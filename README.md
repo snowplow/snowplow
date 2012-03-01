@@ -9,6 +9,8 @@ This repo contains the hacking being done on SnowPlow (aka Piwik's `piwik.js`) t
 * `js\snowplow.js` - the new JavaScript. Largely based on `piwik.js`
 * `tests.html` - some tests for the JavaScript
 
+## TODO
+
 ## Copyright and License
 
 Significant portions copyright 2010 Anton Pang. Remainder copyright 2012 Orderly Ltd.

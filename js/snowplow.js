@@ -1,10 +1,10 @@
 /*!
- * Piwik - Web Analytics
+ * SnowPlow - Take control of your web analytics data
  *
  * JavaScript tracking client
  *
- * @link http://piwik.org
- * @source http://dev.piwik.org/trac/browser/trunk/js/piwik.js
+ * @link http://www.keplarllp.com/blog/2012/02/introducing-snowplow-the-worlds-most-powerful-web-analytics-platform
+ * @source https://github.com/tychosoftworks/snowplow/raw/master/js/snowplow.js
  * @license http://www.opensource.org/licenses/bsd-license.php Simplified BSD
  */
 
@@ -371,7 +371,7 @@ if (!this.JSON2) {
 /*global window */
 /*global unescape */
 /*global ActiveXObject */
-/*global _paq:true */
+/*global _spq:true */
 /*members encodeURIComponent, decodeURIComponent, getElementsByTagName,
 	shift, unshift,
 	addEventListener, attachEvent, removeEventListener, detachEvent,
@@ -410,10 +410,10 @@ if (!this.JSON2) {
 */
 var
 	// asynchronous tracker (or proxy)
-	_paq = _paq || [],
+	_spq = _spq || [],
 
-	// Piwik singleton and namespace
-	Piwik =	Piwik || (function () {
+	// SnowPlow singleton and namespace
+	SnowPlow =	SnowPlow || (function () {
 		"use strict";
 
 		/************************************************************
@@ -1152,52 +1152,13 @@ var
 			}
 
 			/*
-			 * POST request to Piwik server using XMLHttpRequest.
-			 */
-			function sendXmlHttpRequest(request) {
-				try {
-					// we use the progid Microsoft.XMLHTTP because
-					// IE5.5 included MSXML 2.5; the progid MSXML2.XMLHTTP
-					// is pinned to MSXML2.XMLHTTP.3.0
-					var xhr = windowAlias.XDomainRequest ? new windowAlias.XDomainRequest() :
-							windowAlias.XMLHttpRequest ? new windowAlias.XMLHttpRequest() :
-									windowAlias.ActiveXObject ? new ActiveXObject('Microsoft.XMLHTTP') :
-											null;
-
-					xhr.open('POST', configTrackerUrl, true);
-
-					// fallback on error
-					xhr.onreadystatechange = function () {
-						if (this.readyState === 4 && this.status !== 200) {
-							getImage(request);
-						}
-					};
-
-					xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-
-					// Safari: unsafe headers
-//					xhr.setRequestHeader('Content-Length', request.length);
-//					xhr.setRequestHeader('Connection', 'close');
-					xhr.send(request);
-				} catch (e) {
-					// fallback
-					getImage(request);
-				}
-			}
-
-			/*
 			 * Send request
 			 */
 			function sendRequest(request, delay) {
 				var now = new Date();
 
 				if (!configDoNotTrack) {
-					if (configRequestMethod === 'POST') {
-						sendXmlHttpRequest(request);
-					} else {
-						getImage(request);
-					}
-
+					getImage(request);
 					expireDateTime = now.getTime() + delay;
 				}
 			}
@@ -2230,15 +2191,6 @@ var
 				},
 
 				/**
-				 * Set request method
-				 *
-				 * @param string method GET or POST; default is GET
-				 */
-				setRequestMethod: function (method) {
-					configRequestMethod = method || 'GET';
-				},
-
-				/**
 				 * Override referrer
 				 *
 				 * @param string url
@@ -2605,7 +2557,7 @@ var
 
 		/************************************************************
 		 * Proxy object
-		 * - this allows the caller to continue push()'ing to _paq
+		 * - this allows the caller to continue push()'ing to _spq
 		 *   after the Tracker has been initialized and loaded
 		 ************************************************************/
 
@@ -2627,12 +2579,12 @@ var
 
 		asyncTracker = new Tracker();
 
-		for (i = 0; i < _paq.length; i++) {
-			apply(_paq[i]);
+		for (i = 0; i < _spq.length; i++) {
+			apply(_spq[i]);
 		}
 
 		// replace initialization array with proxy object
-		_paq = new TrackerProxy();
+		_spq = new TrackerProxy();
 
 		/************************************************************
 		 * Public data and methods
@@ -2669,87 +2621,4 @@ var
 				return asyncTracker;
 			}
 		};
-	}()),
-
-	/************************************************************
-	 * Deprecated functionality below
-	 * - for legacy piwik.js compatibility
-	 ************************************************************/
-
-	/*
-	 * Piwik globals
-	 *
-	 *   var piwik_install_tracker, piwik_tracker_pause, piwik_download_extensions, piwik_hosts_alias, piwik_ignore_classes;
-	 */
-
-	piwik_track,
-
-	/**
-	 * Track page visit
-	 *
-	 * @param string documentTitle
-	 * @param int|string siteId
-	 * @param string piwikUrl
-	 * @param mixed customData
-	 */
-	piwik_log = function (documentTitle, siteId, piwikUrl, customData) {
-		"use strict";
-
-		function getOption(optionName) {
-			try {
-				return eval('piwik_' + optionName);
-			} catch (e) { }
-
-			return; // undefined
-		}
-
-		// instantiate the tracker
-		var option,
-			piwikTracker = Piwik.getTracker(piwikUrl, siteId);
-
-		// initialize tracker
-		piwikTracker.setDocumentTitle(documentTitle);
-		piwikTracker.setCustomData(customData);
-
-		// handle Piwik globals
-		option = getOption('tracker_pause');
-		if (option) {
-			piwikTracker.setLinkTrackingTimer(option);
-		}
-		option = getOption('download_extensions');
-		if (option) {
-			piwikTracker.setDownloadExtensions(option);
-		}
-		option = getOption('hosts_alias');
-		if (option) {
-			piwikTracker.setDomains(option);
-		}
-		option = getOption('ignore_classes');
-		if (option) {
-			piwikTracker.setIgnoreClasses(option);
-		}
-
-		// track this page view
-		piwikTracker.trackPageView();
-
-		// default is to install the link tracker
-		if (getOption('install_tracker')) {
-
-			/**
-			 * Track click manually (function is defined below)
-			 *
-			 * @param string sourceUrl
-			 * @param int|string siteId
-			 * @param string piwikUrl
-			 * @param string linkType
-			 */
-			piwik_track = function (sourceUrl, siteId, piwikUrl, linkType) {
-				piwikTracker.setSiteId(siteId);
-				piwikTracker.setTrackerUrl(piwikUrl);
-				piwikTracker.trackLink(sourceUrl, linkType);
-			};
-
-			// set-up link tracking
-			piwikTracker.enableLinkTracking();
-		}
-	};
+	}());

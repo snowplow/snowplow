@@ -1,0 +1,43 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>Test page for testing tracking</title>
+
+    <!-- SnowPlow -->
+    <script type="text/javascript">
+	var _spq = _spq || [];
+	
+    _spq.push(['setSiteId', 1]);
+    _spq.push(['setTrackerUrl', 'http://snowplow.co/pxl.png']);
+    _spq.push(['trackPageView']);
+
+    (function() {
+	var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
+	sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://snowplow.co/sp.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
+	})();
+     </script>
+    <!-- SnowPlow code ends -->
+
+    <!--javascript calls-->
+    <script type="text/javascript">
+        function buyDeck(){
+            piwikTracker.addEcommerceItem("pbz00013", "original rider waite", "Tarot", 9, 1)
+        }
+        function registerGoal(){
+            piwikTracker.trackGoal(1,15.99,"pbz00100")
+        }
+    </script>
+    
+</head>
+<body>
+    <h1>This is a test page for checking my tracking tech</h1>
+    <p>Below you'll find a number of linkes. We're going to pretend that clicking on each causes an event to be tracked.</p>
+    <p>I need to try and induce an AJAX call to AmazonS3 to load a pixel, whilst sending some custom parameters incl. the UUID, all via Piwik.</p>
+    <p>Here goes!</p>
+    <button type="button" onclick="buyDeck()">Buy a deck</button>
+    <button type="button" onclick="registerGoal()">Register a goal</button>
+
+</body>
+</html>
