@@ -1529,6 +1529,7 @@ var
                     request += '&ev_va=' + encodeWrapper(value);
                 }
 
+                // TODO: should we remove the lastEcommerceOrderTs timestamp?
                 request = getRequest(request, configCustomData, 'event', lastEcommerceOrderTs);
                 sendRequest(request, configTrackerPause);
             }
