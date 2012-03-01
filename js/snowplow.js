@@ -413,7 +413,7 @@ var
 	_spq = _spq || [],
 
 	// SnowPlow singleton and namespace
-	SnowPlow =	SnowPlow || (function () {
+	SnowPlow = SnowPlow || (function () {
 		"use strict";
 
 		/************************************************************
