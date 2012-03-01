@@ -1300,7 +1300,7 @@ var
 				// NOTE: if the format of the cookie changes,
 				// we must also update JS tests, PHP tracker, Integration tests,
 				// and notify other tracking clients (eg. Java) of the changes
-				var cookie = getCookie(getCookieName('ref'));
+				var cookie = getCookie(getCookieName(getR));
 
 				if (cookie.length) {
 					try {
@@ -1439,19 +1439,19 @@ var
 					}
 				}
 				// build out the rest of the request
-				request += '&idsite=' + configTrackerSiteId +
-					'&rec=1' +
+				request += /*'&idsite=' + configTrackerSiteId + 
+					'&rec=1' + */
 					'&r=' + String(Math.random()).slice(2, 8) + // keep the string to a minimum
-					'&h=' + now.getHours() + '&m=' + now.getMinutes() + '&s=' + now.getSeconds() +
-					'&url=' + encodeWrapper(purify(currentUrl)) +
+					/* '&h=' + now.getHours() + '&m=' + now.getMinutes() + '&s=' + now.getSeconds() + */
+					/* '&url=' + encodeWrapper(purify(currentUrl)) + */
 					(configReferrerUrl.length ? '&urlref=' + encodeWrapper(purify(configReferrerUrl)) : '') +
-					'&_id=' + uuid + '&_idts=' + createTs + '&_idvc=' + visitCount +
-					'&_idn=' + newVisitor + // currently unused
+					'&_id=' + uuid + /* '&_idts=' + createTs + '&_idvc=' + visitCount + 
+					'&_idn=' + newVisitor + // currently unused */
 					(campaignNameDetected.length ? '&_rcn=' + encodeWrapper(campaignNameDetected) : '') +
 					(campaignKeywordDetected.length ? '&_rck=' + encodeWrapper(campaignKeywordDetected) : '') +
-					'&_refts=' + referralTs +
+					/* '&_refts=' + referralTs +
 					'&_viewts=' + lastVisitTs +
-					(String(lastEcommerceOrderTs).length ? '&_ects=' + lastEcommerceOrderTs : '') +
+					(String(lastEcommerceOrderTs).length ? '&_ects=' + lastEcommerceOrderTs : '') + */
 					(String(referralUrl).length ? '&_ref=' + encodeWrapper(purify(referralUrl.slice(0, referralUrlMaxLength))) : '');
 
 				// Custom Variables, scope "page"
@@ -1503,6 +1503,37 @@ var
 
 				return request;
 			}
+
+/*<SNOWPLOW> New SnowPlow functionality */
+
+            /**
+             * Log an event happening on this page
+             *
+             * @param string category The name you supply for the group of objects you want to track
+             * @param string action A string that is uniquely paired with each category, and commonly used to define the type of user interaction for the web object
+             * @param string label (optional) An optional string to provide additional dimensions to the event data
+             * @param int|float|string value (optional) An integer that you can use to provide numerical data about the user event
+             */
+            function logEvent(category, action, label, value) {
+                var request = '';
+
+                // All events have a category and an action
+                request += '&ev_ca=' + encodeWrapper(category);
+                request += '&ev_ac=' + encodeWrapper(action);
+
+                // Label and value are optional
+                if (String(label).length) {
+                    request += '&ev_la=' + encodeWrapper(label);
+                }
+                if (String(value).length) {
+                    request += '&ev_va=' + encodeWrapper(value);
+                }
+
+                request = getRequest(request, configCustomData, 'event', lastEcommerceOrderTs);
+                sendRequest(request, configTrackerPause);
+            }
+
+/*<DEPRECATED> Piwik ecommerce functionality not needed for SnowPlow */
 
 			function logEcommerce(orderId, grandTotal, subTotal, tax, shipping, discount) {
 				var request = 'idgoal=0',
@@ -1572,6 +1603,8 @@ var
 					logEcommerce("", grandTotal, "", "", "", "");
 				}
 			}
+
+/*</DEPRECATED> Piwik ecommerce functionality not needed for SnowPlow */
 
 			/*
 			 * Log the page view / visit
@@ -1731,26 +1764,6 @@ var
 
 				// optimization of the if..elseif..else construct below
 				return linkPattern.test(className) ? 'link' : (downloadPattern.test(className) || downloadExtensionsPattern.test(href) ? 'download' : 0);
-
-/*
-				var linkType;
-
-				if (linkPattern.test(className)) {
-					// class attribute contains 'piwik_link' (or user's override)
-					linkType = 'link';
-				} else if (downloadPattern.test(className)) {
-					// class attribute contains 'piwik_download' (or user's override)
-					linkType = 'download';
-				} else if (downloadExtensionsPattern.test(sourceHref)) {
-					// file extension matches a defined download extension
-					linkType = 'download';
-				} else {
-					// otherwise none of the above
-					linkType = 0;
-				}
-
-				return linkType;
- */
 			}
 
 			/*
@@ -2426,19 +2439,6 @@ var
 				},
 
 				/**
-				 * Trigger a goal
-				 *
-				 * @param int|string idGoal
-				 * @param int|float customRevenue
-				 * @param mixed customData
-				 */
-				trackGoal: function (idGoal, customRevenue, customData) {
-					trackCallback(function () {
-						logGoal(idGoal, customRevenue, customData);
-					});
-				},
-
-				/**
 				 * Manually log a click from your own code
 				 *
 				 * @param string sourceUrl
@@ -2463,6 +2463,38 @@ var
 					});
 				},
 
+/*<SNOWPLOW> New SnowPlow functionality */
+
+                /**
+                 * Log an event happening on this page
+                 *
+                 * @param string category The name you supply for the group of objects you want to track
+                 * @param string action A string that is uniquely paired with each category, and commonly used to define the type of user interaction for the web object
+                 * @param string label (optional) An optional string to provide additional dimensions to the event data
+                 * @param int|float|string value (optional) An integer that you can use to provide numerical data about the user event
+                 */
+                trackEvent: function (category, action, label, value) {
+                    logEvent(category, action, label, value);                   
+                }
+/*</SNOWPLOW>*/
+
+/*<DEPRECATED> Website goals are a pre-SnowPlow concept */
+
+                /**
+                 * Trigger a goal
+                 *
+                 * @param int|string idGoal
+                 * @param int|float customRevenue
+                 * @param mixed customData
+                 */
+                trackGoal: function (idGoal, customRevenue, customData) {
+                    trackCallback(function () {
+                        logGoal(idGoal, customRevenue, customData);
+                    });
+                },
+/*</DEPRECATED>*/
+
+/*<DEPRECATED> Piwik ecommerce functionality not needed for SnowPlow */
 
 				/**
 				 * Used to record that the current page view is an item (product) page view, or a Ecommerce Category page view.
@@ -2522,6 +2554,8 @@ var
 					}
 				},
 
+/* TODO: consider adding in removeEcommerceItem */
+
 				/**
 				 * Tracks an Ecommerce order.
 				 * If the Ecommerce order contains items (products), you must call first the addEcommerceItem() for each item in the order.
@@ -2551,6 +2585,7 @@ var
 				trackEcommerceCartUpdate: function (grandTotal) {
 					logEcommerceCartUpdate(grandTotal);
 				}
+/*</DEPRECATED>*/
 
 			};
 		}
