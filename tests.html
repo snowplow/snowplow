@@ -9,12 +9,12 @@
 	var _spq = _spq || [];
 	
     _spq.push(['setSiteId', 1]);
-    _spq.push(['setTrackerUrl', 'http://snowplow.co/pxl.png']);
+    _spq.push(['setTrackerUrl', 'http://snplow.com/pxl.png']);
     _spq.push(['trackPageView']);
 
     (function() {
 	var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
-	sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://snowplow.co/sp.js';
+	sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://snplow.com/sp.js';
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
 	})();
      </script>
