@@ -2,7 +2,7 @@
 
 ## Introducing snowplow.js
 
-`snowplow.js` (or `sp.js` in minified form) is the JavaScript page and event tracking library for SnowPlow.
+`snowplow.js` (or `sp.js` in minified form) is the JavaScript page and event tracking library for [SnowPlow] [snowplow].
 
 `snowplow.js` is largely based on Anton Pang's excellent [`piwik.js`] [piwikjs], the JavaScript tracker for the open-source [Piwik] [piwik] project, and is distributed under the same license ([Simplified BSD] [bsd]). For completeness, the main differences between `snowplow.js` and `piwik.js` are documented below.
 
@@ -47,7 +47,8 @@ Planned items on the roadmap are as follows:
 Significant portions copyright 2010 Anton Pang. Remainder copyright 2012 Orderly Ltd.
 
 Licensed under the [Simplified BSD] [bsd] license.
- 
+
+[snowplow]: http://www.keplarllp.com/blog/2012/02/introducing-snowplow-the-worlds-most-powerful-web-analytics-platform
 [piwik]: http://piwik.org/
 [piwikjs]: https://github.com/piwik/piwik/blob/master/js/piwik.js
 [piwikphp]: https://github.com/piwik/piwik/blob/master/piwik.php
