@@ -1300,7 +1300,7 @@ var
 				// NOTE: if the format of the cookie changes,
 				// we must also update JS tests, PHP tracker, Integration tests,
 				// and notify other tracking clients (eg. Java) of the changes
-				var cookie = getCookie(getCookieName(getR));
+				var cookie = getCookie(getCookieName('ref'));
 
 				if (cookie.length) {
 					try {
@@ -1529,8 +1529,7 @@ var
                     request += '&ev_va=' + encodeWrapper(value);
                 }
 
-                // TODO: should we remove the lastEcommerceOrderTs timestamp?
-                request = getRequest(request, configCustomData, 'event', lastEcommerceOrderTs);
+                request = getRequest(request, configCustomData, 'event');
                 sendRequest(request, configTrackerPause);
             }
 
@@ -2476,7 +2475,7 @@ var
                  */
                 trackEvent: function (category, action, label, value) {
                     logEvent(category, action, label, value);                   
-                }
+                },
 /*</SNOWPLOW>*/
 
 /*<DEPRECATED> Website goals are a pre-SnowPlow concept */

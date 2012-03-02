@@ -14,7 +14,8 @@
 
     (function() {
 	var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
-	sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://snplow.com/sp.js';
+	// sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://js.snplow.com/sp.js';
+    sp.src = 'js/snowplow.js';
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
 	})();
      </script>
@@ -23,10 +24,12 @@
     <!--javascript calls-->
     <script type="text/javascript">
         function buyDeck(){
-            piwikTracker.addEcommerceItem("pbz00013", "original rider waite", "Tarot", 9, 1)
+            alert("Buy a deck!")
+            _spq.push(['trackEvent', 'myCategory', 'myAction', 'myLabel', 'myValue'])
+            // piwikTracker.addEcommerceItem("pbz00013", "original rider waite", "Tarot", 9, 1)
         }
-        function registerGoal(){
-            piwikTracker.trackGoal(1,15.99,"pbz00100")
+        function pressPlay(){
+            _spq.push(['trackEvent', 'playCategory', 'playAction', 'playLabel', 'playValue'])           
         }
     </script>
     
@@ -37,7 +40,7 @@
     <p>I need to try and induce an AJAX call to AmazonS3 to load a pixel, whilst sending some custom parameters incl. the UUID, all via Piwik.</p>
     <p>Here goes!</p>
     <button type="button" onclick="buyDeck()">Buy a deck</button>
-    <button type="button" onclick="registerGoal()">Register a goal</button>
+    <button type="button" onclick="pressPlay()">Press play</button>
 
 </body>
 </html>
