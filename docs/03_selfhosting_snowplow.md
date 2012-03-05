@@ -33,7 +33,7 @@ If you want to self-host the S3 pixel, you will need the following:
 
 * An account with [Amazon Web Services] account, with S3 and CloudFront enabled
 * The ability to create a subdomain on your website for SnowPlow, and set a CNAME entry for it
-* Some level of technical expertise _e_, where noob < _e_ < ninja 
+* Some level of technical ability _e_, where noob < _e_ < ninja 
 
 The advantages and disadvantages to self-hosting the S3 pixel are listed below:
 
