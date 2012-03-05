@@ -118,7 +118,7 @@ Here is an (asynchronous) example of tracking a user listening to a music mix:
 _snaq.push(['_trackEvent', 'Mixes', 'Play', 'MrC/fabric-0503-mix', , '0.0']);
 ```
 
-The explanation of each argument passed to `_trackEvent` is as follows:
+The explanation of each argument passed to `'_trackEvent'` is as follows:
 
 | **Argument**          | **Attribute** | **Explanation**                                                         |
 |----------------------:|:--------------|:------------------------------------------------------------------------|
