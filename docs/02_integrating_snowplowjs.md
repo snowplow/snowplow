@@ -4,6 +4,9 @@
 
 * [Introduction](#intro)
 * [Asynchronous integration](#async)
+* [Synchronous integration](#sync)
+* [Event tracking](#events)
+* [Testing and troubleshooting](#tt)
 
 <a name="intro"/>
 ## Introduction
@@ -64,6 +67,7 @@ The four arguments to the event tracking command may be broadly familiar to you 
 
 Any problems? Please consult the **Testing and troubleshooting** section at the bottom of this guide.
 
+<a name="sync"/>
 ## Synchronous integration
 
 ### Installing the header script
@@ -74,6 +78,7 @@ Any problems? Please consult the **Testing and troubleshooting** section at the 
 
 **This section still to write.**
 
+<a name="events"/>
 ## Event tracking
 
 _This section is common to both the synchronous and asynchronous integration approaches._
@@ -145,6 +150,7 @@ The explanation of each argument passed to `_trackEvent()` is as follows:
 
 For further examples and additional background on the concepts around web event tracking, we would encourage you to read Google Analytics's [Event Tracking Guide] [gaeventguide], as there are many similarities between the two approaches. 
 
+<a name="tt"/>
 ## Testing and troubleshooting
 
 _This section is common to both the synchronous and asynchronous integration approaches._
