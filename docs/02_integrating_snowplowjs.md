@@ -1,4 +1,4 @@
-# snowplow.js Integration Guide
+# Integrating snowplow.js
 
 ## Introduction
 
@@ -34,15 +34,39 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp
 To explain a few things about this code:
 
 * You must update `{{CLIENT}}` to be your specific sub-domain provided by the SnowPlow team
-* This code work with both https and http pages
-* The `trackPageView` line logs the page load 
+* This code work with both `https` (SSL-secured) and `http` pages
+* The `trackPageView` command logs the page load 
 
-## Event tracking
+### Event tracking
 
-Having set up a 
+Having set up the asynchronous tracking above, you can now add SnowPlow's asynchronous event tracking into your website or webapp.
+
+Here is an example of SnowPlow event tracking attached to a simple JavaScript action:
+
+```html
+<!-- Website event with SnowPlow tracking -->
+<script type="text/javascript">
+    function playVideo(){
+        alert("Playing a video")
+        _spq.push(['trackEvent', 'Videos', 'Play', 'Fargo', '320x200'])
+    }
+</script>
+```
+
+The four arguments to the event tracking command may be familiar to you from the Google Analytics API - however there are some small differences, so please refer to the section **Event tracking** below for more information.
+
+Any problems? Please consult the **Testing and troubleshooting** section at the bottom of this guide.
 
 ## Synchronous integration
 
-This section still to write
+This section still to write.
+
+## Event tracking
+
+This section still to write.
+
+## Testing and troubleshooting
+
+This section still to write.
 
 [selfhosted]: http://todo
