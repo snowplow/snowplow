@@ -101,24 +101,26 @@ If you have setup event tracking with Google Analytics, these will seem very fam
 Here is an (asynchronous) example of tracking a user listening to a music mix:
 
 ```javascript
-_snaq.push(['_trackEvent', 'Mixes', 'Play', 'ToddlaT/radio-1-essential-mix', , '0.0']);
+_snaq.push(['_trackEvent', 'Mixes', 'Play', 'MrC/fabric-0503-mix', , '0.0']);
 ```
 
 **TODO: confirm syntax of this**
 
-where:
-
-* 'Mixes' is the `Category` of object: mixes on a music site
-* 'Play' is the `Action` we are tracking
-* 'ToddlaT/radio-1-essential-mix' uniquely identifies the `Object`
-* `, ,` means we have no `Property` attribute to store
-* '0.0' is the float `Value` specifying where in seconds within the mix the `Action` started 
+| **Attribute** | **Value**             | **Explanation**                                                         |
+|--------------:|:----------------------|:------------------------------------------------------------------------|
+|    `Category` | 'Mixes'               | This is a DJ mix on a music site                                        |
+|      `Action` | 'Play'                | We are tracking a mix being played                                      |
+|      `Object` | 'MrC/fabric-0503-mix' | This uniquely identifies the mix being played                           |
+|    `Property` | Not set               | Not required                                                            |
+|       `Value` | '0.0'                 | A float specifying how far in seconds into the mix the playback started |
 
 Here is a (synchronous) example of tracking an add-to-basket event:
 
 ```javascript
 _trackEvent('Cart', 'Add', 'ASO01043', 'blue:xxl', '2.0']);
 ```
+
+**TODO: confirm syntax of this**
 
 where:
 
@@ -127,8 +129,6 @@ where:
 * 'ASO01043' is the `Object`: a SKU uniquely identifying the product added to basket
 * 'blue:xxl' is the `Property` attribute for the product (we're actually compressing two properties into one with a colon in-between them)
 * '2.0' is the float `Value` specifying how many units of the product the user is adding to basket
-
-**TODO: confirm syntax of this**
 
 ### Further reading
 
