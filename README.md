@@ -13,8 +13,6 @@ Besides this README, there are two main instruction guides written for `snowplow
 * [Integrating `snowplow.js` into your site] [integrating]
 * [Self-hosting `snowplow.js`] [selfhosting]
 
-TODO: write these guides!
-
 ## Main differences between snowplow.js and piwik.js
 
 The main differences today are as follows:

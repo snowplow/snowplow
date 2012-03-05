@@ -1,4 +1,4 @@
-# Integrating snowplow.js
+# Integrating snowplow.js into your site
 
 ## Table of Contents
 
