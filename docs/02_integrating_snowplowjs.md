@@ -10,7 +10,7 @@ The exact integration steps required vary depending on whether you choose to use
 
 ## Asynchronous integration
 
-### The header script
+### Installing the header script
 
 To use `snowplow.js` in an 'async' manner, first add the following script into your website template's `<head>` section:
 
@@ -37,7 +37,7 @@ To explain a few things about this code:
 * This code work with both HTTPS (i.e. SSL-secured) and HTTP pages
 * The `trackPageView` command logs the page load 
 
-### Event tracking
+### Integrating event tracking
 
 Having set up the asynchronous tracking above, you can now add SnowPlow's asynchronous event tracking into your website or webapp.
 
@@ -59,15 +59,15 @@ Any problems? Please consult the **Testing and troubleshooting** section at the 
 
 ## Synchronous integration
 
-### The header script
+### Installing the header script
 
 **This section still to write.**
 
-### Event tracking
+### Integrating event tracking
 
 **This section still to write.**
 
-## Focus on event tracking
+## Event tracking
 
 _This section is common to both the synchronous and asynchronous integration approaches._
 
@@ -108,7 +108,7 @@ _snaq.push(['_trackEvent', 'Mixes', 'Play', 'MrC/fabric-0503-mix', , '0.0']);
 
 | **Attribute** | **Value**             | **Explanation**                                                         |
 |--------------:|:----------------------|:------------------------------------------------------------------------|
-|    `Category` | 'Mixes'               | This is a DJ mix on a music site                                        |
+|    `Category` | ```javascript'Mixes'```               | This is a DJ mix on a music site                                        |
 |      `Action` | 'Play'                | We are tracking a mix being played                                      |
 |      `Object` | 'MrC/fabric-0503-mix' | This uniquely identifies the mix being played                           |
 |    `Property` | Not set               | Not required                                                            |
