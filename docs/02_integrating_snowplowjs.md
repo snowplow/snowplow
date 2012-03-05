@@ -1,5 +1,11 @@
 # Integrating snowplow.js
 
+## Table of Contents
+
+* [Introduction](#intro)
+* [Asynchronous integration](#async)
+
+<a name="intro"/>
 ## Introduction
 
 This guide takes you through the process for integration SnowPlow's JavaScript tracker (`snowplow.js`) into your website or web app.
