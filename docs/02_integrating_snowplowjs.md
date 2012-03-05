@@ -63,9 +63,9 @@ Here is an example of SnowPlow event tracking attached to a simple JavaScript ac
 </script>
 ```
 
-The four arguments to the event tracking command may be broadly familiar to you from the Google Analytics API - however there are some small differences, so please refer to the section **Event tracking** below for more information.
+The four arguments to the event tracking command may be broadly familiar to you from the Google Analytics API - however there are some small differences, so please refer to the section [Event tracking](#events) below for more information.
 
-Any problems? Please consult the **Testing and troubleshooting** section at the bottom of this guide.
+Any problems? Please consult the [Testing and troubleshooting](#tt) section at the bottom of this guide.
 
 <a name="sync"/>
 ## Synchronous integration
@@ -78,6 +78,8 @@ Any problems? Please consult the **Testing and troubleshooting** section at the 
 
 **This section still to write.**
 
+Any problems? Please consult the [Testing and troubleshooting](#tt) section at the bottom of this guide.
+
 <a name="events"/>
 ## Event tracking
 
@@ -87,7 +89,7 @@ _This section is common to both the synchronous and asynchronous integration app
 
 The concept of event tracking is at the heart of SnowPlow. In the 'classical' model of web analytics, sensible analyses are agreed in advance, then formalised by being integrated into the site (e.g. by tracking goals and conversion funnels) and finally analysed. SnowPlow views this approach as 'premature analysis', and encourages logging plenty of intent-agnostic events and then figuring out what they mean later.
 
-The **Event tracking** sections of the synchronous and asynchronous guides covers the technical integration of SnowPlow events; in the rest of this section we provide a practical guide to using event tracking effectively.
+The Event tracking sections of the synchronous and asynchronous guides covers the technical integration of SnowPlow events; in the rest of this section we provide a practical guide to using event tracking effectively.
 
 ### Anatomy of event tracking
 
