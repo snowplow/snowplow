@@ -10,8 +10,8 @@
 
 This guide takes you through the process for self-hosting SnowPlow. There are two distinct aspects to self-hosting:
 
-1. **Self-hosting the S3 pixel** - self-hosting the S3 pixel means that the SnowPlow tracking logs are stored within _your_ Amazon S3 account, rather than SnowPlow's
-2. **Self-hosting `snowplow.js`** - this means that the SnowPlow JavaScript is delivered by your servers as part of your JavaScript asset pipeline 
+1. **Self-hosting the S3 pixel** - so the tracking pixel is served from your Amazon S3 account, rather than the SnowPlow team's account 
+2. **Self-hosting snowplow.js** - this means that the SnowPlow JavaScript is hosted and served by your web server(s) 
 
 SnowPlow makes it easy for you to self-host either the S3 pixel or `snowplow.js`, or both. We look at each in turn below.
 
@@ -19,35 +19,41 @@ SnowPlow makes it easy for you to self-host either the S3 pixel or `snowplow.js`
 
 ### Overview
 
-`snowplow.js` logs a page view or tracking event by making a `GET` request to a single 1x1 pixel; by default this pixel is made available at:
+`snowplow.js` logs every page view and tracking event by making a `GET` request to a single transparent 1x1 pixel; by default this pixel is made available at:
 
-```html
-http://{{CLIENT}}.snplow.com/pxl.png
-```
+    http://{{CLIENT}}.snplow.com/pxl.png
 
-where `{{CLIENT}} is the sub-domain assigned to you by SnowPlow. If you prefer to self-host a S3 pixel, that's straightforward too, and we will explore how to do it in the rest of this section.
+Where `{{CLIENT}} is the sub-domain assigned to you by SnowPlow. This approach means that the data collected by SnowPlow is stored within our Amazon S3 account, rather than yours. If you prefer to self-host the S3 pixel and store your SnowPlow data within your own Amazon S3 account, that's straightforward, and we will explore how to do it in the rest of this section.
 
 ### Pre-requisites
 
 If you want to self-host the S3 pixel, you will need the following:
 
-* An account with [Amazon Web Services] account, with S3 and CloudFront enabled
-* The ability to create a subdomain on your website for SnowPlow, and set a CNAME entry for it
-* Some level of technical ability _e_, where noob < _e_ < ninja 
+* An account with [Amazon Web Services] [aws] account, with S3 and CloudFront enabled
+* The ability to setup a (sub)domain for SnowPlow, and set a CloudFront CNAME entry for it
+* Some level of technical ability _e_, where `noob < e < ninja`
 
-The advantages and disadvantages to self-hosting the S3 pixel are listed below:
+Once you have those ready, please read on...
 
-| **+ives of self-hosting**    | **-ives** |
-|:-----------:|:--------------|
-| Keep your clickstream data in your own Amazon S3 account | Have to setup your own Amazon S3 account
-| No commercial relationship required with SnowPlow | Have to manually configure CloudFront (explained below)          |
-| Can perform any analysis you want | xx         |
-|    xx | xx           |
-|  xx | xx           |
-|     xx | xx            |
+### Setting up Amazon S3 and CloudFront
 
-If you want to self-host the S3 pixel, read-on
+#### 1. Download the pixel
 
-This guide assumes that you are working with the hosted version of `snowplow.js` - you will need to make some adjustments if you are bundling `snowplow.js` into your own site's JavaScript; these adjustments are discussed separately in the [Self-Hosting Guide] [selfhosted]
+First you need a pixel to serve - you can get one by right-clicking [this image file] [pixel] and downloading the image, or alternatively try:
+
+    wget 
+
+
+
+### Handling HTTPS (SSL)
+
+**To write**
+
+
+## Self-hosting snowplow.js
 
 JavaScript can be advisable for a vareif you have your own preferred JavaScript minification scheme or prefer not to use third-party JavaScripts. The other nice thing about
+
+
+[aws]: http://aws.amazon.com/
+[pixel]
