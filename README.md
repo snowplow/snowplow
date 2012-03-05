@@ -53,5 +53,5 @@ Licensed under the [Simplified BSD] [bsd] license.
 [piwikjs]: https://github.com/piwik/piwik/blob/master/js/piwik.js
 [piwikphp]: https://github.com/piwik/piwik/blob/master/piwik.php
 [bsd]: http://www.opensource.org/licenses/bsd-license.php 
-[integrating] /tychosoftworks/snowplow-js/blob/master/docs/02_integrating_snowplowjs.md
-[selfhosting] /tychosoftworks/snowplow-js/blob/master/docs/03_selfhosting_snowplowjs.md
+[integrating]: /tychosoftworks/snowplow-js/blob/master/docs/02_integrating_snowplowjs.md
+[selfhosting]: /tychosoftworks/snowplow-js/blob/master/docs/03_selfhosting_snowplowjs.md
