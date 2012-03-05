@@ -3,7 +3,8 @@
 ## Table of Contents
 
 1. [Introduction](#intro)
-2. []()
+2. [Self-hosting the S3 pixel](#pixelsh)
+3. [Self-hosting snowplow.js](#jssh)
 
 <a name="intro"/>
 ## Introduction
@@ -15,6 +16,7 @@ This guide takes you through the process for self-hosting SnowPlow. There are tw
 
 SnowPlow makes it easy for you to self-host either the S3 pixel or `snowplow.js`, or both. We look at each in turn below.
 
+<a name="pixelsh"/>
 ## Self-hosting the S3 pixel
 
 ### Overview
@@ -35,25 +37,56 @@ If you want to self-host the S3 pixel, you will need the following:
 
 Once you have those ready, please read on...
 
-### Setting up Amazon S3 and CloudFront
+### Self-hosting instructions
 
-#### 1. Download the pixel
+#### 1. Create a bucket for the pixel
 
-First you need a pixel to serve - you can get one by right-clicking [this image file] [pixel] and downloading the image, or alternatively try:
+First create a new bucket within your Amazon S3 account to store the pixel:
 
-    wget 
+[!createbucket]
 
+Some notes on this:
 
+* There is no need to enable logging on this bucket
+* Because we will be using CloudFront, it doesn't particularly matter which data center you choose (although see [A note on privacy](#privacy) below)
+
+#### 2. Add the pixel
+
+First you need a pixel to serve - you can obtain one by right-clicking [this image file] [pixel] and selecting **Save Link As...**, or alternatively run:
+
+```bash
+wget https://github.com/tychosoftworks/snowplow-js/raw/master/pxl/pxl.png 	
+```
+
+Now you're ready to upload the pixel into S3:
+
+[!uploadpixel]
+
+Once uploaded, make sure that the permissions on this image are set to read:
+
+[!pixelsecurity]
+
+#### 3. Configure CloudFront
+
+**To write**
+
+#### 4. Update your header script
+
+**To write**
 
 ### Handling HTTPS (SSL)
 
 **To write**
 
+<a name="privacy"/>
+### A note on privacy
 
+
+
+<a name="jssh"/>
 ## Self-hosting snowplow.js
 
 JavaScript can be advisable for a vareif you have your own preferred JavaScript minification scheme or prefer not to use third-party JavaScripts. The other nice thing about
 
-
 [aws]: http://aws.amazon.com/
-[pixel]
+[pixel]: https://github.com/tychosoftworks/snowplow-js/raw/master/pxl/pxl.png
