@@ -11,7 +11,7 @@
 <a name="intro"/>
 ## Introduction
 
-This guide takes you through the process for integration SnowPlow's JavaScript tracker (`snowplow.js`) into your website or web app.
+This guide takes you through the process for integrating SnowPlow's JavaScript tracker `snowplow.js` into your website or web app.
 
 This guide assumes that you are working with the hosted version of `snowplow.js` - you will need to make some adjustments if you are bundling `snowplow.js` into your own site's JavaScript; these adjustments are discussed separately in the [Self-Hosting Guide] [selfhosted]
 
