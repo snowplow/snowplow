@@ -110,7 +110,7 @@ If you have setup event tracking with Google Analytics, these will seem familiar
 
 ### Examples
 
-#### Tracking playing a music mix
+#### Playing a music mix
 
 Here is an (asynchronous) example of tracking a user listening to a music mix:
 
@@ -128,7 +128,7 @@ The explanation of each argument passed to `_trackEvent` is as follows:
 | `, ,` i.e. not set    | `Property`    | Not required                                                            |
 | '0.0'                 | `Value`       | A float specifying how far in seconds into the mix the playback started |
 
-##### Tracking adding a product to basket
+##### Adding a product to basket
 
 Here is a (synchronous) example of tracking a user adding a product to their shopping basket:
 
