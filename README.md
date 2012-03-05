@@ -1,6 +1,6 @@
 # snowplow.js: JavaScript tracking for SnowPlow
 
-## Introducing snowplow.js
+## Introduction
 
 `snowplow.js` (or `sp.js` in minified form) is the JavaScript page and event tracking library for [SnowPlow] [snowplow].
 
