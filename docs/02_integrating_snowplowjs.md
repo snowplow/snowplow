@@ -92,7 +92,7 @@ The SnowPlow concept of an event has five key attributes:
 If you have setup event tracking with Google Analytics, these will seem familiar. Here are the differences between SnowPlow's approach and Google Analytics':
 
 * The SnowPlow `Object` field is the equivalent of `Label` in Google Analytics
-* The SnowPlow `Value` field takes a floating point number (e.g. '3.14') whereas Google Analytics' equivalent field takes an integer 
+* The SnowPlow `Value` field takes a floating point number (e.g. '3.14') while the equivalent field in Google Analytics takes an integer 
 * SnowPlow has an additional `Property` field, which takes a string and can be used to further describe the object or the action performed on it
 * SnowPlow does not have a boolean field called `Non-interaction`
 
@@ -118,21 +118,21 @@ The explanation of each argument passed to `_trackEvent` is as follows:
 
 ##### Tracking adding a product to basket
 
-Here is a (synchronous) example of tracking an add-to-basket event:
+Here is a (synchronous) example of tracking a user adding a product to their shopping basket:
 
 ```javascript
-_trackEvent('Cart', 'Add', 'ASO01043', 'blue:xxl', '2.0']);
+_trackEvent('Checkout', 'Add', 'ASO01043', 'blue:xxl', '2.0']);
 ```
 
-**TODO: confirm syntax of this**
+The explanation of each argument passed to `_trackEvent()` is as follows:
 
-where:
-
-* 'Cart' is the `Category` of object: checkout flow on an ecommerce site
-* 'Add' is the `Action`, and signifies adding to basket
-* 'ASO01043' is the `Object`: a SKU uniquely identifying the product added to basket
-* 'blue:xxl' is the `Property` attribute for the product (we're actually compressing two properties into one with a colon in-between them)
-* '2.0' is the float `Value` specifying how many units of the product the user is adding to basket
+| **Argument** | **Attribute** | **Explanation**                                                                                         |
+|-------------:|:--------------|:--------------------------------------------------------------------------------------------------------|
+| 'Checkout'   | `Category`    | This is the checkout flow on an ecommerce site                                                          |
+| 'Add'        | `Action`      | The user is adding a product to his or her shopping basket                                              | 
+| 'ASO01043'   | `Object`      | A SKU uniquely identifying the product added to basket                                                  |
+| 'blue:xxl'   | `Property`    | Describes the product (we're actually compressing two properties into one with a colon in-between them) |
+| '2.0'        | `Value`       | A float specifying how many units of the product the user is adding to basket                           |
 
 ### Further reading
 
