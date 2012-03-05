@@ -8,6 +8,7 @@ This guide assumes that you are working with the hosted version of `snowplow.js`
 
 The exact integration steps required vary depending on whether you choose to use `snowplow.js` in a synchronous or an asynchronous manner; each option is covered separately below.
 
+<a name="async"/>
 ## Asynchronous integration
 
 ### Installing the header script
