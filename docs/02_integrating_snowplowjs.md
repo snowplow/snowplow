@@ -89,7 +89,7 @@ The SnowPlow concept of an event has five key attributes:
 |  `Property` | No            | An optional string describing the object or the action performed on it           |
 |     `Value` | No            | An optional float to quantify or further describe the user action                |
 
-If you have setup event tracking with Google Analytics, these will seem very familiar. Here are the differences:
+If you have setup event tracking with Google Analytics, these will seem familiar. Here are the differences between SnowPlow's approach and Google Analytics':
 
 * The SnowPlow `Object` field is the equivalent of `Label` in Google Analytics
 * The SnowPlow `Value` field takes a floating point number (e.g. '3.14') whereas Google Analytics' equivalent field takes an integer 
@@ -97,6 +97,8 @@ If you have setup event tracking with Google Analytics, these will seem very fam
 * SnowPlow does not have a boolean field called `Non-interaction`
 
 ### Examples
+
+#### Tracking playing a music mix
 
 Here is an (asynchronous) example of tracking a user listening to a music mix:
 
@@ -113,6 +115,8 @@ The explanation of each argument passed to `_trackEvent` is as follows:
 | 'MrC/fabric-0503-mix' | `Object`      | This uniquely identifies the mix being played                           |
 | `, ,` i.e. not set    | `Property`    | Not required                                                            |
 | '0.0'                 | `Value`       | A float specifying how far in seconds into the mix the playback started |
+
+##### Tracking adding a product to basket
 
 Here is a (synchronous) example of tracking an add-to-basket event:
 
