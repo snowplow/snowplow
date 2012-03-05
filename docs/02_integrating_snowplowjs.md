@@ -104,15 +104,15 @@ Here is an (asynchronous) example of tracking a user listening to a music mix:
 _snaq.push(['_trackEvent', 'Mixes', 'Play', 'MrC/fabric-0503-mix', , '0.0']);
 ```
 
-**TODO: confirm syntax of this**
+The explanation of each argument passed to `_trackEvent` is as follows:
 
-| **Attribute** | **Value**             | **Explanation**                                                         |
-|--------------:|:----------------------|:------------------------------------------------------------------------|
-|    `Category` | ```javascript'Mixes'```               | This is a DJ mix on a music site                                        |
-|      `Action` | 'Play'                | We are tracking a mix being played                                      |
-|      `Object` | 'MrC/fabric-0503-mix' | This uniquely identifies the mix being played                           |
-|    `Property` | Not set               | Not required                                                            |
-|       `Value` | '0.0'                 | A float specifying how far in seconds into the mix the playback started |
+| **Argument**          | **Attribute** | **Explanation**                                                         |
+|----------------------:|:--------------|:------------------------------------------------------------------------|
+| 'Mixes'               | `Category`    | This is a DJ mix on a music site                                        |
+| 'Play'                | `Action`      | We are tracking a mix being played                                      | 
+| 'MrC/fabric-0503-mix' | `Object`      | This uniquely identifies the mix being played                           |
+| `, ,` i.e. not set    | `Property`    | Not required                                                            |
+| '0.0'                 | `Value`       | A float specifying how far in seconds into the mix the playback started |
 
 Here is a (synchronous) example of tracking an add-to-basket event:
 
