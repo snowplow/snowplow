@@ -2,11 +2,11 @@
 
 ## Table of Contents
 
-* [Introduction](#intro)
-* [Asynchronous integration](#async)
-* [Synchronous integration](#sync)
-* [Event tracking](#events)
-* [Testing and troubleshooting](#tt)
+1. [Introduction](#intro)
+2. [Asynchronous integration](#async)
+3. [Synchronous integration](#sync)
+4. [Event tracking](#events)
+5. [Testing and troubleshooting](#tt)
 
 <a name="intro"/>
 ## Introduction
