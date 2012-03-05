@@ -4,7 +4,7 @@
 
 This guide takes you through the process for integration SnowPlow's JavaScript tracker (`snowplow.js`) into your website or web app.
 
-This guide assumes that you are working with the hosted version of `snowplow.js` - you will need to make some adjustments if you are bundling `snowplow.js` into your own site JavaScript; these adjustments are discussed separately in the [Self-Hosting Guide] [selfhosted]
+This guide assumes that you are working with the hosted version of `snowplow.js` - you will need to make some adjustments if you are bundling `snowplow.js` into your own site's JavaScript; these adjustments are discussed separately in the [Self-Hosting Guide] [selfhosted]
 
 The exact integration steps required vary depending on whether you choose to use `snowplow.js` in a synchronous or an asynchronous manner; each option is covered separately below.
 
@@ -33,8 +33,8 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp
 
 To explain a few things about this code:
 
-* You must update `{{CLIENT}}` to be your specific sub-domain provided by the SnowPlow team
-* This code work with both `https` (SSL-secured) and `http` pages
+* You must update `{{CLIENT}}` with your specific sub-domain provided by the SnowPlow team
+* This code work with both HTTPS (i.e. SSL-secured) and HTTP pages
 * The `trackPageView` command logs the page load 
 
 ### Event tracking
@@ -53,7 +53,7 @@ Here is an example of SnowPlow event tracking attached to a simple JavaScript ac
 </script>
 ```
 
-The four arguments to the event tracking command may be familiar to you from the Google Analytics API - however there are some small differences, so please refer to the section **Event tracking** below for more information.
+The four arguments to the event tracking command may be broadly familiar to you from the Google Analytics API - however there are some small differences, so please refer to the section **Event tracking** below for more information.
 
 Any problems? Please consult the **Testing and troubleshooting** section at the bottom of this guide.
 
@@ -73,21 +73,21 @@ _This section is common to both the synchronous and asynchronous integration app
 
 ### Philosophy
 
-The concept of event tracking is at the heart of SnowPlow. In the 'classical' model of web analytics, the sensible analyses are agreed in advance, then formalised by being integrated into the site (e.g. by tracking goals and conversion funnels) and finally analysed. SnowPlow views this approach as 'premature analysis', and encourages logging lots of intent-agnostic events and then figuring out what they mean later.
+The concept of event tracking is at the heart of SnowPlow. In the 'classical' model of web analytics, sensible analyses are agreed in advance, then formalised by being integrated into the site (e.g. by tracking goals and conversion funnels) and finally analysed. SnowPlow views this approach as 'premature analysis', and encourages logging plenty of intent-agnostic events and then figuring out what they mean later.
 
-The **Event tracking** sections of the synchronous and asynchronous guides covers the technical integration of events; in the rest of this section we provide more of a practical guide to using event tracking effectively. 
+The **Event tracking** sections of the synchronous and asynchronous guides covers the technical integration of SnowPlow events; in the rest of this section we provide a practical guide to using event tracking effectively.
 
 ### Anatomy of event tracking
 
 The SnowPlow concept of an event has five key attributes:
 
-| **Name**  | **Required?** | **Description**                                                                  |
-|----------:|:--------------|:---------------------------------------------------------------------------------|
-|  Category | Yes           | The name you supply for the group of objects you want to track                   |
-|    Action | Yes           | A string which defines the type of user interaction for the web object           |
-|    Object | No            | An optional string which identifies the specific object being actioned           |
-|  Property | No            | An optional string describing the object or the action performed on it           |
-|     Value | No            | An optional float to quantify or further describe the user action                |
+| **Name**    | **Required?** | **Description**                                                                  |
+|------------:|:--------------|:---------------------------------------------------------------------------------|
+|  `Category` | Yes           | The name you supply for the group of objects you want to track                   |
+|    `Action` | Yes           | A string which defines the type of user interaction for the web object           |
+|    `Object` | No            | An optional string which identifies the specific object being actioned           |
+|  `Property` | No            | An optional string describing the object or the action performed on it           |
+|     `Value` | No            | An optional float to quantify or further describe the user action                |
 
 If you have setup event tracking with Google Analytics, these will seem very familiar. Here are the differences:
 
