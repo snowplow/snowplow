@@ -78,6 +78,8 @@ Now hit **Start Upload** to upload the pixel into your bucket. When done, you sh
 
 ![pixelready] [pixelready]
 
+The Properties pane at the bottom is viewable by pressing the **Properties** button and selecting `ice.png`.
+
 #### 4. Create your CloudFront distribution
 
 Now you are ready to create the CloudFront distribution which will serve your tracking pixel. In the S3 tab, hit the **Create Distribution** button:
