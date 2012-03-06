@@ -167,7 +167,7 @@ Before running these HTML pages, make sure to update the {{ACCOUNT}} to your Sno
 
 We recommend using Chrome's [Developer Tools] [chromedevtools] or [Firebug] [firebug] for Firefox to check that SnowPlow's JavaScript tracking is working correctly. Here is what Chrome's Network panel looks like after loading the page and clicking each button once:
 
-[!networkpane]
+![networkpane] [networkpane]
 
 Note the three successful (status code 200) `GET`s to `ice.png`. The first of these was triggered by the page load, and then there is one `GET` each for the two user actions (button clicks) that we're tracking. 
 
