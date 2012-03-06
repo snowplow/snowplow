@@ -83,7 +83,7 @@ That's it - you now have a CloudFront distribution which will serve your trackin
 
 Before testing, take a 10 minute coffee or brandy break (that's how long CloudFront takes to synchronize).
 
-Done? Now just check that you can access your pixel using a browser, `wget` or `curl`:
+Done? Now just check that you can access your pixel over both HTTP and HTTPS using a browser, `wget` or `curl`:
 
     http://{{SUBDOMAIN}}.cloudfront.net/ice.png
     https://{{SUBDOMAIN}}.cloudfront.net/ice.png
@@ -126,9 +126,9 @@ In addition to self-hosting the tracking pixel, it also possible to self-host th
 
 1. Hosting your JavaScript allows you to use your own JavaScript minification and asset pipelining approach (e.g. bundling all JavaScripts into one minified JavaScript)
 2. As [Douglas Crockford] [crockford] put it about third-party JavaScripts: _"IT IS EXTREMELY UNWISE TO LOAD CODE FROM SERVERS YOU DO NOT CONTROL."_
-3. Perhaps most importantly, hosting `snowplow.js` on your own server means that the SnowPlow tracking cookie will be **first-party**, not **third-party**. This is good for privacy reasons, and also it gives better accuracy in counting unique visitors (as first-party cookies are more often accepted and less often deleted by users) 
+3. Perhaps most importantly, hosting `snowplow.js` on your own server means that the SnowPlow tracking cookie will be **first-party**, not **third-party**. This is good from a user-privacy perspective, and it also gives better accuracy in counting unique visitors (as first-party cookies are more often accepted and less often deleted by users) 
 
-If you are convinced about the merits of self-hosting, please read on...
+So if you want to self-host `snowplow.js`, please read on...
 
 ### Prerequisites
 
