@@ -47,6 +47,7 @@ To explain a few things about this code:
 * You must update `{{ACCOUNT}}` with your specific account ID provided by the SnowPlow team (which looks something like `d2i847wvqleb11`)
 * This code works with both HTTPS (i.e. SSL-secured) and HTTP pages
 * The `trackPageView` command logs the page load 
+* The `enableLinkTracking` command ensures SnowPlow enables clicks and download tracking. If this is not required, it can be removed or commented out
 
 ### Integrating event tracking
 
@@ -59,12 +60,12 @@ Here is an example of SnowPlow event tracking attached to a simple JavaScript ac
 <script type="text/javascript">
     function playVideo(){
         alert("Playing a video")
-        _snaq.push(['trackEvent', 'Videos', 'Play', 'Fargo', '320x200'])
+        _snaq.push(['trackEvent', 'Videos', 'Play', 'Fargo', 'French-subtitles','320x200'])
     }
 </script>
 ```
 
-The four arguments to the event tracking command may be broadly familiar to you from Google Analytics - however there are some small differences, so please refer to the section [Event tracking](#events) below for more information.
+The five arguments to the event tracking command may be broadly familiar to you from Google Analytics - however there are some small differences, so please refer to the section [Event tracking](#events) below for more information.
 
 Any problems? Please consult the [Testing and troubleshooting](#tt) section at the bottom of this guide.
 
@@ -83,31 +84,37 @@ document.write(unescape("%3Cscript src'" + sp-src + "' type='text/javascript'%3E
 </script>
 <script type="text/javascript">
 try {
-var snowplowTracker = SnowPlow.getAccount({{ACCOUNT}});
+var snowplowTracker = SnowPlow.getTracker({{ACCOUNT}});
 snowplow.trackPageView();
 snowplow.enableLinkTracking();
 } catch ( err ) {}
 </script>
 <!-- SnowPlow stops plowing -->
-
-<!-- Piwik --> <script type="text/javascript">
-var pkBaseURL = (("https:" == document.location.protocol) ? "https://{$PIWIK_URL}/" : "http://{$PIWIK_URL}/");
-document.write(unescape("%3Cscript src='" + pkBaseURL + "piwik.js' type='text/javascript'%3E%3C/script%3E"));
-</script><script type="text/javascript">
-try {
-var piwikTracker = Piwik.getTracker(pkBaseURL + "piwik.php", {$IDSITE});
-piwikTracker.trackPageView();
-piwikTracker.enableLinkTracking();
-} catch( err ) {}
-</script>
-<!-- End Piwik Code -->
 ```
-
+To explain a few things about this code:
+* You must update `{{ACCOUNT}}` with your specific account ID provided by the SnowPlow team (which looks something like `d2i847wvqleb11`)
+* This code works with both HTTPS (i.e. SSL-secured) and HTTP pages
+* The `trackPageView` command logs the page load 
+* The `enableLinkTracking` command ensures SnowPlow enables clicks and download tracking. If this is not required, it can be removed or commented out
 
 ### Integrating event tracking
 
-**This section still to write.**
+Having set up the synchronous tracking above, you can now add SnowPlow's synchronous event tracking into your website or webapp.
 
+Here is an example of SnowPlow event tracking attached to a simple JavaScript action:
+
+```html
+<!-- Website event with SnowPlow tracking -->
+<script type="text/javascript">
+    function playVideo(){
+        alert("Playing a video")
+        snowplow.trackEvent('Videos', 'Play', 'Fargo', 'French-subtitles', '320x200')
+    }
+</script>
+```
+The five arguments to the event tracking command may be broadly familiar to you from Google Analytics - however there are some small differences, so please refer to the section [Event tracking](#events) below for more information.
+
+Any problems? Please consult the [Testing and troubleshooting](#tt) section at the bottom of this guide.
 Any problems? Please consult the [Testing and troubleshooting](#tt) section at the bottom of this guide.
 
 <a name="events"/>
@@ -205,9 +212,10 @@ If you have any problems getting this to run, please [contact] [contact] the Sno
 
 ### Confirming SnowPlow is logging the right data
 
-If you are using the SnowPlow-hosted version of SnowPlow, then please [contact] [contact] the SnowPlow team to confirm that your event data is being successfully logged. If you are self-hosting SnowPlow, then consult the relevant section within the Self-Hosting Guide.
+If you are using the SnowPlow-hosted version of SnowPlow, then please [contact] [contact] the SnowPlow team to confirm that your event data is being successfully logged. If you are self-hosting SnowPlow, then consult the [Troubleshooting section] [shtt] within the Self-Hosting Guide.
 
 [selfhosting]: /snowplow/snowplow/blob/master/docs/04_selfhosting_snowplow.md
+[shtt]: /snowplow/snowplow/blob/master/docs/04_selfhosting_snowplow.md#tt
 [gaeventguide]: http://code.google.com/apis/analytics/docs/tracking/eventTrackerGuide.html
 [chromedevtools]: http://code.google.com/chrome/devtools/docs/overview.html
 [firebug]: http://getfirebug.com/

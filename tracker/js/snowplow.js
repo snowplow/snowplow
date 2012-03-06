@@ -1531,16 +1531,19 @@ var
              * @param string label (optional) An optional string to provide additional dimensions to the event data
              * @param int|float|string value (optional) An integer that you can use to provide numerical data about the user event
              */
-            function logEvent(category, action, label, value) {
+            function logEvent(category, action, label, property, value) {
                 var request = '';
 
                 // All events have a category and an action
                 request += '&ev_ca=' + encodeWrapper(category);
                 request += '&ev_ac=' + encodeWrapper(action);
 
-                // Label and value are optional
+                // Label, property and value are optional
                 if (String(label).length) {
                     request += '&ev_la=' + encodeWrapper(label);
+                }
+                if (String(property).length) {
+                    request += '&ev_pr=' + encodeWrapper(property);
                 }
                 if (String(value).length) {
                     request += '&ev_va=' + encodeWrapper(value);
@@ -2501,8 +2504,8 @@ var
                  * @param string label (optional) An optional string to provide additional dimensions to the event data
                  * @param int|float|string value (optional) An integer that you can use to provide numerical data about the user event
                  */
-                trackEvent: function (category, action, label, value) {
-                    logEvent(category, action, label, value);                   
+                trackEvent: function (category, action, label, property, value) {
+                    logEvent(category, action, label, property, value);                   
                 },
 
 /*</SNOWPLOW>*/
