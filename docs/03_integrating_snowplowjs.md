@@ -181,5 +181,5 @@ If you have any problems getting this to run, please [contact] [contact] the Sno
 [gaeventguide]: http://code.google.com/apis/analytics/docs/tracking/eventTrackerGuide.html
 [chromedevtools]: http://code.google.com/chrome/devtools/docs/overview.html
 [firebug]: http://getfirebug.com/
-[networkpane]: /snowplow/snowplow/master/docs/images/03_network_pane.png
+[networkpane]: /snowplow/snowplow/raw/master/docs/images/03_network_pane.png
 [contact]: mailto:snowplow@keplarllp.com
