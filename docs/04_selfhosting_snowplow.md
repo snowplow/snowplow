@@ -49,7 +49,7 @@ A couple of notes on this:
 
 #### 2. Create a bucket for the CloudFront logging
 
-Now let's create a second bucket - this will store our CloudFront logs - i.e. our actual SnowPlow data. Call this bucket `snowplow-logs`:
+Now let's create a second bucket to store our CloudFront logs - i.e. our actual SnowPlow data. Call this bucket `snowplow-logs`:
 
 ![logbucket] [logbucket]
 
@@ -61,17 +61,23 @@ You can obtain a 1x1 transparent tracking pixel by right-clicking [this image fi
 
     $ wget https://github.com/snowplow/snowplow/raw/master/tracker/static/ice.png 	
 
-Now you're ready to upload the pixel into S3:
+Now you're ready to upload the pixel into S3. Within the S3 pane, hit **Upload** and browse to your tracking pixel:
 
-[!uploadpixel]
+![pixelchoose] [pixelchoose]
 
-Once uploaded, make sure that the permissions on this image allow anyone to Read:
+Then hit **Open** and you will see the following screen:
 
-[!pixelsecurity]
+![pixelupload] [pixelupload]
+
+Hit **Set Details >**, then hit **Set Permissions >** to set permissions on this file allowing Everyone to Open it:
+
+![pixelsecurity] [pixelsecurity]
+
+Now hit **Start Upload** to upload the pixel into your bucket.
 
 #### 4. Create your CloudFront distribution
 
-Now create the CloudFront distribution:
+Now you are ready to create the CloudFront distribution which will serve your tracking pixel:
 
 [!createdistrib]
 
@@ -88,7 +94,7 @@ Done? Now just check that you can access your pixel over both HTTP and HTTPS usi
     http://{{SUBDOMAIN}}.cloudfront.net/ice.png
     https://{{SUBDOMAIN}}.cloudfront.net/ice.png
 
-If you have any problems, then double-check your CloudFront distribution's URL, and check the permissions on your pixel: it must be publicly Readable.
+If you have any problems, then double-check your CloudFront distribution's URL, and check the permissions on your pixel: it must be Openable by Everyone.
 
 #### 6. Update your header script
 
@@ -208,6 +214,9 @@ Above we mentioned that, from a performance perspective, it is not important whi
 [pixel]: /snowplow/snowplow-js/raw/master/tracker/static/ice.png
 [pixelbucket]: /snowplow/snowplow/raw/master/docs/images/04_pixel_bucket.png
 [logbucket]: /snowplow/snowplow/raw/master/docs/images/04_log_bucket.png
+[pixelchoose]: /snowplow/snowplow/raw/master/docs/images/04_pixel_choose.png
+[pixelupload]: /snowplow/snowplow/raw/master/docs/images/04_pixel_upload.png
+[pixelsecurity]: /snowplow/snowplow/raw/master/docs/images/04_pixel_security.png
 [integrating]: /snowplow/snowplow/blob/master/docs/03_integrating_snowplowjs.md
 [git]: http://git-scm.com/
 [crockford]: https://github.com/douglascrockford
