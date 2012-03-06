@@ -6,12 +6,12 @@
 
     <!-- SnowPlow starts plowing -->
     <script type="text/javascript">
-    var spSrc = ('https:' == document.location.protocol) ? 'https' :'http') + '://snplow.com/sp.js');
-    document.write(unescape("%3Cscript src'" + spSrc + "' type='text/javascript'%3E%3C/script%3E"));
+    var spSrc = ('https:' == document.location.protocol ? 'https' : 'http') + '://snplow.com/sp.js';
+    document.write(unescape("%3Cscript src='" + spSrc + "' type='text/javascript'%3E%3C/script%3E"));
     </script>
     <script type="text/javascript">
     try {
-    var snowplowTracker = SnowPlow.getTracker({{ACCOUNT}});
+    var snowplowTracker = SnowPlow.getTracker('d1x3tduoxjjdr7');
     snowplowTracker.trackPageView();
     snowplowTracker.enableLinkTracking();
     } catch ( err ) {}
@@ -22,11 +22,11 @@
     <script type="text/javascript">
         function playMix() {
             alert("Playing a DJ mix");
-            snowplowTracker('trackEvent', 'Mixes', 'Play', 'MrC/fabric-0503-mix', , '0.0']);
+            snowplowTracker.trackEvent('Mixes', 'Play', 'MrC/fabric-0503-mix', 'high-quality','0.0');
         }
         function addProduct() {
             alert("Adding a product to basket");
-            snowplowTracker('trackEvent', 'Checkout', 'Add', 'ASO01043', 'blue:xxl', '2.0');      
+            snowplowTracker.trackEvent('Checkout', 'Add', 'ASO01043', 'blue:xxl', '2.0');      
         }
     </script>
 </head>

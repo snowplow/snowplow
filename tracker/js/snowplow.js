@@ -2678,8 +2678,9 @@ var
              * 
              */
             getTracker: function (accountId) {
-                return new Tracker(trackerUrlFromAccountId(accountId));
-            } 
+                var trackerUrlString = trackerUrlFromAccountId(accountId);
+                return new Tracker(trackerUrlString);
+            }, 
 /*<SNOWPLOW>*/
 
 			/**
