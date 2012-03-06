@@ -195,19 +195,25 @@ Use your standard asset pipelining strategy to upload the minified `sp.js` JavaS
 
 Now you need to update the JavaScript code for SnowPlow in your website's `<head>` section to use your hosted copy of `snowplow.js`. For the purposes of this section, we're going to assume that you have a minified `sp.js` available at the URL:
 
-    http(s)://bigcorpstatic.com/sp.js
+    http(s)://eskimo-ice.com/js/sp.js
 
 If you are using **asynchronous tracking**, then update your header script to look like this:
 
 ```javascript
 var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
-sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://bigcorpstatic.com/sp.js';
+sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://eskimo-ice.com/js/sp.js';
 ...
 ```
 
 Whereas if you are using **synchronous tracking**, then update your header script to look like this:
 
-**Yali to add**
+```html
+<!-- SnowPlow starts plowing -->
+<script type="text/javascript">
+var spSrc = ('https:' == document.location.protocol ? 'https' : 'http') + '://eskimo-ice.com/js/sp.js';
+...
+</script>
+```
 
 Simple as that really.
 

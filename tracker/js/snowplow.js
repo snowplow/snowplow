@@ -927,7 +927,7 @@ var
 		 *
 		 * See: Tracker.setTrackerUrl() and Tracker.setSiteId()
 		 */
-		function Tracker(trackerUrl, siteId) {
+		function Tracker(accountId) {
 
 			/************************************************************
 			 * Private members
@@ -951,10 +951,10 @@ var
 				configRequestMethod = 'GET',
 
 				// Tracker URL
-				configTrackerUrl = trackerUrl || '',
+				configTrackerUrl = trackerUrlFromAccountId(accountId), // Updated for SnowPlow
 
 				// Site ID
-				configTrackerSiteId = siteId || '',
+				configTrackerSiteId = '', // Updated for SnowPlow. Starting long road to full removal
 
 				// Document URL
 				configCustomUrl,
@@ -2678,8 +2678,7 @@ var
              * 
              */
             getTracker: function (accountId) {
-                var trackerUrlString = trackerUrlFromAccountId(accountId);
-                return new Tracker(trackerUrlString);
+                return new Tracker(accountId);
             }, 
 /*<SNOWPLOW>*/
 
