@@ -18,7 +18,7 @@ Contents of this folder are as follows:
 
 Besides this README, there are two main SnowPlow guides which relate to `snowplow.js`:
 
-* [Integrating `snowplow.js` into your site] [integrating]
+* [Integrating snowplow.js into your site] [integrating]
 * [Self-hosting SnowPlow] [selfhosting]
 
 ## Main differences between snowplow.js and piwik.js
