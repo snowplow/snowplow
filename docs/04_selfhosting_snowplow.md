@@ -15,7 +15,7 @@ This guide takes you through the process for self-hosting SnowPlow. There are tw
 1. **Self-hosting the tracking pixel** - the tracking pixel is served from your Amazon CloudFront distribution, rather than the SnowPlow team's 
 2. **Self-hosting snowplow.js** - the SnowPlow JavaScript is hosted and served by your web server(s) 
 
-SnowPlow makes it easy for you to self-host either the S3 pixel or `snowplow.js`, or both. We look at each in turn below - but first please make sure that you have read and understood [Integrating `snowplow.js` into your site] [integrating] - the below will make little sense without.
+SnowPlow makes it easy for you to self-host either the S3 pixel or `snowplow.js`, or both. We look at each in turn below - but first please make sure that you have read and understood [Integrating snowplow.js into your site] [integrating] - the below will make little sense without.
 
 <a name="pixelsh"/>
 ## Self-hosting the tracking pixel
@@ -63,7 +63,7 @@ You can obtain a 1x1 transparent tracking pixel by right-clicking [this image fi
 
 Now you're ready to upload the pixel into S3. Within the S3 pane, hit **Upload** and browse to your tracking pixel:
 
-![pixelchoose] [pixelchoose]
+![pixelselect] [pixelselect]
 
 Then hit **Open** and you will see the following screen:
 
@@ -71,7 +71,7 @@ Then hit **Open** and you will see the following screen:
 
 Hit **Set Details >**, then hit **Set Permissions >** to set permissions on this file allowing Everyone to Open it:
 
-![pixelsecurity] [pixelsecurity]
+![pixelpermissions] [pixelpermissions]
 
 Now hit **Start Upload** to upload the pixel into your bucket.
 
@@ -214,9 +214,9 @@ Above we mentioned that, from a performance perspective, it is not important whi
 [pixel]: /snowplow/snowplow-js/raw/master/tracker/static/ice.png
 [pixelbucket]: /snowplow/snowplow/raw/master/docs/images/04_pixel_bucket.png
 [logbucket]: /snowplow/snowplow/raw/master/docs/images/04_log_bucket.png
-[pixelchoose]: /snowplow/snowplow/raw/master/docs/images/04_pixel_choose.png
+[pixelselect]: /snowplow/snowplow/raw/master/docs/images/04_pixel_select.png
 [pixelupload]: /snowplow/snowplow/raw/master/docs/images/04_pixel_upload.png
-[pixelsecurity]: /snowplow/snowplow/raw/master/docs/images/04_pixel_security.png
+[pixelpermissions]: /snowplow/snowplow/raw/master/docs/images/04_pixel_permissions.png
 [integrating]: /snowplow/snowplow/blob/master/docs/03_integrating_snowplowjs.md
 [git]: http://git-scm.com/
 [crockford]: https://github.com/douglascrockford
