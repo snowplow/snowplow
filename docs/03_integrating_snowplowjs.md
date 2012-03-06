@@ -157,7 +157,29 @@ For further examples and additional background on the concepts around web event 
 
 _This section is common to both the synchronous and asynchronous integration approaches._
 
-**This section still to write.**
+### Checking snowplow.js is working
+
+You can 'kick the tyres' of `snowplow.js` with the example HTML pages available in:
+
+    snowplow/tracker/examples
+
+Before running these HTML pages, make sure to update the {{ACCOUNT}} to your SnowPlow-supplied account ID.
+
+We recommend using Chrome's [Developer Tools] [chromedevtools] or [Firebug] [firebug] for Firefox to check that SnowPlow's JavaScript tracking is working correctly. Here is what Chrome's Network panel looks like after loading the page and clicking each button once:
+
+[!networkpane]
+
+Note the three successful (status code 200) `GET`s to `ice.png`. The first of these was triggered by the page load, and then there is one `GET` each for the two user actions (button clicks) that we're tracking. 
+
+If you have any problems getting this to run, please [contact] [contact] the SnowPlow team.
+
+### Inspecting the SnowPlow-logged data
+
+**To write**
 
 [selfhosting]: /snowplow/snowplow/blob/master/docs/04_selfhosting_snowplow.md
 [gaeventguide]: http://code.google.com/apis/analytics/docs/tracking/eventTrackerGuide.html
+[chromedevtools]: http://code.google.com/chrome/devtools/docs/overview.html
+[firebug]: http://getfirebug.com/
+[networkpane]: /snowplow/snowplow/blob/master/docs/images/03_network_pane.png
+[contact]: mailto:snowplow@keplarllp.com
