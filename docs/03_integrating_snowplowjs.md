@@ -13,7 +13,7 @@
 
 This guide takes you through the process for integrating SnowPlow's JavaScript tracker `snowplow.js` into your website or web app.
 
-This guide assumes that you are working with the hosted version of `snowplow.js` - you will need to make some adjustments if you are bundling `snowplow.js` into your own site's JavaScript; these adjustments are discussed separately in the [Self-Hosting Guide] [selfhosted]
+This guide assumes that you are working with the hosted version of `snowplow.js` - you will need to make some adjustments if you are bundling `snowplow.js` into your own site's JavaScript; these adjustments are discussed separately in the [Self-Hosting Guide] [selfhosting]
 
 The exact integration steps required vary depending on whether you choose to use `snowplow.js` in a synchronous or an asynchronous manner; each option is covered separately below.
 
@@ -29,12 +29,12 @@ To use `snowplow.js` in an 'async' manner, first add the following script into y
 <script type="text/javascript">
 var _snaq = _snaq || [];
 
-_snaq.push(['setTrackerUrl', 'http://{{CLIENT}}.snplow.com/pxl.png']);
+_snaq.push(['setAccount', '{{ACCOUNT}}']);
 _snaq.push(['trackPageView']);
 
 (function() {
 var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
-sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://js.snplow.com/sp.js';
+sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://snplow.com/sp.js';
 var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
 })();
  </script>
@@ -43,8 +43,8 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp
 
 To explain a few things about this code:
 
-* You must update `{{CLIENT}}` with your specific sub-domain provided by the SnowPlow team
-* This code work with both HTTPS (i.e. SSL-secured) and HTTP pages
+* You must update `{{ACCOUNT}}` with your specific account ID provided by the SnowPlow team (which looks something like `d2i847wvqleb11`)
+* This code works with both HTTPS (i.e. SSL-secured) and HTTP pages
 * The `trackPageView` command logs the page load 
 
 ### Integrating event tracking
@@ -159,5 +159,5 @@ _This section is common to both the synchronous and asynchronous integration app
 
 **This section still to write.**
 
-[selfhosted]: http://todo
+[selfhosting]: /snowplow/snowplow/blob/master/docs/04_selfhosting_snowplow.md
 [gaeventguide]: http://code.google.com/apis/analytics/docs/tracking/eventTrackerGuide.html
