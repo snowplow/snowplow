@@ -25,7 +25,7 @@ There is a growing set of technical documentation for SnowPlow:
 
 * [Introduction] [intro]
 * [Technical FAQ] [techfaq]
-* [Integrating `snowplow.js` into your site] [integrating]
+* [Integrating snowplow.js into your site] [integrating]
 * [Self-hosting SnowPlow] [selfhosting]
 
 Additionally there is a technical [README] [snowplowjs] for the `snowplow.js` JavaScript tracker within the `tracker` sub-folder.
@@ -64,4 +64,5 @@ limitations under the License.
 [techfaq]: /snowplow/snowplow/blob/master/docs/02_technical_faq.md
 [integrating]: /snowplow/snowplow/blob/master/docs/03_integrating_snowplowjs.md
 [selfhosting]: /snowplow/snowplow/blob/master/docs/04_selfhosting_snowplow.md
+[snowplowjs]: /snowplow/snowplow/blob/master/tracker/README.md
 [license]: http://www.apache.org/licenses/LICENSE-2.0
