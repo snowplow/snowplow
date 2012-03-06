@@ -12,8 +12,8 @@
 
 This guide takes you through the process for self-hosting SnowPlow. There are two distinct aspects to self-hosting:
 
-1. **Self-hosting the S3 pixel** - so that the tracking pixel is served from your Amazon S3 account, rather than the SnowPlow team's account 
-2. **Self-hosting snowplow.js** - so that the SnowPlow JavaScript is hosted and served by your web server(s) 
+1. **Self-hosting the tracking pixel** - the tracking pixel is served from your Amazon CloudFront distribution, rather than the SnowPlow team's 
+2. **Self-hosting snowplow.js** - the SnowPlow JavaScript is hosted and served by your web server(s) 
 
 SnowPlow makes it easy for you to self-host either the S3 pixel or `snowplow.js`, or both. We look at each in turn below - but first please make sure that you have read and understood [Integrating `snowplow.js` into your site] [integrating] - the below will make little sense without.
 
@@ -30,7 +30,7 @@ If you want to self-host the tracking pixel, you will need the following:
 
 * An account with [Amazon Web Services] [aws]
 * S3 and CloudFront enabled within your AWS account
-* Some level of technical ability _e_, where `noob < e < ninja`
+* Some level of technical ability _ta1_, where `noob < ta1 < ninja`
 
 Once you have those ready, please read on...
 
@@ -94,7 +94,9 @@ If you have any problems, then double-check your CloudFront distribution's URL, 
 
 Now you need to update the JavaScript code for SnowPlow in your website's `<head>` section to your custom tracking pixel. We're assuming here that you have already followed the steps in [Integrating `snowplow.js` into your site] [integrating].
 
-The secret is to realise that SnowPlow's `setAccount()` method in fact takes a CloudFront subdomain as its argument. So using your own CloudFront distribution is super-simple. If you are using asynchronous tracking and your CloudFront distribution's URL is `http://d1x5tduoxffdr7.cloudfront.net`, then update your header script to look like this:
+The secret is to realise that SnowPlow's `setAccount()` method in fact takes a CloudFront subdomain as its argument - so using your own CloudFront distribution is super-simple.
+
+If you are using **asynchronous tracking** and your CloudFront distribution's URL is `http://d1x5tduoxffdr7.cloudfront.net`, then update your header script to look like this:
 
 ```javascript
 var _snaq = _snaq || [];
@@ -103,25 +105,58 @@ _snaq.push(['setAccount', 'd1x5tduoxffdr7']);
 ...
 ```
 
-Whereas if you are using synchronous tracking, then update your header script to look like this:
+Whereas if you are using **synchronous tracking**, then update your header script to look like this:
 
 **Yali to add**
 
 #### 7. Testing snowplow.js with your tracking pixel
 
-Once you have 
+**To write**
+
+#### 8. Inspecting the CloudFront access logs
+
+**To write**
 
 <a name="jssh"/>
 ## Self-hosting snowplow.js
 
-JavaScript can be advisable for a vareif you have your own preferred JavaScript minification scheme or prefer not to use third-party JavaScripts. The other nice thing about
+### Overview
 
-<a name="tt"/>
-## Testing and troubleshooting
+In addition to self-hosting the tracking pixel, it also possible to self-host the SnowPlow tracking JavaScript, `snowplow.js`. Unlike the tracking pixel, this does not have an impact on where your SnowPlow data gets stored, but it does have some definite advantages over using a SnowPlow hosted JavaScript: 
+
+1. Hosting your JavaScript allows you to use your own JavaScript minification and asset pipelining approach (e.g. bundling all JavaScripts into one minified JavaScript)
+2. As [Douglas Crockford] [crockford] put it about third-party JavaScripts: _"IT IS EXTREMELY UNWISE TO LOAD CODE FROM SERVERS YOU DO NOT CONTROL."_
+3. Perhaps most importantly, hosting `snowplow.js` on your own server means that the SnowPlow tracking cookie will be **first-party**, not **third-party**. This is good for privacy reasons, and also it gives better accuracy in counting unique visitors (as first-party cookies are more often accepted and less often deleted by users) 
+
+If you are convinced about the merits of self-hosting, please read on...
+
+### Prerequisites
+
+To self-host `snowplow.js` you will need the following:
+
+* Access to a Unix-like command line (containing tools such as `sed`)
+* Familiarity with and access to [Git] [git]
+* Some level of technical ability _ta2_, where `ta1 < ta2 < ninja`
+
+Once you have those ready, please read on...
+
+### Self-hosting instructions
+
+#### 1. Checkout the source-code
+
+First please download the source code to your development machine:
+
+**To write**
 
 <a name="privacy"/>
 ## A note on privacy
 
+In the guide above we mention that from a performance perspective it is not important which Amazon data center you choose to self-host your pixel (or indeed your JavaScript) on:
+
+**Add in image**
+
 [aws]: http://aws.amazon.com/
 [pixel]: https://github.com/snowplow/snowplow-js/raw/master/tracker/static/ice.png
 [integrating]: /snowplow/snowplow/blob/master/docs/03_integrating_snowplowjs.md
+[git]: http://git-scm.com/
+[crockford]: https://github.com/douglascrockford
