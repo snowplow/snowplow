@@ -92,6 +92,7 @@ snowplowTracker.enableLinkTracking();
 <!-- SnowPlow stops plowing -->
 ```
 To explain a few things about this code:
+
 * You must update `{{ACCOUNT}}` with your specific account ID provided by the SnowPlow team (which looks something like `d2i847wvqleb11`)
 * This code works with both HTTPS (i.e. SSL-secured) and HTTP pages
 * The `trackPageView` command logs the page load 
