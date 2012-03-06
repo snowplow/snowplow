@@ -45,6 +45,7 @@ However, we fully expect `snowplow.js` to diverge from `piwik.js`, for three mai
 Planned items on the roadmap are as follows:
 
 * Remove goal tracking functionality
+* Remove site ID functionality
 * Update ecommerce tracking functionality to become event-based (e.g. support for `removeEcommerceItem`)
 * Rewrite in CoffeeScript (joke!)
 

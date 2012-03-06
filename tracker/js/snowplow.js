@@ -388,7 +388,7 @@ if (!this.JSON2) {
 	exec,
 	res, width, height,
 	pdf, qt, realp, wma, dir, fla, java, gears, ag,
-	hook, getHook, getVisitorId, getVisitorInfo, setTrackerUrl, setSiteId,
+	hook, getHook, getVisitorId, getVisitorInfo, setTrackerUrl, setAccount, setSiteId,
 	getAttributionInfo, getAttributionCampaignName, getAttributionCampaignKeyword,
 	getAttributionReferrerTimestamp, getAttributionReferrerUrl,
 	setCustomData, getCustomData,
@@ -405,7 +405,7 @@ if (!this.JSON2) {
 	doNotTrack, setDoNotTrack, msDoNotTrack,
 	addListener, enableLinkTracking, setLinkTrackingTimer,
 	setHeartBeatTimer, killFrame, redirectFile, setCountPreRendered,
-	trackGoal, trackLink, trackPageView, setEcommerceView, addEcommerceItem, trackEcommerceOrder, trackEcommerceCartUpdate,
+	trackGoal, trackEvent, trackLink, trackPageView, setEcommerceView, addEcommerceItem, trackEcommerceOrder, trackEcommerceCartUpdate,
 	addPlugin, getTracker, getAsyncTracker
 */
 var
@@ -1438,6 +1438,9 @@ var
 						setCookie(refname, JSON2.stringify(attributionCookie), configReferralCookieTimeout, configCookiePath, configCookieDomain, cookieSecure);
 					}
 				}
+
+/*<SNOWPLOW> Updated behaviour */
+
 				// build out the rest of the request
 				request += /*'&idsite=' + configTrackerSiteId + 
 					'&rec=1' + */
@@ -1453,6 +1456,7 @@ var
 					'&_viewts=' + lastVisitTs +
 					(String(lastEcommerceOrderTs).length ? '&_ects=' + lastEcommerceOrderTs : '') + */
 					(String(referralUrl).length ? '&_ref=' + encodeWrapper(purify(referralUrl.slice(0, referralUrlMaxLength))) : '');
+/*</SNOWPLOW>*/
 
 				// Custom Variables, scope "page"
 				var customVariablesPageStringified = JSON2.stringify(customVariablesPage);
@@ -1507,6 +1511,19 @@ var
 /*<SNOWPLOW> New SnowPlow functionality */
 
             /**
+             * Builds a tracker URL from an account ID.
+             * The trick here is that each account ID is in fact the subdomain on a specific Amazon CloudFront URL.
+             * We don't bother to support custom CNAMEs because Amazon CloudFront doesn't support that for SSL.
+             *
+             * @param string account The account ID to build the tracker URL from
+             *
+             * @return string trackerUrl The tracker URL
+             */
+            function trackerUrlFromAccountId(accountId) {
+                return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + accountId + '.cloudfront.net/ice.png';
+            }
+
+            /**
              * Log an event happening on this page
              *
              * @param string category The name you supply for the group of objects you want to track
@@ -1532,6 +1549,7 @@ var
                 request = getRequest(request, configCustomData, 'event');
                 sendRequest(request, configTrackerPause);
             }
+/*</SNOWPLOW>*/
 
 /*<DEPRECATED> Piwik ecommerce functionality not needed for SnowPlow */
 
@@ -1604,7 +1622,7 @@ var
 				}
 			}
 
-/*</DEPRECATED> Piwik ecommerce functionality not needed for SnowPlow */
+/*</DEPRECATED>*/
 
 			/*
 			 * Log the page view / visit
@@ -2466,6 +2484,16 @@ var
 /*<SNOWPLOW> New SnowPlow functionality */
 
                 /**
+                 * Specify the SnowPlow tracking account. We use the account ID
+                 * to define the tracker URL for SnowPlow. 
+                 *
+                 * @param string accountId
+                 */
+                setAccount: function (accountId) {
+                    configTrackerUrl = trackerUrlFromAccountId(accountId);
+                },
+
+                /**
                  * Log an event happening on this page
                  *
                  * @param string category The name you supply for the group of objects you want to track
@@ -2476,6 +2504,7 @@ var
                 trackEvent: function (category, action, label, value) {
                     logEvent(category, action, label, value);                   
                 },
+
 /*</SNOWPLOW>*/
 
 /*<DEPRECATED> Website goals are a pre-SnowPlow concept */
