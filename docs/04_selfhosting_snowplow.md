@@ -40,7 +40,7 @@ Once you have those ready, please read on...
 
 First create a new bucket within your Amazon S3 account to store the pixel. Call this bucket `snowplow-static`:
 
-[!pixelbucket]
+![pixelbucket] [pixelbucket]
 
 A couple of notes on this:
 
@@ -51,7 +51,7 @@ A couple of notes on this:
 
 Now let's create a second bucket - this will store our CloudFront logs - i.e. our actual SnowPlow data. Call this bucket `snowplow-logs`:
 
-[!logbucket]
+![logbucket] [logbucket]
 
 Again, no need to enable logging on this bucket.
 
@@ -206,6 +206,7 @@ Above we mentioned that, from a performance perspective, it is not important whi
 
 [aws]: http://aws.amazon.com/
 [pixel]: https://github.com/snowplow/snowplow-js/raw/master/tracker/static/ice.png
+[pixelbucket]: 
 [integrating]: /snowplow/snowplow/blob/master/docs/03_integrating_snowplowjs.md
 [git]: http://git-scm.com/
 [crockford]: https://github.com/douglascrockford
