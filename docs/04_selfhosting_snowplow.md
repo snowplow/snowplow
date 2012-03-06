@@ -122,7 +122,7 @@ Whereas if you are using **synchronous tracking**, then update your header scrip
 
 ### Overview
 
-In addition to self-hosting the tracking pixel, it also possible to self-host the SnowPlow tracking JavaScript, `snowplow.js`. Unlike the tracking pixel, this does not have an impact on where your SnowPlow data gets stored, but it does have some definite advantages over using a SnowPlow hosted JavaScript: 
+In addition to self-hosting the tracking pixel, it also possible to self-host the SnowPlow tracking JavaScript, `snowplow.js`. Unlike the tracking pixel, this does not have an impact on where your SnowPlow data gets stored, but it does have some definite advantages over using a SnowPlow-hosted JavaScript: 
 
 1. Hosting your JavaScript allows you to use your own JavaScript minification and asset pipelining approach (e.g. bundling all JavaScripts into one minified JavaScript)
 2. As [Douglas Crockford] [crockford] put it about third-party JavaScripts: _"IT IS EXTREMELY UNWISE TO LOAD CODE FROM SERVERS YOU DO NOT CONTROL."_
