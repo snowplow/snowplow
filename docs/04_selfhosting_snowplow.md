@@ -89,18 +89,16 @@ In other words: it's easy to
 
 **To write**
 
-<a name="privacy"/>
-### A note on privacy
-
-
-
 <a name="jssh"/>
 ## Self-hosting snowplow.js
 
 JavaScript can be advisable for a vareif you have your own preferred JavaScript minification scheme or prefer not to use third-party JavaScripts. The other nice thing about
 
+<a name="tt"/>
+## Testing and troubleshooting
+
 <a name="privacy"/>
-## Self-hosting snowplow.js
+## A note on privacy
 
 [aws]: http://aws.amazon.com/
 [pixel]: https://github.com/snowplow/snowplow-js/raw/master/tracker/static/ice.png 	
