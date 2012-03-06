@@ -79,8 +79,8 @@ To use `snowplow.js` in a 'sync' manner, first add the following script into you
 ```html
 <!-- SnowPlow starts plowing -->
 <script type="text/javascript">
-var sp-src = ('https:' == document.location.protocol) ? 'https' :'http') + '://snplow.com/sp.js');
-document.write(unescape("%3Cscript src'" + sp-src + "' type='text/javascript'%3E%3C/script%3E"));
+var spSrc = ('https:' == document.location.protocol) ? 'https' :'http') + '://snplow.com/sp.js');
+document.write(unescape("%3Cscript src'" + spSrc + "' type='text/javascript'%3E%3C/script%3E"));
 </script>
 <script type="text/javascript">
 try {
