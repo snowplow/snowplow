@@ -69,7 +69,7 @@ Then hit **Open** and you will see the following screen:
 
 ![pixelupload] [pixelupload]
 
-Hit **Set Details >**, then hit **Set Permissions >** to set permissions on this file allowing Everyone to Open it:
+Hit **Set Details >**, then hit **Set Permissions >** to set permissions on this file allowing **Everyone** to **Open/Download** it:
 
 ![pixelpermissions] [pixelpermissions]
 
