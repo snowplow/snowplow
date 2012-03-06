@@ -84,7 +84,7 @@ document.write(unescape("%3Cscript src'" + spSrc + "' type='text/javascript'%3E%
 </script>
 <script type="text/javascript">
 try {
-var snowplowTracker = SnowPlow.getTracker({{ACCOUNT}});
+var snowplowTracker = SnowPlow.getTracker('{{ACCOUNT}}');
 snowplowTracker.trackPageView();
 snowplowTracker.enableLinkTracking();
 } catch ( err ) {}
