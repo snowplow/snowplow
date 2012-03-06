@@ -85,8 +85,8 @@ document.write(unescape("%3Cscript src'" + sp-src + "' type='text/javascript'%3E
 <script type="text/javascript">
 try {
 var snowplowTracker = SnowPlow.getTracker({{ACCOUNT}});
-snowplow.trackPageView();
-snowplow.enableLinkTracking();
+snowplowTracker.trackPageView();
+snowplowTracker.enableLinkTracking();
 } catch ( err ) {}
 </script>
 <!-- SnowPlow stops plowing -->
@@ -108,7 +108,7 @@ Here is an example of SnowPlow event tracking attached to a simple JavaScript ac
 <script type="text/javascript">
     function playVideo(){
         alert("Playing a video")
-        snowplow.trackEvent('Videos', 'Play', 'Fargo', 'French-subtitles', '320x200')
+        snowplowTracker.trackEvent('Videos', 'Play', 'Fargo', 'French-subtitles', '320x200')
     }
 </script>
 ```
