@@ -92,7 +92,7 @@ If you have any problems, then double-check your CloudFront distribution's URL, 
 
 #### 6. Update your header script
 
-Now you need to update the JavaScript code for SnowPlow in your website's `<head>` section to your custom tracking pixel. We're assuming here that you have already followed the steps in [Integrating `snowplow.js` into your site] [integrating].
+Now you need to update the JavaScript code for SnowPlow in your website's `<head>` section to work with your custom tracking pixel. We're assuming here that you have already followed the steps in [Integrating `snowplow.js` into your site] [integrating].
 
 The secret is to realise that SnowPlow's `setAccount()` method in fact takes a CloudFront subdomain as its argument - so using your own CloudFront distribution is super-simple.
 
@@ -109,11 +109,11 @@ Whereas if you are using **synchronous tracking**, then update your header scrip
 
 **Yali to add**
 
-#### 7. Testing snowplow.js with your tracking pixel
+#### 7. Test snowplow.js with your tracking pixel
 
 **To write**
 
-#### 8. Inspecting the CloudFront access logs
+#### 8. Inspect the CloudFront access logs
 
 **To write**
 
@@ -142,7 +142,7 @@ Once you have those ready, please read on...
 
 ### Self-hosting instructions
 
-#### 1. Checkout the source code
+#### 1. Check out the source code
 
 First please download the source code to your development machine:
 
@@ -164,7 +164,38 @@ This will overwrite your existing `sp.js`.
 
 In theory it should be possible to use any JavaScript minifier or pipelining tool to minify the JavaScript - however, you would need to read through and understand what `snowpak.sh` is doing and make sure to recreate that same behaviour in your minification process.
 
+#### 3. Upload the minified JavaScript
 
+Use your standard asset pipelining strategy to upload the minified `sp.js` JavaScript to your servers. Note that to avoid "mixed content" warnings, SnowPlow expects the `sp.js` JavaScript to be available both via HTTP and via HTTPS.
+
+#### 4. Update your header script
+
+Now you need to update the JavaScript code for SnowPlow in your website's `<head>` section to use your hosted copy of `snowplow.js`. For the purposes of this section, we're going to assume that you have a minified `sp.js` available at the URL:
+
+    http(s)://bigcorpstatic.com/sp.js
+
+If you are using **asynchronous tracking**, then update your header script to look like this:
+
+```javascript
+var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
+sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://bigcorpstatic.com/sp.js';
+...
+```
+
+Whereas if you are using **synchronous tracking**, then update your header script to look like this:
+
+**Yali to add**
+
+Simple as that really.
+
+#### 5. Test your hosted JavaScript
+
+As a final step, you'll want to just check that your self-hosted JavaScript is working okay. To do this:
+
+* Upload a test page (possibly based on `tracker/examples/async.html`) to your server
+* 
+
+**To write**
 
 <a name="privacy"/>
 ## A note on privacy
