@@ -6,12 +6,20 @@
 
 `snowplow.js` is largely based on Anton Pang's excellent [`piwik.js`] [piwikjs], the JavaScript tracker for the open-source [Piwik] [piwik] project, and is distributed under the same license ([Simplified BSD] [bsd]). For completeness, the main differences between `snowplow.js` and `piwik.js` are documented below.
 
+## Contents
+
+Contents of this folder are as follows:
+
+* In this folder is this README and the [Simplified BSD] [bsd] license
+* `js` contains the un-minified JavaScript (`snowplow.js`), the minified JavaScript (`sp.js`) and a Bash script for minifying (`snowpak.sh`)
+* `static` contains the 1x1 transparent pixel (`ice.png`) which is fetched by the JavaScript from a CloudFront distribution
+
 ## Documentation
 
-Besides this README, there are two main instruction guides written for `snowplow.js`:
+Besides this README, there are two main SnowPlow guides which relate to `snowplow.js`:
 
 * [Integrating `snowplow.js` into your site] [integrating]
-* [Self-hosting `snowplow.js`] [selfhosting]
+* [Self-hosting SnowPlow] [selfhosting]
 
 ## Main differences between snowplow.js and piwik.js
 
@@ -42,7 +50,7 @@ Planned items on the roadmap are as follows:
 
 ## Copyright and license
 
-Significant portions copyright 2010 Anton Pang. Remainder copyright 2012 Orderly Ltd.
+Significant portions of `snowplow.js` copyright 2010 Anton Pang. Remainder copyright 2012 Orderly Ltd.
 
 Licensed under the [Simplified BSD] [bsd] license.
 
@@ -51,5 +59,5 @@ Licensed under the [Simplified BSD] [bsd] license.
 [piwikjs]: https://github.com/piwik/piwik/blob/master/js/piwik.js
 [piwikphp]: https://github.com/piwik/piwik/blob/master/piwik.php
 [bsd]: http://www.opensource.org/licenses/bsd-license.php 
-[integrating]: /tychosoftworks/snowplow-js/blob/master/docs/02_integrating_snowplowjs.md
-[selfhosting]: /tychosoftworks/snowplow-js/blob/master/docs/03_selfhosting_snowplowjs.md
+[integrating]: /snowplow/snowplow/blob/master/docs/02_integrating_snowplowjs.md
+[selfhosting]: /snowplow/snowplow/blob/master/docs/03_selfhosting_snowplowjs.md
