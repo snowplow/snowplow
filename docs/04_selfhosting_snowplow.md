@@ -142,16 +142,34 @@ Once you have those ready, please read on...
 
 ### Self-hosting instructions
 
-#### 1. Checkout the source-code
+#### 1. Checkout the source code
 
 First please download the source code to your development machine:
 
-**To write**
+    $ git clone git@github.com:snowplow/snowplow.git
+	...
+	$ cd snowplow/tracker/js/
+	$ ls 
+    snowplow.js   sp.js         snowpak.sh
+
+In the listing above, `snowplow.js` is the original JavaScript; `sp.js` is the minified version and `snowpak.sh` is a Bash shell script for performing the minification.
+
+#### 2. Minify the JavaScript
+
+You can minify the 'full fat' version of `snowplow.js` by using `snowpak.sh` if you have **XXX** installed. To do this:
+
+    $ ./snowpak.sh snowplow.js > sp.js
+
+This will overwrite your existing `sp.js`.
+
+In theory it should be possible to use any JavaScript minifier or pipelining tool to minify the JavaScript - however, you would need to read through and understand what `snowpak.sh` is doing and make sure to recreate that same behaviour in your minification process.
+
+
 
 <a name="privacy"/>
 ## A note on privacy
 
-In the guide above we mention that from a performance perspective it is not important which Amazon data center you choose to self-host your pixel (or indeed your JavaScript) on:
+Above we mentioned that, from a performance perspective, it is not important which Amazon data center you choose to self-host your pixel (or indeed your JavaScript):
 
 **Add in image**
 
