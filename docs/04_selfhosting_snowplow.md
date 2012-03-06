@@ -38,22 +38,23 @@ Once you have those ready, please read on...
 
 #### 1. Create a bucket for the pixel
 
-First create a new bucket within your Amazon S3 account to store the pixel. Call this bucket `snowplow-static`:
+First create a new bucket within your Amazon S3 account to store the pixel. Call this bucket something like `snowplow-static`:
 
 ![pixelbucket] [pixelbucket]
 
 A couple of notes on this:
 
 * Don't enable logging on this bucket
+* You won't be able to call this bucket exactly `snowplow-static`. This is because Amazon S3 bucket names have to be globally unique, and `snowplow-static` is unfortunately taken!
 * Because we will be using CloudFront, it doesn't particularly matter which data center you choose (although see [A note on privacy](#privacy) below)
 
 #### 2. Create a bucket for the CloudFront logging
 
-Now let's create a second bucket to store our CloudFront logs - i.e. our actual SnowPlow data. Call this bucket `snowplow-logs`:
+Now let's create a second bucket to store our CloudFront logs - i.e. our actual SnowPlow data. Call this bucket something like `snowplow-logs`:
 
 ![logbucket] [logbucket]
 
-Again, no need to enable logging on this bucket.
+The notes above also hold true for this bucket: don't enable logging, and expect to have to change the bucket's name slightly.
 
 #### 3. Upload a tracking pixel
 
@@ -73,15 +74,29 @@ Hit **Set Details >**, then hit **Set Permissions >** to set permissions on this
 
 ![pixelpermissions] [pixelpermissions]
 
-Now hit **Start Upload** to upload the pixel into your bucket.
+Now hit **Start Upload** to upload the pixel into your bucket. When done, you should have something like this:
+
+![pixelready] [pixelready]
 
 #### 4. Create your CloudFront distribution
 
-Now you are ready to create the CloudFront distribution which will serve your tracking pixel:
+Now you are ready to create the CloudFront distribution which will serve your tracking pixel. In the S3 tab, hit the **Create Distribution** button:
 
-[!createdistrib]
+![distcreate] [distcreate]
 
-Write down your CloudFront distribution's URL - e.g. `http://d1x5tduoxffdr7.cloudfront.net`. You will need this in the next step.
+Choose `snowplow-static` as your Amazon S3 Origin bucket and hit **Continue**:
+
+![distdetails] [distdetails]
+
+On this screen you just want to switch Logging to **On** and select `snowplow-logs` as your Log Bucket. Then hit `Continue` to review a summary of your new distribution:
+
+![distreview] [distreview]
+
+Hit **Create Distribution** and then you should see something like this:
+
+![distenabled] [distenabled]
+
+Write down your CloudFront distribution's **Domain Name** (highlighted above) - e.g. `http://d1x5tduoxffdr7.cloudfront.net`. You will need this in the next step.
 
 That's it - you now have a CloudFront distribution which will serve your tracking pixel fast to anybody anywhere in the world and log the request to Amazon S3 in your `snowplow-logs` bucket. 
 
@@ -217,6 +232,11 @@ Above we mentioned that, from a performance perspective, it is not important whi
 [pixelselect]: /snowplow/snowplow/raw/master/docs/images/04_pixel_select.png
 [pixelupload]: /snowplow/snowplow/raw/master/docs/images/04_pixel_upload.png
 [pixelpermissions]: /snowplow/snowplow/raw/master/docs/images/04_pixel_permissions.png
+[pixelready]: /snowplow/snowplow/raw/master/docs/images/04_pixel_ready.png
+[distcreate]: /snowplow/snowplow/raw/master/docs/images/04_dist_create.png
+[distdetails]: /snowplow/snowplow/raw/master/docs/images/04_dist_details.png
+[distreview]: /snowplow/snowplow/raw/master/docs/images/04_dist_review.png
+[distenabled]: /snowplow/snowplow/raw/master/docs/images/04_dist_enabled.png
 [integrating]: /snowplow/snowplow/blob/master/docs/03_integrating_snowplowjs.md
 [git]: http://git-scm.com/
 [crockford]: https://github.com/douglascrockford
