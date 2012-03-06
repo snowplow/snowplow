@@ -163,7 +163,7 @@ You can 'kick the tyres' of `snowplow.js` with the example HTML pages available 
 
     snowplow/tracker/examples
 
-Before running these HTML pages, make sure to update the {{ACCOUNT}} to your SnowPlow-supplied account ID.
+Before running these HTML pages, make sure to update the `{{ACCOUNT}}` to your SnowPlow-supplied account ID.
 
 We recommend using Chrome's [Developer Tools] [chromedevtools] or [Firebug] [firebug] for Firefox to check that SnowPlow's JavaScript tracking is working correctly. Here is what Chrome's Network panel looks like after loading the page and clicking each button once:
 
@@ -173,11 +173,14 @@ Note the three successful (status code 200) `GET`s to `ice.png`. The first of th
 
 If you have any problems getting this to run, please [contact] [contact] the SnowPlow team.
 
-### Inspecting the SnowPlow-logged data
+### Confirming SnowPlow is logging the right data
+
+If you are using the SnowPlow-hosted version of SnowPlow, then please [contact] [contact] the SnowPlow team to confirm that your event data is being successfully logged. If you are self-hosting SnowPlow, then consult the [Troubleshooting section] [shtt] within the Self-Hosting Guide.
 
 **To write**
 
 [selfhosting]: /snowplow/snowplow/blob/master/docs/04_selfhosting_snowplow.md
+[selfhosting]: /snowplow/snowplow/blob/master/docs/04_selfhosting_snowplow.md#tt
 [gaeventguide]: http://code.google.com/apis/analytics/docs/tracking/eventTrackerGuide.html
 [chromedevtools]: http://code.google.com/chrome/devtools/docs/overview.html
 [firebug]: http://getfirebug.com/
