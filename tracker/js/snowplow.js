@@ -4,7 +4,7 @@
  * JavaScript tracking client
  *
  * @link http://www.keplarllp.com/blog/2012/02/introducing-snowplow-the-worlds-most-powerful-web-analytics-platform
- * @source https://github.com/tychosoftworks/snowplow/raw/master/js/snowplow.js
+ * @source https://github.com/snowplow/snowplow/raw/master/tracker/js/snowplow.js
  * @license http://www.opensource.org/licenses/bsd-license.php Simplified BSD
  */
 
@@ -371,7 +371,7 @@ if (!this.JSON2) {
 /*global window */
 /*global unescape */
 /*global ActiveXObject */
-/*global _spq:true */
+/*global _snaq:true */
 /*members encodeURIComponent, decodeURIComponent, getElementsByTagName,
 	shift, unshift,
 	addEventListener, attachEvent, removeEventListener, detachEvent,
@@ -410,7 +410,7 @@ if (!this.JSON2) {
 */
 var
 	// asynchronous tracker (or proxy)
-	_spq = _spq || [],
+	_snaq = _snaq || [],
 
 	// SnowPlow singleton and namespace
 	SnowPlow = SnowPlow || (function () {
@@ -2621,7 +2621,7 @@ var
 
 		/************************************************************
 		 * Proxy object
-		 * - this allows the caller to continue push()'ing to _spq
+		 * - this allows the caller to continue push()'ing to _snaq
 		 *   after the Tracker has been initialized and loaded
 		 ************************************************************/
 
@@ -2643,12 +2643,12 @@ var
 
 		asyncTracker = new Tracker();
 
-		for (i = 0; i < _spq.length; i++) {
-			apply(_spq[i]);
+		for (i = 0; i < _snaq.length; i++) {
+			apply(_snaq[i]);
 		}
 
 		// replace initialization array with proxy object
-		_spq = new TrackerProxy();
+		_snaq = new TrackerProxy();
 
 		/************************************************************
 		 * Public data and methods

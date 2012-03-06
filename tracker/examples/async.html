@@ -2,45 +2,42 @@
         "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-    <title>Test page for testing tracking</title>
+    <title>Asynchronous examples for snowplow.js</title>
 
-    <!-- SnowPlow -->
+    <!-- SnowPlow starts plowing -->
     <script type="text/javascript">
-	var _spq = _spq || [];
+	var _snaq = _snaq || [];
 	
-    _spq.push(['setSiteId', 1]);
-    _spq.push(['setTrackerUrl', 'http://pxl.snplow.com/pxl.png']);
-    _spq.push(['trackPageView']);
+    _snaq.push(['setAccount', 'd1x3tduoxjjdr7']); // Update to your account ID or CloudFront distribution subdomain
+    _snaq.push(['trackPageView']);
 
     (function() {
 	var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
-	// sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://js.snplow.com/sp.js';
-    sp.src = 'js/snowplow.js';
+	sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://snplow.com/sp.js';
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
 	})();
      </script>
-    <!-- SnowPlow code ends -->
+    <!-- SnowPlow stops plowing -->
 
-    <!--javascript calls-->
+    <!-- Example events -->
     <script type="text/javascript">
-        function buyDeck(){
-            alert("Buy a deck!")
-            _spq.push(['trackEvent', 'myCategory', 'myAction', 'myLabel', 'myValue'])
-            // piwikTracker.addEcommerceItem("pbz00013", "original rider waite", "Tarot", 9, 1)
+        function playMix() {
+            alert("Playing a DJ mix");
+            _snaq.push(['_trackEvent', 'Mixes', 'Play', 'MrC/fabric-0503-mix', , '0.0']);
         }
-        function pressPlay(){
-            _spq.push(['trackEvent', 'playCategory', 'playAction', 'playLabel', 'playValue'])           
+        function addProduct() {
+            alert("Adding a product to basket");
+            _snaq.push(['trackEvent', 'Checkout', 'Add', 'ASO01043', 'blue:xxl', '2.0']);      
         }
     </script>
-    
 </head>
-<body>
-    <h1>This is a test page for checking my tracking tech</h1>
-    <p>Below you'll find a number of linkes. We're going to pretend that clicking on each causes an event to be tracked.</p>
-    <p>I need to try and induce an AJAX call to AmazonS3 to load a pixel, whilst sending some custom parameters incl. the UUID, all via Piwik.</p>
-    <p>Here goes!</p>
-    <button type="button" onclick="buyDeck()">Buy a deck</button>
-    <button type="button" onclick="pressPlay()">Press play</button>
 
+<body>
+    <h1>Asynchronous examples for snowplow.js</h1>
+    <p>Press the buttons below to trigger individual tracking events:<br>
+        <button type="button" onclick="playMix()">Play a mix</button><br>
+        <button type="button" onclick="addProduct()">Add a product</button>
+    </p>
 </body>
+
 </html>
