@@ -49,7 +49,7 @@ Original concept for SnowPlow inspired by [Radek Maciaszek](https://github.com/r
 ## Copyright and license
 
 SnowPlow is copyright 2012 Orderly Ltd. Significant portions of `snowplow.js`
-are copyright 2010 Anton Pang.
+are copyright 2010 Anthon Pang.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.

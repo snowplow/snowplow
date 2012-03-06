@@ -1,4 +1,4 @@
-Significant portions copyright 2010 Anton Pang. Remainder copyright 2012 Orderly Ltd.
+Significant portions copyright 2010 Anthon Pang. Remainder copyright 2012 Orderly Ltd.
 All rights reserved. 
 
 Redistribution and use in source and binary forms, with or without 
