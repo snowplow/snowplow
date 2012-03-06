@@ -406,7 +406,7 @@ if (!this.JSON2) {
 	addListener, enableLinkTracking, setLinkTrackingTimer,
 	setHeartBeatTimer, killFrame, redirectFile, setCountPreRendered,
 	trackGoal, trackEvent, trackLink, trackPageView, setEcommerceView, addEcommerceItem, trackEcommerceOrder, trackEcommerceCartUpdate,
-	addPlugin, getTracker, getAsyncTracker
+	addPlugin, getAccount, getAsyncTracker
 */
 var
 	// asynchronous tracker (or proxy)
@@ -2665,16 +2665,19 @@ var
 				plugins[pluginName] = pluginObj;
 			},
 
-			/**
-			 * Get Tracker (factory method)
-			 *
-			 * @param string piwikUrl
-			 * @param int|string siteId
-			 * @return Tracker
-			 */
-			getTracker: function (piwikUrl, siteId) {
-				return new Tracker(piwikUrl, siteId);
-			},
+/*<SNOWPLOW> New SnowPlow functionality */
+            /**
+             * SnowPlow replacement for Piwik getTracker function
+             * The function returns a Tracker object
+             * However, rather than passing in a piwikUrl and siteID,
+             * it takes a SnowPlow account ID, and constructs the  
+             * Url from it. (We do not use siteIds as part of SnowPlow)
+             * 
+             */
+            getTracker: function (accountId) {
+                return new Tracker(trackerUrlFromAccountId(accountId));
+            } 
+/*<SNOWPLOW>*/
 
 			/**
 			 * Get internal asynchronous tracker object

@@ -31,6 +31,7 @@ var _snaq = _snaq || [];
 
 _snaq.push(['setAccount', '{{ACCOUNT}}']);
 _snaq.push(['trackPageView']);
+_snaq.push(['enableLinkTracking']);
 
 (function() {
 var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
@@ -72,7 +73,36 @@ Any problems? Please consult the [Testing and troubleshooting](#tt) section at t
 
 ### Installing the header script
 
-**This section still to write.**
+To use `snowplow.js` in a 'sync' manner, first add the following script into your website template's `<head>` section:
+
+```html
+<!-- SnowPlow starts plowing -->
+<script type="text/javascript">
+var sp-src = ('https:' == document.location.protocol) ? 'https' :'http') + '://snplow.com/sp.js');
+document.write(unescape("%3Cscript src'" + sp-src + "' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var snowplowTracker = SnowPlow.getAccount({{ACCOUNT}});
+snowplow.trackPageView();
+snowplow.enableLinkTracking();
+} catch ( err ) {}
+</script>
+<!-- SnowPlow stops plowing -->
+
+<!-- Piwik --> <script type="text/javascript">
+var pkBaseURL = (("https:" == document.location.protocol) ? "https://{$PIWIK_URL}/" : "http://{$PIWIK_URL}/");
+document.write(unescape("%3Cscript src='" + pkBaseURL + "piwik.js' type='text/javascript'%3E%3C/script%3E"));
+</script><script type="text/javascript">
+try {
+var piwikTracker = Piwik.getTracker(pkBaseURL + "piwik.php", {$IDSITE});
+piwikTracker.trackPageView();
+piwikTracker.enableLinkTracking();
+} catch( err ) {}
+</script>
+<!-- End Piwik Code -->
+```
+
 
 ### Integrating event tracking
 
