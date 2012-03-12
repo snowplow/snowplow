@@ -27,6 +27,7 @@ The main differences today are as follows:
 
 * Simplified the set of querystring name-value pairs (removing Piwik-specific values and values which Amazon S3 logging gives us for free)
 * Added new `trackEvent` functionality
+* Tracking is now configured with an account ID (CloudFront subdomain) rather than a full tracker URL
 * Removed `POST` functionality (because S3 logging does not support `POST`)
 * Removed `piwik.js`'s own deprecated 'legacy' functionality
 
