@@ -117,7 +117,6 @@ Here is an example of SnowPlow event tracking attached to a simple JavaScript ac
 The five arguments to the event tracking command may be broadly familiar to you from Google Analytics - however there are some small differences, so please refer to the section [Event tracking](#events) below for more information.
 
 Any problems? Please consult the [Testing and troubleshooting](#tt) section at the bottom of this guide.
-Any problems? Please consult the [Testing and troubleshooting](#tt) section at the bottom of this guide.
 
 <a name="events"/>
 ## Event tracking
@@ -212,7 +211,7 @@ Note the three successful (status code 200) `GET`s to `ice.png`. The first of th
 
 If you have any problems getting this to run, please [contact] [contact] the SnowPlow team.
 
-### Confirming SnowPlow is logging the right data
+### Confirming that SnowPlow is logging correctly
 
 If you are using the SnowPlow-hosted version of SnowPlow, then please [contact] [contact] the SnowPlow team to confirm that your event data is being successfully logged. If you are self-hosting SnowPlow, then consult the [Troubleshooting section] [shtt] within the Self-Hosting Guide.
 
