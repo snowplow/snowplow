@@ -1564,8 +1564,8 @@ var
             function logImpression(bannerId, campaignId, advertiserId, userId) {
                 var request = '';
 
-                // All events have a category and an action
-                request += '&ad_ba=' + encodeWrapper(category);
+                // All events have a banner ID
+                request += '&ad_ba=' + encodeWrapper(bannerId);
 
                 // Campaign, advertiser and user IDs are optional
                 if (String(campaignId).length) {
