@@ -1,0 +1,8 @@
+.idea/
+.manager/
+workspace.xml
+*.iml
+*.sublime-*
+.DS_Store
+*~
+*.swp
