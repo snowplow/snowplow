@@ -157,8 +157,9 @@ So if you want to self-host `snowplow.js`, please read on...
 
 To self-host `snowplow.js` you will need the following:
 
-* Access to a Unix-like command line (containing tools such as `sed`)
+* Access to a Unix-like command line with `sed` and the Java runtime installed
 * Familiarity with and access to [Git] [git]
+* The ability to install [YUI Compressor 2.4.2] [yuic]
 * Some level of technical ability _ta2_, where `ta1 < ta2 < ninja`
 
 Once you have those ready, please read on...
@@ -169,6 +170,7 @@ Once you have those ready, please read on...
 
 First please download the source code to your development machine:
 
+    $ cd ~/development
     $ git clone git@github.com:snowplow/snowplow.git
 	...
 	$ cd snowplow/tracker/js/
@@ -177,47 +179,62 @@ First please download the source code to your development machine:
 
 In the listing above, `snowplow.js` is the original JavaScript; `sp.js` is the minified version and `snowpak.sh` is a Bash shell script for performing the minification.
 
-#### 2. Minify the JavaScript
+#### 2. Install YUI Compressor 2.4.2
 
-You can minify the 'full fat' version of `snowplow.js` by using `snowpak.sh` if you have **XXX** installed. To do this:
+To minify the JavaScript, we use a bash shell script which in turn uses YUI Compressor 2.4.2. YUI Compressor depends on the Java runtime - but we'll assume that you already have Java installed.
 
-    $ ./snowpak.sh snowplow.js > sp.js
+To install YUI Compressor 2.4.2:
+
+    $ sudo mkdir /opt/yui
+    $ cd /opt/yui
+    $ sudo wget hhttp://yui.zenfs.com/releases/yuicompressor/yuicompressor-2.4.2.zip
+    $ sudo unzip yuicompressor-2.4.2.zip
+
+Just check that the required jarfile has now been installed:
+
+    $ file /opt/yui/yuicompressor-2.4.2/build/yuicompressor-2.4.2.jar
+    /opt/yui/yuicompressor-2.4.2/build/yuicompressor-2.4.2.jar: Zip archive data, at least v1.0 to extract
+
+Now you're ready to minify `snowplow.js`.
+
+#### 3. Minify the JavaScript
+
+Minification is handled by the bash shell script `snowpak.sh`, in the same folder as `snowplow.js`. `snowpak.sh` takes one argument, which is the path to the folder in which you installed YUI Compressor.
+
+To run `snowpak.sh` is easy:
+
+    $ cd ~/development/snowplow/tracker/js/
+    $ ./snowpak.sh /opt/yui/yuicompressor-2.4.2
 
 This will overwrite your existing `sp.js`.
 
-In theory it should be possible to use any JavaScript minifier or pipelining tool to minify the JavaScript - however, you would need to read through and understand what `snowpak.sh` is doing and make sure to recreate that same behaviour in your minification process.
+A note: in theory it should be possible to use any JavaScript minifier or pipelining tool to minify the JavaScript - however, you would need to read through and understand what `snowpak.sh` is doing and make sure to recreate that same behaviour in your minification process.
 
-#### 3. Upload the minified JavaScript
+#### 4. Upload the minified JavaScript
 
 Use your standard asset pipelining strategy to upload the minified `sp.js` JavaScript to your servers. Note that to avoid "mixed content" warnings, SnowPlow expects the `sp.js` JavaScript to be available both via HTTP and via HTTPS.
 
-#### 4. Update your header script
+#### 5. Update your header script
 
 Now you need to update the JavaScript code for SnowPlow in your website's `<head>` section to use your hosted copy of `snowplow.js`. For the purposes of this section, we're going to assume that you have a minified `sp.js` available at the URL:
 
     http(s)://eskimo-ice.com/js/sp.js
 
-If you are using **asynchronous tracking**, then update your header script to look like this:
+If you are using **asynchronous tracking**, then update the corresponding line in your header script to look like this:
 
 ```javascript
-var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
 sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://eskimo-ice.com/js/sp.js';
-...
 ```
 
-Whereas if you are using **synchronous tracking**, then update your header script to look like this:
+Whereas if you are using **synchronous tracking**, then update the corresponding line in your header script to look like this:
 
-```html
-<!-- SnowPlow starts plowing -->
-<script type="text/javascript">
+```javascript
 var spSrc = ('https:' == document.location.protocol ? 'https' : 'http') + '://eskimo-ice.com/js/sp.js';
-...
-</script>
 ```
 
 Simple as that really.
 
-#### 5. Test your hosted JavaScript
+#### 6. Test your hosted JavaScript
 
 As a final step, you'll want to just check that your self-hosted JavaScript is working okay. To do this:
 
@@ -247,4 +264,5 @@ Above we mentioned that, from a performance perspective, it is not important whi
 [distenabled]: /snowplow/snowplow/raw/master/docs/images/04_dist_enabled.png
 [integrating]: /snowplow/snowplow/blob/master/docs/03_integrating_snowplowjs.md
 [git]: http://git-scm.com/
+[yuic]: http://developer.yahoo.com/yui/compressor/
 [crockford]: https://github.com/douglascrockford
