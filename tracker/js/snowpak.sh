@@ -27,17 +27,20 @@ if [ ${#} -ne 1 ];then
 fi
 
 # Now set user-friendly variables for args.
-yuic_path=${1}/$YC_JARPATH
+yuic_path=${1}/$YUIC_JARPATH
 sp_path=./$SP_INPUTFILE # Assume snowplow.js is in the same folder as this script
 
 # Validate arguments
-if [ ! -f $yuic_path ];then
+if [ ! -f ${yuic_path} ];then
 	echo "Cannot find YUICompressor 2.4.2 jarfile at ${yuic_path}"
-	usage()	
+	usage	
 fi
-if [ ! -f $sp_path ];then
+if [ ! -f ${sp_path} ];then
 	echo "Cannot find snowplow.js file in this directory"
-	usage()	
+	usage	
 fi
+
+# Now run the minification
+sed '/<DEBUG>/,/<\/DEBUG>/d' < snowplow.js | sed 's/eval/replacedEvilString/' | java -jar ${yuic_path} --type js --line-break 1000 | sed 's/replacedEvilString/eval/' > sp.js
 
 exit 0
