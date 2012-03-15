@@ -234,7 +234,7 @@ Above we mentioned that, from a performance perspective, it is not important whi
 **Add in image**
 
 [aws]: http://aws.amazon.com/
-[pixel]: /snowplow/snowplow-js/raw/master/tracker/static/ice.png
+[pixel]: /snowplow/snowplow/raw/master/tracker/static/ice.png
 [pixelbucket]: /snowplow/snowplow/raw/master/docs/images/04_pixel_bucket.png
 [logbucket]: /snowplow/snowplow/raw/master/docs/images/04_log_bucket.png
 [pixelselect]: /snowplow/snowplow/raw/master/docs/images/04_pixel_select.png
