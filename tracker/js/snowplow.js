@@ -405,8 +405,8 @@ if (!this.JSON2) {
 	doNotTrack, setDoNotTrack, msDoNotTrack,
 	addListener, enableLinkTracking, setLinkTrackingTimer,
 	setHeartBeatTimer, killFrame, redirectFile, setCountPreRendered,
-	trackGoal, trackEvent, trackLink, trackPageView, setEcommerceView, addEcommerceItem, trackEcommerceOrder, trackEcommerceCartUpdate,
-	addPlugin, getAccount, getAsyncTracker
+	trackGoal, trackEvent, trackImpression, trackLink, trackPageView, setEcommerceView, addEcommerceItem, trackEcommerceOrder, trackEcommerceCartUpdate,
+	addPlugin, getTracker, getAsyncTracker
 */
 var
 	// asynchronous tracker (or proxy)
@@ -1552,6 +1552,35 @@ var
                 request = getRequest(request, configCustomData, 'event');
                 sendRequest(request, configTrackerPause);
             }
+
+            /**
+             * Log an ad impression
+             *
+             * @param string bannerId Identifier for the ad banner displayed
+             * @param string campaignId (optional) Identifier for the campaign which the banner belongs to
+             * @param string advertiserId (optional) Identifier for the advertiser which the campaign belongs to
+             * @param string userId (optional) Ad server identifier for the viewer of the banner
+             */
+            function logImpression(bannerId, campaignId, advertiserId, userId) {
+                var request = '';
+
+                // All events have a category and an action
+                request += '&ad_ba=' + encodeWrapper(category);
+
+                // Campaign, advertiser and user IDs are optional
+                if (String(campaignId).length) {
+                    request += '&ad_ca=' + encodeWrapper(campaignId);
+                }
+                if (String(advertiserId).length) {
+                    request += '&ad_ad=' + encodeWrapper(advertiserId);
+                }
+                if (String(userId).length) {
+                    request += '&ad_us=' + encodeWrapper(userId);
+                }
+
+                request = getRequest(request, configCustomData, 'adimp');
+                sendRequest(request, configTrackerPause);
+            }
 /*</SNOWPLOW>*/
 
 /*<DEPRECATED> Piwik ecommerce functionality not needed for SnowPlow */
@@ -2497,7 +2526,7 @@ var
                 },
 
                 /**
-                 * Log an event happening on this page
+                 * Track an event happening on this page
                  *
                  * @param string category The name you supply for the group of objects you want to track
                  * @param string action A string that is uniquely paired with each category, and commonly used to define the type of user interaction for the web object
@@ -2508,6 +2537,17 @@ var
                     logEvent(category, action, label, property, value);                   
                 },
 
+                /**
+                 * Track an ad being served
+                 *
+                 * @param string bannerId Identifier for the ad banner displayed
+                 * @param string campaignId (optional) Identifier for the campaign which the banner belongs to
+                 * @param string advertiserId (optional) Identifier for the advertiser which the campaign belongs to
+                 * @param string userId (optional) Ad server identifier for the viewer of the banner
+                 */
+                 trackImpression: function (bannerId, campaignId, advertiserId, userId) {
+                     logImpression(bannerId, campaignId, advertiserId, userId);
+                 },
 /*</SNOWPLOW>*/
 
 /*<DEPRECATED> Website goals are a pre-SnowPlow concept */
@@ -2638,7 +2678,7 @@ var
 		 * Constructor
 		 ************************************************************/
 
-		// initialize the Piwik singleton
+		// initialize the SnowPlow singleton
 		addEventListener(windowAlias, 'beforeunload', beforeUnloadHandler, false);
 		addReadyListener();
 
@@ -2676,6 +2716,7 @@ var
              * it takes a SnowPlow account ID, and constructs the  
              * Url from it. (We do not use siteIds as part of SnowPlow)
              * 
+             * @param string accountId
              */
             getTracker: function (accountId) {
                 return new Tracker(accountId);
