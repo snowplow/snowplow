@@ -1,0 +1,69 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>Asynchronous ad tracking examples for snowplow.js</title>
+</head>
+
+<body>
+    <h1>Asynchronous ad tracking examples for snowplow.js</h1>
+
+    <p>
+    <img src="images/banner-1.png">
+    Banner ID 23, campaign ID 12, advertiser ID 201, user ID 1fd819ffc7267757ba681ff5daa3007e
+    <!-- SnowPlow starts plowing -->
+    <script type="text/javascript">
+    var _snaq = _snaq || [];
+    
+    _snaq.push(['setAccount', 'd1x3tduoxjjdr7']); // Update to your account ID or CloudFront distribution subdomain
+    _snaq.push(['trackImpression', '23', '12', '201', '1fd819ffc7267757ba681ff5daa3007e']);
+
+    (function() {
+    var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
+    sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://snplow.com/sp3.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
+    })();
+     </script>
+    <!-- SnowPlow stops plowing -->
+    </p>
+
+    <p>
+    <img src="images/banner-2.png">
+    Banner ID 127, no campaign or advertiser ID set, user ID 2de819ffc724367ba681ff5daa6777e
+    <!-- SnowPlow starts plowing -->
+    <script type="text/javascript">
+    var _snaq = _snaq || [];
+    
+    _snaq.push(['setAccount', 'd1x3tduoxjjdr7']); // Update to your account ID or CloudFront distribution subdomain
+    _snaq.push(['trackImpression', '127', '', '', '2de819ffc724367ba681ff5daa6777e']);
+
+    (function() {
+    var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
+    sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://snplow.com/sp3.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
+    })();
+     </script>
+    <!-- SnowPlow stops plowing -->
+    </p>
+
+    <p>
+    <img src="images/banner-3.png">
+    Banner ID 56ea2819ffc7da75f7e, no campaign, advertiser or user ID set
+    <!-- SnowPlow starts plowing -->
+    <script type="text/javascript">
+    var _snaq = _snaq || [];
+    
+    _snaq.push(['setAccount', 'd1x3tduoxjjdr7']); // Update to your account ID or CloudFront distribution subdomain
+    _snaq.push(['trackImpression', '56ea2819ffc7da75f7e', '', '', '']);
+
+    (function() {
+    var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
+    sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://snplow.com/sp3.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
+    })();
+     </script>
+    <!-- SnowPlow stops plowing -->
+    </p>
+</body>
+
+</html>
