@@ -119,13 +119,10 @@ Now you need to update the JavaScript code for SnowPlow in your website's `<head
 
 The secret is to realise that SnowPlow's `setAccount()` method in fact takes a CloudFront subdomain as its argument - so using your own CloudFront distribution is super-simple.
 
-If you are using **asynchronous tracking** and your CloudFront distribution's URL is `http://d1x5tduoxffdr7.cloudfront.net`, then update your header script to look like this:
+If you are using **asynchronous tracking** and your CloudFront distribution's URL is `http://d1x5tduoxffdr7.cloudfront.net`, then update the appropriate line in your header script to look like this:
 
 ```javascript
-var _snaq = _snaq || [];
-
 _snaq.push(['setAccount', 'd1x5tduoxffdr7']);
-...
 ```
 
 Whereas if you are using **synchronous tracking**, then update your header script to look like this:
@@ -229,9 +226,13 @@ As a final step, you'll want to just check that your self-hosted JavaScript is w
 <a name="privacy"/>
 ## A note on privacy
 
-Above we mentioned that, from a performance perspective, it is not important which Amazon data center you choose to self-host your pixel (or indeed your JavaScript):
+Above we mentioned that, from a performance perspective, it is not important which Amazon data center you choose to self-host your pixel, or indeed your JavaScript:
 
-**Add in image**
+![chooseregion] [chooseregion]
+
+However, data center choice, particularly for your access logs, does matter from a data privacy perspective. For example, at the time of writing Amazon Web Services [recommends] [dataprivacy] storing data in the EU (Ireland) region if you wish to comply with EU data privacy regulations.
+
+It is your responsibility to ensure that you comply with the privacy laws governing your web property and users.
 
 [aws]: http://aws.amazon.com/
 [pixel]: /snowplow/snowplow/raw/master/tracker/static/ice.png
@@ -246,5 +247,7 @@ Above we mentioned that, from a performance perspective, it is not important whi
 [distreview]: /snowplow/snowplow/raw/master/docs/images/04_dist_review.png
 [distenabled]: /snowplow/snowplow/raw/master/docs/images/04_dist_enabled.png
 [integrating]: /snowplow/snowplow/blob/master/docs/03_integrating_snowplowjs.md
+[chooseregion]: /snowplow/snowplow/blob/master/docs/04_choose_region.png
+[dataprivacy]: http://aws.amazon.com/s3/faqs/#Can_I_comply_with_EU_data_privacy_regulations_using_Amazon_S3
 [git]: http://git-scm.com/
 [crockford]: https://github.com/douglascrockford
