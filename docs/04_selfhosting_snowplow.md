@@ -247,7 +247,7 @@ It is your responsibility to ensure that you comply with the privacy laws govern
 [distreview]: /snowplow/snowplow/raw/master/docs/images/04_dist_review.png
 [distenabled]: /snowplow/snowplow/raw/master/docs/images/04_dist_enabled.png
 [integrating]: /snowplow/snowplow/blob/master/docs/03_integrating_snowplowjs.md
-[chooseregion]: /snowplow/snowplow/blob/master/docs/04_choose_region.png
+[chooseregion]: /snowplow/snowplow/blob/master/docs/images/04_choose_region.png
 [dataprivacy]: http://aws.amazon.com/s3/faqs/#Can_I_comply_with_EU_data_privacy_regulations_using_Amazon_S3
 [git]: http://git-scm.com/
 [crockford]: https://github.com/douglascrockford
