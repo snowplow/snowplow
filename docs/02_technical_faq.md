@@ -28,7 +28,7 @@ It is possible to use SnowPlow with a self-hosted [Nginx] [nginx] webserver to h
 
 ## How can I contribute to SnowPlow?
 
-The SnowPlow team welcome contributions! The core team (funded by [Keplar] [keplar]) is very small so we would love more people to join in and help realise our objectives of building the world's most powerful analytics platform. Stay tuned for a more detailed update on how best you can contribute to SnowPlow. 
+The SnowPlow team welcome contributions! The core team (funded by [Keplar] [keplar]) is small so we would love more people to join in and help realise our objectives of building the world's most powerful analytics platform. Stay tuned for a more detailed update on how best you can contribute to SnowPlow. 
 
 [cloudfrontlog]: http://aws.amazon.com/cloudfront/faqs/#Can_I_get_access_to_request_logs_for_content_delivered_through_CloudFront
 [nginx]: http://nginx.org
