@@ -66,28 +66,28 @@ To do
 
 * Start by fetching your AWS Access Key ID and AWS Secret Access Key. To get both of these, log in to [http://aws.amazon.com](#http://aws.amazon.com)
 
-![Download CLI](#/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-4.PNG)
+![Download CLI](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-4.PNG)
 
 * Click on *My Account* (by clicking on your name on the top right of the screen) and select *Security Credentials*. Scroll down to *Access Credentials*: you will be able to take a copy of your *Access Key ID*. To reveal the associated *Secret Access Key*, click on the _Show_ link. Copy and paste both of these to a text-editor: in a bit you will use these to create a config file.
 
-![Download CLI](#/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-5.png)
+![Download CLI](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-5.png)
 
 * Now you have your *access key* and *secret access key*, you need to create an *Amazon EC2 Key Pair*. Elastic MapReduce is built on top of EC2, and Key Pairs are a key part of Amazon's security apparatus. Click on the *Key Pairs* tab (2 along from *Access Keys* in the same screen) and click *Access your Amazon EC2 Key Pairs using the AWS Management Console*. (Don't be distracted bythe CloudFront Key Pairs section above - that is not relevant here...)
 
-![Navigate to key pair](#/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-6.PNG)
+![Navigate to key pair](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-6.PNG)
 
 
 * In the EC2 window, click on *Key Pairs* on the left hand navigation. (In the _Network & Security_ section.) 
 
-![Create key pair](#/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-7.PNG)
+![Create key pair](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-7.PNG)
 
 * Click on the *Create Key Pair* button
 
-![Create key pair](#/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-8.PNG)
+![Create key pair](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-8.PNG)
 
 * When prompted, give the key pair an appropriate name of your choice. Note it down in your text-editor
 
-![Name new key pair](#/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-9.PNG)
+![Name new key pair](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-9.PNG)
 
 * The `.PEM` file should automatically download. Move it to a safe location (e.g. in a subdirectory of `elastic-mapreduce-cli`) and note the location, again in your text editor, along with the name of the key pair. (This should be the same as the name of the `.PEM` file)
 
@@ -107,4 +107,8 @@ To do
 
 
 
+/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-1.PNG
+https://github.com/snowplow/snowplow/blob/master/docs/05_setting_up_amazon_elastic_mapreduce_and_hive.md#/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-1.PNG
 
+/snowplow/snowplow/raw/master/docs/images/emr-guide/ruby-6.PNG)
+https://github.com/snowplow/snowplow/raw/master/docs/images/emr-guide/ruby-6.PNG
