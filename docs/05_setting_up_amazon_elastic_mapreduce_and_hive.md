@@ -94,7 +94,7 @@ To do
 * Now go to your text-editor. Create a file `credentials.json` in the `elastic-mapreduce-cli` folder
 
 * Add the following (JSON) code to it:
-	
+```javascript	
 	{
 		"access_id": "[Your AWS Access Key ID. (See above)]",
 		"private_key": "[Your AWS Secret Access Key. (See above)]",
@@ -104,6 +104,6 @@ To do
 		"region": "[The Region of yoru job flow, either us-east-1, us-west-2, us-east-1, eu-west-1", eu-west-1, ap-northeast-1, ap-southeast-1, or sa-east-1. We will identify this in the next section]"
 	}
 	
-
+```
 
 
