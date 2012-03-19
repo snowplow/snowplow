@@ -54,7 +54,7 @@ To do
 
 * Go to [http://aws.amazon.com/developertools/2264](#http://aws.amazon.com/developertools/2264). Login if prompted and click download.
 
-![Download CLI](#snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-2.PNG)
+![Download CLI](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-2.PNG)
 
 * Move the ZIP file to the folder you just created, and then unzip it
 
@@ -87,7 +87,7 @@ To do
 
 * When prompted, give the key pair an appropriate name of your choice. Note it down in your text-editor
 
-![Name new key pair](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-9.PNG)
+![Name new key pair](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-0.PNG)
 
 * The `.PEM` file should automatically download. Move it to a safe location (e.g. in a subdirectory of `elastic-mapreduce-cli`) and note the location, again in your text editor, along with the name of the key pair. (This should be the same as the name of the `.PEM` file)
 
