@@ -82,7 +82,7 @@ The Properties pane at the bottom is viewable by pressing the **Properties** but
 
 #### 4. Create your CloudFront distribution
 
-Now you are ready to create the CloudFront distribution which will serve your tracking pixel. In the S3 tab, hit the **Create Distribution** button:
+Now you are ready to create the CloudFront distribution which will serve your tracking pixel. In the CloudFront tab, hit the **Create Distribution** button:
 
 ![distcreate] [distcreate]
 
