@@ -3,7 +3,7 @@
 ## Questions
 
 1. [Is SnowPlow real-time?](#rt)
-2. [Does SnowPlow have a graphical user interface](#gui) to enable me to analyse and visualise web analytics data?
+2. [Does SnowPlow have a graphical user interface to enable me to analyse and visualise web analytics data?](#gui)
 3. [What's next on the roadmap?](#roadmap)
 4. [I want to use SnowPlow but not Amazon CloudFront - how?](#nocloudfront)
 5. [How can I contribute to SnowPlow?](#contribute)
