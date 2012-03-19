@@ -50,15 +50,15 @@ To do
 
 * Navigate to your Ruby folder, and in it, create a new folder for the command line tools:
 
-![Create a directory for the command-line tools](#/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-1.PNG)
+![Create a directory for the command-line tools](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-1.PNG)
 
 * Go to [http://aws.amazon.com/developertools/2264](#http://aws.amazon.com/developertools/2264). Login if prompted and click download.
 
-![Download CLI](#/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-2.PNG)
+![Download CLI](#snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-2.PNG)
 
 * Move the ZIP file to the folder you just created, and then unzip it
 
-![Unzip CLI](#/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-3.PNG)
+![Unzip CLI](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-3.PNG)
 
 ### Create a configuration file, with your login credentials
 
@@ -107,8 +107,3 @@ To do
 
 
 
-/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-1.PNG
-https://github.com/snowplow/snowplow/blob/master/docs/05_setting_up_amazon_elastic_mapreduce_and_hive.md#/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-1.PNG
-
-/snowplow/snowplow/raw/master/docs/images/emr-guide/ruby-6.PNG)
-https://github.com/snowplow/snowplow/raw/master/docs/images/emr-guide/ruby-6.PNG
