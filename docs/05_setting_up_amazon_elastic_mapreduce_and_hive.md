@@ -34,13 +34,13 @@ To use Elastic MapReduce you will need to install Amazon's "EMR Command Line Int
 
 3. Launch the executable file you just downloaded, by double clicking on it. Accept the license terms. When prompted, remember to "Add Ruby executables to your PATH". We also recommend checking the box "Associate .rb and .rbw files with this Ruby installation."
 
-![Select the relevant options](/snowplow/snowplow/raw/master/docs/emr-guide/images/ruby-5.PNG)
+![Select the relevant options](/snowplow/snowplow/raw/master/docs/images/emr-guide/ruby-5.PNG)
 
 4. The installation should proceed automatically. When completed, click "finish".
 
 5. Verify the installation: in either the command-prompt or Windows PowerShell, enter "ruby -v". The Ruby version should display as below:
 
-![Verify installation was successful](/snowplow/snowplow/raw/master/docs/emr-guide/images/ruby-6.PNG)
+![Verify installation was successful](/snowplow/snowplow/raw/master/docs/images/emr-guide/ruby-6.PNG)
 
 ### Installing Ruby on Mac OS X / Linux 
 
