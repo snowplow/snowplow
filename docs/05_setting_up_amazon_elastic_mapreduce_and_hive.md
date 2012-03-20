@@ -76,8 +76,9 @@ To do
 
 ![Navigate to key pair](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-6.PNG)
 
+* In the EC2 window, check what region has been set in the top left, and if necessary, change the region to the one in which you plan to do your analysis. (We use EU West (Ireland) for most of our analysis because we're based in the UK, but Amazon still often defaults to one of the US data center locations...)
 
-* In the EC2 window, click on *Key Pairs* on the left hand navigation. (In the _Network & Security_ section.) 
+* Click on *Key Pairs* on the left hand navigation. (In the _Network & Security_ section.) 
 
 ![Create key pair](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-7.PNG)
 
@@ -146,7 +147,10 @@ To do
 
 #### SSH Setup: for Mac and Linux
 
-To do
+* Navigate to your `.PEM` file in the command line tool and set the permissions on the file as below:
+
+![Fix permissions on .PEM file](/snowplow/snowplow/raw/master/docs/images/emr-guide/mac-install-1.tiff)
+
 
 #### SSH Setup: for Windows
 
@@ -164,13 +168,20 @@ To do
 
 * Exit the PUTTYgen application
 
-* Now download *PUTTY* and *Pageant* from [the same webpage you downloaded PUTTYgen](http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html)
+* Now download *PUTTY* and *Pageant* from [the same webpage you downloaded PUTTYgen](http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html). You will need these to establish the SSH connection and run Hive
+
+
+
+
+
 
 * To establish a secure connection, launch *Pageant* first. The Pageant icon should show in the systems tray on the bottom right of your screen: it looks like a computer wearing a hat. Right click on it and select *Add Keys*. Select the `.PPK` file you created using PUTTYgen 
 
 * Launch PUTTY to establish the SSL connection ???
 
-![Name new S3 bucket to house analysis](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-18.PNG). Click on the *Load* button. 
+![Name new S3 bucket to house analysis](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-18.PNG). 
+
+* Click on the *Load* button 
 
 
 
