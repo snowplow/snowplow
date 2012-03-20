@@ -12,9 +12,9 @@
 
 Note: this guide assumes you are self-hosting SnowPlow on your own Amazon Web Services account. 
 
-Once you have [integrated snowplow.js into your site](#https://github.com/snowplow/snowplow/blob/master/docs/03_integrating_snowplowjs.md) and [hosted SnowPlow hosting](#https://github.com/snowplow/snowplow/blob/master/docs/04_selfhosting_snowplow.md), you should be happily tracking users across your websites and storing that tracking data as logs in S3. Now you'll want to setup Amazon Elastic MapReduce and Hive to analyse those logs and generate actionable insight.
+Once you have [integrated snowplow.js into your site](https://github.com/snowplow/snowplow/blob/master/docs/03_integrating_snowplowjs.md) and [hosted SnowPlow hosting](https://github.com/snowplow/snowplow/blob/master/docs/04_selfhosting_snowplow.md), you should be happily tracking users across your websites and storing that tracking data as logs in S3. Now you'll want to setup Amazon Elastic MapReduce and Hive to analyse those logs and generate actionable insight.
 
-Amazon has published a very good [getting started](#http://docs.amazonwebservices.com/ElasticMapReduce/latest/GettingStartedGuide/Welcome.html?r=7956). This guide can be used as a standalone guide, or read in connection with Amazon's own guide.
+Amazon has published a very good [getting started](http://docs.amazonwebservices.com/ElasticMapReduce/latest/GettingStartedGuide/Welcome.html?r=7956). This guide can be used as a standalone guide, or read in connection with Amazon's own guide.
 
 To use Elastic MapReduce you will need to install Amazon's "EMR Command Line Interface". This will, in particular, let you run "Hive interactive sessions" in which you can try different queries and develop differnet analyses, using the results of each analysis to inform the next query.
 
@@ -24,7 +24,7 @@ To use Elastic MapReduce you will need to install Amazon's "EMR Command Line Int
 
 ### Installing Ruby on Windows
 
-* Go to [RubyInstaller](#http://rubyinstall.org). Click "Download"
+* Go to [RubyInstaller](http://rubyinstall.org). Click "Download"
 
 ![Downloading Ruby](/snowplow/snowplow/raw/master/docs/images/emr-guide/ruby-1.PNG)
 
@@ -52,7 +52,7 @@ To do
 
 ![Create a directory for the command-line tools](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-1.PNG)
 
-* Go to [http://aws.amazon.com/developertools/2264](#http://aws.amazon.com/developertools/2264). Login if prompted and click download.
+* Go to [http://aws.amazon.com/developertools/2264](http://aws.amazon.com/developertools/2264). Login if prompted and click download.
 
 ![Download CLI](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-2.PNG)
 
@@ -96,15 +96,15 @@ To do
 * Add the following (JSON) code to it:
 
 	```javascript	
-		{
-			"access_id": "[Your AWS Access Key ID. (See above)]",
-			"private_key": "[Your AWS Secret Access Key. (See above)]",
-			"keypair": "[Your key pair name. (See above)]",
-			"key-pair-file": "[The path and name of your PEM file. (See above)]",
-			"log_uri": "[A path to the bucket on S3 where your SnowPLow logs are kept. We will identify this in the next section.]",
-			"region": "[The Region of yoru job flow, either us-east-1, us-west-2, us-east-1, eu-west-1", eu-west-1, ap-northeast-1, ap-southeast-1, or sa-east-1. We will identify this in the next section]"
-		}
-		
+	{
+		"access_id": "[Your AWS Access Key ID. (See above)]",
+		"private_key": "[Your AWS Secret Access Key. (See above)]",
+		"keypair": "[Your key pair name. (See above)]",
+		"key-pair-file": "[The path and name of your PEM file. (See above)]",
+		"log_uri": "[A path to the bucket on S3 where your SnowPLow logs are kept. We will identify this in the next section.]",
+		"region": "[The Region of yoru job flow, either us-east-1, us-west-2, us-east-1, eu-west-1", eu-west-1, ap-northeast-1, ap-southeast-1, or sa-east-1. We will identify this in the next section]"
+	}
+	
 	```
 
 
