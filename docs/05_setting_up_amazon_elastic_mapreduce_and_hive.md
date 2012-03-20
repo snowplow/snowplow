@@ -1,5 +1,7 @@
 # Setting up Amazon Elastic MapReduce
 
+*Please note! This document is a work in progress, and is actively being editted. We recommend not using it at the moment. (It will be completed in the next couple of days...)*
+
 ## Table of Contents
 
 1. [Before you get started](#intro)
@@ -149,7 +151,7 @@ To do
 
 * Navigate to your `.PEM` file in the command line tool and set the permissions on the file as below:
 
-![Fix permissions on .PEM file](/snowplow/snowplow/raw/master/docs/images/emr-guide/mac-install-1.tiff)
+![Fix permissions on .PEM file](/snowplow/snowplow/raw/master/docs/images/emr-guide/mac-ssh-1.tiff)
 
 
 #### SSH Setup: for Windows
@@ -170,19 +172,38 @@ To do
 
 * Now download *PUTTY* and *Pageant* from [the same webpage you downloaded PUTTYgen](http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html). You will need these to establish the SSH connection and run Hive
 
+## Running a job
 
+Most of the analyses we do are in Hive interactive sessions: because it is in these types of sessions that we can actively query data, explore results and develop more sophisticated analyses.
 
+New sessions can either be initiated at the command-line, or via aws.amazon.com console. 
 
+To initiative a new session on Mac / Linux, navigate to the `elastic-mapreduce-cli` folder (where you saved the command-line tools) and enter
 
+	$ ./elastic-mapreduce --create --alive --name "Hive Job Flow" --hive-interactive
 
-* To establish a secure connection, launch *Pageant* first. The Pageant icon should show in the systems tray on the bottom right of your screen: it looks like a computer wearing a hat. Right click on it and select *Add Keys*. Select the `.PPK` file you created using PUTTYgen 
+You should see something like:
 
-* Launch PUTTY to establish the SSL connection ???
+![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-1.tiff)
 
-![Name new S3 bucket to house analysis](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-18.PNG). 
+TODO: Add instructions to launch a session from the PC command-line
 
-* Click on the *Load* button 
+Log into the [Amazon Web Console](https://console.aws.amazon.com/console/home) and click on [Elastic MapReduce] in the top menu bar. You should see the job you created listed. (In the screenshot below you'll see that we've initiated 2 Hive sessions.)
 
+![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-2.tiff)
 
+### Establishing the SSH connection: Mac / Linux users
+
+Return to the command-line, establish an SSH connection by entering the following
+
+	$ ./elastic-mapreduce --ssh --jobflow [JobFlowID]
+
+Substituting the JobFlowID generated when you created the session. You should see:
+
+![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-3.tiff)
+
+Now you can launch Hive by typing `Hive` at the command line:
+
+![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-4.tiff)
 
 
