@@ -24,7 +24,7 @@ To use Elastic MapReduce you will need to install Amazon's "EMR Command Line Int
 
 ### Installing Ruby on Windows
 
-* Go to [RubyInstaller](http://rubyinstall.org). Click "Download"
+* Go to [RubyInstaller](http://rubyinstaller.org/). Click "Download"
 
 ![Downloading Ruby](/snowplow/snowplow/raw/master/docs/images/emr-guide/ruby-1.PNG)
 
@@ -56,7 +56,7 @@ To do
 
 ![Download CLI](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-2.PNG)
 
-* Move the ZIP file to the folder you just created, and then unzip it
+* Go to the folder you just installed Ruby in, and in it, create a new folder where you'll save the Elastic Map Reduce tools. Give this folder an appropriate name e.g. `elastic-mapreduce-cli`. Unzip the download into the new folder, by double clicking on the Zip file (to access the contents), selecting the contents, copying it and then pasting it into the new folder.
 
 ![Unzip CLI](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-3.PNG)
 
@@ -72,7 +72,7 @@ To do
 
 ![Download CLI](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-5.png)
 
-* Now you have your *access key* and *secret access key*, you need to create an *Amazon EC2 Key Pair*. Elastic MapReduce is built on top of EC2, and Key Pairs are a key part of Amazon's security apparatus. Click on the *Key Pairs* tab (2 along from *Access Keys* in the same screen) and click *Access your Amazon EC2 Key Pairs using the AWS Management Console*. (Don't be distracted bythe CloudFront Key Pairs section above - that is not relevant here...)
+* Now you have your *access key* and *secret access key*, you need to create an *Amazon EC2 Key Pair*. Elastic MapReduce is built on top of EC2, and Key Pairs are a key part of Amazon's security apparatus. Click on the *Key Pairs* tab (2 along from *Access Keys* in the same screen) and click *Access your Amazon EC2 Key Pairs using the AWS Management Console*. (Don't be distracted by the CloudFront Key Pairs section above - that is not relevant here...)
 
 ![Navigate to key pair](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-6.PNG)
 
@@ -93,7 +93,7 @@ To do
 
 * Now go to your text-editor. Create a file `credentials.json` in the `elastic-mapreduce-cli` folder
 
-* Add the following (JSON) code to it:
+* Add the following (JSON) code to it, substituting the relevant values, noted above, for `access_id`, `private_key`, `keypair`, `key-pair-file`:
 
 	```javascript	
 	{
@@ -106,5 +106,72 @@ To do
 	}
 	
 	```
+
+* The `log-uri` parameter in the `credentials.json` file needs to point at the Amazon S3 bucket that you will use to store the outputs of your analysis. (And any logging of Hadoop sessions, if you desire.) It makes sense to create a new bucket to store these results. To do so, click on the `S3` tab at the top of the _AWS Management Console_, and in the left hand menu under _Buckets_ click the *Create Bucket* button:
+
+![Name new S3 bucket to house analysis](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-11.PNG)
+
+* Name the bucket. (You'll need top pick a name that is unique across Amazon S3, to `snowplow-analysis` will not be an option, unfortunately 
+
+* Select which Region you want the bucket located in. Because we're based in the UK, we've picked Ireland: pick the data center that makes the most sense for you. (Most likely the same location as the S3 buckets with the raw SnowPlow data you intend to analyse.) Click the *create* button.
+
+* Now update `credentials.json` with the `log-uri`. This will be `s3n://` + the bucket name + `/`. For us, then 
+
+	`"log_uri" = "s3n://snowplow-analysis/"`
+
+* You also need to set the `region` field in `credentials.json`. Pick the appropriate region - this should match the Region you selected when you created the bucket. So for us that is `eu-west-1`. (we selected _Ireland_)
+
+<table>
+	<tr><td>Region name</td><td>Region code</td></tr>
+	<tr><td>US Standard</td><td>us-east-1</td></tr>
+	<tr><td>Oregon</td><td>us-west-2</tr>
+	<tr><td>Northern California</td><td>us-west-1</td></tr>
+	<tr><td>Ireland</td><td>eu-west-1</td></tr>
+	<tr><td>Japan</td><td>ap-northeast-1</td></tr>
+	<tr><td>Singapore</td><td>ap-southeast-1</td></tr>
+	<tr><td>Sao Paulo</td><td>sa-east-1</td></tr>
+</table>
+
+* You need to set permissions on the S3 bucket, so that the command line tools can write results output to it. To do so, go back to the [S3 console](https://console.aws.amazon.com/s3/), right click on the bucket you created and click on *properties*
+
+![Name new S3 bucket to house analysis](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-12.PNG)
+
+* A _Properties_ pane will appear at the bottom of the screen. On the _Permissions_ tabl, click *Add more permissions*
+
+![Name new S3 bucket to house analysis](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-13.PNG)
+
+* Select *Authenticated Users* from the *Grantee* dropdown, then select *List* just next to it and click *Save*
+
+![Name new S3 bucket to house analysis](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-14.PNG)
+
+#### SSH Setup: for Mac and Linux
+
+To do
+
+#### SSH Setup: for Windows
+
+* Download PuTTYgen.exe from [here](http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html)
+
+![Name new S3 bucket to house analysis](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-15a.PNG)
+
+* Double click on the download to launch PuTTYgen. Click on the *Load* button and select the `.PEM` file you downloaded from Amazon earlier, when you created the EC2 key-pair
+
+![Name new S3 bucket to house analysis](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-15a.PNG)
+
+![Name new S3 bucket to house analysis](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-16.PNG)
+
+* Enter a passphrase in the dialogue box, confirm the passphrase, and click the *Save private key* button. Save the file down as a `.ppk` file: this will be what you use to establish a secure SSL connection.
+
+* Exit the PUTTYgen application
+
+* Now download *PUTTY* and *Pageant* from [the same webpage you downloaded PUTTYgen](http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html)
+
+* To establish a secure connection, launch *Pageant* first. The Pageant icon should show in the systems tray on the bottom right of your screen: it looks like a computer wearing a hat. Right click on it and select *Add Keys*. Select the `.PPK` file you created using PUTTYgen 
+
+* Launch PUTTY to establish the SSL connection ???
+
+![Name new S3 bucket to house analysis](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-18.PNG). Click on the *Load* button. 
+
+
 
 
