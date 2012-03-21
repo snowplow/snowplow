@@ -28,9 +28,11 @@ We are also looking at possibilities of building GUIs to perform repeatable anal
 <a name="roadmap"/>
 ## What's next on the roadmap?
 
-Lots! We need to open-source our Hive SerDes (serializer-deserializers) for SnowPlow, and we will then start to share the first of the "recipes" for Hive analyses on SnowPlow's clickstream data.
+Lots! We will shortly be open sourcing our SnowPlow-specific Hive Deserializers for SnowPlow; in the meantime you can get started with this general-purpose [CloudFront Log Deserializer] [cflogde].
 
-On the ad serving analytics front, we are working on an architecture to support click-tracking.
+Also on the roadmap is releasing the first of the "recipes" for Hive analyses on SnowPlow's clickstream data.
+
+On the ad serving analytics front, we are working on a micro-webserver to support redirection-based click-tracking, called [SnowHusky] [snowhusky].
 
 ## I want to use SnowPlow but not Amazon CloudFront - how?
 
@@ -43,6 +45,7 @@ The SnowPlow team welcome contributions! The core team (funded by [Keplar] [kepl
 
 [cloudfrontlog]: http://aws.amazon.com/cloudfront/faqs/#Can_I_get_access_to_request_logs_for_content_delivered_through_CloudFront
 [snowhusky]: https://github.com/snowplow/snowhusky
+[cflogde]: https://github.com/snowplow/cloudfront-log-deserializer
 [contact]: mailto:snowplow@keplarllp.com 
 [keplar]: http://www.keplarllp.com
 
