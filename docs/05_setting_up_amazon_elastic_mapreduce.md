@@ -4,25 +4,30 @@
 
 ## Table of Contents
 
-1. [Before you get started](#intro)
-2. [Self-hosting the tracking pixel](#pixelsh)
+1. [Before you get started...](#intro)
+2. [Installing Ruby](#rubyinstall)
 3. [Self-hosting snowplow.js](#jssh)
 5. [A note on privacy](#privacy)
 
 <a name="intro"/>
 ## Before you get started...
 
-Note: this guide assumes you are self-hosting SnowPlow on your own Amazon Web Services account. 
+This is a guide to setting up Amazon Elastic MapReduce. It assumes you are self-hosting SnowPlow on your own Amazon Web Services account. 
 
 Once you have [integrated snowplow.js into your site](https://github.com/snowplow/snowplow/blob/master/docs/03_integrating_snowplowjs.md) and [hosted SnowPlow hosting](https://github.com/snowplow/snowplow/blob/master/docs/04_selfhosting_snowplow.md), you should be happily tracking users across your websites and storing that tracking data as logs in S3. Now you'll want to setup Amazon Elastic MapReduce and Hive to analyse those logs and generate actionable insight.
+
+Amazon's Elastic MapReduce enables you to crunch log file data stored in S3, out of the box. To do so, however, we recommend installing [Amazon Elastic MapReduce Ruby Client](http://aws.amazon.com/developertools/2264). This will enable you to connect to Elastic MapReduce using Hive interactive sessions, run queries and develop analyses, all at the command line. 
+
+Amazon offers a number of other [tools to use Elastic MapReduce](http://aws.amazon.com/developertools/Elastic-MapReduce), however the Ruby Client is the only one we will cover in the documentation. (And the one we use most for SnowPlow.)
 
 Amazon has published a very good [getting started](http://docs.amazonwebservices.com/ElasticMapReduce/latest/GettingStartedGuide/Welcome.html?r=7956). This guide can be used as a standalone guide, or read in connection with Amazon's own guide.
 
 To use Elastic MapReduce you will need to install Amazon's "EMR Command Line Interface". This will, in particular, let you run "Hive interactive sessions" in which you can try different queries and develop differnet analyses, using the results of each analysis to inform the next query.
 
+<a name="rubyinstall"/>
 ## Installing Ruby
 
-"EMR Command Line Interface" is built in Ruby, so unless you have already have Ruby installed, you'll need to install it. Full instructions on downloading and setting up Ruby can be found [here](#http://www.ruby-lang.org/en/downloads/). There are many ways to install Ruby - if you don't have a strong preference for one of them, we recommend Mac OS X and Linux users use RVM, whilst Windows users use Ruby Installer.
+[Amazon Elastic MapReduce Ruby Client](http://aws.amazon.com/developertools/2264) is built in Ruby, so unless you have already have Ruby installed, you'll need to install it. Full instructions on downloading and setting up Ruby can be found [here](#http://www.ruby-lang.org/en/downloads/). There are many ways to install Ruby - if you don't have a strong preference for one of them, we recommend Mac OS X and Linux users use RVM, whilst Windows users use Ruby Installer.
 
 ### Installing Ruby on Windows
 
@@ -44,11 +49,9 @@ To use Elastic MapReduce you will need to install Amazon's "EMR Command Line Int
 
 ![Verify installation was successful](/snowplow/snowplow/raw/master/docs/images/emr-guide/ruby-6.PNG)
 
-### Installing Ruby on Mac OS X / Linux 
+## Installing the Amazon Elastic MapReduce Ruby Client
 
-To do
-
-### Installing the EMR Command-Line tools
+### Downloading the Client 
 
 * Navigate to your Ruby folder, and in it, create a new folder for the command line tools:
 
@@ -62,9 +65,9 @@ To do
 
 ![Unzip CLI](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-3.PNG)
 
-### Create a configuration file, with your login credentials
+### Configuring the client
 
-* To use the command line tools successfully, you will need the tools to talk directly to your Amazon account without any difficulty. That means ensuring that the correct security / login details are available to the command-line tools
+* To use the client successfully, you will need the tools to talk directly to your Amazon account without any difficulty. That means ensuring that the correct security / login details are available to the command-line tools
 
 * Start by fetching your AWS Access Key ID and AWS Secret Access Key. To get both of these, log in to [http://aws.amazon.com](#http://aws.amazon.com)
 
@@ -147,12 +150,17 @@ To do
 
 ![Name new S3 bucket to house analysis](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-14.PNG)
 
+
+### Setup SSH
+
+Now that you have configured the Ruby client, the last thing to do before you can run a Hive interactive session is setup SSH. This process looks different, depending on whether you using a Mac / Linux or PC.
+
+
 #### SSH Setup: for Mac and Linux
 
 * Navigate to your `.PEM` file in the command line tool and set the permissions on the file as below:
 
 ![Fix permissions on .PEM file](/snowplow/snowplow/raw/master/docs/images/emr-guide/mac-ssh-1.tiff)
-
 
 #### SSH Setup: for Windows
 
@@ -172,38 +180,5 @@ To do
 
 * Now download *PUTTY* and *Pageant* from [the same webpage you downloaded PUTTYgen](http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html). You will need these to establish the SSH connection and run Hive
 
-## Running a job
-
-Most of the analyses we do are in Hive interactive sessions: because it is in these types of sessions that we can actively query data, explore results and develop more sophisticated analyses.
-
-New sessions can either be initiated at the command-line, or via aws.amazon.com console. 
-
-To initiative a new session on Mac / Linux, navigate to the `elastic-mapreduce-cli` folder (where you saved the command-line tools) and enter
-
-	$ ./elastic-mapreduce --create --alive --name "Hive Job Flow" --hive-interactive
-
-You should see something like:
-
-![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-1.tiff)
-
-TODO: Add instructions to launch a session from the PC command-line
-
-Log into the [Amazon Web Console](https://console.aws.amazon.com/console/home) and click on [Elastic MapReduce] in the top menu bar. You should see the job you created listed. (In the screenshot below you'll see that we've initiated 2 Hive sessions.)
-
-![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-2.tiff)
-
-### Establishing the SSH connection: Mac / Linux users
-
-Return to the command-line, establish an SSH connection by entering the following
-
-	$ ./elastic-mapreduce --ssh --jobflow [JobFlowID]
-
-Substituting the JobFlowID generated when you created the session. You should see:
-
-![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-3.tiff)
-
-Now you can launch Hive by typing `Hive` at the command line:
-
-![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-4.tiff)
 
 
