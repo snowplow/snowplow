@@ -35,14 +35,14 @@ On the ad serving analytics front, we are working on an architecture to support 
 ## I want to use SnowPlow but not Amazon CloudFront - how?
 
 <a name="nocloudfront"/>
-It is possible to use SnowPlow with a self-hosted [Nginx] [nginx] webserver to handle pixel tracking rather than CloudFront. [Contact the SnowPlow team] [contact] if you want to find out more.
+SnowPlowing without CloudFront is on the roadmap: we are currently building an ultra-fast, micro-webserver called [SnowHusky] [snowhusky] which you can use for impression as well as redirection-based click tracking. SnowHusky is being actively developed and is not yet ready for production deployment; [contact the SnowPlow team] [contact] if you want to find out more about SnowHusky.
 
 ## How can I contribute to SnowPlow?
 
 The SnowPlow team welcome contributions! The core team (funded by [Keplar] [keplar]) is small so we would love more people to join in and help realise our objectives of building the world's most powerful analytics platform. Stay tuned for a more detailed update on how best you can contribute to SnowPlow. 
 
 [cloudfrontlog]: http://aws.amazon.com/cloudfront/faqs/#Can_I_get_access_to_request_logs_for_content_delivered_through_CloudFront
-[nginx]: http://nginx.org
+[snowhusky]: https://github.com/snowplow/snowhusky
 [contact]: mailto:snowplow@keplarllp.com 
 [keplar]: http://www.keplarllp.com
 
