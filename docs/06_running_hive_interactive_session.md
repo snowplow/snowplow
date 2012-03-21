@@ -32,7 +32,7 @@ To initiative a new session on Mac / Linux, navigate to the `elastic-mapreduce-c
 
 You should see something like:
 
-![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-1.tiff)
+![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-1.jpg)
 
 #### Starting a job using the Ruby Client on PC
 
@@ -48,7 +48,7 @@ Note: this will work however you initiated the job. (Whether you used the Ruby C
 
 Log into the [Amazon Web Console](https://console.aws.amazon.com/console/home) and click on [Elastic MapReduce] in the top menu bar. You should see the job you created listed. (In the screenshot below you'll see that we've initiated 2 Hive sessions.)
 
-![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-2.tiff)
+![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-2.jpg)
 
 <a name="sshin"/>
 ## Establishing an SSH connection
@@ -61,11 +61,11 @@ Return to the command-line, establish an SSH connection by entering the followin
 
 Substituting the JobFlowID generated when you created the session. You should see:
 
-![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-3.tiff)
+![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-3.jpg)
 
 Now you can launch Hive by typing `Hive` at the command line:
 
-![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-4.tiff)
+![Launch a Hive session from the command-line](/snowplow/snowplow/raw/master/docs/images/emr-guide/run-hive-interactive-session-4.jpg)
 
 ### Establishing the SSH connection: PC users
 
