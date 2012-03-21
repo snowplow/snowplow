@@ -28,6 +28,10 @@ To use Elastic MapReduce you will need to install Amazon's "EMR Command Line Int
 
 [Amazon Elastic MapReduce Ruby Client](http://aws.amazon.com/developertools/2264) is built in Ruby, so unless you have already have Ruby installed, you'll need to install it. Full instructions on downloading and setting up Ruby can be found [here](#http://www.ruby-lang.org/en/downloads/). There are many ways to install Ruby - if you don't have a strong preference for one of them, we recommend Mac OS X and Linux users use RVM, whilst Windows users use Ruby Installer.
 
+### Installing Ruby on Mac / Linux
+
+TO WRITE
+
 ### Installing Ruby on Windows
 
 * Go to [RubyInstaller](http://rubyinstaller.org/). Click "Download"
@@ -160,7 +164,7 @@ Now that you have configured the Ruby client, the last thing to do before you ca
 
 * Navigate to your `.PEM` file in the command line tool and set the permissions on the file as below:
 
-![Fix permissions on .PEM file](/snowplow/snowplow/raw/master/docs/images/emr-guide/mac-ssh-1.tiff)
+![Fix permissions on .PEM file](/snowplow/snowplow/raw/master/docs/images/emr-guide/mac-ssh-1.jpg)
 
 #### SSH Setup: for Windows
 
