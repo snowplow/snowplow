@@ -6,8 +6,7 @@
 
 1. [Before you get started...](#intro)
 2. [Installing Ruby](#rubyinstall)
-3. [Self-hosting snowplow.js](#jssh)
-5. [A note on privacy](#privacy)
+3. [Installing the Amazon Elastic MapReduce Ruby Client](#rubyclient)
 
 <a name="intro"/>
 ## Before you get started...
@@ -49,6 +48,7 @@ To use Elastic MapReduce you will need to install Amazon's "EMR Command Line Int
 
 ![Verify installation was successful](/snowplow/snowplow/raw/master/docs/images/emr-guide/ruby-6.PNG)
 
+<a name="rubyclient"/>
 ## Installing the Amazon Elastic MapReduce Ruby Client
 
 ### Downloading the Client 
@@ -151,7 +151,7 @@ To use Elastic MapReduce you will need to install Amazon's "EMR Command Line Int
 ![Name new S3 bucket to house analysis](/snowplow/snowplow/raw/master/docs/images/emr-guide/install-cli-14.PNG)
 
 
-### Setup SSH
+### Setting up SSH
 
 Now that you have configured the Ruby client, the last thing to do before you can run a Hive interactive session is setup SSH. This process looks different, depending on whether you using a Mac / Linux or PC.
 
