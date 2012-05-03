@@ -2077,7 +2077,7 @@ var
                  */
                 trackEvent: function (category, action, label, property, value) {
                     logEvent(category, action, label, property, value);                   
-                }
+                },
 
                 /**
                  * Track an ad being served
