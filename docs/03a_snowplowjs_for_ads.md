@@ -49,7 +49,7 @@ Because OpenX has a feature called [magic macros] [magicmacros], it is relativel
 var _snaq = _snaq || [];
 
 _snaq.push(['setAccount', 'patldfvsg0d8w']); // Update to your account ID or CloudFront distribution subdomain
-_snaq.push(['trackImpression', '{bannerid}', '{campaignid}', '', '{OAID}']);
+_snaq.push(['trackImpression', '{bannerid}', '{campaignid}', '', '{OAID}']); // Leave this line as-is
 
 (function() {
 var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
