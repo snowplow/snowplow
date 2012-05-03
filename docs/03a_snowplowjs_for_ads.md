@@ -29,11 +29,11 @@ Tracking ad impressions is handled by a dedicated SnowPlow JavaScript function, 
 | `AdvertiserID` | No            | Adserver identifier for the advertiser which the campaign belongs to                         |
 |       `UserID` | No            | Adserver identifier for the web user. Not to be confused with SnowPlow's own user identifier |
 
-You will want to set these arguments programmatically, across all of your ad zones/units - for guidelines on how to achieve this with the [OpenX adserver] [openx], please see the following sub-sections.
+You will want to set these arguments programmatically, across all of your ad zones/slots - for guidelines on how to achieve this with the [OpenX adserver] [openx], please see the following sub-sections.
 
 ### OpenX: Ad zone HTML append
 
-Assuming that you do not have access to the host website(s) to add the SnowPlow header script, you will need to add the SnowPlow header script and SnowPlow `trackImpression()` call as an append to each ad zone/slot in your ad server.
+Assuming that you do not have access to the host website(s) to add the SnowPlow header script, you will need to add the SnowPlow header script and SnowPlow `trackImpression()` call as an append to each ad zone in your ad server.
 
 Here's what the zone append functionality looks like in the OpenX adserver (OnRamp edition): 
 
