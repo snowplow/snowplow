@@ -70,6 +70,6 @@ At the moment, SnowPlow does not have built-in functionality to handle ad clicks
 An alternative approach is to ask your adserver provider to warehouse this data for you, and upload it to your Amazon S3 account.
 
 [openx]: http://www.openx.com/publisher/enterprise-ad-server
-[zoneappend]: /snowplow/snowplow/raw/master/docs/images/03a_zone_prepend_openx.png
+[zoneappend]: /snowplow/snowplow/raw/develop/docs/images/03a_zone_prepend_openx.png
 [dmp]: http://www.adopsinsider.com/online-ad-measurement-tracking/data-management-platforms/what-are-data-management-platforms/ 
 [contactus]: mailto:snowplow-ads@keplarllp.com
