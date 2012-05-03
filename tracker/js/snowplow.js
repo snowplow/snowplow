@@ -985,7 +985,7 @@ var
 				configDiscardHashTag,
 
 				// First-party cookie name prefix
-				configCookieNamePrefix = '_pk_',
+				configCookieNamePrefix = '_sp_',
 
 				// First-party cookie domain
 				// User agent defaults to origin hostname
