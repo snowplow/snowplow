@@ -39,9 +39,13 @@ Here's what the zone append functionality looks like in the OpenX adserver (OnRa
 
 ![zoneappend] [zoneappend]
 
+You will need to populate the append box with SnowPlow tags for **every ad zone/unit** which you use to serve ads across your site or network. Read on for the SnowPlow HTML code to use for OpenX. 
+
 ### OpenX: SnowPlow impression tracking using magic macros
 
-Because OpenX has a feature called [magic macros] [magicmacros], it is relatively straightforward to pass the banner, campaign and user ID arguments into the call to `trackImpression()` (advertiser ID is not available through magic macros). The full HTML  code to append, using asynchronous SnowPlow invocation, looks like this:
+Because OpenX has a feature called [magic macros] [magicmacros], it is relatively straightforward to pass the banner, campaign and user ID arguments into the call to `trackImpression()` (advertiser ID is not available through magic macros).
+
+The full HTML  code to append, using asynchronous SnowPlow invocation, looks like this:
 
 ```html
 <!-- SnowPlow starts plowing -->
@@ -71,5 +75,6 @@ An alternative approach is to ask your adserver provider to warehouse this data 
 
 [openx]: http://www.openx.com/publisher/enterprise-ad-server
 [zoneappend]: /snowplow/snowplow/raw/develop/docs/images/03a_zone_prepend_openx.png
+[magicmacros]: http://www.openx.com/docs/whitepapers/magic-macros
 [dmp]: http://www.adopsinsider.com/online-ad-measurement-tracking/data-management-platforms/what-are-data-management-platforms/ 
 [contactus]: mailto:snowplow-ads@keplarllp.com
