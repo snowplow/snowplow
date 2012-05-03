@@ -1010,6 +1010,9 @@ var
 				// Life of the referral cookie (in milliseconds)
 				configReferralCookieTimeout = 15768000000, // 6 months
 
+                // Browser language (or Windows language for IE). Imperfect but CloudFront doesn't log the Accept-Language header
+                configBrowserLanguage = window.navigator.userLanguage || window.navigator.language,
+
 				// Should cookies have the secure flag set
 				cookieSecure = documentAlias.location.protocol === 'https',
 
@@ -1285,12 +1288,8 @@ var
 					'&r=' + String(Math.random()).slice(2, 8) +
 					(configReferrerUrl.length ? '&urlref=' + encodeWrapper(purify(configReferrerUrl)) : '') +
 					'&_id=' + uuid +
-					(String(referralUrl).length ? '&_ref=' + encodeWrapper(purify(referralUrl.slice(0, referralUrlMaxLength))) : '');
-
-
-                // Additional features required by SnowPlow (Piwik calculated them server-side)
-                // TODO: add in the browser language
-                // TODO: add in the visitCount
+                    '&lang=' + configBrowserLanguage +
+                    '&visit=' + visitCount;
 
 /*</SNOWPLOW>*/
 
@@ -1424,7 +1423,8 @@ var
 			 * Browser prefix
 			 */
 			function prefixPropertyName(prefix, propertyName) {
-				if (prefix !== '') {
+				
+                if (prefix !== '') {
 					return prefix + propertyName.charAt(0).toUpperCase() + propertyName.slice(1);
 				}
 
