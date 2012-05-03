@@ -31,7 +31,7 @@ Tracking ad impressions is handled by a dedicated SnowPlow JavaScript function, 
 
 You will want to set these arguments programmatically, across all of your ad zones/units - for guidelines on how to achieve this with the [OpenX adserver] [openx], please see the following sub-sections.
 
-### OpenX: Ad zone/unit HTML append
+### OpenX: Ad zone HTML append
 
 Assuming that you do not have access to the host website(s) to add the SnowPlow header script, you will need to add the SnowPlow header script and SnowPlow `trackImpression()` call as an append to each ad zone/slot in your ad server.
 
@@ -39,13 +39,13 @@ Here's what the zone append functionality looks like in the OpenX adserver (OnRa
 
 ![zoneappend] [zoneappend]
 
-You will need to populate the append box with SnowPlow tags for **every ad zone/unit** which you use to serve ads across your site or network. Read on for the SnowPlow HTML code to use for OpenX. 
+You will need to populate the ad zone append field with SnowPlow tags for **every ad zone/unit** which you use to serve ads across your site or network. Read on for the SnowPlow HTML code to use for OpenX. 
 
 ### OpenX: SnowPlow impression tracking using magic macros
 
 Because OpenX has a feature called [magic macros] [magicmacros], it is relatively straightforward to pass the banner, campaign and user ID arguments into the call to `trackImpression()` (advertiser ID is not available through magic macros).
 
-The full HTML  code to append, using asynchronous SnowPlow invocation, looks like this:
+The full HTML code to append, using asynchronous SnowPlow invocation, looks like this:
 
 ```html
 <!-- SnowPlow starts plowing -->
@@ -64,7 +64,7 @@ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp
 <!-- SnowPlow stops plowing -->
 ```
 
-Once you have added this code into all of your active zones, SnowPlow should be collecting all of your ad impression data into Amazon S3.
+Once you have appended this code to all of your active ad zones, SnowPlow should be collecting all of your ad impression data into Amazon S3.
 
 <a name="clicksconvs"/>
 ## Tracking ad clicks and conversions
