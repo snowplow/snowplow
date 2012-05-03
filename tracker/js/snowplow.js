@@ -399,13 +399,8 @@ if (!this.JSON2) {
 	doNotTrack, setDoNotTrack, msDoNotTrack,
 	addListener, enableLinkTracking, setLinkTrackingTimer,
 	setHeartBeatTimer, killFrame, redirectFile, setCountPreRendered,
-<<<<<<< HEAD
-	trackEvent, trackLink, trackPageView, 
-	addPlugin, getAccount, getAsyncTracker
-=======
-	trackGoal, trackEvent, trackImpression, trackLink, trackPageView, setEcommerceView, addEcommerceItem, trackEcommerceOrder, trackEcommerceCartUpdate,
-	addPlugin, getTracker, getAsyncTracker
->>>>>>> imp_tracking
+	trackEvent, trackLink, trackPageView, trackImpression,
+	addPlugin, getAccount, getTracker, getAsyncTracker
 */
 var
 	// asynchronous tracker (or proxy)
