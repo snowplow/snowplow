@@ -2089,7 +2089,7 @@ var
                  */
                  trackImpression: function (bannerId, campaignId, advertiserId, userId) {
                      logImpression(bannerId, campaignId, advertiserId, userId);
-                 },
+                 }
 /*</SNOWPLOW>*/
 
 			};
