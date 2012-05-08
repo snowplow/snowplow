@@ -40,6 +40,8 @@ if [ ! -f ${sp_path} ];then
 	usage	
 fi
 
+echo "Running minification..."
+
 # Now run the minification
 sed '/<DEBUG>/,/<\/DEBUG>/d' < snowplow.js | sed 's/eval/replacedEvilString/' | java -jar ${yuic_path} --type js --line-break 1000 | sed 's/replacedEvilString/eval/' > sp.js
 
