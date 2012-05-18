@@ -1,4 +1,4 @@
-# SnowPlow log deserializers for Hive
+# SnowPlow Log Deserializers for Hive
 
 ## Introduction
 
