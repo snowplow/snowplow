@@ -6,37 +6,44 @@ snowplow-log-deserializers is a pair of Deserializers for importing SnowPlow log
 
 The specific deserializers are as follows:
 
-1. SnowPlowEventDeserializer - for deserializing page views and web events. The standard SnowPlow use case
-2. SnowPlowAdImpDeserializer - for deserializing ad impressions. Use this if you are an [ad network using SnowPlow] [snowplowads]
+1. **SnowPlowEventDeserializer** - for deserializing page views and web events. The standard SnowPlow use case
+2. **SnowPlowAdImpDeserializer** - for deserializing ad impressions. Use this if you are an [ad network using SnowPlow] [snowplowads]
 
-Both deserializers are based on our [cloudfront-log-deserializer] [cfserde], which is for general-purpose (non-SnowPlow-specific) analysis of CloudFront access log files.
+Both deserializers are based on our [cloudfront-log-deserializer] [cfserde], which is for general-purpose (i.e. non-SnowPlow-specific) analysis of CloudFront access log files.
 
 cloudfront-log-deserializers is a [Scala Build Tool] [sbt] project written in Java, and is [available] [downloads] from GitHub as a downloadable jarfile.
 
 ## The SnowPlow log format
 
-Because SnowPlow uses Amazon Web Services' CloudFront CDN for logging, the raw SnowPlow log format is identical to the CloudFront download distribution [access log format] [cflogformat].
+Because SnowPlow uses Amazon Web Services' CloudFront CDN for logging, the raw SnowPlow log format is identical to the [access log format] [cflogformat] for the CloudFront download distributions.
 
 The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs in the querystring attached to the request. The querystring name-value pairs are as follows:
 
-| **Name-value pair** | **Description**                                                                                                                                                                               |
-|------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `xxx`           | The date (UTC) on which the event occurred, e.g. 2009-03-10                                                                                                                                   |
-| `time`            | Time when the server finished processing the request (UTC), e.g. 01:42:39                                                                                                                     | 
-| `x-edge-location` | The edge location that served the request, e.g. DFW3                                                                                                                                          |
-| `sc-bytes`        | Server to client bytes, e.g. 1045619                                                                                                                                                          |
-| `c-ip`            | Client IP, e.g. 192.0.2.183                                                                                                                                                                   |
-| `cs-method`       | HTTP access method, e.g. GET                                                                                                                                                                  |
-| `cs(Host)`        | DNS name (the CloudFront distribution name specified in the request). If you made the request to a CNAME, the DNS name field will contain the underlying distribution DNS name, not the CNAME | 
-| `cs-uri-stem`     | URI stem, e.g. /images/daily-ad.jpg                                                                                                                                                           |
-| `sc-status`       | HTTP status code, e.g. 200                                                                                                                                                                    |
-| `cs(Referer)`     | The referrer, or a single dash (-) if there is no referrer                                                                                                                                    |
-| `cs(User Agent)`  | The user agent                                                                                                                                                                                |
-| `cs-uri-query`    | The querystring portion of the requested URI, or a single dash (-) if none. Max length is 8kB and encoding standard is RFC 1738 |
-
-For more details on this file format (or indeed the streaming distribution file format), please see the Amazon documentation on [Access Logs] [awslogdocs].
+| **KEY**           | **FULL NAME**  | **ALWAYS SET?** | **DESCRIPTION**                                                                                                                        |
+|------------------:|:--------------:|:---------------:|:---------------------------------------------------------------------------------------------------------------------------------------|
+| **Common**        |                |                 | _In all SnowPlow querystrings_                                                                                                         |
+| `rdm`             | Random Number  | Yes             | For cachebusting - not used for analytics                                                                                              |
+| `uid`             | User ID        | Yes             | Uniquely identifies the user i.e. web page visitor (strictly speaking, uniquely identifies the user's browser)                         |
+| `vid`             | Visit ID       | Yes             | The visitor's current visit number. Increments each visit (i.e. is a direct counter). 30 minutes of inactivity ends a given visit      |
+| `lang`            | Language       | Yes             | The visitor's web browser language (or Windows language for Internet Exporer)                                                          |
+| `refr`            | Referrer       | No              | URL of the referrer to the page calling SnowPlow. Don't confuse with CloudFront's own `cs(Referer)` (URL of the page calling SnowPlow) | 
+| **Page view**     |                |                 | _In the SnowPlow querystring when a page view is logged_                                                                               |
+| `page`            | Page Title     | Yes             | The title of the page calling SnowPlow                                                                                                 |
+| **Event**         |                |                 | _In the SnowPlow querystring when an event is logged_                                                                                  | 
+| `ev_ca`           | Event Category | Yes             |     |
+| `ev_ac`           | Event Action   | Yes             |     |
+| `ev_la`           | Event Label    | No              |     |
+| `ev_pr`           | Event Property | No              |     |
+| `ev_va`           | Event Value    | No              |     |
+| **Ad impression** |                |                 | _In the SnowPlow querystring when an ad impression is logged_                                                                          |
+| `ad_ba`           | Ad Banner      | Yes             | |
+| `ad_ca`           | Ad Campaign    | No              | |
+| `ad_ad`           | Ad Advertiser  | No              | |
+| `ad_uid`          | Ad User ID     | No              | |
 
 ## The Hive table format
+
+Each SnowPlow log deserializer maps the SnowPlow log format onto an appropriate Hive table structure. The main transformation 
 
 cloudfront-log-deserializer maps the access log format for a download distribution very directly onto an equivalent Hive table structure. The only transformation is that the querystring on the accessed URI is converted into a Hive `MAP<STRING, STRING>`.
 
