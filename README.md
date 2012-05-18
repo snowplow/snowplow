@@ -2,9 +2,9 @@
 
 ## Introduction
 
-snowplow-log-deserializers is a pair of Deserializers for importing SnowPlow logs into [Apache Hive] [hive] ready for analysis.
+snowplow-log-deserializers is a set of Deserializers which can import SnowPlow logs into [Apache Hive] [hive] ready for analysis.
 
-The specific deserializers are as follows:
+The specific deserializers created to date are as follows:
 
 1. **SnowPlowEventDeserializer** - for deserializing page views and web events. The standard SnowPlow use case
 2. **SnowPlowAdImpDeserializer** - for deserializing ad impressions. Use this if you are an [ad network using SnowPlow] [snowplowads]
