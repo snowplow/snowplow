@@ -25,10 +25,15 @@ Besides this README, there are two main SnowPlow guides which relate to `snowplo
 
 The main differences today are as follows:
 
-* Simplified the set of querystring name-value pairs (removing Piwik-specific values and values which Amazon S3 logging gives us for free)
-* Added new `trackEvent` functionality
+* Simplified the set of querystring name-value pairs (removing Piwik-specific values and values which CloudFront logging gives us for free)
 * Tracking is now configured with an account ID (CloudFront subdomain) rather than a full tracker URL
+* Added new `trackEvent` functionality
+* Added new `trackImpression` functionality
+* Added browser language and visit ID to the querystring (because not available via CloudFront logging)
 * Removed `POST` functionality (because S3 logging does not support `POST`)
+* Removed goal tracking functionality
+* Removed custom variables
+* Removed ecommerce tracking functionality (ecommerce tracking is now handled by events)
 * Removed `piwik.js`'s own deprecated 'legacy' functionality
 
 We expect these two scripts to diverge further as we continue to evolve SnowPlow (see the next section for more detail).
@@ -45,9 +50,8 @@ However, we fully expect `snowplow.js` to diverge from `piwik.js`, for three mai
 
 Planned items on the roadmap are as follows:
 
-* Remove goal tracking functionality
 * Remove site ID functionality
-* Update ecommerce tracking functionality to become event-based (e.g. support for `removeEcommerceItem`)
+* Remove unused campaign marketing variable code (as no longer used)
 * Rewrite in CoffeeScript (joke!)
 
 ## Copyright and license
