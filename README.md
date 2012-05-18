@@ -31,16 +31,16 @@ The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs 
 | **Page view**      |                  |                 | _In the SnowPlow querystring when a page view is logged_                                                                               |
 | `page`             | Page Title       | Yes             | The title of the page calling SnowPlow                                                                                                 |
 | **Event**          |                  |                 | _In the SnowPlow querystring when an event is logged_                                                                                  | 
-| `ev_ca`            | Event Category   | Yes             |  |
-| `ev_ac`            | Event Action     | Yes             |  |
-| `ev_la`            | Event Label      | No              |  | 
-| `ev_pr`            | Event Property   | No              |  |
-| `ev_va`            | Event Value      | No              |  |
+| `ev_ca`            | Event Category   | Yes             | The name you supply for the group of objects you are tracking                                                                          |
+| `ev_ac`            | Event Action     | Yes             | A string which defines the type of user interaction for the web object                                                                 |
+| `ev_la`            | Event Label      | No              | An optional string which identifies the specific object being actioned                                                                 | 
+| `ev_pr`            | Event Property   | No              | An optional string describing the object or the action performed on it                                                                 |
+| `ev_va`            | Event Value      | No              | An optional float to quantify or further describe the user action                                                                      |
 | **Ad imp**         |                  |                 | _In the SnowPlow querystring when an ad impression is logged_                                                                          |
-| `ad_ba`            | Ad Banner        | Yes             |  |
-| `ad_ca`            | Ad Campaign      | No              |  |
-| `ad_ad`            | Ad Advertiser    | No              |  |
-| `ad_uid`           | Ad User ID       | No              |  |
+| `ad_ba`            | Ad Banner        | Yes             | Adserver identifier for the ad banner (creative) being displayed                                                                       |
+| `ad_ca`            | Ad Campaign      | No              | Adserver identifier for the ad campaign which the banner belongs to                                                                    |
+| `ad_ad`            | Ad Advertiser    | No              | Adserver identifier for the advertiser which the campaign belongs to                                                                   |
+| `ad_uid`           | Ad User ID       | No              | Adserver identifier for the web user. Not to be confused with SnowPlow's own user identifier                                           |
 
 ## The Hive table format
 
@@ -95,9 +95,9 @@ CREATE EXTERNAL TABLE ad_imps (
 
 ## Usage
 
-First, download the latest jarfile for cloudfront-log-deserializer from GitHub from the [Downloads] [downloads] menu.
+First, download the latest jarfile for snowplow-log-deserializers from GitHub from the [Downloads] [downloads] menu.
 
-Then upload the jarfile into an S3 bucket accessible from your Hive console.
+Next, upload the jarfile into an S3 bucket accessible from your Hive console.
 
 Now using these deserializers with Hive should be quite easy - here's an example using the SnowPlowEventDeserializer:
 
