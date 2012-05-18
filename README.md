@@ -95,14 +95,14 @@ First, download the latest jarfile for cloudfront-log-deserializer from GitHub f
 
 Then upload the jarfile into an S3 bucket accessible from your Hive console.
 
-Now using this Deserializer with Hive should be quite easy.
+Now using these deserializers with Hive should be quite easy - here's an example using the SnowPlowEventDeserializer:
 
-    ADD JAR s3://{{JARS-BUCKET-NAME}}/cf-log-deserializer-0.2.jar;
+    ADD JAR s3://{{JARS-BUCKET-NAME}}/snowplow-log-deserializers-0.1.jar;
 
-    CREATE EXTERNAL TABLE accesses 
+    CREATE EXTERNAL TABLE views_events 
     PARTITIONED BY (dt STRING)
     ROW FORMAT 
-      SERDE 'com.snowplowanalytics.hive.serde.CfLogDeserializer'
+      SERDE 'com.snowplowanalytics.snowplow.hive.serde.SnowPlowEventDeserializer'
     LOCATION 's3://{{LOGS-BUCKET-NAME}}/';
 
 A couple of points on this:
