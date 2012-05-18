@@ -21,7 +21,7 @@ The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs 
 
 | **KEY**           | **FULL NAME**  | **ALWAYS SET?** | **DESCRIPTION**                                                                                                                        |
 |------------------:|:--------------:|:---------------:|:---------------------------------------------------------------------------------------------------------------------------------------|
-| **Common**        |                |                 | _In all SnowPlow querystrings_                                                                                                         |
+| **Common**        |                |                 | _Common to all SnowPlow querystrings_                                                                                                  |
 | `rdm`             | Random Number  | Yes             | For cachebusting - not used for analytics                                                                                              |
 | `uid`             | User ID        | Yes             | Uniquely identifies the user i.e. web page visitor (strictly speaking, uniquely identifies the user's browser)                         |
 | `vid`             | Visit ID       | Yes             | The visitor's current visit number. Increments each visit (i.e. is a direct counter). 30 minutes of inactivity ends a given visit      |
@@ -30,40 +30,64 @@ The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs 
 | **Page view**     |                |                 | _In the SnowPlow querystring when a page view is logged_                                                                               |
 | `page`            | Page Title     | Yes             | The title of the page calling SnowPlow                                                                                                 |
 | **Event**         |                |                 | _In the SnowPlow querystring when an event is logged_                                                                                  | 
-| `ev_ca`           | Event Category | Yes             |     |
-| `ev_ac`           | Event Action   | Yes             |     |
-| `ev_la`           | Event Label    | No              |     |
-| `ev_pr`           | Event Property | No              |     |
-| `ev_va`           | Event Value    | No              |     |
-| **Ad impression** |                |                 | _In the SnowPlow querystring when an ad impression is logged_                                                                          |
-| `ad_ba`           | Ad Banner      | Yes             | |
-| `ad_ca`           | Ad Campaign    | No              | |
-| `ad_ad`           | Ad Advertiser  | No              | |
-| `ad_uid`          | Ad User ID     | No              | |
+| `ev_ca`           | Event Category | Yes             |  |
+| `ev_ac`           | Event Action   | Yes             |  |
+| `ev_la`           | Event Label    | No              |  | 
+| `ev_pr`           | Event Property | No              |  |
+| `ev_va`           | Event Value    | No              |  |
+| **Ad imp**        |                |                 | _In the SnowPlow querystring when an ad impression is logged_                                                                          |
+| `ad_ba`           | Ad Banner      | Yes             |  |
+| `ad_ca`           | Ad Campaign    | No              |  |
+| `ad_ad`           | Ad Advertiser  | No              |  |
+| `ad_uid`          | Ad User ID     | No              |  |
 
 ## The Hive table format
 
-Each SnowPlow log deserializer maps the SnowPlow log format onto an appropriate Hive table structure. The main transformation 
+Each SnowPlow log deserializer maps the SnowPlow log format onto an appropriate Hive table structure. There are two main transformations handled by each deserializer:
 
-cloudfront-log-deserializer maps the access log format for a download distribution very directly onto an equivalent Hive table structure. The only transformation is that the querystring on the accessed URI is converted into a Hive `MAP<STRING, STRING>`.
+1. To extract the user's browser, screen resolution, OS etc from the CloudFront `useragent` field 
+2. To extract the relevant name-value pairs from the CloudFront `cs-uri-query` aka querystring field
 
-Here is the Hive table definition in full:
+The Hive table definitions for each deserializer are shown below:
 
-    CREATE EXTERNAL TABLE impressions (
-      dt STRING,
-      tm STRING,
-      edgelocation STRING,
-      bytessent INT,
-      ipaddress STRING,
-      operation STRING,
-      domain STRING,
-      object STRING,
-      httpstatus STRING,
-      referrer STRING, 
-      useragent STRING,
-      querystring STRING
-    )
-    ...
+### 1. SnowPlowEventDeserializer Hive table
+
+```sql
+CREATE EXTERNAL TABLE impressions (
+  dt STRING,
+  tm STRING,
+  edgelocation STRING,
+  bytessent INT,
+  ipaddress STRING,
+  operation STRING,
+  domain STRING,
+  object STRING,
+  httpstatus STRING,
+  referrer STRING, 
+  useragent STRING,
+  querystring STRING
+)
+```
+
+### 2. SnowPlowAdImpDeserializer Hive table
+
+
+```sql
+CREATE EXTERNAL TABLE impressions (
+  dt STRING,
+  tm STRING,
+  edgelocation STRING,
+  bytessent INT,
+  ipaddress STRING,
+  operation STRING,
+  domain STRING,
+  object STRING,
+  httpstatus STRING,
+  referrer STRING, 
+  useragent STRING,
+  querystring STRING
+)
+```
 
 ## Usage
 
