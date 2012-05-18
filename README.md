@@ -30,7 +30,7 @@ The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs 
 | **Page view**     |                |                 | _In the SnowPlow querystring when a page view is logged_                                                                               |
 | `page`            | Page Title     | Yes             | The title of the page calling SnowPlow                                                                                                 |
 | **Event**         |                |                 | _In the SnowPlow querystring when an event is logged_                                                                                  | 
-| `ev_ca`           | Event Category | Yes             |  |
+| `ev_ca`           | Event_Category | Yes             |  |
 | `ev_ac`           | Event Action   | Yes             |  |
 | `ev_la`           | Event Label    | No              |  | 
 | `ev_pr`           | Event Property | No              |  |
