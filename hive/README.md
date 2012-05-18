@@ -21,9 +21,9 @@ Besides this README, we recommend reading:
 * The guide to [Running a Hive Interactive Session] [hiveinteractive] 
 * The [Introduction to the SnowPlow Hive Tables] [hivetables]
 
-## Advanced SnowPlow analytics with Hive: A tutorial
+## Tutorial: Advanced SnowPlow analytics with Hive
 
-For a detailed set of tutorials on how to use Hive with SnowPlow for cohort analysis, please see the Keplar blog:
+For a detailed tutorial series exploring how to use Hive with SnowPlow for advanced cohort analysis, please see the Keplar blog:
 
 * [Cohort analyses for digital businesses: an overview] [cohort1]
 * [Performing cohort analysis on web analytics data using SnowPlow] [cohort2]
