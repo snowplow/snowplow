@@ -53,45 +53,91 @@ The Hive table definitions for each deserializer are shown below:
 
 ### 1. SnowPlowEventDeserializer Hive table
 
-Update this:
+This is the Hive table for all **Page views** and **Events**:
 
 ```hiveql
-CREATE EXTERNAL TABLE views_events (
+CREATE EXTERNAL TABLE events (
   dt STRING,
   tm STRING,
-  edgelocation STRING,
-  bytessent INT,
-  ipaddress STRING,
-  operation STRING,
-  domain STRING,
-  object STRING,
-  httpstatus STRING,
-  referrer STRING, 
-  useragent STRING,
-  querystring STRING
+  user_id STRING,
+  user_ipaddress STRING,
+  visit_id INT,
+  page_url STRING,
+  page_title STRING,
+  page_referrer STRING,  
+  mkt_source STRING,
+  mkt_medium STRING,
+  mkt_term STRING,
+  mkt_content STRING,
+  mkt_name STRING,
+  ev_category STRING,
+  ev_action STRING,
+  ev_label STRING,
+  ev_property STRING,
+  ev_value STRING,
+  br_name STRING,
+  br_lang STRING,
+  br_version STRING,
+  br_type STRING,
+  br_manufacturer STRING,
+  br_renderengine STRING,
+  br_family STRING,
+  br_os STRING,
+  br_ismobiledevice BOOLEAN,
+  br_devicetype STRING,
+  br_group STRING,
+  br_manufacturer STRING,
+  br_features ARRAY<STRING>,
+  br_cookies BOOLEAN,
+  br_screenwidth INT,
+  br_screenheight INT
 )
 ```
+
+A full description of each of these fields is out of scope of this documentation. Please see the [Introduction to Hive] [hiveintro] documentation for details.
 
 ### 2. SnowPlowAdImpDeserializer Hive table
 
-Update this:
+This is the Hive table for all **Ad impressions**:
 
 ```hiveql
-CREATE EXTERNAL TABLE ad_imps (
+CREATE EXTERNAL TABLE events (
   dt STRING,
   tm STRING,
-  edgelocation STRING,
-  bytessent INT,
-  ipaddress STRING,
-  operation STRING,
-  domain STRING,
-  object STRING,
-  httpstatus STRING,
-  referrer STRING, 
-  useragent STRING,
-  querystring STRING
+  user_id STRING,
+  user_ipaddress STRING,
+  visit_id INT,
+  page_url STRING,
+  page_referrer STRING,  
+  mkt_source STRING,
+  mkt_medium STRING,
+  mkt_term STRING,
+  mkt_content STRING,
+  mkt_name STRING,
+  ad_campaign STRING,
+  ad_banner STRING,
+  ad_advertiser STRING,
+  ad_user_id STRING,
+  br_name STRING,
+  br_lang STRING,
+  br_version STRING,
+  br_type STRING,
+  br_manufacturer STRING,
+  br_renderengine STRING,
+  br_family STRING,
+  br_os STRING,
+  br_ismobiledevice BOOLEAN,
+  br_devicetype STRING,
+  br_group STRING,
+  br_manufacturer STRING,
+  br_features ARRAY<STRING>,
+  br_cookies BOOLEAN,
+  br_screenwidth INT,
+  br_screenheight INT
 )
 ```
+
+A full description of each of these fields is out of scope of this documentation. Please see the [Introduction to Hive] [hiveintro] documentation for details.
 
 ## Usage
 
@@ -137,6 +183,7 @@ limitations under the License.
 [snowplowads]: http://www.keplarllp.com/blog/2012/05/warehousing-your-online-ad-data-with-snowplow
 [sbt]: https://github.com/harrah/xsbt/wiki
 [cflogformat]: https://github.com/snowplow/cloudfront-log-deserializer/blob/master/README.md#the-cloudfront-access-log-format
+[hiveintro]: TODO
 [cfserde]: https://github.com/snowplow/cloudfront-log-deserializer
 [license]: http://www.apache.org/licenses/LICENSE-2.0
 [downloads]: https://github.com/snowplow/snowplow-log-deserializers/downloads
