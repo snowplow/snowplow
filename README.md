@@ -72,7 +72,7 @@ CREATE EXTERNAL TABLE impressions (
 ### 2. SnowPlowAdImpDeserializer Hive table
 
 
-```sql
+```hiveql
 CREATE EXTERNAL TABLE impressions (
   dt STRING,
   tm STRING,
