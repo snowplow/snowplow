@@ -1285,11 +1285,11 @@ var
 
 				// Build out the rest of the request
 				request += 
-					'&r=' + String(Math.random()).slice(2, 8) +
-					(configReferrerUrl.length ? '&urlref=' + encodeWrapper(purify(configReferrerUrl)) : '') +
-					'&_id=' + uuid +
-                    '&lang=' + configBrowserLanguage +
-                    '&visit=' + visitCount;
+					'&rdm=' + String(Math.random()).slice(2, 8) +
+					(configReferrerUrl.length ? '&refr=' + encodeWrapper(purify(configReferrerUrl)) : '') +
+					'&uid=' + uuid +
+                    '&vid=' + visitCount +
+                    '&lang=' + configBrowserLanguage;
 
 /*</SNOWPLOW>*/
 
@@ -1377,7 +1377,7 @@ var
                     request += '&ad_ad=' + encodeWrapper(advertiserId);
                 }
                 if (String(userId).length) {
-                    request += '&ad_us=' + encodeWrapper(userId);
+                    request += '&ad_uid=' + encodeWrapper(userId);
                 }
 
                 request = getRequest(request, configCustomData, 'adimp');
@@ -1391,7 +1391,7 @@ var
 			 */
 			function logPageView(customTitle) {
 				var now = new Date(),
-					request = getRequest('action_name=' + encodeWrapper(titleFixup(customTitle || configTitle)), 'log');
+					request = getRequest('page=' + encodeWrapper(titleFixup(customTitle || configTitle)), 'log');
 
 				sendRequest(request, configTrackerPause);
 
