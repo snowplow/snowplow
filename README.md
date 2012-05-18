@@ -18,6 +18,7 @@ Contents of this repository are as follows:
 * The root folder contains this README and the [Apache License, Version 2.0] [license]
 * `docs` contains the technical documentation for this project. See the next section for more details
 * `tracker` contains everything related to SnowPlow's JavaScript tracker, `snowplow.js`
+* `hive` contains everything related to running Hive analytics on the SnowPlow data
 
 ## Documentation
 
@@ -26,9 +27,17 @@ There is a growing set of technical documentation for SnowPlow:
 * [Introduction] [intro]
 * [Technical FAQ] [techfaq]
 * [Integrating snowplow.js into your site] [integrating]
+* [SnowPlow for ad tracking] [adtracking]
 * [Self-hosting SnowPlow] [selfhosting]
+* [Setting up Amazon MapReduce] [mapreduce]
+* [Running a Hive interactive session] [hivesession]
+* [Introduction to the SnowPlow Hive tables] [hivetables]
 
-Additionally there is a technical [README] [snowplowjs] for the `snowplow.js` JavaScript tracker within the `tracker` sub-folder.
+Additionally it is worth reading the technical READMEs for the sub-projects:
+
+* The [README] [jsreadme] for the `snowplow.js` JavaScript tracker
+* The [README] [serdereadme] for the `snowplow-log-deserializers` project
+* The [README] [recipesreadme] for the SnowPlow Hive recipes
 
 ## Roadmap
 
@@ -62,9 +71,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 [blogpost]: http://www.keplarllp.com/blog/2012/02/introducing-snowplow-the-worlds-most-powerful-web-analytics-platform
+
 [intro]: /snowplow/snowplow/blob/master/docs/01_introduction.md
 [techfaq]: /snowplow/snowplow/blob/master/docs/02_technical_faq.md
 [integrating]: /snowplow/snowplow/blob/master/docs/03_integrating_snowplowjs.md
+[adtracking]: /snowplow/snowplow/blob/master/docs/03a_snowplowjs_for_ads.md
 [selfhosting]: /snowplow/snowplow/blob/master/docs/04_selfhosting_snowplow.md
-[snowplowjs]: /snowplow/snowplow/blob/master/tracker/README.md
+[mapreduce]: /snowplow/snowplow/blob/master/docs/05_setting_up_amazon_elastic_mapreduce.md
+[hivesession]: /snowplow/snowplow/blob/master/docs/06_running_hive_interactive_session.md
+[hivetables]: /snowplow/snowplow/blob/master/docs/07_snowplow_hive_tables_introduction.md
+
+[jsreadme]: /snowplow/snowplow/blob/master/tracker/README.md
+[serdereadme]: https://github.com/snowplow/snowplow-log-deserializers/blob/master/README.md
+[recipesreadme]: https://github.com/snowplow/snowplow/blob/master/hive/recipes/README.md
+
 [license]: http://www.apache.org/licenses/LICENSE-2.0
