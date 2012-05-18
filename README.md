@@ -28,15 +28,15 @@ The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs 
 | `lang`             | Language         | Yes             | The visitor's web browser language (or Windows language for Internet Exporer)                                                          |
 | `refr`             | Referrer         | No              | URL of the referrer to the page calling SnowPlow. Don't confuse with CloudFront's own `cs(Referer)` (URL of the page calling SnowPlow) | 
 | `f_*`              | Browser_Features | Yes             | Whether the user's browser has specific features, e.g. `f_fla=1` means that the user's browser has Flash                               |
-| **Page view**      |                  |                 | _In the SnowPlow querystring when a page view is logged_                                                                               |
+| **Page view**      |                  |                 | _In the SnowPlow querystring whenever a page view is logged_                                                                           |
 | `page`             | Page Title       | Yes             | The title of the page calling SnowPlow                                                                                                 |
-| **Event**          |                  |                 | _In the SnowPlow querystring when an event is logged_                                                                                  | 
+| **Event**          |                  |                 | _In the SnowPlow querystring whenever an event is logged_                                                                              | 
 | `ev_ca`            | Event Category   | Yes             | The name you supply for the group of objects you are tracking                                                                          |
 | `ev_ac`            | Event Action     | Yes             | A string which defines the type of user interaction for the web object                                                                 |
 | `ev_la`            | Event Label      | No              | An optional string which identifies the specific object being actioned                                                                 | 
 | `ev_pr`            | Event Property   | No              | An optional string describing the object or the action performed on it                                                                 |
 | `ev_va`            | Event Value      | No              | An optional float to quantify or further describe the user action                                                                      |
-| **Ad imp**         |                  |                 | _In the SnowPlow querystring when an ad impression is logged_                                                                          |
+| **Ad imp**         |                  |                 | _In the SnowPlow querystring whenever an ad impression is logged_                                                                      |
 | `ad_ba`            | Ad Banner        | Yes             | Adserver identifier for the ad banner (creative) being displayed                                                                       |
 | `ad_ca`            | Ad Campaign      | No              | Adserver identifier for the ad campaign which the banner belongs to                                                                    |
 | `ad_ad`            | Ad Advertiser    | No              | Adserver identifier for the advertiser which the campaign belongs to                                                                   |
