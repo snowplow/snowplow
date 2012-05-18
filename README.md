@@ -22,7 +22,7 @@ The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs 
 | **KEY**           | **FULL NAME**  | **ALWAYS SET?** | **DESCRIPTION**                                                                                                                        |
 |------------------:|:--------------:|:---------------:|:---------------------------------------------------------------------------------------------------------------------------------------|
 | **Common**        |                |                 | _Common to all SnowPlow querystrings_                                                                                                  |
-| `rdm`             | Random Number  | Yes             | For cachebusting - not used for analytics                                                                                              |
+| `rdm`             | Random_Number  | Yes             | For cachebusting - not used for analytics                                                                                              |
 | `uid`             | User ID        | Yes             | Uniquely identifies the user i.e. web page visitor (strictly speaking, uniquely identifies the user's browser)                         |
 | `vid`             | Visit ID       | Yes             | The visitor's current visit number. Increments each visit (i.e. is a direct counter). 30 minutes of inactivity ends a given visit      |
 | `lang`            | Language       | Yes             | The visitor's web browser language (or Windows language for Internet Exporer)                                                          |
@@ -30,7 +30,7 @@ The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs 
 | **Page view**     |                |                 | _In the SnowPlow querystring when a page view is logged_                                                                               |
 | `page`            | Page Title     | Yes             | The title of the page calling SnowPlow                                                                                                 |
 | **Event**         |                |                 | _In the SnowPlow querystring when an event is logged_                                                                                  | 
-| `ev_ca`           | Event_Category | Yes             |  |
+| `ev_ca`           | Event Category | Yes             |  |
 | `ev_ac`           | Event Action   | Yes             |  |
 | `ev_la`           | Event Label    | No              |  | 
 | `ev_pr`           | Event Property | No              |  |
