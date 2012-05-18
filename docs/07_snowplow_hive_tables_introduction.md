@@ -8,7 +8,7 @@ This guide assumes that you have collected SnowPlow data and successfully run on
 
 You can load your SnowPlow data into one of two different Hive tables, depending on your use case:
 
-| **Table**          | **Deserializer**          | **Description**                                                      |
+| **TABLE**          | **DESERIALIZER**          | **DESCRIPTION**                                                      |
 |:------------------:|:-------------------------:|:--------------------------------------------------------------------:|
 | **Events**         | SnowPlowEventDeserializer | Holds page views and other events. The standard SnowPlow use case    |
 | **Ad impressions** | SnowPlowAdImpDeserializer | Holds ad impressions. For [ad networks using SnowPlow] [snowplowads] |
