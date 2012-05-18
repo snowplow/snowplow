@@ -7,7 +7,7 @@ snowplow-log-deserializers is a set of Deserializers which can import SnowPlow l
 The specific deserializers created to date are as follows:
 
 1. **SnowPlowEventDeserializer** - for deserializing page views and web events. The standard SnowPlow use case
-2. **SnowPlowAdImpDeserializer** - for deserializing ad impressions. Use this if you are an [ad network using SnowPlow] [snowplowads]
+2. **SnowPlowAdImpDeserializer** - for deserializing ad impressions. For [ad networks using SnowPlow] [snowplowads]
 
 Both deserializers are based on our [cloudfront-log-deserializer] [cfserde], which is for general-purpose (i.e. non-SnowPlow-specific) analysis of CloudFront access log files.
 
@@ -94,7 +94,7 @@ CREATE EXTERNAL TABLE events (
 )
 ```
 
-A full description of each of these fields is out of scope of this documentation. Please see the [Introduction to Hive] [hiveintro] documentation for details.
+A full description of each of these fields is out of scope of this documentation. Please see the [Introduction to the SnowPlow Hive Tables] [hivetables] documentation for details.
 
 ### 2. SnowPlowAdImpDeserializer Hive table
 
@@ -137,7 +137,7 @@ CREATE EXTERNAL TABLE imps (
 )
 ```
 
-A full description of each of these fields is out of scope of this documentation. Please see the [Introduction to Hive] [hiveintro] documentation for details.
+A full description of each of these fields is out of scope of this documentation. Please see the [Introduction to the SnowPlow Hive Tables] [hivetables] documentation for details.
 
 ## Usage
 
@@ -157,7 +157,7 @@ Now using these deserializers with Hive should be quite easy - here's an example
 
 Some points on this:
 
-* Replace the `{{ }}` variables with your specific filepaths on Amazon S3
+* Replace the `{{x-BUCKET-NAME}}` variables with your specific filepaths on Amazon S3
 * Don't forget the trailing slash on your `LOCATION`, or you will get a cryptic "Can not create a Path from an empty string" exception
 * In the `CREATE EXTERNAL TABLE` statement above, you do **not** have to manually specify all of the columns to create for this table. This is because Hive will query the SerDe to determine the _actual_ list of columns for this table.
 
@@ -183,7 +183,7 @@ limitations under the License.
 [snowplowads]: http://www.keplarllp.com/blog/2012/05/warehousing-your-online-ad-data-with-snowplow
 [sbt]: https://github.com/harrah/xsbt/wiki
 [cflogformat]: https://github.com/snowplow/cloudfront-log-deserializer/blob/master/README.md#the-cloudfront-access-log-format
-[hiveintro]: TODO
+[hivetables]: https://github.com/snowplow/snowplow/blob/master/docs/07_snowplow_hive_tables_introduction.md
 [cfserde]: https://github.com/snowplow/cloudfront-log-deserializer
 [license]: http://www.apache.org/licenses/LICENSE-2.0
 [downloads]: https://github.com/snowplow/snowplow-log-deserializers/downloads
