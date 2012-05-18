@@ -15,7 +15,7 @@ cloudfront-log-deserializers is a [Scala Build Tool] [sbt] project written in Ja
 
 ## The SnowPlow log format
 
-Because SnowPlow uses Amazon Web Services' CloudFront CDN for logging, the raw SnowPlow log format is identical to the [access log format] [cflogformat] for the CloudFront download distributions.
+Because SnowPlow uses Amazon Web Services' [CloudFront CDN] [cloudfront] for logging, the raw SnowPlow log format is identical to the [access log format] [cflogformat] for the CloudFront download distributions.
 
 The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs in the querystring attached to the request. The querystring name-value pairs are as follows:
 
@@ -27,7 +27,7 @@ The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs 
 | `vid`              | Visit ID         | Yes             | The visitor's current visit number. Increments each visit (i.e. is a direct counter). 30 minutes of inactivity ends a given visit      |
 | `lang`             | Language         | Yes             | The visitor's web browser language (or Windows language for Internet Exporer)                                                          |
 | `refr`             | Referrer         | No              | URL of the referrer to the page calling SnowPlow. Don't confuse with CloudFront's own `cs(Referer)` (URL of the page calling SnowPlow) | 
-| `f_*`              | Browser_Features | Yes             | Whether the user's browser has specific features, e.g. `f_fla=1` means the user's browser has Flash                                    |
+| `f_*`              | Browser_Features | Yes             | Whether the user's browser has specific features, e.g. `f_fla=1` means that the user's browser has Flash                               |
 | **Page view**      |                  |                 | _In the SnowPlow querystring when a page view is logged_                                                                               |
 | `page`             | Page Title       | Yes             | The title of the page calling SnowPlow                                                                                                 |
 | **Event**          |                  |                 | _In the SnowPlow querystring when an event is logged_                                                                                  | 
@@ -132,11 +132,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[hive]: http://hive.apache.org/ 
-[snowplowserdes]: https://github.com/snowplow/snowplow/tree/master/serdes
-[awslogdocs]: http://docs.amazonwebservices.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#LogFileFormat
+[hive]: http://hive.apache.org/
+[cloudfront]: http://aws.amazon.com/cloudfront/
+[snowplowads]: http://www.keplarllp.com/blog/2012/05/warehousing-your-online-ad-data-with-snowplow
+[sbt]: https://github.com/harrah/xsbt/wiki
+[cflogformat]: https://github.com/snowplow/cloudfront-log-deserializer/blob/master/README.md#the-cloudfront-access-log-format
+[cfserde]: https://github.com/snowplow/cloudfront-log-deserializer
 [license]: http://www.apache.org/licenses/LICENSE-2.0
-[loganalyzer]: http://elasticmapreduce.s3.amazonaws.com/samples/cloudfront/code/cloudfront-loganalyzer.tgz
-[w3cformat]: http://www.w3.org/TR/WD-logfile.html 
-[s3logdeserializer]: http://javasourcecode.org/html/open-source/hive/hive-0.7.1/org/apache/hadoop/hive/contrib/serde2/s3/S3LogDeserializer.html
-[downloads]: https://github.com/snowplow/cloudfront-log-deserializer/downloads
+[downloads]: https://github.com/snowplow/snowplow-log-deserializers/downloads
