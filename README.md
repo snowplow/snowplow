@@ -37,9 +37,9 @@ The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs 
 | `ev_pr`            | Event Property   | No              | An optional string describing the object or the action performed on it                                                                 |
 | `ev_va`            | Event Value      | No              | An optional float to quantify or further describe the user action                                                                      |
 | **Ad imp**         |                  |                 | _In the SnowPlow querystring whenever an ad impression is logged_                                                                      |
-| `ad_ba`            | Ad Banner        | Yes             | Adserver identifier for the ad banner (creative) being displayed                                                                       |
-| `ad_ca`            | Ad Campaign      | No              | Adserver identifier for the ad campaign which the banner belongs to                                                                    |
-| `ad_ad`            | Ad Advertiser    | No              | Adserver identifier for the advertiser which the campaign belongs to                                                                   |
+| `ad_ba`            | Ad Banner ID     | Yes             | Adserver identifier for the ad banner (creative) being displayed                                                                       |
+| `ad_ca`            | Ad Campaign ID   | No              | Adserver identifier for the ad campaign which the banner belongs to                                                                    |
+| `ad_ad`            | Ad Advertiser ID | No              | Adserver identifier for the advertiser which the campaign belongs to                                                                   |
 | `ad_uid`           | Ad User ID       | No              | Adserver identifier for the web user. Not to be confused with SnowPlow's own user identifier                                           |
 
 ## The Hive table format
@@ -53,7 +53,7 @@ The Hive table definitions for each deserializer are shown below:
 
 ### 1. SnowPlowEventDeserializer Hive table
 
-This is the Hive table for all **Page views** and **Events**:
+This is the Hive table for **Page views** and **Events**:
 
 ```hiveql
 CREATE EXTERNAL TABLE events (
@@ -98,10 +98,10 @@ A full description of each of these fields is out of scope of this documentation
 
 ### 2. SnowPlowAdImpDeserializer Hive table
 
-This is the Hive table for all **Ad impressions**:
+This is the Hive table for **Ad impressions**:
 
 ```hiveql
-CREATE EXTERNAL TABLE events (
+CREATE EXTERNAL TABLE imps (
   dt STRING,
   tm STRING,
   user_id STRING,
@@ -114,9 +114,9 @@ CREATE EXTERNAL TABLE events (
   mkt_term STRING,
   mkt_content STRING,
   mkt_name STRING,
-  ad_campaign STRING,
-  ad_banner STRING,
-  ad_advertiser STRING,
+  ad_campaign_id STRING,
+  ad_banner_id STRING,
+  ad_advertiser_id STRING,
   ad_user_id STRING,
   br_name STRING,
   br_lang STRING,
