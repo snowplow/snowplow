@@ -45,15 +45,17 @@ The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs 
 
 Each SnowPlow log deserializer maps the SnowPlow log format onto an appropriate Hive table structure. There are two main transformations handled by each deserializer:
 
-1. To extract the user's browser, screen resolution, OS etc from the CloudFront `useragent` field 
-2. To extract the relevant name-value pairs from the CloudFront `cs-uri-query` aka querystring field
+1. Extracting the user's browser, screen resolution, OS etc from the CloudFront `useragent` field 
+2. Extracting the relevant name-value pairs from the CloudFront `cs-uri-query` aka querystring field
 
 The Hive table definitions for each deserializer are shown below:
 
 ### 1. SnowPlowEventDeserializer Hive table
 
+Update this:
+
 ```hiveql
-CREATE EXTERNAL TABLE impressions (
+CREATE EXTERNAL TABLE views_events (
   dt STRING,
   tm STRING,
   edgelocation STRING,
@@ -71,9 +73,10 @@ CREATE EXTERNAL TABLE impressions (
 
 ### 2. SnowPlowAdImpDeserializer Hive table
 
+Update this:
 
 ```hiveql
-CREATE EXTERNAL TABLE impressions (
+CREATE EXTERNAL TABLE ad_imps (
   dt STRING,
   tm STRING,
   edgelocation STRING,
