@@ -1286,17 +1286,17 @@ var
 				// Build out the rest of the request
 				request += 
 					'&rdm=' + String(Math.random()).slice(2, 8) +
-					(configReferrerUrl.length ? '&refr=' + encodeWrapper(purify(configReferrerUrl)) : '') +
 					'&uid=' + uuid +
                     '&vid=' + visitCount +
-                    '&lang=' + configBrowserLanguage;
+                    '&lang=' + configBrowserLanguage +
+                    (configReferrerUrl.length ? '&refr=' + encodeWrapper(purify(configReferrerUrl)) : '');
 
 /*</SNOWPLOW>*/
 
 				// Browser features
 				for (i in browserFeatures) {
 					if (Object.prototype.hasOwnProperty.call(browserFeatures, i)) {
-						request += '&' + i + '=' + browserFeatures[i];
+						request += '&f_' + i + '=' + browserFeatures[i];
 					}
 				}
 
