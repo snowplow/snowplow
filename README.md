@@ -52,7 +52,7 @@ The Hive table definitions for each deserializer are shown below:
 
 ### 1. SnowPlowEventDeserializer Hive table
 
-```sql
+```hiveql
 CREATE EXTERNAL TABLE impressions (
   dt STRING,
   tm STRING,
