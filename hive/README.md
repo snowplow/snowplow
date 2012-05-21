@@ -17,9 +17,8 @@ Because it is built on top of Hadoop, Hive queries can be run against vast data 
 
 Hive is a very flexible tool to use to query data.
 
-1. It includes a large (and growing) number of inbuilt functions
-2. Where Hive functions do not already exist to perform required operations, it is possible to create new user-defined functions
-3. It is possible to extend Hive functionality using other languages including e.g. Python
+1. It includes a large (and growing) number of [inbuilt functions](https://cwiki.apache.org/Hive/languagemanual-udf.html)
+2. Where Hive functions do not already exist to perform required operations, it is possible to create [new user-defined functions](https://cwiki.apache.org/Hive/genericudafcasestudy.html)
 
 ### Hive is straightforward, especially as implemented for SnowPlow
 
