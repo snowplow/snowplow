@@ -20,9 +20,9 @@ object Dependencies {
   object V {
     val hadoop    = "0.20.2"    
     val hive      = "0.8.1"
+    val http      = "4.1.1"
     val logging   = "1.1.1"
     val specs2    = "1.8"
-    val http      = "4.1.1"
     // val useragent = "1.2.3" No Maven repo, so user-agent-utils is an unmanaged lib
   }
 
@@ -30,8 +30,8 @@ object Dependencies {
     val hadoop      = "org.apache.hadoop"          %  "hadoop-core"          % V.hadoop
     val hive        = "org.apache.hive"            %  "hive-common"          % V.hive
     val serde       = "org.apache.hive"            %  "hive-serde"           % V.hive
+    val httpClient  = "org.apache.httpcomponents"  %  "httpclient"           % V.http 
     val logging     = "commons-logging"            %  "commons-logging"      % V.logging
     val specs2      = "org.specs2"                 %% "specs2"               % V.specs2      % "test"
-    val httpClient  = "org.apache.httpcomponents"  %  "httpclient"           % V.http 
   }
 }
