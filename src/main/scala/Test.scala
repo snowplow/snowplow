@@ -4,6 +4,6 @@ object Test {
 
   def main(args: Array[String]) {
     Console.println("Running tests...");
-    SnowPlowEventDeserializer.deserializeLine("2012-03-16	11:45:01	ARN1	3422	195.78.71.32	GET	detlpfvsg0d9v.cloudfront.net	/ice.png	200	http://delivery.ads-creativesyndicator.com/adserver/www/delivery/afr.php?zoneid=103&cb=INSERT_RANDOM_NUMBER_HERE&ct0=INSERT_CLICKURL_HERE	Mozilla/5.0%20(Windows%20NT%206.0)%20AppleWebKit/535.11%20(KHTML,%20like%20Gecko)%20Chrome/17.0.963.79%20Safari/535.11	&ad_ba=1884&ad_ca=547&ad_us=a1088f76c6931b0a26228dc3bde321d7&r=481413&urlref=http%253A%252F%252Fwww.fantasyfootballscout.co.uk%252F&_id=b41cf6859dccd8ce&_ref=http%253A%252F%252Fwww.fantasyfootballscout.co.uk%252F&pdf=1&qt=0&realp=0&wma=0&dir=1&fla=1&java=1&gears=0&ag=1&res=1920x1200&cookie=1", true);
+    SnowPlowEventDeserializer.deserializeLine("2012-05-21\t07:14:47\tFRA2\t3343\t83.4.209.35\tGET\td3t05xllj8hhgj.cloudfront.net\t/ice.png\t200\thttps://test.psybazaar.com/shop/checkout/\tMozilla/5.0%20(X11;%20Ubuntu;%20Linux%20x86_64;%20rv:11.0)%20Gecko/20100101%20Firefox/11.0\t&ev_ca=ecomm&ev_ac=checkout&ev_la=id_email&ev_pr=ERROR&r=236095&urlref=http%253A%252F%252Ftest.psybazaar.com%252F&_id=135f6b7536aff045&lang=en-US&visit=5&pdf=0&qt=1&realp=0&wma=1&dir=0&fla=1&java=1&gears=0&ag=0&res=1920x1080&cookie=1", true);
   }
 }
