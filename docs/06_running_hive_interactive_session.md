@@ -7,13 +7,13 @@ This part of the guide walks through the process of launching and running a Hive
 1. [Starting a job](#startingajob) i.e. firing up a set of instances to run Hive / Hadoop
 2. [SSHing in to the instances and launching Hive](#sshin)
 3. [Running Hive queries, including using the SnowPlow serde](#runninghivequeries)
-4. [Terminating the session](#terminating the session.)
+4. [Terminating the session](#terminatingthesession.)
 
 Most of the analyses we perform are in Hive interactive sessions: because it is in these types of sessions that we can actively query data, explore results and develop more sophisticated analyses.
 
 New sessions can either be initiated at the command-line, or via aws.amazon.com console. 
 
-<a name="staringajob"/>
+<a name="startingajob"/>
 ## Starting a job
 
 There are 2 ways to start a job / fire up instances to run Hive: 
@@ -76,7 +76,7 @@ TO WRITE
 
 TO WRITE
 
-<a name="terminating a session"/>
+<a name="terminatingthesession"/>
 ## Terminating the session
 
 Interactive sessions have to be terminated manually. (Or else you risk running up high Amazon fees...) Sessions can either be terminated at the command-line, using the Ruby Client, or via the web UI.
