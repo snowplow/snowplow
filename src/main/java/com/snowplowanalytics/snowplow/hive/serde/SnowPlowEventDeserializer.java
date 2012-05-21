@@ -63,39 +63,43 @@ public class SnowPlowEventDeserializer implements Deserializer {
   private static final SnowPlowEventStruct cachedStruct = new SnowPlowEventStruct();
 
   // -------------------------------------------------------------------------------------------------------------------
-  // Only test - TODO move this out into test suite
+  // Helper for deserializing a single line
   // -------------------------------------------------------------------------------------------------------------------
 
   /**
-   * @param args
+   * A helper which deserializes and inspects a single line of text
+   *
+   * @param line The line of text to deserialize
+   * @param verbose Whether to debug-print the contents of the struct using reflection
+   * @return The struct object from deserializing the text
+   * @throws SerDeException For any problem deserializing the line, or then reflection-inspecting the contents of the struct
    */
-  public static void runTest(String textLine) {
-    System.err.println("This is only a test run");
-    try {
-      SnowPlowEventDeserializer serDe = new SnowPlowEventDeserializer();
-      Configuration conf = new Configuration();
-      Properties tbl = new Properties();
-      Text sample = new Text(textLine);
-      serDe.initialize(conf, tbl);
-      Object row = serDe.deserialize(sample);
-      System.err.println(serDe.getObjectInspector().getClass().toString());
-      ReflectionStructObjectInspector oi = (ReflectionStructObjectInspector) serDe
-          .getObjectInspector();
+  public static Object deserializeLine(String line, Boolean verbose) throws SerDeException {
+
+    // Run the deserializer with a sample row
+    SnowPlowEventDeserializer serDe = new SnowPlowEventDeserializer();
+    Configuration conf = new Configuration();
+    Properties tbl = new Properties();
+    Text text = new Text(line);
+    serDe.initialize(conf, tbl);
+    Object row = serDe.deserialize(text);
+
+    // Loop through and output each field in the struct, if required.
+    if (verbose) {
+      ReflectionStructObjectInspector oi = (ReflectionStructObjectInspector) serDe.getObjectInspector();
       List<? extends StructField> fieldRefs = oi.getAllStructFieldRefs();
       for (int i = 0; i < fieldRefs.size(); i++) {
-        System.err.println(fieldRefs.get(i).toString());
+        System.out.println(fieldRefs.get(i).toString());
         Object fieldData = oi.getStructFieldData(row, fieldRefs.get(i));
         if (fieldData == null) {
-          System.err.println("null");
+          System.out.println("null");
         } else {
-          System.err.println(fieldData.toString());
+          System.out.println(fieldData.toString());
         }
       }
-
-    } catch (Exception e) {
-      System.err.println("Caught: " + e);
-      e.printStackTrace();
     }
+
+    return row;
   }
 
   // -------------------------------------------------------------------------------------------------------------------
