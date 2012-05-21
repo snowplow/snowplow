@@ -10,7 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.hive.serde;
+package com.snowplowanalytics.snowplow.hive.serde;
 
 // Java
 import java.nio.charset.CharacterCodingException;
@@ -37,18 +37,18 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
 /**
- * CfLogDeserializer reads CloudFront download distribution file access log data into Hive.
+ * SnowPlowEventDeserializer reads SnowPlow event and page view log data into Hive.
  * 
  * For documentation please see the introductory README.md in the project root.
  */
-public class CfLogDeserializer implements Deserializer {
+public class SnowPlowEventDeserializer implements Deserializer {
 
   // -------------------------------------------------------------------------------------------------------------------
   // Initial setup
   // -------------------------------------------------------------------------------------------------------------------
 
   // Setup logging
-  public static final Log LOG = LogFactory.getLog(CfLogDeserializer.class.getName());
+  public static final Log LOG = LogFactory.getLog(SnowPlowEventDeserializer.class.getName());
 
   // Voodoo taken from Zemanta's S3LogDeserializer
   static {
@@ -60,7 +60,7 @@ public class CfLogDeserializer implements Deserializer {
   private ObjectInspector cachedObjectInspector;
 
   // For performance reasons we reuse the same object to deserialize all of our rows
-  private static final CfLogStruct cachedStruct = new CfLogStruct();
+  private static final SnowPlowEventStruct cachedStruct = new SnowPlowEventStruct();
 
   // -------------------------------------------------------------------------------------------------------------------
   // Only test - TODO move this out into test suite
@@ -72,7 +72,7 @@ public class CfLogDeserializer implements Deserializer {
   public static void runTest() {
     System.err.println("This is only a test run");
     try {
-      CfLogDeserializer serDe = new CfLogDeserializer();
+      SnowPlowEventDeserializer serDe = new SnowPlowEventDeserializer();
       Configuration conf = new Configuration();
       Properties tbl = new Properties();
       Text sample = new Text("2012-03-16	11:45:01	ARN1	3422	195.78.71.32	GET	detlpfvsg0d9v.cloudfront.net	/ice.png	200	http://delivery.ads-creativesyndicator.com/adserver/www/delivery/afr.php?zoneid=103&cb=INSERT_RANDOM_NUMBER_HERE&ct0=INSERT_CLICKURL_HERE	Mozilla/5.0%20(Windows%20NT%206.0)%20AppleWebKit/535.11%20(KHTML,%20like%20Gecko)%20Chrome/17.0.963.79%20Safari/535.11	&ad_ba=1884&ad_ca=547&ad_us=a1088f76c6931b0a26228dc3bde321d7&r=481413&urlref=http%253A%252F%252Fwww.fantasyfootballscout.co.uk%252F&_id=b41cf6859dccd8ce&_ref=http%253A%252F%252Fwww.fantasyfootballscout.co.uk%252F&pdf=1&qt=0&realp=0&wma=0&dir=1&fla=1&java=1&gears=0&ag=1&res=1920x1200&cookie=1");
@@ -106,7 +106,7 @@ public class CfLogDeserializer implements Deserializer {
   /**
    * Empty constructor
    */
-  public CfLogDeserializer() throws SerDeException {
+  public SnowPlowEventDeserializer() throws SerDeException {
   }
 
   /**
@@ -119,7 +119,7 @@ public class CfLogDeserializer implements Deserializer {
   @Override
   public void initialize(Configuration conf, Properties tbl) throws SerDeException {
 
-    cachedObjectInspector = ObjectInspectorFactory.getReflectionObjectInspector(CfLogStruct.class, ObjectInspectorFactory.ObjectInspectorOptions.JAVA);
+    cachedObjectInspector = ObjectInspectorFactory.getReflectionObjectInspector(SnowPlowEventStruct.class, ObjectInspectorFactory.ObjectInspectorOptions.JAVA);
     LOG.debug(this.getClass().getName() + " initialized");
   }
 

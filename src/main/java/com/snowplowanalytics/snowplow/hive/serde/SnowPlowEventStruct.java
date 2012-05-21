@@ -10,7 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.hive.serde;
+package com.snowplowanalytics.snowplow.hive.serde;
 
 // Java
 import java.text.SimpleDateFormat;
@@ -22,15 +22,14 @@ import java.util.regex.Pattern;
 import org.apache.hadoop.hive.serde2.SerDeException;
 
 /**
- * CfLogStruct represents the Hive struct for a row in a CloudFront access log.
+ * SnowPlowEventStruct represents the Hive struct for a SnowPlow event or page view.
  *
  * Contains a parse() method to perform an update-in-place for this instance
  * based on the current row's contents.
  *
  * Constructor is empty because we do updates-in-place for performance reasons.
- * An immutable Scala case class would be nice but fear it would be s-l-o-w
  */
-public class CfLogStruct {
+public class SnowPlowEventStruct {
 
   // -------------------------------------------------------------------------------------------------------------------
   // Mutable properties for this Hive struct
@@ -77,7 +76,7 @@ public class CfLogStruct {
   /**
    * Parses the input row String into a Java object.
    * For performance reasons this works in-place updating the fields
-   * within this CfLogStruct, rather than creating a new one.
+   * within this SnowPlowEventStruct, rather than creating a new one.
    * 
    * @param row The raw String containing the row contents
    * @return This struct with all values updated
@@ -111,7 +110,7 @@ public class CfLogStruct {
       throw new SerDeException("Could not parse row: " + row, e);
     }
 
-    return this; // Return the CfLogStruct
+    return this; // Return the SnowPlowEventStruct
   }
 
   // -------------------------------------------------------------------------------------------------------------------
