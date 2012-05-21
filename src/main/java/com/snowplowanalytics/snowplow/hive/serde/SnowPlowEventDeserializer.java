@@ -76,12 +76,14 @@ public class SnowPlowEventDeserializer implements Deserializer {
    */
   public static Object deserializeLine(String line, Boolean verbose) throws SerDeException {
 
-    // Run the deserializer with a sample row
+    // Prep the deserializer
     SnowPlowEventDeserializer serDe = new SnowPlowEventDeserializer();
     Configuration conf = new Configuration();
     Properties tbl = new Properties();
-    Text text = new Text(line);
     serDe.initialize(conf, tbl);
+
+    // Run the deserializer with the sample row
+    Text text = new Text(line);
     Object row = serDe.deserialize(text);
 
     // Loop through and output each field in the struct, if required.
