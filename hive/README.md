@@ -2,7 +2,60 @@
 
 ## Introduction
 
-Yali to write - why Hive is great for SnowPlow analytics.
+SnowPlow was built to meet the following 2 requirements:
+
+1. Make it easy for website owners to capture granular, event-level and customer-level data capturing how their audience / customers engage on their websites and digital platforms and store that data securely
+2. Make it possible to run a wide range of analytics across that entire data set including highly bespoke queries: thereby enabling website owners to answer very specific business questions using their data
+
+Utilising [Apache Hive](http://hive.apache.org/) has been critical in our delivering on our 2nd objective: giving website owners a powerful, flexible tool to query data that is straightforward to use.
+
+### Hive is powerful
+
+Because it is built on top of Hadoop, Hive queries can be run against vast data sets. 
+
+### Hive is flexible
+
+Hive is a very flexible tool to use to query data.
+
+1. It includes a large (and growing) number of inbuilt functions
+2. Where Hive functions do not already exist to perform required operations, it is possible to create new user-defined functions
+3. It is possible to extend Hive functionality using other languages including e.g. Python
+
+### Hive is straightforward, especially as implemented for SnowPlow
+
+Hive makes it easy for anyone with a knowledge of SQL to run queries against SnowPlow web analytics data. No knowledge of Java (or any other languages e.g. Python) is required.
+
+SnowPlow data is stored in Hive in a single events table where each line of the table represents a single "event" or "user action" e.g. opening a web page, adding an item to a shopping basket, filling in an entry in a web form,  playing a video.
+
+SnowPlow's SQL-like querying language combined with SnowPlow's simple data structure means that writing queries is very easy. To give just some examples:
+
+#### Count the number of unique visits in a day
+
+	SELECT COUNT(DISTINCT `user_id`)
+	FROM `snowplow_events_table`
+	WHERE `dt`='2012-05-20'
+
+#### Count the average number of pages-per-visit by day
+
+	SELECT COUNT(`tm`)/COUNT(DISTINCT `visit_id`) /* Average pages per visit */
+	FROM `snowplow_events_table`
+	WHERE `event_action` IS NULL /* i.e. ignore any ajax events */ 
+	GROUP BY `dt` /* group by date */
+	
+#### Look at the number of visitors brought to the site by referrer for 1st visits ONLY
+
+	SELECT
+		`mkt_source`,
+		`mkt_medium`,
+		`mkt_term`,
+		`mkt_content`,
+		`mkt_name`,
+		COUNT(DISTINCT (user_id)),
+	FROM
+		`snowplow_events_table`
+	WHERE
+		`visit_id` = ` /* Only look at 1st visits for each user_id */
+	GROUP BY `mkt_source`, `mkt_medium`, `mkt_term`, `mkt_content`, `mkt_name`
 
 ## Contents
 
