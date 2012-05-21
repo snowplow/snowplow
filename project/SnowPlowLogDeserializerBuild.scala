@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object CfLogDeserializerBuild extends Build {
+object SnowPlowLogDeserializerBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -24,7 +24,7 @@ object CfLogDeserializerBuild extends Build {
   }
 
   // Define our project, with basic project information and library dependencies
-  lazy val project = Project("cloudfront-log-deserializer", file("."))
+  lazy val project = Project("snowplow-log-deserializers", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
@@ -32,7 +32,8 @@ object CfLogDeserializerBuild extends Build {
         Libraries.hive,
         Libraries.serde,
         Libraries.logging,
-        Libraries.specs2
+        Libraries.specs2,
+        Libraries.httpClient
       )
     )
 }
