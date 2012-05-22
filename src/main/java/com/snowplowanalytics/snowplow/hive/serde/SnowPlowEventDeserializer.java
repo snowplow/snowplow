@@ -72,7 +72,7 @@ public class SnowPlowEventDeserializer implements Deserializer {
    * @param line The line of text to deserialize
    * @param verbose Whether to debug-print the contents of the struct using reflection
    * @return The struct object from deserializing the text
-   * @throws SerDeException For any problem deserializing the line, or then reflection-inspecting the contents of the struct
+   * @throws SerDeException if there is a problem deserializing the line, or reflection-inspecting the struct's contents
    */
   public static Object deserializeLine(String line, Boolean verbose) throws SerDeException {
 
