@@ -13,6 +13,7 @@
 package com.snowplowanalytics.snowplow.hive.serde;
 
 // Java
+import java.util.ArrayList;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.util.regex.Matcher;
@@ -23,6 +24,8 @@ import org.apache.hadoop.hive.serde2.SerDeException;
 
 // Java Library for User-Agent Information
 import nl.bitwalker.useragentutils.*;
+
+import javax.el.ArrayELResolver;
 
 /**
  * SnowPlowEventStruct represents the Hive struct for a SnowPlow event or page view.
@@ -38,17 +41,50 @@ public class SnowPlowEventStruct {
   // Mutable properties for this Hive struct
   // -------------------------------------------------------------------------------------------------------------------
 
+  // Date/time
   public String dt;
   public String tm;
+
+  // User and visit
+  public String user_id;
   public String user_ipaddress;
+  public int visit_id; // TODO: check type
+
+  // Page
   public String page_url;
+  public String page_title;
+  public String page_referrer;
 
-  // TODO: add in rest of public fields
+  // Marketing
+  public String mkt_source;
+  public String mkt_medium;
+  public String mkt_term;
+  public String mkt_content;
+  public String mkt_name;
 
+  // Event
+  public String ev_category;
+  public String ev_action;
+  public String ev_label;
+  public String ev_property;
+  public String ev_value;
+
+  // Browser
   public String br_name;
   public String br_group;
+  public String br_lang;
   public String br_version;
   public String br_type;
+  public String br_manufacturer;
+  public String br_renderengine;
+  public String br_family;
+  public String br_os;
+  public boolean br_ismobiledevice; // TODO: check type
+  public String br_devicetype;
+  public ArrayList<String> br_features; // TODO: check type
+  public boolean br_cookies; // TODO: check type
+  public int br_screenwidth; // TODO: check type
+  public int br_screenheight; // TODO: check type
 
   // -------------------------------------------------------------------------------------------------------------------
   // Static configuration
