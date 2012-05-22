@@ -76,21 +76,20 @@ CREATE EXTERNAL TABLE events (
   ev_property STRING,
   ev_value STRING,
   br_name STRING,
-  br_lang STRING,
+  br_family STRING,
   br_version STRING,
   br_type STRING,
-  br_manufacturer STRING,
   br_renderengine STRING,
-  br_family STRING,
-  br_os STRING,
-  br_ismobiledevice BOOLEAN,
-  br_devicetype STRING,
-  br_group STRING,
-  br_manufacturer STRING,
+  br_lang STRING,
   br_features ARRAY<STRING>,
   br_cookies BOOLEAN,
   br_screenwidth INT,
-  br_screenheight INT
+  br_screenheight INT,
+  os_name STRING,
+  os_family STRING,
+  os_manufacturer STRING,
+  dvce_ismobile BOOLEAN,
+  dvce_type STRING
 )
 ```
 
@@ -119,21 +118,20 @@ CREATE EXTERNAL TABLE imps (
   ad_advertiser_id STRING,
   ad_user_id STRING,
   br_name STRING,
-  br_lang STRING,
+  br_family STRING,
   br_version STRING,
   br_type STRING,
-  br_manufacturer STRING,
   br_renderengine STRING,
-  br_family STRING,
-  br_os STRING,
-  br_ismobiledevice BOOLEAN,
-  br_devicetype STRING,
-  br_group STRING,
-  br_manufacturer STRING,
+  br_lang STRING,
   br_features ARRAY<STRING>,
   br_cookies BOOLEAN,
   br_screenwidth INT,
-  br_screenheight INT
+  br_screenheight INT,
+  os_name STRING,
+  os_family STRING,
+  os_manufacturer STRING,
+  dvce_ismobile BOOLEAN,
+  dvce_type STRING
 )
 ```
 

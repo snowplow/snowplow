@@ -10,12 +10,39 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.hive.serde
+package com.snowplowanalytics.snowplow.hadoop.hive
 
 // Specs2
 import org.specs2.mutable.Specification
 
+// Hive
+import org.apache.hadoop.hive.serde2.SerDeException;
+
 class DeserializeTest extends Specification {
+
+  // Toggle if tests are failing and you want to inspect the struct contents
+  val DEBUG = false;
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Invalid/header row checks
+  // -------------------------------------------------------------------------------------------------------------------
+
+  "An invalid or corrupted CloudFront row should throw an exception" >> {
+    Seq("", "NOT VALID", "2012-05-21\t07:14:47\tFRA2\t3343\t83.4.209.35\tGET\td3t05xllj8hhgj.cloudfront.net") foreach { invalid =>
+      "invalid row \"%s\" throws a SerDeException".format(invalid) >> {
+        SnowPlowEventDeserializer.deserializeLine(invalid, DEBUG) must throwA[SerDeException](message = "Could not parse row: " + invalid)
+      }
+    }
+  }
+
+  "The header rows of a CloudFront log file should be skipped" >> {
+
+    Seq("#Version: 1.0", "#Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status cs(Referer) cs(User-Agent) cs-uri-query") foreach { header => 
+      "header row \"%s\" is skipped (returns null)".format(header) >> {
+        SnowPlowEventDeserializer.deserializeLine(header, DEBUG).asInstanceOf[SnowPlowEventStruct].dt must beNull
+      }
+    }
+  }
 
   // -------------------------------------------------------------------------------------------------------------------
   // Type checks
@@ -25,7 +52,7 @@ class DeserializeTest extends Specification {
 
   "The CloudFront line %s".format(line1) should {
 
-    val event = SnowPlowEventDeserializer.deserializeLine(line1, true)
+    val event = SnowPlowEventDeserializer.deserializeLine(line1, DEBUG)
 
     // Check main type
     "deserialize as a SnowPlowEventStruct" in {
@@ -35,29 +62,55 @@ class DeserializeTest extends Specification {
     val eventStruct = event.asInstanceOf[SnowPlowEventStruct]
 
     // Check all of the field types
+
+    // Date/time
     "with a dt (Date) field which is a Hive STRING" in {
       eventStruct.dt must beAnInstanceOf[java.lang.String]
     }
     "with a tm (Time) field which is a Hive STRING" in {
       eventStruct.tm must beAnInstanceOf[java.lang.String]
     }
+
+    // User and visit
     "with a user_ipaddress (User IP Address) field which is a Hive STRING" in {
       eventStruct.user_ipaddress must beAnInstanceOf[java.lang.String]
     }
+
+    // Page
     "with a page_url (Page URL) field which is a Hive STRING" in {
       eventStruct.page_url must beAnInstanceOf[java.lang.String]
     }
+
+    // Browser (from user-agent)
     "with a br_name (Browser Name) field which is a Hive STRING" in {
       eventStruct.br_name must beAnInstanceOf[java.lang.String]
     }
-    "with a br_group (Browser Group) field which is a Hive STRING" in {
-      eventStruct.br_group must beAnInstanceOf[java.lang.String]
+    "with a br_family (Browser Family) field which is a Hive STRING" in {
+      eventStruct.br_family must beAnInstanceOf[java.lang.String]
     }
     "with a br_version (Browser Version) field which is a Hive STRING" in {
       eventStruct.br_version must beAnInstanceOf[java.lang.String]
     }
     "with a br_type (Browser Type) field which is a Hive STRING" in {
       eventStruct.br_type must beAnInstanceOf[java.lang.String]
+    }
+    "with a br_renderengine (Browser Rendering Engine) field which is a Hive STRING" in {
+      eventStruct.br_renderengine must beAnInstanceOf[java.lang.String]
+    }
+    "with a os_name (OS Name) field which is a Hive STRING" in {
+      eventStruct.os_name must beAnInstanceOf[java.lang.String]
+    }
+    "with a os_family (OS Family) field which is a Hive STRING" in {
+      eventStruct.os_family must beAnInstanceOf[java.lang.String]
+    }
+    "with a os_manufacturer (OS Manufacturer) field which is a Hive STRING" in {
+      eventStruct.os_manufacturer must beAnInstanceOf[java.lang.String]
+    }
+    "with a dvce_ismobile (Device Is Mobile?) field which is a Hive BOOLEAN" in {
+      eventStruct.dvce_ismobile must beAnInstanceOf[java.lang.Boolean]
+    }
+    "with a dvce_type (Device Type) field which is a Hive STRING" in {
+      eventStruct.dvce_type must beAnInstanceOf[java.lang.String]
     }
     // TODO
   }
