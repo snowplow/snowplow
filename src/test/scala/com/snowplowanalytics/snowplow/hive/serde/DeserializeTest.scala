@@ -47,6 +47,12 @@ class DeserializeTest extends Specification {
     "deserialize with a page_url (Page URL) field which is a Hive STRING" in {
       eventStruct.page_url must beAnInstanceOf[java.lang.String]
     }
+    "deserialize with a br_name (Browser Name) field which is a Hive STRING" in {
+      eventStruct.br_name must beAnInstanceOf[java.lang.String]
+    }
+    "deserialize with a br_group (Browser Group) field which is a Hive STRING" in {
+      eventStruct.br_group must beAnInstanceOf[java.lang.String]
+    }
     // TODO
   }
 
@@ -55,5 +61,12 @@ class DeserializeTest extends Specification {
   // -------------------------------------------------------------------------------------------------------------------
 
   // Now let's check the specific values for another couple of lines
+  // TODO
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Fallback checks
+  // -------------------------------------------------------------------------------------------------------------------
+
+  // Let's check that a "-" cs(Referer) is successfully replaced with the querystring url
   // TODO
 }

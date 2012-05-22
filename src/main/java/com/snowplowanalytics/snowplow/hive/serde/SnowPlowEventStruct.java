@@ -21,7 +21,8 @@ import java.util.regex.Pattern;
 // Hive
 import org.apache.hadoop.hive.serde2.SerDeException;
 
-import javax.servlet.jsp.PageContext;
+// Java Library for User-Agent Information
+import nl.bitwalker.useragentutils.*;
 
 /**
  * SnowPlowEventStruct represents the Hive struct for a SnowPlow event or page view.
@@ -41,7 +42,11 @@ public class SnowPlowEventStruct {
   public String tm;
   public String user_ipaddress;
   public String page_url;
+
   // TODO: add in rest of public fields
+
+  public String br_name;
+  public String br_group;
 
   // -------------------------------------------------------------------------------------------------------------------
   // Static configuration
@@ -95,8 +100,28 @@ public class SnowPlowEventStruct {
       this.user_ipaddress = m.group(5);
 
       // 2. Now we dis-assemble the user agent
-      String userAgent = m.group(11);
+      UserAgent userAgent = UserAgent.parseUserAgentString(m.group(11));
+
+      Browser b = userAgent.getBrowser();
+      this.br_name = b.getName();
+      Browser bg = b.getGroup();
+      this.br_group = bg.getName();
+
       // TODO
+
+                 /*
+                 ${request.userAgent.browser}
+ ${request.userAgent.browser.group}
+ ${request.userAgent.browser.manufacturer}
+ ${request.userAgent.browser.browserType}
+ ${request.userAgent.browser.renderingEngine}
+
+ Operating System:
+ ${request.userAgent.operatingSystem}
+ ${request.userAgent.operatingSystem.group}
+ ${request.userAgent.operatingSystem.manufacturer}
+ ${request.userAgent.operatingSystem.deviceType}
+ ${request.userAgent.operatingSystem.mobileDevice?string}     */
 
       // 3. Now we dis-assemble the querystring
       String querystring = m.group(12);
