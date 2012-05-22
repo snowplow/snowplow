@@ -169,6 +169,9 @@ Once you have created this table, you should be able to perform simple tests:
 
 snowplow-log-deserializers is copyright 2012 Orderly Ltd.
 
+Contains the [Java Library for User-Agent Information] [useragentlib],
+copyright 2008 Harald Walker (bitwalker.nl).
+
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
 
@@ -184,6 +187,7 @@ limitations under the License.
 [sbt]: https://github.com/harrah/xsbt/wiki
 [cflogformat]: https://github.com/snowplow/cloudfront-log-deserializer/blob/master/README.md#the-cloudfront-access-log-format
 [hivetables]: https://github.com/snowplow/snowplow/blob/master/docs/07_snowplow_hive_tables_introduction.md
+[useragentlib]: http://user-agent-utils.java.net/
 [cfserde]: https://github.com/snowplow/cloudfront-log-deserializer
 [license]: http://www.apache.org/licenses/LICENSE-2.0
 [downloads]: https://github.com/snowplow/snowplow-log-deserializers/downloads
