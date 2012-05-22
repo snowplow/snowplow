@@ -47,6 +47,8 @@ public class SnowPlowEventStruct {
 
   public String br_name;
   public String br_group;
+  public String br_version;
+  public String br_type;
 
   // -------------------------------------------------------------------------------------------------------------------
   // Static configuration
@@ -100,14 +102,14 @@ public class SnowPlowEventStruct {
       this.user_ipaddress = m.group(5);
 
       // 2. Now we dis-assemble the user agent
-      UserAgent userAgent = UserAgent.parseUserAgentString(m.group(11));
+      String ua = m.group(11);
+      UserAgent userAgent = UserAgent.parseUserAgentString(ua);
 
       Browser b = userAgent.getBrowser();
       this.br_name = b.getName();
-      Browser bg = b.getGroup();
-      this.br_group = bg.getName();
-
-      // TODO
+      this.br_group = b.getGroup().getName();
+      this.br_version = b.getVersion(ua).toString(); // No idea why ua needs to be passed back for versioning
+      this.br_type = b.getBrowserType().getName();
 
                  /*
                  ${request.userAgent.browser}

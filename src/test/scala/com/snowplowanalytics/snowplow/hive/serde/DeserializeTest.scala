@@ -35,23 +35,29 @@ class DeserializeTest extends Specification {
     val eventStruct = event.asInstanceOf[SnowPlowEventStruct]
 
     // Check all of the field types
-    "deserialize with a dt (Date) field which is a Hive STRING" in {
+    "with a dt (Date) field which is a Hive STRING" in {
       eventStruct.dt must beAnInstanceOf[java.lang.String]
     }
-    "deserialize with a tm (Time) field which is a Hive STRING" in {
+    "with a tm (Time) field which is a Hive STRING" in {
       eventStruct.tm must beAnInstanceOf[java.lang.String]
     }
-    "deserialize with a user_ipaddress (User IP Address) field which is a Hive STRING" in {
+    "with a user_ipaddress (User IP Address) field which is a Hive STRING" in {
       eventStruct.user_ipaddress must beAnInstanceOf[java.lang.String]
     }
-    "deserialize with a page_url (Page URL) field which is a Hive STRING" in {
+    "with a page_url (Page URL) field which is a Hive STRING" in {
       eventStruct.page_url must beAnInstanceOf[java.lang.String]
     }
-    "deserialize with a br_name (Browser Name) field which is a Hive STRING" in {
+    "with a br_name (Browser Name) field which is a Hive STRING" in {
       eventStruct.br_name must beAnInstanceOf[java.lang.String]
     }
-    "deserialize with a br_group (Browser Group) field which is a Hive STRING" in {
+    "with a br_group (Browser Group) field which is a Hive STRING" in {
       eventStruct.br_group must beAnInstanceOf[java.lang.String]
+    }
+    "with a br_version (Browser Version) field which is a Hive STRING" in {
+      eventStruct.br_version must beAnInstanceOf[java.lang.String]
+    }
+    "with a br_type (Browser Type) field which is a Hive STRING" in {
+      eventStruct.br_type must beAnInstanceOf[java.lang.String]
     }
     // TODO
   }
@@ -61,7 +67,8 @@ class DeserializeTest extends Specification {
   // -------------------------------------------------------------------------------------------------------------------
 
   // Now let's check the specific values for another couple of lines
-  // TODO
+  // TODO let's parameterize this using the example in
+  // TODO http://stackoverflow.com/questions/6805267/scalatest-or-specs2-with-multiple-test-cases
 
   // -------------------------------------------------------------------------------------------------------------------
   // Fallback checks
