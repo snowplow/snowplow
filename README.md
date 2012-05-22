@@ -11,7 +11,7 @@ The specific deserializers created to date are as follows:
 
 Both deserializers are based on our [cloudfront-log-deserializer] [cfserde], which is for general-purpose (i.e. non-SnowPlow-specific) analysis of CloudFront access log files.
 
-snowplow-log-deserializers is a [Scala Build Tool] [sbt] project, written in Java, and is [available] [downloads] from GitHub as a downloadable jarfile.
+snowplow-log-deserializers is a [Scala Build Tool] [sbt] project, written in Java, and is [available] [downloads] from GitHub as a downloadable jarfile. Tests are written in Specs2.
 
 ## The SnowPlow log format
 
