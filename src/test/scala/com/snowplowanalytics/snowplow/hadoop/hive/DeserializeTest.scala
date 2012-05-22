@@ -36,7 +36,6 @@ class DeserializeTest extends Specification {
   }
 
   "The header rows of a CloudFront log file should be skipped" >> {
-
     Seq("#Version: 1.0", "#Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status cs(Referer) cs(User-Agent) cs-uri-query") foreach { header => 
       "header row \"%s\" is skipped (returns null)".format(header) >> {
         SnowPlowEventDeserializer.deserializeLine(header, DEBUG).asInstanceOf[SnowPlowEventStruct].dt must beNull
