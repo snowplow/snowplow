@@ -18,34 +18,10 @@ import org.specs2.mutable.Specification
 // Hive
 import org.apache.hadoop.hive.serde2.SerDeException;
 
-class DeserializeTest extends Specification {
+class StructTypeTest extends Specification {
 
   // Toggle if tests are failing and you want to inspect the struct contents
   val DEBUG = false;
-
-  // -------------------------------------------------------------------------------------------------------------------
-  // Invalid/header row checks
-  // -------------------------------------------------------------------------------------------------------------------
-
-  "An invalid or corrupted CloudFront row should throw an exception" >> {
-    Seq("", "NOT VALID", "2012-05-21\t07:14:47\tFRA2\t3343\t83.4.209.35\tGET\td3t05xllj8hhgj.cloudfront.net") foreach { invalid =>
-      "invalid row \"%s\" throws a SerDeException".format(invalid) >> {
-        SnowPlowEventDeserializer.deserializeLine(invalid, DEBUG) must throwA[SerDeException](message = "Could not parse row: " + invalid)
-      }
-    }
-  }
-
-  "The header rows of a CloudFront log file should be skipped" >> {
-    Seq("#Version: 1.0", "#Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status cs(Referer) cs(User-Agent) cs-uri-query") foreach { header => 
-      "header row \"%s\" is skipped (returns null)".format(header) >> {
-        SnowPlowEventDeserializer.deserializeLine(header, DEBUG).asInstanceOf[SnowPlowEventStruct].dt must beNull
-      }
-    }
-  }
-
-  // -------------------------------------------------------------------------------------------------------------------
-  // Type checks
-  // -------------------------------------------------------------------------------------------------------------------
 
   val types = "2012-05-21\t07:14:47\tFRA2\t3343\t83.4.209.35\tGET\td3t05xllj8hhgj.cloudfront.net\t/ice.png\t200\thttps://test.psybazaar.com/shop/checkout/\tMozilla/5.0%20(X11;%20Ubuntu;%20Linux%20x86_64;%20rv:11.0)%20Gecko/20100101%20Firefox/11.0\t&ev_ca=ecomm&ev_ac=checkout&ev_la=id_email&ev_pr=ERROR&r=236095&urlref=http%253A%252F%252Ftest.psybazaar.com%252F&_id=135f6b7536aff045&lang=en-US&visit=5&pdf=0&qt=1&realp=0&wma=1&dir=0&fla=1&java=1&gears=0&ag=0&res=1920x1080&cookie=1"
 
