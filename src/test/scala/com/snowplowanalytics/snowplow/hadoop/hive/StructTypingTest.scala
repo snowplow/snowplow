@@ -19,7 +19,7 @@ import java.lang.{Boolean => JBoolean}
 // Specs2
 import org.specs2.mutable.Specification
 
-class StructTypeTest extends Specification {
+class StructTypingTest extends Specification {
 
   // Toggle if tests are failing and you want to inspect the struct contents
   val DEBUG = false;
