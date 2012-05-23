@@ -15,7 +15,7 @@ package com.snowplowanalytics.snowplow.hadoop.hive
 // Specs2
 import org.specs2.mutable.Specification
 
-class HyphenTest extends Specification {
+class ConversionTest extends Specification {
 
   "The string \"-\"" should {
     "be identified as null by isNullField" in {
@@ -40,4 +40,6 @@ class HyphenTest extends Specification {
      SnowPlowEventStruct.isNullField("-a-") must beFalse
     }
   }
+
+  // TODO: add in some tests for stringToBool
 }

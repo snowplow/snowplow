@@ -18,16 +18,17 @@ import org.specs2.mutable.Specification
 // Hive
 import org.apache.hadoop.hive.serde2.SerDeException;
 
-class CorruptRowTest extends Specification {
+class BadQsFieldTest extends Specification {
 
   // Toggle if tests are failing and you want to inspect the struct contents
   val DEBUG = false;
 
-  "An invalid or corrupted CloudFront row should throw an exception" >> {
-    Seq("", "NOT VALID", "2012-05-21\t07:14:47\tFRA2\t3343\t83.4.209.35\tGET\td3t05xllj8hhgj.cloudfront.net") foreach { invalid =>
-      "invalid row \"%s\" throws a SerDeException".format(invalid) >> {
-        SnowPlowEventDeserializer.deserializeLine(invalid, DEBUG) must throwA[SerDeException](message = "Could not parse row: \"%s\"".format(invalid))
-      }
+  // Contains a bad querystring field - "referer"
+  val badField = "2012-05-21\t07:14:47\tFRA2\t3343\t83.4.209.35\tGET\td3t05xllj8hhgj.cloudfront.net\t/ice.png\t200\thttps://test.psybazaar.com/shop/checkout/\tMozilla/5.0%20(X11;%20Ubuntu;%20Linux%20x86_64;%20rv:11.0)%20Gecko/20100101%20Firefox/11.0\t&ev_ca=ecomm&ev_ac=checkout&ev_la=id_email&ev_pr=ERROR&tid=236095&referer=http%253A%252F%252Ftest.psybazaar.com%252F&uid=135f6b7536aff045&lang=en-US&vid=5&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1"
+
+  "A SnowPlow querystring with an unsupported field (\"referer\")" should {
+    "throw a SerDeException" in {
+      SnowPlowEventDeserializer.deserializeLine(badField, DEBUG) must throwA[SerDeException]
     }
   }
 }

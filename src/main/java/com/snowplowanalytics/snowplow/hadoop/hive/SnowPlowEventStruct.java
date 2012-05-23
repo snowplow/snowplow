@@ -235,63 +235,68 @@ public class SnowPlowEventStruct {
       for (NameValuePair pair : params) {
         
         String name = pair.getName();
+        String value = pair.getValue();
 
-        // Handle features (f_fla etc) separately
+        // Handle browser features (f_fla etc) separately (i.e. no enum value for these)
         if (name.startsWith("f_")) {
           // TODO
-        
+
         } else {
 
-          Fields field = Fields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
-          // TODO: put exception handling in for case of a non-supported field
-          switch (field) {
+          try {
+            Fields field = Fields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
+            switch (field) {
 
-            case TID: 
-              this.txn_id = pair.getValue();
-              break;
-            case UID: 
-              this.user_id = pair.getValue();
-              break;
-            case VID:
-              this.visit_id = Integer.parseInt(pair.getValue());
-              break;
-            case LANG:
-              this.br_lang = pair.getValue();
-              break;
-            /* case COOKIE:
-              this.br_cookies = TODO;
-              break;
-            case RES:
-              // TODO
-              this.br_screenheight */
-            case REFR:
-              this.page_referrer = pair.getValue();
-              break;
-            case URL:
-              qsUrl = pair.getValue(); // We might use this later for the page URL
-              break;
-            
-            // Page-view only
-            case PAGE:
-              this.page_title = pair.getValue();
-              break;
+              // Common fields
+              case TID: 
+                this.txn_id = value;
+                break;
+              case UID: 
+                this.user_id = value;
+                break;
+              case VID:
+                this.visit_id = Integer.parseInt(value);
+                break;
+              case LANG:
+                this.br_lang = value;
+                break;
+              case COOKIE:
+                this.br_cookies = stringToBoolean(value);
+                break;
+              /* case RES:
+                // TODO
+                this.br_screenheight */
+              case REFR:
+                this.page_referrer = value;
+                break;
+              case URL:
+                qsUrl = pair.getValue(); // We might use this later for the page URL
+                break;
+              
+              // Page-view only
+              case PAGE:
+                this.page_title = value;
+                break;
 
-            // Event only
-            case EV_CA:
-              this.ev_category = pair.getValue();
-              break;         
-            case EV_AC:
-              this.ev_action = pair.getValue();
-              break; 
-            case EV_LA:
-              this.ev_label = pair.getValue();
-              break; 
-            case EV_PR:
-              this.ev_property = pair.getValue();
-              break; 
-             case EV_VA:
-              this.ev_value = pair.getValue();
-              break;
+              // Event only
+              case EV_CA:
+                this.ev_category = value;
+                break;         
+              case EV_AC:
+                this.ev_action = value;
+                break; 
+              case EV_LA:
+                this.ev_label = value;
+                break; 
+              case EV_PR:
+                this.ev_property = value;
+                break; 
+               case EV_VA:
+                this.ev_value = value;
+                break;
+            }
+          } catch (IllegalArgumentException iae) {
+            throw new SerDeException("Unsupported field \"" + name + "\" found in querystring");
           }
         }
       }
@@ -308,7 +313,7 @@ public class SnowPlowEventStruct {
       // TODO
 
     } catch (Exception e) {
-      throw new SerDeException("Could not parse row: " + row, e);
+      throw new SerDeException("Could not parse row: \"" + row + "\"", e);
     }
 
     return this; // Return the SnowPlowEventStruct
@@ -327,4 +332,20 @@ public class SnowPlowEventStruct {
    * @return True if the String was a hyphen "-"
    */
   static boolean isNullField(String s) { return (s == null || s.equals("") || s.equals("-")); }
+
+  /**
+   * Converts a String of value "1" or "0" to true
+   * or false respectively.
+   * 
+   * @param s The String to check
+   * @return True for "1", false for "0"
+   * @throws IllegalArgumentException if the string is not "1" or "0"
+   */ 
+  static boolean stringToBoolean(String s) throws IllegalArgumentException {
+    if (s.equals("1"))
+      return true;
+    if (s.equals("0"))
+      return false;
+    throw new IllegalArgumentException("Could not convert \"" + s + "\" to boolean, only 1 or 0.");
+  }
 }
