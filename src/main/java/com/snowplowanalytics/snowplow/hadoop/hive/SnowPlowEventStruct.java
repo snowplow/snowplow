@@ -56,7 +56,7 @@ public class SnowPlowEventStruct {
   // User and visit
   public String user_id;
   public String user_ipaddress;
-  public Integer visit_id; // TODO: check type
+  public Integer visit_id;
 
   // Page
   public String page_url;
@@ -95,8 +95,8 @@ public class SnowPlowEventStruct {
   public String os_manufacturer;
   
   // Device/Hardware (from user-agent) 
-  public Boolean dvce_ismobile;
   public String dvce_type;
+  public Boolean dvce_ismobile;
 
   // Device (from querystring)
   public Integer dvce_screenwidth;
@@ -173,8 +173,8 @@ public class SnowPlowEventStruct {
     this.os_name = null;
     this.os_family = null;
     this.os_manufacturer = null;
-    this.dvce_ismobile = null; // TODO: check type
     this.dvce_type = null;
+    this.dvce_ismobile = null;
     this.dvce_screenwidth = null;
     this.dvce_screenheight = null;
 
@@ -229,8 +229,8 @@ public class SnowPlowEventStruct {
       this.os_manufacturer = os.getManufacturer().getName();
       
       // -> device/hardware-related fields
-      this.dvce_ismobile = os.isMobileDevice();
       this.dvce_type = os.getDeviceType().getName();
+      this.dvce_ismobile = os.isMobileDevice();
 
       // 3. Now we dis-assemble the querystring
       String qsUrl = null;

@@ -9,5 +9,6 @@
   // Fallback checks
   // -------------------------------------------------------------------------------------------------------------------
 
-  // Let's check that a "-" cs(Referer) is successfully replaced with the querystring url
-  // TODO
+// Let's check that a "-" cs(Referer) is successfully replaced with the querystring url
+
+// Let's check the marketing field values

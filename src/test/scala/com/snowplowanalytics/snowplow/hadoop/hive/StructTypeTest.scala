@@ -19,9 +19,6 @@ import java.lang.{Boolean => JBoolean}
 // Specs2
 import org.specs2.mutable.Specification
 
-// Hive
-import org.apache.hadoop.hive.serde2.SerDeException;
-
 class StructTypeTest extends Specification {
 
   // Toggle if tests are failing and you want to inspect the struct contents
@@ -122,7 +119,9 @@ class StructTypeTest extends Specification {
     "with a br_cookies (Browser Cookies Enabled?) field which is a Hive BOOLEAN" in {
       eventStruct.br_cookies must beAnInstanceOf[JBoolean]
     }
-    // TODO: add in the br_features here
+    "with a br_features (Browser Features) field which is a Hive ARRAY<STRING>" in {
+      eventStruct.br_features must beAnInstanceOf[Array[String]]
+    }
 
     // OS (from user-agent)    
     "with a os_name (OS Name) field which is a Hive STRING" in {
@@ -136,13 +135,13 @@ class StructTypeTest extends Specification {
     }
     
     // Device/Hardware (from user-agent) 
-    "with a dvce_ismobile (Device Is Mobile?) field which is a Hive BOOLEAN" in {
-      eventStruct.dvce_ismobile must beAnInstanceOf[JBoolean]
-    }
     "with a dvce_type (Device Type) field which is a Hive STRING" in {
       eventStruct.dvce_type must beAnInstanceOf[String]
     }
-    
+    "with a dvce_ismobile (Device Is Mobile?) field which is a Hive BOOLEAN" in {
+      eventStruct.dvce_ismobile must beAnInstanceOf[JBoolean]
+    }
+
     // Device (from querystring)
     "with a dvce_screenwidth (Device Screen Width) field which is a Hive INT" in {
       eventStruct.dvce_screenwidth must beAnInstanceOf[JInteger]

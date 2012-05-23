@@ -90,6 +90,7 @@ CREATE EXTERNAL TABLE events (
   os_name STRING,
   os_family STRING,
   os_manufacturer STRING,
+  dvce_type STRING,
   dvce_ismobile BOOLEAN,
   dvce_type STRING,
   dvce_screenwidth INT,
@@ -133,8 +134,8 @@ CREATE EXTERNAL TABLE imps (
   os_name STRING,
   os_family STRING,
   os_manufacturer STRING,
-  dvce_ismobile BOOLEAN,
   dvce_type STRING,
+  dvce_ismobile BOOLEAN,
   dvce_screenwidth INT,
   dvce_screenheight INT
 )
