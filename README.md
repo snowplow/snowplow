@@ -22,17 +22,20 @@ The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs 
 | **KEY**            | **FULL NAME**    | **ALWAYS SET?** | **DESCRIPTION**                                                                                                                        |
 |-------------------:|:----------------:|:---------------:|:---------------------------------------------------------------------------------------------------------------------------------------|
 | **Common**         |                  |                 | _Common to all SnowPlow querystrings_                                                                                                  |
-| `rdm`              | Random Number    | Yes             | For cachebusting - not used for analytics                                                                                              |
+| `tid`              | Transaction ID   | Yes             | Random number used to identify duplicates in the CloudFront logs                                                                       |
 | `uid`              | User ID          | Yes             | Uniquely identifies the user i.e. web page visitor (strictly speaking, uniquely identifies the user's browser)                         |
 | `vid`              | Visit ID         | Yes             | The visitor's current visit number. Increments each visit (i.e. is a direct counter). 30 minutes of inactivity ends a given visit      |
 | `lang`             | Language         | Yes             | The visitor's web browser language (or Windows language for Internet Exporer)                                                          |
+| `res`              | Screen Resolution| Yes             | The screen resolution as reported by the web browser. In the format `widthxheight` e.g. 1920x1080                                      |
+| `cookie`           | Cookies Enabled? | Yes             | Whether or not the web browser has cookies enabled                                                                                     |
 | `refr`             | Referrer         | No              | URL of the referrer to the page calling SnowPlow. Don't confuse with CloudFront's own `cs(Referer)` (URL of the page calling SnowPlow) | 
 | `f_*`              | Browser_Features | Yes             | Whether the user's browser has specific features, e.g. `f_fla=1` means that the user's browser has Flash                               |
+| `url`              | Page URL         | Yes             | The url of the page calling SnowPlow                                                                                                   | 
 | **Page view**      |                  |                 | _In the SnowPlow querystring whenever a page view is logged_                                                                           |
-| `page`             | Page Title       | Yes             | The title of the page calling SnowPlow                                                                                                 |
+| `page`             | Page Title       | Yes (for page views)| The title of the page calling SnowPlow                                                                                             |
 | **Event**          |                  |                 | _In the SnowPlow querystring whenever an event is logged_                                                                              | 
-| `ev_ca`            | Event Category   | Yes             | The name you supply for the group of objects you are tracking                                                                          |
-| `ev_ac`            | Event Action     | Yes             | A string which defines the type of user interaction for the web object                                                                 |
+| `ev_ca`            | Event Category   | Yes (for events)| The name you supply for the group of objects you are tracking                                                                          |
+| `ev_ac`            | Event Action     | Yes (for events)| A string which defines the type of user interaction for the web object                                                                 |
 | `ev_la`            | Event Label      | No              | An optional string which identifies the specific object being actioned                                                                 | 
 | `ev_pr`            | Event Property   | No              | An optional string describing the object or the action performed on it                                                                 |
 | `ev_va`            | Event Value      | No              | An optional float to quantify or further describe the user action                                                                      |
@@ -59,6 +62,7 @@ This is the Hive table for **Page views** and **Events**:
 CREATE EXTERNAL TABLE events (
   dt STRING,
   tm STRING,
+  txn_id STRING,
   user_id STRING,
   user_ipaddress STRING,
   visit_id INT,
@@ -103,6 +107,7 @@ This is the Hive table for **Ad impressions**:
 CREATE EXTERNAL TABLE imps (
   dt STRING,
   tm STRING,
+  txn_id STRING,
   user_id STRING,
   user_ipaddress STRING,
   visit_id INT,
