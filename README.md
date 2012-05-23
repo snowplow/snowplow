@@ -7,7 +7,7 @@ snowplow-log-deserializers is a set of Deserializers which can import SnowPlow l
 The specific deserializers created to date are as follows:
 
 1. **SnowPlowEventDeserializer** - for deserializing page views and web events. The standard SnowPlow use case
-2. **SnowPlowAdImpDeserializer** - for deserializing ad impressions. For [ad networks using SnowPlow] [snowplowads]
+2. **SnowPlowAdImpDeserializer** - for deserializing ad impressions. For [ad networks using SnowPlow] [snowplowads] _(work-in-progress)_
 
 Both deserializers are based on our [cloudfront-log-deserializer] [cfserde], which is for general-purpose (i.e. non-SnowPlow-specific) analysis of CloudFront access log files.
 
@@ -87,13 +87,13 @@ CREATE EXTERNAL TABLE events (
   br_lang STRING,
   br_features ARRAY<STRING>,
   br_cookies BOOLEAN,
-  br_screenwidth INT,
-  br_screenheight INT,
   os_name STRING,
   os_family STRING,
   os_manufacturer STRING,
   dvce_ismobile BOOLEAN,
-  dvce_type STRING
+  dvce_type STRING,
+  dvce_screenwidth INT,
+  dvce_screenheight INT
 )
 ```
 
@@ -130,13 +130,13 @@ CREATE EXTERNAL TABLE imps (
   br_lang STRING,
   br_features ARRAY<STRING>,
   br_cookies BOOLEAN,
-  br_screenwidth INT,
-  br_screenheight INT,
   os_name STRING,
   os_family STRING,
   os_manufacturer STRING,
   dvce_ismobile BOOLEAN,
-  dvce_type STRING
+  dvce_type STRING,
+  dvce_screenwidth INT,
+  dvce_screenheight INT
 )
 ```
 
