@@ -14,6 +14,7 @@ package com.snowplowanalytics.snowplow.hadoop.hive;
 
 // Java
 import java.net.URI;
+import java.net.URLDecoder;
 import java.util.List;
 import java.util.ArrayList;
 import java.nio.charset.Charset;
@@ -107,8 +108,10 @@ public class SnowPlowEventStruct {
   // Static configuration
   // -------------------------------------------------------------------------------------------------------------------
 
+  private static final String cfEncoding = "UTF-8";
+
   // An enum of all the fields we're expecting in the querystring
-  private static enum Fields { TID, UID, VID, LANG, RES, COOKIE, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA }
+  private static enum Fields { TID, UID, VID, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA }
 
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
@@ -252,7 +255,6 @@ public class SnowPlowEventStruct {
         if (name.startsWith("f_")) {
           // Only add it to our array of browser features if it's set to "1"
           if (stringToBoolean(value)) {
-            System.out.print(name.substring(2));
             // Drop the "f_" prefix and add to our array
             this.br_features.add(name.substring(2));
           }
@@ -286,33 +288,34 @@ public class SnowPlowEventStruct {
                 } catch (Exception e) {
                   throw new SerDeException("Not a valid screen resolution: \"" + value + "\"");
                 }
+                break;
               case REFR:
-                this.page_referrer = value;
+                this.page_referrer = URLDecoder.decode(value, cfEncoding);
                 break;
               case URL:
-                qsUrl = pair.getValue(); // We might use this later for the page URL
+                qsUrl = URLDecoder.decode(pair.getValue(), cfEncoding); // We might use this later for the page URL
                 break;
               
               // Page-view only
               case PAGE:
-                this.page_title = value;
+                this.page_title = URLDecoder.decode(value, cfEncoding);
                 break;
 
               // Event only
               case EV_CA:
-                this.ev_category = value;
+                this.ev_category = URLDecoder.decode(value, cfEncoding);
                 break;         
               case EV_AC:
-                this.ev_action = value;
+                this.ev_action = URLDecoder.decode(value, cfEncoding);
                 break; 
               case EV_LA:
-                this.ev_label = value;
+                this.ev_label = URLDecoder.decode(value, cfEncoding);
                 break; 
               case EV_PR:
-                this.ev_property = value;
+                this.ev_property = URLDecoder.decode(value, cfEncoding);
                 break; 
                case EV_VA:
-                this.ev_value = value;
+                this.ev_value = URLDecoder.decode(value, cfEncoding);
                 break;
             }
           } catch (IllegalArgumentException iae) {
