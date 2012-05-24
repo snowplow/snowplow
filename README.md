@@ -98,7 +98,7 @@ CREATE EXTERNAL TABLE events (
 )
 ```
 
-A full description of each of these fields is out of scope of this documentation. Please see the [Events table definition] [eventstabledef] in the Introduction to the SnowPlow Hive Tables documentation for details.
+A full description of each of these fields is out of scope of this documentation. Please see the [Events table definition] [eventstabledef] in the **Introduction to the SnowPlow Hive Tables** documentation for details.
 
 ### 2. SnowPlowAdImpDeserializer Hive table
 
@@ -141,7 +141,7 @@ CREATE EXTERNAL TABLE imps (
 )
 ```
 
-A full description of each of these fields is out of scope of this documentation. Please see the [Ad impressions table definition] [adimpstabledef] in the Introduction to the SnowPlow Hive Tables documentation for details.
+A full description of each of these fields is out of scope of this documentation. Please see the [Ad impressions table definition] [adimpstabledef] in the **Introduction to the SnowPlow Hive Tables** documentation for details.
 
 ## Usage
 
