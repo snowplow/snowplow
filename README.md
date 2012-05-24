@@ -98,7 +98,7 @@ CREATE EXTERNAL TABLE events (
 )
 ```
 
-A full description of each of these fields is out of scope of this documentation. Please see the [Introduction to the SnowPlow Hive Tables] [hivetables] documentation for details.
+A full description of each of these fields is out of scope of this documentation. Please see the [Events table definition] [eventstabledef] in the Introduction to the SnowPlow Hive Tables documentation for details.
 
 ### 2. SnowPlowAdImpDeserializer Hive table
 
@@ -141,7 +141,7 @@ CREATE EXTERNAL TABLE imps (
 )
 ```
 
-A full description of each of these fields is out of scope of this documentation. Please see the [Introduction to the SnowPlow Hive Tables] [hivetables] documentation for details.
+A full description of each of these fields is out of scope of this documentation. Please see the [Ad impressions table definition] [adimpstabledef] in the Introduction to the SnowPlow Hive Tables documentation for details.
 
 ## Usage
 
@@ -190,7 +190,8 @@ limitations under the License.
 [snowplowads]: http://www.keplarllp.com/blog/2012/05/warehousing-your-online-ad-data-with-snowplow
 [sbt]: https://github.com/harrah/xsbt/wiki
 [cflogformat]: https://github.com/snowplow/cloudfront-log-deserializer/blob/master/README.md#the-cloudfront-access-log-format
-[hivetables]: https://github.com/snowplow/snowplow/blob/master/docs/07_snowplow_hive_tables_introduction.md
+[eventstabledef]: https://github.com/snowplow/snowplow/blob/master/docs/07_snowplow_hive_tables_introduction.md#1-events
+[adimpstabledef]: https://github.com/snowplow/snowplow/blob/master/docs/07_snowplow_hive_tables_introduction.md#2-ad-impressions
 [useragentlib]: http://user-agent-utils.java.net/
 [cfserde]: https://github.com/snowplow/cloudfront-log-deserializer
 [license]: http://www.apache.org/licenses/LICENSE-2.0
