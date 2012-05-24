@@ -7,7 +7,7 @@ snowplow-log-deserializers is a set of Deserializers which can import SnowPlow l
 The specific deserializers created to date are as follows:
 
 1. **SnowPlowEventDeserializer** - for deserializing page views and web events. The standard SnowPlow use case
-2. **SnowPlowAdImpDeserializer** - for deserializing ad impressions _(work-in-progress)_. For [ad networks using SnowPlow] [snowplowads]
+2. **SnowPlowAdImpDeserializer** - for deserializing ad impressions _(work-in-progress - see Roadmap section below)_. For [ad networks using SnowPlow] [snowplowads]
 
 Both deserializers are based on our [cloudfront-log-deserializer] [cfserde], which is for general-purpose (i.e. non-SnowPlow-specific) analysis of CloudFront access log files.
 
