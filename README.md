@@ -7,7 +7,7 @@ snowplow-log-deserializers is a set of Deserializers which can import SnowPlow l
 The specific deserializers created to date are as follows:
 
 1. **SnowPlowEventDeserializer** - for deserializing page views and web events. The standard SnowPlow use case
-2. **SnowPlowAdImpDeserializer** - for deserializing ad impressions. For [ad networks using SnowPlow] [snowplowads] _(work-in-progress)_
+2. **SnowPlowAdImpDeserializer** - for deserializing ad impressions _(work-in-progress)_. For [ad networks using SnowPlow] [snowplowads]
 
 Both deserializers are based on our [cloudfront-log-deserializer] [cfserde], which is for general-purpose (i.e. non-SnowPlow-specific) analysis of CloudFront access log files.
 
@@ -17,7 +17,7 @@ snowplow-log-deserializers is a [Scala Build Tool] [sbt] project, written in Jav
 
 Because SnowPlow uses Amazon Web Services' [CloudFront CDN] [cloudfront] for logging, the raw SnowPlow log format is identical to the [access log format] [cflogformat] for the CloudFront download distributions.
 
-The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs in the querystring attached to the request. The querystring name-value pairs are as follows:
+The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs in the querystring attached to the request. The querystring name-value pairs (in **SnowPlow v0.4**) are as follows:
 
 | **KEY**            | **FULL NAME**    | **ALWAYS SET?** | **DESCRIPTION**                                                                                                                        |
 |-------------------:|:----------------:|:---------------:|:---------------------------------------------------------------------------------------------------------------------------------------|
@@ -169,6 +169,13 @@ Once you have created this table, you should be able to perform simple tests:
 
     TODO
 
+## Roadmap
+
+There are some outstanding tasks with these deserializers:
+
+1. Add the functionality (and tests) around extracting the five marketing (`mkt_`) fields
+2. Implement the `SnowPlowAdImpDeserializer` - this is lower priority, so please [vote for this GitHub issue] [adserdeticket] if you need this sooner
+
 ## Copyright and license
 
 snowplow-log-deserializers is copyright 2012 Orderly Ltd.
@@ -193,6 +200,7 @@ limitations under the License.
 [eventstabledef]: https://github.com/snowplow/snowplow/blob/master/docs/07_snowplow_hive_tables_introduction.md#1-events
 [adimpstabledef]: https://github.com/snowplow/snowplow/blob/master/docs/07_snowplow_hive_tables_introduction.md#2-ad-impressions
 [useragentlib]: http://user-agent-utils.java.net/
+[adserdeticket]: https://github.com/snowplow/snowplow-log-deserializers/issues/5
 [cfserde]: https://github.com/snowplow/cloudfront-log-deserializer
 [license]: http://www.apache.org/licenses/LICENSE-2.0
 [downloads]: https://github.com/snowplow/snowplow-log-deserializers/downloads
