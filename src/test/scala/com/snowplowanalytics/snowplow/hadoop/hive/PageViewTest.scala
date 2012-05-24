@@ -62,93 +62,93 @@ class PageViewTest extends Specification {
 
     // Date/time
     "have dt (Date) = %s".format(Expected.dt) in {
-      actual.dt must be_== Expected.dt
+      actual.dt must_== Expected.dt
     }
     "have tm (Time) = %s".format(Expected.tm) in {
-      actual.tm must be_== Expected.tm
+      actual.tm must_== Expected.tm
     }
 
     // Transaction
     "have txn_id (Transaction ID) = %s".format(Expected.txn_id) in {
-      actual.txn_id must be_== Expected.txn_id
+      actual.txn_id must_== Expected.txn_id
     }
 
     // User and visit
     "have user_id (User ID) = %s".format(Expected.user_id) in {
-      actual.user_id must be_== Expected.user_id
+      actual.user_id must_== Expected.user_id
     }
     "have user_ipaddress (User IP Address) = %s".format(Expected.user_ipaddress) in {
-      actual.user_ipaddress must be_== Expected.user_ipaddress
+      actual.user_ipaddress must_== Expected.user_ipaddress
     }
     "have visit_id (User IP Address) = %s".format(Expected.visit_id) in {
-      actual.visit_id must be_== Expected.visit_id
+      actual.visit_id must_== Expected.visit_id
     }
 
     // Page
     "have page_url (Page URL) = %s".format(Expected.page_url) in {
-      actual.page_url must be_== Expected.page_url
+      actual.page_url must_== Expected.page_url
     }
     // Tracking a page view, so we have a page title
     "have page_title (Page Title) = %s".format(Expected.page_title) in {
-      actual.page_title must be_== Expected.page_title
+      actual.page_title must_== Expected.page_title
     }
     "have page_referrer (Page Referrer) = %s".format(Expected.page_referrer) in {
-      actual.page_referrer must be_== Expected.page_referrer
+      actual.page_referrer must_== Expected.page_referrer
     }
 
     // Browser (from user-agent)
     "have br_name (Browser Name) = %s".format(Expected.br_name) in {
-      actual.br_name must be_== Expected.br_name
+      actual.br_name must_== Expected.br_name
     }
     "have br_family (Browser Family) = %s".format(Expected.br_family) in {
-      actual.br_family must be_== Expected.br_family
+      actual.br_family must_== Expected.br_family
     }
     "have br_version (Browser Version) = %s".format(Expected.br_version) in {
-      actual.br_version must be_== Expected.br_version
+      actual.br_version must_== Expected.br_version
     }
     "have br_type (Browser Type) = %s".format(Expected.br_type) in {
-      actual.br_type must be_== Expected.br_type
+      actual.br_type must_== Expected.br_type
     }
     "have br_renderengine (Browser Rendering Engine) = %s".format(Expected.br_renderengine) in {
-      actual.br_renderengine must be_== Expected.br_renderengine
+      actual.br_renderengine must_== Expected.br_renderengine
     }
 
     // Browser (from querystring)
     "have br_lang (Browser Lang) = %s".format(Expected.br_lang) in {
-      actual.br_lang must be_== Expected.br_lang
+      actual.br_lang must_== Expected.br_lang
     }
     "have br_cookies (Browser Cookies Enabled?) = %s".format(Expected.br_cookies) in {
-      actual.br_cookies must be_== Expected.br_cookies
+      actual.br_cookies must_== Expected.br_cookies
     }
     "have br_features (Browser Features) = %s".format(Expected.br_features) in {
-      actual.br_features must be_== Expected.br_features
+      actual.br_features must_== Expected.br_features
     }
 
     // OS (from user-agent)    
     "have os_name (OS Name) = %s".format(Expected.os_name) in {
-      actual.os_name must be_== Expected.os_name
+      actual.os_name must_== Expected.os_name
     }
     "have os_family (OS Family) = %s".format(Expected.os_family) in {
-      actual.os_family must be_== Expected.os_family
+      actual.os_family must_== Expected.os_family
     }
     "have os_manufacturer (OS Manufacturer) = %s".format(Expected.os_manufacturer) in {
-      actual.os_manufacturer must be_== Expected.os_manufacturer
+      actual.os_manufacturer must_== Expected.os_manufacturer
     }
     
     // Device/Hardware (from user-agent) 
     "have dvce_ismobile (Device Is Mobile?) = %s".format(Expected.dvce_ismobile) in {
-      actual.dvce_ismobile must be_== Expected.dvce_ismobile
+      actual.dvce_ismobile must_== Expected.dvce_ismobile
     }
     "have dvce_type (Device Type) = %s".format(Expected.dvce_type) in {
-      actual.dvce_type must be_== Expected.dvce_type
+      actual.dvce_type must_== Expected.dvce_type
     }
     
     // Device (from querystring)
     "have dvce_screenwidth (Device Screen Width) = %s".format(Expected.dvce_screenwidth) in {
-      actual.dvce_screenwidth must be_== Expected.dvce_screenwidth
+      actual.dvce_screenwidth must_== Expected.dvce_screenwidth
     }
     "have dvce_screenheight (Device Screen Height) = %s".format(Expected.dvce_screenheight) in {
-      actual.dvce_screenheight must be_== Expected.dvce_screenheight
+      actual.dvce_screenheight must_== Expected.dvce_screenheight
     }
   }
 }
