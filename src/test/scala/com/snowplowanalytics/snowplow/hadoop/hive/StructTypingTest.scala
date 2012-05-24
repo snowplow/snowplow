@@ -13,6 +13,7 @@
 package com.snowplowanalytics.snowplow.hadoop.hive
 
 // Java
+import java.util.{ArrayList => JArrayList}
 import java.lang.{Integer => JInteger}
 import java.lang.{Boolean => JBoolean}
 
@@ -120,7 +121,7 @@ class StructTypingTest extends Specification {
       eventStruct.br_cookies must beAnInstanceOf[JBoolean]
     }
     "with a br_features (Browser Features) field which is a Hive ARRAY<STRING>" in {
-      eventStruct.br_features must beAnInstanceOf[Array[String]]
+      eventStruct.br_features must beAnInstanceOf[JArrayList[String]]
     }
 
     // OS (from user-agent)    
