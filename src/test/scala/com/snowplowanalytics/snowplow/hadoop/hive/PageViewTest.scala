@@ -26,6 +26,8 @@ import org.apache.hadoop.hive.serde2.SerDeException;
 
 class PageViewTest extends Specification {
 
+  sequential
+
   // Toggle if tests are failing and you want to inspect the struct contents
   val DEBUG = false;
 
@@ -140,7 +142,7 @@ class PageViewTest extends Specification {
     "have br_features (Browser Features) = %s".format(Row3Expected.br_features) in {
       // For some reason (Specs2) couldn't use implicit Java->Scala conversion here
       JavaConversions.asScalaBuffer(actual.br_features) must haveTheSameElementsAs(Row3Expected.br_features)
-    }.pendingUntilFixed // No idea why actual.br_features empties inside this test
+    }.pendingUntilFixed // For some reason actual.br_features empties when inside this test
 
     // OS (from user-agent)    
     "have os_name (OS Name) = %s".format(Row3Expected.os_name) in {

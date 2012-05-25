@@ -251,7 +251,6 @@ public class SnowPlowEventStruct {
         final String value = pair.getValue();
 
         // Handle browser features (f_fla etc) separately (i.e. no enum value for these)
-        // this.br_features = new ArrayList<String>();
         if (name.startsWith("f_")) {
           // Only add it to our array of browser features if it's set to "1"
           if (stringToBoolean(value)) {
@@ -293,7 +292,7 @@ public class SnowPlowEventStruct {
                 this.page_referrer = URLDecoder.decode(value, cfEncoding);
                 break;
               case URL:
-                qsUrl = URLDecoder.decode(pair.getValue(), cfEncoding); // We might use this later for the page URL
+                qsUrl = pair.getValue(); // We might use this later for the page URL
                 break;
               
               // Page-view only
@@ -324,12 +323,12 @@ public class SnowPlowEventStruct {
         }
       }
 
-      // 4. Construct the page_url
+      // 4. Choose the page_url
       final String cfUrl = m.group(10);
       if (isNullField(cfUrl)) { // CloudFront didn't provide the URL as cs(Referer)
-        this.page_url = qsUrl; // Use the querystring URL
-      } else {
-        this.page_url = cfUrl; // Use the CloudFront URL
+        this.page_url = URLDecoder.decode(qsUrl, cfEncoding); // Use the decoded querystring URL
+      } else { // Otherwise default to...
+        this.page_url = cfUrl; // The CloudFront cs(Referer) URL
       }
 
       // 5. Finally handle the marketing fields in the page_url

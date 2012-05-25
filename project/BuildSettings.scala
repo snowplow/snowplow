@@ -22,6 +22,7 @@ object BuildSettings {
     description   := "Hive deserializers for the SnowPlow log data",
     scalaVersion  := "2.9.1",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
+    parallelExecution in Test := false, // Parallel tests cause havoc with Hive
     resolvers     ++= Dependencies.resolutionRepos
   )
 

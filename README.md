@@ -151,7 +151,7 @@ Next, upload the jarfile into an S3 bucket accessible from your Hive console.
 
 Now using these deserializers with Hive should be quite easy - here's an example using the SnowPlowEventDeserializer:
 
-    ADD JAR s3://{{JARS-BUCKET-NAME}}/snowplow-log-deserializers-0.1.jar;
+    ADD JAR s3://{{JARS-BUCKET-NAME}}/snowplow-log-deserializers-0.4.0.jar;
 
     CREATE EXTERNAL TABLE views_events 
     PARTITIONED BY (dt STRING)
