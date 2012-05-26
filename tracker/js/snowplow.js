@@ -1,7 +1,7 @@
 /*!
  * SnowPlow - Take control of your web analytics data
  *
- * JavaScript tracking client
+ * JavaScript tracking client v0.4
  *
  * @link http://www.keplarllp.com/blog/2012/02/introducing-snowplow-the-worlds-most-powerful-web-analytics-platform
  * @source https://github.com/snowplow/snowplow/raw/master/tracker/js/snowplow.js
