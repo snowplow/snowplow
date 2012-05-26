@@ -1257,7 +1257,8 @@ var
 					sesname = getCookieName('ses'),
 					id = loadVisitorIdCookie(),
 					ses = getCookie(sesname),
-					currentUrl = configCustomUrl || locationHrefAlias;
+					currentUrl = configCustomUrl || locationHrefAlias,
+                    featurePrefix;
 
 				if (configDoNotTrack) {
 					setCookie(idname, '', -1, configCookiePath, configCookieDomain);
@@ -1285,21 +1286,24 @@ var
 
 				// Build out the rest of the request
 				request += 
-					'&rdm=' + String(Math.random()).slice(2, 8) +
+					'&tid=' + String(Math.random()).slice(2, 8) +
 					'&uid=' + uuid +
                     '&vid=' + visitCount +
                     '&lang=' + configBrowserLanguage +
                     (configReferrerUrl.length ? '&refr=' + encodeWrapper(purify(configReferrerUrl)) : '');
 
-/*</SNOWPLOW>*/
-
-				// Browser features
+				// Browser features. Cookie and resolution don't get prepended with f_ (because they're not optional features)
 				for (i in browserFeatures) {
 					if (Object.prototype.hasOwnProperty.call(browserFeatures, i)) {
-						request += '&f_' + i + '=' + browserFeatures[i];
+						featurePrefix = (i === 'res' || i === 'cookie') ? '&' : '&f_';
+                        request += featurePrefix + i + '=' + browserFeatures[i];
 					}
 				}
 
+                // Finally add the page URL
+                request += '&url=' + encodeWrapper(purify(window.location));
+
+/*</SNOWPLOW>*/
 				// Update cookies
 				setVisitorIdCookie(uuid, createTs, visitCount, nowTs, lastVisitTs);
 				setCookie(sesname, '*', configSessionCookieTimeout, configCookiePath, configCookieDomain, cookieSecure);
