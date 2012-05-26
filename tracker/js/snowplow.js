@@ -1,14 +1,12 @@
 /*!
- * SnowPlow - Take control of your web analytics data
+ * SnowPlow - The world’s most powerful web analytics platform
  *
- * JavaScript tracking client v0.4
- *
- * @link http://www.keplarllp.com/blog/2012/02/introducing-snowplow-the-worlds-most-powerful-web-analytics-platform
- * @source https://github.com/snowplow/snowplow/raw/master/tracker/js/snowplow.js
- * @license http://www.opensource.org/licenses/bsd-license.php Simplified BSD
+ * @description JavaScript tracking client for SnowPlow
+ * @version 0.4
+ * @author Alex Dean, Anthon Pang
  */
 
-// Refer to README for build instructions when minifying this file for distribution.
+// Refer to /docs/04_selfhosting_snowplow.md for instructions on how to minify this file for distribution.
 
 /*
  * Browser [In]Compatibility
