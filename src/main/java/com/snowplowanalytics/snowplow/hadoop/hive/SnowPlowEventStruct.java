@@ -225,7 +225,8 @@ public class SnowPlowEventStruct {
       final Browser b = userAgent.getBrowser();
       this.br_name = b.getName();
       this.br_family = b.getGroup().getName();
-      this.br_version = userAgent.getBrowserVersion().getVersion();
+      final Version v = userAgent.getBrowserVersion();
+      this.br_version = (v == null) ? null : v.getVersion();
       this.br_type = b.getBrowserType().getName();
       this.br_renderengine = b.getRenderingEngine().toString();
       

@@ -32,6 +32,7 @@ object SnowPlowLogDeserializerBuild extends Build {
         Libraries.hive,
         Libraries.serde,
         Libraries.httpClient,
+        Libraries.httpCore,
         Libraries.logging,
         Libraries.specs2
       )
