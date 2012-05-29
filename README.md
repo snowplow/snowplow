@@ -156,7 +156,7 @@ Now using these deserializers with Hive should be quite easy - here's an example
     CREATE EXTERNAL TABLE views_events 
     PARTITIONED BY (dt STRING)
     ROW FORMAT 
-      SERDE 'com.snowplowanalytics.snowplow.hive.serde.SnowPlowEventDeserializer'
+      SERDE 'com.snowplowanalytics.snowplow.hadoop.hive.SnowPlowEventDeserializer'
     LOCATION 's3://{{LOGS-BUCKET-NAME}}/';
 
 Some points on this:
