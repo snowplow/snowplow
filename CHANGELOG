@@ -1,0 +1,17 @@
+Version 0.4.0 (2012-05-30)
+--------------------------
+Improved names of querystring params
+Added page-url to QS as fallback
+Added Hive Deserializer as submodule
+
+Version 0.3.0 (2012-05-18)
+--------------------------
+Mostly documentation
+
+Version 0.2.0
+-------------
+Formalised minification process
+
+Version 0.1.0
+-------------
+Initial release of SnowPlow.js
