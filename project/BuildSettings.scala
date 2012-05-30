@@ -18,7 +18,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "Orderly Ltd",
-    version       := "0.4.3",
+    version       := "0.4.4",
     description   := "Hive deserializers for the SnowPlow log data",
     scalaVersion  := "2.9.1",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
@@ -26,16 +26,8 @@ object BuildSettings {
     resolvers     ++= Dependencies.resolutionRepos
   )
 
-  // Proguard settings for packaging
-  // TODO: can't get this to work. Move to sbt-assembly
-  import ProguardPlugin._
-  lazy val proguard = proguardSettings ++ Seq(
-    proguardOptions := Seq(
-      "-keepattributes *Annotation*,EnclosingMethod",
-      "-dontskipnonpubliclibraryclassmembers",
-      "-keep public class com.snowplowanalytics.snowplow.**"
-    )
-  )
-
-  lazy val buildSettings = basicSettings ++ proguard
+  // sbt-assembly
+  import sbtassembly.Plugin._
+  import AssemblyKeys._
+  lazy val buildSettings = basicSettings ++ assemblySettings
 }
