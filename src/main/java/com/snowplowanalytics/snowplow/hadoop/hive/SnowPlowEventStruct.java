@@ -281,12 +281,13 @@ public class SnowPlowEventStruct {
                 this.br_cookies = stringToBoolean(value);
                 break;
               case RES:
-                String[] resolution = value.split("x");
                 try {
+                  String[] resolution = value.split("x");
                   this.dvce_screenwidth = Integer.parseInt(resolution[0]);
                   this.dvce_screenheight = Integer.parseInt(resolution[1]); 
                 } catch (Exception e) {
-                  throw new SerDeException("Not a valid screen resolution: \"" + value + "\"");
+                  // Return a null row on invalid data
+                  return null;
                 }
                 break;
               case REFR:
@@ -319,7 +320,8 @@ public class SnowPlowEventStruct {
                 break;
             }
           } catch (IllegalArgumentException iae) {
-            throw new SerDeException("Unsupported field \"" + name + "\" found in querystring");
+            // Return a null row on invalid data
+            return null;
           }
         }
       }
