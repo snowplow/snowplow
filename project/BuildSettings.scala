@@ -18,7 +18,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "Orderly Ltd",
-    version       := "0.4.1",
+    version       := "0.4.2",
     description   := "Hive deserializers for the SnowPlow log data",
     scalaVersion  := "2.9.1",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
@@ -27,6 +27,7 @@ object BuildSettings {
   )
 
   // Proguard settings for packaging
+  // TODO: can't get this to work. Move to sbt-assembly
   import ProguardPlugin._
   lazy val proguard = proguardSettings ++ Seq(
     proguardOptions := Seq(
