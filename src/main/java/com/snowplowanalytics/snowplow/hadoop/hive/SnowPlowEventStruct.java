@@ -206,9 +206,9 @@ public class SnowPlowEventStruct {
         return null;
       }
 
-      // -> was the status code other than 200, 000 (client terminated the connection) or 304? Should never happen, throw an exception
+      // -> was the status code other than 200, 206 (partial), 000 (client terminated the connection) or 304? Should never happen, throw an exception
       final String code = m.group(9);
-      if (!code.equals("200") && !code.equals("304") && !code.equals("000")) {
+      if (!code.equals("200") && !code.equals("206") && !code.equals("304") && !code.equals("000")) {
         throw new SerDeException("Unexpected HTTP status code: \"" + code + "\"");
       }
 
