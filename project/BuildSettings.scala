@@ -26,8 +26,20 @@ object BuildSettings {
     resolvers     ++= Dependencies.resolutionRepos
   )
 
-  // sbt-assembly
+  // sbt-assembly settings for building a fat jar
   import sbtassembly.Plugin._
   import AssemblyKeys._
-  lazy val buildSettings = basicSettings ++ assemblySettings
+  lazy val sbtAssemblySettings = assemblySettings ++ Seq(
+    assembleArtifact in packageScala := false,
+    jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + ".jar" },
+    mergeStrategy in assembly <<= (mergeStrategy in assembly) {
+      (old) => {
+        case "META-INF/NOTICE.txt" => MergeStrategy.discard
+        case "META-INF/LICENSE.txt" => MergeStrategy.discard
+        case x => old(x)
+      }
+    }
+  )
+
+  lazy val buildSettings = basicSettings ++ sbtAssemblySettings
 }

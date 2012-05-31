@@ -27,12 +27,12 @@ object Dependencies {
   }
 
   object Libraries {
-    val hadoop      = "org.apache.hadoop"          %  "hadoop-core"          % V.hadoop
-    val hive        = "org.apache.hive"            %  "hive-common"          % V.hive
-    val serde       = "org.apache.hive"            %  "hive-serde"           % V.hive
+    val hadoop      = "org.apache.hadoop"          %  "hadoop-core"          % V.hadoop      % "provided"
+    val hive        = "org.apache.hive"            %  "hive-common"          % V.hive        % "provided"
+    val serde       = "org.apache.hive"            %  "hive-serde"           % V.hive        % "provided"
     val httpClient  = "org.apache.httpcomponents"  %  "httpclient"           % V.http
     val httpCore    = "org.apache.httpcomponents"  %  "httpcore"             % V.http  
-    val logging     = "commons-logging"            %  "commons-logging"      % V.logging
+    val logging     = "commons-logging"            %  "commons-logging"      % V.logging     % "provided"
     val specs2      = "org.specs2"                 %% "specs2"               % V.specs2      % "test"
   }
 }
