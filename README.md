@@ -44,9 +44,8 @@ Additionally it is worth reading the technical READMEs for the sub-projects:
 Planned items on the roadmap are as follows:
 
 * Making `snowplow.js` available over SSL (not currently working)
-* Improvements to the JavaScript tracker, `snowplow.js`
-* Opensourcing the standard SerDe
 * Writing and opensourcing some standard Hive 'recipes'
+* Releasing schedulable Hive scripts for aggregating daily data
 
 ## Contributors
 
