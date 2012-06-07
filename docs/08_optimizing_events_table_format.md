@@ -50,7 +50,7 @@ Running the above query will only copy data from the SnowPlow Cloudfront logs in
 
 Accessing the optimized table in Hive is straightforward. Because the data is stored in Hive's default format, there is no need to use a deserializer to access it:
 
-	CREATE EXTERNAL TABLE events
+	CREATE EXTERNAL TABLE events (
 	tm string,
 	txn_id string,
 	user_ipaddress string,
@@ -91,9 +91,13 @@ Once created, you need to tell Hive to look for the partitions that exist
 
 	ALTER TABLE events RECOVER PARTITIONS ;
 
+![Recover partitions](/snowplow/snowplow/raw/master/docs/images/recover-partitions.png)
+
 You can then list the partitions that exist:
 
 	SHOW PARTITIONS events ;
+
+![Show partitions](/snowplow/snowplow/raw/master/docs/images/show-partitions.png)
 
 Note: because the fields in the table are *exactly* the same as those in the SnowPlow Cloudfront logs, any query that works for one works for the other. (For that reason, you can use any of the [recipes](https://github.com/snowplow/snowplow/tree/master/hive/receipes) we document on either table.) However, query performance should be faster (and hence Amazon EMR costs should be lower) if you perform the queries against the partitioned table above, especially if your queries are limited to particular data partitions. (E.g. if you specify a date or user_id rangein you WHERE clause, in which case *only* relevant partitions will be processed to answer your query.)
 
