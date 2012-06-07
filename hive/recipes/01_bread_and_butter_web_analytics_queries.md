@@ -2,15 +2,17 @@
 
 The following queries return basic web analytics data that someone could expect from any standard web analytics package.
 
-	1. [Counting unique visitors](#counting-unique-visitors)
-	2. [Counting visits](#counting-visits)
-	3. [Counting pageviews](#counting-pageviews)
-	4. [Counting events](#counting-events)
-	5. [Pages per visit](#pages-per-visit)
-	4. [Repeating queries: a note about efficiency](#a-note-about-efficiency)
+1. [Number of unique visitors](#counting-unique-visitors)
+2. [Number visits](#counting-visits)
+3. [Number of pageviews](#counting-pageviews)
+4. [Number of events](#counting-events)
+5. [Pages per visit](#pages-per-visit)
+6. [Bounce rate](#bounce-rate)
+7. [% new visits](#new-visits)
+8. [Repeating queries: a note about efficiency](#efficiency)
 
-<a name="counting-unique-visitors">
-## Number of unique visitors 
+<a name="counting-unique-visitors" />
+## 1. Number of unique visitors 
 
 The number of unique visitors can be calculated by summing the number of distinct `user_id`s in a specified time period e.g. day. (Because each user is assigned a unique user_id, based on a lack of SnowPlow tracking cookies on their browser):
 
@@ -38,8 +40,8 @@ Or by month:
 	FROM events
 	GROUP BY YEAR(dt), MONTH(dt) ;
 
-<a name="counting-visits">
-## Number of visits
+<a name="counting-visits" />
+## 2. Number of visits
 
 Because each user might visit a site more than once, summing the number of `user_id`s returns the number if *visitors*, NOT the number of *visits*. Every time a user visits the site, however, SnowPlow assigns that session with a `visit_id` (e.g. `1` for their first visit, `2` for their second.) Hence, to count the number of visits in a time period, we concatenate the unique `user_id` with the `visit_id` and then count the number of distinct concatenated entry in the events table:
 
@@ -68,8 +70,8 @@ Or month:
 	FROM events
 	GROUP BY YEAR(dt), MONTH(dt) ;
 
-<a name="counting-pageviews">
-## Number of page views
+<a name="counting-pageviews" />
+## 3. Number of page views
 
 Page views are one type of event that are stored in the SnowPlow events table. Their defining feature is that the `page_title` contain values (are not `NULL`). In the case of an *event* that is not a page view (e.g. an _add to basket_) these fields would all be `NULL`, and the event fields (`ev_category`, `ev_action`, `ev_label` etc.) would contain values. For details, see the [Introduction to the SnowPlow events table](https://github.com/snowplow/snowplow/blog/master/docs/07_snowplow_hive_tables_introduction.md).
 
@@ -102,7 +104,8 @@ By month:
 	WHERE page_title IS NOT NULL
 	GROUP BY YEAR(dt), MONTH(dt) ;
 
-## Number of events / transactions
+<a name="number-of-events" />
+## 4. Number of events / transactions
 
 Although the number of page views is a standard metric in web analytics, this reflects the web's history as a set of hyperlinked documents rather than the modern reality of web applications that are comprise lots of AJAX events (that need not necessarily result in a page load.)
 
@@ -146,8 +149,8 @@ For example, to examine the engagement by user by month, we execute the followin
 
 There is scope to taking a progressively more nuanced approach to measuring user engagement levels. Some of the approaches are described in [this blog post](http://www.keplarllp.com/blog/2012/05/different-approaches-to-measuring-user-engagement-with-snowplow)
 
-<a name="pages-per-visit">
-## Pages per visit
+<a name="pages-per-visit" />
+## 5. Pages per visit
 
 The number of pages per visit can be calculated by visit very straightforwardly:
 
@@ -189,11 +192,13 @@ The queries are given below:
 	FROM pages_per_visit
 	GROUP BY dt ;
 
-## Bounce rate
+<a name="bounce-rate" />
+## 6. Bounce rate
 
 [TO WRITE]
 
-## % New visits
+<a name="new-visits" />
+## 7. % New visits
 
 A new visit is easily identified as a visit where the visit_id = 1. Hence, to calculate the % of new visits, we need to sum all the visits where `visit_id` = 1 and divide by the total number of visits, in the time period.
 
@@ -214,13 +219,13 @@ First, we calculate the number of new visits in the time period:
 Secondly, we calculate the total number of visits in the time period:
 
 	CREATE TABLE visits_by_day (
-	dt,
-	number_of_visits) ;
+	dt STRING,
+	number_of_visits INT) ;
 
 	INSERT OVERWRITE TABLE visits_by_day
 	SELECT
 	dt,
-	COUNT(DISTINCT (user_id) )
+	COUNT(DISTINCT (CONCAT(user_id,visit_id)) )
 	FROM events
 	GROUP BY dt ;
 
@@ -231,3 +236,28 @@ Lastly, we take the number of new visits per time period, and divide by the tota
 	number_new_visits / number_of_visits AS percentage_new_visits
 	FROM new_visits_by_day n JOIN visits_by_day v ON n.dt = v.dt
 	GROUP BY dt ; 
+
+<a name="efficiency" />
+## 8. A note about efficiency
+
+Hive and Hadoop more generally are very powerful tools to process large volumes of data. However, data processing is an expensive task, in the sense that every time you execute the query, you have to pay EMR fees to crunch through your data. As a result, where possible, it is advisable not to repeat the same analysis multiple times: for repeated analyses you should save the results of the analysis, and only perform subsequent analysis on new data.
+
+To take the example of logging the number of unique visitors by day: we could run a query to fetch calculate this data up to and included yesterday:
+
+	SELECT 
+	dt,
+	COUNT(DISTINCT (user_id))
+	FROM events
+	WHERE dt < '{{TODAY's DATE}}'
+	GROUP BY dt ;
+
+We would then save this data in a suitable database / Excel spreadsheet, and add to it by querying just *new* data e.g.
+
+	SELECT 
+	dt,
+	COUNT(DISTINCT (user_id))
+	FROM events
+	WHERE dt > '{{NEW DATES}}'
+	GROUP BY dt ;
+
+At the moment, the analyst has to manually append the new data to the old. Going forwards, we will build out the SnowPlow functionality so that it is straightforward to build ETL processes to migrate useful cuts of data into analytics databases for further analysis, where Hadoop / Hive is not required for that additional analysis.
