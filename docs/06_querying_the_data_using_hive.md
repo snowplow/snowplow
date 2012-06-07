@@ -1,13 +1,13 @@
 # Querying your SnowPlow web analytics data using Hive
 
-Many of the analyses we perform in SnowPlow use Hive. We tend to use Hive Interactive Sessions to develop queries and analyses. If we want to repeat these analyses over time, we turn these into Hive scripts that can scheduled to run.
+Many of the analyses we perform in SnowPlow use Hive. We tend to use Hive Interactive Sessions to develop queries and analyses. Once a set of queries has been developed in the interactive sessions, they can be stored as a text file in S3 and run as a batch process directly from the Elastic Mapreduce Command Line tools.
 
 This part of the guide walks through the process of launching and running a Hive Interactive session. The steps involved are:
 
 1. [Starting a job](#startingajob) i.e. firing up a set of instances to run Hive / Hadoop
 2. [SSHing in to the instances and launching Hive](#sshin)
 3. [Running Hive queries, including using the SnowPlow serde](#runninghivequeries)
-4. [Terminating the session](#terminatingthesession.)
+4. [Terminating the session](#terminatingthesession)
 
 Most of the analyses we perform are in Hive interactive sessions: because it is in these types of sessions that we can actively query data, explore results and develop more sophisticated analyses.
 
@@ -94,15 +94,17 @@ We need to add the JAR to the Hive session, so Hive can access the deserializer.
 
 	ADD JAR s3://{{JARS-BUCKET-NAME-HERE}}/snowplow-log-deserializers-0.4.4.jar
 
+![Add the SnowPlow deserializer JAR to Hive](/snowplow/snowplow/raw/master/docs/images/hive-add-deserializer.png)
+
 Now in Hive we need to define create a table with the data stored in the SnowPlow logs, using the deserializer. Do this by entering the following query:
 
 	CREATE EXTERNAL TABLE snowplow_events_log
 	ROW FORMAT SERDE 'com.snowplowanalytics.snowplow.hadoop.hive.SnowPlowEventDeserializer'
 	LOCATION 's3://{{LOGS-BUCKET-NAME}}/'
 
-Don't forget to include the trailing slash in the location address. The above query creates a new table. The table is `EXTERNAL` because the data in it is not managed by Hive: it is stored in S3 (and only accessed by Hive). As a result, if you drop the table in Hive, the data will remain safely in S3:
+![Create SnowPlow events table](/snowplow/snowplow/raw/master/docs/images/create-table-with-serde.png)
 
-	DROP TABLE snowplow_events_log
+Don't forget to include the trailing slash in the location address. The above query creates a new table. The table is `EXTERNAL` because the data in it is not managed by Hive: it is stored in S3 (and only accessed by Hive). As a result, if you drop the table in Hive (`DROP TABLE snowplow_events_log`), the data will remain safely in S3, even if the table disappears from Hive. (You can re-enter the above query to _bring it back_):
 
 The query instructs Hive to use the deserializer to translate the cloudfront logs into a format that Hive can read directly. It points Hive at the S3 bucket where the data is stored.
 
