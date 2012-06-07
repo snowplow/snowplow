@@ -25,7 +25,7 @@ The ETL can be run as a batch job. The queries to run the batch job are stored i
 To run the script, you need to upload it to S3 e.g. via the [Amazon S3 web UI](https://console.aws.amazon.com). Once uploaded, you can run it using the Elastic MapReduce Command Line Tools, by executing the following command:
 
 	./elastic-mapreduce --create --name "daily ETL" \
-		--hive-script s3://psychicbazaar-snowplow-static/daily-snowplow-etl-dynamic.q \
+		--hive-script s3://{{LOCATION WHERE daily-etl.q IS STORED IN S3}} \
 		--hive-versions 0.7 \
 		--args -d,CLOUDFRONTLOGS=s3://{{BUCKET-WHERE-CLOUDFRONT-LOGS-ARE-STORED}}/ \
 		--args -d,EVENTSTABLE=s3://{{NEW-BUCKET-WHERE-THE-OPTIMIZED-TABLE-WILL-BE-STORED}}/ \
