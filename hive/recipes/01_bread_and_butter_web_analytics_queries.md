@@ -8,7 +8,7 @@ The following queries return basic web analytics data that someone could expect 
 4. [Number of events](#counting-events)
 5. [Pages per visit](#pages-per-visit)
 6. [Bounce rate](#bounce-rate)
-7. [% new visits](#new-visits)
+7. [% New visits](#new-visits)
 8. [Repeating queries: a note about efficiency](#efficiency)
 
 <a name="counting-unique-visitors" />
@@ -104,7 +104,7 @@ By month:
 	WHERE page_title IS NOT NULL
 	GROUP BY YEAR(dt), MONTH(dt) ;
 
-<a name="number-of-events" />
+<a name="counting-events" />
 ## 4. Number of events / transactions
 
 Although the number of page views is a standard metric in web analytics, this reflects the web's history as a set of hyperlinked documents rather than the modern reality of web applications that are comprise lots of AJAX events (that need not necessarily result in a page load.)
