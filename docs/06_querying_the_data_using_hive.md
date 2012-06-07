@@ -136,9 +136,9 @@ Of course, in either of the above cases, we could aggregate our results by month
 	YEAR(dt) AS yr,
 	MONTH(dt) AS mnth,
 	COUNT(DISTINCT user_id) AS unique_visitors,
-	COUNT(DISTINCT (CONCAT(user_id, visit_id))) AS visits,
+	COUNT(DISTINCT (CONCAT(user_id, visit_id))) AS visits
 	FROM snowplow_events_log 
-	GROUP BY yr, mnth ;
+	GROUP BY YEAR(dt), MONTH(dt) ;
 
 
 We can look at the number of 'transactions' (incl. page views, add-to-baskets, and other user actions) by each user to get a sense of whom are most engaged users are, just over May 2012:
