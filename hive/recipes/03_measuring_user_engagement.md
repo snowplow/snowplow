@@ -60,7 +60,7 @@ We might also want to see how the distribution evolves by month:
 
 Note: as well as looking at how the distribution of users by engagement level changes over time, we might also want to look at how it changes for a fixed group of users. This is normally performed as part of a [cohort analysis](http://www.keplarllp.com/blog/2012/05/performing-cohort-analysis-on-web-analytics-data-using-snowplow).
 
-<a name="days-per-time-period" />
+<a name="visits-per-time-period" />
 ## 2. Number of visits by each user per day / week / month
 
 A similar metric is to count the number of visits that each user makes in a given time period. The difference here, is that if a user visits a site more than once a day, each individual visit contributes to the "engagement" value assigned to that user. When we look at the number of days per month a user visits a website, by contrast, we do not distinguish users who've visited once from users who've visited twice. 
@@ -149,3 +149,6 @@ If we want to see whether this metric is improving over time, we can repeat the 
 	GROUP BY dt, engagement ;
 
 <a name="weighted-events-per-visit" />
+## 4. Weighting events by value
+
+[TO WRITE]
