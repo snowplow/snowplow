@@ -9,7 +9,8 @@ The following queries return basic web analytics data that someone could expect 
 5. [Pages per visit](#pages-per-visit)
 6. [Bounce rate](#bounce-rate)
 7. [% New visits](#new-visits)
-8. [Repeating queries: a note about efficiency](#efficiency)
+8. [Average visitor duration](#duration)
+9. [Repeating queries: a note about efficiency](#efficiency)
 
 <a name="counting-unique-visitors" />
 ## 1. Number of unique visitors 
@@ -195,7 +196,57 @@ The queries are given below:
 <a name="bounce-rate" />
 ## 6. Bounce rate
 
-[TO WRITE]
+First we need to look at all the website visits, and flag which of those visits are *bounces*: these are visits where there is only one page view. (So one "event" i.e. only one `txn_id`):
+
+	CREATE TABLE visits_with_bounce_info (
+	user_id STRING,
+	visit_id INT,
+	dt STRING,
+	events INT,
+	bounce BOOLEAN
+	) ;
+
+	INSERT OVERWRITE TABLE visits_with_bounce_info
+	SELECT 
+	user_id,
+	visit_id,
+	MIN(dt),
+	COUNT(txn_id),
+	IF(COUNT(txn_id) = 1, 1, 0)
+	FROM events
+	GROUP BY user_id, visit_id ;
+
+Then we need to calculate the fraction of visits by time period that are *bounces* e.g. by day:
+
+	SELECT
+	dt,
+	COUNT( visit_id ) AS total_visits,
+	SUM( bounce ) AS bounces,
+	SUM( bounce )/COUNT( visit_id ) AS bounce_rate
+	FROM visits_with_bounce_info
+	GROUP BY dt ;
+
+Or by week:
+
+	SELECT
+	YEAR(dt),
+	WEEKOFYEAR(dt),
+	COUNT( visit_id ) AS total_visits,
+	SUM( bounce ) AS bounces,
+	SUM( bounce )/COUNT( visit_id ) AS bounce_rate
+	FROM visits_with_bounce_info
+	GROUP BY YEAR(dt), WEEKOFYEAR(dt) ;
+
+Or by month:
+
+	SELECT
+	YEAR(dt),
+	MONTH(dt),
+	COUNT( visit_id ) AS total_visits,
+	SUM( bounce ) AS bounces,
+	SUM( bounce )/COUNT( visit_id ) AS bounce_rate
+	FROM visits_with_bounce_info
+	GROUP BY YEAR(dt), MONTHS(dt) ;
 
 <a name="new-visits" />
 ## 7. % New visits
@@ -233,12 +284,62 @@ Lastly, we take the number of new visits per time period, and divide by the tota
 
 	SELECT
 	n.dt,
-	number_new_visits / number_of_visits AS percentage_new_visits
-	FROM new_visits_by_day n JOIN visits_by_day v ON n.dt = v.dt
-	GROUP BY dt ; 
+	n.number_new_visits / v.number_of_visits AS percentage_new_visits
+	FROM new_visits_by_day n JOIN visits_by_day v ON n.dt = v.dt;
+
+<a name="duration" />
+## 8. Average visitor duration
+
+To calculate this, 1st we need to calculate the duration of every visit:
+
+	CREATE TABLE visits (
+	user_id STRING,
+	visit_id STRING,
+	dt STRING,
+	start_time STRING,
+	end_time STRING,
+	duration DOUBLE
+	) ;
+
+	INSERT OVERWRITE TABLE visits
+	SELECT
+	user_id,
+	visit_id,
+	MIN(dt),
+	MIN(CONCAT(dt," ",tm)),
+	MAX(CONCAT(dt," ",tm)),
+	UNIX_TIMESTAMP(MAX(CONCAT(dt," ",tm)))-UNIX_TIMESTAMP(MIN(CONCAT(dt," ",tm)))
+	FROM events
+	GROUP BY user_id, visit_id ;
+
+Then we simply average visit durations over the time period we're interested e.g. by day:
+
+	SELECT
+	dt,
+	AVG(duration)
+	FROM visits
+	GROUP BY dt ;
+
+Or by week:
+
+	SELECT 
+	YEAR(dt),
+	WEEKOFYEAR(dt),
+	AVG(duration)
+	FROM visits
+	GROUP BY YEAR(dt), WEEKOFYEAR(dt) ;
+
+Or by month:
+
+	SELECT 
+	YEAR(dt),
+	WEEKOFYEAR(dt),
+	AVG(duration)
+	FROM visits
+	GROUP BY YEAR(dt), MONTH(dt) ;
 
 <a name="efficiency" />
-## 8. A note about efficiency
+## 9. A note about efficiency
 
 Hive and Hadoop more generally are very powerful tools to process large volumes of data. However, data processing is an expensive task, in the sense that every time you execute the query, you have to pay EMR fees to crunch through your data. As a result, where possible, it is advisable not to repeat the same analysis multiple times: for repeated analyses you should save the results of the analysis, and only perform subsequent analysis on new data.
 
