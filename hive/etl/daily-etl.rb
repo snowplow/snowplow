@@ -28,7 +28,8 @@ end
 # Determine yesterday's date
 yesterday = (Date.today - 1).strftime('%Y-%m-%d')
 
-# Runs a daily ETL job for the specific day
+# Runs a daily ETL job for the specific day.
+# Uses the Elastic MapReduce Command Line Tool.
 # Params:
 # +day+:: the day to run the ETL job for
 # +buckets+:: the hash of bucket names to pass in to the Hive script
@@ -36,5 +37,5 @@ def run_etl(day, buckets)
   puts day
 end
 
-# Now run the job via the Elastic MapReduce Command Line Tool
+# Now run the job
 run_etl(yesterday, buckets)
