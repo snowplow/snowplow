@@ -15,11 +15,12 @@ require 'optparse'
 require 'date'
 
 # Handle command-line arguments
+buckets = {}
 OptionParser.new do |o|
-  o.on('-j jarbucket') { |jar_bucket| $jar_bucket = jar_bucket }
-  o.on('-i inbucket') { |in_bucket| $in_bucket = in_bucket }
-  o.on('-o outbucket') { |out_bucket| $out_bucket = out_bucket }
-  o.on('-a archivebucket') { |archive_bucket| $archive_bucket = archive_bucket }
+  o.on('-j jarbucket') { |jar_bucket| buckets[:jar] = jar_bucket }
+  o.on('-i inbucket') { |in_bucket| buckets[:in] = in_bucket }
+  o.on('-o outbucket') { |out_bucket| buckets[:out] = out_bucket }
+  o.on('-a archivebucket') { |archive_bucket| buckets[:archive] = archive_bucket }
   o.on('-h') { puts o; exit }
   o.parse!
 end
@@ -27,5 +28,13 @@ end
 # Determine yesterday's date
 yesterday = (Date.today - 1).strftime('%Y-%m-%d')
 
+# Runs a daily ETL job for the specific day
+# Params:
+# +day+:: the day to run the ETL job for
+# +buckets+:: the hash of bucket names to pass in to the Hive script
+def run_etl(day, buckets)
+  puts day
+end
+
 # Now run the job via the Elastic MapReduce Command Line Tool
-# TODO
+run_etl(yesterday, buckets)
