@@ -10,11 +10,11 @@
 # software distributed under the Apache License Version 2.0 is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
-
+#
 # This Ruby script runs the daily ETL (extract, transform, load)
 # process which transforms the raw CloudFront log data into
 # SnowPlow-formatted Hive data tables, optimised for analysis.
-#
+
 # This is a three-step process:
 # 1. Extract the CloudFront log files to a temporary SnowPlow event data table (using the custom Deserializer)
 # 2. Load the temporary event data into the final SnowPlow data table, partitioning by date and user
