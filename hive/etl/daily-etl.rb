@@ -66,6 +66,39 @@ config = YAML.load_file(options[:config])
 # Determine yesterday's date
 yesterday = (Date.today - 1).strftime('%Y-%m-%d')
 
+# Now load the Ruby EMR Client
+$LOAD_PATH << config["aws"]["emr_client_path"]
+require 'amazon/coral/elasticmapreduceclient'
+require 'amazon/retry_delegator'
+
+aws_config = {
+  :endpoint            => "https://elasticmapreduce.amazonaws.com",
+  :ca_file             => File.join(config["aws"]["emr_client_path"], "cacert.pem"),
+  :aws_access_key      => config["aws"]["my_access_id"],
+  :aws_secret_key      => config["aws"]["my_secret_key"],
+  :signature_algorithm => :V2
+}
+client = Amazon::Coral::ElasticMapReduceClient.new_aws_query(aws_config)
+
+# Use the retry delegator to make your client retry if it gets connection failures.
+is_retryable_error_response = Proc.new do |response|
+  if response == nil then
+    false
+  else
+    ret = false
+    if response['Error'] then
+      # don't retry on 'Timeout' because the call might have succeeded
+      ret ||= ['InternalFailure', 'Throttling', 'ServiceUnavailable'].include?(response['Error']['Code'])
+    end
+    ret
+  end
+end
+
+client = Amazon::RetryDelegator.new(client, :retry_if => is_retryable_error_response)
+
+# Debug TODO: remove
+puts client.DescribeJobFlows.inspect
+
 # Runs a daily ETL job for the specific day.
 # Uses the Elastic MapReduce Command Line Tool.
 # Parameters:
