@@ -4,15 +4,15 @@ In the [previous document](https://github.com/snowplow/snowplow/blob/master/hive
 
 In this document we give the queries required to return the web metrics Google Analytics provides under its *Overview* section i.e.:
 
-[1. Demographics: language](#language)
-[2. Demographics: location](#location)
-[3. Behaviour: new vs returning](#new-vs-returning)
-[4. Behaviour: frequency](#frequency)
-[5. Behaviour: recency](#recency)
-[6. Behaviour: engagement](#engagement)
-[7. Technology: browser](#browser)
-[8. Technology: operating system](#os)
-[9. Technology: mobile](#mobile)
+1. [Demographics: language](#language)
+2. [Demographics: location](#location)
+3. [Behaviour: new vs returning](#new-vs-returning)
+4. [Behaviour: frequency](#frequency)
+5. [Behaviour: recency](#recency)
+6. [Behaviour: engagement](#engagement)
+7. [Technology: browser](#browser)
+8. [Technology: operating system](#os)
+9. [Technology: mobile](#mobile)
 
 
 Remember, these are *NOT* the queries SnowPlow was designed to perform. SnowPlow was built from the ground up to make a wide range of analytics, that are *not* possible with Google Analytics and other web analytics packages, straightforward to perform. (Especially customer and product analytics.) However, the purpose of providing these queries is to show that these *traditional* queries are still very easy to perform in SnowPlow, because SnowPlow is so flexible.
