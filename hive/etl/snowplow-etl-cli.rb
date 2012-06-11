@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 # Copyright (c) 2012 Orderly Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
@@ -10,11 +8,11 @@
 # software distributed under the Apache License Version 2.0 is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
-#
+
 # This Ruby script runs the daily ETL (extract, transform, load)
 # process which transforms the raw CloudFront log data into
 # SnowPlow-formatted Hive data tables, optimised for analysis.
-
+#
 # This is a three-step process:
 # 1. Extract the CloudFront log files to a temporary SnowPlow event data table (using the custom Deserializer)
 # 2. Load the temporary event data into the final SnowPlow data table, partitioning by date and user
@@ -32,72 +30,30 @@
 # Copyright:: Copyright (c) 2012 Orderly Ltd
 # License::   Apache License Version 2.0
 
-require 'optparse'
-require 'date'
-require 'yaml'
-
-# Handle command-line arguments
-# TODO: add support for specifying a date range
-options = {}
-optparse = OptionParser.new do |opts|
-  opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
-  opts.on('-h', '--help', 'display this screen') { puts opts; exit }
-end
-
-# Check the mandatory arguments
-begin
-  optparse.parse!
-  mandatory = [:config]
-  missing = mandatory.select{ |param| options[param].nil? }
-  if not missing.empty?
-    puts "Missing options: #{missing.join(', ')}"
-    puts optparse
-    exit
-  end
-rescue OptionParser::InvalidOption, OptionParser::MissingArgument
-  puts $!.to_s
-  puts optparse
-  exit
-end
-
-# Now load the configuration
-config = YAML.load_file(options[:config])
-
-# Determine yesterday's date
-yesterday = (Date.today - 1).strftime('%Y-%m-%d')
+# TODO: get the config
 
 # Now load the Ruby EMR Client
-$LOAD_PATH << config["aws"]["emr_client_path"]
-require 'amazon/coral/elasticmapreduceclient'
-require 'amazon/retry_delegator'
+$LOAD_PATH.unshift config["aws"]["emr_client_path"]
+require 'commands'
+require 'simple_logger'
+require 'simple_executor'
 
-aws_config = {
-  :endpoint            => "https://elasticmapreduce.amazonaws.com",
-  :ca_file             => File.join(config["aws"]["emr_client_path"], "cacert.pem"),
-  :aws_access_key      => config["aws"]["my_access_id"],
-  :aws_secret_key      => config["aws"]["my_secret_key"],
-  :signature_algorithm => :V2
-}
-client = Amazon::Coral::ElasticMapReduceClient.new_aws_query(aws_config)
-
-# Use the retry delegator to make your client retry if it gets connection failures.
-is_retryable_error_response = Proc.new do |response|
-  if response == nil then
-    false
-  else
-    ret = false
-    if response['Error'] then
-      # don't retry on 'Timeout' because the call might have succeeded
-      ret ||= ['InternalFailure', 'Throttling', 'ServiceUnavailable'].include?(response['Error']['Code'])
-    end
-    ret
-  end
+exit_code = 0
+begin
+  logger = SimpleLogger.new
+  executor = SimpleExecutor.new
+  commands = Commands::create_and_execute_commands(
+    ARGV, Amazon::Coral::ElasticMapReduceClient, logger, executor
+  )
+rescue SystemExit => e
+  exit_code = -1
+rescue Exception => e
+  STDERR.puts("Error: " + e.message)
+  STDERR.puts(e.backtrace.join("\n"))
+  exit_code = -1
 end
 
-client = Amazon::RetryDelegator.new(client, :retry_if => is_retryable_error_response)
-
-# Debug TODO: remove
-puts client.DescribeJobFlows.inspect
+exit(exit_code)
 
 # Runs a daily ETL job for the specific day.
 # Uses the Elastic MapReduce Command Line Tool.
