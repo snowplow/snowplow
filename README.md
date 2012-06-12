@@ -14,7 +14,7 @@ SnowPlow is the world's most powerful web analytics platform. It does three thin
 
 Contents of this repository are as follows:
 
-* The root folder contains this README and the [Apache License, Version 2.0] [license]
+* The root folder contains this README, the CHANGELOG and the [Apache License, Version 2.0] [license]
 * `tracker` contains everything related to SnowPlow's JavaScript tracker, `snowplow.js`
 * `hive` contains everything related to running Hive analytics on the SnowPlow data
 
