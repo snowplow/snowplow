@@ -24,46 +24,53 @@ require 'optparse'
 require 'date'
 require 'yaml'
 
-# TODO: add description
-def get_config()
+# Config module to hold functions related to CLI argument
+# parsing and config file reading
+module Config
 
-  # Now load the configuration
-  options = parse_args()
-  config = YAML.load_file(options[:config])
+  # Return the config from YAML file, plus
+  # yesterday's date for the operation.
+  def Config.get_config()
 
-  # Now add yesterday's date to the config
-  yesterday = (Date.today - 1).strftime('%Y-%m-%d')
-  # TODO: add in yesterday's date in here
+    # Now load the configuration
+    options = Config.parse_args()
+    config = YAML.load_file(options[:config])
 
-end
+    # And add yesterday's date to the config
+    config[:date] = (Date.today - 1).strftime('%Y-%m-%d')
 
-# Parse the command-line arguments
-# TODO: add support for specifying a date range
-# Returns: the hash of parsed options
-def parse_args()
-
-  # Handle command-line arguments
-  options = {}
-  optparse = OptionParser.new do |opts|
-    opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
-    opts.on('-h', '--help', 'display this screen') { puts opts; exit }
+    config # Return the config
   end
 
-  # Check the mandatory arguments
-  begin
-    optparse.parse!
-    mandatory = [:config]
-    missing = mandatory.select{ |param| options[param].nil? }
-    if not missing.empty?
-      puts "Missing options: #{missing.join(', ')}"
+  # Parse the command-line arguments
+  # Returns: the hash of parsed options
+  def Config.parse_args()
+
+    # Handle command-line arguments
+    # TODO: add support for specifying a date range
+    options = {}
+    optparse = OptionParser.new do |opts|
+      opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
+      opts.on('-h', '--help', 'display this screen') { puts opts; exit }
+    end
+
+    # Check the mandatory arguments
+    begin
+      optparse.parse!
+      mandatory = [:config]
+      missing = mandatory.select{ |param| options[param].nil? }
+      if not missing.empty?
+        puts "Missing options: #{missing.join(', ')}"
+        puts optparse
+        exit -1
+      end
+    rescue OptionParser::InvalidOption, OptionParser::MissingArgument
+      puts $!.to_s
       puts optparse
       exit -1
     end
-  rescue OptionParser::InvalidOption, OptionParser::MissingArgument
-    puts $!.to_s
-    puts optparse
-    exit -1
+
+    options # Return the options
   end
 
-  options # Return the options
 end

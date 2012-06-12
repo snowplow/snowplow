@@ -1,3 +1,10 @@
+
+ADD JAR s3://${JAR_LIB}/snowplow-log-deserializers-0.4.4.jar ;
+
+CREATE EXTERNAL TABLE `extracted_logs`
+ROW FORMAT SERDE 'com.snowplowanalytics.snowplow.hadoop.hive.SnowPlowEventDeserializer'
+LOCATION '${CLOUDFRONT_LOGS}' ;
+
 CREATE EXTERNAL TABLE IF NOT EXISTS `events` (
 tm string,
 txn_id string,
@@ -34,11 +41,7 @@ dvce_screenheight int
 )
 PARTITIONED BY (dt STRING, user_id STRING)
 LOCATION '${EVENTS_TABLE}' ;
-ADD JAR s3://${JARBUCKET}/snowplow-log-deserializers-0.4.4.jar ;
 
-CREATE EXTERNAL TABLE `extracted_logs_${RUN_DATE}`
-ROW FORMAT SERDE 'com.snowplowanalytics.snowplow.hadoop.hive.SnowPlowEventDeserializer'
-LOCATION '${CLOUDFRONT_LOGS}' ;
 SET hive.exec.dynamic.partition=true ;
 
 INSERT OVERWRITE TABLE `events`
@@ -77,5 +80,5 @@ dvce_ismobile,
 dvce_screenwidth,
 dvce_screenheight,
 user_id
-FROM `extracted_logs_${RUN_DATE}`
+FROM `extracted_logs`
 WHERE dt='${DATA_DATE}' ;

@@ -30,10 +30,20 @@
 # Copyright:: Copyright (c) 2012 Orderly Ltd
 # License::   Apache License Version 2.0
 
-# TODO: get the config
+require 'config'
 
-# Now load the Ruby EMR Client
-$LOAD_PATH.unshift config["aws"]["emr_client_path"]
+# First get and load the config
+config = Config.get_config()
+
+# Now we upload the Hive query to S3
+# TODO
+
+# Execute the Hive query
+# TODO
+
+# TODO: move the below into a separate module
+$LOAD_PATH.unshift config[:aws][:emr_client_path]
+# TODO: check the EMR client path
 require 'commands'
 require 'simple_logger'
 require 'simple_executor'
@@ -64,5 +74,5 @@ def run_etl(day, buckets)
   puts day
 end
 
-# Now run the job
-run_etl(yesterday, config)
+# Finally we move the S3 files into the archive bucket
+# TODO
