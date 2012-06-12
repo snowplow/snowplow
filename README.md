@@ -8,7 +8,7 @@ SnowPlow is the world's most powerful web analytics platform. It does three thin
 * Stores the associated data in a scalable “clickstream” data warehouse
 * Makes it possible to leverage a big data toolset (e.g. Hadoop, Pig, Hive) to analyse that data
 
-**To find out more, please check out the [SnowPlow wiki] [wiki].**
+**To find out more, please check out the [SnowPlow Wiki] [wiki].**
 
 ## Contents
 
