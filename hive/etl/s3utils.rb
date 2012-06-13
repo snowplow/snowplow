@@ -19,11 +19,11 @@
 # 2. Archiving the CloudFront log files by moving them into a separate bucket
 module S3Utils
 
-  def S3Utils.upload_hive_query(config)
+  def S3Utils.upload_query(config)
     puts "Uploading Hive query..."
   end
 
-  def S3Utils.archive_cloudfront_logs(config)
+  def S3Utils.archive_logs(config)
     puts "Archiving CloudFront logs..."
   end
 end

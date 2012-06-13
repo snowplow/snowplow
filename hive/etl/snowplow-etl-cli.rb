@@ -33,12 +33,13 @@ require 'emr_client'
 # 2. Amazon Elastic MapReduce Ruby Client - see http://aws.amazon.com/developertools/2264
 #
 # Please make sure that both of these are installed before running this script.
+config = Config.get_config()
+
 begin
-  config = Config.get_config()
-  S3Utils.upload_hive_query(config)
+  S3Utils.upload_query(config)
   emr = EMRClient.new(config)
   emr.run_etl()
-  S3Utils.archive_cloudfront_logs(config)
+  S3Utils.archive_logs(config)
 
 rescue SystemExit => e
   exit_code = -1
