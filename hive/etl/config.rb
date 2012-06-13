@@ -1,4 +1,4 @@
-# Copyright (c) 2012 Orderly Ltd. All rights reserved.
+# Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -8,24 +8,17 @@
 # software distributed under the Apache License Version 2.0 is distributed on an
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
-#
-# This Ruby script runs the daily ETL (extract, transform, load)
-# process which transforms the raw CloudFront log data into
-# SnowPlow-formatted Hive data tables, optimised for analysis.
 
-# This is a module to wrap the command-line interface for the daily
-# ETL job.
-#
-# Author::    Alex Dean (mailto:alex@keplarllp.com)
-# Copyright:: Copyright (c) 2012 Orderly Ltd
+# Author::    Alex Dean (mailto:alex@snowplowanalytics.com)
+# Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'optparse'
 require 'date'
 require 'yaml'
 
-# Config module to hold functions related to CLI argument
-# parsing and config file reading
+# Config module to hold functions related to CLI argument parsing
+# and config file reading to support the daily ETL job.
 module Config
 
   # Return the config from YAML file, plus

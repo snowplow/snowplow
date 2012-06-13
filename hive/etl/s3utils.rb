@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 # Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
@@ -15,5 +13,17 @@
 # Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
-$LOAD_PATH.unshift File.dirname(__FILE__)
-require 'snowplow-etl-cli'
+# Ruby module to support the two S3-related actions required by
+# the daily ETL job:
+# 1. Uploading the daily-etl.q HiveQL query to S3
+# 2. Archiving the CloudFront log files by moving them into a separate bucket
+module S3Utils
+
+  def S3Utils.upload_hive_query()
+    puts "Uploading Hive query..."
+  end
+
+  def S3Utils.archive_cloudfront_logs()
+    puts "Archiving CloudFront logs..."
+  end
+end

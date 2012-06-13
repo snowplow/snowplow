@@ -1,4 +1,4 @@
-# Copyright (c) 2012 Orderly Ltd. All rights reserved.
+# Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -26,17 +26,20 @@
 #
 # Please make sure that both of these are installed before running this script.
 #
-# Author::    Alex Dean (mailto:alex@keplarllp.com)
-# Copyright:: Copyright (c) 2012 Orderly Ltd
+# Author::    Alex Dean (mailto:alex@snowplowanalytics.com)
+# Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'config'
+require 's3utils'
+
+# TODO: figure out error handling
 
 # First get and load the config
 config = Config.get_config()
 
 # Now we upload the Hive query to S3
-# TODO
+S3Utils.upload_hive_query()
 
 # Execute the Hive query
 # TODO
@@ -75,4 +78,4 @@ def run_etl(day, buckets)
 end
 
 # Finally we move the S3 files into the archive bucket
-# TODO
+S3Utils.archive_cloudfront_logs()
