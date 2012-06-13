@@ -33,31 +33,11 @@
 require 'config'
 require 's3utils'
 
-# TODO: figure out error handling
-
-# First get and load the config
-config = Config.get_config()
-
-# Now we upload the Hive query to S3
-S3Utils.upload_hive_query()
-
-# Execute the Hive query
-# TODO
-
-# TODO: move the below into a separate module
-$LOAD_PATH.unshift config[:aws][:emr_client_path]
-# TODO: check the EMR client path
-require 'commands'
-require 'simple_logger'
-require 'simple_executor'
-
-exit_code = 0
 begin
-  logger = SimpleLogger.new
-  executor = SimpleExecutor.new
-  commands = Commands::create_and_execute_commands(
-    ARGV, Amazon::Coral::ElasticMapReduceClient, logger, executor
-  )
+  config = Config.get_config()
+  S3Utils.upload_hive_query()
+  # TODO Execute the Hive query
+  S3Utils.archive_cloudfront_logs()
 rescue SystemExit => e
   exit_code = -1
 rescue Exception => e
@@ -67,15 +47,3 @@ rescue Exception => e
 end
 
 exit(exit_code)
-
-# Runs a daily ETL job for the specific day.
-# Uses the Elastic MapReduce Command Line Tool.
-# Parameters:
-# +day+:: the day to run the ETL job for
-# +buckets+:: the hash of bucket names to pass in to the Hive script
-def run_etl(day, buckets)
-  puts day
-end
-
-# Finally we move the S3 files into the archive bucket
-S3Utils.archive_cloudfront_logs()
