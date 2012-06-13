@@ -59,7 +59,6 @@ module Config
     end
 
     # Check the mandatory arguments
-    # TODO: raise exception don't exit -1 on error
     begin
       optparse.parse!
       mandatory = [:config]
