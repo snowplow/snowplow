@@ -29,8 +29,9 @@ module Config
     options = Config.parse_args()
     config = YAML.load_file(options[:config])
 
-    # And add yesterday's date to the config
-    config[:date] = (Date.today - 1).strftime('%Y-%m-%d')
+    # Add some extras to the config
+    config[:date] = (Date.today - 1).strftime('%Y-%m-%d') # Yesterday's date
+    config[:query_file] = RUBY JOIN SYNTAX? (File.dirname(__FILE__), "hiveql", "snowplow-etl.q")
 
     config # Return the config
   end
@@ -48,6 +49,7 @@ module Config
     end
 
     # Check the mandatory arguments
+    # TODO: raise exception don't exit -1 on error
     begin
       optparse.parse!
       mandatory = [:config]

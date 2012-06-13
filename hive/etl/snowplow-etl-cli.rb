@@ -9,6 +9,14 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
+# Author::    Alex Dean (mailto:alex@snowplowanalytics.com)
+# Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
+# License::   Apache License Version 2.0
+
+require 'config'
+require 's3utils'
+require 'emr_client'
+
 # This Ruby script runs the daily ETL (extract, transform, load)
 # process which transforms the raw CloudFront log data into
 # SnowPlow-formatted Hive data tables, optimised for analysis.
@@ -25,23 +33,16 @@
 # 2. Amazon Elastic MapReduce Ruby Client - see http://aws.amazon.com/developertools/2264
 #
 # Please make sure that both of these are installed before running this script.
-#
-# Author::    Alex Dean (mailto:alex@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
-# License::   Apache License Version 2.0
-
-require 'config'
-require 's3utils'
-require 'emr_client'
-
 begin
   config = Config.get_config()
   S3Utils.upload_hive_query(config)
   emr = EMRClient.new(config)
   emr.run_etl()
   S3Utils.archive_cloudfront_logs(config)
+
 rescue SystemExit => e
   exit_code = -1
+
 rescue Exception => e
   STDERR.puts("Error: " + e.message)
   STDERR.puts(e.backtrace.join("\n"))
