@@ -52,6 +52,8 @@ class EMRClient
 
   # Execute a command using the Amazon EMR client.
   # Syntax taken from Amazon's elastic-map-reduce.rb
+  # Parameters:
+  # +argv+:: the array of command-line-style arguments to pass to the Amazon EMR client
   def execute(argv)
     logger = SimpleLogger.new
     executor = SimpleExecutor.new
