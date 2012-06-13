@@ -22,9 +22,11 @@ require 'yaml'
 module Config
 
   QUERY_FILE = "snowplow-etl.q"
+  SERDE_FILE = "snowplow-log-deserializers-0.4.4.jar"
+  HIVE_VERSION = "0.7"
 
   # Return the configuration loaded from the supplied YAML file, plus
-  # yesterday's date and the relevant filepaths.
+  # the additional constants above.
   def Config.get_config()
 
     options = Config.parse_args()
@@ -33,6 +35,8 @@ module Config
     config[:date] = (Date.today - 1).strftime('%Y-%m-%d') # Yesterday's date
     config[:query_file][:local] = File.join(File.dirname(__FILE__), "hiveql", QUERY_FILE)
     config[:query_file][:remote] = File.join(config[:buckets][:query], QUERY_FILE)
+    config[:serde_file] = File.join(config[:buckets][:jar], SERDE_FILE)
+    config[:hive_version] = HIVE_VERSION
 
     config
   end

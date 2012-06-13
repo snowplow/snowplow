@@ -38,9 +38,14 @@ class EMRClient
   # Uses the Elastic MapReduce Command Line Tool.
   def run_etl()
     argv = Array.new(
-      "--json",
-      "TODO",
-      "TODO"
+      "--create",
+      "--name", "Daily ETL [%s]" % config[:date],
+      "--hive-script", config[:query_file][:remote],
+      "--hive-versions", config[:hive_version],
+      "--args", "-d,SERDE_FILE=s3://%s" % config[:serde_file],
+      "--args", "-d,CLOUDFRONT_LOGS=s3://%s/" % config[:buckets][:in],
+      "--args", "-d,EVENTS_TABLE=s3://%s/" % config[:buckets][:out],
+      "--args", "-d,DATA_DATE=%s" % config[:date]
     )
     execute(argv)
   end

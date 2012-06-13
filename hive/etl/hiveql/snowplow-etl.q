@@ -1,5 +1,5 @@
 
-ADD JAR s3://${JAR_LIB}/snowplow-log-deserializers-0.4.4.jar ;
+ADD JAR ${SERDE_FILE} ;
 
 CREATE EXTERNAL TABLE `extracted_logs`
 ROW FORMAT SERDE 'com.snowplowanalytics.snowplow.hadoop.hive.SnowPlowEventDeserializer'
