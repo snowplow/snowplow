@@ -21,19 +21,20 @@ require 'yaml'
 # and config file reading to support the daily ETL job.
 module Config
 
-  # Return the config from YAML file, plus
-  # yesterday's date for the operation.
+  QUERY_FILE = "snowplow-etl.q"
+
+  # Return the configuration loaded from the supplied YAML file, plus
+  # yesterday's date and the relevant filepaths.
   def Config.get_config()
 
-    # Now load the configuration
     options = Config.parse_args()
     config = YAML.load_file(options[:config])
 
-    # Add some extras to the config
     config[:date] = (Date.today - 1).strftime('%Y-%m-%d') # Yesterday's date
-    config[:query_file] = RUBY JOIN SYNTAX? (File.dirname(__FILE__), "hiveql", "snowplow-etl.q")
+    config[:query_file][:local] = File.join(File.dirname(__FILE__), "hiveql", QUERY_FILE)
+    config[:query_file][:remote] = File.join(config[:buckets][:query], QUERY_FILE)
 
-    config # Return the config
+    config
   end
 
   # Parse the command-line arguments
@@ -65,7 +66,7 @@ module Config
       exit -1
     end
 
-    options # Return the options
+    options
   end
 
 end

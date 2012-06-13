@@ -23,6 +23,7 @@ class EMRClient
   # Parameters:
   # +config+:: the hash of configuration options
   def initialize(config)
+
     $LOAD_PATH.unshift config[:aws][:emr_client_path]
     # TODO: check the EMR client path
     require 'commands'
@@ -35,16 +36,18 @@ class EMRClient
 
   # Runs a daily ETL job for the specific day.
   # Uses the Elastic MapReduce Command Line Tool.
-  # Parameters:
-  # +day+:: the day to run the ETL job for
-  # +buckets+:: the hash of bucket names to pass in to the Hive script
-  def run_etl(day)
+  def run_etl()
+    argv = Array.new(
+      "--json",
+      "TODO",
+      "TODO"
+    )
+    execute(argv)
+  end
 
-    # Assemble the args expected by create_and_execute_commands
-    argv = Array.new
-    # TODO
-
-    # Run the command. Syntax taken from Amazon's elastic-map-reduce.rb
+  # Execute a command using the Amazon EMR client.
+  # Syntax taken from Amazon's elastic-map-reduce.rb
+  def execute(argv)
     logger = SimpleLogger.new
     executor = SimpleExecutor.new
     commands = Commands::create_and_execute_commands(

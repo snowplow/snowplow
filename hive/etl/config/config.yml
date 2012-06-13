@@ -3,6 +3,7 @@
   :secret_access_key: ADD HERE
   :emr_client_path: ADD HERE
 :buckets:
+  :query: ADD HERE
   :jar: ADD HERE
   :in: ADD HERE
   :out: ADD HERE
