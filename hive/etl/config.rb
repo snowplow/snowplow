@@ -21,6 +21,7 @@ require 'yaml'
 # and config file reading to support the daily ETL job.
 module Config
 
+  QUERY_SUBFOLDER = "hiveql"
   QUERY_FILE = "snowplow-etl.q"
   SERDE_FILE = "snowplow-log-deserializers-0.4.4.jar"
   HIVE_VERSION = "0.7"
@@ -37,7 +38,7 @@ module Config
     config[:buckets].update(config[:buckets]){|k,v| trail.call(v)}
 
     config[:date] = (Date.today - 1).strftime('%Y-%m-%d') # Yesterday's date
-    config[:query_file][:local] = File.join(File.dirname(__FILE__), "hiveql", QUERY_FILE)
+    config[:query_file][:local] = File.join(File.dirname(__FILE__), QUERY_SUBFOLDER, QUERY_FILE)
     config[:query_file][:remote] = File.join(config[:buckets][:query], QUERY_FILE)
     config[:serde_file] = File.join(config[:buckets][:jar], SERDE_FILE)
     config[:hive_version] = HIVE_VERSION
