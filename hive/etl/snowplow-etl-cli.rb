@@ -32,12 +32,14 @@
 
 require 'config'
 require 's3utils'
+require 'emr_client'
 
 begin
   config = Config.get_config()
-  S3Utils.upload_hive_query()
-  # TODO Execute the Hive query
-  S3Utils.archive_cloudfront_logs()
+  S3Utils.upload_hive_query(config)
+  emr = EMRClient.new(config)
+  emr.run_etl()
+  S3Utils.archive_cloudfront_logs(config)
 rescue SystemExit => e
   exit_code = -1
 rescue Exception => e
