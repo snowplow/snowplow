@@ -28,17 +28,13 @@ require 'emr_client'
 #
 # Note that each step is only actioned if the previous step succeeded without error.
 #
-# This Ruby script is dependent on:
-# 1. AWS::S3 - see https://github.com/marcel/aws-s3/blob/master/INSTALL
-# 2. Amazon Elastic MapReduce Ruby Client - see http://aws.amazon.com/developertools/2264
-#
 # Please make sure that both of these are installed before running this script.
 config = Config.get_config()
 
+exit_code = 0
 begin
   S3Utils.upload_query(config)
-  emr = EMRClient.new(config)
-  emr.run_etl()
+  EmrClient.run_etl(config)
   S3Utils.archive_logs(config)
 
 rescue SystemExit => e
