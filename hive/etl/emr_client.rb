@@ -25,7 +25,7 @@ module EmrClient
   # Uses the Elastic MapReduce Command Line Tool.
   # Parameters:
   # +config+:: the hash of configuration options
-  def EmrClient.run_etl(config)
+  def EmrClient.run_daily_etl(config)
     argv = Array.new(
       "--create",
       "--name", "Daily ETL [%s]" % config[:date],

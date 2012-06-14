@@ -13,17 +13,39 @@
 # Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
+require 'aws/s3'
+
 # Ruby module to support the two S3-related actions required by
 # the daily ETL job:
 # 1. Uploading the daily-etl.q HiveQL query to S3
 # 2. Archiving the CloudFront log files by moving them into a separate bucket
 module S3Utils
 
+  # Uploads the Hive query to S3 ready to be executed as part of the Hive job.
+  # Ensures we are executing the most recent version of the Hive query.
+  # Parameters:
+  # +config+:: the hash of configuration options
   def S3Utils.upload_query(config)
-    puts "Uploading Hive query..."
+
+	AWS::S3::Base.establish_connection!(
+	  :access_key_id     => config[:aws][:access_key_id], 
+	  :secret_access_key => config[:aws][secret_access_key]
+	)
+
+	S3Object.store(
+	  config[:query_file][:remote],
+	  open(config[:query_file][:local]),
+	  config[:buckets][:query],
+	  'text/plain'
+	)
   end
 
+  # Moves (archives) the processed CloudFront logs to an archive bucket.
+  # Prevents the same log files from being processed again the next day.
+  # Parameters:
+  # +config+:: the hash of configuration options
   def S3Utils.archive_logs(config)
+  	# TODO: implement
     puts "Archiving CloudFront logs..."
   end
 end
