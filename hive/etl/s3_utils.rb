@@ -27,17 +27,17 @@ module S3Utils
   # +config+:: the hash of configuration options
   def S3Utils.upload_query(config)
 
-	AWS::S3::Base.establish_connection!(
-	  :access_key_id     => config[:aws][:access_key_id], 
-	  :secret_access_key => config[:aws][secret_access_key]
-	)
+    AWS::S3::Base.establish_connection!(
+      :access_key_id     => config[:aws][:access_key_id], 
+      :secret_access_key => config[:aws][secret_access_key]
+    )
 
-	S3Object.store(
-	  config[:query_file][:remote],
-	  open(config[:query_file][:local]),
-	  config[:buckets][:query],
-	  'text/plain'
-	)
+    S3Object.store(
+      config[:query_file][:remote],
+      open(config[:query_file][:local]),
+      config[:buckets][:query],
+      'text/plain'
+    )
   end
 
   # Moves (archives) the processed CloudFront logs to an archive bucket.
@@ -45,7 +45,7 @@ module S3Utils
   # Parameters:
   # +config+:: the hash of configuration options
   def S3Utils.archive_logs(config)
-  	# TODO: implement
+    # TODO: implement
     puts "Archiving CloudFront logs..."
   end
 end
