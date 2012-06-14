@@ -16,4 +16,4 @@
 # License::   Apache License Version 2.0
 
 $LOAD_PATH.unshift File.dirname(__FILE__)
-require 'snowplow-etl-cli'
+require 'snowplow_etl_cli'
