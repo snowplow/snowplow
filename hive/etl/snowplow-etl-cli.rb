@@ -14,7 +14,7 @@
 # License::   Apache License Version 2.0
 
 require 'config'
-require 's3utils'
+require 's3_utils'
 require 'emr_client'
 
 # This Ruby script runs the daily ETL (extract, transform, load)
