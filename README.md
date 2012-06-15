@@ -22,7 +22,11 @@ Contents of this repository are as follows:
 
 ## Documentation
 
-There is a growing set of technical documentation for SnowPlow:
+There is a growing set of documentation for SnowPlow.
+
+The most comprehensive set of documenetation can be found on the [SnowPlow wiki][snowplow-wiki]. This includes:
+
+* [Technical documentation including setup instructions][setup-snowplow-instructions]
 
 * [Introduction] [intro]
 * [Technical FAQ] [techfaq]
@@ -70,6 +74,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 [blogpost]: http://www.keplarllp.com/blog/2012/02/introducing-snowplow-the-worlds-most-powerful-web-analytics-platform
+
+[snowplow-wiki]: //snowplow/snowplow/wiki
+[setup-snowplow-instructions]: //snowplow/snowplow/wiki
 
 [intro]: /snowplow/snowplow/blob/master/docs/01_introduction.md
 [techfaq]: /snowplow/snowplow/blob/master/docs/02_technical_faq.md
