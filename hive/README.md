@@ -3,9 +3,11 @@
 ## Introduction
 
 Hive is a very powerful tool for querying SnowPlow data.
-A [cookbook of Hive recipes] [analyst-cookbook] is provided in the wiki. It provides a growing list of techniques and queries to use Hive to interrogate SnowPlow data.
+A [cookbook of Hive recipes] [analyst-cookbook] is provided in the wiki: it provides a growing list of techniques and queries to use Hive to interrogate SnowPlow data.
 
 ### Example queries
+
+Here are some example Hive queries which can be run on the SnowPlow data:
 
 #### Count the number of unique visits in a day
 
@@ -41,6 +43,7 @@ The contents of this folder are as follows:
 
 * In this folder is this README and Apache 2.0 License
 * `snowplow-log-deserializers` is a Git submodule (pointing to [this repository] [serdes]) containing the deserializers to import SnowPlow logs into [Apache Hive] [hive] ready for analysis
+* `etl` contains the Ruby and Hive code to automate a nightly ETL (extract-transform-load) job to process the daily SnowPlow log files
 
 ## Documentation
 
@@ -48,10 +51,6 @@ Besides this README, we recommend reading:
 
 * The [analyst cookbook] [analyst-cookbook], a growing list of techniques and queries for interrogating SnowPlow data using Hive
 * The [README] [serdereadme] for the SnowPlow Log Deserializers repository
-* The [README] [recipereadme] detailing the different available HiveQL recipes for SnowPlow
-* The guide to [Running a Hive Interactive Session] [hiveinteractive] 
-* The [Introduction to the SnowPlow Hive Tables] [hivetables]
-
 
 ## Copyright and license
 
@@ -70,11 +69,5 @@ limitations under the License.
 [analyst-cookbook]: https://github.com/snowplow/snowplow/wiki/Analysts-cookbook
 [serdes]: https://github.com/snowplow/snowplow-log-deserializers
 [hive]: http://hive.apache.org/
-
 [serdereadme]: https://github.com/snowplow/snowplow-log-deserializers/blob/master/README.md
-[recipereadme]: https://github.com/snowplow/snowplow/blob/master/hive/recipes/README.md
-[hiveinteractive]: https://github.com/snowplow/snowplow/blob/master/docs/06_running_hive_interactive_session.md
-[hivetables]: https://github.com/snowplow/snowplow/blob/master/docs/07_snowplow_hive_tables_introduction.md
-
-[contact]: snowplow@keplarllp.com
 [license]: http://www.apache.org/licenses/LICENSE-2.0
