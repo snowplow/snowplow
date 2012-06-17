@@ -33,12 +33,12 @@ module Config
     config = YAML.load_file(options[:config])
 
     # Add trailing slashes if needed
-    trail = lamba {|str| return str[-1].chr != '/' ? str << '/' : str}
+    trail = lambda {|str| return str[-1].chr != '/' ? str << '/' : str}
     config[:buckets].update(config[:buckets]){|k,v| trail.call(v)}
 
     config[:date] = (Date.today - 1).strftime('%Y-%m-%d') # Yesterday's date
-    config[:query_file][:local] = File.join(File.dirname(__FILE__), QUERY_SUBFOLDER, QUERY_FILE)
-    config[:query_file][:remote] = File.join(config[:buckets][:query], QUERY_FILE)
+    config[:query_file_local] = File.join(File.dirname(__FILE__), "..", QUERY_SUBFOLDER, QUERY_FILE)
+    config[:query_file_remote] = File.join(config[:buckets][:query], QUERY_FILE)
     config[:serde_file] = File.join(config[:buckets][:jar], SERDE_FILE)
     config[:hive_version] = SnowPlow::Etl::HIVE_VERSION
 

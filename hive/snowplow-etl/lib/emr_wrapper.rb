@@ -21,13 +21,13 @@ require 'simple_executor'
 # Note that we are wrapping the CLI tool, not the Amazon Ruby EMR client - this
 # is because the Ruby client is too low-level: all the functionality around
 # building Hive steps etc is found in the CLI tool, not in the Ruby client.
-module EmrClient
+module EmrWrapper
 
   # Runs a daily ETL job for the specific day.
   # Uses the Elastic MapReduce Command Line Tool.
   # Parameters:
   # +config+:: the hash of configuration options
-  def EmrClient.run_daily_etl(config)
+  def EmrWrapper.run_daily_etl(config)
     argv = Array.new(
       "--create",
       "--name", "Daily ETL [%s]" % config[:date],
@@ -45,7 +45,7 @@ module EmrClient
   # Syntax taken from Amazon's elastic-map-reduce.rb
   # Parameters:
   # +argv+:: the array of command-line-style arguments to pass to the Amazon EMR client
-  def EmrClient.execute(argv)
+  def EmrWrapper.execute(argv)
     logger = SimpleLogger.new
     executor = SimpleExecutor.new
     commands = Commands::create_and_execute_commands(

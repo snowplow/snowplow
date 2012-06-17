@@ -19,7 +19,7 @@ $LOAD_PATH.unshift File.dirname(__FILE__)
 
 require 'config'
 require 's3_utils'
-require 'emr_client'
+require 'emr_wrapper'
 
 # This Ruby script runs the daily ETL (extract, transform, load)
 # process which transforms the raw CloudFront log data into
@@ -36,7 +36,7 @@ config = Config.get_config()
 
 begin
   S3Utils.upload_query(config)
-  EMRClient.run_daily_etl(config)
+  EMRWrapper.run_daily_etl(config)
   S3Utils.archive_logs(config)
 
 rescue SystemExit => e

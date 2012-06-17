@@ -28,15 +28,15 @@ module S3Utils
   def S3Utils.upload_query(config)
 
     AWS::S3::Base.establish_connection!(
-      :access_key_id     => config[:aws][:access_key_id], 
-      :secret_access_key => config[:aws][secret_access_key]
+      :access_key_id     => config[:aws][:access_key_id],
+      :secret_access_key => config[:aws][:secret_access_key]
     )
 
-    S3Object.store(
-      config[:query_file][:remote],
-      open(config[:query_file][:local]),
+    AWS::S3::S3Object.store(
+      config[:query_file_remote],
+      open(config[:query_file_local]),
       config[:buckets][:query],
-      'text/plain'
+      :content_type => 'text/plain'
     )
   end
 
