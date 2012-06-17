@@ -13,30 +13,19 @@
 # Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
+require 'elastic-mapreduce'
+
 # Ruby class to execute jobs against the Amazon Ruby EMR command line (CLI) tool.
 # Note that we are wrapping the CLI tool, not the Amazon Ruby EMR client - this
 # is because the Ruby client is too low-level: all the functionality around
 # building Hive steps etc is found in the CLI tool, not in the Ruby client.
-class EMRClient
-
-  # Constructor loads the Amazon EMR library dependencies
-  # Parameters:
-  # +config+:: the hash of configuration options
-  def initialize(config)
-
-    $LOAD_PATH.unshift config[:aws][:emr_client_path]
-    # TODO: check the EMR client path
-    require 'commands'
-    require 'simple_logger'
-    require 'simple_executor'
-
-    # Instance variables
-    @config = config
-  end
+module EmrClient
 
   # Runs a daily ETL job for the specific day.
   # Uses the Elastic MapReduce Command Line Tool.
-  def run_etl()
+  # Parameters:
+  # +config+:: the hash of configuration options
+  def EmrClient.run_daily_etl(config)
     argv = Array.new(
       "--create",
       "--name", "Daily ETL [%s]" % config[:date],
@@ -54,7 +43,7 @@ class EMRClient
   # Syntax taken from Amazon's elastic-map-reduce.rb
   # Parameters:
   # +argv+:: the array of command-line-style arguments to pass to the Amazon EMR client
-  def execute(argv)
+  def EmrClient.execute(argv)
     logger = SimpleLogger.new
     executor = SimpleExecutor.new
     commands = Commands::create_and_execute_commands(
