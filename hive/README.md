@@ -45,13 +45,6 @@ The contents of this folder are as follows:
 * `snowplow-log-deserializers` is a Git submodule (pointing to [this repository] [serdes]) containing the deserializers to import SnowPlow logs into [Apache Hive] [hive] ready for analysis
 * `snowplow-etl` contains the Ruby and Hive code to automate a nightly ETL (extract-transform-load) job to process the daily SnowPlow log files
 
-## Documentation
-
-Besides this README, we recommend reading:
-
-* The [analyst cookbook] [analyst-cookbook], a growing list of techniques and queries for interrogating SnowPlow data using Hive
-* The [README] [serdereadme] for the SnowPlow Log Deserializers repository
-
 ## Copyright and license
 
 SnowPlow is copyright 2012 Orderly Ltd. Significant portions of `snowplow.js`
@@ -69,5 +62,4 @@ limitations under the License.
 [analyst-cookbook]: https://github.com/snowplow/snowplow/wiki/Analysts-cookbook
 [serdes]: https://github.com/snowplow/snowplow-log-deserializers
 [hive]: http://hive.apache.org/
-[serdereadme]: https://github.com/snowplow/snowplow-log-deserializers/blob/master/README.md
 [license]: http://www.apache.org/licenses/LICENSE-2.0
