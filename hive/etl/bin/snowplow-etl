@@ -13,6 +13,8 @@
 # Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
+$LOAD_PATH.unshift File.dirname(__FILE__)
+
 require 'config'
 require 's3utils'
 require 'emr_client'
