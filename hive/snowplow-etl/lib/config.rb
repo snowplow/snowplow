@@ -17,6 +17,8 @@ require 'optparse'
 require 'date'
 require 'yaml'
 
+require "snowplow-etl/version"
+
 # Config module to hold functions related to CLI argument parsing
 # and config file reading to support the daily ETL job.
 module Config
@@ -41,7 +43,7 @@ module Config
     config[:query_file][:local] = File.join(File.dirname(__FILE__), QUERY_SUBFOLDER, QUERY_FILE)
     config[:query_file][:remote] = File.join(config[:buckets][:query], QUERY_FILE)
     config[:serde_file] = File.join(config[:buckets][:jar], SERDE_FILE)
-    config[:hive_version] = HIVE_VERSION
+    config[:hive_version] = SnowPlow::Etl::HIVE_VERSION
 
     config
   end
@@ -51,11 +53,24 @@ module Config
   def Config.parse_args()
 
     # Handle command-line arguments
-    # TODO: add support for specifying a date range
     options = {}
     optparse = OptionParser.new do |opts|
+
+      opts.banner = "Usage: snowplow-etl [options]"
+      opts.separator ""
+      opts.separator "Specific options:"
+
       opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
-      opts.on('-h', '--help', 'display this screen') { puts opts; exit }
+      # TODO: add support for specifying a date range
+
+      opts.separator ""
+      opts.separator "Common options:"
+
+      opts.on_tail('-h', '--help', 'Show this message') { puts opts; exit }
+      opts.on_tail("--version", "Show version") do
+        puts SnowPlow::Etl::VERSION.join('.')
+        exit
+      end
     end
 
     # Check the mandatory arguments

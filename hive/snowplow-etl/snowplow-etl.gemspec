@@ -3,7 +3,7 @@ require File.expand_path('../lib/snowplow-etl/version', __FILE__)
 
 Gem::Specification.new do |gem|
   gem.authors       = ["Alex Dean"]
-  gem.email         = ["alexander.dean@keplarllp.com"]
+  gem.email         = ["alex@snowplowanalytics.com"]
   gem.description   = %q{TODO: Write a gem description}
   gem.summary       = %q{TODO: Write a gem summary}
   gem.homepage      = ""
@@ -13,5 +13,5 @@ Gem::Specification.new do |gem|
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.name          = "snowplow-etl"
   gem.require_paths = ["lib"]
-  gem.version       = Snowplow::Etl::VERSION
+  gem.version       = SnowPlow::Etl::VERSION
 end
