@@ -26,7 +26,6 @@ module Config
   QUERY_SUBFOLDER = "hiveql"
   QUERY_FILE = "snowplow-etl.q"
   SERDE_FILE = "snowplow-log-deserializers-0.4.4.jar"
-  HIVE_VERSION = "0.7"
 
   # Return the configuration loaded from the supplied YAML file, plus
   # the additional constants above.

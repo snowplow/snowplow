@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
@@ -16,7 +18,7 @@
 $LOAD_PATH.unshift File.dirname(__FILE__)
 
 require 'config'
-require 's3utils'
+require 's3_utils'
 require 'emr_client'
 
 # This Ruby script runs the daily ETL (extract, transform, load)
@@ -29,12 +31,7 @@ require 'emr_client'
 # 3. Archive the CloudFront log files by moving them into a separate bucket
 #
 # Note that each step is only actioned if the previous step succeeded without error.
-#
-# This Ruby script is dependent on:
-# 1. AWS::S3 - see https://github.com/marcel/aws-s3/blob/master/INSTALL
-# 2. Amazon Elastic MapReduce Ruby Client - see http://aws.amazon.com/developertools/2264
-#
-# Please make sure that both of these are installed before running this script.
+
 config = Config.get_config()
 
 begin
