@@ -2,8 +2,8 @@
 
 ## Introduction
 
-Hive is a very powerful tool for querying SnowPlow data.
-A [cookbook of Hive recipes] [analyst-cookbook] is provided in the wiki: it provides a growing list of techniques and queries to use Hive to interrogate SnowPlow data.
+Hive is a very powerful tool for querying SnowPlow data. A [cookbook of Hive recipes] [analyst-cookbook]
+is provided in the wiki: it provides a growing list of techniques and queries to use Hive to interrogate SnowPlow data.
 
 ### Example queries
 
@@ -43,7 +43,7 @@ The contents of this folder are as follows:
 
 * In this folder is this README and Apache 2.0 License
 * `snowplow-log-deserializers` is a Git submodule (pointing to [this repository] [serdes]) containing the deserializers to import SnowPlow logs into [Apache Hive] [hive] ready for analysis
-* `etl` contains the Ruby and Hive code to automate a nightly ETL (extract-transform-load) job to process the daily SnowPlow log files
+* `snowplow-etl` contains the Ruby and Hive code to automate a nightly ETL (extract-transform-load) job to process the daily SnowPlow log files
 
 ## Documentation
 
