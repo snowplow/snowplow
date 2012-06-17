@@ -34,9 +34,10 @@ require 'emr_wrapper'
 
 config = Config.get_config()
 
+exit_code = 0
 begin
   S3Utils.upload_query(config)
-  EMRWrapper.run_daily_etl(config)
+  # EMRWrapper.run_daily_etl(config)
   S3Utils.archive_logs(config)
 
 rescue SystemExit => e

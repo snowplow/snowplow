@@ -33,8 +33,8 @@ module S3Utils
     )
 
     AWS::S3::S3Object.store(
-      config[:query_file_remote],
-      open(config[:query_file_local]),
+      config[:query_file],
+      open(config[:query_local_path]),
       config[:buckets][:query],
       :content_type => 'text/plain'
     )
