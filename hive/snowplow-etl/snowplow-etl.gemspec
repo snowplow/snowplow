@@ -14,4 +14,6 @@ Gem::Specification.new do |gem|
   gem.name          = "snowplow-etl"
   gem.require_paths = ["lib"]
   gem.version       = SnowPlow::Etl::VERSION
+
+  gem.add_dependency "aws-s3", "~> 0.6.3"
 end

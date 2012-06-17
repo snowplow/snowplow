@@ -17,8 +17,6 @@ require 'optparse'
 require 'date'
 require 'yaml'
 
-require "snowplow-etl/version"
-
 # Config module to hold functions related to CLI argument parsing
 # and config file reading to support the daily ETL job.
 module Config
