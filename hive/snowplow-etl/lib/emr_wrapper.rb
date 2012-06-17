@@ -28,6 +28,12 @@ module EmrWrapper
   # Parameters:
   # +config+:: the hash of configuration options
   def EmrWrapper.run_daily_etl(config)
+
+    # Set the environment variables needed for EmrClient
+    ENV['ELASTIC_MAPREDUCE_ACCESS_ID'] = config[:aws][:access_key_id]
+    ENV['ELASTIC_MAPREDUCE_PRIVATE_KEY'] = config[:aws][:secret_access_key]
+
+    # Now prep the command-line args
     argv = Array.new(
       "--create",
       "--name", "Daily ETL [%s]" % config[:date],
