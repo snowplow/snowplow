@@ -13,7 +13,9 @@
 # Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'elastic-mapreduce'
+require 'commands'
+require 'simple_logger'
+require 'simple_executor'
 
 # Ruby class to execute jobs against the Amazon Ruby EMR command line (CLI) tool.
 # Note that we are wrapping the CLI tool, not the Amazon Ruby EMR client - this

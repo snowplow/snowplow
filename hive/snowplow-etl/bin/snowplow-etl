@@ -36,8 +36,7 @@ config = Config.get_config()
 
 begin
   S3Utils.upload_query(config)
-  emr = EMRClient.new(config)
-  emr.run_etl()
+  EMRClient.run_daily_etl(config)
   S3Utils.archive_logs(config)
 
 rescue SystemExit => e
