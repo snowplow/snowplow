@@ -1,3 +1,0 @@
-[submodule "hive/snowplow-log-deserializers"]
-	path = hive/snowplow-log-deserializers
-	url = git@github.com:snowplow/snowplow-log-deserializers.git
