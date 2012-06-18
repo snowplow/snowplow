@@ -46,7 +46,7 @@ LOCATION '${EVENTS_TABLE}' ;
 SET hive.exec.dynamic.partition=true ;
 
 INSERT OVERWRITE TABLE `events`
-PARTITION (dt='${DATA_DATE}', user_id)
+PARTITION (dt='${DATA_DATE}')
 SELECT
 tm,
 txn_id,
@@ -80,7 +80,6 @@ os_manufacturer,
 dvce_type,
 dvce_ismobile,
 dvce_screenwidth,
-dvce_screenheight,
-user_id
+dvce_screenheight
 FROM `extracted_logs`
 WHERE dt='${DATA_DATE}' ;

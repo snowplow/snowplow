@@ -1,4 +1,3 @@
-
 ADD JAR ${SERDE_FILE} ;
 
 CREATE EXTERNAL TABLE `extracted_logs`
@@ -44,9 +43,10 @@ PARTITIONED BY (dt STRING)
 LOCATION '${EVENTS_TABLE}' ;
 
 SET hive.exec.dynamic.partition=true ;
+SET hive.exec.dynamic.partition.mode=nonstrict ;
 
 INSERT OVERWRITE TABLE `events`
-PARTITION (dt='${DATA_DATE}', user_id)
+PARTITION (dt)
 SELECT
 tm,
 txn_id,
@@ -81,6 +81,7 @@ dvce_type,
 dvce_ismobile,
 dvce_screenwidth,
 dvce_screenheight,
-user_id
+dt
 FROM `extracted_logs`
-WHERE dt='${DATA_DATE}' ;
+WHERE dt>='${START_DATE}'
+AND dt<='${END_DATE}';
