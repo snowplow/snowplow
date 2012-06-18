@@ -1,0 +1,10 @@
+:aws:
+  :access_key_id: ADD HERE
+  :secret_access_key: ADD HERE
+:buckets:
+  :query: ADD HERE
+  :jar: ADD HERE
+  :in: ADD HERE
+  :out: ADD HERE
+  :archive: ADD HERE
+  

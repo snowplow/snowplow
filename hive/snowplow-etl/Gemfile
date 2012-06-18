@@ -1,0 +1,9 @@
+source 'https://rubygems.org'
+
+# Specify your gem's dependencies in snowplow-etl.gemspec
+gemspec
+
+# Manually added as per
+# http://stackoverflow.com/questions/6499410/ruby-gemspec-dependency-is-possible-have-a-git-branch-dependency
+gem "elastic-mapreduce", :git =>
+  "git://github.com/hotchpotch/elastic-mapreduce.git"
