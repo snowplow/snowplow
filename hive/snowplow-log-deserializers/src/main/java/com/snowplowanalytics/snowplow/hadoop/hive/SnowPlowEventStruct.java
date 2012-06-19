@@ -207,10 +207,11 @@ public class SnowPlowEventStruct {
       }
 
       // -> was the status code other than 200, 206 (partial), 000 (client terminated the connection) or 304? Should never happen, throw an exception
+      /* No longer test for this - because sometimes CloudFront logs strange HTTP response codes
       final String code = m.group(9);
       if (!code.equals("200") && !code.equals("206") && !code.equals("304") && !code.equals("000")) {
         throw new SerDeException("Unexpected HTTP status code: \"" + code + "\"");
-      }
+      } */
 
       // 1. Now we retrieve the fields which get directly passed through
       this.dt = m.group(1);
