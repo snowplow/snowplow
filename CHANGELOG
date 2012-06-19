@@ -1,3 +1,7 @@
+Version 0.4.2 (2012-06-19)
+--------------------------
+Moved serde into /hive from own repo
+
 Version 0.4.1 (2012-06-16)
 --------------------------
 Updated serde to 0.4.4
