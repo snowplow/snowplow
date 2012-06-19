@@ -42,8 +42,8 @@ Here are some example Hive queries which can be run on the SnowPlow data:
 The contents of this folder are as follows:
 
 * In this folder is this README and Apache 2.0 License
-* `snowplow-log-deserializers` is a Git submodule (pointing to [this repository] [serdes]) containing the deserializers to import SnowPlow logs into [Apache Hive] [hive] ready for analysis
-* `etl` contains the Ruby and Hive code to automate a nightly ETL (extract-transform-load) job to process the daily SnowPlow log files
+* `snowplow-log-deserializers` is an SBT project containing the deserializers to import SnowPlow logs into [Apache Hive] [hive] ready for analysis
+* `etl` contains the Ruby and Hive code to automate a nightly ETL (extract-transform-load) job to process the daily SnowPlow log files (_coming soon_)
 
 ## Documentation
 
