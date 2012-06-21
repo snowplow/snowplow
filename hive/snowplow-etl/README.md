@@ -1,4 +1,4 @@
-# Snowplow::Etl
+# SnowPlow::Etl
 
 TODO: Write a gem description
 
