@@ -32,12 +32,28 @@ module S3Utils
       :secret_access_key => config[:aws][:secret_access_key]
     )
 
+    # Upload both query files
     AWS::S3::S3Object.store(
-      config[:query_file],
-      open(config[:query_local_path]),
+      config[:daily_query_file],
+      open(config[:daily_query_path]),
       config[:buckets][:query],
       :content_type => 'text/plain'
     )
+    AWS::S3::S3Object.store(
+      config[:datespan_query_file],
+      open(config[:datespan_query_path]),
+      config[:buckets][:query],
+      :content_type => 'text/plain'
+    )
+
+    # Now upload the serde
+    AWS::S3::S3Object.store(
+      config[:datespan_query_file],
+      open(config[:datespan_query_path]),
+      config[:buckets][:query],
+      :content_type => 'text/plain'
+    )
+
   end
 
   # Moves (archives) the processed CloudFront logs to an archive bucket.

@@ -33,17 +33,29 @@ module EmrWrapper
     ENV['ELASTIC_MAPREDUCE_ACCESS_ID'] = config[:aws][:access_key_id]
     ENV['ELASTIC_MAPREDUCE_PRIVATE_KEY'] = config[:aws][:secret_access_key]
 
-    # Now prep the command-line args
+    # Now prep the common command-line args
     argv = Array.new(
       "--create",
       "--name", "Daily ETL [%s]" % config[:date],
-      "--hive-script", config[:query_file][:remote],
       "--hive-versions", config[:hive_version],
       "--args", "-d,SERDE_FILE=s3://%s" % config[:serde_file],
       "--args", "-d,CLOUDFRONT_LOGS=s3://%s/" % config[:buckets][:in],
-      "--args", "-d,EVENTS_TABLE=s3://%s/" % config[:buckets][:out],
-      "--args", "-d,DATA_DATE=%s" % config[:date]
+      "--args", "-d,EVENTS_TABLE=s3://%s/" % config[:buckets][:out]
     )
+
+    # Which date args we supply depends on whether we're processing a date range or single day
+    if config[:start] == config[:end]
+      argv.add(
+        "--hive-script", config[:daily_query_file][:remote],
+        "--args", "-d,DATA_DATE=%s" % config[:start]
+      )
+    else # We are processing a datespan
+      argv.add(
+        "--hive-script", config[:datespan_query_file][:remote],
+        "--args", "-d,START_DATE=%s" % config[:start],
+        "--args", "-d,END_DATE=%s" % config[:end]
+      )
+
     execute(argv)
   end
 

@@ -21,9 +21,14 @@ require 'yaml'
 # and config file reading to support the daily ETL job.
 module Config
 
-  QUERY_SUBFOLDER = "hiveql"
-  QUERY_FILE = "snowplow-etl.q"
-  SERDE_FILE = "snowplow-log-deserializers-0.4.4.jar"
+  # Where to find our HiveQL queries
+  QUERY_PATH = File.join("..", "hiveql")
+  DAILY_QUERY_FILE = "daily-etl.q"
+  DATESPAN_QUERY_FILE = "datespan-etl.q"
+
+  # Where to find the Hive Serde used by our queries
+  SERDE_PATH = File.join("..", "..", "snowplow-log-deserializers", 'upload')
+  SERDE_FILE = "snowplow-log-deserializers-0.4.5.jar"
 
   # Return the configuration loaded from the supplied YAML file, plus
   # the additional constants above.
@@ -32,15 +37,23 @@ module Config
     options = Config.parse_args()
     config = YAML.load_file(options[:config])
 
-    # Add trailing slashes if needed
+    # Add in the start and end dates
+    config[:start] = options[:start]
+    config[:end] = options[:end]
+
+    # Add trailing slashes if needed to the buckets
     trail = lambda {|str| return str[-1].chr != '/' ? str << '/' : str}
     config[:buckets].update(config[:buckets]){|k,v| trail.call(v)}
 
-    config[:date] = (Date.today - 1).strftime('%Y-%m-%d') # Yesterday's date
-    config[:query_local_path] = File.join(File.dirname(__FILE__), "..", QUERY_SUBFOLDER, QUERY_FILE)
-    config[:query_file] = QUERY_FILE
-    config[:serde_file] = File.join(config[:buckets][:jar], SERDE_FILE)
     config[:hive_version] = SnowPlow::Etl::HIVE_VERSION
+
+    config[:daily_query_path] = File.join(File.dirname(__FILE__), QUERY_PATH, DAILY_QUERY_FILE)
+    config[:datespan_query_path] = File.join(File.dirname(__FILE__), QUERY_PATH, DATESPAN_QUERY_FILE)
+    config[:daily_query_file] = DAILY_QUERY_FILE
+    config[:datespan_query_file] = DATESPAN_QUERY_FILE
+
+    config[:serde_path] = File.join(File.dirname(__FILE__), SERDE_PATH, SERDE_FILE)
+    config[:serde_file] = File.join(config[:buckets][:jar], SERDE_FILE)
 
     config
   end
@@ -58,7 +71,8 @@ module Config
       opts.separator "Specific options:"
 
       opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
-      # TODO: add support for specifying a date range
+      opts.on('-s', '--start YYYY-MM-DD', 'start date (defaults to yesterday)') { |config| options[:start] = config }
+      opts.on('-e', '--end YYYY-MM-DD', 'end date (defaults to yesterday)') { |config| options[:end] = config }
 
       opts.separator ""
       opts.separator "Common options:"
@@ -84,6 +98,15 @@ module Config
       puts $!.to_s
       puts optparse
       exit -1
+    end
+
+    # Set defaults
+    yesterday = (Date.today - 1).strftime('%Y-%m-%d') # Yesterday's date
+    if options[:start].nil?
+      config[:start] = yesterday
+    end
+    if options[:end].nil?
+      config[:end] = yesterday
     end
 
     options
