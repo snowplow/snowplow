@@ -1,0 +1,23 @@
+*.class
+
+# Package Files #
+*.war
+*.ear
+
+# IntelliJ Files #
+.idea/
+.manager/
+workspace.xml
+*.iml
+
+# Sublime, Vim Files #
+*.sublime-*
+*.swp
+*~
+
+# SBT Files #
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
