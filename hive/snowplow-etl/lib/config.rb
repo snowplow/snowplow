@@ -77,7 +77,7 @@ module Config
       opts.separator "Common options:"
 
       opts.on_tail('-h', '--help', 'Show this message') { puts opts; exit }
-      opts.on_tail("--version", "Show version") do
+      opts.on_tail('-v', "--version", "Show version") do
         puts SnowPlow::Etl::VERSION.join('.')
         exit
       end
