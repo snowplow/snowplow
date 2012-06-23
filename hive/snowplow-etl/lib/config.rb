@@ -47,13 +47,12 @@ module Config
 
     config[:hive_version] = SnowPlow::Etl::HIVE_VERSION
 
-    config[:daily_query_path] = File.join(File.dirname(__FILE__), QUERY_PATH, DAILY_QUERY_FILE)
-    config[:datespan_query_path] = File.join(File.dirname(__FILE__), QUERY_PATH, DATESPAN_QUERY_FILE)
     config[:daily_query_file] = DAILY_QUERY_FILE
+    config[:daily_query_path] = File.join(File.dirname(__FILE__), QUERY_PATH, DAILY_QUERY_FILE)
     config[:datespan_query_file] = DATESPAN_QUERY_FILE
-
+    config[:datespan_query_path] = File.join(File.dirname(__FILE__), QUERY_PATH, DATESPAN_QUERY_FILE)
     config[:serde_path] = File.join(File.dirname(__FILE__), SERDE_PATH, SERDE_FILE)
-    config[:serde_file] = File.join(config[:buckets][:jar], SERDE_FILE)
+    config[:serde_file] = File.join(config[:buckets][:serde], SERDE_FILE)
 
     config
   end
@@ -84,10 +83,15 @@ module Config
       end
     end
 
+    # Set defaults
+    yesterday = (Date.today - 1).strftime('%Y-%m-%d') # Yesterday's date
+    options[:start] ||= yesterday
+    options[:end]   ||= yesterday
+
     # Check the mandatory arguments
     begin
       optparse.parse!
-      mandatory = [:config]
+      mandatory = [:config, :start, :end]
       missing = mandatory.select{ |param| options[param].nil? }
       if not missing.empty?
         puts "Missing options: #{missing.join(', ')}"
@@ -98,15 +102,6 @@ module Config
       puts $!.to_s
       puts optparse
       exit -1
-    end
-
-    # Set defaults
-    yesterday = (Date.today - 1).strftime('%Y-%m-%d') # Yesterday's date
-    if options[:start].nil?
-      config[:start] = yesterday
-    end
-    if options[:end].nil?
-      config[:end] = yesterday
     end
 
     options

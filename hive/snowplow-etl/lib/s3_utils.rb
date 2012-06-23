@@ -27,32 +27,20 @@ module S3Utils
   # +config+:: the hash of configuration options
   def S3Utils.upload_query(config)
 
+   # Connect to S3
     AWS::S3::Base.establish_connection!(
       :access_key_id     => config[:aws][:access_key_id],
       :secret_access_key => config[:aws][:secret_access_key]
     )
 
-    # Upload both query files
-    AWS::S3::S3Object.store(
-      config[:daily_query_file],
-      open(config[:daily_query_path]),
-      config[:buckets][:query],
-      :content_type => 'text/plain'
-    )
-    AWS::S3::S3Object.store(
-      config[:datespan_query_file],
-      open(config[:datespan_query_path]),
-      config[:buckets][:query],
-      :content_type => 'text/plain'
-    )
-
-    # Now upload the serde
-    AWS::S3::S3Object.store(
-      config[:datespan_query_file],
-      open(config[:datespan_query_path]),
-      config[:buckets][:query],
-      :content_type => 'text/plain'
-    )
+    # Upload the two query files and the serde
+    # TODO: what is the syntax for foreach in Ruby?
+    # TODO: what is the MIME type for a jarfile?
+    # [Filename, Local filepath, S3 bucket path, Content type]
+    [[config[:daily_query_file], config[:daily_query_path], config[:buckets][:query], 'text/plain'],
+     [config[:datespan_query_file], config[:datespan_query_path], config[:buckets][:query], 'text/plain'],
+     [config[:serde_file], config[:serde_path], config[:buckets][:serde], 'XXX'],
+    ].map {|f| AWS::S3::S3Object.store(f[0], open(f[1]), f[2], :content_type => f[3])}
 
   end
 

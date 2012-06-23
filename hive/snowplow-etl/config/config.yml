@@ -3,7 +3,7 @@
   :secret_access_key: ADD HERE
 :buckets:
   :query: ADD HERE
-  :jar: ADD HERE
+  :serde: ADD HERE
   :in: ADD HERE
   :out: ADD HERE
   :archive: ADD HERE

@@ -43,18 +43,21 @@ module EmrWrapper
       "--args", "-d,EVENTS_TABLE=s3://%s/" % config[:buckets][:out]
     )
 
-    # Which date args we supply depends on whether we're processing a date range or single day
-    if config[:start] == config[:end]
-      argv.add(
-        "--hive-script", config[:daily_query_file][:remote],
+    # Which date args we supply, and to which script depends on whether
+    # we're processing a date range or single day
+    script = lambda {|file| return "s3://%s/%s" % [config[:buckets][:query], file]}
+    if config[:start] == config[:end] # Processing just one day
+      argv.push(
+        "--hive-script", script.call(config[:daily_query_file]),
         "--args", "-d,DATA_DATE=%s" % config[:start]
       )
     else # We are processing a datespan
-      argv.add(
-        "--hive-script", config[:datespan_query_file][:remote],
+      argv.push(
+        "--hive-script", script.call(config[:datespan_query_file]),
         "--args", "-d,START_DATE=%s" % config[:start],
         "--args", "-d,END_DATE=%s" % config[:end]
       )
+    end
 
     execute(argv)
   end
