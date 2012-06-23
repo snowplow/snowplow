@@ -34,13 +34,13 @@ module S3Utils
     )
 
     # Upload the two query files and the serde
-    # TODO: what is the syntax for foreach in Ruby?
-    # TODO: what is the MIME type for a jarfile?
-    # [Filename, Local filepath, S3 bucket path, Content type]
+    # Array of files to upload: "tuple" format is [Filename, Local filepath, S3 bucket path, Content type]
     [[config[:daily_query_file], config[:daily_query_path], config[:buckets][:query], 'text/plain'],
      [config[:datespan_query_file], config[:datespan_query_path], config[:buckets][:query], 'text/plain'],
-     [config[:serde_file], config[:serde_path], config[:buckets][:serde], 'XXX'],
-    ].map {|f| AWS::S3::S3Object.store(f[0], open(f[1]), f[2], :content_type => f[3])}
+     [config[:serde_file], config[:serde_path], config[:buckets][:serde], 'application/java-archive'],
+    ].each do |f|
+      AWS::S3::S3Object.store(f[0], open(f[1]), f[2], :content_type => f[3])}
+    end
 
   end
 
