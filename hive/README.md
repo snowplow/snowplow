@@ -49,7 +49,7 @@ The contents of this folder are as follows:
 
 ## Copyright and license
 
-SnowPlow is copyright 2012 Orderly Ltd. Significant portions of `snowplow.js`
+SnowPlow is copyright 2012 SnowPlow Analytics Ltd. Significant portions of `snowplow.js`
 are copyright 2010 Anthon Pang.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");

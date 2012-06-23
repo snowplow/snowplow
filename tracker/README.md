@@ -56,7 +56,7 @@ Planned items on the roadmap are as follows:
 
 ## Copyright and license
 
-Significant portions of `snowplow.js` copyright 2010 Anthon Pang. Remainder copyright 2012 Orderly Ltd.
+Significant portions of `snowplow.js` copyright 2010 Anthon Pang. Remainder copyright 2012 SnowPlow Analytics Ltd.
 
 Licensed under the [Simplified BSD] [bsd] license.
 
