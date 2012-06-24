@@ -73,8 +73,8 @@ module Config
       opts.separator "Specific options:"
 
       opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
-      opts.on('-s', '--start YYYY-MM-DD', 'start date (defaults to yesterday)') { |config| options[:start] = config }
-      opts.on('-e', '--end YYYY-MM-DD', 'end date (defaults to yesterday)') { |config| options[:end] = config }
+      opts.on('-s', '--start YYYY-MM-DD', 'optional start date (defaults to yesterday)') { |config| options[:start] = config }
+      opts.on('-e', '--end YYYY-MM-DD', 'optional end date (defaults to yesterday)') { |config| options[:end] = config }
 
       opts.separator ""
       opts.separator "Common options:"
@@ -103,6 +103,13 @@ module Config
       end
     rescue OptionParser::InvalidOption, OptionParser::MissingArgument
       puts $!.to_s
+      puts optparse
+      exit -1
+    end
+
+    # Finally check that start is before end
+    if options[:start] > options[:end]
+      puts "Invalid options: end date %s is before start date %s" % [options[:end], options[:start]]
       puts optparse
       exit -1
     end

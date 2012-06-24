@@ -9,7 +9,8 @@ day-partitioned event files, all stored in Amazon S3.
 
 Currently the SnowPlow::Etl gem performs the ETL process on Amazon Elastic 
 MapReduce using Hive. A future version of this gem will offer a second ETL 
-option using a "vanilla Hadoop" process on EMR.
+option using a "vanilla Hadoop" process on EMR. If you are interested in this,
+please vote for [this issue] [hadoopetl].
 
 ## Installation
 
@@ -78,24 +79,70 @@ all valid configuration settings:
       :serde: my-snowplow-static/jars
       :in: my-snowplow-log-bucket
 
+Please note that all buckets must exist prior to running SnowPlow::Etl,
+and currently the `query`, `serde` and `archive` buckets must be in a 
+US data center (not e.g. in Europe). This latter point is on account of  
+[this bug] [s3bug].
+
 ## Usage
 
 ### Overview
 
-There are two usage modes for 
+There are two usage modes for the SnowPlow::Etl gem:
 
-TODO: Write usage instructions here 
+1. **Daily mode**: where the gem is run daily to process the last 24 hours
+   worth of CloudFront access logs ready for SnowPlow
+2. **Catchup mode**: where the gem is run across a "datespan" of multiple 
+   days to bring processing of the CloudFront access logs up-to-date 
 
-## Contributing
+In particular, catchup mode is useful when running SnowPlow::Etl for the 
+first time, or when something has gone wrong with daily mode and a day's
+processing needs to be rerun.
 
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Added some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
+### Command-line options
+
+The command-line options for SnowPlow::Etl look like this:
+
+    Usage: snowplow-etl [options]
+
+    Specific options:
+        -c, --config CONFIG              configuration file
+        -s, --start YYYY-MM-DD           start date (defaults to yesterday)
+        -e, --end YYYY-MM-DD             end date (defaults to yesterday)
+
+    Common options:
+        -h, --help                       Show this message
+        -v, --version                    Show version
+   
+Invoking SnowPlow::Etl with just a `--config` option puts it into daily
+mode, with yesterday as the day being processed:
+
+    $ bundle exec snowplow-etl --config my-config.yml
+ 
+To run SnowPlow::Etl in catchup mode, simply specify the start and end
+dates to use:
+
+    $ bundle exec snowplow-etl --config my-config.yml --start 2012-06-20 --end 2012-06-24 
+
+This will run SnowPlow::Etl for the period 20 June 2012 to 24 June 2012
+inclusive.
+
+### Scheduling
+
+Once you have the ETL process working smoothly, you can set up a daily cronjob
+to automate the daily ETL process. The job should run in the early morning, 
+when the full set of CloudFront log files for yesterday have been finalised.
+
+Assuming that you have the excellent [cronic] [cronic] installed, you can
+setup your cronjob like so:
+
+    $ TODO
 
 [bundler]: xxx
+[hadoopetl]: xxx
 [aws]: xxx
 [trackerguide]: xxx
 [gitguide]: xxx
 [gemsguide]: xxx
+[cronic]: xxx
+[s3bug]: xxx
