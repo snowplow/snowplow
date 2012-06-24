@@ -21,6 +21,9 @@ require 'yaml'
 # and config file reading to support the daily ETL job.
 module Config
 
+  # What are we called?
+  SCRIPT_NAME = "snowplow-etl"
+
   # Where to find our HiveQL queries
   QUERY_PATH = File.join("..", "hiveql")
   DAILY_QUERY_FILE = "daily-etl.q"
@@ -65,7 +68,7 @@ module Config
     options = {}
     optparse = OptionParser.new do |opts|
 
-      opts.banner = "Usage: snowplow-etl [options]"
+      opts.banner = "Usage: %s [options]" % SCRIPT_NAME
       opts.separator ""
       opts.separator "Specific options:"
 
@@ -78,7 +81,7 @@ module Config
 
       opts.on_tail('-h', '--help', 'Show this message') { puts opts; exit }
       opts.on_tail('-v', "--version", "Show version") do
-        puts SnowPlow::Etl::VERSION.join('.')
+        puts "%s %s" % [SCRIPT_NAME, SnowPlow::Etl::VERSION] #.join('.')
         exit
       end
     end
