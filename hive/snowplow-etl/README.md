@@ -30,9 +30,10 @@ To make use of SnowPlow::Etl you will need the following:
 
 ### Installation
 
-First checkout the repository:
+First checkout the repository (we'll remove the second line in due course):
 
-    $ xxx
+    $ git clone git://github.com/snowplow/snowplow.git
+    $ git checkout etl-scripts
     
 Now install the SnowPlow::ETL gem on your system:
 
@@ -133,16 +134,16 @@ Once you have the ETL process working smoothly, you can set up a daily cronjob
 to automate the daily ETL process. The job should run in the early morning, 
 when the full set of CloudFront log files for yesterday have been finalised.
 
-Assuming that you have the excellent [cronic] [cronic] installed, you can
-setup your cronjob like so:
+Assuming that you have the excellent [cronic] [cronic] installed, and that both 
+cronic and Bundler are on your path, you can configure your cronjob like so:
 
     $ TODO
 
-[bundler]: xxx
+[bundler]: http://gembundler.com/
 [hadoopetl]: xxx
-[aws]: xxx
-[trackerguide]: xxx
-[gitguide]: xxx
-[gemsguide]: xxx
-[cronic]: xxx
+[aws]: http://aws.amazon.com/ 
+[trackerguide]: https://github.com/snowplow/snowplow/wiki/Integrating-SnowPlow-tracking-tags-on-your-website
+[gitguide]: http://git-scm.com/book/en/Getting-Started-Installing-Git
+[gemsguide]: http://docs.rubygems.org/read/chapter/3
+[cronic]: http://habilis.net/cronic/
 [s3bug]: xxx
