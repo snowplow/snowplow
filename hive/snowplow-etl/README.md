@@ -22,9 +22,9 @@ To make use of SnowPlow::Etl you will need the following:
 2. SnowPlow tracking successfully implemented on your website. Please see the
    [Tracker Setup Guide] [trackerguide] for help implementing this
 3. Git installed. Please see the [Git Installation Guide] [gitguide] as needed  
-3. RubyGems installed. Please see the [RubyGems Installation Instructions] [gemsguide]
+4. RubyGems installed. Please see the [RubyGems Installation Instructions] [gemsguide]
    as needed
-4. Bundler (a Ruby gem) installed:
+5. Bundler (a Ruby gem) installed:  
 
     $ gem install bundler
 
@@ -81,7 +81,7 @@ all valid configuration settings:
 
 Please note that all buckets must exist prior to running SnowPlow::Etl,
 and currently the `query`, `serde` and `archive` buckets must be in a 
-US data center (not e.g. in Europe). This latter point is on account of  
+US data center (not in e.g. Europe). This latter point is on account of 
 [this bug] [s3bug].
 
 ## Usage
@@ -90,9 +90,9 @@ US data center (not e.g. in Europe). This latter point is on account of
 
 There are two usage modes for the SnowPlow::Etl gem:
 
-1. **Daily mode**: where the gem is run daily to process the last 24 hours
+1. **Daily mode** where the gem is run daily to process the last 24 hours
    worth of CloudFront access logs ready for SnowPlow
-2. **Catchup mode**: where the gem is run across a "datespan" of multiple 
+2. **Catchup mode** where the gem is run across a "datespan" of multiple 
    days to bring processing of the CloudFront access logs up-to-date 
 
 In particular, catchup mode is useful when running SnowPlow::Etl for the 
