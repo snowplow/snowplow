@@ -161,6 +161,20 @@ configure your cronjob like so:
 
 This will run the ETL job daily at 4am, emailing any failures to you via cronic.
 
+## Copyright and license
+
+SnowPlow is copyright 2012 SnowPlow Analytics Ltd. Significant portions of `snowplow.js`
+are copyright 2010 Anthon Pang.
+
+Licensed under the [Apache License, Version 2.0] [license] (the "License");
+you may not use this software except in compliance with the License.
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
 [bundler]: http://gembundler.com/
 [hadoopetl]: https://github.com/snowplow/snowplow/issues/17
 [aws]: http://aws.amazon.com/ 
@@ -169,3 +183,4 @@ This will run the ETL job daily at 4am, emailing any failures to you via cronic.
 [gemsguide]: http://docs.rubygems.org/read/chapter/3
 [cronic]: http://habilis.net/cronic/
 [s3bug]: https://github.com/snowplow/snowplow/issues/16
+[license]: http://www.apache.org/licenses/LICENSE-2.0
