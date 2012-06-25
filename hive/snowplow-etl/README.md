@@ -28,21 +28,26 @@ To make use of SnowPlow::Etl you will need the following:
 
 ### Installation
 
-First checkout the repository (TODO: remove the second line when we merge this 
+First checkout the repository (TODO: remove the third line when we merge this 
 branch to master):
 
     $ git clone git://github.com/snowplow/snowplow.git
+    $ cd snowplow
     $ git checkout etl-scripts
     
 Now install the SnowPlow::ETL gem on your system:
 
-    $ cd xxx
-    $ gem install snowplow-etl
+    $ cd hive/snowplow-etl
+    $ gem build snowplow-etl.gemspec 
+    $ sudo gem install snowplow-etl-0.0.1.gem
 
 Now test that the gem was installed successfully:
 
     $ bundle exec snowplow-etl --version
     snowplow-etl 0.0.1
+
+Note that the `bundle exec` command will only work when you are inside the 
+`snowplow-etl` folder.
 
 ### Configuration
 
