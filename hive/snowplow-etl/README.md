@@ -106,6 +106,13 @@ processing needs to be rerun.
 
 ### Command-line options
 
+Invoke the SnowPlow::Etl gem using Bundler's `bundle exec` syntax:
+
+    $ bundle exec snowplow-etl
+    
+Note that the `bundle exec` command will only work when you are inside the 
+`snowplow-etl` folder.
+
 The command-line options for SnowPlow::Etl look like this:
 
     Usage: snowplow-etl [options]
@@ -120,12 +127,12 @@ The command-line options for SnowPlow::Etl look like this:
         -v, --version                    Show version
    
 Invoking SnowPlow::Etl with just a `--config` option puts it into daily
-mode, with yesterday as the day being processed:
+mode, processing CloudFront log files from **yesterday** only:
 
     $ bundle exec snowplow-etl --config my-config.yml
  
-To run SnowPlow::Etl in catchup mode, simply specify the start and end
-dates to use:
+To run SnowPlow::Etl in catchup mode, you need to specify the start and end
+dates as well as the `--config` option, like so:
 
     $ bundle exec snowplow-etl --config my-config.yml --start 2012-06-20 --end 2012-06-24 
 
@@ -135,13 +142,24 @@ inclusive.
 ### Scheduling
 
 Once you have the ETL process working smoothly, you can set up a daily cronjob
-to automate the daily ETL process. The job should run in the early morning, 
-when the full set of CloudFront log files for yesterday have been finalised.
+to automate the daily ETL process. The job should run in the early morning 
+(say, 4am) when the full set of CloudFront log files for yesterday have been 
+finalised.
 
-Assuming that you have the excellent [cronic] [cronic] installed, and that both 
-cronic and Bundler are on your path, you can configure your cronjob like so:
+The recommended way of running the ETL process as a daily cronjob is by using 
+the shell script `bin/snowplow-etl-cron`. You need to edit this script and 
+update the two variables:
 
-    $ TODO
+    BUNDLE_GEMFILE=/path/to/snowplow/hive/snowplow-etl
+    ETL_CONFIGFILE=/path/to/your-etl-config.yml
+
+Now, assuming you're using the excellent [cronic] [cronic] as a wrapper for 
+your cronjobs, and that both cronic and Bundler are on your path, you can 
+configure your cronjob like so:
+
+    0 4   * * *   root    cronic /path/to/snowplow/hive/snowplow-etl/bin/etl-cron
+
+This will run the ETL job daily at 4am, emailing any failures to you via cronic.
 
 [bundler]: http://gembundler.com/
 [hadoopetl]: https://github.com/snowplow/snowplow/issues/17
