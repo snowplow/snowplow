@@ -15,5 +15,5 @@
 BUNDLE_GEMFILE=/path/to/snowplow/hive/snowplow-etl
 ETL_CONFIGFILE=/path/to/your-etl-config.yml
 
-# Run the daily ETl job
+# Run the daily ETL job
 bundle exec snowplow-etl --config ${ETL_CONFIGFILE}
