@@ -9,8 +9,8 @@ day-partitioned event files, all stored in Amazon S3.
 
 Currently the SnowPlow::Etl gem performs the ETL process on Amazon Elastic 
 MapReduce using Hive. A future version of this gem will offer a second ETL 
-option using a "vanilla Hadoop" process on EMR. If you are interested in this,
-please vote for [this issue] [hadoopetl].
+option using a "vanilla Hadoop" process on EMR. If you want this alternative 
+ETL option, please vote for [this issue] [hadoopetl].
 
 ## Installation
 
@@ -24,9 +24,7 @@ To make use of SnowPlow::Etl you will need the following:
 3. Git installed. Please see the [Git Installation Guide] [gitguide] as needed  
 4. RubyGems installed. Please see the [RubyGems Installation Instructions] [gemsguide]
    as needed
-5. Bundler (a Ruby gem) installed:  
-
-    $ gem install bundler
+5. Bundler (a Ruby gem) installed (`gem install bundler`)
 
 ### Installation
 
@@ -140,10 +138,10 @@ cronic and Bundler are on your path, you can configure your cronjob like so:
     $ TODO
 
 [bundler]: http://gembundler.com/
-[hadoopetl]: xxx
+[hadoopetl]: https://github.com/snowplow/snowplow/issues/17
 [aws]: http://aws.amazon.com/ 
 [trackerguide]: https://github.com/snowplow/snowplow/wiki/Integrating-SnowPlow-tracking-tags-on-your-website
 [gitguide]: http://git-scm.com/book/en/Getting-Started-Installing-Git
 [gemsguide]: http://docs.rubygems.org/read/chapter/3
 [cronic]: http://habilis.net/cronic/
-[s3bug]: xxx
+[s3bug]: https://github.com/snowplow/snowplow/issues/16
