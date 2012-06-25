@@ -28,7 +28,8 @@ To make use of SnowPlow::Etl you will need the following:
 
 ### Installation
 
-First checkout the repository (we'll remove the second line in due course):
+First checkout the repository (TODO: remove the second line when we merge this 
+branch to master):
 
     $ git clone git://github.com/snowplow/snowplow.git
     $ git checkout etl-scripts
