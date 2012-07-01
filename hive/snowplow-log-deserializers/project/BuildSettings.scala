@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Orderly Ltd. All rights reserved.
+ * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -17,7 +17,7 @@ object BuildSettings {
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
-    organization  := "Orderly Ltd",
+    organization  := "SnowPlow Analytics Ltd",
     version       := "0.4.6",
     description   := "Hive deserializers for the SnowPlow log data",
     scalaVersion  := "2.9.1",
