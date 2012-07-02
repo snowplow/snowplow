@@ -4,7 +4,7 @@
 
 SnowPlow is the world's most powerful web analytics platform. It does three things:
 
-* Identifies users, and tracks the way they engage with one or more websites
+* Identifies users, and tracks the way they engage with a website or web-app
 * Stores the associated data in a scalable “clickstream” data warehouse
 * Makes it possible to leverage a big data toolset (e.g. Hadoop, Pig, Hive) to analyse that data
 
@@ -20,7 +20,7 @@ Contents of this repository are as follows:
 
 ## Copyright and license
 
-SnowPlow is copyright 2012 Orderly Ltd. Significant portions of `snowplow.js`
+SnowPlow is copyright 2012 SnowPlow Analytics Ltd. Significant portions of `snowplow.js`
 are copyright 2010 Anthon Pang.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
