@@ -1,3 +1,8 @@
+Version 0.4.3 (2012-07-02)
+--------------------------
+Removed status code checks from Serde
+Serde now outputs into /upload folder (to be uploaded by SnowPlow::Etl Ruby gem)
+
 Version 0.4.2 (2012-06-19)
 --------------------------
 Moved serde into /hive from own repo
