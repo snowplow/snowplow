@@ -31,7 +31,7 @@ module Config
 
   # Where to find the Hive Serde used by our queries
   SERDE_PATH = File.join("..", "..", "snowplow-log-deserializers", 'upload')
-  SERDE_FILE = "snowplow-log-deserializers-0.4.5.jar"
+  SERDE_FILE = "snowplow-log-deserializers-0.4.6.jar"
 
   # Return the configuration loaded from the supplied YAML file, plus
   # the additional constants above.

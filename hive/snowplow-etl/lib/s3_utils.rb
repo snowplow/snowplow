@@ -25,7 +25,7 @@ module S3Utils
   # Ensures we are executing the most recent version of the Hive query.
   # Parameters:
   # +config+:: the hash of configuration options
-  def S3Utils.upload_query(config)
+  def S3Utils.upload_etl_tools(config)
 
    # Connect to S3
     AWS::S3::Base.establish_connection!(
