@@ -40,6 +40,7 @@ Now install the SnowPlow::ETL gem on your system:
     $ cd hive/snowplow-etl
     $ gem build snowplow-etl.gemspec 
     $ sudo gem install snowplow-etl-0.0.1.gem
+    $ bundle install
 
 Now test that the gem was installed successfully:
 
