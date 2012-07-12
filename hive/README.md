@@ -49,8 +49,7 @@ The contents of this folder are as follows:
 
 ## Copyright and license
 
-SnowPlow is copyright 2012 SnowPlow Analytics Ltd. Significant portions of `snowplow.js`
-are copyright 2010 Anthon Pang.
+SnowPlow is copyright 2012 SnowPlow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
@@ -64,4 +63,5 @@ limitations under the License.
 [analyst-cookbook]: https://github.com/snowplow/snowplow/wiki/Analysts-cookbook
 [serdes]: https://github.com/snowplow/snowplow-log-deserializers
 [hive]: http://hive.apache.org/
+[serdereadme]: https://github.com/snowplow/snowplow-log-deserializers/blob/master/README.md
 [license]: http://www.apache.org/licenses/LICENSE-2.0

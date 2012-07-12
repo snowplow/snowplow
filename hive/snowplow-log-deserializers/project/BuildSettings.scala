@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Orderly Ltd. All rights reserved.
+ * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -17,8 +17,8 @@ object BuildSettings {
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
-    organization  := "Orderly Ltd",
-    version       := "0.4.4",
+    organization  := "SnowPlow Analytics Ltd",
+    version       := "0.4.6",
     description   := "Hive deserializers for the SnowPlow log data",
     scalaVersion  := "2.9.1",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
@@ -31,6 +31,7 @@ object BuildSettings {
   import AssemblyKeys._
   lazy val sbtAssemblySettings = assemblySettings ++ Seq(
     assembleArtifact in packageScala := false,
+    target in assembly <<= (target) { (target) => target / ".." / "upload" },
     jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + ".jar" },
     mergeStrategy in assembly <<= (mergeStrategy in assembly) {
       (old) => {

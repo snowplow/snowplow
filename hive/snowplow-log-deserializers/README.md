@@ -178,7 +178,7 @@ There are some outstanding tasks with these deserializers:
 
 ## Copyright and license
 
-snowplow-log-deserializers is copyright 2012 Orderly Ltd.
+SnowPlow is copyright 2012 SnowPlow Analytics Ltd.
 
 Contains the [Java Library for User-Agent Information] [useragentlib],
 copyright 2008 Harald Walker (bitwalker.nl).

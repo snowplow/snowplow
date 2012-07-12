@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2012 Orderly Ltd. All rights reserved.
+ * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -204,12 +204,6 @@ public class SnowPlowEventStruct {
       final String querystring = m.group(12);
       if (!object.equals("/ice.png") || isNullField(querystring)) {
         return null;
-      }
-
-      // -> was the status code other than 200, 206 (partial), 000 (client terminated the connection) or 304? Should never happen, throw an exception
-      final String code = m.group(9);
-      if (!code.equals("200") && !code.equals("206") && !code.equals("304") && !code.equals("000")) {
-        throw new SerDeException("Unexpected HTTP status code: \"" + code + "\"");
       }
 
       // 1. Now we retrieve the fields which get directly passed through
