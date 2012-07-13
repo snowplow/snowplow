@@ -27,6 +27,8 @@ module S3Utils
   # +config+:: the hash of configuration options
   def S3Utils.upload_etl_tools(config)
 
+    puts "Starting the upload..."
+
    # Connect to S3
     AWS::S3::Base.establish_connection!(
       :access_key_id     => config[:aws][:access_key_id],
@@ -40,6 +42,7 @@ module S3Utils
      [config[:serde_file], config[:serde_path], config[:buckets][:serde], 'application/java-archive']
     ].each do |f|
       AWS::S3::S3Object.store(f[0], open(f[1]), f[2], :content_type => f[3])
+      puts "Uploading %s" % f[0]
     end
 
   end

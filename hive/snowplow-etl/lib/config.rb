@@ -55,7 +55,7 @@ module Config
     config[:datespan_query_file] = DATESPAN_QUERY_FILE
     config[:datespan_query_path] = File.join(File.dirname(__FILE__), QUERY_PATH, DATESPAN_QUERY_FILE)
     config[:serde_path] = File.join(File.dirname(__FILE__), SERDE_PATH, SERDE_FILE)
-    config[:serde_file] = File.join(config[:buckets][:serde], SERDE_FILE)
+    config[:serde_file] = SERDE_FILE
 
     config
   end
