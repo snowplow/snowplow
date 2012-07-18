@@ -36,8 +36,9 @@ config = Config.get_config()
 
 exit_code = 0
 begin
-  S3Utils.upload_etl_tools(config)
-  EmrWrapper.run_daily_etl(config)
+  # S3Utils.upload_etl_tools(config)
+  emr = EmrClientWrapper.new(config[:aws][:access_key_id], config[:aws][:secret_access_key])
+  emr.run_snowplow_etl(config)
   S3Utils.archive_logs(config)
 
 rescue SystemExit => e

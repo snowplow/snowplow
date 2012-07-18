@@ -21,10 +21,40 @@ require 'simple_executor'
 # Note that we are wrapping the CLI tool, not the Amazon Ruby EMR client - this
 # is because the Ruby client is too low-level: all the functionality around
 # building Hive steps etc is found in the CLI tool, not in the Ruby client.
-module EmrWrapper
+class EmrClientWrapper
+  attr_accessor :access_key_id, :secret_access_key, :monitoring_client
 
   # End states mean we can stop monitoring
-  CLOSED_DOWN_STATES = Set.new(%w(TERMINATED COMPLETED FAILED))
+  END_STATES = Set.new(%w(TERMINATED COMPLETED FAILED))
+
+  # Client class is the Coral EMRClient
+  EMR_CLASS = Amazon::Coral::ElasticMapReduceClient
+
+  # Initializes our wrapper for the Amazon EMR client.
+  #
+  # Parameters:
+  # +access_key_id+:: the Amazon access ID
+  # +secret_access_key+:: the Amazon secret key
+  def initialize(access_key_id, secret_access_key)
+
+    @access_key_id = access_key_id
+    @secret_access_key = secret_access_key
+    @executor = SimpleExecutor.new
+    @logger = SimpleLogger.new
+
+    # Set the environment variables needed for EmrClient
+    ENV['ELASTIC_MAPREDUCE_ACCESS_ID'] = @access_key_id
+    ENV['ELASTIC_MAPREDUCE_PRIVATE_KEY'] = @secret_access_key
+
+    # Configure the monitoring client
+    client_config = {
+      :endpoint            => "https://elasticmapreduce.amazonaws.com",
+      :aws_access_key      => @access_key_id,
+      :aws_secret_key      => @secret_access_key,
+      :signature_algorithm => :V2
+    }
+    @monitoring_client = Amazon::Coral::ElasticMapReduceClient.new_aws_query(client_config)
+  end
 
   # Executes a command using the Amazon EMR client.
   # Syntax taken from Amazon's elastic-map-reduce.rb
@@ -35,68 +65,58 @@ module EmrWrapper
   #
   # Returns the jobflow ID
   def execute(argv)
-
-    logger = SimpleLogger.new
-    executor = SimpleExecutor.new
-
     commands = Commands::create_and_execute_commands(
-      argv, Amazon::Coral::ElasticMapReduceClient, logger, executor
+      argv, EMR_CLASS, @logger, @executor
     )
     commands.global_options[:jobflow]
   end
-  module_function :execute
 
-  # Taken from the library's Command class
-  def resolve(obj, *args)
-    while obj != nil && args.size > 0 do
-      obj = obj[args.shift]
-    end
-    return obj
+  def is_error_response(response)
+    response != nil && response.key?('Error')
   end
-  module_function :resolve
+
+  def raise_on_error(response)
+    if is_error_response(response) then
+      raise RuntimeError, response["Error"]["Message"]
+    end
+    return response
+  end
 
   # Monitor an EMR job.
   # Check its status every 5 minutes till it completes.
   #
   # Parameters:
-  # +config+:: contains our ETL configuration
-  # +job_id+:: the ID of the EMR job we want to monitor
-  def monitor_job(config, job_id)
+  # +jobflow_id+:: the ID of the EMR job we want to monitor
+  def monitor_job(jobflow_id)
 
-    puts "Monitoring job %s" % job_id
-
-    # Configure the client
-    client_config = {
-      :endpoint            => "https://elasticmapreduce.amazonaws.com",
-      :aws_access_key      => config[:aws][:access_key_id],
-      :aws_secret_key      => config[:aws][:secret_access_key],
-      :signature_algorithm => :V2
-    }
-    client = Amazon::Coral::ElasticMapReduceClient.new_aws_query(client_config)
+    puts "The jobflow id is #{jobflow_id}"
 
     while true do
-      jobflow_detail = client.DescribeJobFlows('JobFlowId' => job_id).inspect
-      state = resolve(jobflow_detail, "ExecutionStatusDetail", "State")
+      # puts @monitoring_client.DescribeJobFlows.inspect
+      result = @monitoring_client.DescribeJobFlows('JobFlowIds' => [jobflow_id]) #, 'DescriptionType' => 'EXTENDED')
+      # raise_on_error(result)
+      puts result.inspect
+      if result == nil || result['JobFlows'].size() == 0 then
+        raise RuntimeError, "Jobflow with id #{jobflow_id} not found"
+      end
+
+      jobflow_detail = result['JobFlows'].first
+      jobflow_state = Commands::Command::resolve(jobflow_detail, "ExecutionStatusDetail", "State")
       puts "Jobflow is in state #{state}, waiting...."
 
-      # sleep 5.minutes
+      sleep 10.seconds
       break
     end
 
     # TODO: need to handle success or failure
   end
-  module_function :monitor_job
 
   # Runs a daily ETL job for the specific day.
   # Uses the Elastic MapReduce Command Line Tool.
   #
   # Parameters:
   # +config+:: the hash of configuration options
-  def EmrWrapper.run_daily_etl(config)
-
-    # Set the environment variables needed for EmrClient
-    ENV['ELASTIC_MAPREDUCE_ACCESS_ID'] = config[:aws][:access_key_id]
-    ENV['ELASTIC_MAPREDUCE_PRIVATE_KEY'] = config[:aws][:secret_access_key]
+  def run_snowplow_etl(config)
 
     # Now prep the common command-line args
     argv = [
@@ -114,7 +134,7 @@ module EmrWrapper
       )
     else # We are processing a datespan
       argv.push(
-        "--name", "Daily ETL [%s-%s]" % [config[:start], config[:end]],
+        "--name", "Datespan ETL [%s-%s]" % [config[:start], config[:end]],
         "--hive-script", script.call(config[:datespan_query_file]),
         "--args", "-d,START_DATE=%s" % config[:start],
         "--args", "-d,END_DATE=%s" % config[:end]
@@ -130,10 +150,8 @@ module EmrWrapper
       "--args", "-d,EVENTS_TABLE=s3://%s/" % config[:buckets][:out]
     )
 
-    puts "Args prepped, now about to execute..."
-
     jobflow_id = execute(argv)
-    monitor_job(config, jobflow_id)
+    monitor_job(jobflow_id)
   end
 
 end
