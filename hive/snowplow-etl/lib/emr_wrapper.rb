@@ -82,6 +82,13 @@ class EmrClientWrapper
     return response
   end
 
+  def resolve(obj, *args)
+    while obj != nil && args.size > 0 do
+      obj = obj[args.shift]
+    end
+    return obj
+  end
+
   # Monitor an EMR job.
   # Check its status every 5 minutes till it completes.
   #
@@ -92,20 +99,17 @@ class EmrClientWrapper
     puts "The jobflow id is #{jobflow_id}"
 
     while true do
-      # puts @monitoring_client.DescribeJobFlows.inspect
-      result = @monitoring_client.DescribeJobFlows('JobFlowIds' => [jobflow_id]) #, 'DescriptionType' => 'EXTENDED')
-      # raise_on_error(result)
-      puts result.inspect
-      if result == nil || result['JobFlows'].size() == 0 then
+      response = @monitoring_client.DescribeJobFlows('JobFlowId' => jobflow_id)
+      raise_on_error(response)
+      if response == nil || !response.has_key?("DescribeJobFlowsResult") || response["DescribeJobFlowsResult"]["JobFlows"].size() == 0 then
         raise RuntimeError, "Jobflow with id #{jobflow_id} not found"
       end
 
-      jobflow_detail = result['JobFlows'].first
-      jobflow_state = Commands::Command::resolve(jobflow_detail, "ExecutionStatusDetail", "State")
-      puts "Jobflow is in state #{state}, waiting...."
+      jobflow_detail = response["DescribeJobFlowsResult"]["JobFlows"].first
+      jobflow_state = resolve(jobflow_detail, "ExecutionStatusDetail", "State")
+      puts "Jobflow is in state #{jobflow_state}, waiting...."
 
-      sleep 10.seconds
-      break
+      sleep 10
     end
 
     # TODO: need to handle success or failure
