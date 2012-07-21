@@ -18,8 +18,8 @@
 $LOAD_PATH.unshift File.dirname(__FILE__)
 
 require 'config'
-require 's3_utils'
-require 'snowplow_jobflow'
+require 's3_tasks'
+require 'emr_jobs'
 
 # This Ruby script runs the daily ETL (extract, transform, load)
 # process which transforms the raw CloudFront log data into
@@ -36,10 +36,12 @@ config = Config.get_config()
 
 exit_code = 0
 begin
-  # S3Utils.upload_etl_tools(config)
-  spjf = SnowPlowJobFlow.new(config)
-  spjf.run_etl()
-  S3Utils.archive_logs(config)
+  # S3Tasks.upload_etl_tools(config)
+  emr = EmrJobs.new(config)
+  if !emr.run_etl()
+    puts "Oh no! The job failed"
+  end
+  S3Tasks.archive_logs(config)
 
 rescue SystemExit => e
   exit_code = -1

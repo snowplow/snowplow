@@ -19,15 +19,13 @@ require 'aws/s3'
 # the daily ETL job:
 # 1. Uploading the daily-etl.q HiveQL query to S3
 # 2. Archiving the CloudFront log files by moving them into a separate bucket
-module S3Utils
+module S3Tasks
 
   # Uploads the Hive query to S3 ready to be executed as part of the Hive job.
   # Ensures we are executing the most recent version of the Hive query.
   # Parameters:
   # +config+:: the hash of configuration options
-  def S3Utils.upload_etl_tools(config)
-
-    puts "Starting the upload..."
+  def S3Tasks.upload_etl_tools(config)
 
    # Connect to S3
     AWS::S3::Base.establish_connection!(
@@ -42,7 +40,6 @@ module S3Utils
      [config[:serde_file], config[:serde_path], config[:buckets][:serde], 'application/java-archive']
     ].each do |f|
       AWS::S3::S3Object.store(f[0], open(f[1]), f[2], :content_type => f[3])
-      puts "Uploading %s" % f[0]
     end
 
   end
@@ -51,8 +48,8 @@ module S3Utils
   # Prevents the same log files from being processed again the next day.
   # Parameters:
   # +config+:: the hash of configuration options
-  def S3Utils.archive_logs(config)
+  def S3Tasks.archive_logs(config)
     # TODO: implement
-    puts "Archiving CloudFront logs..."
+    puts "Archiving CloudFront logs... (TODO)"
   end
 end

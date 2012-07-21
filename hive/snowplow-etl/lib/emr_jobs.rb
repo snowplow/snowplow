@@ -17,7 +17,7 @@ require 'elasticity'
 
 # Ruby class to execute SnowPlow's Hive jobs against Amazon EMR
 # using Elasticity (https://github.com/rslifka/elasticity).
-class SnowPlowJobFlow
+class EmrJobs
 
   # Need to understand the status of all our jobflow steps
   RUNNING_STATES = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
@@ -34,14 +34,14 @@ class SnowPlowJobFlow
 
     # Hive configuration if we're processing just one day...
     if config[:start] == config[:end]
-      @jobflow.name = "Daily ETL [%s]" % config[:start]
+      @jobflow.name = "Daily ETL (#{config[:start]})"
       hive_script = config[:daily_query_file]
       hive_args = {
         "DATA_DATE" => config[:start]
       }
     # ...versus processing a datespan
     else
-      @jobflow.name = "Datespan ETL [%s-%s]" % [ config[:start], config[:end] ]
+      @jobflow.name = "Datespan ETL (%s-%s)" % [ config[:start], config[:end] ]
       hive_script = config[:datespan_query_file]
       hive_args = {
         "START_DATE" => config[:start],
@@ -89,12 +89,13 @@ class SnowPlowJobFlow
   end
 
   # Run the daily ETL job.
+  #
+  # Returns true if the jobflow completed without error,
+  # false otherwise.
   def run_etl()
 
     jobflow_id = @jobflow.run
     wait_for(jobflow_id)
-
-    # TODO: need to handle success or failure
   end
 
 end
