@@ -15,8 +15,8 @@
 
 require 'elasticity'
 
-# Ruby class to execute jobs against Amazon EMR using
-# Elasticity (https://github.com/rslifka/elasticity).
+# Ruby class to execute SnowPlow's Hive jobs against Amazon EMR
+# using Elasticity (https://github.com/rslifka/elasticity).
 class SnowPlowJobFlow
 
   # Need to understand the status of all our jobflow steps
