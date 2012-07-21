@@ -19,7 +19,7 @@ $LOAD_PATH.unshift File.dirname(__FILE__)
 
 require 'config'
 require 's3_utils'
-require 'emr_wrapper'
+require 'snowplow_jobflow'
 
 # This Ruby script runs the daily ETL (extract, transform, load)
 # process which transforms the raw CloudFront log data into
