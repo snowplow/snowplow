@@ -15,11 +15,11 @@
 
 require 'elasticity'
 
-# Ruby class to execute jobs against the Amazon Ruby EMR command line
-# (CLI) tool using Elasticity (https://github.com/rslifka/elasticity).
+# Ruby class to execute jobs against Amazon EMR using
+# Elasticity (https://github.com/rslifka/elasticity).
 class SnowPlowJobFlow
 
-  # Need to understand the status of all jobflow steps
+  # Need to understand the status of all our jobflow steps
   RUNNING_STATES = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
   FAILED_STATES  = Set.new(%w(FAILED CANCELLED))
 
