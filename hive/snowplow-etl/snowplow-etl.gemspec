@@ -15,6 +15,6 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = SnowPlow::Etl::VERSION
 
-  gem.add_dependency "aws-s3", "~> 0.6.3"
-  # elastic-mapreduce Git dependency is in the Gemfile
+  gem.add_dependency 'elasticity', '~> 2.0'
+  gem.add_dependency 'aws-s3', '~> 0.6.3'
 end

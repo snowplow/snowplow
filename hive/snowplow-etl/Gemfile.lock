@@ -1,14 +1,9 @@
-GIT
-  remote: git://github.com/hotchpotch/elastic-mapreduce.git
-  revision: 10929a12717f634cc2f03ac7e3478fd1b0d14597
-  specs:
-    elastic-mapreduce (2011.11.23)
-
 PATH
   remote: .
   specs:
     snowplow-etl (0.0.1)
       aws-s3 (~> 0.6.3)
+      elasticity (~> 2.0)
 
 GEM
   remote: https://rubygems.org/
@@ -18,12 +13,17 @@ GEM
       mime-types
       xml-simple
     builder (3.0.0)
-    mime-types (1.18)
+    elasticity (2.1)
+      nokogiri
+      rest-client
+    mime-types (1.19)
+    nokogiri (1.5.5)
+    rest-client (1.6.7)
+      mime-types (>= 1.16)
     xml-simple (1.1.1)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  elastic-mapreduce!
   snowplow-etl!

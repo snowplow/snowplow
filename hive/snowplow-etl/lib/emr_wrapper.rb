@@ -13,149 +13,88 @@
 # Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'commands'
-require 'simple_logger'
-require 'simple_executor'
+require 'elasticity'
 
-# Ruby class to execute jobs against the Amazon Ruby EMR command line (CLI) tool.
-# Note that we are wrapping the CLI tool, not the Amazon Ruby EMR client - this
-# is because the Ruby client is too low-level: all the functionality around
-# building Hive steps etc is found in the CLI tool, not in the Ruby client.
-class EmrClientWrapper
-  attr_accessor :access_key_id, :secret_access_key, :monitoring_client
+# Ruby class to execute jobs against the Amazon Ruby EMR command line
+# (CLI) tool using Elasticity (https://github.com/rslifka/elasticity).
+class SnowPlowJobFlow
 
-  # End states mean we can stop monitoring
-  END_STATES = Set.new(%w(TERMINATED COMPLETED FAILED))
-
-  # Client class is the Coral EMRClient
-  EMR_CLASS = Amazon::Coral::ElasticMapReduceClient
+  # Need to understand the status of all jobflow steps
+  RUNNING_STATES = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
+  FAILED_STATES  = Set.new(%w(FAILED CANCELLED))
 
   # Initializes our wrapper for the Amazon EMR client.
   #
   # Parameters:
-  # +access_key_id+:: the Amazon access ID
-  # +secret_access_key+:: the Amazon secret key
-  def initialize(access_key_id, secret_access_key)
+  # +config+:: contains all the control data for the SnowPlow Hive job
+  def initialize(config)
 
-    @access_key_id = access_key_id
-    @secret_access_key = secret_access_key
-    @executor = SimpleExecutor.new
-    @logger = SimpleLogger.new
+    # Create a job flow with your AWS credentials
+    @jobflow = Elasticity::JobFlow.new(config[:aws][:access_key_id], config[:aws][:secret_access_key])
 
-    # Set the environment variables needed for EmrClient
-    ENV['ELASTIC_MAPREDUCE_ACCESS_ID'] = @access_key_id
-    ENV['ELASTIC_MAPREDUCE_PRIVATE_KEY'] = @secret_access_key
-
-    # Configure the monitoring client
-    client_config = {
-      :endpoint            => "https://elasticmapreduce.amazonaws.com",
-      :aws_access_key      => @access_key_id,
-      :aws_secret_key      => @secret_access_key,
-      :signature_algorithm => :V2
-    }
-    @monitoring_client = Amazon::Coral::ElasticMapReduceClient.new_aws_query(client_config)
-  end
-
-  # Executes a command using the Amazon EMR client.
-  # Syntax taken from Amazon's elastic-map-reduce.rb
-  #
-  # Parameters:
-  # +argv+:: the array of command-line-style arguments to pass to the
-  # Amazon EMR client
-  #
-  # Returns the jobflow ID
-  def execute(argv)
-    commands = Commands::create_and_execute_commands(
-      argv, EMR_CLASS, @logger, @executor
-    )
-    commands.global_options[:jobflow]
-  end
-
-  def is_error_response(response)
-    response != nil && response.key?('Error')
-  end
-
-  def raise_on_error(response)
-    if is_error_response(response) then
-      raise RuntimeError, response["Error"]["Message"]
+    # Hive configuration if we're processing just one day...
+    if config[:start] == config[:end]
+      @jobflow.name = "Daily ETL [%s]" % config[:start]
+      hive_script = config[:daily_query_file]
+      hive_args = {
+        "DATA_DATE" => config[:start]
+      }
+    # ...versus processing a datespan
+    else
+      @jobflow.name = "Datespan ETL [%s-%s]" % [ config[:start], config[:end] ]
+      hive_script = config[:datespan_query_file]
+      hive_args = {
+        "START_DATE" => config[:start],
+        "END_DATE"   => config[:end]
+      }
     end
-    return response
+
+    # Now add the Hive step to the jobflow
+    hive_step = Elasticity::HiveStep.new("s3n://%s/%s" % [config[:buckets][:query], hive_script])
+    hive_step.variables = {
+      "SERDE_FILE"      => "s3://%s" % config[:serde_file],
+      "CLOUDFRONT_LOGS" => "s3://%s/" % config[:buckets][:in],
+      "EVENTS_TABLE"    => "s3://%s/" % config[:buckets][:out]
+    }.merge(hive_args)
+    @jobflow.add_step(hive_step)
+
+    # TODO: how to add support for config[:hive_version]?
   end
 
-  def resolve(obj, *args)
-    while obj != nil && args.size > 0 do
-      obj = obj[args.shift]
-    end
-    return obj
-  end
-
-  # Monitor an EMR job.
+  # Wait for a jobflow.
   # Check its status every 5 minutes till it completes.
   #
   # Parameters:
-  # +jobflow_id+:: the ID of the EMR job we want to monitor
-  def monitor_job(jobflow_id)
+  # +jobflow_id+:: the ID of the EMR job we wait for
+  #
+  # Returns true if the jobflow completed without error,
+  # false otherwise.
+  def wait_for(jobflow_id)
 
-    puts "The jobflow id is #{jobflow_id}"
-
+    # Loop until we can quit...
     while true do
-      response = @monitoring_client.DescribeJobFlows('JobFlowId' => jobflow_id)
-      raise_on_error(response)
-      if response == nil || !response.has_key?("DescribeJobFlowsResult") || response["DescribeJobFlowsResult"]["JobFlows"].size() == 0 then
-        raise RuntimeError, "Jobflow with id #{jobflow_id} not found"
+      # Count up running tasks and failures
+      statuses = @jobflow.status.steps.map(&:state).inject([0, 0]) do |sum, state|
+        [ sum[0] + (RUNNING_STATES.include?(state) ? 1 : 0), sum[1] + (FAILED_STATES.include?(state) ? 1 : 0) ]
       end
 
-      jobflow_detail = response["DescribeJobFlowsResult"]["JobFlows"].first
-      jobflow_state = resolve(jobflow_detail, "ExecutionStatusDetail", "State")
-      puts "Jobflow is in state #{jobflow_state}, waiting...."
+      # If no step is still running, then quit
+      if statuses[0] == 0
+        return statuses[1] == 0 # True if no failures
+      end
 
-      sleep 10
+      # Otherwise sleep a while
+      sleep(5)
     end
-
-    # TODO: need to handle success or failure
   end
 
-  # Runs a daily ETL job for the specific day.
-  # Uses the Elastic MapReduce Command Line Tool.
-  #
-  # Parameters:
-  # +config+:: the hash of configuration options
-  def run_snowplow_etl(config)
+  # Run the daily ETL job.
+  def run_etl()
 
-    # Now prep the common command-line args
-    argv = [
-      "--create"
-    ]
+    jobflow_id = @jobflow.run
+    wait_for(jobflow_id)
 
-    # Which date args we supply, and to which script depends on whether
-    # we're processing a date range or single day
-    script = lambda {|file| return "s3://%s/%s" % [config[:buckets][:query], file]}
-    if config[:start] == config[:end] # Processing just one day
-      argv.push(
-        "--name", "Daily ETL [%s]" % config[:start],
-        "--hive-script", script.call(config[:daily_query_file]),
-        "--args", "-d,DATA_DATE=%s" % config[:start]
-      )
-    else # We are processing a datespan
-      argv.push(
-        "--name", "Datespan ETL [%s-%s]" % [config[:start], config[:end]],
-        "--hive-script", script.call(config[:datespan_query_file]),
-        "--args", "-d,START_DATE=%s" % config[:start],
-        "--args", "-d,END_DATE=%s" % config[:end]
-      )
-    end
-
-    # Add remaining arguments. Because --hive-versions
-    # has to follow --hive-script
-    argv.push(
-      "--hive-versions", config[:hive_version],
-      "--args", "-d,SERDE_FILE=s3://%s" % config[:serde_file],
-      "--args", "-d,CLOUDFRONT_LOGS=s3://%s/" % config[:buckets][:in],
-      "--args", "-d,EVENTS_TABLE=s3://%s/" % config[:buckets][:out]
-    )
-
-    jobflow_id = execute(argv)
-    monitor_job(jobflow_id)
+    # TODO: need to handle success or failure
   end
 
 end
