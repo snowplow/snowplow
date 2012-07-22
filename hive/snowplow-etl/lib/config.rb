@@ -97,24 +97,21 @@ module Config
       mandatory = [:config, :start, :end]
       missing = mandatory.select{ |param| options[param].nil? }
       if not missing.empty?
-        puts "Missing options: #{missing.join(', ')}"
-        puts optparse
-        exit -1
+        raise ConfigError, "Missing options: #{missing.join(', ')}\n#{optparse}"
       end
     rescue OptionParser::InvalidOption, OptionParser::MissingArgument
-      puts $!.to_s
-      puts optparse
-      exit -1
+      raise ConfigError, "#{$!.to_s}\n#{optparse}"
     end
 
     # Finally check that start is before end
     if options[:start] > options[:end]
-      puts "Invalid options: end date %s is before start date %s" % [options[:end], options[:start]]
-      puts optparse
-      exit -1
+      raise ConfigError, "Invalid options: end date #{options[:end]} is before start date #{options[:start]}"
     end
 
     options
   end
 
+end
+
+class ConfigError < ArgumentError
 end

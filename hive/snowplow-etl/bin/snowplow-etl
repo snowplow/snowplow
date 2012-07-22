@@ -31,25 +31,25 @@ require 'emr_jobs'
 # 3. Archive the CloudFront log files by moving them into a separate bucket
 #
 # Note that each step is only actioned if the previous step succeeded without error.
-
-config = Config.get_config()
-
-exit_code = 0
 begin
+  config = Config.get_config()
+
   # S3Tasks.upload_etl_tools(config)
+
   emr = EmrJobs.new(config)
-  if !emr.run_etl()
-    puts "Oh no! The job failed"
-  end
+  emr.run_etl()
+
   S3Tasks.archive_logs(config)
 
-rescue SystemExit => e
-  exit_code = -1
-
+rescue ConfigError, EmrJobError => e
+  $stderr.puts(e.message)
+  exit 1
 rescue Exception => e
-  STDERR.puts("Error: " + e.message)
-  STDERR.puts(e.backtrace.join("\n"))
-  exit_code = -1
+  $stderr.puts("Unexpected error: " + e.message)
+  $stderr.puts(e.backtrace.join("\n"))
+  exit 1
+rescue SystemExit => e
+  exit 1
 end
 
-exit(exit_code)
+exit 0

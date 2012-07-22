@@ -84,18 +84,24 @@ class EmrJobs
       end
 
       # Otherwise sleep a while
-      sleep(5*60)
+      sleep(5) #*60)
     end
   end
 
-  # Run the daily ETL job.
+  # Run (and wait for) the daily ETL job.
   #
-  # Returns true if the jobflow completed without error,
-  # false otherwise.
+  # Throws a RuntimeError if the jobflow does not succeed.
   def run_etl()
 
     jobflow_id = @jobflow.run
-    wait_for(jobflow_id)
+    status = wait_for(jobflow_id)
+
+    if !status
+      raise EmrJobError, "Hive jobflow #{jobflow_id} failed, check Amazon logs for details. Data files not archived."
+    end
   end
 
+end
+
+class EmrJobError < RuntimeError
 end
