@@ -41,7 +41,7 @@ begin
 
   S3Tasks.archive_logs(config)
 
-rescue ConfigError, EmrJobError => e
+rescue Config::ConfigError, EmrJobs::ExecutionError => e
   $stderr.puts(e.message)
   exit 1
 rescue Exception => e

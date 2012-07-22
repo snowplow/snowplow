@@ -111,7 +111,7 @@ module Config
     options
   end
 
-end
+  class ConfigError < ArgumentError
+  end
 
-class ConfigError < ArgumentError
 end
