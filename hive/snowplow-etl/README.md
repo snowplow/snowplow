@@ -42,7 +42,7 @@ Now install the SnowPlow::ETL gem on your system:
     $ sudo gem install snowplow-etl-0.0.1.gem
     $ bundle install
 
-If you have any problems installing, it may be because of a missing dependency on the Nokogiri library. See the [Installing Nokogiri] [nokogiri] guide for help installing this dependency.
+If you have any problems installing, it may be because of a missing dependency on the Nokogiri library. See the [Installing Nokogiri] [nokogiri] guide for help installing Nokogiri in your system.
 
 Now test that the gem was installed successfully:
 
