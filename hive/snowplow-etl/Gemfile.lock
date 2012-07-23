@@ -3,7 +3,7 @@ PATH
   specs:
     snowplow-etl (0.0.1)
       aws-s3 (~> 0.6.3)
-      elasticity (~> 2.0)
+      elasticity (~> 2.2)
 
 GEM
   remote: https://rubygems.org/
@@ -13,7 +13,7 @@ GEM
       mime-types
       xml-simple
     builder (3.0.0)
-    elasticity (2.1)
+    elasticity (2.2)
       nokogiri
       rest-client
     mime-types (1.19)
