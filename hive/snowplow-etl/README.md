@@ -24,6 +24,7 @@ To make use of SnowPlow::Etl you will need the following:
 3. Git installed. Please see the [Git Installation Guide] [gitguide] as needed  
 4. RubyGems installed. Please see the [RubyGems Installation Instructions] [gemsguide]
    as needed
+5. Nokogiri installed. Please see the [Installing Nokogiri Guide] [nokogiri] as needed
 5. Bundler (a Ruby gem) installed (`gem install bundler`)
 
 ### Installation
