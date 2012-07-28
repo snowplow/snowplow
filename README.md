@@ -28,7 +28,7 @@ To briefly explain these five sub-systems:
 
 ## Contributing
 
-We're committed to a loosely-coupled architecture for SnowPlow and are keen to get as many user contributions as possible in each part of the flow. If you'd like to write a new tracker, try a different ETL approach or load SnowPlow events into an alternative database, **[get in touch] [contact]**!
+We're committed to a loosely-coupled architecture for SnowPlow and would love to get user contributions within each of the five sub-systems. If you'd like to write a new tracker, try a different ETL approach or load SnowPlow events into an alternative database, **[get in touch] [contact]**!
 
 ## Copyright and license
 
