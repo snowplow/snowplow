@@ -1,8 +1,2 @@
-.idea/
-.manager/
-workspace.xml
-*.iml
-*.sublime-*
-.DS_Store
-*~
-*.swp
+# Global .gitignore
+# Nothing in here yet
