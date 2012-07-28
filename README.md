@@ -26,7 +26,7 @@ To provide brief explanations of these five sub-systems:
 
 The root folder contains this README, the architecture diagram, the CHANGELOG and the [Apache License, Version 2.0] [license].
 
-For more information on the current SnowPlow architecture using CloudFront and Hive, please see the [Technical architecture] [archicture-doc] on the wiki.
+**For more information on the current SnowPlow architecture, please see the [Technical architecture] [architecture-doc]**.
 
 ## Contributing
 
@@ -47,6 +47,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 [wiki]: https://github.com/snowplow/snowplow/wiki
-[architecture-image]: http://blah
+[architecture-image]: https://github.com/snowplow/snowplow/blob/features/new-structure/architecture.png
 [architecture-doc]: https://github.com/snowplow/snowplow/wiki/Technical-architecture
 [license]: http://www.apache.org/licenses/LICENSE-2.0
