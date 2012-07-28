@@ -16,15 +16,13 @@ The repository structure follows the conceptual architecture of SnowPlow, which 
 
 ![architecture] [architecture-image]
 
-To provide brief explanations of these five sub-systems:
+To briefly explain these five sub-systems:
 
-* **Trackers** are responsible for firing SnowPlow events. Currently we have a JavaScript tracker; iOS and Android trackers are on the roadmap
-* **Collectors** are responsible for capturing SnowPlow events from trackers. Currently we have a simple CloudFront-based tracker
-* **ETL** (extract, transform and load) takes the raw SnowPlow events, cleans them up, enriches them and prepares them for storage. Currently we have a Hive-based ETL process
+* **Trackers** fire SnowPlow events. Currently we have a JavaScript tracker; iOS and Android trackers are on the roadmap
+* **Collectors** capture SnowPlow events from trackers. Currently we have a simple CloudFront-based collector
+* **ETL (extract, transform and load)** cleans up the raw SnowPlow events, enriches them and puts them into storage. Currently we have a Hive-based ETL process
 * **Storage** is where the SnowPlow events live. Currently we store the SnowPlow events in a Hive-format flatfile structure on S3
 * **Analytics** are performed on the SnowPlow events. Currently we have a set of ad hoc analyses written in Hive 
-
-The root folder contains this README, the architecture diagram, the CHANGELOG and the [Apache License, Version 2.0] [license].
 
 **For more information on the current SnowPlow architecture, please see the [Technical architecture] [architecture-doc]**.
 
