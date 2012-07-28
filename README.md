@@ -30,7 +30,7 @@ The root folder contains this README, the architecture diagram, the CHANGELOG an
 
 ## Contributing
 
-We're committed to a loosely-coupled architecture for SnowPlow and are keen to get as many user contributions as possible in each part of the flow.
+We're committed to a loosely-coupled architecture for SnowPlow and are keen to get as many user contributions as possible in each part of the flow. If you'd like to write a new tracker, try a different ETL approach or load SnowPlow events into a different kind of database, **[get in touch] [contact]**!
 
 ## Copyright and license
 
@@ -47,6 +47,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 [wiki]: https://github.com/snowplow/snowplow/wiki
-[architecture-image]: https://github.com/snowplow/snowplow/blob/features/new-structure/architecture.png
+[architecture-image]: https://github.com/snowplow/snowplow/raw/features/new-structure/architecture.png
 [architecture-doc]: https://github.com/snowplow/snowplow/wiki/Technical-architecture
+[contact]: contribute@snowplowanalytics.com
 [license]: http://www.apache.org/licenses/LICENSE-2.0
