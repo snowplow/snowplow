@@ -32,6 +32,10 @@ We're committed to a loosely-coupled architecture for SnowPlow and would love to
 
 If you would like help implementing a new tracker, trying a different ETL approach or loading SnowPlow events into an alternative database, **[get in touch] [contact]**!
 
+## Questions or need help?
+
+Contact us at support@snowplowanalytics.com or join our [SnowPlow Google Group] [snowplow-user].
+
 ## Copyright and license
 
 SnowPlow is copyright 2012 SnowPlow Analytics Ltd. Significant portions of `snowplow.js`
@@ -51,3 +55,4 @@ limitations under the License.
 [architecture-doc]: https://github.com/snowplow/snowplow/wiki/Technical-architecture
 [contact]: contribute@snowplowanalytics.com
 [license]: http://www.apache.org/licenses/LICENSE-2.0
+[snowplow-user]: https://groups.google.com/d/forum/snowplow-user
