@@ -53,6 +53,6 @@ limitations under the License.
 [wiki]: https://github.com/snowplow/snowplow/wiki
 [architecture-image]: https://github.com/snowplow/snowplow/raw/master/architecture.png
 [architecture-doc]: https://github.com/snowplow/snowplow/wiki/Technical-architecture
-[contact]: contribute@snowplowanalytics.com
+[contact]: mailto:contribute@snowplowanalytics.com
 [license]: http://www.apache.org/licenses/LICENSE-2.0
 [snowplow-user]: https://groups.google.com/d/forum/snowplow-user
