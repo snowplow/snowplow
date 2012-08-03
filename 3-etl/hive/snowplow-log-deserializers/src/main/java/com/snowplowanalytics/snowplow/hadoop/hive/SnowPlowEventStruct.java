@@ -339,6 +339,7 @@ public class SnowPlowEventStruct {
       // 5. Finally handle the marketing fields in the page_url
       // TODO
 
+
     } catch (Exception e) {
       throw new SerDeException("Could not parse row: \"" + row + "\"", e);
     }
