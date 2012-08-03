@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -30,7 +30,7 @@ import org.apache.hadoop.hive.serde2.SerDeException;
 // Java Library for User-Agent Information
 import nl.bitwalker.useragentutils.*;
 
-// Apache URLEncodedUtils 
+// Apache URLEncodedUtils
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 
@@ -95,8 +95,8 @@ public class SnowPlowEventStruct {
   public String os_name;
   public String os_family;
   public String os_manufacturer;
-  
-  // Device/Hardware (from user-agent) 
+
+  // Device/Hardware (from user-agent)
   public String dvce_type;
   public Boolean dvce_ismobile;
 
@@ -109,9 +109,10 @@ public class SnowPlowEventStruct {
   // -------------------------------------------------------------------------------------------------------------------
 
   private static final String cfEncoding = "UTF-8";
+  private static final Charset cfCharset = Charset.forName("UTF-8");
 
   // An enum of all the fields we're expecting in the querystring
-  private static enum Fields { TID, UID, VID, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA }
+  private static enum Fields { TID, UID, VID, TSTAMP, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA }
 
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
@@ -129,8 +130,6 @@ public class SnowPlowEventStruct {
                                                    + w + "([\\S]+)"  // UserAgent     / cs(User Agent)
                                                    + w + "(.+)");    // Querystring   / cs-uri-query
 
-  // private static final Charset utf8 = Charset.forName("UTF-8"); TODO: use this when httpclient 4.2 comes out of beta http://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient
-
   // -------------------------------------------------------------------------------------------------------------------
   // Deserialization logic
   // -------------------------------------------------------------------------------------------------------------------
@@ -139,13 +138,13 @@ public class SnowPlowEventStruct {
    * Parses the input row String into a Java object.
    * For performance reasons this works in-place updating the fields
    * within this SnowPlowEventStruct, rather than creating a new one.
-   * 
+   *
    * @param row The raw String containing the row contents
    * @return This struct with all values updated
    * @throws SerDeException For any exception during parsing
    */
   public Object parse(String row) throws SerDeException {
-    
+
     // Null everything before we start
     this.dt = null;
     this.tm = null;
@@ -188,7 +187,7 @@ public class SnowPlowEventStruct {
     }
 
     final Matcher m = cfRegex.matcher(row);
-    
+
     try {
       // 0. First check our row is kosher
 
@@ -223,25 +222,24 @@ public class SnowPlowEventStruct {
       this.br_version = (v == null) ? null : v.getVersion();
       this.br_type = b.getBrowserType().getName();
       this.br_renderengine = b.getRenderingEngine().toString();
-      
+
       // -> OS-related fields
       final OperatingSystem os = userAgent.getOperatingSystem();
       this.os_name = os.getName();
-      this.os_family = os.getGroup().getName(); 
+      this.os_family = os.getGroup().getName();
       this.os_manufacturer = os.getManufacturer().getName();
-      
+
       // -> device/hardware-related fields
       this.dvce_type = os.getDeviceType().getName();
       this.dvce_ismobile = os.isMobileDevice();
 
       // 3. Now we dis-assemble the querystring
       String qsUrl = null;
-      // List<NameValuePair> params = URLEncodedUtils.parse(querystring, utf8); TODO: use this when httpclient 4.2 comes out of beta http://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient
-      List<NameValuePair> params = URLEncodedUtils.parse(URI.create("http://localhost/?" + querystring), "UTF-8");
+      List<NameValuePair> params = URLEncodedUtils.parse(querystring, cfCharset);
 
       // For performance, don't convert to a map, just loop through and match to our variables as we go
       for (NameValuePair pair : params) {
-        
+
         final String name = pair.getName();
         final String value = pair.getValue();
 
@@ -259,15 +257,25 @@ public class SnowPlowEventStruct {
             switch (field) {
 
               // Common fields
-              case TID: 
+              case TID:
                 this.txn_id = value;
                 break;
-              case UID: 
+              case UID:
                 this.user_id = value;
                 break;
               case VID:
                 this.visit_id = Integer.parseInt(value);
                 break;
+              case TSTAMP:
+                // Replace our timestamp fields with the client's timestamp
+                try {
+                  String[] timestamp = value.split(" ");
+                  this.dt = timestamp[0];
+                  this.tm = timestamp[1];
+                } catch (Exception e) {
+                  // Return a null row on invalid data
+                  return null;
+                }
               case LANG:
                 this.br_lang = value;
                 break;
@@ -278,7 +286,7 @@ public class SnowPlowEventStruct {
                 try {
                   String[] resolution = value.split("x");
                   this.dvce_screenwidth = Integer.parseInt(resolution[0]);
-                  this.dvce_screenheight = Integer.parseInt(resolution[1]); 
+                  this.dvce_screenheight = Integer.parseInt(resolution[1]);
                 } catch (Exception e) {
                   // Return a null row on invalid data
                   return null;
@@ -290,7 +298,7 @@ public class SnowPlowEventStruct {
               case URL:
                 qsUrl = pair.getValue(); // We might use this later for the page URL
                 break;
-              
+
               // Page-view only
               case PAGE:
                 this.page_title = URLDecoder.decode(value, cfEncoding);
@@ -299,16 +307,16 @@ public class SnowPlowEventStruct {
               // Event only
               case EV_CA:
                 this.ev_category = URLDecoder.decode(value, cfEncoding);
-                break;         
+                break;
               case EV_AC:
                 this.ev_action = URLDecoder.decode(value, cfEncoding);
-                break; 
+                break;
               case EV_LA:
                 this.ev_label = URLDecoder.decode(value, cfEncoding);
-                break; 
+                break;
               case EV_PR:
                 this.ev_property = URLDecoder.decode(value, cfEncoding);
-                break; 
+                break;
                case EV_VA:
                 this.ev_value = URLDecoder.decode(value, cfEncoding);
                 break;
@@ -355,11 +363,11 @@ public class SnowPlowEventStruct {
   /**
    * Converts a String of value "1" or "0" to true
    * or false respectively.
-   * 
+   *
    * @param s The String to check
    * @return True for "1", false for "0"
    * @throws IllegalArgumentException if the string is not "1" or "0"
-   */ 
+   */
   static boolean stringToBoolean(String s) throws IllegalArgumentException {
     if (s.equals("1"))
       return true;

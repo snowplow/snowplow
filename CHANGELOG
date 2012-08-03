@@ -1,3 +1,9 @@
+Version 0.4.5 (2012-08-03)
+--------------------------
+Serde: upgraded httpclient and tweaked URL code (issue #15)
+Serde: now extracting our 5 marketing fields (issue #12)
+Serde: added support for client-timestamp (issue #18)
+
 Version 0.4.4 (2012-07-28)
 --------------------------
 Restructured into 5 sub-systems
