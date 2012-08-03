@@ -109,10 +109,14 @@ public class SnowPlowEventStruct {
   // -------------------------------------------------------------------------------------------------------------------
 
   private static final String cfEncoding = "UTF-8";
-  private static final Charset cfCharset = Charset.forName("UTF-8");
+  private static final Charset cfCharset = Charset.forName(cfEncoding);
 
   // An enum of all the fields we're expecting in the querystring
-  private static enum Fields { TID, UID, VID, TSTAMP, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA }
+  private static enum QuerystringFields { TID, UID, VID, TSTAMP, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA }
+
+  // An enum for the marketing attribution fields we might find
+  // attached to the page URL.
+  private static enum MarketingFields { UTM_SOURCE, UTM_MEDIUM, UTM_CAMPAIGN, UTM_TERM, UTM_CONTENT }
 
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
@@ -253,7 +257,7 @@ public class SnowPlowEventStruct {
         } else {
 
           try {
-            final Fields field = Fields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
+            final QuerystringFields field = QuerystringFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
             switch (field) {
 
               // Common fields
@@ -317,7 +321,7 @@ public class SnowPlowEventStruct {
               case EV_PR:
                 this.ev_property = URLDecoder.decode(value, cfEncoding);
                 break;
-               case EV_VA:
+              case EV_VA:
                 this.ev_value = URLDecoder.decode(value, cfEncoding);
                 break;
             }
@@ -336,9 +340,39 @@ public class SnowPlowEventStruct {
         this.page_url = cfUrl; // The CloudFront cs(Referer) URL
       }
 
-      // 5. Finally handle the marketing fields in the page_url
-      // TODO
+      // 5. Finally handle the marketing fields in the page_url. Re-use params
+      params = URLEncodedUtils.parse(URI.create(this.page_url), cfEncoding);
 
+      // For performance, don't convert to a map, just loop through and match to our variables as we go
+      for (NameValuePair pair : params) {
+
+        final String name = pair.getName();
+        final String value = pair.getValue();
+
+        try {
+          final MarketingFields field = MarketingFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
+
+          switch (field) {
+
+            // Common fields
+            case UTM_SOURCE:
+              this.mkt_source = URLDecoder.decode(value, cfEncoding);
+              break;
+            case UTM_MEDIUM:
+              this.mkt_medium = URLDecoder.decode(value, cfEncoding);
+              break;
+            case UTM_CAMPAIGN:
+              this.mkt_campaign = URLDecoder.decode(value, cfEncoding);
+              break;
+            case UTM_TERM:
+              this.mkt_term = URLDecoder.decode(value, cfEncoding);
+              break;
+            case UTM_CONTENT:
+              this.mkt_content = URLDecoder.decode(value, cfEncoding);
+              break;
+          }
+        } catch (IllegalArgumentException iae) {} // Do nothing in the case of a non-attribution-related querystring param
+      }
 
     } catch (Exception e) {
       throw new SerDeException("Could not parse row: \"" + row + "\"", e);
