@@ -35,7 +35,7 @@ class UnknownProblemTest extends Specification {
   "Our SnowPlow rows which are erroring" >> {
     badRows.foreach { row => 
       "should not return a <<null>> record" in {
-        SnowPlowEventDeserializer.deserializeLine(row, DEBUG).asInstanceOf[SnowPlowEventStruct].dt must beNull
+        SnowPlowEventDeserializer.deserializeLine(row, DEBUG).asInstanceOf[SnowPlowEventStruct].dt must not beNull
       }
     }
   }
