@@ -1,5 +1,5 @@
 /*
- * SnowPlow - The world'’'s most powerful web analytics platform
+ * SnowPlow - The world's most powerful web analytics platform
  *
  * @description JavaScript tracking client for SnowPlow
  * @version 0.4
