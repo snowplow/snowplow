@@ -12,17 +12,11 @@
  */
 package com.snowplowanalytics.snowplow.hadoop.hive
 
-// Java
-import java.util.{ArrayList => JArrayList}
-
 // Scala
 import scala.collection.JavaConversions
 
 // Specs2
 import org.specs2.mutable.Specification
-
-// Hive
-import org.apache.hadoop.hive.serde2.SerDeException;
 
 class MarketingTest extends Specification {
 
