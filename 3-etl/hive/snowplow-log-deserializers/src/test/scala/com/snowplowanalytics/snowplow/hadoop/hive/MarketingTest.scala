@@ -55,6 +55,7 @@ class MarketingTest extends Specification {
         "have mkt_medium (Medium) = %s".format(expected.mkt_medium) in {
           actual.mkt_medium must_== expected.mkt_medium
         }
+        // TODO: add other four fields
       }
     }
   }
