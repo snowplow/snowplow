@@ -53,9 +53,10 @@ Each SnowPlow log deserializer maps the SnowPlow log format onto an appropriate 
 2. Extracting the user's browser, screen resolution, OS etc from the CloudFront `useragent` field 
 3. Extracting marketing campaign information attached in the querystring of the calling page (not the querystring sent to CloudFront)
 
-The fields extracted for marketing campaign information are as follows:
+The marketing fields extracted from the calling URL are as follows:
 
-| **KEY**            | **NAME**         | **DESCRIPTION**                                                                                                        |     
+| **KEY**            | **NAME**         | **DESCRIPTION**                                                                                                                        |     
+|:------------------:|:----------------:|:---------------------------------------------------------------------------------------------------------------------------------------|
 | `utm_medium`       | Campaign medium  | Label for marketing campaigns to distinguish different types of ads e.g. cpc vs affiliate vs banner vs email...                        |
 | `utm_source`       | Campaign source  | Label for marketing campaigns to identify the source of the ads e.g. Google, Yahoo, Facebook                                           |
 | `utm_term`      v  | Campaign term    | Keywords associated with the ad (important for search)                                                                                 |
