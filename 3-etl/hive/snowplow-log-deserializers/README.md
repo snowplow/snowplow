@@ -45,12 +45,29 @@ The SnowPlow-specific data is passed to CloudFront as a set of name-value pairs 
 | `ad_ad`            | Ad Advertiser ID | No              | Adserver identifier for the advertiser which the campaign belongs to                                                                   |
 | `ad_uid`           | Ad User ID       | No              | Adserver identifier for the web user. Not to be confused with SnowPlow's own user identifier                                           |
 
+## Deserializer transformations
+
+Each SnowPlow log deserializer maps the SnowPlow log format onto an appropriate Hive table structure. There are three main transformations handled by each deserializer:
+
+1. Extracting the relevant name-value pairs from the CloudFront `cs-uri-query` aka querystring field (see list of name-value pairs above)
+2. Extracting the user's browser, screen resolution, OS etc from the CloudFront `useragent` field 
+3. Extracting marketing campaign information attached in the querystring of the calling page (not the querystring sent to CloudFront)
+
+The fields extracted for marketing campaign information are as follows:
+
+| **KEY**            | **NAME**         | **DESCRIPTION**                                                                                                        |     
+| `utm_medium`       | Campaign medium  | Label for marketing campaigns to distinguish different types of ads e.g. cpc vs affiliate vs banner vs email...                        |
+| `utm_source`       | Campaign source  | Label for marketing campaigns to identify the source of the ads e.g. Google, Yahoo, Facebook                                           |
+| `utm_term`      v  | Campaign term    | Keywords associated with the ad (important for search)                                                                                 |
+| `utm_content`      | Campaign content | Either the content of the ad creative (if a text ad), or a reference to the content. (So we can distinguish different creatives on the same campaign / source / medium / term)|
+| `utm_campaign`     | Campaign name    | The name of a campaign. Note that a campaign might span multiple sources / mediums / terms adn ad contents                             |
+
+Potential additional transformations being considered are:
+
+* Geographic lookup using MaxMind
+* Identifying traffic sources (e.g. search engine organic versus paid-search)
+
 ## The Hive table format
-
-Each SnowPlow log deserializer maps the SnowPlow log format onto an appropriate Hive table structure. There are two main transformations handled by each deserializer:
-
-1. Extracting the user's browser, screen resolution, OS etc from the CloudFront `useragent` field 
-2. Extracting the relevant name-value pairs from the CloudFront `cs-uri-query` aka querystring field
 
 The Hive table definitions for each deserializer are shown below:
 
@@ -73,7 +90,7 @@ CREATE EXTERNAL TABLE events (
   mkt_medium STRING,
   mkt_term STRING,
   mkt_content STRING,
-  mkt_name STRING,
+  mkt_campaign STRING,
   ev_category STRING,
   ev_action STRING,
   ev_label STRING,
