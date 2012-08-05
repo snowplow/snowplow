@@ -59,7 +59,7 @@ The marketing fields extracted from the calling URL are as follows:
 |:------------------:|:----------------:|:---------------------------------------------------------------------------------------------------------------------------------------|
 | `utm_medium`       | Campaign medium  | Label for marketing campaigns to distinguish different types of ads e.g. cpc vs affiliate vs banner vs email...                        |
 | `utm_source`       | Campaign source  | Label for marketing campaigns to identify the source of the ads e.g. Google, Yahoo, Facebook                                           |
-| `utm_term`      v  | Campaign term    | Keywords associated with the ad (important for search)                                                                                 |
+| `utm_term`         | Campaign term    | Keywords associated with the ad (important for search)                                                                                 |
 | `utm_content`      | Campaign content | Either the content of the ad creative (if a text ad), or a reference to the content. (So we can distinguish different creatives on the same campaign / source / medium / term)|
 | `utm_campaign`     | Campaign name    | The name of a campaign. Note that a campaign might span multiple sources / mediums / terms adn ad contents                             |
 
