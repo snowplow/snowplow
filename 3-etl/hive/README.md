@@ -29,7 +29,7 @@ Here are some example Hive queries which can be run on the SnowPlow data:
 		`mkt_medium`,
 		`mkt_term`,
 		`mkt_content`,
-		`mkt_name`,
+		`mkt_campaign`,
 		COUNT(DISTINCT (user_id)),
 	FROM
 		`snowplow_events_table`
