@@ -53,7 +53,7 @@ Each SnowPlow log deserializer maps the SnowPlow log format onto an appropriate 
 2. Extracting the user's browser, screen resolution, OS etc from the CloudFront `useragent` field 
 3. Extracting marketing campaign information attached in the querystring of the calling page (not the querystring sent to CloudFront)
 
-The marketing fields extracted from the calling URL are as follows:
+The marketing campaign fields extracted from the calling page's querystring are as follows:
 
 | **KEY**            | **NAME**         | **DESCRIPTION**                                                                                                                        |     
 |:------------------:|:----------------:|:---------------------------------------------------------------------------------------------------------------------------------------|
