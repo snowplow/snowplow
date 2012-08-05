@@ -66,11 +66,11 @@ public class SnowPlowEventStruct {
   public String page_referrer;
 
   // Marketing
-  public String mkt_source;
   public String mkt_medium;
+  public String mkt_source;
   public String mkt_term;
   public String mkt_content;
-  public String mkt_name;
+  public String mkt_campaign;
 
   // Event
   public String ev_category;
@@ -159,11 +159,11 @@ public class SnowPlowEventStruct {
     this.page_url = null;
     this.page_title = null;
     this.page_referrer = null;
-    this.mkt_source = null;
     this.mkt_medium = null;
+    this.mkt_source = null;
     this.mkt_term = null;
     this.mkt_content = null;
-    this.mkt_name = null;
+    this.mkt_campaign = null;
     this.ev_category = null;
     this.ev_action = null;
     this.ev_label = null;
@@ -355,20 +355,20 @@ public class SnowPlowEventStruct {
           switch (field) {
 
             // Common fields
-            case UTM_SOURCE:
-              this.mkt_source = URLDecoder.decode(value, cfEncoding);
-              break;
             case UTM_MEDIUM:
               this.mkt_medium = URLDecoder.decode(value, cfEncoding);
               break;
-            case UTM_CAMPAIGN:
-              this.mkt_campaign = URLDecoder.decode(value, cfEncoding);
+            case UTM_SOURCE:
+              this.mkt_source = URLDecoder.decode(value, cfEncoding);
               break;
             case UTM_TERM:
               this.mkt_term = URLDecoder.decode(value, cfEncoding);
               break;
             case UTM_CONTENT:
               this.mkt_content = URLDecoder.decode(value, cfEncoding);
+              break;
+            case UTM_CAMPAIGN:
+              this.mkt_campaign = URLDecoder.decode(value, cfEncoding);
               break;
           }
         } catch (IllegalArgumentException iae) {} // Do nothing in the case of a non-attribution-related querystring param
