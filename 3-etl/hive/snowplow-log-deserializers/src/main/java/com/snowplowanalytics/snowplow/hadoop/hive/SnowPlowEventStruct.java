@@ -341,10 +341,10 @@ public class SnowPlowEventStruct {
       }
 
       // 5. Finally handle the marketing fields in the page_url. Re-use params
-      params = URLEncodedUtils.parse(URI.create(this.page_url), cfEncoding);
+      List<NameValuePair> marketingParams = URLEncodedUtils.parse(URI.create(this.page_url), cfEncoding);
 
       // For performance, don't convert to a map, just loop through and match to our variables as we go
-      for (NameValuePair pair : params) {
+      for (NameValuePair pair : marketingParams) {
 
         final String name = pair.getName();
         final String value = pair.getValue();
