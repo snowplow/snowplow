@@ -355,7 +355,7 @@ public class SnowPlowEventStruct {
 
           switch (field) {
 
-            // Common fields
+            // Marketing fields
             case UTM_MEDIUM:
               this.mkt_medium = decodeSafeString(value);
               break;
