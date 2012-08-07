@@ -339,7 +339,6 @@ public class SnowPlowEventStruct {
         this.page_url = decodeSafeString(qsUrl); // Use the decoded querystring URL
       } else { // Otherwise default to...
         this.page_url = cfUrl; // The CloudFront cs(Referer) URL
-        // throw new Exception("ARG. Using the qs page_url   [" + qsUrl + "]");
       }
 
       // 5. Finally handle the marketing fields in the page_url. Re-use params
