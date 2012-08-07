@@ -15,6 +15,7 @@ package com.snowplowanalytics.snowplow.hadoop.hive;
 // Java
 import java.net.URI;
 import java.net.URLDecoder;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.ArrayList;
 import java.nio.charset.Charset;
@@ -297,7 +298,7 @@ public class SnowPlowEventStruct {
                 }
                 break;
               case REFR:
-                this.page_referrer = URLDecoder.decode(value, cfEncoding);
+                this.page_referrer = decodeSafeString(value);
                 break;
               case URL:
                 qsUrl = pair.getValue(); // We might use this later for the page URL
@@ -305,24 +306,24 @@ public class SnowPlowEventStruct {
 
               // Page-view only
               case PAGE:
-                this.page_title = URLDecoder.decode(value, cfEncoding);
+                this.page_title = decodeSafeString(value);
                 break;
 
               // Event only
               case EV_CA:
-                this.ev_category = URLDecoder.decode(value, cfEncoding);
+                this.ev_category = decodeSafeString(value);
                 break;
               case EV_AC:
-                this.ev_action = URLDecoder.decode(value, cfEncoding);
+                this.ev_action = decodeSafeString(value);
                 break;
               case EV_LA:
-                this.ev_label = URLDecoder.decode(value, cfEncoding);
+                this.ev_label = decodeSafeString(value);
                 break;
               case EV_PR:
-                this.ev_property = URLDecoder.decode(value, cfEncoding);
+                this.ev_property = decodeSafeString(value);
                 break;
               case EV_VA:
-                this.ev_value = URLDecoder.decode(value, cfEncoding);
+                this.ev_value = decodeSafeString(value);
                 break;
             }
           } catch (IllegalArgumentException iae) {
@@ -356,19 +357,19 @@ public class SnowPlowEventStruct {
 
             // Common fields
             case UTM_MEDIUM:
-              this.mkt_medium = URLDecoder.decode(value, cfEncoding);
+              this.mkt_medium = decodeSafeString(value);
               break;
             case UTM_SOURCE:
-              this.mkt_source = URLDecoder.decode(value, cfEncoding);
+              this.mkt_source = decodeSafeString(value);
               break;
             case UTM_TERM:
-              this.mkt_term = URLDecoder.decode(value, cfEncoding);
+              this.mkt_term = decodeSafeString(value);
               break;
             case UTM_CONTENT:
-              this.mkt_content = URLDecoder.decode(value, cfEncoding);
+              this.mkt_content = decodeSafeString(value);
               break;
             case UTM_CAMPAIGN:
-              this.mkt_campaign = URLDecoder.decode(value, cfEncoding);
+              this.mkt_campaign = decodeSafeString(value);
               break;
           }
         } catch (IllegalArgumentException iae) {} // Do nothing in the case of a non-attribution-related querystring param
@@ -394,6 +395,18 @@ public class SnowPlowEventStruct {
    * @return True if the String was a hyphen "-"
    */
   static boolean isNullField(String s) { return (s == null || s.equals("") || s.equals("-")); }
+
+  /**
+   * Decodes a String using UTF8, also stripping out any newlines
+   * (because they will break Hive).
+   *
+   * @param s The String to decode
+   * @return The decoded String
+   * @throws UnsupportedEncodingException if the Character Encoding is not supported
+   */
+  static String decodeSafeString(String s) throws UnsupportedEncodingException {
+      return URLDecoder.decode(s, cfEncoding).replaceAll("(\\r|\\n)", "");
+  }
 
   /**
    * Converts a String of value "1" or "0" to true
