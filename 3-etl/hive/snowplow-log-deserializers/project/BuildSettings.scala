@@ -18,7 +18,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "SnowPlow Analytics Ltd",
-    version       := "0.4.6",
+    version       := "0.4.7",
     description   := "Hive deserializers for the SnowPlow log data",
     scalaVersion  := "2.9.1",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
