@@ -110,7 +110,6 @@ public class SnowPlowEventStruct {
   // -------------------------------------------------------------------------------------------------------------------
 
   private static final String cfEncoding = "UTF-8";
-  private static final Charset cfCharset = Charset.forName(cfEncoding);
 
   // An enum of all the fields we're expecting in the querystring
   private static enum QuerystringFields { TID, UID, VID, TSTAMP, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA }
@@ -240,7 +239,7 @@ public class SnowPlowEventStruct {
 
       // 3. Now we dis-assemble the querystring
       String qsUrl = null;
-      List<NameValuePair> params = URLEncodedUtils.parse(querystring, cfCharset);
+      List<NameValuePair> params = URLEncodedUtils.parse(URI.create("http://localhost/?" + querystring), "UTF-8");
 
       // For performance, don't convert to a map, just loop through and match to our variables as we go
       for (NameValuePair pair : params) {
@@ -341,11 +340,12 @@ public class SnowPlowEventStruct {
         this.page_url = cfUrl; // The CloudFront cs(Referer) URL
       }
 
-      // 5. Finally handle the marketing fields in the page_url. Re-use params
-      List<NameValuePair> marketingParams = URLEncodedUtils.parse(URI.create(this.page_url), cfEncoding);
+      // 5. Finally handle the marketing fields in the page_url
+      // Re-use params to avoid creating another object
+      params = URLEncodedUtils.parse(URI.create(this.page_url), "UTF-8");
 
       // For performance, don't convert to a map, just loop through and match to our variables as we go
-      for (NameValuePair pair : marketingParams) {
+      for (NameValuePair pair : params) {
 
         final String name = pair.getName();
         final String value = pair.getValue();
