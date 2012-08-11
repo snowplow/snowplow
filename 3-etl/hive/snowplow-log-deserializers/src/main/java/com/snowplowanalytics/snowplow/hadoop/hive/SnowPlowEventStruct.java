@@ -394,7 +394,9 @@ public class SnowPlowEventStruct {
    * @param s The String to check
    * @return True if the String was a hyphen "-"
    */
-  static boolean isNullField(String s) { return (s == null || s.equals("") || s.equals("-")); }
+  static boolean isNullField(String s) {
+    return (s == null || s.equals("") || s.equals("-"));
+  }
 
   /**
    * Decodes a String using UTF8, also stripping out any newlines
@@ -405,7 +407,12 @@ public class SnowPlowEventStruct {
    * @throws UnsupportedEncodingException if the Character Encoding is not supported
    */
   static String decodeSafeString(String s) throws UnsupportedEncodingException {
-      return URLDecoder.decode(s, cfEncoding).replaceAll("(\\r|\\n)", "");
+
+    if (s == null) return null;
+    String decoded = URLDecoder.decode(s, cfEncoding);
+    if (decoded == null) return null;
+
+    return decoded.replaceAll("(\\r|\\n)", "");
   }
 
   /**
@@ -417,10 +424,8 @@ public class SnowPlowEventStruct {
    * @throws IllegalArgumentException if the string is not "1" or "0"
    */
   static boolean stringToBoolean(String s) throws IllegalArgumentException {
-    if (s.equals("1"))
-      return true;
-    if (s.equals("0"))
-      return false;
+    if (s.equals("1")) return true;
+    if (s.equals("0")) return false;
     throw new IllegalArgumentException("Could not convert \"" + s + "\" to boolean, only 1 or 0.");
   }
 }
