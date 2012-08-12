@@ -19,7 +19,7 @@ The repository structure follows the conceptual architecture of SnowPlow, which 
 To briefly explain these five sub-systems:
 
 * **Trackers** fire SnowPlow events. Currently we have a JavaScript tracker; iOS and Android trackers are on the roadmap
-* **Collectors** receive SnowPlow events from trackers. Currently we have a simple CloudFront-based collector
+* **Collectors** receive SnowPlow events from trackers. Currently we have a simple CloudFront-based collector; there is also a prototype node.js-based collector, SnowCannon
 * **ETL (extract, transform and load)** cleans up the raw SnowPlow events, enriches them and puts them into storage. Currently we have a Hive-based ETL process
 * **Storage** is where the SnowPlow events live. Currently we store the SnowPlow events in a Hive-format flatfile structure on S3
 * **Analytics** are performed on the SnowPlow events. Currently we have a set of ad hoc analyses written in Hive 
