@@ -1349,9 +1349,8 @@ var
             function logEvent(category, action, label, property, value) {
 
                 // All events have a category and an action
-                var request =
-                    '&ev_ca=' + encodeWrapper(category)
-                    + '&ev_ac=' + encodeWrapper(action);
+                var request = 'ev_ca=' + encodeWrapper(category)
+                            + '&ev_ac=' + encodeWrapper(action);
 
                 // Label, property and value are optional
                 if (String(label).length) {
@@ -1377,10 +1376,9 @@ var
              * @param string userId (optional) Ad server identifier for the viewer of the banner
              */
             function logImpression(bannerId, campaignId, advertiserId, userId) {
-                var request = '';
 
                 // All events have a banner ID
-                request += '&ad_ba=' + encodeWrapper(bannerId);
+                var request = 'ad_ba=' + encodeWrapper(bannerId);
 
                 // Campaign, advertiser and user IDs are optional
                 if (String(campaignId).length) {
