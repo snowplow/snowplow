@@ -2,7 +2,7 @@
  * SnowPlow - The world's most powerful web analytics platform
  *
  * @description JavaScript tracking client for SnowPlow
- * @version 0.4
+ * @version 0.5
  * @author Alex Dean, Anthon Pang
  */
 
@@ -386,7 +386,7 @@ if (!this.JSON2) {
 	exec,
 	res, width, height,
 	pdf, qt, realp, wma, dir, fla, java, gears, ag,
-	hook, getHook, getVisitorId, getVisitorInfo, setTrackerUrl, setAccount, setSiteId,
+	hook, getHook, getVisitorId, getVisitorInfo, setAccount, setCollectorUrl, setSiteId,
 	setDownloadExtensions, addDownloadExtensions,
 	setDomains, setIgnoreClasses, setRequestMethod,
 	setReferrerUrl, setCustomUrl, setDocumentTitle,
@@ -914,11 +914,11 @@ var
 		}
 
 		/*
-		 * Piwik Tracker class
+		 * SnowPlow Tracker class
 		 *
-		 * trackerUrl and trackerSiteId are optional arguments to the constructor
+		 * accountId is an optional argument to the constructor
 		 *
-		 * See: Tracker.setTrackerUrl() and Tracker.setSiteId()
+		 * See: Tracker.setCollectorUrl() and Tracker.setAccount()
 		 */
 		function Tracker(accountId) {
 
@@ -944,7 +944,7 @@ var
 				configRequestMethod = 'GET',
 
 				// Tracker URL
-				configTrackerUrl = trackerUrlFromAccountId(accountId), // Updated for SnowPlow
+				configCollectorUrl = collectorUrlFromAccountId(accountId), // Updated for SnowPlow
 
 				// Site ID
 				configTrackerSiteId = '', // Updated for SnowPlow. Starting long road to full removal
@@ -1120,7 +1120,7 @@ var
 				var image = new Image(1, 1);
 
 				image.onload = function () { };
-				image.src = configTrackerUrl + (configTrackerUrl.indexOf('?') < 0 ? '?' : '&') + request;
+				image.src = configCollectorUrl + '?' + request;
 			}
 
 			/*
@@ -1315,16 +1315,27 @@ var
 /*<SNOWPLOW> New SnowPlow functionality */
 
             /**
-             * Builds a tracker URL from an account ID.
+             * Adds the protocol in front of our collector URL, and ice.png to the end
+             *
+             * @param string rawUrl The collector URL without protocol
+             *
+             * @return string collectorUrl The tracker URL with protocol
+             */
+            function asCollectorUrl(rawUrl) {
+                return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + rawUrl + '/ice.png';               
+            }
+
+            /**
+             * Builds a collector URL from an account ID.
              * The trick here is that each account ID is in fact the subdomain on a specific Amazon CloudFront URL.
              * We don't bother to support custom CNAMEs because Amazon CloudFront doesn't support that for SSL.
              *
              * @param string account The account ID to build the tracker URL from
              *
-             * @return string trackerUrl The tracker URL
+             * @return string collectorUrl The tracker URL
              */
-            function trackerUrlFromAccountId(accountId) {
-                return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + accountId + '.cloudfront.net/ice.png';
+            function collectorUrlFromAccountId(accountId) {
+                return asCollectorUrl(accountId + '.cloudfront.net');
             }
 
             /**
@@ -1768,15 +1779,6 @@ var
 				},
 
 				/**
-				 * Specify the Piwik server URL
-				 *
-				 * @param string trackerUrl
-				 */
-				setTrackerUrl: function (trackerUrl) {
-					configTrackerUrl = trackerUrl;
-				},
-
-				/**
 				 * Specify the site ID
 				 *
 				 * @param int|string siteId
@@ -2066,7 +2068,18 @@ var
                  * @param string accountId
                  */
                 setAccount: function (accountId) {
-                    configTrackerUrl = trackerUrlFromAccountId(accountId);
+                    configCollectorUrl = collectorUrlFromAccountId(accountId);
+                },
+
+                /**
+                 *
+                 * Specify the SnowPlow collector URL. No need to include HTTP
+                 * or HTTPS - we will add this.
+                 * 
+                 * @param string rawUrl The collector URL minus protocol and /ice.png
+                 */
+                setCollectorUrl: function (rawUrl) {
+                    configCollectorUrl = asCollectorUrl(rawUrl);
                 },
 
                 /**
