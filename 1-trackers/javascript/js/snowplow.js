@@ -1037,7 +1037,15 @@ var
 				domainHash,
 
 				// Visitor UUID
-				visitorUUID;
+				visitorUUID,
+
+        // Ecommerce transaction data
+        // Will be committed, sent and emptied by a call to trackTrans.
+        ecommerceTransaction;
+
+      function ecommerceTransactionTemplate() {
+        return { transaction: {}, items: [] }
+      }
 
 			/*
 			 * Removes hash tag from the URL
@@ -1388,6 +1396,54 @@ var
 
 /*</SNOWPLOW>*/
 
+            function requestStringBuilder(initialValue) {
+              var str = initialValue || '';
+              return {
+                add: function(key, value) {
+                  if (value !== undefined && value !== '') {
+                    str += '&' + key + '=' + encodeWrapper(value);
+                  }
+                },
+                build: function() {
+                  return str;
+                }
+              }
+            }
+
+            /*
+             * Log ecommerce transaction meta data
+             */
+            function logTransaction(orderId, affiliation, total, tax, shipping, city, state, country) {
+              var sb = requestStringBuilder();
+              sb.add('tr_id', orderId);
+              sb.add('tr_af', affiliation);
+              sb.add('tr_tt', total);
+              sb.add('tr_tx', tax);
+              sb.add('tr_sh', shipping);
+              sb.add('tr_ci', city);
+              sb.add('tr_st', state);
+              sb.add('tr_co', country);
+              var params = sb.build();
+              var request = getRequest(params, 'ecommerceTransaction');
+              sendRequest(request, configTrackerPause);
+            }
+
+            /*
+             * Log ecommerce transaction item
+             */
+            function logTransactionItem(orderId, sku, name, category, price, quantity) {
+              var sb = requestStringBuilder();
+              sb.add('ti_id', orderId);
+              sb.add('ti_sk', sku);
+              sb.add('ti_na', name);
+              sb.add('ti_ca', category);
+              sb.add('ti_pr', price);
+              sb.add('ti_qu', quantity);
+              var params = sb.build();
+              var request = getRequest(params, 'ecommerceTransactionItem');
+              sendRequest(request, configTrackerPause);
+            }
+
 			/*
 			 * Log the page view / visit
 			 */
@@ -1726,6 +1782,7 @@ var
 			 */
 			detectBrowserFeatures();
 			updateDomainHash();
+      ecommerceTransaction = ecommerceTransactionTemplate();
 
 /*<DEBUG>*/
 			/*
@@ -2091,8 +2148,83 @@ var
                  */
                  trackImpression: function (bannerId, campaignId, advertiserId, userId) {
                      logImpression(bannerId, campaignId, advertiserId, userId);
-                 }
+                 },
 /*</SNOWPLOW>*/
+
+                 /**
+                  * Track an ecommerce transaction
+                  *
+                  * @param string orderId Required. Internal unique order id number for this transaction.
+                  * @param string affiliation Optional. Partner or store affiliation.
+                  * @param string total Required. Total amount of the transaction.
+                  * @param string tax Optional. Tax amount of the transaction.
+                  * @param string shipping Optional. Shipping charge for the transaction.
+                  * @param string city Optional. City to associate with transaction.
+                  * @param string state Optional. State to associate with transaction.
+                  * @param string country Optional. Country to associate with transaction.
+                  */
+                 addTrans: function(orderId, affiliation, total, tax, shipping, city, state, country) {
+                   ecommerceTransaction.transaction = {
+                     orderId: orderId,
+                     affiliation: affiliation,
+                     total: total,
+                     tax: tax,
+                     shipping: shipping,
+                     city: city,
+                     state: state,
+                     country: country};
+                 },
+
+                 /**
+                  * Track an ecommerce transaction item
+                  *
+                  * @param string orderId Required Order ID of the transaction to associate with item.
+                  * @param string sku Required. Item's SKU code.
+                  * @param string name Optional. Product name.
+                  * @param string category Optional. Product category.
+                  * @param string price Required. Product price.
+                  * @param string quantity Required. Purchase quantity.
+                  */
+                 addItem: function(orderId, sku, name, category, price, quantity) {
+                   ecommerceTransaction.items.push({
+                        orderId: orderId,
+                        sku: sku,
+                        name: name,
+                        category: category,
+                        price: price,
+                        quantity: quantity});
+                 },
+
+                 /**
+                  * Commit the ecommerce transaction
+                  *
+                  * This call will send the data specified with addTrans,
+                  * addItem methods to the tracking server.
+                  */
+                 trackTrans: function() {
+                   logTransaction(
+                       ecommerceTransaction.transaction.orderId,
+                       ecommerceTransaction.transaction.affiliation,
+                       ecommerceTransaction.transaction.total,
+                       ecommerceTransaction.transaction.tax,
+                       ecommerceTransaction.transaction.shipping,
+                       ecommerceTransaction.transaction.city,
+                       ecommerceTransaction.transaction.state,
+                       ecommerceTransaction.transaction.country
+                      );
+                   ecommerceTransaction.items.forEach(function(item) {
+                     logTransactionItem(
+                       item.orderId,
+                       item.sku,
+                       item.name,
+                       item.category,
+                       item.price,
+                       item.quantity
+                       );
+                   });
+
+                   ecommerceTransaction = ecommerceTransactionTemplate();
+                 }
 
 			};
 		}
