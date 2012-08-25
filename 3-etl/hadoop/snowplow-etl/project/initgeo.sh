@@ -15,4 +15,6 @@ rm ~/downloads/${JAVA_LIB}
 
 # Now we download the GeoIP Country (and City?) databases
 # DL to /usr/local/share/GeoIP/GeoIP.dat
-'
+
+wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz
+gzip -d GeoLiteCity.dat.gz
