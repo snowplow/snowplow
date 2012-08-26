@@ -18,9 +18,15 @@ object Dependencies {
     "Concurrent Maven Repo" at "http://conjars.org/repo" // For Scalding, Cascading etc
   )
 
+  object Urls {
+    val maxmindJava = "http://www.maxmind.com/download/geoip/api/java/GeoIPJava-%s.zip"
+    val maxmindData = "http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz"
+  }
+
   object V {
     val scalding  = "0.7.3"
     val specs     = "1.6.6"
+    val maxmind   = "1.2.8" // Compiled in BuildSettings
     // val specs2    = "1.8" TODO: update to specs2
     // Add versions for your additional libraries here...
   }

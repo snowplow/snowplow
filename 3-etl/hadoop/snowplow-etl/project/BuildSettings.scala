@@ -19,10 +19,30 @@ object BuildSettings {
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "SnowPlow Analytics Ltd",
     version       := "0.0.1",
-    description   := "The Scalding WordCountJob example as a standalone SBT project, ready for Amazon EMR",
+    description   := "The SnowPlow ETL process, built as Scalding job",
     scalaVersion  := "2.8.1", // TODO: could bump to 2.9.1 if switched to specs2
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= Dependencies.resolutionRepos
+  )
+
+  // For MaxMind support
+  // Adapted from https://github.com/guardian/maxmind-geoip-build/blob/master/project/Build.scala
+  import Dependencies._
+  lazy val maxmindSettings = Seq(
+
+    // Download and compile the MaxMind GeoIP Java API from source
+    sourceGenerators in Compile <+= (sourceManaged in Compile) map { out =>
+      val zip = new URL(Urls.maxmindJava format (V.maxmind))
+      IO.unzipURL(zip, out)
+      (out / "GeoIPJava-%s".format(V.maxmind) / "source" ** ("*.java")).get
+    },
+
+    // Download the GeoLite City and add it into our jar
+    resourceGenerators in Compile <+= (sourceManaged in Compile) map { out =>
+      val zip = new URL(Urls.maxmindData)
+      IO.unzipURL(zip, out)
+      (out / "GeoIP.dat").get
+    }
   )
 
   // sbt-assembly settings for building a fat jar
@@ -33,6 +53,9 @@ object BuildSettings {
     // Slightly cleaner jar name
     jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + ".jar" },
     
+    // Store in the upload folder for the ETL process to upload as necessary
+    target in assembly <<= (target) { (target) => target / ".." / "upload" },
+
     // Drop these jars
     excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
       val excludes = Set(
@@ -56,5 +79,5 @@ object BuildSettings {
     }
   )
 
-  lazy val buildSettings = basicSettings ++ sbtAssemblySettings
+  lazy val buildSettings = basicSettings ++ maxmindSettings ++ sbtAssemblySettings
 }
