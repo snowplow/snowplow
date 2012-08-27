@@ -19,7 +19,7 @@ object BuildSettings {
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "SnowPlow Analytics Ltd",
     version       := "0.0.1",
-    description   := "The SnowPlow ETL process, built as Scalding job",
+    description   := "The SnowPlow Hadoop ETL process, written in Scalding",
     scalaVersion  := "2.8.1", // TODO: could bump to 2.9.1 if switched to specs2
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= Dependencies.resolutionRepos
