@@ -44,7 +44,7 @@ object BuildSettings {
       
       // Only fetch if we don't already have it (because MaxMind 403s if you download GeoIP.dat.gz too frequently)
       if (!datLocal.exists()) {
-        // TODO: replace this with IO.gunzipURL(gzRemote) when https://github.com/harrah/xsbt/issues/529 implemented
+        // TODO: replace this with IO.gunzipURL(gzRemote, out / "maxmind") when https://github.com/harrah/xsbt/issues/529 implemented
         val gzLocal = out / "GeoIP.dat.gz"        
         IO.download(gzRemote, gzLocal)
         IO.createDirectory(out / "maxmind")
