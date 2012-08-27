@@ -26,11 +26,11 @@ object BuildSettings {
   )
 
   // For MaxMind support
-  // Adapted from https://github.com/guardian/maxmind-geoip-build/blob/master/project/Build.scala
   import Dependencies._
   lazy val maxmindSettings = Seq(
 
     // Download and compile the MaxMind GeoIP Java API from source
+    // Adapted from https://github.com/guardian/maxmind-geoip-build/blob/master/project/Build.scala
     sourceGenerators in Compile <+= (sourceManaged in Compile) map { out =>
       val zip = new URL(Urls.maxmindJava format (V.maxmind))
       IO.unzipURL(zip, out)
@@ -44,7 +44,7 @@ object BuildSettings {
       
       // Only fetch if we don't already have it (because MaxMind 403s if you download GeoIP.dat.gz too frequently)
       if (!datLocal.exists()) {
-        // TODO: replace this with IO.gunzipURL(gzRemote, out / "maxmind") when https://github.com/harrah/xsbt/issues/529 implemented
+        // TODO: replace this with simply IO.gunzipURL(gzRemote, out / "maxmind") when https://github.com/harrah/xsbt/issues/529 implemented
         val gzLocal = out / "GeoIP.dat.gz"        
         IO.download(gzRemote, gzLocal)
         IO.createDirectory(out / "maxmind")
