@@ -1,4 +1,4 @@
-# Trackers
+# Collectors
 
 ![architecture] [architecture-image]
 
@@ -6,7 +6,7 @@
 
 **Collectors** receive SnowPlow events from [Trackers] [trackers]. Collectors store these events in their raw form, ready to be processed by the SnowPlow [ETL] [etl] phase.
 
-## Available trackers
+## Available collectors
 
 Table todo
 
