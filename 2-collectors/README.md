@@ -4,7 +4,7 @@
 
 ## Overview
 
-**Collectors** receive SnowPlow events from [Trackers] [trackers]. Collectors store these events in their raw form, ready to be processed by the SnowPlow [ETL] [etl] phase.
+A **Collector** receives SnowPlow events from [Trackers] [trackers]. SnowPlow collectors store these events in their raw form, ready to be processed by the SnowPlow [ETL] [etl] phase.
 
 ## Available collectors
 

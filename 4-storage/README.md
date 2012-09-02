@@ -4,7 +4,7 @@
 
 ## Overview
 
-**Storage** is where the SnowPlow events are stored by the [ETL] [trackers] process, ready for querying by SnowPlow [Analytics] [analytics] tools.
+**Storage** is where atomic SnowPlow events are stored by the [ETL] [etl] process, ready for querying by SnowPlow [Analytics] [analytics] tools.
 
 ## Available storage
 

@@ -4,7 +4,7 @@
 
 ## Overview
 
-**ETL** (extract, transform, load) takes raw SnowPlow events logged by a [Collector] [collectors], cleans them up, enriches them and puts them into [Storage] [storage].
+The **ETL** (extract, transform, load) process takes raw SnowPlow events logged by a [Collector] [collectors], cleans them up, enriches them and puts them into [Storage] [storage].
 
 ## Available ETL
 
