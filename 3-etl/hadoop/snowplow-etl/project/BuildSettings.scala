@@ -11,9 +11,6 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-// Java
-import java.io.InputStream
-
 // SBT
 import sbt._
 import Keys._
@@ -29,31 +26,6 @@ object BuildSettings {
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= Dependencies.resolutionRepos
   )
-
-  def gunzipURL(from: java.net.URL, toDirectory: java.io.File): Unit =
-  {
-    val path = from.getPath()
-    val gzipped = path.substring(path.lastIndexOf('/') + 1, path.length)
-    val toFilename = gzipped.substring(0, gzipped.lastIndexOf(".gz"))
-    gunzipURL(from, toDirectory, toFilename)
-  }
-
-  def gunzipURL(from: java.net.URL, toDirectory: java.io.File, toFilename: String): Unit =
-    Using.urlInputStream(from)(in => gunzipStream(in, toDirectory, toFilename))
-
-  /** Gzips the InputStream 'in' and writes it to 'out' */
-  def gunzip(input: InputStream, out: File): Unit =
-  {
-    Using.fileOutputStream()(out) { outputStream =>
-      IO.gunzip(input, outputStream)
-    }
-  }
-
-  def gunzipStream(from: InputStream, toDirectory: java.io.File, toFilename: String): Unit =
-  {
-    IO.createDirectory(toDirectory)
-    gunzip(from, toDirectory / toFilename)
-  }
 
   // For MaxMind support
   import Dependencies._
@@ -75,12 +47,12 @@ object BuildSettings {
       // Only fetch if we don't already have it (because MaxMind 403s if you download GeoIP.dat.gz too frequently)
       if (!datLocal.exists()) {
         // TODO: replace this with simply IO.gunzipURL(gzRemote, out / "maxmind") when https://github.com/harrah/xsbt/issues/529 implemented
-        /* val gzLocal = out / "GeoIP.dat.gz"        
+        val gzLocal = out / "GeoIP.dat.gz"        
         IO.download(gzRemote, gzLocal)
         IO.createDirectory(out / "maxmind")
         IO.gunzip(gzLocal, datLocal)
-        IO.delete(gzLocal) */
-        gunzipURL(gzRemote, out / "maxmind")
+        IO.delete(gzLocal)
+        // gunzipURL(gzRemote, out / "maxmind")
       }
       datLocal.get
     }
