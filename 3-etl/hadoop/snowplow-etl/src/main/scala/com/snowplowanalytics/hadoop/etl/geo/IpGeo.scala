@@ -18,21 +18,19 @@ import org.apache.hadoop
 // Scalding
 import com.twitter.scalding.Tool
 
+// Caching
+// TODO: add the dependency
+import com.twitter.util.LruMap
+
 // MaxMind
 import com.maxmind.geoip.{Location, LookupService}
 
-class IpGeo(String dbFile, int options = LookupService.GEOIP_MEMORY_CACHE) {
+class IpGeo(dbFile: String, options: Int = LookupService.GEOIP_MEMORY_CACHE) {
 
-}
+	// Initialise the cache
+	val lru = new LruMap[String, Location](10000) // This is of type mutable.Map[String, Location]
 
+	// Start the lookup service
+	val maxmind = new LookupService(locationDbFile, options);
 
-/**
- * Entrypoint for Hadoop to kick off the ETL job.
- *
- * Borrowed from com.twitter.scalding.Tool
- */
-object EtlRunner {
-  def main(args : Array[String]) {
-    hadoop.util.ToolRunner.run(new hadoop.conf.Configuration, new Tool, args);
-  }
 }
