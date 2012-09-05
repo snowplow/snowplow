@@ -12,25 +12,54 @@
  */
 package com.snowplowanalytics.hadoop.etl.geo
 
-// Hadoop
-import org.apache.hadoop
-
-// Scalding
-import com.twitter.scalding.Tool
-
-// Caching
-// TODO: add the dependency
+// LRU
 import com.twitter.util.LruMap
 
 // MaxMind
 import com.maxmind.geoip.{Location, LookupService}
 
+/**
+ * IpGeo is a wrapper around MaxMind's own LookupService
+ * As well as making LookupService a little more Scala-
+ * friendly, IpGeo also introduces a 10k-element LRU
+ * cache to reduce lookup frequency.
+ *
+ * Inspired by https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpGeo.java
+ */
 class IpGeo(dbFile: String, options: Int = LookupService.GEOIP_MEMORY_CACHE) {
 
 	// Initialise the cache
-	val lru = new LruMap[String, Location](10000) // This is of type mutable.Map[String, Location]
+	private val lru = new LruMap[String, Location](10000) // Of type mutable.Map[String, Location]
 
-	// Start the lookup service
-	val maxmind = new LookupService(locationDbFile, options);
+	// Configure the lookup service
+	private val maxmind = new LookupService(dbFile, options);
 
+	// Define an empty location
+	// TODO: check this works
+	val noLocation = new Location("", "", "", "", "", "", "")
+
+	/**
+	 * Returns the MaxMind location for this IP address.
+	 * If MaxMind can't find the IP address, then return
+	 * an empty location.
+	 */
+	def getLocation(ip: String): Option[Location] = {
+
+		// First check the LRU cache
+		val cached = lru.get(ip)
+		if (cached != null) {
+			return cached
+		}
+
+		// Now try MaxMind
+		val location = maxmind.getLocation(ip)
+		
+		if (location == null) {
+			lru.put(ip, noLocation)
+			return noLocation
+		}
+
+		lru.put(ip, location)
+		location
+	}
 }
