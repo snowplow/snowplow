@@ -13,7 +13,8 @@
 package com.snowplowanalytics.hadoop.etl
 
 // Hadoop
-import org.apache.hadoop
+import org.apache.hadoop.util.ToolRunner
+import org.apache.hadoop.conf.Configuration
 
 // Scalding
 import com.twitter.scalding.Tool
@@ -25,6 +26,6 @@ import com.twitter.scalding.Tool
  */
 object EtlRunner {
   def main(args : Array[String]) {
-    hadoop.util.ToolRunner.run(new hadoop.conf.Configuration, new Tool, args);
+    ToolRunner.run(new Configuration, new Tool, args);
   }
 }
