@@ -1,3 +1,9 @@
+Version 0.4.7 (2012-09-05)
+--------------------------
+snowplow.js: bump to version 0.6
+snowplow.js: added setSiteId functionality
+snowplow.js: added ecommerce tracking
+
 Version 0.4.6 (2012-08-18)
 --------------------------
 snowplow.js: added setCollectorUrl functionality
