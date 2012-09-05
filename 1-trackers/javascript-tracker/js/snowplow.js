@@ -2,8 +2,8 @@
  * SnowPlow - The world's most powerful web analytics platform
  *
  * @description JavaScript tracking client for SnowPlow
- * @version 0.5
- * @author Alex Dean, Anthon Pang
+ * @version 0.6
+ * @author Alex Dean, Simon Andersson, Anthon Pang
  */
 
 // Refer to /docs/04_selfhosting_snowplow.md for instructions on how to minify this file for distribution.
@@ -1295,6 +1295,7 @@ var
 					'&tid=' + String(Math.random()).slice(2, 8) +
 					'&uid=' + uuid +
                     '&vid=' + visitCount +
+                    (configTrackerSiteId.length ? '&said=' + encodeWrapper(configTrackerSiteId) : '') +
                     '&lang=' + configBrowserLanguage +
                     (configReferrerUrl.length ? '&refr=' + encodeWrapper(purify(configReferrerUrl)) : '');
 
@@ -1329,6 +1330,7 @@ var
              *
              * @return string collectorUrl The tracker URL with protocol
              */
+            // TODO: update this to use /i instead of /ice.png (BREAKING CHANGE)
             function asCollectorUrl(rawUrl) {
                 return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + rawUrl + '/ice.png';               
             }
@@ -1340,10 +1342,33 @@ var
              *
              * @param string account The account ID to build the tracker URL from
              *
-             * @return string collectorUrl The tracker URL
+             * @return string The URL on which the collector is hosted
              */
             function collectorUrlFromAccountId(accountId) {
                 return asCollectorUrl(accountId + '.cloudfront.net');
+            }
+
+            /**
+             * A helper to build a SnowPlow request string from an
+             * an optional initial value plus a set of individual
+             * key-value pairs, provided using the add method.
+             *
+             * @param string initialValue The initial querystring, ready to have additional key-value pairs added
+             *
+             * @return object The request string builder, with add and build methods
+             */
+            function requestStringBuilder(initialValue) {
+              var str = initialValue || '';
+              return {
+                add: function(key, value) {
+                  if (value !== undefined && value !== '') {
+                    str += '&' + key + '=' + encodeWrapper(value);
+                  }
+                },
+                build: function() {
+                  return str;
+                }
+              }
             }
 
             /**
@@ -1354,6 +1379,7 @@ var
              * @param string label (optional) An optional string to provide additional dimensions to the event data
              * @param int|float|string value (optional) An integer that you can use to provide numerical data about the user event
              */
+            // TODO: update to use requestStringBuilder
             function logEvent(category, action, label, property, value) {
 
                 // All events have a category and an action
@@ -1383,6 +1409,7 @@ var
              * @param string advertiserId (optional) Identifier for the advertiser which the campaign belongs to
              * @param string userId (optional) Ad server identifier for the viewer of the banner
              */
+            // TODO: update to use requestStringBuilder
             function logImpression(bannerId, campaignId, advertiserId, userId) {
 
                 // All events have a banner ID
@@ -1403,25 +1430,10 @@ var
                 sendRequest(request, configTrackerPause);
             }
 
-/*</SNOWPLOW>*/
-
-            function requestStringBuilder(initialValue) {
-              var str = initialValue || '';
-              return {
-                add: function(key, value) {
-                  if (value !== undefined && value !== '') {
-                    str += '&' + key + '=' + encodeWrapper(value);
-                  }
-                },
-                build: function() {
-                  return str;
-                }
-              }
-            }
-
-            /*
-             * Log ecommerce transaction meta data
+            /**
+             * Log ecommerce transaction metadata
              */
+            // TODO: add params to comment
             function logTransaction(orderId, affiliation, total, tax, shipping, city, state, country) {
               var sb = requestStringBuilder();
               sb.add('tr_id', orderId);
@@ -1437,9 +1449,10 @@ var
               sendRequest(request, configTrackerPause);
             }
 
-            /*
+            /**
              * Log ecommerce transaction item
              */
+            // TODO: add params to comment
             function logTransactionItem(orderId, sku, name, category, price, quantity) {
               var sb = requestStringBuilder();
               sb.add('ti_id', orderId);
@@ -1452,6 +1465,8 @@ var
               var request = getRequest(params, 'ecommerceTransactionItem');
               sendRequest(request, configTrackerPause);
             }
+
+/*</SNOWPLOW>*/
 
 			/*
 			 * Log the page view / visit
@@ -2122,6 +2137,7 @@ var
                  *
                  * @param string accountId
                  */
+                // TODO: change to setAccountId for consistency (BREAKING CHANGE)
                 setAccount: function (accountId) {
                     configCollectorUrl = collectorUrlFromAccountId(accountId);
                 },
@@ -2160,7 +2176,6 @@ var
                  trackImpression: function (bannerId, campaignId, advertiserId, userId) {
                      logImpression(bannerId, campaignId, advertiserId, userId);
                  },
-/*</SNOWPLOW>*/
 
                  /**
                   * Track an ecommerce transaction
@@ -2236,6 +2251,8 @@ var
 
                    ecommerceTransaction = ecommerceTransactionTemplate();
                  }
+
+/*</SNOWPLOW>*/
 
 			};
 		}
