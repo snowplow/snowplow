@@ -36,7 +36,7 @@ class IpGeo(dbFile: String, options: Int = LookupService.GEOIP_MEMORY_CACHE) {
 
 	// Define an empty location
 	// TODO: check this works
-	val noLocation = new Location("", "", "", "", "", "", "")
+	private val noLocation = new Location("", "", "", "", "", "", "")
 
 	/**
 	 * Returns the MaxMind location for this IP address.
