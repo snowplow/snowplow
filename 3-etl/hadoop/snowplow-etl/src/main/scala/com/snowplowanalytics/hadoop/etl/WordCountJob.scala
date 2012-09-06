@@ -15,10 +15,7 @@ package com.snowplowanalytics.hadoop.scalding
 // Scalding
 import com.twitter.scalding._
 
-// As a test
-import com.maxmind.geoip.LookupService
-
-class WordCountJob(args : Args) extends Job(args) {
+class SnowPlowEtlJob(args : Args) extends Job(args) {
   TextLine( args("input") )
     .flatMap('line -> 'word) { line : String => tokenize(line) }
     .groupBy('word) { _.size }
