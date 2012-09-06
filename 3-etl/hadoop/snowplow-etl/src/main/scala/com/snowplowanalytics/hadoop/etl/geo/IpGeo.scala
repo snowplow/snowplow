@@ -18,32 +18,33 @@ import com.twitter.util.LruMap
 // MaxMind
 import com.maxmind.geoip.{Location, LookupService}
 
+// SnowPlow ETL
+import IPLocation._
+
 /**
  * IpGeo is a wrapper around MaxMind's own LookupService
  * As well as making LookupService a little more Scala-
  * friendly, IpGeo also introduces a 10k-element LRU
  * cache to reduce lookup frequency.
  *
- * Inspired by https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpGeo.java
+ * Inspired by:
+ * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpGeo.java
  */
-class IpGeo(dbFile: String, options: Int = LookupService.GEOIP_MEMORY_CACHE) {
+class IpGeo(dbFile: String, fromDisk: Boolean = false) {
 
 	// Initialise the cache
 	private val lru = new LruMap[String, Location](10000) // Of type mutable.Map[String, Location]
 
 	// Configure the lookup service
-	private val maxmind = new LookupService(dbFile, options);
-
-	// Define an empty location
-	// TODO: check this works
-	private val noLocation = new Location("", "", "", "", "", "", "")
+	private val options = if (fromDisk) LookupService.GEOIP_STANDARD else LookupService.GEOIP_MEMORY_CACHE
+	private val maxmind = new LookupService(dbFile, options)
 
 	/**
 	 * Returns the MaxMind location for this IP address.
 	 * If MaxMind can't find the IP address, then return
 	 * an empty location.
 	 */
-	def getLocation(ip: String): Option[Location] = {
+	def getLocation(ip: String): IpLocation = {
 
 		// First check the LRU cache
 		val cached = lru.get(ip)
@@ -53,12 +54,12 @@ class IpGeo(dbFile: String, options: Int = LookupService.GEOIP_MEMORY_CACHE) {
 
 		// Now try MaxMind
 		val location = maxmind.getLocation(ip)
-		
 		if (location == null) {
-			lru.put(ip, noLocation)
-			return noLocation
+			lru.put(ip, NoLocation)
+			return NoLocation
 		}
 
+    // We have a new IP address
 		lru.put(ip, location)
 		location
 	}
