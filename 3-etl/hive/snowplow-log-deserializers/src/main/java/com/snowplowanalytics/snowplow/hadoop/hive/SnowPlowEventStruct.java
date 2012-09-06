@@ -105,6 +105,25 @@ public class SnowPlowEventStruct {
   public Integer dvce_screenwidth;
   public Integer dvce_screenheight;
 
+  // Ecommerce transaction (from querystring)
+  public String tr_orderid;
+  public String tr_affiliation;
+  public String tr_total;
+  public String tr_tax;
+  public String tr_shipping;
+  public String tr_city;
+  public String tr_state;
+  public String tr_country;
+
+  // Ecommerce transaction item (from querystring)
+  public String ti_orderid;
+  public String ti_sku;
+  public String ti_name;
+  public String ti_category;
+  public String ti_price;
+  public Integer ti_quantity;
+
+
   // -------------------------------------------------------------------------------------------------------------------
   // Static configuration
   // -------------------------------------------------------------------------------------------------------------------
@@ -112,7 +131,7 @@ public class SnowPlowEventStruct {
   private static final String cfEncoding = "UTF-8";
 
   // An enum of all the fields we're expecting in the querystring
-  private static enum QuerystringFields { TID, UID, VID, TSTAMP, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA }
+  private static enum QuerystringFields { TID, UID, VID, TSTAMP, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
 
   // An enum for the marketing attribution fields we might find
   // attached to the page URL.
@@ -184,6 +203,20 @@ public class SnowPlowEventStruct {
     this.dvce_ismobile = null;
     this.dvce_screenwidth = null;
     this.dvce_screenheight = null;
+    this.tr_orderid = null;
+    this.tr_affiliation = null;
+    this.tr_total = null;
+    this.tr_tax = null;
+    this.tr_shipping = null;
+    this.tr_city = null;
+    this.tr_state = null;
+    this.tr_country = null;
+    this.ti_orderid = null;
+    this.ti_sku = null;
+    this.ti_name = null;
+    this.ti_category = null;
+    this.ti_price = null;
+    this.ti_quantity = null;
 
     // We have to handle any header rows
     if (row.startsWith("#Version:") || row.startsWith("#Fields:")) {
@@ -323,6 +356,50 @@ public class SnowPlowEventStruct {
                 break;
               case EV_VA:
                 this.ev_value = decodeSafeString(value);
+                break;
+
+              // Ecommerce
+              case TR_ID:
+                this.tr_orderid = decodeSafeString(value);
+                break;
+              case TR_AF:
+                this.tr_affiliation = decodeSafeString(value);
+                break;
+              case TR_TT:
+                this.tr_total = decodeSafeString(value);
+                break;
+              case TR_TX:
+                this.tr_tax = decodeSafeString(value);
+                break;
+              case TR_SH:
+                this.tr_shipping = decodeSafeString(value);
+                break;
+              case TR_CI:
+                this.tr_city = decodeSafeString(value);
+                break;
+              case TR_ST:
+                this.tr_state = decodeSafeString(value);
+                break;
+              case TR_CO:
+                this.tr_country = decodeSafeString(value);
+                break;
+              case TI_ID:
+                this.ti_orderid = decodeSafeString(value);
+                break;
+              case TI_SK:
+                this.ti_sku = decodeSafeString(value);
+                break;
+              case TI_NA:
+                this.ti_name = decodeSafeString(value);
+                break;
+              case TI_CA:
+                this.ti_category = decodeSafeString(value);
+                break;
+              case TI_PR:
+                this.ti_price = decodeSafeString(value);
+                break;
+              case TI_QU:
+                this.ti_quantity = Integer.parseInt(value);
                 break;
             }
           } catch (IllegalArgumentException iae) {
