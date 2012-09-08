@@ -20,7 +20,7 @@ import com.twitter.scalding._
 
 class WordCountTest extends Specification with TupleConversions {
   "A WordCount job" should {
-    JobTest("com.snowplowanalytics.hadoop.scalding.WordCountJob").
+    JobTest("com.snowplowanalytics.hadoop.etl.WordCountJob").
       arg("input", "inputFile").
       arg("output", "outputFile").
       source(TextLine("inputFile"), List("0" -> "hack hack hack and hack")).
