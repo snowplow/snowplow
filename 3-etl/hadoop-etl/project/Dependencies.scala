@@ -13,28 +13,28 @@
 import sbt._
 
 object Dependencies {
-  val resolutionRepos = Seq(
-    ScalaToolsSnapshots,
-    "Concurrent Maven Repo" at "http://conjars.org/repo" // For Scalding, Cascading etc
-  )
+	val resolutionRepos = Seq(
+		ScalaToolsSnapshots,
+		"Concurrent Maven Repo" at "http://conjars.org/repo" // For Scalding, Cascading etc
+	)
 
-  object Urls {
-    val maxmindJava = "http://www.maxmind.com/download/geoip/api/java/GeoIPJava-%s.zip"
-    val maxmindData = "http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz"
-  }
+	object Urls {
+		val maxmindJava = "http://www.maxmind.com/download/geoip/api/java/GeoIPJava-%s.zip"
+		val maxmindData = "http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz"
+	}
 
-  object V {
-    val scalding  = "0.7.3"
-    val specs     = "1.6.6"
-    val maxmind   = "1.2.8" // Compiled in BuildSettings
-    // val specs2    = "1.8" TODO: update to specs2
-    // Add versions for your additional libraries here...
-  }
+	object V {
+		val scalding  = "0.7.3"
+		val specs     = "1.6.6"
+		val maxmind   = "1.2.8" // Compiled in BuildSettings
+		// val specs2    = "1.8" TODO: update to specs2
+		// Add versions for your additional libraries here...
+	}
 
-  object Libraries {
-    val scalding    = "com.twitter"                %%  "scalding"            % V.scalding
-    val specs       = "org.scala-tools.testing"    %%  "specs"               % V.specs        % "test"
-    // val specs2      = "org.specs2"                 %% "specs2"               % V.specs2      % "test" TODO: update to specs2
-    // Add additional libraries from mvnrepository.com (SBT syntax) here...
-  }
+	object Libraries {
+		val scalding    = "com.twitter"                %%  "scalding"            % V.scalding
+		val specs       = "org.scala-tools.testing"    %%  "specs"               % V.specs        % "test"
+		// val specs2      = "org.specs2"                 %% "specs2"               % V.specs2      % "test" TODO: update to specs2
+		// Add additional libraries from mvnrepository.com (SBT syntax) here...
+	}
 }

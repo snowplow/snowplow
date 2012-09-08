@@ -22,10 +22,14 @@ import com.maxmind.geoip.{Location, LookupService}
 import IPLocation._
 
 /**
- * IpGeo is a wrapper around MaxMind's own LookupService
- * As well as making LookupService a little more Scala-
- * friendly, IpGeo also introduces a 10k-element LRU
- * cache to reduce lookup frequency.
+ * IpGeo is a wrapper around MaxMind's own LookupService.
+ *
+ * Two main differences:
+ *
+ * 1. getLocation(ip: String) now returns a stringly-typed
+ *    IpLocation case class, not a raw MaxMind Location
+ * 2. IpGeo introduces a 10k-element LRU cache to improve
+ *    lookup performance
  *
  * Inspired by:
  * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpGeo.java
