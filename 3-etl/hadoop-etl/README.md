@@ -1,28 +1,28 @@
-# SnowPlow ETL
+# SnowPlow Hadoop ETL
 
 ## Introduction
 
-This is a Hadoop implementation of the SnowPlow ETL process, written in [Scalding] [scalding].
+This is the SnowPlow ETL process implemented for Hadoop using [Scalding] [scalding].
 
-## Features
+The SnowPlow Hadoop ETL process is an alternative to the SnowPlow Hive ETL process. 
 
-This
+## Technical approach
 
- adapted to run on Hadoop as a standalone job - i.e. without requiring `scald.rb` etc.
+The Hadoop ETL parses raw CloudFront log files, extracts the SnowPlow events, enriches them (e.g. with geo-location information) and then writes them out to SnowPlow-format flatfiles.
 
-This was built as a Scala SBT project by the [SnowPlow Analytics] [snowplow] team, as a proof of concept for porting our ETL jobs to Scalding to run on [Amazon Elastic MapReduce] [emr].
+Like the Hive ETL, the Hadoop ETL can be run on [Amazon Elastic MapReduce] [emr] using the EMR ETL Harness, a Rubygem.
 
 ## Building
 
 Assuming you already have SBT installed:
 
     $ git clone git://github.com/snowplow/snowplow.git
-    $ cd scalding-example-project
+    $ cd 3-etl/hadoop-etl
     $ sbt assembly
 
 The 'fat jar' is now available as:
 
-    upload/scalding-example-project-0.0.1.jar
+    upload/snowplow-hadoop-etl-0.0.1.jar
 
 ## Unit testing
 

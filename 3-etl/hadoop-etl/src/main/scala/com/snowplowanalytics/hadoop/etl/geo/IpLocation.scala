@@ -43,14 +43,14 @@ object IpLocation {
 	private val Empty = ""
 
 	// Helpers to convert float or string into empty field for IpLocation
-	private val stringifyFloat = fl => if (fl == 0.0f) Empty else fl.toString()
-	private val stringifyInt = i => if (i == 0) Empty else i.toString()
+	private val stringifyFloat: Float => String = fl => if (fl == 0.0f) Empty else fl.toString()
+	private val stringifyInt: Int => String = i => if (i == 0) Empty else i.toString()
 
 	// Represents an unidentified location
 	val UnknownIpLocation = IpLocation(Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty)
 
 	/**
-	 * Converts MaxMind Location to an IpLocation
+	 * Converts MaxMind Location to a stringly-typed IpLocation
 	 */
 	implicit def location2IpLocation(loc: Location): IpLocation = IpLocation(
 		countryCode = loc.countryCode,

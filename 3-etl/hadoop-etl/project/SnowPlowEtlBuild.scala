@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object SnowPlowEtlBuild extends Build {
+object SnowPlowHadoopEtlBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -24,7 +24,7 @@ object SnowPlowEtlBuild extends Build {
   }
 
   // Define our project, with basic project information and library dependencies
-  lazy val project = Project("snowplow-etl", file("."))
+  lazy val project = Project("snowplow-hadoop-etl", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(

@@ -33,7 +33,7 @@ import IPLocation._
 class IpGeo(dbFile: String, fromDisk: Boolean = false) {
 
 	// Initialise the cache
-	private val lru = new LruMap[String, Location](10000) // Of type mutable.Map[String, Location]
+	private val lru = new LruMap[String, IpLocation](10000) // Of type mutable.Map[String, IpLocation]
 
 	// Configure the lookup service
 	private val options = if (fromDisk) LookupService.GEOIP_STANDARD else LookupService.GEOIP_MEMORY_CACHE
