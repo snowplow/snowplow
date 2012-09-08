@@ -46,20 +46,17 @@ class IpGeo(dbFile: String, fromDisk: Boolean = false) {
 	 */
 	def getLocation(ip: String): IpLocation = {
 
-		// First check the LRU cache
 		val cached = lru.get(ip)
 		if (cached != null) {
 			return cached
 		}
 
-		// Now try MaxMind
 		val location = maxmind.getLocation(ip)
 		if (location == null) {
 			lru.put(ip, NoLocation)
 			return NoLocation
 		}
 
-    // We have a new IP address
 		lru.put(ip, location)
 		location
 	}

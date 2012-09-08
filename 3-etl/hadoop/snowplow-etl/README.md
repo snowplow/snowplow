@@ -1,8 +1,14 @@
-# Scalding Example Code
+# SnowPlow ETL
 
 ## Introduction
 
-This is Twitter's [`WordCountJob`] [wordcount] example for [Scalding] [scalding] adapted to run on Hadoop as a standalone job - i.e. without requiring `scald.rb` etc.
+This is a Hadoop implementation of the SnowPlow ETL process, written in [Scalding] [scalding].
+
+## Features
+
+This
+
+ adapted to run on Hadoop as a standalone job - i.e. without requiring `scald.rb` etc.
 
 This was built as a Scala SBT project by the [SnowPlow Analytics] [snowplow] team, as a proof of concept for porting our ETL jobs to Scalding to run on [Amazon Elastic MapReduce] [emr].
 
@@ -10,13 +16,13 @@ This was built as a Scala SBT project by the [SnowPlow Analytics] [snowplow] tea
 
 Assuming you already have SBT installed:
 
-    $ git clone git://github.com/snowplow/scalding-example-project.git
+    $ git clone git://github.com/snowplow/snowplow.git
     $ cd scalding-example-project
     $ sbt assembly
 
 The 'fat jar' is now available as:
 
-    target/scalding-example-project-0.0.1.jar
+    upload/scalding-example-project-0.0.1.jar
 
 ## Unit testing
 
