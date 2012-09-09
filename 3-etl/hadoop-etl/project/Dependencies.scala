@@ -16,7 +16,7 @@ object Dependencies {
 	val resolutionRepos = Seq(
 		ScalaToolsSnapshots,
 		"Concurrent Maven Repo" at "http://conjars.org/repo", // For Scalding, Cascading etc
-		"Twitter Maven Repo" at "http://maven.twttr.com/" // For "wonderful" util functions
+		"Twitter Maven Repo" at "http://maven.twttr.com/" // For Twitter's "wonderful" util functions
 	)
 
 	object Urls {
@@ -29,13 +29,11 @@ object Dependencies {
 		val scalding    = "0.7.3"
 		val collUtils   = "5.3.10"
 		val specs2      = "1.8"
-		// Add versions for your additional libraries here...
 	}
 
 	object Libraries {
 		val scalding    = "com.twitter"                %% "scalding"            % V.scalding
 		val collUtils	  = "com.twitter"								 %  "util-collection"		  % V.collUtils
 		val specs2      = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
-		// Add additional libraries from mvnrepository.com (SBT syntax) here...
 	}
 }
