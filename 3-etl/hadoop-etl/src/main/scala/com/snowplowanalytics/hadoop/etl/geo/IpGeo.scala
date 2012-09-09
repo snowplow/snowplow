@@ -19,7 +19,7 @@ import com.twitter.util.LruMap
 import com.maxmind.geoip.{Location, LookupService}
 
 // SnowPlow ETL
-import IPLocation._
+import IpLocation._
 
 /**
  * IpGeo is a wrapper around MaxMind's own LookupService.
@@ -48,20 +48,15 @@ class IpGeo(dbFile: String, fromDisk: Boolean = false) {
 	 * If MaxMind can't find the IP address, then return
 	 * an empty location.
 	 */
-	def getLocation(ip: String): IpLocation = {
-
-		val cached = lru.get(ip)
-		if (cached != null) {
-			return cached
+	def getLocation(ip: String): IpLocation = lru.get(ip) match {
+		case Some(l) => l // In the Lru cache
+		case None => Option(maxmind.getLocation(ip)) match {
+			case Some(l: IpLocation) => // In MaxMind. Do the implicit conversion one time
+				lru.put(ip, l)
+				l
+			case None =>
+				lru.put(ip, UnknownIpLocation) // Not found
+				UnknownIpLocation
 		}
-
-		val location = maxmind.getLocation(ip)
-		if (location == null) {
-			lru.put(ip, NoLocation)
-			return NoLocation
-		}
-
-		lru.put(ip, location)
-		location
 	}
 }

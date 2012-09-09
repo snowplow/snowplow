@@ -43,8 +43,8 @@ object IpLocation {
 	private val Empty = ""
 
 	// Helpers to convert float or string into empty field for IpLocation
-	private val stringifyFloat: Float => String = fl => if (fl == 0.0f) Empty else fl.toString()
 	private val stringifyInt: Int => String = i => if (i == 0) Empty else i.toString()
+	private val stringifyFloat: Float => String = fl => if (fl == 0.0f) Empty else fl.toString()
 
 	// Represents an unidentified location
 	val UnknownIpLocation = IpLocation(Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty)
@@ -62,6 +62,6 @@ object IpLocation {
 		longitude = stringifyFloat(loc.longitude),
 		dmaCode = stringifyInt(loc.dma_code),
 		areaCode = stringifyInt(loc.area_code),
-		metroCode = stringify(loc.metro_code)
+		metroCode = stringifyInt(loc.metro_code)
 		)
 }

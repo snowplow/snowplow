@@ -29,7 +29,8 @@ object SnowPlowHadoopEtlBuild extends Build {
 		.settings(
 			libraryDependencies ++= Seq(
 				Libraries.scalding,
-				Libraries.specs
+				Libraries.collUtils,
+				Libraries.specs2
 				// Add your additional libraries here (comma-separated)...
 			)
 		)
