@@ -10,4 +10,34 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.hadoop.etl.geo
+package com.snowplowanalytics.hadoop.etl.geo
+
+// Java
+import java.io.File
+
+// Specs2
+import org.specs2.mutable.Specification
+
+class IpGeoTest extends Specification {
+
+	val ip = "213.52.50.8"
+	val expected = IpLocation.UnknownIpLocation
+
+	"The IP address %s".format(ip) should {
+
+		val actual = IpGeoTest.createIpGeo.getLocation(ip)
+
+		"have countryCode = %s".format(expected.countryCode) in {
+      actual.countryCode must_== expected.countryCode
+    }
+    // TODO: add remaining fields to inspect
+	}
+}
+
+object IpGeoTest {
+
+	def createIpGeo: IpGeo = {
+		val dbFilepath = getClass.getResource("/maxmind/GeoIP.dat").toURI()
+		new IpGeo(dbFile = new File(dbFilepath)) //, fromDisk = false)
+	}
+}

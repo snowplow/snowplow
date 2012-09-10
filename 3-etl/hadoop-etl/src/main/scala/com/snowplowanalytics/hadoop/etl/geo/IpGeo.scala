@@ -12,6 +12,9 @@
  */
 package com.snowplowanalytics.hadoop.etl.geo
 
+// Java
+import java.io.File
+
 // LRU
 import com.twitter.util.LruMap
 
@@ -34,14 +37,14 @@ import IpLocation._
  * Inspired by:
  * https://github.com/jt6211/hadoop-dns-mining/blob/master/src/main/java/io/covert/dns/geo/IpGeo.java
  */
-class IpGeo(dbFile: String, fromDisk: Boolean = false) {
+class IpGeo(dbFile: File, fromDisk: Boolean = false) {
 
 	// Initialise the cache
 	private val lru = new LruMap[String, IpLocation](10000) // Of type mutable.Map[String, IpLocation]
 
 	// Configure the lookup service
 	private val options = if (fromDisk) LookupService.GEOIP_STANDARD else LookupService.GEOIP_MEMORY_CACHE
-	private val maxmind = new LookupService(dbFile, options)
+	private val maxmind = new LookupService(dbFile) //, options)
 
 	/**
 	 * Returns the MaxMind location for this IP address.
@@ -51,9 +54,10 @@ class IpGeo(dbFile: String, fromDisk: Boolean = false) {
 	def getLocation(ip: String): IpLocation = lru.get(ip) match {
 		case Some(l) => l // In the Lru cache
 		case None => Option(maxmind.getLocation(ip)) match {
-			case Some(l: IpLocation) => // In MaxMind. Do the implicit conversion one time
-				lru.put(ip, l)
-				l
+			case Some(l) => // In MaxMind
+				val ipL: IpLocation = l // Do the implicit conversion one time
+				lru.put(ip, ipL)
+				ipL
 			case None =>
 				lru.put(ip, UnknownIpLocation) // Not found
 				UnknownIpLocation

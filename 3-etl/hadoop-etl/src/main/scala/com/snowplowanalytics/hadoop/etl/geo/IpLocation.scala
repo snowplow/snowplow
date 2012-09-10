@@ -53,7 +53,7 @@ object IpLocation {
 	 * Converts MaxMind Location to a stringly-typed IpLocation
 	 */
 	implicit def location2IpLocation(loc: Location): IpLocation = IpLocation(
-		countryCode = loc.countryCode,
+		countryCode = Option(loc.countryCode).getOrElse(Empty),
 		countryName = loc.countryName,
 		region = loc.region,
 		city = loc.city,
