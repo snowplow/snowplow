@@ -44,7 +44,7 @@ class IpGeo(dbFile: File, fromDisk: Boolean = false) {
 
 	// Configure the lookup service
 	private val options = if (fromDisk) LookupService.GEOIP_STANDARD else LookupService.GEOIP_MEMORY_CACHE
-	private val maxmind = new LookupService(dbFile) //, options)
+	private val maxmind = new LookupService(dbFile, options)
 
 	/**
 	 * Returns the MaxMind location for this IP address.

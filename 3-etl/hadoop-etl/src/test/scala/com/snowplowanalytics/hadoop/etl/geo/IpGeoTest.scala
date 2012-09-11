@@ -21,23 +21,60 @@ import org.specs2.mutable.Specification
 class IpGeoTest extends Specification {
 
 	val ip = "213.52.50.8"
-	val expected = IpLocation.UnknownIpLocation
+	val expected = IpLocation(
+		countryCode = "NO",
+		countryName = "Norway",
+		region = "01",
+		city = "Ås",
+		postalCode = "",
+		latitude = "59.666702",
+		longitude = "10.800003",
+		dmaCode = "",
+		areaCode = "",
+		metroCode = ""
+		)
 
 	"The IP address %s".format(ip) should {
 
 		val actual = IpGeoTest.createIpGeo.getLocation(ip)
 
 		"have countryCode = %s".format(expected.countryCode) in {
-      actual.countryCode must_== expected.countryCode
-    }
-    // TODO: add remaining fields to inspect
+			actual.countryCode must_== expected.countryCode
+		}
+		"have countryName = %s".format(expected.countryName) in {
+			actual.countryName must_== expected.countryName
+		}
+		"have region = %s".format(expected.region) in {
+			actual.region must_== expected.region
+		}
+		"have city = %s".format(expected.city) in {
+			actual.city must_== expected.city
+		}
+		"have postalCode = %s".format(expected.postalCode) in {
+			actual.postalCode must_== expected.postalCode
+		}
+		"have latitude = %s".format(expected.latitude) in {
+			actual.latitude must_== expected.latitude
+		}
+		"have longitude = %s".format(expected.longitude) in {
+			actual.longitude must_== expected.longitude
+		}
+		"have dmaCode = %s".format(expected.dmaCode) in {
+			actual.dmaCode must_== expected.dmaCode
+		}
+		"have areaCode = %s".format(expected.areaCode) in {
+			actual.areaCode must_== expected.areaCode
+		}
+		"have metroCode = %s".format(expected.metroCode) in {
+			actual.metroCode must_== expected.metroCode
+		}
 	}
 }
 
 object IpGeoTest {
 
 	def createIpGeo: IpGeo = {
-		val dbFilepath = getClass.getResource("/maxmind/GeoIP.dat").toURI()
-		new IpGeo(dbFile = new File(dbFilepath)) //, fromDisk = false)
+		val dbFilepath = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI()
+		new IpGeo(dbFile = new File(dbFilepath), fromDisk = false)
 	}
 }

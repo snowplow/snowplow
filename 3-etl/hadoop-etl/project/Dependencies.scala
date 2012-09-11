@@ -21,7 +21,7 @@ object Dependencies {
 
 	object Urls {
 		val maxmindJava = "http://www.maxmind.com/download/geoip/api/java/GeoIPJava-%s.zip"
-		val maxmindData = "http://geolite.maxmind.com/download/geoip/database/GeoLiteCountry/GeoIP.dat.gz"
+		val maxmindData = "http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz"
 	}
 
 	object V {

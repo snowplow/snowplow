@@ -45,6 +45,7 @@ object IpLocation {
 	// Helpers to convert float or string into empty field for IpLocation
 	private val stringifyInt: Int => String = i => if (i == 0) Empty else i.toString()
 	private val stringifyFloat: Float => String = fl => if (fl == 0.0f) Empty else fl.toString()
+	private val stringifyString: String => String = s => Option(s).getOrElse(Empty)
 
 	// Represents an unidentified location
 	val UnknownIpLocation = IpLocation(Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty)
@@ -53,11 +54,11 @@ object IpLocation {
 	 * Converts MaxMind Location to a stringly-typed IpLocation
 	 */
 	implicit def location2IpLocation(loc: Location): IpLocation = IpLocation(
-		countryCode = Option(loc.countryCode).getOrElse(Empty),
-		countryName = loc.countryName,
-		region = loc.region,
-		city = loc.city,
-		postalCode = loc.postalCode,
+		countryCode = stringifyString(loc.countryCode),
+		countryName = stringifyString(loc.countryName),
+		region = stringifyString(loc.region),
+		city = stringifyString(loc.city),
+		postalCode = stringifyString(loc.postalCode),
 		latitude = stringifyFloat(loc.latitude),
 		longitude = stringifyFloat(loc.longitude),
 		dmaCode = stringifyInt(loc.dma_code),
