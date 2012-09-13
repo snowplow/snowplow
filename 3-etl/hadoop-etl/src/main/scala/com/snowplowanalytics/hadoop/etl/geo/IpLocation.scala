@@ -26,9 +26,9 @@ case class IpLocation(
 	countryName: String,
 	region: String,
 	city: String,
-	postalCode: String,
 	latitude: String,
 	longitude: String,
+	postalCode: String,
 	dmaCode: String,
 	areaCode: String,
 	metroCode: String
@@ -58,9 +58,9 @@ object IpLocation {
 		countryName = stringifyString(loc.countryName),
 		region = stringifyString(loc.region),
 		city = stringifyString(loc.city),
-		postalCode = stringifyString(loc.postalCode),
 		latitude = stringifyFloat(loc.latitude),
 		longitude = stringifyFloat(loc.longitude),
+		postalCode = stringifyString(loc.postalCode),
 		dmaCode = stringifyInt(loc.dma_code),
 		areaCode = stringifyInt(loc.area_code),
 		metroCode = stringifyInt(loc.metro_code)

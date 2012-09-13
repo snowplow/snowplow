@@ -87,6 +87,7 @@ object BuildSettings {
 		mergeStrategy in assembly <<= (mergeStrategy in assembly) {
 			(old) => {
 				case "project.clj" => MergeStrategy.discard // Leiningen build files
+				case x if x.startsWith("META-INF") => MergeStrategy.discard // More bumf
 				case x => old(x)
 			}
 		}
