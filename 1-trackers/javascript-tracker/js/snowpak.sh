@@ -6,40 +6,57 @@
 # Copyright 2012 SnowPlow Analytics Ltd
 # License: http://www.opensource.org/licenses/bsd-license.php Simplified BSD
 
+
 # Constants which should apply on any box
-SP_INPUTFILE="snowplow.js"
+DEPENDENCIES_FILE='dependencies.txt'
 SP_OUTPUTFILE="sp.js"
 YUIC_JARPATH="build/yuicompressor-2.4.2.jar"
 
-# Usage
-usage(){
+# Now set user-friendly variables for args.
+yuic_path=${1}/$YUIC_JARPATH
+
+
+
+usage() {
 	echo "Usage: ${0} yuicpath"
 	echo $'\tyuicpath = path to YUICompressor 2.4.2 e.g. /opt/java/yuicompressor-2.4.2'
 	exit 1
 }
 
 # Initial validation.
-if [ ${#} -ne 1 ];then
-	usage
+if [ ${#} -ne 1 ]; then
+  usage
 fi
 
-# Now set user-friendly variables for args.
-yuic_path=${1}/$YUIC_JARPATH
-sp_path=./$SP_INPUTFILE # Assume snowplow.js is in the same folder as this script
+validate_args() {
+  if [ ! -f ${yuic_path} ];then
+    echo "Cannot find YUICompressor 2.4.2 jarfile at ${yuic_path}"
+    usage	
+  fi
+}
 
-# Validate arguments
-if [ ! -f ${yuic_path} ];then
-	echo "Cannot find YUICompressor 2.4.2 jarfile at ${yuic_path}"
-	usage	
-fi
-if [ ! -f ${sp_path} ];then
-	echo "Cannot find snowplow.js file in this directory"
-	usage	
-fi
+combine_files() {
+  cat $DEPENDENCIES_FILE | while read FILE; do cat $FILE; done
+}
+
+filter_out_debug() {
+  sed '/<DEBUG>/,/<\/DEBUG>/d'
+}
+
+yui_compress() {
+  java -jar ${yuic_path} --type js --line-break 1000 
+}
+
+compress() {
+  sed 's/eval/replacedEvilString/' | yui_compress | sed 's/replacedEvilString/eval/'
+}
+
+
+
+validate_args
 
 echo "Running minification..."
 
-# Now run the minification
-sed '/<DEBUG>/,/<\/DEBUG>/d' < snowplow.js | sed 's/eval/replacedEvilString/' | java -jar ${yuic_path} --type js --line-break 1000 | sed 's/replacedEvilString/eval/' > sp.js
+combine_files | filter_out_debug | compress > $SP_OUTPUTFILE
 
 exit 0
