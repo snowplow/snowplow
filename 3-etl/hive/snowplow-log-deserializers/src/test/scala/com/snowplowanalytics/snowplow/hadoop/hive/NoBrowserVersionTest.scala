@@ -27,7 +27,7 @@ class NoBrowserVersionTest extends Specification {
   val br_version = null
 
   "A SnowPlow useragent where browser version is unrecoverable" should {
-    "have browser version set to null" in {
+    "have browser version set to <<null>>" in {
       SnowPlowEventDeserializer.deserializeLine(input, DEBUG).asInstanceOf[SnowPlowEventStruct].br_version must beNull
     }
   }
