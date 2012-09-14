@@ -342,38 +342,40 @@ public class SnowPlowEventStruct {
 
       // 5. Finally handle the marketing fields in the page_url
       // Re-use params to avoid creating another object
-      params = URLEncodedUtils.parse(URI.create(this.page_url), "UTF-8");
+      try {
+        params = URLEncodedUtils.parse(URI.create(this.page_url), "UTF-8");
 
-      // For performance, don't convert to a map, just loop through and match to our variables as we go
-      for (NameValuePair pair : params) {
+        // For performance, don't convert to a map, just loop through and match to our variables as we go
+        for (NameValuePair pair : params) {
 
-        final String name = pair.getName();
-        final String value = pair.getValue();
+          final String name = pair.getName();
+          final String value = pair.getValue();
 
-        try {
-          final MarketingFields field = MarketingFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
+          try {
+            final MarketingFields field = MarketingFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
 
-          switch (field) {
+            switch (field) {
 
-            // Marketing fields
-            case UTM_MEDIUM:
-              this.mkt_medium = decodeSafeString(value);
-              break;
-            case UTM_SOURCE:
-              this.mkt_source = decodeSafeString(value);
-              break;
-            case UTM_TERM:
-              this.mkt_term = decodeSafeString(value);
-              break;
-            case UTM_CONTENT:
-              this.mkt_content = decodeSafeString(value);
-              break;
-            case UTM_CAMPAIGN:
-              this.mkt_campaign = decodeSafeString(value);
-              break;
-          }
-        } catch (IllegalArgumentException iae) {} // Do nothing in the case of a non-attribution-related querystring param
-      }
+              // Marketing fields
+              case UTM_MEDIUM:
+                this.mkt_medium = decodeSafeString(value);
+                break;
+              case UTM_SOURCE:
+                this.mkt_source = decodeSafeString(value);
+                break;
+              case UTM_TERM:
+                this.mkt_term = decodeSafeString(value);
+                break;
+              case UTM_CONTENT:
+                this.mkt_content = decodeSafeString(value);
+                break;
+              case UTM_CAMPAIGN:
+                this.mkt_campaign = decodeSafeString(value);
+                break;
+            }
+          } catch (IllegalArgumentException iae) {} // Do nothing in the case of a non-attribution-related querystring param
+        }
+      } catch (IllegalArgumentException iae) {} // Do nothing in the case of a malformed querystring (IAE thrown by URLEncodedUtils.parse())
 
     } catch (Exception e) {
       throw new SerDeException("Could not parse row: \"" + row + "\"", e);
