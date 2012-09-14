@@ -18,8 +18,8 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "SnowPlow Analytics Ltd",
-    version       := "0.4.6",
-    description   := "Hive deserializers for the SnowPlow log data",
+    version       := "0.4.8",
+    description   := "Hive deserializer for the SnowPlow log data",
     scalaVersion  := "2.9.1",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     parallelExecution in Test := false, // Parallel tests cause havoc with Hive
@@ -35,8 +35,7 @@ object BuildSettings {
     jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + ".jar" },
     mergeStrategy in assembly <<= (mergeStrategy in assembly) {
       (old) => {
-        case "META-INF/NOTICE.txt" => MergeStrategy.discard
-        case "META-INF/LICENSE.txt" => MergeStrategy.discard
+        case x if x.startsWith("META-INF/") => MergeStrategy.discard
         case x => old(x)
       }
     }

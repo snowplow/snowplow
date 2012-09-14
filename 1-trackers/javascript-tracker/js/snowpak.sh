@@ -3,9 +3,9 @@
 # Bash script to minify snowplow.js
 # Depends on YUICompressor 2.4.2 and sed
 
-# Copyright 2012 SnowPlow Analytics Ltd
+# Copyright 2012 Orderly Ltd
 
-# Link: https://github.com/snowplow/snowplow/blob/master/docs/04_selfhosting_snowplow.md
+# Link: https://github.com/snowplow/snowplow/blob/master/docs/04_selfhosting_snowplow.md 
 # Source: https://github.com/snowplow/snowplow/raw/master/tracker/js/snowpak.sh
 # License: http://www.opensource.org/licenses/bsd-license.php Simplified BSD
 

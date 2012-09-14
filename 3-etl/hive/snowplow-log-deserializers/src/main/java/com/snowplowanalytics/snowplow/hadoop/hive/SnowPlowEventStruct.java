@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -15,6 +15,7 @@ package com.snowplowanalytics.snowplow.hadoop.hive;
 // Java
 import java.net.URI;
 import java.net.URLDecoder;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.ArrayList;
 import java.nio.charset.Charset;
@@ -30,7 +31,7 @@ import org.apache.hadoop.hive.serde2.SerDeException;
 // Java Library for User-Agent Information
 import nl.bitwalker.useragentutils.*;
 
-// Apache URLEncodedUtils 
+// Apache URLEncodedUtils
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 
@@ -66,11 +67,11 @@ public class SnowPlowEventStruct {
   public String page_referrer;
 
   // Marketing
-  public String mkt_source;
   public String mkt_medium;
+  public String mkt_source;
   public String mkt_term;
   public String mkt_content;
-  public String mkt_name;
+  public String mkt_campaign;
 
   // Event
   public String ev_category;
@@ -95,8 +96,8 @@ public class SnowPlowEventStruct {
   public String os_name;
   public String os_family;
   public String os_manufacturer;
-  
-  // Device/Hardware (from user-agent) 
+
+  // Device/Hardware (from user-agent)
   public String dvce_type;
   public Boolean dvce_ismobile;
 
@@ -111,25 +112,32 @@ public class SnowPlowEventStruct {
   private static final String cfEncoding = "UTF-8";
 
   // An enum of all the fields we're expecting in the querystring
-  private static enum Fields { TID, UID, VID, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA }
+  private static enum QuerystringFields { TID, UID, VID, TSTAMP, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA }
+
+  // An enum for the marketing attribution fields we might find
+  // attached to the page URL.
+  private static enum MarketingFields { UTM_SOURCE, UTM_MEDIUM, UTM_CAMPAIGN, UTM_TERM, UTM_CONTENT }
 
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
   private static final String w = "[\\s]+"; // Whitespace regex
-  private static final Pattern cfRegex = Pattern.compile("([\\S]+)"  // Date          / date
-                                                   + w + "([\\S]+)"  // Time          / time
-                                                   + w + "([\\S]+)"  // EdgeLocation  / x-edge-location
-                                                   + w + "([\\S]+)"  // BytesSent     / sc-bytes
-                                                   + w + "([\\S]+)"  // IPAddress     / c-ip
-                                                   + w + "([\\S]+)"  // Operation     / cs-method
-                                                   + w + "([\\S]+)"  // Domain        / cs(Host)
-                                                   + w + "([\\S]+)"  // Object        / cs-uri-stem
-                                                   + w + "([\\S]+)"  // HttpStatus    / sc-status
-                                                   + w + "([\\S]+)"  // Referrer      / cs(Referer)
-                                                   + w + "([\\S]+)"  // UserAgent     / cs(User Agent)
-                                                   + w + "(.+)");    // Querystring   / cs-uri-query
-
-  // private static final Charset utf8 = Charset.forName("UTF-8"); TODO: use this when httpclient 4.2 comes out of beta http://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient
+  private static final String ow = "(?:" + w; // Optional whitespace begins
+  private static final Pattern cfRegex = Pattern.compile("([\\S]+)"   // Date          / date
+                                                   + w + "([\\S]+)"   // Time          / time
+                                                   + w + "([\\S]+)"   // EdgeLocation  / x-edge-location
+                                                   + w + "([\\S]+)"   // BytesSent     / sc-bytes
+                                                   + w + "([\\S]+)"   // IPAddress     / c-ip
+                                                   + w + "([\\S]+)"   // Operation     / cs-method
+                                                   + w + "([\\S]+)"   // Domain        / cs(Host)
+                                                   + w + "([\\S]+)"   // Object        / cs-uri-stem
+                                                   + w + "([\\S]+)"   // HttpStatus    / sc-status
+                                                   + w + "([\\S]+)"   // Referrer      / cs(Referer)
+                                                   + w + "([\\S]+)"   // UserAgent     / cs(User Agent)
+                                                   + w + "([\\S]+)"   // Querystring   / cs-uri-query
+                                                   + ow + "[\\S]+"    // CookieHeader  / cs(Cookie)         added 12 Sep 2012
+                                                   + w +  "[\\S]+"    // ResultType    / x-edge-result-type added 12 Sep 2012
+                                                   + w +  "[\\S]+)?"  // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
+                                         );
 
   // -------------------------------------------------------------------------------------------------------------------
   // Deserialization logic
@@ -139,13 +147,13 @@ public class SnowPlowEventStruct {
    * Parses the input row String into a Java object.
    * For performance reasons this works in-place updating the fields
    * within this SnowPlowEventStruct, rather than creating a new one.
-   * 
+   *
    * @param row The raw String containing the row contents
    * @return This struct with all values updated
    * @throws SerDeException For any exception during parsing
    */
   public Object parse(String row) throws SerDeException {
-    
+
     // Null everything before we start
     this.dt = null;
     this.tm = null;
@@ -156,11 +164,11 @@ public class SnowPlowEventStruct {
     this.page_url = null;
     this.page_title = null;
     this.page_referrer = null;
-    this.mkt_source = null;
     this.mkt_medium = null;
+    this.mkt_source = null;
     this.mkt_term = null;
     this.mkt_content = null;
-    this.mkt_name = null;
+    this.mkt_campaign = null;
     this.ev_category = null;
     this.ev_action = null;
     this.ev_label = null;
@@ -188,7 +196,7 @@ public class SnowPlowEventStruct {
     }
 
     final Matcher m = cfRegex.matcher(row);
-    
+
     try {
       // 0. First check our row is kosher
 
@@ -202,7 +210,7 @@ public class SnowPlowEventStruct {
       // -> was generated by sp.js? If not (e.g. favicon.ico request), then silently return
       final String object = m.group(8);
       final String querystring = m.group(12);
-      if (!object.equals("/ice.png") || isNullField(querystring)) {
+      if (!(object.startsWith("/ice.png") || object.equals("/i") || object.startsWith("/i?")) || isNullField(querystring)) { // Also works if Forward Query String = yes
         return null;
       }
 
@@ -223,25 +231,24 @@ public class SnowPlowEventStruct {
       this.br_version = (v == null) ? null : v.getVersion();
       this.br_type = b.getBrowserType().getName();
       this.br_renderengine = b.getRenderingEngine().toString();
-      
+
       // -> OS-related fields
       final OperatingSystem os = userAgent.getOperatingSystem();
       this.os_name = os.getName();
-      this.os_family = os.getGroup().getName(); 
+      this.os_family = os.getGroup().getName();
       this.os_manufacturer = os.getManufacturer().getName();
-      
+
       // -> device/hardware-related fields
       this.dvce_type = os.getDeviceType().getName();
       this.dvce_ismobile = os.isMobileDevice();
 
       // 3. Now we dis-assemble the querystring
       String qsUrl = null;
-      // List<NameValuePair> params = URLEncodedUtils.parse(querystring, utf8); TODO: use this when httpclient 4.2 comes out of beta http://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient
       List<NameValuePair> params = URLEncodedUtils.parse(URI.create("http://localhost/?" + querystring), "UTF-8");
 
       // For performance, don't convert to a map, just loop through and match to our variables as we go
       for (NameValuePair pair : params) {
-        
+
         final String name = pair.getName();
         final String value = pair.getValue();
 
@@ -255,19 +262,29 @@ public class SnowPlowEventStruct {
         } else {
 
           try {
-            final Fields field = Fields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
+            final QuerystringFields field = QuerystringFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
             switch (field) {
 
               // Common fields
-              case TID: 
+              case TID:
                 this.txn_id = value;
                 break;
-              case UID: 
+              case UID:
                 this.user_id = value;
                 break;
               case VID:
                 this.visit_id = Integer.parseInt(value);
                 break;
+              case TSTAMP:
+                // Replace our timestamp fields with the client's timestamp
+                try {
+                  String[] timestamp = value.split(" ");
+                  this.dt = timestamp[0];
+                  this.tm = timestamp[1];
+                } catch (Exception e) {
+                  // Return a null row on invalid data
+                  return null;
+                }
               case LANG:
                 this.br_lang = value;
                 break;
@@ -278,39 +295,39 @@ public class SnowPlowEventStruct {
                 try {
                   String[] resolution = value.split("x");
                   this.dvce_screenwidth = Integer.parseInt(resolution[0]);
-                  this.dvce_screenheight = Integer.parseInt(resolution[1]); 
+                  this.dvce_screenheight = Integer.parseInt(resolution[1]);
                 } catch (Exception e) {
                   // Return a null row on invalid data
                   return null;
                 }
                 break;
               case REFR:
-                this.page_referrer = URLDecoder.decode(value, cfEncoding);
+                this.page_referrer = decodeSafeString(value);
                 break;
               case URL:
                 qsUrl = pair.getValue(); // We might use this later for the page URL
                 break;
-              
+
               // Page-view only
               case PAGE:
-                this.page_title = URLDecoder.decode(value, cfEncoding);
+                this.page_title = decodeSafeString(value);
                 break;
 
               // Event only
               case EV_CA:
-                this.ev_category = URLDecoder.decode(value, cfEncoding);
-                break;         
+                this.ev_category = decodeSafeString(value);
+                break;
               case EV_AC:
-                this.ev_action = URLDecoder.decode(value, cfEncoding);
-                break; 
+                this.ev_action = decodeSafeString(value);
+                break;
               case EV_LA:
-                this.ev_label = URLDecoder.decode(value, cfEncoding);
-                break; 
+                this.ev_label = decodeSafeString(value);
+                break;
               case EV_PR:
-                this.ev_property = URLDecoder.decode(value, cfEncoding);
-                break; 
-               case EV_VA:
-                this.ev_value = URLDecoder.decode(value, cfEncoding);
+                this.ev_property = decodeSafeString(value);
+                break;
+              case EV_VA:
+                this.ev_value = decodeSafeString(value);
                 break;
             }
           } catch (IllegalArgumentException iae) {
@@ -323,13 +340,47 @@ public class SnowPlowEventStruct {
       // 4. Choose the page_url
       final String cfUrl = m.group(10);
       if (isNullField(cfUrl)) { // CloudFront didn't provide the URL as cs(Referer)
-        this.page_url = URLDecoder.decode(qsUrl, cfEncoding); // Use the decoded querystring URL
+        this.page_url = decodeSafeString(qsUrl); // Use the decoded querystring URL
       } else { // Otherwise default to...
         this.page_url = cfUrl; // The CloudFront cs(Referer) URL
       }
 
       // 5. Finally handle the marketing fields in the page_url
-      // TODO
+      // Re-use params to avoid creating another object
+      try {
+        params = URLEncodedUtils.parse(URI.create(this.page_url), "UTF-8");
+
+        // For performance, don't convert to a map, just loop through and match to our variables as we go
+        for (NameValuePair pair : params) {
+
+          final String name = pair.getName();
+          final String value = pair.getValue();
+
+          try {
+            final MarketingFields field = MarketingFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
+
+            switch (field) {
+
+              // Marketing fields
+              case UTM_MEDIUM:
+                this.mkt_medium = decodeSafeString(value);
+                break;
+              case UTM_SOURCE:
+                this.mkt_source = decodeSafeString(value);
+                break;
+              case UTM_TERM:
+                this.mkt_term = decodeSafeString(value);
+                break;
+              case UTM_CONTENT:
+                this.mkt_content = decodeSafeString(value);
+                break;
+              case UTM_CAMPAIGN:
+                this.mkt_campaign = decodeSafeString(value);
+                break;
+            }
+          } catch (IllegalArgumentException iae) {} // Do nothing in the case of a non-attribution-related querystring param
+        }
+      } catch (IllegalArgumentException iae) {} // Do nothing in the case of a malformed querystring (IAE thrown by URLEncodedUtils.parse())
 
     } catch (Exception e) {
       throw new SerDeException("Could not parse row: \"" + row + "\"", e);
@@ -350,21 +401,38 @@ public class SnowPlowEventStruct {
    * @param s The String to check
    * @return True if the String was a hyphen "-"
    */
-  static boolean isNullField(String s) { return (s == null || s.equals("") || s.equals("-")); }
+  static boolean isNullField(String s) {
+    return (s == null || s.equals("") || s.equals("-"));
+  }
+
+  /**
+   * Decodes a String using UTF8, also stripping out any newlines
+   * (because they will break Hive).
+   *
+   * @param s The String to decode
+   * @return The decoded String
+   * @throws UnsupportedEncodingException if the Character Encoding is not supported
+   */
+  static String decodeSafeString(String s) throws UnsupportedEncodingException {
+
+    if (s == null) return null;
+    String decoded = URLDecoder.decode(s, cfEncoding);
+    if (decoded == null) return null;
+
+    return decoded.replaceAll("(\\r|\\n)", "");
+  }
 
   /**
    * Converts a String of value "1" or "0" to true
    * or false respectively.
-   * 
+   *
    * @param s The String to check
    * @return True for "1", false for "0"
    * @throws IllegalArgumentException if the string is not "1" or "0"
-   */ 
+   */
   static boolean stringToBoolean(String s) throws IllegalArgumentException {
-    if (s.equals("1"))
-      return true;
-    if (s.equals("0"))
-      return false;
+    if (s.equals("1")) return true;
+    if (s.equals("0")) return false;
     throw new IllegalArgumentException("Could not convert \"" + s + "\" to boolean, only 1 or 0.");
   }
 }

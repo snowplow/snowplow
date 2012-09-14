@@ -1,17 +1,29 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
+<!-- 
+ ! Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ !
+ ! This program is licensed to you under the Apache License Version 2.0,
+ ! and you may not use this file except in compliance with the Apache License Version 2.0.
+ ! You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+ !
+ ! Unless required by applicable law or agreed to in writing,
+ ! software distributed under the Apache License Version 2.0 is distributed on an
+ ! "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ ! See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+ -->
 <html>
 <head>
     <title>Synchronous website/webapp examples for snowplow.js</title>
 
     <!-- SnowPlow starts plowing -->
     <script type="text/javascript">
-    var spSrc = ('https:' == document.location.protocol ? 'https' : 'http') + '://snplow.com/sp.js';
+    var spSrc = ('https:' == document.location.protocol ? 'https' : 'http') + '://d1fc8wv8zag5ca.cloudfront.net/sp.js';
     document.write(unescape("%3Cscript src='" + spSrc + "' type='text/javascript'%3E%3C/script%3E"));
     </script>
     <script type="text/javascript">
     try {
-    var snowplowTracker = SnowPlow.getTracker('d1x3tduoxjjdr7');
+    var snowplowTracker = SnowPlow.getTracker('d3rkrsqld9gmqf');
     snowplowTracker.trackPageView();
     snowplowTracker.enableLinkTracking();
     } catch ( err ) {}

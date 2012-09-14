@@ -1,50 +1,17 @@
-# Hive analytics for SnowPlow
+# Hive ETL for SnowPlow
 
 ## Introduction
 
-Hive is a very powerful tool for querying SnowPlow data. A [cookbook of Hive recipes] [analyst-cookbook]
-is provided in the wiki: it provides a growing list of techniques and queries to use Hive to interrogate SnowPlow data.
-
-### Example queries
-
-Here are some example Hive queries which can be run on the SnowPlow data:
-
-#### Count the number of unique visits in a day
-
-	SELECT COUNT(DISTINCT `user_id`)
-	FROM `snowplow_events_table`
-	WHERE `dt`='2012-05-20'
-
-#### Count the average number of pages-per-visit by day
-
-	SELECT COUNT(`tm`)/COUNT(DISTINCT `visit_id`) /* Average pages per visit */
-	FROM `snowplow_events_table`
-	WHERE `event_action` IS NULL /* i.e. ignore any ajax events */ 
-	GROUP BY `dt` /* group by date */
-	
-#### Look at the number of visitors brought to the site by referrer for 1st visits ONLY
-
-	SELECT
-		`mkt_source`,
-		`mkt_medium`,
-		`mkt_term`,
-		`mkt_content`,
-		`mkt_name`,
-		COUNT(DISTINCT (user_id)),
-	FROM
-		`snowplow_events_table`
-	WHERE
-		`visit_id` = ` /* Only look at 1st visits for each user_id */
-	GROUP BY `mkt_source`, `mkt_medium`, `mkt_term`, `mkt_content`, `mkt_name`
-
-For more examples, please see the [cookbook of Hive recipes] [analyst-cookbook].
+Hive is a very powerful tool for creating agile ETL processes on
+web-scale data volumes. We have used Hive to build our initial ETL
+process for SnowPlow data.
 
 ## Contents
 
 The contents of this folder are as follows:
 
 * In this folder is this README
-* `snowplow-etl` contains the Ruby and Hive code to automate a nightly ETL (extract-transform-load) job to process the daily SnowPlow log files
+* `hiveql` contains the Hive code to automate a regular ETL (extract-transform-load) job to process the daily SnowPlow log files
 * `snowplow-log-deserializers` is an SBT project containing the deserializers to import SnowPlow logs into [Apache Hive] [hive] ready for analysis
 
 ## Copyright and license

@@ -1,9 +1,9 @@
 /*!
- * SnowPlow - The world’s most powerful web analytics platform
+ * SnowPlow - The world's most powerful web analytics platform
  *
  * @description JavaScript tracking client for SnowPlow
- * @version 0.4
- * @author Alex Dean, Anthon Pang
+ * @version 0.6
+ * @author Alex Dean, Simon Andersson, Anthon Pang
  */
 
 // Refer to /docs/04_selfhosting_snowplow.md for instructions on how to minify this file for distribution.
@@ -386,7 +386,7 @@ if (!this.JSON2) {
 	exec,
 	res, width, height,
 	pdf, qt, realp, wma, dir, fla, java, gears, ag,
-	hook, getHook, getVisitorId, getVisitorInfo, setTrackerUrl, setAccount, setSiteId,
+	hook, getHook, getVisitorId, getVisitorInfo, setAccount, setCollectorUrl, setSiteId,
 	setDownloadExtensions, addDownloadExtensions,
 	setDomains, setIgnoreClasses, setRequestMethod,
 	setReferrerUrl, setCustomUrl, setDocumentTitle,
@@ -914,11 +914,11 @@ var
 		}
 
 		/*
-		 * Piwik Tracker class
+		 * SnowPlow Tracker class
 		 *
-		 * trackerUrl and trackerSiteId are optional arguments to the constructor
+		 * accountId is an optional argument to the constructor
 		 *
-		 * See: Tracker.setTrackerUrl() and Tracker.setSiteId()
+		 * See: Tracker.setCollectorUrl() and Tracker.setAccount()
 		 */
 		function Tracker(accountId) {
 
@@ -944,7 +944,7 @@ var
 				configRequestMethod = 'GET',
 
 				// Tracker URL
-				configTrackerUrl = trackerUrlFromAccountId(accountId), // Updated for SnowPlow
+				configCollectorUrl = collectorUrlFromAccountId(accountId), // Updated for SnowPlow
 
 				// Site ID
 				configTrackerSiteId = '', // Updated for SnowPlow. Starting long road to full removal
@@ -1037,7 +1037,15 @@ var
 				domainHash,
 
 				// Visitor UUID
-				visitorUUID;
+				visitorUUID,
+
+        // Ecommerce transaction data
+        // Will be committed, sent and emptied by a call to trackTrans.
+        ecommerceTransaction;
+
+      function ecommerceTransactionTemplate() {
+        return { transaction: {}, items: [] }
+      }
 
 			/*
 			 * Removes hash tag from the URL
@@ -1120,7 +1128,7 @@ var
 				var image = new Image(1, 1);
 
 				image.onload = function () { };
-				image.src = configTrackerUrl + (configTrackerUrl.indexOf('?') < 0 ? '?' : '&') + request;
+				image.src = configCollectorUrl + '?' + request;
 			}
 
 			/*
@@ -1287,6 +1295,7 @@ var
 					'&tid=' + String(Math.random()).slice(2, 8) +
 					'&uid=' + uuid +
                     '&vid=' + visitCount +
+                    (configTrackerSiteId.length ? '&said=' + encodeWrapper(configTrackerSiteId) : '') +
                     '&lang=' + configBrowserLanguage +
                     (configReferrerUrl.length ? '&refr=' + encodeWrapper(purify(configReferrerUrl)) : '');
 
@@ -1315,16 +1324,51 @@ var
 /*<SNOWPLOW> New SnowPlow functionality */
 
             /**
-             * Builds a tracker URL from an account ID.
+             * Adds the protocol in front of our collector URL, and ice.png to the end
+             *
+             * @param string rawUrl The collector URL without protocol
+             *
+             * @return string collectorUrl The tracker URL with protocol
+             */
+            // TODO: update this to use /i instead of /ice.png (BREAKING CHANGE)
+            function asCollectorUrl(rawUrl) {
+                return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + rawUrl + '/ice.png';               
+            }
+
+            /**
+             * Builds a collector URL from an account ID.
              * The trick here is that each account ID is in fact the subdomain on a specific Amazon CloudFront URL.
              * We don't bother to support custom CNAMEs because Amazon CloudFront doesn't support that for SSL.
              *
              * @param string account The account ID to build the tracker URL from
              *
-             * @return string trackerUrl The tracker URL
+             * @return string The URL on which the collector is hosted
              */
-            function trackerUrlFromAccountId(accountId) {
-                return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + accountId + '.cloudfront.net/ice.png';
+            function collectorUrlFromAccountId(accountId) {
+                return asCollectorUrl(accountId + '.cloudfront.net');
+            }
+
+            /**
+             * A helper to build a SnowPlow request string from an
+             * an optional initial value plus a set of individual
+             * key-value pairs, provided using the add method.
+             *
+             * @param string initialValue The initial querystring, ready to have additional key-value pairs added
+             *
+             * @return object The request string builder, with add and build methods
+             */
+            function requestStringBuilder(initialValue) {
+              var str = initialValue || '';
+              return {
+                add: function(key, value) {
+                  if (value !== undefined && value !== '') {
+                    str += '&' + key + '=' + encodeWrapper(value);
+                  }
+                },
+                build: function() {
+                  return str;
+                }
+              }
             }
 
             /**
@@ -1335,12 +1379,12 @@ var
              * @param string label (optional) An optional string to provide additional dimensions to the event data
              * @param int|float|string value (optional) An integer that you can use to provide numerical data about the user event
              */
+            // TODO: update to use requestStringBuilder
             function logEvent(category, action, label, property, value) {
 
                 // All events have a category and an action
-                var request =
-                    '&ev_ca=' + encodeWrapper(category)
-                    + '&ev_ac=' + encodeWrapper(action);
+                var request = 'ev_ca=' + encodeWrapper(category)
+                            + '&ev_ac=' + encodeWrapper(action);
 
                 // Label, property and value are optional
                 if (String(label).length) {
@@ -1365,11 +1409,11 @@ var
              * @param string advertiserId (optional) Identifier for the advertiser which the campaign belongs to
              * @param string userId (optional) Ad server identifier for the viewer of the banner
              */
+            // TODO: update to use requestStringBuilder
             function logImpression(bannerId, campaignId, advertiserId, userId) {
-                var request = '';
 
                 // All events have a banner ID
-                request += '&ad_ba=' + encodeWrapper(bannerId);
+                var request = 'ad_ba=' + encodeWrapper(bannerId);
 
                 // Campaign, advertiser and user IDs are optional
                 if (String(campaignId).length) {
@@ -1384,6 +1428,42 @@ var
 
                 request = getRequest(request, configCustomData, 'adimp');
                 sendRequest(request, configTrackerPause);
+            }
+
+            /**
+             * Log ecommerce transaction metadata
+             */
+            // TODO: add params to comment
+            function logTransaction(orderId, affiliation, total, tax, shipping, city, state, country) {
+              var sb = requestStringBuilder();
+              sb.add('tr_id', orderId);
+              sb.add('tr_af', affiliation);
+              sb.add('tr_tt', total);
+              sb.add('tr_tx', tax);
+              sb.add('tr_sh', shipping);
+              sb.add('tr_ci', city);
+              sb.add('tr_st', state);
+              sb.add('tr_co', country);
+              var params = sb.build();
+              var request = getRequest(params, 'ecommerceTransaction');
+              sendRequest(request, configTrackerPause);
+            }
+
+            /**
+             * Log ecommerce transaction item
+             */
+            // TODO: add params to comment
+            function logTransactionItem(orderId, sku, name, category, price, quantity) {
+              var sb = requestStringBuilder();
+              sb.add('ti_id', orderId);
+              sb.add('ti_sk', sku);
+              sb.add('ti_na', name);
+              sb.add('ti_ca', category);
+              sb.add('ti_pr', price);
+              sb.add('ti_qu', quantity);
+              var params = sb.build();
+              var request = getRequest(params, 'ecommerceTransactionItem');
+              sendRequest(request, configTrackerPause);
             }
 
 /*</SNOWPLOW>*/
@@ -1726,6 +1806,7 @@ var
 			 */
 			detectBrowserFeatures();
 			updateDomainHash();
+      ecommerceTransaction = ecommerceTransactionTemplate();
 
 /*<DEBUG>*/
 			/*
@@ -1765,15 +1846,6 @@ var
 				 */
 				getVisitorInfo: function () {
 					return loadVisitorIdCookie();
-				},
-
-				/**
-				 * Specify the Piwik server URL
-				 *
-				 * @param string trackerUrl
-				 */
-				setTrackerUrl: function (trackerUrl) {
-					configTrackerUrl = trackerUrl;
 				},
 
 				/**
@@ -2065,8 +2137,20 @@ var
                  *
                  * @param string accountId
                  */
+                // TODO: change to setAccountId for consistency (BREAKING CHANGE)
                 setAccount: function (accountId) {
-                    configTrackerUrl = trackerUrlFromAccountId(accountId);
+                    configCollectorUrl = collectorUrlFromAccountId(accountId);
+                },
+
+                /**
+                 *
+                 * Specify the SnowPlow collector URL. No need to include HTTP
+                 * or HTTPS - we will add this.
+                 * 
+                 * @param string rawUrl The collector URL minus protocol and /ice.png
+                 */
+                setCollectorUrl: function (rawUrl) {
+                    configCollectorUrl = asCollectorUrl(rawUrl);
                 },
 
                 /**
@@ -2091,7 +2175,83 @@ var
                  */
                  trackImpression: function (bannerId, campaignId, advertiserId, userId) {
                      logImpression(bannerId, campaignId, advertiserId, userId);
+                 },
+
+                 /**
+                  * Track an ecommerce transaction
+                  *
+                  * @param string orderId Required. Internal unique order id number for this transaction.
+                  * @param string affiliation Optional. Partner or store affiliation.
+                  * @param string total Required. Total amount of the transaction.
+                  * @param string tax Optional. Tax amount of the transaction.
+                  * @param string shipping Optional. Shipping charge for the transaction.
+                  * @param string city Optional. City to associate with transaction.
+                  * @param string state Optional. State to associate with transaction.
+                  * @param string country Optional. Country to associate with transaction.
+                  */
+                 addTrans: function(orderId, affiliation, total, tax, shipping, city, state, country) {
+                   ecommerceTransaction.transaction = {
+                     orderId: orderId,
+                     affiliation: affiliation,
+                     total: total,
+                     tax: tax,
+                     shipping: shipping,
+                     city: city,
+                     state: state,
+                     country: country};
+                 },
+
+                 /**
+                  * Track an ecommerce transaction item
+                  *
+                  * @param string orderId Required Order ID of the transaction to associate with item.
+                  * @param string sku Required. Item's SKU code.
+                  * @param string name Optional. Product name.
+                  * @param string category Optional. Product category.
+                  * @param string price Required. Product price.
+                  * @param string quantity Required. Purchase quantity.
+                  */
+                 addItem: function(orderId, sku, name, category, price, quantity) {
+                   ecommerceTransaction.items.push({
+                        orderId: orderId,
+                        sku: sku,
+                        name: name,
+                        category: category,
+                        price: price,
+                        quantity: quantity});
+                 },
+
+                 /**
+                  * Commit the ecommerce transaction
+                  *
+                  * This call will send the data specified with addTrans,
+                  * addItem methods to the tracking server.
+                  */
+                 trackTrans: function() {
+                   logTransaction(
+                       ecommerceTransaction.transaction.orderId,
+                       ecommerceTransaction.transaction.affiliation,
+                       ecommerceTransaction.transaction.total,
+                       ecommerceTransaction.transaction.tax,
+                       ecommerceTransaction.transaction.shipping,
+                       ecommerceTransaction.transaction.city,
+                       ecommerceTransaction.transaction.state,
+                       ecommerceTransaction.transaction.country
+                      );
+                   ecommerceTransaction.items.forEach(function(item) {
+                     logTransactionItem(
+                       item.orderId,
+                       item.sku,
+                       item.name,
+                       item.category,
+                       item.price,
+                       item.quantity
+                       );
+                   });
+
+                   ecommerceTransaction = ecommerceTransactionTemplate();
                  }
+
 /*</SNOWPLOW>*/
 
 			};

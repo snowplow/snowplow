@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<!-- 
+ ! Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ !
+ ! This program is licensed to you under the Apache License Version 2.0,
+ ! and you may not use this file except in compliance with the Apache License Version 2.0.
+ ! You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+ !
+ ! Unless required by applicable law or agreed to in writing,
+ ! software distributed under the Apache License Version 2.0 is distributed on an
+ ! "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ ! See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+ -->
+<html>
+<head>
+    <title>Asynchronous website/webapp examples for snowplow.js</title>
+
+    <!-- SnowPlow starts plowing -->
+    <script type="text/javascript">
+        var _snaq = _snaq || [];
+	
+        _snaq.push(['setAccount', 'd3rkrsqld9gmqf']); // Update to your account ID or CloudFront distribution subdomain
+        _snaq.push(['setSiteId', 'CFe23a']); // Site ID can be anything you want. Set it if you're tracking more than one site in this account
+        _snaq.push(['trackPageView']);
+
+        (function() {
+            var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
+            sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://d1fc8wv8zag5ca.cloudfront.net/0.6/sp.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
+            })();
+    </script>
+    <!-- SnowPlow stops plowing -->
+
+    <!-- Example events -->
+    <script type="text/javascript">
+        function playMix() {
+            alert("Playing a DJ mix");
+            _snaq.push(['trackEvent', 'Mixes', 'Play', 'MRC/fabric-0503-mix', '', '0.0']);
+        }
+        function addProduct() {
+            alert("Adding a product to basket");
+            _snaq.push(['trackEvent', 'Checkout', 'Add', 'ASO01043', 'blue:xxl', '2.0']);      
+        }
+
+        function addEcommerceTransaction() {
+          alert('Adding an ecommerce transaction');
+
+          var orderId = 'order-123';
+
+          // addTrans sets up the transaction, should be called first.
+          _snaq.push(['addTrans',
+              orderId,                // order ID - required
+              '',                     // affiliation or store name
+              '8000',                 // total - required
+              '',                     // tax
+              '',                     // shipping
+              '',                     // city
+              '',                     // state or province
+              ''                      // country
+              ]);
+
+          // addItem might be called for each item in the shopping cart,
+          // or not at all.
+          _snaq.push(['addItem',
+              orderId,                // order ID - required
+              '1001',                 // SKU - required
+              'Blue t-shirt',         // product name
+              '',                     // category
+              '2000',                 // unit price - required
+              '2'                     // quantity - required
+              ]);
+
+          _snaq.push(['addItem',
+              orderId,                // order ID - required
+              '1002',                 // SKU - required
+              'Red shoes',            // product name
+              '',                     // category
+              '4000',                 // unit price - required
+              '1'                     // quantity - required
+              ]);
+
+          // trackTrans sends the transaction to SnowPlow tracking servers.
+          // Must be called last to commit the transaction.
+          _snaq.push(['trackTrans']);
+
+        }
+    </script>
+</head>
+
+<body>
+    <h1>Asynchronous examples for snowplow.js</h1>
+    <p>Press the buttons below to trigger individual tracking events:<br>
+        <button type="button" onclick="playMix()">Play a mix</button><br>
+        <button type="button" onclick="addProduct()">Add a product</button><br>
+        <button type="button" onclick="addEcommerceTransaction()">Add an ecommerce transaction</button>
+    </p>
+</body>
+
+</html>
