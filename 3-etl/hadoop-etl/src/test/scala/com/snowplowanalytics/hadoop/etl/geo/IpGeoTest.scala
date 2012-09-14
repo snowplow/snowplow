@@ -22,13 +22,13 @@ object IpGeoTest {
 
 	type DataGrid = scala.collection.immutable.Map[String, IpLocation]
 
-	def createIpGeo: IpGeo = {
+	val GeoLiteCity: IpGeo = {
 		val dbFilepath = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI()
 		new IpGeo(dbFile = new File(dbFilepath), fromDisk = false)
 	}
 
 	val testData: DataGrid = Map(
-		"213.52.50.8" -> // MaxMind-provided test IP address, in Norway
+		"213.52.50.8" -> // Norwegian IP address, provided by MaxMind in their test suite
 		IpLocation(
 			countryCode = "NO",
 			countryName = "Norway",
@@ -80,13 +80,11 @@ class IpGeoTest extends Specification {
 	"Looking up some IP address locations should match their expected locations" >> {
 
 		import IpGeoTest._
-		val ipGeo = createIpGeo
-
 		testData foreach { case (ip, expected) =>
 
 			"The IP address %s".format(ip) should {
 
-				val actual = ipGeo.getLocation(ip)
+				val actual = GeoLiteCity.getLocation(ip)
 
 				"have countryCode = %s".format(expected.countryCode) in {
 					actual.countryCode must_== expected.countryCode
