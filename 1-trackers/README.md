@@ -11,11 +11,11 @@
 | Tracker                   | Description                                          | Status           | Read more |
 |---------------------------|------------------------------------------------------|------------------|-----------|
 | [javascript-tracker] [t1] | A client-side JavaScript tracker for web browser use | Production-ready | Wiki      |
-| contrib-ios-tracker       | _Coming soon_ from a community member              | Pre-alpha        | -         | 
+| contrib-ios-tracker       | _Coming soon_ from a community member                | Pre-alpha        | -         | 
 
 ## Contributing
 
-We welcome community contributions of additional trackers! We have a guide to contributing trackers coming soon on the Wiki. 
+We welcome community contributions of additional Trackers! We have a guide to contributing Trackers coming soon on the Wiki. 
 
 [architecture-image]: https://github.com/snowplow/snowplow/raw/master/1-trackers/1-trackers.png
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
