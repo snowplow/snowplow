@@ -121,7 +121,7 @@ public class SnowPlowEventStruct {
   public String ti_name;
   public String ti_category;
   public String ti_price;
-  public Integer ti_quantity;
+  public String ti_quantity;
 
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -399,7 +399,7 @@ public class SnowPlowEventStruct {
                 this.ti_price = decodeSafeString(value);
                 break;
               case TI_QU:
-                this.ti_quantity = Integer.parseInt(value);
+                this.ti_quantity = decodeSafeString(value);
                 break;
             }
           } catch (IllegalArgumentException iae) {
