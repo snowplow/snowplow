@@ -134,9 +134,9 @@ public class SnowPlowEventStruct {
                                                    + w + "([\\S]+)"   // Referrer      / cs(Referer)
                                                    + w + "([\\S]+)"   // UserAgent     / cs(User Agent)
                                                    + w + "([\\S]+)"   // Querystring   / cs-uri-query
-                                                   + ow + "[\\S]+"    // Cookie header / Added by CloudFront 12 Sep 2012
-                                                   + w +  "[\\S]+"    // Result type   / Added by CloudFront 12 Sep 2012
-                                                   + w +  "[\\S]+)?"  // X-Amz-Cf-Id   / Added by CloudFront 12 Sep 2012
+                                                   + ow + "[\\S]+"    // CookieHeader  / cs(Cookie)         added 12 Sep 2012
+                                                   + w +  "[\\S]+"    // ResultType    / x-edge-result-type added 12 Sep 2012
+                                                   + w +  "[\\S]+)?"  // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
                                          );
 
   // -------------------------------------------------------------------------------------------------------------------
