@@ -121,18 +121,23 @@ public class SnowPlowEventStruct {
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
   private static final String w = "[\\s]+"; // Whitespace regex
-  private static final Pattern cfRegex = Pattern.compile("([\\S]+)"  // Date          / date
-                                                   + w + "([\\S]+)"  // Time          / time
-                                                   + w + "([\\S]+)"  // EdgeLocation  / x-edge-location
-                                                   + w + "([\\S]+)"  // BytesSent     / sc-bytes
-                                                   + w + "([\\S]+)"  // IPAddress     / c-ip
-                                                   + w + "([\\S]+)"  // Operation     / cs-method
-                                                   + w + "([\\S]+)"  // Domain        / cs(Host)
-                                                   + w + "([\\S]+)"  // Object        / cs-uri-stem
-                                                   + w + "([\\S]+)"  // HttpStatus    / sc-status
-                                                   + w + "([\\S]+)"  // Referrer      / cs(Referer)
-                                                   + w + "([\\S]+)"  // UserAgent     / cs(User Agent)
-                                                   + w + "(.+)");    // Querystring   / cs-uri-query
+  private static final String ow = "(?:" + w; // Optional whitespace begins
+  private static final Pattern cfRegex = Pattern.compile("([\\S]+)"   // Date          / date
+                                                   + w + "([\\S]+)"   // Time          / time
+                                                   + w + "([\\S]+)"   // EdgeLocation  / x-edge-location
+                                                   + w + "([\\S]+)"   // BytesSent     / sc-bytes
+                                                   + w + "([\\S]+)"   // IPAddress     / c-ip
+                                                   + w + "([\\S]+)"   // Operation     / cs-method
+                                                   + w + "([\\S]+)"   // Domain        / cs(Host)
+                                                   + w + "([\\S]+)"   // Object        / cs-uri-stem
+                                                   + w + "([\\S]+)"   // HttpStatus    / sc-status
+                                                   + w + "([\\S]+)"   // Referrer      / cs(Referer)
+                                                   + w + "([\\S]+)"   // UserAgent     / cs(User Agent)
+                                                   + w + "([\\S]+)"   // Querystring   / cs-uri-query
+                                                   + ow + "[\\S]+"    // Cookie header / Added by CloudFront 12 Sep 2012
+                                                   + w +  "[\\S]+"    // Result type   / Added by CloudFront 12 Sep 2012
+                                                   + w +  "[\\S]+)?"  // X-Amz-Cf-Id   / Added by CloudFront 12 Sep 2012
+                                         );
 
   // -------------------------------------------------------------------------------------------------------------------
   // Deserialization logic
