@@ -7,3 +7,6 @@
   :in: ADD HERE
   :out: ADD HERE
   :archive: ADD HERE
+:emr:
+  :placement: ADD HERE
+  :ec2_key_name: ADD HERE

@@ -50,8 +50,9 @@ class EmrJobs
     end
 
     # Additional configuration
-    @jobflow.ec2_key_name = "pbz-hive"
-    # TODO: when this is supported by Elasticity @jobflow.placement = "TODO"
+    @jobflow.hadoop_version = config[:hadoop_version]
+    @jobflow.ec2_key_name = config[:ec2_key_name]
+    @jobflow.placement = config[:placement]
 
     # Now add the Hive step to the jobflow
     hive_step = Elasticity::HiveStep.new("s3n://%s%s" % [config[:buckets][:query], hive_script])
@@ -61,8 +62,6 @@ class EmrJobs
       "EVENTS_TABLE"    => "s3n://%s" % config[:buckets][:out]
     }.merge(hive_args)
     @jobflow.add_step(hive_step)
-
-    # TODO: how to add support for config[:hive_version]?
   end
 
   # Wait for a jobflow.

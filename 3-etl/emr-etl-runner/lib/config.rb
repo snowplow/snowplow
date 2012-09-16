@@ -48,7 +48,7 @@ module Config
     trail = lambda {|str| return str[-1].chr != '/' ? str << '/' : str}
     config[:buckets].update(config[:buckets]){|k,v| trail.call(v)}
 
-    config[:hive_version] = SnowPlow::EmrEtlRunner::HIVE_VERSION
+    config[:hadoop_version] = SnowPlow::EmrEtlRunner::HADOOP_VERSION
 
     config[:daily_query_file] = DAILY_QUERY_FILE
     config[:daily_query_path] = File.join(File.dirname(__FILE__), QUERY_PATH, DAILY_QUERY_FILE)
