@@ -12,8 +12,8 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Update these for your environment
-BUNDLE_GEMFILE=/path/to/snowplow/hive/snowplow-etl
-ETL_CONFIGFILE=/path/to/your-etl-config.yml
+BUNDLE_GEMFILE=/path/to/snowplow/hive/snowplow-emr-etl-runner
+RUBYGEM_CONFIGFILE=/path/to/your-etl-config.yml
 
 # Run the daily ETL job
-bundle exec snowplow-etl --config ${ETL_CONFIGFILE}
+bundle exec snowplow-emr-etl-runner --config ${RUBYGEM_CONFIGFILE}

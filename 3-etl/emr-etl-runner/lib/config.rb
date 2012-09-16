@@ -9,7 +9,7 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
-# Author::    Alex Dean (mailto:alex@snowplowanalytics.com)
+# Author::    Alex Dean (mailto:support@snowplowanalytics.com)
 # Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
@@ -22,16 +22,16 @@ require 'yaml'
 module Config
 
   # What are we called?
-  SCRIPT_NAME = "snowplow-etl"
+  SCRIPT_NAME = SnowPlow::EmrEtlRunner::SCRIPT_NAME
 
   # Where to find our HiveQL queries
-  QUERY_PATH = File.join("..", "hiveql")
+  QUERY_PATH = File.join("..", "..", "hive-etl", "hiveql")
   DAILY_QUERY_FILE = "daily-etl.q"
   DATESPAN_QUERY_FILE = "datespan-etl.q"
 
   # Where to find the Hive Serde used by our queries
-  SERDE_PATH = File.join("..", "..", "snowplow-log-deserializers", 'upload')
-  SERDE_FILE = "snowplow-log-deserializers-0.4.6.jar"
+  SERDE_PATH = File.join("..", "..", "hive-etl", "snowplow-log-deserializers", 'upload')
+  SERDE_FILE = "snowplow-log-deserializers-%s.jar" % SnowPlow::EmrEtlRunner::HIVE_SERDE_VERSION
 
   # Return the configuration loaded from the supplied YAML file, plus
   # the additional constants above.
@@ -48,7 +48,7 @@ module Config
     trail = lambda {|str| return str[-1].chr != '/' ? str << '/' : str}
     config[:buckets].update(config[:buckets]){|k,v| trail.call(v)}
 
-    config[:hive_version] = SnowPlow::Etl::HIVE_VERSION
+    config[:hive_version] = SnowPlow::EmrEtlRunner::HIVE_VERSION
 
     config[:daily_query_file] = DAILY_QUERY_FILE
     config[:daily_query_path] = File.join(File.dirname(__FILE__), QUERY_PATH, DAILY_QUERY_FILE)
