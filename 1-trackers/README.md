@@ -11,7 +11,7 @@
 | Tracker                   | Description                                          | Status           | Read more |
 |---------------------------|------------------------------------------------------|------------------|-----------|
 | [javascript-tracker] [t1] | A client-side JavaScript tracker for web browser use | Production-ready | Wiki      |
-| contrib-ios-tracker       | _Coming soon_ from a community member                | Pre-alpha        | -         | 
+| contrib-ios-tracker       | Coming soon from a community member                | Pre-alpha        | -         | 
 
 ## Contributing
 
