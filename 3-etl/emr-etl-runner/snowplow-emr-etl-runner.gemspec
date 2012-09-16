@@ -4,7 +4,7 @@ require File.expand_path('../lib/snowplow-emr-etl-runner/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Alex Dean"]
   gem.email         = ["support@snowplowanalytics.com"]
-  gem.description   = %q{A RubyGem to run SnowPlow's Hive ETL job on Amazon Elastic MapReduce. Built using Bundler. Uses Elasticity and qoobaa/s3}
+  gem.description   = %q{A Bundler RubyGem to run SnowPlow's Hive ETL job on Amazon Elastic MapReduce. Uses Elasticity and qoobaa/s3}
   gem.summary       = %q{Runs the SnowPlow Hive ETL on EMR}
   gem.homepage      = "http://snowplowanalytics.com"
 
