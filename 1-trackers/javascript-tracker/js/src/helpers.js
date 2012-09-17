@@ -53,7 +53,7 @@ SnowPlow.urlFixup = function (hostName, href, referrer) {
       f = new RegExp('(?:^|&)' + name + '=([^&]*)'),
       result = matches ? f.exec(matches[1]) : 0;
 
-    return result ? this.decodeWrapper(result[1]) : '';
+    return result ? SnowPlow.decodeWrapper(result[1]) : '';
   }
 
   /*
@@ -77,7 +77,7 @@ SnowPlow.urlFixup = function (hostName, href, referrer) {
   } else if (hostName === 'cc.bingj.com' ||					// Bing
       hostName === 'webcache.googleusercontent.com' ||	// Google
       hostName.slice(0, 5) === '74.6.') {					// Yahoo (via Inktomi 74.6.0.0/16)
-    href = this.documentAlias.links[0].href;
+    href = SnowPlow.documentAlias.links[0].href;
     hostName = getHostName(href);
   }
   return [hostName, href, referrer];
@@ -93,18 +93,18 @@ SnowPlow.getReferrer = function () {
   var referrer = '';
 
   try {
-    referrer = this.windowAlias.top.document.referrer;
+    referrer = SnowPlow.windowAlias.top.document.referrer;
   } catch (e) {
-    if (this.windowAlias.parent) {
+    if (SnowPlow.windowAlias.parent) {
       try {
-        referrer = this.windowAlias.parent.document.referrer;
+        referrer = SnowPlow.windowAlias.parent.document.referrer;
       } catch (e2) {
         referrer = '';
       }
     }
   }
   if (referrer === '') {
-    referrer = this.documentAlias.referrer;
+    referrer = SnowPlow.documentAlias.referrer;
   }
 
   return referrer;
