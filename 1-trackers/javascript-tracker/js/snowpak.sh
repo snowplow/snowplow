@@ -24,7 +24,7 @@ usage() {
 
 validate_args() {
   if [ ! -f ${YUI_COMPRESSOR_PATH} ];then
-    echo "Cannot find YUICompressor 2.4.2 jarfile at ${yuic_path}"
+    echo "Cannot find YUICompressor 2.4.2 jarfile at ${YUI_COMPRESSOR_PATH}"
     usage
   fi
 }
@@ -52,7 +52,7 @@ filter_out_debug() {
 }
 
 yui_compress() {
-  java -jar ${yuic_path} --type js --line-break 1000 
+  java -jar ${YUI_COMPRESSOR_PATH} --type js --line-break 1000
 }
 
 compress() {

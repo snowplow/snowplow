@@ -45,7 +45,7 @@ SnowPlow.sha1 = function sha1(str) {
     str_len,
     word_array = [];
 
-  str = utf8_encode(str);
+  str = SnowPlow.utf8_encode(str);
   str_len = str.length;
 
   for (i = 0; i < str_len - 3; i += 4) {
