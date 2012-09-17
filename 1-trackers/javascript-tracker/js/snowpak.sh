@@ -16,16 +16,16 @@ ARGC=${#}
 ARG1=${1}
 
 usage() {
-	echo "Usage: ${0} [yuicpath]"
-	echo $'\twhere yuicpath = path to YUICompressor 2.4.2 e.g. /opt/java/yuicompressor-2.4.2'
+  echo "Usage: ${0} [yuicpath]"
+  echo $'\twhere yuicpath = path to YUICompressor 2.4.2 e.g. /opt/java/yuicompressor-2.4.2'
   echo $'\tor set env variable YUI_COMPRESSOR_PATH instead'
-	exit 1
+  exit 1
 }
 
 validate_args() {
   if [ ! -f ${YUI_COMPRESSOR_PATH} ];then
     echo "Cannot find YUICompressor 2.4.2 jarfile at ${yuic_path}"
-    usage	
+    usage
   fi
 }
 
