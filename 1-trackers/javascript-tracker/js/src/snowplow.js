@@ -34,7 +34,6 @@
 	addPlugin, getAccount, getTracker, getAsyncTracker
 */
 
-
 SnowPlow.snowplow = (function () {
 		"use strict";
 
@@ -64,7 +63,6 @@ SnowPlow.snowplow = (function () {
 				}
 			}
 		}
-
 
 		/*
 		 * Handle beforeunload event
@@ -156,7 +154,6 @@ SnowPlow.snowplow = (function () {
 		}
 
 
-
 		/************************************************************
 		 * Proxy object
 		 * - this allows the caller to continue push()'ing to _snaq
@@ -181,9 +178,9 @@ SnowPlow.snowplow = (function () {
 
 		SnowPlow.asyncTracker = new SnowPlow.Tracker();
 
-    for (var i = 0; i < _snaq.length; i++) {
-      apply(_snaq[i]);
-    }
+		for (var i = 0; i < _snaq.length; i++) {
+			apply(_snaq[i]);
+		}
 
 		// replace initialization array with proxy object
 		_snaq = new TrackerProxy();
@@ -203,7 +200,6 @@ SnowPlow.snowplow = (function () {
 				SnowPlow.plugins[pluginName] = pluginObj;
 			},
 
-/*<SNOWPLOW> Updated SnowPlow functionality */
             /**
              * SnowPlow replacement for Piwik getTracker function
              * The function returns a Tracker object
@@ -215,8 +211,7 @@ SnowPlow.snowplow = (function () {
              */
             getTracker: function (accountId) {
                 return new SnowPlow.Tracker(accountId);
-            }, 
-/*<SNOWPLOW>*/
+            },
 
 			/**
 			 * Get internal asynchronous tracker object
@@ -228,3 +223,4 @@ SnowPlow.snowplow = (function () {
 			}
 		};
 }());
+
