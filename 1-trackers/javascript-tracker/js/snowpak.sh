@@ -12,26 +12,34 @@ DEPENDENCIES_FILE='dependencies.txt'
 SP_OUTPUTFILE="sp.js"
 YUIC_JARPATH="build/yuicompressor-2.4.2.jar"
 
-# Now set user-friendly variables for args.
-yuic_path=${1}/$YUIC_JARPATH
-
-
+ARGC=${#}
+ARG1=${1}
 
 usage() {
-	echo "Usage: ${0} yuicpath"
-	echo $'\tyuicpath = path to YUICompressor 2.4.2 e.g. /opt/java/yuicompressor-2.4.2'
+	echo "Usage: ${0} [yuicpath]"
+	echo $'\twhere yuicpath = path to YUICompressor 2.4.2 e.g. /opt/java/yuicompressor-2.4.2'
+  echo $'\tor set env variable YUI_COMPRESSOR_PATH instead'
 	exit 1
 }
 
-# Initial validation.
-if [ ${#} -ne 1 ]; then
-  usage
-fi
-
 validate_args() {
-  if [ ! -f ${yuic_path} ];then
+  if [ ! -f ${YUI_COMPRESSOR_PATH} ];then
     echo "Cannot find YUICompressor 2.4.2 jarfile at ${yuic_path}"
     usage	
+  fi
+}
+
+set_yui_compressor() {
+  suffix='/'$YUIC_JARPATH
+
+  if [ ! $YUI_COMPRESSOR_PATH ]; then
+    if [ $ARGC -ne 1 ]; then
+      usage
+    else
+      YUI_COMPRESSOR_PATH=$ARG1$suffix
+    fi
+  else
+    YUI_COMPRESSOR_PATH=$YUI_COMPRESSOR_PATH$suffix
   fi
 }
 
@@ -53,6 +61,7 @@ compress() {
 
 
 
+set_yui_compressor
 validate_args
 
 echo "Running minification..."
