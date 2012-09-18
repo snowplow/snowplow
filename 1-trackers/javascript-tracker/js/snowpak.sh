@@ -44,7 +44,7 @@ set_yui_compressor() {
 }
 
 combine_files() {
-  cat $DEPENDENCIES_FILE | while read FILE; do cat $FILE; done
+  while read F; do cat $F; done <$DEPENDENCIES_FILE
 }
 
 filter_out_debug() {

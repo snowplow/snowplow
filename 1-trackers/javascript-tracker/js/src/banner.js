@@ -6,7 +6,10 @@
  * @author Alex Dean, Simon Andersson, Anthon Pang
  */
 
-// Refer to /docs/04_selfhosting_snowplow.md for instructions on how to minify this file for distribution.
+/*
+ * For instructions on how to minify these source files for distribution, please see:
+ * https://github.com/snowplow/snowplow/wiki/Modifying-snowplow-js
+ * /
 
 /*
  * Browser [In]Compatibility
