@@ -5,3 +5,5 @@ src/helpers.js
 src/sha1.js
 src/tracker.js
 src/snowplow.js
+src/constructor.js
+

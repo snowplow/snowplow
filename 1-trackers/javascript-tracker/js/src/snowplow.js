@@ -34,7 +34,7 @@
 	addPlugin, getAccount, getTracker, getAsyncTracker
 */
 
-SnowPlow.snowplow = (function () {
+SnowPlow.build = function () {
 		"use strict";
 
 		/************************************************************
@@ -185,42 +185,43 @@ SnowPlow.snowplow = (function () {
 		// replace initialization array with proxy object
 		_snaq = new TrackerProxy();
 
+
 		/************************************************************
 		 * Public data and methods
 		 ************************************************************/
 
-		return {
-			/**
-			 * Add plugin
-			 *
-			 * @param string pluginName
-			 * @param Object pluginObj
-			 */
-			addPlugin: function (pluginName, pluginObj) {
-				SnowPlow.plugins[pluginName] = pluginObj;
-			},
+	return {
+		/**
+		* Add plugin
+		*
+		* @param string pluginName
+		* @param Object pluginObj
+		*/
+		addPlugin: function (pluginName, pluginObj) {
+			SnowPlow.plugins[pluginName] = pluginObj;
+		},
 
-            /**
-             * SnowPlow replacement for Piwik getTracker function
-             * The function returns a Tracker object
-             * However, rather than passing in a piwikUrl and siteID,
-             * it takes a SnowPlow account ID, and constructs the  
-             * Url from it. (We do not use siteIds as part of SnowPlow)
-             * 
-             * @param string accountId
-             */
-            getTracker: function (accountId) {
-                return new SnowPlow.Tracker(accountId);
-            },
+		/**
+		* SnowPlow replacement for Piwik getTracker function
+		* The function returns a Tracker object
+		* However, rather than passing in a piwikUrl and siteID,
+		* it takes a SnowPlow account ID, and constructs the
+		* Url from it. (We do not use siteIds as part of SnowPlow)
+		*
+		* @param string accountId
+		*/
+		getTracker: function (accountId) {
+			return new SnowPlow.Tracker(accountId);
+		},
 
-			/**
-			 * Get internal asynchronous tracker object
-			 *
-			 * @return Tracker
-			 */
-			getAsyncTracker: function () {
-				return SnowPlow.asyncTracker;
-			}
-		};
-}());
+		/**
+		* Get internal asynchronous tracker object
+		*
+		* @return Tracker
+		*/
+		getAsyncTracker: function () {
+			return SnowPlow.asyncTracker;
+		}
+	};
+};
 
