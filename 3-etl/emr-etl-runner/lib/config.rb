@@ -46,9 +46,12 @@ module Config
 
     # Add trailing slashes if needed to the buckets
     trail = lambda {|str| return str[-1].chr != '/' ? str << '/' : str}
-    config[:buckets].update(config[:buckets]){|k,v| trail.call(v)}
+    config[:buckets].update(config[:s3][:buckets]){|k,v| trail.call(v)}
 
     config[:hadoop_version] = SnowPlow::EmrEtlRunner::HADOOP_VERSION
+    config[:s3_location] = config[:s3][:location]
+    config[:emr_placement] = config[:emr][:placement]
+    config[:ec2_key_name] = config[:emr][:ec2_key_name]
 
     config[:daily_query_file] = DAILY_QUERY_FILE
     config[:daily_query_path] = File.join(File.dirname(__FILE__), QUERY_PATH, DAILY_QUERY_FILE)

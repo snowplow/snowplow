@@ -23,9 +23,21 @@ module S3Tasks
 
   # Uploads the Hive query to S3 ready to be executed as part of the Hive job.
   # Ensures we are executing the most recent version of the Hive query.
+  #
   # Parameters:
   # +config+:: the hash of configuration options
+  #
+  # TODO: update this when https://github.com/rslifka/elasticity/issues/34 fixed
   def S3Tasks.upload_etl_tools(config)
+
+  # Specify the bucket and AWS credentials
+  s3 = Elasticity::SyncToS3('my-bucket', 'access', 'secret')
+
+  # Use the standard environment variables (AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY)
+  # s3 = Elasticity::SyncToS3('my-bucket')
+
+  # Recursively sync the contents of '/some/parent/dir' under the remote location 'remote-dir/this-job/assets'
+  s3.sync('/some/parent/dir', 'remote-dir/this-job/assets')
 
    # Connect to S3
     AWS::S3::Base.establish_connection!(

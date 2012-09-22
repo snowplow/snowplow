@@ -52,7 +52,7 @@ class EmrJobs
     # Additional configuration
     @jobflow.hadoop_version = config[:hadoop_version]
     @jobflow.ec2_key_name = config[:ec2_key_name]
-    @jobflow.placement = config[:placement]
+    @jobflow.placement = config[:emr_placement]
 
     # Now add the Hive step to the jobflow
     hive_step = Elasticity::HiveStep.new("s3n://%s%s" % [config[:buckets][:query], hive_script])

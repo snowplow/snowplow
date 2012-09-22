@@ -1,12 +1,13 @@
 :aws:
   :access_key_id: ADD HERE
   :secret_access_key: ADD HERE
-:buckets:
-  :query: ADD HERE
-  :serde: ADD HERE
-  :in: ADD HERE
-  :out: ADD HERE
-  :archive: ADD HERE
+:s3:
+  :location: ADD HERE
+	:buckets:
+	  :static: ADD HERE
+	  :in: ADD HERE
+	  :out: ADD HERE
+	  :archive: ADD HERE
 :emr:
   :placement: ADD HERE
   :ec2_key_name: ADD HERE

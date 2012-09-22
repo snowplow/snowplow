@@ -1,5 +1,7 @@
 # SnowPlow::Etl
 
+TODO: update this - it's quite out of date...
+
 ## Introduction
 
 SnowPlow::Etl is a Ruby gem (built with [Bundler] [bundler]) to run the daily
