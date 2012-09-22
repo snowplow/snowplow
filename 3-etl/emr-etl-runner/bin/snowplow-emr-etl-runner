@@ -34,7 +34,7 @@ require 'emr_jobs'
 begin
   config = Config.get_config()
 
-  # S3Tasks.upload_etl_tools(config)
+  S3Tasks.sync_assets(config)
 
   emr = EmrJobs.new(config)
   emr.run_etl()

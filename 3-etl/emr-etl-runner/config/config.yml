@@ -1,13 +1,13 @@
 :aws:
-  :access_key_id: ADD HERE
-  :secret_access_key: ADD HERE
+	:access_key_id: ADD HERE
+	:secret_access_key: ADD HERE
 :s3:
-  :location: ADD HERE
+	:location: ADD HERE
 	:buckets:
-	  :static: ADD HERE
-	  :in: ADD HERE
-	  :out: ADD HERE
-	  :archive: ADD HERE
+		:assets: ADD HERE
+		:in: ADD HERE
+		:out: ADD HERE
+		:archive: ADD HERE
 :emr:
-  :placement: ADD HERE
-  :ec2_key_name: ADD HERE
+	:placement: ADD HERE
+	:ec2_key_name: ADD HERE
