@@ -66,7 +66,7 @@ module S3Tasks
     # Bucket containing logs to archive...
     in = bucket(config[:buckets][:in])
     in.files.each do |file|
-      puts file.etag
+      puts "File %s last modified: %s" % [file.key, file.last_modified]
     end
 
     # TODO: implement
@@ -76,11 +76,11 @@ module S3Tasks
 
   def bucket(bucket_name)
     index = s3.directories.index { |d| d.key == bucket_name }
-    bucket ||= index ? s3.directories[index] : nil
-    if bucket.nil?
+    if index
+      s3.directories[index]
+    else
       raise NoBucketError, "Bucket '%s' does not exist" % bucket_name
     end
-    bucket
   end
 
 end
