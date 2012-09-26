@@ -54,8 +54,23 @@ class EmrJobs
     @jobflow.ec2_key_name = config[:ec2_key_name]
     @jobflow.placement = config[:emr_placement]
 
+    # add extra configuration
+    if config[:emr][:jobflow].respond_to?(:each)
+      config[:emr][:jobflow].each { |key, value|
+        @jobflow.send("#{key}=", value)
+      }
+    end
+
     # Now add the Hive step to the jobflow
     hive_step = Elasticity::HiveStep.new("s3n://%s%s" % [config[:s3][:buckets][:assets], hive_script])
+
+    # add extra configuration
+    if config[:emr][:hive_step].respond_to?(:each)
+      config[:emr][:hive_step].each { |key, value|
+        hive_step.send("#{key}=", value)
+      }
+    end
+
     hive_step.variables = {
       "SERDE_FILE"      => "s3n://%s%s" % [ config[:s3][:buckets][:serde], config[:serde_file] ],
       "CLOUDFRONT_LOGS" => "s3n://%s" % config[:s3][:buckets][:in],
