@@ -42,9 +42,9 @@ module S3Tasks
 
     # Upload the two query files and the serde
     # Array of files to upload: "tuple" format is [Filename, Local filepath, S3 bucket path, Content type]
-    [[config[:daily_query_file], config[:daily_query_path], config[:buckets][:assets], 'text/plain'],
-     [config[:datespan_query_file], config[:datespan_query_path], config[:buckets][:assets], 'text/plain'],
-     [config[:serde_file], config[:serde_path], config[:buckets][:serde], 'application/java-archive']
+    [[config[:daily_query_file], config[:daily_query_path], config[:s3][:buckets][:assets], 'text/plain'],
+     [config[:datespan_query_file], config[:datespan_query_path], config[:s3][:buckets][:assets], 'text/plain'],
+     [config[:serde_file], config[:serde_path], config[:s3][:buckets][:serde], 'application/java-archive']
     ].each do |f|
       AWS::S3::S3Object.store(f[0], open(f[1]), f[2], :content_type => f[3])
     end
@@ -64,8 +64,8 @@ module S3Tasks
     })
 
     # Bucket containing logs to archive...
-    in = bucket(config[:buckets][:in])
-    in.files.each do |file|
+    inbucket = bucket(config[:s3][:buckets][:in])
+    inbucket.files.each do |file|
       puts "File %s last modified: %s" % [file.key, file.last_modified]
     end
 

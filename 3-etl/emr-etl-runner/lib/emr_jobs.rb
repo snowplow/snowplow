@@ -55,11 +55,11 @@ class EmrJobs
     @jobflow.placement = config[:emr_placement]
 
     # Now add the Hive step to the jobflow
-    hive_step = Elasticity::HiveStep.new("s3n://%s%s" % [config[:buckets][:query], hive_script])
+    hive_step = Elasticity::HiveStep.new("s3n://%s%s" % [config[:s3][:buckets][:assets], hive_script])
     hive_step.variables = {
-      "SERDE_FILE"      => "s3n://%s%s" % [ config[:buckets][:serde], config[:serde_file] ],
-      "CLOUDFRONT_LOGS" => "s3n://%s" % config[:buckets][:in],
-      "EVENTS_TABLE"    => "s3n://%s" % config[:buckets][:out]
+      "SERDE_FILE"      => "s3n://%s%s" % [ config[:s3][:buckets][:serde], config[:serde_file] ],
+      "CLOUDFRONT_LOGS" => "s3n://%s" % config[:s3][:buckets][:in],
+      "EVENTS_TABLE"    => "s3n://%s" % config[:s3][:buckets][:out]
     }.merge(hive_args)
     @jobflow.add_step(hive_step)
   end
