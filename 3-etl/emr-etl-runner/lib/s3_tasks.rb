@@ -14,6 +14,8 @@
 # License::   Apache License Version 2.0
 
 require 'aws/s3'
+require 'fog'
+
 
 # Ruby module to support the two S3-related actions required by
 # the daily ETL job:
@@ -22,6 +24,7 @@ require 'aws/s3'
 module S3Tasks
 
   class NoBucketError < StandardError; end
+  class DirectoryNotEmptyError < StandardError; end
 
   # Uploads the Hive query to S3 ready to be executed as part of the Hive job.
   # Ensures we are executing the most recent version of the Hive query.
@@ -51,11 +54,14 @@ module S3Tasks
   end
   module_function :sync_assets
 
-  # Moves (archives) the processed CloudFront logs to an archive bucket.
-  # Prevents the same log files from being processed again.
+
+  # Moves new CloudFront logs to a processing bucket.
+  #
   # Parameters:
   # +config+:: the hash of configuration options
-  def archive_logs(config)
+  def stage_logs_for_emr(config)
+
+    puts 'Staging CloudFront logs...'
 
     s3 = Fog::Storage.new({
       :provider => 'AWS',
@@ -63,14 +69,69 @@ module S3Tasks
       :aws_secret_access_key => config[:aws][:secret_access_key]
     })
 
-    # Bucket containing logs to archive...
-    inbucket = bucket(config[:s3][:buckets][:in])
-    inbucket.files.each do |file|
-      puts "File %s last modified: %s" % [file.key, file.last_modified]
+    in_config = config[:s3][:buckets][:in].match('^(.+?)/(.+)/$');
+    in_bucket = in_config[1]
+    in_dir = in_config[2]
+
+    processing = config[:s3][:buckets][:processing].match('^(.+?)/(.+)/$');
+    processing_bucket = processing[1]
+    processing_dir = processing[2]
+
+    # check whether our processing directory is empty
+    if s3.directories.get(processing_bucket, :prefix => processing_dir).files().length > 1
+      raise DirectoryNotEmptyError, "The processing directory is not empty"
     end
 
-    # TODO: implement
-    puts "Archiving CloudFront logs... (TODO)"
+    dates = []
+    Date.parse(config[:start]).upto(Date.parse(config[:end])) do |day|
+      dates << day.strftime('%Y-%m-%d')
+    end
+
+    # find files with the given date
+    target_file = '^.+/([^/]+(' + dates.join('|') + ')[^/]+\.gz)$'
+
+    s3.directories.get(in_bucket, :prefix => in_dir).files().each{ |file|
+      if m = file.key.match(target_file)
+        #puts 'Staging '+ m[1]
+        file.copy(processing_bucket, processing_dir + '/' + m[1])
+        file.destroy()
+      end
+    }
+  end
+  module_function :stage_logs_for_emr
+
+
+  # Moves (archives) the processed CloudFront logs to an archive bucket.
+  # Prevents the same log files from being processed again.
+  # Parameters:
+  # +config+:: the hash of configuration options
+  def archive_logs(config)
+
+    puts 'Archiving CloudFront logs...'
+
+    s3 = Fog::Storage.new({
+      :provider => 'AWS',
+      :aws_access_key_id => config[:aws][:access_key_id],
+      :aws_secret_access_key => config[:aws][:secret_access_key]
+    })
+
+    processing = config[:s3][:buckets][:processing].match('^(.+?)/(.+)/$');
+    processing_bucket = processing[1]
+    processing_dir = processing[2]
+
+    archive = config[:s3][:buckets][:archive].match('^(.+?)/(.+)/$');
+    archive_bucket = archive[1]
+    archive_dir = archive[2]
+
+    s3.directories.get(processing_bucket, :prefix => processing_dir).files().each{ |file|
+      if m = file.key.match('[^/]+\.(\d\d\d\d-\d\d-\d\d)-\d\d\.[^/]+\.gz$')
+        filename = m[0]
+        date = m[1]
+        #puts 'Archiving ' + filename
+        file.copy(archive_bucket, archive_dir + '/' + date + '/' + filename)
+        file.destroy()
+      end
+    }
   end
   module_function :archive_logs
 

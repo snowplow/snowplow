@@ -73,7 +73,7 @@ class EmrJobs
 
     hive_step.variables = {
       "SERDE_FILE"      => "s3n://%s%s" % [ config[:s3][:buckets][:serde], config[:serde_file] ],
-      "CLOUDFRONT_LOGS" => "s3n://%s" % config[:s3][:buckets][:in],
+      "CLOUDFRONT_LOGS" => "s3n://%s" % config[:s3][:buckets][:processing],
       "EVENTS_TABLE"    => "s3n://%s" % config[:s3][:buckets][:out]
     }.merge(hive_args)
     @jobflow.add_step(hive_step)
