@@ -36,6 +36,8 @@ begin
 
   S3Tasks.sync_assets(config)
 
+  S3Tasks.stage_logs_for_emr(config)
+
   emr = EmrJobs.new(config)
   emr.run_etl()
 
