@@ -19,5 +19,6 @@ Gem::Specification.new do |gem|
   gem.add_dependency 'elasticity', '~> 2.4'
   gem.add_dependency 'fog', '~> 1.6.0'
   gem.add_dependency 's3', '0.3.11'
+  gem.add_dependency 'aws-s3', '0.6.3'
   # TODO: remove s3 when no longer used
 end

@@ -46,7 +46,7 @@ module Config
 
     # Add trailing slashes if needed to the buckets
     trail = lambda {|str| return str[-1].chr != '/' ? str << '/' : str}
-    config[:buckets].update(config[:s3][:buckets]){|k,v| trail.call(v)}
+    config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| trail.call(v)}
 
     config[:hadoop_version] = SnowPlow::EmrEtlRunner::HADOOP_VERSION
     config[:s3_location] = config[:s3][:location]
