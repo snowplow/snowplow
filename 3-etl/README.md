@@ -11,7 +11,7 @@ The **ETL** (extract, transform, load) process takes raw SnowPlow events logged 
 | ETL                             | Description                                                  | Status           | Read more                    |
 |---------------------------------|--------------------------------------------------------------|------------------|------------------------------|
 | [hive-etl] [e1] (1)             | An ETL process built using Apache Hive                       | Production-ready | Wiki                         |
-| [hadoop-etl] [e2] (2)           | An ETL process built using Scalding for Apache Hadoop        | Pre-alpha        | Coming soon                  | 
+| hadoop-etl (2)           | An ETL process built using Scalding for Apache Hadoop        | Pre-alpha        | Coming soon                  | 
 | [emr-etl-runner] [e3]           | A RubyGem for running (1) or (2) on Amazon Elastic MapReduce | Beta             | Wiki                         |  
 
 ## Contributing
