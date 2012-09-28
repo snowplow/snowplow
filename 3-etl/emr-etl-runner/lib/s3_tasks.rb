@@ -172,17 +172,19 @@ module S3Tasks
     threads = []
     mutex = Mutex.new
     complete = false
+    markeropts = {}
 
     # create ruby threads to concurrently execute s3 operations
     for i in (0...100)
 
-      # each thread grabs a file off the files_to_move stack, and moves it.
+      # each thread pops a file off the files_to_move array, and moves it.
       # We loop until there are no more files
       threads << Thread.new do
         loop do
           file = false
           match = false
 
+          # critcal section
           # only allow one thread to modify the array at any time
           mutex.synchronize do
 
@@ -190,12 +192,14 @@ module S3Tasks
               if files_to_move.size == 0
                 # s3 batches 1000 files per request
                 # we load up our array with the files to move
-                files_to_move = s3.directories.get(from_location.bucket, :prefix => from_location.dir).files()
+                files_to_move = s3.directories.get(from_location.bucket, :prefix => from_location.dir).files.all(markeropts)
 
                 # if we don't have any files after the s3 request, we're complete
                 if files_to_move.size == 0
                   complete = true
                   next
+                else
+                  markeropts = { :marker => files_to_move.last.key }
                 end
               end
 
