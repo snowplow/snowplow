@@ -15,6 +15,7 @@
 
 require 'aws/s3'
 require 'fog'
+require 'thread'
 
 
 # Ruby module to support the two S3-related actions required by
@@ -23,8 +24,38 @@ require 'fog'
 # 2. Archiving the CloudFront log files by moving them into a separate bucket
 module S3Tasks
 
-  class NoBucketError < StandardError; end
   class DirectoryNotEmptyError < StandardError; end
+
+
+  # Class to describe an S3 location
+  class S3Location
+    attr_reader :bucket, :dir, :s3location
+
+    #
+    # +s3location+:: the s3 location config string e.g. "bucket/directory"
+    def initialize(s3location)
+      @s3location = s3location
+
+      s3location_match = s3location.match('^([^/]+)/?(.*)/$');
+      raise ArgumentError, 'Bad s3 location' unless s3location_match
+
+      @bucket = s3location_match[1]
+      @dir = s3location_match[2]
+    end
+
+    def dir_as_path
+      if @dir.length > 0
+        return @dir+'/'
+      else
+        return ''
+      end
+    end
+
+    def to_s
+      @s3location
+    end
+  end
+
 
   # Uploads the Hive query to S3 ready to be executed as part of the Hive job.
   # Ensures we are executing the most recent version of the Hive query.
@@ -37,7 +68,9 @@ module S3Tasks
   # - https://github.com/rslifka/elasticity/pull/35
   def sync_assets(config)
 
-   # Connect to S3
+    puts 'Syncing assets...'
+
+    # Connect to S3
     AWS::S3::Base.establish_connection!(
       :access_key_id     => config[:aws][:access_key_id],
       :secret_access_key => config[:aws][:secret_access_key]
@@ -60,7 +93,6 @@ module S3Tasks
   # Parameters:
   # +config+:: the hash of configuration options
   def stage_logs_for_emr(config)
-
     puts 'Staging CloudFront logs...'
 
     s3 = Fog::Storage.new({
@@ -69,44 +101,34 @@ module S3Tasks
       :aws_secret_access_key => config[:aws][:secret_access_key]
     })
 
-    in_config = config[:s3][:buckets][:in].match('^(.+?)/(.+)/$');
-    in_bucket = in_config[1]
-    in_dir = in_config[2]
-
-    processing = config[:s3][:buckets][:processing].match('^(.+?)/(.+)/$');
-    processing_bucket = processing[1]
-    processing_dir = processing[2]
+    # get s3 locations
+    in_location = S3Location.new(config[:s3][:buckets][:in]);
+    processing_location = S3Location.new(config[:s3][:buckets][:processing]);
 
     # check whether our processing directory is empty
-    if s3.directories.get(processing_bucket, :prefix => processing_dir).files().length > 1
+    if s3.directories.get(processing_location.bucket, :prefix => processing_location.dir).files().length > 1
       raise DirectoryNotEmptyError, "The processing directory is not empty"
     end
 
+    # find files with the given date range
     dates = []
     Date.parse(config[:start]).upto(Date.parse(config[:end])) do |day|
       dates << day.strftime('%Y-%m-%d')
     end
+    target_file = '(' + dates.join('|') + ')[^/]+\.gz$'
 
-    # find files with the given date
-    target_file = '^.+/([^/]+(' + dates.join('|') + ')[^/]+\.gz)$'
+    move_files(s3, in_location, processing_location, target_file);
 
-    s3.directories.get(in_bucket, :prefix => in_dir).files().each{ |file|
-      if m = file.key.match(target_file)
-        #puts 'Staging '+ m[1]
-        file.copy(processing_bucket, processing_dir + '/' + m[1])
-        file.destroy()
-      end
-    }
   end
   module_function :stage_logs_for_emr
 
 
   # Moves (archives) the processed CloudFront logs to an archive bucket.
   # Prevents the same log files from being processed again.
+  #
   # Parameters:
   # +config+:: the hash of configuration options
   def archive_logs(config)
-
     puts 'Archiving CloudFront logs...'
 
     s3 = Fog::Storage.new({
@@ -115,33 +137,86 @@ module S3Tasks
       :aws_secret_access_key => config[:aws][:secret_access_key]
     })
 
-    processing = config[:s3][:buckets][:processing].match('^(.+?)/(.+)/$');
-    processing_bucket = processing[1]
-    processing_dir = processing[2]
+    # get s3 locations
+    processing_location = S3Location.new(config[:s3][:buckets][:processing]);
+    archive_location = S3Location.new(config[:s3][:buckets][:archive]);
 
-    archive = config[:s3][:buckets][:archive].match('^(.+?)/(.+)/$');
-    archive_bucket = archive[1]
-    archive_dir = archive[2]
-
-    s3.directories.get(processing_bucket, :prefix => processing_dir).files().each{ |file|
-      if m = file.key.match('[^/]+\.(\d\d\d\d-\d\d-\d\d)-\d\d\.[^/]+\.gz$')
-        filename = m[0]
-        date = m[1]
-        #puts 'Archiving ' + filename
-        file.copy(archive_bucket, archive_dir + '/' + date + '/' + filename)
-        file.destroy()
+    add_date_path = lambda { |filepath|
+      puts filepath
+      if m = filepath.match('[^/]+\.(\d\d\d\d-\d\d-\d\d)-\d\d\.[^/]+\.gz$')
+          filename = m[0]
+          date = m[1]
+          return date + '/' + filename
+      else
+        return filename
       end
     }
+
+    move_files(s3, processing_location, archive_location, '.+', add_date_path);
+
   end
   module_function :archive_logs
 
-  def bucket(bucket_name)
-    index = s3.directories.index { |d| d.key == bucket_name }
-    if index
-      s3.directories[index]
-    else
-      raise NoBucketError, "Bucket '%s' does not exist" % bucket_name
+
+  # Moves files between s3 locations concurrently
+  #
+  # Parameters:
+  # +s3+:: A Fog::Storage s3 connection
+  # +from+:: S3Location to move files from
+  # +to+:: S3Location to move files to
+  # +match_regex+:: a regex string to match the files to copy
+  # +alter_filename_lambda+:: lambda to alter the written filename
+  def move_files(s3, from_location, to_location, match_regex='.+', alter_filename_lambda=false)
+
+    # get the files to move
+    files_to_move = s3.directories.get(from_location.bucket, :prefix => from_location.dir).files()
+
+    # setup mutex and thread array
+    threads = []
+    mutex = Mutex.new
+
+    # create ruby threads to concurrently execute s3 operations
+    for i in (0...100)
+
+      # each thread grabs a file off the files_to_move stack, and moves it.
+      # We loop until there are no more files
+      threads << Thread.new do
+        loop do
+          file = false
+          match = false
+
+          # only allow one thread to modify the array at any time
+          mutex.synchronize do
+            while !match && (files_to_move.size > 0) do
+              file = files_to_move.pop
+              match = file.key.match(match_regex)
+            end
+          end
+
+          # once we're at the end of files_to_move, match==false
+          if !match
+            break
+          end
+
+          # match the filename, ignoring directory
+          file_match = file.key.match('([^/]+)$')
+
+          if alter_filename_lambda.class == Proc
+            filename = alter_filename_lambda.call(file_match[1])
+          else
+            filename = file_match[1]
+          end
+
+          #puts "moving #{file.key} to #{to_location.bucket}/#{to_location.dir_as_path}#{filename}";
+
+          file.copy(to_location.bucket, to_location.dir + filename)
+          file.destroy()
+        end
+      end
     end
+
+    threads.each { |aThread|  aThread.join }
   end
+  module_function :move_files
 
 end
