@@ -168,12 +168,10 @@ module S3Tasks
   # +alter_filename_lambda+:: lambda to alter the written filename
   def move_files(s3, from_location, to_location, match_regex='.+', alter_filename_lambda=false)
 
-    # get the files to move
-    files_to_move = s3.directories.get(from_location.bucket, :prefix => from_location.dir).files()
-
-    # setup mutex and thread array
+    files_to_move = []
     threads = []
     mutex = Mutex.new
+    complete = false
 
     # create ruby threads to concurrently execute s3 operations
     for i in (0...100)
@@ -187,13 +185,26 @@ module S3Tasks
 
           # only allow one thread to modify the array at any time
           mutex.synchronize do
-            while !match && (files_to_move.size > 0) do
+
+            while !complete && !match do
+              if files_to_move.size == 0
+                # s3 batches 1000 files per request
+                # we load up our array with the files to move
+                files_to_move = s3.directories.get(from_location.bucket, :prefix => from_location.dir).files()
+
+                # if we don't have any files after the s3 request, we're complete
+                if files_to_move.size == 0
+                  complete = true
+                  next
+                end
+              end
+
               file = files_to_move.pop
               match = file.key.match(match_regex)
             end
           end
 
-          # once we're at the end of files_to_move, match==false
+          # if we don't have a match, then we must be complete
           if !match
             break
           end
@@ -216,6 +227,7 @@ module S3Tasks
     end
 
     threads.each { |aThread|  aThread.join }
+
   end
   module_function :move_files
 
