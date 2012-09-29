@@ -26,7 +26,8 @@ class BadRowTest extends Specification {
   // Toggle if tests are failing and you want to inspect the struct contents
   implicit val _DEBUG = false
 
-  val badRows = Seq("",
+  val badRows = Seq(
+    "",
     "NOT VALID",
     "2012-05-21\t07:14:47\tFRA2\t3343\t83.4.209.35\tGET\td3t05xllj8hhgj.cloudfront.net"
   )
