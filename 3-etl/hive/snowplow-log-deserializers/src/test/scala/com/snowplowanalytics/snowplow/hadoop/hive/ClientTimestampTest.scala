@@ -15,8 +15,11 @@ package com.snowplowanalytics.snowplow.hadoop.hive
 // Specs2
 import org.specs2.mutable.Specification
 
+// SnowPlow Utils
+import test.Tap._
+
 // Deserializer
-import test.SnowPlowDeserializer
+import test.{SnowPlowDeserializer, SnowPlowEvent}
 
 class ClientTimestampTest extends Specification {
 
@@ -24,20 +27,21 @@ class ClientTimestampTest extends Specification {
   implicit val _DEBUG = false
 
   val row = "2012-05-21\t07:14:47\tFRA2\t3343\t83.4.209.35\tGET\td3t05xllj8hhgj.cloudfront.net\t/ice.png\t200\thttps://test.psybazaar.com/shop/checkout/\tMozilla/5.0%20(X11;%20Ubuntu;%20Linux%20x86_64;%20rv:11.0)%20Gecko/20100101%20Firefox/11.0\t&page=Test&ev_ca=ecomm&ev_ac=checkout&ev_la=id_email&ev_va=Empty&ev_pr=ERROR&tid=236095&tstamp=12-10-2012%2014%3A34%3A21&refr=http%253A%252F%252Ftest.psybazaar.com%252F&uid=135f6b7536aff045&lang=en-US&vid=5&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1"
-  object Expected {
-    val dt = "12-10-2012"
-    val tm = "14:34:21"
+  
+  val expected = new SnowPlowEvent().tap { e =>
+    e.dt = "12-10-2012"
+    e.tm = "14:34:21"
   }
   
   "A SnowPlow row with a client-set timestamp" should {
 
     val actual = SnowPlowDeserializer.deserialize(row)
 
-    "have dt (Date) = %s".format(Expected.dt) in {
-      actual.dt must_== Expected.dt
+    "have dt (Date) = %s".format(expected.dt) in {
+      actual.dt must_== expected.dt
     }
-    "have tm (Time) = %s".format(Expected.tm) in {
-      actual.tm must_== Expected.tm
+    "have tm (Time) = %s".format(expected.tm) in {
+      actual.tm must_== expected.tm
     }
   }
 }
