@@ -356,7 +356,7 @@ public class SnowPlowEventStruct {
       throw new SerDeException("Could not parse row: \"" + row + "\"", e);
     }
 
-    return true; // Return the SnowPlowEventStruct. Not actually used anywhere.
+    return true; // Successfully updated the row.
   }
 
   // -------------------------------------------------------------------------------------------------------------------
