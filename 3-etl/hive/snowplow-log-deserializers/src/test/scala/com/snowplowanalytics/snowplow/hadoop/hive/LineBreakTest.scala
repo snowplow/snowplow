@@ -35,5 +35,3 @@ class DelimiterTest extends Specification {
     }
   } 
 }
-
-

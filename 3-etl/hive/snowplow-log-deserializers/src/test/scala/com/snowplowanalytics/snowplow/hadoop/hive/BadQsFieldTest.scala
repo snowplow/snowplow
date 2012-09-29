@@ -29,7 +29,7 @@ class BadQsFieldTest extends Specification {
   "A SnowPlow querystring with an incorrectly named field (\"referer\" not \"refr\")" should {
     "return a <<null>> record" in {
       SnowPlowEventDeserializer.deserializeLine(badField, DEBUG).asInstanceOf[SnowPlowEventStruct].dt must beNull
-    }.pendingUntilFixed // This is checking the wrong row somehow
+    }
   }
 
   // Contains an extra querystring field - "future"
@@ -38,6 +38,6 @@ class BadQsFieldTest extends Specification {
   "A SnowPlow querystring with an extra field (\"future\")" should {
     "return a <<null>> record" in {
       SnowPlowEventDeserializer.deserializeLine(extraField, DEBUG).asInstanceOf[SnowPlowEventStruct].dt must beNull
-    }.pendingUntilFixed // This is checking the wrong row somehow
+    }
   }
 }

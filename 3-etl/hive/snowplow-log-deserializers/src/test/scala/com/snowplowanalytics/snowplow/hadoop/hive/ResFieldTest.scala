@@ -30,7 +30,7 @@ class ResFieldTest extends Specification {
     Seq("", "800x", "x600", "420Ax800") foreach { res =>
       "invalid screen resolution \"%s\" returns a <<null>> record".format(res) >> {
         SnowPlowEventDeserializer.deserializeLine(rowWithRes(res), DEBUG).asInstanceOf[SnowPlowEventStruct].dt must beNull
-      }.pendingUntilFixed // This is checking the wrong row somehow
+      }
     }
   }
 }

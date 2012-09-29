@@ -149,50 +149,17 @@ public class SnowPlowEventStruct {
    * within this SnowPlowEventStruct, rather than creating a new one.
    *
    * @param row The raw String containing the row contents
-   * @return This struct with all values updated
+   * @return true if row was successfull parsed, false otherwise
    * @throws SerDeException For any exception during parsing
    */
-  public Object parse(String row) throws SerDeException {
+  public boolean updateByParsing(String row) throws SerDeException {
 
-    // Null everything before we start
-    this.dt = null;
-    this.tm = null;
-    this.txn_id = null;
-    this.user_id = null;
-    this.user_ipaddress = null;
-    this.visit_id = null;
-    this.page_url = null;
-    this.page_title = null;
-    this.page_referrer = null;
-    this.mkt_medium = null;
-    this.mkt_source = null;
-    this.mkt_term = null;
-    this.mkt_content = null;
-    this.mkt_campaign = null;
-    this.ev_category = null;
-    this.ev_action = null;
-    this.ev_label = null;
-    this.ev_property = null;
-    this.ev_value = null;
-    this.br_name = null;
-    this.br_family = null;
-    this.br_version = null;
-    this.br_type = null;
-    this.br_renderengine = null;
-    this.br_lang = null;
-    this.br_features.clear(); // Empty the ArrayList, don't destroy it
-    this.br_cookies = null;
-    this.os_name = null;
-    this.os_family = null;
-    this.os_manufacturer = null;
-    this.dvce_type = null;
-    this.dvce_ismobile = null;
-    this.dvce_screenwidth = null;
-    this.dvce_screenheight = null;
+    // First we reset the object's fields
+    nullify();
 
     // We have to handle any header rows
     if (row.startsWith("#Version:") || row.startsWith("#Fields:")) {
-      return null; // Empty row will be discarded by Hive
+      return false; // Empty row will be discarded by Hive
     }
 
     final Matcher m = cfRegex.matcher(row);
@@ -211,7 +178,7 @@ public class SnowPlowEventStruct {
       final String object = m.group(8);
       final String querystring = m.group(12);
       if (!(object.startsWith("/ice.png") || object.equals("/i") || object.startsWith("/i?")) || isNullField(querystring)) { // Also works if Forward Query String = yes
-        return null;
+        return false;
       }
 
       // 1. Now we retrieve the fields which get directly passed through
@@ -282,8 +249,9 @@ public class SnowPlowEventStruct {
                   this.dt = timestamp[0];
                   this.tm = timestamp[1];
                 } catch (Exception e) {
-                  // Return a null row on invalid data
-                  return null;
+                  // We've started setting fields, so we need to reset the object
+                  nullify();
+                  return false;
                 }
               case LANG:
                 this.br_lang = value;
@@ -297,8 +265,9 @@ public class SnowPlowEventStruct {
                   this.dvce_screenwidth = Integer.parseInt(resolution[0]);
                   this.dvce_screenheight = Integer.parseInt(resolution[1]);
                 } catch (Exception e) {
-                  // Return a null row on invalid data
-                  return null;
+                  // We've started setting fields, so we need to reset the object
+                  nullify();
+                  return false;
                 }
                 break;
               case REFR:
@@ -331,8 +300,9 @@ public class SnowPlowEventStruct {
                 break;
             }
           } catch (IllegalArgumentException iae) {
-            // Return a null row on invalid data
-            return null;
+            // We've started setting fields, so we need to reset the object
+            nullify();
+            return false;
           }
         }
       }
@@ -386,7 +356,61 @@ public class SnowPlowEventStruct {
       throw new SerDeException("Could not parse row: \"" + row + "\"", e);
     }
 
-    return this; // Return the SnowPlowEventStruct
+    return true; // Return the SnowPlowEventStruct. Not actually used anywhere.
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Initializer & scrubber
+  // -------------------------------------------------------------------------------------------------------------------
+
+  /**
+   * Because we are always re-using the same object
+   * (for performance reasons), we need a mechanism
+   * for nulling all the fields. We null all the
+   * fields at two points in time:
+   * 1. When we're re-initializing the object ready
+   *    to parse a new row into it
+   * 2. If the parsing failed part way through and we
+   *    we need to null all the fields again (so that
+   *    Hive silently discards the row)
+   */
+  private void nullify() {
+
+    // Null all the things
+    this.dt = null;
+    this.tm = null;
+    this.txn_id = null;
+    this.user_id = null;
+    this.user_ipaddress = null;
+    this.visit_id = null;
+    this.page_url = null;
+    this.page_title = null;
+    this.page_referrer = null;
+    this.mkt_medium = null;
+    this.mkt_source = null;
+    this.mkt_term = null;
+    this.mkt_content = null;
+    this.mkt_campaign = null;
+    this.ev_category = null;
+    this.ev_action = null;
+    this.ev_label = null;
+    this.ev_property = null;
+    this.ev_value = null;
+    this.br_name = null;
+    this.br_family = null;
+    this.br_version = null;
+    this.br_type = null;
+    this.br_renderengine = null;
+    this.br_lang = null;
+    this.br_features.clear(); // Empty the ArrayList, don't destroy it
+    this.br_cookies = null;
+    this.os_name = null;
+    this.os_family = null;
+    this.os_manufacturer = null;
+    this.dvce_type = null;
+    this.dvce_ismobile = null;
+    this.dvce_screenwidth = null;
+    this.dvce_screenheight = null;
   }
 
   // -------------------------------------------------------------------------------------------------------------------
