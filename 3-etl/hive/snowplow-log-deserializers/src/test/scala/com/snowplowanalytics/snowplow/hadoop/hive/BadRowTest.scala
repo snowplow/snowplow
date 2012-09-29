@@ -16,17 +16,25 @@ package com.snowplowanalytics.snowplow.hadoop.hive
 import org.specs2.mutable.Specification
 
 // Hive
-import org.apache.hadoop.hive.serde2.SerDeException;
+import org.apache.hadoop.hive.serde2.SerDeException
 
-class CorruptRowTest extends Specification {
+// Deserializer
+import test.SnowPlowDeserializer
+
+class BadRowTest extends Specification {
 
   // Toggle if tests are failing and you want to inspect the struct contents
-  val DEBUG = false;
+  implicit val _DEBUG = false
+
+  val badRows = Seq("",
+    "NOT VALID",
+    "2012-05-21\t07:14:47\tFRA2\t3343\t83.4.209.35\tGET\td3t05xllj8hhgj.cloudfront.net"
+  )
 
   "An invalid or corrupted CloudFront row should throw an exception" >> {
-    Seq("", "NOT VALID", "2012-05-21\t07:14:47\tFRA2\t3343\t83.4.209.35\tGET\td3t05xllj8hhgj.cloudfront.net") foreach { invalid =>
-      "invalid row \"%s\" throws a SerDeException".format(invalid) >> {
-        SnowPlowEventDeserializer.deserializeLine(invalid, DEBUG) must throwA[SerDeException](message = "Could not parse row: \"%s\"".format(invalid))
+     badRows foreach { row =>
+      "invalid row \"%s\" throws a SerDeException".format(row) >> {
+        SnowPlowDeserializer.deserializeUntyped(row) must throwA[SerDeException](message = "Could not parse row: \"%s\"".format(row))
       }
     }
   }

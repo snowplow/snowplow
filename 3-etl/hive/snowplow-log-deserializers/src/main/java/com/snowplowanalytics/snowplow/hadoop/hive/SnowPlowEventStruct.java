@@ -29,6 +29,7 @@ import java.util.regex.PatternSyntaxException;
 import org.apache.hadoop.hive.serde2.SerDeException;
 
 // Java Library for User-Agent Information
+// TODO: we may well update this to a better lib
 import nl.bitwalker.useragentutils.*;
 
 // Apache URLEncodedUtils

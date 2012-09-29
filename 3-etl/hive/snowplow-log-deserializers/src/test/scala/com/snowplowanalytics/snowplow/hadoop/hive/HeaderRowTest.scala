@@ -15,18 +15,18 @@ package com.snowplowanalytics.snowplow.hadoop.hive
 // Specs2
 import org.specs2.mutable.Specification
 
-// Hive
-import org.apache.hadoop.hive.serde2.SerDeException;
+// Deserializer
+import test.SnowPlowDeserializer
 
 class HeaderRowTest extends Specification {
 
   // Toggle if tests are failing and you want to inspect the struct contents
-  val DEBUG = false;
+  implicit val _DEBUG = false
 
   "The header rows of a CloudFront log file should be skipped" >> {
     Seq("#Version: 1.0", "#Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status cs(Referer) cs(User-Agent) cs-uri-query") foreach { header => 
       "header row \"%s\" is skipped (returns null)".format(header) >> {
-        SnowPlowEventDeserializer.deserializeLine(header, DEBUG).asInstanceOf[SnowPlowEventStruct].dt must beNull
+        SnowPlowDeserializer.deserialize(header).dt must beNull
       }
     }
   }

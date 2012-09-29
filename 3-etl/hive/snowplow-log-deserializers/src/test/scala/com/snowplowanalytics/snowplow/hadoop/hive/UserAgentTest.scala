@@ -18,7 +18,7 @@ import org.specs2.mutable.Specification
 // Deserializer
 import test.SnowPlowDeserializer
 
-class NoUserAgentTest extends Specification {
+class UserAgentTest extends Specification {
 
   // Toggle if tests are failing and you want to inspect the struct contents
   implicit val _DEBUG = false
