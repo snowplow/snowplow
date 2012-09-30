@@ -3,7 +3,7 @@
 ## Introduction
 
 Hive is a very powerful tool for querying SnowPlow data.
-An [Analyst's Cookbook of Hive recipes] [analyst-cookbook] is provided on the SnowPlow Analytics website: it provides a growing list of techniques and queries to use Hive to interrogate SnowPlow data.
+An [Analyst's Cookbook] [analyst-cookbook] of Hive "recipes" is provided on the SnowPlow Analytics website: it provides a growing list of techniques and queries to use Hive to interrogate SnowPlow data.
 
 ## Example queries
 
