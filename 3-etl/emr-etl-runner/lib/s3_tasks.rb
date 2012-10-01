@@ -142,7 +142,6 @@ module S3Tasks
     archive_location = S3Location.new(config[:s3][:buckets][:archive]);
 
     add_date_path = lambda { |filepath|
-      puts filepath
       if m = filepath.match('[^/]+\.(\d\d\d\d-\d\d-\d\d)-\d\d\.[^/]+\.gz$')
           filename = m[0]
           date = m[1]
@@ -168,11 +167,14 @@ module S3Tasks
   # +alter_filename_lambda+:: lambda to alter the written filename
   def move_files(s3, from_location, to_location, match_regex='.+', alter_filename_lambda=false)
 
+    puts "   moving files from #{from_location} to #{to_location}"
+
     files_to_move = []
     threads = []
     mutex = Mutex.new
     complete = false
     markeropts = {}
+
 
     # create ruby threads to concurrently execute s3 operations
     for i in (0...100)
@@ -199,7 +201,11 @@ module S3Tasks
                   complete = true
                   next
                 else
-                  markeropts = { :marker => files_to_move.last.key }
+                  markeropts[:marker] = files_to_move.last.key
+
+                  # By reversing the array we can use pop and get FIFO behaviour
+                  # instead of the performance penalty incurred by unshift
+                  files_to_move = files_to_move.reverse
                 end
               end
 
@@ -222,7 +228,7 @@ module S3Tasks
             filename = file_match[1]
           end
 
-          #puts "moving #{file.key} to #{to_location.bucket}/#{to_location.dir_as_path}#{filename}";
+          puts "    #{from_location.bucket}/#{file.key} -> #{to_location.bucket}/#{to_location.dir_as_path}#{filename}"
 
           file.copy(to_location.bucket, to_location.dir + filename)
           file.destroy()
