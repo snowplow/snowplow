@@ -34,6 +34,9 @@ class SnowPlowEvent {
   @BeanProperty
   var txn_id: String = _
 
+  // The application (site, game, app etc) this event belongs to
+  var app_id: String = _
+
   // User and visit
   @BeanProperty
   var user_id: String = _

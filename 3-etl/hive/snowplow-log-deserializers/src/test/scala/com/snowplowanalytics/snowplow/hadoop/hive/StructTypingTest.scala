@@ -28,7 +28,7 @@ class StructTypingTest extends Specification {
   // Toggle if tests are failing and you want to inspect the struct contents
   implicit val _DEBUG = false
 
-  val row = "2012-05-21\t07:14:47\tFRA2\t3343\t83.4.209.35\tGET\td3t05xllj8hhgj.cloudfront.net\t/ice.png\t200\thttps://test.psybazaar.com/shop/checkout/?utm_source=a&utm_medium=cpc&utm_campaign=uk-oracle-decks--angel-cards-text&utm_term=buy%2520angel%2520cards&utm_content=b\tMozilla/5.0%20(X11;%20Ubuntu;%20Linux%20x86_64;%20rv:11.0)%20Gecko/20100101%20Firefox/11.0\t&page=Test&ev_ca=ecomm&ev_ac=checkout&ev_la=id_email&ev_va=Empty&ev_pr=ERROR&tid=236095&refr=http%253A%252F%252Ftest.psybazaar.com%252F&uid=135f6b7536aff045&lang=en-US&vid=5&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1&tr_id=a&tr_af=b&tr_tt=c&tr_tx=d&tr_sh=e&tr_ci=f&tr_st=g&tr_co=h&ti_id=i&ti_sk=j&ti_na=k&ti_ca=l&ti_pr=m&ti_qu=n"
+  val row = "2012-05-21\t07:14:47\tFRA2\t3343\t83.4.209.35\tGET\td3t05xllj8hhgj.cloudfront.net\t/ice.png\t200\thttps://test.psybazaar.com/shop/checkout/?utm_source=a&utm_medium=cpc&utm_campaign=uk-oracle-decks--angel-cards-text&utm_term=buy%2520angel%2520cards&utm_content=b\tMozilla/5.0%20(X11;%20Ubuntu;%20Linux%20x86_64;%20rv:11.0)%20Gecko/20100101%20Firefox/11.0\t&aid=3&page=Test&ev_ca=ecomm&ev_ac=checkout&ev_la=id_email&ev_va=Empty&ev_pr=ERROR&tid=236095&refr=http%253A%252F%252Ftest.psybazaar.com%252F&uid=135f6b7536aff045&lang=en-US&vid=5&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1&tr_id=a&tr_af=b&tr_tt=c&tr_tx=d&tr_sh=e&tr_ci=f&tr_st=g&tr_co=h&ti_id=i&ti_sk=j&ti_na=k&ti_ca=l&ti_pr=m&ti_qu=n"
 
   "The hypothetical (because it includes every possible field) CloudFront row \"%s\"".format(row) should {
 
@@ -54,6 +54,11 @@ class StructTypingTest extends Specification {
     // Transaction
     "with a txn_id (Transaction ID) field which is a Hive STRING" in {
       eventStruct.txn_id must beAnInstanceOf[String]
+    }
+
+    // Application
+    "with an app_id (Application ID) field which is a Hive STRING" in {
+      eventStruct.app_id must beAnInstanceOf[String]
     }
 
     // User and visit

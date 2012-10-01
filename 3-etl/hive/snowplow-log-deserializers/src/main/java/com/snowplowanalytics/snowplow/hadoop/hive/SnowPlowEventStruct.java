@@ -57,6 +57,9 @@ public class SnowPlowEventStruct {
   // Transaction (i.e. this logging event)
   public String txn_id;
 
+  // The application (site, game, app etc) this event belongs to
+  public String app_id;
+
   // User and visit
   public String user_id;
   public String user_ipaddress;
@@ -132,7 +135,7 @@ public class SnowPlowEventStruct {
   private static final String cfEncoding = "UTF-8";
 
   // An enum of all the fields we're expecting in the querystring
-  private static enum QuerystringFields { TID, UID, VID, TSTAMP, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
+  private static enum QuerystringFields { TID, AID, UID, VID, TSTAMP, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
 
   // An enum for the marketing attribution fields we might find
   // attached to the page URL.
@@ -255,6 +258,9 @@ public class SnowPlowEventStruct {
               // Common fields
               case TID:
                 this.txn_id = value;
+                break;
+              case AID:
+                this.app_id = value;
                 break;
               case UID:
                 this.user_id = value;
@@ -444,6 +450,7 @@ public class SnowPlowEventStruct {
     this.dt = null;
     this.tm = null;
     this.txn_id = null;
+    this.app_id = null;
     this.user_id = null;
     this.user_ipaddress = null;
     this.visit_id = null;
