@@ -142,7 +142,6 @@ module S3Tasks
     archive_location = S3Location.new(config[:s3][:buckets][:archive]);
 
     add_date_path = lambda { |filepath|
-      puts filepath
       if m = filepath.match('[^/]+\.(\d\d\d\d-\d\d-\d\d)-\d\d\.[^/]+\.gz$')
           filename = m[0]
           date = m[1]
@@ -168,32 +167,54 @@ module S3Tasks
   # +alter_filename_lambda+:: lambda to alter the written filename
   def move_files(s3, from_location, to_location, match_regex='.+', alter_filename_lambda=false)
 
-    # get the files to move
-    files_to_move = s3.directories.get(from_location.bucket, :prefix => from_location.dir).files()
+    puts "   moving files from #{from_location} to #{to_location}"
 
-    # setup mutex and thread array
+    files_to_move = []
     threads = []
     mutex = Mutex.new
+    complete = false
+    markeropts = {}
+
 
     # create ruby threads to concurrently execute s3 operations
     for i in (0...100)
 
-      # each thread grabs a file off the files_to_move stack, and moves it.
+      # each thread pops a file off the files_to_move array, and moves it.
       # We loop until there are no more files
       threads << Thread.new do
         loop do
           file = false
           match = false
 
+          # critcal section
           # only allow one thread to modify the array at any time
           mutex.synchronize do
-            while !match && (files_to_move.size > 0) do
+
+            while !complete && !match do
+              if files_to_move.size == 0
+                # s3 batches 1000 files per request
+                # we load up our array with the files to move
+                files_to_move = s3.directories.get(from_location.bucket, :prefix => from_location.dir).files.all(markeropts)
+
+                # if we don't have any files after the s3 request, we're complete
+                if files_to_move.size == 0
+                  complete = true
+                  next
+                else
+                  markeropts[:marker] = files_to_move.last.key
+
+                  # By reversing the array we can use pop and get FIFO behaviour
+                  # instead of the performance penalty incurred by unshift
+                  files_to_move = files_to_move.reverse
+                end
+              end
+
               file = files_to_move.pop
               match = file.key.match(match_regex)
             end
           end
 
-          # once we're at the end of files_to_move, match==false
+          # if we don't have a match, then we must be complete
           if !match
             break
           end
@@ -207,7 +228,7 @@ module S3Tasks
             filename = file_match[1]
           end
 
-          #puts "moving #{file.key} to #{to_location.bucket}/#{to_location.dir_as_path}#{filename}";
+          puts "    #{from_location.bucket}/#{file.key} -> #{to_location.bucket}/#{to_location.dir_as_path}#{filename}"
 
           file.copy(to_location.bucket, to_location.dir + filename)
           file.destroy()
@@ -216,6 +237,7 @@ module S3Tasks
     end
 
     threads.each { |aThread|  aThread.join }
+
   end
   module_function :move_files
 
