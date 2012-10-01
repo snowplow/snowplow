@@ -29,15 +29,18 @@ class EmrJobs
   # +config+:: contains all the control data for the SnowPlow Hive job
   def initialize(config)
 
+    puts "Initializing EMR jobflow"
+
     # Create a job flow with your AWS credentials
     @jobflow = Elasticity::JobFlow.new(config[:aws][:access_key_id], config[:aws][:secret_access_key])
 
     # Hive configuration if we're processing just one day...
     if config[:start] == config[:end]
       @jobflow.name = "Daily ETL (#{config[:start]})"
-      hive_script = config[:daily_query_file]
+      hive_script = config[:datespan_query_file]
       hive_args = {
-        "DATA_DATE" => config[:start]
+        "START_DATE" => config[:start],
+        "END_DATE"   => config[:start]
       }
     # ...versus processing a datespan
     else
