@@ -14,7 +14,8 @@ import sbt._
 
 object Dependencies {
   val resolutionRepos = Seq(
-    ScalaToolsSnapshots
+    ScalaToolsSnapshots,
+    "SnowPlow Analytics Maven repo" at "http://maven.snplow.com/releases/"
   )
 
   object V {
@@ -23,6 +24,7 @@ object Dependencies {
     val http      = "4.1.1"
     val logging   = "1.1.1"
     val specs2    = "1.12.1"
+    val scalaUtil = "0.1.0"
     // val useragent = "1.6" No Maven repo, so user-agent-utils is an unmanaged lib
   }
 
@@ -34,5 +36,6 @@ object Dependencies {
     val httpCore    = "org.apache.httpcomponents"  %  "httpcore"             % V.http  
     val logging     = "commons-logging"            %  "commons-logging"      % V.logging     % "provided"
     val specs2      = "org.specs2"                 %% "specs2"               % V.specs2      % "test"
+    val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"           % V.scalaUtil        % "test"
   }
 }

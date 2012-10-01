@@ -16,7 +16,7 @@ package com.snowplowanalytics.snowplow.hadoop.hive
 import org.specs2.mutable.Specification
 
 // SnowPlow Utils
-import test.Tap._
+import com.snowplowanalytics.util.Tap._
 
 // Deserializer
 import test.{SnowPlowDeserializer, SnowPlowEvent}

@@ -22,7 +22,7 @@ import org.specs2.mutable.Specification
 import org.apache.hadoop.hive.serde2.SerDeException
 
 // SnowPlow Utils
-import test.Tap._
+import com.snowplowanalytics.util.Tap._
 
 // Deserializer
 import test.{SnowPlowDeserializer, SnowPlowEvent}
