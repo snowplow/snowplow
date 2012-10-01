@@ -136,7 +136,7 @@ CREATE EXTERNAL TABLE imps (
   mkt_medium STRING,
   mkt_term STRING,
   mkt_content STRING,
-  mkt_name STRING,
+  mkt_campaign STRING,
   ad_campaign_id STRING,
   ad_banner_id STRING,
   ad_advertiser_id STRING,

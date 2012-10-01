@@ -1,4 +1,4 @@
-ADD JAR s3://psychicbazaar-snowplow-static/snowplow-log-deserializers-0.4.4.jar ;
+ADD JAR s3://psychicbazaar-snowplow-static/snowplow-log-deserializers-0.4.8.jar ;
 
 CREATE EXTERNAL TABLE `cloudfront_log_of_events`
 ROW FORMAT SERDE 'com.snowplowanalytics.snowplow.hadoop.hive.SnowPlowEventDeserializer'
@@ -16,7 +16,7 @@ mkt_source string,
 mkt_medium string,
 mkt_term string,
 mkt_content string,
-mkt_name string,
+mkt_campaign string,
 ev_category string,
 ev_action string,
 ev_label string,
@@ -57,7 +57,7 @@ mkt_source,
 mkt_medium,
 mkt_term,
 mkt_content,
-mkt_name,
+mkt_campaign,
 ev_category,
 ev_action,
 ev_label,
