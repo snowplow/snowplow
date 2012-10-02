@@ -172,11 +172,16 @@ module S3Tasks
     threads = []
     mutex = Mutex.new
     complete = false
-    markeropts = {}
+    marker_opts = {}
+    s3_retries = 3
+
+
+    # if an exception is thrown in a thread that isn't handled, die quickly
+    Thread.abort_on_exception = true
 
 
     # create ruby threads to concurrently execute s3 operations
-    for i in (0...100)
+    for i in (0...10)
 
       # each thread pops a file off the files_to_move array, and moves it.
       # We loop until there are no more files
@@ -193,14 +198,15 @@ module S3Tasks
               if files_to_move.size == 0
                 # s3 batches 1000 files per request
                 # we load up our array with the files to move
-                files_to_move = s3.directories.get(from_location.bucket, :prefix => from_location.dir).files.all(markeropts)
-
+                #puts "-- loading more results"
+                files_to_move = s3.directories.get(from_location.bucket, :prefix => from_location.dir).files.all(marker_opts)
+                #puts "-- got #{files_to_move.size} results"
                 # if we don't have any files after the s3 request, we're complete
                 if files_to_move.size == 0
                   complete = true
                   next
                 else
-                  markeropts[:marker] = files_to_move.last.key
+                  marker_opts['marker'] = files_to_move.last.key
 
                   # By reversing the array we can use pop and get FIFO behaviour
                   # instead of the performance penalty incurred by unshift
@@ -214,9 +220,7 @@ module S3Tasks
           end
 
           # if we don't have a match, then we must be complete
-          if !match
-            break
-          end
+          break unless match # exit the thread
 
           # match the filename, ignoring directory
           file_match = file.key.match('([^/]+)$')
@@ -227,15 +231,42 @@ module S3Tasks
             filename = file_match[1]
           end
 
+
           puts "    #{from_location.bucket}/#{file.key} -> #{to_location.bucket}/#{to_location.dir_as_path}#{filename}"
 
-          file.copy(to_location.bucket, to_location.dir + filename)
-          file.destroy()
+          # copy file
+          i = 0
+          begin
+            file.copy(to_location.bucket, to_location.dir_as_path + filename)
+          rescue
+            raise unless i < s3_retries
+            puts "Problem copying #{file.key}. Retrying.", $!, $@
+            sleep(5)  # give us a bit of time before retrying
+            i += 1
+            retry
+          end
+
+          # delete file
+          i = 0
+          begin
+            file.destroy()
+          rescue
+            raise unless i < s3_retries
+            puts "Problem destroying #{file.key}. Retrying.", $!, $@
+            sleep(5) # give us a bit of time before retrying
+            i += 1
+            retry
+          end
         end
       end
     end
 
+    # wait for threads to finish
     threads.each { |aThread|  aThread.join }
+
+    # wait for s3 to eventually become consistant
+    puts "Waiting a minute to allow S3 to settle (eventual consistancy)"
+    sleep(60)
 
   end
   module_function :move_files
