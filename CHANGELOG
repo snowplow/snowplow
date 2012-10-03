@@ -5,6 +5,7 @@ Serde: added support for new application ID (#33)
 Serde: added deserialization of ecommerce fields, plus tests (#34, #51)
 Serde: test suite enhancements (adding Scala helper objects)
 Serde: added tests including #13 and #10
+snowplow.js: renamed said to aid for application ID
 
 Version 0.4.8 (2012-09-14)
 --------------------------
