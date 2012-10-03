@@ -2,7 +2,7 @@
  * SnowPlow - The world's most powerful web analytics platform
  *
  * @description JavaScript tracking client for SnowPlow
- * @version 0.6
+ * @version 0.7.0
  * @author Alex Dean, Simon Andersson, Anthon Pang
  */
 
