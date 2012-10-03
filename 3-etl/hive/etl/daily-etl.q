@@ -109,6 +109,7 @@ os_manufacturer,
 dvce_type,
 dvce_ismobile,
 dvce_screenwidth,
-dvce_screenheight
+dvce_screenheight,
+dt
 FROM `cloudfront_log_of_events`
 WHERE dt='${DATE}' ;
