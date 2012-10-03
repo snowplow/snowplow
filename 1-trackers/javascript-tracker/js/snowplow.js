@@ -1295,7 +1295,7 @@ var
 					'&tid=' + String(Math.random()).slice(2, 8) +
 					'&uid=' + uuid +
                     '&vid=' + visitCount +
-                    (configTrackerSiteId.length ? '&said=' + encodeWrapper(configTrackerSiteId) : '') +
+                    (configTrackerSiteId.length ? '&aid=' + encodeWrapper(configTrackerSiteId) : '') +
                     '&lang=' + configBrowserLanguage +
                     (configReferrerUrl.length ? '&refr=' + encodeWrapper(purify(configReferrerUrl)) : '');
 
