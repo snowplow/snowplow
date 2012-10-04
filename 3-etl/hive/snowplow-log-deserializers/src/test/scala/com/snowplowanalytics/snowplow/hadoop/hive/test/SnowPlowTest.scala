@@ -11,28 +11,9 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.hadoop.hive
+package test
 
-// Specs2
-import org.specs2.mutable.Specification
+object SnowPlowTest {
 
-// Deserializer
-import test.SnowPlowDeserializer
-
-class HeaderRowTest extends Specification {
-
-  // Toggle if tests are failing and you want to inspect the struct contents
-  implicit val _DEBUG = false
-
-  val headers = Seq(
-  	"#Version: 1.0",
-  	"#Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status cs(Referer) cs(User-Agent) cs-uri-query"
-  )
-
-  "The header rows of a CloudFront log file should be skipped" >> {
-     headers foreach { header => 
-      "header row \"%s\" is skipped (returns null)".format(header) >> {
-        SnowPlowDeserializer.deserialize(header).dt must beNull
-      }
-    }
-  }
+	type DataGrid = scala.collection.immutable.Map[String, SnowPlowEvent]
 }
