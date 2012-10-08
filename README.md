@@ -34,7 +34,7 @@ If you would like help implementing a new tracker, trying a different ETL approa
 
 ## Questions or need help?
 
-Contact us at support@snowplowanalytics.com or join our [SnowPlow Google Group] [snowplow-user].
+Check out the [Talk to us] [talk-to-us] page on our wiki.
 
 ## Copyright and license
 
@@ -54,6 +54,5 @@ limitations under the License.
 [wiki]: https://github.com/snowplow/snowplow/wiki
 [architecture-image]: https://github.com/snowplow/snowplow/raw/master/architecture.png
 [architecture-doc]: https://github.com/snowplow/snowplow/wiki/Technical-architecture
-[contact]: mailto:contribute@snowplowanalytics.com
+[talk-to-us]: https://github.com/snowplow/snowplow/wiki/Talk-to-us
 [license]: http://www.apache.org/licenses/LICENSE-2.0
-[snowplow-user]: https://groups.google.com/d/forum/snowplow-user
