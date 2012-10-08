@@ -34,7 +34,7 @@ If you would like help implementing a new tracker, trying a different ETL approa
 
 ## Questions or need help?
 
-Check out the [Talk to us] [talk-to-us] page on our wiki.
+Check out the **[Talk to us] [talk-to-us]** page on our wiki.
 
 ## Copyright and license
 
