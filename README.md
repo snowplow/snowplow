@@ -30,7 +30,7 @@ To briefly explain these five sub-systems:
 
 We're committed to a loosely-coupled architecture for SnowPlow and would love to get your contributions within each of the five sub-systems.
 
-If you would like help implementing a new tracker, trying a different ETL approach or loading SnowPlow events into an alternative database, **[get in touch] [contact]**!
+If you would like help implementing a new tracker, trying a different ETL approach or loading SnowPlow events into an alternative database, **[get in touch] [talk-to-us]**!
 
 ## Questions or need help?
 
