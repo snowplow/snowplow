@@ -1,4 +1,4 @@
-ADD JAR s3://psychicbazaar-snowplow-static/snowplow-log-deserializers-0.4.8.jar ;
+ADD JAR s3://psychicbazaar-snowplow-static/snowplow-log-deserializers-0.4.9.jar ;
 
 CREATE EXTERNAL TABLE `cloudfront_log_of_events`
 ROW FORMAT SERDE 'com.snowplowanalytics.snowplow.hadoop.hive.SnowPlowEventDeserializer'
@@ -7,7 +7,6 @@ LOCATION '${CLOUDFRONTLOGS}' ;
 CREATE EXTERNAL TABLE `events` (
 tm string,
 txn_id string,
-app_id string,
 user_id string,
 user_ipaddress string,
 visit_id int,
@@ -52,7 +51,8 @@ os_manufacturer string,
 dvce_type string,
 dvce_ismobile boolean,
 dvce_screenwidth int,
-dvce_screenheight int
+dvce_screenheight int,
+app_id string
 )
 PARTITIONED BY (dt STRING, user_id STRING)
 LOCATION '${EVENTSTABLE}' ;
@@ -64,7 +64,6 @@ PARTITION (dt='${DATE}', user_id)
 SELECT 
 tm,
 txn_id,
-app_id,
 user_id,
 user_ipaddress,
 visit_id,
@@ -110,6 +109,7 @@ dvce_type,
 dvce_ismobile,
 dvce_screenwidth,
 dvce_screenheight,
+app_id,
 dt
 FROM `cloudfront_log_of_events`
 WHERE dt='${DATE}' ;
