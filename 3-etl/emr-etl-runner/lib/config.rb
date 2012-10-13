@@ -24,15 +24,6 @@ module Config
   # What are we called?
   SCRIPT_NAME = SnowPlow::EmrEtlRunner::SCRIPT_NAME
 
-  # Where to find our HiveQL queries
-  QUERY_PATH = File.join("..", "..", "hive-etl", "hiveql")
-  DAILY_QUERY_FILE = "daily-etl.q"
-  DATESPAN_QUERY_FILE = "datespan-etl.q"
-
-  # Where to find the Hive Serde used by our queries
-  SERDE_PATH = File.join("..", "..", "hive-etl", "snowplow-log-deserializers", 'upload')
-  SERDE_FILE = "snowplow-log-deserializers-%s.jar" % SnowPlow::EmrEtlRunner::HIVE_SERDE_VERSION
-
   # Return the configuration loaded from the supplied YAML file, plus
   # the additional constants above.
   def Config.get_config()
@@ -48,17 +39,14 @@ module Config
     trail = lambda {|str| return str[-1].chr != '/' ? str << '/' : str}
     config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| trail.call(v)}
 
-    config[:hadoop_version] = SnowPlow::EmrEtlRunner::HADOOP_VERSION
+    config[:hadoop_version] = config[:emr][:hadoop_version]
     config[:s3_location] = config[:s3][:location]
     config[:emr_placement] = config[:emr][:placement]
     config[:ec2_key_name] = config[:emr][:ec2_key_name]
 
-    config[:daily_query_file] = DAILY_QUERY_FILE
-    config[:daily_query_path] = File.join(File.dirname(__FILE__), QUERY_PATH, DAILY_QUERY_FILE)
-    config[:datespan_query_file] = DATESPAN_QUERY_FILE
-    config[:datespan_query_path] = File.join(File.dirname(__FILE__), QUERY_PATH, DATESPAN_QUERY_FILE)
-    config[:serde_path] = File.join(File.dirname(__FILE__), SERDE_PATH, SERDE_FILE)
-    config[:serde_file] = SERDE_FILE
+    asset_path = "%s/hive" % [config[:s3][:buckets][:assets]
+    config[:serde_asset] = "%s/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
+    config[:hiveql_asset] = "%s/hiveql/datespan-etl-%s.q" % [asset_path, config[:snowplow][:hiveql_version]]
 
     config
   end
@@ -84,7 +72,7 @@ module Config
 
       opts.on_tail('-h', '--help', 'Show this message') { puts opts; exit }
       opts.on_tail('-v', "--version", "Show version") do
-        puts "%s %s" % [SCRIPT_NAME, SnowPlow::Etl::VERSION] #.join('.')
+        puts "%s %s" % [SCRIPT_NAME, SnowPlow::EmrEtlRunner::VERSION]
         exit
       end
     end

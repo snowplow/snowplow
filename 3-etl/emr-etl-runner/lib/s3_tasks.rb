@@ -13,25 +13,20 @@
 # Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'aws/s3'
 require 'fog'
 require 'thread'
 
-
-# Ruby module to support the two S3-related actions required by
-# the daily ETL job:
-# 1. Uploading the daily-etl.q HiveQL query to S3
-# 2. Archiving the CloudFront log files by moving them into a separate bucket
+# Ruby module to support the S3-related actions required by
+# the Hive-based ETL process.
 module S3Tasks
 
   class DirectoryNotEmptyError < StandardError; end
-
 
   # Class to describe an S3 location
   class S3Location
     attr_reader :bucket, :dir, :s3location
 
-    #
+    # Parameters:
     # +s3location+:: the s3 location config string e.g. "bucket/directory"
     def initialize(s3location)
       @s3location = s3location
@@ -55,38 +50,6 @@ module S3Tasks
       @s3location
     end
   end
-
-
-  # Uploads the Hive query to S3 ready to be executed as part of the Hive job.
-  # Ensures we are executing the most recent version of the Hive query.
-  #
-  # Parameters:
-  # +config+:: the hash of configuration options
-  #
-  # TODO: replace with Elasticity code when added:
-  # - https://github.com/rslifka/elasticity/issues/34
-  # - https://github.com/rslifka/elasticity/pull/35
-  def sync_assets(config)
-
-    puts 'Syncing assets...'
-
-    # Connect to S3
-    AWS::S3::Base.establish_connection!(
-      :access_key_id     => config[:aws][:access_key_id],
-      :secret_access_key => config[:aws][:secret_access_key]
-    )
-
-    # Upload the two query files and the serde
-    # Array of files to upload: "tuple" format is [Filename, Local filepath, S3 bucket path, Content type]
-    [[config[:daily_query_file], config[:daily_query_path], config[:s3][:buckets][:assets], 'text/plain'],
-     [config[:datespan_query_file], config[:datespan_query_path], config[:s3][:buckets][:assets], 'text/plain'],
-     [config[:serde_file], config[:serde_path], config[:s3][:buckets][:serde], 'application/java-archive']
-    ].each do |f|
-      AWS::S3::S3Object.store(f[0], open(f[1]), f[2], :content_type => f[3])
-    end
-  end
-  module_function :sync_assets
-
 
   # Moves new CloudFront logs to a processing bucket.
   #
@@ -122,7 +85,6 @@ module S3Tasks
   end
   module_function :stage_logs_for_emr
 
-
   # Moves (archives) the processed CloudFront logs to an archive bucket.
   # Prevents the same log files from being processed again.
   #
@@ -137,7 +99,7 @@ module S3Tasks
       :aws_secret_access_key => config[:aws][:secret_access_key]
     })
 
-    # get s3 locations
+    # Get s3 locations
     processing_location = S3Location.new(config[:s3][:buckets][:processing]);
     archive_location = S3Location.new(config[:s3][:buckets][:archive]);
 
@@ -156,7 +118,6 @@ module S3Tasks
   end
   module_function :archive_logs
 
-
   # Moves files between s3 locations concurrently
   #
   # Parameters:
@@ -174,7 +135,6 @@ module S3Tasks
     mutex = Mutex.new
     complete = false
     markeropts = {}
-
 
     # create ruby threads to concurrently execute s3 operations
     for i in (0...100)
