@@ -27,13 +27,13 @@ Next install the gem on your system:
 
     $ cd snowplow/3-etl/emr-etl-runner
     $ gem build snowplow-emr-etl-runner.gemspec 
-    $ sudo gem install snowplow-emr-etl-runner-0.0.1.gem
+    $ sudo gem install snowplow-emr-etl-runner-0.0.2.gem
     $ bundle install
 
 Finally, test that the gem was installed successfully:
 
     $ bundle exec snowplow-emr-etl-runner --version
-    snowplow-emr-etl-runner 0.0.1
+    snowplow-emr-etl-runner 0.0.2
 
 Note that the `bundle exec` command will only work when you are inside the 
 `emr-etl-runner` folder.
