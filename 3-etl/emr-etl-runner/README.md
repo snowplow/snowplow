@@ -12,12 +12,12 @@ For detailed instructions on setting up EmrEtlRunner on your server, please see 
 
 If you want to hack on EmrEtlRunner locally, first make sure that you have the following dependencies installed:
 
-1. **Git**. Please see the [Git Installation Guide] [git-install] as needed  
-2. **Ruby**. Please see the [Ruby Download Instructions] [ruby-install] as needed
-3. **RubyGems**. Please see the [RubyGems Installation Instructions] [rubygems-install]
+1. **Git** - see the [Git Installation Guide] [git-install] as needed  
+2. **Ruby** - see the [Ruby Download Instructions] [ruby-install] as needed
+3. **RubyGems** - see the [RubyGems Installation Instructions] [rubygems-install]
    as needed
-4. **Nokogiri**. Please see the [Installing Nokogiri Guide] [nokogiri-install] as needed
-5. **Bundler**. This is a one-liner: `gem install bundler`
+4. **Nokogiri** - see the [Installing Nokogiri Guide] [nokogiri-install] as needed
+5. **Bundler** - this is a one-liner: `gem install bundler`
 
 Now checkout the repository:
 
