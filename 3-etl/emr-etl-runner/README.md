@@ -50,7 +50,7 @@ EmrEtlRunner in turn depends heavily on [Rob Slifka] [rslifka]'s excellent [Elas
 
 ## Copyright and license
 
-SnowPlow is copyright 2012 SnowPlow Analytics Ltd.
+SnowPlow::EmrEtlRunner is copyright 2012 SnowPlow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
