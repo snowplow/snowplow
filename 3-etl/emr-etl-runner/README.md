@@ -6,14 +6,14 @@ SnowPlow::EmrEtlRunner is a Ruby gem (built with [Bundler] [bundler]) to run Sno
 
 ## Deployment and configuration
 
-For detailed instructions on setting up EmrEtlRunner on your server, please see the [Deploying the EMR-ETL-Runner] [deploying-emr-etl-runner] guide on the SnowPlow Analytics wiki.
+For detailed instructions on setting up EmrEtlRunner on your server, please see the [Deploying the EMR ETL Runner] [deploying-emr-etl-runner] guide on the SnowPlow Analytics wiki.
 
 ## Contributing
 
 If you want to hack on EmrEtlRunner locally, first make sure that you have the following dependencies installed:
 
-1. Git installed. Please see the [Git Installation Guide] [git-install] as needed  
-2 **Ruby**. Please see the [Ruby Download Instructions] [ruby-install] as needed
+1. **Git**. Please see the [Git Installation Guide] [git-install] as needed  
+2. **Ruby**. Please see the [Ruby Download Instructions] [ruby-install] as needed
 3. **RubyGems**. Please see the [RubyGems Installation Instructions] [rubygems-install]
    as needed
 4. **Nokogiri**. Please see the [Installing Nokogiri Guide] [nokogiri-install] as needed
@@ -23,22 +23,22 @@ Now checkout the repository:
 
     $ git clone git://github.com/snowplow/snowplow.git
     
-Next install the SnowPlow::ETL gem on your system:
+Next install the gem on your system:
 
     $ cd snowplow/3-etl/emr-etl-runner
-    $ gem build snowplow-etl.gemspec 
-    $ sudo gem install snowplow-etl-0.0.1.gem
+    $ gem build snowplow-emr-etl-runner.gemspec 
+    $ sudo gem install snowplow-emr-etl-runner-0.0.1.gem
     $ bundle install
 
 Finally, test that the gem was installed successfully:
 
-    $ bundle exec snowplow-etl --version
-    snowplow-etl 0.0.1
+    $ bundle exec snowplow-emr-etl-runner --version
+    snowplow-emr-etl-runner 0.0.1
 
 Note that the `bundle exec` command will only work when you are inside the 
 `emr-etl-runner` folder.
 
-That's it! Next, head over to the [Deploying the EMR-ETL-Runner] [deploying-emr-etl-runner] guide for help on configuring and running your local copy of EmrEtlRunner.
+That's it! Next, head over to the [Deploying the EMR ETL Runner] [deploying-emr-etl-runner] guide for help on configuring and running your local copy of EmrEtlRunner.
 
 Happy hacking!
 
