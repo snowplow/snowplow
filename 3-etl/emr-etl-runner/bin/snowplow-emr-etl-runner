@@ -34,8 +34,6 @@ require 'emr_jobs'
 begin
   config = Config.get_config()
 
-  S3Tasks.sync_assets(config)
-
   S3Tasks.stage_logs_for_emr(config)
 
   emr = EmrJobs.new(config)

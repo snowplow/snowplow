@@ -23,6 +23,8 @@ class EmrJobs
   RUNNING_STATES = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
   FAILED_STATES  = Set.new(%w(FAILED CANCELLED))
 
+  class ExecutionError < RuntimeError; end
+
   # Initializes our wrapper for the Amazon EMR client.
   #
   # Parameters:
@@ -57,7 +59,7 @@ class EmrJobs
     @jobflow.ec2_key_name = config[:ec2_key_name]
     @jobflow.placement = config[:emr_placement]
 
-    # add extra configuration
+    # Add extra configuration
     if config[:emr][:jobflow].respond_to?(:each)
       config[:emr][:jobflow].each { |key, value|
         @jobflow.send("#{key}=", value)
@@ -65,9 +67,9 @@ class EmrJobs
     end
 
     # Now add the Hive step to the jobflow
-    hive_step = Elasticity::HiveStep.new("s3n://%s%s" % [config[:s3][:buckets][:assets], hive_script])
+    hive_step = Elasticity::HiveStep.new(config[:hiveql_asset])
 
-    # add extra configuration
+    # Add extra configuration
     if config[:emr][:hive_step].respond_to?(:each)
       config[:emr][:hive_step].each { |key, value|
         hive_step.send("#{key}=", value)
@@ -75,9 +77,9 @@ class EmrJobs
     end
 
     hive_step.variables = {
-      "SERDE_FILE"      => "s3n://%s%s" % [ config[:s3][:buckets][:serde], config[:serde_file] ],
-      "CLOUDFRONT_LOGS" => "s3n://%s" % config[:s3][:buckets][:processing],
-      "EVENTS_TABLE"    => "s3n://%s" % config[:s3][:buckets][:out]
+      "SERDE_FILE"      => config[:serde_asset],
+      "CLOUDFRONT_LOGS" => config[:s3][:buckets][:processing],
+      "EVENTS_TABLE"    => config[:s3][:buckets][:out]
     }.merge(hive_args)
     @jobflow.add_step(hive_step)
   end
@@ -120,9 +122,6 @@ class EmrJobs
     if !status
       raise ExecutionError, "Hive jobflow #{jobflow_id} failed, check Amazon logs for details. Data files not archived."
     end
-  end
-
-  class ExecutionError < RuntimeError
   end
 
 end
