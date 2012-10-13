@@ -46,7 +46,7 @@ Happy hacking!
 
 SnowPlow::EmrEtlRunner was primarily developed by [Alex Dean] [alexanderdean] ([SnowPlow Analytics] [snowplow-analytics]), with substantial contributions from [Michael Tibben] [mtibben] ([99designs] [99designs]). Thank you Michael!
 
-EmrEtlRunner in turn depends heavily on [Rob Slifka] [rslifka]'s excellent [Elasticity] [elasticity] Ruby gem, which provides programmatic access to Amazon's Elastic Map Reduce service. Huge thanks to Rob for writing Elasticity!
+EmrEtlRunner in turn depends heavily on [Rob Slifka] [rslifka]'s excellent [Elasticity] [elasticity] Ruby gem, which provides programmatic access to Amazon EMR. Huge thanks to Rob for writing Elasticity!
 
 ## Copyright and license
 
