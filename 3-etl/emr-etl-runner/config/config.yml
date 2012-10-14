@@ -4,7 +4,7 @@
 :s3:
   :buckets:
     # Update assets if you want to host the serde and HiveQL yourself
-    :assets: 's3://pbz-snowplow-emr-assets'
+    :assets: 's3n://pbz-snowplow-emr-assets'
     :in: 'ADD HERE'
     :processing: 'ADD HERE'
     :out: 'ADD HERE'
