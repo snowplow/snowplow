@@ -12,11 +12,10 @@ For detailed instructions on setting up EmrEtlRunner on your server, please see 
 
 If you want to hack on EmrEtlRunner locally, first make sure that you have the following dependencies installed:
 
-1. **Git** - see the [Git Installation Guide] [git-install] as needed  
-2. **Ruby** - see the [Ruby Download Instructions] [ruby-install] as needed
+1. **Git** - see the [Git Installation Guide] [git-install]
+2. **Ruby** - see the [Ruby Download Instructions] [ruby-install]
 3. **RubyGems** - see the [RubyGems Installation Instructions] [rubygems-install]
-   as needed
-4. **Nokogiri** - see the [Installing Nokogiri Guide] [nokogiri-install] as needed
+4. **Nokogiri** - see the [Installing Nokogiri Guide] [nokogiri-install]
 5. **Bundler** - this is a one-liner: `gem install bundler`
 
 Now checkout the repository:
@@ -43,9 +42,9 @@ Happy hacking!
 
 ## Credits and thanks
 
-SnowPlow::EmrEtlRunner was primarily developed by [Alex Dean] [alexanderdean] ([SnowPlow Analytics] [snowplow-analytics]), with substantial contributions from [Michael Tibben] [mtibben] ([99designs] [99designs]). Thank you Michael!
+SnowPlow::EmrEtlRunner was primarily developed by [Alex Dean] [alexanderdean] ([SnowPlow Analytics] [snowplow-analytics]), with substantial contributions from [Michael Tibben] [mtibben] ([99designs] [99designs]). Huge thanks Michael!
 
-EmrEtlRunner in turn depends heavily on [Rob Slifka] [rslifka]'s excellent [Elasticity] [elasticity] Ruby gem, which provides programmatic access to Amazon EMR. Huge thanks to Rob for writing Elasticity!
+EmrEtlRunner in turn depends heavily on [Rob Slifka] [rslifka]'s excellent [Elasticity] [elasticity] Ruby gem, which provides programmatic access to Amazon EMR. Big thanks to Rob for writing Elasticity!
 
 ## Copyright and license
 
