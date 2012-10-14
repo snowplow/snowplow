@@ -35,8 +35,7 @@ Finally, test that the gem was installed successfully:
     $ bundle exec snowplow-emr-etl-runner --version
     snowplow-emr-etl-runner 0.0.2
 
-Note that the `bundle exec` command will only work when you are inside the 
-`emr-etl-runner` folder.
+Note that the `bundle exec` command will only work when you are inside the `emr-etl-runner` folder.
 
 That's it! Next, head over to the [Deploying the EMR ETL Runner] [deploying-emr-etl-runner] guide for help on configuring and running your local copy of EmrEtlRunner.
 

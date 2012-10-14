@@ -42,7 +42,6 @@ module Config
     config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| trail.call(v)}
 
     config[:hadoop_version] = config[:emr][:hadoop_version]
-    config[:s3_location] = config[:s3][:location]
     config[:emr_placement] = config[:emr][:placement]
     config[:ec2_key_name] = config[:emr][:ec2_key_name]
 
