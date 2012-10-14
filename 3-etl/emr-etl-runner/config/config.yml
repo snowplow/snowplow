@@ -19,7 +19,7 @@
     :instance_count: 2
     :master_instance_type: 'm1.small'
     :slave_instance_type: 'm1.small'
-# Can bump the below as new versions are released
+# Can bump the below as SnowPlow releases new versions
 :snowplow:
   :serde_version: '0.4.9'
   :hiveql_version: '0.4.10'
