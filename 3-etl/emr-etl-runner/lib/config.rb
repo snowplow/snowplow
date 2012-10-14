@@ -24,6 +24,8 @@ module Config
   # What are we called?
   SCRIPT_NAME = SnowPlow::EmrEtlRunner::SCRIPT_NAME
 
+  class ConfigError < ArgumentError; end
+
   # Return the configuration loaded from the supplied YAML file, plus
   # the additional constants above.
   def Config.get_config()
@@ -44,7 +46,7 @@ module Config
     config[:emr_placement] = config[:emr][:placement]
     config[:ec2_key_name] = config[:emr][:ec2_key_name]
 
-    asset_path = "%s/hive" % [config[:s3][:buckets][:assets]
+    asset_path = "%s/hive" % config[:s3][:buckets][:assets]
     config[:serde_asset] = "%s/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
     config[:hiveql_asset] = "%s/hiveql/datespan-etl-%s.q" % [asset_path, config[:snowplow][:hiveql_version]]
 
@@ -100,9 +102,6 @@ module Config
     end
 
     options
-  end
-
-  class ConfigError < ArgumentError
   end
 
 end

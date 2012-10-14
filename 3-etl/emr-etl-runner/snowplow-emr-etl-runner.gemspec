@@ -5,7 +5,7 @@ Gem::Specification.new do |gem|
   gem.authors       = ["Alex Dean <support@snowplowanalytics.com>"]
   gem.email         = ["support@snowplowanalytics.com"]
   gem.summary       = %q{Runs the SnowPlow Hive ETL on EMR}
-  gem.description   = %q{A Bundler RubyGem to run SnowPlow's Hive ETL job on Amazon Elastic MapReduce. Uses Elasticity and Fog}
+  gem.description   = %q{A Ruby gem to run SnowPlow's Hive ETL job on Amazon Elastic MapReduce. Uses Elasticity and Fog}
   gem.homepage      = "http://snowplowanalytics.com"
 
   gem.files         = `git ls-files`.split($\)
@@ -16,6 +16,7 @@ Gem::Specification.new do |gem|
   gem.platform      = Gem::Platform::RUBY
   gem.require_paths = ["lib"]
 
+  # Only dependencies
   gem.add_dependency 'elasticity', '~> 2.5'
   gem.add_dependency 'fog', '~> 1.6.0'
 end

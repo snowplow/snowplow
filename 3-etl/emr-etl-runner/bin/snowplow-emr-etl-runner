@@ -44,11 +44,11 @@ begin
 rescue Config::ConfigError, EmrJobs::ExecutionError => e
   $stderr.puts(e.message)
   exit 1
+rescue SystemExit => e
+  exit 1
 rescue Exception => e
   $stderr.puts("Unexpected error: " + e.message)
   $stderr.puts(e.backtrace.join("\n"))
-  exit 1
-rescue SystemExit => e
   exit 1
 end
 
