@@ -4,11 +4,12 @@
 :s3:
   :buckets:
     # Update assets if you want to host the serde and HiveQL yourself
-    :assets: 's3n://snowplow-emr-assets'
-    :in: 'ADD HERE'
-    :processing: 'ADD HERE'
-    :out: 'ADD HERE'
-    :archive: 'ADD HERE'
+    :assets: 's3://snowplow-emr-assets'
+    :log: 'ADD HERE WITH PROTOCOL'
+    :in: 'ADD HERE WITHOUT PROTOCOL'
+    :processing: 'ADD HERE WITHOUT PROTOCOL'
+    :out: 'ADD HERE WITHOUT PROTOCOL'
+    :archive: 'ADD HERE WITHOUT PROTOCOL'
 :emr:
   # Can bump the below as EMR upgrades Hadoop
   :hadoop_version: '1.0.3'

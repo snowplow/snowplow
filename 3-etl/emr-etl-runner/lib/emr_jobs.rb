@@ -55,9 +55,10 @@ class EmrJobs
     end
 
     # Additional configuration
-    @jobflow.hadoop_version = config[:hadoop_version]
-    @jobflow.ec2_key_name = config[:ec2_key_name]
-    @jobflow.placement = config[:emr_placement]
+    @jobflow.hadoop_version = config[:emr][:hadoop_version]
+    @jobflow.ec2_key_name = config[:emr][:ec2_key_name]
+    @jobflow.placement = config[:emr][:placement]
+    @jobflow.log_uri = config[:s3][:buckets][:log]
 
     # Add extra configuration
     if config[:emr][:jobflow].respond_to?(:each)
