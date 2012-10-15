@@ -28,14 +28,18 @@ module S3Tasks
 
     # Parameters:
     # +s3location+:: the s3 location config string e.g. "bucket/directory"
-    def initialize(s3location)
-      @s3location = s3location
+    def initialize(s3_location)
+      @s3_location = s3_location
 
-      s3location_match = s3location.match('^([^/]+)/?(.*)/$');
-      raise ArgumentError, 'Bad s3 location' unless s3location_match
+      s3_location_match = s3_location.match('^s3n?://([^/]+)/?(.*)/$')
+      raise ArgumentError, 'Bad s3 location %s' % s3_location unless s3_location_match
 
-      @bucket = s3location_match[1]
-      @dir = s3location_match[2]
+      @bucket = s3_location_match[1]
+      @dir = s3_location_match[2]
+
+      puts ">>> BUCKET = %s" % @bucket
+      puts ">>> DIR = %s" % dir
+
     end
 
     def dir_as_path
@@ -47,7 +51,7 @@ module S3Tasks
     end
 
     def to_s
-      @s3location
+      @s3_location
     end
   end
 
