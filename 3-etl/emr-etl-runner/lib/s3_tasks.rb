@@ -36,10 +36,6 @@ module S3Tasks
 
       @bucket = s3_location_match[1]
       @dir = s3_location_match[2]
-
-      puts ">>> BUCKET = %s" % @bucket
-      puts ">>> DIR = %s" % dir
-
     end
 
     def dir_as_path
