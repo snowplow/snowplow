@@ -58,11 +58,7 @@ module S3Tasks
   def stage_logs_for_emr(config)
     puts 'Staging CloudFront logs...'
 
-    s3 = Fog::Storage.new({
-      :provider => 'AWS',
-      :aws_access_key_id => config[:aws][:access_key_id],
-      :aws_secret_access_key => config[:aws][:secret_access_key]
-    })
+    s3 = new_s3_from(config)
 
     # get s3 locations
     in_location = S3Location.new(config[:s3][:buckets][:in]);
@@ -93,11 +89,7 @@ module S3Tasks
   def archive_logs(config)
     puts 'Archiving CloudFront logs...'
 
-    s3 = Fog::Storage.new({
-      :provider => 'AWS',
-      :aws_access_key_id => config[:aws][:access_key_id],
-      :aws_secret_access_key => config[:aws][:secret_access_key]
-    })
+    s3 = new_s3_from(config)
 
     # Get s3 locations
     processing_location = S3Location.new(config[:s3][:buckets][:processing]);
@@ -118,6 +110,21 @@ module S3Tasks
   end
   module_function :archive_logs
 
+  # Helper function to instantiate a new Fog::Storage
+  # for S3 based on our config options
+  #
+  # Parameters:
+  # +config+:: the hash of configuration options
+  def new_s3_from(config)
+    Fog::Storage.new({
+      :provider => 'AWS',
+      :region => config[:s3][:region],
+      :aws_access_key_id => config[:aws][:access_key_id],
+      :aws_secret_access_key => config[:aws][:secret_access_key]
+    })
+  end
+  module_function :new_s3_from
+
   # Moves files between s3 locations concurrently
   #
   # Parameters:
@@ -128,7 +135,7 @@ module S3Tasks
   # +alter_filename_lambda+:: lambda to alter the written filename
   def move_files(s3, from_location, to_location, match_regex='.+', alter_filename_lambda=false)
 
-    puts "   moving files from #{from_location} to #{to_location}"
+    puts "  moving files from #{from_location} to #{to_location}"
 
     files_to_move = []
     threads = []
@@ -136,7 +143,6 @@ module S3Tasks
     complete = false
     marker_opts = {}
     s3_retries = 3
-
 
     # if an exception is thrown in a thread that isn't handled, die quickly
     Thread.abort_on_exception = true
@@ -192,17 +198,17 @@ module S3Tasks
             filename = file_match[1]
           end
 
-
           puts "    #{from_location.bucket}/#{file.key} -> #{to_location.bucket}/#{to_location.dir_as_path}#{filename}"
 
           # copy file
           i = 0
           begin
             file.copy(to_location.bucket, to_location.dir_as_path + filename)
+            puts "      #{from_location.bucket}/#{file.key} +-> #{to_location.bucket}/#{to_location.dir_as_path}#{filename}"
           rescue
             raise unless i < s3_retries
             puts "Problem copying #{file.key}. Retrying.", $!, $@
-            sleep(5)  # give us a bit of time before retrying
+            sleep(10)  # give us a bit of time before retrying
             i += 1
             retry
           end
@@ -211,10 +217,11 @@ module S3Tasks
           i = 0
           begin
             file.destroy()
+            puts "      x #{from_location.bucket}/#{file.key}"
           rescue
             raise unless i < s3_retries
             puts "Problem destroying #{file.key}. Retrying.", $!, $@
-            sleep(5) # give us a bit of time before retrying
+            sleep(10) # give us a bit of time before retrying
             i += 1
             retry
           end
@@ -226,7 +233,7 @@ module S3Tasks
     threads.each { |aThread|  aThread.join }
 
     # wait for s3 to eventually become consistant
-    puts "Waiting a minute to allow S3 to settle (eventual consistancy)"
+    puts "Waiting a minute to allow S3 to settle (eventual consistency)"
     sleep(60)
 
   end

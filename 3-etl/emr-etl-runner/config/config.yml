@@ -2,6 +2,7 @@
   :access_key_id: 'ADD HERE'
   :secret_access_key: 'ADD HERE'
 :s3:
+  :region: 'ADD HERE'
   :buckets:
     # Update assets if you want to host the serde and HiveQL yourself
     :assets: 's3://snowplow-emr-assets'
