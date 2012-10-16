@@ -157,8 +157,8 @@ public class SnowPlowEventDeserializer implements Deserializer {
       row = field.toString();
     }
     try {
-      // Construct and return the S3LogStruct from the row data
-      cachedStruct.parse(row);
+      // Update in place the S3LogStruct with the row data
+      cachedStruct.updateByParsing(row);
       return cachedStruct;
     } catch (ClassCastException e) {
       throw new SerDeException(this.getClass().getName() + " expects Text or BytesWritable", e);

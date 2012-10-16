@@ -29,6 +29,7 @@ import java.util.regex.PatternSyntaxException;
 import org.apache.hadoop.hive.serde2.SerDeException;
 
 // Java Library for User-Agent Information
+// TODO: we may well update this to a better lib
 import nl.bitwalker.useragentutils.*;
 
 // Apache URLEncodedUtils
@@ -55,6 +56,9 @@ public class SnowPlowEventStruct {
 
   // Transaction (i.e. this logging event)
   public String txn_id;
+
+  // The application (site, game, app etc) this event belongs to
+  public String app_id;
 
   // User and visit
   public String user_id;
@@ -105,6 +109,25 @@ public class SnowPlowEventStruct {
   public Integer dvce_screenwidth;
   public Integer dvce_screenheight;
 
+  // Ecommerce transaction (from querystring)
+  public String tr_orderid;
+  public String tr_affiliation;
+  public String tr_total;
+  public String tr_tax;
+  public String tr_shipping;
+  public String tr_city;
+  public String tr_state;
+  public String tr_country;
+
+  // Ecommerce transaction item (from querystring)
+  public String ti_orderid;
+  public String ti_sku;
+  public String ti_name;
+  public String ti_category;
+  public String ti_price;
+  public String ti_quantity;
+
+
   // -------------------------------------------------------------------------------------------------------------------
   // Static configuration
   // -------------------------------------------------------------------------------------------------------------------
@@ -112,7 +135,7 @@ public class SnowPlowEventStruct {
   private static final String cfEncoding = "UTF-8";
 
   // An enum of all the fields we're expecting in the querystring
-  private static enum QuerystringFields { TID, UID, VID, TSTAMP, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA }
+  private static enum QuerystringFields { TID, AID, UID, VID, TSTAMP, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
 
   // An enum for the marketing attribution fields we might find
   // attached to the page URL.
@@ -149,50 +172,17 @@ public class SnowPlowEventStruct {
    * within this SnowPlowEventStruct, rather than creating a new one.
    *
    * @param row The raw String containing the row contents
-   * @return This struct with all values updated
+   * @return true if row was successfully parsed, false otherwise
    * @throws SerDeException For any exception during parsing
    */
-  public Object parse(String row) throws SerDeException {
+  public boolean updateByParsing(String row) throws SerDeException {
 
-    // Null everything before we start
-    this.dt = null;
-    this.tm = null;
-    this.txn_id = null;
-    this.user_id = null;
-    this.user_ipaddress = null;
-    this.visit_id = null;
-    this.page_url = null;
-    this.page_title = null;
-    this.page_referrer = null;
-    this.mkt_medium = null;
-    this.mkt_source = null;
-    this.mkt_term = null;
-    this.mkt_content = null;
-    this.mkt_campaign = null;
-    this.ev_category = null;
-    this.ev_action = null;
-    this.ev_label = null;
-    this.ev_property = null;
-    this.ev_value = null;
-    this.br_name = null;
-    this.br_family = null;
-    this.br_version = null;
-    this.br_type = null;
-    this.br_renderengine = null;
-    this.br_lang = null;
-    this.br_features.clear(); // Empty the ArrayList, don't destroy it
-    this.br_cookies = null;
-    this.os_name = null;
-    this.os_family = null;
-    this.os_manufacturer = null;
-    this.dvce_type = null;
-    this.dvce_ismobile = null;
-    this.dvce_screenwidth = null;
-    this.dvce_screenheight = null;
+    // First we reset the object's fields
+    nullify();
 
     // We have to handle any header rows
     if (row.startsWith("#Version:") || row.startsWith("#Fields:")) {
-      return null; // Empty row will be discarded by Hive
+      return false; // Empty row will be discarded by Hive
     }
 
     final Matcher m = cfRegex.matcher(row);
@@ -211,7 +201,7 @@ public class SnowPlowEventStruct {
       final String object = m.group(8);
       final String querystring = m.group(12);
       if (!(object.startsWith("/ice.png") || object.equals("/i") || object.startsWith("/i?")) || isNullField(querystring)) { // Also works if Forward Query String = yes
-        return null;
+        return false;
       }
 
       // 1. Now we retrieve the fields which get directly passed through
@@ -269,6 +259,9 @@ public class SnowPlowEventStruct {
               case TID:
                 this.txn_id = value;
                 break;
+              case AID:
+                this.app_id = value;
+                break;
               case UID:
                 this.user_id = value;
                 break;
@@ -282,8 +275,9 @@ public class SnowPlowEventStruct {
                   this.dt = timestamp[0];
                   this.tm = timestamp[1];
                 } catch (Exception e) {
-                  // Return a null row on invalid data
-                  return null;
+                  // We've started setting fields, so we need to reset the object
+                  nullify();
+                  return false;
                 }
               case LANG:
                 this.br_lang = value;
@@ -297,8 +291,9 @@ public class SnowPlowEventStruct {
                   this.dvce_screenwidth = Integer.parseInt(resolution[0]);
                   this.dvce_screenheight = Integer.parseInt(resolution[1]);
                 } catch (Exception e) {
-                  // Return a null row on invalid data
-                  return null;
+                  // We've started setting fields, so we need to reset the object
+                  nullify();
+                  return false;
                 }
                 break;
               case REFR:
@@ -329,10 +324,55 @@ public class SnowPlowEventStruct {
               case EV_VA:
                 this.ev_value = decodeSafeString(value);
                 break;
+
+              // Ecommerce
+              case TR_ID:
+                this.tr_orderid = decodeSafeString(value);
+                break;
+              case TR_AF:
+                this.tr_affiliation = decodeSafeString(value);
+                break;
+              case TR_TT:
+                this.tr_total = decodeSafeString(value);
+                break;
+              case TR_TX:
+                this.tr_tax = decodeSafeString(value);
+                break;
+              case TR_SH:
+                this.tr_shipping = decodeSafeString(value);
+                break;
+              case TR_CI:
+                this.tr_city = decodeSafeString(value);
+                break;
+              case TR_ST:
+                this.tr_state = decodeSafeString(value);
+                break;
+              case TR_CO:
+                this.tr_country = decodeSafeString(value);
+                break;
+              case TI_ID:
+                this.ti_orderid = decodeSafeString(value);
+                break;
+              case TI_SK:
+                this.ti_sku = decodeSafeString(value);
+                break;
+              case TI_NA:
+                this.ti_name = decodeSafeString(value);
+                break;
+              case TI_CA:
+                this.ti_category = decodeSafeString(value);
+                break;
+              case TI_PR:
+                this.ti_price = decodeSafeString(value);
+                break;
+              case TI_QU:
+                this.ti_quantity = decodeSafeString(value);
+                break;
             }
           } catch (IllegalArgumentException iae) {
-            // Return a null row on invalid data
-            return null;
+            // We've started setting fields, so we need to reset the object
+            nullify();
+            return false;
           }
         }
       }
@@ -386,7 +426,76 @@ public class SnowPlowEventStruct {
       throw new SerDeException("Could not parse row: \"" + row + "\"", e);
     }
 
-    return this; // Return the SnowPlowEventStruct
+    return true; // Successfully updated the row.
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Initializer & scrubber
+  // -------------------------------------------------------------------------------------------------------------------
+
+  /**
+   * Because we are always re-using the same object
+   * (for performance reasons), we need a mechanism
+   * for nulling all the fields. We null all the
+   * fields at two points in time:
+   * 1. When we're re-initializing the object ready
+   *    to parse a new row into it
+   * 2. If the parsing failed part way through and we
+   *    we need to null all the fields again (so that
+   *    Hive silently discards the row)
+   */
+  private void nullify() {
+
+    // Null all the things
+    this.dt = null;
+    this.tm = null;
+    this.txn_id = null;
+    this.app_id = null;
+    this.user_id = null;
+    this.user_ipaddress = null;
+    this.visit_id = null;
+    this.page_url = null;
+    this.page_title = null;
+    this.page_referrer = null;
+    this.mkt_medium = null;
+    this.mkt_source = null;
+    this.mkt_term = null;
+    this.mkt_content = null;
+    this.mkt_campaign = null;
+    this.ev_category = null;
+    this.ev_action = null;
+    this.ev_label = null;
+    this.ev_property = null;
+    this.ev_value = null;
+    this.br_name = null;
+    this.br_family = null;
+    this.br_version = null;
+    this.br_type = null;
+    this.br_renderengine = null;
+    this.br_lang = null;
+    this.br_features.clear(); // Empty the ArrayList, don't destroy it
+    this.br_cookies = null;
+    this.os_name = null;
+    this.os_family = null;
+    this.os_manufacturer = null;
+    this.dvce_type = null;
+    this.dvce_ismobile = null;
+    this.dvce_screenwidth = null;
+    this.dvce_screenheight = null;
+    this.tr_orderid = null;
+    this.tr_affiliation = null;
+    this.tr_total = null;
+    this.tr_tax = null;
+    this.tr_shipping = null;
+    this.tr_city = null;
+    this.tr_state = null;
+    this.tr_country = null;
+    this.ti_orderid = null;
+    this.ti_sku = null;
+    this.ti_name = null;
+    this.ti_category = null;
+    this.ti_price = null;
+    this.ti_quantity = null;
   }
 
   // -------------------------------------------------------------------------------------------------------------------

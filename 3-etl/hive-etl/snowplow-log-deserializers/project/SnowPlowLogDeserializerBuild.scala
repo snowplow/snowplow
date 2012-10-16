@@ -34,7 +34,8 @@ object SnowPlowLogDeserializerBuild extends Build {
         Libraries.httpClient,
         Libraries.httpCore,
         Libraries.logging,
-        Libraries.specs2
+        Libraries.specs2,
+        Libraries.scalaUtil
       )
     )
 }

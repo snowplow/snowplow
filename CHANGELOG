@@ -1,3 +1,18 @@
+Version 0.4.10 (2012-10-10)
+---------------------------
+SnowCannon: bumped submodule to latest shermozle/SnowCannon commit
+HiveQL: moved app_id to end of table for backwards compatibility
+HiveQL: fixed bug where pointing to serde 0.4.8 NOT new serde 0.4.9
+
+Version 0.4.9 (2012-10-01)
+--------------------------
+Serde: fixed bug where row not nulled if a critical field un-parseable
+Serde: added support for new application ID (#33)
+Serde: added deserialization of ecommerce fields, plus tests (#34, #51)
+Serde: test suite enhancements (adding Scala helper objects)
+Serde: added tests including #13 and #10
+snowplow.js: renamed said to aid for application ID
+
 Version 0.4.8 (2012-09-14)
 --------------------------
 Serde: added support for /i as well as /ice.png (issue #35)
@@ -7,7 +22,7 @@ Serde: made marketing attribution parsing more robust
 
 Version 0.4.7 (2012-09-05)
 --------------------------
-snowplow.js: bump to version 0.6
+snowplow.js: bumped to version 0.6
 snowplow.js: added setSiteId functionality
 snowplow.js: added ecommerce tracking
 

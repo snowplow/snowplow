@@ -3,7 +3,7 @@
 ## Introduction
 
 Hive is a very powerful tool for querying SnowPlow data.
-A [cookbook of Hive recipes] [analyst-cookbook] is provided in the wiki: it provides a growing list of techniques and queries to use Hive to interrogate SnowPlow data.
+An [Analyst's Cookbook] [analyst-cookbook] of Hive "recipes" is provided on the SnowPlow Analytics website: it provides a growing list of techniques and queries to use Hive to interrogate SnowPlow data.
 
 ## Example queries
 
@@ -41,7 +41,7 @@ Here are some example Hive queries which can be run on the SnowPlow data:
 
 Besides this README, we recommend reading:
 
-* The [analyst cookbook] [analyst-cookbook], a growing list of techniques and queries for interrogating SnowPlow data using Hive
+* The [SnowPlow Analyst's Cookbook] [analyst-cookbook], a growing list of techniques and queries for interrogating SnowPlow data using Hive
 
 ## Copyright and license
 
@@ -56,7 +56,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[analyst-cookbook]: https://github.com/snowplow/snowplow/wiki/Analysts-cookbook
+[analyst-cookbook]: http://snowplowanalytics.com/analytics/index.html
 [serdes]: https://github.com/snowplow/snowplow-log-deserializers
 [hive]: http://hive.apache.org/
 [serdereadme]: https://github.com/snowplow/snowplow-log-deserializers/blob/master/README.md
