@@ -204,7 +204,7 @@ module S3Tasks
           i = 0
           begin
             file.copy(to_location.bucket, to_location.dir_as_path + filename)
-            puts "      #{from_location.bucket}/#{file.key} +-> #{to_location.bucket}/#{to_location.dir_as_path}#{filename}"
+            puts "      +-> #{to_location.bucket}/#{to_location.dir_as_path}#{filename}"
           rescue
             raise unless i < s3_retries
             puts "Problem copying #{file.key}. Retrying.", $!, $@

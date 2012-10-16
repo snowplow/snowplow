@@ -6,39 +6,11 @@ SnowPlow::EmrEtlRunner is a Ruby gem (built with [Bundler] [bundler]) to run Sno
 
 ## Deployment and configuration
 
-For detailed instructions on setting up EmrEtlRunner on your server, please see the [Deploying the EMR ETL Runner] [deploying-emr-etl-runner] guide on the SnowPlow Analytics wiki.
+For detailed instructions on installing, running and scheduling EmrEtlRunner on your server, please see the [Deploying the EMR ETL Runner] [deploying-emr-etl-runner] guide on the SnowPlow Analytics wiki.
 
 ## Contributing
 
-If you want to hack on EmrEtlRunner locally, first make sure that you have the following dependencies installed:
-
-1. **Git** - see the [Git Installation Guide] [git-install]
-2. **Ruby** - see the [Ruby Download Instructions] [ruby-install]
-3. **RubyGems** - see the [RubyGems Installation Instructions] [rubygems-install]
-4. **Nokogiri** - see the [Installing Nokogiri Guide] [nokogiri-install]
-5. **Bundler** - this is a one-liner: `gem install bundler`
-
-Now checkout the repository:
-
-    $ git clone git://github.com/snowplow/snowplow.git
-    
-Next install the gem on your system:
-
-    $ cd snowplow/3-etl/emr-etl-runner
-    $ gem build snowplow-emr-etl-runner.gemspec
-    $ sudo gem install snowplow-emr-etl-runner-0.0.2.gem
-    $ bundle install
-
-Finally, test that the gem was installed successfully:
-
-    $ bundle exec snowplow-emr-etl-runner --version
-    snowplow-emr-etl-runner 0.0.2
-
-Note that the `bundle exec` command will only work when you are inside the `emr-etl-runner` folder.
-
-That's it! Next, head over to the [Deploying the EMR ETL Runner] [deploying-emr-etl-runner] guide for help on configuring and running your local copy of EmrEtlRunner.
-
-Happy hacking!
+We will be adding a guide to contributing soon.
 
 ## Credits and thanks
 
@@ -62,11 +34,6 @@ limitations under the License.
 [bundler]: http://gembundler.com/
 [amazon-emr]: http://aws.amazon.com/elasticmapreduce/
 [deploying-emr-etl-runner]: https://github.com/snowplow/snowplow/wiki/Deploying-the-EMR-ETL-Runner
-
-[git-install]: http://git-scm.com/book/en/Getting-Started-Installing-Git
-[ruby-install]: http://www.ruby-lang.org/en/downloads/
-[nokogiri-install]: http://nokogiri.org/tutorials/installing_nokogiri.html
-[rubygems-install]: http://docs.rubygems.org/read/chapter/3
 
 [alexanderdean]: https://github.com/alexanderdean
 [snowplow-analytics]: http://snowplowanalytics.com
