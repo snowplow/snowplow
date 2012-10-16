@@ -9,7 +9,7 @@
     :log: ADD HERE
     :in: ADD HERE
     :processing: ADD HERE
-    :out: ADD HERE
+    :out: ADD HERE WITH SUB-FOLDER
     :archive: ADD HERE
 :emr:
   # Can bump the below as EMR upgrades Hadoop
