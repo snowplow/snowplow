@@ -69,14 +69,13 @@ module S3Tasks
       raise DirectoryNotEmptyError, "The processing directory is not empty"
     end
 
-    # find files with the given date range
-    dates = []
-    Date.parse(config[:start]).upto(Date.parse(config[:end])) do |day|
-      dates << day.strftime('%Y-%m-%d')
-    end
-    target_file = '(' + dates.join('|') + ')[^/]+\.gz$'
+    # Move the files we need to move (within the date span)
+    files_to_move = files_between(config[:start], config[:end])
+    move_files(s3, in_location, processing_location, target_files)
 
-    move_files(s3, in_location, processing_location, target_file);
+    # To deal with boundary issues, we also copy over the available files for the day after our date range
+    files_to_copy = files_for_day_after(config[:end])
+    puts ">>>>>>>>> TODO: need to copy files that match %s" % files_to_copy
 
   end
   module_function :stage_logs_for_emr
@@ -105,10 +104,44 @@ module S3Tasks
       end
     }
 
-    move_files(s3, processing_location, archive_location, '.+', add_date_path);
+    # Move the files we need to move (within the date span)
+    files_to_move = files_between(config[:start], config[:end])
+    move_files(s3, processing_location, archive_location, files_to_move, add_date_path);
+
+    # Delete the copies of the files from the day after our date range
+    files_to_copy = files_for_day_after(config[:end])
+    puts ">>>>>>>>> TODO: need to copy files that match %s" % files_to_copy
 
   end
   module_function :archive_logs
+
+  # Find files for the day after end_date
+  #
+  # Parameters:
+  # +end_date+:: end date
+  def files_for_day_after(end_date)
+
+    day_after = Date.parse(end_date) + 1
+    '(' + day_after + ')[^/]+\.gz$'
+  end
+  module_function :files_between
+
+  # Find files within the given date range
+  # (inclusive).
+  #
+  # Parameters:
+  # +start_date+:: start date
+  # +end_date+:: end date
+  def files_between(start_date, end_date)
+
+    dates = []
+    Date.parse(start_date).upto(Date.parse(end_date)) do |day|
+      dates << day.strftime('%Y-%m-%d')
+    end
+
+    '(' + dates.join('|') + ')[^/]+\.gz$'
+  end
+  module_function :files_between
 
   # Helper function to instantiate a new Fog::Storage
   # for S3 based on our config options
@@ -157,7 +190,7 @@ module S3Tasks
           file = false
           match = false
 
-          # critcal section
+          # Critical section
           # only allow one thread to modify the array at any time
           mutex.synchronize do
 
