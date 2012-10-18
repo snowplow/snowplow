@@ -121,8 +121,10 @@ class EmrJobs
     status = wait_for(jobflow_id)
 
     if !status
-      raise ExecutionError, "Hive jobflow #{jobflow_id} failed, check Amazon logs for details. Data files not archived."
+      raise ExecutionError, "EMR jobflow #{jobflow_id} failed, check Amazon logs for details. Data files not archived."
     end
+
+    puts "EMR jobflow #{jobflow_id} completed successfully."
   end
 
 end

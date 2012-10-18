@@ -22,6 +22,8 @@ module S3Tasks
 
   class DirectoryNotEmptyError < StandardError; end
 
+  class UnsupportedFileOperationError < StandardError; end
+
   # Class to describe an S3 location
   class S3Location
     attr_reader :bucket, :dir, :s3location
@@ -71,11 +73,15 @@ module S3Tasks
 
     # Move the files we need to move (within the date span)
     files_to_move = files_between(config[:start], config[:end])
-    move_files(s3, in_location, processing_location, target_files)
+    move_files(s3, in_location, processing_location, files_to_move)
 
     # To deal with boundary issues, we also copy over the available files for the day after our date range
     files_to_copy = files_for_day_after(config[:end])
-    puts ">>>>>>>>> TODO: need to copy files that match %s" % files_to_copy
+    copy_files(s3, in_location, processing_location, files_to_copy)
+
+    # Wait for s3 to eventually become consistant
+    puts "Waiting a minute to allow S3 to settle (eventual consistency)"
+    sleep(60)
 
   end
   module_function :stage_logs_for_emr
@@ -96,9 +102,9 @@ module S3Tasks
 
     add_date_path = lambda { |filepath|
       if m = filepath.match('[^/]+\.(\d\d\d\d-\d\d-\d\d)-\d\d\.[^/]+\.gz$')
-          filename = m[0]
-          date = m[1]
-          return date + '/' + filename
+        filename = m[0]
+        date = m[1]
+        return date + '/' + filename
       else
         return filename
       end
@@ -106,11 +112,11 @@ module S3Tasks
 
     # Move the files we need to move (within the date span)
     files_to_move = files_between(config[:start], config[:end])
-    move_files(s3, processing_location, archive_location, files_to_move, add_date_path);
+    move_files(s3, processing_location, archive_location, files_to_move, add_date_path)
 
     # Delete the copies of the files from the day after our date range
-    files_to_copy = files_for_day_after(config[:end])
-    puts ">>>>>>>>> TODO: need to copy files that match %s" % files_to_copy
+    files_to_delete = files_for_day_after(config[:end])
+    delete_files(s3, processing_location, files_to_delete)
 
   end
   module_function :archive_logs
@@ -122,9 +128,9 @@ module S3Tasks
   def files_for_day_after(end_date)
 
     day_after = Date.parse(end_date) + 1
-    '(' + day_after + ')[^/]+\.gz$'
+    '(' + day_after.strftime('%Y-%m-%d') + ')[^/]+\.gz$'
   end
-  module_function :files_between
+  module_function :files_for_day_after
 
   # Find files within the given date range
   # (inclusive).
@@ -158,19 +164,81 @@ module S3Tasks
   end
   module_function :new_s3_from
 
-  # Moves files between s3 locations concurrently
+  # Delete files from S3 locations concurrently
+  #
+  # Parameters:
+  # +s3+:: A Fog::Storage s3 connection
+  # +from+:: S3Location to delete files from
+  # +match_regex+:: a regex string to match the files to delete
+  def delete_files(s3, from_location, match_regex='.+')
+
+    puts "  deleting files from #{from_location}"
+    process_files(:delete, s3, from_location, match_regex)
+  end
+  module_function :delete_files
+
+  # Copies files between S3 locations concurrently
+  #
+  # Parameters:
+  # +s3+:: A Fog::Storage s3 connection
+  # +from+:: S3Location to copy files from
+  # +to+:: S3Location to copy files to
+  # +match_regex+:: a regex string to match the files to copy
+  # +alter_filename_lambda+:: lambda to alter the written filename
+  def copy_files(s3, from_location, to_location, match_regex='.+', alter_filename_lambda=false)
+
+    puts "  copying files from #{from_location} to #{to_location}"
+    process_files(:copy, s3, from_location, match_regex, to_location, alter_filename_lambda)
+  end
+  module_function :copy_files
+
+  # Moves files between S3 locations concurrently
   #
   # Parameters:
   # +s3+:: A Fog::Storage s3 connection
   # +from+:: S3Location to move files from
   # +to+:: S3Location to move files to
-  # +match_regex+:: a regex string to match the files to copy
+  # +match_regex+:: a regex string to match the files to move
   # +alter_filename_lambda+:: lambda to alter the written filename
   def move_files(s3, from_location, to_location, match_regex='.+', alter_filename_lambda=false)
 
     puts "  moving files from #{from_location} to #{to_location}"
+    process_files(:move, s3, from_location, match_regex, to_location, alter_filename_lambda)
+  end
+  module_function :move_files
 
-    files_to_move = []
+  # Concurrent file operations between S3 locations. Supports:
+  # - Copy
+  # - Delete
+  # - Move (= Copy + Delete)
+  #
+  # Parameters:
+  # +operation+:: Operation to perform. :copy, :delete, :move supported
+  # +s3+:: A Fog::Storage s3 connection
+  # +from+:: S3Location to process files from
+  # +match_regex+:: a regex string to match the files to process
+  # +to+:: S3Location to process files to
+  # +alter_filename_lambda+:: lambda to alter the written filename
+  def process_files(operation, s3, from_location, match_regex='.+', to_location=nil, alter_filename_lambda=false)
+
+    # Validate that the file operation makes sense
+    case operation
+    when :copy, :move
+      if to_location.nil?
+        raise UnsupportedFileOperationError "File operation %s requires a to_location to be set" % operation
+      end
+    when :delete
+      unless to_location.nil?
+        raise UnsupportedFileOperationError "File operation %s does not support the to_location argument" % operation
+      end
+      if alter_filename_lambda.class == Proc
+        raise UnsupportedFileOperationError "File operation %s does not support the alter_filename_lambda argument" % operation
+      end
+    else
+      raise UnsupportedFileOperationError "File operation %s is unsupported. Try :copy, :delete or :move" % operation
+    end
+
+    files_to_process = []
     threads = []
     mutex = Mutex.new
     complete = false
@@ -183,7 +251,7 @@ module S3Tasks
     # create ruby threads to concurrently execute s3 operations
     for i in (0...10)
 
-      # each thread pops a file off the files_to_move array, and moves it.
+      # each thread pops a file off the files_to_process array, and moves it.
       # We loop until there are no more files
       threads << Thread.new do
         loop do
@@ -195,26 +263,26 @@ module S3Tasks
           mutex.synchronize do
 
             while !complete && !match do
-              if files_to_move.size == 0
+              if files_to_process.size == 0
                 # s3 batches 1000 files per request
                 # we load up our array with the files to move
                 #puts "-- loading more results"
-                files_to_move = s3.directories.get(from_location.bucket, :prefix => from_location.dir).files.all(marker_opts)
-                #puts "-- got #{files_to_move.size} results"
+                files_to_process = s3.directories.get(from_location.bucket, :prefix => from_location.dir).files.all(marker_opts)
+                #puts "-- got #{files_to_process.size} results"
                 # if we don't have any files after the s3 request, we're complete
-                if files_to_move.size == 0
+                if files_to_process.size == 0
                   complete = true
                   next
                 else
-                  marker_opts['marker'] = files_to_move.last.key
+                  marker_opts['marker'] = files_to_process.last.key
 
                   # By reversing the array we can use pop and get FIFO behaviour
                   # instead of the performance penalty incurred by unshift
-                  files_to_move = files_to_move.reverse
+                  files_to_process = files_to_process.reverse
                 end
               end
 
-              file = files_to_move.pop
+              file = files_to_process.pop
               match = file.key.match(match_regex)
             end
           end
@@ -231,32 +299,44 @@ module S3Tasks
             filename = file_match[1]
           end
 
-          puts "    #{from_location.bucket}/#{file.key} -> #{to_location.bucket}/#{to_location.dir_as_path}#{filename}"
-
-          # copy file
-          i = 0
-          begin
-            file.copy(to_location.bucket, to_location.dir_as_path + filename)
-            puts "      +-> #{to_location.bucket}/#{to_location.dir_as_path}#{filename}"
-          rescue
-            raise unless i < s3_retries
-            puts "Problem copying #{file.key}. Retrying.", $!, $@
-            sleep(10)  # give us a bit of time before retrying
-            i += 1
-            retry
+          # What are we doing?
+          case operation
+          when :move
+            puts "    MOVE #{from_location.bucket}/#{file.key} -> #{to_location.bucket}/#{to_location.dir_as_path}#{filename}"            
+          when :copy
+            puts "    COPY #{from_location.bucket}/#{file.key} +-> #{to_location.bucket}/#{to_location.dir_as_path}#{filename}"  
+          when :delete
+            puts "    DELETE x #{from_location.bucket}/#{file.key}" 
           end
 
-          # delete file
-          i = 0
-          begin
-            file.destroy()
-            puts "      x #{from_location.bucket}/#{file.key}"
-          rescue
-            raise unless i < s3_retries
-            puts "Problem destroying #{file.key}. Retrying.", $!, $@
-            sleep(10) # give us a bit of time before retrying
-            i += 1
-            retry
+          # A move or copy starts with a copy file
+          if [:move, :copy].include? operation
+            i = 0
+            begin
+              file.copy(to_location.bucket, to_location.dir_as_path + filename)
+              puts "      +-> #{to_location.bucket}/#{to_location.dir_as_path}#{filename}"
+            rescue
+              raise unless i < s3_retries
+              puts "Problem copying #{file.key}. Retrying.", $!, $@
+              sleep(10)  # give us a bit of time before retrying
+              i += 1
+              retry
+            end
+          end
+
+          # A move or delete ends with a delete
+          if [:move, :delete].include? operation
+            i = 0
+            begin
+              file.destroy()
+              puts "      x #{from_location.bucket}/#{file.key}"
+            rescue
+              raise unless i < s3_retries
+              puts "Problem destroying #{file.key}. Retrying.", $!, $@
+              sleep(10) # give us a bit of time before retrying
+              i += 1
+              retry
+            end
           end
         end
       end
@@ -265,11 +345,7 @@ module S3Tasks
     # wait for threads to finish
     threads.each { |aThread|  aThread.join }
 
-    # wait for s3 to eventually become consistant
-    puts "Waiting a minute to allow S3 to settle (eventual consistency)"
-    sleep(60)
-
   end
-  module_function :move_files
+  module_function :process_files
 
 end
