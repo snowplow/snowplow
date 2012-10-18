@@ -108,7 +108,7 @@ class EmrJobs
       end
 
       # Otherwise sleep a while
-      sleep(5) #*60)
+      sleep(60)
     end
   end
 
