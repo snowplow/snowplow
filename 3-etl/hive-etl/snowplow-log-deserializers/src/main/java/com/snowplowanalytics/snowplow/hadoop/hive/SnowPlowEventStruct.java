@@ -25,6 +25,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+// Commons Logging
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 // Hive
 import org.apache.hadoop.hive.serde2.SerDeException;
 
@@ -45,6 +49,9 @@ import org.apache.http.client.utils.URLEncodedUtils;
  * Constructor is empty because we do updates-in-place for performance reasons.
  */
 public class SnowPlowEventStruct {
+
+  // Setup logging - instantiated lazily
+  private static Log _LOG;
 
   // -------------------------------------------------------------------------------------------------------------------
   // Mutable properties for this Hive struct
@@ -161,6 +168,14 @@ public class SnowPlowEventStruct {
                                                    + w +  "[\\S]+"    // ResultType    / x-edge-result-type added 12 Sep 2012
                                                    + w +  "[\\S]+)?"  // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
                                          );
+
+  // Logging helper instantiated lazily
+  private static Log getLog() {
+    if (_LOG == null)
+      _LOG = LogFactory.getLog(SnowPlowEventStruct.class.getName());
+
+    return _LOG;
+  }
 
   // -------------------------------------------------------------------------------------------------------------------
   // Deserialization logic
