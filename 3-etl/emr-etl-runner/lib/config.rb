@@ -44,7 +44,7 @@ module Config
     # Construct paths to our HiveQL and serde
     asset_path = "%shive" % config[:s3][:buckets][:assets]
     config[:serde_asset] = "%s/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
-    config[:hiveql_asset] = "%s/hiveql/datespan-etl-%s.q" % [asset_path, config[:snowplow][:hiveql_version]]
+    config[:hiveql_asset] = "%s/hiveql/hive-format-etl-%s.q" % [asset_path, config[:snowplow][:hiveql_version]]
 
     config
   end
