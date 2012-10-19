@@ -97,18 +97,24 @@ class EmrJobs
 
     # Loop until we can quit...
     while true do
-      # Count up running tasks and failures
-      statuses = @jobflow.status.steps.map(&:state).inject([0, 0]) do |sum, state|
-        [ sum[0] + (RUNNING_STATES.include?(state) ? 1 : 0), sum[1] + (FAILED_STATES.include?(state) ? 1 : 0) ]
-      end
+      begin 
+        # Count up running tasks and failures
+        statuses = @jobflow.status.steps.map(&:state).inject([0, 0]) do |sum, state|
+          [ sum[0] + (RUNNING_STATES.include?(state) ? 1 : 0), sum[1] + (FAILED_STATES.include?(state) ? 1 : 0) ]
+        end
 
-      # If no step is still running, then quit
-      if statuses[0] == 0
-        return statuses[1] == 0 # True if no failures
-      end
+        # If no step is still running, then quit
+        if statuses[0] == 0
+          return statuses[1] == 0 # True if no failures
+        end
 
-      # Otherwise sleep a while
-      sleep(60)
+        # Sleep a while before we check again
+        sleep(60)
+
+      rescue SocketError => se
+        puts "Got socket error #{se}, waiting 5 minutes before checking jobflow again"
+        sleep(300)
+      end
     end
   end
 
