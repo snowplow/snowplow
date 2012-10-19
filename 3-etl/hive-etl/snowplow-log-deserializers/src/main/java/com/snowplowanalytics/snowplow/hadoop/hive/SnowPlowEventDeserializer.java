@@ -176,9 +176,10 @@ public class SnowPlowEventDeserializer implements Deserializer {
     } catch (ClassCastException e) {
       throw new SerDeException(this.getClass().getName() + " expects Text or BytesWritable", e);
     } catch (Exception e) {
-      LOG.error("Could not parse row: \"" + row + "\"", e);
-      if (this.ignore_errors)
+      if (this.ignore_errors) {
+        LOG.error("Could not parse row: \"" + row + "\"", e);
         return null;
+      }
       else
         throw new SerDeException(e);
     }

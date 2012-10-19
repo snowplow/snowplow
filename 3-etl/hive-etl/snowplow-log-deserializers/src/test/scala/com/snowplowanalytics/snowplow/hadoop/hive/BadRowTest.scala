@@ -35,7 +35,7 @@ class BadRowTest extends Specification {
   "An invalid or corrupted CloudFront row should throw an exception" >> {
      badRows foreach { row =>
       "invalid row \"%s\" throws a SerDeException".format(row) >> {
-        SnowPlowDeserializer.deserializeUntyped(row) must throwA[SerDeException](message = "Could not parse row: \"%s\"".format(row))
+        SnowPlowDeserializer.deserializeUntyped(row) must throwA[SerDeException](message = "Row does not match expected CloudFront regexp pattern")
       }
     }
   }
