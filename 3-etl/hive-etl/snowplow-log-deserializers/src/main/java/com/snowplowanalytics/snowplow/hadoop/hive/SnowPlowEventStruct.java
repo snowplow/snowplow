@@ -24,6 +24,7 @@ import java.text.ParseException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import org.apache.commons.lang.StringUtils;
 
 // Commons Logging
 import org.apache.commons.logging.Log;
@@ -257,16 +258,16 @@ public class SnowPlowEventStruct {
         final String name = pair.getName();
         final String value = pair.getValue();
 
-        // Handle browser features (f_fla etc) separately (i.e. no enum value for these)
-        if (name.startsWith("f_")) {
-          // Only add it to our array of browser features if it's set to "1"
-          if (stringToBoolean(value)) {
-            // Drop the "f_" prefix and add to our array
-            this.br_features.add(name.substring(2));
-          }
-        } else {
+        try {
+          // Handle browser features (f_fla etc) separately (i.e. no enum value for these)
+          if (name.startsWith("f_")) {
+            // Only add it to our array of browser features if it's set to "1"
+            if (stringToBoolean(value)) {
+              // Drop the "f_" prefix and add to our array
+              this.br_features.add(name.substring(2));
+            }
+          } else {
 
-          try {
             final QuerystringFields field = QuerystringFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
             switch (field) {
 
@@ -285,15 +286,9 @@ public class SnowPlowEventStruct {
                 break;
               case TSTAMP:
                 // Replace our timestamp fields with the client's timestamp
-                try {
-                  String[] timestamp = value.split(" ");
-                  this.dt = timestamp[0];
-                  this.tm = timestamp[1];
-                } catch (Exception e) {
-                  // We've started setting fields, so we need to reset the object
-                  nullify();
-                  return false;
-                }
+                String[] timestamp = value.split(" ");
+                this.dt = timestamp[0];
+                this.tm = timestamp[1];
               case LANG:
                 this.br_lang = value;
                 break;
@@ -301,15 +296,9 @@ public class SnowPlowEventStruct {
                 this.br_cookies = stringToBoolean(value);
                 break;
               case RES:
-                try {
-                  String[] resolution = value.split("x");
-                  this.dvce_screenwidth = Integer.parseInt(resolution[0]);
-                  this.dvce_screenheight = Integer.parseInt(resolution[1]);
-                } catch (Exception e) {
-                  // We've started setting fields, so we need to reset the object
-                  nullify();
-                  return false;
-                }
+                String[] resolution = value.split("x");
+                this.dvce_screenwidth = Integer.parseInt(resolution[0]);
+                this.dvce_screenheight = Integer.parseInt(resolution[1]);
                 break;
               case REFR:
                 this.page_referrer = decodeSafeString(value);
@@ -384,25 +373,24 @@ public class SnowPlowEventStruct {
                 this.ti_quantity = decodeSafeString(value);
                 break;
             }
-          } catch (IllegalArgumentException iae) {
-            // We've started setting fields, so we need to reset the object
-            nullify();
-            return false;
           }
+        } catch (Exception e) {
+          getLog().warn(e.getClass() + " on { name: " + name + ", value: " + value + "}");
         }
       }
 
-      // 4. Choose the page_url
-      final String cfUrl = m.group(10);
-      if (isNullField(cfUrl)) { // CloudFront didn't provide the URL as cs(Referer)
-        this.page_url = decodeSafeString(qsUrl); // Use the decoded querystring URL
-      } else { // Otherwise default to...
-        this.page_url = cfUrl; // The CloudFront cs(Referer) URL
-      }
-
-      // 5. Finally handle the marketing fields in the page_url
-      // Re-use params to avoid creating another object
       try {
+        // 4. Choose the page_url
+        final String cfUrl = m.group(10);
+        if (isNullField(cfUrl)) { // CloudFront didn't provide the URL as cs(Referer)
+          this.page_url = decodeSafeString(qsUrl); // Use the decoded querystring URL
+        } else { // Otherwise default to...
+          this.page_url = cfUrl; // The CloudFront cs(Referer) URL
+        }
+
+        // 5. Finally handle the marketing fields in the page_url
+        // Re-use params to avoid creating another object
+
         params = URLEncodedUtils.parse(URI.create(this.page_url), "UTF-8");
 
         // For performance, don't convert to a map, just loop through and match to our variables as we go
@@ -433,7 +421,9 @@ public class SnowPlowEventStruct {
                 this.mkt_campaign = decodeSafeString(value);
                 break;
             }
-          } catch (IllegalArgumentException iae) {} // Do nothing in the case of a non-attribution-related querystring param
+          } catch (Exception e) {
+            getLog().warn(e.getClass() + " on { name: " + name + ", value: " + value + "}");
+          }
         }
       } catch (IllegalArgumentException iae) {} // Do nothing in the case of a malformed querystring (IAE thrown by URLEncodedUtils.parse())
 
@@ -537,13 +527,27 @@ public class SnowPlowEventStruct {
    * @return The decoded String
    * @throws UnsupportedEncodingException if the Character Encoding is not supported
    */
-  static String decodeSafeString(String s) throws UnsupportedEncodingException {
+  static String decodeSafeString(String s) throws UnsupportedEncodingException, IllegalArgumentException {
 
     if (s == null) return null;
-    String decoded = URLDecoder.decode(s, cfEncoding);
+    String decoded = URLDecoder.decode(cleanUrlString(s), cfEncoding);
     if (decoded == null) return null;
 
     return decoded.replaceAll("(\\r|\\n)", "");
+}
+
+  /**
+   * Cleans a string to try and make it parsable by URLDecoder.decode.
+   *
+   * @param s The String to clean
+   * @return The cleaned string
+   */
+  static String cleanUrlString(String s)
+  {
+    // The '%' character seems to be appended to the end of some URLs in 
+    // the Cloudfront logs, causing Exceptions when using URLDecoder.decode
+    // Perhaps a Cloudfront bug?
+    return StringUtils.strip(s, "%");
   }
 
   /**
