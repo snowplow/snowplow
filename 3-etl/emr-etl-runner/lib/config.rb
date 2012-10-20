@@ -44,7 +44,7 @@ module Config
     # Construct paths to our HiveQL and serde
     asset_path = "%shive" % config[:s3][:buckets][:assets]
     config[:serde_asset] = "%s/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
-    config[:hiveql_asset] = "%s/hiveql/hive-format-etl-%s.q" % [asset_path, config[:snowplow][:hiveql_version]]
+    config[:hiveql_asset] = "%s/hiveql/hive-exact-etl-%s.q" % [asset_path, config[:snowplow][:hiveql_version]]
 
     config
   end
@@ -80,16 +80,21 @@ module Config
     options[:start] ||= yesterday
     options[:end]   ||= yesterday
 
-    # Check the mandatory arguments
+    # Run OptionParser's structural validation
     begin
       optparse.parse!
-      mandatory = [:config, :start, :end]
-      missing = mandatory.select{ |param| options[param].nil? }
-      if not missing.empty?
-        raise ConfigError, "Missing options: #{missing.join(', ')}\n#{optparse}"
-      end
     rescue OptionParser::InvalidOption, OptionParser::MissingArgument
       raise ConfigError, "#{$!.to_s}\n#{optparse}"
+    end
+
+    # Check we have a config file argument
+    if options[:config].nil?
+      raise ConfigError, "Missing option: config\n#{optparse}"
+    end
+
+    # Check the config file exists
+    unless File.file?(options[:config])
+      raise ConfigError, "Configuration file '#{options[:config]}' does not exist, or is not a file."
     end
 
     # Finally check that start is before end
