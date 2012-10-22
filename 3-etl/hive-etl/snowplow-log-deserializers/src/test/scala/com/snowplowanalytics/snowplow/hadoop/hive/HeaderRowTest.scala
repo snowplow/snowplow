@@ -31,7 +31,7 @@ class HeaderRowTest extends Specification {
   "The header rows of a CloudFront log file should be skipped" >> {
      headers foreach { header => 
       "header row \"%s\" is skipped (returns null)".format(header) >> {
-        SnowPlowDeserializer.deserialize(header).dt must beNull
+        SnowPlowDeserializer.deserialize(header) must beNull
       }
     }
   }
