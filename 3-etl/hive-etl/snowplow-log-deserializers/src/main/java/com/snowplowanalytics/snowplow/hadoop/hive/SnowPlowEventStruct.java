@@ -294,6 +294,8 @@ public class SnowPlowEventStruct {
               break;
             case RES:
               String[] resolution = value.split("x");
+              if (resolution.length != 2)
+                throw new Exception("Couldn't parse res field");
               this.dvce_screenwidth = Integer.parseInt(resolution[0]);
               this.dvce_screenheight = Integer.parseInt(resolution[1]);
               break;
@@ -372,7 +374,7 @@ public class SnowPlowEventStruct {
           }
         }
       } catch (Exception e) {
-        getLog().warn(e.getClass().getSimpleName() + " on { name: " + name + ", value: " + value + "}");
+        getLog().warn(e.getClass().getSimpleName() + " on { " + name + ": " + value + "}");
       }
     }
 
@@ -392,40 +394,43 @@ public class SnowPlowEventStruct {
 
     // 5. Finally handle the marketing fields in the page_url
     // Re-use params to avoid creating another object
-
-    params = URLEncodedUtils.parse(URI.create(this.page_url), "UTF-8");
-
-    // For performance, don't convert to a map, just loop through and match to our variables as we go
-    for (NameValuePair pair : params) {
-
-      final String name = pair.getName();
-      final String value = pair.getValue();
-
-      try {
-        final MarketingFields field = MarketingFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
-
-        switch (field) {
-
-          // Marketing fields
-          case UTM_MEDIUM:
-            this.mkt_medium = decodeSafeString(value);
-            break;
-          case UTM_SOURCE:
-            this.mkt_source = decodeSafeString(value);
-            break;
-          case UTM_TERM:
-            this.mkt_term = decodeSafeString(value);
-            break;
-          case UTM_CONTENT:
-            this.mkt_content = decodeSafeString(value);
-            break;
-          case UTM_CAMPAIGN:
-            this.mkt_campaign = decodeSafeString(value);
-            break;
+    try {
+      params = URLEncodedUtils.parse(URI.create(this.page_url), "UTF-8");
+  
+      // For performance, don't convert to a map, just loop through and match to our variables as we go
+      for (NameValuePair pair : params) {
+  
+        final String name = pair.getName();
+        final String value = pair.getValue();
+  
+        try {
+          final MarketingFields field = MarketingFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
+  
+          switch (field) {
+  
+            // Marketing fields
+            case UTM_MEDIUM:
+              this.mkt_medium = decodeSafeString(value);
+              break;
+            case UTM_SOURCE:
+              this.mkt_source = decodeSafeString(value);
+              break;
+            case UTM_TERM:
+              this.mkt_term = decodeSafeString(value);
+              break;
+            case UTM_CONTENT:
+              this.mkt_content = decodeSafeString(value);
+              break;
+            case UTM_CAMPAIGN:
+              this.mkt_campaign = decodeSafeString(value);
+              break;
+          }
+        } catch (Exception e) {
+          getLog().warn(e.getClass().getSimpleName() + " on { " + name + ": " + value + "}");
         }
-      } catch (Exception e) {
-        getLog().warn(e.getClass().getSimpleName() + " on { name: " + name + ", value: " + value + "}");
       }
+    } catch (IllegalArgumentException e) {
+      getLog().warn("Couldn't parse page_url: " + page_url);
     }
 
     return true; // Successfully updated the row.
