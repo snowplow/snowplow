@@ -285,6 +285,7 @@ public class SnowPlowEventStruct {
               String[] timestamp = value.split(" ");
               this.dt = timestamp[0];
               this.tm = timestamp[1];
+              break;
             case LANG:
               this.br_lang = value;
               break;
