@@ -72,12 +72,21 @@ module S3Tasks
     end
 
     # Move the files we need to move (within the date span)
-    files_to_move = files_between(config[:start], config[:end])
-    move_files(s3, in_location, processing_location, files_to_move)
+    files_to_move = case
+    when (config[:start].nil? and config[:end].nil?)
+      '.+'
+    when config[:start].nil?
+      files_up_to(config[:end])
+    when config[:end].nil?
+      files_from(config[:start])
+    else
+      files_between(config[:start], config[:end])
+    end
 
-    # To deal with boundary issues, we also copy over the available files for the day after our date range
-    files_to_copy = files_for_day_after(config[:end])
-    copy_files(s3, in_location, processing_location, files_to_copy)
+    puts ">>>>>> DEBUG, files to move are:"
+    puts files_to_move
+
+    move_files(s3, in_location, processing_location, files_to_move)
 
     # Wait for s3 to eventually become consistant
     puts "Waiting a minute to allow S3 to settle (eventual consistency)"
@@ -110,27 +119,11 @@ module S3Tasks
       end
     }
 
-    # Move the files we need to move (within the date span)
-    files_to_move = files_between(config[:start], config[:end])
-    move_files(s3, processing_location, archive_location, files_to_move, add_date_path)
-
-    # Delete the copies of the files from the day after our date range
-    files_to_delete = files_for_day_after(config[:end])
-    delete_files(s3, processing_location, files_to_delete)
+    # Move all the files in the Processing Bucket
+    move_files(s3, processing_location, archive_location, '.+', add_date_path)
 
   end
   module_function :archive_logs
-
-  # Find files for the day after end_date
-  #
-  # Parameters:
-  # +end_date+:: end date
-  def files_for_day_after(end_date)
-
-    day_after = Date.parse(end_date) + 1
-    '(' + day_after.strftime('%Y-%m-%d') + ')[^/]+\.gz$'
-  end
-  module_function :files_for_day_after
 
   # Find files within the given date range
   # (inclusive).
@@ -148,6 +141,44 @@ module S3Tasks
     '(' + dates.join('|') + ')[^/]+\.gz$'
   end
   module_function :files_between
+
+  # Find files up to (and including) the given date.
+  #
+  # Parameters:
+  # +end_date+:: end date
+  def files_up_to(end_date)
+
+    # Let's create a black list from the day
+    # after the end_date up to today
+    day_after = Date.parse(end_date) + 1
+    today = Date.today
+
+    dates = []
+    day_after.upto(today) do |day|
+      dates << ('^' + day.strftime('%Y-%m-%d')) # Black list
+    end
+
+    '(' + dates.join('|') + ')[^/]+\.gz$'
+  end
+  module_function :files_up_to
+
+  # Find files starting from the given date.
+  #
+  # Parameters:
+  # +start_date+:: start date
+  def files_from(start_date)
+
+    # Let's create a white list from the start_date to today
+    today = Date.today
+
+    dates = []
+    Date.parse(start_date).upto(today) do |day|
+      dates << day.strftime('%Y-%m-%d')
+    end
+
+    '(' + dates.join('|') + ')[^/]+\.gz$'
+  end
+  module_function :files_from
 
   # Helper function to instantiate a new Fog::Storage
   # for S3 based on our config options

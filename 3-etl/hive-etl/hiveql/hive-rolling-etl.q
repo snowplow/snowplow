@@ -10,7 +10,7 @@
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
 -- Version:     0.4.10
--- URL:         s3://snowplow-emr-assets/hive/hiveql/hive-exact-etl-0.4.10.q
+-- URL:         s3://snowplow-emr-assets/hive/hiveql/hive-rolling-etl-0.4.10.q
 --
 -- Authors:     Alex Dean, Yali Sassoon, Simon Andersson, Michael Tibben
 -- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
@@ -78,7 +78,9 @@ app_id string
 PARTITIONED BY (dt STRING)
 LOCATION '${EVENTS_TABLE}' ;
 
-INSERT OVERWRITE TABLE `events`
+ALTER TABLE events RECOVER PARTITIONS ;
+
+INSERT INTO TABLE `events`
 PARTITION (dt)
 SELECT
 tm,
@@ -130,6 +132,4 @@ dvce_screenwidth,
 dvce_screenheight,
 app_id,
 dt
-FROM `extracted_logs`
-WHERE dt>='${START_DATE}'
-AND dt<='${END_DATE}' ;
+FROM `extracted_logs` ;

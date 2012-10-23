@@ -44,7 +44,7 @@ module Config
     # Construct paths to our HiveQL and serde
     asset_path = "%shive" % config[:s3][:buckets][:assets]
     config[:serde_asset] = "%s/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
-    config[:hiveql_asset] = "%s/hiveql/hive-exact-etl-%s.q" % [asset_path, config[:snowplow][:hiveql_version]]
+    config[:hiveql_asset] = "%s/hiveql/hive-rolling-etl-%s.q" % [asset_path, config[:snowplow][:hiveql_version]]
 
     config
   end
@@ -62,8 +62,11 @@ module Config
       opts.separator "Specific options:"
 
       opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
-      opts.on('-s', '--start YYYY-MM-DD', 'optional start date (defaults to yesterday)') { |config| options[:start] = config }
-      opts.on('-e', '--end YYYY-MM-DD', 'optional end date (defaults to yesterday)') { |config| options[:end] = config }
+      opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
+      opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
+
+      opts.separator ""
+      opts.separator "* filters the raw event logs processed by EmrEtlRunner by their timestamp"
 
       opts.separator ""
       opts.separator "Common options:"
@@ -74,11 +77,6 @@ module Config
         exit
       end
     end
-
-    # Set defaults
-    yesterday = (Date.today - 1).strftime('%Y-%m-%d') # Yesterday's date
-    options[:start] ||= yesterday
-    options[:end]   ||= yesterday
 
     # Run OptionParser's structural validation
     begin
@@ -97,9 +95,11 @@ module Config
       raise ConfigError, "Configuration file '#{options[:config]}' does not exist, or is not a file."
     end
 
-    # Finally check that start is before end
-    if options[:start] > options[:end]
-      raise ConfigError, "Invalid options: end date #{options[:end]} is before start date #{options[:start]}"
+    # Finally check that start is before end, if both set
+    if !options[:start].nil? and !options[:end].nil?
+      if options[:start] > options[:end]
+        raise ConfigError, "Invalid options: end date #{options[:end]} is before start date #{options[:start]}"
+      end
     end
 
     options

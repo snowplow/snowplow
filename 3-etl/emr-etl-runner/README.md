@@ -6,7 +6,7 @@ SnowPlow::EmrEtlRunner is a Ruby gem (built with [Bundler] [bundler]) to run Sno
 
 ## Deployment and configuration
 
-For detailed instructions on installing, running and scheduling EmrEtlRunner on your server, please see the [Deploying the EMR ETL Runner] [deploying-emr-etl-runner] guide on the SnowPlow Analytics wiki.
+For detailed instructions on installing, running and scheduling EmrEtlRunner on your server, please see the [Deploying EmrEtlRunner] [deploying-emretlrunner] guide on the SnowPlow Analytics wiki.
 
 ## Contributing
 
@@ -14,7 +14,7 @@ We will be adding a guide to contributing soon.
 
 ## Credits and thanks
 
-SnowPlow::EmrEtlRunner was primarily developed by [Alex Dean] [alexanderdean] ([SnowPlow Analytics] [snowplow-analytics]), with substantial contributions from [Michael Tibben] [mtibben] ([99designs] [99designs]). Huge thanks Michael!
+SnowPlow::EmrEtlRunner was primarily developed by [Alex Dean] [alexanderdean] ([SnowPlow Analytics] [snowplow-analytics]), with very substantial contributions from [Michael Tibben] [mtibben] ([99designs] [99designs]). Huge thanks Michael!
 
 EmrEtlRunner in turn depends heavily on [Rob Slifka] [rslifka]'s excellent [Elasticity] [elasticity] Ruby gem, which provides programmatic access to Amazon EMR. Big thanks to Rob for writing Elasticity!
 
@@ -33,7 +33,7 @@ limitations under the License.
 
 [bundler]: http://gembundler.com/
 [amazon-emr]: http://aws.amazon.com/elasticmapreduce/
-[deploying-emr-etl-runner]: https://github.com/snowplow/snowplow/wiki/Deploying-the-EMR-ETL-Runner
+[deploying-emr-etl-runner]: https://github.com/snowplow/snowplow/wiki/Deploying-EmrEtlRunner
 
 [alexanderdean]: https://github.com/alexanderdean
 [snowplow-analytics]: http://snowplowanalytics.com
