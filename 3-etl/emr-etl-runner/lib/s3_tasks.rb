@@ -20,9 +20,12 @@ require 'thread'
 # the Hive-based ETL process.
 module S3Tasks
 
+  # Possible errors
   class DirectoryNotEmptyError < StandardError; end
-
   class UnsupportedFileOperationError < StandardError; end
+
+  # To handle negative file matching
+  NegativeRegex = Struct.new(:regex)  
 
   # Class to describe an S3 location
   class S3Location
@@ -144,6 +147,9 @@ module S3Tasks
 
   # Find files up to (and including) the given date.
   #
+  # Returns a regex in a NegativeRegex so that the
+  # matcher can negate the match.
+  #
   # Parameters:
   # +end_date+:: end date
   def files_up_to(end_date)
@@ -155,10 +161,10 @@ module S3Tasks
 
     dates = []
     day_after.upto(today) do |day|
-      dates << ('^' + day.strftime('%Y-%m-%d')) # Black list
+      dates << day.strftime('%Y-%m-%d') # Black list
     end
 
-    '(' + dates.join('|') + ')[^/]+\.gz$'
+    NegativeRegex.new('(' + dates.join('|') + ')[^/]+\.gz$')
   end
   module_function :files_up_to
 
@@ -314,7 +320,11 @@ module S3Tasks
               end
 
               file = files_to_process.pop
-              match = file.key.match(match_regex)
+              match = if match_regex.is_a? NegativeRegex
+                        !file.key.match(match_regex.regex)
+                      else
+                        file.key.match(match_regex)
+                      end
             end
           end
 
