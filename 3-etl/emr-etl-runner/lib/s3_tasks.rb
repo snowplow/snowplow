@@ -20,6 +20,9 @@ require 'thread'
 # the Hive-based ETL process.
 module S3Tasks
 
+  S3_CONCURRENCY = 10
+  S3_RETRIES = 3
+
   # Possible errors
   class DirectoryNotEmptyError < StandardError; end
   class UnsupportedFileOperationError < StandardError; end
@@ -280,13 +283,12 @@ module S3Tasks
     mutex = Mutex.new
     complete = false
     marker_opts = {}
-    s3_retries = 3
 
     # if an exception is thrown in a thread that isn't handled, die quickly
     Thread.abort_on_exception = true
 
     # create ruby threads to concurrently execute s3 operations
-    for i in (0...10)
+    for i in (0...S3_CONCURRENCY)
 
       # each thread pops a file off the files_to_process array, and moves it.
       # We loop until there are no more files
@@ -357,7 +359,7 @@ module S3Tasks
               file.copy(to_location.bucket, to_location.dir_as_path + filename)
               puts "      +-> #{to_location.bucket}/#{to_location.dir_as_path}#{filename}"
             rescue
-              raise unless i < s3_retries
+              raise unless i < S3_RETRIES
               puts "Problem copying #{file.key}. Retrying.", $!, $@
               sleep(10)  # give us a bit of time before retrying
               i += 1
@@ -372,7 +374,7 @@ module S3Tasks
               file.destroy()
               puts "      x #{from_location.bucket}/#{file.key}"
             rescue
-              raise unless i < s3_retries
+              raise unless i < S3_RETRIES
               puts "Problem destroying #{file.key}. Retrying.", $!, $@
               sleep(10) # give us a bit of time before retrying
               i += 1
