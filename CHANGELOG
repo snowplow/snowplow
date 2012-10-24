@@ -1,7 +1,7 @@
 Version 0.5.1 (2012-10-27) - REMOVE DONES...
 --------------------------
 Infobright: added setup scripts into 4-storage/infobright           - DONE
-Infobright - added version handling (v_tracker, v_collector, v_etl)
+Infobright: added version handling (v_tracker, v_collector, v_etl)
 HiveQL: removed hive-exact-etl.q as no longer supported             - DONE
 HiveQL: added non-hive-rolling-etl.q for Infobright- (and other db-)friendly event file format             - DONE
 HiveQL: added version handling (v_tracker, v_collector, v_etl)
