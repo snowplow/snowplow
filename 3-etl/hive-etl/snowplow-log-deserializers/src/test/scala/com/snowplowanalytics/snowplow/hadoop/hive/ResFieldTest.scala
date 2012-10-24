@@ -29,7 +29,7 @@ class ResFieldTest extends Specification {
   "An invalid screen resolution querystring field should return a <<null>> record" >> {
     Seq("", "800x", "x600", "420Ax800") foreach { res =>
       "invalid screen resolution \"%s\" returns a <<null>> record".format(res) >> {
-        SnowPlowDeserializer.deserialize(badRowWith(res)).dt must beNull
+        SnowPlowDeserializer.deserialize(badRowWith(res)).dvce_screenwidth must beNull
       }
     }
   }

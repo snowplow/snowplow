@@ -61,6 +61,9 @@ public class SnowPlowEventDeserializer implements Deserializer {
 
   // For performance reasons we reuse the same object to deserialize all of our rows
   private static final SnowPlowEventStruct cachedStruct = new SnowPlowEventStruct();
+  
+  // returns null instead of throwing an exception
+  private boolean ignore_errors = false;
 
   // -------------------------------------------------------------------------------------------------------------------
   // Helper for deserializing a single line
@@ -75,10 +78,13 @@ public class SnowPlowEventDeserializer implements Deserializer {
    * @throws SerDeException if there is a problem deserializing the line, or reflection-inspecting the struct's contents
    */
   public static Object deserializeLine(String line, Boolean verbose) throws SerDeException {
+    return deserializeLine(line, verbose, new Configuration());
+  }
+
+  public static Object deserializeLine(String line, Boolean verbose, Configuration conf) throws SerDeException {
 
     // Prep the deserializer
     SnowPlowEventDeserializer serDe = new SnowPlowEventDeserializer();
-    Configuration conf = new Configuration();
     Properties tbl = new Properties();
     serDe.initialize(conf, tbl);
 
@@ -125,6 +131,11 @@ public class SnowPlowEventDeserializer implements Deserializer {
   public void initialize(Configuration conf, Properties tbl) throws SerDeException {
 
     cachedObjectInspector = ObjectInspectorFactory.getReflectionObjectInspector(SnowPlowEventStruct.class, ObjectInspectorFactory.ObjectInspectorOptions.JAVA);
+
+    if (conf.get("snowplow.serde.ignore_errors") == "1") {
+      this.ignore_errors = true;
+    }
+    
     LOG.debug(this.getClass().getName() + " initialized");
   }
 
@@ -158,12 +169,19 @@ public class SnowPlowEventDeserializer implements Deserializer {
     }
     try {
       // Update in place the S3LogStruct with the row data
-      cachedStruct.updateByParsing(row);
-      return cachedStruct;
+      if (cachedStruct.updateByParsing(row))
+        return cachedStruct;
+      else
+        return null;
     } catch (ClassCastException e) {
       throw new SerDeException(this.getClass().getName() + " expects Text or BytesWritable", e);
     } catch (Exception e) {
-      throw new SerDeException(e);
+      if (this.ignore_errors) {
+        LOG.error("Could not parse row: \"" + row + "\"", e);
+        return null;
+      }
+      else
+        throw new SerDeException(e);
     }
   }
 

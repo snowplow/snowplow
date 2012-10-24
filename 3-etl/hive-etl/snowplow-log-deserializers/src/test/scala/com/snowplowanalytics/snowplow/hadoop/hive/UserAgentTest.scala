@@ -37,8 +37,8 @@ class UserAgentTest extends Specification {
 
   "The user-agent \"NEW SPIDER USERAGENT\"" should {
     "be identified as a spider" in {
-      val actual = SnowPlowDeserializer.deserialize(rowWith("NEW%20SPIDER%20USERAGENT"))
+      val actual = SnowPlowDeserializer.deserialize(rowWith("SPIDER%20USERAGENT"))
       actual.br_name must_== "Robot/Spider"
     }
-  } 
+  }
 }
