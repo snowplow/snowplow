@@ -31,7 +31,6 @@ object BuildSettings {
   import AssemblyKeys._
   lazy val sbtAssemblySettings = assemblySettings ++ Seq(
     assembleArtifact in packageScala := false,
-    target in assembly <<= (target) { (target) => target / ".." / "upload" },
     jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + ".jar" },
     mergeStrategy in assembly <<= (mergeStrategy in assembly) {
       (old) => {

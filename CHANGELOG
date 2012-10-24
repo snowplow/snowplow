@@ -1,3 +1,9 @@
+Version 0.5.0 (2012-10-23)
+--------------------------
+Tidied up folder structure inside 3-etl/
+Serde: assembles to /target, not to /upload any more (and jars won't be committed to Git)
+EmrEtlRunner: added. Ruby application to run Hive ETL process on Amazon EMR
+
 Version 0.4.10 (2012-10-10)
 ---------------------------
 SnowCannon: bumped submodule to latest shermozle/SnowCannon commit

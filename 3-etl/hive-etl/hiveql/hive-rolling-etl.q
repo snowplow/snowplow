@@ -1,10 +1,31 @@
-ADD JAR s3://psychicbazaar-snowplow-static/snowplow-log-deserializers-0.4.9.jar ;
+-- Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+--
+-- This program is licensed to you under the Apache License Version 2.0,
+-- and you may not use this file except in compliance with the Apache License Version 2.0.
+-- You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+--
+-- Unless required by applicable law or agreed to in writing,
+-- software distributed under the Apache License Version 2.0 is distributed on an
+-- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+--
+-- Version:     0.4.10
+-- URL:         s3://snowplow-emr-assets/hive/hiveql/hive-rolling-etl-0.4.10.q
+--
+-- Authors:     Alex Dean, Yali Sassoon, Simon Andersson, Michael Tibben
+-- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
+-- License:     Apache License Version 2.0
 
-CREATE EXTERNAL TABLE `cloudfront_log_of_events`
+SET hive.exec.dynamic.partition=true ;
+SET hive.exec.dynamic.partition.mode=nonstrict ;
+
+ADD JAR ${SERDE_FILE} ;
+
+CREATE EXTERNAL TABLE `extracted_logs`
 ROW FORMAT SERDE 'com.snowplowanalytics.snowplow.hadoop.hive.SnowPlowEventDeserializer'
-LOCATION '${CLOUDFRONTLOGS}' ;
+LOCATION '${CLOUDFRONT_LOGS}' ;
 
-CREATE EXTERNAL TABLE `events` (
+CREATE EXTERNAL TABLE IF NOT EXISTS `events` (
 tm string,
 txn_id string,
 user_id string,
@@ -54,14 +75,14 @@ dvce_screenwidth int,
 dvce_screenheight int,
 app_id string
 )
-PARTITIONED BY (dt STRING, user_id STRING)
-LOCATION '${EVENTSTABLE}' ;
+PARTITIONED BY (dt STRING)
+LOCATION '${EVENTS_TABLE}' ;
 
-set hive.exec.dynamic.partition=true ;
+ALTER TABLE events RECOVER PARTITIONS ;
 
-INSERT OVERWRITE TABLE `events`
-PARTITION (dt='${DATE}', user_id)
-SELECT 
+INSERT INTO TABLE `events`
+PARTITION (dt)
+SELECT
 tm,
 txn_id,
 user_id,
@@ -111,5 +132,4 @@ dvce_screenwidth,
 dvce_screenheight,
 app_id,
 dt
-FROM `cloudfront_log_of_events`
-WHERE dt='${DATE}' ;
+FROM `extracted_logs` ;

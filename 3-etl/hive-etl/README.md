@@ -10,9 +10,9 @@ process for SnowPlow data.
 
 The contents of this folder are as follows:
 
-* In this folder is this README and Apache 2.0 License
+* In this folder is this README
+* `hiveql` contains the Hive code to automate a regular ETL (extract-transform-load) job to process the daily SnowPlow log files
 * `snowplow-log-deserializers` is an SBT project containing the deserializers to import SnowPlow logs into [Apache Hive] [hive] ready for analysis
-* `etl` contains the Ruby and Hive code to automate a nightly ETL (extract-transform-load) job to process the daily SnowPlow log files (_coming soon_)
 
 ## Copyright and license
 
