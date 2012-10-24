@@ -41,7 +41,7 @@ Check out the **[Talk to us] [talk-to-us]** page on our wiki.
 SnowPlow is copyright 2012 SnowPlow Analytics Ltd. Significant portions of `snowplow.js`
 are copyright 2010 Anthon Pang.
 
-Licensed under the [Apache License, Version 2.0] [license] (the "License");
+Licensed under the **[Apache License, Version 2.0] [license]** (the "License");
 you may not use this software except in compliance with the License.
 
 Unless required by applicable law or agreed to in writing, software
