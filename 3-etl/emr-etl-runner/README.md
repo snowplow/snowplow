@@ -6,7 +6,7 @@ SnowPlow::EmrEtlRunner is a Ruby gem (built with [Bundler] [bundler]) to run Sno
 
 ## Deployment and configuration
 
-For detailed instructions on installing, running and scheduling EmrEtlRunner on your server, please see the [Deploying EmrEtlRunner] [deploying-emretlrunner] guide on the SnowPlow Analytics wiki.
+For detailed instructions on installing, running and scheduling EmrEtlRunner on your server, please see the [Deploying EmrEtlRunner] [deploying-emr-etl-runner] guide on the SnowPlow Analytics wiki.
 
 ## Contributing
 
