@@ -21,6 +21,6 @@ We welcome community contributions to the existing ETL processes or all-new ETL 
 [architecture-image]: https://github.com/snowplow/snowplow/raw/master/3-etl/3-etl.png
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
 [storage]: https://github.com/snowplow/snowplow/tree/master/4-storage
-[e1]: ./3-etl/hive-etl/
-[e2]: ./3-etl/hadoop-etl/
-[e3]: ./3-etl/emr-etl-runner/
+[e1]: ./hive-etl/
+[e2]: ./hadoop-etl/
+[e3]: ./emr-etl-runner/
