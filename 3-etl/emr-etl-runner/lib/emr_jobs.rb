@@ -36,23 +36,17 @@ class EmrJobs
     # Create a job flow with your AWS credentials
     @jobflow = Elasticity::JobFlow.new(config[:aws][:access_key_id], config[:aws][:secret_access_key])
 
-    # Hive configuration if we're processing just one day...
-    if config[:start] == config[:end]
-      @jobflow.name = "Daily ETL (#{config[:start]})"
-      hive_script = config[:datespan_query_file]
-      hive_args = {
-        "START_DATE" => config[:start],
-        "END_DATE"   => config[:start]
-      }
-    # ...versus processing a datespan
-    else
-      @jobflow.name = "Datespan ETL (%s-%s)" % [ config[:start], config[:end] ]
-      hive_script = config[:datespan_query_file]
-      hive_args = {
-        "START_DATE" => config[:start],
-        "END_DATE"   => config[:end]
-      }
-    end
+    # Set the name of the jobflow
+    @jobflow.name = "EmrEtlRunner: %s" % case
+                      when (config[:start].nil? and config[:end].nil?)
+                        "Rolling mode"
+                      when config[:start].nil?
+                        "Timespan mode (to %s)" % config[:end]
+                      when config[:end].nil?
+                        "Timespan mode (%s onwards)" % config[:start]
+                      else
+                        "Timespan mode (%s to %s)" % [config[:start], config[:end]]
+                      end
 
     # Additional configuration
     @jobflow.hadoop_version = config[:emr][:hadoop_version]
@@ -67,7 +61,7 @@ class EmrJobs
       }
     end
 
-    # Now add the Hive step to the jobflow
+    # Now create the Hive step for the jobflow
     hive_step = Elasticity::HiveStep.new(config[:hiveql_asset])
 
     # Add extra configuration
@@ -81,7 +75,9 @@ class EmrJobs
       "SERDE_FILE"      => config[:serde_asset],
       "CLOUDFRONT_LOGS" => config[:s3][:buckets][:processing],
       "EVENTS_TABLE"    => config[:s3][:buckets][:out]
-    }.merge(hive_args)
+    }
+
+    # Finally add to our jobflow
     @jobflow.add_step(hive_step)
   end
 
