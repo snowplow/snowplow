@@ -16,8 +16,6 @@
 -- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-CREATE DATABASE snowplow ;
-
 USE snowplow ;
 
 DESC events ;

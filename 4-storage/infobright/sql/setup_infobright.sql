@@ -16,7 +16,7 @@
 -- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-CREATE DATABASE snowplow ;
+-- CREATE DATABASE snowplow ;
 
 USE snowplow ;
 
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS events (
 	`tr_total` dec(18,2),
 	`tr_tax` dec(18,2),
 	`tr_shipping` dec(18,2),
-	`tr_city` varchar(255) comment 'lookup'.
+	`tr_city` varchar(255) comment 'lookup',
 	`tr_state` varchar(255) comment 'lookup',
 	`tr_country` varchar(255) comment 'lookup',
 	`ti_orderid` varchar(255) comment 'lookup',

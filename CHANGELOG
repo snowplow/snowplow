@@ -1,7 +1,7 @@
-Version 0.5.1 (2012-10-25)
+Version 0.5.1 (2012-10-27)
 --------------------------
 Serde: added ignore_errors option to avoid throwing exceptions on a bad field (thanks mtibben!)
-MORE TO COME
+Infobright: added setup scripts into 4-storage/infobright
 
 Version 0.5.0 (2012-10-24)
 --------------------------
