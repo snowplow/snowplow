@@ -37,7 +37,7 @@ class EmrJobs
     @jobflow = Elasticity::JobFlow.new(config[:aws][:access_key_id], config[:aws][:secret_access_key])
 
     # Set the name of the jobflow
-    @jobflow.name = "EmrEtlRunner: %s" % case
+    @jobflow.name = "SnowPlow EmrEtlRunner: %s" % case
                       when (config[:start].nil? and config[:end].nil?)
                         "Rolling mode"
                       when config[:start].nil?

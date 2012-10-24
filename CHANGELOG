@@ -1,7 +1,13 @@
-Version 0.5.1 (2012-10-27)
+Version 0.5.1 (2012-10-27) - REMOVE DONES...
 --------------------------
-Serde: added ignore_errors option to avoid throwing exceptions on a bad field (thanks mtibben!)
-Infobright: added setup scripts into 4-storage/infobright
+Infobright: added setup scripts into 4-storage/infobright - DONE
+HiveQL: removed hive-exact-etl.q as no longer supported   - DONE
+HiveQL: added nohive-rolling-etl.q for Infobright- (and other db-)friendly event file format 
+Serde: added ignore_errors option to avoid throwing exceptions on a bad field, fixes #52 (thanks mtibben!) - DONE
+Serde: tabs are changed to 4 spaces
+Serde: browser features are now also available as individual fields, for nohive-rolling-etl.q to use
+EmrEtlRunner: bumped to 0.0.3
+EmrEtlRunner: added new configuration options (output format, ignore errors)
 
 Version 0.5.0 (2012-10-24)
 --------------------------
