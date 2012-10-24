@@ -28,6 +28,8 @@ SQL=`locate mysql-ib`
 
 echo "Setting up Infobright..."
 cat ./sql/setup_infobright.sql | ${SQL} -u ${USERNAME} --password=${PASSWORD}
+echo "... done."
 
 echo "Showing the new table definition..."
 cat ./sql/verify_infobright.sql | ${SQL} -u ${USERNAME} --password=${PASSWORD}
+echo "... done."

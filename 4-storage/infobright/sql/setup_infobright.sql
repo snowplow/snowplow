@@ -16,7 +16,7 @@
 -- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
 -- License:     Apache License Version 2.0
 
--- CREATE DATABASE snowplow ;
+CREATE DATABASE IF NOT EXISTS snowplow ;
 
 USE snowplow ;
 
