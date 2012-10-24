@@ -2,7 +2,7 @@ Version 0.5.1 (2012-10-27) - REMOVE DONES...
 --------------------------
 Infobright: added setup scripts into 4-storage/infobright - DONE
 HiveQL: removed hive-exact-etl.q as no longer supported   - DONE
-HiveQL: added nohive-rolling-etl.q for Infobright- (and other db-)friendly event file format 
+HiveQL: added nonhive-rolling-etl.q for Infobright- (and other db-)friendly event file format 
 Serde: added ignore_errors option to avoid throwing exceptions on a bad field, fixes #52 (thanks mtibben!) - DONE
 Serde: tabs are changed to 4 spaces
 Serde: browser features are now also available as individual fields, for nohive-rolling-etl.q to use
