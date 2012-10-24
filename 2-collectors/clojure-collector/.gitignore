@@ -1,0 +1,6 @@
+pom.xml
+*.jar
+*.war
+lib
+classes
+target
