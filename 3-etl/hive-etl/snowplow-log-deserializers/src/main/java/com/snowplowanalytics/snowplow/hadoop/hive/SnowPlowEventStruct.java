@@ -159,7 +159,7 @@ public class SnowPlowEventStruct {
   private static final String cfEncoding = "UTF-8";
 
   // An enum of all the fields we're expecting in the querystring
-  private static enum QuerystringFields { TID, AID, UID, VID, TSTAMP, TV, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
+  private static enum QuerystringFields { TID, AID, UID, VID, TSTAMP, TV, LANG, F_PDF, F_FLA, F_JAVA, F_DIR, F_QT, F_REALP, F_WMA, F_GEARS, F_AG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
 
   // An enum for the marketing attribution fields we might find
   // attached to the page URL.
@@ -305,48 +305,40 @@ public class SnowPlowEventStruct {
             this.br_lang = value;
             break;
           case F_PDF:
-            if (this.br_features_pdf = stringToBoolean(value)) // = Intentional =, not ==
-              this.br_features.add('pdf');
+            if (this.br_features_pdf = stringToBoolean(value)) // = Intentional =
+              this.br_features.add("pdf");
             break;
-          case F_xxx:
-            this.br_features_flash = stringToBoolean(value);
-            if (this.br_features_flash)
-              this.br_features.add('xxx');
+          case F_FLA:
+            if (this.br_features_flash = stringToBoolean(value)) // = Intentional =
+              this.br_features.add("fla");
             break;
-          case F_xxx:
-            this.br_features_java = stringToBoolean(value);
-            if (this.br_features_java)
-              this.br_features.add('xxx');
+          case F_JAVA:
+            if (this.br_features_java = stringToBoolean(value)) // = Intentional =
+              this.br_features.add("java");
             break;
-          case F_xxx:
-            this.br_features_director = stringToBoolean(value);
-            if (this.br_features_director)
-              this.br_features.add('xxx');
+          case F_DIR:
+            if (this.br_features_director = stringToBoolean(value)) // = Intentional =
+              this.br_features.add("dir");
             break;
-          case F_xxx:
-            this.br_features_quicktime = stringToBoolean(value);
-            if (this.br_features_quicktime)
-              this.br_features.add('xxx');
+          case F_QT:
+            if (this.br_features_quicktime = stringToBoolean(value)) // = Intentional =
+              this.br_features.add("qt");
             break;
-          case F_xxx:
-            this.br_features_realplayer = stringToBoolean(value);
-            if (this.br_features_realplayer)
-              this.br_features.add('xxx');
+          case F_REALP:
+            if (this.br_features_realplayer = stringToBoolean(value)) // = Intentional =
+              this.br_features.add("realp");
             break;
-          case F_xxx:
-            this.br_features_windowsmedia = stringToBoolean(value);
-            if (this.br_features_windowsmedia)
-              this.br_features.add('xxx');
+          case F_WMA:
+            if (this.br_features_windowsmedia = stringToBoolean(value)) // = Intentional =
+              this.br_features.add("wma");
             break;
-          case F_xxx:
-            this.br_features_gears = stringToBoolean(value);
-            if (this.br_features_gears)
-              this.br_features.add('xxx');
+          case F_GEARS:
+            if (this.br_features_gears = stringToBoolean(value)) // = Intentional =
+              this.br_features.add("gears");
             break;
-          case F_xxx:
-            this.br_features_silverlight = stringToBoolean(value);
-            if (this.br_features_silverlight)
-              this.br_features.add('xxx');
+          case F_AG:
+            if (this.br_features_silverlight = stringToBoolean(value)) // = Intentional =
+              this.br_features.add("ag");
             break;
           case COOKIE:
             this.br_cookies = stringToBoolean(value);
