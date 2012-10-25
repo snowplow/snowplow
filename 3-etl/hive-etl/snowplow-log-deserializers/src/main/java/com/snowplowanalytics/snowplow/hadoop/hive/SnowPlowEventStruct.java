@@ -431,7 +431,6 @@ public class SnowPlowEventStruct {
       }
     }
 
-
     // 4. Choose the page_url
     final String cfUrl = m.group(10);
     if (isNullField(cfUrl)) { // CloudFront didn't provide the URL as cs(Referer)
@@ -443,7 +442,6 @@ public class SnowPlowEventStruct {
     } else { // Otherwise default to...
       this.page_url = cfUrl; // The CloudFront cs(Referer) URL
     }
-
 
     // 5. Finally handle the marketing fields in the page_url
     // Re-use params to avoid creating another object
