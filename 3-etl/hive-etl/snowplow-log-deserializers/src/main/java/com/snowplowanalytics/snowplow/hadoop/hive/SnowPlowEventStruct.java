@@ -616,8 +616,8 @@ public class SnowPlowEventStruct {
   static String cleanUrlString(String s)
   {
     // The '%' character seems to be appended to the end of some URLs in 
-    // the Cloudfront logs, causing Exceptions when using URLDecoder.decode
-    // Perhaps a Cloudfront bug?
+    // the CloudFront logs, causing Exceptions when using URLDecoder.decode
+    // Perhaps a CloudFront bug?
     return StringUtils.removeEnd(s, "%");
   }
 
