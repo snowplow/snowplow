@@ -17,7 +17,7 @@ Link to setup guide to come.
 
 The contents of this folder are as follows:
 
-* In this folder is this `README` and the `setup.sh` Bash script
+* In this folder is this `README.md` and the `setup.sh` Bash script
 * `sql` contains Infobright-compatible SQL scripts to setup your database and
   verify the setup
 
