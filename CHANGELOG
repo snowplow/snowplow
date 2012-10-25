@@ -1,6 +1,6 @@
 Version 0.5.1 (2012-10-27) - REMOVE DONES...
 --------------------------
-Infobright: added setup scripts and docs into 4-storage/infobright                                         - DONE need DOCS
+Infobright: added setup scripts and docs into 4-storage/infobright                                         - DONE
 Infobright: added version handling (v_tracker, v_collector, v_etl)                                         - DONE
 HiveQL: removed hive-exact-etl.q as no longer supported                                                    - DONE
 HiveQL: added non-hive-rolling-etl.q for Infobright- (and other db-)friendly event file format             - DONE need UPLOAD
@@ -9,7 +9,7 @@ Serde: bumped to 0.5.0                                                          
 Serde: added ignore_errors option to avoid throwing exceptions on a bad field, fixes #52 (thanks mtibben!) - DONE need TEST
 Serde: tabs are changed to 4 spaces, fixes #61                                                             - DONE need TEST
 Serde: browser features are now also available as individual fields, for non-hive-rolling-etl.q to use     - DONE need TEST
-Serde: added version handling (v_tracker, v_collector, v_etl)                                              - 
+Serde: added version handling (v_tracker, v_collector, v_etl)                                              - DONE need TEST
 EmrEtlRunner: bumped to 0.0.3                                                                              - DONE
 EmrEtlRunner: moved 3 .rb files in lib/ into lib/snowplow-emr-etl-runner                                   - 
 EmrEtlRunner: added/updated configuration options (:etl: section and hiveql versioning params)

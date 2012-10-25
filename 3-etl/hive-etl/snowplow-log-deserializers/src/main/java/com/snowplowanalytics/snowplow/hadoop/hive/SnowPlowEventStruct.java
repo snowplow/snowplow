@@ -41,6 +41,9 @@ import nl.bitwalker.useragentutils.*;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 
+// Get our project settings
+import com.snowplowanalytics.snowplow.hadoop.hive.generated.ProjectSettings;
+
 /**
  * SnowPlowEventStruct represents the Hive struct for a SnowPlow event or page view.
  *
@@ -262,7 +265,7 @@ public class SnowPlowEventStruct {
 
     // 3. Now for the versioning
     this.v_collector = collectorVersion;
-    this.v_etl = "TODO"; // Update this!
+    this.v_etl = "serde-" + ProjectSettings.VERSION;
 
     // 4. Now we dis-assemble the querystring
     String qsUrl = null;

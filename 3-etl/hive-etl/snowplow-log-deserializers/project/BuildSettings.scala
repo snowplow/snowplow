@@ -17,7 +17,7 @@ object BuildSettings {
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
-    organization  := "SnowPlow Analytics Ltd",
+    organization  := "com.snowplowanalytics",
     version       := "0.5.0",
     description   := "Hive deserializer for the SnowPlow log data",
     scalaVersion  := "2.9.1",
@@ -25,6 +25,20 @@ object BuildSettings {
     parallelExecution in Test := false, // Parallel tests cause havoc with Hive
     resolvers     ++= Dependencies.resolutionRepos
   )
+
+  // Makes our SBT app settings available from within the deserializer
+  lazy val javifySettings = Seq(sourceGenerators in Compile <+= (sourceManaged in Compile, version, name, organization) map { (d, v, n, o) =>
+    val file = d / "ProjectSettings.java"
+    IO.write(file, """package com.snowplowanalytics.snowplow.hadoop.hive.generated;
+      |public final class ProjectSettings {
+      |  private ProjectSettings() {}
+      |  public static final String ORGANIZATION = "%s";
+      |  public static final String VERSION = "%s";
+      |  public static final String NAME = "%s";
+      |}
+      |""".stripMargin.format(o, v, n))
+    Seq(file)
+  })
 
   // sbt-assembly settings for building a fat jar
   import sbtassembly.Plugin._
@@ -40,5 +54,5 @@ object BuildSettings {
     }
   )
 
-  lazy val buildSettings = basicSettings ++ sbtAssemblySettings
+  lazy val buildSettings = basicSettings ++ javifySettings ++ sbtAssemblySettings
 }

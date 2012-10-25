@@ -62,7 +62,7 @@ public class SnowPlowEventDeserializer implements Deserializer {
   // For performance reasons we reuse the same object to deserialize all of our rows
   private static final SnowPlowEventStruct cachedStruct = new SnowPlowEventStruct();
   
-  // returns null instead of throwing an exception
+  // Returns null instead of throwing an exception
   private boolean ignore_errors = false;
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -121,7 +121,7 @@ public class SnowPlowEventDeserializer implements Deserializer {
   }
 
   /**
-   * Initialize the CfLogDeserializer.
+   * Initialize the SnowPlowEventDeserializer.
    *
    * @param conf System properties
    * @param tbl Table properties
