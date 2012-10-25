@@ -65,6 +65,16 @@ class SnowPlowEvent {
   // Browser (from querystring)
   var br_lang: String = _
   var br_features: List[String] = List[String]()
+  // Individual feature fields for non-Hive targets (e.g. Infobright)
+  var br_features_pdf: Boolean = _
+  var br_features_flash: Boolean = _
+  var br_features_java: Boolean = _
+  var br_features_director: Boolean = _
+  var br_features_quicktime: Boolean = _
+  var br_features_realplayer: Boolean = _
+  var br_features_windowsmedia: Boolean = _
+  var br_features_gears: Boolean = _
+  var br_features_silverlight: Boolean = _
   var br_cookies: Boolean = _
 
   // OS (from user-agent)

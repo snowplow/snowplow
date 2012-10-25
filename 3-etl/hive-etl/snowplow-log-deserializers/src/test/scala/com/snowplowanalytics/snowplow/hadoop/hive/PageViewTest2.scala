@@ -32,9 +32,9 @@ class PageViewTest2 extends Specification {
   // Toggle if tests are failing and you want to inspect the struct contents
   implicit val _DEBUG = false
 
-  val row3 = "2012-05-24  00:06:42  LHR5  3402  90.194.12.51  GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(iPhone;%20CPU%20iPhone%20OS%205_1_1%20like%20Mac%20OS%20X)%20AppleWebKit/534.46%20(KHTML,%20like%20Gecko)%20Version/5.1%20Mobile/9B206%20Safari/7534.48.3  page=Psycards%2520book%2520and%2520deck%2520starter%2520pack%2520-%2520Psychic%2520Bazaar&tid=019539&uid=e7bccbb647296c98&vid=1&lang=en-us&refr=http%253A%252F%252Fwww.google.com%252Fsearch%253Fhl%253Den%2526q%253Dthe%252Bpsycard%252Bstory%2526oq%253Dthe%252Bpsycard%252Bstory%2526aq%253Df%2526aqi%253D%2526aql%253D%2526gs_l%253Dmobile-gws-serp.12...0.0.0.6358.0.0.0.0.0.0.0.0..0.0...0.0.JrNbKlRgHbQ%2526mvs%253D0&f_pdf=0&f_qt=1&f_realp=0&f_wma=0&f_dir=0&f_fla=0&f_java=0&f_gears=0&f_ag=0&res=320x480&cookie=1"
+  val row = "2012-05-24  00:06:42  LHR5  3402  90.194.12.51  GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(iPhone;%20CPU%20iPhone%20OS%205_1_1%20like%20Mac%20OS%20X)%20AppleWebKit/534.46%20(KHTML,%20like%20Gecko)%20Version/5.1%20Mobile/9B206%20Safari/7534.48.3  page=Psycards%2520book%2520and%2520deck%2520starter%2520pack%2520-%2520Psychic%2520Bazaar&tid=019539&uid=e7bccbb647296c98&vid=1&lang=en-us&refr=http%253A%252F%252Fwww.google.com%252Fsearch%253Fhl%253Den%2526q%253Dthe%252Bpsycard%252Bstory%2526oq%253Dthe%252Bpsycard%252Bstory%2526aq%253Df%2526aqi%253D%2526aql%253D%2526gs_l%253Dmobile-gws-serp.12...0.0.0.6358.0.0.0.0.0.0.0.0..0.0...0.0.JrNbKlRgHbQ%2526mvs%253D0&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=0&f_gears=1&f_ag=0&res=320x480&cookie=1"
 
-  val expected3 = new SnowPlowEvent().tap { e =>
+  val expected = new SnowPlowEvent().tap { e =>
     e.dt = "2012-05-24"
     e.tm = "00:06:42"
     e.txn_id = "019539"
@@ -51,7 +51,16 @@ class PageViewTest2 extends Specification {
     e.br_renderengine = "WEBKIT"
     e.br_lang = "en-us"
     e.br_cookies = true
-    e.br_features = List("qt")
+    e.br_features = List("qt", "fla", "wma", "gears")
+    e.br_features_pdf = false
+    e.br_features_flash = true
+    e.br_features_java = false
+    e.br_features_director = false
+    e.br_features_quicktime = true
+    e.br_features_realplayer = false
+    e.br_features_windowsmedia = true
+    e.br_features_gears = true
+    e.br_features_silverlight = false
     e.os_name = "iOS 5 (iPhone)"
     e.os_family = "iOS"
     e.os_manufacturer = "Apple Inc."
@@ -61,102 +70,131 @@ class PageViewTest2 extends Specification {
     e.dvce_screenheight = 480
   }
 
-  "The SnowPlow page view row \"%s\"".format(row3) should {
+  "The SnowPlow page view row \"%s\"".format(row) should {
 
-    val actual = SnowPlowDeserializer.deserialize(row3)
+    val actual = SnowPlowDeserializer.deserialize(row)
 
     // Check all of the field values
 
     // Date/time
-    "have dt (Date) = %s".format(expected3.dt) in {
-      actual.dt must_== expected3.dt
+    "have dt (Date) = %s".format(expected.dt) in {
+      actual.dt must_== expected.dt
     }
-    "have tm (Time) = %s".format(expected3.tm) in {
-      actual.tm must_== expected3.tm
+    "have tm (Time) = %s".format(expected.tm) in {
+      actual.tm must_== expected.tm
     }
 
     // Transaction
-    "have txn_id (Transaction ID) = %s".format(expected3.txn_id) in {
-      actual.txn_id must_== expected3.txn_id
+    "have txn_id (Transaction ID) = %s".format(expected.txn_id) in {
+      actual.txn_id must_== expected.txn_id
     }
 
     // User and visit
-    "have user_id (User ID) = %s".format(expected3.user_id) in {
-      actual.user_id must_== expected3.user_id
+    "have user_id (User ID) = %s".format(expected.user_id) in {
+      actual.user_id must_== expected.user_id
     }
-    "have user_ipaddress (User IP Address) = %s".format(expected3.user_ipaddress) in {
-      actual.user_ipaddress must_== expected3.user_ipaddress
+    "have user_ipaddress (User IP Address) = %s".format(expected.user_ipaddress) in {
+      actual.user_ipaddress must_== expected.user_ipaddress
     }
-    "have visit_id (User IP Address) = %s".format(expected3.visit_id) in {
-      actual.visit_id must_== expected3.visit_id
+    "have visit_id (User IP Address) = %s".format(expected.visit_id) in {
+      actual.visit_id must_== expected.visit_id
     }
 
     // Page
-    "have page_url (Page URL) = %s".format(expected3.page_url) in {
-      actual.page_url must_== expected3.page_url
+    "have page_url (Page URL) = %s".format(expected.page_url) in {
+      actual.page_url must_== expected.page_url
     }
     // Tracking a page view, so we have a page title
-    "have page_title (Page Title) = %s".format(expected3.page_title) in {
-      actual.page_title must_== expected3.page_title
+    "have page_title (Page Title) = %s".format(expected.page_title) in {
+      actual.page_title must_== expected.page_title
     }
-    "have page_referrer (Page Referrer) = %s".format(expected3.page_referrer) in {
-      actual.page_referrer must_== expected3.page_referrer
+    "have page_referrer (Page Referrer) = %s".format(expected.page_referrer) in {
+      actual.page_referrer must_== expected.page_referrer
     }
 
     // Browser (from user-agent)
-    "have br_name (Browser Name) = %s".format(expected3.br_name) in {
-      actual.br_name must_== expected3.br_name
+    "have br_name (Browser Name) = %s".format(expected.br_name) in {
+      actual.br_name must_== expected.br_name
     }
-    "have br_family (Browser Family) = %s".format(expected3.br_family) in {
-      actual.br_family must_== expected3.br_family
+    "have br_family (Browser Family) = %s".format(expected.br_family) in {
+      actual.br_family must_== expected.br_family
     }
-    "have br_version (Browser Version) = %s".format(expected3.br_version) in {
-      actual.br_version must_== expected3.br_version
+    "have br_version (Browser Version) = %s".format(expected.br_version) in {
+      actual.br_version must_== expected.br_version
     }
-    "have br_type (Browser Type) = %s".format(expected3.br_type) in {
-      actual.br_type must_== expected3.br_type
+    "have br_type (Browser Type) = %s".format(expected.br_type) in {
+      actual.br_type must_== expected.br_type
     }
-    "have br_renderengine (Browser Rendering Engine) = %s".format(expected3.br_renderengine) in {
-      actual.br_renderengine must_== expected3.br_renderengine
+    "have br_renderengine (Browser Rendering Engine) = %s".format(expected.br_renderengine) in {
+      actual.br_renderengine must_== expected.br_renderengine
     }
 
     // Browser (from querystring)
-    "have br_lang (Browser Lang) = %s".format(expected3.br_lang) in {
-      actual.br_lang must_== expected3.br_lang
+    "have br_lang (Browser Lang) = %s".format(expected.br_lang) in {
+      actual.br_lang must_== expected.br_lang
     }
-    "have br_cookies (Browser Cookies Enabled?) = %s".format(expected3.br_cookies) in {
-      actual.br_cookies must_== expected3.br_cookies
+    "have br_cookies (Browser Cookies Enabled?) = %s".format(expected.br_cookies) in {
+      actual.br_cookies must_== expected.br_cookies
     }
-    "have br_features (Browser Features) = %s".format(expected3.br_features) in {
+    "have br_features (Browser Features) = %s".format(expected.br_features) in {
       // For some reason (Specs2) couldn't use implicit Java->Scala conversion here
-      JavaConversions.asScalaBuffer(actual.br_features) must haveTheSameElementsAs(expected3.br_features)
+      JavaConversions.asScalaBuffer(actual.br_features) must haveTheSameElementsAs(expected.br_features)
+    }
+
+    // Browser features
+    "have br_features_pdf (Browser Feature PDF) = %s".format(expected.br_features_pdf) in {
+      actual.br_features_pdf must_== expected.br_features_pdf
+    }
+    "have br_features_flash (Browser Feature Flash) = %s".format(expected.br_features_flash) in {
+      actual.br_features_flash must_== expected.br_features_flash
+    }
+    "have br_features_java (Browser Feature Java) = %s".format(expected.br_features_java) in {
+      actual.br_features_java must_== expected.br_features_java
+    }
+    "have br_features_director (Browser Feature Director) = %s".format(expected.br_features_director) in {
+      actual.br_features_director must_== expected.br_features_director
+    }
+    "have br_features_quicktime (Browser Feature QuickTime) = %s".format(expected.br_features_quicktime) in {
+      actual.br_features_quicktime must_== expected.br_features_quicktime
+    }
+    "have br_features_realplayer (Browser Feature RealPlayer) = %s".format(expected.br_features_realplayer) in {
+      actual.br_features_realplayer must_== expected.br_features_realplayer
+    }
+    "have br_features_windowsmedia (Browser Feature Windows Media) = %s".format(expected.br_features_windowsmedia) in {
+      actual.br_features_windowsmedia must_== expected.br_features_windowsmedia
+    }
+    "have br_features_gears (Browser Feature Google Gears) = %s".format(expected.br_features_gears) in {
+      actual.br_features_gears must_== expected.br_features_gears
+    }
+    "have br_features_silverlight (Browser Feature Silverlight) = %s".format(expected.br_features_silverlight) in {
+      actual.br_features_silverlight must_== expected.br_features_silverlight
     }
 
     // OS (from user-agent)
-    "have os_name (OS Name) = %s".format(expected3.os_name) in {
-      actual.os_name must_== expected3.os_name
+    "have os_name (OS Name) = %s".format(expected.os_name) in {
+      actual.os_name must_== expected.os_name
     }.pendingUntilFixed // nl.bitwalker.useragentutils is not parsing this user agent correctly
-    "have os_family (OS Family) = %s".format(expected3.os_family) in {
-      actual.os_family must_== expected3.os_family
+    "have os_family (OS Family) = %s".format(expected.os_family) in {
+      actual.os_family must_== expected.os_family
     }.pendingUntilFixed // nl.bitwalker.useragentutils is not parsing this user agent correctly
-    "have os_manufacturer (OS Manufacturer) = %s".format(expected3.os_manufacturer) in {
-      actual.os_manufacturer must_== expected3.os_manufacturer
+    "have os_manufacturer (OS Manufacturer) = %s".format(expected.os_manufacturer) in {
+      actual.os_manufacturer must_== expected.os_manufacturer
     }
 
     // Device/Hardware (from user-agent)
-    "have dvce_type (Device Type) = %s".format(expected3.dvce_type) in {
-      actual.dvce_type must_== expected3.dvce_type
+    "have dvce_type (Device Type) = %s".format(expected.dvce_type) in {
+      actual.dvce_type must_== expected.dvce_type
     }.pendingUntilFixed // nl.bitwalker.useragentutils is not parsing this user agent correctly
-    "have dvce_ismobile (Device Is Mobile?) = %s".format(expected3.dvce_ismobile) in {
-      actual.dvce_ismobile must_== expected3.dvce_ismobile
+    "have dvce_ismobile (Device Is Mobile?) = %s".format(expected.dvce_ismobile) in {
+      actual.dvce_ismobile must_== expected.dvce_ismobile
     }.pendingUntilFixed // nl.bitwalker.useragentutils is not parsing this user agent correctly
 
     // Device (from querystring)
-    "have dvce_screenwidth (Device Screen Width) = %s".format(expected3.dvce_screenwidth) in {
-      actual.dvce_screenwidth must_== expected3.dvce_screenwidth
+    "have dvce_screenwidth (Device Screen Width) = %s".format(expected.dvce_screenwidth) in {
+      actual.dvce_screenwidth must_== expected.dvce_screenwidth
     }
-    "have dvce_screenheight (Device Screen Height) = %s".format(expected3.dvce_screenheight) in {
-      actual.dvce_screenheight must_== expected3.dvce_screenheight
+    "have dvce_screenheight (Device Screen Height) = %s".format(expected.dvce_screenheight) in {
+      actual.dvce_screenheight must_== expected.dvce_screenheight
     }
   }
 }
