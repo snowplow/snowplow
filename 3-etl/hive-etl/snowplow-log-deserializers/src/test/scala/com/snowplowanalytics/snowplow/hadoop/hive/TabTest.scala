@@ -24,13 +24,13 @@ class TabTest extends Specification {
   implicit val _DEBUG = false
 
   // Row which contains tabs
-  val badRow = "2012-06-09	00:12:34	EWR2	3345	184.151.127.250	GET	d3gs014xn8p70.cloudfront.net	/ice.png	200	http://www.psychicbazaar.com/publisher/8_piatnik	Mozilla/5.0%20(Macintosh;%20U;%20Intel%20Mac%20OS%20X%2010_6_2;%20en-us)%20AppleWebKit/531.21.8%20(KHTML,%20like%20Gecko)%20Version/4.0.4%20Safari/531.21.10	page=%250APublisher%253A%2520Piatnik%2520-%2520Psychic%2520Bazaar&tid=397770&uid=825c94ab288ad859&vid=5&lang=en-us&refr=http%253A%252F%252Fwww.google.ca%252Fimgres%253Fimgurl%253Dhttp%253A%252F%252Fmdm.pbzstatic.com%252Ftarot%252Fpetrak-tarot%252Fmontage.png%2526imgrefurl%253Dhttp%253A%252F%252Fwww.psychicbazaar.com%252Fpublisher%252F8_piatnik%2526usg%253D__SuKRFvoIHha8fX6oh_-k3Rt3EdQ%253D%2526h%253D250%2526w%253D734%2526sz%253D241%2526hl%253Den%2526start%253D11%2526zoom%253D1%2526tbnid%253DcRZVciqXz-3AHM%253A%2526tbnh%253D48%2526tbnw%253D141%2526ei%253D2JTST-bYKMa-0QHTwZyEAw%2526prev%253D%252Fsearch%25253Fq%25253Dpetra%25252BK%25252Bpiatnik%25252Btarot%252526hl%25253Den%252526client%25253Dsafari%252526sa%25253DX%252526rls%25253Den%252526tbm%25253Disch%252526prmd%25253Divns%2526itbs%253D1&f_pdf=0&f_qt=1&f_realp=0&f_wma=0&f_dir=1&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1920x1080&cookie=1&url=http%253A%252F%252Fwww.psychicbazaar.com%252Fpublisher%252F8_piatnik";
+  val badRow = "2012-05-25  11:35:53  DFW3  3343  99.116.172.58 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=5 Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &ti_id=order-123&ti_sk=PBZ1001&ti_na=Blue%20t-shirt&ti_ca=APPAREL&ti_pr=2000&ti_qu=2&tid=851830&uid=a279872d76480afb&vid=1&aid=CFe23a&lang=en-GB&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1&url=file%3A%2F%2F%2Fhome%2Falex%2Fasync.html"
   
   "A SnowPlow row where fields contain tabs" should {
 
     val actual = SnowPlowDeserializer.deserialize(badRow)
   
-    "change the tabs into four spaces (    )" in {
+    "change the tabs into four spaces" in {
       actual.page_title must_== "Publisher: Piatnik - Psychic Bazaar"
     }
   } 
