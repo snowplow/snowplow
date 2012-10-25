@@ -36,6 +36,6 @@ object Dependencies {
     val httpCore    = "org.apache.httpcomponents"  %  "httpcore"             % V.http  
     val logging     = "commons-logging"            %  "commons-logging"      % V.logging     % "provided"
     val specs2      = "org.specs2"                 %% "specs2"               % V.specs2      % "test"
-    val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"           % V.scalaUtil        % "test"
+    val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"           % V.scalaUtil   % "test"
   }
 }
