@@ -27,7 +27,7 @@ import com.snowplowanalytics.util.Tap._
 // Deserializer
 import test.{SnowPlowDeserializer, SnowPlowEvent}
 
-class PageViewTest extends Specification {
+class PageViewTest1 extends Specification {
 
   // Toggle if tests are failing and you want to inspect the struct contents
   implicit val _DEBUG = false
