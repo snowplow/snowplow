@@ -277,9 +277,15 @@ public class SnowPlowEventStruct {
       final String name = pair.getName();
       final String value = pair.getValue();
 
+      QuerystringFields field = null;
       try {
+        field = QuerystringFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
+      } catch (Exception e) {
+        getLog().warn(e.getClass().getSimpleName() + " on { " + name + ": " + value + "}");
+        // Don't re-raise - new tracker with old version of deserializer
+      }
 
-        final QuerystringFields field = QuerystringFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
+      try {
         switch (field) {
 
           // Common fields
