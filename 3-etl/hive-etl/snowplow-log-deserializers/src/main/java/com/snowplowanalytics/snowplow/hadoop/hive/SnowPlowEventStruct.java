@@ -102,6 +102,16 @@ public class SnowPlowEventStruct {
   // Browser (from querystring)
   public String br_lang;
   public ArrayList<String> br_features = new ArrayList<String>(); // So we don't have to create new on each row.
+  // Individual feature fields for non-Hive targets (e.g. Infobright)
+  public Boolean br_features_pdf;
+  public Boolean br_features_flash;
+  public Boolean br_features_java;
+  public Boolean br_features_director;
+  public Boolean br_features_quicktime;
+  public Boolean br_features_realplayer;
+  public Boolean br_features_windowsmedia;
+  public Boolean br_features_gears;
+  public Boolean br_features_silverlight;
   public Boolean br_cookies;
 
   // OS (from user-agent)
@@ -135,15 +145,21 @@ public class SnowPlowEventStruct {
   public String ti_price;
   public String ti_quantity;
 
+  // Versioning
+  public String v_tracker;
+  public String v_collector;
+  public String v_etl;
 
   // -------------------------------------------------------------------------------------------------------------------
   // Static configuration
   // -------------------------------------------------------------------------------------------------------------------
 
+  private static final String collectorVersion = "cf"; // Collector is CloudFront. Update when we support other collector formats.
+
   private static final String cfEncoding = "UTF-8";
 
   // An enum of all the fields we're expecting in the querystring
-  private static enum QuerystringFields { TID, AID, UID, VID, TSTAMP, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
+  private static enum QuerystringFields { TID, AID, UID, VID, TSTAMP, TV, LANG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
 
   // An enum for the marketing attribution fields we might find
   // attached to the page URL.
@@ -244,7 +260,11 @@ public class SnowPlowEventStruct {
     this.dvce_type = os.getDeviceType().getName();
     this.dvce_ismobile = os.isMobileDevice();
 
-    // 3. Now we dis-assemble the querystring
+    // 3. Now for the versioning
+    this.v_collector = collectorVersion;
+    this.v_etl = "TODO"; // Update this!
+
+    // 4. Now we dis-assemble the querystring
     String qsUrl = null;
     List<NameValuePair> params = URLEncodedUtils.parse(URI.create("http://localhost/?" + querystring), "UTF-8");
 
@@ -255,123 +275,161 @@ public class SnowPlowEventStruct {
       final String value = pair.getValue();
 
       try {
-        // Handle browser features (f_fla etc) separately (i.e. no enum value for these)
-        if (name.startsWith("f_")) {
-          // Only add it to our array of browser features if it's set to "1"
-          if (stringToBoolean(value)) {
-            // Drop the "f_" prefix and add to our array
-            this.br_features.add(name.substring(2));
-          }
-        } else {
 
-          final QuerystringFields field = QuerystringFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
-          switch (field) {
+        final QuerystringFields field = QuerystringFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
+        switch (field) {
 
-            // Common fields
-            case TID:
-              this.txn_id = value;
-              break;
-            case AID:
-              this.app_id = value;
-              break;
-            case UID:
-              this.user_id = value;
-              break;
-            case VID:
-              this.visit_id = Integer.parseInt(value);
-              break;
-            case TSTAMP:
-              // Replace our timestamp fields with the client's timestamp
-              String[] timestamp = value.split(" ");
-              this.dt = timestamp[0];
-              this.tm = timestamp[1];
-              break;
-            case LANG:
-              this.br_lang = value;
-              break;
-            case COOKIE:
-              this.br_cookies = stringToBoolean(value);
-              break;
-            case RES:
-              String[] resolution = value.split("x");
-              if (resolution.length != 2)
-                throw new Exception("Couldn't parse res field");
-              this.dvce_screenwidth = Integer.parseInt(resolution[0]);
-              this.dvce_screenheight = Integer.parseInt(resolution[1]);
-              break;
-            case REFR:
-              this.page_referrer = decodeSafeString(value);
-              break;
-            case URL:
-              qsUrl = pair.getValue(); // We might use this later for the page URL
-              break;
+          // Common fields
+          case TID:
+            this.txn_id = value;
+            break;
+          case AID:
+            this.app_id = value;
+            break;
+          case UID:
+            this.user_id = value;
+            break;
+          case VID:
+            this.visit_id = Integer.parseInt(value);
+            break;
+          case TSTAMP:
+            // Replace our timestamp fields with the client's timestamp
+            String[] timestamp = value.split(" ");
+            this.dt = timestamp[0];
+            this.tm = timestamp[1];
+            break;
+          case TV:
+            this.v_tracker = value;
+            break;
+          case LANG:
+            this.br_lang = value;
+            break;
+          case F_PDF:
+            if (this.br_features_pdf = stringToBoolean(value)) // = Intentional =, not ==
+              this.br_features.add('pdf');
+            break;
+          case F_xxx:
+            this.br_features_flash = stringToBoolean(value);
+            if (this.br_features_flash)
+              this.br_features.add('xxx');
+            break;
+          case F_xxx:
+            this.br_features_java = stringToBoolean(value);
+            if (this.br_features_java)
+              this.br_features.add('xxx');
+            break;
+          case F_xxx:
+            this.br_features_director = stringToBoolean(value);
+            if (this.br_features_director)
+              this.br_features.add('xxx');
+            break;
+          case F_xxx:
+            this.br_features_quicktime = stringToBoolean(value);
+            if (this.br_features_quicktime)
+              this.br_features.add('xxx');
+            break;
+          case F_xxx:
+            this.br_features_realplayer = stringToBoolean(value);
+            if (this.br_features_realplayer)
+              this.br_features.add('xxx');
+            break;
+          case F_xxx:
+            this.br_features_windowsmedia = stringToBoolean(value);
+            if (this.br_features_windowsmedia)
+              this.br_features.add('xxx');
+            break;
+          case F_xxx:
+            this.br_features_gears = stringToBoolean(value);
+            if (this.br_features_gears)
+              this.br_features.add('xxx');
+            break;
+          case F_xxx:
+            this.br_features_silverlight = stringToBoolean(value);
+            if (this.br_features_silverlight)
+              this.br_features.add('xxx');
+            break;
+          case COOKIE:
+            this.br_cookies = stringToBoolean(value);
+            break;
+          case RES:
+            String[] resolution = value.split("x");
+            if (resolution.length != 2)
+              throw new Exception("Couldn't parse res field");
+            this.dvce_screenwidth = Integer.parseInt(resolution[0]);
+            this.dvce_screenheight = Integer.parseInt(resolution[1]);
+            break;
+          case REFR:
+            this.page_referrer = decodeSafeString(value);
+            break;
+          case URL:
+            qsUrl = pair.getValue(); // We might use this later for the page URL
+            break;
 
-            // Page-view only
-            case PAGE:
-              this.page_title = decodeSafeString(value);
-              break;
+          // Page-view only
+          case PAGE:
+            this.page_title = decodeSafeString(value);
+            break;
 
-            // Event only
-            case EV_CA:
-              this.ev_category = decodeSafeString(value);
-              break;
-            case EV_AC:
-              this.ev_action = decodeSafeString(value);
-              break;
-            case EV_LA:
-              this.ev_label = decodeSafeString(value);
-              break;
-            case EV_PR:
-              this.ev_property = decodeSafeString(value);
-              break;
-            case EV_VA:
-              this.ev_value = decodeSafeString(value);
-              break;
+          // Event only
+          case EV_CA:
+            this.ev_category = decodeSafeString(value);
+            break;
+          case EV_AC:
+            this.ev_action = decodeSafeString(value);
+            break;
+          case EV_LA:
+            this.ev_label = decodeSafeString(value);
+            break;
+          case EV_PR:
+            this.ev_property = decodeSafeString(value);
+            break;
+          case EV_VA:
+            this.ev_value = decodeSafeString(value);
+            break;
 
-            // Ecommerce
-            case TR_ID:
-              this.tr_orderid = decodeSafeString(value);
-              break;
-            case TR_AF:
-              this.tr_affiliation = decodeSafeString(value);
-              break;
-            case TR_TT:
-              this.tr_total = decodeSafeString(value);
-              break;
-            case TR_TX:
-              this.tr_tax = decodeSafeString(value);
-              break;
-            case TR_SH:
-              this.tr_shipping = decodeSafeString(value);
-              break;
-            case TR_CI:
-              this.tr_city = decodeSafeString(value);
-              break;
-            case TR_ST:
-              this.tr_state = decodeSafeString(value);
-              break;
-            case TR_CO:
-              this.tr_country = decodeSafeString(value);
-              break;
-            case TI_ID:
-              this.ti_orderid = decodeSafeString(value);
-              break;
-            case TI_SK:
-              this.ti_sku = decodeSafeString(value);
-              break;
-            case TI_NA:
-              this.ti_name = decodeSafeString(value);
-              break;
-            case TI_CA:
-              this.ti_category = decodeSafeString(value);
-              break;
-            case TI_PR:
-              this.ti_price = decodeSafeString(value);
-              break;
-            case TI_QU:
-              this.ti_quantity = decodeSafeString(value);
-              break;
-          }
+          // Ecommerce
+          case TR_ID:
+            this.tr_orderid = decodeSafeString(value);
+            break;
+          case TR_AF:
+            this.tr_affiliation = decodeSafeString(value);
+            break;
+          case TR_TT:
+            this.tr_total = decodeSafeString(value);
+            break;
+          case TR_TX:
+            this.tr_tax = decodeSafeString(value);
+            break;
+          case TR_SH:
+            this.tr_shipping = decodeSafeString(value);
+            break;
+          case TR_CI:
+            this.tr_city = decodeSafeString(value);
+            break;
+          case TR_ST:
+            this.tr_state = decodeSafeString(value);
+            break;
+          case TR_CO:
+            this.tr_country = decodeSafeString(value);
+            break;
+          case TI_ID:
+            this.ti_orderid = decodeSafeString(value);
+            break;
+          case TI_SK:
+            this.ti_sku = decodeSafeString(value);
+            break;
+          case TI_NA:
+            this.ti_name = decodeSafeString(value);
+            break;
+          case TI_CA:
+            this.ti_category = decodeSafeString(value);
+            break;
+          case TI_PR:
+            this.ti_price = decodeSafeString(value);
+            break;
+          case TI_QU:
+            this.ti_quantity = decodeSafeString(value);
+            break;            
         }
       } catch (Exception e) {
         getLog().warn(e.getClass().getSimpleName() + " on { " + name + ": " + value + "}");
@@ -481,6 +539,16 @@ public class SnowPlowEventStruct {
     this.br_renderengine = null;
     this.br_lang = null;
     this.br_features.clear(); // Empty the ArrayList, don't destroy it
+    this.br_features_pdf = null;
+    this.br_features_flash = null;
+    this.br_features_java = null;
+    this.br_features_director = null;
+    this.br_features_quicktime = null;
+    this.br_features_realplayer = null;
+    this.br_features_windowsmedia = null;
+    this.br_features_gears = null;
+    this.br_features_silverlight = null;
+    this.br_cookies = null;
     this.br_cookies = null;
     this.os_name = null;
     this.os_family = null;
@@ -503,6 +571,9 @@ public class SnowPlowEventStruct {
     this.ti_category = null;
     this.ti_price = null;
     this.ti_quantity = null;
+    this.v_tracker = null;
+    this.v_collector = null;
+    this.v_etl = null;
   }
 
   // -------------------------------------------------------------------------------------------------------------------
@@ -522,8 +593,10 @@ public class SnowPlowEventStruct {
   }
 
   /**
-   * Decodes a String using UTF8, also stripping out any newlines
-   * (because they will break Hive).
+   * Decodes a String using UTF8, also removing:
+   * - Newlines - because they will break Hive
+   * - Tabs - because they will break non-Hive
+   *          targets (e.g. Infobright)
    *
    * @param s The String to decode
    * @return The decoded String
@@ -536,7 +609,7 @@ public class SnowPlowEventStruct {
     String decoded = URLDecoder.decode(cleanUrlString(s), cfEncoding);
     if (decoded == null) return null;
 
-    return decoded.replaceAll("(\\r|\\n)", "");
+    return decoded.replaceAll("(\\r|\\n)", "").replaceAll("\\t", "    ");
 }
 
   /**

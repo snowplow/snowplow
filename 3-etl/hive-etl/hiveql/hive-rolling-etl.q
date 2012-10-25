@@ -73,7 +73,10 @@ dvce_type string,
 dvce_ismobile boolean,
 dvce_screenwidth int,
 dvce_screenheight int,
-app_id string
+app_id string,
+v_tracker string,
+v_collector string,
+v_etl string
 )
 PARTITIONED BY (dt STRING)
 LOCATION '${EVENTS_TABLE}' ;
@@ -131,5 +134,8 @@ dvce_ismobile,
 dvce_screenwidth,
 dvce_screenheight,
 app_id,
+v_tracker,
+v_collector,
+v_etl,
 dt
 FROM `extracted_logs` ;
