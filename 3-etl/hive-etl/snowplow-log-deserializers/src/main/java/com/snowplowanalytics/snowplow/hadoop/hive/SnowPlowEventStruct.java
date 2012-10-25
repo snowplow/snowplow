@@ -479,7 +479,7 @@ public class SnowPlowEventStruct {
               break;
           }
         } catch (Exception e) {
-          getLog().warn(e.getClass().getSimpleName() + " on { " + name + ": " + value + "}");
+          // Do nothing: non-marketing related querystring fields are not an issue.
         }
       }
     } catch (IllegalArgumentException e) {
