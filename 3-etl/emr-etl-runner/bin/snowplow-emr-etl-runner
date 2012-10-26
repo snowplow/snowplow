@@ -15,20 +15,22 @@
 # Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
-$LOAD_PATH.unshift File.dirname(__FILE__)
+$:.unshift(File.expand_path("../../lib", __FILE__))
 
-require 'config'
-require 's3_tasks'
-require 'emr_jobs'
+# $LOAD_PATH.unshift File.dirname(__FILE__)
+
+require 'snowplow-emr-etl-runner/config'
+require 'snowplow-emr-etl-runner/s3_tasks'
+require 'snowplow-emr-etl-runner/emr_jobs'
 
 # This Ruby script runs the daily ETL (extract, transform, load)
 # process which transforms the raw CloudFront log data into
 # SnowPlow-formatted Hive data tables, optimised for analysis.
 #
 # This is a three-step process:
-# 1. Extract the CloudFront log files to a temporary SnowPlow event data table (using the custom Deserializer)
-# 2. Load the temporary event data into the final SnowPlow data table, partitioning by date and user
-# 3. Archive the CloudFront log files by moving them into a separate bucket
+# 1. Transfer the raw CloudFront logs from the In Bucket to the Processing Bucket
+# 2. Run the Hive ETL process on the logs using Amazon EMR (populates processed SnowPlow events into the Out Bucket)
+# 3. Archive the processed CloudFront logs from Processing Bucket to Archive Bucket
 #
 # Note that each step is only actioned if the previous step succeeded without error.
 begin
@@ -36,8 +38,8 @@ begin
 
   S3Tasks.stage_logs_for_emr(config)
 
-  emr = EmrJobs.new(config)
-  emr.run_etl()
+  job = EmrJob.new(config)
+  job.run()
 
   S3Tasks.archive_logs(config)
 

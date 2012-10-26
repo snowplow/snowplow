@@ -14,7 +14,9 @@
 # License::   Apache License Version 2.0
 
 # -*- encoding: utf-8 -*-
-require File.expand_path('../lib/snowplow-emr-etl-runner/version', __FILE__)
+lib = File.expand_path('../lib', __FILE__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+require 'snowplow-emr-etl-runner'
 
 Gem::Specification.new do |gem|
   gem.authors       = ["Alex Dean <support@snowplowanalytics.com>"]
@@ -26,7 +28,7 @@ Gem::Specification.new do |gem|
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
-  gem.name          = SnowPlow::EmrEtlRunner::SCRIPT_NAME
+  gem.name          = SnowPlow::EmrEtlRunner::NAME
   gem.version       = SnowPlow::EmrEtlRunner::VERSION
   gem.platform      = Gem::Platform::RUBY
   gem.require_paths = ["lib"]
