@@ -69,7 +69,7 @@ module SnowPlow
 
         # check whether our processing directory is empty
         if s3.directories.get(processing_location.bucket, :prefix => processing_location.dir).files().length > 1
-          raise SnowPlow::EmrEtlRunner::DirectoryNotEmptyError, "The processing directory is not empty"
+          raise DirectoryNotEmptyError, "The processing directory is not empty"
         end
 
         # Move the files we need to move (within the date span)
@@ -257,17 +257,17 @@ module SnowPlow
         case operation
         when :copy, :move
           if to_location.nil?
-            raise SnowPlow::EmrEtlRunner::S3FileOperationError "File operation %s requires a to_location to be set" % operation
+            raise S3FileOperationError "File operation %s requires a to_location to be set" % operation
           end
         when :delete
           unless to_location.nil?
-            raise SnowPlow::EmrEtlRunner::S3FileOperationError "File operation %s does not support the to_location argument" % operation
+            raise S3FileOperationError "File operation %s does not support the to_location argument" % operation
           end
           if alter_filename_lambda.class == Proc
-            raise SnowPlow::EmrEtlRunner::S3FileOperationError "File operation %s does not support the alter_filename_lambda argument" % operation
+            raise S3FileOperationError "File operation %s does not support the alter_filename_lambda argument" % operation
           end
         else
-          raise SnowPlow::EmrEtlRunner::S3FileOperationError "File operation %s is unsupported. Try :copy, :delete or :move" % operation
+          raise S3FileOperationError "File operation %s is unsupported. Try :copy, :delete or :move" % operation
         end
 
         files_to_process = []

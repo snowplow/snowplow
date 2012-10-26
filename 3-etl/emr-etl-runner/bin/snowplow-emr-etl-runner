@@ -17,11 +17,7 @@
 
 $:.unshift(File.expand_path("../../lib", __FILE__))
 
-# $LOAD_PATH.unshift File.dirname(__FILE__)
-
-require 'snowplow-emr-etl-runner/config'
-require 'snowplow-emr-etl-runner/s3_tasks'
-require 'snowplow-emr-etl-runner/emr_jobs'
+require 'snowplow-emr-etl-runner'; runner = SnowPlow::EmrEtlRunner
 
 # This Ruby script runs the daily ETL (extract, transform, load)
 # process which transforms the raw CloudFront log data into
@@ -34,16 +30,17 @@ require 'snowplow-emr-etl-runner/emr_jobs'
 #
 # Note that each step is only actioned if the previous step succeeded without error.
 begin
-  config = Config.get_config()
+  config = runner::Config.get_config()
 
-  S3Tasks.stage_logs_for_emr(config)
+  runner::S3Tasks.stage_logs_for_emr(config)
 
-  job = EmrJob.new(config)
+  job = runner::EmrJob.new(config)
   job.run()
 
-  S3Tasks.archive_logs(config)
+  runner::S3Tasks.archive_logs(config)
 
-rescue Config::ConfigError, EmrJobs::ExecutionError => e
+# Catch any SnowPlow error
+rescue runner::Error => e
   $stderr.puts(e.message)
   exit 1
 rescue SystemExit => e
@@ -54,4 +51,4 @@ rescue Exception => e
   exit 1
 end
 
-exit 0
+exit 0 # Success
