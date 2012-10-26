@@ -38,10 +38,27 @@ module SnowPlow
         trail = lambda {|str| return str[-1].chr != '/' ? str << '/' : str}
         config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| trail.call(v)}
 
+        # Validate the collector format
+        if config[:etl][:collector_format] != 'cloudfront'
+          raise ConfigError, "Collector format '%s' not supported" % config[:etl][:collector_format]
+        end
+
         # Construct paths to our HiveQL and serde
         asset_path = "%shive" % config[:s3][:buckets][:assets]
-        config[:serde_asset] = "%s/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
-        config[:hiveql_asset] = "%s/hiveql/hive-rolling-etl-%s.q" % [asset_path, config[:snowplow][:hiveql_version]]
+        config[:serde_asset]  = "%s/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
+        hiveql_file = case config[:etl][:storage_format]
+                        when 'hive'
+                          "hive-rolling-etl-%s" % config[:snowplow][:hive_hiveql_version]
+                        when 'non-hive'
+                          "non-hive-rolling-etl-%s" % config[:snowplow][:non_hive_hiveql_version]
+                        else
+                          raise ConfigError, "Storage format '%s' not supported" % config[:snowplow][:storage_format]
+                        end
+        config[:hiveql_asset] = "%s/hiveql/%s.q" % [asset_path, hiveql_file]
+
+        if config[:etl][:continue_on_malformed_row]
+          puts "IS TRUE"
+        end
 
         config
       end
