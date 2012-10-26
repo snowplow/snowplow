@@ -6,13 +6,13 @@ HiveQL: removed hive-exact-etl.q as no longer supported                         
 HiveQL: added non-hive-rolling-etl.q for Infobright- (and other db-)friendly event file format             - DONE need UPLOAD
 HiveQL: added version handling (v_tracker, v_collector, v_etl) (fixes #42)                                 - DONE
 Serde: bumped to 0.5.0                                                                                     - DONE need UPLOAD
-Serde: added ignore_errors option to avoid throwing exceptions on a bad field, fixes #52 (thanks mtibben!) - DONE need TEST
-Serde: tabs are changed to 4 spaces, fixes #61                                                             - DONE w TEST
-Serde: browser features are now also available as individual fields, for non-hive-rolling-etl.q to use     - DONE w TEST
-Serde: added version handling (v_tracker, v_collector, v_etl)                                              - DONE w TEST
+Serde: added ignore_errors option to avoid throwing exceptions on a bad field, fixes #52 (thanks mtibben!) - 
+Serde: tabs are changed to 4 spaces, fixes #61                                                             - DONE
+Serde: browser features are now also available as individual fields, for non-hive-rolling-etl.q to use     - DONE
+Serde: added version handling (v_tracker, v_collector, v_etl)                                              - DONE
 EmrEtlRunner: bumped to 0.0.3                                                                              - DONE
 EmrEtlRunner: moved 3 .rb files in lib/ into lib/snowplow-emr-etl-runner                                   - 
-EmrEtlRunner: added/updated configuration options (:etl: section and hiveql versioning params)
+EmrEtlRunner: added/updated configuration options (:etl: section and hiveql versioning params)             -
 
 Version 0.5.0 (2012-10-24)
 --------------------------
