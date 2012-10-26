@@ -277,15 +277,8 @@ public class SnowPlowEventStruct {
       final String name = pair.getName();
       final String value = pair.getValue();
 
-      QuerystringFields field = null;
       try {
-        field = QuerystringFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
-      } catch (Exception e) {
-        getLog().warn(e.getClass().getSimpleName() + " on { " + name + ": " + value + "}");
-        // Don't re-raise - new tracker with old version of deserializer
-      }
-
-      try {
+        final QuerystringFields field = QuerystringFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
         switch (field) {
 
           // Common fields
@@ -314,39 +307,39 @@ public class SnowPlowEventStruct {
             this.br_lang = value;
             break;
           case F_PDF:
-            if (this.br_features_pdf = stringToBoolean(value)) // = Intentional =
+            if (this.br_features_pdf = stringToBoolean(value)) // Intentional =
               this.br_features.add("pdf");
             break;
           case F_FLA:
-            if (this.br_features_flash = stringToBoolean(value)) // = Intentional =
+            if (this.br_features_flash = stringToBoolean(value)) // Intentional =
               this.br_features.add("fla");
             break;
           case F_JAVA:
-            if (this.br_features_java = stringToBoolean(value)) // = Intentional =
+            if (this.br_features_java = stringToBoolean(value)) // Intentional =
               this.br_features.add("java");
             break;
           case F_DIR:
-            if (this.br_features_director = stringToBoolean(value)) // = Intentional =
+            if (this.br_features_director = stringToBoolean(value)) // Intentional =
               this.br_features.add("dir");
             break;
           case F_QT:
-            if (this.br_features_quicktime = stringToBoolean(value)) // = Intentional =
+            if (this.br_features_quicktime = stringToBoolean(value)) // Intentional =
               this.br_features.add("qt");
             break;
           case F_REALP:
-            if (this.br_features_realplayer = stringToBoolean(value)) // = Intentional =
+            if (this.br_features_realplayer = stringToBoolean(value)) // Intentional =
               this.br_features.add("realp");
             break;
           case F_WMA:
-            if (this.br_features_windowsmedia = stringToBoolean(value)) // = Intentional =
+            if (this.br_features_windowsmedia = stringToBoolean(value)) // Intentional =
               this.br_features.add("wma");
             break;
           case F_GEARS:
-            if (this.br_features_gears = stringToBoolean(value)) // = Intentional =
+            if (this.br_features_gears = stringToBoolean(value)) // Intentional =
               this.br_features.add("gears");
             break;
           case F_AG:
-            if (this.br_features_silverlight = stringToBoolean(value)) // = Intentional =
+            if (this.br_features_silverlight = stringToBoolean(value)) // Intentional =
               this.br_features.add("ag");
             break;
           case COOKIE:
