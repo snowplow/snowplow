@@ -21,19 +21,19 @@ import org.apache.hadoop.hive.serde2.SerDeException
 // Deserializer
 import test.SnowPlowDeserializer
 
-class BadRowTest extends Specification {
+class MalformedRowTest extends Specification {
 
   // Toggle if tests are failing and you want to inspect the struct contents
   implicit val _DEBUG = false
 
-  val badRows = Seq(
+  val malformedRows = Seq(
     "",
     "NOT VALID",
     "2012-05-21\t07:14:47\tFRA2\t3343\t83.4.209.35\tGET\td3t05xllj8hhgj.cloudfront.net"
   )
 
   "An invalid or corrupted CloudFront row should throw an exception" >> {
-     badRows foreach { row =>
+     malformedRows foreach { row =>
       "invalid row \"%s\" throws a SerDeException".format(row) >> {
         SnowPlowDeserializer.deserializeUntyped(row) must throwA[SerDeException](message = "Row does not match expected CloudFront regexp pattern")
       }
