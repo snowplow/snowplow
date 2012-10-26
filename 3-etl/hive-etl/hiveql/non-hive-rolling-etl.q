@@ -26,6 +26,7 @@ ROW FORMAT SERDE 'com.snowplowanalytics.snowplow.hadoop.hive.SnowPlowEventDeseri
 LOCATION '${CLOUDFRONT_LOGS}' ;
 
 CREATE EXTERNAL TABLE IF NOT EXISTS `events` (
+dt_dt string,
 tm string,
 txn_id string,
 user_id string,
