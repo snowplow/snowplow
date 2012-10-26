@@ -13,6 +13,7 @@
 # Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
+require 'set'
 require 'elasticity'
 
 # Ruby class to execute SnowPlow's Hive jobs against Amazon EMR
@@ -22,8 +23,8 @@ module SnowPlow
     class EmrJob
 
       # Need to understand the status of all our jobflow steps
-      RUNNING_STATES = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
-      FAILED_STATES  = Set.new(%w(FAILED CANCELLED))
+      @@running_states = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
+      @@failed_states  = Set.new(%w(FAILED CANCELLED))
 
       # Initializes our wrapper for the Amazon EMR client.
       #
@@ -111,7 +112,7 @@ module SnowPlow
           begin 
             # Count up running tasks and failures
             statuses = @jobflow.status.steps.map(&:state).inject([0, 0]) do |sum, state|
-              [ sum[0] + (RUNNING_STATES.include?(state) ? 1 : 0), sum[1] + (FAILED_STATES.include?(state) ? 1 : 0) ]
+              [ sum[0] + (@@running_states.include?(state) ? 1 : 0), sum[1] + (@@failed_states.include?(state) ? 1 : 0) ]
             end
 
             # If no step is still running, then quit
