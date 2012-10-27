@@ -14,9 +14,10 @@
 ;;;; License:   Apache License Version 2.0
 
 (ns com.snowplowanalytics.clojure-collector.beanstalk
+  "AWS Elastic Beanstalk-specific functionality"
   (:use [compojure.core :only (HEAD defroutes)])
   (:require [com.snowplowanalytics.clojure-collector :as collector]
-	        [compojure.core :as compojure]))
+            [compojure.core :as compojure]))
 
 (compojure/defroutes app
   ; This HEAD route is here because Amazon's Elastic Beanstalk determines if
