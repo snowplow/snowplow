@@ -17,6 +17,7 @@
   :description "A SnowPlow event collector written in Clojure"
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [compojure "1.1.3"]
-                 [ring "1.1.6"]]
+                 [ring "1.1.6"]
+                 [commons-codec/commons-codec "1.7"]]
   :plugins [[lein-beanstalk "0.2.6"]]
   :ring {:handler com.snowplowanalytics.clojure-collector.beanstalk/app})
