@@ -14,12 +14,14 @@
 ;;;; License:   Apache License Version 2.0
 
 (ns com.snowplowanalytics.clojure-collector
+  "Main app handler"
   (:use [compojure.core :only (GET defroutes)])
-  (:require (compojure handler route)))
+  (:require (compojure handler route)
+            [com.snowplowanalytics.clojure-collector.responses :as responses]))
 
 (defroutes app*
-  (GET "/" request "Welcome!")
-  (compojure.route/not-found "404 not found"))
+  (GET "/healthcheck" request send200)
+  (compojure.route/not-found responses/send404))
 
 (def app (compojure.handler/api app*))
 
