@@ -20,7 +20,7 @@
             [com.snowplowanalytics.clojure-collector.responses :as responses]))
 
 (defroutes app*
-  (GET "/healthcheck" request send200)
+  (GET "/healthcheck" request responses/send200)
   (compojure.route/not-found responses/send404))
 
 (def app (compojure.handler/api app*))
