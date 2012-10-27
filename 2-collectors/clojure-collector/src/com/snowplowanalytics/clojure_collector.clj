@@ -13,10 +13,16 @@
 ;;;; Copyright: Copyright (c) 2012 SnowPlow Analytics Ltd
 ;;;; License:   Apache License Version 2.0
 
-(defproject com.snowplowanalytics/clojure-collector "0.1.0"
-  :description "A SnowPlow event collector written in Clojure"
-  :dependencies [[org.clojure/clojure "1.4.0"]
-                 [compojure "1.1.3"]
-                 [ring "1.1.6"]]
-  :plugins [[lein-beanstalk "0.2.6"]]
-  :ring {:handler com.snowplowanalytics.clojure-collector.beanstalk/app})
+(ns com.snowplowanalytics.clojure-collector
+  (:use [compojure.core :only (GET defroutes)])
+  (:require (compojure handler route)))
+
+(defroutes app*
+  (GET "/" request "Welcome!")
+  (compojure.route/not-found "404 not found"))
+
+(def app (compojure.handler/api app*))
+
+;; ; To run locally:
+(use '[ring.adapter.jetty :only (run-jetty)])     
+(def server (run-jetty #'app {:port 8080 :join? false}))

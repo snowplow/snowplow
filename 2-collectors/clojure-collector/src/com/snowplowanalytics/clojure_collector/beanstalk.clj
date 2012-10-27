@@ -13,10 +13,14 @@
 ;;;; Copyright: Copyright (c) 2012 SnowPlow Analytics Ltd
 ;;;; License:   Apache License Version 2.0
 
-(defproject com.snowplowanalytics/clojure-collector "0.1.0"
-  :description "A SnowPlow event collector written in Clojure"
-  :dependencies [[org.clojure/clojure "1.4.0"]
-                 [compojure "1.1.3"]
-                 [ring "1.1.6"]]
-  :plugins [[lein-beanstalk "0.2.6"]]
-  :ring {:handler com.snowplowanalytics.clojure-collector.beanstalk/app})
+(ns com.snowplowanalytics.clojure-collector.beanstalk
+  (:use [compojure.core :only (HEAD defroutes)])
+  (:require [com.snowplowanalytics.clojure-collector :as collector]
+	        [compojure.core :as compojure]))
+
+(compojure/defroutes app
+  ; This HEAD route is here because Amazon's Elastic Beanstalk determines if
+  ; your application is up by whether it responds successfully to a
+  ; HEAD request at /
+  (compojure/HEAD "/" [] "")
+  collector/app)
