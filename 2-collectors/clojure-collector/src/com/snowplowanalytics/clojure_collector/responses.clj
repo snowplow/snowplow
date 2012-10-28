@@ -17,29 +17,29 @@
   "Holds the different HTTP responses sent by clojure-collector"
   (:import (org.apache.commons.codec.binary Base64)))
 
-(def ^:const imageData (str "R0lGODlhAQABAPAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="))
-(def imageBuffer (Base64/decodeBase64 imageData)) ;; Can't define ^:const here as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
-(def ^:const imageLength (alength imageBuffer))
+(def ^:const pixel-data (str "R0lGODlhAQABAPAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="))
+(def pixel (Base64/decodeBase64 pixel-data)) ; Can't define ^:const on this as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
+(def ^:const pixel-length (alength pixel))
 
 ;; Respond with a 404.
-(def send404
+(def send-404
   {:status  404
    :headers {"Content-Type" "text/plain"}
    :body    (str "404 Not found")})
 
 ;; Respond with a 200.
-(def send200
+(def send-200
   {:status  200
    :headers {"Content-Type" "text/plain"}
    :body    (str "OK")})
 
-;; Respond with a transparent pixel and the cookie.
-(defn sendCookieAndPixel [cookieId cookieDuration cookieContents]
+;; Respond with a transparent pixel and the cookie. ; [cookie-id cookie-duration cookie-contents]
+(def send-cookie-and-pixel
   {:status  200
-   :headers {"Set-Cookie" (str "sp=" cookieId "; expires=" "[1]" ";" cookieContents)
-             "P3P" "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\""
+   :headers {"Set-Cookie"    (str "sp=" "cookie-id" "; expires=" "[1]" ";" "cookie-contents")
+             "P3P"           "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\""
              "Content-Type"  "image/gif"
-             "Content-Length" imageLength}
-   :body    imageBuffer})
+             "Content-Length" (str pixel-length)}
+   :body    (new java.io.ByteArrayInputStream pixel)})
 
 ;; TODO: [1] new Date(new Date().getTime()+cookieDuration).toUTCString()

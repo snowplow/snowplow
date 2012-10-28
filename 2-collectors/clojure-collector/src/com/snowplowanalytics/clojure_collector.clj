@@ -18,10 +18,12 @@
   (:use [compojure.core :only (GET defroutes)])
   (:require (compojure handler route)
             [com.snowplowanalytics.clojure-collector.responses :as responses]))
-
+ ; ice.png is legacy name for i
 (defroutes app*
-  (GET "/healthcheck" request responses/send200)
-  (compojure.route/not-found responses/send404))
+  (GET "/i"       request responses/send-cookie-and-pixel)
+  (GET "/ice.png" request responses/send-cookie-and-pixel) 
+  (GET "/healthcheck" request responses/send-200)
+  (compojure.route/not-found  responses/send-404))
 
 (def app (compojure.handler/api app*))
 
