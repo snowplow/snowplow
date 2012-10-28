@@ -15,31 +15,40 @@
 
 (ns com.snowplowanalytics.clojure-collector.responses
   "Holds the different HTTP responses sent by clojure-collector"
-  (:import (org.apache.commons.codec.binary Base64)))
+  (:import (org.apache.commons.codec.binary Base64))
+  (:import (org.joda.time DateTime)))
 
-(def ^:const pixel-data (str "R0lGODlhAQABAPAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="))
-(def pixel (Base64/decodeBase64 pixel-data)) ; Can't define ^:const on this as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
-(def ^:const pixel-length (alength pixel))
+(def pixel-bytes (Base64/decodeBase64 (.getBytes "R0lGODlhAQABAPAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="))) ; Can't define ^:const on this as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
+(def pixel (new java.io.ByteArrayInputStream pixel-bytes))
+(def ^:const pixel-length (str (alength pixel-bytes)))
 
-;; Respond with a 404.
 (def send-404
+  "Respond with a 404"
   {:status  404
    :headers {"Content-Type" "text/plain"}
    :body    (str "404 Not found")})
 
-;; Respond with a 200.
 (def send-200
+  "Respond with a 200"
   {:status  200
    :headers {"Content-Type" "text/plain"}
    :body    (str "OK")})
 
-;; Respond with a transparent pixel and the cookie. ; [cookie-id cookie-duration cookie-contents]
+; [cookie-id cookie-duration cookie-contents]
 (def send-cookie-and-pixel
+  "Responds with a transparent pixel and the cookie"
   {:status  200
    :headers {"Set-Cookie"    (str "sp=" "cookie-id" "; expires=" "[1]" ";" "cookie-contents")
              "P3P"           "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\""
              "Content-Type"  "image/gif"
-             "Content-Length" (str pixel-length)}
-   :body    (new java.io.ByteArrayInputStream pixel)})
+             "Content-Length" pixel-length}
+   :body    pixel})
 
-;; TODO: [1] new Date(new Date().getTime()+cookieDuration).toUTCString()
+(defn- set-id-cookie
+  "Sets the SnowPlow ID cookie"
+  [id duration domain] 
+  {:value    (str "sp=" id)
+   :expires  (-> (new DateTime) (.plusSeconds duration))
+   :domain   domain})
+
+;; TODO: [1] new Date(new Dat`e().getTime()+cookieDuration).toUTCString()
