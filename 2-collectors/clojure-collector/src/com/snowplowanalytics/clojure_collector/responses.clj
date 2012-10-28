@@ -50,5 +50,3 @@
   {:value    (str "sp=" id)
    :expires  (-> (new DateTime) (.plusSeconds duration))
    :domain   domain})
-
-;; TODO: [1] new Date(new Dat`e().getTime()+cookieDuration).toUTCString()
