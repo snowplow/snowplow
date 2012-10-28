@@ -26,13 +26,13 @@
   "Respond with a 404"
   {:status  404
    :headers {"Content-Type" "text/plain"}
-   :body    (str "404 Not found")})
+   :body    "404 Not found"})
 
 (def send-200
   "Respond with a 200"
   {:status  200
    :headers {"Content-Type" "text/plain"}
-   :body    (str "OK")})
+   :body    "OK"})
 
 ; [cookie-id cookie-duration cookie-contents]
 (def send-cookie-and-pixel
