@@ -27,4 +27,4 @@
 
 ;; ; To run locally:
 (use '[ring.adapter.jetty :only (run-jetty)])     
-(def server (run-jetty #'app {:port 8080 :join? false}))
+(def server (run-jetty #'app {:port 8081 :join? false}))

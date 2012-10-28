@@ -3,5 +3,5 @@ pom.xml
 *.war
 /lib/
 /classes/
-/targets/
+/target/
 .lein-deps-sum

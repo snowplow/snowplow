@@ -19,7 +19,7 @@
 
 (def ^:const imageData (str "R0lGODlhAQABAPAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="))
 (def ^:const imageBuffer (Base64/decodeBase64 imageData))
-(def ^:const imageLength (count imageData)) ;; TODO need to fix this
+(def ^:const imageLength (alength imageBuffer))
 
 ;; Respond with a 404.
 (def send404
@@ -36,7 +36,7 @@
 ;; Respond with a transparent pixel and the cookie.
 (defn sendCookieAndPixel [cookieId cookieDuration cookieContents]
   {:status  200
-   :headers {"Set-Cookie" (str "sp=" cookieId "; expires=" /*[1]*/ ";" cookieContents)
+   :headers {"Set-Cookie" (str "sp=" cookieId "; expires=" "[1]" ";" cookieContents)
              "P3P" "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\"",
              "Content-Type"  "image/gif",
              "Content-Length" imageLength}
