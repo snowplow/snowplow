@@ -15,8 +15,8 @@
 
 (ns com.snowplowanalytics.clojure-collector.responses
   "Holds the different HTTP responses sent by clojure-collector"
-  (:import (org.apache.commons.codec.binary Base64))
-  (:import (org.joda.time DateTime)))
+  (:import (org.apache.commons.codec.binary Base64)
+           (org.joda.time DateTime)))
 
 (def pixel-bytes (Base64/decodeBase64 (.getBytes "R0lGODlhAQABAPAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="))) ; Can't define ^:const on this as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
 (def pixel (new java.io.ByteArrayInputStream pixel-bytes))
