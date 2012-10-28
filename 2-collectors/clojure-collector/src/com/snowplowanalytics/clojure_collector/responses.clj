@@ -18,7 +18,7 @@
   (:import (org.apache.commons.codec.binary Base64)))
 
 (def ^:const imageData (str "R0lGODlhAQABAPAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="))
-(def ^:const imageBuffer (Base64/decodeBase64 imageData))
+(def imageBuffer (Base64/decodeBase64 imageData)) ;; Can't define ^:const here as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
 (def ^:const imageLength (alength imageBuffer))
 
 ;; Respond with a 404.
@@ -37,9 +37,9 @@
 (defn sendCookieAndPixel [cookieId cookieDuration cookieContents]
   {:status  200
    :headers {"Set-Cookie" (str "sp=" cookieId "; expires=" "[1]" ";" cookieContents)
-             "P3P" "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\"",
-             "Content-Type"  "image/gif",
+             "P3P" "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\""
+             "Content-Type"  "image/gif"
              "Content-Length" imageLength}
-   :body    (str "OK")})
+   :body    imageBuffer})
 
 ;; TODO: [1] new Date(new Date().getTime()+cookieDuration).toUTCString()
