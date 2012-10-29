@@ -36,24 +36,29 @@
    :headers {"Content-Type" "text/plain"}
    :body    "OK"})
 
-(defn send-cookie-and-pixel
-  "Responds with a transparent pixel and the cookie"
-  [cookies id duration domain]
-  ; Set the user's uuid if not already set
-  (let [id (if (empty? (:value (cookies cookie-name))))
-              ("123")
-              (:value (cookies cookie-name))]
-    ; Set cookie; return pixel
-    {:status  200
-     :headers {"Content-Type"  "text/plain"
-               "P3P"           "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\""}
-             ; "Content-Length" pixel-length}
-     :cookies {cookie-name (set-cookie id duration domain)}
-     :body    "PIXEL"})) ; pixel
-
 (defn- set-cookie
   "Sets the SnowPlow ID cookie"
   [id duration domain] 
   {:value    id
-   :expires  (-> (new DateTime) (.plusSeconds duration))
-   :domain   domain})
+   ; :domain   domain ; Comment this line out to test locally, because of http://stackoverflow.com/questions/1134290/cookies-on-localhost-with-explicit-domain
+   :expires  (-> (new DateTime) (.plusSeconds duration))})
+
+(defn- generate-id
+  "Generates a SnowPlow user ID if necessary"
+  [cookies]
+  (let [id (:value (cookies cookie-name))]
+    (if (empty? id) "1234" id)))
+
+(defn send-cookie-and-pixel
+  "Responds with a transparent pixel and the cookie"
+  [cookies duration domain]
+  ; Set the user's uuid if not already set
+  (let [id (generate-id cookies)
+        cookie-data (set-cookie id duration domain)]
+    ; Set cookie and return pixel
+    {:status  200
+     :headers {"Content-Type"   "image/gif"
+               "P3P"            "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\""
+               "Content-Length"  pixel-length}
+     :cookies {cookie-name cookie-data}
+     :body    pixel}))

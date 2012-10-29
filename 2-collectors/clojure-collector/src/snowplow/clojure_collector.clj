@@ -17,22 +17,29 @@
   "Main app handler"
   (:use [ring.adapter.jetty      :only [run-jetty]] 
         [compojure.core          :only [defroutes GET]]
-        [ring.middleware.cookies :only [wrap-cookies]])
+        [ring.middleware.cookies :only [wrap-cookies]]
+        [ring.middleware.reload  :only [wrap-reload]])
   (:require [compojure handler route]
   	        [snowplow.clojure-collector.responses :as responses]))
-
-(defroutes routes
-  (GET "/i"           {c :cookies} (send-cookie-and-pixel' c) ; ice.png is legacy name for i
-  (GET "/ice.png"     {c :cookies} (send-cookie-and-pixel' c) 
-  (GET "/healthcheck" request responses/send-200)
-  (compojure.route/not-found  responses/send-404))
 
 (defn- send-cookie-and-pixel'
   "Wrapper for send-cookie-and-pixel"
   [cookies]
-  (responses/testy cookies 30000 "snowplow.com"))  ; TODO: fix this
+  (responses/send-cookie-and-pixel cookies 60000 "localhost"))  ; TODO: fix this
 
-(def app (-> #'routes wrap-cookies))
+(defroutes routes
+  (GET "/i"           {c :cookies} (send-cookie-and-pixel' c)) ; ice.png is legacy name for i
+  (GET "/ice.png"     {c :cookies} (send-cookie-and-pixel' c)) 
+  (GET "/healthcheck" request responses/send-200)
+  (compojure.route/not-found  responses/send-404))
+
+(def app (-> routes
+             (wrap-cookies)
+             (wrap-reload '(snowplow.clojure-collector responses)))) ; TODO: disable this in production
 
 ;; ; To run locally: `lein ring server`
-(def server (run-jetty #'app {:port 8081 :join? false}))
+(def start-server (run-jetty #'app {:port 8081 :join? false}))
+
+;; ; To run without Leiningen (package with uberjar)
+(defn -main [& args]
+  (start-server))
