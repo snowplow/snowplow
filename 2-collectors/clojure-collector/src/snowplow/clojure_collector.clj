@@ -40,6 +40,6 @@
 ;; ; To run locally: `lein ring server`
 (def start-server (run-jetty #'app {:port 8081 :join? false}))
 
-;; ; To run without Leiningen (package with uberjar)
+;; ; To run locally without Leiningen (having packaged with `lein uberjar`)
 (defn -main [& args]
   (start-server))
