@@ -50,6 +50,9 @@ public class SnowPlowEventDeserializer implements Deserializer {
   // Setup logging
   public static final Log LOG = LogFactory.getLog(SnowPlowEventDeserializer.class.getName());
 
+  // What's our continue on errors property called?
+  private static final String CONTINUE_ON = "continue_on_unexpected_error";
+
   // Voodoo taken from Zemanta's S3LogDeserializer
   static {
     StackTraceElement[] sTrace = new Exception().getStackTrace();
@@ -84,6 +87,7 @@ public class SnowPlowEventDeserializer implements Deserializer {
     SnowPlowEventDeserializer serDe = new SnowPlowEventDeserializer();
     Configuration conf = new Configuration();
     Properties tbl = new Properties();
+    tbl.setProperty(CONTINUE_ON, continueOn? "1" : "0");
 
     serDe.initialize(conf, tbl);
 
@@ -131,9 +135,7 @@ public class SnowPlowEventDeserializer implements Deserializer {
 
     cachedObjectInspector = ObjectInspectorFactory.getReflectionObjectInspector(SnowPlowEventStruct.class, ObjectInspectorFactory.ObjectInspectorOptions.JAVA);
 
-    if (conf.get("snowplow.serde.continue_on_unexpected_error") == "1") {
-      this.continueOnUnexpectedError = true;
-    }
+    this.continueOnUnexpectedError = SnowPlowEventStruct.stringToBoolean(tbl.getProperty(CONTINUE_ON, "0"));
     
     LOG.debug(this.getClass().getName() + " initialized");
   }
