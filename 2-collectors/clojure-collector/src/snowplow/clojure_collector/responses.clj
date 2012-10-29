@@ -18,6 +18,8 @@
   (:import (org.apache.commons.codec.binary Base64)
            (org.joda.time DateTime)))
 
+(def ^:const cookie-name "sp")
+
 (def pixel-bytes (Base64/decodeBase64 (.getBytes "R0lGODlhAQABAPAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="))) ; Can't define ^:const on this as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
 (def pixel (new java.io.ByteArrayInputStream pixel-bytes))
 (def ^:const pixel-length (str (alength pixel-bytes)))
@@ -34,27 +36,24 @@
    :headers {"Content-Type" "text/plain"}
    :body    "OK"})
 
-; [cookie-id cookie-duration cookie-contents]
-(def send-cookie-and-pixel
+(defn send-cookie-and-pixel
   "Responds with a transparent pixel and the cookie"
-  {:status  200
-   :headers {"Set-Cookie"    (str "sp=" "cookie-id" "; expires=" "[1]" ";" "cookie-contents")
-             "P3P"           "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\""
-             "Content-Type"  "image/gif"
-             "Content-Length" pixel-length}
-   :body    pixel})
+  [cookies id duration domain]
+  ; Set the user's uuid if not already set
+  (let [id (if (empty? (:value (cookies cookie-name))))
+              ("123")
+              (:value (cookies cookie-name))]
+    ; Set cookie; return pixel
+    {:status  200
+     :headers {"Content-Type"  "text/plain"
+               "P3P"           "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\""}
+             ; "Content-Length" pixel-length}
+     :cookies {cookie-name (set-cookie id duration domain)}
+     :body    "PIXEL"})) ; pixel
 
-(defn testy
-  "Temporary test for Ring cookie middleware. TODO: delete this"
-  ; [cookie-id cookie-duration cookie-contents]
-  [cookies]
-  {:status  200
-   :headers {"Content-Type"  "text/plain"}
-   :body    "PIXEL"})
-
-(defn- set-id-cookie
+(defn- set-cookie
   "Sets the SnowPlow ID cookie"
   [id duration domain] 
-  {:value    (str "sp=" id)
+  {:value    id
    :expires  (-> (new DateTime) (.plusSeconds duration))
    :domain   domain})

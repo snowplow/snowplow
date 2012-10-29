@@ -22,10 +22,15 @@
   	        [snowplow.clojure-collector.responses :as responses]))
 
 (defroutes routes
-  (GET "/i"       request responses/send-cookie-and-pixel) ; ice.png is legacy name for i
-  (GET "/ice.png"     {cookies :cookies} (responses/testy cookies)) 
+  (GET "/i"           {c :cookies} (send-cookie-and-pixel' c) ; ice.png is legacy name for i
+  (GET "/ice.png"     {c :cookies} (send-cookie-and-pixel' c) 
   (GET "/healthcheck" request responses/send-200)
   (compojure.route/not-found  responses/send-404))
+
+(defn- send-cookie-and-pixel'
+  "Wrapper for send-cookie-and-pixel"
+  [cookies]
+  (responses/testy cookies 30000 "snowplow.com"))  ; TODO: fix this
 
 (def app (-> #'routes wrap-cookies))
 
