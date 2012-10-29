@@ -63,29 +63,28 @@ public class SnowPlowEventDeserializer implements Deserializer {
   private static final SnowPlowEventStruct cachedStruct = new SnowPlowEventStruct();
   
   // Returns null instead of throwing an exception
-  private boolean ignore_errors = false;
+  private boolean continueOnUnexpectedError = false;
 
   // -------------------------------------------------------------------------------------------------------------------
-  // Helper for deserializing a single line
+  // Helper for deserializing a single line. Used for testing
   // -------------------------------------------------------------------------------------------------------------------
 
   /**
-   * A helper which deserializes and inspects a single line of text
+   * A helper which deserializes and inspects a single row
    *
    * @param line The line of text to deserialize
    * @param verbose Whether to debug-print the contents of the struct using reflection
+   * @param continue Whether to continue on an unexpected error or not
    * @return The struct object from deserializing the text
    * @throws SerDeException if there is a problem deserializing the line, or reflection-inspecting the struct's contents
    */
-  public static Object deserializeLine(String line, Boolean verbose) throws SerDeException {
-    return deserializeLine(line, verbose, new Configuration());
-  }
-
-  public static Object deserializeLine(String line, Boolean verbose, Configuration conf) throws SerDeException {
+  public static Object deserializeLine(String line, Boolean verbose, Boolean continue) throws SerDeException {
 
     // Prep the deserializer
     SnowPlowEventDeserializer serDe = new SnowPlowEventDeserializer();
+    Configuration conf = new Configuration();
     Properties tbl = new Properties();
+
     serDe.initialize(conf, tbl);
 
     // Run the deserializer with the sample row
@@ -132,8 +131,8 @@ public class SnowPlowEventDeserializer implements Deserializer {
 
     cachedObjectInspector = ObjectInspectorFactory.getReflectionObjectInspector(SnowPlowEventStruct.class, ObjectInspectorFactory.ObjectInspectorOptions.JAVA);
 
-    if (conf.get("snowplow.serde.ignore_errors") == "1") {
-      this.ignore_errors = true;
+    if (conf.get("snowplow.serde.continue_on_unexpected_error") == "1") {
+      this.continueOnUnexpectedError = true;
     }
     
     LOG.debug(this.getClass().getName() + " initialized");
@@ -176,7 +175,7 @@ public class SnowPlowEventDeserializer implements Deserializer {
     } catch (ClassCastException e) {
       throw new SerDeException(this.getClass().getName() + " expects Text or BytesWritable", e);
     } catch (Exception e) {
-      if (this.ignore_errors) {
+      if (this.continueOnUnexpectedError) {
         LOG.error("Could not parse row: \"" + row + "\"", e);
         return null;
       }
