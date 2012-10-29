@@ -23,6 +23,7 @@ ADD JAR ${SERDE_FILE} ;
 
 CREATE EXTERNAL TABLE `extracted_logs`
 ROW FORMAT SERDE 'com.snowplowanalytics.snowplow.hadoop.hive.SnowPlowEventDeserializer'
+WITH SERDEPROPERTIES ( 'continue_on_unexpected_error' = '${CONTINUE_ON}')
 LOCATION '${CLOUDFRONT_LOGS}' ;
 
 CREATE EXTERNAL TABLE IF NOT EXISTS `events` (
