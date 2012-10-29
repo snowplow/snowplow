@@ -21,7 +21,7 @@ import org.apache.hadoop.hive.serde2.SerDeException
 // Deserializer
 import test.SnowPlowDeserializer
 
-class MalformedRowTest extends Specification {
+class BadRowTest extends Specification {
 
   // Toggle if tests are failing and you want to inspect the struct contents
   implicit val _DEBUG = false
