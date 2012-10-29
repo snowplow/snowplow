@@ -44,9 +44,10 @@
              "Content-Length" pixel-length}
    :body    pixel})
 
-(def testy
+(defn testy
   "Temporary test for Ring cookie middleware. TODO: delete this"
   ; [cookie-id cookie-duration cookie-contents]
+  [cookies]
   {:status  200
    :headers {"Content-Type"  "text/plain"}
    :body    "PIXEL"})

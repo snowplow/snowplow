@@ -19,9 +19,9 @@
   (:require [snowplow.clojure-collector :as collector]
             [compojure.core :as compojure]))
 
-(compojure/defroutes app
+(defroutes app
   ; This HEAD route is here because Amazon's Elastic Beanstalk determines if
   ; your application is up by whether it responds successfully to a
   ; HEAD request at /
-  (compojure/HEAD "/" [] "")
+  (HEAD "/" [] "")
   collector/app)
