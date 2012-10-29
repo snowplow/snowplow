@@ -24,8 +24,8 @@ object SnowPlowDeserializer {
 	 * Deserialize a line using the SnowPlowEventDeserializer.
 	 * Don't make the output conform to a SnowPlowEventStruct.
 	 */
-	def deserializeUntyped(line: String)(implicit debug: Boolean) = {
-		SnowPlowEventDeserializer.deserializeLine(line, debug)
+	def deserializeUntyped(line: String, continueOn: Boolean = false)(implicit debug: Boolean) = {
+		SnowPlowEventDeserializer.deserializeLine(line, debug, continueOn)
 	}
 
 	/**
@@ -33,7 +33,7 @@ object SnowPlowDeserializer {
 	 * Uses deserializeUntyped().
 	 * Make the output conform to a SnowPlowEventStruct.
 	 */
-	def deserialize(line: String)(implicit debug: Boolean): SnowPlowEventStruct = {
-		deserializeUntyped(line)(debug).asInstanceOf[SnowPlowEventStruct]
+	def deserialize(line: String, continueOn: Boolean = false)(implicit debug: Boolean): SnowPlowEventStruct = {
+		deserializeUntyped(line, continueOn)(debug).asInstanceOf[SnowPlowEventStruct]
 	}
 }
