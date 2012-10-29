@@ -13,7 +13,7 @@
 ;;;; Copyright: Copyright (c) 2012 SnowPlow Analytics Ltd
 ;;;; License:   Apache License Version 2.0
 
-(ns com.snowplowanalytics.clojure-collector.responses
+(ns snowplow.clojure-collector.responses
   "Holds the different HTTP responses sent by clojure-collector"
   (:import (org.apache.commons.codec.binary Base64)
            (org.joda.time DateTime)))
@@ -43,6 +43,13 @@
              "Content-Type"  "image/gif"
              "Content-Length" pixel-length}
    :body    pixel})
+
+(def testy
+  "Temporary test for Ring cookie middleware. TODO: delete this"
+  ; [cookie-id cookie-duration cookie-contents]
+  {:status  200
+   :headers {"Content-Type"  "text/plain"}
+   :body    "PIXEL"})
 
 (defn- set-id-cookie
   "Sets the SnowPlow ID cookie"

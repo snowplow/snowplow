@@ -13,20 +13,20 @@
 ;;;; Copyright: Copyright (c) 2012 SnowPlow Analytics Ltd
 ;;;; License:   Apache License Version 2.0
 
-(ns com.snowplowanalytics.clojure-collector
+(ns snowplow.clojure-collector
   "Main app handler"
-  (:use [compojure.core :only (GET defroutes)])
-  (:require (compojure handler route)
-            [com.snowplowanalytics.clojure-collector.responses :as responses]))
+  (:use [ring.adapter.jetty      :only [run-jetty]] 
+        [compojure.core          :only [defroutes GET]]
+        [ring.middleware.cookies :only [wrap-cookies]])
+  (:require [snowplow.clojure-collector.responses :as responses]))
 
-(defroutes app*
+(defroutes routes
   (GET "/i"       request responses/send-cookie-and-pixel) ; ice.png is legacy name for i
-  (GET "/ice.png" request responses/send-cookie-and-pixel) 
+  (GET "/ice.png" {cookies :cookies} (responses/testy cookies)) 
   (GET "/healthcheck" request responses/send-200)
   (compojure.route/not-found  responses/send-404))
 
-(def app (compojure.handler/api app*))
+(def app (-> #'routes wrap-cookies)
 
-;; ; To run locally:
-(use '[ring.adapter.jetty :only (run-jetty)])     
+;; ; To run locally: `lein ring server`
 (def server (run-jetty #'app {:port 8081 :join? false}))

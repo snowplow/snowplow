@@ -13,10 +13,10 @@
 ;;;; Copyright: Copyright (c) 2012 SnowPlow Analytics Ltd
 ;;;; License:   Apache License Version 2.0
 
-(ns com.snowplowanalytics.clojure-collector.beanstalk
+(ns snowplow.clojure-collector.beanstalk
   "AWS Elastic Beanstalk-specific functionality"
   (:use [compojure.core :only (HEAD defroutes)])
-  (:require [com.snowplowanalytics.clojure-collector :as collector]
+  (:require [snowplow.clojure-collector :as collector]
             [compojure.core :as compojure]))
 
 (compojure/defroutes app
