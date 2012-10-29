@@ -73,14 +73,14 @@ module SnowPlow
         end
 
         puts ">>>>>>>>>>> DEBUG"
-        puts config[:eml][:continue_on_unexpected_error] ? "1" : "0"
+        puts config[:etl][:continue_on_unexpected_error] ? "1" : "0"
         puts "^^^^^^^^^^^"
 
         hive_step.variables = {
           "SERDE_FILE"      => config[:serde_asset],
           "CLOUDFRONT_LOGS" => config[:s3][:buckets][:processing],
           "EVENTS_TABLE"    => config[:s3][:buckets][:out],
-          "CONTINUE_ON"     => config[:eml][:continue_on_unexpected_error] ? "1" : "0"
+          "CONTINUE_ON"     => config[:etl][:continue_on_unexpected_error] ? "1" : "0"
         }
 
         # Finally add to our jobflow

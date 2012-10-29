@@ -52,7 +52,7 @@ module SnowPlow
                         when 'non-hive'
                           "non-hive-rolling-etl-%s" % config[:snowplow][:non_hive_hiveql_version]
                         else
-                          raise ConfigError, "Storage format '%s' not supported" % config[:snowplow][:storage_format]
+                          raise ConfigError, "Storage format '%s' not supported" % config[:etl][:storage_format]
                         end
         config[:hiveql_asset] = "%s/hiveql/%s.q" % [asset_path, hiveql_file]
 
