@@ -16,7 +16,8 @@
 (ns snowplow.clojure-collector.responses
   "Holds the different HTTP responses sent by clojure-collector"
   (:import (org.apache.commons.codec.binary Base64)
-           (org.joda.time DateTime)))
+           (org.joda.time DateTime)
+           (java.util.UUID)))
 
 (def ^:const cookie-name "sp")
 
@@ -44,10 +45,12 @@
    :expires  (-> (new DateTime) (.plusSeconds duration))})
 
 (defn- generate-id
-  "Generates a SnowPlow user ID if necessary"
+  "Generates a new uuid for a visitor as necessary"
   [cookies]
   (let [id (:value (cookies cookie-name))]
-    (if (empty? id) "1234" id)))
+    (if (empty? id)
+      (str (UUID/randomUUID))
+      id)))
 
 (defn send-cookie-and-pixel
   "Responds with a transparent pixel and the cookie"
