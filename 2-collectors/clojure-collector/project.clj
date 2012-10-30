@@ -18,6 +18,8 @@
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [compojure "1.1.3"]
                  [ring "1.1.6"]
-                 [commons-codec/commons-codec "1.7"]]
+                 [commons-codec/commons-codec "1.7"]
+                 [metrics-clojure "0.9.1"]
+                 [metrics-clojure-ring "0.9.1"]]
   :plugins [[lein-beanstalk "0.2.6"]]
   :ring {:handler snowplow.clojure-collector.beanstalk/app})

@@ -18,9 +18,11 @@
   (:use [ring.adapter.jetty      :only [run-jetty]] 
         [compojure.core          :only [defroutes GET]]
         [ring.middleware.cookies :only [wrap-cookies]]
-        [ring.middleware.reload  :only [wrap-reload]])
+        [ring.middleware.reload  :only [wrap-reload]]
+        [metrics.ring.expose     :only [expose-metrics-as-json]]
+        [metrics.ring.instrument :only [instrument]])
   (:require [compojure handler route]
-  	        [snowplow.clojure-collector.responses :as responses]))
+            [snowplow.clojure-collector.responses :as responses]))
 
 (defn- send-cookie-and-pixel'
   "Wrapper for send-cookie-and-pixel"
@@ -35,7 +37,8 @@
 
 (def app (-> routes
              (wrap-cookies)
-             (wrap-reload '(snowplow.clojure-collector responses)))) ; TODO: disable this in production
+             (wrap-reload '(snowplow.clojure-collector responses)) ; TODO: disable this in production
+             (instrument)))
 
 ;; ; To run locally: `lein ring server`
 (def start-server (run-jetty #'app {:port 8081 :join? false}))
