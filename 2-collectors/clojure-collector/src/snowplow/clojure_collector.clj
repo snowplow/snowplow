@@ -42,6 +42,7 @@
  (-> routes
    (wrap-cookies)
    (wrap-reload '(snowplow.clojure-collector responses)) ; TODO: disable this in production
+   (#(expose-metrics-as-json % "/status"))
    (instrument)))
 
 (def start-server
