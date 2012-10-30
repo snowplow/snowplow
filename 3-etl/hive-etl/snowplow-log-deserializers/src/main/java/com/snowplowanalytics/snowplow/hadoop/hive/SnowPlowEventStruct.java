@@ -277,10 +277,16 @@ public class SnowPlowEventStruct {
       final String name = pair.getName();
       final String value = pair.getValue();
 
+      final QuerystringFields field;
       try {
-        final QuerystringFields field = QuerystringFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
-        switch (field) {
+        field = QuerystringFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
+      } catch(IllegalArgumentException e) {
+        getLog().warn("Unexpected params { " + name + ": " + value + " }");
+        continue;
+      }
 
+      try {
+        switch (field) {
           // Common fields
           case TID:
             this.txn_id = value;
@@ -423,64 +429,73 @@ public class SnowPlowEventStruct {
             break;
           case TI_QU:
             this.ti_quantity = decodeSafeString(value);
-            break;            
+            break;
         }
       } catch (Exception e) {
-        getLog().warn(e.getClass().getSimpleName() + " on { " + name + ": " + value + "}");
+        getLog().warn(e.getClass().getSimpleName() + " on { " + name + ": " + value + " }");
       }
     }
 
     // 4. Choose the page_url
     final String cfUrl = m.group(10);
-    if (isNullField(cfUrl)) { // CloudFront didn't provide the URL as cs(Referer)
+    if (!isNullField(cfUrl)) { // CloudFront didn't provide the URL as cs(Referer)
+      this.page_url = cfUrl; // The CloudFront cs(Referer) URL
+    } else {
       try {
         this.page_url = decodeSafeString(qsUrl); // Use the decoded querystring URL
       } catch (Exception e) {
-        getLog().warn(e.getClass().getSimpleName() + " on { qsUrl: " + qsUrl + "}");
+        getLog().warn(e.getClass().getSimpleName() + " on { qsUrl: " + qsUrl + " }");
       }
-    } else { // Otherwise default to...
-      this.page_url = cfUrl; // The CloudFront cs(Referer) URL
     }
 
     // 5. Finally handle the marketing fields in the page_url
     // Re-use params to avoid creating another object
-    try {
-      params = URLEncodedUtils.parse(URI.create(this.page_url), "UTF-8");
-  
-      // For performance, don't convert to a map, just loop through and match to our variables as we go
-      for (NameValuePair pair : params) {
-  
-        final String name = pair.getName();
-        final String value = pair.getValue();
-  
-        try {
-          final MarketingFields field = MarketingFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
-  
-          switch (field) {
-  
-            // Marketing fields
-            case UTM_MEDIUM:
-              this.mkt_medium = decodeSafeString(value);
-              break;
-            case UTM_SOURCE:
-              this.mkt_source = decodeSafeString(value);
-              break;
-            case UTM_TERM:
-              this.mkt_term = decodeSafeString(value);
-              break;
-            case UTM_CONTENT:
-              this.mkt_content = decodeSafeString(value);
-              break;
-            case UTM_CAMPAIGN:
-              this.mkt_campaign = decodeSafeString(value);
-              break;
+    if (this.page_url != null) {
+      params = null;
+      try {
+        params = URLEncodedUtils.parse(URI.create(this.page_url), "UTF-8");
+      } catch (IllegalArgumentException e) {
+        getLog().warn("Couldn't parse page_url: " + page_url);
+      }
+      if (params != null) {
+        // For performance, don't convert to a map, just loop through and match to our variables as we go
+        for (NameValuePair pair : params) {
+
+          final String name = pair.getName();
+          final String value = pair.getValue();
+
+          final MarketingFields field;
+          try {
+            field = MarketingFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
+          } catch(IllegalArgumentException e) {
+            // Do nothing: non-marketing related querystring fields are not an issue.
+            continue;
           }
-        } catch (Exception e) {
-          // Do nothing: non-marketing related querystring fields are not an issue.
+
+          try {
+            switch (field) {
+              // Marketing fields
+              case UTM_MEDIUM:
+                this.mkt_medium = decodeSafeString(value);
+                break;
+              case UTM_SOURCE:
+                this.mkt_source = decodeSafeString(value);
+                break;
+              case UTM_TERM:
+                this.mkt_term = decodeSafeString(value);
+                break;
+              case UTM_CONTENT:
+                this.mkt_content = decodeSafeString(value);
+                break;
+              case UTM_CAMPAIGN:
+                this.mkt_campaign = decodeSafeString(value);
+                break;
+            }
+          } catch (Exception e) {
+            getLog().warn(e.getClass().getSimpleName() + " on { " + name + ": " + value + " }");
+          }
         }
       }
-    } catch (IllegalArgumentException e) {
-      getLog().warn("Couldn't parse page_url: " + page_url);
     }
 
     return true; // Successfully updated the row.
@@ -612,7 +627,7 @@ public class SnowPlowEventStruct {
    */
   static String cleanUrlString(String s)
   {
-    // The '%' character seems to be appended to the end of some URLs in 
+    // The '%' character seems to be appended to the end of some URLs in
     // the CloudFront logs, causing Exceptions when using URLDecoder.decode
     // Perhaps a CloudFront bug?
     return StringUtils.removeEnd(s, "%");
