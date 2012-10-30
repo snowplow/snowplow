@@ -1,5 +1,6 @@
-Version 0.5.1 (2012-10-27) - REMOVE DONES...
+Version 0.5.1 (2012-10-27)
 --------------------------
+Data model: stubbed new event_name and platform fields
 Infobright: added setup scripts and docs into 4-storage/infobright (fixes #57)
 Infobright: added version handling (v_tracker, v_collector, v_etl)
 HiveQL: removed hive-exact-etl.q as no longer supported

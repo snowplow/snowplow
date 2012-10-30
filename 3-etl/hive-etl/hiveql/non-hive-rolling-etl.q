@@ -27,9 +27,15 @@ WITH SERDEPROPERTIES ( 'continue_on_unexpected_error' = '${CONTINUE_ON}')
 LOCATION '${CLOUDFRONT_LOGS}' ;
 
 CREATE EXTERNAL TABLE IF NOT EXISTS `events` (
+app_id string,
+platform string,
 dt_dt string,
 tm string,
+event_name string,
 txn_id string,
+v_tracker string,
+v_collector string,
+v_etl string,
 user_id string,
 user_ipaddress string,
 visit_id int,
@@ -82,11 +88,7 @@ os_manufacturer string,
 dvce_type string,
 dvce_ismobile boolean,
 dvce_screenwidth int,
-dvce_screenheight int,
-app_id string,
-v_tracker string,
-v_collector string,
-v_etl string
+dvce_screenheight int
 )
 PARTITIONED BY (dt string)
 ROW FORMAT DELIMITED
@@ -100,9 +102,15 @@ ALTER TABLE `events` RECOVER PARTITIONS ;
 INSERT INTO TABLE `events`
 PARTITION (dt)
 SELECT
+app_id,
+NULL as platform,
 dt AS dt_dt,
 tm,
+NULL as event_name,
 txn_id,
+v_tracker,
+v_collector,
+v_etl,
 user_id,
 user_ipaddress,
 visit_id,
@@ -156,9 +164,5 @@ dvce_type,
 dvce_ismobile,
 dvce_screenwidth,
 dvce_screenheight,
-app_id,
-v_tracker,
-v_collector,
-v_etl,
 dt
 FROM `extracted_logs` ;

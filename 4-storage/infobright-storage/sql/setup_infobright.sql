@@ -21,12 +21,24 @@ CREATE DATABASE IF NOT EXISTS snowplow ;
 USE snowplow ;
 
 CREATE TABLE IF NOT EXISTS events (
+	-- App
+	`app_id` varchar(255) comment 'lookup', -- ('lookup' is a varchar optimisation)
+	`platform` varchar(50) comment 'lookup',
+	-- Date/time
 	`dt` date,
 	`tm` time,
+	-- Event
+	`event_name` varchar(255) comment 'lookup',
 	`txn_id` int,
+	-- Versioning
+	`v_tracker` varchar(100) comment 'lookup',
+	`v_collector` varchar(100) comment 'lookup',
+	`v_etl` varchar(100) comment 'lookup',
+	-- User and visit
 	`user_id` varchar(16) comment 'lookup',
 	`user_ipaddress` varchar(19) comment 'lookup',
 	`visit_id` smallint,
+	-- Page
 	`page_url` varchar(2083) comment 'lookup',
 	`page_title` varchar(2083) comment 'lookup',
 	`page_referrer` varchar(2083) comment 'lookup',
@@ -76,6 +88,5 @@ CREATE TABLE IF NOT EXISTS events (
 	`dvce_type` varchar(50) comment 'lookup',
 	`dvce_ismobile` boolean,
 	`dvce_screenwidth` mediumint,
-	`dvce_screenheight` mediumint,
-	`app_id` varchar(255) comment 'lookup'
+	`dvce_screenheight` mediumint
 ) ENGINE=BRIGHTHOUSE DEFAULT CHARSET=utf8 ;
