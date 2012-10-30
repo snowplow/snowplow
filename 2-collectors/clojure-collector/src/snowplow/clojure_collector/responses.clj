@@ -44,8 +44,7 @@
 (defn- generate-id
   "Checks `cookies` and generates a uuid for the visitor as necessary"
   [cookies]
-  (let [id (:value (cookies cookie-name))]
-    (if (empty? id) (uuid) id)))
+  (get (cookies cookie-name) :value (uuid))
 
 (defn send-cookie-and-pixel
   "Respond with a transparent pixel and the cookie"
