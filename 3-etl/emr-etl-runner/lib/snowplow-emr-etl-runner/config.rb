@@ -40,7 +40,7 @@ module SnowPlow
 
         # Validate the collector format
         if config[:etl][:collector_format] != 'cloudfront'
-          raise ConfigError, "Collector format '%s' not supported" % config[:etl][:collector_format]
+          raise ConfigError, "collector_format '%s' not supported (only 'cloudfront')" % config[:etl][:collector_format]
         end
 
         # Construct paths to our HiveQL and serde
@@ -52,13 +52,20 @@ module SnowPlow
                         when 'non-hive'
                           "non-hive-rolling-etl-%s" % config[:snowplow][:non_hive_hiveql_version]
                         else
-                          raise ConfigError, "Storage format '%s' not supported" % config[:etl][:storage_format]
+                          raise ConfigError, "storage_format '%s' not supported (only 'hive', 'non-hive')" % config[:etl][:storage_format]
                         end
         config[:hiveql_asset] = "%s/hiveql/%s.q" % [asset_path, hiveql_file]
 
-        if config[:etl][:continue_on_malformed_row]
-          puts "IS TRUE"
-        end
+        # Should we continue on unexpected error or not?
+        continue_on = case config[:etl][:continue_on_unexpected_error]
+                        when true
+                          '1'
+                        when false
+                          '0'
+                        else
+                          raise ConfigError, "continue_on_unexpected_error '%s' not supported (only 'true' or 'false')" % config[:etl][:continue_on_unexpected_error]
+                        end
+        config[:etl][:continue_on_unexpected_error] = continue_on
 
         config
       end
