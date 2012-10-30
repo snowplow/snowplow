@@ -22,9 +22,8 @@
 
 (def ^:const cookie-name "sp")
 
-(def pixel-bytes (Base64/decodeBase64 (.getBytes "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="))) ; Can't define ^:const on this as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
-(def pixel (ByteArrayInputStream. pixel-bytes))
-(def ^:const pixel-length (str (alength pixel-bytes)))
+(def pixel (Base64/decodeBase64 (.getBytes "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="))) ; Can't define ^:const on this as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
+(def ^:const pixel-length (str (alength pixel)))
 
 (def send-404
   "Respond with a 404"
@@ -65,4 +64,4 @@
                "P3P"            "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\""
                "Content-Length"  pixel-length}
      :cookies {cookie-name cookie-data}
-     :body    pixel}))
+     :body    (ByteArrayInputStream. pixel)}))
