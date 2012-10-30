@@ -8,6 +8,7 @@ HiveQL: added non-hive-rolling-etl.q for Infobright- (and other db-)friendly eve
 HiveQL: added version handling (v_tracker, v_collector, v_etl) (fixes #42)
 Serde: bumped to 0.5.0
 Serde: updated to avoid throwing exceptions on a bad field, fixes #52 (thanks @mtibben!)
+Serde: moved some exception handling closer to the throw point, pull req #66 (thanks @mtibben!)
 Serde: added continue_on_unexpected_error (thanks @mtibben!)
 Serde: tabs are changed to 4 spaces, fixes #61
 Serde: browser features are now also available as individual fields, for non-hive-rolling-etl.q to use
