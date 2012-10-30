@@ -28,8 +28,8 @@
   (responses/send-cookie-and-pixel cookies 60000 "localhost"))  ; TODO: fix this
 
 (defroutes routes
-  (GET "/i"           {c :cookies} (send-cookie-and-pixel' c)) ; ice.png is legacy name for i
-  (GET "/ice.png"     {c :cookies} (send-cookie-and-pixel' c)) 
+  (GET "/i"           {c :cookies} (send-cookie-and-pixel' c))
+  (GET "/ice.png"     {c :cookies} (send-cookie-and-pixel' c)) ; ice.png is legacy name for i
   (GET "/healthcheck" request responses/send-200)
   (compojure.route/not-found  responses/send-404))
 
