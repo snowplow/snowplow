@@ -34,7 +34,7 @@
   (GET "/i"           {c :cookies} (send-cookie-and-pixel' c))
   (GET "/ice.png"     {c :cookies} (send-cookie-and-pixel' c)) ; ice.png is legacy name for i
   (GET "/healthcheck" request responses/send-200)
-  ;  + "/status" provided by expose-metrics-as-json
+  ;  + "/status"      provided by expose-metrics-as-json
   (compojure.route/not-found  responses/send-404))
 
 (def app
