@@ -30,19 +30,25 @@
   (responses/send-cookie-and-pixel cookies 60000 "localhost"))  ; TODO: fix this
 
 (defroutes routes
+  "Our main routes - see also beanstalk.clj plus expose-metrics-as-json"
   (GET "/i"           {c :cookies} (send-cookie-and-pixel' c))
   (GET "/ice.png"     {c :cookies} (send-cookie-and-pixel' c)) ; ice.png is legacy name for i
   (GET "/healthcheck" request responses/send-200)
+  ;  + "/status" provided by expose-metrics-as-json
   (compojure.route/not-found  responses/send-404))
 
-(def app (-> routes
-             (wrap-cookies)
-             (wrap-reload '(snowplow.clojure-collector responses)) ; TODO: disable this in production
-             (instrument)))
+(def app
+  "Customize our handler"
+ (-> routes
+   (wrap-cookies)
+   (wrap-reload '(snowplow.clojure-collector responses)) ; TODO: disable this in production
+   (instrument)))
 
-;; ; To run locally: `lein ring server`
-(def start-server (run-jetty #'app {:port 8081 :join? false}))
+(def start-server
+  "To run locally: `lein ring server`"
+  (run-jetty #'app {:port 8081 :join? false}))
 
-;; ; To run locally without Leiningen (having packaged with `lein uberjar`)
-(defn -main [& args]
+(defn -main
+  "To run locally without Leiningen (having packaged with `lein uberjar`)"
+  [& args]
   (start-server))
