@@ -16,13 +16,14 @@
 (ns snowplow.clojure-collector.responses
   "Holds the different HTTP responses sent by clojure-collector"
   (:import (org.apache.commons.codec.binary Base64)
+           (java.io ByteArrayInputStream)
            (org.joda.time DateTime)
-           (java.util.UUID)))
+           (java.util UUID)))
 
 (def ^:const cookie-name "sp")
 
-(def pixel-bytes (Base64/decodeBase64 (.getBytes "R0lGODlhAQABAPAAAAAAAAAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="))) ; Can't define ^:const on this as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
-(def pixel (new java.io.ByteArrayInputStream pixel-bytes))
+(def pixel-bytes (Base64/decodeBase64 (.getBytes "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="))) ; Can't define ^:const on this as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
+(def pixel (ByteArrayInputStream. pixel-bytes))
 (def ^:const pixel-length (str (alength pixel-bytes)))
 
 (def send-404
@@ -44,13 +45,13 @@
    ; :domain   domain ; Comment this line out to test locally, because of http://stackoverflow.com/questions/1134290/cookies-on-localhost-with-explicit-domain
    :expires  (-> (new DateTime) (.plusSeconds duration))})
 
+(defn- uuid [] (str (UUID/randomUUID)))
+
 (defn- generate-id
   "Generates a new uuid for a visitor as necessary"
   [cookies]
   (let [id (:value (cookies cookie-name))]
-    (if (empty? id)
-      (str (UUID/randomUUID))
-      id)))
+    (if (empty? id) (uuid) id)))
 
 (defn send-cookie-and-pixel
   "Responds with a transparent pixel and the cookie"
