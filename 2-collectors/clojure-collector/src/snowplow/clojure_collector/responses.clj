@@ -21,9 +21,44 @@
            (java.util UUID)))
 
 (def ^:const cookie-name "sp")
-
 (def pixel (Base64/decodeBase64 (.getBytes "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="))) ; Can't define ^:const on this as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
 (def ^:const pixel-length (str (alength pixel)))
+
+(defn- uuid
+  "Returns a string representation of new type 4 UUID"
+  []
+  (str (UUID/randomUUID)))
+
+(defn- now-plus
+  "Creates a DateTime `duration` seconds from now"
+  [duration]
+  (-> (new DateTime) (.plusSeconds duration)))
+
+(defn- set-cookie
+  "Sets a SnowPlow cookie with visitor `id`, lasting `duration` seconds for `domain`"
+  [id duration domain] 
+  {:value    id
+   ; :domain   domain ; Comment this line out to test locally, because of http://stackoverflow.com/questions/1134290/cookies-on-localhost-with-explicit-domain
+   :expires  (now-plus duration)})
+
+(defn- generate-id
+  "Checks `cookies` and generates a uuid for the visitor as necessary"
+  [cookies]
+  (let [id (:value (cookies cookie-name))]
+    (if (empty? id) (uuid) id)))
+
+(defn send-cookie-and-pixel
+  "Respond with a transparent pixel and the cookie"
+  [cookies duration domain]
+  (let [id (generate-id cookies)
+        cookie-contents (set-cookie id duration domain)]
+    {:status  200
+     :headers {"Content-Type"   "image/gif"
+               "P3P"            "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\""
+               "Content-Length"  pixel-length}
+     :cookies {cookie-name cookie-contents}
+     :body    (ByteArrayInputStream. pixel)}))
+
 
 (def send-404
   "Respond with a 404"
@@ -31,37 +66,9 @@
    :headers {"Content-Type" "text/plain"}
    :body    "404 Not found"})
 
+
 (def send-200
   "Respond with a 200"
   {:status  200
    :headers {"Content-Type" "text/plain"}
    :body    "OK"})
-
-(defn- set-cookie
-  "Sets the SnowPlow ID cookie"
-  [id duration domain] 
-  {:value    id
-   ; :domain   domain ; Comment this line out to test locally, because of http://stackoverflow.com/questions/1134290/cookies-on-localhost-with-explicit-domain
-   :expires  (-> (new DateTime) (.plusSeconds duration))})
-
-(defn- uuid [] (str (UUID/randomUUID)))
-
-(defn- generate-id
-  "Generates a new uuid for a visitor as necessary"
-  [cookies]
-  (let [id (:value (cookies cookie-name))]
-    (if (empty? id) (uuid) id)))
-
-(defn send-cookie-and-pixel
-  "Responds with a transparent pixel and the cookie"
-  [cookies duration domain]
-  ; Set the user's uuid if not already set
-  (let [id (generate-id cookies)
-        cookie-data (set-cookie id duration domain)]
-    ; Set cookie and return pixel
-    {:status  200
-     :headers {"Content-Type"   "image/gif"
-               "P3P"            "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\""
-               "Content-Length"  pixel-length}
-     :cookies {cookie-name cookie-data}
-     :body    (ByteArrayInputStream. pixel)}))
