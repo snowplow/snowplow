@@ -21,7 +21,6 @@
            (java.util UUID)))
 
 (def ^:const cookie-name "sp")
-(def ^:const cookie-p3p-header "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\"") ; TODO: move this into config
 
 (def pixel (Base64/decodeBase64 (.getBytes "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="))) ; Can't define ^:const on this as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
 (def ^:const pixel-length (str (alength pixel)))
@@ -50,12 +49,12 @@
 
 (defn send-cookie-and-pixel
   "Respond with a transparent pixel and the cookie"
-  [cookies duration domain]
+  [cookies duration domain p3p-header]
   (let [id (generate-id cookies)
         cookie-contents (set-cookie id duration domain)]
     {:status  200
      :headers {"Content-Type"   "image/gif"
-               "P3P"             cookie-p3p-header
+               "P3P"             p3p-header
                "Content-Length"  pixel-length}
      :cookies {cookie-name cookie-contents}
      :body    (ByteArrayInputStream. pixel)}))
