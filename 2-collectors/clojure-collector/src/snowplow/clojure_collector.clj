@@ -42,14 +42,5 @@
  (-> routes
    (wrap-cookies)
    (wrap-reload '(snowplow.clojure-collector responses)) ; TODO: disable this in production
-   (#(expose-metrics-as-json % "/status"))
+   (#(expose-metrics-as-json % "/status")) ; Takes routes as first arg
    (instrument)))
-
-; (def server
-;   "To run locally: `lein ring server`"
-;  (run-jetty #'app {:port 8081 :join? false}))
-
-; defn -main
-;  "To run locally without Leiningen (having packaged with `lein uberjar`)"
-;  [& args]
-;  (server))

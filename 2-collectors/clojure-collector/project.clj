@@ -16,6 +16,7 @@
 (defproject snowplow/clojure-collector "0.1.0"
   :description "A SnowPlow event collector written in Clojure. AWS Elastic Beanstalk compatible."
   :dependencies [[org.clojure/clojure "1.4.0"]
+                 [org.clojure/clojure-contrib "1.2.0"]
                  [ring "1.1.6"]
                  [compojure "1.1.3"]
                  [metrics-clojure "0.9.1"]
