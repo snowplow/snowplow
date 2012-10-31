@@ -36,11 +36,17 @@
   (-> (new DateTime) (.plusSeconds duration)))
 
 (defn- set-cookie
-  "Sets a SnowPlow cookie with visitor `id`, lasting `duration` seconds for `domain`"
-  [id duration domain] 
-  {:value    id
-   ; :domain   domain ; Comment this line out to test locally, because of http://stackoverflow.com/questions/1134290/cookies-on-localhost-with-explicit-domain
-   :expires  (now-plus duration)})
+  "Sets a SnowPlow cookie with visitor `id`,
+   to last `duration` seconds for `domain`.
+   If domain is nil, leave out so the FQDN
+   of the host can be used instead"
+  [id duration domain]
+  (merge
+    {:value    id
+     :expires  (now-plus duration)}
+   (when-let [d nil]
+    {:domain   d}))
+
 
 (defn- generate-id
   "Checks `cookies` and generates a uuid for the visitor as necessary"
