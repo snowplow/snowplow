@@ -14,10 +14,10 @@
 ;;;; License:   Apache License Version 2.0
 
 (ns snowplow.clojure-collector.config
-  "Accesses environment variables and
-   sets defaults where necessary")
+  "Gets environment variables, using
+   sensible defaults where necessary")
 
-;; Beanstalk only has 4 slots for environment variable
+;; Beanstalk only has 4 slots for environment variables
 (def ^:const env-varname "SP_ENV")
 (def ^:const p3p-varname "SP_P3P")
 (def ^:const domain-varname "SP_DOMAIN")
