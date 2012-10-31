@@ -18,6 +18,7 @@
   (:use [compojure.core          :only [defroutes GET]]
         [ring.middleware.cookies :only [wrap-cookies]]
         [ring.middleware.reload  :only [wrap-reload]]
+        [ring.adapter.jetty      :only [run-jetty]]
         [metrics.ring.expose     :only [expose-metrics-as-json]]
         [metrics.ring.instrument :only [instrument]])
   (:require [compojure handler route]
@@ -35,6 +36,10 @@
   (GET "/healthcheck" request responses/send-200)
   ;  + "/status"      provided by expose-metrics-as-json
   (compojure.route/not-found  responses/send-404))
+
+(defonce server
+  "So we can interact at the REPL"
+  (run-jetty #'my-app {:port 8080 :join? false}))
 
 (def app
   "Customize our handler"
