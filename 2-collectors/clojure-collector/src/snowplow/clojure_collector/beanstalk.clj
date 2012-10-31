@@ -16,7 +16,7 @@
 (ns snowplow.clojure-collector.beanstalk
   "AWS Elastic Beanstalk-specific functionality"
   (:use [compojure.core :only (HEAD defroutes)])
-  (:require [snowplow.clojure-collector :as collector]
+  (:require [snowplow.clojure-collector.core :as clojure-collector]
             [compojure.core :as compojure]))
 
 (defroutes app
@@ -24,4 +24,4 @@
   ; your application is up by whether it responds successfully to a
   ; HEAD request at /
   (HEAD "/" [] "")
-  collector/app)
+  clojure-collector/app)

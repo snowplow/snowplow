@@ -13,8 +13,8 @@
 ;;;; Copyright: Copyright (c) 2012 SnowPlow Analytics Ltd
 ;;;; License:   Apache License Version 2.0
 
-(ns snowplow.clojure-collector
-  "Main app handler"
+(ns snowplow.clojure-collector.core
+  "Core app handler"
   (:use [compojure.core          :only [defroutes GET]]
         [ring.middleware.cookies :only [wrap-cookies]]
         [ring.middleware.reload  :only [wrap-reload]]
@@ -40,6 +40,6 @@
   "Customize our handler"
  (-> routes
    (wrap-cookies)
-   (wrap-reload '(snowplow.clojure-collector responses)) ; TODO: disable this in production
-   (#(expose-metrics-as-json % "/status")) ; Takes routes as first arg
+   (wrap-reload '(snowplow.clojure-collector.core responses)) ; TODO: disable this in production
+   (#(expose-metrics-as-json % "/status")) ; Needs routes as first arg
    (instrument)))
