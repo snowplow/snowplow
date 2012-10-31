@@ -15,8 +15,7 @@
 
 (ns snowplow.clojure-collector
   "Main app handler"
-  (:use [ring.adapter.jetty      :only [run-jetty]] 
-        [compojure.core          :only [defroutes GET]]
+  (:use [compojure.core          :only [defroutes GET]]
         [ring.middleware.cookies :only [wrap-cookies]]
         [ring.middleware.reload  :only [wrap-reload]]
         [metrics.ring.expose     :only [expose-metrics-as-json]]

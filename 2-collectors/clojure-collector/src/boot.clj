@@ -2,7 +2,6 @@
   "A namespace only used while developing to 
    start and stop an internal server"
   (:use ring.adapter.jetty)
-  (:use clojure.contrib.def)
   (:use snowplow.clojure-collector))
  
 (def *port* 8081) ;; Override if needed
