@@ -18,7 +18,6 @@
   (:use [compojure.core          :only [defroutes GET]]
         [ring.middleware.cookies :only [wrap-cookies]]
         [ring.middleware.reload  :only [wrap-reload]]
-        [ring.adapter.jetty      :only [run-jetty]]
         [metrics.ring.expose     :only [expose-metrics-as-json]]
         [metrics.ring.instrument :only [instrument]])
   (:require [compojure handler route]
