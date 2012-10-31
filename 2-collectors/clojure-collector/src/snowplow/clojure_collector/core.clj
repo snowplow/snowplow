@@ -24,6 +24,8 @@
             [snowplow.clojure-collector.responses :as responses]
             [snowplow.clojure-collector.config    :as config]))
 
+; TODO: important, need to add support for no domain name into appropriate response
+
 (defn- send-cookie-and-pixel'
   "Wrapper for send-cookie-and-pixel, pulling
    in the configuration settings"
