@@ -43,7 +43,7 @@
   [id duration domain]
   (merge
     {:value    id
-     :expires  (now-plus duration)}
+     :expires (now-plus duration)}
    (when-let [d nil]
     {:domain   d}))
 
