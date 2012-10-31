@@ -12,7 +12,8 @@ A **Collector** receives SnowPlow events from one or more [Trackers]
 | Collector                       | Description                                           | Status           | Read more                    |
 |---------------------------------|-------------------------------------------------------|------------------|------------------------------|
 | [cloudfront-collector] [c1]     | An Amazon CloudFront-based collector. No moving parts | Production-ready | Wiki                         |
-| [contrib-nodejs-collector] [c2] | SnowCannon is a node.js-based collector               | Beta             | [README] [snowcannon-readme] | 
+| [clojure-collector] [c2]     | A Clojure collector compatible with Amazon Elastic Beanstalk | Beta | Coming soon                         |
+| [contrib-nodejs-collector] [c3] | SnowCannon is a node.js-based collector               | Beta             | [README] [snowcannon-readme] | 
 
 ## Contributing
 
@@ -23,4 +24,5 @@ We welcome community contributions of additional Collectors! We have a guide to 
 [etl]: https://github.com/snowplow/snowplow/tree/master/3-etl
 [snowcannon-readme]: https://github.com/shermozle/SnowCannon/blob/master/README.md
 [c1]: ./2-collectors/cloudfront-collector/
-[c2]: ./2-collectors/contrib-nodejs-collector/
+[c2]: ./2-collectors/clojure-collector/
+[c3]: ./2-collectors/contrib-nodejs-collector/
