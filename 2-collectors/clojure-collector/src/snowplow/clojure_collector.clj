@@ -45,11 +45,11 @@
    (#(expose-metrics-as-json % "/status"))
    (instrument)))
 
-(def start-server
-  "To run locally: `lein ring server`"
-  (run-jetty #'app {:port 8081 :join? false}))
+; (def server
+;   "To run locally: `lein ring server`"
+;  (run-jetty #'app {:port 8081 :join? false}))
 
-(defn -main
-  "To run locally without Leiningen (having packaged with `lein uberjar`)"
-  [& args]
-  (start-server))
+; defn -main
+;  "To run locally without Leiningen (having packaged with `lein uberjar`)"
+;  [& args]
+;  (server))

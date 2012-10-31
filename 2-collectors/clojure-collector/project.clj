@@ -16,10 +16,11 @@
 (defproject snowplow/clojure-collector "0.1.0"
   :description "A SnowPlow event collector written in Clojure. AWS Elastic Beanstalk compatible."
   :dependencies [[org.clojure/clojure "1.4.0"]
-                 [compojure "1.1.3"]
                  [ring "1.1.6"]
-                 [commons-codec/commons-codec "1.7"]
+                 [compojure "1.1.3"]
                  [metrics-clojure "0.9.1"]
-                 [metrics-clojure-ring "0.9.1"]]
-  :plugins [[lein-beanstalk "0.2.6"]]
+                 [metrics-clojure-ring "0.9.1"]
+                 [commons-codec/commons-codec "1.7"]]
+  :plugins      [[lein-ring "0.7.5"]
+                 [lein-beanstalk "0.2.6"]]
   :ring {:handler snowplow.clojure-collector.beanstalk/app})
