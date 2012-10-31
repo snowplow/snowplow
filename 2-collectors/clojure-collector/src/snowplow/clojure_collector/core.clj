@@ -37,13 +37,9 @@
   ;  + "/status"      provided by expose-metrics-as-json
   (compojure.route/not-found  responses/send-404))
 
-(defonce server
-  "So we can interact at the REPL"
-  (run-jetty #'my-app {:port 8080 :join? false}))
-
 (def app
   "Customize our handler"
- (-> routes
+ (-> #'routes
    (wrap-cookies)
    (wrap-reload '(snowplow.clojure-collector.core responses)) ; TODO: disable this in production
    (#(expose-metrics-as-json % "/status")) ; Needs routes as first arg
