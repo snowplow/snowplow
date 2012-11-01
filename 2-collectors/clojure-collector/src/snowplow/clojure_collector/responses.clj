@@ -45,7 +45,7 @@
     {:value    id
      :expires (now-plus duration)}
    (when-let [d nil]
-    {:domain   d}))
+    {:domain   d})))
 
 
 (defn- generate-id

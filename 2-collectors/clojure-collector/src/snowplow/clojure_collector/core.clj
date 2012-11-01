@@ -31,7 +31,7 @@
   (responses/send-cookie-and-pixel cookies
     (config/duration)
     (config/domain)
-    (config/p3p-header))
+    (config/p3p-header)))
 
 (defroutes routes
   "Our main routes - see also beanstalk.clj plus expose-metrics-as-json"
