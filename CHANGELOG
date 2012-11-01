@@ -1,4 +1,4 @@
-Version 0.5.1 (2012-10-27)
+Version 0.5.1 (2012-10-31)
 --------------------------
 Data model: stubbed new event_name and platform fields
 Infobright: added setup scripts and docs into 4-storage/infobright (fixes #57)
