@@ -2,7 +2,7 @@
 
 ## Introduction
 
-SnowPlow::StorageLoader is a Ruby application (built with [Bundler] [bundler]) to load SnowPlow event data into various databases and "big data" storage options. Initially StorageLoader supports one
+SnowPlow::StorageLoader is a Ruby application (built with [Bundler] [bundler]) to load SnowPlow event data into various databases and "big data" platforms. Initially StorageLoader supports one storage 'target': 
 
 
 
@@ -18,9 +18,9 @@ We will be adding a guide to contributing soon.
 
 ## Credits and thanks
 
-SnowPlow::EmrEtlRunner was developed by [Alex Dean] [alexanderdean] ([SnowPlow Analytics] [snowplow-analytics]), with very substantial contributions from [Michael Tibben] [mtibben] ([99designs] [99designs]). Huge thanks Michael!
+SnowPlow::StorageLoader was developed by [Alex Dean] [alexanderdean] ([SnowPlow Analytics] [snowplow-analytics])
 
-StorageLoader in turn depends heavily on [Rob Slifka] [rslifka]'s excellent [Elasticity] [elasticity] Ruby gem, which provides programmatic access to Amazon EMR. Big thanks to Rob for writing Elasticity!
+StorageLoader in turn depends heavily on [Sluice] [sluice], a Ruby toolkit for cloud-friendly ETL, written by [Alex Dean] [alexanderdean] ([SnowPlow Analytics] [snowplow-analytics]) and [Michael Tibben] [mtibben] ([99designs] [99designs]).
 
 ## Copyright and license
 
@@ -44,6 +44,12 @@ limitations under the License.
 [mtibben]: https://github.com/mtibben
 [99designs]: http://99designs.com
 [rslifka]: https://github.com/rslifka
-[elasticity]: https://github.com/rslifka/elasticity
+
+[infobright]: http://www.infobright.org/
+
+[sluice]: https://github.com/snowplow/sluice
+
+[mtibben]: https://github.com/mtibben
+[99designs]: http://99designs.com
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
