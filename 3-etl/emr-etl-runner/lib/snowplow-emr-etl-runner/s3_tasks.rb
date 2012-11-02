@@ -22,6 +22,10 @@ module SnowPlow
   module EmrEtlRunner
     module S3Tasks
 
+      # TODO: make these configurable?
+      S3_CONCURRENCY = 10
+      S3_RETRIES = 3
+
       # To handle negative file matching
       NegativeRegex = Struct.new(:regex)  
 
@@ -275,13 +279,12 @@ module SnowPlow
         mutex = Mutex.new
         complete = false
         marker_opts = {}
-        s3_retries = 3
 
         # if an exception is thrown in a thread that isn't handled, die quickly
         Thread.abort_on_exception = true
 
         # create ruby threads to concurrently execute s3 operations
-        for i in (0...10)
+        for i in (0...S3_CONCURRENCY)
 
           # each thread pops a file off the files_to_process array, and moves it.
           # We loop until there are no more files
@@ -352,7 +355,7 @@ module SnowPlow
                   file.copy(to_location.bucket, to_location.dir_as_path + filename)
                   puts "      +-> #{to_location.bucket}/#{to_location.dir_as_path}#{filename}"
                 rescue
-                  raise unless i < s3_retries
+                  raise unless i < S3_RETRIES
                   puts "Problem copying #{file.key}. Retrying.", $!, $@
                   sleep(10)  # give us a bit of time before retrying
                   i += 1
@@ -367,7 +370,7 @@ module SnowPlow
                   file.destroy()
                   puts "      x #{from_location.bucket}/#{file.key}"
                 rescue
-                  raise unless i < s3_retries
+                  raise unless i < S3_RETRIES
                   puts "Problem destroying #{file.key}. Retrying.", $!, $@
                   sleep(10) # give us a bit of time before retrying
                   i += 1
