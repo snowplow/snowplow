@@ -33,6 +33,7 @@
    cookie should last for"
   (get (System/getenv) duration-varname default-duration))
 
+
 (def p3p-header
   "Get the P3P header.
    Return a default P3P policy if not set"
