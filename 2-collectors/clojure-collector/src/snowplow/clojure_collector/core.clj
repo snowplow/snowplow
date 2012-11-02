@@ -28,18 +28,19 @@
   "Wrapper for send-cookie-and-pixel, pulling
    in the configuration settings"
   [cookies]
-  (responses/send-cookie-and-pixel cookies
-    (config/duration)
-    (config/domain)
-    (config/p3p-header)))
+  (responses/send-cookie-and-pixel
+    cookies
+    config/duration
+    config/domain
+    config/p3p-header))
 
 (defroutes routes
   "Our main routes - see also beanstalk.clj plus expose-metrics-as-json"
   (GET "/i"           {c :cookies} (send-cookie-and-pixel' c))
   (GET "/ice.png"     {c :cookies} (send-cookie-and-pixel' c)) ; legacy name for i
-  (GET "/healthcheck" request (responses/send-200))
+  (GET "/healthcheck" request responses/send-200)
   ;  + "/status"      provided by expose-metrics-as-json
-  (compojure.route/not-found  (responses/send-404)))
+  (compojure.route/not-found  responses/send-404))
 
 (def app
   "Our routes plus selected wraps"

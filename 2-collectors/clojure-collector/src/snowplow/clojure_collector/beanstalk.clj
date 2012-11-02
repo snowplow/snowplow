@@ -24,4 +24,4 @@
   ; your application is up by whether it responds successfully to a
   ; HEAD request at /
   (HEAD "/" [] "")
-  (clojure-collector/app))
+  clojure-collector/app)

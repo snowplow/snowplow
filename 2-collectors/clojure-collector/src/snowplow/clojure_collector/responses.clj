@@ -41,11 +41,11 @@
    If domain is nil, leave out so the FQDN
    of the host can be used instead"
   [id duration domain]
-  (merge
+;  (merge
     {:value    id
-     :expires (now-plus duration)}
-   (when-let [d nil]
-    {:domain   d})))
+     :expires (now-plus duration)})
+;   (when-let [domain nil]
+;    {:domain   domain})))
 
 
 (defn- generate-id
