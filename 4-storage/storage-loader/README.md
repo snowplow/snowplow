@@ -1,8 +1,12 @@
-# SnowPlow::EmrEtlRunner
+# SnowPlow::StorageLoader
 
 ## Introduction
 
-SnowPlow::EmrEtlRunner is a Ruby application (built with [Bundler] [bundler]) to run SnowPlow's Hive-based ETL (extract, transform, load) process on [Amazon Elastic MapReduce] [amazon-emr] with minimum fuss.
+SnowPlow::StorageLoader is a Ruby application (built with [Bundler] [bundler]) to load SnowPlow event data into various databases and "big data" storage options. Initially StorageLoader supports one
+
+
+
+ (extract, transform, load) process on [Amazon Elastic MapReduce] [amazon-emr] with minimum fuss.
 
 ## Deployment and configuration
 
@@ -14,13 +18,13 @@ We will be adding a guide to contributing soon.
 
 ## Credits and thanks
 
-SnowPlow::EmrEtlRunner was primarily developed by [Alex Dean] [alexanderdean] ([SnowPlow Analytics] [snowplow-analytics]), with very substantial contributions from [Michael Tibben] [mtibben] ([99designs] [99designs]). Huge thanks Michael!
+SnowPlow::EmrEtlRunner was developed by [Alex Dean] [alexanderdean] ([SnowPlow Analytics] [snowplow-analytics]), with very substantial contributions from [Michael Tibben] [mtibben] ([99designs] [99designs]). Huge thanks Michael!
 
-EmrEtlRunner in turn depends heavily on [Rob Slifka] [rslifka]'s excellent [Elasticity] [elasticity] Ruby gem, which provides programmatic access to Amazon EMR. Big thanks to Rob for writing Elasticity!
+StorageLoader in turn depends heavily on [Rob Slifka] [rslifka]'s excellent [Elasticity] [elasticity] Ruby gem, which provides programmatic access to Amazon EMR. Big thanks to Rob for writing Elasticity!
 
 ## Copyright and license
 
-SnowPlow::EmrEtlRunner is copyright 2012 SnowPlow Analytics Ltd.
+SnowPlow::StorageLoader is copyright 2012 SnowPlow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
