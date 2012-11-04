@@ -32,9 +32,5 @@ module SnowPlow
     # Raised if a directory is not empty
     class DirectoryNotEmptyError < Error
     end
-
-    # If an S3 file operation is not supported or incorrect
-    class S3FileOperationError < Error
-    end
   end
 end
