@@ -35,7 +35,7 @@ module SnowPlow
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
 
-        # Get s3 locations
+        # Get S3 locations
         in_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:in])
         processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:processing])
 
@@ -78,7 +78,7 @@ module SnowPlow
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
 
-        # Get s3 locations
+        # Get S3 locations
         processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:processing]);
         archive_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:archive]);
 

@@ -88,6 +88,7 @@ module SnowPlow
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
+          opts.on('-s', '--skip staging|emr', 'skip work step(s)') { |config| options[:skip] = config }
 
           opts.separator ""
           opts.separator "* filters the raw event logs processed by EmrEtlRunner by their timestamp"
