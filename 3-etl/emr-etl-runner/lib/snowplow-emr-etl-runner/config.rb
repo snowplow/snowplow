@@ -16,6 +16,7 @@
 require 'optparse'
 require 'date'
 require 'yaml'
+require 'sluice'
 
 # Config module to hold functions related to CLI argument parsing
 # and config file reading to support the daily ETL job.
@@ -35,8 +36,7 @@ module SnowPlow
         config[:end] = options[:end]
 
         # Add trailing slashes if needed to the buckets
-        trail = lambda {|str| return str[-1].chr != '/' ? str << '/' : str}
-        config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| trail.call(v)}
+        config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
 
         # Validate the collector format
         if config[:etl][:collector_format] != 'cloudfront'
