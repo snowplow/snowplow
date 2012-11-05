@@ -19,7 +19,7 @@ $:.unshift(File.expand_path("../../lib", __FILE__))
 
 require 'snowplow-storage-loader'; loader = SnowPlow::StorageLoader
 
-# This Ruby script runs the SnowPlow storage loader.
+# This Ruby script runs the SnowPlow StorageLoader.
 #
 # This is a four-step process:
 # 1. Transfer the SnowPlow event files from the In Bucket to the Processing Bucket
@@ -31,9 +31,19 @@ require 'snowplow-storage-loader'; loader = SnowPlow::StorageLoader
 begin
   config = loader::Config.get_config()
 
-  loader::S3Tasks.stage_events_for_load(config)
-  loader::S3Tasks.download_events(config)
-  loader::S3Tasks.load_events(config)
+  if config[:skip] == :none
+    loader::S3Tasks.stage_events_for_load(config)
+  end
+
+  unless config[:skip] == :download or config[:skip] == :load
+    loader::S3Tasks.download_events(config)
+  end
+
+  unless config[:skip] == :load
+    loader::S3Tasks.load_events(config)
+  end
+
+  # Always run the archive
   loader::S3Tasks.archive_events(config)
 
 # Catch any SnowPlow error

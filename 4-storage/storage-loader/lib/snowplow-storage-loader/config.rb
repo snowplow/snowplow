@@ -34,6 +34,9 @@ module SnowPlow
         options = Config.parse_args()
         config = YAML.load_file(options[:config])
 
+        # Add in our skip setting
+        config[:skip] = options[:skip]
+
         # Add trailing slashes if needed to the buckets
         config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
 
@@ -61,6 +64,7 @@ module SnowPlow
           opts.separator "Specific options:"
 
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
+          opts.on('-s', '--skip staging|download|load', 'skip work step(s)') { |config| options[:skip] = config }
 
           opts.separator ""
           opts.separator "Common options:"
@@ -78,6 +82,21 @@ module SnowPlow
         rescue OptionParser::InvalidOption, OptionParser::MissingArgument
           raise ConfigError, "#{$!.to_s}\n#{optparse}"
         end
+
+        # Check our skip argument
+        skip = case options[:skip]
+                 when "staging"
+                   :staging
+                 when "download"
+                   :emr
+                 when "load"
+                   :load
+                 when nil
+                   :none                            
+                 else
+                   raise ConfigError, "Invalid option: skip can be 'staging', 'download' or 'load', not '#{options[:skip]}'"
+                 end
+        options[:skip] = skip # Heinous mutability
 
         # Check we have a config file argument
         if options[:config].nil?
