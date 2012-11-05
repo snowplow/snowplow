@@ -33,6 +33,8 @@ begin
   config = runner::Config.get_config()
   skip = config[:skip]
 
+  puts "skip = %s" % skip
+
   if skip == :none
     runner::S3Tasks.stage_logs_for_emr(config)
   end

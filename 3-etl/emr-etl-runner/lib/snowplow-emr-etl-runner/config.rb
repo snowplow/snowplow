@@ -34,9 +34,10 @@ module SnowPlow
         options = Config.parse_args()
         config = YAML.load_file(options[:config])
 
-        # Add in the start and end dates
+        # Add in the start and end dates, and our skip setting
         config[:start] = options[:start]
         config[:end] = options[:end]
+        config[:skip] = options[:skip]
 
         # Add trailing slashes if needed to the buckets
         config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
