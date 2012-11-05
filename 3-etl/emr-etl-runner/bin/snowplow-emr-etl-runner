@@ -31,15 +31,12 @@ require 'snowplow-emr-etl-runner'; runner = SnowPlow::EmrEtlRunner
 # Note that each step is only actioned if the previous step succeeded without error.
 begin
   config = runner::Config.get_config()
-  skip = config[:skip]
 
-  puts "skip = %s" % skip
-
-  if skip == :none
+  if config[:skip] == :none
     runner::S3Tasks.stage_logs_for_emr(config)
   end
 
-  unless skip == :emr
+  unless config[:skip] == :emr
     job = runner::EmrJob.new(config)
     job.run()
   end
