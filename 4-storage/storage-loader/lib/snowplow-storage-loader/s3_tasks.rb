@@ -59,6 +59,14 @@ module SnowPlow
       # +config+:: the hash of configuration options
       def download_events(config)
         puts "Downloading SnowPlow events..."
+
+        s3 = Sluice::Storage::S3::new_fog_s3_from(
+          config[:s3][:region],
+          config[:aws][:access_key_id],
+          config[:aws][:secret_access_key])
+
+        # TODO: implement the rest of this method
+
       end
       module_function :download_events
 
