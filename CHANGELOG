@@ -1,5 +1,6 @@
 Version 0.5.2 (2012-11-05)
 --------------------------
+EmrEtlRunner: bump to 0.0.4
 EmrEtlRunner: fixed reference to old version of Hive deserializer in config.yml (fixes #71)
 EmrEtlRunner: fixed bug using sub-folders with the Processing Bucket (fixes #72)
 EmrEtlRunner: can now skip move-files-to-Processing-Bucket or EMR stages (fixes #58)

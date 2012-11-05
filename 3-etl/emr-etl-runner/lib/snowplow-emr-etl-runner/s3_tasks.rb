@@ -73,7 +73,7 @@ module SnowPlow
       def archive_logs(config)
         puts 'Archiving CloudFront logs...'
 
-        s3 = Sluice::Storage::S3::new_s3_from(
+        s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:s3][:region],
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
