@@ -15,9 +15,9 @@
 #           (runs both the EmrEtlRunner and the StorageLoader)
 
 # Update these for your environment
-EMR_RUNNER_PATH=/path/to/snowplow/3-etl/snowplow-emr-etl-runner
-CONFIG_FILE=/path/to/your-config.yml
+RUNNER_PATH=/path/to/snowplow/3-etl/snowplow-emr-etl-runner
+RUNNER_CONFIG=/path/to/your-config.yml
 
 # Run the daily ETL job
-BUNDLE_GEMFILE=${EMR_RUNNER_PATH}
-bundle exec snowplow-emr-etl-runner --config ${CONFIG_FILE}
+BUNDLE_GEMFILE=${RUNNER_PATH}
+bundle exec snowplow-emr-etl-runner --config ${RUNNER_CONFIG}
