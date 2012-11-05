@@ -33,8 +33,8 @@ Gem::Specification.new do |gem|
   gem.platform      = Gem::Platform::RUBY
   gem.require_paths = ["lib"]
 
-  # Only dependencies
+  # Dependencies
   gem.add_dependency 'elasticity', '~> 2.5'
-  gem.add_dependency 'fog', '~> 1.6.0'
+#   gem.add_dependency 'fog', '~> 1.6.0'
   gem.add_dependency 'sluice', '~> 0.0.1'
 end

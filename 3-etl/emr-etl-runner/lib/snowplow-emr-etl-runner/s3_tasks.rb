@@ -13,8 +13,6 @@
 # Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'fog'
-require 'thread'
 require 'sluice'
 
 # Ruby module to support the S3-related actions required by
@@ -22,6 +20,10 @@ require 'sluice'
 module SnowPlow
   module EmrEtlRunner
     module S3Tasks
+
+      # Constants for CloudFront log format
+      CF_DATE_FORMAT = '%Y-%m-%d'
+      CF_FILE_EXT = '.gz'
 
       # Moves new CloudFront logs to a processing bucket.
       #
@@ -39,8 +41,8 @@ module SnowPlow
         in_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:in])
         processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:processing])
 
-        # check whether our processing directory is empty
-        if s3.directories.get(processing_location.bucket, :prefix => processing_location.dir).files().length > 1
+        # Check whether our processing directory is empty
+        if Sluice::Storage::S3::is_empty?(s3, processing_location)
           raise DirectoryNotEmptyError, "The processing directory is not empty"
         end
 
@@ -49,11 +51,11 @@ module SnowPlow
         when (config[:start].nil? and config[:end].nil?)
           '.+'
         when config[:start].nil?
-          Sluice::Storage::S3::files_up_to(config[:end])
+          Sluice::Storage::files_up_to(config[:end], CF_DATE_FORMAT, CF_FILE_EXT)
         when config[:end].nil?
-          Sluice::Storage::S3::files_from(config[:start])
+          Sluice::Storage::files_from(config[:start], CF_DATE_FORMAT, CF_FILE_EXT)
         else
-          Sluice::Storage::S3::files_between(config[:start], config[:end])
+          Sluice::Storage::files_between(config[:start], config[:end], CF_DATE_FORMAT, CF_FILE_EXT)
         end
 
         Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move)
