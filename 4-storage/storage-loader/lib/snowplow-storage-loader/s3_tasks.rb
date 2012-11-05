@@ -21,7 +21,7 @@ module SnowPlow
   module EmrEtlRunner
     module S3Tasks
 
-      # Moves SnowPlow event files logs to the Processing Bucket.
+      # Moves SnowPlow event files to the Processing Bucket.
       #
       # Parameters:
       # +config+:: the hash of configuration options
@@ -51,7 +51,7 @@ module SnowPlow
       end
       module_function :stage_events
 
-      # Downloads the SnowPlow events from the Processing
+      # Downloads the SnowPlow event files from the Processing
       # Bucket to the local filesystem, ready to be loaded
       # into different storage options.
       #
@@ -70,8 +70,8 @@ module SnowPlow
       end
       module_function :download_events
 
-      # Moves (archives) the loaded SnowPlow events to the Archive Bucket.
-      # Prevents the same event from being loaded into the same database twice.
+      # Moves (archives) the loaded SnowPlow event files to the
+      # Archive Bucket.
       #
       # Parameters:
       # +config+:: the hash of configuration options

@@ -40,7 +40,7 @@ begin
   end
 
   unless config[:skip] == :load
-    loader::S3Tasks.load_events(config)
+    loader::Loader.load_events(config)
   end
 
   # Always run the archive
