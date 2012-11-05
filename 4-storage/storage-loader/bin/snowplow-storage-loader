@@ -32,7 +32,7 @@ begin
   config = loader::Config.get_config()
 
   if config[:skip] == :none
-    loader::S3Tasks.stage_events_for_load(config)
+    loader::S3Tasks.stage_events(config)
   end
 
   unless config[:skip] == :download or config[:skip] == :load
