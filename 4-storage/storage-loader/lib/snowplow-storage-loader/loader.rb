@@ -20,14 +20,47 @@ module SnowPlow
   module StorageLoader
     module Loader
 
+      # Constants for the load process
+      EVENT_FIELD_SEPARATOR = "/t"
+      EVENT_FIELD_ENCLOSER  = "" # No encloser
+
       # Loads the SnowPlow event files into Infobright.
       #
       # Parameters:
       # +config+:: the hash of configuration options 
       def load_events(config)
         puts "Loading SnowPlow events into Infobright..."
+
+        # Configuration for our database
+        db = InfobrightLoader::Db::DbConfig.new(
+               config[:storage][:database],
+               config[:storage][:username],
+               config[:storage][:password])
+
+        # Load the events table from our download folder
+        InfobrightLoader::Loader::load_from_folder(
+          config[:download][:folder],      # Folder
+          config[:storage][:table],        # Table
+          db,                              # Database config
+          EVENT_FIELD_SEPARATOR,           # Field separator
+          EVENT_FIELD_ENCLOSER             # Field encloser
+        )
+
+        # Now delete the local files
+        delete_events(config[:download][:folder])
       end
       module_function :load_events
+
+      private
+
+      # Empties the download folder now that the events
+      # have been loaded
+      #
+      # Parameters:
+      # +folder+:: the folder containing the files to delete 
+      def delete_events(folder)
+        FileUtils.rm_rf("#{folder}/.", secure: true)
+      module_function :delete_events
 
     end
   end

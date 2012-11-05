@@ -7,9 +7,12 @@
     :in: ADD HERE
     :processing: ADD HERE
     :archive: ADD HERE
+:download:
+  :folder: ADD HERE # Where to store the downloaded files
 # Currently assumes we are loading only one target
 :storage:
   :type: infobright # No other storage types supported yet
-  :database_name: ADD HERE
+  :database: ADD HERE # Name of database
+  :table:    ADD HERE # Name of the table to populate
   :username: ADD HERE # Or leave blank to default to the user running the script
   :password: ADD HERE # Or leave blank if no password
