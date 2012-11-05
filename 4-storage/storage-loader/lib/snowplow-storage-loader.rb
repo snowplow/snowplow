@@ -13,7 +13,10 @@
 # Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
+require 'snowplow-storage-loader/errors'
 require 'snowplow-storage-loader/config'
+require 'snowplow-storage-loader/s3_tasks'
+require 'snowplow-storage-loader/loader'
 
 module SnowPlow
   module StorageLoader
