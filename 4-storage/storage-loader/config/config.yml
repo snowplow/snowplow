@@ -8,8 +8,8 @@
     :processing: ADD HERE
     :archive: ADD HERE
 # Currently assumes we are loading only one target
-:target:
-  :type: infobright # No other database types supported yet
+:storage:
+  :type: infobright # No other storage types supported yet
   :database_name: ADD HERE
   :username: ADD HERE # Or leave blank to default to the user running the script
   :password: ADD HERE # Or leave blank if no password

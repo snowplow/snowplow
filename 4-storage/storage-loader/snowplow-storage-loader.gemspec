@@ -33,6 +33,7 @@ Gem::Specification.new do |gem|
   gem.platform      = Gem::Platform::RUBY
   gem.require_paths = ["lib"]
 
-  # Only dependencies
+  # Dependencies
   gem.add_dependency 'infobright-loader', '~> 0.1'
+  gem.add_dependency 'sluice', '~> 0.0.1'
 end
