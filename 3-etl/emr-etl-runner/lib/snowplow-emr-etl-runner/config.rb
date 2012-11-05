@@ -24,6 +24,9 @@ module SnowPlow
   module EmrEtlRunner
     module Config
 
+      # TODO: would be nice to move this to using Kwalify
+      # TODO: would be nice to support JSON as well as YAML
+
       # Return the configuration loaded from the supplied YAML file, plus
       # the additional constants above.
       def get_config()
@@ -65,7 +68,7 @@ module SnowPlow
                         else
                           raise ConfigError, "continue_on_unexpected_error '%s' not supported (only 'true' or 'false')" % config[:etl][:continue_on_unexpected_error]
                         end
-        config[:etl][:continue_on_unexpected_error] = continue_on
+        config[:etl][:continue_on_unexpected_error] = continue_on # Heinous mutability
 
         config
       end
@@ -110,6 +113,19 @@ module SnowPlow
           raise ConfigError, "#{$!.to_s}\n#{optparse}"
         end
 
+        # Check our skip argument
+        skip = case options[:skip]
+                 when "staging"
+                   :staging
+                 when "emr"
+                   :emr
+                 when nil
+                   :none                            
+                 else
+                   raise ConfigError, "Invalid option: skip can be 'staging' or 'emr', not '#{options[:skip]}'"
+                 end
+        options[:skip] = skip # Heinous mutability
+
         # Check we have a config file argument
         if options[:config].nil?
           raise ConfigError, "Missing option: config\n#{optparse}"
@@ -123,7 +139,7 @@ module SnowPlow
         # Finally check that start is before end, if both set
         if !options[:start].nil? and !options[:end].nil?
           if options[:start] > options[:end]
-            raise ConfigError, "Invalid options: end date #{options[:end]} is before start date #{options[:start]}"
+            raise ConfigError, "Invalid options: end date '#{options[:end]}' is before start date '#{options[:start]}'"
           end
         end
 
