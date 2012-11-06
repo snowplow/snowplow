@@ -66,6 +66,7 @@ module SnowPlow
           config[:aws][:secret_access_key])
 
         # TODO: implement the rest of this method
+        puts "TODO"
 
       end
       module_function :download_events
