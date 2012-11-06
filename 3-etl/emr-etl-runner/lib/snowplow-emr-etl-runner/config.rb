@@ -16,12 +16,16 @@
 require 'optparse'
 require 'date'
 require 'yaml'
+require 'sluice'
 
 # Config module to hold functions related to CLI argument parsing
 # and config file reading to support the daily ETL job.
 module SnowPlow
   module EmrEtlRunner
     module Config
+
+      # TODO: would be nice to move this to using Kwalify
+      # TODO: would be nice to support JSON as well as YAML
 
       # Return the configuration loaded from the supplied YAML file, plus
       # the additional constants above.
@@ -30,13 +34,13 @@ module SnowPlow
         options = Config.parse_args()
         config = YAML.load_file(options[:config])
 
-        # Add in the start and end dates
+        # Add in the start and end dates, and our skip setting
         config[:start] = options[:start]
         config[:end] = options[:end]
+        config[:skip] = options[:skip]
 
         # Add trailing slashes if needed to the buckets
-        trail = lambda {|str| return str[-1].chr != '/' ? str << '/' : str}
-        config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| trail.call(v)}
+        config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
 
         # Validate the collector format
         if config[:etl][:collector_format] != 'cloudfront'
@@ -65,7 +69,7 @@ module SnowPlow
                         else
                           raise ConfigError, "continue_on_unexpected_error '%s' not supported (only 'true' or 'false')" % config[:etl][:continue_on_unexpected_error]
                         end
-        config[:etl][:continue_on_unexpected_error] = continue_on
+        config[:etl][:continue_on_unexpected_error] = continue_on # Heinous mutability
 
         config
       end
@@ -88,6 +92,7 @@ module SnowPlow
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
+          opts.on('-s', '--skip staging|emr', 'skip work step(s)') { |config| options[:skip] = config }
 
           opts.separator ""
           opts.separator "* filters the raw event logs processed by EmrEtlRunner by their timestamp"
@@ -109,6 +114,19 @@ module SnowPlow
           raise ConfigError, "#{$!.to_s}\n#{optparse}"
         end
 
+        # Check our skip argument
+        skip = case options[:skip]
+                 when "staging"
+                   :staging
+                 when "emr"
+                   :emr
+                 when nil
+                   :none                            
+                 else
+                   raise ConfigError, "Invalid option: skip can be 'staging' or 'emr', not '#{options[:skip]}'"
+                 end
+        options[:skip] = skip # Heinous mutability
+
         # Check we have a config file argument
         if options[:config].nil?
           raise ConfigError, "Missing option: config\n#{optparse}"
@@ -122,7 +140,7 @@ module SnowPlow
         # Finally check that start is before end, if both set
         if !options[:start].nil? and !options[:end].nil?
           if options[:start] > options[:end]
-            raise ConfigError, "Invalid options: end date #{options[:end]} is before start date #{options[:start]}"
+            raise ConfigError, "Invalid options: end date '#{options[:end]}' is before start date '#{options[:start]}'"
           end
         end
 

@@ -1,3 +1,11 @@
+Version 0.5.2 (2012-11-05)
+--------------------------
+EmrEtlRunner: bump to 0.0.4
+EmrEtlRunner: fixed reference to old version of Hive deserializer in config.yml (fixes #71)
+EmrEtlRunner: fixed bug using sub-folders with the Processing Bucket (fixes #72)
+EmrEtlRunner: can now skip move-files-to-Processing-Bucket or EMR stages (fixes #58)
+EmrEtlRunner: S3 filecopy code now moved to Sluice, an external Ruby gem
+
 Version 0.5.1 (2012-10-31)
 --------------------------
 Data model: stubbed new event_name and platform fields

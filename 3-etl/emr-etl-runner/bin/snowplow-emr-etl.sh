@@ -11,9 +11,13 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
-# Update these for your environment
-BUNDLE_GEMFILE=/path/to/snowplow/hive/snowplow-emr-etl-runner
-RUBYGEM_CONFIGFILE=/path/to/your-etl-config.yml
+# See also: 4-storage/storage-loader/bin/snowplow-runner-and-loader
+#           (runs both the EmrEtlRunner and the StorageLoader)
 
-# Run the daily ETL job
-bundle exec snowplow-emr-etl-runner --config ${RUBYGEM_CONFIGFILE}
+# Update these for your environment
+RUNNER_PATH=/path/to/snowplow/3-etl/snowplow-emr-etl-runner
+RUNNER_CONFIG=/path/to/your-config.yml
+
+# Run the ETL job on EMR
+BUNDLE_GEMFILE=${RUNNER_PATH}
+bundle exec snowplow-emr-etl-runner --config ${RUNNER_CONFIG}
