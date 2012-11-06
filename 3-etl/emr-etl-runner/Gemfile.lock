@@ -3,7 +3,7 @@ PATH
   specs:
     snowplow-emr-etl-runner (0.0.4)
       elasticity (~> 2.5)
-      sluice (~> 0.0.1)
+      sluice (~> 0.0.2)
 
 GEM
   remote: https://rubygems.org/
@@ -36,7 +36,7 @@ GEM
     rest-client (1.6.7)
       mime-types (>= 1.16)
     ruby-hmac (0.4.0)
-    sluice (0.0.1)
+    sluice (0.0.2)
       fog (~> 1.6.0)
 
 PLATFORMS
