@@ -43,9 +43,17 @@ module SnowPlow
 
         # Validate the storage target type
         if config[:storage][:type] != 'infobright'
-          raise ConfigError, "storage type '#{config[:storage][:type]}' not supported (only 'infobright')"
+          raise ConfigError, "Storage type '#{config[:storage][:type]}' not supported (only 'infobright')"
         end
         
+        # Check our download folder exists and is empty
+        unless File.directory?(config[:download][:folder])
+          raise ConfigError, "Download folder '#{config[:download][:folder]}' not found"
+        end
+        if !(Dir.entries(config[:download][:folder]) - %w{ . .. }).empty?
+          raise ConfigError, "Download folder '#{config[:download][:folder]}' is not empty"
+        end
+
         config
       end
       module_function :get_config
