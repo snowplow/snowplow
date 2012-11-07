@@ -88,7 +88,7 @@ module SnowPlow
                  when "staging"
                    :staging
                  when "download"
-                   :emr
+                   :download
                  when "load"
                    :load
                  when nil
