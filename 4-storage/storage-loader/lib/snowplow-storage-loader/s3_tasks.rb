@@ -56,6 +56,9 @@ module SnowPlow
           raise DirectoryNotEmptyError, "The processing directory is not empty"
         end
 
+        # TODO: build regex using IGNORE_PATH
+        # TODO
+
         Sluice::Storage::S3::move_files(s3, in_location, processing_location, '.+')
 
         # Wait for S3 to eventually become consistant
@@ -79,8 +82,12 @@ module SnowPlow
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
 
-        # TODO: implement the rest of this method
-        puts "TODO"
+        # Get S3 location and local directory
+        processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:processing])
+        download_dir = config[:download][:folder]
+
+        # Download
+        Sluice::Storage::S3::download_files(s3, processing_location, download_dir, '.+')
 
       end
       module_function :download_events
