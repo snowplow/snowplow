@@ -21,6 +21,16 @@ module SnowPlow
   module StorageLoader
     module S3Tasks
 
+      # Constants for working with S3
+
+      # We ignore the HIVE_DEFAULT_PARTITION path. This is
+      # the partition which Hive stores events in if they
+      # have no dt (date) stamp. It's safe for us not to
+      # load these files because the only 'events' without
+      # a dt stamp are favicon requests, the headers in
+      # CloudFront access logs etc - i.e. noise.
+      IGNORE_PATH = "dt=__HIVE_DEFAULT_PARTITION__"
+
       # Moves SnowPlow event files to the Processing Bucket.
       #
       # Parameters:
