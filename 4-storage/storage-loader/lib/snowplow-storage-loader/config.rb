@@ -37,8 +37,9 @@ module SnowPlow
         # Add in our skip setting
         config[:skip] = options[:skip]
 
-        # Add trailing slashes if needed to the buckets
+        # Add trailing slashes if needed to the buckets and download folder
         config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
+        config[:download][:folder] = Sluice::Storage::trail_slash(config[:download][:folder])
 
         # Validate the storage target type
         if config[:storage][:type] != 'infobright'
