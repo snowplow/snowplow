@@ -51,8 +51,10 @@ module SnowPlow
           raise DatabaseLoadError, le.message
         end
 
+        # TODO: bug where a LoadError doesn't get caught.
+
         # Now delete the local files
-        delete_events(config[:download][:folder])
+        # delete_events(config[:download][:folder])
       end
       module_function :load_events
 
