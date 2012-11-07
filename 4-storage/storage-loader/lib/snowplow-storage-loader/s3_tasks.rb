@@ -18,7 +18,7 @@ require 'sluice'
 # Ruby module to support the S3-related actions required by
 # the Hive-based ETL process.
 module SnowPlow
-  module EmrEtlRunner
+  module StorageLoader
     module S3Tasks
 
       # Moves SnowPlow event files to the Processing Bucket.

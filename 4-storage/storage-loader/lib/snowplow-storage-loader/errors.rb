@@ -28,5 +28,9 @@ module SnowPlow
     # Raised if a directory is not empty
     class DirectoryNotEmptyError < Error
     end
+
+    # A problem with the load into a database
+    class DatabaseLoadError < Error
+    end
   end
 end

@@ -38,13 +38,18 @@ module SnowPlow
                config[:storage][:password])
 
         # Load the events table from our download folder
-        InfobrightLoader::Loader::load_from_folder(
-          config[:download][:folder],      # Folder
-          config[:storage][:table],        # Table
-          db,                              # Database config
-          EVENT_FIELD_SEPARATOR,           # Field separator
-          EVENT_FIELD_ENCLOSER             # Field encloser
-        )
+        begin
+          InfobrightLoader::Loader::load_from_folder(
+            config[:download][:folder],      # Folder
+            config[:storage][:table],        # Table
+            db,                              # Database config
+            EVENT_FIELD_SEPARATOR,           # Field separator
+            EVENT_FIELD_ENCLOSER             # Field encloser
+          )
+        rescue InfobrightLoader::Loader::LoadError => le
+          # Re-raise as a StorageLoader own-brand exception
+          raise DatabaseLoadError, le.message
+        end
 
         # Now delete the local files
         delete_events(config[:download][:folder])
