@@ -25,10 +25,14 @@ module SnowPlow
 
       # We ignore the HIVE_DEFAULT_PARTITION path. This is
       # the partition which Hive stores events in if they
-      # have no dt (date) stamp. It's safe for us not to
-      # load these files because the only 'events' without
-      # a dt stamp are favicon requests, the headers in
-      # CloudFront access logs etc - i.e. noise.
+      # have no dt (date) stamp. With the CloudFront
+      # collector, it's safe for us not to load these files
+      # because the only 'events' without a dt stamp are
+      # favicon requests, the headers in CloudFront access
+      # logs etc - i.e. noise.
+      # TODO: revisit this when we are ETLing from other
+      # collectors (e.g. clojure-collector). Because there
+      # shouldn't be any dt-less rows with other collectors
       IGNORE_PATH = "dt=__HIVE_DEFAULT_PARTITION__"
 
       # Moves SnowPlow event files to the Processing Bucket.
