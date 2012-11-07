@@ -1,3 +1,8 @@
+Version 0.5.3 (2012-11-XX)
+--------------------------
+EmrEtlRunner: bumped gem dependencies to exactly match StorageLoader
+StorageLoader: added. Ruby app to load SnowPlow events into local databases etc
+
 Version 0.5.2 (2012-11-05)
 --------------------------
 EmrEtlRunner: bump to 0.0.4
