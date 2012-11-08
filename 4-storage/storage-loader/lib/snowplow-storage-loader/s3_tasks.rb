@@ -33,7 +33,7 @@ module SnowPlow
       # TODO: revisit this when we are ETLing from other
       # collectors (e.g. clojure-collector). Because there
       # shouldn't be any dt-less rows with other collectors
-      IGNORE_PATH = "dt=__HIVE_DEFAULT_PARTITION__"
+      IGNORE_EVENTS = "(dt=__HIVE_DEFAULT_PARTITION__)"
 
       # Moves SnowPlow event files to the Processing Bucket.
       #
@@ -56,10 +56,10 @@ module SnowPlow
           raise DirectoryNotEmptyError, "The processing directory is not empty"
         end
 
-        # TODO: build regex using IGNORE_PATH
-        # TODO
+        # Exclude event files which match IGNORE_EVENTS
+        event_files = Sluice::Storage::NegativeRegex.new(IGNORE_EVENTS)
 
-        Sluice::Storage::S3::move_files(s3, in_location, processing_location, '.+')
+        Sluice::Storage::S3::move_files(s3, in_location, processing_location, event_files)
 
         # Wait for S3 to eventually become consistant
         puts "Waiting a minute to allow S3 to settle (eventual consistency)"
@@ -110,7 +110,7 @@ module SnowPlow
         archive_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:archive]);
 
         # Move all the files in the Processing Bucket
-        Sluice::Storage::S3::move_files(s3, processing_location, archive_location, '.+', add_date_path)
+        Sluice::Storage::S3::move_files(s3, processing_location, archive_location, '.+')
 
       end
       module_function :archive_events

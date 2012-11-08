@@ -21,7 +21,7 @@ module SnowPlow
     module Loader
 
       # Constants for the load process
-      EVENT_FIELD_SEPARATOR = "/t"
+      EVENT_FIELD_SEPARATOR = "\t"
       EVENT_FIELD_ENCLOSER  = "" # No encloser
 
       # Loads the SnowPlow event files into Infobright.
@@ -39,22 +39,23 @@ module SnowPlow
 
         # Load the events table from our download folder
         begin
-          InfobrightLoader::Loader::load_from_folder(
+          failed_files = InfobrightLoader::Loader::load_from_folder(
             config[:download][:folder],      # Folder
             config[:storage][:table],        # Table
             db,                              # Database config
             EVENT_FIELD_SEPARATOR,           # Field separator
             EVENT_FIELD_ENCLOSER             # Field encloser
           )
+          if failed_files.any?
+            raise DatabaseLoadError, "The following files could not be loaded:\n" + failed_files.join("\n")
+          end
         rescue InfobrightLoader::Loader::LoadError => le
           # Re-raise as a StorageLoader own-brand exception
           raise DatabaseLoadError, le.message
         end
 
-        # TODO: bug where a LoadError doesn't get caught.
-
         # Now delete the local files
-        # delete_events(config[:download][:folder])
+        delete_events(config[:download][:folder])
       end
       module_function :load_events
 
