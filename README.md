@@ -26,6 +26,11 @@ To briefly explain these five sub-systems:
 
 **For more information on the current SnowPlow architecture, please see the [Technical architecture] [architecture-doc]**.
 
+## Documentation
+
+1. The [SnowPlow setup guide] [setup] details how to choose between the different available trackers, collectors, ETL modules, storage solutions etc. and hwo to set each module up.
+2. The [SnowPlow technical documentation] [tech-docs] provide technical details including the [SnowPlow tracker protocol] [tracker-protocol], [collector log file format schemas] [collector-logs] and [data structure schemas] [data-structure].
+
 ## Contributing
 
 We're committed to a loosely-coupled architecture for SnowPlow and would love to get your contributions within each of the five sub-systems.
@@ -56,3 +61,8 @@ limitations under the License.
 [architecture-doc]: https://github.com/snowplow/snowplow/wiki/Technical-architecture
 [talk-to-us]: https://github.com/snowplow/snowplow/wiki/Talk-to-us
 [license]: http://www.apache.org/licenses/LICENSE-2.0
+[setup]: https://github.com/snowplow/snowplow/wiki/SnowPlow%20setup%20guide
+[tech-docs]: https://github.com/snowplow/snowplow/wiki/SnowPlow%20technical%20documentation
+[tracker-protocol]: https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol
+[collector-logs]: https://github.com/snowplow/snowplow/wiki/Collector-logging-formats
+[data-structure]: https://github.com/snowplow/snowplow/wiki/canonical-data-structure
