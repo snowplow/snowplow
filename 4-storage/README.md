@@ -14,6 +14,11 @@
 | [infobright-storage] [s2] (1) | SnowPlow events stored in a table in [Infobright Community Edition] [ice] | Production-ready | Wiki                         |  
 | storage-loader                | A Ruby application for loading SnowPlow events into (1)                   | Pre-alpha        | Coming soon                  |  
 
+## Documentation
+
+1. The [Setup guide] [setup] includes a [guide to choosing the most appropriate storage option] [which-storage] and step-by-step instructions to setup both the [S3 / Hive] [s3-hive-setup] storage and the [Infobright storage] [infobright-setup] options.
+2. The [technical documenation] [tech-docs] includes details of the [SnowPlow data structure] [canonical-data-structure] including the table definitions employed by [Hive] [hive-table-def] and [Infobright][infobright-table-def].
+
 ## Contributing
 
 We welcome community contributions of new storage options for SnowPlow events! We have a guide to contributing storage options coming soon on the Wiki. 
@@ -22,6 +27,15 @@ We welcome community contributions of new storage options for SnowPlow events! W
 [trackers]: https://github.com/snowplow/snowplow/tree/master/1-trackers
 [etl]: https://github.com/snowplow/snowplow/tree/master/3-etl
 [analytics]: https://github.com/snowplow/snowplow/tree/master/5-analytics
+[setup]: https://github.com/snowplow/snowplow/wiki/choosing-a-storage-module
+[which-storage]: https://github.com/snowplow/snowplow/wiki/choosing-a-storage-module
+[s3-hive-setup]: https://github.com/snowplow/snowplow/wiki/s3-hive-storage-setup
+[infobright-setup]: https://github.com/snowplow/snowplow/wiki/infobright-storage-setup
+[tech-docs]: https://github.com/snowplow/snowplow/wiki/storage%20documentation
+[canonical-data-structure]: https://github.com/snowplow/snowplow/wiki/canonical-data-structure
+[hive-table-def]: https://github.com/snowplow/snowplow/wiki/s3-apache-hive-storage
+[infobright-table-def]: https://github.com/snowplow/snowplow/wiki/infobright-storage
+
 
 [s1]: ./hive-storage/
 [s2]: ./infobright-storage/

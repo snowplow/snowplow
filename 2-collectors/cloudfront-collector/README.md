@@ -13,5 +13,8 @@ The SnowPlow tracking pixel is served from Cloudfront. The SnowPlow tracker requ
 1. [Setting up the Cloudfront collector] [setup]: a step-by-step guide to setting up Cloudfront to use with SnowPlow
 2. [Technical documentation] [tech-docs] include details of the Cloudfront log format
 
+Both sets of documents are published on the [wiki].
+
 [setup]: https://github.com/snowplow/snowplow/wiki/setting-up-the-cloudfront-collector
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/collectors
+[wiki]: https://github.com/snowplow/snowplow/wiki

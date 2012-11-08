@@ -19,6 +19,8 @@ A **Collector** receives SnowPlow events from one or more [Trackers]
 1. The [setup guide] [setup] details how to choose between the different Collectors available and how to set each up.
 2. The [technical documentation] [tech-docs] provide additional technical details on each collector including the log file formats.
 
+Both guides are published on the [wiki][wiki]
+
 ## Contributing
 
 We welcome community contributions of additional Collectors! We have a guide to contributing Collectors coming soon on the Wiki. 
@@ -31,3 +33,4 @@ We welcome community contributions of additional Collectors! We have a guide to 
 [c2]: ./2-collectors/contrib-nodejs-collector/
 [setup]: https://github.com/snowplow/snowplow/wiki/choosing-a-collector
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/collectors
+[wiki]: https://github.com/snowplow/snowplow/wiki

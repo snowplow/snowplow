@@ -18,8 +18,8 @@ Contents of this folder are as follows:
 
 Besides this README, there are two main SnowPlow guides which relate to `snowplow.js`:
 
-* [Integrating snowplow.js into your site] [integrating]
-* [Self-hosting SnowPlow] [selfhosting]
+1. The [Javascript tracker setup guide] [setup] details how to get up and running with the tracker, including [integrating the Javascript tags] [integrating-js-on-website].
+2. The [Javascript tracker technical documentation] [tech-docs] detail how the tracker handles pageview, event, ecomm, social, campaign, error and application tracking, including tracker API details.
 
 ## Main differences between snowplow.js and piwik.js
 
@@ -53,11 +53,6 @@ Planned items on the roadmap are as follows:
 * Remove site ID functionality
 * Remove unused campaign marketing variable code (as no longer used)
 * Rewrite in CoffeeScript (joke!)
-
-## Documentation
-
-1. The [Javascript tracker setup guide] [setup] details how to get up and running with the tracker, including [integrating the Javascript tags] [integrating-js-on-website].
-2. The [Javascript tracker technical documentation] [tech-docs] detail how the tracker handles pageview, event, ecomm, social, campaign, error and application tracking, including tracker API details.
 
 ## Copyright and license
 
