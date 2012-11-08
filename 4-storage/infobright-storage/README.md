@@ -9,10 +9,6 @@ should be an attractive alternative to doing all of your analysis in Hive.
 This folder contains scripts to setup ICE so that you can start loading
 SnowPlow events into it.
 
-## Setup guide
-
-A guide to setting up ICE, including creating a database for SnowPlow and the SnowPlow events table, can be found on the **[Wiki] [ice-setup]**.
-
 ## Contents
 
 The contents of this folder are as follows:
@@ -20,6 +16,13 @@ The contents of this folder are as follows:
 * In this folder is this `README.md` and the `setup.sh` Bash script
 * `sql` contains Infobright-compatible SQL scripts to setup your database and
   verify the setup
+
+## Documentation
+
+1. [The setup guide] [setup] includes details on how to get up and running with ICE, including configuring it for use with SnowPlow
+2. [The technical documentation] [tech-docs] includes the Infobright table definitions
+
+Both the above can be found on the [wiki] [wiki]
 
 ## Copyright and license
 
@@ -36,4 +39,6 @@ limitations under the License.
 
 [ice]: http://www.infobright.org
 [license]: http://www.apache.org/licenses/LICENSE-2.0
-[ice-setup]: https://github.com/snowplow/snowplow/wiki/infobright-storage-setup
+[setup]: https://github.com/snowplow/snowplow/wiki/infobright-storage-setup
+[tech-docs]: https://github.com/snowplow/snowplow/wiki/infobright-storage
+[wiki]: https://github.com/snowplow/snowplow/wiki

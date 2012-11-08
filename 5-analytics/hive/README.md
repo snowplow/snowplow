@@ -41,6 +41,7 @@ Here are some example Hive queries which can be run on the SnowPlow data:
 
 Besides this README, we recommend reading:
 
+* The [Setup guide] [setup]. This details how to install the EMR command line tools, and use those tools to start developing Hive queries and running those queries against SnowPlow data
 * The [SnowPlow Analyst's Cookbook] [analyst-cookbook], a growing list of techniques and queries for interrogating SnowPlow data using Hive
 
 ## Copyright and license
@@ -61,3 +62,4 @@ limitations under the License.
 [hive]: http://hive.apache.org/
 [serdereadme]: https://github.com/snowplow/snowplow-log-deserializers/blob/master/README.md
 [license]: http://www.apache.org/licenses/LICENSE-2.0
+[setup]: https://github.com/snowplow/snowplow/wiki/hive%20analytics%20setup
