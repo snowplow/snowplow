@@ -11,7 +11,7 @@ SnowPlow events into it.
 
 ## Setup guide
 
-A guide to setting up ICE, including creating a database for SnowPlow and the SnowPlow events table, can be found on the **[Wiki]** [ice-setup].
+A guide to setting up ICE, including creating a database for SnowPlow and the SnowPlow events table, can be found on the **[Wiki] [ice-setup]**.
 
 ## Contents
 
