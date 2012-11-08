@@ -11,7 +11,7 @@ SnowPlow events into it.
 
 ## Setup guide
 
-Link to setup guide to come.
+A guide to setting up ICE, including creating a database for SnowPlow and the SnowPlow events table, can be found on the [wiki] [ice-setup].
 
 ## Contents
 
@@ -36,3 +36,4 @@ limitations under the License.
 
 [ice]: http://www.infobright.org
 [license]: http://www.apache.org/licenses/LICENSE-2.0
+[ice-setup]: https://github.com/snowplow/snowplow/wiki/infobright-storage-setup
