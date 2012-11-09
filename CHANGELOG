@@ -1,7 +1,7 @@
 Version 0.5.3 (2012-11-XX)
 --------------------------
 EmrEtlRunner: bumped to 0.0.5
-EmrEtlRunner: bumped gem dependencies to match StorageLoader (including Sluice 0.0.3)
+EmrEtlRunner: bumped gem dependencies to match StorageLoader (including Sluice 0.0.4)
 StorageLoader: added. Ruby app to load SnowPlow events into local databases etc
 Serde: bumped to 0.5.1
 Serde: changed all Booleans to Bytes for non-Hive output
