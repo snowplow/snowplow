@@ -35,5 +35,5 @@ Gem::Specification.new do |gem|
 
   # Dependencies
   gem.add_dependency 'infobright-loader', '~> 0.0.1'
-  gem.add_dependency 'sluice', '~> 0.0.3'
+  gem.add_dependency 'sluice', '~> 0.0.4'
 end

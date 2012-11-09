@@ -3,7 +3,7 @@ PATH
   specs:
     snowplow-storage-loader (0.0.1)
       infobright-loader (~> 0.0.1)
-      sluice (~> 0.0.3)
+      sluice (~> 0.0.4)
 
 GEM
   remote: https://rubygems.org/
@@ -29,7 +29,7 @@ GEM
     net-ssh (2.6.1)
     nokogiri (1.5.5)
     ruby-hmac (0.4.0)
-    sluice (0.0.3)
+    sluice (0.0.4)
       fog (~> 1.6.0)
 
 PLATFORMS
