@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    snowplow-emr-etl-runner (0.0.4)
+    snowplow-emr-etl-runner (0.0.5)
       elasticity (~> 2.5)
       sluice (~> 0.0.3)
 
