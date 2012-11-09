@@ -51,21 +51,23 @@ class PageViewTest2 extends Specification {
     e.br_renderengine = "WEBKIT"
     e.br_lang = "en-us"
     e.br_cookies = true
+    e.br_cookies_bt = 1
     e.br_features = List("qt", "fla", "wma", "gears")
-    e.br_features_pdf = false
-    e.br_features_flash = true
-    e.br_features_java = false
-    e.br_features_director = false
-    e.br_features_quicktime = true
-    e.br_features_realplayer = false
-    e.br_features_windowsmedia = true
-    e.br_features_gears = true
-    e.br_features_silverlight = false
+    e.br_features_pdf = 0
+    e.br_features_flash = 1
+    e.br_features_java = 0
+    e.br_features_director = 0
+    e.br_features_quicktime = 1
+    e.br_features_realplayer = 0
+    e.br_features_windowsmedia = 1
+    e.br_features_gears = 1
+    e.br_features_silverlight = 0
     e.os_name = "iOS 5 (iPhone)"
     e.os_family = "iOS"
     e.os_manufacturer = "Apple Inc."
     e.dvce_type = "Mobile"
     e.dvce_ismobile = true
+    e.dvce_ismobile_bt = 1
     e.dvce_screenwidth = 320
     e.dvce_screenheight = 480
   }
@@ -136,6 +138,9 @@ class PageViewTest2 extends Specification {
     "have br_cookies (Browser Cookies Enabled?) = %s".format(expected.br_cookies) in {
       actual.br_cookies must_== expected.br_cookies
     }
+    "have br_cookies_bt (Browser Cookies Enabled, Byte?) = %s".format(expected.br_cookies_bt) in {
+      actual.br_cookies_bt must_== expected.br_cookies_bt
+    }
     "have br_features (Browser Features) = %s".format(expected.br_features) in {
       // For some reason (Specs2) couldn't use implicit Java->Scala conversion here
       JavaConversions.asScalaBuffer(actual.br_features) must haveTheSameElementsAs(expected.br_features)
@@ -187,6 +192,9 @@ class PageViewTest2 extends Specification {
     }.pendingUntilFixed // nl.bitwalker.useragentutils is not parsing this user agent correctly
     "have dvce_ismobile (Device Is Mobile?) = %s".format(expected.dvce_ismobile) in {
       actual.dvce_ismobile must_== expected.dvce_ismobile
+    }.pendingUntilFixed // nl.bitwalker.useragentutils is not parsing this user agent correctly
+    "have dvce_ismobile_bt (Device Is Mobile, Byte?) = %s".format(expected.dvce_ismobile_bt) in {
+      actual.dvce_ismobile_bt must_== expected.dvce_ismobile_bt
     }.pendingUntilFixed // nl.bitwalker.useragentutils is not parsing this user agent correctly
 
     // Device (from querystring)

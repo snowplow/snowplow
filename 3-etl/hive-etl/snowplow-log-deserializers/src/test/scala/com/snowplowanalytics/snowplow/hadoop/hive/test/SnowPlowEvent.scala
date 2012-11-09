@@ -66,16 +66,17 @@ class SnowPlowEvent {
   var br_lang: String = _
   var br_features: List[String] = List[String]()
   // Individual feature fields for non-Hive targets (e.g. Infobright)
-  var br_features_pdf: Boolean = _
-  var br_features_flash: Boolean = _
-  var br_features_java: Boolean = _
-  var br_features_director: Boolean = _
-  var br_features_quicktime: Boolean = _
-  var br_features_realplayer: Boolean = _
-  var br_features_windowsmedia: Boolean = _
-  var br_features_gears: Boolean = _
-  var br_features_silverlight: Boolean = _
+  var br_features_pdf: Byte = _
+  var br_features_flash: Byte = _
+  var br_features_java: Byte = _
+  var br_features_director: Byte = _
+  var br_features_quicktime: Byte = _
+  var br_features_realplayer: Byte = _
+  var br_features_windowsmedia: Byte = _
+  var br_features_gears: Byte = _
+  var br_features_silverlight: Byte = _
   var br_cookies: Boolean = _
+  var br_cookies_bt: Byte = _
 
   // OS (from user-agent)
   var os_name: String = _
@@ -85,6 +86,7 @@ class SnowPlowEvent {
   // Device/Hardware (from user-agent)
   var dvce_type: String = _
   var dvce_ismobile: Boolean = _
+  var dvce_ismobile_bt: Byte = _
 
   // Device (from querystring)
   var dvce_screenwidth: Int = _

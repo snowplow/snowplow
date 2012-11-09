@@ -3,6 +3,12 @@ Version 0.5.3 (2012-11-XX)
 EmrEtlRunner: bumped to 0.0.5
 EmrEtlRunner: bumped gem dependencies to match StorageLoader (including Sluice 0.0.3)
 StorageLoader: added. Ruby app to load SnowPlow events into local databases etc
+Serde: bumped to 0.5.1
+Serde: changed all Booleans to Bytes for non-Hive output
+HiveQL: bumped non-hive-rolling-etl.q to 0.0.2
+HiveQL: changed non-hive-rolling-etl.q to use the two _bt Byte fields
+Infobright: bumped setup_infobright.sql to 0.0.2
+Infobright: changed booleans to tinyint(1)s (non-breaking change) 
 
 Version 0.5.2 (2012-11-05)
 --------------------------

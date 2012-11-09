@@ -9,8 +9,8 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.0.1
--- URL:         s3://snowplow-emr-assets/hive/hiveql/non-hive-rolling-etl-0.0.1.q
+-- Version:     0.0.2
+-- URL:         s3://snowplow-emr-assets/hive/hiveql/non-hive-rolling-etl-0.0.2.q
 --
 -- Authors:     Yali Sassoon, Alex Dean
 -- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
@@ -156,12 +156,12 @@ br_features_realplayer,
 br_features_windowsmedia,
 br_features_gears,
 br_features_silverlight,
-br_cookies,
+br_cookies_bt AS br_cookies,
 os_name,
 os_family,
 os_manufacturer,
 dvce_type,
-dvce_ismobile,
+dvce_ismobile_bt AS dvce_ismobile,
 dvce_screenwidth,
 dvce_screenheight,
 dt

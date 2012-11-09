@@ -106,16 +106,19 @@ public class SnowPlowEventStruct {
   public String br_lang;
   public ArrayList<String> br_features = new ArrayList<String>(); // So we don't have to create new on each row.
   // Individual feature fields for non-Hive targets (e.g. Infobright)
-  public Boolean br_features_pdf;
-  public Boolean br_features_flash;
-  public Boolean br_features_java;
-  public Boolean br_features_director;
-  public Boolean br_features_quicktime;
-  public Boolean br_features_realplayer;
-  public Boolean br_features_windowsmedia;
-  public Boolean br_features_gears;
-  public Boolean br_features_silverlight;
+  // Note: we use objects (not primitives) because we want to be able to set to null
+  public Byte br_features_pdf;
+  public Byte br_features_flash;
+  public Byte br_features_java;
+  public Byte br_features_director;
+  public Byte br_features_quicktime;
+  public Byte br_features_realplayer;
+  public Byte br_features_windowsmedia;
+  public Byte br_features_gears;
+  public Byte br_features_silverlight;
+  // Non-Hive uses Byte version
   public Boolean br_cookies;
+  public Byte br_cookies_bt;
 
   // OS (from user-agent)
   public String os_name;
@@ -124,7 +127,9 @@ public class SnowPlowEventStruct {
 
   // Device/Hardware (from user-agent)
   public String dvce_type;
+  // Non-Hive uses Byte version
   public Boolean dvce_ismobile;
+  public Byte dvce_ismobile_bt;
 
   // Device (from querystring)
   public Integer dvce_screenwidth;
@@ -262,6 +267,7 @@ public class SnowPlowEventStruct {
     // -> device/hardware-related fields
     this.dvce_type = os.getDeviceType().getName();
     this.dvce_ismobile = os.isMobileDevice();
+    this.dvce_ismobile_bt = (byte)(this.dvce_ismobile ? 1 : 0);
 
     // 3. Now for the versioning
     this.v_collector = collectorVersion;
@@ -313,43 +319,44 @@ public class SnowPlowEventStruct {
             this.br_lang = value;
             break;
           case F_PDF:
-            if (this.br_features_pdf = stringToBoolean(value)) // Intentional =
+            if ((this.br_features_pdf = stringToByte(value)) == 1)
               this.br_features.add("pdf");
             break;
           case F_FLA:
-            if (this.br_features_flash = stringToBoolean(value)) // Intentional =
+            if ((this.br_features_flash = stringToByte(value)) == 1)
               this.br_features.add("fla");
             break;
           case F_JAVA:
-            if (this.br_features_java = stringToBoolean(value)) // Intentional =
+            if ((this.br_features_java = stringToByte(value)) == 1)
               this.br_features.add("java");
             break;
           case F_DIR:
-            if (this.br_features_director = stringToBoolean(value)) // Intentional =
+            if ((this.br_features_director = stringToByte(value)) == 1)
               this.br_features.add("dir");
             break;
           case F_QT:
-            if (this.br_features_quicktime = stringToBoolean(value)) // Intentional =
+            if ((this.br_features_quicktime = stringToByte(value)) == 1)
               this.br_features.add("qt");
             break;
           case F_REALP:
-            if (this.br_features_realplayer = stringToBoolean(value)) // Intentional =
+            if ((this.br_features_realplayer = stringToByte(value)) == 1)
               this.br_features.add("realp");
             break;
           case F_WMA:
-            if (this.br_features_windowsmedia = stringToBoolean(value)) // Intentional =
+            if ((this.br_features_windowsmedia = stringToByte(value)) == 1)
               this.br_features.add("wma");
             break;
           case F_GEARS:
-            if (this.br_features_gears = stringToBoolean(value)) // Intentional =
+            if ((this.br_features_gears = stringToByte(value)) == 1)
               this.br_features.add("gears");
             break;
           case F_AG:
-            if (this.br_features_silverlight = stringToBoolean(value)) // Intentional =
+            if ((this.br_features_silverlight = stringToByte(value)) == 1)
               this.br_features.add("ag");
             break;
           case COOKIE:
             this.br_cookies = stringToBoolean(value);
+            this.br_cookies_bt = (byte)(this.br_cookies ? 1 : 0);
             break;
           case RES:
             String[] resolution = value.split("x");
@@ -556,12 +563,13 @@ public class SnowPlowEventStruct {
     this.br_features_gears = null;
     this.br_features_silverlight = null;
     this.br_cookies = null;
-    this.br_cookies = null;
+    this.br_cookies_bt = null;
     this.os_name = null;
     this.os_family = null;
     this.os_manufacturer = null;
     this.dvce_type = null;
     this.dvce_ismobile = null;
+    this.dvce_ismobile_bt = null;
     this.dvce_screenwidth = null;
     this.dvce_screenheight = null;
     this.tr_orderid = null;
@@ -646,4 +654,18 @@ public class SnowPlowEventStruct {
     if (s.equals("0")) return false;
     throw new IllegalArgumentException("Could not convert \"" + s + "\" to boolean, only 1 or 0.");
   }
+
+  /**
+   * Converts a String of value "1" or "0" to a Byte
+   * of 1 or 0 respectively.
+   *
+   * @param s The String to check
+   * @return 1 for "1", 0 for "0"
+   * @throws IllegalArgumentException if the string is not "1" or "0"
+   */
+  static byte stringToByte(String s) throws IllegalArgumentException {
+    if (s.equals("1")) return (byte)1;
+    if (s.equals("0")) return (byte)0;
+    throw new IllegalArgumentException("Could not convert \"" + s + "\" to byte, only 1 or 0.");
+  } 
 }
