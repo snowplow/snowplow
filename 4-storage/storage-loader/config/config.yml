@@ -5,7 +5,6 @@
   :region: ADD HERE
   :buckets:
     :in: ADD HERE
-    :processing: ADD HERE
     :archive: ADD HERE
 :download:
   :folder: ADD HERE # Where to store the downloaded files

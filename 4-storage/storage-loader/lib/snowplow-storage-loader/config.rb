@@ -77,7 +77,7 @@ module SnowPlow
           opts.separator "Specific options:"
 
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
-          opts.on('-s', '--skip staging|download|load', 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-s', '--skip download|load', 'skip step(s) up to and including this step') { |config| options[:skip] = config }
 
           opts.separator ""
           opts.separator "Common options:"
@@ -98,8 +98,6 @@ module SnowPlow
 
         # Check our skip argument
         skip = case options[:skip]
-                 when "staging"
-                   :staging
                  when "download"
                    :download
                  when "load"
@@ -107,7 +105,7 @@ module SnowPlow
                  when nil
                    :none                            
                  else
-                   raise ConfigError, "Invalid option: skip can be 'staging', 'download' or 'load', not '#{options[:skip]}'"
+                   raise ConfigError, "Invalid option: skip can be 'download' or 'load', not '#{options[:skip]}'"
                  end
         options[:skip] = skip # Heinous mutability
 

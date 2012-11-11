@@ -35,40 +35,7 @@ module SnowPlow
       # shouldn't be any dt-less rows with other collectors
       IGNORE_EVENTS = "(dt=__HIVE_DEFAULT_PARTITION__)"
 
-      # Moves SnowPlow event files to the Processing Bucket.
-      #
-      # Parameters:
-      # +config+:: the hash of configuration options
-      def stage_events(config)
-        puts 'Staging SnowPlow events...'
-
-        s3 = Sluice::Storage::S3::new_fog_s3_from(
-          config[:s3][:region],
-          config[:aws][:access_key_id],
-          config[:aws][:secret_access_key])
-
-        # Get S3 locations
-        in_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:in])
-        processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:processing])
-
-        # Check whether our Processing Bucket is empty
-        if Sluice::Storage::S3::is_empty?(s3, processing_location)
-          raise DirectoryNotEmptyError, "The processing directory is not empty"
-        end
-
-        # Exclude event files which match IGNORE_EVENTS
-        event_files = Sluice::Storage::NegativeRegex.new(IGNORE_EVENTS)
-
-        Sluice::Storage::S3::move_files(s3, in_location, processing_location, event_files)
-
-        # Wait for S3 to eventually become consistant
-        puts "Waiting a minute to allow S3 to settle (eventual consistency)"
-        sleep(60)
-
-      end
-      module_function :stage_events
-
-      # Downloads the SnowPlow event files from the Processing
+      # Downloads the SnowPlow event files from the In
       # Bucket to the local filesystem, ready to be loaded
       # into different storage options.
       #
@@ -82,12 +49,15 @@ module SnowPlow
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
 
-        # Get S3 location and local directory
-        processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:processing])
+        # Get S3 location of In Bucket plus local directory
+        in_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:in])
         download_dir = config[:download][:folder]
 
+        # Exclude event files which match IGNORE_EVENTS
+        event_files = Sluice::Storage::NegativeRegex.new(IGNORE_EVENTS)
+
         # Download
-        Sluice::Storage::S3::download_files(s3, processing_location, download_dir, '.+')
+        Sluice::Storage::S3::download_files(s3, in_location, download_dir, event_files)
 
       end
       module_function :download_events
@@ -106,11 +76,11 @@ module SnowPlow
           config[:aws][:secret_access_key])
 
         # Get S3 locations
-        processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:processing]);
+        in_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:in]);
         archive_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:archive]);
 
-        # Move all the files in the Processing Bucket
-        Sluice::Storage::S3::move_files(s3, processing_location, archive_location, '.+')
+        # Move all the files in the In Bucket
+        Sluice::Storage::S3::move_files(s3, in_location, archive_location, '.+')
 
       end
       module_function :archive_events
