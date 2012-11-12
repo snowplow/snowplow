@@ -13,14 +13,7 @@
 # Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'snowplow-emr-etl-runner/config'
-require 'snowplow-emr-etl-runner/s3_tasks'
-require 'snowplow-emr-etl-runner/emr_jobs'
-require 'snowplow-emr-etl-runner/errors'
+source 'https://rubygems.org'
 
-module SnowPlow
-  module EmrEtlRunner
-    NAME          = "snowplow-emr-etl-runner"
-    VERSION       = "0.0.5"
-  end
-end
+# Specify your gem's dependencies in storage-loader.gemspec
+gemspec

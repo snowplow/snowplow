@@ -13,14 +13,24 @@
 # Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'snowplow-emr-etl-runner/config'
-require 'snowplow-emr-etl-runner/s3_tasks'
-require 'snowplow-emr-etl-runner/emr_jobs'
-require 'snowplow-emr-etl-runner/errors'
-
+# All errors
 module SnowPlow
-  module EmrEtlRunner
-    NAME          = "snowplow-emr-etl-runner"
-    VERSION       = "0.0.5"
+  module StorageLoader
+
+    # The base error class for all <tt>EmrEtlRunner</tt> error classes.
+    class Error < StandardError
+    end
+
+    # Raised when there's a problem with the supplied configuration (either command line or in configuration file)
+    class ConfigError < Error
+    end
+
+    # Raised if a directory is not empty
+    class DirectoryNotEmptyError < Error
+    end
+
+    # A problem with the load into a database
+    class DatabaseLoadError < Error
+    end
   end
 end

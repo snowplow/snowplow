@@ -13,14 +13,14 @@
 # Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'snowplow-emr-etl-runner/config'
-require 'snowplow-emr-etl-runner/s3_tasks'
-require 'snowplow-emr-etl-runner/emr_jobs'
-require 'snowplow-emr-etl-runner/errors'
+require 'snowplow-storage-loader/errors'
+require 'snowplow-storage-loader/config'
+require 'snowplow-storage-loader/s3_tasks'
+require 'snowplow-storage-loader/loader'
 
 module SnowPlow
-  module EmrEtlRunner
-    NAME          = "snowplow-emr-etl-runner"
-    VERSION       = "0.0.5"
+  module StorageLoader
+  	NAME          = "snowplow-storage-loader"
+    VERSION       = "0.0.1"
   end
 end

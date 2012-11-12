@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
@@ -9,18 +11,10 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
-# Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
-# License::   Apache License Version 2.0
+# Update these for your environment
+LOADER_PATH=/path/to/snowplow/4-storage/snowplow-storage-loader
+LOADER_CONFIG=/path/to/your-loader-config.yml
 
-require 'snowplow-emr-etl-runner/config'
-require 'snowplow-emr-etl-runner/s3_tasks'
-require 'snowplow-emr-etl-runner/emr_jobs'
-require 'snowplow-emr-etl-runner/errors'
-
-module SnowPlow
-  module EmrEtlRunner
-    NAME          = "snowplow-emr-etl-runner"
-    VERSION       = "0.0.5"
-  end
-end
+# Run the daily ETL job
+BUNDLE_GEMFILE=${LOADER_PATH}
+bundle exec snowplow-storage-loader --config ${LOADER_CONFIG}

@@ -16,24 +16,24 @@
 # -*- encoding: utf-8 -*-
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'snowplow-emr-etl-runner'
+require 'snowplow-storage-loader'
 
 Gem::Specification.new do |gem|
   gem.authors       = ["Alex Dean <support@snowplowanalytics.com>"]
   gem.email         = ["support@snowplowanalytics.com"]
   gem.summary       = %q{Runs the SnowPlow Hive ETL on EMR}
-  gem.description   = %q{A Ruby gem to run SnowPlow's Hive ETL job on Amazon Elastic MapReduce. Uses Elasticity and Fog}
+  gem.description   = %q{A Ruby application to load SnowPlow events into various databases and big data stores}
   gem.homepage      = "http://snowplowanalytics.com"
 
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
-  gem.name          = SnowPlow::EmrEtlRunner::NAME
-  gem.version       = SnowPlow::EmrEtlRunner::VERSION
+  gem.name          = SnowPlow::StorageLoader::NAME
+  gem.version       = SnowPlow::StorageLoader::VERSION
   gem.platform      = Gem::Platform::RUBY
   gem.require_paths = ["lib"]
 
   # Dependencies
-  gem.add_dependency 'elasticity', '~> 2.5'
+  gem.add_dependency 'infobright-loader', '~> 0.0.1'
   gem.add_dependency 'sluice', '~> 0.0.4'
 end

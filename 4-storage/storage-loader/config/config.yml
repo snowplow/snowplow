@@ -1,0 +1,17 @@
+:aws:
+  :access_key_id: ADD HERE
+  :secret_access_key: ADD HERE
+:s3:
+  :region: ADD HERE
+  :buckets:
+    :in: ADD HERE
+    :archive: ADD HERE
+:download:
+  :folder: ADD HERE # Where to store the downloaded files
+# Currently assumes we are loading only one target
+:storage:
+  :type: infobright # No other storage types supported yet
+  :database: ADD HERE # Name of database
+  :table:    ADD HERE # Name of the table to populate
+  :username: ADD HERE # Or leave blank to default to the user running the script
+  :password: ADD HERE # Or leave blank if no password

@@ -9,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.0.1
+-- Version:     0.0.2
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
@@ -72,21 +72,21 @@ CREATE TABLE IF NOT EXISTS events (
 	`br_type` varchar(50) comment 'lookup',
 	`br_renderengine` varchar(50) comment 'lookup',
 	`br_lang` varchar(10) comment 'lookup',
-	`br_features_pdf` boolean,
-	`br_features_flash` boolean,
-	`br_features_java` boolean,
-	`br_features_director` boolean,
-	`br_features_quicktime` boolean,
-	`br_features_realplayer` boolean,
-	`br_features_windowsmedia` boolean,
-	`br_features_gears` boolean ,
-	`br_features_silverlight` boolean,
-	`br_cookies` boolean,
+	`br_features_pdf` tinyint(1),
+	`br_features_flash` tinyint(1),
+	`br_features_java` tinyint(1),
+	`br_features_director` tinyint(1),
+	`br_features_quicktime` tinyint(1),
+	`br_features_realplayer` tinyint(1),
+	`br_features_windowsmedia` tinyint(1),
+	`br_features_gears` tinyint(1) ,
+	`br_features_silverlight` tinyint(1),
+	`br_cookies` tinyint(1),
 	`os_name` varchar(50) comment 'lookup',
 	`os_family` varchar(50) comment 'lookup',
 	`os_manufacturer` varchar(50) comment 'lookup',
 	`dvce_type` varchar(50) comment 'lookup',
-	`dvce_ismobile` boolean,
+	`dvce_ismobile` tinyint(1),
 	`dvce_screenwidth` mediumint,
 	`dvce_screenheight` mediumint
 ) ENGINE=BRIGHTHOUSE DEFAULT CHARSET=utf8 ;
