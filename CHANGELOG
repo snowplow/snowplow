@@ -16,12 +16,17 @@ StorageLoader: --skip takes multiple args (supercedes #80)    --
 StorageLoader: delete local turned into separate step (#76)   -- 
 Serde: bumped to 0.5.2                                        -- 
 Serde: now extracts color depth, timezone and social fields   -- 
+Serde: added useragent into ETL (was being dropped)           --
 HiveQL: hive-rolling-etl.q bumped to 0.5.1                    -- 
 HiveQL: non-hive-rolling-etl.q bumped to 0.0.3                -- 
-HiveQL: now extracts color depth, timezone and social fields  -- 
+HiveQL: now extracts color depth, timezone and social fields  --
+HiveQL: now includes raw useragent as a separate field        --   
+HiveQL: event_name field renamed to event                     --
 Infobright: bumped setup_infobright.sql to 0.0.3              -- DONE
 Infobright: added migration script (0.0.1/2 -> 0.0.3)         -- 
-Infobright: now includes color depth, timezone and social fields -- 
+Infobright: now includes color depth, timezone and social fields --
+Infobright: now includes raw useragent                        --
+Infobright: event_name field renamed to event                 --
 
 Version 0.6.0 (2012-11-12)
 --------------------------
