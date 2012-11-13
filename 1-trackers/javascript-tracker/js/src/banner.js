@@ -1,14 +1,17 @@
 /*!
  * SnowPlow - The world's most powerful web analytics platform
  *
- * @description JavaScript tracking client for SnowPlow
- * @version 0.6
+ * @description JavaScript tracker for SnowPlow
+ * @version 0.7.0
  * @author Alex Dean, Simon Andersson, Anthon Pang
  */
 
 /*
- * For instructions on how to minify these source files for distribution, please see:
- * https://github.com/snowplow/snowplow/wiki/Modifying-snowplow-js
+ * For technical documentation:
+ * https://github.com/snowplow/snowplow/wiki/javascript-tracker
+ *
+ * For the setup guide:
+ * https://github.com/snowplow/snowplow/wiki/javascript-tracker-setup
  * /
 
 /*

@@ -1,6 +1,19 @@
 Version 0.6.1 (2012-11-xx)
 --------------------------
-JS tracker: broke out .js into multiple files
+JS tracker: bumped to 0.7.0                                   -- DONE
+JS tracker: broke out .js into multiple files (fixes #55)     -- DONE
+JS tracker: rename ice.png to i - BREAKING CHANGE (#29)       -- DONE
+JS tracker: added tracker version (`tv`) to querystring (#41) -- 
+JS tracker: added color depth tracking (part of #69)          -- DONE
+JS tracker: added timezone tracking (part of #69)             -- 
+JS tracker: added social tracking (#47)                       --
+JS tracker: now passing the event type as `e`                 --
+EmrEtlRunner: bumped to 0.0.6
+EmrEtlRunner: --skip has multiple args and is no longer cumulative (part of #83) --
+EmrEtlRunner: add --process-bucket to process a bucket directly (part of #83)    --
+StorageLoader: bumped to 0.0.2
+StorageLoader: --skip has multiple args and is no longer cumulative --
+StorageLoader: --
 
 Version 0.6.0 (2012-11-12)
 --------------------------

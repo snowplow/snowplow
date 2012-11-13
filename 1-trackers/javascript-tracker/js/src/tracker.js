@@ -392,10 +392,10 @@ SnowPlow.Tracker = function Tracker(accountId) {
 			'&lang=' + configBrowserLanguage +
 			(configReferrerUrl.length ? '&refr=' + SnowPlow.encodeWrapper(purify(configReferrerUrl)) : '');
 
-		// Browser features. Cookie and resolution don't get prepended with f_ (because they're not optional features)
+		// Browser features. Cookies, color depth and resolution don't get prepended with f_ (because they're not optional features)
 		for (i in browserFeatures) {
 			if (Object.prototype.hasOwnProperty.call(browserFeatures, i)) {
-				featurePrefix = (i === 'res' || i === 'cookie') ? '&' : '&f_';
+				featurePrefix = (i === 'res' || i === 'color' || i === 'cookie') ? '&' : '&f_';
 				request += featurePrefix + i + '=' + browserFeatures[i];
 			}
 		}
@@ -414,15 +414,14 @@ SnowPlow.Tracker = function Tracker(accountId) {
 	}
 
 	/**
-	 * Adds the protocol in front of our collector URL, and ice.png to the end
+	 * Adds the protocol in front of our collector URL, and i to the end
 	 *
 	 * @param string rawUrl The collector URL without protocol
 	 *
 	 * @return string collectorUrl The tracker URL with protocol
 	 */
-	// TODO: update this to use /i instead of /ice.png (BREAKING CHANGE)
 	function asCollectorUrl(rawUrl) {
-			return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + rawUrl + '/ice.png';               
+			return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + rawUrl + '/i';               
 	}
 
 	/**
@@ -846,7 +845,7 @@ SnowPlow.Tracker = function Tracker(accountId) {
 				ag: 'application/x-silverlight'
 			};
 
-		// general plugin detection
+		// General plugin detection
 		if (SnowPlow.navigatorAlias.mimeTypes && SnowPlow.navigatorAlias.mimeTypes.length) {
 			for (i in pluginMap) {
 				if (Object.prototype.hasOwnProperty.call(pluginMap, i)) {
@@ -869,8 +868,9 @@ SnowPlow.Tracker = function Tracker(accountId) {
 			browserFeatures.gears = '1';
 		}
 
-		// other browser features
+		// Other browser features
 		browserFeatures.res = SnowPlow.screenAlias.width + 'x' + SnowPlow.screenAlias.height;
+		browserFeatures.color = screen.colorDepth;
 		browserFeatures.cookie = hasCookies();
 	}
 
@@ -1245,7 +1245,7 @@ SnowPlow.Tracker = function Tracker(accountId) {
 		 * Specify the SnowPlow collector URL. No need to include HTTP
 		 * or HTTPS - we will add this.
 		 * 
-		 * @param string rawUrl The collector URL minus protocol and /ice.png
+		 * @param string rawUrl The collector URL minus protocol and /i
 		 */
 		setCollectorUrl: function (rawUrl) {
 			configCollectorUrl = asCollectorUrl(rawUrl);
