@@ -39,6 +39,10 @@ module SnowPlow
         config[:end] = options[:end]
         config[:skip] = options[:skip]
 
+        unless options[:processbucket].nil?
+          config[:s3][:buckets][:processing] = options[:processbucket]
+        end
+
         # Add trailing slashes if needed to the buckets
         config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
 
@@ -83,6 +87,7 @@ module SnowPlow
 
         # Handle command-line arguments
         options = {}
+        options[:skip] = []
         optparse = OptionParser.new do |opts|
 
           opts.banner = "Usage: %s [options]" % NAME
@@ -92,7 +97,11 @@ module SnowPlow
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
-          opts.on('-s', '--skip staging|emr', 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-s', '--skip staging,emr,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-b', '--process-bucket BUCKET', 'run emr only on specified bucket. Implies --skip staging,archive') { |config| 
+            options[:processbucket] = config
+            options[:skip] = %w(staging archive)
+          }
 
           opts.separator ""
           opts.separator "* filters the raw event logs processed by EmrEtlRunner by their timestamp"
@@ -115,17 +124,11 @@ module SnowPlow
         end
 
         # Check our skip argument
-        skip = case options[:skip]
-                 when "staging"
-                   :staging
-                 when "emr"
-                   :emr
-                 when nil
-                   :none                            
-                 else
-                   raise ConfigError, "Invalid option: skip can be 'staging' or 'emr', not '#{options[:skip]}'"
-                 end
-        options[:skip] = skip # Heinous mutability
+        options[:skip].each { |opt|
+          unless %w(staging emr archive).include?(opt)
+            raise ConfigError, "Invalid option: skip can be 'staging', 'emr' or 'archive', not '#{opt}'"
+          end
+        }
 
         # Check we have a config file argument
         if options[:config].nil?

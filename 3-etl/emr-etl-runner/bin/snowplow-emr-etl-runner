@@ -32,16 +32,18 @@ require 'snowplow-emr-etl-runner'; runner = SnowPlow::EmrEtlRunner
 begin
   config = runner::Config.get_config()
 
-  if config[:skip] == :none
+  unless config[:skip].include?('staging')
     runner::S3Tasks.stage_logs_for_emr(config)
   end
 
-  unless config[:skip] == :emr
+  unless config[:skip].include?('emr')
     job = runner::EmrJob.new(config)
     job.run()
   end
 
-  runner::S3Tasks.archive_logs(config)
+  unless config[:skip].include?('archive')
+    runner::S3Tasks.archive_logs(config)
+  end
 
 # Catch any SnowPlow error
 rescue runner::Error => e
