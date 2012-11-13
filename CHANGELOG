@@ -16,7 +16,7 @@ StorageLoader: --skip takes multiple args (supercedes #80)    --
 StorageLoader: delete local turned into separate step (#76)   -- 
 Serde: bumped to 0.5.2                                        -- 
 Serde: now extracts color depth, timezone and social fields   -- 
-Serde: added useragent into ETL (was being dropped)           --
+Serde: added useragent into ETL (#68)                         --
 HiveQL: hive-rolling-etl.q bumped to 0.5.1                    -- 
 HiveQL: non-hive-rolling-etl.q bumped to 0.0.3                -- 
 HiveQL: now extracts color depth, timezone and social fields  --
