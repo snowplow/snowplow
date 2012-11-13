@@ -8,31 +8,35 @@ var _snaq = _snaq || [];
 var SnowPlow = SnowPlow || function() {
 	var windowAlias = window;
 	return {
+
+		/* Tracker identifier with version */
+		version: 'js-0.7.0',
+
 		expireDateTime: null,
 
-		/* plugins */
+		/* Plugins */
 		plugins: {},
 
 		/* DOM Ready */
 		hasLoaded: false,
 		registeredOnLoadHandlers: [],
 
-		/* alias frequently used globals for added minification */
+		/* Alias frequently used globals for added minification */
 		documentAlias: document,
 		windowAlias: windowAlias,
 		navigatorAlias: navigator,
 		screenAlias: screen,
 
-		/* encode */
+		/* Encode */
 		encodeWrapper: windowAlias.encodeURIComponent,
 
-		/* decode */
+		/* Decode */
 		decodeWrapper: windowAlias.decodeURIComponent,
 
-		/* urldecode */
+		/* Urldecode */
 		urldecode: unescape,
 
-		/* asynchronous tracker */
+		/* Asynchronous tracker */
 		asyncTracker: null,
 	}
 }();

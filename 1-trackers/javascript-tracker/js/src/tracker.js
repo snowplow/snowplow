@@ -388,6 +388,7 @@ SnowPlow.Tracker = function Tracker(accountId) {
 			'&tid=' + String(Math.random()).slice(2, 8) +
 			'&uid=' + uuid +
 			'&vid=' + visitCount +
+			'&tv='  + SnowPlow.version +
 			(configTrackerSiteId.length ? '&said=' + SnowPlow.encodeWrapper(configTrackerSiteId) : '') +
 			'&lang=' + configBrowserLanguage +
 			(configReferrerUrl.length ? '&refr=' + SnowPlow.encodeWrapper(purify(configReferrerUrl)) : '');

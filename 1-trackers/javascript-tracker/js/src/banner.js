@@ -27,4 +27,3 @@
  * - Opera 6 - Error object (and Presto) introduced in Opera 7
  * - Opera 7
  */
-
