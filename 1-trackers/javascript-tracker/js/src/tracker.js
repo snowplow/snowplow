@@ -435,6 +435,11 @@ SnowPlow.Tracker = function Tracker(accountId) {
 			}
 		}
 
+		// Let's add in the timezone detection
+		request +=
+			'&tz_k=' + jstz.determine() +
+			'&tz_dst=' + jstz.date_is_dst();
+
 		// Finally add the page URL
 		request += '&url=' + SnowPlow.encodeWrapper(purify(window.location));
 
