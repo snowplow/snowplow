@@ -10,9 +10,9 @@
 
 | Storage                       | Description                                                               | Status           | Read more                    |
 |-------------------------------|---------------------------------------------------------------------------|------------------|------------------------------|
-| [hive-storage] [s1]           | SnowPlow events stored in a Hive-compatible flatfile format on Amazon S3  | Production-ready | Wiki                         |
-| [infobright-storage] [s2] (1) | SnowPlow events stored in a table in [Infobright Community Edition] [ice] | Production-ready | Wiki                         |  
-| [storage-loader] [s3]         | A Ruby application for loading SnowPlow events into (1)                   | Pre-alpha        | Coming soon                  |  
+| [hive-storage] [s1]           | SnowPlow events stored in a Hive-compatible flatfile format on Amazon S3  | Production-ready | [Wiki] [hive-on-wiki]        |
+| [infobright-storage] [s2] (1) | SnowPlow events stored in a table in [Infobright Community Edition] [ice] | Production-ready | [Wiki] [ice-on-wiki]         |  
+| [storage-loader] [s3]         | A Ruby application for loading SnowPlow events into (1)                   | Production-ready | [Wiki] [storage-loader-on-wiki] |  
 
 ## Documentation
 
@@ -37,7 +37,11 @@ We welcome community contributions of new storage options for SnowPlow events! W
 [infobright-table-def]: https://github.com/snowplow/snowplow/wiki/infobright-storage
 
 
-[s1]: ./hive-storage/
-[s2]: ./infobright-storage/
-[s3]: ./storage-loader/
+[s1]: https://github.com/snowplow/snowplow/tree/master/4-storage/hive-storage
+[s2]: https://github.com/snowplow/snowplow/tree/master/4-storage/infobright-storage
+[s3]: https://github.com/snowplow/snowplow/tree/master/4-storage/storage-loader
 [ice]: http://www.infobright.org
+
+[hive-on-wiki]: https://github.com/snowplow/snowplow/wiki/s3-hive-storage-setup
+[ice-on-wiki]: https://github.com/snowplow/snowplow/wiki/infobright-storage-setup
+[storage-loader-on-wiki]: https://github.com/snowplow/snowplow/wiki/StorageLoader-setup 
