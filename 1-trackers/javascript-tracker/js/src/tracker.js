@@ -134,7 +134,10 @@ SnowPlow.Tracker = function Tracker(accountId) {
 		cookieSecure = SnowPlow.documentAlias.location.protocol === 'https',
 
 		// Browser features via client-side data collection
-		browserFeatures = {},
+		browserFeatures = detectBrowserFeatures(),
+
+		// Visitor timezone
+		timezone = detectTimezone(),
 
 		// Guard against installing the link tracker more than once per Tracker instance
 		linkTrackingInstalled = false,
@@ -160,8 +163,12 @@ SnowPlow.Tracker = function Tracker(accountId) {
 
 		// Ecommerce transaction data
 		// Will be committed, sent and emptied by a call to trackTrans.
-		ecommerceTransaction;
+		ecommerceTransaction = ecommerceTransactionTemplate();
 
+	/*
+	 * Initializes an empty ecommerce
+	 * transaction and line items
+	 */
 	function ecommerceTransactionTemplate() {
 		return { transaction: {}, items: [] }
 	}
@@ -422,23 +429,21 @@ SnowPlow.Tracker = function Tracker(accountId) {
 			'&tid=' + String(Math.random()).slice(2, 8) +
 			'&uid=' + uuid +
 			'&vid=' + visitCount +
-			'&tv='  + SnowPlow.version +
-			(configTrackerSiteId.length ? '&said=' + SnowPlow.encodeWrapper(configTrackerSiteId) : '') +
+			'&tv='  + SnowPlow.encodeWrapper(SnowPlow.version) +
+			(configTrackerSiteId.length ? '&aid=' + SnowPlow.encodeWrapper(configTrackerSiteId) : '') +
 			'&lang=' + configBrowserLanguage +
 			(configReferrerUrl.length ? '&refr=' + SnowPlow.encodeWrapper(purify(configReferrerUrl)) : '');
 
 		// Browser features. Cookies, color depth and resolution don't get prepended with f_ (because they're not optional features)
 		for (i in browserFeatures) {
 			if (Object.prototype.hasOwnProperty.call(browserFeatures, i)) {
-				featurePrefix = (i === 'res' || i === 'color' || i === 'cookie') ? '&' : '&f_';
+				featurePrefix = (i === 'res' || i === 'cd' || i === 'cookie') ? '&' : '&f_';
 				request += featurePrefix + i + '=' + browserFeatures[i];
 			}
 		}
 
-		// Let's add in the timezone detection
-		request +=
-			'&tz_k=' + jstz.determine() +
-			'&tz_dst=' + jstz.date_is_dst();
+        // Add in timezone
+		request += '&tz=' + timezone;
 
 		// Finally add the page URL
 		request += '&url=' + SnowPlow.encodeWrapper(purify(window.location));
@@ -861,7 +866,15 @@ SnowPlow.Tracker = function Tracker(accountId) {
 	}
 
 	/*
-	 * Browser features (plugins, resolution, cookies)
+	 * Returns visitor timezone
+	 */
+	function detectTimezone() {
+		var tz = jstz.determine();  
+        return (typeof (tz) === 'undefined') ? '' : SnowPlow.encodeWrapper(tz.name());
+	}
+
+	/*
+	 * Returns browser features (plugins, resolution, cookies)
 	 */
 	function detectBrowserFeatures() {
 		var i,
@@ -883,14 +896,15 @@ SnowPlow.Tracker = function Tracker(accountId) {
 				java: 'application/x-java-vm',
 				gears: 'application/x-googlegears',
 				ag: 'application/x-silverlight'
-			};
+			},
+			features = {};
 
 		// General plugin detection
 		if (SnowPlow.navigatorAlias.mimeTypes && SnowPlow.navigatorAlias.mimeTypes.length) {
 			for (i in pluginMap) {
 				if (Object.prototype.hasOwnProperty.call(pluginMap, i)) {
 					mimeType = SnowPlow.navigatorAlias.mimeTypes[pluginMap[i]];
-					browserFeatures[i] = (mimeType && mimeType.enabledPlugin) ? '1' : '0';
+					features[i] = (mimeType && mimeType.enabledPlugin) ? '1' : '0';
 				}
 			}
 		}
@@ -900,18 +914,20 @@ SnowPlow.Tracker = function Tracker(accountId) {
 		if (typeof navigator.javaEnabled !== 'unknown' &&
 				SnowPlow.isDefined(SnowPlow.navigatorAlias.javaEnabled) &&
 				SnowPlow.navigatorAlias.javaEnabled()) {
-			browserFeatures.java = '1';
+			features.java = '1';
 		}
 
 		// Firefox
 		if (SnowPlow.isFunction(SnowPlow.windowAlias.GearsFactory)) {
-			browserFeatures.gears = '1';
+			features.gears = '1';
 		}
 
 		// Other browser features
-		browserFeatures.res = SnowPlow.screenAlias.width + 'x' + SnowPlow.screenAlias.height;
-		browserFeatures.color = screen.colorDepth;
-		browserFeatures.cookie = hasCookies();
+		features.res = SnowPlow.screenAlias.width + 'x' + SnowPlow.screenAlias.height;
+		features.cd = screen.colorDepth;
+		features.cookie = hasCookies();
+
+		return features;
 	}
 
 /*<DEBUG>*/
@@ -942,11 +958,9 @@ SnowPlow.Tracker = function Tracker(accountId) {
 	 ************************************************************/
 
 	/*
-	 * initialize tracker
+	 * Initialize tracker
 	 */
-	detectBrowserFeatures();
 	updateDomainHash();
-	ecommerceTransaction = ecommerceTransactionTemplate();
 
 /*<DEBUG>*/
 	/*

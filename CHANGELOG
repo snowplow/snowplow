@@ -1,11 +1,11 @@
 Version 0.6.1 (2012-11-xx)
 --------------------------
-JS tracker: bumped to 0.7.0                                   -- DONE
+JS tracker: bumped to 0.8.0                                   -- DONE
 JS tracker: broke out .js into multiple files (#55)           -- DONE
 JS tracker: rename ice.png to i - BREAKING CHANGE (#29)       -- DONE
 JS tracker: added tracker version (`tv`) to querystring (#41) -- DONE
 JS tracker: added color depth tracking (part of #69)          -- DONE
-JS tracker: added timezone tracking (part of #69)             -- 
+JS tracker: added timezone tracking (part of #69)             -- DONE
 JS tracker: added social tracking (#47)                       -- 
 JS tracker: now passing the event type on querystring as `e`  -- 
 EmrEtlRunner: bumped to 0.0.6                                 -- DONE
