@@ -2,8 +2,10 @@
  * SnowPlow - The world's most powerful web analytics platform
  *
  * @description JavaScript tracker for SnowPlow
- * @version 0.7.0
- * @author Alex Dean, Simon Andersson, Anthon Pang
+ * @version     0.7.0
+ * @author      Alex Dean, Simon Andersson, Anthon Pang
+ * @copyright   Anthon Pang, SnowPlow Analytics Ltd
+ * @license     Simplified BSD
  */
 
 /*
@@ -27,3 +29,4 @@
  * - Opera 6 - Error object (and Presto) introduced in Opera 7
  * - Opera 7
  */
+
