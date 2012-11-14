@@ -4,7 +4,7 @@
 2. [Technical documentation] [tech-docs] 
 3. [Table definition] [table-def]
 
-Both the above can be found on the [wiki] [wiki].
+All the above can be found on the [wiki] [wiki].
 
 ## Getting started with Hive
 
