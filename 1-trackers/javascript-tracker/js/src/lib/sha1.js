@@ -1,13 +1,22 @@
-/************************************************************
- * sha1
- * - based on sha1 from http://phpjs.org/functions/sha1:512 (MIT / GPL v2)
+/*
+ * sha1.js
  *
+ * @description SHA1 hash function for JavaScript
+ * @version     N/A
+ * @author      Various (see below)
+ * @license     MIT / GPL v2
+ * @link        http://phpjs.org/functions/sha1:512
+ *
+ * Modifications:
+ * - Various (see below)
+ *
+ * Authors & Modifications:
  *    original by: Webtoolkit.info (http://www.webtoolkit.info/)
  *  namespaced by: Michael White (http://getsprink.com)
  *       input by: Brett Zamir (http://brett-zamir.me)
  *    improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
  *    jslinted by: Anthon Pang (http://piwik.org)
- ************************************************************/
+ */
 
 SnowPlow.sha1 = function sha1(str) {
 	var

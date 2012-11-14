@@ -1,3 +1,16 @@
+/*
+ * jstz.js
+ *
+ * @description Makes a robust determination of a user's timezone
+ * @version     2012-05-10
+ * @author      Jon Nylander (https://bitbucket.org/pellepim)
+ * @license     MIT
+ * @link        https://bitbucket.org/pellepim/jstimezonedetect/raw/f83d5a26fa638f7cc528430005761febb20ae447/detect_timezone.js
+ *
+ * Modifications:
+ * - None
+ */
+
 /*jslint undef: true */
 /*global console*/
 /*global exports*/

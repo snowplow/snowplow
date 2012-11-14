@@ -1,7 +1,15 @@
-/************************************************************
- * JSON - public domain reference implementation by Douglas Crockford
- * @link http://www.JSON.org/json2.js
- ************************************************************/
+/*
+ * json2.js
+ *
+ * @description Creates a global JSON2 object
+ * @version     N/A
+ * @author      Douglas Crockford (https://github.com/douglascrockford)
+ * @license     Public Domain
+ * @link        https://github.com/douglascrockford/JSON-js/raw/master/json2.js
+ *
+ * Modifications:
+ * - None
+ */
 
 /*jslint evil: true, regexp: false, bitwise: true */
 /*global JSON2 */
