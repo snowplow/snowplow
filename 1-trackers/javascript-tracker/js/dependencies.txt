@@ -1,9 +1,9 @@
 src/banner.js
-src/3rd-party/json.js
+src/lib/json.js
 src/init.js
 src/helpers.js
-src/3rd-party/sha1.js
-src/3rd-party/jstz.js
+src/lib/sha1.js
+src/lib/jstz.js
 src/tracker.js
 src/snowplow.js
 src/constructor.js
