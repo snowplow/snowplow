@@ -1,5 +1,3 @@
--- This is where we port 0.0.1 or 0.0.2 to 0.0.3
-
 -- Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
@@ -11,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.0.3
+-- Version:     Ports versions 0.0.1 or 0.0.2 to version 0.0.3
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
