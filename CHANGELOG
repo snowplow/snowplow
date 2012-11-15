@@ -1,32 +1,32 @@
 Version 0.6.1 (2012-11-xx)
 --------------------------
-JS tracker: bumped to 0.8.0                                   -- DONE
-JS tracker: rename ice.png to i - BREAKING CHANGE (#29)       -- DONE
-JS tracker: added setCollectorCf() and deprecated setAccount() (#32) -- DONE
-JS tracker: Tracker constructor now supports Cf or Url (part of #44) -- DONE
-JS tracker: getTrackerCf() and -Url() added, getTracker() deprecated (part of #44) -- DONE
-JS tracker: added tracker version (`tv`) to querystring (#41) -- DONE
-JS tracker: added color depth tracking (part of #69)          -- DONE
-JS tracker: added timezone tracking (part of #69)             -- DONE
-JS tracker: added user fingerprinting (#70)                   -- DONE
-JS tracker: broke out .js into multiple files (#55)           -- DONE
-EmrEtlRunner: bumped to 0.0.6                                 -- DONE
-EmrEtlRunner: --skip takes multiple args (part of #83, supercedes #80)        -- DONE
-EmrEtlRunner: add --process-bucket to process a bucket directly (part of #83) -- DONE
-Serde: bumped to 0.5.2                                        -- DONE
-Serde: now extracts color depth, timezone and fingerprint fields -- 
-Serde: added useragent into ETL (#68)                         --
-Serde: now extracts platform field                            -- 
-HiveQL: hive-rolling-etl.q bumped to 0.5.1                    -- DONE
-HiveQL: non-hive-rolling-etl.q bumped to 0.0.3                -- DONE
-HiveQL: now extracts color depth, timezone and fingerprint fields -- DONE
-HiveQL: now includes raw useragent as a separate field (#68)  -- DONE
-HiveQL: event_name field renamed to event                     -- DONE
-Infobright: bumped setup_infobright.sql to 0.0.3              -- DONE
-Infobright: added migration script (0.0.1/2 -> 0.0.3)         -- DONE
-Infobright: now includes color depth, timezone and fingerprint fields -- DONE
-Infobright: now includes raw useragent (#68)                  -- DONE
-Infobright: event_name field renamed to event                 -- DONE
+JS tracker: bumped to 0.8.0
+JS tracker: rename ice.png to i - BREAKING CHANGE (#29)
+JS tracker: added setCollectorCf() and deprecated setAccount() (#32)
+JS tracker: Tracker constructor now supports Cf or Url (part of #44)
+JS tracker: getTrackerCf() and -Url() added, getTracker() deprecated (part of #44)
+JS tracker: added tracker version (`tv`) to querystring (#41)
+JS tracker: added color depth tracking (part of #69)
+JS tracker: added timezone tracking (part of #69)
+JS tracker: added user fingerprinting (#70)
+JS tracker: broke out .js into multiple files (#55)
+EmrEtlRunner: bumped to 0.0.6
+EmrEtlRunner: --skip takes multiple args (part of #83, supercedes #80)
+EmrEtlRunner: add --process-bucket to process a bucket directly (part of #83)
+Serde: bumped to 0.5.2
+Serde: now extracts color depth, timezone and fingerprint fields
+Serde: added useragent into ETL (#68)
+Serde: now extracts platform field
+HiveQL: hive-rolling-etl.q bumped to 0.5.1
+HiveQL: non-hive-rolling-etl.q bumped to 0.0.3
+HiveQL: now extracts color depth, timezone and fingerprint fields
+HiveQL: now includes raw useragent as a separate field (#68)
+HiveQL: event_name field renamed to event
+Infobright: bumped setup_infobright.sql to 0.0.3
+Infobright: added migration script (0.0.1/2 -> 0.0.3)
+Infobright: now includes color depth, timezone and fingerprint fields
+Infobright: now includes raw useragent (#68)
+Infobright: event_name field renamed to event
 
 Version 0.6.0 (2012-11-12)
 --------------------------

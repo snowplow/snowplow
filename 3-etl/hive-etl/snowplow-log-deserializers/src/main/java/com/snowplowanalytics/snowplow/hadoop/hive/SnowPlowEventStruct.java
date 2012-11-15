@@ -61,6 +61,10 @@ public class SnowPlowEventStruct {
   // Mutable properties for this Hive struct
   // -------------------------------------------------------------------------------------------------------------------
 
+  // The application (site, game, app etc) this event belongs to, and the tracker platform
+  public String app_id;
+  public String platform;
+
   // Date/time
   public String dt;
   public String tm;
@@ -68,12 +72,10 @@ public class SnowPlowEventStruct {
   // Transaction (i.e. this logging event)
   public String txn_id;
 
-  // The application (site, game, app etc) this event belongs to
-  public String app_id;
-
   // User and visit
   public String user_id;
   public String user_ipaddress;
+  public String user_fingerprint;
   public Integer visit_id;
 
   // Page
@@ -94,6 +96,9 @@ public class SnowPlowEventStruct {
   public String ev_label;
   public String ev_property;
   public String ev_value;
+
+  // User Agent
+  public String useragent;
 
   // Browser (from user-agent)
   public String br_name;
@@ -119,11 +124,13 @@ public class SnowPlowEventStruct {
   // Non-Hive uses Byte version
   public Boolean br_cookies;
   public Byte br_cookies_bt;
+  public String br_colordepth;
 
   // OS (from user-agent)
   public String os_name;
   public String os_family;
   public String os_manufacturer;
+  public String os_timezone;
 
   // Device/Hardware (from user-agent)
   public String dvce_type;
@@ -162,12 +169,13 @@ public class SnowPlowEventStruct {
   // Static configuration
   // -------------------------------------------------------------------------------------------------------------------
 
-  private static final String collectorVersion = "cf"; // Collector is CloudFront. Update when we support other collector formats.
+  private static final String collectorVersion = "cf"; // Collector is CloudFront. TODO: update when we support other collector formats.
 
   private static final String cfEncoding = "UTF-8";
 
   // An enum of all the fields we're expecting in the querystring
-  private static enum QuerystringFields { TID, AID, UID, VID, TSTAMP, TV, LANG, F_PDF, F_FLA, F_JAVA, F_DIR, F_QT, F_REALP, F_WMA, F_GEARS, F_AG, COOKIE, RES, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
+  // See https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol for details
+  private static enum QuerystringFields { AID, P, TID, UID, FP, VID, TSTAMP, TV, LANG, F_PDF, F_FLA, F_JAVA, F_DIR, F_QT, F_REALP, F_WMA, F_GEARS, F_AG, COOKIE, RES, CD, TZ, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
 
   // An enum for the marketing attribution fields we might find
   // attached to the page URL.
@@ -245,8 +253,15 @@ public class SnowPlowEventStruct {
     this.tm = m.group(2); // CloudFront date format matches Hive's
     this.user_ipaddress = m.group(5);
 
-    // 2. Next we dis-assemble the user agent...
+    // 2. Now grab the user agent
     final String ua = m.group(11);
+    try {
+      this.useragent = decodeSafeString(ua);
+      } catch (Exception e) {
+        getLog().warn(e.getClass().getSimpleName() + " on { useragent: " + ua + " }");
+      }
+
+    // 3. Next we dis-assemble the user agent...
     final UserAgent userAgent = UserAgent.parseUserAgentString(ua);
 
     // -> browser fields
@@ -269,11 +284,11 @@ public class SnowPlowEventStruct {
     this.dvce_ismobile = os.isMobileDevice();
     this.dvce_ismobile_bt = (byte)(this.dvce_ismobile ? 1 : 0);
 
-    // 3. Now for the versioning
+    // 4. Now for the versioning (tracker versioning is handled below)
     this.v_collector = collectorVersion;
     this.v_etl = "serde-" + ProjectSettings.VERSION;
 
-    // 4. Now we dis-assemble the querystring
+    // 5. Now we dis-assemble the querystring
     String qsUrl = null;
     List<NameValuePair> params = URLEncodedUtils.parse(URI.create("http://localhost/?" + querystring), "UTF-8");
 
@@ -294,14 +309,20 @@ public class SnowPlowEventStruct {
       try {
         switch (field) {
           // Common fields
-          case TID:
-            this.txn_id = value;
-            break;
           case AID:
             this.app_id = value;
             break;
+          case P:
+            this.platform = value;
+            break;
+          case TID:
+            this.txn_id = value;
+            break;
           case UID:
             this.user_id = value;
+            break;
+          case FP:
+            this.user_fingerprint = value;
             break;
           case VID:
             this.visit_id = Integer.parseInt(value);
@@ -364,6 +385,12 @@ public class SnowPlowEventStruct {
               throw new Exception("Couldn't parse res field");
             this.dvce_screenwidth = Integer.parseInt(resolution[0]);
             this.dvce_screenheight = Integer.parseInt(resolution[1]);
+            break;
+          case CD:
+            this.br_colordepth = value;
+            break;
+          case TZ:
+            this.os_timezone = decodeSafeString(value);
             break;
           case REFR:
             this.page_referrer = decodeSafeString(value);
@@ -526,12 +553,14 @@ public class SnowPlowEventStruct {
   private void nullify() {
 
     // Null all the things
+    this.app_id = null;
+    this.platform = null;
     this.dt = null;
     this.tm = null;
     this.txn_id = null;
-    this.app_id = null;
     this.user_id = null;
     this.user_ipaddress = null;
+    this.user_fingerprint = null;
     this.visit_id = null;
     this.page_url = null;
     this.page_title = null;
@@ -546,6 +575,7 @@ public class SnowPlowEventStruct {
     this.ev_label = null;
     this.ev_property = null;
     this.ev_value = null;
+    this.useragent = null;
     this.br_name = null;
     this.br_family = null;
     this.br_version = null;
@@ -564,9 +594,11 @@ public class SnowPlowEventStruct {
     this.br_features_silverlight = null;
     this.br_cookies = null;
     this.br_cookies_bt = null;
+    this.br_colordepth = null;
     this.os_name = null;
     this.os_family = null;
     this.os_manufacturer = null;
+    this.os_timezone = null;
     this.dvce_type = null;
     this.dvce_ismobile = null;
     this.dvce_ismobile_bt = null;

@@ -32,18 +32,22 @@ class PageViewTest2 extends Specification {
   // Toggle if tests are failing and you want to inspect the struct contents
   implicit val _DEBUG = false
 
-  val row = "2012-05-24  00:06:42  LHR5  3402  90.194.12.51  GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(iPhone;%20CPU%20iPhone%20OS%205_1_1%20like%20Mac%20OS%20X)%20AppleWebKit/534.46%20(KHTML,%20like%20Gecko)%20Version/5.1%20Mobile/9B206%20Safari/7534.48.3  page=Psycards%2520book%2520and%2520deck%2520starter%2520pack%2520-%2520Psychic%2520Bazaar&tid=019539&uid=e7bccbb647296c98&vid=1&lang=en-us&refr=http%253A%252F%252Fwww.google.com%252Fsearch%253Fhl%253Den%2526q%253Dthe%252Bpsycard%252Bstory%2526oq%253Dthe%252Bpsycard%252Bstory%2526aq%253Df%2526aqi%253D%2526aql%253D%2526gs_l%253Dmobile-gws-serp.12...0.0.0.6358.0.0.0.0.0.0.0.0..0.0...0.0.JrNbKlRgHbQ%2526mvs%253D0&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=0&f_gears=1&f_ag=0&res=320x480&cookie=1"
+  val row = "2012-05-24  00:06:42  LHR5  3402  90.194.12.51  GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(iPhone;%20CPU%20iPhone%20OS%205_1_1%20like%20Mac%20OS%20X)%20AppleWebKit/534.46%20(KHTML,%20like%20Gecko)%20Version/5.1%20Mobile/9B206%20Safari/7534.48.3  page=Psycards%2520book%2520and%2520deck%2520starter%2520pack%2520-%2520Psychic%2520Bazaar&tid=019539&uid=e7bccbb647296c98&vid=1&p=Web&aid=CFe23a&fp=1906624389&tz=Europe%2FLondon&cd=24&lang=en-us&refr=http%253A%252F%252Fwww.google.com%252Fsearch%253Fhl%253Den%2526q%253Dthe%252Bpsycard%252Bstory%2526oq%253Dthe%252Bpsycard%252Bstory%2526aq%253Df%2526aqi%253D%2526aql%253D%2526gs_l%253Dmobile-gws-serp.12...0.0.0.6358.0.0.0.0.0.0.0.0..0.0...0.0.JrNbKlRgHbQ%2526mvs%253D0&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=0&f_gears=1&f_ag=0&res=320x480&cookie=1"
 
   val expected = new SnowPlowEvent().tap { e =>
+    e.app_id = "CFe23a"
+    e.platform = "Web"
     e.dt = "2012-05-24"
     e.tm = "00:06:42"
     e.txn_id = "019539"
     e.user_id = "e7bccbb647296c98"
     e.user_ipaddress = "90.194.12.51"
+    e.user_fingerprint = "1906624389"
     e.visit_id = 1
     e.page_url = "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html"
     e.page_title = "Psycards book and deck starter pack - Psychic Bazaar"
     e.page_referrer = "http://www.google.com/search?hl=en&q=the+psycard+story&oq=the+psycard+story&aq=f&aqi=&aql=&gs_l=mobile-gws-serp.12...0.0.0.6358.0.0.0.0.0.0.0.0..0.0...0.0.JrNbKlRgHbQ&mvs=0"
+    e.useragent = "Mozilla/5.0 (iPhone; CPU iPhone OS 5_1_1 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9B206 Safari/7534.48.3"
     e.br_name = "Mobile Safari"
     e.br_family = "Safari"
     e.br_version = "5.1"
@@ -62,9 +66,11 @@ class PageViewTest2 extends Specification {
     e.br_features_windowsmedia = 1
     e.br_features_gears = 1
     e.br_features_silverlight = 0
+    e.br_colordepth = "24"
     e.os_name = "iOS 5 (iPhone)"
     e.os_family = "iOS"
     e.os_manufacturer = "Apple Inc."
+    e.os_timezone = "Europe/London"
     e.dvce_type = "Mobile"
     e.dvce_ismobile = true
     e.dvce_ismobile_bt = 1
@@ -77,6 +83,14 @@ class PageViewTest2 extends Specification {
     val actual = SnowPlowDeserializer.deserialize(row)
 
     // Check all of the field values
+
+    // The application (site, game, app etc) this event belongs to, and the tracker platform
+    "have app_id (Application ID) = %s".format(expected.app_id) in {
+      actual.app_id must_== expected.app_id
+    }
+    "have platform (Platform) = %s".format(expected.platform) in {
+      actual.platform must_== expected.platform
+    }
 
     // Date/time
     "have dt (Date) = %s".format(expected.dt) in {
@@ -98,6 +112,9 @@ class PageViewTest2 extends Specification {
     "have user_ipaddress (User IP Address) = %s".format(expected.user_ipaddress) in {
       actual.user_ipaddress must_== expected.user_ipaddress
     }
+    "have user_fingerprint (User Fingerprint) = %s".format(expected.user_fingerprint) in {
+      actual.user_fingerprint must_== expected.user_fingerprint
+    }
     "have visit_id (User IP Address) = %s".format(expected.visit_id) in {
       actual.visit_id must_== expected.visit_id
     }
@@ -112,6 +129,11 @@ class PageViewTest2 extends Specification {
     }
     "have page_referrer (Page Referrer) = %s".format(expected.page_referrer) in {
       actual.page_referrer must_== expected.page_referrer
+    }
+
+    // Useragent
+    "have useragent (User Agent) = %s".format(expected.useragent) in {
+      actual.useragent must_== expected.useragent
     }
 
     // Browser (from user-agent)
@@ -141,6 +163,9 @@ class PageViewTest2 extends Specification {
     "have br_cookies_bt (Browser Cookies Enabled, Byte?) = %s".format(expected.br_cookies_bt) in {
       actual.br_cookies_bt must_== expected.br_cookies_bt
     }
+    "have br_colordepth (Browser Color Depth) = %s".format(expected.br_colordepth) in {
+      actual.br_colordepth must_== expected.br_colordepth
+    }    
     "have br_features (Browser Features) = %s".format(expected.br_features) in {
       // For some reason (Specs2) couldn't use implicit Java->Scala conversion here
       JavaConversions.asScalaBuffer(actual.br_features) must haveTheSameElementsAs(expected.br_features)
@@ -184,6 +209,9 @@ class PageViewTest2 extends Specification {
     }.pendingUntilFixed // nl.bitwalker.useragentutils is not parsing this user agent correctly
     "have os_manufacturer (OS Manufacturer) = %s".format(expected.os_manufacturer) in {
       actual.os_manufacturer must_== expected.os_manufacturer
+    }
+    "have os_timezone (OS Timezone) = %s".format(expected.os_timezone) in {
+      actual.os_timezone must_== expected.os_timezone
     }
 
     // Device/Hardware (from user-agent)
