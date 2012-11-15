@@ -139,6 +139,9 @@ SnowPlow.Tracker = function Tracker(accountId) {
 		// Visitor timezone
 		timezone = detectTimezone(),
 
+		// Visitor fingerprint
+		fingerprint = generateFingerprint(),
+
 		// Guard against installing the link tracker more than once per Tracker instance
 		linkTrackingInstalled = false,
 
@@ -428,6 +431,7 @@ SnowPlow.Tracker = function Tracker(accountId) {
 		request += 
 			'&tid=' + String(Math.random()).slice(2, 8) +
 			'&uid=' + uuid +
+			'&fp='  + fingerprint +
 			'&vid=' + visitCount +
 			'&tv='  + SnowPlow.encodeWrapper(SnowPlow.version) +
 			(configTrackerSiteId.length ? '&aid=' + SnowPlow.encodeWrapper(configTrackerSiteId) : '') +
@@ -863,6 +867,39 @@ SnowPlow.Tracker = function Tracker(accountId) {
 				}
 			}
 		}
+	}
+
+	/*
+	 * JS Implementation for browser fingerprint.
+	 * Does not require any external resources.
+	 * Based on https://github.com/carlo/jquery-browser-fingerprint
+	 * @return {number} 32-bit positive integer hash 
+	 */
+	// TODO: make seed for hashing configurable
+	function generateFingerprint() {
+
+	    var fingerprint = [
+	        navigator.userAgent,
+	        [ screen.height, screen.width, screen.colorDepth ].join("x"),
+	        ( new Date() ).getTimezoneOffset(),
+	        !!window.sessionStorage,
+	        !!window.localStorage,
+	    ];
+
+	    var plugins = [];
+	    if (navigator.plugins)
+	    {
+	        for(var i = 0; i < navigator.plugins.length; i++)
+	        {
+	            var mt = [];
+	            for(var j = 0; j < navigator.plugins[i].length; j++)
+	            {
+	                mt.push([navigator.plugins[i][j].type, navigator.plugins[i][j].suffixes]);
+	            }
+	            plugins.push([navigator.plugins[i].name + "::" + navigator.plugins[i].description, mt.join("~")]);
+	        }
+	    }
+	    return SnowPlow.murmurhash3_32_gc(fingerprint.join("###") + "###" + plugins.sort().join(";"), 123412414);
 	}
 
 	/*
