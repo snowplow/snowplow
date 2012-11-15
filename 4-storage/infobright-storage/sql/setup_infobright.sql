@@ -20,7 +20,7 @@ CREATE DATABASE IF NOT EXISTS snowplow ;
 
 USE snowplow ;
 
-CREATE TABLE IF NOT EXISTS events (
+CREATE TABLE IF NOT EXISTS events_003 (
 	-- App
 	`app_id` varchar(255) comment 'lookup', -- 'lookup' is a varchar optimisation
 	`platform` varchar(50) comment 'lookup',
@@ -70,6 +70,8 @@ CREATE TABLE IF NOT EXISTS events (
 	`ti_category` varchar(255) comment 'lookup',
 	`ti_price` dec(18,2),
 	`ti_quantity` int,
+	-- User Agent
+	`useragent` (2083) comment 'lookup', -- New in 0.0.3
 	-- Browser
 	`br_name` varchar(50) comment 'lookup',
 	`br_family` varchar(50) comment 'lookup',

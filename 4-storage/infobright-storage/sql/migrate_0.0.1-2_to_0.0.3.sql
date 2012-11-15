@@ -22,7 +22,7 @@ USE snowplow ;
 
 SELECT 
 	-- App
-	null as `app_id`, -- 'lookup' is a varchar optimisation
+	null AS `app_id`, -- 'lookup' is a varchar optimisation
 	`platform`,
 	-- Date/time
 	`dt`,
@@ -37,7 +37,7 @@ SELECT
 	-- User and visit
 	`user_id`,
 	`user_ipaddress`,
-	null as `user_fingerprint`, -- New in 0.0.3
+	null AS `user_fingerprint`, -- New in 0.0.3
 	`visit_id`,
 	-- Page
 	`page_url`,
@@ -70,6 +70,8 @@ SELECT
 	`ti_category`,
 	`ti_price`,
 	`ti_quantity`,
+	-- User Agent
+	null AS `useragent`, -- New in 0.0.3
 	-- Browser
 	`br_name`,
 	`br_family`,
@@ -87,19 +89,19 @@ SELECT
 	`br_features_gears`,
 	`br_features_silverlight`,
 	`br_cookies`,
-	null as `br_colordepth`, -- New in 0.0.3
+	null AS `br_colordepth`, -- New in 0.0.3
 	-- Operating System
 	`os_name`,
 	`os_family`,
 	`os_manufacturer`,
-	null as `os_timezone`, -- New in 0.0.3
+	null AS `os_timezone`, -- New in 0.0.3
 	-- Device/Hardware
 	`dvce_type`,
 	`dvce_ismobile`,
 	`dvce_screenwidth`,
 	`dvce_screenheight`
-FROM events INTO OUTFILE ‘/tmp/events_0.0.3’
+FROM events INTO OUTFILE ‘/tmp/events_003’
 FIELDS TERMINATED BY ‘|’;
 
-LOAD DATA INFILE ‘/tmp/events_0.0.3’ INTO TABLE events_003
+LOAD DATA INFILE ‘/tmp/events_003’ INTO TABLE events_003
 FIELDS TERMINATED BY ‘|’;
