@@ -58,7 +58,11 @@ module SnowPlow
           Sluice::Storage::files_between(config[:start], config[:end], CF_DATE_FORMAT, CF_FILE_EXT)
         end
 
-        Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move)
+        if config[:safe]
+          Sluice::Storage::S3::copy_files(s3, in_location, processing_location, files_to_move)
+        else
+          Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move)
+        end
 
         # Wait for s3 to eventually become consistant
         puts "Waiting a minute to allow S3 to settle (eventual consistency)"
@@ -95,7 +99,11 @@ module SnowPlow
         }
 
         # Move all the files in the Processing Bucket
-        Sluice::Storage::S3::move_files(s3, processing_location, archive_location, '.+', add_date_path)
+        if config[:safe]
+          Sluice::Storage::S3::copy_files(s3, processing_location, archive_location, '.+', add_date_path)
+        else
+          Sluice::Storage::S3::move_files(s3, processing_location, archive_location, '.+', add_date_path)
+        end
 
       end
       module_function :archive_logs
