@@ -13,9 +13,10 @@ JS tracker: broke out .js into multiple files (#55)           -- DONE
 EmrEtlRunner: bumped to 0.0.6                                 -- DONE
 EmrEtlRunner: --skip takes multiple args (part of #83, supercedes #80)        -- DONE
 EmrEtlRunner: add --process-bucket to process a bucket directly (part of #83) -- DONE
-Serde: bumped to 0.5.2                                        -- 
+Serde: bumped to 0.5.2                                        -- DONE
 Serde: now extracts color depth, timezone and fingerprint fields -- 
 Serde: added useragent into ETL (#68)                         --
+Serde: now extracts platform field                            -- 
 HiveQL: hive-rolling-etl.q bumped to 0.5.1                    -- DONE
 HiveQL: non-hive-rolling-etl.q bumped to 0.0.3                -- DONE
 HiveQL: now extracts color depth, timezone and fingerprint fields -- DONE
