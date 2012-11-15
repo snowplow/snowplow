@@ -107,7 +107,7 @@ INSERT INTO TABLE `events`
 PARTITION (dt)
 SELECT
 app_id,
-NULL as platform,
+platform, -- Now available for 0.5.1
 dt AS dt_dt,
 tm,
 NULL as event, -- Renamed in 0.0.3

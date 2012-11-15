@@ -142,7 +142,7 @@ dvce_ismobile,
 dvce_screenwidth,
 dvce_screenheight,
 app_id,
-NULL as platform,
+platform, -- Now available for 0.5.1
 NULL as event, -- Renamed in 0.5.1
 v_tracker,
 v_collector,
