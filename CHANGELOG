@@ -16,11 +16,11 @@ EmrEtlRunner: add --process-bucket to process a bucket directly (part of #83) --
 Serde: bumped to 0.5.2                                        -- 
 Serde: now extracts color depth, timezone and fingerprint fields -- 
 Serde: added useragent into ETL (#68)                         --
-HiveQL: hive-rolling-etl.q bumped to 0.5.1                    -- 
-HiveQL: non-hive-rolling-etl.q bumped to 0.0.3                -- 
-HiveQL: now extracts color depth, timezone and fingerprint fields --
-HiveQL: now includes raw useragent as a separate field (#68)  --   
-HiveQL: event_name field renamed to event                     --
+HiveQL: hive-rolling-etl.q bumped to 0.5.1                    -- DONE
+HiveQL: non-hive-rolling-etl.q bumped to 0.0.3                -- DONE
+HiveQL: now extracts color depth, timezone and fingerprint fields -- DONE
+HiveQL: now includes raw useragent as a separate field (#68)  -- DONE
+HiveQL: event_name field renamed to event                     -- DONE
 Infobright: bumped setup_infobright.sql to 0.0.3              -- DONE
 Infobright: added migration script (0.0.1/2 -> 0.0.3)         -- DONE
 Infobright: now includes color depth, timezone and fingerprint fields -- DONE
