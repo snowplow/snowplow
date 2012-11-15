@@ -16,6 +16,10 @@
 -- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
 -- License:     Apache License Version 2.0
 
+-- Note: Infobright does not support MySQL-like ALTER TABLE statements
+-- Approach below follows recommended best practice for ICE:
+-- http://www.infobright.org/images/uploads/blogs/how-to/How_To_ALTER_TABLE_in_Infobright.pdf
+
 USE snowplow ;
 
 SELECT 
