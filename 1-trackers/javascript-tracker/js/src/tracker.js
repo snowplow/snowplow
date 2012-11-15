@@ -462,7 +462,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			'&p=Web' +
 			'&tid=' + String(Math.random()).slice(2, 8) +
 			'&uid=' + uuid +
-			'&fp='  + fingerprint +
+			'&fp='  + SnowPlow.encodeWrapper(fingerprint) +
 			'&vid=' + visitCount +
 			'&tv='  + SnowPlow.encodeWrapper(SnowPlow.version) +
 			(configTrackerSiteId.length ? '&aid=' + SnowPlow.encodeWrapper(configTrackerSiteId) : '') +
@@ -478,7 +478,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		}
 
         // Add in timezone
-		request += '&tz=' + timezone;
+		request += '&tz=' + SnowPlow.encodeWrapper(timezone);
 
 		// Finally add the page URL
 		request += '&url=' + SnowPlow.encodeWrapper(purify(window.location));
@@ -937,7 +937,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 */
 	function detectTimezone() {
 		var tz = jstz.determine();  
-        return (typeof (tz) === 'undefined') ? '' : SnowPlow.encodeWrapper(tz.name());
+        return (typeof (tz) === 'undefined') ? '' : tz.name();
 	}
 
 	/*
