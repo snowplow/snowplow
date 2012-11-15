@@ -22,7 +22,7 @@ module SnowPlow
 
       # Constants for the load process
       EVENT_FIELD_SEPARATOR = "\t"
-      EVENT_FIELD_ENCLOSER  = "" # No encloser
+      EVENT_FIELD_ENCLOSER  = "NULL" # Explicitly specify no encloser. Empty quotes won't work. See https://github.com/snowplow/snowplow/issues/88 for details
 
       # Loads the SnowPlow event files into Infobright.
       #

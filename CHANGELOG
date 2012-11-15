@@ -13,6 +13,8 @@ JS tracker: broke out .js into multiple files (#55)
 EmrEtlRunner: bumped to 0.0.6
 EmrEtlRunner: --skip takes multiple args (part of #83, supercedes #80)
 EmrEtlRunner: add --process-bucket to process a bucket directly (part of #83)
+StorageLoader: bumped to 0.0.2
+StorageLoader: changed the data file encloser to NULL (#88)
 Serde: bumped to 0.5.2
 Serde: now extracts color depth, timezone and fingerprint fields
 Serde: added useragent into ETL (#68)
