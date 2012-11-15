@@ -243,10 +243,35 @@ SnowPlow.build = function () {
 		* it takes a SnowPlow account ID, and constructs the
 		* Url from it. (We do not use siteIds as part of SnowPlow)
 		*
-		* @param string accountId
+		* DEPRECATED: use getTrackerCf or getTrackerUrl instead 
+		*
+		* @param string distSubdomain The subdomain on your CloudFront collector's distribution
 		*/
-		getTracker: function (accountId) {
-			return new SnowPlow.Tracker(accountId);
+		getTracker: function (distSubdomain) {
+			if (typeof console !== 'undefined') {
+				console.log("SnowPlow: getTracker() is deprecated and will be removed in an upcoming version. Please use getTrackerCf() instead.");
+			}
+			return new SnowPlow.Tracker({cf: distSubdomain});
+		},
+
+		/**
+		* Returns a Tracker object, configured with a
+		* CloudFront collector.
+		*
+		* @param string distSubdomain The subdomain on your CloudFront collector's distribution
+		*/
+		getTrackerCf: function (distSubdomain) {
+			return new SnowPlow.Tracker({cf: distSubdomain});
+		},
+
+		/**
+		* Returns a Tracker object, configured with the
+		* URL to the collector to use.
+		*
+		* @param string rawUrl The collector URL minus protocol and /i
+		*/
+		getTrackerUrl: function (rawUrl) {
+			return new SnowPlow.Tracker({url: rawUrl});
 		},
 
 		/**

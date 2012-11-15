@@ -35,12 +35,17 @@
 /*
  * SnowPlow Tracker class
  *
- * cfDistSubdomain is an optional argument to the constructor
+ * Takes an argmap as its sole parameter. Argmap supports:
  *
- * See: Tracker.setCollectorUrl() and Tracker.setCollectorCf()
+ * 1. Empty             - to initialize an Async Tracker
+ * 2. {cf: 'subdomain'} - to initialize a Sync Tracker with
+ *                        a CloudFront-based collector 
+ * 3. {url: 'rawurl'}   - to initialize a Sync Tracker with a
+ *                        URL-based collector
+ *
+ * See also: Tracker.setCollectorUrl() and Tracker.setCollectorCf()
  */
-// TODO: make it possible to initialize with a URL (issue #44)
-SnowPlow.Tracker = function Tracker(cfDistSubdomain) {
+SnowPlow.Tracker = function Tracker(argmap) {
 
 	/************************************************************
 	 * Private members
@@ -63,8 +68,8 @@ SnowPlow.Tracker = function Tracker(cfDistSubdomain) {
 		// Request method is always GET for SnowPlow
 		configRequestMethod = 'GET',
 
-		// Tracker URL
-		configCollectorUrl = collectorUrlFromCfDist(cfDistSubdomain), // Updated for SnowPlow
+		// SnowPlow collector URL
+		configCollectorUrl = constructCollectorUrl(argmap),
 
 		// Site ID
 		configTrackerSiteId = '', // Updated for SnowPlow. Starting long road to full removal
@@ -169,6 +174,21 @@ SnowPlow.Tracker = function Tracker(cfDistSubdomain) {
 		// Will be committed, sent and emptied by a call to trackTrans.
 		ecommerceTransaction = ecommerceTransactionTemplate();
 
+	/**
+	 * Determines how to build our collector URL,
+	 * based on the argmap passed into the
+	 * Tracker's constructor.
+	 */
+	function constructCollectorUrl(argmap) {
+		if (typeof argmap === "undefined") {
+			return null; // JavaScript joys, changing an undefined into a null
+		} else if ('cf' in argmap) {
+			return collectorUrlFromCfDist(argmap.cf);
+		} else if ('url' in argmap) {
+			return asCollectorUrl(argmap.url);
+		}
+	}
+
 	/*
 	 * Initializes an empty ecommerce
 	 * transaction and line items
@@ -265,8 +285,17 @@ SnowPlow.Tracker = function Tracker(cfDistSubdomain) {
 	 * A web bug/beacon is a transparent, single pixel (1x1) image
 	 */
 	function getImage(request) {
+
 		var image = new Image(1, 1);
 
+		// Let's chec that we have a Url to ping
+		if (configCollectorUrl === null) {
+			throw "No SnowPlow collector configured, cannot track";
+		} else {
+			console.log(configCollectorUrl);
+		}
+
+		// Okay? Let's proceed.
 		image.onload = function () { };
 		image.src = configCollectorUrl + '?' + request;
 	}
@@ -465,17 +494,6 @@ SnowPlow.Tracker = function Tracker(cfDistSubdomain) {
 	}
 
 	/**
-	 * Adds the protocol in front of our collector URL, and i to the end
-	 *
-	 * @param string rawUrl The collector URL without protocol
-	 *
-	 * @return string collectorUrl The tracker URL with protocol
-	 */
-	function asCollectorUrl(rawUrl) {
-			return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + rawUrl + '/i';               
-	}
-
-	/**
 	 * Builds a collector URL from a CloudFront distribution.
 	 * We don't bother to support custom CNAMEs because Amazon CloudFront doesn't support that for SSL.
 	 *
@@ -485,6 +503,17 @@ SnowPlow.Tracker = function Tracker(cfDistSubdomain) {
 	 */
 	function collectorUrlFromCfDist(distSubdomain) {
 			return asCollectorUrl(distSubdomain + '.cloudfront.net');
+	}
+
+	/**
+	 * Adds the protocol in front of our collector URL, and i to the end
+	 *
+	 * @param string rawUrl The collector URL without protocol
+	 *
+	 * @return string collectorUrl The tracker URL with protocol
+	 */
+	function asCollectorUrl(rawUrl) {
+			return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + rawUrl + '/i';               
 	}
 
 	/**
@@ -1328,7 +1357,7 @@ SnowPlow.Tracker = function Tracker(cfDistSubdomain) {
 		 * DEPRECATED - will be removed in a future release.
 		 * See issue #32 for details. 
 		 *
-		 * @param string distSubdomain
+		 * @param string distSubdomain The subdomain on your CloudFront collector's distribution
 		 */
 		// TODO: change to setAccountId for consistency (BREAKING CHANGE)
 		setAccount: function (distSubdomain) {
@@ -1341,7 +1370,7 @@ SnowPlow.Tracker = function Tracker(cfDistSubdomain) {
 		/**
 		 * Configure this tracker to log to a CloudFront collector. 
 		 *
-		 * @param string distSubdomain
+		 * @param string distSubdomain The subdomain on your CloudFront collector's distribution
 		 */
 		setCollectorCf: function (distSubdomain) {
 			configCollectorUrl = collectorUrlFromCfDist(distSubdomain);
