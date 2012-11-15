@@ -7,6 +7,7 @@ JS tracker: added tracker version (`tv`) to querystring (#41) -- DONE
 JS tracker: added color depth tracking (part of #69)          -- DONE
 JS tracker: added timezone tracking (part of #69)             -- DONE
 JS tracker: added user fingerprinting (#70)                   -- DONE
+JS tracker: added setCollectorCf() and deprecated setAccount() (part of #32) -- DONE
 JS tracker: added social tracking (#47)                       -- 
 JS tracker: now passing the event type on querystring as `e`  -- 
 EmrEtlRunner: bumped to 0.0.6                                 -- DONE

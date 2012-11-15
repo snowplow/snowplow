@@ -35,11 +35,12 @@
 /*
  * SnowPlow Tracker class
  *
- * accountId is an optional argument to the constructor
+ * cfDistSubdomain is an optional argument to the constructor
  *
- * See: Tracker.setCollectorUrl() and Tracker.setAccount()
+ * See: Tracker.setCollectorUrl() and Tracker.setCollectorCf()
  */
-SnowPlow.Tracker = function Tracker(accountId) {
+// TODO: make it possible to initialize with a URL (issue #44)
+SnowPlow.Tracker = function Tracker(cfDistSubdomain) {
 
 	/************************************************************
 	 * Private members
@@ -63,7 +64,7 @@ SnowPlow.Tracker = function Tracker(accountId) {
 		configRequestMethod = 'GET',
 
 		// Tracker URL
-		configCollectorUrl = collectorUrlFromAccountId(accountId), // Updated for SnowPlow
+		configCollectorUrl = collectorUrlFromCfDist(cfDistSubdomain), // Updated for SnowPlow
 
 		// Site ID
 		configTrackerSiteId = '', // Updated for SnowPlow. Starting long road to full removal
@@ -475,16 +476,15 @@ SnowPlow.Tracker = function Tracker(accountId) {
 	}
 
 	/**
-	 * Builds a collector URL from an account ID.
-	 * The trick here is that each account ID is in fact the subdomain on a specific Amazon CloudFront URL.
+	 * Builds a collector URL from a CloudFront distribution.
 	 * We don't bother to support custom CNAMEs because Amazon CloudFront doesn't support that for SSL.
 	 *
 	 * @param string account The account ID to build the tracker URL from
 	 *
 	 * @return string The URL on which the collector is hosted
 	 */
-	function collectorUrlFromAccountId(accountId) {
-			return asCollectorUrl(accountId + '.cloudfront.net');
+	function collectorUrlFromCfDist(distSubdomain) {
+			return asCollectorUrl(distSubdomain + '.cloudfront.net');
 	}
 
 	/**
@@ -1323,13 +1323,28 @@ SnowPlow.Tracker = function Tracker(accountId) {
 
 		/**
 		 * Specify the SnowPlow tracking account. We use the account ID
-		 * to define the tracker URL for SnowPlow. 
+		 * to define the tracker URL for SnowPlow.
 		 *
-		 * @param string accountId
+		 * DEPRECATED - will be removed in a future release.
+		 * See issue #32 for details. 
+		 *
+		 * @param string distSubdomain
 		 */
 		// TODO: change to setAccountId for consistency (BREAKING CHANGE)
-		setAccount: function (accountId) {
-			configCollectorUrl = collectorUrlFromAccountId(accountId);
+		setAccount: function (distSubdomain) {
+			if (typeof console !== 'undefined') {
+				console.log("SnowPlow: setAccount() is deprecated and will be removed in an upcoming version. Please use setCollectorCf() instead.");
+			}
+			configCollectorUrl = collectorUrlFromCfDist(distSubdomain);
+		},
+
+		/**
+		 * Configure this tracker to log to a CloudFront collector. 
+		 *
+		 * @param string distSubdomain
+		 */
+		setCollectorCf: function (distSubdomain) {
+			configCollectorUrl = collectorUrlFromCfDist(distSubdomain);
 		},
 
 		/**
