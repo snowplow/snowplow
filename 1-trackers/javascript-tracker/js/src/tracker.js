@@ -127,11 +127,11 @@ SnowPlow.Tracker = function Tracker(accountId) {
 		// Life of the referral cookie (in milliseconds)
 		configReferralCookieTimeout = 15768000000, // 6 months
 
-		// Browser language (or Windows language for IE). Imperfect but CloudFront doesn't log the Accept-Language header
-		configBrowserLanguage = SnowPlow.navigatorAlias.userLanguage || SnowPlow.navigatorAlias.language,
-
 		// Should cookies have the secure flag set
 		cookieSecure = SnowPlow.documentAlias.location.protocol === 'https',
+
+		// Browser language (or Windows language for IE). Imperfect but CloudFront doesn't log the Accept-Language header
+		browserLanguage = SnowPlow.navigatorAlias.userLanguage || SnowPlow.navigatorAlias.language,
 
 		// Browser features via client-side data collection
 		browserFeatures = detectBrowserFeatures(),
@@ -429,13 +429,14 @@ SnowPlow.Tracker = function Tracker(accountId) {
 
 		// Build out the rest of the request
 		request += 
+			'&p=Web' +
 			'&tid=' + String(Math.random()).slice(2, 8) +
 			'&uid=' + uuid +
 			'&fp='  + fingerprint +
 			'&vid=' + visitCount +
 			'&tv='  + SnowPlow.encodeWrapper(SnowPlow.version) +
 			(configTrackerSiteId.length ? '&aid=' + SnowPlow.encodeWrapper(configTrackerSiteId) : '') +
-			'&lang=' + configBrowserLanguage +
+			'&lang=' + browserLanguage +
 			(configReferrerUrl.length ? '&refr=' + SnowPlow.encodeWrapper(purify(configReferrerUrl)) : '');
 
 		// Browser features. Cookies, color depth and resolution don't get prepended with f_ (because they're not optional features)
