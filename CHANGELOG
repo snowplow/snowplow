@@ -21,6 +21,7 @@ HiveQL: hive-rolling-etl.q bumped to 0.5.1
 HiveQL: non-hive-rolling-etl.q bumped to 0.0.3
 HiveQL: now extracts color depth, timezone and fingerprint fields
 HiveQL: now includes raw useragent as a separate field (#68)
+HiveQL: platform field no longer a placeholder
 HiveQL: event_name field renamed to event
 Infobright: bumped setup_infobright.sql to 0.0.3
 Infobright: added migration script (0.0.1/2 -> 0.0.3)
