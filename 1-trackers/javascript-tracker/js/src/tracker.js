@@ -68,6 +68,9 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		// Request method is always GET for SnowPlow
 		configRequestMethod = 'GET',
 
+		// Platform is always web for this tracker
+		configPlatform = 'web',
+
 		// SnowPlow collector URL
 		configCollectorUrl = constructCollectorUrl(argmap),
 
@@ -459,7 +462,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 		// Build out the rest of the request
 		request += 
-			'&p=Web' +
+			'&p=' + configPlatform +
 			'&tid=' + String(Math.random()).slice(2, 8) +
 			'&uid=' + uuid +
 			'&fp='  + SnowPlow.encodeWrapper(fingerprint) +
