@@ -22,13 +22,14 @@ USE snowplow ;
 
 CREATE TABLE IF NOT EXISTS events_003 (
 	-- App
-	`app_id` varchar(255) comment 'lookup', -- 'lookup' is a varchar optimisation
+	`app_id` varchar(255) comment 'lookup', -- 'lookup' is a varchar optimisation for Infobright
 	`platform` varchar(50) comment 'lookup',
 	-- Date/time
 	`dt` date,
 	`tm` time,
 	-- Event
 	`event` varchar(255) comment 'lookup', -- Renamed in 0.0.3
+	`event_id` varchar(38) comment 'lookup', -- Added in 0.0.3
 	`txn_id` int,
 	-- Versioning
 	`v_tracker` varchar(100) comment 'lookup',

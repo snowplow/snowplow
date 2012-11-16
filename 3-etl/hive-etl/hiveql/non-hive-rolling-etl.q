@@ -32,6 +32,7 @@ platform string,
 dt_dt string,
 tm string,
 event string, -- Renamed in 0.0.3
+event_id string, -- Added in 0.0.3
 txn_id string,
 v_tracker string,
 v_collector string,
@@ -111,6 +112,7 @@ platform, -- Now available for 0.5.1
 dt AS dt_dt,
 tm,
 NULL as event, -- Renamed in 0.0.3
+NULL as event_id, -- Added in 0.0.3
 txn_id,
 v_tracker,
 v_collector,

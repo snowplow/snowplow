@@ -81,6 +81,7 @@ v_tracker string,
 v_collector string,
 v_etl string,
 -- Added in 0.5.1
+event_id string
 user_fingerprint string,
 useragent string,
 br_colordepth string,
@@ -148,6 +149,7 @@ v_tracker,
 v_collector,
 v_etl,
 -- Added in 0.5.1
+NULL as event_id,
 user_fingerprint,
 useragent,
 br_colordepth,

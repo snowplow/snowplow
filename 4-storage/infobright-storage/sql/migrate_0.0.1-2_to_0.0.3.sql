@@ -31,6 +31,7 @@ SELECT
 	`tm`,
 	-- Event
 	`event_name`, -- Renamed in 0.0.3 to event
+	null AS `event_id`, -- New in 0.0.3
 	`txn_id`,
 	-- Versioning
 	`v_tracker`,
