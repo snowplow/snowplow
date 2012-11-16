@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    snowplow-storage-loader (0.0.1)
+    snowplow-storage-loader (0.0.2)
       infobright-loader (~> 0.0.1)
       sluice (~> 0.0.4)
 
