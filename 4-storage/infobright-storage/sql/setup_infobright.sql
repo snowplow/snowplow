@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS events_003 (
 	`ti_price` dec(18,2),
 	`ti_quantity` int,
 	-- User Agent
-	`useragent` (2083) comment 'lookup', -- New in 0.0.3
+	`useragent` varchar(2083) comment 'lookup', -- New in 0.0.3
 	-- Browser
 	`br_name` varchar(50) comment 'lookup',
 	`br_family` varchar(50) comment 'lookup',

@@ -103,8 +103,8 @@ SELECT
 	`dvce_ismobile`,
 	`dvce_screenwidth`,
 	`dvce_screenheight`
-FROM events INTO OUTFILE ‘/tmp/events_003’
-FIELDS TERMINATED BY ‘|’;
+FROM events INTO OUTFILE '/tmp/events_003'
+FIELDS TERMINATED BY '|';
 
-LOAD DATA INFILE ‘/tmp/events_003’ INTO TABLE events_003
-FIELDS TERMINATED BY ‘|’;
+LOAD DATA INFILE '/tmp/events_003' INTO TABLE events_003
+FIELDS TERMINATED BY '|';
