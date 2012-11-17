@@ -41,12 +41,11 @@
    If domain is nil, leave out so the FQDN
    of the host can be used instead"
   [id duration domain]
-;  (merge
+  (merge
     {:value    id
-     :expires (now-plus duration)})
-;   (when-let [domain nil]
-;    {:domain   domain})))
-
+     :expires (now-plus duration)}
+   (when-let [domain nil]
+    {:domain   domain})))
 
 (defn- generate-id
   "Checks `cookies` and generates a uuid for the visitor as necessary"

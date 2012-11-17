@@ -17,11 +17,12 @@
   "Gets environment variables, using
    sensible defaults where necessary")
 
-;; Beanstalk only has 4 slots for environment variables
+;; Note Beanstalk only has 4 'slots' in the UI for environment variables
 (def ^:const env-varname "SP_ENV")
 (def ^:const p3p-varname "SP_P3P")
 (def ^:const domain-varname "SP_DOMAIN")
 (def ^:const duration-varname "SP_DURATION")
+(def ^:const redirect-varname "SP_REDIRECT")
 ; Don't add any more!
 
 ;; Defaults
