@@ -52,9 +52,9 @@
   [cookies]
   (get (cookies cookie-name) :value (uuid)))
 
-(defn send-cookie-and-pixel
-  "Respond with a transparent pixel and the cookie"
-  [cookies duration domain p3p-header]
+(defn send-cookie-and-pixel-or-redirect
+  "Respond with the cookie and either a transparent pixel or a redirect"
+  [cookies duration domain p3p-header] ; TODO: add in redirect support
   (let [id (generate-id cookies)
         cookie-contents (set-cookie id duration domain)]
     {:status  200
