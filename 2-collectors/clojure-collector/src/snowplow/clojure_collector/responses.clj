@@ -49,12 +49,19 @@
     {:domain   domain})))
 
 (defn- generate-id
-  "Checks `cookies` and generates a uuid for the visitor as necessary"
+  "Checks `cookies` and generates a uuid
+   for the visitor as necessary"
   [cookies]
   (get (cookies cookie-name) :value (uuid)))
 
+(defn- attach-id
+  "Attach a user `id` to the redirect `url`"
+  [url id]
+    (str url "&" id-name "=" id))
+
 (defn- send-pixel
-  "Respond wtih a transparent pixel"
+  "Respond with a transparent pixel,
+   attaching `cookies` and `headers`"
   [cookies headers]
     {:status  200
      :headers (assoc headers
@@ -64,27 +71,26 @@
      :body    (ByteArrayInputStream. pixel)})   
 
 (defn- send-redirect
-  "Respond wtih a 303 redirect"
+  "Respond wtih a 303 redirect,
+   attaching `cookies` and `headers`"
   [cookies headers url]
     {:status  303
      :headers (assoc headers
                     "Location" url)
      :cookies cookies
-     :body    ""})   
-
-(defn- attach-id
-  "Attach a user ID to the redirect"
-  [url id]
-    (str url "&" id-name "=" id))
+     :body    ""})
 
 (defn send-cookie-and-pixel-or-redirect
-  "Respond with the cookie and either a transparent pixel or a redirect"
-  [cookies duration domain p3p-header] ; TODO: add in redirect support
+  "Respond with the cookie and either a
+   transparent pixel or a redirect"
+  [cookies duration domain p3p-header url]
   (let [id      (generate-id cookies)
         cookies {cookie-name (set-cookie id duration domain)}
         headers {"P3P" p3p-header}]
-    ;(send-pixel cookies headers)))
-    (send-redirect cookies headers (attach-id "http://localhost:3000/status?" id))))
+    (if (nil? url)
+        (send-pixel cookies headers)
+        (send-redirect cookies headers (attach-id url id)))))
+
 
 (def send-404
   "Respond with a 404"

@@ -34,12 +34,14 @@
    cookie should last for"
   (get (System/getenv) duration-varname default-duration))
 
-
 (def p3p-header
   "Get the P3P header.
    Return a default P3P policy if not set"
   (get (System/getenv) p3p-varname default-p3p-header))
 
+(def redirect-url
+  "Get the redirect URL. Can be nil"
+  (get (System/getenv) redirect-varname))
 
 (def production?
   "Running in production?"
@@ -48,7 +50,6 @@
 (def development?
   "Running in development environment?"
   (not production?))
-
 
 (def domain
   "Get the domain the name cookies will be set on.

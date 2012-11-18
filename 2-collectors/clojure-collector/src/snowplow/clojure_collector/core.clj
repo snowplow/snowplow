@@ -13,6 +13,9 @@
 ;;;; Copyright: Copyright (c) 2012 SnowPlow Analytics Ltd
 ;;;; License:   Apache License Version 2.0
 
+;; TODO: need to change the below so that config variables are
+;;       read ONCE - not checked on every response. 
+
 (ns snowplow.clojure-collector.core
   "Core app handler"
   (:use [compojure.core          :only [defroutes GET]]
@@ -32,7 +35,8 @@
     cookies
     config/duration
     config/domain
-    config/p3p-header))
+    config/p3p-header
+    config/redirect-url))
 
 (defroutes routes
   "Our main routes - see also beanstalk.clj plus expose-metrics-as-json"
