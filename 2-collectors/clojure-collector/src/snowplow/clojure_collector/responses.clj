@@ -21,6 +21,7 @@
            (java.util UUID)))
 
 (def ^:const cookie-name "sp")
+(def ^:const id-name "uid")
 
 (def pixel (Base64/decodeBase64 (.getBytes "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="))) ; Can't define ^:const on this as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
 (def ^:const pixel-length (str (alength pixel)))
@@ -52,18 +53,38 @@
   [cookies]
   (get (cookies cookie-name) :value (uuid)))
 
+(defn- send-pixel
+  "Respond wtih a transparent pixel"
+  [cookies headers]
+    {:status  200
+     :headers (assoc headers
+                    "Content-Type"   "image/gif"
+                    "Content-Length"  pixel-length)
+     :cookies cookies
+     :body    (ByteArrayInputStream. pixel)})   
+
+(defn- send-redirect
+  "Respond wtih a 303 redirect"
+  [cookies headers url]
+    {:status  303
+     :headers (assoc headers
+                    "Location" url)
+     :cookies cookies
+     :body    ""})   
+
+(defn- attach-id
+  "Attach a user ID to the redirect"
+  [url id]
+    (str url "&" id-name "=" id))
+
 (defn send-cookie-and-pixel-or-redirect
   "Respond with the cookie and either a transparent pixel or a redirect"
   [cookies duration domain p3p-header] ; TODO: add in redirect support
-  (let [id (generate-id cookies)
-        cookie-contents (set-cookie id duration domain)]
-    {:status  200
-     :headers {"Content-Type"   "image/gif"
-               "P3P"             p3p-header
-               "Content-Length"  pixel-length}
-     :cookies {cookie-name cookie-contents}
-     :body    (ByteArrayInputStream. pixel)}))
-
+  (let [id      (generate-id cookies)
+        cookies {cookie-name (set-cookie id duration domain)}
+        headers {"P3P" p3p-header}]
+    ;(send-pixel cookies headers)))
+    (send-redirect cookies headers (attach-id "http://localhost:3000/status?" id))))
 
 (def send-404
   "Respond with a 404"
