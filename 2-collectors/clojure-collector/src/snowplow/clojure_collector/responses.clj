@@ -45,8 +45,8 @@
   (merge
     {:value    id
      :expires (now-plus duration)}
-   (when-let [domain nil]
-    {:domain   domain})))
+   (when-let [d domain]
+    {:domain   d})))
 
 (defn- generate-id
   "Checks `cookies` and generates a uuid
