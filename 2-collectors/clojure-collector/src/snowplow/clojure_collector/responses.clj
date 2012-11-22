@@ -80,7 +80,7 @@
      :cookies cookies
      :body    ""})
 
-(defn send-cookie-and-pixel-or-redirect
+(defn send-cookie-etc
   "Respond with the cookie and either a
    transparent pixel or a redirect"
   [cookies duration domain p3p-header url]

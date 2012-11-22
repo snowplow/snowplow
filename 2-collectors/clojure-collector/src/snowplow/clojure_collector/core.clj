@@ -27,11 +27,11 @@
             [snowplow.clojure-collector.responses :as responses]
             [snowplow.clojure-collector.config    :as config]))
 
-(defn- send-cookie-and-pixel-or-redirect'
+(defn- send-cookie-etc'
   "Wrapper for send-cookie-and-pixel-or-redirect, pulling
    in the configuration settings"
   [cookies]
-  (responses/send-cookie-and-pixel-or-redirect
+  (responses/send-cookie-etc
     cookies
     config/duration
     config/domain
@@ -40,8 +40,8 @@
 
 (defroutes routes
   "Our main routes - see also beanstalk.clj plus expose-metrics-as-json"
-  (GET "/i"           {c :cookies} (send-cookie-and-pixel-or-redirect' c))
-  (GET "/ice.png"     {c :cookies} (send-cookie-and-pixel-or-redirect' c)) ; legacy name for i
+  (GET "/i"           {c :cookies} (send-cookie-etc' c))
+  (GET "/ice.png"     {c :cookies} (send-cookie-etc' c)) ; legacy name for i
   (GET "/healthcheck" request responses/send-200)
   ;  + "/status"      provided by expose-metrics-as-json
   (compojure.route/not-found  responses/send-404))
