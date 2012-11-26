@@ -18,34 +18,40 @@
    sensible defaults where necessary")
 
 ;; Note Beanstalk only has 4 'slots' in the UI for environment variables
-(def ^:const env-varname "SP_ENV")
-(def ^:const p3p-varname "SP_P3P")
-(def ^:const domain-varname "SP_DOMAIN")
-(def ^:const duration-varname "SP_DURATION")
-(def ^:const redirect-varname "SP_REDIRECT")
-; Don't add any more!
+(def ^:const env-varnames ["PARAM1", "SP_ENV"])
+(def ^:const p3p-varnames ["PARAM2", "SP_P3P"])
+(def ^:const domain-varnames ["PARAM3", "SP_DOMAIN"])
+(def ^:const duration-varnames ["PARAM4", "SP_DURATION"])
+; If you add any more, they won't be settable in the Beanstalk UI.
 
 ;; Defaults
 (def ^:const default-p3p-header "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\"")
 (def ^:const default-duration 31556900) ; A year
 
+(defn- get-env
+  "Try both options for each
+   environment varname. Supports
+   optional `default` as fallback"
+  ([varnames] (get-env varnames nil))
+  ([varnames default]
+    (let [env (System/getenv)]
+      (get env (first varnames)
+        (get env (second varnames)
+          default)))))
+
 (def duration
   "Get the duration (in seconds) the
    cookie should last for"
-  (get (System/getenv) duration-varname default-duration))
+  (get-env duration-varnames default-duration))
 
 (def p3p-header
   "Get the P3P header.
    Return a default P3P policy if not set"
-  (get (System/getenv) p3p-varname default-p3p-header))
-
-(def redirect-url
-  "Get the redirect URL. Can be nil"
-  (get (System/getenv) redirect-varname))
+  (get-env p3p-varnames default-p3p-header))
 
 (def production?
   "Running in production?"
-  (= "production" (get (System/getenv) env-varname)))
+  (= "production" (get-env env-varnames)))
 
 (def development?
   "Running in development environment?"
@@ -55,4 +61,4 @@
   "Get the domain the name cookies will be set on.
    Can be a wildcard e.g. '.foo.com'.
    If undefined we'll just use the FQDN of the host"
-  (get (System/getenv) domain-varname))
+  (get-env domain-varnames))

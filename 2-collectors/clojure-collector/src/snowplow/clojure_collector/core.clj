@@ -13,22 +13,21 @@
 ;;;; Copyright: Copyright (c) 2012 SnowPlow Analytics Ltd
 ;;;; License:   Apache License Version 2.0
 
-;; TODO: need to change the below so that config variables are
-;;       read ONCE - not checked on every response. 
-
 (ns snowplow.clojure-collector.core
   "Core app handler"
-  (:use [compojure.core          :only [defroutes GET]]
-        [ring.middleware.cookies :only [wrap-cookies]]
-        [ring.middleware.reload  :only [wrap-reload]]
-        [metrics.ring.expose     :only [expose-metrics-as-json]]
-        [metrics.ring.instrument :only [instrument]])
+  (:use [compojure.core              :only [defroutes GET]]
+        [ring.middleware.cookies     :only [wrap-cookies]]
+        [ring.middleware.reload      :only [wrap-reload]]
+        [ring.middleware.stacktrace  :only [wrap-stacktrace]]
+        [metrics.ring.expose         :only [expose-metrics-as-json]]
+        [metrics.ring.instrument     :only [instrument]])
   (:require [compojure handler route]
-            [snowplow.clojure-collector.responses :as responses]
-            [snowplow.clojure-collector.config    :as config]))
+            [snowplow.clojure-collector.responses  :as responses]
+            [snowplow.clojure-collector.config     :as config]
+            [snowplow.clojure-collector.middleware :as mware]))
 
 (defn- send-cookie-etc'
-  "Wrapper for send-cookie-and-pixel-or-redirect, pulling
+  "Wrapper for send-cookie-etc, pulling
    in the configuration settings"
   [cookies]
   (responses/send-cookie-etc
@@ -36,20 +35,26 @@
     config/duration
     config/domain
     config/p3p-header
-    config/redirect-url))
+    nil))
 
 (defroutes routes
-  "Our main routes - see also beanstalk.clj plus expose-metrics-as-json"
+  "Our routes"
   (GET "/i"           {c :cookies} (send-cookie-etc' c))
   (GET "/ice.png"     {c :cookies} (send-cookie-etc' c)) ; legacy name for i
   (GET "/healthcheck" request responses/send-200)
-  ;  + "/status"      provided by expose-metrics-as-json
+  ;GET "/status"      from expose-metrics-as-json
+  ;HEAD "/"           from beanstalk.clj
   (compojure.route/not-found  responses/send-404))
 
 (def app
-  "Our routes plus selected wraps"
+  "Our routes plus selected wraps.
+   See middleware.clj for details"
  (-> #'routes
    (wrap-cookies)
-   (wrap-reload '(snowplow.clojure-collector.core responses)) ; TODO: disable this in production
-   (#(expose-metrics-as-json % "/status")) ; Lambda because needs routes as first arg
+   (mware/wrap-if config/development? wrap-reload '(snowplow.clojure-collector.core snowplow.clojure-collector.middleware responses))
+   (mware/wrap-if config/development? wrap-stacktrace)
+   (mware/wrap-if config/production?  mware/wrap-failsafe)
+   (mware/wrap-request-logging)
+   (mware/wrap-exception-logging)
+   (expose-metrics-as-json "/status")
    (instrument)))

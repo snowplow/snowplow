@@ -88,8 +88,8 @@
         cookies {cookie-name (set-cookie id duration domain)}
         headers {"P3P" p3p-header}]
     (if (nil? url)
-        (send-pixel cookies headers)
-        (send-redirect cookies headers (attach-id url id)))))
+      (send-pixel cookies headers)
+      (send-redirect cookies headers (attach-id url id)))))
 
 
 (def send-404
