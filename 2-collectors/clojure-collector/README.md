@@ -6,7 +6,9 @@ clojure-collector is a SnowPlow event collector for [SnowPlow] [snowplow], writt
 
 There is one major benefit of using clojure-collector over SnowPlow's [CloudFront-based collector] [cloudfront-collector]:
 
-clojure-collector allows the use of a third-party cookie, making user tracking across domains possible for all browsers except mobile Safari; this is something even the Google Analytics JavaScript-set cookie approach struggles with.
+clojure-collector allows the use of a third-party cookie, making user tracking across domains possible. The Cloudfront collector does not support cross domain tracking of users because user ids are set client side, whereas the clojure-collector sets them server side.
+
+Note: this approach to tracking users across domains works on all browsers except mobile Safari; this is something even the Google Analytics JavaScript-set cookie approach struggles with as well.
 
 ## How clojure-collector works
 
@@ -27,17 +29,7 @@ Note that clojure-collector does not contain any logging functionality of its ow
 
 ## Deployment and configuration
 
-Section to come (should be eventually moved to Setup guide).
-
-Before rolling up your own solution, take a look at the valve component that Tomcat supports. In particular, the aptly named RequestDumperValve will log all the request and response headers in Tomcat. To enable the valve, just go to your server.xml file in the /conf directory and uncomment this line:
-
-<Valve className="org.apache.catalina.valves.RequestDumperValve"/>
-
-Then restart your server and the headers will appear in your log file.
-
-http://tomcat.apache.org/tomcat-5.0-doc/config/valve.html
-
-http://tomcat.apache.org/tomcat-5.0-doc/config/valve.html#Request Dumper Valve
+A detailed guide to setting up the Clojure collector on Amazon Elastic Beanstalk, including setting up support for HTTPS and integrating with the Javascript tracker, can be found on the [setup guide][setup-guide].
 
 ## Technical architecture
 
@@ -83,5 +75,6 @@ limitations under the License.
 [cloudfront-collector]: https://github.com/snowplow/snowplow/tree/master/2-collectors/cloudfront-collector
 [snowcannon]: https://github.com/shermozle/SnowCannon
 [snowplow-js]: https://github.com/snowplow/snowplow/tree/master/1-trackers/javascript
+[setup-guide]: https://github.com/snowplow/snowplow/wiki/Setting%20up%20the%20Clojure%20collector#wiki-war-file
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
