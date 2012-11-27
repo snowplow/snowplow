@@ -134,7 +134,7 @@
              Note: The pattern used is equivalent to using pattern="common" -->
         <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
                prefix="localhost_access_log" fileDateFormat="yyyy-MM-dd.HH" suffix=".txt" rotatable="false"
-               pattern="%{yyyy-MM-dd}t&#1;%{hh:mm:ss}t&#1;x-edge-location&#1;%b&#1;%a&#1;%m&#1;%h&#1;%U&#1;%s&#1;%{Referer}i&#1;%{User-Agent}i&#1;%q&amp;uid=%{sp}c&#1;cs(Cookie)&#1;x-edge-result-type&#1;x-edge-request-id "  />
+               pattern="%{yyyy-MM-dd}t&#9;%{hh:mm:ss}t&#9;x-edge-location&#9;%b&#9;%a&#9;%m&#9;%h&#9;%U&#9;%s&#9;%{Referer}i&#9;%{User-Agent}i&#9;%q&amp;uid=%{sp}c&#9;cs(Cookie)&#9;x-edge-result-type&#9;x-edge-request-id "  />
 
         <Valve className="org.apache.catalina.valves.RemoteIpValve" protocolHeader="X-Forwarded-Proto" />
       </Host>
