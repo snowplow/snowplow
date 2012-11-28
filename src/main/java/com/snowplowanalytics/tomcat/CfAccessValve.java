@@ -15,9 +15,12 @@ package com.snowplowanalytics.tomcat;
 
 import org.apache.catalina.valves.AccessLogValve;
 
+// TODO: delete these
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.MatchResult;
+
+import java.net.URLEncoder;
 
 public class CfAccessValve extends AccessLogValve {
 
