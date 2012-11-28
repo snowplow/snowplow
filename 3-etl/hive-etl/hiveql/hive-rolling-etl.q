@@ -9,8 +9,8 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.4.10
--- URL:         s3://snowplow-emr-assets/hive/hiveql/hive-rolling-etl-0.4.10.q
+-- Version:     0.5.1
+-- URL:         s3://snowplow-emr-assets/hive/hiveql/hive-rolling-etl-0.5.1.q
 --
 -- Authors:     Alex Dean, Yali Sassoon, Simon Andersson, Michael Tibben
 -- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
@@ -23,6 +23,7 @@ ADD JAR ${SERDE_FILE} ;
 
 CREATE EXTERNAL TABLE `extracted_logs`
 ROW FORMAT SERDE 'com.snowplowanalytics.snowplow.hadoop.hive.SnowPlowEventDeserializer'
+WITH SERDEPROPERTIES ( 'continue_on_unexpected_error' = '${CONTINUE_ON}')
 LOCATION '${CLOUDFRONT_LOGS}' ;
 
 CREATE EXTERNAL TABLE IF NOT EXISTS `events` (
@@ -73,7 +74,18 @@ dvce_type string,
 dvce_ismobile boolean,
 dvce_screenwidth int,
 dvce_screenheight int,
-app_id string
+app_id string,
+platform string,
+event string, -- Renamed in 0.5.1
+v_tracker string,
+v_collector string,
+v_etl string,
+-- Added in 0.5.1
+event_id string
+user_fingerprint string,
+useragent string,
+br_colordepth string,
+os_timezone string
 )
 PARTITIONED BY (dt STRING)
 LOCATION '${EVENTS_TABLE}' ;
@@ -131,5 +143,17 @@ dvce_ismobile,
 dvce_screenwidth,
 dvce_screenheight,
 app_id,
+platform, -- Now available for 0.5.1
+NULL as event, -- Renamed in 0.5.1
+v_tracker,
+v_collector,
+v_etl,
+-- Added in 0.5.1
+NULL as event_id,
+user_fingerprint,
+useragent,
+br_colordepth,
+os_timezone,
+-- Additions end
 dt
 FROM `extracted_logs` ;

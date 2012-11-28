@@ -1,0 +1,39 @@
+PATH
+  remote: .
+  specs:
+    snowplow-storage-loader (0.0.2)
+      infobright-loader (~> 0.0.1)
+      sluice (~> 0.0.4)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    builder (3.1.4)
+    excon (0.16.7)
+    fog (1.6.0)
+      builder
+      excon (~> 0.14)
+      formatador (~> 0.2.0)
+      mime-types
+      multi_json (~> 1.0)
+      net-scp (~> 1.0.4)
+      net-ssh (>= 2.1.3)
+      nokogiri (~> 1.5.0)
+      ruby-hmac
+    formatador (0.2.4)
+    infobright-loader (0.0.1)
+    mime-types (1.19)
+    multi_json (1.3.7)
+    net-scp (1.0.4)
+      net-ssh (>= 1.99.1)
+    net-ssh (2.6.1)
+    nokogiri (1.5.5)
+    ruby-hmac (0.4.0)
+    sluice (0.0.4)
+      fog (~> 1.6.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  snowplow-storage-loader!

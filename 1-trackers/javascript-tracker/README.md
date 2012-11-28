@@ -18,8 +18,8 @@ Contents of this folder are as follows:
 
 Besides this README, there are two main SnowPlow guides which relate to `snowplow.js`:
 
-* [Integrating snowplow.js into your site] [integrating]
-* [Self-hosting SnowPlow] [selfhosting]
+1. The [Javascript tracker setup guide] [setup] details how to get up and running with the tracker, including [integrating the Javascript tags] [integrating-js-on-website].
+2. The [Javascript tracker technical documentation] [tech-docs] detail how the tracker handles pageview, event, ecomm, social, campaign, error and application tracking, including tracker API details.
 
 ## Main differences between snowplow.js and piwik.js
 
@@ -67,3 +67,6 @@ Licensed under the [Simplified BSD] [bsd] license.
 [bsd]: http://www.opensource.org/licenses/bsd-license.php 
 [integrating]: /snowplow/snowplow/blob/master/docs/03_integrating_snowplowjs.md
 [selfhosting]: /snowplow/snowplow/blob/master/docs/04_selfhosting_snowplow.md
+[setup]: https://github.com/snowplow/snowplow/wiki/javascript-tracker-setup
+[integrating-js-on-website]: https://github.com/snowplow/snowplow/wiki/integrating-javascript-tags-onto-your-website
+[tech-docs]: https://github.com/snowplow/snowplow/wiki/javascript-tracker

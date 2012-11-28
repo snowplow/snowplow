@@ -21,6 +21,10 @@ package test
  */
 class SnowPlowEvent {
 
+  // The application (site, game, app etc) this event belongs to, and the tracker platform
+  var app_id: String = _
+  var platform: String = _
+
   // Date/time
   var dt: String = _
   var tm: String = _
@@ -28,12 +32,10 @@ class SnowPlowEvent {
   // Transaction (i.e. this logging event)
   var txn_id: String = _
 
-  // The application (site, game, app etc) this event belongs to
-  var app_id: String = _
-
   // User and visit
   var user_id: String = _
   var user_ipaddress: String = _
+  var user_fingerprint: String = _
   var visit_id: Int = _
 
   // Page
@@ -55,6 +57,9 @@ class SnowPlowEvent {
   var ev_property: String = _
   var ev_value: String = _
 
+  // User Agent
+  var useragent: String = _
+
   // Browser (from user-agent)
   var br_name: String = _
   var br_family: String = _
@@ -65,16 +70,30 @@ class SnowPlowEvent {
   // Browser (from querystring)
   var br_lang: String = _
   var br_features: List[String] = List[String]()
+  // Individual feature fields for non-Hive targets (e.g. Infobright)
+  var br_features_pdf: Byte = _
+  var br_features_flash: Byte = _
+  var br_features_java: Byte = _
+  var br_features_director: Byte = _
+  var br_features_quicktime: Byte = _
+  var br_features_realplayer: Byte = _
+  var br_features_windowsmedia: Byte = _
+  var br_features_gears: Byte = _
+  var br_features_silverlight: Byte = _
   var br_cookies: Boolean = _
+  var br_cookies_bt: Byte = _
+  var br_colordepth: String = _
 
   // OS (from user-agent)
   var os_name: String = _
   var os_family: String = _
   var os_manufacturer: String = _
+  var os_timezone: String = _
 
   // Device/Hardware (from user-agent)
   var dvce_type: String = _
   var dvce_ismobile: Boolean = _
+  var dvce_ismobile_bt: Byte = _
 
   // Device (from querystring)
   var dvce_screenwidth: Int = _

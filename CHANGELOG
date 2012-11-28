@@ -1,4 +1,79 @@
-Version 0.5.0 (2012-10-23)
+Version 0.6.1 (2012-11-28)
+--------------------------
+JS tracker: bumped to 0.8.0
+JS tracker: rename ice.png to i - BREAKING CHANGE (#29)
+JS tracker: added setCollectorCf() and deprecated setAccount() (#32)
+JS tracker: Tracker constructor now supports Cf or Url (part of #44)
+JS tracker: getTrackerCf() and -Url() added, getTracker() deprecated (part of #44)
+JS tracker: added tracker version (`tv`) to querystring (#41)
+JS tracker: added color depth tracking (part of #69)
+JS tracker: added timezone tracking (part of #69)
+JS tracker: added user fingerprinting (#70)
+JS tracker: broke out .js into multiple files (#55)
+EmrEtlRunner: bumped to 0.0.6
+EmrEtlRunner: --skip takes multiple args (part of #83, supercedes #80)
+EmrEtlRunner: add --process-bucket to process a bucket directly (part of #83)
+StorageLoader: bumped to 0.0.2
+StorageLoader: changed the data file encloser to NULL (#88)
+Serde: bumped to 0.5.2
+Serde: now extracts color depth, timezone and fingerprint fields
+Serde: added useragent into ETL (#68)
+Serde: now extracts platform field
+HiveQL: hive-rolling-etl.q bumped to 0.5.1
+HiveQL: non-hive-rolling-etl.q bumped to 0.0.3
+HiveQL: now extracts color depth, timezone and fingerprint fields
+HiveQL: now includes raw useragent as a separate field (#68)
+HiveQL: platform field no longer a placeholder
+HiveQL: event_name field renamed to event (prep for #89)
+HiveQL: added event_id as a placeholder
+Infobright: bumped setup_infobright.sql to 0.0.3
+Infobright: added migration script (0.0.1/2 -> 0.0.3)
+Infobright: now includes color depth, timezone and fingerprint fields
+Infobright: now includes raw useragent (#68)
+Infobright: event_name field renamed to event
+Infobright: added event_id as a placeholder (prep for #89)
+
+Version 0.6.0 (2012-11-12)
+--------------------------
+EmrEtlRunner: bumped to 0.0.5
+EmrEtlRunner: bumped gem dependencies to match StorageLoader (including Sluice 0.0.4)
+EmrEtlRunner: renamed snowplow-emr-etl.sh to snowplow-emr-etl-runner.sh
+StorageLoader: added. Ruby app to load SnowPlow events into local databases etc
+Serde: bumped to 0.5.1
+Serde: changed all Booleans to Bytes for non-Hive output
+HiveQL: bumped non-hive-rolling-etl.q to 0.0.2
+HiveQL: changed non-hive-rolling-etl.q to use the two _bt Byte fields
+Infobright: bumped setup_infobright.sql to 0.0.2
+Infobright: changed booleans to tinyint(1)s (non-breaking change) 
+
+Version 0.5.2 (2012-11-05)
+--------------------------
+EmrEtlRunner: bump to 0.0.4
+EmrEtlRunner: fixed reference to old version of Hive deserializer in config.yml (fixes #71)
+EmrEtlRunner: fixed bug using sub-folders with the Processing Bucket (fixes #72)
+EmrEtlRunner: can now skip move-files-to-Processing-Bucket or EMR stages (fixes #58)
+EmrEtlRunner: S3 filecopy code now moved to Sluice, an external Ruby gem
+
+Version 0.5.1 (2012-10-31)
+--------------------------
+Data model: stubbed new event_name and platform fields
+Infobright: added setup scripts and docs into 4-storage/infobright (fixes #57)
+Infobright: added version handling (v_tracker, v_collector, v_etl)
+HiveQL: removed hive-exact-etl.q as no longer supported
+HiveQL: added non-hive-rolling-etl.q for Infobright- (and other db-)friendly event file format
+HiveQL: added version handling (v_tracker, v_collector, v_etl) (fixes #42)
+Serde: bumped to 0.5.0
+Serde: updated to avoid throwing exceptions on a bad field, fixes #52 (thanks @mtibben!)
+Serde: moved some exception handling closer to the throw point, pull req #66 (thanks @mtibben!)
+Serde: added continue_on_unexpected_error (thanks @mtibben!)
+Serde: tabs are changed to 4 spaces, fixes #61
+Serde: browser features are now also available as individual fields, for non-hive-rolling-etl.q to use
+Serde: added version handling (v_tracker, v_collector, v_etl)
+EmrEtlRunner: bumped to 0.0.3
+EmrEtlRunner: moved 3 .rb files in lib/ into lib/snowplow-emr-etl-runner
+EmrEtlRunner: added/updated configuration options (:etl: section and hiveql versioning params)
+
+Version 0.5.0 (2012-10-24)
 --------------------------
 Tidied up folder structure inside 3-etl/
 Serde: assembles to /target, not to /upload any more (and jars won't be committed to Git)
@@ -17,6 +92,7 @@ Serde: added support for new application ID (#33)
 Serde: added deserialization of ecommerce fields, plus tests (#34, #51)
 Serde: test suite enhancements (adding Scala helper objects)
 Serde: added tests including #13 and #10
+snowplow.js: bumped to 0.7.0
 snowplow.js: renamed said to aid for application ID
 
 Version 0.4.8 (2012-09-14)

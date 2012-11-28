@@ -1,0 +1,56 @@
+#!/usr/bin/env ruby
+
+# Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+#
+# This program is licensed to you under the Apache License Version 2.0,
+# and you may not use this file except in compliance with the Apache License Version 2.0.
+# You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the Apache License Version 2.0 is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+
+# Author::    Alex Dean (mailto:support@snowplowanalytics.com)
+# Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
+# License::   Apache License Version 2.0
+
+$:.unshift(File.expand_path("../../lib", __FILE__))
+
+require 'snowplow-storage-loader'; loader = SnowPlow::StorageLoader
+
+# This Ruby script runs the SnowPlow StorageLoader.
+#
+# This is a three-step process:
+# 1. Download the SnowPlow event files from In Bucket to the local filesystem
+# 2. Load the SnowPlow event files into the target storage (currently, only Infobright is supported)
+# 3. Archive the processed SnowPlow event files from In Bucket to Archive Bucket
+#
+# Note that each step is only actioned if the previous step succeeded without error.
+begin
+  config = loader::Config.get_config()
+
+  if config[:skip] == :none
+   loader::S3Tasks.download_events(config)
+  end
+
+  unless config[:skip] == :load
+    loader::Loader.load_events(config)
+  end
+
+  # Always run the archive
+  loader::S3Tasks.archive_events(config)
+
+# Catch any SnowPlow error
+rescue loader::Error => e
+  $stderr.puts(e.message)
+  exit 1
+rescue SystemExit => e
+  exit 1
+rescue Exception => e
+  $stderr.puts("Unexpected error: " + e.message)
+  $stderr.puts(e.backtrace.join("\n"))
+  exit 1
+end
+
+exit 0 # Success

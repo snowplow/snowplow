@@ -9,10 +9,10 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.4.10
--- URL:         s3://snowplow-emr-assets/hive/hiveql/hive-exact-etl-0.4.10.q
+-- Version:     0.0.3
+-- URL:         s3://snowplow-emr-assets/hive/hiveql/non-hive-rolling-etl-0.0.3.q
 --
--- Authors:     Alex Dean, Yali Sassoon, Simon Andersson, Michael Tibben
+-- Authors:     Yali Sassoon, Alex Dean
 -- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
 -- License:     Apache License Version 2.0
 
@@ -23,13 +23,23 @@ ADD JAR ${SERDE_FILE} ;
 
 CREATE EXTERNAL TABLE `extracted_logs`
 ROW FORMAT SERDE 'com.snowplowanalytics.snowplow.hadoop.hive.SnowPlowEventDeserializer'
+WITH SERDEPROPERTIES ( 'continue_on_unexpected_error' = '${CONTINUE_ON}')
 LOCATION '${CLOUDFRONT_LOGS}' ;
 
 CREATE EXTERNAL TABLE IF NOT EXISTS `events` (
+app_id string,
+platform string,
+dt_dt string,
 tm string,
+event string, -- Renamed in 0.0.3
+event_id string, -- Added in 0.0.3
 txn_id string,
+v_tracker string,
+v_collector string,
+v_etl string,
 user_id string,
 user_ipaddress string,
+user_fingerprint string, -- Added in 0.0.3
 visit_id int,
 page_url string,
 page_title string,
@@ -58,33 +68,58 @@ ti_name string,
 ti_category string,
 ti_price string,
 ti_quantity string,
+useragent string, -- Added in 0.0.3
 br_name string,
 br_family string,
 br_version string,
 br_type string,
 br_renderengine string,
 br_lang string,
-br_features array<string>,
-br_cookies boolean,
+br_features_pdf tinyint,
+br_features_flash tinyint,
+br_features_java tinyint,
+br_features_director tinyint,
+br_features_quicktime tinyint,
+br_features_realplayer tinyint,
+br_features_windowsmedia tinyint,
+br_features_gears tinyint,
+br_features_silverlight tinyint,
+br_cookies tinyint,
+br_colordepth string, -- Added in 0.0.3
 os_name string,
 os_family string,
 os_manufacturer string,
+os_timezone string, -- Added in 0.0.3
 dvce_type string,
-dvce_ismobile boolean,
+dvce_ismobile tinyint,
 dvce_screenwidth int,
-dvce_screenheight int,
-app_id string
+dvce_screenheight int
 )
-PARTITIONED BY (dt STRING)
+PARTITIONED BY (dt string)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+LINES TERMINATED BY '\n'
+STORED AS TEXTFILE
 LOCATION '${EVENTS_TABLE}' ;
 
-INSERT OVERWRITE TABLE `events`
+ALTER TABLE `events` RECOVER PARTITIONS ;
+
+INSERT INTO TABLE `events`
 PARTITION (dt)
 SELECT
+app_id,
+platform, -- Now available for 0.5.1
+dt AS dt_dt,
 tm,
+NULL as event, -- Renamed in 0.0.3
+NULL as event_id, -- Added in 0.0.3
 txn_id,
+v_tracker,
+v_collector,
+v_etl,
 user_id,
 user_ipaddress,
+user_fingerprint, -- Added in 0.0.3
 visit_id,
 page_url,
 page_title,
@@ -113,23 +148,31 @@ ti_name,
 ti_category,
 ti_price,
 ti_quantity,
+useragent, -- Added in 0.0.3
 br_name,
 br_family,
 br_version,
 br_type,
 br_renderengine,
 br_lang,
-br_features,
-br_cookies,
+br_features_pdf,
+br_features_flash,
+br_features_java,
+br_features_director,
+br_features_quicktime,
+br_features_realplayer,
+br_features_windowsmedia,
+br_features_gears,
+br_features_silverlight,
+br_cookies_bt AS br_cookies,
+br_colordepth, -- Added in 0.0.3
 os_name,
 os_family,
 os_manufacturer,
+os_timezone, -- Added in 0.0.3
 dvce_type,
-dvce_ismobile,
+dvce_ismobile_bt AS dvce_ismobile,
 dvce_screenwidth,
 dvce_screenheight,
-app_id,
 dt
-FROM `extracted_logs`
-WHERE dt>='${START_DATE}'
-AND dt<='${END_DATE}' ;
+FROM `extracted_logs` ;

@@ -50,6 +50,9 @@ public class SnowPlowEventDeserializer implements Deserializer {
   // Setup logging
   public static final Log LOG = LogFactory.getLog(SnowPlowEventDeserializer.class.getName());
 
+  // What's our continue on errors property called?
+  private static final String CONTINUE_ON = "continue_on_unexpected_error";
+
   // Voodoo taken from Zemanta's S3LogDeserializer
   static {
     StackTraceElement[] sTrace = new Exception().getStackTrace();
@@ -61,25 +64,31 @@ public class SnowPlowEventDeserializer implements Deserializer {
 
   // For performance reasons we reuse the same object to deserialize all of our rows
   private static final SnowPlowEventStruct cachedStruct = new SnowPlowEventStruct();
+  
+  // Returns null instead of throwing an exception
+  private boolean continueOnUnexpectedError = false;
 
   // -------------------------------------------------------------------------------------------------------------------
-  // Helper for deserializing a single line
+  // Helper for deserializing a single line. Used for testing
   // -------------------------------------------------------------------------------------------------------------------
 
   /**
-   * A helper which deserializes and inspects a single line of text
+   * A helper which deserializes and inspects a single row
    *
    * @param line The line of text to deserialize
    * @param verbose Whether to debug-print the contents of the struct using reflection
+   * @param continueOn Whether to continue on an unexpected error or not
    * @return The struct object from deserializing the text
    * @throws SerDeException if there is a problem deserializing the line, or reflection-inspecting the struct's contents
    */
-  public static Object deserializeLine(String line, Boolean verbose) throws SerDeException {
+  public static Object deserializeLine(String line, Boolean verbose, Boolean continueOn) throws SerDeException {
 
     // Prep the deserializer
     SnowPlowEventDeserializer serDe = new SnowPlowEventDeserializer();
     Configuration conf = new Configuration();
     Properties tbl = new Properties();
+    tbl.setProperty(CONTINUE_ON, continueOn? "1" : "0");
+
     serDe.initialize(conf, tbl);
 
     // Run the deserializer with the sample row
@@ -115,7 +124,7 @@ public class SnowPlowEventDeserializer implements Deserializer {
   }
 
   /**
-   * Initialize the CfLogDeserializer.
+   * Initialize the SnowPlowEventDeserializer.
    *
    * @param conf System properties
    * @param tbl Table properties
@@ -125,6 +134,9 @@ public class SnowPlowEventDeserializer implements Deserializer {
   public void initialize(Configuration conf, Properties tbl) throws SerDeException {
 
     cachedObjectInspector = ObjectInspectorFactory.getReflectionObjectInspector(SnowPlowEventStruct.class, ObjectInspectorFactory.ObjectInspectorOptions.JAVA);
+
+    this.continueOnUnexpectedError = SnowPlowEventStruct.stringToBoolean(tbl.getProperty(CONTINUE_ON, "0"));
+    
     LOG.debug(this.getClass().getName() + " initialized");
   }
 
@@ -158,12 +170,19 @@ public class SnowPlowEventDeserializer implements Deserializer {
     }
     try {
       // Update in place the S3LogStruct with the row data
-      cachedStruct.updateByParsing(row);
-      return cachedStruct;
+      if (cachedStruct.updateByParsing(row))
+        return cachedStruct;
+      else
+        return null;
     } catch (ClassCastException e) {
       throw new SerDeException(this.getClass().getName() + " expects Text or BytesWritable", e);
     } catch (Exception e) {
-      throw new SerDeException(e);
+      if (this.continueOnUnexpectedError) {
+        LOG.error("Could not parse row: \"" + row + "\"", e);
+        return null;
+      }
+      else
+        throw new SerDeException(e);
     }
   }
 
