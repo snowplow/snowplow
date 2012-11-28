@@ -17,10 +17,8 @@ A **Collector** receives SnowPlow events from one or more [Trackers]
 
 ## Documentation
 
-1. The [setup guide] [setup] details how to choose between the different Collectors available and how to set each up.
-2. The [technical documentation] [tech-docs] provide additional technical details on each collector including the log file formats.
-
-Both guides are published on the [wiki][wiki]
+1. The [setup guide] [setup] details how to choose between the different Collectors available and how to set each up
+2. The [technical documentation] [tech-docs] provide additional technical details on each collector including the log file formats
 
 ## Contributing
 
