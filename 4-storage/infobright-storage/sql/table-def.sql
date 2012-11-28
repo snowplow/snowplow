@@ -1,12 +1,13 @@
-CREATE TABLE IF NOT EXISTS events (
+CREATE TABLE IF NOT EXISTS events_003 (
 	-- App
-	`app_id` varchar(255) comment 'lookup', -- ('lookup' is a varchar optimisation)
+	`app_id` varchar(255) comment 'lookup', -- 'lookup' is a varchar optimisation for Infobright
 	`platform` varchar(50) comment 'lookup',
 	-- Date/time
 	`dt` date,
 	`tm` time,
 	-- Event
-	`event_name` varchar(255) comment 'lookup',
+	`event` varchar(255) comment 'lookup', -- Renamed in 0.0.3
+	`event_id` varchar(38) comment 'lookup', -- Added in 0.0.3
 	`txn_id` int,
 	-- Versioning
 	`v_tracker` varchar(100) comment 'lookup',
@@ -15,21 +16,25 @@ CREATE TABLE IF NOT EXISTS events (
 	-- User and visit
 	`user_id` varchar(16) comment 'lookup',
 	`user_ipaddress` varchar(19) comment 'lookup',
+	`user_fingerprint` varchar(50) comment 'lookup', -- New in 0.0.3
 	`visit_id` smallint,
 	-- Page
 	`page_url` varchar(2083) comment 'lookup',
 	`page_title` varchar(2083) comment 'lookup',
 	`page_referrer` varchar(2083) comment 'lookup',
+	-- Marketing
 	`mkt_source` varchar(255) comment 'lookup',
 	`mkt_medium` varchar(255) comment 'lookup',
 	`mkt_term` varchar(255) comment 'lookup',
 	`mkt_content` varchar(2083) comment 'lookup',
 	`mkt_campaign` varchar(255) comment 'lookup',
+	-- Custom Event
 	`ev_category` varchar(255) comment 'lookup',
 	`ev_action` varchar(255) comment 'lookup',
 	`ev_label` varchar(255) comment 'lookup',
 	`ev_property` varchar(255) comment 'lookup',
 	`ev_value` float,
+	-- Ecommerce
 	`tr_orderid` varchar(255) comment 'lookup',
 	`tr_affiliation` varchar(255),
 	`tr_total` dec(18,2),
@@ -44,6 +49,9 @@ CREATE TABLE IF NOT EXISTS events (
 	`ti_category` varchar(255) comment 'lookup',
 	`ti_price` dec(18,2),
 	`ti_quantity` int,
+	-- User Agent
+	`useragent` varchar(2083) comment 'lookup', -- New in 0.0.3
+	-- Browser
 	`br_name` varchar(50) comment 'lookup',
 	`br_family` varchar(50) comment 'lookup',
 	`br_version` varchar(50) comment 'lookup',
@@ -60,9 +68,13 @@ CREATE TABLE IF NOT EXISTS events (
 	`br_features_gears` tinyint(1) ,
 	`br_features_silverlight` tinyint(1),
 	`br_cookies` tinyint(1),
+	`br_colordepth` varchar(12) comment 'lookup', -- New in 0.0.3
+	-- Operating System
 	`os_name` varchar(50) comment 'lookup',
 	`os_family` varchar(50) comment 'lookup',
 	`os_manufacturer` varchar(50) comment 'lookup',
+	`os_timezone` varchar(255) comment 'lookup', -- New in 0.0.3
+	-- Device/Hardware
 	`dvce_type` varchar(50) comment 'lookup',
 	`dvce_ismobile` tinyint(1),
 	`dvce_screenwidth` mediumint,
