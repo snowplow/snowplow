@@ -13,13 +13,7 @@
 
 package com.snowplowanalytics.tomcat;
 
-// TODO: delete these
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.MatchResult;
-
 import java.net.URLEncoder;
-
 import java.util.Date;
 import java.util.Enumeration;
 
@@ -30,38 +24,6 @@ import org.apache.catalina.connector.Response;
 // https://github.com/snowplow/snowplow/blob/master/3-etl/hive-etl/snowplow-log-deserializers/src/main/java/com/snowplowanalytics/snowplow/hadoop/hive/SnowPlowEventStruct.java
 
 public class CfAccessValve extends AccessLogValve {
-
-    private static Pattern pattern = Pattern.compile("\\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6(?:011|5[0-9][0-9])[0-9]{12}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|(?:2131|1800|35\\d{3})\\d{11})\\b");
-
-    /*
-     This method will sanitize any cc numbers in the string and replace them with x's
-    */
-    private String sanitize(String string) {
-        String sanitizedString = string;
-
-        if(string != null) {
-
-            StringBuffer buffer = new StringBuffer();
-            Matcher matcher = pattern.matcher(string);
-
-            while(matcher.find()) {
-                MatchResult matchResult = matcher.toMatchResult();
-
-                int start = matchResult.start();
-                int end = matchResult.end();
-
-                String matchedText = string.substring(start, end);
-
-                matcher.appendReplacement(buffer, "xxxxxxxxxxxxxxxx");                
-            }
-
-            matcher.appendTail(buffer);
-
-            sanitizedString = buffer.toString();
-        }
-
-        return sanitizedString;
-    }
 
 /**
         * create an AccessLogElement implementation which needs header string
@@ -84,11 +46,6 @@ public class CfAccessValve extends AccessLogValve {
         default:
             return new StringElement("???");
         }
-    }
-
-    @Override
-    public void log(String message) {
-        super.log(sanitize(message));
     }
 
     /**
