@@ -13,14 +13,21 @@
 
 package com.snowplowanalytics.tomcat;
 
-import org.apache.catalina.valves.AccessLogValve;
-
 // TODO: delete these
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.MatchResult;
 
 import java.net.URLEncoder;
+
+import java.util.Date;
+import java.util.Enumeration;
+
+import org.apache.catalina.valves.AccessLogValve;
+import org.apache.catalina.connector.Request;
+import org.apache.catalina.connector.Response;
+
+// https://github.com/snowplow/snowplow/blob/master/3-etl/hive-etl/snowplow-log-deserializers/src/main/java/com/snowplowanalytics/snowplow/hadoop/hive/SnowPlowEventStruct.java
 
 public class CfAccessValve extends AccessLogValve {
 
@@ -56,8 +63,55 @@ public class CfAccessValve extends AccessLogValve {
         return sanitizedString;
     }
 
+/**
+        * create an AccessLogElement implementation which needs header string
+   http://svn.apache.org/repos/asf/tomcat/tc6.0.x/tags/TOMCAT_6_0_33/java/org/apache/catalina/valves/AccessLogValve.java
+        */
+    protected AccessLogElement createAccessLogElement(String header, char pattern) {
+        switch (pattern) {
+        case 'i':
+            return new HeaderElement(header);
+        case 'e':
+            return new HeaderElement(header);
+        case 'c':
+            return new CookieElement(header);
+        case 'o':
+            return new ResponseHeaderElement(header);
+        case 'r':
+            return new RequestAttributeElement(header);
+        case 's':
+            return new SessionAttributeElement(header);            
+        default:
+            return new StringElement("???");
+        }
+    }
+
     @Override
     public void log(String message) {
         super.log(sanitize(message));
+    }
+
+    /**
+     * write incoming headers - %{xxx}i
+     */
+    protected class HeaderElement implements AccessLogElement {
+        private String header;
+
+        public HeaderElement(String header) {
+            this.header = header;
+        }
+
+        public void addElement(StringBuffer buf, Date date, Request request,
+                Response response, long time) {
+            Enumeration<String> iter = request.getHeaders(header);
+            if (iter.hasMoreElements()) {
+                buf.append(iter.nextElement());
+                while (iter.hasMoreElements()) {
+                    buf.append(',').append(iter.nextElement());
+                }
+                return;
+            }
+            buf.append('-');
+        }
     }
 }
