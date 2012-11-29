@@ -13,28 +13,44 @@
 
 package com.snowplowanalytics.tomcat;
 
-import java.net.URLEncoder;
+// Java
 import java.util.Date;
 import java.util.Enumeration;
+import java.net.URLEncoder;
+import java.io.UnsupportedEncodingException;
 
+// Tomcat
 import org.apache.catalina.valves.AccessLogValve;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 
 // https://github.com/snowplow/snowplow/blob/master/3-etl/hive-etl/snowplow-log-deserializers/src/main/java/com/snowplowanalytics/snowplow/hadoop/hive/SnowPlowEventStruct.java
 
+/**
+ * A custom AccessLogValve for Tomcat to help generate CloudFront-like access logs.
+ *
+ * Introduces a new pattern, 'I', to escape an incoming header.
+ * Used in SnowPlow's Clojure Collector to escape the User-Agent header (as 
+ * CloudFront does).
+ *
+ * All original AccessLogValve code taken from:
+ * http://svn.apache.org/repos/asf/tomcat/tc6.0.x/tags/TOMCAT_6_0_33/java/org/apache/catalina/valves/AccessLogValve.java
+ */
 public class CfAccessValve extends AccessLogValve {
 
-/**
-        * create an AccessLogElement implementation which needs header string
-   http://svn.apache.org/repos/asf/tomcat/tc6.0.x/tags/TOMCAT_6_0_33/java/org/apache/catalina/valves/AccessLogValve.java
-        */
+    private static final String cfEncoding = "UTF-8";
+
+    /**
+     * Create an AccessLogElement implementation which needs header string.
+     * Updated to include an 'I' pattern, to escape an incoming header.
+     */
     protected AccessLogElement createAccessLogElement(String header, char pattern) {
         switch (pattern) {
         case 'i':
             return new HeaderElement(header);
-        case 'e':
-            return new HeaderElement(header);
+        // Added EscapedHeaderElement
+        case 'I':
+            return new EscapedHeaderElement(header);
         case 'c':
             return new CookieElement(header);
         case 'o':
@@ -49,12 +65,13 @@ public class CfAccessValve extends AccessLogValve {
     }
 
     /**
-     * write incoming headers - %{xxx}i
+     * Write incoming headers, but escaped - %{xxx}I
+     * Based on HeaderElement.
      */
-    protected class HeaderElement implements AccessLogElement {
+    protected class EscapedHeaderElement implements AccessLogElement {
         private String header;
 
-        public HeaderElement(String header) {
+        public EscapedHeaderElement(String header) {
             this.header = header;
         }
 
@@ -62,7 +79,16 @@ public class CfAccessValve extends AccessLogValve {
                 Response response, long time) {
             Enumeration<String> iter = request.getHeaders(header);
             if (iter.hasMoreElements()) {
-                buf.append(iter.nextElement());
+
+                String encodedElement;
+
+                try {
+                    encodedElement = URLEncoder.encode(iter.nextElement(), cfEncoding);
+                } catch (UnsupportedEncodingException uee) {
+                    encodedElement = "-"; // Don't take the risk of including an unescaped header.
+                }
+
+                buf.append(encodedElement);
                 while (iter.hasMoreElements()) {
                     buf.append(',').append(iter.nextElement());
                 }
