@@ -80,21 +80,28 @@ public class CfAccessLogValve extends AccessLogValve {
             Enumeration<String> iter = request.getHeaders(header);
             if (iter.hasMoreElements()) {
 
-                String encodedElement;
-
-                try {
-                    encodedElement = URLEncoder.encode(iter.nextElement(), cfEncoding);
-                } catch (UnsupportedEncodingException uee) {
-                    encodedElement = "-"; // Don't take the risk of including an unescaped header.
-                }
-
-                buf.append(encodedElement);
+                buf.append(encodeStringSafely(iter.nextElement()));
                 while (iter.hasMoreElements()) {
-                    buf.append(',').append(iter.nextElement());
+                    buf.append(',').append(encodeStringSafely(iter.nextElement()));
                 }
                 return;
             }
             buf.append('-');
         }
     }
+
+    /**
+    * Encodes a string or returns a "-" if not possible.
+    *
+    * @param s The String to encode
+    * @return The encoded string
+    */
+    protected static String encodeStringSafely(String s)
+    {
+        try {
+            return URLEncoder.encode(s, cfEncoding);
+        } catch (Exception e) {
+            return "-";
+        }
+    }    
 }
