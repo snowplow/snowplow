@@ -71,7 +71,7 @@
      :body    (ByteArrayInputStream. pixel)})   
 
 (defn- send-redirect
-  "Respond wtih a 303 redirect,
+  "Respond with a 303 redirect,
    attaching `cookies` and `headers`"
   [cookies headers url]
     {:status  303
