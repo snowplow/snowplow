@@ -554,7 +554,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 */
 	function logEvent(category, action, label, property, value) {
 		var sb = requestStringBuilder();
-		sb.add('e', 'TODO');
+		sb.add('e', 'c');
 		sb.add('ev_ca', category);
 		sb.add('ev_ac', action)
 		sb.add('ev_la', label);
@@ -575,7 +575,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 */
 	function logImpression(bannerId, campaignId, advertiserId, userId) {
 		var sb = requestStringBuilder();
-		sb.add('e', 'TODO');
+		sb.add('e', 'i');
 		sb.add('ad_ba', category);
 		sb.add('ad_ca', action)
 		sb.add('ad_ad', label);
@@ -600,7 +600,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	// TODO: add params to comment
 	function logTransaction(orderId, affiliation, total, tax, shipping, city, state, country) {
 		var sb = requestStringBuilder();
-		sb.add('e', 'TODO');
+		sb.add('e', 't');
 		sb.add('tr_id', orderId);
 		sb.add('tr_af', affiliation);
 		sb.add('tr_tt', total);
@@ -627,7 +627,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	// TODO: add params to comment
 	function logTransactionItem(orderId, sku, name, category, price, quantity) {
 		var sb = requestStringBuilder();
-		sb.add('e', 'TODO');
+		sb.add('e', 'ti');
 		sb.add('ti_id', orderId);
 		sb.add('ti_sk', sku);
 		sb.add('ti_na', name);
@@ -642,14 +642,14 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	/*
 	 * Log the page view / visit
 	 *
-	 * @param string customTitle 
+	 * @param string customTitle The user-defined page title to attach to this page view
 	 */
 	// TODO: add params to comment
 	function logPageView(customTitle) {
 
 		// Log pageview
 		var sb = requestStringBuilder();
-		sb.add('e', 'TODO');
+		sb.add('e', 'pv');
 		sb.add('page', fixupTitle(customTitle || configTitle));
 		var params = sb.build();
 		var request = getRequest(params, 'log');
@@ -688,6 +688,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 					// send ping if minimum visit time has elapsed
 					if (configMinimumVisitTime < now.getTime()) {
 						request = getRequest('ping=1', 'ping'); // TODO: decide what to do here.
+						// TODO: should we track the page title for each ping? We have the information. Ask Yali
 						sendRequest(request, configTrackerPause);
 					}
 
@@ -709,7 +710,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	// See https://github.com/snowplow/snowplow/issues/75
 	function logLink(url, linkType) {
 		var sb = requestStringBuilder();
-		sb.add('e', linkType); // TODO: check the supported values
+		sb.add('e', linkType); // TODO: change this to the first letter of linkType.
 		sb.add('t_url', purify(url));
 		var params = sb.build();
 		var request = getRequest(params, 'link');
