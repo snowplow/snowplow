@@ -520,6 +520,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + rawUrl + '/i';               
 	}
 
+
 	/**
 	 * A helper to build a SnowPlow request string from an
 	 * an optional initial value plus a set of individual
@@ -551,26 +552,17 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * @param string label (optional) An optional string to provide additional dimensions to the event data
 	 * @param int|float|string value (optional) An integer that you can use to provide numerical data about the user event
 	 */
-	// TODO: update to use requestStringBuilder
 	function logEvent(category, action, label, property, value) {
-
-			// All events have a category and an action
-			var request = 'ev_ca=' + SnowPlow.encodeWrapper(category)
-									+ '&ev_ac=' + SnowPlow.encodeWrapper(action);
-
-			// Label, property and value are optional
-			if (String(label).length) {
-					request += '&ev_la=' + SnowPlow.encodeWrapper(label);
-			}
-			if (String(property).length) {
-					request += '&ev_pr=' + SnowPlow.encodeWrapper(property);
-			}
-			if (String(value).length) {
-					request += '&ev_va=' + SnowPlow.encodeWrapper(value);
-			}
-
-			request = getRequest(request, 'event');
-			sendRequest(request, configTrackerPause);
+		var sb = requestStringBuilder();
+		sb.add('e', 'TODO');
+		sb.add('ev_ca', category);
+		sb.add('ev_ac', action)
+		sb.add('ev_la', label);
+		sb.add('ev_pr', property);
+		sb.add('ev_va', value);
+		var params = sb.build();
+		request = getRequest(params, 'event');
+		sendRequest(request, configTrackerPause);
 	}
 
 	/**
@@ -581,33 +573,34 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * @param string advertiserId (optional) Identifier for the advertiser which the campaign belongs to
 	 * @param string userId (optional) Ad server identifier for the viewer of the banner
 	 */
-	// TODO: update to use requestStringBuilder
 	function logImpression(bannerId, campaignId, advertiserId, userId) {
-
-			// All events have a banner ID
-			var request = 'ad_ba=' + SnowPlow.encodeWrapper(bannerId);
-
-			// Campaign, advertiser and user IDs are optional
-			if (String(campaignId).length) {
-					request += '&ad_ca=' + SnowPlow.encodeWrapper(campaignId);
-			}
-			if (String(advertiserId).length) {
-					request += '&ad_ad=' + SnowPlow.encodeWrapper(advertiserId);
-			}
-			if (String(userId).length) {
-					request += '&ad_uid=' + SnowPlow.encodeWrapper(userId);
-			}
-
-			request = getRequest(request, configCustomData, 'adimp');
-			sendRequest(request, configTrackerPause);
+		var sb = requestStringBuilder();
+		sb.add('e', 'TODO');
+		sb.add('ad_ba', category);
+		sb.add('ad_ca', action)
+		sb.add('ad_ad', label);
+		sb.add('ad_uid', property);
+		var params = sb.build();
+		request = getRequest(params, 'adimp');
+		sendRequest(request, configTrackerPause);
 	}
 
 	/**
 	 * Log ecommerce transaction metadata
+	 *
+	 * @param string orderId 
+ 	 * @param string affiliation 
+ 	 * @param string total 
+ 	 * @param string tax 
+ 	 * @param string shipping 
+ 	 * @param string city 
+  	 * @param string state 
+   	 * @param string country 
 	 */
 	// TODO: add params to comment
 	function logTransaction(orderId, affiliation, total, tax, shipping, city, state, country) {
 		var sb = requestStringBuilder();
+		sb.add('e', 'TODO');
 		sb.add('tr_id', orderId);
 		sb.add('tr_af', affiliation);
 		sb.add('tr_tt', total);
@@ -623,10 +616,18 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 	/**
 	 * Log ecommerce transaction item
+	 *
+	 * @param string orderId
+	 * @param string sku
+	 * @param string name
+	 * @param string category
+	 * @param string price
+	 * @param string quantity
 	 */
 	// TODO: add params to comment
 	function logTransactionItem(orderId, sku, name, category, price, quantity) {
 		var sb = requestStringBuilder();
+		sb.add('e', 'TODO');
 		sb.add('ti_id', orderId);
 		sb.add('ti_sk', sku);
 		sb.add('ti_na', name);
@@ -640,30 +641,26 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 	/*
 	 * Log the page view / visit
+	 *
+	 * @param string customTitle 
 	 */
+	// TODO: add params to comment
 	function logPageView(customTitle) {
-		function titleFixup(title) {
-			if (!SnowPlow.isString(title)) {
-				title = title.text || '';
 
-				var tmp = SnowPlow.documentAlias.getElementsByTagName('title');
-				if (tmp && SnowPlow.isDefined(tmp[0])) {
-					title = tmp[0].text;
-				}
-			}
-			return title;
-		}
-
-		var now = new Date(),
-			request = getRequest('page=' + SnowPlow.encodeWrapper(titleFixup(customTitle || configTitle)), 'log');
-
+		// Log pageview
+		var sb = requestStringBuilder();
+		sb.add('e', 'TODO');
+		sb.add('page', fixupTitle(customTitle || configTitle));
+		var params = sb.build();
+		var request = getRequest(params, 'log');
 		sendRequest(request, configTrackerPause);
 
-		// send ping
+		// Send ping (to log that user has stayed on page)
+		var now = new Date();
 		if (configMinimumVisitTime && configHeartBeatTimer && !activityTrackingInstalled) {
 			activityTrackingInstalled = true;
 
-			// add event handlers; cross-browser compatibility here varies significantly
+			// Add event handlers; cross-browser compatibility here varies significantly
 			// @see http://quirksmode.org/dom/events
 			addEventListener(SnowPlow.documentAlias, 'click', activityHandler);
 			addEventListener(SnowPlow.documentAlias, 'mouseup', activityHandler);
@@ -679,7 +676,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			addEventListener(SnowPlow.windowAlias, 'focus', activityHandler);
 			addEventListener(SnowPlow.windowAlias, 'blur', activityHandler);
 
-			// periodic check for activity
+			// Periodic check for activity
 			lastActivityTime = now.getTime();
 			setTimeout(function heartBeat() {
 				var now = new Date(),
@@ -690,8 +687,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 				if ((lastActivityTime + configHeartBeatTimer) > now.getTime()) {
 					// send ping if minimum visit time has elapsed
 					if (configMinimumVisitTime < now.getTime()) {
-						request = getRequest('ping=1', 'ping');
-
+						request = getRequest('ping=1', 'ping'); // TODO: decide what to do here.
 						sendRequest(request, configTrackerPause);
 					}
 
@@ -705,12 +701,21 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 	/*
 	 * Log the link or click with the server
+	 *
+	 * @param string url The target URL
+	 * @param string linkType The type of link - link or download (see getLinkType() for details)
 	 */
+	// TODO: this functionality is not yet fully implemented.
+	// See https://github.com/snowplow/snowplow/issues/75
 	function logLink(url, linkType) {
-		var request = getRequest(linkType + '=' + SnowPlow.encodeWrapper(purify(url)), 'link');
-
+		var sb = requestStringBuilder();
+		sb.add('e', linkType); // TODO: check the supported values
+		sb.add('target', purify(url)); // TODO: check with Yali what this should be called
+		var params = sb.build();
+		var request = getRequest(params, 'link');
 		sendRequest(request, configTrackerPause);
 	}
+
 
 	/*
 	 * Browser prefix
@@ -934,6 +939,21 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	        }
 	    }
 	    return SnowPlow.murmurhash3_32_gc(fingerprint.join("###") + "###" + plugins.sort().join(";"), 123412414);
+	}
+
+	/**
+	 * Cleans up the page title
+	 */
+	function fixupTitle(title) {
+		if (!SnowPlow.isString(title)) {
+			title = title.text || '';
+
+			var tmp = SnowPlow.documentAlias.getElementsByTagName('title');
+			if (tmp && SnowPlow.isDefined(tmp[0])) {
+				title = tmp[0].text;
+			}
+		}
+		return title;
 	}
 
 	/*
@@ -1337,6 +1357,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 * @param string sourceUrl
 		 * @param string linkType
 		 */
+		// TODO: break this into trackLink(destUrl) and trackDownload(destUrl)
 		trackLink: function (sourceUrl, linkType) {
 			trackCallback(function () {
 				logLink(sourceUrl, linkType);
@@ -1363,7 +1384,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 *
 		 * @param string distSubdomain The subdomain on your CloudFront collector's distribution
 		 */
-		// TODO: change to setAccountId for consistency (BREAKING CHANGE)
+		// TODO: remove in a future version
 		setAccount: function (distSubdomain) {
 			if (typeof console !== 'undefined') {
 				console.log("SnowPlow: setAccount() is deprecated and will be removed in an upcoming version. Please use setCollectorCf() instead.");
