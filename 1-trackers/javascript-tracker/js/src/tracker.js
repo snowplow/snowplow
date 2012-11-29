@@ -589,13 +589,13 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * Log ecommerce transaction metadata
 	 *
 	 * @param string orderId 
- 	 * @param string affiliation 
- 	 * @param string total 
- 	 * @param string tax 
+	 * @param string affiliation 
+	 * @param string total 
+	 * @param string tax 
  	 * @param string shipping 
- 	 * @param string city 
-  	 * @param string state 
-   	 * @param string country 
+	 * @param string city 
+ 	 * @param string state 
+ 	 * @param string country 
 	 */
 	// TODO: add params to comment
 	function logTransaction(orderId, affiliation, total, tax, shipping, city, state, country) {
