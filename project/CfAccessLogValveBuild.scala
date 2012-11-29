@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object CfAccessValveBuild extends Build {
+object CfAccessLogValveBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -24,7 +24,7 @@ object CfAccessValveBuild extends Build {
   }
 
   // Define our project, with basic project information and library dependencies
-  lazy val project = Project("cf-tomcat-access-valve", file("."))
+  lazy val project = Project("cf-access-log-valve", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
