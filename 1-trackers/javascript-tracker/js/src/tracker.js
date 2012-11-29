@@ -710,7 +710,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	function logLink(url, linkType) {
 		var sb = requestStringBuilder();
 		sb.add('e', linkType); // TODO: check the supported values
-		sb.add('target', purify(url)); // TODO: check with Yali what this should be called
+		sb.add('t_url', purify(url));
 		var params = sb.build();
 		var request = getRequest(params, 'link');
 		sendRequest(request, configTrackerPause);
