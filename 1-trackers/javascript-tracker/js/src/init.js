@@ -71,7 +71,7 @@ var SnowPlow = SnowPlow || function() {
 		urldecode: unescape,
 
 		/* Asynchronous tracker */
-		asyncTracker: null,
+		asyncTracker: null
 	}
 }();
 
