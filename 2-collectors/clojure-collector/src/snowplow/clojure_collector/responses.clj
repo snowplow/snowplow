@@ -34,7 +34,7 @@
 (defn- now-plus
   "Creates a DateTime `duration` seconds from now"
   [duration]
-  (-> (new DateTime) (.plusSeconds duration)))
+  (-> (new DateTime) (.plusDays duration)))
 
 (defn- set-cookie
   "Sets a SnowPlow cookie with visitor `id`,

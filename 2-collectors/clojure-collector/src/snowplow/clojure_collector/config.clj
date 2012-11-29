@@ -17,16 +17,16 @@
   "Gets environment variables, using
    sensible defaults where necessary")
 
-;; Note Beanstalk only has 4 'slots' in the UI for environment variables
+;; Note Beanstalk only has 5 'slots' in the UI for environment variables
 (def ^:const env-varnames ["PARAM1", "SP_ENV"])
 (def ^:const p3p-varnames ["PARAM2", "SP_P3P"])
 (def ^:const domain-varnames ["PARAM3", "SP_DOMAIN"])
 (def ^:const duration-varnames ["PARAM4", "SP_DURATION"])
-; If you add any more, they won't be settable in the Beanstalk UI.
+; If you add more than 5, they won't be settable in the Beanstalk UI.
 
 ;; Defaults
 (def ^:const default-p3p-header "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\"")
-(def ^:const default-duration 31556900) ; A year
+(def ^:const default-duration "365") ; A year
 
 (defn- get-env
   "Try both options for each
@@ -40,9 +40,9 @@
           default)))))
 
 (def duration
-  "Get the duration (in seconds) the
+  "Get the duration (in days) the
    cookie should last for"
-  (get-env duration-varnames default-duration))
+  (-> (get-env duration-varnames default-duration) read-string))
 
 (def p3p-header
   "Get the P3P header.
