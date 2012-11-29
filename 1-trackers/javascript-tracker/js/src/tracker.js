@@ -294,9 +294,10 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		// Let's chec that we have a Url to ping
 		if (configCollectorUrl === null) {
 			throw "No SnowPlow collector configured, cannot track";
-		} else {
-			console.log(configCollectorUrl);
 		}
+/*<DEBUG>*/
+		console.log(configCollectorUrl);
+/*</DEBUG>*/
 
 		// Okay? Let's proceed.
 		image.onload = function () { };
