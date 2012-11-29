@@ -9,8 +9,8 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.5.1
--- URL:         s3://snowplow-emr-assets/hive/hiveql/hive-rolling-etl-0.5.1.q
+-- Version:     0.5.2
+-- URL:         s3://snowplow-emr-assets/hive/hiveql/hive-rolling-etl-0.5.2.q
 --
 -- Authors:     Alex Dean, Yali Sassoon, Simon Andersson, Michael Tibben
 -- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
@@ -76,11 +76,10 @@ dvce_screenwidth int,
 dvce_screenheight int,
 app_id string,
 platform string,
-event string, -- Renamed in 0.5.1
+event string,
 v_tracker string,
 v_collector string,
 v_etl string,
--- Added in 0.5.1
 event_id string
 user_fingerprint string,
 useragent string,
@@ -143,17 +142,15 @@ dvce_ismobile,
 dvce_screenwidth,
 dvce_screenheight,
 app_id,
-platform, -- Now available for 0.5.1
-NULL as event, -- Renamed in 0.5.1
+platform,
+event, -- Now available in 0.5.2
 v_tracker,
 v_collector,
 v_etl,
--- Added in 0.5.1
-NULL as event_id,
+event_id, -- Now available in 0.5.2
 user_fingerprint,
 useragent,
 br_colordepth,
 os_timezone,
--- Additions end
 dt
 FROM `extracted_logs` ;

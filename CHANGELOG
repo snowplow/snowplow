@@ -1,17 +1,17 @@
 Version 0.6.3 (2012-12-XX)
 --------------------------
-JS tracker: bumped to 0.8.2                                  --
+JS tracker: bumped to 0.8.2                                  -- DONE
 JS tracker: each event now sent with an event type `e` (#63) --
 JS tracker: refactoring of event definition code             --
 JS tracker: added attachUserId(boolean) method (#92)         --
-Serde: bumped to 0.5.3                                       --
+Serde: bumped to 0.5.3                                       -- DONE
 Serde: now extracts event type (`e`) from querystring (#63)  --
 Serde: now attaches UUID event_id to each event (#89)        --
 Serde: added support for IP address override in querystring (#90) --
-HiveQL: hive-rolling-etl.q bumped to 0.5.2                     --
-HiveQL: non-hive-rolling-etl.q bumped to 0.0.4                 --
-HiveQL: event and event_id now extracted from Serde (#63, #89) --
-EmrEtlRunner: updated config file template                     --
+HiveQL: hive-rolling-etl.q bumped to 0.5.2                     -- DONE
+HiveQL: non-hive-rolling-etl.q bumped to 0.0.4                 -- DONE
+HiveQL: event and event_id now extracted from Serde (#63, #89) -- DONE
+EmrEtlRunner: updated config file template                     -- DONE
 
 Version 0.6.2 (2012-11-29)
 --------------------------

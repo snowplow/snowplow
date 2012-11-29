@@ -44,7 +44,7 @@ var SnowPlow = SnowPlow || function() {
 	return {
 
 		/* Tracker identifier with version */
-		version: 'js-0.8.1',
+		version: 'js-0.8.2',
 
 		expireDateTime: null,
 
