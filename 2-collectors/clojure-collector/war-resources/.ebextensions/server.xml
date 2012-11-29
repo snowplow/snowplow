@@ -132,9 +132,9 @@
         <!-- Access log processes all example.
              Documentation at: /docs/config/valve.html
              Note: The pattern used is equivalent to using pattern="common" -->
-        <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+        <Valve className="com.snowplowanalytics.com.tomcat.CfAccessLogValve" directory="logs"
                prefix="localhost_access_log" fileDateFormat="yyyy-MM-dd.HH" suffix=".txt" rotatable="false"
-               pattern="%{yyyy-MM-dd}t&#9;%{hh:mm:ss}t&#9;-&#9;%b&#9;%a&#9;%m&#9;%h&#9;%U&#9;%s&#9;%{Referer}i&#9;%{User-Agent}i&#9;%q&amp;uid=%{sp}c&#9;-&#9;-&#9;- "  />
+               pattern="%{yyyy-MM-dd}t&#9;%{hh:mm:ss}t&#9;-&#9;%b&#9;%a&#9;%m&#9;%h&#9;%U&#9;%s&#9;%{Referer}i&#9;%{User-Agent}I&#9;%q&amp;uid=%{sp}c&#9;-&#9;-&#9;- "  />
 
         <Valve className="org.apache.catalina.valves.RemoteIpValve" protocolHeader="X-Forwarded-Proto" />
       </Host>
