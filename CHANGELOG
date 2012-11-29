@@ -3,7 +3,7 @@ Version 0.6.2 (2012-11-29)
 JS tracker: bumped to 0.8.1
 JS tracker: fixed bug with trailing comma (#102)
 JS tracker: removed console.log when not debugging (#101)
-JS tracker: removed minified sp.js from version control
+JS tracker: removed minified sp.js from version control (added .gitignore to keep it out)
 SnowCannon: bumped submodule to latest shermozle/SnowCannon commit
 
 Version 0.6.1 (2012-11-28)
