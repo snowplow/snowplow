@@ -36,7 +36,7 @@ import org.apache.catalina.connector.Response;
  * All original AccessLogValve code taken from:
  * http://svn.apache.org/repos/asf/tomcat/tc6.0.x/tags/TOMCAT_6_0_33/java/org/apache/catalina/valves/AccessLogValve.java
  */
-public class CfAccessValve extends AccessLogValve {
+public class CfAccessLogValve extends AccessLogValve {
 
     private static final String cfEncoding = "UTF-8";
 
