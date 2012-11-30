@@ -557,7 +557,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 */
 	function logEvent(category, action, label, property, value) {
 		var sb = requestStringBuilder();
-		sb.add('e', 'ce');
+		sb.add('e', 'ce'); // 'ce' for custom event
 		sb.add('ev_ca', category);
 		sb.add('ev_ac', action)
 		sb.add('ev_la', label);
@@ -576,9 +576,10 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * @param string advertiserId (optional) Identifier for the advertiser which the campaign belongs to
 	 * @param string userId (optional) Ad server identifier for the viewer of the banner
 	 */
+	// TODO: should add impressionId as well.
 	function logImpression(bannerId, campaignId, advertiserId, userId) {
 		var sb = requestStringBuilder();
-		sb.add('e', 'imp');
+		sb.add('e', 'imp'); // 'imp' for impression
 		sb.add('ad_ba', category);
 		sb.add('ad_ca', action)
 		sb.add('ad_ad', label);
@@ -603,7 +604,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	// TODO: add params to comment
 	function logTransaction(orderId, affiliation, total, tax, shipping, city, state, country) {
 		var sb = requestStringBuilder();
-		sb.add('e', 't');
+		sb.add('e', 't'); // 't' for transaction
 		sb.add('tr_id', orderId);
 		sb.add('tr_af', affiliation);
 		sb.add('tr_tt', total);
@@ -630,7 +631,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	// TODO: add params to comment
 	function logTransactionItem(orderId, sku, name, category, price, quantity) {
 		var sb = requestStringBuilder();
-		sb.add('e', 'ti');
+		sb.add('e', 'ti'); // 'ti' for transaction item
 		sb.add('ti_id', orderId);
 		sb.add('ti_sk', sku);
 		sb.add('ti_na', name);
@@ -647,13 +648,15 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 *
 	 * @param string customTitle The user-defined page title to attach to this page view
 	 */
-	// TODO: add params to comment
 	function logPageView(customTitle) {
 
-		// Log pageview
+		// Fixup page title. We'll pass this to logPagePing too.
+		var pageTitle = SnowPlow.fixupTitle(customTitle || configTitle);
+
+		// Log page view
 		var sb = requestStringBuilder();
-		sb.add('e', 'pv');
-		sb.add('page', SnowPlow.fixupTitle(customTitle || configTitle));
+		sb.add('e', 'pv'); // 'pv' for page view
+		sb.add('page', pageTitle);
 		var params = sb.build();
 		var request = getRequest(params, 'log');
 		sendRequest(request, configTrackerPause);
@@ -688,19 +691,33 @@ SnowPlow.Tracker = function Tracker(argmap) {
 				// There was activity during the heart beat period;
 				// on average, this is going to overstate the visitDuration by configHeartBeatTimer/2
 				if ((lastActivityTime + configHeartBeatTimer) > now.getTime()) {
-					// send ping if minimum visit time has elapsed
+					// Send ping if minimum visit time has elapsed
 					if (configMinimumVisitTime < now.getTime()) {
-						request = getRequest('ping=1', 'ping'); // TODO: decide what to do here.
-						// TODO: should we track the page title for each ping? We have the information. Ask Yali
-						sendRequest(request, configTrackerPause);
+						logPagePing(pageTitle);
 					}
-
-					// resume heart beat
+					// Resume heart beat
 					setTimeout(heartBeat, configHeartBeatTimer);
 				}
 				// Else heart beat cancelled due to inactivity
 			}, configHeartBeatTimer);
 		}
+	}
+
+	/*
+	 * Log that a user is still viewing a given page
+	 * by sending a page ping.
+	 * Not part of the public API - only called from
+	 * logPageView() above.
+	 *
+	 * @param string pageTitle The page title to attach to this page ping
+	 */
+	function logPagePing(pageTitle) {
+		var sb = requestStringBuilder();
+		sb.add('e', 'pp'); // 'pp' for page ping
+		sb.add('page', pageTitle);
+		var params = sb.build();
+		var request = getRequest(params, 'ping');
+		sendRequest(request, configTrackerPause);
 	}
 
 	/*
@@ -808,7 +825,6 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			// does file extension indicate that it is a download?
 			downloadExtensionsPattern = new RegExp('\\.(' + configDownloadExtensions + ')([?&#]|$)', 'i');
 
-		// optimization of the if..elseif..else construct below
 		return linkPattern.test(className) ? 'lnk' : (downloadPattern.test(className) || downloadExtensionsPattern.test(href) ? 'dl' : 0);
 	}
 
