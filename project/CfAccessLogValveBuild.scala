@@ -29,6 +29,7 @@ object CfAccessLogValveBuild extends Build {
     .settings(
       libraryDependencies ++= Seq(
         Libraries.catalina,
+        Libraries.coyote,
         Libraries.specs2
       )
     )

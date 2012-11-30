@@ -18,12 +18,13 @@ object Dependencies {
   )
 
   object V {
-    val catalina  = "6.0.33"
+    val tomcat  = "6.0.33"
     val specs2    = "1.12.1"    
   }
 
   object Libraries {
-    val catalina    = "org.apache.tomcat"          %  "catalina"             % V.catalina    % "provided"
+    val catalina    = "org.apache.tomcat"          %  "catalina"             % V.tomcat    % "provided"
+    val coyote      = "org.apache.tomcat"          %  "coyote"             % V.tomcat    % "provided"
     val specs2      = "org.specs2"                 %% "specs2"               % V.specs2      % "test"
   }
 }
