@@ -69,12 +69,26 @@ SnowPlow.encodeUtf8 = function (argString) {
 	return SnowPlow.urldecode(SnowPlow.encodeWrapper(argString));
 }
 
+/**
+ * Cleans up the page title
+ */
+function fixupTitle(title) {
+	if (!SnowPlow.isString(title)) {
+		title = title.text || '';
+
+		var tmp = SnowPlow.documentAlias.getElementsByTagName('title');
+		if (tmp && SnowPlow.isDefined(tmp[0])) {
+			title = tmp[0].text;
+		}
+	}
+	return title;
+}
 
 /*
  * Fix-up URL when page rendered from search engine cache or translated page.
  * TODO: it would be nice to generalise this and/or move into the ETL phase.
  */
-SnowPlow.urlFixup = function (hostName, href, referrer) {
+SnowPlow.fixupUrl = function (hostName, href, referrer) {
 	/*
 	 * Extract parameter from URL
 	 */
@@ -116,6 +130,23 @@ SnowPlow.urlFixup = function (hostName, href, referrer) {
 }
 
 /*
+ * Fix-up domain
+ */
+SnowPlow.fixupDomain = function (domain) {
+	var dl = domain.length;
+
+	// remove trailing '.'
+	if (domain.charAt(--dl) === '.') {
+		domain = domain.slice(0, dl);
+	}
+	// remove leading '*'
+	if (domain.slice(0, 2) === '*.') {
+		domain = domain.slice(1);
+	}
+	return domain;
+}
+
+/*
  * Get page referrer
  */
 SnowPlow.getReferrer = function () {
@@ -137,23 +168,6 @@ SnowPlow.getReferrer = function () {
 	}
 
 	return referrer;
-}
-
-/*
- * Fix-up domain
- */
-SnowPlow.domainFixup = function (domain) {
-	var dl = domain.length;
-
-	// remove trailing '.'
-	if (domain.charAt(--dl) === '.') {
-		domain = domain.slice(0, dl);
-	}
-	// remove leading '*'
-	if (domain.slice(0, 2) === '*.') {
-		domain = domain.slice(1);
-	}
-	return domain;
 }
 
 /*

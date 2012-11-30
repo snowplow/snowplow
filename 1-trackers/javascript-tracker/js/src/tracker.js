@@ -60,8 +60,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 /*</DEBUG>*/
 
 		// Current URL and Referrer URL
-		locationArray = SnowPlow.urlFixup(SnowPlow.documentAlias.domain, SnowPlow.windowAlias.location.href, SnowPlow.getReferrer()),
-		domainAlias = SnowPlow.domainFixup(locationArray[0]),
+		locationArray = SnowPlow.fixupUrl(SnowPlow.documentAlias.domain, SnowPlow.windowAlias.location.href, SnowPlow.getReferrer()),
+		domainAlias = SnowPlow.fixupDomain(locationArray[0]),
 		locationHrefAlias = locationArray[1],
 		configReferrerUrl = locationArray[2],
 
@@ -135,6 +135,9 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 		// Life of the referral cookie (in milliseconds)
 		configReferralCookieTimeout = 15768000000, // 6 months
+
+		// Whether we should attach uid (User ID) to the querystring
+		configAttachUserId = true, 
 
 		// Should cookies have the secure flag set
 		cookieSecure = SnowPlow.documentAlias.location.protocol === 'https',
@@ -263,7 +266,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			offset;
 
 		for (i = 0; i < configHostsAlias.length; i++) {
-			alias = domainFixup(configHostsAlias[i].toLowerCase());
+			alias = SnowPlow.fixupDomain(configHostsAlias[i].toLowerCase());
 
 			if (hostName === alias) {
 				return true;
@@ -284,8 +287,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	}
 
 	/*
-	 * Send image request to Piwik server using GET.
-	 * A web bug/beacon is a transparent, single pixel (1x1) image
+	 * Send image request to the SnowPlow Collector using GET.
+	 * The Collector serves a transparent, single pixel (1x1) GIF
 	 */
 	function getImage(request) {
 
@@ -554,7 +557,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 */
 	function logEvent(category, action, label, property, value) {
 		var sb = requestStringBuilder();
-		sb.add('e', 'c');
+		sb.add('e', 'ce');
 		sb.add('ev_ca', category);
 		sb.add('ev_ac', action)
 		sb.add('ev_la', label);
@@ -575,7 +578,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 */
 	function logImpression(bannerId, campaignId, advertiserId, userId) {
 		var sb = requestStringBuilder();
-		sb.add('e', 'i');
+		sb.add('e', 'imp');
 		sb.add('ad_ba', category);
 		sb.add('ad_ca', action)
 		sb.add('ad_ad', label);
@@ -650,7 +653,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		// Log pageview
 		var sb = requestStringBuilder();
 		sb.add('e', 'pv');
-		sb.add('page', fixupTitle(customTitle || configTitle));
+		sb.add('page', SnowPlow.fixupTitle(customTitle || configTitle));
 		var params = sb.build();
 		var request = getRequest(params, 'log');
 		sendRequest(request, configTrackerPause);
@@ -710,13 +713,12 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	// See https://github.com/snowplow/snowplow/issues/75
 	function logLink(url, linkType) {
 		var sb = requestStringBuilder();
-		sb.add('e', linkType); // TODO: change this to the first letter of linkType.
+		sb.add('e', linkType);
 		sb.add('t_url', purify(url));
 		var params = sb.build();
 		var request = getRequest(params, 'link');
 		sendRequest(request, configTrackerPause);
 	}
-
 
 	/*
 	 * Browser prefix
@@ -791,10 +793,12 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	/*
 	 * Link or Download?
 	 */
+	// TODO: why is a download assumed to always be on the same host?
+	// TODO: why return 0 if can't detect it as a link or download?
 	function getLinkType(className, href, isInLink) {
 		// outlinks
 		if (!isInLink) {
-			return 'link';
+			return 'lnk';
 		}
 
 		// does class indicate whether it is an (explicit/forced) outlink or a download?
@@ -805,7 +809,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			downloadExtensionsPattern = new RegExp('\\.(' + configDownloadExtensions + ')([?&#]|$)', 'i');
 
 		// optimization of the if..elseif..else construct below
-		return linkPattern.test(className) ? 'link' : (downloadPattern.test(className) || downloadExtensionsPattern.test(href) ? 'download' : 0);
+		return linkPattern.test(className) ? 'lnk' : (downloadPattern.test(className) || downloadExtensionsPattern.test(href) ? 'dl' : 0);
 	}
 
 	/*
@@ -940,21 +944,6 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	        }
 	    }
 	    return SnowPlow.murmurhash3_32_gc(fingerprint.join("###") + "###" + plugins.sort().join(";"), 123412414);
-	}
-
-	/**
-	 * Cleans up the page title
-	 */
-	function fixupTitle(title) {
-		if (!SnowPlow.isString(title)) {
-			title = title.text || '';
-
-			var tmp = SnowPlow.documentAlias.getElementsByTagName('title');
-			if (tmp && SnowPlow.isDefined(tmp[0])) {
-				title = tmp[0].text;
-			}
-		}
-		return title;
 	}
 
 	/*
@@ -1218,7 +1207,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 * @param string domain
 		 */
 		setCookieDomain: function (domain) {
-			configCookieDomain = domainFixup(domain);
+			configCookieDomain = SnowPlow.fixupDomain(domain);
 			updateDomainHash();
 		},
 
@@ -1391,6 +1380,15 @@ SnowPlow.Tracker = function Tracker(argmap) {
 				console.log("SnowPlow: setAccount() is deprecated and will be removed in an upcoming version. Please use setCollectorCf() instead.");
 			}
 			configCollectorUrl = collectorUrlFromCfDist(distSubdomain);
+		},
+
+		/**
+		 * Toggle whether to attach User ID to the querystring or not
+		 *
+		 * @param bool attach Whether to attach User ID or not
+		 */
+		attachUserId: function (attach) {
+			configAttachUserId = attach;
 		},
 
 		/**
