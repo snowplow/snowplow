@@ -72,7 +72,7 @@ SnowPlow.encodeUtf8 = function (argString) {
 /**
  * Cleans up the page title
  */
-function fixupTitle(title) {
+SnowPlow.fixupTitle = function (title) {
 	if (!SnowPlow.isString(title)) {
 		title = title.text || '';
 
