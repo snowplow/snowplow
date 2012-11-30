@@ -4,6 +4,7 @@ JS tracker: bumped to 0.8.2                                  -- DONE
 JS tracker: each event now sent with an event type `e` (#63) -- DONE
 JS tracker: refactoring of event definition code             -- DONE
 JS tracker: added attachUserId(boolean) method (#92)         -- DONE
+JS tracker: added a combine only option to snowpak.sh        -- DONE
 Serde: bumped to 0.5.3                                       -- DONE
 Serde: now extracts event type (`e`) from querystring (#63)  --
 Serde: now attaches UUID event_id to each event (#89)        --

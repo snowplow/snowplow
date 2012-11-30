@@ -9,38 +9,59 @@
 
 # Constants which should apply on any box
 DEPENDENCIES_FILE='dependencies.txt'
-SP_OUTPUTFILE="sp.js"
+FULL_OUTPUTFILE="snowplow.js"
+MIN_OUTPUTFILE="sp.js"
 YUIC_JARPATH="build/yuicompressor-2.4.2.jar"
 
-ARGC=${#}
-ARG1=${1}
-
 usage() {
-  echo "Usage: ${0} [yuicpath]"
-  echo $'\twhere yuicpath = path to YUICompressor 2.4.2 e.g. /opt/java/yuicompressor-2.4.2'
-  echo $'\tor set env variable YUI_COMPRESSOR_PATH instead'
+  echo "Usage: ${0} [options]"
+  echo ""
+  echo "Specific options:"
+  echo "  -y PATH             path to YUICompressor 2.4.2 *"
+  echo "  -c                  combine only (no minification or removing debug)"
+  echo ""
+  echo "* or set env variable YUI_COMPRESSOR_PATH instead"
+  echo ""
+  echo "Common options:"
+  echo "  -h                  Show this message"
   exit 1
 }
 
-validate_args() {
+parse_args() {
+
+  while getopts “cy:” opt; do
+    case $opt in
+      c)
+        COMBINE_ONLY=true
+        ;;
+      y)
+        YUI_COMPRESSOR_PATH=$OPTARG
+        ;;
+      \?)
+        usage
+        exit 1
+        ;;
+      h)
+        usage
+        exit
+        ;;
+    esac
+  done
+}
+
+validate_options() {
+
+  if [ ! $YUI_COMPRESSOR_PATH ]; then
+    echo "Path to YUICompressor 2.4.2 not provided"
+    usage
+    exit 1
+  fi
+
+  YUI_COMPRESSOR_PATH=$YUI_COMPRESSOR_PATH'/'$YUIC_JARPATH
   if [ ! -f ${YUI_COMPRESSOR_PATH} ];then
     echo "Cannot find YUICompressor 2.4.2 jarfile at ${YUI_COMPRESSOR_PATH}"
     usage
-  fi
-}
-
-set_yui_compressor() {
-  suffix='/'$YUIC_JARPATH
-
-  if [ ! $YUI_COMPRESSOR_PATH ]; then
-    if [ $ARGC -ne 1 ]; then
-      usage
-    else
-      YUI_COMPRESSOR_PATH=$ARG1$suffix
-    fi
-  else
-    YUI_COMPRESSOR_PATH=$YUI_COMPRESSOR_PATH$suffix
-  fi
+  fi  
 }
 
 combine_files() {
@@ -59,13 +80,15 @@ compress() {
   sed 's/eval/replacedEvilString/' | yui_compress | sed 's/replacedEvilString/eval/'
 }
 
+parse_args "$@"
+validate_options
 
-
-set_yui_compressor
-validate_args
-
-echo "Running minification..."
-
-combine_files | filter_out_debug | compress > $SP_OUTPUTFILE
+if [ $COMBINE_ONLY ]; then
+  echo "Combining source files only..."
+  combine_files > $FULL_OUTPUTFILE
+else
+  echo "Running minification..."
+  combine_files | filter_out_debug | compress > $MIN_OUTPUTFILE
+fi
 
 exit 0
