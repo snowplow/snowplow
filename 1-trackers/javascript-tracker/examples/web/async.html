@@ -24,11 +24,13 @@
         _snaq.push(['setCollectorCf', 'd3rkrsqld9gmqf']); // Update to your CloudFront distribution subdomain
         _snaq.push(['setSiteId', 'CFe23a']); // Site ID can be anything you want. Set it if you're tracking more than one site in this account
         _snaq.push(['setHeartBeatTimer', 5, 15]);
+        _snaq.push(['attachUserId', false]);
         _snaq.push(['trackPageView']);
 
         (function() {
             var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
-            sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://d1fc8wv8zag5ca.cloudfront.net/0.8.1/sp.js';
+            // sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://d1fc8wv8zag5ca.cloudfront.net/0.8.1/sp.js';
+            sp.src = 'file:///home/alex/Development/SnowPlow/snowplow/1-trackers/javascript-tracker/js/snowplow.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
             })();
     </script>

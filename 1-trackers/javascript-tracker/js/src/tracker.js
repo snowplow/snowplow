@@ -137,6 +137,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		configReferralCookieTimeout = 15768000000, // 6 months
 
 		// Whether we should attach uid (User ID) to the querystring
+		// Set to false if the collector is going to attach uid
 		configAttachUserId = true, 
 
 		// Should cookies have the secure flag set
@@ -468,7 +469,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		request += 
 			'&p=' + configPlatform +
 			'&tid=' + String(Math.random()).slice(2, 8) +
-			'&uid=' + uuid +
+			(configAttachUserId ? '&uid=' + uuid : '') +
 			'&fp='  + SnowPlow.encodeWrapper(fingerprint) +
 			'&vid=' + visitCount +
 			'&tv='  + SnowPlow.encodeWrapper(SnowPlow.version) +
