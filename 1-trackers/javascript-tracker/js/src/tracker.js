@@ -299,9 +299,6 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		if (configCollectorUrl === null) {
 			throw "No SnowPlow collector configured, cannot track";
 		}
-/*<DEBUG>*/
-		console.log(configCollectorUrl);
-/*</DEBUG>*/
 
 		// Okay? Let's proceed.
 		image.onload = function () { };
@@ -356,7 +353,6 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 */
 	function activityHandler() {
 		var now = new Date();
-
 		lastActivityTime = now.getTime();
 	}
 
@@ -669,19 +665,19 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 			// Add event handlers; cross-browser compatibility here varies significantly
 			// @see http://quirksmode.org/dom/events
-			addEventListener(SnowPlow.documentAlias, 'click', activityHandler);
-			addEventListener(SnowPlow.documentAlias, 'mouseup', activityHandler);
-			addEventListener(SnowPlow.documentAlias, 'mousedown', activityHandler);
-			addEventListener(SnowPlow.documentAlias, 'mousemove', activityHandler);
-			addEventListener(SnowPlow.documentAlias, 'mousewheel', activityHandler);
-			addEventListener(SnowPlow.windowAlias, 'DOMMouseScroll', activityHandler);
-			addEventListener(SnowPlow.windowAlias, 'scroll', activityHandler);
-			addEventListener(SnowPlow.documentAlias, 'keypress', activityHandler);
-			addEventListener(SnowPlow.documentAlias, 'keydown', activityHandler);
-			addEventListener(SnowPlow.documentAlias, 'keyup', activityHandler);
-			addEventListener(SnowPlow.windowAlias, 'resize', activityHandler);
-			addEventListener(SnowPlow.windowAlias, 'focus', activityHandler);
-			addEventListener(SnowPlow.windowAlias, 'blur', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'click', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'mouseup', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'mousedown', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'mousemove', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'mousewheel', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.windowAlias, 'DOMMouseScroll', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.windowAlias, 'scroll', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'keypress', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'keydown', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'keyup', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.windowAlias, 'resize', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.windowAlias, 'focus', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.windowAlias, 'blur', activityHandler);
 
 			// Periodic check for activity
 			lastActivityTime = now.getTime();
@@ -1317,12 +1313,32 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		},
 
 		/**
+		 * Enables page activity tracking (sends page
+		 * pings to the Collector regularly).
+		 *
+		 * @param int minimumVisitLength Seconds to wait before sending first page ping
+		 * @param int heartBeatDelay Seconds to wait between pings
+		 */
+		enableActivityTracking: function (minimumVisitLength, heartBeatDelay) {
+			
+			var now = new Date();
+
+			configMinimumVisitTime = now.getTime() + minimumVisitLength * 1000;
+			configHeartBeatTimer = heartBeatDelay * 1000;
+		},
+
+		/**
 		 * Set heartbeat (in seconds)
 		 *
 		 * @param int minimumVisitLength
 		 * @param int heartBeatDelay
 		 */
 		setHeartBeatTimer: function (minimumVisitLength, heartBeatDelay) {
+			
+			if (typeof console !== 'undefined') {
+				console.log("SnowPlow: setHeartBeatTimer() is deprecated and will be removed in an upcoming version. Please use enableActivityTracking() instead.");
+			}
+
 			var now = new Date();
 
 			configMinimumVisitTime = now.getTime() + minimumVisitLength * 1000;
