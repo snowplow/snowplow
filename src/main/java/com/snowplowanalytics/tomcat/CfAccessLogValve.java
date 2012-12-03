@@ -34,7 +34,7 @@ import org.apache.catalina.connector.Response;
  * CloudFront does).
  *
  * All original AccessLogValve code taken from:
- * http://svn.apache.org/repos/asf/tomcat/tc6.0.x/tags/TOMCAT_6_0_33/java/org/apache/catalina/valves/AccessLogValve.java
+ * http://javasourcecode.org/html/open-source/tomcat/tomcat-7.0.29/org/apache/catalina/valves/AccessLogValve.java.html
  */
 public class CfAccessLogValve extends AccessLogValve {
 
@@ -45,22 +45,12 @@ public class CfAccessLogValve extends AccessLogValve {
      * Updated to include an 'I' pattern, to escape an incoming header.
      */
     protected AccessLogElement createAccessLogElement(String header, char pattern) {
-        switch (pattern) {
-        case 'i':
-            return new HeaderElement(header);
-        // Added EscapedHeaderElement
-        case 'I':
+
+        // Added EscapedHeaderElement        
+        if (pattern == 'I') {
             return new EscapedHeaderElement(header);
-        case 'c':
-            return new CookieElement(header);
-        case 'o':
-            return new ResponseHeaderElement(header);
-        case 'r':
-            return new RequestAttributeElement(header);
-        case 's':
-            return new SessionAttributeElement(header);            
-        default:
-            return new StringElement("???");
+        } else {
+            return super.createAccessLogElement(header, pattern);
         }
     }
 
@@ -68,18 +58,18 @@ public class CfAccessLogValve extends AccessLogValve {
      * Write incoming headers, but escaped - %{xxx}I
      * Based on HeaderElement.
      */
-    protected class EscapedHeaderElement implements AccessLogElement {
-        private String header;
+    protected static class EscapedHeaderElement implements AccessLogElement {
+        private final String header;
 
         public EscapedHeaderElement(String header) {
             this.header = header;
         }
 
-        public void addElement(StringBuffer buf, Date date, Request request,
+        @Override
+        public void addElement(StringBuilder buf, Date date, Request request,
                 Response response, long time) {
             Enumeration<String> iter = request.getHeaders(header);
             if (iter.hasMoreElements()) {
-
                 buf.append(encodeStringSafely(iter.nextElement()));
                 while (iter.hasMoreElements()) {
                     buf.append(',').append(encodeStringSafely(iter.nextElement()));
@@ -89,6 +79,7 @@ public class CfAccessLogValve extends AccessLogValve {
             buf.append('-');
         }
     }
+
 
     /**
     * Encodes a string or returns a "-" if not possible.
