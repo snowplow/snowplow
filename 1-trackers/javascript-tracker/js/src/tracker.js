@@ -776,7 +776,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 		if (isPreRendered) {
 			// note: the event name doesn't follow the same naming convention as vendor properties
-			addEventListener(SnowPlow.documentAlias, prefix + 'visibilitychange', function ready() {
+			SnowPlow.addEventListener(SnowPlow.documentAlias, prefix + 'visibilitychange', function ready() {
 				SnowPlow.documentAlias.removeEventListener(prefix + 'visibilitychange', ready, false);
 				callback();
 			});
@@ -896,10 +896,10 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	function addClickListener(element, enable) {
 		if (enable) {
 			// for simplicity and performance, we ignore drag events
-			addEventListener(element, 'mouseup', clickHandler, false);
-			addEventListener(element, 'mousedown', clickHandler, false);
+			SnowPlow.addEventListener(element, 'mouseup', clickHandler, false);
+			SnowPlow.addEventListener(element, 'mousedown', clickHandler, false);
 		} else {
-			addEventListener(element, 'click', clickHandler, false);
+			SnowPlow.addEventListener(element, 'click', clickHandler, false);
 		}
 	}
 
