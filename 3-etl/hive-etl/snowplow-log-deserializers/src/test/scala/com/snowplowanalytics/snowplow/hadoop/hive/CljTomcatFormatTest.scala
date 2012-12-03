@@ -34,35 +34,35 @@ class CljTomcatFormatTest extends Specification {
 
   // Input
   // TODO: Yali to update this to current output
-  val row = "2012-05-24  00:08:40  LHR5  3397  74.125.17.210 GET d3gs014xn8p70.cloudfront.net  /i  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(Linux;%20U;%20Android%202.3.4;%20generic)%20AppleWebKit/535.1%20(KHTML,%20like%20Gecko;%20Google%20Web%20Preview)%20Version/4.0%20Mobile%20Safari/535.1  page=Psycards%2520book%2520and%2520deck%2520starter%2520pack%2520-%2520Psychic%2520Bazaar&tid=721410&uid=3798cdce0493133e&vid=1&lang=en&refr=http%253A%252F%252Fwww.google.com%252Fm%252Fsearch&res=640x960&cookie=1 - Hit vHql4ZhKJSl8yUJZuCrmvwBuVGmmgizVsKoo8lfPIn-ts0gR4g7KmA=="
+  val row = "2012-12-03 04:49:53  - 37  127.0.0.1 GET localhost /i  200 http://yalisassoon.github.com/cl-collector-tests/async.html Mozilla%2F5.0+%28Windows+NT+6.1%3B+WOW64%3B+rv%3A16.0%29+Gecko%2F20100101+Firefox%2F16.0  ?ev_ca=Mixes&ev_ac=Play&ev_la=MRC%2Ffabric-0503-mix&ev_va=0.0&p=web&tid=755049&uid=915bc1dd0a4c5ba5&fp=2196241488&vid=3&tv=js-0.8.0&lang=en-GB&refr=http%3A%2F%2Fyalisassoon.github.com%2F&f_pdf=1&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1920x1080&cd=24&cookie=1&tz=Europe%2FLondon&url=http%3A%2F%2Fyalisassoon.github.com%2Fcl-collector-tests%2Fasync.html&uid=7fc17b64-b202-46e4-8d3a-4d144edf2b23  - - -"
 
   // Output
   // TODO: Yali to update expected values
   val expected = new SnowPlowEvent().tap { e =>
-    e.dt = "2012-05-24"
-    e.tm = "00:08:40"
-    e.txn_id = "721410"
-    e.user_id = "3798cdce0493133e"
-    e.user_ipaddress = "74.125.17.210"
-    e.visit_id = 1
-    e.page_url = "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html"
-    e.page_title = "Psycards book and deck starter pack - Psychic Bazaar"
-    e.page_referrer = "http://www.google.com/m/search"
-    e.br_name = "Safari 4"
-    e.br_family = "Safari"
-    e.br_version = "4.0"
+    e.dt = "2012-12-03"
+    e.tm = "04:49:53"
+    e.txn_id = "755049"
+    e.user_id = "915bc1dd0a4c5ba5"
+    e.user_ipaddress = "127.0.0.1"
+    e.visit_id = 3
+    e.page_url = "http://yalisassoon.github.com/cl-collector-tests/async.html"
+    e.page_title = "Asynchronous website/webapp examples for snowplow.js"
+    e.page_referrer = "http://yalisassoon.github.com/"
+    e.br_name = "Firefox"
+    e.br_family = "Firefox"
+    e.br_version = "16.0"
     e.br_type = "Browser"
-    e.br_renderengine = "WEBKIT"
+    e.br_renderengine = "GECKO"
     e.br_lang = "en"
     e.br_cookies = true
-    e.br_features = List("qt")
-    e.os_name = "Android"
-    e.os_family = "Android"
-    e.os_manufacturer = "Google Inc."
-    e.dvce_type = "Mobile"
-    e.dvce_ismobile = true
-    e.dvce_screenwidth = 640
-    e.dvce_screenheight = 960
+    e.br_features = List("ag, java, pdf, wma")
+    e.os_name = "Windows"
+    e.os_family = "Windows"
+    e.os_manufacturer = "Microsoft Corporation"
+    e.dvce_type = "Computer"
+    e.dvce_ismobile = false
+    e.dvce_screenwidth = 1920
+    e.dvce_screenheight = 1080
   }
 
   "The SnowPlow page view row \"%s\" in the Clojure-Tomcat format".format(row) should {
