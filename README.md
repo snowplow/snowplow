@@ -1,7 +1,7 @@
 tomcat-cf-access-valve
 ======================
 
-Custom AccessLogValve for Tomcat to help generate CloudFront-like access logs, e.g. on Amazon Elastic Beanstalk.
+Custom `AccessLogValve` for Tomcat 7 to help generate CloudFront-like access logs, e.g. on Amazon Elastic Beanstalk.
 
 Used by the SnowPlow Clojure Collector.
 
