@@ -21,8 +21,8 @@ To briefly explain these five sub-systems:
 * **Trackers** fire SnowPlow events. Currently we have a JavaScript tracker; iOS and Android trackers are on the roadmap
 * **Collectors** receive SnowPlow events from trackers. Currently we have a CloudFront-based collector and a node.js-based collector, called SnowCannon
 * **ETL (extract, transform and load)** cleans up the raw SnowPlow events, enriches them and puts them into storage. Currently we have a Hive-based ETL process
-* **Storage** is where the SnowPlow events live. Currently we store the SnowPlow events in a Hive-format flatfile structure on S3
-* **Analytics** are performed on the SnowPlow events. Currently we have a set of ad hoc analyses written in Hive 
+* **Storage** is where the SnowPlow events live. Currently we store the SnowPlow events in a Hive-format flatfile structure on S3, and in the Infobright columnar database
+* **Analytics** are performed on the SnowPlow events. Currently we have a set of ad hoc analyses that work with Hive and Infobright 
 
 **For more information on the current SnowPlow architecture, please see the [Technical architecture] [architecture-doc]**.
 
