@@ -24,8 +24,6 @@ import org.apache.catalina.valves.AccessLogValve;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 
-// https://github.com/snowplow/snowplow/blob/master/3-etl/hive-etl/snowplow-log-deserializers/src/main/java/com/snowplowanalytics/snowplow/hadoop/hive/SnowPlowEventStruct.java
-
 /**
  * A custom AccessLogValve for Tomcat to help generate CloudFront-like access logs.
  *
@@ -79,7 +77,6 @@ public class CfAccessLogValve extends AccessLogValve {
             buf.append('-');
         }
     }
-
 
     /**
     * Encodes a string or returns a "-" if not possible.
