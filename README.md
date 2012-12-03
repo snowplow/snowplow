@@ -1,4 +1,4 @@
-cf-tomcat-access-valve
+tomcat-cf-access-valve
 ======================
 
 Custom AccessLogValve for Tomcat to help generate CloudFront-like access logs
