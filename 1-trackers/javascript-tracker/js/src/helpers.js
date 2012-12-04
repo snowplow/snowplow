@@ -73,7 +73,7 @@ SnowPlow.encodeUtf8 = function (argString) {
  * Extract hostname from URL
  */
 SnowPlow.getHostName = function (url) {
-	// scheme : // [username [: password] @] hostame [: port] [/ [path] [? query] [# fragment]]
+	// scheme : // [username [: password] @] hostname [: port] [/ [path] [? query] [# fragment]]
 	var e = new RegExp('^(?:(?:https?|ftp):)/*(?:[^@]+@)?([^:/#]+)'),
 		matches = e.exec(url);
 
