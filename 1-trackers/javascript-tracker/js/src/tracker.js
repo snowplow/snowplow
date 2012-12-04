@@ -263,7 +263,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			offset;
 
 		for (i = 0; i < configHostsAlias.length; i++) {
-			alias = domainFixup(configHostsAlias[i].toLowerCase());
+			alias = SnowPlow.domainFixup(configHostsAlias[i].toLowerCase());
 
 			if (hostName === alias) {
 				return true;
@@ -1197,7 +1197,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 * @param string domain
 		 */
 		setCookieDomain: function (domain) {
-			configCookieDomain = domainFixup(domain);
+			configCookieDomain = SnowPlow.domainFixup(domain);
 			updateDomainHash();
 		},
 
