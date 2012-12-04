@@ -1,3 +1,8 @@
+Version 0.6.3 (2012-12-04)
+--------------------------
+JS tracker: bumped to 0.8.2
+JS tracker: fixed regressions from splitting JS into multiple files (#103)
+
 Version 0.6.2 (2012-11-29)
 --------------------------
 JS tracker: bumped to 0.8.1
