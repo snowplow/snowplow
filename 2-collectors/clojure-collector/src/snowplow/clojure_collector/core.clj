@@ -42,7 +42,7 @@
   (GET "/i"           {c :cookies} (send-cookie-etc' c))
   (GET "/ice.png"     {c :cookies} (send-cookie-etc' c)) ; legacy name for i
   (GET "/healthcheck" request responses/send-200)
-  ;GET "/status"      from expose-metrics-as-json
+  ;GET "/status"      from expose-metrics-as-json, only in development env
   ;HEAD "/"           from beanstalk.clj
   (compojure.route/not-found  responses/send-404))
 
@@ -56,5 +56,5 @@
    (mware/wrap-if config/production?  mware/wrap-failsafe)
    (mware/wrap-request-logging)
    (mware/wrap-exception-logging)
-   (expose-metrics-as-json "/status")
-   (instrument)))
+   (mware/wrap-if config/development? expose-metrics-as-json "/status")
+   (mware/wrap-if config/development? instrument)))
