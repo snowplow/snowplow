@@ -679,7 +679,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			SnowPlow.addEventListener(SnowPlow.windowAlias, 'focus', activityHandler);
 			SnowPlow.addEventListener(SnowPlow.windowAlias, 'blur', activityHandler);
 
-			// periodic check for activity
+			// Periodic check for activity
 			lastActivityTime = now.getTime();
 			setTimeout(function heartBeat() {
 				var now = new Date(),
