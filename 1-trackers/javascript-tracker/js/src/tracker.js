@@ -244,7 +244,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		}
 
 		if (url.slice(0, 1) === '/') {
-			return getProtocolScheme(baseUrl) + '://' + getHostName(baseUrl) + url;
+			return getProtocolScheme(baseUrl) + '://' + SnowPlow.getHostName(baseUrl) + url;
 		}
 
 		baseUrl = purify(baseUrl);
@@ -554,7 +554,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 */
 	function logEvent(category, action, label, property, value) {
 		var sb = requestStringBuilder();
-		sb.add('e', 'ce'); // 'ce' for custom event
+		sb.add('e', 'ev'); // 'ev' for custom EVent
 		sb.add('ev_ca', category);
 		sb.add('ev_ac', action)
 		sb.add('ev_la', label);
@@ -576,7 +576,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	// TODO: should add impressionId as well.
 	function logImpression(bannerId, campaignId, advertiserId, userId) {
 		var sb = requestStringBuilder();
-		sb.add('e', 'imp'); // 'imp' for impression
+		sb.add('e', 'ad'); // 'ad' for AD impression
 		sb.add('ad_ba', category);
 		sb.add('ad_ca', action)
 		sb.add('ad_ad', label);
@@ -601,7 +601,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	// TODO: add params to comment
 	function logTransaction(orderId, affiliation, total, tax, shipping, city, state, country) {
 		var sb = requestStringBuilder();
-		sb.add('e', 't'); // 't' for transaction
+		sb.add('e', 'tr'); // 'tr' for TRansaction
 		sb.add('tr_id', orderId);
 		sb.add('tr_af', affiliation);
 		sb.add('tr_tt', total);
@@ -628,7 +628,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	// TODO: add params to comment
 	function logTransactionItem(orderId, sku, name, category, price, quantity) {
 		var sb = requestStringBuilder();
-		sb.add('e', 'ti'); // 'ti' for transaction item
+		sb.add('e', 'ti'); // 'ti' for Transaction Item
 		sb.add('ti_id', orderId);
 		sb.add('ti_sk', sku);
 		sb.add('ti_na', name);
@@ -652,7 +652,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 		// Log page view
 		var sb = requestStringBuilder();
-		sb.add('e', 'pv'); // 'pv' for page view
+		sb.add('e', 'pv'); // 'pv' for Page View
 		sb.add('page', pageTitle);
 		var params = sb.build();
 		var request = getRequest(params, 'log');
@@ -710,7 +710,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 */
 	function logPagePing(pageTitle) {
 		var sb = requestStringBuilder();
-		sb.add('e', 'pp'); // 'pp' for page ping
+		sb.add('e', 'pp'); // 'pp' for Page Ping
 		sb.add('page', pageTitle);
 		var params = sb.build();
 		var request = getRequest(params, 'ping');
@@ -841,7 +841,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 		if (SnowPlow.isDefined(sourceElement.href)) {
 			// browsers, such as Safari, don't downcase hostname and href
-			var originalSourceHostName = sourceElement.hostname || getHostName(sourceElement.href),
+			var originalSourceHostName = sourceElement.hostname || SnowPlow.getHostName(sourceElement.href),
 				sourceHostName = originalSourceHostName.toLowerCase(),
 				sourceHref = sourceElement.href.replace(originalSourceHostName, sourceHostName),
 				scriptProtocol = new RegExp('^(javascript|vbscript|jscript|mocha|livescript|ecmascript|mailto):', 'i');
@@ -851,8 +851,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 				// track outlinks and all downloads
 				linkType = getLinkType(sourceElement.className, sourceHref, isSiteHostName(sourceHostName));
 				if (linkType) {
-					// urldecode %xx
-					sourceHref = urldecode(sourceHref);
+					// decodeUrl %xx
+					sourceHref = SnowPlow.decodeUrl(sourceHref);
 					logLink(sourceHref, linkType);
 				}
 			}

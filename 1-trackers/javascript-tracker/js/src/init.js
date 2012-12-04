@@ -67,8 +67,8 @@ var SnowPlow = SnowPlow || function() {
 		/* Decode */
 		decodeWrapper: windowAlias.decodeURIComponent,
 
-		/* Urldecode */
-		urldecode: unescape,
+		/* decodeUrl */
+		decodeUrl: unescape,
 
 		/* Asynchronous tracker */
 		asyncTracker: null
