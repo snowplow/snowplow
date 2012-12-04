@@ -462,6 +462,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		}
 
 		// Build out the rest of the request
+		// TODO: switch this to using requestStringBuilder, much tidier
 		request += 
 			'&p=' + configPlatform +
 			'&tid=' + String(Math.random()).slice(2, 8) +
@@ -530,6 +531,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 *
 	 * @return object The request string builder, with add and build methods
 	 */
+	// TODO: add encode flag to add
+	// TODO: add addIf() function
 	function requestStringBuilder(initialValue) {
 		var str = initialValue || '';
 		return {
