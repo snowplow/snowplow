@@ -87,7 +87,7 @@ SnowPlow.fixupTitle = function (title) {
 /*
  * Extract hostname from URL
  */
-SnowPlow.getHostName = fuction (url) {
+SnowPlow.getHostName = function (url) {
 	// scheme : // [username [: password] @] hostname [: port] [/ [path] [? query] [# fragment]]
 	var e = new RegExp('^(?:(?:https?|ftp):)/*(?:[^@]+@)?([^:/#]+)'),
 		matches = e.exec(url);
@@ -104,7 +104,7 @@ SnowPlow.fixupUrl = function (hostName, href, referrer) {
 	 * Extract parameter from URL
 	 */
 	function getParameter(url, name) {
-		// scheme : // [username [: password] @] hostame [: port] [/ [path] [? query] [# fragment]]
+		// scheme : // [username [: password] @] hostname [: port] [/ [path] [? query] [# fragment]]
 		var e = new RegExp('^(?:https?|ftp)(?::/*(?:[^?]+)[?])([^#]+)'),
 			matches = e.exec(url),
 			f = new RegExp('(?:^|&)' + name + '=([^&]*)'),
