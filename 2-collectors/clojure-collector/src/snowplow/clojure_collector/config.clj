@@ -17,7 +17,7 @@
   "Gets environment variables, using
    sensible defaults where necessary")
 
-;; Note Beanstalk only has 5 'slots' in the UI for environment variables
+;; Note Beanstalk only has 5 'slots' in the UI for Java system properties
 (def ^:const env-varnames ["PARAM1", "SP_ENV"])
 (def ^:const p3p-varnames ["PARAM2", "SP_P3P"])
 (def ^:const domain-varnames ["PARAM3", "SP_DOMAIN"])
@@ -28,30 +28,30 @@
 (def ^:const default-p3p-header "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\"")
 (def ^:const default-duration "365") ; A year
 
-(defn- get-env
-  "Try both options for each
-   environment varname. Supports
+(defn- get-var
+  "Try first option as a Java system
+   property, then second option as
+   an environment variable. Supports
    optional `default` as fallback"
-  ([varnames] (get-env varnames nil))
+  ([varnames] (get-var varnames nil))
   ([varnames default]
-    (let [env (System/getenv)]
-      (get env (first varnames)
-        (get env (second varnames)
-          default)))))
+    (System/getProperty (first varnames)
+      (get (System/getenv) (second varnames)
+        default))))
 
 (def duration
   "Get the duration (in days) the
    cookie should last for"
-  (-> (get-env duration-varnames default-duration) read-string))
+  (-> (get-var duration-varnames default-duration) read-string))
 
 (def p3p-header
   "Get the P3P header.
    Return a default P3P policy if not set"
-  (get-env p3p-varnames default-p3p-header))
+  (get-var p3p-varnames default-p3p-header))
 
 (def production?
   "Running in production?"
-  (= "production" (get-env env-varnames)))
+  (= "production" (get-var env-varnames)))
 
 (def development?
   "Running in development environment?"
@@ -61,4 +61,4 @@
   "Get the domain the name cookies will be set on.
    Can be a wildcard e.g. '.foo.com'.
    If undefined we'll just use the FQDN of the host"
-  (get-env domain-varnames))
+  (get-var domain-varnames))
