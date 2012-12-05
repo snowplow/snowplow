@@ -42,7 +42,7 @@
 (def duration
   "Get the duration (in days) the
    cookie should last for"
-  (-> (get-var duration-varnames default-duration) read-string))
+  (-> (get-var duration-varnames default-duration) Integer/parseInt))
 
 (def p3p-header
   "Get the P3P header.
