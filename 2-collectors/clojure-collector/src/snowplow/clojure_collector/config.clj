@@ -15,7 +15,8 @@
 
 (ns snowplow.clojure-collector.config
   "Gets environment variables, using
-   sensible defaults where necessary")
+   sensible defaults where necessary"
+   (:use [clojure.string              :only [blank?]]))
 
 ;; Note Beanstalk only has 5 'slots' in the UI for Java system properties
 (def ^:const env-varnames ["PARAM1", "SP_ENV"])
@@ -28,6 +29,15 @@
 (def ^:const default-p3p-header "policyref=\"/w3c/p3p.xml\", CP=\"NOI DSP COR NID PSA OUR IND COM NAV STA\"")
 (def ^:const default-duration "365") ; A year
 
+(defn- get-property-safely
+  "This is required because Beanstalk
+   sends in \"\" for any PARAMx which
+   is not set in the UI. We should
+   replace this with the default"
+  [property default]
+  (let [value (System/getProperty property)]
+    (if (blank? value) default value)))
+
 (defn- get-var
   "Try first option as a Java system
    property, then second option as
@@ -35,7 +45,7 @@
    optional `default` as fallback"
   ([varnames] (get-var varnames nil))
   ([varnames default]
-    (System/getProperty (first varnames)
+    (get-property-safely (first varnames)
       (get (System/getenv) (second varnames)
         default))))
 
