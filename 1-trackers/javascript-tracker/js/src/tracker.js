@@ -1009,10 +1009,10 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	function registerHook(hookName, userHook) {
 		var hookObj = null;
 
-		if (isString(hookName) && !SnowPlow.isDefined(registeredHooks[hookName]) && userHook) {
-			if (isObject(userHook)) {
+		if (SnowPlow.isString(hookName) && !SnowPlow.isDefined(registeredHooks[hookName]) && userHook) {
+			if (SnowPlow.isObject(userHook)) {
 				hookObj = userHook;
-			} else if (isString(userHook)) {
+			} else if (SnowPlow.isString(userHook)) {
 				try {
 					eval('hookObj =' + userHook);
 				} catch (e) { }
@@ -1115,7 +1115,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 * @param string|array hostsAlias
 		 */
 		setDomains: function (hostsAlias) {
-			configHostsAlias = isString(hostsAlias) ? [hostsAlias] : hostsAlias;
+			configHostsAlias = SnowPlow.isString(hostsAlias) ? [hostsAlias] : hostsAlias;
 			configHostsAlias.push(domainAlias);
 		},
 
@@ -1125,7 +1125,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 * @param string|array ignoreClasses
 		 */
 		setIgnoreClasses: function (ignoreClasses) {
-			configIgnoreClasses = isString(ignoreClasses) ? [ignoreClasses] : ignoreClasses;
+			configIgnoreClasses = SnowPlow.isString(ignoreClasses) ? [ignoreClasses] : ignoreClasses;
 		},
 
 		/**
@@ -1161,7 +1161,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 * @param string|array downloadClasses
 		 */
 		setDownloadClasses: function (downloadClasses) {
-			configDownloadClasses = isString(downloadClasses) ? [downloadClasses] : downloadClasses;
+			configDownloadClasses = SnowPlow.isString(downloadClasses) ? [downloadClasses] : downloadClasses;
 		},
 
 		/**
@@ -1170,7 +1170,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 * @param string|array linkClasses
 		 */
 		setLinkClasses: function (linkClasses) {
-			configLinkClasses = isString(linkClasses) ? [linkClasses] : linkClasses;
+			configLinkClasses = SnowPlow.isString(linkClasses) ? [linkClasses] : linkClasses;
 		},
 
 		/**
