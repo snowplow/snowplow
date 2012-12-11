@@ -263,7 +263,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			offset;
 
 		for (i = 0; i < configHostsAlias.length; i++) {
-			alias = domainFixup(configHostsAlias[i].toLowerCase());
+			alias = SnowPlow.domainFixup(configHostsAlias[i].toLowerCase());
 
 			if (hostName === alias) {
 				return true;
@@ -665,19 +665,19 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 			// add event handlers; cross-browser compatibility here varies significantly
 			// @see http://quirksmode.org/dom/events
-			addEventListener(SnowPlow.documentAlias, 'click', activityHandler);
-			addEventListener(SnowPlow.documentAlias, 'mouseup', activityHandler);
-			addEventListener(SnowPlow.documentAlias, 'mousedown', activityHandler);
-			addEventListener(SnowPlow.documentAlias, 'mousemove', activityHandler);
-			addEventListener(SnowPlow.documentAlias, 'mousewheel', activityHandler);
-			addEventListener(SnowPlow.windowAlias, 'DOMMouseScroll', activityHandler);
-			addEventListener(SnowPlow.windowAlias, 'scroll', activityHandler);
-			addEventListener(SnowPlow.documentAlias, 'keypress', activityHandler);
-			addEventListener(SnowPlow.documentAlias, 'keydown', activityHandler);
-			addEventListener(SnowPlow.documentAlias, 'keyup', activityHandler);
-			addEventListener(SnowPlow.windowAlias, 'resize', activityHandler);
-			addEventListener(SnowPlow.windowAlias, 'focus', activityHandler);
-			addEventListener(SnowPlow.windowAlias, 'blur', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'click', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'mouseup', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'mousedown', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'mousemove', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'mousewheel', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.windowAlias, 'DOMMouseScroll', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.windowAlias, 'scroll', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'keypress', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'keydown', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.documentAlias, 'keyup', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.windowAlias, 'resize', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.windowAlias, 'focus', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.windowAlias, 'blur', activityHandler);
 
 			// periodic check for activity
 			lastActivityTime = now.getTime();
@@ -754,7 +754,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 		if (isPreRendered) {
 			// note: the event name doesn't follow the same naming convention as vendor properties
-			addEventListener(SnowPlow.documentAlias, prefix + 'visibilitychange', function ready() {
+			SnowPlow.addEventListener(SnowPlow.documentAlias, prefix + 'visibilitychange', function ready() {
 				SnowPlow.documentAlias.removeEventListener(prefix + 'visibilitychange', ready, false);
 				callback();
 			});
@@ -873,10 +873,10 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	function addClickListener(element, enable) {
 		if (enable) {
 			// for simplicity and performance, we ignore drag events
-			addEventListener(element, 'mouseup', clickHandler, false);
-			addEventListener(element, 'mousedown', clickHandler, false);
+			SnowPlow.addEventListener(element, 'mouseup', clickHandler, false);
+			SnowPlow.addEventListener(element, 'mousedown', clickHandler, false);
 		} else {
-			addEventListener(element, 'click', clickHandler, false);
+			SnowPlow.addEventListener(element, 'click', clickHandler, false);
 		}
 	}
 
@@ -1009,10 +1009,10 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	function registerHook(hookName, userHook) {
 		var hookObj = null;
 
-		if (isString(hookName) && !SnowPlow.isDefined(registeredHooks[hookName]) && userHook) {
-			if (isObject(userHook)) {
+		if (SnowPlow.isString(hookName) && !SnowPlow.isDefined(registeredHooks[hookName]) && userHook) {
+			if (SnowPlow.isObject(userHook)) {
 				hookObj = userHook;
-			} else if (isString(userHook)) {
+			} else if (SnowPlow.isString(userHook)) {
 				try {
 					eval('hookObj =' + userHook);
 				} catch (e) { }
@@ -1115,7 +1115,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 * @param string|array hostsAlias
 		 */
 		setDomains: function (hostsAlias) {
-			configHostsAlias = isString(hostsAlias) ? [hostsAlias] : hostsAlias;
+			configHostsAlias = SnowPlow.isString(hostsAlias) ? [hostsAlias] : hostsAlias;
 			configHostsAlias.push(domainAlias);
 		},
 
@@ -1125,7 +1125,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 * @param string|array ignoreClasses
 		 */
 		setIgnoreClasses: function (ignoreClasses) {
-			configIgnoreClasses = isString(ignoreClasses) ? [ignoreClasses] : ignoreClasses;
+			configIgnoreClasses = SnowPlow.isString(ignoreClasses) ? [ignoreClasses] : ignoreClasses;
 		},
 
 		/**
@@ -1161,7 +1161,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 * @param string|array downloadClasses
 		 */
 		setDownloadClasses: function (downloadClasses) {
-			configDownloadClasses = isString(downloadClasses) ? [downloadClasses] : downloadClasses;
+			configDownloadClasses = SnowPlow.isString(downloadClasses) ? [downloadClasses] : downloadClasses;
 		},
 
 		/**
@@ -1170,7 +1170,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 * @param string|array linkClasses
 		 */
 		setLinkClasses: function (linkClasses) {
-			configLinkClasses = isString(linkClasses) ? [linkClasses] : linkClasses;
+			configLinkClasses = SnowPlow.isString(linkClasses) ? [linkClasses] : linkClasses;
 		},
 
 		/**
@@ -1197,7 +1197,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 * @param string domain
 		 */
 		setCookieDomain: function (domain) {
-			configCookieDomain = domainFixup(domain);
+			configCookieDomain = SnowPlow.domainFixup(domain);
 			updateDomainHash();
 		},
 
