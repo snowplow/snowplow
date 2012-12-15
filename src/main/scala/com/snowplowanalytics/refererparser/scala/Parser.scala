@@ -53,7 +53,7 @@ object Parser {
     
     if (r.known)
       Referer(
-        referer = r.referer,
+        name = r.name,
         searchParameter = r.searchParameter,
         searchTerm = r.searchTerm,
         uri = r.uri

@@ -25,7 +25,7 @@ import java.net.URI
  * Replacement for Java version's POJO.
  */
 case class Referer(
-  referer: String,
+  name: String,
   searchParameter: String,
   searchTerm: String,
   uri: URI
