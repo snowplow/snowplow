@@ -19,13 +19,13 @@ object Dependencies {
   )
 
   object V {
-    // TODO: add YAML dependency
+    val yaml      = "1.10"
     val specs2    = "1.12.1"
     val scalaUtil = "0.1.0"
   }
 
   object Libraries {
-    // TODO: add YAML dependency
+    val yaml        = "org.yaml"                   %  "snakeyaml"            % V.yaml
     val specs2      = "org.specs2"                 %% "specs2"               % V.specs2      % "test"
     val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"           % V.scalaUtil   % "test"
   }

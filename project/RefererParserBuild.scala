@@ -28,6 +28,7 @@ object RefererParserBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
+        Libraries.yaml,
         Libraries.specs2,
         Libraries.scalaUtil
       )
