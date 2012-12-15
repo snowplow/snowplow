@@ -21,51 +21,44 @@ package com.snowplowanalytics.refererparser;
  *
  * @author Alex Dean (@alexatkeplar) <support at snowplowanalytics com>
  */
-public class OS {
-  public final String family, major, minor, patch, patchMinor;
+public class Referer {
+  public final String name, searchTerm, searchParameter;
+  public final boolean known;
 
-  public OS(String family, String major, String minor, String patch, String patchMinor) {
-    this.family = family;
-    this.major = major;
-    this.minor = minor;
-    this.patch = patch;
-    this.patchMinor = patchMinor;
-  }
-
-  public static OS fromMap(Map<String, String> m) {
-    return new OS(m.get("family"), m.get("major"), m.get("minor"), m.get("patch"), m.get("patch_minor"));
+  public Referer(String name, boolean known, String searchParameter, String searchTerm) {
+    this.name = name;
+    this.known = known;
+    this.searchParameter = searchParameter;
+    this.searchTerm = searchTerm;
   }
 
   @Override
   public boolean equals(Object other) {
     if (other == this) return true;
+    if (this.known == false) return false;
     if (!(other instanceof OS)) return false;
 
-    OS o = (OS) other;
-    return ((this.family != null && this.family.equals(o.family)) || this.family == o.family) &&
-           ((this.major != null && this.major.equals(o.major)) || this.major == o.major) &&
-           ((this.minor != null && this.minor.equals(o.minor)) || this.minor == o.minor) &&
-           ((this.patch != null && this.patch.equals(o.patch)) || this.patch == o.patch) &&
-           ((this.patchMinor != null && this.patchMinor.equals(o.patchMinor)) || this.patchMinor == o.patchMinor);
+    Referer r = (Referer) other;
+    return ((this.name != null && this.name.equals(r.name)) || this.name == r.name) &&
+           ((this.searchParameter != null && this.searchParameter.equals(r.searchParameter)) || this.searchParameter == r.searchParameter) &&
+           ((this.searchTerm != null && this.searchTerm.equals(r.searchTerm)) || this.searchTerm == r.searchTerm);
   }
 
   @Override
   public int hashCode() {
-    int h = family == null ? 0 : family.hashCode();
-    h += major == null ? 0 : major.hashCode();
-    h += minor == null ? 0 : minor.hashCode();
-    h += patch == null ? 0 : patch.hashCode();
-    h += patchMinor == null ? 0 : patchMinor.hashCode();
+    int h = name == null ? 0 : name.hashCode();
+    h += known == null ? 0 : known.hashCode();
+    h += searchParameter == null ? 0 : searchParameter.hashCode();
+    h += searchTerm == null ? 0 : searchTerm.hashCode();
     return h;
   }
 
   @Override
   public String toString() {
-    return String.format("{family: %s, major: %s, minor: %s, patch: %s, patch_minor: %s}",
-                         family == null ? null : '"' + family + '"',
-                         major == null ? null : '"' + major + '"',
-                         minor == null ? null : '"' + minor + '"',
-                         patch == null ? null : '"' + patch + '"',
-                         patchMinor == null ? null : '"' + patchMinor + '"');
+    return String.format("{name: %s, known: %s, search_parameter: %s, search_term: %s}",
+                         name == null ? null : '"' + name + '"',
+                         known == null ? null : '"' + known + '"',
+                         searchParameter == null ? null : '"' + searchParameter + '"',
+                         searchTerm == null ? null : '"' + searchTerm + '"');
   }
 }

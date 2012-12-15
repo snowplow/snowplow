@@ -20,11 +20,8 @@ package com.snowplowanalytics.refererparser;
 import java.net.URI;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-// import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-// import java.util.Set;
 
 // SnakeYAML
 import org.yaml.snakeyaml.Yaml;
@@ -58,7 +55,7 @@ public class Parser {
     // First check we have an http: or https: URI
     String scheme = refererUri.getScheme();
     if (scheme != "http" && scheme != "https") {
-      throw new IllegalArgumentException("'" + scheme + "' is not an http(s) protocol URI");
+      throw new IllegalArgumentException('"' + scheme + '" is not an http(s) protocol URI');
     }
 
     // Check if domain+path matches (e.g. google.co.uk/products)
@@ -71,11 +68,10 @@ public class Parser {
     if (referer == null) {
       return new Referer(null, false, null, null); // Referer is not known
     } else {
-      String name   = referer.get("name");
-      Boolean known = true;
+      String name = referer.get("name");
       String searchTerm = null; // How to do a tuple in Java?
       String searchParameter = null; // Ditto
-      return new Referer(name, known, searchTerm, searchParameter)
+      return new Referer(name, true, searchParameter, searchTerm)
     }
   }
 
@@ -92,11 +88,11 @@ public class Parser {
       // Validate
       List<String> parameters = refererMap.get("parameters");
       if (parameters == null) {
-        throw new CorruptReferersYamlException("No parameters found for referer '" + referer + "'");
+        throw new CorruptReferersYamlException('No parameters found for referer "' + referer + '"');
       }
       List<String> domains = refererMap.get("domains");
       if (domains == null) { 
-        throw new CorruptReferersYamlException("No domains found for referer '" + referer + "'");
+        throw new CorruptReferersYamlException('No domains found for referer "' + referer + '"');
       }
 
       // Our hash needs referer domain as the
