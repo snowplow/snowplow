@@ -23,11 +23,9 @@ package com.snowplowanalytics.refererparser;
  */
 public class Referer {
   public final String name, searchTerm, searchParameter;
-  public final boolean known;
 
-  public Referer(String name, boolean known, String searchParameter, String searchTerm) {
+  public Referer(String name, String searchParameter, String searchTerm) {
     this.name = name;
-    this.known = known;
     this.searchParameter = searchParameter;
     this.searchTerm = searchTerm;
   }
@@ -35,7 +33,6 @@ public class Referer {
   @Override
   public boolean equals(Object other) {
     if (other == this) return true;
-    if (this.known == false) return false;
     if (!(other instanceof OS)) return false;
 
     Referer r = (Referer) other;
@@ -47,7 +44,6 @@ public class Referer {
   @Override
   public int hashCode() {
     int h = name == null ? 0 : name.hashCode();
-    h += known == null ? 0 : known.hashCode();
     h += searchParameter == null ? 0 : searchParameter.hashCode();
     h += searchTerm == null ? 0 : searchTerm.hashCode();
     return h;
@@ -55,9 +51,8 @@ public class Referer {
 
   @Override
   public String toString() {
-    return String.format("{name: %s, known: %s, search_parameter: %s, search_term: %s}",
+    return String.format("{name: %s, search_parameter: %s, search_term: %s}",
                          name == null ? null : '"' + name + '"',
-                         known == null ? null : '"' + known + '"',
                          searchParameter == null ? null : '"' + searchParameter + '"',
                          searchTerm == null ? null : '"' + searchTerm + '"');
   }

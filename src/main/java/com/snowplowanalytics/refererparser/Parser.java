@@ -46,14 +46,14 @@ public class Parser {
   }
 
   public Referer parse(String refererUri) {
-    static final URI uri = new URI(refererUri);
+    final URI uri = new URI(refererUri);
     return parse(uri);
   }
 
   public Referer parse(URI refererUri) {
 
     // First check we have an http: or https: URI
-    String scheme = refererUri.getScheme();
+    final String scheme = refererUri.getScheme();
     if (scheme != "http" && scheme != "https") {
       throw new IllegalArgumentException("'" + scheme + "' is not an http(s) protocol URI");
     }
@@ -66,12 +66,12 @@ public class Parser {
 
     // Create our referer as necessary
     if (referer == null) {
-      return new Referer(null, false, null, null); // Referer is not known
+      return new Referer("Other", null, null); // Other referer
     } else {
-      String name = referer.get("name");
-      String searchTerm = null; // How to do a tuple in Java?
-      String searchParameter = null; // Ditto
-      return new Referer(name, true, searchParameter, searchTerm)
+      final String name = referer.get("name");
+      final String searchTerm = null; // How to do a tuple in Java?
+      final String searchParameter = null; // Ditto
+      return new Referer(name, searchParameter, searchTerm);
     }
   }
 
@@ -81,25 +81,27 @@ public class Parser {
     Map<String,Map> rawReferers = (Map<String,Map>) yaml.load(referersYaml);
 
     // Process each element of the map
-    Map<String,Map> referers = (Map<String,Map>);
-    for (String referer : rawReferers.getKeys()) { // Pseudo-code
-      Map<String,List> refererMap = rawRefers.get(referer); // Can I do this in one line?
+    Map<String,Map> referers = new Map<String,Map>();
+    for (Map.Entry<String, Map> referer : rawReferers.entrySet()) {
+
+      String refererName = referer.getKey();
+      String refererMap = referer.getValue();
 
       // Validate
       List<String> parameters = refererMap.get("parameters");
       if (parameters == null) {
-        throw new CorruptReferersYamlException("No parameters found for referer '" + referer + "'");
+        throw new CorruptReferersYamlException("No parameters found for referer '" + refererName + "'");
       }
       List<String> domains = refererMap.get("domains");
       if (domains == null) { 
-        throw new CorruptReferersYamlException("No domains found for referer '" + referer + "'");
+        throw new CorruptReferersYamlException("No domains found for referer '" + refererName + "'");
       }
 
       // Our hash needs referer domain as the
       // key, so let's expand
       for (String domain : domains) {
-        Map<String,Map> domainMap = (Map<String,Map>);
-        domainMap.put("name", referer); // Pseudo-code
+        Map<String,Map> domainMap = new Map<String,Map>();
+        domainMap.put("name", refererName); // Pseudo-code
         domainMap.put("parameters", parameters);
 
         referers.add(domain, domainMap);

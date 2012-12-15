@@ -26,7 +26,6 @@ import java.net.URI
  */
 case class Referer(
   name: String,
-  searchParameter: String,
-  searchTerm: String,
-  uri: URI
+  searchParameter: Option[String],
+  searchTerm: Option[String]
 )
