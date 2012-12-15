@@ -55,7 +55,7 @@ public class Parser {
     // First check we have an http: or https: URI
     String scheme = refererUri.getScheme();
     if (scheme != "http" && scheme != "https") {
-      throw new IllegalArgumentException('"' + scheme + '" is not an http(s) protocol URI');
+      throw new IllegalArgumentException("'" + scheme + "' is not an http(s) protocol URI");
     }
 
     // Check if domain+path matches (e.g. google.co.uk/products)
@@ -88,11 +88,11 @@ public class Parser {
       // Validate
       List<String> parameters = refererMap.get("parameters");
       if (parameters == null) {
-        throw new CorruptReferersYamlException('No parameters found for referer "' + referer + '"');
+        throw new CorruptReferersYamlException("No parameters found for referer '" + referer + "'");
       }
       List<String> domains = refererMap.get("domains");
       if (domains == null) { 
-        throw new CorruptReferersYamlException('No domains found for referer "' + referer + '"');
+        throw new CorruptReferersYamlException("No domains found for referer '" + referer + "'");
       }
 
       // Our hash needs referer domain as the
