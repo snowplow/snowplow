@@ -23,6 +23,27 @@ import java.net.URI
 import com.snowplowanalytics.refererparser.{Parser => JParser}
 
 /**
+ * Immutable case class to hold a referal.
+ *
+ * Replacement for Java version's POJO.
+ */
+case class Referal(referer: Referer, search: Option[Search])
+
+/**
+ * Immutable case class to hold a referer.
+ *
+ * Replacement for Java version's POJO.
+ */
+case class Referer(name: String)
+
+/**
+ * Immutable case class to hold a search.
+ *
+ * Replacement for Java version's POJO.
+ */
+case class Search(term: String, parameter: String)
+
+/**
  * Parser object - contains one-time initialization
  * of the YAML database of referers, and parse()
  * methods to generate a Referer object from a
@@ -32,29 +53,34 @@ import com.snowplowanalytics.refererparser.{Parser => JParser}
  */
 object Parser {
 
-  private type MaybeReferer = Option[Referer]
+  private type MaybeReferal = Option[Referal]
 
   /**
    * Parses a `refererUri` String to return
-   * either a Referer, or None.
+   * either a Referal, or None.
    */
-  def parse(refererUri: String): Referer = {
+  def parse(refererUri: String): MaybeReferal = {
     val uri = new URI(refererUri)
     parse(uri)
   }
 
   /**
    * Parses a `refererUri` URI to return
-   * either a Referer, or None.
+   * either a Referal, or None.
    */
-  def parse(refererUri: URI): Referer = {
+  def parse(refererUri: URI): MaybeReferal = {
     val jp = new JParser()
     val r = jp.parse(refererUri)
     
-    Referer(
-      name = r.name,
-      searchParameter = Option(r.searchParameter),
-      searchTerm = Option(r.searchTerm)
-    )
+    if (r == null) {
+      None
+    } else {
+      Referal(
+        Referer(name = r.referer.name),
+        Search(term = 
+        searchParameter = Option(r.searchParameter),
+        searchTerm = Option(r.searchTerm)
+      )
+    }
   }
 }
