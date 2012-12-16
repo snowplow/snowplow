@@ -22,7 +22,8 @@ package com.snowplowanalytics.refererparser;
  * @author Alex Dean (@alexatkeplar) <support at snowplowanalytics com>
  */
 public class Referal {
-  public final Referer referer, Search search;
+  public final Referer referer;
+  public final Search search;
 
   public Referal(Referer referer, Search search) {
     this.referer = referer;
@@ -35,7 +36,7 @@ public class Referal {
     if (!(other instanceof Referal)) return false;
 
     Referal r = (Referal) other;
-    return ((this.referer != null && this.name.equals(r.referer)) || this.referer == r.referer) &&
+    return ((this.referer != null && this.referer.equals(r.referer)) || this.referer == r.referer) &&
            ((this.search != null && this.search.equals(r.search)) || this.search == r.search);
   }
 
@@ -49,7 +50,6 @@ public class Referal {
   @Override
   public String toString() {
     return String.format("{referer: %s, search: %s}",
-                         referer,
-                         search == null ? null : '"' + search + '"');
+                         referer, search);
   }
 }

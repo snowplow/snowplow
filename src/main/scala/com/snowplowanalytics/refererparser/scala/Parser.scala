@@ -76,7 +76,7 @@ object Parser {
       r <- Option(jp.parse(refererUri))
       s <- Option(r.search)
     } yield Referal(Referer(name = r.referer.name),
-                     Search(term = s.term,
-                            parameter = s.parameter)))
+                    Option(Search(term = s.term,
+                                  parameter = s.parameter)))
   }
 }

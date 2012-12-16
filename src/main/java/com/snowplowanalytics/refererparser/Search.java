@@ -22,7 +22,7 @@ package com.snowplowanalytics.refererparser;
  * @author Alex Dean (@alexatkeplar) <support at snowplowanalytics com>
  */
 public class Search {
-  public final String term, String parameter;
+  public final String term, parameter;
 
   public Search(String term, String parameter) {
     this.term = term;
@@ -36,7 +36,7 @@ public class Search {
 
     Search s = (Search) other;
     return ((this.term != null && this.term.equals(s.term)) || this.term == s.term) &&
-           ((this.parameter != null && this.parameter.equals(s.parameter)) || this.search == s.parameter);
+           ((this.parameter != null && this.parameter.equals(s.parameter)) || this.parameter == s.parameter);
   }
 
   @Override
@@ -49,7 +49,7 @@ public class Search {
   @Override
   public String toString() {
     return String.format("{term: %s, parameter: %s}",
-                         term == null ? null : '"' + term + '"'),
+                         term == null ? null : '"' + term + '"',
                          parameter == null ? null : '"' + parameter + '"');
   }
 }

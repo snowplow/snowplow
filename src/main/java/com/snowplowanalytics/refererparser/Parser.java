@@ -18,10 +18,12 @@ package com.snowplowanalytics.refererparser;
 
 // Java
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 // SnakeYAML
 import org.yaml.snakeyaml.Yaml;
@@ -39,17 +41,27 @@ import org.apache.http.client.utils.URLEncodedUtils;
 public class Parser {
 
   private static final String REFERERS_YAML_PATH = "/referer_parser/search_engines.yaml";
-  private Map<String,Map> referers;
+  private Map<String,RefererLookup> referers;
 
-  public Parser() throws IOException {
+  private static class RefererLookup {
+    public String name;
+    public List<String> parameters;
+
+    public RefererLookup(String name, List<String> parameters) {
+      this.name = name;
+      this.parameters = parameters;
+    }
+  }
+
+  public Parser() throws IOException, CorruptYamlException {
     this(Parser.class.getResourceAsStream(REFERERS_YAML_PATH));
   }
 
-  public Parser(InputStream referersYaml) {
+  public Parser(InputStream referersYaml) throws CorruptYamlException {
     referers = loadReferers(referersYaml);
   }
 
-  public Referal parse(String refererUri) {
+  public Referal parse(String refererUri) throws URISyntaxException {
     if (refererUri == null || refererUri == "") return null;
     final URI uri = new URI(refererUri);
     return parse(uri);
@@ -63,7 +75,7 @@ public class Parser {
     if (scheme != "http" && scheme != "https") return null;
 
     // Check if domain+path matches (e.g. google.co.uk/products)
-    Map<String,List>referer = referers.get(refererUri.getHost() + refererUri.getPath());
+    RefererLookup referer = referers.get(refererUri.getHost() + refererUri.getPath());
     if (referer == null) {
       referer = referers.get(refererUri.getHost() + refererUri.getPath());
     }
@@ -72,8 +84,8 @@ public class Parser {
     if (referer == null) {
       return new Referal(new Referer("Other"), null); // Other referer, no search we can extract
     } else {
-      final Referer refr = new Referer(referer.get("name"));
-      final Search search = extractSearch(refererUri, possibleParameters);
+      final Referer refr = new Referer(referer.name);
+      final Search search = extractSearch(refererUri, referer.parameters);
       return new Referal(refr, search);
     }
   }
@@ -86,43 +98,39 @@ public class Parser {
       final String name = pair.getName();
       final String value = pair.getValue();
 
-      if possibleParameters.contains(name) {
+      if (possibleParameters.contains(name)) {
         return new Search(value, name);
       }
     }
     return null;
   }
 
-  private Map<String,Map> loadReferers(InputStream referersYaml) {
+  private Map<String,RefererLookup> loadReferers(InputStream referersYaml) throws CorruptYamlException {
 
     Yaml yaml = new Yaml(new SafeConstructor());
     Map<String,Map> rawReferers = (Map<String,Map>) yaml.load(referersYaml);
 
     // Process each element of the map
-    Map<String,Map> referers = new Map<String,Map>();
+    Map<String,RefererLookup> referers = new HashMap<String,RefererLookup>();
     for (Map.Entry<String, Map> referer : rawReferers.entrySet()) {
 
       String refererName = referer.getKey();
-      String refererMap = referer.getValue();
+      Map<String,List<String>> refererMap = referer.getValue();
 
       // Validate
       List<String> parameters = refererMap.get("parameters");
       if (parameters == null) {
-        throw new CorruptReferersYamlException("No parameters found for referer '" + refererName + "'");
+        throw new CorruptYamlException("No parameters found for referer '" + refererName + "'");
       }
       List<String> domains = refererMap.get("domains");
       if (domains == null) { 
-        throw new CorruptReferersYamlException("No domains found for referer '" + refererName + "'");
+        throw new CorruptYamlException("No domains found for referer '" + refererName + "'");
       }
 
       // Our hash needs referer domain as the
       // key, so let's expand
       for (String domain : domains) {
-        Map<String,Map> domainMap = new Map<String,Map>();
-        domainMap.put("name", refererName);
-        domainMap.put("parameters", parameters);
-
-        referers.add(domain, domainMap);
+        referers.put(domain, new RefererLookup(refererName, parameters));
       }
     }
 
