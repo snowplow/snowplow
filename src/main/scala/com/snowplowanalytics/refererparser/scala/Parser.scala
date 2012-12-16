@@ -72,15 +72,11 @@ object Parser {
     val jp = new JParser()
     val r = jp.parse(refererUri)
     
-    if (r == null) {
-      None
-    } else {
-      Referal(
-        Referer(name = r.referer.name),
-        Search(term = 
-        searchParameter = Option(r.searchParameter),
-        searchTerm = Option(r.searchTerm)
-      )
-    }
+    for {
+      r <- Option(jp.parse(refererUri))
+      s <- Option(r.search)
+    } yield Referal(Referer(name = r.referer.name),
+                     Search(term = s.term,
+                            parameter = s.parameter)))
   }
 }
