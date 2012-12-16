@@ -17,35 +17,39 @@
 package com.snowplowanalytics.refererparser;
 
 /**
- * Referer data class
+ * Search data class
  *
  * @author Alex Dean (@alexatkeplar) <support at snowplowanalytics com>
  */
-public class Referer {
-  public final String name;
+public class Search {
+  public final String term, String parameter;
 
-  public Referer(String name) {
-    this.name = name;
+  public Search(String term, String parameter) {
+    this.term = term;
+    this.parameter = parameter;
   }
 
   @Override
   public boolean equals(Object other) {
     if (other == this) return true;
-    if (!(other instanceof Referer)) return false;
+    if (!(other instanceof Search)) return false;
 
-    Referer r = (Referer) other;
-    return ((this.name != null && this.name.equals(r.name)) || this.name == r.name);
+    Search s = (Search) other;
+    return ((this.term != null && this.term.equals(s.term)) || this.term == s.term) &&
+           ((this.parameter != null && this.parameter.equals(s.parameter)) || this.search == s.parameter);
   }
 
   @Override
   public int hashCode() {
-    int h = name == null ? 0 : name.hashCode();
+    int h = term == null ? 0 : term.hashCode();
+    h += parameter == null ? 0 : parameter.hashCode();
     return h;
   }
 
   @Override
   public String toString() {
-    return String.format("{name: %s}",
-                         name == null ? null : '"' + name + '"');
+    return String.format("{term: %s, parameter: %s}",
+                         term == null ? null : '"' + term + '"'),
+                         parameter == null ? null : '"' + parameter + '"');
   }
 }

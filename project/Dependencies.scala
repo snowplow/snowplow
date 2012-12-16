@@ -24,12 +24,14 @@ object Dependencies {
 
   object V {
     val yaml      = "1.10"
+    val http      = "4.1.1"
     val specs2    = "1.12.1"
     val scalaUtil = "0.1.0"
   }
 
   object Libraries {
     val yaml        = "org.yaml"                   %  "snakeyaml"            % V.yaml
+    val httpClient  = "org.apache.httpcomponents"  %  "httpclient"           % V.http
     val specs2      = "org.specs2"                 %% "specs2"               % V.specs2      % "test"
     val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"           % V.scalaUtil   % "test"
   }

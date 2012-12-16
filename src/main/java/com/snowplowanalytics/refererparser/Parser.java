@@ -27,6 +27,10 @@ import java.util.Map;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
+// Apache URLEncodedUtils
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+
 /**
  * Java implementation of <a href="https://github.com/snowplow/referer-parser">Referer Parser</a>
  *
@@ -45,34 +49,48 @@ public class Parser {
     referers = loadReferers(referersYaml);
   }
 
-  public Referer parse(String refererUri) {
+  public Referal parse(String refererUri) {
+    if (refererUri == null || refererUri == "") return null;
     final URI uri = new URI(refererUri);
     return parse(uri);
   }
 
-  public Referer parse(URI refererUri) {
+  public Referal parse(URI refererUri) {
 
-    // First check we have an http: or https: URI
+    // null unless we have a valid http: or https: URI
+    if (refererUri == null) return null;
     final String scheme = refererUri.getScheme();
-    if (scheme != "http" && scheme != "https") {
-      throw new IllegalArgumentException("'" + scheme + "' is not an http(s) protocol URI");
-    }
+    if (scheme != "http" && scheme != "https") return null;
 
     // Check if domain+path matches (e.g. google.co.uk/products)
     Map<String,List>referer = referers.get(refererUri.getHost() + refererUri.getPath());
     if (referer == null) {
       referer = referers.get(refererUri.getHost() + refererUri.getPath());
-    } // May still be null.
+    }
 
     // Create our referer as necessary
     if (referer == null) {
-      return new Referer("Other", null, null); // Other referer
+      return new Referal(new Referer("Other"), null); // Other referer, no search we can extract
     } else {
-      final String name = referer.get("name");
-      final String searchTerm = null; // How to do a tuple in Java?
-      final String searchParameter = null; // Ditto
-      return new Referer(name, searchParameter, searchTerm);
+      final Referer refr = new Referer(referer.get("name"));
+      final Search search = extractSearch(refererUri, possibleParameters);
+      return new Referal(refr, search);
     }
+  }
+
+  private Search extractSearch(URI uri, List<String> possibleParameters) {
+
+    List<NameValuePair> params = URLEncodedUtils.parse(uri, "UTF-8");
+
+    for (NameValuePair pair : params) {
+      final String name = pair.getName();
+      final String value = pair.getValue();
+
+      if possibleParameters.contains(name) {
+        return new Search(value, name);
+      }
+    }
+    return null;
   }
 
   private Map<String,Map> loadReferers(InputStream referersYaml) {
@@ -101,7 +119,7 @@ public class Parser {
       // key, so let's expand
       for (String domain : domains) {
         Map<String,Map> domainMap = new Map<String,Map>();
-        domainMap.put("name", refererName); // Pseudo-code
+        domainMap.put("name", refererName);
         domainMap.put("parameters", parameters);
 
         referers.add(domain, domainMap);

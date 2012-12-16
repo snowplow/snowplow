@@ -33,6 +33,7 @@ object RefererParserBuild extends Build {
     .settings(
       libraryDependencies ++= Seq(
         Libraries.yaml,
+        Libraries.httpClient,
         Libraries.specs2,
         Libraries.scalaUtil
       )

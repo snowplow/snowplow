@@ -17,35 +17,39 @@
 package com.snowplowanalytics.refererparser;
 
 /**
- * Referer data class
+ * Referal data class
  *
  * @author Alex Dean (@alexatkeplar) <support at snowplowanalytics com>
  */
-public class Referer {
-  public final String name;
+public class Referal {
+  public final Referer referer, Search search;
 
-  public Referer(String name) {
-    this.name = name;
+  public Referal(Referer referer, Search search) {
+    this.referer = referer;
+    this.search = search;
   }
 
   @Override
   public boolean equals(Object other) {
     if (other == this) return true;
-    if (!(other instanceof Referer)) return false;
+    if (!(other instanceof Referal)) return false;
 
-    Referer r = (Referer) other;
-    return ((this.name != null && this.name.equals(r.name)) || this.name == r.name);
+    Referal r = (Referal) other;
+    return ((this.referer != null && this.name.equals(r.referer)) || this.referer == r.referer) &&
+           ((this.search != null && this.search.equals(r.search)) || this.search == r.search);
   }
 
   @Override
   public int hashCode() {
-    int h = name == null ? 0 : name.hashCode();
+    int h = referer == null ? 0 : referer.hashCode();
+    h += search == null ? 0 : search.hashCode();
     return h;
   }
 
   @Override
   public String toString() {
-    return String.format("{name: %s}",
-                         name == null ? null : '"' + name + '"');
+    return String.format("{referer: %s, search: %s}",
+                         referer,
+                         search == null ? null : '"' + search + '"');
   }
 }
