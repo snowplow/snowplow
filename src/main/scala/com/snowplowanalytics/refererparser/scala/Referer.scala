@@ -20,12 +20,11 @@ package com.snowplowanalytics.refererparser.scala
 import java.net.URI
 
 /**
- * Immutable case class to hold a referer.
+ * Immutable case class to hold a referal.
  *
  * Replacement for Java version's POJO.
  */
-case class Referer(
-  name: String,
-  searchParameter: Option[String],
-  searchTerm: Option[String]
+case class Referal(
+  referer: Referer,
+  search:  Option[Search]
 )
