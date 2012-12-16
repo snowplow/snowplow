@@ -59,10 +59,11 @@ object Parser {
    * Parses a `refererUri` String to return
    * either a Referal, or None.
    */
-  def parse(refererUri: String): MaybeReferal = {
-    val uri = new URI(refererUri)
-    parse(uri)
-  }
+  def parse(refererUri: String): MaybeReferal =
+    if (refererUri == null || refererUri == "")
+      None
+    else
+      parse(new URI(refererUri))
 
   /**
    * Parses a `refererUri` URI to return
@@ -70,7 +71,6 @@ object Parser {
    */
   def parse(refererUri: URI): MaybeReferal = {
     val jp = new JParser()
-    val r = jp.parse(refererUri)
     
     for {
       r <- Option(jp.parse(refererUri))
