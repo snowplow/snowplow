@@ -40,7 +40,7 @@ import org.apache.http.client.utils.URLEncodedUtils;
  */
 public class Parser {
 
-  private static final String REFERERS_YAML_PATH = "/referer_parser/search_engines.yaml";
+  private static final String REFERERS_YAML_PATH = "/referer_parser/search.yml";
   private Map<String,RefererLookup> referers;
 
   private static class RefererLookup {
@@ -72,12 +72,12 @@ public class Parser {
     // null unless we have a valid http: or https: URI
     if (refererUri == null) return null;
     final String scheme = refererUri.getScheme();
-    if (scheme != "http" && scheme != "https") return null;
+    if (!scheme.equals("http") && !scheme.equals("https")) return null;
 
     // Check if domain+path matches (e.g. google.co.uk/products)
     RefererLookup referer = referers.get(refererUri.getHost() + refererUri.getPath());
     if (referer == null) {
-      referer = referers.get(refererUri.getHost() + refererUri.getPath());
+      referer = referers.get(refererUri.getHost());
     }
 
     // Create our referer as necessary

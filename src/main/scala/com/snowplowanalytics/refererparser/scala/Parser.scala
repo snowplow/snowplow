@@ -71,12 +71,11 @@ object Parser {
    */
   def parse(refererUri: URI): MaybeReferal = {
     val jp = new JParser()
-    
+
     for {
       r <- Option(jp.parse(refererUri))
-      s <- Option(r.search)
-    } yield Referal(Referer(name = r.referer.name),
-                    Option(Search(term = s.term,
-                                  parameter = s.parameter)))
+    } yield Referal(Referer(name = r.referer.name), for {
+        s <- Option(r.search)
+      } yield Search(term = s.term, parameter = s.parameter))
   }
 }
