@@ -62,6 +62,8 @@ Then add into your project's `pom.xml`:
 </dependency>
 ```
 
+## Scala
+
 ### Usage
 
 Use referer-parser in Scala like this:
