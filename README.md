@@ -4,7 +4,28 @@ This is the Java and Scala implementation of [referer-parser] [referer-parser], 
 
 The implementation uses the shared 'database' of known search engine referers found in [`search.yml`] [search-yml].
 
-## Installation: Java
+## Java
+
+### Usage
+
+Use referer-parser in Java like this:
+
+```java
+import com.snowplowanalytics.refererparser.Parser;
+
+...
+
+  String refererUrl = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari";
+
+  Parser refererParser = new Parser();
+  Referal r = refererParser.parse(refererUrl);
+
+  System.out.println(r.referer.name);       // => "Google"
+  System.out.println(r.search.parameter);   // => "q"    
+  System.out.println(r.search.term);        // => "gateway oracle cards denise linn"
+```
+
+### Installation
 
 Add the following code into your `HOME/.m2/settings.xml` to be able to use this repository:
 
@@ -41,38 +62,7 @@ Then add into your project's `pom.xml`:
 </dependency>
 ```
 
-## Installation: Scala
-
-Add this to your SBT config:
-
-```scala
-// Resolver
-val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
-
-// Dependency
-val scalaUtil = "com.snowplowanalytics"   % "refererparser"   % "0.0.1" .
-```
-
-## Usage: Java
-
-Use referer-parser in Java like this:
-
-```java
-import com.snowplowanalytics.refererparser.Parser;
-
-...
-
-  String refererUrl = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari";
-
-  Parser refererParser = new Parser();
-  Referal r = refererParser.parse(refererUrl);
-
-  System.out.println(r.referer.name);       // => "Google"
-  System.out.println(r.search.parameter);   // => "q"    
-  System.out.println(r.search.term);        // => "gateway oracle cards denise linn"
-```
-
-## Usage: Scala
+### Usage
 
 Use referer-parser in Scala like this:
 
@@ -87,6 +77,18 @@ for (r <- Parser.parse(refererUrl)) {
     println(s.parameter)       // => "q"    
   }
 }
+```
+
+### Installation
+
+Add this to your SBT config:
+
+```scala
+// Resolver
+val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
+
+// Dependency
+val scalaUtil = "com.snowplowanalytics"   % "refererparser"   % "0.0.1" .
 ```
 
 ## Contributing
