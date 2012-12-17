@@ -69,7 +69,7 @@ Then add into your project's `pom.xml`:
 Use referer-parser in Scala like this:
 
 ```ruby
-val refererUrl = "http://www.googlex.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
+val refererUrl = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
 
 import com.snowplowanalytics.refererparser.scala.Parser
 for (r <- Parser.parse(refererUrl)) {
