@@ -1,16 +1,57 @@
 # referer-parser Java/Scala library
 
-This is the Java/Scala implementation of [referer-parser] [referer-parser], the library for extracting search marketing data from referer _(sic)_ URLs.
+This is the Java and Scala implementation of [referer-parser] [referer-parser], the library for extracting search marketing data from referer _(sic)_ URLs.
 
 The implementation uses the shared 'database' of known search engine referers found in [`search.yml`] [search-yml].
 
 ## Installation: Java
 
-Section to come.
+Add the following code into your `HOME/.m2/settings.xml` to be able to use this repository:
+
+```xml
+<settings>
+  <profiles>
+    <profile>
+      <!-- ... -->
+      <repositories>
+        <repository>
+          <id>com.snowplowanalytics</id>
+          <name>SnowPlow Analytics</name>
+          <url>http://maven.snplow.com/releases</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
+</settings>
+```
+
+Then add into your project's `pom.xml`:
+
+```xml
+<dependency>
+  <groupId>org.snowplowanalytics</groupId>
+  <artifactId>refererparser</artifactId>
+  <version>0.0.1</version>
+</dependency>
+```
 
 ## Installation: Scala
 
-Section to come.
+Add this to your SBT config:
+
+```scala
+// Resolver
+val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
+
+// Dependency
+val scalaUtil = "com.snowplowanalytics"   % "refererparser"   % "0.0.1" .
+```
 
 ## Usage: Java
 
