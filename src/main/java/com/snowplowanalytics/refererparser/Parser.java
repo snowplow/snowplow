@@ -40,7 +40,7 @@ import org.apache.http.client.utils.URLEncodedUtils;
  */
 public class Parser {
 
-  private static final String REFERERS_YAML_PATH = "/referer_parser/search.yml";
+  private static final String REFERERS_YAML_PATH = "/search.yml";
   private Map<String,RefererLookup> referers;
 
   private static class RefererLookup {
