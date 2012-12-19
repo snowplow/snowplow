@@ -1,4 +1,4 @@
-Version 0.6.3 (2012-12-XX)
+Version 0.6.5 (2012-12-XX)
 --------------------------
 JS tracker: bumped to 0.9.0                                  -- DONE
 JS tracker: each event now sent with an event type `e` (#63) -- DONE
@@ -13,6 +13,13 @@ HiveQL: hive-rolling-etl.q bumped to 0.5.2                     -- DONE
 HiveQL: non-hive-rolling-etl.q bumped to 0.0.4                 -- DONE
 HiveQL: event and event_id now extracted from Serde (#63, #89) -- DONE
 EmrEtlRunner: updated config file template                     -- DONE
+
+Version 0.6.3 (2012-12-18)
+--------------------------
+JS tracker: bumped to 0.8.2
+JS tracker: fixed regressions from splitting JS into multiple files (#103)
+HiveQL: hive-rolling-etl.q bumped to 0.5.2
+HiveQL: addded missing comma in hive-rolling-etl.q (#112)
 
 Version 0.6.2 (2012-11-29)
 --------------------------

@@ -111,8 +111,8 @@ app_id,
 platform,
 dt AS dt_dt,
 tm,
-NULL as event, -- Now available in 0.5.2
-NULL as event_id, -- Now available in 0.5.2
+event, -- Now available in 0.0.4
+event_id, -- Now available in 0.0.4
 txn_id,
 v_tracker,
 v_collector,

@@ -23,9 +23,10 @@
 	
         _snaq.push(['setCollectorCf', 'd3rkrsqld9gmqf']); // Update to your CloudFront distribution subdomain
         _snaq.push(['setSiteId', 'CFe23a']); // Site ID can be anything you want. Set it if you're tracking more than one site in this account
-        _snaq.push(['attachUserId', false]);
-        _snaq.push(['enableActivityTracking', 10, 10]);
-        _snaq.push(['trackPageView']);
+        _snaq.push(['attachUserId', false]); // Don't attach &uid=xxx to the querystring
+        _snaq.push(['enableActivityTracking', 10, 10]); // Ping every 10 seconds after 10 seconds
+        _snaq.push(['enableLinkTracking']);
+        _snaq.push(['trackPageView', 'Async Test']); // Track the page view with custom title
 
         (function() {
             var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
