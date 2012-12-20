@@ -181,6 +181,9 @@ public class SnowPlowEventStruct {
   // attached to the page URL.
   private static enum MarketingFields { UTM_SOURCE, UTM_MEDIUM, UTM_CAMPAIGN, UTM_TERM, UTM_CONTENT }
 
+  // An enum for the event codes we might find in our e= querystring parameter
+  private static enum 
+
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
   private static final String w = "[\\s]+"; // Whitespace regex
