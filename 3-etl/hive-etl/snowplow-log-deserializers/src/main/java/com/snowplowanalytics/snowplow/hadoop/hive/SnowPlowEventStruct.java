@@ -69,7 +69,9 @@ public class SnowPlowEventStruct {
   public String dt;
   public String tm;
 
-  // Transaction (i.e. this logging event)
+  // Event and transaction
+  public String event;
+  public String event_id;
   public String txn_id;
 
   // User and visit
@@ -175,14 +177,14 @@ public class SnowPlowEventStruct {
 
   // An enum of all the fields we're expecting in the querystring
   // See https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol for details
-  private static enum QuerystringFields { AID, P, TID, UID, FP, VID, TSTAMP, TV, LANG, F_PDF, F_FLA, F_JAVA, F_DIR, F_QT, F_REALP, F_WMA, F_GEARS, F_AG, COOKIE, RES, CD, TZ, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
+  private static enum QuerystringFields { E, IP, AID, P, TID, UID, FP, VID, TSTAMP, TV, LANG, F_PDF, F_FLA, F_JAVA, F_DIR, F_QT, F_REALP, F_WMA, F_GEARS, F_AG, COOKIE, RES, CD, TZ, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
 
   // An enum for the marketing attribution fields we might find
   // attached to the page URL.
   private static enum MarketingFields { UTM_SOURCE, UTM_MEDIUM, UTM_CAMPAIGN, UTM_TERM, UTM_CONTENT }
 
   // An enum for the event codes we might find in our e= querystring parameter
-  private static enum 
+  private static enum EventTypes { EV, AD, TR, TI, PV, PP }
 
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
@@ -312,6 +314,12 @@ public class SnowPlowEventStruct {
       try {
         switch (field) {
           // Common fields
+          case E:
+            this.event = asEventType(value);
+            break;
+          case IP:
+            this.user_ipaddress = value;
+            break;
           case AID:
             this.app_id = value;
             break;
@@ -639,7 +647,32 @@ public class SnowPlowEventStruct {
    * @throws IllegalArgumentException if the event code is not recognised
    */
   static String asEventType(String e) {
-    return e; // TODO: implement this.
+
+    final EventTypes = EventTypes.valueOf(e.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
+    
+    final String eventType;
+    switch (field) {
+      case EV:
+        eventType = "custom";
+        break;
+      case AD:
+        eventType = "ad_impression";
+        break;
+      case TR:
+        eventType = "transaction";
+        break;
+      case TI:
+        eventType = "transaction_item";
+        break;
+      case PV:
+        eventType = "page_view";
+        break;
+      case PP:
+        eventType = "page_ping";
+        break;
+    }
+
+    return eventType;
   }
 
   // TODO: add in the UUID enrichment.
