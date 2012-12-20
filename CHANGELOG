@@ -14,6 +14,15 @@ HiveQL: non-hive-rolling-etl.q bumped to 0.0.4                 -- DONE
 HiveQL: event and event_id now extracted from Serde (#63, #89) -- DONE
 EmrEtlRunner: updated config file template                     -- DONE
 
+Version 0.6.4 (2012-12-20)
+--------------------------
+HiveQL: renamed table-def.q to non-hive-format-table-def.q
+HiveQL: added hive-format-table-def.q (#111)
+Infobright: bumped setup_infobright.sql to 0.0.4
+Infobright: added migration script (0.0.3 -> 0.0.4)
+Infobright: now supports long br_langs and urls (#107)
+Infobright: removed lookup from fields which slow a large load (#107)
+
 Version 0.6.3 (2012-12-18)
 --------------------------
 JS tracker: bumped to 0.8.2
