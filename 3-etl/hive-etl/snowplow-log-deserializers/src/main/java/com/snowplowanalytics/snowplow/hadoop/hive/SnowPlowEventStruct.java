@@ -624,6 +624,24 @@ public class SnowPlowEventStruct {
   }
 
   // -------------------------------------------------------------------------------------------------------------------
+  // Enrichments
+  // -------------------------------------------------------------------------------------------------------------------
+
+  /**
+   * Turns an event code into a valid event type,
+   * e.g. "pv" -> "page_view"
+   *
+   * @param e The event code
+   * @return The event type
+   * @throws IllegalArgumentException if the event code is not recognised
+   */
+  static String asEventType(String e) {
+    return e; // TODO: implement this.
+  }
+
+  // TODO: add in the UUID enrichment.
+
+  // -------------------------------------------------------------------------------------------------------------------
   // Datatype conversions
   // -------------------------------------------------------------------------------------------------------------------
 
