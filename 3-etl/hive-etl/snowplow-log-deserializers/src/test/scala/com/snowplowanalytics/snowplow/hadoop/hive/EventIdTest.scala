@@ -18,18 +18,21 @@ import java.util.UUID
 // Specs2
 import org.specs2.mutable.Specification
 
+// Test suite helpers
+import test.SnowPlowTest
+
 class EventIdTest extends Specification {
 
   "generateEventId()" should {
     "generate a String" in {
-      SnowPlowEventStruct.generateEventId() must beAnInstanceOf[String]
+      SnowPlowEventStruct.generateEventId must beAnInstanceOf[String]
     }
   }
 
   "generateEventId()" should {
     "generate a UUID-format event ID" in {
-      val eventId = SnowPlowEventStruct.generateEventId()
-      UUID.fromString(eventId).toString must_== eventId
+      val eventId = SnowPlowEventStruct.generateEventId
+      SnowPlowTest.stringlyTypedUuid(eventId) must_== eventId
     }
   }
 

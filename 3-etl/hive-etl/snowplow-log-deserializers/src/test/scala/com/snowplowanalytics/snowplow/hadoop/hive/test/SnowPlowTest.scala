@@ -13,7 +13,19 @@
 package com.snowplowanalytics.snowplow.hadoop.hive
 package test
 
+// Java
+import java.util.UUID
+
+// Scala
+import scala.collection.immutable.Map
+
 object SnowPlowTest {
 
-	type DataGrid = scala.collection.immutable.Map[String, SnowPlowEvent]
+	// A grid of tests to run
+	type DataGrid = Map[String, SnowPlowEvent]
+
+	// A helper for implicitly checking UUID-format Strings
+	// TODO: really we should write a custom Specs2 Matcher,
+	// which checks for stringlyTypedUuid
+	val stringlyTypedUuid: String => String = s => UUID.fromString(s).toString
 }
