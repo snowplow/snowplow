@@ -15,31 +15,31 @@ package com.snowplowanalytics.snowplow.hadoop.hive
 // Specs2
 import org.specs2.mutable.Specification
 
-class ConversionTest extends Specification {
+class EventTypeTest extends Specification {
 
-  "The string \"-\"" should {
-    "be identified as null by isNullField" in {
-      SnowPlowEventStruct.isNullField("-") must beTrue
+  // Valid event codes and their type mappings
+  val eventCodes = Map(
+    "ev" -> "custom",
+    "ad" -> "ad_impression",
+    "tr" -> "transaction",
+    "ti" -> "transaction_item",
+    "pv" -> "page_view",
+    "pp" -> "page_ping"
+  )
+
+  "A valid event code should be converted to its event type" >> {
+    eventCodes foreach { case (code, typ) =>
+      "The event code \"%s\"".format(code) should {
+        "be convert to \"%s\"".format(typ) in {
+          SnowPlowEventStruct.asEventType(code) must_== typ
+        }
+      }
     }
   }
 
-  "The string \"\"" should {
-    "be identified as null by isNullField" in {
-      SnowPlowEventStruct.isNullField("") must beTrue
+  "An invalid event code \"oops\" " should {
+    "throw an IllegalArgumentException" in {
+      SnowPlowEventStruct.asEventType("oops") must throwA[IllegalArgumentException]
     }
   }
-
-  "The string <<null>>" should {
-    "be identified as null by isNullField" in {
-      SnowPlowEventStruct.isNullField(null) must beTrue
-    }
-  }
-
-  "The string \"-a-\"" should {
-    "NOT be identified as null by isNullField" in {
-      SnowPlowEventStruct.isNullField("-a-") must beFalse
-    }
-  }
-
-  // TODO: add in some tests for stringToBool
 }
