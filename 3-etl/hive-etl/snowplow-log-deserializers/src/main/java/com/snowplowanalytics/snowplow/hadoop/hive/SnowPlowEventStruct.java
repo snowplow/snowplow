@@ -15,6 +15,7 @@ package com.snowplowanalytics.snowplow.hadoop.hive;
 // Java
 import java.net.URI;
 import java.net.URLDecoder;
+import java.util.UUID;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.ArrayList;
@@ -184,7 +185,7 @@ public class SnowPlowEventStruct {
   private static enum MarketingFields { UTM_SOURCE, UTM_MEDIUM, UTM_CAMPAIGN, UTM_TERM, UTM_CONTENT }
 
   // An enum for the event codes we might find in our e= querystring parameter
-  private static enum EventTypes { EV, AD, TR, TI, PV, PP }
+  private static enum EventCodes { EV, AD, TR, TI, PV, PP }
 
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
@@ -293,7 +294,10 @@ public class SnowPlowEventStruct {
     this.v_collector = collectorVersion;
     this.v_etl = "serde-" + ProjectSettings.VERSION;
 
-    // 5. Now we dis-assemble the querystring
+    // 5. Now we generate the event ID
+    this.event_id = generateEventId();
+
+    // 6. Now we dis-assemble the querystring
     String qsUrl = null;
     List<NameValuePair> params = URLEncodedUtils.parse(URI.create("http://localhost/?" + querystring), "UTF-8");
 
@@ -568,6 +572,8 @@ public class SnowPlowEventStruct {
     this.platform = null;
     this.dt = null;
     this.tm = null;
+    this.event = null;
+    this.event_id = null;
     this.txn_id = null;
     this.user_id = null;
     this.user_ipaddress = null;
@@ -642,16 +648,16 @@ public class SnowPlowEventStruct {
    * Turns an event code into a valid event type,
    * e.g. "pv" -> "page_view"
    *
-   * @param e The event code
+   * @param eventCode The event code
    * @return The event type
    * @throws IllegalArgumentException if the event code is not recognised
    */
-  static String asEventType(String e) {
+  static String asEventType(String eventCode) {
 
-    final EventTypes = EventTypes.valueOf(e.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
+    final EventCodes e = EventCodes.valueOf(eventCode.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
     
     final String eventType;
-    switch (field) {
+    switch (e) {
       case EV:
         eventType = "custom";
         break;
@@ -670,12 +676,24 @@ public class SnowPlowEventStruct {
       case PP:
         eventType = "page_ping";
         break;
+      default: // Should never happen
+        eventType = "";
+        break;
     }
 
     return eventType;
   }
 
-  // TODO: add in the UUID enrichment.
+  /**
+   * Returns a unique event ID. ID is 
+   * generated as a type 4 UUID, then
+   * converted to a String.
+   *
+   * @return The event ID
+   */
+  static String generateEventId() {
+    return UUID.randomUUID().toString();
+  }
 
   // -------------------------------------------------------------------------------------------------------------------
   // Datatype conversions
