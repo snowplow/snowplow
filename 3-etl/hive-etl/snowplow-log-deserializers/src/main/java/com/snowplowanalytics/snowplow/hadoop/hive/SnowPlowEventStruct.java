@@ -299,7 +299,7 @@ public class SnowPlowEventStruct {
 
     // 6. Now we dis-assemble the querystring
     String qsUrl = null;
-    List<NameValuePair> params = URLEncodedUtils.parse(URI.create("http://localhost/?" + querystring), "UTF-8");
+    List<NameValuePair> params = URLEncodedUtils.parse(URI.create("http://localhost/?" + querystring), cfEncoding);
 
     // For performance, don't convert to a map, just loop through and match to our variables as we go
     for (NameValuePair pair : params) {
