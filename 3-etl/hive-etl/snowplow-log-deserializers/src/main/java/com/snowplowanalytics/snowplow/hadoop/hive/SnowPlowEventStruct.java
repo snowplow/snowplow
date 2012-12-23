@@ -298,8 +298,15 @@ public class SnowPlowEventStruct {
     this.event_id = generateEventId();
 
     // 6. Now we dis-assemble the querystring
+    List<NameValuePair> params; // = null; OT MOVE THIS BACK INTO BELOW...
+    try {
+      params = URLEncodedUtils.parse(URI.create("http://localhost/?" + querystring), cfEncoding);
+    } catch (IllegalArgumentException e) {
+      getLog().warn("Corrupted querystring { " + querystring + " }");
+      return false;      
+    }
+
     String qsUrl = null;
-    List<NameValuePair> params = URLEncodedUtils.parse(URI.create("http://localhost/?" + querystring), cfEncoding);
 
     // For performance, don't convert to a map, just loop through and match to our variables as we go
     for (NameValuePair pair : params) {
