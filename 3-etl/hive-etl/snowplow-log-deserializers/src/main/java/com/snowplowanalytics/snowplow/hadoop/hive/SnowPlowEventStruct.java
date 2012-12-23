@@ -263,9 +263,9 @@ public class SnowPlowEventStruct {
     final String ua = m.group(11);
     try {
       this.useragent = decodeSafeString(ua);
-      } catch (Exception e) {
-        getLog().warn(e.getClass().getSimpleName() + " on { useragent: " + ua + " }");
-      }
+    } catch (Exception e) {
+      getLog().warn(e.getClass().getSimpleName() + " on { useragent: " + ua + " }");
+    }
 
     // 3. Next we dis-assemble the user agent...
     final UserAgent userAgent = UserAgent.parseUserAgentString(ua);
