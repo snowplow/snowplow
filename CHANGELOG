@@ -9,6 +9,7 @@ Serde: bumped to 0.5.3
 Serde: now extracts event type (`e`) from querystring (#63)
 Serde: now attaches UUID event_id to each event (#89)
 Serde: added support for IP address override in querystring (#90)
+Serde: no longer dies on corrupted querystring (#114)
 HiveQL: hive-rolling-etl.q bumped to 0.5.3
 HiveQL: non-hive-rolling-etl.q bumped to 0.0.4
 HiveQL: event and event_id now extracted from Serde (#63, #89)
