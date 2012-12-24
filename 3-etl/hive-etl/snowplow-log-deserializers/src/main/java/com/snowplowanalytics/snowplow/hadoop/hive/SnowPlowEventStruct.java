@@ -297,214 +297,212 @@ public class SnowPlowEventStruct {
     // 5. Now we generate the event ID
     this.event_id = generateEventId();
 
-    // 6. Now we dis-assemble the querystring
-    List<NameValuePair> params; // = null; OT MOVE THIS BACK INTO BELOW...
+    // 6. Now we dis-assemble the querystring.
+    String qsUrl = null; // We use this in the block below, and afterwards
+    List<NameValuePair> params = null; // We re-use this for efficiency
     try {
       params = URLEncodedUtils.parse(URI.create("http://localhost/?" + querystring), cfEncoding);
-    } catch (IllegalArgumentException e) {
-      getLog().warn("Corrupted querystring { " + querystring + " }");
-      return false;      
-    }
 
-    String qsUrl = null;
+      // For performance, don't convert to a map, just loop through and match to our variables as we go
+      for (NameValuePair pair : params) {
 
-    // For performance, don't convert to a map, just loop through and match to our variables as we go
-    for (NameValuePair pair : params) {
+        final String name = pair.getName();
+        final String value = pair.getValue();
 
-      final String name = pair.getName();
-      final String value = pair.getValue();
-
-      final QuerystringFields field;
-      try {
-        field = QuerystringFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
-      } catch(IllegalArgumentException e) {
-        getLog().warn("Unexpected params { " + name + ": " + value + " }");
-        continue;
-      }
-
-      try {
-        switch (field) {
-          // Common fields
-          case E:
-            this.event = asEventType(value);
-            break;
-          case IP:
-            this.user_ipaddress = value;
-            break;
-          case AID:
-            this.app_id = value;
-            break;
-          case P:
-            this.platform = value;
-            break;
-          case TID:
-            this.txn_id = value;
-            break;
-          case UID:
-            this.user_id = value;
-            break;
-          case FP:
-            this.user_fingerprint = value;
-            break;
-          case VID:
-            this.visit_id = Integer.parseInt(value);
-            break;
-          case TSTAMP:
-            // Replace our timestamp fields with the client's timestamp
-            String[] timestamp = value.split(" ");
-            this.dt = timestamp[0];
-            this.tm = timestamp[1];
-            break;
-          case TV:
-            this.v_tracker = value;
-            break;
-          case LANG:
-            this.br_lang = value;
-            break;
-          case F_PDF:
-            if ((this.br_features_pdf = stringToByte(value)) == 1)
-              this.br_features.add("pdf");
-            break;
-          case F_FLA:
-            if ((this.br_features_flash = stringToByte(value)) == 1)
-              this.br_features.add("fla");
-            break;
-          case F_JAVA:
-            if ((this.br_features_java = stringToByte(value)) == 1)
-              this.br_features.add("java");
-            break;
-          case F_DIR:
-            if ((this.br_features_director = stringToByte(value)) == 1)
-              this.br_features.add("dir");
-            break;
-          case F_QT:
-            if ((this.br_features_quicktime = stringToByte(value)) == 1)
-              this.br_features.add("qt");
-            break;
-          case F_REALP:
-            if ((this.br_features_realplayer = stringToByte(value)) == 1)
-              this.br_features.add("realp");
-            break;
-          case F_WMA:
-            if ((this.br_features_windowsmedia = stringToByte(value)) == 1)
-              this.br_features.add("wma");
-            break;
-          case F_GEARS:
-            if ((this.br_features_gears = stringToByte(value)) == 1)
-              this.br_features.add("gears");
-            break;
-          case F_AG:
-            if ((this.br_features_silverlight = stringToByte(value)) == 1)
-              this.br_features.add("ag");
-            break;
-          case COOKIE:
-            this.br_cookies = stringToBoolean(value);
-            this.br_cookies_bt = (byte)(this.br_cookies ? 1 : 0);
-            break;
-          case RES:
-            String[] resolution = value.split("x");
-            if (resolution.length != 2)
-              throw new Exception("Couldn't parse res field");
-            this.dvce_screenwidth = Integer.parseInt(resolution[0]);
-            this.dvce_screenheight = Integer.parseInt(resolution[1]);
-            break;
-          case CD:
-            this.br_colordepth = value;
-            break;
-          case TZ:
-            this.os_timezone = decodeSafeString(value);
-            break;
-          case REFR:
-            this.page_referrer = decodeSafeString(value);
-            break;
-          case URL:
-            qsUrl = pair.getValue(); // We might use this later for the page URL
-            break;
-
-          // Page-view only
-          case PAGE:
-            this.page_title = decodeSafeString(value);
-            break;
-
-          // Event only
-          case EV_CA:
-            this.ev_category = decodeSafeString(value);
-            break;
-          case EV_AC:
-            this.ev_action = decodeSafeString(value);
-            break;
-          case EV_LA:
-            this.ev_label = decodeSafeString(value);
-            break;
-          case EV_PR:
-            this.ev_property = decodeSafeString(value);
-            break;
-          case EV_VA:
-            this.ev_value = decodeSafeString(value);
-            break;
-
-          // Ecommerce
-          case TR_ID:
-            this.tr_orderid = decodeSafeString(value);
-            break;
-          case TR_AF:
-            this.tr_affiliation = decodeSafeString(value);
-            break;
-          case TR_TT:
-            this.tr_total = decodeSafeString(value);
-            break;
-          case TR_TX:
-            this.tr_tax = decodeSafeString(value);
-            break;
-          case TR_SH:
-            this.tr_shipping = decodeSafeString(value);
-            break;
-          case TR_CI:
-            this.tr_city = decodeSafeString(value);
-            break;
-          case TR_ST:
-            this.tr_state = decodeSafeString(value);
-            break;
-          case TR_CO:
-            this.tr_country = decodeSafeString(value);
-            break;
-          case TI_ID:
-            this.ti_orderid = decodeSafeString(value);
-            break;
-          case TI_SK:
-            this.ti_sku = decodeSafeString(value);
-            break;
-          case TI_NA:
-            this.ti_name = decodeSafeString(value);
-            break;
-          case TI_CA:
-            this.ti_category = decodeSafeString(value);
-            break;
-          case TI_PR:
-            this.ti_price = decodeSafeString(value);
-            break;
-          case TI_QU:
-            this.ti_quantity = decodeSafeString(value);
-            break;
+        final QuerystringFields field;
+        try {
+          field = QuerystringFields.valueOf(name.toUpperCase()); // Java pre-7 can't switch on a string, so hash the string
+        } catch(IllegalArgumentException e) {
+          getLog().warn("Unexpected params { " + name + ": " + value + " }");
+          continue;
         }
-      } catch (Exception e) {
-        getLog().warn(e.getClass().getSimpleName() + " on { " + name + ": " + value + " }");
+
+        try {
+          switch (field) {
+            // Common fields
+            case E:
+              this.event = asEventType(value);
+              break;
+            case IP:
+              this.user_ipaddress = value;
+              break;
+            case AID:
+              this.app_id = value;
+              break;
+            case P:
+              this.platform = value;
+              break;
+            case TID:
+              this.txn_id = value;
+              break;
+            case UID:
+              this.user_id = value;
+              break;
+            case FP:
+              this.user_fingerprint = value;
+              break;
+            case VID:
+              this.visit_id = Integer.parseInt(value);
+              break;
+            case TSTAMP:
+              // Replace our timestamp fields with the client's timestamp
+              String[] timestamp = value.split(" ");
+              this.dt = timestamp[0];
+              this.tm = timestamp[1];
+              break;
+            case TV:
+              this.v_tracker = value;
+              break;
+            case LANG:
+              this.br_lang = value;
+              break;
+            case F_PDF:
+              if ((this.br_features_pdf = stringToByte(value)) == 1)
+                this.br_features.add("pdf");
+              break;
+            case F_FLA:
+              if ((this.br_features_flash = stringToByte(value)) == 1)
+                this.br_features.add("fla");
+              break;
+            case F_JAVA:
+              if ((this.br_features_java = stringToByte(value)) == 1)
+                this.br_features.add("java");
+              break;
+            case F_DIR:
+              if ((this.br_features_director = stringToByte(value)) == 1)
+                this.br_features.add("dir");
+              break;
+            case F_QT:
+              if ((this.br_features_quicktime = stringToByte(value)) == 1)
+                this.br_features.add("qt");
+              break;
+            case F_REALP:
+              if ((this.br_features_realplayer = stringToByte(value)) == 1)
+                this.br_features.add("realp");
+              break;
+            case F_WMA:
+              if ((this.br_features_windowsmedia = stringToByte(value)) == 1)
+                this.br_features.add("wma");
+              break;
+            case F_GEARS:
+              if ((this.br_features_gears = stringToByte(value)) == 1)
+                this.br_features.add("gears");
+              break;
+            case F_AG:
+              if ((this.br_features_silverlight = stringToByte(value)) == 1)
+                this.br_features.add("ag");
+              break;
+            case COOKIE:
+              this.br_cookies = stringToBoolean(value);
+              this.br_cookies_bt = (byte)(this.br_cookies ? 1 : 0);
+              break;
+            case RES:
+              String[] resolution = value.split("x");
+              if (resolution.length != 2)
+                throw new Exception("Couldn't parse res field");
+              this.dvce_screenwidth = Integer.parseInt(resolution[0]);
+              this.dvce_screenheight = Integer.parseInt(resolution[1]);
+              break;
+            case CD:
+              this.br_colordepth = value;
+              break;
+            case TZ:
+              this.os_timezone = decodeSafeString(value);
+              break;
+            case REFR:
+              this.page_referrer = decodeSafeString(value);
+              break;
+            case URL:
+              qsUrl = pair.getValue(); // We might use this later for the page URL
+              break;
+
+            // Page-view only
+            case PAGE:
+              this.page_title = decodeSafeString(value);
+              break;
+
+            // Event only
+            case EV_CA:
+              this.ev_category = decodeSafeString(value);
+              break;
+            case EV_AC:
+              this.ev_action = decodeSafeString(value);
+              break;
+            case EV_LA:
+              this.ev_label = decodeSafeString(value);
+              break;
+            case EV_PR:
+              this.ev_property = decodeSafeString(value);
+              break;
+            case EV_VA:
+              this.ev_value = decodeSafeString(value);
+              break;
+
+            // Ecommerce
+            case TR_ID:
+              this.tr_orderid = decodeSafeString(value);
+              break;
+            case TR_AF:
+              this.tr_affiliation = decodeSafeString(value);
+              break;
+            case TR_TT:
+              this.tr_total = decodeSafeString(value);
+              break;
+            case TR_TX:
+              this.tr_tax = decodeSafeString(value);
+              break;
+            case TR_SH:
+              this.tr_shipping = decodeSafeString(value);
+              break;
+            case TR_CI:
+              this.tr_city = decodeSafeString(value);
+              break;
+            case TR_ST:
+              this.tr_state = decodeSafeString(value);
+              break;
+            case TR_CO:
+              this.tr_country = decodeSafeString(value);
+              break;
+            case TI_ID:
+              this.ti_orderid = decodeSafeString(value);
+              break;
+            case TI_SK:
+              this.ti_sku = decodeSafeString(value);
+              break;
+            case TI_NA:
+              this.ti_name = decodeSafeString(value);
+              break;
+            case TI_CA:
+              this.ti_category = decodeSafeString(value);
+              break;
+            case TI_PR:
+              this.ti_price = decodeSafeString(value);
+              break;
+            case TI_QU:
+              this.ti_quantity = decodeSafeString(value);
+              break;
+          }
+        } catch (Exception e) {
+          getLog().warn(e.getClass().getSimpleName() + " on { " + name + ": " + value + " }");
+        }
       }
+    } catch (IllegalArgumentException e) {
+      getLog().warn("Corrupted querystring { " + querystring + " }");    
     }
 
-    // 4. Choose the page_url
+    // 7. Choose the page_url
     final String cfUrl = m.group(10);
     if (!isNullField(cfUrl)) { // CloudFront didn't provide the URL as cs(Referer)
       this.page_url = cfUrl; // The CloudFront cs(Referer) URL
     } else {
       try {
-        this.page_url = decodeSafeString(qsUrl); // Use the decoded querystring URL
+        this.page_url = decodeSafeString(qsUrl); // Use the decoded querystring URL. Might be null (returned as null)
       } catch (Exception e) {
         getLog().warn(e.getClass().getSimpleName() + " on { qsUrl: " + qsUrl + " }");
       }
     }
 
-    // 5. Finally handle the marketing fields in the page_url
+    // 8. Finally handle the marketing fields in the page_url
     // Re-use params to avoid creating another object
     if (this.page_url != null) {
       params = null;
