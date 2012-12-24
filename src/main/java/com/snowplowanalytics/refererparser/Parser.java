@@ -77,7 +77,7 @@ public class Parser {
     // Check if domain+path matches (e.g. google.co.uk/products)
     RefererLookup referer = referers.get(refererUri.getHost() + refererUri.getPath());
     if (referer == null) {
-      referer = referers.get(refererUri.getHost());
+      referer = referers.get(refererUri.getHost()); // Try just the domain (e.g. google.com)
     }
 
     // Create our referer as necessary
