@@ -21,7 +21,7 @@ object BuildSettings {
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
-    organization  := "SnowPlow Analytics Ltd",
+    organization  := "com.snowplowanalytics",
     version       := "0.0.1",
     description   := "Library for extracting marketing attribution data from referer URLs",
     scalaVersion  := "2.9.1",
@@ -43,5 +43,19 @@ object BuildSettings {
     }
   )
 
-  lazy val buildSettings = basicSettings ++ sbtAssemblySettings
+  // Publish settings
+  // TODO: update with ivy credentials etc when we start using Nexus
+  lazy val publishSettings = Seq[Setting[_]](
+   
+    crossPaths := false,
+    publishTo <<= version { version =>
+      val keyFile = (Path.userHome / ".ssh" / "admin_keplar.osk")
+      val basePath = "/var/www/maven.snplow.com/prod/public/%s".format {
+        if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
+      }
+      Some(Resolver.sftp("SnowPlow Analytics Maven repository", "prodbox", 8686, basePath) as ("admin", keyFile))
+    }
+  )
+
+  lazy val buildSettings = basicSettings ++ sbtAssemblySettings ++ publishSettings
 }
