@@ -1,10 +1,11 @@
-Version 0.6.5 (2012-12-XX)
+Version 0.6.5 (2012-12-25)
 --------------------------
 JS tracker: bumped to 0.9.0
 JS tracker: each event now sent with an event type `e` (#63)
 JS tracker: refactoring of event definition code
 JS tracker: added attachUserId(boolean) method (#92)
 JS tracker: removed configCustomData from logImpression (#115)
+JS tracker: cleaned up activity tracking (page pings)
 JS tracker: added a combine only option to snowpak.sh
 Serde: bumped to 0.5.3
 Serde: now extracts event type (`e`) from querystring (#63)
