@@ -9,8 +9,8 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.0.4
--- URL:         s3://snowplow-emr-assets/hive/hiveql/non-hive-rolling-etl-0.0.4.q
+-- Version:     0.0.5
+-- URL:         s3://snowplow-emr-assets/hive/hiveql/non-hive-rolling-etl-0.0.5.q
 --
 -- Authors:     Yali Sassoon, Alex Dean
 -- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
@@ -111,11 +111,11 @@ app_id,
 platform,
 dt AS dt_dt,
 tm,
-event, -- Now available in 0.0.4
-event_id, -- Now available in 0.0.4
+event,
+event_id,
 txn_id,
 v_tracker,
-v_collector,
+'${COLLECTOR_FORMAT}' AS v_collector, -- Now set via variable in 0.0.5
 v_etl,
 user_id,
 user_ipaddress,
