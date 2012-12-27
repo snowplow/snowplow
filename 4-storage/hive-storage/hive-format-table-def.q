@@ -48,12 +48,11 @@ dvce_screenwidth int,
 dvce_screenheight int,
 app_id string,
 platform string,
-event string, -- Renamed in 0.5.1
+event string,
 v_tracker string,
 v_collector string,
 v_etl string,
--- Added in 0.5.1
-event_id string
+event_id string,
 user_fingerprint string,
 useragent string,
 br_colordepth string,

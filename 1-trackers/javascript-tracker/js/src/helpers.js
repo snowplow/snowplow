@@ -66,20 +66,45 @@ SnowPlow.isString = function (property) {
  * UTF-8 encoding
  */
 SnowPlow.encodeUtf8 = function (argString) {
-	return SnowPlow.urldecode(SnowPlow.encodeWrapper(argString));
+	return SnowPlow.decodeUrl(SnowPlow.encodeWrapper(argString));
 }
 
+/**
+ * Cleans up the page title
+ */
+SnowPlow.fixupTitle = function (title) {
+	if (!SnowPlow.isString(title)) {
+		title = title.text || '';
+
+		var tmp = SnowPlow.documentAlias.getElementsByTagName('title');
+		if (tmp && SnowPlow.isDefined(tmp[0])) {
+			title = tmp[0].text;
+		}
+	}
+	return title;
+}
+
+/*
+ * Extract hostname from URL
+ */
+SnowPlow.getHostName = function (url) {
+	// scheme : // [username [: password] @] hostname [: port] [/ [path] [? query] [# fragment]]
+	var e = new RegExp('^(?:(?:https?|ftp):)/*(?:[^@]+@)?([^:/#]+)'),
+		matches = e.exec(url);
+
+	return matches ? matches[1] : url;
+}
 
 /*
  * Fix-up URL when page rendered from search engine cache or translated page.
  * TODO: it would be nice to generalise this and/or move into the ETL phase.
  */
-SnowPlow.urlFixup = function (hostName, href, referrer) {
+SnowPlow.fixupUrl = function (hostName, href, referrer) {
 	/*
 	 * Extract parameter from URL
 	 */
 	function getParameter(url, name) {
-		// scheme : // [username [: password] @] hostame [: port] [/ [path] [? query] [# fragment]]
+		// scheme : // [username [: password] @] hostname [: port] [/ [path] [? query] [# fragment]]
 		var e = new RegExp('^(?:https?|ftp)(?::/*(?:[^?]+)[?])([^#]+)'),
 			matches = e.exec(url),
 			f = new RegExp('(?:^|&)' + name + '=([^&]*)'),
@@ -88,31 +113,36 @@ SnowPlow.urlFixup = function (hostName, href, referrer) {
 		return result ? SnowPlow.decodeWrapper(result[1]) : '';
 	}
 
-	/*
-	 * Extract hostname from URL
-	 */
-	function getHostName(url) {
-		// scheme : // [username [: password] @] hostame [: port] [/ [path] [? query] [# fragment]]
-		var e = new RegExp('^(?:(?:https?|ftp):)/*(?:[^@]+@)?([^:/#]+)'),
-			matches = e.exec(url);
-
-		return matches ? matches[1] : url;
-	}
-
-
 	if (hostName === 'translate.googleusercontent.com') {		// Google
 		if (referrer === '') {
 			referrer = href;
 		}
 		href = getParameter(href, 'u');
-		hostName = getHostName(href);
+		hostName = SnowPlow.getHostName(href);
 	} else if (hostName === 'cc.bingj.com' ||					// Bing
 			hostName === 'webcache.googleusercontent.com' ||	// Google
 			hostName.slice(0, 5) === '74.6.') {					// Yahoo (via Inktomi 74.6.0.0/16)
 		href = SnowPlow.documentAlias.links[0].href;
-		hostName = getHostName(href);
+		hostName = SnowPlow.getHostName(href);
 	}
 	return [hostName, href, referrer];
+}
+
+/*
+ * Fix-up domain
+ */
+SnowPlow.fixupDomain = function (domain) {
+	var dl = domain.length;
+
+	// remove trailing '.'
+	if (domain.charAt(--dl) === '.') {
+		domain = domain.slice(0, dl);
+	}
+	// remove leading '*'
+	if (domain.slice(0, 2) === '*.') {
+		domain = domain.slice(1);
+	}
+	return domain;
 }
 
 /*
@@ -137,23 +167,6 @@ SnowPlow.getReferrer = function () {
 	}
 
 	return referrer;
-}
-
-/*
- * Fix-up domain
- */
-SnowPlow.domainFixup = function (domain) {
-	var dl = domain.length;
-
-	// remove trailing '.'
-	if (domain.charAt(--dl) === '.') {
-		domain = domain.slice(0, dl);
-	}
-	// remove leading '*'
-	if (domain.slice(0, 2) === '*.') {
-		domain = domain.slice(1);
-	}
-	return domain;
 }
 
 /*

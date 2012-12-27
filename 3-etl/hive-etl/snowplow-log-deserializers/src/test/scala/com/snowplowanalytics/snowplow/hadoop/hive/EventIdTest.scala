@@ -11,21 +11,30 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.hadoop.hive
-package test
 
 // Java
 import java.util.UUID
 
-// Scala
-import scala.collection.immutable.Map
+// Specs2
+import org.specs2.mutable.Specification
 
-object SnowPlowTest {
+// Test suite helpers
+import test.SnowPlowTest
 
-	// A grid of tests to run
-	type DataGrid = Map[String, SnowPlowEvent]
+class EventIdTest extends Specification {
 
-	// A helper for implicitly checking UUID-format Strings
-	// TODO: really we should write a custom Specs2 Matcher,
-	// which checks for stringlyTypedUuid
-	val stringlyTypedUuid: String => String = s => UUID.fromString(s).toString
+  "generateEventId()" should {
+    "generate a String" in {
+      SnowPlowEventStruct.generateEventId must beAnInstanceOf[String]
+    }
+  }
+
+  "generateEventId()" should {
+    "generate a UUID-format event ID" in {
+      val eventId = SnowPlowEventStruct.generateEventId
+      SnowPlowTest.stringlyTypedUuid(eventId) must_== eventId
+    }
+  }
+
+  // TODO: add in some tests for stringToBool
 }

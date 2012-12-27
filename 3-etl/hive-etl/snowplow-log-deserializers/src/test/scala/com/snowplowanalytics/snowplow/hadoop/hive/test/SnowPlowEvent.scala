@@ -30,6 +30,8 @@ class SnowPlowEvent {
   var tm: String = _
 
   // Transaction (i.e. this logging event)
+  var event: String = _
+  var event_id: String = _
   var txn_id: String = _
 
   // User and visit

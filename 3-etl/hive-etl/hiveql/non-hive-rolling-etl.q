@@ -9,8 +9,8 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.0.3
--- URL:         s3://snowplow-emr-assets/hive/hiveql/non-hive-rolling-etl-0.0.3.q
+-- Version:     0.0.4
+-- URL:         s3://snowplow-emr-assets/hive/hiveql/non-hive-rolling-etl-0.0.4.q
 --
 -- Authors:     Yali Sassoon, Alex Dean
 -- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
@@ -31,15 +31,15 @@ app_id string,
 platform string,
 dt_dt string,
 tm string,
-event string, -- Renamed in 0.0.3
-event_id string, -- Added in 0.0.3
+event string,
+event_id string,
 txn_id string,
 v_tracker string,
 v_collector string,
 v_etl string,
 user_id string,
 user_ipaddress string,
-user_fingerprint string, -- Added in 0.0.3
+user_fingerprint string,
 visit_id int,
 page_url string,
 page_title string,
@@ -68,7 +68,7 @@ ti_name string,
 ti_category string,
 ti_price string,
 ti_quantity string,
-useragent string, -- Added in 0.0.3
+useragent string,
 br_name string,
 br_family string,
 br_version string,
@@ -85,11 +85,11 @@ br_features_windowsmedia tinyint,
 br_features_gears tinyint,
 br_features_silverlight tinyint,
 br_cookies tinyint,
-br_colordepth string, -- Added in 0.0.3
+br_colordepth string,
 os_name string,
 os_family string,
 os_manufacturer string,
-os_timezone string, -- Added in 0.0.3
+os_timezone string,
 dvce_type string,
 dvce_ismobile tinyint,
 dvce_screenwidth int,
@@ -108,18 +108,18 @@ INSERT INTO TABLE `events`
 PARTITION (dt)
 SELECT
 app_id,
-platform, -- Now available for 0.5.1
+platform,
 dt AS dt_dt,
 tm,
-NULL as event, -- Renamed in 0.0.3
-NULL as event_id, -- Added in 0.0.3
+event, -- Now available in 0.0.4
+event_id, -- Now available in 0.0.4
 txn_id,
 v_tracker,
 v_collector,
 v_etl,
 user_id,
 user_ipaddress,
-user_fingerprint, -- Added in 0.0.3
+user_fingerprint,
 visit_id,
 page_url,
 page_title,
@@ -148,7 +148,7 @@ ti_name,
 ti_category,
 ti_price,
 ti_quantity,
-useragent, -- Added in 0.0.3
+useragent,
 br_name,
 br_family,
 br_version,
@@ -165,11 +165,11 @@ br_features_windowsmedia,
 br_features_gears,
 br_features_silverlight,
 br_cookies_bt AS br_cookies,
-br_colordepth, -- Added in 0.0.3
+br_colordepth,
 os_name,
 os_family,
 os_manufacturer,
-os_timezone, -- Added in 0.0.3
+os_timezone,
 dvce_type,
 dvce_ismobile_bt AS dvce_ismobile,
 dvce_screenwidth,

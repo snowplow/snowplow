@@ -19,7 +19,7 @@ import org.specs2.mutable.Specification
 import com.snowplowanalytics.util.Tap._
 
 // Deserializer
-import test.{SnowPlowDeserializer, SnowPlowEvent}
+import test.{SnowPlowDeserializer, SnowPlowEvent, SnowPlowTest}
 
 class TransactionTest extends Specification {
 
@@ -27,10 +27,11 @@ class TransactionTest extends Specification {
 	implicit val _DEBUG = false
 
 	// Transaction
-	val row = "2012-05-24	11:35:53	DFW3	3343	99.116.172.58 GET d3gs014xn8p70.cloudfront.net	/ice.png	200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=5 Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0	&tr_id=order-123&tr_af=psychicbazaar&tr_tt=8000&tr_tx=200&tr_sh=50&tr_ci=London&tr_st=England&tr_co=UK&tid=028288&uid=a279872d76480afb&vid=1&aid=CFe23a&lang=en-GB&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1&url=file%3A%2F%2F%2Fhome%2Falex%2Fasync.html"
+	val row = "2012-05-24	11:35:53	DFW3	3343	99.116.172.58 GET d3gs014xn8p70.cloudfront.net	/ice.png	200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=5 Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0	&e=tr&tr_id=order-123&tr_af=psychicbazaar&tr_tt=8000&tr_tx=200&tr_sh=50&tr_ci=London&tr_st=England&tr_co=UK&tid=028288&uid=a279872d76480afb&vid=1&aid=CFe23a&lang=en-GB&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1&url=file%3A%2F%2F%2Fhome%2Falex%2Fasync.html"
 	val expected = new SnowPlowEvent().tap { e =>
 		e.dt = "2012-05-24"
 		e.tm = "11:35:53"
+		e.event = "transaction"
 		e.txn_id = "028288"
 		e.tr_orderid = "order-123"
 		e.tr_affiliation = "psychicbazaar"
@@ -53,6 +54,9 @@ class TransactionTest extends Specification {
 		"have tm (Time) = %s".format(expected.tm) in {
 			actual.tm must_== expected.tm
 		}
+	    "have a valid (stringly-typed UUID) event_id" in {
+	      SnowPlowTest.stringlyTypedUuid(actual.event_id) must_== actual.event_id
+	    }
 		"have txn_id (Transaction ID) = %s".format(expected.txn_id) in {
 			actual.txn_id must_== expected.txn_id
 		}
