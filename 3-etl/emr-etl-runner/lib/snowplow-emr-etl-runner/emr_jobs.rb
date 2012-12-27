@@ -73,10 +73,11 @@ module SnowPlow
         end
 
         hive_step.variables = {
-          "SERDE_FILE"      => config[:serde_asset],
-          "CLOUDFRONT_LOGS" => config[:s3][:buckets][:processing],
-          "EVENTS_TABLE"    => config[:s3][:buckets][:out],
-          "CONTINUE_ON"     => config[:etl][:continue_on_unexpected_error]
+          "SERDE_FILE"       => config[:serde_asset],
+          "CLOUDFRONT_LOGS"  => config[:s3][:buckets][:processing],
+          "EVENTS_TABLE"     => config[:s3][:buckets][:out],
+          "COLLECTOR_FORMAT" => config[:etl][:collector_format],
+          "CONTINUE_ON"      => config[:etl][:continue_on_unexpected_error]
         }
 
         # Finally add to our jobflow
@@ -99,7 +100,7 @@ module SnowPlow
       end
 
       # Wait for a jobflow.
-      # Check its status every 5 minutes till it completes.
+      # Check its status every 2 minutes till it completes.
       #
       # Parameters:
       # +jobflow_id+:: the ID of the EMR job we wait for
@@ -122,10 +123,10 @@ module SnowPlow
             end
 
             # Sleep a while before we check again
-            sleep(60)
+            sleep(120)
 
           rescue SocketError => se
-            puts "Got socket error #{se}, waiting 5 minutes before checking jobflow again"
+            puts "Got socket error #{se}, waiting 2 minutes before checking jobflow again"
             sleep(300)
           end
         end

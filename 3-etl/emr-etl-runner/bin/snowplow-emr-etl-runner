@@ -45,6 +45,8 @@ begin
     runner::S3Tasks.archive_logs(config)
   end
 
+  puts "Completed successfully"
+
 # Catch any SnowPlow error
 rescue runner::Error => e
   $stderr.puts(e.message)

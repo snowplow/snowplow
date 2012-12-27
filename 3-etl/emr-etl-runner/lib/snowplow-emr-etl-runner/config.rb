@@ -24,6 +24,8 @@ module SnowPlow
   module EmrEtlRunner
     module Config
 
+      collector_formats  = Set.new(%w(cloudfront clj-tomcat))
+
       # TODO: would be nice to move this to using Kwalify
       # TODO: would be nice to support JSON as well as YAML
 
@@ -47,8 +49,8 @@ module SnowPlow
         config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
 
         # Validate the collector format
-        if config[:etl][:collector_format] != 'cloudfront'
-          raise ConfigError, "collector_format '%s' not supported (only 'cloudfront')" % config[:etl][:collector_format]
+        unless collector_formats.include?(config[:etl][:collector_format]) 
+          raise ConfigError, "collector_format '%s' not supported" % config[:etl][:collector_format]
         end
 
         # Construct paths to our HiveQL and serde
