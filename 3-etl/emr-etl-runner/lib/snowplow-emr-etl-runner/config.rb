@@ -53,6 +53,11 @@ module SnowPlow
           raise ConfigError, "collector_format '%s' not supported" % config[:etl][:collector_format]
         end
 
+        # Currently we only support start/end times for the CloudFront collector format. See #120 for details
+        unless config[:etl][:collector_format] == 'cloudfront' or (config[:start].nil? and config[:end].nil?)
+          raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
+        end
+
         # Construct paths to our HiveQL and serde
         asset_path = "%shive" % config[:s3][:buckets][:assets]
         config[:serde_asset]  = "%s/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
@@ -106,7 +111,8 @@ module SnowPlow
           }
 
           opts.separator ""
-          opts.separator "* filters the raw event logs processed by EmrEtlRunner by their timestamp"
+          opts.separator "* filters the raw event logs processed by EmrEtlRunner by their timestamp. Only"
+          opts.separator "  supported with 'cloudfront' collector format currently."
 
           opts.separator ""
           opts.separator "Common options:"
