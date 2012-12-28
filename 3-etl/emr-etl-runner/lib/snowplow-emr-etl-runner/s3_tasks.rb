@@ -49,7 +49,11 @@ module SnowPlow
         # Move the files we need to move (within the date span)
         files_to_move = case
         when (config[:start].nil? and config[:end].nil?)
-          '.+'
+          if config[:etl][:collector_format] == 'clj-tomcat'
+            '.*access\.log-.*'
+          else
+            '.+'
+          end if
         when config[:start].nil?
           Sluice::Storage::files_up_to(config[:end], CF_DATE_FORMAT, CF_FILE_EXT)
         when config[:end].nil?
