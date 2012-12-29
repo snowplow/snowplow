@@ -94,7 +94,7 @@ module SnowPlow
             date = m[1]
             return date + '/' + filename
           else
-            return filename
+            return filepath
           end
         }
 
