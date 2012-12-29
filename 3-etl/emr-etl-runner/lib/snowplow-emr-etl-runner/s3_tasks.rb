@@ -53,7 +53,7 @@ module SnowPlow
             '.*access\.log-.*'
           else
             '.+'
-          end if
+          end
         when config[:start].nil?
           Sluice::Storage::files_up_to(config[:end], CF_DATE_FORMAT, CF_FILE_EXT)
         when config[:end].nil?
