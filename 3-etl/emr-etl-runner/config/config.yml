@@ -22,7 +22,7 @@
     :master_instance_type: m1.small
     :slave_instance_type: m1.small
 :etl:
-  :collector_format: cloudfront # No other formats supported yet
+  :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
   :continue_on_unexpected_error: false # You can switch to 'true' if you really don't want the serde throwing exceptions
   :storage_format: non-hive # Or switch to 'hive' if you're only using Hive for analysis
 # Can bump the below as SnowPlow releases new versions
