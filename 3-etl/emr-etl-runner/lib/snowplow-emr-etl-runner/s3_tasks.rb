@@ -50,7 +50,7 @@ module SnowPlow
         files_to_move = case
         when (config[:start].nil? and config[:end].nil?)
           if config[:etl][:collector_format] == 'clj-tomcat'
-            '.*access\.log-.*'
+            '.*access[\._]log-.*'
           else
             '.+'
           end
