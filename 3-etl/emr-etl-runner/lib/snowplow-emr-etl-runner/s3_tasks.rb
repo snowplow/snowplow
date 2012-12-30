@@ -50,7 +50,7 @@ module SnowPlow
         files_to_move = case
         when (config[:start].nil? and config[:end].nil?)
           if config[:etl][:collector_format] == 'clj-tomcat'
-            '.*access[\._]log-.*'
+            '.*localhost_access_log\.txt-.*'
           else
             '.+'
           end
@@ -62,7 +62,16 @@ module SnowPlow
           Sluice::Storage::files_between(config[:start], config[:end], CF_DATE_FORMAT, CF_FILE_EXT)
         end
 
-        Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move)
+        # Remove Elastic Beanstalk instance sub-folder if filename includes it
+        remove_instance_folder = lamdba { |filepath|
+          if m = filepath.match('/i-\h+/([^/]+\.gz)$')
+            return m[1] # Return just the filename
+          else
+            return filepath
+          end
+        }
+
+        Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move, remove_instance_folder)
 
         # Wait for s3 to eventually become consistant
         puts "Waiting a minute to allow S3 to settle (eventual consistency)"
@@ -88,6 +97,7 @@ module SnowPlow
         processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:processing]);
         archive_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:archive]);
 
+        # Attach date path if filenames include datestamp
         add_date_path = lambda { |filepath|
           if m = filepath.match('[^/]+\.(\d\d\d\d-\d\d-\d\d)-\d\d\.[^/]+\.gz$')
             filename = m[0]
