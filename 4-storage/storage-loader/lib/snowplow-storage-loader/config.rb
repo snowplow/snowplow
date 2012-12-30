@@ -70,6 +70,7 @@ module SnowPlow
 
         # Handle command-line arguments
         options = {}
+        options[:skip] = []
         optparse = OptionParser.new do |opts|
 
           opts.banner = "Usage: %s [options]" % NAME
@@ -77,7 +78,7 @@ module SnowPlow
           opts.separator "Specific options:"
 
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
-          opts.on('-s', '--skip download|load', 'skip step(s) up to and including this step') { |config| options[:skip] = config }
+          opts.on('-s', '--skip download,load,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
 
           opts.separator ""
           opts.separator "Common options:"
@@ -97,17 +98,11 @@ module SnowPlow
         end
 
         # Check our skip argument
-        skip = case options[:skip]
-                 when "download"
-                   :download
-                 when "load"
-                   :load
-                 when nil
-                   :none                            
-                 else
-                   raise ConfigError, "Invalid option: skip can be 'download' or 'load', not '#{options[:skip]}'"
-                 end
-        options[:skip] = skip # Heinous mutability
+        options[:skip].each { |opt|
+          unless %w(download load archive).include?(opt)
+            raise ConfigError, "Invalid option: skip can be 'download', 'load' or 'archive', not '#{opt}'"
+          end
+        }
 
         # Check we have a config file argument
         if options[:config].nil?
