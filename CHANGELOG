@@ -5,6 +5,7 @@ HiveQL: hive-rolling-etl.q bumped to 0.5.4
 HiveQL: non-hive-rolling-etl.q bumped to 0.0.5
 HiveQL: v_collector now set via Hive variable, not Serde (#118)
 EmrEtlRunner: bumped to 0.0.7
+EmrEtlRunner: bumped to using Sluice 0.0.5
 EmrEtlRunner: added "Complete" message at end of run (part of #97)
 EmrEtlRunner: validates "clj-tomcat" as collector format (#119)
 EmrEtlRunner: passes collector format through to HiveQL (#119)

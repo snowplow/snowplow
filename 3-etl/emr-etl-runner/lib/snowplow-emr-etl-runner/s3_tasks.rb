@@ -62,16 +62,7 @@ module SnowPlow
           Sluice::Storage::files_between(config[:start], config[:end], CF_DATE_FORMAT, CF_FILE_EXT)
         end
 
-        # Remove Elastic Beanstalk instance sub-folder if filename includes it
-        remove_instance_folder = lamdba { |filepath|
-          if m = filepath.match('/i-\h+/([^/]+\.gz)$')
-            return m[1] # Return just the filename
-          else
-            return filepath
-          end
-        }
-
-        Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move, remove_instance_folder)
+        Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move, false, true)
 
         # Wait for s3 to eventually become consistant
         puts "Waiting a minute to allow S3 to settle (eventual consistency)"
