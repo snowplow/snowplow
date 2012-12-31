@@ -14,6 +14,9 @@ StorageLoader: bumped to 0.0.3
 StorageLoader: bumped to using Sluice 0.0.6
 StorageLoader: added "Complete" message at end of run (part of #97)
 StorageLoader: --skip argument now supports a list (#81)
+Infobright: bumped setup_infobright.sql to 0.0.5               - TODO
+Infobright: added migration script (0.0.4 -> 0.0.5)            - TODO
+Infobright: user_id field widened to 38 chars to support UUID  - TODO
 
 Version 0.6.5 (2012-12-26)
 --------------------------
