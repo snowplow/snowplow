@@ -18,4 +18,4 @@
 
 USE snowplow ;
 
-DESC events_004 ;
+DESC events_005 ;
