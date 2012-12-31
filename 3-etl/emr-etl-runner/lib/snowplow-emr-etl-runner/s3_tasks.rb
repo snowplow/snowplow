@@ -42,7 +42,7 @@ module SnowPlow
         processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:processing])
 
         # Check whether our processing directory is empty
-        if Sluice::Storage::S3::is_empty?(s3, processing_location)
+        unless Sluice::Storage::S3::is_empty?(s3, processing_location)
           raise DirectoryNotEmptyError, "The processing directory is not empty"
         end
 

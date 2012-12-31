@@ -35,5 +35,5 @@ Gem::Specification.new do |gem|
 
   # Dependencies
   gem.add_dependency 'elasticity', '~> 2.5'
-  gem.add_dependency 'sluice', '~> 0.0.5'
+  gem.add_dependency 'sluice', '~> 0.0.6'
 end
