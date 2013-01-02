@@ -52,7 +52,7 @@ module SnowPlow
         end
 
         # If we are not skipping the download stage, the download folder needs to be empty
-        unless config[:skip] == :download or config[:skip] == :load
+        unless config[:skip].include?("download")
           if !(Dir.entries(config[:download][:folder]) - %w{ . .. }).empty?
             raise ConfigError, "Download folder '#{config[:download][:folder]}' is not empty"
           end
