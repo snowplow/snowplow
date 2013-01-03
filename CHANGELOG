@@ -1,4 +1,4 @@
-Version 0.7.0 (2013-01-03)
+Version 0.7.0 (2013-01-04)
 --------------------------
 Clojure Collector: added. Version 0.1.0
 HiveQL: hive-rolling-etl.q bumped to 0.5.4
