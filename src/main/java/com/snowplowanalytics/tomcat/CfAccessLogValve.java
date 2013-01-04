@@ -16,6 +16,7 @@ package com.snowplowanalytics.tomcat;
 // Java
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.net.URLEncoder;
 import java.io.UnsupportedEncodingException;
 
@@ -104,9 +105,9 @@ public class CfAccessLogValve extends AccessLogValve {
         @Override
         public void addElement(StringBuilder buf, Date date, Request request,
                 Response response, long time) {
-            Enumeration<String> iter = request.getHeaders("Set-Cookie");
-            while (iter.hasMoreElements()) {
-                final String cookie = iter.nextElement();
+            Iterator<String> iter = response.getHeaders("Set-Cookie").iterator();
+            while (iter.hasNext()) {
+                final String cookie = iter.next();
                 // Yech. You should test this works with the cookies you want to log.
                 if (cookie.startsWith(header + "=")) {
                     buf.append(cookie.split(";")[0].split("=")[1]);
