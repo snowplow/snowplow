@@ -40,15 +40,22 @@ public class CfAccessLogValve extends AccessLogValve {
 
     /**
      * Create an AccessLogElement implementation which needs header string.
-     * Updated to include an 'I' pattern, to escape an incoming header.
+     * Updated to include:
+     * - An 'I' pattern, to escape an incoming header
+     * - A  'C' pattern, to fetch a cookie on the response (not request)
      */
     protected AccessLogElement createAccessLogElement(String header, char pattern) {
 
-        // Added EscapedHeaderElement        
-        if (pattern == 'I') {
-            return new EscapedHeaderElement(header);
-        } else {
-            return super.createAccessLogElement(header, pattern);
+        switch (pattern) {
+            // Added EscapedHeaderElement        
+            case 'I':
+                return new EscapedHeaderElement(header);
+            // Added EscapedHeaderElement        
+            case 'C':
+                return new ResponseCookieElement(header);
+            // Back to AccessLogValve's handler
+            default:
+                return super.createAccessLogElement(header, pattern);
         }
     }
 
@@ -73,6 +80,38 @@ public class CfAccessLogValve extends AccessLogValve {
                     buf.append(',').append(encodeStringSafely(iter.nextElement()));
                 }
                 return;
+            }
+            buf.append('-');
+        }
+    }
+
+    /**
+     * Write a cookie on the response - %{xxx}C.
+     *
+     * Assumes cookies are pre-escaped.
+     *
+     * This is hacky code - literally the most primitive
+     * cookie parsing possible. Please test it with the
+     * cookies you want to log to check it works for you.
+     */
+    protected static class ResponseCookieElement implements AccessLogElement {
+        private final String header;
+
+        public ResponseCookieElement(String header) {
+            this.header = header;
+        }
+
+        @Override
+        public void addElement(StringBuilder buf, Date date, Request request,
+                Response response, long time) {
+            Enumeration<String> iter = request.getHeaders("Set-Cookie");
+            while (iter.hasMoreElements()) {
+                final String cookie = iter.nextElement();
+                // Yech. You should test this works with the cookies you want to log.
+                if (cookie.startsWith(header + "=")) {
+                    buf.append(cookie.split(";")[0].split("=")[1]);
+                    return; // Multiple cookies with the same name? We don't support that.
+                }
             }
             buf.append('-');
         }
