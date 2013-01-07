@@ -16,9 +16,6 @@ package utils
 // Java
 import java.net.URLDecoder;
 
-// Apache Commons
-import org.apache.commons.lang.StringUtils
-
 /**
  * General-purpose utils to help the
  * ETL process along.
@@ -60,21 +57,4 @@ object EtlUtils {
     } catch {
       case _ => None
     }
-
-  /**
-   * 'Cleans' a string to make it parsable by
-   * URLDecoder.decode.
-   * 
-   * The '%' character seems to be appended to the
-   * end of some URLs in the CloudFront logs, causing
-   * Exceptions when using URLDecoder.decode. Perhaps
-   * a CloudFront bug?
-   *
-   * TODO: move this into a CloudFront-specific file
-   *
-   * @param s The String to clean
-   * @return the cleaned string
-   */
-  private def cleanUri(uri: String): String = 
-    StringUtils.removeEnd(uri, "%")
 }
