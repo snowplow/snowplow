@@ -1,3 +1,3 @@
-[submodule "2-collectors/contrib-nodejs"]
-	path = 2-collectors/contrib-nodejs
+[submodule "2-collectors/contrib-nodejs-collector"]
+	path = 2-collectors/contrib-nodejs-collector
 	url = git://github.com/shermozle/SnowCannon.git

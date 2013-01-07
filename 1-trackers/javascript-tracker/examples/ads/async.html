@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<!-- 
+ ! Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ !
+ ! This program is licensed to you under the Apache License Version 2.0,
+ ! and you may not use this file except in compliance with the Apache License Version 2.0.
+ ! You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+ !
+ ! Unless required by applicable law or agreed to in writing,
+ ! software distributed under the Apache License Version 2.0 is distributed on an
+ ! "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ ! See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+ -->
+<html>
+<head>
+    <title>Asynchronous ad tracking examples for snowplow.js</title>
+</head>
+
+<body>
+    <h1>Asynchronous ad tracking examples for snowplow.js</h1>
+
+    <p>
+    <img src="images/banner-1.png">
+    Banner ID 23, campaign ID 12, advertiser ID 201, user ID 1fd819ffc7267757ba681ff5daa3007e
+    <!-- SnowPlow starts plowing -->
+    <script type="text/javascript">
+    var _snaq = _snaq || [];
+    
+    _snaq.push(['setAccount', 'd3rkrsqld9gmqf']); // Update to your account ID or CloudFront distribution subdomain
+    _snaq.push(['trackImpression', '23', '12', '201', '1fd819ffc7267757ba681ff5daa3007e']);
+
+    (function() {
+    var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
+    sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://d1fc8wv8zag5ca.cloudfront.net/0.8.2/sp.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
+    })();
+     </script>
+    <!-- SnowPlow stops plowing -->
+    </p>
+
+    <p>
+    <img src="images/banner-2.png">
+    Banner ID 127, no campaign or advertiser ID set, user ID 2de819ffc724367ba681ff5daa6777e
+    <!-- SnowPlow starts plowing -->
+    <script type="text/javascript">
+    var _snaq = _snaq || [];
+    
+    _snaq.push(['setAccount', 'd3rkrsqld9gmqf']); // Update to your account ID or CloudFront distribution subdomain
+    _snaq.push(['trackImpression', '127', '', '', '2de819ffc724367ba681ff5daa6777e']);
+
+    (function() {
+    var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
+    sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://d1fc8wv8zag5ca.cloudfront.net/0.8.2/sp.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
+    })();
+     </script>
+    <!-- SnowPlow stops plowing -->
+    </p>
+
+    <p>
+    <img src="images/banner-3.png">
+    Banner ID 56ea2819ffc7da75f7e, no campaign, advertiser or user ID set
+    <!-- SnowPlow starts plowing -->
+    <script type="text/javascript">
+    var _snaq = _snaq || [];
+    
+    _snaq.push(['setAccount', 'd3rkrsqld9gmqf']); // Update to your account ID or CloudFront distribution subdomain
+    _snaq.push(['trackImpression', '56ea2819ffc7da75f7e', '', '', '']);
+
+    (function() {
+    var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
+    sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://d1fc8wv8zag5ca.cloudfront.net/0.8.2/sp.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
+    })();
+     </script>
+    <!-- SnowPlow stops plowing -->
+    </p>
+</body>
+
+</html>

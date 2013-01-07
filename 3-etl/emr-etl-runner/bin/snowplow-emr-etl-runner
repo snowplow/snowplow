@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+
+# Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+#
+# This program is licensed to you under the Apache License Version 2.0,
+# and you may not use this file except in compliance with the Apache License Version 2.0.
+# You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the Apache License Version 2.0 is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+
+# Author::    Alex Dean (mailto:support@snowplowanalytics.com)
+# Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
+# License::   Apache License Version 2.0
+
+$:.unshift(File.expand_path("../../lib", __FILE__))
+
+require 'snowplow-emr-etl-runner'; runner = SnowPlow::EmrEtlRunner
+
+# This Ruby script runs the ETL (extract, transform, load)
+# process which transforms the raw SnowPlow event logs into
+# SnowPlow-formatted Hive data tables, optimised for analysis.
+#
+# This is a three-step process:
+# 1. Transfer the raw SnowPlow event logs from the In Bucket to the Processing Bucket
+# 2. Run the Hive ETL process on the logs using Amazon EMR (populates processed SnowPlow events into the Out Bucket)
+# 3. Archive the processed event logs from Processing Bucket to Archive Bucket
+#
+# Note that each step is only actioned if the previous step succeeded without error.
+begin
+  config = runner::Config.get_config()
+
+  unless config[:skip].include?('staging')
+    runner::S3Tasks.stage_logs_for_emr(config)
+  end
+
+  unless config[:skip].include?('emr')
+    job = runner::EmrJob.new(config)
+    job.run()
+  end
+
+  unless config[:skip].include?('archive')
+    runner::S3Tasks.archive_logs(config)
+  end
+
+  puts "Completed successfully"
+
+# Catch any SnowPlow error
+rescue runner::Error => e
+  $stderr.puts(e.message)
+  exit 1
+rescue SystemExit => e
+  exit 1
+rescue Exception => e
+  $stderr.puts("Unexpected error: " + e.message)
+  $stderr.puts(e.backtrace.join("\n"))
+  exit 1
+end
+
+exit 0 # Success
