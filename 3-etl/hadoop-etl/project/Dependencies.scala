@@ -13,27 +13,18 @@
 import sbt._
 
 object Dependencies {
-	val resolutionRepos = Seq(
-		ScalaToolsSnapshots,
-		"Concurrent Maven Repo" at "http://conjars.org/repo", // For Scalding, Cascading etc
-		"Twitter Maven Repo" at "http://maven.twttr.com/" // For Twitter's "wonderful" util functions
-	)
+  val resolutionRepos = Seq(
+    ScalaToolsSnapshots,
+    "Concurrent Maven Repo" at "http://conjars.org/repo" // For Scalding, Cascading etc
+  )
 
-	object Urls {
-		val maxmindJava = "http://www.maxmind.com/download/geoip/api/java/GeoIPJava-%s.zip"
-		val maxmindData = "http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz"
-	}
+  object V {
+    val scalding    = "0.7.3"
+    val specs2      = "1.8"
+  }
 
-	object V {
-		val maxmind     = "1.2.8" // Compiled in BuildSettings
-		val scalding    = "0.7.3"
-		val collUtils   = "5.3.10"
-		val specs2      = "1.8"
-	}
-
-	object Libraries {
-		val scalding    = "com.twitter"                %% "scalding"            % V.scalding
-		val collUtils	  = "com.twitter"								 %  "util-collection"		  % V.collUtils
-		val specs2      = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
-	}
+  object Libraries {
+    val scalding    = "com.twitter"                %% "scalding"            % V.scalding
+    val specs2      = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
+  }
 }

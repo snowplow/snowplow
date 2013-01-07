@@ -25,7 +25,7 @@ import com.twitter.scalding.Tool
  * Borrowed from com.twitter.scalding.Tool
  */
 object EtlRunner {
-	def main(args : Array[String]) {
-		ToolRunner.run(new Configuration, new Tool, args);
-	}
+  def main(args : Array[String]) {
+    ToolRunner.run(new Configuration, new Tool, args);
+  }
 }
