@@ -10,23 +10,23 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-import sbt._
+package com.snowplowanalytics.snowplow.hadoop.etl.enrichments
 
-object Dependencies {
-  val resolutionRepos = Seq(
-    ScalaToolsSnapshots,
-    "Concurrent Maven Repo" at "http://conjars.org/repo" // For Scalding, Cascading etc
-  )
+/**
+ * Holds enrichments related to marketing and campaign
+ * attribution.
+ */
+object AttributionEnrichments {
 
-  object V {
-    val scalding    = "0.7.3"
-    val specs2      = "1.8"
-    val specs       = "1.6.6" // TODO: remove
-  }
+  case class MarketingCampaign(
+    val medium:   Option[String],
+    val source:   Option[String],
+    val term:     Option[String],
+    val content:  Option[String],
+    val campaign: Option[String]
+    )
 
-  object Libraries {
-    val scalding    = "com.twitter"                %% "scalding"            % V.scalding
-    val specs2      = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
-    val specs       = "org.scala-tools.testing"    %% "specs"               % V.specs        % "test" // TODO: remove
-  }
+  /**
+   *  
+   */
 }

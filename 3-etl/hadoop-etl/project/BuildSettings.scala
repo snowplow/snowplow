@@ -22,7 +22,7 @@ object BuildSettings {
     organization  := "SnowPlow Analytics Ltd",
     version       := "0.0.1",
     description   := "The SnowPlow Hadoop ETL process, written in Scalding",
-    scalaVersion  := "2.9.1",
+    scalaVersion  := "2.8.1", // TODO: could bump to 2.9.1 if switched to specs2
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= Dependencies.resolutionRepos
   )

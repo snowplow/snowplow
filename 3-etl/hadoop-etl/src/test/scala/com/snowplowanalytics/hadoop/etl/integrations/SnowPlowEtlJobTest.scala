@@ -10,19 +10,22 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.hadoop.etl //.integrations
+package com.snowplowanalytics.hadoop.etl.integrations
 
-// Specs2
-// import org.specs.Specification
+// Specs // TODO: Specs 2
+import org.specs.Specification
 
 // Scalding
 import com.twitter.scalding._
 
-/* Commented out till we upgrade to specs2 and update based on new ETL process
-
+/**
+ * Integration test for SnowPlowEtlJob:
+ *
+ * XXX
+ */
 class WordCountTest extends Specification with TupleConversions {
   "A WordCount job" should {
-    JobTest("com.snowplowanalytics.hadoop.etl.WordCountJob").
+    JobTest("com.snowplowanalytics.hadoop.etl.SnowPlowEtlJob").
       arg("input", "inputFile").
       arg("output", "outputFile").
       source(TextLine("inputFile"), List("0" -> "hack hack hack and hack")).
@@ -36,4 +39,4 @@ class WordCountTest extends Specification with TupleConversions {
       run.
       finish
   }
-} */
+}
