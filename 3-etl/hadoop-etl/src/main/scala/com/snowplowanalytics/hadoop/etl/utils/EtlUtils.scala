@@ -54,7 +54,8 @@ object EtlUtils {
         s <- Option(str)
         d = URLDecoder.decode(s, encoding)
         if d != null
-        r = d.replaceAll("(\\r|\\n)", "").replaceAll("\\t", "    ")
+        r = d.replaceAll("(\\r|\\n)", "")
+             .replaceAll("\\t", "    ")
       } yield r
     } catch {
       case _ => None
