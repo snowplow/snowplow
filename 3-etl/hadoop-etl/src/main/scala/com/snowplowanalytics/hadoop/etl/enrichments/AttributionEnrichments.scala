@@ -23,6 +23,9 @@ import scala.collection.JavaConversions._
 import org.apache.http.NameValuePair
 import org.apache.http.client.utils.URLEncodedUtils
 
+// This project
+import utils.EtlUtils
+
 /**
  * Holds enrichments related to marketing and campaign
  * attribution.
@@ -59,7 +62,7 @@ object AttributionEnrichments {
     }
 
     // If somebody wants to rewrite this without the
-    // mutable state, please go ahead
+    // mutable variables, please go ahead
     var medium, source, term, content, campaign: Option[String] = None
     for (params <- parameters) {
       for (p <- params toList) {
@@ -68,15 +71,15 @@ object AttributionEnrichments {
 
         name match {
           case "utm_medium" =>
-            medium = Some(value) // TODO: change to decodeSafely(value)
+            medium = EtlUtils.decodeSafely(value, encoding)
           case "utm_source" =>
-            source = Some(value) // TODO: change to decodeSafely(value)
+            source = EtlUtils.decodeSafely(value, encoding)
           case "utm_term" =>
-            term = Some(value) // TODO: change to decodeSafely(value)
+            term = EtlUtils.decodeSafely(value, encoding)
           case "utm_content" =>
-            content = Some(value) // TODO: change to decodeSafely(value)
+            content = EtlUtils.decodeSafely(value, encoding)
           case "utm_campaign" =>
-            campaign = Some(value) // TODO: change to decodeSafely(value)
+            campaign = EtlUtils.decodeSafely(value, encoding)
         }
       }
     }
@@ -88,24 +91,4 @@ object AttributionEnrichments {
       content,
       campaign))
   }
-
-  /**
-   * Decodes a String using UTF8, also removing:
-   * - Newlines - because they will break Hive
-   * - Tabs - because they will break non-Hive
-   *          targets (e.g. Infobright)
-   *
-   * @param s The String to decode
-   * @return The decoded String
-   * @throws UnsupportedEncodingException if the Character Encoding is not supported
-   * @throws IllegalArgumentException if the string cannot be parsed
-   *
-  static String decodeSafeString(String s) throws UnsupportedEncodingException, IllegalArgumentException {
-
-    if (s == null) return null;
-    String decoded = URLDecoder.decode(cleanUrlString(s), cfEncoding);
-    if (decoded == null) return null;
-
-    return decoded.replaceAll("(\\r|\\n)", "").replaceAll("\\t", "    ");
-  } */
 }
