@@ -23,10 +23,11 @@ object EventEnrichments {
 
   /**
    * Turns an event code into a valid event type,
-   * e.g. "pv" -> "page_view"
+   * e.g. "pv" -> "page_view".
    *
    * @param eventCode The event code
-   * @return The event type (Option-boxed), or None
+   * @return the event type (Option-boxed), or None
+   *         if it's not recognised
    */
   def asEventType(eventCode: String): Option[String] = eventCode match {
     case "ev" => Some("custom")
@@ -39,11 +40,11 @@ object EventEnrichments {
   }
 
   /**
-   * Returns a unique event ID. ID is 
-   * generated as a type 4 UUID, then
-   * converted to a String.
+   * Returns a unique event ID. The event ID is 
+   * generated as a type 4 UUID, then converted
+   * to a String.
    *
-   * @return The event ID
+   * @return the event ID
    */
   def generateEventId(): String = UUID.randomUUID().toString
 }

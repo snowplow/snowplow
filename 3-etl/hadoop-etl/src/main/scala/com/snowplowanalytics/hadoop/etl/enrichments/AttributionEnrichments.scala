@@ -44,8 +44,8 @@ object AttributionEnrichments {
   /**
    * Extract the marketing fields from a URL.
    *
-   * @param uri the URI to extract marketing fields from
-   * @param encoding the encoding of the URL
+   * @param uri The URI to extract marketing fields from
+   * @param encoding The encoding of the URL
    * @return a MarketingCampaign (Right-boxed), or an
    *         explanatory String (Left-boxed) if something
    *         went wrong.

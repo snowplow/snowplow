@@ -25,7 +25,7 @@ object MiscEnrichments {
   /**
    * Returns the version of this ETL
    *
-   * @return The ETL version
+   * @return the ETL version
    */
   def etlVersion = "hadoop-%s" format ProjectSettings.version
 }
