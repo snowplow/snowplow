@@ -19,13 +19,27 @@ object BuildSettings {
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
-    organization  := "SnowPlow Analytics Ltd",
+    organization  := "com.snowplowanalytics",
     version       := "0.0.1",
     description   := "The SnowPlow Hadoop ETL process, written in Scalding",
     scalaVersion  := "2.8.1", // TODO: could bump to 2.9.1 if switched to specs2
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= Dependencies.resolutionRepos
   )
+
+  // Makes our SBT app settings available from within the ETL
+  lazy val scalifySettings = Seq(sourceGenerators in Compile <+= (sourceManaged in Compile, version, name, organization, scalaVersion) map { (d, v, n, o, sv) =>
+    val file = d / "settings.scala"
+    IO.write(file, """package com.snowplowanalytics.snowplow.hadoop.etl.generated
+      |object ProjectSettings {
+      |  val version = "%s"
+      |  val name = "%s"
+      |  val organization = "%s"
+      |  val scalaVersion = "%s"
+      |}
+      |""".stripMargin.format(v, n, o, sv))
+    Seq(file)
+  })
 
   // sbt-assembly settings for building a fat jar
   import sbtassembly.Plugin._
@@ -62,5 +76,5 @@ object BuildSettings {
     }
   )
 
-  lazy val buildSettings = basicSettings ++ sbtAssemblySettings
+  lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings
 }

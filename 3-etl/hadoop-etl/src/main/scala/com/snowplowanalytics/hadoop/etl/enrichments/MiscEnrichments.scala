@@ -13,25 +13,17 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package enrichments
 
-// Apache URLEncodedUtils
-import org.apache.http.NameValuePair
-import org.apache.http.client.utils.URLEncodedUtils
+// Get our project settings
+import generated.ProjectSettings
 
 /**
- * Holds enrichments related to marketing and campaign
- * attribution.
+ * Miscellaneous enrichments which don't fit into
+ * one of the other modules.
  */
-object AttributionEnrichments {
-
-  case class MarketingCampaign(
-    val medium:   Option[String],
-    val source:   Option[String],
-    val term:     Option[String],
-    val content:  Option[String],
-    val campaign: Option[String]
-    )
-
+object MiscEnrichments {
+  
   /**
-   *  
+   * Returns the version of this ETL
    */
+  def etlVersion = "hadoop-%s" format ProjectSettings.version
 }

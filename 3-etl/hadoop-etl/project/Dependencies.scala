@@ -20,12 +20,15 @@ object Dependencies {
 
   object V {
     val scalding    = "0.7.3"
+    val http        = "4.1.1"
     val specs2      = "1.8"
     val specs       = "1.6.6" // TODO: remove
   }
 
   object Libraries {
     val scalding    = "com.twitter"                %% "scalding"            % V.scalding
+    // val httpCore    = "org.apache.httpcomponents"  %  "httpcore"            % V.http  
+    val httpClient  = "org.apache.httpcomponents"  %  "httpclient"          % V.http
     val specs2      = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
     val specs       = "org.scala-tools.testing"    %% "specs"               % V.specs        % "test" // TODO: remove
   }
