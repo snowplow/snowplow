@@ -127,8 +127,8 @@ object CloudFrontLoader extends CollectorLoader {
    * @return the JodaTime, Option-boxed, or
    *         None if something went wrong
    */
-  def toDateTime(date: String, time: String): Option[DateTime] = try {
-    Some(DateTime.parse("%s %s".format(date, time))) // Stitch together with a space between them
+  private def toDateTime(date: String, time: String): Option[DateTime] = try {
+    Some(DateTime.parse("%sT%s".format(date, time))) // Add T to conform to UTC styles
   } catch {
     case iae: IllegalArgumentException => None // TODO: should really return an error
   }
@@ -141,7 +141,7 @@ object CloudFrontLoader extends CollectorLoader {
    * @param field The field to check
    * @return True if the String was a hyphen "-"
    */
-  def toOption(field: String): Option[String] = Option(field) match {
+  private def toOption(field: String): Option[String] = Option(field) match {
     case Some("-") => None
     case Some("")  => None
     case s => s // Leaves any other Some(x) or None as-is
