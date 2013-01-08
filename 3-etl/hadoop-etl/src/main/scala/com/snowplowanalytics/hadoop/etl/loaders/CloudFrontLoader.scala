@@ -26,40 +26,64 @@ object CloudFrontLoader extends CollectorLoader {
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
   private val w = "[\\s]+"    // Whitespace regex
   private val ow = "(?:" + w  // Optional whitespace begins
-  private val CfRegex =     "([\\S]+)" + // Date          / date
-                        w + "([\\S]+)" + // Time          / time
-                        w + "([\\S]+)" + // EdgeLocation  / x-edge-location
-                        w + "([\\S]+)" + // BytesSent     / sc-bytes
-                        w + "([\\S]+)" + // IPAddress     / c-ip
-                        w + "([\\S]+)" + // Operation     / cs-method
-                        w + "([\\S]+)" + // Domain        / cs(Host)
-                        w + "([\\S]+)" + // Object        / cs-uri-stem
-                        w + "([\\S]+)" + // HttpStatus    / sc-status
-                        w + "([\\S]+)" + // Referrer      / cs(Referer)
-                        w + "([\\S]+)" + // UserAgent     / cs(User Agent)
-                        w + "([\\S]+)" + // Querystring   / cs-uri-query
-                        ow + "[\\S]+"  + // CookieHeader  / cs(Cookie)         added 12 Sep 2012
-                        w +  "[\\S]+"  + // ResultType    / x-edge-result-type added 12 Sep 2012
-                        w +  "[\\S]+)?".r // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
+  private val CfRegex = (   "([\\S]+)" +   // Date          / date
+                        w + "([\\S]+)" +   // Time          / time
+                        w + "([\\S]+)" +   // EdgeLocation  / x-edge-location
+                        w + "([\\S]+)" +   // BytesSent     / sc-bytes
+                        w + "([\\S]+)" +   // IPAddress     / c-ip
+                        w + "([\\S]+)" +   // Operation     / cs-method
+                        w + "([\\S]+)" +   // Domain        / cs(Host)
+                        w + "([\\S]+)" +   // Object        / cs-uri-stem
+                        w + "([\\S]+)" +   // HttpStatus    / sc-status
+                        w + "([\\S]+)" +   // Referer       / cs(Referer)
+                        w + "([\\S]+)" +   // UserAgent     / cs(User Agent)
+                        w + "([\\S]+)" +   // Querystring   / cs-uri-query
+                        ow + "[\\S]+"  +   // CookieHeader  / cs(Cookie)         added 12 Sep 2012
+                        w +  "[\\S]+"  +   // ResultType    / x-edge-result-type added 12 Sep 2012
+                        w +  "[\\S]+)?").r // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
 
   /**
    * Converts the source string
    * into a CanonicalInput.
    *
-   * @param line The line of data to convert
+   * TODO: need to change this to
+   * handling some sort of validation
+   * object.
+   *
+   * @param line A line of data to convert
    * @return a CanonicalInput object
    */
-  def toCanonicalInput(line: String): CanonicalInput = {
-
-    // Stub a canonical input
-    CanonicalInput(
-      timestamp = null, // Placeholder
-      payload = GetPayload("blah"), // Placeholder
-      ipAddress = "128.0.0.1", // Placeholder
-      userAgent = "BOT", // Placeholder
-      refererUrl = None, // Placeholder
-      userId = None // Placeholder
-      )
+  def toCanonicalInput(line: String): CanonicalInput = line match {
+    case h if (h.startsWith("#Version:") ||
+               h.startsWith("#Fields:"))    => null // TODO: return None or something sensible
+    case CfRegex(date,
+                 time,
+                 _,
+                 _,
+                 ipAddress,
+                 _,
+                 _,
+                 objct,
+                 _,
+                 referer,
+                 userAgent,
+                 querystring,
+                 _,
+                 _,
+                 _) =>
+      // TODO: convert to YodaTime
+      // TODO: add validation of object:
+      // if (!(object.startsWith("/ice.png") || object.equals("/i") || object.startsWith("/i?")) || isNullField(querystring)) { // Also works if Forward Query String = yes
+      //   return false;
+      // }
+      CanonicalInput(timestamp = null, // Placeholder
+                     payload   = GetPayload(querystring),
+                     ipAddress = ipAddress,
+                     userAgent = userAgent,
+                     refererUrl = Some(referer),
+                     userId = None
+                    )
+    case _ => null // TODO: return a validation error
   }
 
   /**
