@@ -17,9 +17,8 @@ package loaders
 import org.apache.commons.lang.StringUtils
 
 // Joda-Time
-import org.joda.time.{DateTime => JoDateTime}
-import org.joda.time.format.{DateTimeFormat => JoDateTimeFormat,
-                             DateTimeFormatter => JoDateTimeFormatter}
+import org.joda.time.DateTime
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 /**
  * Module to hold specific helpers related to the
@@ -90,30 +89,37 @@ object CloudFrontLoader extends CollectorLoader {
       // Is this a request for the tracker? Might be a browser favicon request or similar
       if (!isIceRequest(objct)) return None // TODO: would be nice to attach the reason
 
-      // Now process every other field
-      val dt = toOption(date)
-      val tm = toOption(time)
-      val ip = toOption(ipAddress)
-      val r  = toOption(referer) map toCleanUri
-      val ua = toOption(userAgent)
-      val qs = toOption(querystring)
-
       // Build the Joda-Time
-      val timestamp = null // TODO
+      val timestamp = toDateTime(date, time) getOrElse { return None } // TODO: would be nice to attach the reason
 
-      // TODO: move this to a validation object
-      if (qs == None) return None
-
-      Some(CanonicalInput(timestamp = timestamp,
-                          payload   = GetPayload(qs.get),
-                          ipAddress = ip,
-                          userAgent = ua,
-                          refererUri = r,
-                          userId = None))
+      // Finally check that we have a querystring
+      toOption(querystring) match {
+        case None =>
+          None // TODO: would be nice to attach the reason
+        case Some(qs) => 
+          Some(CanonicalInput(timestamp = timestamp,
+                              payload   = GetPayload(qs),
+                              ipAddress = toOption(ipAddress),
+                              userAgent = toOption(userAgent),
+                              refererUri = toOption(referer) map toCleanUri,
+                              userId = None))
+      }
 
     // 3. Row does not match CloudFront header or data row formats
     case _ => None // TODO: return a validation error so we can route this row to the bad row bin
   }
+
+  /**
+   * Converts a CloudFront log-format date and
+   * a time to a Joda DateTime.
+   *
+   * @param date The CloudFront log-format date
+   * @param time The CloudFront log-format time
+   * @return the JodaTime, Option-Boxed, or
+   *         None if something went wrong
+   */
+  def toDateTime(date: String, time: String): Option[DateTime] =
+    null // TODO update this.
 
   /**
    * Checks whether a String field is a hyphen
