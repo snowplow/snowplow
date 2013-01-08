@@ -32,6 +32,8 @@ object CloudFrontLoader extends CollectorLoader {
   private val CfRegex = {
     val w = "[\\s]+"   // Whitespace regex
     val ow = "(?:" + w // Optional whitespace begins
+    
+    // Our regex follows
     (   "([\\S]+)" +   // Date          / date
     w + "([\\S]+)" +   // Time          / time
     w + "([\\S]+)" +   // EdgeLocation  / x-edge-location
