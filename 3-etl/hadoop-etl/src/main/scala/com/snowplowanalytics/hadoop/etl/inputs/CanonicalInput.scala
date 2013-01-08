@@ -17,12 +17,6 @@ package inputs
 import org.joda.time.DateTime
 
 /**
- * All collector input formats must inherit from
- * this trait.
- */
-trait CollectorInput
-
-/**
  * All payloads sent by trackers must inherit from
  * this class.
  */
