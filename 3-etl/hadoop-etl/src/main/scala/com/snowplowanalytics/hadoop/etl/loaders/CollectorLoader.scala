@@ -67,7 +67,7 @@ abstract class CollectorLoader {
    *         for the ice pixel
    */
   protected def isIceRequest(path: String): Boolean =
-    path.startsWith("/ice.png") ||
+    path.startsWith("/ice.png") || // Legacy name for /i
     path.equals("/i") ||
     path.startsWith("/i?")
 }
