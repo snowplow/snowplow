@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.hadoop.etl
-package inputs
+package loaders
 
 // Apache Commons
 import org.apache.commons.lang.StringUtils
@@ -19,10 +19,28 @@ import org.apache.commons.lang.StringUtils
 /**
  * Module to hold specific helpers related to the
  * CloudFront input format.
- *
- * TODO: this needs to implement CollectorLoader
  */
-object CloudFrontLoader {
+class CloudFrontLoader extends CollectorLoader {
+
+  /**
+   * Converts the source string
+   * into a CanonicalInput.
+   *
+   * @param line The line of data to convert
+   * @return a CanonicalInput object
+   */
+  def toCanonicalInput(line: String): CanonicalInput = {
+
+    // Stub a canonical input
+    CanonicalInput(
+      timestamp = null, // Placeholder
+      payload = GetPayload("blah"), // Placeholder
+      ipAddress = "128.0.0.1", // Placeholder
+      userAgent = "BOT", // Placeholder
+      refererUrl = None, // Placeholder
+      userId = None // Placeholder
+      )
+  }
 
   /**
    * 'Cleans' a string to make it parsable by
