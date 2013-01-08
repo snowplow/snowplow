@@ -30,6 +30,8 @@ object SnowPlowHadoopEtlBuild extends Build {
       libraryDependencies ++= Seq(
         Libraries.scalding,
         Libraries.httpClient,
+        Libraries.yodaTime,
+        Libraries.yodaConvert,
         Libraries.specs // TODO: change to specs2
         // Add your additional libraries here (comma-separated)...
       )
