@@ -29,23 +29,27 @@ object CloudFrontLoader extends CollectorLoader {
 
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
-  private val w = "[\\s]+"    // Whitespace regex
-  private val ow = "(?:" + w  // Optional whitespace begins
-  private val CfRegex = (   "([\\S]+)" +   // Date          / date
-                        w + "([\\S]+)" +   // Time          / time
-                        w + "([\\S]+)" +   // EdgeLocation  / x-edge-location
-                        w + "([\\S]+)" +   // BytesSent     / sc-bytes
-                        w + "([\\S]+)" +   // IPAddress     / c-ip
-                        w + "([\\S]+)" +   // Operation     / cs-method
-                        w + "([\\S]+)" +   // Domain        / cs(Host)
-                        w + "([\\S]+)" +   // Object        / cs-uri-stem
-                        w + "([\\S]+)" +   // HttpStatus    / sc-status
-                        w + "([\\S]+)" +   // Referer       / cs(Referer)
-                        w + "([\\S]+)" +   // UserAgent     / cs(User Agent)
-                        w + "([\\S]+)" +   // Querystring   / cs-uri-query
-                        ow + "[\\S]+"  +   // CookieHeader  / cs(Cookie)         added 12 Sep 2012
-                        w +  "[\\S]+"  +   // ResultType    / x-edge-result-type added 12 Sep 2012
-                        w +  "[\\S]+)?").r // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
+  // private val w = "[\\s]+"    // Whitespace regex
+  // private val ow = "(?:" + w  // Optional whitespace begins
+  private val CfRegex = {
+    val w = "[\\s]+"    // Whitespace regex
+    val ow = "(?:" + w  // Optional whitespace begins
+    (   "([\\S]+)" +   // Date          / date
+    w + "([\\S]+)" +   // Time          / time
+    w + "([\\S]+)" +   // EdgeLocation  / x-edge-location
+    w + "([\\S]+)" +   // BytesSent     / sc-bytes
+    w + "([\\S]+)" +   // IPAddress     / c-ip
+    w + "([\\S]+)" +   // Operation     / cs-method
+    w + "([\\S]+)" +   // Domain        / cs(Host)
+    w + "([\\S]+)" +   // Object        / cs-uri-stem
+    w + "([\\S]+)" +   // HttpStatus    / sc-status
+    w + "([\\S]+)" +   // Referer       / cs(Referer)
+    w + "([\\S]+)" +   // UserAgent     / cs(User Agent)
+    w + "([\\S]+)" +   // Querystring   / cs-uri-query
+    ow + "[\\S]+"  +   // CookieHeader  / cs(Cookie)         added 12 Sep 2012
+    w +  "[\\S]+"  +   // ResultType    / x-edge-result-type added 12 Sep 2012
+    w +  "[\\S]+)?").r // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
+  }
 
   /**
    * Converts the source string into a 
@@ -97,12 +101,11 @@ object CloudFrontLoader extends CollectorLoader {
 
       // TODO: convert to YodaTime
       Some(CanonicalInput(timestamp = null, // Placeholder
-                     payload   = GetPayload(querystring),
-                     ipAddress = ipAddress,
-                     userAgent = userAgent,
-                     refererUrl = Some(referer),
-                     userId = None
-                    ))
+                          payload   = GetPayload(querystring),
+                          ipAddress = ipAddress,
+                          userAgent = userAgent,
+                          refererUrl = Some(referer),
+                          userId = None))
 
     // 3. Row does not match CloudFront header or data row formats
     case _ => None // TODO: return a validation error so we can route this row to the bad row bin
