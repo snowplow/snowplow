@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.hadoop.etl
 package loaders
 
 // Joda-Time
-import org.joda.time.DateTime
+import org.joda.time.{DateTime => JoDateTime}
 
 /**
  * All payloads sent by trackers must inherit from
@@ -36,7 +36,7 @@ case class GetPayload(val payload: String) extends TrackerPayload
  * collector-agnostic stage of the ETL.
  */
 final case class CanonicalInput(
-  val timestamp:  DateTime,
+  val timestamp:  JoDateTime,
   val payload:    TrackerPayload,
   val ipAddress:  String,
   val userAgent:  String,
