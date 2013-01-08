@@ -16,6 +16,11 @@ package loaders
 // Apache Commons
 import org.apache.commons.lang.StringUtils
 
+// Joda-Time
+import org.joda.time.{DateTime => JoDateTime}
+import org.joda.time.format.{DateTimeFormat => JoDateTimeFormat,
+                             DateTimeFormatter => JoDateTimeFormatter}
+
 /**
  * Module to hold specific helpers related to the
  * CloudFront input format.
@@ -43,19 +48,25 @@ object CloudFrontLoader extends CollectorLoader {
                         w +  "[\\S]+)?").r // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
 
   /**
-   * Converts the source string
-   * into a CanonicalInput.
+   * Converts the source string into a 
+   * CanonicalInput.
    *
    * TODO: need to change this to
    * handling some sort of validation
    * object.
    *
    * @param line A line of data to convert
-   * @return a CanonicalInput object
+   * @return a CanonicalInput object, Option-
+   *         boxed, or None if no input was
+   *         extractable.
    */
-  def toCanonicalInput(line: String): CanonicalInput = line match {
+  def toCanonicalInput(line: String): Option[CanonicalInput] = line match {
+    
+    // 1. Header row
     case h if (h.startsWith("#Version:") ||
-               h.startsWith("#Fields:"))    => null // TODO: return None or something sensible
+               h.startsWith("#Fields:"))    => None // TODO: would be nice to attach the reason
+    
+    // 2. Row matches CloudFront format
     case CfRegex(date,
                  time,
                  _,
@@ -71,20 +82,43 @@ object CloudFrontLoader extends CollectorLoader {
                  _,
                  _,
                  _) =>
+
+      /*
+      // Is this a request for the tracker? Might be a browser favicon request or similar
+      if (!isIceRequest(object)) return None // TODO: would be nice to attach the reason
+
+      // TODO: pull this out so it's reusable by other implementations
+      if (!(objct.startsWith("/ice.png") || objct.equals("/i") ||
+           objct.startsWith("/i?"))) return None // TODO: would be nice to attach the reason
+      */
+
+      // isNullField(querystring)) { // Also works if Forward Query String = yes
+      // TODO: need to check the other fields are set too
+
       // TODO: convert to YodaTime
-      // TODO: add validation of object:
-      // if (!(object.startsWith("/ice.png") || object.equals("/i") || object.startsWith("/i?")) || isNullField(querystring)) { // Also works if Forward Query String = yes
-      //   return false;
-      // }
-      CanonicalInput(timestamp = null, // Placeholder
+      Some(CanonicalInput(timestamp = null, // Placeholder
                      payload   = GetPayload(querystring),
                      ipAddress = ipAddress,
                      userAgent = userAgent,
                      refererUrl = Some(referer),
                      userId = None
-                    )
-    case _ => null // TODO: return a validation error
+                    ))
+
+    // 3. Row does not match CloudFront header or data row formats
+    case _ => None // TODO: return a validation error so we can route this row to the bad row bin
   }
+
+  /**
+   * Checks whether a String field is a hyphen
+   * "-", which is used by CloudFront to signal
+   * a null.
+   *
+   * @param field The field to check
+   * @return True if the String was a hyphen "-"
+   */
+  // def isNullField(str: String) {
+  //  return (s == null || s.equals("") || s.equals("-"));
+  // }
 
   /**
    * 'Cleans' a string to make it parsable by

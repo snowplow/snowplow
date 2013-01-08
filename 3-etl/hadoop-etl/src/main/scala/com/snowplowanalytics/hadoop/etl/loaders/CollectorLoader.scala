@@ -43,11 +43,17 @@ object CollectorLoader {
 abstract class CollectorLoader {
   
   /**
-   * Converts the source string
-   * into a CanonicalInput.
+   * Converts the source string into a 
+   * CanonicalInput.
    *
-   * @param line The line of data to convert
-   * @return a CanonicalInput object
+   * TODO: need to change this to
+   * handling some sort of validation
+   * object.
+   *
+   * @param line A line of data to convert
+   * @return a CanonicalInput object, Option-
+   *         boxed, or None if no input was
+   *         extractable.
    */
-  def toCanonicalInput(line: String): CanonicalInput
+  def toCanonicalInput(line: String): Option[CanonicalInput]
 }
