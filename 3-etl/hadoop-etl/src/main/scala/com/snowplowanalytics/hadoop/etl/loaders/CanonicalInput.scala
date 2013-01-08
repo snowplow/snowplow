@@ -36,9 +36,10 @@ case class GetPayload(val payload: String) extends TrackerPayload
  * collector-agnostic stage of the ETL.
  */
 final case class CanonicalInput(
-  val timestamp: DateTime,
-  val payload:   TrackerPayload,
-  val ipAddress: String,
-  val userAgent: String,
-  val userId:    Option[String]
+  val timestamp:  DateTime,
+  val payload:    TrackerPayload,
+  val ipAddress:  String,
+  val userAgent:  String,
+  val refererUrl: Option[String],
+  val userId:     Option[String]
   )
