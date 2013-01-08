@@ -11,31 +11,34 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.hadoop.etl
-package inputs
+package loaders
 
-// Apache Commons
-import org.apache.commons.lang.StringUtils
+// Joda-Time
+import org.joda.time.DateTime
 
 /**
- * Module to hold specific helpers related to the
- * CloudFront input format.
+ * All payloads sent by trackers must inherit from
+ * this class.
  */
-object CloudFrontInput {
+trait TrackerPayload
 
-  /**
-   * 'Cleans' a string to make it parsable by
-   * URLDecoder.decode.
-   * 
-   * The '%' character seems to be appended to the
-   * end of some URLs in the CloudFront logs, causing
-   * Exceptions when using URLDecoder.decode. Perhaps
-   * a CloudFront bug?
-   *
-   * TODO: move this into a CloudFront-specific file
-   *
-   * @param s The String to clean
-   * @return the cleaned string
-   */
-  private def cleanUri(uri: String): String = 
-    StringUtils.removeEnd(uri, "%")
-}
+/**
+ * A tracker payload for a single event, delivered
+ * via the querystring on a GET.
+ */
+case class GetPayload(val payload: String) extends TrackerPayload
+
+/**
+ * The canonical input format for the ETL
+ * process: it should be possible to
+ * convert any collector input format to
+ * this format, ready for the main,
+ * collector-agnostic stage of the ETL.
+ */
+final case class CanonicalInput(
+  val timestamp: DateTime,
+  val payload:   TrackerPayload,
+  val ipAddress: String,
+  val userAgent: String,
+  val userId:    Option[String]
+  )
