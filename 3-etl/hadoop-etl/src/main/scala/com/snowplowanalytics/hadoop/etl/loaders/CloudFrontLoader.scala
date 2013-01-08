@@ -93,7 +93,7 @@ object CloudFrontLoader extends CollectorLoader {
                  querystring,
                  _,
                  _,
-                 _) =>
+                 _) => {
 
       // Is this a request for the tracker? Might be a browser favicon request or similar
       if (!isIceRequest(objct)) return None // TODO: would be nice to attach the reason
@@ -113,6 +113,7 @@ object CloudFrontLoader extends CollectorLoader {
                               refererUri = toOption(referer) map toCleanUri,
                               userId = None))
       }
+    }
 
     // 3. Row does not match CloudFront header or data row formats
     case _ => None // TODO: return a validation error so we can route this row to the bad row bin
