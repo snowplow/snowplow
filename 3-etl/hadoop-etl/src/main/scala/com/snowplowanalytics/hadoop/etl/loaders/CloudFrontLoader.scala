@@ -115,7 +115,7 @@ object CloudFrontLoader extends CollectorLoader {
    *
    * @param date The CloudFront log-format date
    * @param time The CloudFront log-format time
-   * @return the JodaTime, Option-Boxed, or
+   * @return the JodaTime, Option-boxed, or
    *         None if something went wrong
    */
   def toDateTime(date: String, time: String): Option[DateTime] =
