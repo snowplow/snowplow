@@ -30,8 +30,8 @@ object CloudFrontLoader extends CollectorLoader {
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
   private val CfRegex = {
-    val w = "[\\s]+"    // Whitespace regex
-    val ow = "(?:" + w  // Optional whitespace begins
+    val w = "[\\s]+"   // Whitespace regex
+    val ow = "(?:" + w // Optional whitespace begins
     (   "([\\S]+)" +   // Date          / date
     w + "([\\S]+)" +   // Time          / time
     w + "([\\S]+)" +   // EdgeLocation  / x-edge-location
