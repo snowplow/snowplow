@@ -35,6 +35,14 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
  */
 object CloudFrontLoader extends CollectorLoader {
 
+  // Two ideas:
+  // ----------------------------------------
+  //
+  // 1. Maybe the payload should be broken out for a Get using the Cf encoding.
+  //    Otherwise we are kind of leaving more stuff to be extracted later
+  // 2. Maybe validating that the querystring is a valid querystring (not
+  //    corrupted) makes sense too (basically another reason to do #1)
+
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
   private val CfRegex = {
