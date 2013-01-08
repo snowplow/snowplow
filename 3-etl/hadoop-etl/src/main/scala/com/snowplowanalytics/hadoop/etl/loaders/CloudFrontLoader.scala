@@ -23,6 +23,15 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 /**
  * Module to hold specific helpers related to the
  * CloudFront input format.
+ *
+ * By "CloudFront input format", we mean the
+ * CloudFront access log format for download
+ * distributions (not streaming), September
+ * 2012 release but with support for the pre-
+ * September 2012 format as well.
+ *
+ * For more details on this format, please see:
+ * http://docs.amazonwebservices.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#LogFileFormat
  */
 object CloudFrontLoader extends CollectorLoader {
 
@@ -118,8 +127,11 @@ object CloudFrontLoader extends CollectorLoader {
    * @return the JodaTime, Option-boxed, or
    *         None if something went wrong
    */
-  def toDateTime(date: String, time: String): Option[DateTime] =
-    null // TODO update this.
+  def toDateTime(date: String, time: String): Option[DateTime] = try {
+    Some(DateTime.parse("%s %s".format(date, time))) // Stitch together with a space between them
+  } catch {
+    case iae: IllegalArgumentException => None // TODO: should really return an error
+  }
 
   /**
    * Checks whether a String field is a hyphen
