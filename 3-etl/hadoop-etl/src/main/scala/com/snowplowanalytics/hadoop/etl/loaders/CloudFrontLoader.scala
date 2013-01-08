@@ -87,24 +87,28 @@ object CloudFrontLoader extends CollectorLoader {
                  _,
                  _) =>
 
-      /*
       // Is this a request for the tracker? Might be a browser favicon request or similar
-      if (!isIceRequest(object)) return None // TODO: would be nice to attach the reason
+      if (!isIceRequest(objct)) return None // TODO: would be nice to attach the reason
 
-      // TODO: pull this out so it's reusable by other implementations
-      if (!(objct.startsWith("/ice.png") || objct.equals("/i") ||
-           objct.startsWith("/i?"))) return None // TODO: would be nice to attach the reason
-      */
+      // Now process every other field
+      val dt = toOption(date)
+      val tm = toOption(time)
+      val ip = toOption(ipAddress)
+      val r  = toOption(referer) map toCleanUri
+      val ua = toOption(userAgent)
+      val qs = toOption(querystring)
 
-      // isNullField(querystring)) { // Also works if Forward Query String = yes
-      // TODO: need to check the other fields are set too
+      // Build the Joda-Time
+      val timestamp = null // TODO
 
-      // TODO: convert to YodaTime
-      Some(CanonicalInput(timestamp = null, // Placeholder
-                          payload   = GetPayload(querystring),
-                          ipAddress = ipAddress,
-                          userAgent = userAgent,
-                          refererUrl = Some(referer),
+      // TODO: move this to a validation object
+      if (qs == None) return None
+
+      Some(CanonicalInput(timestamp = timestamp,
+                          payload   = GetPayload(qs.get),
+                          ipAddress = ip,
+                          userAgent = ua,
+                          refererUri = r,
                           userId = None))
 
     // 3. Row does not match CloudFront header or data row formats
@@ -119,9 +123,11 @@ object CloudFrontLoader extends CollectorLoader {
    * @param field The field to check
    * @return True if the String was a hyphen "-"
    */
-  // def isNullField(str: String) {
-  //  return (s == null || s.equals("") || s.equals("-"));
-  // }
+  def toOption(field: String): Option[String] = Option(field) match {
+    case Some("-") => None
+    case Some("")  => None
+    case s => s // Leaves any other Some(x) or None as-is
+  }
 
   /**
    * 'Cleans' a string to make it parsable by
@@ -137,6 +143,6 @@ object CloudFrontLoader extends CollectorLoader {
    * @param s The String to clean
    * @return the cleaned string
    */
-  private def cleanUri(uri: String): String = 
+  private def toCleanUri(uri: String): String = 
     StringUtils.removeEnd(uri, "%")
 }

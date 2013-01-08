@@ -56,4 +56,18 @@ abstract class CollectorLoader {
    *         extractable.
    */
   def toCanonicalInput(line: String): Option[CanonicalInput]
+
+  /**
+   * Checks whether a request to
+   * a collector is a tracker
+   * hitting the ice pixel.
+   *
+   * @param path The request path
+   * @return true if this is a request
+   *         for the ice pixel
+   */
+  protected def isIceRequest(path: String): Boolean =
+    path.startsWith("/ice.png") ||
+    path.equals("/i") ||
+    path.startsWith("/i?")
 }

@@ -38,8 +38,8 @@ case class GetPayload(val payload: String) extends TrackerPayload
 final case class CanonicalInput(
   val timestamp:  JoDateTime,
   val payload:    TrackerPayload,
-  val ipAddress:  String,
-  val userAgent:  String,
-  val refererUrl: Option[String],
+  val ipAddress:  Option[String],
+  val userAgent:  Option[String],
+  val refererUri: Option[String],
   val userId:     Option[String]
   )
