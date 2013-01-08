@@ -14,6 +14,29 @@ package com.snowplowanalytics.snowplow.hadoop.etl
 package loaders
 
 /**
+ * Companion object to the CollectorLoader.
+ * Contains factory methods.
+ */
+object CollectorLoader {
+  
+  /**
+   * Factory to return a CollectorLoader
+   * based on the supplied collector
+   * identifier.
+   *
+   * @param collector Identifier for the collector
+   * @return a CollectorLoader object,
+   *         Option-boxed, or None if `collector`
+   *         was not recognised
+   */
+  def getCollectorLoader(collector: String): Option[CollectorLoader] = collector match {
+    case "cloudfront" => Some(CloudFrontLoader)
+    case "clj-tomcat" => Some(CloudFrontLoader)
+    case _            => None
+  }
+}
+
+/**
  * All loaders must implement this
  * abstract base class.
  */
