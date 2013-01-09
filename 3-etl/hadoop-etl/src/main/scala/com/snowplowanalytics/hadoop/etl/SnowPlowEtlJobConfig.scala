@@ -12,6 +12,9 @@
  */
 package com.snowplowanalytics.snowplow.hadoop.etl
 
+// Scalding
+import com.twitter.scalding.Args
+
 // This project
 import loaders.CollectorLoader
 
@@ -19,14 +22,57 @@ import loaders.CollectorLoader
  * Module to handle configuration for
  * the SnowPlowEtlJob
  */
-object SnowPlowEtlJobConfig {
+object EtlJobConfig {
 	
+	/**
+	 * Loads the Config from the Scalding
+	 * job's supplied Args.
+	 *
+	 * TODO: currently throws a mix of
+	 * Scalding exceptions (from required)
+	 * plus FatalEtlException. Let's
+	 * change it to return a validation or
+	 * similar.
+	 *
+   * TODO: decide if we want to keep
+   * ContinueOnUnexpecteError.
+   *
+	 * @param args The arguments to parse
+	 * @return the configuration, in a
+	 *         case class
+	 */
+	def loadConfigFrom(args: Args): EtlJobConfig = {
+
+		val in  = args required "CLOUDFRONT_LOGS"
+		val out = args required "EVENTS_TABLE"
+	  val continue = {
+	  	val c = args required "CONTINUE_ON"
+	  	c == "1"
+	  }
+  	
+  	val loader = {
+	    val cf = args required "COLLECTOR_FORMAT"
+	    CollectorLoader.getLoader(cf) getOrElse {
+	      throw new EtlFatalException("collector_format '%s' not supported" format cf)
+	    }
+	  }
+
+	  EtlJobConfig(
+			inFolder = in,
+			outFolder = out,
+			collectorLoader = loader,
+			continueOnUnexpectedError = continue)
+	}
 }
 	
 /**
- * TODO
+ * The configuration for the
+ * SnowPlowEtlJob. 
+ *
+ * TODO: decide if we want to keep
+ * ContinueOnUnexpecteError.
  */
-case class SnowPlowEtlJobConfig(
+case class EtlJobConfig(
 	val inFolder: String,
 	val outFolder: String,
 	val collectorLoader: CollectorLoader,

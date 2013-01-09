@@ -24,26 +24,21 @@ import loaders._
  * Will only be thrown if the ETL cannot
  * feasibly be run - do not try to catch it.
  */
-case class FatalEtlException(msg: String) extends RuntimeException(msg)
+case class EtlFatalException(msg: String) extends RuntimeException(msg)
 
 /**
  * The SnowPlow ETL job, written in Scalding
  * (the Scala DSL on top of Cascading).
  */ 
-class SnowPlowEtlJob(args: Args) extends Job(args) {
+class EtlJob(args: Args) extends Job(args) {
 
-  // Loader type
-  val loader = {
-    val cf = args("collector_format")
-    CollectorLoader.getLoader(cf) getOrElse {
-      throw new FatalEtlException("collector_format '%s' not supported" format cf)
-    }
-  }
-  
-  TextLine( args("input") )
+  // Load configuration
+  val etlConfig = EtlJobConfig.loadConfigFrom(args)
+
+  TextLine( etlConfig.inFolder )
     .flatMap('line -> 'word) { line : String => tokenize(line) }
     .groupBy('word) { _.size }
-    .write( Tsv( args("output") ) )
+    .write( Tsv( etlConfig.outFolder ) )
 
   // Split a piece of text into individual words.
   def tokenize(text : String) : Array[String] = {
