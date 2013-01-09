@@ -2,17 +2,17 @@
 
 ## Introduction
 
-Clojure Collector is a SnowPlow event collector for [SnowPlow] [snowplow], written in Clojure.
+The Clojure Collector is a SnowPlow event collector for [SnowPlow] [snowplow], written in Clojure.
 
-There is one major benefit of using Clojure Collector over SnowPlow's [CloudFront Collector] [cloudfront-collector]:
+There is one major benefit of using the Clojure Collector over SnowPlow's [CloudFront Collector] [cloudfront-collector]:
 
-Clojure Collector allows the use of a third-party cookie, making user tracking across domains possible. The CloudFront Collector does not support cross domain tracking of users because user ids are set client side, whereas the Clojure Collector sets them server side.
+The Clojure Collector allows the use of a third-party cookie, making user tracking across domains possible. The CloudFront Collector does not support cross domain tracking of users because user ids are set client side, whereas the Clojure Collector sets them server side.
 
 Note: this approach to tracking users across domains works on all browsers except mobile Safari; this is something even the Google Analytics JavaScript-set cookie approach struggles with as well.
 
 ## How Clojure Collector works
 
-In a nutshell: Clojure Collector receives events from the [SnowPlow JavaScript tracker] [snowplow-js], sets/updates a third-party user tracking cookie, and returns the pixel to the client.
+In a nutshell: the Clojure Collector receives events from the [SnowPlow JavaScript tracker] [snowplow-js], sets/updates a third-party user tracking cookie, and returns the pixel to the client.
 
 In pseudocode terms:
 
@@ -25,21 +25,21 @@ In pseudocode terms:
 	    Add the headers and payload to the output array
 	}
 
-Note that Clojure Collector does not contain any logging functionality of its own (unlike Simon Rumble's [SnowCannon] [snowcannon]); instead, you are expected to run Clojure Collector in a servlet container like [Tomcat][4] or [Jetty][5], with access logging (including response headers) enabled.
+Note that Clojure Collector does not contain any logging functionality of its own (unlike Simon Rumble's [SnowCannon] [snowcannon]); instead, you are expected to run Clojure Collector in a servlet container like [Tomcat][tomcat], with access logging (including response headers) enabled.
 
 ## Deployment and configuration
 
-A detailed guide to setting up the Clojure collector on Amazon Elastic Beanstalk, including setting up support for HTTPS and integrating with the Javascript tracker, can be found on the [setup guide][setup-guide].
+A detailed guide to setting up the Clojure Collector on Amazon Elastic Beanstalk, including setting up support for HTTPS and integrating with the Javascript tracker, can be found on the [setup guide][setup-guide].
 
 ## Technical architecture
 
-Clojure Collector is built on top of [Ring][ring] and [Compojure][compojure].
+The Clojure Collector is built on top of [Ring][ring] and [Compojure][compojure].
 
     lein ring uberwar
 
 ## Copyright and license
 
-Clojure Collector is copyright 2012 SnowPlow Analytics Ltd.
+The Clojure Collector is copyright 2012 SnowPlow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
@@ -58,5 +58,7 @@ limitations under the License.
 
 [ring]: https://github.com/ring-clojure/ring
 [compojure]: https://github.com/weavejester/compojure
+
+[tomcat]: http://tomcat.apache.org/
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
