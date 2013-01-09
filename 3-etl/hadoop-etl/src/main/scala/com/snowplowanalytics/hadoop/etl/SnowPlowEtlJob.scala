@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Twitter, Inc.
+ * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -26,6 +26,10 @@ import loaders._
  */
 case class FatalEtlException(msg: String) extends RuntimeException(msg)
 
+/**
+ * The SnowPlow ETL job, written in Scalding
+ * (the Scala DSL on top of Cascading).
+ */ 
 class SnowPlowEtlJob(args: Args) extends Job(args) {
 
   // Loader type
