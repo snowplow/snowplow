@@ -18,10 +18,23 @@ import com.twitter.scalding._
 // This project
 import loaders._
 
-class SnowPlowEtlJob(args : Args) extends Job(args) {
+/**
+ * A fatal exception in our ETL.
+ *
+ * Will only be thrown if the ETL cannot
+ * feasibly be run - do not try to catch it.
+ */
+case class FatalEtlException(msg: String) extends RuntimeException(msg)
+
+class SnowPlowEtlJob(args: Args) extends Job(args) {
 
   // Loader type
-  val loader = CollectorLoader.getLoader(args("collector_format"))
+  val loader = {
+    val cf = args("collector_format")
+    CollectorLoader.getLoader(cf) getOrElse {
+      throw new FatalEtlException("collector_format '%s' not supported" format cf)
+    }
+  }
   
   TextLine( args("input") )
     .flatMap('line -> 'word) { line : String => tokenize(line) }
