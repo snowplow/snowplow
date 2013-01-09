@@ -12,8 +12,8 @@
  */
 package com.snowplowanalytics.hadoop.etl.integrations
 
-// Specs // TODO: Specs 2
-import org.specs.Specification
+// Specs2
+import org.specs2.mutable.Specification
 
 // Scalding
 import com.twitter.scalding._
@@ -21,22 +21,25 @@ import com.twitter.scalding._
 /**
  * Integration test for SnowPlowEtlJob:
  *
- * XXX
+ * placeholder that needs updating.
  */
-class WordCountTest extends Specification with TupleConversions {
+class SnowPlowEtlJobTest extends Specification with TupleConversions {
+
   "A WordCount job" should {
-    JobTest("com.snowplowanalytics.hadoop.etl.SnowPlowEtlJob").
-      arg("input", "inputFile").
-      arg("output", "outputFile").
-      source(TextLine("inputFile"), List("0" -> "hack hack hack and hack")).
-      sink[(String,Int)](Tsv("outputFile")){ outputBuffer =>
-        val outMap = outputBuffer.toMap
-        "count words correctly" in {
-          outMap("hack") must be_==(4)
-          outMap("and") must be_==(1)
-        }
-      }.
-      run.
-      finish
+      "count words correctly" in {
+
+        JobTest("com.snowplowanalytics.hadoop.etl.SnowPlowEtlJob").
+          arg("input", "inputFile").
+          arg("output", "outputFile").
+          source(TextLine("inputFile"), List("0" -> "hack hack hack and hack")).
+          sink[(String,Int)](Tsv("outputFile")){ outputBuffer =>
+            val outMap = outputBuffer.toMap
+            outMap("hack") must_== 4
+            outMap("and") must_== 1
+          }.
+          run.
+          finish
+          success
+      }
   }
 }

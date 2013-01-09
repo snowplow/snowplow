@@ -24,7 +24,6 @@ object Dependencies {
     val specs2      = "1.8"
     val yodaTime    = "2.1"
     val yodaConvert = "1.2"
-    val specs       = "1.6.6" // TODO: remove
   }
 
   object Libraries {
@@ -34,6 +33,5 @@ object Dependencies {
     val yodaTime    = "joda-time"                  %  "joda-time"           % V.yodaTime
     val yodaConvert = "org.joda"                   %  "joda-convert"        % V.yodaConvert
     val specs2      = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
-    val specs       = "org.scala-tools.testing"    %% "specs"               % V.specs        % "test" // TODO: remove
   }
 }
