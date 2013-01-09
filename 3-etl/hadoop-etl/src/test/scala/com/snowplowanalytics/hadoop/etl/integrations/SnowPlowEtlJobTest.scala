@@ -10,7 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.hadoop.etl.integrations
+package com.snowplowanalytics.snowplow.hadoop.etl.integrations
 
 // Specs2
 import org.specs2.mutable.Specification
@@ -28,8 +28,9 @@ class SnowPlowEtlJobTest extends Specification with TupleConversions {
   "A WordCount job" should {
       "count words correctly" in {
 
-        JobTest("com.snowplowanalytics.hadoop.etl.SnowPlowEtlJob").
+        JobTest("com.snowplowanalytics.snowplow.hadoop.etl.SnowPlowEtlJob").
           arg("input", "inputFile").
+          arg("collector_format", "cloudfront").
           arg("output", "outputFile").
           source(TextLine("inputFile"), List("0" -> "hack hack hack and hack")).
           sink[(String,Int)](Tsv("outputFile")){ outputBuffer =>

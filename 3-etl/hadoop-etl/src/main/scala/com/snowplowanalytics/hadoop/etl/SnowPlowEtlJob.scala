@@ -10,12 +10,19 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.hadoop.etl
+package com.snowplowanalytics.snowplow.hadoop.etl
 
 // Scalding
 import com.twitter.scalding._
 
+// This project
+import loaders._
+
 class SnowPlowEtlJob(args : Args) extends Job(args) {
+
+  // Loader type
+  val loader = CollectorLoader.getLoader(args("collector_format"))
+  
   TextLine( args("input") )
     .flatMap('line -> 'word) { line : String => tokenize(line) }
     .groupBy('word) { _.size }

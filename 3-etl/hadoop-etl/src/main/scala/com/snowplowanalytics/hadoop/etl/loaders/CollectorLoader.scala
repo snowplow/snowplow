@@ -29,7 +29,7 @@ object CollectorLoader {
    *         Option-boxed, or None if `collector`
    *         was not recognised
    */
-  def getCollectorLoader(collector: String): Option[CollectorLoader] = collector match {
+  def getLoader(collector: String): Option[CollectorLoader] = collector match {
     case "cloudfront" => Some(CloudFrontLoader)
     case "clj-tomcat" => Some(CloudFrontLoader)
     case _            => None
