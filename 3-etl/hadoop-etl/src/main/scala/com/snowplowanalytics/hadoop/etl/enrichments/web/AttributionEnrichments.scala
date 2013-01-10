@@ -12,6 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.hadoop.etl
 package enrichments
+package web
 
 // Java
 import java.net.URI
