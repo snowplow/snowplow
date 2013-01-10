@@ -20,10 +20,44 @@ import java.util.UUID
 import scalaz._
 import Scalaz._
 
+// Joda-Time
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
+
 /**
  * Holds the enrichments related to events.
  */
 object EventEnrichments {
+
+  /**
+   * The Tracker Protocol's pattern
+   * for a timestamp - for details
+   * see:
+   *
+   * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-common-params
+   */
+  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH-mm-ss")
+
+  /**
+   * Extracts the timestamp from the
+   * format as laid out in the Tracker
+   * Protocol:
+   *
+   * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-common-params
+   *
+   * @param tstamp The timestamp as
+   *        stored in the Tracker
+   *        Protocol
+   * @return a Joda DateTime, or an
+   *         error message if the format
+   *         was invalid
+   */
+  def extractTimestamp(tstamp: String): Validation[String, DateTime] = try {
+    TstampFormat.parseDateTime(tstamp).success
+    } catch {
+      case iae: IllegalArgumentException =>
+        "[%s] is not in the expected timestamp format".format(tstamp).fail
+    }
 
   /**
    * Turns an event code into a valid event type,

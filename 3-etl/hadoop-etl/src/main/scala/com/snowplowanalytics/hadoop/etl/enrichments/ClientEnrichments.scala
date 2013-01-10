@@ -74,8 +74,8 @@ object ClientEnrichments {
 
   /**
    * Extracts the screen resolution
-   * from the packed format used by
-   * the Tracker Protocol:
+   * stored as per the Tracker
+   * Protocol:
    *
    * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-browserandos
    *
