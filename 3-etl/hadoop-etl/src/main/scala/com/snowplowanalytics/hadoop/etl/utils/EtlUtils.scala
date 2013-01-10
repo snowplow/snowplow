@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.hadoop.etl
 package utils
 
 // Java
-import java.net.URLDecoder;
+import java.net.URLDecoder
 
 // Scalaz
 import scalaz._
@@ -73,9 +73,11 @@ object EtlUtils {
    *         value, all boxed in a Scalaz
    *         Validation
    */
-  def stringToBoolean(str: String): Validation[String, Boolean] = str match {
-    case s if s == "1" => true.success
-    case s if s == "0" => false.success
-    case s => "Cannot convert [%s] to boolean, only 1 or 0.".format(s).fail
-  }
+  def stringToBoolean(str: String): Validation[String, Boolean] = 
+    if (str == "1") 
+      true.success
+    else if (str == "0")
+      false.success
+    else
+      "Cannot convert [%s] to boolean, only 1 or 0.".format(str).fail
 }

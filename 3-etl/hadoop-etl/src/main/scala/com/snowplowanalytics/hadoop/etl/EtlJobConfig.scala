@@ -21,7 +21,7 @@ import com.twitter.scalding.Args
 
 // This project
 import loaders.CollectorLoader
-import utils.EtlUtils
+import utils.{EtlUtils, ScalazArgs}
 
 /**
  * The configuration for the
@@ -50,6 +50,7 @@ object EtlJobConfig {
    */
   def loadConfigFrom(args: Args): ValidationNEL[String, EtlJobConfig] = {
 
+    import ScalazArgs._
     val in  = args.requiredz("CLOUDFRONT_LOGS")
     val out = args.requiredz("EVENTS_TABLE")
     val loader = args.requiredz("COLLECTOR_FORMAT") flatMap (cf => CollectorLoader.getLoader(cf))
@@ -57,21 +58,4 @@ object EtlJobConfig {
 
     (in.toValidationNEL ⊛ out.toValidationNEL ⊛ loader.toValidationNEL ⊛ continue.toValidationNEL) { EtlJobConfig(_, _, _, _) }
   }
-
-  /**
-   * Scalding's Args.required() method,
-   * wrapped with a Scalaz Validation.
-   *
-   * Use this to compose error messages
-   * relating to 
-   * TODO rest of description
-   */
-  private def requiredz(args: Args, key: String): Validation[String, String] = try {
-      args.optional(key) match {
-        case Some(value) => value.success
-        case None => "Required argument [%s] not found".format(key).fail
-      }
-    } catch {
-      case _ => "List of values for argument [%s], should be one".format(key).fail
-    }
 }
