@@ -22,9 +22,12 @@ import com.twitter.scalding.Tool
 /**
  * Entrypoint for Hadoop to kick off the ETL job.
  *
- * Borrowed from com.twitter.scalding.Tool
+ * Not specific to this ETL job in any way -
+ * 'borrowed' from com.twitter.scalding.Tool:
+ *
+ * https://github.com/scalding/scalding/blob/master/src/main/scala/com/twitter/scalding/Tool.scala
  */
-object EtlRunner {
+object JobRunner {
   def main(args : Array[String]) {
     ToolRunner.run(new Configuration, new Tool, args);
   }
