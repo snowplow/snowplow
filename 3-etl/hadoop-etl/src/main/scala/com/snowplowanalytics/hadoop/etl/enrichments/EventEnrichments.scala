@@ -61,7 +61,10 @@ object EventEnrichments {
 
   /**
    * Turns an event code into a valid event type,
-   * e.g. "pv" -> "page_view".
+   * e.g. "pv" -> "page_view". See the Tracker
+   * Protocol for details:
+   *
+   * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-event2
    *
    * @param eventCode The event code
    * @return the event type, or an error message

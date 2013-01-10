@@ -55,6 +55,7 @@ object EtlJobConfig {
     val out = args.requiredz("EVENTS_TABLE")
     val loader = args.requiredz("COLLECTOR_FORMAT") flatMap (cf => CollectorLoader.getLoader(cf))
     val continue = args.requiredz("CONTINUE_ON") flatMap (co => EtlUtils.stringToBoolean(co))
+    // TODO: add in output format to
 
     (in.toValidationNEL |@| out.toValidationNEL |@| loader.toValidationNEL |@| continue.toValidationNEL) { EtlJobConfig(_, _, _, _) }
   }
