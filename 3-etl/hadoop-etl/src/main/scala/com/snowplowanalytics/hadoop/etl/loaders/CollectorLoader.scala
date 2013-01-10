@@ -13,6 +13,10 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package loaders
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 /**
  * Companion object to the CollectorLoader.
  * Contains factory methods.
@@ -22,17 +26,19 @@ object CollectorLoader {
   /**
    * Factory to return a CollectorLoader
    * based on the supplied collector
-   * identifier.
+   * identifier (e.g. "cloudfront" or
+   * "clj-tomcat").
    *
-   * @param collector Identifier for the collector
-   * @return a CollectorLoader object,
-   *         Option-boxed, or None if `collector`
-   *         was not recognised
+   * @param collector Identifier for the
+   *        event collector
+   * @return a CollectorLoader object, or
+   *         an an error message, boxed
+   *         in a Scalaz Validation
    */
-  def getLoader(collector: String): Option[CollectorLoader] = collector match {
-    case "cloudfront" => Some(CloudFrontLoader)
-    case "clj-tomcat" => Some(CloudFrontLoader)
-    case _            => None
+  def getLoader(collector: String): Validation[String, CollectorLoader] = collector match {
+    case "cloudfront" => CloudFrontLoader.success
+    case "clj-tomcat" => CloudFrontLoader.success
+    case  c           => "[%s] is not a recognised SnowPlow event collector".format(c).fail
   }
 }
 

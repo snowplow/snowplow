@@ -69,8 +69,8 @@ object AttributionEnrichments {
       case _ => return "Could not parse uri [%s]".format(uri).fail
     }
 
-    // If somebody wants to rewrite this without
-    // the mutable variables, please go ahead
+    // I think vars the lesser of two evils here:
+    // http://stackoverflow.com/questions/4290955/instantiating-a-case-class-from-a-list-of-parameters
     var medium, source, term, content, campaign: Option[String] = None
     for (params <- parameters) {
       for (p <- params.toList) {

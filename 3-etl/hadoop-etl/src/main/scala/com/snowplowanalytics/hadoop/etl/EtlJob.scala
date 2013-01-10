@@ -36,11 +36,11 @@ case class FatalValidationException(msg: String) extends RuntimeException(msg)
  */ 
 class EtlJob(args: Args) extends Job(args) {
 
-  // Load configuration
-  val etlConfig = EtlJobConfig.loadConfigFrom(args) match {
-    case Success(config) => config
-    case Failure(errors) => throw new FatalValidationException("OH MY GOD")
-  }
+  // Load configuration. Scalaz recommends using fold()
+  // for unpicking a Validation
+  val etlConfig = EtlJobConfig.loadConfigFrom(args).fold(
+    e => throw new FatalValidationException("OH MY GOD"),
+    s => s)
 
   TextLine( etlConfig.inFolder )
     .flatMap('line -> 'word) { line : String => tokenize(line) }
