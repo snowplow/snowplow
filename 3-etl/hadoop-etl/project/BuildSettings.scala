@@ -22,7 +22,7 @@ object BuildSettings {
     organization  := "com.snowplowanalytics",
     version       := "0.0.1",
     description   := "The SnowPlow Hadoop ETL process, written in Scalding",
-    scalaVersion  := "2.9.1",
+    scalaVersion  := "2.9.2", // -> 2.10.0 when Scalding is ready
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= Dependencies.resolutionRepos
   )
