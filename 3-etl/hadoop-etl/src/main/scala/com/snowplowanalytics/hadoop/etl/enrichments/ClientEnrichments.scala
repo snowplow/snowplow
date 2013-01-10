@@ -29,9 +29,8 @@ object ClientEnrichments {
   
   /**
    * The Tracker Protocol's pattern
-   * for a screen resolution.
-   *
-   * See for details:
+   * for a screen resolution - for
+   * details see:
    *
    * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-browserandos
    */
