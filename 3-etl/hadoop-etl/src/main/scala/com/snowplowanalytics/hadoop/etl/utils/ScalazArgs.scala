@@ -24,6 +24,16 @@ import com.twitter.scalding.Args
  * Module to hold the pimped class
  */
 object ScalazArgs {
+
+  /**
+   * Implicit to pimp a Scalding
+   * Args class to our Scalaz
+   * Validation friendly version.
+   *
+   * @param args A Scalding Args
+   *        object
+   * @return the pimped ScalazArgs
+   */
   implicit def pimpArgs(args: Args) = new ScalazArgs(args)
 }
 
