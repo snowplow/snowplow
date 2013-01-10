@@ -72,8 +72,6 @@ object ClientEnrichments {
     val deviceType: String,
     val deviceIsMobile: Boolean)
 
-  // TODO: write the extractor.
-
   /**
    * Extracts the screen resolution
    * from the packed format used by
@@ -81,17 +79,14 @@ object ClientEnrichments {
    *
    * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-browserandos
    *
-   * TODO: update this to return a
-   * Scalaz Validation instead of Option
-   *
    * @param res The resolution string
    * @return the ScreenResolution or an
    *         error message, boxed in a
    *         Scalaz Validation
    */
-  def extractScreenResolution(res: String): Validation[String, ScreenResolution] = res match {
+  def extractScreenResolution(screenResolution: String): Validation[String, ScreenResolution] = screenResolution match {
     case ResRegex(h, w) => ScreenResolution(h.toInt, w.toInt).success
-    case _ => ("Could not extract screen resolution [" + res + "]").fail
+    case r => "[%s] is not a valid screen resolution".format(r).fail
   }
 
   /**

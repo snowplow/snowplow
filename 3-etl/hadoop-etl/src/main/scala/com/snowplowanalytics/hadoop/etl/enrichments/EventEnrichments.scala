@@ -16,6 +16,10 @@ package enrichments
 // Java
 import java.util.UUID
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 /**
  * Holds the enrichments related to events.
  */
@@ -26,23 +30,27 @@ object EventEnrichments {
    * e.g. "pv" -> "page_view".
    *
    * @param eventCode The event code
-   * @return the event type (Option-boxed), or None
-   *         if it's not recognised
+   * @return the event type, or an error message
+   *         if not recognised, boxed in a Scalaz
+   *         Validation
    */
-  def extractEventType(eventCode: String): Option[String] = eventCode match {
-    case "ev" => Some("custom")
-    case "ad" => Some("ad_impression")
-    case "tr" => Some("transaction")
-    case "ti" => Some("transaction_item")
-    case "pv" => Some("page_view")
-    case "pp" => Some("page_ping")
-    case _    => None
+  def extractEventType(eventCode: String): Validation[String, String] = eventCode match {
+    case "ev" => "custom".success
+    case "ad" => "ad_impression".success
+    case "tr" => "transaction".success
+    case "ti" => "transaction_item".success
+    case "pv" => "page_view".success
+    case "pp" => "page_ping".success
+    case _    => "[%s] is not a recognised event code".format(eventCode).fail
   }
 
   /**
    * Returns a unique event ID. The event ID is 
    * generated as a type 4 UUID, then converted
    * to a String.
+   *
+   * () on the function signature because it's
+   * not pure
    *
    * @return the event ID
    */
