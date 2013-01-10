@@ -35,15 +35,16 @@ object EtlUtils {
    * that str is a URI which needs 'cleaning'.
    *
    * TODO: simplify this when we move to a more
-   * robust output format (e.g. Avro)
+   * robust output format (e.g. Avro) - as then
+   * no need to remove line breaks, tabs etc
+   *
+   * TODO: maybe a decoding failure should be
+   * explicitly reported (e.g. via Either)
    *
    * @param str The String to decode
    * @param encoding The encoding of the String
    * @return the decoded String (Option-boxed),
    *         or None if nothing to extract
-   *
-   * TODO: maybe a decoding failure should be
-   * explicitly reported (e.g. via Either)
    */
   def decodeSafely(str: String, encoding: String): Option[String] =
     try {
