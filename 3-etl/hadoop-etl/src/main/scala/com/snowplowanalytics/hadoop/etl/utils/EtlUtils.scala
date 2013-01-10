@@ -16,6 +16,10 @@ package utils
 // Java
 import java.net.URLDecoder;
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 /**
  * General-purpose utils to help the
  * ETL process along.
@@ -58,4 +62,20 @@ object EtlUtils {
     } catch {
       case _ => None
     }
+
+  /**
+   * Converts a String of value "1" or "0"
+   * to true or false respectively.
+   *
+   * @param str The String to convert
+   * @return True for "1", false for "0", or
+   *         an error message for any other
+   *         value, all boxed in a Scalaz
+   *         Validation
+   */
+  def stringToBoolean(str: String): Validation[String, Boolean] = str match {
+    case s if s == "1" => true.success
+    case s if s == "0" => false.success
+    case s => "Cannot convert [%s] to boolean, only 1 or 0.".format(s).fail
+  }
 }

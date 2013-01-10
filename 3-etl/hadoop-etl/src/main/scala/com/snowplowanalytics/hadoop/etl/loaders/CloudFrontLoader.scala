@@ -13,6 +13,10 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package loaders
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 // Apache Commons
 import org.apache.commons.lang.StringUtils
 

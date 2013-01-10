@@ -21,6 +21,7 @@ import com.twitter.scalding.Args
 
 // This project
 import loaders.CollectorLoader
+import utils.EtlUtils
 
 /**
  * The configuration for the
@@ -28,13 +29,9 @@ import loaders.CollectorLoader
  */
 case class EtlJobConfig(
     val inFolder: String,
-    val outFolder: String)
-
-
-    // val collectorLoader: CollectorLoader,
-    // val continueOnUnexpectedError: Boolean)
-
-
+    val outFolder: String,
+    val collectorLoader: CollectorLoader,
+    val continueOnUnexpectedError: Boolean)
 
 /**
  * Module to handle configuration for
@@ -47,38 +44,26 @@ object EtlJobConfig {
    * job's supplied Args.
    *
    * @param args The arguments to parse
-   * @return the configuration, in a
-   *         case class
+   * @return the EtLJobConfig, or one or
+   *         more error messages, boxed
+   *         in a Scalaz Validation
    */
   def loadConfigFrom(args: Args): ValidationNEL[String, EtlJobConfig] = {
 
-    // val in  = requiredz(args, "CLOUDFRONT_LOGS")
-    // val out = requiredz(args, "EVENTS_TABLE")
-    
-    val iny: Validation[String, String] = "yo".fail
-    val outy: Validation[String, String] = "yo".fail
-    // val loader = requiredf(args, "COLLECTOR_FORMAT", (cf => CollectorLoader.getLoader(cf)))
-    
-    /*
-    val continue = {
-      val c = args required "CONTINUE_ON"
-      c == "1"
-    }
-    
-    val loader = {
-      val cf = args required "COLLECTOR_FORMAT"
-      CollectorLoader.getLoader(cf) getOrElse {
-        throw new FatalValidationException("collector_format '%s' not supported" format cf)
-      }
-    } */
+    val in  = args.requiredz("CLOUDFRONT_LOGS")
+    val out = args.requiredz("EVENTS_TABLE")
+    val loader = args.requiredz("COLLECTOR_FORMAT") flatMap (cf => CollectorLoader.getLoader(cf))
+    val continue = args.requiredz("CONTINUE_ON") flatMap (co => EtlUtils.stringToBoolean(co))
 
-    (iny.liftFailNel ⊛ outy.liftFailNel) { EtlJobConfig(_, _) }
+    (in.toValidationNEL ⊛ out.toValidationNEL ⊛ loader.toValidationNEL ⊛ continue.toValidationNEL) { EtlJobConfig(_, _, _, _) }
   }
 
   /**
-   * Scalding's Args.required() method
-   * given a Scalaz Validation wrapper
+   * Scalding's Args.required() method,
+   * wrapped with a Scalaz Validation.
    *
+   * Use this to compose error messages
+   * relating to 
    * TODO rest of description
    */
   private def requiredz(args: Args, key: String): Validation[String, String] = try {
@@ -89,19 +74,4 @@ object EtlJobConfig {
     } catch {
       case _ => "List of values for argument [%s], should be one".format(key).fail
     }
-
-  /**
-   * Scalding's Args.required() method
-   * given a Scalaz Validation wrapper
-   *
-   * TODO rest of description
-   */
-  private def requiredf[A](args: Args, key: String, f: (String => Validation[String, A])): Validation[String, A] = try {
-      args.optional(key) match {
-        case Some(value) => f(value)
-        case None => "Required argument [%s] not found".format(key).fail
-      }
-    } catch {
-      case _ => "List of values for argument [%s], should be one".format(key).fail
-    }   
 }
