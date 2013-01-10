@@ -39,8 +39,8 @@ class EtlJob(args: Args) extends Job(args) {
   // Load configuration. Scalaz recommends using fold()
   // for unpicking a Validation
   val etlConfig = EtlJobConfig.loadConfigFrom(args).fold(
-    e => throw new FatalValidationException("OH MY GOD"),
-    s => s)
+    e => throw new FatalValidationException("OH MY GOD"), // TODO: need to display errors correctly.
+    c => c)
 
   TextLine( etlConfig.inFolder )
     .flatMap('line -> 'word) { line : String => tokenize(line) }

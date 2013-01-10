@@ -64,7 +64,7 @@ object AttributionEnrichments {
   def extractMarketingFields(uri: URI, encoding: String): Validation[String, MarketingCampaign] = {
 
     val parameters = try {
-      Option(URLEncodedUtils parse(uri, encoding))
+      Option(URLEncodedUtils.parse(uri, encoding))
     } catch {
       case _ => return "Could not parse uri [%s]".format(uri).fail
     }

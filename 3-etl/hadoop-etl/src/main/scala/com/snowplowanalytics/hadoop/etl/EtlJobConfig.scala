@@ -46,7 +46,7 @@ object EtlJobConfig {
    * @param args The arguments to parse
    * @return the EtLJobConfig, or one or
    *         more error messages, boxed
-   *         in a Scalaz Validation
+   *         in a Scalaz Validation NEL
    */
   def loadConfigFrom(args: Args): ValidationNEL[String, EtlJobConfig] = {
 

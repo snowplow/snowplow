@@ -13,8 +13,21 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package loaders
 
+// Apache URLEncodedUtils
+import org.apache.http.NameValuePair
+
 // Joda-Time
 import org.joda.time.DateTime
+
+/**
+ * A companion object which holds
+ * factories (more like mines
+ * really) to extract the
+ * different possible payloads.
+ */
+object TrackerPayload {
+  // TODO List[NameValuePair]
+}
 
 /**
  * All payloads sent by trackers must inherit from
@@ -36,10 +49,9 @@ case class GetPayload(val payload: String) extends TrackerPayload
  * collector-agnostic stage of the ETL.
  */
 final case class CanonicalInput(
-  val timestamp:  DateTime,
-  val payload:    TrackerPayload,
-  val ipAddress:  Option[String],
-  val userAgent:  Option[String],
-  val refererUri: Option[String],
-  val userId:     Option[String]
-  )
+    val timestamp:  DateTime,
+    val payload:    TrackerPayload,
+    val ipAddress:  Option[String],
+    val userAgent:  Option[String],
+    val refererUri: Option[String],
+    val userId:     Option[String])
