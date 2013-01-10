@@ -75,19 +75,15 @@ object AttributionEnrichments {
     for (params <- parameters) {
       for (p <- params.toList) {
         val name  = p.getName
-        val value = p.getValue.toLowerCase // Should be lower case anyway
+        lazy val value = EtlUtils.decodeSafely(
+          p.getValue.toLowerCase, encoding) // Should actually be lower case anyway
 
         name match {
-          case "utm_medium" =>
-            medium = EtlUtils.decodeSafely(value, encoding)
-          case "utm_source" =>
-            source = EtlUtils.decodeSafely(value, encoding)
-          case "utm_term" =>
-            term = EtlUtils.decodeSafely(value, encoding)
-          case "utm_content" =>
-            content = EtlUtils.decodeSafely(value, encoding)
-          case "utm_campaign" =>
-            campaign = EtlUtils.decodeSafely(value, encoding)
+          case "utm_medium" => medium = value
+          case "utm_source" => source = value
+          case "utm_term" => term = value
+          case "utm_content" => content = value
+          case "utm_campaign" => campaign = value
         }
       }
     }
