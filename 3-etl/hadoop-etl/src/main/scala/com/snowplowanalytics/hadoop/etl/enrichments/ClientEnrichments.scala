@@ -18,11 +18,23 @@ import nl.bitwalker.useragentutils._
 
 /**
  * Contains enrichments related to the
- * client - i.e. useragent, browser
- * details etc.
+ * client - where the client is the
+ * software which is using the SnowPlow
+ * tracker.
+ *
+ * Enrichments relate to the useragent,
+ * browser resolution, etc.
  */
 object ClientEnrichments {
   
+  /**
+   * Case class to capture a client's
+   * screen resolution
+   */
+  case class ScreenResolution(
+    val width: Int,
+    val height: Int)
+
   /**
    * Case class to wrap everything we
    * can extract from the useragent
@@ -46,6 +58,38 @@ object ClientEnrichments {
     // Hardware the OS is running on
     val deviceType: String,
     val deviceIsMobile: Boolean)
+
+  // TODO: write the extractor.
+
+  /**
+   * Extracts the screen resolution
+   * from the packed format used by
+   * the Tracker Protocol:
+   *
+   * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-browserandos
+   *
+   * TODO: update this to return a
+   * Scalaz Validation instead of Option
+   *
+   * @param res The resolution string
+   * @return the ScreenResolution,
+   *         Option-boxed, or None if
+   *         we had a problem
+   */
+  def extractScreenResolution(res: String): Option[ScreenResolution] = res match {
+
+    /*
+      String[] resolution = value.split("x");
+    if (resolution.length != 2)
+      throw new Exception("Couldn't parse res field");
+    this.dvce_screenwidth = Integer.parseInt(resolution[0]);
+    this.dvce_screenheight = Integer.parseInt(resolution[1]);
+    break; */
+
+    case _ => None // TODO: change to "Could not extract screen resolution [%s]" format res
+  }
+
+
 
   /**
    * Extracts the client attributes
