@@ -14,7 +14,10 @@ import sbt._
 
 object Dependencies {
   
-  val resolutionRepos = Seq() // No additional repos required
+  val resolutionRepos = Seq(
+    // Required for our Scalaz snapshot
+    "Typesafe Snapshots" at "http://repo.typesafe.com/typesafe/snapshots/"
+  )
 
   object V {
     // Java
@@ -22,8 +25,9 @@ object Dependencies {
     val yodaTime    = "2.1"
     val yodaConvert = "1.2"
     // Scala
-    val specs2      = "1.12.3" // -> "1.13" when we bump to Scala 2.10.0
     val scalding    = "0.8.1"
+    val scalaz7     = "7.0-SNAPSHOT" // -> "7.0.0" when released
+    val specs2      = "1.12.3" // -> "1.13" when we bump to Scala 2.10.0
   }
 
   object Libraries {
@@ -35,6 +39,7 @@ object Dependencies {
     
     // Scala
     val scalding    = "com.twitter"                %% "scalding"            % V.scalding
+    val scalaz7     = "org.scalaz"                 %% "scalaz-core"         % V.scalaz7
     // Scala (test only)
     val specs2      = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
   }

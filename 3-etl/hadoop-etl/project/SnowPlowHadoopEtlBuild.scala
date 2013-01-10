@@ -28,10 +28,14 @@ object SnowPlowHadoopEtlBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
-        Libraries.scalding,
+        // Java
         Libraries.httpClient,
         Libraries.yodaTime,
         Libraries.yodaConvert,
+        // Scala
+        Libraries.scalding,
+        Libraries.scalaz7,
+        // Scala (test only)
         Libraries.specs2
         // Add your additional libraries here (comma-separated)...
       )
