@@ -67,7 +67,7 @@ object AttributionEnrichments {
     var medium, source, term, content, campaign: Option[String] = None
     for (params <- parameters) {
       for (p <- params toList) {
-        val name  = p getName
+        val name  = p.getName
         val value = p.getValue.toLowerCase // Should be lower case anyway
 
         name match {

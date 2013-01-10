@@ -28,6 +28,7 @@ object Dependencies {
     val scalding    = "0.8.1"
     val scalaz7     = "7.0-SNAPSHOT" // -> "7.0.0" when released
     val specs2      = "1.12.3" // -> "1.13" when we bump to Scala 2.10.0
+    // val useragent = "1.6" No Maven repo, so user-agent-utils is an unmanaged lib
   }
 
   object Libraries {

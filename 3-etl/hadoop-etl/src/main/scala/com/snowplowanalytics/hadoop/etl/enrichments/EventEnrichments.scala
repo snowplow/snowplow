@@ -29,7 +29,7 @@ object EventEnrichments {
    * @return the event type (Option-boxed), or None
    *         if it's not recognised
    */
-  def asEventType(eventCode: String): Option[String] = eventCode match {
+  def extractEventType(eventCode: String): Option[String] = eventCode match {
     case "ev" => Some("custom")
     case "ad" => Some("ad_impression")
     case "tr" => Some("transaction")
