@@ -12,6 +12,10 @@
  */
 package com.snowplowanalytics.snowplow.hadoop.etl
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 // Scalding
 import com.twitter.scalding._
 
@@ -24,7 +28,7 @@ import loaders._
  * Will only be thrown if the ETL cannot
  * feasibly be run - do not try to catch it.
  */
-case class EtlFatalException(msg: String) extends RuntimeException(msg)
+case class FatalValidationException(msg: String) extends RuntimeException(msg)
 
 /**
  * The SnowPlow ETL job, written in Scalding
@@ -33,7 +37,10 @@ case class EtlFatalException(msg: String) extends RuntimeException(msg)
 class EtlJob(args: Args) extends Job(args) {
 
   // Load configuration
-  val etlConfig = EtlJobConfig.loadConfigFrom(args)
+  val etlConfig = EtlJobConfig.loadConfigFrom(args) match {
+    case Success(config) => config
+    case Failure(errors) => throw new FatalValidationException("OH MY GOD")
+  }
 
   TextLine( etlConfig.inFolder )
     .flatMap('line -> 'word) { line : String => tokenize(line) }
