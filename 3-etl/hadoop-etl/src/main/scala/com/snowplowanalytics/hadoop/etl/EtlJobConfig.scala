@@ -56,6 +56,6 @@ object EtlJobConfig {
     val loader = args.requiredz("COLLECTOR_FORMAT") flatMap (cf => CollectorLoader.getLoader(cf))
     val continue = args.requiredz("CONTINUE_ON") flatMap (co => EtlUtils.stringToBoolean(co))
 
-    (in.toValidationNEL ⊛ out.toValidationNEL ⊛ loader.toValidationNEL ⊛ continue.toValidationNEL) { EtlJobConfig(_, _, _, _) }
+    (in.toValidationNEL |@| out.toValidationNEL |@| loader.toValidationNEL |@| continue.toValidationNEL) { EtlJobConfig(_, _, _, _) }
   }
 }
