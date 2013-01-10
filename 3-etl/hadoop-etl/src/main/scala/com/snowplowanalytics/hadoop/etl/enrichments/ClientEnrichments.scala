@@ -13,6 +13,10 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package enrichments
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 // UserAgentUtils
 import nl.bitwalker.useragentutils._
 
@@ -81,13 +85,13 @@ object ClientEnrichments {
    * Scalaz Validation instead of Option
    *
    * @param res The resolution string
-   * @return the ScreenResolution,
-   *         Option-boxed, or None if
-   *         we had a problem
+   * @return the ScreenResolution or an
+   *         error message, boxed in a
+   *         Scalaz Validation
    */
-  def extractScreenResolution(res: String): Option[ScreenResolution] = res match {
-    case ResRegex(h, w) => Some(ScreenResolution(h.toInt, w.toInt))
-    case _ => None // TODO: change to "Could not extract screen resolution [%s]" format res
+  def extractScreenResolution(res: String): Validation[String, ScreenResolution] = res match {
+    case ResRegex(h, w) => ScreenResolution(h.toInt, w.toInt).success
+    case _ => ("Could not extract screen resolution [" + res + "]").fail
   }
 
   /**
@@ -98,33 +102,31 @@ object ClientEnrichments {
    * TODO: rewrite this when we swap
    * out UserAgentUtils for ua-parser
    *
-   * TODO: update this to return a
-   * Scalaz Validation instead of Option
-   *
    * @param useragent The useragent
    *                  string
-   * @return the ClientAttributes,
-   *         Option-boxed, or None if
-   *         we had a problem
+   * @return the ClientAttributes or
+   *         the exception which would
+   *         have been thrown, boxed in
+   *         a Scalaz Validation
    */
-  def extractClientAttributes(useragent: String): Option[ClientAttributes] = try {
-    val ua = UserAgent.parseUserAgentString(useragent)
-    val b  = ua.getBrowser
-    val v  = Option(ua.getBrowserVersion)
-    val os = ua.getOperatingSystem
+  def extractClientAttributes(useragent: String): Validation[Throwable, ClientAttributes] = 
 
-    Some(ClientAttributes(
-      browserName = b.getName,
-      browserFamily = b.getGroup.getName,
-      browserVersion = v map { _.getVersion },
-      browserType = b.getBrowserType.getName,
-      browserRenderEngine = b.getRenderingEngine.toString,
-      osName = os.getName,
-      osFamily = os.getGroup.getName,
-      osManufacturer = os.getManufacturer.getName,
-      deviceType = os.getDeviceType.getName,
-      deviceIsMobile = os.isMobileDevice))
-    } catch {
-      case _ => None // TODO: need to return the error
+    Validation.fromTryCatch {
+      val ua = UserAgent.parseUserAgentString(useragent)
+      val b  = ua.getBrowser
+      val v  = Option(ua.getBrowserVersion)
+      val os = ua.getOperatingSystem
+
+      ClientAttributes(
+        browserName = b.getName,
+        browserFamily = b.getGroup.getName,
+        browserVersion = v map { _.getVersion },
+        browserType = b.getBrowserType.getName,
+        browserRenderEngine = b.getRenderingEngine.toString,
+        osName = os.getName,
+        osFamily = os.getGroup.getName,
+        osManufacturer = os.getManufacturer.getName,
+        deviceType = os.getDeviceType.getName,
+        deviceIsMobile = os.isMobileDevice)
     }
 }
