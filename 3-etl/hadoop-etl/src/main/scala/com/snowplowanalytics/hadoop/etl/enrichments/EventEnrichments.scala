@@ -41,7 +41,7 @@ object EventEnrichments {
     case "ti" => "transaction_item".success
     case "pv" => "page_view".success
     case "pp" => "page_ping".success
-    case _    => "[%s] is not a recognised event code".format(eventCode).fail
+    case  ec  => "[%s] is not a recognised event code".format(ec).fail
   }
 
   /**
@@ -52,7 +52,7 @@ object EventEnrichments {
    * () on the function signature because it's
    * not pure
    *
-   * @return the event ID
+   * @return the unique event ID
    */
   def generateEventId(): String = UUID.randomUUID().toString
 }

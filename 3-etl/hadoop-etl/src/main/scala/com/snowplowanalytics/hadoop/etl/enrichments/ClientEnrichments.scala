@@ -45,8 +45,8 @@ object ClientEnrichments {
    * screen resolution
    */
   case class ScreenResolution(
-    val width: Int,
-    val height: Int)
+      val width: Int,
+      val height: Int)
 
   /**
    * Case class to wrap everything we
@@ -58,19 +58,19 @@ object ClientEnrichments {
    * ua-parser
    */
   case class ClientAttributes(
-    // Browser
-    val browserName: String,
-    val browserFamily: String,
-    val browserVersion: Option[String],
-    val browserType: String,
-    val browserRenderEngine: String,
-    // OS the browser is running on
-    val osName: String,
-    val osFamily: String,
-    val osManufacturer: String,
-    // Hardware the OS is running on
-    val deviceType: String,
-    val deviceIsMobile: Boolean)
+      // Browser
+      val browserName: String,
+      val browserFamily: String,
+      val browserVersion: Option[String],
+      val browserType: String,
+      val browserRenderEngine: String,
+      // OS the browser is running on
+      val osName: String,
+      val osFamily: String,
+      val osManufacturer: String,
+      // Hardware the OS is running on
+      val deviceType: String,
+      val deviceIsMobile: Boolean)
 
   /**
    * Extracts the screen resolution
@@ -79,7 +79,9 @@ object ClientEnrichments {
    *
    * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-browserandos
    *
-   * @param res The resolution string
+   * @param screenResolution The
+   *        packed string holding the
+   *        screen resolution
    * @return the ScreenResolution or an
    *         error message, boxed in a
    *         Scalaz Validation
@@ -98,7 +100,7 @@ object ClientEnrichments {
    * out UserAgentUtils for ua-parser
    *
    * @param useragent The useragent
-   *                  string
+   *        string to extract from
    * @return the ClientAttributes or
    *         the exception which would
    *         have been thrown, boxed in
