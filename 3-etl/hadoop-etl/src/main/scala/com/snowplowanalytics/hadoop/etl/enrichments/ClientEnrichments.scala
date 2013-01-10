@@ -28,6 +28,16 @@ import nl.bitwalker.useragentutils._
 object ClientEnrichments {
   
   /**
+   * The Tracker Protocol's pattern
+   * for a screen resolution.
+   *
+   * See for details:
+   *
+   * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-browserandos
+   */
+  private val ResRegex = """(\d+)x(\d+)""".r
+
+  /**
    * Case class to capture a client's
    * screen resolution
    */
@@ -77,19 +87,9 @@ object ClientEnrichments {
    *         we had a problem
    */
   def extractScreenResolution(res: String): Option[ScreenResolution] = res match {
-
-    /*
-      String[] resolution = value.split("x");
-    if (resolution.length != 2)
-      throw new Exception("Couldn't parse res field");
-    this.dvce_screenwidth = Integer.parseInt(resolution[0]);
-    this.dvce_screenheight = Integer.parseInt(resolution[1]);
-    break; */
-
+    case ResRegex(h, w) => Some(ScreenResolution(h.toInt, w.toInt))
     case _ => None // TODO: change to "Could not extract screen resolution [%s]" format res
   }
-
-
 
   /**
    * Extracts the client attributes
