@@ -23,14 +23,6 @@ import com.twitter.scalding._
 // TODO
 
 /**
- * A fatal exception in our ETL.
- *
- * Will only be thrown if the ETL cannot
- * feasibly be run - do not try to catch it.
- */
-case class FatalValidationException(msg: String) extends RuntimeException(msg)
-
-/**
  * The SnowPlow ETL job, written in Scalding
  * (the Scala DSL on top of Cascading).
  */ 
@@ -39,7 +31,7 @@ class EtlJob(args: Args) extends Job(args) {
   // Load configuration. Scalaz recommends using fold()
   // for unpicking a Validation
   val etlConfig = EtlJobConfig.loadConfigFrom(args).fold(
-    e => throw new FatalValidationException("OH MY GOD"), // TODO: need to display errors correctly.
+    e => throw FatalEtlException(e),
     c => c)
 
   TextLine( etlConfig.inFolder )

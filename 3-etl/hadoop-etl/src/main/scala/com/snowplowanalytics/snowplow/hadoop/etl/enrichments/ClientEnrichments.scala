@@ -79,14 +79,13 @@ object ClientEnrichments {
    *
    * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-browserandos
    *
-   * @param screenResolution The
-   *        packed string holding the
-   *        screen resolution
+   * @param res The packed string
+   *        holding the screen resolution
    * @return the ScreenResolution or an
    *         error message, boxed in a
    *         Scalaz Validation
    */
-  def extractScreenResolution(screenResolution: String): Validation[String, ScreenResolution] = screenResolution match {
+  def extractScreenResolution(res: String): Validation[String, ScreenResolution] = res match {
     case ResRegex(h, w) => ScreenResolution(h.toInt, w.toInt).success
     case r => "[%s] is not a valid screen resolution".format(r).fail
   }
@@ -100,7 +99,7 @@ object ClientEnrichments {
    * out UserAgentUtils for ua-parser
    *
    * @param useragent The useragent
-   *        string to extract from
+   *        String to extract from
    * @return the ClientAttributes or
    *         the exception which would
    *         have been thrown, boxed in

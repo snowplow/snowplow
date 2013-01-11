@@ -52,8 +52,8 @@ object EtlJobConfig {
 
     import ScalazArgs._
     val inFolder  = args.requiredz("INPUT_FOLDER")
-    val loader = args.requiredz("INPUT_FORMAT") flatMap (cf => CollectorLoader.getLoader(cf))
     val outFolder = args.requiredz("OUTPUT_FOLDER")
+    val loader = args.requiredz("INPUT_FORMAT") flatMap (cf => CollectorLoader.getLoader(cf))
     // TODO: add in output format to    
     val continue = args.requiredz("CONTINUE_ON") flatMap (co => EtlUtils.stringToBoolean(co))
 
