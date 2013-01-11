@@ -29,12 +29,12 @@ class SnowPlowEtlJobTest extends Specification with TupleConversions {
       "count words correctly" in {
 
         JobTest("com.snowplowanalytics.snowplow.hadoop.etl.EtlJob").
-          arg("CLOUDFRONT_LOGS", "inputFile").
-          arg("COLLECTOR_FORMAT", "cloudfront").
-          arg("EVENTS_TABLE", "outputFile").
+          arg("INPUT_FOLDER", "inputFolder").
+          arg("INPUT_FORMAT", "cloudfront").
+          arg("OUTPUT_FOLDER", "outputFolder").
           arg("CONTINUE_ON", "1").
-          source(TextLine("inputFile"), List("0" -> "hack hack hack and hack")).
-          sink[(String,Int)](Tsv("outputFile")){ outputBuffer =>
+          source(TextLine("inputFolder"), List("0" -> "hack hack hack and hack")).
+          sink[(String,Int)](Tsv("outputFolder")){ outputBuffer =>
             val outMap = outputBuffer.toMap
             outMap("hack") must_== 4
             outMap("and") must_== 1

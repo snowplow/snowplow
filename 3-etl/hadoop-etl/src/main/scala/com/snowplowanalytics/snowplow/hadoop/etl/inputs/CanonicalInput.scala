@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.hadoop.etl
-package loaders
+package inputs
 
 // Apache URLEncodedUtils
 import org.apache.http.NameValuePair

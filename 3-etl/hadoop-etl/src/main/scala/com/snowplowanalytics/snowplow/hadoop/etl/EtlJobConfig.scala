@@ -20,7 +20,7 @@ import Scalaz._
 import com.twitter.scalding.Args
 
 // This project
-import loaders.CollectorLoader
+import inputs.CollectorLoader
 import utils.{EtlUtils, ScalazArgs}
 
 /**
@@ -51,12 +51,12 @@ object EtlJobConfig {
   def loadConfigFrom(args: Args): ValidationNEL[String, EtlJobConfig] = {
 
     import ScalazArgs._
-    val in  = args.requiredz("CLOUDFRONT_LOGS")
-    val out = args.requiredz("EVENTS_TABLE")
-    val loader = args.requiredz("COLLECTOR_FORMAT") flatMap (cf => CollectorLoader.getLoader(cf))
+    val inFolder  = args.requiredz("INPUT_FOLDER")
+    val loader = args.requiredz("INPUT_FORMAT") flatMap (cf => CollectorLoader.getLoader(cf))
+    val outFolder = args.requiredz("OUTPUT_FOLDER")
+    // TODO: add in output format to    
     val continue = args.requiredz("CONTINUE_ON") flatMap (co => EtlUtils.stringToBoolean(co))
-    // TODO: add in output format to
 
-    (in.toValidationNEL |@| out.toValidationNEL |@| loader.toValidationNEL |@| continue.toValidationNEL) { EtlJobConfig(_, _, _, _) }
+    (inFolder.toValidationNEL |@| outFolder.toValidationNEL |@| loader.toValidationNEL |@| continue.toValidationNEL) { EtlJobConfig(_, _, _, _) }
   }
 }

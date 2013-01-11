@@ -20,7 +20,7 @@ import Scalaz._
 import com.twitter.scalding._
 
 // This project
-import loaders._
+// TODO
 
 /**
  * A fatal exception in our ETL.

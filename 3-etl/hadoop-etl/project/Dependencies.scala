@@ -16,7 +16,9 @@ object Dependencies {
   
   val resolutionRepos = Seq(
     // Required for our Scalaz snapshot
-    "Typesafe Snapshots" at "http://repo.typesafe.com/typesafe/snapshots/"
+    "Typesafe Snapshots" at "http://repo.typesafe.com/typesafe/snapshots/",
+     // For some misc Scalding and Twitter libs
+    "Concurrent Maven Repo" at "http://conjars.org/repo"
   )
 
   object V {
