@@ -60,13 +60,26 @@ object TrackerPayload {
    */
   def extractGetPayload(qs: String, encoding: String): Validation[Either[String, Throwable], NonEmptyList[NameValuePair]] =
     try {
-      URLEncodedUtils.parse(URI.create("http://localhost/?" + qs), encoding).toList match {
+      extractNameValuePairs(qs, encoding) match {
         case head :: tail => NonEmptyList[NameValuePair](head, tail: _*).success
         case Nil => Left("no name-value pairs extractable from querystring [%s] with encoding [%s]".format(qs, encoding)).fail
       }
     } catch {
       case e => Right(e).fail
     }
+
+  /**
+   * Helper to extract NameValuePairs
+   *
+   * @param qs The querystring
+   *        String to extract name-value
+   *        pairs from
+   * @param encoding The encoding used
+   *        by this querystring
+   * @return the List of NameValuePairs
+   */
+  private def extractNameValuePairs(qs: String, encoding: String): List[NameValuePair] =
+    URLEncodedUtils.parse(URI.create("http://localhost/?" + qs), encoding).toList
 }
 
 /**
