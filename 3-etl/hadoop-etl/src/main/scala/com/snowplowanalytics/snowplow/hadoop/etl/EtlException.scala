@@ -41,7 +41,7 @@ sealed class EtlException(msg: String) extends RuntimeException(msg)
  * Mixed into the companion objects
  * for the exceptions below.
  */
-trait ValidationConstructors[E <: EtlException] {
+trait VConstructors[E <: EtlException] {
 	
   // Structured type lets us pass in
   // a factory to construct our E
@@ -103,7 +103,7 @@ trait ValidationConstructors[E <: EtlException] {
  * ValidationConstructors trait
  * for details.
  */
-object FatalEtlException extends ValidationConstructors[FatalEtlException] {
+object FatalEtlException extends VConstructors[FatalEtlException] {
   val fac = (msg: String) => FatalEtlException(msg)
 }
 
@@ -117,7 +117,7 @@ object FatalEtlException extends ValidationConstructors[FatalEtlException] {
  * ValidationConstructors trait
  * for details.
  */
-object UnexpectedEtlException extends ValidationConstructors[UnexpectedEtlException] {
+object UnexpectedEtlException extends VConstructors[UnexpectedEtlException] {
   val fac = (msg: String) => UnexpectedEtlException(msg)
 }
 
