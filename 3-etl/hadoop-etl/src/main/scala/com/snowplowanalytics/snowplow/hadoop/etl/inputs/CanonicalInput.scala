@@ -13,11 +13,24 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package inputs
 
+// Java
+import java.net.URI
+
+// Scala
+import scala.collection.JavaConversions._
+
+// Scalaz
+import scalaz._
+import Scalaz._
+
 // Apache URLEncodedUtils
 import org.apache.http.NameValuePair
+import org.apache.http.client.utils.URLEncodedUtils
 
 // Joda-Time
 import org.joda.time.DateTime
+
+// Apache URLEncodedUtils
 
 /**
  * A companion object which holds
@@ -26,7 +39,34 @@ import org.joda.time.DateTime
  * different possible payloads.
  */
 object TrackerPayload {
-  // TODO List[NameValuePair]
+
+  /**
+   * Converts a querystring String
+   * into the GetPayload for SnowPlow:
+   * a non-empty list of NameValuePairs.
+   *
+   * Returns a non-empty list of 
+   * NameValuePairs, or an error.
+   *
+   * @param qs The querystring
+   *        String to extract name-value
+   *        pairs from
+   * @param encoding The encoding used
+   *        by this querystring
+   * @return either a NonEmptyList of
+   *         NameValuePairs, an error
+   *         message or an exception,
+   *         boxed in a Scalaz Validation
+   */
+  def extractGetPayload(qs: String, encoding: String): Validation[Either[String, Throwable], NonEmptyList[NameValuePair]] =
+    try {
+      URLEncodedUtils.parse(URI.create("http://localhost/?" + qs), encoding).toList match {
+        case head :: tail => NonEmptyList[NameValuePair](head, tail: _*).success
+        case Nil => Left("no name-value pairs extractable from querystring [%s] with encoding [%s]".format(qs, encoding)).fail
+      }
+    } catch {
+      case e => Right(e).fail
+    }
 }
 
 /**
@@ -39,7 +79,7 @@ trait TrackerPayload
  * A tracker payload for a single event, delivered
  * via the querystring on a GET.
  */
-case class GetPayload(val payload: String) extends TrackerPayload
+case class GetPayload(val payload: NonEmptyList[NameValuePair]) extends TrackerPayload
 
 /**
  * The canonical input format for the ETL

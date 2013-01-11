@@ -39,13 +39,8 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
  */
 object CloudFrontLoader extends CollectorLoader {
 
-  // Two ideas:
-  // ----------------------------------------
-  //
-  // 1. Maybe the payload should be broken out for a Get using the Cf encoding.
-  //    Otherwise we are kind of leaving more stuff to be extracted later
-  // 2. Maybe validating that the querystring is a valid querystring (not
-  //    corrupted) makes sense too (basically another reason to do #1)
+  // The encoding used on CloudFront logs
+  private val CfEncoding = "UTF-8"
 
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
@@ -113,13 +108,18 @@ object CloudFrontLoader extends CollectorLoader {
       // Build the Joda-Time
       val timestamp = toDateTime(date, time) getOrElse { return None } // TODO: would be nice to attach the reason
 
+      val qs = toOption(querystring)
+      if (qs == None) return None // TODO: needs fixing
       // Finally check that we have a querystring
-      toOption(querystring) match {
-        case None =>
-          None // TODO: would be nice to attach the reason
-        case Some(qs) => 
+      // case None => "supplied querystring was null, cannot extract GET payload".fail
+      // case Some("") => "supplied querystring was empty, cannot extract GET payload".fail
+
+      TrackerPayload.extractGetPayload(qs.get, CfEncoding) match { // Yech
+        case Failure(f) =>
+          None // TODO: add in the reason obv
+        case Success(s) => 
           Some(CanonicalInput(timestamp = timestamp,
-                              payload   = GetPayload(qs),
+                              payload   = GetPayload(s),
                               ipAddress = toOption(ipAddress),
                               userAgent = toOption(userAgent),
                               refererUri = toOption(referer) map toCleanUri,
