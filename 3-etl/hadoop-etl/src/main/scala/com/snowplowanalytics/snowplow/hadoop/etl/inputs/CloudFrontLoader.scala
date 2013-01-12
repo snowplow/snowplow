@@ -39,6 +39,9 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
  */
 object CloudFrontLoader extends CollectorLoader {
 
+  // For the MaybeCanonicalInput type
+  import CanonicalInput._
+
   // The encoding used on CloudFront logs
   private val CfEncoding = "UTF-8"
 
@@ -75,15 +78,16 @@ object CloudFrontLoader extends CollectorLoader {
    * object.
    *
    * @param line A line of data to convert
-   * @return a CanonicalInput object, Option-
-   *         boxed, or None if no input was
-   *         extractable.
+   * @return either a set of validation
+   *         errors or an Option-boxed
+   *         CanonicalInput object, wrapped
+   *         in a Scalaz ValidatioNEL.
    */
-  def toCanonicalInput(line: String): Option[CanonicalInput] = line match {
+  def toCanonicalInput(line: String): MaybeCanonicalInput[String] = line match {
     
     // 1. Header row
     case h if (h.startsWith("#Version:") ||
-               h.startsWith("#Fields:"))    => None // TODO: would be nice to attach the reason
+               h.startsWith("#Fields:"))    => None.success
     
     // 2. Row matches CloudFront format
     case CfRegex(date,
@@ -103,32 +107,32 @@ object CloudFrontLoader extends CollectorLoader {
                  _) => {
 
       // Is this a request for the tracker? Might be a browser favicon request or similar
-      if (!isIceRequest(objct)) return None // TODO: would be nice to attach the reason
+      if (!isIceRequest(objct)) return None.success
 
       // Build the Joda-Time
-      val timestamp = toDateTime(date, time) getOrElse { return None } // TODO: would be nice to attach the reason
+      val timestamp = toDateTime(date, time) getOrElse { return "Oh no".failNel } // TODO: fix reason
 
       val qs = toOption(querystring)
-      if (qs == None) return None // TODO: needs fixing
+      if (qs == None) return "Oh no".failNel // TODO: needs fixing
       // Finally check that we have a querystring
       // case None => "supplied querystring was null, cannot extract GET payload".fail
       // case Some("") => "supplied querystring was empty, cannot extract GET payload".fail
 
       TrackerPayload.extractGetPayload(qs.get, CfEncoding) match { // Yech
         case Failure(f) =>
-          None // TODO: add in the reason obv
+          "Oh no".failNel // TODO: add in the reason obv
         case Success(s) => 
           Some(CanonicalInput(timestamp = timestamp,
                               payload   = GetPayload(s),
                               ipAddress = toOption(ipAddress),
                               userAgent = toOption(userAgent),
                               refererUri = toOption(referer) map toCleanUri,
-                              userId = None))
+                              userId = None)).success
       }
     }
 
     // 3. Row does not match CloudFront header or data row formats
-    case _ => None // TODO: return a validation error so we can route this row to the bad row bin
+    case _ => "Oh no".failNel // TODO: return a validation error so we can route this row to the bad row bin
   }
 
   /**

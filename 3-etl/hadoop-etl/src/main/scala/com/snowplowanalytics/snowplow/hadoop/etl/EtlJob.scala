@@ -34,7 +34,7 @@ class EtlJob(args: Args) extends Job(args) {
     e => throw FatalEtlException(e),
     c => c)
 
-  TextLine( etlConfig.inFolder )
+  MultipleTextLineFiles( etlConfig.inFolder )
     .flatMap('line -> 'word) { line : String => tokenize(line) }
     .groupBy('word) { _.size }
     .write( Tsv( etlConfig.outFolder ) )

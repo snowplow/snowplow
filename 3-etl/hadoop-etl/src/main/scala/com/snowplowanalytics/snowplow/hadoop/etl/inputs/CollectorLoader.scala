@@ -22,7 +22,7 @@ import Scalaz._
  * Contains factory methods.
  */
 object CollectorLoader {
-  
+
   /**
    * Factory to return a CollectorLoader
    * based on the supplied collector
@@ -48,6 +48,8 @@ object CollectorLoader {
  */
 abstract class CollectorLoader {
   
+  import CanonicalInput._
+
   /**
    * Converts the source string into a 
    * CanonicalInput.
@@ -61,7 +63,7 @@ abstract class CollectorLoader {
    *         boxed, or None if no input was
    *         extractable.
    */
-  def toCanonicalInput(line: String): Option[CanonicalInput]
+  def toCanonicalInput(line: String): MaybeCanonicalInput[String]
 
   /**
    * Checks whether a request to

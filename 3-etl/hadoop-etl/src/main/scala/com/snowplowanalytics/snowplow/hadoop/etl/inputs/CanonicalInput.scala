@@ -31,9 +31,39 @@ import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTime
 
 /**
+ * Companion object to the
+ * `CanonicalInput` case class.
+ * Contains types.
+ */
+object CanonicalInput {
+
+  /**
+   * Type alias for either ValidationNEL
+   * or an Option-boxed CanonicalInput.
+   *
+   * @tparam E the type of `Failure`
+   */
+  type MaybeCanonicalInput[E] = ValidationNEL[E, Option[CanonicalInput]]
+}
+
+/**
+ * The canonical input format for the ETL
+ * process: it should be possible to
+ * convert any collector input format to
+ * this format, ready for the main,
+ * collector-agnostic stage of the ETL.
+ */
+final case class CanonicalInput(
+    val timestamp:  DateTime,
+    val payload:    TrackerPayload, // See below for defn.
+    val ipAddress:  Option[String],
+    val userAgent:  Option[String],
+    val refererUri: Option[String],
+    val userId:     Option[String])
+
+/**
  * A companion object which holds
- * factories (more like mines
- * really) to extract the
+ * factories to extract the
  * different possible payloads.
  */
 object TrackerPayload {
@@ -52,26 +82,27 @@ object TrackerPayload {
    * @param encoding The encoding used
    *        by this querystring
    * @return either a NonEmptyList of
-   *         NameValuePairs, an error
-   *         message or an exception,
-   *         boxed in a Scalaz Validation
+   *         NameValuePairs or an error
+   *         message, boxed in a Scalaz
+   *         Validation
    */
-  def extractGetPayload(qs: String, encoding: String): Validation[Either[String, Throwable], NonEmptyList[NameValuePair]] =
+  def extractGetPayload(qs: String, encoding: String): Validation[String, NonEmptyList[NameValuePair]] =
     try {
       parseQuerystring(qs, encoding) match {
         case head :: tail => NonEmptyList[NameValuePair](head, tail: _*).success
-        case Nil => Left("no name-value pairs extractable from querystring [%s] with encoding [%s]".format(qs, encoding)).fail
+        case Nil => "no name-value pairs extractable from querystring [%s] with encoding [%s]".format(qs, encoding).fail
       }
     } catch {
-      case e => Right(e).fail
+      case e => e.getMessage.fail
     }
 
   /**
    * Helper to extract NameValuePairs.
    *
-   * Note: does not handle any exceptions
-   * from encoding errors. Only call this
-   * from a method that does.
+   * Health warning: does not handle any
+   * exceptions from encoding errors.
+   * Only call this from a method that
+   * catches exceptions.
    *
    * @param qs The querystring
    *        String to extract name-value
@@ -95,18 +126,3 @@ trait TrackerPayload
  * via the querystring on a GET.
  */
 case class GetPayload(val payload: NonEmptyList[NameValuePair]) extends TrackerPayload
-
-/**
- * The canonical input format for the ETL
- * process: it should be possible to
- * convert any collector input format to
- * this format, ready for the main,
- * collector-agnostic stage of the ETL.
- */
-final case class CanonicalInput(
-    val timestamp:  DateTime,
-    val payload:    TrackerPayload,
-    val ipAddress:  Option[String],
-    val userAgent:  Option[String],
-    val refererUri: Option[String],
-    val userId:     Option[String])

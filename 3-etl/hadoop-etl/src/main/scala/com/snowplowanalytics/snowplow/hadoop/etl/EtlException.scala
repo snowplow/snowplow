@@ -127,9 +127,6 @@ object UnexpectedEtlException extends EtlExceptionConstructors[UnexpectedEtlExce
  * Will only be thrown if the ETL cannot
  * feasibly be run - **do not** try to catch
  * it, or a kitten dies.
- *
- * @param msg The message for this
- *        fatal exception
  */
 case class FatalEtlException(msg: String) extends EtlException(msg)
 
@@ -143,8 +140,5 @@ case class FatalEtlException(msg: String) extends EtlException(msg)
  * setting of the Continue On
  * Unexpected Error? flag passed in
  * to the ETL.
- *
- * @param msg The message for this
- *        unexpected exception 
  */
 case class UnexpectedEtlException(msg: String) extends EtlException(msg)

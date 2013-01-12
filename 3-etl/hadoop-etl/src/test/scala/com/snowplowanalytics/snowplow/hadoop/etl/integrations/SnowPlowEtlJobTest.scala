@@ -33,7 +33,7 @@ class SnowPlowEtlJobTest extends Specification with TupleConversions {
           arg("INPUT_FORMAT", "cloudfront").
           arg("OUTPUT_FOLDER", "outputFolder").
           arg("CONTINUE_ON", "1").
-          source(TextLine("inputFolder"), List("0" -> "hack hack hack and hack")).
+          source(MultipleTextLineFiles("inputFolder"), List("0" -> "hack hack hack and hack")).
           sink[(String,Int)](Tsv("outputFolder")){ outputBuffer =>
             val outMap = outputBuffer.toMap
             outMap("hack") must_== 4
