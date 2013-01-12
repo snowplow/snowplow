@@ -39,9 +39,6 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
  */
 object CloudFrontLoader extends CollectorLoader {
 
-  // For the MaybeCanonicalInput type
-  import CanonicalInput._
-
   // The encoding used on CloudFront logs
   private val CfEncoding = "UTF-8"
 

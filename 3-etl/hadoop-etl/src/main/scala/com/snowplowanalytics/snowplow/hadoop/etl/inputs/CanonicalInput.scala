@@ -31,22 +31,6 @@ import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTime
 
 /**
- * Companion object to the
- * `CanonicalInput` case class.
- * Contains types.
- */
-object CanonicalInput {
-
-  /**
-   * Type alias for either ValidationNEL
-   * or an Option-boxed CanonicalInput.
-   *
-   * @tparam E the type of `Failure`
-   */
-  type MaybeCanonicalInput[E] = ValidationNEL[E, Option[CanonicalInput]]
-}
-
-/**
  * The canonical input format for the ETL
  * process: it should be possible to
  * convert any collector input format to
@@ -64,7 +48,8 @@ final case class CanonicalInput(
 /**
  * A companion object which holds
  * factories to extract the
- * different possible payloads.
+ * different possible payloads,
+ * and related types.
  */
 object TrackerPayload {
 
@@ -86,7 +71,7 @@ object TrackerPayload {
    *         message, boxed in a Scalaz
    *         Validation
    */
-  def extractGetPayload(qs: String, encoding: String): Validation[String, NonEmptyList[NameValuePair]] =
+  def extractGetPayload(qs: String, encoding: String): MaybeNameValueNEL[String] =
     try {
       parseQuerystring(qs, encoding) match {
         case head :: tail => NonEmptyList[NameValuePair](head, tail: _*).success
@@ -125,4 +110,4 @@ trait TrackerPayload
  * A tracker payload for a single event, delivered
  * via the querystring on a GET.
  */
-case class GetPayload(val payload: NonEmptyList[NameValuePair]) extends TrackerPayload
+case class GetPayload(val payload: NameValueNEL) extends TrackerPayload
