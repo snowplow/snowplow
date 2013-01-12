@@ -2,13 +2,13 @@
 
 ## Introduction
 
-This is the SnowPlow ETL process implemented for Hadoop using [Scalding] [scalding].
+This is the SnowPlow ETL process implemented for Hadoop using [Scalding] [scalding]. The Hadoop ETL parses raw SnowPlow event logs, extracts the SnowPlow events, enriches them (e.g. with geo-location information) and then writes them out to SnowPlow-format event files.
 
-The SnowPlow Hadoop ETL process is an alternative to the SnowPlow Hive ETL process. 
+The SnowPlow Hadoop ETL process is an alternative to the SnowPlow [Hive ETL] [hive-etl] process.
 
 ## Technical overview
 
-The Hadoop ETL parses raw CloudFront log files, extracts the SnowPlow events, enriches them (e.g. with geo-location information) and then writes them out to SnowPlow-format flatfiles.
+The SnowPlow Hadoop ETL process is written in [Scalding] [scalding], the Scala library/DSL on top of [Cascading] [cascading], the Java data processing framework which in turn wraps Hadoop.
 
 Like the Hive ETL, the Hadoop ETL can be run on [Amazon Elastic MapReduce] [emr] using the [EmrEtlRunner] [emr-etl-runner] Ruby app.
 
@@ -48,7 +48,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 [scalding]: https://github.com/twitter/scalding/
+[cascading]: http://www.cascading.org/
 [snowplow]: http://snowplowanalytics.com
+[hive-etl]: https://github.com/snowplow/snowplow/tree/master/3-etl/hive-etl
 [emr]: http://aws.amazon.com/elasticmapreduce/
-[emr-etl-runner]: https://github.com/snowplow/snowplow/tree/feature/scalding-etl/3-etl/emr-etl-runner
+[emr-etl-runner]: https://github.com/snowplow/snowplow/tree/master/3-etl/emr-etl-runner
 [license]: http://www.apache.org/licenses/LICENSE-2.0
