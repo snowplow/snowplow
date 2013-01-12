@@ -30,8 +30,6 @@ import org.apache.http.client.utils.URLEncodedUtils
 // Joda-Time
 import org.joda.time.DateTime
 
-// Apache URLEncodedUtils
-
 /**
  * A companion object which holds
  * factories (more like mines
