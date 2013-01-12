@@ -47,11 +47,8 @@ object BuildSettings {
   lazy val sbtAssemblySettings = assemblySettings ++ Seq(
 
     // Slightly cleaner jar name
-    jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + ".jar" },
+    jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + "-fat.jar" },
     
-    // Store in the upload folder for the ETL process to upload as necessary
-    target in assembly <<= (target) { (target) => target / ".." / "upload" },
-
     // Drop these jars
     excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
       val excludes = Set(

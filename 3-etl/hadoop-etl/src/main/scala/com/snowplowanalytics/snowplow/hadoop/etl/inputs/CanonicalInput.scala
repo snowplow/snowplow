@@ -60,7 +60,7 @@ object TrackerPayload {
    */
   def extractGetPayload(qs: String, encoding: String): Validation[Either[String, Throwable], NonEmptyList[NameValuePair]] =
     try {
-      extractNameValuePairs(qs, encoding) match {
+      parseQuerystring(qs, encoding) match {
         case head :: tail => NonEmptyList[NameValuePair](head, tail: _*).success
         case Nil => Left("no name-value pairs extractable from querystring [%s] with encoding [%s]".format(qs, encoding)).fail
       }
@@ -69,7 +69,11 @@ object TrackerPayload {
     }
 
   /**
-   * Helper to extract NameValuePairs
+   * Helper to extract NameValuePairs.
+   *
+   * Note: does not handle any exceptions
+   * from encoding errors. Only call this
+   * from a method that does.
    *
    * @param qs The querystring
    *        String to extract name-value
@@ -78,7 +82,7 @@ object TrackerPayload {
    *        by this querystring
    * @return the List of NameValuePairs
    */
-  private def extractNameValuePairs(qs: String, encoding: String): List[NameValuePair] =
+  private def parseQuerystring(qs: String, encoding: String): List[NameValuePair] =
     URLEncodedUtils.parse(URI.create("http://localhost/?" + qs), encoding).toList
 }
 
