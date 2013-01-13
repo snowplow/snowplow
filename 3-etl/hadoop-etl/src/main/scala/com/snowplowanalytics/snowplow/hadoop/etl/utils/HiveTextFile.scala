@@ -46,7 +46,7 @@ object HiveTextFile {
    * Iterable, with the Hive ARRAY
    * delimiter between each element
    */
-  private def toARRAY[A](i: Iterable[A]) =
+  private def toHiveArray[A](i: Iterable[A]) =
     i.mkString(Separators.ArrayValue)
 
   /**
