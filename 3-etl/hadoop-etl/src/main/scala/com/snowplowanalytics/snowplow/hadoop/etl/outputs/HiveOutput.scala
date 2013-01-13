@@ -13,18 +13,4 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package outputs
 
-object HiveOutput {
-
-  /**
-   * TODO: we need to port the below:
-
-	1. (byte)(this.dvce_ismobile ? 1 : 0);
-
-  2. Turning a List of items into a Hive
-
-  See:
-
-  http://www.nearinfinity.com/blogs/stephen_mouring_jr/2013/01/04/writing-hive-tables-from-mapreduce.html
-
-  */
-}
+final case class HiveOutput(val todo: String)
