@@ -57,7 +57,24 @@ package object etl {
    */
   type MaybeNameValueNEL[E] = Validation[E, NameValueNEL]
 
+  /**
+   * Type alias for a `ValidationNEL`
+   * containing Strings for `Failure`
+   * or any type of `Success`.
+   *
+   * @tparam A the type of `Success`
+   */
   type MaybeUnexpectedError[A] = ValidationNEL[String, A]
 
-  type UnexpectedErrorHandler[A] = PartialFunction[Throwable, ValidationNEL[String, A]]
+  /**
+   * Type alias for a `PartialFunction`
+   * to handle unexpected errors.
+   * Can contain a `Throwable` or a
+   * `MaybeUnexpectedError`, with
+   * `Success` of any type.
+   *
+   * @tparam A the type of `Success`
+   *         within the ValidationNEL
+   */
+  type UnexpectedErrorHandler[A] = PartialFunction[Throwable, MaybeUnexpectedError[A]]
 }
