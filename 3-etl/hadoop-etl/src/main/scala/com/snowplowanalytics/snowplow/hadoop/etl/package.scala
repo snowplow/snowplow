@@ -56,4 +56,8 @@ package object etl {
    * @tparam E the type of `Failure`
    */
   type MaybeNameValueNEL[E] = Validation[E, NameValueNEL]
+
+  type MaybeUnexpectedError[A] = ValidationNEL[String, A]
+
+  type UnexpectedErrorHandler[A] = PartialFunction[Throwable, ValidationNEL[String, A]]
 }

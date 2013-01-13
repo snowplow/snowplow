@@ -20,8 +20,9 @@ import Scalaz._
 import com.twitter.scalding.Args
 
 // This project
-import inputs.CollectorLoader
 import utils.{EtlUtils, ScalazArgs}
+import inputs.CollectorLoader
+import outputs.CanonicalOutput
 
 /**
  * The configuration for the
@@ -31,7 +32,7 @@ case class EtlJobConfig(
     val inFolder: String,
     val outFolder: String,
     val collectorLoader: CollectorLoader,
-    val continueOnUnexpectedError: Boolean)
+    val unexpectedErrorHandler: UnexpectedErrorHandler[CanonicalOutput])
 
 /**
  * Module to handle configuration for
@@ -54,9 +55,14 @@ object EtlJobConfig {
     val inFolder  = args.requiredz("INPUT_FOLDER")
     val outFolder = args.requiredz("OUTPUT_FOLDER")
     val loader = args.requiredz("INPUT_FORMAT") flatMap (cf => CollectorLoader.getLoader(cf))
-    // TODO: add in output format to    
-    val continue = args.requiredz("CONTINUE_ON") flatMap (co => EtlUtils.stringToBoolean(co))
+    // TODO: add in output format to  
 
-    (inFolder.toValidationNEL |@| outFolder.toValidationNEL |@| loader.toValidationNEL |@| continue.toValidationNEL) { EtlJobConfig(_, _, _, _) }
+    val unexpectedErrorHandler = for {
+      a <- args.requiredz("CONTINUE_ON")
+      c <- EtlUtils.stringToBoolean(a)
+      hr = EtlJobFlow.buildUnexpectedErrorHandler(c)
+    } yield hr
+
+    (inFolder.toValidationNEL |@| outFolder.toValidationNEL |@| loader.toValidationNEL |@| unexpectedErrorHandler.toValidationNEL) { EtlJobConfig(_, _, _, _) }
   }
 }
