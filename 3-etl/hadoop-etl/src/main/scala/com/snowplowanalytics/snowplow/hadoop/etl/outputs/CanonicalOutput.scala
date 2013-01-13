@@ -64,7 +64,7 @@ class CanonicalOutput {
   var ev_action: String = _
   var ev_label: String = _
   var ev_property: String = _
-  var ev_value: String = _
+  var ev_value: Float = _
 
   // User Agent
   var useragent: String = _
