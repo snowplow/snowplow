@@ -20,10 +20,6 @@ package outputs
  * format, it can then be modified
  * to fit one of our output formats
  * (Hive or non-Hive).
- *
- * TODO: this needs completing. At
- * the moment this is just the non-
- * Hive format.
  */
 class CanonicalOutput {
 
