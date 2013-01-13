@@ -75,10 +75,10 @@ object TrackerPayload {
     try {
       parseQuerystring(qs, encoding) match {
         case head :: tail => NonEmptyList[NameValuePair](head, tail: _*).success
-        case Nil => "no name-value pairs extractable from querystring [%s] with encoding [%s]".format(qs, encoding).fail
+        case Nil => "No name-value pairs extractable from querystring [%s] with encoding [%s]".format(qs, encoding).fail
       }
     } catch {
-      case e => e.getMessage.fail
+      case e => "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]".format(qs, encoding, e.getMessage).fail
     }
 
   /**

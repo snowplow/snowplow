@@ -101,13 +101,13 @@ object ClientEnrichments {
    * @param useragent The useragent
    *        String to extract from
    * @return the ClientAttributes or
-   *         the exception which would
-   *         have been thrown, boxed in
-   *         a Scalaz Validation
+   *         the message of the
+   *         exception, boxed in a
+   *         Scalaz Validation
    */
-  def extractClientAttributes(useragent: String): Validation[Throwable, ClientAttributes] = 
+  def extractClientAttributes(useragent: String): Validation[String, ClientAttributes] = 
 
-    Validation.fromTryCatch {
+    try {
       val ua = UserAgent.parseUserAgentString(useragent)
       val b  = ua.getBrowser
       val v  = Option(ua.getBrowserVersion)
@@ -123,6 +123,8 @@ object ClientEnrichments {
         osFamily = os.getGroup.getName,
         osManufacturer = os.getManufacturer.getName,
         deviceType = os.getDeviceType.getName,
-        deviceIsMobile = os.isMobileDevice)
+        deviceIsMobile = os.isMobileDevice).success
+    } catch {
+      case e => "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).fail
     }
 }
