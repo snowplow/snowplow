@@ -106,45 +106,53 @@ object CloudFrontLoader extends CollectorLoader {
       // Is this a request for the tracker? Might be a browser favicon request or similar
       if (!isIceRequest(objct)) return None.success
 
-      // Build the Joda-Time
-      val timestamp = toDateTime(date, time) getOrElse { return "Oh no".failNel } // TODO: fix reason
+      // Validations
+      val timestamp = toTimestamp(date, time)
+      val payload = toGetPayload(querystring)
 
-      val qs = toOption(querystring)
-      if (qs == None) return "Oh no".failNel // TODO: needs fixing
-      // Finally check that we have a querystring
-      // case None => "supplied querystring was null, cannot extract GET payload".fail
-      // case Some("") => "supplied querystring was empty, cannot extract GET payload".fail
+      // No validation (yet) on the below
+      val ip  = toOption(ipAddress)
+      val ua  = toOption(userAgent)
+      val rfr = toOption(referer) map toCleanUri
 
-      TrackerPayload.extractGetPayload(qs.get, CfEncoding) match { // Yech
-        case Failure(f) =>
-          "Oh no".failNel // TODO: add in the reason obv
-        case Success(s) => 
-          Some(CanonicalInput(timestamp = timestamp,
-                              payload   = GetPayload(s),
-                              ipAddress = toOption(ipAddress),
-                              userAgent = toOption(userAgent),
-                              refererUri = toOption(referer) map toCleanUri,
-                              userId = None)).success
+      (timestamp.toValidationNEL |@| payload.toValidationNEL) { (t, p) =>
+        Some(CanonicalInput(t, GetPayload(p), ip, ua, rfr, None))
       }
     }
 
-    // 3. Row does not match CloudFront header or data row formats
-    case _ => "Oh no".failNel // TODO: return a validation error so we can route this row to the bad row bin
+    // 3. Row not recognised
+    case _ => "Line does not match CloudFront header or data row formats".failNel[Option[CanonicalInput]]
   }
 
   /**
    * Converts a CloudFront log-format date and
-   * a time to a Joda DateTime.
+   * a time to a timestamp.
    *
    * @param date The CloudFront log-format date
    * @param time The CloudFront log-format time
-   * @return the JodaTime, Option-boxed, or
-   *         None if something went wrong
+   * @return the timestamp as a Joda DateTime
+   *         or an error String, all wrapped in
+   *         a Scalaz Validation
    */
-  private def toDateTime(date: String, time: String): Option[DateTime] = try {
-    Some(DateTime.parse("%sT%s".format(date, time))) // Add T to conform to UTC styles
-  } catch {
-    case iae: IllegalArgumentException => None // TODO: should really return an error
+  private def toTimestamp(date: String, time: String): Validation[String, DateTime] =
+    try {
+      DateTime.parse("%sT%s".format(date, time)).success // Add T to conform to UTC styles
+    } catch {
+      case e => "Unexpected exception converting date [%s] and time [%s] to timestamp: [%s]".format(date, time, e.getMessage).fail
+    }
+
+  /**
+   * Converts a raw querystring into a
+   * GetPayload object.
+   *
+   * @param querystring The raw querystring
+   * @return the GetPayload object, or
+   *         an error, all wrapped in a
+   *         Scalaz Validation
+   */
+  private def toGetPayload(querystring: String): MaybeNameValueNEL = toOption(querystring) match {
+    case Some(qs) => TrackerPayload.extractGetPayload(qs, CfEncoding)
+    case None => "Querystring is empty, cannot extract GET payload".fail
   }
 
   /**
@@ -169,8 +177,6 @@ object CloudFrontLoader extends CollectorLoader {
    * end of some URLs in the CloudFront logs, causing
    * Exceptions when using URLDecoder.decode. Perhaps
    * a CloudFront bug?
-   *
-   * TODO: move this into a CloudFront-specific file
    *
    * @param s The String to clean
    * @return the cleaned string

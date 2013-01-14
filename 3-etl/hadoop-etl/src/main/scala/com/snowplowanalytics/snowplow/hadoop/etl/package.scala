@@ -38,12 +38,6 @@ package object etl {
 	type NameValueNEL = NonEmptyList[NameValuePair]
 
   /**
-   * Type alias for either a `ValidationNEL`
-   * or an Option-boxed `CanonicalInput`.
-   */
-  type MaybeCanonicalInput = ValidationNEL[String, Option[CanonicalInput]]
-
-  /**
    * Type alias for a `Validation`
    * containing either error `String`s
    * or a `NameValueNEL`.
@@ -54,6 +48,12 @@ package object etl {
    * @tparam E the type of `Failure`
    */
   type MaybeNameValueNEL = Validation[String, NameValueNEL]
+
+  /**
+   * Type alias for either a `ValidationNEL`
+   * or an Option-boxed `CanonicalInput`.
+   */
+  type MaybeCanonicalInput = ValidationNEL[String, Option[CanonicalInput]]
 
   /**
    * Type alias for a `ValidationNEL`
