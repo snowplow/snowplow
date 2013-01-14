@@ -90,7 +90,7 @@ trait EtlExceptionConstructors[E <: EtlException] {
    *         error String
    */
   private def formatErrors(errs: List[String]): String =
-    "Errors:\n  - %s".format(errs.mkString("\n  - "))
+    "EtlException Errors:\n  - %s".format(errs.mkString("\n  - "))
 }
 
 /**

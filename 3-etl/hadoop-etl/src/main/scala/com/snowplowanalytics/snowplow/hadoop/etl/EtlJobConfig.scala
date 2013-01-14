@@ -54,8 +54,10 @@ object EtlJobConfig {
     import ScalazArgs._
     val inFolder  = args.requiredz("INPUT_FOLDER")
     val outFolder = args.requiredz("OUTPUT_FOLDER")
+    
+    // TODO: change loader to be the whole end-to-end load
     val loader = args.requiredz("INPUT_FORMAT") flatMap (cf => CollectorLoader.getLoader(cf))
-    // TODO: add in output format to  
+    // val outFormat TODO: add this
 
     val unexpectedErrorHandler = for {
       a <- args.requiredz("CONTINUE_ON")

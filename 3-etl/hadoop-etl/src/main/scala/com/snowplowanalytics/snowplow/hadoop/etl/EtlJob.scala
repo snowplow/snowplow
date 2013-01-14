@@ -33,22 +33,24 @@ class EtlJob(args: Args) extends Job(args) {
   val etlConfig = EtlJobConfig.loadConfigFrom(args).fold(
     e => throw FatalEtlException(e),
     c => c)
+  val Loader = etlConfig.collectorLoader // Alias
 
-  /** The old code
-   */
+  // Scalding data pipeline
+  MultipleTextLineFiles(etlConfig.inFolder)
+    .read
+    .mapTo('line -> 'input) { line: String =>
+      val ci = Loader.toCanonicalInput(line)
+      flatify(ci)
+    }
+    .write( TextLine( etlConfig.outFolder ) )
 
-  MultipleTextLineFiles( etlConfig.inFolder )
-    .flatMap('line -> 'word) { line : String => tokenize(line) }
-    .groupBy('word) { _.size }
-    .write( Tsv( etlConfig.outFolder ) )
-
-  // Split a piece of text into individual words.
-  def tokenize(text : String) : Array[String] = {
-    // Lowercase each word and remove punctuation.
-    text.toLowerCase.replaceAll("[^a-zA-Z0-9\\s]", "").split("\\s+")
+  // Prototyping here
+  def flatify(input: MaybeCanonicalInput) = input match {
+    case Success(Some(s)) => "SUCCESS"
+    case Success(None)    => "NONE"
+    case Failure(f)       => {
+      throw FatalEtlException(f)
+      "OH NOES"
+    }
   }
-
-  /** The new code I'm writing
-   */
-  // TODO
 }

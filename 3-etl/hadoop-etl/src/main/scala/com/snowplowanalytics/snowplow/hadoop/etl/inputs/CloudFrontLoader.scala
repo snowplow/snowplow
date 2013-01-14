@@ -98,10 +98,7 @@ object CloudFrontLoader extends CollectorLoader {
                  _,
                  referer,
                  userAgent,
-                 querystring,
-                 _,
-                 _,
-                 _) => {
+                 querystring) => {
 
       // Is this a request for the tracker? Might be a browser favicon request or similar
       if (!isIceRequest(objct)) return None.success
