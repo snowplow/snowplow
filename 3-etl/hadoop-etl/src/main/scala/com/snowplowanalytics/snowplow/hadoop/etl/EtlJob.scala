@@ -34,6 +34,9 @@ class EtlJob(args: Args) extends Job(args) {
     e => throw FatalEtlException(e),
     c => c)
 
+  /** The old code
+   */
+
   MultipleTextLineFiles( etlConfig.inFolder )
     .flatMap('line -> 'word) { line : String => tokenize(line) }
     .groupBy('word) { _.size }
@@ -44,4 +47,8 @@ class EtlJob(args: Args) extends Job(args) {
     // Lowercase each word and remove punctuation.
     text.toLowerCase.replaceAll("[^a-zA-Z0-9\\s]", "").split("\\s+")
   }
+
+  /** The new code I'm writing
+   */
+  // TODO
 }

@@ -71,7 +71,7 @@ object TrackerPayload {
    *         message, boxed in a Scalaz
    *         Validation
    */
-  def extractGetPayload(qs: String, encoding: String): MaybeNameValueNEL[String] =
+  def extractGetPayload(qs: String, encoding: String): MaybeNameValueNEL =
     try {
       parseQuerystring(qs, encoding) match {
         case head :: tail => NonEmptyList[NameValuePair](head, tail: _*).success

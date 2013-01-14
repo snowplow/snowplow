@@ -29,7 +29,24 @@ import Scalaz._
 object PageEnrichments {
 
   /**
+   * Extracts the page URI from
+   * either the collector's referer
+   * or the appropriate tracker
+   * variable, depending on some
+   * business rules: see also
+   * `choosePageUri` below.
    *
+   * @param fromReferer The
+   *        page URI reported
+   *        as the referer to
+   *        the collector
+   * @param fromTracker The
+   *        page URI reported
+   *        by the tracker
+   * @return either the chosen
+   *         page URI, or an
+   *         error, wrapped in a
+   *         Validation
    */
   def extractPageUri(
       fromReferer: Option[String],
@@ -46,19 +63,28 @@ object PageEnrichments {
   /**
    * Let's us choose between
    * the page URI from the
-   * referer and the page URI
-   * as set in the tracker.
+   * collector's referer and
+   * the page URI as set in
+   * the tracker, when both
+   * are present.
    *
    * TODO: add a warning if
    * referer page URI is
    * shorter than tracker
    * page URI.
    *
-   * @param fromReferer the
+   * @param fromReferer The
    *        page URI reported
    *        as the referer to
    *        the collector
-   * @return 
+   * @param fromTracker The
+   *        page URI reported
+   *        by the tracker
+   * @return either the chosen
+   *         page URI as a
+   *         String, or an
+   *         error, all wrapped
+   *         in a Validation
    */
   private def choosePageUri(fromReferer: String, fromTracker: String): Validation[String, String] =
     try {
@@ -82,7 +108,9 @@ object PageEnrichments {
    *
    * @param uri The URI string to
    *        convert
-   * @return the URI object, or
+   * @return the URI object, or an
+   *         error message, all
+   *         wrapped in a Validation
    */       
   private def toUri(uri: String): Validation[String, URI] =
     try {

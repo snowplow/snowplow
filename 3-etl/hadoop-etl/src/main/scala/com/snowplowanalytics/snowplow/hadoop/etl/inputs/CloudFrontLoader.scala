@@ -68,7 +68,7 @@ object CloudFrontLoader extends CollectorLoader {
 
   /**
    * Converts the source string into a 
-   * CanonicalInput.
+   * MaybeCanonicalInput.
    *
    * TODO: need to change this to
    * handling some sort of validation
@@ -80,7 +80,7 @@ object CloudFrontLoader extends CollectorLoader {
    *         CanonicalInput object, wrapped
    *         in a Scalaz ValidatioNEL.
    */
-  def toCanonicalInput(line: String): MaybeCanonicalInput[String] = line match {
+  def toCanonicalInput(line: String): MaybeCanonicalInput = line match {
     
     // 1. Header row
     case h if (h.startsWith("#Version:") ||
