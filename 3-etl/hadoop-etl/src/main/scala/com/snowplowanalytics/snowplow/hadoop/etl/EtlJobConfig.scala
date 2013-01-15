@@ -67,6 +67,6 @@ object EtlJobConfig {
       hr = EtlJobFlow.buildUnexpectedErrorHandler(c)
     } yield hr
 
-    (inFolder.toValidationNEL |@| outFolder.toValidationNEL |@| errFolder.toValidationNEL |@| loader.toValidationNEL |@| unexpectedErrorHandler.toValidationNEL) { EtlJobConfig(_, _, _, _) }
+    (inFolder.toValidationNEL |@| outFolder.toValidationNEL |@| errFolder.toValidationNEL |@| loader.toValidationNEL |@| unexpectedErrorHandler.toValidationNEL) { EtlJobConfig(_, _, _, _, _) }
   }
 }

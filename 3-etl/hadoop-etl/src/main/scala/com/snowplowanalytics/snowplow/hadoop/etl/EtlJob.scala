@@ -37,15 +37,37 @@ class EtlJob(args: Args) extends Job(args) {
   // Aliases for our job
   val loader = etlConfig.collectorLoader
   val input = MultipleTextLineFiles(etlConfig.inFolder)
-  val goodOutput = TextLine(etlConfig.goodFolder)
-  val badOutput = JsonLine(etlConfig.badFolder)
+  val goodOutput = TextLine(etlConfig.outFolder)
+  val badOutput = JsonLine(etlConfig.errFolder)
 
   // Scalding data pipeline
-  input
+  val process = input
     .read
     .map('line -> 'input) { l: String =>
       loader.toCanonicalInput(l)
     }
+
+  val bad = process
+    .map('input -> 'errors) { i: MaybeCanonicalInput =>
+      i match {
+        case Failure(f) => f.toList // NEL -> List
+        case _ => Nil
+      }
+    }
+    .filter('errors) { e: List[String] => e.isEmpty } // Drop anything that isn't an error
+    // .project('line, 'errors)
+    .write(badOutput)
+
+  val good = process
+    .filter('input) { i : MaybeCanonicalInput =>
+      i match {
+        case Success(Some(s)) => true
+        case _ => false
+      }
+    }
+    .write(goodOutput)
+
+/*
     .then { p : Pipe =>
       <<'input inside p>> match {
         case Success(Some(s)) => p.write(goodOutput)
@@ -53,4 +75,15 @@ class EtlJob(args: Args) extends Job(args) {
         case Failure(f) => p.write(badOutput)
       }
     }
+
+  I think I'm missing something about your problem, but just in case, can you do something like:
+
+val unknown = do the flow above up to the validation
+val validation = unknown.foldLeft(stuff)
+// There might be a better way to materialize into an object, I haven't checked
+validation.write
+val validationResult = read file result from hdfs
+
+val location = if (validationResult ) good else bad
+unknown.write(location) */
 }
