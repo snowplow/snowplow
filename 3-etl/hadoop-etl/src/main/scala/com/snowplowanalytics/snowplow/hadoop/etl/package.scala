@@ -31,11 +31,11 @@ import etl.inputs.CanonicalInput
  */
 package object etl {
 
-	/**
-	 * Type alias for a non-empty
-	 * set of name-value pairs
-	 */
-	type NameValueNEL = NonEmptyList[NameValuePair]
+  /**
+   * Type alias for a non-empty
+   * set of name-value pairs
+   */
+  type NameValueNEL = NonEmptyList[NameValuePair]
 
   /**
    * Type alias for a `Validation`
