@@ -33,31 +33,24 @@ class EtlJob(args: Args) extends Job(args) {
   val etlConfig = EtlJobConfig.loadConfigFrom(args).fold(
     e => throw FatalEtlException(e),
     c => c)
-  val Loader = etlConfig.collectorLoader // Alias
 
+  // Aliases for our job
+  val loader = etlConfig.collectorLoader
   val input = MultipleTextLineFiles(etlConfig.inFolder)
-  val goodOutput = TextLine(etlConfig.outFolder)
-  val badOutput = JsonLine("ohnoes/")
+  val goodOutput = TextLine(etlConfig.goodFolder)
+  val badOutput = JsonLine(etlConfig.badFolder)
 
   // Scalding data pipeline
   input
     .read
-    .mapTo('line -> 'input) { l: String =>
-      val ci = Loader.toCanonicalInput(line)
-      flatify(ci)
+    .map('line -> 'input) { l: String =>
+      loader.toCanonicalInput(l)
     }
-    .project('input)
-    .filter('input) { i : MaybeCanonicalInput =>
-      i != Success(None) }
-    .write(goodOutput)
-
-  // Prototyping here
-  def flatify(input: MaybeCanonicalInput) = input match {
-    case Success(Some(s)) => "SUCCESS"
-    case Success(None)    => "NONE"
-    case Failure(f)       => {
-      throw FatalEtlException(f)
-      "OH NOES"
+    .then { p : Pipe =>
+      <<'input inside p>> match {
+        case Success(Some(s)) => p.write(goodOutput)
+        case Success(None) => // Silently drop Nones
+        case Failure(f) => p.write(badOutput)
+      }
     }
-  }
 }

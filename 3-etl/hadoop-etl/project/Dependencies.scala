@@ -29,6 +29,7 @@ object Dependencies {
     // Scala
     val scalding    = "0.8.1"
     val scalaz7     = "7.0-SNAPSHOT" // -> "7.0.0" when released
+    val jerkson     = "0.7.0"
     val specs2      = "1.12.3" // -> "1.13" when we bump to Scala 2.10.0
     // val useragent = "1.6" No Maven repo, so user-agent-utils is an unmanaged lib
   }
@@ -43,6 +44,7 @@ object Dependencies {
     // Scala
     val scalding    = "com.twitter"                %% "scalding"            % V.scalding
     val scalaz7     = "org.scalaz"                 %% "scalaz-core"         % V.scalaz7
+    val jerkson     = "io.backchat.jerkson"        %% "jerkson"             % V.jerkson
     // Scala (test only)
     val specs2      = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
   }
