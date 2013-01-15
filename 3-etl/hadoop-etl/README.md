@@ -36,7 +36,7 @@ The `assembly` command above runs the test suite - but you can also run this man
 
 ## Copyright and license
 
-Copyright 2012 SnowPlow Analytics Ltd, with significant portions copyright 2012 Twitter, Inc.
+Copyright 2012 SnowPlow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
