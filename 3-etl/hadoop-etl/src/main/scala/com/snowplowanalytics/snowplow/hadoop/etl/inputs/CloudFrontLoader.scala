@@ -70,10 +70,6 @@ object CloudFrontLoader extends CollectorLoader {
    * Converts the source string into a 
    * MaybeCanonicalInput.
    *
-   * TODO: need to change this to
-   * handling some sort of validation
-   * object.
-   *
    * @param line A line of data to convert
    * @return either a set of validation
    *         errors or an Option-boxed
