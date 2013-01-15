@@ -35,14 +35,18 @@ class EtlJob(args: Args) extends Job(args) {
     c => c)
   val Loader = etlConfig.collectorLoader // Alias
 
+  val input = MultipleTextLineFiles(etlConfig.inFolder)
+  val goodOutput = TextLine(etlConfig.outFolder)
+
   // Scalding data pipeline
-  MultipleTextLineFiles(etlConfig.inFolder)
+  input
     .read
     .mapTo('line -> 'input) { line: String =>
       val ci = Loader.toCanonicalInput(line)
       flatify(ci)
     }
-    .write( TextLine( etlConfig.outFolder ) )
+    .project('input)
+    .write(goodOutput)
 
   // Prototyping here
   def flatify(input: MaybeCanonicalInput) = input match {
