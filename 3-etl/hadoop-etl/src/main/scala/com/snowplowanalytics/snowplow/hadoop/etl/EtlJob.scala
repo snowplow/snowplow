@@ -37,15 +37,18 @@ class EtlJob(args: Args) extends Job(args) {
 
   val input = MultipleTextLineFiles(etlConfig.inFolder)
   val goodOutput = TextLine(etlConfig.outFolder)
+  val badOutput = JsonLine("ohnoes/")
 
   // Scalding data pipeline
   input
     .read
-    .mapTo('line -> 'input) { line: String =>
+    .mapTo('line -> 'input) { l: String =>
       val ci = Loader.toCanonicalInput(line)
       flatify(ci)
     }
     .project('input)
+    .filter('input) { i : MaybeCanonicalInput =>
+      i != Success(None) }
     .write(goodOutput)
 
   // Prototyping here
