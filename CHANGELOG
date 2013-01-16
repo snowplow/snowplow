@@ -1,3 +1,13 @@
+Version 0.7.1 (2013-01-1X)
+--------------------------
+EmrEtlRunner: bumped to 0.0.8
+EmrEtlRunner: updated copyright notices
+EmrEtlRunner: added .rvmrc file (part of #121, #84)
+StorageLoader: bumped to 0.0.4
+StorageLoader: updated copyright notices
+StorageLoader: added .rvmrc file (part of #121, #84)
+Documentation: updated to use `bundle install` (#122)
+
 Version 0.7.0 (2013-01-04)
 --------------------------
 Clojure Collector: added. Version 0.1.0
