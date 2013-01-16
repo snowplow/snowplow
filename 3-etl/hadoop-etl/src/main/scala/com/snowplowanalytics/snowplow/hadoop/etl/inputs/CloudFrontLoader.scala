@@ -25,7 +25,52 @@ import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 /**
- * Module to hold specific helpers related to the
+ * The dedicated loader for events
+ * collected by CloudFront.
+ */
+object CloudFrontLoader extends CloudFrontLikeLoader {
+
+  /**
+   * Returns the InputSource for this
+   * loader.
+   *
+   * TODO: repetition of the identifier
+   * String from getCollectorLoader. Can
+   * we prevent duplication?
+   */
+  def getSource = InputSource("cloudfront", None)
+}
+
+/**
+ * The dedicated loader for events
+ * collected by the Clojure
+ * Collector running on Tomcat (with
+ * a Tomcat log format which
+ * approximates the CloudFront format).
+ */
+object CljTomcatLoader extends CloudFrontLikeLoader {
+
+  /**
+   * Returns the InputSource for this
+   * loader.
+   *
+   *
+   * TODO: we need to update this in
+   * this future when we have a way
+   * of retrieving the Clojure Collector's
+   * version (currently it's hardcoded
+   * to clj-tomcat).
+   *
+   * TODO: repetition of the identifier
+   * String from getCollectorLoader. Can
+   * we prevent duplication?
+   */
+
+  def getSource = InputSource("clj-tomcat", None)
+}
+
+/**
+ * Trait to hold helpers related to the
  * CloudFront input format.
  *
  * By "CloudFront input format", we mean the
@@ -37,7 +82,20 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
  * For more details on this format, please see:
  * http://docs.amazonwebservices.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#LogFileFormat
  */
-object CloudFrontLoader extends CollectorLoader {
+trait CloudFrontLikeLoader extends CollectorLoader {
+
+  /**
+   * Gets the source of this input.
+   * Implemented by the implementing
+   * objects (see above).
+   *
+   * TODO: we need to update this in
+   * this future when we have a way
+   * of retrieving the Clojure Collector's
+   * version (currently it's hardcoded
+   * to clj-tomcat).
+   */
+  def getSource: InputSource
 
   // The encoding used on CloudFront logs
   private val CfEncoding = "UTF-8"
@@ -109,7 +167,7 @@ object CloudFrontLoader extends CollectorLoader {
       val rfr = toOption(referer) map toCleanUri
 
       (timestamp.toValidationNEL |@| payload.toValidationNEL) { (t, p) =>
-        Some(CanonicalInput(t, GetPayload(p), ip, ua, rfr, None))
+        Some(CanonicalInput(t, NVGetPayload(p), getSource, ip, ua, rfr, Nil, None)) // No headers or separate userId.
       }
     }
 

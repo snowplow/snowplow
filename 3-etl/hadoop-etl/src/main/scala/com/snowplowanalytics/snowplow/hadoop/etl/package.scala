@@ -32,6 +32,11 @@ import etl.inputs.CanonicalInput
 package object etl {
 
   /**
+   * Type alias for HTTP headers
+   */
+  type HttpHeaders = List[String]
+
+  /**
    * Type alias for a non-empty
    * set of name-value pairs
    */

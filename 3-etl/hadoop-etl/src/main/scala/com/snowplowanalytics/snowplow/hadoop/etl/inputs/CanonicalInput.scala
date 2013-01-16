@@ -40,10 +40,48 @@ import org.joda.time.DateTime
 final case class CanonicalInput(
     val timestamp:  DateTime,
     val payload:    TrackerPayload, // See below for defn.
+    val source:     InputSource,    // See below for defn. 
     val ipAddress:  Option[String],
     val userAgent:  Option[String],
     val refererUri: Option[String],
+    val headers:    List[String],   // May be Nil so not a NEL
     val userId:     Option[String])
+
+/**
+ * Unambiguously identifies the collector
+ * source of this input line.
+ */
+final case class InputSource(
+    val collector: String, // Collector name/version
+    val hostname:  Option[String])
+
+/**
+ * All payloads sent by trackers must inherit from
+ * this class.
+ */
+trait TrackerPayload
+
+/**
+ * All GET payloads sent by trackers inherit from
+ * this class.
+ */
+trait GetPayload extends TrackerPayload
+
+/**
+ * A tracker payload for a single event, delivered
+ * via a set of name-value pairs on the querystring
+ * of a GET.
+ */
+case class NVGetPayload(val payload: NameValueNEL) extends GetPayload
+
+/**
+ * A tracker payload for a single event, delivered
+ * via a data= parameter on the querystring of a GET.
+ *
+ * TODO: can we define payload with something other
+ * than a String?
+ */
+case class JsonGetPayload(val payload: String) extends GetPayload
 
 /**
  * A companion object which holds
@@ -99,15 +137,3 @@ object TrackerPayload {
   private def parseQuerystring(qs: String, encoding: String): List[NameValuePair] =
     URLEncodedUtils.parse(URI.create("http://localhost/?" + qs), encoding).toList
 }
-
-/**
- * All payloads sent by trackers must inherit from
- * this class.
- */
-trait TrackerPayload
-
-/**
- * A tracker payload for a single event, delivered
- * via the querystring on a GET.
- */
-case class GetPayload(val payload: NameValueNEL) extends TrackerPayload

@@ -37,7 +37,7 @@ object CollectorLoader {
    */
   def getLoader(collector: String): Validation[String, CollectorLoader] = collector match {
     case "cloudfront" => CloudFrontLoader.success
-    case "clj-tomcat" => CloudFrontLoader.success
+    case "clj-tomcat" => CljTomcatLoader.success
     case  c           => "[%s] is not a recognised SnowPlow event collector".format(c).fail
   }
 }
