@@ -1,16 +1,16 @@
 Version 0.7.1 (2013-01-1X)
 --------------------------
-EmrEtlRunner: bumped to 0.0.8 - DONE
-EmrEtlRunner: updated copyright notices - DONE
-EmrEtlRunner: added .rvmrc file (part of #121, #84) - DONE
+EmrEtlRunner: bumped to 0.0.8
+EmrEtlRunner: updated copyright notices
+EmrEtlRunner: added .rvmrc file (part of #121, #84)
 EmrEtlRunner: removed .gemspec file
-EmrEtlRunner: re-generated Gemfile.lock
-StorageLoader: bumped to 0.0.4 - DONE
-StorageLoader: updated copyright notices - DONE
-StorageLoader: added .rvmrc file (part of #121, #84) - DONE
+EmrEtlRunner: added dependencies to Gemfile and re-generated Gemfile.lock - TODO
+StorageLoader: bumped to 0.0.4
+StorageLoader: updated copyright notices
+StorageLoader: added .rvmrc file (part of #121, #84)
 StorageLoader: removed .gemspec file
-StorageLoader: re-generated Gemfile.lock
-Documentation: updated to use `bundle install` (#122)
+StorageLoader: added dependencies to Gemfile and re-generated Gemfile.lock - TODO
+Documentation: updated to use `bundle install` (#122) - TODO
 
 Version 0.7.0 (2013-01-04)
 --------------------------
