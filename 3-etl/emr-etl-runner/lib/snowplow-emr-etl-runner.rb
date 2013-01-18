@@ -13,10 +13,10 @@
 # Copyright:: Copyright (c) 2012-2013 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'snowplow-emr-etl-runner/config'
-require 'snowplow-emr-etl-runner/s3_tasks'
-require 'snowplow-emr-etl-runner/emr_jobs'
-require 'snowplow-emr-etl-runner/errors'
+require_relative 'snowplow-emr-etl-runner/config'
+require_relative 'snowplow-emr-etl-runner/s3_tasks'
+require_relative 'snowplow-emr-etl-runner/emr_jobs'
+require_relative 'snowplow-emr-etl-runner/errors'
 
 module SnowPlow
   module EmrEtlRunner
