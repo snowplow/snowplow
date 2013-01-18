@@ -13,7 +13,10 @@
 # Copyright:: Copyright (c) 2012-2013 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
-source 'https://rubygems.org'
+source "https://rubygems.org"
 
-# Specify your gem's dependencies in storage-loader.gemspec
-gemspec
+# StorageLoader is a Ruby app (not a RubyGem)
+# built with Bundler, so we add in the
+# RubyGems it requires here.
+gem "infobright-loader", "~> 0.0.1"
+gem "sluice", "~> 0.0.6"
