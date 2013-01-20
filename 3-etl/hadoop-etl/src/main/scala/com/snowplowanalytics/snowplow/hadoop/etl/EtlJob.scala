@@ -54,9 +54,9 @@ class EtlJob(args: Args) extends Job(args) {
         case _ => Nil
       }
     }
-    .filter('errors) { e: List[String] => e.isEmpty } // Drop anything that isn't an error
+    .filter('errors) { e: List[String] => !e.isEmpty } // Drop anything that isn't an error
     // .project('line, 'errors)
-    .write(badOutput)
+    .write(badOutput) // JSON containing line and errors
 
   val good = process
     .filter('input) { i : MaybeCanonicalInput =>
