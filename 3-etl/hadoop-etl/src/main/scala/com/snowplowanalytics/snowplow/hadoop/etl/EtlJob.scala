@@ -64,9 +64,9 @@ class EtlJob(args: Args) extends Job(args) {
     .mapTo('input -> 'good) { i : MaybeCanonicalInput =>
       i match { // Have to unbox for Scalding
         case Success(Some(s)) => s
-        case _ => null // Yech
+        case _ => null // Yech, kills the Success(None)s and Failure()s
       }
     }
-    .filter('good) { g: CanonicalInput => g != null } // Yech, drop the non-nulls
+    .filter('good) { g: CanonicalInput => g != null } // Yech, drop the nulls
     .write(goodOutput)
 }
