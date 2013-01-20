@@ -20,7 +20,7 @@ import Scalaz._
 import com.twitter.scalding._
 
 // This project
-// TODO
+import inputs.CanonicalInput
 
 /**
  * The SnowPlow ETL job, written in Scalding
@@ -41,49 +41,32 @@ class EtlJob(args: Args) extends Job(args) {
   val badOutput = JsonLine(etlConfig.errFolder)
 
   // Scalding data pipeline
-  val process = input
+  val common = input
     .read
     .map('line -> 'input) { l: String =>
       loader.toCanonicalInput(l)
     }
 
-  val bad = process
+  // Handle bad rows
+  val bad = common
     .map('input -> 'errors) { i: MaybeCanonicalInput =>
-      i match {
+      i match { // Have to unbox for Scalding
         case Failure(f) => f.toList // NEL -> List
         case _ => Nil
       }
     }
     .filter('errors) { e: List[String] => !e.isEmpty } // Drop anything that isn't an error
     .project('line, 'errors)
-    .write(badOutput) // JSON containing line and errors
+    .write(badOutput) // JSON containing line and error(s)
 
-  val good = process
-    .filter('input) { i : MaybeCanonicalInput =>
-      i match {
-        case Success(Some(s)) => true
-        case _ => false
+  // Handle good rows
+  val good = common
+    .mapTo('input -> 'good) { i : MaybeCanonicalInput =>
+      i match { // Have to unbox for Scalding
+        case Success(Some(s)) => s
+        case _ => null // Yech
       }
     }
+    .filter('good) { g: CanonicalInput => g != null } // Yech, drop the non-nulls
     .write(goodOutput)
-
-/*
-    .then { p : Pipe =>
-      <<'input inside p>> match {
-        case Success(Some(s)) => p.write(goodOutput)
-        case Success(None) => // Silently drop Nones
-        case Failure(f) => p.write(badOutput)
-      }
-    }
-
-  I think I'm missing something about your problem, but just in case, can you do something like:
-
-val unknown = do the flow above up to the validation
-val validation = unknown.foldLeft(stuff)
-// There might be a better way to materialize into an object, I haven't checked
-validation.write
-val validationResult = read file result from hdfs
-
-val location = if (validationResult ) good else bad
-unknown.write(location) */
 }
