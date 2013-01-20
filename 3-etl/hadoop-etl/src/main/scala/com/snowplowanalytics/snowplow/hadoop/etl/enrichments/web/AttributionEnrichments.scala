@@ -42,11 +42,11 @@ object AttributionEnrichments {
    * or all of the five fields can be set.
    */
   case class MarketingCampaign(
-      val medium:   Option[String],
-      val source:   Option[String],
-      val term:     Option[String],
-      val content:  Option[String],
-      val campaign: Option[String])
+      medium:   Option[String],
+      source:   Option[String],
+      term:     Option[String],
+      content:  Option[String],
+      campaign: Option[String])
 
   /**
    * Extract the marketing fields

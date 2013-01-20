@@ -38,22 +38,22 @@ import org.joda.time.DateTime
  * collector-agnostic stage of the ETL.
  */
 final case class CanonicalInput(
-    val timestamp:  DateTime,
-    val payload:    TrackerPayload, // See below for defn.
-    val source:     InputSource,    // See below for defn. 
-    val ipAddress:  Option[String],
-    val userAgent:  Option[String],
-    val refererUri: Option[String],
-    val headers:    List[String],   // May be Nil so not a NEL
-    val userId:     Option[String])
+    timestamp:  DateTime,
+    payload:    TrackerPayload, // See below for defn.
+    source:     InputSource,    // See below for defn. 
+    ipAddress:  Option[String],
+    userAgent:  Option[String],
+    refererUri: Option[String],
+    headers:    List[String],   // May be Nil so not a NEL
+    userId:     Option[String])
 
 /**
  * Unambiguously identifies the collector
  * source of this input line.
  */
 final case class InputSource(
-    val collector: String, // Collector name/version
-    val hostname:  Option[String])
+    collector: String, // Collector name/version
+    hostname:  Option[String])
 
 /**
  * All payloads sent by trackers must inherit from
@@ -72,7 +72,7 @@ trait GetPayload extends TrackerPayload
  * via a set of name-value pairs on the querystring
  * of a GET.
  */
-case class NVGetPayload(val payload: NameValueNEL) extends GetPayload
+case class NVGetPayload(payload: NameValueNEL) extends GetPayload
 
 /**
  * A tracker payload for a single event, delivered
@@ -81,7 +81,7 @@ case class NVGetPayload(val payload: NameValueNEL) extends GetPayload
  * TODO: can we define payload with something other
  * than a String?
  */
-case class JsonGetPayload(val payload: String) extends GetPayload
+case class JsonGetPayload(payload: String) extends GetPayload
 
 /**
  * A companion object which holds

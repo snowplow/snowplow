@@ -45,8 +45,8 @@ object ClientEnrichments {
    * screen resolution
    */
   case class ScreenResolution(
-      val width: Int,
-      val height: Int)
+      width: Int,
+      height: Int)
 
   /**
    * Case class to wrap everything we
@@ -59,18 +59,18 @@ object ClientEnrichments {
    */
   case class ClientAttributes(
       // Browser
-      val browserName: String,
-      val browserFamily: String,
-      val browserVersion: Option[String],
-      val browserType: String,
-      val browserRenderEngine: String,
+      browserName: String,
+      browserFamily: String,
+      browserVersion: Option[String],
+      browserType: String,
+      browserRenderEngine: String,
       // OS the browser is running on
-      val osName: String,
-      val osFamily: String,
-      val osManufacturer: String,
+      osName: String,
+      osFamily: String,
+      osManufacturer: String,
       // Hardware the OS is running on
-      val deviceType: String,
-      val deviceIsMobile: Boolean)
+      deviceType: String,
+      deviceIsMobile: Boolean)
 
   /**
    * Extracts the screen resolution

@@ -29,11 +29,11 @@ import outputs.CanonicalOutput
  * SnowPlowEtlJob.
  */
 case class EtlJobConfig(
-    val inFolder: String,
-    val outFolder: String,
-    val errFolder: String,
-    val collectorLoader: CollectorLoader,
-    val unexpectedErrorHandler: UnexpectedErrorHandler[CanonicalOutput])
+    inFolder: String,
+    outFolder: String,
+    errFolder: String,
+    collectorLoader: CollectorLoader,
+    unexpectedErrorHandler: UnexpectedErrorHandler[CanonicalOutput])
 
 /**
  * Module to handle configuration for
