@@ -27,7 +27,7 @@ object Dependencies {
     val yodaTime    = "2.1"
     val yodaConvert = "1.2"
     // Scala
-    val scalding    = "0.8.1"
+    val scalding    = "0.8.2"
     val scalaz7     = "7.0-SNAPSHOT" // -> "7.0.0" when released
     val jerkson     = "0.7.0"
     val specs2      = "1.12.3" // -> "1.13" when we bump to Scala 2.10.0

@@ -21,6 +21,7 @@ import com.twitter.scalding._
 
 // This project
 import inputs.CanonicalInput
+import utils.Json2Line
 
 /**
  * The SnowPlow ETL job, written in Scalding
@@ -38,7 +39,7 @@ class EtlJob(args: Args) extends Job(args) {
   val loader = etlConfig.collectorLoader
   val input = MultipleTextLineFiles(etlConfig.inFolder)
   val goodOutput = TextLine(etlConfig.outFolder)
-  val badOutput = JsonLine(etlConfig.errFolder)
+  val badOutput = Json2Line(etlConfig.errFolder)
 
   // Scalding data pipeline
   val common = input

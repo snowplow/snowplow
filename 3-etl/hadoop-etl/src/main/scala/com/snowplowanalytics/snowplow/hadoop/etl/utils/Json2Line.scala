@@ -18,19 +18,24 @@ import cascading.pipe.Pipe
 import cascading.tuple.{TupleEntry, Fields}
 
 // Scalding
-import com.twitter.scalding.Dsl
-import com.twitter.scalding.FixedPathSource
-import com.twitter.scalding.TextLineScheme
+import com.twitter.scalding.{Dsl, FixedPathSource, TextLineScheme}
+
+// Jerkson
+import com.codahale.jerkson.Json
 
 /**
  * This Source writes out the TupleEntry as a simple JSON object, using the field names
  * as keys and the string representation of the values.
  * Only useful for writing, on read it is identical to TextLineScheme.
- *
+ */
 case class Json2Line(p : String) extends FixedPathSource(p) with TextLineScheme {
   import Dsl._
 
+  /**
+   * Updated by SnowPlow so that a Scala List of errors
+   * is turned into valid JSON.
+   */
   override def transformForWrite(pipe : Pipe) = pipe.mapTo(Fields.ALL -> 'json) {
-    t: TupleEntry => Json.generate(toMap(t).mapValues { _.toString })
+    t: TupleEntry => Json.generate(toMap(t))
   }
-} */
+}
