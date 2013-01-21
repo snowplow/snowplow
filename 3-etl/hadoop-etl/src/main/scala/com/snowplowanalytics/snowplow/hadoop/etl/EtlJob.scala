@@ -50,24 +50,22 @@ class EtlJob(args: Args) extends Job(args) {
 
   // Handle bad rows
   val bad = common
-    .map('input -> 'errors) { i: MaybeCanonicalInput =>
-      i match { // Have to unbox for Scalding
-        case Failure(f) => f.toList // NEL -> List
-        case _ => Nil
+    .flatMap('input -> 'errors) { i: MaybeCanonicalInput =>
+      i match {
+        case Failure(f) => Some(f.toList) // NEL -> Some(List)
+        case _ => None
       }
     }
-    .filter('errors) { e: List[String] => !e.isEmpty } // Drop anything that isn't an error
     .project('line, 'errors)
     .write(badOutput) // JSON containing line and error(s)
 
   // Handle good rows
   val good = common
-    .mapTo('input -> 'good) { i : MaybeCanonicalInput =>
-      i match { // Have to unbox for Scalding
-        case Success(Some(s)) => s
-        case _ => null // Yech, kills the Success(None)s and Failure()s
+    .flatMapTo('input -> 'good) { i: MaybeCanonicalInput =>
+      i match {
+        case Success(Some(s)) => Some(s)
+        case _ => None // Drop error and blank rows
       }
     }
-    .filter('good) { g: CanonicalInput => g != null } // Yech, drop the nulls
     .write(goodOutput)
 }
