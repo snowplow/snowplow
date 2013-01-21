@@ -29,4 +29,4 @@ if [ $ret_val -ne 0 ]; then
 fi
 
 # If all okay, run the storage load too
-${RUNNER_PATH}/bin/snowplow-storage-loader --config ${LOADER_CONFIG}
+${LOADER_PATH}/bin/snowplow-storage-loader --config ${LOADER_CONFIG}
