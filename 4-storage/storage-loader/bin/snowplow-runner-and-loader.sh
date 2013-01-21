@@ -19,7 +19,8 @@ RUNNER_CONFIG=/path/to/your-runner-config.yml
 LOADER_CONFIG=/path/to/your-loader-config.yml
 
 # Run the ETL job on EMR
-${RUNNER_PATH}/bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG}
+BUNDLE_GEMFILE=${RUNNER_PATH}
+bundle exec bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG}
 
 # Check the damage
 ret_val=$?
@@ -29,4 +30,5 @@ if [ $ret_val -ne 0 ]; then
 fi
 
 # If all okay, run the storage load too
-${LOADER_PATH}/bin/snowplow-storage-loader --config ${LOADER_CONFIG}
+BUNDLE_GEMFILE=${LOADER_PATH}
+bundle exec bin/snowplow-storage-loader --config ${LOADER_CONFIG}
