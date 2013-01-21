@@ -15,13 +15,6 @@
 # Copyright:: Copyright (c) 2012-2013 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
-# Equivalent to a Bundler binstub
-require 'pathname'
-ENV['BUNDLE_GEMFILE'] ||= File.expand_path("../../Gemfile",
-  Pathname.new(__FILE__).realpath)
-require 'rubygems'
-require 'bundler/setup'
-
 # Don't edit $LOAD_PATH, go straight to main Ruby file
 require File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'snowplow-storage-loader'))
 loader = SnowPlow::StorageLoader

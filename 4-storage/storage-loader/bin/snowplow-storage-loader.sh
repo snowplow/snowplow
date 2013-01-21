@@ -16,4 +16,5 @@ LOADER_PATH=/path/to/snowplow/4-storage/snowplow-storage-loader
 LOADER_CONFIG=/path/to/your-loader-config.yml
 
 # Run the daily ETL job
-${LOADER_PATH}/bin/snowplow-storage-loader --config ${LOADER_CONFIG}
+BUNDLE_GEMFILE=${LOADER_PATH}
+bundle exec bin/snowplow-storage-loader --config ${LOADER_CONFIG}
