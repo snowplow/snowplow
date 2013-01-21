@@ -19,5 +19,5 @@ RUNNER_PATH=/path/to/snowplow/3-etl/snowplow-emr-etl-runner
 RUNNER_CONFIG=/path/to/your-config.yml
 
 # Run the ETL job on EMR
-BUNDLE_GEMFILE=${RUNNER_PATH}
-bundle exec bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG}
+export BUNDLE_GEMFILE=${RUNNER_PATH}
+bundle exec ${RUNNER_PATH}/bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG}
