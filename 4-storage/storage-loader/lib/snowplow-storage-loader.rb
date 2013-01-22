@@ -1,4 +1,4 @@
-# Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,17 +10,18 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012 SnowPlow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2013 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'snowplow-storage-loader/errors'
-require 'snowplow-storage-loader/config'
-require 'snowplow-storage-loader/s3_tasks'
-require 'snowplow-storage-loader/loader'
+# Ruby 1.9.2 onwards doesn't add . into $LOAD_PATH by default - use require_relative instead
+require_relative 'snowplow-storage-loader/errors'
+require_relative 'snowplow-storage-loader/config'
+require_relative 'snowplow-storage-loader/s3_tasks'
+require_relative 'snowplow-storage-loader/loader'
 
 module SnowPlow
   module StorageLoader
   	NAME          = "snowplow-storage-loader"
-    VERSION       = "0.0.3"
+    VERSION       = "0.0.4"
   end
 end

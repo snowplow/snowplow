@@ -13,24 +13,6 @@
 # Copyright:: Copyright (c) 2012-2013 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
-# All errors
-module SnowPlow
-  module EmrEtlRunner
-
-    # The base error class for all <tt>EmrEtlRunner</tt> error classes.
-    class Error < StandardError
-    end
-
-    # Raised when there's a problem with the supplied configuration (either command line or in configuration file)
-    class ConfigError < Error
-    end
-
-    # Problem when running Amazon EMR (e.g. job failed) 
-    class EmrExecutionError < Error
-    end
-
-    # Raised if a directory is not empty
-    class DirectoryNotEmptyError < Error
-    end
-  end
-end
+# We only specify Ruby version in here, as per:
+# http://ryan.mcgeary.org/2011/02/09/vendor-everything-still-applies/
+rvm use ruby-1.9.3
