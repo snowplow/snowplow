@@ -64,7 +64,7 @@ class EtlJob(args: Args) extends Job(args) {
     .flatMapTo('input -> 'good) { i: MaybeCanonicalInput =>
       i match {
         case Success(Some(s)) => Some(s)
-        case _ => None // Drop error and blank rows
+        case _ => None // Drop errors and blank rows
       }
     }
     .write(goodOutput)
