@@ -20,6 +20,7 @@ RUNNER_CONFIG=/path/to/your-runner-config.yml
 LOADER_CONFIG=/path/to/your-loader-config.yml
 
 # Load the RVM environment
+export PATH=$PATH:${RVM_PATH}/bin
 source ${RVM_PATH}/scripts/rvm
 
 # Run the ETL job on EMR

@@ -21,6 +21,7 @@ RUNNER_PATH=/path/to/snowplow/3-etl/snowplow-emr-etl-runner
 RUNNER_CONFIG=/path/to/your-config.yml
 
 # Load the RVM environment
+export PATH=$PATH:${RVM_PATH}/bin
 source ${RVM_PATH}/scripts/rvm
 
 # Run the ETL job on EMR

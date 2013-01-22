@@ -18,6 +18,7 @@ LOADER_PATH=/path/to/snowplow/4-storage/snowplow-storage-loader
 LOADER_CONFIG=/path/to/your-loader-config.yml
 
 # Load the RVM environment
+export PATH=$PATH:${RVM_PATH}/bin
 source ${RVM_PATH}/scripts/rvm
 
 # Run the daily ETL job
