@@ -12,9 +12,13 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Update these for your environment
+RVM_PATH=/path/to/.rvm # Check the bottom of your .bashrc or .zshrc
 BUNDLE_PATH=/path/to/your/bundle-binary # `which bundle` to find this
 LOADER_PATH=/path/to/snowplow/4-storage/snowplow-storage-loader
 LOADER_CONFIG=/path/to/your-loader-config.yml
+
+# Load the RVM environment
+source ${RVM_PATH}/scripts/rvm
 
 # Run the daily ETL job
 export BUNDLE_GEMFILE=${LOADER_PATH}

@@ -15,9 +15,13 @@
 #           (runs both the EmrEtlRunner and the StorageLoader)
 
 # Update these for your environment
+RVM_PATH=/path/to/.rvm # Check the bottom of your .bashrc or .zshrc
 BUNDLE_PATH=/path/to/your/bundle-binary # `which bundle` to find this
 RUNNER_PATH=/path/to/snowplow/3-etl/snowplow-emr-etl-runner
 RUNNER_CONFIG=/path/to/your-config.yml
+
+# Load the RVM environment
+source ${RVM_PATH}/scripts/rvm
 
 # Run the ETL job on EMR
 export BUNDLE_GEMFILE=${RUNNER_PATH}
