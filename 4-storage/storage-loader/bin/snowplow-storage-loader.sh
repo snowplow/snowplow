@@ -12,9 +12,10 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Update these for your environment
+BUNDLE_PATH=/path/to/your/bundle-binary # `which bundle` to find this
 LOADER_PATH=/path/to/snowplow/4-storage/snowplow-storage-loader
 LOADER_CONFIG=/path/to/your-loader-config.yml
 
 # Run the daily ETL job
 export BUNDLE_GEMFILE=${LOADER_PATH}
-bundle exec ${LOADER_PATH}/bin/snowplow-storage-loader --config ${LOADER_CONFIG}
+${BUNDLE_PATH}/bundle exec ${LOADER_PATH}/bin/snowplow-storage-loader --config ${LOADER_CONFIG}
