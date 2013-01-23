@@ -1014,8 +1014,9 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * - http://andylangton.co.uk/articles/javascript/get-viewport-size-javascript/
      */
     function detectDocumentSize() {
-    	var w = Math.max(documentAlias.documentElement.clientWidth, documentAlias.documentElement.offsetWidth, documentAlias.documentElement.scrollWidth);
-    	var h = Math.max(documentAlias.documentElement.clientHeight, documentAlias.documentElement.offsetHeight, documentAlias.documentElement.scrollHeight);
+    	var de = SnowPlow.documentAlias.documentElement; // Alias
+    	var w = Math.max(de.clientWidth, de.offsetWidth, de.scrollWidth);
+    	var h = Math.max(de.clientHeight, de.offsetHeight, de.scrollHeight);
     	return w + 'x' + h;
     }
 
@@ -1390,10 +1391,12 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 */
 		enableDarkSocialTracking: function () {
 
-			if (history.pushState) { // Feature detection
-				var newUrl = SnowPlow.windowAlias.location.href +
-				             '?utm_share=copy-paste';
-				window.history.pushState(null, document.title, newUrl);
+			var darkFlag = '?utm_share=copy-paste';
+
+			if (SnowPlow.windowAlias.history.pushState && 
+			  !SnowPlow.endsWith(SnowPlow.windowAlias.location.href, darkFlag)) {
+				var newUrl = SnowPlow.windowAlias.location.href + darkFlag;
+				SnowPlow.windowAlias.history.pushState(null, document.title, newUrl);
 		    }
 		},
 

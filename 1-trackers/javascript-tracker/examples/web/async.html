@@ -27,6 +27,7 @@
         _snaq.push(['enableActivityTracking', 10, 10]); // Ping every 10 seconds after 10 seconds
         _snaq.push(['enableLinkTracking']);
         _snaq.push(['trackPageView', 'Async Test']); // Track the page view with custom title
+        _snaq.push(['enableDarkSocialTracking']);
 
         (function() {
             var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
@@ -41,11 +42,11 @@
     <script type="text/javascript">
         function playMix() {
             alert("Playing a DJ mix");
-            _snaq.push(['trackEvent', 'Mixes', 'Play', 'MRC/fabric-0503-mix', '', '0.0']);
+            _snaq.push(['trackStructEvent', 'Mixes', 'Play', 'MRC/fabric-0503-mix', '', '0.0']);
         }
         function addProduct() {
             alert("Adding a product to basket");
-            _snaq.push(['trackEvent', 'Checkout', 'Add', 'ASO01043', 'blue:xxl', '2.0']);      
+            _snaq.push(['trackStructEvent', 'Checkout', 'Add', 'ASO01043', 'blue:xxl', '2.0']);      
         }
 
         function addEcommerceTransaction() {

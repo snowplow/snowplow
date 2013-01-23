@@ -35,11 +35,11 @@
     <script type="text/javascript">
         function playMix() {
             alert("Playing a DJ mix");
-            snowplowTracker.trackEvent('Mixes', 'Play', 'MrC/fabric-0503-mix', '','0.0');
+            snowplowTracker.trackStructEvent('Mixes', 'Play', 'MrC/fabric-0503-mix', '','0.0');
         }
         function addProduct() {
             alert("Adding a product to basket");
-            snowplowTracker.trackEvent('Checkout', 'Add', 'ASO01043', 'blue:xxl', '2.0');      
+            snowplowTracker.trackStructEvent('Checkout', 'Add', 'ASO01043', 'blue:xxl', '2.0');      
         }
     </script>
 </head>
