@@ -53,7 +53,7 @@
 	exec,
 	res, width, height,
 	pdf, qt, realp, wma, dir, fla, java, gears, ag,
-	hook, getHook, getVisitorId, getVisitorInfo, setAccount,
+	hook, getHook, getVisitorId, getVisitorInfo,
 	setCollectorCf, setCollectorUrl, setSiteId,
 	setDownloadExtensions, addDownloadExtensions,
 	setDomains, setIgnoreClasses, setRequestMethod,
@@ -64,9 +64,9 @@
 	setVisitorCookieTimeout, setSessionCookieTimeout, setReferralCookieTimeout,
 	doNotTrack, setDoNotTrack, msDoNotTrack,
 	addListener, enableLinkTracking, setLinkTrackingTimer,
-	setHeartBeatTimer, killFrame, redirectFile, setCountPreRendered,
+	killFrame, redirectFile, setCountPreRendered,
 	trackEvent, trackLink, trackPageView, trackImpression,
-	addPlugin, getAccount, getTracker, getAsyncTracker
+	addPlugin, getAsyncTracker
 */
 
 SnowPlow.build = function () {
@@ -234,24 +234,6 @@ SnowPlow.build = function () {
 		*/
 		addPlugin: function (pluginName, pluginObj) {
 			SnowPlow.plugins[pluginName] = pluginObj;
-		},
-
-		/**
-		* SnowPlow replacement for Piwik getTracker function
-		* The function returns a Tracker object
-		* However, rather than passing in a piwikUrl and siteID,
-		* it takes a SnowPlow account ID, and constructs the
-		* Url from it. (We do not use siteIds as part of SnowPlow)
-		*
-		* DEPRECATED: use getTrackerCf or getTrackerUrl instead 
-		*
-		* @param string distSubdomain The subdomain on your CloudFront collector's distribution
-		*/
-		getTracker: function (distSubdomain) {
-			if (typeof console !== 'undefined') {
-				console.log("SnowPlow: getTracker() is deprecated and will be removed in an upcoming version. Please use getTrackerCf() instead.");
-			}
-			return new SnowPlow.Tracker({cf: distSubdomain});
 		},
 
 		/**

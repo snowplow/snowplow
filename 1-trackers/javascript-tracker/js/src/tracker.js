@@ -1333,24 +1333,6 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		},
 
 		/**
-		 * Set heartbeat (in seconds)
-		 *
-		 * @param int minimumVisitLength
-		 * @param int heartBeatDelay
-		 */
-		setHeartBeatTimer: function (minimumVisitLength, heartBeatDelay) {
-			
-			if (typeof console !== 'undefined') {
-				console.log("SnowPlow: setHeartBeatTimer() is deprecated and will be removed in an upcoming version. Please use enableActivityTracking() instead.");
-			}
-
-			var now = new Date();
-
-			configMinimumVisitTime = now.getTime() + minimumVisitLength * 1000;
-			configHeartBeatTimer = heartBeatDelay * 1000;
-		},
-
-		/**
 		 * Frame buster
 		 */
 		killFrame: function () {
@@ -1401,23 +1383,6 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			trackCallback(function () {
 				logPageView(customTitle);
 			});
-		},
-
-		/**
-		 * Specify the SnowPlow tracking account. We use the account ID
-		 * to define the tracker URL for SnowPlow.
-		 *
-		 * DEPRECATED - will be removed in a future release.
-		 * See issue #32 for details. 
-		 *
-		 * @param string distSubdomain The subdomain on your CloudFront collector's distribution
-		 */
-		// TODO: remove in a future version
-		setAccount: function (distSubdomain) {
-			if (typeof console !== 'undefined') {
-				console.log("SnowPlow: setAccount() is deprecated and will be removed in an upcoming version. Please use setCollectorCf() instead.");
-			}
-			configCollectorUrl = collectorUrlFromCfDist(distSubdomain);
 		},
 
 		/**
