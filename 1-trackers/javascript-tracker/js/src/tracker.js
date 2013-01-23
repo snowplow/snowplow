@@ -990,7 +990,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 */
 	function detectTimezone() {
 		var tz = jstz.determine();  
-        return (typeof (tz) === 'undefined') ? '' : tz.name();
+        	return (typeof (tz) === 'undefined') ? '' : tz.name();
 	}
 
 	/**
@@ -1002,11 +1002,11 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 */
 	function detectViewport() {
 		var e = SnowPlow.windowAlias, a = 'inner';
-	    if (!('innerWidth' in SnowPlow.windowAlias)) {
-	        a = 'client';
-	        e = SnowPlow.documentAlias.documentElement || SnowPlow.documentAlias.body;
-	    }
-	    return e[a+'Width'] + 'x' + e[a+'Height'];
+		if (!('innerWidth' in SnowPlow.windowAlias)) {
+			a = 'client';
+			e = SnowPlow.documentAlias.documentElement || SnowPlow.documentAlias.body;
+		}
+		return e[a+'Width'] + 'x' + e[a+'Height'];
 	}
 
 	/**
@@ -1015,13 +1015,13 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 *
 	 * Code based on:
 	 * - http://andylangton.co.uk/articles/javascript/get-viewport-size-javascript/
-     */
-    function detectDocumentSize() {
-    	var de = SnowPlow.documentAlias.documentElement; // Alias
-    	var w = Math.max(de.clientWidth, de.offsetWidth, de.scrollWidth);
-    	var h = Math.max(de.clientHeight, de.offsetHeight, de.scrollHeight);
-    	return w + 'x' + h;
-    }
+	 */
+	function detectDocumentSize() {
+		var de = SnowPlow.documentAlias.documentElement; // Alias
+		var w = Math.max(de.clientWidth, de.offsetWidth, de.scrollWidth);
+		var h = Math.max(de.clientHeight, de.offsetHeight, de.scrollHeight);
+		return w + 'x' + h;
+	}
 
 	/*
 	 * Returns browser features (plugins, resolution, cookies)
