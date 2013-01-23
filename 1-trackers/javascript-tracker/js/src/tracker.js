@@ -86,6 +86,9 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		// Extensions to be treated as download links
 		configDownloadExtensions = '7z|aac|ar[cj]|as[fx]|avi|bin|csv|deb|dmg|doc|exe|flv|gif|gz|gzip|hqx|jar|jpe?g|js|mp(2|3|4|e?g)|mov(ie)?|ms[ip]|od[bfgpst]|og[gv]|pdf|phps|png|ppt|qtm?|ra[mr]?|rpm|sea|sit|tar|t?bz2?|tgz|torrent|txt|wav|wm[av]|wpd||xls|xml|z|zip',
 
+		// How do we identify dark social copy-paste?
+		configDarkSocialAppend = '?utm_share=copy-paste',
+
 		// Hosts or alias(es) to not treat as outlinks
 		configHostsAlias = [domainAlias],
 
@@ -1391,12 +1394,10 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 */
 		enableDarkSocialTracking: function () {
 
-			var darkFlag = '?utm_share=copy-paste';
-
 			if (SnowPlow.windowAlias.history.pushState && 
-			  !SnowPlow.endsWith(SnowPlow.windowAlias.location.href, darkFlag)) {
-				var newUrl = SnowPlow.windowAlias.location.href + darkFlag;
-				SnowPlow.windowAlias.history.pushState(null, document.title, newUrl);
+			  !SnowPlow.endsWith(SnowPlow.windowAlias.location.href, configDarkSocialAppend)) {
+				var newUrl = SnowPlow.windowAlias.location.href + configDarkSocialAppend;
+				SnowPlow.windowAlias.history.pushState(null, SnowPlow.documentAlias.title, newUrl);
 		    }
 		},
 
