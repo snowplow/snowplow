@@ -479,8 +479,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		var sb = requestStringBuilder(request);
 
 		sb.addRaw('tid', String(Math.random()).slice(2, 8));
-        sb.addRaw('vp', detectViewport());
-        sb.addRaw('ds', detectDocumentSize());
+		sb.addRaw('vp', detectViewport());
+		sb.addRaw('ds', detectDocumentSize());
 
 		sb.add('p', configPlatform);		
 		sb.add('tv', SnowPlow.version);
@@ -488,7 +488,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('aid', configTrackerSiteId);
 		sb.add('lang', browserLanguage);
 		sb.add('cs', documentCharset);
-        sb.add('tz', timezone);
+		sb.add('tz', timezone);
 
 		// Adds with custom conditions
 		if (configAttachUserId) sb.addRaw('uid', uuid);
@@ -511,7 +511,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		SnowPlow.setCookie(sesname, '*', configSessionCookieTimeout, configCookiePath, configCookieDomain, cookieSecure);
 
 		// Tracker plugin hook
-		// TODO: can blow this away for SnowPlow
+		// TODO: we can blow this away for SnowPlow
 		req += SnowPlow.executePluginMethod(pluginMethod);
 
 		return req;
