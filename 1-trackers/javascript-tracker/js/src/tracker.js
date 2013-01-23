@@ -476,35 +476,35 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		}
 
 		// Build out the rest of the request
-		// TODO: switch this to using requestStringBuilder, much tidier
-		request += 
-			'&p=' + configPlatform +
-			'&tid=' + String(Math.random()).slice(2, 8) +
-			(configAttachUserId ? '&uid=' + uuid : '') +
-			'&fp='  + SnowPlow.encodeWrapper(fingerprint) +
-			'&vid=' + visitCount +
-			'&tv='  + SnowPlow.encodeWrapper(SnowPlow.version) +
-			(configTrackerSiteId.length ? '&aid=' + SnowPlow.encodeWrapper(configTrackerSiteId) : '') +
-			'&lang=' + browserLanguage +
-			(configReferrerUrl.length ? '&refr=' + SnowPlow.encodeWrapper(purify(configReferrerUrl)) : '') +
-			(documentCharset ? '&cs=' + SnowPlow.encodeWrapper(documentCharset) : '');
+		var sb = requestStringBuilder(request);
+
+		sb.addRaw('tid', String(Math.random()).slice(2, 8));
+        sb.addRaw('vp', detectViewport());
+        sb.addRaw('ds', detectDocumentSize());
+
+		sb.add('p', configPlatform);		
+		sb.add('tv', SnowPlow.version);
+		sb.add('fp', fingerprint);
+		sb.add('aid', configTrackerSiteId);
+		sb.add('lang', browserLanguage);
+		sb.add('cs', documentCharset);
+        sb.add('tz', timezone);
+
+		// Adds with custom conditions
+		if (configAttachUserId) sb.addRaw('uid', uuid);
+		if (configReferrerUrl.length) sb.add('refr', purify(configReferrerUrl));
 
 		// Browser features. Cookies, color depth and resolution don't get prepended with f_ (because they're not optional features)
 		for (i in browserFeatures) {
 			if (Object.prototype.hasOwnProperty.call(browserFeatures, i)) {
-				featurePrefix = (i === 'res' || i === 'cd' || i === 'cookie') ? '&' : '&f_';
-				request += featurePrefix + i + '=' + browserFeatures[i];
+				featurePrefix = (i === 'res' || i === 'cd' || i === 'cookie') ? '' : 'f_';
+				sb.addRaw(featurePrefix + i, browserFeatures[i]);
 			}
 		}
 
-        // Add in timezone, viewport and document size etc
-		request +=
-			'&tz=' + SnowPlow.encodeWrapper(timezone) +
-			'&vp=' + detectViewport() +
-			'&ds=' + detectDocumentSize();
-
-		// Finally add the page URL
-		request += '&url=' + SnowPlow.encodeWrapper(purify(window.location));
+		// Add the page URL last as it may take us over the IE limit (and we don't always need it)
+		sb.add('url', purify(window.location));
+		var req = sb.build();
 
 		// Update cookies
 		setVisitorIdCookie(uuid, createTs, visitCount, nowTs, lastVisitTs);
@@ -512,9 +512,9 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 		// Tracker plugin hook
 		// TODO: can blow this away for SnowPlow
-		request += SnowPlow.executePluginMethod(pluginMethod);
+		req += SnowPlow.executePluginMethod(pluginMethod);
 
-		return request;
+		return req;
 	}
 
 	/**

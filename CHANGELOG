@@ -8,9 +8,9 @@ JS tracker: page ping no longer killed by 1 heartbeat w/o activity (#132)
 JS tracker: added document & viewport dimensions (#94)
 JS tracker: introduced trackStructEvent and deprecated trackEvent (#143)
 JS tracker: added enableDarkSocial() to set utm_share (#130)
+JS tracker: cleaned up getRequest code to use improved requestStringBuilder
 
 JS tracker: added scroll offsets to page ping (#127) - TODO
-JS tracker: cleaned up getRequest code to use improved requestStringBuilder - TODO
 
 Serde: bumped to 0.5.4 - TODO
 Serde: updated copyright notices - TODO
