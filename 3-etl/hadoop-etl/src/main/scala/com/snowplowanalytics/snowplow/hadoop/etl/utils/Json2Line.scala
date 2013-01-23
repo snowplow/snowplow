@@ -27,6 +27,8 @@ import com.codahale.jerkson.Json
  * This Source writes out the TupleEntry as a simple JSON object, using the field names
  * as keys and the string representation of the values.
  * Only useful for writing, on read it is identical to TextLineScheme.
+ *
+ * TODO: this can be removed when Scalding 0.8.3 is released.
  */
 case class Json2Line(p : String) extends FixedPathSource(p) with TextLineScheme {
   import Dsl._
