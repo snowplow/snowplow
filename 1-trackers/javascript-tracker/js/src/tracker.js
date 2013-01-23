@@ -143,6 +143,9 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		// Should cookies have the secure flag set
 		cookieSecure = SnowPlow.documentAlias.location.protocol === 'https',
 
+		// Document character set
+		documentCharset = SnowPlow.documentAlias.characterSet || SnowPlow.documentAlias.charset,
+
 		// Browser language (or Windows language for IE). Imperfect but CloudFront doesn't log the Accept-Language header
 		browserLanguage = SnowPlow.navigatorAlias.userLanguage || SnowPlow.navigatorAlias.language,
 
@@ -473,7 +476,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			'&tv='  + SnowPlow.encodeWrapper(SnowPlow.version) +
 			(configTrackerSiteId.length ? '&aid=' + SnowPlow.encodeWrapper(configTrackerSiteId) : '') +
 			'&lang=' + browserLanguage +
-			(configReferrerUrl.length ? '&refr=' + SnowPlow.encodeWrapper(purify(configReferrerUrl)) : '');
+			(configReferrerUrl.length ? '&refr=' + SnowPlow.encodeWrapper(purify(configReferrerUrl)) : '') +
+			(charSet ? '&cs=' + SnowPlow.encodeWrapper(documentCharset) : '');
 
 		// Browser features. Cookies, color depth and resolution don't get prepended with f_ (because they're not optional features)
 		for (i in browserFeatures) {

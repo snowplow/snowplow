@@ -1,6 +1,11 @@
 Version 0.7.2 (2013-01-XX)
 --------------------------
-Removed deprecated getAccount(), getTracker(), setHeartBeatTimer() - BREAKING CHANGE (#86)
+JS tracker: bumped to 0.10.0
+JS tracker: removed deprecated getAccount(), getTracker(), setHeartBeatTimer() - BREAKING CHANGE (#86)
+JS tracker: added document charset to querystring (part of #138)
+Serde: bumped to 0.5.4 - TODO
+Serde: added extraction of doc charset (part of #138) - TODO
+HiveQL: xxx
 
 Version 0.7.1 (2013-01-22)
 --------------------------
