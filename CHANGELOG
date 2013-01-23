@@ -1,14 +1,17 @@
 Version 0.7.2 (2013-01-XX)
 --------------------------
 JS tracker: bumped to 0.10.0
-JS tracker: updated copyright notices - TODO
+JS tracker: updated copyright notices
 JS tracker: removed deprecated getAccount(), getTracker(), setHeartBeatTimer() - BREAKING CHANGE (#86)
 JS tracker: added document charset to querystring (#138)
 JS tracker: page ping no longer killed by 1 heartbeat w/o activity (#132)
 JS tracker: added document & viewport dimensions (#94)
 JS tracker: introduced trackStructEvent and deprecated trackEvent (#143)
-JS tracker: added enableDarkSocial() to set utm_share (#130) - TODO
+JS tracker: added enableDarkSocial() to set utm_share (#130)
+
 JS tracker: added scroll offsets to page ping (#127) - TODO
+JS tracker: cleaned up getRequest code to use improved requestStringBuilder - TODO
+
 Serde: bumped to 0.5.4 - TODO
 Serde: updated copyright notices - TODO
 Serde: added extraction of doc charset (#138) - TODO

@@ -2,7 +2,7 @@
  * JavaScript tracker for SnowPlow: tracker.js
  * 
  * Significant portions copyright 2010 Anthon Pang. Remainder copyright 
- * 2012 SnowPlow Analytics Ltd. All rights reserved. 
+ * 2012-2013 SnowPlow Analytics Ltd. All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without 
  * modification, are permitted provided that the following conditions are 
@@ -1378,6 +1378,23 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 			configMinimumVisitTime = now.getTime() + minimumVisitLength * 1000;
 			configHeartBeatTimer = heartBeatDelay * 1000;
+		},
+
+		/**
+		 * Enables dark social tracking.
+		 * Only works on newer browsers
+		 * that support push state.
+		 *
+		 * Based on:
+		 * - https://plus.google.com/u/0/109159729997909875172/posts/Jk8n5nhqC6c
+		 */
+		enableDarkSocialTracking: function () {
+
+			if (history.pushState) { // Feature detection
+				var newUrl = SnowPlow.windowAlias.location.href +
+				             '?utm_share=copy-paste';
+				window.history.pushState(null, document.title, newUrl);
+		    }
 		},
 
 		/**
