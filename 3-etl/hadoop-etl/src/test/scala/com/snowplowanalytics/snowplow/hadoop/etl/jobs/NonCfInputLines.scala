@@ -25,19 +25,23 @@ import utils.Json2Line
 import EtlJobTestHelpers._
 
 /**
- * Integration test for SnowPlowEtlJob:
+ * Integration test for the EtlJob:
  *
- * Input data _is_ in the CloudFront
- * access log format, but the fields
- * are somehow corrupted.
+ * Input data _is_ not in the
+ * expected CloudFront format.
  */
-class CorruptedInputRowJobTest extends Specification with TupleConversions {
+class NonCloudFrontInputLine extends Specification with TupleConversions {
 
-  "A job which processes a corrupted input row" should {
-    "write an error JSON containing the input row and all errors" in {
+  "A job which processes an input line which is not CloudFront format" should {
+    "write an error JSON containing the input line and the appropriate error message" in {
+
+    	val badLines = List(
+        "0" -> "",
+        "1" -> "NOT VALID",
+        "2" -> "2012-05-21\t07:14:47\tFRA2\t3343\t83.4.209.35\tGET\td3t05xllj8hhgj.cloudfront.net")
 
       EtlJobTest.
-        source(MultipleTextLineFiles("inputFolder"), List("0" -> "20yy-05-24  00:08:40  LHR5  3397  74.125.17.210 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(Linux;%20U;%20Android%202.3.4;%20generic)%20AppleWebKit/535.1%20(KHTML,%20like%20Gecko;%20Google%20Web%20Preview)%20Version/4.0%20Mobile%20Safari/535.1  -")).
+        source(MultipleTextLineFiles("inputFolder"), badLines).
         sink[String](TextLine("outputFolder")){ _ => Unit }.
         sink[String](Json2Line("errorFolder")){ buf =>
           val json = buf.head
