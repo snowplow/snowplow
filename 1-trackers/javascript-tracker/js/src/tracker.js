@@ -498,6 +498,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		SnowPlow.setCookie(sesname, '*', configSessionCookieTimeout, configCookiePath, configCookieDomain, cookieSecure);
 
 		// Tracker plugin hook
+		// TODO: can blow this away for SnowPlow
 		request += SnowPlow.executePluginMethod(pluginMethod);
 
 		return request;
@@ -530,21 +531,25 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	/**
 	 * A helper to build a SnowPlow request string from an
 	 * an optional initial value plus a set of individual
-	 * key-value pairs, provided using the add method.
+	 * name-value pairs, provided using the add method.
 	 *
 	 * @param string initialValue The initial querystring, ready to have additional key-value pairs added
 	 *
-	 * @return object The request string builder, with add and build methods
+	 * @return object The request string builder, with add, addRaw and build methods
 	 */
-	// TODO: add encode flag to add
-	// TODO: add addIf() function
 	function requestStringBuilder(initialValue) {
 		var str = initialValue || '';
+		var addNvPair = function(key, value, encode) {
+			if (value !== undefined && value !== '') {
+				str += '&' + key + '=' + (encode ? SnowPlow.encodeWrapper(value) : value);
+			}
+		};
 		return {
 			add: function(key, value) {
-				if (value !== undefined && value !== '') {
-					str += '&' + key + '=' + SnowPlow.encodeWrapper(value);
-				}
+				addNvPair(key, value, true);
+			},
+			addRaw: function(key, value) {
+				addNvPair(key, value, false);
 			},
 			build: function() {
 				return str;
