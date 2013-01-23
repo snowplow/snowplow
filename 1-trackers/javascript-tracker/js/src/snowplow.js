@@ -63,6 +63,7 @@
 	setCookieNamePrefix, setCookieDomain, setCookiePath, setVisitorIdCookie,
 	setVisitorCookieTimeout, setSessionCookieTimeout, setReferralCookieTimeout,
 	doNotTrack, setDoNotTrack, msDoNotTrack,
+	detectTimezone, detectViewport,
 	addListener, enableLinkTracking, setLinkTrackingTimer,
 	killFrame, redirectFile, setCountPreRendered,
 	trackEvent, trackLink, trackPageView, trackImpression,

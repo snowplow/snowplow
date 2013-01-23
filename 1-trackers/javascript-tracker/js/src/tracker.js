@@ -263,6 +263,14 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 	/*
 	 * Is the host local? (i.e., not an outlink)
+	 *
+	 * This is a pretty flawed approach - assumes
+	 * a website only has one domain.
+	 *
+	 * TODO: I think we can blow this away for
+	 * SnowPlow and handle the equivalent with a
+	 * whitelist of the site's domains. 
+	 * 
 	 */
 	function isSiteHostName(hostName) {
 		var i,
@@ -460,7 +468,6 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		if (!ses) {
 			// New session (aka new visit)
 			visitCount++;
-
 			// Update the last visit timestamp
 			lastVisitTs = currentVisitTs;
 		}
@@ -487,8 +494,11 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			}
 		}
 
-        // Add in timezone
-		request += '&tz=' + SnowPlow.encodeWrapper(timezone);
+        // Add in timezone, viewport and document size etc
+		request +=
+			'&tz=' + SnowPlow.encodeWrapper(timezone) +
+			'&vp=' + detectViewport() +
+			'&ds=' + detectDocumentSize();
 
 		// Finally add the page URL
 		request += '&url=' + SnowPlow.encodeWrapper(purify(window.location));
@@ -558,14 +568,15 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	}
 
 	/**
-	 * Log an event happening on this page
+	 * Log a structured event happening on this page
 	 *
 	 * @param string category The name you supply for the group of objects you want to track
 	 * @param string action A string that is uniquely paired with each category, and commonly used to define the type of user interaction for the web object
 	 * @param string label (optional) An optional string to provide additional dimensions to the event data
+	 * @param string property (optional) Describes the object or the action performed on it, e.g. quantity of item added to basket
 	 * @param int|float|string value (optional) An integer that you can use to provide numerical data about the user event
 	 */
-	function logEvent(category, action, label, property, value) {
+	function logStructEvent(category, action, label, property, value) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'ev'); // 'ev' for custom EVent
 		sb.add('ev_ca', category);
@@ -587,6 +598,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * @param string userId (optional) Ad server identifier for the viewer of the banner
 	 */
 	// TODO: should add impressionId as well.
+	// TODO: should add in zoneId (aka placementId, slotId?) as well
 	function logImpression(bannerId, campaignId, advertiserId, userId) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'ad'); // 'ad' for AD impression
@@ -598,6 +610,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		request = getRequest(params, 'adimp');
 		sendRequest(request, configTrackerPause);
 	}
+
+	// TODO: add in ad clicks
 
 	/**
 	 * Log ecommerce transaction metadata
@@ -975,6 +989,35 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		var tz = jstz.determine();  
         return (typeof (tz) === 'undefined') ? '' : tz.name();
 	}
+
+	/**
+	 * Gets the current viewport.
+	 *
+	 * Code based on:
+	 * - http://andylangton.co.uk/articles/javascript/get-viewport-size-javascript/
+	 * - http://responsejs.com/labs/dimensions/
+	 */
+	function detectViewport() {
+		var e = SnowPlow.windowAlias, a = 'inner';
+	    if (!('innerWidth' in SnowPlow.windowAlias)) {
+	        a = 'client';
+	        e = SnowPlow.documentAlias.documentElement || SnowPlow.documentAlias.body;
+	    }
+	    return e[a+'Width'] + 'x' + e[a+'Height'];
+	}
+
+	/**
+	 * Gets the dimensions of the current
+	 * document.
+	 *
+	 * Code based on:
+	 * - http://andylangton.co.uk/articles/javascript/get-viewport-size-javascript/
+     */
+    function detectDocumentSize() {
+    	var w = Math.max(documentAlias.documentElement.clientWidth, documentAlias.documentElement.offsetWidth, documentAlias.documentElement.scrollWidth);
+    	var h = Math.max(documentAlias.documentElement.clientHeight, documentAlias.documentElement.offsetHeight, documentAlias.documentElement.scrollHeight);
+    	return w + 'x' + h;
+    }
 
 	/*
 	 * Returns browser features (plugins, resolution, cookies)
@@ -1422,13 +1465,36 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		/**
 		 * Track an event happening on this page
 		 *
+		 * DEPRECATED: use getStructEvent instead
+		 *
 		 * @param string category The name you supply for the group of objects you want to track
 		 * @param string action A string that is uniquely paired with each category, and commonly used to define the type of user interaction for the web object
 		 * @param string label (optional) An optional string to provide additional dimensions to the event data
+		 * @param string property (optional) Describes the object or the action performed on it, e.g. quantity of item added to basket
 		 * @param int|float|string value (optional) An integer that you can use to provide numerical data about the user event
 		 */
 		trackEvent: function (category, action, label, property, value) {
-			logEvent(category, action, label, property, value);                   
+
+			if (typeof console !== 'undefined') {
+				console.log("SnowPlow: trackEvent() is deprecated and will be removed in an upcoming version. Please use trackStructEvent() instead.");
+			}
+			logStructEvent(category, action, label, property, value);
+		},
+
+		/**
+		 * Track a structured event happening on this page.
+		 *
+		 * Replaces trackEvent, making clear that the type
+		 * of event being tracked is a structured one.
+		 *
+		 * @param string category The name you supply for the group of objects you want to track
+		 * @param string action A string that is uniquely paired with each category, and commonly used to define the type of user interaction for the web object
+		 * @param string label (optional) An optional string to provide additional dimensions to the event data
+		 * @param string property (optional) Describes the object or the action performed on it, e.g. quantity of item added to basket
+		 * @param int|float|string value (optional) An integer that you can use to provide numerical data about the user event
+		 */
+		trackStructEvent: function (category, action, label, property, value) {
+			logStructEvent(category, action, label, property, value);                   
 		},
 
 		/**
