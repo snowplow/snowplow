@@ -477,7 +477,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			(configTrackerSiteId.length ? '&aid=' + SnowPlow.encodeWrapper(configTrackerSiteId) : '') +
 			'&lang=' + browserLanguage +
 			(configReferrerUrl.length ? '&refr=' + SnowPlow.encodeWrapper(purify(configReferrerUrl)) : '') +
-			(charSet ? '&cs=' + SnowPlow.encodeWrapper(documentCharset) : '');
+			(documentCharset ? '&cs=' + SnowPlow.encodeWrapper(documentCharset) : '');
 
 		// Browser features. Cookies, color depth and resolution don't get prepended with f_ (because they're not optional features)
 		for (i in browserFeatures) {
