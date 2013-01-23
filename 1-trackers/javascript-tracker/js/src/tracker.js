@@ -687,11 +687,10 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			SnowPlow.addEventListener(SnowPlow.windowAlias, 'focus', activityHandler);
 			SnowPlow.addEventListener(SnowPlow.windowAlias, 'blur', activityHandler);
 
-			// Periodic check for activity
+			// Periodic check for activity.
 			lastActivityTime = now.getTime();
-			setTimeout(function heartBeat() {
-				var now = new Date(),
-					request;
+			setInterval(function heartBeat() {
+				var now = new Date();
 
 				// There was activity during the heart beat period;
 				// on average, this is going to overstate the visitDuration by configHeartBeatTimer/2
@@ -700,10 +699,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 					if (configMinimumVisitTime < now.getTime()) {
 						logPagePing(pageTitle);
 					}
-					// Resume heart beat
-					setTimeout(heartBeat, configHeartBeatTimer);
 				}
-				// Else heart beat cancelled due to inactivity
 			}, configHeartBeatTimer);
 		}
 	}
