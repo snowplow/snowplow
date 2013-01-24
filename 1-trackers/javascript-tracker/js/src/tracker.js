@@ -528,7 +528,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * @return string The URL on which the collector is hosted
 	 */
 	function collectorUrlFromCfDist(distSubdomain) {
-			return asCollectorUrl(distSubdomain + '.cloudfront.net');
+		return asCollectorUrl(distSubdomain + '.cloudfront.net');
 	}
 
 	/**
@@ -539,7 +539,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * @return string collectorUrl The tracker URL with protocol
 	 */
 	function asCollectorUrl(rawUrl) {
-			return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + rawUrl + '/i';               
+		return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + rawUrl + '/i';               
 	}
 
 	/**
