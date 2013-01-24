@@ -20,7 +20,7 @@ import com.twitter.scalding._
  * Holds helpers for running integration
  * tests on SnowPlow EtlJobs.
  */
-object EtlJobTestHelpers {
+object TestHelpers {
 
   // Standard JobTest definition used by all integration tests
   val EtlJobTest = 

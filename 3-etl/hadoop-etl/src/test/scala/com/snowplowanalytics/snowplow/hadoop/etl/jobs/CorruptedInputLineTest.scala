@@ -22,7 +22,7 @@ import com.twitter.scalding._
 // This project
 // TODO: remove this when Scalding 0.8.3 released
 import utils.Json2Line
-import EtlJobTestHelpers._
+import TestHelpers._
 
 /**
  * Integration test for the EtlJob:
@@ -31,7 +31,7 @@ import EtlJobTestHelpers._
  * access log format, but the fields
  * are somehow corrupted.
  */
-class CorruptedInputLineJobTest extends Specification with TupleConversions {
+class CorruptedInputLineTest extends Specification with TupleConversions {
 
   "A job which processes a corrupted input line" should {
     "write an error JSON containing the input line and all errors" in {

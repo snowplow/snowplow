@@ -22,7 +22,7 @@ import com.twitter.scalding._
 // This project
 // TODO: remove this when Scalding 0.8.3 released
 import utils.Json2Line
-import EtlJobTestHelpers._
+import TestHelpers._
 
 /**
  * Integration test for the EtlJob:
@@ -30,7 +30,7 @@ import EtlJobTestHelpers._
  * Input data _is_ not in the
  * expected CloudFront format.
  */
-class NonCloudFrontInputLine extends Specification with TupleConversions {
+class NonCfInputLinesTest extends Specification with TupleConversions {
 
   "A job which processes an input line which is not CloudFront format" should {
     "write an error JSON containing the input line and the appropriate error message" in {
