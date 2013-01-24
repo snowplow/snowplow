@@ -1,15 +1,8 @@
-PATH
-  remote: .
-  specs:
-    snowplow-emr-etl-runner (0.0.7)
-      elasticity (~> 2.5)
-      sluice (~> 0.0.6)
-
 GEM
   remote: https://rubygems.org/
   specs:
     builder (3.1.4)
-    elasticity (2.5.2)
+    elasticity (2.5.3)
       fog
       nokogiri
       rest-client
@@ -29,7 +22,7 @@ GEM
     multi_json (1.5.0)
     net-scp (1.0.4)
       net-ssh (>= 1.99.1)
-    net-ssh (2.6.2)
+    net-ssh (2.6.3)
     nokogiri (1.5.6)
     rest-client (1.6.7)
       mime-types (>= 1.16)
@@ -41,4 +34,5 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  snowplow-emr-etl-runner!
+  elasticity (~> 2.5)
+  sluice (~> 0.0.6)

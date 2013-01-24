@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -15,9 +15,14 @@
 #           (runs both the EmrEtlRunner and the StorageLoader)
 
 # Update these for your environment
+rvm_path=/path/to/.rvm # Typically in the $HOME of the user who installed RVM
 RUNNER_PATH=/path/to/snowplow/3-etl/snowplow-emr-etl-runner
 RUNNER_CONFIG=/path/to/your-config.yml
 
+# Load the RVM environment
+export PATH=$PATH:${rvm_path}/bin
+source ${rvm_path}/scripts/rvm
+
 # Run the ETL job on EMR
-BUNDLE_GEMFILE=${RUNNER_PATH}
-bundle exec snowplow-emr-etl-runner --config ${RUNNER_CONFIG}
+export BUNDLE_GEMFILE=${RUNNER_PATH}
+bundle exec ${RUNNER_PATH}/bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG}
