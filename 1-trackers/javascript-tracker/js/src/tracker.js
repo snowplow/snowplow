@@ -428,11 +428,14 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	}
 
 	/*
-	 * Returns the URL to call piwik.php,
-	 * with the standard parameters (plugins, resolution, url, referrer, etc.).
-	 * Sends the pageview and browser settings with every request in case of race conditions.
+	 * Attaches all the common web fields to the request
+	 * (resolution, url, referrer, etc.)
+	 * Also sets the required cookies.
+	 *
+	 * Takes in a string builder, adds in parameters to it
+	 * and then generates the request.
 	 */
-	function getRequest(request, pluginMethod) {
+	function getRequest(sb, pluginMethod) {
 		var i,
 			now = new Date(),
 			nowTs = Math.round(now.getTime() / 1000),
@@ -475,13 +478,12 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			lastVisitTs = currentVisitTs;
 		}
 
-		// Build out the rest of the request
-		var sb = requestStringBuilder(request);
-
+		// Build out the rest of the request - first add fields we can safely skip encoding
 		sb.addRaw('tid', String(Math.random()).slice(2, 8));
 		sb.addRaw('vp', detectViewport());
 		sb.addRaw('ds', detectDocumentSize());
 
+		// Encode all these
 		sb.add('p', configPlatform);		
 		sb.add('tv', SnowPlow.version);
 		sb.add('fp', fingerprint);
@@ -503,8 +505,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		}
 
 		// Add the page URL last as it may take us over the IE limit (and we don't always need it)
-		sb.add('url', purify(window.location));
-		var req = sb.build();
+		sb.add('url', purify(SnowPlow.windowAlias.location));
+		var request = sb.build();
 
 		// Update cookies
 		setVisitorIdCookie(uuid, createTs, visitCount, nowTs, lastVisitTs);
@@ -512,9 +514,9 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 		// Tracker plugin hook
 		// TODO: we can blow this away for SnowPlow
-		req += SnowPlow.executePluginMethod(pluginMethod);
+		request += SnowPlow.executePluginMethod(pluginMethod);
 
-		return req;
+		return request;
 	}
 
 	/**
@@ -539,7 +541,6 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	function asCollectorUrl(rawUrl) {
 			return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + rawUrl + '/i';               
 	}
-
 
 	/**
 	 * A helper to build a SnowPlow request string from an
@@ -587,8 +588,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('ev_la', label);
 		sb.add('ev_pr', property);
 		sb.add('ev_va', value);
-		var params = sb.build();
-		request = getRequest(params, 'event');
+		request = getRequest(sb, 'event');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -609,8 +609,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('ad_ca', action)
 		sb.add('ad_ad', label);
 		sb.add('ad_uid', property);
-		var params = sb.build();
-		request = getRequest(params, 'adimp');
+		request = getRequest(sb, 'adimp');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -640,8 +639,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('tr_ci', city);
 		sb.add('tr_st', state);
 		sb.add('tr_co', country);
-		var params = sb.build();
-		var request = getRequest(params, 'ecommerceTransaction');
+		var request = getRequest(sb, 'ecommerceTransaction');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -665,8 +663,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('ti_ca', category);
 		sb.add('ti_pr', price);
 		sb.add('ti_qu', quantity);
-		var params = sb.build();
-		var request = getRequest(params, 'ecommerceTransactionItem');
+		var request = getRequest(sb, 'ecommerceTransactionItem');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -684,8 +681,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'pv'); // 'pv' for Page View
 		sb.add('page', pageTitle);
-		var params = sb.build();
-		var request = getRequest(params, 'log');
+		var request = getRequest(sb, 'log');
 		sendRequest(request, configTrackerPause);
 
 		// Send ping (to log that user has stayed on page)
@@ -738,8 +734,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'pp'); // 'pp' for Page Ping
 		sb.add('page', pageTitle);
-		var params = sb.build();
-		var request = getRequest(params, 'ping');
+		var request = getRequest(sb, 'ping');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -755,8 +750,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		var sb = requestStringBuilder();
 		sb.add('e', linkType);
 		sb.add('t_url', purify(url));
-		var params = sb.build();
-		var request = getRequest(params, 'link');
+		var request = getRequest(sb, 'link');
 		sendRequest(request, configTrackerPause);
 	}
 
