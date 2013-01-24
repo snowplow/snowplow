@@ -63,13 +63,6 @@ SnowPlow.isString = function (property) {
 }
 
 /*
- * String ends with another string?
- */
-SnowPlow.endsWith = function (str, tail) {
-    return str.slice(-tail.length) === tail;
-}
-
-/*
  * UTF-8 encoding
  */
 SnowPlow.encodeUtf8 = function (argString) {

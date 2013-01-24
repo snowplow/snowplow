@@ -7,7 +7,6 @@ JS tracker: added document charset to querystring (#138)
 JS tracker: page ping no longer killed by 1 heartbeat w/o activity (#132)
 JS tracker: added document & viewport dimensions (#94)
 JS tracker: introduced trackStructEvent and deprecated trackEvent (#143)
-JS tracker: added enableDarkSocial() to set utm_share (#130)
 JS tracker: cleaned up getRequest code to use improved requestStringBuilder
 
 JS tracker: added scroll offsets to page ping (#127) - TODO
@@ -17,16 +16,15 @@ Serde: updated copyright notices - TODO
 Serde: added extraction of doc charset (#138) - TODO
 Serde: added extraction of URL components (#105) - TODO
 Serde: added extraction of document & viewport dimensions (#94) - TODO
-Serde: added extraction of utm_share (#130) - TODO
 Serde: added extraction of scroll offsets for enhanced page ping (#127) - TODO
 HiveQL: hive-rolling-etl.q bumped to 0.5.4 - TODO
 HiveQL: non-hive-rolling-etl.q bumped to 0.0.5 - TODO
 HiveQL: updated copyright notices - TODO
-HiveQL: now supports charset, document & viewport, utm_share, URL components and enhanced page ping - TODO
+HiveQL: now supports charset, document & viewport, URL components and enhanced page ping - TODO
 Infobright: bumped setup_infobright.sql to 0.0.6 - TODO
 Infobright: updated copyright notices - TODO
 Infobright: added migration scripts (0.0.4; 0.0.5 -> 0.0.6) - TODO
-Infobright: added charset, document & viewport, utm_share, URL components and enhanced page ping - TODO
+Infobright: added charset, document & viewport, URL components and enhanced page ping - TODO
 
 Version 0.7.1 (2013-01-22)
 --------------------------
