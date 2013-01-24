@@ -11,7 +11,7 @@ $(function() {
 		alert('variables grabbed');
 		var embedCode = generateNoJsTag(applicationId, selfHostedCollectorUrl, pageTitle, pageUrl);
 		alert('embed code generated');
-		$('#output').append($('<h2>The embed code is:' + embedCode + '</h2>'));
+		$('#output').append($('<h3>The embed code is:</h3><br /><br /><h2>' + embedCode + '</h2>'));
 
 		return false;
 	});
@@ -21,9 +21,14 @@ $(function() {
 		// 1st, let's generate the collectorUrl
 		configCollectorUrl = asCollectorUrl(collectorDomain);
 
+		// 2nd generate the request string
 		request = generateRequestString(appId, pageTitle, pageUrl);
 
-		return configCollectorUrl + '?' + request;
+		// 3rd assemble the tag out of the above two
+		tag = '<img src="' + configCollectorUrl + '?' + request + '" />' ;
+
+		// 4th return the tag, html-escaped so it prints to the screen, rather than actually executing in the browser
+		return htmlEscape(tag);
 	};
 
 	function asCollectorUrl(rawUrl) {
@@ -41,7 +46,7 @@ $(function() {
 		sb.add('aid', appId); 
 
 		sb.add('p', 'web');
-		sb.add('tv', 'nojs-0.1.0') // Update to set this in a config file rather than hardcode, and display on the web page
+		sb.add('tv', 'no-js-0.1.0') // Update to set this in a config file rather than hardcode, and display on the web page
 
 		var request = sb.build();
 
@@ -62,7 +67,7 @@ $(function() {
 		var str = initialValue || '';
 		var addNvPair = function(key, value, encode) {
 			if (value !== undefined && value !== '') {
-				str += '&' + key + '=' + value;
+				str += '&' + key + '=' + (encode ? window.encodeURIComponent(value) : value);
 			}
 		};
 		return {
@@ -77,4 +82,19 @@ $(function() {
 			}
 		}
 	}
+
+
+	/**
+	 * Escapes HTML - used so that the tag is printed to the 
+	 * screen (so it can be copied / pasted), rather than actually executed by the browser
+	 */
+	function htmlEscape(str) {
+    return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+	
 });
