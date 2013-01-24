@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.hadoop.etl
 package jobs
 
 // Specs2
-import org.specs2.mutable.Specification
+import org.specs2.mutable.{Specification, Matcher}
 
 // Scalding
 import com.twitter.scalding._
@@ -32,20 +32,25 @@ import TestHelpers._
  */
 class NonCfInputLinesTest extends Specification with TupleConversions {
 
-  "A job which processes an input line which is not CloudFront format" should {
-    "write an error JSON containing the input line and the appropriate error message" in {
+  "A job which processes input lines not in CloudFront format" should {
+    "write an error JSON with input line and error message for each input line" in {
 
+val m: Matcher[String]  = ((_: String).startsWith("hello"), "doesn't start with hello")
+
+      // TODO: write a zipWith helper
     	val badLines = List(
         "0" -> "",
         "1" -> "NOT VALID",
-        "2" -> "2012-05-21\t07:14:47\tFRA2\t3343\t83.4.209.35\tGET\td3t05xllj8hhgj.cloudfront.net")
+        "2" -> "2012-05-21  07:14:47  FRA2  3343  83.4.209.35 GET d3t05xllj8hhgj.cloudfront.net")
+
+      val expected = (line: String) => """{"line":"%s","errors":["Line does not match CloudFront header or data row formats"]}""".format(line)
 
       EtlJobTest.
         source(MultipleTextLineFiles("inputFolder"), badLines).
-        sink[String](TextLine("outputFolder")){ _ => Unit }.
-        sink[String](Json2Line("errorFolder")){ buf =>
-          val json = buf.head
-          json must_== """{"line":"20yy-05-24  00:08:40  LHR5  3397  74.125.17.210 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(Linux;%20U;%20Android%202.3.4;%20generic)%20AppleWebKit/535.1%20(KHTML,%20like%20Gecko;%20Google%20Web%20Preview)%20Version/4.0%20Mobile%20Safari/535.1  -","errors":["Unexpected exception converting date [20yy-05-24] and time [00:08:40] to timestamp: [Invalid format: \"20yy-05-24T00:08:40\" is malformed at \"yy-05-24T00:08:40\"]","Querystring is empty, cannot extract GET payload"]}"""
+        sink[String](TextLine("outputFolder")){ output => output must beNull }. // TODO check it's empty
+        sink[String](Json2Line("errorFolder")){ json =>
+          for (i <- json.indices)
+            json(i) must_== expected(badLines(i)._2)
         }.
         run.
         finish
