@@ -1,25 +1,59 @@
 $(function() {
+	/**
+	 * The following function generates the embed code when the visitor clicks on the "Generate embed code" button
+	 */
 	$(".button").click(function() {
 		// First clear the output div of any contents (e.g. from tags that were inserted last time the form was submitted)
 		$('#output').html("");
 		alert('starting function!');
+
+		// Now pass the variables in each of the fields into the Javascript, so we can use them to generate the tracking tag
 		var applicationId = $("input#applicationId").val();
-		var cloudfrontSubdomain = $("input#cloudfrontSubdomain").val();
-		var selfHostedCollectorUrl = $("input#selfHostedCollectorUrl").val();
+
+		var isHttps;
+		if ($("input#is-https").is(':checked')) {
+			isHttps = true;
+		} else {
+			isHttps = false;
+		};
+		alert('isHttps = ' + isHttps);
+
 		var pageTitle = $("input#pageTitle").val();
 		var pageUrl = $("input#pageUrl").val();
-		alert('variables grabbed');
-		var embedCode = generateNoJsTag(applicationId, selfHostedCollectorUrl, pageTitle, pageUrl);
-		alert('embed code generated');
-		$('#output').append($('<h3>The embed code is:</h3><br /><br /><h2>' + embedCode + '</h2>'));
 
+		var isCloudfrontCollector
+		if ($("input#is-cloudfront-collector").is(':checked')) {
+			isCloudfrontCollector = true;
+		} else {
+			isCloudfrontCollector = false
+		}
+
+		var cloudfrontSubdomain = $("input#cloudfrontSubdomain").val();
+		var selfHostedCollectorUrl = $("input#selfHostedCollectorUrl").val();
+	
+		alert('variables grabbed');
+
+		var embedCode = generateNoJsTag(applicationId, isHttps, pageTitle, pageUrl, isCloudfrontCollector, cloudfrontSubdomain, selfHostedCollectorUrl);
+		alert('embed code generated');
+		$('#output').append($('<h3>The No-JS tracking tag for this page is:</h3><br /><br /><h2>' + embedCode + '</h2>'));
+
+		// Return false because we do NOT want the page to reload. 
+		// (Which would cause the values entered in the fields to be lost, and the embed code to disappear)
 		return false;
 	});
 
+	/**
+	 * Generates the tag, based on the values inputted on the form above
+	 */
+	function generateNoJsTag(appId, isHttps, pageTitle, pageUrl, isCloudfrontCollector, cloudFrontSubDomain, collectorDomain ){
+		// 1st, let's set the endpoint
+		var configCollectorUrl;
 
-	function generateNoJsTag(appId, collectorDomain, pageTitle, pageUrl){
-		// 1st, let's generate the collectorUrl
-		configCollectorUrl = asCollectorUrl(collectorDomain);
+		if (isCloudfrontCollector) {
+			configCollectorUrl = collectorUrlFromCfDist(cloudFrontSubDomain, isHttps);
+		} else {
+			configCollectorUrl = asCollectorUrl(collectorDomain, isHttps);
+		}
 
 		// 2nd generate the request string
 		request = generateRequestString(appId, pageTitle, pageUrl);
@@ -31,9 +65,19 @@ $(function() {
 		return htmlEscape(tag);
 	};
 
-	function asCollectorUrl(rawUrl) {
+	/**
+	 * Builds a collector URL from a CloudFront distribution.
+	 */
+	function collectorUrlFromCfDist(distSubdomain, isHttps) {
+		return asCollectorUrl(distSubdomain + '.cloudfront.net', isHttps);
+	}
+
+	/** 
+	 * Returns the collector end point based on the raw URL
+	 */
+	function asCollectorUrl(rawUrl, isHttps) {
 		// Add an option in the form to see if page being tracked is HTTPS (so need to replace the `http` below with `https`)?
-		return ( 'http://' + rawUrl + '/i' );               
+		return 'http' + (isHttps ? 's' : '') + '://' + rawUrl + '/i';
 	}
 
 	function generateRequestString(appId, pageTitle, pageUrl){
