@@ -1,7 +1,8 @@
 Version 0.7.2 (2013-01-XX)
 --------------------------
 No-JS tracker: Added
-Serde: Added No-JS tracker test
+Serde: added NoJsTrackerTest
+Serde: fixed CljTomcatFormatTest
 
 Version 0.7.1 (2013-01-22)
 --------------------------
