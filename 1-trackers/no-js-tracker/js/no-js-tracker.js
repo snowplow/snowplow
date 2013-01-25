@@ -9,15 +9,8 @@ $(function() {
 
 		// Now pass the variables in each of the fields into the Javascript, so we can use them to generate the tracking tag
 		var applicationId = $("input#applicationId").val();
-
-		var isHttps;
-		if ($("input#is-https").is(':checked')) {
-			isHttps = true;
-		} else {
-			isHttps = false;
-		};
-		alert('isHttps = ' + isHttps);
-
+		var pageScheme = $("input#pageScheme").val();
+		
 		var pageTitle = $("input#pageTitle").val();
 		var pageUrl = $("input#pageUrl").val();
 
@@ -33,7 +26,7 @@ $(function() {
 	
 		alert('variables grabbed');
 
-		var embedCode = generateNoJsTag(applicationId, isHttps, pageTitle, pageUrl, isCloudfrontCollector, cloudfrontSubdomain, selfHostedCollectorUrl);
+		var embedCode = generateNoJsTag(applicationId, pageScheme, pageTitle, pageUrl, isCloudfrontCollector, cloudfrontSubdomain, selfHostedCollectorUrl);
 		alert('embed code generated');
 		$('#output').append($('<h3>The No-JS tracking tag for this page is:</h3><br /><br /><h2>' + embedCode + '</h2>'));
 
@@ -45,18 +38,18 @@ $(function() {
 	/**
 	 * Generates the tag, based on the values inputted on the form above
 	 */
-	function generateNoJsTag(appId, isHttps, pageTitle, pageUrl, isCloudfrontCollector, cloudFrontSubDomain, collectorDomain ){
+	function generateNoJsTag(appId, pageScheme, pageTitle, pageUrl, isCloudfrontCollector, cloudFrontSubDomain, collectorDomain ){
 		// 1st, let's set the endpoint
 		var configCollectorUrl;
 
 		if (isCloudfrontCollector) {
-			configCollectorUrl = collectorUrlFromCfDist(cloudFrontSubDomain, isHttps);
+			configCollectorUrl = collectorUrlFromCfDist(cloudFrontSubDomain, pageScheme);
 		} else {
-			configCollectorUrl = asCollectorUrl(collectorDomain, isHttps);
+			configCollectorUrl = asCollectorUrl(collectorDomain, pageScheme);
 		}
 
 		// 2nd generate the request string
-		request = generateRequestString(appId, pageTitle, pageUrl);
+		request = generateRequestString(appId, pageTitle, pageUrl, pageScheme);
 
 		// 3rd assemble the tag out of the above two
 		tag = '<img src="' + configCollectorUrl + '?' + request + '" />' ;
@@ -68,25 +61,25 @@ $(function() {
 	/**
 	 * Builds a collector URL from a CloudFront distribution.
 	 */
-	function collectorUrlFromCfDist(distSubdomain, isHttps) {
-		return asCollectorUrl(distSubdomain + '.cloudfront.net', isHttps);
+	function collectorUrlFromCfDist(distSubdomain, pageScheme) {
+		return asCollectorUrl(distSubdomain + '.cloudfront.net', pageScheme);
 	}
 
 	/** 
 	 * Returns the collector end point based on the raw URL
 	 */
-	function asCollectorUrl(rawUrl, isHttps) {
+	function asCollectorUrl(rawUrl, pageScheme) {
 		// Add an option in the form to see if page being tracked is HTTPS (so need to replace the `http` below with `https`)?
-		return 'http' + (isHttps ? 's' : '') + '://' + rawUrl + '/i';
+		return pageScheme + '://' + rawUrl + '/i';
 	}
 
-	function generateRequestString(appId, pageTitle, pageUrl){
+	function generateRequestString(appId, pageTitle, pageUrl, pageScheme){
 		// Need to fixup pageTitle AND encode URL prior to code below
 		sb = new requestStringBuilder();
 
 		sb.add('e','pv'); // 'pv' for Page View	
 		sb.add('page', pageTitle); 
-		sb.add('url', pageUrl);
+		sb.add('url', (pageScheme + '://' + pageUrl));
 		sb.add('aid', appId); 
 
 		sb.add('p', 'web');
