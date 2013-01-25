@@ -22,6 +22,8 @@
 
 We welcome community contributions of additional Trackers! We have a guide to contributing Trackers coming soon on the Wiki. 
 
+![Tracker](https://collector.snplow.com/i?&e=pv&page=1%20Trackers%20README&aid=snowplowgithub&p=web&tv=no-js-0.1.0)
+
 [architecture-image]: https://github.com/snowplow/snowplow/raw/master/1-trackers/1-trackers.png
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
 [t1]: ./1-trackers/javascript-tracker/
