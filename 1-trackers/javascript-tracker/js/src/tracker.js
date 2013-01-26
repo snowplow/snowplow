@@ -141,7 +141,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		configAttachUserId = true, 
 
 		// Should cookies have the secure flag set
-		cookieSecure = SnowPlow.documentAlias.location.protocol === 'https',
+		cookieSecure = SnowPlow.documentAlias.location.protocol === 'https:',
 
 		// Browser language (or Windows language for IE). Imperfect but CloudFront doesn't log the Accept-Language header
 		browserLanguage = SnowPlow.navigatorAlias.userLanguage || SnowPlow.navigatorAlias.language,
