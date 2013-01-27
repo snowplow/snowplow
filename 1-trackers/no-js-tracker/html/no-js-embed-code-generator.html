@@ -6,13 +6,12 @@
 	
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
 	<script src="../js/no-js-tracker.js"></script>
+
+	<LINK href="../css/styles.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-
-	<h1>No-Javascript Tracker for SnowPlow</h1>
-
-	<h2>No-JS tracking tag generator</h2>
-
+	<div id="title">
+	</div>
 	<div id="introduction">
 		<p>The No-Javascript Tracker for SnowPlow allows you to track customer behaviour in web-based environments that do not support Javascript, for example:</p>
 		<ul>
@@ -28,7 +27,7 @@
 	<div id="generator">
 		<p>Fill in the fields below, hit <a href="">Generate URL</a> and then embed that tag in your HTML to start tracking user views on that web page:</p>
 		
-		<form id="generateurlform" name="generateurlform" action="" >
+		<form id="generateTagForm" name="generateTagForm" action="" >
 		<fieldset>
 			<fieldset>
 				<h4>Application data</h4>
@@ -38,10 +37,10 @@
 			</fieldset>
 			<fieldset>
 				<h4>Page-level data</h4>
-				<p>This is used so you can compare data for different web pages you are tracking using the No-JS tracker.</p>
-				<label for="http-or-https" id="http-or-https_label" name="http-or-https_label">Is the page your are tracking HTTP or HTTPS?</label><br />
+				<p>Enter the details of the page you wish to embed the tracking code in.</p>
+				<label>Is the page HTTP or HTTPS?</label>
+				<input type="radio" id="pageScheme" name="pageScheme" value="http" />HTTP
 				<input type="radio" id="pageScheme" name="pageScheme" value="https" />HTTPS</br>
-				<input type="radio" id="pageScheme" name="pageScheme" value="http" />HTTP</br>
 				<label for="pageTitle" id="pageTitle_label">Page title:</label>
 				<input type="text" id="pageTitle" name="pageTitle" size="30" value="" class="text-input" /><br />
 				<label for="pageUrl" id="pageUrl_label">Page URL:</label>
@@ -52,8 +51,8 @@
 				<p>This data is used to set the endpoint for the embed code to your collector, so that the data is passed to your SnowPlow instance.</p>
 				<div id="collector-selector"></div>
 				<label for="collector-selector_label">Select your collector type</label><br />
-				<input type="checkbox" id="is-cloudfront-collector" name="is-cloudfront-collector" />Cloudfront collector<br />
-				<input type="checkbox" id="is-not-cloudfront-collector" name="is-not-cloudfront-collector" />Other collector (e.g. Clojure collector)<br />
+				<input type="radio" id="cloudfrontCollectorType" name="collectorType" value="cloudfront" />Cloudfront collector<br />
+				<input type="radio" id="otherCollectorType" name="collectorType" value="other" />Other collector (e.g. Clojure collector)<br />
 				<div id="cloudfront-collector-div">
 					<label for="cloudfront" id="cloudfrontSubdomain_label">Your Cloudfront subdomain:</label>
 					<input type="text" id="cloudfrontSubdomain" name="cloudfrontSubdomain" size="30" value="" class="text-input" /><br />
