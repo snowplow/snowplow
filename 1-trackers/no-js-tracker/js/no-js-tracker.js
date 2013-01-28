@@ -5,7 +5,7 @@ $(function() {
 	 * On page load... 
 	 */
 	// 1. Display the title including tracker version
-	$('#title').append($('<h1>No-Javascript Tracker for SnowPlow</h1><h2>No-JS tracking tag generator version ' + trackerVersion + '</h2>'));
+	$('#title').append($('<h1>No-Javascript Tracker for SnowPlow</h1><h2>No-JS tracking tag generator version <code>' + trackerVersion + '</code></h2>'));
 	
 	// 2. Set the radio buttons to default options i.e. scheme = HTTP and collectorType = cloudfront...
 	$('input:radio[name=pageScheme]:nth(0)').attr('checked',true);
@@ -44,23 +44,61 @@ $(function() {
 		var pageScheme = $('input:radio[name=pageScheme]:checked').val();
 		
 		var pageTitle = $("input#pageTitle").val();
-		var pageUrl = $("input#pageUrl").val();
-
+		var pageUrlRaw = $("input#pageUrl").val();
+		var pageUrl = removeScheme(pageUrlRaw); // Remove the pageScheme (i.e. HTTPS / HTTP) if present on the value entered
+		
 		// var collectorType = $("input#collectorType").val();
 		var collectorType = $('input:radio[name=collectorType]:checked').val();
 		
-		var cloudfrontSubdomain = $("input#cloudfrontSubdomain").val();
-		var selfHostedCollectorUrl = $("input#selfHostedCollectorUrl").val();
-	
+		var cloudfrontSubDomain = $("input#cloudfrontSubdomain").val();
+		var selfHostedCollectorUrlRaw = $("input#selfHostedCollectorUrl").val();
+		var selfHostedCollectorUrl = removeScheme(selfHostedCollectorUrlRaw); // Remove the pageScheme (i.e. HTTPS / HTTP) if present on the value entered
 		
-		var embedCode = generateNoJsTag(applicationId, pageScheme, pageTitle, pageUrl, collectorType, cloudfrontSubdomain, selfHostedCollectorUrl);
-		alert('embed code generated');
-		$('#output').append($('<h3>The No-JS tracking tag for this page is:</h3><h2>' + embedCode + '</h2>'));
+		// Validate the input, and if all the required fields have been provided, generate the tracking tag
+		if ( isValidated(applicationId, pageTitle, collectorType, cloudfrontSubDomain, selfHostedCollectorUrlRaw) ) {
+			var embedCode = generateNoJsTag(applicationId, pageScheme, pageTitle, pageUrl, collectorType, cloudfrontSubdomain, selfHostedCollectorUrl);
+			$('#output').append($('<h3>The No-JS tracking tag for this page is:</h3><h2>' + embedCode + '</h2>'));
+		};
+		
 
 		// Return false because we do NOT want the page to reload. 
 		// (Which would cause the values entered in the fields to be lost, and the embed code to disappear)
 		return false;
 	});
+
+	/**
+	 * Validate that the required fields have all been inputted
+	 */
+	function isValidated(applicationId, pageTitle, collectorType, cloudfrontSubDomain, selfHostedCollectorUrlRaw) {
+		if ( applicationId == ''  || applicationId == undefined ) {
+			alert('Please enter an application ID');
+			return false;
+		}
+		
+		if ( pageTitle == '' || pageTitle == undefined ) {
+			alert('Please enter a page title');
+			return false;
+		}
+
+		if (collectorType == 'cloudfront') {
+			// check if the subdomain has been set
+			
+			if ( cloudfrontSubDomain == '' || cloudfrontSubDomain == undefined ) {
+				alert('Please enter a Cloudfront subdomain');
+				return false;
+			} else {
+				return true;
+			}
+		} else {
+			// check if the collector endpoint URL has been set
+			if (selfHostedCollectorUrlRaw == '' || selfHostedCollectorUrlRaw == undefined ) {
+				alert('Please enter a collector URL');
+				return false;
+			} else {
+				return true;
+			}
+		}
+	};
 
 	/**
 	 * Generates the tag, based on the values inputted on the form above
@@ -79,7 +117,9 @@ $(function() {
 		request = generateRequestString(appId, pageTitle, pageUrl, pageScheme);
 
 		// 3rd assemble the tag out of the above two
-		tag = '<img src="' + configCollectorUrl + '?' + request + '" />' ;
+		tag = [	'<!--SnowPlow start plowing-->',
+				'<img src="' + configCollectorUrl + '?' + request + '" />',
+				'<!--SnowPlow stop plowing-->'].join('\n') ;
 
 		// 4th return the tag, html-escaped so it prints to the screen, rather than actually executing in the browser
 		return htmlEscape(tag);
@@ -106,7 +146,10 @@ $(function() {
 
 		sb.add('e','pv'); // 'pv' for Page View	
 		sb.add('page', pageTitle); 
-		sb.add('url', (pageScheme + '://' + pageUrl));
+		// Only add the URL parameter if the user has entered a page URL (i.e. not if the value is blank)
+		if ( pageUrl != '') { 
+			sb.add('url', (pageScheme + '://' + pageUrl));
+		};
 		sb.add('aid', appId); 
 
 		sb.add('p', 'web');
@@ -160,5 +203,17 @@ $(function() {
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
     }
-	
+
+    /**
+	 * Removes scheme i.e. `http://` or `https://` from the beginning of a string if it is present
+	 */
+	function removeScheme(url){
+		if ( url.substring(0,8) == 'https://' ) {
+			return url.slice(8);
+		} else if ( url.substring(0,7) == 'http://' ) {
+			return url.slice(7);
+		} else {
+			return url;
+		}
+	}	
 });
