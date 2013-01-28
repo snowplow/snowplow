@@ -1,10 +1,13 @@
 Version 0.7.2 (2013-01-XX)
 --------------------------
 No-JS tracker: added. Version 0.1.0
+JS tracker: bumped to 0.9.1
+JS tracker: fixed bug where secure flag not being set on cookies sent via HTTPS
 Clojure Collector: bumped to 0.2.0
 Clojure Collector: fixed Tomcat config issue of times being recorded in 12-hour clock
 Serde: added NoJsTrackerTest
 Serde: fixed CljTomcatFormatTest
+
 
 Version 0.7.1 (2013-01-22)
 --------------------------
