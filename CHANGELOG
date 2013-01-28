@@ -8,7 +8,6 @@ Clojure Collector: fixed Tomcat config issue of times being recorded in 12-hour 
 Serde: added NoJsTrackerTest
 Serde: fixed CljTomcatFormatTest
 
-
 Version 0.7.1 (2013-01-22)
 --------------------------
 EmrEtlRunner: bumped to 0.0.8
