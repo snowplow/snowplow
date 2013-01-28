@@ -24,6 +24,8 @@ A **Collector** receives SnowPlow events from one or more [Trackers]
 
 We welcome community contributions of additional Collectors! We have a guide to contributing Collectors coming soon on the Wiki. 
 
+![Tracker](https://collector.snplow.com/i?&e=pv&page=2%20Collectors%20README&aid=snowplowgithub&p=web&tv=no-js-0.1.0)
+
 [architecture-image]: https://github.com/snowplow/snowplow/raw/master/2-collectors/2-collectors.png
 [trackers]: https://github.com/snowplow/snowplow/tree/master/1-trackers
 [etl]: https://github.com/snowplow/snowplow/tree/master/3-etl
