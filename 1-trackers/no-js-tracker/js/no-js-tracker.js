@@ -1,5 +1,5 @@
 $(function() {
-	var trackerVersion = 'no-js-0.0.1';
+	var trackerVersion = 'no-js-0.1.0';
 
 	/**
 	 * On page load... 
