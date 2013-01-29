@@ -13,6 +13,13 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package jobs
 
+// Scala
+import scala.collection.mutable.ListBuffer
+
+// Specs2
+import org.specs2.matcher.Matcher
+import org.specs2.matcher.Matchers._
+
 // Scalding
 import com.twitter.scalding._
 
@@ -21,6 +28,8 @@ import com.twitter.scalding._
  * tests on SnowPlow EtlJobs.
  */
 object TestHelpers {
+
+	val beEmpty: Matcher[ListBuffer[_]]  = ((_: ListBuffer[_]).isEmpty, "is not empty")
 
   // Standard JobTest definition used by all integration tests
   val EtlJobTest = 

@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.hadoop.etl
 package jobs
 
 // Specs2
-import org.specs2.mutable.{Specification, Matcher}
+import org.specs2.mutable.Specification
 
 // Scalding
 import com.twitter.scalding._
@@ -35,8 +35,6 @@ class NonCfInputLinesTest extends Specification with TupleConversions {
   "A job which processes input lines not in CloudFront format" should {
     "write an error JSON with input line and error message for each input line" in {
 
-val m: Matcher[String]  = ((_: String).startsWith("hello"), "doesn't start with hello")
-
       // TODO: write a zipWith helper
     	val badLines = List(
         "0" -> "",
@@ -47,7 +45,7 @@ val m: Matcher[String]  = ((_: String).startsWith("hello"), "doesn't start with 
 
       EtlJobTest.
         source(MultipleTextLineFiles("inputFolder"), badLines).
-        sink[String](TextLine("outputFolder")){ output => output must beNull }. // TODO check it's empty
+        sink[String](TextLine("outputFolder")){ output => output must beEmpty }.
         sink[String](Json2Line("errorFolder")){ json =>
           for (i <- json.indices)
             json(i) must_== expected(badLines(i)._2)
