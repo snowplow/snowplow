@@ -50,13 +50,13 @@ $(function() {
 		// var collectorType = $("input#collectorType").val();
 		var collectorType = $('input:radio[name=collectorType]:checked').val();
 		
-		var cloudfrontSubDomain = $("input#cloudfrontSubdomain").val();
+		var cloudfrontSubDomain = $("input#cloudfrontSubDomain").val();
 		var selfHostedCollectorUrlRaw = $("input#selfHostedCollectorUrl").val();
 		var selfHostedCollectorUrl = removeScheme(selfHostedCollectorUrlRaw); // Remove the pageScheme (i.e. HTTPS / HTTP) if present on the value entered
 		
 		// Validate the input, and if all the required fields have been provided, generate the tracking tag
 		if ( isValidated(applicationId, pageTitle, collectorType, cloudfrontSubDomain, selfHostedCollectorUrlRaw) ) {
-			var embedCode = generateNoJsTag(applicationId, pageScheme, pageTitle, pageUrl, collectorType, cloudfrontSubdomain, selfHostedCollectorUrl);
+			var embedCode = generateNoJsTag(applicationId, pageScheme, pageTitle, pageUrl, collectorType, cloudfrontSubDomain, selfHostedCollectorUrl);
 			$('#output').append($('<h3>The No-JS tracking tag for this page is:</h3><h2>' + embedCode + '</h2>'));
 		};
 		
@@ -128,8 +128,8 @@ $(function() {
 	/**
 	 * Builds a collector URL from a CloudFront distribution.
 	 */
-	function collectorUrlFromCfDist(distSubdomain, pageScheme) {
-		return asCollectorUrl(distSubdomain + '.cloudfront.net', pageScheme);
+	function collectorUrlFromCfDist(distSubDomain, pageScheme) {
+		return asCollectorUrl(distSubDomain + '.cloudfront.net', pageScheme);
 	}
 
 	/** 
