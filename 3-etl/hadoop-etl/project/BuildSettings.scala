@@ -24,6 +24,7 @@ object BuildSettings {
     description   := "The SnowPlow Hadoop ETL process, written in Scalding",
     scalaVersion  := "2.9.2", // -> 2.10.0 when Scalding is ready
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
+    parallelExecution in Test := false, // Parallel tests cause havoc with MapReduce
     resolvers     ++= Dependencies.resolutionRepos
   )
 

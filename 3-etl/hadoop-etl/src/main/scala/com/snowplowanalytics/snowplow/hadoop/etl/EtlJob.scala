@@ -16,12 +16,16 @@ package com.snowplowanalytics.snowplow.hadoop.etl
 import scalaz._
 import Scalaz._
 
+// Cascading
+import cascading.tuple.Fields
+
 // Scalding
 import com.twitter.scalding._
 
 // This project
 import inputs.CanonicalInput
 import utils.Json2Line
+import outputs.TestOutput
 
 /**
  * The SnowPlow ETL job, written in Scalding
@@ -65,5 +69,12 @@ class EtlJob(args: Args) extends Job(args) {
         case _ => None // Drop errors *and* blank rows
       }
     }
+    .mapTo('good -> 'poso) { i: CanonicalInput =>
+      val b = new TestOutput;
+      b.fieldOne = "HELLO"
+      // Imagine another 66 fields
+      b
+    }
+    .unpackTo[TestOutput]('poso -> Fields.ALL)
     .write(goodOutput)
 }
