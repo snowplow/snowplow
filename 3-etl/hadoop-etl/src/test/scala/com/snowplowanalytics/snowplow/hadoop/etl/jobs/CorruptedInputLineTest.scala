@@ -46,5 +46,6 @@ class CorruptedInputLineTest extends Specification with TupleConversions {
         run.
         finish
         success
-  }}
+    }
+  }
 }

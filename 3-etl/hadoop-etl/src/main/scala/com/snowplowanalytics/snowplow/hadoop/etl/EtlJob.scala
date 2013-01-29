@@ -75,6 +75,6 @@ class EtlJob(args: Args) extends Job(args) {
       // Imagine another 66 fields
       b
     }
-    .unpackTo[TestOutput]('poso -> Fields.ALL)
+    .unpackTo[TestOutput]('poso -> Fields.RESULTS)
     .write(goodOutput)
 }
