@@ -8,10 +8,11 @@
 
 ## Available trackers
 
-| Tracker                   | Description                                          | Status           | Read more |
-|---------------------------|------------------------------------------------------|------------------|-----------|
-| [javascript-tracker] [t1] | A client-side JavaScript tracker for web browser use | Production-ready | Wiki      |
-| contrib-ios-tracker       | Coming soon from a community member                  | Pre-alpha        | -         | 
+| Tracker                   | Description                                          | Status               | Read more |
+|---------------------------|------------------------------------------------------|----------------------|-----------|
+| [javascript-tracker] [t1] | A client-side JavaScript tracker for web browser use | Production-ready     | Wiki      |
+| [no-js-tracker] [t2]      | A pixel-based tracker for no-JavaScript web environments | Production-ready | Wiki      |
+| contrib-ios-tracker       | Coming soon from a community member                  | Pre-alpha            | -         | 
 
 ## Useful resources
 
@@ -27,6 +28,7 @@ We welcome community contributions of additional Trackers! We have a guide to co
 [architecture-image]: https://github.com/snowplow/snowplow/raw/master/1-trackers/1-trackers.png
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
 [t1]: ./1-trackers/javascript-tracker/
+[t2]: ./1-trackers/no-js-tracker/
 [setup]: https://github.com/snowplow/snowplow/wiki/choosing-a-tracker
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/trackers
 [wiki]: https://github.com/snowplow/snowplow/wiki/trackers
