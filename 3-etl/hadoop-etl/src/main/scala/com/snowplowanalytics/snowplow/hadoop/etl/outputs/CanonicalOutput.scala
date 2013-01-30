@@ -15,11 +15,19 @@ package outputs
 
 /**
  * The canonical output format.
- * Once an event has been
- * processed into the canonical
- * format, it can then be modified
- * to fit one of our output formats
- * (Hive or non-Hive).
+ *
+ * For simplicity, we are using our
+ * "non-Hive" format as the canonical
+ * format. I.e. the below is
+ * equivalent to the
+ * non-hive-rolling-etl.q HiveQL
+ * script used by the Hive ETL.
+ *
+ * When we move to Avro, we will
+ * probably review some of these
+ * types (e.g. move back to
+ * Array for browser features, and
+ * switch remaining Bytes to Booleans.
  */
 class CanonicalOutput {
 
@@ -64,7 +72,7 @@ class CanonicalOutput {
   var ev_action: String = _
   var ev_label: String = _
   var ev_property: String = _
-  var ev_value: Float = _
+  var ev_value: String = _
 
   // User Agent
   var useragent: String = _
@@ -78,16 +86,17 @@ class CanonicalOutput {
 
   // Browser (from querystring)
   var br_lang: String = _
-  var br_features_pdf: Boolean = _
-  var br_features_flash: Boolean = _
-  var br_features_java: Boolean = _
-  var br_features_director: Boolean = _
-  var br_features_quicktime: Boolean = _
-  var br_features_realplayer: Boolean = _
-  var br_features_windowsmedia: Boolean = _
-  var br_features_gears: Boolean = _
-  var br_features_silverlight: Boolean = _
-  var br_cookies: Boolean = _
+  // Individual feature fields for non-Hive targets (e.g. Infobright)
+  var br_features_pdf: Byte = _
+  var br_features_flash: Byte = _
+  var br_features_java: Byte = _
+  var br_features_director: Byte = _
+  var br_features_quicktime: Byte = _
+  var br_features_realplayer: Byte = _
+  var br_features_windowsmedia: Byte = _
+  var br_features_gears: Byte = _
+  var br_features_silverlight: Byte = _
+  var br_cookies: Byte = _
   var br_colordepth: String = _
 
   // OS (from user-agent)
@@ -98,7 +107,7 @@ class CanonicalOutput {
 
   // Device/Hardware (from user-agent)
   var dvce_type: String = _
-  var dvce_ismobile: Boolean = _
+  var dvce_ismobile: Byte = _
 
   // Device (from querystring)
   var dvce_screenwidth: Int = _
