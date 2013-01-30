@@ -94,27 +94,36 @@ object EnrichmentManager {
 
       name match {
         // Event type
-        case "e" => { 
+        case "e" =>
           EventEnrichments.extractEventType(value).fold(
             e => errors ++ e,
             s => event.event = s)
-        }
         // IP address override
         case "ip" => event.user_ipaddress = value
         // Application/site ID
         case "aid" => event.app_id = value
         // Platform
-        case "p" => {
+        case "p" =>
           MiscEnrichments.extractPlatform(value).fold(
             e => errors ++ e,
             s => event.platform = s)
-        }
         // Transaction ID
         case "tid" => event.txn_id = value
         // User ID
         case "uid" => event.user_id = value
         // User fingerprint
         case "fp" => event.user_fingerprint = value
+        // Visit ID
+        // TODO: need to validate this is a number
+        // Client timestamp
+        // TODO: we want to put this into separate client dt, tm fields: #149
+        case "tstamp" =>
+          EventEnrichments.extractTimestamp(value).fold(
+            e => errors + e,
+            s => {
+              event.dt = s._1
+              event.tm = s._2
+            })
         // TODO: add a warning if unrecognised parameter found
       }
     })

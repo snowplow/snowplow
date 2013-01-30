@@ -37,6 +37,8 @@ object EventEnrichments {
    * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-common-params
    */
   private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH-mm-ss")
+  private val DtFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
+  private val TmFormat = DateTimeFormat.forPattern("HH-mm-ss")  
 
   /**
    * Extracts the timestamp from the
@@ -48,12 +50,14 @@ object EventEnrichments {
    * @param tstamp The timestamp as
    *        stored in the Tracker
    *        Protocol
-   * @return a Joda DateTime, or an
-   *         error message if the format
-   *         was invalid
+   * @return a Tuple of two Strings
+   *         (date and time), or an
+   *         error message if the
+   *         format was invalid
    */
-  def extractTimestamp(tstamp: String): Validation[String, DateTime] = try {
-    TstampFormat.parseDateTime(tstamp).success
+  def extractTimestamp(tstamp: String): Validation[String, (String, String)] = try {
+      val t = TstampFormat.parseDateTime(tstamp)
+      (DtFormat.print(t), TmFormat.print(t)).success
     } catch {
       case iae: IllegalArgumentException =>
         "[%s] is not in the expected timestamp format".format(tstamp).fail
