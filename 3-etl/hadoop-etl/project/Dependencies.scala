@@ -18,7 +18,9 @@ object Dependencies {
     // Required for our Scalaz snapshot
     "Typesafe Snapshots" at "http://repo.typesafe.com/typesafe/snapshots/",
      // For some misc Scalding and Twitter libs
-    "Concurrent Maven Repo" at "http://conjars.org/repo"
+    "Concurrent Maven Repo" at "http://conjars.org/repo",
+    // For scala-util currently
+    "SnowPlow Analytics Maven repo" at "http://maven.snplow.com/releases/"
   )
 
   object V {
@@ -30,6 +32,7 @@ object Dependencies {
     val scalding    = "0.8.2"
     val scalaz7     = "7.0-SNAPSHOT" // -> "7.0.0" when released
     val jerkson     = "0.7.0"
+    val scalaUtil   = "0.1.0"
     val specs2      = "1.12.3" // -> "1.13" when we bump to Scala 2.10.0
     // val useragent = "1.6" No Maven repo, so user-agent-utils is an unmanaged lib
   }
@@ -45,6 +48,7 @@ object Dependencies {
     val scalding    = "com.twitter"                %% "scalding"            % V.scalding
     val scalaz7     = "org.scalaz"                 %% "scalaz-core"         % V.scalaz7
     val jerkson     = "io.backchat.jerkson"        %% "jerkson"             % V.jerkson
+    val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"          % V.scalaUtil
     // Scala (test only)
     val specs2      = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
   }

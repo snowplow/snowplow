@@ -21,6 +21,7 @@ import org.apache.http.NameValuePair
 
 // This project
 import etl.inputs.CanonicalInput
+import etl.outputs.NonHiveOutput
 
 /**
  * Scala package object to hold types,
@@ -68,6 +69,13 @@ package object etl {
    * @tparam A the type of `Success`
    */
   type MaybeUnexpectedError[A] = ValidationNEL[String, A]
+
+  /**
+   * Type alias for either a `ValidationNEL`
+   * containing Strings for `Failure`
+   * or a NonHiveOutput for `Success`.
+   */
+  type MaybeNonHiveOutput = ValidationNEL[String, NonHiveOutput]
 
   /**
    * Type alias for a `PartialFunction`

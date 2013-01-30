@@ -33,9 +33,10 @@ object SnowPlowHadoopEtlBuild extends Build {
         Libraries.yodaTime,
         Libraries.yodaConvert,
         // Scala
-        // Libraries.scalding,
+        Libraries.scalding,
         Libraries.scalaz7,
         Libraries.jerkson,
+        Libraries.scalaUtil,
         // Scala (test only)
         Libraries.specs2
         // Add your additional libraries here (comma-separated)...
