@@ -136,7 +136,7 @@ object EnrichmentManager {
         case "lang" => event.br_lang = value
         // Browser has PDF?
         case "f_pdf" =>
-          TypedEnrichments.extractByte(value, "Visit ID").fold(
+          TypedEnrichments.extractByte(value, "Feature: PDF").fold(
             e => errors.append(e),
             s => event.br_features_pdf = s)
 
