@@ -42,7 +42,7 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-	def enrichEvent(raw: CanonicalInput): MaybeNonHiveOutput = {
+  def enrichEvent(raw: CanonicalInput): MaybeNonHiveOutput = {
 
     // 1. Enrichments not expected to fail
 
