@@ -13,6 +13,9 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package enrichments
 
+// Scala
+import scala.collection.mutable.ListBuffer
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -64,7 +67,7 @@ object EnrichmentManager {
 
     // Create a list of failed validation messages
     // Yech mutable. This isn't the Scalaz way
-    var errors: List[String] = Nil
+    var errors = new ListBuffer[String]
 
     // 2a. Failable enrichments which don't need the payload
 
@@ -96,7 +99,7 @@ object EnrichmentManager {
         // Event type
         case "e" =>
           EventEnrichments.extractEventType(value).fold(
-            e => errors ++ e,
+            e => errors.append(e),
             s => event.event = s)
         // IP address override
         case "ip" => event.user_ipaddress = value
@@ -105,7 +108,7 @@ object EnrichmentManager {
         // Platform
         case "p" =>
           MiscEnrichments.extractPlatform(value).fold(
-            e => errors ++ e,
+            e => errors.append(e),
             s => event.platform = s)
         // Transaction ID
         case "tid" => event.txn_id = value
@@ -114,12 +117,15 @@ object EnrichmentManager {
         // User fingerprint
         case "fp" => event.user_fingerprint = value
         // Visit ID
-        // TODO: need to validate this is a number
+        case "vid" =>
+          /* MiscEnrichments.extractInt(value, "Visit ID").fold(
+            e => errors.append(e),
+            s => event.visit_id = s) */
         // Client date and time
         // TODO: we want to move this into separate client dt, tm fields: #149
         case "tstamp" =>
           EventEnrichments.extractTimestamp(value).fold(
-            e => errors + e,
+            e => errors.append(e),
             s => {
               event.dt = s._1
               event.tm = s._2
@@ -128,13 +134,18 @@ object EnrichmentManager {
         case "tv" => event.v_tracker = value
         // Browser language
         case "lang" => event.br_lang = value
+        // Browser has PDF?
+        case "f_pdf" =>
+          /* MiscEnrichments.extractByte(value, "Visit ID").fold(
+            e => errors.append(e),
+            s => event.br_features_pdf = s) */
 
         // TODO: add a warning if unrecognised parameter found
       }
     })
 
     // Do we have errors, or a valid event?
-    errors match {
+    errors.toList match {
       case h :: t => NonEmptyList(h, t: _*).fail
       case _ => event.success
     }
