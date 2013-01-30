@@ -62,6 +62,10 @@ object EnrichmentManager {
 
     // 2. Enrichments which can fail
 
+    // Create a list of failed validation messages
+    // Yech mutable. This isn't the Scalaz way
+    var errors: List[String] = Nil
+
     // 2a. Failable enrichments which don't need the payload
 
     // Useragent analysis TODO
@@ -75,10 +79,6 @@ object EnrichmentManager {
       case NVGetPayload(p) => p
       case _ => throw new Exception("OH MY GOD")
     }
-
-    // Create a list of failed validation messages
-    // Yech mutable. This isn't the Scalaz way
-    var errors: List[String] = Nil
 
     // We copy the Hive ETL approach: one
     // big loop through all the NV pairs
