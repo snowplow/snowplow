@@ -41,6 +41,18 @@ object EventEnrichments {
   private val TmFormat = DateTimeFormat.forPattern("HH-mm-ss")  
 
   /**
+   * Splits a Joda DateTime into
+   * separate time and date Strings
+   *
+   * @param datetime The Joda DateTime
+   *        to split into two
+   * @return a Tuple of two Strings
+   *         (date and time)
+   */
+  def splitDatetime(datetime: DateTime): DateTimeTuple =
+    (DtFormat.print(datetime), TmFormat.print(datetime))
+
+  /**
    * Extracts the timestamp from the
    * format as laid out in the Tracker
    * Protocol:
@@ -55,9 +67,9 @@ object EventEnrichments {
    *         error message if the
    *         format was invalid
    */
-  def extractTimestamp(tstamp: String): Validation[String, (String, String)] = try {
+  def extractTimestamp(tstamp: String): Validation[String, DateTimeTuple] = try {
       val t = TstampFormat.parseDateTime(tstamp)
-      (DtFormat.print(t), TmFormat.print(t)).success
+      splitDatetime(t).success
     } catch {
       case iae: IllegalArgumentException =>
         "[%s] is not in the expected timestamp format".format(tstamp).fail

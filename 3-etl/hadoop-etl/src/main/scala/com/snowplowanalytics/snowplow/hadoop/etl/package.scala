@@ -33,6 +33,13 @@ import etl.outputs.NonHiveOutput
 package object etl {
 
   /**
+   * Because analysis is always easier
+   * when date and time are in
+   * separate fields.
+   */
+  type DateTimeTuple = (String, String)
+
+  /**
    * Type alias for HTTP headers
    */
   type HttpHeaders = List[String]

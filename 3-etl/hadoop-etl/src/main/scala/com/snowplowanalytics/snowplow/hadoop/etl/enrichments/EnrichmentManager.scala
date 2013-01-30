@@ -47,7 +47,7 @@ object EnrichmentManager {
     // 1. Enrichments not expected to fail
 
     // Quick split timestamp into date and time
-    val (dt, tm) = ("TODO", "TODO")
+    val (dt, tm) = EventEnrichments.splitDatetime(raw.timestamp)
 
     // Let's start populating the NonHiveOutput
     // with the fields which cannot error
@@ -115,8 +115,8 @@ object EnrichmentManager {
         case "fp" => event.user_fingerprint = value
         // Visit ID
         // TODO: need to validate this is a number
-        // Client timestamp
-        // TODO: we want to put this into separate client dt, tm fields: #149
+        // Client date and time
+        // TODO: we want to move this into separate client dt, tm fields: #149
         case "tstamp" =>
           EventEnrichments.extractTimestamp(value).fold(
             e => errors + e,
@@ -124,6 +124,11 @@ object EnrichmentManager {
               event.dt = s._1
               event.tm = s._2
             })
+        // Tracker version
+        case "tv" => event.v_tracker = value
+        // Browser language
+        case "lang" => event.br_lang = value
+
         // TODO: add a warning if unrecognised parameter found
       }
     })
