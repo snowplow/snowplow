@@ -118,9 +118,9 @@ object EnrichmentManager {
         case "fp" => event.user_fingerprint = value
         // Visit ID
         case "vid" =>
-          /* MiscEnrichments.extractInt(value, "Visit ID").fold(
+          TypedEnrichments.extractInt(value, "Visit ID").fold(
             e => errors.append(e),
-            s => event.visit_id = s) */
+            s => event.visit_id = s)
         // Client date and time
         // TODO: we want to move this into separate client dt, tm fields: #149
         case "tstamp" =>
@@ -136,9 +136,9 @@ object EnrichmentManager {
         case "lang" => event.br_lang = value
         // Browser has PDF?
         case "f_pdf" =>
-          /* MiscEnrichments.extractByte(value, "Visit ID").fold(
+          TypedEnrichments.extractByte(value, "Visit ID").fold(
             e => errors.append(e),
-            s => event.br_features_pdf = s) */
+            s => event.br_features_pdf = s)
 
         // TODO: add a warning if unrecognised parameter found
       }
