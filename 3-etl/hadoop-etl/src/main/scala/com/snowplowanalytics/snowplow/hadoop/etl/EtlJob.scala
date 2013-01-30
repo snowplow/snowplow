@@ -70,11 +70,11 @@ class EtlJob(args: Args) extends Job(args) {
       }
     }
     .mapTo('good -> 'poso) { i: CanonicalInput =>
-      val b = new TestOutput;
+      val b = new TestOutput
       b.fieldOne = "HELLO"
       // Imagine another 66 fields
       b
     }
-    .unpackTo[TestOutput]('poso -> Fields.RESULTS)
+    .unpack[TestOutput]('poso -> '*)
     .write(goodOutput)
 }
