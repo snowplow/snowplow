@@ -40,6 +40,12 @@ package object etl {
   type DateTimeTuple = (String, String)
 
   /**
+   * Capture a client's
+   * screen resolution
+   */
+  type ScreenResTuple = (Int, Int) // Height, width
+
+  /**
    * Type alias for HTTP headers
    */
   type HttpHeaders = List[String]

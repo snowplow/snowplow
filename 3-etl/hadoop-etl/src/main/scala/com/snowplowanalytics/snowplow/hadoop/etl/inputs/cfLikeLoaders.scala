@@ -167,7 +167,7 @@ trait CloudFrontLikeLoader extends CollectorLoader {
       val rfr = toOption(referer) map toCleanUri
 
       (timestamp.toValidationNEL |@| payload.toValidationNEL) { (t, p) =>
-        Some(CanonicalInput(t, NVGetPayload(p), getSource, ip, ua, rfr, Nil, None)) // No headers or separate userId.
+        Some(CanonicalInput(t, NVGetPayload(p), getSource, CfEncoding, ip, ua, rfr, Nil, None)) // No headers or separate userId.
       }
     }
 

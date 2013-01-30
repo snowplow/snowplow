@@ -41,14 +41,6 @@ object ClientEnrichments {
   private val ResRegex = """(\d+)x(\d+)""".r
 
   /**
-   * Case class to capture a client's
-   * screen resolution
-   */
-  case class ScreenResolution(
-      width: Int,
-      height: Int)
-
-  /**
    * Case class to wrap everything we
    * can extract from the useragent
    * using UserAgentUtils.
@@ -85,8 +77,8 @@ object ClientEnrichments {
    *         error message, boxed in a
    *         Scalaz Validation
    */
-  def extractScreenResolution(res: String): Validation[String, ScreenResolution] = res match {
-    case ResRegex(h, w) => ScreenResolution(h.toInt, w.toInt).success
+  def extractScreenResolution(res: String): Validation[String, ScreenResTuple] = res match {
+    case ResRegex(h, w) => (h.toInt, w.toInt).success
     case r => "[%s] is not a valid screen resolution".format(r).fail
   }
 
@@ -99,7 +91,9 @@ object ClientEnrichments {
    * out UserAgentUtils for ua-parser
    *
    * @param useragent The useragent
-   *        String to extract from
+   *        String to extract from.
+   *        Should be encoded (i.e.
+   *        not previously decoded).
    * @return the ClientAttributes or
    *         the message of the
    *         exception, boxed in a

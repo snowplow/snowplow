@@ -42,25 +42,67 @@ object EtlUtils {
    * robust output format (e.g. Avro) - as then
    * no need to remove line breaks, tabs etc
    *
-   * TODO: maybe a decoding failure should be
-   * explicitly reported (e.g. via Either)
-   *
    * @param str The String to decode
    * @param encoding The encoding of the String
-   * @return the decoded String (Option-boxed),
-   *         or None if nothing to extract
+   * @return a Scalaz Validation, wrapping either
+   *         an error String or the decoded String
    */
-  def decodeSafely(str: String, encoding: String): Option[String] =
+  def decodeString(str: String, encoding: String): Validation[String, String] =
     try {
-      for {
-        s <- Option(str)
-        d = URLDecoder.decode(s, encoding)
-        if d != null
-        r = d.replaceAll("(\\r|\\n)", "")
-             .replaceAll("\\t", "    ")
-      } yield r
+      val s = Option(str).getOrElse("")
+      val d = URLDecoder.decode(s, encoding)
+      val r = d.replaceAll("(\\r|\\n)", "")
+               .replaceAll("\\t", "    ")
+      r.success
     } catch {
-      case _ => None
+      case e =>
+        "Exception decoding [%s] from [%s] encoding: [%s]".format(str, encoding, e.getMessage).fail
+    }
+
+  /**
+   * Extract a Scala Int from
+   * a String, or error.
+   *
+   * @param str The String
+   *        which we hope is an
+   *        Int
+   * @param field The name of the
+   *        field we are trying to
+   *        process. To use in our
+   *        error message
+   * @return a Scalaz Validation,
+   *         being either a
+   *         Failure String or
+   *         a Success Int
+   */
+  def toInt(str: String, field: String): Validation[String, Int] = try {
+      str.toInt.success
+    } catch {
+      case nfe: NumberFormatException =>
+        "Field [%s]: cannot convert [%s] to Int".format(field, str).fail
+    }
+
+  /**
+   * Extract a Scala Byte from
+   * a String, or error.
+   *
+   * @param str The String
+   *        which we hope is an
+   *        Byte
+   * @param field The name of the
+   *        field we are trying to
+   *        process. To use in our
+   *        error message
+   * @return a Scalaz Validation,
+   *         being either a
+   *         Failure String or
+   *         a Success Byte
+   */
+  def toByte(str: String, field: String): Validation[String, Byte] = try {
+      str.toByte.success
+    } catch {
+      case nfe: NumberFormatException =>
+        "Field [%s]: cannot convert [%s] to Byte".format(field, str).fail
     }
 
   /**

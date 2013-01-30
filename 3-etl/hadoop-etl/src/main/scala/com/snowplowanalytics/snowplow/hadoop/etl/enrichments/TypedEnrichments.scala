@@ -13,6 +13,9 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package enrichments
 
+// Java
+import java.net.URLDecoder
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -23,49 +26,4 @@ import Scalaz._
  */
 object TypedEnrichments {
 
-  /**
-   * Extract a Scala Int from
-   * a String, or error.
-   *
-   * @param str The String
-   *        which we hope is an
-   *        Int
-   * @param field The name of the
-   *        field we are trying to
-   *        process. To use in our
-   *        error message
-   * @return a Scalaz Validation,
-   *         being either a
-   *         Failure String or
-   *         a Success Int
-   */
-  def extractInt(str: String, field: String): Validation[String, Int] = try {
-      str.toInt.success
-    } catch {
-      case nfe: NumberFormatException =>
-        "Field [%s]: cannot convert [%s] to Int".format(field, str).fail
-    }
-
-  /**
-   * Extract a Scala Byte from
-   * a String, or error.
-   *
-   * @param str The String
-   *        which we hope is an
-   *        Byte
-   * @param field The name of the
-   *        field we are trying to
-   *        process. To use in our
-   *        error message
-   * @return a Scalaz Validation,
-   *         being either a
-   *         Failure String or
-   *         a Success Byte
-   */
-  def extractByte(str: String, field: String): Validation[String, Byte] = try {
-      str.toByte.success
-    } catch {
-      case nfe: NumberFormatException =>
-        "Field [%s]: cannot convert [%s] to Byte".format(field, str).fail
-    }
 }

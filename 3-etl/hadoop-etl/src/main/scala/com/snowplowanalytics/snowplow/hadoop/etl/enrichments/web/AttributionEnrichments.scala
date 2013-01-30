@@ -52,6 +52,11 @@ object AttributionEnrichments {
    * Extract the marketing fields
    * from a URL.
    *
+   * TODO: get this working.
+   * TODO: change Validation to
+   * ValidationNEL (we might get
+   * up to 5 error messages)
+   *
    * @param uri The URI to extract
    *        marketing fields from
    * @param encoding The encoding of
@@ -75,8 +80,12 @@ object AttributionEnrichments {
     for (params <- parameters) {
       for (p <- params.toList) {
         val name  = p.getName
-        lazy val value = EtlUtils.decodeSafely(
+        lazy val value = EtlUtils.decodeString(
           p.getValue.toLowerCase, encoding) // Should actually be lower case anyway
+
+        /* TODO: need to implement this.
+           We need to chain Scalaz Validations
+           together.
 
         name match {
           case "utm_medium" => medium = value
@@ -84,7 +93,7 @@ object AttributionEnrichments {
           case "utm_term" => term = value
           case "utm_content" => content = value
           case "utm_campaign" => campaign = value
-        }
+        } */
       }
     }
 

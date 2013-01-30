@@ -40,7 +40,8 @@ import org.joda.time.DateTime
 final case class CanonicalInput(
     timestamp:  DateTime,
     payload:    TrackerPayload, // See below for defn.
-    source:     InputSource,    // See below for defn. 
+    source:     InputSource,    // See below for defn.
+    encoding:   String, 
     ipAddress:  Option[String],
     userAgent:  Option[String],
     refererUri: Option[String],
