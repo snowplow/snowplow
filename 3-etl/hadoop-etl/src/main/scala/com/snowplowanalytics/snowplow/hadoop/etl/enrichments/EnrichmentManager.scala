@@ -25,7 +25,7 @@ import com.snowplowanalytics.util.Tap._
 
 // This project
 import inputs.{CanonicalInput, NVGetPayload}
-import outputs.NonHiveOutput
+import outputs.CanonicalOutput
 
 /**
  * A module to hold our enrichment process.
@@ -40,12 +40,12 @@ object EnrichmentManager {
    *
    * @param input Our canonical input
    *        to enrich
-   * @return a MaybeNonHiveOutput - i.e.
+   * @return a MaybeCanonicalOutput - i.e.
    *         a ValidationNEL containing
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  def enrichEvent(raw: CanonicalInput): MaybeNonHiveOutput = {
+  def enrichEvent(raw: CanonicalInput): MaybeCanonicalOutput = {
 
     // 1. Enrichments not expected to fail
 
@@ -54,7 +54,7 @@ object EnrichmentManager {
 
     // Let's start populating the NonHiveOutput
     // with the fields which cannot error
-    val event = new NonHiveOutput().tap { e =>
+    val event = new CanonicalOutput().tap { e =>
       e.dt = dt
       e.tm = tm
       e.event_id = EventEnrichments.generateEventId
@@ -80,7 +80,7 @@ object EnrichmentManager {
     // payload types in the future
     val parameters = raw.payload match {
       case NVGetPayload(p) => p
-      case _ => throw new Exception("OH MY GOD")
+      case _ => throw new FatalEtlException("Only name-value pair GET payloads are currently supported")
     }
 
     // We copy the Hive ETL approach: one
