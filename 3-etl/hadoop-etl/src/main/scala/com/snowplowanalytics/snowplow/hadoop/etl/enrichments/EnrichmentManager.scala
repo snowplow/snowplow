@@ -104,7 +104,11 @@ object EnrichmentManager {
         // Application/site ID
         case "aid" => event.app_id = value
         // Platform
-        case "p" => event.platform = value // TODO: let's validate it's web or iot (internet of things)
+        case "p" => {
+          MiscEnrichments.extractPlatform(value).fold(
+            e => errors ++ e,
+            s => event.platform = s)
+        }
         // Transaction ID
         case "tid" => event.txn_id = value
         // User ID
@@ -117,7 +121,7 @@ object EnrichmentManager {
 
     // Do we have errors, or a valid event?
     errors match {
-      case h :: t => NonEmptyList(h, t: _*).failure
+      case h :: t => NonEmptyList(h, t: _*).fail
       case _ => event.success
     }
   }

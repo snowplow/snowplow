@@ -13,6 +13,10 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package enrichments
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 // Get our project settings
 import generated.ProjectSettings
 
@@ -26,4 +30,23 @@ object MiscEnrichments {
    * The version of this ETL
    */
   val etlVersion = "hadoop-%s" format ProjectSettings.version
+
+  /**
+   * Validate the specified
+   * platform.
+   *
+   * @param platform The code
+   *        for the platform
+   *        generating this
+   *        event.
+   * @return a Scalaz
+   *         Validation[String, String].
+   */
+  def extractPlatform(platform: String): Validation[String, String] = {
+    platform match {
+      case "web" => "web".success
+      case "iot" => "iot".success // Internet of Things (e.g. Arduino tracker)
+      case p => "[%s] is not a support tracking platform".format(p).fail
+    }
+  }
 }
