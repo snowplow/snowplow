@@ -105,12 +105,20 @@ object EnrichmentManager {
         case "aid" => event.app_id = value
         // Platform
         case "p" => event.platform = value // TODO: let's validate it's web or iot (internet of things)
+        // Transaction ID
+        case "tid" => event.txn_id = value
+        // User ID
+        case "uid" => event.user_id = value
+        // User fingerprint
+        case "fp" => event.user_fingerprint = value
         // TODO: add a warning if unrecognised parameter found
       }
     })
 
-    // Return success!
-    // TODO: needs fleshing out :-)
-    Success(event)
+    // Do we have errors, or a valid event?
+    errors match {
+      case h :: t => NonEmptyList(h, t: _*).failure
+      case _ => event.success
+    }
   }
 }
