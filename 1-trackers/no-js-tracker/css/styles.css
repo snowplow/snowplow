@@ -1,0 +1,13 @@
+#generateTagForm {
+	width: 650px;
+}
+
+#output {
+	width: 650px;
+}
+
+label {
+	float: left;
+	display: inline;
+	width: 50%;
+}

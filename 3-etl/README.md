@@ -21,10 +21,11 @@ The **ETL** (extract, transform, load) process takes raw SnowPlow events logged 
 
 Both the above are published on the [wiki] [wiki].
 
-
 ## Contributing
 
 We welcome community contributions to the existing ETL processes or all-new ETL processes! We have a guide to contributing ETL code coming soon on the Wiki. 
+
+![Tracker](https://collector.snplow.com/i?&e=pv&page=3%20ETL%20README&aid=snowplowgithub&p=web&tv=no-js-0.1.0)
 
 [architecture-image]: https://github.com/snowplow/snowplow/raw/master/3-etl/3-etl.png
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
