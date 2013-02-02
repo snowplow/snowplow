@@ -24,8 +24,8 @@ import com.twitter.scalding._
 
 // This project
 import inputs.CanonicalInput
-import utils.Json2Line
-import outputs.TestOutput
+import utils.Json2Line // TODO: remove when we can
+import enrichments.EnrichmentManager
 
 /**
  * The SnowPlow ETL job, written in Scalding
@@ -48,13 +48,13 @@ class EtlJob(args: Args) extends Job(args) {
   // Scalding data pipeline
   val common = input
     .read
-    .map('line -> 'input) { l: String =>
-      loader.toCanonicalInput(l)
+    .map('line -> 'input) { i: MaybeCanonicalOutput =>
+      loader.toCanonicalInput(l) flatMap EnrichmentManager.enrichEvent
     }
 
   // Handle bad rows
   val bad = common
-    .flatMap('input -> 'errors) { i: MaybeCanonicalInput => i.fold(
+    .flatMap('input -> 'errors) { o: MaybeCanonicalOutput => o.fold(
       e => Some(e.toList), // NEL -> Some(List)
       c => None)
     }
@@ -63,8 +63,8 @@ class EtlJob(args: Args) extends Job(args) {
 
   // Handle good rows
   val good = common
-    .flatMapTo('input -> 'good) { i: MaybeCanonicalInput =>
-      i match {
+    .flatMapTo('input -> 'good) { o: MaybeCanonicalOutput =>
+      o match {
         case Success(Some(s)) => Some(s)
         case _ => None // Drop errors *and* blank rows
       }
