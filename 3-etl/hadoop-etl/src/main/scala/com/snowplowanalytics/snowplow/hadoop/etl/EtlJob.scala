@@ -48,8 +48,10 @@ class EtlJob(args: Args) extends Job(args) {
   // Scalding data pipeline
   val common = input
     .read
-    .map('line -> 'input) { i: MaybeCanonicalOutput =>
-      loader.toCanonicalInput(l) flatMap EnrichmentManager.enrichEvent
+    .map('line -> 'input) { l: String =>
+      loader.toCanonicalInput(l) flatMap { i: MaybeCanonicalInput =>
+        map EnrichmentManager.enrichEvent
+      }
     }
 
   // Handle bad rows
@@ -69,12 +71,5 @@ class EtlJob(args: Args) extends Job(args) {
         case _ => None // Drop errors *and* blank rows
       }
     }
-    .mapTo('good -> 'poso) { i: CanonicalInput =>
-      val b = new TestOutput
-      b.fieldOne = "HELLO"
-      // Imagine another 66 fields
-      b
-    }
-    .unpackTo[TestOutput]('poso -> 'fieldOne)
     .write(goodOutput)
 }
