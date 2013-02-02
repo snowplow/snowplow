@@ -24,7 +24,7 @@ import Scalaz._
  * General-purpose utils to help the
  * ETL process along.
  */
-object EtlUtils {
+object ConversionUtils {
 
   /**
    * Decodes a String in the specific encoding,

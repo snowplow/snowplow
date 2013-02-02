@@ -42,7 +42,7 @@ class EtlJob(args: Args) extends Job(args) {
   // Aliases for our job
   val loader = etlConfig.collectorLoader
   val input = MultipleTextLineFiles(etlConfig.inFolder)
-  val goodOutput = TextLine(etlConfig.outFolder)
+  val goodOutput = Osv(etlConfig.outFolder)
   val badOutput = Json2Line(etlConfig.errFolder)
 
   // Scalding data pipeline
