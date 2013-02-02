@@ -24,42 +24,16 @@ package utils
 object HiveTextFile {
 
   /**
-   * Hive uses:
-   * * \001 (SOH) to delimit fields
-   * * \002 (STX_) to delimit array values
-   *   within fields
+   * Helper to convert any Scala Iterable to
+   * a Hive-formatted ARRAY. Values in Hive
+   * ARRAYs are separated by \002 (STX).
+   *
+   * @param i the Iterable to turn into a Hive ARRAY
+   * @return a String containing all Iterable elements
+   *         separated by STX
    */
-  private object Separators {
-    val Field = 0x001.toChar.toString // SOH
-    val ArrayValue = 0x002.toChar.toString // STX
-  }
+  def toHiveArray[A](i: Iterable[A]): String =
+    i.mkString("\2")
 
-  /**
-   * Helper to convert any Scala
-   * Iterable to a Hive-formatted
-   * ARRAY.
-   *
-   * @param i the Iterable to
-   * turn into a Hive ARRAY
-   * @return the String
-   * representation of this
-   * Iterable, with the Hive ARRAY
-   * delimiter between each element
-   */
-  private def toHiveArray[A](i: Iterable[A]) =
-    i.mkString(Separators.ArrayValue)
-
-  /**
-   * Helper to convert a Boolean
-   * value into a Byte (1 or 0).
-   *
-   * This is used when generating
-   * "non-Hive format" Hive files.
-   *
-   * @param b The Boolean to turn
-   *        into a Byte
-   * @return the Byte value of b 
-   */
-  private def toByte(b: Boolean): Byte =
-    if (b) 1.toByte else 0.toByte
+  // TODO: add support for Hive MAPs
 }

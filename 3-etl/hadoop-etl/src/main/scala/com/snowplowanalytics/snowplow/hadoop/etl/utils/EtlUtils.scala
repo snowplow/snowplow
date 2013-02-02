@@ -75,7 +75,7 @@ object EtlUtils {
    *         Failure String or
    *         a Success Int
    */
-  def toInt(str: String, field: String): Validation[String, Int] = try {
+  def stringToInt(str: String, field: String): Validation[String, Int] = try {
       str.toInt.success
     } catch {
       case nfe: NumberFormatException =>
@@ -98,7 +98,7 @@ object EtlUtils {
    *         Failure String or
    *         a Success Byte
    */
-  def toByte(str: String, field: String): Validation[String, Byte] = try {
+  def stringToByte(str: String, field: String): Validation[String, Byte] = try {
       str.toByte.success
     } catch {
       case nfe: NumberFormatException =>
@@ -122,4 +122,23 @@ object EtlUtils {
       false.success
     else
       "Cannot convert [%s] to boolean, only 1 or 0.".format(str).fail
+
+  /**
+   * Helper to convert a Byte value
+   * (1 or 0) into a Boolean.
+   *
+   * @param b The Byte to turn
+   *        into a Boolean
+   * @return the Boolean value of b, or
+   *         an error message if b is
+   *         not 0 or 1 - all boxed in a
+   *         Scalaz Validation 
+   */
+  def byteToBoolean(b: Byte): Boolean =
+    if (b == 0)
+      false.success
+    else if (b == 1)
+      true.success
+    else
+      "Cannot convert byte [%s] to boolean, only 1 or 0.".format(b).fail
 }
