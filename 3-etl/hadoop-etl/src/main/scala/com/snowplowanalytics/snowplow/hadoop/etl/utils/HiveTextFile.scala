@@ -21,7 +21,7 @@ package utils
  * See:
  * http://www.nearinfinity.com/blogs/stephen_mouring_jr/2013/01/04/writing-hive-tables-from-mapreduce.html
  */
-object HiveTextFile {
+object HiveUtils {
 
   /**
    * Helper to convert any Scala Iterable to
