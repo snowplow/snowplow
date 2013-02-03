@@ -20,7 +20,7 @@ import Scalaz._
 import com.twitter.scalding.Args
 
 // This project
-import utils.{EtlUtils, ScalazArgs}
+import utils.{ConversionUtils, ScalazArgs}
 import inputs.CollectorLoader
 import outputs.CanonicalOutput
 
@@ -63,7 +63,7 @@ object EtlJobConfig {
 
     val unexpectedErrorHandler = for {
       a <- args.requiredz("CONTINUE_ON")
-      c <- EtlUtils.stringToBoolean(a)
+      c <- ConversionUtils.stringToBoolean(a)
       hr = EtlJobFlow.buildUnexpectedErrorHandler(c)
     } yield hr
 

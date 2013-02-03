@@ -29,7 +29,7 @@ import org.apache.http.NameValuePair
 import org.apache.http.client.utils.URLEncodedUtils
 
 // This project
-import utils.EtlUtils
+import utils.ConversionUtils
 
 /**
  * Holds enrichments related to marketing and campaign
@@ -80,7 +80,7 @@ object AttributionEnrichments {
     for (params <- parameters) {
       for (p <- params.toList) {
         val name  = p.getName
-        lazy val value = EtlUtils.decodeString(
+        lazy val value = ConversionUtils.decodeString(
           p.getValue.toLowerCase, encoding) // Should actually be lower case anyway
 
         /* TODO: need to implement this.

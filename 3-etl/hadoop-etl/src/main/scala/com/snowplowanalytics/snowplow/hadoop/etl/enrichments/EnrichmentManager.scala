@@ -26,7 +26,7 @@ import com.snowplowanalytics.util.Tap._
 // This project
 import inputs.{CanonicalInput, NVGetPayload}
 import outputs.CanonicalOutput
-import utils.EtlUtils
+import utils.ConversionUtils
 
 /**
  * A module to hold our enrichment process.
@@ -46,7 +46,7 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  def enrichEvent(raw: CanonicalInput): MaybeCanonicalOutput = {
+  def enrichEvent(raw: CanonicalInput): ValidationNEL[String, CanonicalOutput] = {
 
     // 1. Enrichments not expected to fail
 
@@ -74,7 +74,7 @@ object EnrichmentManager {
 
     // Pull everything out of the useragent
     for (ua <- raw.userAgent) {
-      val useragent = EtlUtils.decodeString(ua, raw.encoding)
+      val useragent = ConversionUtils.decodeString(ua, raw.encoding)
       useragent.fold(
         e => errors.append(e),
         s => {
@@ -133,7 +133,7 @@ object EnrichmentManager {
         case "fp" => event.user_fingerprint = value
         // Visit ID
         case "vid" =>
-          EtlUtils.toInt(value, "Visit ID").fold(
+          ConversionUtils.stringToInt(value, "Visit ID").fold(
             e => errors.append(e),
             s => event.visit_id = s)
         // Client date and time
@@ -151,11 +151,12 @@ object EnrichmentManager {
         case "lang" => event.br_lang = value
         // Browser has PDF?
         case "f_pdf" =>
-          EtlUtils.toByte(value, "Feature: PDF").fold(
+          ConversionUtils.stringToByte(value, "Feature: PDF").fold(
             e => errors.append(e),
             s => event.br_features_pdf = s)
 
         // TODO: add a warning if unrecognised parameter found
+        case _ =>
       }
     })
 

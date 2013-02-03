@@ -45,7 +45,7 @@ class NonCfInputLinesTest extends Specification with TupleConversions {
 
       EtlJobTest.
         source(MultipleTextLineFiles("inputFolder"), badLines).
-        sink[String](TextLine("outputFolder")){ output => output must beEmpty }.
+        sink[String](Osv("outputFolder")){ output => output must beEmpty }.
         sink[String](Json2Line("errorFolder")){ json =>
           for (i <- json.indices)
             json(i) must_== expected(badLines(i)._2)

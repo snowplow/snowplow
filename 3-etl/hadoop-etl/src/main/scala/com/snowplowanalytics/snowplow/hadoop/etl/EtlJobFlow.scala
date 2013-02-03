@@ -45,4 +45,14 @@ object EtlJobFlow {
     case e if continueOn => "Unexpected error occurred: [%s] (continuing...)".format(e.getMessage).failNel[CanonicalOutput]
     case e => throw e
   }
+
+  def test(input: MaybeCanonicalInput): ValidationNEL[String, Option[CanonicalOutput]] = {
+    input flatMap { oi: Option[inputs.CanonicalInput] =>
+      oi match {
+        case Some(i) => enrichments.EnrichmentManager.enrichEvent(i).map(_.some)
+        case None => None.success
+      }
+    }
+
+  }
 }

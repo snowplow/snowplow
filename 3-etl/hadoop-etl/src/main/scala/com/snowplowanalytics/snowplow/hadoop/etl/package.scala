@@ -88,7 +88,7 @@ package object etl {
    * containing Strings for `Failure`
    * or a NonHiveOutput for `Success`.
    */
-  type MaybeCanonicalOutput = ValidationNEL[String, CanonicalOutput]
+  type MaybeCanonicalOutput = ValidationNEL[String, Option[CanonicalOutput]]
 
   /**
    * Type alias for a `PartialFunction`

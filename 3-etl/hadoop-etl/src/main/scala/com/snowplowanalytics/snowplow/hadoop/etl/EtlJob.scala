@@ -24,6 +24,7 @@ import com.twitter.scalding._
 
 // This project
 import inputs.CanonicalInput
+import outputs.CanonicalOutput
 import utils.Json2Line // TODO: remove when we can
 import enrichments.EnrichmentManager
 
@@ -48,15 +49,13 @@ class EtlJob(args: Args) extends Job(args) {
   // Scalding data pipeline
   val common = input
     .read
-    .map('line -> 'input) { l: String =>
-      loader.toCanonicalInput(l) flatMap { i: MaybeCanonicalInput =>
-        map EnrichmentManager.enrichEvent
-      }
+    .map('line -> 'output) { l: String =>
+      EtlJobFlow.test(loader.toCanonicalInput(l))
     }
 
   // Handle bad rows
   val bad = common
-    .flatMap('input -> 'errors) { o: MaybeCanonicalOutput => o.fold(
+    .flatMap('output -> 'errors) { o: MaybeCanonicalOutput => o.fold(
       e => Some(e.toList), // NEL -> Some(List)
       c => None)
     }
@@ -65,11 +64,12 @@ class EtlJob(args: Args) extends Job(args) {
 
   // Handle good rows
   val good = common
-    .flatMapTo('input -> 'good) { o: MaybeCanonicalOutput =>
+    .flatMapTo('output -> 'good) { o: MaybeCanonicalOutput =>
       o match {
-        case Success(Some(s)) => Some(s)
+        case Success(s) => Some(s)
         case _ => None // Drop errors *and* blank rows
       }
     }
+    .mapTo('good -> 'unboxed) { g: Option[CanonicalOutput] => g.get.toString() }
     .write(goodOutput)
 }

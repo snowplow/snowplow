@@ -134,7 +134,7 @@ object ConversionUtils {
    *         not 0 or 1 - all boxed in a
    *         Scalaz Validation 
    */
-  def byteToBoolean(b: Byte): Boolean =
+  def byteToBoolean(b: Byte): Validation[String, Boolean] =
     if (b == 0)
       false.success
     else if (b == 1)
