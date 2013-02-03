@@ -73,11 +73,11 @@ object ClientEnrichments {
    *
    * @param res The packed string
    *        holding the screen resolution
-   * @return the ScreenResolution or an
+   * @return the ResolutionTuple or an
    *         error message, boxed in a
    *         Scalaz Validation
    */
-  def extractScreenResolution(res: String): Validation[String, ScreenResTuple] = res match {
+  def extractScreenResolution(res: String): Validation[String, ResolutionTuple] = res match {
     case ResRegex(h, w) => (h.toInt, w.toInt).success
     case r => "[%s] is not a valid screen resolution".format(r).fail
   }

@@ -134,7 +134,7 @@ trait CloudFrontLikeLoader extends CollectorLoader {
    *         CanonicalInput object, wrapped
    *         in a Scalaz ValidatioNEL.
    */
-  def toCanonicalInput(line: String): MaybeCanonicalInput = line match {
+  def toCanonicalInput(line: String): ValidatedCanonicalInput = line match {
     
     // 1. Header row
     case h if (h.startsWith("#Version:") ||
@@ -201,7 +201,7 @@ trait CloudFrontLikeLoader extends CollectorLoader {
    *         an error, all wrapped in a
    *         Scalaz Validation
    */
-  private def toGetPayload(querystring: String): MaybeNameValueNEL = toOption(querystring) match {
+  private def toGetPayload(querystring: String): ValidatedNameValueNEL = toOption(querystring) match {
     case Some(qs) => TrackerPayload.extractGetPayload(qs, CfEncoding)
     case None => "Querystring is empty, cannot extract GET payload".fail
   }

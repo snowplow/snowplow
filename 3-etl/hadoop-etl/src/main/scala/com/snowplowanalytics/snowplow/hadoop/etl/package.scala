@@ -43,7 +43,7 @@ package object etl {
    * Capture a client's
    * screen resolution
    */
-  type ScreenResTuple = (Int, Int) // Height, width
+  type ResolutionTuple = (Int, Int) // Height, width
 
   /**
    * Type alias for HTTP headers
@@ -57,38 +57,46 @@ package object etl {
   type NameValueNEL = NonEmptyList[NameValuePair]
 
   /**
-   * Type alias for a `Validation`
-   * containing either error `String`s
-   * or a `NameValueNEL`.
-   *
-   * See package object for `NameValueNEL`
-   * definition.
-   *
-   * @tparam E the type of `Failure`
-   */
-  type MaybeNameValueNEL = Validation[String, NameValueNEL]
-
-  /**
-   * Type alias for either a `ValidationNEL`
-   * or an Option-boxed `CanonicalInput`.
-   */
-  type MaybeCanonicalInput = ValidationNEL[String, Option[CanonicalInput]]
-
-  /**
    * Type alias for a `ValidationNEL`
    * containing Strings for `Failure`
    * or any type of `Success`.
    *
    * @tparam A the type of `Success`
    */
-  type MaybeUnexpectedError[A] = ValidationNEL[String, A]
+  type Validated[A] = ValidationNEL[String, A]
+
+  /**
+   * Type alias for a `Validation`
+   * containing either error `String`s
+   * or a `NameValueNEL`.
+   */
+  type ValidatedNameValueNEL = Validation[String, NameValueNEL] // Note not Validated[]
+
+  /**
+   * Type alias for an `Option`-boxed
+   * `CanonicalInput`.
+   */
+  type MaybeCanonicalInput2 = Option[CanonicalInput]
 
   /**
    * Type alias for either a `ValidationNEL`
-   * containing Strings for `Failure`
-   * or a NonHiveOutput for `Success`.
+   * containing `String`s for `Failure`
+   * or a `MaybeCanonicalInput` for `Success`.
    */
-  type MaybeCanonicalOutput = ValidationNEL[String, Option[CanonicalOutput]]
+  type ValidatedCanonicalInput = Validated[MaybeCanonicalInput2]
+
+  /**
+   * Type alias for an `Option`-boxed
+   * `CanonicalOutput`.
+   */
+  type MaybeCanonicalOutput2 = Option[CanonicalOutput]
+
+  /**
+   * Type alias for either a `ValidationNEL`
+   * containing `String`s for `Failure`
+   * or a MaybeCanonicalOutput for `Success`.
+   */
+  type ValidatedCanonicalOutput = Validated[MaybeCanonicalOutput2]
 
   /**
    * Type alias for a `PartialFunction`
@@ -100,5 +108,5 @@ package object etl {
    * @tparam A the type of `Success`
    *         within the ValidationNEL
    */
-  type UnexpectedErrorHandler[A] = PartialFunction[Throwable, MaybeUnexpectedError[A]]
+  // type UnexpectedErrorHandler[A] = PartialFunction[Throwable, Validated[A]]
 }

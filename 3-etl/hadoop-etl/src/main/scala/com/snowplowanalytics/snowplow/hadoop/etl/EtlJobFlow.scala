@@ -17,7 +17,7 @@ import scalaz._
 import Scalaz._
 
 // This project
-import outputs.CanonicalOutput
+import enrichments.EnrichmentManager
 
 /**
  * Holds constructs to help
@@ -25,6 +25,26 @@ import outputs.CanonicalOutput
  * flow.
  */ 
 object EtlJobFlow {
+
+  /**
+   * A helper method to take a ValidatedCanonicalOutput
+   * and flatMap it into a ValidatedCanonicalOutput.
+   *
+   * We have to do some unboxing because enrichEvent
+   * expects a raw CanonicalInput as its argument, not
+   * a MaybeCanonicalInput.
+   *
+   * @param input The ValidatedCanonicalInput
+   * @return the ValidatedCanonicalOutput. Thanks to
+   *         flatMap, will include any validation errors
+   *         contained within the ValidatedCanonicalInput
+   */
+  def toCanonicalOutput(input: ValidatedCanonicalInput): ValidatedCanonicalOutput = {
+    input.flatMap {
+      _.cata(EnrichmentManager.enrichEvent(_).map(_.some),
+             none.success)
+    }
+  }
 
   /**
    * A factory to build the handler
@@ -41,18 +61,8 @@ object EtlJobFlow {
    *         package object for
    *         details of the type
    */
-  def buildUnexpectedErrorHandler(continueOn: Boolean): UnexpectedErrorHandler[CanonicalOutput] = {
-    case e if continueOn => "Unexpected error occurred: [%s] (continuing...)".format(e.getMessage).failNel[CanonicalOutput]
-    case e => throw e
-  }
-
-  def test(input: MaybeCanonicalInput): ValidationNEL[String, Option[CanonicalOutput]] = {
-    input flatMap { oi: Option[inputs.CanonicalInput] =>
-      oi match {
-        case Some(i) => enrichments.EnrichmentManager.enrichEvent(i).map(_.some)
-        case None => None.success
-      }
-    }
-
-  }
+  // def buildUnexpectedErrorHandler(continueOn: Boolean): UnexpectedErrorHandler[CanonicalOutput] = {
+  //   case e if continueOn => "Unexpected error occurred: [%s] (continuing...)".format(e.getMessage).failNel[CanonicalOutput]
+  //  case e => throw e
+  //}
 }

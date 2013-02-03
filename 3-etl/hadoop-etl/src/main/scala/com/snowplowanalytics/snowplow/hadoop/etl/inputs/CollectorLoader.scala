@@ -63,7 +63,7 @@ abstract class CollectorLoader {
    *         boxed, or None if no input was
    *         extractable.
    */
-  def toCanonicalInput(line: String): MaybeCanonicalInput
+  def toCanonicalInput(line: String): ValidatedCanonicalInput
 
   /**
    * Checks whether a request to

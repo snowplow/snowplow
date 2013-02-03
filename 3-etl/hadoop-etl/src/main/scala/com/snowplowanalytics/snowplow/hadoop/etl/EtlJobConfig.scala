@@ -32,8 +32,8 @@ case class EtlJobConfig(
     inFolder: String,
     outFolder: String,
     errFolder: String,
-    collectorLoader: CollectorLoader,
-    unexpectedErrorHandler: UnexpectedErrorHandler[CanonicalOutput])
+    collectorLoader: CollectorLoader) //,
+    // unexpectedErrorHandler: UnexpectedErrorHandler[CanonicalOutput])
 
 /**
  * Module to handle configuration for
@@ -61,12 +61,12 @@ object EtlJobConfig {
     val loader = args.requiredz("INPUT_FORMAT") flatMap (cf => CollectorLoader.getLoader(cf))
     // val outFormat TODO: add this
 
-    val unexpectedErrorHandler = for {
+    /* val unexpectedErrorHandler = for {
       a <- args.requiredz("CONTINUE_ON")
       c <- ConversionUtils.stringToBoolean(a)
       hr = EtlJobFlow.buildUnexpectedErrorHandler(c)
-    } yield hr
+    } yield hr */
 
-    (inFolder.toValidationNEL |@| outFolder.toValidationNEL |@| errFolder.toValidationNEL |@| loader.toValidationNEL |@| unexpectedErrorHandler.toValidationNEL) { EtlJobConfig(_, _, _, _, _) }
+    (inFolder.toValidationNEL |@| outFolder.toValidationNEL |@| errFolder.toValidationNEL |@| loader.toValidationNEL /*|@| unexpectedErrorHandler.toValidationNEL */) { EtlJobConfig(_, _, _, _/*, _*/) }
   }
 }

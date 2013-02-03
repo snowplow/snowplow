@@ -30,7 +30,7 @@ import TestHelpers._
  * Input data is valid. We want to
  * test that we can extract from
  * our POSO here.
- */
+ *
 class TestOutputTest extends Specification with TupleConversions {
 
   "A job which processes a valid input line" should {
@@ -48,4 +48,4 @@ class TestOutputTest extends Specification with TupleConversions {
         success
     }
   }
-}
+} */
