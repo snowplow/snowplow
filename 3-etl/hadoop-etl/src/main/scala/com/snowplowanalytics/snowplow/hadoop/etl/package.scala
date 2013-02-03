@@ -76,27 +76,27 @@ package object etl {
    * Type alias for an `Option`-boxed
    * `CanonicalInput`.
    */
-  type MaybeCanonicalInput2 = Option[CanonicalInput]
+  type MaybeCanonicalInput = Option[CanonicalInput]
 
   /**
    * Type alias for either a `ValidationNEL`
    * containing `String`s for `Failure`
    * or a `MaybeCanonicalInput` for `Success`.
    */
-  type ValidatedCanonicalInput = Validated[MaybeCanonicalInput2]
+  type ValidatedCanonicalInput = Validated[MaybeCanonicalInput]
 
   /**
    * Type alias for an `Option`-boxed
    * `CanonicalOutput`.
    */
-  type MaybeCanonicalOutput2 = Option[CanonicalOutput]
+  type MaybeCanonicalOutput = Option[CanonicalOutput]
 
   /**
    * Type alias for either a `ValidationNEL`
    * containing `String`s for `Failure`
    * or a MaybeCanonicalOutput for `Success`.
    */
-  type ValidatedCanonicalOutput = Validated[MaybeCanonicalOutput2]
+  type ValidatedCanonicalOutput = Validated[MaybeCanonicalOutput]
 
   /**
    * Type alias for a `PartialFunction`

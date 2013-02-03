@@ -68,6 +68,6 @@ class EtlJob(args: Args) extends Job(args) {
         case _ => None // Drop errors *and* blank rows
       }
     }
-    .mapTo('good -> 'unboxed) { g: MaybeCanonicalOutput2 => g.get.toString() }
+    .mapTo('good -> 'unboxed) { g: MaybeCanonicalOutput => g.get.toString() }
     .write(goodOutput)
 }
