@@ -31,6 +31,20 @@ object TestHelpers {
 
   val beEmpty: Matcher[ListBuffer[_]]  = ((_: ListBuffer[_]).isEmpty, "is not empty")
 
+  // Desc
+  case class Lines(l: String*) {
+
+    val lines = l.toList
+    val numberedLines = number(lines)
+
+    private def number(lines: List[String]) = 
+      for ((line, n) <- lines zip (0 until lines.size)) yield (n.toString -> line)
+  }
+
+  // Desc
+  implicit def Lines2TupleList(lines : Lines): List[(String, String)] = lines.numberedLines 
+
+
   // Standard JobTest definition used by all integration tests
   val EtlJobTest = 
     JobTest("com.snowplowanalytics.snowplow.hadoop.etl.EtlJob").

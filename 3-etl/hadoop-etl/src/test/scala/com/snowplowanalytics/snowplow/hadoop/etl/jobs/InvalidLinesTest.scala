@@ -35,11 +35,11 @@ class InvalidLinesTest extends Specification with TupleConversions {
   "A job which processes input lines not in CloudFront format" should {
     "write an error JSON with input line and error message for each input line" in {
 
-      // TODO: write a zipWith helper
-    	val badLines = List(
-        "0" -> "",
-        "1" -> "NOT VALID",
-        "2" -> "2012-05-21  07:14:47  FRA2  3343  83.4.209.35 GET d3t05xllj8hhgj.cloudfront.net")
+    	val badLines = Lines(
+        "",
+        "NOT VALID",
+        "2012-05-21  07:14:47  FRA2  3343  83.4.209.35 GET d3t05xllj8hhgj.cloudfront.net"
+        )
 
       val expected = (line: String) => """{"line":"%s","errors":["Line does not match CloudFront header or data row formats"]}""".format(line)
 
