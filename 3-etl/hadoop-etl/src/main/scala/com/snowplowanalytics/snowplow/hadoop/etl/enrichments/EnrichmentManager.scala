@@ -81,28 +81,29 @@ object EnrichmentManager {
     // 2a. Failable enrichments which don't need the payload
 
     // Attempt to decode the useragent
+    // TODO: invert the boxing, so the Option is innermost, on the Success only.
     val useragent = raw.userAgent.map(ConversionUtils.decodeString(_, raw.encoding))
     useragent.map(_.fold(
-        e => errors.append(e),
-        s => event.useragent = s))
+      e => errors.append(e),
+      s => event.useragent = s))
 
     // Parse the useragent
-    // val 
-
-    /*
-      val useragent = 
-      useragent.fold(
-        e => errors.append(e),
-        s => {
-          event.useragent = s
-          ClientEnrichments.extractClientAttributes(ua).fold( // Note we pass in the still-encoded useragent
-            e => errors.append(e),
-            s => {
-              event.br_name = s.browserName
-              // TODO: add rest of browser fields.
-            })
-        })
-    } */
+    // TODO: invert the boxing, so the Option is innermost, on the Success only.
+    val clientAttribs = raw.userAgent.map(ClientEnrichments.extractClientAttributes(_))
+    clientAttribs.map(_.fold(
+      e => errors.append(e),
+      s => {
+        event.br_name = s.browserName
+        event.br_family = s.browserFamily
+        s.browserVersion.map(bv => event.br_version = bv)
+        event.br_type = s.browserType
+        event.br_renderengine = s.browserType
+        event.os_name = s.osName
+        event.os_family = s.osName
+        event.os_manufacturer = s.osManufacturer
+        event.dvce_type = s.deviceType
+        event.dvce_ismobile = ConversionUtils.booleanToByte(s.deviceIsMobile)
+      }))
 
     // 2b. Failable enrichments using the payload
 
@@ -163,7 +164,7 @@ object EnrichmentManager {
             e => errors.append(e),
             s => event.br_features_pdf = s)
 
-        // TODO: add a warning if unrecognised parameter found
+        // TODO: add a warning if unrecognised parameter found when we support warnings
         case _ =>
       }
     })

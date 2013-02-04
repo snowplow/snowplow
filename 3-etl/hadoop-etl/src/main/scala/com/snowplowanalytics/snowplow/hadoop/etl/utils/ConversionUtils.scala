@@ -124,6 +124,16 @@ object ConversionUtils {
       "Cannot convert [%s] to boolean, only 1 or 0.".format(str).fail
 
   /**
+   * Helper to convert a Boolean value to a Byte.
+   * Does not require any validation.
+   *
+   * @param bool The Boolean to convert into a Byte
+   * @return 0 if false, 1 if true
+   */
+  def booleanToByte(bool: Boolean): Byte =
+    if (bool) 1 else 0
+
+  /**
    * Helper to convert a Byte value
    * (1 or 0) into a Boolean.
    *
