@@ -46,7 +46,15 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  def enrichEvent(raw: CanonicalInput): ValidationNEL[String, CanonicalOutput] = {
+  def enrichEvent(raw: CanonicalInput): ValidatedCanonicalOutput = {
+
+    // Retrieve the payload
+    // TODO: add support for other
+    // payload types in the future
+    val parameters = raw.payload match {
+      case NVGetPayload(p) => p
+      case _ => throw new FatalEtlException("Only name-value pair GET payloads are currently supported")
+    }
 
     // 1. Enrichments not expected to fail
 
@@ -72,9 +80,17 @@ object EnrichmentManager {
 
     // 2a. Failable enrichments which don't need the payload
 
-    // Pull everything out of the useragent
-    for (ua <- raw.userAgent) {
-      val useragent = ConversionUtils.decodeString(ua, raw.encoding)
+    // Attempt to decode the useragent
+    val useragent = raw.userAgent.map(ConversionUtils.decodeString(_, raw.encoding))
+    useragent.map(_.fold(
+        e => errors.append(e),
+        s => event.useragent = s))
+
+    // Parse the useragent
+    // val 
+
+    /*
+      val useragent = 
       useragent.fold(
         e => errors.append(e),
         s => {
@@ -86,17 +102,9 @@ object EnrichmentManager {
               // TODO: add rest of browser fields.
             })
         })
-    }
+    } */
 
     // 2b. Failable enrichments using the payload
-
-    // Retrieve the payload
-    // TODO: add support for other
-    // payload types in the future
-    val parameters = raw.payload match {
-      case NVGetPayload(p) => p
-      case _ => throw new FatalEtlException("Only name-value pair GET payloads are currently supported")
-    }
 
     // We copy the Hive ETL approach: one
     // big loop through all the NV pairs
@@ -137,7 +145,7 @@ object EnrichmentManager {
             e => errors.append(e),
             s => event.visit_id = s)
         // Client date and time
-        // TODO: we want to move this into separate client dt, tm fields: #149
+        // TODO: we want to move this into separate client_dt, client_tm fields: #149
         case "tstamp" =>
           EventEnrichments.extractTimestamp(value).fold(
             e => errors.append(e),

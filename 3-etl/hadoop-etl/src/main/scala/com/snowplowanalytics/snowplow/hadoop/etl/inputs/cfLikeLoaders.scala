@@ -134,7 +134,7 @@ trait CloudFrontLikeLoader extends CollectorLoader {
    *         CanonicalInput object, wrapped
    *         in a Scalaz ValidatioNEL.
    */
-  def toCanonicalInput(line: String): ValidatedCanonicalInput = line match {
+  def toCanonicalInput(line: String): ValidatedMaybeCanonicalInput = line match {
     
     // 1. Header row
     case h if (h.startsWith("#Version:") ||

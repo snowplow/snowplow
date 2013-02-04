@@ -83,7 +83,7 @@ package object etl {
    * containing `String`s for `Failure`
    * or a `MaybeCanonicalInput` for `Success`.
    */
-  type ValidatedCanonicalInput = Validated[MaybeCanonicalInput]
+  type ValidatedMaybeCanonicalInput = Validated[MaybeCanonicalInput]
 
   /**
    * Type alias for an `Option`-boxed
@@ -94,9 +94,16 @@ package object etl {
   /**
    * Type alias for either a `ValidationNEL`
    * containing `String`s for `Failure`
+   * or a CanonicalOutput for `Success`.
+   */
+  type ValidatedCanonicalOutput = Validated[CanonicalOutput]
+
+  /**
+   * Type alias for either a `ValidationNEL`
+   * containing `String`s for `Failure`
    * or a MaybeCanonicalOutput for `Success`.
    */
-  type ValidatedCanonicalOutput = Validated[MaybeCanonicalOutput]
+  type ValidatedMaybeCanonicalOutput = Validated[MaybeCanonicalOutput]
 
   /**
    * Type alias for a `PartialFunction`

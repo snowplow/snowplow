@@ -39,7 +39,7 @@ object EtlJobFlow {
    *         flatMap, will include any validation errors
    *         contained within the ValidatedCanonicalInput
    */
-  def toCanonicalOutput(input: ValidatedCanonicalInput): ValidatedCanonicalOutput = {
+  def toCanonicalOutput(input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
     input.flatMap {
       _.cata(EnrichmentManager.enrichEvent(_).map(_.some),
              none.success)

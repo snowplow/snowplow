@@ -53,7 +53,7 @@ class EtlJob(args: Args) extends Job(args) {
 
   // Handle bad rows
   val bad = common
-    .flatMap('output -> 'errors) { o: ValidatedCanonicalOutput => o.fold(
+    .flatMap('output -> 'errors) { o: ValidatedMaybeCanonicalOutput => o.fold(
       e => Some(e.toList), // NEL -> Some(List)
       c => None)
     }
@@ -62,7 +62,7 @@ class EtlJob(args: Args) extends Job(args) {
 
   // Handle good rows
   val good = common
-    .flatMapTo('output -> 'good) { o: ValidatedCanonicalOutput =>
+    .flatMapTo('output -> 'good) { o: ValidatedMaybeCanonicalOutput =>
       o match {
         case Success(Some(s)) => Some(s)
         case _ => None // Drop errors *and* blank rows
