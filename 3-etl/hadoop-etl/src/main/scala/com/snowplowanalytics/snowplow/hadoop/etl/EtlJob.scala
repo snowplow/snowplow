@@ -64,7 +64,7 @@ class EtlJob(args: Args) extends Job(args) {
   val good = common
     .flatMapTo('output -> 'good) { o: ValidatedCanonicalOutput =>
       o match {
-        case Success(s) => Some(s)
+        case Success(Some(s)) => Some(s)
         case _ => None // Drop errors *and* blank rows
       }
     }

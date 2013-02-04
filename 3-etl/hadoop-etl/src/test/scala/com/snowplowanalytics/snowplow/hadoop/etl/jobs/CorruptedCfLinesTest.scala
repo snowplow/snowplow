@@ -31,7 +31,7 @@ import TestHelpers._
  * access log format, but the fields
  * are somehow corrupted.
  */
-class CorruptedInputLineTest extends Specification with TupleConversions {
+class CorruptedCfLinesTest extends Specification with TupleConversions {
 
   "A job which processes a corrupted input line" should {
     "write an error JSON containing the input line and all errors" in {

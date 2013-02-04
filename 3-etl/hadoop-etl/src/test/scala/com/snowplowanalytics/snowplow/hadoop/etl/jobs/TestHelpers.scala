@@ -29,7 +29,7 @@ import com.twitter.scalding._
  */
 object TestHelpers {
 
-	val beEmpty: Matcher[ListBuffer[_]]  = ((_: ListBuffer[_]).isEmpty, "is not empty")
+  val beEmpty: Matcher[ListBuffer[_]]  = ((_: ListBuffer[_]).isEmpty, "is not empty")
 
   // Standard JobTest definition used by all integration tests
   val EtlJobTest = 
