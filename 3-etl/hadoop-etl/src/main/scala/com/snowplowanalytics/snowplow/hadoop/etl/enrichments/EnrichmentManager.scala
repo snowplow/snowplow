@@ -163,6 +163,46 @@ object EnrichmentManager {
           ConversionUtils.stringToByte(value, "Feature: PDF").fold(
             e => errors.append(e),
             s => event.br_features_pdf = s)
+        // Browser has Flash?
+        case "f_fla" =>
+          ConversionUtils.stringToByte(value, "Feature: Flash").fold(
+            e => errors.append(e),
+            s => event.br_features_flash = s)
+        // Browser has Java?
+        case "f_java" =>
+          ConversionUtils.stringToByte(value, "Feature: Java").fold(
+            e => errors.append(e),
+            s => event.br_features_java = s)
+        // Browser has Director?
+        case "f_dir" =>
+          ConversionUtils.stringToByte(value, "Feature: Director").fold(
+            e => errors.append(e),
+            s => event.br_features_director = s)
+        // Browser has Quicktime?
+        case "f_qt" =>
+          ConversionUtils.stringToByte(value, "Feature: Quicktime").fold(
+            e => errors.append(e),
+            s => event.br_features_quicktime = s)
+        // Browser has RealPlayer?
+        case "f_realp" =>
+          ConversionUtils.stringToByte(value, "Feature: RealPlayer").fold(
+            e => errors.append(e),
+            s => event.br_features_realplayer = s)
+        // Browser has Windows Media?
+        case "f_wma" =>
+          ConversionUtils.stringToByte(value, "Feature: Windows Media").fold(
+            e => errors.append(e),
+            s => event.br_features_windowsmedia = s)
+        // Browser has Gears?
+        case "f_gears" =>
+          ConversionUtils.stringToByte(value, "Feature: Gears").fold(
+            e => errors.append(e),
+            s => event.br_features_gears = s)
+        // Browser has Silverlight?
+        case "f_ag" =>
+          ConversionUtils.stringToByte(value, "Feature: Silverlight").fold(
+            e => errors.append(e),
+            s => event.br_features_silverlight = s)
 
         // TODO: add a warning if unrecognised parameter found when we support warnings
         case _ =>
