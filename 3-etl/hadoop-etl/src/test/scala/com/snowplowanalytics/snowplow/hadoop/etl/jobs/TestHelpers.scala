@@ -29,21 +29,51 @@ import com.twitter.scalding._
  */
 object TestHelpers {
 
-  val beEmpty: Matcher[ListBuffer[_]]  = ((_: ListBuffer[_]).isEmpty, "is not empty")
+  /**
+   * A Specs2 matcher to check if a Scalding
+   * output sink is empty or not.
+   */
+  val beEmpty: Matcher[ListBuffer[_]] =
+    ((_: ListBuffer[_]).isEmpty, "is not empty")
 
-  // Desc
+  /**
+   * How Scalding represents input lines
+   */
+  type ScaldingLines = List[(String, String)]
+
+  /**
+   * A case class to make it easy to write out input
+   * lines for Scalding jobs without manually appending
+   * line numbers.
+   *
+   * @param l The repeated String parameters
+   */
   case class Lines(l: String*) {
 
     val lines = l.toList
     val numberedLines = number(lines)
 
-    private def number(lines: List[String]) = 
-      for ((line, n) <- lines zip (0 until lines.size)) yield (n.toString -> line)
+    /**
+     * Numbers the lines in the Scalding format.
+     * Converts "My line" to ("0" -> "My line")
+     *
+     * @param lines The List of lines to number
+     * @return the List of ("line number" -> "line")
+     *         tuples.
+     */
+    private def number(lines: List[String]): ScaldingLines =
+      for ((l, n) <- lines zip (0 until lines.size)) yield (n.toString -> l)
   }
 
-  // Desc
-  implicit def Lines2TupleList(lines : Lines): List[(String, String)] = lines.numberedLines 
-
+  /**
+   * Implicit conversion from a Lines object to
+   * a ScaldingLines, aka List[(String, String)],
+   * ready for Scalding to use.
+   *
+   * @param lines The Lines object
+   * @return the ScaldingLines ready for Scalding
+   */
+  implicit def Lines2ScaldingLines(lines : Lines): ScaldingLines = lines.numberedLines 
 
   // Standard JobTest definition used by all integration tests
   val EtlJobTest = 
