@@ -30,7 +30,7 @@ import scala.reflect.BeanProperty
  * probably review some of these
  * types (e.g. move back to
  * Array for browser features, and
- * switch remaining Bytes to Booleans.
+ * switch remaining Bytes to Booleans).
  */
 class CanonicalOutput {
 
