@@ -30,6 +30,7 @@ import com.snowplowanalytics.util.Tap._
 import utils.Json2Line
 import TestHelpers._
 import utils.DataTransform._
+import enrichments.MiscEnrichments
 
 // Test class
 class Target {
@@ -57,7 +58,7 @@ class TransformMapTest extends Specification {
       val toIntGenerator: TransformFunc = (str: String) => str.toInt
       val toByteGenerator: TransformFunc = (str: String) => if (str == "1") 1: Byte else 0: Byte
 
-      val transformMap: TransformMap = Map("p"     -> (identityGenerator, "platform"),
+      val transformMap: TransformMap = Map("p"     -> (byRef(MiscEnrichments.extractPlatform), "platform"),
                                            "f_pdf" -> (toByteGenerator, "br_features_pdf"),
                                            "vid"   -> (toIntGenerator, "visit_id"))
 
