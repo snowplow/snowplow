@@ -61,8 +61,17 @@ package utils
  */
 object DataTransform {
 
-  type TransformFunc = String => Unit
+  // Clarificatory types
+  type Key = String
+  type Value = String
+  type Field = String
 
-  // Our initial type
-  type DataTransformMap1 = Map[String, Tuple2[TransformFunc, String]]
+  // A transformation takes a string and can return anything
+  type TransformFunc1 = Value => AnyRef
+
+  // Our source map
+  type SourceMap1 = Map[Key, Value]
+
+  // Our map for transforming data
+  type TransformMap1 = Map[Key, Tuple2[TransformFunc1, Field]]
 }

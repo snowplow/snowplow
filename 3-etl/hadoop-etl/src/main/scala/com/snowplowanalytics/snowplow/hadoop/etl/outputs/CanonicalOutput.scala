@@ -13,6 +13,9 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package outputs
 
+// Scala
+import scala.reflect.BeanProperty
+
 /**
  * The canonical output format.
  *
