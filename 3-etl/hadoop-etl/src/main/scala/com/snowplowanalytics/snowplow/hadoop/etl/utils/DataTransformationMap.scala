@@ -13,6 +13,8 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package utils
 
+import java.lang.reflect.Method
+
 /**
  * HIGHLY EXPERIMENTAL
  *
@@ -61,17 +63,60 @@ package utils
  */
 object DataTransform {
 
-  // Clarificatory types
+  // Clarificatory aliases
   type Key = String
   type Value = String
   type Field = String
 
-  // A transformation takes a string and can return anything
-  type TransformFunc1 = Value => AnyRef
+  // A transformation takes a Value and can return anything (for now)
+  type TransformFunc = Function1[Value, _]
 
   // Our source map
-  type SourceMap1 = Map[Key, Value]
+  type SourceMap = Map[Key, Value]
 
   // Our map for transforming data
-  type TransformMap1 = Map[Key, Tuple2[TransformFunc1, Field]]
+  type TransformMap = Map[Key, Tuple2[TransformFunc, Field]]
+
+  /**
+   * An implicit conversion to take any Object and make it
+   * Transformable.
+   * @param any Any Object
+   * @return the new Transformable class, with manifest attached
+   */ 
+  implicit def makeTransformable[A <: AnyRef](a: A)(implicit m : Manifest[A]) = new TransformableClass[A](a)
+}
+
+class TransformableClass[A](a: A)(implicit m: Manifest[A]) {
+
+  import DataTransform._
+
+  // Let's try to set all fields using reflection
+  def transform(sourceMap: SourceMap, transformMap: TransformMap): Unit = {
+
+    val results = sourceMap.map { case (key, in) =>
+      val (func, field) = transformMap(key)
+      val out = func(in).asInstanceOf[AnyRef]
+      val setMethod = setters(field)
+      setMethod.invoke(a, out)
+    }.toList
+  }
+  // TODO: eventually would be nice to return numfieldsset.sucess for Success
+
+  // Taken from Scalding
+  // --------------------------------
+
+  // Do all the reflection for the setters we need:
+  // This needs to be lazy because Method is not serializable
+  // TODO: filter by isAccessible, which somehow seems to fail
+  lazy val setters = getSetters
+
+  def lowerFirst(s : String) = s.substring(0,1).toLowerCase + s.substring(1)
+  // Cut out "set" and lower case the first after
+  def setterToFieldName(setter : Method) = lowerFirst(setter.getName.substring(3))
+
+  def getSetters = m.erasure
+    .getDeclaredMethods
+    .filter { _.getName.startsWith("set") }
+    .groupBy { setterToFieldName(_) }
+    .mapValues { _.head }
 }

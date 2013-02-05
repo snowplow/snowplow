@@ -34,8 +34,8 @@ import utils.DataTransform._
 // Test class
 class Target {
   @BeanProperty var platform: String = _
-  @BeanProperty var visit_id: String = _ // TODO: turn into Int = _
-  @BeanProperty var br_features_pdf: String = _ // TODO: turn in Byte = _
+  @BeanProperty var br_features_pdf: Byte = _
+  @BeanProperty var visit_id: Int = _
 }
 
 /**
@@ -49,21 +49,26 @@ class TransformMapTest extends Specification {
   "Executing a TransformMap against a SourceMap" should {
     "successfully set each of the target fields" in {
 
-      val sourceMap: SourceMap1 = Map("p"     -> "web",
-                                      "f_pdf" -> "1",
-                                      "vid"   -> "1")
+      val sourceMap: SourceMap = Map("p"     -> "web",
+                                     "f_pdf" -> "1",
+                                     "vid"   -> "1")
 
-      val transformMap: TransformMap1 = Map("p"     -> (identity, "platform"),
-                                            "f_pdf" -> (identity, "supports_pdf"),
-                                            "vid"   -> (identity, "visit_id"))
+      val identityGenerator: TransformFunc = (str: String) => str
+      val toIntGenerator: TransformFunc = (str: String) => str.toInt
+      val toByteGenerator: TransformFunc = (str: String) => if (str == "1") 1: Byte else 0: Byte
+
+      val transformMap: TransformMap = Map("p"     -> (identityGenerator, "platform"),
+                                           "f_pdf" -> (toByteGenerator, "br_features_pdf"),
+                                           "vid"   -> (toIntGenerator, "visit_id"))
 
       val expected = new Target().tap { t =>
         t.platform = "web"
-        t.visit_id = "1"
-        t.br_features_pdf = "1"
+        t.br_features_pdf = 1
+        t.visit_id = 1
       }
 
       val target = new Target
+      target.transform(sourceMap, transformMap)
 
       target.platform must_== expected.platform
       target.visit_id must_== expected.visit_id

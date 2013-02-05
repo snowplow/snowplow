@@ -42,7 +42,7 @@ object MiscEnrichments {
    * @return a Scalaz
    *         Validation[String, String].
    */
-  def extractPlatform(platform: String): Validation[String, String] = {
+  val extractPlatform: (String) => Validation[String, String] = platform => {
     platform match {
       case "web" => "web".success
       case "iot" => "iot".success // Internet of Things (e.g. Arduino tracker)
