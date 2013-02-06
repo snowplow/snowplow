@@ -80,7 +80,7 @@ object DataTransform {
   type SourceMap = Map[Key, Value]
 
   // Our map for transforming data
-  type TransformMap = Map[Key, Tuple2[TransformFunc, Field]]
+  type TransformMap = Map[Key, Tuple2[TransformFunc, _]]
 
   /**
    * An implicit conversion to take any Object and make it
@@ -88,7 +88,7 @@ object DataTransform {
    * @param any Any Object
    * @return the new Transformable class, with manifest attached
    */ 
-  implicit def makeTransformable[A <: AnyRef](a: A)(implicit m : Manifest[A]) = new TransformableClass[A](a)
+  implicit def makeTransformable[A <: AnyRef](obj: A)(implicit m : Manifest[A]) = new TransformableClass[A](obj)
 
   /**
    * A helper method to store our functions with accidentally calling them.
@@ -96,7 +96,7 @@ object DataTransform {
   def !~(f: => TransformFunc): TransformFunc = f
 }
 
-class TransformableClass[A](a: A)(implicit m: Manifest[A]) {
+class TransformableClass[A](obj: A)(implicit m: Manifest[A]) {
 
   import DataTransform._
 
@@ -105,13 +105,21 @@ class TransformableClass[A](a: A)(implicit m: Manifest[A]) {
 
     val results = sourceMap.map { case (key, in) =>
       val (func, field) = transformMap(key)
-      val setMethod = setters(field)
-
       val out = func(key, in)
+
       out match {
         case Success(s) =>
-          setMethod.invoke(a, s.asInstanceOf[AnyRef])
-          1.successNel[String] // 
+          field match {
+            case f: String =>
+              val result = s.asInstanceOf[AnyRef]
+              setters(f).invoke(obj, result)
+              1.successNel[String] // +1 to the count of fields successfully set
+            case Tuple2(f1: String, f2: String) =>
+              val result = s.asInstanceOf[Tuple2[AnyRef, AnyRef]]
+              setters(f1).invoke(obj, result._1)
+              setters(f2).invoke(obj, result._2)
+              2.successNel[String] // +2 to the count of fields successfully set
+          }
         case Failure(e) =>
           e.failNel[Int]
       }

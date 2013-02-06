@@ -67,12 +67,13 @@ object EventEnrichments {
    *         error message if the
    *         format was invalid
    */
-  def extractTimestamp(tstamp: String): Validation[String, DateTimeTuple] = try {
+  val extractTimestamp: (String, String) => Validation[String, DateTimeTuple] = (field, tstamp) =>
+    try {
       val t = TstampFormat.parseDateTime(tstamp)
       splitDatetime(t).success
     } catch {
       case iae: IllegalArgumentException =>
-        "[%s] is not in the expected timestamp format".format(tstamp).fail
+        "Field [%s]: [%s] is not in the expected timestamp format".format(field, tstamp).fail
     }
 
   /**

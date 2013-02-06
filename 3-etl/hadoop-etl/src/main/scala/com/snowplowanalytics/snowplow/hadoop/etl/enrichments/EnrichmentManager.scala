@@ -148,7 +148,7 @@ object EnrichmentManager {
         // Client date and time
         // TODO: we want to move this into separate client_dt, client_tm fields: #149
         case "tstamp" =>
-          EventEnrichments.extractTimestamp(value).fold(
+          EventEnrichments.extractTimestamp("tstamp", value).fold(
             e => errors.append(e),
             s => {
               event.dt = s._1

@@ -32,12 +32,15 @@ import TestHelpers._
 import utils.DataTransform._
 import enrichments.MiscEnrichments
 import utils.ConversionUtils
+import enrichments.EventEnrichments
 
 // Test class
 class Target {
   @BeanProperty var platform: String = _
   @BeanProperty var br_features_pdf: Byte = _
   @BeanProperty var visit_id: Int = _
+  @BeanProperty var dt: String = _
+  @BeanProperty var tm: String = _
 }
 
 /**
@@ -51,18 +54,22 @@ class TransformMapTest extends Specification {
   "Executing a TransformMap against a SourceMap" should {
     "successfully set each of the target fields" in {
 
-      val sourceMap: SourceMap = Map("p"     -> "web",
-                                     "f_pdf" -> "1",
-                                     "vid"   -> "1")
+      val sourceMap: SourceMap = Map("p"      -> "web",
+                                     "f_pdf"  -> "1",
+                                     "vid"    -> "1",
+                                     "tstamp" -> "2013-01-01 23-11-59")
 
-      val transformMap: TransformMap = Map("p"     -> (!~(MiscEnrichments.extractPlatform), "platform"),
-                                           "f_pdf" -> (!~(ConversionUtils.stringToByte), "br_features_pdf"),
-                                           "vid"   -> (!~(ConversionUtils.stringToInt), "visit_id"))
+      val transformMap: TransformMap = Map("p"      -> (!~(MiscEnrichments.extractPlatform), "platform"),
+                                           "f_pdf"  -> (!~(ConversionUtils.stringToByte), "br_features_pdf"),
+                                           "vid"    -> (!~(ConversionUtils.stringToInt), "visit_id"),
+                                           "tstamp" -> (!~(EventEnrichments.extractTimestamp), ("dt", "tm")))
 
       val expected = new Target().tap { t =>
         t.platform = "web"
         t.br_features_pdf = 1
         t.visit_id = 1
+        t.dt = "2013-01-01"
+        t.tm = "23-11-59"
       }
 
       val target = new Target
@@ -71,6 +78,8 @@ class TransformMapTest extends Specification {
       target.platform must_== expected.platform
       target.visit_id must_== expected.visit_id
       target.br_features_pdf must_== expected.br_features_pdf
+      target.dt must_== expected.dt
+      target.tm must_== expected.tm
     }
   }
 }
