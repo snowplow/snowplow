@@ -55,11 +55,12 @@ class TransformMapTest extends Specification {
   "Executing a TransformMap against a SourceMap" should {
     "successfully set each of the target fields" in {
 
-      val sourceMap = Map("p"      -> "web",
-                          "f_pdf"  -> "1",
-                          "vid"    -> "1",
-                          "tv"     -> "no-js-0.1.0",
-                          "tstamp" -> "2013-01-01 23-11-59")
+      val sourceMap = Map("p"       -> "web",
+                          "f_pdf"   -> "1",
+                          "vid"     -> "1",
+                          "tv"      -> "no-js-0.1.0",
+                          "tstamp"  -> "2013-01-01 23-11-59",
+                          "missing" -> "Not in the transformation map")
 
       val transformMap: TransformMap = Map("p"      -> (!~(MiscEnrichments.extractPlatform), "platform"),
                                            "f_pdf"  -> (!~(ConversionUtils.stringToByte), "br_features_pdf"),

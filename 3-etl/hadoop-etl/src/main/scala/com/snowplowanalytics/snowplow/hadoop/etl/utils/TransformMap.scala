@@ -74,7 +74,7 @@ object DataTransform {
   type Field = String
 
   // A transformation takes a Key and Value and can return anything (for now)
-  type TransformFunc = Function2[Key, Value, _]
+  type TransformFunc = Function2[Key, Value, Validation[String, _]]
 
   // Our source map
   type SourceMap = Map[Key, Value]
@@ -101,9 +101,9 @@ class TransformableClass[A](obj: A)(implicit m: Manifest[A]) {
   import DataTransform._
 
   // Let's try to set all fields using reflection
-  def transform(sourceMap: SourceMap, transformMap: TransformMap): Unit = {
+  def transform(sourceMap: SourceMap, transformMap: TransformMap): ValidationNEL[String, Int] = {
 
-    val results = sourceMap.map { case (key, in) =>
+    val results: List[Validation[String, Int]] = sourceMap.map { case (key, in) =>
       if (transformMap.contains(key)) {
         val (func, field) = transformMap(key)
         val out = func(key, in)
@@ -114,22 +114,23 @@ class TransformableClass[A](obj: A)(implicit m: Manifest[A]) {
               case f: String =>
                 val result = s.asInstanceOf[AnyRef]
                 setters(f).invoke(obj, result)
-                1.successNel[String] // +1 to the count of fields successfully set
+                1.success[String] // +1 to the count of fields successfully set
               case Tuple2(f1: String, f2: String) =>
                 val result = s.asInstanceOf[Tuple2[AnyRef, AnyRef]]
                 setters(f1).invoke(obj, result._1)
                 setters(f2).invoke(obj, result._2)
-                2.successNel[String] // +2 to the count of fields successfully set
+                2.success[String] // +2 to the count of fields successfully set
             }
           case Failure(e) =>
-            e.failNel[Int]
+            e.fail[Int]
         }
       } else {
-        0.successNel[String] // Key not found: zero fields updated
+        0.success[String] // Key not found: zero fields updated
       }
     }.toList
 
-    // TODO: can we now roll up all the results?
+    // Roll up and return the results
+    results.foldLeft(0.successNel[String])(_ +++ _.toValidationNEL)
   }
 
   // Do all the reflection for the setters we need:

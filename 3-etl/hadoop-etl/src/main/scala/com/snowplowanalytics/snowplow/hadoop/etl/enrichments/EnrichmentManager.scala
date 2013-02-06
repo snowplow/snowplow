@@ -138,9 +138,9 @@ object EnrichmentManager {
 
     val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
   
-    event.transform(sourceMap, transformMap)
-
-    errors.append("OH NO")
+    event.transform(sourceMap, transformMap).fold(
+      e => errors.appendAll(e.toList),
+      s => Unit)
 
     // Do we have errors, or a valid event?
     errors.toList match {
