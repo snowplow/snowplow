@@ -96,7 +96,7 @@ class TransformableClass[A](obj: A)(implicit m: Manifest[A]) {
   import DataTransform._
 
   // Let's try to set all fields using reflection
-  def transform(sourceMap: SourceMap, transformMap: TransformMap): List[String] = {
+  def transform(sourceMap: SourceMap, transformMap: TransformMap): ValidationNEL[String, Int] = {
 
     val results: List[Validation[String, Int]] = sourceMap.map { case (key, in) =>
       if (transformMap.contains(key)) {
@@ -124,13 +124,8 @@ class TransformableClass[A](obj: A)(implicit m: Manifest[A]) {
       }
     }.toList
 
-    // results.foldLeft(0.successNel[String])(_ +++ _.toValidationNEL)
-
-    // Roll up and return the errors (if any)
-    results.map(r => r match {
-      case Failure(e) => Some(e)
-      case Success(a) => None
-      }).flatten
+    // TODO: fix so it returns the total count of fields set on Success
+    results.foldLeft(0.successNel[String])(_ +++ _.toValidationNEL)
   }
 
   // Do all the reflection for the setters we need:

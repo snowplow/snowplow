@@ -92,10 +92,6 @@ object AttributionEnrichments {
 
     val campaign = new MarketingCampaign
     val transform = campaign.transform(sourceMap, transformMap)
-
-    transform match {
-      case h :: t => NonEmptyList(h, t: _*).fail
-      case _ => campaign.success
-    }
+    transform.flatMap(s => campaign.success)
   }
 }

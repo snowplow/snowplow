@@ -200,14 +200,16 @@ object EnrichmentManager {
     // Assemble all of our (potential) errors
     // TODO: there must be some applicative way of doing this without having to disassemble each Validation
     val errors: List[String] =
-      transform ++
+      transform.fold(
+        e => e.toList,
+        s => Nil) ++
+      campaign.fold(
+        e => e.toList,
+        s => Nil) ++
       List(useragent, client, pageUri).map(v => v match {
         case Failure(e) => Some(e)
         case Success(a) => None
-        }).flatten ++
-      campaign.fold(
-        e => e.toList,
-        s => Nil)
+        }).flatten
 
     // Do we have errors, or a valid event?
     errors match {
