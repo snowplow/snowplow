@@ -74,7 +74,7 @@ object EnrichmentManager {
       e.event_id = EE.generateEventId
       e.v_collector = raw.source.collector
       e.v_etl = ME.etlVersion
-      e.user_ipaddress = raw.ipAddress.getOrElse("")
+      raw.ipAddress.map(ip => e.user_ipaddress = ip)
     }
 
     // 2. Enrichments which can fail
@@ -85,30 +85,42 @@ object EnrichmentManager {
 
     // 2a. Failable enrichments which don't need the payload
 
+    val emptySuccess = 0.success[String]
+
     // Attempt to decode the useragent
     // TODO: invert the boxing, so the Option is innermost, on the Success only.
-    val useragent = raw.userAgent.map(CU.decodeString(_, "useragent", raw.encoding))
-    useragent.map(_.fold(
-      e => errors.append(e),
-      s => event.useragent = s))
+    val useragent = raw.userAgent match {
+      case Some(ua) =>
+        val result = CU.decodeString(ua, "useragent", raw.encoding)
+        result.fold(
+          e => errors.append(e),
+          s => event.useragent = s)
+        result
+      case None => emptySuccess // No fields updated
+    }
 
     // Parse the useragent
     // TODO: invert the boxing, so the Option is innermost, on the Success only.
-    val clientAttribs = raw.userAgent.map(CE.extractClientAttributes(_))
-    clientAttribs.map(_.fold(
-      e => errors.append(e),
-      s => {
-        event.br_name = s.browserName
-        event.br_family = s.browserFamily
-        s.browserVersion.map(bv => event.br_version = bv)
-        event.br_type = s.browserType
-        event.br_renderengine = s.browserType
-        event.os_name = s.osName
-        event.os_family = s.osName
-        event.os_manufacturer = s.osManufacturer
-        event.dvce_type = s.deviceType
-        event.dvce_ismobile = CU.booleanToByte(s.deviceIsMobile)
-      }))
+    val clientAttribs = raw.userAgent match {
+      case Some(ua) =>
+        val ca = CE.extractClientAttributes(ua)
+        ca.fold(
+          e => errors.append(e),
+          s => {
+            event.br_name = s.browserName
+            event.br_family = s.browserFamily
+            s.browserVersion.map(bv => event.br_version = bv)
+            event.br_type = s.browserType
+            event.br_renderengine = s.browserType
+            event.os_name = s.osName
+            event.os_family = s.osName
+            event.os_manufacturer = s.osManufacturer
+            event.dvce_type = s.deviceType
+            event.dvce_ismobile = CU.booleanToByte(s.deviceIsMobile)
+          })
+        ca
+      case None => emptySuccess // No fields updated
+    }
 
     // 2b. Failable enrichments using the payload
 
@@ -167,12 +179,14 @@ object EnrichmentManager {
 
     val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
   
-    event.transform(sourceMap, transformMap).fold(
+    val mapTransform = event.transform(sourceMap, transformMap)
+    mapTransform.fold(
       e => errors.appendAll(e.toList),
       s => Unit)
 
     // Potentially update the page_url
-    PE.extractPageUri(raw.refererUri, Option(event.page_url)).fold(
+    val pageUri = PE.extractPageUri(raw.refererUri, Option(event.page_url))
+    pageUri.fold(
       e => errors.append(e),
       s => event.page_url = s.toString)
 
