@@ -19,6 +19,7 @@ import java.net.URI
 
 // Scala
 import scala.collection.JavaConversions._
+import scala.reflect.BeanProperty
 
 // Scalaz
 import scalaz._
@@ -29,7 +30,8 @@ import org.apache.http.NameValuePair
 import org.apache.http.client.utils.URLEncodedUtils
 
 // This project
-import utils.ConversionUtils
+import utils.{ConversionUtils => CU}
+import utils.DataTransform._
 
 /**
  * Holds enrichments related to marketing and campaign
@@ -41,12 +43,13 @@ object AttributionEnrichments {
    * Immutable case class for a marketing campaign. Any
    * or all of the five fields can be set.
    */
-  case class MarketingCampaign(
-      medium:   Option[String],
-      source:   Option[String],
-      term:     Option[String],
-      content:  Option[String],
-      campaign: Option[String])
+  class MarketingCampaign {
+    @BeanProperty var medium: String = _
+    @BeanProperty var source: String = _
+    @BeanProperty var term: String = _
+    @BeanProperty var content: String = _
+    @BeanProperty var campaign: String = _
+  }
 
   /**
    * Extract the marketing fields
@@ -66,42 +69,33 @@ object AttributionEnrichments {
    *         boxed in a Scalaz
    *         Validation
    */
-  def extractMarketingFields(uri: URI, encoding: String): Validation[String, MarketingCampaign] = {
+  def extractMarketingFields(uri: URI, encoding: String): ValidationNEL[String, MarketingCampaign] = {
 
     val parameters = try {
-      Option(URLEncodedUtils.parse(uri, encoding))
+      URLEncodedUtils.parse(uri, encoding)
     } catch {
-      case _ => return "Could not parse uri [%s]".format(uri).fail
+      case _ => return "Could not parse uri [%s]".format(uri).failNel[MarketingCampaign]
     }
 
-    // I think vars the lesser of two evils here:
-    // http://stackoverflow.com/questions/4290955/instantiating-a-case-class-from-a-list-of-parameters
-    var medium, source, term, content, campaign: Option[String] = None
-    for (params <- parameters) {
-      for (p <- params.toList) {
-        val name  = p.getName
-        lazy val value = ConversionUtils.decodeString(
-          p.getValue.toLowerCase, "N/A", encoding) // Should actually be lower case anyway
+    val decodeString: TransformFunc = CU.decodeString(encoding, _, _)
 
-        /* TODO: need to implement this.
-           We need to chain Scalaz Validations
-           together.
+    // We use a TransformMap which takes the format:
+    // "source key" -> (transformFunction, field(s) to set)
+    val transformMap: TransformMap =
+      Map(("utm_medium"   , (decodeString, "medium")),
+          ("utm_source"   , (decodeString, "source")),
+          ("utm_term"     , (decodeString, "term")),
+          ("utm_content"  , (decodeString, "term")),
+          ("utm_campaign" , (decodeString, "campaign")))
 
-        name match {
-          case "utm_medium" => medium = value
-          case "utm_source" => source = value
-          case "utm_term" => term = value
-          case "utm_content" => content = value
-          case "utm_campaign" => campaign = value
-        } */
-      }
+    val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
+
+    val campaign = new MarketingCampaign
+    val transform = campaign.transform(sourceMap, transformMap)
+
+    transform match {
+      case h :: t => NonEmptyList(h, t: _*).fail
+      case _ => campaign.success
     }
-
-    MarketingCampaign(
-      medium,
-      source,
-      term,
-      content,
-      campaign).success
   }
 }
