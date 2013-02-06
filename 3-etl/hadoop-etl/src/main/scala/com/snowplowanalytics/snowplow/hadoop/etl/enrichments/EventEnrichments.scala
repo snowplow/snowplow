@@ -88,15 +88,16 @@ object EventEnrichments {
    *         if not recognised, boxed in a Scalaz
    *         Validation
    */
-  def extractEventType(eventCode: String): Validation[String, String] = eventCode match {
-    case "ev" => "custom".success
-    case "ad" => "ad_impression".success
-    case "tr" => "transaction".success
-    case "ti" => "transaction_item".success
-    case "pv" => "page_view".success
-    case "pp" => "page_ping".success
-    case  ec  => "[%s] is not a recognised event code".format(ec).fail
-  }
+  val extractEventType: (String, String) => Validation[String, String] = (field, code) =>
+    code match {
+      case "ev" => "custom".success
+      case "ad" => "ad_impression".success
+      case "tr" => "transaction".success
+      case "ti" => "transaction_item".success
+      case "pv" => "page_view".success
+      case "pp" => "page_ping".success
+      case  ec  => "[%s] is not a recognised event code".format(ec).fail
+    }
 
   /**
    * Returns a unique event ID. The event ID is 

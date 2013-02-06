@@ -26,7 +26,11 @@ import com.snowplowanalytics.util.Tap._
 // This project
 import inputs.{CanonicalInput, NVGetPayload}
 import outputs.CanonicalOutput
-import utils.ConversionUtils
+import utils.{ConversionUtils => CU}
+import enrichments.{EventEnrichments => EE}
+import enrichments.{MiscEnrichments => ME}
+import enrichments.{ClientEnrichments => CE}
+import utils.DataTransform._
 
 /**
  * A module to hold our enrichment process.
@@ -59,16 +63,16 @@ object EnrichmentManager {
     // 1. Enrichments not expected to fail
 
     // Quick split timestamp into date and time
-    val (dt, tm) = EventEnrichments.splitDatetime(raw.timestamp)
+    val (dt, tm) = EE.splitDatetime(raw.timestamp)
 
     // Let's start populating the NonHiveOutput
     // with the fields which cannot error
     val event = new CanonicalOutput().tap { e =>
       e.dt = dt
       e.tm = tm
-      e.event_id = EventEnrichments.generateEventId
+      e.event_id = EE.generateEventId
       e.v_collector = raw.source.collector
-      e.v_etl = MiscEnrichments.etlVersion
+      e.v_etl = ME.etlVersion
       e.user_ipaddress = raw.ipAddress.getOrElse("")
     }
 
@@ -82,14 +86,14 @@ object EnrichmentManager {
 
     // Attempt to decode the useragent
     // TODO: invert the boxing, so the Option is innermost, on the Success only.
-    val useragent = raw.userAgent.map(ConversionUtils.decodeString(_, raw.encoding))
+    val useragent = raw.userAgent.map(CU.decodeString(_, raw.encoding))
     useragent.map(_.fold(
       e => errors.append(e),
       s => event.useragent = s))
 
     // Parse the useragent
     // TODO: invert the boxing, so the Option is innermost, on the Success only.
-    val clientAttribs = raw.userAgent.map(ClientEnrichments.extractClientAttributes(_))
+    val clientAttribs = raw.userAgent.map(CE.extractClientAttributes(_))
     clientAttribs.map(_.fold(
       e => errors.append(e),
       s => {
@@ -102,112 +106,41 @@ object EnrichmentManager {
         event.os_family = s.osName
         event.os_manufacturer = s.osManufacturer
         event.dvce_type = s.deviceType
-        event.dvce_ismobile = ConversionUtils.booleanToByte(s.deviceIsMobile)
+        event.dvce_ismobile = CU.booleanToByte(s.deviceIsMobile)
       }))
 
     // 2b. Failable enrichments using the payload
 
-    // We copy the Hive ETL approach: one
-    // big loop through all the NV pairs
-    // present, populating as we go.
-    // TODO: in the Avro future we will be
-    // more strict and check that a raw row
-    // maps onto a specific event type and
-    // the required fields for that event
-    // type are present
-    parameters.foreach(p => {
-      val name = p.getName
-      val value = p.getValue
+    // We use a TransformMap which takes the format:
+    // "source key" -> (transformFunction, field(s) to set)
+    val transformMap: TransformMap =
+      Map("e"       -> (!~(EE.extractEventType), "event"),
+          "ip"      -> (!~(ME.identity), "user_ipaddress"),
+          "aid"     -> (!~(ME.identity), "app_id"),
+          "p"       -> (!~(ME.extractPlatform), "platform"),
+          "tid"     -> (!~(ME.identity), "txn_id"),
+          "uid"     -> (!~(ME.identity), "user_id"),
+          "fp"      -> (!~(ME.identity), "user_fingerprint"),
+          "vid"     -> (!~(CU.stringToInt), "visit_id"),
+          "tstamp"  -> (!~(EE.extractTimestamp), ("dt", "tm")), // Note tuple target
+          "tv"      -> (!~(ME.identity), "tracker_v"),
+          "lang"    -> (!~(ME.identity), "br_lang"),
+          "f_pdf"   -> (!~(CU.stringToByte), "br_features_pdf"),
+          "f_fla"   -> (!~(CU.stringToByte), "br_features_flash"),
+          "f_java"  -> (!~(CU.stringToByte), "br_features_java"),
+          "f_dir"   -> (!~(CU.stringToByte), "br_features_director"),
+          "f_qt"    -> (!~(CU.stringToByte), "br_features_quicktime"),
+          "f_realp" -> (!~(CU.stringToByte), "br_features_realplayer"),
+          "f_wma"   -> (!~(CU.stringToByte), "br_features_windowsmedia"),
+          "f_gears" -> (!~(CU.stringToByte), "br_features_gears"),
+          "f_ag"    -> (!~(CU.stringToByte), "br_features_silverlight"),
+          "cookie"  -> (!~(CU.stringToByte), "br_cookies"))
 
-      name match {
-        // Event type
-        case "e" =>
-          EventEnrichments.extractEventType(value).fold(
-            e => errors.append(e),
-            s => event.event = s)
-        // IP address override
-        case "ip" => event.user_ipaddress = value
-        // Application/site ID
-        case "aid" => event.app_id = value
-        // Platform
-        case "p" =>
-          MiscEnrichments.extractPlatform("p", value).fold(
-            e => errors.append(e),
-            s => event.platform = s)
-        // Transaction ID
-        case "tid" => event.txn_id = value
-        // User ID
-        case "uid" => event.user_id = value
-        // User fingerprint
-        case "fp" => event.user_fingerprint = value
-        // Visit ID
-        case "vid" =>
-          ConversionUtils.stringToInt("vid", value).fold(
-            e => errors.append(e),
-            s => event.visit_id = s)
-        // Client date and time
-        // TODO: we want to move this into separate client_dt, client_tm fields: #149
-        case "tstamp" =>
-          EventEnrichments.extractTimestamp("tstamp", value).fold(
-            e => errors.append(e),
-            s => {
-              event.dt = s._1
-              event.tm = s._2
-            })
-        // Tracker version
-        case "tv" => event.v_tracker = value
-        // Browser language
-        case "lang" => event.br_lang = value
-        // Browser has PDF?
-        case "f_pdf" =>
-          ConversionUtils.stringToByte("f_pdf", value).fold(
-            e => errors.append(e),
-            s => event.br_features_pdf = s)
-        // Browser has Flash?
-        case "f_fla" =>
-          ConversionUtils.stringToByte("f_fla", value).fold(
-            e => errors.append(e),
-            s => event.br_features_flash = s)
-        // Browser has Java?
-        case "f_java" =>
-          ConversionUtils.stringToByte("f_java", value).fold(
-            e => errors.append(e),
-            s => event.br_features_java = s)
-        // Browser has Director?
-        case "f_dir" =>
-          ConversionUtils.stringToByte("f_dir", value).fold(
-            e => errors.append(e),
-            s => event.br_features_director = s)
-        // Browser has Quicktime?
-        case "f_qt" =>
-          ConversionUtils.stringToByte("f_qt", value).fold(
-            e => errors.append(e),
-            s => event.br_features_quicktime = s)
-        // Browser has RealPlayer?
-        case "f_realp" =>
-          ConversionUtils.stringToByte("f_realp", value).fold(
-            e => errors.append(e),
-            s => event.br_features_realplayer = s)
-        // Browser has Windows Media?
-        case "f_wma" =>
-          ConversionUtils.stringToByte("f_wma", value).fold(
-            e => errors.append(e),
-            s => event.br_features_windowsmedia = s)
-        // Browser has Gears?
-        case "f_gears" =>
-          ConversionUtils.stringToByte("f_gears", value).fold(
-            e => errors.append(e),
-            s => event.br_features_gears = s)
-        // Browser has Silverlight?
-        case "f_ag" =>
-          ConversionUtils.stringToByte("f_ag", value).fold(
-            e => errors.append(e),
-            s => event.br_features_silverlight = s)
+    val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
+  
+    event.transform(sourceMap, transformMap)
 
-        // TODO: add a warning if unrecognised parameter found when we support warnings
-        case _ =>
-      }
-    })
+    errors.append("OH NO")
 
     // Do we have errors, or a valid event?
     errors.toList match {

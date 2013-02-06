@@ -104,24 +104,28 @@ class TransformableClass[A](obj: A)(implicit m: Manifest[A]) {
   def transform(sourceMap: SourceMap, transformMap: TransformMap): Unit = {
 
     val results = sourceMap.map { case (key, in) =>
-      val (func, field) = transformMap(key)
-      val out = func(key, in)
+      if (transformMap.contains(key)) {
+        val (func, field) = transformMap(key)
+        val out = func(key, in)
 
-      out match {
-        case Success(s) =>
-          field match {
-            case f: String =>
-              val result = s.asInstanceOf[AnyRef]
-              setters(f).invoke(obj, result)
-              1.successNel[String] // +1 to the count of fields successfully set
-            case Tuple2(f1: String, f2: String) =>
-              val result = s.asInstanceOf[Tuple2[AnyRef, AnyRef]]
-              setters(f1).invoke(obj, result._1)
-              setters(f2).invoke(obj, result._2)
-              2.successNel[String] // +2 to the count of fields successfully set
-          }
-        case Failure(e) =>
-          e.failNel[Int]
+        out match {
+          case Success(s) =>
+            field match {
+              case f: String =>
+                val result = s.asInstanceOf[AnyRef]
+                setters(f).invoke(obj, result)
+                1.successNel[String] // +1 to the count of fields successfully set
+              case Tuple2(f1: String, f2: String) =>
+                val result = s.asInstanceOf[Tuple2[AnyRef, AnyRef]]
+                setters(f1).invoke(obj, result._1)
+                setters(f2).invoke(obj, result._2)
+                2.successNel[String] // +2 to the count of fields successfully set
+            }
+          case Failure(e) =>
+            e.failNel[Int]
+        }
+      } else {
+        0.successNel[String] // Key not found: zero fields updated
       }
     }.toList
 
