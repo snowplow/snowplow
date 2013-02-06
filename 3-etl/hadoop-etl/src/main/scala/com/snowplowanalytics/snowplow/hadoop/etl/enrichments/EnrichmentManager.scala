@@ -81,40 +81,38 @@ object EnrichmentManager {
 
     // 2a. Failable enrichments which don't need the payload
 
-    val emptySuccess = 0.success[String]
+    val success = 0.success[String]
 
     // Attempt to decode the useragent
-    // TODO: invert the boxing, so the Option is innermost, on the Success only.
     val useragent = raw.userAgent match {
       case Some(ua) =>
-        val result = CU.decodeString(ua, "useragent", raw.encoding)
-        result.fold(e => Unit,
-          s => event.useragent = s)
-        result
-      case None => emptySuccess // No fields updated
+        val u = CU.decodeString(ua, "useragent", raw.encoding)
+        u.flatMap(s => {
+          event.useragent = s
+          s.success
+          })
+      case None => success // No fields updated
     }
 
     // Parse the useragent
-    // TODO: invert the boxing, so the Option is innermost, on the Success only.
     val client = raw.userAgent match {
       case Some(ua) =>
         val ca = CE.extractClientAttributes(ua)
-        ca.fold(
-          e => Unit,
-          s => {
-            event.br_name = s.browserName
-            event.br_family = s.browserFamily
-            s.browserVersion.map(bv => event.br_version = bv)
-            event.br_type = s.browserType
-            event.br_renderengine = s.browserType
-            event.os_name = s.osName
-            event.os_family = s.osName
-            event.os_manufacturer = s.osManufacturer
-            event.dvce_type = s.deviceType
-            event.dvce_ismobile = CU.booleanToByte(s.deviceIsMobile)
+        ca.flatMap(s => {
+          event.br_name = s.browserName
+          event.br_family = s.browserFamily
+          s.browserVersion.map(bv => event.br_version = bv)
+          event.br_type = s.browserType
+          event.br_renderengine = s.browserType
+          event.os_name = s.osName
+          event.os_family = s.osName
+          event.os_manufacturer = s.osManufacturer
+          event.dvce_type = s.deviceType
+          event.dvce_ismobile = CU.booleanToByte(s.deviceIsMobile)
+          s.success
           })
         ca
-      case None => emptySuccess // No fields updated
+      case None => success // No fields updated
     }
 
     // 2b. Failable enrichments using the payload
@@ -177,18 +175,21 @@ object EnrichmentManager {
     val transform = event.transform(sourceMap, transformMap)
 
     // Potentially update the page_url
+    // TODO: this is a bit wasteful. We should keep the URI version for use when we are splitting out all 5 parts of Url.
     val pageUri = PE.extractPageUri(raw.refererUri, Option(event.page_url))
-    pageUri.fold(
-      e => Unit,
-      s => event.page_url = s.toString)
+    pageUri.flatMap(s => {
+      event.page_url = s.toString
+      s.success
+      })
 
-    val errors2: List[String] = List(useragent, client, pageUri).map(v => v match {
+    // Assemble all of our (potential) errors
+    val errors: List[String] = transform ++ List(useragent, client, pageUri).map(v => v match {
       case Failure(e) => Some(e)
       case Success(a) => None
-      }).flatten ++ transform
+      }).flatten
 
     // Do we have errors, or a valid event?
-    errors2 match {
+    errors match {
       case h :: t => NonEmptyList(h, t: _*).fail
       case _ => event.success
     }
