@@ -77,10 +77,11 @@ object ClientEnrichments {
    *         error message, boxed in a
    *         Scalaz Validation
    */
-  def extractScreenResolution(res: String): Validation[String, ResolutionTuple] = res match {
-    case ResRegex(h, w) => (h.toInt, w.toInt).success
-    case r => "[%s] is not a valid screen resolution".format(r).fail
-  }
+  val extractResolution: (String, String) => Validation[String, ResolutionTuple] = (field, res) =>
+    res match {
+      case ResRegex(width, height) => (width.toInt, height.toInt).success
+      case _ => "Field [%s]: [%s] is not a valid screen resolution".format(field, res).fail
+    }
 
   /**
    * Extracts the client attributes

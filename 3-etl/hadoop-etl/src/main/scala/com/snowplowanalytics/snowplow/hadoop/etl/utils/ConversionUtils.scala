@@ -47,16 +47,16 @@ object ConversionUtils {
    * @return a Scalaz Validation, wrapping either
    *         an error String or the decoded String
    */
-  def decodeString(str: String, encoding: String): Validation[String, String] =
+  val decodeString: (String, String, String) => Validation[String, String] = (enc, field, str) =>
     try {
       val s = Option(str).getOrElse("")
-      val d = URLDecoder.decode(s, encoding)
+      val d = URLDecoder.decode(s, enc)
       val r = d.replaceAll("(\\r|\\n)", "")
                .replaceAll("\\t", "    ")
       r.success
     } catch {
       case e =>
-        "Exception decoding [%s] from [%s] encoding: [%s]".format(str, encoding, e.getMessage).fail
+        "Exception decoding [%s] from [%s] encoding: [%s]".format(str, enc, e.getMessage).fail
     }
 
   /**

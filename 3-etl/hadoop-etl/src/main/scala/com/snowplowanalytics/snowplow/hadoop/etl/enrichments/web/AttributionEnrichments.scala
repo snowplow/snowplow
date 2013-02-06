@@ -81,7 +81,7 @@ object AttributionEnrichments {
       for (p <- params.toList) {
         val name  = p.getName
         lazy val value = ConversionUtils.decodeString(
-          p.getValue.toLowerCase, encoding) // Should actually be lower case anyway
+          p.getValue.toLowerCase, "N/A", encoding) // Should actually be lower case anyway
 
         /* TODO: need to implement this.
            We need to chain Scalaz Validations

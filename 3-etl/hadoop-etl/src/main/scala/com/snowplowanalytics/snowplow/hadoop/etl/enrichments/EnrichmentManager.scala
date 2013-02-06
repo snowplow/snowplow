@@ -86,7 +86,7 @@ object EnrichmentManager {
 
     // Attempt to decode the useragent
     // TODO: invert the boxing, so the Option is innermost, on the Success only.
-    val useragent = raw.userAgent.map(CU.decodeString(_, raw.encoding))
+    val useragent = raw.userAgent.map(CU.decodeString(_, "N/A", raw.encoding))
     useragent.map(_.fold(
       e => errors.append(e),
       s => event.useragent = s))
@@ -111,6 +111,9 @@ object EnrichmentManager {
 
     // 2b. Failable enrichments using the payload
 
+    // Partially apply decodeString to create a TransformFunc
+    val decodeString: TransformFunc = CU.decodeString(raw.encoding, _, _)
+
     // We use a TransformMap which takes the format:
     // "source key" -> (transformFunction, field(s) to set)
     val transformMap: TransformMap =
@@ -134,7 +137,32 @@ object EnrichmentManager {
           "f_wma"   -> (!~(CU.stringToByte), "br_features_windowsmedia"),
           "f_gears" -> (!~(CU.stringToByte), "br_features_gears"),
           "f_ag"    -> (!~(CU.stringToByte), "br_features_silverlight"),
-          "cookie"  -> (!~(CU.stringToByte), "br_cookies"))
+          "cookie"  -> (!~(CU.stringToByte), "br_cookies"),
+          "res"     -> (!~(CE.extractResolution), ("dvce_screenwidth", "dvce_screenheight")), // Note tuple target
+          "cd"      -> (!~(ME.identity), "br_colordepth"),
+          "tz"      -> (!~(decodeString), "os_timezone"),
+          "refr"    -> (!~(decodeString), "page_referrer"),
+          // TODO: handle URL
+          "page"    -> (!~(decodeString), "page_title"),
+          "ev_ca"   -> (!~(decodeString), "ev_category"),
+          "ev_ac"   -> (!~(decodeString), "ev_action"),
+          "ev_la"   -> (!~(decodeString), "ev_label"),
+          "ev_pr"   -> (!~(decodeString), "ev_property"),
+          "ev_va"   -> (!~(decodeString), "ev_value"),
+          "tr_id"   -> (!~(decodeString), "tr_orderid"),
+          "tr_af"   -> (!~(decodeString), "tr_affiliation"),
+          "tr_tt"   -> (!~(decodeString), "tr_total"),
+          "tr_tx"   -> (!~(decodeString), "tr_tax"),
+          "tr_sh"   -> (!~(decodeString), "tr_shipping"),
+          "tr_ci"   -> (!~(decodeString), "tr_city"),
+          "tr_st"   -> (!~(decodeString), "tr_state"),
+          "tr_co"   -> (!~(decodeString), "tr_country"),
+          "ti_id"   -> (!~(decodeString), "ti_orderid"),
+          "ti_sk"   -> (!~(decodeString), "ti_sku"),
+          "ti_na"   -> (!~(decodeString), "ti_name"),
+          "ti_ca"   -> (!~(decodeString), "ti_category"),
+          "ti_pr"   -> (!~(decodeString), "ti_price"),
+          "ti_qu"   -> (!~(decodeString), "ti_quantity"))
 
     val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
   
