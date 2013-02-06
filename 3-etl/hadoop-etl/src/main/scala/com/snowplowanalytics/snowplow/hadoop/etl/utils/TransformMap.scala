@@ -89,11 +89,6 @@ object DataTransform {
    * @return the new Transformable class, with manifest attached
    */ 
   implicit def makeTransformable[A <: AnyRef](obj: A)(implicit m : Manifest[A]) = new TransformableClass[A](obj)
-
-  /**
-   * A helper method to store our functions with accidentally calling them.
-   */
-  def !~(f: => TransformFunc): TransformFunc = f
 }
 
 class TransformableClass[A](obj: A)(implicit m: Manifest[A]) {

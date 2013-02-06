@@ -62,11 +62,11 @@ class TransformMapTest extends Specification {
                           "tstamp"  -> "2013-01-01 23-11-59",
                           "missing" -> "Not in the transformation map")
 
-      val transformMap: TransformMap = Map("p"      -> (!~(MiscEnrichments.extractPlatform), "platform"),
-                                           "f_pdf"  -> (!~(ConversionUtils.stringToByte), "br_features_pdf"),
-                                           "vid"    -> (!~(ConversionUtils.stringToInt), "visit_id"),
-                                           "tv"     -> (!~(MiscEnrichments.identity), "tracker_v"),
-                                           "tstamp" -> (!~(EventEnrichments.extractTimestamp), ("dt", "tm")))
+      val transformMap: TransformMap = Map(("p"      , (MiscEnrichments.extractPlatform, "platform")),
+                                           ("f_pdf"  , (ConversionUtils.stringToByte, "br_features_pdf")),
+                                           ("vid"    , (ConversionUtils.stringToInt, "visit_id")),
+                                           ("tv"     , (MiscEnrichments.identity, "tracker_v")),
+                                           ("tstamp" , (EventEnrichments.extractTimestamp, ("dt", "tm"))))
 
       val expected = new Target().tap { t =>
         t.platform = "web"
