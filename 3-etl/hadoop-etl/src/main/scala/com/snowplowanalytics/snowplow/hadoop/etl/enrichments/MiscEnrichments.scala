@@ -52,4 +52,10 @@ object MiscEnrichments {
       case p => "Field [%s]: [%s] is not a support tracking platform".format(field, p).fail
     }
   }
+
+  /**
+   * Identity transform.
+   * Straight pass through.
+   */
+  val identity: (String, String) => Validation[String, String] = (field, value) => value.success
 }

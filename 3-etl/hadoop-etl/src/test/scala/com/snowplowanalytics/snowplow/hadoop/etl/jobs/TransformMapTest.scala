@@ -39,6 +39,7 @@ class Target {
   @BeanProperty var platform: String = _
   @BeanProperty var br_features_pdf: Byte = _
   @BeanProperty var visit_id: Int = _
+  @BeanProperty var tracker_v: String = _
   @BeanProperty var dt: String = _
   @BeanProperty var tm: String = _
 }
@@ -54,20 +55,23 @@ class TransformMapTest extends Specification {
   "Executing a TransformMap against a SourceMap" should {
     "successfully set each of the target fields" in {
 
-      val sourceMap: SourceMap = Map("p"      -> "web",
-                                     "f_pdf"  -> "1",
-                                     "vid"    -> "1",
-                                     "tstamp" -> "2013-01-01 23-11-59")
+      val sourceMap = Map("p"      -> "web",
+                          "f_pdf"  -> "1",
+                          "vid"    -> "1",
+                          "tv"     -> "no-js-0.1.0",
+                          "tstamp" -> "2013-01-01 23-11-59")
 
       val transformMap: TransformMap = Map("p"      -> (!~(MiscEnrichments.extractPlatform), "platform"),
                                            "f_pdf"  -> (!~(ConversionUtils.stringToByte), "br_features_pdf"),
                                            "vid"    -> (!~(ConversionUtils.stringToInt), "visit_id"),
+                                           "tv"     -> (!~(MiscEnrichments.identity), "tracker_v"),
                                            "tstamp" -> (!~(EventEnrichments.extractTimestamp), ("dt", "tm")))
 
       val expected = new Target().tap { t =>
         t.platform = "web"
         t.br_features_pdf = 1
         t.visit_id = 1
+        t.tracker_v = "no-js-0.1.1"
         t.dt = "2013-01-01"
         t.tm = "23-11-59"
       }
@@ -78,6 +82,7 @@ class TransformMapTest extends Specification {
       target.platform must_== expected.platform
       target.visit_id must_== expected.visit_id
       target.br_features_pdf must_== expected.br_features_pdf
+      target.tracker_v = expected.tracker_v
       target.dt must_== expected.dt
       target.tm must_== expected.tm
     }
