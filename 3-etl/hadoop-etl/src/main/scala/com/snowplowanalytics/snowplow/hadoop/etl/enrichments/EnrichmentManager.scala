@@ -79,10 +79,6 @@ object EnrichmentManager {
 
     // 2. Enrichments which can fail
 
-    // Create a list of failed validation messages
-    // Yech mutable. This isn't the Scalaz way
-    var errors = new ListBuffer[String]
-
     // 2a. Failable enrichments which don't need the payload
 
     val emptySuccess = 0.success[String]
@@ -92,8 +88,7 @@ object EnrichmentManager {
     val useragent = raw.userAgent match {
       case Some(ua) =>
         val result = CU.decodeString(ua, "useragent", raw.encoding)
-        result.fold(
-          e => errors.append(e),
+        result.fold(e => Unit,
           s => event.useragent = s)
         result
       case None => emptySuccess // No fields updated
@@ -101,11 +96,11 @@ object EnrichmentManager {
 
     // Parse the useragent
     // TODO: invert the boxing, so the Option is innermost, on the Success only.
-    val clientAttribs = raw.userAgent match {
+    val client = raw.userAgent match {
       case Some(ua) =>
         val ca = CE.extractClientAttributes(ua)
         ca.fold(
-          e => errors.append(e),
+          e => Unit,
           s => {
             event.br_name = s.browserName
             event.br_family = s.browserFamily
@@ -179,19 +174,21 @@ object EnrichmentManager {
 
     val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
   
-    val mapTransform = event.transform(sourceMap, transformMap)
-    mapTransform.fold(
-      e => errors.appendAll(e.toList),
-      s => Unit)
+    val transform = event.transform(sourceMap, transformMap)
 
     // Potentially update the page_url
     val pageUri = PE.extractPageUri(raw.refererUri, Option(event.page_url))
     pageUri.fold(
-      e => errors.append(e),
+      e => Unit,
       s => event.page_url = s.toString)
 
+    val errors2: List[String] = List(useragent, client, pageUri).map(v => v match {
+      case Failure(e) => Some(e)
+      case Success(a) => None
+      }).flatten ++ transform
+
     // Do we have errors, or a valid event?
-    errors.toList match {
+    errors2 match {
       case h :: t => NonEmptyList(h, t: _*).fail
       case _ => event.success
     }
