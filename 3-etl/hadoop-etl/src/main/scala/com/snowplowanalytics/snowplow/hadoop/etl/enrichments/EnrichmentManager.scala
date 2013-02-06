@@ -30,6 +30,7 @@ import utils.{ConversionUtils => CU}
 import enrichments.{EventEnrichments => EE}
 import enrichments.{MiscEnrichments => ME}
 import enrichments.{ClientEnrichments => CE}
+import web.{PageEnrichments => PE}
 import utils.DataTransform._
 
 /**
@@ -86,7 +87,7 @@ object EnrichmentManager {
 
     // Attempt to decode the useragent
     // TODO: invert the boxing, so the Option is innermost, on the Success only.
-    val useragent = raw.userAgent.map(CU.decodeString(_, "N/A", raw.encoding))
+    val useragent = raw.userAgent.map(CU.decodeString(_, "useragent", raw.encoding))
     useragent.map(_.fold(
       e => errors.append(e),
       s => event.useragent = s))
@@ -142,7 +143,7 @@ object EnrichmentManager {
           ("cd"      , (ME.identity, "br_colordepth")),
           ("tz"      , (decodeString, "os_timezone")),
           ("refr"    , (decodeString, "page_referrer")),
-          // TODO: handle URL
+          ("url"     , (ME.identity, "page_url")), // Note we may override this below
           ("page"    , (decodeString, "page_title")),
           ("ev_ca"   , (decodeString, "ev_category")),
           ("ev_ac"   , (decodeString, "ev_action")),
@@ -169,6 +170,11 @@ object EnrichmentManager {
     event.transform(sourceMap, transformMap).fold(
       e => errors.appendAll(e.toList),
       s => Unit)
+
+    // Potentially update the page_url
+    PE.extractPageUri(raw.refererUri, Option(event.page_url)).fold(
+      e => errors.append(e),
+      s => event.page_url = s.toString)
 
     // Do we have errors, or a valid event?
     errors.toList match {
