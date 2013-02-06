@@ -100,13 +100,16 @@ object ConversionUtils {
    *         Failure String or
    *         a Success Byte
    */
-  val stringToByte: (String, String) => Validation[String, Byte] = (field, str) =>
+  val stringToByte: (String, String) => Validation[String, Byte] = (field, str) => {
     try {
       str.toByte.success
     } catch {
       case nfe: NumberFormatException =>
         "Field [%s]: cannot convert [%s] to Byte".format(field, str).fail
     }
+  }
+
+  val stringToByte2: (String, String) => Validation[String, String] = (field, str) => str.success
 
   /**
    * Converts a String of value "1" or "0"

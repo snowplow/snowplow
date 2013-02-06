@@ -31,6 +31,7 @@ import utils.Json2Line
 import TestHelpers._
 import utils.DataTransform._
 import enrichments.MiscEnrichments
+import utils.ConversionUtils
 
 // Test class
 class Target {
@@ -44,7 +45,7 @@ class Target {
  *
  * Input data _is_ not in the
  * expected CloudFront format.
- *
+ */
 class TransformMapTest extends Specification {
 
   "Executing a TransformMap against a SourceMap" should {
@@ -54,10 +55,9 @@ class TransformMapTest extends Specification {
                                      "f_pdf" -> "1",
                                      "vid"   -> "1")
 
-      val transformMap: TransformMap = Map("p"     -> (byRef(MiscEnrichments.extractPlatform), "platform"),
-                                           "p2"    -> (byRef(MiscEnrichments.extractPlatform), "platform"),
-                                           // "f_pdf" -> (byRef(ConversionUtils.stringToByte), "br_features_pdf"),
-                                           "vid"   -> (byRef(MiscEnrichments.extractPlatform), "visit_id"))
+      val transformMap: TransformMap = Map("p"     -> (!~(MiscEnrichments.extractPlatform), "platform"),
+                                           "f_pdf" -> (!~(ConversionUtils.stringToByte), "br_features_pdf"),
+                                           "vid"   -> (!~(ConversionUtils.stringToInt), "visit_id"))
 
       val expected = new Target().tap { t =>
         t.platform = "web"
@@ -73,4 +73,4 @@ class TransformMapTest extends Specification {
       target.br_features_pdf must_== expected.br_features_pdf
     }
   }
-} */
+}

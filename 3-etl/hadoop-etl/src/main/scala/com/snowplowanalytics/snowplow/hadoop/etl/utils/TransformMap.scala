@@ -13,7 +13,12 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package utils
 
+// Java
 import java.lang.reflect.Method
+
+// Scalaz
+import scalaz._
+import Scalaz._
 
 /**
  * HIGHLY EXPERIMENTAL
@@ -88,7 +93,7 @@ object DataTransform {
   /**
    * A helper method to store our functions with accidentally calling them.
    */
-  def byRef(f: => TransformFunc): TransformFunc = f
+  def !~(f: => TransformFunc): TransformFunc = f
 }
 
 class TransformableClass[A](a: A)(implicit m: Manifest[A]) {
@@ -100,19 +105,23 @@ class TransformableClass[A](a: A)(implicit m: Manifest[A]) {
 
     val results = sourceMap.map { case (key, in) =>
       val (func, field) = transformMap(key)
-      val out = func(key, in).asInstanceOf[AnyRef]
       val setMethod = setters(field)
-      setMethod.invoke(a, out)
-    }.toList
-  }
-  // TODO: eventually would be nice to return numfieldsset.sucess for Success
 
-  // Taken from Scalding
-  // --------------------------------
+      val out = func(key, in)
+      out match {
+        case Success(s) =>
+          setMethod.invoke(a, s.asInstanceOf[AnyRef])
+          1.successNel[String] // 
+        case Failure(e) =>
+          e.failNel[Int]
+      }
+    }.toList
+
+    // TODO: can we now roll up all the results?
+  }
 
   // Do all the reflection for the setters we need:
   // This needs to be lazy because Method is not serializable
-  // TODO: filter by isAccessible, which somehow seems to fail
   lazy val setters = getSetters
 
   def lowerFirst(s : String) = s.substring(0,1).toLowerCase + s.substring(1)
