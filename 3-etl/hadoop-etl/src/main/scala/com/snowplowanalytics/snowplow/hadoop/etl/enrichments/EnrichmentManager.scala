@@ -131,7 +131,7 @@ object EnrichmentManager {
         case "aid" => event.app_id = value
         // Platform
         case "p" =>
-          MiscEnrichments.extractPlatform(value).fold(
+          MiscEnrichments.extractPlatform("p", value).fold(
             e => errors.append(e),
             s => event.platform = s)
         // Transaction ID
@@ -142,7 +142,7 @@ object EnrichmentManager {
         case "fp" => event.user_fingerprint = value
         // Visit ID
         case "vid" =>
-          ConversionUtils.stringToInt(value, "Visit ID").fold(
+          ConversionUtils.stringToInt("vid", value).fold(
             e => errors.append(e),
             s => event.visit_id = s)
         // Client date and time
@@ -160,47 +160,47 @@ object EnrichmentManager {
         case "lang" => event.br_lang = value
         // Browser has PDF?
         case "f_pdf" =>
-          ConversionUtils.stringToByte(value, "Feature: PDF").fold(
+          ConversionUtils.stringToByte("f_pdf", value).fold(
             e => errors.append(e),
             s => event.br_features_pdf = s)
         // Browser has Flash?
         case "f_fla" =>
-          ConversionUtils.stringToByte(value, "Feature: Flash").fold(
+          ConversionUtils.stringToByte("f_fla", value).fold(
             e => errors.append(e),
             s => event.br_features_flash = s)
         // Browser has Java?
         case "f_java" =>
-          ConversionUtils.stringToByte(value, "Feature: Java").fold(
+          ConversionUtils.stringToByte("f_java", value).fold(
             e => errors.append(e),
             s => event.br_features_java = s)
         // Browser has Director?
         case "f_dir" =>
-          ConversionUtils.stringToByte(value, "Feature: Director").fold(
+          ConversionUtils.stringToByte("f_dir", value).fold(
             e => errors.append(e),
             s => event.br_features_director = s)
         // Browser has Quicktime?
         case "f_qt" =>
-          ConversionUtils.stringToByte(value, "Feature: Quicktime").fold(
+          ConversionUtils.stringToByte("f_qt", value).fold(
             e => errors.append(e),
             s => event.br_features_quicktime = s)
         // Browser has RealPlayer?
         case "f_realp" =>
-          ConversionUtils.stringToByte(value, "Feature: RealPlayer").fold(
+          ConversionUtils.stringToByte("f_realp", value).fold(
             e => errors.append(e),
             s => event.br_features_realplayer = s)
         // Browser has Windows Media?
         case "f_wma" =>
-          ConversionUtils.stringToByte(value, "Feature: Windows Media").fold(
+          ConversionUtils.stringToByte("f_wma", value).fold(
             e => errors.append(e),
             s => event.br_features_windowsmedia = s)
         // Browser has Gears?
         case "f_gears" =>
-          ConversionUtils.stringToByte(value, "Feature: Gears").fold(
+          ConversionUtils.stringToByte("f_gears", value).fold(
             e => errors.append(e),
             s => event.br_features_gears = s)
         // Browser has Silverlight?
         case "f_ag" =>
-          ConversionUtils.stringToByte(value, "Feature: Silverlight").fold(
+          ConversionUtils.stringToByte("f_ag", value).fold(
             e => errors.append(e),
             s => event.br_features_silverlight = s)
 

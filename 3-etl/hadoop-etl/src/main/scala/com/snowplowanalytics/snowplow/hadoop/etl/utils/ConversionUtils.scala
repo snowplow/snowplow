@@ -75,12 +75,14 @@ object ConversionUtils {
    *         Failure String or
    *         a Success Int
    */
-  def stringToInt(str: String, field: String): Validation[String, Int] = try {
+  val stringToInt: (String, String) => Validation[String, Int] = (field, str) => {
+    try {
       str.toInt.success
     } catch {
       case nfe: NumberFormatException =>
         "Field [%s]: cannot convert [%s] to Int".format(field, str).fail
     }
+  }
 
   /**
    * Extract a Scala Byte from
@@ -98,7 +100,8 @@ object ConversionUtils {
    *         Failure String or
    *         a Success Byte
    */
-  def stringToByte(str: String, field: String): Validation[String, Byte] = try {
+  val stringToByte: (String, String) => Validation[String, Byte] = (field, str) =>
+    try {
       str.toByte.success
     } catch {
       case nfe: NumberFormatException =>

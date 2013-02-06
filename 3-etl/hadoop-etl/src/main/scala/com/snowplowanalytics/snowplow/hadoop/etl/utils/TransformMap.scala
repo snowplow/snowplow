@@ -68,8 +68,8 @@ object DataTransform {
   type Value = String
   type Field = String
 
-  // A transformation takes a Value and can return anything (for now)
-  type TransformFunc = Function1[Value, _]
+  // A transformation takes a Key and Value and can return anything (for now)
+  type TransformFunc = Function2[Key, Value, _]
 
   // Our source map
   type SourceMap = Map[Key, Value]
@@ -100,7 +100,7 @@ class TransformableClass[A](a: A)(implicit m: Manifest[A]) {
 
     val results = sourceMap.map { case (key, in) =>
       val (func, field) = transformMap(key)
-      val out = func(in).asInstanceOf[AnyRef]
+      val out = func(key, in).asInstanceOf[AnyRef]
       val setMethod = setters(field)
       setMethod.invoke(a, out)
     }.toList
