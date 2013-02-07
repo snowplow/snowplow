@@ -27,17 +27,4 @@ object ValidationUtils {
   // when you're slowly updating large (>22 field) POSOs.
   val unitSuccess = ().success[String]
   val unitSuccessNel = ().successNel[String]
-
-  /**
-   * A helper to strip out a Success from a ValidationNEL
-   * and turn it into a Unit. Useful if you want to sum
-   * Validations for the Failures rather than the Successes.
-   * Because Semigroup[Any] doesn't exist (and shouldn't).
-   *
-   * @param v The ValidationNEL to convert
-   * @return the same ValidationNEL but with the Success converted
-   *         into a Unit
-   */
-  def toUnitSuccess(v: ValidationNEL[String, _]): ValidationNEL[String, Unit] =
-    v.flatMap(s => unitSuccessNel)
 }
