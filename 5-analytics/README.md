@@ -19,6 +19,6 @@ Table todo
 
 [architecture-image]: https://github.com/snowplow/snowplow/raw/master/5-analytics/5-analytics.png
 [storage]: https://github.com/snowplow/snowplow/tree/master/4-storage
-[setup]: https://github.com/snowplow/snowplow/wiki/analytics-setup
+[setup]: https://github.com/snowplow/snowplow/wiki/getting-started-analysing-SnowPlow-data
 [cookbook]: http://snowplowanalytics.com/analytics/index.html
 [website]: http://snowplowanalytics.com
