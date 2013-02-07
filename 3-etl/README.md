@@ -16,7 +16,7 @@ The **ETL** (extract, transform, load) process takes raw SnowPlow events logged 
 
 ## Documentation
 
-[Setup guide] [setup] provides step-by-step instructions on setting up and running the [emr-etl-runner] [e3].
+[The setup guide] [setup] provides step-by-step instructions on setting up and running the [emr-etl-runner] [e3].
 
 Both the above are published on the [wiki] [wiki].
 

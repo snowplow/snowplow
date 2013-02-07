@@ -35,7 +35,7 @@ We welcome community contributions of additional Collectors! We have a guide to 
 [c2]: ./2-collectors/clojure-collector/
 [c2-setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-the-Clojure-collector
 [c3]: ./2-collectors/contrib-nodejs-collector/
-[c3-setup]: https://github.com/snowplow/snowplow/wiki/snowcannon-setup-guide
+[c3-setup]: https://github.com/snowplow/snowplow/wiki/SnowCannon-setup-guide
 [setup]: https://github.com/snowplow/snowplow/wiki/setting-up-a-collector
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/collectors
 [wiki]: https://github.com/snowplow/snowplow/wiki
