@@ -70,7 +70,7 @@ object EnrichmentManager {
     // Quick split timestamp into date and time
     val (dt, tm) = EE.splitDatetime(raw.timestamp)
 
-    // Let's start populating the NonHiveOutput
+    // Let's start populating the CanonicalOutput
     // with the fields which cannot error
     val event = new CanonicalOutput().tap { e =>
       e.dt = dt
