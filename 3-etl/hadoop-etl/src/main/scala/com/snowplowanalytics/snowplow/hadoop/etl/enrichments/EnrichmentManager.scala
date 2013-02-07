@@ -197,13 +197,11 @@ object EnrichmentManager {
           })
         })
 
-    // Assemble all of our validations:
-    // 1. First we harmonize them all as ValidationNELs
+    // 1. Assemble our Validations, harmonizing to ValidationNELs
     val vNels = List(useragent, client, pageUri).map(_.toValidationNEL) ::: List(transform, campaign)
-    // 2. Then we convert the Successes (which we're not interested in) to Units.
-    // Now we can sum up, using the implicit NEL and Unit Semigroup append behaviours
+    // 2. Turn Successes to Units and sum up. Uses implicit NEL and Unit Semigroup append
     val sum = vNels.map(VU.toUnitSuccess(_)).foldLeft(VU.unitSuccessNel)(_ +++ _)    
-    // 3. Finally in case of Success, overwrite the Unit with our event
+    // 3. Finally if Success, overwrite Unit with our event
     sum.flatMap(s => event.success)
   }
 }
