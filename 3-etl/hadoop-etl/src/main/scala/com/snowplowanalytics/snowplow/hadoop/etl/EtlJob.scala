@@ -17,7 +17,6 @@ import scalaz._
 import Scalaz._
 
 // Cascading
-import cascading.tuple.Fields
 
 // Scalding
 import com.twitter.scalding._
@@ -41,7 +40,7 @@ class EtlJob(args: Args) extends Job(args) {
   // Aliases for our job
   val loader = etlConfig.collectorLoader
   val input = MultipleTextLineFiles(etlConfig.inFolder)
-  val goodOutput = Osv(etlConfig.outFolder)
+  val goodOutput = Tsv(etlConfig.outFolder)
   val badOutput = Json2Line(etlConfig.errFolder)
 
   // Scalding data pipeline

@@ -25,10 +25,12 @@ import com.twitter.scalding._
 // SnowPlow Utils
 import com.snowplowanalytics.util.Tap._
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 // This project
 // TODO: remove this when Scalding 0.8.3 released
-import utils.Json2Line
-import TestHelpers._
 import utils.DataTransform._
 import enrichments.MiscEnrichments
 import utils.ConversionUtils
@@ -78,7 +80,9 @@ class TransformMapTest extends Specification {
       }
 
       val target = new Target
-      target.transform(sourceMap, transformMap)
+      val result = target.transform(sourceMap, transformMap)
+
+      result must_== 6.successNel[String] // 6 fields updated
 
       target.platform must_== expected.platform
       target.visit_id must_== expected.visit_id

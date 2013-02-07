@@ -43,7 +43,7 @@ class DiscardableCfLinesTest extends Specification with TupleConversions {
 
       EtlJobTest.
         source(MultipleTextLineFiles("inputFolder"), discardableLines).
-        sink[String](Osv("outputFolder")){ output => output must beEmpty }.
+        sink[String](Tsv("outputFolder")){ output => output must beEmpty }.
         sink[String](Json2Line("errorFolder")){ error => error must beEmpty }.
         run.
         finish
