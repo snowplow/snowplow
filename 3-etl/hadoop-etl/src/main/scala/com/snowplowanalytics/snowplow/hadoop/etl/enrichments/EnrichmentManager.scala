@@ -26,13 +26,16 @@ import com.snowplowanalytics.util.Tap._
 // This project
 import inputs.{CanonicalInput, NVGetPayload}
 import outputs.CanonicalOutput
+
 import utils.{ConversionUtils => CU}
+import utils.{ValidationUtils => VU}
+import utils.DataTransform._
+
 import enrichments.{EventEnrichments => EE}
 import enrichments.{MiscEnrichments => ME}
 import enrichments.{ClientEnrichments => CE}
 import web.{PageEnrichments => PE}
 import web.{AttributionEnrichments => AE}
-import utils.DataTransform._
 
 /**
  * A module to hold our enrichment process.
@@ -82,13 +85,6 @@ object EnrichmentManager {
 
     // 2a. Failable enrichments which don't need the payload
 
-    val unitSuccess = ().success[String]
-    val unitSuccessNel = ().successNel[String]
-
-    // A helper to harmonize our redundant Successes to Units.
-    def toUnitSuccess(v: ValidationNEL[String, _]): ValidationNEL[String, Unit] =
-      v.flatMap(s => unitSuccessNel)
-
     // Attempt to decode the useragent
     val useragent = raw.userAgent match {
       case Some(ua) =>
@@ -97,7 +93,7 @@ object EnrichmentManager {
           event.useragent = ua
           ua.success
           })
-      case None => unitSuccess // No fields updated
+      case None => VU.unitSuccess // No fields updated
     }
 
     // Parse the useragent
@@ -118,7 +114,7 @@ object EnrichmentManager {
           c.success
           })
         ca
-      case None => unitSuccess // No fields updated
+      case None => VU.unitSuccess // No fields updated
     }
 
     // 2b. Failable enrichments using the payload
@@ -189,7 +185,7 @@ object EnrichmentManager {
 
     // Marketing attribution
     val campaign = pageUri.fold(
-      e => unitSuccessNel, // No fields updated
+      e => VU.unitSuccessNel, // No fields updated
       uri => {
         AE.extractMarketingFields(uri, raw.encoding).flatMap(cmp => {
           event.mkt_medium = cmp.medium
@@ -201,50 +197,13 @@ object EnrichmentManager {
           })
         })
 
-
-
-
-
-    // Assemble all of our (potential) errors
-    // First we harmonize them all as ValidationNELs
+    // Assemble all of our validations:
+    // 1. First we harmonize them all as ValidationNELs
     val vNels = List(useragent, client, pageUri).map(_.toValidationNEL) ::: List(transform, campaign)
-    // Then we convert their Successes (which we're not interested in) to Units.
-    // And we can sum up the values inside validation, using the NEL and Unit Semigroup behaviours
-    val y2 = vNels.map(toUnitSuccess(_)).foldLeft(unitSuccessNel)(_ +++ _)    
-    // TODO: there must be some applicative way of doing this without having to disassemble each Validation
-    // Finally in case of Success, overwrite the Unit with our event
-    val y3 = y2.flatMap(s => event.success)    
-
-    // val x = transform +++ campaign // +++ useragent.toValidationNEL +++ client.toValidationNEL
-    // +++ pageUri.toValidationNEL
-
-
-
-    def s2u = toUnitSuccess _
-
-
-    val x = s2u(useragent.toValidationNEL) +++ s2u(client.toValidationNEL) +++ s2u(pageUri.toValidationNEL) +++ s2u(transform) +++ s2u(campaign)
-    val x2 = x.flatMap(s => event.success)
-
-
-    val errors: List[String] =
-      transform.fold(
-        e => e.toList,
-        s => Nil) ++
-      campaign.fold(
-        e => e.toList,
-        s => Nil) ++
-      List(useragent, client, pageUri).map(v => v match {
-        case Failure(e) => Some(e)
-        case Success(a) => None
-        }).flatten
-
-    // Do we have errors, or a valid event?
-    errors match {
-      case h :: t => NonEmptyList(h, t: _*).fail
-      case _ => event.success
-    }
-
-    y3
+    // 2. Then we convert the Successes (which we're not interested in) to Units.
+    // Now we can sum up, using the implicit NEL and Unit Semigroup append behaviours
+    val sum = vNels.map(VU.toUnitSuccess(_)).foldLeft(VU.unitSuccessNel)(_ +++ _)    
+    // 3. Finally in case of Success, overwrite the Unit with our event
+    sum.flatMap(s => event.success)
   }
 }
