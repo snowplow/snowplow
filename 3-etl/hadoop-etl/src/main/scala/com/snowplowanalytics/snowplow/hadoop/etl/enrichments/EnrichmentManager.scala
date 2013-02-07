@@ -82,8 +82,12 @@ object EnrichmentManager {
 
     // 2a. Failable enrichments which don't need the payload
 
-    val success = 0.success[String]
-    val successNel = 0.successNel[String]
+    val unitSuccess = ().success[String]
+    val unitSuccessNel = ().successNel[String]
+
+    // A helper to harmonize our redundant Successes to Units.
+    def toUnitSuccess(v: ValidationNEL[String, _]): ValidationNEL[String, Unit] =
+      v.flatMap(s => unitSuccessNel)
 
     // Attempt to decode the useragent
     val useragent = raw.userAgent match {
@@ -93,7 +97,7 @@ object EnrichmentManager {
           event.useragent = ua
           ua.success
           })
-      case None => success // No fields updated
+      case None => unitSuccess // No fields updated
     }
 
     // Parse the useragent
@@ -114,7 +118,7 @@ object EnrichmentManager {
           c.success
           })
         ca
-      case None => success // No fields updated
+      case None => unitSuccess // No fields updated
     }
 
     // 2b. Failable enrichments using the payload
@@ -185,7 +189,7 @@ object EnrichmentManager {
 
     // Marketing attribution
     val campaign = pageUri.fold(
-      e => successNel, // No fields updated
+      e => unitSuccessNel, // No fields updated
       uri => {
         AE.extractMarketingFields(uri, raw.encoding).flatMap(cmp => {
           event.mkt_medium = cmp.medium
@@ -197,8 +201,32 @@ object EnrichmentManager {
           })
         })
 
+
+
+
+
     // Assemble all of our (potential) errors
+    // First we harmonize them all as ValidationNELs
+    val vNels = List(useragent, client, pageUri).map(_.toValidationNEL) ::: List(transform, campaign)
+    // Then we convert their Successes (which we're not interested in) to Units.
+    // And we can sum up the values inside validation, using the NEL and Unit Semigroup behaviours
+    val y2 = vNels.map(toUnitSuccess(_)).foldLeft(unitSuccessNel)(_ +++ _)    
     // TODO: there must be some applicative way of doing this without having to disassemble each Validation
+    // Finally in case of Success, overwrite the Unit with our event
+    val y3 = y2.flatMap(s => event.success)    
+
+    // val x = transform +++ campaign // +++ useragent.toValidationNEL +++ client.toValidationNEL
+    // +++ pageUri.toValidationNEL
+
+
+
+    def s2u = toUnitSuccess _
+
+
+    val x = s2u(useragent.toValidationNEL) +++ s2u(client.toValidationNEL) +++ s2u(pageUri.toValidationNEL) +++ s2u(transform) +++ s2u(campaign)
+    val x2 = x.flatMap(s => event.success)
+
+
     val errors: List[String] =
       transform.fold(
         e => e.toList,
@@ -216,5 +244,7 @@ object EnrichmentManager {
       case h :: t => NonEmptyList(h, t: _*).fail
       case _ => event.success
     }
+
+    y3
   }
 }
