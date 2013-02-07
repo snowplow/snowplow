@@ -16,8 +16,8 @@
 
 ## Useful resources
 
-1. [Guide to choosing and setting up a tracker] [setup] on the [wiki] [wiki].
-2. [Tracker technical documentation] [tech-docs], also on the [wiki] [wiki].
+1. [Guide to choosing and setting up a tracker] [setup] on the [wiki] [setup].
+2. [Tracker technical documentation] [tech-docs], also on the [wiki] [tech-docs].
 
 ## Contributing
 
@@ -29,6 +29,6 @@ We welcome community contributions of additional Trackers! We have a guide to co
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
 [t1]: ./1-trackers/javascript-tracker/
 [t2]: ./1-trackers/no-js-tracker/
-[setup]: https://github.com/snowplow/snowplow/wiki/choosing-a-tracker
+[setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-a-Tracker
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/trackers
-[wiki]: https://github.com/snowplow/snowplow/wiki/trackers
+[wiki]: https://github.com/snowplow/snowplow/wiki
