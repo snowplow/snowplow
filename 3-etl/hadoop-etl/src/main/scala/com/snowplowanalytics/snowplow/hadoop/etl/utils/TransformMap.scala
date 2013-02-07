@@ -73,7 +73,7 @@ object DataTransform {
   type Value = String
   type Field = String
 
-  // A transformation takes a Key and Value and can return anything (for now)
+  // A transformation takes a Key and Value and returns a Scalaz Validation with String for Failure and anything for Success
   type TransformFunc = Function2[Key, Value, Validation[String, _]]
 
   // Our source map
