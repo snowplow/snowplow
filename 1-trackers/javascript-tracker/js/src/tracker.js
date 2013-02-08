@@ -141,7 +141,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		configAttachUserId = true, 
 
 		// Should cookies have the secure flag set
-		cookieSecure = SnowPlow.documentAlias.location.protocol === 'https',
+		cookieSecure = SnowPlow.documentAlias.location.protocol === 'https:',
 
 		// Document character set
 		documentCharset = SnowPlow.documentAlias.characterSet || SnowPlow.documentAlias.charset,
