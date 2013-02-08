@@ -77,6 +77,24 @@ class CanonicalOutput {
   @BeanProperty var ev_property: String = _
   @BeanProperty var ev_value: String = _
 
+  // Ecommerce transaction (from querystring)
+  @BeanProperty var tr_orderid: String = _
+  @BeanProperty var tr_affiliation: String = _
+  @BeanProperty var tr_total: String = _
+  @BeanProperty var tr_tax: String = _
+  @BeanProperty var tr_shipping: String = _
+  @BeanProperty var tr_city: String = _
+  @BeanProperty var tr_state: String = _
+  @BeanProperty var tr_country: String = _
+
+  // Ecommerce transaction item (from querystring)
+  @BeanProperty var ti_orderid: String = _
+  @BeanProperty var ti_sku: String = _
+  @BeanProperty var ti_name: String = _
+  @BeanProperty var ti_category: String = _
+  @BeanProperty var ti_price: String = _
+  @BeanProperty var ti_quantity: String = _
+
   // User Agent
   @BeanProperty var useragent: String = _
 
@@ -115,22 +133,4 @@ class CanonicalOutput {
   // Device (from querystring)
   @BeanProperty var dvce_screenwidth: Int = _
   @BeanProperty var dvce_screenheight: Int = _
-
-  // Ecommerce transaction (from querystring)
-  @BeanProperty var tr_orderid: String = _
-  @BeanProperty var tr_affiliation: String = _
-  @BeanProperty var tr_total: String = _
-  @BeanProperty var tr_tax: String = _
-  @BeanProperty var tr_shipping: String = _
-  @BeanProperty var tr_city: String = _
-  @BeanProperty var tr_state: String = _
-  @BeanProperty var tr_country: String = _
-
-  // Ecommerce transaction item (from querystring)
-  @BeanProperty var ti_orderid: String = _
-  @BeanProperty var ti_sku: String = _
-  @BeanProperty var ti_name: String = _
-  @BeanProperty var ti_category: String = _
-  @BeanProperty var ti_price: String = _
-  @BeanProperty var ti_quantity: String = _
 }
