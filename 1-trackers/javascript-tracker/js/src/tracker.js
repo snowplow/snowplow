@@ -785,19 +785,15 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * logPageView() above.
 	 *
 	 * @param string pageTitle The page title to attach to this page ping
-	 * @param int minXOffset The minimum X (left-right) scroll during last ping period
-	 * @param int maxXOffset The maximum X (left-right) scroll during last ping period
-	 * @param int maxYOffset The minimum Y (top-down) scroll during last ping period
-	 * @param int maxYOffset The maximum Y (top-down) scroll during last period period 
 	 */
 	function logPagePing(pageTitle) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'pp'); // 'pp' for Page Ping
 		sb.add('page', pageTitle);
-		sb.add('pp_mix', minXOffset);
-		sb.add('pp_max', maxXOffset);
-		sb.add('pp_miy', minYOffset);
-		sb.add('pp_may', maxYOffset);
+		sb.add('pp_mix', minXOffset); // Global
+		sb.add('pp_max', maxXOffset); // Global
+		sb.add('pp_miy', minYOffset); // Global
+		sb.add('pp_may', maxYOffset); // Global
 		var request = getRequest(sb, 'ping');
 		sendRequest(request, configTrackerPause);
 	}
