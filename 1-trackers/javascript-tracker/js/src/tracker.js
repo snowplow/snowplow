@@ -602,10 +602,10 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	function logImpression(bannerId, campaignId, advertiserId, userId) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'ad'); // 'ad' for AD impression
-		sb.add('ad_ba', category);
-		sb.add('ad_ca', action)
-		sb.add('ad_ad', label);
-		sb.add('ad_uid', property);
+		sb.add('ad_ba', bannerId);
+		sb.add('ad_ca', campaignId)
+		sb.add('ad_ad', advertiserId);
+		sb.add('ad_uid', userId);
 		request = getRequest(sb, 'adimp');
 		sendRequest(request, configTrackerPause);
 	}
