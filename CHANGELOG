@@ -9,8 +9,7 @@ JS tracker: added document & viewport dimensions (#94)
 JS tracker: introduced trackStructEvent and deprecated trackEvent (#143)
 JS tracker: cleaned up getRequest code to use improved requestStringBuilder
 JS tracker: fixed logImpression (was using wrong argument names) (#162)
-
-JS tracker: added scroll offsets to page ping (#127) - TODO
+JS tracker: added scroll offsets to page ping (#127)
 
 Serde: bumped to 0.5.4 - TODO
 Serde: updated copyright notices - TODO

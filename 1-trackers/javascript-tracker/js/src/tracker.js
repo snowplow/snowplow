@@ -167,6 +167,12 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		// Last activity timestamp
 		lastActivityTime,
 
+		// How are we scrolling?
+		minXOffset,
+		maxXOffset,
+		minYOffset,
+		maxYOffset,
+
 		// Internal state of the pseudo click handler
 		lastButton,
 		lastTarget,
@@ -333,8 +339,6 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * Get cookie name with prefix and domain hash
 	 */
 	function getCookieName(baseName) {
-		// NOTE: If the cookie name is changed, we must also update the PiwikTracker.php which
-		// will attempt to discover first party cookies. eg. See the PHP Client method getVisitorId()
 		return configCookieNamePrefix + baseName + '.' + configTrackerSiteId + '.' + domainHash;
 	}
 
@@ -366,6 +370,58 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	function activityHandler() {
 		var now = new Date();
 		lastActivityTime = now.getTime();
+	}
+
+	/*
+	 * Process all "scroll" events.
+	 */
+	function scrollHandler() {
+		updateMaxScrolls();
+		activityHandler();
+	}
+
+	/*
+	 * Returns [pageXOffset, pageYOffset].
+	 */
+	function getPageOffsets() {
+		return [SnowPlow.documentAlias.body.scrollLeft || SnowPlow.windowAlias.pageXOffset,
+		       SnowPlow.documentAlias.body.scrollTop || SnowPlow.windowAlias.pageYOffset];
+	}
+
+	/*
+	 * Quick initialization of max scroll levels
+	 */
+	function initMaxScrolls() {
+		var offsets = getPageOffsets();
+		
+		var x = offsets[0];
+		minXOffset = x;
+		maxXOffset = x;
+		
+		var y = offsets[1];
+		minYOffset = y;
+		maxYOffset = y;
+	}
+
+	/*
+	 * Check the max scroll levels, updating as necessary
+	 */
+	function updateMaxScrolls() {
+		var offsets = getPageOffsets();
+		
+		var x = offsets[0];
+		if (pageXOffset < minXOffset) {
+			minXOffset = pageXOffset;
+		} else if (pageXOffset > maxXOffset) {
+			maxXOffset = pageXOffset;
+		}
+
+		var y = offsets[1];
+		if (pageYOffset < minYOffset) {
+			minYOffset = pageYOffset;
+		} else if (pageYOffset > maxYOffset) {
+			maxYOffset = pageYOffset;
+		}	
 	}
 
 	/*
@@ -687,7 +743,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			activityTrackingInstalled = true;
 
 			// Capture our initial scroll points
-			// TODO
+			initMaxScrolls();
 
 			// Add event handlers; cross-browser compatibility here varies significantly
 			// @see http://quirksmode.org/dom/events
@@ -697,7 +753,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			SnowPlow.addEventListener(SnowPlow.documentAlias, 'mousemove', activityHandler);
 			SnowPlow.addEventListener(SnowPlow.documentAlias, 'mousewheel', activityHandler);
 			SnowPlow.addEventListener(SnowPlow.windowAlias, 'DOMMouseScroll', activityHandler);
-			SnowPlow.addEventListener(SnowPlow.windowAlias, 'scroll', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.windowAlias, 'scroll', scrollHandler); // Will updateMaxScrolls() for us
 			SnowPlow.addEventListener(SnowPlow.documentAlias, 'keypress', activityHandler);
 			SnowPlow.addEventListener(SnowPlow.documentAlias, 'keydown', activityHandler);
 			SnowPlow.addEventListener(SnowPlow.documentAlias, 'keyup', activityHandler);
@@ -715,7 +771,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 				if ((lastActivityTime + configHeartBeatTimer) > now.getTime()) {
 					// Send ping if minimum visit time has elapsed
 					if (configMinimumVisitTime < now.getTime()) {
-						logPagePing(pageTitle, "TODO", "TODO", "TODO", "TODO");
+						logPagePing(pageTitle); // Grab the min/max globals
 					}
 				}
 			}, configHeartBeatTimer);
@@ -729,19 +785,19 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * logPageView() above.
 	 *
 	 * @param string pageTitle The page title to attach to this page ping
-	 * @param int maxLeft  The maximum scroll left during last ping period
-	 * @param int maxRight The maximum scroll right during last ping period
-	 * @param int maxUp    The maximum scroll up during last ping period
-	 * @param int maxDown  The maximum scroll down during last period period 
+	 * @param int minXOffset The minimum X (left-right) scroll during last ping period
+	 * @param int maxXOffset The maximum X (left-right) scroll during last ping period
+	 * @param int maxYOffset The minimum Y (top-down) scroll during last ping period
+	 * @param int maxYOffset The maximum Y (top-down) scroll during last period period 
 	 */
-	function logPagePing(pageTitle, maxLeft, maxRight, maxUp, maxDown) {
+	function logPagePing(pageTitle) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'pp'); // 'pp' for Page Ping
 		sb.add('page', pageTitle);
-		sb.add('pp_ml', maxLeft);
-		sb.add('pp_mr', maxRight);
-		sb.add('pp_mu', maxUp);
-		sb.add('pp_md', maxDown);
+		sb.add('pp_mix', minXOffset);
+		sb.add('pp_max', maxXOffset);
+		sb.add('pp_miy', minYOffset);
+		sb.add('pp_may', maxYOffset);
 		var request = getRequest(sb, 'ping');
 		sendRequest(request, configTrackerPause);
 	}
