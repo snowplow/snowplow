@@ -686,6 +686,9 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		if (configMinimumVisitTime && configHeartBeatTimer && !activityTrackingInstalled) {
 			activityTrackingInstalled = true;
 
+			// Capture our initial scroll points
+			// TODO
+
 			// Add event handlers; cross-browser compatibility here varies significantly
 			// @see http://quirksmode.org/dom/events
 			SnowPlow.addEventListener(SnowPlow.documentAlias, 'click', activityHandler);
@@ -712,7 +715,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 				if ((lastActivityTime + configHeartBeatTimer) > now.getTime()) {
 					// Send ping if minimum visit time has elapsed
 					if (configMinimumVisitTime < now.getTime()) {
-						logPagePing(pageTitle);
+						logPagePing(pageTitle, "TODO", "TODO", "TODO", "TODO");
 					}
 				}
 			}, configHeartBeatTimer);
@@ -726,11 +729,19 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * logPageView() above.
 	 *
 	 * @param string pageTitle The page title to attach to this page ping
+	 * @param int maxLeft  The maximum scroll left during last ping period
+	 * @param int maxRight The maximum scroll right during last ping period
+	 * @param int maxUp    The maximum scroll up during last ping period
+	 * @param int maxDown  The maximum scroll down during last period period 
 	 */
-	function logPagePing(pageTitle) {
+	function logPagePing(pageTitle, maxLeft, maxRight, maxUp, maxDown) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'pp'); // 'pp' for Page Ping
 		sb.add('page', pageTitle);
+		sb.add('pp_ml', maxLeft);
+		sb.add('pp_mr', maxRight);
+		sb.add('pp_mu', maxUp);
+		sb.add('pp_md', maxDown);
 		var request = getRequest(sb, 'ping');
 		sendRequest(request, configTrackerPause);
 	}
