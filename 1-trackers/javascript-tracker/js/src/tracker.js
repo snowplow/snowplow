@@ -389,9 +389,9 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	}
 
 	/*
-	 * Quick initialization of max scroll levels
+	 * Quick initialization/reset of max scroll levels
 	 */
-	function initMaxScrolls() {
+	function resetMaxScrolls() {
 		var offsets = getPageOffsets();
 		
 		var x = offsets[0];
@@ -743,7 +743,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			activityTrackingInstalled = true;
 
 			// Capture our initial scroll points
-			initMaxScrolls();
+			resetMaxScrolls();
 
 			// Add event handlers; cross-browser compatibility here varies significantly
 			// @see http://quirksmode.org/dom/events
@@ -794,6 +794,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('pp_max', maxXOffset); // Global
 		sb.add('pp_miy', minYOffset); // Global
 		sb.add('pp_may', maxYOffset); // Global
+		resetMaxScrolls();
 		var request = getRequest(sb, 'ping');
 		sendRequest(request, configTrackerPause);
 	}
