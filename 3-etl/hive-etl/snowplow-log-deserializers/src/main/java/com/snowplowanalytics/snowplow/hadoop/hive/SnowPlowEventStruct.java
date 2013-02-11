@@ -87,6 +87,14 @@ public class SnowPlowEventStruct {
   public String page_title;
   public String page_referrer;
 
+  // Page URL components
+  public String page_url_scheme;
+  public String page_url_host;
+  public String page_url_port;
+  public String page_url_path;
+  public String page_url_query;
+  public String page_url_fragment;
+
   // Marketing
   public String mkt_medium;
   public String mkt_source;
