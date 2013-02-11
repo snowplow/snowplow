@@ -17,10 +17,9 @@ Serde: added setting of new event_vendor field (to com.snowplowanalytics) (#144)
 Serde: added extraction of doc charset (#138)
 Serde: added extraction of document & viewport dimensions (#94)
 Serde: added extraction of scroll offsets for enhanced page ping (#127)
+Serde: added extraction of URL components (#105)
 
 [Reminder: remove hardlink to file:/// in async.html]
-
-Serde: added extraction of URL components (#105) - TODO
 
 HiveQL: hive-rolling-etl.q bumped to 0.5.4 - TODO
 HiveQL: non-hive-rolling-etl.q bumped to 0.0.5 - TODO

@@ -90,7 +90,7 @@ public class SnowPlowEventStruct {
   // Page URL components
   public String page_url_scheme;
   public String page_url_host;
-  public String page_url_port;
+  public Integer page_url_port;
   public String page_url_path;
   public String page_url_query;
   public String page_url_fragment;
@@ -559,7 +559,18 @@ public class SnowPlowEventStruct {
     }
 
     // 8. Now try to convert the page_url into a valid Java URI and store the 6 out of 9 components we are interested in:
-    // TODO
+    try {
+      final URI pageUri = URI.create(this.page_url);
+      this.page_url_scheme = pageUri.getScheme();
+      this.page_url_host = pageUri.getHost();
+      final Integer port = pageUri.getPort();
+      this.page_url_port = (port == -1) ? 80 : port;
+      this.page_url_path = pageUri.getPath();
+      this.page_url_query = pageUri.getQuery();
+      this.page_url_fragment = pageUri.getFragment();
+    } catch (Exception e) {
+      getLog().warn("Could not parse page_url " + this.page_url + " }");
+    }
 
     // 9. Finally handle the marketing fields in the page_url
     // Re-use params to avoid creating another object

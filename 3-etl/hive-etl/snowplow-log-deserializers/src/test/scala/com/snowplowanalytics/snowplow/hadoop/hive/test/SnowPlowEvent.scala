@@ -49,7 +49,7 @@ class SnowPlowEvent {
   // Page URL
   var page_url_scheme: String = _
   var page_url_host: String = _
-  var page_url_port: String = _
+  var page_url_port: Int = _
   var page_url_path: String = _
   var page_url_query: String = _
   var page_url_fragment: String = _
