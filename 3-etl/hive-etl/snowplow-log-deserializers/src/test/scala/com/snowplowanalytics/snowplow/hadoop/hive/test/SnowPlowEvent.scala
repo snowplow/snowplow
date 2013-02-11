@@ -53,12 +53,36 @@ class SnowPlowEvent {
   var mkt_content: String = _
   var mkt_campaign: String = _
 
-  // Event
+  // Structured event
   var ev_category: String = _
   var ev_action: String = _
   var ev_label: String = _
   var ev_property: String = _
   var ev_value: String = _
+
+  // Ecommerce transaction (from querystring)
+  var tr_orderid: String = _
+  var tr_affiliation: String = _
+  var tr_total: String = _
+  var tr_tax: String = _
+  var tr_shipping: String = _
+  var tr_city: String = _
+  var tr_state: String = _
+  var tr_country: String = _
+
+  // Ecommerce transaction item (from querystring)
+  var ti_orderid: String = _
+  var ti_sku: String = _
+  var ti_name: String = _
+  var ti_category: String = _
+  var ti_price: String = _
+  var ti_quantity: String = _
+
+  // Page ping
+  var pp_xoffset_min: Int = _
+  var pp_xoffset_max: Int = _
+  var pp_yoffset_min: Int = _
+  var pp_yoffset_max: Int = _
 
   // User Agent
   var useragent: String = _
@@ -108,22 +132,4 @@ class SnowPlowEvent {
   var doc_height: Int = _;
   var doc_viewwidth: Int = _;
   var doc_viewheight: Int = _;
-
-  // Ecommerce transaction (from querystring)
-  var tr_orderid: String = _
-  var tr_affiliation: String = _
-  var tr_total: String = _
-  var tr_tax: String = _
-  var tr_shipping: String = _
-  var tr_city: String = _
-  var tr_state: String = _
-  var tr_country: String = _
-
-  // Ecommerce transaction item (from querystring)
-  var ti_orderid: String = _
-  var ti_sku: String = _
-  var ti_name: String = _
-  var ti_category: String = _
-  var ti_price: String = _
-  var ti_quantity: String = _
 }

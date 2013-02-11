@@ -171,6 +171,12 @@ public class SnowPlowEventStruct {
   public String ti_price;
   public String ti_quantity;
 
+  // Page pings
+  public Integer pp_xoffset_min;
+  public Integer pp_xoffset_max;
+  public Integer pp_yoffset_min;
+  public Integer pp_yoffset_max;
+
   // Versioning
   public String v_tracker;
   public String v_collector;
@@ -188,7 +194,7 @@ public class SnowPlowEventStruct {
 
   // An enum of all the fields we're expecting in the querystring
   // See https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol for details
-  private static enum QuerystringFields { E, IP, AID, P, TID, UID, FP, VID, TSTAMP, TV, LANG, CS, VP, DS, F_PDF, F_FLA, F_JAVA, F_DIR, F_QT, F_REALP, F_WMA, F_GEARS, F_AG, COOKIE, RES, CD, TZ, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
+  private static enum QuerystringFields { E, IP, AID, P, TID, UID, FP, VID, TSTAMP, TV, LANG, CS, VP, DS, F_PDF, F_FLA, F_JAVA, F_DIR, F_QT, F_REALP, F_WMA, F_GEARS, F_AG, COOKIE, RES, CD, TZ, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU, PP_MIX, PP_MAX, PP_MIY, PP_MAY }
 
   // An enum for the marketing attribution fields we might find
   // attached to the page URL.
@@ -509,6 +515,20 @@ public class SnowPlowEventStruct {
             case TI_QU:
               this.ti_quantity = decodeSafeString(value);
               break;
+
+            // Page pings
+            case PP_MIX:
+              this.pp_xoffset_min = Integer.parseInt(value);
+              break;
+            case PP_MAX:
+              this.pp_xoffset_max = Integer.parseInt(value);
+              break;
+            case PP_MIY:
+              this.pp_yoffset_min = Integer.parseInt(value);
+              break;
+            case PP_MAY:
+              this.pp_yoffset_max = Integer.parseInt(value);
+              break;              
           }
         } catch (Exception e) {
           getLog().warn(e.getClass().getSimpleName() + " on { " + name + ": " + value + " }");
