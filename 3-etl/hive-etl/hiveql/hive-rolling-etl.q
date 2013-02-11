@@ -84,7 +84,23 @@ event_id string,
 user_fingerprint string,
 useragent string,
 br_colordepth string,
-os_timezone string
+os_timezone string,
+event_vendor string, -- New in 0.0.6
+page_urlscheme string,
+page_urlhost string,
+page_urlport int,
+page_urlpath string,
+page_urlquery string,
+page_urlfragment string,
+doc_charset string,
+doc_width int,
+doc_height int,
+doc_viewwidth int,
+doc_viewheight int,
+pp_xoffset_min int,
+pp_xoffset_max int,
+pp_yoffset_min int,
+pp_yoffset_max int -- End of new in 0.0.6
 )
 PARTITIONED BY (dt STRING)
 LOCATION '${EVENTS_TABLE}' ;
@@ -145,12 +161,28 @@ app_id,
 platform,
 event,
 v_tracker,
-'${COLLECTOR_FORMAT}' AS v_collector, -- Now set via variable in 0.5.4
+'${COLLECTOR_FORMAT}' AS v_collector,
 v_etl,
 event_id,
 user_fingerprint,
 useragent,
 br_colordepth,
 os_timezone,
+event_vendor, -- New in 0.0.6
+page_urlscheme,
+page_urlhost,
+page_urlport,
+page_urlpath,
+page_urlquery,
+page_urlfragment,
+doc_charset,
+doc_width,
+doc_height,
+doc_viewwidth,
+doc_viewheight,
+pp_xoffset_min,
+pp_xoffset_max,
+pp_yoffset_min,
+pp_yoffset_max, -- End of new in 0.0.6
 dt
 FROM `extracted_logs` ;

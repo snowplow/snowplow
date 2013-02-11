@@ -32,6 +32,7 @@ platform string,
 dt_dt string,
 tm string,
 event string,
+event_vendor string, -- New in 0.0.6
 event_id string,
 txn_id string,
 v_tracker string,
@@ -44,6 +45,12 @@ visit_id int,
 page_url string,
 page_title string,
 page_referrer string,
+page_urlscheme string, -- New in 0.0.6
+page_urlhost string, -- New in 0.0.6
+page_urlport int, -- New in 0.0.6
+page_urlpath string, -- New in 0.0.6
+page_urlquery string, -- New in 0.0.6
+page_urlfragment string, -- New in 0.0.6
 mkt_source string,
 mkt_medium string,
 mkt_term string,
@@ -68,6 +75,10 @@ ti_name string,
 ti_category string,
 ti_price string,
 ti_quantity string,
+pp_xoffset_min int, -- New in 0.0.6
+pp_xoffset_max int, -- New in 0.0.6
+pp_yoffset_min int, -- New in 0.0.6
+pp_yoffset_max int, -- New in 0.0.6
 useragent string,
 br_name string,
 br_family string,
@@ -93,7 +104,12 @@ os_timezone string,
 dvce_type string,
 dvce_ismobile tinyint,
 dvce_screenwidth int,
-dvce_screenheight int
+dvce_screenheight int,
+doc_charset string, -- New in 0.0.6
+doc_width int, -- New in 0.0.6
+doc_height int, -- New in 0.0.6
+doc_viewwidth int, -- New in 0.0.6
+doc_viewheight int -- New in 0.0.6
 )
 PARTITIONED BY (dt string)
 ROW FORMAT DELIMITED
@@ -112,10 +128,11 @@ platform,
 dt AS dt_dt,
 tm,
 event,
+event_vendor, -- New in 0.0.6
 event_id,
 txn_id,
 v_tracker,
-'${COLLECTOR_FORMAT}' AS v_collector, -- Now set via variable in 0.0.5
+'${COLLECTOR_FORMAT}' AS v_collector,
 v_etl,
 user_id,
 user_ipaddress,
@@ -124,6 +141,12 @@ visit_id,
 page_url,
 page_title,
 page_referrer,
+page_urlscheme, -- New in 0.0.6
+page_urlhost, -- New in 0.0.6
+page_urlport, -- New in 0.0.6
+page_urlpath, -- New in 0.0.6
+page_urlquery, -- New in 0.0.6
+page_urlfragment, -- New in 0.0.6
 mkt_source,
 mkt_medium,
 mkt_term,
@@ -148,6 +171,10 @@ ti_name,
 ti_category,
 ti_price,
 ti_quantity,
+pp_xoffset_min, -- New in 0.0.6
+pp_xoffset_max, -- New in 0.0.6
+pp_yoffset_min, -- New in 0.0.6
+pp_yoffset_max, -- New in 0.0.6
 useragent,
 br_name,
 br_family,
@@ -174,5 +201,10 @@ dvce_type,
 dvce_ismobile_bt AS dvce_ismobile,
 dvce_screenwidth,
 dvce_screenheight,
+doc_charset, -- New in 0.0.6
+doc_width, -- New in 0.0.6
+doc_height, -- New in 0.0.6
+doc_viewwidth, -- New in 0.0.6
+doc_viewheight, -- New in 0.0.6
 dt
 FROM `extracted_logs` ;

@@ -21,10 +21,10 @@ Serde: added extraction of URL components (#105)
 HiveQL: hive-rolling-etl.q bumped to 0.5.5
 HiveQL: non-hive-rolling-etl.q bumped to 0.0.6
 HiveQL: updated copyright notices
+HiveQL: now supports charset, document & viewport, URL components, event_vendor and enhanced page ping
 
 [Reminder: remove hardlink to file:/// in async.html]
 
-HiveQL: now supports charset, document & viewport, URL components, event_vendor and enhanced page ping - TODO
 Infobright: bumped setup_infobright.sql to 0.0.6 - TODO
 Infobright: updated copyright notices - TODO
 Infobright: added migration scripts (0.0.4; 0.0.5 -> 0.0.6) - TODO
