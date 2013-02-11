@@ -558,7 +558,10 @@ public class SnowPlowEventStruct {
       }
     }
 
-    // 8. Finally handle the marketing fields in the page_url
+    // 8. Now try to convert the page_url into a valid Java URI and store the 6 out of 9 components we are interested in:
+    // TODO
+
+    // 9. Finally handle the marketing fields in the page_url
     // Re-use params to avoid creating another object
     if (this.page_url != null) {
       params = null;
