@@ -11,10 +11,10 @@ JS tracker: cleaned up getRequest code to use improved requestStringBuilder
 JS tracker: fixed logImpression (was using wrong argument names) (#162)
 JS tracker: added scroll offsets to page ping (#127)
 Serde: bumped to 0.5.4
+Serde: updated copyright notices
 
 [Reminder: remove hardlink to file:/// in async.html]
 
-Serde: updated copyright notices - TODO
 Serde: added extraction of doc charset (#138) - TODO
 Serde: added extraction of URL components (#105) - TODO
 Serde: added extraction of document & viewport dimensions (#94) - TODO
