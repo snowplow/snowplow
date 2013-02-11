@@ -88,12 +88,12 @@ public class SnowPlowEventStruct {
   public String page_referrer;
 
   // Page URL components
-  public String page_url_scheme;
-  public String page_url_host;
-  public Integer page_url_port;
-  public String page_url_path;
-  public String page_url_query;
-  public String page_url_fragment;
+  public String page_urlscheme;
+  public String page_urlhost;
+  public Integer page_urlport;
+  public String page_urlpath;
+  public String page_urlquery;
+  public String page_urlfragment;
 
   // Marketing
   public String mkt_medium;
@@ -561,13 +561,13 @@ public class SnowPlowEventStruct {
     // 8. Now try to convert the page_url into a valid Java URI and store the 6 out of 9 components we are interested in:
     try {
       final URI pageUri = URI.create(this.page_url);
-      this.page_url_scheme = pageUri.getScheme();
-      this.page_url_host = pageUri.getHost();
+      this.page_urlscheme = pageUri.getScheme();
+      this.page_urlhost = pageUri.getHost();
       final Integer port = pageUri.getPort();
-      this.page_url_port = (port == -1) ? 80 : port;
-      this.page_url_path = pageUri.getPath();
-      this.page_url_query = pageUri.getQuery();
-      this.page_url_fragment = pageUri.getFragment();
+      this.page_urlport = (port == -1) ? 80 : port;
+      this.page_urlpath = pageUri.getPath();
+      this.page_urlquery = pageUri.getQuery();
+      this.page_urlfragment = pageUri.getFragment();
     } catch (Exception e) {
       getLog().warn("Could not parse page_url " + this.page_url + " }");
     }
@@ -648,6 +648,7 @@ public class SnowPlowEventStruct {
     this.dt = null;
     this.tm = null;
     this.event = null;
+    this.event_vendor = null;
     this.event_id = null;
     this.txn_id = null;
     this.user_id = null;
@@ -657,6 +658,12 @@ public class SnowPlowEventStruct {
     this.page_url = null;
     this.page_title = null;
     this.page_referrer = null;
+    this.page_urlscheme = null;
+    this.page_urlhost = null;
+    this.page_urlport = null;
+    this.page_urlpath = null;
+    this.page_urlquery = null;
+    this.page_urlfragment = null;
     this.mkt_medium = null;
     this.mkt_source = null;
     this.mkt_term = null;
@@ -696,6 +703,11 @@ public class SnowPlowEventStruct {
     this.dvce_ismobile_bt = null;
     this.dvce_screenwidth = null;
     this.dvce_screenheight = null;
+    this.doc_charset = null;
+    this.doc_width = null;
+    this.doc_height = null;
+    this.doc_viewwidth = null;
+    this.doc_viewheight = null;
     this.tr_orderid = null;
     this.tr_affiliation = null;
     this.tr_total = null;
@@ -710,6 +722,10 @@ public class SnowPlowEventStruct {
     this.ti_category = null;
     this.ti_price = null;
     this.ti_quantity = null;
+    this.pp_xoffset_min = null;
+    this.pp_xoffset_max = null;
+    this.pp_yoffset_min = null;
+    this.pp_yoffset_max = null;
     this.v_tracker = null;
     this.v_collector = null;
     this.v_etl = null;

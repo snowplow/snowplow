@@ -47,12 +47,12 @@ class SnowPlowEvent {
   var page_referrer: String = _
 
   // Page URL
-  var page_url_scheme: String = _
-  var page_url_host: String = _
-  var page_url_port: Int = _
-  var page_url_path: String = _
-  var page_url_query: String = _
-  var page_url_fragment: String = _
+  var page_urlscheme: String = _
+  var page_urlhost: String = _
+  var page_urlport: Int = _
+  var page_urlpath: String = _
+  var page_urlquery: String = _
+  var page_urlfragment: String = _
 
   // Marketing
   var mkt_medium: String = _

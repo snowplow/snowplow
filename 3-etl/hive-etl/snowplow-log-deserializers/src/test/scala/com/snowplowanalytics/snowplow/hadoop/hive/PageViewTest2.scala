@@ -49,12 +49,12 @@ class PageViewTest2 extends Specification {
     e.page_url = "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail"
     e.page_title = "Psycards book and deck starter pack - Psychic Bazaar"
     e.page_referrer = "http://www.google.com/search?hl=en&q=the+psycard+story&oq=the+psycard+story&aq=f&aqi=&aql=&gs_l=mobile-gws-serp.12...0.0.0.6358.0.0.0.0.0.0.0.0..0.0...0.0.JrNbKlRgHbQ&mvs=0"
-    e.page_url_scheme = "http"
-    e.page_url_host = "www.psychicbazaar.com"
-    e.page_url_port = 80
-    e.page_url_path = "/oracles/119-psycards-book-and-deck-starter-pack.html"
-    e.page_url_query = "view=print"
-    e.page_url_fragment = "detail"
+    e.page_urlscheme = "http"
+    e.page_urlhost = "www.psychicbazaar.com"
+    e.page_urlport = 80
+    e.page_urlpath = "/oracles/119-psycards-book-and-deck-starter-pack.html"
+    e.page_urlquery = "view=print"
+    e.page_urlfragment = "detail"
     e.useragent = "Mozilla/5.0 (iPhone; CPU iPhone OS 5_1_1 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9B206 Safari/7534.48.3"
     e.br_name = "Mobile Safari"
     e.br_family = "Safari"
@@ -154,24 +154,24 @@ class PageViewTest2 extends Specification {
     }
 
     // Page URL components
-    "have page_url_scheme (Page URL) = %s".format(expected.page_url_scheme) in {
-      actual.page_url_scheme must_== expected.page_url_scheme
+    "have page_urlscheme (Page URL) = %s".format(expected.page_urlscheme) in {
+      actual.page_urlscheme must_== expected.page_urlscheme
     }
     // Tracking a page view, so we have a page title
-    "have page_url_host (Page URL Host) = %s".format(expected.page_url_host) in {
-      actual.page_url_host must_== expected.page_url_host
+    "have page_urlhost (Page URL Host) = %s".format(expected.page_urlhost) in {
+      actual.page_urlhost must_== expected.page_urlhost
     }
-    "have page_url_port (Page URL Port) = %s".format(expected.page_url_port) in {
-      actual.page_url_port must_== expected.page_url_port
+    "have page_urlport (Page URL Port) = %s".format(expected.page_urlport) in {
+      actual.page_urlport must_== expected.page_urlport
     }
-    "have page_url_path (Page URL Path) = %s".format(expected.page_url_path) in {
-      actual.page_url_path must_== expected.page_url_path
+    "have page_urlpath (Page URL Path) = %s".format(expected.page_urlpath) in {
+      actual.page_urlpath must_== expected.page_urlpath
     }
-    "have page_url_query (Page URL Querystring) = %s".format(expected.page_url_query) in {
-      actual.page_url_query must_== expected.page_url_query
+    "have page_urlquery (Page URL Querystring) = %s".format(expected.page_urlquery) in {
+      actual.page_urlquery must_== expected.page_urlquery
     }
-    "have page_url_fragment (Page URL Fragment aka Anchor) = %s".format(expected.page_url_fragment) in {
-      actual.page_url_fragment must_== expected.page_url_fragment
+    "have page_urlfragment (Page URL Fragment aka Anchor) = %s".format(expected.page_urlfragment) in {
+      actual.page_urlfragment must_== expected.page_urlfragment
     }
 
     // Useragent
