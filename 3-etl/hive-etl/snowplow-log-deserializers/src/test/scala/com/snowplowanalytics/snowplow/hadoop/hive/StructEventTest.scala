@@ -21,7 +21,7 @@ import com.snowplowanalytics.util.Tap._
 // Deserializer
 import test.{SnowPlowDeserializer, SnowPlowEvent, SnowPlowTest}
 
-class EventTest extends Specification {
+class StructEventTest extends Specification {
 
   // Toggle if tests are failing and you want to inspect the struct contents
   implicit val _DEBUG = false
@@ -52,9 +52,9 @@ class EventTest extends Specification {
     "have tm (Time) = %s".format(expected.tm) in {
       actual.tm must_== expected.tm
     }
-      "have event (Event Type) = %s".format(expected.event) in {
-        actual.event must_== expected.event
-      }
+    "have event (Event Type) = %s".format(expected.event) in {
+      actual.event must_== expected.event
+    }
     "have event_vendor (Event Vendor) = %s".format(expected.event_vendor) in {
       actual.event_vendor must_== expected.event_vendor
     }
