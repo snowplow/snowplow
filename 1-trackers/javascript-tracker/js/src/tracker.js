@@ -535,6 +535,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.addRaw('tid', String(Math.random()).slice(2, 8));
 		sb.addRaw('vp', detectViewport());
 		sb.addRaw('ds', detectDocumentSize());
+		sb.addRaw('vid', visitCount);
 
 		// Encode all these
 		sb.add('p', configPlatform);		
@@ -790,10 +791,10 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'pp'); // 'pp' for Page Ping
 		sb.add('page', pageTitle);
-		sb.add('pp_mix', minXOffset); // Global
-		sb.add('pp_max', maxXOffset); // Global
-		sb.add('pp_miy', minYOffset); // Global
-		sb.add('pp_may', maxYOffset); // Global
+		sb.addRaw('pp_mix', minXOffset); // Global
+		sb.addRaw('pp_max', maxXOffset); // Global
+		sb.addRaw('pp_miy', minYOffset); // Global
+		sb.addRaw('pp_may', maxYOffset); // Global
 		resetMaxScrolls();
 		var request = getRequest(sb, 'ping');
 		sendRequest(request, configTrackerPause);
