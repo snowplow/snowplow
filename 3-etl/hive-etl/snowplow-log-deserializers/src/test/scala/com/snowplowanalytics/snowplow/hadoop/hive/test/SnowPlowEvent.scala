@@ -31,6 +31,7 @@ class SnowPlowEvent {
 
   // Transaction (i.e. this logging event)
   var event: String = _
+  var event_vendor: String = _
   var event_id: String = _
   var txn_id: String = _
 
@@ -100,6 +101,13 @@ class SnowPlowEvent {
   // Device (from querystring)
   var dvce_screenwidth: Int = _
   var dvce_screenheight: Int = _
+
+  // Document fields
+  var doc_charset: String = _;
+  var doc_width: Int = _;
+  var doc_height: Int = _;
+  var doc_viewwidth: Int = _;
+  var doc_viewheight: Int = _;
 
   // Ecommerce transaction (from querystring)
   var tr_orderid: String = _

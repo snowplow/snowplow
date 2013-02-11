@@ -32,7 +32,7 @@ class PageViewTest2 extends Specification {
   // Toggle if tests are failing and you want to inspect the struct contents
   implicit val _DEBUG = false
 
-  val row = "2012-05-24  00:06:42  LHR5  3402  90.194.12.51  GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(iPhone;%20CPU%20iPhone%20OS%205_1_1%20like%20Mac%20OS%20X)%20AppleWebKit/534.46%20(KHTML,%20like%20Gecko)%20Version/5.1%20Mobile/9B206%20Safari/7534.48.3  e=pv&page=Psycards%2520book%2520and%2520deck%2520starter%2520pack%2520-%2520Psychic%2520Bazaar&tid=019539&uid=e7bccbb647296c98&vid=1&p=Web&aid=CFe23a&fp=1906624389&tz=Europe%2FLondon&cd=24&lang=en-us&refr=http%253A%252F%252Fwww.google.com%252Fsearch%253Fhl%253Den%2526q%253Dthe%252Bpsycard%252Bstory%2526oq%253Dthe%252Bpsycard%252Bstory%2526aq%253Df%2526aqi%253D%2526aql%253D%2526gs_l%253Dmobile-gws-serp.12...0.0.0.6358.0.0.0.0.0.0.0.0..0.0...0.0.JrNbKlRgHbQ%2526mvs%253D0&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=0&f_gears=1&f_ag=0&res=320x480&cookie=1"
+  val row = "2012-05-24  00:06:42  LHR5  3402  90.194.12.51  GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(iPhone;%20CPU%20iPhone%20OS%205_1_1%20like%20Mac%20OS%20X)%20AppleWebKit/534.46%20(KHTML,%20like%20Gecko)%20Version/5.1%20Mobile/9B206%20Safari/7534.48.3  e=pv&page=Psycards%2520book%2520and%2520deck%2520starter%2520pack%2520-%2520Psychic%2520Bazaar&tid=019539&vp=479x283&ds=584x268&cs=UTF-8&uid=e7bccbb647296c98&vid=1&p=Web&aid=CFe23a&fp=1906624389&tz=Europe%2FLondon&cd=24&lang=en-us&refr=http%253A%252F%252Fwww.google.com%252Fsearch%253Fhl%253Den%2526q%253Dthe%252Bpsycard%252Bstory%2526oq%253Dthe%252Bpsycard%252Bstory%2526aq%253Df%2526aqi%253D%2526aql%253D%2526gs_l%253Dmobile-gws-serp.12...0.0.0.6358.0.0.0.0.0.0.0.0..0.0...0.0.JrNbKlRgHbQ%2526mvs%253D0&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=0&f_gears=1&f_ag=0&res=320x480&cookie=1"
 
   val expected = new SnowPlowEvent().tap { e =>
     e.app_id = "CFe23a"
@@ -40,6 +40,7 @@ class PageViewTest2 extends Specification {
     e.dt = "2012-05-24"
     e.tm = "00:06:42"
     e.event = "page_view"
+    e.event_vendor = "com.snowplowanalytics"
     e.txn_id = "019539"
     e.user_id = "e7bccbb647296c98"
     e.user_ipaddress = "90.194.12.51"
@@ -77,6 +78,11 @@ class PageViewTest2 extends Specification {
     e.dvce_ismobile_bt = 1
     e.dvce_screenwidth = 320
     e.dvce_screenheight = 480
+    e.doc_charset = "UTF-8"
+    e.doc_width = 584
+    e.doc_height = 268
+    e.doc_viewwidth = 479
+    e.doc_viewheight = 283
   }
 
   "The SnowPlow page view row \"%s\"".format(row) should {
@@ -104,6 +110,9 @@ class PageViewTest2 extends Specification {
     // Event and transaction
     "have event (Event Type) = %s".format(expected.event) in {
       actual.event must_== expected.event
+    }
+    "have event_vendor (Event Vendor) = %s".format(expected.event_vendor) in {
+      actual.event_vendor must_== expected.event_vendor
     }
     "have a valid (stringly-typed UUID) event_id" in {
       SnowPlowTest.stringlyTypedUuid(actual.event_id) must_== actual.event_id
@@ -238,6 +247,23 @@ class PageViewTest2 extends Specification {
     }
     "have dvce_screenheight (Device Screen Height) = %s".format(expected.dvce_screenheight) in {
       actual.dvce_screenheight must_== expected.dvce_screenheight
+    }
+
+    // Document fields
+    "have doc_charset (Document character set) = %s".format(expected.doc_charset) in {
+      actual.doc_charset must_== expected.doc_charset
+    }
+    "have doc_width (Document Width) = %s".format(expected.doc_width) in {
+      actual.doc_width must_== expected.doc_width
+    }
+    "have doc_height (Document Height) = %s".format(expected.doc_height) in {
+      actual.doc_height must_== expected.doc_height
+    }
+    "have doc_viewwidth (Viewport Width) = %s".format(expected.doc_viewwidth) in {
+      actual.doc_viewwidth must_== expected.doc_viewwidth
+    }
+    "have doc_viewheight (Viewport Height) = %s".format(expected.doc_viewheight) in {
+      actual.doc_viewheight must_== expected.doc_viewheight
     }
   }
 }

@@ -72,6 +72,7 @@ public class SnowPlowEventStruct {
 
   // Event and transaction
   public String event;
+  public String event_vendor;
   public String event_id;
   public String txn_id;
 
@@ -145,6 +146,13 @@ public class SnowPlowEventStruct {
   public Integer dvce_screenwidth;
   public Integer dvce_screenheight;
 
+  // Document fields
+  public String doc_charset;
+  public Integer doc_width;
+  public Integer doc_height;
+  public Integer doc_viewwidth;
+  public Integer doc_viewheight;
+
   // Ecommerce transaction (from querystring)
   public String tr_orderid;
   public String tr_affiliation;
@@ -176,16 +184,18 @@ public class SnowPlowEventStruct {
 
   private static final String cfEncoding = "UTF-8";
 
+  private static final String eventVendor = "com.snowplowanalytics"; // Assume all events are from SnowPlow vendor for now.
+
   // An enum of all the fields we're expecting in the querystring
   // See https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol for details
-  private static enum QuerystringFields { E, IP, AID, P, TID, UID, FP, VID, TSTAMP, TV, LANG, F_PDF, F_FLA, F_JAVA, F_DIR, F_QT, F_REALP, F_WMA, F_GEARS, F_AG, COOKIE, RES, CD, TZ, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
+  private static enum QuerystringFields { E, IP, AID, P, TID, UID, FP, VID, TSTAMP, TV, LANG, CS, VP, DS, F_PDF, F_FLA, F_JAVA, F_DIR, F_QT, F_REALP, F_WMA, F_GEARS, F_AG, COOKIE, RES, CD, TZ, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
 
   // An enum for the marketing attribution fields we might find
   // attached to the page URL.
   private static enum MarketingFields { UTM_SOURCE, UTM_MEDIUM, UTM_CAMPAIGN, UTM_TERM, UTM_CONTENT }
 
   // An enum for the event codes we might find in our e= querystring parameter
-  private static enum EventCodes { EV, AD, TR, TI, PV, PP }
+  private static enum EventCodes { EV, SE, AD, TR, TI, PV, PP }
 
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
@@ -294,7 +304,8 @@ public class SnowPlowEventStruct {
     this.v_collector = collectorVersion;
     this.v_etl = "serde-" + ProjectSettings.VERSION;
 
-    // 5. Now we generate the event ID
+    // 5. Now we generate the event vendor and ID
+    this.event_vendor = eventVendor; // TODO: this becomes part of the protocol eventually
     this.event_id = generateEventId();
 
     // 6. Now we dis-assemble the querystring.
@@ -355,6 +366,23 @@ public class SnowPlowEventStruct {
               break;
             case LANG:
               this.br_lang = value;
+              break;
+            case CS:
+              this.doc_charset = value;
+              break;
+            case VP:
+              String[] viewport = value.split("x");
+              if (viewport.length != 2)
+                throw new Exception("Couldn't parse vp field");
+              this.doc_viewwidth = Integer.parseInt(viewport[0]);
+              this.doc_viewheight = Integer.parseInt(viewport[1]);
+              break;
+            case DS:
+              String[] docsize = value.split("x");
+              if (docsize.length != 2)
+                throw new Exception("Couldn't parse ds field");
+              this.doc_width = Integer.parseInt(docsize[0]);
+              this.doc_height = Integer.parseInt(docsize[1]);
               break;
             case F_PDF:
               if ((this.br_features_pdf = stringToByte(value)) == 1)
@@ -663,8 +691,11 @@ public class SnowPlowEventStruct {
     
     final String eventType;
     switch (e) {
-      case EV:
-        eventType = "custom";
+      case EV: // TODO: remove this in the future.
+        eventType = "struct";
+        break;
+      case SE:
+        eventType = "struct";
         break;
       case AD:
         eventType = "ad_impression";

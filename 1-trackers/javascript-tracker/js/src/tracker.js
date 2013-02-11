@@ -635,7 +635,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 */
 	function logStructEvent(category, action, label, property, value) {
 		var sb = requestStringBuilder();
-		sb.add('e', 'ev'); // 'ev' for custom EVent
+		sb.add('e', 'se'); // 'se' for Structured Event
 		sb.add('ev_ca', category);
 		sb.add('ev_ac', action)
 		sb.add('ev_la', label);

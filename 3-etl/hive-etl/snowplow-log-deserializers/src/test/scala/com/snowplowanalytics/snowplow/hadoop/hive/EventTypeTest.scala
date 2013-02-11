@@ -19,7 +19,8 @@ class EventTypeTest extends Specification {
 
   // Valid event codes and their type mappings
   val eventCodes = Map(
-    "ev" -> "custom",
+    "ev" -> "struct",
+    "se" -> "struct",
     "ad" -> "ad_impression",
     "tr" -> "transaction",
     "ti" -> "transaction_item",
