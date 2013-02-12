@@ -42,9 +42,9 @@ CREATE TABLE IF NOT EXISTS events_006 (
 	`user_fingerprint` varchar(50),
 	`visit_id` smallint,
 	-- Page
-	`page_url` varchar(4095),
-	`page_title` varchar(2083),
-	`page_referrer` varchar(2083),
+	`page_url` varchar(3000),
+	`page_title` varchar(1000),
+	`page_referrer` varchar(3000),
 	-- Page URL components
 	`page_urlscheme` varchar(16),    -- New in 0.0.6
 	`page_urlhost` varchar(255),     -- New in 0.0.6
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS events_006 (
 	`mkt_source` varchar(255),
 	`mkt_medium` varchar(255),
 	`mkt_term` varchar(255),
-	`mkt_content` varchar(2083),
+	`mkt_content` varchar(500),
 	`mkt_campaign` varchar(255),
 	-- Custom Event
 	`ev_category` varchar(255),
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS events_006 (
 	`pp_yoffset_min` mediumint, -- New in 0.0.6
 	`pp_yoffset_max` mediumint, -- New in 0.0.6
 	-- User Agent
-	`useragent` varchar(2083),
+	`useragent` varchar(500),
 	-- Browser
 	`br_name` varchar(50) comment 'lookup',
 	`br_family` varchar(50) comment 'lookup',
