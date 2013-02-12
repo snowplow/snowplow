@@ -31,7 +31,7 @@ SELECT
 	`tm`,
 	-- Event
 	`event`,
-	"com.snowplowanalytics.com" AS `event_vendor`, -- New in 0.0.6
+	"com.snowplowanalytics" AS `event_vendor`, -- New in 0.0.6
 	`event_id`,
 	`txn_id`,
 	-- Versioning

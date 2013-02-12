@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS events_006 (
 	`visit_id` smallint,
 	-- Page
 	`page_url` varchar(3000),
-	`page_title` varchar(1000),
+	`page_title` varchar(2000),
 	`page_referrer` varchar(3000),
 	-- Page URL components
 	`page_urlscheme` varchar(16),    -- New in 0.0.6
