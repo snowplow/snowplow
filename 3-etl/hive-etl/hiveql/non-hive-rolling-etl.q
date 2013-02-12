@@ -105,11 +105,11 @@ dvce_type string,
 dvce_ismobile tinyint,
 dvce_screenwidth int,
 dvce_screenheight int,
+br_viewwidth int, -- New in 0.0.6
+br_viewheight int, -- New in 0.0.6
 doc_charset string, -- New in 0.0.6
 doc_width int, -- New in 0.0.6
-doc_height int, -- New in 0.0.6
-doc_viewwidth int, -- New in 0.0.6
-doc_viewheight int -- New in 0.0.6
+doc_height int -- New in 0.0.6
 )
 PARTITIONED BY (dt string)
 ROW FORMAT DELIMITED
@@ -201,10 +201,10 @@ dvce_type,
 dvce_ismobile_bt AS dvce_ismobile,
 dvce_screenwidth,
 dvce_screenheight,
+br_viewwidth, -- New in 0.0.6
+br_viewheight, -- New in 0.0.6
 doc_charset, -- New in 0.0.6
 doc_width, -- New in 0.0.6
 doc_height, -- New in 0.0.6
-doc_viewwidth, -- New in 0.0.6
-doc_viewheight, -- New in 0.0.6
 dt
 FROM `extracted_logs` ;
