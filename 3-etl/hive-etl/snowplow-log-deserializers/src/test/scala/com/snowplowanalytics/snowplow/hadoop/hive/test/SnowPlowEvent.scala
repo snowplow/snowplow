@@ -118,6 +118,8 @@ class SnowPlowEvent {
   var br_cookies: Boolean = _
   var br_cookies_bt: Byte = _
   var br_colordepth: String = _
+  var br_viewwidth: Int = _
+  var br_viewheight: Int = _
 
   // OS (from user-agent)
   var os_name: String = _
@@ -135,9 +137,7 @@ class SnowPlowEvent {
   var dvce_screenheight: Int = _
 
   // Document fields
-  var doc_charset: String = _;
-  var doc_width: Int = _;
-  var doc_height: Int = _;
-  var doc_viewwidth: Int = _;
-  var doc_viewheight: Int = _;
+  var doc_charset: String = _
+  var doc_width: Int = _
+  var doc_height: Int = _
 }

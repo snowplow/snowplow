@@ -137,6 +137,8 @@ public class SnowPlowEventStruct {
   public Boolean br_cookies;
   public Byte br_cookies_bt;
   public String br_colordepth;
+  public Integer br_viewwidth;
+  public Integer br_viewheight;
 
   // OS (from user-agent)
   public String os_name;
@@ -158,8 +160,6 @@ public class SnowPlowEventStruct {
   public String doc_charset;
   public Integer doc_width;
   public Integer doc_height;
-  public Integer doc_viewwidth;
-  public Integer doc_viewheight;
 
   // Ecommerce transaction (from querystring)
   public String tr_orderid;
@@ -388,8 +388,8 @@ public class SnowPlowEventStruct {
               String[] viewport = value.split("x");
               if (viewport.length != 2)
                 throw new Exception("Couldn't parse vp field");
-              this.doc_viewwidth = Integer.parseInt(viewport[0]);
-              this.doc_viewheight = Integer.parseInt(viewport[1]);
+              this.br_viewwidth = Integer.parseInt(viewport[0]);
+              this.br_viewheight = Integer.parseInt(viewport[1]);
               break;
             case DS:
               String[] docsize = value.split("x");
@@ -694,6 +694,8 @@ public class SnowPlowEventStruct {
     this.br_cookies = null;
     this.br_cookies_bt = null;
     this.br_colordepth = null;
+    this.br_viewwidth = null;
+    this.br_viewheight = null;
     this.os_name = null;
     this.os_family = null;
     this.os_manufacturer = null;
@@ -706,8 +708,6 @@ public class SnowPlowEventStruct {
     this.doc_charset = null;
     this.doc_width = null;
     this.doc_height = null;
-    this.doc_viewwidth = null;
-    this.doc_viewheight = null;
     this.tr_orderid = null;
     this.tr_affiliation = null;
     this.tr_total = null;

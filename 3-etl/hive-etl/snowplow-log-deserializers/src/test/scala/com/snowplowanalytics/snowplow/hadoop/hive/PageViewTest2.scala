@@ -75,6 +75,8 @@ class PageViewTest2 extends Specification {
     e.br_features_gears = 1
     e.br_features_silverlight = 0
     e.br_colordepth = "24"
+    e.br_viewwidth = 479
+    e.br_viewheight = 283
     e.os_name = "iOS 5 (iPhone)"
     e.os_family = "iOS"
     e.os_manufacturer = "Apple Inc."
@@ -87,8 +89,6 @@ class PageViewTest2 extends Specification {
     e.doc_charset = "UTF-8"
     e.doc_width = 584
     e.doc_height = 268
-    e.doc_viewwidth = 479
-    e.doc_viewheight = 283
   }
 
   "The SnowPlow page view row \"%s\"".format(row) should {
@@ -242,6 +242,12 @@ class PageViewTest2 extends Specification {
     "have br_features_silverlight (Browser Feature Silverlight) = %s".format(expected.br_features_silverlight) in {
       actual.br_features_silverlight must_== expected.br_features_silverlight
     }
+    "have br_viewwidth (Viewport Width) = %s".format(expected.br_viewwidth) in {
+      actual.br_viewwidth must_== expected.br_viewwidth
+    }
+    "have br_viewheight (Viewport Height) = %s".format(expected.br_viewheight) in {
+      actual.br_viewheight must_== expected.br_viewheight
+    }
 
     // OS (from user-agent)
     "have os_name (OS Name) = %s".format(expected.os_name) in {
@@ -285,12 +291,6 @@ class PageViewTest2 extends Specification {
     }
     "have doc_height (Document Height) = %s".format(expected.doc_height) in {
       actual.doc_height must_== expected.doc_height
-    }
-    "have doc_viewwidth (Viewport Width) = %s".format(expected.doc_viewwidth) in {
-      actual.doc_viewwidth must_== expected.doc_viewwidth
-    }
-    "have doc_viewheight (Viewport Height) = %s".format(expected.doc_viewheight) in {
-      actual.doc_viewheight must_== expected.doc_viewheight
     }
   }
 }
