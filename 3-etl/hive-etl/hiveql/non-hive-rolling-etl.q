@@ -97,6 +97,8 @@ br_features_gears tinyint,
 br_features_silverlight tinyint,
 br_cookies tinyint,
 br_colordepth string,
+br_viewwidth int, -- New in 0.0.6
+br_viewheight int, -- New in 0.0.6
 os_name string,
 os_family string,
 os_manufacturer string,
@@ -105,8 +107,6 @@ dvce_type string,
 dvce_ismobile tinyint,
 dvce_screenwidth int,
 dvce_screenheight int,
-br_viewwidth int, -- New in 0.0.6
-br_viewheight int, -- New in 0.0.6
 doc_charset string, -- New in 0.0.6
 doc_width int, -- New in 0.0.6
 doc_height int -- New in 0.0.6
@@ -193,6 +193,8 @@ br_features_gears,
 br_features_silverlight,
 br_cookies_bt AS br_cookies,
 br_colordepth,
+br_viewwidth, -- New in 0.0.6
+br_viewheight, -- New in 0.0.6
 os_name,
 os_family,
 os_manufacturer,
@@ -201,8 +203,6 @@ dvce_type,
 dvce_ismobile_bt AS dvce_ismobile,
 dvce_screenwidth,
 dvce_screenheight,
-br_viewwidth, -- New in 0.0.6
-br_viewheight, -- New in 0.0.6
 doc_charset, -- New in 0.0.6
 doc_width, -- New in 0.0.6
 doc_height, -- New in 0.0.6
