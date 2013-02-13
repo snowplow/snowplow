@@ -13,7 +13,7 @@
 -- URL:         s3://snowplow-emr-assets/hive/hiveql/hive-rolling-etl-0.5.5.q
 --
 -- Authors:     Alex Dean, Yali Sassoon, Simon Andersson, Michael Tibben, Mike Moulton
--- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
+-- Copyright:   Copyright (c) 2012-2013 SnowPlow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 SET hive.exec.dynamic.partition=true ;
