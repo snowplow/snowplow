@@ -547,7 +547,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('tz', timezone);
 
 		// Adds with custom conditions
-		if (configAttachUserId) sb.addRaw('uid', uuid);
+		if (configAttachUserId) sb.addRaw('duid', uuid); // Domain user ID
 		if (configReferrerUrl.length) sb.add('refr', purify(configReferrerUrl));
 
 		// Browser features. Cookies, color depth and resolution don't get prepended with f_ (because they're not optional features)

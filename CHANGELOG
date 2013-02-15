@@ -2,9 +2,9 @@ Version 0.7.4 (2013-02-XX)
 --------------------------
 JS tracker: bumped to 0.11.0
 JS tracker: introduced setAppId() and deprecated setSiteId() (#168)
-JS tracker: SnowPlow duid no longer tied to site ID (#148) - TODO
+JS tracker: 1st party user ID now transmitted as duid (domain uid) (part of #150)
 JS tracker: add setUserId which sets the uid field (#167) - TODO
-JS tracker: 1st party user ID now transmitted as duid (domain uid) (part of #150) - TODO
+JS tracker: SnowPlow duid no longer tied to site ID (#148) - TODO
 Clojure Collector: bumped to 0.3.0
 Clojure Collector: now append nuid (network aka 3rd party) user ID, not uid (#150)
 Serde: bumped to 0.5.5 - TODO
