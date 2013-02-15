@@ -4,6 +4,7 @@ platform string,
 dt_dt string,
 tm string,
 event string,
+event_vendor string, -- New in 0.0.6
 event_id string,
 txn_id string,
 v_tracker string,
@@ -16,6 +17,12 @@ visit_id int,
 page_url string,
 page_title string,
 page_referrer string,
+page_urlscheme string, -- New in 0.0.6
+page_urlhost string, -- New in 0.0.6
+page_urlport int, -- New in 0.0.6
+page_urlpath string, -- New in 0.0.6
+page_urlquery string, -- New in 0.0.6
+page_urlfragment string, -- New in 0.0.6
 mkt_source string,
 mkt_medium string,
 mkt_term string,
@@ -40,6 +47,10 @@ ti_name string,
 ti_category string,
 ti_price string,
 ti_quantity string,
+pp_xoffset_min int, -- New in 0.0.6
+pp_xoffset_max int, -- New in 0.0.6
+pp_yoffset_min int, -- New in 0.0.6
+pp_yoffset_max int, -- New in 0.0.6
 useragent string,
 br_name string,
 br_family string,
@@ -58,6 +69,8 @@ br_features_gears tinyint,
 br_features_silverlight tinyint,
 br_cookies tinyint,
 br_colordepth string,
+br_viewwidth int, -- New in 0.0.6
+br_viewheight int, -- New in 0.0.6
 os_name string,
 os_family string,
 os_manufacturer string,
@@ -65,7 +78,10 @@ os_timezone string,
 dvce_type string,
 dvce_ismobile tinyint,
 dvce_screenwidth int,
-dvce_screenheight int
+dvce_screenheight int,
+doc_charset string, -- New in 0.0.6
+doc_width int, -- New in 0.0.6
+doc_height int -- New in 0.0.6
 )
 PARTITIONED BY (dt string)
 ROW FORMAT DELIMITED

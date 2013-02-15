@@ -2,7 +2,7 @@ Version 0.7.3 (2013-02-15)
 --------------------------
 JS tracker: bumped to 0.10.0
 JS tracker: updated copyright notices
-JS tracker: removed deprecated getAccount(), getTracker(), setHeartBeatTimer() - BREAKING CHANGE (#86)
+JS tracker: removed deprecated setAccount(), setTracker(), setHeartBeatTimer() - BREAKING CHANGE (#86)
 JS tracker: added document charset to querystring (#138)
 JS tracker: page ping no longer killed by 1 heartbeat w/o activity (#132)
 JS tracker: added document & viewport dimensions (#94)
@@ -12,7 +12,7 @@ JS tracker: fixed logImpression (was using wrong argument names) (#162)
 JS tracker: added scroll offsets to page ping (#127)
 Serde: bumped to 0.5.4
 Serde: updated copyright notices
-Serde: structured events now logged as "struct" not "custom"
+Serde: structured events now logged as "struct" not "custom" - DATA CHANGE
 Serde: added setting of new event_vendor field (to com.snowplowanalytics) (#144)
 Serde: added extraction of doc charset (#138)
 Serde: added extraction of document & viewport dimensions (#94)
