@@ -54,7 +54,7 @@
 	res, width, height,
 	pdf, qt, realp, wma, dir, fla, java, gears, ag,
 	hook, getHook, getVisitorId, getVisitorInfo,
-	setCollectorCf, setCollectorUrl, setSiteId,
+	setCollectorCf, setCollectorUrl, setSiteId, setAppId,
 	setDownloadExtensions, addDownloadExtensions,
 	setDomains, setIgnoreClasses, setRequestMethod,
 	setReferrerUrl, setCustomUrl, setDocumentTitle,

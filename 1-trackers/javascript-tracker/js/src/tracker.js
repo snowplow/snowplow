@@ -1211,9 +1211,23 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		/**
 		 * Specify the site ID
 		 *
+		 * DEPRECATED: use setAppId() below
+		 *
 		 * @param int|string siteId
 		 */
 		setSiteId: function (siteId) {
+			if (typeof console !== 'undefined') {
+				console.log("SnowPlow: setSiteId() is deprecated and will be removed in an upcoming version. Please use setAppId() instead.");
+			}
+			configTrackerSiteId = siteId;
+		},
+
+		/**
+		 * Specify the app ID
+		 *
+		 * @param int|string appId
+		 */
+		setAppId: function (appId) {
 			configTrackerSiteId = siteId;
 		},
 

@@ -1,7 +1,7 @@
 Version 0.7.4 (2013-02-XX)
 --------------------------
-JS tracker: bumped to 0.10.1 - TODO
-JS tracker: introduced setAppId() and deprecated setSiteId() (#168) - TODO
+JS tracker: bumped to 0.11.0
+JS tracker: introduced setAppId() and deprecated setSiteId() (#168)
 JS tracker: SnowPlow duid no longer tied to site ID (#148) - TODO
 JS tracker: add setUserId which sets the uid field (#167) - TODO
 JS tracker: 1st party user ID now transmitted as duid (domain uid) (part of #150) - TODO
