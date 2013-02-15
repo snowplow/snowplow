@@ -5,8 +5,8 @@ JS tracker: introduced setAppId() and deprecated setSiteId() (#168) - TODO
 JS tracker: SnowPlow duid no longer tied to site ID (#148) - TODO
 JS tracker: add setUserId which sets the uid field (#167) - TODO
 JS tracker: 1st party user ID now transmitted as duid (domain uid) (part of #) - TODO
-Clojure Collector: bumped to 0.3.0 - TODO
-Clojure Collector: now append nuid (network aka 3rd party) user ID, not uid (#150) - TODO
+Clojure Collector: bumped to 0.3.0
+Clojure Collector: now append nuid (network aka 3rd party) user ID, not uid (#150)
 Serde: bumped to 0.5.5 - TODO
 Serde: dt and tm split into dvce_x and collector_x (#149) - TODO
 Serde: extract new nuid and duid fields (#150) - TODO
