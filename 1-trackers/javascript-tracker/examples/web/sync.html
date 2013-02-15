@@ -19,7 +19,7 @@
 
     <!-- SnowPlow starts plowing -->
     <script type="text/javascript">
-    var spSrc = ('https:' == document.location.protocol ? 'https' : 'http') + '://d1fc8wv8zag5ca.cloudfront.net/0.9.1/sp.js';
+    var spSrc = ('https:' == document.location.protocol ? 'https' : 'http') + '://d1fc8wv8zag5ca.cloudfront.net/0.10.0/sp.js';
     document.write(unescape("%3Cscript src='" + spSrc + "' type='text/javascript'%3E%3C/script%3E"));
     </script>
     <script type="text/javascript">
@@ -35,11 +35,11 @@
     <script type="text/javascript">
         function playMix() {
             alert("Playing a DJ mix");
-            snowplowTracker.trackEvent('Mixes', 'Play', 'MrC/fabric-0503-mix', '','0.0');
+            snowplowTracker.trackStructEvent('Mixes', 'Play', 'MrC/fabric-0503-mix', '','0.0');
         }
         function addProduct() {
             alert("Adding a product to basket");
-            snowplowTracker.trackEvent('Checkout', 'Add', 'ASO01043', 'blue:xxl', '2.0');      
+            snowplowTracker.trackStructEvent('Checkout', 'Add', 'ASO01043', 'blue:xxl', '2.0');      
         }
     </script>
 </head>

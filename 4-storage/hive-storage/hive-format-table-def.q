@@ -56,7 +56,23 @@ event_id string,
 user_fingerprint string,
 useragent string,
 br_colordepth string,
-os_timezone string
+os_timezone string,
+event_vendor string, -- New in 0.0.6
+page_urlscheme string,
+page_urlhost string,
+page_urlport int,
+page_urlpath string,
+page_urlquery string,
+page_urlfragment string,
+br_viewwidth int,
+br_viewheight int,
+doc_charset string,
+doc_width int,
+doc_height int,
+pp_xoffset_min int,
+pp_xoffset_max int,
+pp_yoffset_min int,
+pp_yoffset_max int -- End of new in 0.0.6
 )
 PARTITIONED BY (dt STRING)
 LOCATION '${EVENTS_TABLE}' ;

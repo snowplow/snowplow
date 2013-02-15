@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -18,7 +18,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    version       := "0.5.3",
+    version       := "0.5.4",
     description   := "Hive deserializer for the SnowPlow log data",
     scalaVersion  := "2.9.1",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),

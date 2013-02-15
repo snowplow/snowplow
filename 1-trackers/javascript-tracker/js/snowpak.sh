@@ -3,7 +3,7 @@
 # Bash script to minify snowplow.js
 # Depends on YUICompressor 2.4.2 and sed
 #
-# Copyright 2012 SnowPlow Analytics Ltd
+# Copyright 2012-2013 SnowPlow Analytics Ltd
 # License: http://www.opensource.org/licenses/bsd-license.php Simplified BSD
 
 

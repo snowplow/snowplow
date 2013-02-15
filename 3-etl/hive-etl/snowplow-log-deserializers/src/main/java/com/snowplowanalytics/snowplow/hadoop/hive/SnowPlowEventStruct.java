@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -72,6 +72,7 @@ public class SnowPlowEventStruct {
 
   // Event and transaction
   public String event;
+  public String event_vendor;
   public String event_id;
   public String txn_id;
 
@@ -85,6 +86,14 @@ public class SnowPlowEventStruct {
   public String page_url;
   public String page_title;
   public String page_referrer;
+
+  // Page URL components
+  public String page_urlscheme;
+  public String page_urlhost;
+  public Integer page_urlport;
+  public String page_urlpath;
+  public String page_urlquery;
+  public String page_urlfragment;
 
   // Marketing
   public String mkt_medium;
@@ -128,6 +137,8 @@ public class SnowPlowEventStruct {
   public Boolean br_cookies;
   public Byte br_cookies_bt;
   public String br_colordepth;
+  public Integer br_viewwidth;
+  public Integer br_viewheight;
 
   // OS (from user-agent)
   public String os_name;
@@ -144,6 +155,11 @@ public class SnowPlowEventStruct {
   // Device (from querystring)
   public Integer dvce_screenwidth;
   public Integer dvce_screenheight;
+
+  // Document fields
+  public String doc_charset;
+  public Integer doc_width;
+  public Integer doc_height;
 
   // Ecommerce transaction (from querystring)
   public String tr_orderid;
@@ -163,6 +179,12 @@ public class SnowPlowEventStruct {
   public String ti_price;
   public String ti_quantity;
 
+  // Page pings
+  public Integer pp_xoffset_min;
+  public Integer pp_xoffset_max;
+  public Integer pp_yoffset_min;
+  public Integer pp_yoffset_max;
+
   // Versioning
   public String v_tracker;
   public String v_collector;
@@ -176,16 +198,18 @@ public class SnowPlowEventStruct {
 
   private static final String cfEncoding = "UTF-8";
 
+  private static final String eventVendor = "com.snowplowanalytics"; // Assume all events are from SnowPlow vendor for now.
+
   // An enum of all the fields we're expecting in the querystring
   // See https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol for details
-  private static enum QuerystringFields { E, IP, AID, P, TID, UID, FP, VID, TSTAMP, TV, LANG, F_PDF, F_FLA, F_JAVA, F_DIR, F_QT, F_REALP, F_WMA, F_GEARS, F_AG, COOKIE, RES, CD, TZ, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU }
+  private static enum QuerystringFields { E, IP, AID, P, TID, UID, FP, VID, TSTAMP, TV, LANG, CS, VP, DS, F_PDF, F_FLA, F_JAVA, F_DIR, F_QT, F_REALP, F_WMA, F_GEARS, F_AG, COOKIE, RES, CD, TZ, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU, PP_MIX, PP_MAX, PP_MIY, PP_MAY }
 
   // An enum for the marketing attribution fields we might find
   // attached to the page URL.
   private static enum MarketingFields { UTM_SOURCE, UTM_MEDIUM, UTM_CAMPAIGN, UTM_TERM, UTM_CONTENT }
 
   // An enum for the event codes we might find in our e= querystring parameter
-  private static enum EventCodes { EV, AD, TR, TI, PV, PP }
+  private static enum EventCodes { EV, SE, AD, TR, TI, PV, PP }
 
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
@@ -294,7 +318,8 @@ public class SnowPlowEventStruct {
     this.v_collector = collectorVersion;
     this.v_etl = "serde-" + ProjectSettings.VERSION;
 
-    // 5. Now we generate the event ID
+    // 5. Now we generate the event vendor and ID
+    this.event_vendor = eventVendor; // TODO: this becomes part of the protocol eventually
     this.event_id = generateEventId();
 
     // 6. Now we dis-assemble the querystring.
@@ -355,6 +380,23 @@ public class SnowPlowEventStruct {
               break;
             case LANG:
               this.br_lang = value;
+              break;
+            case CS:
+              this.doc_charset = value;
+              break;
+            case VP:
+              String[] viewport = value.split("x");
+              if (viewport.length != 2)
+                throw new Exception("Couldn't parse vp field");
+              this.br_viewwidth = Integer.parseInt(viewport[0]);
+              this.br_viewheight = Integer.parseInt(viewport[1]);
+              break;
+            case DS:
+              String[] docsize = value.split("x");
+              if (docsize.length != 2)
+                throw new Exception("Couldn't parse ds field");
+              this.doc_width = Integer.parseInt(docsize[0]);
+              this.doc_height = Integer.parseInt(docsize[1]);
               break;
             case F_PDF:
               if ((this.br_features_pdf = stringToByte(value)) == 1)
@@ -481,6 +523,20 @@ public class SnowPlowEventStruct {
             case TI_QU:
               this.ti_quantity = decodeSafeString(value);
               break;
+
+            // Page pings
+            case PP_MIX:
+              this.pp_xoffset_min = Integer.parseInt(value);
+              break;
+            case PP_MAX:
+              this.pp_xoffset_max = Integer.parseInt(value);
+              break;
+            case PP_MIY:
+              this.pp_yoffset_min = Integer.parseInt(value);
+              break;
+            case PP_MAY:
+              this.pp_yoffset_max = Integer.parseInt(value);
+              break;              
           }
         } catch (Exception e) {
           getLog().warn(e.getClass().getSimpleName() + " on { " + name + ": " + value + " }");
@@ -502,7 +558,21 @@ public class SnowPlowEventStruct {
       }
     }
 
-    // 8. Finally handle the marketing fields in the page_url
+    // 8. Now try to convert the page_url into a valid Java URI and store the 6 out of 9 components we are interested in:
+    try {
+      final URI pageUri = URI.create(this.page_url);
+      this.page_urlscheme = pageUri.getScheme();
+      this.page_urlhost = pageUri.getHost();
+      final Integer port = pageUri.getPort();
+      this.page_urlport = (port == -1) ? 80 : port;
+      this.page_urlpath = pageUri.getPath();
+      this.page_urlquery = pageUri.getQuery();
+      this.page_urlfragment = pageUri.getFragment();
+    } catch (Exception e) {
+      getLog().warn("Could not parse page_url " + this.page_url + " }");
+    }
+
+    // 9. Finally handle the marketing fields in the page_url
     // Re-use params to avoid creating another object
     if (this.page_url != null) {
       params = null;
@@ -578,6 +648,7 @@ public class SnowPlowEventStruct {
     this.dt = null;
     this.tm = null;
     this.event = null;
+    this.event_vendor = null;
     this.event_id = null;
     this.txn_id = null;
     this.user_id = null;
@@ -587,6 +658,12 @@ public class SnowPlowEventStruct {
     this.page_url = null;
     this.page_title = null;
     this.page_referrer = null;
+    this.page_urlscheme = null;
+    this.page_urlhost = null;
+    this.page_urlport = null;
+    this.page_urlpath = null;
+    this.page_urlquery = null;
+    this.page_urlfragment = null;
     this.mkt_medium = null;
     this.mkt_source = null;
     this.mkt_term = null;
@@ -617,6 +694,8 @@ public class SnowPlowEventStruct {
     this.br_cookies = null;
     this.br_cookies_bt = null;
     this.br_colordepth = null;
+    this.br_viewwidth = null;
+    this.br_viewheight = null;
     this.os_name = null;
     this.os_family = null;
     this.os_manufacturer = null;
@@ -626,6 +705,9 @@ public class SnowPlowEventStruct {
     this.dvce_ismobile_bt = null;
     this.dvce_screenwidth = null;
     this.dvce_screenheight = null;
+    this.doc_charset = null;
+    this.doc_width = null;
+    this.doc_height = null;
     this.tr_orderid = null;
     this.tr_affiliation = null;
     this.tr_total = null;
@@ -640,6 +722,10 @@ public class SnowPlowEventStruct {
     this.ti_category = null;
     this.ti_price = null;
     this.ti_quantity = null;
+    this.pp_xoffset_min = null;
+    this.pp_xoffset_max = null;
+    this.pp_yoffset_min = null;
+    this.pp_yoffset_max = null;
     this.v_tracker = null;
     this.v_collector = null;
     this.v_etl = null;
@@ -663,8 +749,11 @@ public class SnowPlowEventStruct {
     
     final String eventType;
     switch (e) {
-      case EV:
-        eventType = "custom";
+      case EV: // TODO: remove this in the future.
+        eventType = "struct";
+        break;
+      case SE:
+        eventType = "struct";
         break;
       case AD:
         eventType = "ad_impression";

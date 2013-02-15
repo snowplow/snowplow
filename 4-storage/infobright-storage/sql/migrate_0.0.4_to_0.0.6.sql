@@ -9,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     Ports versions 0.0.1 or 0.0.2 to version 0.0.3
+-- Version:     Ports version 0.0.4 to version 0.0.6
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
@@ -24,14 +24,15 @@ USE snowplow ;
 
 SELECT 
 	-- App
-	null AS `app_id`, -- 'lookup' is a varchar optimisation
+	`app_id`,
 	`platform`,
 	-- Date/time
 	`dt`,
 	`tm`,
 	-- Event
-	`event_name`, -- Renamed in 0.0.3 to event
-	null AS `event_id`, -- New in 0.0.3
+	`event`,
+	"com.snowplowanalytics" AS `event_vendor`, -- New in 0.0.6
+	`event_id`,
 	`txn_id`,
 	-- Versioning
 	`v_tracker`,
@@ -40,12 +41,19 @@ SELECT
 	-- User and visit
 	`user_id`,
 	`user_ipaddress`,
-	null AS `user_fingerprint`, -- New in 0.0.3
+	`user_fingerprint`,
 	`visit_id`,
 	-- Page
 	`page_url`,
 	`page_title`,
 	`page_referrer`,
+	-- Page URL components
+	null AS `page_urlscheme`,   -- New in 0.0.6
+	null AS `page_urlhost`,     -- New in 0.0.6
+	null AS `page_urlport`,     -- New in 0.0.6
+	null AS `page_urlpath`,     -- New in 0.0.6
+	null AS `page_urlquery`,    -- New in 0.0.6
+	null AS `page_urlfragment`, -- New in 0.0.6
 	-- Marketing
 	`mkt_source`,
 	`mkt_medium`,
@@ -73,8 +81,13 @@ SELECT
 	`ti_category`,
 	`ti_price`,
 	`ti_quantity`,
+	-- Page ping
+	null AS `pp_xoffset_min`, -- New in 0.0.6
+	null AS `pp_xoffset_max`, -- New in 0.0.6
+	null AS `pp_yoffset_min`, -- New in 0.0.6
+	null AS `pp_yoffset_max`, -- New in 0.0.6
 	-- User Agent
-	null AS `useragent`, -- New in 0.0.3
+	`useragent`,
 	-- Browser
 	`br_name`,
 	`br_family`,
@@ -92,19 +105,25 @@ SELECT
 	`br_features_gears`,
 	`br_features_silverlight`,
 	`br_cookies`,
-	null AS `br_colordepth`, -- New in 0.0.3
+	`br_colordepth`,
+	null AS `br_viewwidth`,  -- New in 0.0.6
+	null AS `br_viewheight`, -- New in 0.0.6
 	-- Operating System
 	`os_name`,
 	`os_family`,
 	`os_manufacturer`,
-	null AS `os_timezone`, -- New in 0.0.3
+	`os_timezone`,
 	-- Device/Hardware
 	`dvce_type`,
 	`dvce_ismobile`,
 	`dvce_screenwidth`,
-	`dvce_screenheight`
-FROM events INTO OUTFILE '/tmp/events_003'
+	`dvce_screenheight`,
+	-- Document
+	null AS `doc_charset`, -- New in 0.0.6
+	null AS `doc_width`, -- New in 0.0.6
+	null AS `doc_height` -- New in 0.0.6
+FROM events_004 INTO OUTFILE '/tmp/events_006'
 FIELDS TERMINATED BY '|';
 
-LOAD DATA INFILE '/tmp/events_003' INTO TABLE events_003
+LOAD DATA INFILE '/tmp/events_006' INTO TABLE events_006
 FIELDS TERMINATED BY '|';

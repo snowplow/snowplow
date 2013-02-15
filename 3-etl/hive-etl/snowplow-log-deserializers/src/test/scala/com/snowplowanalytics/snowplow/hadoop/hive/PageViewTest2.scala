@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -32,7 +32,7 @@ class PageViewTest2 extends Specification {
   // Toggle if tests are failing and you want to inspect the struct contents
   implicit val _DEBUG = false
 
-  val row = "2012-05-24  00:06:42  LHR5  3402  90.194.12.51  GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(iPhone;%20CPU%20iPhone%20OS%205_1_1%20like%20Mac%20OS%20X)%20AppleWebKit/534.46%20(KHTML,%20like%20Gecko)%20Version/5.1%20Mobile/9B206%20Safari/7534.48.3  e=pv&page=Psycards%2520book%2520and%2520deck%2520starter%2520pack%2520-%2520Psychic%2520Bazaar&tid=019539&uid=e7bccbb647296c98&vid=1&p=Web&aid=CFe23a&fp=1906624389&tz=Europe%2FLondon&cd=24&lang=en-us&refr=http%253A%252F%252Fwww.google.com%252Fsearch%253Fhl%253Den%2526q%253Dthe%252Bpsycard%252Bstory%2526oq%253Dthe%252Bpsycard%252Bstory%2526aq%253Df%2526aqi%253D%2526aql%253D%2526gs_l%253Dmobile-gws-serp.12...0.0.0.6358.0.0.0.0.0.0.0.0..0.0...0.0.JrNbKlRgHbQ%2526mvs%253D0&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=0&f_gears=1&f_ag=0&res=320x480&cookie=1"
+  val row = "2012-05-24  00:06:42  LHR5  3402  90.194.12.51  GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(iPhone;%20CPU%20iPhone%20OS%205_1_1%20like%20Mac%20OS%20X)%20AppleWebKit/534.46%20(KHTML,%20like%20Gecko)%20Version/5.1%20Mobile/9B206%20Safari/7534.48.3  e=pv&page=Psycards%2520book%2520and%2520deck%2520starter%2520pack%2520-%2520Psychic%2520Bazaar&tid=019539&vp=479x283&ds=584x268&cs=UTF-8&uid=e7bccbb647296c98&vid=1&p=Web&aid=CFe23a&fp=1906624389&tz=Europe%2FLondon&cd=24&lang=en-us&refr=http%253A%252F%252Fwww.google.com%252Fsearch%253Fhl%253Den%2526q%253Dthe%252Bpsycard%252Bstory%2526oq%253Dthe%252Bpsycard%252Bstory%2526aq%253Df%2526aqi%253D%2526aql%253D%2526gs_l%253Dmobile-gws-serp.12...0.0.0.6358.0.0.0.0.0.0.0.0..0.0...0.0.JrNbKlRgHbQ%2526mvs%253D0&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=0&f_gears=1&f_ag=0&res=320x480&cookie=1"
 
   val expected = new SnowPlowEvent().tap { e =>
     e.app_id = "CFe23a"
@@ -40,14 +40,21 @@ class PageViewTest2 extends Specification {
     e.dt = "2012-05-24"
     e.tm = "00:06:42"
     e.event = "page_view"
+    e.event_vendor = "com.snowplowanalytics"
     e.txn_id = "019539"
     e.user_id = "e7bccbb647296c98"
     e.user_ipaddress = "90.194.12.51"
     e.user_fingerprint = "1906624389"
     e.visit_id = 1
-    e.page_url = "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html"
+    e.page_url = "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail"
     e.page_title = "Psycards book and deck starter pack - Psychic Bazaar"
     e.page_referrer = "http://www.google.com/search?hl=en&q=the+psycard+story&oq=the+psycard+story&aq=f&aqi=&aql=&gs_l=mobile-gws-serp.12...0.0.0.6358.0.0.0.0.0.0.0.0..0.0...0.0.JrNbKlRgHbQ&mvs=0"
+    e.page_urlscheme = "http"
+    e.page_urlhost = "www.psychicbazaar.com"
+    e.page_urlport = 80
+    e.page_urlpath = "/oracles/119-psycards-book-and-deck-starter-pack.html"
+    e.page_urlquery = "view=print"
+    e.page_urlfragment = "detail"
     e.useragent = "Mozilla/5.0 (iPhone; CPU iPhone OS 5_1_1 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9B206 Safari/7534.48.3"
     e.br_name = "Mobile Safari"
     e.br_family = "Safari"
@@ -68,6 +75,8 @@ class PageViewTest2 extends Specification {
     e.br_features_gears = 1
     e.br_features_silverlight = 0
     e.br_colordepth = "24"
+    e.br_viewwidth = 479
+    e.br_viewheight = 283
     e.os_name = "iOS 5 (iPhone)"
     e.os_family = "iOS"
     e.os_manufacturer = "Apple Inc."
@@ -77,6 +86,9 @@ class PageViewTest2 extends Specification {
     e.dvce_ismobile_bt = 1
     e.dvce_screenwidth = 320
     e.dvce_screenheight = 480
+    e.doc_charset = "UTF-8"
+    e.doc_width = 584
+    e.doc_height = 268
   }
 
   "The SnowPlow page view row \"%s\"".format(row) should {
@@ -104,6 +116,9 @@ class PageViewTest2 extends Specification {
     // Event and transaction
     "have event (Event Type) = %s".format(expected.event) in {
       actual.event must_== expected.event
+    }
+    "have event_vendor (Event Vendor) = %s".format(expected.event_vendor) in {
+      actual.event_vendor must_== expected.event_vendor
     }
     "have a valid (stringly-typed UUID) event_id" in {
       SnowPlowTest.stringlyTypedUuid(actual.event_id) must_== actual.event_id
@@ -136,6 +151,27 @@ class PageViewTest2 extends Specification {
     }
     "have page_referrer (Page Referrer) = %s".format(expected.page_referrer) in {
       actual.page_referrer must_== expected.page_referrer
+    }
+
+    // Page URL components
+    "have page_urlscheme (Page URL) = %s".format(expected.page_urlscheme) in {
+      actual.page_urlscheme must_== expected.page_urlscheme
+    }
+    // Tracking a page view, so we have a page title
+    "have page_urlhost (Page URL Host) = %s".format(expected.page_urlhost) in {
+      actual.page_urlhost must_== expected.page_urlhost
+    }
+    "have page_urlport (Page URL Port) = %s".format(expected.page_urlport) in {
+      actual.page_urlport must_== expected.page_urlport
+    }
+    "have page_urlpath (Page URL Path) = %s".format(expected.page_urlpath) in {
+      actual.page_urlpath must_== expected.page_urlpath
+    }
+    "have page_urlquery (Page URL Querystring) = %s".format(expected.page_urlquery) in {
+      actual.page_urlquery must_== expected.page_urlquery
+    }
+    "have page_urlfragment (Page URL Fragment aka Anchor) = %s".format(expected.page_urlfragment) in {
+      actual.page_urlfragment must_== expected.page_urlfragment
     }
 
     // Useragent
@@ -206,6 +242,12 @@ class PageViewTest2 extends Specification {
     "have br_features_silverlight (Browser Feature Silverlight) = %s".format(expected.br_features_silverlight) in {
       actual.br_features_silverlight must_== expected.br_features_silverlight
     }
+    "have br_viewwidth (Viewport Width) = %s".format(expected.br_viewwidth) in {
+      actual.br_viewwidth must_== expected.br_viewwidth
+    }
+    "have br_viewheight (Viewport Height) = %s".format(expected.br_viewheight) in {
+      actual.br_viewheight must_== expected.br_viewheight
+    }
 
     // OS (from user-agent)
     "have os_name (OS Name) = %s".format(expected.os_name) in {
@@ -238,6 +280,17 @@ class PageViewTest2 extends Specification {
     }
     "have dvce_screenheight (Device Screen Height) = %s".format(expected.dvce_screenheight) in {
       actual.dvce_screenheight must_== expected.dvce_screenheight
+    }
+
+    // Document fields
+    "have doc_charset (Document character set) = %s".format(expected.doc_charset) in {
+      actual.doc_charset must_== expected.doc_charset
+    }
+    "have doc_width (Document Width) = %s".format(expected.doc_width) in {
+      actual.doc_width must_== expected.doc_width
+    }
+    "have doc_height (Document Height) = %s".format(expected.doc_height) in {
+      actual.doc_height must_== expected.doc_height
     }
   }
 }

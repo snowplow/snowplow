@@ -1,4 +1,4 @@
--- Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,11 +9,11 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.5.4
--- URL:         s3://snowplow-emr-assets/hive/hiveql/hive-rolling-etl-0.5.4.q
+-- Version:     0.5.5
+-- URL:         s3://snowplow-emr-assets/hive/hiveql/hive-rolling-etl-0.5.5.q
 --
 -- Authors:     Alex Dean, Yali Sassoon, Simon Andersson, Michael Tibben, Mike Moulton
--- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
+-- Copyright:   Copyright (c) 2012-2013 SnowPlow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 SET hive.exec.dynamic.partition=true ;
@@ -84,7 +84,23 @@ event_id string,
 user_fingerprint string,
 useragent string,
 br_colordepth string,
-os_timezone string
+os_timezone string,
+event_vendor string, -- New in 0.0.6
+page_urlscheme string,
+page_urlhost string,
+page_urlport int,
+page_urlpath string,
+page_urlquery string,
+page_urlfragment string,
+br_viewwidth int,
+br_viewheight int,
+doc_charset string,
+doc_width int,
+doc_height int,
+pp_xoffset_min int,
+pp_xoffset_max int,
+pp_yoffset_min int,
+pp_yoffset_max int -- End of new in 0.0.6
 )
 PARTITIONED BY (dt STRING)
 LOCATION '${EVENTS_TABLE}' ;
@@ -145,12 +161,28 @@ app_id,
 platform,
 event,
 v_tracker,
-'${COLLECTOR_FORMAT}' AS v_collector, -- Now set via variable in 0.5.4
+'${COLLECTOR_FORMAT}' AS v_collector,
 v_etl,
 event_id,
 user_fingerprint,
 useragent,
 br_colordepth,
 os_timezone,
+event_vendor, -- New in 0.0.6
+page_urlscheme,
+page_urlhost,
+page_urlport,
+page_urlpath,
+page_urlquery,
+page_urlfragment,
+br_viewwidth,
+br_viewheight,
+doc_charset,
+doc_width,
+doc_height,
+pp_xoffset_min,
+pp_xoffset_max,
+pp_yoffset_min,
+pp_yoffset_max, -- End of new in 0.0.6
 dt
 FROM `extracted_logs` ;

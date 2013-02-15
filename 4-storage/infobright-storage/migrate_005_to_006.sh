@@ -26,12 +26,12 @@ fi
 
 SQL=`locate mysql-ib`
 
-echo "Creating new Infobright table 0.0.4"
+echo "Creating new Infobright table 0.0.6"
 cat ./sql/setup_infobright.sql | ${SQL} -u ${USERNAME} --password=${PASSWORD}
 echo "... done."
 
-echo "Updating Infobright table from 0.0.3 to 0.0.4..."
-cat ./sql/migrate_0.0.3_to_0.0.4.sql | ${SQL} -u ${USERNAME} --password=${PASSWORD}
+echo "Updating Infobright table from 0.0.5 to 0.0.6..."
+cat ./sql/migrate_0.0.5_to_0.0.6.sql | ${SQL} -u ${USERNAME} --password=${PASSWORD}
 echo "... done."
 
 echo "Showing the new table definition..."
