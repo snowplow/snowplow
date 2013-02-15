@@ -1,3 +1,24 @@
+Version 0.7.4 (2013-02-XX)
+--------------------------
+JS tracker: bumped to 0.10.1 - TODO
+JS tracker: introduced setAppId() and deprecated setSiteId() (#168) - TODO
+JS tracker: SnowPlow duid no longer tied to site ID (#148) - TODO
+JS tracker: add setUserId which sets the uid field (#167) - TODO
+JS tracker: 1st party user ID now transmitted as duid (domain uid) (part of #) - TODO
+Clojure Collector: bumped to 0.3.0 - TODO
+Clojure Collector: now append nuid (network aka 3rd party) user ID, not uid (#150) - TODO
+Serde: bumped to 0.5.5 - TODO
+Serde: dt and tm split into dvce_x and collector_x (#149) - TODO
+Serde: extract new nuid and duid fields (#150) - TODO
+HiveQL: hive-rolling-etl.q bumped to 0.5.6 - TODO
+HiveQL: non-hive-rolling-etl.q bumped to 0.0.7 - TODO
+HiveQL: dt and tm split into dvce_x and collector_x (#149) - TODO
+HiveQL: now extracts uid, nuid and duid (#150) - TODO
+Infobright: bumped setup_infobright.sql to 0.0.7 - TODO
+Infobright: added migration scripts (0.0.6->0.0.7) - TODO
+Infobright: renamed dt and tm to dvce_x and collector_x (#149) - TODO
+Infobright: now supports uid, nuid and duid (#150) - TODO
+
 Version 0.7.3 (2013-02-15)
 --------------------------
 JS tracker: bumped to 0.10.0
