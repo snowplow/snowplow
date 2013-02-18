@@ -41,25 +41,28 @@ module SnowPlow
         config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
         config[:download][:folder] = Sluice::Storage::trail_slash(config[:download][:folder])
 
-        # Validate the storage target type
-        if config[:storage][:type] != 'infobright'
+        # Validate that there is at least one valid storage target
+        unless ( config[:targets][:Redshift][:enabled] == true  or config[:targets][:Infobright][:enabled] == true )
           raise ConfigError, "Storage type '#{config[:storage][:type]}' not supported (only 'infobright')"
         end
+            
+        # If the Infobright is a target, check that the download folder exists and is empty
+        if ( config[:targets][:Infobright][:enabled] == true)
+          # Check that the download folder exists...
+          unless File.directory?(config[:download][:folder])
+            raise ConfigError, "Download folder '#{config[:download][:folder]}' not found"
+          end
         
-        # Check our download folder exists
-        unless File.directory?(config[:download][:folder])
-          raise ConfigError, "Download folder '#{config[:download][:folder]}' not found"
-        end
-
-        # If we are not skipping the download stage, the download folder needs to be empty
-        unless config[:skip].include?("download")
-          if !(Dir.entries(config[:download][:folder]) - %w{ . .. }).empty?
-            raise ConfigError, "Download folder '#{config[:download][:folder]}' is not empty"
+          # ...and it is empty
+          unless config[:skip].include?("download")
+            if !(Dir.entries(config[:download][:folder]) - %w{ . .. }).empty?
+              raise ConfigError, "Download folder '#{config[:download][:folder]}' is not empty"
+            end
           end
         end
 
         config
-      end
+      end  
       module_function :get_config
 
       private

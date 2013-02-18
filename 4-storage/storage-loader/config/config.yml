@@ -2,16 +2,26 @@
   :access_key_id: ADD HERE
   :secret_access_key: ADD HERE
 :s3:
-  :region: ADD HERE
+  :region: ADD HERE # Note: for loading data into Redshift, your region needs to be US-standard
   :buckets:
     :in: ADD HERE
     :archive: ADD HERE
 :download:
-  :folder: ADD HERE # Where to store the downloaded files
+  :folder: ADD HERE # Infobright-only config option. Where to store the downloaded files. Note: only relevant for Infobright loads (not Redshift)
 # Currently assumes we are loading only one target
-:storage:
-  :type: infobright # No other storage types supported yet
-  :database: ADD HERE # Name of database
-  :table:    events_006 # Latest version of table
-  :username: ADD HERE # Or leave blank to default to the user running the script
-  :password: ADD HERE # Or leave blank if no password
+:targets:
+  :Redshift: # Options for loading data into Redshift
+    :enabled: true # enter false if not loading data into Redshift
+    :endpoint: ADD HERE # Get from Redshift console.
+    :database: ADD HERE # Name of database 
+    :port: 5039 # Database port e.g. 5039
+    :table: events_007 # Latest version of table
+    :username: ADD HERE 
+    :password: ADD HERE 
+  :Infobright: # Options for loading data into Infobright. Note: assume that Infobright is running on the same box as the StorageLoader
+    :enabled: false # enter false if not loading data into Infobright
+    :database: ADD HERE # Name of database
+    :port: 5029 # Database port e.g. 5029
+    :table: events_007 # Latest version of table
+    :username: ADD HERE # Or leave blank to default to the user running the script
+    :password: ADD HERE # Or leave blank if no password

@@ -18,7 +18,7 @@ require 'infobright-loader'
 # Ruby module to support the load of SnowPlow events into Infobright.
 module SnowPlow
   module StorageLoader
-    module Loader
+    module InfobrightLoader
 
       # Constants for the load process
       EVENT_FIELD_SEPARATOR = "\t"

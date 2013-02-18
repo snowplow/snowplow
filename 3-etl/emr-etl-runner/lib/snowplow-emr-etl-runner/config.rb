@@ -63,9 +63,11 @@ module SnowPlow
         config[:serde_asset]  = "%s/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
         hiveql_file = case config[:etl][:storage_format]
                         when 'hive'
-                          "hive-rolling-etl-%s" % config[:snowplow][:hive_hiveql_version]
-                        when 'non-hive'
-                          "non-hive-rolling-etl-%s" % config[:snowplow][:non_hive_hiveql_version]
+                          "etl-output-hive-%s" % config[:snowplow][:hive_hiveql_version]
+                        when 'mysql-infobright'
+                          "etl-output-mysql-infobright-%s" % config[:snowplow][:mysql_infobright_hiveql_version]
+                        when 'postgres-redshift'
+                          "etl-output-postgres-redshift-%s" config[:snowplow][:postgres_redshift_hiveql_version]
                         else
                           raise ConfigError, "storage_format '%s' not supported (only 'hive', 'non-hive')" % config[:etl][:storage_format]
                         end
