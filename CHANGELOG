@@ -3,6 +3,8 @@ Version 0.7.4 (2013-02-XX)
 JS tracker: bumped to 0.11.0
 JS tracker: introduced setAppId() and deprecated setSiteId() (#168)
 JS tracker: 1st party user ID now transmitted as duid (domain uid) (part of #150)
+JS tracker: now sends dtm, device timestamp (#149)
+JS tracker: deprecated attachUserId()
 JS tracker: add setUserId which sets the uid field (#167) - TODO
 JS tracker: SnowPlow duid no longer tied to site ID (#148) - TODO
 Clojure Collector: bumped to 0.3.0
@@ -11,13 +13,15 @@ Serde: bumped to 0.5.5 - TODO
 Serde: dt and tm split into dvce_x and collector_x (#149) - TODO
 Serde: extract new nuid and duid fields (#150) - TODO
 Serde: renamed visit_id to domain_sessionidx (#171) - TODO
+Serde: renamed tstamp field to dtm - TODO
 HiveQL: hive-rolling-etl.q bumped to 0.5.6 - TODO
 HiveQL: non-hive-rolling-etl.q bumped to 0.0.7 - TODO
 HiveQL: dt and tm split into dvce_x and collector_x (#149) - TODO
 HiveQL: now extracts uid, nuid and duid (#150) - TODO
 HiveQL: renamed visit_id to domain_sessionidx (#171) - TODO
 Infobright: bumped setup_infobright.sql to 0.0.7 - TODO
-Infobright: added migration scripts (0.0.6->0.0.7) - TODO
+Infobright: added migration script 0.0.6 CloudFront collector -> 0.0.7 - TODO
+Infobright: added migration script 0.0.6 Clojure collector -> 0.0.7 - TODO
 Infobright: renamed dt and tm to dvce_x and collector_x (#149) - TODO
 Infobright: now supports uid, nuid and duid (#150) - TODO
 Infobright: renamed visit_id to domain_sessionidx (#171) - TODO

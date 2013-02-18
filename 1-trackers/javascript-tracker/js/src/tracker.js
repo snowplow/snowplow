@@ -481,6 +481,17 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	}
 
 	/*
+	 * Get the current timestamp:
+	 * milliseconds since epoch.
+	 */
+	function getTimestamp() {
+		var now = new Date(),
+			nowTs = now.getTime();
+
+		return nowTs;
+	}
+
+	/*
 	 * Attaches all the common web fields to the request
 	 * (resolution, url, referrer, etc.)
 	 * Also sets the required cookies.
@@ -532,6 +543,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		}
 
 		// Build out the rest of the request - first add fields we can safely skip encoding
+		sb.addRaw('dtm', getTimestamp());
 		sb.addRaw('tid', String(Math.random()).slice(2, 8));
 		sb.addRaw('vp', detectViewport());
 		sb.addRaw('ds', detectDocumentSize());
@@ -1510,9 +1522,17 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		/**
 		 * Toggle whether to attach User ID to the querystring or not
 		 *
+		 * DEPRECATED: because we now have three separate user IDs:
+		 * uid (business-set), nuid (3rd-party cookie) and duid (1st-party
+		 * cookie). So there's no need to enable or disable specific user IDs.
+		 *
 		 * @param bool attach Whether to attach User ID or not
 		 */
 		attachUserId: function (attach) {
+
+			if (typeof console !== 'undefined') {
+				console.log("SnowPlow: attachUserId() is deprecated and will be removed in an upcoming version. It is no longer required (because nuid and duid have been separated out).");
+			}
 			configAttachUserId = attach;
 		},
 
