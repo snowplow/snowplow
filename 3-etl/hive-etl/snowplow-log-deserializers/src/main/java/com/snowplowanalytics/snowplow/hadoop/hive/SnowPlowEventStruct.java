@@ -202,7 +202,7 @@ public class SnowPlowEventStruct {
 
   // An enum of all the fields we're expecting in the querystring
   // See https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol for details
-  private static enum QuerystringFields { E, IP, AID, P, TID, UID, FP, VID, TSTAMP, TV, LANG, CS, VP, DS, F_PDF, F_FLA, F_JAVA, F_DIR, F_QT, F_REALP, F_WMA, F_GEARS, F_AG, COOKIE, RES, CD, TZ, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU, PP_MIX, PP_MAX, PP_MIY, PP_MAY }
+  private static enum QuerystringFields { E, IP, AID, P, TID, UID, FP, VID, DTM, TV, LANG, CS, VP, DS, F_PDF, F_FLA, F_JAVA, F_DIR, F_QT, F_REALP, F_WMA, F_GEARS, F_AG, COOKIE, RES, CD, TZ, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU, PP_MIX, PP_MAX, PP_MIY, PP_MAY }
 
   // An enum for the marketing attribution fields we might find
   // attached to the page URL.
@@ -363,14 +363,22 @@ public class SnowPlowEventStruct {
             case UID:
               this.user_id = value;
               break;
+            case NUID:
+              // TODO: this.network_userid = value;
+              break;
+            case DUID:
+              // TODO: this.domain_userid = value;
+              break;
             case FP:
               this.user_fingerprint = value;
               break;
             case VID:
+              // TODO: rename this field.
               this.visit_id = Integer.parseInt(value);
               break;
-            case TSTAMP:
-              // Replace our timestamp fields with the client's timestamp
+            case DTM:
+              // Set our dvce_dt and dvce_tm fields
+              // TODO: this is now millis since epoch. We need to convert into dt and tm.
               String[] timestamp = value.split(" ");
               this.dt = timestamp[0];
               this.tm = timestamp[1];
