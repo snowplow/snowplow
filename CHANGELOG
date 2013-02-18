@@ -12,7 +12,8 @@ JS tracker: SnowPlow cookies no longer tied to site ID (#148)
 Clojure Collector: bumped to 0.3.0
 Clojure Collector: now append nuid (network aka 3rd party) user ID, not uid (#150)
 
-Serde: bumped to 0.5.5 - TODO
+Serde: bumped to 0.5.5
+
 Serde: dt and tm split into dvce_x and collector_x (#149) - TODO
 Serde: extract new nuid and duid fields (#150) - TODO
 Serde: renamed visit_id to domain_sessionidx (#171) - TODO
