@@ -9,8 +9,8 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.5.5
--- URL:         s3://snowplow-emr-assets/hive/hiveql/hive-rolling-etl-0.5.5.q
+-- Version:     0.5.6
+-- URL:         s3://snowplow-emr-assets/hive/hiveql/hive-rolling-etl-0.5.6.q
 --
 -- Authors:     Alex Dean, Yali Sassoon, Simon Andersson, Michael Tibben, Mike Moulton
 -- Copyright:   Copyright (c) 2012-2013 SnowPlow Analytics Ltd
@@ -27,11 +27,11 @@ WITH SERDEPROPERTIES ( 'continue_on_unexpected_error' = '${CONTINUE_ON}')
 LOCATION '${CLOUDFRONT_LOGS}' ;
 
 CREATE EXTERNAL TABLE IF NOT EXISTS `events` (
-tm string,
+collector_tm string, -- Renamed in 0.5.6
 txn_id string,
 user_id string,
 user_ipaddress string,
-visit_id int,
+domain_sessionidx int, -- Renamed in 0.5.6
 page_url string,
 page_title string,
 page_referrer string,
@@ -85,7 +85,7 @@ user_fingerprint string,
 useragent string,
 br_colordepth string,
 os_timezone string,
-event_vendor string, -- New in 0.0.6
+event_vendor string,
 page_urlscheme string,
 page_urlhost string,
 page_urlport int,
@@ -100,7 +100,11 @@ doc_height int,
 pp_xoffset_min int,
 pp_xoffset_max int,
 pp_yoffset_min int,
-pp_yoffset_max int -- End of new in 0.0.6
+pp_yoffset_max int,
+collector_dt string, -- Same as dt (the partition). Added in 0.5.6
+dvce_dt string, -- Added in 0.5.6
+dvce_tm string, -- Added in 0.5.6
+dvce_epoch int -- Added in 0.5.6
 )
 PARTITIONED BY (dt STRING)
 LOCATION '${EVENTS_TABLE}' ;
@@ -110,11 +114,11 @@ ALTER TABLE events RECOVER PARTITIONS ;
 INSERT INTO TABLE `events`
 PARTITION (dt)
 SELECT
-tm,
+collector_tm, -- Renamed in 0.5.6
 txn_id,
 user_id,
 user_ipaddress,
-visit_id,
+domain_sessionidx, -- Renamed in 0.5.6
 page_url,
 page_title,
 page_referrer,
@@ -168,7 +172,7 @@ user_fingerprint,
 useragent,
 br_colordepth,
 os_timezone,
-event_vendor, -- New in 0.0.6
+event_vendor,
 page_urlscheme,
 page_urlhost,
 page_urlport,
@@ -183,6 +187,10 @@ doc_height,
 pp_xoffset_min,
 pp_xoffset_max,
 pp_yoffset_min,
-pp_yoffset_max, -- End of new in 0.0.6
+pp_yoffset_max,
+collector_dt, -- Same as dt (the partition). Added in 0.5.6
+dvce_dt, -- Added in 0.5.6
+dvce_tm, -- Added in 0.5.6
+dvce_epoch, -- Added in 0.5.6
 dt
 FROM `extracted_logs` ;
