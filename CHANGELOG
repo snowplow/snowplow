@@ -3,11 +3,12 @@ Version 0.7.4 (2013-02-XX)
 JS tracker: bumped to 0.11.0
 JS tracker: introduced setAppId() and deprecated setSiteId() (#168)
 JS tracker: 1st party user ID now transmitted as duid (domain uid) (part of #150)
-JS tracker: now sends dtm, device timestamp (#149)
+JS tracker: now sends dtm - the client timestamp (#149)
 JS tracker: deprecated attachUserId()
 JS tracker: deprecated getVisitorId() and getVisitorInfo() - use getDomainUserId() and getDomainUserInfo() instead
 JS tracker: add setUserId which sets the uid field (#167)
 JS tracker: SnowPlow cookies no longer tied to site ID (#148)
+
 Clojure Collector: bumped to 0.3.0
 Clojure Collector: now append nuid (network aka 3rd party) user ID, not uid (#150)
 
@@ -16,6 +17,7 @@ Serde: dt and tm split into dvce_x and collector_x (#149) - TODO
 Serde: extract new nuid and duid fields (#150) - TODO
 Serde: renamed visit_id to domain_sessionidx (#171) - TODO
 Serde: renamed tstamp field to dtm - TODO
+
 HiveQL: hive-rolling-etl.q bumped to 0.5.6 - TODO
 HiveQL: non-hive-rolling-etl.q bumped to 0.0.7 - TODO
 HiveQL: dt and tm split into dvce_x and collector_x (#149) - TODO
