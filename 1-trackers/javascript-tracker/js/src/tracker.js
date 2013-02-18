@@ -75,7 +75,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		configCollectorUrl = constructCollectorUrl(argmap),
 
 		// Site ID
-		configTrackerSiteId = '', // Updated for SnowPlow. Starting long road to full removal
+		configTrackerSiteId = '', // Updated for SnowPlow
 
 		// Document URL
 		configCustomUrl,
@@ -136,10 +136,6 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		// Life of the referral cookie (in milliseconds)
 		configReferralCookieTimeout = 15768000000, // 6 months
 
-		// Whether we should attach uid (User ID) to the querystring
-		// Set to false if the collector is going to attach uid
-		configAttachUserId = true, 
-
 		// Should cookies have the secure flag set
 		cookieSecure = SnowPlow.documentAlias.location.protocol === 'https:',
 
@@ -183,8 +179,11 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		// Domain hash value
 		domainHash,
 
-		// Visitor UUID
-		visitorUUID,
+		// Domain unique user ID
+		domainUserId,
+
+		// Business-defined unique user ID
+		businessUserId,
 
 		// Ecommerce transaction data
 		// Will be committed, sent and emptied by a call to trackTrans.
@@ -339,7 +338,45 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * Get cookie name with prefix and domain hash
 	 */
 	function getCookieName(baseName) {
+		return configCookieNamePrefix + baseName + '.' + domainHash;
+	}
+
+	/*
+	 * Legacy getCookieName. This is the old version inherited from
+	 * Piwik which includes the site ID. Including the site ID in
+	 * the user cookie doesn't make sense, so we have removed it.
+	 * But, to avoid breaking sites with existing cookies, we leave
+	 * this function in as a legacy, and use it to check for a
+	 * 'legacy' cookie.
+	 *
+	 * TODO: delete in February 2013 or so!
+	 */
+	function getLegacyCookieName(basedName) {
 		return configCookieNamePrefix + baseName + '.' + configTrackerSiteId + '.' + domainHash;
+	}
+
+	/*
+	 * Cookie getter.
+	 *
+	 * This exists because we cannot guarantee whether a cookie will
+	 * be available using getCookieName or getLegacyCookieName (i.e.
+	 * whether the cookie includes the legacy site ID in its name).
+	 *
+	 * This wrapper supports both.
+	 *
+	 * TODO: simplify in February 2013 back to:
+	 * return SnowPlow.getCookie(getCookieName(cookieName));
+	 */
+	function getCookieValue(cookieName) {
+
+		// First we try the new cookie
+		var cookieValue = SnowPlow.getCookie(getCookieName(cookieName));
+		if (cookieValue) {
+			return cookieValue;
+		}
+
+		// Last we try the legacy cookie. May still return failure.
+		return SnowPlow.getCookie(getLegacyCookieName(cookieName));
 	}
 
 	/*
@@ -425,20 +462,20 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	}
 
 	/*
-	 * Sets the Visitor ID cookie: either the first time loadVisitorIdCookie is called
+	 * Sets the Visitor ID cookie: either the first time loadDomainUserIdCookie is called
 	 * or when there is a new visit or a new page view
 	 */
-	function setVisitorIdCookie(uuid, createTs, visitCount, nowTs, lastVisitTs) {
-		SnowPlow.setCookie(getCookieName('id'), uuid + '.' + createTs + '.' + visitCount + '.' + nowTs + '.' + lastVisitTs, configVisitorCookieTimeout, configCookiePath, configCookieDomain, cookieSecure);
+	function setDomainUserIdCookie(_domainUserId, createTs, visitCount, nowTs, lastVisitTs) {
+		SnowPlow.setCookie(getCookieName('id'), _domainUserId + '.' + createTs + '.' + visitCount + '.' + nowTs + '.' + lastVisitTs, configVisitorCookieTimeout, configCookiePath, configCookieDomain, cookieSecure);
 	}
 
 	/*
 	 * Load visitor ID cookie
 	 */
-	function loadVisitorIdCookie() {
+	function loadDomainUserIdCookie() {
 		var now = new Date(),
 			nowTs = Math.round(now.getTime() / 1000),
-			id = SnowPlow.getCookie(getCookieName('id')),
+			id = getCookieValue('id'),
 			tmpContainer;
 
 		if (id) {
@@ -447,10 +484,10 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			// New visitor set to 0 now
 			tmpContainer.unshift('0');
 		} else {
-			// uuid - generate a pseudo-unique ID to fingerprint this user;
+			// Domain - generate a pseudo-unique ID to fingerprint this user;
 			// Note: this isn't a RFC4122-compliant UUID
-			if (!visitorUUID) {
-				visitorUUID = hash(
+			if (!domainUserId) {
+				domainUserId = hash(
 					(SnowPlow.navigatorAlias.userAgent || '') +
 						(SnowPlow.navigatorAlias.platform || '') +
 						JSON2.stringify(browserFeatures) + nowTs
@@ -461,8 +498,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 				// new visitor
 				'1',
 
-				// uuid
-				visitorUUID,
+				// Domain user ID
+				domainUserId,
 
 				// creation timestamp - seconds since Unix epoch
 				nowTs,
@@ -504,7 +541,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			now = new Date(),
 			nowTs = Math.round(now.getTime() / 1000),
 			newVisitor,
-			uuid,
+			_domainUserId, // Don't shadow the global
 			visitCount,
 			createTs,
 			currentVisitTs,
@@ -516,8 +553,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			originalReferrerHostName,
 			idname = getCookieName('id'),
 			sesname = getCookieName('ses'),
-			id = loadVisitorIdCookie(),
-			ses = SnowPlow.getCookie(sesname),
+			id = loadDomainUserIdCookie(),
+			ses = getCookieValue(sesname),
 			currentUrl = configCustomUrl || locationHrefAlias,
 			featurePrefix;
 
@@ -528,7 +565,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		}
 
 		newVisitor = id[0];
-		uuid = id[1];
+		_domainUserId = id[1]; // We could use the global (domainUserId) but this is better etiquette
 		createTs = id[2];
 		visitCount = id[3];
 		currentVisitTs = id[4];
@@ -548,6 +585,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.addRaw('vp', detectViewport());
 		sb.addRaw('ds', detectDocumentSize());
 		sb.addRaw('vid', visitCount);
+		sb.addRaw('duid', _domainUserId); // Set to our local variable
 
 		// Encode all these
 		sb.add('p', configPlatform);		
@@ -557,9 +595,9 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('lang', browserLanguage);
 		sb.add('cs', documentCharset);
 		sb.add('tz', timezone);
+		sb.add('uid', businessUserId); // Business-defined user ID
 
 		// Adds with custom conditions
-		if (configAttachUserId) sb.addRaw('duid', uuid); // Domain user ID
 		if (configReferrerUrl.length) sb.add('refr', purify(configReferrerUrl));
 
 		// Browser features. Cookies, color depth and resolution don't get prepended with f_ (because they're not optional features)
@@ -575,7 +613,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		var request = sb.build();
 
 		// Update cookies
-		setVisitorIdCookie(uuid, createTs, visitCount, nowTs, lastVisitTs);
+		setDomainUserIdCookie(_domainUserId, createTs, visitCount, nowTs, lastVisitTs);
 		SnowPlow.setCookie(sesname, '*', configSessionCookieTimeout, configCookiePath, configCookieDomain, cookieSecure);
 
 		// Tracker plugin hook
@@ -1203,12 +1241,22 @@ SnowPlow.Tracker = function Tracker(argmap) {
 /*</DEBUG>*/
 
 		/**
+		 * Get the current user ID (as set previously
+		 * with setUserId()).
+		 *
+		 * @return string Business-defined user ID
+		 */
+		getUserId: function () {
+			return businessUserId;
+		},
+
+		/**
 		 * Get visitor ID (from first party cookie)
 		 *
 		 * @return string Visitor ID in hexits (or null, if not yet known)
 		 */
-		getVisitorId: function () {
-			return (loadVisitorIdCookie())[1];
+		getDomainUserId: function () {
+			return (loadDomainUserIdCookie())[1];
 		},
 
 		/**
@@ -1216,7 +1264,35 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 *
 		 * @return array
 		 */
+		getDomainUserInfo: function () {
+			return loadDomainUserIdCookie();
+		},
+
+		/**
+		 * Get visitor ID (from first party cookie)
+		 *
+		 * DEPRECATED: use getDomainUserId() above.
+		 *
+		 * @return string Visitor ID in hexits (or null, if not yet known)
+		 */
+		getVisitorId: function () {
+			if (typeof console !== 'undefined') {
+				console.log("SnowPlow: getVisitorId() is deprecated and will be removed in an upcoming version. Please use getDomainUserId() instead.");
+			}
+			return (loadVisitorIdCookie())[1];
+		},
+
+		/**
+		 * Get the visitor information (from first party cookie)
+		 *
+		 * DEPRECATED: use getDomainUserInfo() above.
+		 *
+		 * @return array
+		 */
 		getVisitorInfo: function () {
+			if (typeof console !== 'undefined') {
+				console.log("SnowPlow: getVisitorInfo() is deprecated and will be removed in an upcoming version. Please use getDomainUserInfo() instead.");
+			}
 			return loadVisitorIdCookie();
 		},
 
@@ -1240,7 +1316,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 * @param int|string appId
 		 */
 		setAppId: function (appId) {
-			configTrackerSiteId = siteId;
+			configTrackerSiteId = appId;
 		},
 
 		/**
@@ -1520,6 +1596,15 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		},
 
 		/**
+		 * Set the business-defined user ID for this user.
+		 *
+		 * @param string userId The business-defined user ID
+		 */
+		setUserId: function(userId) {
+			businessUserId = userId;
+		},
+
+		/**
 		 * Toggle whether to attach User ID to the querystring or not
 		 *
 		 * DEPRECATED: because we now have three separate user IDs:
@@ -1531,9 +1616,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		attachUserId: function (attach) {
 
 			if (typeof console !== 'undefined') {
-				console.log("SnowPlow: attachUserId() is deprecated and will be removed in an upcoming version. It is no longer required (because nuid and duid have been separated out).");
+				console.log("SnowPlow: attachUserId() is deprecated and will be removed in an upcoming version. It no longer does anything (because nuid and duid have been separated out).");
 			}
-			configAttachUserId = attach;
 		},
 
 		/**
