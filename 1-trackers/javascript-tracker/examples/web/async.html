@@ -22,15 +22,17 @@
         var _snaq = _snaq || [];
 	
         _snaq.push(['setCollectorCf', 'd3rkrsqld9gmqf']); // Update to your CloudFront distribution subdomain
-        _snaq.push(['setSiteId', 'CFe23a']); // Site ID can be anything you want. Set it if you're tracking more than one site in this account
-        _snaq.push(['attachUserId', false]); // Don't attach &uid=xxx to the querystring
+        _snaq.push(['setAppId', 'CFe23a']); // Site ID can be anything you want. Set it if you're tracking more than one site in this account
+        _snaq.push(['setUserId', 'alex 123']); // Business-defined user ID
+        // Deprecated _snaq.push(['attachUserId', false]); // Don't attach &uid=xxx to the querystring
         _snaq.push(['enableActivityTracking', 10, 10]); // Ping every 10 seconds after 10 seconds
         _snaq.push(['enableLinkTracking']);
         _snaq.push(['trackPageView', 'Async Test']); // Track the page view with custom title
 
         (function() {
             var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
-            sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://d1fc8wv8zag5ca.cloudfront.net/0.10.0/sp.js';
+            sp.src = "file:///home/alex/Development/SnowPlow/snowplow/1-trackers/javascript-tracker/js/snowplow.js";
+            // sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://d1fc8wv8zag5ca.cloudfront.net/0.11.0/sp.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
             })();
     </script>

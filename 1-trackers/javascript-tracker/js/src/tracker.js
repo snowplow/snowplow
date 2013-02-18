@@ -351,7 +351,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 *
 	 * TODO: delete in February 2013 or so!
 	 */
-	function getLegacyCookieName(basedName) {
+	function getLegacyCookieName(baseName) {
 		return configCookieNamePrefix + baseName + '.' + configTrackerSiteId + '.' + domainHash;
 	}
 
