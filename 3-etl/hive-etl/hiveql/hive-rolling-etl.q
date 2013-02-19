@@ -101,10 +101,12 @@ pp_xoffset_min int,
 pp_xoffset_max int,
 pp_yoffset_min int,
 pp_yoffset_max int,
+domain_userid string, -- Added in 0.5.6
+network_userid string, -- Added in 0.5.6
 collector_dt string, -- Same as dt (the partition). Added in 0.5.6
 dvce_dt string, -- Added in 0.5.6
 dvce_tm string, -- Added in 0.5.6
-dvce_epoch int -- Added in 0.5.6
+dvce_epoch bigint  -- Added in 0.5.6
 )
 PARTITIONED BY (dt STRING)
 LOCATION '${EVENTS_TABLE}' ;
@@ -188,6 +190,8 @@ pp_xoffset_min,
 pp_xoffset_max,
 pp_yoffset_min,
 pp_yoffset_max,
+domain_userid, -- Added in 0.5.6
+network_userid, -- Added in 0.5.6
 collector_dt, -- Same as dt (the partition). Added in 0.5.6
 dvce_dt, -- Added in 0.5.6
 dvce_tm, -- Added in 0.5.6
