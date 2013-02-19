@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS events_007 (
 	`dvce_tm` time, -- Added in 0.0.7
 	`dvce_epoch` bigint, -- Added in 0.0.7
 	-- Event
-	`event` varchar(255) comment 'lookup',
+	`event` varchar(128) comment 'lookup', -- Size reduced in 0.0.7
 	`event_vendor` varchar(128) comment 'lookup',
 	`event_id` varchar(38),
 	`txn_id` int,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS events_007 (
 	`v_collector` varchar(100) comment 'lookup',
 	`v_etl` varchar(100) comment 'lookup',
 	-- User and visit
-	`user_id` varchar(100), -- Size increased in 0.0.7
+	`user_id` varchar(255), -- Size increased in 0.0.7
 	`user_ipaddress` varchar(19),
 	`user_fingerprint` varchar(50),
 	`domain_userid` varchar(16),  -- Added in 0.0.7
