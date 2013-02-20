@@ -69,10 +69,10 @@ class CljTomcatFormatTest extends Specification {
     // Check all of the field values
 
     // Date/time
-    "have dt (Date) = %s".format(expected.dt) in {
+    "have dt (Legacy Hive Date) = %s".format(expected.dt) in {
       actual.dt must_== expected.dt
     }
-    "have tm (Time) = %s".format(expected.collector_tm) in {
+    "have collector_tm (Collector Time) = %s".format(expected.collector_tm) in {
       actual.collector_tm must_== expected.collector_tm
     }
 

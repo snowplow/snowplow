@@ -38,6 +38,7 @@ class PageViewTest2 extends Specification {
     e.app_id = "CFe23a"
     e.platform = "Web"
     e.dt = "2012-05-24"
+    e.collector_dt = "2012-05-24"
     e.collector_tm = "00:06:42"
     e.event = "page_view"
     e.event_vendor = "com.snowplowanalytics"
@@ -106,10 +107,13 @@ class PageViewTest2 extends Specification {
     }
 
     // Date/time
-    "have dt (Date) = %s".format(expected.dt) in {
+    "have dt (Legacy Hive Date) = %s".format(expected.dt) in {
       actual.dt must_== expected.dt
     }
-    "have tm (Time) = %s".format(expected.collector_tm) in {
+    "have collector_dt (Collector Date) = %s".format(expected.collector_dt) in {
+      actual.collector_dt must_== expected.collector_dt
+    }
+    "have collector_tm (Collector Time) = %s".format(expected.collector_tm) in {
       actual.collector_tm must_== expected.collector_tm
     }
 

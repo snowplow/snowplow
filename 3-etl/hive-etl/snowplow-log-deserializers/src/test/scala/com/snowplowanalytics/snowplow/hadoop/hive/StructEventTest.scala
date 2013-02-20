@@ -30,6 +30,7 @@ class StructEventTest extends Specification {
   val row = "2012-05-27  11:35:53  DFW3  3343  99.116.172.58 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=5 Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=ev&ev_ca=Mixes&ev_ac=Play&ev_la=MRC%2Ffabric-0503-mix&ev_pr=mp3&ev_va=0.0&tid=191001&uid=ea7de42957742fbb&vid=1&aid=CFe23a&lang=en-GB&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1&url=file%3A%2F%2F%2Fhome%2Falex%2Fasync.html"
   val expected = new SnowPlowEvent().tap { e =>
     e.dt = "2012-05-27"
+    e.collector_dt = "2012-05-27"
     e.collector_tm = "11:35:53"
     e.event = "struct" // Structured event
     e.event_vendor = "com.snowplowanalytics"
@@ -46,10 +47,13 @@ class StructEventTest extends Specification {
     val actual = SnowPlowDeserializer.deserialize(row)
 
     // General fields
-    "have dt (Date) = %s".format(expected.dt) in {
+    "have dt (Legacy Hive Date) = %s".format(expected.dt) in {
       actual.dt must_== expected.dt
     }
-    "have tm (Time) = %s".format(expected.collector_tm) in {
+    "have collector_dt (Collector Date) = %s".format(expected.collector_dt) in {
+      actual.collector_dt must_== expected.collector_dt
+    }
+    "have collector_tm (Collector Time) = %s".format(expected.collector_tm) in {
       actual.collector_tm must_== expected.collector_tm
     }
     "have event (Event Type) = %s".format(expected.event) in {

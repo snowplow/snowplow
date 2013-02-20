@@ -12,9 +12,9 @@ Clojure Collector: bumped to 0.3.0
 Clojure Collector: now append nuid (network aka 3rd party) user ID, not uid (#150)
 Serde: bumped to 0.5.5
 Serde: renamed tstamp field to dtm
-Serde: dt and tm split into dvce_x and collector_x (#149) - TODO
-Serde: extract new nuid and duid fields (#150) - TODO
-Serde: renamed visit_id to domain_sessionidx (#171) - TODO
+Serde: dt and tm split into dvce_x and collector_x (#149)
+Serde: extract new nuid and duid fields (#150)
+Serde: renamed visit_id to domain_sessionidx (#171)
 HiveQL: hive-rolling-etl.q bumped to 0.5.6
 HiveQL: non-hive-rolling-etl.q bumped to 0.0.7
 HiveQL: dt and tm split into dvce_x and collector_x (#149)
