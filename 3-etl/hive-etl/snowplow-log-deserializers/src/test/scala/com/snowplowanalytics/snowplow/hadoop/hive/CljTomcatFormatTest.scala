@@ -38,11 +38,11 @@ class CljTomcatFormatTest extends Specification {
   // Output
   val expected = new SnowPlowEvent().tap { e =>
     e.dt = "2012-12-03"
-    e.tm = "04:49:53"
+    e.collector_tm = "04:49:53"
     e.txn_id = "755049"
     e.user_id = "7fc17b64-b202-46e4-8d3a-4d144edf2b23"
     e.user_ipaddress = "127.0.0.1"
-    e.visit_id = 3
+    e.domain_sessionidx = 3
     e.page_url = "http://yalisassoon.github.com/cl-collector-tests/async.html"
     e.page_referrer = "http://yalisassoon.github.com/"
     e.br_name = "Firefox"
@@ -72,8 +72,8 @@ class CljTomcatFormatTest extends Specification {
     "have dt (Date) = %s".format(expected.dt) in {
       actual.dt must_== expected.dt
     }
-    "have tm (Time) = %s".format(expected.tm) in {
-      actual.tm must_== expected.tm
+    "have tm (Time) = %s".format(expected.collector_tm) in {
+      actual.collector_tm must_== expected.collector_tm
     }
 
     // Transaction
@@ -88,8 +88,8 @@ class CljTomcatFormatTest extends Specification {
     "have user_ipaddress (User IP Address) = %s".format(expected.user_ipaddress) in {
       actual.user_ipaddress must_== expected.user_ipaddress
     }
-    "have visit_id (User IP Address) = %s".format(expected.visit_id) in {
-      actual.visit_id must_== expected.visit_id
+    "have visit_id (User IP Address) = %s".format(expected.domain_sessionidx) in {
+      actual.domain_sessionidx must_== expected.domain_sessionidx
     }
 
     // Page

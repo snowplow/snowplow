@@ -38,7 +38,7 @@ class NoJsTrackerTest extends Specification {
     e.app_id = "snowplow"
     e.platform = "web"
     e.dt = "2012-05-24"
-    e.tm = "11:35:53"
+    e.collector_tm = "11:35:53"
     e.event = "page_view"
     e.page_title = "root readme"
     e.page_url = "https://github.com/snowplow/snowplow"
@@ -62,8 +62,8 @@ class NoJsTrackerTest extends Specification {
 	  "have dt (Date) = %s".format(expected.dt) in {
 	    actual.dt must_== expected.dt
 	  }
-	  "have tm (Time) = %s".format(expected.tm) in {
-	    actual.tm must_== expected.tm
+	  "have tm (Time) = %s".format(expected.collector_tm) in {
+	    actual.collector_tm must_== expected.collector_tm
 	  }
 
 	  // Event and transaction

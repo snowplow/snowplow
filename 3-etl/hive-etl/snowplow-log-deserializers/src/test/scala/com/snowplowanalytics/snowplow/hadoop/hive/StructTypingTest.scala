@@ -48,7 +48,7 @@ class StructTypingTest extends Specification {
       eventStruct.dt must beAnInstanceOf[String]
     }
     "with a tm (Time) field which is a Hive STRING" in {
-      eventStruct.tm must beAnInstanceOf[String]
+      eventStruct.collector_tm must beAnInstanceOf[String]
     }
 
     // Transaction
@@ -69,7 +69,7 @@ class StructTypingTest extends Specification {
       eventStruct.user_ipaddress must beAnInstanceOf[String]
     }
     "with a visit_id (User IP Address) field which is a Hive STRING" in {
-      eventStruct.visit_id must beAnInstanceOf[JInteger]
+      eventStruct.domain_sessionidx must beAnInstanceOf[JInteger]
     }
 
     // Page

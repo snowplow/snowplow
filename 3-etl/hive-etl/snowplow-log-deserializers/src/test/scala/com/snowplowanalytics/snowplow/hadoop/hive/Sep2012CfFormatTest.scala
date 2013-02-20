@@ -38,11 +38,11 @@ class Sep2012CfFormatTest extends Specification {
   // Output
   val expected = new SnowPlowEvent().tap { e =>
     e.dt = "2012-05-24"
-    e.tm = "00:08:40"
+    e.collector_tm = "00:08:40"
     e.txn_id = "721410"
     e.user_id = "3798cdce0493133e"
     e.user_ipaddress = "74.125.17.210"
-    e.visit_id = 1
+    e.domain_sessionidx = 1
     e.page_url = "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html"
     e.page_title = "Psycards book and deck starter pack - Psychic Bazaar"
     e.page_referrer = "http://www.google.com/m/search"
@@ -73,8 +73,8 @@ class Sep2012CfFormatTest extends Specification {
     "have dt (Date) = %s".format(expected.dt) in {
       actual.dt must_== expected.dt
     }
-    "have tm (Time) = %s".format(expected.tm) in {
-      actual.tm must_== expected.tm
+    "have tm (Time) = %s".format(expected.collector_tm) in {
+      actual.collector_tm must_== expected.collector_tm
     }
 
     // Transaction
@@ -89,8 +89,8 @@ class Sep2012CfFormatTest extends Specification {
     "have user_ipaddress (User IP Address) = %s".format(expected.user_ipaddress) in {
       actual.user_ipaddress must_== expected.user_ipaddress
     }
-    "have visit_id (User IP Address) = %s".format(expected.visit_id) in {
-      actual.visit_id must_== expected.visit_id
+    "have visit_id (User IP Address) = %s".format(expected.domain_sessionidx) in {
+      actual.domain_sessionidx must_== expected.domain_sessionidx
     }
 
     // Page

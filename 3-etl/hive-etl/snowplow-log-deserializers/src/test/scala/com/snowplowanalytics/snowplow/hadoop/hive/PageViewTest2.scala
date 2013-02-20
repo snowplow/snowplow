@@ -38,14 +38,14 @@ class PageViewTest2 extends Specification {
     e.app_id = "CFe23a"
     e.platform = "Web"
     e.dt = "2012-05-24"
-    e.tm = "00:06:42"
+    e.collector_tm = "00:06:42"
     e.event = "page_view"
     e.event_vendor = "com.snowplowanalytics"
     e.txn_id = "019539"
     e.user_id = "e7bccbb647296c98"
     e.user_ipaddress = "90.194.12.51"
     e.user_fingerprint = "1906624389"
-    e.visit_id = 1
+    e.domain_sessionidx = 1
     e.page_url = "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail"
     e.page_title = "Psycards book and deck starter pack - Psychic Bazaar"
     e.page_referrer = "http://www.google.com/search?hl=en&q=the+psycard+story&oq=the+psycard+story&aq=f&aqi=&aql=&gs_l=mobile-gws-serp.12...0.0.0.6358.0.0.0.0.0.0.0.0..0.0...0.0.JrNbKlRgHbQ&mvs=0"
@@ -109,8 +109,8 @@ class PageViewTest2 extends Specification {
     "have dt (Date) = %s".format(expected.dt) in {
       actual.dt must_== expected.dt
     }
-    "have tm (Time) = %s".format(expected.tm) in {
-      actual.tm must_== expected.tm
+    "have tm (Time) = %s".format(expected.collector_tm) in {
+      actual.collector_tm must_== expected.collector_tm
     }
 
     // Event and transaction
@@ -137,8 +137,8 @@ class PageViewTest2 extends Specification {
     "have user_fingerprint (User Fingerprint) = %s".format(expected.user_fingerprint) in {
       actual.user_fingerprint must_== expected.user_fingerprint
     }
-    "have visit_id (User IP Address) = %s".format(expected.visit_id) in {
-      actual.visit_id must_== expected.visit_id
+    "have visit_id (User IP Address) = %s".format(expected.domain_sessionidx) in {
+      actual.domain_sessionidx must_== expected.domain_sessionidx
     }
 
     // Page

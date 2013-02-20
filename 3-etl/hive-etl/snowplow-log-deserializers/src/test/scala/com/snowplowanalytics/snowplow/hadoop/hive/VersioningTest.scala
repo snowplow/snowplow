@@ -33,7 +33,7 @@ class VersioningTest extends Specification {
     "have correct versioning information" in {
       actual.v_tracker must_== "js-0.10.0"
       actual.v_collector must_== "cf"
-      actual.v_etl must_== "serde-0.5.4"
+      actual.v_etl must_== "serde-0.5.5"
     }
   } 
 }

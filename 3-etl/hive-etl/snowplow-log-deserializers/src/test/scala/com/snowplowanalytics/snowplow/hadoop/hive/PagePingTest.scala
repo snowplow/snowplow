@@ -30,7 +30,7 @@ class PagePingTest extends Specification {
   val row = "2012-05-27  11:35:53  DFW3  3343  99.116.172.58 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=5 Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=pp&page=Async%20Test&pp_mix=28&pp_max=109&pp_miy=12&pp_may=22&tid=405338&vp=479x161&ds=584x193&p=web&tv=js-0.10.0&fp=119997519&aid=CFe23a&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=2560x1336&cd=24&cookie=1&url=file%3A%2F%2F%2Fhome%2Falex%2FDevelopment%2FSnowPlow%2Fsnowplow%2F1-trackers%2Fjavascript-tracker%2Fexamples%2Fweb%2Fasync.html"
   val expected = new SnowPlowEvent().tap { e =>
     e.dt = "2012-05-27"
-    e.tm = "11:35:53"
+    e.collector_tm = "11:35:53"
     e.event = "page_ping" // Page ping
     e.event_vendor = "com.snowplowanalytics"
     e.txn_id = "405338"
@@ -50,8 +50,8 @@ class PagePingTest extends Specification {
     "have dt (Date) = %s".format(expected.dt) in {
       actual.dt must_== expected.dt
     }
-    "have tm (Time) = %s".format(expected.tm) in {
-      actual.tm must_== expected.tm
+    "have tm (Time) = %s".format(expected.collector_tm) in {
+      actual.collector_tm must_== expected.collector_tm
     }
     "have event (Event Type) = %s".format(expected.event) in {
       actual.event must_== expected.event
