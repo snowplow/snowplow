@@ -33,14 +33,14 @@ class Sep2012CfFormatTest extends Specification {
   implicit val _DEBUG = false
 
   // Input
-  val row = "2012-05-24  00:08:40  LHR5  3397  74.125.17.210 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(Linux;%20U;%20Android%202.3.4;%20generic)%20AppleWebKit/535.1%20(KHTML,%20like%20Gecko;%20Google%20Web%20Preview)%20Version/4.0%20Mobile%20Safari/535.1  page=Psycards%2520book%2520and%2520deck%2520starter%2520pack%2520-%2520Psychic%2520Bazaar&tid=721410&uid=3798cdce0493133e&vid=1&lang=en&refr=http%253A%252F%252Fwww.google.com%252Fm%252Fsearch&res=640x960&cookie=1 - Hit vHql4ZhKJSl8yUJZuCrmvwBuVGmmgizVsKoo8lfPIn-ts0gR4g7KmA=="
+  val row = "2012-05-24  00:08:40  LHR5  3397  74.125.17.210 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(Linux;%20U;%20Android%202.3.4;%20generic)%20AppleWebKit/535.1%20(KHTML,%20like%20Gecko;%20Google%20Web%20Preview)%20Version/4.0%20Mobile%20Safari/535.1  page=Psycards%2520book%2520and%2520deck%2520starter%2520pack%2520-%2520Psychic%2520Bazaar&tid=721410&duid=3798cdce0493133e&vid=1&lang=en&refr=http%253A%252F%252Fwww.google.com%252Fm%252Fsearch&res=640x960&cookie=1 - Hit vHql4ZhKJSl8yUJZuCrmvwBuVGmmgizVsKoo8lfPIn-ts0gR4g7KmA=="
 
   // Output
   val expected = new SnowPlowEvent().tap { e =>
     e.dt = "2012-05-24"
     e.collector_tm = "00:08:40"
     e.txn_id = "721410"
-    e.user_id = "3798cdce0493133e"
+    e.domain_userid = "3798cdce0493133e"
     e.user_ipaddress = "74.125.17.210"
     e.domain_sessionidx = 1
     e.page_url = "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html"
@@ -83,8 +83,8 @@ class Sep2012CfFormatTest extends Specification {
     }
 
     // User and visit
-    "have user_id (User ID) = %s".format(expected.user_id) in {
-      actual.user_id must_== expected.user_id
+    "have domain_userid (Domain User ID) = %s".format(expected.domain_userid) in {
+      actual.domain_userid must_== expected.domain_userid
     }
     "have user_ipaddress (User IP Address) = %s".format(expected.user_ipaddress) in {
       actual.user_ipaddress must_== expected.user_ipaddress

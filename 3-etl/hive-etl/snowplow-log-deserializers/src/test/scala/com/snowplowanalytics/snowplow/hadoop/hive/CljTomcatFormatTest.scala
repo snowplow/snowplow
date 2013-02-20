@@ -33,14 +33,15 @@ class CljTomcatFormatTest extends Specification {
   implicit val _DEBUG = false
 
   // Input
-  val row = "2012-12-03 04:49:53  - 37  127.0.0.1 GET localhost /i  200 http://yalisassoon.github.com/cl-collector-tests/async.html Mozilla%2F5.0+%28Windows+NT+6.1%3B+WOW64%3B+rv%3A16.0%29+Gecko%2F20100101+Firefox%2F16.0  ?ev_ca=Mixes&ev_ac=Play&ev_la=MRC%2Ffabric-0503-mix&ev_va=0.0&p=web&tid=755049&uid=915bc1dd0a4c5ba5&fp=2196241488&vid=3&tv=js-0.8.0&lang=en-GB&refr=http%3A%2F%2Fyalisassoon.github.com%2F&f_pdf=1&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1920x1080&cd=24&cookie=1&tz=Europe%2FLondon&url=http%3A%2F%2Fyalisassoon.github.com%2Fcl-collector-tests%2Fasync.html&uid=7fc17b64-b202-46e4-8d3a-4d144edf2b23  - - -"
+  val row = "2012-12-03 04:49:53  - 37  127.0.0.1 GET localhost /i  200 http://yalisassoon.github.com/cl-collector-tests/async.html Mozilla%2F5.0+%28Windows+NT+6.1%3B+WOW64%3B+rv%3A16.0%29+Gecko%2F20100101+Firefox%2F16.0  ?ev_ca=Mixes&ev_ac=Play&ev_la=MRC%2Ffabric-0503-mix&ev_va=0.0&p=web&tid=755049&duid=915bc1dd0a4c5ba5&fp=2196241488&vid=3&tv=js-0.8.0&lang=en-GB&refr=http%3A%2F%2Fyalisassoon.github.com%2F&f_pdf=1&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1920x1080&cd=24&cookie=1&tz=Europe%2FLondon&url=http%3A%2F%2Fyalisassoon.github.com%2Fcl-collector-tests%2Fasync.html&nuid=7fc17b64-b202-46e4-8d3a-4d144edf2b23  - - -"
 
   // Output
   val expected = new SnowPlowEvent().tap { e =>
     e.dt = "2012-12-03"
     e.collector_tm = "04:49:53"
     e.txn_id = "755049"
-    e.user_id = "7fc17b64-b202-46e4-8d3a-4d144edf2b23"
+    e.domain_userid = "915bc1dd0a4c5ba5"
+    e.network_userid = "7fc17b64-b202-46e4-8d3a-4d144edf2b23"
     e.user_ipaddress = "127.0.0.1"
     e.domain_sessionidx = 3
     e.page_url = "http://yalisassoon.github.com/cl-collector-tests/async.html"
@@ -82,8 +83,11 @@ class CljTomcatFormatTest extends Specification {
     }
 
     // User and visit
-    "have user_id (User ID) = %s".format(expected.user_id) in {
-      actual.user_id must_== expected.user_id
+    "have domain_userid (Domain User ID) = %s".format(expected.domain_userid) in {
+      actual.domain_userid must_== expected.domain_userid
+    }
+    "have network_userid (Network User ID) = %s".format(expected.network_userid) in {
+      actual.network_userid must_== expected.network_userid
     }
     "have user_ipaddress (User IP Address) = %s".format(expected.user_ipaddress) in {
       actual.user_ipaddress must_== expected.user_ipaddress
