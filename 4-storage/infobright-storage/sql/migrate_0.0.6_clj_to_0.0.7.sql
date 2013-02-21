@@ -27,8 +27,8 @@ SELECT
 	`app_id`,
 	`platform`,
 	-- Date/time
-	`dt`, -- Renamed in 0.0.7 (no action to migrate)
-	`tm`, -- Renamed in 0.0.7 (no action to migrate)
+	`dt` AS `collector_dt`, -- Renamed in 0.0.7 (no action to migrate)
+	`tm` AS `collector_tm`, -- Renamed in 0.0.7 (no action to migrate)
 	null AS `dvce_dt`,    -- New in 0.0.7
 	null AS `dvce_tm`,    -- New in 0.0.7
 	null AS `dvce_epoch`, -- New in 0.0.7
@@ -42,12 +42,12 @@ SELECT
 	`v_collector`,
 	`v_etl`,
 	-- User and visit
-	null AS `user_id`, -- Changed meaning in 0.0.7
+	null AS `user_id`, -- Changed meaning in 0.0.7. Not set.
 	`user_ipaddress`,
 	`user_fingerprint`,
-	null AS `domain_userid`,       -- New in 0.0.7. Historically was not attached if Clojure collector used
-	`visit_id`,                    -- Renamed in 0.0.7 (no action to migrate)
-	`user_id` AS `network_userid`, -- New in 0.0.7. Historically Clojure collector stored network uid as user_id
+	null AS `domain_userid`,           -- New in 0.0.7. Historically was not attached if Clojure collector used
+	`visit_id` AS `domain_sessionidx`, -- Renamed in 0.0.7 (no action to migrate)
+	`user_id` AS `network_userid`,     -- New in 0.0.7. Historically Clojure collector stored network uid as user_id
 	-- Page
 	`page_url`,
 	`page_title`,

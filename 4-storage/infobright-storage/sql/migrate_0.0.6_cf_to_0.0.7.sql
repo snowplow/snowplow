@@ -27,11 +27,11 @@ SELECT
 	`app_id`,
 	`platform`,
 	-- Date/time
-	`dt`, -- Renamed in 0.0.7 (no action to migrate)
-	`tm`, -- Renamed in 0.0.7 (no action to migrate)
-	null AS `dvce_dt`,    -- New in 0.0.7
-	null AS `dvce_tm`,    -- New in 0.0.7
-	null AS `dvce_epoch`, -- New in 0.0.7
+	`dt` AS `collector_dt`, -- Renamed in 0.0.7 (no action to migrate)
+	`tm` AS `collector_tm`, -- Renamed in 0.0.7 (no action to migrate)
+	null AS `dvce_dt`,      -- New in 0.0.7
+	null AS `dvce_tm`,      -- New in 0.0.7
+	null AS `dvce_epoch`,   -- New in 0.0.7
 	-- Event
 	`event`,
 	`event_vendor`,
@@ -45,9 +45,9 @@ SELECT
 	null AS `user_id`, -- Changed meaning in 0.0.7
 	`user_ipaddress`,
 	`user_fingerprint`,
-	`user_id` AS `domain_userid`, -- New in 0.0.7. If using CloudFront collector, user_ids are now domain_userids
-	`visit_id`,                   -- Renamed in 0.0.7 (no action to migrate)
-	null AS `network_userid`,     -- New in 0.0.7. Not set by CloudFront collector
+	`user_id` AS `domain_userid`,      -- New in 0.0.7. If using CloudFront collector, user_ids are now domain_userids
+	`visit_id` AS `domain_sessionidx`, -- Renamed in 0.0.7 (no action to migrate)
+	null AS `network_userid`,          -- New in 0.0.7. Not set by CloudFront collector
 	-- Page
 	`page_url`,
 	`page_title`,
