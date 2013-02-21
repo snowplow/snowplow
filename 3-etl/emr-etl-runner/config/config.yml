@@ -28,5 +28,5 @@
 # Can bump the below as SnowPlow releases new versions
 :snowplow:
   :serde_version: 0.5.5
-  :hive_hiveql_version: 0.5.5
-  :non_hive_hiveql_version: 0.0.6
+  :hive_hiveql_version: 0.5.6
+  :non_hive_hiveql_version: 0.0.7
