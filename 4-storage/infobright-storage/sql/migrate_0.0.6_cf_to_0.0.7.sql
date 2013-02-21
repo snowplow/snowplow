@@ -9,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     Ports version 0.0.4 to version 0.0.6
+-- Version:     Ports version 0.0.6 (CloudFront collector) to version 0.0.7
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
