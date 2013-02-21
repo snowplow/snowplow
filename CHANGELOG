@@ -4,7 +4,7 @@ JS tracker: bumped to 0.11.0
 JS tracker: introduced setAppId() and deprecated setSiteId() (#168)
 JS tracker: 1st party user ID now transmitted as duid (domain uid) (part of #150)
 JS tracker: now sends dtm - the client timestamp (#149)
-JS tracker: deprecated attachUserId()
+JS tracker: deprecated and disabled attachUserId()
 JS tracker: deprecated getVisitorId() and getVisitorInfo() - use getDomainUserId() and getDomainUserInfo() instead
 JS tracker: add setUserId which sets the uid field (#167)
 JS tracker: SnowPlow cookies no longer tied to site ID (#148)
