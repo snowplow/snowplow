@@ -1,4 +1,4 @@
-Version 0.7.4 (2013-02-XX)
+Version 0.7.4 (2013-02-22)
 --------------------------
 JS tracker: bumped to 0.11.0
 JS tracker: introduced setAppId() and deprecated setSiteId() (#168)
