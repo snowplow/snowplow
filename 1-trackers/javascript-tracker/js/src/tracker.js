@@ -554,7 +554,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			idname = getCookieName('id'),
 			sesname = getCookieName('ses'),
 			id = loadDomainUserIdCookie(),
-			ses = getCookieValue(sesname),
+			ses = getCookieValue('ses'),
 			currentUrl = configCustomUrl || locationHrefAlias,
 			featurePrefix;
 
