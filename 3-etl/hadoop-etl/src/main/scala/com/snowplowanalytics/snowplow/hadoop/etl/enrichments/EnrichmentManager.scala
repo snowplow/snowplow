@@ -28,7 +28,6 @@ import inputs.{CanonicalInput, NVGetPayload}
 import outputs.CanonicalOutput
 
 import utils.{ConversionUtils => CU}
-import utils.{ValidationUtils => VU}
 import utils.DataTransform._
 
 import enrichments.{EventEnrichments => EE}
@@ -56,6 +55,11 @@ object EnrichmentManager {
    *         NonHiveOutput.
    */
   def enrichEvent(raw: CanonicalInput): ValidatedCanonicalOutput = {
+
+    // Placeholders for where the Success value doesn't matter.
+    // Useful when you're updating large (>22 field) POSOs.
+    val unitSuccess = ().success[String]
+    val unitSuccessNel = ().successNel[String]
 
     // Retrieve the payload
     // TODO: add support for other
@@ -93,7 +97,7 @@ object EnrichmentManager {
           event.useragent = ua
           ua.success
           })
-      case None => VU.unitSuccess // No fields updated
+      case None => unitSuccess // No fields updated
     }
 
     // Parse the useragent
@@ -114,7 +118,7 @@ object EnrichmentManager {
           c.success
           })
         ca
-      case None => VU.unitSuccess // No fields updated
+      case None => unitSuccess // No fields updated
     }
 
     // 2b. Failable enrichments using the payload
@@ -185,7 +189,7 @@ object EnrichmentManager {
 
     // Marketing attribution
     val campaign = pageUri.fold(
-      e => VU.unitSuccessNel, // No fields updated
+      e => unitSuccessNel, // No fields updated
       uri => {
         AE.extractMarketingFields(uri, raw.encoding).flatMap(cmp => {
           event.mkt_medium = cmp.medium
