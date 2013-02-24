@@ -20,8 +20,6 @@ import org.specs2.mutable.Specification
 import com.twitter.scalding._
 
 // This project
-// TODO: remove this when Scalding 0.8.3 released
-import utils.Json2Line
 import TestHelpers._
 
 /**
@@ -46,7 +44,7 @@ class InvalidLinesTest extends Specification with TupleConversions {
       EtlJobTest.
         source(MultipleTextLineFiles("inputFolder"), badLines).
         sink[String](Tsv("outputFolder")){ output => output must beEmpty }.
-        sink[String](Json2Line("errorFolder")){ json =>
+        sink[String](JsonLine("errorFolder")){ json =>
           for (i <- json.indices)
             json(i) must_== expected(badLines(i)._2)
         }.

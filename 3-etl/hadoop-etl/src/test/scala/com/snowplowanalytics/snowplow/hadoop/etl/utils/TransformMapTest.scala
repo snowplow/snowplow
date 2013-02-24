@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.hadoop.etl
-package jobs
+package utils
 
 // Scala
 import scala.reflect.BeanProperty
@@ -30,11 +30,9 @@ import scalaz._
 import Scalaz._
 
 // This project
-// TODO: remove this when Scalding 0.8.3 released
-import utils.DataTransform._
-import enrichments.MiscEnrichments
-import utils.ConversionUtils
-import enrichments.EventEnrichments
+import DataTransform._
+// import utils.ConversionUtils
+import enrichments.{MiscEnrichments, EventEnrichments}
 
 // Test class
 class Target {

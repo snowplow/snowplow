@@ -22,7 +22,6 @@ import Scalaz._
 import com.twitter.scalding._
 
 // This project
-import utils.Json2Line // TODO: remove when we can
 import enrichments.EnrichmentManager
 
 /**
@@ -41,7 +40,7 @@ class EtlJob(args: Args) extends Job(args) {
   val loader = etlConfig.collectorLoader
   val input = MultipleTextLineFiles(etlConfig.inFolder)
   val goodOutput = Tsv(etlConfig.outFolder)
-  val badOutput = Json2Line(etlConfig.errFolder)
+  val badOutput = JsonLine(etlConfig.errFolder)
 
   // Scalding data pipeline
   val common = input

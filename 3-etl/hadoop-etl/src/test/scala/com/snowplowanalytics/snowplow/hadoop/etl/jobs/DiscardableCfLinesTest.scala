@@ -20,8 +20,6 @@ import org.specs2.mutable.Specification
 import com.twitter.scalding._
 
 // This project
-// TODO: remove this when Scalding 0.8.3 released
-import utils.Json2Line
 import TestHelpers._
 
 /**
@@ -44,7 +42,7 @@ class DiscardableCfLinesTest extends Specification with TupleConversions {
       EtlJobTest.
         source(MultipleTextLineFiles("inputFolder"), discardableLines).
         sink[String](Tsv("outputFolder")){ output => output must beEmpty }.
-        sink[String](Json2Line("errorFolder")){ error => error must beEmpty }.
+        sink[String](JsonLine("errorFolder")){ error => error must beEmpty }.
         run.
         finish
         success
