@@ -1,12 +1,34 @@
-CREATE TABLE IF NOT EXISTS events_005 (
+-- Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+--
+-- This program is licensed to you under the Apache License Version 2.0,
+-- and you may not use this file except in compliance with the Apache License Version 2.0.
+-- You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+--
+-- Unless required by applicable law or agreed to in writing,
+-- software distributed under the Apache License Version 2.0 is distributed on an
+-- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+--
+-- Version:     0.0.7
+-- URL:         -
+--
+-- Authors:     Yali Sassoon, Alex Dean
+-- Copyright:   Copyright (c) 2012-2013 SnowPlow Analytics Ltd
+-- License:     Apache License Version 2.0
+
+CREATE TABLE IF NOT EXISTS events_007 (
 	-- App
 	`app_id` varchar(255) comment 'lookup', -- 'lookup' is a varchar optimisation for Infobright
 	`platform` varchar(50) comment 'lookup',
 	-- Date/time
-	`dt` date,
-	`tm` time,
+	`collector_dt` date, -- Renamed in 0.0.7
+	`collector_tm` time, -- Renamed in 0.0.7
+	`dvce_dt` date, -- Added in 0.0.7
+	`dvce_tm` time, -- Added in 0.0.7
+	`dvce_epoch` bigint, -- Added in 0.0.7
 	-- Event
-	`event` varchar(255) comment 'lookup',
+	`event` varchar(128) comment 'lookup', -- Size reduced in 0.0.7
+	`event_vendor` varchar(128) comment 'lookup',
 	`event_id` varchar(38),
 	`txn_id` int,
 	-- Versioning
@@ -14,19 +36,28 @@ CREATE TABLE IF NOT EXISTS events_005 (
 	`v_collector` varchar(100) comment 'lookup',
 	`v_etl` varchar(100) comment 'lookup',
 	-- User and visit
-	`user_id` varchar(38), -- Widened in 0.0.5 to support UUID
+	`user_id` varchar(255), -- Size increased in 0.0.7
 	`user_ipaddress` varchar(19),
 	`user_fingerprint` varchar(50),
-	`visit_id` smallint,
+	`domain_userid` varchar(16),  -- Added in 0.0.7
+	`domain_sessionidx` smallint, -- Renamed in 0.0.7
+	`network_userid` varchar(38), -- Added in 0.0.7
 	-- Page
-	`page_url` varchar(4095),
-	`page_title` varchar(2083),
-	`page_referrer` varchar(2083),
+	`page_url` varchar(3000),
+	`page_title` varchar(2000),
+	`page_referrer` varchar(3000),
+	-- Page URL components
+	`page_urlscheme` varchar(16),
+	`page_urlhost` varchar(255),
+	`page_urlport` smallint,
+	`page_urlpath` varchar(1000),
+	`page_urlquery` varchar(3000),
+	`page_urlfragment` varchar(255),
 	-- Marketing
 	`mkt_source` varchar(255),
 	`mkt_medium` varchar(255),
 	`mkt_term` varchar(255),
-	`mkt_content` varchar(2083),
+	`mkt_content` varchar(500),
 	`mkt_campaign` varchar(255),
 	-- Custom Event
 	`ev_category` varchar(255),
@@ -49,8 +80,13 @@ CREATE TABLE IF NOT EXISTS events_005 (
 	`ti_category` varchar(255),
 	`ti_price` dec(18,2),
 	`ti_quantity` int,
+	-- Page ping
+	`pp_xoffset_min` mediumint,
+	`pp_xoffset_max` mediumint,
+	`pp_yoffset_min` mediumint,
+	`pp_yoffset_max` mediumint,
 	-- User Agent
-	`useragent` varchar(2083),
+	`useragent` varchar(500),
 	-- Browser
 	`br_name` varchar(50) comment 'lookup',
 	`br_family` varchar(50) comment 'lookup',
@@ -69,6 +105,8 @@ CREATE TABLE IF NOT EXISTS events_005 (
 	`br_features_silverlight` tinyint(1),
 	`br_cookies` tinyint(1),
 	`br_colordepth` varchar(12) comment 'lookup',
+	`br_viewwidth` mediumint,
+	`br_viewheight` mediumint,
 	-- Operating System
 	`os_name` varchar(50) comment 'lookup',
 	`os_family` varchar(50) comment 'lookup',
@@ -78,5 +116,9 @@ CREATE TABLE IF NOT EXISTS events_005 (
 	`dvce_type` varchar(50) comment 'lookup',
 	`dvce_ismobile` tinyint(1),
 	`dvce_screenwidth` mediumint,
-	`dvce_screenheight` mediumint
+	`dvce_screenheight` mediumint,
+	-- Document
+	`doc_charset` varchar(128),
+	`doc_width` mediumint,
+	`doc_height` mediumint
 ) ENGINE=BRIGHTHOUSE DEFAULT CHARSET=utf8 ;

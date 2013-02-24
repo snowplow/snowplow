@@ -1,3 +1,61 @@
+Version 0.7.4 (2013-02-22)
+--------------------------
+JS tracker: bumped to 0.11.0
+JS tracker: introduced setAppId() and deprecated setSiteId() (#168)
+JS tracker: 1st party user ID now transmitted as duid (domain uid) (part of #150)
+JS tracker: now sends dtm - the client timestamp (#149)
+JS tracker: deprecated and disabled attachUserId()
+JS tracker: deprecated getVisitorId() and getVisitorInfo() - use getDomainUserId() and getDomainUserInfo() instead
+JS tracker: add setUserId which sets the uid field (#167)
+JS tracker: SnowPlow cookies no longer tied to site ID (#148)
+Clojure Collector: bumped to 0.3.0
+Clojure Collector: now append nuid (network aka 3rd party) user ID, not uid (#150)
+Serde: bumped to 0.5.5
+Serde: renamed tstamp field to dtm
+Serde: dt and tm split into dvce_x and collector_x (#149)
+Serde: extract new nuid and duid fields (#150)
+Serde: renamed visit_id to domain_sessionidx (#171)
+HiveQL: hive-rolling-etl.q bumped to 0.5.6
+HiveQL: non-hive-rolling-etl.q bumped to 0.0.7
+HiveQL: dt and tm split into dvce_x and collector_x (#149)
+HiveQL: now extracts uid, nuid and duid (#150)
+HiveQL: renamed visit_id to domain_sessionidx (#171)
+Infobright: bumped setup_infobright.sql to 0.0.7
+Infobright: renamed dt and tm to dvce_x and collector_x (#149)
+Infobright: now supports uid, nuid and duid (#150)
+Infobright: renamed visit_id to domain_sessionidx (#171)
+Infobright: added migration script 0.0.6 CloudFront collector -> 0.0.7
+Infobright: added migration script 0.0.6 Clojure collector -> 0.0.7
+
+Version 0.7.3 (2013-02-15)
+--------------------------
+JS tracker: bumped to 0.10.0
+JS tracker: updated copyright notices
+JS tracker: removed deprecated setAccount(), setTracker(), setHeartBeatTimer() - BREAKING CHANGE (#86)
+JS tracker: added document charset to querystring (#138)
+JS tracker: page ping no longer killed by 1 heartbeat w/o activity (#132)
+JS tracker: added document & viewport dimensions (#94)
+JS tracker: introduced trackStructEvent and deprecated trackEvent (#143)
+JS tracker: cleaned up getRequest code to use improved requestStringBuilder
+JS tracker: fixed logImpression (was using wrong argument names) (#162)
+JS tracker: added scroll offsets to page ping (#127)
+Serde: bumped to 0.5.4
+Serde: updated copyright notices
+Serde: structured events now logged as "struct" not "custom" - DATA CHANGE
+Serde: added setting of new event_vendor field (to com.snowplowanalytics) (#144)
+Serde: added extraction of doc charset (#138)
+Serde: added extraction of document & viewport dimensions (#94)
+Serde: added extraction of scroll offsets for enhanced page ping (#127)
+Serde: added extraction of URL components (#105)
+HiveQL: hive-rolling-etl.q bumped to 0.5.5
+HiveQL: non-hive-rolling-etl.q bumped to 0.0.6
+HiveQL: updated copyright notices
+HiveQL: now supports charset, document & viewport, URL components, event_vendor and enhanced page ping
+Infobright: bumped setup_infobright.sql to 0.0.6
+Infobright: updated copyright notices
+Infobright: added migration scripts (0.0.4->.6; 0.0.5->.6)
+Infobright: added charset, document & viewport, URL components, event_vendor enhanced page ping
+
 Version 0.7.2 (2013-01-29)
 --------------------------
 No-JS tracker: added. Version 0.1.0

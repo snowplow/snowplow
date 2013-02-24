@@ -1,4 +1,4 @@
--- Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,7 +13,7 @@
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
--- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
+-- Copyright:   Copyright (c) 2012-2013 SnowPlow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 -- Note: Infobright does not support MySQL-like ALTER TABLE statements

@@ -2,7 +2,7 @@
  * JavaScript tracker for SnowPlow: tracker.js
  * 
  * Significant portions copyright 2010 Anthon Pang. Remainder copyright 
- * 2012 SnowPlow Analytics Ltd. All rights reserved. 
+ * 2012-2013 SnowPlow Analytics Ltd. All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without 
  * modification, are permitted provided that the following conditions are 
@@ -75,7 +75,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		configCollectorUrl = constructCollectorUrl(argmap),
 
 		// Site ID
-		configTrackerSiteId = '', // Updated for SnowPlow. Starting long road to full removal
+		configTrackerSiteId = '', // Updated for SnowPlow
 
 		// Document URL
 		configCustomUrl,
@@ -136,12 +136,11 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		// Life of the referral cookie (in milliseconds)
 		configReferralCookieTimeout = 15768000000, // 6 months
 
-		// Whether we should attach uid (User ID) to the querystring
-		// Set to false if the collector is going to attach uid
-		configAttachUserId = true, 
-
 		// Should cookies have the secure flag set
 		cookieSecure = SnowPlow.documentAlias.location.protocol === 'https:',
+
+		// Document character set
+		documentCharset = SnowPlow.documentAlias.characterSet || SnowPlow.documentAlias.charset,
 
 		// Browser language (or Windows language for IE). Imperfect but CloudFront doesn't log the Accept-Language header
 		browserLanguage = SnowPlow.navigatorAlias.userLanguage || SnowPlow.navigatorAlias.language,
@@ -164,6 +163,12 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		// Last activity timestamp
 		lastActivityTime,
 
+		// How are we scrolling?
+		minXOffset,
+		maxXOffset,
+		minYOffset,
+		maxYOffset,
+
 		// Internal state of the pseudo click handler
 		lastButton,
 		lastTarget,
@@ -174,8 +179,11 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		// Domain hash value
 		domainHash,
 
-		// Visitor UUID
-		visitorUUID,
+		// Domain unique user ID
+		domainUserId,
+
+		// Business-defined unique user ID
+		businessUserId,
 
 		// Ecommerce transaction data
 		// Will be committed, sent and emptied by a call to trackTrans.
@@ -260,6 +268,14 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 	/*
 	 * Is the host local? (i.e., not an outlink)
+	 *
+	 * This is a pretty flawed approach - assumes
+	 * a website only has one domain.
+	 *
+	 * TODO: I think we can blow this away for
+	 * SnowPlow and handle the equivalent with a
+	 * whitelist of the site's domains. 
+	 * 
 	 */
 	function isSiteHostName(hostName) {
 		var i,
@@ -322,9 +338,45 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * Get cookie name with prefix and domain hash
 	 */
 	function getCookieName(baseName) {
-		// NOTE: If the cookie name is changed, we must also update the PiwikTracker.php which
-		// will attempt to discover first party cookies. eg. See the PHP Client method getVisitorId()
+		return configCookieNamePrefix + baseName + '.' + domainHash;
+	}
+
+	/*
+	 * Legacy getCookieName. This is the old version inherited from
+	 * Piwik which includes the site ID. Including the site ID in
+	 * the user cookie doesn't make sense, so we have removed it.
+	 * But, to avoid breaking sites with existing cookies, we leave
+	 * this function in as a legacy, and use it to check for a
+	 * 'legacy' cookie.
+	 *
+	 * TODO: delete in February 2013 or so!
+	 */
+	function getLegacyCookieName(baseName) {
 		return configCookieNamePrefix + baseName + '.' + configTrackerSiteId + '.' + domainHash;
+	}
+
+	/*
+	 * Cookie getter.
+	 *
+	 * This exists because we cannot guarantee whether a cookie will
+	 * be available using getCookieName or getLegacyCookieName (i.e.
+	 * whether the cookie includes the legacy site ID in its name).
+	 *
+	 * This wrapper supports both.
+	 *
+	 * TODO: simplify in February 2013 back to:
+	 * return SnowPlow.getCookie(getCookieName(cookieName));
+	 */
+	function getCookieValue(cookieName) {
+
+		// First we try the new cookie
+		var cookieValue = SnowPlow.getCookie(getCookieName(cookieName));
+		if (cookieValue) {
+			return cookieValue;
+		}
+
+		// Last we try the legacy cookie. May still return failure.
+		return SnowPlow.getCookie(getLegacyCookieName(cookieName));
 	}
 
 	/*
@@ -358,20 +410,72 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	}
 
 	/*
-	 * Sets the Visitor ID cookie: either the first time loadVisitorIdCookie is called
+	 * Process all "scroll" events.
+	 */
+	function scrollHandler() {
+		updateMaxScrolls();
+		activityHandler();
+	}
+
+	/*
+	 * Returns [pageXOffset, pageYOffset].
+	 */
+	function getPageOffsets() {
+		return [SnowPlow.documentAlias.body.scrollLeft || SnowPlow.windowAlias.pageXOffset,
+		       SnowPlow.documentAlias.body.scrollTop || SnowPlow.windowAlias.pageYOffset];
+	}
+
+	/*
+	 * Quick initialization/reset of max scroll levels
+	 */
+	function resetMaxScrolls() {
+		var offsets = getPageOffsets();
+		
+		var x = offsets[0];
+		minXOffset = x;
+		maxXOffset = x;
+		
+		var y = offsets[1];
+		minYOffset = y;
+		maxYOffset = y;
+	}
+
+	/*
+	 * Check the max scroll levels, updating as necessary
+	 */
+	function updateMaxScrolls() {
+		var offsets = getPageOffsets();
+		
+		var x = offsets[0];
+		if (pageXOffset < minXOffset) {
+			minXOffset = pageXOffset;
+		} else if (pageXOffset > maxXOffset) {
+			maxXOffset = pageXOffset;
+		}
+
+		var y = offsets[1];
+		if (pageYOffset < minYOffset) {
+			minYOffset = pageYOffset;
+		} else if (pageYOffset > maxYOffset) {
+			maxYOffset = pageYOffset;
+		}	
+	}
+
+	/*
+	 * Sets the Visitor ID cookie: either the first time loadDomainUserIdCookie is called
 	 * or when there is a new visit or a new page view
 	 */
-	function setVisitorIdCookie(uuid, createTs, visitCount, nowTs, lastVisitTs) {
-		SnowPlow.setCookie(getCookieName('id'), uuid + '.' + createTs + '.' + visitCount + '.' + nowTs + '.' + lastVisitTs, configVisitorCookieTimeout, configCookiePath, configCookieDomain, cookieSecure);
+	function setDomainUserIdCookie(_domainUserId, createTs, visitCount, nowTs, lastVisitTs) {
+		SnowPlow.setCookie(getCookieName('id'), _domainUserId + '.' + createTs + '.' + visitCount + '.' + nowTs + '.' + lastVisitTs, configVisitorCookieTimeout, configCookiePath, configCookieDomain, cookieSecure);
 	}
 
 	/*
 	 * Load visitor ID cookie
 	 */
-	function loadVisitorIdCookie() {
+	function loadDomainUserIdCookie() {
 		var now = new Date(),
 			nowTs = Math.round(now.getTime() / 1000),
-			id = SnowPlow.getCookie(getCookieName('id')),
+			id = getCookieValue('id'),
 			tmpContainer;
 
 		if (id) {
@@ -380,10 +484,10 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			// New visitor set to 0 now
 			tmpContainer.unshift('0');
 		} else {
-			// uuid - generate a pseudo-unique ID to fingerprint this user;
+			// Domain - generate a pseudo-unique ID to fingerprint this user;
 			// Note: this isn't a RFC4122-compliant UUID
-			if (!visitorUUID) {
-				visitorUUID = hash(
+			if (!domainUserId) {
+				domainUserId = hash(
 					(SnowPlow.navigatorAlias.userAgent || '') +
 						(SnowPlow.navigatorAlias.platform || '') +
 						JSON2.stringify(browserFeatures) + nowTs
@@ -394,8 +498,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 				// new visitor
 				'1',
 
-				// uuid
-				visitorUUID,
+				// Domain user ID
+				domainUserId,
 
 				// creation timestamp - seconds since Unix epoch
 				nowTs,
@@ -414,16 +518,30 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	}
 
 	/*
-	 * Returns the URL to call piwik.php,
-	 * with the standard parameters (plugins, resolution, url, referrer, etc.).
-	 * Sends the pageview and browser settings with every request in case of race conditions.
+	 * Get the current timestamp:
+	 * milliseconds since epoch.
 	 */
-	function getRequest(request, pluginMethod) {
+	function getTimestamp() {
+		var now = new Date(),
+			nowTs = now.getTime();
+
+		return nowTs;
+	}
+
+	/*
+	 * Attaches all the common web fields to the request
+	 * (resolution, url, referrer, etc.)
+	 * Also sets the required cookies.
+	 *
+	 * Takes in a string builder, adds in parameters to it
+	 * and then generates the request.
+	 */
+	function getRequest(sb, pluginMethod) {
 		var i,
 			now = new Date(),
 			nowTs = Math.round(now.getTime() / 1000),
 			newVisitor,
-			uuid,
+			_domainUserId, // Don't shadow the global
 			visitCount,
 			createTs,
 			currentVisitTs,
@@ -434,9 +552,9 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			currentReferrerHostName,
 			originalReferrerHostName,
 			idname = getCookieName('id'),
-			sesname = getCookieName('ses'),
-			id = loadVisitorIdCookie(),
-			ses = SnowPlow.getCookie(sesname),
+			sesname = getCookieName('ses'), // NOT sesname
+			id = loadDomainUserIdCookie(),
+			ses = getCookieValue('ses'),
 			currentUrl = configCustomUrl || locationHrefAlias,
 			featurePrefix;
 
@@ -447,7 +565,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		}
 
 		newVisitor = id[0];
-		uuid = id[1];
+		_domainUserId = id[1]; // We could use the global (domainUserId) but this is better etiquette
 		createTs = id[2];
 		visitCount = id[3];
 		currentVisitTs = id[4];
@@ -457,43 +575,49 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		if (!ses) {
 			// New session (aka new visit)
 			visitCount++;
-
 			// Update the last visit timestamp
 			lastVisitTs = currentVisitTs;
 		}
 
-		// Build out the rest of the request
-		// TODO: switch this to using requestStringBuilder, much tidier
-		request += 
-			'&p=' + configPlatform +
-			'&tid=' + String(Math.random()).slice(2, 8) +
-			(configAttachUserId ? '&uid=' + uuid : '') +
-			'&fp='  + SnowPlow.encodeWrapper(fingerprint) +
-			'&vid=' + visitCount +
-			'&tv='  + SnowPlow.encodeWrapper(SnowPlow.version) +
-			(configTrackerSiteId.length ? '&aid=' + SnowPlow.encodeWrapper(configTrackerSiteId) : '') +
-			'&lang=' + browserLanguage +
-			(configReferrerUrl.length ? '&refr=' + SnowPlow.encodeWrapper(purify(configReferrerUrl)) : '');
+		// Build out the rest of the request - first add fields we can safely skip encoding
+		sb.addRaw('dtm', getTimestamp());
+		sb.addRaw('tid', String(Math.random()).slice(2, 8));
+		sb.addRaw('vp', detectViewport());
+		sb.addRaw('ds', detectDocumentSize());
+		sb.addRaw('vid', visitCount);
+		sb.addRaw('duid', _domainUserId); // Set to our local variable
+
+		// Encode all these
+		sb.add('p', configPlatform);		
+		sb.add('tv', SnowPlow.version);
+		sb.add('fp', fingerprint);
+		sb.add('aid', configTrackerSiteId);
+		sb.add('lang', browserLanguage);
+		sb.add('cs', documentCharset);
+		sb.add('tz', timezone);
+		sb.add('uid', businessUserId); // Business-defined user ID
+
+		// Adds with custom conditions
+		if (configReferrerUrl.length) sb.add('refr', purify(configReferrerUrl));
 
 		// Browser features. Cookies, color depth and resolution don't get prepended with f_ (because they're not optional features)
 		for (i in browserFeatures) {
 			if (Object.prototype.hasOwnProperty.call(browserFeatures, i)) {
-				featurePrefix = (i === 'res' || i === 'cd' || i === 'cookie') ? '&' : '&f_';
-				request += featurePrefix + i + '=' + browserFeatures[i];
+				featurePrefix = (i === 'res' || i === 'cd' || i === 'cookie') ? '' : 'f_';
+				sb.addRaw(featurePrefix + i, browserFeatures[i]);
 			}
 		}
 
-        // Add in timezone
-		request += '&tz=' + SnowPlow.encodeWrapper(timezone);
-
-		// Finally add the page URL
-		request += '&url=' + SnowPlow.encodeWrapper(purify(window.location));
+		// Add the page URL last as it may take us over the IE limit (and we don't always need it)
+		sb.add('url', purify(SnowPlow.windowAlias.location));
+		var request = sb.build();
 
 		// Update cookies
-		setVisitorIdCookie(uuid, createTs, visitCount, nowTs, lastVisitTs);
+		setDomainUserIdCookie(_domainUserId, createTs, visitCount, nowTs, lastVisitTs);
 		SnowPlow.setCookie(sesname, '*', configSessionCookieTimeout, configCookiePath, configCookieDomain, cookieSecure);
 
 		// Tracker plugin hook
+		// TODO: we can blow this away for SnowPlow
 		request += SnowPlow.executePluginMethod(pluginMethod);
 
 		return request;
@@ -508,7 +632,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * @return string The URL on which the collector is hosted
 	 */
 	function collectorUrlFromCfDist(distSubdomain) {
-			return asCollectorUrl(distSubdomain + '.cloudfront.net');
+		return asCollectorUrl(distSubdomain + '.cloudfront.net');
 	}
 
 	/**
@@ -519,28 +643,31 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * @return string collectorUrl The tracker URL with protocol
 	 */
 	function asCollectorUrl(rawUrl) {
-			return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + rawUrl + '/i';               
+		return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + rawUrl + '/i';               
 	}
-
 
 	/**
 	 * A helper to build a SnowPlow request string from an
 	 * an optional initial value plus a set of individual
-	 * key-value pairs, provided using the add method.
+	 * name-value pairs, provided using the add method.
 	 *
 	 * @param string initialValue The initial querystring, ready to have additional key-value pairs added
 	 *
-	 * @return object The request string builder, with add and build methods
+	 * @return object The request string builder, with add, addRaw and build methods
 	 */
-	// TODO: add encode flag to add
-	// TODO: add addIf() function
 	function requestStringBuilder(initialValue) {
 		var str = initialValue || '';
+		var addNvPair = function(key, value, encode) {
+			if (value !== undefined && value !== '') {
+				str += '&' + key + '=' + (encode ? SnowPlow.encodeWrapper(value) : value);
+			}
+		};
 		return {
 			add: function(key, value) {
-				if (value !== undefined && value !== '') {
-					str += '&' + key + '=' + SnowPlow.encodeWrapper(value);
-				}
+				addNvPair(key, value, true);
+			},
+			addRaw: function(key, value) {
+				addNvPair(key, value, false);
 			},
 			build: function() {
 				return str;
@@ -549,23 +676,23 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	}
 
 	/**
-	 * Log an event happening on this page
+	 * Log a structured event happening on this page
 	 *
 	 * @param string category The name you supply for the group of objects you want to track
 	 * @param string action A string that is uniquely paired with each category, and commonly used to define the type of user interaction for the web object
 	 * @param string label (optional) An optional string to provide additional dimensions to the event data
+	 * @param string property (optional) Describes the object or the action performed on it, e.g. quantity of item added to basket
 	 * @param int|float|string value (optional) An integer that you can use to provide numerical data about the user event
 	 */
-	function logEvent(category, action, label, property, value) {
+	function logStructEvent(category, action, label, property, value) {
 		var sb = requestStringBuilder();
-		sb.add('e', 'ev'); // 'ev' for custom EVent
+		sb.add('e', 'se'); // 'se' for Structured Event
 		sb.add('ev_ca', category);
 		sb.add('ev_ac', action)
 		sb.add('ev_la', label);
 		sb.add('ev_pr', property);
 		sb.add('ev_va', value);
-		var params = sb.build();
-		request = getRequest(params, 'event');
+		request = getRequest(sb, 'event');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -578,17 +705,19 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * @param string userId (optional) Ad server identifier for the viewer of the banner
 	 */
 	// TODO: should add impressionId as well.
+	// TODO: should add in zoneId (aka placementId, slotId?) as well
 	function logImpression(bannerId, campaignId, advertiserId, userId) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'ad'); // 'ad' for AD impression
-		sb.add('ad_ba', category);
-		sb.add('ad_ca', action)
-		sb.add('ad_ad', label);
-		sb.add('ad_uid', property);
-		var params = sb.build();
-		request = getRequest(params, 'adimp');
+		sb.add('ad_ba', bannerId);
+		sb.add('ad_ca', campaignId)
+		sb.add('ad_ad', advertiserId);
+		sb.add('ad_uid', userId);
+		request = getRequest(sb, 'adimp');
 		sendRequest(request, configTrackerPause);
 	}
+
+	// TODO: add in ad clicks
 
 	/**
 	 * Log ecommerce transaction metadata
@@ -614,8 +743,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('tr_ci', city);
 		sb.add('tr_st', state);
 		sb.add('tr_co', country);
-		var params = sb.build();
-		var request = getRequest(params, 'ecommerceTransaction');
+		var request = getRequest(sb, 'ecommerceTransaction');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -639,8 +767,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('ti_ca', category);
 		sb.add('ti_pr', price);
 		sb.add('ti_qu', quantity);
-		var params = sb.build();
-		var request = getRequest(params, 'ecommerceTransactionItem');
+		var request = getRequest(sb, 'ecommerceTransactionItem');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -658,14 +785,16 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'pv'); // 'pv' for Page View
 		sb.add('page', pageTitle);
-		var params = sb.build();
-		var request = getRequest(params, 'log');
+		var request = getRequest(sb, 'log');
 		sendRequest(request, configTrackerPause);
 
 		// Send ping (to log that user has stayed on page)
 		var now = new Date();
 		if (configMinimumVisitTime && configHeartBeatTimer && !activityTrackingInstalled) {
 			activityTrackingInstalled = true;
+
+			// Capture our initial scroll points
+			resetMaxScrolls();
 
 			// Add event handlers; cross-browser compatibility here varies significantly
 			// @see http://quirksmode.org/dom/events
@@ -675,7 +804,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			SnowPlow.addEventListener(SnowPlow.documentAlias, 'mousemove', activityHandler);
 			SnowPlow.addEventListener(SnowPlow.documentAlias, 'mousewheel', activityHandler);
 			SnowPlow.addEventListener(SnowPlow.windowAlias, 'DOMMouseScroll', activityHandler);
-			SnowPlow.addEventListener(SnowPlow.windowAlias, 'scroll', activityHandler);
+			SnowPlow.addEventListener(SnowPlow.windowAlias, 'scroll', scrollHandler); // Will updateMaxScrolls() for us
 			SnowPlow.addEventListener(SnowPlow.documentAlias, 'keypress', activityHandler);
 			SnowPlow.addEventListener(SnowPlow.documentAlias, 'keydown', activityHandler);
 			SnowPlow.addEventListener(SnowPlow.documentAlias, 'keyup', activityHandler);
@@ -683,23 +812,19 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			SnowPlow.addEventListener(SnowPlow.windowAlias, 'focus', activityHandler);
 			SnowPlow.addEventListener(SnowPlow.windowAlias, 'blur', activityHandler);
 
-			// Periodic check for activity
+			// Periodic check for activity.
 			lastActivityTime = now.getTime();
-			setTimeout(function heartBeat() {
-				var now = new Date(),
-					request;
+			setInterval(function heartBeat() {
+				var now = new Date();
 
 				// There was activity during the heart beat period;
 				// on average, this is going to overstate the visitDuration by configHeartBeatTimer/2
 				if ((lastActivityTime + configHeartBeatTimer) > now.getTime()) {
 					// Send ping if minimum visit time has elapsed
 					if (configMinimumVisitTime < now.getTime()) {
-						logPagePing(pageTitle);
+						logPagePing(pageTitle); // Grab the min/max globals
 					}
-					// Resume heart beat
-					setTimeout(heartBeat, configHeartBeatTimer);
 				}
-				// Else heart beat cancelled due to inactivity
 			}, configHeartBeatTimer);
 		}
 	}
@@ -716,8 +841,12 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'pp'); // 'pp' for Page Ping
 		sb.add('page', pageTitle);
-		var params = sb.build();
-		var request = getRequest(params, 'ping');
+		sb.addRaw('pp_mix', minXOffset); // Global
+		sb.addRaw('pp_max', maxXOffset); // Global
+		sb.addRaw('pp_miy', minYOffset); // Global
+		sb.addRaw('pp_may', maxYOffset); // Global
+		resetMaxScrolls();
+		var request = getRequest(sb, 'ping');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -733,8 +862,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		var sb = requestStringBuilder();
 		sb.add('e', linkType);
 		sb.add('t_url', purify(url));
-		var params = sb.build();
-		var request = getRequest(params, 'link');
+		var request = getRequest(sb, 'link');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -968,7 +1096,37 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 */
 	function detectTimezone() {
 		var tz = jstz.determine();  
-        return (typeof (tz) === 'undefined') ? '' : tz.name();
+        	return (typeof (tz) === 'undefined') ? '' : tz.name();
+	}
+
+	/**
+	 * Gets the current viewport.
+	 *
+	 * Code based on:
+	 * - http://andylangton.co.uk/articles/javascript/get-viewport-size-javascript/
+	 * - http://responsejs.com/labs/dimensions/
+	 */
+	function detectViewport() {
+		var e = SnowPlow.windowAlias, a = 'inner';
+		if (!('innerWidth' in SnowPlow.windowAlias)) {
+			a = 'client';
+			e = SnowPlow.documentAlias.documentElement || SnowPlow.documentAlias.body;
+		}
+		return e[a+'Width'] + 'x' + e[a+'Height'];
+	}
+
+	/**
+	 * Gets the dimensions of the current
+	 * document.
+	 *
+	 * Code based on:
+	 * - http://andylangton.co.uk/articles/javascript/get-viewport-size-javascript/
+	 */
+	function detectDocumentSize() {
+		var de = SnowPlow.documentAlias.documentElement; // Alias
+		var w = Math.max(de.clientWidth, de.offsetWidth, de.scrollWidth);
+		var h = Math.max(de.clientHeight, de.offsetHeight, de.scrollHeight);
+		return w + 'x' + h;
 	}
 
 	/*
@@ -1083,12 +1241,22 @@ SnowPlow.Tracker = function Tracker(argmap) {
 /*</DEBUG>*/
 
 		/**
+		 * Get the current user ID (as set previously
+		 * with setUserId()).
+		 *
+		 * @return string Business-defined user ID
+		 */
+		getUserId: function () {
+			return businessUserId;
+		},
+
+		/**
 		 * Get visitor ID (from first party cookie)
 		 *
 		 * @return string Visitor ID in hexits (or null, if not yet known)
 		 */
-		getVisitorId: function () {
-			return (loadVisitorIdCookie())[1];
+		getDomainUserId: function () {
+			return (loadDomainUserIdCookie())[1];
 		},
 
 		/**
@@ -1096,17 +1264,59 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 *
 		 * @return array
 		 */
+		getDomainUserInfo: function () {
+			return loadDomainUserIdCookie();
+		},
+
+		/**
+		 * Get visitor ID (from first party cookie)
+		 *
+		 * DEPRECATED: use getDomainUserId() above.
+		 *
+		 * @return string Visitor ID in hexits (or null, if not yet known)
+		 */
+		getVisitorId: function () {
+			if (typeof console !== 'undefined') {
+				console.log("SnowPlow: getVisitorId() is deprecated and will be removed in an upcoming version. Please use getDomainUserId() instead.");
+			}
+			return (loadVisitorIdCookie())[1];
+		},
+
+		/**
+		 * Get the visitor information (from first party cookie)
+		 *
+		 * DEPRECATED: use getDomainUserInfo() above.
+		 *
+		 * @return array
+		 */
 		getVisitorInfo: function () {
+			if (typeof console !== 'undefined') {
+				console.log("SnowPlow: getVisitorInfo() is deprecated and will be removed in an upcoming version. Please use getDomainUserInfo() instead.");
+			}
 			return loadVisitorIdCookie();
 		},
 
 		/**
 		 * Specify the site ID
 		 *
+		 * DEPRECATED: use setAppId() below
+		 *
 		 * @param int|string siteId
 		 */
 		setSiteId: function (siteId) {
+			if (typeof console !== 'undefined') {
+				console.log("SnowPlow: setSiteId() is deprecated and will be removed in an upcoming version. Please use setAppId() instead.");
+			}
 			configTrackerSiteId = siteId;
+		},
+
+		/**
+		 * Specify the app ID
+		 *
+		 * @param int|string appId
+		 */
+		setAppId: function (appId) {
+			configTrackerSiteId = appId;
 		},
 
 		/**
@@ -1333,24 +1543,6 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		},
 
 		/**
-		 * Set heartbeat (in seconds)
-		 *
-		 * @param int minimumVisitLength
-		 * @param int heartBeatDelay
-		 */
-		setHeartBeatTimer: function (minimumVisitLength, heartBeatDelay) {
-			
-			if (typeof console !== 'undefined') {
-				console.log("SnowPlow: setHeartBeatTimer() is deprecated and will be removed in an upcoming version. Please use enableActivityTracking() instead.");
-			}
-
-			var now = new Date();
-
-			configMinimumVisitTime = now.getTime() + minimumVisitLength * 1000;
-			configHeartBeatTimer = heartBeatDelay * 1000;
-		},
-
-		/**
 		 * Frame buster
 		 */
 		killFrame: function () {
@@ -1404,29 +1596,28 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		},
 
 		/**
-		 * Specify the SnowPlow tracking account. We use the account ID
-		 * to define the tracker URL for SnowPlow.
+		 * Set the business-defined user ID for this user.
 		 *
-		 * DEPRECATED - will be removed in a future release.
-		 * See issue #32 for details. 
-		 *
-		 * @param string distSubdomain The subdomain on your CloudFront collector's distribution
+		 * @param string userId The business-defined user ID
 		 */
-		// TODO: remove in a future version
-		setAccount: function (distSubdomain) {
-			if (typeof console !== 'undefined') {
-				console.log("SnowPlow: setAccount() is deprecated and will be removed in an upcoming version. Please use setCollectorCf() instead.");
-			}
-			configCollectorUrl = collectorUrlFromCfDist(distSubdomain);
+		setUserId: function(userId) {
+			businessUserId = userId;
 		},
 
 		/**
 		 * Toggle whether to attach User ID to the querystring or not
 		 *
+		 * DEPRECATED: because we now have three separate user IDs:
+		 * uid (business-set), nuid (3rd-party cookie) and duid (1st-party
+		 * cookie). So there's no need to enable or disable specific user IDs.
+		 *
 		 * @param bool attach Whether to attach User ID or not
 		 */
 		attachUserId: function (attach) {
-			configAttachUserId = attach;
+
+			if (typeof console !== 'undefined') {
+				console.log("SnowPlow: attachUserId() is deprecated and will be removed in an upcoming version. It no longer does anything (because nuid and duid have been separated out).");
+			}
 		},
 
 		/**
@@ -1452,13 +1643,36 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		/**
 		 * Track an event happening on this page
 		 *
+		 * DEPRECATED: use getStructEvent instead
+		 *
 		 * @param string category The name you supply for the group of objects you want to track
 		 * @param string action A string that is uniquely paired with each category, and commonly used to define the type of user interaction for the web object
 		 * @param string label (optional) An optional string to provide additional dimensions to the event data
+		 * @param string property (optional) Describes the object or the action performed on it, e.g. quantity of item added to basket
 		 * @param int|float|string value (optional) An integer that you can use to provide numerical data about the user event
 		 */
 		trackEvent: function (category, action, label, property, value) {
-			logEvent(category, action, label, property, value);                   
+
+			if (typeof console !== 'undefined') {
+				console.log("SnowPlow: trackEvent() is deprecated and will be removed in an upcoming version. Please use trackStructEvent() instead.");
+			}
+			logStructEvent(category, action, label, property, value);
+		},
+
+		/**
+		 * Track a structured event happening on this page.
+		 *
+		 * Replaces trackEvent, making clear that the type
+		 * of event being tracked is a structured one.
+		 *
+		 * @param string category The name you supply for the group of objects you want to track
+		 * @param string action A string that is uniquely paired with each category, and commonly used to define the type of user interaction for the web object
+		 * @param string label (optional) An optional string to provide additional dimensions to the event data
+		 * @param string property (optional) Describes the object or the action performed on it, e.g. quantity of item added to basket
+		 * @param int|float|string value (optional) An integer that you can use to provide numerical data about the user event
+		 */
+		trackStructEvent: function (category, action, label, property, value) {
+			logStructEvent(category, action, label, property, value);                   
 		},
 
 		/**

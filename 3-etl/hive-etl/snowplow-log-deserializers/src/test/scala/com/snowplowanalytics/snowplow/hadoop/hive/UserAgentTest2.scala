@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -24,7 +24,7 @@ class UserAgentTest2 extends Specification {
   implicit val _DEBUG = false
 
   // Template row to slot in a useragent
-  val rowWith: (String => String) = "2012-05-28  21:12:03  IAD12 3402  71.191.251.183  GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/tarot-cards/57-universal-rider-waite-pocket-tarot-deck.html  " + _ + "  page=Universal%2520Rider%2520Waite%2520pocket%2520Tarot%2520deck%2520-%2520Psychic%2520Bazaar&tid=491830&uid=80822abc1ad45c78&vid=1&lang=en-us&refr=http%253A%252F%252Fwww.bing.com%252Fimages%252Fsearch%253Fq%253Drider%252Bwaite%252Btarot%252Bdeck%252Bcard%252Bimages%2526view%253Ddetail%2526id%253D9A4E92316CFA727D79FE6AD095D12C6B34DAB043%2526first%253D0%2526qpvt%253Drider%252Bwaite%252Btarot%252Bdeck%252Bcard%252Bimages%2526FORM%253DIDFRIR&f_java=1&res=1600x900&cookie=1&url=http%253A%252F%252Fwww.psychicbazaar.com%252Ftarot-cards%252F57-universal-rider-waite-pocket-tarot-deck.html"
+  val rowWith: (String => String) = "2012-05-28  21:12:03  IAD12 3402  71.191.251.183  GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/tarot-cards/57-universal-rider-waite-pocket-tarot-deck.html  " + _ + "  page=Universal%2520Rider%2520Waite%2520pocket%2520Tarot%2520deck%2520-%2520Psychic%2520Bazaar&tid=491830&duid=80822abc1ad45c78&vid=1&lang=en-us&refr=http%253A%252F%252Fwww.bing.com%252Fimages%252Fsearch%253Fq%253Drider%252Bwaite%252Btarot%252Bdeck%252Bcard%252Bimages%2526view%253Ddetail%2526id%253D9A4E92316CFA727D79FE6AD095D12C6B34DAB043%2526first%253D0%2526qpvt%253Drider%252Bwaite%252Btarot%252Bdeck%252Bcard%252Bimages%2526FORM%253DIDFRIR&f_java=1&res=1600x900&cookie=1&url=http%253A%252F%252Fwww.psychicbazaar.com%252Ftarot-cards%252F57-universal-rider-waite-pocket-tarot-deck.html"
 
   "The user-agent \"NEW SPIDER USERAGENT\"" should {
     "be identified as a spider" in {

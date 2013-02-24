@@ -13,7 +13,7 @@
 ;;;; Copyright: Copyright (c) 2012 SnowPlow Analytics Ltd
 ;;;; License:   Apache License Version 2.0
 
-(defproject snowplow/clojure-collector "0.2.0"
+(defproject snowplow/clojure-collector "0.3.0"
   :description "A SnowPlow event collector written in Clojure. AWS Elastic Beanstalk compatible."
   :dependencies     [[org.clojure/clojure "1.4.0"]
                      [ring/ring-core "1.1.6"]

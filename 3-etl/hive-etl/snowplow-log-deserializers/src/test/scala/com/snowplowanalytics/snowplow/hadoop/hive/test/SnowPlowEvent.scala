@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -27,10 +27,15 @@ class SnowPlowEvent {
 
   // Date/time
   var dt: String = _
-  var tm: String = _
+  var collector_dt: String = _
+  var collector_tm: String = _
+  var dvce_dt: String = _
+  var dvce_tm: String = _
+  var dvce_epoch: Long = _
 
   // Transaction (i.e. this logging event)
   var event: String = _
+  var event_vendor: String = _
   var event_id: String = _
   var txn_id: String = _
 
@@ -38,12 +43,22 @@ class SnowPlowEvent {
   var user_id: String = _
   var user_ipaddress: String = _
   var user_fingerprint: String = _
-  var visit_id: Int = _
+  var domain_userid: String = _
+  var domain_sessionidx: Int = _
+  var network_userid: String = _
 
   // Page
   var page_url: String = _
   var page_title: String = _
   var page_referrer: String = _
+
+  // Page URL
+  var page_urlscheme: String = _
+  var page_urlhost: String = _
+  var page_urlport: Int = _
+  var page_urlpath: String = _
+  var page_urlquery: String = _
+  var page_urlfragment: String = _
 
   // Marketing
   var mkt_medium: String = _
@@ -52,12 +67,36 @@ class SnowPlowEvent {
   var mkt_content: String = _
   var mkt_campaign: String = _
 
-  // Event
+  // Structured event
   var ev_category: String = _
   var ev_action: String = _
   var ev_label: String = _
   var ev_property: String = _
   var ev_value: String = _
+
+  // Ecommerce transaction (from querystring)
+  var tr_orderid: String = _
+  var tr_affiliation: String = _
+  var tr_total: String = _
+  var tr_tax: String = _
+  var tr_shipping: String = _
+  var tr_city: String = _
+  var tr_state: String = _
+  var tr_country: String = _
+
+  // Ecommerce transaction item (from querystring)
+  var ti_orderid: String = _
+  var ti_sku: String = _
+  var ti_name: String = _
+  var ti_category: String = _
+  var ti_price: String = _
+  var ti_quantity: String = _
+
+  // Page ping
+  var pp_xoffset_min: Int = _
+  var pp_xoffset_max: Int = _
+  var pp_yoffset_min: Int = _
+  var pp_yoffset_max: Int = _
 
   // User Agent
   var useragent: String = _
@@ -85,6 +124,8 @@ class SnowPlowEvent {
   var br_cookies: Boolean = _
   var br_cookies_bt: Byte = _
   var br_colordepth: String = _
+  var br_viewwidth: Int = _
+  var br_viewheight: Int = _
 
   // OS (from user-agent)
   var os_name: String = _
@@ -101,21 +142,8 @@ class SnowPlowEvent {
   var dvce_screenwidth: Int = _
   var dvce_screenheight: Int = _
 
-  // Ecommerce transaction (from querystring)
-  var tr_orderid: String = _
-  var tr_affiliation: String = _
-  var tr_total: String = _
-  var tr_tax: String = _
-  var tr_shipping: String = _
-  var tr_city: String = _
-  var tr_state: String = _
-  var tr_country: String = _
-
-  // Ecommerce transaction item (from querystring)
-  var ti_orderid: String = _
-  var ti_sku: String = _
-  var ti_name: String = _
-  var ti_category: String = _
-  var ti_price: String = _
-  var ti_quantity: String = _
+  // Document fields
+  var doc_charset: String = _
+  var doc_width: Int = _
+  var doc_height: Int = _
 }

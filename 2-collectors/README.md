@@ -31,11 +31,11 @@ We welcome community contributions of additional Collectors! We have a guide to 
 [etl]: https://github.com/snowplow/snowplow/tree/master/3-etl
 [snowcannon-readme]: https://github.com/shermozle/SnowCannon/blob/master/README.md
 [c1]: ./2-collectors/cloudfront-collector/
-[c1-setup]: https://github.com/snowplow/snowplow/wiki/setting-up-the-cloudfront-collector
+[c1-setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-the-Cloudfront-collector
 [c2]: ./2-collectors/clojure-collector/
 [c2-setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-the-Clojure-collector
 [c3]: ./2-collectors/contrib-nodejs-collector/
-[c3-setup]: https://github.com/snowplow/snowplow/wiki/snowcannon-setup-guide
-[setup]: https://github.com/snowplow/snowplow/wiki/choosing-a-collector
+[c3-setup]: https://github.com/snowplow/snowplow/wiki/SnowCannon-setup-guide
+[setup]: https://github.com/snowplow/snowplow/wiki/setting-up-a-collector
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/collectors
 [wiki]: https://github.com/snowplow/snowplow/wiki

@@ -63,8 +63,8 @@ limitations under the License.
 [architecture-doc]: https://github.com/snowplow/snowplow/wiki/Technical-architecture
 [talk-to-us]: https://github.com/snowplow/snowplow/wiki/Talk-to-us
 [license]: http://www.apache.org/licenses/LICENSE-2.0
-[setup]: https://github.com/snowplow/snowplow/wiki/SnowPlow%20setup%20guide
+[setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-SnowPlow
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/SnowPlow%20technical%20documentation
 [tracker-protocol]: https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol
 [collector-logs]: https://github.com/snowplow/snowplow/wiki/Collector-logging-formats
-[data-structure]: https://github.com/snowplow/snowplow/wiki/canonical-data-structure
+[data-structure]: https://github.com/snowplow/snowplow/wiki/canonical-event-model

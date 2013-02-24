@@ -9,13 +9,13 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.0.1
+-- Version:     0.0.7
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
--- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
+-- Copyright:   Copyright (c) 2012-2013 SnowPlow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 USE snowplow ;
 
-DESC events_005 ;
+DESC events_007 ;

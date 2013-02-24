@@ -13,7 +13,7 @@
 -- URL:         -
 --
 -- Authors:     Alex Dean
--- Copyright:   Copyright (c) 2012 SnowPlow Analytics Ltd
+-- Copyright:   Copyright (c) 2012-2013 SnowPlow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 -- Note: Infobright does not support MySQL-like ALTER TABLE statements

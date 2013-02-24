@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -19,7 +19,8 @@ class EventTypeTest extends Specification {
 
   // Valid event codes and their type mappings
   val eventCodes = Map(
-    "ev" -> "custom",
+    "ev" -> "struct",
+    "se" -> "struct",
     "ad" -> "ad_impression",
     "tr" -> "transaction",
     "ti" -> "transaction_item",
