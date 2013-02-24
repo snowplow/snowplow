@@ -16,6 +16,10 @@ package utils
 // Scala
 import scala.reflect.BeanProperty
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 // Specs2
 import org.specs2.mutable.Specification
 
@@ -25,13 +29,8 @@ import com.twitter.scalding._
 // SnowPlow Utils
 import com.snowplowanalytics.util.Tap._
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
 // This project
 import DataTransform._
-// import utils.ConversionUtils
 import enrichments.{MiscEnrichments, EventEnrichments}
 
 // Test class
