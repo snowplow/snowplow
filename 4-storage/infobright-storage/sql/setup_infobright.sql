@@ -9,10 +9,10 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.0.6
+-- Version:     0.0.7
 -- URL:         -
 --
--- Authors:     Yali Sassoon, Alex Dean, Gilles Moncaubeig
+-- Authors:     Yali Sassoon, Alex Dean
 -- Copyright:   Copyright (c) 2012-2013 SnowPlow Analytics Ltd
 -- License:     Apache License Version 2.0
 
@@ -20,16 +20,19 @@ CREATE DATABASE IF NOT EXISTS snowplow ;
 
 USE snowplow ;
 
-CREATE TABLE IF NOT EXISTS events_006 (
+CREATE TABLE IF NOT EXISTS events_007 (
 	-- App
 	`app_id` varchar(255) comment 'lookup', -- 'lookup' is a varchar optimisation for Infobright
 	`platform` varchar(50) comment 'lookup',
 	-- Date/time
-	`dt` date,
-	`tm` time,
+	`collector_dt` date, -- Renamed in 0.0.7
+	`collector_tm` time, -- Renamed in 0.0.7
+	`dvce_dt` date, -- Added in 0.0.7
+	`dvce_tm` time, -- Added in 0.0.7
+	`dvce_epoch` bigint, -- Added in 0.0.7
 	-- Event
-	`event` varchar(255) comment 'lookup',
-	`event_vendor` varchar(128) comment 'lookup', -- New in 0.0.6
+	`event` varchar(128) comment 'lookup', -- Size reduced in 0.0.7
+	`event_vendor` varchar(128) comment 'lookup',
 	`event_id` varchar(38),
 	`txn_id` int,
 	-- Versioning
@@ -37,21 +40,23 @@ CREATE TABLE IF NOT EXISTS events_006 (
 	`v_collector` varchar(100) comment 'lookup',
 	`v_etl` varchar(100) comment 'lookup',
 	-- User and visit
-	`user_id` varchar(38),
+	`user_id` varchar(255), -- Size increased in 0.0.7
 	`user_ipaddress` varchar(19),
 	`user_fingerprint` varchar(50),
-	`visit_id` smallint,
+	`domain_userid` varchar(16),  -- Added in 0.0.7
+	`domain_sessionidx` smallint, -- Renamed in 0.0.7
+	`network_userid` varchar(38), -- Added in 0.0.7
 	-- Page
 	`page_url` varchar(3000),
 	`page_title` varchar(2000),
 	`page_referrer` varchar(3000),
 	-- Page URL components
-	`page_urlscheme` varchar(16),    -- New in 0.0.6
-	`page_urlhost` varchar(255),     -- New in 0.0.6
-	`page_urlport` smallint,         -- New in 0.0.6
-	`page_urlpath` varchar(1000),    -- New in 0.0.6
-	`page_urlquery` varchar(3000),   -- New in 0.0.6
-	`page_urlfragment` varchar(255), -- New in 0.0.6
+	`page_urlscheme` varchar(16),
+	`page_urlhost` varchar(255),
+	`page_urlport` smallint,
+	`page_urlpath` varchar(1000),
+	`page_urlquery` varchar(3000),
+	`page_urlfragment` varchar(255),
 	-- Marketing
 	`mkt_source` varchar(255),
 	`mkt_medium` varchar(255),
@@ -80,10 +85,10 @@ CREATE TABLE IF NOT EXISTS events_006 (
 	`ti_price` dec(18,2),
 	`ti_quantity` int,
 	-- Page ping
-	`pp_xoffset_min` mediumint, -- New in 0.0.6
-	`pp_xoffset_max` mediumint, -- New in 0.0.6
-	`pp_yoffset_min` mediumint, -- New in 0.0.6
-	`pp_yoffset_max` mediumint, -- New in 0.0.6
+	`pp_xoffset_min` mediumint,
+	`pp_xoffset_max` mediumint,
+	`pp_yoffset_min` mediumint,
+	`pp_yoffset_max` mediumint,
 	-- User Agent
 	`useragent` varchar(500),
 	-- Browser
@@ -104,8 +109,8 @@ CREATE TABLE IF NOT EXISTS events_006 (
 	`br_features_silverlight` tinyint(1),
 	`br_cookies` tinyint(1),
 	`br_colordepth` varchar(12) comment 'lookup',
-	`br_viewwidth` mediumint,  -- New in 0.0.6
-	`br_viewheight` mediumint, -- New in 0.0.6
+	`br_viewwidth` mediumint,
+	`br_viewheight` mediumint,
 	-- Operating System
 	`os_name` varchar(50) comment 'lookup',
 	`os_family` varchar(50) comment 'lookup',
@@ -117,7 +122,7 @@ CREATE TABLE IF NOT EXISTS events_006 (
 	`dvce_screenwidth` mediumint,
 	`dvce_screenheight` mediumint,
 	-- Document
-	`doc_charset` varchar(128), -- New in 0.0.6
-	`doc_width` mediumint, -- New in 0.0.6
-	`doc_height` mediumint -- New in 0.0.6
+	`doc_charset` varchar(128),
+	`doc_width` mediumint,
+	`doc_height` mediumint
 ) ENGINE=BRIGHTHOUSE DEFAULT CHARSET=utf8 ;

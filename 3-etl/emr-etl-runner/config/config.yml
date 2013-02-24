@@ -27,7 +27,7 @@
   :storage_format: postgres-redshift # Or switch to 'hive' if you're only using Hive for analysis or switch to 'mysql-infobright' if you're using Infobright
 # Can bump the below as SnowPlow releases new versions
 :snowplow:
-  :serde_version: 0.5.4
+  :serde_version: 0.5.5
   :hive_hiveql_version: 0.5.6
   :mysql_infobright_hiveql_version: 0.0.7
   :postgres_redshift_hiveql_version: 0.0.1

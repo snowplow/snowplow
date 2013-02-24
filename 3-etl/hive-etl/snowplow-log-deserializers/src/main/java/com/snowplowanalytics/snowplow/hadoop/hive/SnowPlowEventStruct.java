@@ -20,6 +20,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.ArrayList;
 import java.nio.charset.Charset;
+import java.util.Date;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.util.regex.Matcher;
@@ -67,8 +68,12 @@ public class SnowPlowEventStruct {
   public String platform;
 
   // Date/time
-  public String dt;
-  public String tm;
+  public String dt; // Leave in because still used in the Hive output for partioning
+  public String collector_dt;
+  public String collector_tm;
+  public String dvce_dt;
+  public String dvce_tm;
+  public Long dvce_epoch;
 
   // Event and transaction
   public String event;
@@ -80,7 +85,9 @@ public class SnowPlowEventStruct {
   public String user_id;
   public String user_ipaddress;
   public String user_fingerprint;
-  public Integer visit_id;
+  public String domain_userid;
+  public Integer domain_sessionidx;
+  public String network_userid;
 
   // Page
   public String page_url;
@@ -200,9 +207,12 @@ public class SnowPlowEventStruct {
 
   private static final String eventVendor = "com.snowplowanalytics"; // Assume all events are from SnowPlow vendor for now.
 
+  private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+  private static final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+
   // An enum of all the fields we're expecting in the querystring
   // See https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol for details
-  private static enum QuerystringFields { E, IP, AID, P, TID, UID, FP, VID, TSTAMP, TV, LANG, CS, VP, DS, F_PDF, F_FLA, F_JAVA, F_DIR, F_QT, F_REALP, F_WMA, F_GEARS, F_AG, COOKIE, RES, CD, TZ, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU, PP_MIX, PP_MAX, PP_MIY, PP_MAY }
+  private static enum QuerystringFields { E, IP, AID, P, TID, UID, DUID, NUID, FP, VID, DTM, TV, LANG, CS, VP, DS, F_PDF, F_FLA, F_JAVA, F_DIR, F_QT, F_REALP, F_WMA, F_GEARS, F_AG, COOKIE, RES, CD, TZ, REFR, URL, PAGE, EV_CA, EV_AC, EV_LA, EV_PR, EV_VA, TR_ID, TR_AF, TR_TT, TR_TX, TR_SH, TR_CI, TR_ST, TR_CO, TI_ID, TI_SK, TI_NA, TI_CA, TI_PR, TI_QU, PP_MIX, PP_MAX, PP_MIY, PP_MAY }
 
   // An enum for the marketing attribution fields we might find
   // attached to the page URL.
@@ -280,7 +290,8 @@ public class SnowPlowEventStruct {
 
     // 1. Now we retrieve the fields which get directly passed through
     this.dt = m.group(1);
-    this.tm = m.group(2); // CloudFront date format matches Hive's
+    this.collector_dt = this.dt;
+    this.collector_tm = m.group(2); // CloudFront date format matches Hive's
     this.user_ipaddress = m.group(5);
 
     // 2. Now grab the user agent
@@ -363,17 +374,24 @@ public class SnowPlowEventStruct {
             case UID:
               this.user_id = value;
               break;
+            case DUID:
+              this.domain_userid = value;
+              break;
+            case NUID:
+              this.network_userid = value;
+              break;
             case FP:
               this.user_fingerprint = value;
               break;
             case VID:
-              this.visit_id = Integer.parseInt(value);
+              this.domain_sessionidx = Integer.parseInt(value);
               break;
-            case TSTAMP:
-              // Replace our timestamp fields with the client's timestamp
-              String[] timestamp = value.split(" ");
-              this.dt = timestamp[0];
-              this.tm = timestamp[1];
+            case DTM:
+              // Set our dvce_dt, _tm and _epoch fields
+              this.dvce_epoch = Long.parseLong(value);
+              Date deviceDate = new Date(this.dvce_epoch);
+              this.dvce_dt = dateFormat.format(deviceDate);
+              this.dvce_tm = timeFormat.format(deviceDate);
               break;
             case TV:
               this.v_tracker = value;
@@ -646,7 +664,11 @@ public class SnowPlowEventStruct {
     this.app_id = null;
     this.platform = null;
     this.dt = null;
-    this.tm = null;
+    this.collector_dt = null;
+    this.collector_tm = null;
+    this.dvce_dt = null;
+    this.dvce_tm = null;
+    this.dvce_epoch = null;
     this.event = null;
     this.event_vendor = null;
     this.event_id = null;
@@ -654,7 +676,9 @@ public class SnowPlowEventStruct {
     this.user_id = null;
     this.user_ipaddress = null;
     this.user_fingerprint = null;
-    this.visit_id = null;
+    this.domain_userid = null;
+    this.domain_sessionidx = null;
+    this.network_userid = null;
     this.page_url = null;
     this.page_title = null;
     this.page_referrer = null;

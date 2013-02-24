@@ -9,8 +9,8 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.0.6
--- URL:         s3://snowplow-emr-assets/hive/hiveql/non-hive-rolling-etl-0.0.6.q
+-- Version:     0.0.7
+-- URL:         s3://snowplow-emr-assets/hive/hiveql/non-hive-rolling-etl-0.0.7.q
 --
 -- Authors:     Yali Sassoon, Alex Dean
 -- Copyright:   Copyright (c) 2012-2013 SnowPlow Analytics Ltd
@@ -29,10 +29,13 @@ LOCATION '${CLOUDFRONT_LOGS}' ;
 CREATE EXTERNAL TABLE IF NOT EXISTS `events` (
 app_id string,
 platform string,
-dt_dt string,
-tm string,
+collector_dt string, -- Renamed in 0.0.7
+collector_tm string, -- Renamed in 0.0.7
+dvce_dt string, -- Added in 0.0.7
+dvce_tm string, -- Added in 0.0.7
+dvce_epoch bigint, -- Added in 0.0.7
 event string,
-event_vendor string, -- New in 0.0.6
+event_vendor string,
 event_id string,
 txn_id string,
 v_tracker string,
@@ -41,16 +44,18 @@ v_etl string,
 user_id string,
 user_ipaddress string,
 user_fingerprint string,
-visit_id int,
+domain_userid string,  -- Added in 0.0.7
+domain_sessionidx int, -- Renamed in 0.0.7
+network_userid string, -- Added in 0.0.7
 page_url string,
 page_title string,
 page_referrer string,
-page_urlscheme string, -- New in 0.0.6
-page_urlhost string, -- New in 0.0.6
-page_urlport int, -- New in 0.0.6
-page_urlpath string, -- New in 0.0.6
-page_urlquery string, -- New in 0.0.6
-page_urlfragment string, -- New in 0.0.6
+page_urlscheme string,
+page_urlhost string,
+page_urlport int,
+page_urlpath string,
+page_urlquery string,
+page_urlfragment string,
 mkt_source string,
 mkt_medium string,
 mkt_term string,
@@ -75,10 +80,10 @@ ti_name string,
 ti_category string,
 ti_price string,
 ti_quantity string,
-pp_xoffset_min int, -- New in 0.0.6
-pp_xoffset_max int, -- New in 0.0.6
-pp_yoffset_min int, -- New in 0.0.6
-pp_yoffset_max int, -- New in 0.0.6
+pp_xoffset_min int,
+pp_xoffset_max int,
+pp_yoffset_min int,
+pp_yoffset_max int,
 useragent string,
 br_name string,
 br_family string,
@@ -97,8 +102,8 @@ br_features_gears tinyint,
 br_features_silverlight tinyint,
 br_cookies tinyint,
 br_colordepth string,
-br_viewwidth int, -- New in 0.0.6
-br_viewheight int, -- New in 0.0.6
+br_viewwidth int,
+br_viewheight int,
 os_name string,
 os_family string,
 os_manufacturer string,
@@ -107,9 +112,9 @@ dvce_type string,
 dvce_ismobile tinyint,
 dvce_screenwidth int,
 dvce_screenheight int,
-doc_charset string, -- New in 0.0.6
-doc_width int, -- New in 0.0.6
-doc_height int -- New in 0.0.6
+doc_charset string,
+doc_width int,
+doc_height int
 )
 PARTITIONED BY (dt string)
 ROW FORMAT DELIMITED
@@ -125,10 +130,13 @@ PARTITION (dt)
 SELECT
 app_id,
 platform,
-dt AS dt_dt,
-tm,
+collector_dt, -- Renamed in 0.0.7
+collector_tm, -- Renamed in 0.0.7
+dvce_dt, -- Added in 0.0.7
+dvce_tm, -- Added in 0.0.7
+dvce_epoch, -- Added in 0.0.7
 event,
-event_vendor, -- New in 0.0.6
+event_vendor,
 event_id,
 txn_id,
 v_tracker,
@@ -137,16 +145,18 @@ v_etl,
 user_id,
 user_ipaddress,
 user_fingerprint,
-visit_id,
+domain_userid,  -- Added in 0.0.7
+domain_sessionidx, -- Renamed in 0.0.7
+network_userid, -- Added in 0.0.7
 page_url,
 page_title,
 page_referrer,
-page_urlscheme, -- New in 0.0.6
-page_urlhost, -- New in 0.0.6
-page_urlport, -- New in 0.0.6
-page_urlpath, -- New in 0.0.6
-page_urlquery, -- New in 0.0.6
-page_urlfragment, -- New in 0.0.6
+page_urlscheme,
+page_urlhost,
+page_urlport,
+page_urlpath,
+page_urlquery,
+page_urlfragment,
 mkt_source,
 mkt_medium,
 mkt_term,
@@ -171,10 +181,10 @@ ti_name,
 ti_category,
 ti_price,
 ti_quantity,
-pp_xoffset_min, -- New in 0.0.6
-pp_xoffset_max, -- New in 0.0.6
-pp_yoffset_min, -- New in 0.0.6
-pp_yoffset_max, -- New in 0.0.6
+pp_xoffset_min,
+pp_xoffset_max,
+pp_yoffset_min,
+pp_yoffset_max,
 useragent,
 br_name,
 br_family,
@@ -193,8 +203,8 @@ br_features_gears,
 br_features_silverlight,
 br_cookies_bt AS br_cookies,
 br_colordepth,
-br_viewwidth, -- New in 0.0.6
-br_viewheight, -- New in 0.0.6
+br_viewwidth,
+br_viewheight,
 os_name,
 os_family,
 os_manufacturer,
@@ -203,8 +213,8 @@ dvce_type,
 dvce_ismobile_bt AS dvce_ismobile,
 dvce_screenwidth,
 dvce_screenheight,
-doc_charset, -- New in 0.0.6
-doc_width, -- New in 0.0.6
-doc_height, -- New in 0.0.6
+doc_charset,
+doc_width,
+doc_height,
 dt
 FROM `extracted_logs` ;

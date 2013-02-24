@@ -27,7 +27,11 @@ class SnowPlowEvent {
 
   // Date/time
   var dt: String = _
-  var tm: String = _
+  var collector_dt: String = _
+  var collector_tm: String = _
+  var dvce_dt: String = _
+  var dvce_tm: String = _
+  var dvce_epoch: Long = _
 
   // Transaction (i.e. this logging event)
   var event: String = _
@@ -39,7 +43,9 @@ class SnowPlowEvent {
   var user_id: String = _
   var user_ipaddress: String = _
   var user_fingerprint: String = _
-  var visit_id: Int = _
+  var domain_userid: String = _
+  var domain_sessionidx: Int = _
+  var network_userid: String = _
 
   // Page
   var page_url: String = _

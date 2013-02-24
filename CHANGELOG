@@ -1,3 +1,32 @@
+Version 0.7.4 (2013-02-22)
+--------------------------
+JS tracker: bumped to 0.11.0
+JS tracker: introduced setAppId() and deprecated setSiteId() (#168)
+JS tracker: 1st party user ID now transmitted as duid (domain uid) (part of #150)
+JS tracker: now sends dtm - the client timestamp (#149)
+JS tracker: deprecated and disabled attachUserId()
+JS tracker: deprecated getVisitorId() and getVisitorInfo() - use getDomainUserId() and getDomainUserInfo() instead
+JS tracker: add setUserId which sets the uid field (#167)
+JS tracker: SnowPlow cookies no longer tied to site ID (#148)
+Clojure Collector: bumped to 0.3.0
+Clojure Collector: now append nuid (network aka 3rd party) user ID, not uid (#150)
+Serde: bumped to 0.5.5
+Serde: renamed tstamp field to dtm
+Serde: dt and tm split into dvce_x and collector_x (#149)
+Serde: extract new nuid and duid fields (#150)
+Serde: renamed visit_id to domain_sessionidx (#171)
+HiveQL: hive-rolling-etl.q bumped to 0.5.6
+HiveQL: non-hive-rolling-etl.q bumped to 0.0.7
+HiveQL: dt and tm split into dvce_x and collector_x (#149)
+HiveQL: now extracts uid, nuid and duid (#150)
+HiveQL: renamed visit_id to domain_sessionidx (#171)
+Infobright: bumped setup_infobright.sql to 0.0.7
+Infobright: renamed dt and tm to dvce_x and collector_x (#149)
+Infobright: now supports uid, nuid and duid (#150)
+Infobright: renamed visit_id to domain_sessionidx (#171)
+Infobright: added migration script 0.0.6 CloudFront collector -> 0.0.7
+Infobright: added migration script 0.0.6 Clojure collector -> 0.0.7
+
 Version 0.7.3 (2013-02-15)
 --------------------------
 JS tracker: bumped to 0.10.0
