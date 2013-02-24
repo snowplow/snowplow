@@ -128,6 +128,7 @@ object EnrichmentManager {
 
     // We use a TransformMap which takes the format:
     // "source key" -> (transformFunction, field(s) to set)
+    // Caution: by definition, a TransformMap loses type safety. Always unit test!
     val transformMap: TransformMap =
       Map(("e"       , (EE.extractEventType, "event")),
           ("ip"      , (ME.identity, "user_ipaddress")),
