@@ -1,12 +1,11 @@
 Version 0.7.6 (2013-XX-XX)
 --------------------------
-HiveQL: postgres-redshift-etl.q added. Version 0.0.1
+HiveQL: postgres-redshift-etl.q added. Version 0.0.1 (#174)
 HiveQL: hive-rolling-etl.q renamed to hive-etl.q (version left the same)
 HiveQL: non-hive-rolling-etl.q renamed to mysql-infobright-etl.q (version left the same)
 EmrEtlRunner: bumped to 0.0.9
 EmrEtlRunner: renamed :snowplow: variable names and added new Redshift one in config.yml
-EmrEtlRunner: ...
-
+EmrEtlRunner: updated to support Redshift as a storage format (#173)
 StorageLoader: bumped to 0.0.5
 StorageLoader: added Redshift-specific fields to config.yml
 StorageLoader: ...
