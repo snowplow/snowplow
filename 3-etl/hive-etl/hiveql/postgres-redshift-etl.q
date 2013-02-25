@@ -140,6 +140,8 @@ app_id,
 platform,
 
 concat(collector_dt, ' ', collector_tm) AS collector_tstamp,
+
+-- TODO: need to fix this.
 concat(dvce_dt, ' ', dvce_tm) AS dvce_tstamp,
 
 event,

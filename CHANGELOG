@@ -1,3 +1,12 @@
+Version 0.7.6 (2013-XX-XX)
+--------------------------
+
+TODO: fix dvce_tstamp field
+
+HiveQL: postgres-redshift-etl.q added. Version 0.0.1
+HiveQL: hive-rolling-etl.q renamed to hive-etl.q (versioning unchanged)
+HiveQL: xxx
+
 Version 0.7.5 (2013-02-25)
 --------------------------
 JS tracker: bumped to 0.11.1
