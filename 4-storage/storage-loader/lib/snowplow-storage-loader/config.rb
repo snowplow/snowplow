@@ -27,6 +27,8 @@ module SnowPlow
       # TODO: would be nice to move this to using Kwalify
       # TODO: would be nice to support JSON as well as YAML
 
+      @@storage_targets = Set.net(%s(redshift infobright))
+
       # Return the configuration loaded from the supplied YAML file, plus
       # the additional constants above.
       def get_config()
@@ -41,13 +43,13 @@ module SnowPlow
         config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
         config[:download][:folder] = Sluice::Storage::trail_slash(config[:download][:folder])
 
-        # Validate that there is at least one valid storage target
-        unless ( config[:targets][:Redshift][:enabled] == true  or config[:targets][:Infobright][:enabled] == true )
-          raise ConfigError, "Storage type '#{config[:storage][:type]}' not supported (only 'infobright')"
+        # Check we recognise the storage target 
+        unless @@storage_targets.include?(config[:storage][:type]) 
+          raise ConfigError, "Storage type '#{config[:storage][:type]}' not supported"
         end
             
-        # If the Infobright is a target, check that the download folder exists and is empty
-        if ( config[:targets][:Infobright][:enabled] == true)
+        # If Infobright is the target, check that the download folder exists and is empty
+        if (config[:storage][:type] == 'infobright')
           # Check that the download folder exists...
           unless File.directory?(config[:download][:folder])
             raise ConfigError, "Download folder '#{config[:download][:folder]}' not found"

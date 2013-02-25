@@ -26,8 +26,8 @@ module SnowPlow
         puts "Loading SnowPlow events into Redshift..."
 
         # Assemble the relevant parameters for the bulk load query
-        jdbc_url = "jdbc:postgresql://%s:%s/%s" % [config[:storage][:endpoint], config[:storage][:port], config[:storage][:database]]
-        credentials = "aws_access_key_id=%s;aws_secret_access_key=%s" % [config[:aws][:access_key_id], config[:aws][:secret_access_key]]
+        jdbc_url = "jdbc:postgresql://#{config[:storage][:endpoint]}:#{config[:storage][:port]}/#{config[:storage][:database]}"
+        credentials = "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
         query = "copy %s from '%s' credentials '%s' delimiter '%s';" % [config[:storage][:table], config[:s3][:buckets][:in], credentials, EVENT_FIELD_SEPARATOR]
         username = config[:storage][:username]
         password = config[:storage][:password]

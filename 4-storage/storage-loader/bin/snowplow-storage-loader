@@ -31,28 +31,26 @@ loader = SnowPlow::StorageLoader
 begin
   config = loader::Config.get_config()
 
-  # If Redshift is a target, bulk load data from In Bucket to Redshift
-  if config[:targets][:Redshift][:enabled] == true
-    loader::RedshiftLoader.load_events(config)
-  end
-
-  # If Infobright is a target
-    # Download the SnowPlow event files from In Bucket to the local file system
-    # Load the SnowPlow event files into the target storage
-  if config[:targets][:Infobright][:enabled] == true
-    unless config[:skip].include?('download')
-     loader::S3Tasks.download_events(config)
-    end   
-
-    unless config[:skip].include?('load')
-      loader::Loader.load_events(config)
+  # Download files - only for Infobright
+  unless config[:skip].include?('download')
+    if config[:storage][:type] == 'infobright'
+      loader::S3Tasks.download_events(config)
     end
   end
 
-  unless config[:skip].include?('download')
-   loader::S3Tasks.download_events(config)
+  # If we are not skipping the load, use the appropriate
+  # loader for Redshift or Infobright
+  unless config[:skip].include?('load')
+    case config[:storage][:type]
+      when 'redshift'
+        loader::RedshiftLoader.load_events(config)
+      when 'infobright'
+        loader::InfobrightLoader.load_events(config)
+      end
+    end
   end
 
+  # Archive
   unless config[:skip].include?('archive')
     loader::S3Tasks.archive_events(config)
   end
