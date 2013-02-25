@@ -44,7 +44,7 @@ var SnowPlow = SnowPlow || function() {
 	return {
 
 		/* Tracker identifier with version */
-		version: 'js-0.11.0', // Update banner.js too
+		version: 'js-0.11.1', // Update banner.js too
 
 		expireDateTime: null,
 
