@@ -20,6 +20,7 @@ module SnowPlow
 
       # Constants for the load process
       EVENT_FIELD_SEPARATOR = "\\t"
+      JISQL_PATH = File.join("..", "jisql-2.0.11")
 
       def load_events(config)
         puts "Loading SnowPlow events into Redshift..."
@@ -32,8 +33,8 @@ module SnowPlow
         password = config[:storage][:password]
            
         # Execute the following request at the command line:
-        cmd_line_request = %Q!java -cp 4-storage/storage-loader/jisql-2.0.11/lib/jisql-2.0.11.jar:4-storage/storage-loader/jisql-2.0.11/lib/jopt-simple-3.2.jar:4-storage/storage-loader/jisql-2.0.11/lib/postgresql-8.4-703.jdbc4.jar com.xigole.util.sql.Jisql -driver postgresql -cstring #{jdbc_url} -user #{username} -password #{password} -c \\; -query "#{query}"!
-        stdout_err = `#{cmd_line_request} 2>&1` # Execute
+        jisql_cmd = %Q!java -cp #{JISQL_PATH}/* com.xigole.util.sql.Jisql -driver postgresql -cstring #{jdbc_url} -user #{username} -password #{password} -c \\; -query "#{query}"!
+        stdout_err = `#{jisql_cmd} 2>&1` # Execute
         ret_val = $?.to_i
 
         # Error handling
