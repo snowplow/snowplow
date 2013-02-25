@@ -10,7 +10,7 @@
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
 -- Version:     0.5.6
--- URL:         s3://snowplow-emr-assets/hive/hiveql/hive-rolling-etl-0.5.6.q
+-- URL:         s3://snowplow-emr-assets/hive/hiveql/hive-etl-0.5.6.q
 --
 -- Authors:     Alex Dean, Yali Sassoon, Simon Andersson, Michael Tibben, Mike Moulton
 -- Copyright:   Copyright (c) 2012-2013 SnowPlow Analytics Ltd
