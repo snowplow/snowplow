@@ -33,9 +33,9 @@ module SnowPlow
 
         stdout_err = `#{cmd_line_request} 2>&1` # Execute the cmd_line_request
         ret_val = $?.to_i
-          unless ret_val == 0
-            raise StorageLoader::Loader::DatabaseLoadError, "Error code #{ret_val}: #{stdout_err}"
-          end
+        unless ret_val == 0
+          raise StorageLoader::Loader::DatabaseLoadError, "Error code #{ret_val}: #{stdout_err}"
+        end
       end
     end
   end
