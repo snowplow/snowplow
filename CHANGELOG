@@ -6,7 +6,7 @@ fix dvce_tstamp field - TODO
 
 HiveQL: hive-rolling-etl.q renamed to hive-etl.q (version left the same)
 HiveQL: non-hive-rolling-etl.q renamed to mysql-infobright-etl.q (version left the same)
-EmrEtlRunner: bumped to 0.0.9 - TODO
+EmrEtlRunner: bumped to 0.0.9
 
 Version 0.7.5 (2013-02-25)
 --------------------------
