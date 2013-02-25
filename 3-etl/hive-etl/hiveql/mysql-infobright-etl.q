@@ -10,7 +10,7 @@
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
 -- Version:     0.0.7
--- URL:         s3://snowplow-emr-assets/hive/hiveql/non-hive-rolling-etl-0.0.7.q
+-- URL:         s3://snowplow-emr-assets/hive/hiveql/mysql-infobright-etl-0.0.7.q
 --
 -- Authors:     Yali Sassoon, Alex Dean
 -- Copyright:   Copyright (c) 2012-2013 SnowPlow Analytics Ltd
