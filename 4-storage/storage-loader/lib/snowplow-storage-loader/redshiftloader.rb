@@ -30,11 +30,12 @@ module SnowPlow
            
         # Execute the following request at the command line:
         cmd_line_request = %Q!java -cp 4-storage/storage-loader/jisql-2.0.11/lib/jisql-2.0.11.jar:4-storage/storage-loader/jisql-2.0.11/lib/jopt-simple-3.2.jar:4-storage/storage-loader/jisql-2.0.11/lib/postgresql-8.4-703.jdbc4.jar com.xigole.util.sql.Jisql -driver postgresql -cstring #{jdbc_url} -user #{username} -password #{password} -c \\; -query "#{query}"!
-
-        stdout_err = `#{cmd_line_request} 2>&1` # Execute the cmd_line_request
+        stdout_err = `#{cmd_line_request} 2>&1` # Execute
         ret_val = $?.to_i
+
+        # Error handling
         unless ret_val == 0
-          raise StorageLoader::Loader::DatabaseLoadError, "Error code #{ret_val}: #{stdout_err}"
+          raise DatabaseLoadError, "Error code #{ret_val}: #{stdout_err}"
         end
       end
     end
