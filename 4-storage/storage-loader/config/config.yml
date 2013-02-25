@@ -9,7 +9,7 @@
 :download:
   :folder: ADD HERE # Infobright-only config option. Where to store the downloaded files. Note: only relevant for Infobright loads (not Redshift)
 # Currently assumes we are loading only one target
-:target:
+:storage:
   :type: redshift # Or 'infobright'
   :endpoint: ADD HERE # Redshift only - get from Redshift console. Leave blank for Infobright
   :database: ADD HERE # Name of database 

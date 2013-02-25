@@ -22,24 +22,13 @@ module SnowPlow
         puts "Loading SnowPlow events into Redshift..."
 
         # Assemble the relevant parameters for the bulk load query
-
-        jdbc_url = "jdbc:postgresql://" + config[:targets][:Redshift][:endpoint] + ":" + config[:targets][:Redshift][:port].to_s + "/" + config[:targets][:Redshift][:database]
-
-        source_in_s3 = config[:s3][:buckets][:in]
-
-        output_table_in_redshift = config[:targets][:Redshift][:table]
-
+        jdbc_url = "jdbc:postgresql://" + config[:storage][:endpoint] + ":" + config[:storage][:port].to_s + "/" + config[:storage][:database]
         credentials = "'aws_access_key_id=" + config[:aws][:access_key_id] + ";aws_secret_access_key=" + config[:aws][:secret_access_key] + "'"
-
-        delimiter = "'\\t'"
-
-        query = "copy " + output_table_in_redshift + " from '" + source_in_s3 + "' credentials " + credentials + " delimiter " + delimiter + ";"
-
-        username = config[:targets][:Redshift][:username]
-        password = config[:targets][:Redshift][:password]
-
-        # We need to execute the following request at the command line:
-
+        query = "copy " + config[:storage][:table] + " from '" + config[:s3][:buckets][:in] + "' credentials " + credentials + " delimiter '\\t';"
+        username = config[:storage][:username]
+        password = config[:storage][:password]
+           
+        # Execute the following request at the command line:
         cmd_line_request = %Q!java -cp 4-storage/storage-loader/jisql-2.0.11/lib/jisql-2.0.11.jar:4-storage/storage-loader/jisql-2.0.11/lib/jopt-simple-3.2.jar:4-storage/storage-loader/jisql-2.0.11/lib/postgresql-8.4-703.jdbc4.jar com.xigole.util.sql.Jisql -driver postgresql -cstring #{jdbc_url} -user #{username} -password #{password} -c \\; -query "#{query}"!
 
         stdout_err = `#{cmd_line_request} 2>&1` # Execute the cmd_line_request
