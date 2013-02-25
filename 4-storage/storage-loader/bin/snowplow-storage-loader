@@ -22,12 +22,10 @@ loader = SnowPlow::StorageLoader
 # This Ruby script runs the SnowPlow StorageLoader.
 #
 # This is a three-step process:
-# If Redshift is a target, bulk load from In Bucket to Redshift
-# If Infobright is a target
-  # Download the SnowPlow event files from In Bucket to the local file system
-  # Load the SnowPlow event files into the target storage
-# Then archive the processed SnowPlow event files from In Bucket to Archive Bucket
-
+#
+# 1. Download SnowPlow event files from S3 (Infobright only)
+# 2. Load SnowPlow event files (either local or remote) into storage target
+# 3. Archive event files in S3
 begin
   config = loader::Config.get_config()
 
