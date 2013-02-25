@@ -1,12 +1,15 @@
 Version 0.7.6 (2013-XX-XX)
 --------------------------
 HiveQL: postgres-redshift-etl.q added. Version 0.0.1
-
-fix dvce_tstamp field - TODO
-
 HiveQL: hive-rolling-etl.q renamed to hive-etl.q (version left the same)
 HiveQL: non-hive-rolling-etl.q renamed to mysql-infobright-etl.q (version left the same)
 EmrEtlRunner: bumped to 0.0.9
+EmrEtlRunner: renamed :snowplow: variable names and added new Redshift one in config.yml
+EmrEtlRunner: ...
+
+StorageLoader: bumped to 0.0.5
+StorageLoader: added Redshift-specific fields to config.yml
+StorageLoader: ...
 
 Version 0.7.5 (2013-02-25)
 --------------------------

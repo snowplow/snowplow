@@ -140,8 +140,8 @@ app_id,
 platform,
 
 concat(collector_dt, ' ', collector_tm) AS collector_tstamp,
--- TODO: consider adding dvce_tmms into the serde. Would simplify the below into:
--- concat(dvce_dt, ' ', dvce_tm, ".", dvce_tmms) AS dvce_tstamp,
+-- TODO: consider adding dvce_tmillis into the serde. Would simplify the below into:
+-- concat(dvce_dt, ' ', dvce_tm, ".", dvce_tmillis) AS dvce_tstamp,
 concat(dvce_dt, ' ', dvce_tm, ".", (dvce_epoch - (unix_timestamp(concat(dvce_dt, ' ', dvce_tm)) * 1000))) AS dvce_tstamp,
 
 event,

@@ -22,6 +22,6 @@ require_relative 'snowplow-storage-loader/loader'
 module SnowPlow
   module StorageLoader
   	NAME          = "snowplow-storage-loader"
-    VERSION       = "0.0.4"
+    VERSION       = "0.0.5"
   end
 end
