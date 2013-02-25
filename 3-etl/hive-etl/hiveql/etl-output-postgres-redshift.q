@@ -1,4 +1,4 @@
--- Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2013 SnowPlow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,10 +10,10 @@
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
 -- Version:     0.0.1
--- URL:         s3://snowplow-emr-assets/hive/hiveql/etl-output-postgres-redshift-0.0.1.q
+-- URL:         s3://snowplow-emr-assets/hive/hiveql/postgres-redshift-etl-0.0.1.q
 --
--- Authors:     Yali Sassoon, Alex Dean
--- Copyright:   Copyright (c) 2012-2013 SnowPlow Analytics Ltd
+-- Authors:     Yali Sassoon
+-- Copyright:   Copyright (c) 2013 SnowPlow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 SET hive.exec.dynamic.partition=true ;
@@ -139,8 +139,8 @@ SELECT
 app_id,
 platform,
 
-concat(collector_dt, ' ',collector_tm) AS collector_tstamp,
-concat(dvce_dt, ' ',dvce_tm) AS dvce_tstamp,
+concat(collector_dt, ' ', collector_tm) AS collector_tstamp,
+concat(dvce_dt, ' ', dvce_tm) AS dvce_tstamp,
 
 event,
 event_vendor,
