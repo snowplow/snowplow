@@ -25,6 +25,7 @@ module SnowPlow
     module Config
 
       @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
+      @@storage_formats = Set.net(%s(hive postgres-redshift mysql-infobright))
 
       # TODO: would be nice to move this to using Kwalify
       # TODO: would be nice to support JSON as well as YAML
@@ -61,17 +62,15 @@ module SnowPlow
         # Construct paths to our HiveQL and serde
         asset_path = "%shive" % config[:s3][:buckets][:assets]
         config[:serde_asset]  = "%s/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
-        hiveql_file = case config[:etl][:storage_format]
-                        when 'hive'
-                          "etl-output-hive-%s" % config[:snowplow][:hive_hiveql_version]
-                        when 'mysql-infobright'
-                          "etl-output-mysql-infobright-%s" % config[:snowplow][:mysql_infobright_hiveql_version]
-                        when 'postgres-redshift'
-                          "etl-output-postgres-redshift-%s" config[:snowplow][:postgres_redshift_hiveql_version]
-                        else
-                          raise ConfigError, "storage_format '%s' not supported (only 'hive', 'non-hive')" % config[:etl][:storage_format]
-                        end
-        config[:hiveql_asset] = "%s/hiveql/%s.q" % [asset_path, hiveql_file]
+
+        unless @@storage_formats.include?(config[:etl][:storage_format])
+          raise ConfigError, "storage_format '%s' not supported" % config[:etl][:storage_format]
+        end
+        config[:hiveql_asset] = "%s/hiveql/%s-etl-%s.q" % [
+                                  asset_path, 
+                                  config[:etl][:storage_format].gsub("-", "_"),
+                                  config[:snowplow][:hive_hiveql_version]
+                                ]
 
         # Should we continue on unexpected error or not?
         continue_on = case config[:etl][:continue_on_unexpected_error]
