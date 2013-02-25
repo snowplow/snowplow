@@ -14,46 +14,40 @@
 # License::   Apache License Version 2.0
 
 # Ruby module to support the load of SnowPlow events into Redshift
-
-
-
 module SnowPlow
-	module StorageLoader
-		module RedshiftLoader
+  module StorageLoader
+    module RedshiftLoader
 
-			def load_events(config)
-				puts "Loading SnowPlow events into Redshift..."
+      def load_events(config)
+        puts "Loading SnowPlow events into Redshift..."
 
-				# Assemble the relevant parameters for the bulk load query
+        # Assemble the relevant parameters for the bulk load query
 
-				jdbc_url = "jdbc:postgresql://" + config[:targets][:Redshift][:endpoint] + ":" + config[:targets][:Redshift][:port].to_s + "/" + config[:targets][:Redshift][:database]
+        jdbc_url = "jdbc:postgresql://" + config[:targets][:Redshift][:endpoint] + ":" + config[:targets][:Redshift][:port].to_s + "/" + config[:targets][:Redshift][:database]
 
-				source_in_s3 = config[:s3][:buckets][:in]
+        source_in_s3 = config[:s3][:buckets][:in]
 
-				output_table_in_redshift = config[:targets][:Redshift][:table]
+        output_table_in_redshift = config[:targets][:Redshift][:table]
 
-				credentials = "'aws_access_key_id=" + config[:aws][:access_key_id] + ";aws_secret_access_key=" + config[:aws][:secret_access_key] + "'"
+        credentials = "'aws_access_key_id=" + config[:aws][:access_key_id] + ";aws_secret_access_key=" + config[:aws][:secret_access_key] + "'"
 
-				delimiter = "'\\t'"
+        delimiter = "'\\t'"
 
-				query = "copy " + output_table_in_redshift + " from '" + source_in_s3 + "' credentials " + credentials + " delimiter " + delimiter + ";"
+        query = "copy " + output_table_in_redshift + " from '" + source_in_s3 + "' credentials " + credentials + " delimiter " + delimiter + ";"
 
-				username = config[:targets][:Redshift][:username]
-				password = config[:targets][:Redshift][:password]
+        username = config[:targets][:Redshift][:username]
+        password = config[:targets][:Redshift][:password]
 
-				# We need to execute the following request at the command line:
+        # We need to execute the following request at the command line:
 
-				cmd_line_request = %Q!java -cp 4-storage/storage-loader/jisql-2.0.11/lib/jisql-2.0.11.jar:4-storage/storage-loader/jisql-2.0.11/lib/jopt-simple-3.2.jar:4-storage/storage-loader/jisql-2.0.11/lib/postgresql-8.4-703.jdbc4.jar com.xigole.util.sql.Jisql -driver postgresql -cstring #{jdbc_url} -user #{username} -password #{password} -c \\; -query "#{query}"!
+        cmd_line_request = %Q!java -cp 4-storage/storage-loader/jisql-2.0.11/lib/jisql-2.0.11.jar:4-storage/storage-loader/jisql-2.0.11/lib/jopt-simple-3.2.jar:4-storage/storage-loader/jisql-2.0.11/lib/postgresql-8.4-703.jdbc4.jar com.xigole.util.sql.Jisql -driver postgresql -cstring #{jdbc_url} -user #{username} -password #{password} -c \\; -query "#{query}"!
 
-				stdout_err = `#{cmd_line_request} 2>&1` # Execute the cmd_line_request
-				ret_val = $?.to_i
-			    unless ret_val == 0
-			      raise StorageLoader::Loader::DatabaseLoadError, "Error code #{ret_val}: #{stdout_err}"
-			    end
-			end
-		end
-	end
+        stdout_err = `#{cmd_line_request} 2>&1` # Execute the cmd_line_request
+        ret_val = $?.to_i
+          unless ret_val == 0
+            raise StorageLoader::Loader::DatabaseLoadError, "Error code #{ret_val}: #{stdout_err}"
+          end
+      end
+    end
+  end
 end
-
-
-				
