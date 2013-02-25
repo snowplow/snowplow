@@ -136,9 +136,6 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		// Life of the referral cookie (in milliseconds)
 		configReferralCookieTimeout = 15768000000, // 6 months
 
-		// Should cookies have the secure flag set
-		cookieSecure = SnowPlow.documentAlias.location.protocol === 'https:',
-
 		// Document character set
 		documentCharset = SnowPlow.documentAlias.characterSet || SnowPlow.documentAlias.charset,
 
@@ -466,7 +463,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * or when there is a new visit or a new page view
 	 */
 	function setDomainUserIdCookie(_domainUserId, createTs, visitCount, nowTs, lastVisitTs) {
-		SnowPlow.setCookie(getCookieName('id'), _domainUserId + '.' + createTs + '.' + visitCount + '.' + nowTs + '.' + lastVisitTs, configVisitorCookieTimeout, configCookiePath, configCookieDomain, cookieSecure);
+		SnowPlow.setCookie(getCookieName('id'), _domainUserId + '.' + createTs + '.' + visitCount + '.' + nowTs + '.' + lastVisitTs, configVisitorCookieTimeout, configCookiePath, configCookieDomain);
 	}
 
 	/*
@@ -480,7 +477,6 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 		if (id) {
 			tmpContainer = id.split('.');
-
 			// New visitor set to 0 now
 			tmpContainer.unshift('0');
 		} else {
@@ -495,22 +491,17 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			}
 
 			tmpContainer = [
-				// new visitor
+				// New visitor
 				'1',
-
 				// Domain user ID
 				domainUserId,
-
-				// creation timestamp - seconds since Unix epoch
+				// Creation timestamp - seconds since Unix epoch
 				nowTs,
-
 				// visitCount - 0 = no previous visit
 				0,
-
-				// current visit timestamp
+				// Current visit timestamp
 				nowTs,
-
-				// last visit timestamp - blank meaning no previous visit
+				// Last visit timestamp - blank meaning no previous visit
 				''
 			];
 		}
@@ -614,7 +605,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 		// Update cookies
 		setDomainUserIdCookie(_domainUserId, createTs, visitCount, nowTs, lastVisitTs);
-		SnowPlow.setCookie(sesname, '*', configSessionCookieTimeout, configCookiePath, configCookieDomain, cookieSecure);
+		SnowPlow.setCookie(sesname, '*', configSessionCookieTimeout, configCookiePath, configCookieDomain);
 
 		// Tracker plugin hook
 		// TODO: we can blow this away for SnowPlow
