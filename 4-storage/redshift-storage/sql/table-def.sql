@@ -19,19 +19,19 @@
 CREATE TABLE events (
 	-- App
 	app_id varchar(255) encode text255, 
-	platform varchar(255) encode text255, 
+	platform varchar(255) encode text255 not null, 
 	-- Date/time
-	collector_tstamp timestamp,
+	collector_tstamp timestamp not null,
 	dvce_tstamp timestamp,
 	-- Event
-	event varchar(128) encode text255,
-	event_vendor varchar(128) encode text32k,
-	event_id varchar(38),
+	event varchar(128) encode text255 not null,
+	event_vendor varchar(128) encode text32k not null,
+	event_id varchar(38) not null unique,
 	txn_id int,
 	-- Versioning
-	v_tracker varchar(100) encode text255, 
-	v_collector varchar(100) encode text255,
-	v_etl varchar(100) encode text255, 
+	v_tracker varchar(100) encode text255 not null, 
+	v_collector varchar(100) encode text255 not null,
+	v_etl varchar(100) encode text255 not null, 
 	-- User and visit
 	user_id varchar(255) encode runlength, 
 	user_ipaddress varchar(19) encode runlength,
@@ -82,7 +82,7 @@ CREATE TABLE events (
 	pp_yoffset_min integer,
 	pp_yoffset_max integer,
 	-- User Agent
-	useragent varchar(500) encode text32k,
+	useragent varchar(1000) encode text32k,
 	-- Browser
 	br_name varchar(50) encode text255,
 	br_family varchar(50) encode text255,
@@ -116,8 +116,9 @@ CREATE TABLE events (
 	-- Document
 	doc_charset varchar(128) encode text255,
 	doc_width integer,
-	doc_height integer
+	doc_height integer,
+	CONSTRAINT event_id_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
-DISTKEY domain_userid
-SORTKEY collector_tstamp;
+DISTKEY (domain_userid)
+SORTKEY (collector_tstamp);
