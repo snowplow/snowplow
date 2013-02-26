@@ -2,7 +2,7 @@
   :access_key_id: ADD HERE
   :secret_access_key: ADD HERE
 :s3:
-  :region: ADD HERE # Note: for loading data into Redshift, your region needs to be US-standard
+  :region: ADD HERE # Note: for loading data into Redshift, your region needs to be 'us-east-1'
   :buckets:
     :in: ADD HERE
     :archive: ADD HERE
@@ -13,7 +13,7 @@
   :type: redshift # Or 'infobright'
   :endpoint: ADD HERE # Redshift only - get from Redshift console. Leave blank for Infobright
   :database: ADD HERE # Name of database 
-  :port: 5039 # Typically '5039' for Redshift, '5029' for Infobright
+  :port: 5439 # Typically '5439' for Redshift, '5029' for Infobright
   :table: events_007 # Latest version of table
   :username: ADD HERE 
   :password: ADD HERE 
