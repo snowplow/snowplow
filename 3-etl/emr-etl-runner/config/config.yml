@@ -24,10 +24,10 @@
 :etl:
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
   :continue_on_unexpected_error: false # You can switch to 'true' if you really don't want the serde throwing exceptions
-  :storage_format: postgres-redshift # Or 'hive' or 'mysql-infobright'.
+  :storage_format: redshift # Or 'hive' or 'mysql-infobright'.
 # Can bump the below as SnowPlow releases new versions
 :snowplow:
   :serde_version: 0.5.5
-  :hive_hiveql_version: 0.5.6
-  :mysql_infobright_hiveql_version: 0.0.7
-  :postgres_redshift_hiveql_version: 0.0.1
+  :hive_hiveql_version: 0.5.7
+  :mysql_infobright_hiveql_version: 0.0.8
+  :redshift_hiveql_version: 0.0.1

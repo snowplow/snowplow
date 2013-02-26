@@ -25,7 +25,7 @@ module SnowPlow
     module Config
 
       @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
-      @@storage_formats = Set.net(%s(hive postgres-redshift mysql-infobright))
+      @@storage_formats = Set.net(%s(hive redshift mysql-infobright))
 
       # TODO: would be nice to move this to using Kwalify
       # TODO: would be nice to support JSON as well as YAML

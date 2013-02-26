@@ -9,8 +9,8 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.0.7
--- URL:         s3://snowplow-emr-assets/hive/hiveql/mysql-infobright-etl-0.0.7.q
+-- Version:     0.0.8
+-- URL:         s3://snowplow-emr-assets/hive/hiveql/mysql-infobright-etl-0.0.8.q
 --
 -- Authors:     Yali Sassoon, Alex Dean
 -- Copyright:   Copyright (c) 2012-2013 SnowPlow Analytics Ltd
@@ -23,17 +23,17 @@ ADD JAR ${SERDE_FILE} ;
 
 CREATE EXTERNAL TABLE `extracted_logs`
 ROW FORMAT SERDE 'com.snowplowanalytics.snowplow.hadoop.hive.SnowPlowEventDeserializer'
-WITH SERDEPROPERTIES ( 'continue_on_unexpected_error' = '${CONTINUE_ON}')
+WITH SERDEPROPERTIES ('continue_on_unexpected_error' = '${CONTINUE_ON}')
 LOCATION '${CLOUDFRONT_LOGS}' ;
 
 CREATE EXTERNAL TABLE IF NOT EXISTS `events` (
 app_id string,
 platform string,
-collector_dt string, -- Renamed in 0.0.7
-collector_tm string, -- Renamed in 0.0.7
-dvce_dt string, -- Added in 0.0.7
-dvce_tm string, -- Added in 0.0.7
-dvce_epoch bigint, -- Added in 0.0.7
+collector_dt string,
+collector_tm string,
+dvce_dt string,
+dvce_tm string,
+dvce_epoch bigint,
 event string,
 event_vendor string,
 event_id string,
@@ -44,9 +44,9 @@ v_etl string,
 user_id string,
 user_ipaddress string,
 user_fingerprint string,
-domain_userid string,  -- Added in 0.0.7
-domain_sessionidx int, -- Renamed in 0.0.7
-network_userid string, -- Added in 0.0.7
+domain_userid string,
+domain_sessionidx int,
+network_userid string,
 page_url string,
 page_title string,
 page_referrer string,
@@ -130,11 +130,11 @@ PARTITION (dt)
 SELECT
 app_id,
 platform,
-collector_dt, -- Renamed in 0.0.7
-collector_tm, -- Renamed in 0.0.7
-dvce_dt, -- Added in 0.0.7
-dvce_tm, -- Added in 0.0.7
-dvce_epoch, -- Added in 0.0.7
+collector_dt,
+collector_tm,
+dvce_dt,
+dvce_tm,
+dvce_epoch,
 event,
 event_vendor,
 event_id,
@@ -145,9 +145,9 @@ v_etl,
 user_id,
 user_ipaddress,
 user_fingerprint,
-domain_userid,  -- Added in 0.0.7
-domain_sessionidx, -- Renamed in 0.0.7
-network_userid, -- Added in 0.0.7
+domain_userid,
+domain_sessionidx,
+network_userid,
 page_url,
 page_title,
 page_referrer,
