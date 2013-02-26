@@ -10,9 +10,9 @@ StorageLoader: bumped to 0.0.5
 StorageLoader: added Redshift-specific fields to config.yml (part of #159)
 StorageLoader: added Redshift load support into StorageLoader (part of #159)
 Redshift: table-def.sql script added. Version 0.0.1 (#158)
-Infobright: bumped setup_infobright.sql to 0.0.8 - TODO
-Infobright: widened useragent field (#184) - TODO
-Infobright: added migration script 0.0.7->0.0.8 - TODO
+Infobright: bumped setup_ and verify_infobright.sql to 0.0.8
+Infobright: widened useragent field (#184)
+Infobright: added migration script 0.0.7->0.0.8
 
 Version 0.7.5 (2013-02-25)
 --------------------------
