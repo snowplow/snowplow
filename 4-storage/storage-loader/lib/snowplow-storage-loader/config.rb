@@ -27,7 +27,7 @@ module SnowPlow
       # TODO: would be nice to move this to using Kwalify
       # TODO: would be nice to support JSON as well as YAML
 
-      @@storage_targets = Set.net(%s(redshift infobright))
+      @@storage_targets = Set.new(%w(redshift infobright))
 
       # Return the configuration loaded from the supplied YAML file, plus
       # the additional constants above.

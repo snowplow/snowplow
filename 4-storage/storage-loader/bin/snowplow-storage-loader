@@ -44,7 +44,6 @@ begin
         loader::RedshiftLoader.load_events(config)
       when 'infobright'
         loader::InfobrightLoader.load_events(config)
-      end
     end
   end
 
