@@ -20,20 +20,30 @@ module SnowPlow
 
       # Constants for the load process
       EVENT_FIELD_SEPARATOR = "\\t"
-      JISQL_PATH = File.join("..", "jisql-2.0.11")
+      JISQL_PATH = File.join("jisql-2.0.11")
 
+      # Loads the SnowPlow event files into Redshift.
+      #
+      # Parameters:
+      # +config+:: the hash of configuration options 
       def load_events(config)
         puts "Loading SnowPlow events into Redshift..."
 
         # Assemble the relevant parameters for the bulk load query
         jdbc_url = "jdbc:postgresql://#{config[:storage][:endpoint]}:#{config[:storage][:port]}/#{config[:storage][:database]}"
         credentials = "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
-        query = "copy %s from '%s' credentials '%s' delimiter '%s';" % [config[:storage][:table], config[:s3][:buckets][:in], credentials, EVENT_FIELD_SEPARATOR]
+        query = "copy '#{config[:storage][:table]}' from '#{config[:s3][:buckets][:in]}' credentials '#{credentials}' delimiter '#{EVENT_FIELD_SEPARATOR}';"
+        classpath = "%s/jisql-2.0.11.jar:%s/jopt-simple-3.2.jar:%s/postgresql-8.4-703.jdbc4.jar" % ([JISQL_PATH] * 3)
         username = config[:storage][:username]
         password = config[:storage][:password]
            
         # Execute the following request at the command line:
-        jisql_cmd = %Q!java -cp #{JISQL_PATH}/* com.xigole.util.sql.Jisql -driver postgresql -cstring #{jdbc_url} -user #{username} -password #{password} -c \\; -query "#{query}"!
+        jisql_cmd = %Q!java -cp #{classpath} com.xigole.util.sql.Jisql -driver postgresql -cstring #{jdbc_url} -user #{username} -password #{password} -c \\; -query "#{query}"!
+
+        puts ">>>>>>>>>>"
+        puts jisql_cmd
+        puts ">>>>>>>>>>"
+
         stdout_err = `#{jisql_cmd} 2>&1` # Execute
         ret_val = $?.to_i
 
@@ -42,6 +52,8 @@ module SnowPlow
           raise DatabaseLoadError, "Error code #{ret_val}: #{stdout_err}"
         end
       end
+      module_function :load_events
+
     end
   end
 end
