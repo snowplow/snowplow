@@ -66,12 +66,12 @@ module SnowPlow
         unless @@storage_formats.include?(config[:etl][:storage_format])
           raise ConfigError, "storage_format '%s' not supported" % config[:etl][:storage_format]
         end
-        storage_format_w_underscores = config[:etl][:storage_format].gsub("-", "_")
-        storage_format_symbol = "#{storage_format_w_underscores}_hiveql_version".to_sym
+        storage_format_uscore = config[:etl][:storage_format].gsub("-", "_")
+        storage_format_version_sym = "#{storage_format_uscore}_hiveql_version".to_sym
         config[:hiveql_asset] = "%s/hiveql/%s-etl-%s.q" % [
                                   asset_path, 
-                                  storage_format_w_underscores,
-                                  config[:snowplow][storage_format_symbol]
+                                  config[:etl][:storage_format],
+                                  config[:snowplow][storage_format_version_sym]
                                 ]
 
         # Should we continue on unexpected error or not?
