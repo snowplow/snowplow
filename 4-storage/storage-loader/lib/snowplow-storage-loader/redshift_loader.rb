@@ -76,7 +76,7 @@ module SnowPlow
 
         return status
       end
-      module_function
+      module_function :execute_queries
 
     end
   end
