@@ -20,7 +20,7 @@ module SnowPlow
 
       # Constants for the load process
       EVENT_FIELD_SEPARATOR = "\\t"
-      JISQL_PATH = File.join("jisql-2.0.11")
+      JISQL_PATH = File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'jisql-2.0.11'))
 
       # Loads the SnowPlow event files into Redshift.
       #
