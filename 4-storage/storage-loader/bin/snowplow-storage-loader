@@ -43,7 +43,7 @@ begin
       when 'redshift'
         loader::RedshiftLoader.load_events(config)
       when 'infobright'
-        loader::InfobrightLoader.load_events(config)
+        loader::IceLoader.load_events(config)
     end
   end
 

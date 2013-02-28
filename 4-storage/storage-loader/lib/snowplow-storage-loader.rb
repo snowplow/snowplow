@@ -17,7 +17,7 @@
 require_relative 'snowplow-storage-loader/errors'
 require_relative 'snowplow-storage-loader/config'
 require_relative 'snowplow-storage-loader/s3_tasks'
-require_relative 'snowplow-storage-loader/infobright_loader'
+require_relative 'snowplow-storage-loader/ice_loader'
 require_relative 'snowplow-storage-loader/redshift_loader'
 
 module SnowPlow
