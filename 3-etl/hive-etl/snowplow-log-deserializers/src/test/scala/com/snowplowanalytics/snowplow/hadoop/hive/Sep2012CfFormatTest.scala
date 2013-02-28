@@ -33,7 +33,7 @@ class Sep2012CfFormatTest extends Specification {
   implicit val _DEBUG = false
 
   // Input
-  val row = "2012-05-24  00:08:40  LHR5  3397  74.125.17.210 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(Linux;%20U;%20Android%202.3.4;%20generic)%20AppleWebKit/535.1%20(KHTML,%20like%20Gecko;%20Google%20Web%20Preview)%20Version/4.0%20Mobile%20Safari/535.1  page=Psycards%2520book%2520and%2520deck%2520starter%2520pack%2520-%2520Psychic%2520Bazaar&tid=721410&duid=3798cdce0493133e&vid=1&lang=en&refr=http%253A%252F%252Fwww.google.com%252Fm%252Fsearch&res=640x960&cookie=1 - Hit vHql4ZhKJSl8yUJZuCrmvwBuVGmmgizVsKoo8lfPIn-ts0gR4g7KmA=="
+  val row = "2012-05-24  00:08:40  LHR5  3397  74.125.17.210 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(Linux;%20U;%20Android%202.3.4;%20generic)%20AppleWebKit/535.1%20(KHTML,%20like%20Gecko;%20Google%20Web%20Preview)%20Version/4.0%20Mobile%20Safari/535.1  page=Psycards%2520book%2520and%2520deck%2520starter%2520pack%2520-%2520Psychic%2520Bazaar&tid=721410&duid=3798cdce0493133e&vid=1&lang=en&refr=http%253A%252F%252Fwww.google.com%252Fm%252Fsearch&f_pdf=1&f_qt=1&f_realp=0&f_wma=0&f_dir=0&f_fla=0&f_java=1&f_gears=0&f_ag=0&res=640x960&cookie=1 - Hit vHql4ZhKJSl8yUJZuCrmvwBuVGmmgizVsKoo8lfPIn-ts0gR4g7KmA=="
 
   // Output
   val expected = new SnowPlowEvent().tap { e =>
@@ -53,7 +53,7 @@ class Sep2012CfFormatTest extends Specification {
     e.br_renderengine = "WEBKIT"
     e.br_lang = "en"
     e.br_cookies = true
-    e.br_features = List("qt")
+    e.br_features = List("java", "qt", "pdf")
     e.os_name = "Android"
     e.os_family = "Android"
     e.os_manufacturer = "Google Inc."
@@ -132,7 +132,7 @@ class Sep2012CfFormatTest extends Specification {
     "have br_features (Browser Features) = %s".format(expected.br_features) in {
       // For some reason (Specs2) couldn't use implicit Java->Scala conversion here
       JavaConversions.asScalaBuffer(actual.br_features) must haveTheSameElementsAs(expected.br_features)
-    }.pendingUntilFixed // For some reason actual.br_features empties when inside this test
+    }
 
     // OS (from user-agent)    
     "have os_name (OS Name) = %s".format(expected.os_name) in {
