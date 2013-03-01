@@ -29,11 +29,18 @@ loader = SnowPlow::StorageLoader
 begin
   config = loader::Config.get_config()
 
-  # Download files - only for Infobright
+  # Download files - Infobright only
   unless config[:skip].include?('download')
     if config[:storage][:type] == 'infobright'
       loader::S3Tasks.download_events(config)
     end
+  end
+
+  # Delete files - Redshift only
+  unless config[:skip].include?('delete')
+    if config[:storage][:type] == 'redshift'
+      loader::S3Tasks.delete_ignorable_events(config)
+    end    
   end
 
   # If we are not skipping the load, use the appropriate

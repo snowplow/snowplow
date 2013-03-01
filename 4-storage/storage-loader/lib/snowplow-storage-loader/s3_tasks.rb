@@ -30,10 +30,18 @@ module SnowPlow
       # because the only 'events' without a dt stamp are
       # favicon requests, the headers in CloudFront access
       # logs etc - i.e. noise.
-      # TODO: revisit this when we are ETLing from other
-      # collectors (e.g. clojure-collector). Because there
-      # shouldn't be any dt-less rows with other collectors
       IGNORE_EVENTS = "(dt=__HIVE_DEFAULT_PARTITION__)"
+
+      # Deletes the ignorable events from the bucket to
+      # prevent Redshift from trying to load them by
+      # mistake.
+      #
+      # Parameters:
+      # +config+:: the hash of configuration options
+      def delete_ignorable_events(config)
+        puts "Placeholder for deleting ignorable events"
+      end
+      module_function :delete_ignorable_events
 
       # Downloads the SnowPlow event files from the In
       # Bucket to the local filesystem, ready to be loaded

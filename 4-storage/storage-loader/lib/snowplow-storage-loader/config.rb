@@ -83,7 +83,7 @@ module SnowPlow
           opts.separator "Specific options:"
 
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
-          opts.on('-s', '--skip download,load,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-s', '--skip download|delete,load,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
 
           opts.separator ""
           opts.separator "Common options:"
@@ -104,8 +104,8 @@ module SnowPlow
 
         # Check our skip argument
         options[:skip].each { |opt|
-          unless %w(download load archive).include?(opt)
-            raise ConfigError, "Invalid option: skip can be 'download', 'load' or 'archive', not '#{opt}'"
+          unless %w(download delete load archive).include?(opt)
+            raise ConfigError, "Invalid option: skip can be 'download', 'delete', 'load' or 'archive', not '#{opt}'"
           end
         }
 
