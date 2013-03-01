@@ -1,4 +1,4 @@
-Version 0.7.6 (2013-XX-XX)
+Version 0.7.6 (2013-03-XX)
 --------------------------
 HiveQL: redshift-etl.q added. Version 0.0.1 (#174)
 HiveQL: hive-rolling-etl.q renamed to hive-etl.q and bumped to 0.5.7
@@ -13,6 +13,7 @@ Redshift: table-def.sql script added. Version 0.0.1 (#158)
 Infobright: bumped setup_ and verify_infobright.sql to 0.0.8
 Infobright: widened useragent field (#184)
 Infobright: added migration script 0.0.7->0.0.8
+Serde: fixed and enabled broken tests (#14). Version unchanged
 
 Version 0.7.5 (2013-02-25)
 --------------------------

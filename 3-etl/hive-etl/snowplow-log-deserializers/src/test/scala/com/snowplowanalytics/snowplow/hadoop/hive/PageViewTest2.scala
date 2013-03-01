@@ -78,13 +78,13 @@ class PageViewTest2 extends Specification {
     e.br_colordepth = "24"
     e.br_viewwidth = 479
     e.br_viewheight = 283
-    e.os_name = "iOS 5 (iPhone)"
-    e.os_family = "iOS"
+    e.os_name = "Mac OS"
+    e.os_family = "Mac OS"
     e.os_manufacturer = "Apple Inc."
     e.os_timezone = "Europe/London"
-    e.dvce_type = "Mobile"
-    e.dvce_ismobile = true
-    e.dvce_ismobile_bt = 1
+    e.dvce_type = "Computer"
+    e.dvce_ismobile = false
+    e.dvce_ismobile_bt = 0
     e.dvce_screenwidth = 320
     e.dvce_screenheight = 480
     e.doc_charset = "UTF-8"
@@ -256,10 +256,10 @@ class PageViewTest2 extends Specification {
     // OS (from user-agent)
     "have os_name (OS Name) = %s".format(expected.os_name) in {
       actual.os_name must_== expected.os_name
-    }.pendingUntilFixed // nl.bitwalker.useragentutils is not parsing this user agent correctly
+    }
     "have os_family (OS Family) = %s".format(expected.os_family) in {
       actual.os_family must_== expected.os_family
-    }.pendingUntilFixed // nl.bitwalker.useragentutils is not parsing this user agent correctly
+    }
     "have os_manufacturer (OS Manufacturer) = %s".format(expected.os_manufacturer) in {
       actual.os_manufacturer must_== expected.os_manufacturer
     }
@@ -270,13 +270,13 @@ class PageViewTest2 extends Specification {
     // Device/Hardware (from user-agent)
     "have dvce_type (Device Type) = %s".format(expected.dvce_type) in {
       actual.dvce_type must_== expected.dvce_type
-    }.pendingUntilFixed // nl.bitwalker.useragentutils is not parsing this user agent correctly
+    }
     "have dvce_ismobile (Device Is Mobile?) = %s".format(expected.dvce_ismobile) in {
       actual.dvce_ismobile must_== expected.dvce_ismobile
-    }.pendingUntilFixed // nl.bitwalker.useragentutils is not parsing this user agent correctly
+    }
     "have dvce_ismobile_bt (Device Is Mobile, Byte?) = %s".format(expected.dvce_ismobile_bt) in {
       actual.dvce_ismobile_bt must_== expected.dvce_ismobile_bt
-    }.pendingUntilFixed // nl.bitwalker.useragentutils is not parsing this user agent correctly
+    }
 
     // Device (from querystring)
     "have dvce_screenwidth (Device Screen Width) = %s".format(expected.dvce_screenwidth) in {
