@@ -19,17 +19,17 @@
 CREATE TABLE events (
 	-- App
 	app_id varchar(255) encode text255, 
-	platform varchar(255) encode text255 not null, 
+	platform varchar(255) encode text255, 
 	-- Date/time
 	collector_tstamp timestamp not null,
 	dvce_tstamp timestamp,
 	-- Event
-	event varchar(128) encode text255 not null,
+	event varchar(128) encode text255,
 	event_vendor varchar(128) encode text32k not null,
 	event_id varchar(38) not null unique,
 	txn_id int,
 	-- Versioning
-	v_tracker varchar(100) encode text255 not null, 
+	v_tracker varchar(100) encode text255, 
 	v_collector varchar(100) encode text255 not null,
 	v_etl varchar(100) encode text255 not null, 
 	-- User and visit
