@@ -13,6 +13,8 @@
 # Copyright:: Copyright (c) 2012-2013 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
+require 'pg'
+
 # Ruby module to support the load of SnowPlow events into Redshift
 module SnowPlow
   module StorageLoader
@@ -37,7 +39,7 @@ module SnowPlow
 
         status = execute_queries(config, queries)
         unless status == []
-          raise DatabaseLoadError, "Error code #{status[1]} executing #{status[0]}: #{status[2]}"
+          raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
         end 
       end
       module_function :load_events
@@ -46,7 +48,7 @@ module SnowPlow
 
       # Execute a chain of SQL commands, stopping as soon as
       # an error is encountered. At that point, it returns a
-      # 'tuple' of the error code, stdout/err and command
+      # 'tuple' of the error class and message and the command
       # that caused the error
       #
       # Parameters:
@@ -54,26 +56,26 @@ module SnowPlow
       # +queries+:: the Redshift queries to execute sequentially
       #
       # Returns either an empty list on success, or on failure
-      # a list of the form [query, ret_val, stdout_err]
+      # a list of the form [query, err_class, err_message]
       def execute_queries(config, queries)
 
-        jdbc_url = "jdbc:postgresql://#{config[:storage][:endpoint]}:#{config[:storage][:port]}/#{config[:storage][:database]}"
-        classpath = "%s/jisql-2.0.11.jar:%s/jopt-simple-3.2.jar:%s/postgresql-8.4-703.jdbc4.jar" % ([JISQL_PATH] * 3)
-        username = config[:storage][:username]
-        password = config[:storage][:password]
+        conn = PG.connect({:host     => config[:storage][:endpoint],
+                           :dbname   => config[:storage][:database],
+                           :port     => config[:storage][:port],
+                           :user     => config[:storage][:username],
+                           :password => config[:storage][:password]
+                           })
 
         status = []
         queries.each do |q|
-          jisql_cmd = %Q!java -cp #{classpath} com.xigole.util.sql.Jisql -driver postgresql -cstring #{jdbc_url} -user #{username} -password #{password} -c \\; -query "#{q};"!
-          stdout_err = `#{jisql_cmd} 2>&1` # Execute
-          ret_val = $?.to_i
-
-          unless ret_val == 0
-            status = [q, ret_val, stdout_err]
+          begin
+            conn.exec("#{q};")
+          rescue PG::Error => err
+            status = [q, err.class, err.message]
             break
-          end
         end
 
+        conn.finish
         return status
       end
       module_function :execute_queries
