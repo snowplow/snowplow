@@ -39,7 +39,17 @@ module SnowPlow
       # Parameters:
       # +config+:: the hash of configuration options
       def delete_ignorable_events(config)
-        puts "Placeholder for deleting ignorable events"
+
+        s3 = Sluice::Storage::S3::new_fog_s3_from(
+          config[:s3][:region],
+          config[:aws][:access_key_id],
+          config[:aws][:secret_access_key])
+
+        # Get S3 location of In Bucket
+        in_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:in])
+
+        # Delete ignorable events
+        Sluice::Storage::S3::delete_files(s3, in_location, IGNORE_EVENTS)
       end
       module_function :delete_ignorable_events
 
