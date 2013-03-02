@@ -51,7 +51,7 @@ module SnowPlow
         # Delete ignorable events
         Sluice::Storage::S3::delete_files(s3, in_location, NULL_EVENTS)
       end
-      module_function :delete_ignorable_events
+      module_function :delete_null_events
 
       # Downloads the SnowPlow event files from the In
       # Bucket to the local filesystem, ready to be loaded
