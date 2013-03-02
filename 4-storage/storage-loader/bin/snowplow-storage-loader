@@ -39,7 +39,7 @@ begin
   # Delete files - Redshift only
   unless config[:skip].include?('delete')
     if config[:storage][:type] == 'redshift'
-      loader::S3Tasks.delete_ignorable_events(config)
+      loader::S3Tasks.delete_null_events(config)
     end    
   end
 

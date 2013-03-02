@@ -30,7 +30,7 @@ module SnowPlow
       # because the only 'events' without a dt stamp are
       # favicon requests, the headers in CloudFront access
       # logs etc - i.e. noise.
-      IGNORE_EVENTS = "(dt=__HIVE_DEFAULT_PARTITION__)"
+      NULL_EVENTS = "(dt=__HIVE_DEFAULT_PARTITION__)"
 
       # Deletes the ignorable events from the bucket to
       # prevent Redshift from trying to load them by
@@ -38,7 +38,7 @@ module SnowPlow
       #
       # Parameters:
       # +config+:: the hash of configuration options
-      def delete_ignorable_events(config)
+      def delete_null_events(config)
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:s3][:region],
@@ -49,7 +49,7 @@ module SnowPlow
         in_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:in])
 
         # Delete ignorable events
-        Sluice::Storage::S3::delete_files(s3, in_location, IGNORE_EVENTS)
+        Sluice::Storage::S3::delete_files(s3, in_location, NULL_EVENTS)
       end
       module_function :delete_ignorable_events
 
@@ -72,7 +72,7 @@ module SnowPlow
         download_dir = config[:download][:folder]
 
         # Exclude event files which match IGNORE_EVENTS
-        event_files = Sluice::Storage::NegativeRegex.new(IGNORE_EVENTS)
+        event_files = Sluice::Storage::NegativeRegex.new(NULL_EVENTS)
 
         # Download
         Sluice::Storage::S3::download_files(s3, in_location, download_dir, event_files)
