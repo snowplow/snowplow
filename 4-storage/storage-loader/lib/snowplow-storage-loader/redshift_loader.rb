@@ -73,6 +73,7 @@ module SnowPlow
           rescue PG::Error => err
             status = [q, err.class, err.message]
             break
+          end
         end
 
         conn.finish
