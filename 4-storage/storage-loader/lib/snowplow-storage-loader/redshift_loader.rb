@@ -59,7 +59,7 @@ module SnowPlow
       # a list of the form [query, err_class, err_message]
       def execute_queries(config, queries)
 
-        conn = PG.connect({:host     => config[:storage][:endpoint],
+        conn = PG.connect({:host     => config[:storage][:host],
                            :dbname   => config[:storage][:database],
                            :port     => config[:storage][:port],
                            :user     => config[:storage][:username],

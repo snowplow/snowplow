@@ -11,7 +11,7 @@
 # Currently assumes we are loading only one target
 :storage:
   :type: redshift # Or 'infobright'
-  :endpoint: ADD HERE # Redshift only - get from Redshift console. Leave blank for Infobright
+  :host: ADD HERE # The Redshift endpoint - get from Redshift console. Not supported for Infobright currently
   :database: ADD HERE # Name of database 
   :port: 5439 # Typically '5439' for Redshift, '5029' for Infobright
   :table: events_007 # Latest version of table
