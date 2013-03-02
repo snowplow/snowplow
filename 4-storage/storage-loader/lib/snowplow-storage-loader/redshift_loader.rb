@@ -64,7 +64,7 @@ module SnowPlow
                            :port     => config[:storage][:port],
                            :user     => config[:storage][:username],
                            :password => config[:storage][:password]
-                           })
+                          })
 
         status = []
         queries.each do |q|
