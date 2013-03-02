@@ -21,5 +21,5 @@ export PATH=$PATH:${rvm_path}/bin
 source ${rvm_path}/scripts/rvm
 
 # Run the daily ETL job
-export BUNDLE_GEMFILE=${LOADER_PATH}
+export BUNDLE_GEMFILE=${LOADER_PATH}/Gemfile
 bundle exec ${LOADER_PATH}/bin/snowplow-storage-loader --config ${LOADER_CONFIG}

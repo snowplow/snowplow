@@ -23,7 +23,7 @@ export PATH=$PATH:${rvm_path}/bin
 source ${rvm_path}/scripts/rvm
 
 # Run the ETL job on EMR
-export BUNDLE_GEMFILE=${RUNNER_PATH}
+export BUNDLE_GEMFILE=${RUNNER_PATH}/Gemfile
 bundle exec ${RUNNER_PATH}/bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG}
 
 # Check the damage

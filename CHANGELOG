@@ -6,9 +6,11 @@ HiveQL: non-hive-rolling-etl.q renamed to mysql-infobright-etl.q and bumped to 0
 EmrEtlRunner: bumped to 0.0.9
 EmrEtlRunner: renamed :snowplow: variable names and added new Redshift one in config.yml (part of #172)
 EmrEtlRunner: updated to support Redshift as a storage format (#173)
+EmrEtlRunner: added missing /Gemfile to BUNDLE_GEMFILE in Bash script
 StorageLoader: bumped to 0.0.5
 StorageLoader: added Redshift-specific fields to config.yml (part of #159)
 StorageLoader: added Redshift load support into StorageLoader (part of #159)
+StorageLoader: added missing /Gemfile to BUNDLE_GEMFILE in Bash scripts
 Redshift: table-def.sql script added. Version 0.0.1 (#158)
 Infobright: bumped setup_ and verify_infobright.sql to 0.0.8
 Infobright: widened useragent field (#184)
