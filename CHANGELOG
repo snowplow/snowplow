@@ -1,4 +1,4 @@
-Version 0.7.6 (2013-03-XX)
+Version 0.7.6 (2013-03-03)
 --------------------------
 HiveQL: redshift-etl.q added. Version 0.0.1 (#174)
 HiveQL: hive-rolling-etl.q renamed to hive-etl.q and bumped to 0.5.7
