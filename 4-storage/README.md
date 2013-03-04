@@ -12,8 +12,8 @@
 |-------------------------------|---------------------------------------------------------------------------|------------------|------------------------------|
 | [s3 / hive-storage] [s1]      | SnowPlow events stored in a Hive-compatible flatfile format on Amazon S3  | Production-ready | [Wiki] [hive-on-wiki]        |
 | [infobright-storage] [s2] (1) | SnowPlow events stored in a table in [Infobright Community Edition] [ice] | Production-ready | [Wiki] [ice-on-wiki]         |  
-| [redshift-storage] [s2] (2)   | SnowPlow events stored in a table in [Amazon Redshift] [redshift]         | Production-ready | [Wiki] [wiki-redshift]       |  
-| [storage-loader] [s3]         | A Ruby application for loading SnowPlow events into (1) and (2)           | Production-ready | [Wiki] [storage-loader-on-wiki] |  
+| [redshift-storage] [s3] (2)   | SnowPlow events stored in a table in [Amazon Redshift] [redshift]         | Production-ready | [Wiki] [wiki-redshift]       |  
+| [storage-loader] [s4]         | A Ruby application for loading SnowPlow events into (1) and (2)           | Production-ready | [Wiki] [storage-loader-on-wiki] |  
 
 ## Documentation
 
@@ -42,7 +42,8 @@ We welcome community contributions of new storage options for SnowPlow events! W
 
 [s1]: https://github.com/snowplow/snowplow/tree/master/4-storage/hive-storage
 [s2]: https://github.com/snowplow/snowplow/tree/master/4-storage/infobright-storage
-[s3]: https://github.com/snowplow/snowplow/tree/master/4-storage/storage-loader
+[s3]: https://github.com/snowplow/snowplow/tree/master/4-storage/redshift-storage
+[s4]: https://github.com/snowplow/snowplow/tree/master/4-storage/storage-loader
 [ice]: http://www.infobright.org
 
 [hive-on-wiki]: https://github.com/snowplow/snowplow/wiki/s3-hive-storage-setup
