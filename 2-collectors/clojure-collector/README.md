@@ -32,9 +32,9 @@ limitations under the License.
 [ring]: https://github.com/ring-clojure/ring
 [compojure]: https://github.com/weavejester/compojure
 
-[techdocs-image]: //d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
-[setup-image]: //d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
-[roadmap-image]: //d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
+[techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
+[setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
+[roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
 [techdocs]: https://github.com/snowplow/snowplow/wiki/Clojure-collector
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-the-Clojure-collector
 
