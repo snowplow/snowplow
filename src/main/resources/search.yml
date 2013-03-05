@@ -124,6 +124,13 @@ APOLL07:
   domains:
     - apollo7.de
 
+Apontador:
+  parameters:
+    - q
+  domains:
+    - apontador.com.br
+    - www.apontador.com.br
+
 Aport:
   parameters: 
     - r
@@ -157,6 +164,7 @@ Ask:
     - web.ask.com
     - int.ask.com
     - mws.ask.com
+    - uk.ask.com
     - images.ask.com
     - ask.reference.com
     - www.askkids.com
@@ -2052,6 +2060,7 @@ InfoSpace:
   domains:
     - infospace.com
     - dogpile.com
+    - www.dogpile.com
     - metacrawler.com
     - webfetch.com
     - webcrawler.com
@@ -2061,6 +2070,7 @@ InfoSpace:
     - start.facemoods.com
     - search.magnetic.com
     - search.searchcompletion.com
+    - clusty.com
 
 Interia:
   parameters:
