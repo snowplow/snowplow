@@ -10,9 +10,21 @@ The No-JS tracker is effectively a wizard that generates a static SnowPlow track
 
 The wizard source code can be found [here] [wizard]. The logic for generating the tag is stored in the [Javascript file] [js-wizard] invoked by the wizard.
 
-For more details about how to use the No-JS tracker see [this introductory blog post] [intro-blog-post]. A hosted version of the wizard can be found [on the SnowPlow Analytics website] [hosted-wizard].
+## Find out more
+
+| Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
+|-----------------------------|-----------------------|--------------------------------------|
+| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
+| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
+
+Also see [this introductory blog post] [intro-blog-post]. A hosted version of the wizard can be found [on the SnowPlow Analytics website] [hosted-wizard].
 
 [wizard]: https://github.com/snowplow/snowplow/blob/master/1-trackers/no-js-tracker/html/no-js-embed-code-generator.html
 [js-wizard]: https://github.com/snowplow/snowplow/blob/master/1-trackers/no-js-tracker/js/no-js-tracker.js
 [intro-blog-post]: http://snowplowanalytics.com/blog/2013/01/29/introducing-the-no-js-tracker/
 [hosted-wizard]: http://snowplowanalytics.com/no-js-tracker.html
+[techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
+[setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
+[roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
+[techdocs]: https://github.com/snowplow/snowplow/wiki/no-js-tracker
+[setup]: https://github.com/snowplow/snowplow/wiki/no-js-tracker-setup
