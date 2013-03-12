@@ -6,14 +6,12 @@
 
 **Analytics** are performed on the SnowPlow events held in [Storage] [storage], to answer business questions.
 
-## Available analytics
-
-Table todo
-
 ## Documentation
 
-1. [The setup guide] [setup] includes details on how to start performing analysis on SnowPlow data including setting up additional tools / libraries where appropriate.
-2. [The Analytics cookbook][cookbook] on the [SnowPlow website][website] provides details of a number of SQL based analytics suitable for both Hive and Infobright.
+| Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
+|-----------------------------|-----------------------|--------------------------------------|
+| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
+| [Analytics Cookbook] [cookbook] | [Setup Guide] [setup] | _coming soon_                        |
 
 ![Tracker](https://collector.snplow.com/i?&e=pv&page=5%20Analytics%20README&aid=snowplowgithub&p=web&tv=no-js-0.1.0)
 
