@@ -14,14 +14,12 @@
 | [no-js-tracker] [t2]      | A pixel-based tracker for no-JavaScript web environments | Production-ready | Wiki      |
 | contrib-ios-tracker       | Coming soon from a community member                  | Pre-alpha            | -         | 
 
-## Useful resources
+## Find out more
 
-1. [Guide to choosing and setting up a tracker] [setup] on the [wiki] [setup].
-2. [Tracker technical documentation] [tech-docs], also on the [wiki] [tech-docs].
-
-## Contributing
-
-We welcome community contributions of additional Trackers! We have a guide to contributing Trackers coming soon on the Wiki. 
+| Technical Docs               | Setup Guide           | Roadmap & Contributing               |         
+|------------------------------|-----------------------|--------------------------------------|
+| ![i1] [techdocs-image]       | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
+| [Technical Docs] [tech-docs] | [Setup Guide] [setup] | _coming soon_                        |
 
 ![Tracker](https://collector.snplow.com/i?&e=pv&page=1%20Trackers%20README&aid=snowplowgithub&p=web&tv=no-js-0.1.0)
 
