@@ -9,7 +9,7 @@
 | Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
 |-----------------------------|-----------------------|--------------------------------------|
 | ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
-| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
+| [Technical Docs] [tech-docs] | [Setup Guide] [setup] | _coming soon_                        |
 
 
 ## Copyright and license
