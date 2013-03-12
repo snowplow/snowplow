@@ -19,6 +19,19 @@ The wizard source code can be found [here] [wizard]. The logic for generating th
 
 Also see [this introductory blog post] [intro-blog-post]. A hosted version of the wizard can be found [on the SnowPlow Analytics website] [hosted-wizard].
 
+## Copyright and license
+
+The No-JS Tracker is copyright 2012 SnowPlow Analytics Ltd.
+
+Licensed under the [Apache License, Version 2.0] [license] (the "License");
+you may not use this software except in compliance with the License.
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
 [wizard]: https://github.com/snowplow/snowplow/blob/master/1-trackers/no-js-tracker/html/no-js-embed-code-generator.html
 [js-wizard]: https://github.com/snowplow/snowplow/blob/master/1-trackers/no-js-tracker/js/no-js-tracker.js
 [intro-blog-post]: http://snowplowanalytics.com/blog/2013/01/29/introducing-the-no-js-tracker/
