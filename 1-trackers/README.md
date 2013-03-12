@@ -12,7 +12,7 @@
 |---------------------------|------------------------------------------------------|----------------------|-----------|
 | [javascript-tracker] [t1] | A client-side JavaScript tracker for web browser use | Production-ready     | Wiki      |
 | [no-js-tracker] [t2]      | A pixel-based tracker for no-JavaScript web environments | Production-ready | Wiki      |
-| contrib-ios-tracker       | Coming soon from a community member                  | Pre-alpha            | -         | 
+| iOS-tracker               | Coming soon from a community member                  | Pre-alpha            | -         | 
 
 ## Find out more
 
@@ -30,3 +30,6 @@
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-a-Tracker
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/trackers
 [wiki]: https://github.com/snowplow/snowplow/wiki
+[techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
+[setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
+[roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
