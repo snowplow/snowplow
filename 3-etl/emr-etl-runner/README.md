@@ -45,5 +45,5 @@ limitations under the License.
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
 [roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
-[techdocs]: 
+[techdocs]: https://github.com/snowplow/snowplow/wiki/EmrEtlRunner
 [setup]: https://github.com/snowplow/snowplow/tree/master/3-etl/emr-etl-runner
