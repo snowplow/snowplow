@@ -4,13 +4,12 @@
 
 SnowPlow::EmrEtlRunner is a Ruby application (built with [Bundler] [bundler]) to run SnowPlow's Hive-based ETL (extract, transform, load) process on [Amazon Elastic MapReduce] [amazon-emr] with minimum fuss.
 
-## Deployment and configuration
+## Find out more
 
-For detailed instructions on installing, running and scheduling EmrEtlRunner on your server, please see the [Deploying EmrEtlRunner] [deploying-emr-etl-runner] guide on the SnowPlow Analytics wiki.
-
-## Contributing
-
-We will be adding a guide to contributing soon.
+| Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
+|-----------------------------|-----------------------|--------------------------------------|
+| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
+| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
 
 ## Credits and thanks
 
@@ -43,3 +42,8 @@ limitations under the License.
 [elasticity]: https://github.com/rslifka/elasticity
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
+[techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
+[setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
+[roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
+[techdocs]: 
+[setup]: https://github.com/snowplow/snowplow/tree/master/3-etl/emr-etl-runner
