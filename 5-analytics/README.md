@@ -20,3 +20,7 @@
 [setup]: https://github.com/snowplow/snowplow/wiki/getting-started-analysing-SnowPlow-data
 [cookbook]: http://snowplowanalytics.com/analytics/index.html
 [website]: http://snowplowanalytics.com
+
+[techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
+[setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
+[roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
