@@ -26,10 +26,14 @@ To briefly explain these five sub-systems:
 
 **For more information on the current SnowPlow architecture, please see the [Technical architecture] [architecture-doc]**.
 
-## Documentation
+## Find out more
 
-1. The [SnowPlow setup guide] [setup] details how to choose between the different available trackers, collectors, ETL modules, storage solutions etc. and hwo to set each module up.
-2. The [SnowPlow technical documentation] [tech-docs] provide technical details including the [SnowPlow tracker protocol] [tracker-protocol], [collector log file format schemas] [collector-logs] and [data structure schemas] [data-structure].
+| Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
+|-----------------------------|-----------------------|--------------------------------------|
+| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
+| [Technical Docs] [techdocs] | [Setup Guide] [setup] | [Roadmap] [roadmap]. [Contributors] [contributors]. |
+
+
 
 ## Contributing
 
@@ -68,3 +72,10 @@ limitations under the License.
 [tracker-protocol]: https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol
 [collector-logs]: https://github.com/snowplow/snowplow/wiki/Collector-logging-formats
 [data-structure]: https://github.com/snowplow/snowplow/wiki/canonical-event-model
+[techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
+[setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
+[roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
+[techdocs]: https://github.com/snowplow/snowplow/wiki/SnowPlow-technical-documentation
+[setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-SnowPlow
+[roadmap]: https://github.com/snowplow/snowplow/wiki/Product-roadmap
+[contributors]: https://github.com/snowplow/snowplow/wiki/Contributors
