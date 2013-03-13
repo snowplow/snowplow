@@ -56,9 +56,9 @@ Then add into your project's `pom.xml`:
 
 ```xml
 <dependency>
-  <groupId>org.snowplowanalytics</groupId>
-  <artifactId>refererparser</artifactId>
-  <version>0.0.1</version>
+    <groupId>com.snowplowanalytics</groupId>
+    <artifactId>referer-parser</artifactId>
+    <version>0.0.1</version>
 </dependency>
 ```
 
