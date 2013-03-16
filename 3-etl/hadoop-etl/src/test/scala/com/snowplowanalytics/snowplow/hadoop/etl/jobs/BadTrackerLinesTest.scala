@@ -47,7 +47,6 @@ class BadTrackerLinesTest extends Specification with TupleConversions {
         }.
         run.
         finish
-        success
     }
   }
 }

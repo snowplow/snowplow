@@ -25,6 +25,7 @@ object BuildSettings {
     scalaVersion  := "2.9.2", // -> 2.10.0 when Scalding is ready
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     parallelExecution in Test := false, // Parallel tests cause havoc with MapReduce
+    logBuffered   := false, // For debugging Specs2 tests
     resolvers     ++= Dependencies.resolutionRepos
   )
 

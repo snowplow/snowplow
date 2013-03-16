@@ -47,7 +47,6 @@ class CorruptedCfLinesTest extends Specification with TupleConversions {
         }.
         run.
         finish
-        success
     }
   }
 }

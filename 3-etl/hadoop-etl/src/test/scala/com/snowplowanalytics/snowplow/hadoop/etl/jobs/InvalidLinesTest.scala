@@ -50,7 +50,6 @@ class InvalidLinesTest extends Specification with TupleConversions {
         }.
         run.
         finish
-        success
     }
   }
 }
