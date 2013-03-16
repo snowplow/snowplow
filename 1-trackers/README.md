@@ -13,7 +13,7 @@
 | [javascript-tracker] [t1] | A client-side JavaScript tracker for web browser use | Production-ready     |
 | [no-js-tracker] [t2]      | A pixel-based tracker for no-JavaScript web environments | Production-ready |
 
-For other trackers (e.g. iOS, Android) and their approximate timelines, please see the [product roadmap][roadmap].
+For other trackers (e.g. iOS, Android) and their approximate timelines, please see the [Product Roadmap][roadmap].
 
 ## Find out more
 
