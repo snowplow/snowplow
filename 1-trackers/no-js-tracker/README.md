@@ -41,3 +41,4 @@ limitations under the License.
 [roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
 [techdocs]: https://github.com/snowplow/snowplow/wiki/no-js-tracker
 [setup]: https://github.com/snowplow/snowplow/wiki/no-js-tracker-setup
+[license]: http://www.apache.org/licenses/LICENSE-2.0
