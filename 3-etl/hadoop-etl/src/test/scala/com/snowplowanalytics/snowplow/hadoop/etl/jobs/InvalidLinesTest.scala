@@ -30,26 +30,29 @@ import JobTestHelpers._
  */
 class InvalidLinesTest extends Specification with TupleConversions {
 
+  val badLines = Lines(
+    "",
+    "NOT VALID",
+    "2012-05-21  07:14:47  FRA2  3343  83.4.209.35 GET d3t05xllj8hhgj.cloudfront.net"
+    )
+  val expected = (line: String) => """{"line":"%s","errors":["Line does not match CloudFront header or data row formats"]}""".format(line)
+
   "A job which processes input lines not in CloudFront format" should {
-    "write an error JSON with input line and error message for each input line" in {
-
-    	val badLines = Lines(
-        "",
-        "NOT VALID",
-        "2012-05-21  07:14:47  FRA2  3343  83.4.209.35 GET d3t05xllj8hhgj.cloudfront.net"
-        )
-
-      val expected = (line: String) => """{"line":"%s","errors":["Line does not match CloudFront header or data row formats"]}""".format(line)
-
-      EtlJobTest.
-        source(MultipleTextLineFiles("inputFolder"), badLines).
-        sink[String](Tsv("outputFolder")){ output => output must beEmpty }.
-        sink[String](JsonLine("errorFolder")){ json =>
-          for (i <- json.indices)
+    EtlJobTest.
+      source(MultipleTextLineFiles("inputFolder"), badLines).
+      sink[String](Tsv("outputFolder")){ output =>
+        "not write any events" in {
+          output must beEmpty
+        }
+      }.
+      sink[String](JsonLine("errorFolder")){ json =>
+        "write an error JSON with input line and error message for each input line" in {
+          for (i <- json.indices) {
             json(i) must_== expected(badLines(i)._2)
-        }.
-        run.
-        finish
-    }
+          }
+        }
+      }.
+      run.
+      finish
   }
 }
