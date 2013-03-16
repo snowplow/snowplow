@@ -127,8 +127,26 @@ object UnexpectedEtlException extends EtlExceptionConstructors[UnexpectedEtlExce
  * Will only be thrown if the ETL cannot
  * feasibly be run - **do not** try to catch
  * it, or a kitten dies.
+ *
+ * This should be explicitly excluded from
+ * Cascading Failure Traps, as soon as they
+ * support this (Cascading 2.2).
  */
 case class FatalEtlException(msg: String) extends EtlException(msg)
+
+/**
+ * A fatal error in our ETL.
+ *
+ * We are using this as a workaround:
+ * because Cascading cannot yet support
+ * excluding a specific Exception subclass
+ * (e.g. FatalEtlException) from a Failure
+ * Trap, we need to throw an Error instead.
+ *
+ * For details see:
+ * https://groups.google.com/forum/?fromgroups=#!topic/cascading-user/Ld5sg1baOyc
+ */
+case class FatalEtlError(msg: String) extends Error(msg)
 
 /**
  * An unexpected exception in our

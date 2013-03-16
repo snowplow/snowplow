@@ -20,7 +20,7 @@ import org.specs2.mutable.Specification
 import com.twitter.scalding._
 
 // This project
-import TestHelpers._
+import JobTestHelpers._
 
 /**
  * Integration test for the EtlJob:

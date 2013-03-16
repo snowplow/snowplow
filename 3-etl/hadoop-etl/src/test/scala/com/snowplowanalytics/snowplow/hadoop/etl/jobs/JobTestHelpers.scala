@@ -27,7 +27,7 @@ import com.twitter.scalding._
  * Holds helpers for running integration
  * tests on SnowPlow EtlJobs.
  */
-object TestHelpers {
+object JobTestHelpers {
 
   /**
    * A Specs2 matcher to check if a Scalding
