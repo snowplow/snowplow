@@ -8,10 +8,10 @@
 
 ## Available trackers
 
-| Tracker                   | Description                                          | Status               | Read more |
-|---------------------------|------------------------------------------------------|----------------------|-----------|
-| [javascript-tracker] [t1] | A client-side JavaScript tracker for web browser use | Production-ready     | Wiki      |
-| [no-js-tracker] [t2]      | A pixel-based tracker for no-JavaScript web environments | Production-ready | Wiki      |
+| Tracker                   | Description                                          | Status               |
+|---------------------------|------------------------------------------------------|----------------------|
+| [javascript-tracker] [t1] | A client-side JavaScript tracker for web browser use | Production-ready     |
+| [no-js-tracker] [t2]      | A pixel-based tracker for no-JavaScript web environments | Production-ready |
 
 For other trackers (e.g. iOS, Android) and their approximate timelines, please see the [product roadmap][roadmap].
 
