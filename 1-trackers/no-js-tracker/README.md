@@ -21,7 +21,7 @@ Also see [this introductory blog post] [intro-blog-post]. A hosted version of th
 
 ## Copyright and license
 
-The No-JavaScript Tracker is copyright 2012 SnowPlow Analytics Ltd.
+The No-JavaScript Tracker is copyright 2012-2013 SnowPlow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
