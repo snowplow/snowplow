@@ -1,12 +1,12 @@
-# The SnowPlow No-Javascript tracker (pixel tracker)
+# The SnowPlow No-JavaScript tracker (pixel tracker)
 
-The SnowPlow No-Javascript tracker can be used to track views of HTML pages that do not support Javascript. Examples include:
+The SnowPlow No-JavaScript (No-JS) tracker can be used to track views of HTML pages that do not support JavaScript. Examples include:
 
 * HTML emails
 * Pages hosted on 3rd party websites (e.g. READMEs on Github)
 * Product listings on 3rd party marketplaces (e.g. eBay)
 
-The No-JS tracker is effectively a wizard that generates a static SnowPlow tracking tag for a particular HTML page e.g. email. The wizard takes a set of inputs e.g. collector endpoint and page title, and generates a tracking tag that works with any of the SnowPlow collectors.
+The No-JavaScript tracker is effectively a wizard that generates a static SnowPlow tracking tag for a particular HTML page e.g. email. The wizard takes a set of inputs e.g. collector endpoint and page title, and generates a tracking tag that works with any of the SnowPlow collectors.
 
 The wizard source code can be found [here] [wizard]. The logic for generating the tag is stored in the [Javascript file] [js-wizard] invoked by the wizard.
 
@@ -21,7 +21,7 @@ Also see [this introductory blog post] [intro-blog-post]. A hosted version of th
 
 ## Copyright and license
 
-The No-JS Tracker is copyright 2012 SnowPlow Analytics Ltd.
+The No-JavaScript Tracker is copyright 2012-2013 SnowPlow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
@@ -41,3 +41,4 @@ limitations under the License.
 [roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
 [techdocs]: https://github.com/snowplow/snowplow/wiki/no-js-tracker
 [setup]: https://github.com/snowplow/snowplow/wiki/no-js-tracker-setup
+[license]: http://www.apache.org/licenses/LICENSE-2.0
