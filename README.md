@@ -21,15 +21,19 @@ To briefly explain these five sub-systems:
 * **Trackers** fire SnowPlow events. Currently we have a JavaScript tracker; iOS and Android trackers are on the roadmap
 * **Collectors** receive SnowPlow events from trackers. Currently we have a CloudFront-based collector and a node.js-based collector, called SnowCannon
 * **ETL (extract, transform and load)** cleans up the raw SnowPlow events, enriches them and puts them into storage. Currently we have a Hive-based ETL process
-* **Storage** is where the SnowPlow events live. Currently we store the SnowPlow events in a Hive-format flatfile structure on S3, and in the Infobright columnar database
+* **Storage** is where the SnowPlow events live. Currently we store the SnowPlow events in a Hive-format flatfile structure on S3, and in the Redshift and Infobright columnar databases
 * **Analytics** are performed on the SnowPlow events. Currently we have a set of ad hoc analyses that work with Hive and Infobright 
 
 **For more information on the current SnowPlow architecture, please see the [Technical architecture] [architecture-doc]**.
 
-## Documentation
+## Find out more
 
-1. The [SnowPlow setup guide] [setup] details how to choose between the different available trackers, collectors, ETL modules, storage solutions etc. and hwo to set each module up.
-2. The [SnowPlow technical documentation] [tech-docs] provide technical details including the [SnowPlow tracker protocol] [tracker-protocol], [collector log file format schemas] [collector-logs] and [data structure schemas] [data-structure].
+| Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
+|-----------------------------|-----------------------|--------------------------------------|
+| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
+| [Technical Docs] [techdocs] | [Setup Guide] [setup] | [Roadmap] [roadmap]. [Contributors] [contributors]. |
+
+
 
 ## Contributing
 
@@ -43,8 +47,7 @@ Check out the **[Talk to us] [talk-to-us]** page on our wiki.
 
 ## Copyright and license
 
-SnowPlow is copyright 2012 SnowPlow Analytics Ltd. Significant portions of `snowplow.js`
-are copyright 2010 Anthon Pang.
+SnowPlow is copyright 2012-2013 SnowPlow Analytics Ltd.
 
 Licensed under the **[Apache License, Version 2.0] [license]** (the "License");
 you may not use this software except in compliance with the License.
@@ -68,3 +71,10 @@ limitations under the License.
 [tracker-protocol]: https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol
 [collector-logs]: https://github.com/snowplow/snowplow/wiki/Collector-logging-formats
 [data-structure]: https://github.com/snowplow/snowplow/wiki/canonical-event-model
+[techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
+[setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
+[roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
+[techdocs]: https://github.com/snowplow/snowplow/wiki/SnowPlow-technical-documentation
+[setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-SnowPlow
+[roadmap]: https://github.com/snowplow/snowplow/wiki/Product-roadmap
+[contributors]: https://github.com/snowplow/snowplow/wiki/Contributors

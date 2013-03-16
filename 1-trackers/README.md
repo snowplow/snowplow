@@ -12,16 +12,15 @@
 |---------------------------|------------------------------------------------------|----------------------|-----------|
 | [javascript-tracker] [t1] | A client-side JavaScript tracker for web browser use | Production-ready     | Wiki      |
 | [no-js-tracker] [t2]      | A pixel-based tracker for no-JavaScript web environments | Production-ready | Wiki      |
-| contrib-ios-tracker       | Coming soon from a community member                  | Pre-alpha            | -         | 
 
-## Useful resources
+For other trackers (e.g. iOS, Android) and their approximate timelines, please see the [product roadmap][roadmap].
 
-1. [Guide to choosing and setting up a tracker] [setup] on the [wiki] [setup].
-2. [Tracker technical documentation] [tech-docs], also on the [wiki] [tech-docs].
+## Find out more
 
-## Contributing
-
-We welcome community contributions of additional Trackers! We have a guide to contributing Trackers coming soon on the Wiki. 
+| Technical Docs               | Setup Guide           | Roadmap & Contributing               |         
+|------------------------------|-----------------------|--------------------------------------|
+| ![i1] [techdocs-image]       | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
+| [Technical Docs] [tech-docs] | [Setup Guide] [setup] | _coming soon_                        |
 
 ![Tracker](https://collector.snplow.com/i?&e=pv&page=1%20Trackers%20README&aid=snowplowgithub&p=web&tv=no-js-0.1.0)
 
@@ -32,3 +31,7 @@ We welcome community contributions of additional Trackers! We have a guide to co
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-a-Tracker
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/trackers
 [wiki]: https://github.com/snowplow/snowplow/wiki
+[techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
+[setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
+[roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
+[roadmap]: https://github.com/snowplow/snowplow/wiki/Product-roadmap

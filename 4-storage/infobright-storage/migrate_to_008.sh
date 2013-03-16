@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
+# Copyright (c) 2013 SnowPlow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -11,7 +11,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2013 SnowPlow Analytics Ltd
+# Copyright:: Copyright (c) 2013 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
 # input parameters
@@ -26,8 +26,12 @@ fi
 
 SQL=`locate mysql-ib`
 
-echo "Setting up Infobright..."
+echo "Creating new Infobright table 0.0.8"
 cat ./sql/setup_infobright.sql | ${SQL} -u ${USERNAME} --password=${PASSWORD}
+echo "... done."
+
+echo "Updating Infobright table from 0.0.7 to 0.0.8..."
+cat ./sql/migrate_0.0.7_to_0.0.8.sql | ${SQL} -u ${USERNAME} --password=${PASSWORD}
 echo "... done."
 
 echo "Showing the new table definition..."

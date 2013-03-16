@@ -8,21 +8,18 @@ The **ETL** (extract, transform, load) process takes raw SnowPlow events logged 
 
 ## Available ETL
 
-| ETL                             | Description                                                  | Status           | Read more                    |
-|---------------------------------|--------------------------------------------------------------|------------------|------------------------------|
-| [hive-etl] [e1] (1)             | An ETL process built using Apache Hive                       | Production-ready | Wiki                         |
-| [hadoop-etl] [e2] (2)           | An ETL process built using Scalding for Apache Hadoop        | Pre-alpha        | Coming soon                  | 
-| [emr-etl-runner] [e3]           | A RubyGem for running (1) or (2) on Amazon Elastic MapReduce | Production-ready | Wiki                         |  
+| ETL                             | Description                                                  | Status           |
+|---------------------------------|--------------------------------------------------------------|------------------|
+| [hive-etl] [e1] (1)             | An ETL process built using Apache Hive                       | Production-ready |
+| [hadoop-etl] [e2] (2)           | An ETL process built using Scalding for Apache Hadoop        | In beta          |
+| [emr-etl-runner] [e3]           | A RubyGem for running (1) or (2) on Amazon Elastic MapReduce | Production-ready |
 
-## Documentation
+## Find out more
 
-[The setup guide] [setup] provides step-by-step instructions on setting up and running the [emr-etl-runner] [e3].
-
-Both the above are published on the [wiki] [wiki].
-
-## Contributing
-
-We welcome community contributions to the existing ETL processes or all-new ETL processes! We have a guide to contributing ETL code coming soon on the Wiki. 
+| Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
+|-----------------------------|-----------------------|--------------------------------------|
+| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
+| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
 
 ![Tracker](https://collector.snplow.com/i?&e=pv&page=3%20ETL%20README&aid=snowplowgithub&p=web&tv=no-js-0.1.0)
 
@@ -33,5 +30,9 @@ We welcome community contributions to the existing ETL processes or all-new ETL 
 [e2]: ./hadoop-etl/
 [e3]: ./emr-etl-runner/
 [setup]: https://github.com/snowplow/snowplow/wiki/setting-up-EmrEtlRunner
-[which-etl]: https://github.com/snowplow/snowplow/wiki/choosing-an-etl-module
-[wiki]: https://github.com/snowplow/snowplow/wiki
+[techdocs]: https://github.com/snowplow/snowplow/wiki/etl
+[techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
+[setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
+[roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
+
+

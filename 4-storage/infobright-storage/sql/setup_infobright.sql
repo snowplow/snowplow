@@ -1,4 +1,4 @@
--- Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.0.7
+-- Version:     0.0.8
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
@@ -20,7 +20,7 @@ CREATE DATABASE IF NOT EXISTS snowplow ;
 
 USE snowplow ;
 
-CREATE TABLE IF NOT EXISTS events_007 (
+CREATE TABLE IF NOT EXISTS events_008 (
 	-- App
 	`app_id` varchar(255) comment 'lookup', -- 'lookup' is a varchar optimisation for Infobright
 	`platform` varchar(50) comment 'lookup',
@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS events_007 (
 	`pp_yoffset_min` mediumint,
 	`pp_yoffset_max` mediumint,
 	-- User Agent
-	`useragent` varchar(500),
+	`useragent` varchar(1000),
 	-- Browser
 	`br_name` varchar(50) comment 'lookup',
 	`br_family` varchar(50) comment 'lookup',

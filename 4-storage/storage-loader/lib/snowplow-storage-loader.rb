@@ -17,11 +17,12 @@
 require_relative 'snowplow-storage-loader/errors'
 require_relative 'snowplow-storage-loader/config'
 require_relative 'snowplow-storage-loader/s3_tasks'
-require_relative 'snowplow-storage-loader/loader'
+require_relative 'snowplow-storage-loader/ice_loader'
+require_relative 'snowplow-storage-loader/redshift_loader'
 
 module SnowPlow
   module StorageLoader
   	NAME          = "snowplow-storage-loader"
-    VERSION       = "0.0.4"
+    VERSION       = "0.0.5"
   end
 end

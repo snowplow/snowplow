@@ -53,7 +53,7 @@ class CljTomcatFormatTest extends Specification {
     e.br_renderengine = "GECKO"
     e.br_lang = "en-GB"
     e.br_cookies = true
-    e.br_features = List("ag, java, pdf, wma")
+    e.br_features = List("pdf", "qt", "ag", "java", "fla", "wma")
     e.os_name = "Windows"
     e.os_family = "Windows"
     e.os_manufacturer = "Microsoft Corporation"
@@ -131,7 +131,7 @@ class CljTomcatFormatTest extends Specification {
     "have br_features (Browser Features) = %s".format(expected.br_features) in {
       // For some reason (Specs2) couldn't use implicit Java->Scala conversion here
       JavaConversions.asScalaBuffer(actual.br_features) must haveTheSameElementsAs(expected.br_features)
-    }.pendingUntilFixed // For some reason actual.br_features empties when inside this test
+    }
 
     // OS (from user-agent)    
     "have os_name (OS Name) = %s".format(expected.os_name) in {

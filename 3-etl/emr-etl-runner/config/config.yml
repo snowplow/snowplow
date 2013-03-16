@@ -9,7 +9,7 @@
     :log: ADD HERE
     :in: ADD HERE
     :processing: ADD HERE
-    :out: ADD HERE WITH SUB-FOLDER
+    :out: ADD HERE WITH SUB-FOLDER # Make sure this bucket is in the US standard region if you wish to use Redshift
     :archive: ADD HERE
 :emr:
   # Can bump the below as EMR upgrades Hadoop
@@ -24,9 +24,10 @@
 :etl:
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
   :continue_on_unexpected_error: false # You can switch to 'true' if you really don't want the serde throwing exceptions
-  :storage_format: non-hive # Or switch to 'hive' if you're only using Hive for analysis
+  :storage_format: redshift # Or 'hive' or 'mysql-infobright'
 # Can bump the below as SnowPlow releases new versions
 :snowplow:
   :serde_version: 0.5.5
-  :hive_hiveql_version: 0.5.6
-  :non_hive_hiveql_version: 0.0.7
+  :hive_hiveql_version: 0.5.7
+  :mysql_infobright_hiveql_version: 0.0.8
+  :redshift_hiveql_version: 0.0.1

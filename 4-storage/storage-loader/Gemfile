@@ -21,3 +21,4 @@ ruby "1.9.3"
 # RubyGems it requires here.
 gem "infobright-loader", "~> 0.0.1"
 gem "sluice", "~> 0.0.6"
+gem "pg", "~> 0.14.1"

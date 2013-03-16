@@ -19,10 +19,12 @@ The contents of this folder are as follows:
 
 ## Documentation
 
-1. [The setup guide] [setup] includes details on how to get up and running with ICE, including configuring it for use with SnowPlow
-2. [The technical documentation] [tech-docs] includes the Infobright table definitions
+| Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
+|-----------------------------|-----------------------|--------------------------------------|
+| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
+| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
 
-Both the above can be found on the [wiki] [wiki]
+
 
 ## Copyright and license
 
@@ -39,6 +41,9 @@ limitations under the License.
 
 [ice]: http://www.infobright.org
 [license]: http://www.apache.org/licenses/LICENSE-2.0
-[setup]: https://github.com/snowplow/snowplow/wiki/infobright-storage-setup
-[tech-docs]: https://github.com/snowplow/snowplow/wiki/infobright-storage
+[setup]: https://github.com/snowplow/snowplow/wiki/setting-up-infobright
+[techdocs]: https://github.com/snowplow/snowplow/wiki/infobright-storage
 [wiki]: https://github.com/snowplow/snowplow/wiki
+[techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
+[setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
+[roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png

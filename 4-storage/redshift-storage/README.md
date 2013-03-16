@@ -1,21 +1,31 @@
-# Clojure Collector
+# Infobright storage for SnowPlow
 
 ## Introduction
 
-The Clojure Collector is an event collector for [SnowPlow] [snowplow], written in Clojure. It sets a third-party cookie, allowing user tracking across domains. It is designed to be easy to setup on [Amazon Elastic Beanstalk] [elastic-beanstalk].
+[Amazon Redshift] [redshift] is a fully-managed, Petabyte scale datawarehouse
+provided by Amazon. It is an excellent location for storing SnowPlow data, as it
+enables you to plugin a wide variety of analytics tools directly onto SnowPlow data.
 
-The Clojure Collector relies on [Tomcat] [tomcat] for SnowPlow event logging, and is built on top of [Ring][ring] and [Compojure][compojure].
+## Contents
 
-## Find out more
+The contents of this folder are as follows:
+
+* In this folder is this `README.md` and the `setup.sh` Bash script
+* `sql` contains Infobright-compatible SQL scripts to setup your database and
+  verify the setup
+
+## Documentation
 
 | Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
 |-----------------------------|-----------------------|--------------------------------------|
 | ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
 | [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
 
+
+
 ## Copyright and license
 
-The Clojure Collector is copyright 2012 SnowPlow Analytics Ltd.
+redshift-storage is copyright 2012 SnowPlow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
@@ -26,16 +36,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[snowplow]: http://snowplowanalytics.com
-[elastic-beanstalk]: http://aws.amazon.com/elasticbeanstalk/
-[tomcat]: http://tomcat.apache.org/
-[ring]: https://github.com/ring-clojure/ring
-[compojure]: https://github.com/weavejester/compojure
-
+[redshift]: http://aws.amazon.com/redshift/
+[license]: http://www.apache.org/licenses/LICENSE-2.0
+[setup]: https://github.com/snowplow/snowplow/wiki/setting-up-redshift
+[techdocs]: https://github.com/snowplow/snowplow/wiki/amazon-redshift-storage
+[wiki]: https://github.com/snowplow/snowplow/wiki
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
 [roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
-[techdocs]: https://github.com/snowplow/snowplow/wiki/Clojure-collector
-[setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-the-Clojure-collector
-
-[license]: http://www.apache.org/licenses/LICENSE-2.0

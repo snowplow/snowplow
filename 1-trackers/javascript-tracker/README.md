@@ -4,59 +4,19 @@
 
 `snowplow.js` (or `sp.js` in minified form) is the JavaScript page and event tracking library for [SnowPlow] [snowplow].
 
-`snowplow.js` is largely based on Anthon Pang's excellent [`piwik.js`] [piwikjs], the JavaScript tracker for the open-source [Piwik] [piwik] project, and is distributed under the same license ([Simplified BSD] [bsd]). For completeness, the main differences between `snowplow.js` and `piwik.js` are documented below.
+## Find out more
 
-## Contents
+| Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
+|-----------------------------|-----------------------|--------------------------------------|
+| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
+| [Technical Docs] [tech-docs] | [Setup Guide] [setup] | _coming soon_                        |
 
-Contents of this folder are as follows:
-
-* In this folder is this README and the [Simplified BSD] [bsd] license
-* `js` contains the un-minified JavaScript (`snowplow.js`), the minified JavaScript (`sp.js`) and a Bash script for minifying (`snowpak.sh`)
-* `static` contains the 1x1 transparent pixel (`ice.png`) which is fetched by the JavaScript from a CloudFront distribution
-
-## Documentation
-
-Besides this README, there are two main SnowPlow guides which relate to `snowplow.js`:
-
-1. The [Javascript tracker setup guide] [setup] details how to get up and running with the tracker, including [integrating the Javascript tags] [integrating-js-on-website].
-2. The [Javascript tracker technical documentation] [tech-docs] detail how the tracker handles pageview, event, ecomm, social, campaign, error and application tracking, including tracker API details.
-
-## Main differences between snowplow.js and piwik.js
-
-The main differences today are as follows:
-
-* Simplified the set of querystring name-value pairs (removing Piwik-specific values and values which CloudFront logging gives us for free)
-* Tracking is now configured with an account ID (CloudFront subdomain) rather than a full tracker URL
-* Added new `trackEvent` functionality
-* Added new `trackImpression` functionality
-* Added browser language and visit ID to the querystring (because not available via CloudFront logging)
-* Removed `POST` functionality (because S3 logging does not support `POST`)
-* Removed goal tracking functionality
-* Removed custom variables
-* Removed ecommerce tracking functionality (ecommerce tracking is now handled by events)
-* Removed `piwik.js`'s own deprecated 'legacy' functionality
-
-We expect these two scripts to diverge further as we continue to evolve SnowPlow (see the next section for more detail).
-
-## Roadmap
-
-`piwik.js` provides an excellent starting point for `snowplow.js` - and we would encourage any SnowPlow users to check out [Piwik] [piwik] as an open-source alternative to using Google Analytics.
-
-However, we fully expect `snowplow.js` to diverge from `piwik.js`, for three main reasons:
-
-* **Tracking technology:** there are some differences in what is advisable/possible using a PHP tracker (like Piwik) versus using an Amazon S3 pixel (like SnowPlow)
-* **Approach to data aggregation:** Piwik performs 'pre-aggregation' on the incoming data in both `piwik.js` and the [PHP tracker] [piwikphp] prior to logging to database. The SnowPlow approach is to defer all such aggregations to the MapReduce phase - which should reduce the complexity of `snowplow.js`
-* **Philosophy on premature analysis:** Piwik follows the 'classical' model of web analytics, where the sensible analyses are agreed in advance, formalised by being integrated into the site (e.g. by tracking goals and conversion funnels) and then analysed. SnowPlow views this as 'premature analysis', and encourages logging lots of intent-agnostic events and then figuring out what they mean later
-
-Planned items on the roadmap are as follows:
-
-* Remove site ID functionality
-* Remove unused campaign marketing variable code (as no longer used)
-* Rewrite in CoffeeScript (joke!)
 
 ## Copyright and license
 
-Significant portions of `snowplow.js` copyright 2010 Anthon Pang. Remainder copyright 2012 SnowPlow Analytics Ltd.
+`snowplow.js` is based on Anthon Pang's excellent [`piwik.js`] [piwikjs], the JavaScript tracker for the open-source [Piwik] [piwik] project, and is distributed under the same license ([Simplified BSD] [bsd]).
+
+Significant portions of `snowplow.js` copyright 2010 Anthon Pang. Remainder copyright 2012-13 SnowPlow Analytics Ltd.
 
 Licensed under the [Simplified BSD] [bsd] license.
 
@@ -70,3 +30,6 @@ Licensed under the [Simplified BSD] [bsd] license.
 [setup]: https://github.com/snowplow/snowplow/wiki/javascript-tracker-setup
 [integrating-js-on-website]: https://github.com/snowplow/snowplow/wiki/integrating-javascript-tags-onto-your-website
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/javascript-tracker
+[techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
+[setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
+[roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png

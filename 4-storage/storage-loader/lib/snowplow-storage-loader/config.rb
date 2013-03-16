@@ -27,6 +27,8 @@ module SnowPlow
       # TODO: would be nice to move this to using Kwalify
       # TODO: would be nice to support JSON as well as YAML
 
+      @@storage_targets = Set.new(%w(redshift infobright))
+
       # Return the configuration loaded from the supplied YAML file, plus
       # the additional constants above.
       def get_config()
@@ -41,25 +43,28 @@ module SnowPlow
         config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
         config[:download][:folder] = Sluice::Storage::trail_slash(config[:download][:folder])
 
-        # Validate the storage target type
-        if config[:storage][:type] != 'infobright'
-          raise ConfigError, "Storage type '#{config[:storage][:type]}' not supported (only 'infobright')"
+        # Check we recognise the storage target 
+        unless @@storage_targets.include?(config[:storage][:type]) 
+          raise ConfigError, "Storage type '#{config[:storage][:type]}' not supported"
         end
+            
+        # If Infobright is the target, check that the download folder exists and is empty
+        if (config[:storage][:type] == 'infobright')
+          # Check that the download folder exists...
+          unless File.directory?(config[:download][:folder])
+            raise ConfigError, "Download folder '#{config[:download][:folder]}' not found"
+          end
         
-        # Check our download folder exists
-        unless File.directory?(config[:download][:folder])
-          raise ConfigError, "Download folder '#{config[:download][:folder]}' not found"
-        end
-
-        # If we are not skipping the download stage, the download folder needs to be empty
-        unless config[:skip].include?("download")
-          if !(Dir.entries(config[:download][:folder]) - %w{ . .. }).empty?
-            raise ConfigError, "Download folder '#{config[:download][:folder]}' is not empty"
+          # ...and it is empty
+          unless config[:skip].include?("download")
+            if !(Dir.entries(config[:download][:folder]) - %w{ . .. }).empty?
+              raise ConfigError, "Download folder '#{config[:download][:folder]}' is not empty"
+            end
           end
         end
 
         config
-      end
+      end  
       module_function :get_config
 
       private
@@ -78,7 +83,7 @@ module SnowPlow
           opts.separator "Specific options:"
 
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
-          opts.on('-s', '--skip download,load,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-s', '--skip download|delete,load,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
 
           opts.separator ""
           opts.separator "Common options:"
@@ -99,8 +104,8 @@ module SnowPlow
 
         # Check our skip argument
         options[:skip].each { |opt|
-          unless %w(download load archive).include?(opt)
-            raise ConfigError, "Invalid option: skip can be 'download', 'load' or 'archive', not '#{opt}'"
+          unless %w(download delete load archive).include?(opt)
+            raise ConfigError, "Invalid option: skip can be 'download', 'delete', 'load' or 'archive', not '#{opt}'"
           end
         }
 

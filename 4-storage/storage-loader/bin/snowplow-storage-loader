@@ -22,22 +22,39 @@ loader = SnowPlow::StorageLoader
 # This Ruby script runs the SnowPlow StorageLoader.
 #
 # This is a three-step process:
-# 1. Download the SnowPlow event files from In Bucket to the local filesystem
-# 2. Load the SnowPlow event files into the target storage (currently, only Infobright is supported)
-# 3. Archive the processed SnowPlow event files from In Bucket to Archive Bucket
 #
-# Note that each step is only actioned if the previous step succeeded without error.
+# 1. Download SnowPlow event files from S3 (Infobright only)
+# 2. Load SnowPlow event files (either local or remote) into storage target
+# 3. Archive event files in S3
 begin
   config = loader::Config.get_config()
 
+  # Download files - Infobright only
   unless config[:skip].include?('download')
-   loader::S3Tasks.download_events(config)
+    if config[:storage][:type] == 'infobright'
+      loader::S3Tasks.download_events(config)
+    end
   end
 
+  # Delete files - Redshift only
+  unless config[:skip].include?('delete')
+    if config[:storage][:type] == 'redshift'
+      loader::S3Tasks.delete_null_events(config)
+    end    
+  end
+
+  # If we are not skipping the load, use the appropriate
+  # loader for Redshift or Infobright
   unless config[:skip].include?('load')
-    loader::Loader.load_events(config)
+    case config[:storage][:type]
+      when 'redshift'
+        loader::RedshiftLoader.load_events(config)
+      when 'infobright'
+        loader::IceLoader.load_events(config)
+    end
   end
 
+  # Archive
   unless config[:skip].include?('archive')
     loader::S3Tasks.archive_events(config)
   end
