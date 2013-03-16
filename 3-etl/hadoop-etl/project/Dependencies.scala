@@ -16,7 +16,7 @@ object Dependencies {
   
   val resolutionRepos = Seq(
     // Required for our Scalaz snapshot
-    "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
+    "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/releases/",
      // For some misc Scalding and Twitter libs
     "Concurrent Maven Repo" at "http://conjars.org/repo",
     // For scala-util currently
@@ -29,8 +29,8 @@ object Dependencies {
     val yodaTime    = "2.1"
     val yodaConvert = "1.2"
     // Scala
-    val scalding    = "0.8.3"
-    val scalaz7     = "7.0-SNAPSHOT" // -> "7.0.0" when released
+    val scalding    = "0.8.4"
+    val scalaz7     = "7.0.0-M8" // -> "7.0.0" when released
     val jerkson     = "0.7.0"
     val scalaUtil   = "0.1.0"
     val specs2      = "1.12.3" // -> "1.13" when we bump to Scala 2.10.0
@@ -45,7 +45,8 @@ object Dependencies {
     val yodaConvert = "org.joda"                   %  "joda-convert"        % V.yodaConvert
     
     // Scala
-    val scalding    = "com.twitter"                %% "scalding"            % V.scalding
+    val scaldingCore= "com.twitter"                %% "scalding-core"       % V.scalding
+    val scaldingArgs= "com.twitter"                %% "scalding-args"       % V.scalding
     val scalaz7     = "org.scalaz"                 %% "scalaz-core"         % V.scalaz7
     val jerkson     = "io.backchat.jerkson"        %% "jerkson"             % V.jerkson
     val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"          % V.scalaUtil
