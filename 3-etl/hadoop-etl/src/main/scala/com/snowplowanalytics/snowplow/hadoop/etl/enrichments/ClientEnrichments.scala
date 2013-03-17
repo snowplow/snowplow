@@ -71,6 +71,8 @@ object ClientEnrichments {
    *
    * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-browserandos
    *
+   * @param field The name of the field
+   *        holding the resolution
    * @param res The packed string
    *        holding the screen resolution
    * @return the ResolutionTuple or an
