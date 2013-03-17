@@ -66,7 +66,7 @@ object EnrichmentManager {
     // payload types in the future
     val parameters = raw.payload match {
       case NVGetPayload(p) => p
-      case _ => throw new FatalEtlException("Only name-value pair GET payloads are currently supported")
+      case _ => throw new FatalEtlError("Only name-value pair GET payloads are currently supported") // TODO: change back to FatalEtlException when Cascading FailureTrap supports exclusions
     }
 
     // 1. Enrichments not expected to fail

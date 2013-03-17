@@ -146,6 +146,7 @@ case class FatalEtlException(msg: String) extends EtlException(msg)
  * For details see:
  * https://groups.google.com/forum/?fromgroups=#!topic/cascading-user/Ld5sg1baOyc
  */
+// TODO: delete when Cascading FailureTrap supports exclusions
 case class FatalEtlError(msg: String) extends Error(msg)
 
 /**
