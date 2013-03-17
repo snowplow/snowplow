@@ -113,7 +113,7 @@ object TrackerPayload {
   def extractGetPayload(qs: String, encoding: String): ValidatedNameValueNEL =
     try {
       parseQuerystring(qs, encoding) match {
-        case head :: tail => NonEmptyList[NameValuePair](head, tail: _*).success
+        case x :: xs => NonEmptyList[NameValuePair](x, xs: _*).success
         case Nil => "No name-value pairs extractable from querystring [%s] with encoding [%s]".format(qs, encoding).fail
       }
     } catch {
