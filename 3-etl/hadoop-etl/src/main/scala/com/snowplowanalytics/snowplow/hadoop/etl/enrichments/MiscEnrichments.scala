@@ -55,7 +55,7 @@ object MiscEnrichments {
 
   /**
    * Identity transform.
-   * Straight pass through.
+   * Straight passthrough.
    */
   val identity: (String, String) => Validation[String, String] = (field, value) => value.success
 }
