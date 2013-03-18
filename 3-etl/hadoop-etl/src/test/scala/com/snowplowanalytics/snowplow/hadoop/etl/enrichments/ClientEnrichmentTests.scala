@@ -30,9 +30,9 @@ class ExtractResolutionTest extends Specification with DataTables {
   def err: (String) => String = input => "Field [%s]: [%s] is not a valid screen resolution".format(FieldName, input)
 
   def is =
-    "Extracting resolutions with extractResolution should work" ! er
+    "Extracting resolutions with extractResolution should work" ! e1
 
-  def er =
+  def e1 =
     "SPEC NAME"        || "INPUT VAL" | "EXPECTED OUTPUT"                      |
     "valid desktop"    !! "1200x800"  !  (1200, 800).success[String]           |
     "valid mobile"     !! "76x128"    !  (76, 128).success[String]             |
