@@ -13,7 +13,7 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package enrichments
 
-// Specs2
+// Specs2 & ScalaCheck
 import org.specs2.mutable.{Specification => MutSpecification}
 import org.specs2.{Specification, ScalaCheck}
 import org.specs2.matcher.DataTables

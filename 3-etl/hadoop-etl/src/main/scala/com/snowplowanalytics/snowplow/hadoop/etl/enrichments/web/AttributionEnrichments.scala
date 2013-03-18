@@ -40,8 +40,8 @@ import utils.DataTransform._
 object AttributionEnrichments {
 
   /**
-   * Immutable case class for a marketing campaign. Any
-   * or all of the five fields can be set.
+   * Class for a marketing campaign. Any or
+   * all of the five fields can be set.
    */
   class MarketingCampaign {
     @BeanProperty var medium: String = _
@@ -52,13 +52,7 @@ object AttributionEnrichments {
   }
 
   /**
-   * Extract the marketing fields
-   * from a URL.
-   *
-   * TODO: get this working.
-   * TODO: change Validation to
-   * ValidationNEL (we might get
-   * up to 5 error messages)
+   * Extract the marketing fields from a URL.
    *
    * @param uri The URI to extract
    *        marketing fields from
