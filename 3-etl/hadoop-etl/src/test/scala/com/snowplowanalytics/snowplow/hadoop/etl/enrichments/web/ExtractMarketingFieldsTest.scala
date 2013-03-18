@@ -36,7 +36,7 @@ class ExtractMarketingFieldsTest extends Specification with DataTables {
   // TODO: write this!!!
   // Start with EXPECTED fields, then URL
   def e1 =
-    "SPEC NAME"                      || "EXPECTED MEDIUM" | "EXPECTED SOURCE" |
+    "SPEC NAME"                      || "EXP. MEDIUM" | "EXP. SOURCE" |
     "valid web"                      !! "web"       ! "web".success     |
     "valid iot (internet of things)" !! "iot"       ! "iot".success     |
     "invalid empty"                  !! ""          !  "".fail     |
