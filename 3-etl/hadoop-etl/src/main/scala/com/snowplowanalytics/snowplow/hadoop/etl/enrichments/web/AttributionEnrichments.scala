@@ -43,6 +43,8 @@ object AttributionEnrichments {
    * Class for a marketing campaign. Any or
    * all of the five fields can be set.
    */
+  // TODO: change this to a case class (add case class
+  // support to TransformMap)
   class MarketingCampaign {
     @BeanProperty var source: String = _
     @BeanProperty var medium: String = _
