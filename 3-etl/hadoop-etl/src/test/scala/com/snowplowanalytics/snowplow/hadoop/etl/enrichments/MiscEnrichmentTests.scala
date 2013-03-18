@@ -25,6 +25,7 @@ import Scalaz._
 
 /**
  * Tests the etlVersion variable.
+ * Uses mutable.Specification.
  */
 class EtlVersionTest extends MutSpecification {
 
@@ -37,6 +38,7 @@ class EtlVersionTest extends MutSpecification {
 
 /**
  * Tests the extractPlatform function.
+ * Uses DataTables.
  */
 class ExtractPlatformTest extends Specification with DataTables {
 
@@ -59,7 +61,8 @@ class ExtractPlatformTest extends Specification with DataTables {
 }
 
 /**
- * Tests the identity function using ScalaCheck.
+ * Tests the identity function.
+ * Uses ScalaCheck.
  */
 class IdentityTest extends Specification with ScalaCheck {
 
