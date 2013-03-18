@@ -39,7 +39,8 @@ object SnowPlowHadoopEtlBuild extends Build {
         Libraries.jerkson,
         Libraries.scalaUtil,
         // Scala (test only)
-        Libraries.specs2
+        Libraries.specs2,
+        Libraries.scalaCheck
         // Add your additional libraries here (comma-separated)...
       )
     )

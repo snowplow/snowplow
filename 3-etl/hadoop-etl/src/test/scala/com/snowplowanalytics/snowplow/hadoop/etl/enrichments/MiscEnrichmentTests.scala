@@ -15,8 +15,9 @@ package enrichments
 
 // Specs2
 import org.specs2.mutable.{Specification => MutSpecification}
-import org.specs2.Specification
+import org.specs2.{Specification, ScalaCheck}
 import org.specs2.matcher.DataTables
+import org.scalacheck._
 
 // Scalaz
 import scalaz._
@@ -37,7 +38,7 @@ class EtlVersionTest extends MutSpecification {
 /**
  * Tests the extractPlatform function.
  */
-class ExtractPlatform extends Specification with DataTables {
+class ExtractPlatformTest extends Specification with DataTables {
 
   val FieldName = "p"
   def err: (String) => String = input => "Field [%s]: [%s] is not a supported tracking platform".format(FieldName, input)
@@ -55,4 +56,16 @@ class ExtractPlatform extends Specification with DataTables {
 
       (_, input, expected) => MiscEnrichments.extractPlatform(FieldName, input) must_== expected
     }
-} 
+}
+
+/**
+ * Tests the identity function using ScalaCheck.
+ */
+class IdentityTest extends Specification with ScalaCheck {
+
+  def is =
+    "The identity function should work for any pair of Strings" ! e1
+
+  def e1 =
+    check { (field: String, value: String) => MiscEnrichments.identity(field, value) must_== value.success }
+}

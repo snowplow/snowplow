@@ -33,7 +33,9 @@ object Dependencies {
     val scalaz7     = "7.0.0-M8" // -> "7.0.0" when released
     val jerkson     = "0.7.0"
     val scalaUtil   = "0.1.0"
+    // Scala (test only)
     val specs2      = "1.12.3" // -> "1.13" when we bump to Scala 2.10.0
+    val scalaCheck  = "1.10.0"
     // val useragent = "1.6" No Maven repo, so user-agent-utils is an unmanaged lib
   }
 
@@ -52,5 +54,6 @@ object Dependencies {
     val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"          % V.scalaUtil
     // Scala (test only)
     val specs2      = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
+    val scalaCheck  = "org.scalacheck"             %% "scalacheck"          % V.scalaCheck   % "test"
   }
 }
