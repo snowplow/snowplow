@@ -27,7 +27,6 @@ import Scalaz._
 class ExtractResolutionTest extends Specification with DataTables {
 
   val FieldName = "res"
-
   def err: (String) => String = input => "Field [%s]: [%s] is not a valid screen resolution".format(FieldName, input)
 
   def is =
