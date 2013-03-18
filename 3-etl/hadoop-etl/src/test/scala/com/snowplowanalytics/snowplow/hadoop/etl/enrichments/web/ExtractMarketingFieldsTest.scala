@@ -14,6 +14,9 @@ package com.snowplowanalytics.snowplow.hadoop.etl
 package enrichments
 package web
 
+// Java
+import java.net.URI
+
 // Specs2
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
@@ -21,6 +24,12 @@ import org.specs2.matcher.DataTables
 // Scalaz
 import scalaz._
 import Scalaz._
+
+// SnowPlow Utils
+import com.snowplowanalytics.util.Tap._
+
+// This project
+import AttributionEnrichments._
 
 /**
  * Tests the extractMarketingFields function.
@@ -31,17 +40,21 @@ class ExtractMarketingFieldsTest extends Specification with DataTables {
   val Encoding = "UTF-8"
 
   def is =
-    "Extracting marketing campaigns with extractMarketingFields should work" ! e1
+    "Extracting valid marketing campaigns with extractMarketingFields should work" ! e1
 
-  // TODO: write this!!!
-  // Start with EXPECTED fields, then URL
+  // Valid marketing campaigns
+  // Use http://support.google.com/analytics/bin/answer.py?hl=en&answer=1033867 to generate additional ones
   def e1 =
-    "SPEC NAME"                      || "EXP. MEDIUM" | "EXP. SOURCE" |
-    "valid web"                      !! "web"       ! "web".success     |
-    "valid iot (internet of things)" !! "iot"       ! "iot".success     |
-    "invalid empty"                  !! ""          !  "".fail     |
-    "invalid platform"               !! "ma"        !  "ma".fail   |> {
+    "SPEC NAME"                      || "EXP. SOURCE" | "EXP. MEDIUM" | "EXP. TERM" | "EXP. CONTENT" | "EXP. CAMPAIGN" | "URL" |
+    "all except content"             !! "google"      ! "cpc"         ! "buy tarot" ! null           ! "spring_sale"   ! new URI("http://www.psychicbazaar.com/shop/tarot?utm_source=google&utm_medium=cpc&utm_term=buy%2Btarot&utm_campaign=spring_sale") |> {
 
-      (_, url, expected) => 1 must_== 1
+      (_, source, medium, term, content, campaign, url) =>
+        extractMarketingFields(url, Encoding) must_== new MarketingCampaign().tap { mc =>
+          mc.source   = source
+          mc.medium   = medium
+          mc.term     = term
+          mc.content  = content
+          mc.campaign = campaign 
+        }.success
     }
 }

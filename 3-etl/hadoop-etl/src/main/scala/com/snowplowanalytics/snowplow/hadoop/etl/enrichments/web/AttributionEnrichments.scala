@@ -44,8 +44,8 @@ object AttributionEnrichments {
    * all of the five fields can be set.
    */
   class MarketingCampaign {
-    @BeanProperty var medium: String = _
     @BeanProperty var source: String = _
+    @BeanProperty var medium: String = _
     @BeanProperty var term: String = _
     @BeanProperty var content: String = _
     @BeanProperty var campaign: String = _
@@ -76,10 +76,10 @@ object AttributionEnrichments {
     // We use a TransformMap which takes the format:
     // "source key" -> (transformFunction, field(s) to set)
     val transformMap: TransformMap =
-      Map(("utm_medium"   , (decodeString, "medium")),
-          ("utm_source"   , (decodeString, "source")),
+      Map(("utm_source"   , (decodeString, "source")),
+          ("utm_medium"   , (decodeString, "medium")),
           ("utm_term"     , (decodeString, "term")),
-          ("utm_content"  , (decodeString, "term")),
+          ("utm_content"  , (decodeString, "content")),
           ("utm_campaign" , (decodeString, "campaign")))
 
     val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
