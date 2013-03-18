@@ -109,6 +109,23 @@ object FatalEtlException extends EtlExceptionConstructors[FatalEtlException] {
 
 /**
  * Companion object for
+ * FatalEtlError
+ */
+// TODO: delete when Cascading FailureTrap supports exclusions
+object FatalEtlError {
+
+  def apply(errs: NonEmptyList[String]): FatalEtlError = 
+    apply(errs.list)
+
+  def apply(errs: List[String]): FatalEtlError = 
+    FatalEtlError(formatErrors(errs))
+
+  private def formatErrors(errs: List[String]): String =
+    "EtlError Errors:\n  - %s".format(errs.mkString("\n  - "))
+}
+
+/**
+ * Companion object for
  * UnexpectedEtlException
  *
  * Contains an apply() constructor

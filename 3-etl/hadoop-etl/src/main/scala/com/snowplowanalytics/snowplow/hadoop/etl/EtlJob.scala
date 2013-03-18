@@ -33,7 +33,7 @@ class EtlJob(args: Args) extends Job(args) {
   // Job configuration. Scalaz recommends using fold()
   // for unpicking a Validation
   val etlConfig = EtlJobConfig.loadConfigFrom(args).fold(
-    e => throw FatalEtlException(e),
+    e => throw FatalEtlError(e),
     c => c)
 
   // Aliases for our job

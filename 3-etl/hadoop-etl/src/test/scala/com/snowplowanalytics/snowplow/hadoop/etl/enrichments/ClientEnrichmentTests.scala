@@ -14,7 +14,8 @@ package com.snowplowanalytics.snowplow.hadoop.etl
 package enrichments
 
 // Specs2
-import org.specs2.mutable.Specification
+import org.specs2.Specification
+import org.specs2.matcher.DataTables
 
 // Scalaz
 import scalaz._
@@ -23,14 +24,23 @@ import Scalaz._
 /**
  * Tests the extractResolution function
  */
-class ExtractResolutionTest extends Specification {
+class ExtractResolutionTest extends Specification with DataTables {
 
   val FieldName = "res"
 
-  // TODO: switch to a data table for this test.
-	"A resolution of 1200x800" should {
-    "be successfully extracted" in {
-      ClientEnrichments.extractResolution(FieldName, "1200x800") must_== (1200, 800).success
+  def err: (String) => String = input => "Field [%s]: [%s] is not a valid screen resolution".format(FieldName, input)
+
+  def is =
+    "Extracting resolutions with extractResolution should work" ! er
+
+  def er =
+    "SPEC NAME"        || "INPUT VAL" | "EXPECTED OUTPUT"                      |
+    "valid desktop"    !! "1200x800"  !  (1200, 800).success[String]           |
+    "valid mobile"     !! "76x128"    !  (76, 128).success[String]             |
+    "invalid empty"    !! ""          !  err("").fail[ResolutionTuple]         |
+    "invalid hex"      !! "76xEE"     !  err("76xEE").fail[ResolutionTuple]    |
+    "invalid negative" !! "1200x-17"  !  err("1200x-17").fail[ResolutionTuple] |> {
+
+      (_, input, expected) => ClientEnrichments.extractResolution(FieldName, input) must_== expected
     }
-  }
 }
