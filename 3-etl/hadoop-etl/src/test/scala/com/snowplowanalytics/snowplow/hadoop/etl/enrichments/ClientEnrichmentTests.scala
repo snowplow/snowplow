@@ -33,12 +33,13 @@ class ExtractResolutionTest extends Specification with DataTables {
     "Extracting resolutions with extractResolution should work" ! e1
 
   def e1 =
-    "SPEC NAME"        || "INPUT VAL" | "EXPECTED OUTPUT"                      |
-    "valid desktop"    !! "1200x800"  !  (1200, 800).success[String]           |
-    "valid mobile"     !! "76x128"    !  (76, 128).success[String]             |
-    "invalid empty"    !! ""          !  err("").fail[ResolutionTuple]         |
-    "invalid hex"      !! "76xEE"     !  err("76xEE").fail[ResolutionTuple]    |
-    "invalid negative" !! "1200x-17"  !  err("1200x-17").fail[ResolutionTuple] |> {
+    "SPEC NAME"        || "INPUT VAL" | "EXPECTED OUTPUT"     |
+    "valid desktop"    !! "1200x800"  !  (1200, 800).success  |
+    "valid mobile"     !! "76x128"    !  (76, 128).success    |
+    "invalid empty"    !! ""          !  err("").fail         |
+    "invalid null"     !! null        !  err(null).fail       |
+    "invalid hex"      !! "76xEE"     !  err("76xEE").fail    |
+    "invalid negative" !! "1200x-17"  !  err("1200x-17").fail |> {
 
       (_, input, expected) => ClientEnrichments.extractResolution(FieldName, input) must_== expected
     }
