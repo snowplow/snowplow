@@ -28,7 +28,7 @@ import inputs.{CanonicalInput, NVGetPayload}
 import outputs.CanonicalOutput
 
 import utils.{ConversionUtils => CU}
-import utils.DataTransform._
+import utils.MapTransformer._
 
 import enrichments.{EventEnrichments => EE}
 import enrichments.{MiscEnrichments => ME}

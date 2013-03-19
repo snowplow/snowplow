@@ -31,7 +31,7 @@ import org.apache.http.client.utils.URLEncodedUtils
 
 // This project
 import utils.{ConversionUtils => CU}
-import utils.DataTransform._
+import utils.MapTransformer._
 
 /**
  * Holds enrichments related to marketing and campaign

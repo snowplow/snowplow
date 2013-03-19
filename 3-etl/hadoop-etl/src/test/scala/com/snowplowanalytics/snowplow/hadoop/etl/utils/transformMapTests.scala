@@ -30,51 +30,65 @@ import com.twitter.scalding._
 import com.snowplowanalytics.util.Tap._
 
 // This project
-import DataTransform._
+import MapTransformer._
 import enrichments.{MiscEnrichments, EventEnrichments}
 
-/**
- * Tests the TransformMap against a POJO (Plain
- * Old Java Object).
- */
-class PojoTransformMapTest extends Specification {
+// Test Bean
+class TargetBean {
+  @BeanProperty var platform: String = _
+  @BeanProperty var br_features_pdf: Byte = _
+  @BeanProperty var visit_id: Int = _
+  @BeanProperty var tracker_v: String = _
+  @BeanProperty var dt: String = _
+  @BeanProperty var tm: String = _
+}
 
-  // Test class
-  class Target {
-    @BeanProperty var platform: String = _
-    @BeanProperty var br_features_pdf: Byte = _
-    @BeanProperty var visit_id: Int = _
-    @BeanProperty var tracker_v: String = _
-    @BeanProperty var dt: String = _
-    @BeanProperty var tm: String = _
+// Test Case Class
+class TargetCC(
+  platform: String,
+  br_features_pdf: Byte,
+  visit_id: Int,
+  tracker_v: String,
+  dt: String,
+  tm: String
+  )
+
+// TODO: rename file
+
+/**
+ * Tests the MapTransformer.
+ */
+class MapTransformerTest extends Specification {
+
+  val sourceMap = Map("p"       -> "web",
+                      "f_pdf"   -> "1",
+                      "vid"     -> "1",
+                      "tv"      -> "no-js-0.1.0",
+                      "tstamp"  -> "2013-01-01 23-11-59",
+                      "missing" -> "Not in the transformation map")
+
+  val transformMap: TransformMap = Map(("p"      , (MiscEnrichments.extractPlatform, "platform")),
+                                       ("f_pdf"  , (ConversionUtils.stringToByte, "br_features_pdf")),
+                                       ("vid"    , (ConversionUtils.stringToInt, "visit_id")),
+                                       ("tv"     , (MiscEnrichments.identity, "tracker_v")),
+                                       ("tstamp" , (EventEnrichments.extractTimestamp, ("dt", "tm"))))
+
+  val expected = new TargetBean().tap { t =>
+    t.platform = "web"
+    t.br_features_pdf = 1
+    t.visit_id = 1
+    t.tracker_v = "no-js-0.1.1"
+    t.dt = "2013-01-01"
+    t.tm = "23-11-59"
   }
 
-  "Executing a TransformMap against a SourceMap" should {
+  "Applying a TransformMap to an existing POJO" should {
     "successfully set each of the target fields" in {
 
-      val sourceMap = Map("p"       -> "web",
-                          "f_pdf"   -> "1",
-                          "vid"     -> "1",
-                          "tv"      -> "no-js-0.1.0",
-                          "tstamp"  -> "2013-01-01 23-11-59",
-                          "missing" -> "Not in the transformation map")
-
-      val transformMap: TransformMap = Map(("p"      , (MiscEnrichments.extractPlatform, "platform")),
-                                           ("f_pdf"  , (ConversionUtils.stringToByte, "br_features_pdf")),
-                                           ("vid"    , (ConversionUtils.stringToInt, "visit_id")),
-                                           ("tv"     , (MiscEnrichments.identity, "tracker_v")),
-                                           ("tstamp" , (EventEnrichments.extractTimestamp, ("dt", "tm"))))
-
-      val expected = new Target().tap { t =>
-        t.platform = "web"
-        t.br_features_pdf = 1
-        t.visit_id = 1
-        t.tracker_v = "no-js-0.1.1"
-        t.dt = "2013-01-01"
-        t.tm = "23-11-59"
+      val target = new TargetBean().tap { t =>
+        t.platform = "deleteme"
+        t.tracker_v = "deleteme"
       }
-
-      val target = new Target
       val result = target.transform(sourceMap, transformMap)
 
       result must_== 6.successNel[String] // 6 fields updated
@@ -87,10 +101,23 @@ class PojoTransformMapTest extends Specification {
       target.tm must_== expected.tm
     }
   }
-}
 
-/**
- * Tests the TransformMap against a Scala
- * case class.
- */
-// TODO
+  /*
+  "Executing TransformMap's generate() factory" should {
+    "successfully instantiate a new POJO" in {
+
+      val result = MapTransformer.generate[TargetBean](sourceMap, transformMap)
+      result must_== expected.successNel[String]
+    }
+  } */
+
+  // TODO: search for newInstance(args:_*
+
+  "Executing TransformMap's generate() factory" should {
+    "successfully instantiate a new case class" in {
+
+      val result = MapTransformer.generate[TargetCC](sourceMap, transformMap)
+      result must_== expected.successNel[String]
+    }
+  }
+}
