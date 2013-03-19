@@ -33,23 +33,21 @@ import com.snowplowanalytics.util.Tap._
 import DataTransform._
 import enrichments.{MiscEnrichments, EventEnrichments}
 
-// Test class
-class Target {
-  @BeanProperty var platform: String = _
-  @BeanProperty var br_features_pdf: Byte = _
-  @BeanProperty var visit_id: Int = _
-  @BeanProperty var tracker_v: String = _
-  @BeanProperty var dt: String = _
-  @BeanProperty var tm: String = _
-}
-
 /**
- * Integration test for the EtlJob:
- *
- * Input data _is_ not in the
- * expected CloudFront format.
+ * Tests the TransformMap against a POJO (Plain
+ * Old Java Object).
  */
 class PojoTransformMapTest extends Specification {
+
+  // Test class
+  class Target {
+    @BeanProperty var platform: String = _
+    @BeanProperty var br_features_pdf: Byte = _
+    @BeanProperty var visit_id: Int = _
+    @BeanProperty var tracker_v: String = _
+    @BeanProperty var dt: String = _
+    @BeanProperty var tm: String = _
+  }
 
   "Executing a TransformMap against a SourceMap" should {
     "successfully set each of the target fields" in {
@@ -90,3 +88,9 @@ class PojoTransformMapTest extends Specification {
     }
   }
 }
+
+/**
+ * Tests the TransformMap against a Scala
+ * case class.
+ */
+// TODO

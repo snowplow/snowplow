@@ -1,3 +1,10 @@
+Version 0.8.0 (2013-04-XX)
+--------------------------
+Hadoop ETL: added. Version 0.1.0
+EmrEtlRunner: bumped to 0.1.0
+EmrEtlRunner: changed .rvmrc to .ruby-version, thanks @richo (#190)
+StorageLoader: changed .rvmrc to .ruby-version, thanks @richo (#190)
+
 Version 0.7.6 (2013-03-03)
 --------------------------
 HiveQL: redshift-etl.q added. Version 0.0.1 (#174)
