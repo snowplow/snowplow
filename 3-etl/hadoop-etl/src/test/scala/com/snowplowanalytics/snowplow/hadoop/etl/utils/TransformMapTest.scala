@@ -49,7 +49,7 @@ class Target {
  * Input data _is_ not in the
  * expected CloudFront format.
  */
-class TransformMapTest extends Specification {
+class PojoTransformMapTest extends Specification {
 
   "Executing a TransformMap against a SourceMap" should {
     "successfully set each of the target fields" in {

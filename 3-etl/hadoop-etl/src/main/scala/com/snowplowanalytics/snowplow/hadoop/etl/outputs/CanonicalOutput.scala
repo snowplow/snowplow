@@ -19,12 +19,10 @@ import scala.reflect.BeanProperty
 /**
  * The canonical output format.
  *
- * For simplicity, we are using our
- * "non-Hive" format as the canonical
- * format. I.e. the below is
- * equivalent to the
- * non-hive-rolling-etl.q HiveQL
- * script used by the Hive ETL.
+ * For simplicity, we are using our Redshift format
+ * as the canonical format, i.e. the below is
+ * equivalent to the redshift-etl.q HiveQL script
+ * used by the Hive ETL.
  *
  * When we move to Avro, we will
  * probably review some of these
@@ -32,6 +30,7 @@ import scala.reflect.BeanProperty
  * Array for browser features, and
  * switch remaining Bytes to Booleans).
  */
+// TODO: update to include new Redshift fields
 class CanonicalOutput {
 
   // The application (site, game, app etc) this event belongs to, and the tracker platform
