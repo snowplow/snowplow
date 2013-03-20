@@ -81,6 +81,6 @@ object JobTestHelpers {
       arg("INPUT_FOLDER", "inputFolder").
       arg("INPUT_FORMAT", "cloudfront").
       arg("OUTPUT_FOLDER", "outputFolder").
-      arg("ERRORS_FOLDER", "errorFolder").
+      arg("BAD_ROWS_FOLDER", "badFolder").
       arg("CONTINUE_ON", "1")
 }

@@ -44,8 +44,8 @@ class GoodCfLinesTest extends Specification with TupleConversions {
           output.size must_== 3
         }
       }.
-      sink[String](JsonLine("errorFolder")){ error =>
-        "not write any errors" in {
+      sink[String](JsonLine("badFolder")){ error =>
+        "not write any bad rows" in {
           error must beEmpty
         }
       }.

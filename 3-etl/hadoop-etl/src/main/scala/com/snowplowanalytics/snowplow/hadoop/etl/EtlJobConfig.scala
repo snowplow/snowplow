@@ -31,7 +31,7 @@ import outputs.CanonicalOutput
 case class EtlJobConfig(
     inFolder: String,
     outFolder: String,
-    errFolder: String,
+    badFolder: String,
     collectorLoader: CollectorLoader) //,
     // unexpectedErrorHandler: UnexpectedErrorHandler[CanonicalOutput])
 
@@ -55,7 +55,7 @@ object EtlJobConfig {
     import ScalazArgs._
     val inFolder  = args.requiredz("INPUT_FOLDER")
     val outFolder = args.requiredz("OUTPUT_FOLDER")
-    val errFolder = args.requiredz("ERRORS_FOLDER")
+    val badFolder = args.requiredz("BAD_ROWS_FOLDER")
 
     // TODO: change loader to be the whole end-to-end load
     val loader = args.requiredz("INPUT_FORMAT") flatMap (cf => CollectorLoader.getLoader(cf))
@@ -67,6 +67,6 @@ object EtlJobConfig {
       hr = EtlJobFlow.buildUnexpectedErrorHandler(c)
     } yield hr */
 
-    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| errFolder.toValidationNel |@| loader.toValidationNel /*|@| unexpectedErrorHandler.toValidationNel */) { EtlJobConfig(_, _, _, _/*, _*/) }
+    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| loader.toValidationNel /*|@| unexpectedErrorHandler.toValidationNel */) { EtlJobConfig(_, _, _, _/*, _*/) }
   }
 }

@@ -45,8 +45,8 @@ class InvalidLinesTest extends Specification with TupleConversions {
           output must beEmpty
         }
       }.
-      sink[String](JsonLine("errorFolder")){ json =>
-        "write an error JSON with input line and error message for each input line" in {
+      sink[String](JsonLine("badFolder")){ json =>
+        "write a bad row JSON with input line and error message for each input line" in {
           for (i <- json.indices) {
             json(i) must_== expected(badLines(i)._2)
           }

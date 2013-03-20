@@ -16,14 +16,39 @@ package com.snowplowanalytics.snowplow.hadoop.etl
 import scalaz._
 import Scalaz._
 
-// Cascading
-
 // Scalding
 import com.twitter.scalding._
 
 // This project
 import enrichments.EnrichmentManager
 import outputs.CanonicalOutput
+
+/**
+ * Holds constructs to help build the ETL job's data
+ * flow.
+ */ 
+object EtlJob {
+
+  /**
+   * A helper method to take a ValidatedCanonicalOutput
+   * and flatMap it into a ValidatedCanonicalOutput.
+   *
+   * We have to do some unboxing because enrichEvent
+   * expects a raw CanonicalInput as its argument, not
+   * a MaybeCanonicalInput.
+   *
+   * @param input The ValidatedCanonicalInput
+   * @return the ValidatedCanonicalOutput. Thanks to
+   *         flatMap, will include any validation errors
+   *         contained within the ValidatedCanonicalInput
+   */
+  def toCanonicalOutput(input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
+    input.flatMap {
+      _.cata(EnrichmentManager.enrichEvent(_).map(_.some),
+             none.success)
+    }
+  }
+}
 
 /**
  * The SnowPlow ETL job, written in Scalding
@@ -41,13 +66,13 @@ class EtlJob(args: Args) extends Job(args) {
   val loader = etlConfig.collectorLoader
   val input = MultipleTextLineFiles(etlConfig.inFolder)
   val goodOutput = Tsv(etlConfig.outFolder)
-  val badOutput = JsonLine(etlConfig.errFolder)
+  val badOutput = JsonLine(etlConfig.badFolder)
 
   // Scalding data pipeline
   val common = input
     .read
     .map('line -> 'output) { l: String =>
-      EtlJobFlow.toCanonicalOutput(loader.toCanonicalInput(l))
+      EtlJob.toCanonicalOutput(loader.toCanonicalInput(l))
     }
 
   // Handle bad rows

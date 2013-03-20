@@ -44,8 +44,8 @@ class DiscardableCfLinesTest extends Specification with TupleConversions {
           output must beEmpty
         }
       }.
-      sink[String](JsonLine("errorFolder")){ error =>
-        "not write any errors" in {
+      sink[String](JsonLine("badFolder")){ error =>
+        "not write any bad rows" in {
           error must beEmpty
         }
       }.

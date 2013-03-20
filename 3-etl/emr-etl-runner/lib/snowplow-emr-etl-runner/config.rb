@@ -24,6 +24,7 @@ module SnowPlow
   module EmrEtlRunner
     module Config
 
+      @@etl_implementations = Set.new(%w(cloudfront clj-tomcat))
       @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
       @@storage_formats = Set.new(%w(hive redshift mysql-infobright))
 
@@ -54,13 +55,23 @@ module SnowPlow
           raise ConfigError, "collector_format '%s' not supported" % config[:etl][:collector_format]
         end
 
+        # Validate the ETL implementation option
+        unless @@etl_implementations.include?(config[:etl][:implementation]) 
+          raise ConfigError, "etl_implementation '%s' not supported" % config[:etl][:implementation]
+        end
+
         # Currently we only support start/end times for the CloudFront collector format. See #120 for details
         unless config[:etl][:collector_format] == 'cloudfront' or (config[:start].nil? and config[:end].nil?)
           raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
         end
 
-        # Construct paths to our HiveQL and serde
+        # Construct path to our ETL implementations
         asset_path = "%shive" % config[:s3][:buckets][:assets]
+
+        # Construct path to our Hadoop ETL
+        config[:hadoop_asset] = "%s/hadoop/snowplow-hadoop-etl-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
+
+        # Construct paths to our HiveQL and serde
         config[:serde_asset]  = "%s/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
 
         unless @@storage_formats.include?(config[:etl][:storage_format])

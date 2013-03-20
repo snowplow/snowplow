@@ -48,8 +48,8 @@ object BuildSettings {
   import AssemblyKeys._
   lazy val sbtAssemblySettings = assemblySettings ++ Seq(
 
-    // Slightly cleaner jar name
-    jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + "-fat.jar" },
+    // Simpler jar name
+    jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + ".jar" },
     
     // Drop these jars
     excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
