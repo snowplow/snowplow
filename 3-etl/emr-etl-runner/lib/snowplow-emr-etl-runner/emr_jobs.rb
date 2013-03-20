@@ -63,28 +63,52 @@ module SnowPlow
         end
 
         # Now branch based on the ETL implementation (Hadoop or Hive)
-        # TODO
+        if config[:etl][:implementation] == "hive"
 
-        # Now create the Hive step for the jobflow
-        hive_step = Elasticity::HiveStep.new(config[:hiveql_asset])
+          # Now create the Hive step for the jobflow
+          hive_step = Elasticity::HiveStep.new(config[:hiveql_asset])
 
-        # Add extra configuration
-        if config[:emr][:hive_step].respond_to?(:each)
-          config[:emr][:hive_step].each { |key, value|
-            hive_step.send("#{key}=", value)
+          # Add extra configuration (undocumented feature)
+          if config[:emr][:hive_step].respond_to?(:each)
+            config[:emr][:hive_step].each { |key, value|
+              hive_step.send("#{key}=", value)
+            }
+          end
+
+          hive_step.variables = {
+            "SERDE_FILE"       => config[:serde_asset],
+            "CLOUDFRONT_LOGS"  => config[:s3][:buckets][:processing],
+            "EVENTS_TABLE"     => config[:s3][:buckets][:out],
+            "COLLECTOR_FORMAT" => config[:etl][:collector_format],
+            "CONTINUE_ON"      => config[:etl][:continue_on_unexpected_error]
           }
+
+          # Finally add to our jobflow
+          @jobflow.add_step(hive_step)
+
+        else
+
+          # Now create the Hadoop MR step for the jobflow
+          hadoop_step = Elasticity::CustomJarStep.new(config[:hadoop_asset])
+
+          # Add extra configuration (undocumented feature)
+          if config[:emr][:hadoop_step].respond_to?(:each)
+            config[:emr][:hadoop_step].each { |key, value|
+              hadoop_step.send("#{key}=", value)
+            }
+          end          
+
+          hadoop_step.variables = {
+            "INPUT_FOLDER"    => config[:s3][:buckets][:processing],
+            "OUTPUT_FOLDER"   => config[:s3][:buckets][:out],
+            "BAD_ROWS_FOLDER" => config[:s3][:buckets][:out_bad_rows],
+            "INPUT_FORMAT"    => config[:etl][:collector_format]
+            # TODO: add CONTINUE_ON and the bucket for exceptions
+          }
+
+          # Finally add to our jobflow
+          @jobflow.add_step(hadoop_step)
         end
-
-        hive_step.variables = {
-          "SERDE_FILE"       => config[:serde_asset],
-          "CLOUDFRONT_LOGS"  => config[:s3][:buckets][:processing],
-          "EVENTS_TABLE"     => config[:s3][:buckets][:out],
-          "COLLECTOR_FORMAT" => config[:etl][:collector_format],
-          "CONTINUE_ON"      => config[:etl][:continue_on_unexpected_error]
-        }
-
-        # Finally add to our jobflow
-        @jobflow.add_step(hive_step)
       end
 
       # Run (and wait for) the daily ETL job.

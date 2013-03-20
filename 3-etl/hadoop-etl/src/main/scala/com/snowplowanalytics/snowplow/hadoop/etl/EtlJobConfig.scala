@@ -25,15 +25,13 @@ import inputs.CollectorLoader
 import outputs.CanonicalOutput
 
 /**
- * The configuration for the
- * SnowPlowEtlJob.
+ * The configuration for the SnowPlowEtlJob.
  */
 case class EtlJobConfig(
     inFolder: String,
     outFolder: String,
     badFolder: String,
-    collectorLoader: CollectorLoader) //,
-    // unexpectedErrorHandler: UnexpectedErrorHandler[CanonicalOutput])
+    collectorLoader: CollectorLoader)
 
 /**
  * Module to handle configuration for
@@ -59,14 +57,9 @@ object EtlJobConfig {
 
     // TODO: change loader to be the whole end-to-end load
     val loader = args.requiredz("INPUT_FORMAT") flatMap (cf => CollectorLoader.getLoader(cf))
-    // val outFormat TODO: add this
+    
+    // TODO: add in support for CONTINUE_ON and the Failure Trap
 
-    /* val unexpectedErrorHandler = for {
-      a <- args.requiredz("CONTINUE_ON")
-      c <- ConversionUtils.stringToBoolean(a)
-      hr = EtlJobFlow.buildUnexpectedErrorHandler(c)
-    } yield hr */
-
-    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| loader.toValidationNel /*|@| unexpectedErrorHandler.toValidationNel */) { EtlJobConfig(_, _, _, _/*, _*/) }
+    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| loader.toValidationNel) { EtlJobConfig(_, _, _, _) }
   }
 }

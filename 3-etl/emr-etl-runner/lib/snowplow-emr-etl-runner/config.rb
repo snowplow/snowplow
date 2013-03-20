@@ -69,7 +69,7 @@ module SnowPlow
         asset_path = "%shive" % config[:s3][:buckets][:assets]
 
         # Construct path to our Hadoop ETL
-        config[:hadoop_asset] = "%s/hadoop/snowplow-hadoop-etl-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
+        config[:hadoop_asset] = "%s/hadoop/snowplow-hadoop-etl-%s.jar" % [asset_path, config[:snowplow][:hadoop_etl_version]]
 
         # Construct paths to our HiveQL and serde
         config[:serde_asset]  = "%s/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
