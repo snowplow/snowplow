@@ -11,7 +11,7 @@
     :processing: ADD HERE
     :out: ADD HERE WITH SUB-FOLDER # Make sure this bucket is in the US standard region if you wish to use Redshift
     :out_bad_rows: ADD HERE # Only supported by Hadoop ETL
-    :out_unexpected_errors: ADD HERE # Only supported by Hadoop ETL. Doesn't work for Hadoop ETL yet
+    :out_errors: ADD HERE # Only supported by Hadoop ETL. Doesn't work for Hadoop ETL yet
     :archive: ADD HERE
 :emr:
   # Can bump the below as EMR upgrades Hadoop

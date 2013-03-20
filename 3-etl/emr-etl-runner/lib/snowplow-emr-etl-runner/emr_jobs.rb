@@ -99,11 +99,12 @@ module SnowPlow
           end          
 
           hadoop_step.variables = {
-            "INPUT_FOLDER"    => config[:s3][:buckets][:processing],
-            "OUTPUT_FOLDER"   => config[:s3][:buckets][:out],
-            "BAD_ROWS_FOLDER" => config[:s3][:buckets][:out_bad_rows],
-            "INPUT_FORMAT"    => config[:etl][:collector_format]
-            # TODO: add CONTINUE_ON and the bucket for exceptions
+            "INPUT_FOLDER"      => config[:s3][:buckets][:processing],
+            "OUTPUT_FOLDER"     => config[:s3][:buckets][:out],
+            "BAD_ROWS_FOLDER"   => config[:s3][:buckets][:out_bad_rows],
+            "OUT_ERRORS_FOLDER" => config[:s3][:buckets][:out_errors],
+            "INPUT_FORMAT"      => config[:etl][:collector_format],
+            "CONTINUE_ON"       => config[:etl][:continue_on_unexpected_error]
           }
 
           # Finally add to our jobflow
