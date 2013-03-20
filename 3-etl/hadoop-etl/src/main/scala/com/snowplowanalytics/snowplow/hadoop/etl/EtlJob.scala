@@ -23,6 +23,7 @@ import com.twitter.scalding._
 
 // This project
 import enrichments.EnrichmentManager
+import outputs.CanonicalOutput
 
 /**
  * The SnowPlow ETL job, written in Scalding
@@ -66,6 +67,6 @@ class EtlJob(args: Args) extends Job(args) {
         case _ => None // Drop errors *and* blank rows
       }
     }
-    .mapTo('good -> 'unboxed) { g: MaybeCanonicalOutput => g.get.toString() }
+    .unpackTo[CanonicalOutput]('good -> '*)
     .write(goodOutput)
 }
