@@ -45,7 +45,7 @@ final case class CanonicalInput(
     ipAddress:  Option[String],
     userAgent:  Option[String],
     refererUri: Option[String],
-    headers:    List[String],   // May be Nil so not a NEL
+    headers:    List[String],   // May be Nil so not a Nel
     userId:     Option[String])
 
 /**
@@ -73,7 +73,7 @@ trait GetPayload extends TrackerPayload
  * via a set of name-value pairs on the querystring
  * of a GET.
  */
-case class NVGetPayload(payload: NameValueNEL) extends GetPayload
+case class NVGetPayload(payload: NameValueNel) extends GetPayload
 
 /**
  * A tracker payload for a single event, delivered
@@ -110,7 +110,7 @@ object TrackerPayload {
    *         message, boxed in a Scalaz
    *         Validation
    */
-  def extractGetPayload(qs: String, encoding: String): ValidatedNameValueNEL =
+  def extractGetPayload(qs: String, encoding: String): ValidatedNameValueNel =
     try {
       parseQuerystring(qs, encoding) match {
         case x :: xs => NonEmptyList[NameValuePair](x, xs: _*).success

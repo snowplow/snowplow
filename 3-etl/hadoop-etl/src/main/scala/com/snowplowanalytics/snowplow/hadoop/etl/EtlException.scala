@@ -21,7 +21,7 @@ import Scalaz._
  *
  * Note that the SnowPlow ETL does **not**
  * use exceptions for control flow - it uses
- * Scalaz Validation and ValidationNEL objects.
+ * Scalaz Validation and ValidationNel objects.
  * 
  * However two types of exception we do support
  * are:
@@ -36,7 +36,7 @@ sealed class EtlException(msg: String) extends RuntimeException(msg)
 /**
  * Holds ways of constructing the
  * exception message from a Scalaz
- * Validation or ValidatioNEL.
+ * Validation or ValidatioNel.
  *
  * Mixed into the companion objects
  * for the exceptions below.

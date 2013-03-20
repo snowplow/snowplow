@@ -54,23 +54,23 @@ package object etl {
    * Type alias for a non-empty
    * set of name-value pairs
    */
-  type NameValueNEL = NonEmptyList[NameValuePair]
+  type NameValueNel = NonEmptyList[NameValuePair]
 
   /**
-   * Type alias for a `ValidationNEL`
+   * Type alias for a `ValidationNel`
    * containing Strings for `Failure`
    * or any type of `Success`.
    *
    * @tparam A the type of `Success`
    */
-  type Validated[A] = ValidationNEL[String, A]
+  type Validated[A] = ValidationNel[String, A]
 
   /**
    * Type alias for a `Validation`
    * containing either error `String`s
-   * or a `NameValueNEL`.
+   * or a `NameValueNel`.
    */
-  type ValidatedNameValueNEL = Validation[String, NameValueNEL] // Note not Validated[]
+  type ValidatedNameValueNel = Validation[String, NameValueNel] // Note not Validated[]
 
   /**
    * Type alias for an `Option`-boxed
@@ -79,7 +79,7 @@ package object etl {
   type MaybeCanonicalInput = Option[CanonicalInput]
 
   /**
-   * Type alias for either a `ValidationNEL`
+   * Type alias for either a `ValidationNel`
    * containing `String`s for `Failure`
    * or a `MaybeCanonicalInput` for `Success`.
    */
@@ -92,14 +92,14 @@ package object etl {
   type MaybeCanonicalOutput = Option[CanonicalOutput]
 
   /**
-   * Type alias for either a `ValidationNEL`
+   * Type alias for either a `ValidationNel`
    * containing `String`s for `Failure`
    * or a CanonicalOutput for `Success`.
    */
   type ValidatedCanonicalOutput = Validated[CanonicalOutput]
 
   /**
-   * Type alias for either a `ValidationNEL`
+   * Type alias for either a `ValidationNel`
    * containing `String`s for `Failure`
    * or a MaybeCanonicalOutput for `Success`.
    */
@@ -113,7 +113,7 @@ package object etl {
    * `Success` of any type.
    *
    * @tparam A the type of `Success`
-   *         within the ValidationNEL
+   *         within the ValidationNel
    */
   // type UnexpectedErrorHandler[A] = PartialFunction[Throwable, Validated[A]]
 }

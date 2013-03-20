@@ -52,7 +52,7 @@ class EtlJob(args: Args) extends Job(args) {
   // Handle bad rows
   val bad = common
     .flatMap('output -> 'errors) { o: ValidatedMaybeCanonicalOutput => o.fold(
-      e => Some(e.toList), // NEL -> Some(List)
+      e => Some(e.toList), // Nel -> Some(List)
       c => None)
     }
     .project('line, 'errors)

@@ -50,7 +50,7 @@ object EnrichmentManager {
    * @param input Our canonical input
    *        to enrich
    * @return a MaybeCanonicalOutput - i.e.
-   *         a ValidationNEL containing
+   *         a ValidationNel containing
    *         either failure Strings or a
    *         NonHiveOutput.
    */
@@ -203,7 +203,7 @@ object EnrichmentManager {
         })
 
     // Collect our errors on Failure, or return our event on Success 
-    (useragent.toValidationNEL |@| client.toValidationNEL |@| pageUri.toValidationNEL |@| transform |@| campaign) {
+    (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| transform |@| campaign) {
       (_,_,_,_,_) => event
     }
   }

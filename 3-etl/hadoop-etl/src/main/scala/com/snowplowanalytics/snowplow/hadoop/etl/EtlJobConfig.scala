@@ -48,9 +48,9 @@ object EtlJobConfig {
    * @param args The arguments to parse
    * @return the EtLJobConfig, or one or
    *         more error messages, boxed
-   *         in a Scalaz Validation NEL
+   *         in a Scalaz Validation Nel
    */
-  def loadConfigFrom(args: Args): ValidationNEL[String, EtlJobConfig] = {
+  def loadConfigFrom(args: Args): ValidationNel[String, EtlJobConfig] = {
 
     import ScalazArgs._
     val inFolder  = args.requiredz("INPUT_FOLDER")
@@ -67,6 +67,6 @@ object EtlJobConfig {
       hr = EtlJobFlow.buildUnexpectedErrorHandler(c)
     } yield hr */
 
-    (inFolder.toValidationNEL |@| outFolder.toValidationNEL |@| errFolder.toValidationNEL |@| loader.toValidationNEL /*|@| unexpectedErrorHandler.toValidationNEL */) { EtlJobConfig(_, _, _, _/*, _*/) }
+    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| errFolder.toValidationNel |@| loader.toValidationNel /*|@| unexpectedErrorHandler.toValidationNel */) { EtlJobConfig(_, _, _, _/*, _*/) }
   }
 }

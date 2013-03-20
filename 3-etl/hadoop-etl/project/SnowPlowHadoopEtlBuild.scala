@@ -32,6 +32,7 @@ object SnowPlowHadoopEtlBuild extends Build {
         Libraries.httpClient,
         Libraries.yodaTime,
         Libraries.yodaConvert,
+        Libraries.commonsLang,
         // Scala
         Libraries.scaldingCore,
         Libraries.scaldingArgs,
@@ -40,6 +41,7 @@ object SnowPlowHadoopEtlBuild extends Build {
         Libraries.scalaUtil,
         // Scala (test only)
         Libraries.specs2,
+        Libraries.scalazSpecs2,
         Libraries.scalaCheck
         // Add your additional libraries here (comma-separated)...
       )

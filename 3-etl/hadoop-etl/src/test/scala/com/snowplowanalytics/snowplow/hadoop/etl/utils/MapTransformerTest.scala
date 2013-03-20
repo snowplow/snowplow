@@ -20,50 +20,58 @@ import scala.reflect.BeanProperty
 import scalaz._
 import Scalaz._
 
-// Specs2
+// Specs2 & Scalaz-Specs2
 import org.specs2.mutable.Specification
+import org.specs2.scalaz.ValidationMatchers
 
 // Scalding
 import com.twitter.scalding._
 
-// SnowPlow Utils
+// Utils
 import com.snowplowanalytics.util.Tap._
+import org.apache.commons.lang3.builder.ToStringBuilder
+import org.apache.commons.lang3.builder.HashCodeBuilder
 
 // This project
 import MapTransformer._
 import enrichments.{MiscEnrichments, EventEnrichments}
 
 // Test Bean
-class TargetBean {
+final class TargetBean {
   @BeanProperty var platform: String = _
   @BeanProperty var br_features_pdf: Byte = _
   @BeanProperty var visit_id: Int = _
   @BeanProperty var tracker_v: String = _
   @BeanProperty var dt: String = _
   @BeanProperty var tm: String = _
+
+  override def equals(other: Any): Boolean = other match {
+    case that: TargetBean => {
+      platform == that.platform &&
+      br_features_pdf == that.br_features_pdf &&
+      visit_id == that.visit_id &&
+      tracker_v == that.tracker_v &&
+      dt == that.dt &&
+      tm == that.tm
+    }
+    case _ => false
+  }
+  // No canEqual needed as the class is final
+
+  // Use Reflection - perf hit is okay as this is only in the test suite
+  override def hashCode: Int = HashCodeBuilder.reflectionHashCode(this, false)
+  override def toString: String = ToStringBuilder.reflectionToString(this)
 }
-
-// Test Case Class
-class TargetCC(
-  platform: String,
-  br_features_pdf: Byte,
-  visit_id: Int,
-  tracker_v: String,
-  dt: String,
-  tm: String
-  )
-
-// TODO: rename file
 
 /**
  * Tests the MapTransformer.
  */
-class MapTransformerTest extends Specification {
+class MapTransformerTest extends Specification with ValidationMatchers {
 
   val sourceMap = Map("p"       -> "web",
                       "f_pdf"   -> "1",
                       "vid"     -> "1",
-                      "tv"      -> "no-js-0.1.0",
+                      "tv"      -> "no-js-0.1.1",
                       "tstamp"  -> "2013-01-01 23-11-59",
                       "missing" -> "Not in the transformation map")
 
@@ -86,38 +94,21 @@ class MapTransformerTest extends Specification {
     "successfully set each of the target fields" in {
 
       val target = new TargetBean().tap { t =>
-        t.platform = "deleteme"
-        t.tracker_v = "deleteme"
+        t.platform = "old"
+        t.tracker_v = "old"
       }
       val result = target.transform(sourceMap, transformMap)
 
-      result must_== 6.successNel[String] // 6 fields updated
-
-      target.platform must_== expected.platform
-      target.visit_id must_== expected.visit_id
-      target.br_features_pdf must_== expected.br_features_pdf
-      target.tracker_v = expected.tracker_v
-      target.dt must_== expected.dt
-      target.tm must_== expected.tm
+      result must beSuccessful(6) // 6 fields updated
+      target must_== expected
     }
   }
 
-  /*
   "Executing TransformMap's generate() factory" should {
     "successfully instantiate a new POJO" in {
 
       val result = MapTransformer.generate[TargetBean](sourceMap, transformMap)
-      result must_== expected.successNel[String]
-    }
-  } */
-
-  // TODO: search for newInstance(args:_*
-
-  "Executing TransformMap's generate() factory" should {
-    "successfully instantiate a new case class" in {
-
-      val result = MapTransformer.generate[TargetCC](sourceMap, transformMap)
-      result must_== expected.successNel[String]
+      result must beSuccessful(expected)
     }
   }
 }

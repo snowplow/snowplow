@@ -20,8 +20,6 @@ import java.lang.reflect.Method
 import scalaz._
 import Scalaz._
 
-// TODO: rename file
-
 /**
  * The problem we're trying to solve: converting maps to classes in Scala
  * is not very easy to do in a functional way, and it gets even harder
@@ -44,12 +42,12 @@ import Scalaz._
  * If I can get this working, then the next step is to generate
  * a "results" map which contains the results of each
  * transformFunc. Each transformFunc should either return a
- * ValidationNEL[String, Unit], or should be promoted (via an
+ * ValidationNel[String, Unit], or should be promoted (via an
  * implicit) to the same.
  *
  * Having this should allow me to do something like:
  * resultsMap.foldLeft(Unit.success, |@|) to roll up any validation
- * errors into one final ValidatioNEL. 
+ * errors into one final ValidatioNel. 
  *
  * If I can get all that working, then the final step is to
  * support transformFuncs which set multiple fields. To avoid the
@@ -89,10 +87,10 @@ object MapTransformer {
    * @param transformMap Determines how the source
    *                     data should be transformed
    *                     before storing in the obj
-   * @return a ValidationNEL containing either a NEL
+   * @return a ValidationNel containing either a Nel
    *         of error Strings, or the new object
    */
-  def generate[T](sourceMap: SourceMap, transformMap: TransformMap)(implicit m: Manifest[T]): Validated[T] = {
+  def generate[T <: AnyRef](sourceMap: SourceMap, transformMap: TransformMap)(implicit m: Manifest[T]): Validated[T] = {
     val newInst = m.erasure.newInstance()
     val result = _transform(newInst, sourceMap, transformMap, getSetters(m.erasure))
     result.flatMap(s => newInst.asInstanceOf[T].success) // On success, replace the field count with the new instance
@@ -105,7 +103,7 @@ object MapTransformer {
    * @param obj Any Object
    * @return the new Transformable class, with manifest attached
    */ 
-  implicit def makeTransformable[T](obj: T)(implicit m : Manifest[T]) = new TransformableClass[T](obj)
+  implicit def makeTransformable[T <: AnyRef](obj: T)(implicit m : Manifest[T]) = new TransformableClass[T](obj)
 
   /**
    * A pimped object, now transformable by
@@ -126,12 +124,12 @@ object MapTransformer {
      * @param transformMap Determines how the source
      *                     data should be transformed
      *                     before storing in the obj
-     * @return a ValidationNEL containing either a NEL
+     * @return a ValidationNel containing either a Nel
      *         of error Strings, or the count of
      *         updated fields
      */
-    def transform(sourceMap: SourceMap, transformMap: TransformMap): ValidationNEL[String, Int] =   
-      _transform(obj, sourceMap, transformMap, setters)
+    def transform(sourceMap: SourceMap, transformMap: TransformMap): ValidationNel[String, Int] =   
+      _transform[T](obj, sourceMap, transformMap, setters)
   }
 
   /**
@@ -148,11 +146,11 @@ object MapTransformer {
    *                     before storing in the obj
    * @param setters Provides access to the obj's
    *                setX() methods
-   * @return a ValidationNEL containing either a NEL
+   * @return a ValidationNel containing either a Nel
    *         of error Strings, or the count of
    *         updated fields
    */
-  private def _transform(obj: Any, sourceMap: SourceMap, transformMap: TransformMap, setters: SettersMap): ValidationNEL[String, Int] = {
+  private def _transform[T](obj: T, sourceMap: SourceMap, transformMap: TransformMap, setters: SettersMap): ValidationNel[String, Int] = {
 
     val results: List[Validation[String, Int]] = sourceMap.map { case (key, in) =>
       if (transformMap.contains(key)) {
@@ -180,7 +178,7 @@ object MapTransformer {
       }
     }.toList
 
-    results.foldLeft(0.successNel[String])(_ +++ _.toValidationNEL)
+    results.foldLeft(0.successNel[String])(_ +++ _.toValidationNel)
   }
 
   /**
@@ -215,7 +213,7 @@ object MapTransformer {
    *          setter methods to return
    * @return the Map of setter Methods
    */
-  private def getSetters[A](c: Class[A]): SettersMap = c
+  private def getSetters[T](c: Class[T]): SettersMap = c
     .getDeclaredMethods
     .filter { _.getName.startsWith("set") }
     .groupBy { setterToFieldName(_) }

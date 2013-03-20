@@ -17,9 +17,10 @@ package web
 // Java
 import java.net.URI
 
-// Specs2
+// Specs2 & Scalaz-Specs2
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
+import org.specs2.scalaz.ValidationMatchers
 
 // Scalaz
 import scalaz._
@@ -35,7 +36,7 @@ import AttributionEnrichments._
  * Tests the extractMarketingFields function.
  * Uses DataTables.
  */
-class ExtractMarketingFieldsTest extends Specification with DataTables {
+class ExtractMarketingFieldsTest extends Specification with DataTables with ValidationMatchers {
 
   val Encoding = "UTF-8"
 
@@ -46,15 +47,18 @@ class ExtractMarketingFieldsTest extends Specification with DataTables {
   // Use http://support.google.com/analytics/bin/answer.py?hl=en&answer=1033867 to generate additional ones
   def e1 =
     "SPEC NAME"                      || "EXP. SOURCE" | "EXP. MEDIUM" | "EXP. TERM" | "EXP. CONTENT" | "EXP. CAMPAIGN" | "URL" |
-    "all except content"             !! "google"      ! "cpc"         ! "buy tarot" ! null           ! "spring_sale"   ! new URI("http://www.psychicbazaar.com/shop/tarot?utm_source=google&utm_medium=cpc&utm_term=buy%2Btarot&utm_campaign=spring_sale") |> {
+    "all except content"             !! "google"      ! "cpc"         ! "buy tarot" ! null           ! "spring_sale"   ! new URI("http://www.psychicbazaar.com/shop/tarot?utm_source=google&utm_medium=cpc&utm_term=buy%2Btarot&utm_campaign=spring_sale") |
+    "just source & medium"           !! "google"      ! "cpc"         ! "buy tarot" ! null           ! "spring_sale"   ! new URI("ccc") |
+    "all"                            !! "google"      ! "cpc"         ! "buy tarot" ! ""           ! "spring_sale"   ! new URI("xxx") |> {
 
       (_, source, medium, term, content, campaign, url) =>
-        extractMarketingFields(url, Encoding) must_== new MarketingCampaign().tap { mc =>
+        val expected = new MarketingCampaign().tap { mc =>
           mc.source   = source
           mc.medium   = medium
           mc.term     = term
           mc.content  = content
           mc.campaign = campaign 
-        }.success
+        }
+        extractMarketingFields(url, Encoding) must beSuccessful(expected)
     }
 }

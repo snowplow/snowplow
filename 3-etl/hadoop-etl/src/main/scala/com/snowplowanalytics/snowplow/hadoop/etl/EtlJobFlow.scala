@@ -57,7 +57,7 @@ object EtlJobFlow {
    * @return a catch block i.e. a
    *         PartialFunction boxing
    *         either a Throwable or a
-   *         ValidationNEL. See the
+   *         ValidationNel. See the
    *         package object for
    *         details of the type
    */

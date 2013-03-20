@@ -132,7 +132,7 @@ trait CloudFrontLikeLoader extends CollectorLoader {
    * @return either a set of validation
    *         errors or an Option-boxed
    *         CanonicalInput object, wrapped
-   *         in a Scalaz ValidatioNEL.
+   *         in a Scalaz ValidatioNel.
    */
   def toCanonicalInput(line: String): ValidatedMaybeCanonicalInput = line match {
     
@@ -166,7 +166,7 @@ trait CloudFrontLikeLoader extends CollectorLoader {
       val ua  = toOption(userAgent)
       val rfr = toOption(referer) map toCleanUri
 
-      (timestamp.toValidationNEL |@| payload.toValidationNEL) { (t, p) =>
+      (timestamp.toValidationNel |@| payload.toValidationNel) { (t, p) =>
         Some(CanonicalInput(t, NVGetPayload(p), getSource, CfEncoding, ip, ua, rfr, Nil, None)) // No headers or separate userId.
       }
     }
@@ -201,7 +201,7 @@ trait CloudFrontLikeLoader extends CollectorLoader {
    *         an error, all wrapped in a
    *         Scalaz Validation
    */
-  private def toGetPayload(querystring: String): ValidatedNameValueNEL = toOption(querystring) match {
+  private def toGetPayload(querystring: String): ValidatedNameValueNel = toOption(querystring) match {
     case Some(qs) => TrackerPayload.extractGetPayload(qs, CfEncoding)
     case None => "Querystring is empty, cannot extract GET payload".fail
   }

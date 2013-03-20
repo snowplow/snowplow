@@ -25,35 +25,38 @@ object Dependencies {
 
   object V {
     // Java
-    val http        = "4.1.1"
-    val yodaTime    = "2.1"
-    val yodaConvert = "1.2"
+    val http         = "4.1.1"
+    val commonsLang  = "3.1"
+    val yodaTime     = "2.1"
+    val yodaConvert  = "1.2"
     // Scala
-    val scalding    = "0.8.4"
-    val scalaz7     = "7.0.0-M8" // -> "7.0.0" when released
-    val jerkson     = "0.7.0"
-    val scalaUtil   = "0.1.0"
+    val scalding     = "0.8.4"
+    val scalaz7      = "7.0.0-M9" // -> "7.0.0" when released
+    val jerkson      = "0.7.0"
+    val scalaUtil    = "0.1.0"
     // Scala (test only)
-    val specs2      = "1.12.3" // -> "1.13" when we bump to Scala 2.10.0
-    val scalaCheck  = "1.10.0"
+    val specs2       = "1.12.3" // -> "1.13" when we bump to Scala 2.10.0
+    val scalazSpecs2 = "0.1.2"
+    val scalaCheck   = "1.10.0"
     // val useragent = "1.6" No Maven repo, so user-agent-utils is an unmanaged lib
   }
 
   object Libraries {
     // Java
-    // val httpCore    = "org.apache.httpcomponents"  %  "httpcore"            % V.http  
-    val httpClient  = "org.apache.httpcomponents"  %  "httpclient"          % V.http
-    val yodaTime    = "joda-time"                  %  "joda-time"           % V.yodaTime
-    val yodaConvert = "org.joda"                   %  "joda-convert"        % V.yodaConvert
+    val httpClient   = "org.apache.httpcomponents"  %  "httpclient"          % V.http
+    val commonsLang  = "org.apache.commons"         %  "commons-lang3"       % V.commonsLang
+    val yodaTime     = "joda-time"                  %  "joda-time"           % V.yodaTime
+    val yodaConvert  = "org.joda"                   %  "joda-convert"        % V.yodaConvert
     
     // Scala
-    val scaldingCore= "com.twitter"                %% "scalding-core"       % V.scalding
-    val scaldingArgs= "com.twitter"                %% "scalding-args"       % V.scalding
-    val scalaz7     = "org.scalaz"                 %% "scalaz-core"         % V.scalaz7
-    val jerkson     = "io.backchat.jerkson"        %% "jerkson"             % V.jerkson
-    val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"          % V.scalaUtil
+    val scaldingCore = "com.twitter"                %% "scalding-core"       % V.scalding
+    val scaldingArgs = "com.twitter"                %% "scalding-args"       % V.scalding
+    val scalaz7      = "org.scalaz"                 %% "scalaz-core"         % V.scalaz7
+    val jerkson      = "io.backchat.jerkson"        %% "jerkson"             % V.jerkson
+    val scalaUtil    = "com.snowplowanalytics"      %  "scala-util"          % V.scalaUtil
     // Scala (test only)
-    val specs2      = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
-    val scalaCheck  = "org.scalacheck"             %% "scalacheck"          % V.scalaCheck   % "test"
+    val specs2       = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
+    val scalazSpecs2 = "org.typelevel"              %% "scalaz-specs2"       % V.scalazSpecs2 % "test"
+    val scalaCheck   = "org.scalacheck"             %% "scalacheck"          % V.scalaCheck   % "test"
   }
 }

@@ -25,9 +25,11 @@ import scala.reflect.BeanProperty
 import scalaz._
 import Scalaz._
 
-// Apache URLEncodedUtils
+// Utils
 import org.apache.http.NameValuePair
 import org.apache.http.client.utils.URLEncodedUtils
+import org.apache.commons.lang3.builder.ToStringBuilder
+import org.apache.commons.lang3.builder.HashCodeBuilder
 
 // This project
 import utils.{ConversionUtils => CU}
@@ -43,7 +45,7 @@ object AttributionEnrichments {
    * Class for a marketing campaign. Any or
    * all of the five fields can be set.
    */
-  // TODO: change this to a case class (add case class
+  // TODO: change this to a case class (and add case class
   // support to TransformMap)
   class MarketingCampaign {
     @BeanProperty var source: String = _
@@ -51,6 +53,34 @@ object AttributionEnrichments {
     @BeanProperty var term: String = _
     @BeanProperty var content: String = _
     @BeanProperty var campaign: String = _
+
+    override def equals(other: Any): Boolean = other match {
+      case that: MarketingCampaign =>
+        (that canEqual this) &&
+        source == that.source &&
+        medium == that.medium &&
+        term == that.term &&
+        content == that.content &&
+        campaign == that.campaign
+      case _ => false
+    }
+  def canEqual(other: Any): Boolean = other.isInstanceOf[MarketingCampaign]
+  
+  // No reflection for perf reasons.
+  override def hashCode: Int = new HashCodeBuilder()
+    .append(source)
+    .append(medium)
+    .append(term)
+    .append(content)
+    .append(campaign)
+    .toHashCode()
+  override def toString: String = new ToStringBuilder(this)
+    .append("source", source)
+    .append("medium", medium)
+    .append("term", term)
+    .append("content", content)
+    .append("campaign", campaign)
+    .toString()
   }
 
   /**
@@ -65,7 +95,7 @@ object AttributionEnrichments {
    *         boxed in a Scalaz
    *         Validation
    */
-  def extractMarketingFields(uri: URI, encoding: String): ValidationNEL[String, MarketingCampaign] = {
+  def extractMarketingFields(uri: URI, encoding: String): ValidationNel[String, MarketingCampaign] = {
 
     val parameters = try {
       URLEncodedUtils.parse(uri, encoding)
