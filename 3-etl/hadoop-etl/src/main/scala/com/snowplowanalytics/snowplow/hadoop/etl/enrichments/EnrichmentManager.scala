@@ -134,7 +134,7 @@ object EnrichmentManager {
           ("uid"     , (ME.identity, "user_id")),
           ("fp"      , (ME.identity, "user_fingerprint")),
           ("vid"     , (CU.stringToInt, "visit_id")),
-          ("tstamp"  , (EE.extractTimestamp, ("dt", "tm"))), // Note tuple target
+          ("tstamp"  , (EE.extractTimestamp, "dvce_tstamp")),
           ("tv"      , (ME.identity, "tracker_v")),
           ("lang"    , (ME.identity, "br_lang")),
           ("f_pdf"   , (CU.stringToByte, "br_features_pdf")),
@@ -153,11 +153,13 @@ object EnrichmentManager {
           ("refr"    , (decodeString, "page_referrer")),
           ("url"     , (ME.identity, "page_url")), // Note we may override this below
           ("page"    , (decodeString, "page_title")),
+          // Custom structured events
           ("ev_ca"   , (decodeString, "ev_category")),
           ("ev_ac"   , (decodeString, "ev_action")),
           ("ev_la"   , (decodeString, "ev_label")),
           ("ev_pr"   , (decodeString, "ev_property")),
           ("ev_va"   , (decodeString, "ev_value")),
+          // Ecommerce transactions
           ("tr_id"   , (decodeString, "tr_orderid")),
           ("tr_af"   , (decodeString, "tr_affiliation")),
           ("tr_tt"   , (decodeString, "tr_total")),
@@ -166,12 +168,18 @@ object EnrichmentManager {
           ("tr_ci"   , (decodeString, "tr_city")),
           ("tr_st"   , (decodeString, "tr_state")),
           ("tr_co"   , (decodeString, "tr_country")),
+          // Ecommerce transaction items
           ("ti_id"   , (decodeString, "ti_orderid")),
           ("ti_sk"   , (decodeString, "ti_sku")),
           ("ti_na"   , (decodeString, "ti_name")),
           ("ti_ca"   , (decodeString, "ti_category")),
           ("ti_pr"   , (decodeString, "ti_price")),
-          ("ti_qu"   , (decodeString, "ti_quantity")))
+          ("ti_qu"   , (decodeString, "ti_quantity")),
+          // Page pings
+          ("pp_mix"  , (CU.stringToInt, "pp_xoffset_min")),
+          ("pp_max"  , (CU.stringToInt, "pp_xoffset_max")),
+          ("pp_miy"  , (CU.stringToInt, "pp_yoffset_min")),
+          ("pp_may"  , (CU.stringToInt, "pp_yoffset_max")))
 
     val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
   

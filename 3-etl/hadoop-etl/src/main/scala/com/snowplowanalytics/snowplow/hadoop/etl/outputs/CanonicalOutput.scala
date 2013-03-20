@@ -116,6 +116,12 @@ class CanonicalOutput {
   @BeanProperty var br_type: String = _
   @BeanProperty var br_renderengine: String = _
 
+  // Page Pings
+  @BeanProperty var pp_xoffset_min: String = _
+  @BeanProperty var pp_xoffset_max: String = _
+  @BeanProperty var pp_yoffset_min: String = _
+  @BeanProperty var pp_yoffset_max: String = _
+
   // Browser (from querystring)
   @BeanProperty var br_lang: String = _
   // Individual feature fields for non-Hive targets (e.g. Infobright)
