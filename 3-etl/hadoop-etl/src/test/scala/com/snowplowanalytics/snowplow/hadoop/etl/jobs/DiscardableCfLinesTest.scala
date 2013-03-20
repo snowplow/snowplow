@@ -28,8 +28,6 @@ import JobTestHelpers._
  * CloudFront-format rows which should
  * be discarded.
  */
-// TODO: this test causes an intermittent error. Needs fixing.
-// Believe the error is because the test generates NO output.
 class DiscardableCfLinesTest extends Specification with TupleConversions {
 
   val discardableLines = Lines(

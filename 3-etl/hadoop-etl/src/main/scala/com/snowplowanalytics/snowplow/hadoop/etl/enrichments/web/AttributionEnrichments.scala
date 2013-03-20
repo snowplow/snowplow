@@ -33,6 +33,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder
 
 // This project
 import utils.{ConversionUtils => CU}
+import utils.MapTransformer
 import utils.MapTransformer._
 
 /**
@@ -45,8 +46,8 @@ object AttributionEnrichments {
    * Class for a marketing campaign. Any or
    * all of the five fields can be set.
    */
-  // TODO: change this to a case class (and add case class
-  // support to TransformMap)
+  // TODO: change this to a (much simpler) case class as soon
+  // as MapTransformer supports case classes
   class MarketingCampaign {
     @BeanProperty var source: String = _
     @BeanProperty var medium: String = _
@@ -116,8 +117,6 @@ object AttributionEnrichments {
 
     val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
 
-    val campaign = new MarketingCampaign
-    val transform = campaign.transform(sourceMap, transformMap)
-    transform.flatMap(s => campaign.success)
+    MapTransformer.generate[MarketingCampaign](sourceMap, transformMap)
   }
 }

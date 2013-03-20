@@ -76,6 +76,7 @@ object EnrichmentManager {
     val event = new CanonicalOutput().tap { e =>
       e.collector_tstamp = EE.toTimestamp(raw.timestamp)
       e.event_id = EE.generateEventId
+      e.event_vendor = "com.snowplowanalytics" // TODO: this should be moved to Tracker Protocol
       e.v_collector = raw.source.collector
       e.v_etl = ME.etlVersion
       raw.ipAddress.map(ip => e.user_ipaddress = ip)
@@ -132,8 +133,10 @@ object EnrichmentManager {
           ("p"       , (ME.extractPlatform, "platform")),
           ("tid"     , (ME.identity, "txn_id")),
           ("uid"     , (ME.identity, "user_id")),
+          ("duid"    , (ME.identity, "domain_userid")),
+          ("nuid"    , (ME.identity, "network_userid")),
           ("fp"      , (ME.identity, "user_fingerprint")),
-          ("vid"     , (CU.stringToInt, "visit_id")),
+          ("vid"     , (CU.stringToInt, "domain_sessionidx")),
           ("tstamp"  , (EE.extractTimestamp, "dvce_tstamp")),
           ("tv"      , (ME.identity, "tracker_v")),
           ("lang"    , (ME.identity, "br_lang")),
@@ -153,6 +156,9 @@ object EnrichmentManager {
           ("refr"    , (decodeString, "page_referrer")),
           ("url"     , (ME.identity, "page_url")), // Note we may override this below
           ("page"    , (decodeString, "page_title")),
+          ("cs"      , (ME.identity, "doc_charset")),
+          ("ds"      , (CE.extractResolution, ("doc_width", "doc_height"))),
+          ("vp"      , (CE.extractResolution, ("br_viewwidth", "br_viewheight"))),
           // Custom structured events
           ("ev_ca"   , (decodeString, "ev_category")),
           ("ev_ac"   , (decodeString, "ev_action")),
@@ -185,10 +191,17 @@ object EnrichmentManager {
   
     val transform = event.transform(sourceMap, transformMap)
 
-    // Potentially update the page_url
+    // Potentially update the page_url and set the page URL components
     val pageUri = PE.extractPageUri(raw.refererUri, Option(event.page_url))
     pageUri.flatMap(uri => {
       event.page_url = uri.toString
+      event.page_urlscheme = uri.getScheme
+      event.page_urlhost = uri.getHost
+      val port = uri.getPort
+      event.page_urlport = if (port == -1) 80 else port
+      event.page_urlpath = uri.getPath
+      event.page_urlquery = uri.getQuery
+      event.page_urlfragment = uri.getFragment
       uri.success
       })
 
