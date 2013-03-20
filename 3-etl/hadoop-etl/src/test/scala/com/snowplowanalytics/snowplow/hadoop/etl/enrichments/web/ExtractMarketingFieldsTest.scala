@@ -43,13 +43,15 @@ class ExtractMarketingFieldsTest extends Specification with DataTables with Vali
   def is =
     "Extracting valid marketing campaigns with extractMarketingFields should work" ! e1
 
+  // TODO: add in some invalid URLs etc.
+
   // Valid marketing campaigns
   // Use http://support.google.com/analytics/bin/answer.py?hl=en&answer=1033867 to generate additional ones
   def e1 =
-    "SPEC NAME"                      || "EXP. SOURCE" | "EXP. MEDIUM" | "EXP. TERM" | "EXP. CONTENT" | "EXP. CAMPAIGN" | "URL" |
-    "all except content"             !! "google"      ! "cpc"         ! "buy tarot" ! null           ! "spring_sale"   ! new URI("http://www.psychicbazaar.com/shop/tarot?utm_source=google&utm_medium=cpc&utm_term=buy%2Btarot&utm_campaign=spring_sale") |
-    "just source & medium"           !! "google"      ! "cpc"         ! "buy tarot" ! null           ! "spring_sale"   ! new URI("ccc") |
-    "all"                            !! "google"      ! "cpc"         ! "buy tarot" ! ""           ! "spring_sale"   ! new URI("xxx") |> {
+    "SPEC NAME"                      || "EXP. SOURCE" | "EXP. MEDIUM" | "EXP. TERM"      | "EXP. CONTENT" | "EXP. CAMPAIGN" | "URL" |
+    "all except content"             !! "google"      ! "cpc"         ! "buy tarot"      ! null           ! "spring_sale"   ! new URI("http://www.psychicbazaar.com/shop/tarot?utm_source=google&utm_medium=cpc&utm_term=buy%2Btarot&utm_campaign=spring_sale") |
+    "just source, medium & campaign" !! "newsletter4" ! "email"       ! null             ! null           ! "slogan"        ! new URI("http://www.example.com/?utm_source=newsletter4&utm_medium=email&utm_campaign=slogan") |
+    "all"                            !! "citysearch"  ! "banner"      ! "cola fizzy pop" ! "creative 1"   ! "promo code"    ! new URI("http://www.example.com/?utm_source=citysearch&utm_medium=banner&utm_term=cola%2Bfizzy%2Bpop&utm_content=creative%2B1&utm_campaign=promo%2Bcode") |> {
 
       (_, source, medium, term, content, campaign, url) =>
         val expected = new MarketingCampaign().tap { mc =>
