@@ -25,7 +25,7 @@ import outputs.CanonicalOutput
 
 /**
  * Holds constructs to help build the ETL job's data
- * flow.
+ * flow (see below).
  */ 
 object EtlJob {
 

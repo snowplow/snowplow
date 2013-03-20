@@ -62,6 +62,9 @@ module SnowPlow
           }
         end
 
+        # Now branch based on the ETL implementation (Hadoop or Hive)
+        # TODO
+
         # Now create the Hive step for the jobflow
         hive_step = Elasticity::HiveStep.new(config[:hiveql_asset])
 
