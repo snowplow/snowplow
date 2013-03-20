@@ -38,8 +38,8 @@ class CanonicalOutput {
   @BeanProperty var platform: String = _
 
   // Date/time
-  @BeanProperty var dt: String = _
-  @BeanProperty var tm: String = _
+  @BeanProperty var collector_tstamp: String = _
+  @BeanProperty var dvce_tstamp: String = _
 
   // Transaction (i.e. this logging event)
   @BeanProperty var event: String = _
@@ -55,12 +55,24 @@ class CanonicalOutput {
   @BeanProperty var user_id: String = _
   @BeanProperty var user_ipaddress: String = _
   @BeanProperty var user_fingerprint: String = _
-  @BeanProperty var visit_id: Int = _
+  @BeanProperty var visit_id: Int = _ // TODO: comment out
+
+  // @BeanProperty var domain_userid String = _
+  // @BeanProperty var domain_sessionidx: Int = _
+  // @BeanProperty var network_userid String = _
 
   // Page
-  @BeanProperty var page_url: String = _
+  @BeanProperty var page_url: String = _ // TODO: comment out
   @BeanProperty var page_title: String = _
   @BeanProperty var page_referrer: String = _
+
+  // Page URL components
+  /* @BeanProperty var page_urlscheme: String = _  
+  @BeanProperty var page_urlhost: String = _   
+  @BeanProperty var page_urlport: Int = _      
+  @BeanProperty var page_urlpath: String = _
+  @BeanProperty var page_urlquery: String = _
+  @BeanProperty var page_urlfragment: String = _ */
 
   // Marketing
   @BeanProperty var mkt_medium: String = _
@@ -118,6 +130,8 @@ class CanonicalOutput {
   @BeanProperty var br_features_silverlight: Byte = _
   @BeanProperty var br_cookies: Byte = _
   @BeanProperty var br_colordepth: String = _
+  // @BeanProperty var br_viewwidth: Int = _ 
+  // @BeanProperty var br_viewheight: Int = _ 
 
   // OS (from user-agent)
   @BeanProperty var os_name: String = _
@@ -132,4 +146,9 @@ class CanonicalOutput {
   // Device (from querystring)
   @BeanProperty var dvce_screenwidth: Int = _
   @BeanProperty var dvce_screenheight: Int = _
+
+  // Document
+  // @BeanProperty var doc_charset: String = _
+  // @BeanProperty var doc_width: Int = _
+  // @BeanProperty var doc_height: Int = _
 }

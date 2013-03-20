@@ -31,26 +31,23 @@ object EventEnrichments {
 
   /**
    * The Tracker Protocol's pattern
-   * for a timestamp - for details
-   * see:
+   * for a timestamp - for details see:
    *
    * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-common-params
    */
-  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH-mm-ss")
+  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH-mm-ss.SSS")
   private val DtFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
   private val TmFormat = DateTimeFormat.forPattern("HH-mm-ss")  
 
   /**
-   * Splits a Joda DateTime into
-   * separate time and date Strings
+   * Converts a Joda DateTime into
+   * a timestamp String.
    *
    * @param datetime The Joda DateTime
-   *        to split into two
-   * @return a Tuple of two Strings
-   *         (date and time)
+   *        to convert to a timestamp String
+   * @return the timestamp String
    */
-  def splitDatetime(datetime: DateTime): DateTimeTuple =
-    (DtFormat.print(datetime), TmFormat.print(datetime))
+  def toTimestamp(datetime: DateTime): String = TstampFormat.print(datetime)
 
   /**
    * Extracts the timestamp from the
@@ -67,10 +64,11 @@ object EventEnrichments {
    *         error message if the
    *         format was invalid
    */
-  val extractTimestamp: (String, String) => Validation[String, DateTimeTuple] = (field, tstamp) =>
+  val extractTimestamp: (String, String) => Validation[String, String] = (field, tstamp) =>
     try {
-      val t = TstampFormat.parseDateTime(tstamp)
-      splitDatetime(t).success
+      // TODO: write this code
+      // val t = TstampFormat.parseDateTime(tstamp)
+      "TODO".success
     } catch {
       case iae: IllegalArgumentException =>
         "Field [%s]: [%s] is not in the expected timestamp format".format(field, tstamp).fail

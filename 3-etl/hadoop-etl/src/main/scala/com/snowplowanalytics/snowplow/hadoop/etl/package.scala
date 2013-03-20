@@ -33,13 +33,6 @@ import etl.outputs.CanonicalOutput
 package object etl {
 
   /**
-   * Because analysis is always easier
-   * when date and time are in
-   * separate fields.
-   */
-  type DateTimeTuple = (String, String)
-
-  /**
    * Capture a client's
    * screen resolution
    */

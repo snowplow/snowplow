@@ -38,7 +38,7 @@ import org.joda.time.DateTime
  * collector-agnostic stage of the ETL.
  */
 final case class CanonicalInput(
-    timestamp:  DateTime,
+    timestamp:  DateTime, // Collector timestamp
     payload:    TrackerPayload, // See below for defn.
     source:     InputSource,    // See below for defn.
     encoding:   String, 

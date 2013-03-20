@@ -34,7 +34,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder
 
 // This project
 import MapTransformer._
-import enrichments.{MiscEnrichments, EventEnrichments}
+import enrichments.{MiscEnrichments, EventEnrichments, ClientEnrichments}
 
 // Test Bean
 final class TargetBean {
@@ -42,8 +42,8 @@ final class TargetBean {
   @BeanProperty var br_features_pdf: Byte = _
   @BeanProperty var visit_id: Int = _
   @BeanProperty var tracker_v: String = _
-  @BeanProperty var dt: String = _
-  @BeanProperty var tm: String = _
+  @BeanProperty var width: Int = _
+  @BeanProperty var height: Int = _
 
   override def equals(other: Any): Boolean = other match {
     case that: TargetBean => {
@@ -51,8 +51,8 @@ final class TargetBean {
       br_features_pdf == that.br_features_pdf &&
       visit_id == that.visit_id &&
       tracker_v == that.tracker_v &&
-      dt == that.dt &&
-      tm == that.tm
+      height == that.height &&
+      width == that.width
     }
     case _ => false
   }
@@ -72,22 +72,22 @@ class MapTransformerTest extends Specification with ValidationMatchers {
                       "f_pdf"   -> "1",
                       "vid"     -> "1",
                       "tv"      -> "no-js-0.1.1",
-                      "tstamp"  -> "2013-01-01 23-11-59",
+                      "res"     -> "720x1080",
                       "missing" -> "Not in the transformation map")
 
   val transformMap: TransformMap = Map(("p"      , (MiscEnrichments.extractPlatform, "platform")),
                                        ("f_pdf"  , (ConversionUtils.stringToByte, "br_features_pdf")),
                                        ("vid"    , (ConversionUtils.stringToInt, "visit_id")),
                                        ("tv"     , (MiscEnrichments.identity, "tracker_v")),
-                                       ("tstamp" , (EventEnrichments.extractTimestamp, ("dt", "tm"))))
+                                       ("res"    , (ClientEnrichments.extractResolution, ("width", "height"))))
 
   val expected = new TargetBean().tap { t =>
     t.platform = "web"
     t.br_features_pdf = 1
     t.visit_id = 1
     t.tracker_v = "no-js-0.1.1"
-    t.dt = "2013-01-01"
-    t.tm = "23-11-59"
+    t.width = 720
+    t.height = 1080
   }
 
   "Applying a TransformMap to an existing POJO" should {

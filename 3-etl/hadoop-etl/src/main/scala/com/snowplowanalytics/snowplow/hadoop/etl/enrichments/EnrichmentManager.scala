@@ -71,14 +71,10 @@ object EnrichmentManager {
 
     // 1. Enrichments not expected to fail
 
-    // Quick split timestamp into date and time
-    val (dt, tm) = EE.splitDatetime(raw.timestamp)
-
     // Let's start populating the CanonicalOutput
     // with the fields which cannot error
     val event = new CanonicalOutput().tap { e =>
-      e.dt = dt
-      e.tm = tm
+      e.collector_tstamp = EE.toTimestamp(raw.timestamp)
       e.event_id = EE.generateEventId
       e.v_collector = raw.source.collector
       e.v_etl = ME.etlVersion
