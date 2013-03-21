@@ -91,11 +91,11 @@ module SnowPlow
             "com.snowplowanalytics.snowplow.hadoop.etl.EtlJob",
             "--hdfs",
             # TODO: turn arg names to lowercase (as these aren't variables)
-            "--INPUT_FOLDER"    , config[:s3][:buckets][:processing],
-            "--OUTPUT_FOLDER"   , config[:s3][:buckets][:out],
-            "--BAD_ROWS_FOLDER" , config[:s3][:buckets][:out_bad_rows],
+            "--input_folder"    , config[:s3][:buckets][:processing],
+            "--output_folder"   , config[:s3][:buckets][:out],
+            "--bad_rows_folder" , config[:s3][:buckets][:out_bad_rows],
             # "ERRORS_FOLDER"   , config[:s3][:buckets][:out_errors],
-            "--INPUT_FORMAT"    , config[:etl][:collector_format],
+            "--input_format"    , config[:etl][:collector_format],
             # "CONTINUE_ON"     , config[:etl][:continue_on_unexpected_error]
           ]
 
