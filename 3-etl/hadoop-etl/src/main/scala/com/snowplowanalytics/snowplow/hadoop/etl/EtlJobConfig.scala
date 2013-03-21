@@ -51,12 +51,12 @@ object EtlJobConfig {
   def loadConfigFrom(args: Args): ValidationNel[String, EtlJobConfig] = {
 
     import ScalazArgs._
-    val inFolder  = args.requiredz("INPUT_FOLDER")
-    val outFolder = args.requiredz("OUTPUT_FOLDER")
-    val badFolder = args.requiredz("BAD_ROWS_FOLDER")
+    val inFolder  = args.requiredz("input_folder")
+    val outFolder = args.requiredz("output_folder")
+    val badFolder = args.requiredz("bad_rows_folder")
 
-    // TODO: change loader to be the whole end-to-end load
-    val loader = args.requiredz("INPUT_FORMAT") flatMap (cf => CollectorLoader.getLoader(cf))
+    // Don't instantiate till we're on the cluster nodes
+    lazy val loader = args.requiredz("input_format") flatMap (cf => CollectorLoader.getLoader(cf))
     
     // TODO: add in support for CONTINUE_ON and the Failure Trap
 
