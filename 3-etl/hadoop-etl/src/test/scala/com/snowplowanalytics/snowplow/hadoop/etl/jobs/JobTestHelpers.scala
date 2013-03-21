@@ -78,9 +78,9 @@ object JobTestHelpers {
   // Standard JobTest definition used by all integration tests
   val EtlJobTest = 
     JobTest("com.snowplowanalytics.snowplow.hadoop.etl.EtlJob").
-      arg("INPUT_FOLDER", "inputFolder").
-      arg("INPUT_FORMAT", "cloudfront").
-      arg("OUTPUT_FOLDER", "outputFolder").
-      arg("BAD_ROWS_FOLDER", "badFolder").
-      arg("CONTINUE_ON", "1")
+      arg("input_folder", "inputFolder").
+      arg("input_format", "cloudfront").
+      arg("output_folder", "outputFolder").
+      arg("bad_rows_folder", "badFolder").
+      arg("continue_on", "1")
 }
