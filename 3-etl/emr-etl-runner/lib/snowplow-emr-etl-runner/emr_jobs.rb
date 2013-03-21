@@ -98,7 +98,7 @@ module SnowPlow
             }
           end          
 
-          hadoop_step.variables = {
+          hadoop_step.arguments = {
             "INPUT_FOLDER"      => config[:s3][:buckets][:processing],
             "OUTPUT_FOLDER"     => config[:s3][:buckets][:out],
             "BAD_ROWS_FOLDER"   => config[:s3][:buckets][:out_bad_rows],
