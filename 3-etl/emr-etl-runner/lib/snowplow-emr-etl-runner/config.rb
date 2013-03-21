@@ -24,7 +24,7 @@ module SnowPlow
   module EmrEtlRunner
     module Config
 
-      @@etl_implementations = Set.new(%w(cloudfront clj-tomcat))
+      @@etl_implementations = Set.new(%w(hive hadoop))
       @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
       @@storage_formats = Set.new(%w(hive redshift mysql-infobright))
 
