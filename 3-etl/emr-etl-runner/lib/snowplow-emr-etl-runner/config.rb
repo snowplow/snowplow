@@ -66,13 +66,13 @@ module SnowPlow
         end
 
         # Construct path to our ETL implementations
-        asset_path = "%shive" % config[:s3][:buckets][:assets]
+        asset_path = "%s3-etl" % config[:s3][:buckets][:assets]
 
         # Construct path to our Hadoop ETL
-        config[:hadoop_asset] = "%s/3-etl/hadoop-etl/snowplow-hadoop-etl-%s.jar" % [asset_path, config[:snowplow][:hadoop_etl_version]]
+        config[:hadoop_asset] = "%s/hadoop-etl/snowplow-hadoop-etl-%s.jar" % [asset_path, config[:snowplow][:hadoop_etl_version]]
 
         # Construct paths to our HiveQL and serde
-        config[:serde_asset]  = "%s/3-etl/hive-etl/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
+        config[:serde_asset]  = "%s/hive-etl/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
 
         unless @@storage_formats.include?(config[:etl][:storage_format])
           raise ConfigError, "storage_format '%s' not supported" % config[:etl][:storage_format]
