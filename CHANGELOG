@@ -5,6 +5,8 @@ Hadoop ETL: truncate raw useragent, page title and URL (#192)           - TODO
 EmrEtlRunner: bumped to 0.1.0
 EmrEtlRunner: updated to work with new config.yml fields (part of #178)
 EmrEtlRunner: added support for Hadoop ETL (part of #178)
+EmrEtlRunner: added configurable job name (part of #XXX)                - TIDY UP
+EmrEtlRunner: added run IDs to output folders (Hadoop only) (part of #XXX) - TODO
 EmrEtlRunner: changed .rvmrc to .ruby-version, thanks @richo (part of #190)
 StorageLoader: changed .rvmrc to .ruby-version, thanks @richo (part of #190)
 

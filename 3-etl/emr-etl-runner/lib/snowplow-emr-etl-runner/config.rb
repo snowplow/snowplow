@@ -50,14 +50,19 @@ module SnowPlow
         # Add trailing slashes if needed to the non-nil buckets
         config[:s3][:buckets].reject{|k,v| v.nil?}.update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
 
-        # Validate the collector format
-        unless @@collector_formats.include?(config[:etl][:collector_format]) 
-          raise ConfigError, "collector_format '%s' not supported" % config[:etl][:collector_format]
-        end
-
         # Validate the ETL implementation option
         unless @@etl_implementations.include?(config[:etl][:implementation]) 
           raise ConfigError, "etl_implementation '%s' not supported" % config[:etl][:implementation]
+        end
+
+        # Add the run ID to the output buckets (prevents collisions) if we using the Hadoop ETL
+        if config[:etl][:implementation]
+          # TODO
+        end
+
+        # Validate the collector format
+        unless @@collector_formats.include?(config[:etl][:collector_format]) 
+          raise ConfigError, "collector_format '%s' not supported" % config[:etl][:collector_format]
         end
 
         # Currently we only support start/end times for the CloudFront collector format. See #120 for details

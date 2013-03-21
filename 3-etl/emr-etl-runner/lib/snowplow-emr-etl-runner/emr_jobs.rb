@@ -37,19 +37,8 @@ module SnowPlow
         # Create a job flow with your AWS credentials
         @jobflow = Elasticity::JobFlow.new(config[:aws][:access_key_id], config[:aws][:secret_access_key])
 
-        # Set the name of the jobflow
-        @jobflow.name = "SnowPlow EmrEtlRunner: %s" % case
-                          when (config[:start].nil? and config[:end].nil?)
-                            "Rolling mode"
-                          when config[:start].nil?
-                            "Timespan mode (to %s)" % config[:end]
-                          when config[:end].nil?
-                            "Timespan mode (%s onwards)" % config[:start]
-                          else
-                            "Timespan mode (%s to %s)" % [config[:start], config[:end]]
-                          end
-
-        # Additional configuration
+        # Configure
+        @jobflow.name = config[:etl][:job_name]
         @jobflow.hadoop_version = config[:emr][:hadoop_version]
         @jobflow.ec2_key_name = config[:emr][:ec2_key_name]
         @jobflow.placement = config[:emr][:placement]

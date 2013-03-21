@@ -24,6 +24,7 @@
     :master_instance_type: m1.small
     :slave_instance_type: m1.small
 :etl:
+  :job_name: SnowPlow ETL # Give your job a name
   :implementation: hive # Or 'hadoop' for experimental Hadoop ETL
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
   :continue_on_unexpected_error: false # You can switch to 'true' if you really don't want the ETL throwing exceptions. Doesn't work for Hadoop ETL yet
