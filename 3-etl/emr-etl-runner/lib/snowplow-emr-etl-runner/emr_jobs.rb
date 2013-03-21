@@ -88,11 +88,13 @@ module SnowPlow
           end          
 
           hadoop_step.arguments = [
-            "INPUT_FOLDER"    , config[:s3][:buckets][:processing],
-            "OUTPUT_FOLDER"   , config[:s3][:buckets][:out],
-            "BAD_ROWS_FOLDER" , config[:s3][:buckets][:out_bad_rows],
+            "--hdfs",
+            # TODO: turn arg names to lowercase (as these aren't variables)
+            "--INPUT_FOLDER"    , config[:s3][:buckets][:processing],
+            "--OUTPUT_FOLDER"   , config[:s3][:buckets][:out],
+            "--BAD_ROWS_FOLDER" , config[:s3][:buckets][:out_bad_rows],
             # "ERRORS_FOLDER"   , config[:s3][:buckets][:out_errors],
-            "INPUT_FORMAT"    , config[:etl][:collector_format],
+            "--INPUT_FORMAT"    , config[:etl][:collector_format],
             # "CONTINUE_ON"     , config[:etl][:continue_on_unexpected_error]
           ]
 
