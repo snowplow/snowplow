@@ -63,17 +63,15 @@ class EtlJob(args: Args) extends Job(args) {
     e => throw FatalEtlError(e),
     c => c)
 
+  // Wait until we're on the nodes to instantiate
+  lazy val loader = CollectorLoader.getLoader(etlConfig.inFormat).fold(
+    e => throw FatalEtlError(e),
+    c => c)
+
   // Aliases for our job
   val input = MultipleTextLineFiles(etlConfig.inFolder)
   val goodOutput = Tsv(etlConfig.outFolder)
   val badOutput = JsonLine(etlConfig.badFolder)
-
-  // Wait until we're on the nodes to instantiate
-  // TODO: can we tidy this up
-  lazy val loader = CollectorLoader.getLoader(etlConfig.inFormat) match {
-    case Success(s) => s
-    case Failure(f) => throw FatalEtlError(f)
-  }
 
   // Scalding data pipeline
   val common = input
