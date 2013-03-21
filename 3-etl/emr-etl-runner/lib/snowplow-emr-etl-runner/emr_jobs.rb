@@ -88,6 +88,7 @@ module SnowPlow
           end          
 
           hadoop_step.arguments = [
+            "com.snowplowanalytics.snowplow.hadoop.etl.EtlJob",
             "--hdfs",
             # TODO: turn arg names to lowercase (as these aren't variables)
             "--INPUT_FOLDER"    , config[:s3][:buckets][:processing],
