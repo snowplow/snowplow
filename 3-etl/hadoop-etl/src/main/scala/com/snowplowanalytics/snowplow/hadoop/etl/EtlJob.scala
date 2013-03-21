@@ -100,6 +100,6 @@ class EtlJob(args: Args) extends Job(args) {
       }
     }
     .unpackTo[CanonicalOutput]('good -> '*)
-    .project('page_url) // We don't have space to store the raw page URL in Redshift _currently_
+    .discard('page_url) // We don't have space to store the raw page URL in Redshift _currently_
     .write(goodOutput)
 }
