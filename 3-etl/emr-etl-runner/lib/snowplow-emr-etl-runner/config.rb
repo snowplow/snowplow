@@ -79,7 +79,7 @@ module SnowPlow
         end
         storage_format_uscore = config[:etl][:storage_format].gsub("-", "_")
         storage_format_version_sym = "#{storage_format_uscore}_hiveql_version".to_sym
-        config[:hiveql_asset] = "%s/hiveql/%s-etl-%s.q" % [
+        config[:hiveql_asset] = "%s/3-etl/hive-etl/hiveql/%s-etl-%s.q" % [
                                   asset_path, 
                                   config[:etl][:storage_format],
                                   config[:snowplow][storage_format_version_sym]
