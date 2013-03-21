@@ -8,6 +8,8 @@ EmrEtlRunner: added support for Hadoop ETL (part of #178)
 EmrEtlRunner: changed .rvmrc to .ruby-version, thanks @richo (part of #190)
 StorageLoader: changed .rvmrc to .ruby-version, thanks @richo (part of #190)
 
+Reminder: need to add failure trap to Hadoop ETL                        - TODO
+
 Version 0.7.6 (2013-03-03)
 --------------------------
 HiveQL: redshift-etl.q added. Version 0.0.1 (#174)
