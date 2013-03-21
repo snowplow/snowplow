@@ -47,8 +47,8 @@ module SnowPlow
           config[:s3][:buckets][:processing] = options[:processbucket]
         end
 
-        # Add trailing slashes if needed to the buckets
-        config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
+        # Add trailing slashes if needed to the non-nil buckets
+        config[:s3][:buckets].reject{|k,v| v.nil?}.update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
 
         # Validate the collector format
         unless @@collector_formats.include?(config[:etl][:collector_format]) 
