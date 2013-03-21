@@ -20,6 +20,7 @@ import Scalaz._
 import com.twitter.scalding._
 
 // This project
+import inputs.CollectorLoader
 import enrichments.EnrichmentManager
 import outputs.CanonicalOutput
 
@@ -63,10 +64,16 @@ class EtlJob(args: Args) extends Job(args) {
     c => c)
 
   // Aliases for our job
-  val loader = etlConfig.collectorLoader
   val input = MultipleTextLineFiles(etlConfig.inFolder)
   val goodOutput = Tsv(etlConfig.outFolder)
   val badOutput = JsonLine(etlConfig.badFolder)
+
+  // Wait until we're on the nodes to instantiate
+  // TODO: can we tidy this up
+  lazy val loader = CollectorLoader.getLoader(etlConfig.inFormat) match {
+    case Success(s) => s
+    case Failure(f) => throw FatalEtlError(f)
+  }
 
   // Scalding data pipeline
   val common = input

@@ -20,9 +20,7 @@ import Scalaz._
 import com.twitter.scalding.Args
 
 // This project
-import utils.{ConversionUtils, ScalazArgs}
-import inputs.CollectorLoader
-import outputs.CanonicalOutput
+import utils.ScalazArgs
 
 /**
  * The configuration for the SnowPlowEtlJob.
@@ -31,7 +29,7 @@ case class EtlJobConfig(
     inFolder: String,
     outFolder: String,
     badFolder: String,
-    collectorLoader: CollectorLoader)
+    inFormat: String)
 
 /**
  * Module to handle configuration for
@@ -54,12 +52,10 @@ object EtlJobConfig {
     val inFolder  = args.requiredz("input_folder")
     val outFolder = args.requiredz("output_folder")
     val badFolder = args.requiredz("bad_rows_folder")
-
-    // Don't instantiate till we're on the cluster nodes
-    lazy val loader = args.requiredz("input_format") flatMap (cf => CollectorLoader.getLoader(cf))
+    val inFormat = args.requiredz("input_format") // TODO: check it's a valid format
     
     // TODO: add in support for CONTINUE_ON and the Failure Trap
 
-    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| loader.toValidationNel) { EtlJobConfig(_, _, _, _) }
+    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| inFormat.toValidationNel) { EtlJobConfig(_, _, _, _) }
   }
 }

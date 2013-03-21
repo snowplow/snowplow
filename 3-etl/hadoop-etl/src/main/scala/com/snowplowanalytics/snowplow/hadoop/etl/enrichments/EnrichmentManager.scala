@@ -138,7 +138,7 @@ object EnrichmentManager {
           ("fp"      , (ME.identity, "user_fingerprint")),
           ("vid"     , (CU.stringToInt, "domain_sessionidx")),
           ("tstamp"  , (EE.extractTimestamp, "dvce_tstamp")),
-          ("tv"      , (ME.identity, "tracker_v")),
+          ("tv"      , (ME.identity, "v_tracker")),
           ("lang"    , (ME.identity, "br_lang")),
           ("f_pdf"   , (CU.stringToByte, "br_features_pdf")),
           ("f_fla"   , (CU.stringToByte, "br_features_flash")),
