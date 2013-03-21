@@ -98,14 +98,14 @@ module SnowPlow
             }
           end          
 
-          hadoop_step.arguments = {
-            "INPUT_FOLDER"      => config[:s3][:buckets][:processing],
-            "OUTPUT_FOLDER"     => config[:s3][:buckets][:out],
-            "BAD_ROWS_FOLDER"   => config[:s3][:buckets][:out_bad_rows],
-            "ERRORS_FOLDER"     => config[:s3][:buckets][:out_errors],
-            "INPUT_FORMAT"      => config[:etl][:collector_format],
-            "CONTINUE_ON"       => config[:etl][:continue_on_unexpected_error]
-          }
+          hadoop_step.arguments = [
+            "INPUT_FOLDER"    , config[:s3][:buckets][:processing],
+            "OUTPUT_FOLDER"   , config[:s3][:buckets][:out],
+            "BAD_ROWS_FOLDER" , config[:s3][:buckets][:out_bad_rows],
+            # "ERRORS_FOLDER"   , config[:s3][:buckets][:out_errors],
+            "INPUT_FORMAT"    , config[:etl][:collector_format],
+            # "CONTINUE_ON"     , config[:etl][:continue_on_unexpected_error]
+          ]
 
           # Finally add to our jobflow
           @jobflow.add_step(hadoop_step)
