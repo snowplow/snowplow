@@ -43,6 +43,9 @@ module SnowPlow
         config[:end] = options[:end]
         config[:skip] = options[:skip]
 
+        # Generate our run ID: based on the time now
+        config[:run_id] = Time.new.strftime("%Y-%m-%d-%H-%M-%S")
+
         unless options[:processbucket].nil?
           config[:s3][:buckets][:processing] = options[:processbucket]
         end
