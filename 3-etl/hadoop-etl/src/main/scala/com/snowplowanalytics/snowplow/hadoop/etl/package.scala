@@ -97,16 +97,4 @@ package object etl {
    * or a MaybeCanonicalOutput for `Success`.
    */
   type ValidatedMaybeCanonicalOutput = Validated[MaybeCanonicalOutput]
-
-  /**
-   * Type alias for a `PartialFunction`
-   * to handle unexpected errors.
-   * Can contain a `Throwable` or a
-   * `MaybeUnexpectedError`, with
-   * `Success` of any type.
-   *
-   * @tparam A the type of `Success`
-   *         within the ValidationNel
-   */
-  // type UnexpectedErrorHandler[A] = PartialFunction[Throwable, Validated[A]]
 }

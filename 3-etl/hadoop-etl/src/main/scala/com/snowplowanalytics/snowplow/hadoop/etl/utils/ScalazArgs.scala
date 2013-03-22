@@ -62,13 +62,22 @@ class ScalazArgs(args: Args) {
    *         message, boxed in a
    *         Scalaz Validation
    */
-  def requiredz(key: String): Validation[String, String] = try {
-      args.optional(key) match {
-        case Some(value) => value.success
-        case None => "Required argument [%s] not found".format(key).fail
-      }
-    // TODO: clean this up. What is the specific Exception being thrown here?
-    } catch {
-      case _ => "List of values found for argument [%s], should be one".format(key).fail
-    }
+  def requiredz(key: String): Validation[String, String] = args.list(key) match {
+    case List() => "Required argument [%s] not found".format(key).fail
+    case List(a) => a.success
+    case _ => "List of values found for argument [%s], should be one".format(key).fail
+  }
+
+  /**
+   * A re-implementation of the optional()
+   * method, wrapped in a Scalaz Validation.
+   *
+   * Use it to compose validation errors if
+   * a key is missing.
+   */
+  def optionalz(key: String): Validation[String, Option[String]] = args.list(key) match {
+    case List() => None.success
+    case List(a) => Some(a).success
+    case _ => "List of values found for argument [%s], should be at most one".format(key).fail
+  }
 }

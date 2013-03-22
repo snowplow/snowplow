@@ -63,7 +63,7 @@ class EtlJob(args: Args) extends Job(args) {
     e => throw FatalEtlError(e),
     c => c)
 
-  // Wait until we're on the nodes to instantiate
+  // Wait until we're on the nodes to instantiate with lazy
   lazy val loader = CollectorLoader.getLoader(etlConfig.inFormat).fold(
     e => throw FatalEtlError(e),
     c => c)
@@ -98,6 +98,6 @@ class EtlJob(args: Args) extends Job(args) {
       }
     }
     .unpackTo[CanonicalOutput]('good -> '*)
-    .discard('page_url) // We don't have space to store the raw page URL in Redshift _currently_
+    .discard('page_url) // We don't have space to store the raw page URL in Redshift currently
     .write(goodOutput)
 }

@@ -54,8 +54,8 @@ object EtlJobConfig {
     val outFolder = args.requiredz("output_folder")
     val badFolder = args.requiredz("bad_rows_folder")
     val inFormat = args.requiredz("input_format") // TODO: check it's a valid format
+    val trapFolder = args.optionalz("trap_folder")
     
-    // TODO: add in support for CONTINUE_ON and the Failure Trap
-    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| inFormat.toValidationNel) { EtlJobConfig(_, _, _, _, None) }
+    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| inFormat.toValidationNel |@| trapFolder.toValidationNel) { EtlJobConfig(_, _, _, _, _) }
   }
 }
