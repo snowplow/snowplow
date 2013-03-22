@@ -67,6 +67,7 @@ class ScalazArgs(args: Args) {
         case Some(value) => value.success
         case None => "Required argument [%s] not found".format(key).fail
       }
+    // TODO: clean this up. What is the specific Exception being thrown here?
     } catch {
       case _ => "List of values found for argument [%s], should be one".format(key).fail
     }

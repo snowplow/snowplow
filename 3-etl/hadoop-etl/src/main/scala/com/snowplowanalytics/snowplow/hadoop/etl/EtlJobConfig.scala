@@ -29,7 +29,8 @@ case class EtlJobConfig(
     inFolder: String,
     outFolder: String,
     badFolder: String,
-    inFormat: String)
+    inFormat: String,
+    trapFolder: Option[String])
 
 /**
  * Module to handle configuration for
@@ -55,7 +56,6 @@ object EtlJobConfig {
     val inFormat = args.requiredz("input_format") // TODO: check it's a valid format
     
     // TODO: add in support for CONTINUE_ON and the Failure Trap
-
-    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| inFormat.toValidationNel) { EtlJobConfig(_, _, _, _) }
+    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| inFormat.toValidationNel) { EtlJobConfig(_, _, _, _, None) }
   }
 }

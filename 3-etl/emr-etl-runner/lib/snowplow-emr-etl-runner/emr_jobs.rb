@@ -88,15 +88,14 @@ module SnowPlow
           end          
 
           hadoop_step.arguments = [
-            "com.snowplowanalytics.snowplow.hadoop.etl.EtlJob",
-            "--hdfs",
-            # TODO: turn arg names to lowercase (as these aren't variables)
-            "--input_folder"    , config[:s3][:buckets][:processing],
-            "--output_folder"   , config[:s3][:buckets][:out],
-            "--bad_rows_folder" , config[:s3][:buckets][:out_bad_rows],
-            # "ERRORS_FOLDER"   , config[:s3][:buckets][:out_errors],
-            "--input_format"    , config[:etl][:collector_format],
-            # "CONTINUE_ON"     , config[:etl][:continue_on_unexpected_error]
+            "com.snowplowanalytics.snowplow.hadoop.etl.EtlJob", # Job to run
+            "--hdfs", # Always --hdfs mode, never --local
+            "--input_folder"      , config[:s3][:buckets][:processing], # Argument names are "arguments" too
+            "--output_folder"     , config[:s3][:buckets][:out],
+            "--bad_rows_folder"   , config[:s3][:buckets][:out_bad_rows],
+            "--exceptions_folder" , config[:s3][:buckets][:out_errors],
+            "--input_format"      , config[:etl][:collector_format],
+            "--trap_exceptions"   , config[:etl][:continue_on_unexpected_error]
           ]
 
           # Finally add to our jobflow
