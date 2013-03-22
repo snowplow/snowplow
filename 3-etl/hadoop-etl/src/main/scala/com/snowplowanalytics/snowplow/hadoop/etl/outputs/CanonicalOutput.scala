@@ -116,10 +116,10 @@ class CanonicalOutput {
   @BeanProperty var br_renderengine: String = _
 
   // Page Pings
-  @BeanProperty var pp_xoffset_min: String = _
-  @BeanProperty var pp_xoffset_max: String = _
-  @BeanProperty var pp_yoffset_min: String = _
-  @BeanProperty var pp_yoffset_max: String = _
+  @BeanProperty var pp_xoffset_min: Int = _
+  @BeanProperty var pp_xoffset_max: Int = _
+  @BeanProperty var pp_yoffset_min: Int = _
+  @BeanProperty var pp_yoffset_max: Int = _
 
   // Browser (from querystring)
   @BeanProperty var br_lang: String = _
