@@ -31,17 +31,17 @@ import outputs.CanonicalOutput
 object EtlJob {
 
   /**
-   * A helper method to take a ValidatedCanonicalOutput
-   * and flatMap it into a ValidatedCanonicalOutput.
+   * A helper method to take a ValidatedMaybeCanonicalInput
+   * and flatMap it into a ValidatedMaybeCanonicalOutput.
    *
    * We have to do some unboxing because enrichEvent
    * expects a raw CanonicalInput as its argument, not
    * a MaybeCanonicalInput.
    *
-   * @param input The ValidatedCanonicalInput
-   * @return the ValidatedCanonicalOutput. Thanks to
+   * @param input The ValidatedMaybeCanonicalInput
+   * @return the ValidatedMaybeCanonicalOutput. Thanks to
    *         flatMap, will include any validation errors
-   *         contained within the ValidatedCanonicalInput
+   *         contained within the ValidatedMaybeCanonicalInput
    */
   def toCanonicalOutput(input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
     input.flatMap {
