@@ -95,12 +95,17 @@ module SnowPlow
             "com.snowplowanalytics.snowplow.hadoop.etl.EtlJob", # Job to run
             "--hdfs", # Always --hdfs mode, never --local
             "--input_folder"      , config[:s3][:buckets][:processing], # Argument names are "arguments" too
-            "--output_folder"     , partition.call(config[:s3][:buckets][:out]),
-            "--bad_rows_folder"   , partition.call(config[:s3][:buckets][:out_bad_rows]),
-            "--exceptions_folder" , partition.call(config[:s3][:buckets][:out_errors]),
             "--input_format"      , config[:etl][:collector_format],
-            "--trap_exceptions"   , config[:etl][:continue_on_unexpected_error]
+            "--output_folder"     , partition.call(config[:s3][:buckets][:out]),
+            "--bad_rows_folder"   , partition.call(config[:s3][:buckets][:out_bad_rows])
           ]
+
+          # Conditionally add exceptions_folder
+          if config[:etl][:continue_on_unexpected_error] == '1'
+            hadoop_step.arguments.concat [
+              "--exceptions_folder" , partition.call(config[:s3][:buckets][:out_errors])
+            ]
+          end
 
           # Finally add to our jobflow
           @jobflow.add_step(hadoop_step)

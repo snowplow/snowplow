@@ -30,7 +30,7 @@ case class EtlJobConfig(
     outFolder: String,
     badFolder: String,
     inFormat: String,
-    trapFolder: Option[String])
+    exceptionsFolder: Option[String])
 
 /**
  * Module to handle configuration for
@@ -54,8 +54,8 @@ object EtlJobConfig {
     val outFolder = args.requiredz("output_folder")
     val badFolder = args.requiredz("bad_rows_folder")
     val inFormat = args.requiredz("input_format") // TODO: check it's a valid format
-    val trapFolder = args.optionalz("trap_folder")
+    val exceptionsFolder = args.optionalz("trap_folder")
     
-    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| inFormat.toValidationNel |@| trapFolder.toValidationNel) { EtlJobConfig(_, _, _, _, _) }
+    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| inFormat.toValidationNel |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_, _, _, _, _) }
   }
 }
