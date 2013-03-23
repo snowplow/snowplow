@@ -1,3 +1,6 @@
 [submodule "2-collectors/contrib-nodejs-collector"]
 	path = 2-collectors/contrib-nodejs-collector
 	url = git://github.com/shermozle/SnowCannon.git
+[submodule "1-trackers/arduino-tracker"]
+	path = 1-trackers/arduino-tracker
+	url = git://github.com/snowplow/snowplow-arduino-tracker.git

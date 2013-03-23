@@ -12,6 +12,7 @@
 |---------------------------|------------------------------------------------------|----------------------|
 | [javascript-tracker] [t1] | A client-side JavaScript tracker for web browser use | Production-ready     |
 | [no-js-tracker] [t2]      | A pixel-based tracker for no-JavaScript web environments | Production-ready |
+| [arduino-tracker] [t3]    | An event tracker for IP-connected Arduino boards     | Production-ready     |
 
 For other trackers (e.g. iOS, Android) and their approximate timelines, please see the [Product Roadmap][roadmap].
 
@@ -28,6 +29,7 @@ For other trackers (e.g. iOS, Android) and their approximate timelines, please s
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
 [t1]: ./1-trackers/javascript-tracker/
 [t2]: ./1-trackers/no-js-tracker/
+[t3]: https://github.com/snowplow/snowplow-arduino-tracker
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-a-Tracker
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/trackers
 [wiki]: https://github.com/snowplow/snowplow/wiki
