@@ -223,9 +223,9 @@ object EnrichmentManager {
     // TODO: move this into the db-specific ETL phase (when written) & apply to all strings, not just these 5
     event.useragent = CU.truncate(event.useragent, 1000)
     event.page_title = CU.truncate(event.page_title, 2000)
-    event.page_urlpath = CU.truncate(event.page_title, 1000)
-    event.page_urlquery = CU.truncate(event.page_title, 3000)
-    event.page_urlfragment = CU.truncate(event.page_title, 255)
+    event.page_urlpath = CU.truncate(event.page_urlpath, 1000)
+    event.page_urlquery = CU.truncate(event.page_urlquery, 3000)
+    event.page_urlfragment = CU.truncate(event.page_urlfragment, 255)
 
     // Collect our errors on Failure, or return our event on Success 
     (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| transform |@| campaign) {
