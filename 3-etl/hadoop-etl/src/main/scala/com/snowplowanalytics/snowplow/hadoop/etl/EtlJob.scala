@@ -69,13 +69,18 @@ class EtlJob(args: Args) extends Job(args) {
     c => c)
 
   // Aliases for our job
-  val input = MultipleTextLineFiles(etlConfig.inFolder)
+  val input = MultipleTextLineFiles(etlConfig.inFolder).read
   val goodOutput = Tsv(etlConfig.outFolder)
   val badOutput = JsonLine(etlConfig.badFolder)
 
+  // Do we add a failure trap?
+  val trappableInput = etlConfig.exceptionsFolder match {
+    case Some(folder) => input.addTrap(Tsv(folder))
+    case None => input
+  }
+
   // Scalding data pipeline
-  val common = input
-    .read
+  val common = trappableInput
     .map('line -> 'output) { l: String =>
       EtlJob.toCanonicalOutput(loader.toCanonicalInput(l))
     }

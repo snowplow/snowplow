@@ -30,7 +30,7 @@ import scala.reflect.BeanProperty
  * Array for browser features, and
  * switch remaining Bytes to Booleans).
  */
-// TODO: update to include new Redshift fields
+// TODO: make the Canonical Output Avro-format, not Redshift-specific
 class CanonicalOutput {
 
   // The application (site, game, app etc) this event belongs to, and the tracker platform

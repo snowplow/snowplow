@@ -118,12 +118,29 @@ object ConversionUtils {
    *         Validation
    */
   def stringToBoolean(str: String): Validation[String, Boolean] = 
-    if (str == "1") 
+    if (str == "1") {
       true.success
-    else if (str == "0")
+    } else if (str == "0") {
       false.success
-    else
+    } else {
       "Cannot convert [%s] to boolean, only 1 or 0.".format(str).fail
+    }
+
+  /**
+   * Truncates a String - useful for making sure
+   * Strings can't overflow a database field.
+   *
+   * @param str The String to truncate
+   * @param length The maximum length of the String
+   *        to keep
+   * @return the truncated String
+   */
+  def truncate(str: String, length: Int): String =
+    if (str == null) {
+      null
+    } else {
+      str.take(length)
+    }
 
   /**
    * Helper to convert a Boolean value to a Byte.
