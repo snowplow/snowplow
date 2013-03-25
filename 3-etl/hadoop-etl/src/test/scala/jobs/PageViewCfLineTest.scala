@@ -72,7 +72,7 @@ class PageViewCfLineTest extends Specification with TupleConversions {
     null, //
     null, //
     null, //
-    null, // Event fields empty
+    null, // Structured event fields empty
     null, //
     null, //
     null, //
