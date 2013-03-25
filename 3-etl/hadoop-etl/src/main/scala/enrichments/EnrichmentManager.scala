@@ -220,7 +220,7 @@ object EnrichmentManager {
         })
 
     // Some quick and dirty truncation to ensure the load into Redshift doesn't error. Yech this is pretty dirty
-    // TODO: move this into the db-specific ETL phase (when written) & apply to all strings, not just these 6
+    // TODO: move this into the db-specific ETL phase (when written) & _programmatically_ apply to all strings, not just these 6
     event.useragent = CU.truncate(event.useragent, 1000)
     event.page_title = CU.truncate(event.page_title, 2000)
     event.page_referrer = CU.truncate(event.page_referrer, 3000)
