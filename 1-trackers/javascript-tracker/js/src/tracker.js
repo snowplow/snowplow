@@ -688,6 +688,21 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	}
 
 	/**
+	 * Log an unstructured event happening on this page
+	 *
+	 * @param string name The name of the event
+	 * @param object payload The properties of the event
+	 */
+	function logUnstructEvent(name, payload) {
+		var sb = requestStringBuilder();
+		sb.add('e', 'ue'); // 'ue' for Unstructured Event
+		sb.add('usev_name', name);
+		sb.add('usev_json', JSON2.stringify(payload))
+		request = getRequest(sb, 'event');
+		sendRequest(request, configTrackerPause);
+	}
+
+	/**
 	 * Log an ad impression
 	 *
 	 * @param string bannerId Identifier for the ad banner displayed
@@ -1664,6 +1679,16 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 */
 		trackStructEvent: function (category, action, label, property, value) {
 			logStructEvent(category, action, label, property, value);                   
+		},
+
+		/**
+		 * Track an unstructured event happening on this page.
+		 *
+		 * @param string name The name of the event
+		 * @param object payload The properties of the event
+		 */
+		trackUnstructEvent: function (name, payload) {
+			logUnstructEvent(name, payload);
 		},
 
 		/**
