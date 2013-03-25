@@ -220,9 +220,12 @@ object EnrichmentManager {
         })
 
     // Some quick and dirty truncation to ensure the load into Redshift doesn't error. Yech this is pretty dirty
-    // TODO: move this into the db-specific ETL phase & apply to all Strings, not just these 3
+    // TODO: move this into the db-specific ETL phase (when written) & apply to all strings, not just these 5
     event.useragent = CU.truncate(event.useragent, 1000)
     event.page_title = CU.truncate(event.page_title, 2000)
+    event.page_urlpath = CU.truncate(event.page_title, 1000)
+    event.page_urlquery = CU.truncate(event.page_title, 3000)
+    event.page_urlfragment = CU.truncate(event.page_title, 255)
 
     // Collect our errors on Failure, or return our event on Success 
     (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| transform |@| campaign) {
