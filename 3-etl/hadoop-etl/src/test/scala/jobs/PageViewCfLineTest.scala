@@ -31,8 +31,8 @@ import JobTestHelpers._
 /**
  * Integration test for the EtlJob:
  *
- * CloudFront-format rows which are all
- * valid SnowPlow events.
+ * Check that all tuples in a raw page view event
+ * (CloudFront format) are successfully extracted.
  */
 class PageViewCfLineTest extends Specification with TupleConversions {
 
