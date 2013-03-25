@@ -42,8 +42,10 @@ object ConversionUtils {
    * robust output format (e.g. Avro) - as then
    * no need to remove line breaks, tabs etc
    *
+   * @param enc The encoding of the String
+   * @param field The name of the field 
    * @param str The String to decode
-   * @param encoding The encoding of the String
+   *
    * @return a Scalaz Validation, wrapping either
    *         an error String or the decoded String
    */

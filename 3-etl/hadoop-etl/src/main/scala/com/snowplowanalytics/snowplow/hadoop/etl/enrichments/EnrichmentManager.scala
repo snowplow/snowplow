@@ -89,7 +89,7 @@ object EnrichmentManager {
     // Attempt to decode the useragent
     val useragent = raw.userAgent match {
       case Some(ua) =>
-        val u = CU.decodeString(ua, "useragent", raw.encoding)
+        val u = CU.decodeString(raw.encoding, "useragent", ua)
         u.flatMap(ua => {
           event.useragent = ua
           ua.success
@@ -106,9 +106,9 @@ object EnrichmentManager {
           event.br_family = c.browserFamily
           c.browserVersion.map(bv => event.br_version = bv)
           event.br_type = c.browserType
-          event.br_renderengine = c.browserType
+          event.br_renderengine = c.browserRenderEngine
           event.os_name = c.osName
-          event.os_family = c.osName
+          event.os_family = c.osFamily
           event.os_manufacturer = c.osManufacturer
           event.dvce_type = c.deviceType
           event.dvce_ismobile = CU.booleanToByte(c.deviceIsMobile)
@@ -137,7 +137,7 @@ object EnrichmentManager {
           ("nuid"    , (ME.identity, "network_userid")),
           ("fp"      , (ME.identity, "user_fingerprint")),
           ("vid"     , (CU.stringToInt, "domain_sessionidx")),
-          ("tstamp"  , (EE.extractTimestamp, "dvce_tstamp")),
+          ("dtm"     , (EE.extractTimestamp, "dvce_tstamp")),
           ("tv"      , (ME.identity, "v_tracker")),
           ("lang"    , (ME.identity, "br_lang")),
           ("f_pdf"   , (CU.stringToByte, "br_features_pdf")),

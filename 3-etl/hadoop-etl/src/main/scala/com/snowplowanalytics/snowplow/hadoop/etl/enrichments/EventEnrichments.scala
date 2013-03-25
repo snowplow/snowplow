@@ -35,9 +35,7 @@ object EventEnrichments {
    *
    * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-common-params
    */
-  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH-mm-ss.SSS")
-  private val DtFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
-  private val TmFormat = DateTimeFormat.forPattern("HH-mm-ss")  
+  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
 
   /**
    * Converts a Joda DateTime into

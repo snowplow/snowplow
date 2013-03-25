@@ -13,6 +13,9 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package outputs
 
+// Java
+import java.lang.{Integer => JInteger}
+
 // Scala
 import scala.reflect.BeanProperty
 
@@ -57,7 +60,7 @@ class CanonicalOutput {
   @BeanProperty var user_ipaddress: String = _
   @BeanProperty var user_fingerprint: String = _
   @BeanProperty var domain_userid: String = _
-  @BeanProperty var domain_sessionidx: Int = _
+  @BeanProperty var domain_sessionidx: JInteger = _
   @BeanProperty var network_userid: String = _
 
   // Page
@@ -68,7 +71,7 @@ class CanonicalOutput {
   // Page URL components
   @BeanProperty var page_urlscheme: String = _  
   @BeanProperty var page_urlhost: String = _   
-  @BeanProperty var page_urlport: Int = _      
+  @BeanProperty var page_urlport: JInteger = _ 
   @BeanProperty var page_urlpath: String = _
   @BeanProperty var page_urlquery: String = _
   @BeanProperty var page_urlfragment: String = _
@@ -116,10 +119,10 @@ class CanonicalOutput {
   @BeanProperty var br_renderengine: String = _
 
   // Page Pings
-  @BeanProperty var pp_xoffset_min: Int = _
-  @BeanProperty var pp_xoffset_max: Int = _
-  @BeanProperty var pp_yoffset_min: Int = _
-  @BeanProperty var pp_yoffset_max: Int = _
+  @BeanProperty var pp_xoffset_min: JInteger = _
+  @BeanProperty var pp_xoffset_max: JInteger = _
+  @BeanProperty var pp_yoffset_min: JInteger = _
+  @BeanProperty var pp_yoffset_max: JInteger = _
 
   // Browser (from querystring)
   @BeanProperty var br_lang: String = _
@@ -135,8 +138,8 @@ class CanonicalOutput {
   @BeanProperty var br_features_silverlight: Byte = _
   @BeanProperty var br_cookies: Byte = _
   @BeanProperty var br_colordepth: String = _
-  @BeanProperty var br_viewwidth: Int = _ 
-  @BeanProperty var br_viewheight: Int = _ 
+  @BeanProperty var br_viewwidth: JInteger = _
+  @BeanProperty var br_viewheight: JInteger = _
 
   // OS (from user-agent)
   @BeanProperty var os_name: String = _
@@ -149,11 +152,11 @@ class CanonicalOutput {
   @BeanProperty var dvce_ismobile: Byte = _
 
   // Device (from querystring)
-  @BeanProperty var dvce_screenwidth: Int = _
-  @BeanProperty var dvce_screenheight: Int = _
+  @BeanProperty var dvce_screenwidth: JInteger = _
+  @BeanProperty var dvce_screenheight: JInteger = _
 
   // Document
   @BeanProperty var doc_charset: String = _
-  @BeanProperty var doc_width: Int = _
-  @BeanProperty var doc_height: Int = _
+  @BeanProperty var doc_width: JInteger = _
+  @BeanProperty var doc_height: JInteger = _
 }

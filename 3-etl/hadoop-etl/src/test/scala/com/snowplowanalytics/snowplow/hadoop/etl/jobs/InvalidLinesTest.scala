@@ -28,7 +28,7 @@ import JobTestHelpers._
  * Input data _is_ not in the
  * expected CloudFront format.
  */
-class InvalidLinesTest extends Specification with TupleConversions {
+class InvalidCfLinesTest extends Specification with TupleConversions {
 
   val badLines = Lines(
     "",
