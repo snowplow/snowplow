@@ -160,11 +160,16 @@ object EnrichmentManager {
           ("ds"      , (CE.extractResolution, ("doc_width", "doc_height"))),
           ("vp"      , (CE.extractResolution, ("br_viewwidth", "br_viewheight"))),
           // Custom structured events
-          ("ev_ca"   , (decodeString, "ev_category")),
-          ("ev_ac"   , (decodeString, "ev_action")),
-          ("ev_la"   , (decodeString, "ev_label")),
-          ("ev_pr"   , (decodeString, "ev_property")),
-          ("ev_va"   , (decodeString, "ev_value")),
+          ("ev_ca"   , (decodeString, "ev_category")), // Legacy tracker var. TODO: Remove in late 2013
+          ("ev_ac"   , (decodeString, "ev_action")),   // Legacy tracker var. TODO: Remove in late 2013
+          ("ev_la"   , (decodeString, "ev_label")),    // Legacy tracker var. TODO: Remove in late 2013
+          ("ev_pr"   , (decodeString, "ev_property")), // Legacy tracker var. TODO: Remove in late 2013
+          ("ev_va"   , (decodeString, "ev_value")),    // Legacy tracker var. TODO: Remove in late 2013
+          ("se_ca"   , (decodeString, "ev_category")),
+          ("se_ac"   , (decodeString, "ev_action")),
+          ("se_la"   , (decodeString, "ev_label")),
+          ("se_pr"   , (decodeString, "ev_property")),
+          ("se_va"   , (decodeString, "ev_value")),
           // Ecommerce transactions
           ("tr_id"   , (decodeString, "tr_orderid")),
           ("tr_af"   , (decodeString, "tr_affiliation")),
