@@ -19,6 +19,9 @@ import org.specs2.mutable.Specification
 // Scalding
 import com.twitter.scalding._
 
+// Cascading
+import cascading.tuple.TupleEntry
+
 // This project
 import JobTestHelpers._
 
@@ -45,6 +48,11 @@ class GoodCfLinesTest extends Specification with TupleConversions {
       sink[String](Tsv("outputFolder")){ output =>
         "write 3 events" in {
           output.size must_== 3
+        }
+      }.
+      sink[TupleEntry](Tsv("exceptionsFolder")){ trap =>
+        "not trap any exceptions" in {
+          trap must beEmpty
         }
       }.
       sink[String](JsonLine("badFolder")){ error =>

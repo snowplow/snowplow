@@ -143,6 +143,11 @@ class PagePingCfLineTest extends Specification with TupleConversions {
           }
         }
       }.
+      sink[TupleEntry](Tsv("exceptionsFolder")){ trap =>
+        "not trap any exceptions" in {
+          trap must beEmpty
+        }
+      }.
       sink[String](JsonLine("badFolder")){ error =>
         "not write any bad rows" in {
           error must beEmpty

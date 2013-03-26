@@ -31,36 +31,36 @@ import JobTestHelpers._
 /**
  * Integration test for the EtlJob:
  *
- * Check that all tuples in a custom structured event
+ * Check that all tuples in a transaction event
  * (CloudFront format) are successfully extracted.
  */
-class StructEventCfLineTest extends Specification with TupleConversions {
+class TransactionCfLineTest extends Specification with TupleConversions {
 
   val input = Lines(
-    "2012-05-27  11:35:53  DFW3  3343  99.116.172.58 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=se&ev_ca=ecomm&ev_ac=add-to-basket&ev_la=PBZ00110&ev_pr=1&ev_va=13.99&dtm=1364230969450&tid=598951&vp=2560x934&ds=2543x1420&vid=43&duid=9795bd0203804cd1&p=web&tv=js-0.11.1&fp=2876815413&aid=pbzsite&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2F&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=2560x1440&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2F2-tarot-cards"
+    "2012-05-27  11:35:53  DFW3  3343  99.116.172.58 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=tr&tr_id=order-123&tr_af=psychicbazaar&tr_tt=8000&tr_tx=200&tr_sh=50&tr_ci=London&tr_st=England&tr_co=UK&tid=028288&duid=a279872d76480afb&vid=1&aid=CFe23a&lang=en-GB&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1&url=file%3A%2F%2F%2Fhome%2Falex%2Fasync.html"
     )
 
   val expected = List(
-    "pbzsite",
-    "web",
+    "CFe23a",
+    null, // Not set (legacy input line)
     "2012-05-27 11:35:53.000",
-    "2013-03-25 17:02:49.450",
-    "struct",
+    null, // Not set (legacy input line)
+    "transaction",
     "com.snowplowanalytics",
     null, // We can't predict the event_id
-    "598951",
-    "js-0.11.1",
+    "028288",
+    null, // Not set (legacy input line)
     "cloudfront",
     "hadoop-0.1.0",
     null, // No user_id set
     "99.116.172.58",
-    "2876815413",
-    "9795bd0203804cd1",
-    "43",
+    null, // Not set (legacy input line)
+    "a279872d76480afb",
+    "1",
     null, // No network_userid set
     // Raw page URL is discarded 
-    null, // No page title for events
-    "http://www.psychicbazaar.com/",
+    null, // No page title for transactions
+    null, // No referer
     "http",
     "www.psychicbazaar.com",
     "80",
@@ -72,19 +72,19 @@ class StructEventCfLineTest extends Specification with TupleConversions {
     null, //
     null, //
     null, //
-    "ecomm",         // Unstructured event fields are set
-    "add-to-basket", //
-    "PBZ00110",      //
-    "1",             //
-    "13.99",         //
-    null, // Transaction fields empty 
+    null, // Unstructured event fields empty
     null, //
     null, //
     null, //
     null, //
-    null, //
-    null, //
-    null, //
+    "order-123",     // Transaction fields are set 
+    "psychicbazaar", //
+    "8000",          //
+    "200",           //
+    "50",            //
+    "London",        //
+    "England",       //
+    "UK",            //
     null, // Transaction item fields empty
     null, //
     null, //
@@ -102,37 +102,37 @@ class StructEventCfLineTest extends Specification with TupleConversions {
     null, //
     null, //
     "en-GB",
-    "1",
-    "1",
-    "1",
-    "0",
-    "0",
-    "0",
-    "0",
     "0",
     "1",
     "1",
-    "32",
-    "2560",
-    "934",
+    "0",
+    "1",
+    "0",
+    "1",
+    "0",
+    "0",
+    "1",
+    null, // Not set (legacy input lines)
+    null, //
+    null, //
     "Windows",
     "Windows",
     "Microsoft Corporation",
-    "Europe/London",
+    null, // Not set (legacy input line)
     "Computer",
     "0",
-    "2560",
-    "1440",
-    "UTF-8",
-    "2543",
-    "1420"
+    "1920",
+    "1080",
+    null, // Not set (legacy input lines)
+    null, //
+    null  //
     )
 
-  "A job which processes a CloudFront file containing 1 valid custom structured event" should {
+  "A job which processes a CloudFront file containing 1 valid transaction" should {
     EtlJobTest.
       source(MultipleTextLineFiles("inputFolder"), input).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
-        "correctly output a struct event" in {
+        "correctly output a transaction" in {
           buf.size must_== 1
           val actual = buf.head
           for (idx <- expected.indices) {
