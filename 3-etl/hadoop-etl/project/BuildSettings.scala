@@ -51,6 +51,8 @@ object BuildSettings {
     // Simpler jar name
     jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + ".jar" },
     
+    test in assembly := {}, // At least until we resolve the Specs2-Scalding issues
+
     // Drop these jars
     excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
       val excludes = Set(
