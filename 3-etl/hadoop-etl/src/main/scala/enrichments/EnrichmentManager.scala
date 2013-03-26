@@ -154,7 +154,7 @@ object EnrichmentManager {
           ("cd"      , (ME.identity, "br_colordepth")),
           ("tz"      , (decodeString, "os_timezone")),
           ("refr"    , (decodeString, "page_referrer")),
-          ("url"     , (ME.identity, "page_url")), // Note we may override this below
+          ("url"     , (ME.identity, "page_url")), // Note we may override this below. I think this is the problem
           ("page"    , (decodeString, "page_title")),
           ("cs"      , (ME.identity, "doc_charset")),
           ("ds"      , (CE.extractResolution, ("doc_width", "doc_height"))),

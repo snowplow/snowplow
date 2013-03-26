@@ -29,9 +29,6 @@ import Scalaz._
 // SnowPlow Utils
 import com.snowplowanalytics.util.Tap._
 
-// This project
-import AttributionEnrichments._
-
 /**
  * Tests the extractMarketingFields function.
  * Uses DataTables.
@@ -54,13 +51,13 @@ class ExtractMarketingFieldsTest extends Specification with DataTables with Vali
     "all"                            !! "citysearch"  ! "banner"      ! "cola fizzy pop" ! "creative 1"   ! "promo code"    ! new URI("http://www.example.com/?utm_source=citysearch&utm_medium=banner&utm_term=cola%2Bfizzy%2Bpop&utm_content=creative%2B1&utm_campaign=promo%2Bcode") |> {
 
       (_, source, medium, term, content, campaign, url) =>
-        val expected = new MarketingCampaign().tap { mc =>
+        val expected = new AttributionEnrichments.MarketingCampaign().tap { mc =>
           mc.source   = source
           mc.medium   = medium
           mc.term     = term
           mc.content  = content
           mc.campaign = campaign 
         }
-        extractMarketingFields(url, Encoding) must beSuccessful(expected)
+        AttributionEnrichments.extractMarketingFields(url, Encoding) must beSuccessful(expected)
     }
 }
