@@ -696,8 +696,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	function logUnstructEvent(name, payload) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'ue'); // 'ue' for Unstructured Event
-		sb.add('usev_name', name);
-		sb.add('usev_json', JSON2.stringify(payload))
+		sb.add('ue_name', name);
+		sb.add('ue_json', JSON2.stringify(payload))
 		request = getRequest(sb, 'event');
 		sendRequest(request, configTrackerPause);
 	}
