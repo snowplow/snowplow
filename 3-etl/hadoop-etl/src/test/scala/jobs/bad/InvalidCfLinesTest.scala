@@ -27,6 +27,22 @@ import cascading.tuple.TupleEntry
 import JobTestHelpers._
 
 /**
+ * Holds the input data for the test,
+ * plus a lambda to create the expected
+ * output.
+ */
+object InvalidCfLinesTest {
+
+  val lines = Lines(
+    "",
+    "NOT VALID",
+    "2012-05-21  07:14:47  FRA2  3343  83.4.209.35 GET d3t05xllj8hhgj.cloudfront.net"
+    )
+
+  val expected = (line: String) => """{"line":"%s","errors":["Line does not match CloudFront header or data row formats"]}""".format(line)
+}
+
+/**
  * Integration test for the EtlJob:
  *
  * Input data _is_ not in the
@@ -34,16 +50,9 @@ import JobTestHelpers._
  */
 class InvalidCfLinesTest extends Specification with TupleConversions {
 
-  val badLines = Lines(
-    "",
-    "NOT VALID",
-    "2012-05-21  07:14:47  FRA2  3343  83.4.209.35 GET d3t05xllj8hhgj.cloudfront.net"
-    )
-  val expected = (line: String) => """{"line":"%s","errors":["Line does not match CloudFront header or data row formats"]}""".format(line)
-
   "A job which processes input lines not in CloudFront format" should {
     EtlJobTest.
-      source(MultipleTextLineFiles("inputFolder"), badLines).
+      source(MultipleTextLineFiles("inputFolder"), InvalidCfLinesTest.lines).
       sink[String](Tsv("outputFolder")){ output =>
         "not write any events" in {
           output must beEmpty
@@ -57,7 +66,7 @@ class InvalidCfLinesTest extends Specification with TupleConversions {
       sink[String](JsonLine("badFolder")){ json =>
         "write a bad row JSON with input line and error message for each input line" in {
           for (i <- json.indices) {
-            json(i) must_== expected(badLines(i)._2)
+            json(i) must_== InvalidCfLinesTest.expected(InvalidCfLinesTest.lines(i)._2)
           }
         }
       }.
