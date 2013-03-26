@@ -26,20 +26,26 @@ import cascading.tuple.TupleEntry
 import JobTestHelpers._
 
 /**
- * Holds the input for the test.
+ * Holds the input and expected output data
+ * (counts) for the test.
  */
 object MasterCfLinesTest {
 
   // Concatenate ALL lines from ALL other jobs
-  val lines = bad.BadTrackerCfLinesTest.lines ++
-              bad.CorruptedCfLinesTest.lines ++
-              bad.InvalidCfLinesTest.lines ++
-              good.PagePingCfLineTest.lines ++
-              good.PageViewCfLineTest.lines ++
-              good.StructEventCfLineTest.lines ++
-              good.TransactionCfLineTest.lines ++
-              good.TransactionItemCfLineTest.lines ++
-              misc.DiscardableCfLinesTest.lines
+  val lines = bad.BadTrackerCfLinesTest.lines ++      // 2 bad
+              bad.CorruptedCfLinesTest.lines ++       // 1 bad
+              bad.InvalidCfLinesTest.lines ++         // 3 bad  = 6 BAD
+              good.PagePingCfLineTest.lines ++        // 1 good
+              good.PageViewCfLineTest.lines ++        // 1 good
+              good.StructEventCfLineTest.lines ++     // 1 good
+              good.TransactionCfLineTest.lines ++     // 1 good
+              good.TransactionItemCfLineTest.lines ++ // 1 good = 5 GOOD
+              misc.DiscardableCfLinesTest.lines       // 3 discarded
+
+  val expected {
+    goodCount = 5
+    badCount = 6
+  }
 }
 
 /**
@@ -55,7 +61,7 @@ class MasterCfLinesTest extends Specification with TupleConversions {
       source(MultipleTextLineFiles("inputFolder"), MasterCfLinesTest.lines).
       sink[String](Tsv("outputFolder")){ output =>
         "write 5 events" in {
-          output.size must_== 5
+          output.size must_== MasterCfLinesTest.expected.goodCount
         }
       }.
       sink[TupleEntry](Tsv("exceptionsFolder")){ trap =>
@@ -65,7 +71,7 @@ class MasterCfLinesTest extends Specification with TupleConversions {
       }.
       sink[String](JsonLine("badFolder")){ error =>
         "write 6 bad rows" in {
-          error.size must_== 6
+          error.size must_== MasterCfLinesTest.expected.badCount
         }
       }.
       run.
