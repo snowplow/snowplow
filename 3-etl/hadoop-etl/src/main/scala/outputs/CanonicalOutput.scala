@@ -108,6 +108,12 @@ class CanonicalOutput {
   @BeanProperty var ti_price: String = _
   @BeanProperty var ti_quantity: String = _
 
+  // Page Pings
+  @BeanProperty var pp_xoffset_min: JInteger = _
+  @BeanProperty var pp_xoffset_max: JInteger = _
+  @BeanProperty var pp_yoffset_min: JInteger = _
+  @BeanProperty var pp_yoffset_max: JInteger = _
+  
   // User Agent
   @BeanProperty var useragent: String = _
 
@@ -117,12 +123,6 @@ class CanonicalOutput {
   @BeanProperty var br_version: String = _
   @BeanProperty var br_type: String = _
   @BeanProperty var br_renderengine: String = _
-
-  // Page Pings
-  @BeanProperty var pp_xoffset_min: JInteger = _
-  @BeanProperty var pp_xoffset_max: JInteger = _
-  @BeanProperty var pp_yoffset_min: JInteger = _
-  @BeanProperty var pp_yoffset_max: JInteger = _
 
   // Browser (from querystring)
   @BeanProperty var br_lang: String = _

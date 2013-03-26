@@ -90,16 +90,16 @@ object TransactionCfLineTest {
     null, //
     null, //
     null, //
+    null, // Page ping fields are empty
+    null, //
+    null, //
+    null, //
     "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0",
     "Firefox 12",
     "Firefox",
     "12.0",
     "Browser",
     "GECKO",
-    null, // Page ping fields are empty
-    null, //
-    null, //
-    null, //
     "en-GB",
     "0",
     "1",

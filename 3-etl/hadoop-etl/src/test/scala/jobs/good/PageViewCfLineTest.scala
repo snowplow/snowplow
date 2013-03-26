@@ -90,16 +90,16 @@ object PageViewCfLineTest {
     null, //
     null, //
     null, //
+    null, // Page ping fields are empty
+    null, //
+    null, //
+    null, //
     "Mozilla/5.0 (iPhone; CPU iPhone OS 5_1_1 like Mac OS X) AppleWebKit/534.46 (KHTML, like Gecko) Version/5.1 Mobile/9B206 Safari/7534.48.3",
     "Mobile Safari",
     "Safari",
     "5.1",
     "Browser (mobile)",
     "WEBKIT",
-    null, // Page ping fields are empty
-    null, //
-    null, //
-    null, //
     "en-GB",
     "1",
     "1",

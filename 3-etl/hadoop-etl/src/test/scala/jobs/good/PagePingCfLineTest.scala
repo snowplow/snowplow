@@ -90,16 +90,16 @@ object PagePingCfLineTest {
     null, //
     null, //
     null, //
+    "21",  // Page ping fields are set
+    "214", //
+    "251", //
+    "517", //
     "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0",
     "Firefox 12",
     "Firefox",
     "12.0",
     "Browser",
     "GECKO",
-    "21",  // Page ping fields are set
-    "214", //
-    "251", //
-    "517", //
     "en-GB",
     "1",
     "1",
