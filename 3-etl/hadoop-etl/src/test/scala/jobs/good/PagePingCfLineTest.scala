@@ -30,15 +30,12 @@ import cascading.tuple.TupleEntry
 import JobTestHelpers._
 
 /**
- * Integration test for the EtlJob:
- *
- * Check that all tuples in a page ping
- * (CloudFront format) are successfully
- * extracted.
+ * Holds the input and expected data
+ * for the test.
  */
-class PagePingCfLineTest extends Specification with TupleConversions {
+object PagePingCfLineTest {
 
-  val input = Lines(
+  val lines = Lines(
     "2012-05-27  11:35:53  DFW3  3343  99.116.172.58 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=pp&page=Tarot%20cards%20-%20Psychic%20Bazaar&pp_mix=21&pp_max=214&pp_miy=251&pp_may=517&dtm=1364232736230&tid=209801&vp=923x905&ds=1120x1420&vid=43&duid=9795bd0203804cd1&p=web&tv=js-0.11.1&fp=2876815413&aid=pbzsite&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2F&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=2560x1440&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2F2-tarot-cards"
     )
 
@@ -129,17 +126,27 @@ class PagePingCfLineTest extends Specification with TupleConversions {
     "1120",
     "1420"
     )
+}
+
+/**
+ * Integration test for the EtlJob:
+ *
+ * Check that all tuples in a page ping
+ * (CloudFront format) are successfully
+ * extracted.
+ */
+class PagePingCfLineTest extends Specification with TupleConversions {
 
   "A job which processes a CloudFront file containing 1 valid page ping" should {
     EtlJobTest.
-      source(MultipleTextLineFiles("inputFolder"), input).
+      source(MultipleTextLineFiles("inputFolder"), PagePingCfLineTest.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {
           buf.size must_== 1
           val actual = buf.head
-          for (idx <- expected.indices) {
+          for (idx <- PagePingCfLineTest.expected.indices) {
             if (idx != 6) { // We can't predict the event_id
-              actual.getString(idx) must_== expected(idx)
+              actual.getString(idx) must_== PagePingCfLineTest.expected(idx)
             }
           }
         }
