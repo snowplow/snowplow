@@ -33,8 +33,8 @@ class ExtractPageUriTest extends Specification with DataTables with ValidationMa
 
   "This is a specification to test the extractPageUri function"                                    ^
                                                                                                   p^
-  "extractPageUri should return failure when it has no page URL provided"                          ! e1^
-  "extractPageUri should choose the most complete page URL when it has one or two to choose from"  ! e2^
+  "extractPageUri should return failure when it has no page URI provided"                          ! e1^
+  "extractPageUri should choose the most complete page URI when it has one or two to choose from"  ! e2^
                                                                                                    end
 
   // No URI
@@ -45,14 +45,14 @@ class ExtractPageUriTest extends Specification with DataTables with ValidationMa
   val fullUri = "http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=2&n=48"
   val truncatedUri = fullUri.take(fullUri.length - 5)
   val fullURI = new URI(fullUri)
-  
+
   def e2 =
-    "SPEC NAME"                                     || "URI TAKEN FROM COLLECTOR'S REFERER" | "URI SENT BY TRACKER" | "EXPECTED URL"   |
-    "both URIs match (98% of the time)"             !! fullUri.some                         ! fullUri.some          ! fullURI          |
-    "tracker didn't send URI (e.g. No-JS Tracker)"  !! fullUri.some                         ! None                  ! fullURI          |
-    "collector didn't record the referer (rare)"    !! None                                 ! fullUri.some          ! fullURI          |
-    "tracker truncated URI (IE might do this)"      !! fullUri.some                         ! truncatedUri.some     ! fullURI          |
-    "collector truncated URI (should never happen)" !! truncatedUri.some                    ! fullUri.some          ! fullURI          |> {
+    "SPEC NAME"                                     || "URI TAKEN FROM COLLECTOR'S REFERER" | "URI SENT BY TRACKER" | "EXPECTED URI" |
+    "both URIs match (98% of the time)"             !! fullUri.some                         ! fullUri.some          ! fullURI        |
+    "tracker didn't send URI (e.g. No-JS Tracker)"  !! fullUri.some                         ! None                  ! fullURI        |
+    "collector didn't record the referer (rare)"    !! None                                 ! fullUri.some          ! fullURI        |
+    "tracker truncated URI (IE might do this)"      !! fullUri.some                         ! truncatedUri.some     ! fullURI        |
+    "collector truncated URI (should never happen)" !! truncatedUri.some                    ! fullUri.some          ! fullURI        |> {
       (_, fromReferer, fromTracker, expected) =>
         PageEnrichments.extractPageUri(fromReferer, fromTracker) must beSuccessful(expected)
     }
