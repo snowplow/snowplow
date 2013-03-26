@@ -56,6 +56,4 @@ class ExtractPageUriTest extends Specification with DataTables with ValidationMa
       (_, fromReferer, fromTracker, expected) =>
         PageEnrichments.extractPageUri(fromReferer, fromTracker) must beSuccessful(expected)
     }
-
-
 }
