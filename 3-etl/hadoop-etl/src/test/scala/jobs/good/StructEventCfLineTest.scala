@@ -133,7 +133,7 @@ class StructEventCfLineTest extends Specification with TupleConversions {
     EtlJobTest.
       source(MultipleTextLineFiles("inputFolder"), input).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
-        "correctly output a struct event" in {
+        "correctly output 1 custom structured event" in {
           buf.size must_== 1
           val actual = buf.head
           for (idx <- expected.indices) {

@@ -133,7 +133,7 @@ class PageViewCfLineTest extends Specification with TupleConversions {
     EtlJobTest.
       source(MultipleTextLineFiles("inputFolder"), input).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
-        "correctly output a page_view event" in {
+        "correctly output 1 page view" in {
           buf.size must_== 1
           val actual = buf.head
           for (idx <- expected.indices) {
