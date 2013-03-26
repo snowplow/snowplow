@@ -12,6 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.hadoop.etl
 package jobs
+package misc
 
 // Specs2
 import org.specs2.mutable.Specification
@@ -28,21 +29,20 @@ import JobTestHelpers._
 /**
  * Integration test for the EtlJob:
  *
- * Input data _is_ not in the
- * expected CloudFront format.
+ * CloudFront-format rows which should
+ * be discarded.
  */
-class InvalidCfLinesTest extends Specification with TupleConversions {
+class DiscardableCfLinesTest extends Specification with TupleConversions {
 
-  val badLines = Lines(
-    "",
-    "NOT VALID",
-    "2012-05-21  07:14:47  FRA2  3343  83.4.209.35 GET d3t05xllj8hhgj.cloudfront.net"
+  val discardableLines = Lines(
+    "#Version: 1.0",
+    "#Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status cs(Referer) cs(User-Agent) cs-uri-query",
+    "2012-05-24  11:35:53  DFW3  3343  99.116.172.58 GET d3gs014xn8p70.cloudfront.net  /not-ice.png  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=5 Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  e=pv&page=Tarot%2520cards%2520-%2520Psychic%2520Bazaar&tid=344260&uid=288112e0a5003be2&vid=1&lang=en-US&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fp%253D4&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1366x768&cookie=1"
     )
-  val expected = (line: String) => """{"line":"%s","errors":["Line does not match CloudFront header or data row formats"]}""".format(line)
 
-  "A job which processes input lines not in CloudFront format" should {
+  "A job which processes expected but discardable CloudFront input lines" should {
     EtlJobTest.
-      source(MultipleTextLineFiles("inputFolder"), badLines).
+      source(MultipleTextLineFiles("inputFolder"), discardableLines).
       sink[String](Tsv("outputFolder")){ output =>
         "not write any events" in {
           output must beEmpty
@@ -53,11 +53,9 @@ class InvalidCfLinesTest extends Specification with TupleConversions {
           trap must beEmpty
         }
       }.
-      sink[String](JsonLine("badFolder")){ json =>
-        "write a bad row JSON with input line and error message for each input line" in {
-          for (i <- json.indices) {
-            json(i) must_== expected(badLines(i)._2)
-          }
+      sink[String](JsonLine("badFolder")){ error =>
+        "not write any bad rows" in {
+          error must beEmpty
         }
       }.
       run.

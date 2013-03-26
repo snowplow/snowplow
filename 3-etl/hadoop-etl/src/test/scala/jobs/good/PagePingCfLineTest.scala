@@ -12,6 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.hadoop.etl
 package jobs
+package good
 
 // Scala
 import scala.collection.mutable.Buffer

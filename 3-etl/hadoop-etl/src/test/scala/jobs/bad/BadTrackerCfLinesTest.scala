@@ -12,6 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.hadoop.etl
 package jobs
+package bad
 
 // Specs2
 import org.specs2.mutable.Specification
