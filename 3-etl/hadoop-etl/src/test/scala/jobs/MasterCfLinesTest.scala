@@ -42,9 +42,9 @@ object MasterCfLinesTest {
               good.TransactionItemCfLineTest.lines ++ // 1 good = 5 GOOD
               misc.DiscardableCfLinesTest.lines       // 3 discarded
 
-  val expected {
-    goodCount = 5
-    badCount = 6
+  object expected {
+    val goodCount = 5
+    val badCount = 6
   }
 }
 
