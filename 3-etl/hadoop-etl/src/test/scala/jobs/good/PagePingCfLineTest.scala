@@ -36,30 +36,30 @@ import JobTestHelpers._
 object PagePingCfLineTest {
 
   val lines = Lines(
-    "2012-05-27  11:35:53  DFW3  3343  99.116.172.58 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=pp&page=Tarot%20cards%20-%20Psychic%20Bazaar&pp_mix=21&pp_max=214&pp_miy=251&pp_may=517&dtm=1364232736230&tid=209801&vp=923x905&ds=1120x1420&vid=43&duid=9795bd0203804cd1&p=web&tv=js-0.11.1&fp=2876815413&aid=pbzsite&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2F&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=2560x1440&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2F2-tarot-cards"
+    "2013-03-25 02:04:00    GRU1    1047    201.17.84.32    GET d10wr4jwvp55f9.cloudfront.net   /i  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=2&n=48  Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64)%20AppleWebKit/537.22%20(KHTML,%20like%20Gecko)%20Chrome/25.0.1364.172%20Safari/537.22   &e=pp&page=Tarot%2520cards%2520-%2520Psychic%2520Bazaar&pp_mix=0&pp_max=0&pp_miy=2800&pp_may=2800&dtm=1364177017342&tid=128574&vp=1366x630&ds=1349x3787&vid=1&duid=132e226e3359a9cd&p=web&tv=js-0.11.1&fp=1640945579&aid=pbzsite&lang=pt-BR&cs=UTF-8&tz=America%252FSao_Paulo&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fn%253D48&f_pdf=1&f_qt=0&f_realp=1&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1366x768&cd=32&cookie=1&url=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fp%253D2%2526n%253D48 -   Hit dfFVXBxYoXbfL3TBTlr6Q-_TFqzLujgZBfuAa80qB9ND22Cn5lqJdg=="
     )
 
   val expected = List(
     "pbzsite",
     "web",
-    "2012-05-27 11:35:53.000",
-    "2013-03-25 17:32:16.230",
+    "2013-03-25 02:04:00.000",
+    "2013-03-25 02:03:37.342",
     "page_ping",
     "com.snowplowanalytics",
     null, // We can't predict the event_id
-    "209801",
+    "128574",
     "js-0.11.1",
     "cloudfront",
     "hadoop-0.1.0",
     null, // No user_id set
-    "99.116.172.58",
-    "2876815413",
-    "9795bd0203804cd1",
-    "43",
+    "201.17.84.32",
+    "1640945579",
+    "132e226e3359a9cd",
+    "1",
     null, // No network_userid set
     // Raw page URL is discarded 
     "Tarot cards - Psychic Bazaar",
-    "http://www.psychicbazaar.com/",
+    "http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?n=48",
     "http",
     "www.psychicbazaar.com",
     "80",
