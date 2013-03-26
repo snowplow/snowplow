@@ -47,21 +47,16 @@
             alert("Adding a product to basket");
             _snaq.push(['trackStructEvent', 'Checkout', 'Add', 'ASO01043', 'blue:xxl', '2.0']);      
         }
-        function recordVariants() {
-            alert("Record available product variants");
-            _snaq.push(['trackUnstructEvent',
-                'Available Variants',
+        function viewProduct() {
+            alert("Viewing a product");
+            _snaq.push(['trackUnstructEvent', 'Viewed Product',
                 {
-                    product_id: 42,
+                    product_id: 'ASO01043',
                     category: 'Dresses',
                     brand: 'ACME',
-                    visitor_ab_design: 'flat',
-                    variants: [
-                      { size: '0', color: 'black' },
-                      { size: '4', color: 'green' },
-                      { size: '8', color: 'pink' },
-                      { size: '10', color: 'black' }
-                    ]
+                    returning: true,
+                    price: 49.95,
+                    sizes: ['xs', 's', 'l', 'xl', 'xxl']
                 }
             ]);
         }
@@ -116,7 +111,7 @@
     <p>Press the buttons below to trigger individual tracking events:<br>
         <button type="button" onclick="playMix()">Play a mix</button><br>
         <button type="button" onclick="addProduct()">Add a product</button><br>
-        <button type="button" onclick="recordVariants()">Record product variants</button><br>
+        <button type="button" onclick="viewProduct()">View a product</button><br>
         <button type="button" onclick="addEcommerceTransaction()">Add an ecommerce transaction</button>
     </p>
 </body>
