@@ -36,7 +36,7 @@ import JobTestHelpers._
 object PagePingCfLineTest {
 
   val lines = Lines(
-    "2013-03-25 02:04:00    GRU1    1047    201.17.84.32    GET d10wr4jwvp55f9.cloudfront.net   /i  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=2&n=48  Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64)%20AppleWebKit/537.22%20(KHTML,%20like%20Gecko)%20Chrome/25.0.1364.172%20Safari/537.22   &e=pp&page=Tarot%2520cards%2520-%2520Psychic%2520Bazaar&pp_mix=0&pp_max=0&pp_miy=2800&pp_may=2800&dtm=1364177017342&tid=128574&vp=1366x630&ds=1349x3787&vid=1&duid=132e226e3359a9cd&p=web&tv=js-0.11.1&fp=1640945579&aid=pbzsite&lang=pt-BR&cs=UTF-8&tz=America%252FSao_Paulo&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fn%253D48&f_pdf=1&f_qt=0&f_realp=1&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1366x768&cd=32&cookie=1&url=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fp%253D2%2526n%253D48 -   Hit dfFVXBxYoXbfL3TBTlr6Q-_TFqzLujgZBfuAa80qB9ND22Cn5lqJdg=="
+    "2013-03-25 02:04:00    GRU1    1047    201.17.84.32    GET d10wr4jwvp55f9.cloudfront.net   /i  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=2&n=48  Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64)%20AppleWebKit/537.22%20(KHTML,%20like%20Gecko)%20Chrome/25.0.1364.172%20Safari/537.22   &e=pp&page=Tarot%2520cards%2520-%2520Psychic%2520Bazaar&pp_mix=21&pp_max=214&pp_miy=251&pp_may=517&dtm=1364177017342&tid=128574&vp=1366x630&ds=1349x3787&vid=1&duid=132e226e3359a9cd&p=web&tv=js-0.11.1&fp=1640945579&aid=pbzsite&lang=pt-BR&cs=UTF-8&tz=America%252FSao_Paulo&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fn%253D48&f_pdf=1&f_qt=0&f_realp=1&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1366x768&cd=32&cookie=1&url=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fp%253D2%2526n%253D48 -   Hit dfFVXBxYoXbfL3TBTlr6Q-_TFqzLujgZBfuAa80qB9ND22Cn5lqJdg=="
     )
 
   val expected = List(
@@ -63,9 +63,9 @@ object PagePingCfLineTest {
     "http",
     "www.psychicbazaar.com",
     "80",
-    "/oracles/119-psycards-book-and-deck-starter-pack.html",
-    "view=print",
-    "detail",
+    "/2-tarot-cards/genre/all/type/all",
+    "p=2&n=48",
+    null,
     null, // No marketing campaign info
     null, //
     null, //
@@ -94,37 +94,37 @@ object PagePingCfLineTest {
     "214", //
     "251", //
     "517", //
-    "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0",
-    "Firefox 12",
-    "Firefox",
-    "12.0",
+    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22",
+    "Chrome",
+    "Chrome",
+    "25.0.1364.172", // Yech. We need to upgrade our UA library
     "Browser",
-    "GECKO",
-    "en-GB",
+    "WEBKIT",
+    "pt-BR",
     "1",
     "1",
     "1",
     "0",
     "0",
-    "0",
+    "1",
     "0",
     "0",
     "1",
     "1",
     "32",
-    "923",
-    "905",
+    "1366",
+    "630",
     "Windows",
     "Windows",
     "Microsoft Corporation",
-    "Europe/London",
+    "America/Sao_Paulo",
     "Computer",
     "0",
-    "2560",
-    "1440",
+    "1366",
+    "768",
     "UTF-8",
-    "1120",
-    "1420"
+    "1349",
+    "3787"
     )
 }
 
