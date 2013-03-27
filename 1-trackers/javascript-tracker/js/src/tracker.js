@@ -691,13 +691,13 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * Log an unstructured event happening on this page
 	 *
 	 * @param string name The name of the event
-	 * @param object payload The properties of the event
+	 * @param object properties The properties of the event
 	 */
-	function logUnstructEvent(name, payload) {
+	function logUnstructEvent(name, properties) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'ue'); // 'ue' for Unstructured Event
 		sb.add('ue_name', name);
-		sb.add('ue_json', JSON2.stringify(payload))
+		sb.add('ue_json', JSON2.stringify(properties))
 		request = getRequest(sb, 'event');
 		sendRequest(request, configTrackerPause);
 	}
@@ -1685,10 +1685,10 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 * Track an unstructured event happening on this page.
 		 *
 		 * @param string name The name of the event
-		 * @param object payload The properties of the event
+		 * @param object properties The properties of the event
 		 */
-		trackUnstructEvent: function (name, payload) {
-			logUnstructEvent(name, payload);
+		trackUnstructEvent: function (name, properties) {
+			logUnstructEvent(name, properties);
 		},
 
 		/**
