@@ -160,11 +160,11 @@ object EnrichmentManager {
           ("ds"      , (CE.extractResolution, ("doc_width", "doc_height"))),
           ("vp"      , (CE.extractResolution, ("br_viewwidth", "br_viewheight"))),
           // Custom structured events
-          ("ev_ca"   , (decodeString, "ev_category")), // Legacy tracker var. TODO: Remove in late 2013
-          ("ev_ac"   , (decodeString, "ev_action")),   // Legacy tracker var. TODO: Remove in late 2013
-          ("ev_la"   , (decodeString, "ev_label")),    // Legacy tracker var. TODO: Remove in late 2013
-          ("ev_pr"   , (decodeString, "ev_property")), // Legacy tracker var. TODO: Remove in late 2013
-          ("ev_va"   , (CU.stringToFloat, "ev_value")),    // Legacy tracker var. TODO: Remove in late 2013
+          ("ev_ca"   , (decodeString, "ev_category")),  // Legacy tracker var. TODO: Remove in late 2013
+          ("ev_ac"   , (decodeString, "ev_action")),    // Legacy tracker var. TODO: Remove in late 2013
+          ("ev_la"   , (decodeString, "ev_label")),     // Legacy tracker var. TODO: Remove in late 2013
+          ("ev_pr"   , (decodeString, "ev_property")),  // Legacy tracker var. TODO: Remove in late 2013
+          ("ev_va"   , (CU.stringToFloat, "ev_value")), // Legacy tracker var. TODO: Remove in late 2013
           ("se_ca"   , (decodeString, "ev_category")),
           ("se_ac"   , (decodeString, "ev_action")),
           ("se_la"   , (decodeString, "ev_label")),

@@ -15,6 +15,7 @@ package outputs
 
 // Java
 import java.lang.{Integer => JInteger}
+import java.lang.{Float => JFloat}
 
 // Scala
 import scala.reflect.BeanProperty
@@ -88,7 +89,7 @@ class CanonicalOutput {
   @BeanProperty var ev_action: String = _
   @BeanProperty var ev_label: String = _
   @BeanProperty var ev_property: String = _
-  @BeanProperty var ev_value: Float = _
+  @BeanProperty var ev_value: JFloat = null.asInstanceOf[JFloat]
 
   // Ecommerce transaction (from querystring)
   @BeanProperty var tr_orderid: String = _
