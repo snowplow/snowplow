@@ -88,7 +88,7 @@ class CanonicalOutput {
   @BeanProperty var ev_action: String = _
   @BeanProperty var ev_label: String = _
   @BeanProperty var ev_property: String = _
-  @BeanProperty var ev_value: String = _
+  @BeanProperty var ev_value: Float = _
 
   // Ecommerce transaction (from querystring)
   @BeanProperty var tr_orderid: String = _

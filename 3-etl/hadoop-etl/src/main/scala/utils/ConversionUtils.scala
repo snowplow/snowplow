@@ -86,6 +86,26 @@ object ConversionUtils {
     }
 
   /**
+   * Extract a Scala Float from
+   * a String, or error.
+   *
+   * @param str The String which we hope can
+   *        be turned into a Float
+   * @param field The name of the field
+   *        we are trying to process. To use
+   *        in our error message
+   * @return a Scalaz Validation, being either
+   *         a Failure String or a Success Int
+   */
+  val stringToFloat: (String, String) => Validation[String, Float] = (field, str) =>
+    try {
+      str.toFloat.success
+    } catch {
+      case nfe: NumberFormatException =>
+        "Field [%s]: cannot convert [%s] to Float".format(field, str).fail
+    }
+
+  /**
    * Extract a Scala Byte from
    * a String, or error.
    *
