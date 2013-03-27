@@ -1,0 +1,19 @@
+{
+  "namespace": "com.snowplowanalytics.snowplow.avro",
+  "type": "record",
+  "name": "DummyAvroClass",
+  "fields": [
+    {"name": "header", "type":
+      {
+        "namespace": "com.snowplowanalytics.snowplow.avro",
+        "type": "record",
+        "name": "HeaderAvro",
+        "fields": [
+            {"name": "something", "type": "string"},
+            {"name": "somethingElse", "type": "string"}
+        ]
+      }
+    },
+    {"name": "anotherField", "type": "string"}
+  ]
+}
