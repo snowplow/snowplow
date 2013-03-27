@@ -1,0 +1,36 @@
+{
+	"namespace": "com.snowplowanalytics.snowplow",
+	"type": "record",
+	"name": "event",
+	"fields": [
+		{"name": "app_id", "type": "string"},
+		{"name": "collector_tstamp", "type": "long"},
+		{"name": "dvce_tstamp", "type": "long"},	
+		{
+			"name": "event",
+			"type": [
+						{
+							"type": "record",
+							"name": "page_ping",
+							"fields" : [
+								{"name": "pp_xoffset_min", "type": "int"},
+								{"name": "pp_xoffset_max", "type": "int"},
+								{"name": "pp_yoffset_min", "type": "int"},
+								{"name": "pp_yoffset_max", "type": "int"}
+							]
+						},
+						{
+							"type": "record",
+							"name": "ad_impression",
+							"fields": [
+								{"name": "adi_bannerid", "type": "string"},
+								{"name": "adi_campaignid", "type": "string"},
+								{"name": "adi_advertiserid", "type": "string"},
+								{"name": "adi_userid", "type": "string"},
+								{"name": "adi_zoneid", "type": "string"}
+							]
+						}
+					]
+		}
+	]
+}
