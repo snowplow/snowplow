@@ -1,7 +1,7 @@
-Version 0.8.0 (2013-04-XX)
+Version 0.8.0 (2013-03-28)
 --------------------------
 Hadoop ETL: added. Version 0.1.0 (#177)
-Hadoop ETL: truncate raw useragent and page title (#192)
+Hadoop ETL: truncate 6 "high risk" fields for Redshift (raw useragent, page title etc) (#192)
 EmrEtlRunner: bumped to 0.1.0
 EmrEtlRunner: updated to work with new config.yml fields (part of #178)
 EmrEtlRunner: added support for Hadoop ETL (part of #178)
