@@ -1,5 +1,5 @@
 {
-	"namespace": "com.snowplowanalytics.snowplow",
+	"namespace": "com.snowplowanalytics.snowplow.storage.avro",
 	"type": "record",
 	"name": "event",
 	"fields": [
