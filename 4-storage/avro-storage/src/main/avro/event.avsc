@@ -7,27 +7,28 @@
 		{"name": "collector_tstamp", "type": "long"},
 		{"name": "dvce_tstamp", "type": "long"},	
 		{
-			"name": "event",
+			"name": "event_type",
 			"type": [
 						{
 							"type": "record",
 							"name": "page_ping",
 							"fields" : [
-								{"name": "pp_xoffset_min", "type": "int"},
-								{"name": "pp_xoffset_max", "type": "int"},
-								{"name": "pp_yoffset_min", "type": "int"},
-								{"name": "pp_yoffset_max", "type": "int"}
+								{"name": "page_title", "type": "string"},
+								{"name": "xoffset_min", "type": "int"},
+								{"name": "xoffset_max", "type": "int"},
+								{"name": "yoffset_min", "type": "int"},
+								{"name": "yoffset_max", "type": "int"}
 							]
 						},
 						{
 							"type": "record",
 							"name": "ad_impression",
 							"fields": [
-								{"name": "adi_bannerid", "type": "string"},
-								{"name": "adi_campaignid", "type": "string"},
-								{"name": "adi_advertiserid", "type": "string"},
-								{"name": "adi_userid", "type": "string"},
-								{"name": "adi_zoneid", "type": "string"}
+								{"name": "bannerid", "type": "string"},
+								{"name": "campaignid", "type": "string"},
+								{"name": "advertiserid", "type": "string"},
+								{"name": "userid", "type": "string"},
+								{"name": "zoneid", "type": "string"}
 							]
 						}
 					]
