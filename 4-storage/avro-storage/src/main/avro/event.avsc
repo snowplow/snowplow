@@ -55,14 +55,32 @@
 							"type": "record",
 							"name": "web",
 							"fields": [
-								{"name": "page_urlschme", "type": "string"},
-								{"name": "page_urlhost", "type": "string"},
-								{"name": "page_urlpost", "type": "string"},
-								{"name": "page_urlpath", "type": "string"},
-								{"name": "page_urlquery", "type": "string"},
-								{"name": "page_urlfragment", "type": "string"},
-								{"name": "page_title", "type": "string"},
-								{"name": "page_referrer", "type": "string"}
+								{"name": "page", "type":{
+									"type": "record",
+									"name": "page",
+									"fields": [
+										{"name": "url_scheme", "type": "string"},
+										{"name": "url_host", "type": "string"},
+										{"name": "url_scheme", "type": "string"},
+										{"name": "url_host", "type": "string"},
+										{"name": "url_post", "type": "string"},
+										{"name": "url_path", "type": "string"},
+										{"name": "url_query", "type": "string"},
+										{"name": "url_fragment", "type": "string"},
+										{"name": "title", "type": "string"},
+										{"name": "referrer", "type": "string"}
+									]
+
+								}},
+								{"name": "document", "type":{
+									"type": "record",
+									"name": "document",
+									"fields": [
+										{"name": "character_set", "type": "string"},
+										{"name": "width", "type": "string"}
+									]
+								}}
+								
 							]
 						}
 				]
