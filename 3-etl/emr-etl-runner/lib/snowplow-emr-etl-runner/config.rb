@@ -74,7 +74,7 @@ module SnowPlow
         end
 
         # Construct path to our ETL implementations
-        asset_path = "%s3-etl" % config[:s3][:buckets][:assets]
+        asset_path = "%s3-enrich" % config[:s3][:buckets][:assets]
 
         # Construct path to our Hadoop ETL
         config[:hadoop_asset] = "%s/hadoop-etl/snowplow-hadoop-etl-%s.jar" % [asset_path, config[:snowplow][:hadoop_etl_version]]
