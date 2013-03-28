@@ -15,6 +15,8 @@ package utils
 
 // Java
 import java.net.URLDecoder
+import java.lang.{Integer => JInteger}
+import java.lang.{Float => JFloat}
 
 // Scalaz
 import scalaz._
@@ -79,11 +81,12 @@ object ConversionUtils {
    * @return a Scalaz Validation,
    *         being either a
    *         Failure String or
-   *         a Success Int
+   *         a Success JInt
    */
-  val stringToInt: (String, String) => Validation[String, Int] = (field, str) =>
+  val stringToJInteger: (String, String) => Validation[String, JInteger] = (field, str) =>
     try {
-      str.toInt.success
+      val jint: JInteger = str.toInt
+      jint.success
     } catch {
       case nfe: NumberFormatException =>
         "Field [%s]: cannot convert [%s] to Int".format(field, str).fail
@@ -101,12 +104,13 @@ object ConversionUtils {
    * @return a Scalaz Validation, being either
    *         a Failure String or a Success Int
    */
-  val stringToFloat: (String, String) => Validation[String, Float] = (field, str) =>
+  val stringToJFloat: (String, String) => Validation[String, JFloat] = (field, str) =>
     try {
       if (str == "null") { // Yech, to handle a bug in the JavaScript tracker
-        null.asInstanceOf[Float].success
+        null.asInstanceOf[JFloat].success
       } else {
-        str.toFloat.success
+        val jfloat: JFloat = str.toFloat
+        jfloat.success
       }
     } catch {
       case nfe: NumberFormatException =>

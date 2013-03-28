@@ -13,6 +13,9 @@
 package com.snowplowanalytics.snowplow.hadoop.etl
 package enrichments
 
+// Java
+import java.lang.{Integer => JInteger}
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -81,7 +84,7 @@ object ClientEnrichments {
    */
   val extractResolution: (String, String) => Validation[String, ResolutionTuple] = (field, res) =>
     res match {
-      case ResRegex(width, height) => (width.toInt, height.toInt).success
+      case ResRegex(width, height) => (width.toInt: JInteger, height.toInt: JInteger).success
       case _ => "Field [%s]: [%s] is not a valid screen resolution".format(field, res).fail
     }
 

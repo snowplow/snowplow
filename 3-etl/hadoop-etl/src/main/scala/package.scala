@@ -12,6 +12,9 @@
  */
 package com.snowplowanalytics.snowplow.hadoop
 
+// Java
+import java.lang.{Integer => JInteger}
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -36,7 +39,7 @@ package object etl {
    * Capture a client's
    * screen resolution
    */
-  type ResolutionTuple = (Int, Int) // Height, width
+  type ResolutionTuple = (JInteger, JInteger) // Height, width.
 
   /**
    * Type alias for HTTP headers

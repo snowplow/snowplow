@@ -136,7 +136,7 @@ object EnrichmentManager {
           ("duid"    , (ME.identity, "domain_userid")),
           ("nuid"    , (ME.identity, "network_userid")),
           ("fp"      , (ME.identity, "user_fingerprint")),
-          ("vid"     , (CU.stringToInt, "domain_sessionidx")),
+          ("vid"     , (CU.stringToJInteger, "domain_sessionidx")),
           ("dtm"     , (EE.extractTimestamp, "dvce_tstamp")),
           ("tv"      , (ME.identity, "v_tracker")),
           ("lang"    , (ME.identity, "br_lang")),
@@ -164,12 +164,12 @@ object EnrichmentManager {
           ("ev_ac"   , (decodeString, "ev_action")),    // Legacy tracker var. TODO: Remove in late 2013
           ("ev_la"   , (decodeString, "ev_label")),     // Legacy tracker var. TODO: Remove in late 2013
           ("ev_pr"   , (decodeString, "ev_property")),  // Legacy tracker var. TODO: Remove in late 2013
-          ("ev_va"   , (CU.stringToFloat, "ev_value")), // Legacy tracker var. TODO: Remove in late 2013
+          ("ev_va"   , (CU.stringToJFloat, "ev_value")), // Legacy tracker var. TODO: Remove in late 2013
           ("se_ca"   , (decodeString, "ev_category")),
           ("se_ac"   , (decodeString, "ev_action")),
           ("se_la"   , (decodeString, "ev_label")),
           ("se_pr"   , (decodeString, "ev_property")),
-          ("se_va"   , (CU.stringToFloat, "ev_value")),
+          ("se_va"   , (CU.stringToJFloat, "ev_value")),
           // Ecommerce transactions
           ("tr_id"   , (decodeString, "tr_orderid")),
           ("tr_af"   , (decodeString, "tr_affiliation")),
@@ -187,10 +187,10 @@ object EnrichmentManager {
           ("ti_pr"   , (decodeString, "ti_price")),
           ("ti_qu"   , (decodeString, "ti_quantity")),
           // Page pings
-          ("pp_mix"  , (CU.stringToInt, "pp_xoffset_min")),
-          ("pp_max"  , (CU.stringToInt, "pp_xoffset_max")),
-          ("pp_miy"  , (CU.stringToInt, "pp_yoffset_min")),
-          ("pp_may"  , (CU.stringToInt, "pp_yoffset_max")))
+          ("pp_mix"  , (CU.stringToJInteger, "pp_xoffset_min")),
+          ("pp_max"  , (CU.stringToJInteger, "pp_xoffset_max")),
+          ("pp_miy"  , (CU.stringToJInteger, "pp_yoffset_min")),
+          ("pp_may"  , (CU.stringToJInteger, "pp_yoffset_max")))
 
     val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
   

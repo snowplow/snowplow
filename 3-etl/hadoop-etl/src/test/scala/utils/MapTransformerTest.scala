@@ -77,7 +77,7 @@ class MapTransformerTest extends Specification with ValidationMatchers {
 
   val transformMap: TransformMap = Map(("p"      , (MiscEnrichments.extractPlatform, "platform")),
                                        ("f_pdf"  , (ConversionUtils.stringToByte, "br_features_pdf")),
-                                       ("vid"    , (ConversionUtils.stringToInt, "visit_id")),
+                                       ("vid"    , (ConversionUtils.stringToJInteger, "visit_id")),
                                        ("tv"     , (MiscEnrichments.identity, "tracker_v")),
                                        ("res"    , (ClientEnrichments.extractResolution, ("width", "height"))))
 
