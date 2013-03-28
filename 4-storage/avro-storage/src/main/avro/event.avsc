@@ -5,6 +5,7 @@
 	"fields": [
 		{ "name": "event_id", "type": "string" },
 		{ "name": "app_id", "type": ["string", "null"] },
+		{ "name": "user_id", "type": ["string", "null"]},
 		{ "name": "collector_tstamp", "type": "long"},
 		{ "name": "dvce_tstamp", "type": ["long", "null"] },	
 		{ 
