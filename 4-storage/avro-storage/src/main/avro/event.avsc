@@ -47,6 +47,25 @@
 							]
 						}
 					]
+		},
+		{
+			"name": "platform",
+			"type": [
+						{
+							"type": "record",
+							"name": "web",
+							"fields": [
+								{"name": "page_urlschme", "type": "string"},
+								{"name": "page_urlhost", "type": "string"},
+								{"name": "page_urlpost", "type": "string"},
+								{"name": "page_urlpath", "type": "string"},
+								{"name": "page_urlquery", "type": "string"},
+								{"name": "page_urlfragment", "type": "string"},
+								{"name": "page_title", "type": "string"},
+								{"name": "page_referrer", "type": "string"}
+							]
+						}
+				]
 		}
 	]
 }
