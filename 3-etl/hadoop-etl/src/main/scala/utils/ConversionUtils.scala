@@ -53,15 +53,11 @@ object ConversionUtils {
    */
   val decodeString: (String, String, String) => Validation[String, String] = (enc, field, str) =>
     try {
-      if (str == "null") { // Yech, to handle a bug in the JavaScript tracker
-        null.asInstanceOf[String].success
-      } else {
-        val s = Option(str).getOrElse("")
-        val d = URLDecoder.decode(s, enc)
-        val r = d.replaceAll("(\\r|\\n)", "")
-                 .replaceAll("\\t", "    ")
-        r.success
-      }
+      val s = Option(str).getOrElse("")
+      val d = URLDecoder.decode(s, enc)
+      val r = d.replaceAll("(\\r|\\n)", "")
+               .replaceAll("\\t", "    ")
+      r.success
     } catch {
       case e =>
         "Exception decoding [%s] from [%s] encoding: [%s]".format(str, enc, e.getMessage).fail
