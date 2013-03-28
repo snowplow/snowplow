@@ -3,9 +3,23 @@
 	"type": "record",
 	"name": "event",
 	"fields": [
-		{"name": "app_id", "type": "string"},
-		{"name": "collector_tstamp", "type": "long"},
-		{"name": "dvce_tstamp", "type": "long"},	
+		{ "name": "event_id", "type": "string" },
+		{ "name": "app_id", "type": ["string", "null"] },
+		{ "name": "collector_tstamp", "type": "long"},
+		{ "name": "dvce_tstamp", "type": ["long", "null"] },	
+		{ 
+			"name": "snowplow_version",
+			"type": { 
+				"name": "snowplow_v",
+				"type": "record",
+				"fields": [
+					{ "name": "tracker_version", "type": "string" },
+					{ "name": "collector_version", "type": "string" },
+					{ "name": "etl_version", "type": "string"}
+				]
+			}	
+			
+		},
 		{
 			"name": "event_type",
 			"type": [
