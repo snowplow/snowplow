@@ -102,7 +102,7 @@ object ConversionUtils {
    */
   val stringToJFloat: (String, String) => Validation[String, JFloat] = (field, str) =>
     try {
-      if (str == "null") { // Yech, to handle a bug in the JavaScript tracker
+      if (str == "null") { // LEGACY. Yech, to handle a bug in the JavaScript tracker
         null.asInstanceOf[JFloat].success
       } else {
         val jfloat: JFloat = str.toFloat
