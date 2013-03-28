@@ -33,7 +33,7 @@ import etl.outputs.CanonicalOutput
  * See:
  * http://www.artima.com/scalazine/articles/package_objects.html
  */
-package object etl {
+package object enrich {
 
   /**
    * Capture a client's
