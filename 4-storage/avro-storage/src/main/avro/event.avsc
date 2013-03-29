@@ -55,24 +55,28 @@
 		},
 		{
 			"name": "platform",
-			"type": [
-						{
+			"type": {
+				"type": "record",
+				"name": "platform_record",
+				"fields": [
+					{
+						"name": "web",
+						"type": {
 							"type": "record",
-							"name": "web",
+							"name": "web_record",
 							"fields": [
-								{"name": "user", "type":{
+								{"name": "user", "type": {
 									"type": "record",
 									"name": "user_record",
 									"fields": [
 										{"name": "domain_userid", "type": "string"},
-										{"name": "domain_networkid", "type": "string"},
-										{"name": "domain_session_idx", "type": "int"}
+										{"name": "network_userid", "type": "string"},
+										{"name": "session_idx", "type": "int"}
 									]
 								}},
-
-								{"name": "page", "type":{
+								{"name": "page", "type": {
 									"type": "record",
-									"name": "page",
+									"name": "page_record", 
 									"fields": [
 										{"name": "url_scheme", "type": "string"},
 										{"name": "url_host", "type": "string"},
@@ -85,7 +89,6 @@
 										{"name": "title", "type": "string"},
 										{"name": "referrer", "type": "string"}
 									]
-
 								}},
 								{"name": "document", "type":{
 									"type": "record",
@@ -144,11 +147,12 @@
 										{"name": "latitude", "type": "float"},
 										{"name": "longitude", "type": "float"}
 									]
-								}}
-								
+								}}							
 							]
 						}
+					}
 				]
+			}
 		}
 	]
 }
