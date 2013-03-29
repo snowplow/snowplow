@@ -4,8 +4,8 @@
 	"name": "event",
 	"fields": [
 		{ "name": "event_id", "type": "string" },
-		{ "name": "app_id", "type": ["string", "null"] },
-		{ "name": "user_id", "type": ["string", "null"]},
+		{ "name": "app_id", "type": "string" },
+		{ "name": "user_id", "type": "string"},
 		{ "name": "timestamp", "type": {
 			"type": "record",
 			"name": "timestamp_record",
@@ -26,33 +26,75 @@
 			}	
 			
 		},
-		{
-			"name": "event_type",
-			"type": [
-						{
-							"type": "record",
-							"name": "page_ping",
-							"fields" : [
-								{"name": "page_title", "type": "string"},
-								{"name": "xoffset_min", "type": "int"},
-								{"name": "xoffset_max", "type": "int"},
-								{"name": "yoffset_min", "type": "int"},
-								{"name": "yoffset_max", "type": "int"}
-							]
-						},
-						{
-							"type": "record",
-							"name": "ad_impression",
-							"fields": [
-								{"name": "bannerid", "type": "string"},
-								{"name": "campaignid", "type": "string"},
-								{"name": "advertiserid", "type": "string"},
-								{"name": "userid", "type": "string"},
-								{"name": "zoneid", "type": "string"}
-							]
-						}
+		{ "name": "event_vendor", "type": {
+			"type": "record",
+			"name": "event_vendor_record",
+			"fields": [
+				{"name": "event_vendor_name", "type": {
+					"type": "record",
+					"name": "com.snowplowanalytics",
+					"fields": [
+						{"name": "event_type", "type": [
+							{
+								"type": "record",
+								"name": "page_view",
+								"fields": [
+									{"name": "page_title", "type": "string"}
+								]
+							},
+							{
+								"type": "record",
+								"name": "page_ping",
+								"fields": [
+									{"name": "page_title", "type": "string"},
+									{"name": "xoffset_min", "type": "int"},
+									{"name": "xoffset_max", "type": "int"},
+									{"name": "yoffset_min", "type": "int"},
+									{"name": "yoffset_max", "type": "int"}
+								]
+							},
+							{
+								"type": "record",
+								"name": "transaction",
+								"fields": [
+									{"name": "order_id", "type": "string"},
+									{"name": "affiliation", "type": "string"},
+									{"name": "value", "type": {
+										"type": "record",
+										"name": "value_record",
+										"fields": [
+											{"name": "total", "type": "float"},
+											{"name": "tax", "type": "float"},
+											{"name": "shipping", "type": "float"}
+										]
+									}},
+									{"name": "delivery_address", "type": {
+										"type": "record",
+										"name": "delivery_address_record",
+										"fields": [
+											{"name": "city", "type": "string"},
+											{"name": "state", "type": "string"},
+											{"name": "country", "type": "string"}
+										]
+									}}
+								]
+							},
+							{
+								"type": "record",
+								"name": "ad_impression",
+								"fields": [
+									{"name": "bannerid", "type": "string"},
+									{"name": "campaignid", "type": "string"},
+									{"name": "advertiserid", "type": "string"},
+									{"name": "userid", "type": "string"},
+									{"name": "zoneid", "type": "string"}
+								]
+							}							
+						]}
 					]
-		},
+				}
+			}]
+		}},
 		{
 			"name": "platform",
 			"type": {
@@ -70,9 +112,9 @@
 									"type": "record",
 									"name": "user_record",
 									"fields": [
-										{"name": "domain_userid", "type": ["string", "null"]},
-										{"name": "network_userid", "type": ["string", "null"]},
-										{"name": "session_idx", "type": ["int", "null"]}
+										{"name": "domain_userid", "type": "string"},
+										{"name": "network_userid", "type": "string"},
+										{"name": "session_idx", "type": "int"}
 									]
 								}},
 								{"name": "page", "type": {
@@ -81,38 +123,38 @@
 									"fields": [
 										{"name": "url_scheme", "type": "string"},
 										{"name": "url_host", "type": "string"},
-										{"name": "url_port", "type": ["string", "null"]},
-										{"name": "url_path", "type": ["string", "null"]},
-										{"name": "url_query", "type": ["string", "null"]},
-										{"name": "url_fragment", "type": ["string", "null"]},
+										{"name": "url_port", "type": "string"},
+										{"name": "url_path", "type": "string"},
+										{"name": "url_query", "type": "string"},
+										{"name": "url_fragment", "type": "string"},
 										{"name": "title", "type": "string"},
-										{"name": "referrer", "type": [{
+										{"name": "referrer", "type": {
 											"type": "record",
 											"name": "referrer_record",
 											"fields": [
-												{"name": "source", "type": ["string", "null"]},
-												{"name": "medium", "type": ["string", "null"]},
-												{"name": "term", "type": ["string", "null"]},
-												{"name": "content", "type": ["string", "null"]},
-												{"name": "campaign", "type": ["string", "null"]},
+												{"name": "source", "type": "string"},
+												{"name": "medium", "type": "string"},
+												{"name": "term", "type": "string"},
+												{"name": "content", "type": "string"},
+												{"name": "campaign", "type": "string"},
 												{"name": "url_scheme", "type": "string"},
 												{"name": "url_host", "type": "string"},
-												{"name": "url_port", "type": ["string", "null"]},
-												{"name": "url_path", "type": ["string", "null"]},
-												{"name": "url_query", "type": ["string", "null"]},
-												{"name": "url_fragment", "type": ["string", "null"]}
+												{"name": "url_port", "type": "string"},
+												{"name": "url_path", "type": "string"},
+												{"name": "url_query", "type": "string"},
+												{"name": "url_fragment", "type": "string"}
 											]
-										}, "null"]}
+										}}
 									]
 								}},
 								{"name": "document", "type":{
 									"type": "record",
 									"name": "document",
 									"fields": [
-										{"name": "character_set", "type": ["string", "null"]},
-										{"name": "width", "type": ["string", "null"]},
-										{"name": "height", "type": ["int", "null"]},
-										{"name": "page_type", "type": ["string", "null"]}
+										{"name": "character_set", "type": "string"},
+										{"name": "width", "type": "string"},
+										{"name": "height", "type": "int"},
+										{"name": "page_type", "type": "string"}
 									]
 								}},
 								{"name": "useragent", "type": "string"},
@@ -120,34 +162,34 @@
 									"type": "record",
 									"name": "browser_record",
 									"fields": [
-										{"name": "user_fingerprint", "type": ["string", "null"]},
-										{"name": "cookie", "type": ["boolean", "null"]},
-										{"name": "language", "type": ["string", "null"]},
+										{"name": "user_fingerprint", "type": "string"},
+										{"name": "cookie", "type": "boolean"},
+										{"name": "language", "type": "string"},
 										{"name": "features", "type": {"type": "array", "items": "string"}},
-										{"name": "colordepth", "type": ["int", "null"]},
-										{"name": "js_version", "type": ["string", "null"]},
-										{"name": "view_height", "type": ["int", "null"]},
-										{"name": "view_width", "type": ["int", "null"]}
+										{"name": "colordepth", "type": "int"},
+										{"name": "js_version", "type": "string"},
+										{"name": "view_height", "type": "int"},
+										{"name": "view_width", "type": "int"}
 									]
 								}},
 								{"name": "operating_system", "type": {
 									"type": "record",
 									"name": "operating_system_record",
 									"fields": [
-										{"name": "name", "type": ["string", "null"]},
-										{"name": "family", "type": ["string", "null"]},
-										{"name": "manufacturer", "type": ["string", "null"]},
-										{"name": "time_zone", "type": ["string", "null"]}
+										{"name": "name", "type": "string"},
+										{"name": "family", "type": "string"},
+										{"name": "manufacturer", "type": "string"},
+										{"name": "time_zone", "type": "string"}
 									]
 								}},
 								{"name": "device", "type": {
 									"type": "record",
 									"name": "device_record",
 									"fields": [
-										{"name": "type", "type": ["string", "null"]},
-										{"name": "is_mobile", "type": ["boolean", "null"]},
-										{"name": "screen_height", "type": ["int", "null"]},
-										{"name": "screen_width", "type": ["int", "null"]}
+										{"name": "type", "type": "string"},
+										{"name": "is_mobile", "type": "boolean"},
+										{"name": "screen_height", "type": "int"},
+										{"name": "screen_width", "type": "int"}
 									]
 								}},
 								{"name": "location", "type": {
@@ -155,12 +197,12 @@
 									"name": "location_record",
 									"fields": [
 										{"name": "ip_address", "type": "string"},
-										{"name": "country", "type": ["string", "null"]},
-										{"name": "region", "type": ["string", "null"]},
-										{"name": "city", "type": ["string", "null"]},
-										{"name": "postcode", "type": ["string", "null"]},
-										{"name": "latitude", "type": ["float", "null"]},
-										{"name": "longitude", "type": ["float", "null"]}
+										{"name": "country", "type": "string"},
+										{"name": "region", "type": "string"},
+										{"name": "city", "type": "string"},
+										{"name": "postcode", "type": "string"},
+										{"name": "latitude", "type": "string"},
+										{"name": "longitude", "type": "string"}
 									]
 								}}							
 							]
