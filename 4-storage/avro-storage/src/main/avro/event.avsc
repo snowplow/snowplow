@@ -65,6 +65,7 @@
 							"type": "record",
 							"name": "web_record",
 							"fields": [
+								{"name": "txn_id", "type": "string"},
 								{"name": "user", "type": {
 									"type": "record",
 									"name": "user_record",
@@ -87,7 +88,17 @@
 										{"name": "url_query", "type": "string"},
 										{"name": "url_fragment", "type": "string"},
 										{"name": "title", "type": "string"},
-										{"name": "referrer", "type": "string"}
+										{"name": "referrer", "type": {
+											"type": "record",
+											"name": "referrer_record",
+											"fields": [
+												{"name": "source", "type": ["string", "null"]},
+												{"name": "medium", "type": ["string", "null"]},
+												{"name": "term", "type": ["string", "null"]},
+												{"name": "content", "type": ["string", "null"]},
+												{"name": "campaign", "type": ["string", "null"]}
+											]
+										}}
 									]
 								}},
 								{"name": "document", "type":{
