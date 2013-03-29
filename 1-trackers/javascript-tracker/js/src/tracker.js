@@ -136,6 +136,9 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		// Life of the referral cookie (in milliseconds)
 		configReferralCookieTimeout = 15768000000, // 6 months
 
+    // Enable Base64 encoding for unstructured events
+    configEncodeUnstructEvents = false,
+
 		// Document character set
 		documentCharset = SnowPlow.documentAlias.characterSet || SnowPlow.documentAlias.charset,
 
@@ -1644,6 +1647,16 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 */
 		setCollectorUrl: function (rawUrl) {
 			configCollectorUrl = asCollectorUrl(rawUrl);
+		},
+
+		/**
+		 *
+		 * Enable Base64 encoding for unstructured event payload
+		 *
+		 * @param boolean enabled A boolean value indicating if the Base64 encoding for unstructured events should be enabled or not
+		 */
+		encodeUnstructEvents: function (enabled) {
+			configEncodeUnstructEvents = enabled;
 		},
 
 		/**
