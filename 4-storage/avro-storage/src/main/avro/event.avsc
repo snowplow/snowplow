@@ -6,13 +6,18 @@
 		{ "name": "event_id", "type": "string" },
 		{ "name": "app_id", "type": ["string", "null"] },
 		{ "name": "user_id", "type": ["string", "null"]},
-		{ "name": "collector_tstamp", "type": "long"},
-		{ "name": "dvce_tstamp", "type": ["long", "null"] },	
-		{ 
-			"name": "snowplow_version",
+		{ "name": "timestamp", "type": {
+			"type": "record",
+			"name": "timestamp_record",
+			"fields": [
+				{"name": "collector_tstamp", "type": "long"},
+				{"name": "device_tstamp", "type": ["long", "null"]}
+			]
+		}},
+		{ 	"name": "snowplow_version",
 			"type": { 
-				"name": "snowplow_version_record",
 				"type": "record",
+				"name": "snowplow_version_record",
 				"fields": [
 					{ "name": "tracker_version", "type": "string" },
 					{ "name": "collector_version", "type": "string" },
@@ -55,6 +60,16 @@
 							"type": "record",
 							"name": "web",
 							"fields": [
+								{"name": "user", "type":{
+									"type": "record",
+									"name": "user_record",
+									"fields": [
+										{"name": "domain_userid", "type": "string"},
+										{"name": "domain_networkid", "type": "string"},
+										{"name": "domain_session_idx", "type": "int"}
+									]
+								}},
+
 								{"name": "page", "type":{
 									"type": "record",
 									"name": "page",
@@ -103,7 +118,8 @@
 									"fields": [
 										{"name": "name", "type": "string"},
 										{"name": "family", "type": "string"},
-										{"name": "manufacturer", "type": "string"}
+										{"name": "manufacturer", "type": "string"},
+										{"name": "time_zone", "type": "string"}
 									]
 								}},
 								{"name": "device", "type": {
