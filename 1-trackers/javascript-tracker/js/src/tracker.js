@@ -701,13 +701,23 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('e', 'ue'); // 'ue' for Unstructured Event
 		sb.add('ue_na', name);
 
-		pr_string = JSON2.stringify(properties);
+		var translated = {}
+		for(var p in properties) {
+			var key = p, value = properties[p];
+			if (properties.hasOwnProperty(p) && SnowPlow.isDate(properties[p])) {
+				suffix = SnowPlow.getPropertySuffix(p);
+				value = SnowPlow.toTimestamp(value, (suffix != 'ts'))
+				if(suffix == '') key += ':tms'
+			};
+			translated[key] = value;
+		}
 
+		pr_string = JSON2.stringify(translated);
 		if(configEncodeUnstructEvents) {
 		  sb.add('ue_px', SnowPlow.base64encode(pr_string));
 		} else {
 		  sb.add('ue_pr', pr_string);
-		}
+		};
 		request = getRequest(sb, 'event');
 		sendRequest(request, configTrackerPause);
 	}

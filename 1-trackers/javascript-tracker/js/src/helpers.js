@@ -63,6 +63,13 @@ SnowPlow.isString = function (property) {
 }
 
 /*
+ * Is property a date?
+ */
+SnowPlow.isDate = function (property) {
+	return Object.prototype.toString.call(property) === "[object Date]";
+}
+
+/*
  * UTF-8 encoding
  */
 SnowPlow.encodeUtf8 = function (argString) {
@@ -93,6 +100,23 @@ SnowPlow.getHostName = function (url) {
 		matches = e.exec(url);
 
 	return matches ? matches[1] : url;
+}
+
+/*
+ * Extract suffix from a property
+ */
+SnowPlow.getPropertySuffix = function (property) {
+	var e = new RegExp(':(.[^:]+)$'),
+	    matches = e.exec(property);
+
+	return matches ? matches[1] : '';
+}
+
+/*
+ * Converts a date object to Unix timestamp with or without miliseconds
+ */
+SnowPlow.toTimestamp = function (date, miliseconds) {
+	return miliseconds ? date / 1 : Math.floor(date / 1000);
 }
 
 /*
