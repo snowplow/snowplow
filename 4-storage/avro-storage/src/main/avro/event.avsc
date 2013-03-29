@@ -105,6 +105,29 @@
 										{"name": "family", "type": "string"},
 										{"name": "manufacturer", "type": "string"}
 									]
+								}},
+								{"name": "device", "type": {
+									"type": "record",
+									"name": "device_record",
+									"fields": [
+										{"name": "type", "type": "string"},
+										{"name": "is_mobile", "type": "boolean"},
+										{"name": "screen_height", "type": "int"},
+										{"name": "screen_width", "type": "int"}
+									]
+								}},
+								{"name": "location", "type": {
+									"type": "record",
+									"name": "location_record",
+									"fields": [
+										{"name": "ip_address", "type": "string"},
+										{"name": "country", "type": "string"},
+										{"name": "region", "type": "string"},
+										{"name": "city", "type": "string"},
+										{"name": "postcode", "type": "string"},
+										{"name": "latitude", "type": "float"},
+										{"name": "longitude", "type": "float"}
+									]
 								}}
 								
 							]
