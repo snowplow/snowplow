@@ -11,7 +11,7 @@
 		{ 
 			"name": "snowplow_version",
 			"type": { 
-				"name": "snowplow_v",
+				"name": "snowplow_version_record",
 				"type": "record",
 				"fields": [
 					{ "name": "tracker_version", "type": "string" },
@@ -77,7 +77,23 @@
 									"name": "document",
 									"fields": [
 										{"name": "character_set", "type": "string"},
-										{"name": "width", "type": "string"}
+										{"name": "width", "type": "string"},
+										{"name": "height", "type": "int"},
+										{"name": "page_type", "type": "string"}
+									]
+								}},
+								{"name": "browser", "type": {
+									"type": "record",
+									"name": "browser",
+									"fields": [
+										{"name": "user_fingerprint", "type": "string"},
+										{"name": "cookie", "type": "boolean"},
+										{"name": "language", "type": "string"},
+										{"name": "features", "type": {"type": "array", "items": "string"}},
+										{"name": "colordepth", "type": "int"},
+										{"name": "js_version", "type": "string"},
+										{"name": "view_height", "type": "int"},
+										{"name": "view_width", "type": "int"}
 									]
 								}}
 								
