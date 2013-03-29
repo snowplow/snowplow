@@ -82,9 +82,10 @@
 										{"name": "page_type", "type": "string"}
 									]
 								}},
+								{"name": "useragent", "type": "string"},
 								{"name": "browser", "type": {
 									"type": "record",
-									"name": "browser",
+									"name": "browser_record",
 									"fields": [
 										{"name": "user_fingerprint", "type": "string"},
 										{"name": "cookie", "type": "boolean"},
@@ -94,6 +95,15 @@
 										{"name": "js_version", "type": "string"},
 										{"name": "view_height", "type": "int"},
 										{"name": "view_width", "type": "int"}
+									]
+								}},
+								{"name": "operating_system", "type": {
+									"type": "record",
+									"name": "operating_system_record",
+									"fields": [
+										{"name": "name", "type": "string"},
+										{"name": "family", "type": "string"},
+										{"name": "manufacturer", "type": "string"}
 									]
 								}}
 								
