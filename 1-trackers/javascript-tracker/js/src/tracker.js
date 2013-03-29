@@ -700,7 +700,14 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'ue'); // 'ue' for Unstructured Event
 		sb.add('ue_na', name);
-		sb.add('ue_pr', JSON2.stringify(properties))
+
+		pr_string = JSON2.stringify(properties);
+
+		if(configEncodeUnstructEvents) {
+		  sb.add('ue_px', SnowPlow.base64encode(pr_string));
+		} else {
+		  sb.add('ue_pr', pr_string);
+		}
 		request = getRequest(sb, 'event');
 		sendRequest(request, configTrackerPause);
 	}
