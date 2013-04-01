@@ -34,5 +34,5 @@ if [ $ret_val -ne 0 ]; then
 fi
 
 # If all okay, run the storage load too
-export BUNDLE_GEMFILE=${LOADER_PATH}
+export BUNDLE_GEMFILE=${LOADER_PATH}/Gemfile
 bundle exec ${LOADER_PATH}/bin/snowplow-storage-loader --config ${LOADER_CONFIG}
