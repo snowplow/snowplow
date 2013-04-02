@@ -104,6 +104,17 @@
 							},
 							{
 								"type": "record",
+								"name": "item_view",
+								"fields": [
+									{"name": "id", "type": "string"},
+									{"name": "name", "type": "string"},
+									{"name": "display_format", "type": "string"},
+									{"name": "rank", "type": "int"},
+									{"name": "location", "type": "string"}
+								]
+							},
+							{
+								"type": "record",
 								"name": "ad_impression",
 								"fields": [
 									{"name": "bannerid", "type": "string"},
@@ -111,6 +122,17 @@
 									{"name": "advertiserid", "type": "string"},
 									{"name": "userid", "type": "string"},
 									{"name": "zoneid", "type": "string"}
+								]
+							},
+							{
+								"type": "record",
+								"name": "custom_structured_event",
+								"fields": [
+									{"name": "category", "type": "string"},
+									{"name": "action", "type": "string"},
+									{"name": "label", "type": "string"},
+									{"name": "property", "type": "string"},
+									{"name": "value", "type": "float"}
 								]
 							}							
 						]}
