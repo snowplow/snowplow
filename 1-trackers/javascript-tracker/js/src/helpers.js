@@ -109,7 +109,7 @@ SnowPlow.getPropertySuffix = function (property) {
 	var e = new RegExp('\\$(.[^\\$]+)$'),
 	    matches = e.exec(property);
 
-	return matches ? matches[1] : null;
+	if(matches) return matches[1];
 }
 
 /*
