@@ -114,7 +114,8 @@
 									"fields": [
 										{"name": "domain_userid", "type": "string"},
 										{"name": "network_userid", "type": "string"},
-										{"name": "session_idx", "type": "int"}
+										{"name": "session_idx", "type": "int"},
+										{"name": "ip_address", "type": "string"}
 									]
 								}},
 								{"name": "page", "type": {
@@ -196,7 +197,6 @@
 									"type": "record",
 									"name": "location_record",
 									"fields": [
-										{"name": "ip_address", "type": "string"},
 										{"name": "country", "type": "string"},
 										{"name": "region", "type": "string"},
 										{"name": "city", "type": "string"},
