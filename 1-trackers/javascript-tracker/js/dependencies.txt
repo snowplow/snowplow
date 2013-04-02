@@ -5,6 +5,7 @@ src/init.js
 src/helpers.js
 src/lib/sha1.js
 src/lib/murmur.js
+src/lib/base64.js
 src/tracker.js
 src/snowplow.js
 src/constructor.js
