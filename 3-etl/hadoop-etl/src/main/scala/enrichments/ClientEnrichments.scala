@@ -10,8 +10,11 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.hadoop.etl
+package com.snowplowanalytics.snowplow.enrich.hadoop
 package enrichments
+
+// Java
+import java.lang.{Integer => JInteger}
 
 // Scalaz
 import scalaz._
@@ -81,7 +84,7 @@ object ClientEnrichments {
    */
   val extractResolution: (String, String) => Validation[String, ResolutionTuple] = (field, res) =>
     res match {
-      case ResRegex(width, height) => (width.toInt, height.toInt).success
+      case ResRegex(width, height) => (width.toInt: JInteger, height.toInt: JInteger).success
       case _ => "Field [%s]: [%s] is not a valid screen resolution".format(field, res).fail
     }
 

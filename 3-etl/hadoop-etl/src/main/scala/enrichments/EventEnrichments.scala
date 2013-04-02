@@ -10,7 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.hadoop.etl
+package com.snowplowanalytics.snowplow.enrich.hadoop
 package enrichments
 
 // Java
@@ -86,7 +86,7 @@ object EventEnrichments {
   val extractEventType: (String, String) => Validation[String, String] = (field, code) =>
     code match {
       case "se" => "struct".success
-      case "ev" => "struct".success // Legacy.
+      case "ev" => "struct".success // LEGACY. Remove late 2013
       case "ad" => "ad_impression".success
       case "tr" => "transaction".success
       case "ti" => "transaction_item".success

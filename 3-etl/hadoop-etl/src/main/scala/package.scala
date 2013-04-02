@@ -10,7 +10,10 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.hadoop
+package com.snowplowanalytics.snowplow.enrich
+
+// Java
+import java.lang.{Integer => JInteger}
 
 // Scalaz
 import scalaz._
@@ -30,13 +33,13 @@ import etl.outputs.CanonicalOutput
  * See:
  * http://www.artima.com/scalazine/articles/package_objects.html
  */
-package object etl {
+package object enrich {
 
   /**
    * Capture a client's
    * screen resolution
    */
-  type ResolutionTuple = (Int, Int) // Height, width
+  type ResolutionTuple = (JInteger, JInteger) // Height, width.
 
   /**
    * Type alias for HTTP headers
