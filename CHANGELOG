@@ -10,6 +10,7 @@ EmrEtlRunner: added run ID and human-friendly job name (#100)
 EmrEtlRunner: added run IDs to output folders (Hadoop ETL only) (#79)
 EmrEtlRunner: changed .rvmrc to .ruby-version, thanks @richo (part of #190)
 StorageLoader: changed .rvmrc to .ruby-version, thanks @richo (part of #190)
+Common: started rename of 3-etl to 3-enrich (part of #99)
 
 Version 0.7.6 (2013-03-03)
 --------------------------
