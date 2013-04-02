@@ -707,7 +707,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 			if (properties.hasOwnProperty(p) && SnowPlow.isDate(properties[p])) {
 				suffix = SnowPlow.getPropertySuffix(p);
 				value = SnowPlow.toTimestamp(value, (suffix != 'ts'))
-				if(suffix == '') key += ':tms'
+				if(!suffix) += ':tms'
 			};
 			translated[key] = value;
 		}
