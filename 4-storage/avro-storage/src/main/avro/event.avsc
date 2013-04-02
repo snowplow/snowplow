@@ -66,8 +66,7 @@
 											{"name": "total", "type": "float"},
 											{"name": "tax", "type": "float"},
 											{"name": "shipping", "type": "float"}
-										]
-									}},
+										]}},
 									{"name": "delivery_address", "type": {
 										"type": "record",
 										"name": "delivery_address_record",
