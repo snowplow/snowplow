@@ -114,7 +114,7 @@
 									"fields": [
 										{"name": "domain_userid", "type": "string"},
 										{"name": "network_userid", "type": "string"},
-										{"name": "session_idx", "type": "int"},
+										{"name": "domain_session_idx", "type": "int"},
 										{"name": "ip_address", "type": "string"}
 									]
 								}},
