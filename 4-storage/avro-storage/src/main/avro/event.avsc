@@ -75,6 +75,20 @@
 											{"name": "state", "type": "string"},
 											{"name": "country", "type": "string"}
 										]
+									}},
+									{"name": "products", "type": {
+										"type": "array",
+										"items": {
+											"type": "record",
+											"name": "product_record",
+											"fields": [
+												{"name": "sku", "type": "string"},
+												{"name": "name", "type": "string"},
+												{"name": "category", "type": "string"},
+												{"name": "unit_price", "type": "float"},
+												{"name": "quantity", "type": "float"}
+											]
+										}
 									}}
 								]
 							},
