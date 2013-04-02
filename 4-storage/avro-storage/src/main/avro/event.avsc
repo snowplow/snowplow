@@ -94,6 +94,16 @@
 							},
 							{
 								"type": "record",
+								"name": "social_event",
+								"fields": [
+									{"name": "action", "type": "string"},
+									{"name": "network", "type": "string"},
+									{"name": "target", "type": "string"},
+									{"name": "page_path", "type": "string"}
+								]
+							},
+							{
+								"type": "record",
 								"name": "ad_impression",
 								"fields": [
 									{"name": "bannerid", "type": "string"},
