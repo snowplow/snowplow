@@ -106,7 +106,7 @@ SnowPlow.getHostName = function (url) {
  * Extract suffix from a property
  */
 SnowPlow.getPropertySuffix = function (property) {
-	var e = new RegExp(':(.[^:]+)$'),
+	var e = new RegExp('\\$(.[^\\$]+)$'),
 	    matches = e.exec(property);
 
 	return matches ? matches[1] : null;
