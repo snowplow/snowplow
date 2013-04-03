@@ -1,14 +1,14 @@
 /**
- * PagePing an event_type
+ * PagePing event_type
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
 protocol PagePing {
 	record PagePing {
 		string PageTitle;
-		int XOffsetMin;
-		int XOffsetMax;
-		int YOffsetMin;
-		int YOffsetMax;
+		int x_offset_minimum;
+		int x_offset_maximum;
+		int y_offset_minimum;
+		int y_offset_maximum;
 	}
 }

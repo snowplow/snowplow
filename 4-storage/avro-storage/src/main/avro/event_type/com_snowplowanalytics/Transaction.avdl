@@ -1,0 +1,34 @@
+/**
+ * Transaction event_type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol Transaction {
+	record Value {
+		float total;
+		float shipping;
+		float tax;
+	}
+
+	record DeliveryAddress {
+		string city;
+		string state;
+		string country;
+	}
+
+	record LineItems {
+		string sku;
+		string name;
+		string category;
+		float unit_price;
+		float quantity;
+	}
+
+	record Transaction {
+		string id;
+		string affiliation;
+		Value value;
+		DeliveryAddress delivery_address;
+		array<LineItems> line_items;
+	}
+}

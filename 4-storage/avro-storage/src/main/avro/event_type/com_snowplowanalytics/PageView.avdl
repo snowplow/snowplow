@@ -1,10 +1,10 @@
 /**
- * PageView an event_type
+ * PageView event_type
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
 protocol PageView {
 	record PageView {
-		string PageTitle;
+		string page_title;
 	}
 }
