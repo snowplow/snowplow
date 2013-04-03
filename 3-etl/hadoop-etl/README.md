@@ -22,21 +22,19 @@ Assuming you already have SBT installed:
 
 The 'fat jar' is now available as:
 
-    target/snowplow-hadoop-etl-0.0.1-fat.jar
+    target/snowplow-hadoop-etl-0.1.0.jar
 
-## Unit testing
+## Testing
 
-The `assembly` command above runs the test suite - but you can also run this manually with:
+The `assembly` command above does not (currently) run the test suite - but you can run this manually with:
 
     $ sbt test
-    <snip>
-    [info] + A WordCount job should
-	[info]   + count words correctly
-	[info] Passed: : Total 2, Failed 0, Errors 0, Passed 2, Skipped 0
+
+If you get errors reported in some tests, run those tests individually with `test-only com.snowplowanalytics...TestName` and they should pass fine.
 
 ## Copyright and license
 
-Copyright 2012 SnowPlow Analytics Ltd.
+Copyright 2012-2013 SnowPlow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
