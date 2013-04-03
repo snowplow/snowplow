@@ -32,7 +32,7 @@ object BuildSettings {
   // Add in settings for our SBT-Avro plugin
   import sbtavro.SbtAvro
   lazy val sbtAvroSettings = SbtAvro.avroSettings ++ Seq(
-    (version in SbtAvro.avroConfig) := "1.7.2",
+    (version in SbtAvro.avroConfig) := "1.7.4",
     (javaSource in SbtAvro.avroConfig) <<= (sourceManaged in Compile)(_ / "java")
     )
 

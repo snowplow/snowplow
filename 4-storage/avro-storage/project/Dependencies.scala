@@ -18,7 +18,7 @@ object Dependencies {
 
   object V {
     // For Avro
-    val avro         = "1.7.2"
+    val avro         = "1.7.4"
     // Scala (test only)
     val specs2       = "1.12.3" // -> "1.13" when we bump to Scala 2.10.0
     val scalaCheck   = "1.10.0"
