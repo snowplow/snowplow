@@ -1,0 +1,18 @@
+/**
+ * Legacy transaction items event_type - for first Avro release then to be deprecated in favour
+ * of `Transaction.avdl`
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol TransactionItemsLegacy {
+
+	record TransactionItemsLegacy {
+		string order_id;
+		string sku;
+		string name;
+		string category;
+		float unit_price;
+		float quantity;	
+	}
+
+}

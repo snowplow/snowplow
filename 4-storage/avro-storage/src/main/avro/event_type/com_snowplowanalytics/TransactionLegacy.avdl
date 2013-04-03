@@ -1,0 +1,26 @@
+/**
+ * Legacy transaction event_type - for first Avro release then to be deprecated in favour
+ * of `Transaction.avdl`
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol TransactionLegacy {
+	record Value {
+		float total;
+		float shipping;
+		float tax;
+	}
+
+	record DeliveryAddress {
+		string city;
+		string state;
+		string country;
+	}
+
+	record TransactionLegacy {
+		string id;
+		string affiliation;
+		Value value;
+		DeliveryAddress delivery_address;
+	}
+}

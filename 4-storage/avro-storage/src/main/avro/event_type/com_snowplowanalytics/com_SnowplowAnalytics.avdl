@@ -12,9 +12,11 @@ protocol com_SnowplowAnalytics {
 	import idl "PageView.avdl";
 	import idl "Social.avdl";
 	import idl "Transaction.avdl";
+	import idl "TransactionItemsLegacy.avdl";
+	import idl "TransactionLegacy.avdl";
 
 	
 	record com_SnowplowAnalytics {
-		union { AdImpression, CustomStructuredEvent, ItemView, PagePing, PageView, Social, Transaction } com_snowplowanalytics_event_type;
+		union { AdImpression, CustomStructuredEvent, ItemView, PagePing, PageView, Social, Transaction, TransactionLegacy, TransactionItemsLegacy } com_snowplowanalytics_event_type;
 	}
 }
