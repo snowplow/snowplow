@@ -4,7 +4,87 @@
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
 protocol Web {
-	record Web {
 
+	record User {
+		string domain_user_id;
+		string network_user_id;
+		int domain_session_index;
+		string ip_address;
+		string user_fingerprint;
+	}
+
+	record Location {
+		string country;
+		string region;
+		string city;
+		string postcode;
+		float latitude;
+		float longitude;
+	}
+
+	record URL {
+		string scheme;
+		string host;
+		string port;
+		string path;
+		string query;
+		string fragment;
+	}
+
+	record Referrer {
+		URL url;
+		string source;
+		string medium;
+		string term;
+		string content;
+		string campaign;
+	}
+
+	record Document {
+		string character_set;
+		int width;
+		int height;
+	}
+
+	record Page {
+		URL url;
+		string title;
+		Referrer referrer;
+		Document document;
+	}
+
+	record Browser {
+		string user_fingerprint;
+		boolean cookie;
+		string language;
+		array<string> features;
+		int color_depth;
+		string js_version;
+		int view_height;
+		int view_width;
+	}
+
+	record OperatingSystem {
+		string name;
+		string type;
+		string manufacturer;
+		string time_zone;
+	}
+
+	record Device {
+		string type;
+		boolean is_mobile;
+		int screen_height;
+		int screen_width;
+	}
+
+	record Web {
+		string transaction_id;
+		User user;
+		string useragent;
+		Page page;
+		Browser browser;
+		OperatingSystem os;
+		Device device;
 	}
 }
