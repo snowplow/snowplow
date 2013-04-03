@@ -7,8 +7,10 @@
 protocol com_SnowplowAnalytics {
 	import idl "PageView.avdl";
 	import idl "PagePing.avdl";	
+	import idl "Transaction.avdl";
+	import idl "Social.avdl";
 	
 	record com_SnowplowAnalytics {
-		union { PageView, PagePing } com_snowplowanalytics_event_type;
+		union { PageView, PagePing, Transaction, Social } com_snowplowanalytics_event_type;
 	}
 }

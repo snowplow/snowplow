@@ -1,0 +1,13 @@
+/**
+ * Social event_type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol Social {
+	record Social {
+		string action;
+		string network;
+		string target;
+		string page_path;
+	}
+}
