@@ -1,0 +1,27 @@
+/**
+ * Custom Unstructured Event event_type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol CustomStructuredEvent {
+
+	import idl "../../simple_types/Timestamp.avdl";
+	import idl "../../simple_types/Geo.avdl";
+
+	record SingleProperty {
+		union { string, float, Timestamp, Geo } single_property;
+	}
+
+	record MultiProperty {
+		array<SingleProperty> multi_properties;
+	}
+
+	record Properties {
+		union { SingleProperty, MultiProperty, null } properties;
+	}
+
+	record CustomStructuredEvent {
+		string name;
+		map<Properties> Properties;
+	}
+}

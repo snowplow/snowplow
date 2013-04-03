@@ -1,0 +1,12 @@
+/**
+ * SnowPlow version is the object that tracks the longitude / latitude
+ * geographic location
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol Geo {
+	record Geo {
+		float longitude;
+		float latitude;
+	}
+}

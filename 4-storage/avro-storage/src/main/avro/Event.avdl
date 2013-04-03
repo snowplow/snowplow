@@ -7,14 +7,15 @@
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
 protocol Event {
+	import idl "simple_types/Timestamp.avdl";
 	import idl "snowplow_version/SnowPlowVersion.avdl";
-	import idl "timestamp/Timestamp.avdl";
 	import idl "event_type/EventType.avdl";
 	import idl "platform/Platform.avdl";
 
 	record Event {
 		string event_id;
-		Timestamp timestamp;
+		Timestamp collector_tstamp;
+		Timestamp device_tstamp;
 		SnowPlowVersion snowplow_version;
 		EventType event_type;
 		Platform platform;

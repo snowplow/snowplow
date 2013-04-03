@@ -5,6 +5,8 @@
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
 protocol Web {
 
+	import idl "../../simple_types/Geo.avdl";
+
 	record User {
 		string domain_user_id;
 		string network_user_id;
@@ -18,8 +20,7 @@ protocol Web {
 		string region;
 		string city;
 		string postcode;
-		float latitude;
-		float longitude;
+		Geo coordinates;
 	}
 
 	record URL {
