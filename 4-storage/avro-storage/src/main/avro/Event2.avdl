@@ -1,0 +1,16 @@
+/**
+ * SnowPlow event object definition
+ *
+ * This is being called "Event2" temporarily so that there is no conflict with the equivalent 
+ * definition in `event.avsc`
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol Event2 {
+	import idl "SnowPlowVersion.avdl";
+
+	record Event2 {
+		string event_id;
+		SnowPlowVersion snowplow_version;
+	}
+}
