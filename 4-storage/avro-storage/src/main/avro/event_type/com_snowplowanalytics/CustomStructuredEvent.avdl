@@ -1,0 +1,14 @@
+/**
+ * Custom Structured Event event_type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol CustomStructuredEvent {
+	record CustomStructuredEvent {
+		string category;
+		string action;
+		string label;
+		string property;
+		string value;
+	}
+}

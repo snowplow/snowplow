@@ -5,12 +5,16 @@
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
 protocol com_SnowplowAnalytics {
-	import idl "PageView.avdl";
+	import idl "AdImpression.avdl";
+	import idl "CustomStructuredEvent.avdl";
+	import idl "ItemView.avdl";
 	import idl "PagePing.avdl";	
-	import idl "Transaction.avdl";
+	import idl "PageView.avdl";
 	import idl "Social.avdl";
+	import idl "Transaction.avdl";
+
 	
 	record com_SnowplowAnalytics {
-		union { PageView, PagePing, Transaction, Social } com_snowplowanalytics_event_type;
+		union { AdImpression, CustomStructuredEvent, ItemView, PagePing, PageView, Social, Transaction } com_snowplowanalytics_event_type;
 	}
 }

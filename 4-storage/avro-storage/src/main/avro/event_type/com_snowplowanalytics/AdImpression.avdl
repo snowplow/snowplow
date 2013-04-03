@@ -1,0 +1,15 @@
+/**
+ * AdImpression event_type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol AdImpression {
+	record AdImpression {
+		string banner_id;
+		string campaign_id;
+		string advertiser_id;
+		string user_id;
+		string zone_id;
+		string publisher_id;
+	}
+}

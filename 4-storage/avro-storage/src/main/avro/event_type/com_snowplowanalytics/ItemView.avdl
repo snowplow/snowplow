@@ -1,0 +1,14 @@
+/**
+ * ItemView event_type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol ItemView {
+	record ItemView {
+		string id;
+		string name;
+		string display_format;
+		int rank;
+		string location;
+	}
+}
