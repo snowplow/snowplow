@@ -1,0 +1,10 @@
+/**
+ * TV platform type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol TV {
+	record TV {
+		
+	}
+}

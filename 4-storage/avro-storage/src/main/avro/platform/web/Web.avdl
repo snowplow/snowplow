@@ -1,0 +1,10 @@
+/**
+ * web platform type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol Web {
+	record Web {
+
+	}
+}

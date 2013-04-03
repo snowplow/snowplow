@@ -1,0 +1,10 @@
+/**
+ * games console platform type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol GamesConsole {
+	record GamesConsole {
+		
+	}
+}

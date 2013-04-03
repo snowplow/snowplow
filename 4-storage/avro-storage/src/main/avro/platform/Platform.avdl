@@ -1,0 +1,18 @@
+/**
+ * Platform type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol Platform {
+	import idl "games_console/GamesConsole.avdl";
+	import idl "internet_of_things/InternetOfThings.avdl";
+	import idl "mobile/Mobile.avdl";
+	import idl "pc/PC.avdl";
+	import idl "server_side_app/ServerSideApp.avdl";
+	import idl "tv/TV.avdl";
+	import idl "web/Web.avdl";
+
+	record Platform {
+		union { GamesConsole, InternetOfThings, Mobile, PC, ServerSideApp, TV, Web } Platform;
+	}
+}

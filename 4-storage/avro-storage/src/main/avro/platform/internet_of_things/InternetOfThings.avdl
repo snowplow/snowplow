@@ -1,0 +1,10 @@
+/**
+ * Internet-of-things platform type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol InternetOfThings {
+	record InternetOfThings {
+		
+	}
+}
