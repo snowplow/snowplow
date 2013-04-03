@@ -6,10 +6,10 @@
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
-protocol Event2 {
-	import idl "SnowPlowVersion.avdl";
+protocol Event {
+	import idl "snowplow_version/SnowPlowVersion.avdl";
 
-	record Event2 {
+	record Event {
 		string event_id;
 		SnowPlowVersion snowplow_version;
 	}
