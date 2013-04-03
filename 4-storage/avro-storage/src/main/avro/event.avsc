@@ -32,7 +32,7 @@
 			"fields": [
 				{"name": "event_vendor_name", "type": {
 					"type": "record",
-					"name": "com.snowplowanalytics",
+					"name": "com_snowplowanalytics",
 					"fields": [
 						{"name": "event_type", "type": [
 							{
