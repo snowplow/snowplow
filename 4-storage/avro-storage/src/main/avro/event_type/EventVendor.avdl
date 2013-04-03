@@ -1,0 +1,12 @@
+/**
+ * EventVendor is the company that defined the event type recorded
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol EventVendor {
+	import idl "com_snowplowanalytics/com_SnowplowAnalytics.avdl";
+
+	record EventVendor {
+		com_SnowplowAnalytics snowplow_analytics_defined_event;
+	}
+}

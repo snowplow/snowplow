@@ -1,0 +1,10 @@
+/**
+ * PageView an event_type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol PageView {
+	record PageView {
+		string PageTitle;
+	}
+}

@@ -9,10 +9,12 @@
 protocol Event {
 	import idl "snowplow_version/SnowPlowVersion.avdl";
 	import idl "timestamp/Timestamp.avdl";
+	import idl "event_type/EventType.avdl";
 
 	record Event {
 		string event_id;
 		Timestamp timestamp;
 		SnowPlowVersion snowplow_version;
+		EventType event_type;
 	}
 }

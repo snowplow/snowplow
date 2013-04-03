@@ -1,0 +1,14 @@
+/**
+ * com_SnowplowAnalytics is the first company to define events that can 
+ * be recorded in Snowplow
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol com_SnowplowAnalytics {
+	import idl "PageView.avdl";
+	import idl "PagePing.avdl";	
+	
+	record com_SnowplowAnalytics {
+		union { PageView, PagePing } com_snowplowanalytics_event_type;
+	}
+}
