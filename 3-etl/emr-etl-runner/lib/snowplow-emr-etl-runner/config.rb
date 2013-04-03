@@ -24,6 +24,7 @@ module SnowPlow
   module EmrEtlRunner
     module Config
 
+      @@etl_implementations = Set.new(%w(hive hadoop))
       @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
       @@storage_formats = Set.new(%w(hive redshift mysql-infobright))
 
@@ -42,12 +43,25 @@ module SnowPlow
         config[:end] = options[:end]
         config[:skip] = options[:skip]
 
+        # Generate our run ID: based on the time now
+        config[:run_id] = Time.new.strftime("%Y-%m-%d-%H-%M-%S")
+
         unless options[:processbucket].nil?
           config[:s3][:buckets][:processing] = options[:processbucket]
         end
 
-        # Add trailing slashes if needed to the buckets
-        config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
+        # Add trailing slashes if needed to the non-nil buckets
+        config[:s3][:buckets].reject{|k,v| v.nil?}.update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
+
+        # Validate the ETL implementation option
+        unless @@etl_implementations.include?(config[:etl][:implementation]) 
+          raise ConfigError, "etl_implementation '%s' not supported" % config[:etl][:implementation]
+        end
+
+        # Add the run ID to the output buckets (prevents collisions) if we using the Hadoop ETL
+        if config[:etl][:implementation]
+          # TODO
+        end
 
         # Validate the collector format
         unless @@collector_formats.include?(config[:etl][:collector_format]) 
@@ -59,16 +73,21 @@ module SnowPlow
           raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
         end
 
+        # Construct path to our ETL implementations
+        asset_path = "%s3-enrich" % config[:s3][:buckets][:assets]
+
+        # Construct path to our Hadoop ETL
+        config[:hadoop_asset] = "%s/hadoop-etl/snowplow-hadoop-etl-%s.jar" % [asset_path, config[:snowplow][:hadoop_etl_version]]
+
         # Construct paths to our HiveQL and serde
-        asset_path = "%shive" % config[:s3][:buckets][:assets]
-        config[:serde_asset]  = "%s/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
+        config[:serde_asset]  = "%s/hive-etl/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
 
         unless @@storage_formats.include?(config[:etl][:storage_format])
           raise ConfigError, "storage_format '%s' not supported" % config[:etl][:storage_format]
         end
         storage_format_uscore = config[:etl][:storage_format].gsub("-", "_")
         storage_format_version_sym = "#{storage_format_uscore}_hiveql_version".to_sym
-        config[:hiveql_asset] = "%s/hiveql/%s-etl-%s.q" % [
+        config[:hiveql_asset] = "%s/hive-etl/hiveql/%s-etl-%s.q" % [
                                   asset_path, 
                                   config[:etl][:storage_format],
                                   config[:snowplow][storage_format_version_sym]

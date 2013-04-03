@@ -10,6 +10,8 @@
     :in: ADD HERE
     :processing: ADD HERE
     :out: ADD HERE WITH SUB-FOLDER # Make sure this bucket is in the US standard region if you wish to use Redshift
+    :out_bad_rows: ADD HERE # Leave blank for Hive ETL.
+    :out_errors: ADD HERE # Leave blank for Hive ETL.
     :archive: ADD HERE
 :emr:
   # Can bump the below as EMR upgrades Hadoop
@@ -22,12 +24,15 @@
     :master_instance_type: m1.small
     :slave_instance_type: m1.small
 :etl:
+  :job_name: SnowPlow ETL # Give your job a name
+  :implementation: hadoop # Or 'hive' for legacy ETL
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
-  :continue_on_unexpected_error: false # You can switch to 'true' if you really don't want the serde throwing exceptions
-  :storage_format: redshift # Or 'hive' or 'mysql-infobright'
+  :continue_on_unexpected_error: false # You can switch to 'true' if you really don't want the ETL throwing exceptions. Doesn't work for Hadoop ETL yet
+  :storage_format: redshift # Or 'hive' or 'mysql-infobright'. Doesn't work for Hadoop ETL yet (always outputs redshift format)
 # Can bump the below as SnowPlow releases new versions
 :snowplow:
-  :serde_version: 0.5.5
+  :hadoop_etl_version: 0.1.0 # Version of the Hadoop ETL
+  :serde_version: 0.5.5 # Version of the Hive deserializer
   :hive_hiveql_version: 0.5.7
   :mysql_infobright_hiveql_version: 0.0.8
   :redshift_hiveql_version: 0.0.1
