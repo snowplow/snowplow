@@ -23,8 +23,8 @@ import Scalaz._
 import org.apache.http.NameValuePair
 
 // This project
-import etl.inputs.CanonicalInput
-import etl.outputs.CanonicalOutput
+import hadoop.inputs.CanonicalInput
+import hadoop.outputs.CanonicalOutput
 
 /**
  * Scala package object to hold types,
@@ -33,7 +33,7 @@ import etl.outputs.CanonicalOutput
  * See:
  * http://www.artima.com/scalazine/articles/package_objects.html
  */
-package object enrich {
+package object hadoop {
 
   /**
    * Capture a client's
