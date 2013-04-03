@@ -4,11 +4,14 @@
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
 protocol ItemView {
+	import idl "../../simple_types/Properties.avdl";
+	
 	record ItemView {
 		string id;
 		string name;
 		string display_format;
 		int rank;
 		string location;
+		map<Properties> custom_variables;
 	}
 }

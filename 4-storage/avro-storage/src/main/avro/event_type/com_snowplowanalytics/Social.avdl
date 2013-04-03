@@ -4,10 +4,13 @@
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
 protocol Social {
+	import idl "../../simple_types/Properties.avdl";
+
 	record Social {
 		string action;
 		string network;
 		string target;
 		string page_path;
+		map<Properties> custom_variables;
 	}
 }

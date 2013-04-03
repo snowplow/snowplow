@@ -4,6 +4,8 @@
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
 protocol Transaction {
+	import idl "../../simple_types/Properties.avdl";
+
 	record Value {
 		float total;
 		float shipping;
@@ -30,5 +32,6 @@ protocol Transaction {
 		Value value;
 		DeliveryAddress delivery_address;
 		array<LineItems> line_items;
+		map<Properties> custom_variables;
 	}
 }

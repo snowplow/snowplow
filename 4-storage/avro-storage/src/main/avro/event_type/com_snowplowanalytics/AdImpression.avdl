@@ -4,6 +4,8 @@
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
 protocol AdImpression {
+	import idl "../../simple_types/Properties.avdl";
+
 	record AdImpression {
 		string banner_id;
 		string campaign_id;
@@ -11,5 +13,6 @@ protocol AdImpression {
 		string user_id;
 		string zone_id;
 		string publisher_id;
+		map<Properties> custom_variables;
 	}
 }

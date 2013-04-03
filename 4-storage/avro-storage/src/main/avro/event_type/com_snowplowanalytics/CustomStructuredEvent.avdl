@@ -4,11 +4,14 @@
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
 protocol CustomStructuredEvent {
+	import idl "../../simple_types/Properties.avdl";
+	
 	record CustomStructuredEvent {
 		string category;
 		string action;
 		string label;
 		string property;
 		string value;
+		map<Properties> custom_variables;
 	}
 }

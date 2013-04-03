@@ -4,11 +4,14 @@
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
 protocol PagePing {
+	import idl "../../simple_types/Properties.avdl";
+	
 	record PagePing {
 		string PageTitle;
 		int x_offset_minimum;
 		int x_offset_maximum;
 		int y_offset_minimum;
 		int y_offset_maximum;
+		map<Properties> custom_variables;
 	}
 }

@@ -4,7 +4,10 @@
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
 protocol PageView {
+	import idl "../../simple_types/Properties.avdl";
+	
 	record PageView {
 		string page_title;
+		map<Properties> custom_variables;
 	}
 }
