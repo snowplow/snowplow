@@ -77,18 +77,18 @@ class CanonicalOutput {
   @BeanProperty var page_urlquery: String = _
   @BeanProperty var page_urlfragment: String = _
   /*
-  // Referer details
-  @BeanProperty var referer_category: String = _
-  @BeanProperty var referer_name: String = _
-  @BeanProperty var referer_searchterm: String = _
+  // Referrer details
+  @BeanProperty var refr_medium: String = _
+  @BeanProperty var refr_source: String = _
+  @BeanProperty var refr_term: String = _
 
-  // Referer URL components
-  @BeanProperty var referrer_urlscheme: String = _  
-  @BeanProperty var referrer_urlhost: String = _   
-  @BeanProperty var referrer_urlport: JInteger = _ 
-  @BeanProperty var referrer_urlpath: String = _
-  @BeanProperty var referrer_urlquery: String = _
-  @BeanProperty var referrer_urlfragment: String = _  
+  // Referrer URL components
+  @BeanProperty var refr_urlscheme: String = _  
+  @BeanProperty var refr_urlhost: String = _   
+  @BeanProperty var refr_urlport: JInteger = _ 
+  @BeanProperty var refr_urlpath: String = _
+  @BeanProperty var refr_urlquery: String = _
+  @BeanProperty var refr_urlfragment: String = _  
   */
   // Marketing
   @BeanProperty var mkt_medium: String = _
