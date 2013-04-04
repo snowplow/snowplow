@@ -15,6 +15,7 @@ package utils
 
 // Java
 import java.net.URLDecoder
+import java.net.URI
 import java.lang.{Integer => JInteger}
 import java.lang.{Float => JFloat}
 
@@ -27,6 +28,44 @@ import Scalaz._
  * ETL process along.
  */
 object ConversionUtils {
+
+  /**
+   * Simple case class wrapper around the
+   * components of a URI.
+   */
+  case class UriComponents(
+      // Required
+      scheme: String,
+      host: String,
+      port: JInteger,
+      // Optional
+      path: Option[String],
+      query: Option[String],
+      fragment: Option[String])
+
+  /**
+   * Explodes a URI into its 6 components
+   * pieces. Simple code but we use it
+   * in multiple places
+   *
+   * @param uri The URI to explode into its
+   *        constituent pieces
+   *
+   * @return The 6 components in a UriComponents
+   *         case class
+   */
+  def explodeUri(uri: URI): UriComponents = {
+
+    val p = uri.getPort
+    UriComponents(
+      scheme   = uri.getScheme,
+      host     = uri.getHost,
+      port     = if (p == -1) 80 else p,
+      path     = Option(uri.getPath),
+      query    = Option(uri.getQuery),
+      fragment = Option(uri.getFragment)
+      )
+  }
 
   /**
    * Decodes a String in the specific encoding,

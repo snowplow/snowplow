@@ -200,13 +200,13 @@ object EnrichmentManager {
     val pageUri = PE.extractPageUri(raw.refererUri, Option(event.page_url))
     pageUri.flatMap(uri => {
       event.page_url = uri.toString
-      event.page_urlscheme = uri.getScheme
-      event.page_urlhost = uri.getHost
-      val port = uri.getPort
-      event.page_urlport = if (port == -1) 80 else port
-      event.page_urlpath = uri.getPath
-      event.page_urlquery = uri.getQuery
-      event.page_urlfragment = uri.getFragment
+      val components = CU.explodeUri(uri)
+      event.page_urlscheme = components.scheme
+      event.page_urlhost = components.host
+      event.page_urlport = components.port
+      event.page_urlpath = components.path.orNull
+      event.page_urlquery = components.query.orNull
+      event.page_urlfragment = components.fragment.orNull
       uri.success
       })
 
