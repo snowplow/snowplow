@@ -4,7 +4,6 @@ import com.snowplowanalytics.snowplow.storage.avro.schema.User;
 import org.apache.avro.io.*;
 import org.apache.avro.specific.*;
 import org.apache.avro.file.*;
-// import java.io.File;
 import java.io.*;
 
 
@@ -41,8 +40,23 @@ public class TestUser {
 			dataFileWriter.close();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}	
 
-	
+		// Deserialize Users from disk
+		try {
+			DatumReader<User> userDatumReader = new SpecificDatumReader<User>(User.class);
+			DataFileReader<User> dataFileReader = new DataFileReader<User>(file, userDatumReader);
+			User user = null;
+			while (dataFileReader.hasNext()) {
+				// Reuse user object by passing it to next(). This saves us from
+				// allocating and garbage collecting many objects for files with
+				// many items.
+				user = dataFileReader.next(user);
+				System.out.println(user);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
 	}
 }
