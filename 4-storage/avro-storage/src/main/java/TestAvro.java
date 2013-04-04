@@ -34,7 +34,7 @@ public class TestAvro {
 		DatumWriter<User> userDatumWriter = new SpecificDatumWriter<User>(User.class);
 		DataFileWriter<User> dataFileWriter = new DataFileWriter<User>(userDatumWriter);
 		try {
-			dataFileWriter.create(user1.getSchema(), new File("users.avro"));
+			dataFileWriter.create(user1.getSchema(), file);
 			dataFileWriter.append(user1);
 			dataFileWriter.append(user2);
 			dataFileWriter.append(user3);

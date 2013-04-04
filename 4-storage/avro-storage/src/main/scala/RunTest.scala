@@ -13,7 +13,7 @@ object TestRunner {
       println("Finished...")
 
       var v = new TestAvroScala
-      u.RunTest1
+      v.RunTest1
 
     }
   }
