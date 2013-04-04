@@ -20,7 +20,7 @@ To briefly explain these five sub-systems:
 
 * **Trackers** fire SnowPlow events. Currently we have a JavaScript tracker, a no-JavaScript (pixel) tracker and an Arduino tracker
 * **Collectors** receive SnowPlow events from trackers. Currently we have a CloudFront-based collector and a Clojure-based collector
-* **ETL (extract, transform and load)** cleans up the raw SnowPlow events, enriches them and puts them into storage. Currently we have separate Hadoop-based and Hive-based ETL processes
+* **Enrich** cleans up the raw SnowPlow events, enriches them and puts them into storage. Currently we have separate Hadoop-based and Hive-based enrichment processes
 * **Storage** is where the SnowPlow events live. Currently we store the SnowPlow events in a Hive-format flatfile structure on S3, and in the Redshift and Infobright columnar databases
 * **Analytics** are performed on the SnowPlow events. Currently we have a set of ad hoc analyses that work with Hive and Infobright 
 
@@ -33,13 +33,11 @@ To briefly explain these five sub-systems:
 | ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
 | [Technical Docs] [techdocs] | [Setup Guide] [setup] | [Roadmap] [roadmap]. [Contributors] [contributors]. |
 
-
-
 ## Contributing
 
 We're committed to a loosely-coupled architecture for SnowPlow and would love to get your contributions within each of the five sub-systems.
 
-If you would like help implementing a new tracker, trying a different ETL approach or loading SnowPlow events into an alternative database, **[get in touch] [talk-to-us]**!
+If you would like help implementing a new tracker, adding an additional enrichment or loading SnowPlow events into an alternative database, **[get in touch] [talk-to-us]**!
 
 ## Questions or need help?
 
