@@ -39,6 +39,7 @@ object SnowPlowHadoopEtlBuild extends Build {
         Libraries.scalaz7,
         Libraries.jerkson,
         Libraries.scalaUtil,
+        Libraries.refererParser,
         // Scala (test only)
         Libraries.specs2,
         Libraries.scalazSpecs2,
