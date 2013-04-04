@@ -66,6 +66,9 @@ object StructEventCfLineTest {
     "/oracles/119-psycards-book-and-deck-starter-pack.html",
     "view=print",
     "detail",
+    null, // No referrer details
+    null, //
+    null, //
     null, // No marketing campaign info
     null, //
     null, //

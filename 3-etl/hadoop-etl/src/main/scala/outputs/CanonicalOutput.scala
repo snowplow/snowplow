@@ -76,12 +76,12 @@ class CanonicalOutput {
   @BeanProperty var page_urlpath: String = _
   @BeanProperty var page_urlquery: String = _
   @BeanProperty var page_urlfragment: String = _
-  /*
+
   // Referrer details
   @BeanProperty var refr_medium: String = _
   @BeanProperty var refr_source: String = _
   @BeanProperty var refr_term: String = _
-
+/*
   // Referrer URL components
   @BeanProperty var refr_urlscheme: String = _  
   @BeanProperty var refr_urlhost: String = _   

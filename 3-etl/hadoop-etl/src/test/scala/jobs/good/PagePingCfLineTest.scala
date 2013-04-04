@@ -66,6 +66,9 @@ object PagePingCfLineTest {
     "/2-tarot-cards/genre/all/type/all",
     "p=2&n=48",
     null,
+    null, // No referrer details
+    null, //
+    null, //
     null, // No marketing campaign info
     null, //
     null, //
