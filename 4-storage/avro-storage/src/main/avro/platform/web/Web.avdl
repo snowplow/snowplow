@@ -6,12 +6,12 @@
 protocol Web {
 
 	import idl "../../simple_types/Geo.avdl";
+	import idl "../../simple_types/URI.avdl";
 
 	record User {
 		string domain_user_id;
 		string network_user_id;
 		int domain_session_index;
-		string ip_address;
 		string user_fingerprint;
 	}
 
@@ -34,7 +34,7 @@ protocol Web {
 	}
 
 	record Referrer {
-		URL url;
+		URI url;
 		string source;
 		string medium;
 		string term;
@@ -49,7 +49,7 @@ protocol Web {
 	}
 
 	record Page {
-		URL url;
+		URI url;
 		string title;
 		Referrer referrer;
 		Document document;

@@ -1,0 +1,17 @@
+/**
+ * SnowPlow user fields common across platforms
+ * and event types
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol User {
+	record StringOrNull {
+		union {string, null} StringOrNull;
+	}
+
+	record User {
+		StringOrNull business_user_id;
+		StringOrNull canonical_user_id;
+		string ip_address;
+	}
+}

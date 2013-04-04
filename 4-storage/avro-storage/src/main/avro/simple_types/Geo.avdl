@@ -1,6 +1,6 @@
 /**
- * SnowPlow version is the object that tracks the longitude / latitude
- * geographic location
+ * Geo  type - tracks the longitude / latitude
+ * i.e. geographic location
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")

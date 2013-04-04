@@ -12,13 +12,9 @@ protocol Event {
 	import idl "event_type/EventType.avdl";
 	import idl "platform/Platform.avdl";
 
-	record UserID {
-		union { string, null } user;
-	}
-
 	record Event {
 		string event_id;
-		UserID user_id;
+		User user;
 		Timestamp collector_tstamp;
 		Timestamp device_tstamp;
 		SnowPlowVersion snowplow_version;
