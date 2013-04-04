@@ -4,7 +4,7 @@
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
-protocol Timestamp {
+protocol TimestampProtocol {
 	record Timestamp {
 		long collector;
 		long device;

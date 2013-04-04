@@ -3,7 +3,7 @@
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
-protocol GamesConsole {
+protocol GamesConsoleProtocol {
 	record GamesConsole {
 		
 	}

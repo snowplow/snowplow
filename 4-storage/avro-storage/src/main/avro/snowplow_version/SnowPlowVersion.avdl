@@ -4,7 +4,7 @@
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
-protocol SnowPlowVersion {
+protocol SnowPlowVersionProtocol {
 	record SnowPlowVersion {
 		string tracker_version;
 		string collector_version;

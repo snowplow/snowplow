@@ -3,7 +3,7 @@
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
-protocol PC {
+protocol PCProtocol {
 	record PC {
 		
 	}

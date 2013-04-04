@@ -4,7 +4,7 @@
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
-protocol TransactionLegacy {
+protocol TransactionLegacyProtocol {
 	record Value {
 		float total;
 		float shipping;

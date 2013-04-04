@@ -4,7 +4,7 @@
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
-protocol com_SnowplowAnalytics {
+protocol com_SnowplowAnalyticsProtocol {
 	import idl "AdImpression.avdl";
 	import idl "CustomStructuredEvent.avdl";
 	import idl "ItemView.avdl";

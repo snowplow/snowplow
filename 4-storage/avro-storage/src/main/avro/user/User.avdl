@@ -4,7 +4,7 @@
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
-protocol User {
+protocol UserProtocol {
 	record StringOrNull {
 		union {string, null} StringOrNull;
 	}

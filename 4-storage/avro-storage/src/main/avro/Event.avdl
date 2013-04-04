@@ -6,7 +6,7 @@
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
-protocol Event {
+protocol EventProtocol {
 	import idl "simple_types/Timestamp.avdl";
 	import idl "snowplow_version/SnowPlowVersion.avdl";
 	import idl "event_type/EventType.avdl";

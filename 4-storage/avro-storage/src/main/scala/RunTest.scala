@@ -12,5 +12,8 @@ object TestRunner {
 
       println("Finished...")
 
+      var v = new TestAvroScala
+      u.RunTest1
+
     }
   }

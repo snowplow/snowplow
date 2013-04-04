@@ -19,8 +19,6 @@ public class TestAvro {
 		user1.setFavoriteNumber(256);
 		// Leave favorite color null
 
-		System.out.println("Hello World!");
-
 		// alternate constructor
 		User user2 = new User("Ben", 7, "red");
 

@@ -4,7 +4,7 @@
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
-protocol TransactionItemsLegacy {
+protocol TransactionItemsLegacyProtocol {
 
 	record TransactionItemsLegacy {
 		string order_id;

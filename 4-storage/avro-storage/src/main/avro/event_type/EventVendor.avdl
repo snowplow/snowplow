@@ -3,7 +3,7 @@
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
-protocol EventVendor {
+protocol EventVendorProtocol {
 	import idl "com_snowplowanalytics/com_SnowplowAnalytics.avdl";
 
 	record EventVendor {

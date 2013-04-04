@@ -3,7 +3,7 @@
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
-protocol Web {
+protocol WebProtocol {
 
 	import idl "../../simple_types/Geo.avdl";
 	import idl "../../simple_types/URI.avdl";

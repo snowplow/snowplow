@@ -4,7 +4,7 @@
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
-protocol Geo {
+protocol GeoProtocol {
 	record Geo {
 		float longitude;
 		float latitude;

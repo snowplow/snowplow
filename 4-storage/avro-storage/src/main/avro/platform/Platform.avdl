@@ -3,7 +3,7 @@
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
-protocol Platform {
+protocol PlatformProtocol {
 	import idl "games_console/GamesConsole.avdl";
 	import idl "internet_of_things/InternetOfThings.avdl";
 	import idl "mobile/Mobile.avdl";

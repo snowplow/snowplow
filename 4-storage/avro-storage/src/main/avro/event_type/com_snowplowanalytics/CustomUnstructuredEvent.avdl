@@ -3,7 +3,7 @@
  */
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
-protocol CustomStructuredEvent {
+protocol CustomStructuredEventProtocol {
 
 	import idl "../../simple_types/Properties.avdl";
 
