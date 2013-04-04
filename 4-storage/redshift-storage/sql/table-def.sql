@@ -41,7 +41,6 @@ CREATE TABLE events (
 	network_userid varchar(38),
 	-- Page
 	page_title varchar(2000),
-	page_referrer varchar(3000),
 	-- Page URL components
 	page_urlscheme varchar(16) encode text255,    
 	page_urlhost varchar(255) encode text255,     
@@ -49,9 +48,20 @@ CREATE TABLE events (
 	page_urlpath varchar(1000) encode text32k,
 	page_urlquery varchar(3000),
 	page_urlfragment varchar(255),
+	-- Referrer URL components
+	refr_urlscheme varchar(16) encode text255,    
+	refr_urlhost varchar(255) encode text255,     
+	refr_urlport smallint,        
+	refr_urlpath varchar(1000) encode text32k,
+	refr_urlquery varchar(3000),
+	refr_urlfragment varchar(255),
+	-- Referrer details
+	refr_medium varchar(50) encode text255,
+	refr_source varchar(50) encode text255,
+	refr_term varchar(255) encode raw,
 	-- Marketing
-	mkt_source varchar(255) encode text255,
 	mkt_medium varchar(255) encode text255,
+	mkt_source varchar(255) encode text255,
 	mkt_term varchar(255) encode raw,
 	mkt_content varchar(500) encode raw,
 	mkt_campaign varchar(255) encode text32k,
