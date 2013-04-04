@@ -67,7 +67,7 @@ class CanonicalOutput {
   // Page
   @BeanProperty var page_url: String = _ // Note: we project this out in Scalding (because we don't have space in Redshift currently)
   @BeanProperty var page_title: String = _
-  @BeanProperty var page_referrer: String = _
+  @BeanProperty var page_referrer: String = _ // Note: we project this out in Scalding (because we don't have space in Redshift currently)
 
   // Page URL components
   @BeanProperty var page_urlscheme: String = _  
@@ -77,11 +77,6 @@ class CanonicalOutput {
   @BeanProperty var page_urlquery: String = _
   @BeanProperty var page_urlfragment: String = _
 
-  // Referrer details
-  @BeanProperty var refr_medium: String = _
-  @BeanProperty var refr_source: String = _
-  @BeanProperty var refr_term: String = _
-/*
   // Referrer URL components
   @BeanProperty var refr_urlscheme: String = _  
   @BeanProperty var refr_urlhost: String = _   
@@ -89,7 +84,12 @@ class CanonicalOutput {
   @BeanProperty var refr_urlpath: String = _
   @BeanProperty var refr_urlquery: String = _
   @BeanProperty var refr_urlfragment: String = _  
-  */
+
+  // Referrer details
+  @BeanProperty var refr_medium: String = _
+  @BeanProperty var refr_source: String = _
+  @BeanProperty var refr_term: String = _
+
   // Marketing
   @BeanProperty var mkt_medium: String = _
   @BeanProperty var mkt_source: String = _

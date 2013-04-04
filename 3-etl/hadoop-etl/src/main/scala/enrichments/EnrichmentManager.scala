@@ -199,7 +199,10 @@ object EnrichmentManager {
     // Potentially update the page_url and set the page URL components
     val pageUri = PE.extractPageUri(raw.refererUri, Option(event.page_url))
     pageUri.flatMap(uri => {
+      // Update the page_url
       event.page_url = uri.toString
+
+      // Set the URL components
       val components = CU.explodeUri(uri)
       event.page_urlscheme = components.scheme
       event.page_urlhost = components.host
@@ -207,6 +210,31 @@ object EnrichmentManager {
       event.page_urlpath = components.path.orNull
       event.page_urlquery = components.query.orNull
       event.page_urlfragment = components.fragment.orNull
+      
+      uri.success
+      })
+
+    // Potentially set the referrer details and URL components
+    val refererUri = CU.stringToUri(event.page_referrer)
+    refererUri.flatMap(
+      uri => {
+        uri match {
+          case Some(u) =>
+
+            // Set the referrer details
+            // TODO
+
+            // Set the URL components
+            val components = CU.explodeUri(u)
+            event.refr_urlscheme = components.scheme
+            event.refr_urlhost = components.host
+            event.refr_urlport = components.port
+            event.refr_urlpath = components.path.orNull
+            event.refr_urlquery = components.query.orNull
+            event.refr_urlfragment = components.fragment.orNull
+
+          case None =>
+        }
       uri.success
       })
 
@@ -234,8 +262,8 @@ object EnrichmentManager {
     event.page_urlfragment = CU.truncate(event.page_urlfragment, 255)
 
     // Collect our errors on Failure, or return our event on Success 
-    (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| transform |@| campaign) {
-      (_,_,_,_,_) => event
+    (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {
+      (_,_,_,_,_,_) => event
     }
   }
 }

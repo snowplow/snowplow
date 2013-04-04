@@ -103,6 +103,32 @@ object ConversionUtils {
     }
 
   /**
+   * A wrapper around Java's
+   * URI.create().
+   *
+   * Exceptions thrown by
+   * URI.create():
+   * 1. NullPointerException
+   *    if uri is null
+   * 2. IllegalArgumentException
+   *    if uri violates RFC 2396
+   *
+   * @param uri The URI string to
+   *        convert
+   * @return an Option-boxed URI object, or an
+   *         error message, all
+   *         wrapped in a Validation
+   */       
+  def stringToUri(uri: String): Validation[String, Option[URI]] =
+    try {
+      Some(URI.create(uri)).success
+    } catch {
+      case e: NullPointerException => None.success
+      case e: IllegalArgumentException => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, e.getMessage).fail
+      case e => "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).fail
+    }
+
+  /**
    * Extract a Scala Int from
    * a String, or error.
    *

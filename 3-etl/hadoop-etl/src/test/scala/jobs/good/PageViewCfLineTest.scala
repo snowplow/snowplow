@@ -59,13 +59,19 @@ object PageViewCfLineTest {
     null, // No network_userid set
     // Raw page URL is discarded 
     "Psychic Bazaar",
-    "http://www.psychicbazaar.com/",
+    // Raw referer URL is discarded "http://www.psychicbazaar.com/",
     "http",
     "www.psychicbazaar.com",
     "80",
     "/oracles/119-psycards-book-and-deck-starter-pack.html",
     "view=print",
     "detail",
+    "http",
+    "www.psychicbazaar.com",
+    "80",
+    "/",
+    null, //
+    null, //
     null, // No referrer details
     null, //
     null, //

@@ -59,13 +59,19 @@ object TransactionItemCfLineTest {
     null, // No network_userid set
     // Raw page URL is discarded 
     null, // No page title for transactions
-    null, // No referer
+    // Raw referer URL is discarded
     "http",
     "www.psychicbazaar.com",
     "80",
     "/oracles/119-psycards-book-and-deck-starter-pack.html",
     "view=print",
     "detail",
+    null, // No referrer URL components
+    null, //
+    null, //
+    null, //
+    null, //
+    null, //
     null, // No referrer details
     null, //
     null, //

@@ -59,12 +59,18 @@ object PagePingCfLineTest {
     null, // No network_userid set
     // Raw page URL is discarded 
     "Tarot cards - Psychic Bazaar",
-    "http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?n=48",
+    // Raw referer URL is discarded "http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?n=48",
     "http",
     "www.psychicbazaar.com",
     "80",
     "/2-tarot-cards/genre/all/type/all",
     "p=2&n=48",
+    null,
+    "http",
+    "www.psychicbazaar.com",
+    "80",
+    "/2-tarot-cards/genre/all/type/all",
+    "n=48",
     null,
     null, // No referrer details
     null, //

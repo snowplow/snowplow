@@ -21,6 +21,9 @@ import java.net.URI
 import scalaz._
 import Scalaz._
 
+// This project
+import utils.{ConversionUtils => CU}
+
 /**
  * Holds enrichments related to the
  * web page's URL, and the document
@@ -53,9 +56,10 @@ object PageEnrichments {
       fromTracker: Option[String]): Validation[String, URI] = {
 
     (fromReferer, fromTracker) match {
-      case (Some(r), None)    => toUri(r)
-      case (None, Some(t))    => toUri(t)
-      case (Some(r), Some(t)) => choosePageUri(r, t) flatMap (pu => toUri(pu))
+      // TODO: tidy up this nasty _.get.success (which is just to strip the not-needed Option-boxing from the URI)
+      case (Some(r), None)    => CU.stringToUri(r).flatMap(_.get.success)
+      case (None, Some(t))    => CU.stringToUri(t).flatMap(_.get.success)
+      case (Some(r), Some(t)) => choosePageUri(r, t) flatMap (pu => CU.stringToUri(pu).flatMap(_.get.success))
       case (None, None)       => "No page URI provided".fail
     }
   }
@@ -93,31 +97,5 @@ object PageEnrichments {
       else fromTracker.success // Corruption in the collector log? TODO: add a warning when we support warnings
     } catch {
       case e => "Unexpected error choosing page URI from [%s] and [%s]: [%s]".format(fromReferer, fromTracker, e.getMessage).fail
-    }
-
-  /**
-   * A wrapper around Java's
-   * URI.parse().
-   *
-   * Exceptions thrown by
-   * URI.parse():
-   * 1. NullPointerException
-   *    if uri is null
-   * 2. IllegalArgumentException
-   *    if uri violates RFC 2396
-   *
-   * @param uri The URI string to
-   *        convert
-   * @return the URI object, or an
-   *         error message, all
-   *         wrapped in a Validation
-   */       
-  private def toUri(uri: String): Validation[String, URI] =
-    try {
-      URI.create(uri).success
-    } catch {
-      case e: NullPointerException => "Provided URI string was null".fail
-      case e: IllegalArgumentException => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, e.getMessage).fail
-      case e => "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).fail
     }
 }
