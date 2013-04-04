@@ -24,6 +24,7 @@ protocol Web {
 	}
 
 	record URL {
+		string complete;
 		string scheme;
 		string host;
 		string port;
