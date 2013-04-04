@@ -1,12 +1,12 @@
-# ETL
+# Enrich
 
 ![architecture] [architecture-image]
 
 ## Overview
 
-The **ETL** (extract, transform, load) process takes raw SnowPlow events logged by a [Collector] [collectors], cleans them up, enriches them and puts them into [Storage] [storage].
+The **Enrich** process takes raw SnowPlow events logged by a [Collector] [collectors], cleans them up, enriches them and puts them into [Storage] [storage].
 
-## Available ETL
+## Available enrich
 
 | ETL                             | Description                                                  | Status           |
 |---------------------------------|--------------------------------------------------------------|------------------|
