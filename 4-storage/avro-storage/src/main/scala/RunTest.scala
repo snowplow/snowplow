@@ -4,10 +4,8 @@ object TestRunner {
     def main(args: Array[String]) {
       println("Running test...")
 
-      var u = new TestUser
-      u.i = 3;
-      println(u.i + " value retrieved from instance of TestUser class")
-      u.run();
+      var u = new TestAvro
+      u.RunTest1();
 
       println("Finished...")
 

@@ -7,10 +7,9 @@ import org.apache.avro.file.*;
 import java.io.*;
 
 
-public class TestUser {
-	int i;
-
-	void run() {
+public class TestAvro {
+	
+	void RunTest1() {
 		User user1 = new User();
 		user1.setName("Alyssa");
 		user1.setFavoriteNumber(256);
@@ -56,7 +55,10 @@ public class TestUser {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
-		
+		}		
+	}
+
+	void RunTest2() {
+		Schema schema = new Parser().parse(new File("user.avsc"));
 	}
 }
