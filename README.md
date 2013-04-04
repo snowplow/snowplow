@@ -20,7 +20,7 @@ To briefly explain these five sub-systems:
 
 * **Trackers** fire SnowPlow events. Currently we have a JavaScript tracker, a no-JavaScript (pixel) tracker and an Arduino tracker
 * **Collectors** receive SnowPlow events from trackers. Currently we have a CloudFront-based collector and a Clojure-based collector
-* **ETL (extract, transform and load)** cleans up the raw SnowPlow events, enriches them and puts them into storage. Currently we have a Hive-based ETL process
+* **ETL (extract, transform and load)** cleans up the raw SnowPlow events, enriches them and puts them into storage. Currently we have separate Hadoop-based and Hive-based ETL processes
 * **Storage** is where the SnowPlow events live. Currently we store the SnowPlow events in a Hive-format flatfile structure on S3, and in the Redshift and Infobright columnar databases
 * **Analytics** are performed on the SnowPlow events. Currently we have a set of ad hoc analyses that work with Hive and Infobright 
 
