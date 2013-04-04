@@ -14,6 +14,7 @@ object TestRunner {
 
       var v = new TestAvroScala
       v.RunTest1
+      v.RunTest2
 
     }
   }
