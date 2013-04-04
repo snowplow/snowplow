@@ -2,7 +2,7 @@ Version 0.8.x (2013-04-xx)
 --------------------------
 Hadoop ETL: break referer_url into constituent parts (and remove raw referer_url) (part of #175)
 Hadoop ETL: remove raw referrer_url (as no space in Redshift table defn) (part of #175)
-
+Hadoop ETL: added referer parsing (#176)
 Common: completed rename of 3-etl to 3-enrich (#99)
 
 Version 0.8.0 (2013-04-03)
