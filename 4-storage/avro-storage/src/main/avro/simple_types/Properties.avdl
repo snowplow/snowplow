@@ -8,7 +8,7 @@
  	import idl "Geo.avdl";
 
 	record SingleProperty {
-		union { string, float, Timestamp, Geo } single_property;
+		union { string, boolean, float, Timestamp, Geo } single_property;
 	}
 
 	record MultiProperty {
