@@ -5,7 +5,10 @@ object TestRunner {
       println("Running test...")
 
       var u = new TestAvro
-      u.RunTest1();
+      u.RunTest1()
+      println("Run test 1 - now going to run test 2")
+
+      u.RunTest2()
 
       println("Finished...")
 
