@@ -4,7 +4,8 @@ import com.snowplowanalytics.snowplow.storage.avro.schema.User;
 import org.apache.avro.io.*;
 import org.apache.avro.specific.*;
 import org.apache.avro.file.*;
-import java.io.File;
+// import java.io.File;
+import java.io.*;
 
 
 public class TestUser {
@@ -32,10 +33,16 @@ public class TestUser {
 		File file = new File("users.avro");
 		DatumWriter<User> userDatumWriter = new SpecificDatumWriter<User>(User.class);
 		DataFileWriter<User> dataFileWriter = new DataFileWriter<User>(userDatumWriter);
-		dataFileWriter.create(user1.getSchema(), new File("users.avro"));
-		dataFileWriter.append(user1);
-		dataFileWriter.append(user2);
-		dataFileWriter.append(user3);
-		dataFileWriter.close();
+		try {
+			dataFileWriter.create(user1.getSchema(), new File("users.avro"));
+			dataFileWriter.append(user1);
+			dataFileWriter.append(user2);
+			dataFileWriter.append(user3);
+			dataFileWriter.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	
 	}
 }
