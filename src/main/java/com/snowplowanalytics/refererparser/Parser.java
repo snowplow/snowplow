@@ -40,15 +40,17 @@ import org.apache.http.client.utils.URLEncodedUtils;
  */
 public class Parser {
 
-  private static final String REFERERS_YAML_PATH = "/search.yml";
+  private static final String REFERERS_YAML_PATH = "/referers.yml";
   private Map<String,RefererLookup> referers;
 
   private static class RefererLookup {
-    public String name;
+    public Medium medium;
+    public String source;
     public List<String> parameters;
 
-    public RefererLookup(String name, List<String> parameters) {
-      this.name = name;
+    public RefererLookup(Medium medium, String source, List<String> parameters) {
+      this.medium = medium;
+      this.source = source;
       this.parameters = parameters;
     }
   }
@@ -85,7 +87,7 @@ public class Parser {
       return new Referer(Medium.UNKNOWN, null, null); // Unknown referer, nothing more to do
     } else {
       final String term = extractSearchTerm(refererUri, referer.parameters);
-      return new Referer(Medium.SEARCH, referer.name, term);
+      return new Referer(referer.medium, referer.source, term);
     }
   }
 
@@ -107,29 +109,40 @@ public class Parser {
   private Map<String,RefererLookup> loadReferers(InputStream referersYaml) throws CorruptYamlException {
 
     Yaml yaml = new Yaml(new SafeConstructor());
-    Map<String,Map> rawReferers = (Map<String,Map>) yaml.load(referersYaml);
+    Map<String,Map<String,Map>> rawReferers = (Map<String,Map<String,Map>>) yaml.load(referersYaml);
 
-    // Process each element of the map
+    // This will store all of our referers
     Map<String,RefererLookup> referers = new HashMap<String,RefererLookup>();
-    for (Map.Entry<String, Map> referer : rawReferers.entrySet()) {
 
-      String refererName = referer.getKey();
-      Map<String,List<String>> refererMap = referer.getValue();
+    // Outer loop is all referers under a given medium
+    for (Map.Entry<String,Map<String,Map>> mediumReferers : rawReferers.entrySet()) {
 
-      // Validate
-      List<String> parameters = refererMap.get("parameters");
-      if (parameters == null) {
-        throw new CorruptYamlException("No parameters found for referer '" + refererName + "'");
-      }
-      List<String> domains = refererMap.get("domains");
-      if (domains == null) { 
-        throw new CorruptYamlException("No domains found for referer '" + refererName + "'");
-      }
+      Medium medium = Medium.fromString(mediumReferers.getKey());
 
-      // Our hash needs referer domain as the
-      // key, so let's expand
-      for (String domain : domains) {
-        referers.put(domain, new RefererLookup(refererName, parameters));
+      // Inner loop is individual referers
+      for (Map.Entry<String, Map> referer : mediumReferers.getValue().entrySet()) {
+
+        String sourceName = referer.getKey();
+        Map<String,List<String>> refererMap = referer.getValue();
+
+        // Validate
+        List<String> parameters = refererMap.get("parameters");
+        if (parameters == null) {
+          throw new CorruptYamlException("No parameters found for referer '" + sourceName + "'");
+        }
+        List<String> domains = refererMap.get("domains");
+        if (domains == null) { 
+          throw new CorruptYamlException("No domains found for referer '" + sourceName + "'");
+        }
+
+        // Our hash needs referer domain as the
+        // key, so let's expand
+        for (String domain : domains) {
+          if (referers.containsValue(domain)) {
+            throw new CorruptYamlException("Duplicate of domain '" + domain + "' found");
+          }
+          referers.put(domain, new RefererLookup(medium, sourceName, parameters));
+        }
       }
     }
 
