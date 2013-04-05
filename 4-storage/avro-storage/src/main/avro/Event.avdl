@@ -13,10 +13,10 @@ protocol EventProtocol {
 	import idl "platform/Platform.avdl";
 
 	record Event {
-		string event_id;
+		union {string, null} event_id;
 		User user;
 		Timestamp collector_tstamp;
-		Timestamp device_tstamp;
+		union {Timestamp, null} device_tstamp;
 		SnowPlowVersion snowplow_version;
 		EventType event_type;
 		Platform platform;

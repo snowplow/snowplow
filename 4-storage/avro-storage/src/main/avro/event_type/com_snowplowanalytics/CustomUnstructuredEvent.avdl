@@ -9,6 +9,6 @@ protocol CustomStructuredEventProtocol {
 
 	record CustomStructuredEvent {
 		string name;
-		map<Properties> Properties;
+		union{map<Properties>, null} Properties;
 	}
 }

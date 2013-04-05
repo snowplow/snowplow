@@ -5,13 +5,10 @@
 
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
 protocol UserProtocol {
-	record StringOrNull {
-		union {string, null} StringOrNull;
-	}
 
 	record User {
-		StringOrNull business_user_id;
-		StringOrNull canonical_user_id;
-		string ip_address;
+		union {string, null} business_user_id;
+		union {string, null} canonical_user_id;
+		union {string, null} ip_address;
 	}
 }

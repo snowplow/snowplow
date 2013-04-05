@@ -9,9 +9,9 @@ protocol ItemViewProtocol {
 	record ItemView {
 		string id;
 		string name;
-		string display_format;
-		int rank;
-		string location;
-		map<Properties> custom_variables;
+		union{string, null} display_format;
+		union{int, null} rank;
+		union{string, null} location;
+		union{map<Properties>, null} custom_variables;
 	}
 }

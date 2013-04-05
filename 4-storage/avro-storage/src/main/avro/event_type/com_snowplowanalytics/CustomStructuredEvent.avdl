@@ -7,11 +7,11 @@ protocol CustomStructuredEventProtocol {
 	import idl "../../simple_types/Properties.avdl";
 	
 	record CustomStructuredEvent {
-		string category;
+		union {string, null} category;
 		string action;
-		string label;
-		string property;
-		string value;
-		map<Properties> custom_variables;
+		union {string, null} label;
+		union {string, null} property;
+		union {float, null} value;
+		union {map<Properties>, null} custom_variables;
 	}
 }

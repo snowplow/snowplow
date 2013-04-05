@@ -20,18 +20,18 @@ protocol TransactionProtocol {
 
 	record LineItems {
 		string sku;
-		string name;
-		string category;
+		union{string, null} name;
+		union{string, null} category;
 		float unit_price;
 		float quantity;
 	}
 
 	record Transaction {
 		string id;
-		string affiliation;
+		union{string, null} affiliation;
 		Value value;
 		DeliveryAddress delivery_address;
 		array<LineItems> line_items;
-		map<Properties> custom_variables;
+		union{map<Properties>, null} custom_variables;
 	}
 }

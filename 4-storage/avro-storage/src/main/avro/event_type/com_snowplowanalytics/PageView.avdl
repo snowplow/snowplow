@@ -8,6 +8,6 @@ protocol PageViewProtocol {
 	
 	record PageView {
 		string page_title;
-		map<Properties> custom_variables;
+		union{map<Properties>, null} custom_variables;
 	}
 }

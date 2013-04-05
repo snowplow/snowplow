@@ -12,6 +12,6 @@ protocol PagePingProtocol {
 		int x_offset_maximum;
 		int y_offset_minimum;
 		int y_offset_maximum;
-		map<Properties> custom_variables;
+		union{map<Properties>, null} custom_variables;
 	}
 }

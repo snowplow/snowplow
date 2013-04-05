@@ -9,8 +9,8 @@ protocol SocialProtocol {
 	record Social {
 		string action;
 		string network;
-		string target;
-		string page_path;
-		map<Properties> custom_variables;
+		union{string, null} target;
+		union{string, null} page_path;
+		union{map<Properties>, null} custom_variables;
 	}
 }

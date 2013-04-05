@@ -6,8 +6,8 @@
 @namespace("com.snowplowanalytics.snowplow.storage.avro")
 protocol SnowPlowVersionProtocol {
 	record SnowPlowVersion {
-		string tracker_version;
-		string collector_version;
-		string etl_version;
+		union{string, null} tracker_version;
+		union{string, null} collector_version;
+		union{string, null} etl_version;
 	}
 }

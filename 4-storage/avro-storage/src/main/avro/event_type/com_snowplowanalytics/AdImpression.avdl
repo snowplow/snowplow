@@ -7,12 +7,12 @@ protocol AdImpressionProtocol {
 	import idl "../../simple_types/Properties.avdl";
 
 	record AdImpression {
-		string banner_id;
-		string campaign_id;
-		string advertiser_id;
-		string user_id;
-		string zone_id;
-		string publisher_id;
-		map<Properties> custom_variables;
+		union {string, null} banner_id;
+		union {string, null} campaign_id;
+		union {string, null} advertiser_id;
+		union {string, null} user_id;
+		union {string, null} zone_id;
+		union {string, null} publisher_id;
+		union {map<Properties>, null} custom_variables;
 	}
 }
