@@ -61,13 +61,13 @@ public class Parser {
     referers = loadReferers(referersYaml);
   }
 
-  public Referal parse(String refererUri) throws URISyntaxException {
+  public Referer parse(String refererUri) throws URISyntaxException {
     if (refererUri == null || refererUri == "") return null;
     final URI uri = new URI(refererUri);
     return parse(uri);
   }
 
-  public Referal parse(URI refererUri) {
+  public Referer parse(URI refererUri) {
 
     // null unless we have a valid http: or https: URI
     if (refererUri == null) return null;
@@ -82,15 +82,14 @@ public class Parser {
 
     // Create our referer as necessary
     if (referer == null) {
-      return new Referal(new Referer("Other"), null); // Other referer, no search we can extract
+      return new Referer(Medium.UNKNOWN, null, null); // Unknown referer, nothing more to do
     } else {
-      final Referer refr = new Referer(referer.name);
-      final Search search = extractSearch(refererUri, referer.parameters);
-      return new Referal(refr, search);
+      final String term = extractSearchTerm(refererUri, referer.parameters);
+      return new Referer(Medium.SEARCH, referer.name, term);
     }
   }
 
-  private Search extractSearch(URI uri, List<String> possibleParameters) {
+  private String extractSearchTerm(URI uri, List<String> possibleParameters) {
 
     List<NameValuePair> params = URLEncodedUtils.parse(uri, "UTF-8");
 
@@ -99,7 +98,7 @@ public class Parser {
       final String value = pair.getValue();
 
       if (possibleParameters.contains(name)) {
-        return new Search(value, name);
+        return value;
       }
     }
     return null;

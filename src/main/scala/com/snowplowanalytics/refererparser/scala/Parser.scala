@@ -21,27 +21,41 @@ import java.net.URI
 
 // RefererParser Java impl
 import com.snowplowanalytics.refererparser.{Parser => JParser}
+import com.snowplowanalytics.refererparser.{Medium => JMedium}
 
 /**
- * Immutable case class to hold a referal.
+ * Enumeration for supported mediums.
  *
- * Replacement for Java version's POJO.
+ * Replacement for Java version's Enum.
  */
-case class Referal(referer: Referer, search: Option[Search])
+object Medium extends Enumeration {
+  type Medium = Value
+
+  val Unknown  = Value("unknown")
+  val Search   = Value("search")
+  val Internal = Value("internal")
+  val Social   = Value("social")
+  val Email    = Value("email")
+
+  /**
+   * Converts from our Java Medium Enum
+   * to our Scala Enumeration values above.
+   */
+  def fromJava(medium: JMedium) = medium match {
+    case JMedium.UNKNOWN  => Unknown
+    case JMedium.INTERNAL => Internal
+    case JMedium.SEARCH   => Search
+    case JMedium.SOCIAL   => Social
+    case JMedium.EMAIL    => Email
+  }
+}
 
 /**
  * Immutable case class to hold a referer.
  *
  * Replacement for Java version's POJO.
  */
-case class Referer(name: String)
-
-/**
- * Immutable case class to hold a search.
- *
- * Replacement for Java version's POJO.
- */
-case class Search(term: String, parameter: String)
+case class Referer(medium: Medium.Medium, source: String, term: Option[String])
 
 /**
  * Parser object - contains one-time initialization
@@ -53,13 +67,13 @@ case class Search(term: String, parameter: String)
  */
 object Parser {
 
-  private type MaybeReferal = Option[Referal]
+  private type MaybeReferer = Option[Referer]
 
   /**
    * Parses a `refererUri` String to return
    * either a Referal, or None.
    */
-  def parse(refererUri: String): MaybeReferal =
+  def parse(refererUri: String): MaybeReferer =
     if (refererUri == null || refererUri == "")
       None
     else
@@ -67,15 +81,15 @@ object Parser {
 
   /**
    * Parses a `refererUri` URI to return
-   * either a Referal, or None.
+   * either a Referer, or None.
    */
-  def parse(refererUri: URI): MaybeReferal = {
+  def parse(refererUri: URI): MaybeReferer = {
+    
     val jp = new JParser()
+    val jrefr = Option(jp.parse(refererUri))
 
-    for {
-      r <- Option(jp.parse(refererUri))
-    } yield Referal(Referer(name = r.referer.name), for {
-        s <- Option(r.search)
-      } yield Search(term = s.term, parameter = s.parameter))
+    jrefr.map(jr =>
+      Referer(Medium.fromJava(jr.medium), jr.source, Option(jr.term))
+      )
   }
 }

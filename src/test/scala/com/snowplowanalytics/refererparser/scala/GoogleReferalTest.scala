@@ -23,22 +23,19 @@ class GoogleReferalTest extends Specification {
 
   // From the README
   val refererUrl = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
-  val expected = Referal(Referer("Google"),
-                         Some(Search(term="gateway oracle cards denise linn", parameter="q")))
+  val expected = Referer(Medium.Search, "Google", Some("gateway oracle cards denise linn"))
 
   "A Google referal" should {
 
-    val referal = Parser.parse(refererUrl).get
-    "have referer set to \"%s\"".format(expected.referer.name) in {
-      referal.referer.name must_== expected.referer.name
+    val referer = Parser.parse(refererUrl).get
+    "have referer medium to \"%s\"".format(expected.medium) in {
+      referer.medium must_== expected.medium
     }
-
-    val search = referal.search.get
-    "have search parameter set to \"%s\"".format(expected.search.get.parameter) in {
-      search.parameter must_== expected.search.get.parameter
+    "have referer source to \"%s\"".format(expected.source) in {
+      referer.source must_== expected.source
     }
-    "have search term set to \"%s\"".format(expected.search.get.term) in {
-      search.term must_== expected.search.get.term
+    "have search term set to \"%s\"".format(expected.term.get) in {
+      referer.term must_== expected.term
     }
   }
 }
