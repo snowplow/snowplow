@@ -33,7 +33,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder
 
 // Snowplow referer-parser
 import com.snowplowanalytics.refererparser.scala.{Parser => RefererParser}
-import com.snowplowanalytics.refererparser.scala.Referal
+import com.snowplowanalytics.refererparser.scala.Referer
 
 // This project
 import utils.{ConversionUtils => CU}
@@ -138,17 +138,6 @@ object AttributionEnrichments {
    * @return a Tuple3 containing referer medium,
    *         source and term, all Strings
    */
-  def extractRefererDetails(uri: URI, pageHost: String): Option[Tuple3[String, Option[String], Option[String]]] = {
-
-    RefererParser.parse(uri) match {
-      case None => None
-      case Some(c) =>
-        if (c.referer.name == "Other") {
-          val source = if (uri.getHost == pageHost) "internal" else "unknown"
-          Some(source, None, None)
-        } else {
-          Some("search", Some(c.referer.name), c.search.map(c => c.term))
-        }
-    }
-  }
+  def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] =
+    RefererParser.parse(uri, pageHost)
 }

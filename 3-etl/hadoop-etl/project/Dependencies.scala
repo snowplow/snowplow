@@ -34,7 +34,7 @@ object Dependencies {
     val scalaz7       = "7.0.0-M9" // -> "7.0.0" when released
     val jerkson       = "0.7.0"
     val scalaUtil     = "0.1.0"
-    val refererParser = "0.0.1"
+    val refererParser = "0.1.0-M1" // -> "0.1.0" when released
     // Scala (test only)
     val specs2        = "1.12.3" // -> "1.13" when we bump to Scala 2.10.0
     val scalazSpecs2  = "0.1.2"
