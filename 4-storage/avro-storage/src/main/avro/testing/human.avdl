@@ -1,0 +1,26 @@
+/*
+ * Object to test serialization in Avro of more complicated objects
+ * and data types including nesting, maps, arrays etc.
+ */
+
+@namespace("test.example")
+protocol HumanProtocol{
+
+    enum Sex {
+        male, female
+    }
+
+    record Job {
+        string position;
+        string industry;
+        int salary;
+    }
+
+    record Human {
+        string name;
+        Sex sex;
+        string date_of_birth;
+        Job job;
+    }
+
+}

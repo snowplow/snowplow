@@ -62,7 +62,7 @@ public class TestAvro {
 
 	void RunTest2() {
 		try {
-			Schema schema = new Parser().parse(new File("src/main/avro/user.avsc"));
+			Schema schema = new Parser().parse(new File("src/main/avro/testing/user.avsc"));
 			GenericRecord user1 = new GenericData.Record(schema);
 			user1.put("name", "Alyssa");
 			user1.put("favorite_number", 256);

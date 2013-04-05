@@ -16,5 +16,8 @@ object TestRunner {
       v.RunTest1
       v.RunTest2
 
+      var w = new TestComplexTypes
+      w.RunTest1
+
     }
   }
