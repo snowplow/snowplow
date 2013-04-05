@@ -5,9 +5,9 @@ Hadoop ETL: break referer_url into constituent parts (and remove raw referer_url
 Hadoop ETL: remove raw referrer_url (as no space in Redshift table defn) (part of #175)
 Hadoop ETL: added referer parsing (#176)                                                            - TODO
 Redshift: table-def script bumped to 0.1.0
-Redshift: migration script added for 0.0.1 to 0.1.0                                                 - TODO
-Redshift: XXX
-Redshift: fix bug where mkt_source and mkt_medium are in each other's fields                        - TODO add ticket
+Redshift: migration script added for 0.0.1 to 0.1.0                                                 - TODO REMEMBER SOURCE MEDIUM SWAP
+Redshift: add/update referer fields in Redshift table definition (#204)
+Redshift: fix bug where mkt_source and mkt_medium are getting swapped around (#215)
 Common: completed rename of 3-etl to 3-enrich (#99)                                                 - TODO
 Common: replaced embedded architecture images with CloudFront-hosted images                         - TODO
 
