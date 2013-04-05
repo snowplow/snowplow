@@ -36,7 +36,7 @@ import JobTestHelpers._
 object PageViewCfLineTest {
 
   val lines = Lines(
-    "2012-05-24  00:06:42  LHR5  3402  90.194.12.51  GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(iPhone;%20CPU%20iPhone%20OS%205_1_1%20like%20Mac%20OS%20X)%20AppleWebKit/534.46%20(KHTML,%20like%20Gecko)%20Version/5.1%20Mobile/9B206%20Safari/7534.48.3  &e=pv&page=Psychic%20Bazaar&dtm=1364219529188&tid=637309&vp=2560x935&ds=2543x1273&vid=41&duid=9795bd0203804cd1&p=web&tv=js-0.11.1&fp=2876815413&aid=pbzsite&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2F&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=2560x1440&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Freaders%2F"
+    "2012-05-24  00:06:42  LHR5  3402  90.194.12.51  GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(iPhone;%20CPU%20iPhone%20OS%205_1_1%20like%20Mac%20OS%20X)%20AppleWebKit/534.46%20(KHTML,%20like%20Gecko)%20Version/5.1%20Mobile/9B206%20Safari/7534.48.3  &e=pv&page=Psychic%20Bazaar&dtm=1364219529188&tid=637309&vp=2560x935&ds=2543x1273&vid=41&duid=9795bd0203804cd1&p=web&tv=js-0.11.1&fp=2876815413&aid=pbzsite&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&refr=http%253A%252F%252Fwww.google.com%252Fsearch%253Fq%253Dgateway%252Boracle%252Bcards%252Bdenise%252Blinn%2526hl%253Den%2526client%253Dsafari&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=2560x1440&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Freaders%2F"
     )
 
   val expected = List(
@@ -67,14 +67,14 @@ object PageViewCfLineTest {
     "view=print",
     "detail",
     "http",
-    "www.psychicbazaar.com",
+    "www.google.com",
     "80",
-    "/",
+    "/search",
+    "q=gateway+oracle+cards+denise+linn&hl=en&client=safari",
     null,
-    null,
-    "internal", // Unknown referer
-    null,
-    null,
+    "search", // Search referer
+    "Google",
+    "gateway oracle cards denise linn",
     null, // No marketing campaign info
     null, //
     null, //
