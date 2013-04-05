@@ -1,5 +1,5 @@
 {
-	"namespace": "com.snowplowanalytics.snowplow.storage.avro.schema",
+	"namespace": "test.example",
  	"type": "record",
  	"name": "User",
  	"fields": [

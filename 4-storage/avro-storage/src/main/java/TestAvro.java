@@ -1,6 +1,6 @@
 package com.snowplowanalytics.snowplow.storage.avro;
 
-import com.snowplowanalytics.snowplow.storage.avro.schema.User;
+import test.example.User;
 import org.apache.avro.io.*;
 import org.apache.avro.specific.*;
 import org.apache.avro.file.*;

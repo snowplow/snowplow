@@ -1,6 +1,6 @@
 package com.snowplowanalytics.snowplow.storage.avro
 
-import com.snowplowanalytics.snowplow.storage.avro.schema.User
+import test.example.User
 import org.apache.avro.io._
 import org.apache.avro.specific._
 import org.apache.avro.file._
@@ -13,20 +13,20 @@ class TestAvroScala {
 	def RunTest1() {
 		println("Running first Scala tests: serializing and deserializing with code generation")
 		println("User 1 = Harry, favorite number 100")
-		val user1 = new schema.User()
+		val user1 = new test.example.User()
 		user1.setName("Harry")
 		user1.setFavoriteNumber(100)
 		// Leave favorite color null
 
 		// Alternate constructor
 		println("User 2 = Harold, favorite number 1, favorite colour blue")
-		val user2 = new schema.User("Harold", 1, "blue");
+		val user2 = new test.example.User("Harold", 1, "blue");
 
 		// Cannot work out how to translate builder notation so that it works in Scala
 
 		// Serialize user1 and user2 to disk
 		val file = new File("users_scala.avro")
-		var userDatumWriter = new SpecificDatumWriter(classOf[schema.User])
+		var userDatumWriter = new SpecificDatumWriter(classOf[test.example.User])
 		var dataFileWriter = new DataFileWriter(userDatumWriter)
 
 		try {
@@ -40,9 +40,9 @@ class TestAvroScala {
 
     	// Deserialize User from disk
     	try {
-    		var userDatumReader = new SpecificDatumReader(classOf[schema.User])
+    		var userDatumReader = new SpecificDatumReader(classOf[test.example.User])
     		var dataFileReader = new DataFileReader(file, userDatumReader)
-    		var user:schema.User = null
+    		var user:test.example.User = null
     		while (dataFileReader.hasNext()) {
     			// Reuse user object by passing it to next(). This saves us from
 				// allocating and garbage collecting many objects for files with
@@ -59,7 +59,7 @@ class TestAvroScala {
 		try {
 			println("Running second Scala tests: serializing and deserializing without code genearation...")
 
-			val schema = new Parser().parse(new File("src/main/avro/user.avsc"))
+			val schema = new Parser().parse(new File("src/main/avro/testing/user.avsc"))
 
 			println("Gertrud likes 64")
 			val user1 = new GenericData.Record(schema)
