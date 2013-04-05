@@ -55,7 +55,7 @@ object Medium extends Enumeration {
  *
  * Replacement for Java version's POJO.
  */
-case class Referer(medium: Medium.Medium, source: String, term: Option[String])
+case class Referer(medium: Medium.Medium, source: Option[String], term: Option[String])
 
 /**
  * Parser object - contains one-time initialization
@@ -70,26 +70,40 @@ object Parser {
   private type MaybeReferer = Option[Referer]
 
   /**
-   * Parses a `refererUri` String to return
-   * either a Referal, or None.
+   * Parses a `refererUri` UR and a `pageUri`
+   * URI to return either Some Referer, or None.
    */
-  def parse(refererUri: String): MaybeReferer =
+  def parse(refererUri: URI, pageHost: URI): MaybeReferer =
+    parse(refererUri, pageHost.getHost());
+
+  /**
+   * Parses a `refererUri` String and a `pageUri`
+   * URI to return either Some Referer, or None.
+   */
+  def parse(refererUri: String, pageHost: URI): MaybeReferer =
+    parse(refererUri, pageHost.getHost());
+
+  /**
+   * Parses a `refererUri` String and a `pageUri`
+   * URI to return either some Referer, or None.
+   */
+  def parse(refererUri: String, pageHost: String): MaybeReferer =
     if (refererUri == null || refererUri == "")
       None
     else
-      parse(new URI(refererUri))
+      parse(new URI(refererUri), pageHost)
 
   /**
    * Parses a `refererUri` URI to return
-   * either a Referer, or None.
+   * either Some Referer, or None.
    */
-  def parse(refererUri: URI): MaybeReferer = {
+  def parse(refererUri: URI, pageHost: String): MaybeReferer = {
     
     val jp = new JParser()
-    val jrefr = Option(jp.parse(refererUri))
+    val jrefr = Option(jp.parse(refererUri, pageHost))
 
     jrefr.map(jr =>
-      Referer(Medium.fromJava(jr.medium), jr.source, Option(jr.term))
+      Referer(Medium.fromJava(jr.medium), Option(jr.source), Option(jr.term))
       )
   }
 }

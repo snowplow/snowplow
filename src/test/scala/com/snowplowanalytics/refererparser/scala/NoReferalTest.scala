@@ -26,19 +26,19 @@ class NoReferalTest extends Specification {
 
   "An empty referer URL" should {
     "return no referal" in {
-      Parser.parse("") must beNone
+      Parser.parse("", null.asInstanceOf[String]) must beNone
     }
   }
 
   "A null (String) referer URL" should {
     "return no referal" in {
-      Parser.parse(null.asInstanceOf[String]) must beNone
+      Parser.parse(null.asInstanceOf[String], null.asInstanceOf[String]) must beNone
     }
   }
 
   "A null (URI) referer URL" should {
     "return no referal" in {
-      Parser.parse(null.asInstanceOf[URI]) must beNone
+      Parser.parse(null.asInstanceOf[URI], null.asInstanceOf[String]) must beNone
     }
   }
 }

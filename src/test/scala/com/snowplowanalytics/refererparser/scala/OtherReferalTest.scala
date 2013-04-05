@@ -22,9 +22,10 @@ import org.specs2.mutable.Specification
 class OtherReferalTest extends Specification {
 
   val refererUrl = "http://www.facebook.com"
+  val pageUrl = "http://www.psychicbazaar.com"
 
   "A non-search referal (e.g. Facebook)" should {
-    val referer = Parser.parse(refererUrl).get
+    val referer = Parser.parse(refererUrl, pageUrl).get
 
     "have referer medium set to UNKNOWN" in {
       referer.medium must_== Medium.Unknown
