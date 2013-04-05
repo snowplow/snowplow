@@ -59,7 +59,7 @@ object PageViewCfLineTest {
     null, // No network_userid set
     // Raw page URL is discarded 
     "Psychic Bazaar",
-    // Raw referer URL is discarded "http://www.psychicbazaar.com/",
+    // Raw referer URL is discarded
     "http",
     "www.psychicbazaar.com",
     "80",
@@ -72,7 +72,7 @@ object PageViewCfLineTest {
     "/",
     null,
     null,
-    "unknown", // Unknown referer
+    "internal", // Unknown referer
     null,
     null,
     null, // No marketing campaign info

@@ -222,7 +222,7 @@ object EnrichmentManager {
           case Some(u) =>
 
             // Set the referrer details
-            AE.extractRefererDetails(u) match {
+            AE.extractRefererDetails(u, event.page_urlhost) match {
               case Some((medium, source, term)) =>
                 event.refr_medium = medium
                 event.refr_source = source.orNull

@@ -131,16 +131,21 @@ object AttributionEnrichments {
    *
    * @param uri The referer URI to extract
    *            referer details from
+   * @param pageHost The host of the current
+   *                 page (used to determine
+   *                 if this is an internal
+   *                 referer)
    * @return a Tuple3 containing referer medium,
    *         source and term, all Strings
    */
-  def extractRefererDetails(uri: URI): Option[Tuple3[String, Option[String], Option[String]]] = {
+  def extractRefererDetails(uri: URI, pageHost: String): Option[Tuple3[String, Option[String], Option[String]]] = {
 
     RefererParser.parse(uri) match {
       case None => None
       case Some(c) =>
         if (c.referer.name == "Other") {
-          Some("unknown", None, None)
+          val source = if (uri.getHost == pageHost) "internal" else "unknown"
+          Some(source, None, None)
         } else {
           Some("search", Some(c.referer.name), c.search.map(c => c.term))
         }

@@ -36,7 +36,7 @@ import JobTestHelpers._
 object PagePingCfLineTest {
 
   val lines = Lines(
-    "2013-03-25 02:04:00    GRU1    1047    201.17.84.32    GET d10wr4jwvp55f9.cloudfront.net   /i  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=2&n=48  Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64)%20AppleWebKit/537.22%20(KHTML,%20like%20Gecko)%20Chrome/25.0.1364.172%20Safari/537.22   &e=pp&page=Tarot%2520cards%2520-%2520Psychic%2520Bazaar&pp_mix=21&pp_max=214&pp_miy=251&pp_may=517&dtm=1364177017342&tid=128574&vp=1366x630&ds=1349x3787&vid=1&duid=132e226e3359a9cd&p=web&tv=js-0.11.1&fp=1640945579&aid=pbzsite&lang=pt-BR&cs=UTF-8&tz=America%252FSao_Paulo&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fn%253D48&f_pdf=1&f_qt=0&f_realp=1&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1366x768&cd=32&cookie=1&url=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fp%253D2%2526n%253D48 -   Hit dfFVXBxYoXbfL3TBTlr6Q-_TFqzLujgZBfuAa80qB9ND22Cn5lqJdg=="
+    "2013-03-25 02:04:00    GRU1    1047    201.17.84.32    GET d10wr4jwvp55f9.cloudfront.net   /i  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?utm_source=google&utm_medium=cpc&utm_term=buy%2Btarot&utm_campaign=spring_sale  Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64)%20AppleWebKit/537.22%20(KHTML,%20like%20Gecko)%20Chrome/25.0.1364.172%20Safari/537.22   &e=pp&page=Tarot%2520cards%2520-%2520Psychic%2520Bazaar&pp_mix=21&pp_max=214&pp_miy=251&pp_may=517&dtm=1364177017342&tid=128574&vp=1366x630&ds=1349x3787&vid=1&duid=132e226e3359a9cd&p=web&tv=js-0.11.1&fp=1640945579&aid=pbzsite&lang=pt-BR&cs=UTF-8&tz=America%252FSao_Paulo&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fn%253D48&f_pdf=1&f_qt=0&f_realp=1&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1366x768&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2F2-tarot-cards%2Fgenre%2Fall%2Ftype%2Fall%3Futm_source%3Dgoogle%26utm_medium%3Dcpc%26utm_term%3Dbuy%252Btarot%26utm_campaign%3Dspring_sale -   Hit dfFVXBxYoXbfL3TBTlr6Q-_TFqzLujgZBfuAa80qB9ND22Cn5lqJdg=="
     )
 
   val expected = List(
@@ -64,7 +64,7 @@ object PagePingCfLineTest {
     "www.psychicbazaar.com",
     "80",
     "/2-tarot-cards/genre/all/type/all",
-    "p=2&n=48",
+    "utm_source=google&utm_medium=cpc&utm_term=buy+tarot&utm_campaign=spring_sale",
     null,
     "http",
     "www.psychicbazaar.com",
@@ -72,14 +72,14 @@ object PagePingCfLineTest {
     "/2-tarot-cards/genre/all/type/all",
     "n=48",
     null,
-    "unknown",
+    "internal",
     null,
     null,
-    null, // No marketing campaign info
-    null, //
-    null, //
-    null, //
-    null, //
+    "cpc",
+    "google",
+    "buy tarot",
+    null,
+    "spring_sale",
     null, // Event fields empty
     null, //
     null, //
