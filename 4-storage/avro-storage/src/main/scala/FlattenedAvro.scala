@@ -26,7 +26,7 @@ import scala.reflect.BeanProperty
  *
  */
 
-class FlatFileOutput {
+class FlattenedAvro {
 
   // The application (site, game, app etc) this event belongs to, and the tracker platform
   @BeanProperty var app_id: String = _
@@ -118,18 +118,23 @@ class FlatFileOutput {
 
   // Browser (from querystring)
   @BeanProperty var br_lang: String = _
-  // Individual feature fields for non-Hive targets (e.g. Infobright)
-  @BeanProperty var br_features_pdf: Byte = _
-  @BeanProperty var br_features_flash: Byte = _
-  @BeanProperty var br_features_java: Byte = _
-  @BeanProperty var br_features_director: Byte = _
-  @BeanProperty var br_features_quicktime: Byte = _
-  @BeanProperty var br_features_realplayer: Byte = _
-  @BeanProperty var br_features_windowsmedia: Byte = _
-  @BeanProperty var br_features_gears: Byte = _
-  @BeanProperty var br_features_silverlight: Byte = _
+  @BeanProperty var br_features: Array[String] = _
+  /*
+    Individual feature fields for non-Hive targets (e.g. Infobright)
+    Replaced by a single array (above) with a list of browser features as string
+    Need to move to make this an array of ENUMs
+    @BeanProperty var br_features_pdf: Byte = _
+    @BeanProperty var br_features_flash: Byte = _
+    @BeanProperty var br_features_java: Byte = _
+    @BeanProperty var br_features_director: Byte = _
+    @BeanProperty var br_features_quicktime: Byte = _
+    @BeanProperty var br_features_realplayer: Byte = _
+    @BeanProperty var br_features_windowsmedia: Byte = _
+    @BeanProperty var br_features_gears: Byte = _
+    @BeanProperty var br_features_silverlight: Byte = _
+   */
   @BeanProperty var br_cookies: Byte = _
-  @BeanProperty var br_colordepth: String = _
+  @BeanProperty var br_colordepth: JInteger = _
   @BeanProperty var br_viewwidth: JInteger = _
   @BeanProperty var br_viewheight: JInteger = _
 
