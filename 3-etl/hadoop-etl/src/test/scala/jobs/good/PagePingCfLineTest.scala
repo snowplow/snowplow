@@ -50,7 +50,7 @@ object PagePingCfLineTest {
     "128574",
     "js-0.11.1",
     "cloudfront",
-    "hadoop-0.1.0",
+    "hadoop-0.2.0",
     null, // No user_id set
     "201.17.84.32",
     "1640945579",
@@ -59,7 +59,7 @@ object PagePingCfLineTest {
     null, // No network_userid set
     // Raw page URL is discarded 
     "Tarot cards - Psychic Bazaar",
-    // Raw referer URL is discarded "http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?n=48",
+    // Raw referer URL is discarded
     "http",
     "www.psychicbazaar.com",
     "80",
@@ -72,9 +72,9 @@ object PagePingCfLineTest {
     "/2-tarot-cards/genre/all/type/all",
     "n=48",
     null,
-    null, // No referrer details
-    null, //
-    null, //
+    "unknown",
+    null,
+    null,
     null, // No marketing campaign info
     null, //
     null, //

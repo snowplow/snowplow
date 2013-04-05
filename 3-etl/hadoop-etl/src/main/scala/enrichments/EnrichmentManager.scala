@@ -222,7 +222,13 @@ object EnrichmentManager {
           case Some(u) =>
 
             // Set the referrer details
-            // TODO
+            AE.extractRefererDetails(u) match {
+              case Some((medium, source, term)) =>
+                event.refr_medium = medium
+                event.refr_source = source.orNull
+                event.refr_term = term.orNull
+              case _ =>
+            }
 
             // Set the URL components
             val components = CU.explodeUri(u)

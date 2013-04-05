@@ -31,6 +31,10 @@ import org.apache.http.client.utils.URLEncodedUtils
 import org.apache.commons.lang3.builder.ToStringBuilder
 import org.apache.commons.lang3.builder.HashCodeBuilder
 
+// Snowplow referer-parser
+import com.snowplowanalytics.refererparser.scala.{Parser => RefererParser}
+import com.snowplowanalytics.refererparser.scala.Referal
+
 // This project
 import utils.{ConversionUtils => CU}
 import utils.MapTransformer
@@ -65,23 +69,23 @@ object AttributionEnrichments {
         campaign == that.campaign
       case _ => false
     }
-  def canEqual(other: Any): Boolean = other.isInstanceOf[MarketingCampaign]
-  
-  // No reflection for perf reasons.
-  override def hashCode: Int = new HashCodeBuilder()
-    .append(source)
-    .append(medium)
-    .append(term)
-    .append(content)
-    .append(campaign)
-    .toHashCode()
-  override def toString: String = new ToStringBuilder(this)
-    .append("source", source)
-    .append("medium", medium)
-    .append("term", term)
-    .append("content", content)
-    .append("campaign", campaign)
-    .toString()
+    def canEqual(other: Any): Boolean = other.isInstanceOf[MarketingCampaign]
+    
+    // No reflection for perf reasons.
+    override def hashCode: Int = new HashCodeBuilder()
+      .append(source)
+      .append(medium)
+      .append(term)
+      .append(content)
+      .append(campaign)
+      .toHashCode()
+    override def toString: String = new ToStringBuilder(this)
+      .append("source", source)
+      .append("medium", medium)
+      .append("term", term)
+      .append("content", content)
+      .append("campaign", campaign)
+      .toString()
   }
 
   /**
@@ -118,5 +122,28 @@ object AttributionEnrichments {
     val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
 
     MapTransformer.generate[MarketingCampaign](sourceMap, transformMap)
+  }
+
+  /**
+   * Extract details about the referer (sic).
+   *
+   * Uses the referer-parser library. 
+   *
+   * @param uri The referer URI to extract
+   *            referer details from
+   * @return a Tuple3 containing referer medium,
+   *         source and term, all Strings
+   */
+  def extractRefererDetails(uri: URI): Option[Tuple3[String, Option[String], Option[String]]] = {
+
+    RefererParser.parse(uri) match {
+      case None => None
+      case Some(c) =>
+        if (c.referer.name == "Other") {
+          Some("unknown", None, None)
+        } else {
+          Some("search", Some(c.referer.name), c.search.map(c => c.term))
+        }
+    }
   }
 }

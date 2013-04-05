@@ -50,7 +50,7 @@ object StructEventCfLineTest {
     "598951",
     "js-0.11.1",
     "cloudfront",
-    "hadoop-0.1.0",
+    "hadoop-0.2.0",
     null, // No user_id set
     "99.116.172.58",
     "2876815413",
@@ -70,11 +70,11 @@ object StructEventCfLineTest {
     "www.psychicbazaar.com",
     "80",
     "/",
-    null, //
-    null, //
-    null, // No referrer details
-    null, //
-    null, //
+    null,
+    null,
+    "unknown", // Unknown referer
+    null,
+    null,
     null, // No marketing campaign info
     null, //
     null, //
