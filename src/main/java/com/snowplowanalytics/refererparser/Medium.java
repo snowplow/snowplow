@@ -31,6 +31,11 @@ public enum Medium {
     EMAIL;
 
   static public Medium fromString(String medium) {
-		return Medium.valueOf(medium.toUpperCase());
-	}
+    return Medium.valueOf(medium.toUpperCase());
+  }
+
+  @Override
+  public String toString() {
+    return super.toString().toLowerCase();
+  }
 }

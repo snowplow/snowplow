@@ -41,13 +41,8 @@ object Medium extends Enumeration {
    * Converts from our Java Medium Enum
    * to our Scala Enumeration values above.
    */
-  def fromJava(medium: JMedium) = medium match {
-    case JMedium.UNKNOWN  => Unknown
-    case JMedium.INTERNAL => Internal
-    case JMedium.SEARCH   => Search
-    case JMedium.SOCIAL   => Social
-    case JMedium.EMAIL    => Email
-  }
+  def fromJava(medium: JMedium) =
+    Medium.withName(medium.toString())
 }
 
 /**
