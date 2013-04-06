@@ -43,6 +43,10 @@ public class Parser {
   private static final String REFERERS_YAML_PATH = "/referers.yml";
   private Map<String,RefererLookup> referers;
 
+  /**
+   * Holds the structure of each referer
+   * in our lookup Map.
+   */
   private static class RefererLookup {
     public Medium medium;
     public String source;
@@ -121,7 +125,7 @@ public class Parser {
     if (referer == null) {
       referer = referers.get(refererHost); // Try just the domain (e.g. google.com)
       if (referer == null) {
-        int idx = refererHost.indexOf('.');
+        final int idx = refererHost.indexOf('.');
         if (idx == -1) {
           return null; // No "."? Let's quit.
         } else {
