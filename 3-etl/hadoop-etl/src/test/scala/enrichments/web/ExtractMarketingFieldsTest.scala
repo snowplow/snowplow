@@ -61,3 +61,7 @@ class ExtractMarketingFieldsTest extends Specification with DataTables with Vali
         AttributionEnrichments.extractMarketingFields(url, Encoding) must beSuccessful(expected)
     }
 }
+
+/**
+ * TODO: add a few tests adapted from referer-parser
+ */

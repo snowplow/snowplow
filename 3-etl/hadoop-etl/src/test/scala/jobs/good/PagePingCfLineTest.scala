@@ -72,7 +72,7 @@ object PagePingCfLineTest {
     "/2-tarot-cards/genre/all/type/all",
     "n=48",
     null,
-    "internal",
+    "internal", // Internal referer
     null,
     null,
     "cpc",

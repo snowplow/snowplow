@@ -223,10 +223,10 @@ object EnrichmentManager {
 
             // Set the referrer details
             AE.extractRefererDetails(u, event.page_urlhost) match {
-              case Some((medium, source, term)) =>
-                event.refr_medium = medium
-                event.refr_source = source.orNull
-                event.refr_term = term.orNull
+              case Some(refr) =>
+                event.refr_medium = refr.medium.toString
+                event.refr_source = refr.source.orNull
+                event.refr_term = refr.term.orNull
               case _ =>
             }
 

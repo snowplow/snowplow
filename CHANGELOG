@@ -3,7 +3,7 @@ Version 0.8.x (2013-04-xx)
 Hadoop ETL: bumped to 0.2.0
 Hadoop ETL: break referer_url into constituent parts (and remove raw referer_url) (part of #175)
 Hadoop ETL: remove raw referrer_url (as no space in Redshift table defn) (part of #175)
-Hadoop ETL: added referer parsing (#176)                                                            - TODO
+Hadoop ETL: added referer parsing (#176)
 Redshift: table-def script bumped to 0.1.0
 Redshift: migration script added for 0.0.1 to 0.1.0                                                 - TODO REMEMBER SOURCE MEDIUM SWAP
 Redshift: add/update referer fields in Redshift table definition (#204)

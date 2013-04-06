@@ -72,7 +72,7 @@ object StructEventCfLineTest {
     "/",
     null,
     null,
-    "internal", // Unknown referer
+    "internal", // Internal referer
     null,
     null,
     null, // No marketing campaign info
