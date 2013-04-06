@@ -68,15 +68,15 @@ object Parser {
    * Parses a `refererUri` UR and a `pageUri`
    * URI to return either Some Referer, or None.
    */
-  def parse(refererUri: URI, pageHost: URI): MaybeReferer =
-    parse(refererUri, pageHost.getHost());
+  def parse(refererUri: URI, pageUri: URI): MaybeReferer =
+    parse(refererUri, pageUri.getHost());
 
   /**
    * Parses a `refererUri` String and a `pageUri`
    * URI to return either Some Referer, or None.
    */
-  def parse(refererUri: String, pageHost: URI): MaybeReferer =
-    parse(refererUri, pageHost.getHost());
+  def parse(refererUri: String, pageUri: URI): MaybeReferer =
+    parse(refererUri, pageUri.getHost());
 
   /**
    * Parses a `refererUri` String and a `pageUri`
