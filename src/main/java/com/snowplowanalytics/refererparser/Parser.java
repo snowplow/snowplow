@@ -59,12 +59,35 @@ public class Parser {
     }
   }
 
+  /**
+   * Construct our Parser object using the
+   * bundled referers.yml
+   */
   public Parser() throws IOException, CorruptYamlException {
     this(Parser.class.getResourceAsStream(REFERERS_YAML_PATH));
   }
 
-  public Parser(InputStream referersYaml) throws CorruptYamlException {
-    referers = loadReferers(referersYaml);
+  /**
+   * Construct our Parser object using a 
+   * InputStream (in YAML format)
+   *
+   * @param referersYaml The referers YAML
+   *        to load into our Parser, in
+   *        InputStream format
+   */
+  public Parser(InputStream referersStream) throws CorruptYamlException {
+    referers = loadReferers(referersStream);
+  }
+
+  /**
+   * Construct our Parser object using a
+   * custom resource String
+   *
+   * @param referersResource The resource pointing
+   *        to the referers YAML file to load
+   */
+  public Parser(String referersResource) throws IOException, CorruptYamlException {
+    this(Parser.class.getResourceAsStream(referersResource));
   }
 
   public Referer parse(URI refererUri, URI pageUri) {
@@ -92,7 +115,7 @@ public class Parser {
     // TODO: would also be nice to:
     // 1. Support a list of other hosts which count as internal
     // 2. Have an algo for stripping subdomains before checking match
-    if (refererUri.getHost() == pageHost) return new Referer(Medium.INTERNAL, null, null);
+    if (refererUri.getHost().equals(pageHost)) return new Referer(Medium.INTERNAL, null, null);
 
     // Try to lookup our referer
     RefererLookup referer = lookupReferer(refererUri.getHost(), refererUri.getPath());

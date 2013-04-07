@@ -64,6 +64,8 @@ object Parser {
 
   private type MaybeReferer = Option[Referer]
 
+  private lazy val jp = new JParser()
+
   /**
    * Parses a `refererUri` UR and a `pageUri`
    * URI to return either Some Referer, or None.
@@ -94,9 +96,7 @@ object Parser {
    */
   def parse(refererUri: URI, pageHost: String): MaybeReferer = {
     
-    val jp = new JParser()
     val jrefr = Option(jp.parse(refererUri, pageHost))
-
     jrefr.map(jr =>
       Referer(Medium.fromJava(jr.medium), Option(jr.source), Option(jr.term))
       )
