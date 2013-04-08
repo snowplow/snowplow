@@ -22,7 +22,7 @@ import java.net.URI
 // Specs2
 import org.specs2.mutable.Specification
 
-class NoReferalTest extends Specification {
+class NoRefererTest extends Specification {
 
   "An empty referer URL" should {
     "return no referal" in {

@@ -117,11 +117,17 @@ public class Parser {
     // 2. Have an algo for stripping subdomains before checking match
     if (refererUri.getHost().equals(pageHost)) return new Referer(Medium.INTERNAL, null, null);
 
-    // Try to lookup our referer
-    RefererLookup referer = lookupReferer(refererUri.getHost(), refererUri.getPath());
+    // Try to lookup our referer. First check with paths, then without.
+    // This is the safest way of handling lookups
+    RefererLookup referer = lookupReferer(refererUri.getHost(), refererUri.getPath(), true);
+    if (referer == null) {
+      referer = lookupReferer(refererUri.getHost(), refererUri.getPath(), false);
+    }
+
     if (referer == null) {
       return new Referer(Medium.UNKNOWN, null, null); // Unknown referer, nothing more to do
     } else {
+      // Potentially add a search term
       final String term = (referer.medium == Medium.SEARCH) ? extractSearchTerm(refererUri, referer.parameters) : null;
       return new Referer(referer.medium, referer.source, term);
     }
@@ -137,28 +143,26 @@ public class Parser {
    *
    * @param pageHost The host of the current page
    * @param pagePath The path to the current page
+   * @param includePath Whether to include the path in the lookup
    *
    * @return a RefererLookup object populated with the given
    *         referer, or null if not found
    */
-  private RefererLookup lookupReferer(String refererHost, String refererPath) {
+  private RefererLookup lookupReferer(String refererHost, String refererPath, Boolean includePath) {
 
     // Check if domain+path matches (e.g. google.co.uk/products)    
-    RefererLookup referer = referers.get(refererHost + refererPath);
+    RefererLookup referer = (includePath) ? referers.get(refererHost + refererPath) : referers.get(refererHost);
+
     if (referer == null) {
-      referer = referers.get(refererHost); // Try just the domain (e.g. google.com)
-      if (referer == null) {
-        final int idx = refererHost.indexOf('.');
-        if (idx == -1) {
-          return null; // No "."? Let's quit.
-        } else {
-          return lookupReferer(refererHost.substring(idx + 1), refererPath); // Recurse
-        }
+      final int idx = refererHost.indexOf('.');
+      if (idx == -1) {
+        return null; // No "."? Let's quit.
       } else {
-        return referer;
+        return lookupReferer(refererHost.substring(idx + 1), refererPath, includePath); // Recurse
       }
+    } else {
+      return referer;
     }
-    return referer;
   }
 
   private String extractSearchTerm(URI uri, List<String> possibleParameters) {
