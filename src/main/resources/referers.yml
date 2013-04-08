@@ -3266,7 +3266,7 @@ search:
       - search.offerbox.com
       - ys.mirostart.com
 
-  Yahoo image search:
+  Yahoo! Images:
     parameters:
       - p
       - q
