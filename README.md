@@ -60,7 +60,7 @@ limitations under the License.
 
 [website]: http://snowplowanalytics.com
 [wiki]: https://github.com/snowplow/snowplow/wiki
-[architecture-image]: https://github.com/snowplow/snowplow/raw/master/architecture.png
+[architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/technical-architecture.png
 [architecture-doc]: https://github.com/snowplow/snowplow/wiki/Technical-architecture
 [talk-to-us]: https://github.com/snowplow/snowplow/wiki/Talk-to-us
 [license]: http://www.apache.org/licenses/LICENSE-2.0

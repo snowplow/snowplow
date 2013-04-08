@@ -23,7 +23,7 @@ The **Enrich** process takes raw SnowPlow events logged by a [Collector] [collec
 
 ![Tracker](https://collector.snplow.com/i?&e=pv&page=3%20ETL%20README&aid=snowplowgithub&p=web&tv=no-js-0.1.0)
 
-[architecture-image]: https://github.com/snowplow/snowplow/raw/master/3-etl/3-etl.png
+[architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/3-enrich.png
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
 [storage]: https://github.com/snowplow/snowplow/tree/master/4-storage
 [e1]: ./hive-etl/

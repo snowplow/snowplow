@@ -15,7 +15,7 @@
 
 ![Tracker](https://collector.snplow.com/i?&e=pv&page=5%20Analytics%20README&aid=snowplowgithub&p=web&tv=no-js-0.1.0)
 
-[architecture-image]: https://github.com/snowplow/snowplow/raw/master/5-analytics/5-analytics.png
+[architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/5-analytics.png
 [storage]: https://github.com/snowplow/snowplow/tree/master/4-storage
 [setup]: https://github.com/snowplow/snowplow/wiki/getting-started-analysing-SnowPlow-data
 [cookbook]: http://snowplowanalytics.com/analytics/index.html

@@ -25,7 +25,7 @@ A **Collector** receives SnowPlow events from one or more [Trackers]
 
 ![Tracker](https://collector.snplow.com/i?&e=pv&page=2%20Collectors%20README&aid=snowplowgithub&p=web&tv=no-js-0.1.0)
 
-[architecture-image]: https://github.com/snowplow/snowplow/raw/master/2-collectors/2-collectors.png
+[architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/2-collectors.png
 [trackers]: https://github.com/snowplow/snowplow/tree/master/1-trackers
 [etl]: https://github.com/snowplow/snowplow/tree/master/3-etl
 [snowcannon-readme]: https://github.com/shermozle/SnowCannon/blob/master/README.md
