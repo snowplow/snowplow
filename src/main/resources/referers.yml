@@ -2656,6 +2656,12 @@ search:
     domains:
       - www.plazoo.com
 
+  PriceRunner:
+    parameters:
+      - q
+    domains:
+      - www.pricerunner.co.uk
+
   qip:
     parameters: 
       - query
