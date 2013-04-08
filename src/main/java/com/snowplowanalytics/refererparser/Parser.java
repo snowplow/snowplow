@@ -1,5 +1,5 @@
 /**
- * Copyright 2012 SnowPlow Analytics Ltd
+ * Copyright 2012-2013 Snowplow Analytics Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,7 +152,7 @@ public class Parser {
         if (idx == -1) {
           return null; // No "."? Let's quit.
         } else {
-          lookupReferer(refererHost.substring(idx + 1), refererPath); // Recurse
+          return lookupReferer(refererHost.substring(idx + 1), refererPath); // Recurse
         }
       } else {
         return referer;
