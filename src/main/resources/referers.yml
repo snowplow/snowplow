@@ -1487,6 +1487,7 @@ search:
     parameters:
       - q
     domains:
+      - google.com/imgres
       - images.google.ac
       - images.google.ad
       - images.google.ae
