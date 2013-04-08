@@ -31,6 +31,7 @@ email:
 
   Yahoo!:
     domains:
+      - mail.yahoo.net
       - mail.yahoo.com
       - mail.yahoo.co.uk
 
