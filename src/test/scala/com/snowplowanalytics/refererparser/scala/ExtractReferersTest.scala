@@ -54,7 +54,7 @@ class ExtractReferersTest extends Specification with DataTables { def is =
     "Tumblr social #1"     !! "http://www.tumblr.com/dashboard"                                                              ! Medium.Social    ! Some("Tumblr")      ! None                                     |
     "Tumblr w subdomain"   !! "http://psychicbazaar.tumblr.com/"                                                             ! Medium.Social    ! Some("Tumblr")      ! None                                     |
     "Yahoo! Mail"          !! "http://36ohk6dgmcd1n-c.c.yom.mail.yahoo.net/om/api/1.0/openmail.app.invoke/36ohk6dgmcd1n/11/1.0.35/us/en-US/view.html/0" ! Medium.Email ! Some("Yahoo! Mail") ! None              |
-    "Internal referal #1"  !! "https://www.snowplowanalytics.com/shop/oracles"                                               ! Medium.Internal  ! None                ! None                                     |> {
+    "Internal referal #1"  !! "https://www.snowplowanalytics.com/about.team"                                                 ! Medium.Internal  ! None                ! None                                     |> {
       (_, refererUri, medium, source, term) =>
         Parser.parse(refererUri, pageUri) must_== Some(Referer(medium, source, term))
     }
