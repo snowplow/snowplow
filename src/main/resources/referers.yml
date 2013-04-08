@@ -127,6 +127,7 @@ social:
   Google+:
     domains:
       - url.google.com
+      - plus.google.com
 
   Douban:
     domains:
@@ -231,6 +232,10 @@ social:
   Taringa!:
     domains:
       - taringa.net
+
+  Tumblr:
+    domains:
+      - tumblr.com
 
   Nasza-klasa.pl:
     domains:
@@ -2991,7 +2996,7 @@ search:
     domains:
       - www.x-recherche.com
 
-  Yahoo:
+  Yahoo!:
     parameters:
       - p
       - q
