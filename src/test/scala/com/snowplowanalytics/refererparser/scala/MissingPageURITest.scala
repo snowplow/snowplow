@@ -22,26 +22,27 @@ import java.net.URI
 // Specs2
 import org.specs2.mutable.Specification
 
-class NoRefererTest extends Specification {
+class MissingPageURITest extends Specification {
 
   // Our data
-  val pageHost = "www.psychicbazaar.com"
+  val refererUri = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
+  val expected   = Some(Referer(Medium.Search, Some("Google"), Some("gateway oracle cards denise linn")))
 
-  "An empty referer URI" should {
-    "return no referal" in {
-      Parser.parse("", pageHost) must beNone
+  "An empty page URI" should {
+    "not interfere with the referer parsing" in {
+      Parser.parse(refererUri, "") must_== expected
     }
   }
 
-  "A null [String] referer URI" should {
-    "return no referal" in {
-      Parser.parse(null.asInstanceOf[String], pageHost) must beNone
+  "A null (String) page URI" should {
+    "not interfere with the referer parsing" in {
+      Parser.parse(refererUri, null.asInstanceOf[String]) must_== expected
     }
   }
 
-  "A null [URI] referer URI" should {
-    "return no referal" in {
-      Parser.parse(null.asInstanceOf[URI], pageHost) must beNone
+  "A null (URI) page URI" should {
+    "not interfere with the referer parsing" in {
+      Parser.parse(refererUri, null.asInstanceOf[URI]) must_== expected
     }
   }
 }

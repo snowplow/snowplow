@@ -66,29 +66,39 @@ object Parser {
 
   private lazy val jp = new JParser()
 
+  private def getHostSafely(uri: URI): String = {
+    if (uri == null) {
+      null
+    } else {
+      uri.getHost();
+    }
+  }
+
   /**
    * Parses a `refererUri` UR and a `pageUri`
    * URI to return either Some Referer, or None.
    */
   def parse(refererUri: URI, pageUri: URI): MaybeReferer =
-    parse(refererUri, pageUri.getHost());
+    parse(refererUri, getHostSafely(pageUri));
 
   /**
    * Parses a `refererUri` String and a `pageUri`
    * URI to return either Some Referer, or None.
    */
   def parse(refererUri: String, pageUri: URI): MaybeReferer =
-    parse(refererUri, pageUri.getHost());
+    parse(refererUri, getHostSafely(pageUri));
 
   /**
    * Parses a `refererUri` String and a `pageUri`
    * URI to return either some Referer, or None.
    */
-  def parse(refererUri: String, pageHost: String): MaybeReferer =
-    if (refererUri == null || refererUri == "")
+  def parse(refererUri: String, pageHost: String): MaybeReferer = {
+    if (refererUri == null || refererUri == "") {
       None
-    else
+    } else {
       parse(new URI(refererUri), pageHost)
+    }
+  }
 
   /**
    * Parses a `refererUri` URI to return
