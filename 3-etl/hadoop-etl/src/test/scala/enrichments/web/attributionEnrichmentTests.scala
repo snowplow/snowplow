@@ -66,9 +66,9 @@ class ExtractMarketingFieldsTest extends Specification with DataTables with Vali
 }
 
 /**
- * TODO: a small selection of tests borrowed from referer-parser.
+ * A small selection of tests borrowed from referer-parser.
  *
- * This is a very imcomplete set - more a tripwire than a test suite.
+ * This is a very imcomplete set - more a tripwire than an exhaustive test.
  * Please see referer-parser's test suite for the full set of tests:
  *
  * https://github.com/snowplow/referer-parser/tree/master/java-scala/src/test/scala/com/snowplowanalytics/refererparser/scala
