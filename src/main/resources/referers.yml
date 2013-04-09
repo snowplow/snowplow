@@ -10,9 +10,53 @@
 #
 # Broken down into:
 #
-# 1. Email providers
-# 2. Social providers
-# 3. Search providers
+# 1. Medium-unknown providers
+# 2. Email providers
+# 3. Social providers
+# 4. Search providers
+
+
+# #######################################################################################################
+#
+# MEDIUM-UNKNOWN PROVIDERS
+#
+# We know the source, but not the medium.
+# This section is useful for reducing false positives in the other sections
+
+unknown:
+
+  Google:
+    domains:
+      - google.com/url
+      - support.google.com
+      - developers.google.com
+      - maps.google.com
+      - accounts.google.com
+      - drive.google.com
+      - sites.google.com
+      - groups.google.com
+      - groups.google.co.uk
+      - news.google.co.uk
+
+  Yahoo!:
+    domains:
+      - finance.yahoo.com
+      - news.yahoo.com
+      - eurosport.yahoo.com
+      - sports.yahoo.com
+      - astrology.yahoo.com
+      - travel.yahoo.com
+      - answers.yahoo.com
+      - screen.yahoo.com
+      - weather.yahoo.com
+      - messenger.yahoo.com
+      - games.yahoo.com
+      - shopping.yahoo.net
+      - movies.yahoo.com
+      - cars.yahoo.com
+      - lifestyle.yahoo.com
+      - omg.yahoo.com
+      - match.yahoo.net
 
 
 # #######################################################################################################
