@@ -35,6 +35,7 @@ object RefererParserBuild extends Build {
         Libraries.yaml,
         Libraries.httpClient,
         Libraries.specs2,
+        Libraries.scalaCheck,
         Libraries.scalaUtil
       )
     )

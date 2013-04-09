@@ -23,7 +23,7 @@ import java.net.URI
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 
-class ExtractReferersTest extends Specification with DataTables { def is =
+class ParseTest extends Specification with DataTables { def is =
 
   "This is a specification to test the parse function"                                             ^
                                                                                                   p^

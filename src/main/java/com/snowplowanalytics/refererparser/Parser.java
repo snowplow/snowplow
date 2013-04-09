@@ -109,7 +109,7 @@ public class Parser {
     // null unless we have a valid http: or https: URI
     if (refererUri == null) return null;
     final String scheme = refererUri.getScheme();
-    if (!scheme.equals("http") && !scheme.equals("https")) return null;
+    if (scheme == null || (!scheme.equals("http") && !scheme.equals("https"))) return null;
 
     // Internal link if hosts match exactly
     // TODO: would also be nice to:

@@ -22,22 +22,27 @@ import java.net.URI
 // Specs2
 import org.specs2.mutable.Specification
 
-class ParseArgumentsTest extends Specification {
+class NoPageUriTest extends Specification {
 
-  // Aliases
-  val refererUri = "http://www.psychicbazaar.com/catalog/pendula"
-  val refererURI = new URI(refererUri)
-  val pageURI = new URI("http://www.psychicbazaar.com/catalog/pendula/lo-scarabeo-silver-cone-pendulum")
-  val pageHost = pageURI.getHost
+  // Our data
+  val refererUri = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
+  val expected   = Some(Referer(Medium.Search, Some("Google"), Some("gateway oracle cards denise linn")))
 
-  val expected = Some(Referer(Medium.Internal, None, None))
+  "An empty page URI" should {
+    "not interfere with the referer parsing" in {
+      Parser.parse(refererUri, "") must_== expected
+    }
+  }
 
-  "parse " should {
-    "work the same regardless of which arguments are used to call it" in {
-      Parser.parse(refererUri, pageHost) must_== expected
-      Parser.parse(refererUri, pageURI)  must_== expected
-      Parser.parse(refererURI, pageHost) must_== expected
-      Parser.parse(refererURI, pageURI)  must_== expected
+  "A null (String) page URI" should {
+    "not interfere with the referer parsing" in {
+      Parser.parse(refererUri, null.asInstanceOf[String]) must_== expected
+    }
+  }
+
+  "A null (URI) page URI" should {
+    "not interfere with the referer parsing" in {
+      Parser.parse(refererUri, null.asInstanceOf[URI]) must_== expected
     }
   }
 }

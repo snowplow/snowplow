@@ -17,7 +17,7 @@
 package com.snowplowanalytics.refererparser.scala
 
 // Java
-import java.net.URI
+import java.net.{URI, URISyntaxException}
 
 // RefererParser Java impl
 import com.snowplowanalytics.refererparser.{Parser => JParser}
@@ -62,7 +62,7 @@ case class Referer(medium: Medium.Medium, source: Option[String], term: Option[S
  */
 object Parser {
 
-  private type MaybeReferer = Option[Referer]
+  type MaybeReferer = Option[Referer]
 
   private lazy val jp = new JParser()
 
@@ -93,10 +93,15 @@ object Parser {
    * URI to return either some Referer, or None.
    */
   def parse(refererUri: String, pageHost: String): MaybeReferer = {
+
     if (refererUri == null || refererUri == "") {
       None
     } else {
-      parse(new URI(refererUri), pageHost)
+      try {
+        parse(new URI(refererUri), pageHost)
+      } catch {
+        case use: URISyntaxException => None
+      }
     }
   }
 
@@ -106,9 +111,13 @@ object Parser {
    */
   def parse(refererUri: URI, pageHost: String): MaybeReferer = {
     
-    val jrefr = Option(jp.parse(refererUri, pageHost))
-    jrefr.map(jr =>
-      Referer(Medium.fromJava(jr.medium), Option(jr.source), Option(jr.term))
+    try {
+      val jrefr = Option(jp.parse(refererUri, pageHost))
+      jrefr.map(jr =>
+        Referer(Medium.fromJava(jr.medium), Option(jr.source), Option(jr.term))
       )
+    } catch {
+      case use: URISyntaxException => None
+    }
   }
 }

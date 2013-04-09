@@ -22,7 +22,7 @@ import java.net.URI
 // Specs2
 import org.specs2.mutable.Specification
 
-class NoRefererTest extends Specification {
+class NoRefererUriTest extends Specification {
 
   // Our data
   val pageHost = "www.psychicbazaar.com"
