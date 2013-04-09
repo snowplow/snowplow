@@ -137,7 +137,9 @@ public class Parser {
    * Recursive function to lookup a host (or partial host)
    * in our referers map.
    *
-   * First check the host, then the host+path
+   * First check the host, then the host+full path, then the host+
+   * one-level path.
+   *
    * If not found, remove one subdomain-level off the front
    * of the host and try again.
    *
@@ -150,8 +152,16 @@ public class Parser {
    */
   private RefererLookup lookupReferer(String refererHost, String refererPath, Boolean includePath) {
 
-    // Check if domain+path matches (e.g. google.co.uk/products)    
+    // Check if domain+full path matches, e.g. for apollo.lv/portal/search/ 
     RefererLookup referer = (includePath) ? referers.get(refererHost + refererPath) : referers.get(refererHost);
+
+    // Check if domain+one-level path matches, e.g. for orange.fr/webmail/fr_FR/read.html (in our YAML it's orange.fr/webmail)
+    if (includePath && referer == null) {
+      final String[] pathElements = refererPath.split("/");
+      if (pathElements.length > 1) {
+        referer = referers.get(refererHost + "/" + pathElements[1]);
+      }
+    }
 
     if (referer == null) {
       final int idx = refererHost.indexOf('.');

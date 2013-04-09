@@ -49,6 +49,7 @@ class ExtractReferersTest extends Specification with DataTables { def is =
     "IXquick search"       !! "https://s3-us3.ixquick.com/do/search"                                                         ! Medium.Search    ! Some("IXquick")     ! None                                     |   
     "AOL search"           !! "http://aolsearch.aol.co.uk/aol/search?s_chn=hp&enabled_terms=&s_it=aoluk-homePage50&q=pendulums" ! Medium.Search ! Some("AOL")         ! Some("pendulums")                        |
     "Ask search"           !! "http://uk.search-results.com/web?qsrc=1&o=1921&l=dis&q=pendulums&dm=ctry&atb=sysid%3D406%3Aappid%3D113%3Auid%3D8f40f651e7b608b5%3Auc%3D1346336505%3Aqu%3Dpendulums%3Asrc%3Dcrt%3Ao%3D1921&locale=en_GB" ! Medium.Search ! Some("Ask") ! Some("pendulums") |
+    "Mail.ru search"       !! "http://go.mail.ru/search?q=Gothic%20Tarot%20Cards&where=any&num=10&rch=e&sf=20"               ! Medium.Search    ! Some("Mail.ru")     ! Some("Gothic Tarot Cards")               |
     "Yandex search"        !! "http://images.yandex.ru/yandsearch?text=Blue%20Angel%20Oracle%20Blue%20Angel%20Oracle&noreask=1&pos=16&rpt=simage&lr=45&img_url=http%3A%2F%2Fmdm.pbzstatic.com%2Foracles%2Fblue-angel-oracle%2Fbox-small.png" ! Medium.Search ! Some("Yandex Images") ! Some("Blue Angel Oracle Blue Angel Oracle") | 
     "Twitter redirect"     !! "http://t.co/chrgFZDb"                                                                         ! Medium.Social    ! Some("Twitter")     ! None                                     |
     "Facebook social"      !! "http://www.facebook.com/l.php?u=http%3A%2F%2Fwww.psychicbazaar.com&h=yAQHZtXxS&s=1"           ! Medium.Social    ! Some("Facebook")    ! None                                     |
@@ -57,6 +58,8 @@ class ExtractReferersTest extends Specification with DataTables { def is =
     "Tumblr social #1"     !! "http://www.tumblr.com/dashboard"                                                              ! Medium.Social    ! Some("Tumblr")      ! None                                     |
     "Tumblr w subdomain"   !! "http://psychicbazaar.tumblr.com/"                                                             ! Medium.Social    ! Some("Tumblr")      ! None                                     |
     "Yahoo! Mail"          !! "http://36ohk6dgmcd1n-c.c.yom.mail.yahoo.net/om/api/1.0/openmail.app.invoke/36ohk6dgmcd1n/11/1.0.35/us/en-US/view.html/0" ! Medium.Email ! Some("Yahoo! Mail") ! None              |
+    "Outlook.com mail"     !! "http://co106w.col106.mail.live.com/default.aspx?rru=inbox"                                    ! Medium.Email     ! Some("Outlook.com") ! None                                     |
+    "Orange Webmail"       !! "http://webmail1m.orange.fr/webmail/fr_FR/read.html?FOLDER=SF_INBOX&IDMSG=8594&check=&SORTBY=31" ! Medium.Email   ! Some("Orange Webmail") ! None                                  |
     "Internal HTTP"        !! "http://www.snowplowanalytics.com/about/team"                                                  ! Medium.Internal  ! None                ! None                                     |
     "Internal HTTPS"       !! "https://www.snowplowanalytics.com/account/profile"                                            ! Medium.Internal  ! None                ! None                                     |> {
       (_, refererUri, medium, source, term) =>
