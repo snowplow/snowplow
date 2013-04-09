@@ -28,13 +28,12 @@ class ExtractReferersTest extends Specification with DataTables { def is =
   "This is a specification to test the parse function"                                             ^
                                                                                                   p^
   "parse should successfully extract referer details from URIs with recognised referers"           ! e1^
-  "parse should work the same regardless of which arguments are used to call it"                   ! e2^
-  "parse should return unknown when the provided referer URI is not recognised"                    ! e3^
-  "parse will (unavoidably) return some false positives as a result of its lookup algorithm"       ! e4^
+  "parse should return unknown when the provided referer URI is not recognised"                    ! e2^
+  "parse will (unavoidably) return some false positives as a result of its lookup algorithm"       ! e3^
                                                                                                    end
 
   // Aliases
-  val pageUri = "www.snowplowanalytics.com"
+  val pageHost = "www.snowplowanalytics.com"
 
   // Successful extractions
   def e1 =
@@ -54,32 +53,29 @@ class ExtractReferersTest extends Specification with DataTables { def is =
     "Tumblr social #1"     !! "http://www.tumblr.com/dashboard"                                                              ! Medium.Social    ! Some("Tumblr")      ! None                                     |
     "Tumblr w subdomain"   !! "http://psychicbazaar.tumblr.com/"                                                             ! Medium.Social    ! Some("Tumblr")      ! None                                     |
     "Yahoo! Mail"          !! "http://36ohk6dgmcd1n-c.c.yom.mail.yahoo.net/om/api/1.0/openmail.app.invoke/36ohk6dgmcd1n/11/1.0.35/us/en-US/view.html/0" ! Medium.Email ! Some("Yahoo! Mail") ! None              |
-    "Internal referal #1"  !! "https://www.snowplowanalytics.com/shop/oracles"                                               ! Medium.Internal  ! None                ! None                                     |> {
+    "Internal HTTP"        !! "http://www.snowplowanalytics.com/about/team"                                                  ! Medium.Internal  ! None                ! None                                     |
+    "Internal HTTPS"       !! "https://www.snowplowanalytics.com/account/profile"                                            ! Medium.Internal  ! None                ! None                                     |> {
       (_, refererUri, medium, source, term) =>
-        Parser.parse(refererUri, pageUri) must_== Some(Referer(medium, source, term))
+        Parser.parse(refererUri, pageHost) must_== Some(Referer(medium, source, term))
     }
 
-  // Different API calls TODO
-  def e2 =
-    1 must_== 1
-
   // Unknown referer URI
-  def e3 =
+  def e2 =
     "SPEC NAME"          || "REFERER URI"                                             |
     "Unknown referer #1" !! "http://www.behance.net/gallery/psychicbazaarcom/2243272" |
     "Unknown referer #2" !! "http://www.wishwall.me/home"                             |
     "Unknown referer #3" !! "http://www.spyfu.com/domain.aspx?d=3897225171967988459"  |
     "Unknown referer #4" !! "http://seaqueen.wordpress.com/"                          |> {
       (_, refererUri) =>
-        Parser.parse(refererUri, pageUri) must_== Some(Referer(Medium.Unknown, None, None))
+        Parser.parse(refererUri, pageHost) must_== Some(Referer(Medium.Unknown, None, None))
     }
 
   // Unavoidable false positives
-  def e4 =
+  def e3 =
     "SPEC NAME"                                             || "REFERER URI"              | "REFERER MEDIUM" | "REFERER SOURCE"    | "REFERER TERM"                           |
     "Google search false +ive (actually Google Drive link)" !! "http://www.google.com/url?q=http://www.whatismyreferer.com/&sa=D&usg=ALhdy2_qs3arPmg7E_e2aBkj6K0gHLa5rQ" ! Medium.Search ! Some("Google") ! Some("http://www.whatismyreferer.com/") |
     "Yahoo! search false +ive (actually Yahoo! Finance)"    !! "http://finance.yahoo.com" ! Medium.Search    ! Some("Yahoo!")      ! None                                     |> {
       (_, refererUri, medium, source, term) =>
-        Parser.parse(refererUri, pageUri) must_== Some(Referer(medium, source, term))
+        Parser.parse(refererUri, pageHost) must_== Some(Referer(medium, source, term))
     }
 }
