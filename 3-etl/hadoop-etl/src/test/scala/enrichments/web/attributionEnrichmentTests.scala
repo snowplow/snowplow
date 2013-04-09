@@ -29,6 +29,9 @@ import Scalaz._
 // SnowPlow Utils
 import com.snowplowanalytics.util.Tap._
 
+// referer-parser
+import com.snowplowanalytics.refererparser.scala.{Medium, Referer}
+
 /**
  * Tests the extractMarketingFields function.
  * Uses DataTables.
@@ -63,5 +66,28 @@ class ExtractMarketingFieldsTest extends Specification with DataTables with Vali
 }
 
 /**
- * TODO: add a few tests adapted from referer-parser
+ * TODO: a small selection of tests borrowed from referer-parser.
+ *
+ * This is a very imcomplete set - more a tripwire than a test suite.
+ * Please see referer-parser's test suite for the full set of tests:
+ *
+ * https://github.com/snowplow/referer-parser/tree/master/java-scala/src/test/scala/com/snowplowanalytics/refererparser/scala
  */
+class ParseRefererUriTest extends Specification with DataTables {
+
+  val PageHost = "www.snowplowanalytics.com"
+
+  def is =
+      "Parsing referer URIs should work" ! e1
+
+  def e1 =
+    "SPEC NAME"        || "REFERER URI"                                                                                                             | "REFERER MEDIUM" | "REFERER SOURCE"    | "REFERER TERM"                           |
+    "Google search"    !! "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"                                     ! Medium.Search    ! Some("Google")      ! Some("gateway oracle cards denise linn") |
+    "Facebook social"  !! "http://www.facebook.com/l.php?u=http%3A%2F%2Fwww.psychicbazaar.com&h=yAQHZtXxS&s=1"                                      ! Medium.Social    ! Some("Facebook")    ! None                                     |
+    "Yahoo! Mail"      !! "http://36ohk6dgmcd1n-c.c.yom.mail.yahoo.net/om/api/1.0/openmail.app.invoke/36ohk6dgmcd1n/11/1.0.35/us/en-US/view.html/0" ! Medium.Email     ! Some("Yahoo! Mail") ! None                                     |
+    "Internal referer" !! "https://www.snowplowanalytics.com/account/profile"                                                                       ! Medium.Internal  ! None                ! None                                     |
+    "Unknown referer"  !! "http://www.spyfu.com/domain.aspx?d=3897225171967988459"                                                                  ! Medium.Unknown   ! None                ! None                                     |> {                                                                                                                   
+      (_, refererUri, medium, source, term) =>
+        AttributionEnrichments.extractRefererDetails(new URI(refererUri), PageHost) must_== Some(Referer(medium, source, term))
+    }
+}
