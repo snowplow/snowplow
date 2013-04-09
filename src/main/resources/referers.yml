@@ -35,6 +35,9 @@ email:
       - mail.yahoo.com
       - mail.yahoo.co.uk
 
+  Orange Webmail:
+    domains:
+      - orange.fr/webmail
 
 # #######################################################################################################
 #
