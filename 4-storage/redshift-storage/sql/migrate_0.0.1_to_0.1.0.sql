@@ -9,13 +9,17 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.1.0
+-- Version:     Ports version 0.0.1 to version 0.1.0
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
 -- Copyright:   Copyright (c) 2013 SnowPlow Analytics Ltd
 -- License:     Apache License Version 2.0
 
+-- First rename the existing table (DON'T DELETE)
+ALTER TABLE events RENAME TO events_001;
+
+-- Now create the new table (copy-and-pasted from table-def.sql)
 CREATE TABLE events (
 	-- App
 	app_id varchar(255) encode text255, 
@@ -132,3 +136,6 @@ CREATE TABLE events (
 DISTSTYLE KEY
 DISTKEY (domain_userid)
 SORTKEY (collector_tstamp);
+
+-- Finally copy all the old data into the new format
+-- TODO
