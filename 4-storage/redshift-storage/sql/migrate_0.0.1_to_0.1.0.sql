@@ -138,4 +138,117 @@ DISTKEY (domain_userid)
 SORTKEY (collector_tstamp);
 
 -- Finally copy all the old data into the new format
--- TODO
+SELECT
+	-- App
+	app_id, 
+	platform, 
+	-- Date/time
+	collector_tstamp,
+	dvce_tstamp,
+	-- Event
+	event,
+	event_vendor,
+	event_id,
+	txn_id,
+	-- Versioning
+	v_tracker, 
+	v_collector,
+	v_etl, 
+	-- User and visit
+	user_id, 
+	user_ipaddress,
+	user_fingerprint,
+	domain_userid,
+	domain_sessionidx,
+	network_userid,
+	-- Page
+	page_title,
+	                          -- Don't select page_referrer
+	-- Page URL components
+	page_urlscheme,    
+	page_urlhost,     
+	page_urlport,        
+	page_urlpath,
+	page_urlquery,
+	page_urlfragment,
+	-- Referrer URL components
+	null AS refr_urlscheme,   -- Placeholder   
+	null AS refr_urlhost,     -- Placeholder
+	null AS refr_urlport,     -- Placeholder  
+	null AS refr_urlpath,     -- Placeholder 
+	null AS refr_urlquery,    -- Placeholder 
+	null AS refr_urlfragment, -- Placeholder 
+	-- Referrer details
+	null AS refr_medium,      -- Placeholder 
+	null AS refr_source,      -- Placeholder 
+	null AS refr_term,        -- Placeholder 
+	-- Marketing
+	mkt_medium AS mkt_source, -- Swap to fix #215
+	mkt_source AS mkt_medium, -- Swap to fix #215
+	mkt_term,
+	mkt_content,
+	mkt_campaign,
+	-- Custom Event
+	ev_category,
+	ev_action,
+	ev_label,
+	ev_property,
+	ev_value,
+	-- Ecommerce
+	tr_orderid,
+	tr_affiliation,
+	tr_total,
+	tr_tax,
+	tr_shipping,
+	tr_city,
+	tr_state,
+	tr_country,
+	ti_orderid,
+	ti_sku,
+	ti_name,
+	ti_category,
+	ti_price,
+	ti_quantity,
+	-- Page ping
+	pp_xoffset_min,
+	pp_xoffset_max,
+	pp_yoffset_min,
+	pp_yoffset_max,
+	-- User Agent
+	useragent,
+	-- Browser
+	br_name,
+	br_family,
+	br_version,
+	br_type,
+	br_renderengine,
+	br_lang,
+	br_features_pdf,
+	br_features_flash,
+	br_features_java,
+	br_features_director,
+	br_features_quicktime,
+	br_features_realplayer,
+	br_features_windowsmedia,
+	br_features_gears,
+	br_features_silverlight,
+	br_cookies,
+	br_colordepth,
+	br_viewwidth, 
+	br_viewheight,
+	-- Operating System
+	os_name,
+	os_family,
+	os_manufacturer,
+	os_timezone,
+	-- Device/Hardware
+	dvce_type,
+	dvce_ismobile,
+	dvce_screenwidth,
+	dvce_screenheight,
+	-- Document
+	doc_charset,
+	doc_width,
+	doc_height
+INTO events
+FROM events_001
