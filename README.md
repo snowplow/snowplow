@@ -2,11 +2,11 @@
 
 ## Introduction
 
-SnowPlow is the world's most powerful web analytics platform. It does three things:
+SnowPlow is the world's most powerful marketing and product analytics platform. It does three things:
 
-* Identifies users, and tracks the way they engage with a website or web-app
-* Stores the associated data in a scalable “clickstream” data warehouse
-* Makes it possible to leverage a big data toolset (e.g. Hadoop, Pig, Hive) to analyse that data
+* Identifies users, and tracks the way they engage with a website or app
+* Stores the associated behavioural data in a scalable “clickstream” data warehouse
+* Makes it possible to leverage a big data toolset (e.g. Hadoop, Pig, Hive) to analyse that event data
 
 **To find out more, please check out the [SnowPlow website] [website] and the [SnowPlow wiki] [wiki].**
 
