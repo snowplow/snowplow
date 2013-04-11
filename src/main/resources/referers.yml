@@ -164,6 +164,10 @@ social:
     domains:
       - mylife.ru
 
+  Paper.li:
+    domains:
+      - paper.li
+
   Classmates:
     domains:
       - classmates.com
@@ -2867,12 +2871,12 @@ search:
     domains:
       - www.1881.no
 
-
   Orange:
     parameters:
       - q
     domains:
       - busca.orange.es
+      - search.orange.co.uk
 
   Paperball:
     parameters:
