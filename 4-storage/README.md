@@ -4,7 +4,7 @@
 
 ## Overview
 
-**Storage** is where atomic SnowPlow events are stored by the [ETL] [etl] process, ready for querying by SnowPlow [Analytics] [analytics] tools.
+**Storage** is where atomic SnowPlow events are stored by the [Enrich] [enrich] process, ready for querying by SnowPlow [Analytics] [analytics] tools.
 
 ## Available storage
 
@@ -26,7 +26,7 @@
 
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/4-storage.png
 [trackers]: https://github.com/snowplow/snowplow/tree/master/1-trackers
-[etl]: https://github.com/snowplow/snowplow/tree/master/3-etl
+[enrich]: https://github.com/snowplow/snowplow/tree/master/3-enrich
 [analytics]: https://github.com/snowplow/snowplow/tree/master/5-analytics
 [setup]: https://github.com/snowplow/snowplow/wiki/setting-up-alternative-data-stores
 [techdocs]: https://github.com/snowplow/snowplow/wiki/storage%20documentation

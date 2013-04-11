@@ -5,7 +5,7 @@
 ## Overview
 
 A **Collector** receives SnowPlow events from one or more [Trackers]
-[trackers]. A Collector captures and logs these events in their raw form, ready to be processed by the SnowPlow [ETL] [etl] phase.
+[trackers]. A Collector captures and logs these events in their raw form, ready to be processed by the SnowPlow [Enrich] [enrich] phase.
 
 ## Available collectors
 
@@ -27,7 +27,7 @@ A **Collector** receives SnowPlow events from one or more [Trackers]
 
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/2-collectors.png
 [trackers]: https://github.com/snowplow/snowplow/tree/master/1-trackers
-[etl]: https://github.com/snowplow/snowplow/tree/master/3-etl
+[enrich]: https://github.com/snowplow/snowplow/tree/master/3-enrich
 [snowcannon-readme]: https://github.com/shermozle/SnowCannon/blob/master/README.md
 [c1]: https://github.com/snowplow/snowplow/tree/master/2-collectors/cloudfront-collector
 [c2]: https://github.com/snowplow/snowplow/tree/master/2-collectors/clojure-collector

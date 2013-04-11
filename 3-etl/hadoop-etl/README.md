@@ -17,7 +17,7 @@ Like the Hive ETL, the Hadoop ETL can be run on [Amazon Elastic MapReduce] [emr]
 Assuming you already have SBT installed:
 
     $ git clone git://github.com/snowplow/snowplow.git
-    $ cd 3-etl/hadoop-etl
+    $ cd 3-enrich/hadoop-etl
     $ sbt assembly
 
 The 'fat jar' is now available as:
@@ -48,7 +48,7 @@ limitations under the License.
 [scalding]: https://github.com/twitter/scalding/
 [cascading]: http://www.cascading.org/
 [snowplow]: http://snowplowanalytics.com
-[hive-etl]: https://github.com/snowplow/snowplow/tree/master/3-etl/hive-etl
+[hive-etl]: https://github.com/snowplow/snowplow/tree/master/3-enrich/hive-etl
 [emr]: http://aws.amazon.com/elasticmapreduce/
-[emr-etl-runner]: https://github.com/snowplow/snowplow/tree/master/3-etl/emr-etl-runner
+[emr-etl-runner]: https://github.com/snowplow/snowplow/tree/master/3-enrich/emr-etl-runner
 [license]: http://www.apache.org/licenses/LICENSE-2.0

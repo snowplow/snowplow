@@ -13,7 +13,7 @@
 
 # Update these for your environment
 rvm_path=/path/to/.rvm # Typically in the $HOME of the user who installed RVM
-RUNNER_PATH=/path/to/snowplow/3-etl/snowplow-emr-etl-runner
+RUNNER_PATH=/path/to/snowplow/3-enrich/snowplow-emr-etl-runner
 LOADER_PATH=/path/to/snowplow/4-storage/snowplow-storage-loader
 RUNNER_CONFIG=/path/to/your-runner-config.yml
 LOADER_CONFIG=/path/to/your-loader-config.yml
