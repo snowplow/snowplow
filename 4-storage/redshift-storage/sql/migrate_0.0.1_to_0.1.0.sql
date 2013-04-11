@@ -138,11 +138,9 @@ DISTSTYLE KEY
 DISTKEY (domain_userid)
 SORTKEY (collector_tstamp);
 
--- Need a commit here before loading
-COMMIT;
-
 -- Finally copy all the old data into the new format
-SELECT
+INSERT INTO events
+	SELECT
 	-- App
 	app_id, 
 	platform, 
@@ -187,8 +185,8 @@ SELECT
 	null AS refr_source,      -- Placeholder 
 	null AS refr_term,        -- Placeholder 
 	-- Marketing
-	mkt_medium AS mkt_source, -- Swap to fix #215
 	mkt_source AS mkt_medium, -- Swap to fix #215
+	mkt_medium AS mkt_source, -- Swap to fix #215
 	mkt_term,
 	mkt_content,
 	mkt_campaign,
@@ -254,5 +252,4 @@ SELECT
 	doc_charset,
 	doc_width,
 	doc_height
-INTO events
 FROM events_001;
