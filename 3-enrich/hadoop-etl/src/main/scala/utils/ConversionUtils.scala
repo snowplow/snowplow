@@ -56,15 +56,33 @@ object ConversionUtils {
    */
   def explodeUri(uri: URI): UriComponents = {
 
-    val p = uri.getPort
+    val port = uri.getPort
+
+    // TODO: should we be using decodeString below instead?
+    // Trouble is we can't be sure of the querystring's encoding.
+    val query    = fixTabsNewlines(uri.getQuery)
+    val path     = fixTabsNewlines(uri.getPath)
+    val fragment = fixTabsNewlines(uri.getFragment)
+
     UriComponents(
       scheme   = uri.getScheme,
       host     = uri.getHost,
-      port     = if (p == -1) 80 else p,
-      path     = Option(uri.getPath),
-      query    = Option(uri.getQuery),
-      fragment = Option(uri.getFragment)
+      port     = if (port == -1) 80 else port,
+      path     = path,
+      query    = query,
+      fragment = fragment
       )
+  }
+
+  /**
+   * A helper for the above
+   * TODO: complete description
+   */
+  private def fixTabsNewlines(str: String): Option[String] = {
+    val s = Option(str)
+    val r = s.map(_.replaceAll("(\\r|\\n)", "")
+             .replaceAll("\\t", "    "))
+    if (r == Some("")) None else r
   }
 
   /**
@@ -92,6 +110,8 @@ object ConversionUtils {
    */
   val decodeString: (String, String, String) => Validation[String, String] = (enc, field, str) =>
     try {
+      // TODO: switch to style of fixTabsNewlines above
+      // TODO: potentially switch to using fixTabsNewlines too to avoid duplication
       val s = Option(str).getOrElse("")
       val d = URLDecoder.decode(s, enc)
       val r = d.replaceAll("(\\r|\\n)", "")
