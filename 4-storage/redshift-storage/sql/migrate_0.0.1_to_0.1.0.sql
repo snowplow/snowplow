@@ -16,7 +16,7 @@
 -- Copyright:   Copyright (c) 2013 SnowPlow Analytics Ltd
 -- License:     Apache License Version 2.0
 
--- First rename the existing table (DON'T DELETE)
+-- First rename the existing table (don't delete it)
 ALTER TABLE events DROP CONSTRAINT event_id_pk;
 ALTER TABLE events RENAME TO events_001;
 
