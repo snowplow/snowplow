@@ -17,6 +17,7 @@
 -- License:     Apache License Version 2.0
 
 -- First rename the existing table (DON'T DELETE)
+ALTER TABLE events DROP CONSTRAINT event_id_pk;
 ALTER TABLE events RENAME TO events_001;
 
 -- Now create the new table (copy-and-pasted from table-def.sql)
@@ -137,6 +138,9 @@ DISTSTYLE KEY
 DISTKEY (domain_userid)
 SORTKEY (collector_tstamp);
 
+-- Need a commit here before loading
+COMMIT;
+
 -- Finally copy all the old data into the new format
 SELECT
 	-- App
@@ -251,4 +255,4 @@ SELECT
 	doc_width,
 	doc_height
 INTO events
-FROM events_001
+FROM events_001;
