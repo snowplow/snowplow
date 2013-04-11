@@ -4,7 +4,7 @@
 
 ## Overview
 
-**Analytics** are performed on the SnowPlow events held in [Storage] [storage], to answer business questions.
+**Analytics** are performed on the Snowplow events held in [Storage] [storage], to answer business questions.
 
 ## Documentation
 

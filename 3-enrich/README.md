@@ -4,7 +4,7 @@
 
 ## Overview
 
-The **Enrich** process takes raw SnowPlow events logged by a [Collector] [collectors], cleans them up, enriches them and puts them into [Storage] [storage].
+The **Enrich** process takes raw Snowplow events logged by a [Collector] [collectors], cleans them up, enriches them and puts them into [Storage] [storage].
 
 ## Available enrich
 

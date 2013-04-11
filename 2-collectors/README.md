@@ -4,8 +4,8 @@
 
 ## Overview
 
-A **Collector** receives SnowPlow events from one or more [Trackers]
-[trackers]. A Collector captures and logs these events in their raw form, ready to be processed by the SnowPlow [Enrich] [enrich] phase.
+A **Collector** receives Snowplow events from one or more [Trackers]
+[trackers]. A Collector captures and logs these events in their raw form, ready to be processed by the Snowplow [Enrich] [enrich] phase.
 
 ## Available collectors
 

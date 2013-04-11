@@ -4,7 +4,7 @@
 
 ## Overview
 
-**Trackers** are client- or server-side libraries which track customer behaviour by sending SnowPlow events to a [Collector] [collectors].
+**Trackers** are client- or server-side libraries which track customer behaviour by sending Snowplow events to a [Collector] [collectors].
 
 ## Available trackers
 

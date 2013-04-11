@@ -1,30 +1,30 @@
-# SnowPlow
+# Snowplow
 
 ## Introduction
 
-SnowPlow is the world's most powerful marketing and product analytics platform. It does three things:
+Snowplow is the world's most powerful marketing and product analytics platform. It does three things:
 
 * Identifies users, and tracks the way they engage with a website or app
 * Stores the associated behavioural data in a scalable “clickstream” data warehouse
 * Makes it possible to leverage a big data toolset (e.g. Hadoop, Pig, Hive) to analyse that event data
 
-**To find out more, please check out the [SnowPlow website] [website] and the [SnowPlow wiki] [wiki].**
+**To find out more, please check out the [Snowplow website] [website] and the [Snowplow wiki] [wiki].**
 
-## SnowPlow technology 101
+## Snowplow technology 101
 
-The repository structure follows the conceptual architecture of SnowPlow, which consists of five loosely coupled stages:
+The repository structure follows the conceptual architecture of Snowplow, which consists of five loosely coupled stages:
 
 ![architecture] [architecture-image]
 
 To briefly explain these five sub-systems:
 
-* **Trackers** fire SnowPlow events. Currently we have a JavaScript tracker, a no-JavaScript (pixel) tracker and an Arduino tracker
-* **Collectors** receive SnowPlow events from trackers. Currently we have a CloudFront-based collector and a Clojure-based collector
-* **Enrich** cleans up the raw SnowPlow events, enriches them and puts them into storage. Currently we have separate Hadoop-based and Hive-based enrichment processes
-* **Storage** is where the SnowPlow events live. Currently we store the SnowPlow events in a Hive-format flatfile structure on S3, and in the Redshift and Infobright columnar databases
-* **Analytics** are performed on the SnowPlow events. Currently we have a set of ad hoc analyses that work with Hive and Infobright 
+* **Trackers** fire Snowplow events. Currently we have a JavaScript tracker, a no-JavaScript (pixel) tracker and an Arduino tracker
+* **Collectors** receive Snowplow events from trackers. Currently we have a CloudFront-based collector and a Clojure-based collector
+* **Enrich** cleans up the raw Snowplow events, enriches them and puts them into storage. Currently we have separate Hadoop-based and Hive-based enrichment processes
+* **Storage** is where the Snowplow events live. Currently we store the Snowplow events in a Hive-format flatfile structure on S3, and in the Redshift and Infobright columnar databases
+* **Analytics** are performed on the Snowplow events. Currently we have a set of ad hoc analyses that work with Hive and Infobright 
 
-**For more information on the current SnowPlow architecture, please see the [Technical architecture] [architecture-doc]**.
+**For more information on the current Snowplow architecture, please see the [Technical architecture] [architecture-doc]**.
 
 ## Find out more
 
@@ -35,9 +35,9 @@ To briefly explain these five sub-systems:
 
 ## Contributing
 
-We're committed to a loosely-coupled architecture for SnowPlow and would love to get your contributions within each of the five sub-systems.
+We're committed to a loosely-coupled architecture for Snowplow and would love to get your contributions within each of the five sub-systems.
 
-If you would like help implementing a new tracker, adding an additional enrichment or loading SnowPlow events into an alternative database, **[get in touch] [talk-to-us]**!
+If you would like help implementing a new tracker, adding an additional enrichment or loading Snowplow events into an alternative database, **[get in touch] [talk-to-us]**!
 
 ## Questions or need help?
 
@@ -45,7 +45,7 @@ Check out the **[Talk to us] [talk-to-us]** page on our wiki.
 
 ## Copyright and license
 
-SnowPlow is copyright 2012-2013 SnowPlow Analytics Ltd.
+Snowplow is copyright 2012-2013 Snowplow Analytics Ltd.
 
 Licensed under the **[Apache License, Version 2.0] [license]** (the "License");
 you may not use this software except in compliance with the License.

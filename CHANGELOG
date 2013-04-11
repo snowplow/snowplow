@@ -9,7 +9,8 @@ Redshift: migration script added for 0.0.1 to 0.1.0
 Redshift: add/update referer fields in Redshift table definition (#204)
 Redshift: fix bug where mkt_source and mkt_medium are getting swapped around (#215)
 Common: replaced embedded architecture images with CloudFront-hosted images
-Common: completed rename of 3-etl to 3-enrich (#99)                                                 - TODO
+Common: completed rename of 3-etl to 3-enrich (#99)
+Common: "SnowPlow" -> "Snowplow" in 1st and 2nd level READMEs
 
 Version 0.8.0 (2013-04-03)
 --------------------------
