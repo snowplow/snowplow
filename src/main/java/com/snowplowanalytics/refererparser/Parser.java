@@ -177,7 +177,12 @@ public class Parser {
 
   private String extractSearchTerm(URI uri, List<String> possibleParameters) {
 
-    List<NameValuePair> params = URLEncodedUtils.parse(uri, "UTF-8");
+    List<NameValuePair> params;
+    try {
+      params = URLEncodedUtils.parse(uri, "UTF-8");
+    } catch (IllegalArgumentException iae) {
+      return null;
+    }
 
     for (NameValuePair pair : params) {
       final String name = pair.getName();
