@@ -20,10 +20,6 @@ import java.net.URI
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
 /**
  * Tests the explodeUri function
  */
