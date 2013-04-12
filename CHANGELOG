@@ -1,4 +1,4 @@
-Version 0.8.1 (2013-04-1x)
+Version 0.8.1 (2013-04-12)
 --------------------------
 Hadoop ETL: bumped to 0.2.0
 Hadoop ETL: break referer_url into constituent parts (part of #175)
