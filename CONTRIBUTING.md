@@ -23,7 +23,7 @@ and closed issues first.
 
 * Two spaces, not tabs
 * Code should follow our accepted style guides (coming soon)
-* Keep editor-specific cruft out of `.gitignore`s and source code
+* Don't add editor-specific cruft to source code or `.gitignore`
 
 Look at existing code to get a good feel for the patterns we use.
 
