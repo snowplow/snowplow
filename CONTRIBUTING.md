@@ -3,6 +3,10 @@
 So you want to contribute to Snowplow? Fantastic! Here's a brief overview on
 how best to do so.
 
+## Support request?
+
+If you are having trouble setting up or running Snowplow, then the best place to get help is on the [SnowPlow Google Group](https://groups.google.com/forum/#!forum/snowplow-user) (aka `snowplow-user`). Posting your problem there ensures more people will see it and you should get support faster than creating a new issue on GitHub. Please do create a new issue on GitHub if you think you've found a bug though! 
+
 ## What to change
 
 Here's some examples of things you might want to make a pull request for:
