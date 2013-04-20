@@ -27,12 +27,13 @@ import org.apache.catalina.connector.Response;
 
 /**
  * A custom AccessLogValve for Tomcat to help generate CloudFront-like access logs.
+ * Used in SnowPlow's Clojure Collector.
  *
  * Introduces a new pattern, 'I', to escape an incoming header.
- * Used in SnowPlow's Clojure Collector to escape the User-Agent header (as 
- * CloudFront does).
+ * Introduces a new pattern, 'C', to fetch a cookie stored on the response.
+ * Re-implements the pattern 'i' to ensure that "" (empty string) is replaced with "-".
  *
- * All original AccessLogValve code taken from:
+ * This is adapted from the original AccessLogValve code here:
  * http://javasourcecode.org/html/open-source/tomcat/tomcat-7.0.29/org/apache/catalina/valves/AccessLogValve.java.html
  */
 public class CfAccessLogValve extends AccessLogValve {
@@ -41,9 +42,11 @@ public class CfAccessLogValve extends AccessLogValve {
 
     /**
      * Create an AccessLogElement implementation which needs header string.
-     * Updated to include:
-     * - An 'I' pattern, to escape an incoming header
-     * - A  'C' pattern, to fetch a cookie on the response (not request)
+     *
+     * Changes:
+     * - Added 'I' pattern, to escape an incoming header
+     * - Added 'C' pattern, to fetch a cookie on the response (not request)
+     * - Fixed 'i' pattern, to replace "" (empty string) with "-"
      */
     protected AccessLogElement createAccessLogElement(String header, char pattern) {
 

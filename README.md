@@ -1,9 +1,14 @@
-tomcat-cf-access-valve
-======================
+# tomcat-cf-access-log-valve
 
 Custom `AccessLogValve` for Tomcat 7 to help generate CloudFront-like access logs, e.g. on Amazon Elastic Beanstalk.
 
 Used by the SnowPlow Clojure Collector.
+
+Compared to the standard `AccessLogValve`, this valve:
+
+1. Introduces a new pattern, 'I', to escape an incoming header.
+2. Introduces a new pattern, 'C', to fetch a cookie stored on the response.
+3. Re-implements the pattern 'i' to ensure that "" (empty string) is replaced with "-".
 
 To build:
 
