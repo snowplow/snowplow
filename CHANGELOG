@@ -1,3 +1,12 @@
+Version 0.8.2 (2013-04-2X)
+--------------------------
+Clojure Collector: bumped to 0.4.0
+Remove duplicate of wrap-request-logging in middleware.clj (#221) - TODO
+Simplify building clojure collector (#223)                        - TODO
+Check/potentially bump lein-ring dependency in project.clj (#222) - TODO
+Fix Tomcat log bug of missing cs(Referer) (#220)                  - TODO
+Clojure Collector: send 204 No Content instead of 1x1 pixel (#141) - TODO
+
 Version 0.8.1 (2013-04-12)
 --------------------------
 Hadoop ETL: bumped to 0.2.0
