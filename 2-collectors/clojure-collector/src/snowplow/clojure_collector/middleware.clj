@@ -24,6 +24,11 @@
   (let [line (apply format msg vals)]
     (locking System/out (println line))))
 
+(defn wrap-if [handler pred wrapper & args]
+  (if pred
+    (apply wrapper handler args)
+    handler))
+
 (defn wrap-request-logging [handler]
   (fn [{:keys [request-method uri] :as req}]
     (let [start  (System/currentTimeMillis)
@@ -32,11 +37,6 @@
           total  (- finish start)]
       (log "request %s %s (%dms)" request-method uri total)
       resp)))
-
-(defn wrap-if [handler pred wrapper & args]
-  (if pred
-    (apply wrapper handler args)
-    handler))
 
 (defn wrap-exception-logging [handler]
   (fn [req]
