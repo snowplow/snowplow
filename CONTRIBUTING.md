@@ -28,8 +28,9 @@ and closed issues first.
 ## Style
 
 * Two spaces, not tabs
+* Trailing newline at end of source files
+* No editor-specific cruft in source code or `.gitignore`
 * Code should follow our accepted style guides (coming soon)
-* Don't add editor-specific cruft to source code or `.gitignore`
 
 Look at existing code to get a good feel for the patterns we use.
 
