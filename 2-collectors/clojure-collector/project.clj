@@ -16,14 +16,14 @@
 (defproject snowplow/clojure-collector "0.4.0"
   :description "A SnowPlow event collector written in Clojure. AWS Elastic Beanstalk compatible."
   :dependencies     [[org.clojure/clojure "1.4.0"]
-                     [ring/ring-core "1.1.6"]
+                     [ring/ring-core "1.1.8"]
+                     [ring/ring-devel "1.1.8"]
                      [compojure "1.1.3"]
                      [metrics-clojure "0.9.2"]
                      [metrics-clojure-ring "0.9.2"]
                      [commons-codec/commons-codec "1.7"]]
   ;; The jetty adapter is only used during development
-  :profiles         {:dev {:dependencies [[ring/ring-devel "1.1.6"]
-                                          [ring/ring-jetty-adapter "1.1.6"]]}}
+  :profiles         {:dev {:dependencies [[ring/ring-jetty-adapter "1.1.8"]]}}
   :plugins          [[lein-ring "0.8.3"]
                      [lein-beanstalk "0.2.6"]]
   :ring {:handler snowplow.clojure-collector.beanstalk/app}) ; .beanstalk -> .core if you don't need Beanstalk support
