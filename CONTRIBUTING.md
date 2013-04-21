@@ -13,7 +13,6 @@ Posting your problem there ensures more people will see it and you should get su
 
 Here's some examples of things you might want to make a pull request for:
 
-* New language translations
 * New features
 * Bugfixes
 * Inefficient blocks of code
