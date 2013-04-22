@@ -31,7 +31,7 @@ To briefly explain these five sub-systems:
 | Technical Docs                  | Setup Guide               | Roadmap                 | Contributing                      |
 |---------------------------------|---------------------------|-------------------------|-----------------------------------|
 | ![i1] [techdocs-image]          | ![i2] [setup-image]       | ![i3] [roadmap-image]   | ![i4] [contributing-image]        |
-| **[Technical Docs] [techdocs]** | **[Setup Guide] [setup]** | **[Roadmap] [roadmap]** | **[Contributors] [contributors]** |
+| **[Technical Docs] [techdocs]** | **[Setup Guide] [setup]** | **[Roadmap] [roadmap]** | **[Contributing] [contributing]** |
 
 ## Contributing
 
@@ -78,4 +78,4 @@ limitations under the License.
 [techdocs]: https://github.com/snowplow/snowplow/wiki/SnowPlow-technical-documentation
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-SnowPlow
 [roadmap]: https://github.com/snowplow/snowplow/wiki/Product-roadmap
-[contributors]: https://github.com/snowplow/snowplow/wiki/Contributors
+[contributing]: https://github.com/snowplow/snowplow/wiki/Contributing
