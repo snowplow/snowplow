@@ -51,6 +51,9 @@ public class CfAccessLogValve extends AccessLogValve {
     protected AccessLogElement createAccessLogElement(String header, char pattern) {
 
         switch (pattern) {
+            // A safer header element returns a hyphen never a null/empty string
+            case 'i':
+                return new SaferHeaderElement(header);
             // Added EscapedHeaderElement        
             case 'I':
                 return new EscapedHeaderElement(header);
@@ -60,6 +63,36 @@ public class CfAccessLogValve extends AccessLogValve {
             // Back to AccessLogValve's handler
             default:
                 return super.createAccessLogElement(header, pattern);
+        }
+    }
+
+    /**
+     * Write incoming headers - %{xxx}i
+     * Makes sure to hyphenate in the case of null/empty element.
+     *
+     * Note: if there are multiple blank elements, then -,-,- or
+     * similar will be returned. This is acceptable for our
+     * (Snowplow's) purposes - your use case might differ.
+     */
+    protected static class SaferHeaderElement implements AccessLogElement {
+        private final String header;
+
+        public SaferHeaderElement(String header) {
+            this.header = header;
+        }
+
+        @Override
+        public void addElement(StringBuilder buf, Date date, Request request,
+                Response response, long time) {
+            Enumeration<String> iter = request.getHeaders(header);
+            if (iter.hasMoreElements()) {
+                buf.append(handleBlankSafely(iter.nextElement()));
+                while (iter.hasMoreElements()) {
+                    buf.append(',').append(handleBlankSafely(iter.nextElement()));
+                }
+                return;
+            }
+            buf.append('-');
         }
     }
 
@@ -122,13 +155,29 @@ public class CfAccessLogValve extends AccessLogValve {
     }
 
     /**
-    * Encodes a string or returns a "-" if not possible.
-    *
-    * @param s The String to encode
-    * @return The encoded string
-    */
-    protected static String encodeStringSafely(String s)
-    {
+     * Replaces a null or empty string with
+     * a hyphen, to avoid the logs ending up
+     * with any <TAB><TAB> entries (which can
+     * break parsers).
+     *
+     * @param s The String to hyphenate if blank
+     * @return The string, or a hyphen if blank
+     */
+    protected static String handleBlankSafely(String s) {
+        if (s == null || s.isEmpty()) {
+            return "-";
+        } else {
+            return s;
+        }
+    }
+
+    /**
+     * Encodes a string or returns a "-" if not possible.
+     *
+     * @param s The String to encode
+     * @return The encoded string
+     */
+    protected static String encodeStringSafely(String s) {
         try {
             return URLEncoder.encode(s, cfEncoding);
         } catch (Exception e) {
