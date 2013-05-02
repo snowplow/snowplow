@@ -1,8 +1,10 @@
 # referer-parser Java/Scala library
 
-This is the Java and Scala implementation of [referer-parser] [referer-parser], the library for extracting search marketing data from referer _(sic)_ URLs.
+This is the Java and Scala implementation of [referer-parser] [referer-parser], the library for extracting attribution data from referer _(sic)_ URLs.
 
-The implementation uses the shared 'database' of known search engine referers found in [`search.yml`] [search-yml].
+The implementation uses the shared 'database' of known referers found in [`referers.yml`] [referer-yml].
+
+The Scala implementation is a core component of [Snowplow] [snowplow], the open-source web-scale analytics platform powered by Hadoop, Hive and Redshift.
 
 ## Java
 
@@ -18,11 +20,11 @@ import com.snowplowanalytics.refererparser.Parser;
   String refererUrl = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari";
 
   Parser refererParser = new Parser();
-  Referal r = refererParser.parse(refererUrl);
+  Referer r = refererParser.parse(refererUrl);
 
-  System.out.println(r.referer.name);       // => "Google"
-  System.out.println(r.search.parameter);   // => "q"    
-  System.out.println(r.search.term);        // => "gateway oracle cards denise linn"
+  System.out.println(r.medium);     // => "search"
+  System.out.println(r.source);     // => "Google"
+  System.out.println(r.term);       // => "gateway oracle cards denise linn"
 ```
 
 ### Installation
@@ -58,7 +60,7 @@ Then add into your project's `pom.xml`:
 <dependency>
     <groupId>com.snowplowanalytics</groupId>
     <artifactId>referer-parser</artifactId>
-    <version>0.0.1</version>
+    <version>0.1.0</version>
 </dependency>
 ```
 
@@ -68,15 +70,17 @@ Then add into your project's `pom.xml`:
 
 Use referer-parser in Scala like this:
 
-```ruby
+```scala
 val refererUrl = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
 
 import com.snowplowanalytics.refererparser.scala.Parser
 for (r <- Parser.parse(refererUrl)) {
-  println(r.referer.name)      // => "Google"
-  for (s <- r.search) {
-    println(s.term)            // => "gateway oracle cards denise linn"
-    println(s.parameter)       // => "q"    
+  println(r.medium)         // => "search"
+  for (s <- r.source) {
+    println(s)              // => "Google"
+  }
+  for (t <- r.term) {
+    println(t)              // => "gateway oracle cards denise linn"
   }
 }
 ```
@@ -90,7 +94,7 @@ Add this to your SBT config:
 val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
 
 // Dependency
-val scalaUtil = "com.snowplowanalytics"   % "referer-parser"   % "0.0.1" .
+val scalaUtil = "com.snowplowanalytics"   % "referer-parser"   % "0.1.0" .
 ```
 
 ## Contributing
@@ -113,6 +117,8 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+[snowplow]: https://github.com/snowplow/snowplow
 
 [referer-parser]: https://github.com/snowplow/referer-parser
 [search-yml]: https://github.com/snowplow/referer-parser/blob/master/search.yml

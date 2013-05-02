@@ -50,7 +50,11 @@ object Medium extends Enumeration {
  *
  * Replacement for Java version's POJO.
  */
-case class Referer(medium: Medium.Medium, source: Option[String], term: Option[String])
+case class Referer(
+  medium: Medium.Medium,
+  source: Option[String],
+  term:   Option[String]
+)
 
 /**
  * Parser object - contains one-time initialization
