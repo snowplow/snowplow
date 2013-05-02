@@ -94,7 +94,7 @@ Add this to your SBT config:
 val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
 
 // Dependency
-val scalaUtil = "com.snowplowanalytics"   % "referer-parser"   % "0.1.0" .
+val scalaUtil = "com.snowplowanalytics"   % "referer-parser"   % "0.1.0"
 ```
 
 ## Contributing
