@@ -1,4 +1,4 @@
--- Copyright (c) 2013 SnowPlow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2013 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,7 +13,7 @@
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
--- Copyright:   Copyright (c) 2013 SnowPlow Analytics Ltd
+-- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 CREATE TABLE events (
@@ -40,12 +40,12 @@ CREATE TABLE events (
 	domain_sessionidx smallint,
 	network_userid varchar(38),
 	-- Location
-	geo_country char(2),
-	geo_region,
-	geo_city,
-	geo_zipcode,
-	geo_latitude,
-	geo_longitude,
+	geo_country char(2),            -- New in 0.2.0
+	geo_region char(2),             -- New in 0.2.0
+	geo_city varchar(75),           -- New in 0.2.0
+	geo_zipcode varchar(15),        -- New in 0.2.0
+	geo_latitude double precision,  -- New in 0.2.0
+	geo_longitude double precision, -- New in 0.2.0
 	-- Page
 	page_title varchar(2000),
 	-- Page URL components
@@ -72,7 +72,7 @@ CREATE TABLE events (
 	mkt_term varchar(255) encode raw,
 	mkt_content varchar(500) encode raw,
 	mkt_campaign varchar(255) encode text32k,
-	-- Custom Event
+	-- Custom structured event
 	ev_category varchar(255) encode text255,
 	ev_action varchar(255) encode text255,
 	ev_label varchar(255) encode text32k,

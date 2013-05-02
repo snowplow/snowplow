@@ -9,16 +9,16 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     Ports version 0.0.1 to version 0.1.0
+-- Version:     Ports version 0.1.0 to version 0.2.0
 -- URL:         -
 --
--- Authors:     Yali Sassoon, Alex Dean
+-- Authors:     Alex Dean
 -- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 -- First rename the existing table (don't delete it)
 ALTER TABLE events DROP CONSTRAINT event_id_pk;
-ALTER TABLE events RENAME TO events_001;
+ALTER TABLE events RENAME TO events_010;
 
 -- Now create the new table (copy-and-pasted from table-def.sql)
 CREATE TABLE events (
@@ -44,6 +44,13 @@ CREATE TABLE events (
 	domain_userid varchar(16),
 	domain_sessionidx smallint,
 	network_userid varchar(38),
+	-- Location
+	geo_country char(2),            -- New in 0.2.0
+	geo_region char(2),             -- New in 0.2.0
+	geo_city varchar(75),           -- New in 0.2.0
+	geo_zipcode varchar(15),        -- New in 0.2.0
+	geo_latitude double precision,  -- New in 0.2.0
+	geo_longitude double precision, -- New in 0.2.0
 	-- Page
 	page_title varchar(2000),
 	-- Page URL components
@@ -70,7 +77,7 @@ CREATE TABLE events (
 	mkt_term varchar(255) encode raw,
 	mkt_content varchar(500) encode raw,
 	mkt_campaign varchar(255) encode text32k,
-	-- Custom Event
+	-- Custom structured event
 	ev_category varchar(255) encode text255,
 	ev_action varchar(255) encode text255,
 	ev_label varchar(255) encode text32k,
@@ -163,9 +170,15 @@ INSERT INTO events
 	domain_userid,
 	domain_sessionidx,
 	network_userid,
+	-- Location
+	null AS geo_country,   -- Placeholder
+	null AS geo_region,    -- Placeholder
+	null AS geo_city,      -- Placeholder
+	null AS geo_zipcode,   -- Placeholder
+	null AS geo_latitude,  -- Placeholder
+	null AS geo_longitude, -- Placeholder
 	-- Page
 	page_title,
-	                          -- Don't select page_referrer
 	-- Page URL components
 	page_urlscheme,    
 	page_urlhost,     
@@ -174,19 +187,19 @@ INSERT INTO events
 	page_urlquery,
 	page_urlfragment,
 	-- Referrer URL components
-	null AS refr_urlscheme,   -- Placeholder   
-	null AS refr_urlhost,     -- Placeholder
-	null AS refr_urlport,     -- Placeholder  
-	null AS refr_urlpath,     -- Placeholder 
-	null AS refr_urlquery,    -- Placeholder 
-	null AS refr_urlfragment, -- Placeholder 
+	refr_urlscheme, 
+	refr_urlhost,
+	refr_urlport, 
+	refr_urlpath, 
+	refr_urlquery,
+	refr_urlfragment, 
 	-- Referrer details
-	null AS refr_medium,      -- Placeholder 
-	null AS refr_source,      -- Placeholder 
-	null AS refr_term,        -- Placeholder 
+	refr_medium,
+	refr_source,
+	refr_term,
 	-- Marketing
-	mkt_source AS mkt_medium, -- Swap to fix #215
-	mkt_medium AS mkt_source, -- Swap to fix #215
+	mkt_medium,
+	mkt_source,
 	mkt_term,
 	mkt_content,
 	mkt_campaign,
@@ -252,4 +265,4 @@ INSERT INTO events
 	doc_charset,
 	doc_width,
 	doc_height
-FROM events_001;
+FROM events_010;
