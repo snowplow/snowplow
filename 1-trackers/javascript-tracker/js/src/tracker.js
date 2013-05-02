@@ -137,7 +137,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		configReferralCookieTimeout = 15768000000, // 6 months
 
     // Enable Base64 encoding for unstructured events
-    configEncodeUnstructEvents = false,
+    configEncodeBase64 = false,
 
 		// Document character set
 		documentCharset = SnowPlow.documentAlias.characterSet || SnowPlow.documentAlias.charset,
@@ -713,7 +713,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		}
 
 		pr_string = JSON2.stringify(translated);
-		if(configEncodeUnstructEvents) {
+		if(configEncodeBase64) {
 		  sb.add('ue_px', SnowPlow.base64encode(pr_string));
 		} else {
 		  sb.add('ue_pr', pr_string);
@@ -1672,8 +1672,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 *
 		 * @param boolean enabled A boolean value indicating if the Base64 encoding for unstructured events should be enabled or not
 		 */
-		encodeUnstructEvents: function (enabled) {
-			configEncodeUnstructEvents = enabled;
+		encodeBase64: function (enabled) {
+			configEncodeBase64 = enabled;
 		},
 
 		/**
