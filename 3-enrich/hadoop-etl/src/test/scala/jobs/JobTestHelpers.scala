@@ -30,6 +30,11 @@ import com.twitter.scalding._
 object JobTestHelpers {
 
   /**
+   * The current version of our Hadoop ETL
+   */
+  val EtlVersion = "hadoop-0.3.0"
+
+  /**
    * A Specs2 matcher to check if a Scalding
    * output sink is empty or not.
    */

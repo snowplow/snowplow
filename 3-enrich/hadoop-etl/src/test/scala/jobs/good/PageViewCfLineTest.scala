@@ -50,7 +50,7 @@ object PageViewCfLineTest {
     "637309",
     "js-0.11.1",
     "cloudfront",
-    "hadoop-0.2.0",
+    EtlVersion,
     null, // No user_id set
     "90.194.12.51",
     "2876815413",

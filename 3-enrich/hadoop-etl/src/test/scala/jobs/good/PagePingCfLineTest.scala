@@ -50,7 +50,7 @@ object PagePingCfLineTest {
     "128574",
     "js-0.11.1",
     "cloudfront",
-    "hadoop-0.2.0",
+    EtlVersion,
     null, // No user_id set
     "201.17.84.32",
     "1640945579",

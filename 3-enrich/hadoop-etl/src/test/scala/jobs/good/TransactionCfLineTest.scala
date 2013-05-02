@@ -50,7 +50,7 @@ object TransactionCfLineTest {
     "028288",
     null, // Not set (legacy input line)
     "cloudfront",
-    "hadoop-0.2.0",
+    EtlVersion,
     null, // No user_id set
     "99.116.172.58",
     null, // Not set (legacy input line)

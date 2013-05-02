@@ -50,7 +50,7 @@ object StructEventCfLineTest {
     "598951",
     "js-0.11.1",
     "cloudfront",
-    "hadoop-0.2.0",
+    EtlVersion,
     null, // No user_id set
     "99.116.172.58",
     "2876815413",
