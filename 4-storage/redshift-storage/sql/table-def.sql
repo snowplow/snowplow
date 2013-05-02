@@ -9,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.1.0
+-- Version:     0.2.0
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
@@ -39,6 +39,13 @@ CREATE TABLE events (
 	domain_userid varchar(16),
 	domain_sessionidx smallint,
 	network_userid varchar(38),
+	-- Location
+	geo_country char(2),
+	geo_region,
+	geo_city,
+	geo_zipcode,
+	geo_latitude,
+	geo_longitude,
 	-- Page
 	page_title varchar(2000),
 	-- Page URL components
