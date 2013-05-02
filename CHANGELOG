@@ -5,9 +5,9 @@ Hadoop ETL: added geo-ip lookup to Scalding ETL                   - TODO
 Hadoop ETL: bumped referer-parser to 0.1.0 from 0.1.0-M6          - TODO
 EmrEtlRunner: bumped to 0.2.0                                     - TODO
 EmrEtlRunner: <<< >>>
-Redshift: table-def script bumped to 0.2.0                        - TODO
-Redshift: migration script added for 0.1.0 to 0.2.0               - TODO
-Redshift: added geo-ip fields to Redshift table definition (#2XX) - TODO
+Redshift: table-def script bumped to 0.2.0
+Redshift: migration script added for 0.1.0 to 0.2.0
+Redshift: added geo-ip fields to Redshift table definition (#226)
 
 <<< >>>
 
