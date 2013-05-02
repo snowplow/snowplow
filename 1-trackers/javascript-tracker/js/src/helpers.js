@@ -109,16 +109,40 @@ SnowPlow.getPropertySuffix = function (property) {
 	var e = new RegExp('\\$(.[^\\$]+)$'),
 	    matches = e.exec(property);
 
-	if(matches) return matches[1];
+	if (matches) return matches[1];
 }
 
 /*
- * Converts a date object to Unix timestamp with or without miliseconds
+ * Converts a date object to Unix timestamp with or without milliseconds
  */
-SnowPlow.toTimestamp = function (date, miliseconds) {
-	return miliseconds ? date / 1 : Math.floor(date / 1000);
+SnowPlow.toTimestamp = function (date, milliseconds) {
+	return milliseconds ? date / 1 : Math.floor(date / 1000);
 }
 
+/*
+ * Converts a date object to Unix datestamp (number of days since epoch)
+ */
+SnowPlow.toDatestamp = function (date) {
+	return Math.floor(date / 86400000);
+}
+
+/*
+ * Translates a value of an unstructured date property
+ */
+SnowPlow.translateDateValue = function (date, type) {
+  switch (type) {
+    case 'tms':
+      return SnowPlow.toTimestamp(date, true);
+    case 'ts':
+      return SnowPlow.toTimestamp(date, false);
+    case 'dt':
+      return SnowPlow.toDatestamp(date);
+    default:
+      return date;
+  }
+}
+
+  
 /*
  * Fix-up URL when page rendered from search engine cache or translated page.
  * TODO: it would be nice to generalise this and/or move into the ETL phase.

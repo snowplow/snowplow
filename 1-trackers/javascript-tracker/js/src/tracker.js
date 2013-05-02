@@ -705,9 +705,12 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		for(var p in properties) {
 			var key = p, value = properties[p];
 			if (properties.hasOwnProperty(p) && SnowPlow.isDate(properties[p])) {
-				suffix = SnowPlow.getPropertySuffix(p);
-				value = SnowPlow.toTimestamp(value, (suffix != 'ts'))
-				if(!suffix) key += '$tms'
+				type = SnowPlow.getPropertySuffix(p);
+				if(!type) {
+          type = 'tms'
+          key += '$' + type
+        }
+        value = SnowPlow.translateDateValue(value, type);
 			};
 			translated[key] = value;
 		}
