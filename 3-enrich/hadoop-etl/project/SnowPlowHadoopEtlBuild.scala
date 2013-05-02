@@ -39,11 +39,11 @@ object SnowPlowHadoopEtlBuild extends Build {
         Libraries.scalaz7,
         Libraries.scalaUtil,
         Libraries.refererParser,
+        Libraries.maxmindGeoip,
         // Scala (test only)
         Libraries.specs2,
         Libraries.scalazSpecs2,
         Libraries.scalaCheck
-        // Add your additional libraries here (comma-separated)...
       )
     )
 }

@@ -34,6 +34,7 @@ object Dependencies {
     val scalaz7       = "7.0.0-M9" // -> "7.0.0" when released
     val scalaUtil     = "0.1.0"
     val refererParser = "0.1.0-M6" // -> "0.1.0" when released
+    val maxmindGeoip  = "0.0.1"
     // Scala (test only)
     val specs2        = "1.12.3" // -> "1.13" when we bump to Scala 2.10.0
     val scalazSpecs2  = "0.1.2"
@@ -54,6 +55,7 @@ object Dependencies {
     val scalaz7       = "org.scalaz"                 %% "scalaz-core"         % V.scalaz7
     val scalaUtil     = "com.snowplowanalytics"      %  "scala-util"          % V.scalaUtil
     val refererParser = "com.snowplowanalytics"      %  "referer-parser"      % V.refererParser
+    val maxmindGeoip  = "com.snowplowanalytics"      %  "scala-maxmind-geoip" % V.maxmindGeoip
     // Scala (test only)
     val specs2        = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
     val scalazSpecs2  = "org.typelevel"              %% "scalaz-specs2"       % V.scalazSpecs2 % "test"
