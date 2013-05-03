@@ -14,10 +14,22 @@
  * limitations under the License.
  */
 
-package com.snowplowanalytics.refererparser;
+package com.snowplowanalytics.refererparser.scala
 
-public class CorruptYamlException extends Exception {
-	public CorruptYamlException(String message) {
-    super(message);
-  }
+// Java
+import java.net.URI
+
+// Specs2 & ScalaCheck
+import org.specs2.{Specification, ScalaCheck}
+import org.specs2.matcher.DataTables
+import org.scalacheck._
+import org.scalacheck.Arbitrary._
+
+class ParseFuzzTest extends Specification with ScalaCheck {
+
+  def is =
+    "The parse function should work for any pair of referer and page Strings" ! e1
+
+  def e1 =
+    check { (refererUri: String, pageUri: String) => Parser.parse(refererUri, pageUri) must beAnInstanceOf[Parser.MaybeReferer] }
 }

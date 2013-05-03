@@ -1,5 +1,5 @@
 /**
- * Copyright 2012 SnowPlow Analytics Ltd
+ * Copyright 2012-2013 Snowplow Analytics Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +17,44 @@
 package com.snowplowanalytics.refererparser.scala
 
 // Java
-import java.net.URI
+import java.net.{URI, URISyntaxException}
 
 // RefererParser Java impl
 import com.snowplowanalytics.refererparser.{Parser => JParser}
+import com.snowplowanalytics.refererparser.{Medium => JMedium}
 
 /**
- * Immutable case class to hold a referal.
+ * Enumeration for supported mediums.
  *
- * Replacement for Java version's POJO.
+ * Replacement for Java version's Enum.
  */
-case class Referal(referer: Referer, search: Option[Search])
+object Medium extends Enumeration {
+  type Medium = Value
+
+  val Unknown  = Value("unknown")
+  val Search   = Value("search")
+  val Internal = Value("internal")
+  val Social   = Value("social")
+  val Email    = Value("email")
+
+  /**
+   * Converts from our Java Medium Enum
+   * to our Scala Enumeration values above.
+   */
+  def fromJava(medium: JMedium) =
+    Medium.withName(medium.toString())
+}
 
 /**
  * Immutable case class to hold a referer.
  *
  * Replacement for Java version's POJO.
  */
-case class Referer(name: String)
-
-/**
- * Immutable case class to hold a search.
- *
- * Replacement for Java version's POJO.
- */
-case class Search(term: String, parameter: String)
+case class Referer(
+  medium: Medium.Medium,
+  source: Option[String],
+  term:   Option[String]
+)
 
 /**
  * Parser object - contains one-time initialization
@@ -53,29 +66,62 @@ case class Search(term: String, parameter: String)
  */
 object Parser {
 
-  private type MaybeReferal = Option[Referal]
+  type MaybeReferer = Option[Referer]
+
+  private lazy val jp = new JParser()
+
+  private def getHostSafely(uri: URI): String = {
+    if (uri == null) {
+      null
+    } else {
+      uri.getHost();
+    }
+  }
 
   /**
-   * Parses a `refererUri` String to return
-   * either a Referal, or None.
+   * Parses a `refererUri` UR and a `pageUri`
+   * URI to return either Some Referer, or None.
    */
-  def parse(refererUri: String): MaybeReferal =
-    if (refererUri == null || refererUri == "")
+  def parse(refererUri: URI, pageUri: URI): MaybeReferer =
+    parse(refererUri, getHostSafely(pageUri));
+
+  /**
+   * Parses a `refererUri` String and a `pageUri`
+   * URI to return either Some Referer, or None.
+   */
+  def parse(refererUri: String, pageUri: URI): MaybeReferer =
+    parse(refererUri, getHostSafely(pageUri));
+
+  /**
+   * Parses a `refererUri` String and a `pageUri`
+   * URI to return either some Referer, or None.
+   */
+  def parse(refererUri: String, pageHost: String): MaybeReferer = {
+
+    if (refererUri == null || refererUri == "") {
       None
-    else
-      parse(new URI(refererUri))
+    } else {
+      try {
+        parse(new URI(refererUri), pageHost)
+      } catch {
+        case use: URISyntaxException => None
+      }
+    }
+  }
 
   /**
    * Parses a `refererUri` URI to return
-   * either a Referal, or None.
+   * either Some Referer, or None.
    */
-  def parse(refererUri: URI): MaybeReferal = {
-    val jp = new JParser()
-
-    for {
-      r <- Option(jp.parse(refererUri))
-    } yield Referal(Referer(name = r.referer.name), for {
-        s <- Option(r.search)
-      } yield Search(term = s.term, parameter = s.parameter))
+  def parse(refererUri: URI, pageHost: String): MaybeReferer = {
+    
+    try {
+      val jrefr = Option(jp.parse(refererUri, pageHost))
+      jrefr.map(jr =>
+        Referer(Medium.fromJava(jr.medium), Option(jr.source), Option(jr.term))
+      )
+    } catch {
+      case use: URISyntaxException => None
+    }
   }
 }

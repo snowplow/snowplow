@@ -1,5 +1,5 @@
 /**
- * Copyright 2012 SnowPlow Analytics Ltd
+ * Copyright 2012-2013 Snowplow Analytics Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,23 +22,15 @@ import java.net.URI
 // Specs2
 import org.specs2.mutable.Specification
 
-class NoReferalTest extends Specification {
+class CorruptedRefererQuerystringTest extends Specification {
 
-  "An empty referer URL" should {
-    "return no referal" in {
-      Parser.parse("") must beNone
-    }
-  }
+  // Our data
+  val refererUri = "http://www.google.com/search?q=Psychic+Bazaar&sugexp=chrome,mod=3&sourceid=chrome&ie=UTF-8"
+  val expected   = Some(Referer(Medium.Search, Some("Google"), None))
 
-  "A null (String) referer URL" should {
-    "return no referal" in {
-      Parser.parse(null.asInstanceOf[String]) must beNone
-    }
-  }
-
-  "A null (URI) referer URL" should {
-    "return no referal" in {
-      Parser.parse(null.asInstanceOf[URI]) must beNone
+  "A corrupted referer querystring" should {
+    "identify the search engine but not the search term" in {
+      Parser.parse(refererUri, "") must_== expected
     }
   }
 }

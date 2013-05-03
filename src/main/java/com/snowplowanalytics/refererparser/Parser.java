@@ -1,5 +1,5 @@
 /**
- * Copyright 2012 SnowPlow Analytics Ltd
+ * Copyright 2012-2013 Snowplow Analytics Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,97 +40,215 @@ import org.apache.http.client.utils.URLEncodedUtils;
  */
 public class Parser {
 
-  private static final String REFERERS_YAML_PATH = "/search.yml";
+  private static final String REFERERS_YAML_PATH = "/referers.yml";
   private Map<String,RefererLookup> referers;
 
+  /**
+   * Holds the structure of each referer
+   * in our lookup Map.
+   */
   private static class RefererLookup {
-    public String name;
+    public Medium medium;
+    public String source;
     public List<String> parameters;
 
-    public RefererLookup(String name, List<String> parameters) {
-      this.name = name;
+    public RefererLookup(Medium medium, String source, List<String> parameters) {
+      this.medium = medium;
+      this.source = source;
       this.parameters = parameters;
     }
   }
 
+  /**
+   * Construct our Parser object using the
+   * bundled referers.yml
+   */
   public Parser() throws IOException, CorruptYamlException {
     this(Parser.class.getResourceAsStream(REFERERS_YAML_PATH));
   }
 
-  public Parser(InputStream referersYaml) throws CorruptYamlException {
-    referers = loadReferers(referersYaml);
+  /**
+   * Construct our Parser object using a 
+   * InputStream (in YAML format)
+   *
+   * @param referersYaml The referers YAML
+   *        to load into our Parser, in
+   *        InputStream format
+   */
+  public Parser(InputStream referersStream) throws CorruptYamlException {
+    referers = loadReferers(referersStream);
   }
 
-  public Referal parse(String refererUri) throws URISyntaxException {
+  /**
+   * Construct our Parser object using a
+   * custom resource String
+   *
+   * @param referersResource The resource pointing
+   *        to the referers YAML file to load
+   */
+  public Parser(String referersResource) throws IOException, CorruptYamlException {
+    this(Parser.class.getResourceAsStream(referersResource));
+  }
+
+  public Referer parse(URI refererUri, URI pageUri) {
+    return parse(refererUri, pageUri.getHost());
+  }
+
+  public Referer parse(String refererUri, URI pageUri) throws URISyntaxException {
+    return parse(refererUri, pageUri.getHost());
+  }
+
+  public Referer parse(String refererUri, String pageHost) throws URISyntaxException {
     if (refererUri == null || refererUri == "") return null;
     final URI uri = new URI(refererUri);
-    return parse(uri);
+    return parse(uri, pageHost);
   }
 
-  public Referal parse(URI refererUri) {
+  public Referer parse(URI refererUri, String pageHost) {
 
     // null unless we have a valid http: or https: URI
     if (refererUri == null) return null;
     final String scheme = refererUri.getScheme();
-    if (!scheme.equals("http") && !scheme.equals("https")) return null;
+    if (scheme == null || (!scheme.equals("http") && !scheme.equals("https"))) return null;
 
-    // Check if domain+path matches (e.g. google.co.uk/products)
-    RefererLookup referer = referers.get(refererUri.getHost() + refererUri.getPath());
+    // Internal link if hosts match exactly
+    // TODO: would also be nice to:
+    // 1. Support a list of other hosts which count as internal
+    // 2. Have an algo for stripping subdomains before checking match
+    if (refererUri.getHost().equals(pageHost)) return new Referer(Medium.INTERNAL, null, null);
+
+    // Try to lookup our referer. First check with paths, then without.
+    // This is the safest way of handling lookups
+    RefererLookup referer = lookupReferer(refererUri.getHost(), refererUri.getPath(), true);
     if (referer == null) {
-      referer = referers.get(refererUri.getHost()); // Try just the domain (e.g. google.com)
+      referer = lookupReferer(refererUri.getHost(), refererUri.getPath(), false);
     }
 
-    // Create our referer as necessary
     if (referer == null) {
-      return new Referal(new Referer("Other"), null); // Other referer, no search we can extract
+      return new Referer(Medium.UNKNOWN, null, null); // Unknown referer, nothing more to do
     } else {
-      final Referer refr = new Referer(referer.name);
-      final Search search = extractSearch(refererUri, referer.parameters);
-      return new Referal(refr, search);
+      // Potentially add a search term
+      final String term = (referer.medium == Medium.SEARCH) ? extractSearchTerm(refererUri, referer.parameters) : null;
+      return new Referer(referer.medium, referer.source, term);
     }
   }
 
-  private Search extractSearch(URI uri, List<String> possibleParameters) {
+  /**
+   * Recursive function to lookup a host (or partial host)
+   * in our referers map.
+   *
+   * First check the host, then the host+full path, then the host+
+   * one-level path.
+   *
+   * If not found, remove one subdomain-level off the front
+   * of the host and try again.
+   *
+   * @param pageHost The host of the current page
+   * @param pagePath The path to the current page
+   * @param includePath Whether to include the path in the lookup
+   *
+   * @return a RefererLookup object populated with the given
+   *         referer, or null if not found
+   */
+  private RefererLookup lookupReferer(String refererHost, String refererPath, Boolean includePath) {
 
-    List<NameValuePair> params = URLEncodedUtils.parse(uri, "UTF-8");
+    // Check if domain+full path matches, e.g. for apollo.lv/portal/search/ 
+    RefererLookup referer = (includePath) ? referers.get(refererHost + refererPath) : referers.get(refererHost);
+
+    // Check if domain+one-level path matches, e.g. for orange.fr/webmail/fr_FR/read.html (in our YAML it's orange.fr/webmail)
+    if (includePath && referer == null) {
+      final String[] pathElements = refererPath.split("/");
+      if (pathElements.length > 1) {
+        referer = referers.get(refererHost + "/" + pathElements[1]);
+      }
+    }
+
+    if (referer == null) {
+      final int idx = refererHost.indexOf('.');
+      if (idx == -1) {
+        return null; // No "."? Let's quit.
+      } else {
+        return lookupReferer(refererHost.substring(idx + 1), refererPath, includePath); // Recurse
+      }
+    } else {
+      return referer;
+    }
+  }
+
+  private String extractSearchTerm(URI uri, List<String> possibleParameters) {
+
+    List<NameValuePair> params;
+    try {
+      params = URLEncodedUtils.parse(uri, "UTF-8");
+    } catch (IllegalArgumentException iae) {
+      return null;
+    }
 
     for (NameValuePair pair : params) {
       final String name = pair.getName();
       final String value = pair.getValue();
 
       if (possibleParameters.contains(name)) {
-        return new Search(value, name);
+        return value;
       }
     }
     return null;
   }
 
+  /**
+   * Builds the map of hosts to referers from the
+   * input YAML file.
+   *
+   * @param referersYaml An InputStream containing the
+   *                     referers database in YAML format.
+   *
+   * @return a Map where the key is the hostname of each
+   *         referer and the value (RefererLookup)
+   *         contains all known info about this referer
+   */
   private Map<String,RefererLookup> loadReferers(InputStream referersYaml) throws CorruptYamlException {
 
     Yaml yaml = new Yaml(new SafeConstructor());
-    Map<String,Map> rawReferers = (Map<String,Map>) yaml.load(referersYaml);
+    Map<String,Map<String,Map>> rawReferers = (Map<String,Map<String,Map>>) yaml.load(referersYaml);
 
-    // Process each element of the map
+    // This will store all of our referers
     Map<String,RefererLookup> referers = new HashMap<String,RefererLookup>();
-    for (Map.Entry<String, Map> referer : rawReferers.entrySet()) {
 
-      String refererName = referer.getKey();
-      Map<String,List<String>> refererMap = referer.getValue();
+    // Outer loop is all referers under a given medium
+    for (Map.Entry<String,Map<String,Map>> mediumReferers : rawReferers.entrySet()) {
 
-      // Validate
-      List<String> parameters = refererMap.get("parameters");
-      if (parameters == null) {
-        throw new CorruptYamlException("No parameters found for referer '" + refererName + "'");
-      }
-      List<String> domains = refererMap.get("domains");
-      if (domains == null) { 
-        throw new CorruptYamlException("No domains found for referer '" + refererName + "'");
-      }
+      Medium medium = Medium.fromString(mediumReferers.getKey());
 
-      // Our hash needs referer domain as the
-      // key, so let's expand
-      for (String domain : domains) {
-        referers.put(domain, new RefererLookup(refererName, parameters));
+      // Inner loop is individual referers
+      for (Map.Entry<String,Map> referer : mediumReferers.getValue().entrySet()) {
+
+        String sourceName = referer.getKey();
+        Map<String,List<String>> refererMap = referer.getValue();
+
+        // Validate
+        List<String> parameters = refererMap.get("parameters");
+        if (medium == Medium.SEARCH) {
+          if (parameters == null) {
+            throw new CorruptYamlException("No parameters found for search referer '" + sourceName + "'");
+          }
+        } else {
+          if (parameters != null) {
+            throw new CorruptYamlException("Parameters not supported for non-search referer '" + sourceName + "'");
+          }
+        }
+        List<String> domains = refererMap.get("domains");
+        if (domains == null) { 
+          throw new CorruptYamlException("No domains found for referer '" + sourceName + "'");
+        }
+
+        // Our hash needs referer domain as the
+        // key, so let's expand
+        for (String domain : domains) {
+          if (referers.containsValue(domain)) {
+            throw new CorruptYamlException("Duplicate of domain '" + domain + "' found");
+          }
+          referers.put(domain, new RefererLookup(medium, sourceName, parameters));
+        }
       }
     }
 

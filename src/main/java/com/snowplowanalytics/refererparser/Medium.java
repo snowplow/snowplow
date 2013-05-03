@@ -1,5 +1,5 @@
 /**
- * Copyright 2012 SnowPlow Analytics Ltd
+ * Copyright 2012-2013 Snowplow Analytics Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,23 +14,28 @@
  * limitations under the License.
  */
 
-package com.snowplowanalytics.refererparser.scala
+package com.snowplowanalytics.refererparser;
 
-// Specs2
-import org.specs2.mutable.Specification
+/**
+ * Enum for the types of referer
+ * that we can detect - "medium"
+ * in Google's language.
+ *
+ * @author Alex Dean (@alexatkeplar) <support at snowplowanalytics com>
+ */
+public enum Medium {
+    UNKNOWN,
+    INTERNAL,
+    SEARCH,
+    SOCIAL,
+    EMAIL;
 
-class OtherReferalTest extends Specification {
+  static public Medium fromString(String medium) {
+    return Medium.valueOf(medium.toUpperCase());
+  }
 
-  val refererUrl = "http://www.facebook.com"
-
-  "A non-search referal (e.g. Facebook)" should {
-    val referal = Parser.parse(refererUrl).get
-
-    "have referer set to \"Other\"" in {
-      referal.referer.name must_== "Other"
-    }
-    "have no search information" in {
-      referal.search must beNone
-    }
+  @Override
+  public String toString() {
+    return super.toString().toLowerCase();
   }
 }
