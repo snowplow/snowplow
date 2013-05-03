@@ -2,7 +2,7 @@ Version 0.8.3 (2013-05-XX)
 --------------------------
 Hadoop ETL: bumped to 0.3.0
 Hadoop ETL: added geo-ip lookup to Scalding ETL                   - TODO
-Hadoop ETL: bumped referer-parser to 0.1.0 from 0.1.0-M6          - TODO
+Hadoop ETL: bumped referer-parser to 0.1.0 from 0.1.0-M6
 EmrEtlRunner: bumped to 0.2.0                                     - TODO
 EmrEtlRunner: <<< >>>
 Redshift: table-def script bumped to 0.2.0
