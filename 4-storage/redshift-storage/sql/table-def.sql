@@ -73,11 +73,11 @@ CREATE TABLE events (
 	mkt_content varchar(500) encode raw,
 	mkt_campaign varchar(255) encode text32k,
 	-- Custom structured event
-	ev_category varchar(255) encode text255,
-	ev_action varchar(255) encode text255,
-	ev_label varchar(255) encode text32k,
-	ev_property varchar(255) encode text32k,
-	ev_value float,
+	se_category varchar(255) encode text255, -- Renamed from ev_
+	se_action varchar(255) encode text255,   -- Renamed from ev_
+	se_label varchar(255) encode text32k,    -- Renamed from ev_
+	se_property varchar(255) encode text32k, -- Renamed from ev_
+	se_value float,                          -- Renamed from ev_
 	-- Ecommerce
 	tr_orderid varchar(255) encode raw,
 	tr_affiliation varchar(255) encode text255,
