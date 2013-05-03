@@ -2,7 +2,7 @@
 
 This is the Java and Scala implementation of [referer-parser] [referer-parser], the library for extracting attribution data from referer _(sic)_ URLs.
 
-The implementation uses the shared 'database' of known referers found in [`referers.yml`] [referer-yml].
+The implementation uses the shared 'database' of known referers found in [`referers.yml`] [referers-yml].
 
 The Scala implementation is a core component of [Snowplow] [snowplow], the open-source web-scale analytics platform powered by Hadoop, Hive and Redshift.
 
@@ -17,14 +17,15 @@ import com.snowplowanalytics.refererparser.Parser;
 
 ...
 
-  String refererUrl = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari";
+String refererUrl = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari";
+String pageUrl    = "http:/www.psychicbazaar.com/shop" // Our current URL
 
-  Parser refererParser = new Parser();
-  Referer r = refererParser.parse(refererUrl);
+Parser refererParser = new Parser();
+Referer r = refererParser.parse(refererUrl, pageUrl);
 
-  System.out.println(r.medium);     // => "search"
-  System.out.println(r.source);     // => "Google"
-  System.out.println(r.term);       // => "gateway oracle cards denise linn"
+System.out.println(r.medium);     // => "search"
+System.out.println(r.source);     // => "Google"
+System.out.println(r.term);       // => "gateway oracle cards denise linn"
 ```
 
 ### Installation
@@ -72,9 +73,10 @@ Use referer-parser in Scala like this:
 
 ```scala
 val refererUrl = "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari"
+val pageUrl    = "http:/www.psychicbazaar.com/shop" // Our current URL
 
 import com.snowplowanalytics.refererparser.scala.Parser
-for (r <- Parser.parse(refererUrl)) {
+for (r <- Parser.parse(refererUrl, pageUrl)) {
   println(r.medium)         // => "search"
   for (s <- r.source) {
     println(s)              // => "Google"
@@ -121,6 +123,6 @@ limitations under the License.
 [snowplow]: https://github.com/snowplow/snowplow
 
 [referer-parser]: https://github.com/snowplow/referer-parser
-[search-yml]: https://github.com/snowplow/referer-parser/blob/master/search.yml
+[referers-yml]: https://github.com/snowplow/referer-parser/blob/master/referers.yml
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0

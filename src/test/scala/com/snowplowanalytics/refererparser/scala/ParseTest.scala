@@ -73,7 +73,6 @@ class ParseTest extends Specification with DataTables { def is =
     "Unknown referer #2"            !! "http://www.wishwall.me/home"                             ! None             |
     "Unknown referer #3"            !! "http://www.spyfu.com/domain.aspx?d=3897225171967988459"  ! None             |
     "Unknown referer #4"            !! "http://seaqueen.wordpress.com/"                          ! None             |
-    "Non-search Google Drive link"  !! "http://www.google.com/url?q=http://www.whatismyreferer.com/&sa=D&usg=ALhdy2_qs3arPmg7E_e2aBkj6K0gHLa5rQ" ! Some("Google") |
     "Non-search Yahoo! site"        !! "http://finance.yahoo.com"                                ! Some("Yahoo!")   |> {
       (_, refererUri, refererSource) =>
         Parser.parse(refererUri, pageHost) must_== Some(Referer(Medium.Unknown, refererSource, None))
@@ -81,9 +80,11 @@ class ParseTest extends Specification with DataTables { def is =
 
   // Unavoidable false positives
   def e3 =
-    "SPEC NAME"              || "REFERER URI"           | "REFERER MEDIUM" | "REFERER SOURCE" | "REFERER TERM" |
-    "Unknown Google service" !! "http://xxx.google.com" ! Medium.Search    ! Some("Google")   ! None           |
-    "Unknown Yahoo! service" !! "http://yyy.yahoo.com"  ! Medium.Search    ! Some("Yahoo!")   ! None           |> {
+    "SPEC NAME"                    || "REFERER URI"           | "REFERER MEDIUM" | "REFERER SOURCE" | "REFERER TERM" |
+    "Unknown Google service"       !! "http://xxx.google.com" ! Medium.Search    ! Some("Google")   ! None           |
+    "Unknown Yahoo! service"       !! "http://yyy.yahoo.com"  ! Medium.Search    ! Some("Yahoo!")   ! None           |
+    "Non-search Google Drive link" !! "http://www.google.com/url?q=http://www.whatismyreferer.com/&sa=D&usg=ALhdy2_qs3arPmg7E_e2aBkj6K0gHLa5rQ" ! Medium.Search ! Some("Google") ! Some("http://www.whatismyreferer.com/") |> {
+     // ^ Sadly indistinguishable from a search link
       (_, refererUri, medium, source, term) =>
         Parser.parse(refererUri, pageHost) must_== Some(Referer(medium, source, term))
     }
