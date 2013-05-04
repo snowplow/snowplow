@@ -12,12 +12,19 @@
  */
 package com.snowplowanalytics.snowplow.enrich.hadoop
 
+// Hadoop
+import org.apache.hadoop.fs.{Path, FileSystem}
+import org.apache.hadoop.filecache.DistributedCache
+
 // Scalaz
 import scalaz._
 import Scalaz._
 
 // Scalding
 import com.twitter.scalding._
+
+// Scala MaxMind GeoIP
+import com.snowplowanalytics.maxmind.geoip.IpGeo
 
 // This project
 import inputs.CollectorLoader
@@ -49,6 +56,41 @@ object EtlJob {
              none.success)
     }
   }
+
+  def jobConfOption(implicit mode : Mode) = {
+    mode match {
+      case Hdfs(_, conf) => Option(conf)
+      case _ => None
+    }
+  }
+
+  def addGeoIpToDistributedCache() {
+    for (conf <- jobConfOption) {
+      val fs = FileSystem.get(conf)
+      val fsUri = fs.getUri
+      val mapUriStr = fsUri.toString() + "/cache/GeoLiteCity.dat#geoip"
+      DistributedCache.createSymlink(conf)
+      DistributedCache.addCacheFile(new java.net.URI(mapUriStr), conf)
+    }
+  }
+
+  
+val ipGeo = new IpGeo(dbFile = (dbFilepath), memCache = false, lruCache = 20000)
+
+  def getGeoIP() {
+    val dbFile = jobConfOption match {
+      case Some(conf) => {
+        val fs = FileSystem.get(conf)
+        val fsUri = fs.getUri
+        val mapUriStr = fsUri.toString() + "/cache/GeoLiteCity.dat#geoip"
+        DistributedCache.createSymlink(conf)
+        DistributedCache.addCacheFile(new java.net.URI(mapUriStr), conf)
+      }
+      case None => {
+        new java.io.File(getClass.getResource("/maxmind/GeoLiteCity.dat").toURI)
+      }
+    }
+  }
 }
 
 /**
@@ -67,6 +109,9 @@ class EtlJob(args: Args) extends Job(args) {
   lazy val loader = CollectorLoader.getLoader(etlConfig.inFormat).fold(
     e => throw FatalEtlError(e),
     c => c)
+
+  EtlJob.addGeoIpToDistributedCache
+  lazy val ipGeo = 
 
   // Aliases for our job
   val input = MultipleTextLineFiles(etlConfig.inFolder).read

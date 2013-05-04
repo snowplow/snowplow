@@ -65,13 +65,14 @@ class CanonicalOutput {
   @BeanProperty var network_userid: String = _
 
   // Location
+  /*
   @BeanProperty var geo_country: String = _
   @BeanProperty var geo_region: String = _
   @BeanProperty var geo_city: String = _
   @BeanProperty var geo_zipcode: String = _
   @BeanProperty var geo_latitude: JFloat = _
   @BeanProperty var geo_longitude: JFloat = _
-
+*/
   // Page
   @BeanProperty var page_url: String = _ // Note: we project this out in Scalding (because we don't have space in Redshift currently)
   @BeanProperty var page_title: String = _
