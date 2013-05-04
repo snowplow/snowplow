@@ -23,6 +23,9 @@ import Scalaz._
 // SnowPlow Utils
 import com.snowplowanalytics.util.Tap._
 
+// Scala MaxMind GeoIP
+import com.snowplowanalytics.maxmind.geoip.IpGeo
+
 // This project
 import inputs.{CanonicalInput, NVGetPayload}
 import outputs.CanonicalOutput
@@ -33,6 +36,7 @@ import utils.MapTransformer._
 import enrichments.{EventEnrichments => EE}
 import enrichments.{MiscEnrichments => ME}
 import enrichments.{ClientEnrichments => CE}
+import enrichments.{GeoEnrichments => GE}
 import web.{PageEnrichments => PE}
 import web.{AttributionEnrichments => AE}
 
@@ -54,7 +58,7 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  def enrichEvent(raw: CanonicalInput): ValidatedCanonicalOutput = {
+  def enrichEvent(geo: IpGeo, raw: CanonicalInput): ValidatedCanonicalOutput = {
 
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
@@ -214,6 +218,9 @@ object EnrichmentManager {
       uri.success
       })
 
+    // Get the geo-location from the IP address
+    val ipLocation = GE.extractIpLocation(geo, event.user_ipaddress)
+
     // Potentially set the referrer details and URL components
     val refererUri = CU.stringToUri(event.page_referrer)
     refererUri.flatMap(
@@ -268,8 +275,8 @@ object EnrichmentManager {
     event.page_urlfragment = CU.truncate(event.page_urlfragment, 255)
 
     // Collect our errors on Failure, or return our event on Success 
-    (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {
-      (_,_,_,_,_,_) => event
+    (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| ipLocation.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {
+      (_,_,_,_,_,_,_) => event
     }
   }
 }

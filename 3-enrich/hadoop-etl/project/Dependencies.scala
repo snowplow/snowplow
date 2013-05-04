@@ -42,6 +42,10 @@ object Dependencies {
     // val useragent  = "1.6" No Maven repo, so user-agent-utils is an unmanaged lib
   }
 
+  object Urls {
+    val maxmindData = "http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz"
+  }
+
   object Libraries {
     // Java
     val httpClient    = "org.apache.httpcomponents"  %  "httpclient"          % V.http

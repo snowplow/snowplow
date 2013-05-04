@@ -54,13 +54,14 @@ object EtlJob {
    *         flatMap, will include any validation errors
    *         contained within the ValidatedMaybeCanonicalInput
    */
-  def toCanonicalOutput(input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
+  def toCanonicalOutput(geo: IpGeo, input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
     input.flatMap {
-      _.cata(EnrichmentManager.enrichEvent(_).map(_.some),
+      _.cata(EnrichmentManager.enrichEvent(geo, _).map(_.some),
              none.success)
     }
   }
 
+  // This should really be in Scalding
   def jobConfOption(implicit mode : Mode) = {
     mode match {
       case Hdfs(_, conf) => Option(conf)
@@ -68,6 +69,7 @@ object EtlJob {
     }
   }
 
+  // This should really be in Scalding
   def addToDistributedCache(file: String) {
     for (conf <- jobConfOption) {
       val fs = FileSystem.get(conf)
@@ -77,15 +79,15 @@ object EtlJob {
     }
   }
 
-  def getGeoIp() {
+  def getGeoIp(): IpGeo = {
     val dbFile = jobConfOption match {
       case Some(conf) => {
         val file = "geoip"
-        addToDistributedCache("/cache/GeoLiteCity.dat#%s".format(file))
-        file       
+        addToDistributedCache("/cache/GeoLiteCity.dat#" + file)
+        "./" + file   
       }
       case None => {
-        getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.toString
+        getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
       }
     }
     new IpGeo(dbFile = new File(dbFile), memCache = false, lruCache = 20000)
@@ -125,7 +127,7 @@ class EtlJob(args: Args) extends Job(args) {
   // Scalding data pipeline
   val common = trappableInput
     .map('line -> 'output) { l: String =>
-      EtlJob.toCanonicalOutput(loader.toCanonicalInput(l))
+      EtlJob.toCanonicalOutput(ipGeo, loader.toCanonicalInput(l))
     }
 
   // Handle bad rows

@@ -22,6 +22,9 @@ import Scalaz._
 // Apache URLEncodedUtils
 import org.apache.http.NameValuePair
 
+// Scala MaxMind GeoIP
+import com.snowplowanalytics.maxmind.geoip.IpLocation
+
 // This project
 import hadoop.inputs.CanonicalInput
 import hadoop.outputs.CanonicalOutput
@@ -86,6 +89,12 @@ package object hadoop {
    * `CanonicalOutput`.
    */
   type MaybeCanonicalOutput = Option[CanonicalOutput]
+
+  /**
+   * Type alias for an `Option`-boxed
+   * `IpLocation`.
+   */
+  type MaybeIpLocation = Option[IpLocation]
 
   /**
    * Type alias for either a `ValidationNel`
