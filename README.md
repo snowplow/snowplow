@@ -6,7 +6,7 @@ Snowplow is the world's most powerful marketing and product analytics platform. 
 
 * Identifies users, and tracks the way they engage with a website or app
 * Stores the associated behavioural data in a scalable “clickstream” data warehouse
-* Makes it possible to leverage a big data toolset (e.g. Hive, Pig, Cascalog) to analyse that event data
+* Makes it possible to leverage a big data toolset (e.g. Hive, Pig, Mahout) to analyse that event data
 
 **To find out more, please check out the [Snowplow website] [website] and the [Snowplow wiki] [wiki].**
 
