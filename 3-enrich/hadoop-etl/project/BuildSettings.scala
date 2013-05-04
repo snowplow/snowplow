@@ -80,6 +80,7 @@ object BuildSettings {
     // Drop these jars
     excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
       val excludes = Set(
+        "junit-4.5.jar", // We shouldn't need JUnit
         "jsp-api-2.1-6.1.14.jar",
         "jsp-2.1-6.1.14.jar",
         "jasper-compiler-5.5.12.jar",
@@ -94,8 +95,10 @@ object BuildSettings {
     
     mergeStrategy in assembly <<= (mergeStrategy in assembly) {
       (old) => {
-        case "project.clj" => MergeStrategy.discard // Leiningen build files
+        case x if x.endsWith("project.clj") => MergeStrategy.discard // Leiningen build files
+        case x if x.endsWith("GeoLiteCity.dat") => MergeStrategy.discard // Don't include the MaxMind file
         case x if x.startsWith("META-INF") => MergeStrategy.discard // More bumf
+        case x if x.endsWith(".html") => MergeStrategy.discard
         case x => old(x)
       }
     }
