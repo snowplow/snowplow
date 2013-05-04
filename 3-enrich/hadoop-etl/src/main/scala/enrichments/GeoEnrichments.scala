@@ -37,6 +37,7 @@ object GeoEnrichments {
    *         IpLocation), or an error message,
    *         boxed in a Scalaz Validation
    */
+  // TODO: can I move the IpGeo to an implicit?
   def extractIpLocation(geo: IpGeo, ip: String): Validation[String, MaybeIpLocation] = {
 
     try {
