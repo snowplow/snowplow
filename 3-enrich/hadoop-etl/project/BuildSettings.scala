@@ -44,12 +44,11 @@ object BuildSettings {
   })
 
   // For MaxMind support in the test suite
-  // TODO: would be nice not to have to include this, but bundling the file in the scala-maxmind-geoip jar doesn't work
   import Dependencies._
   lazy val maxmindSettings = Seq(
 
     // Download the GeoLite City and add it into our jar
-    resourceGenerators in Compile <+= (resourceManaged in Compile) map { out =>
+    resourceGenerators in Test <+= (resourceManaged in Test) map { out =>
       val gzRemote = new URL(Urls.maxmindData)
       val datLocal = out / "maxmind" / "GeoLiteCity.dat"
       
@@ -96,7 +95,6 @@ object BuildSettings {
     mergeStrategy in assembly <<= (mergeStrategy in assembly) {
       (old) => {
         case x if x.endsWith("project.clj") => MergeStrategy.discard // Leiningen build files
-        case x if x.endsWith("GeoLiteCity.dat") => MergeStrategy.discard // Don't include the MaxMind file
         case x if x.startsWith("META-INF") => MergeStrategy.discard // More bumf
         case x if x.endsWith(".html") => MergeStrategy.discard
         case x => old(x)

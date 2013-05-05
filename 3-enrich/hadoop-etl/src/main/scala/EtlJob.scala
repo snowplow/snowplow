@@ -79,18 +79,30 @@ object EtlJob {
     }
   }
 
+  /**
+   * A helper to create a new IpGeo object
+   * used for IP location -> geo-location lookups
+   *
+   * How we source the MaxMind data file depends
+   * on whether we are running locally or on HDFS:
+   *
+   * 1. On HDFS - assume the file is in /cache/GeoLiteCity.dat,
+   *    add it to Hadoop's distributed cache and use that
+   * 2. On local (test) - use the copy of the file on our
+   *    resource path (downloaded for us by SBT)
+   */
   def getGeoIp(): IpGeo = {
     val dbFile = jobConfOption match {
-      case Some(conf) => {
+      case Some(conf) => { // We're on HDFS
         val file = "geoip"
         addToDistributedCache("/cache/GeoLiteCity.dat#" + file)
         "./" + file   
       }
-      case None => {
+      case None => { // Local mode
         getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
       }
     }
-    new IpGeo(dbFile = new File(dbFile), memCache = false, lruCache = 20000)
+    IpGeo(dbFile, memCache = true, lruCache = 20000)
   }
 }
 
