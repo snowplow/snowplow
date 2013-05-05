@@ -17,6 +17,7 @@ import java.io.File
 import java.net.URI
 
 // Hadoop
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{Path, FileSystem}
 import org.apache.hadoop.filecache.DistributedCache
 
@@ -61,24 +62,6 @@ object EtlJob {
     }
   }
 
-  // This should really be in Scalding
-  def jobConfOption(implicit mode : Mode) = {
-    mode match {
-      case Hdfs(_, conf) => Option(conf)
-      case _ => None
-    }
-  }
-
-  // This should really be in Scalding
-  def addToDistributedCache(file: String) {
-    for (conf <- jobConfOption) {
-      val fs = FileSystem.get(conf)
-      val abspath = fs.getUri.toString + file
-      DistributedCache.createSymlink(conf)
-      DistributedCache.addCacheFile(new URI(abspath), conf)
-    }
-  }
-
   /**
    * A helper to create a new IpGeo object
    * used for IP location -> geo-location lookups
@@ -95,7 +78,7 @@ object EtlJob {
     val dbFile = jobConfOption match {
       case Some(conf) => { // We're on HDFS
         val file = "geoip"
-        addToDistributedCache("/cache/GeoLiteCity.dat#" + file)
+        addToDistributedCache(conf, "/cache/GeoLiteCity.dat#" + file)
         "./" + file   
       }
       case None => { // Local mode
@@ -103,6 +86,22 @@ object EtlJob {
       }
     }
     IpGeo(dbFile, memCache = true, lruCache = 20000)
+  }
+
+  // This should really be in Scalding
+  def jobConfOption(implicit mode : Mode): Option[Configuration] = {
+    mode match {
+      case Hdfs(_, conf) => Option(conf)
+      case _ => None
+    }
+  }
+
+  // This should really be in Scalding
+  def addToDistributedCache(conf: Configuration, file: String) {
+    val fs = FileSystem.get(conf)
+    val abspath = fs.getUri.toString + file
+    DistributedCache.createSymlink(conf)
+    DistributedCache.addCacheFile(new URI(abspath), conf)
   }
 }
 
