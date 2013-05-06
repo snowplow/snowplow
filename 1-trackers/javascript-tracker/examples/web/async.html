@@ -32,6 +32,7 @@
         (function() {
             var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
             sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://d1fc8wv8zag5ca.cloudfront.net/0.11.0/sp.js';
+            sp.src = '../../js/snowplow.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
             })();
     </script>
@@ -57,7 +58,7 @@
                     returning: true,
                     price: 49.95,
                     sizes: ['xs', 's', 'l', 'xl', 'xxl'],
-                    available_since$ts: new Date(2013,3,7)
+                    available_since$dt: new Date(2013,3,7)
                 }
             ]);
         }
