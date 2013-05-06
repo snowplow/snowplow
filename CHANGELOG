@@ -3,8 +3,8 @@ Version 0.8.2 (2013-05-0X)
 Clojure Collector: bumped to 0.4.0
 Clojure Collector: remove duplicate of wrap-request-logging in middleware.clj (#221)
 Clojure Collector: check/potentially bump lein-ring dependency in project.clj (#222)
-Clojure Collector: simplify building Clojure Collector, thanks @butlermh (#223, #225) - TODO
-Clojure Collector: fix Tomcat log bug of missing cs(Referer) (#220)                   - TODO
+Clojure Collector: simplify building Clojure Collector, thanks @butlermh (#223, #225)
+Clojure Collector: fix Tomcat log bug of missing cs(Referer) (#220)
 
 Version 0.8.1 (2013-04-12)
 --------------------------
