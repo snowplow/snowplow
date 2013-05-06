@@ -29,6 +29,15 @@ object GeoEnrichments {
    * Extract the geo-location using the
    * client IP address.
    *
+   * Note we wrap the getLocation call in a try
+   * catch block. At the time of writing, no
+   * valid or invalid IP address can make
+   * getLocation throw an Exception, but we keep
+   * this protection in case this situation
+   * changes in the future (as we don't control
+   * the functionality of the underlying MaxMind
+   * Java API).
+   *
    * @param geo The IpGeo lookup engine we will
    *        use to lookup the client's IP address
    * @param ip The client's IP address to use to
@@ -37,7 +46,7 @@ object GeoEnrichments {
    *         IpLocation), or an error message,
    *         boxed in a Scalaz Validation
    */
-  // TODO: can I move the IpGeo to an implicit?
+  // TODO: can we move the IpGeo to an implicit?
   def extractIpLocation(geo: IpGeo, ip: String): Validation[String, MaybeIpLocation] = {
 
     try {
