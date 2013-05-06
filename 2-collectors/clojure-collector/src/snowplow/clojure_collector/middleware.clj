@@ -29,15 +29,6 @@
     (apply wrapper handler args)
     handler))
 
-(defn wrap-request-logging [handler]
-  (fn [{:keys [request-method uri] :as req}]
-    (let [start  (System/currentTimeMillis)
-          resp   (handler req)
-          finish (System/currentTimeMillis)
-          total  (- finish start)]
-      (log "request %s %s (%dms)" request-method uri total)
-      resp)))
-
 (defn wrap-exception-logging [handler]
   (fn [req]
     (try
