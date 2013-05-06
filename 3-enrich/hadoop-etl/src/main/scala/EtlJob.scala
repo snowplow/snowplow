@@ -77,9 +77,9 @@ object EtlJob {
   def getGeoIp(): IpGeo = {
     val dbFile = jobConfOption match {
       case Some(conf) => { // We're on HDFS
-        val file = "geoip"
-        addToDistributedCache(conf, "/cache/GeoLiteCity.dat#" + file)
-        "./" + file   
+        val target = "geoip"
+        addToDistributedCache(conf, "/cache/GeoLiteCity.dat", target)
+        "./" + target   
       }
       case None => { // Local mode
         getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
@@ -97,9 +97,9 @@ object EtlJob {
   }
 
   // This should really be in Scalding
-  def addToDistributedCache(conf: Configuration, file: String) {
+  def addToDistributedCache(conf: Configuration, source: String, target: String) {
     val fs = FileSystem.get(conf)
-    val abspath = fs.getUri.toString + file
+    val abspath = fs.getUri.toString + source + "#" + target
     DistributedCache.createSymlink(conf)
     DistributedCache.addCacheFile(new URI(abspath), conf)
   }
