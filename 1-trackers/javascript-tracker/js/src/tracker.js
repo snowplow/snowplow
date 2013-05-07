@@ -137,7 +137,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		configReferralCookieTimeout = 15768000000, // 6 months
 
     // Enable Base64 encoding for unstructured events
-    configEncodeBase64 = false,
+    configEncodeBase64 = true,
 
 		// Document character set
 		documentCharset = SnowPlow.documentAlias.characterSet || SnowPlow.documentAlias.charset,
