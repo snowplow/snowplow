@@ -27,6 +27,7 @@ object Dependencies {
     // Java
     val http          = "4.1.1"
     val commonsLang   = "3.1"
+    val commonsCodec  = "1.7"
     val yodaTime      = "2.1"
     val yodaConvert   = "1.2"
     // Scala
@@ -45,6 +46,7 @@ object Dependencies {
     // Java
     val httpClient    = "org.apache.httpcomponents"  %  "httpclient"          % V.http
     val commonsLang   = "org.apache.commons"         %  "commons-lang3"       % V.commonsLang
+    val commonsCodec  = "commons-codec"              % "commons-codec"        % V.commonsCodec
     val yodaTime      = "joda-time"                  %  "joda-time"           % V.yodaTime
     val yodaConvert   = "org.joda"                   %  "joda-convert"        % V.yodaConvert
     
