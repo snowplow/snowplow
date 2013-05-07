@@ -319,7 +319,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 		// Okay? Let's proceed.
 		image.onload = function () { };
-		image.src = configCollectorUrl + '?' + request;
+		image.src = configCollectorUrl + request;
 	}
 
 	/*
@@ -653,7 +653,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		var str = initialValue || '';
 		var addNvPair = function(key, value, encode) {
 			if (value !== undefined && value !== '') {
-				str += '&' + key + '=' + (encode ? SnowPlow.encodeWrapper(value) : value);
+				var sep = (str.length > 0) ? "&" : "?";
+				str += sep + key + '=' + (encode ? SnowPlow.encodeWrapper(value) : value);
 			}
 		};
 		return {
