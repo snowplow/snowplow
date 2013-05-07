@@ -16,9 +16,12 @@ package utils
 // Java
 import java.net.URI
 
-// Specs2
-import org.specs2.Specification
+// Specs2 & Scalaz-Specs2
+import org.specs2.{Specification, ScalaCheck}
 import org.specs2.matcher.DataTables
+import org.specs2.scalaz.ValidationMatchers
+import org.scalacheck._
+import org.scalacheck.Arbitrary._
 
 /**
  * Tests the explodeUri function
@@ -51,15 +54,31 @@ class ExplodeUriTest extends Specification with DataTables {
 /**
  * Tests the decodeBase64Url function
  */
-class DecodeBase64UrlTest extends Specification with DataTables { def is =
+class DecodeBase64UrlTest extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
 
   "This is a specification to test the decodeBase64Url function"                         ^
                                                                                         p^
-  "decodeBase64Url should return failure if passed an invalid string"                    ! e1^
-  "decodeBase64Url should successfully decode a valid Base64 (URL-safe)-encoded string"  ! e2^
+  "decodeBase64Url should return failure if passed a null"                               ! e1^
+  "decodeBase64Url should not return failure on any other string"                        ! e2^
+  "decodeBase64Url should correctly decode valid Base64 (URL-safe) encoded strings"      ! e3^
                                                                                          end
 
-  // TODO
-  def e1 = 1 must_== 1
-  def e2 = 1 must_== 1                                                                                         
+  val FieldName = "e"
+
+  def e1 =
+    ConversionUtils.decodeBase64Url(FieldName, null) must beFailing("Field [%s]: exception Base64-decoding [null] (URL-safe encoding): [null])".format(FieldName))
+
+  // No non-null string creates a failure
+  def e2 =
+    check { (str: String) => ConversionUtils.decodeBase64Url(FieldName, str) must beSuccessful }
+
+  def e3 =
+    "SPEC NAME"            || "ENCODED STRING" | "EXPECTED" |
+    "Unescaped characters" !! "äöü"            ! ""         |
+    "Blank string"         !! ""               ! ""         |> {
+
+    (_, str, expected) => {
+      ConversionUtils.decodeBase64Url(FieldName, str) must beSuccessful(expected)
+    }
+  }                                                                             
 }
