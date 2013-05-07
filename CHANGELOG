@@ -1,7 +1,7 @@
 Version 0.8.X (2013-05-XX)
 --------------------------
 JS tracker: bumped to 0.11.2
-JS tracker: added unstructured events, thanks @rgabo, @tarsolya (#198)
+JS tracker: added unstructured events, thanks @rgabo, @tarsolya, @lackac (#198)
 JS tracker: remove leading ampersand in querystring (#188)
 Common: completed splitting custom event type into: unstructured and structured events (#133)
 
