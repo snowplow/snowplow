@@ -717,7 +717,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 		pr_string = JSON2.stringify(translated);
 		if(configEncodeBase64) {
-		  sb.add('ue_px', SnowPlow.base64encode(pr_string));
+		  sb.addRaw('ue_px', SnowPlow.base64urlencode(pr_string));
 		} else {
 		  sb.add('ue_pr', pr_string);
 		};
