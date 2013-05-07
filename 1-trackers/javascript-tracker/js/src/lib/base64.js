@@ -52,3 +52,16 @@ SnowPlow.base64encode = function sha1(data) {
   return (r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3);
 };
 
+/*
+ * Bas64 encode data with URL and Filename Safe Alphabet (base64url)
+ *
+ * See: http://tools.ietf.org/html/rfc4648#page-7
+ */
+SnowPlow.base64urlencode = function(data) {
+  if (!data) return data;
+
+  var enc = SnowPlow.base64encode(data);
+  return enc.replace(/=/g, '')
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_');
+};
