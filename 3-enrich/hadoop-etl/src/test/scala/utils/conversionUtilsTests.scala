@@ -47,3 +47,19 @@ class ExplodeUriTest extends Specification with DataTables {
       }
     }
 }
+
+/**
+ * Tests the decodeBase64Url function
+ */
+class DecodeBase64UrlTest extends Specification with DataTables { def is =
+
+  "This is a specification to test the decodeBase64Url function"                         ^
+                                                                                        p^
+  "decodeBase64Url should return failure if passed an invalid string"                    ! e1^
+  "decodeBase64Url should successfully decode a valid Base64 (URL-safe)-encoded string"  ! e2^
+                                                                                         end
+
+  // TODO
+  def e1 = 1 must_== 1
+  def e2 = 1 must_== 1                                                                                         
+}
