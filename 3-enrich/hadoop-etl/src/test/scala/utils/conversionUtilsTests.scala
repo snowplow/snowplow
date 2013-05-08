@@ -54,6 +54,8 @@ class ExplodeUriTest extends Specification with DataTables {
 /**
  * Tests the decodeBase64Url function
  */
+// TODO: note that we have some functionality tweaks planned.
+// See comments on ConversionUtils.decodeBase64Url for details.
 class DecodeBase64UrlTest extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
 
   "This is a specification to test the decodeBase64Url function"                         ^
@@ -75,19 +77,20 @@ class DecodeBase64UrlTest extends Specification with DataTables with ValidationM
 
   // Taken from:
   // 1. Lua Tracker's base64_spec.lua 
-  // 2. Manual tests of the JavaScript Tracker's trackUnstructEvent() TODO
+  // 2. Manual tests of the JavaScript Tracker's trackUnstructEvent()
   // 3. Misc edge cases worth checking
   def e3 =
-    "SPEC NAME"            || "ENCODED STRING"                                 | "EXPECTED"                                 |
-    "Simple string #1"     !! "Sm9oblNtaXRo"                                   ! "JohnSmith"                                |
-    "Simple string #2"     !! "am9obitzbWl0aA"                                 ! "john+smith"                               |
-    "Simple string #3"     !! "Sm9obiBTbWl0aA"                                 ! "John Smith"                               |
-    "JSON #1"              !! "eyJhZ2UiOjIzLCJuYW1lIjoiSm9obiJ9"               ! """{"age":23,"name":"John"}"""             |
-    "JSON #2"              !! "eyJteVRlbXAiOjIzLjMsIm15VW5pdCI6ImNlbHNpdXMifQ" ! """{"myTemp":23.3,"myUnit":"celsius"}"""   |
-    "JSON #3"              !! "eyJldmVudCI6InBhZ2VfcGluZyIsIm1vYmlsZSI6dHJ1ZSwicHJvcGVydGllcyI6eyJtYXhfeCI6OTYwLCJtYXhfeSI6MTA4MCwibWluX3giOjAsIm1pbl95IjotMTJ9fQ"  ! """{"event":"page_ping","mobile":true,"properties":{"max_x":960,"max_y":1080,"min_x":0,"min_y":-12}}"""  |
-    "JSON #4"              !! "eyJldmVudCI6ImJhc2tldF9jaGFuZ2UiLCJwcmljZSI6MjMuMzksInByb2R1Y3RfaWQiOiJQQlowMDAzNDUiLCJxdWFudGl0eSI6LTIsInRzdGFtcCI6MTY3ODAyMzAwMH0" ! """{"event":"basket_change","price":23.39,"product_id":"PBZ000345","quantity":-2,"tstamp":1678023000}""" |
-    "Unescaped characters" !! "äöü - &"                                        ! ""           |
-    "Blank string"         !! ""                                               ! ""           |> {
+    "SPEC NAME"             || "ENCODED STRING"                                 | "EXPECTED"                                 |
+    "Lua Tracker String #1" !! "Sm9oblNtaXRo"                                   ! "JohnSmith"                                |
+    "Lua Tracker String #2" !! "am9obitzbWl0aA"                                 ! "john+smith"                               |
+    "Lua Tracker String #3" !! "Sm9obiBTbWl0aA"                                 ! "John Smith"                               |
+    "Lua Tracker JSON #1"   !! "eyJhZ2UiOjIzLCJuYW1lIjoiSm9obiJ9"               ! """{"age":23,"name":"John"}"""             |
+    "Lua Tracker JSON #2"   !! "eyJteVRlbXAiOjIzLjMsIm15VW5pdCI6ImNlbHNpdXMifQ" ! """{"myTemp":23.3,"myUnit":"celsius"}"""   |
+    "Lua Tracker JSON #3"   !! "eyJldmVudCI6InBhZ2VfcGluZyIsIm1vYmlsZSI6dHJ1ZSwicHJvcGVydGllcyI6eyJtYXhfeCI6OTYwLCJtYXhfeSI6MTA4MCwibWluX3giOjAsIm1pbl95IjotMTJ9fQ"  ! """{"event":"page_ping","mobile":true,"properties":{"max_x":960,"max_y":1080,"min_x":0,"min_y":-12}}"""  |
+    "Lua Tracker JSON #4"   !! "eyJldmVudCI6ImJhc2tldF9jaGFuZ2UiLCJwcmljZSI6MjMuMzksInByb2R1Y3RfaWQiOiJQQlowMDAzNDUiLCJxdWFudGl0eSI6LTIsInRzdGFtcCI6MTY3ODAyMzAwMH0" ! """{"event":"basket_change","price":23.39,"product_id":"PBZ000345","quantity":-2,"tstamp":1678023000}""" |
+    "JS Tracker JSON #1"    !! "eyJwcm9kdWN0X2lkIjoiQVNPMDEwNDMiLCJjYXRlZ29yeSI6IkRyZXNzZXMiLCJicmFuZCI6IkFDTUUiLCJyZXR1cm5pbmciOnRydWUsInByaWNlIjo0OS45NSwic2l6ZXMiOlsieHMiLCJzIiwibCIsInhsIiwieHhsIl0sImF2YWlsYWJsZV9zaW5jZSRkdCI6MTU4MDF9" ! """{"product_id":"ASO01043","category":"Dresses","brand":"ACME","returning":true,"price":49.95,"sizes":["xs","s","l","xl","xxl"],"available_since$dt":15801}""" |
+    "Unescaped characters"  !! "äöü - &"                                        ! ""           |
+    "Blank string"          !! ""                                               ! ""           |> {
 
     (_, str, expected) => {
       ConversionUtils.decodeBase64Url(FieldName, str) must beSuccessful(expected)
