@@ -102,6 +102,13 @@ object ConversionUtils {
    * @return a Scalaz Validation, wrapping either an
    *         an error String or the decoded String
    */
+  // TODO: probably better to change the functionality and signature
+  // a little:
+  //
+  // 1. Signature -> : Validation[String, Option[String]]
+  // 2. Functionality:
+  //    1. If passed in null or "", return Success(None)
+  //    2. If passed in a non-empty string but result == "", then return a Failure, because we have failed to decode something meaningful
   def decodeBase64Url(field: String, str: String): Validation[String, String] = {
     try {
       val decoder = new Base64(true) // true means "url safe"
