@@ -1,4 +1,4 @@
-;;;; Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+;;;; Copyright (c) 2012-2013 Snowplow Analytics Ltd. All rights reserved.
 ;;;;
 ;;;; This program is licensed to you under the Apache License Version 2.0,
 ;;;; and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 ;;;; See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 ;;;; Author:    Alex Dean (mailto:support@snowplowanalytics.com)
-;;;; Copyright: Copyright (c) 2012 SnowPlow Analytics Ltd
+;;;; Copyright: Copyright (c) 2012-2013 Snowplow Analytics Ltd
 ;;;; License:   Apache License Version 2.0
 
 (ns snowplow.clojure-collector.middleware
@@ -23,15 +23,6 @@
 (defn- log [msg & vals]
   (let [line (apply format msg vals)]
     (locking System/out (println line))))
-
-(defn wrap-request-logging [handler]
-  (fn [{:keys [request-method uri] :as req}]
-    (let [start  (System/currentTimeMillis)
-          resp   (handler req)
-          finish (System/currentTimeMillis)
-          total  (- finish start)]
-      (log "request %s %s (%dms)" request-method uri total)
-      resp)))
 
 (defn wrap-if [handler pred wrapper & args]
   (if pred

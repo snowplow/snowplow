@@ -1,10 +1,17 @@
-Version 0.8.X (2013-05-XX)
+Version 0.8.3 (2013-05-XX)
 --------------------------
 JS tracker: bumped to 0.11.2
 JS tracker: added unstructured events, thanks @rgabo, @tarsolya, @lackac (#198)
 JS tracker: remove leading ampersand in querystring (#188)
 Common: completed splitting custom event type into: unstructured and structured events (#133)
 
+Version 0.8.2 (2013-05-08)
+--------------------------
+Clojure Collector: bumped to 0.4.0
+Clojure Collector: remove duplicate of wrap-request-logging in middleware.clj (#221)
+Clojure Collector: check/potentially bump lein-ring dependency in project.clj (#222)
+Clojure Collector: simplify building Clojure Collector, thanks @butlermh (#223, #225)
+Clojure Collector: fix Tomcat log bug of missing cs(Referer) (#220)
 
 Version 0.8.1 (2013-04-12)
 --------------------------
