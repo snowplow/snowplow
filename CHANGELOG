@@ -1,4 +1,4 @@
-Version 0.8.2 (2013-05-0X)
+Version 0.8.2 (2013-05-08)
 --------------------------
 Clojure Collector: bumped to 0.4.0
 Clojure Collector: remove duplicate of wrap-request-logging in middleware.clj (#221)
