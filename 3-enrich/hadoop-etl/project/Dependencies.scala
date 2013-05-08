@@ -33,10 +33,11 @@ object Dependencies {
     // Scala
     val scalding      = "0.8.4"
     val scalaz7       = "7.0.0-M9" // -> "7.0.0" when released
+    val argonaut      = "6.0-M7"   // -> "6.0" when released
     val scalaUtil     = "0.1.0"
     val refererParser = "0.1.0-M6" // -> "0.1.0" when released
     // Scala (test only)
-    val specs2        = "1.12.3" // -> "1.13" when we bump to Scala 2.10.0
+    val specs2        = "1.12.3"   // -> "1.13" when we bump to Scala 2.10.0
     val scalazSpecs2  = "0.1.2"
     val scalaCheck    = "1.10.0"
     // val useragent  = "1.6" No Maven repo, so user-agent-utils is an unmanaged lib
@@ -54,6 +55,7 @@ object Dependencies {
     val scaldingCore  = "com.twitter"                %% "scalding-core"       % V.scalding
     val scaldingArgs  = "com.twitter"                %% "scalding-args"       % V.scalding
     val scalaz7       = "org.scalaz"                 %% "scalaz-core"         % V.scalaz7
+    val argonaut      = "io.argonaut"                %% "argonaut"            % V.argonaut
     val scalaUtil     = "com.snowplowanalytics"      %  "scala-util"          % V.scalaUtil
     val refererParser = "com.snowplowanalytics"      %  "referer-parser"      % V.refererParser
     // Scala (test only)
