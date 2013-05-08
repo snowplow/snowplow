@@ -50,7 +50,6 @@ object Dependencies {
     val commonsCodec  = "commons-codec"              % "commons-codec"        % V.commonsCodec
     val yodaTime      = "joda-time"                  %  "joda-time"           % V.yodaTime
     val yodaConvert   = "org.joda"                   %  "joda-convert"        % V.yodaConvert
-    
     // Scala
     val scaldingCore  = "com.twitter"                %% "scalding-core"       % V.scalding
     val scaldingArgs  = "com.twitter"                %% "scalding-args"       % V.scalding

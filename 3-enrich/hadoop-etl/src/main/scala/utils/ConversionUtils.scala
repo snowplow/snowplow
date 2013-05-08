@@ -26,6 +26,10 @@ import org.apache.commons.codec.binary.Base64
 import scalaz._
 import Scalaz._
 
+// Argonaut
+import argonaut._
+import Argonaut._
+
 /**
  * General-purpose utils to help the
  * ETL process along.
@@ -87,6 +91,17 @@ object ConversionUtils {
              .replaceAll("\\t", "    "))
     if (r == Some("")) None else r
   }
+
+  /**
+   * Converts a JSON string into an \/[String, Json]
+   *
+   * @param json The JSON string to parse
+   * @return a Scalaz \/, wrapping either a list of
+   *         error Strings or the extracted Json
+   */
+  // TODO: change this so it returns a ValidationNel
+  def extractJson(json: String): \/[String, Json] =
+    Parse.parse(json)
 
   /**
    * Decodes a URL-safe Base64 string.
