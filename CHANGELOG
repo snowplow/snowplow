@@ -1,16 +1,26 @@
-Version 0.8.3 (2013-05-XX)
+Version 0.8.4 (2013-05-XX)
 --------------------------
 Hadoop ETL: bumped to 0.3.0
 Hadoop ETL: added geo-ip lookup to Scalding ETL                   - TODO
 Hadoop ETL: bumped referer-parser to 0.1.0 from 0.1.0-M6
+Hadoop ETL: removed truncation of page_referrer (#236)            - TODO
+Hadoop ETL: added truncation of referer path/qs/fragment (#235)   - TODO
+Hadoop ETL: removing tabs found in referer search terms (#234)    - TODO
 EmrEtlRunner: bumped to 0.2.0                                     - TODO
-EmrEtlRunner: <<< >>>
+EmrEtlRunner: now passes MaxMind .dat file into Scalding ETL (#213) - TODO
+EmrEtlRunner: improve messages when ETL job starts and fails (#230) - TODO
 Redshift: table-def script bumped to 0.2.0
 Redshift: migration script added for 0.1.0 to 0.2.0
 Redshift: added geo-ip fields to Redshift table definition (#226)
 Redshift: rename ev_ fields to se_ for structured events (#227)
 
-<<< >>>
+Version 0.8.2 (2013-05-08)
+--------------------------
+Clojure Collector: bumped to 0.4.0
+Clojure Collector: remove duplicate of wrap-request-logging in middleware.clj (#221)
+Clojure Collector: check/potentially bump lein-ring dependency in project.clj (#222)
+Clojure Collector: simplify building Clojure Collector, thanks @butlermh (#223, #225)
+Clojure Collector: fix Tomcat log bug of missing cs(Referer) (#220)
 
 Version 0.8.1 (2013-04-12)
 --------------------------
