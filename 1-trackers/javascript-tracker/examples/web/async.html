@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <!-- 
- ! Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ ! Copyright (c) 2012-2013 Snowplow Analytics Ltd. All rights reserved.
  !
  ! This program is licensed to you under the Apache License Version 2.0,
  ! and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -17,7 +17,7 @@
     <title>Asynchronous website/webapp examples for snowplow.js</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-    <!-- SnowPlow starts plowing -->
+    <!-- Snowplow starts plowing -->
     <script type="text/javascript">
         var _snaq = _snaq || [];
 	
@@ -27,6 +27,7 @@
         // Deprecated _snaq.push(['attachUserId', false]); // Don't attach &uid=xxx to the querystring
         _snaq.push(['enableActivityTracking', 10, 10]); // Ping every 10 seconds after 10 seconds
         _snaq.push(['enableLinkTracking']);
+        _snaq.push(['encodeBase64', false]); // Default is true
         _snaq.push(['trackPageView', 'Async Test']); // Track the page view with custom title
 
         (function() {
@@ -36,7 +37,7 @@
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
             })();
     </script>
-    <!-- SnowPlow stops plowing -->
+    <!-- Snowplow stops plowing -->
 
     <!-- Example events -->
     <script type="text/javascript">
@@ -100,7 +101,7 @@
               '1'                     // quantity - required
               ]);
 
-          // trackTrans sends the transaction to SnowPlow tracking servers.
+          // trackTrans sends the transaction to Snowplow tracking servers.
           // Must be called last to commit the transaction.
           _snaq.push(['trackTrans']);
 
