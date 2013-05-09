@@ -217,7 +217,15 @@ object EnrichmentManager {
     }
 
     // Get the geo-location from the IP address
-    val ipLocation = GE.extractGeoLocation(geo, event.user_ipaddress)
+    val geoLocation = GE.extractGeoLocation(geo, event.user_ipaddress)
+    for (loc <- geoLocation; l <- loc) {
+      event.geo_country = l.countryCode
+      event.geo_region = l.region.orNull
+      event.geo_city = l.city.orNull
+      event.geo_zipcode = l.postalCode.orNull
+      event.geo_latitude = l.latitude
+      event.geo_longitude = l.longitude
+    }
 
     // Potentially set the referrer details and URL components
     val refererUri = CU.stringToUri(event.page_referrer)
@@ -266,7 +274,7 @@ object EnrichmentManager {
     event.refr_urlfragment = CU.truncate(event.refr_urlfragment, 255)
 
     // Collect our errors on Failure, or return our event on Success 
-    (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| ipLocation.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {
+    (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| geoLocation.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {
       (_,_,_,_,_,_,_) => event
     }
   }

@@ -1,12 +1,12 @@
 Version 0.8.4 (2013-05-XX)
 --------------------------
 Hadoop ETL: bumped to 0.3.0
-Hadoop ETL: added geo-ip lookup to Scalding ETL                   - TODO
+Hadoop ETL: added geo-ip lookup to Scalding ETL
 Hadoop ETL: bumped referer-parser to 0.1.0 from 0.1.0-M6
 Hadoop ETL: removed truncation of page_referrer (#236)
 Hadoop ETL: added truncation of referer path/qs/fragment (#235)
 Hadoop ETL: removing tabs found in referer search terms (#234)
-EmrEtlRunner: bumped to 0.2.0                                     - TODO
+EmrEtlRunner: bumped to 0.2.0                                       - TODO
 EmrEtlRunner: now passes MaxMind .dat file into Scalding ETL (#213) - TODO
 EmrEtlRunner: improve messages when ETL job starts and fails (#230) - TODO
 Redshift: table-def script bumped to 0.2.0

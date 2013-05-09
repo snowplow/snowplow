@@ -27,9 +27,10 @@ import utils.ScalazArgs
  */
 case class EtlJobConfig(
     inFolder: String,
+    inFormat: String,
+    maxmindFile: String,
     outFolder: String,
     badFolder: String,
-    inFormat: String,
     exceptionsFolder: Option[String])
 
 /**
@@ -51,11 +52,12 @@ object EtlJobConfig {
 
     import ScalazArgs._
     val inFolder  = args.requiredz("input_folder")
+    val inFormat = args.requiredz("input_format") // TODO: check it's a valid format
+    val maxmindFile = args.requiredz("maxmind_file")
     val outFolder = args.requiredz("output_folder")
     val badFolder = args.requiredz("bad_rows_folder")
-    val inFormat = args.requiredz("input_format") // TODO: check it's a valid format
     val exceptionsFolder = args.optionalz("exceptions_folder")
     
-    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| inFormat.toValidationNel |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_, _, _, _, _) }
+    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_) }
   }
 }

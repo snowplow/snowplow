@@ -85,7 +85,8 @@ object JobTestHelpers {
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob").
       arg("input_folder", "inputFolder").
       arg("input_format", "cloudfront").
+      arg("maxmind_file", "-"). // Not needed when running locally, but error if not set
       arg("output_folder", "outputFolder").
-      arg("bad_rows_folder", "badFolder") // .
-      // arg("exceptions_folder", "exceptionsFolder")
+      arg("bad_rows_folder", "badFolder").
+      arg("exceptions_folder", "exceptionsFolder")
 }

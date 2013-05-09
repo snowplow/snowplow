@@ -73,7 +73,7 @@ class ExtractMarketingFieldsTest extends Specification with DataTables with Vali
  *
  * https://github.com/snowplow/referer-parser/tree/master/java-scala/src/test/scala/com/snowplowanalytics/refererparser/scala
  */
-class ParseRefererUriTest extends Specification with DataTables { def is =
+class ExtractRefererDetailsTest extends Specification with DataTables { def is =
 
   "This is a specification to test extractRefererDetails"              ^
                                                                       p^

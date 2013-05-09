@@ -73,15 +73,18 @@ object EtlJob {
    *    add it to Hadoop's distributed cache and use that
    * 2. On local (test) - use the copy of the file on our
    *    resource path (downloaded for us by SBT)
+   *
+   * @param file The path to the Maxmind GeoLiteCity.dat file
+   * @return an IpGeo object ready to perform IP->geo lookups
    */
-  def getGeoIp(): IpGeo = {
+  def getGeoIp(file: String): IpGeo = {
     val dbFile = jobConfOption match {
-      case Some(conf) => { // We're on HDFS
+      case Some(conf) => {   // We're on HDFS
         val target = "geoip"
-        addToDistCache(conf, "/cache/GeoLiteCity.dat", target)
+        addToDistCache(conf, file, target)
         "./" + target   
       }
-      case None => { // Local mode
+      case None => {         // Local mode
         getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
       }
     }
@@ -122,7 +125,7 @@ class EtlJob(args: Args) extends Job(args) {
     e => throw FatalEtlError(e),
     c => c)
 
-  lazy val ipGeo = EtlJob.getGeoIp()
+  lazy val ipGeo = EtlJob.getGeoIp(etlConfig.maxmindFile)
 
   // Aliases for our job
   val input = MultipleTextLineFiles(etlConfig.inFolder).read
