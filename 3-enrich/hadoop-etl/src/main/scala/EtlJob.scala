@@ -104,7 +104,7 @@ object EtlJob {
     val fs = FileSystem.get(conf)
     val abspath = fs.getUri.toString + source + "#" + target
     DistributedCache.createSymlink(conf)
-    DistributedCache.addCacheFile(new URI(abspath), conf)
+    DistributedCache.addCacheFile(new Path(abspath).toUri, conf)
   }
 }
 
