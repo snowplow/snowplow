@@ -75,10 +75,17 @@ object ConversionUtils {
   }
 
   /**
-   * A helper for the above
-   * TODO: complete description
+   * Replaces tabs with four spaces and removes
+   * newlines altogether.
+   *
+   * Useful to prepare user-created strings for
+   * fragile storage formats like TSV.
+   *
+   * @param str The String to fix
+
+   * @return The String with tabs and newlines fixed.
    */
-  private def fixTabsNewlines(str: String): Option[String] = {
+  def fixTabsNewlines(str: String): Option[String] = {
     val s = Option(str)
     val r = s.map(_.replaceAll("(\\r|\\n)", "")
              .replaceAll("\\t", "    "))

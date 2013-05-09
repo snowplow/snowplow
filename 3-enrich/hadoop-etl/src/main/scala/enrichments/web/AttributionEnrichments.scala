@@ -125,6 +125,12 @@ object AttributionEnrichments {
   }
 
   /**
+   * A Scalaz Lens to update the term within
+   * a Referer object.
+   */
+  private val termLens: Lens[Referer, MaybeString] = Lens.lensu((r, newTerm) => r.copy(term = newTerm), _.term)
+
+  /**
    * Extract details about the referer (sic).
    *
    * Uses the referer-parser library. 

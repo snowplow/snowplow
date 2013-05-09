@@ -72,6 +72,11 @@ package object hadoop {
   type ValidatedNameValueNel = Validation[String, NameValueNel] // Note not Validated[]
 
   /**
+   * Type alias for an `Option`-boxed String
+   */
+  type MaybeString = Option[String]
+
+  /**
    * Type alias for an `Option`-boxed
    * `CanonicalInput`.
    */
