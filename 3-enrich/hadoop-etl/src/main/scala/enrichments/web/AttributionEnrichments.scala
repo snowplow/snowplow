@@ -144,6 +144,10 @@ object AttributionEnrichments {
    * @return a Tuple3 containing referer medium,
    *         source and term, all Strings
    */
-  def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] =
-    RefererParser.parse(uri, pageHost)
+  def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] = {
+    for {
+      r <- RefererParser.parse(uri, pageHost)
+      t = r.term.flatMap(t => CU.fixTabsNewlines(t))
+    } yield termLens.set(r, t)
+  }
 }
