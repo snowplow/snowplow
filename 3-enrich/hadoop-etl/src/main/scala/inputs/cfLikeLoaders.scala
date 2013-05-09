@@ -187,7 +187,7 @@ trait CloudFrontLikeLoader extends CollectorLoader {
    */
   private def toTimestamp(date: String, time: String): Validation[String, DateTime] =
     try {
-      DateTime.parse("%sT%s".format(date, time)).success // Add T to conform to UTC styles
+      DateTime.parse("%sT%s+00:00".format(date, time)).success // Construct a UTC ISO date from CloudFront date and time
     } catch {
       case e => "Unexpected exception converting date [%s] and time [%s] to timestamp: [%s]".format(date, time, e.getMessage).fail
     }

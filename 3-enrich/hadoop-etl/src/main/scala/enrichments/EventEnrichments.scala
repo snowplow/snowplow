@@ -21,7 +21,7 @@ import scalaz._
 import Scalaz._
 
 // Joda-Time
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
 
 /**
@@ -35,7 +35,7 @@ object EventEnrichments {
    *
    * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-common-params
    */
-  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
+  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").withZone(DateTimeZone.UTC)
 
   /**
    * Converts a Joda DateTime into
