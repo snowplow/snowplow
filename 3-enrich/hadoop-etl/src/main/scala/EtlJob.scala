@@ -99,12 +99,18 @@ object EtlJob {
     }
   }
 
-  // This should really be in Scalding
+  /**
+   * Adds a file to the DistributedCache as a symbolic link.
+   * Only tested with S3.
+   *
+   * @param conf Our current job Configuration
+   * @param source The file to add to the DistributedCache
+   * @param target Name of our symbolic link in the cache
+   */
   def addToDistCache(conf: Configuration, source: String, target: String) {
-    val fs = FileSystem.get(conf)
-    val abspath = fs.getUri.toString + source + "#" + target
+    val path = new Path(source).toUri.toString + "#" + target // Convoluted because Path("#") -> "%23"
     DistributedCache.createSymlink(conf)
-    DistributedCache.addCacheFile(new Path(abspath).toUri, conf)
+    DistributedCache.addCacheFile(new URI(path), conf)
   }
 }
 
