@@ -217,7 +217,7 @@ object EnrichmentManager {
     }
 
     // Get the geo-location from the IP address
-    val ipLocation = GE.extractIpLocation(geo, event.user_ipaddress)
+    val ipLocation = GE.extractGeoLocation(geo, event.user_ipaddress)
 
     // Potentially set the referrer details and URL components
     val refererUri = CU.stringToUri(event.page_referrer)

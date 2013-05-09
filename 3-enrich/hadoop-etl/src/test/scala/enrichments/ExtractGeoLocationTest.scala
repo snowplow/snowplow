@@ -27,20 +27,20 @@ import Scalaz._
 // Scala MaxMind GeoIP
 import com.snowplowanalytics.maxmind.geoip.{IpGeo, IpLocation}
 
-class ExtractIpLocationTest extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
+class ExtractGeoLocationTest extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
 
-  "This is a specification to test the extractIpLocation function"                                 ^
-                                                                                                  p^
-  "extractIpLocation should not return failure for any valid or invalid IP address"                ! e1^
-  "extractPageUri should correctly extract location data from IP addresses where possible"         ! e2^
-                                                                                                   end
+  "This is a specification to test the extractGeoLocation function"                                 ^
+                                                                                                   p^
+  "extractGeoLocation should not return failure for any valid or invalid IP address"                ! e1^
+  "extractGeoLocation should correctly extract location data from IP addresses where possible"      ! e2^
+                                                                                                    end
 
   val dbFile = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
   val ipGeo = IpGeo(dbFile, memCache = true, lruCache = 20000)
 
   // Impossible to make extractIpLocation throw a validation error
   def e1 =
-    check { (ipAddress: String) => GeoEnrichments.extractIpLocation(ipGeo, ipAddress) must beSuccessful }
+    check { (ipAddress: String) => GeoEnrichments.extractGeoLocation(ipGeo, ipAddress) must beSuccessful }
 
   def e2 =
     "SPEC NAME"             || "IP ADDRESS"  | "EXPECTED LOCATION" |
@@ -61,6 +61,6 @@ class ExtractIpLocationTest extends Specification with DataTables with Validatio
                                                  metroCode = None
                                                ))                  |> {
       (_, ipAddress, expected) =>
-        GeoEnrichments.extractIpLocation(ipGeo, ipAddress) must beSuccessful(expected)
+        GeoEnrichments.extractGeoLocation(ipGeo, ipAddress) must beSuccessful(expected)
     }
 }
