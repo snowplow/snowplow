@@ -96,7 +96,7 @@ module SnowPlow
             "--hdfs", # Always --hdfs mode, never --local
             "--input_folder"      , config[:s3][:buckets][:processing], # Argument names are "--arguments" too
             "--input_format"      , config[:etl][:collector_format],
-            "--maxmind_file"      , config[:etl][:maxmind_file],
+            "--maxmind_file"      , config[:maxmind_asset],
             "--output_folder"     , partition.call(config[:s3][:buckets][:out]),
             "--bad_rows_folder"   , partition.call(config[:s3][:buckets][:out_bad_rows])
           ]
