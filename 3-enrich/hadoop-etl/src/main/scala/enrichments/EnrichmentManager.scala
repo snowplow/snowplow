@@ -202,7 +202,7 @@ object EnrichmentManager {
 
     // Potentially update the page_url and set the page URL components
     val pageUri = PE.extractPageUri(raw.refererUri, Option(event.page_url))
-    pageUri.flatMap(uri => {
+    for (uri <- pageUri) {
       // Update the page_url
       event.page_url = uri.toString
 
@@ -214,42 +214,31 @@ object EnrichmentManager {
       event.page_urlpath = components.path.orNull
       event.page_urlquery = components.query.orNull
       event.page_urlfragment = components.fragment.orNull
-      
-      uri.success
-      })
+    }
 
     // Get the geo-location from the IP address
     val ipLocation = GE.extractIpLocation(geo, event.user_ipaddress)
 
     // Potentially set the referrer details and URL components
     val refererUri = CU.stringToUri(event.page_referrer)
-    refererUri.flatMap(
-      uri => {
-        uri match {
-          case Some(u) =>
+    for (uri <- refererUri; u <- uri) {
+      
+      // Set the URL components
+      val components = CU.explodeUri(u)
+      event.refr_urlscheme = components.scheme
+      event.refr_urlhost = components.host
+      event.refr_urlport = components.port
+      event.refr_urlpath = components.path.orNull
+      event.refr_urlquery = components.query.orNull
+      event.refr_urlfragment = components.fragment.orNull
 
-            // Set the referrer details
-            AE.extractRefererDetails(u, event.page_urlhost) match {
-              case Some(refr) =>
-                event.refr_medium = refr.medium.toString
-                event.refr_source = refr.source.orNull
-                event.refr_term = refr.term.orNull
-              case _ =>
-            }
-
-            // Set the URL components
-            val components = CU.explodeUri(u)
-            event.refr_urlscheme = components.scheme
-            event.refr_urlhost = components.host
-            event.refr_urlport = components.port
-            event.refr_urlpath = components.path.orNull
-            event.refr_urlquery = components.query.orNull
-            event.refr_urlfragment = components.fragment.orNull
-
-          case None =>
-        }
-      uri.success
-      })
+      // Set the referrer details
+      for (refr <- AE.extractRefererDetails(u, event.page_urlhost)) {
+        event.refr_medium = refr.medium.toString
+        event.refr_source = refr.source.orNull
+        event.refr_term = refr.term.orNull
+      }
+    }
 
     // Marketing attribution
     val campaign = pageUri.fold(
@@ -269,10 +258,12 @@ object EnrichmentManager {
     // TODO: move this into the db-specific ETL phase (when written) & _programmatically_ apply to all strings, not just these 6
     event.useragent = CU.truncate(event.useragent, 1000)
     event.page_title = CU.truncate(event.page_title, 2000)
-    event.page_referrer = CU.truncate(event.page_referrer, 3000)
     event.page_urlpath = CU.truncate(event.page_urlpath, 1000)
     event.page_urlquery = CU.truncate(event.page_urlquery, 3000)
     event.page_urlfragment = CU.truncate(event.page_urlfragment, 255)
+    event.refr_urlpath = CU.truncate(event.refr_urlpath, 1000)
+    event.refr_urlquery = CU.truncate(event.refr_urlquery, 3000)
+    event.refr_urlfragment = CU.truncate(event.refr_urlfragment, 255)
 
     // Collect our errors on Failure, or return our event on Success 
     (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| ipLocation.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {

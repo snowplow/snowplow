@@ -73,12 +73,15 @@ class ExtractMarketingFieldsTest extends Specification with DataTables with Vali
  *
  * https://github.com/snowplow/referer-parser/tree/master/java-scala/src/test/scala/com/snowplowanalytics/refererparser/scala
  */
-class ParseRefererUriTest extends Specification with DataTables {
+class ParseRefererUriTest extends Specification with DataTables { def is =
+
+  "This is a specification to test extractRefererDetails"              ^
+                                                                      p^
+    "Parsing referer URIs should work"                                 ! e1^
+    "Tabs and newlines in search terms should be replaced"             ! e2^
+                                                                       end
 
   val PageHost = "www.snowplowanalytics.com"
-
-  def is =
-      "Parsing referer URIs should work" ! e1
 
   def e1 =
     "SPEC NAME"        || "REFERER URI"                                                                                                             | "REFERER MEDIUM" | "REFERER SOURCE"    | "REFERER TERM"                           |
@@ -90,4 +93,7 @@ class ParseRefererUriTest extends Specification with DataTables {
       (_, refererUri, medium, source, term) =>
         AttributionEnrichments.extractRefererDetails(new URI(refererUri), PageHost) must_== Some(Referer(medium, source, term))
     }
+
+  def e2 =
+    AttributionEnrichments.extractRefererDetails(new URI("http://www.google.com/search?q=%0Agateway%09%09+oracle+cards+denise+linn&hl=en&client=safari"), PageHost) must_== Some(Referer(Medium.Search, Some("Google"), Some("gateway oracle cards denise linn"))) 
 }
