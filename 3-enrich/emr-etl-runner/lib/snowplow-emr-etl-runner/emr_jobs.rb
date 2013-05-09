@@ -94,8 +94,9 @@ module SnowPlow
           hadoop_step.arguments = [
             "com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob", # Job to run
             "--hdfs", # Always --hdfs mode, never --local
-            "--input_folder"      , config[:s3][:buckets][:processing], # Argument names are "arguments" too
+            "--input_folder"      , config[:s3][:buckets][:processing], # Argument names are "--arguments" too
             "--input_format"      , config[:etl][:collector_format],
+            "--maxmind_file"      , config[:etl][:maxmind_file],
             "--output_folder"     , partition.call(config[:s3][:buckets][:out]),
             "--bad_rows_folder"   , partition.call(config[:s3][:buckets][:out_bad_rows])
           ]
@@ -118,10 +119,11 @@ module SnowPlow
       def run()
 
         jobflow_id = @jobflow.run
+        puts "EMR jobflow started, waiting for jobflow to complete..."
         status = wait_for(jobflow_id)
 
         if !status
-          raise EmrExecutionError, "EMR jobflow #{jobflow_id} failed, check Amazon logs for details. Data files not archived."
+          raise EmrExecutionError, "EMR jobflow #{jobflow_id} failed, check Amazon EMR console and Hadoop logs for details (or try: https://github.com/snowplow/snowplow/wiki/Troubleshooting#wiki-etl-failure). Data files not archived."
         end
 
         puts "EMR jobflow #{jobflow_id} completed successfully."
