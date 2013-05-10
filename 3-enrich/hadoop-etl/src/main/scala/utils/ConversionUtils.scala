@@ -93,15 +93,14 @@ object ConversionUtils {
   }
 
   /**
-   * Converts a JSON string into an \/[String, Json]
+   * Converts a JSON string into a Validation[String, Json]
    *
    * @param json The JSON string to parse
-   * @return a Scalaz \/, wrapping either a list of
-   *         error Strings or the extracted Json
+   * @return a Scalaz Validation, wrapping either an error
+   *         String or the extracted Json
    */
-  // TODO: change this so it returns a ValidationNel
-  def extractJson(json: String): \/[String, Json] =
-    Parse.parse(json)
+  def extractJson(json: String): Validation[String, Json] =
+    Parse.parse(json).validation
 
   /**
    * Decodes a URL-safe Base64 string.

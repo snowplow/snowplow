@@ -24,6 +24,9 @@ import Scalaz._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
+// This project
+import utils.{ConversionUtils => CU}
+
 /**
  * Holds the enrichments related to events.
  */
@@ -94,6 +97,14 @@ object EventEnrichments {
       case "pp" => "page_ping".success
       case  ec  => "[%s] is not a recognised event code".format(ec).fail
     }
+
+  /**
+   * Noodling.
+   *
+   * Checks that a String is valid JSON
+   */
+  val validateUnstructEvent: (String, String) => Validation[String, String] = (field, json) =>
+    CU.extractJson(json).map(_.nospaces)
 
   /**
    * Returns a unique event ID. The event ID is 
