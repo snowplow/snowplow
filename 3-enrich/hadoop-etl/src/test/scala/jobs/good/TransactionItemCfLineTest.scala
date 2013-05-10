@@ -57,7 +57,7 @@ object TransactionItemCfLineTest {
     "a279872d76480afb",
     "1",
     null, // No network_userid set
-    // Raw page URL is discarded 
+    // Raw page URL is discarded
     null, // No page title for transactions
     // Raw referer URL is discarded
     "http",
@@ -80,12 +80,14 @@ object TransactionItemCfLineTest {
     null, //
     null, //
     null, //
+    null, // Structured event fields empty
+    null, //
+    null, //
+    null, //
+    null, //
     null, // Unstructured event fields empty
     null, //
-    null, //
-    null, //
-    null, //
-    null, // Transaction fields empty 
+    null, // Transaction fields empty
     null, //
     null, //
     null, //

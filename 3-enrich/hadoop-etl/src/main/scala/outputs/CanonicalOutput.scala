@@ -70,20 +70,20 @@ class CanonicalOutput {
   @BeanProperty var page_referrer: String = _ // Note: we project this out in Scalding (because we don't have space in Redshift currently)
 
   // Page URL components
-  @BeanProperty var page_urlscheme: String = _  
-  @BeanProperty var page_urlhost: String = _   
-  @BeanProperty var page_urlport: JInteger = _ 
+  @BeanProperty var page_urlscheme: String = _
+  @BeanProperty var page_urlhost: String = _
+  @BeanProperty var page_urlport: JInteger = _
   @BeanProperty var page_urlpath: String = _
   @BeanProperty var page_urlquery: String = _
   @BeanProperty var page_urlfragment: String = _
 
   // Referrer URL components
-  @BeanProperty var refr_urlscheme: String = _  
-  @BeanProperty var refr_urlhost: String = _   
-  @BeanProperty var refr_urlport: JInteger = _ 
+  @BeanProperty var refr_urlscheme: String = _
+  @BeanProperty var refr_urlhost: String = _
+  @BeanProperty var refr_urlport: JInteger = _
   @BeanProperty var refr_urlpath: String = _
   @BeanProperty var refr_urlquery: String = _
-  @BeanProperty var refr_urlfragment: String = _  
+  @BeanProperty var refr_urlfragment: String = _
 
   // Referrer details
   @BeanProperty var refr_medium: String = _
@@ -97,12 +97,16 @@ class CanonicalOutput {
   @BeanProperty var mkt_content: String = _
   @BeanProperty var mkt_campaign: String = _
 
-  // Event
+  // Structured event
   @BeanProperty var ev_category: String = _
   @BeanProperty var ev_action: String = _
   @BeanProperty var ev_label: String = _
   @BeanProperty var ev_property: String = _
   @BeanProperty var ev_value: JFloat = null.asInstanceOf[JFloat]
+
+  // Unstructured event
+  @BeanProperty var ue_name: String = _
+  @BeanProperty var ue_json: String = _
 
   // Ecommerce transaction (from querystring)
   @BeanProperty var tr_orderid: String = _
@@ -127,7 +131,7 @@ class CanonicalOutput {
   @BeanProperty var pp_xoffset_max: JInteger = _
   @BeanProperty var pp_yoffset_min: JInteger = _
   @BeanProperty var pp_yoffset_max: JInteger = _
-  
+
   // User Agent
   @BeanProperty var useragent: String = _
 

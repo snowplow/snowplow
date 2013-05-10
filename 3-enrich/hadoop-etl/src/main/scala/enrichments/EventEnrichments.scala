@@ -90,6 +90,7 @@ object EventEnrichments {
     code match {
       case "se" => "struct".success
       case "ev" => "struct".success // LEGACY. Remove late 2013
+      case "ue" => "unstruct".success
       case "ad" => "ad_impression".success
       case "tr" => "transaction".success
       case "ti" => "transaction_item".success
@@ -119,7 +120,7 @@ object EventEnrichments {
     CU.decodeBase64Url(field, str).flatMap(json => validateUnstructEvent(field, json))
 
   /**
-   * Returns a unique event ID. The event ID is 
+   * Returns a unique event ID. The event ID is
    * generated as a type 4 UUID, then converted
    * to a String.
    *

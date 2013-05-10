@@ -57,7 +57,7 @@ object PagePingCfLineTest {
     "132e226e3359a9cd",
     "1",
     null, // No network_userid set
-    // Raw page URL is discarded 
+    // Raw page URL is discarded
     "Tarot cards - Psychic Bazaar",
     // Raw referer URL is discarded
     "http",
@@ -85,7 +85,9 @@ object PagePingCfLineTest {
     null, //
     null, //
     null, //
-    null, // Transaction fields empty 
+    null, // Unstructured event fields empty
+    null, //
+    null, // Transaction fields empty
     null, //
     null, //
     null, //
