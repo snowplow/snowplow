@@ -6,9 +6,10 @@ Used by the SnowPlow Clojure Collector.
 
 Compared to the standard `AccessLogValve`, this valve:
 
-1. Introduces a new pattern, 'I', to escape an incoming header.
-2. Introduces a new pattern, 'C', to fetch a cookie stored on the response.
-3. Re-implements the pattern 'i' to ensure that "" (empty string) is replaced with "-".
+1. Introduces a new pattern, 'I', to escape an incoming header
+2. Introduces a new pattern, 'C', to fetch a cookie stored on the response
+3. Re-implements the pattern 'i' to ensure that "" (empty string) is replaced with "-"
+4. Re-implements the pattern 'q' to remove the "?" and ensure "" (empty string) is replaced with "-"
 
 To build:
 
