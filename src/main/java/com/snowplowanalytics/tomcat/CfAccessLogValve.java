@@ -49,6 +49,7 @@ public class CfAccessLogValve extends AccessLogValve {
      * - Added 'C' pattern, to fetch a cookie on the response (not request)
      * - Fixed 'i' pattern, to replace "" (empty string) with "-"
      */
+    @Override
     protected AccessLogElement createAccessLogElement(String header, char pattern) {
 
         switch (pattern) {
@@ -73,6 +74,7 @@ public class CfAccessLogValve extends AccessLogValve {
      * Changes:
      * - Fixed 'q' pattern, to remove the "?" and ensure "" (empty string) is replaced with "-"     
      */
+    @Override
     protected AccessLogElement createAccessLogElement(char pattern) {
         switch (pattern) {
             // A better (safer, Cf-compatible) querystring element
