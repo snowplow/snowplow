@@ -103,10 +103,20 @@ object EventEnrichments {
    *
    * Checks that a String is valid JSON
    */
+  // TODO: remove/rewrite when Avro introduced
   val validateUnstructEvent: (String, String) => Validation[String, String] = (field, json) =>
     CU.extractJson(json).fold(
       e => "Field [%s]: invalid JSON with parsing error: %s".format(field, e).fail,
       f => f.nospaces.success)
+
+  /**
+   * More noodling.
+   *
+   * Decodes and then checks the String is valid JSON
+   */
+  // TODO: remove/rewrite when Avro introduced
+  val decodeAndValidateUnstructEvent: (String, String) => Validation[String, String] = (field, str) =>
+    CU.decodeBase64Url(field, str).flatMap(json => validateUnstructEvent(field, json))
 
   /**
    * Returns a unique event ID. The event ID is 
