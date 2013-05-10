@@ -18,7 +18,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    version       := "0.0.3",
+    version       := "0.0.4",
     description   := "Custom AccessLogValve for Tomcat to help generate CloudFront-like access logs",
     scalaVersion  := "2.9.1",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),

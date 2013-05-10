@@ -29,9 +29,10 @@ import org.apache.catalina.connector.Response;
  * A custom AccessLogValve for Tomcat to help generate CloudFront-like access logs.
  * Used in SnowPlow's Clojure Collector.
  *
- * Introduces a new pattern, 'I', to escape an incoming header.
- * Introduces a new pattern, 'C', to fetch a cookie stored on the response.
- * Re-implements the pattern 'i' to ensure that "" (empty string) is replaced with "-".
+ * Introduces a new pattern, 'I', to escape an incoming header
+ * Introduces a new pattern, 'C', to fetch a cookie stored on the response
+ * Re-implements the pattern 'i' to ensure that "" (empty string) is replaced with "-"
+ * Re-implements the pattern 'q' to remove the "?" and ensure "" (empty string) is replaced with "-"
  *
  * This is adapted from the original AccessLogValve code here:
  * http://javasourcecode.org/html/open-source/tomcat/tomcat-7.0.29/org/apache/catalina/valves/AccessLogValve.java.html
@@ -63,6 +64,23 @@ public class CfAccessLogValve extends AccessLogValve {
             // Back to AccessLogValve's handler
             default:
                 return super.createAccessLogElement(header, pattern);
+        }
+    }
+
+    /**
+     * create an AccessLogElement implementation which doesn't need a header string.
+     *
+     * Changes:
+     * - Fixed 'q' pattern, to remove the "?" and ensure "" (empty string) is replaced with "-"     
+     */
+    protected AccessLogElement createAccessLogElement(char pattern) {
+        switch (pattern) {
+            // A better (safer, Cf-compatible) querystring element
+            case 'q':
+                return new BetterQueryElement();
+            // Back to AccessLogValve's handler
+            default:
+                return super.createAccessLogElement(pattern);
         }
     }
 
@@ -117,6 +135,25 @@ public class CfAccessLogValve extends AccessLogValve {
                     buf.append(',').append(encodeStringSafely(iter.nextElement()));
                 }
                 return;
+            }
+            buf.append('-');
+        }
+    }
+
+    /**
+     * Write Querystring _without_ an initial '?', for compatibility with CloudFront - %q
+     * Makes sure to hyphenate in the case of null/empty element.
+     */
+    protected static class BetterQueryElement implements AccessLogElement {
+        @Override
+        public void addElement(StringBuilder buf, Date date, Request request,
+                Response response, long time) {
+            if (request != null) {
+                String query = request.getQueryString();
+                if (query != null) {
+                    buf.append(query);
+                    return;
+                }
             }
             buf.append('-');
         }
