@@ -104,7 +104,9 @@ object EventEnrichments {
    * Checks that a String is valid JSON
    */
   val validateUnstructEvent: (String, String) => Validation[String, String] = (field, json) =>
-    CU.extractJson(json).map(_.nospaces)
+    CU.extractJson(json).fold(
+      e => "Field [%s]: invalid JSON with parsing error: %s".format(field, e).fail,
+      f => f.nospaces.success)
 
   /**
    * Returns a unique event ID. The event ID is 
