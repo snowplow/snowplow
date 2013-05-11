@@ -18,8 +18,8 @@
 
 CREATE TABLE events (
 	-- App
-	app_id varchar(255) encode text255, 
-	platform varchar(255) encode text255, 
+	app_id varchar(255) encode text255,
+	platform varchar(255) encode text255,
 	-- Date/time
 	collector_tstamp timestamp not null,
 	dvce_tstamp timestamp,
@@ -29,11 +29,11 @@ CREATE TABLE events (
 	event_id varchar(38) not null unique,
 	txn_id int,
 	-- Versioning
-	v_tracker varchar(100) encode text255, 
+	v_tracker varchar(100) encode text255,
 	v_collector varchar(100) encode text255 not null,
-	v_etl varchar(100) encode text255 not null, 
+	v_etl varchar(100) encode text255 not null,
 	-- User and visit
-	user_id varchar(255) encode runlength, 
+	user_id varchar(255) encode runlength,
 	user_ipaddress varchar(19) encode runlength,
 	user_fingerprint varchar(50) encode runlength,
 	domain_userid varchar(16),
@@ -42,16 +42,16 @@ CREATE TABLE events (
 	-- Page
 	page_title varchar(2000),
 	-- Page URL components
-	page_urlscheme varchar(16) encode text255,    
-	page_urlhost varchar(255) encode text255,     
-	page_urlport smallint,        
+	page_urlscheme varchar(16) encode text255,
+	page_urlhost varchar(255) encode text255,
+	page_urlport smallint,
 	page_urlpath varchar(1000) encode text32k,
 	page_urlquery varchar(3000),
 	page_urlfragment varchar(255),
 	-- Referrer URL components
-	refr_urlscheme varchar(16) encode text255,    
-	refr_urlhost varchar(255) encode text255,     
-	refr_urlport smallint,        
+	refr_urlscheme varchar(16) encode text255,
+	refr_urlhost varchar(255) encode text255,
+	refr_urlport smallint,
 	refr_urlpath varchar(1000) encode text32k,
 	refr_urlquery varchar(3000),
 	refr_urlfragment varchar(255),
@@ -65,12 +65,15 @@ CREATE TABLE events (
 	mkt_term varchar(255) encode raw,
 	mkt_content varchar(500) encode raw,
 	mkt_campaign varchar(255) encode text32k,
-	-- Custom Event
+	-- Structured event
 	ev_category varchar(255) encode text255,
 	ev_action varchar(255) encode text255,
 	ev_label varchar(255) encode text32k,
 	ev_property varchar(255) encode text32k,
 	ev_value float,
+	-- Unstructured event
+	ue_name varchar(255) encode text255,
+	ue_json varchar(2000) encode raw,
 	-- Ecommerce
 	tr_orderid varchar(255) encode raw,
 	tr_affiliation varchar(255) encode text255,
@@ -111,7 +114,7 @@ CREATE TABLE events (
 	br_features_silverlight boolean,
 	br_cookies boolean,
 	br_colordepth varchar(12) encode text255,
-	br_viewwidth integer, 
+	br_viewwidth integer,
 	br_viewheight integer,
 	-- Operating System
 	os_name varchar(50) encode text255,

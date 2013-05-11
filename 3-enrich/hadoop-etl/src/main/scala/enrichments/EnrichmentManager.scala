@@ -170,6 +170,10 @@ object EnrichmentManager {
           ("se_la"   , (decodeString, "ev_label")),
           ("se_pr"   , (decodeString, "ev_property")),
           ("se_va"   , (CU.stringToJFloat, "ev_value")),
+          // Custom unstructured events
+          ("ue_na"   , (decodeString, "ue_name")),
+          ("ue_pr"   , (decodeString, "ue_json")),
+          ("ue_px"   , (CU.decodeBase64Url, "ue_json")),
           // Ecommerce transactions
           ("tr_id"   , (decodeString, "tr_orderid")),
           ("tr_af"   , (decodeString, "tr_affiliation")),
@@ -193,7 +197,7 @@ object EnrichmentManager {
           ("pp_may"  , (CU.stringToJInteger, "pp_yoffset_max")))
 
     val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
-  
+
     val transform = event.transform(sourceMap, transformMap)
 
     // Potentially update the page_url and set the page URL components
@@ -210,7 +214,7 @@ object EnrichmentManager {
       event.page_urlpath = components.path.orNull
       event.page_urlquery = components.query.orNull
       event.page_urlfragment = components.fragment.orNull
-      
+
       uri.success
       })
 
@@ -267,7 +271,7 @@ object EnrichmentManager {
     event.page_urlquery = CU.truncate(event.page_urlquery, 3000)
     event.page_urlfragment = CU.truncate(event.page_urlfragment, 255)
 
-    // Collect our errors on Failure, or return our event on Success 
+    // Collect our errors on Failure, or return our event on Success
     (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {
       (_,_,_,_,_,_) => event
     }
