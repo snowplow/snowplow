@@ -105,9 +105,9 @@ object EventEnrichments {
    */
   // TODO: remove/rewrite when Avro introduced
   val validateUnstructEvent: (String, String) => Validation[String, String] = (field, json) =>
-    CU.extractJson(json).fold(
-      e => "Field [%s]: invalid JSON with parsing error: %s".format(field, e).fail,
-      f => f.nospaces.success)
+    CU.extractJson(json).bimap(
+      e => "Field [%s]: invalid JSON with parsing error: %s".format(field, e),
+      f => f.nospaces)
 
   /**
    * More noodling.
