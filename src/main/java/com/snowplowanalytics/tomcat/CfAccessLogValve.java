@@ -25,6 +25,9 @@ import org.apache.catalina.valves.AccessLogValve;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 
+// Get our project settings
+import com.snowplowanalytics.tomcat.generated.ProjectSettings;
+
 /**
  * A custom AccessLogValve for Tomcat to help generate CloudFront-like access logs.
  * Used in SnowPlow's Clojure Collector.
@@ -33,6 +36,7 @@ import org.apache.catalina.connector.Response;
  * Introduces a new pattern, 'C', to fetch a cookie stored on the response
  * Re-implements the pattern 'i' to ensure that "" (empty string) is replaced with "-"
  * Re-implements the pattern 'q' to remove the "?" and ensure "" (empty string) is replaced with "-"
+ * Overwrites the 'v' pattern, to write the version of this AccessLogValve, rather than the local server name
  *
  * This is adapted from the original AccessLogValve code here:
  * http://javasourcecode.org/html/open-source/tomcat/tomcat-7.0.29/org/apache/catalina/valves/AccessLogValve.java.html
@@ -72,7 +76,8 @@ public class CfAccessLogValve extends AccessLogValve {
      * create an AccessLogElement implementation which doesn't need a header string.
      *
      * Changes:
-     * - Fixed 'q' pattern, to remove the "?" and ensure "" (empty string) is replaced with "-"     
+     * - Fixed 'q' pattern, to remove the "?" and ensure "" (empty string) is replaced with "-"
+     * - Overwrote 'v' pattern, to write the version of this AccessLogValve, rather than the local server name  
      */
     @Override
     protected AccessLogElement createAccessLogElement(char pattern) {
@@ -80,9 +85,25 @@ public class CfAccessLogValve extends AccessLogValve {
             // A better (safer, Cf-compatible) querystring element
             case 'q':
                 return new BetterQueryElement();
+            // Return the version of this AccessLogValve
+            case 'v':
+                return new AccessLogValveVersionElement();
             // Back to AccessLogValve's handler
             default:
                 return super.createAccessLogElement(pattern);
+        }
+    }
+
+    /**
+     * We replace writing the local server name with writing
+     * the version of this Tomcat AccessLogValve - %v
+     */
+    protected static class AccessLogValveVersionElement implements AccessLogElement {
+        @Override
+        public void addElement(StringBuilder buf, Date date, Request request,
+                Response response, long time) {
+            buf.append("tom-");
+            buf.append(ProjectSettings.VERSION);
         }
     }
 

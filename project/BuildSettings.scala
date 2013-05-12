@@ -25,6 +25,20 @@ object BuildSettings {
     resolvers     ++= Dependencies.resolutionRepos
   )
 
+  // Makes our SBT app settings available from within the deserializer
+  lazy val javifySettings = Seq(sourceGenerators in Compile <+= (sourceManaged in Compile, version, name, organization) map { (d, v, n, o) =>
+    val file = d / "ProjectSettings.java"
+    IO.write(file, """package com.snowplowanalytics.tomcat.generated;
+      |public final class ProjectSettings {
+      |  private ProjectSettings() {}
+      |  public static final String ORGANIZATION = "%s";
+      |  public static final String VERSION = "%s";
+      |  public static final String NAME = "%s";
+      |}
+      |""".stripMargin.format(o, v, n))
+    Seq(file)
+  })
+
   // sbt-assembly settings for building a fat jar
   import sbtassembly.Plugin._
   import AssemblyKeys._
@@ -39,5 +53,5 @@ object BuildSettings {
     }
   )
 
-  lazy val buildSettings = basicSettings ++ sbtAssemblySettings
+  lazy val buildSettings = basicSettings ++ javifySettings ++ sbtAssemblySettings
 }
