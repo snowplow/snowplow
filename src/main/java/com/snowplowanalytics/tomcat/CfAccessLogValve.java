@@ -87,7 +87,7 @@ public class CfAccessLogValve extends AccessLogValve {
                 return new BetterQueryElement();
             // Return the version of this AccessLogValve
             case 'v':
-                return new AccessLogValveVersionElement();
+                return new ValveVersionElement();
             // Back to AccessLogValve's handler
             default:
                 return super.createAccessLogElement(pattern);
@@ -98,7 +98,7 @@ public class CfAccessLogValve extends AccessLogValve {
      * We replace writing the local server name with writing
      * the version of this Tomcat AccessLogValve - %v
      */
-    protected static class AccessLogValveVersionElement implements AccessLogElement {
+    protected static class ValveVersionElement implements AccessLogElement {
         @Override
         public void addElement(StringBuilder buf, Date date, Request request,
                 Response response, long time) {
