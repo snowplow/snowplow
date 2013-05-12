@@ -7,6 +7,7 @@ Hadoop ETL: removed truncation of page_referrer (#236)
 Hadoop ETL: added truncation of referer path/qs/fragment (#235)
 Hadoop ETL: removing tabs found in referer search terms (#234)
 Hadoop ETL: fixed client timestamp so it's not incorrectly localised (#238)
+Hadoop ETL: added parsing of collector version `cv` (#243) - TODO
 EmrEtlRunner: bumped to 0.2.0
 EmrEtlRunner: now passes MaxMind .dat file into Scalding ETL (#213)
 EmrEtlRunner: improve messages when ETL job starts and fails (#230)
