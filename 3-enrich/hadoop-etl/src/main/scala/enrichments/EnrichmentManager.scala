@@ -81,7 +81,7 @@ object EnrichmentManager {
       e.collector_tstamp = EE.toTimestamp(raw.timestamp)
       e.event_id = EE.generateEventId
       e.event_vendor = "com.snowplowanalytics" // TODO: this should be moved to Tracker Protocol
-      e.v_collector = raw.source.collector
+      e.v_collector = raw.source.collector // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion
       raw.ipAddress.map(ip => e.user_ipaddress = ip)
     }
@@ -143,6 +143,7 @@ object EnrichmentManager {
           ("vid"     , (CU.stringToJInteger, "domain_sessionidx")),
           ("dtm"     , (EE.extractTimestamp, "dvce_tstamp")),
           ("tv"      , (ME.identity, "v_tracker")),
+          ("cv"      , (ME.identity, "v_collector")),
           ("lang"    , (ME.identity, "br_lang")),
           ("f_pdf"   , (CU.stringToByte, "br_features_pdf")),
           ("f_fla"   , (CU.stringToByte, "br_features_flash")),
