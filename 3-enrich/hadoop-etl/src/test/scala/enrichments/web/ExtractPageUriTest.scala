@@ -48,11 +48,11 @@ class ExtractPageUriTest extends Specification with DataTables with ValidationMa
 
   def e2 =
     "SPEC NAME"                                     || "URI TAKEN FROM COLLECTOR'S REFERER" | "URI SENT BY TRACKER" | "EXPECTED URI" |
-    "both URIs match (98% of the time)"             !! fullUri.some                         ! fullUri.some          ! fullURI        |
-    "tracker didn't send URI (e.g. No-JS Tracker)"  !! fullUri.some                         ! None                  ! fullURI        |
-    "collector didn't record the referer (rare)"    !! None                                 ! fullUri.some          ! fullURI        |
-    "tracker truncated URI (IE might do this)"      !! fullUri.some                         ! truncatedUri.some     ! fullURI        |
-    "collector truncated URI (should never happen)" !! truncatedUri.some                    ! fullUri.some          ! fullURI        |> {
+    "both URIs match (98% of the time)"             !! fullUri.some                         ! fullUri.some          ! fullURI.some   |
+    "tracker didn't send URI (e.g. No-JS Tracker)"  !! fullUri.some                         ! None                  ! fullURI.some   |
+    "collector didn't record the referer (rare)"    !! None                                 ! fullUri.some          ! fullURI.some   |
+    "tracker truncated URI (IE might do this)"      !! fullUri.some                         ! truncatedUri.some     ! fullURI.some   |
+    "collector truncated URI (should never happen)" !! truncatedUri.some                    ! fullUri.some          ! fullURI.some   |> {
       (_, fromReferer, fromTracker, expected) =>
         PageEnrichments.extractPageUri(fromReferer, fromTracker) must beSuccessful(expected)
     }

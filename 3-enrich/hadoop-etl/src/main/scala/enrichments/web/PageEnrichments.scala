@@ -53,13 +53,12 @@ object PageEnrichments {
    */
   def extractPageUri(
       fromReferer: Option[String],
-      fromTracker: Option[String]): Validation[String, URI] = {
+      fromTracker: Option[String]): Validation[String, Option[URI]] = {
 
     (fromReferer, fromTracker) match {
-      // TODO: tidy up this nasty _.get.success (which is just to strip the not-needed Option-boxing from the URI)
-      case (Some(r), None)    => CU.stringToUri(r).flatMap(_.get.success)
-      case (None, Some(t))    => CU.stringToUri(t).flatMap(_.get.success)
-      case (Some(r), Some(t)) => choosePageUri(r, t) flatMap (pu => CU.stringToUri(pu).flatMap(_.get.success))
+      case (Some(r), None)    => CU.stringToUri(r)
+      case (None, Some(t))    => CU.stringToUri(t)
+      case (Some(r), Some(t)) => choosePageUri(r, t) flatMap (pu => CU.stringToUri(pu))
       case (None, None)       => "No page URI provided".fail
     }
   }

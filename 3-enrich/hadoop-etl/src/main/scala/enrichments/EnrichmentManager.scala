@@ -203,12 +203,12 @@ object EnrichmentManager {
 
     // Potentially update the page_url and set the page URL components
     val pageUri = PE.extractPageUri(raw.refererUri, Option(event.page_url))
-    for (uri <- pageUri) {
+    for (uri <- pageUri; u <- uri) {
       // Update the page_url
-      event.page_url = uri.toString
+      event.page_url = u.toString
 
       // Set the URL components
-      val components = CU.explodeUri(uri)
+      val components = CU.explodeUri(u)
       event.page_urlscheme = components.scheme
       event.page_urlhost = components.host
       event.page_urlport = components.port
@@ -252,15 +252,17 @@ object EnrichmentManager {
     // Marketing attribution
     val campaign = pageUri.fold(
       e => unitSuccessNel, // No fields updated
-      uri => {
-        AE.extractMarketingFields(uri, raw.encoding).flatMap(cmp => {
-          event.mkt_medium = cmp.medium
-          event.mkt_source = cmp.source
-          event.mkt_term = cmp.term
-          event.mkt_content = cmp.content
-          event.mkt_campaign = cmp.campaign
-          cmp.success
-          })
+      uri => uri match {
+        case Some(u) =>
+          AE.extractMarketingFields(u, raw.encoding).flatMap(cmp => {
+            event.mkt_medium = cmp.medium
+            event.mkt_source = cmp.source
+            event.mkt_term = cmp.term
+            event.mkt_content = cmp.content
+            event.mkt_campaign = cmp.campaign
+            cmp.success
+            })
+        case None => unitSuccessNel // No fields updated
         })
 
     // Some quick and dirty truncation to ensure the load into Redshift doesn't error. Yech this is pretty dirty
