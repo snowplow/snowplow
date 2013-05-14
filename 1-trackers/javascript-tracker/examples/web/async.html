@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
         "http://www.w3.org/TR/html4/loose.dtd">
 <!-- 
- ! Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ ! Copyright (c) 2012-2013 Snowplow Analytics Ltd. All rights reserved.
  !
  ! This program is licensed to you under the Apache License Version 2.0,
  ! and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -17,7 +17,7 @@
     <title>Asynchronous website/webapp examples for snowplow.js</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-    <!-- SnowPlow starts plowing -->
+    <!-- Snowplow starts plowing -->
     <script type="text/javascript">
         var _snaq = _snaq || [];
 	
@@ -27,15 +27,17 @@
         // Deprecated _snaq.push(['attachUserId', false]); // Don't attach &uid=xxx to the querystring
         _snaq.push(['enableActivityTracking', 10, 10]); // Ping every 10 seconds after 10 seconds
         _snaq.push(['enableLinkTracking']);
+        _snaq.push(['encodeBase64', false]); // Default is true
         _snaq.push(['trackPageView', 'Async Test']); // Track the page view with custom title
 
         (function() {
             var sp = document.createElement('script'); sp.type = 'text/javascript'; sp.async = true; sp.defer = true;
-            sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://d1fc8wv8zag5ca.cloudfront.net/0.11.0/sp.js';
+            sp.src = ('https:' == document.location.protocol ? 'https' : 'http') + '://d1fc8wv8zag5ca.cloudfront.net/0.11.2/sp.js';
+            // sp.src = '../../js/snowplow.js'; // For testing
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(sp, s);
             })();
     </script>
-    <!-- SnowPlow stops plowing -->
+    <!-- Snowplow stops plowing -->
 
     <!-- Example events -->
     <script type="text/javascript">
@@ -46,6 +48,20 @@
         function addProduct() {
             alert("Adding a product to basket");
             _snaq.push(['trackStructEvent', 'Checkout', 'Add', 'ASO01043', 'blue:xxl', '2.0']);      
+        }
+        function viewProduct() {
+            alert("Viewing a product");
+            _snaq.push(['trackUnstructEvent', 'Viewed Product',
+                {
+                    product_id: 'ASO01043',
+                    category: 'Dresses',
+                    brand: 'ACME',
+                    returning: true,
+                    price: 49.95,
+                    sizes: ['xs', 's', 'l', 'xl', 'xxl'],
+                    available_since$dt: new Date(2013,3,7)
+                }
+            ]);
         }
 
         function addEcommerceTransaction() {
@@ -85,7 +101,7 @@
               '1'                     // quantity - required
               ]);
 
-          // trackTrans sends the transaction to SnowPlow tracking servers.
+          // trackTrans sends the transaction to Snowplow tracking servers.
           // Must be called last to commit the transaction.
           _snaq.push(['trackTrans']);
 
@@ -98,6 +114,7 @@
     <p>Press the buttons below to trigger individual tracking events:<br>
         <button type="button" onclick="playMix()">Play a mix</button><br>
         <button type="button" onclick="addProduct()">Add a product</button><br>
+        <button type="button" onclick="viewProduct()">View a product</button><br>
         <button type="button" onclick="addEcommerceTransaction()">Add an ecommerce transaction</button>
     </p>
 </body>

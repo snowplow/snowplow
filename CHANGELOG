@@ -16,6 +16,16 @@ Redshift: migration script added for 0.1.0 to 0.2.0
 Redshift: added geo-ip fields to Redshift table definition (#226)
 Redshift: rename ev_ fields to se_ for structured events (#227)
 
+Version 0.8.3 (2013-05-14)
+--------------------------
+JS tracker: bumped to 0.11.2
+JS tracker: added unstructured events, thanks @rgabo, @tarsolya, @lackac (#198)
+JS tracker: remove leading ampersand in querystring (#188)
+Clojure Collector: bumped to 0.5.0
+Clojure Collector: upgraded to use Tomcat AccessLogValve 0.0.4 (#240)
+Clojure Collector: now logging Clojure Collector and Tomcat AccessLogValve versions (#239)
+Common: completed splitting custom event type into: unstructured and structured events (#133)
+
 Version 0.8.2 (2013-05-08)
 --------------------------
 Clojure Collector: bumped to 0.4.0
