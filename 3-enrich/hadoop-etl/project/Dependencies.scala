@@ -31,7 +31,7 @@ object Dependencies {
     val yodaConvert   = "1.2"
     // Scala
     val scalding      = "0.8.4"
-    val scalaz7       = "7.0.0-M9" // -> "7.0.0" when released
+    val scalaz7       = "7.0.0"
     val scalaUtil     = "0.1.0"
     val refererParser = "0.1.0"
     val maxmindGeoip  = "0.0.3"
