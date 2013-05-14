@@ -2,7 +2,7 @@ Version 0.8.4 (2013-05-XX)
 --------------------------
 Hadoop ETL: bumped to 0.3.0
 Hadoop ETL: added geo-ip lookup to Scalding ETL
-Hadoop ETL: bumped referer-parser to 0.1.0 from 0.1.0-M6
+Hadoop ETL: bumped referer-parser from 0.1.0-M6 to to 0.1.0
 Hadoop ETL: removed truncation of page_referrer (#236)
 Hadoop ETL: added truncation of referer path/qs/fragment (#235)
 Hadoop ETL: removing tabs found in referer search terms (#234)
