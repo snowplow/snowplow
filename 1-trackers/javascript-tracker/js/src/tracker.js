@@ -1,8 +1,8 @@
 /*
- * JavaScript tracker for SnowPlow: tracker.js
+ * JavaScript tracker for Snowplow: tracker.js
  * 
  * Significant portions copyright 2010 Anthon Pang. Remainder copyright 
- * 2012-2013 SnowPlow Analytics Ltd. All rights reserved. 
+ * 2012-2013 Snowplow Analytics Ltd. All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without 
  * modification, are permitted provided that the following conditions are 
@@ -15,7 +15,7 @@
  *   notice, this list of conditions and the following disclaimer in the 
  *   documentation and/or other materials provided with the distribution. 
  *
- * * Neither the name of Anthon Pang nor SnowPlow Analytics Ltd nor the
+ * * Neither the name of Anthon Pang nor Snowplow Analytics Ltd nor the
  *   names of their contributors may be used to endorse or promote products
  *   derived from this software without specific prior written permission. 
  *
@@ -135,6 +135,9 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 		// Life of the referral cookie (in milliseconds)
 		configReferralCookieTimeout = 15768000000, // 6 months
+
+    // Enable Base64 encoding for unstructured events
+    configEncodeBase64 = true,
 
 		// Document character set
 		documentCharset = SnowPlow.documentAlias.characterSet || SnowPlow.documentAlias.charset,
@@ -316,7 +319,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 		// Okay? Let's proceed.
 		image.onload = function () { };
-		image.src = configCollectorUrl + '?' + request;
+		image.src = configCollectorUrl + request;
 	}
 
 	/*
@@ -650,7 +653,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		var str = initialValue || '';
 		var addNvPair = function(key, value, encode) {
 			if (value !== undefined && value !== '') {
-				str += '&' + key + '=' + (encode ? SnowPlow.encodeWrapper(value) : value);
+				var sep = (str.length > 0) ? "&" : "?";
+				str += sep + key + '=' + (encode ? SnowPlow.encodeWrapper(value) : value);
 			}
 		};
 		return {
@@ -683,6 +687,41 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('ev_la', label);
 		sb.add('ev_pr', property);
 		sb.add('ev_va', value);
+		request = getRequest(sb, 'event');
+		sendRequest(request, configTrackerPause);
+	}
+
+	/**
+	 * Log an unstructured event happening on this page
+	 *
+	 * @param string name The name of the event
+	 * @param object properties The properties of the event
+	 */
+	function logUnstructEvent(name, properties) {
+		var sb = requestStringBuilder();
+		sb.add('e', 'ue'); // 'ue' for Unstructured Event
+		sb.add('ue_na', name);
+
+		var translated = {}
+		for(var p in properties) {
+			var key = p, value = properties[p];
+			if (properties.hasOwnProperty(p) && SnowPlow.isDate(properties[p])) {
+				type = SnowPlow.getPropertySuffix(p);
+				if(!type) {
+          type = 'tms'
+          key += '$' + type
+        }
+        value = SnowPlow.translateDateValue(value, type);
+			};
+			translated[key] = value;
+		}
+
+		pr_string = JSON2.stringify(translated);
+		if(configEncodeBase64) {
+		  sb.addRaw('ue_px', SnowPlow.base64urlencode(pr_string));
+		} else {
+		  sb.add('ue_pr', pr_string);
+		};
 		request = getRequest(sb, 'event');
 		sendRequest(request, configTrackerPause);
 	}
@@ -1632,6 +1671,16 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		},
 
 		/**
+		 *
+		 * Enable Base64 encoding for unstructured event payload
+		 *
+		 * @param boolean enabled A boolean value indicating if the Base64 encoding for unstructured events should be enabled or not
+		 */
+		encodeBase64: function (enabled) {
+			configEncodeBase64 = enabled;
+		},
+
+		/**
 		 * Track an event happening on this page
 		 *
 		 * DEPRECATED: use getStructEvent instead
@@ -1664,6 +1713,16 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		 */
 		trackStructEvent: function (category, action, label, property, value) {
 			logStructEvent(category, action, label, property, value);                   
+		},
+
+		/**
+		 * Track an unstructured event happening on this page.
+		 *
+		 * @param string name The name of the event
+		 * @param object properties The properties of the event
+		 */
+		trackUnstructEvent: function (name, properties) {
+			logUnstructEvent(name, properties);
 		},
 
 		/**

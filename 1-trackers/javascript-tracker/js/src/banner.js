@@ -1,10 +1,10 @@
 /*!
- * SnowPlow - The world's most powerful web analytics platform
+ * Snowplow - The world's most powerful web analytics platform
  *
- * @description JavaScript tracker for SnowPlow
- * @version     0.11.1
+ * @description JavaScript tracker for Snowplow
+ * @version     0.11.2
  * @author      Alex Dean, Simon Andersson, Anthon Pang
- * @copyright   Anthon Pang, SnowPlow Analytics Ltd
+ * @copyright   Anthon Pang, Snowplow Analytics Ltd
  * @license     Simplified BSD
  */
 

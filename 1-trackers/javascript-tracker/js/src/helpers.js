@@ -1,8 +1,8 @@
 /*
- * JavaScript tracker for SnowPlow: helpers.js
+ * JavaScript tracker for Snowplow: helpers.js
  * 
  * Significant portions copyright 2010 Anthon Pang. Remainder copyright 
- * 2012-2013 SnowPlow Analytics Ltd. All rights reserved. 
+ * 2012-2013 Snowplow Analytics Ltd. All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without 
  * modification, are permitted provided that the following conditions are 
@@ -15,7 +15,7 @@
  *   notice, this list of conditions and the following disclaimer in the 
  *   documentation and/or other materials provided with the distribution. 
  *
- * * Neither the name of Anthon Pang nor SnowPlow Analytics Ltd nor the
+ * * Neither the name of Anthon Pang nor Snowplow Analytics Ltd nor the
  *   names of their contributors may be used to endorse or promote products
  *   derived from this software without specific prior written permission. 
  *
@@ -63,6 +63,13 @@ SnowPlow.isString = function (property) {
 }
 
 /*
+ * Is property a date?
+ */
+SnowPlow.isDate = function (property) {
+	return Object.prototype.toString.call(property) === "[object Date]";
+}
+
+/*
  * UTF-8 encoding
  */
 SnowPlow.encodeUtf8 = function (argString) {
@@ -95,6 +102,47 @@ SnowPlow.getHostName = function (url) {
 	return matches ? matches[1] : url;
 }
 
+/*
+ * Extract suffix from a property
+ */
+SnowPlow.getPropertySuffix = function (property) {
+	var e = new RegExp('\\$(.[^\\$]+)$'),
+	    matches = e.exec(property);
+
+	if (matches) return matches[1];
+}
+
+/*
+ * Converts a date object to Unix timestamp with or without milliseconds
+ */
+SnowPlow.toTimestamp = function (date, milliseconds) {
+	return milliseconds ? date / 1 : Math.floor(date / 1000);
+}
+
+/*
+ * Converts a date object to Unix datestamp (number of days since epoch)
+ */
+SnowPlow.toDatestamp = function (date) {
+	return Math.floor(date / 86400000);
+}
+
+/*
+ * Translates a value of an unstructured date property
+ */
+SnowPlow.translateDateValue = function (date, type) {
+  switch (type) {
+    case 'tms':
+      return SnowPlow.toTimestamp(date, true);
+    case 'ts':
+      return SnowPlow.toTimestamp(date, false);
+    case 'dt':
+      return SnowPlow.toDatestamp(date);
+    default:
+      return date;
+  }
+}
+
+  
 /*
  * Fix-up URL when page rendered from search engine cache or translated page.
  * TODO: it would be nice to generalise this and/or move into the ETL phase.
