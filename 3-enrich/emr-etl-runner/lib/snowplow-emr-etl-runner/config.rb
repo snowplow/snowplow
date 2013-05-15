@@ -74,7 +74,7 @@ module SnowPlow
         end
 
         # Construct path to our MaxMind file
-        config[:maxmind_asset] = "%s/third-party/maxmind/GeoLiteCity.dat" % config[:s3][:buckets][:assets]
+        config[:maxmind_asset] = "%sthird-party/maxmind/GeoLiteCity.dat" % config[:s3][:buckets][:assets]
 
         # Construct path to our ETL implementations
         asset_path = "%s3-enrich" % config[:s3][:buckets][:assets]
