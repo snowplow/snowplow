@@ -1,7 +1,6 @@
 
-
-$ sbt
-snowplow-avro > avro:generate
+    $ sbt
+    snowplow-avro > avro:generate
 
 TODO: adapt JSON format used in SnowCannon:
 
