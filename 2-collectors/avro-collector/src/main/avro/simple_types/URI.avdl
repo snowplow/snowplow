@@ -1,0 +1,16 @@
+/**
+ * URL data type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol URIProtocol {
+	record URI {
+		string raw;
+		string scheme;
+		string host;
+		string port;
+		string path;
+		string query;
+		string fragment;
+	}
+}

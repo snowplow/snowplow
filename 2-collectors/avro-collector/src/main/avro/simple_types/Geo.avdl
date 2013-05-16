@@ -1,0 +1,12 @@
+/**
+ * Geo  type - tracks the longitude / latitude
+ * i.e. geographic location
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol GeoProtocol {
+	record Geo {
+		float longitude;
+		float latitude;
+	}
+}

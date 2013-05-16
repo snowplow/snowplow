@@ -1,0 +1,22 @@
+/**
+ * Properties type - used for unstructured events, custom dimensions and custom metrics
+ */
+
+ @namespace("com.snowplowanalytics.snowplow.storage.avro")
+ protocol PropertiesProtocol {
+ 	import idl "Timestamp.avdl";
+ 	import idl "Geo.avdl";
+
+	record SingleProperty {
+		union { string, boolean, float, Timestamp, Geo } single_property;
+	}
+
+	record MultiProperty {
+		array<SingleProperty> multi_properties;
+	}
+
+	record Properties {
+		union { SingleProperty, MultiProperty, null } properties;
+	}
+
+ }

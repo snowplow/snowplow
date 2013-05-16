@@ -1,0 +1,10 @@
+/**
+ * Timestamp
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol TimestampProtocol {
+	record Timestamp {
+		long Timestamp;
+	}
+}
