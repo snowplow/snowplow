@@ -6,7 +6,7 @@ Hadoop ETL: bumped referer-parser from 0.1.0-M6 to to 0.1.0
 Hadoop ETL: removed truncation of page_referrer (#236)
 Hadoop ETL: added truncation of referer path/qs/fragment (#235)
 Hadoop ETL: removing tabs found in referer search terms (#234)
-Hadoop ETL: fixed client timestamp so it's not incorrectly localised (#238)
+Hadoop ETL: fixed client timestamp so it's not incorrectly localised - thanks @rgabo (#238)
 Hadoop ETL: added parsing of collector version `cv` (#243)
 Hadoop ETL: bumped Scalaz from 7.0.0-M9 to 7.0.0
 Hadoop ETL: removed .gets from extractPageUri (#249)
