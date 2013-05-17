@@ -19,6 +19,8 @@ object Dependencies {
     "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/releases/",
      // For some misc Scalding and Twitter libs
     "Concurrent Maven Repo" at "http://conjars.org/repo",
+     // For Twitter's util functions
+    "Twitter Maven Repo" at "http://maven.twttr.com/",
     // For scala-util and referer-parser
     "SnowPlow Analytics Maven repo" at "http://maven.snplow.com/releases/"
   )
