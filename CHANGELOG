@@ -2,6 +2,8 @@ Version 0.8.5 (2013-05-XX)
 --------------------------
 Hadoop ETL: bumped to 0.3.1
 Hadoop ETL: added Twitter Maven Repo as a resolution repo, thanks @rgabo (#239)
+Hadoop ETL: replaced Bytes in CanonicalOutput with JBytes (#254) - TODO
+Hadoop ETL: simplified initialization of `ev_value` in CanonicalOutput (#255) - TODO
 EmrEtlRunner: bumped to 0.3.0
 EmrEtlRunner: updated config.yml.sample to support spot task instances
 EmrEtlRunner: let EmrEtlRunner use spot task instances (#193)
