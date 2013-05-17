@@ -115,7 +115,7 @@ object EnrichmentManager {
           event.os_family = c.osFamily
           event.os_manufacturer = c.osManufacturer
           event.dvce_type = c.deviceType
-          event.dvce_ismobile = CU.booleanToByte(c.deviceIsMobile)
+          event.dvce_ismobile = CU.booleanToJByte(c.deviceIsMobile)
           c.success
           })
         ca
@@ -145,16 +145,16 @@ object EnrichmentManager {
           ("tv"      , (ME.identity, "v_tracker")),
           ("cv"      , (ME.identity, "v_collector")),
           ("lang"    , (ME.identity, "br_lang")),
-          ("f_pdf"   , (CU.stringToByte, "br_features_pdf")),
-          ("f_fla"   , (CU.stringToByte, "br_features_flash")),
-          ("f_java"  , (CU.stringToByte, "br_features_java")),
-          ("f_dir"   , (CU.stringToByte, "br_features_director")),
-          ("f_qt"    , (CU.stringToByte, "br_features_quicktime")),
-          ("f_realp" , (CU.stringToByte, "br_features_realplayer")),
-          ("f_wma"   , (CU.stringToByte, "br_features_windowsmedia")),
-          ("f_gears" , (CU.stringToByte, "br_features_gears")),
-          ("f_ag"    , (CU.stringToByte, "br_features_silverlight")),
-          ("cookie"  , (CU.stringToByte, "br_cookies")),
+          ("f_pdf"   , (CU.stringToJByte, "br_features_pdf")),
+          ("f_fla"   , (CU.stringToJByte, "br_features_flash")),
+          ("f_java"  , (CU.stringToJByte, "br_features_java")),
+          ("f_dir"   , (CU.stringToJByte, "br_features_director")),
+          ("f_qt"    , (CU.stringToJByte, "br_features_quicktime")),
+          ("f_realp" , (CU.stringToJByte, "br_features_realplayer")),
+          ("f_wma"   , (CU.stringToJByte, "br_features_windowsmedia")),
+          ("f_gears" , (CU.stringToJByte, "br_features_gears")),
+          ("f_ag"    , (CU.stringToJByte, "br_features_silverlight")),
+          ("cookie"  , (CU.stringToJByte, "br_cookies")),
           ("res"     , (CE.extractResolution, ("dvce_screenwidth", "dvce_screenheight"))), // Note tuple target
           ("cd"      , (ME.identity, "br_colordepth")),
           ("tz"      , (decodeString, "os_timezone")),

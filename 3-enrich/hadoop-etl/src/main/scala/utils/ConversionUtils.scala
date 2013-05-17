@@ -18,6 +18,7 @@ import java.net.URLDecoder
 import java.net.URI
 import java.lang.{Integer => JInteger}
 import java.lang.{Float => JFloat}
+import java.lang.{Byte => JByte}
 
 // Scalaz
 import scalaz._
@@ -221,9 +222,10 @@ object ConversionUtils {
    *         Failure String or
    *         a Success Byte
    */
-  val stringToByte: (String, String) => Validation[String, Byte] = (field, str) =>
+  val stringToJByte: (String, String) => Validation[String, JByte] = (field, str) =>
     try {
-      str.toByte.success
+      val jbyte: JByte = str.toByte
+      jbyte.success
     } catch {
       case nfe: NumberFormatException =>
         "Field [%s]: cannot convert [%s] to Byte".format(field, str).fail
@@ -271,8 +273,8 @@ object ConversionUtils {
    * @param bool The Boolean to convert into a Byte
    * @return 0 if false, 1 if true
    */
-  def booleanToByte(bool: Boolean): Byte =
-    if (bool) 1 else 0
+  def booleanToJByte(bool: Boolean): JByte =
+    (if (bool) 1 else 0).toByte
 
   /**
    * Helper to convert a Byte value
