@@ -17,11 +17,14 @@
   :hadoop_version: 1.0.3
   :placement: ADD HERE
   :ec2_key_name: ADD HERE
-  # Adjust your Hive cluster below
-  :jobflow:
-    :instance_count: 2
+  # Adjust your Hadoop cluster below
+:jobflow:
     :master_instance_type: m1.small
-    :slave_instance_type: m1.small
+    :core_instance_count: 2
+    :core_instance_type: m1.small
+    :task_instance_count: 0 # Increase to use spot instances
+    :task_instance_type: m1.small
+    :task_instance_bid: 0.25 # In USD. Adjust bid, or leave blank for non-spot-priced task instances
 :etl:
   :job_name: SnowPlow ETL # Give your job a name
   :implementation: hadoop # Or 'hive' for legacy ETL
