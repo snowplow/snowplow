@@ -47,8 +47,28 @@ module SnowPlow
         # Add extra configuration
         if config[:emr][:jobflow].respond_to?(:each)
           config[:emr][:jobflow].each { |key, value|
-            @jobflow.send("#{key}=", value)
+             # Don't include the task fields
+            if not key.start_with?("task_")
+               # Rename the core_ fields for Elasticity
+              k = key.sub(/^core_/, "")
+              @jobflow.send("#{k}=", value)
+            end
           }
+        end
+
+        # Now let's add our task group if required
+        tic = config[:emr][:jobflow][:task_instance_count]
+        unless tic.nil? or tic == 0
+          ig = Elasticity::InstanceGroup.new
+          ig.count = tic
+          ig.type  = config[:emr][:jobflow][:task_instance_type]
+          tib = config[:emr][:jobflow][:task_instance_bid]
+          if tib.nil?
+            ig.set_on_demand_instances
+          else
+            ig.set_spot_instances(tib)
+          end
+          jobflow.set_task_instance_group(ig)
         end
 
         # Now branch based on the ETL implementation (Hadoop or Hive)
