@@ -28,11 +28,12 @@ object Dependencies {
   object V {
     // Java
     val http          = "4.1.1"
+    val hadoop        = "0.20.2"
     val commonsLang   = "3.1"
     val yodaTime      = "2.1"
     val yodaConvert   = "1.2"
     // Scala
-    val scalding      = "0.8.4"
+    val scalding      = "0.8.5"
     val scalaz7       = "7.0.0"
     val scalaUtil     = "0.1.0"
     val refererParser = "0.1.0"
@@ -51,6 +52,7 @@ object Dependencies {
   object Libraries {
     // Java
     val httpClient    = "org.apache.httpcomponents"  %  "httpclient"          % V.http
+    val hadoopCore    = "org.apache.hadoop"          % "hadoop-core"          % V.hadoop       % "provided"
     val commonsLang   = "org.apache.commons"         %  "commons-lang3"       % V.commonsLang
     val yodaTime      = "joda-time"                  %  "joda-time"           % V.yodaTime
     val yodaConvert   = "org.joda"                   %  "joda-convert"        % V.yodaConvert

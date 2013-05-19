@@ -30,6 +30,7 @@ object SnowPlowHadoopEtlBuild extends Build {
       libraryDependencies ++= Seq(
         // Java
         Libraries.httpClient,
+        Libraries.hadoopCore,
         Libraries.yodaTime,
         Libraries.yodaConvert,
         Libraries.commonsLang,
