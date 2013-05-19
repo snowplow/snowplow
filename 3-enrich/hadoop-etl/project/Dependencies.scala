@@ -39,7 +39,7 @@ object Dependencies {
     val refererParser = "0.1.0"
     val maxmindGeoip  = "0.0.5"
     // Scala (test only)
-    val specs2        = "1.12.3" // -> "1.13" when we bump to Scala 2.10.0
+    val specs2        = "1.14"
     val scalazSpecs2  = "0.1.2"
     val scalaCheck    = "1.10.0"
     // val useragent  = "1.6" No Maven repo, so user-agent-utils is an unmanaged lib

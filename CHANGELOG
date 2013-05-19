@@ -5,6 +5,7 @@ Hadoop ETL: bumped Scalding to 0.8.5
 Hadoop ETL: bumped Scala version to 2.10.0
 Hadoop ETL: bumped scala-maxmind-geoip to 0.0.5 to work with Scala 2.10.0
 Hadoop ETL: bumped SBT from 0.12.1 to 0.12.3
+Hadoop ETL: bumped Specs2 to 1.14
 Hadoop ETL: added Twitter Maven Repo as a resolution repo, thanks @rgabo (#239)
 Hadoop ETL: replaced Bytes in CanonicalOutput with JBytes (#254)
 Hadoop ETL: simplified initialization of `ev_value` in CanonicalOutput (#255)
