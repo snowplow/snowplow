@@ -86,10 +86,12 @@ object ConversionUtils {
    * @return The String with tabs and newlines fixed.
    */
   def fixTabsNewlines(str: String): Option[String] = {
-    val s = Option(str)
-    val r = s.map(_.replaceAll("\\t", "    ")
-                   .replaceAll("\\p{Cntrl}", "")) // Any other control character
-    if (r == Some("")) None else r
+    val f = for {
+      s <- Option(str)
+      r = s.replaceAll("\\t", "    ")
+           .replaceAll("\\p{Cntrl}", "") // Any other control character
+    } yield r
+    if (f == Some("")) None else f
   }
 
   /**
