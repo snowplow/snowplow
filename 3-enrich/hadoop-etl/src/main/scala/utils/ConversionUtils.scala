@@ -88,7 +88,7 @@ object ConversionUtils {
   def fixTabsNewlines(str: String): Option[String] = {
     val s = Option(str)
     val r = s.map(_.replaceAll("\\t", "    ")
-             .replaceAll("\\p{Cntrl}", "")) // Any other control character
+                   .replaceAll("\\p{Cntrl}", "")) // Any other control character
     if (r == Some("")) None else r
   }
 
