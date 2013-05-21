@@ -13,7 +13,9 @@
   :type: redshift # Or 'postgres'
   :host: ADD HERE # For Redshift, the endpoint as shown in the Redshift console. For Postgres, the hostname of your database server
   :database: ADD HERE # Name of database 
-  :port: 5439 # The Redshift default port, or '5432' as the Postgres default port
+  :port: 5439 # For Redshift default port, or '5432' for Postgres default port
   :table: events # For Redshift, or 'atomic.events' for Postgres
   :username: ADD HERE 
   :password: ADD HERE 
+  :maxerror: 1 # For Redshift, stop loading on first error
+  :empty_as_null: true # For Redshift, treat empty char / varchar fields as NULL

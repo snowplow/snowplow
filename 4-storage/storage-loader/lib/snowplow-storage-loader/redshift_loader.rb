@@ -26,20 +26,21 @@ module SnowPlow
       # Loads the SnowPlow event files into Redshift.
       #
       # Parameters:
-      # +config+:: the hash of configuration options 
+      # +config+:: the hash of configuration options
       def load_events(config)
         puts "Loading SnowPlow events into Redshift..."
 
         # Assemble the relevant parameters for the bulk load query
         credentials = "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
-        queries = ["COPY #{config[:storage][:table]} FROM '#{config[:s3][:buckets][:in]}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}'",
+        empty_as_null = "EMPTYASNULL" if config[:storage][:empty_as_null]
+        queries = ["COPY #{config[:storage][:table]} FROM '#{config[:s3][:buckets][:in]}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{config[:storage][:maxerror]} #{empty_as_null}",
                    "ANALYZE #{config[:storage][:table]}",
                    "VACUUM SORT ONLY #{config[:storage][:table]}"]
 
         status = execute_queries(config, queries)
         unless status == []
           raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
-        end 
+        end
       end
       module_function :load_events
 
