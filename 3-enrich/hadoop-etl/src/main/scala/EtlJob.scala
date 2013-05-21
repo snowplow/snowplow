@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.hadoop
 
 // Java
 import java.io.File
-import java.net.URI
+import java.net.{URL, URI}
 
 // Hadoop
 import org.apache.hadoop.conf.Configuration
@@ -77,21 +77,40 @@ object EtlJob {
    * 2. On local (test) - find the copy of the file on our
    *    resource path (downloaded for us by SBT) and return that path
    *
-   * @param assetPath The path to the Maxmind GeoLiteCity.dat asset
+   * @param fileUri The URI to the Maxmind GeoLiteCity.dat file
    * @return the path to the Maxmind GeoLiteCity.dat to use
    */
-  def sourceIpGeoFile(assetPath: String): String = {
+   // TODO: change this to pass in a URI
+  def installIpGeoFile(fileUri: String): String = {
     jobConfOption match {
       case Some(conf) => {   // We're on HDFS
-        val hdfsPath = "hdfs:///cache/GeoLiteCity.dat"
-        downloadToHdfs(conf, assetPath, hdfsPath)
+        val hdfsPath = sourceHostedAsset(conf, new URI(fileUri))
         val symlink = "geoip"
         addToDistCache(conf, hdfsPath, symlink)
         "./" + symlink   
       }
-      case None => {         // Local mode
+      case None => {         // We're in local mode
         getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
       }
+    }
+  }
+
+  /**
+   * A helper to source a hosted asset. If the asset's path
+   * starts with http://, then it's a web-hosted asset: we
+   * need to download it and add it to HDFS.
+   * Otherwise, we expect the asset is available from S3 or
+   * HDFS - no action needed.
+   *
+   * @param conf Our Hadoop job Configuration
+   * @param assetUri The hosted asset's URI
+   * @return the URI to the local asset, readable from HDFS
+   */
+  def sourceHostedAsset(conf: Configuration, assetUri: URI): URI = {
+    assetUri.getScheme match {
+      case "http" | "https" =>
+        downloadAssetToHdfs(conf, assetUri).toUri
+      case "s3" | "s3n" | "hdfs" => assetUri
     }
   }
 
@@ -101,18 +120,26 @@ object EtlJob {
    * S3 file from a third-party account, even if public.
    *
    * @param conf Our Hadoop job Configuration
-   * @param assetPath The path to the asset to download
-   * @param localPath The temporary local path for the downloaded asset
+   * @param assetUri The URI of the asset to download
    * @return the path to the asset in HDFS
    */
-  def downloadToHdfs(conf: Configuration, assetPath: String, localPath: String, hdfsPath: String) {
-    FileUtils.copyURLToFile(assetPath, localPath)
-    fs = FileSystem.get(conf)
-    val src = new Path(localPath)
-    val dst = new Path(hdfsPath)
-    fs.copyFromLocalFile(true, true, src, dst) // Delete local file, overwrite target if exists
+  def downloadAssetToHdfs(conf: Configuration, assetUri: URI): Path = {
+
+    val filename = extractFilenameFromUri(assetUri)
+    val localFile = "/tmp/%s".format(filename)
+    FileUtils.copyURLToFile(assetUri.toURL, new File(localFile))
+    
+    val fs = FileSystem.get(conf)
+    val hdfsPath = new Path("hdfs:///cache/%s".format(filename))
+    fs.copyFromLocalFile(true, true, new Path(localFile), hdfsPath) // Delete local file, overwrite target if exists
+    hdfsPath
   }
 
+  // TODO: comment and move
+  def extractFilenameFromUri(uri: URI): String = {
+    val u = uri.toString
+    u.substring(u.lastIndexOf('/') + 1, u.length)
+  }
 
   /**
    * A helper to create the new IpGeo object.
@@ -139,8 +166,8 @@ object EtlJob {
    * @param source The file to add to the DistributedCache
    * @param symlink Name of our symbolic link in the cache
    */
-  def addToDistCache(conf: Configuration, source: String, symlink: String) {
-    val path = new Path(source).toUri.toString + "#" + symlink // Convoluted because Path("#") -> "%23"
+  def addToDistCache(conf: Configuration, source: URI, symlink: String) {
+    val path = source.toString + "#" + symlink // Convoluted because Path("#") -> "%23"
     DistributedCache.createSymlink(conf)
     DistributedCache.addCacheFile(new URI(path), conf)
   }
@@ -163,7 +190,7 @@ class EtlJob(args: Args) extends Job(args) {
     e => throw FatalEtlError(e),
     c => c)
 
-  val ipGeoFile = EtlJob.sourceIpGeoFile(etlConfig.maxmindFile)
+  val ipGeoFile = EtlJob.installIpGeoFile(etlConfig.maxmindFile)
   lazy val ipGeo = EtlJob.createIpGeo(ipGeoFile)
 
   // Aliases for our job
