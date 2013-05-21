@@ -83,8 +83,8 @@ module SnowPlow
           s3distcp_step = Elasticity::CustomJarStep.new(config[:s3distcp_asset])
 
           s3distcp_step.arguments = [
-            "--src"               , config[:maxmind_asset]
-            "--dest"              , config[:maxmind_hdfs]
+            "--src"               , config[:maxmind_asset],
+            "--dest"              , config[:maxmind_hdfs],
             "--s3Endpoint"        , config[:s3][:endpoint]
           ]
 
