@@ -2,7 +2,7 @@ Version 0.8.5 (2013-05-XX)
 --------------------------
 Hadoop ETL: bumped to 0.3.1
 Hadoop ETL: added Twitter Maven Repo as a resolution repo, thanks @rgabo (#239)
-Hadoop ETL: stripping nulls in addition to tabs and newlines (#259) - TODO
+Hadoop ETL: stripping control characters in addition to tabs and newlines (#259) - TODO
 EmrEtlRunner: bumped to 0.3.0 - TODO
 EmrEtlRunner: added step to copy GeoLiteCity.dat to EMR nodes via S3DistCp (#258) - TODO
 
