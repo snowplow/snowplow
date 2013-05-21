@@ -21,6 +21,9 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{Path, FileSystem}
 import org.apache.hadoop.filecache.DistributedCache
 
+// Apache
+import org.apache.commons.io.FileUtils
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -74,12 +77,14 @@ object EtlJob {
    * 2. On local (test) - find the copy of the file on our
    *    resource path (downloaded for us by SBT) and return that path
    *
-   * @param hdfsPath The path to the Maxmind GeoLiteCity.dat file on HDFS
+   * @param assetPath The path to the Maxmind GeoLiteCity.dat asset
    * @return the path to the Maxmind GeoLiteCity.dat to use
    */
-  def sourceIpGeoFile(hdfsPath: String): String = {
+  def sourceIpGeoFile(assetPath: String): String = {
     jobConfOption match {
       case Some(conf) => {   // We're on HDFS
+        val hdfsPath = "hdfs:///cache/GeoLiteCity.dat"
+        downloadToHdfs(conf, assetPath, hdfsPath)
         val symlink = "geoip"
         addToDistCache(conf, hdfsPath, symlink)
         "./" + symlink   
@@ -91,9 +96,28 @@ object EtlJob {
   }
 
   /**
+   * A helper to download an asset file and add it to HDFS.
+   * We need this because unfortunately EMR cannot read an
+   * S3 file from a third-party account, even if public.
+   *
+   * @param conf Our Hadoop job Configuration
+   * @param assetPath The path to the asset to download
+   * @param localPath The temporary local path for the downloaded asset
+   * @return the path to the asset in HDFS
+   */
+  def downloadToHdfs(conf: Configuration, assetPath: String, localPath: String, hdfsPath: String) {
+    FileUtils.copyURLToFile(assetPath, localPath)
+    fs = FileSystem.get(conf)
+    val src = new Path(localPath)
+    val dst = new Path(hdfsPath)
+    fs.copyFromLocalFile(true, true, src, dst) // Delete local file, overwrite target if exists
+  }
+
+
+  /**
    * A helper to create the new IpGeo object.
    *
-   * @param ipGeoFile The path to the Maxmind GeoLiteCity.dat file
+   * @param ipGeoFile The path to the MaxMind GeoLiteCity.dat file
    * @return an IpGeo object ready to perform IP->geo lookups
    */
   def createIpGeo(ipGeoFile: String): IpGeo =
