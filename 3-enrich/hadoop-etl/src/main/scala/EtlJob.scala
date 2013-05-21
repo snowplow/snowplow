@@ -69,7 +69,7 @@ object EtlJob {
    * How we source the MaxMind data file depends
    * on whether we are running locally or on HDFS:
    *
-   * 1. On HDFS - assume the file is in /cache/GeoLiteCity.dat,
+   * 1. On HDFS - assume the file is at `hdfsPath`,
    *    add it to Hadoop's distributed cache and return the symlink
    * 2. On local (test) - find the copy of the file on our
    *    resource path (downloaded for us by SBT) and return that path
