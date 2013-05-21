@@ -77,6 +77,20 @@ module SnowPlow
 
         else
 
+          puts "Running S3DistCp to load MaxMind file onto HDFS"
+
+          # Now create the Hadoop MR step for the file copy
+          s3distcp_step = Elasticity::CustomJarStep.new(config[:s3distcp_asset])
+
+          s3distcp_step.arguments = [
+            "--src"               , config[:maxmind_asset]
+            "--dest"              , config[:maxmind_hdfs]
+            "--s3Endpoint"        , config[:s3][:endpoint]
+          ]
+
+          # Add to our jobflow
+          @jobflow.add_step(s3distcp_step)
+
           # Now create the Hadoop MR step for the jobflow
           hadoop_step = Elasticity::CustomJarStep.new(config[:hadoop_asset])
 
@@ -96,7 +110,7 @@ module SnowPlow
             "--hdfs", # Always --hdfs mode, never --local
             "--input_folder"      , config[:s3][:buckets][:processing], # Argument names are "--arguments" too
             "--input_format"      , config[:etl][:collector_format],
-            "--maxmind_file"      , config[:maxmind_asset],
+            "--maxmind_file"      , config[:maxmind_hdfs],
             "--output_folder"     , partition.call(config[:s3][:buckets][:out]),
             "--bad_rows_folder"   , partition.call(config[:s3][:buckets][:out_bad_rows])
           ]
