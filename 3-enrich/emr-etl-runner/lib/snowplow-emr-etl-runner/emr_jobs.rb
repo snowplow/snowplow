@@ -77,8 +77,6 @@ module SnowPlow
 
         else
 
-          puts "Running S3DistCp to load MaxMind file onto HDFS"
-
           # Now create the Hadoop MR step for the file copy
           s3distcp_step = Elasticity::CustomJarStep.new(config[:s3distcp_asset])
 
