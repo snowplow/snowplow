@@ -101,7 +101,7 @@ module SnowPlow
           config[:emr][:hadoop_step].each { |key, value|
             hadoop_step.send("#{key}=", value)
           }
-        end          
+        end
 
         # We need to partition our output buckets by run ID
         # Note buckets already have trailing slashes
@@ -118,7 +118,7 @@ module SnowPlow
         ]
 
         # Conditionally add exceptions_folder
-        if config[:etl][:continue_on_unexpected_error] == '1'
+        if config[:etl][:continue_on_unexpected_error]
           hadoop_step.arguments.concat [
             "--exceptions_folder" , partition.call(config[:s3][:buckets][:out_errors])
           ]
@@ -156,7 +156,7 @@ module SnowPlow
 
         # Loop until we can quit...
         while true do
-          begin 
+          begin
             # Count up running tasks and failures
             statuses = @jobflow.status.steps.map(&:state).inject([0, 0]) do |sum, state|
               [ sum[0] + (@@running_states.include?(state) ? 1 : 0), sum[1] + (@@failed_states.include?(state) ? 1 : 0) ]
