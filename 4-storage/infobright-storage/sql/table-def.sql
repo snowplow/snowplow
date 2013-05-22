@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS events_007 (
 	-- Page URL components
 	`page_urlscheme` varchar(16),
 	`page_urlhost` varchar(255),
-	`page_urlport` smallint,
+	`page_urlport` mediumint,
 	`page_urlpath` varchar(1000),
 	`page_urlquery` varchar(3000),
 	`page_urlfragment` varchar(255),
