@@ -13,16 +13,10 @@
 package com.snowplowanalytics.snowplow.enrich.hadoop
 
 // Java
-import java.io.File
-import java.net.{URL, URI}
+import java.net.URI
 
 // Hadoop
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{Path, FileSystem}
-import org.apache.hadoop.filecache.DistributedCache
-
-// Apache
-import org.apache.commons.io.FileUtils
 
 // Scalaz
 import scalaz._
@@ -38,6 +32,7 @@ import com.snowplowanalytics.maxmind.geoip.IpGeo
 import inputs.CollectorLoader
 import enrichments.EnrichmentManager
 import outputs.CanonicalOutput
+import utils.FileUtils
 
 /**
  * Holds constructs to help build the ETL job's data
@@ -72,10 +67,12 @@ object EtlJob {
    * How we source the MaxMind data file depends
    * on whether we are running locally or on HDFS:
    *
-   * 1. On HDFS - assume the file is at `hdfsPath`,
-   *    add it to Hadoop's distributed cache and return the symlink
-   * 2. On local (test) - find the copy of the file on our
-   *    resource path (downloaded for us by SBT) and return that path
+   * 1. On HDFS - source the file at `hdfsPath`,
+   *    add it to Hadoop's distributed cache and
+   *    return the symlink
+   * 2. On local (test) - find the copy of the
+   *    file on our resource path (downloaded for
+   *    us by SBT) and return that path
    *
    * @param fileUri The URI to the Maxmind GeoLiteCity.dat file
    * @return the path to the Maxmind GeoLiteCity.dat to use
@@ -83,62 +80,15 @@ object EtlJob {
   def installIpGeoFile(fileUri: URI): String = {
     jobConfOption match {
       case Some(conf) => {   // We're on HDFS
-        val hdfsPath = sourceHostedAsset(conf, fileUri)
+        val hdfsPath = FileUtils.sourceFile(conf, fileUri).valueOr(e => throw FatalEtlError(e))
         val symlink = "geoip"
-        addToDistCache(conf, hdfsPath, symlink)
+        FileUtils.addToDistCache(conf, hdfsPath, symlink)
         "./" + symlink   
       }
       case None => {         // We're in local mode
         getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
       }
     }
-  }
-
-  /**
-   * A helper to source a hosted asset. If the asset's path
-   * starts with http://, then it's a web-hosted asset: we
-   * need to download it and add it to HDFS.
-   * Otherwise, we expect the asset is available from S3 or
-   * HDFS - no action needed.
-   *
-   * @param conf Our Hadoop job Configuration
-   * @param assetUri The hosted asset's URI
-   * @return the URI to the local asset, readable from HDFS
-   */
-  def sourceHostedAsset(conf: Configuration, assetUri: URI): URI = {
-    assetUri.getScheme match {
-      case "http" | "https" =>
-        downloadAssetToHdfs(conf, assetUri).toUri
-      case "s3" | "s3n" | "hdfs" => assetUri
-      case s => throw FatalEtlError("Scheme [%s] for hosted asset not supported".format(s))
-    }
-  }
-
-  /**
-   * A helper to download an asset file and add it to HDFS.
-   * We need this because unfortunately EMR cannot read an
-   * S3 file from a third-party account, even if public.
-   *
-   * @param conf Our Hadoop job Configuration
-   * @param assetUri The URI of the asset to download
-   * @return the path to the asset in HDFS
-   */
-  def downloadAssetToHdfs(conf: Configuration, assetUri: URI): Path = {
-
-    val filename = extractFilenameFromUri(assetUri)
-    val localFile = "/tmp/%s".format(filename)
-    FileUtils.copyURLToFile(assetUri.toURL, new File(localFile))
-    
-    val fs = FileSystem.get(conf)
-    val hdfsPath = new Path("hdfs:///cache/%s".format(filename))
-    fs.copyFromLocalFile(true, true, new Path(localFile), hdfsPath) // Delete local file, overwrite target if exists
-    hdfsPath
-  }
-
-  // TODO: comment and move
-  def extractFilenameFromUri(uri: URI): String = {
-    val u = uri.toString
-    u.substring(u.lastIndexOf('/') + 1, u.length)
   }
 
   /**
@@ -156,20 +106,6 @@ object EtlJob {
       case Hdfs(_, conf) => Option(conf)
       case _ => None
     }
-  }
-
-  /**
-   * Adds a file to the DistributedCache as a symbolic link.
-   * Only tested with S3.
-   *
-   * @param conf Our current job Configuration
-   * @param source The file to add to the DistributedCache
-   * @param symlink Name of our symbolic link in the cache
-   */
-  def addToDistCache(conf: Configuration, source: URI, symlink: String) {
-    val path = source.toString + "#" + symlink // Convoluted because Path("#") -> "%23"
-    DistributedCache.createSymlink(conf)
-    DistributedCache.addCacheFile(new URI(path), conf)
   }
 }
 
