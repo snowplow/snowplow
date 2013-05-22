@@ -80,11 +80,10 @@ object EtlJob {
    * @param fileUri The URI to the Maxmind GeoLiteCity.dat file
    * @return the path to the Maxmind GeoLiteCity.dat to use
    */
-   // TODO: change this to pass in a URI
-  def installIpGeoFile(fileUri: String): String = {
+  def installIpGeoFile(fileUri: URI): String = {
     jobConfOption match {
       case Some(conf) => {   // We're on HDFS
-        val hdfsPath = sourceHostedAsset(conf, new URI(fileUri))
+        val hdfsPath = sourceHostedAsset(conf, fileUri)
         val symlink = "geoip"
         addToDistCache(conf, hdfsPath, symlink)
         "./" + symlink   
