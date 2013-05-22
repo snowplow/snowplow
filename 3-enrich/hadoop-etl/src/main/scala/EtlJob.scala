@@ -85,9 +85,8 @@ object EtlJob {
         FileUtils.addToDistCache(conf, hdfsPath, symlink)
         "./" + symlink   
       }
-      case None => {         // We're in local mode
+      case None =>           // We're in local mode
         getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
-      }
     }
   }
 
