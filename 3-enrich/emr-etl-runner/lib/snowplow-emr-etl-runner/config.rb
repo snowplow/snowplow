@@ -74,7 +74,12 @@ module SnowPlow
         end
 
         # Construct path to our MaxMind file
-        config[:maxmind_asset] = "%sthird-party/maxmind/GeoLiteCity.dat" % config[:s3][:buckets][:assets]
+        if config[:s3][:buckets][:assets] == "s3://snowplow-hosted-assets/"
+          maxmind_host = "http://snowplow-hosted-assets.s3.amazonaws.com/" # Use the public S3 URL
+        else
+          maxmind_host = config[:s3][:buckets][:assets]
+        end
+        config[:maxmind_asset] = "%sthird-party/maxmind/GeoLiteCity.dat" % maxmind_host
 
         # Construct path to our ETL implementations
         asset_path = "%s3-enrich" % config[:s3][:buckets][:assets]
