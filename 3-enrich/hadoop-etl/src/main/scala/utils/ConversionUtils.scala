@@ -17,7 +17,7 @@ package utils
 import java.net.URLDecoder
 import java.net.URI
 import java.lang.{Integer => JInteger}
-import java.lang.{Float => JFloat}
+import java.math.{BigDecimal => JBigDecimal}
 
 // Scalaz
 import scalaz._
@@ -183,47 +183,36 @@ object ConversionUtils {
     }
 
   /**
-   * A String which is a valid Float for Redshift:
-   * a subset of valid Java/Scala Floats.
-   */
-  // TODO: not yet working
-  private val FloatRegex = """^([+-]?\d*\.?\d*)$""".r
-
-  /**
-   * Validate that a String represents a Float loadable
-   * intoRed.
-   * Why do we use a regular expression and not .toFloat?
-   * Because:
+   * Convert a String to a String containing a
+   * Redshift-compatible Double.
    *
-   * 1. scala> "%f".format("357.23".toFloat)
-   *    res4: String = 357.230011
+   * Necessary because Redshift does not support all
+   * Java Double syntaxes e.g. "3.4028235E38"
    *
-   * 2. Redshift does not support all Java Float syntaxes
-   *    e.g. "3.4028235E38"
+   * Note that this code does NOT check that the
+   * value will fit within a Redshift Double -
+   * meaning Redshift may silently round this number
+   * on load.
    *
    * @param str The String which we hope contains
-   *        a Float
-   * @param field The name of the field
-   *        we are validating. To use
-   *        in our error message
+   *        a Double
+   * @param field The name of the field we are
+   *        validating. To use in our error message
    * @return a Scalaz Validation, being either
    *         a Failure String or a Success String
    */
-  val validateIsFloat: (String, String) => Validation[String, String] = (field, str) => {
-
-    if (str == "null") { // LEGACY. Yech, to handle a bug in the JavaScript tracker
-      null.asInstanceOf[String].success
-    } else {
-      str match {
-        case FloatRegex(_) if withinFloatSize(str) => str.success
-        case _ => "Field [%s]: [%s] is not a valid Float".format(field, str).fail
+  val stringToDoublelike: (String, String) => Validation[String, String] = (field, str) =>
+    try {
+      if (str == "null") { // LEGACY. Yech, to handle a bug in the JavaScript tracker
+        null.asInstanceOf[String].success
+      } else {
+        val jbigdec = new JBigDecimal(str)
+        jbigdec.toPlainString.success
       }
+    } catch {
+      case nfe: NumberFormatException =>
+        "Field [%s]: cannot convert [%s] to Double-like String".format(field, str).fail
     }
-  }
-
-  // Not working yet.
-  def withinFloatSize(str: String): Boolean =
-    ("%f".format(str.toFloat) == "%f".format(str.toDouble))
 
   /**
    * Extract a Scala Byte from
