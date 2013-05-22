@@ -169,12 +169,12 @@ object EnrichmentManager {
           ("ev_ac"   , (decodeString, "ev_action")),     // LEGACY tracker var. TODO: Remove in late 2013
           ("ev_la"   , (decodeString, "ev_label")),      // LEGACY tracker var. TODO: Remove in late 2013
           ("ev_pr"   , (decodeString, "ev_property")),   // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_va"   , (CU.stringToJFloat, "ev_value")), // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_va"   , (CU.validateIsFloat, "ev_value")), // LEGACY tracker var. TODO: Remove in late 2013
           ("se_ca"   , (decodeString, "ev_category")),
           ("se_ac"   , (decodeString, "ev_action")),
           ("se_la"   , (decodeString, "ev_label")),
           ("se_pr"   , (decodeString, "ev_property")),
-          ("se_va"   , (CU.stringToJFloat, "ev_value")),
+          ("se_va"   , (CU.validateIsFloat, "ev_value")),
           // Ecommerce transactions
           ("tr_id"   , (decodeString, "tr_orderid")),
           ("tr_af"   , (decodeString, "tr_affiliation")),

@@ -183,29 +183,47 @@ object ConversionUtils {
     }
 
   /**
-   * Extract a Scala Float from
-   * a String, or error.
+   * A String which is a valid Float for Redshift:
+   * a subset of valid Java/Scala Floats.
+   */
+  // TODO: not yet working
+  private val FloatRegex = """^([+-]?\d*\.?\d*)$""".r
+
+  /**
+   * Validate that a String represents a Float loadable
+   * intoRed.
+   * Why do we use a regular expression and not .toFloat?
+   * Because:
    *
-   * @param str The String which we hope can
-   *        be turned into a Float
+   * 1. scala> "%f".format("357.23".toFloat)
+   *    res4: String = 357.230011
+   *
+   * 2. Redshift does not support all Java Float syntaxes
+   *    e.g. "3.4028235E38"
+   *
+   * @param str The String which we hope contains
+   *        a Float
    * @param field The name of the field
-   *        we are trying to process. To use
+   *        we are validating. To use
    *        in our error message
    * @return a Scalaz Validation, being either
-   *         a Failure String or a Success Int
+   *         a Failure String or a Success String
    */
-  val stringToJFloat: (String, String) => Validation[String, JFloat] = (field, str) =>
-    try {
-      if (str == "null") { // LEGACY. Yech, to handle a bug in the JavaScript tracker
-        null.asInstanceOf[JFloat].success
-      } else {
-        val jfloat: JFloat = str.toFloat
-        jfloat.success
+  val validateIsFloat: (String, String) => Validation[String, String] = (field, str) => {
+
+    if (str == "null") { // LEGACY. Yech, to handle a bug in the JavaScript tracker
+      null.asInstanceOf[String].success
+    } else {
+      str match {
+        case FloatRegex(_) if withinFloatSize(str) => str.success
+        case _ => "Field [%s]: [%s] is not a valid Float".format(field, str).fail
       }
-    } catch {
-      case nfe: NumberFormatException =>
-        "Field [%s]: cannot convert [%s] to Float".format(field, str).fail
     }
+  }
+
+  // Not working yet.
+  def withinFloatSize(str: String): Boolean =
+    ("%f".format(str.toFloat) == "%f".format(str.toDouble))
 
   /**
    * Extract a Scala Byte from
