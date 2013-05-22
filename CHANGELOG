@@ -3,11 +3,11 @@ Version 0.8.5 (2013-05-XX)
 Hadoop ETL: bumped to 0.3.1
 Hadoop ETL: added Twitter Maven Repo as a resolution repo, thanks @rgabo (#239)
 Hadoop ETL: stripping control characters in addition to tabs and newlines (#259)
-Hadoop ETL: now downloads GeoLiteCity.dat from http:// and adds to HDFS if necessary (part of #258)
+Hadoop ETL: now supports downloading GeoLiteCity.dat from public S3 URL if needed (part of #258)
 Hadoop ETL: fixed issue with large values for se_value (#263) - TODO
 Hadoop ETL: fixed resolution regex so no longer for arbitrarily large numbers (#264) - TODO
 EmrEtlRunner: bumped to 0.3.0 - TODO
-EmrEtlRunner: HTTP-fies MaxMind.dat file URI if hosted by Snowplow (part of #258) - TODO
+EmrEtlRunner: returns public S3 URL to GeoLiteCity.dat file if hosted by Snowplow (part of #258) - TODO
 
 Version 0.8.4 (2013-05-16)
 --------------------------
