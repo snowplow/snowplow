@@ -58,7 +58,7 @@ CREATE TABLE events (
 	-- Referrer URL components
 	refr_urlscheme varchar(16) encode text255,
 	refr_urlhost varchar(255) encode text255,
-	refr_urlport smallint,
+	refr_urlport int,
 	refr_urlpath varchar(1000) encode text32k,
 	refr_urlquery varchar(3000),
 	refr_urlfragment varchar(255),
