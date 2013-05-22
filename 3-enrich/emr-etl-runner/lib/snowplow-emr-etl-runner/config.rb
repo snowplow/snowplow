@@ -73,13 +73,13 @@ module SnowPlow
           raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
         end
 
-        # Construct path to our MaxMind file
+        # Construct path to our assets
         if config[:s3][:buckets][:assets] == "s3://snowplow-hosted-assets/"
-          maxmind_host = "http://snowplow-hosted-assets.s3.amazonaws.com/" # Use the public S3 URL
+          asset_host = "http://snowplow-hosted-assets.s3.amazonaws.com/" # Use the public S3 URL
         else
-          maxmind_host = config[:s3][:buckets][:assets]
+          asset_host = config[:s3][:buckets][:assets]
         end
-        config[:maxmind_asset] = "%sthird-party/maxmind/GeoLiteCity.dat" % maxmind_host
+        config[:maxmind_asset] = "%sthird-party/maxmind/GeoLiteCity.dat" % asset_host
 
         # Construct path to our ETL implementations
         asset_path = "%s3-enrich" % config[:s3][:buckets][:assets]
