@@ -110,6 +110,7 @@ object EtlJob {
       case "http" | "https" =>
         downloadAssetToHdfs(conf, assetUri).toUri
       case "s3" | "s3n" | "hdfs" => assetUri
+      case s => throw FatalEtlError("Scheme [%s] for hosted asset not supported".format(s))
     }
   }
 
