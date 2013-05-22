@@ -207,7 +207,7 @@ object ConversionUtils {
         null.asInstanceOf[String].success
       } else {
         val jbigdec = new JBigDecimal(str)
-        jbigdec.toPlainString.success
+        jbigdec.toPlainString.success // Strip scientific notation
       }
     } catch {
       case nfe: NumberFormatException =>
