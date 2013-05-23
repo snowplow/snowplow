@@ -41,6 +41,7 @@ class ExtractViewDimensionsTest extends Specification with DataTables {
     "invalid null"     !! null              ! err(null).fail               |
     "invalid hex"      !! "76xEE"           ! err("76xEE").fail            |
     "invalid negative" !! "1200x-17"        ! err("1200x-17").fail         |
+    "Arabic number"    !! "٤٥٦٧x680"        ! err("٤٥٦٧x680").fail         |
     "number > int #1"  !! "760x3389336768"  ! err2("760x3389336768").fail  | 
     "number > int #2"  !! "9989336768x1200" ! err2("9989336768x1200").fail |> {
 

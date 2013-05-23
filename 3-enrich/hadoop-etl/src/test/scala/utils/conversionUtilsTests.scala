@@ -80,6 +80,7 @@ class StringToDoublelikeTest extends Specification with DataTables with Validati
     "Integer #1"            !! "23"              ! "23"                  |
     "Integer #2"            !! "23."             ! "23"                  |
     "Negative integer"      !! "-2012103"        ! "-2012103"            |
+    "Arabic number"         !! "٤٥٦٧.٦٧"         ! "4567.67"             |
     "Floating point #1"     !! "1999.99"         ! "1999.99"             |
     "Floating point #2"     !! "1999.00"         ! "1999.00"             |
     "Floating point #3"     !! "78694353.00001"  ! "78694353.00001"      |
