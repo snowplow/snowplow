@@ -68,24 +68,24 @@ object ClientEnrichments {
       deviceIsMobile: Boolean)
 
   /**
-   * Extracts the screen resolution
-   * stored as per the Tracker
+   * Extracts view dimensions (e.g. screen resolution,
+   * browser/app viewport) stored as per the Tracker
    * Protocol:
    *
    * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-browserandos
    *
    * @param field The name of the field
-   *        holding the resolution
+   *        holding the screen dimensions
    * @param res The packed string
-   *        holding the screen resolution
+   *        holding the screen dimensions
    * @return the ResolutionTuple or an
    *         error message, boxed in a
    *         Scalaz Validation
    */
-  val extractResolution: (String, String) => Validation[String, ResolutionTuple] = (field, res) =>
+  val extractViewDimensions: (String, String) => Validation[String, ViewDimensionsTuple] = (field, res) =>
     res match {
       case ResRegex(width, height) => (width.toInt: JInteger, height.toInt: JInteger).success
-      case _ => "Field [%s]: [%s] is not a valid screen resolution".format(field, res).fail
+      case _ => "Field [%s]: [%s] does not contain valid view dimensions".format(field, res).fail
     }
 
   /**
