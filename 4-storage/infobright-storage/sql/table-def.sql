@@ -9,25 +9,25 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.0.7
+-- Version:     0.0.8
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
 -- Copyright:   Copyright (c) 2012-2013 SnowPlow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-CREATE TABLE IF NOT EXISTS events_007 (
+CREATE TABLE IF NOT EXISTS events_009 (
 	-- App
 	`app_id` varchar(255) comment 'lookup', -- 'lookup' is a varchar optimisation for Infobright
 	`platform` varchar(50) comment 'lookup',
 	-- Date/time
-	`collector_dt` date, -- Renamed in 0.0.7
-	`collector_tm` time, -- Renamed in 0.0.7
-	`dvce_dt` date, -- Added in 0.0.7
-	`dvce_tm` time, -- Added in 0.0.7
-	`dvce_epoch` bigint, -- Added in 0.0.7
+	`collector_dt` date,
+	`collector_tm` time,
+	`dvce_dt` date,
+	`dvce_tm` time, 
+	`dvce_epoch` bigint,
 	-- Event
-	`event` varchar(128) comment 'lookup', -- Size reduced in 0.0.7
+	`event` varchar(128) comment 'lookup',
 	`event_vendor` varchar(128) comment 'lookup',
 	`event_id` varchar(38),
 	`txn_id` int,
@@ -36,12 +36,12 @@ CREATE TABLE IF NOT EXISTS events_007 (
 	`v_collector` varchar(100) comment 'lookup',
 	`v_etl` varchar(100) comment 'lookup',
 	-- User and visit
-	`user_id` varchar(255), -- Size increased in 0.0.7
+	`user_id` varchar(255),
 	`user_ipaddress` varchar(19),
 	`user_fingerprint` varchar(50),
-	`domain_userid` varchar(16),  -- Added in 0.0.7
-	`domain_sessionidx` smallint, -- Renamed in 0.0.7
-	`network_userid` varchar(38), -- Added in 0.0.7
+	`domain_userid` varchar(16),
+	`domain_sessionidx` smallint,
+	`network_userid` varchar(38),
 	-- Page
 	`page_url` varchar(3000),
 	`page_title` varchar(2000),
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS events_007 (
 	-- Page URL components
 	`page_urlscheme` varchar(16),
 	`page_urlhost` varchar(255),
-	`page_urlport` mediumint,
+	`page_urlport` mediumint,             -- Size increased in 0.0.9
 	`page_urlpath` varchar(1000),
 	`page_urlquery` varchar(3000),
 	`page_urlfragment` varchar(255),
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS events_007 (
 	`ev_action` varchar(255),
 	`ev_label` varchar(255),
 	`ev_property` varchar(255),
-	`ev_value` float,
+	`ev_value` double,                    -- Size increased in 0.0.9
 	-- Ecommerce
 	`tr_orderid` varchar(255),
 	`tr_affiliation` varchar(255),
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS events_007 (
 	`pp_yoffset_min` mediumint,
 	`pp_yoffset_max` mediumint,
 	-- User Agent
-	`useragent` varchar(500),
+	`useragent` varchar(1000),
 	-- Browser
 	`br_name` varchar(50) comment 'lookup',
 	`br_family` varchar(50) comment 'lookup',

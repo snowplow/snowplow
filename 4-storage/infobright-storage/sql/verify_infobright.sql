@@ -9,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.0.8
+-- Version:     0.0.9
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
@@ -18,4 +18,4 @@
 
 USE snowplow ;
 
-DESC events_008 ;
+DESC events_009 ;

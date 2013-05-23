@@ -9,10 +9,10 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.2.0
+-- Version:     0.2.1
 -- URL:         -
 --
--- Authors:     Yali Sassoon, Alex Dean
+-- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep
 -- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
@@ -40,25 +40,25 @@ CREATE TABLE events (
 	domain_sessionidx smallint,
 	network_userid varchar(38),
 	-- Location
-	geo_country char(2),            -- New in 0.2.0
-	geo_region char(2),             -- New in 0.2.0
-	geo_city varchar(75),           -- New in 0.2.0
-	geo_zipcode varchar(15),        -- New in 0.2.0
-	geo_latitude double precision,  -- New in 0.2.0
-	geo_longitude double precision, -- New in 0.2.0
+	geo_country char(2),
+	geo_region char(2),
+	geo_city varchar(75),
+	geo_zipcode varchar(15),
+	geo_latitude double precision,
+	geo_longitude double precision,
 	-- Page
 	page_title varchar(2000),
 	-- Page URL components
 	page_urlscheme varchar(16) encode text255,
 	page_urlhost varchar(255) encode text255,
-	page_urlport int,
+	page_urlport int,                          -- Increased size in 0.2.1
 	page_urlpath varchar(1000) encode text32k,
 	page_urlquery varchar(3000),
 	page_urlfragment varchar(255),
 	-- Referrer URL components
 	refr_urlscheme varchar(16) encode text255,
 	refr_urlhost varchar(255) encode text255,
-	refr_urlport int,
+	refr_urlport int,                          -- Increased size in 0.2.1
 	refr_urlpath varchar(1000) encode text32k,
 	refr_urlquery varchar(3000),
 	refr_urlfragment varchar(255),
@@ -73,11 +73,11 @@ CREATE TABLE events (
 	mkt_content varchar(500) encode raw,
 	mkt_campaign varchar(255) encode text32k,
 	-- Custom structured event
-	se_category varchar(255) encode text255, -- Renamed from ev_
-	se_action varchar(255) encode text255,   -- Renamed from ev_
-	se_label varchar(255) encode text32k,    -- Renamed from ev_
-	se_property varchar(255) encode text32k, -- Renamed from ev_
-	se_value float,                          -- Renamed from ev_
+	se_category varchar(255) encode text255,
+	se_action varchar(255) encode text255,
+	se_label varchar(255) encode text32k,
+	se_property varchar(255) encode text32k,
+	se_value double precision,                 -- Increased size in 0.2.1
 	-- Ecommerce
 	tr_orderid varchar(255) encode raw,
 	tr_affiliation varchar(255) encode text255,
