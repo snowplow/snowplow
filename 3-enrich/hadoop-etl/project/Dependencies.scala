@@ -53,7 +53,7 @@ object Dependencies {
     // Java
     val httpClient    = "org.apache.httpcomponents"  %  "httpclient"          % V.http
     val commonsLang   = "org.apache.commons"         %  "commons-lang3"       % V.commonsLang
-    val commonsIo     = "commons-io"                 % "commons-io"           % V.commonsIo
+    val commonsIo     = "commons-io"                 %  "commons-io"          % V.commonsIo
     val yodaTime      = "joda-time"                  %  "joda-time"           % V.yodaTime
     val yodaConvert   = "org.joda"                   %  "joda-convert"        % V.yodaConvert
     

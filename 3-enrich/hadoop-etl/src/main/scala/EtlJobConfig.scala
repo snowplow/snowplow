@@ -51,7 +51,7 @@ object EtlJobConfig {
    *        URI to the hosted MaxMind file
    * @return a Validation-boxed URI
    */
-  def getMaxmindUri(maxmindFile: String): Validation[String, URI] = {
+  private def getMaxmindUri(maxmindFile: String): Validation[String, URI] = {
 
     ConversionUtils.stringToUri(maxmindFile).flatMap(_ match {
       case Some(u) => u.success
