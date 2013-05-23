@@ -19,6 +19,7 @@ import java.net.URI
 // Specs2
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
+import org.specs2.scalaz.ValidationMatchers
 
 /**
  * Tests the explodeUri function
@@ -46,4 +47,51 @@ class ExplodeUriTest extends Specification with DataTables {
         actual  must_== expected
       }
     }
+}
+
+class StringToDoublelikeTest extends Specification with DataTables with ValidationMatchers { def is =
+
+  "This is a specification to test the stringToDoublelike function"                                  ^
+                                                                                                    p^
+  "stringToDoublelike should fail if the supplied String is not parseable as a number"               ! e1^
+  "stringToDoublelike should convert numeric Strings to 'Double-like' Strings loadable by Redshift"  ! e2^
+  "stringToDoublelike will *not* fail numbers having more significant digits than Redshift supports" ! e3^
+                                                                                                     end
+
+  val FieldName = "val"
+  def err: (String) => String = input => "Field [%s]: cannot convert [%s] to Double-like String".format(FieldName, input)
+
+  def e1 =
+    "SPEC NAME"             || "INPUT STR"       | "EXPECTED"            |
+    "Empty string"          !! ""                ! err("")               |
+    "Number with commas"    !! "19,999.99"       ! err("19,999.99")      |
+    "Hexadecimal number"    !! "0x54"            ! err("0x54")           |
+    "Bad sci. notation"     !! "-7.51E^9"        ! err("-7.51E^9")       |
+    "German number"         !! "1.000,3932"      ! err("1.000,3932")     |
+    "NaN"                   !! "NaN"             ! err("NaN")            |
+    "English string"        !! "hi & bye"        ! err("hi & bye")       |
+    "Vietnamese name"       !! "Trịnh Công Sơn"  ! err("Trịnh Công Sơn") |> {
+      (_, str, expected) =>
+        ConversionUtils.stringToDoublelike(FieldName, str) must beFailing(expected)
+    }
+
+  def e2 =
+    "SPEC NAME"             || "INPUT STR"       | "EXPECTED"            |
+    "Integer #1"            !! "23"              ! "23"                  |
+    "Integer #2"            !! "23."             ! "23"                  |
+    "Negative integer"      !! "-2012103"        ! "-2012103"            |
+    "Floating point #1"     !! "1999.99"         ! "1999.99"             |
+    "Floating point #2"     !! "1999.00"         ! "1999.00"             |
+    "Floating point #3"     !! "78694353.00001"  ! "78694353.00001"      |
+    "Floating point #4"     !! "-78694353.00001" ! "-78694353.00001"     |
+    "Sci. notation #1"      !! "4.321768E3"      ! "4321.768"            |
+    "Sci. notation #2"      !! "6.72E9"          ! "6720000000"          |
+    "Sci. notation #3"      !! "7.51E-9"         ! "0.00000000751"       |> {
+      (_, str, expected) =>
+        ConversionUtils.stringToDoublelike(FieldName, str) must beSuccessful(expected)
+    }
+
+  val BigNumber = "78694235323.00000001" // Redshift only supports 15 significant digits for a Double
+  def e3 = ConversionUtils.stringToDoublelike(FieldName, BigNumber) must beSuccessful(BigNumber)
+
 }
