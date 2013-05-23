@@ -165,16 +165,16 @@ object EnrichmentManager {
           ("ds"      , (CE.extractResolution, ("doc_width", "doc_height"))),
           ("vp"      , (CE.extractResolution, ("br_viewwidth", "br_viewheight"))),
           // Custom structured events
-          ("ev_ca"   , (decodeString, "ev_category")),   // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_ac"   , (decodeString, "ev_action")),     // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_la"   , (decodeString, "ev_label")),      // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_pr"   , (decodeString, "ev_property")),   // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_va"   , (CU.stringToDoublelike, "ev_value")), // LEGACY tracker var. TODO: Remove in late 2013
-          ("se_ca"   , (decodeString, "ev_category")),
-          ("se_ac"   , (decodeString, "ev_action")),
-          ("se_la"   , (decodeString, "ev_label")),
-          ("se_pr"   , (decodeString, "ev_property")),
-          ("se_va"   , (CU.stringToDoublelike, "ev_value")),
+          ("ev_ca"   , (decodeString, "se_category")),   // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_ac"   , (decodeString, "se_action")),     // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_la"   , (decodeString, "se_label")),      // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_pr"   , (decodeString, "se_property")),   // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_va"   , (CU.stringToDoublelike, "se_value")), // LEGACY tracker var. TODO: Remove in late 2013
+          ("se_ca"   , (decodeString, "se_category")),
+          ("se_ac"   , (decodeString, "se_action")),
+          ("se_la"   , (decodeString, "se_label")),
+          ("se_pr"   , (decodeString, "se_property")),
+          ("se_va"   , (CU.stringToDoublelike, "se_value")),
           // Ecommerce transactions
           ("tr_id"   , (decodeString, "tr_orderid")),
           ("tr_af"   , (decodeString, "tr_affiliation")),
