@@ -84,7 +84,12 @@ object ClientEnrichments {
    */
   val extractViewDimensions: (String, String) => Validation[String, ViewDimensionsTuple] = (field, res) =>
     res match {
-      case ResRegex(width, height) => (width.toInt: JInteger, height.toInt: JInteger).success
+      case ResRegex(width, height) =>
+        try {
+          (width.toInt: JInteger, height.toInt: JInteger).success
+        } catch {
+          case _ => "Field [%s]: view dimensions [%s] exceed Integer's max range".format(field, res).fail
+        }
       case _ => "Field [%s]: [%s] does not contain valid view dimensions".format(field, res).fail
     }
 
