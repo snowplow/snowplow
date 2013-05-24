@@ -1,14 +1,14 @@
 Version 0.8.5 (2013-05-24)
 --------------------------
 Hadoop ETL: bumped to 0.3.1
+Hadoop ETL: now supports downloading GeoLiteCity.dat from public S3 URL if needed, thanks @petervanwesep (part of #258)
 Hadoop ETL: added Twitter Maven Repo as a resolution repo, thanks @rgabo (#239)
 Hadoop ETL: stripping control characters in addition to tabs and newlines (#259)
-Hadoop ETL: now supports downloading GeoLiteCity.dat from public S3 URL if needed (part of #258)
 Hadoop ETL: fixed issue with large values for se_value (#263)
 Hadoop ETL: renamed ev_ fields in CanonicalOutput to se_
 Hadoop ETL: extractResolution renamed and fails gracefully if view dimensions exceed Integer max size (#264)
 EmrEtlRunner: bumped to 0.2.1
-EmrEtlRunner: returns public S3 URL to GeoLiteCity.dat file if hosted by Snowplow (part of #258)
+EmrEtlRunner: returns public S3 URL to GeoLiteCity.dat file if hosted by Snowplow, thanks @petervanwesep (part of #258)
 Redshift: table-def script bumped to 0.2.1
 Redshift: migration script added for 0.2.0 to 0.2.1
 Redshift: bumped se_value from a float to a double
