@@ -1,3 +1,12 @@
+Version 0.8.6 (2013-05-XX)
+--------------------------
+JS tracker: bumped to 0.12.0
+JS tracker: fixed document reference to use documentAlias (#247) - TODO
+JS tracker: fixed bug with setCustomUrl (#267) - TODO
+JS tracker: fixed Firefox failure when "Always ask" set for cookies (#163) - TODO
+JS tracker: disabled page ping functionality in IE 8 (#260) - TODO
+JS tracker: changed ev_ to se_ for structured events (#197) - TODO 
+
 Version 0.8.5 (2013-05-24)
 --------------------------
 Hadoop ETL: bumped to 0.3.1
