@@ -637,7 +637,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * @return string collectorUrl The tracker URL with protocol
 	 */
 	function asCollectorUrl(rawUrl) {
-		return ('https:' == document.location.protocol ? 'https' : 'http') + '://' + rawUrl + '/i';               
+		return ('https:' == SnowPlow.documentAlias.location.protocol ? 'https' : 'http') + '://' + rawUrl + '/i';               
 	}
 
 	/**
