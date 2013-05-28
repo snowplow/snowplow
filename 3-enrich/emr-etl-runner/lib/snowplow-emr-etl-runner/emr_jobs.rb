@@ -70,7 +70,7 @@ module SnowPlow
           else
             ig.set_spot_instances(tib)
           end
-          jobflow.set_task_instance_group(ig)
+          @jobflow.set_task_instance_group(ig)
         end
 
         # Now branch based on the ETL implementation (Hadoop or Hive)
