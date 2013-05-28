@@ -48,9 +48,10 @@ module SnowPlow
         if config[:emr][:jobflow].respond_to?(:each)
           config[:emr][:jobflow].each { |key, value|
              # Don't include the task fields
-            if not key.start_with?("task_")
+             ks = key.to_s
+            if not ks.start_with?("task_")
                # Rename the core_ fields for Elasticity
-              k = key.sub(/^core_/, "")
+              k = ks.sub(/^core_/, "")
               @jobflow.send("#{k}=", value)
             end
           }
