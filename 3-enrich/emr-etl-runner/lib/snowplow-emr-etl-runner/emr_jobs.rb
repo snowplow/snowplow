@@ -97,12 +97,15 @@ module SnowPlow
 
         else
 
+          # We are going to consolidate files into this HDFS folder
+          hdfs_processing = "hdfs:///local"
+
           # Now create the Hadoop MR step for the file crushing
           filecrush_step = Elasticity::CustomJarStep.new(config[:s3distcp_asset])
 
           filecrush_step.arguments = [
             "--src"               , config[:s3][:buckets][:processing],
-            "--dest"              , "hdfs:///local",
+            "--dest"              , hdfs_processing,
             "--groupBy"           , ".*\.([0-9]+-[0-9]+-[0-9]+-[0-9]+)\..*",
             "--targetSize"        , 128,
             "--outputCodec"       , "lzo",
@@ -129,7 +132,7 @@ module SnowPlow
           hadoop_step.arguments = [
             "com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob", # Job to run
             "--hdfs", # Always --hdfs mode, never --local
-            "--input_folder"      , config[:s3][:buckets][:processing], # Argument names are "--arguments" too
+            "--input_folder"      , hdfs_processing, # Argument names are "--arguments" too
             "--input_format"      , config[:etl][:collector_format],
             "--maxmind_file"      , config[:maxmind_asset],
             "--output_folder"     , partition.call(config[:s3][:buckets][:out]),

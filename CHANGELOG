@@ -10,7 +10,7 @@ Hadoop ETL: replaced Bytes in CanonicalOutput with JBytes (#254)
 EmrEtlRunner: bumped to 0.3.0
 EmrEtlRunner: updated config.yml.sample to support spot task instances
 EmrEtlRunner: let EmrEtlRunner use spot task instances (#193)
-EmrEtlRunner: consolidate small files prior to running ETL job (#207) - TODO
+EmrEtlRunner: consolidate small files prior to running ETL job (#207)
 
 Version 0.8.5 (2013-05-24)
 --------------------------
