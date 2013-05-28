@@ -12,8 +12,8 @@ A **Collector** receives Snowplow events from one or more [Trackers]
 | Collector                       | Description                                           | Status           |
 |---------------------------------|-------------------------------------------------------|------------------|
 | [cloudfront-collector] [c1]     | An Amazon CloudFront-based collector. No moving parts | Production-ready |                         |
-| [clojure-collector] [c2]     | A Clojure collector compatible with Amazon Elastic Beanstalk | Beta |
-| [contrib-nodejs-collector] [c3] | SnowCannon is a node.js-based collector               | Beta             |
+| [clojure-collector] [c2]     | A Clojure collector compatible with Amazon Elastic Beanstalk | Production-ready |
+| [contrib-nodejs-collector] [c3] | SnowCannon is a node.js-based collector               | Alpha             |
 
 ## Find out more
 
