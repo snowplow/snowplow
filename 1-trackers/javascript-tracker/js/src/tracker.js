@@ -687,7 +687,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('se_la', label);
 		sb.add('se_pr', property);
 		sb.add('se_va', value);
-		request = getRequest(sb, 'event');
+		request = getRequest(sb, 'structEvent');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -722,7 +722,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		} else {
 		  sb.add('ue_pr', pr_string);
 		};
-		request = getRequest(sb, 'event');
+		request = getRequest(sb, 'unstructEvent');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -734,8 +734,10 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * @param string advertiserId (optional) Identifier for the advertiser which the campaign belongs to
 	 * @param string userId (optional) Ad server identifier for the viewer of the banner
 	 */
+	// TODO: rename to logAdImpression and deprecate logImpression
 	// TODO: should add impressionId as well.
 	// TODO: should add in zoneId (aka placementId, slotId?) as well
+	// TODO: change ad_ to ai_?
 	function logImpression(bannerId, campaignId, advertiserId, userId) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'ad'); // 'ad' for AD impression
@@ -743,7 +745,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('ad_ca', campaignId)
 		sb.add('ad_ad', advertiserId);
 		sb.add('ad_uid', userId);
-		request = getRequest(sb, 'adimp');
+		request = getRequest(sb, 'impression');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -773,7 +775,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('tr_ci', city);
 		sb.add('tr_st', state);
 		sb.add('tr_co', country);
-		var request = getRequest(sb, 'ecommerceTransaction');
+		var request = getRequest(sb, 'transaction');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -797,7 +799,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.add('ti_ca', category);
 		sb.add('ti_pr', price);
 		sb.add('ti_qu', quantity);
-		var request = getRequest(sb, 'ecommerceTransactionItem');
+		var request = getRequest(sb, 'transactionItem');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -815,7 +817,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'pv'); // 'pv' for Page View
 		sb.add('page', pageTitle);
-		var request = getRequest(sb, 'log');
+		var request = getRequest(sb, 'pageView');
 		sendRequest(request, configTrackerPause);
 
 		// Send ping (to log that user has stayed on page)
@@ -876,7 +878,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		sb.addRaw('pp_miy', minYOffset); // Global
 		sb.addRaw('pp_may', maxYOffset); // Global
 		resetMaxScrolls();
-		var request = getRequest(sb, 'ping');
+		var request = getRequest(sb, 'pagePing');
 		sendRequest(request, configTrackerPause);
 	}
 
@@ -886,6 +888,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * @param string url The target URL
 	 * @param string linkType The type of link - link or download (see getLinkType() for details)
 	 */
+	// TODO: rename to LinkClick
 	// TODO: this functionality is not yet fully implemented.
 	// See https://github.com/snowplow/snowplow/issues/75
 	function logLink(url, linkType) {
