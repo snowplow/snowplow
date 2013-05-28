@@ -33,7 +33,7 @@
   :storage_format: redshift # Or 'hive' or 'mysql-infobright'. Doesn't work for Hadoop ETL yet (always outputs redshift format)
 # Can bump the below as SnowPlow releases new versions
 :snowplow:
-  :hadoop_etl_version: 0.3.1 # Version of the Hadoop ETL
+  :hadoop_etl_version: 0.3.2 # Version of the Hadoop ETL
   :serde_version: 0.5.5 # Version of the Hive deserializer
   :hive_hiveql_version: 0.5.7
   :mysql_infobright_hiveql_version: 0.0.8
