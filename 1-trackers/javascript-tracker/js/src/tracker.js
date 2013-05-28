@@ -603,7 +603,7 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		}
 
 		// Add the page URL last as it may take us over the IE limit (and we don't always need it)
-		sb.add('url', purify(SnowPlow.windowAlias.location));
+		sb.add('url', purify(currentUrl));
 		var request = sb.build();
 
 		// Update cookies
