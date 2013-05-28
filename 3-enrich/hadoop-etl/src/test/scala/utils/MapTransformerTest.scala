@@ -76,7 +76,7 @@ class MapTransformerTest extends Specification with ValidationMatchers {
                                        ("f_pdf"  , (ConversionUtils.stringToJByte, "br_features_pdf")),
                                        ("vid"    , (ConversionUtils.stringToJInteger, "visit_id")),
                                        ("tv"     , (MiscEnrichments.identity, "tracker_v")),
-                                       ("res"    , (ClientEnrichments.extractResolution, ("width", "height"))))
+                                       ("res"    , (ClientEnrichments.extractViewDimensions, ("width", "height"))))
 
   val expected = new TargetBean().tap { t =>
     t.platform = "web"

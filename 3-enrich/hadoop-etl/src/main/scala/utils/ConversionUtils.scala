@@ -17,7 +17,7 @@ package utils
 import java.net.URLDecoder
 import java.net.URI
 import java.lang.{Integer => JInteger}
-import java.lang.{Float => JFloat}
+import java.math.{BigDecimal => JBigDecimal}
 import java.lang.{Byte => JByte}
 
 // Scalaz
@@ -87,10 +87,12 @@ object ConversionUtils {
    * @return The String with tabs and newlines fixed.
    */
   def fixTabsNewlines(str: String): Option[String] = {
-    val s = Option(str)
-    val r = s.map(_.replaceAll("(\\r|\\n)", "")
-             .replaceAll("\\t", "    "))
-    if (r == Some("")) None else r
+    val f = for {
+      s <- Option(str)
+      r = s.replaceAll("\\t", "    ")
+           .replaceAll("\\p{Cntrl}", "") // Any other control character
+    } yield r
+    if (f == Some("")) None else f
   }
 
   /**
@@ -182,28 +184,35 @@ object ConversionUtils {
     }
 
   /**
-   * Extract a Scala Float from
-   * a String, or error.
+   * Convert a String to a String containing a
+   * Redshift-compatible Double.
    *
-   * @param str The String which we hope can
-   *        be turned into a Float
-   * @param field The name of the field
-   *        we are trying to process. To use
-   *        in our error message
+   * Necessary because Redshift does not support all
+   * Java Double syntaxes e.g. "3.4028235E38"
+   *
+   * Note that this code does NOT check that the
+   * value will fit within a Redshift Double -
+   * meaning Redshift may silently round this number
+   * on load.
+   *
+   * @param str The String which we hope contains
+   *        a Double
+   * @param field The name of the field we are
+   *        validating. To use in our error message
    * @return a Scalaz Validation, being either
-   *         a Failure String or a Success Int
+   *         a Failure String or a Success String
    */
-  val stringToJFloat: (String, String) => Validation[String, JFloat] = (field, str) =>
+  val stringToDoublelike: (String, String) => Validation[String, String] = (field, str) =>
     try {
       if (str == "null") { // LEGACY. Yech, to handle a bug in the JavaScript tracker
-        null.asInstanceOf[JFloat].success
+        null.asInstanceOf[String].success
       } else {
-        val jfloat: JFloat = str.toFloat
-        jfloat.success
+        val jbigdec = new JBigDecimal(str)
+        jbigdec.toPlainString.success // Strip scientific notation
       }
     } catch {
       case nfe: NumberFormatException =>
-        "Field [%s]: cannot convert [%s] to Float".format(field, str).fail
+        "Field [%s]: cannot convert [%s] to Double-like String".format(field, str).fail
     }
 
   /**

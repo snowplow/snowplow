@@ -12,6 +12,25 @@ EmrEtlRunner: updated config.yml.sample to support spot task instances
 EmrEtlRunner: let EmrEtlRunner use spot task instances (#193)
 EmrEtlRunner: consolidate small files prior to running ETL job (#207) - TODO
 
+Version 0.8.5 (2013-05-24)
+--------------------------
+Hadoop ETL: bumped to 0.3.1
+Hadoop ETL: now supports downloading GeoLiteCity.dat from public S3 URL if needed, thanks @petervanwesep (part of #258)
+Hadoop ETL: added Twitter Maven Repo as a resolution repo, thanks @rgabo (#239)
+Hadoop ETL: stripping control characters in addition to tabs and newlines (#259)
+Hadoop ETL: fixed issue with large values for se_value (#263)
+Hadoop ETL: renamed ev_ fields in CanonicalOutput to se_
+Hadoop ETL: extractResolution renamed and fails gracefully if view dimensions exceed Integer max size (#264)
+EmrEtlRunner: bumped to 0.2.1
+EmrEtlRunner: returns public S3 URL to GeoLiteCity.dat file if hosted by Snowplow, thanks @petervanwesep (part of #258)
+Redshift: table-def script bumped to 0.2.1
+Redshift: migration script added for 0.2.0 to 0.2.1
+Redshift: bumped se_value from a float to a double
+Redshift: increased size of `_urlport` fields, thanks @petervanwesep (#266)
+Infobright: bumped setup_ and verify_infobright.sql to 0.0.9
+Infobright: added migration script 0.0.8->0.0.9
+Infobright: increased size of `_urlport` fields, thanks @petervanwesep (#266)
+
 Version 0.8.4 (2013-05-16)
 --------------------------
 Hadoop ETL: bumped to 0.3.0

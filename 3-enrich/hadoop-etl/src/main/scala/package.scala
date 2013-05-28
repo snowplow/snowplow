@@ -42,7 +42,7 @@ package object hadoop {
    * Capture a client's
    * screen resolution
    */
-  type ResolutionTuple = (JInteger, JInteger) // Height, width.
+  type ViewDimensionsTuple = (JInteger, JInteger) // Height, width.
 
   /**
    * Type alias for HTTP headers

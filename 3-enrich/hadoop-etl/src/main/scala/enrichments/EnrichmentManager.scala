@@ -155,26 +155,26 @@ object EnrichmentManager {
           ("f_gears" , (CU.stringToJByte, "br_features_gears")),
           ("f_ag"    , (CU.stringToJByte, "br_features_silverlight")),
           ("cookie"  , (CU.stringToJByte, "br_cookies")),
-          ("res"     , (CE.extractResolution, ("dvce_screenwidth", "dvce_screenheight"))), // Note tuple target
+          ("res"     , (CE.extractViewDimensions, ("dvce_screenwidth", "dvce_screenheight"))), // Note tuple target
           ("cd"      , (ME.identity, "br_colordepth")),
           ("tz"      , (decodeString, "os_timezone")),
           ("refr"    , (decodeString, "page_referrer")),
           ("url"     , (decodeString, "page_url")), // Note we may override this below
           ("page"    , (decodeString, "page_title")),
           ("cs"      , (ME.identity, "doc_charset")),
-          ("ds"      , (CE.extractResolution, ("doc_width", "doc_height"))),
-          ("vp"      , (CE.extractResolution, ("br_viewwidth", "br_viewheight"))),
+          ("ds"      , (CE.extractViewDimensions, ("doc_width", "doc_height"))),
+          ("vp"      , (CE.extractViewDimensions, ("br_viewwidth", "br_viewheight"))),
           // Custom structured events
-          ("ev_ca"   , (decodeString, "ev_category")),   // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_ac"   , (decodeString, "ev_action")),     // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_la"   , (decodeString, "ev_label")),      // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_pr"   , (decodeString, "ev_property")),   // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_va"   , (CU.stringToJFloat, "ev_value")), // LEGACY tracker var. TODO: Remove in late 2013
-          ("se_ca"   , (decodeString, "ev_category")),
-          ("se_ac"   , (decodeString, "ev_action")),
-          ("se_la"   , (decodeString, "ev_label")),
-          ("se_pr"   , (decodeString, "ev_property")),
-          ("se_va"   , (CU.stringToJFloat, "ev_value")),
+          ("ev_ca"   , (decodeString, "se_category")),   // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_ac"   , (decodeString, "se_action")),     // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_la"   , (decodeString, "se_label")),      // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_pr"   , (decodeString, "se_property")),   // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_va"   , (CU.stringToDoublelike, "se_value")), // LEGACY tracker var. TODO: Remove in late 2013
+          ("se_ca"   , (decodeString, "se_category")),
+          ("se_ac"   , (decodeString, "se_action")),
+          ("se_la"   , (decodeString, "se_label")),
+          ("se_pr"   , (decodeString, "se_property")),
+          ("se_va"   , (CU.stringToDoublelike, "se_value")),
           // Ecommerce transactions
           ("tr_id"   , (decodeString, "tr_orderid")),
           ("tr_af"   , (decodeString, "tr_affiliation")),

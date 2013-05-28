@@ -12,6 +12,9 @@
  */
 package com.snowplowanalytics.snowplow.enrich.hadoop
 
+// Java
+import java.net.URI
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -21,6 +24,7 @@ import com.twitter.scalding.Args
 
 // This project
 import utils.ScalazArgs
+import utils.ConversionUtils
 
 /**
  * The configuration for the SnowPlowEtlJob.
@@ -28,7 +32,7 @@ import utils.ScalazArgs
 case class EtlJobConfig(
     inFolder: String,
     inFormat: String,
-    maxmindFile: String,
+    maxmindFile: URI,
     outFolder: String,
     badFolder: String,
     exceptionsFolder: Option[String])
@@ -38,6 +42,22 @@ case class EtlJobConfig(
  * the SnowPlowEtlJob
  */
 object EtlJobConfig {
+
+  /**
+   * Convert the Maxmind file from a
+   * Validation[String] to a Validation[URI].
+   *
+   * @param maxmindFile A String holding the
+   *        URI to the hosted MaxMind file
+   * @return a Validation-boxed URI
+   */
+  private def getMaxmindUri(maxmindFile: String): Validation[String, URI] = {
+
+    ConversionUtils.stringToUri(maxmindFile).flatMap(_ match {
+      case Some(u) => u.success
+      case None => "URI to MaxMind file must be provided".fail
+      })
+  }
 
   /**
    * Loads the Config from the Scalding
@@ -53,7 +73,7 @@ object EtlJobConfig {
     import ScalazArgs._
     val inFolder  = args.requiredz("input_folder")
     val inFormat = args.requiredz("input_format") // TODO: check it's a valid format
-    val maxmindFile = args.requiredz("maxmind_file")
+    val maxmindFile = args.requiredz("maxmind_file").flatMap(f => getMaxmindUri(f))
     val outFolder = args.requiredz("output_folder")
     val badFolder = args.requiredz("bad_rows_folder")
     val exceptionsFolder = args.optionalz("exceptions_folder")

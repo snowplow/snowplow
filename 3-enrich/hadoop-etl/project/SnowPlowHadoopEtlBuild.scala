@@ -34,6 +34,7 @@ object SnowPlowHadoopEtlBuild extends Build {
         Libraries.yodaTime,
         Libraries.yodaConvert,
         Libraries.commonsLang,
+        Libraries.commonsIo,
         // Scala
         Libraries.scaldingCore,
         Libraries.scaldingArgs,

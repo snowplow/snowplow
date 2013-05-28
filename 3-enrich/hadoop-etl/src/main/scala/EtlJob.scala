@@ -13,13 +13,10 @@
 package com.snowplowanalytics.snowplow.enrich.hadoop
 
 // Java
-import java.io.File
 import java.net.URI
 
 // Hadoop
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{Path, FileSystem}
-import org.apache.hadoop.filecache.DistributedCache
 
 // Scalaz
 import scalaz._
@@ -35,6 +32,7 @@ import com.snowplowanalytics.maxmind.geoip.IpGeo
 import inputs.CollectorLoader
 import enrichments.EnrichmentManager
 import outputs.CanonicalOutput
+import utils.FileUtils
 
 /**
  * Holds constructs to help build the ETL job's data
@@ -69,31 +67,33 @@ object EtlJob {
    * How we source the MaxMind data file depends
    * on whether we are running locally or on HDFS:
    *
-   * 1. On HDFS - assume the file is in /cache/GeoLiteCity.dat,
-   *    add it to Hadoop's distributed cache and return the symlink
-   * 2. On local (test) - find the copy of the file on our
-   *    resource path (downloaded for us by SBT) and return that path
+   * 1. On HDFS - source the file at `hdfsPath`,
+   *    add it to Hadoop's distributed cache and
+   *    return the symlink
+   * 2. On local (test) - find the copy of the
+   *    file on our resource path (downloaded for
+   *    us by SBT) and return that path
    *
-   * @param hdfsPath The path to the Maxmind GeoLiteCity.dat file on HDFS
+   * @param fileUri The URI to the Maxmind GeoLiteCity.dat file
    * @return the path to the Maxmind GeoLiteCity.dat to use
    */
-  def sourceIpGeoFile(hdfsPath: String): String = {
+  def installIpGeoFile(fileUri: URI): String = {
     jobConfOption match {
       case Some(conf) => {   // We're on HDFS
+        val hdfsPath = FileUtils.sourceFile(conf, fileUri).valueOr(e => throw FatalEtlError(e))
         val symlink = "geoip"
-        addToDistCache(conf, hdfsPath, symlink)
+        FileUtils.addToDistCache(conf, hdfsPath, symlink)
         "./" + symlink   
       }
-      case None => {         // Local mode
+      case None =>           // We're in local mode
         getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
-      }
     }
   }
 
   /**
    * A helper to create the new IpGeo object.
    *
-   * @param ipGeoFile The path to the Maxmind GeoLiteCity.dat file
+   * @param ipGeoFile The path to the MaxMind GeoLiteCity.dat file
    * @return an IpGeo object ready to perform IP->geo lookups
    */
   def createIpGeo(ipGeoFile: String): IpGeo =
@@ -105,20 +105,6 @@ object EtlJob {
       case Hdfs(_, conf) => Option(conf)
       case _ => None
     }
-  }
-
-  /**
-   * Adds a file to the DistributedCache as a symbolic link.
-   * Only tested with S3.
-   *
-   * @param conf Our current job Configuration
-   * @param source The file to add to the DistributedCache
-   * @param symlink Name of our symbolic link in the cache
-   */
-  def addToDistCache(conf: Configuration, source: String, symlink: String) {
-    val path = new Path(source).toUri.toString + "#" + symlink // Convoluted because Path("#") -> "%23"
-    DistributedCache.createSymlink(conf)
-    DistributedCache.addCacheFile(new URI(path), conf)
   }
 }
 
@@ -139,7 +125,7 @@ class EtlJob(args: Args) extends Job(args) {
     e => throw FatalEtlError(e),
     c => c)
 
-  val ipGeoFile = EtlJob.sourceIpGeoFile(etlConfig.maxmindFile)
+  val ipGeoFile = EtlJob.installIpGeoFile(etlConfig.maxmindFile)
   lazy val ipGeo = EtlJob.createIpGeo(ipGeoFile)
 
   // Aliases for our job
