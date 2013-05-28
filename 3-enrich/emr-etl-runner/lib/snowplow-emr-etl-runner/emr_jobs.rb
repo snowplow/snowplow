@@ -97,6 +97,21 @@ module SnowPlow
 
         else
 
+          # Now create the Hadoop MR step for the file crushing
+          filecrush_step = Elasticity::CustomJarStep.new(config[:s3distcp_asset])
+
+          filecrush_step.arguments = [
+            "--src"               , config[:s3][:buckets][:processing],
+            "--dest"              , "hdfs:///local",
+            "--groupBy"           , ".*\.([0-9]+-[0-9]+-[0-9]+-[0-9]+)\..*",
+            "--targetSize"        , 128,
+            "--outputCodec"       , "lzo",
+            "--s3Endpoint"        , config[:s3][:endpoint],
+          ]
+
+          # Add to our jobflow
+          @jobflow.add_step(filecrush_step)
+
           # Now create the Hadoop MR step for the jobflow
           hadoop_step = Elasticity::CustomJarStep.new(config[:hadoop_asset])
 
