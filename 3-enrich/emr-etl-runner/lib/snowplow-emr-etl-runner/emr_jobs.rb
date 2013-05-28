@@ -99,7 +99,7 @@ module SnowPlow
         else
 
           # We are going to consolidate files into this HDFS folder
-          hdfs_processing = "s3n://snowplow-emr-processing-us/crush" # "hdfs:///local/snowplow-logs"
+          hdfs_processing = "hdfs:///local/snowplow-logs"
 
           # Now create the Hadoop MR step for the file crushing
           filecrush_step = Elasticity::CustomJarStep.new(config[:s3distcp_asset])
@@ -107,7 +107,7 @@ module SnowPlow
           filecrush_step.arguments = [
             "--src"               , config[:s3][:buckets][:processing],
             "--dest"              , hdfs_processing,
-            "--groupBy"           , ".*ESB0SPC3X6GOF.([0-9]+-[0-9]+-[0-9]+-[0-9]+).*",  # ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
+            "--groupBy"           , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
             "--targetSize"        , "128",
             "--outputCodec"       , "lzo",
             "--s3Endpoint"        , config[:s3][:endpoint],
