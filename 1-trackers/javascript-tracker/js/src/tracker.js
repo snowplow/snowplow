@@ -677,16 +677,16 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	 * @param string action A string that is uniquely paired with each category, and commonly used to define the type of user interaction for the web object
 	 * @param string label (optional) An optional string to provide additional dimensions to the event data
 	 * @param string property (optional) Describes the object or the action performed on it, e.g. quantity of item added to basket
-	 * @param int|float|string value (optional) An integer that you can use to provide numerical data about the user event
+	 * @param numeric value (optional) An integer or floating point number to provide numerical data about the user event
 	 */
 	function logStructEvent(category, action, label, property, value) {
 		var sb = requestStringBuilder();
 		sb.add('e', 'se'); // 'se' for Structured Event
-		sb.add('ev_ca', category);
-		sb.add('ev_ac', action)
-		sb.add('ev_la', label);
-		sb.add('ev_pr', property);
-		sb.add('ev_va', value);
+		sb.add('se_ca', category);
+		sb.add('se_ac', action)
+		sb.add('se_la', label);
+		sb.add('se_pr', property);
+		sb.add('se_va', value);
 		request = getRequest(sb, 'event');
 		sendRequest(request, configTrackerPause);
 	}
