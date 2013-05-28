@@ -107,7 +107,7 @@ module SnowPlow
           filecrush_step.arguments = [
             "--src"               , config[:s3][:buckets][:processing],
             "--dest"              , hdfs_processing,
-            "--groupBy"           , ".*\.([0-9]+-[0-9]+-[0-9]+-[0-9]+)\..*",
+            "--groupBy"           , ".*\\.([0-9]+-[0-9]+-[0-9]+-[0-9]+)\\..*",
             "--targetSize"        , "128",
             "--outputCodec"       , "lzo",
             "--s3Endpoint"        , config[:s3][:endpoint],
