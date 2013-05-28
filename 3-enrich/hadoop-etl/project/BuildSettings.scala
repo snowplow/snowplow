@@ -83,6 +83,7 @@ object BuildSettings {
         "jsp-api-2.1-6.1.14.jar",
         "jsp-2.1-6.1.14.jar",
         "jasper-compiler-5.5.12.jar",
+        "minlog-1.2.jar", // Otherwise causes conflicts with Kyro (which bundles it)
         "janino-2.5.16.jar", // Janino includes a broken signature, and is not needed anyway
         "commons-beanutils-core-1.8.0.jar", // Clash with each other and with commons-collections
         "commons-beanutils-1.7.0.jar",      // "
