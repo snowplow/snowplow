@@ -31,29 +31,39 @@ import com.snowplowanalytics.util.Tap._
 
 class ExtractPageUriTest extends Specification with DataTables with ValidationMatchers { def is =
 
-  "This is a specification to test the extractPageUri function"                                    ^
-                                                                                                  p^
-  "extractPageUri should return failure when it has no page URI provided"                          ! e1^
-  "extractPageUri should choose the most complete page URI when it has one or two to choose from"  ! e2^
-                                                                                                   end
+  "This is a specification to test the extractPageUri function"                                ^
+                                                                                              p^
+  "extractPageUri should return failure when it has no page URI provided"                      ! e1^
+  "extractPageUri should choose the URI from the tracker if it has one or two to choose from"  ! e2^
+  "extractPageUri will alas assume a browser-truncated page URL is a custom URL not an error"  ! e3^
+                                                                                               end
 
   // No URI
   def e1 =
     PageEnrichments.extractPageUri(None, None) must beFailing("No page URI provided")
 
   // Valid URI combinations
-  val fullUri = "http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=2&n=48"
-  val truncatedUri = fullUri.take(fullUri.length - 5)
-  val fullURI = new URI(fullUri)
+  val originalUri = "http://www.mysite.com/shop/session/_internal/checkout"
+  val customUri = "http://www.mysite.com/shop/checkout" // E.g. set by setCustomUrl in JS Tracker
+  val originalURI = new URI(originalUri)
+  val customURI = new URI(customUri)
 
   def e2 =
-    "SPEC NAME"                                     || "URI TAKEN FROM COLLECTOR'S REFERER" | "URI SENT BY TRACKER" | "EXPECTED URI" |
-    "both URIs match (98% of the time)"             !! fullUri.some                         ! fullUri.some          ! fullURI.some   |
-    "tracker didn't send URI (e.g. No-JS Tracker)"  !! fullUri.some                         ! None                  ! fullURI.some   |
-    "collector didn't record the referer (rare)"    !! None                                 ! fullUri.some          ! fullURI.some   |
-    "tracker truncated URI (IE might do this)"      !! fullUri.some                         ! truncatedUri.some     ! fullURI.some   |
-    "collector truncated URI (should never happen)" !! truncatedUri.some                    ! fullUri.some          ! fullURI.some   |> {
+    "SPEC NAME"                                       || "URI TAKEN FROM COLLECTOR'S REFERER" | "URI SENT BY TRACKER" | "EXPECTED URI"   |
+    "both URIs match (98% of the time)"               !! originalUri.some                     ! originalUri.some      ! originalURI.some |
+    "tracker didn't send URI (e.g. No-JS Tracker)"    !! originalUri.some                     ! None                  ! originalURI.some |
+    "collector didn't record the referer (rare)"      !! None                                 ! originalUri.some      ! originalURI.some |
+    "collector and tracker URIs differ - use tracker" !! originalUri.some                     ! customUri.some        ! customURI.some   |> {
+      
       (_, fromReferer, fromTracker, expected) =>
         PageEnrichments.extractPageUri(fromReferer, fromTracker) must beSuccessful(expected)
     }
+
+  // Truncate
+  val truncatedUri = originalUri.take(originalUri.length - 5)
+  val truncatedURI = new URI(truncatedUri)
+
+  // See https://github.com/snowplow/snowplow/issues/268 for background behind this test
+  def e3 =
+    PageEnrichments.extractPageUri(originalUri.some, truncatedUri.some) must beSuccessful(truncatedURI.some)
 }
