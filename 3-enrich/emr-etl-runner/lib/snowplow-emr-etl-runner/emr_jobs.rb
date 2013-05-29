@@ -47,13 +47,10 @@ module SnowPlow
         # Add extra configuration
         if config[:emr][:jobflow].respond_to?(:each)
           config[:emr][:jobflow].each { |key, value|
-            ks = key.to_s
+            k = key.to_s
             # Don't include the task fields
-            if not ks.start_with?("task_")
-               # Rename the core_ fields for Elasticity
-              k = ks.sub(/^core_/, "slave_")
-              k2 = k.sub(/^slave_instance_count/, "instance_count")
-              @jobflow.send("#{k2}=", value)
+            if not k.start_with?("task_")
+              @jobflow.send("#{k}=", value)
             end
           }
         end
@@ -99,23 +96,28 @@ module SnowPlow
 
         else
 
-          # We are going to consolidate files into this HDFS folder
-          hdfs_processing = "hdfs:///local/snowplow-logs"
+          # We only consolidate files on HDFS folder for CloudFront currently
+          unless config[:etl][:collector_format] == "cloudfront"
+            hadoop_input = config[:s3][:buckets][:processing]
+          
+          else
+            hadoop_input = "hdfs:///local/snowplow-logs"
 
-          # Now create the Hadoop MR step for the file crushing
-          filecrush_step = Elasticity::CustomJarStep.new(config[:s3distcp_asset])
+            # Create the Hadoop MR step for the file crushing
+            filecrush_step = Elasticity::CustomJarStep.new(config[:s3distcp_asset])
 
-          filecrush_step.arguments = [
-            "--src"               , config[:s3][:buckets][:processing],
-            "--dest"              , hdfs_processing,
-            "--groupBy"           , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
-            "--targetSize"        , "128",
-            "--outputCodec"       , "lzo",
-            "--s3Endpoint"        , config[:s3][:endpoint],
-          ]
+            filecrush_step.arguments = [
+              "--src"               , config[:s3][:buckets][:processing],
+              "--dest"              , hadoop_input,
+              "--groupBy"           , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
+              "--targetSize"        , "128",
+              "--outputCodec"       , "lzo",
+              "--s3Endpoint"        , config[:s3][:endpoint],
+            ]
 
-          # Add to our jobflow
-          @jobflow.add_step(filecrush_step)
+            # Add to our jobflow
+            @jobflow.add_step(filecrush_step)
+          end
 
           # Now create the Hadoop MR step for the jobflow
           hadoop_step = Elasticity::CustomJarStep.new(config[:hadoop_asset])
@@ -134,7 +136,7 @@ module SnowPlow
           hadoop_step.arguments = [
             "com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob", # Job to run
             "--hdfs", # Always --hdfs mode, never --local
-            "--input_folder"      , hdfs_processing, # Argument names are "--arguments" too
+            "--input_folder"      , hadoop_input, # Argument names are "--arguments" too
             "--input_format"      , config[:etl][:collector_format],
             "--maxmind_file"      , config[:maxmind_asset],
             "--output_folder"     , partition.call(config[:s3][:buckets][:out]),
