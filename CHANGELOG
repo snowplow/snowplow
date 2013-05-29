@@ -7,7 +7,7 @@ Hadoop ETL: bumped scala-maxmind-geoip to 0.0.5 to work with Scala 2.10.0
 Hadoop ETL: bumped SBT from 0.12.1 to 0.12.3
 Hadoop ETL: bumped Specs2 to 1.14
 Hadoop ETL: replaced Bytes in CanonicalOutput with JBytes (#254)
-EmrEtlRunner: bumped to 0.3.0
+EmrEtlRunner: bumped to 0.3.2
 EmrEtlRunner: updated config.yml.sample to support spot task instances
 EmrEtlRunner: let EmrEtlRunner use spot task instances (#193)
 EmrEtlRunner: consolidate small files prior to running ETL job (#207)
