@@ -73,7 +73,7 @@ module SnowPlow
         # We have to rename some config fields for Elasticity - and make a manual adjustment
         config[:emr][:jobflow][:slave_instance_type] = config[:emr][:jobflow][:core_instance_type]
         config[:emr][:jobflow][:instance_count] = config[:emr][:jobflow][:core_instance_count] + 1 # +1 for the master instance
-        config[:emr][:jobflow].delete_if {|k, _| k.start_with?("core_") }
+        config[:emr][:jobflow].delete_if {|k, _| k.to_s.start_with?("core_") }
 
         # Validate the collector format
         unless @@collector_formats.include?(config[:etl][:collector_format]) 
