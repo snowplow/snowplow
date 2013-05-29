@@ -1,6 +1,6 @@
-Version 0.8.6 (2013-05-XX)
+Version 0.8.6 (2013-05-30)
 --------------------------
-Hadoop ETL: bumped to 0.3.1
+Hadoop ETL: bumped to 0.3.2
 Hadoop ETL: bumped Scalding to 0.8.5
 Hadoop ETL: bumped Scala version to 2.10.0
 Hadoop ETL: bumped scala-maxmind-geoip to 0.0.5 to work with Scala 2.10.0
