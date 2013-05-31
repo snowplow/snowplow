@@ -3,11 +3,11 @@
 <img src="https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-logo-large.png"
  alt="Snowplow logo" title="Snowplow" align="right" />
 
-Snowplow is the world's most powerful marketing and product analytics platform. It does three things:
+Snowplow is an enterprise-strength marketing and product analytics platform. It does three things:
 
-1. Identifies users, and tracks the way they engage with a website or app
-2. Stores the associated behavioural data in a scalable “clickstream” data warehouse
-3. Makes it possible to leverage a big data toolset (e.g. Hive, Pig, Mahout) to analyse that event data
+1. Identifies your users, and tracks the way they engage with your website or application
+2. Stores the associated behavioural data in a scalable event data warehouse you control
+3. Lets you leverage a big data toolset (e.g. Hive, Pig, Mahout) to analyse that behavioural data
 
 **To find out more, please check out the [Snowplow website] [website] and the [Snowplow wiki] [wiki].**
 
