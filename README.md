@@ -6,7 +6,7 @@
 Snowplow is an enterprise-strength marketing and product analytics platform. It does three things:
 
 1. Identifies your users, and tracks the way they engage with your website or application
-2. Stores the associated behavioural data in a scalable event data warehouse you control
+2. Stores your users' behavioural data in a scalable "event data warehouse" you control
 3. Lets you leverage a big data toolset (e.g. Hive, Pig, Mahout) to analyse that behavioural data
 
 **To find out more, please check out the [Snowplow website] [website] and the [Snowplow wiki] [wiki].**
