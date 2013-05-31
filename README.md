@@ -37,7 +37,7 @@ To briefly explain these five sub-systems:
 
 We're committed to a loosely-coupled architecture for Snowplow and would love to get your contributions within each of the five sub-systems.
 
-If you would like help implementing a new tracker, adding an additional enrichment or loading Snowplow events into an alternative database, check out our **[Guide to Contributing] [contributing]**!
+If you would like help implementing a new tracker, adding an additional enrichment or loading Snowplow events into an alternative database, check out our **[Contributing] [contributing]** page on the wiki!
 
 ## Questions or need help?
 
