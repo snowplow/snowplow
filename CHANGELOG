@@ -1,3 +1,18 @@
+Version 0.8.6 (2013-06-03)
+--------------------------
+Hadoop ETL: bumped to 0.3.2
+Hadoop ETL: bumped Scalding to 0.8.5
+Hadoop ETL: bumped Scala version to 2.10.0
+Hadoop ETL: bumped scala-maxmind-geoip to 0.0.5 to work with Scala 2.10.0
+Hadoop ETL: bumped SBT from 0.12.1 to 0.12.3
+Hadoop ETL: bumped Specs2 to 1.14
+Hadoop ETL: replaced Bytes in CanonicalOutput with JBytes (#254)
+Hadoop ETL: disabled "corruption" detection in ETL overriding custom URLs with longer collector referer URLs (#268)
+EmrEtlRunner: bumped to 0.3.0
+EmrEtlRunner: updated config.yml.sample to support spot task instances
+EmrEtlRunner: let EmrEtlRunner use spot task instances (#193)
+EmrEtlRunner: consolidate small files prior to running ETL job (#207)
+
 Version 0.8.5 (2013-05-24)
 --------------------------
 Hadoop ETL: bumped to 0.3.1

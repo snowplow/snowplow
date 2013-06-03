@@ -51,12 +51,12 @@ class ExplodeUriTest extends Specification with DataTables {
 
 class StringToDoublelikeTest extends Specification with DataTables with ValidationMatchers { def is =
 
-  "This is a specification to test the stringToDoublelike function"                                  ^
-                                                                                                    p^
-  "stringToDoublelike should fail if the supplied String is not parseable as a number"               ! e1^
-  "stringToDoublelike should convert numeric Strings to 'Double-like' Strings loadable by Redshift"  ! e2^
-  "stringToDoublelike will *not* fail numbers having more significant digits than Redshift supports" ! e3^
-                                                                                                     end
+  "This is a specification to test the stringToDoublelike function"                                       ^
+                                                                                                         p^
+  "stringToDoublelike should fail if the supplied String is not parseable as a number"                    ! e1^
+  "stringToDoublelike should convert numeric Strings to 'Double-like' Strings loadable by Redshift"       ! e2^
+  "stringToDoublelike will alas *not* fail numbers having more significant digits than Redshift supports" ! e3^
+                                                                                                          end
 
   val FieldName = "val"
   def err: (String) => String = input => "Field [%s]: cannot convert [%s] to Double-like String".format(FieldName, input)
