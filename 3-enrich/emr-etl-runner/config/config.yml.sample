@@ -18,7 +18,7 @@
   :placement: ADD HERE
   :ec2_key_name: ADD HERE
   # Adjust your Hadoop cluster below
-:jobflow:
+  :jobflow:
     :master_instance_type: m1.small
     :core_instance_count: 2
     :core_instance_type: m1.small
