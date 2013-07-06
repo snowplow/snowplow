@@ -7,7 +7,7 @@ JS tracker: changed ev_ to se_ for structured events (#197)
 JS tracker: fixed Firefox failure when "Always ask" set for cookies (#163) - TODO
 JS tracker: disabled page ping functionality in IE 8 (#260) - TODO
 EmrEtlRunner: fixed bug in config.yml.sample (#291)
-Arduino tracker: added git submodule link (#292) - TODO
+Arduino tracker: added git submodule link (#292)
 
 Version 0.8.6 (2013-06-03)
 --------------------------
