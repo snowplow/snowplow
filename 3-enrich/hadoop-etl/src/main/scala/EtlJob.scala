@@ -81,9 +81,7 @@ object EtlJob {
     jobConfOption match {
       case Some(conf) => {   // We're on HDFS
         val hdfsPath = FileUtils.sourceFile(conf, fileUri).valueOr(e => throw FatalEtlError(e))
-        val symlink = "geoip"
-        FileUtils.addToDistCache(conf, hdfsPath, symlink)
-        "./" + symlink   
+        FileUtils.addToDistCache(conf, hdfsPath, "geoip")
       }
       case None =>           // We're in local mode
         getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath

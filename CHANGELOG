@@ -1,4 +1,4 @@
-Version 0.8.6 (2013-07-XX)
+Version 0.8.7 (2013-07-XX)
 --------------------------
 JS tracker: bumped to 0.12.0
 JS tracker: fixed document reference to use documentAlias (#247)
@@ -8,6 +8,22 @@ JS tracker: fixed Firefox failure when "Always ask" set for cookies (#163) - TOD
 JS tracker: disabled page ping functionality in IE 8 (#260) - TODO
 EmrEtlRunner: fixed bug in config.yml.sample (#291)
 Arduino tracker: added git submodule link (#292) - TODO
+
+Version 0.8.6 (2013-06-03)
+--------------------------
+Hadoop ETL: bumped to 0.3.2
+Hadoop ETL: bumped Scalding to 0.8.5
+Hadoop ETL: bumped Scala version to 2.10.0
+Hadoop ETL: bumped scala-maxmind-geoip to 0.0.5 to work with Scala 2.10.0
+Hadoop ETL: bumped SBT from 0.12.1 to 0.12.3
+Hadoop ETL: bumped Specs2 to 1.14
+Hadoop ETL: replaced Bytes in CanonicalOutput with JBytes (#254)
+Hadoop ETL: disabled "corruption" detection in ETL overriding custom URLs with longer collector referer URLs (#268)
+EmrEtlRunner: bumped to 0.3.0
+EmrEtlRunner: updated config.yml.sample to support spot task instances
+EmrEtlRunner: let EmrEtlRunner use spot task instances (#193)
+EmrEtlRunner: consolidate small files prior to running ETL job (#207)
+>>>>>>> master
 
 Version 0.8.5 (2013-05-24)
 --------------------------

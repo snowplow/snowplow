@@ -16,6 +16,7 @@ package outputs
 // Java
 import java.lang.{Integer => JInteger}
 import java.lang.{Float => JFloat}
+import java.lang.{Byte => JByte}
 
 // Scala
 import scala.reflect.BeanProperty
@@ -149,16 +150,16 @@ class CanonicalOutput {
   // Browser (from querystring)
   @BeanProperty var br_lang: String = _
   // Individual feature fields for non-Hive targets (e.g. Infobright)
-  @BeanProperty var br_features_pdf: Byte = _
-  @BeanProperty var br_features_flash: Byte = _
-  @BeanProperty var br_features_java: Byte = _
-  @BeanProperty var br_features_director: Byte = _
-  @BeanProperty var br_features_quicktime: Byte = _
-  @BeanProperty var br_features_realplayer: Byte = _
-  @BeanProperty var br_features_windowsmedia: Byte = _
-  @BeanProperty var br_features_gears: Byte = _
-  @BeanProperty var br_features_silverlight: Byte = _
-  @BeanProperty var br_cookies: Byte = _
+  @BeanProperty var br_features_pdf: JByte = _
+  @BeanProperty var br_features_flash: JByte = _
+  @BeanProperty var br_features_java: JByte = _
+  @BeanProperty var br_features_director: JByte = _
+  @BeanProperty var br_features_quicktime: JByte = _
+  @BeanProperty var br_features_realplayer: JByte = _
+  @BeanProperty var br_features_windowsmedia: JByte = _
+  @BeanProperty var br_features_gears: JByte = _
+  @BeanProperty var br_features_silverlight: JByte = _
+  @BeanProperty var br_cookies: JByte = _
   @BeanProperty var br_colordepth: String = _
   @BeanProperty var br_viewwidth: JInteger = _
   @BeanProperty var br_viewheight: JInteger = _
@@ -171,7 +172,7 @@ class CanonicalOutput {
 
   // Device/Hardware (from user-agent)
   @BeanProperty var dvce_type: String = _
-  @BeanProperty var dvce_ismobile: Byte = _
+  @BeanProperty var dvce_ismobile: JByte = _
 
   // Device (from querystring)
   @BeanProperty var dvce_screenwidth: JInteger = _

@@ -63,6 +63,18 @@ module SnowPlow
           # TODO
         end
 
+        # TODO: can we get this functionality for free with Fog?
+        if config[:s3][:region] == "us-east-1"
+          config[:s3][:endpoint] = "s3.amazonaws.com"
+        else
+          config[:s3][:endpoint] = "s3-%s.amazonaws.com" % config[:s3][:region]
+        end
+
+        # We have to rename some config fields for Elasticity - and make a manual adjustment
+        config[:emr][:jobflow][:slave_instance_type] = config[:emr][:jobflow][:core_instance_type]
+        config[:emr][:jobflow][:instance_count] = config[:emr][:jobflow][:core_instance_count] + 1 # +1 for the master instance
+        config[:emr][:jobflow].delete_if {|k, _| k.to_s.start_with?("core_") }
+
         # Validate the collector format
         unless @@collector_formats.include?(config[:etl][:collector_format]) 
           raise ConfigError, "collector_format '%s' not supported" % config[:etl][:collector_format]
@@ -80,6 +92,9 @@ module SnowPlow
           asset_host = config[:s3][:buckets][:assets]
         end
         config[:maxmind_asset] = "%sthird-party/maxmind/GeoLiteCity.dat" % asset_host
+
+        # Construct our path to S3DistCp
+        config[:s3distcp_asset] = "/home/hadoop/lib/emr-s3distcp-1.0.jar"
 
         # Construct path to our ETL implementations
         asset_path = "%s3-enrich" % config[:s3][:buckets][:assets]

@@ -24,9 +24,6 @@ import Scalaz._
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
 
-// Scalding
-import com.twitter.scalding._
-
 // Utils
 import com.snowplowanalytics.util.Tap._
 import org.apache.commons.lang3.builder.ToStringBuilder
@@ -76,7 +73,7 @@ class MapTransformerTest extends Specification with ValidationMatchers {
                       "missing" -> "Not in the transformation map")
 
   val transformMap: TransformMap = Map(("p"      , (MiscEnrichments.extractPlatform, "platform")),
-                                       ("f_pdf"  , (ConversionUtils.stringToByte, "br_features_pdf")),
+                                       ("f_pdf"  , (ConversionUtils.stringToJByte, "br_features_pdf")),
                                        ("vid"    , (ConversionUtils.stringToJInteger, "visit_id")),
                                        ("tv"     , (MiscEnrichments.identity, "tracker_v")),
                                        ("res"    , (ClientEnrichments.extractViewDimensions, ("width", "height"))))

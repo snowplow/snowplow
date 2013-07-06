@@ -35,9 +35,8 @@ object PageEnrichments {
    * Extracts the page URI from
    * either the collector's referer
    * or the appropriate tracker
-   * variable, depending on some
-   * business rules: see also
-   * `choosePageUri` below.
+   * variable. Tracker variable
+   * takes precedence as per #268
    *
    * @param fromReferer The
    *        page URI reported
@@ -58,43 +57,8 @@ object PageEnrichments {
     (fromReferer, fromTracker) match {
       case (Some(r), None)    => CU.stringToUri(r)
       case (None, Some(t))    => CU.stringToUri(t)
-      case (Some(r), Some(t)) => choosePageUri(r, t) flatMap (pu => CU.stringToUri(pu))
+      case (Some(r), Some(t)) => CU.stringToUri(t) // Tracker URL takes precedence
       case (None, None)       => "No page URI provided".fail
     }
   }
-
-  /**
-   * Let's us choose between
-   * the page URI from the
-   * collector's referer and
-   * the page URI as set in
-   * the tracker, when both
-   * are present.
-   *
-   * TODO: add a warning if
-   * referer page URI is
-   * shorter than tracker
-   * page URI.
-   *
-   * @param fromReferer The
-   *        page URI reported
-   *        as the referer to
-   *        the collector
-   * @param fromTracker The
-   *        page URI reported
-   *        by the tracker
-   * @return either the chosen
-   *         page URI as a
-   *         String, or an
-   *         error, all wrapped
-   *         in a Validation
-   */
-  private def choosePageUri(fromReferer: String, fromTracker: String): Validation[String, String] =
-    try {
-      if (fromReferer == fromTracker) fromTracker.success // 98% of the time
-      else if (fromReferer.length > fromTracker.length) fromReferer.success // Page URL got truncated in the GET, use referer URI
-      else fromTracker.success // Corruption in the collector log? TODO: add a warning when we support warnings
-    } catch {
-      case e => "Unexpected error choosing page URI from [%s] and [%s]: [%s]".format(fromReferer, fromTracker, e.getMessage).fail
-    }
 }

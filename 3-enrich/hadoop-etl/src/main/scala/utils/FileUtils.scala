@@ -82,11 +82,13 @@ object FileUtils {
    * @param conf Our current job Configuration
    * @param source The file to add to the DistributedCache
    * @param symlink Name of our symbolic link in the cache
+   * @return the path to the symbolic link in the cache
    */
-  def addToDistCache(conf: Configuration, source: URI, symlink: String) {
+  def addToDistCache(conf: Configuration, source: URI, symlink: String): String = {
     val path = source.toString + "#" + symlink
     DistributedCache.createSymlink(conf)
     DistributedCache.addCacheFile(new URI(path), conf)
+    "./" + symlink
   }
 
   /**

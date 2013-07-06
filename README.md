@@ -1,12 +1,13 @@
 # Snowplow
 
-## Introduction
+<img src="https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-logo-large.png"
+ alt="Snowplow logo" title="Snowplow" align="right" />
 
-Snowplow is the world's most powerful marketing and product analytics platform. It does three things:
+Snowplow is an enterprise-strength marketing and product analytics platform. It does three things:
 
-* Identifies users, and tracks the way they engage with a website or app
-* Stores the associated behavioural data in a scalable “clickstream” data warehouse
-* Makes it possible to leverage a big data toolset (e.g. Hive, Pig, Mahout) to analyse that event data
+1. Identifies your users, and tracks the way they engage with your website or application
+2. Stores your users' behavioural data in a scalable "event data warehouse" you control: in Amazon S3 and (optionally) Amazon Redshift
+3. Lets you leverage the biggest range of tools to analyse that data incl. big data toolset (e.g. Hive, Pig, Mahout) via EMR or more traditional tools e.g. Tableau, R to analyse that behavioural data
 
 **To find out more, please check out the [Snowplow website] [website] and the [Snowplow wiki] [wiki].**
 
@@ -20,9 +21,9 @@ To briefly explain these five sub-systems:
 
 * **Trackers** fire Snowplow events. Currently we have a JavaScript tracker, a no-JavaScript (pixel) tracker and an Arduino tracker
 * **Collectors** receive Snowplow events from trackers. Currently we have a CloudFront-based collector and a Clojure-based collector
-* **Enrich** cleans up the raw Snowplow events, enriches them and puts them into storage. Currently we have separate Hadoop-based and Hive-based enrichment processes
-* **Storage** is where the Snowplow events live. Currently we store the Snowplow events in a Hive-format flatfile structure on S3, and in the Redshift and Infobright columnar databases
-* **Analytics** are performed on the Snowplow events. Currently we have a set of ad hoc analyses that work with Hive and Infobright 
+* **Enrich** cleans up the raw Snowplow events, enriches them and puts them into storage. Currently we have a Hadoop-based enrichment processes
+* **Storage** is where the Snowplow events live. Currently we store the Snowplow events in a flatfile structure on S3, and in the Redshift and Infobright columnar databases
+* **Analytics** are performed on the Snowplow events. Currently we have a cookbook of ad hoc analyses that work with Hive, Redshift and Infobright 
 
 **For more information on the current Snowplow architecture, please see the [Technical architecture] [architecture-doc]**.
 
@@ -37,7 +38,7 @@ To briefly explain these five sub-systems:
 
 We're committed to a loosely-coupled architecture for Snowplow and would love to get your contributions within each of the five sub-systems.
 
-If you would like help implementing a new tracker, adding an additional enrichment or loading Snowplow events into an alternative database, **[get in touch] [talk-to-us]**!
+If you would like help implementing a new tracker, adding an additional enrichment or loading Snowplow events into an alternative database, check out our **[Contributing] [contributing]** page on the wiki!
 
 ## Questions or need help?
 
@@ -63,6 +64,7 @@ limitations under the License.
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/technical-architecture.png
 [architecture-doc]: https://github.com/snowplow/snowplow/wiki/Technical-architecture
 [talk-to-us]: https://github.com/snowplow/snowplow/wiki/Talk-to-us
+[contributing]: https://github.com/snowplow/snowplow/wiki/Contributing
 [license]: http://www.apache.org/licenses/LICENSE-2.0
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-SnowPlow
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/SnowPlow%20technical%20documentation

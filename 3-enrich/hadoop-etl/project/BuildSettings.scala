@@ -20,9 +20,9 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    version       := "0.3.1",
+    version       := "0.3.2",
     description   := "The SnowPlow Hadoop ETL process, written in Scalding",
-    scalaVersion  := "2.9.2", // -> 2.10.0 when Scalding is ready
+    scalaVersion  := "2.10.0",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     parallelExecution in Test := false, // Parallel tests cause havoc with MapReduce
     logBuffered   := false, // For debugging Specs2 tests
@@ -83,6 +83,7 @@ object BuildSettings {
         "jsp-api-2.1-6.1.14.jar",
         "jsp-2.1-6.1.14.jar",
         "jasper-compiler-5.5.12.jar",
+        "minlog-1.2.jar", // Otherwise causes conflicts with Kyro (which bundles it)
         "janino-2.5.16.jar", // Janino includes a broken signature, and is not needed anyway
         "commons-beanutils-core-1.8.0.jar", // Clash with each other and with commons-collections
         "commons-beanutils-1.7.0.jar",      // "
