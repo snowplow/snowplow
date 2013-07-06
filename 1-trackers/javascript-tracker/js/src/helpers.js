@@ -113,6 +113,33 @@ SnowPlow.getPropertySuffix = function (property) {
 }
 
 /*
+ * Checks whether sessionStorage is available, in a way that
+ * does not throw a SecurityError in Firefox if "always ask"
+ * is enabled for cookies (https://github.com/snowplow/snowplow/issues/163).
+ */
+SnowPlow.hasSessionStorage = function () {
+	try {
+		return !!SnowPlow.windowAlias.sessionStorage;
+	} catch (e) {
+		return true; // SecurityError when referencing it means it exists
+	}
+}
+
+/*
+ * Checks whether localStorage is available, in a way that
+ * does not throw a SecurityError in Firefox if "always ask"
+ * is enabled for cookies (https://github.com/snowplow/snowplow/issues/163).
+ */
+SnowPlow.hasLocalStorage = function () {
+	try {
+		return !!SnowPlow.windowAlias.localStorage;
+	} catch (e) {
+		return true; // SecurityError when referencing it means it exists
+	}
+}
+
+
+/*
  * Converts a date object to Unix timestamp with or without milliseconds
  */
 SnowPlow.toTimestamp = function (date, milliseconds) {

@@ -1104,8 +1104,8 @@ SnowPlow.Tracker = function Tracker(argmap) {
 	        navigator.userAgent,
 	        [ screen.height, screen.width, screen.colorDepth ].join("x"),
 	        ( new Date() ).getTimezoneOffset(),
-	        !!window.sessionStorage,
-	        !!window.localStorage,
+	        SnowPlow.hasSessionStorage(),
+	        SnowPlow.hasLocalStorage(),
 	    ];
 
 	    var plugins = [];
