@@ -1,7 +1,8 @@
 Version 0.8.7 (2013-07-XX)
 --------------------------
 ...
-Hive: update hive-storage scripts to work with current Redshift-format flatfile (#290)
+Hive storage: update hive-storage scripts to work with current Redshift-format flatfile (#290)
+Hive ETL: removed folder 3-enrich/hive-etl as no longer supported (#286)
 
 Version 0.8.7 (2013-07-07)
 --------------------------
