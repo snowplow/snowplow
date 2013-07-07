@@ -1,6 +1,6 @@
 Version 0.8.7 (2013-07-XX)
 --------------------------
-...
+EmrEtlRunner: removed :snowplow: section from config.yml.sample (#289)
 Hive storage: update hive-storage scripts to work with current Redshift-format flatfile (#290)
 Infobright: removed folder 4-storage/infobright as not currently supported (#285)
 Hive ETL: removed folder 3-enrich/hive-etl as no longer supported (#286)

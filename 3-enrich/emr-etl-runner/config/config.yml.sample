@@ -27,14 +27,8 @@
     :task_instance_bid: 0.015 # In USD. Adjust bid, or leave blank for non-spot-priced (i.e. on-demand) task instances
 :etl:
   :job_name: SnowPlow ETL # Give your job a name
+  :hadoop_etl_version: 0.3.2 # Version of the Hadoop ETL
   :implementation: hadoop # DO NOT CHANGE to 'hive' unless you are loading into Infobright
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
   :continue_on_unexpected_error: false # You can switch to 'true' if you really don't want the ETL throwing exceptions. Doesn't work for Hadoop ETL yet
   :storage_format: redshift # Or 'hive' or 'mysql-infobright'. Doesn't work for Hadoop ETL yet (always outputs redshift format)
-# Can bump the below as SnowPlow releases new versions
-:snowplow:
-  :hadoop_etl_version: 0.3.2 # Version of the Hadoop ETL
-  :serde_version: 0.5.5 # Version of the Hive deserializer
-  :hive_hiveql_version: 0.5.7
-  :mysql_infobright_hiveql_version: 0.0.8
-  :redshift_hiveql_version: 0.0.1
