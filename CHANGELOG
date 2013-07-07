@@ -6,6 +6,7 @@ JS tracker: fixed bug with setCustomUrl (#267)
 JS tracker: changed ev_ to se_ for structured events (#197)
 JS tracker: fixed Firefox failure when "Always ask" set for cookies (#163)
 JS tracker: fixed bug in page ping functionality detected in IE 8 (#260)
+JS tracker: replaced forEach as not supported in IE 6-8 (#295)
 EmrEtlRunner: fixed bug in config.yml.sample (#291)
 Arduino tracker: added git submodule link (#292)
 

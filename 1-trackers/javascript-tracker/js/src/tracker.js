@@ -419,10 +419,14 @@ SnowPlow.Tracker = function Tracker(argmap) {
 
 	/*
 	 * Returns [pageXOffset, pageYOffset].
+	 * Adapts code taken from: http://www.javascriptkit.com/javatutors/static2.shtml
 	 */
 	function getPageOffsets() {
-		return [SnowPlow.documentAlias.body.scrollLeft || SnowPlow.windowAlias.pageXOffset,
-		       SnowPlow.documentAlias.body.scrollTop || SnowPlow.windowAlias.pageYOffset];
+		var iebody = (SnowPlow.documentAlias.compatMode && SnowPlow.documentAlias.compatMode != "BackCompat") ?
+		               SnowPlow.documentAlias.documentElement :
+		               SnowPlow.documentAlias.body;
+		return [iebody.scrollLeft || SnowPlow.windowAlias.pageXOffset,
+		       iebody.scrollTop || SnowPlow.windowAlias.pageYOffset];
 	}
 
 	/*
@@ -1801,18 +1805,19 @@ SnowPlow.Tracker = function Tracker(argmap) {
 					 ecommerceTransaction.transaction.state,
 					 ecommerceTransaction.transaction.country
 					);
-			 ecommerceTransaction.items.forEach(function(item) {
-				 logTransactionItem(
-					 item.orderId,
-					 item.sku,
-					 item.name,
-					 item.category,
-					 item.price,
-					 item.quantity
-					 );
-			 });
+			for (var i = 0; i < ecommerceTransaction.items.length; i++) {
+        		var item = ecommerceTransaction.items[i];
+				logTransactionItem(
+					item.orderId,
+					item.sku,
+					item.name,
+					item.category,
+					item.price,
+					item.quantity
+					);
+			}
 
-			 ecommerceTransaction = ecommerceTransactionTemplate();
+			ecommerceTransaction = ecommerceTransactionTemplate();
 		 }
 
 	};
