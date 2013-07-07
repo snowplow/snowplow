@@ -1,3 +1,8 @@
+Version 0.8.7 (2013-07-XX)
+--------------------------
+
+Hive: update hive-storage scripts to work with current Redshift-format flatfile (#290) - TODO
+
 Version 0.8.7 (2013-07-07)
 --------------------------
 JS tracker: bumped to 0.12.0
