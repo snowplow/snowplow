@@ -447,17 +447,17 @@ SnowPlow.Tracker = function Tracker(argmap) {
 		var offsets = getPageOffsets();
 		
 		var x = offsets[0];
-		if (pageXOffset < minXOffset) {
-			minXOffset = pageXOffset;
-		} else if (pageXOffset > maxXOffset) {
-			maxXOffset = pageXOffset;
+		if (x < minXOffset) {
+			minXOffset = x;
+		} else if (x > maxXOffset) {
+			maxXOffset = x;
 		}
 
 		var y = offsets[1];
-		if (pageYOffset < minYOffset) {
-			minYOffset = pageYOffset;
-		} else if (pageYOffset > maxYOffset) {
-			maxYOffset = pageYOffset;
+		if (y < minYOffset) {
+			minYOffset = y;
+		} else if (y > maxYOffset) {
+			maxYOffset = y;
 		}	
 	}
 

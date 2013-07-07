@@ -5,7 +5,7 @@ JS tracker: fixed document reference to use documentAlias (#247)
 JS tracker: fixed bug with setCustomUrl (#267)
 JS tracker: changed ev_ to se_ for structured events (#197)
 JS tracker: fixed Firefox failure when "Always ask" set for cookies (#163)
-JS tracker: disabled page ping functionality in IE 8 (#260) - TODO
+JS tracker: fixed bug in page ping functionality detected in IE 8 (#260)
 EmrEtlRunner: fixed bug in config.yml.sample (#291)
 Arduino tracker: added git submodule link (#292)
 
