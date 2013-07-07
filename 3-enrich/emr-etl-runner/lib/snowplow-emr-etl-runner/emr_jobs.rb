@@ -70,89 +70,62 @@ module SnowPlow
           @jobflow.set_task_instance_group(ig)
         end
 
-        # Now branch based on the ETL implementation (Hadoop or Hive)
-        if config[:etl][:implementation] == "hive"
-
-          # Now create the Hive step for the jobflow
-          hive_step = Elasticity::HiveStep.new(config[:hiveql_asset])
-
-          # Add extra configuration (undocumented feature)
-          if config[:emr][:hive_step].respond_to?(:each)
-            config[:emr][:hive_step].each { |key, value|
-              hive_step.send("#{key}=", value)
-            }
-          end
-
-          hive_step.variables = {
-            "SERDE_FILE"       => config[:serde_asset],
-            "CLOUDFRONT_LOGS"  => config[:s3][:buckets][:processing],
-            "EVENTS_TABLE"     => config[:s3][:buckets][:out],
-            "COLLECTOR_FORMAT" => config[:etl][:collector_format],
-            "CONTINUE_ON"      => config[:etl][:continue_on_unexpected_error]
-          }
-
-          # Finally add to our jobflow
-          @jobflow.add_step(hive_step)
-
+        # We only consolidate files on HDFS folder for CloudFront currently
+        unless config[:etl][:collector_format] == "cloudfront"
+          hadoop_input = config[:s3][:buckets][:processing]
+        
         else
+          hadoop_input = "hdfs:///local/snowplow-logs"
 
-          # We only consolidate files on HDFS folder for CloudFront currently
-          unless config[:etl][:collector_format] == "cloudfront"
-            hadoop_input = config[:s3][:buckets][:processing]
-          
-          else
-            hadoop_input = "hdfs:///local/snowplow-logs"
+          # Create the Hadoop MR step for the file crushing
+          filecrush_step = Elasticity::CustomJarStep.new(config[:s3distcp_asset])
 
-            # Create the Hadoop MR step for the file crushing
-            filecrush_step = Elasticity::CustomJarStep.new(config[:s3distcp_asset])
-
-            filecrush_step.arguments = [
-              "--src"               , config[:s3][:buckets][:processing],
-              "--dest"              , hadoop_input,
-              "--groupBy"           , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
-              "--targetSize"        , "128",
-              "--outputCodec"       , "lzo",
-              "--s3Endpoint"        , config[:s3][:endpoint],
-            ]
-
-            # Add to our jobflow
-            @jobflow.add_step(filecrush_step)
-          end
-
-          # Now create the Hadoop MR step for the jobflow
-          hadoop_step = Elasticity::CustomJarStep.new(config[:hadoop_asset])
-
-          # Add extra configuration (undocumented feature)
-          if config[:emr][:hadoop_step].respond_to?(:each)
-            config[:emr][:hadoop_step].each { |key, value|
-              hadoop_step.send("#{key}=", value)
-            }
-          end          
-
-          # We need to partition our output buckets by run ID
-          # Note buckets already have trailing slashes
-          partition = lambda { |bucket| "#{bucket}#{config[:run_id]}/" }
-
-          hadoop_step.arguments = [
-            "com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob", # Job to run
-            "--hdfs", # Always --hdfs mode, never --local
-            "--input_folder"      , hadoop_input, # Argument names are "--arguments" too
-            "--input_format"      , config[:etl][:collector_format],
-            "--maxmind_file"      , config[:maxmind_asset],
-            "--output_folder"     , partition.call(config[:s3][:buckets][:out]),
-            "--bad_rows_folder"   , partition.call(config[:s3][:buckets][:out_bad_rows])
+          filecrush_step.arguments = [
+            "--src"               , config[:s3][:buckets][:processing],
+            "--dest"              , hadoop_input,
+            "--groupBy"           , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
+            "--targetSize"        , "128",
+            "--outputCodec"       , "lzo",
+            "--s3Endpoint"        , config[:s3][:endpoint],
           ]
 
-          # Conditionally add exceptions_folder
-          if config[:etl][:continue_on_unexpected_error] == '1'
-            hadoop_step.arguments.concat [
-              "--exceptions_folder" , partition.call(config[:s3][:buckets][:out_errors])
-            ]
-          end
-
-          # Finally add to our jobflow
-          @jobflow.add_step(hadoop_step)
+          # Add to our jobflow
+          @jobflow.add_step(filecrush_step)
         end
+
+        # Now create the Hadoop MR step for the jobflow
+        hadoop_step = Elasticity::CustomJarStep.new(config[:hadoop_asset])
+
+        # Add extra configuration (undocumented feature)
+        if config[:emr][:hadoop_step].respond_to?(:each)
+          config[:emr][:hadoop_step].each { |key, value|
+            hadoop_step.send("#{key}=", value)
+          }
+        end          
+
+        # We need to partition our output buckets by run ID
+        # Note buckets already have trailing slashes
+        partition = lambda { |bucket| "#{bucket}run=#{config[:run_id]}/" }
+
+        hadoop_step.arguments = [
+          "com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob", # Job to run
+          "--hdfs", # Always --hdfs mode, never --local
+          "--input_folder"      , hadoop_input, # Argument names are "--arguments" too
+          "--input_format"      , config[:etl][:collector_format],
+          "--maxmind_file"      , config[:maxmind_asset],
+          "--output_folder"     , partition.call(config[:s3][:buckets][:out]),
+          "--bad_rows_folder"   , partition.call(config[:s3][:buckets][:out_bad_rows])
+        ]
+
+        # Conditionally add exceptions_folder
+        if config[:etl][:continue_on_unexpected_error] == '1'
+          hadoop_step.arguments.concat [
+            "--exceptions_folder" , partition.call(config[:s3][:buckets][:out_errors])
+          ]
+        end
+
+        # Finally add to our jobflow
+        @jobflow.add_step(hadoop_step)
       end
 
       # Run (and wait for) the daily ETL job.

@@ -24,7 +24,6 @@ module SnowPlow
   module EmrEtlRunner
     module Config
 
-      @@etl_implementations = Set.new(%w(hive hadoop))
       @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
       @@storage_formats = Set.new(%w(hive redshift mysql-infobright))
 
@@ -52,16 +51,6 @@ module SnowPlow
 
         # Add trailing slashes if needed to the non-nil buckets
         config[:s3][:buckets].reject{|k,v| v.nil?}.update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
-
-        # Validate the ETL implementation option
-        unless @@etl_implementations.include?(config[:etl][:implementation]) 
-          raise ConfigError, "etl_implementation '%s' not supported" % config[:etl][:implementation]
-        end
-
-        # Add the run ID to the output buckets (prevents collisions) if we using the Hadoop ETL
-        if config[:etl][:implementation]
-          # TODO
-        end
 
         # TODO: can we get this functionality for free with Fog?
         if config[:s3][:region] == "us-east-1"
@@ -96,24 +85,10 @@ module SnowPlow
         # Construct our path to S3DistCp
         config[:s3distcp_asset] = "/home/hadoop/lib/emr-s3distcp-1.0.jar"
 
-        # Construct path to our ETL implementations
-        asset_path = "%s3-enrich" % config[:s3][:buckets][:assets]
-
         # Construct path to our Hadoop ETL
-        config[:hadoop_asset] = "%s/hadoop-etl/snowplow-hadoop-etl-%s.jar" % [asset_path, config[:snowplow][:hadoop_etl_version]]
-
-        # Construct paths to our HiveQL and serde
-        config[:serde_asset]  = "%s/hive-etl/serdes/snowplow-log-deserializers-%s.jar" % [asset_path, config[:snowplow][:serde_version]]
-
-        unless @@storage_formats.include?(config[:etl][:storage_format])
-          raise ConfigError, "storage_format '%s' not supported" % config[:etl][:storage_format]
-        end
-        storage_format_uscore = config[:etl][:storage_format].gsub("-", "_")
-        storage_format_version_sym = "#{storage_format_uscore}_hiveql_version".to_sym
-        config[:hiveql_asset] = "%s/hive-etl/hiveql/%s-etl-%s.q" % [
-                                  asset_path, 
-                                  config[:etl][:storage_format],
-                                  config[:snowplow][storage_format_version_sym]
+        config[:hadoop_asset] = "%s3-enrich/hadoop-etl/snowplow-hadoop-etl-%s.jar" % [
+                                  config[:s3][:buckets][:assets],
+                                  config[:etl][:hadoop_etl_version]
                                 ]
 
         # Should we continue on unexpected error or not?
