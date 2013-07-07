@@ -1,7 +1,7 @@
 Version 0.8.7 (2013-07-XX)
 --------------------------
-
-Hive: update hive-storage scripts to work with current Redshift-format flatfile (#290) - TODO
+...
+Hive: update hive-storage scripts to work with current Redshift-format flatfile (#290)
 
 Version 0.8.7 (2013-07-07)
 --------------------------
