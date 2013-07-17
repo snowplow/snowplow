@@ -12,7 +12,7 @@
 |-------------------------------|---------------------------------------------------------------------------|------------------|
 | [s3 / hive-storage] [s1]      | Snowplow events stored in a Hive-compatible flatfile format on Amazon S3  | Production-ready |
 | [redshift-storage] [s3] (1)   | Snowplow events stored in a table in [Amazon Redshift] [redshift]         | Production-ready |
-| [infobright-storage] [s2] (2) | Snowplow events stored in a table in [Infobright Community Edition] [ice] | Production-ready |
+| [infobright-storage] [s2] (2) | Snowplow events stored in a table in [Infobright Community Edition] [ice], now **deprecated** | Production-ready |
 | [storage-loader] [s4]         | A Ruby application for loading Snowplow events into (1) and (2)           | Production-ready |
 
 ## Find out more

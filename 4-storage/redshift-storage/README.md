@@ -1,4 +1,4 @@
-# Infobright storage for SnowPlow
+# Amazon Redshift storage for SnowPlow
 
 ## Introduction
 

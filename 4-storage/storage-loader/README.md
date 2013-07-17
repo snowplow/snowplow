@@ -42,6 +42,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+| Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
+|-----------------------------|-----------------------|--------------------------------------|
+| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
+| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
+
 [bundler]: http://gembundler.com/
 
 [infobright]: http://www.infobright.org/
@@ -58,3 +63,8 @@ limitations under the License.
 [99designs]: http://99designs.com
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
+[techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
+[setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
+[roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
+[techdocs]: https://github.com/snowplow/snowplow/wiki/S3%20storage
+[setup]: https://github.com/snowplow/snowplow/wiki/1-installing-the-storageloader
