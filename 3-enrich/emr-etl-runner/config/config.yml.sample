@@ -8,9 +8,9 @@
     :log: ADD HERE
     :in: ADD HERE
     :processing: ADD HERE
-    :out: ADD HERE WITH SUB-FOLDER # Make sure this bucket is in the US standard region if you wish to use Redshift
-    :out_bad_rows: ADD HERE # Leave blank for Hive ETL.
-    :out_errors: ADD HERE # Leave blank for Hive ETL.
+    :out: ADD HERE WITH SUB-FOLDER # e.g. s3://my-out-bucket/events
+    :out_bad_rows: ADD HERE        # e.g. s3://my-out-bucket/bad-rows
+    :out_errors: ADD HERE # Leave blank unless :continue_on_unexpected_error: set to true below
     :archive: ADD HERE
 :emr:
   # Can bump the below as EMR upgrades Hadoop
@@ -29,4 +29,4 @@
   :job_name: SnowPlow ETL # Give your job a name
   :hadoop_etl_version: 0.3.2 # Version of the Hadoop ETL
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
-  :continue_on_unexpected_error: false # You can switch to 'true' if you really don't want the ETL throwing exceptions. Doesn't work for Hadoop ETL yet
+  :continue_on_unexpected_error: false # You can switch to 'true' (and set :out_errors: above) if you really don't want the ETL throwing exceptions
