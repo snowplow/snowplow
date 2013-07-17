@@ -21,8 +21,6 @@ The contents of this folder are as follows:
 | ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
 | [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
 
-
-
 ## Copyright and license
 
 redshift-storage is copyright 2012 SnowPlow Analytics Ltd.
