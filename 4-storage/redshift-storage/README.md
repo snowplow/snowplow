@@ -10,9 +10,8 @@ enables you to plugin a wide variety of analytics tools directly onto SnowPlow d
 
 The contents of this folder are as follows:
 
-* In this folder is this `README.md` and the `setup.sh` Bash script
-* `sql` contains Infobright-compatible SQL scripts to setup your database and
-  verify the setup
+* In this folder is this `README.md` and the `LICENSE-20.txt` Apache license file
+* `sql` contains Redshift-compatible SQL scripts to setup your database
 
 ## Documentation
 
@@ -23,7 +22,7 @@ The contents of this folder are as follows:
 
 ## Copyright and license
 
-redshift-storage is copyright 2012 SnowPlow Analytics Ltd.
+redshift-storage is copyright 2012-2013 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
