@@ -1,7 +1,7 @@
 Version 0.8.8 (2013-07-XX)
 --------------------------
 Hadoop ETL: bumped to 0.3.3 - TODO
-Hadoop ETL: URL-decodes "%3D" to "=" to allow Hive-style directory names in Scalding Args 0.6.0 - TODO
+Hadoop ETL: URL-decodes "%3D" to "=" to allow Hive-style directory names in Scalding Args 0.6.0 (#305) - TODO
 EmrEtlRunner: bumped to 0.4.0
 EmrEtlRunner: bumped Sluice to 0.0.7 (#299)
 EmrEtlRunner: removed :snowplow: section from config.yml.sample (#289)
@@ -11,6 +11,7 @@ Hive storage: updated hive-storage scripts to work with current Redshift-format 
 Infobright: removed folder 4-storage/infobright as not currently supported (#285)
 Hive ETL: removed folder 3-enrich/hive-etl as no longer supported (#286)
 JS tracker: moved into own repo (#277) - TODO
+Postgres: add Postgres table definition in atomic schema (#160) - TODO
 
 Version 0.8.7 (2013-07-07)
 --------------------------
