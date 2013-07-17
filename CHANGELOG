@@ -1,5 +1,7 @@
 Version 0.8.8 (2013-07-XX)
 --------------------------
+Hadoop ETL: bumped to 0.3.3 - TODO
+Hadoop ETL: URL-decodes "%3D" to "=" to allow Hive-style directory names in Scalding Args 0.6.0 - TODO
 EmrEtlRunner: bumped to 0.4.0
 EmrEtlRunner: bumped Sluice to 0.0.7 (#299)
 EmrEtlRunner: removed :snowplow: section from config.yml.sample (#289)
