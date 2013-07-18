@@ -1,6 +1,6 @@
 Version 0.8.8 (2013-07-XX)
 --------------------------
-JS tracker: moved into own repo (#277) - TODO
+JS tracker: moved into own repo (#277)
 Hadoop ETL: bumped to 0.3.3
 Hadoop ETL: URL-decodes "%3D" to "=" to allow Hive-style directory names as arguments (#305) - TODO
 EmrEtlRunner: bumped to 0.4.0
