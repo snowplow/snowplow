@@ -105,7 +105,7 @@ module SnowPlow
 
         # We need to partition our output buckets by run ID
         # Note buckets already have trailing slashes
-        partition = lambda { |bucket| "#{bucket}run#{config[:run_id]}/" } # TODO: add = back when Scalding Args updated
+        partition = lambda { |bucket| "#{bucket}run%3D#{config[:run_id]}/" } # TODO: s/%3D/=/ when Scalding Args supports it
 
         hadoop_step.arguments = [
           "com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob", # Job to run
