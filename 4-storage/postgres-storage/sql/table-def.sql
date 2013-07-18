@@ -135,7 +135,7 @@ CREATE TABLE "atomic"."events" (
 	"doc_charset" varchar(128),
 	"doc_width" integer,
 	"doc_height" integer,
-	PRIMARY KEY ("event")
+	PRIMARY KEY ("event_id")
 )
 WITH (OIDS=FALSE)
 ;
