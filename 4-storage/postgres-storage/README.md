@@ -1,8 +1,8 @@
-# PostgreSQL Redshift storage for SnowPlow
+# PostgreSQL storage for SnowPlow
 
 ## Introduction
 
-[PostgreSQL] [postgres] is an advanced open-source Object-Relational DBMS. Postgres is an excellent storage target for Snowplow data, supporting a variety of rich SQL querying techniques (e.g. [windowing] [window-functions]) as well as connections to a variety of BI and dashboarding tools.
+[PostgreSQL] [postgres] ("Postgres") is an advanced open-source Object-Relational DBMS. Postgres is an excellent storage target for Snowplow data, supporting a variety of rich SQL querying techniques (e.g. [windowing] [window-functions]) as well as connections to a variety of BI and dashboarding tools.
 
 Hosted options for Postgres include [Heroku] [heroku] and [Engine Yard] [engine-yard], with a [full list of hosting providers] [hosted-postgres] available from PostgreSQL themselves.
 
