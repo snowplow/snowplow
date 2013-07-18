@@ -12,6 +12,13 @@ Infobright: removed folder 4-storage/infobright as not currently supported (#285
 Hive ETL: removed folder 3-enrich/hive-etl as no longer supported (#286)
 JS tracker: moved into own repo (#277) - TODO
 Postgres: add Postgres table definition in atomic schema (#160)
+StorageLoader: bumped to 0.1.0 - TODO
+StorageLoader: added max_error and treat_empty_as_null as StorageLoader configuration values for Redshift (#273) - TODO
+StorageLoader: added run= to front of folder names in events-archive folder (#293) - TODO
+StorageLoader: fixed bug where download path has to be set (even when using Redshift) (#280) - TODO
+StorageLoader: tweaked ANALYZE and VACUUM commands (#283) - TODO
+StorageLoader: bumped Sluice 0.0.7 (#300) - TODO
+StorageLoader: added support for loading Postgres (#161) - TODO
 
 Version 0.8.7 (2013-07-07)
 --------------------------
