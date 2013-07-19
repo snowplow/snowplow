@@ -64,7 +64,7 @@ class ScalazArgs(args: Args) {
    */
   def requiredz(key: String): Validation[String, String] = args.list(key) match {
     case List() => "Required argument [%s] not found".format(key).fail
-    case List(a) => a.success
+    case List(a) => decodeEquals(a).success
     case _ => "List of values found for argument [%s], should be one".format(key).fail
   }
 
@@ -77,7 +77,7 @@ class ScalazArgs(args: Args) {
    */
   def optionalz(key: String): Validation[String, Option[String]] = args.list(key) match {
     case List() => None.success
-    case List(a) => Some(a).success
+    case List(a) => Some(decodeEquals(a)).success
     case _ => "List of values found for argument [%s], should be at most one".format(key).fail
   }
 
