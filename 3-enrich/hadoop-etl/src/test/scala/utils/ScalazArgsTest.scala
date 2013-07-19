@@ -13,6 +13,9 @@
 package com.snowplowanalytics.snowplow.enrich.hadoop
 package utils
 
+// Scalding
+import com.twitter.scalding.Args
+
 // Specs2
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
@@ -21,6 +24,19 @@ import org.specs2.scalaz.ValidationMatchers
 /**
  * Tests the explodeUri function
  */
-class ScalazArgsTest { // extends Specification with DataTables {
+class ScalazArgsTest extends Specification with DataTables with ValidationMatchers { def is =
 
+  "This is a specification to test the ScalazArgs functionality"                  ^
+                                                                                 p^
+  "a Scalding Args should be pimped to a ScalazArgs as needed"                    ! e1^
+  "required, optional and missing keys should be handled correctly by ScalazArgs" ! e2^
+                                                                                  end
+
+
+  val scaldingArgs = Args(Array("--one", "1"))
+
+  import ScalazArgs._
+  def e1 = scaldingArgs.requiredz("one") must beSuccessful("1")
+
+  def e2 = 1 must_== 1
 }
