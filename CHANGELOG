@@ -18,7 +18,7 @@ StorageLoader: removed code to delete Hive ETL's empty event files (#306)
 StorageLoader: fixed bug where download path has to be set (even when using Redshift) (#280)
 StorageLoader: optimised ANALYZE and VACUUM commands (#283)
 
-StorageLoader: added max_error and treat_empty_as_null as StorageLoader configuration values for Redshift (#273) - TODO
+StorageLoader: added MAXERROR and EMPTYASNULL as StorageLoader configuration values for Redshift (#273) - TODO
 
 StorageLoader: added support for loading Postgres (#161) - TODO
 StorageLoader: removed Infobright loading capability (#307) - TODO
