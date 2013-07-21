@@ -23,7 +23,7 @@ GEM
     nokogiri (1.5.6)
     pg (0.14.1)
     ruby-hmac (0.4.0)
-    sluice (0.0.6)
+    sluice (0.0.7)
       fog (~> 1.6.0)
 
 PLATFORMS
@@ -32,4 +32,4 @@ PLATFORMS
 DEPENDENCIES
   infobright-loader (~> 0.0.1)
   pg (~> 0.14.1)
-  sluice (~> 0.0.6)
+  sluice (~> 0.0.7)

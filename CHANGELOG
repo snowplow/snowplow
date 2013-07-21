@@ -14,7 +14,7 @@ Infobright: removed folder 4-storage/infobright as not currently supported (#285
 Postgres: add Postgres table definition in atomic schema (#160)
 
 StorageLoader: bumped to 0.1.0
-StorageLoader: bumped Sluice 0.0.7 (#300) - TODO
+StorageLoader: bumped Sluice 0.0.7 (#300)
 StorageLoader: fixed bug where download path has to be set (even when using Redshift) (#280) - TODO
 StorageLoader: added max_error and treat_empty_as_null as StorageLoader configuration values for Redshift (#273) - TODO
 StorageLoader: tweaked ANALYZE and VACUUM commands (#283) - TODO
