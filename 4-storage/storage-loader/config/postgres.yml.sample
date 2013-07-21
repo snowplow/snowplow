@@ -16,5 +16,5 @@
   :table: atomic.events
   :username: ADD HERE 
   :password: ADD HERE 
-  :maxerror: 
-  :empty_as_null: 
+  :maxerror: # Not required for Postgres
+  :empty_as_null: # Not required for Postgres

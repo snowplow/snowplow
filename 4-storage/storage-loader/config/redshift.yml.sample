@@ -7,7 +7,7 @@
     :in: ADD HERE # Must be s3:// not s3n:// for Redshift
     :archive: ADD HERE
 :download:
-  :folder: 
+  :folder: # Not required for Redshift
 :storage:
   :type: redshift
   :host: ADD HERE # The endpoint as shown in the Redshift console
