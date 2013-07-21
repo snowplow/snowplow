@@ -41,7 +41,10 @@ module SnowPlow
 
         # Add trailing slashes if needed to the buckets and download folder
         config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
-        config[:download][:folder] = Sluice::Storage::trail_slash(config[:download][:folder])
+        
+        unless config[:download][:folder].nil? # TODO: remove when Sluice's trail_slash can handle nil
+          config[:download][:folder] = Sluice::Storage::trail_slash(config[:download][:folder])
+        end
 
         # Check we recognise the storage target 
         unless @@storage_targets.include?(config[:storage][:type]) 
