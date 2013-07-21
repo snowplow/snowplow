@@ -4,7 +4,7 @@
 :s3:
   :region: ADD HERE # For Redshift, S3 bucket region must be the same as Redshift cluster region
   :buckets:
-    :in: ADD HERE # Must be s3:// not s3n://
+    :in: ADD HERE # Must be s3:// not s3n:// for Redshift
     :archive: ADD HERE
 :download:
   :folder: ADD HERE # Postgres-only config option. Where to store the downloaded files. Leave blank for Redshift
