@@ -36,13 +36,6 @@ begin
     end
   end
 
-  # Delete files - Redshift only
-  unless config[:skip].include?('delete')
-    if config[:storage][:type] == 'redshift'
-      loader::S3Tasks.delete_null_events(config)
-    end    
-  end
-
   # If we are not skipping the load, use the appropriate
   # loader for Redshift or Infobright
   unless config[:skip].include?('load')

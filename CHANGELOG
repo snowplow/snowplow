@@ -23,7 +23,6 @@ StorageLoader: added run= to front of folder names in events-archive folder (#29
 StorageLoader: added support for loading Postgres (#161) - TODO
 StorageLoader: removed Infobright loading capability (#307) - TODO
 
-
 Version 0.8.7 (2013-07-07)
 --------------------------
 JS tracker: bumped to 0.12.0
