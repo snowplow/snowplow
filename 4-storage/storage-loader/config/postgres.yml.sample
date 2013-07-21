@@ -1,0 +1,20 @@
+:aws:
+  :access_key_id: ADD HERE
+  :secret_access_key: ADD HERE
+:s3:
+  :region: ADD HERE # S3 bucket region
+  :buckets:
+    :in: ADD HERE
+    :archive: ADD HERE
+:download:
+  :folder: ADD HERE # Postgres-only config option. Where to store the downloaded files
+:storage:
+  :type: postgres
+  :host: ADD HERE # Hostname of database server
+  :database: ADD HERE # Name of database 
+  :port: 5432 # Default Postgres port
+  :table: atomic.events
+  :username: ADD HERE 
+  :password: ADD HERE 
+  :maxerror: 
+  :empty_as_null: 
