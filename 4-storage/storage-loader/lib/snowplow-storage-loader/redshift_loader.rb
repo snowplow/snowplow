@@ -32,7 +32,7 @@ module SnowPlow
 
         # Assemble the relevant parameters for the bulk load query
         credentials = "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
-        queries = ["copy #{config[:storage][:table]} from '#{config[:s3][:buckets][:in]}' credentials '#{credentials}' delimiter '#{EVENT_FIELD_SEPARATOR}'",
+        queries = ["COPY #{config[:storage][:table]} FROM '#{config[:s3][:buckets][:in]}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}'",
                    "ANALYZE #{config[:storage][:table]}",
                    "VACUUM SORT ONLY #{config[:storage][:table]}"]
 
