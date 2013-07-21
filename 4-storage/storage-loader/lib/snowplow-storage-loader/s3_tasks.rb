@@ -21,6 +21,9 @@ module SnowPlow
   module StorageLoader
     module S3Tasks
 
+      # We ignore the Hadoop success files
+      EMPTY_FILES = "_SUCCESS"
+
       # Downloads the SnowPlow event files from the In
       # Bucket to the local filesystem, ready to be loaded
       # into different storage options.
@@ -39,8 +42,8 @@ module SnowPlow
         in_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:in])
         download_dir = config[:download][:folder]
 
-        # Exclude event files which match IGNORE_EVENTS
-        event_files = Sluice::Storage::NegativeRegex.new(NULL_EVENTS)
+        # Exclude event files which match EMPTY_FILES
+        event_files = Sluice::Storage::NegativeRegex.new(EMPTY_FILES)
 
         # Download
         Sluice::Storage::S3::download_files(s3, in_location, download_dir, event_files)
