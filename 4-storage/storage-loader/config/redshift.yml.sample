@@ -8,13 +8,14 @@
     :archive: ADD HERE
 :download:
   :folder: # Not required for Redshift
-:storage:
-  :type: redshift
-  :host: ADD HERE # The endpoint as shown in the Redshift console
-  :database: ADD HERE # Name of database 
-  :port: 5439 # Default Redshift port
-  :table: events
-  :username: ADD HERE 
-  :password: ADD HERE 
-  :maxerror: 1 # Stop loading on first error, or increase to permit more load errors
-  :empty_as_null: true # Treat empty char / varchar fields as NULL
+:targets:
+  - :name: "My Redshift database"
+    :type: redshift
+    :host: ADD HERE # The endpoint as shown in the Redshift console
+    :database: ADD HERE # Name of database 
+    :port: 5439 # Default Redshift port
+    :table: events
+    :username: ADD HERE 
+    :password: ADD HERE 
+    :max_error: 1 # Stop loading on first error, or increase to permit more load errors
+    :empty_as_null: true # Treat empty char / varchar fields as NULL

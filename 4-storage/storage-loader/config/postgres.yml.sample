@@ -8,13 +8,14 @@
     :archive: ADD HERE
 :download:
   :folder: ADD HERE # Postgres-only config option. Where to store the downloaded files
-:storage:
-  :type: postgres
-  :host: ADD HERE # Hostname of database server
-  :database: ADD HERE # Name of database 
-  :port: 5432 # Default Postgres port
-  :table: atomic.events
-  :username: ADD HERE 
-  :password: ADD HERE 
-  :maxerror: # Not required for Postgres
-  :empty_as_null: # Not required for Postgres
+:targets:
+  - :name: "My PostgreSQL database"
+    :type: postgres
+    :host: ADD HERE # Hostname of database server
+    :database: ADD HERE # Name of database 
+    :port: 5432 # Default Postgres port
+    :table: atomic.events
+    :username: ADD HERE 
+    :password: ADD HERE 
+    :max_error: # Not required for Postgres
+    :empty_as_null: # Not required for Postgres
