@@ -21,6 +21,8 @@ StorageLoader: added MAXERROR and EMPTYASNULL as StorageLoader configuration val
 
 StorageLoader: added support for loading Postgres (#161) - TODO
 StorageLoader: removed Infobright loading capability (#307) - TODO
+StorageLoader: added support for loading into multiple storage targets (#311) - TODO
+
 
 Version 0.8.7 (2013-07-07)
 --------------------------
