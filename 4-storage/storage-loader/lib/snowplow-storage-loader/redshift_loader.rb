@@ -46,6 +46,8 @@ module SnowPlow
 
       private
 
+      # TODO: move execute_queries to PostgresLoader
+
       # Execute a chain of SQL commands, stopping as soon as
       # an error is encountered. At that point, it returns a
       # 'tuple' of the error class and message and the command

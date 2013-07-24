@@ -19,37 +19,49 @@
 require File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'snowplow-storage-loader'))
 loader = SnowPlow::StorageLoader
 
-# This Ruby script runs the SnowPlow StorageLoader.
+# This Ruby script runs the Snowplow StorageLoader.
 #
-# This is a three-step process:
+# This is a four-step process:
 #
-# 1. Download SnowPlow event files from S3 (Infobright only)
+# 1. Download Snowplow event files from S3 (only if 1+ storage targets are local e.g. Postgres)
 # 2. Load SnowPlow event files (either local or remote) into storage target
 # 3. Archive event files in S3
+# 4. Delete local Snowplow event files (only if 1+ storage targets are local e.g. Postgres)
 begin
   config = loader::Config.get_config()
 
-  # Download files - Infobright only
+  # Download files if required
   unless config[:skip].include?('download')
-    if config[:storage][:type] == 'infobright'
+    if config[:download_required]
       loader::S3Tasks.download_events(config)
     end
   end
 
   # If we are not skipping the load, use the appropriate
-  # loader for Redshift or Infobright
+  # loader for Redshift or Postgres
   unless config[:skip].include?('load')
-    case config[:storage][:type]
-      when 'redshift'
-        loader::RedshiftLoader.load_events(config)
-      when 'infobright'
-        loader::IceLoader.load_events(config)
+
+    # Loop through all targets
+    # TODO
+      case config[:storage][:type]
+        when 'redshift'
+          loader::RedshiftLoader.load_events(config)
+        when 'postgres'
+          loader::PostgresLoader.load_events(config)
+      end
     end
   end
 
   # Archive
   unless config[:skip].include?('archive')
     loader::S3Tasks.archive_events(config)
+  end
+
+  # Delete local files if required
+  unless config[:skip].include?('delete')
+    if config[:download_required]
+      loader::FileTasks.delete_events(config)
+    end
   end
 
   puts "Completed successfully"

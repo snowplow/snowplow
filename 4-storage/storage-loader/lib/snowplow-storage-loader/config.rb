@@ -51,8 +51,11 @@ module SnowPlow
           raise ConfigError, "Storage type '#{config[:storage][:type]}' not supported"
         end
             
+        # Determine whether we need to download events
+        config[:download_required] = false # TODO fix this
+
         # If Infobright is the target, check that the download folder exists and is empty
-        if (config[:storage][:type] == 'infobright')
+        if config[:download_required]
           # Check that the download folder exists...
           unless File.directory?(config[:download][:folder])
             raise ConfigError, "Download folder '#{config[:download][:folder]}' not found"
