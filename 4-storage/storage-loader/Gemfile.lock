@@ -14,7 +14,6 @@ GEM
       nokogiri (~> 1.5.0)
       ruby-hmac
     formatador (0.2.4)
-    infobright-loader (0.0.1)
     mime-types (1.21)
     multi_json (1.6.1)
     net-scp (1.0.4)

@@ -19,6 +19,5 @@ ruby "1.9.3"
 # StorageLoader is a Ruby app (not a RubyGem)
 # built with Bundler, so we add in the
 # RubyGems it requires here.
-gem "infobright-loader", "~> 0.0.1"
 gem "sluice", "~> 0.0.7"
 gem "pg", "~> 0.14.1"

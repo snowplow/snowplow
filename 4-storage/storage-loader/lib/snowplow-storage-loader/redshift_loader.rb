@@ -28,7 +28,7 @@ module SnowPlow
       # Parameters:
       # +config+:: the hash of configuration options
       def load_events(config)
-        puts "Loading SnowPlow events into Redshift..."
+        puts "Loading Snowplow events into Redshift..."
 
         # Assemble the relevant parameters for the bulk load query
         credentials = "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
