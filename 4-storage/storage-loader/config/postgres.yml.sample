@@ -18,4 +18,3 @@
     :username: ADD HERE 
     :password: ADD HERE 
     :max_error: # Not required for Postgres
-    :empty_as_null: # Not required for Postgres
