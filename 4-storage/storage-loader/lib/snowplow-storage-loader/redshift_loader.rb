@@ -13,8 +13,6 @@
 # Copyright:: Copyright (c) 2012-2013 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'pg'
-
 # Ruby module to support the load of SnowPlow events into Redshift
 module SnowPlow
   module StorageLoader
@@ -37,51 +35,12 @@ module SnowPlow
                    "ANALYZE #{config[:storage][:table]}",
                    "VACUUM SORT ONLY #{config[:storage][:table]}"]
 
-        status = execute_queries(config, queries)
+        status = PostgresLoader.execute_queries(config, queries)
         unless status == []
           raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
         end
       end
       module_function :load_events
-
-      private
-
-      # TODO: move execute_queries to PostgresLoader
-
-      # Execute a chain of SQL commands, stopping as soon as
-      # an error is encountered. At that point, it returns a
-      # 'tuple' of the error class and message and the command
-      # that caused the error
-      #
-      # Parameters:
-      # +config+:: the hash of configuration options
-      # +queries+:: the Redshift queries to execute sequentially
-      #
-      # Returns either an empty list on success, or on failure
-      # a list of the form [query, err_class, err_message]
-      def execute_queries(config, queries)
-
-        conn = PG.connect({:host     => config[:storage][:host],
-                           :dbname   => config[:storage][:database],
-                           :port     => config[:storage][:port],
-                           :user     => config[:storage][:username],
-                           :password => config[:storage][:password]
-                          })
-
-        status = []
-        queries.each do |q|
-          begin
-            conn.exec("#{q};")
-          rescue PG::Error => err
-            status = [q, err.class, err.message]
-            break
-          end
-        end
-
-        conn.finish
-        return status
-      end
-      module_function :execute_queries
 
     end
   end

@@ -23,54 +23,58 @@ module SnowPlow
       # Constants for the load process
       EVENT_FIELD_SEPARATOR = "\\t"
 
-      # Loads the SnowPlow event files into Infobright.
+      # Loads the SnowPlow event files into Postgres.
       #
       # Parameters:
       # +config+:: the hash of configuration options 
       def load_events(config)
         puts "Loading Snowplow events into PostgreSQL..."
 
-        # Configuration for our database
-        db = InfobrightLoader::Db::DbConfig.new(
-               config[:storage][:database],
-               config[:storage][:username],
-               config[:storage][:password])
+        empty_as_null = "EMPTYASNULL" if config[:storage][:empty_as_null]
+        queries = ["COPY #{config[:storage][:table]} FROM '#{config[:download][:folder]}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{config[:storage][:max_error]} #{empty_as_null}",
+                   "VACUUM FULL ANALYZE #{config[:storage][:table]}"]
 
-        # Load the events table from our download folder
-        begin
-          failed_files = InfobrightLoader::Loader::load_from_folder(
-            config[:download][:folder],      # Folder
-            config[:storage][:table],        # Table
-            db,                              # Database config
-            EVENT_FIELD_SEPARATOR,           # Field separator
-            EVENT_FIELD_ENCLOSER             # Field encloser
-          )
-          if failed_files.any?
-            raise DatabaseLoadError, "The following files could not be loaded:\n" + failed_files.join("\n")
-          end
-        rescue InfobrightLoader::Loader::LoadError => le
-          # Re-raise as a StorageLoader own-brand exception
-          raise DatabaseLoadError, le.message
+        status = execute_queries(config, queries)
+        unless status == []
+          raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
         end
-
-        # Now delete the local files
-        delete_events(config[:download][:folder])
       end
       module_function :load_events
 
-      private
-
-      # TODO: move this out of this loader (not Postgres loader specific)
-
-      # Empties the download folder now that the events
-      # have been loaded
+      # Execute a chain of SQL commands, stopping as soon as
+      # an error is encountered. At that point, it returns a
+      # 'tuple' of the error class and message and the command
+      # that caused the error
       #
       # Parameters:
-      # +folder+:: the folder containing the files to delete 
-      def delete_events(folder)
-        FileUtils.rm_rf("#{folder}/.", :secure => true)
+      # +config+:: the hash of configuration options
+      # +queries+:: the Redshift queries to execute sequentially
+      #
+      # Returns either an empty list on success, or on failure
+      # a list of the form [query, err_class, err_message]
+      def execute_queries(config, queries)
+
+        conn = PG.connect({:host     => config[:storage][:host],
+                           :dbname   => config[:storage][:database],
+                           :port     => config[:storage][:port],
+                           :user     => config[:storage][:username],
+                           :password => config[:storage][:password]
+                          })
+
+        status = []
+        queries.each do |q|
+          begin
+            conn.exec("#{q};")
+          rescue PG::Error => err
+            status = [q, err.class, err.message]
+            break
+          end
+        end
+
+        conn.finish
+        return status
       end
-      module_function :delete_events
+      module_function :execute_queries
 
     end
   end
