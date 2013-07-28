@@ -28,11 +28,14 @@ module SnowPlow
       #
       # Parameters:
       # +config+:: the hash of configuration options 
-      def load_events(config)
+      # +target+:: the configuration options for this target
+      def load_events(config, target)
         puts "Loading Snowplow events into PostgreSQL..."
 
-        queries = ["COPY #{config[:storage][:table]} FROM '#{config[:download][:folder]}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}'",
-                   "VACUUM FULL ANALYZE #{config[:storage][:table]}"]
+        queries = [
+          "COPY #{target[:table]} FROM '#{config[:download][:folder]}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}'",
+          "VACUUM FULL ANALYZE #{target[:table]}"
+        ]
 
         status = execute_queries(config, queries)
         unless status == []
@@ -47,18 +50,18 @@ module SnowPlow
       # that caused the error
       #
       # Parameters:
-      # +config+:: the hash of configuration options
+      # +target+:: the configuration options for this target
       # +queries+:: the Redshift queries to execute sequentially
       #
       # Returns either an empty list on success, or on failure
       # a list of the form [query, err_class, err_message]
-      def execute_queries(config, queries)
+      def execute_queries(target, queries)
 
-        conn = PG.connect({:host     => config[:storage][:host],
-                           :dbname   => config[:storage][:database],
-                           :port     => config[:storage][:port],
-                           :user     => config[:storage][:username],
-                           :password => config[:storage][:password]
+        conn = PG.connect({:host     => target[:host],
+                           :dbname   => target[:database],
+                           :port     => target[:port],
+                           :user     => target[:username],
+                           :password => target[:password]
                           })
 
         status = []

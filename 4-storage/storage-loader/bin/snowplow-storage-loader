@@ -42,12 +42,12 @@ begin
   unless config[:skip].include?('load')
 
     # Loop through all targets
-    # TODO
-      case config[:storage][:type]
+    config[:targets].each { |t|
+      case t[:type]
         when 'redshift'
-          loader::RedshiftLoader.load_events(config)
+          loader::RedshiftLoader.load_events(config, t)
         when 'postgres'
-          loader::PostgresLoader.load_events(config)
+          loader::PostgresLoader.load_events(config, t)
       end
     end
   end

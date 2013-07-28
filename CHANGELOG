@@ -19,9 +19,9 @@ StorageLoader: fixed bug where download path has to be set (even when using Reds
 StorageLoader: optimized ANALYZE and VACUUM commands (#283)
 StorageLoader: added MAXERROR as StorageLoader configuration value for Redshift (#273)
 
-StorageLoader: added support for loading Postgres (#161) - TODO
-StorageLoader: removed Infobright loading capability (#307) - TODO
-StorageLoader: added support for loading into multiple storage targets (#311) - TODO
+StorageLoader: added support for loading Postgres (#161)
+StorageLoader: removed Infobright loading capability (#307)
+StorageLoader: added support for loading into multiple storage targets (#311)
 
 Version 0.8.7 (2013-07-07)
 --------------------------

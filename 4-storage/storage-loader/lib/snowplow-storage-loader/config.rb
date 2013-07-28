@@ -52,7 +52,7 @@ module SnowPlow
         end
             
         # Determine whether we need to download events
-        config[:download_required] = false # TODO fix this
+        config[:download_required] = config[:targets].count { |t| t.type == "postgres" } > 0
 
         # If Infobright is the target, check that the download folder exists and is empty
         if config[:download_required]
