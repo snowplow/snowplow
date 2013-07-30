@@ -11,7 +11,7 @@ The **Enrich** process takes raw Snowplow events logged by a [Collector] [collec
 | ETL                             | Description                                                  | Status           |
 |---------------------------------|--------------------------------------------------------------|------------------|
 | [hadoop-etl] [e2] (1)           | An ETL process built using Scalding for Apache Hadoop        | Production-ready |
-| [hive-etl] [e1] (2)             | An ETL process built using Apache Hive, now **deprecated**   | Production-ready |
+| [hive-etl] [e1] (2)             | An ETL process built using Apache Hive, now **deprecated**   | Deprecated |
 | [emr-etl-runner] [e3]           | A RubyGem for running (1) or (2) on Amazon Elastic MapReduce | Production-ready |
 
 ## Find out more
