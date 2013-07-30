@@ -26,17 +26,17 @@ module SnowPlow
       # Parameters:
       # +target+:: the configuration options for this target
       def load_events(config, target)
-        puts "Loading Snowplow events into Redshift..."
+        puts "Loading Snowplow events into Redshift #{target[:name]}..."
 
         # Assemble the relevant parameters for the bulk load query
         credentials = "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
         queries = [
-          "COPY #{target[:table]} FROM '#{config[:s3][:buckets][:in]}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{target[:max_error]} EMPTYASNULL",
+          "COPY #{target[:table]} FROM '#{config[:s3][:buckets][:in]}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{target[:maxerror]} EMPTYASNULL",
           "ANALYZE #{target[:table]}",
           "VACUUM SORT ONLY #{target[:table]}"
         ]
 
-        status = PostgresLoader.execute_queries(config, queries)
+        status = PostgresLoader.execute_queries(target, queries)
         unless status == []
           raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
         end

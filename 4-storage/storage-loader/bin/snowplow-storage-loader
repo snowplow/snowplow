@@ -49,7 +49,7 @@ begin
         when 'postgres'
           loader::PostgresLoader.load_events(config, t)
       end
-    end
+    }
   end
 
   # Archive

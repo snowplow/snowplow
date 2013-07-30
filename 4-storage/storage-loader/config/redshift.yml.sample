@@ -17,4 +17,4 @@
     :table: events
     :username: ADD HERE 
     :password: ADD HERE 
-    :max_error: 1 # Stop loading on first error, or increase to permit more load errors
+    :maxerror: 1 # Stop loading on first error, or increase to permit more load errors

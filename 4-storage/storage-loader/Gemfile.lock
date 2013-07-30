@@ -29,6 +29,5 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  infobright-loader (~> 0.0.1)
   pg (~> 0.14.1)
   sluice (~> 0.0.7)
