@@ -134,7 +134,7 @@ module SnowPlow
       def run()
 
         jobflow_id = @jobflow.run
-        puts "EMR jobflow started, waiting for jobflow to complete..."
+        puts "EMR jobflow #{jobflow_id} started, waiting for jobflow to complete..."
         status = wait_for(jobflow_id)
 
         if !status

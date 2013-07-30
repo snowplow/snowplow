@@ -8,7 +8,7 @@ EmrEtlRunner: bumped Sluice to 0.0.7 (#299)
 EmrEtlRunner: removed :snowplow: section from config.yml.sample (#289)
 EmrEtlRunner: simplified EmrEtlRunner and its config (#287)
 EmrEtlRunner: added run= to timestamped ETL folder names (#294)
-EmrEtlRunner: updated "Jobflow started" stdout message to include jobflow ID (#315) - TODO
+EmrEtlRunner: updated "Jobflow started" stdout message to include jobflow ID (#315)
 Hive ETL: removed folder 3-enrich/hive-etl as no longer supported (#286)
 Hive storage: updated hive-storage scripts to work with current Redshift-format flatfile (#290)
 Infobright: removed folder 4-storage/infobright as not currently supported (#285)
