@@ -106,22 +106,36 @@ public class Parser {
 
   public Referer parse(URI refererUri, String pageHost) {
 
+    // Have to declare up here without `final` due to try/catch scoping
+    String scheme;
+    String host;
+    String path;
+
     // null unless we have a valid http: or https: URI
     if (refererUri == null) return null;
-    final String scheme = refererUri.getScheme();
+
+    try {
+      scheme = refererUri.getScheme();
+      host = refererUri.getHost();
+      path = refererUri.getPath();
+    } catch(Exception e) { // Not a valid URL
+      return null;
+    }
+
     if (scheme == null || (!scheme.equals("http") && !scheme.equals("https"))) return null;
 
     // Internal link if hosts match exactly
     // TODO: would also be nice to:
     // 1. Support a list of other hosts which count as internal
     // 2. Have an algo for stripping subdomains before checking match
-    if (refererUri.getHost().equals(pageHost)) return new Referer(Medium.INTERNAL, null, null);
+    if (host == null) return null; // Not a valid URL
+    if (host.equals(pageHost)) return new Referer(Medium.INTERNAL, null, null);
 
     // Try to lookup our referer. First check with paths, then without.
     // This is the safest way of handling lookups
-    RefererLookup referer = lookupReferer(refererUri.getHost(), refererUri.getPath(), true);
+    RefererLookup referer = lookupReferer(host, path, true);
     if (referer == null) {
-      referer = lookupReferer(refererUri.getHost(), refererUri.getPath(), false);
+      referer = lookupReferer(host, path, false);
     }
 
     if (referer == null) {
