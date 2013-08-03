@@ -21,7 +21,7 @@ module SnowPlow
     module PostgresLoader
 
       # Constants for the load process
-      EVENT_FIELD_SEPARATOR = "\\t"
+      EVENT_FIELD_SEPARATOR = "	"
       NULL_STRING = ""
 
       # Loads the SnowPlow event files into Postgres.
@@ -32,12 +32,13 @@ module SnowPlow
       def load_events(config, target)
         puts "Loading Snowplow events into #{target[:name]} (PostgreSQL database)..."
 
+        # TODO: rebuild this to handle N files
         queries = [
-          "COPY #{target[:table]} FROM '#{config[:download][:folder]}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}'",
+          "COPY #{target[:table]} FROM '#{config[:download][:folder]}/run=2013-08-03-11-54-02/part-00000' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}'",
           "VACUUM FULL ANALYZE #{target[:table]}"
         ]
 
-        status = execute_queries(config, queries)
+        status = execute_queries(target, queries)
         unless status == []
           raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
         end
