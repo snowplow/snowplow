@@ -26,7 +26,7 @@ module SnowPlow
       # Parameters:
       # +target+:: the configuration options for this target
       def load_events(config, target)
-        puts "Loading Snowplow events into Redshift #{target[:name]}..."
+        puts "Loading Snowplow events into #{target[:name]} (Redshift cluster)..."
 
         # Assemble the relevant parameters for the bulk load query
         credentials = "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"

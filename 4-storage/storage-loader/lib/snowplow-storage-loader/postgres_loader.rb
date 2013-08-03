@@ -30,7 +30,7 @@ module SnowPlow
       # +config+:: the hash of configuration options 
       # +target+:: the configuration options for this target
       def load_events(config, target)
-        puts "Loading Snowplow events into PostgreSQL #{target[:name]}..."
+        puts "Loading Snowplow events into #{target[:name]} (PostgreSQL database)..."
 
         queries = [
           "COPY #{target[:table]} FROM '#{config[:download][:folder]}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}'",
