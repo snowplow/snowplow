@@ -21,29 +21,58 @@ module SnowPlow
     module PostgresLoader
 
       # Constants for the load process
+      EVENT_FILES = "part-*"
       EVENT_FIELD_SEPARATOR = "	"
       NULL_STRING = ""
 
       # Loads the SnowPlow event files into Postgres.
       #
       # Parameters:
-      # +config+:: the hash of configuration options 
+      # +events_dir+:: the directory holding the event files to load 
       # +target+:: the configuration options for this target
-      def load_events(config, target)
+      def load_events(events_dir, target)
         puts "Loading Snowplow events into #{target[:name]} (PostgreSQL database)..."
 
-        # TODO: rebuild this to handle N files
-        queries = [
-          "COPY #{target[:table]} FROM '#{config[:download][:folder]}/run=2013-08-03-11-54-02/part-00000' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}'",
-          "VACUUM FULL ANALYZE #{target[:table]}"
-        ]
-
-        status = execute_queries(target, queries)
+        event_files = get_event_files(events_dir)
+        queries = event_files.map { |f|
+          "COPY #{target[:table]} FROM '#{f}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}';"
+        }
+        
+        status = execute_transaction(target, queries)
         unless status == []
           raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
         end
+
+        status = execute_queries(target, [ "VACUUM FULL ANALYZE #{target[:table]};" ] )
+        unless status == []
+          raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
+        end        
       end
       module_function :load_events
+
+      # Converts a set of queries into a
+      # single Redshift read-write
+      # transaction.
+      #
+      # Parameters:
+      # +target+:: the configuration options for this target
+      # +queries+:: the Redshift queries to execute sequentially
+      #
+      # Returns either an empty list on success, or on failure
+      # a list of the form [query, err_class, err_message]      
+      def execute_transaction(target, queries)
+
+        transaction = (
+          [ "BEGIN;" ] +
+          
+          queries +
+          
+          [ "COMMIT;" ]
+        ).join("\n")
+
+        execute_queries(target, [ transaction ])
+      end
+      module_function :execute_transaction
 
       # Execute a chain of SQL commands, stopping as soon as
       # an error is encountered. At that point, it returns a
@@ -79,6 +108,22 @@ module SnowPlow
         return status
       end
       module_function :execute_queries
+
+      private
+
+      # Return the list of event files.
+      #
+      # Parameters:
+      # +events_dir+:: the directory holding the event files to load 
+      #
+      # Returns the array of cold files
+      def get_event_files(events_dir)
+
+        Dir[File.join(events_dir, '**', EVENT_FILES)].select { |f|
+          File.file?(f) # In case of a dir ending in .tsv
+        }
+      end
+      module_function :get_event_files
 
     end
   end
