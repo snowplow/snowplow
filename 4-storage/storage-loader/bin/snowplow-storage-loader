@@ -60,7 +60,7 @@ begin
   # Delete local files if required
   unless config[:skip].include?('delete')
     if config[:download_required]
-      loader::FileTasks.delete_events(config)
+      loader::FileTasks.delete_events(config[:download][:folder])
     end
   end
 
