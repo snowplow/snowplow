@@ -77,6 +77,7 @@ CREATE TABLE "atomic"."events" (
 	-- Custom structured event
 	"se_category" varchar(255),
 	"se_action" varchar(255),
+	"se_label" varchar(255),
 	"se_property" varchar(255),
 	"se_value" double precision,
 	-- Ecommerce
