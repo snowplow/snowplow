@@ -37,7 +37,7 @@ object Dependencies {
     val scalding      = "0.8.5"
     val scalaz7       = "7.0.0"
     val scalaUtil     = "0.1.0"
-    val refererParser = "0.1.0"
+    val refererParser = "0.1.1"
     val maxmindGeoip  = "0.0.5"
     // Scala (test only)
     val specs2        = "1.14"

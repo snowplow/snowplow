@@ -1,6 +1,6 @@
 ## Introduction
 
-As standard, SnowPlow saves your data into S3, in a format suitable for querying using EMR. (E.g. Apache Hive.)
+As standard, Snowplow saves your data into S3, in a format suitable for querying using Hive on EMR.
 
 ## Documentation
 

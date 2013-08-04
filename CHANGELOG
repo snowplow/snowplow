@@ -1,3 +1,29 @@
+Version 0.8.8 (2013-08-XX)
+--------------------------
+JS tracker: moved into own repo (#277)
+Hadoop ETL: bumped to 0.3.3
+Hadoop ETL: URL-decodes "%3D" to "=" to allow Hive-style directory names as arguments (#305)
+Hadoop ETL: bumped referer-parser to 0.1.1 to fix java.lang.NullPointerException (#314)
+EmrEtlRunner: bumped to 0.4.0
+EmrEtlRunner: bumped Sluice to 0.0.7 (#299)
+EmrEtlRunner: removed :snowplow: section from config.yml.sample (#289)
+EmrEtlRunner: simplified EmrEtlRunner and its config (#287)
+EmrEtlRunner: added run= to timestamped ETL folder names (#294)
+EmrEtlRunner: updated "Jobflow started" stdout message to include jobflow ID (#315)
+Hive ETL: removed folder 3-enrich/hive-etl as no longer supported (#286)
+Hive storage: updated hive-storage scripts to work with current Redshift-format flatfile (#290)
+Infobright: removed folder 4-storage/infobright as not currently supported (#285)
+Postgres: add Postgres table definition in atomic schema (#160)
+StorageLoader: bumped to 0.1.0
+StorageLoader: bumped Sluice 0.0.7 (#300)
+StorageLoader: removed code to delete Hive ETL's empty event files (#306)
+StorageLoader: fixed bug where download path has to be set (even when using Redshift) (#280)
+StorageLoader: optimized ANALYZE and VACUUM commands (#283)
+StorageLoader: added MAXERROR as StorageLoader configuration value for Redshift (#273)
+StorageLoader: added support for loading Postgres (#161)
+StorageLoader: removed Infobright loading capability (#307)
+StorageLoader: added support for loading into multiple storage targets (#311)
+
 Version 0.8.7 (2013-07-07)
 --------------------------
 JS tracker: bumped to 0.12.0

@@ -7,3 +7,6 @@
 [submodule "1-trackers/lua-tracker"]
 	path = 1-trackers/lua-tracker
 	url = git@github.com:snowplow/snowplow-lua-tracker.git
+[submodule "1-trackers/javascript-tracker"]
+	path = 1-trackers/javascript-tracker
+	url = https://github.com/snowplow/snowplow-javascript-tracker

@@ -64,7 +64,7 @@ class ScalazArgs(args: Args) {
    */
   def requiredz(key: String): Validation[String, String] = args.list(key) match {
     case List() => "Required argument [%s] not found".format(key).fail
-    case List(a) => a.success
+    case List(a) => decodeEquals(a).success
     case _ => "List of values found for argument [%s], should be one".format(key).fail
   }
 
@@ -77,7 +77,19 @@ class ScalazArgs(args: Args) {
    */
   def optionalz(key: String): Validation[String, Option[String]] = args.list(key) match {
     case List() => None.success
-    case List(a) => Some(a).success
+    case List(a) => Some(decodeEquals(a)).success
     case _ => "List of values found for argument [%s], should be at most one".format(key).fail
   }
+
+  /**
+   * URL-decodes %3D to =
+   * Used to get around Scalding Args which
+   * assumes = is part of an arg=val assignment
+   * @param str An argument string possibly
+   *        containing one or more %3D
+   * @return the incoming argument string, with
+   *         any instance of %3D replaced with =
+   */
+  private def decodeEquals(str: String): String =
+    str.replaceAll("%3D", "=")
 }

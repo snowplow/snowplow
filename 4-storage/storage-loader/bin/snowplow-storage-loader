@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2013 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,51 +12,56 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2013 SnowPlow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2013 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 # Don't edit $LOAD_PATH, go straight to main Ruby file
 require File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'snowplow-storage-loader'))
 loader = SnowPlow::StorageLoader
 
-# This Ruby script runs the SnowPlow StorageLoader.
+# This Ruby script runs the Snowplow StorageLoader.
 #
-# This is a three-step process:
+# This is a four-step process:
 #
-# 1. Download SnowPlow event files from S3 (Infobright only)
+# 1. Download Snowplow event files from S3 (only if 1+ storage targets are local e.g. Postgres)
 # 2. Load SnowPlow event files (either local or remote) into storage target
 # 3. Archive event files in S3
+# 4. Delete local Snowplow event files (only if 1+ storage targets are local e.g. Postgres)
 begin
   config = loader::Config.get_config()
 
-  # Download files - Infobright only
+  # Download files if required
   unless config[:skip].include?('download')
-    if config[:storage][:type] == 'infobright'
+    if config[:download_required]
       loader::S3Tasks.download_events(config)
     end
   end
 
-  # Delete files - Redshift only
-  unless config[:skip].include?('delete')
-    if config[:storage][:type] == 'redshift'
-      loader::S3Tasks.delete_null_events(config)
-    end    
-  end
-
   # If we are not skipping the load, use the appropriate
-  # loader for Redshift or Infobright
+  # loader for Redshift or Postgres
   unless config[:skip].include?('load')
-    case config[:storage][:type]
-      when 'redshift'
-        loader::RedshiftLoader.load_events(config)
-      when 'infobright'
-        loader::IceLoader.load_events(config)
-    end
+
+    # Loop through all targets
+    config[:targets].each { |t|
+      case t[:type]
+        when 'redshift'
+          loader::RedshiftLoader.load_events(config, t)
+        when 'postgres'
+          loader::PostgresLoader.load_events(config[:download][:folder], t)
+      end
+    }
   end
 
   # Archive
   unless config[:skip].include?('archive')
     loader::S3Tasks.archive_events(config)
+  end
+
+  # Delete local files if required
+  unless config[:skip].include?('delete')
+    if config[:download_required]
+      loader::FileTasks.delete_events(config[:download][:folder])
+    end
   end
 
   puts "Completed successfully"

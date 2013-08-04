@@ -14,7 +14,6 @@ GEM
       nokogiri (~> 1.5.0)
       ruby-hmac
     formatador (0.2.4)
-    infobright-loader (0.0.1)
     mime-types (1.21)
     multi_json (1.6.1)
     net-scp (1.0.4)
@@ -23,13 +22,12 @@ GEM
     nokogiri (1.5.6)
     pg (0.14.1)
     ruby-hmac (0.4.0)
-    sluice (0.0.6)
+    sluice (0.0.7)
       fog (~> 1.6.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  infobright-loader (~> 0.0.1)
   pg (~> 0.14.1)
-  sluice (~> 0.0.6)
+  sluice (~> 0.0.7)

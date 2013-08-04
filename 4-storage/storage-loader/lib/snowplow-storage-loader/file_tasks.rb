@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
+# Copyright (c) 2013 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,14 +10,24 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2013 SnowPlow Analytics Ltd
+# Copyright:: Copyright (c) 2013 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-source "https://rubygems.org"
-ruby "1.9.3"
+# Ruby module to support the load of Snowplow events into local databases.
+module SnowPlow
+  module StorageLoader
+    module FileTasks
 
-# ErmEtlRunner is a Ruby app (not a RubyGem)
-# built with Bundler, so we add in the
-# RubyGems it requires here.
-gem "elasticity", "~> 2.5"
-gem "sluice", "~> 0.0.7"
+      # Empties the download folder now that the events
+      # have been loaded
+      #
+      # Parameters:
+      # +folder+:: the folder containing the files to delete 
+      def delete_events(folder)
+        FileUtils.rm_rf("#{folder}/.", :secure => true)
+      end
+      module_function :delete_events
+
+    end
+  end
+end

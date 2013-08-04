@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2013 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2013 SnowPlow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2013 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'optparse'
@@ -27,7 +27,7 @@ module SnowPlow
       # TODO: would be nice to move this to using Kwalify
       # TODO: would be nice to support JSON as well as YAML
 
-      @@storage_targets = Set.new(%w(redshift infobright))
+      @@storage_targets = Set.new(%w(redshift postgres))
 
       # Return the configuration loaded from the supplied YAML file, plus
       # the additional constants above.
@@ -41,15 +41,23 @@ module SnowPlow
 
         # Add trailing slashes if needed to the buckets and download folder
         config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
-        config[:download][:folder] = Sluice::Storage::trail_slash(config[:download][:folder])
-
-        # Check we recognise the storage target 
-        unless @@storage_targets.include?(config[:storage][:type]) 
-          raise ConfigError, "Storage type '#{config[:storage][:type]}' not supported"
+        
+        unless config[:download][:folder].nil? # TODO: remove when Sluice's trail_slash can handle nil
+          config[:download][:folder] = Sluice::Storage::trail_slash(config[:download][:folder])
         end
+
+        config[:targets].each { |t|
+          # Check we recognise the storage target 
+          unless @@storage_targets.include?(t[:type]) 
+            raise ConfigError, "Storage type '#{t[:type]}' not supported"
+          end
+        }
             
+        # Determine whether we need to download events
+        config[:download_required] = config[:targets].count { |t| t[:type] == "postgres" } > 0
+
         # If Infobright is the target, check that the download folder exists and is empty
-        if (config[:storage][:type] == 'infobright')
+        if config[:download_required]
           # Check that the download folder exists...
           unless File.directory?(config[:download][:folder])
             raise ConfigError, "Download folder '#{config[:download][:folder]}' not found"
