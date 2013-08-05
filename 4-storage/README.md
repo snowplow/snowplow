@@ -12,7 +12,7 @@
 |-------------------------------|---------------------------------------------------------------------------|------------------|
 | [s3 / hive-storage] [s1]      | Snowplow events stored in a Hive-compatible flatfile format on Amazon S3  | Production-ready |
 | [redshift-storage] [s3] (1)   | Snowplow events stored in a table in [Amazon Redshift] [redshift]         | Production-ready |
-| [infobright-storage] [s2] (2) | Snowplow events stored in a table in [Infobright Community Edition] [ice], now **deprecated** | Production-ready |
+| [postgres-storage] [s2] (2)   | Snowplow events stored in a table in [PostgreSQL] [postgres]              | Production-ready |
 | [storage-loader] [s4]         | A Ruby application for loading Snowplow events into (1) and (2)           | Production-ready |
 
 ## Find out more
@@ -32,10 +32,10 @@
 [techdocs]: https://github.com/snowplow/snowplow/wiki/storage%20documentation
 
 [redshift]: http://aws.amazon.com/redshift/
-[ice]: http://www.infobright.org
+[postgres]: http://www.postgresql.org/
 
 [s1]: https://github.com/snowplow/snowplow/tree/master/4-storage/hive-storage
-[s2]: https://github.com/snowplow/snowplow/tree/master/4-storage/infobright-storage
+[s2]: https://github.com/snowplow/snowplow/tree/master/4-storage/postgres-storage
 [s3]: https://github.com/snowplow/snowplow/tree/master/4-storage/redshift-storage
 [s4]: https://github.com/snowplow/snowplow/tree/master/4-storage/storage-loader
 
