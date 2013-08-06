@@ -1,8 +1,8 @@
 Version 0.8.9 (2013-08-XX)
 --------------------------
-Redshift: table-def script bumped to 0.2.2
+Redshift: bumped table-def script to 0.2.2
 Redshift: moved events table to a new atomic schema (#301)
-Redshift: migration script added for 0.2.1 to 0.2.2
+Redshift: added migration script for 0.2.1 to 0.2.2
 Redshift: added DDL for reports schema with the basic recipes in view form (#297)                  - TODO
 Redshift: added DDL for feeds schema to support the Excel export (#298)                            - TODO
 Postgres: added DDL for reports schema with the basic recipes in view form (#303)                  - TODO
