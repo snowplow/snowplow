@@ -1,3 +1,13 @@
+Version 0.8.9 (2013-08-XX)
+--------------------------
+Redshift: moved events table to a new atomic schema (#301) - TODO
+Redshift: added DDL for reports schema with the basic recipes in view form (#297) - TODO
+Redshift: added DDL for feeds schema to support the Excel export (#298) - TODO
+Postgres: added DDL for reports schema with the basic recipes in view form (#303) - TODO
+Postgres: added DDL for feeds schema to support the Excel export (#302) - TODO
+Excel: added Excel .xlsx (Office Open XML) template 0.1.0 - TODO
+Excel: wrote Excel VBA to automatically connect to a Snowplow Redshift or Postgres database (#304) - TODO
+
 Version 0.8.8 (2013-08-04)
 --------------------------
 JS tracker: moved into own repo (#277)
