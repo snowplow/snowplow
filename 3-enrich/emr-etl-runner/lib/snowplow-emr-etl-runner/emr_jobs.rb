@@ -13,6 +13,7 @@
 # Copyright:: Copyright (c) 2012-2013 SnowPlow Analytics Ltd
 # License::   Apache License Version 2.0
 
+require 'date'
 require 'set'
 require 'elasticity'
 
@@ -76,24 +77,55 @@ module SnowPlow
         # We only consolidate files on HDFS folder for CloudFront currently
         unless config[:etl][:collector_format] == "cloudfront"
           hadoop_input = config[:s3][:buckets][:processing]
-        
+
         else
           hadoop_input = "hdfs:///local/snowplow-logs"
 
-          # Create the Hadoop MR step for the file crushing
-          filecrush_step = Elasticity::CustomJarStep.new(config[:s3distcp_asset])
+          # If logs are archived and under datestamped directories, create filecrush step for each directory
+          if config[:s3][:archived]
+            # Use config[:start] and config[:end] to determine which directories to process
+            start_date = Date.parse(config[:start])
 
-          filecrush_step.arguments = [
-            "--src"               , config[:s3][:buckets][:processing],
-            "--dest"              , hadoop_input,
-            "--groupBy"           , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
-            "--targetSize"        , "128",
-            "--outputCodec"       , "lzo",
-            "--s3Endpoint"        , config[:s3][:endpoint],
-          ]
+            # Process until today if end is not specified (directories are not checked whether they exist though, but only those steps might fail)
+            end_date = if config[:end] then Date.parse(config[:end]) else Date.today end
 
-          # Add to our jobflow
-          @jobflow.add_step(filecrush_step)
+            date = start_date
+            begin
+              src = "#{config[:s3][:buckets][:processing]}#{date}/"
+
+              # Create a Hadoop MR step for the file crushing of this directory
+              filecrush_step = Elasticity::CustomJarStep.new(config[:s3distcp_asset])
+
+              filecrush_step.arguments = [
+                "--src"               , src,
+                "--dest"              , hadoop_input,
+                "--groupBy"           , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
+                "--targetSize"        , "128",
+                "--outputCodec"       , "lzo",
+                "--s3Endpoint"        , config[:s3][:endpoint],
+              ]
+
+              # Add to our jobflow
+              @jobflow.add_step(filecrush_step)
+
+              date += 1
+            end until date > end_date
+          else
+            # Create the Hadoop MR step for the file crushing
+            filecrush_step = Elasticity::CustomJarStep.new(config[:s3distcp_asset])
+
+            filecrush_step.arguments = [
+              "--src"               , config[:s3][:buckets][:processing],
+              "--dest"              , hadoop_input,
+              "--groupBy"           , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
+              "--targetSize"        , "128",
+              "--outputCodec"       , "lzo",
+              "--s3Endpoint"        , config[:s3][:endpoint],
+            ]
+
+            # Add to our jobflow
+            @jobflow.add_step(filecrush_step)
+          end
         end
 
         # Now create the Hadoop MR step for the jobflow
