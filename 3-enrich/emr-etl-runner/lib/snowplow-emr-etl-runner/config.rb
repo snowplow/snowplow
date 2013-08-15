@@ -51,7 +51,7 @@ module SnowPlow
         end
 
         unless options[:processarchive].nil?
-          config[:s3][:buckets][:processing] = options[:processarchive]
+          config[:s3][:buckets][:processing] = config[:s3][:buckets][:archive]
           config[:s3][:archived] = true
         end
 
@@ -145,8 +145,8 @@ module SnowPlow
             options[:processbucket] = config
             options[:skip] = %w(staging archive)
           }
-          opts.on('-a', '--process-archive BUCKET', 'run emr only on specified archive bucket. Requires --start, implies --skip staging,archive') { |config|
-            options[:processarchive] = config
+          opts.on('-a', '--process-archive', 'run emr only on archive bucket. Requires --start, implies --skip staging,archive') {
+            options[:processarchive] = true
             options[:skip] = %w(staging archive)
           }
 
