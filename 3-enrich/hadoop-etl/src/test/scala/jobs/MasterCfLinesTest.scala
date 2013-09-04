@@ -35,15 +35,16 @@ object MasterCfLinesTest {
   val lines = bad.BadTrackerCfLinesTest.lines ++      // 2 bad
               bad.CorruptedCfLinesTest.lines ++       // 1 bad
               bad.InvalidCfLinesTest.lines ++         // 3 bad  = 6 BAD
+              good.Aug2013CfLineTest.lines ++       // 1 good
               good.PagePingCfLineTest.lines ++        // 1 good
               good.PageViewCfLineTest.lines ++        // 1 good
               good.StructEventCfLineTest.lines ++     // 1 good
               good.TransactionCfLineTest.lines ++     // 1 good
-              good.TransactionItemCfLineTest.lines ++ // 1 good = 5 GOOD
+              good.TransactionItemCfLineTest.lines ++ // 1 good = 6 GOOD
               misc.DiscardableCfLinesTest.lines       // 3 discarded
 
   object expected {
-    val goodCount = 5
+    val goodCount = 6
     val badCount = 6
   }
 }
@@ -56,11 +57,11 @@ object MasterCfLinesTest {
  */
 class MasterCfLinesTest extends Specification with TupleConversions {
 
-  "A job which processes a CloudFront file containing 5 valid events, 6 bad lines and 3 discardable lines" should {
+  "A job which processes a CloudFront file containing 6 valid events, 6 bad lines and 3 discardable lines" should {
     EtlJobTest.
       source(MultipleTextLineFiles("inputFolder"), MasterCfLinesTest.lines).
       sink[String](Tsv("outputFolder")){ output =>
-        "write 5 events" in {
+        "write 6 events" in {
           output.size must_== MasterCfLinesTest.expected.goodCount
         }
       }.
