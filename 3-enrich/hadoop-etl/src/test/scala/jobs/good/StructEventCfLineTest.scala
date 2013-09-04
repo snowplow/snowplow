@@ -36,7 +36,7 @@ import JobTestHelpers._
 object StructEventCfLineTest {
 
   val lines = Lines(
-    "2012-05-27  11:35:53  DFW3  3343  213.52.50.8 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/internal/_session/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=se&se_ca=ecomm&se_ac=add-to-basket&se_la=PBZ00110&se_pr=1&se_va=35708.23&dtm=1364230969450&tid=598951&vp=2560x934&ds=2543x1420&vid=43&duid=9795bd0203804cd1&p=web&tv=js-0.11.1&fp=2876815413&aid=pbzsite&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2F&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=2560x1440&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F119-psycards-book-and-deck-starter-pack.html%3Fview%3Dprint%23detail"
+    "2012-05-27  11:35:53  DFW3  3343  128.232.0.0 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/internal/_session/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=se&se_ca=ecomm&se_ac=add-to-basket&se_la=PBZ00110&se_pr=1&se_va=35708.23&dtm=1364230969450&tid=598951&vp=2560x934&ds=2543x1420&vid=43&duid=9795bd0203804cd1&p=web&tv=js-0.11.1&fp=2876815413&aid=pbzsite&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2F&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=2560x1440&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F119-psycards-book-and-deck-starter-pack.html%3Fview%3Dprint%23detail"
     )
 
   val expected = List(
@@ -52,17 +52,17 @@ object StructEventCfLineTest {
     "cloudfront",
     EtlVersion,
     null, // No user_id set
-    "213.52.50.8",
+    "128.232.0.0",
     "2876815413",
     "9795bd0203804cd1",
     "43",
     null, // No network_userid set
-    "NO", // Norway geo-location
-    "01",
-    "Ås",
+    "GB", // UK geo-location
+    "C3",
+    "Cambridge",
     null,
-    "59.666702",
-    "10.800003",
+    "52.199997",
+    "0.11669922",
     // Raw page URL is discarded 
     null, // No page title for events
     // Raw referer URL is discarded
