@@ -137,8 +137,8 @@ object TrackerPayload {
    * @return the List of NameValuePairs
    */
   private def parseQs(qs: String, encoding: String): List[NameValuePair] = {
-    val deqs = doubleEncodePct(qs)
-    URLEncodedUtils.parse(URI.create("http://localhost/?" + deqs), encoding).toList
+    val dePcts = doubleEncodePcts(qs)
+    URLEncodedUtils.parse(URI.create("http://localhost/?" + dePcts), encoding).toList
   }
 
   /**
@@ -160,32 +160,14 @@ object TrackerPayload {
    * 1. "page=Celestial%2520Tarot" - no change
    * 2. "page=Dreaming%20Way%20Tarot" -> "page=Dreaming%2520Way%2520Tarot"
    *
-   * @param qs The querystring String to double-encode
-   * @param encoding The encoding used this querystring
-   * @return the double-encoded querystring
-   */
-  private[inputs] def doubleEncodePct(qs: String, encoding: String): String = {
-
-
-    val dec = decodeFullyPct(qs, encoding)
-    URLEncoder.encode(URLEncoder.encode(dec, encoding), encoding) // Double-encode
-  }
-
-  /**
-   * Decodes a String fully - in other words, decodes Strings
-   * which have been encoded N-times.
+   * TODO: at a later stage, we can probably move from double-encoding %s,
+   * to single-encoding all %s (i.e. fixing pre-Aug 17th double-encoded %s),
+   * and then removing all decodeString calls in the EnrichmentManager.
    *
-   * Does this by recursively decoding until the decoded String
-   * matches the last version of String (i.e. no more decoding to
-   * do).
-   *
-   * @param qs The querystring String to decode N-times
-   * @param encoding The encoding used this querystring
-   * @return the fully-decoded querystring
+   * @param qs The querystring String to double-encode %s within
+   * @return the querystring with %s double-encoded
    */
-  private def decodeFullyQs(qs: String, encoding: String): String = {
-    val dec = URLDecoder.decode(qs, encoding)
-    if (dec == qs) qs else decodeFullyQs(dec, encoding)
-  }
+  private[inputs] def doubleEncodePcts(qs: String): String =
+    qs.replaceAll("%(?!25)", "%25")
 
 }
