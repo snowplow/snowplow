@@ -14,8 +14,8 @@ package com.snowplowanalytics.snowplow.enrich.hadoop
 package utils
 
 // Java
-import java.net.URLDecoder
 import java.net.URI
+import java.net.URLDecoder
 import java.lang.{Integer => JInteger}
 import java.math.{BigDecimal => JBigDecimal}
 import java.lang.{Byte => JByte}
