@@ -1,7 +1,7 @@
 Version 0.8.9 (2013-09-05)
 --------------------------
 Hadoop ETL: bumped to 0.3.4
-Hadoop ETL: updated to only double-decode CloudFront fields if they were double-decoded by Amazon (#333) - TODO
+Hadoop ETL: updated to handle singly-encoded %s in CloudFront querystring field (#333)
 
 Version 0.8.8 (2013-08-04)
 --------------------------

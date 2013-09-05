@@ -36,7 +36,7 @@ import JobTestHelpers._
 object Aug2013CfLineTest {
 
   val lines = Lines(
-    "2013-08-29	00:18:48	LAX3	830	173.51.104.164	GET	d3v6ndkyapxc2w.cloudfront.net	/i	200	http://snowplowanalytics.com/analytics/index.html	Mozilla/5.0%20(Windows%20NT%205.1;%20rv:23.0)%20Gecko/20100101%20Firefox/23.0	e=pv&page=Introduction%20-%20Snowplow%20Analytics&dtm=1377735557970&tid=567074&vp=1024x635&ds=1024x635&vid=1&duid=7969620089de36eb&p=web&tv=js-0.12.0&fp=308909339&aid=snowplowweb&lang=en-US&cs=UTF-8&tz=America%2FLos_Angeles&refr=http%3A%2F%2Fwww.metacrawler.com%2Fsearch%2Fweb%3Ffcoid%3D417%26fcop%3Dtopnav%26fpid%3D27%26q%3Dsnowplow%2Banalytics%26ql%3D&f_pdf=1&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1024x768&cd=24&cookie=1&url=http%3A%2F%2Fsnowplowanalytics.com%2Fanalytics%2Findex.html	-	Hit	wQ1OBZtQlGgfM_tPEJ-lIQLsdra0U-lXgmfJfwja2KAV_SfTdT3lZg=="
+    "2013-08-29	00:18:48	LAX3	830	255.255.255.255	GET	d3v6ndkyapxc2w.cloudfront.net	/i	200	http://snowplowanalytics.com/analytics/index.html	Mozilla/5.0%20(Windows%20NT%205.1;%20rv:23.0)%20Gecko/20100101%20Firefox/23.0	e=pv&page=Introduction%20-%20Snowplow%20Analytics&dtm=1377735557970&tid=567074&vp=1024x635&ds=1024x635&vid=1&duid=7969620089de36eb&p=web&tv=js-0.12.0&fp=308909339&aid=snowplowweb&lang=en-US&cs=UTF-8&tz=America%2FLos_Angeles&refr=http%3A%2F%2Fwww.metacrawler.com%2Fsearch%2Fweb%3Ffcoid%3D417%26fcop%3Dtopnav%26fpid%3D27%26q%3Dsnowplow%2Banalytics%26ql%3D&f_pdf=1&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1024x768&cd=24&cookie=1&url=http%3A%2F%2Fsnowplowanalytics.com%2Fanalytics%2Findex.html	-	Hit	wQ1OBZtQlGgfM_tPEJ-lIQLsdra0U-lXgmfJfwja2KAV_SfTdT3lZg=="
     )
 
   val expected = List(
@@ -53,8 +53,8 @@ object Aug2013CfLineTest {
     EtlVersion,
     null, // No user_id set
     "255.255.255.255",
-    "1640945579",
-    "132e226e3359a9cd",
+    "308909339",
+    "7969620089de36eb",
     "1",
     null, // No network_userid set
     null, // No geo-location for this IP address
@@ -64,28 +64,28 @@ object Aug2013CfLineTest {
     null,
     null,
     // Raw page URL is discarded 
-    "Tarot cards - Psychic Bazaar",
+    "Introduction - Snowplow Analytics",
     // Raw referer URL is discarded
     "http",
-    "www.psychicbazaar.com",
+    "snowplowanalytics.com",
     "80",
-    "/2-tarot-cards/genre/all/type/all",
-    "utm_source=google&utm_medium=cpc&utm_term=buy+tarot&utm_campaign=spring_sale",
+    "/analytics/index.html",
+    null,
     null,
     "http",
-    "www.psychicbazaar.com",
+    "www.metacrawler.com",
     "80",
-    "/2-tarot-cards/genre/all/type/all",
-    "n=48",
+    "/search/web",
+    "fcoid=417&fcop=topnav&fpid=27&q=snowplow+analytics&ql=",
     null,
-    "internal", // Internal referer
-    null,
-    null,
-    "cpc",
-    "google",
-    "buy tarot",
-    null,
-    "spring_sale",
+    "search", // Search referer
+    "InfoSpace",
+    "snowplow analytics",
+    null, // Marketing campaign fields empty
+    null, //
+    null, //
+    null, //
+    null, //
     null, // Event fields empty
     null, //
     null, //
@@ -105,41 +105,41 @@ object Aug2013CfLineTest {
     null, //
     null, //
     null, //
-    "21",  // Page ping fields are set
-    "214", //
-    "251", //
-    "517", //
-    "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22",
-    "Chrome",
-    "Chrome",
-    "25.0.1364.172", // Yech. We need to upgrade our UA library
+    null, // Page ping fields empty
+    null, //
+    null, //
+    null, //
+    "Mozilla/5.0 (Windows NT 5.1; rv:23.0) Gecko/20100101 Firefox/23.0",
+    "Firefox 2",
+    "Firefox",
+    "23.0",
     "Browser",
-    "WEBKIT",
-    "pt-BR",
+    "GECKO",
+    "en-US",
     "1",
     "1",
     "1",
     "0",
+    "1",
     "0",
     "1",
     "0",
     "0",
     "1",
-    "1",
-    "32",
-    "1366",
-    "630",
+    "24",
+    "1024",
+    "635",
     "Windows",
     "Windows",
     "Microsoft Corporation",
-    "America/Sao_Paulo",
+    "America/Los_Angeles",
     "Computer",
     "0",
-    "1366",
+    "1024",
     "768",
     "UTF-8",
-    "1349",
-    "3787"
+    "1024",
+    "635"
     )
 }
 
