@@ -27,6 +27,6 @@
     :task_instance_bid: 0.015 # In USD. Adjust bid, or leave blank for non-spot-priced (i.e. on-demand) task instances
 :etl:
   :job_name: SnowPlow ETL # Give your job a name
-  :hadoop_etl_version: 0.3.3 # Version of the Hadoop ETL
+  :hadoop_etl_version: 0.3.4 # Version of the Hadoop ETL
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
   :continue_on_unexpected_error: false # You can switch to 'true' (and set :out_errors: above) if you really don't want the ETL throwing exceptions
