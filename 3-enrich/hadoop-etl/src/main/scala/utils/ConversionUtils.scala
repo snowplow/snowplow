@@ -76,6 +76,17 @@ object ConversionUtils {
   }
 
   /**
+   * Quick helper to make sure our Strings are TSV-safe,
+   * i.e. don't include tabs, special characters, newlines
+   * etc.
+   *
+   * @param str The string we want to make safe
+   * @return a safe String
+   */
+  def makeTsvSafe(str: String): String =
+    fixTabsNewlines(str).orNull
+
+  /**
    * Replaces tabs with four spaces and removes
    * newlines altogether.
    *

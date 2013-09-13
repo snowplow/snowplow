@@ -30,22 +30,28 @@ import org.joda.time.format.DateTimeFormat
 object EventEnrichments {
 
   /**
-   * The Tracker Protocol's pattern
-   * for a timestamp - for details see:
-   *
-   * https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol#wiki-common-params
+   * A Redshift-compatible timestamp format
    */
   private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").withZone(DateTimeZone.UTC)
 
   /**
    * Converts a Joda DateTime into
-   * a timestamp String.
+   * a Redshift-compatible timestamp String.
    *
    * @param datetime The Joda DateTime
    *        to convert to a timestamp String
    * @return the timestamp String
    */
   def toTimestamp(datetime: DateTime): String = TstampFormat.print(datetime)
+
+   /**
+    * Converts a Redshift-compatible timestamp String
+    * back into a Joda DateTime.
+    *
+    * @param timestamp The timestamp String to convert
+    * @return the Joda DateTime
+    */
+  def fromTimestamp(timestamp: String): DateTime = TstampFormat.parseDateTime(timestamp)
 
   /**
    * Extracts the timestamp from the
