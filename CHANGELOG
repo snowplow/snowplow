@@ -9,6 +9,12 @@ Hadoop ETL: added support for 3 and 4 return values from MapTransformer (#324)
 Hadoop ETL: updated GetJsonPayload to use Argonaut and renamed to JsonPayload (#339)
 Hadoop ETL: added ability to mask IP addresses in ETL (#309) - TODO
 Also TODO: tests for how fixNewlines works
+EmrEtlRunner: bumped to 0.4.1 - TODO
+EmrEtlRunner: bumped Sluice to 0.1.3 (#96) - TODO
+EmrEtlRunner: TODO
+StorageLoader: bumped to 0.1.1 - TODO
+StorageLoader: bumped Sluice to 0.1.3 (#96) - TODO
+StorageLoader: TODO
 
 Version 0.8.9 (2013-09-05)
 --------------------------
