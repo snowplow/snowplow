@@ -169,6 +169,19 @@ object MapTransformer {
                 setters(f1).invoke(obj, result._1)
                 setters(f2).invoke(obj, result._2)
                 2.success[String] // +2 to the count of fields successfully set
+              case Tuple3(f1: String, f2: String, f3: String) =>
+                val result = s.asInstanceOf[Tuple3[AnyRef, AnyRef, AnyRef]]
+                setters(f1).invoke(obj, result._1)
+                setters(f2).invoke(obj, result._2)
+                setters(f3).invoke(obj, result._3)
+                3.success[String] // +3 to the count of fields successfully set
+              case Tuple4(f1: String, f2: String, f3: String, f4: String) =>
+                val result = s.asInstanceOf[Tuple4[AnyRef, AnyRef, AnyRef, AnyRef]]
+                setters(f1).invoke(obj, result._1)
+                setters(f2).invoke(obj, result._2)
+                setters(f3).invoke(obj, result._3)
+                setters(f4).invoke(obj, result._4)
+                4.success[String] // +4 to the count of fields successfully set
             }
           case Failure(e) =>
             e.fail[Int]

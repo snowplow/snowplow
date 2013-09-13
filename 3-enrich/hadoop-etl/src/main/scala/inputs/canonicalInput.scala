@@ -31,6 +31,9 @@ import org.apache.http.client.utils.URLEncodedUtils
 // Joda-Time
 import org.joda.time.DateTime
 
+// Argonaut
+import argonaut.Json
+
 /**
  * The canonical input format for the ETL
  * process: it should be possible to
@@ -77,13 +80,11 @@ trait GetPayload extends TrackerPayload
 case class NVGetPayload(payload: NameValueNel) extends GetPayload
 
 /**
- * A tracker payload for a single event, delivered
- * via a data= parameter on the querystring of a GET.
+ * A tracker payload for a single event, expressed
+ * as JSON.
  *
- * TODO: can we define payload with something other
- * than a String?
  */
-case class JsonGetPayload(payload: String) extends GetPayload
+case class JsonPayload(payload: Json) extends TrackerPayload
 
 /**
  * A companion object which holds

@@ -5,6 +5,10 @@ Hadoop ETL: added Argonaut 6.0 as a dependency (#342)
 Hadoop ETL: added fromTimestamp to EventEnrichments (#340)
 Hadoop ETL: added makeTsvSafe to ConversionUtils (#338)
 Hadoop ETL: added JsonUtils (#323)
+Hadoop ETL: added support for 3 and 4 return values from MapTransformer (#324)
+Hadoop ETL: updated GetJsonPayload to use Argonaut and renamed to JsonPayload (#339)
+Hadoop ETL: added ability to mask IP addresses in ETL (#309) - TODO
+Also TODO: tests for how fixNewlines works
 
 Version 0.8.9 (2013-09-05)
 --------------------------
