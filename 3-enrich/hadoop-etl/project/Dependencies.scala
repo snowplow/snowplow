@@ -36,6 +36,7 @@ object Dependencies {
     // Scala
     val scalding      = "0.8.5"
     val scalaz7       = "7.0.0"
+    val argonaut      = "6.0"
     val scalaUtil     = "0.1.0"
     val refererParser = "0.1.1"
     val maxmindGeoip  = "0.0.5"
@@ -63,6 +64,7 @@ object Dependencies {
     val scaldingCore  = "com.twitter"                %% "scalding-core"       % V.scalding
     val scaldingArgs  = "com.twitter"                %% "scalding-args"       % V.scalding
     val scalaz7       = "org.scalaz"                 %% "scalaz-core"         % V.scalaz7
+    val argonaut      = "io.argonaut"                %% "argonaut"            % V.argonaut
     val scalaUtil     = "com.snowplowanalytics"      %  "scala-util"          % V.scalaUtil
     val refererParser = "com.snowplowanalytics"      %  "referer-parser"      % V.refererParser
     val maxmindGeoip  = "com.snowplowanalytics"      %% "scala-maxmind-geoip" % V.maxmindGeoip
