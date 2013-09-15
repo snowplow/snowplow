@@ -23,9 +23,9 @@ EmrEtlRunner: added ability to mask IP addresses in ETL (#309) - TODO
 StorageLoader: bumped to 0.1.1
 StorageLoader: bumped Sluice to 0.1.3 (#96)
 StorageLoader: fixed "\" in fields acts as an escape character for Postgres (#329) - TODO
-StorageLoader: added ability to --skip analyze (#335) - TODO
-StorageLoader: moved VACUUM SORT ONLY to a --include step (#321) - TODO
-StorageLoader: added COMPROWS to config and --include compupdate option (#344) - TODO
+StorageLoader: added ability to --skip analyze (#335)
+StorageLoader: moved VACUUM SORT ONLY to a --include step (#321)
+StorageLoader: added COMPROWS to config and --include compupdate option (#344)
 
 Version 0.8.9 (2013-09-05)
 --------------------------

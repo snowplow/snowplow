@@ -30,11 +30,22 @@ module SnowPlow
 
         # Assemble the relevant parameters for the bulk load query
         credentials = "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
+        comprows = if config[:include].include?('compudate')
+                     "COMPROWS #{config[:comprows]}"
+                   else
+                     ""
+                   end
+
+        # Build the Array of queries we will run
         queries = [
-          "COPY #{target[:table]} FROM '#{config[:s3][:buckets][:in]}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{target[:maxerror]} EMPTYASNULL",
-          "ANALYZE #{target[:table]}",
-          "VACUUM SORT ONLY #{target[:table]}"
+          "COPY #{target[:table]} FROM '#{config[:s3][:buckets][:in]}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{target[:maxerror]} EMPTYASNULL #{comprows}",
         ]
+        unless config[:skip].include?('analyze')
+          queries << "ANALYZE #{target[:table]}"
+        end
+        if config[:include].include?('vacuum')
+          queries << "VACUUM SORT ONLY #{target[:table]}"
+        end
 
         status = PostgresLoader.execute_queries(target, queries)
         unless status == []
