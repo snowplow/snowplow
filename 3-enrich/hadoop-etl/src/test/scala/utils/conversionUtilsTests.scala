@@ -62,6 +62,7 @@ class FixTabsNewlines extends Specification with DataTables {
     "Empty string"              !! ""                              ! None                                       |
     "String with true-tab"      !! "	"                            ! SafeTab.some                               |
     "String with \\t"           !! "\t"                            ! SafeTab.some                               |
+    "String with \\\\t"         !! "\\\t"                          ! "\\%s".format(SafeTab).some                |
     "String with \\b"           !! "\b"                            ! None                                       |
     "String ending in newline"  !! "Hello\n"                       ! "Hello".some                               |
     "String with control char"  !! "\u0002"                        ! None                                       |
