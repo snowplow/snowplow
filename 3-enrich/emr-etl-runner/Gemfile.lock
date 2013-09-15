@@ -2,7 +2,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     builder (3.1.4)
-    elasticity (2.5.3)
+    elasticity (2.6)
       fog
       nokogiri
       rest-client
@@ -27,12 +27,13 @@ GEM
     rest-client (1.6.7)
       mime-types (>= 1.16)
     ruby-hmac (0.4.0)
-    sluice (0.0.7)
+    sluice (0.1.3)
+      contracts (~> 0.2.3)
       fog (~> 1.6.0)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  elasticity (~> 2.5)
-  sluice (~> 0.0.7)
+  elasticity (~> 2.6)
+  sluice (~> 0.1.3)
