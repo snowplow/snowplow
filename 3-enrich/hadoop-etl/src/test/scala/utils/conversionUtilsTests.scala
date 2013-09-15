@@ -16,14 +16,15 @@ package utils
 // Java
 import java.net.URI
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 // Specs2
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-/**
- * Tests the explodeUri function
- */
 class ExplodeUriTest extends Specification with DataTables {
 
   def is =
@@ -46,6 +47,29 @@ class ExplodeUriTest extends Specification with DataTables {
         val expected = ConversionUtils.UriComponents(scheme, host, port, path, query, fragment)       
         actual  must_== expected
       }
+    }
+}
+
+class FixTabsNewlines extends Specification with DataTables {
+
+  val SafeTab = "    "
+
+  def is =
+    "Replacing tabs, newlines and control characters with fixTabsNewlines should work" ! e1
+
+  def e1 =
+    "SPEC NAME"                 || "INPUT STR"                     | "EXPECTED"                                 |
+    "Empty string"              !! ""                              ! None                                       |
+    "String with true-tab"      !! "	"                            ! SafeTab.some                               |
+    "String with \\t"           !! "\t"                            ! SafeTab.some                               |
+    "String with \\b"           !! "\b"                            ! None                                       |
+    "String ending in newline"  !! "Hello\n"                       ! "Hello".some                               |
+    "String with control char"  !! "\u0002"                        ! None                                       |
+    "String with space"         !! "\u0020"                        ! " ".some                                   |
+    "String with black diamond" !! "�"                             ! "�".some                                   |
+    "String with everything"    !! "Hi	\u0002�\u0020\bJo\t\u0002" ! "Hi%s� Jo%s".format(SafeTab, SafeTab).some |> {
+      (_, str, expected) =>
+        ConversionUtils.fixTabsNewlines(str) must_== expected
     }
 }
 
