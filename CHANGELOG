@@ -15,11 +15,10 @@ Also TODO: tests for how fixNewlines works
 EmrEtlRunner: bumped to 0.5.0
 EmrEtlRunner: bumped Sluice to 0.1.3 (#96)
 EmrEtlRunner: bumped Elasticity to 2.6 (#345)
-EmrEtlRunner: enabled EMR Job Flow debugging for easier access to logs (#279) - TODO
-EmrEtlRunner: added ability to mask IP addresses in ETL (#309) - TODO
-EmrEtlRunner: ETL job no longer fails if there's no data for last run period (#296) - TODO
-EmrEtlRunner: replaced custom `wait_for` in EmrEtlRunner with new Elasticity feature (#322) - TODO
+EmrEtlRunner: enabled EMR Job Flow debugging for easier access to logs (#279)
+EmrEtlRunner: ETL job no longer fails if there's no data for last run period (#296)
 EmrEtlRunner: empty processing dir check doesn't seem to work if processing dir is a sub-folder (#326) - TODO
+EmrEtlRunner: added ability to mask IP addresses in ETL (#309) - TODO
 
 StorageLoader: bumped to 0.1.1
 StorageLoader: bumped Sluice to 0.1.3 (#96)

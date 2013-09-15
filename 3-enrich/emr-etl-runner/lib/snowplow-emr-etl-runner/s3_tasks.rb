@@ -71,12 +71,17 @@ module SnowPlow
           end
         }
 
-        Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move, strip_underscore, true)
+        files_moved = Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move, strip_underscore, true)
 
-        # Wait for s3 to eventually become consistant
-        puts "Waiting a minute to allow S3 to settle (eventual consistency)"
-        sleep(60)
+        if files_moved = 0
+          false
+        else
+          # Wait for s3 to eventually become consistant
+          puts "Waiting a minute to allow S3 to settle (eventual consistency)"
+          sleep(60)
 
+          true
+        end
       end
       module_function :stage_logs_for_emr
 

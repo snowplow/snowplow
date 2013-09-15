@@ -43,6 +43,7 @@ module SnowPlow
         @jobflow.ec2_key_name = config[:emr][:ec2_key_name]
         @jobflow.placement = config[:emr][:placement]
         @jobflow.log_uri = config[:s3][:buckets][:log]
+        @jobflow.enable_debugging = config[:debug] || false
 
         # Add extra configuration
         if config[:emr][:jobflow].respond_to?(:each)
@@ -145,7 +146,7 @@ module SnowPlow
       end
 
       # Wait for a jobflow.
-      # Check its status every 2 minutes till it completes.
+      # Check its status every 5 minutes till it completes.
       #
       # Parameters:
       # +jobflow_id+:: the ID of the EMR job we wait for
@@ -171,7 +172,7 @@ module SnowPlow
             sleep(120)
 
           rescue SocketError => se
-            puts "Got socket error #{se}, waiting 2 minutes before checking jobflow again"
+            puts "Got socket error #{se}, waiting 5 minutes before checking jobflow again"
             sleep(300)
           end
         end
