@@ -31,7 +31,7 @@ module SnowPlow
         # Assemble the relevant parameters for the bulk load query
         credentials = "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
         comprows = if config[:include].include?('compudate')
-                     "COMPROWS #{config[:comprows]}"
+                     "COMPUPDATE COMPROWS #{config[:comprows]}"
                    else
                      ""
                    end
