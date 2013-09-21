@@ -15,7 +15,7 @@ package utils
 
 // Java
 import java.lang.{Integer => JInteger}
-import java.lang.{Float => JFloat}
+import java.lang.{Double => JDouble}
 import java.lang.{Byte => JByte}
 
 // Scalaz
@@ -108,16 +108,16 @@ object JsonUtils {
   }
 
   /**
-   * Extracts a JSON field as a JFloat
+   * Extracts a JSON field as a JDouble
    *
    * @param field The name of the field being processed
-   * @param json The Json object hopefully containing a Float
-   * @return a Scalaz Validation[String, JFloat]
+   * @param json The Json object hopefully containing a Double
+   * @return a Scalaz Validation[String, JDouble]
    */
-  val asJFloat: (String, Json) => Validation[String, JFloat] = (field, json) => {
+  val asJDouble: (String, Json) => Validation[String, JDouble] = (field, json) => {
     json.number match {
-      case Some(num) => (num.toFloat: JFloat).success // May silently round or truncate
-      case None => "JSON field [%s]: [%s] is not extractable as a JFloat".format(field, json).fail
+      case Some(num) => (num.toDouble: JDouble).success // May silently round or truncate
+      case None => "JSON field [%s]: [%s] is not extractable as a JDouble".format(field, json).fail
     }
   }
 }
