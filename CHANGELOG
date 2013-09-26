@@ -1,4 +1,4 @@
-Version 0.8.10 (2013-09-XX)
+Version 0.8.10 (2013-10-XX)
 ---------------------------
 Hadoop ETL: bumped to 0.3.5
 Hadoop ETL: added Argonaut 6.0 as a dependency (#342)
