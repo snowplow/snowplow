@@ -31,6 +31,6 @@
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
   :continue_on_unexpected_error: false # You can switch to 'true' (and set :out_errors: above) if you really don't want the ETL throwing exceptions
 :enrichments:
-  :ip_anon:
+  :anon_ip:
     :enabled: false
     :anon_octets: 1 # Or 2, 3 or 4. 0 is same as enabled: false
