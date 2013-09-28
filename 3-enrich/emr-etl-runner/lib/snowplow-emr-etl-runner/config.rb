@@ -102,6 +102,14 @@ module SnowPlow
                         end
         config[:etl][:continue_on_unexpected_error] = continue_on # Heinous mutability
 
+        # Now let's handle the enrichments.
+        anon_octets = if config[:enrichments][:anon_ip][:enabled]
+                        config[:enrichments][:anon_ip][:anon_octets]
+                      else
+                        '0' # Anonymize 0 quartets == anonymization disabled
+                      end
+        config[:enrichments][:anon_ip_octets] = anon_octets
+
         config
       end
       module_function :get_config
