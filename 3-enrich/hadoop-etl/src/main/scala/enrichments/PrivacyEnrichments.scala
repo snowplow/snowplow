@@ -48,6 +48,10 @@ object PrivacyEnrichments {
    * anonymizeIp("94.15.223.151", Three)
    * => "94.x.x.x"
    *
+   * TODO: potentially update this to return
+   * a Validation error or a null if the IP
+   * address is somehow invalid or incomplete.
+   *
    * @param ip The IP address to anonymize
    * @param quartets The number of quartets
    *        to anonymize
