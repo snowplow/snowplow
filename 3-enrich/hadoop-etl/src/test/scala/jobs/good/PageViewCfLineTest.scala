@@ -52,7 +52,7 @@ object PageViewCfLineTest {
     "clj-0.5.0-tom-0.0.4",
     EtlVersion,
     null, // No user_id set
-    "128.232.0.0",
+    "128.232.0.x",
     "2876815413",
     "9795bd0203804cd1",
     "41",
@@ -152,7 +152,7 @@ object PageViewCfLineTest {
 class PageViewCfLineTest extends Specification with TupleConversions {
 
   "A job which processes a CloudFront file containing 1 valid page view event" should {
-    EtlJobTest.
+    EtlJobTest("1"). // Anonymize 1 IP address quartet
       source(MultipleTextLineFiles("inputFolder"), PageViewCfLineTest.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page view" in {

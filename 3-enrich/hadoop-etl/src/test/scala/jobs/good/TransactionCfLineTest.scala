@@ -52,7 +52,7 @@ object TransactionCfLineTest {
     "clj-0.3.0-tom-0.0.2",
     EtlVersion,
     null, // No user_id set
-    "128.232.0.0",
+    "x.x.x.x",
     null, // Not set (legacy input line)
     "a279872d76480afb",
     "1",
@@ -152,7 +152,7 @@ object TransactionCfLineTest {
 class TransactionCfLineTest extends Specification with TupleConversions {
 
   "A job which processes a CloudFront file containing 1 valid transaction" should {
-    EtlJobTest.
+    EtlJobTest("4").
       source(MultipleTextLineFiles("inputFolder"), TransactionCfLineTest.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 transaction" in {

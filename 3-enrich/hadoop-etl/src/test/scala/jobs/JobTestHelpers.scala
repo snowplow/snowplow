@@ -81,12 +81,13 @@ object JobTestHelpers {
   implicit def Lines2ScaldingLines(lines : Lines): ScaldingLines = lines.numberedLines 
 
   // Standard JobTest definition used by all integration tests
-  val EtlJobTest = 
+  val EtlJobTest: String => JobTest = anonQuartets => 
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob").
       arg("input_folder", "inputFolder").
       arg("input_format", "cloudfront").
       arg("maxmind_file", "-"). // Not needed when running locally, but error if not set
       arg("output_folder", "outputFolder").
       arg("bad_rows_folder", "badFolder").
+      arg("anon_ip_quartets", anonQuartets).
       arg("exceptions_folder", "exceptionsFolder")
 }

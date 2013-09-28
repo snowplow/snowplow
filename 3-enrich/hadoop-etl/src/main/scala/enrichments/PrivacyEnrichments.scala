@@ -27,12 +27,14 @@ object PrivacyEnrichments {
    * How many quartets to anonymize?
    */
   object AnonQuartets extends Enumeration {
+
     type AnonQuartets = Value
-    val None  = Value(0)
-    val One   = Value(1)
-    val Two   = Value(2)
-    val Three = Value(3)
-    val All   = Value(4)
+    
+    val None  = Value(0, "0")
+    val One   = Value(1, "1")
+    val Two   = Value(2, "2")
+    val Three = Value(3, "3")
+    val All   = Value(4, "4")
   }
 
   /**

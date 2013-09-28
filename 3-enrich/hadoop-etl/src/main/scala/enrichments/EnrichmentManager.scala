@@ -37,8 +37,10 @@ import enrichments.{EventEnrichments => EE}
 import enrichments.{MiscEnrichments => ME}
 import enrichments.{ClientEnrichments => CE}
 import enrichments.{GeoEnrichments => GE}
-import web.{PageEnrichments => PE}
-import web.{AttributionEnrichments => AE}
+import enrichments.{PrivacyEnrichments => PE}
+import PE.AnonQuartets.AnonQuartets
+import web.{PageEnrichments => WPE}
+import web.{AttributionEnrichments => WAE}
 
 /**
  * A module to hold our enrichment process.
@@ -58,7 +60,7 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  def enrichEvent(geo: IpGeo, raw: CanonicalInput): ValidatedCanonicalOutput = {
+  def enrichEvent(geo: IpGeo, anonQuartets: AnonQuartets, raw: CanonicalInput): ValidatedCanonicalOutput = {
 
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
@@ -83,7 +85,7 @@ object EnrichmentManager {
       e.event_vendor = "com.snowplowanalytics" // TODO: this should be moved to Tracker Protocol
       e.v_collector = raw.source.collector // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion
-      raw.ipAddress.map(ip => e.user_ipaddress = ip)
+      raw.ipAddress.map(ip => e.user_ipaddress = PE.anonymizeIp(ip, anonQuartets))
     }
 
     // 2. Enrichments which can fail
@@ -202,7 +204,7 @@ object EnrichmentManager {
     val transform = event.transform(sourceMap, transformMap)
 
     // Potentially update the page_url and set the page URL components
-    val pageUri = PE.extractPageUri(raw.refererUri, Option(event.page_url))
+    val pageUri = WPE.extractPageUri(raw.refererUri, Option(event.page_url))
     for (uri <- pageUri; u <- uri) {
       // Update the page_url
       event.page_url = u.toString
@@ -218,7 +220,7 @@ object EnrichmentManager {
     }
 
     // Get the geo-location from the IP address
-    val geoLocation = GE.extractGeoLocation(geo, event.user_ipaddress)
+    val geoLocation = GE.extractGeoLocation(geo, raw.ipAddress.orNull)
     for (loc <- geoLocation; l <- loc) {
       event.geo_country = l.countryCode
       event.geo_region = l.region.orNull
@@ -242,7 +244,7 @@ object EnrichmentManager {
       event.refr_urlfragment = components.fragment.orNull
 
       // Set the referrer details
-      for (refr <- AE.extractRefererDetails(u, event.page_urlhost)) {
+      for (refr <- WAE.extractRefererDetails(u, event.page_urlhost)) {
         event.refr_medium = refr.medium.toString
         event.refr_source = refr.source.orNull
         event.refr_term = refr.term.orNull
@@ -254,7 +256,7 @@ object EnrichmentManager {
       e => unitSuccessNel, // No fields updated
       uri => uri match {
         case Some(u) =>
-          AE.extractMarketingFields(u, raw.encoding).flatMap(cmp => {
+          WAE.extractMarketingFields(u, raw.encoding).flatMap(cmp => {
             event.mkt_medium = cmp.medium
             event.mkt_source = cmp.source
             event.mkt_term = cmp.term

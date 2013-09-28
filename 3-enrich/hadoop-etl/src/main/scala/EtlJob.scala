@@ -33,6 +33,7 @@ import inputs.CollectorLoader
 import enrichments.EnrichmentManager
 import outputs.CanonicalOutput
 import utils.FileUtils
+import enrichments.PrivacyEnrichments.AnonQuartets.AnonQuartets
 
 /**
  * Holds constructs to help build the ETL job's data
@@ -53,9 +54,9 @@ object EtlJob {
    *         flatMap, will include any validation errors
    *         contained within the ValidatedMaybeCanonicalInput
    */
-  def toCanonicalOutput(geo: IpGeo, input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
+  def toCanonicalOutput(geo: IpGeo, anonQuartets: AnonQuartets, input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
     input.flatMap {
-      _.cata(EnrichmentManager.enrichEvent(geo, _).map(_.some),
+      _.cata(EnrichmentManager.enrichEvent(geo, anonQuartets, _).map(_.some),
              none.success)
     }
   }
@@ -140,7 +141,7 @@ class EtlJob(args: Args) extends Job(args) {
   // Scalding data pipeline
   val common = trappableInput
     .map('line -> 'output) { l: String =>
-      EtlJob.toCanonicalOutput(ipGeo, loader.toCanonicalInput(l))
+      EtlJob.toCanonicalOutput(ipGeo, etlConfig.anonQuartets, loader.toCanonicalInput(l))
     }
 
   // Handle bad rows

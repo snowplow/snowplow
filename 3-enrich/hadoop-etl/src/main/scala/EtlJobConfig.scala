@@ -14,6 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.hadoop
 
 // Java
 import java.net.URI
+import java.util.NoSuchElementException
 
 // Scalaz
 import scalaz._
@@ -25,7 +26,8 @@ import com.twitter.scalding.Args
 // This project
 import utils.ScalazArgs
 import utils.ConversionUtils
-import enrichments.PrivacyEnrichments._
+import enrichments.PrivacyEnrichments.AnonQuartets
+import AnonQuartets._
 
 /**
  * The configuration for the SnowPlowEtlJob.
@@ -36,7 +38,7 @@ case class EtlJobConfig(
     maxmindFile: URI,
     outFolder: String,
     badFolder: String,
-    anonIpQuartets: AnonQuartets,
+    anonQuartets: AnonQuartets,
     exceptionsFolder: Option[String])
 
 /**
@@ -75,13 +77,11 @@ object EtlJobConfig {
    * @return a Validation-boxed AnonQuartets
    */
   private def getAnonQuartets(anonQuartets: String): Validation[String, AnonQuartets] = {
-
-    anonQuartets.parseInt.flatMap(q => try {
-
-      catch => {
-
-      })
-
+    try {
+      AnonQuartets.withName(anonQuartets).success
+    } catch {
+      case nse: NoSuchElementException => "IP address quartets to anonymize must be 0, 1, 2, 3 or 4".fail
+    }
   }
 
   /**
@@ -101,9 +101,9 @@ object EtlJobConfig {
     val maxmindFile = args.requiredz("maxmind_file").flatMap(f => getMaxmindUri(f))
     val outFolder = args.requiredz("output_folder")
     val badFolder = args.requiredz("bad_rows_folder")
-    val anonIpQuartets = args.requiredz("anon_ip_quartets").flatMap(q => getAnonQuartets(q))
+    val anonQuartets = args.requiredz("anon_ip_quartets").flatMap(q => getAnonQuartets(q))
     val exceptionsFolder = args.optionalz("exceptions_folder")
     
-    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| anonIpQuartets.toValidationNel |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_) }
+    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| anonQuartets.toValidationNel |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_) }
   }
 }
