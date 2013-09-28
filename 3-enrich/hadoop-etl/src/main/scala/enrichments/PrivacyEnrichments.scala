@@ -53,7 +53,11 @@ object PrivacyEnrichments {
    *        to anonymize
    * @return the anonymized IP address
    */
-  def anonymizeIp(ip: String, quartets: AnonQuartets): String = {
-    ip // TODO: impl
-  }
+  import AnonQuartets._
+  def anonymizeIp(ip: String, quartets: AnonQuartets): String =
+    Option(ip).map(_.split("\\.").zipWithIndex.map{
+      case (q, i) => {
+        if (quartets.id >= All.id - i) "x" else q
+      }
+    }.mkString(".")).orNull
 }
