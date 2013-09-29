@@ -158,17 +158,21 @@ object TrackerPayload {
    * will insert 25.
    *
    * Examples:
-   * 1. "page=Celestial%2520Tarot" - no change
+   * 1. "page=Celestial%2520Tarot"    - no change (already double encoded)
    * 2. "page=Dreaming%20Way%20Tarot" -> "page=Dreaming%2520Way%2520Tarot"
+   * 3. "loading 30%25 complete"      -> "loading 30%2525 complete"
    *
-   * TODO: at a later stage, we can probably move from double-encoding %s,
-   * to single-encoding all %s (i.e. fixing pre-Aug 17th double-encoded %s),
-   * and then removing all decodeString calls in the EnrichmentManager.
+   * Limitation of this approach: %2588 is ambiguous. Is it a:
+   * a) A double-escaped caret "ˆ" (%2588 -> %88 -> ^), or:
+   * b) A single-escaped "%88" (%2588 -> %88)
+   *
+   * This code assumes it's a).
    *
    * @param qs The querystring String to double-encode %s within
    * @return the querystring with %s double-encoded
    */
   private[inputs] def doubleEncodePcts(qs: String): String =
-    qs.replaceAll("%(?!25)", "%25")
-
+    qs
+      .replaceAll("%25(?![0-9a-fA-F][0-9a-fA-F])", "%2525") // Re-encode encoded % (%25) to %2525
+      .replaceAll("%(?!25)", "%25") // Re-encode any other encoded pattern
 }
