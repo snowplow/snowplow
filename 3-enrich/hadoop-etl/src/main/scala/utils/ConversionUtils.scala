@@ -20,6 +20,9 @@ import java.lang.{Integer => JInteger}
 import java.math.{BigDecimal => JBigDecimal}
 import java.lang.{Byte => JByte}
 
+// Apache Commons
+import org.apache.commons.lang.exception.ExceptionUtils
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -165,8 +168,8 @@ object ConversionUtils {
       val r = uri.replaceAll(" ", "%20") // Because so many raw URIs are bad, #346
       Some(URI.create(r)).success
     } catch {
-      case e: NullPointerException => None.success
-      case e: IllegalArgumentException => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, e.getMessage).fail
+      case npe: NullPointerException => None.success
+      case iae: IllegalArgumentException => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
       case e => "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).fail
     }
 
