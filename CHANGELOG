@@ -28,6 +28,8 @@ StorageLoader: added ability to --skip analyze (#335)
 StorageLoader: moved VACUUM SORT ONLY to a --include step (#321)
 StorageLoader: added COMPROWS to config and --include compupdate option (#344)
 
+Documentation: fixed wrong path to no-js-tracker subdirectory (#343) - TODO
+
 Version 0.8.9 (2013-09-05)
 --------------------------
 Hadoop ETL: bumped to 0.3.4
