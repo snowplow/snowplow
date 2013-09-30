@@ -1,6 +1,6 @@
 CREATE SCHEMA basic_recipes;
 
--- uniques and visits by day
+-- Uniques and visits by day
 CREATE VIEW basic_recipes.uniques_and_visits_by_day AS
 SELECT
 DATE_TRUNC('day', collector_tstamp) as "Date",
@@ -11,7 +11,7 @@ WHERE collector_tstamp > current_date - integer '31'
 GROUP BY 1
 ORDER BY 1;
 
--- page views by day
+-- Pageviews by day
 CREATE VIEW basic_recipes.pageviews_by_day AS
 SELECT 
 DATE_TRUNC('day', collector_tstamp) AS "Date",
@@ -22,7 +22,7 @@ AND event = 'page_view'
 GROUP BY 1
 ORDER BY 1;
 
--- events by day by type
+-- Events by day by type
 CREATE VIEW basic_recipes.events_by_day AS
 SELECT
 DATE_TRUNC('day', collector_tstamp) AS "Date",
@@ -67,3 +67,22 @@ FROM (
 ) v
 GROUP BY 1
 ORDER BY 1;
+
+-- Visits by country
+SELECT
+geo_country AS "Country",
+COUNT(DISTINCT(domain_userid)) as "Visitors"
+FROM "atomic".events
+WHERE collector_tstamp > current_date - integer '31'
+GROUP BY 1
+ORDER BY 2 DESC;
+
+-- Behavior: new vs returning
+select
+domain_userid,
+domain_sessionidx,
+min(collector_tstamp) as time_first_touch,
+case when domain_sessionidx = 1 then 'new' else 'returning' end as "new_vs_returning"
+from events
+where collector_tstamp > current_date - integer '31'
+group by domain_userid, domain_sessionidx;
