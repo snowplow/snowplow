@@ -205,3 +205,78 @@ FROM (
 ) t
 GROUP BY 1
 ORDER BY 1;
+
+-- Behavior: engagement - visit duration
+CREATE VIEW basic_recipes.engagement_visit_duration AS
+SELECT
+"Visit duration",
+COUNT(*) as "Number of visits"
+FROM (
+	SELECT
+	domain_userid,
+	domain_sessionidx,
+	CASE 
+		WHEN extract(EPOCH FROM (MAX(dvce_tstamp)-MIN(dvce_tstamp))) > 1800 THEN 'g. 1801+ seconds' 
+		WHEN extract(EPOCH FROM (MAX(dvce_tstamp)-MIN(dvce_tstamp))) > 600 THEN 'f. 601-1800 seconds' 
+		WHEN extract(EPOCH FROM (MAX(dvce_tstamp)-MIN(dvce_tstamp))) > 180 THEN 'e. 181-600 seconds' 
+		WHEN extract(EPOCH FROM (MAX(dvce_tstamp)-MIN(dvce_tstamp))) > 60 THEN 'd. 61 - 180 seconds' 
+		WHEN extract(EPOCH FROM (MAX(dvce_tstamp)-MIN(dvce_tstamp))) > 30 THEN 'c. 31-60 seconds' 
+		WHEN extract(EPOCH FROM (MAX(dvce_tstamp)-MIN(dvce_tstamp))) > 10 THEN 'b. 11-30 seconds' 
+		ELSE 'a. 0-10 seconds' END AS "Visit duration"
+	FROM "atomic".events
+	WHERE collector_tstamp > current_date - integer '31'
+	GROUP BY 1,2
+) t
+GROUP BY 1
+ORDER BY 1;
+
+
+-- Behavior: engagement - page views per visit
+CREATE VIEW basic_recipes.engagement_pageviews_per_visit AS
+SELECT
+"Page views per visit",
+COUNT(*) as "Number of visits"
+FROM (
+	SELECT
+	domain_userid,
+	domain_sessionidx,
+	COUNT(*) as "Page views per visit"
+	FROM "atomic".events
+	WHERE collector_tstamp > current_date - integer '31'
+	AND event = 'page_view'
+	GROUP BY 1,2
+) t
+GROUP BY 1
+ORDER BY 1;
+
+
+-- Technology: browser
+CREATE VIEW basic_recipes.technology_browser AS
+SELECT
+br_family as "Browser",
+COUNT(DISTINCT(domain_userid || domain_sessionidx)) as "Visits"
+FROM "atomic"events
+WHERE collector_tstamp > current_date - integer '31'
+GROUP BY 1
+ORDER BY 2 DESC;
+
+
+-- Technology: Operating System
+CREATE VIEW basic_recipes.technology_os AS
+SELECT 
+os_name as "Operating System",
+COUNT(DISTINCT(domain_userid || domain_sessionidx)) as "Visits"
+FROM "atomic".events
+WHERE collector_tstamp > current_date - integer '31'
+GROUP BY 1 
+ORDER BY 2 DESC; 
+
+
+-- Technology: mobile
+CREATE VIEW basic_recipes.technology_mobile AS
+SELECT 
+CASE WHEN dvce_ismobile=1 THEN 'mobile' ELSE 'desktop' END AS "Device type",
+COUNT(DISTINCT(domain_userid || domain_sessionidx)) as "Visits"
+FROM "atomic".events
+WHERE collector_tstamp > current_date - integer '31'
+GROUP BY 1;
