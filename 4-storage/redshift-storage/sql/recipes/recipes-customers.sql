@@ -29,12 +29,12 @@ FROM (
 	FROM "atomic".events
 	WHERE event='transaction'
 	GROUP BY 1,2,3 ) AS t -- deduped transaction table
-GROUP BY 1
+GROUP BY 1;
 
 
 -- MEASURING USER ENGAGEMENT
 -- Users by number of days per month visit website
-CREATE VIEW engagement_users_by_days_per_month_visit_website AS
+CREATE VIEW engagement_users_by_days_p_month_on_site AS
 SELECT
 "Month",
 "Days_visited_website",
@@ -51,7 +51,7 @@ ORDER BY 1,2;
 
 
 -- Users by number of days per week visit website
-CREATE VIEW engagement_users_by_days_per_week_visit_website AS
+CREATE VIEW engagement_users_by_days_p_week_on_site AS
 SELECT
 "Week",
 "Days_visited_website",
@@ -68,7 +68,7 @@ ORDER BY 1,2;
 
 
 -- Users by number of visits per month
-CREATE VIEW engagement_users_by_visits_per_month
+CREATE VIEW engagement_users_by_visits_per_month AS 
 SELECT
 "Month",
 "Visits_per_month",
@@ -85,7 +85,7 @@ GROUP BY 1,2
 ORDER BY 1,2;
 
 -- Users by number of visits per week
-CREATE VIEW engagement_users_by_visits_per_week
+CREATE VIEW engagement_users_by_visits_per_week AS
 SELECT
 "Week",
 "Visits_per_week",
@@ -145,15 +145,16 @@ SELECT
 domain_userid,
 DATE_TRUNC('week', collector_tstamp) AS weeks_active
 FROM "atomic".events
-GROUP BY 1,2
+GROUP BY 1,2;
 
 -- STAGE 3: combine views in 1 and 2 to perform cohort analysis
 
 -- Cohort analysis: retention by month
+CREATE VIEW cohort_retention_by_month AS
 SELECT
 cohort,
-months_active
-rank() OVER (PARTITOIN BY cohort ORDER BY months_active ASC) AS "Month",
+months_active,
+rank() OVER (PARTITION BY cohort ORDER BY months_active ASC) AS "Month",
 COUNT(DISTINCT(domain_userid)) AS uniques,
 COUNT(DISTINCT(domain_userid)) / (first_value(COUNT(DISTINCT(domain_userid))) OVER (PARTITION BY cohort))::REAL AS fraction_retained
 FROM cohort_user_map_week_first_touch_website c
