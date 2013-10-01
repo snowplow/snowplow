@@ -156,7 +156,7 @@ cohort,
 months_active,
 rank() OVER (PARTITION BY cohort ORDER BY months_active ASC) AS "Month",
 COUNT(DISTINCT(m.domain_userid)) AS uniques,
-COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(domain_userid))) OVER (PARTITION BY cohort))::REAL AS fraction_retained
+COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY cohort))::REAL AS fraction_retained
 FROM customer_recipes.cohort_user_map_week_first_touch_website c
 JOIN customer_recipes.retention_by_user_by_month m
 ON c.domain_userid = m.domain_userid
