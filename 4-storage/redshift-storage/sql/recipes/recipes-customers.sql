@@ -111,7 +111,7 @@ SELECT
 domain_userid,
 DATE_TRUNC('month', MIN(collector_tstamp)) AS cohort
 FROM "atomic".events
-GROUP BY domain_userid;
+GROUP BY 1;
 
 -- Cohort based on week that user first touched website
 CREATE VIEW customer_recipes.cohort_user_map_week_first_touch_website AS
@@ -140,12 +140,15 @@ DATE_TRUNC('month', collector_tstamp) AS months_active
 FROM "atomic".events
 GROUP BY 1,2;
 
+-- Retention by week by user
 CREATE VIEW customer_recipes.retention_by_user_by_week AS
 SELECT
 domain_userid,
 DATE_TRUNC('week', collector_tstamp) AS weeks_active
 FROM "atomic".events
 GROUP BY 1,2;
+
+
 
 -- STAGE 3: combine views in 1 and 2 to perform cohort analysis
 
