@@ -140,7 +140,7 @@ module SnowPlow
         status = wait_for(jobflow_id)
 
         if !status
-          raise EmrExecutionError, "EMR jobflow #{jobflow_id} failed, check Amazon EMR console and Hadoop logs for details (help: https://github.com/snowplow/snowplow/wiki/Troubleshooting#wiki-etl-failure). Data files not archived."
+          raise EmrExecutionError, "EMR jobflow #{jobflow_id} failed, check Amazon EMR console and Hadoop logs for details (help: https://github.com/snowplow/snowplow/wiki/Troubleshooting-jobs-on-Elastic-MapReduce). Data files not archived."
         end
 
         puts "EMR jobflow #{jobflow_id} completed successfully."
