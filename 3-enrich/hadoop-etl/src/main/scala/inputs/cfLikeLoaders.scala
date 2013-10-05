@@ -39,6 +39,13 @@ object CloudFrontLoader extends CloudFrontLikeLoader {
    * we prevent duplication?
    */
   def getSource = InputSource("cloudfront", None)
+
+  /**
+   * This is an actual CloudFront log.
+   * Unfortunate as it means we
+   * have some ambiguities to resolve.
+   */
+  def isActualCloudFront = true
 }
 
 /**
@@ -65,8 +72,15 @@ object CljTomcatLoader extends CloudFrontLikeLoader {
    * String from getCollectorLoader. Can
    * we prevent duplication?
    */
-
   def getSource = InputSource("clj-tomcat", None)
+
+  /**
+   * This is not a real CloudFront log.
+   * Good because it means we can
+   * sidestep the ambiguities in the
+   * CloudFront access log format.
+   */
+  def isActualCloudFront = false
 }
 
 /**
@@ -96,6 +110,16 @@ trait CloudFrontLikeLoader extends CollectorLoader {
    * to clj-tomcat).
    */
   def getSource: InputSource
+
+  /**
+   * Whether this is true CloudFront or
+   * CloudFront-like. Important to
+   * distinguish because the CloudFront
+   * format has some ambiguities which
+   * we can sidestep if we know we are
+   * processing Clojure-Tomcat logs.
+   */
+  def isActualCloudFront: Boolean
 
   // The encoding used on CloudFront logs
   private val CfEncoding = "UTF-8"
