@@ -20,6 +20,7 @@ EmrEtlRunner: enabled EMR Job Flow debugging for easier access to logs (#279)
 EmrEtlRunner: ETL job no longer fails if there's no data for last run period (#296)
 EmrEtlRunner: empty processing dir check doesn't seem to work if processing dir is a sub-folder (#326) - TODO
 EmrEtlRunner: added ability to mask IP addresses in ETL (#309)
+EmrEtlRunner: made the examples match what you get from git out of the box, thanks @shermozle (#331)
 
 StorageLoader: bumped to 0.1.1
 StorageLoader: bumped Sluice to 0.1.3 (#96)
