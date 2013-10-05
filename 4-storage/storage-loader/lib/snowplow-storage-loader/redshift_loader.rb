@@ -38,7 +38,7 @@ module SnowPlow
 
         # Build the Array of queries we will run
         queries = [
-          "COPY #{target[:table]} FROM '#{config[:s3][:buckets][:in]}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{target[:maxerror]} EMPTYASNULL #{comprows}",
+          "COPY #{target[:table]} FROM '#{config[:s3][:buckets][:in]}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{target[:maxerror]} EMPTYASNULL TRUNCATECOLUMNS #{comprows}",
         ]
         unless config[:skip].include?('analyze')
           queries << "ANALYZE #{target[:table]}"
