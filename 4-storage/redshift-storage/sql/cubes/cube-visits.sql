@@ -1,4 +1,25 @@
--- OLAP compatible view at visit (session) level of granularity
+-- Copyright (c) 2013 Snowplow Analytics Ltd. All rights reserved.
+--
+-- This program is licensed to you under the Apache License Version 2.0,
+-- and you may not use this file except in compliance with the Apache License Version 2.0.
+-- You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+--
+-- Unless required by applicable law or agreed to in writing,
+-- software distributed under the Apache License Version 2.0 is distributed on an
+-- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+--
+-- OLAP compatible views at visit (session) level of granularity
+--
+-- Version:     0.1.0
+-- URL:         -
+--
+-- Authors:     Yali Sassoon
+-- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
+-- License:     Apache License Version 2.0
+
+
+-- Create schema
 CREATE SCHEMA visits;
 
 -- VIEW 1
@@ -21,7 +42,8 @@ CREATE VIEW visits.basic AS
 		COUNT(*) AS number_of_events,
 		COUNT(DISTINCT(page_urlpath)) AS distinct_pages_viewed,
 		tr_orderid AS ecomm_orderid
-	FROM atomic.events
+	FROM
+		atomic.events
 	GROUP BY 1,2,3,4,5,6,7,8,9, tr_orderid;
 
 -- VIEW 2
@@ -102,15 +124,16 @@ CREATE VIEW visits.entry_and_exit_pages AS
 		v.number_of_events,
 		v.distinct_pages_viewed,
 		v.ecomm_orderid
-	FROM visits.basic v
-	LEFT JOIN atomic.events e1
-	ON v.domain_userid = e1.domain_userid
-	AND v.domain_sessionidx = e1.domain_sessionidx
-	AND v.dvce_visit_start_ts = e1.dvce_tstamp
-	LEFT JOIN atomic.events e2
-	ON v.domain_userid = e2.domain_userid
-	AND v.domain_sessionidx = e2.domain_sessionidx
-	AND v.dvce_visit_finish_ts = e2.dvce_tstamp;
+	FROM
+		visits.basic v
+		LEFT JOIN atomic.events e1
+			ON v.domain_userid = e1.domain_userid
+			AND v.domain_sessionidx = e1.domain_sessionidx
+			AND v.dvce_visit_start_ts = e1.dvce_tstamp
+		LEFT JOIN atomic.events e2
+			ON v.domain_userid = e2.domain_userid
+			AND v.domain_sessionidx = e2.domain_sessionidx
+			AND v.dvce_visit_finish_ts = e2.dvce_tstamp;
 
 
 -- Consolidated table with visits data (VIEW 1) and entry / exit page data (VIEW 4)
@@ -123,9 +146,6 @@ CREATE VIEW visits.referer_entries_and_exits AS
 		b.exit_page_path
 	FROM
 		visits.referer a
-	LEFT JOIN
-		visits.entry_and_exit_pages b
-	ON 
-		a.domain_userid = b.domain_userid
-	AND
-		a.domain_sessionidx = b.domain_sessionidx;
+		LEFT JOIN visits.entry_and_exit_pages b
+		ON a.domain_userid = b.domain_userid
+		AND a.domain_sessionidx = b.domain_sessionidx;

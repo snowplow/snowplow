@@ -1,4 +1,25 @@
--- OLAP compatible view at transaction level of granularity
+-- Copyright (c) 2013 Snowplow Analytics Ltd. All rights reserved.
+--
+-- This program is licensed to you under the Apache License Version 2.0,
+-- and you may not use this file except in compliance with the Apache License Version 2.0.
+-- You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+--
+-- Unless required by applicable law or agreed to in writing,
+-- software distributed under the Apache License Version 2.0 is distributed on an
+-- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+--
+-- OLAP-compatible views at transaction level of granularity
+--
+-- Version:     0.1.0
+-- URL:         -
+--
+-- Authors:     Yali Sassoon
+-- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
+-- License:     Apache License Version 2.0
+
+
+-- Create schema
 CREATE SCHEMA ecomm;
 
 -- VIEW 1
@@ -64,7 +85,8 @@ CREATE VIEW ecomm.transactions_with_visits AS
 	e.tr_country,
 	e.number_of_products_bought,
 	e.number_of_distinct_products_bought
-	FROM visits.referer_entries_and_exits v
-	LEFT JOIN ecomm.transactions e
-	ON v.domain_userid = e.domain_userid
-	AND v.domain_sessionidx = v.domain_sessionidx;
+	FROM
+		visits.referer_entries_and_exits v
+		LEFT JOIN ecomm.transactions e
+			ON v.domain_userid = e.domain_userid
+			AND v.domain_sessionidx = v.domain_sessionidx;
