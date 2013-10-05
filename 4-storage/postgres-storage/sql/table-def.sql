@@ -26,8 +26,8 @@ CREATE TABLE "atomic"."events" (
 	"collector_tstamp" timestamp NOT NULL,
 	"dvce_tstamp" timestamp,
 	-- Date/time
-	"event" varchar(128) NOT NULL,
-	"event_vendor" varchar(128),
+	"event" varchar(128),
+	"event_vendor" varchar(128) NOT NULL,
 	"event_id" varchar(38) NOT NULL,
 	"txn_id" integer,
 	-- Versioning
