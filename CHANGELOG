@@ -1,14 +1,23 @@
-Version 0.8.9 (2013-08-XX)
---------------------------
-Redshift: bumped table-def script to 0.2.2
-Redshift: moved events table to a new atomic schema (#301)
+Version 0.8.10 (2013-10-XX)
+---------------------------
+Redshift: bumped table def to 0.2.2
+Redshift: moved events table to a new atomic schema in atomic-def.sql (#301)
 Redshift: added migration script for 0.2.1 to 0.2.2
-Redshift: added DDL for reports schema with the basic recipes in view form (#297)                  - TODO
-Redshift: added DDL for feeds schema to support the Excel export (#298)                            - TODO
-Postgres: added DDL for reports schema with the basic recipes in view form (#303)                  - TODO
-Postgres: added DDL for feeds schema to support the Excel export (#302)                            - TODO
-Excel: added Excel .xlsx (Office Open XML) template 0.1.0                                          - TODO
-Excel: wrote Excel VBA to automatically connect to a Snowplow Redshift or Postgres database (#304) - TODO
+Redshift: added SQL DDL to define Redshift recipes (#297)                          - TODO
+Redshift: added SQL DDL to define Redshift cubes (#298)                            - TODO
+Postgres: bumped table def to 0.1.1
+Postgres: renamed file to atomic-def.sql
+Postgres: added migration script for 0.1.0 to 0.1.1
+Postgres: moved NOT NULL constraint on event field to event_vendor field (#318)
+Postgres: added SQL DDL to define Postgres recipes (#303)                          - TODO
+Postgres: added SQL DDL to define Postgres cubes (#302)                            - TODO
+Documentation: fixed wrong path to no-js-tracker subdirectory, thanks @gregakespret (#343)
+Documentation: improved "Find out more" table in README, thanks @dideler (#353)
+
+Version 0.8.9 (2013-09-05)
+--------------------------
+Hadoop ETL: bumped to 0.3.4
+Hadoop ETL: updated to handle singly-encoded %s in CloudFront querystring field (#333)
 
 Version 0.8.8 (2013-08-04)
 --------------------------

@@ -6,7 +6,7 @@
 Snowplow is an enterprise-strength marketing and product analytics platform. It does three things:
 
 1. Identifies your users, and tracks the way they engage with your website or application
-2. Stores your users' behavioural data in a scalable "event data warehouse" you control: in Amazon S3 and (optionally) Amazon Redshift
+2. Stores your users' behavioural data in a scalable "event data warehouse" you control: in Amazon S3 and (optionally) Amazon Redshift or Postgres
 3. Lets you leverage the biggest range of tools to analyse that data incl. big data toolset (e.g. Hive, Pig, Mahout) via EMR or more traditional tools e.g. Tableau, R, Chartio to analyse that behavioural data
 
 **To find out more, please check out the [Snowplow website] [website] and the [Snowplow wiki] [wiki].**
@@ -22,8 +22,8 @@ To briefly explain these five sub-systems:
 * **Trackers** fire Snowplow events. Currently we have JavaScript, no-JavaScript (pixel), Lua and Arduino trackers
 * **Collectors** receive Snowplow events from trackers. Currently we have a CloudFront-based collector and a Clojure-based collector
 * **Enrich** cleans up the raw Snowplow events, enriches them and puts them into storage. Currently we have a Hadoop-based enrichment processes
-* **Storage** is where the Snowplow events live. Currently we store the Snowplow events in a flatfile structure on S3, and in the Redshift database
-* **Analytics** are performed on the Snowplow events. Currently we have a cookbook of ad hoc analyses that work with Redshift and Hive 
+* **Storage** is where the Snowplow events live. Currently we store the Snowplow events in a flatfile structure on S3, and in the Redshift and Postgres databases
+* **Analytics** are performed on the Snowplow events. Currently we have a cookbook of ad hoc analyses that work with Redshift, Postgres and Hive 
 
 **For more information on the current Snowplow architecture, please see the [Technical architecture] [architecture-doc]**.
 

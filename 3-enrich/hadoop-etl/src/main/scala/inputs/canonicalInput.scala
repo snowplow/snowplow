@@ -15,6 +15,7 @@ package inputs
 
 // Java
 import java.net.URI
+import java.net.URLDecoder
 
 // Scala
 import scala.collection.JavaConversions._
@@ -112,7 +113,7 @@ object TrackerPayload {
    */
   def extractGetPayload(qs: String, encoding: String): ValidatedNameValueNel =
     try {
-      parseQuerystring(qs, encoding) match {
+      parseQs(qs, encoding) match {
         case x :: xs => NonEmptyList[NameValuePair](x, xs: _*).success
         case Nil => "No name-value pairs extractable from querystring [%s] with encoding [%s]".format(qs, encoding).fail
       }
@@ -135,6 +136,38 @@ object TrackerPayload {
    *        by this querystring
    * @return the List of NameValuePairs
    */
-  private def parseQuerystring(qs: String, encoding: String): List[NameValuePair] =
-    URLEncodedUtils.parse(URI.create("http://localhost/?" + qs), encoding).toList
+  private def parseQs(qs: String, encoding: String): List[NameValuePair] = {
+    val dePcts = doubleEncodePcts(qs)
+    URLEncodedUtils.parse(URI.create("http://localhost/?" + dePcts), encoding).toList
+  }
+
+  /**
+   * On 17th August 2013, Amazon made an
+   * unannounced change to their CloudFront
+   * log format - they went from always encoding
+   * % characters, to only encoding % characters
+   * which were not previously encoded. For a
+   * full discussion of this see:
+   *
+   * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
+   *
+   * Because of this change, and to preserve backwards compatibility,
+   * we will "double-encode" any % signs in the querystring which are only
+   * singly encoded. In other words, if we find: % NOT followed by 25, we
+   * will insert 25.
+   *
+   * Examples:
+   * 1. "page=Celestial%2520Tarot" - no change
+   * 2. "page=Dreaming%20Way%20Tarot" -> "page=Dreaming%2520Way%2520Tarot"
+   *
+   * TODO: at a later stage, we can probably move from double-encoding %s,
+   * to single-encoding all %s (i.e. fixing pre-Aug 17th double-encoded %s),
+   * and then removing all decodeString calls in the EnrichmentManager.
+   *
+   * @param qs The querystring String to double-encode %s within
+   * @return the querystring with %s double-encoded
+   */
+  private[inputs] def doubleEncodePcts(qs: String): String =
+    qs.replaceAll("%(?!25)", "%25")
+
 }

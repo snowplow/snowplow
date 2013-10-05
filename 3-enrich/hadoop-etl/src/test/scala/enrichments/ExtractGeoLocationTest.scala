@@ -48,13 +48,13 @@ class ExtractGeoLocationTest extends Specification with DataTables with Validati
     "null IP address"       !! null          ! None                |
     "invalid IP address #1" !! "localhost"   ! None                |
     "invalid IP address #2" !! "hello"       ! None                |
-    "valid IP address"      !! "213.52.50.8" ! Some(IpLocation(    // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
-                                                 countryCode = "NO",
-                                                 countryName = "Norway",
-                                                 region = Some("01"),
-                                                 city = Some("Ås"),
-                                                 latitude = 59.666702F,
-                                                 longitude = 10.800003F,
+    "valid IP address"      !! "128.232.0.0" ! Some(IpLocation(    // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
+                                                 countryCode = "GB",
+                                                 countryName = "United Kingdom",
+                                                 region = Some("C3"),
+                                                 city = Some("Cambridge"),
+                                                 latitude = 52.199997F,
+                                                 longitude = 0.11669922F,
                                                  postalCode = None,
                                                  dmaCode = None,
                                                  areaCode = None,
