@@ -15,7 +15,3 @@
 -- Authors:     Yali Sassoon
 -- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
-
-CREATE SCHEMA "recipes";
-
--- Yali to add
