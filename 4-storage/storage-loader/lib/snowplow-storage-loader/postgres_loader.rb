@@ -43,10 +43,20 @@ module SnowPlow
           raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
         end
 
-        status = execute_queries(target, [ "VACUUM FULL ANALYZE #{target[:table]};" ] )
-        unless status == []
-          raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
-        end        
+        post_processing = nil
+        unless config[:skip].include?('analyze')
+          post_processing = "ANALYZE "
+        end
+        if config[:include].include?('vacuum')
+          post_processing = "VACUUM " + (post_processing || "")
+        end
+
+        unless post_processing.nil?
+          status = execute_queries(target, [ "#{post_processing}#{target[:table]};" ] )
+          unless status == []
+            raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
+          end
+        end  
       end
       module_function :load_events
 
