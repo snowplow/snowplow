@@ -29,7 +29,7 @@ For other trackers (e.g. iOS, Android) and their approximate timelines, please s
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/1-trackers.png
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
 [t1]: https://github.com/snowplow/snowplow-javascript-tracker
-[t2]: ./1-trackers/no-js-tracker/
+[t2]: ./no-js-tracker/
 [t3]: https://github.com/snowplow/snowplow-arduino-tracker
 [t4]: https://github.com/snowplow/snowplow-lua-tracker
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-a-Tracker
