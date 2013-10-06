@@ -50,14 +50,12 @@ object JobTestHelpers {
 
   /**
    * A Specs2 matcher to check if a CanonicalOutput
-   * field is correctly set. Passed in a Tuple2 of
-   * the field's index and the field's value.
+   * field is correctly set.
    *
    * A couple of neat tricks:
    *
-   * 1. Shortcircuit the comparison if this is the
-   *    event_id field, because it has unpredictable
-   *    values
+   * 1. Skips the comparison if this is the event_id
+   *    field, because it has unpredictable values
    * 2. On failure, print out the field's name as
    *    well as the mismatch, to help with debugging
    */
