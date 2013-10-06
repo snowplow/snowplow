@@ -159,9 +159,7 @@ class StructEventCfLineTest extends Specification with TupleConversions {
           buf.size must_== 1
           val actual = buf.head
           for (idx <- StructEventCfLineTest.expected.indices) {
-            if (idx != 6) { // We can't predict the event_id
-              actual.getString(idx) must_== StructEventCfLineTest.expected(idx)
-            }
+            actual.getString(idx) must beFieldEqualTo(StructEventCfLineTest.expected(idx), withIndex = idx)
           }
         }
       }.

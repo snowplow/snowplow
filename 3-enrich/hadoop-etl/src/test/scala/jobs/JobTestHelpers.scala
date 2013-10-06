@@ -17,11 +17,14 @@ package jobs
 import scala.collection.mutable.ListBuffer
 
 // Specs2
-import org.specs2.matcher.Matcher
+import org.specs2.matcher.{Matcher, Expectable}
 import org.specs2.matcher.Matchers._
 
 // Scalding
 import com.twitter.scalding._
+
+// This project
+import outputs.CanonicalOutput
 
 /**
  * Holds helpers for running integration
@@ -33,6 +36,42 @@ object JobTestHelpers {
    * The current version of our Hadoop ETL
    */
   val EtlVersion = "hadoop-0.3.5"
+
+  /**
+   * The names of the fields in CanonicalOutput
+   */
+  lazy val CanonicalOutputFields = classOf[CanonicalOutput].getDeclaredFields.map(_.getName)
+
+  /**
+   * User-friendly wrapper to instantiate
+   * a BeFieldEqualTo Matcher.
+   */
+  def beFieldEqualTo(v: String, withIndex: Int) = new BeFieldEqualTo(v, withIndex)
+
+  /**
+   * A Specs2 matcher to check if a CanonicalOutput
+   * field is correctly set. Passed in a Tuple2 of
+   * the field's index and the field's value.
+   *
+   * A couple of neat tricks:
+   *
+   * 1. Shortcircuit the comparison if this is the
+   *    event_id field, because it has unpredictable
+   *    values
+   * 2. On failure, print out the field's name as
+   *    well as the mismatch, to help with debugging
+   */
+  class BeFieldEqualTo(expected: String, idx: Int) extends Matcher[String] {
+
+    private val field = CanonicalOutputFields(idx)
+
+    def apply[S <: String](actual: Expectable[S]) = {
+      result(field == "event_id" || actual.value == expected,
+             "%s: %s equals %s".format(field, actual.description, expected),
+             "%s: %s doesn't equal %s".format(field, actual.description, expected),
+             actual)
+    }
+  }
 
   /**
    * A Specs2 matcher to check if a Scalding

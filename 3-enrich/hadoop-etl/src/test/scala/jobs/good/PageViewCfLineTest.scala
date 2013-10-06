@@ -159,9 +159,7 @@ class PageViewCfLineTest extends Specification with TupleConversions {
           buf.size must_== 1
           val actual = buf.head
           for (idx <- PageViewCfLineTest.expected.indices) {
-            if (idx != 6) { // We can't predict the event_id
-              actual.getString(idx) must_== PageViewCfLineTest.expected(idx)
-            }
+            actual.getString(idx) must beFieldEqualTo(PageViewCfLineTest.expected(idx), withIndex = idx)
           }
         }
       }.

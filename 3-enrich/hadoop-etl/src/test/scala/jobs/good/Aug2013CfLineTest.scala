@@ -163,9 +163,7 @@ class Aug2013CfLineTest extends Specification with TupleConversions {
           buf.size must_== 1
           val actual = buf.head
           for (idx <- Aug2013CfLineTest.expected.indices) {
-            if (idx != 6) { // We can't predict the event_id
-              actual.getString(idx) must_== Aug2013CfLineTest.expected(idx)
-            }
+            actual.getString(idx) must beFieldEqualTo(Aug2013CfLineTest.expected(idx), withIndex = idx)
           }
         }
       }.
