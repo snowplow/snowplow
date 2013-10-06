@@ -11,7 +11,7 @@ Hadoop ETL: added ability to mask IP addresses in ETL (#309)
 Hadoop ETL: defensively fixed raw spaces in page and referer URLs (#346)
 Hadoop ETL: fixed regression, single-encoded %s logic didn't account for % itself (#347)
 Hadoop ETL: added unit tests for fixTabsNewlines (#332)
-Hadoop ETL: tests now give the failing CanonicalOutput field (#325)
+Hadoop ETL: tests now report the failing CanonicalOutput field (#325)
 Hadoop ETL: now handling double-encoded cs(User Agent) as per CloudFront post-14-September (#348)      - TODO
 EmrEtlRunner: bumped to 0.5.0
 EmrEtlRunner: bumped Sluice to 0.1.4 (#96)
