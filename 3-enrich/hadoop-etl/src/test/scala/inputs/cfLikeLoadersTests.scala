@@ -23,7 +23,7 @@ import org.specs2.matcher.DataTables
 /**
  * Tests the explodeUri function
  */
-class TrackerPayloadTest extends Specification with DataTables {
+class DoubleEncodePctsTest extends Specification with DataTables {
 
   def is =
     "Double-encoding single-encoded (post-August 17th 2013) % signs should work" ! e1
@@ -35,7 +35,7 @@ class TrackerPayloadTest extends Specification with DataTables {
     "Single-encoded %s, modify"                !! "e=pp&page=Dreaming%20Way%20Tarot%20-%20Psychic%20Bazaar&pp_mix=0&pp_max=0&pp_miy=0&pp_may=0&dtm=1376984181667&tid=056188&vp=1440x838&ds=1440x1401&vid=1&duid=8ac2d67163d6d36a&p=web&tv=js-0.12.0&fp=1569742263&aid=pbzsite&lang=en-us&cs=UTF-8&tz=Australia%2FSydney&f_pdf=1&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1440x900&cd=24&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Ftarot-cards%2F312-dreaming-way-tarot.html" ! "e=pp&page=Dreaming%2520Way%2520Tarot%2520-%2520Psychic%2520Bazaar&pp_mix=0&pp_max=0&pp_miy=0&pp_may=0&dtm=1376984181667&tid=056188&vp=1440x838&ds=1440x1401&vid=1&duid=8ac2d67163d6d36a&p=web&tv=js-0.12.0&fp=1569742263&aid=pbzsite&lang=en-us&cs=UTF-8&tz=Australia%252FSydney&f_pdf=1&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1440x900&cd=24&cookie=1&url=http%253A%252F%252Fwww.psychicbazaar.com%252Ftarot-cards%252F312-dreaming-way-tarot.html" |
     "Single-encoded % sign itself, modify"     !! "Loading - 70%25 Complete"                       ! "Loading - 70%2525 Complete"                     |> {
       (_, qs, expected) => {
-        val actual = TrackerPayload.doubleEncodePcts(qs)     
+        val actual = CloudFrontLoader.doubleEncodePcts(qs)     
         actual  must_== expected
       }
     }
