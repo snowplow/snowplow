@@ -264,6 +264,7 @@ FROM "atomic".events
 WHERE se_action = 'sign-up'
 GROUP BY domain_userid;
 
+-- Cohort based on time first transacted 
 CREATE VIEW recipes_customer.cohort_dfn_by_month_first_transact AS
 SELECT
 domain_userid,
@@ -272,13 +273,63 @@ FROM "atomic".events
 WHERE event = 'transaction'
 GROUP BY domain_userid;
 
-CREATE VIEW recipes_customer.cohort_dfn_by_month_week_transact AS
+CREATE VIEW recipes_customer.cohort_dfn_by_week_first_transact AS
 SELECT
 domain_userid,
 DATE_TRUNC('week', MIN(collector_tstamp)) AS cohort
 FROM "atomic".events
 WHERE event = 'transaction'
 GROUP BY domain_userid;
+
+-- Cohort based on marketing channel (paid) first acquired
+CREATE VIEW recipes_customer.cohort_dfn_by_paid_channel_acquired_by_month AS
+SELECT
+domain_userid,
+mkt_medium AS channel_acquired_medium,
+mkt_source AS channel_acquired_source,
+DATE_TRUNC('month', MIN(collector_tstamp)) AS month_acquired
+FROM "atomic".events
+WHERE mkt_medium IS NOT NULL 
+AND mkt_medium != ''
+AND domain_sessionidx = 1
+GROUP BY 1,2,3;
+
+CREATE VIEW recipes_customer.cohort_dfn_by_paid_channel_acquired_by_week AS
+SELECT
+domain_userid,
+mkt_medium AS channel_acquired_medium,
+mkt_source AS channel_acquired_source,
+DATE_TRUNC('week', MIN(collector_tstamp)) AS week_acquired
+FROM "atomic".events
+WHERE mkt_medium IS NOT NULL 
+AND mkt_medium != ''
+AND domain_sessionidx = 1
+GROUP BY 1,2,3;
+
+-- Cohort based on referal channel first acquired
+CREATE VIEW recipes_customer.cohort_dfn_by_refr_channel_acquired_by_month AS
+SELECT
+domain_userid,
+refr_medium AS refr_acquired_medium, 
+refr_source AS refr_acquired_source, 
+DATE_TRUNC('month', MIN(collector_tstamp)) AS month_acquired
+FROM "atomic".events
+WHERE domain_sessionidx = 1
+AND refr_medium != 'internal'
+GROUP BY 1,2,3;
+
+CREATE VIEW recipes_customer.cohort_dfn_by_refr_channel_acquired_by_week AS
+SELECT
+domain_userid,
+refr_medium AS refr_acquired_medium, 
+refr_source AS refr_acquired_source, 
+DATE_TRUNC('week', MIN(collector_tstamp)) AS week_acquired
+FROM "atomic".events
+WHERE mkt_medium IS NOT NULL 
+AND mkt_medium != ''
+AND domain_sessionidx = 1
+GROUP BY 1,2,3;
+
 
 
 -- STAGE 2. Metrics by user
@@ -299,7 +350,7 @@ DATE_TRUNC('week', collector_tstamp) AS weeks_active
 FROM "atomic".events
 GROUP BY 1,2;
 
--- Also refer to CLV and engagement
+-- Also refer to CLV and engagement metrics
 
 -- STAGE 3: combine views in 1 and 2 to perform cohort analysis
 
@@ -307,8 +358,8 @@ GROUP BY 1,2;
 CREATE VIEW recipes_customer.cohort_retention_by_month_first_touch AS
 SELECT
 cohort,
-months_active,
-rank() OVER (PARTITION BY cohort ORDER BY months_active ASC) AS "Month",
+months_active AS month_actual,
+rank() OVER (PARTITION BY cohort ORDER BY months_active ASC) AS month_rank,
 COUNT(DISTINCT(m.domain_userid)) AS uniques,
 COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY cohort))::REAL AS fraction_retained
 FROM recipes_customer.cohort_dfn_by_month_first_touch_website c
@@ -317,12 +368,12 @@ ON c.domain_userid = m.domain_userid
 GROUP BY 1,2
 ORDER BY 1,2;
 
--- Chort analysis: retention by week, by first touch
+-- Cohort analysis: retention by week, by first touch
 CREATE VIEW recipes_customer.cohort_retention_by_week_first_touch AS
 SELECT
 cohort,
-weeks_active,
-rank() OVER (PARTITION BY cohort ORDER BY weeks_active ASC) AS "Weeks",
+weeks_active AS weeks_actual,
+rank() OVER (PARTITION BY cohort ORDER BY weeks_active ASC) AS weeks_rank,
 COUNT(DISTINCT(m.domain_userid)) AS uniques,
 COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY cohort))::REAL AS fraction_retained
 FROM recipes_customer.cohort_dfn_by_week_first_touch_website c
@@ -330,3 +381,121 @@ JOIN recipes_customer.retention_by_user_by_week m
 ON c.domain_userid = m.domain_userid
 GROUP BY 1,2
 ORDER BY 1,2;
+
+-- Cohort analysis: retention by month, by first signup
+CREATE VIEW recipes_customer.cohort_retention_by_month_signed_up AS
+SELECT
+cohort,
+months_active AS month_actual,
+rank() OVER (PARTITION BY cohort ORDER BY months_active ASC) AS month_rank,
+COUNT(DISTINCT(m.domain_userid)) AS uniques,
+COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY cohort))::REAL AS fraction_retained
+FROM recipes_customer.cohort_dfn_by_month_signed_up c
+JOIN recipes_customer.retention_by_user_by_month m
+ON c.domain_userid = m.domain_userid
+GROUP BY 1,2
+ORDER BY 1,2;
+
+-- Cohort analysis: retention by week, by first signup
+CREATE VIEW recipes_customer.cohort_retention_by_week_signed_up AS
+SELECT
+cohort,
+weeks_active AS weeks_actual,
+rank() OVER (PARTITION BY cohort ORDER BY weeks_active ASC) AS weeks_rank,
+COUNT(DISTINCT(m.domain_userid)) AS uniques,
+COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY cohort))::REAL AS fraction_retained
+FROM recipes_customer.cohort_dfn_by_week_signed_up c
+JOIN recipes_customer.retention_by_user_by_week m
+ON c.domain_userid = m.domain_userid
+GROUP BY 1,2
+ORDER BY 1,2;
+
+
+-- Cohort analysis: retention by month, by first transaction
+CREATE VIEW recipes_customer.cohort_retention_by_month_first_transact AS
+SELECT
+cohort,
+months_active AS month_actual,
+rank() OVER (PARTITION BY cohort ORDER BY months_active ASC) AS month_rank,
+COUNT(DISTINCT(m.domain_userid)) AS uniques,
+COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY cohort))::REAL AS fraction_retained
+FROM recipes_customer.cohort_dfn_by_month_first_transact c
+JOIN recipes_customer.retention_by_user_by_month m
+ON c.domain_userid = m.domain_userid
+GROUP BY 1,2
+ORDER BY 1,2;
+
+-- Cohort analysis: retention by week, by first signup
+CREATE VIEW recipes_customer.cohort_retention_by_week_first_transact AS
+SELECT
+cohort,
+weeks_active AS weeks_actual,
+rank() OVER (PARTITION BY cohort ORDER BY weeks_active ASC) AS weeks_rank,
+COUNT(DISTINCT(m.domain_userid)) AS uniques,
+COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY cohort))::REAL AS fraction_retained
+FROM recipes_customer.cohort_dfn_by_week_first_transact c
+JOIN recipes_customer.retention_by_user_by_week m
+ON c.domain_userid = m.domain_userid
+GROUP BY 1,2
+ORDER BY 1,2;
+
+-- Cohort analysis: retention by marketing channel acquired
+CREATE VIEW recipes_customer.cohort_retention_by_month_by_paid_channel_acquired AS
+SELECT 
+channel_acquired_medium,
+channel_acquired_source,
+months_active AS month_actual,
+rank() OVER (PARTITION BY channel_acquired_medium, channel_acquired_source ORDER BY months_active ASC) AS month_rank,
+COUNT(DISTINCT(m.domain_userid)) AS uniques,
+COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY channel_acquired_medium, channel_acquired_source))::REAL AS fraction_retained
+FROM recipes_customer.cohort_dfn_by_paid_channel_acquired_by_month c 
+JOIN recipes_customer.retention_by_user_by_month m 
+ON c.domain_userid = m.domain_userid
+GROUP BY 1,2,3
+ORDER BY 1,2,3;
+
+CREATE VIEW recipes_customer.cohort_retention_by_week_by_paid_channel_acquired AS
+SELECT 
+channel_acquired_medium,
+channel_acquired_source,
+weeks_active AS week_actual,
+rank() OVER (PARTITION BY channel_acquired_medium, channel_acquired_source ORDER BY weeks_active ASC) AS week_rank,
+COUNT(DISTINCT(m.domain_userid)) AS uniques,
+COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY channel_acquired_medium, channel_acquired_source))::REAL AS fraction_retained
+FROM recipes_customer.cohort_dfn_by_paid_channel_acquired_by_week c 
+JOIN recipes_customer.retention_by_user_by_week m 
+ON c.domain_userid = m.domain_userid
+GROUP BY 1,2,3
+ORDER BY 1,2,3;
+
+
+-- Cohort analysis: retention by referer
+CREATE VIEW recipes_customer.cohort_retention_by_month_by_refr_acquired AS
+SELECT 
+refr_acquired_medium,
+refr_acquired_source,
+months_active AS month_actual,
+rank() OVER (PARTITION BY refr_acquired_medium, refr_acquired_source ORDER BY months_active ASC) AS month_rank,
+COUNT(DISTINCT(m.domain_userid)) AS uniques,
+COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY refr_acquired_medium, refr_acquired_source))::REAL AS fraction_retained
+FROM recipes_customer.cohort_dfn_by_refr_channel_acquired_by_month c 
+JOIN recipes_customer.retention_by_user_by_month m 
+ON c.domain_userid = m.domain_userid
+GROUP BY 1,2,3
+ORDER BY 1,2,3;
+
+CREATE VIEW recipes_customer.cohort_retention_by_week_by_refr_acquired AS
+SELECT 
+refr_acquired_medium,
+refr_acquired_source,
+weeks_active AS week_actual,
+rank() OVER (PARTITION BY refr_acquired_medium, refr_acquired_source ORDER BY weeks_active ASC) AS week_rank,
+COUNT(DISTINCT(m.domain_userid)) AS uniques,
+COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY refr_acquired_medium, refr_acquired_source))::REAL AS fraction_retained
+FROM recipes_customer.cohort_dfn_by_refr_channel_acquired_by_week c 
+JOIN recipes_customer.retention_by_user_by_week m 
+ON c.domain_userid = m.domain_userid
+GROUP BY 1,2,3
+ORDER BY 1,2,3;
+
+
