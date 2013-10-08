@@ -37,6 +37,11 @@ object JobTestHelpers {
    */
   val EtlVersion = "hadoop-0.3.5"
 
+  /*
+   * Fields in our CanonicalOutput which are unmatchable
+   */
+  val UnmatchableFields = List("event_id")
+
   /**
    * The names of the fields in CanonicalOutput
    */
@@ -46,7 +51,7 @@ object JobTestHelpers {
    * User-friendly wrapper to instantiate
    * a BeFieldEqualTo Matcher.
    */
-  def beFieldEqualTo(v: String, withIndex: Int) = new BeFieldEqualTo(v, withIndex)
+  def beFieldEqualTo(expected: String, withIndex: Int) = new BeFieldEqualTo(expected, withIndex)
 
   /**
    * A Specs2 matcher to check if a CanonicalOutput
@@ -59,16 +64,29 @@ object JobTestHelpers {
    * 2. On failure, print out the field's name as
    *    well as the mismatch, to help with debugging
    */
-  class BeFieldEqualTo(expected: String, idx: Int) extends Matcher[String] {
+  class BeFieldEqualTo(expected: String, index: Int) extends Matcher[String] {
 
-    private val field = CanonicalOutputFields(idx)
+    private val field = CanonicalOutputFields(index)
+    private val unmatcheable = isUnmatchable(field)
 
     def apply[S <: String](actual: Expectable[S]) = {
-      result(field == "event_id" || actual.value == expected,
-             "%s: %s equals %s".format(field, actual.description, expected),
+      result(unmatcheable || actual.value == expected,
+             "%s: %s".format(field, if (unmatcheable) "is unmatcheable" else "%s equals %s".format(actual.description, expected)),
              "%s: %s doesn't equal %s".format(field, actual.description, expected),
              actual)
     }
+
+    /**
+     * Whether a field in CanonicalOutput is
+     * unmatchable - i.e. has unpredictable
+     * values.
+     *
+     * @param field The name of the field
+     * @return true if the field is unmatchable,
+     *         false otherwise
+     */
+    private def isUnmatchable(field: String): Boolean =
+      UnmatchableFields.contains(field)
   }
 
   /**
