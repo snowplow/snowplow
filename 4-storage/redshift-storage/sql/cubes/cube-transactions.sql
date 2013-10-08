@@ -65,9 +65,9 @@ CREATE VIEW cubes_ecomm.transactions AS
 		i."number_of_products_bought",
 		i."number_of_distinct_products_bought"
 	FROM
-		customer_recipes.ecomm_transactions_basic t
+		cubes_ecomm.transactions_basic t
 	JOIN
-		customer_recipes.ecomm_transaction_items_basic i
+		cubes_ecomm.transactions_items_basic i
 	ON t.tr_orderid = i.ti_orderid;
 
 -- VIEW 4

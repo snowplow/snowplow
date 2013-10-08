@@ -97,8 +97,8 @@ CREATE VIEW cubes_visits.referer AS
 		r.refr_urlhost,
 		r.refr_urlpath
 	FROM 
-		visits.basic v
-	LEFT JOIN visits.referer_basic r
+		cubes_visits.basic v
+	LEFT JOIN cubes_visits.referer_basic r
 	ON v.domain_userid = r.domain_userid
 	AND v.domain_sessionidx = r.domain_sessionidx;
 
@@ -136,6 +136,7 @@ CREATE VIEW cubes_visits.entry_and_exit_pages AS
 			AND v.dvce_visit_finish_ts = e2.dvce_tstamp;
 
 
+-- VIEW 5
 -- Consolidated table with visits data (VIEW 1) and entry / exit page data (VIEW 4)
 CREATE VIEW cubes_visits.referer_entries_and_exits AS
 	SELECT
