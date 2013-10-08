@@ -37,15 +37,23 @@ object JobTestHelpers {
    */
   val EtlVersion = "hadoop-0.3.5"
 
-  /*
+  /**
    * Fields in our CanonicalOutput which are unmatchable
    */
-  val UnmatchableFields = List("event_id")
+  private val UnmatchableFields = List("event_id")
 
   /**
-   * The names of the fields in CanonicalOutput
+   * Fields in our CanonicalOutput which are discarded
    */
-  lazy val CanonicalOutputFields = classOf[CanonicalOutput].getDeclaredFields.map(_.getName)
+  private val DiscardedFields = List("page_url", "page_referrer")
+
+  /**
+   * The names of the fields written out
+   */
+  lazy val OutputFields = classOf[CanonicalOutput]
+      .getDeclaredFields
+      .map(_.getName)
+      .filter(f => !DiscardedFields.contains(f))
 
   /**
    * User-friendly wrapper to instantiate
@@ -66,13 +74,13 @@ object JobTestHelpers {
    */
   class BeFieldEqualTo(expected: String, index: Int) extends Matcher[String] {
 
-    private val field = CanonicalOutputFields(index)
+    private val field = OutputFields(index)
     private val unmatcheable = isUnmatchable(field)
 
     def apply[S <: String](actual: Expectable[S]) = {
       result(unmatcheable || actual.value == expected,
              "%s: %s".format(field, if (unmatcheable) "is unmatcheable" else "%s equals %s".format(actual.description, expected)),
-             "%s: %s doesn't equal %s".format(field, actual.description, expected),
+             "%s: %s does not equal %s".format(field, actual.description, expected),
              actual)
     }
 
