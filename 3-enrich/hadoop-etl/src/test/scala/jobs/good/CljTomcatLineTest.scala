@@ -75,12 +75,12 @@ object CljTomcatLineTest {
     "https",
     "www.google.co.uk",
     "80",
-    "/search/web",
-    "fcoid=417&fcop=topnav&fpid=27&q=snowplow+analytics&ql=",
+    "/url",
+    "sa=t&rct=j&q=&esrc=s&source=web&cd=3&ved=0CDsQFjAC&url=http://snowplowanalytics.com/blog/2012/10/31/snowplow-in-a-universal-analytics-world-what-the-new-version-of-google-analytics-means-for-companies-adopting-snowplow/&ei=uQ9TUonxBcLL0QXc74DoDg&usg=AFQjCNFWhV4rr2zmRm1fe4hNiay6Td9VrA&bvm=bv.53537100,d.d2k",
     null,
     "search", // Search referer
-    "InfoSpace",
-    "snowplow analytics",
+    "Google",
+    null,
     null, // Marketing campaign fields empty
     null, //
     null, //
