@@ -137,7 +137,7 @@ CREATE VIEW cubes_visits.entry_and_exit_pages AS
 
 
 -- Consolidated table with visits data (VIEW 1) and entry / exit page data (VIEW 4)
-CREATE VIEW visits.referer_entries_and_exits AS
+CREATE VIEW cubes_visits.referer_entries_and_exits AS
 	SELECT
 		a.*,
 		b.entry_page_host,
@@ -145,7 +145,7 @@ CREATE VIEW visits.referer_entries_and_exits AS
 		b.exit_page_host,
 		b.exit_page_path
 	FROM
-		cubes_visits.referer a
+		cubes_visits.referer_basic a
 		LEFT JOIN cubes_visits.entry_and_exit_pages b
 	ON a.domain_userid = b.domain_userid
 	AND a.domain_sessionidx = b.domain_sessionidx;
