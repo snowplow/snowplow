@@ -129,17 +129,17 @@ object CljTomcatLineTest {
     "24",
     "1440",
     "802",
-    "Windows",
-    "Windows",
-    "Microsoft Corporation",
-    "America/Los_Angeles",
+    "Mac OS",
+    "Mac OS",
+    "Apple Inc.",
+    "Europe/London",
     "Computer",
     "0",
-    "1024",
-    "768",
+    "1440",
+    "900",
     "UTF-8",
-    "1024",
-    "635"
+    "1425",
+    "4674"
     )
 }
 
