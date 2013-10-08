@@ -20,11 +20,11 @@
 
 
 -- Create schema
-CREATE SCHEMA visits;
+CREATE SCHEMA cubes_visits;
 
 -- VIEW 1
 -- Simplest visit-level view
-CREATE VIEW visits.basic AS
+CREATE VIEW cubes_visits.basic AS
 	SELECT
 		domain_userid,
 		domain_sessionidx,
@@ -48,7 +48,7 @@ CREATE VIEW visits.basic AS
 
 -- VIEW 2
 -- Referer data returned in a format that makes it easy to join with the visits view above
-CREATE VIEW visits.referer_basic AS
+CREATE VIEW cubes_visits.referer_basic AS
 	SELECT
 		domain_userid,
 		domain_sessionidx,
@@ -72,7 +72,7 @@ CREATE VIEW visits.referer_basic AS
 
 -- VIEW 3
 -- View that joins refer data (view 2) with visit data (view 1)
-CREATE VIEW visits.referer AS
+CREATE VIEW cubes_visits.referer AS
 	SELECT
 		v.domain_userid,
 		v.domain_sessionidx,
@@ -104,7 +104,7 @@ CREATE VIEW visits.referer AS
 
 -- VIEW 4
 -- Entry and exit pages by visit
-CREATE VIEW visits.entry_and_exit_pages AS
+CREATE VIEW cubes_visits.entry_and_exit_pages AS
 	SELECT
 		v.domain_userid,
 		v.domain_sessionidx,
@@ -125,7 +125,7 @@ CREATE VIEW visits.entry_and_exit_pages AS
 		v.distinct_pages_viewed,
 		v.ecomm_orderid
 	FROM
-		visits.basic v
+		cubes_visits.basic v
 		LEFT JOIN atomic.events e1
 			ON v.domain_userid = e1.domain_userid
 			AND v.domain_sessionidx = e1.domain_sessionidx
@@ -145,7 +145,7 @@ CREATE VIEW visits.referer_entries_and_exits AS
 		b.exit_page_host,
 		b.exit_page_path
 	FROM
-		visits.referer a
-		LEFT JOIN visits.entry_and_exit_pages b
-		ON a.domain_userid = b.domain_userid
-		AND a.domain_sessionidx = b.domain_sessionidx;
+		cubes_visits.referer a
+		LEFT JOIN cubes_visits.entry_and_exit_pages b
+	ON a.domain_userid = b.domain_userid
+	AND a.domain_sessionidx = b.domain_sessionidx;

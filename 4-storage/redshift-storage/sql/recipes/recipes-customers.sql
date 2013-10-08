@@ -18,43 +18,150 @@
 
 
 -- Create the schema
-CREATE SCHEMA customer_recipes;
+CREATE SCHEMA recipes_customer;
 
 
 -- Map different user identifiers to one another
-CREATE VIEW customer_recipes.user_id_map AS
+CREATE VIEW recipes_customer.id_map_domain_to_network AS
 SELECT
 domain_userid,
-network_userid,
-user_id,
-user_ipaddress,
+network_userid
+FROM "atomic".events
+WHERE domain_userid IS NOT NULL
+AND network_userid IS NOT NULL
+GROUP BY 1,2
+ORDER BY 1,2;
+
+CREATE VIEW recipes_customer.id_map_domain_to_user AS
+SELECT
+domain_userid,
+user_id
+FROM "atomic".events
+WHERE domain_userid IS NOT NULL
+AND user_id IS NOT NULL
+GROUP BY 1,2
+ORDER BY 1,2;
+
+CREATE VIEW recipes_customer.id_map_domain_to_ipaddress AS
+SELECT
+domain_userid,
+user_ipaddress
+FROM "atomic".events
+WHERE domain_userid IS NOT NULL
+AND user_ipaddress IS NOT NULL
+GROUP BY 1,2
+ORDER BY 1,2;
+
+CREATE VIEW recipes_customer.id_map_domain_to_fingerprint AS
+SELECT
+domain_userid,
 user_fingerprint
 FROM "atomic".events
 WHERE domain_userid IS NOT NULL
-GROUP BY 1,2,3,4,5
-ORDER BY 1,2,3,4,5;
+AND user_fingerprint IS NOT NULL
+GROUP BY 1,2
+ORDER BY 1,2;
+
+CREATE VIEW recipes_customer.id_map_network_to_user AS
+SELECT
+network_userid,
+user_id
+FROM "atomic".events
+WHERE network_userid IS NOT NULL
+AND user_id IS NOT NULL
+GROUP BY 1,2
+ORDER BY 1,2;
+
+CREATE VIEW recipes_customer.id_map_network_to_ipaddress AS
+SELECT
+network_userid,
+user_ipaddress
+FROM "atomic".events
+WHERE network_userid IS NOT NULL
+AND user_ipaddress IS NOT NULL
+GROUP BY 1,2
+ORDER BY 1,2;
+
+CREATE VIEW recipes_customer.id_map_network_to_fingerprint AS
+SELECT
+network_userid,
+user_fingerprint
+FROM "atomic".events
+WHERE network_userid IS NOT NULL
+AND user_fingerprint IS NOT NULL
+GROUP BY 1,2
+ORDER BY 1,2;
+
+CREATE VIEW recipes_customer.id_map_user_to_ipaddress AS
+SELECT
+user_id,
+user_ipaddress
+FROM "atomic".events
+WHERE user_id IS NOT NULL
+AND user_ipaddress IS NOT NULL
+GROUP BY 1,2
+ORDER BY 1,2;
+
+CREATE VIEW recipes_customer.id_map_user_to_fingerprint AS
+SELECT
+user_id,
+user_fingerprint
+FROM "atomic".events
+WHERE user_id IS NOT NULL
+AND user_ipaddress IS NOT NULL
+GROUP BY 1,2
+ORDER BY 1,2;
+
+CREATE VIEW recipes_customer.id_map_ipaddress_to_fingerprint AS
+SELECT
+user_ipaddress,
+user_fingerprint
+FROM "atomic".events
+WHERE user_ipaddress IS NOT NULL
+AND user_ipaddress IS NOT NULL
+GROUP BY 1,2
+ORDER BY 1,2;
+
 
 
 -- CUSTOMER LIFETIME VALUE
 -- Total transaction value by domain_userid over time
-CREATE VIEW customer_recipes.total_transaction_value_by_user AS
+CREATE VIEW recipes_customer.clv_total_transaction_value_by_user_by_month AS
 SELECT
 domain_userid,
+month,
 SUM(tr_total) AS "total_transaction_value_by_user"
 FROM (
 	SELECT
 	domain_userid,
+	DATE_TRUNC('month', collector_tstamp) AS month,
 	tr_orderid,
 	tr_total
 	FROM "atomic".events
 	WHERE event='transaction'
-	GROUP BY 1,2,3 ) AS t -- deduped transaction table
-GROUP BY 1;
+	GROUP BY 1,2,3,4 ) AS t -- deduped transaction table
+GROUP BY 1,2;
+
+CREATE VIEW recipes_customer.clv_total_transaction_value_by_user_by_week AS
+SELECT
+domain_userid,
+week,
+SUM(tr_total) AS "total_transaction_value_by_user"
+FROM (
+	SELECT
+	domain_userid,
+	DATE_TRUNC('week', collector_tstamp) AS week,
+	tr_orderid,
+	tr_total
+	FROM "atomic".events
+	WHERE event='transaction'
+	GROUP BY 1,2,3,4 ) AS t -- deduped transaction table
+GROUP BY 1,2;
 
 
 -- MEASURING USER ENGAGEMENT
 -- Users by number of days per month visit website
-CREATE VIEW customer_recipes.engagement_users_by_days_p_month_on_site AS
+CREATE VIEW recipes_customer.engagement_users_by_days_p_month_on_site AS
 SELECT
 "Month",
 "Days_visited_website",
@@ -71,7 +178,7 @@ ORDER BY 1,2;
 
 
 -- Users by number of days per week visit website
-CREATE VIEW customer_recipes.engagement_users_by_days_p_week_on_site AS
+CREATE VIEW recipes_customer.engagement_users_by_days_p_week_on_site AS
 SELECT
 "Week",
 "Days_visited_website",
@@ -88,7 +195,7 @@ ORDER BY 1,2;
 
 
 -- Users by number of visits per month
-CREATE VIEW customer_recipes.engagement_users_by_visits_per_month AS 
+CREATE VIEW recipes_customer.engagement_users_by_visits_per_month AS 
 SELECT
 "Month",
 "Visits_per_month",
@@ -105,7 +212,7 @@ GROUP BY 1,2
 ORDER BY 1,2;
 
 -- Users by number of visits per week
-CREATE VIEW customer_recipes.engagement_users_by_visits_per_week AS
+CREATE VIEW recipes_customer.engagement_users_by_visits_per_week AS
 SELECT
 "Week",
 "Visits_per_week",
@@ -125,16 +232,15 @@ ORDER BY 1,2;
 -- COHORT ANALYSIS
 -- STAGE 1. Assigning users to cohorts
 
--- Cohort based on month that user first visited website
-CREATE VIEW customer_recipes.cohort_user_map_month_first_touch_website AS
+-- Cohort based on time that user first visited website
+CREATE VIEW recipes_customer.cohort_dfn_by_month_first_touch_website AS
 SELECT
 domain_userid,
 DATE_TRUNC('month', MIN(collector_tstamp)) AS cohort
 FROM "atomic".events
 GROUP BY 1;
 
--- Cohort based on week that user first touched website
-CREATE VIEW customer_recipes.cohort_user_map_week_first_touch_website AS
+CREATE VIEW recipes_customer.cohort_dfn_by_week_first_touch_website AS
 SELECT
 domain_userid,
 DATE_TRUNC('week', MIN(collector_tstamp)) AS cohort
@@ -142,7 +248,15 @@ FROM "atomic".events
 GROUP BY domain_userid;
 
 -- Cohort based on time first signed up (se_action = 'sign-up')
-CREATE VIEW customer_recipes.cohort_user_map_month_signed_up AS
+CREATE VIEW recipes_customer.cohort_dfn_by_month_signed_up AS
+SELECT
+domain_userid,
+DATE_TRUNC('month', MIN(collector_tstamp)) AS cohort
+FROM "atomic".events
+WHERE se_action = 'sign-up'
+GROUP BY domain_userid;
+
+CREATE VIEW recipes_customer.cohort_dfn_by_week_signed_up AS
 SELECT
 domain_userid,
 DATE_TRUNC('week', MIN(collector_tstamp)) AS cohort
@@ -150,11 +264,27 @@ FROM "atomic".events
 WHERE se_action = 'sign-up'
 GROUP BY domain_userid;
 
+CREATE VIEW recipes_customer.cohort_dfn_by_month_first_transact AS
+SELECT
+domain_userid,
+DATE_TRUNC('month', MIN(collector_tstamp)) AS cohort
+FROM "atomic".events
+WHERE event = 'transaction'
+GROUP BY domain_userid;
+
+CREATE VIEW recipes_customer.cohort_dfn_by_month_week_transact AS
+SELECT
+domain_userid,
+DATE_TRUNC('week', MIN(collector_tstamp)) AS cohort
+FROM "atomic".events
+WHERE event = 'transaction'
+GROUP BY domain_userid;
+
 
 -- STAGE 2. Metrics by user
 
 -- Retention by month by user
-CREATE VIEW customer_recipes.retention_by_user_by_month AS
+CREATE VIEW recipes_customer.retention_by_user_by_month AS
 SELECT
 domain_userid,
 DATE_TRUNC('month', collector_tstamp) AS months_active
@@ -162,26 +292,41 @@ FROM "atomic".events
 GROUP BY 1,2;
 
 -- Retention by week by user
-CREATE VIEW customer_recipes.retention_by_user_by_week AS
+CREATE VIEW recipes_customer.retention_by_user_by_week AS
 SELECT
 domain_userid,
 DATE_TRUNC('week', collector_tstamp) AS weeks_active
 FROM "atomic".events
 GROUP BY 1,2;
 
+-- Also refer to CLV and engagement
 
 -- STAGE 3: combine views in 1 and 2 to perform cohort analysis
 
--- Cohort analysis: retention by month
-CREATE VIEW customer_recipes.cohort_retention_by_month AS
+-- Cohort analysis: retention by month, by first touch
+CREATE VIEW recipes_customer.cohort_retention_by_month_first_touch AS
 SELECT
 cohort,
 months_active,
 rank() OVER (PARTITION BY cohort ORDER BY months_active ASC) AS "Month",
 COUNT(DISTINCT(m.domain_userid)) AS uniques,
 COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY cohort))::REAL AS fraction_retained
-FROM customer_recipes.cohort_user_map_week_first_touch_website c
-JOIN customer_recipes.retention_by_user_by_month m
+FROM recipes_customer.cohort_dfn_by_month_first_touch_website c
+JOIN recipes_customer.retention_by_user_by_month m
+ON c.domain_userid = m.domain_userid
+GROUP BY 1,2
+ORDER BY 1,2;
+
+-- Chort analysis: retention by week, by first touch
+CREATE VIEW recipes_customer.cohort_retention_by_week_first_touch AS
+SELECT
+cohort,
+weeks_active,
+rank() OVER (PARTITION BY cohort ORDER BY weeks_active ASC) AS "Weeks",
+COUNT(DISTINCT(m.domain_userid)) AS uniques,
+COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY cohort))::REAL AS fraction_retained
+FROM recipes_customer.cohort_dfn_by_week_first_touch_website c
+JOIN recipes_customer.retention_by_user_by_week m
 ON c.domain_userid = m.domain_userid
 GROUP BY 1,2
 ORDER BY 1,2;

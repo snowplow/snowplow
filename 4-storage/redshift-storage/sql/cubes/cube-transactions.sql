@@ -20,11 +20,11 @@
 
 
 -- Create schema
-CREATE SCHEMA ecomm;
+CREATE SCHEMA cubes_ecomm;
 
 -- VIEW 1
 -- Basic data by transaction
-CREATE VIEW ecomm.transactions_basic AS
+CREATE VIEW cubes_ecomm.transactions_basic AS
 	SELECT
 		domain_userid,
 		domain_sessionidx,
@@ -45,7 +45,7 @@ CREATE VIEW ecomm.transactions_basic AS
 
 -- VIEW 2
 -- Item data by transaction
-CREATE VIEW ecomm.transactions_items_basic AS
+CREATE VIEW cubes_ecomm.transactions_items_basic AS
 	SELECT 
 		ti_orderid,
 		SUM(ti_quantity) AS "number_of_products_bought",
@@ -59,7 +59,7 @@ CREATE VIEW ecomm.transactions_items_basic AS
 
 -- VIEW 3
 -- Consolidate data in View 1 and View 2
-CREATE VIEW ecomm.transactions AS
+CREATE VIEW cubes_ecomm.transactions AS
 	SELECT
 		t.*,
 		i."number_of_products_bought",
@@ -72,7 +72,7 @@ CREATE VIEW ecomm.transactions AS
 
 -- VIEW 4
 -- Consolidate data in view 3 with visit level data
-CREATE VIEW ecomm.transactions_with_visits AS
+CREATE VIEW cubes_ecomm.transactions_with_visits AS
 	SELECT
 	v.*,
 	e.tr_orderid,
@@ -86,7 +86,7 @@ CREATE VIEW ecomm.transactions_with_visits AS
 	e.number_of_products_bought,
 	e.number_of_distinct_products_bought
 	FROM
-		visits.referer_entries_and_exits v
-		LEFT JOIN ecomm.transactions e
-			ON v.domain_userid = e.domain_userid
-			AND v.domain_sessionidx = v.domain_sessionidx;
+	cubes_visits.referer_entries_and_exits v
+	LEFT JOIN cubes_ecomm.transactions e
+	ON v.domain_userid = e.domain_userid
+	AND v.domain_sessionidx = v.domain_sessionidx;

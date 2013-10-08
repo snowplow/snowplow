@@ -18,11 +18,11 @@
 
 
 -- Create the schema
-CREATE SCHEMA basic_recipes;
+CREATE SCHEMA recipes_basic;
 
 
 -- Uniques and visits by day
-CREATE VIEW basic_recipes.uniques_and_visits_by_day AS
+CREATE VIEW recipes_basic.uniques_and_visits_by_day AS
 SELECT
 DATE_TRUNC('day', collector_tstamp) as "Date",
 COUNT(distinct(domain_userid)) as "Uniques",
@@ -34,7 +34,7 @@ ORDER BY 1;
 
 
 -- Pageviews by day
-CREATE VIEW basic_recipes.pageviews_by_day AS
+CREATE VIEW recipes_basic.pageviews_by_day AS
 SELECT 
 DATE_TRUNC('day', collector_tstamp) AS "Date",
 COUNT(*) AS "page_views"
@@ -46,7 +46,7 @@ ORDER BY 1;
 
 
 -- Events by day by type
-CREATE VIEW basic_recipes.events_by_day AS
+CREATE VIEW recipes_basic.events_by_day AS
 SELECT
 DATE_TRUNC('day', collector_tstamp) AS "Date",
 event,
@@ -58,7 +58,7 @@ ORDER BY 1,2;
 
 
 -- Pages per visit (frequency table for last month of data)
-CREATE VIEW basic_recipes.pages_per_visit AS
+CREATE VIEW recipes_basic.pages_per_visit AS
 SELECT
 pages_visited,
 COUNT(*) as "frequency"
@@ -76,7 +76,7 @@ ORDER BY 1;
 
 
 -- Bounce rate by day
-CREATE VIEW AS basic_recipes.bounce_rate_by_day AS 
+CREATE VIEW AS recipes_basic.bounce_rate_by_day AS 
 SELECT
 DATE_TRUNC('day', time_first_touch) AS "Date",
 SUM(bounces)::REAL/COUNT(*) as "Bounce rate"
@@ -96,7 +96,7 @@ ORDER BY 1;
 
 
 -- % New visits
-CREATE VIEW basic_recipes.fraction_new_visits_by_day AS
+CREATE VIEW recipes_basic.fraction_new_visits_by_day AS
 SELECT
 DATE_TRUNC('day', time_first_touch) AS "Date",
 SUM(first_visit)::REAL/COUNT(*) as "fraction_of_visits_that_are_new"
@@ -114,7 +114,7 @@ ORDER BY 1;
 
 
 -- Average visit duration
-CREATE VIEW basic_recipes.avg_visit_duration_by_day AS 
+CREATE VIEW recipes_basic.avg_visit_duration_by_day AS 
 SELECT
 DATE_TRUNC('day', start_time) AS "Date",
 AVG(duration)/1000000 as "average_visit_duration_seconds"
@@ -134,7 +134,7 @@ order by 1;
 
 
 -- Demographics: language
-CREATE VIEW AS basic_recipes.visitors_by_language AS
+CREATE VIEW AS recipes_basic.visitors_by_language AS
 SELECT
 br_lang,
 COUNT(DISTINCT(domain_userid)) as "visitors"
@@ -145,7 +145,7 @@ ORDER BY 2 DESC;
 
 
 -- Demographics: location
-CREATE VIEW basic_recipes.visits_by_country AS 
+CREATE VIEW recipes_basic.visits_by_country AS 
 SELECT
 geo_country AS "Country",
 COUNT(DISTINCT(domain_userid)) as "Visitors"
@@ -156,7 +156,7 @@ ORDER BY 2 DESC;
 
 
 -- Behavior: new vs returning
-CREATE VIEW basic_recipes.new_vs_returning AS
+CREATE VIEW recipes_basic.new_vs_returning AS
 SELECT
 DATE_TRUNC('day', time_first_touch) AS "Date",
 SUM(first_visit)::REAL/COUNT(*) as "fraction_of_visits_that_are_new"
@@ -174,7 +174,7 @@ ORDER BY 1;
 
 
 -- Behavior: frequency
-CREATE VIEW basic_recipes.behavior_frequency AS
+CREATE VIEW recipes_basic.behavior_frequency AS
 SELECT
 domain_sessionidx as "Number of visits",
 COUNT(DISTINCT(domain_userid)) as "Frequency"
@@ -184,7 +184,7 @@ GROUP BY 1
 ORDER BY 1;
 
 -- Behavior: recency
-CREATE VIEW basic_recipes.behavior_recency AS
+CREATE VIEW recipes_basic.behavior_recency AS
 SELECT
 "Days between visits",
 COUNT(*) as "Number of visits"
@@ -227,7 +227,7 @@ GROUP BY 1
 ORDER BY 1;
 
 -- Behavior: engagement - visit duration
-CREATE VIEW basic_recipes.engagement_visit_duration AS
+CREATE VIEW recipes_basic.engagement_visit_duration AS
 SELECT
 "Visit duration",
 COUNT(*) as "Number of visits"
@@ -252,7 +252,7 @@ ORDER BY 1;
 
 
 -- Behavior: engagement - page views per visit
-CREATE VIEW basic_recipes.engagement_pageviews_per_visit AS
+CREATE VIEW recipes_basic.engagement_pageviews_per_visit AS
 SELECT
 "Page views per visit",
 COUNT(*) as "Number of visits"
@@ -271,7 +271,7 @@ ORDER BY 1;
 
 
 -- Technology: browser
-CREATE VIEW basic_recipes.technology_browser AS
+CREATE VIEW recipes_basic.technology_browser AS
 SELECT
 br_family as "Browser",
 COUNT(DISTINCT(domain_userid || domain_sessionidx)) as "Visits"
@@ -282,7 +282,7 @@ ORDER BY 2 DESC;
 
 
 -- Technology: Operating System
-CREATE VIEW basic_recipes.technology_os AS
+CREATE VIEW recipes_basic.technology_os AS
 SELECT 
 os_name as "Operating System",
 COUNT(DISTINCT(domain_userid || domain_sessionidx)) as "Visits"
@@ -293,7 +293,7 @@ ORDER BY 2 DESC;
 
 
 -- Technology: mobile
-CREATE VIEW basic_recipes.technology_mobile AS
+CREATE VIEW recipes_basic.technology_mobile AS
 SELECT 
 CASE WHEN dvce_ismobile=1 THEN 'mobile' ELSE 'desktop' END AS "Device type",
 COUNT(DISTINCT(domain_userid || domain_sessionidx)) as "Visits"

@@ -20,11 +20,11 @@
 
 
 -- Create schema
-CREATE SCHEMA pages;
+CREATE SCHEMA cubes_pages;
 
 -- VIEW 1
 -- Simplest page-level view (aggregated by page per session)
-CREATE VIEW pages.basic AS
+CREATE VIEW cubes_pages.basic AS
 	SELECT
 		page_urlscheme,
 		page_urlhost,
@@ -46,7 +46,7 @@ CREATE VIEW pages.basic AS
 
 -- VIEW 2
 -- Page views by page by session
-CREATE VIEW pages.views_by_session AS
+CREATE VIEW cubes_pages.views_by_session AS
 	SELECT
 		page_urlscheme,
 		page_urlhost,
@@ -62,7 +62,7 @@ CREATE VIEW pages.views_by_session AS
 
 -- VIEW 3
 -- Page pings by page by session
-CREATE VIEW pages.pings_by_session AS
+CREATE VIEW cubes_pages.pings_by_session AS
 	SELECT
 		page_urlscheme,
 		page_urlhost,
@@ -78,13 +78,13 @@ CREATE VIEW pages.pings_by_session AS
 
 -- VIEW 4
 -- Consolidate data from above 3 views (pages per session)
-CREATE VIEW pages.complete AS
+CREATE VIEW cubes_pages.complete AS
 	SELECT
 		basic.*,
 		v.pageviews_by_session,
 		pp.pagepings_by_session
 	FROM
-		pages.basic basic
+		cubes_pages.basic basic
 		LEFT JOIN pages.views_by_session AS v 
 			ON basic.page_urlscheme = v.page_urlscheme
 			AND basic.page_urlhost = v.page_urlhost
