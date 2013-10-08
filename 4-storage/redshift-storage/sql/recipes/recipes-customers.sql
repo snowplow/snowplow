@@ -285,50 +285,80 @@ GROUP BY domain_userid;
 CREATE VIEW recipes_customer.cohort_dfn_by_paid_channel_acquired_by_month AS
 SELECT
 domain_userid,
-mkt_medium AS channel_acquired_medium,
-mkt_source AS channel_acquired_source,
-DATE_TRUNC('month', MIN(collector_tstamp)) AS month_acquired
-FROM "atomic".events
-WHERE mkt_medium IS NOT NULL 
-AND mkt_medium != ''
-AND domain_sessionidx = 1
-GROUP BY 1,2,3;
+channel_acquired_medium,
+channel_acquired_source,
+month_acquired
+FROM (
+	SELECT 
+	domain_userid, 
+	mkt_medium AS channel_acquired_medium,
+	mkt_source AS channel_acquired_source,
+	DATE_TRUNC('month', collector_tstamp) AS month_acquired,
+ 	rank() over (partition by domain_userid order by collector_tstamp) AS r
+	FROM "atomic".events
+	WHERE mkt_medium IS NOT NULL
+	AND mkt_medium != ''
+	AND domain_sessionidx = 1
+) t
+WHERE r = 1;
 
 CREATE VIEW recipes_customer.cohort_dfn_by_paid_channel_acquired_by_week AS
 SELECT
 domain_userid,
-mkt_medium AS channel_acquired_medium,
-mkt_source AS channel_acquired_source,
-DATE_TRUNC('week', MIN(collector_tstamp)) AS week_acquired
-FROM "atomic".events
-WHERE mkt_medium IS NOT NULL 
-AND mkt_medium != ''
-AND domain_sessionidx = 1
-GROUP BY 1,2,3;
+channel_acquired_medium,
+channel_acquired_source,
+week_acquired
+FROM (
+	SELECT 
+	domain_userid, 
+	mkt_medium AS channel_acquired_medium,
+	mkt_source AS channel_acquired_source,
+	DATE_TRUNC('week', collector_tstamp) AS week_acquired,
+ 	rank() over (partition by domain_userid order by collector_tstamp) AS r
+	FROM "atomic".events
+	WHERE mkt_medium IS NOT NULL
+	AND mkt_medium != ''
+	AND domain_sessionidx = 1
+) t
+WHERE r = 1;
 
 -- Cohort based on referal channel first acquired
 CREATE VIEW recipes_customer.cohort_dfn_by_refr_channel_acquired_by_month AS
 SELECT
 domain_userid,
-refr_medium AS refr_acquired_medium, 
-refr_source AS refr_acquired_source, 
-DATE_TRUNC('month', MIN(collector_tstamp)) AS month_acquired
-FROM "atomic".events
-WHERE domain_sessionidx = 1
-AND refr_medium != 'internal'
-GROUP BY 1,2,3;
+refr_acquired_medium,
+refr_acquired_source,
+month_acquired
+FROM (
+	SELECT 
+	domain_userid, 
+	refr_medium AS refr_acquired_medium,
+	refr_source AS refr_acquired_source,
+	DATE_TRUNC('month', collector_tstamp) AS month_acquired,
+ 	rank() over (partition by domain_userid order by collector_tstamp) AS r
+	FROM "atomic".events
+	WHERE refr_medium != 'internal'
+) t
+WHERE r = 1;
+
 
 CREATE VIEW recipes_customer.cohort_dfn_by_refr_channel_acquired_by_week AS
 SELECT
 domain_userid,
-refr_medium AS refr_acquired_medium, 
-refr_source AS refr_acquired_source, 
-DATE_TRUNC('week', MIN(collector_tstamp)) AS week_acquired
-FROM "atomic".events
-WHERE mkt_medium IS NOT NULL 
-AND mkt_medium != ''
-AND domain_sessionidx = 1
-GROUP BY 1,2,3;
+refr_acquired_medium,
+refr_acquired_source,
+week_acquired
+FROM (
+	SELECT 
+	domain_userid, 
+	refr_medium AS refr_acquired_medium,
+	refr_source AS refr_acquired_source,
+	DATE_TRUNC('week', collector_tstamp) AS week_acquired,
+ 	rank() over (partition by domain_userid order by collector_tstamp) AS r
+	FROM "atomic".events
+	WHERE refr_medium != 'internal'
+) t
+WHERE r = 1;
 
 
 

@@ -295,8 +295,8 @@ CREATE VIEW recipes_basic.technology_os AS
 -- Technology: mobile
 CREATE VIEW recipes_basic.technology_mobile AS
 SELECT 
-CASE WHEN dvce_ismobile=1 THEN 'mobile' ELSE 'desktop' END AS "Device type",
-COUNT(DISTINCT(domain_userid || domain_sessionidx)) as "Visits"
+	CASE WHEN dvce_ismobile=1 THEN 'mobile' ELSE 'desktop' END AS "Device type",
+	COUNT(DISTINCT(domain_userid || domain_sessionidx)) as "Visits"
 FROM "atomic".events
 WHERE collector_tstamp > current_date - integer '31'
 GROUP BY 1;
