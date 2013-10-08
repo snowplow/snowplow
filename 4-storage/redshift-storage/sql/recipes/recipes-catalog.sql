@@ -125,11 +125,12 @@ ORDER BY 1,2,3;
 -- PART 2 - CONTENT PAGE ANALYTICS
 
 -- Length of time per page per user
-CREATE VIEW recipes_catalog.time_per_page_per_user AS
+CREATE VIEW recipes_catalog.time_and fraction_read_per_page_per_user AS
 SELECT
 	page_urlpath,
 	domain_userid,
-	COUNT(*) AS number_of_pings
+	COUNT(*) AS number_of_pings,
+	MAX( (pp_yoffset_max + br_viewheight) / doc_height::REAL ) AS fraction_read
 FROM "atomic".events
 WHERE event = 'page_ping'
 GROUP BY 1,2;
@@ -147,8 +148,8 @@ ORDER BY 1,2;
 CREATE VIEW recipes_catalog.avg_pings_per_unique_per_page_per_month AS
 SELECT
 	u.page_urlpath,
-	u.unique_visitors,
 	u.month,
+	u.unique_visitors,
 	p.number_of_pings,
 	p.number_of_pings / u.unique_visitors AS average_pings_per_unique_per_page 
 FROM recipes_catalog.uniques_and_pvs_by_page_by_month u 
