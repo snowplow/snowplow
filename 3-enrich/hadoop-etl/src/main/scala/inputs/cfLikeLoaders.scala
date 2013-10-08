@@ -183,7 +183,7 @@ trait CloudFrontLikeLoader extends CollectorLoader {
 
       // Validations
       val timestamp = toTimestamp(date, time)
-      val querystring = if (isActualCloudFront) doubleEncodePcts(qs) else qs
+      val querystring = doubleEncodePcts(qs) // Even CljTomcat format doesn't double-encode pcts
       val payload = toGetPayload(querystring)
 
       // No validation (yet) on the below
