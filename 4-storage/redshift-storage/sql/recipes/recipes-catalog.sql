@@ -21,6 +21,7 @@
 CREATE SCHEMA recipes_catalog;
 
 
+
 -- PART 1 - PRODUCT ANALYTICS
 
 -- Uniques and page views by page
@@ -123,3 +124,33 @@ ORDER BY 1,2,3;
 
 -- PART 2 - CONTENT PAGE ANALYTICS
 
+-- Length of time per page per user
+CREATE VIEW recipes_catalog.time_per_page_per_user AS
+SELECT
+	page_urlpath,
+	domain_userid,
+	COUNT(*) AS number_of_pings
+FROM "atomic".events
+WHERE event = 'page_ping'
+GROUP BY 1,2;
+
+CREATE VIEW recipes_catalog.pings_per_page_per_month AS
+SELECT
+	page_urlpath,
+	DATE_TRUNC('month', collector_tstamp) AS month,
+	COUNT(DISTINCT(event_id)) AS number_of_pings
+FROM "atomic".events
+WHERE event = 'page_ping'
+GROUP BY 1,2
+ORDER BY 1,2;
+
+CREATE VIEW recipes_catalog.avg_pings_per_unique_per_page_per_month AS
+SELECT
+	u.page_urlpath,
+	u.unique_visitors,
+	u.month,
+	p.number_of_pings,
+	p.number_of_pings / u.unique_visitors AS average_pings_per_unique_per_page 
+FROM recipes_catalog.uniques_and_pvs_by_page_by_month u 
+LEFT JOIN recipes_catalog.pings_per_page_per_month p
+ON u.page_urlpath = p.page_urlpath AND u.month = p.month;
