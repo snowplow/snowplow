@@ -155,3 +155,21 @@ SELECT
 FROM recipes_catalog.uniques_and_pvs_by_page_by_month u 
 LEFT JOIN recipes_catalog.pings_per_page_per_month p
 ON u.page_urlpath = p.page_urlpath AND u.month = p.month;
+
+-- PART 3 - general page analytics
+
+-- How much traffic does each page drive directly to the website?
+CREATE VIEW recipes_catalog.traffic_driven_to_site_per_page_per_month AS
+SELECT
+	page_urlpath AS "page",
+	DATE_TRUNC('month', collector_tstamp) AS month,
+	COUNT(DISTINCT(domain_userid)) AS "Uniques driven to site",
+	COUNT(DISTINCT(domain_userid || '-' || domain_sessionidx)) AS "Visits driven to site",
+	COUNT(*) AS "Landing page views"
+FROM
+	"atomic".events
+WHERE "event" = 'page_view'
+AND   "refr_medium" != 'internal'
+GROUP BY 1,2
+ORDER BY 2,3 DESC;
+

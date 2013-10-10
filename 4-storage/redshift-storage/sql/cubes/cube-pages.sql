@@ -22,6 +22,8 @@
 -- Create schema
 CREATE SCHEMA cubes_pages;
 
+-- PART 1: General page-level analytics
+
 -- VIEW 1
 -- Simplest page-level view (aggregated by page per session)
 CREATE VIEW cubes_pages.basic AS
@@ -97,3 +99,22 @@ CREATE VIEW cubes_pages.complete AS
 			AND basic.page_urlpath = pp.page_urlpath
 			AND basic.domain_userid = pp.domain_userid
 			AND basic.domain_sessionidx = pp.domain_sessionidx;
+
+-- PART 2: LANDING PAGE ANALYTICS
+CRATE VIEW cube_pages.landing_pages AS
+CREATE VIEW recipes_catalog.traffic_driven_to_site_per_page_per_week AS
+	SELECT
+		page_urlpath AS "page",
+		DATE_TRUNC('week', collector_tstamp) AS week,
+		refr_medium,
+		refr_source,
+		refr_term,
+		refr_urlhost,
+		refr_urlpath,
+		COUNT(*) AS "Landing page views"
+	FROM
+		"atomic".events
+	WHERE "event" = 'page_view'
+	AND   "refr_medium" != 'internal'
+	GROUP BY 1,2,3,4,5,6
+	ORDER BY 7 DESC;
