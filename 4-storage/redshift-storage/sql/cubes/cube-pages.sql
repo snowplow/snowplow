@@ -101,7 +101,6 @@ CREATE VIEW cubes_pages.complete AS
 			AND basic.domain_sessionidx = pp.domain_sessionidx;
 
 -- PART 2: LANDING PAGE ANALYTICS
-CRATE VIEW cube_pages.landing_pages AS
 CREATE VIEW recipes_catalog.traffic_driven_to_site_per_page_per_week AS
 	SELECT
 		page_urlpath AS "page",
@@ -111,6 +110,11 @@ CREATE VIEW recipes_catalog.traffic_driven_to_site_per_page_per_week AS
 		refr_term,
 		refr_urlhost,
 		refr_urlpath,
+		mkt_medium,
+		mkt_source,
+		mkt_term,
+		mkt_campaign,
+		mkt_content
 		COUNT(*) AS "Landing page views"
 	FROM
 		"atomic".events
@@ -118,3 +122,26 @@ CREATE VIEW recipes_catalog.traffic_driven_to_site_per_page_per_week AS
 	AND   "refr_medium" != 'internal'
 	GROUP BY 1,2,3,4,5,6
 	ORDER BY 7 DESC;
+
+CREATE VIEW recipes_catalog.traffic_driven_to_site_per_page_per_month AS
+	SELECT
+		page_urlpath AS "page",
+		DATE_TRUNC('month', collector_tstamp) AS month,
+		refr_medium,
+		refr_source,
+		refr_term,
+		refr_urlhost,
+		refr_urlpath,
+		mkt_medium,
+		mkt_source,
+		mkt_term,
+		mkt_campaign,
+		mkt_content
+		COUNT(*) AS "Landing page views"
+	FROM
+		"atomic".events
+	WHERE "event" = 'page_view'
+	AND   "refr_medium" != 'internal'
+	GROUP BY 1,2,3,4,5,6
+	ORDER BY 7 DESC;
+
