@@ -74,10 +74,10 @@ object Sep2013CfLineTest {
     "utm_source=GoogleSearch&utm_term=rome%20choi%20tarot&utm_content=42017424088&utm_medium=cpc&utm_campaign=uk-tarot-decks--pbz00316",
     null,
     "http",
-    "www.metacrawler.com",
+    "www.google.com",
     "80",
-    "/search/web",
-    "fcoid=417&fcop=topnav&fpid=27&q=snowplow+analytics&ql=",
+    "/url",
+    "sa=t&rct=j&q=www.psychicbazaar.com%2B312-dreaming-way-tarot&source=web&cd=1&ved=0CFwQFjAD&url=http%3A%2F%2Fwww.psychicbazaar.com%2Ftarot-cards%2F312-dreaming-way-tarot.html%3Futm_source%3DGoogleSearch%26utm_term%3Drome%2520choi%2520tarot%26utm_content%3D42017424088%26utm_medium%3Dcpc%26utm_campaign%3Duk-tarot-decks--pbz00316&ei=2CdTUo3DJqf9oAa_Fg&usg=AFQjCNGGq8p48SyYds9oznKs1F5RQYtx_A",
     null,
     "search", // Search referer
     "InfoSpace",

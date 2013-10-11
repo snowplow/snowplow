@@ -70,25 +70,23 @@ object Oct2013CfLineTest {
     "http",
     "www.psychicbazaar.com",
     "80",
-    // TODO: why is this being decoded one too many times?
     "/2-tarot-cards/genre/native%20american/type/all/view/list",
-    // TODO: why is this being decoded one too many times?
-    "ARG utm_source=GoogleSearch&utm_medium=cpc&utm_term=native american tarot deck&utm_content=39254295088&utm_campaign=uk-tarot--native-american&gclid=CI6thtbxhboCFTMctAod0FcAdQ",
+    "utm_source=GoogleSearch&utm_medium=cpc&utm_term=native%20american%20tarot%20deck&utm_content=39254295088&utm_campaign=uk-tarot--native-american&gclid=CI6thtbxhboCFTMctAod0FcAdQ",
     null,
     "http",
-    "www.metacrawler.com",
+    "www.google.com",
     "80",
-    "/search/web",
-    "fcoid=417&fcop=topnav&fpid=27&q=snowplow+analytics&ql=",
+    "/uds/afs",
+    "q=native%20american%20tarot%20deck%20religion%20and%20spirituality%20card%20corn%20dance%203&client=monstermarketplace-infosites-search&channel=outboundteleservices&hl=en&adtest=false&oe=utf8&ie=utf8&r=m&adpage=1&fexp=21404%2C7000108&jsei=4&format=n3%7Cn3&ad=n6&nocache=8231381188870735&num=0&output=uds_ads_only&v=3&u_his=2&u_tz=60&dt=1381188870736&u_w=1024&u_h=768&biw=784&bih=515&psw=784&psh=269&frm=0&ui=uv3atlt20ld20lv20ff1st14sd12sv12sa10af3srslipva-wi562-wi562&rurl=http%3A%2F%2Fwww.vivasearch.com%2Fsearch%2F%3Fq%3Dnative%2Bamerican%2Btarot%2Bdeck%2Breligion%2Band%2Bspirituality%2Bcard%2Bcorn%2Bdance%2B3%26t%3DH476469%26gc%3Dw13%26sid%3DCNCRousx1br-1GbJoA3wpw%26utm_source%3DH%26utm_medium%3Dpaid%26utm_campaign%3DH476469&referer=http%3A%2F%2F14468.6103.1.gameshud.com%2Ffp%3Fip%3D81.106.34.172%26q%3DNative%2BAmerican%2BTarot%2BDeck%2B%2528Religion%2Band%2BSpirituality%2529%2B%255BCards%255D%2Bcorn%2Bdance%2B3%26ua%3DMozilla%252F5.0%2B%2528compatible%253B%2BMSIE%2B9.0%253B%2BWindows%2BNT%2B6.0%253B%2BTrident%252F5.0%2529%26ts%3D1381188845562%26sig%3D3f9mz-69KddNRBXDy8jc95VhqkjyWeTKvvhqTWa9tyDVTnCAEJ6B79LSwsgKcBLPtUfE62OQnCJuvbfJXoGdIS92QkObhKYW1G5yhSG7vCdt61Y6z7RcSupxJ2Y4bw3mzYbSBaegl5DlBva7KCE-JtnOCTrRa7e6hNMxUVr_gL1oBeYFqwy8JZx0VuXyaYisBjdRKQeAyHYf5cb3I6d1CmZXTN3J7h7X2bV1Vp2TkAuJRzcfAj-WOJtneQ",
     null,
     "search", // Search referer
-    "InfoSpace",
-    "snowplow analytics",
-    null, // Marketing campaign fields empty
-    null, //
-    null, //
-    null, //
-    null, //
+    "Google",
+    "native american tarot deck religion and spirituality card corn dance 3",
+    "cpc",
+    "GoogleSearch",
+    "native american tarot deck",
+    "39254295088",
+    "uk-tarot--native-american",
     null, // Event fields empty
     null, //
     null, //
@@ -108,41 +106,41 @@ object Oct2013CfLineTest {
     null, //
     null, //
     null, //
-    null, // Page ping fields empty
-    null, //
-    null, //
-    null, //
-    "Mozilla/5.0 (Windows NT 5.1; rv:23.0) Gecko/20100101 Firefox/23.0",
-    "Firefox 2",
-    "Firefox",
-    "23.0",
+    "0",
+    "0",
+    "0",
+    "0",
+    "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0; Trident/5.0)",
+    "Internet Explorer",
+    "Internet Explorer",
+    null,
     "Browser",
-    "GECKO",
-    "en-US",
-    "1",
-    "1",
-    "1",
-    "0",
-    "1",
-    "0",
-    "1",
-    "0",
-    "0",
+    "TRIDENT",
+    "en-gb",
+    null, // IE cannot report browser features
+    null,
+    "1", // Java
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
     "1",
     "24",
-    "1024",
-    "635",
+    "784",
+    "532",
     "Windows",
     "Windows",
     "Microsoft Corporation",
-    "America/Los_Angeles",
+    "Europe/London",
     "Computer",
     "0",
     "1024",
     "768",
-    "UTF-8",
-    "1024",
-    "635"
+    "utf-8",
+    "1063",
+    "1726"
     )
 }
 

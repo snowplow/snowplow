@@ -64,9 +64,9 @@ object ConversionUtils {
 
     // TODO: should we be using decodeString below instead?
     // Trouble is we can't be sure of the querystring's encoding.
-    val query    = fixTabsNewlines(uri.getQuery)
-    val path     = fixTabsNewlines(uri.getPath)
-    val fragment = fixTabsNewlines(uri.getFragment)
+    val query    = fixTabsNewlines(uri.getRawQuery)
+    val path     = fixTabsNewlines(uri.getRawPath)
+    val fragment = fixTabsNewlines(uri.getRawFragment)
 
     UriComponents(
       scheme   = uri.getScheme,

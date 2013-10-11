@@ -291,8 +291,8 @@ trait CloudFrontLikeLoader extends CollectorLoader {
    */
   private[inputs] def doubleEncodePcts(str: String): String =
     str
-      .replaceAll("%25(?![0-9a-fA-F][0-9a-fA-F])", "%2525") // Re-encode encoded % (%25) to %2525
-      .replaceAll("%(?!25)", "%25") // Re-encode any other encoded pattern
+      .replaceAll("%25(?![0-9a-fA-F][0-9a-fA-F])", "%2525") // Re-encode single-encoded % (%25) to %2525
+      .replaceAll("%(?!25)", "%25") // Re-encode any other single-encoded pattern
 
   /**
    * On 14th September 2013, Amazon rolled out a further fix,
