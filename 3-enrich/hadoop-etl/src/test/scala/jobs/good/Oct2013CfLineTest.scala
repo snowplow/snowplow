@@ -71,7 +71,7 @@ object Oct2013CfLineTest {
     "www.psychicbazaar.com",
     "80",
     // TODO: why is this being decoded one too many times?
-    "ARG /2-tarot-cards/genre/native american/type/all/view/list",
+    "/2-tarot-cards/genre/native%20american/type/all/view/list",
     // TODO: why is this being decoded one too many times?
     "ARG utm_source=GoogleSearch&utm_medium=cpc&utm_term=native american tarot deck&utm_content=39254295088&utm_campaign=uk-tarot--native-american&gclid=CI6thtbxhboCFTMctAod0FcAdQ",
     null,
