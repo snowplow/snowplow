@@ -13,7 +13,7 @@ Hadoop ETL: defensively fixed raw spaces in page and referer URLs (#346)
 Hadoop ETL: fixed regression, single-encoded %s logic didn't account for % itself (#347)
 Hadoop ETL: added unit tests for fixTabsNewlines (#332)
 Hadoop ETL: tests now report the failing CanonicalOutput field (#325)
-Hadoop ETL: now handling all fields double-encoded as per CloudFront post-14-September (#348)      - TODO
+Hadoop ETL: now handling all fields double-encoded as per CloudFront post-14-September (#348)
 EmrEtlRunner: bumped to 0.5.0
 EmrEtlRunner: bumped Sluice to 0.1.4 (#96)
 EmrEtlRunner: bumped Elasticity to 2.6 (#345)
@@ -30,9 +30,6 @@ StorageLoader: moved VACUUM SORT ONLY to a --include step (#321)
 StorageLoader: added COMPROWS to config and --include compupdate option (#344)
 StorageLoader: changed Postgres VACUUM FULL to VACUUM (#357)
 StorageLoader: added TRUNCATECOLUMNS for Redshift load (#360)
-
-REMOVE: 
-ADD: fix problem where refr and url are being decoded one too many times - TODO
 
 Version 0.8.9 (2013-09-05)
 --------------------------

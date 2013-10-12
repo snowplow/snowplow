@@ -61,7 +61,7 @@ object MasterCfLinesTest {
 class MasterCfLinesTest extends Specification with TupleConversions {
 
   "A job which processes a CloudFront file containing 9 valid events, 6 bad lines and 3 discardable lines" should {
-    EtlJobTest("0").
+    EtlJobTest("cloudfront", "0"). // Technically CljTomcatLineTest isn't CloudFront format but won't break this test
       source(MultipleTextLineFiles("inputFolder"), MasterCfLinesTest.lines).
       sink[String](Tsv("outputFolder")){ output =>
         "write 9 events" in {

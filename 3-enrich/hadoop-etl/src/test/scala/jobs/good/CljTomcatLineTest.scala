@@ -156,7 +156,7 @@ object CljTomcatLineTest {
 class CljTomcatLineTest extends Specification with TupleConversions {
 
   "A job which processes a Clojure-Tomcat file containing 1 valid page view" should {
-    EtlJobTest("2").
+    EtlJobTest("clj-tomcat", "2").
       source(MultipleTextLineFiles("inputFolder"), CljTomcatLineTest.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {

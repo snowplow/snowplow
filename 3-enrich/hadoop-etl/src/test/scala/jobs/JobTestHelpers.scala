@@ -144,7 +144,7 @@ object JobTestHelpers {
   implicit def Lines2ScaldingLines(lines : Lines): ScaldingLines = lines.numberedLines 
 
   // Standard JobTest definition used by all integration tests
-  val EtlJobTest: (String, String) => JobTest = (anonQuartets, collector) => 
+  val EtlJobTest: (String, String) => JobTest = (collector, anonQuartets) => 
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob").
       arg("input_folder", "inputFolder").
       arg("input_format", collector).

@@ -152,7 +152,7 @@ object TransactionCfLineTest {
 class TransactionCfLineTest extends Specification with TupleConversions {
 
   "A job which processes a CloudFront file containing 1 valid transaction" should {
-    EtlJobTest("4").
+    EtlJobTest("cloudfront", "4").
       source(MultipleTextLineFiles("inputFolder"), TransactionCfLineTest.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 transaction" in {

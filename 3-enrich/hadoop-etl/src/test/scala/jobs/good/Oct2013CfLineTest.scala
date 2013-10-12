@@ -157,7 +157,7 @@ object Oct2013CfLineTest {
 class Oct2013CfLineTest extends Specification with TupleConversions {
 
   "A job which processes a CloudFront file containing 1 valid page ping" should {
-    EtlJobTest("0").
+    EtlJobTest("cloudfront", "0").
       source(MultipleTextLineFiles("inputFolder"), Oct2013CfLineTest.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {
