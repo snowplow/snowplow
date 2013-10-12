@@ -13,6 +13,9 @@
 package com.snowplowanalytics.snowplow.enrich.hadoop
 package inputs
 
+// Java
+import java.net.URLEncoder
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -183,12 +186,12 @@ trait CloudFrontLikeLoader extends CollectorLoader {
 
       // Validations
       val timestamp = toTimestamp(date, time)
-      val querystring = doubleEncodePcts(qs) // Even CljTomcat format doesn't double-encode pcts
+      val querystring = if (isActualCloudFront) doubleEncodePcts(qs) else reEncode(qs)
       val payload = toGetPayload(querystring)
 
       // No validation (yet) on the below
-      val userAgent  = if (isActualCloudFront) singleEncodePcts(ua) else ua
-      val refr = if (isActualCloudFront) singleEncodePcts(rfr) else rfr
+      val userAgent  = if (isActualCloudFront) singleEncodePcts(ua) else ua // TODO: better to be non-lossy post-September
+      val refr = if (isActualCloudFront) singleEncodePcts(rfr) else rfr // TODO: better to be non-lossy post-September
       val referer = toOption(refr) map toCleanUri
 
       (timestamp.toValidationNel |@| payload.toValidationNel) { (t, p) =>
@@ -230,6 +233,18 @@ trait CloudFrontLikeLoader extends CollectorLoader {
     case Some(qs) => TrackerPayload.extractGetPayload(qs, CfEncoding)
     case None => "Querystring is empty, cannot extract GET payload".fail
   }
+
+  /**
+   * Wrapper to re-encode a value.
+   * Used for Clojure Collector
+   * fields as they are only
+   * singly-encoded
+   *
+   * @param value The value to re-encode
+   * @return the re-encoded value
+   */
+  private def reEncode(value: String) =
+    URLEncoder.encode(value, CfEncoding)
 
   /**
    * Checks whether a String field is a hyphen

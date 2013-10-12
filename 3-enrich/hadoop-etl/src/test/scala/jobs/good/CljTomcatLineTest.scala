@@ -155,7 +155,7 @@ object CljTomcatLineTest {
  */
 class CljTomcatLineTest extends Specification with TupleConversions {
 
-  "A job which processes a CloudFront file containing 1 valid page ping" should {
+  "A job which processes a Clojure-Tomcat file containing 1 valid page view" should {
     EtlJobTest("2").
       source(MultipleTextLineFiles("inputFolder"), CljTomcatLineTest.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
