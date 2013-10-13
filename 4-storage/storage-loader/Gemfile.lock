@@ -25,7 +25,7 @@ GEM
       mini_portile (~> 0.5.0)
     pg (0.14.1)
     ruby-hmac (0.4.0)
-    sluice (0.1.4)
+    sluice (0.1.5)
       contracts (~> 0.2.3)
       fog (~> 1.14.0)
 
@@ -34,4 +34,4 @@ PLATFORMS
 
 DEPENDENCIES
   pg (~> 0.14.1)
-  sluice (~> 0.1.4)
+  sluice (~> 0.1.5)

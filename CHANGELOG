@@ -15,15 +15,15 @@ Hadoop ETL: added unit tests for fixTabsNewlines (#332)
 Hadoop ETL: tests now report the failing CanonicalOutput field (#325)
 Hadoop ETL: now handling all fields double-encoded as per CloudFront post-14-September (#348)
 EmrEtlRunner: bumped to 0.5.0
-EmrEtlRunner: bumped Sluice to 0.1.4 (#96)
+EmrEtlRunner: bumped Sluice to 0.1.5 (#96)
 EmrEtlRunner: bumped Elasticity to 2.6 (#345)
 EmrEtlRunner: enabled EMR Job Flow debugging for easier access to logs (#279)
 EmrEtlRunner: ETL job no longer fails if there's no data for last run period (#296)
-EmrEtlRunner: empty processing dir check doesn't seem to work if processing dir is a sub-folder (#326) - TODO
+EmrEtlRunner: empty processing dir check now works if dir contains 1 file (#326)
 EmrEtlRunner: added ability to mask IP addresses in ETL (#309)
 EmrEtlRunner: made the examples match what you get from git out of the box, thanks @shermozle (#331)
 StorageLoader: bumped to 0.1.1
-StorageLoader: bumped Sluice to 0.1.4 (#96)
+StorageLoader: bumped Sluice to 0.1.5 (#96)
 StorageLoader: fixed "\" in fields acts as an escape character for Postgres (#329)                     - TODO
 StorageLoader: added ability to --skip analyze (#335)
 StorageLoader: moved VACUUM SORT ONLY to a --include step (#321)
