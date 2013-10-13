@@ -24,7 +24,7 @@ EmrEtlRunner: added ability to mask IP addresses in ETL (#309)
 EmrEtlRunner: made the examples match what you get from git out of the box, thanks @shermozle (#331)
 StorageLoader: bumped to 0.1.1
 StorageLoader: bumped Sluice to 0.1.5 (#96)
-StorageLoader: fixed "\" in fields acts as an escape character for Postgres (#329)                     - TODO
+StorageLoader: fixed "\" in fields acts as an escape character for Postgres, thanks @kingo55 (#329)
 StorageLoader: added ability to --skip analyze (#335)
 StorageLoader: moved VACUUM SORT ONLY to a --include step (#321)
 StorageLoader: added COMPROWS to config and --include compupdate option (#344)

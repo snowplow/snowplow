@@ -47,7 +47,7 @@ begin
         when 'redshift'
           loader::RedshiftLoader.load_events(config, t)
         when 'postgres'
-          loader::PostgresLoader.load_events(config[:download][:folder], t)
+          loader::PostgresLoader.load_events(config[:download][:folder], t, config[:skip], config[:include])
       end
     }
   end

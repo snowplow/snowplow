@@ -24,14 +24,16 @@ module SnowPlow
       EVENT_FILES = "part-*"
       EVENT_FIELD_SEPARATOR = "	"
       NULL_STRING = ""
-      ESCAPE_STRING = "\\\\"
+      ESCAPE_STRING = "\\x02"
 
       # Loads the SnowPlow event files into Postgres.
       #
       # Parameters:
       # +events_dir+:: the directory holding the event files to load 
       # +target+:: the configuration options for this target
-      def load_events(events_dir, target)
+      # +skip_steps+:: Array of steps to skip
+      # +include_steps+:: Array of optional steps to include
+      def load_events(events_dir, target, skip_steps, include_steps)
         puts "Loading Snowplow events into #{target[:name]} (PostgreSQL database)..."
 
         event_files = get_event_files(events_dir)
@@ -45,10 +47,10 @@ module SnowPlow
         end
 
         post_processing = nil
-        unless config[:skip].include?('analyze')
+        unless skip_steps.include?('analyze')
           post_processing = "ANALYZE "
         end
-        if config[:include].include?('vacuum')
+        if include_steps.include?('vacuum')
           post_processing = "VACUUM " + (post_processing || "")
         end
 

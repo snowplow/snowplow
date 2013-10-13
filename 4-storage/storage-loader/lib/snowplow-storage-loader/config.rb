@@ -88,6 +88,7 @@ module SnowPlow
         # Handle command-line arguments
         options = {}
         options[:skip] = []
+        options[:include] = []
         optparse = OptionParser.new do |opts|
 
           opts.banner = "Usage: %s [options]" % NAME
