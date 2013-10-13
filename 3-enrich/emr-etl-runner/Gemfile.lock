@@ -27,6 +27,7 @@ GEM
     rest-client (1.6.7)
       mime-types (>= 1.16)
     ruby-hmac (0.4.0)
+    contracts (0.2.3)
     sluice (0.1.4)
       contracts (~> 0.2.3)
       fog (~> 1.6.0)
