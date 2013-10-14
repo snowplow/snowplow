@@ -76,7 +76,7 @@ CREATE VIEW recipes_basic.pages_per_visit AS
 
 
 -- Bounce rate by day
-CREATE VIEW AS recipes_basic.bounce_rate_by_day AS 
+CREATE VIEW recipes_basic.bounce_rate_by_day AS 
 	SELECT
 		DATE_TRUNC('day', time_first_touch) AS "Date",
 		SUM(bounces)::REAL/COUNT(*) as "Bounce rate"
@@ -134,7 +134,7 @@ CREATE VIEW recipes_basic.avg_visit_duration_by_day AS
 
 
 -- Demographics: language
-CREATE VIEW AS recipes_basic.visitors_by_language AS
+CREATE VIEW recipes_basic.visitors_by_language AS
 	SELECT
 		br_lang,
 		COUNT(DISTINCT(domain_userid)) as "visitors"
