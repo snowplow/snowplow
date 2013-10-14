@@ -275,7 +275,7 @@ CREATE VIEW recipes_basic.technology_browser AS
 	SELECT
 		br_family as "Browser",
 		COUNT(DISTINCT(domain_userid || domain_sessionidx)) as "Visits"
-	FROM "atomic"events
+	FROM "atomic".events
 	WHERE collector_tstamp > current_date - integer '31'
 	GROUP BY 1
 	ORDER BY 2 DESC;
