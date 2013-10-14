@@ -117,7 +117,7 @@ CREATE VIEW recipes_basic.fraction_new_visits_by_day AS
 CREATE VIEW recipes_basic.avg_visit_duration_by_day AS 
 	SELECT
 		DATE_TRUNC('day', start_time) AS "Date",
-		AVG(duration)/1000000 as "average_visit_duration_seconds"
+		EXTRACT(EPOCH FROM AVG(duration)) AS "average_visit_duration_seconds"
 	FROM (
 		SELECT
 			domain_userid,
