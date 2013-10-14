@@ -159,40 +159,40 @@ object EnrichmentManager {
           ("cookie"  , (CU.stringToJByte, "br_cookies")),
           ("res"     , (CE.extractViewDimensions, ("dvce_screenwidth", "dvce_screenheight"))), // Note tuple target
           ("cd"      , (ME.identity, "br_colordepth")),
-          ("tz"      , (/**/ME.identity, "os_timezone")),
-          ("refr"    , (/**/ME.identity, "page_referrer")),
-          ("url"     , (/**/ME.identity, "page_url")), // Note we may override this below
-          ("page"    , (/**/ME.identity, "page_title")),
+          ("tz"      , (ME.identity, "os_timezone")),
+          ("refr"    , (ME.identity, "page_referrer")),
+          ("url"     , (ME.identity, "page_url")), // Note we may override this below
+          ("page"    , (ME.identity, "page_title")),
           ("cs"      , (ME.identity, "doc_charset")),
           ("ds"      , (CE.extractViewDimensions, ("doc_width", "doc_height"))),
           ("vp"      , (CE.extractViewDimensions, ("br_viewwidth", "br_viewheight"))),
           // Custom structured events
-          ("ev_ca"   , (/**/ME.identity, "se_category")),   // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_ac"   , (/**/ME.identity, "se_action")),     // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_la"   , (/**/ME.identity, "se_label")),      // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_pr"   , (/**/ME.identity, "se_property")),   // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_ca"   , (ME.identity, "se_category")),   // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_ac"   , (ME.identity, "se_action")),     // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_la"   , (ME.identity, "se_label")),      // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_pr"   , (ME.identity, "se_property")),   // LEGACY tracker var. TODO: Remove in late 2013
           ("ev_va"   , (CU.stringToDoublelike, "se_value")), // LEGACY tracker var. TODO: Remove in late 2013
-          ("se_ca"   , (/**/ME.identity, "se_category")),
-          ("se_ac"   , (/**/ME.identity, "se_action")),
-          ("se_la"   , (/**/ME.identity, "se_label")),
-          ("se_pr"   , (/**/ME.identity, "se_property")),
+          ("se_ca"   , (ME.identity, "se_category")),
+          ("se_ac"   , (ME.identity, "se_action")),
+          ("se_la"   , (ME.identity, "se_label")),
+          ("se_pr"   , (ME.identity, "se_property")),
           ("se_va"   , (CU.stringToDoublelike, "se_value")),
           // Ecommerce transactions
-          ("tr_id"   , (/**/ME.identity, "tr_orderid")),
-          ("tr_af"   , (/**/ME.identity, "tr_affiliation")),
-          ("tr_tt"   , (/**/ME.identity, "tr_total")),
-          ("tr_tx"   , (/**/ME.identity, "tr_tax")),
-          ("tr_sh"   , (/**/ME.identity, "tr_shipping")),
-          ("tr_ci"   , (/**/ME.identity, "tr_city")),
-          ("tr_st"   , (/**/ME.identity, "tr_state")),
-          ("tr_co"   , (/**/ME.identity, "tr_country")),
+          ("tr_id"   , (ME.identity, "tr_orderid")),
+          ("tr_af"   , (ME.identity, "tr_affiliation")),
+          ("tr_tt"   , (ME.identity, "tr_total")),
+          ("tr_tx"   , (ME.identity, "tr_tax")),
+          ("tr_sh"   , (ME.identity, "tr_shipping")),
+          ("tr_ci"   , (ME.identity, "tr_city")),
+          ("tr_st"   , (ME.identity, "tr_state")),
+          ("tr_co"   , (ME.identity, "tr_country")),
           // Ecommerce transaction items
-          ("ti_id"   , (/**/ME.identity, "ti_orderid")),
-          ("ti_sk"   , (/**/ME.identity, "ti_sku")),
-          ("ti_na"   , (/**/ME.identity, "ti_name")),
-          ("ti_ca"   , (/**/ME.identity, "ti_category")),
-          ("ti_pr"   , (/**/ME.identity, "ti_price")),
-          ("ti_qu"   , (/**/ME.identity, "ti_quantity")),
+          ("ti_id"   , (ME.identity, "ti_orderid")),
+          ("ti_sk"   , (ME.identity, "ti_sku")),
+          ("ti_na"   , (ME.identity, "ti_name")),
+          ("ti_ca"   , (ME.identity, "ti_category")),
+          ("ti_pr"   , (ME.identity, "ti_price")),
+          ("ti_qu"   , (ME.identity, "ti_quantity")),
           // Page pings
           ("pp_mix"  , (CU.stringToJInteger, "pp_xoffset_min")),
           ("pp_max"  , (CU.stringToJInteger, "pp_xoffset_max")),
