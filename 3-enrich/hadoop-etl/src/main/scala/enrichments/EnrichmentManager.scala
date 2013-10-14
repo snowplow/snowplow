@@ -126,9 +126,6 @@ object EnrichmentManager {
 
     // 2b. Failable enrichments using the payload
 
-    // Partially apply decodeString to create a TransformFunc
-    val decodeString: TransformFunc = CU.decodeString(raw.encoding, _, _)
-
     // We use a TransformMap which takes the format:
     // "source key" -> (transformFunction, field(s) to set)
     // Caution: by definition, a TransformMap loses type safety. Always unit test!
