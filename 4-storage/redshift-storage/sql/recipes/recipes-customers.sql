@@ -474,6 +474,7 @@ CREATE VIEW recipes_customer.cohort_retention_by_month_by_paid_channel_acquired 
 SELECT 
 channel_acquired_medium,
 channel_acquired_source,
+month_acquired,
 months_active AS month_actual,
 rank() OVER (PARTITION BY channel_acquired_medium, channel_acquired_source ORDER BY months_active ASC) AS month_rank,
 COUNT(DISTINCT(m.domain_userid)) AS uniques,
@@ -481,13 +482,14 @@ COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))
 FROM recipes_customer.cohort_dfn_by_paid_channel_acquired_by_month c 
 JOIN recipes_customer.retention_by_user_by_month m 
 ON c.domain_userid = m.domain_userid
-GROUP BY 1,2,3
-ORDER BY 1,2,3;
+GROUP BY 1,2,3,4
+ORDER BY 1,2,3,4;
 
 CREATE VIEW recipes_customer.cohort_retention_by_week_by_paid_channel_acquired AS
 SELECT 
 channel_acquired_medium,
 channel_acquired_source,
+week_acquired,
 weeks_active AS week_actual,
 rank() OVER (PARTITION BY channel_acquired_medium, channel_acquired_source ORDER BY weeks_active ASC) AS week_rank,
 COUNT(DISTINCT(m.domain_userid)) AS uniques,
@@ -495,8 +497,8 @@ COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))
 FROM recipes_customer.cohort_dfn_by_paid_channel_acquired_by_week c 
 JOIN recipes_customer.retention_by_user_by_week m 
 ON c.domain_userid = m.domain_userid
-GROUP BY 1,2,3
-ORDER BY 1,2,3;
+GROUP BY 1,2,3,4
+ORDER BY 1,2,3,4;
 
 
 -- Cohort analysis: retention by referer
@@ -504,6 +506,7 @@ CREATE VIEW recipes_customer.cohort_retention_by_month_by_refr_acquired AS
 SELECT 
 refr_acquired_medium,
 refr_acquired_source,
+month_acquired,
 months_active AS month_actual,
 rank() OVER (PARTITION BY refr_acquired_medium, refr_acquired_source ORDER BY months_active ASC) AS month_rank,
 COUNT(DISTINCT(m.domain_userid)) AS uniques,
@@ -511,8 +514,8 @@ COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))
 FROM recipes_customer.cohort_dfn_by_refr_channel_acquired_by_month c 
 JOIN recipes_customer.retention_by_user_by_month m 
 ON c.domain_userid = m.domain_userid
-GROUP BY 1,2,3
-ORDER BY 1,2,3;
+GROUP BY 1,2,3,4
+ORDER BY 1,2,3,4;
 
 CREATE VIEW recipes_customer.cohort_retention_by_week_by_refr_acquired AS
 SELECT 
@@ -525,7 +528,7 @@ COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))
 FROM recipes_customer.cohort_dfn_by_refr_channel_acquired_by_week c 
 JOIN recipes_customer.retention_by_user_by_week m 
 ON c.domain_userid = m.domain_userid
-GROUP BY 1,2,3
-ORDER BY 1,2,3;
+GROUP BY 1,2,3,4
+ORDER BY 1,2,3,4;
 
 
