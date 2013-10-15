@@ -478,7 +478,7 @@ month_acquired,
 months_active AS month_actual,
 rank() OVER (PARTITION BY channel_acquired_medium, channel_acquired_source ORDER BY months_active ASC) AS month_rank,
 COUNT(DISTINCT(m.domain_userid)) AS uniques,
-COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY channel_acquired_medium, channel_acquired_source))::REAL AS fraction_retained
+COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY channel_acquired_medium, channel_acquired_source, month_acquired))::REAL AS fraction_retained
 FROM recipes_customer.cohort_dfn_by_paid_channel_acquired_by_month c 
 JOIN recipes_customer.retention_by_user_by_month m 
 ON c.domain_userid = m.domain_userid
@@ -493,7 +493,7 @@ week_acquired,
 weeks_active AS week_actual,
 rank() OVER (PARTITION BY channel_acquired_medium, channel_acquired_source ORDER BY weeks_active ASC) AS week_rank,
 COUNT(DISTINCT(m.domain_userid)) AS uniques,
-COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY channel_acquired_medium, channel_acquired_source))::REAL AS fraction_retained
+COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY channel_acquired_medium, channel_acquired_source, week_acquired))::REAL AS fraction_retained
 FROM recipes_customer.cohort_dfn_by_paid_channel_acquired_by_week c 
 JOIN recipes_customer.retention_by_user_by_week m 
 ON c.domain_userid = m.domain_userid
@@ -510,7 +510,7 @@ month_acquired,
 months_active AS month_actual,
 rank() OVER (PARTITION BY refr_acquired_medium, refr_acquired_source ORDER BY months_active ASC) AS month_rank,
 COUNT(DISTINCT(m.domain_userid)) AS uniques,
-COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY refr_acquired_medium, refr_acquired_source))::REAL AS fraction_retained
+COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY refr_acquired_medium, refr_acquired_source, month_acquired))::REAL AS fraction_retained
 FROM recipes_customer.cohort_dfn_by_refr_channel_acquired_by_month c 
 JOIN recipes_customer.retention_by_user_by_month m 
 ON c.domain_userid = m.domain_userid
@@ -521,10 +521,11 @@ CREATE VIEW recipes_customer.cohort_retention_by_week_by_refr_acquired AS
 SELECT 
 refr_acquired_medium,
 refr_acquired_source,
+week_acquired,
 weeks_active AS week_actual,
 rank() OVER (PARTITION BY refr_acquired_medium, refr_acquired_source ORDER BY weeks_active ASC) AS week_rank,
 COUNT(DISTINCT(m.domain_userid)) AS uniques,
-COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY refr_acquired_medium, refr_acquired_source))::REAL AS fraction_retained
+COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))) OVER (PARTITION BY refr_acquired_medium, refr_acquired_source, week_acquired))::REAL AS fraction_retained
 FROM recipes_customer.cohort_dfn_by_refr_channel_acquired_by_week c 
 JOIN recipes_customer.retention_by_user_by_week m 
 ON c.domain_userid = m.domain_userid
