@@ -125,7 +125,7 @@ ORDER BY 1,2,3;
 -- PART 2 - CONTENT PAGE ANALYTICS
 
 -- Length of time per page per user
-CREATE VIEW recipes_catalog.time_and fraction_read_per_page_per_user AS
+CREATE VIEW recipes_catalog.time_and_fraction_read_per_page_per_user AS
 SELECT
 	page_urlpath,
 	domain_userid,
