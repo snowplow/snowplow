@@ -33,6 +33,7 @@ CREATE VIEW cubes_pages.basic AS
 		page_urlpath,
 		domain_userid,
 		domain_sessionidx,
+		DATE_TRUNC('day', collector_tstamp) AS day,
 		COUNT(*) AS number_of_events,
 		MIN(pp_xoffset_min) AS pp_xoffset_min,
 		MAX(pp_xoffset_max) AS pp_xoffset_max,
@@ -44,7 +45,7 @@ CREATE VIEW cubes_pages.basic AS
 		AVG(dvce_screenheight) AS dvce_screenheight
 	FROM
 		atomic.events
-	GROUP BY 1,2,3,4,5;
+	GROUP BY 1,2,3,4,5,6;
 
 -- VIEW 2
 -- Page views by page by session
@@ -55,6 +56,7 @@ CREATE VIEW cubes_pages.views_by_session AS
 		page_urlpath,
 		domain_userid,
 		domain_sessionidx,
+		DATE_TRUNC('day', MIN(collector_tstamp)) AS day,
 		COUNT(*) AS pageviews_by_session
 	FROM
 		atomic.events
@@ -71,6 +73,7 @@ CREATE VIEW cubes_pages.pings_by_session AS
 		page_urlpath,
 		domain_userid,
 		domain_sessionidx,
+		DATE_TRUNC('day', MIN(collector_tstamp)) AS day,
 		COUNT(*) AS pagepings_by_session
 	FROM
 		atomic.events
@@ -87,61 +90,18 @@ CREATE VIEW cubes_pages.complete AS
 		pp.pagepings_by_session
 	FROM
 		cubes_pages.basic basic
-		LEFT JOIN pages.views_by_session AS v 
+		LEFT JOIN cubes_pages.views_by_session AS v 
 			ON basic.page_urlscheme = v.page_urlscheme
 			AND basic.page_urlhost = v.page_urlhost
 			AND basic.page_urlpath = v.page_urlpath
 			AND basic.domain_userid = v.domain_userid
 			AND basic.domain_sessionidx = v.domain_sessionidx
-		LEFT JOIN pages.pings_by_session AS pp 
+		LEFT JOIN cubes_pages.pings_by_session AS pp 
 			ON basic.page_urlscheme = pp.page_urlscheme
 			AND basic.page_urlhost = pp.page_urlhost
 			AND basic.page_urlpath = pp.page_urlpath
 			AND basic.domain_userid = pp.domain_userid
 			AND basic.domain_sessionidx = pp.domain_sessionidx;
 
--- PART 2: LANDING PAGE ANALYTICS
-CREATE VIEW recipes_catalog.traffic_driven_to_site_per_page_per_week AS
-	SELECT
-		page_urlpath AS "page",
-		DATE_TRUNC('week', collector_tstamp) AS week,
-		refr_medium,
-		refr_source,
-		refr_term,
-		refr_urlhost,
-		refr_urlpath,
-		mkt_medium,
-		mkt_source,
-		mkt_term,
-		mkt_campaign,
-		mkt_content
-		COUNT(*) AS "Landing page views"
-	FROM
-		"atomic".events
-	WHERE "event" = 'page_view'
-	AND   "refr_medium" != 'internal'
-	GROUP BY 1,2,3,4,5,6
-	ORDER BY 7 DESC;
 
-CREATE VIEW recipes_catalog.traffic_driven_to_site_per_page_per_month AS
-	SELECT
-		page_urlpath AS "page",
-		DATE_TRUNC('month', collector_tstamp) AS month,
-		refr_medium,
-		refr_source,
-		refr_term,
-		refr_urlhost,
-		refr_urlpath,
-		mkt_medium,
-		mkt_source,
-		mkt_term,
-		mkt_campaign,
-		mkt_content
-		COUNT(*) AS "Landing page views"
-	FROM
-		"atomic".events
-	WHERE "event" = 'page_view'
-	AND   "refr_medium" != 'internal'
-	GROUP BY 1,2,3,4,5,6
-	ORDER BY 7 DESC;
 
