@@ -274,6 +274,7 @@ object EnrichmentManager {
     event.refr_urlpath = CU.truncate(event.refr_urlpath, 1000)
     event.refr_urlquery = CU.truncate(event.refr_urlquery, 3000)
     event.refr_urlfragment = CU.truncate(event.refr_urlfragment, 255)
+    event.refr_term = CU.truncate(event.refr_term, 255)
 
     // Collect our errors on Failure, or return our event on Success 
     (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| geoLocation.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {
