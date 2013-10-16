@@ -131,21 +131,24 @@ trait CloudFrontLikeLoader extends CollectorLoader {
     val ow = "(?:" + w // Optional whitespace begins
     
     // Our regex follows
-    (   "([\\S]+)" +   // Date          / date
-    w + "([\\S]+)" +   // Time          / time
-    w + "([\\S]+)" +   // EdgeLocation  / x-edge-location
-    w + "([\\S]+)" +   // BytesSent     / sc-bytes
-    w + "([\\S]+)" +   // IPAddress     / c-ip
-    w + "([\\S]+)" +   // Operation     / cs-method
-    w + "([\\S]+)" +   // Domain        / cs(Host)
-    w + "([\\S]+)" +   // Object        / cs-uri-stem
-    w + "([\\S]+)" +   // HttpStatus    / sc-status
-    w + "([\\S]+)" +   // Referer       / cs(Referer)
-    w + "([\\S]+)" +   // UserAgent     / cs(User Agent)
-    w + "([\\S]+)" +   // Querystring   / cs-uri-query
-    ow + "[\\S]+"  +   // CookieHeader  / cs(Cookie)         added 12 Sep 2012
-    w +  "[\\S]+"  +   // ResultType    / x-edge-result-type added 12 Sep 2012
-    w +  "[\\S]+)?").r // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
+    (   "([\\S]+)"  +   // Date          / date
+    w + "([\\S]+)"  +   // Time          / time
+    w + "([\\S]+)"  +   // EdgeLocation  / x-edge-location
+    w + "([\\S]+)"  +   // BytesSent     / sc-bytes
+    w + "([\\S]+)"  +   // IPAddress     / c-ip
+    w + "([\\S]+)"  +   // Operation     / cs-method
+    w + "([\\S]+)"  +   // Domain        / cs(Host)
+    w + "([\\S]+)"  +   // Object        / cs-uri-stem
+    w + "([\\S]+)"  +   // HttpStatus    / sc-status
+    w + "([\\S]+)"  +   // Referer       / cs(Referer)
+    w + "([\\S]+)"  +   // UserAgent     / cs(User Agent)
+    w + "([\\S]+)"  +   // Querystring   / cs-uri-query
+    ow + "[\\S]+"   +   // CookieHeader  / cs(Cookie)         added 12 Sep 2012
+    w +  "[\\S]+"   +   // ResultType    / x-edge-result-type added 12 Sep 2012
+    w +  "[\\S]+)?" +   // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
+    ow + "[\\S]+"   +   // XHostHeader   / x-host-header      added 21 Oct 2013
+    w +  "[\\S]+"   +   // CsProtocol    / cs-protocol        added 21 Oct 2013
+    w +  "[\\S]+)?").r  // CsBytes       / cs-bytes           added 21 Oct 2013
   }
 
   /**
