@@ -14,6 +14,8 @@ Hadoop ETL: fixed regression, single-encoded %s logic didn't account for % itsel
 Hadoop ETL: added unit tests for fixTabsNewlines (#332)
 Hadoop ETL: tests now report the failing CanonicalOutput field (#325)
 Hadoop ETL: now handling all fields double-encoded as per CloudFront post-14-September (#348)
+Hadoop ETL: added support for 21 Oct CloudFront access log format (#384) - TODO
+Hadoop ETL: added truncation to refr_term (#379) - TODO
 EmrEtlRunner: bumped to 0.5.0
 EmrEtlRunner: bumped Sluice to 0.1.5 (#96)
 EmrEtlRunner: bumped Elasticity to 2.6 (#345)
@@ -30,6 +32,7 @@ StorageLoader: moved VACUUM SORT ONLY to a --include step (#321)
 StorageLoader: added COMPROWS to config and --include compupdate option (#344)
 StorageLoader: changed Postgres VACUUM FULL to VACUUM (#357)
 StorageLoader: added TRUNCATECOLUMNS for Redshift load (#360)
+StorageLoader: added FILLRECORD to our Redshift COPY command (#380) - TODO
 
 Version 0.8.9 (2013-09-05)
 --------------------------
