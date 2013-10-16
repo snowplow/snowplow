@@ -482,6 +482,7 @@ COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))
 FROM recipes_customer.cohort_dfn_by_paid_channel_acquired_by_month c 
 JOIN recipes_customer.retention_by_user_by_month m 
 ON c.domain_userid = m.domain_userid
+WHERE months_active >= month_acquired
 GROUP BY 1,2,3,4
 ORDER BY 1,2,3,4;
 
@@ -497,6 +498,7 @@ COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))
 FROM recipes_customer.cohort_dfn_by_paid_channel_acquired_by_week c 
 JOIN recipes_customer.retention_by_user_by_week m 
 ON c.domain_userid = m.domain_userid
+WHERE weeks_active >= week_acquired
 GROUP BY 1,2,3,4
 ORDER BY 1,2,3,4;
 
@@ -514,6 +516,7 @@ COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))
 FROM recipes_customer.cohort_dfn_by_refr_channel_acquired_by_month c 
 JOIN recipes_customer.retention_by_user_by_month m 
 ON c.domain_userid = m.domain_userid
+WHERE months_active >= month_acquired
 GROUP BY 1,2,3,4
 ORDER BY 1,2,3,4;
 
@@ -529,6 +532,7 @@ COUNT(DISTINCT(m.domain_userid)) / (first_value(COUNT(DISTINCT(m.domain_userid))
 FROM recipes_customer.cohort_dfn_by_refr_channel_acquired_by_week c 
 JOIN recipes_customer.retention_by_user_by_week m 
 ON c.domain_userid = m.domain_userid
+WHERE weeks_active >= week_acquired
 GROUP BY 1,2,3,4
 ORDER BY 1,2,3,4;
 
