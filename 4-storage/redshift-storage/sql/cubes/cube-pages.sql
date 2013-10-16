@@ -26,7 +26,7 @@ CREATE SCHEMA cubes_pages;
 
 -- VIEW 1
 -- Simplest page-level view (aggregated by page per session)
-CREATE VIEW cubes_pages.basic AS
+CREATE VIEW cubes_pages.pages_basic AS
 	SELECT
 		page_urlscheme,
 		page_urlhost,
@@ -57,7 +57,7 @@ CREATE VIEW cubes_pages.views_by_session AS
 		domain_userid,
 		domain_sessionidx,
 		DATE_TRUNC('day', MIN(collector_tstamp)) AS day,
-		COUNT(*) AS pageviews_by_session
+		COUNT(*) AS pageviews
 	FROM
 		atomic.events
 	WHERE
@@ -74,7 +74,7 @@ CREATE VIEW cubes_pages.pings_by_session AS
 		domain_userid,
 		domain_sessionidx,
 		DATE_TRUNC('day', MIN(collector_tstamp)) AS day,
-		COUNT(*) AS pagepings_by_session
+		COUNT(*) AS pagepings
 	FROM
 		atomic.events
 	WHERE
@@ -86,8 +86,8 @@ CREATE VIEW cubes_pages.pings_by_session AS
 CREATE VIEW cubes_pages.complete AS
 	SELECT
 		basic.*,
-		v.pageviews_by_session,
-		pp.pagepings_by_session
+		v.pageviews,
+		pp.pagepings
 	FROM
 		cubes_pages.basic basic
 		LEFT JOIN cubes_pages.views_by_session AS v 
