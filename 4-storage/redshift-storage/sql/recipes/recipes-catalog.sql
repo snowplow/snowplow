@@ -56,7 +56,7 @@ DATE_TRUNC('month', collector_tstamp) AS month,
 se_label AS product_sku,
 COUNT(DISTINCT(domain_userid)) AS uniques_that_add_to_basket,
 COUNT(*) AS number_of_add_to_baskets,
-SUM(se_property) AS number_of_products_added_to_basket
+SUM(NULLIF(se_property, '')::INT) AS number_of_products_added_to_basket
 FROM "atomic".events
 WHERE se_action = 'add-to-basket'
 GROUP BY 1,2,3
@@ -69,7 +69,7 @@ DATE_TRUNC('week', collector_tstamp) AS week,
 se_label AS product_sku,
 COUNT(DISTINCT(domain_userid)) AS uniques_that_add_to_basket,
 COUNT(*) AS number_of_add_to_baskets,
-SUM(se_property) AS number_of_products_added_to_basket
+SUM(NULLIF(se_property,'')::INT) AS number_of_products_added_to_basket
 FROM "atomic".events
 WHERE se_action = 'add-to-basket'
 GROUP BY 1,2,3

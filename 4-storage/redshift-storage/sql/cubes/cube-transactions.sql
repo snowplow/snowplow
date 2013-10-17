@@ -19,6 +19,8 @@
 -- License:     Apache License Version 2.0
 
 
+-- NOTE: This needs to be run *after* `cube-visits.sql`
+
 -- Create schema
 CREATE SCHEMA cubes_ecomm;
 
