@@ -2,8 +2,9 @@
 
 ## Introduction
 
-SnowPlow::StorageLoader is a Ruby application (built with [Bundler] [bundler]) to load SnowPlow event data into various databases and "big data" platforms. Currently, StorageLoader supports two storage target:
+SnowPlow::StorageLoader is a Ruby application (built with [Bundler] [bundler]) to load SnowPlow event data into various databases and "big data" platforms. Currently, StorageLoader supports three storage targets:
 
+* [Amazon S3] [s3]
 * [Amazon Redshift] [redshift]
 * [PostgreSQL] [postgres]
 
@@ -53,7 +54,7 @@ limitations under the License.
 
 [redshift]: http://aws.amazon.com/redshift/
 [neo4j]: http://www.neo4j.org/
-[infobright]: http://www.infobright.org/
+[s3]: http://aws.amazon.com/s3/
 [postgres]: http://www.postgresql.org/
 [mysql]: http://www.mysql.com/
 [bigquery]: https://developers.google.com/bigquery/
