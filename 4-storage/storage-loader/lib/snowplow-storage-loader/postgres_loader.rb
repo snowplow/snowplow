@@ -24,7 +24,8 @@ module SnowPlow
       EVENT_FILES = "part-*"
       EVENT_FIELD_SEPARATOR = "	"
       NULL_STRING = ""
-      ESCAPE_STRING = "\\x02"
+      QUOTE_CHAR = "\\x01"
+      ESCAPE_CHAR = "\\x02"
 
       # Loads the SnowPlow event files into Postgres.
       #
@@ -38,7 +39,7 @@ module SnowPlow
 
         event_files = get_event_files(events_dir)
         queries = event_files.map { |f|
-            "COPY #{target[:table]} FROM '#{f}' WITH CSV ESCAPE E'#{ESCAPE_STRING}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}';"
+            "COPY #{target[:table]} FROM '#{f}' WITH CSV ESCAPE E'#{ESCAPE_CHAR}' QUOTE E'#{QUOTE_CHAR}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}';"
         }
         
         status = execute_transaction(target, queries)
