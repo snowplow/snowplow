@@ -117,8 +117,15 @@ module SnowPlow
 
         # Check our skip argument
         options[:skip].each { |opt|
-          unless %w(download delete load archive).include?(opt)
-            raise ConfigError, "Invalid option: skip can be 'download', 'delete', 'load' or 'archive', not '#{opt}'"
+          unless %w(download delete load analyze archive).include?(opt)
+            raise ConfigError, "Invalid option: skip can be 'download', 'delete', 'load', 'analyze' or 'archive', not '#{opt}'"
+          end
+        }
+
+        # Check our include argument
+        options[:include].each { |opt|
+          unless %w(compupdate vacuum).include?(opt)
+            raise ConfigError, "Invalid option: include can be 'compupdate' or 'vacuum', not '#{opt}'"
           end
         }
 

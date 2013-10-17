@@ -104,7 +104,7 @@ module SnowPlow
 
         # Now let's handle the enrichments.
         anon_octets = if config[:enrichments][:anon_ip][:enabled]
-                        config[:enrichments][:anon_ip][:anon_octets]
+                        config[:enrichments][:anon_ip][:anon_octets].to_s
                       else
                         '0' # Anonymize 0 quartets == anonymization disabled
                       end

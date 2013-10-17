@@ -33,12 +33,10 @@ begin
   config = runner::Config.get_config()
 
   unless config[:skip].include?('staging')
-    continue = runner::S3Tasks.stage_logs_for_emr(config)
-  end
-
-  unless continue
-    puts "No Snowplow logs to process since last run, exiting"
-    exit 0
+    unless runner::S3Tasks.stage_logs_for_emr(config)
+      puts "No Snowplow logs to process since last run, exiting"
+      exit 0
+    end
   end
 
   unless config[:skip].include?('emr')
