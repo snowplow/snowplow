@@ -9,7 +9,6 @@ Postgres: bumped table-def to 0.1.1
 Postgres: renamed table-def file to atomic-def.sql
 Postgres: added migration script for 0.1.0 to 0.1.1
 Postgres: moved NOT NULL constraint on event field to event_vendor field (#318)
-Postgres: added indexes for event table (#356)
 Postgres: added SQL DDL to define Postgres recipes (#303)
 Postgres: added SQL DDL to define Postgres cubes (#302)
 Documentation: fixed wrong path to no-js-tracker subdirectory, thanks @gregakespret (#343)
