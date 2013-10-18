@@ -34,6 +34,22 @@ StorageLoader: changed Postgres VACUUM FULL to VACUUM (#357)
 StorageLoader: added TRUNCATECOLUMNS for Redshift load (#360)
 StorageLoader: added FILLRECORD to our Redshift COPY command (#380)
 
+Version 0.8.10 (2013-10-18)
+---------------------------
+Redshift: bumped table-def to 0.2.2
+Redshift: moved events table to a new atomic schema in atomic-def.sql (#301)
+Redshift: added migration script for 0.2.1 to 0.2.2
+Redshift: added SQL DDL to define Redshift recipes (#297)
+Redshift: added SQL DDL to define Redshift cubes (#298)
+Postgres: bumped table-def to 0.1.1
+Postgres: renamed table-def file to atomic-def.sql
+Postgres: added migration script for 0.1.0 to 0.1.1
+Postgres: moved NOT NULL constraint on event field to event_vendor field (#318)
+Postgres: added SQL DDL to define Postgres recipes (#303)
+Postgres: added SQL DDL to define Postgres cubes (#302)
+Documentation: fixed wrong path to no-js-tracker subdirectory, thanks @gregakespret (#343)
+Documentation: improved "Find out more" table in README, thanks @dideler (#353)
+
 Version 0.8.9 (2013-09-05)
 --------------------------
 Hadoop ETL: bumped to 0.3.4
