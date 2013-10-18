@@ -29,10 +29,9 @@ To briefly explain these five sub-systems:
 
 ## Find out more
 
-| Technical Docs                  | Setup Guide               | Roadmap                 | Contributing                      |
-|---------------------------------|---------------------------|-------------------------|-----------------------------------|
-| ![i1] [techdocs-image]          | ![i2] [setup-image]       | ![i3] [roadmap-image]   | ![i4] [contributing-image]        |
-| **[Technical Docs] [techdocs]** | **[Setup Guide] [setup]** | **[Roadmap] [roadmap]** | **[Contributing] [contributing]** |
+| **[Technical Docs] [techdocs]**     | **[Setup Guide] [setup]**     | **[Roadmap] [roadmap]**           | **[Contributing] [contributing]**           |
+|-------------------------------------|-------------------------------|-----------------------------------|---------------------------------------------|
+| [![i1] [techdocs-image]] [techdocs] | [![i2] [setup-image]] [setup] | [![i3] [roadmap-image]] [roadmap] | [![i4] [contributing-image]] [contributing] |
 
 ## Contributing
 
