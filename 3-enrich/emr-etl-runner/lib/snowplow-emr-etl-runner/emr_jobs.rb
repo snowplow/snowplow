@@ -43,7 +43,7 @@ module SnowPlow
         @jobflow.ec2_key_name = config[:emr][:ec2_key_name]
         @jobflow.placement = config[:emr][:placement]
         @jobflow.log_uri = config[:s3][:buckets][:log]
-        @jobflow.enable_debugging = config[:debug] || false
+        @jobflow.enable_debugging = config[:debug]
 
         # Add extra configuration
         if config[:emr][:jobflow].respond_to?(:each)
