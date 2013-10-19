@@ -37,10 +37,11 @@ module SnowPlow
         options = Config.parse_args()
         config = YAML.load_file(options[:config])
 
-        # Add in the start and end dates, and our skip setting
+        # Add in the start and end dates, and our skip and debug settings
         config[:start] = options[:start]
         config[:end] = options[:end]
         config[:skip] = options[:skip]
+        config[:debug] = options[:debug]
 
         # Generate our run ID: based on the time now
         config[:run_id] = Time.new.strftime("%Y-%m-%d-%H-%M-%S")
@@ -123,6 +124,7 @@ module SnowPlow
         # Handle command-line arguments
         options = {}
         options[:skip] = []
+        options[:debug] = false
         optparse = OptionParser.new do |opts|
 
           opts.banner = "Usage: %s [options]" % NAME
