@@ -38,13 +38,13 @@ module SnowPlow
 
         # Build the Array of queries we will run
         queries = [
-          "COPY #{target[:table]} FROM '#{config[:s3][:buckets][:in]}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{target[:maxerror]} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS #{comprows}",
+          "COPY #{target[:table]} FROM '#{config[:s3][:buckets][:in]}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{target[:maxerror]} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS #{comprows};",
         ]
         unless config[:skip].include?('analyze')
-          queries << "ANALYZE #{target[:table]}"
+          queries << "ANALYZE #{target[:table]};"
         end
         if config[:include].include?('vacuum')
-          queries << "VACUUM SORT ONLY #{target[:table]}"
+          queries << "VACUUM SORT ONLY #{target[:table]};"
         end
 
         status = PostgresLoader.execute_queries(target, queries)
