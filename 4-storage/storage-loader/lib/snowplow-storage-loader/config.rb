@@ -95,7 +95,7 @@ module SnowPlow
           opts.separator ""
           opts.separator "Specific options:"
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
-          opts.on('-i', '--include compupdate|vacuum', Array, 'include optional work step(s)') { |config| options[:include] = config }
+          opts.on('-i', '--include compupdate,vacuum', Array, 'include optional work step(s)') { |config| options[:include] = config }
           opts.on('-s', '--skip download|delete,load,analyze,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
 
           opts.separator ""
