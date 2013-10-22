@@ -35,6 +35,7 @@ StorageLoader: added COMPROWS to config and --include compupdate option (#344)
 StorageLoader: changed Postgres VACUUM FULL to VACUUM (#357)
 StorageLoader: added TRUNCATECOLUMNS for Redshift load (#360)
 StorageLoader: added FILLRECORD to our Redshift COPY command (#380)
+Postgres: fixed error in `recipes_basic.technology_mobile` recipe (#397)
 
 Version 0.8.10 (2013-10-18)
 ---------------------------
