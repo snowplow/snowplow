@@ -17,6 +17,9 @@ package enrichments
 import scalaz._
 import Scalaz._
 
+// This project
+import utils.{ConversionUtils => CU}
+
 // Get our project settings
 import generated.ProjectSettings
 
@@ -58,4 +61,11 @@ object MiscEnrichments {
    * Straight passthrough.
    */
   val identity: (String, String) => Validation[String, String] = (field, value) => value.success
+
+  /**
+   * Make a String TSV safe
+   */
+  val toTsvSafe: (String, String) => Validation[String, String] = (field, value) =>
+    CU.makeTsvSafe(value).success
+
 }

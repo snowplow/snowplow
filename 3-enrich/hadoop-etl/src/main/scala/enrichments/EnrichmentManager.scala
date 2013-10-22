@@ -131,19 +131,19 @@ object EnrichmentManager {
     // Caution: by definition, a TransformMap loses type safety. Always unit test!
     val transformMap: TransformMap =
       Map(("e"       , (EE.extractEventType, "event")),
-          ("ip"      , (ME.identity, "user_ipaddress")),
-          ("aid"     , (ME.identity, "app_id")),
+          ("ip"      , (ME.toTsvSafe, "user_ipaddress")),
+          ("aid"     , (ME.toTsvSafe, "app_id")),
           ("p"       , (ME.extractPlatform, "platform")),
-          ("tid"     , (ME.identity, "txn_id")),
-          ("uid"     , (ME.identity, "user_id")),
-          ("duid"    , (ME.identity, "domain_userid")),
-          ("nuid"    , (ME.identity, "network_userid")),
-          ("fp"      , (ME.identity, "user_fingerprint")),
+          ("tid"     , (ME.toTsvSafe, "txn_id")),
+          ("uid"     , (ME.toTsvSafe, "user_id")),
+          ("duid"    , (ME.toTsvSafe, "domain_userid")),
+          ("nuid"    , (ME.toTsvSafe, "network_userid")),
+          ("fp"      , (ME.toTsvSafe, "user_fingerprint")),
           ("vid"     , (CU.stringToJInteger, "domain_sessionidx")),
           ("dtm"     , (EE.extractTimestamp, "dvce_tstamp")),
-          ("tv"      , (ME.identity, "v_tracker")),
-          ("cv"      , (ME.identity, "v_collector")),
-          ("lang"    , (ME.identity, "br_lang")),
+          ("tv"      , (ME.toTsvSafe, "v_tracker")),
+          ("cv"      , (ME.toTsvSafe, "v_collector")),
+          ("lang"    , (ME.toTsvSafe, "br_lang")),
           ("f_pdf"   , (CU.stringToJByte, "br_features_pdf")),
           ("f_fla"   , (CU.stringToJByte, "br_features_flash")),
           ("f_java"  , (CU.stringToJByte, "br_features_java")),
@@ -155,41 +155,41 @@ object EnrichmentManager {
           ("f_ag"    , (CU.stringToJByte, "br_features_silverlight")),
           ("cookie"  , (CU.stringToJByte, "br_cookies")),
           ("res"     , (CE.extractViewDimensions, ("dvce_screenwidth", "dvce_screenheight"))), // Note tuple target
-          ("cd"      , (ME.identity, "br_colordepth")),
-          ("tz"      , (ME.identity, "os_timezone")),
-          ("refr"    , (ME.identity, "page_referrer")),
-          ("url"     , (ME.identity, "page_url")), // Note we may override this below
-          ("page"    , (ME.identity, "page_title")),
-          ("cs"      , (ME.identity, "doc_charset")),
+          ("cd"      , (ME.toTsvSafe, "br_colordepth")),
+          ("tz"      , (ME.toTsvSafe, "os_timezone")),
+          ("refr"    , (ME.toTsvSafe, "page_referrer")),
+          ("url"     , (ME.toTsvSafe, "page_url")), // Note we may override this below
+          ("page"    , (ME.toTsvSafe, "page_title")),
+          ("cs"      , (ME.toTsvSafe, "doc_charset")),
           ("ds"      , (CE.extractViewDimensions, ("doc_width", "doc_height"))),
           ("vp"      , (CE.extractViewDimensions, ("br_viewwidth", "br_viewheight"))),
           // Custom structured events
-          ("ev_ca"   , (ME.identity, "se_category")),   // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_ac"   , (ME.identity, "se_action")),     // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_la"   , (ME.identity, "se_label")),      // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_pr"   , (ME.identity, "se_property")),   // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_ca"   , (ME.toTsvSafe, "se_category")),   // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_ac"   , (ME.toTsvSafe, "se_action")),     // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_la"   , (ME.toTsvSafe, "se_label")),      // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_pr"   , (ME.toTsvSafe, "se_property")),   // LEGACY tracker var. TODO: Remove in late 2013
           ("ev_va"   , (CU.stringToDoublelike, "se_value")), // LEGACY tracker var. TODO: Remove in late 2013
-          ("se_ca"   , (ME.identity, "se_category")),
-          ("se_ac"   , (ME.identity, "se_action")),
-          ("se_la"   , (ME.identity, "se_label")),
-          ("se_pr"   , (ME.identity, "se_property")),
+          ("se_ca"   , (ME.toTsvSafe, "se_category")),
+          ("se_ac"   , (ME.toTsvSafe, "se_action")),
+          ("se_la"   , (ME.toTsvSafe, "se_label")),
+          ("se_pr"   , (ME.toTsvSafe, "se_property")),
           ("se_va"   , (CU.stringToDoublelike, "se_value")),
           // Ecommerce transactions
-          ("tr_id"   , (ME.identity, "tr_orderid")),
-          ("tr_af"   , (ME.identity, "tr_affiliation")),
-          ("tr_tt"   , (ME.identity, "tr_total")),
-          ("tr_tx"   , (ME.identity, "tr_tax")),
-          ("tr_sh"   , (ME.identity, "tr_shipping")),
-          ("tr_ci"   , (ME.identity, "tr_city")),
-          ("tr_st"   , (ME.identity, "tr_state")),
-          ("tr_co"   , (ME.identity, "tr_country")),
+          ("tr_id"   , (ME.toTsvSafe, "tr_orderid")),
+          ("tr_af"   , (ME.toTsvSafe, "tr_affiliation")),
+          ("tr_tt"   , (ME.toTsvSafe, "tr_total")),
+          ("tr_tx"   , (ME.toTsvSafe, "tr_tax")),
+          ("tr_sh"   , (ME.toTsvSafe, "tr_shipping")),
+          ("tr_ci"   , (ME.toTsvSafe, "tr_city")),
+          ("tr_st"   , (ME.toTsvSafe, "tr_state")),
+          ("tr_co"   , (ME.toTsvSafe, "tr_country")),
           // Ecommerce transaction items
-          ("ti_id"   , (ME.identity, "ti_orderid")),
-          ("ti_sk"   , (ME.identity, "ti_sku")),
-          ("ti_na"   , (ME.identity, "ti_name")),
-          ("ti_ca"   , (ME.identity, "ti_category")),
-          ("ti_pr"   , (ME.identity, "ti_price")),
-          ("ti_qu"   , (ME.identity, "ti_quantity")),
+          ("ti_id"   , (ME.toTsvSafe, "ti_orderid")),
+          ("ti_sk"   , (ME.toTsvSafe, "ti_sku")),
+          ("ti_na"   , (ME.toTsvSafe, "ti_name")),
+          ("ti_ca"   , (ME.toTsvSafe, "ti_category")),
+          ("ti_pr"   , (ME.toTsvSafe, "ti_price")),
+          ("ti_qu"   , (ME.toTsvSafe, "ti_quantity")),
           // Page pings
           ("pp_mix"  , (CU.stringToJInteger, "pp_xoffset_min")),
           ("pp_max"  , (CU.stringToJInteger, "pp_xoffset_max")),
@@ -275,6 +275,7 @@ object EnrichmentManager {
     event.refr_urlquery = CU.truncate(event.refr_urlquery, 3000)
     event.refr_urlfragment = CU.truncate(event.refr_urlfragment, 255)
     event.refr_term = CU.truncate(event.refr_term, 255)
+    event.se_label = CU.truncate(event.se_label, 255)
 
     // Collect our errors on Failure, or return our event on Success 
     (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| geoLocation.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {

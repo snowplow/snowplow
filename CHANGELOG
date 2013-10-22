@@ -1,4 +1,4 @@
-Version 0.8.11 (2013-10-XX)
+Version 0.8.11 (2013-10-22)
 ---------------------------
 Hadoop ETL: bumped to 0.3.5
 Hadoop ETL: added Argonaut 6.0 as a dependency (#342)
@@ -16,6 +16,8 @@ Hadoop ETL: tests now report the failing CanonicalOutput field (#325)
 Hadoop ETL: now handling all fields double-encoded as per CloudFront post-14-September (#348)
 Hadoop ETL: added support for 21 Oct CloudFront access log format (#384)
 Hadoop ETL: added truncation to refr_term (#379)
+Hadoop ETL: added truncation to se_label (#394)
+Hadoop ETL: made all prior ME.identity fields TSV-safe (#395)
 EmrEtlRunner: bumped to 0.5.0
 EmrEtlRunner: bumped Sluice to 0.1.5 (#96)
 EmrEtlRunner: bumped Elasticity to 2.6 (#345)
