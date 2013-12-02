@@ -38,13 +38,12 @@ module SnowPlow
         puts "Loading Snowplow events into #{target[:name]} (PostgreSQL database)..."
 
         event_files = get_event_files(events_dir)
-        queries = event_files.map { |f|
-            "COPY #{target[:table]} FROM '#{f}' WITH CSV ESCAPE E'#{ESCAPE_CHAR}' QUOTE E'#{QUOTE_CHAR}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}';"
-        }
-        
-        status = execute_transaction(target, queries)
-        unless status == []
-          raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
+        event_files.each do |f|
+          copy_via_stdin(
+            target,
+            "COPY #{target[:table]} FROM STDIN WITH CSV ESCAPE E'#{ESCAPE_CHAR}' QUOTE E'#{QUOTE_CHAR}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}'",
+            f
+          )
         end
 
         post_processing = nil
@@ -63,6 +62,50 @@ module SnowPlow
         end  
       end
       module_function :load_events
+
+      COPY_BUFFER_SIZE = 1024
+
+      # Adapted from:  https://bitbucket.org/ged/ruby-pg/raw/9812218e0654caa58f8604838bc368434f7b3828/sample/copyfrom.rb
+      # Streams a file from disk directly into the postgres copy statement
+      # FIXME: refactor COPY into this method
+      # FIXME: wrap transaction around sequential COPYs
+      # FIXME: battletest; how does this behave when it fails?
+      def copy_via_stdin(target, copy_statement, file)
+        puts "Opening database connection ..."
+        conn = PG.connect({:host     => target[:host],
+                           :dbname   => target[:database],
+                           :port     => target[:port],
+                           :user     => target[:username],
+                           :password => target[:password]
+                          })
+
+        puts "Running COPY command with data ..."
+        buf = ''
+        conn.transaction do
+          conn.exec(copy_statement)
+          begin
+            File.open(file, 'r+') do |copy_data|
+              while copy_data.read( COPY_BUFFER_SIZE, buf )
+                until conn.put_copy_data( buf )
+                  puts "  waiting for connection to be writable..."
+                  sleep 0.1
+                end
+              end
+            end
+          rescue Errno => err
+            errmsg = "%s while reading copy data: %s" % [ err.class.name, err.message ]
+            conn.put_copy_end( errmsg )
+          else
+            conn.put_copy_end
+            while res = conn.get_result
+              puts "Result of COPY is: %s" % [ res.res_status(res.result_status) ]
+            end
+          end
+        end
+
+        conn.finish
+      end
+      module_function :copy_via_stdin
 
       # Converts a set of queries into a
       # single Redshift read-write
