@@ -25,7 +25,7 @@ object BuildSettings {
     scalaVersion  := "2.10.0",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     parallelExecution in Test := false, // Parallel tests cause havoc with MapReduce
-    logBuffered   := false, // For debugging Specs2 tests
+    logBuffered   := false,             // For debugging Specs2 tests
     resolvers     ++= Dependencies.resolutionRepos
   )
 
@@ -73,8 +73,6 @@ object BuildSettings {
 
     // Simpler jar name
     jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + ".jar" },
-    
-    test in assembly := {}, // At least until we resolve the Specs2-Scalding issues
 
     // Drop these jars
     excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>

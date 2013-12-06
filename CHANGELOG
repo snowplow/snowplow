@@ -9,6 +9,7 @@ Hadoop ETL: added missing validation to stringToJByte (#408) - TODO
 Hadoop ETL: updated CfRegex to reflect Cfcs(Cookie) can be empty (#410) - TODO
 Hadoop ETL: upgraded useragent utils to 1.11 & move to Maven dependency (#416) - TODO
 Hadoop ETL: moved ETL core into separate project scala-enrich-common (#417) - TODO
+Hadoop ETL: added test running back into sbt-assembly step (#420)
 Postgres: bumped cube-pages.sql to 0.1.1
 Postgres: minor fix: cube_pages.complete referenced non-existent table cube_pages.basic, thanks @mrwalker! (#414)
 
