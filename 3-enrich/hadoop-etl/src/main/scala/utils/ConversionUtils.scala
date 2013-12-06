@@ -132,7 +132,7 @@ object ConversionUtils {
    * @return a Scalaz Validation, wrapping either
    *         an error String or the decoded String
    */
-  val decodeString: (String, String, String) => Validation[String, String] = (enc, field, str) =>
+  val decodeString: (String, String, String) => ValidatedString = (enc, field, str) =>
     try {
       // TODO: switch to style of fixTabsNewlines above
       // TODO: potentially switch to using fixTabsNewlines too to avoid duplication
@@ -217,7 +217,7 @@ object ConversionUtils {
    * @return a Scalaz Validation, being either
    *         a Failure String or a Success String
    */
-  val stringToDoublelike: (String, String) => Validation[String, String] = (field, str) =>
+  val stringToDoublelike: (String, String) => ValidatedString = (field, str) =>
     try {
       if (str == "null") { // LEGACY. Yech, to handle a bug in the JavaScript tracker
         null.asInstanceOf[String].success

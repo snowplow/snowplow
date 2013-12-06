@@ -62,7 +62,7 @@ class ScalazArgs(args: Args) {
    *         message, boxed in a
    *         Scalaz Validation
    */
-  def requiredz(key: String): Validation[String, String] = args.list(key) match {
+  def requiredz(key: String): ValidatedString = args.list(key) match {
     case List() => "Required argument [%s] not found".format(key).fail
     case List(a) => decodeEquals(a).success
     case _ => "List of values found for argument [%s], should be one".format(key).fail

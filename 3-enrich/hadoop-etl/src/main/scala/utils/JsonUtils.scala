@@ -70,9 +70,9 @@ object JsonUtils {
    *
    * @param field The name of the field being processed
    * @param json The Json object hopefully containing a String
-   * @return a Scalaz Validation[String, String]
+   * @return a Scalaz ValidatedString
    */
-  val asString: (String, Json) => Validation[String, String] = (field, json) => {
+  val asString: (String, Json) => ValidatedString = (field, json) => {
     json.string match {
       case Some(str) => CU.makeTsvSafe(str).success
       case None => "JSON field [%s]: [%s] is not extractable as a String".format(field, json).fail

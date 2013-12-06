@@ -8,12 +8,15 @@ Hadoop ETL: bumped to Scalding 0.8.11 (#422)
 Hadoop ETL: upgraded useragent utils to 1.11 & moved to Maven dependency (#416)
 Hadoop ETL: added test running back into sbt-assembly step (#420)
 Hadoop ETL: updated copyright messages to be Snowplow not SnowPlow, and to 2014 not 2013 (#419)
-Hadoop ETL: numeric fields in tr_ and ti_ parsed to doubles, not madeTsvSafe strings (#400) - TODO
-Hadoop ETL: added ValidatedString as a type to package.scala (#328) - TODO
+Hadoop ETL: added ValidatedString as a type to package.scala (#328)
+
 Hadoop ETL: added missing validation to stringToJByte (#408) - TODO
 Hadoop ETL: updated CfRegex to reflect Cfcs(Cookie) can be empty (#410) - TODO
 Hadoop ETL: no page URI should not be interpreted as bad row (#399) - TODO
+
+Hadoop ETL: numeric fields in tr_ and ti_ now parsed to doubles, not madeTsvSafe strings (#400) - TODO
 Hadoop ETL: moved ETL core into separate project scala-enrich-common (#417) - TODO
+
 Postgres: bumped cube-pages.sql to 0.1.1
 Postgres: minor fix: cube_pages.complete referenced non-existent table cube_pages.basic, thanks @mrwalker! (#414)
 

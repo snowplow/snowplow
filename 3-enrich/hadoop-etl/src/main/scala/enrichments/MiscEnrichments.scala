@@ -46,9 +46,9 @@ object MiscEnrichments {
    *        generating this
    *        event.
    * @return a Scalaz
-   *         Validation[String, String].
+   *         ValidatedString.
    */
-  val extractPlatform: (String, String) => Validation[String, String] = (field, platform) => {
+  val extractPlatform: (String, String) => ValidatedString = (field, platform) => {
     platform match {
       case "web" => "web".success // Web, including Mobile Web
       case "iot" => "iot".success // Internet of Things (e.g. Arduino tracker)
@@ -60,12 +60,12 @@ object MiscEnrichments {
    * Identity transform.
    * Straight passthrough.
    */
-  val identity: (String, String) => Validation[String, String] = (field, value) => value.success
+  val identity: (String, String) => ValidatedString = (field, value) => value.success
 
   /**
    * Make a String TSV safe
    */
-  val toTsvSafe: (String, String) => Validation[String, String] = (field, value) =>
+  val toTsvSafe: (String, String) => ValidatedString = (field, value) =>
     CU.makeTsvSafe(value).success
 
 }

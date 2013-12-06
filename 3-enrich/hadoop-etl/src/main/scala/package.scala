@@ -66,6 +66,13 @@ package object hadoop {
 
   /**
    * Type alias for a `Validation`
+   * containing either an error
+   * `String` or a success `String`.
+   */
+  type ValidatedString = Validation[String, String]
+
+  /**
+   * Type alias for a `Validation`
    * containing either error `String`s
    * or a `NameValueNel`.
    */

@@ -68,7 +68,7 @@ object EventEnrichments {
    *         error message if the
    *         format was invalid
    */
-  val extractTimestamp: (String, String) => Validation[String, String] = (field, tstamp) =>
+  val extractTimestamp: (String, String) => ValidatedString = (field, tstamp) =>
     try {
       val dt = new DateTime(tstamp.toLong)
       toTimestamp(dt).success
@@ -89,7 +89,7 @@ object EventEnrichments {
    *         if not recognised, boxed in a Scalaz
    *         Validation
    */
-  val extractEventType: (String, String) => Validation[String, String] = (field, code) =>
+  val extractEventType: (String, String) => ValidatedString = (field, code) =>
     code match {
       case "se" => "struct".success
       case "ev" => "struct".success // LEGACY. Remove late 2013
