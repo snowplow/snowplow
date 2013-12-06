@@ -11,8 +11,8 @@ Hadoop ETL: updated copyright messages to be Snowplow not SnowPlow, and to 2014 
 Hadoop ETL: added ValidatedString as a type to package.scala (#328)
 Hadoop ETL: added missing validation to stringToJByte (#408)
 Hadoop ETL: missing page URI no longer interpreted as bad row (#399)
+Hadoop ETL: updated CfRegex to reflect Cfcs(Cookie) can be empty (#410)
 
-Hadoop ETL: updated CfRegex to reflect Cfcs(Cookie) can be empty (#410) - TODO
 Hadoop ETL: numeric fields in tr_ and ti_ now parsed to doubles, not madeTsvSafe strings (#400) - TODO
 Hadoop ETL: moved ETL core into separate project scala-enrich-common (#417) - TODO
 

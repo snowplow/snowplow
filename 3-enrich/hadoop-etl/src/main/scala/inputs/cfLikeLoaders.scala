@@ -143,7 +143,7 @@ trait CloudFrontLikeLoader extends CollectorLoader {
     w + "([\\S]+)"  +   // Referer       / cs(Referer)
     w + "([\\S]+)"  +   // UserAgent     / cs(User Agent)
     w + "([\\S]+)"  +   // Querystring   / cs-uri-query
-    ow + "[\\S]+"   +   // CookieHeader  / cs(Cookie)         added 12 Sep 2012
+    ow + "[\\S]*"   +   // CookieHeader  / cs(Cookie)         added 12 Sep 2012
     w +  "[\\S]+"   +   // ResultType    / x-edge-result-type added 12 Sep 2012
     w +  "[\\S]+)?" +   // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
     ow + "[\\S]+"   +   // XHostHeader   / x-host-header      added 21 Oct 2013
