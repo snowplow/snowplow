@@ -1,6 +1,6 @@
 Version 0.8.12 (2013-12-XX)
 ---------------------------
-Hadoop ETL: bumped to 0.3.6 - TODO
+Hadoop ETL: bumped to 0.3.6
 Hadoop ETL: bumped to SBT 0.13.0 (#404) - TODO
 Hadoop ETL: numeric fields in tr_ and ti_ parsed to doubles, not madeTsvSafe strings (#400) - TODO
 Hadoop ETL: added ValidatedString as a type to package.scala (#328) - TODO
