@@ -33,14 +33,14 @@ class ExtractPageUriTest extends Specification with DataTables with ValidationMa
 
   "This is a specification to test the extractPageUri function"                                ^
                                                                                               p^
-  "extractPageUri should return failure when it has no page URI provided"                      ! e1^
+  "extractPageUri should return a None when no page URI provided"                              ! e1^
   "extractPageUri should choose the URI from the tracker if it has one or two to choose from"  ! e2^
   "extractPageUri will alas assume a browser-truncated page URL is a custom URL not an error"  ! e3^
                                                                                                end
 
   // No URI
   def e1 =
-    PageEnrichments.extractPageUri(None, None) must beFailing("No page URI provided")
+    PageEnrichments.extractPageUri(None, None) must beSuccessful(None)
 
   // Valid URI combinations
   val originalUri = "http://www.mysite.com/shop/session/_internal/checkout"

@@ -58,7 +58,7 @@ object PageEnrichments {
       case (Some(r), None)    => CU.stringToUri(r)
       case (None, Some(t))    => CU.stringToUri(t)
       case (Some(r), Some(t)) => CU.stringToUri(t) // Tracker URL takes precedence
-      case (None, None)       => "No page URI provided".fail
+      case (None, None)       => None.success // No page URI available. Not a failable offence
     }
   }
 }
