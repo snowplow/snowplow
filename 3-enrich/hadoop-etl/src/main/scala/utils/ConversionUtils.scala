@@ -231,8 +231,8 @@ object ConversionUtils {
     }
 
   /**
-   * Extract a Scala Byte from
-   * a String, or error.
+   * Extract a Java Byte representing
+   * 1 or 0 only from a String, or error.
    *
    * @param str The String
    *        which we hope is an
@@ -246,13 +246,11 @@ object ConversionUtils {
    *         Failure String or
    *         a Success Byte
    */
-  val stringToJByte: (String, String) => Validation[String, JByte] = (field, str) =>
-    try {
-      val jbyte: JByte = str.toByte
-      jbyte.success
-    } catch {
-      case nfe: NumberFormatException =>
-        "Field [%s]: cannot convert [%s] to Byte".format(field, str).fail
+  val stringToBooleanlikeJByte: (String, String) => Validation[String, JByte] = (field, str) =>
+    str match {
+      case "1" => (1.toByte: JByte).success
+      case "0" => (0.toByte: JByte).success
+      case _   => "Field [%s]: cannot convert [%s] to Boolean-like JByte".format(field, str).fail
     }
 
   /**

@@ -140,3 +140,38 @@ class StringToDoublelikeTest extends Specification with DataTables with Validati
   def e3 = ConversionUtils.stringToDoublelike(FieldName, BigNumber) must beSuccessful(BigNumber)
 
 }
+
+class StringToBooleanlikeJByte extends Specification with DataTables with ValidationMatchers { def is =
+
+  "This is a specification to test the stringToBooleanlikeJByte function"                                    ^
+                                                                                                            p^
+  "stringToBooleanlikeJByte should fail if the supplied String is not parseable as a 1 or 0 JByte"           ! e1^
+  "stringToBooleanlikeJByte should convert '1' or '0' Strings to 'Boolean-like' JBytes loadable by Redshift" ! e2^
+                                                                                                             end
+
+  val FieldName = "val"
+  def err: (String) => String = input => "Field [%s]: cannot convert [%s] to Boolean-like JByte".format(FieldName, input)
+
+  def e1 =
+    "SPEC NAME"             || "INPUT STR"       | "EXPECTED"            |
+    "Empty string"          !! ""                ! err("")               |
+    "Small number"          !! "2"               ! err("2")              |
+    "Negative number"       !! "-1"              ! err("-1")             |
+    "Floating point number" !! "0.0"             ! err("0.0")            |
+    "Large number"          !! "19,999.99"       ! err("19,999.99")      |
+    "Text #1"               !! "a"               ! err("a")              |
+    "Text #2"               !! "0x54"            ! err("0x54")           |> {
+      (_, str, expected) =>
+        ConversionUtils.stringToBooleanlikeJByte(FieldName, str) must beFailing(expected)
+    }
+
+  def e2 =
+    "SPEC NAME"             || "INPUT STR"       | "EXPECTED"            |
+    "True aka 1"            !! "1"               ! 1.toByte              |
+    "False aka 0"           !! "0"               ! 0.toByte              |> {
+      (_, str, expected) =>
+        ConversionUtils.stringToBooleanlikeJByte(FieldName, str) must beSuccessful(expected)
+    }
+
+
+}
