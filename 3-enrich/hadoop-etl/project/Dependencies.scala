@@ -22,7 +22,9 @@ object Dependencies {
      // For Twitter's util functions
     "Twitter Maven Repo" at "http://maven.twttr.com/",
     // For scala-util and referer-parser
-    "SnowPlow Analytics Maven repo" at "http://maven.snplow.com/releases/"
+    "SnowPlow Analytics Maven repo" at "http://maven.snplow.com/releases/",
+    // For user-agent-utils
+    "user-agent-utils repo" at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/"
   )
 
   object V {
@@ -33,6 +35,7 @@ object Dependencies {
     val commonsIo     = "2.4"
     val yodaTime      = "2.1"
     val yodaConvert   = "1.2"
+    val useragent     = "1.11"
     // Scala
     val scalding      = "0.8.11"
     val scalaz7       = "7.0.0"
@@ -44,7 +47,6 @@ object Dependencies {
     val specs2        = "1.14"
     val scalazSpecs2  = "0.1.2"
     val scalaCheck    = "1.10.0"
-    // val useragent  = "1.6" No Maven repo, so user-agent-utils is an unmanaged lib
   }
 
   object Urls {
@@ -54,12 +56,12 @@ object Dependencies {
   object Libraries {
     // Java
     val httpClient    = "org.apache.httpcomponents"  %  "httpclient"          % V.http
-    val hadoopCore    = "org.apache.hadoop"          % "hadoop-core"          % V.hadoop       % "provided"
+    val hadoopCore    = "org.apache.hadoop"          %  "hadoop-core"         % V.hadoop       % "provided"
     val commonsLang   = "org.apache.commons"         %  "commons-lang3"       % V.commonsLang
     val commonsIo     = "commons-io"                 %  "commons-io"          % V.commonsIo
     val yodaTime      = "joda-time"                  %  "joda-time"           % V.yodaTime
     val yodaConvert   = "org.joda"                   %  "joda-convert"        % V.yodaConvert
-    
+    val useragent     = "bitwalker"                  %  "UserAgentUtils"      % V.useragent
     // Scala
     val scaldingCore  = "com.twitter"                %% "scalding-core"       % V.scalding
     val scaldingArgs  = "com.twitter"                %% "scalding-args"       % V.scalding

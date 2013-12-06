@@ -110,7 +110,7 @@ object PagePingCfLineTest {
     "251", //
     "517", //
     "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.22 (KHTML, like Gecko) Chrome/25.0.1364.172 Safari/537.22",
-    "Chrome",
+    "Chrome 25",
     "Chrome",
     "25.0.1364.172", // Yech. We need to upgrade our UA library
     "Browser",

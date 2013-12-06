@@ -21,7 +21,7 @@ import scalaz._
 import Scalaz._
 
 // UserAgentUtils
-import nl.bitwalker.useragentutils._
+import eu.bitwalker.useragentutils._
 
 /**
  * Contains enrichments related to the

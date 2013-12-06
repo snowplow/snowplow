@@ -111,7 +111,7 @@ object Aug2013CfLineTest {
     null, //
     null, //
     "Mozilla/5.0 (Windows NT 5.1; rv:23.0) Gecko/20100101 Firefox/23.0",
-    "Firefox 2",
+    "Firefox 23",
     "Firefox",
     "23.0",
     "Browser",
@@ -156,7 +156,7 @@ object Aug2013CfLineTest {
  */
 class Aug2013CfLineTest extends Specification with TupleConversions {
 
-  "A job which processes a CloudFront file containing 1 valid page ping" should {
+  "A job which processes a CloudFront file containing 1 valid page view" should {
     EtlJobTest("cloudfront", "0").
       source(MultipleTextLineFiles("inputFolder"), Aug2013CfLineTest.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
