@@ -22,7 +22,7 @@ object BuildSettings {
     organization  := "com.snowplowanalytics",
     version       := "0.3.6",
     description   := "The SnowPlow Hadoop ETL process, written in Scalding",
-    scalaVersion  := "2.10.0",
+    scalaVersion  := "2.10.3",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     parallelExecution in Test := false, // Parallel tests cause havoc with MapReduce
     logBuffered   := false,             // For debugging Specs2 tests

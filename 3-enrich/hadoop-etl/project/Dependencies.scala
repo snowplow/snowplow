@@ -34,7 +34,7 @@ object Dependencies {
     val yodaTime      = "2.1"
     val yodaConvert   = "1.2"
     // Scala
-    val scalding      = "0.8.5"
+    val scalding      = "0.8.11"
     val scalaz7       = "7.0.0"
     val argonaut      = "6.0"
     val scalaUtil     = "0.1.0"
