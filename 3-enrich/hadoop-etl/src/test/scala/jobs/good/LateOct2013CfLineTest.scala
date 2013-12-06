@@ -111,7 +111,7 @@ object LateOct2013CfLineTest {
     null, //
     null, //
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.76 Safari/537.36",
-    "Chrome",
+    "Chrome 29",
     "Chrome",
     "29.0.1547.76",
     "Browser",
@@ -156,7 +156,7 @@ object LateOct2013CfLineTest {
  */
 class LateOct2013CfLineTest extends Specification with TupleConversions {
 
-  "A job which processes a CloudFront file containing 1 valid page ping" should {
+  "A job which processes a CloudFront file containing 1 valid page view" should {
     EtlJobTest("cloudfront", "0").
       source(MultipleTextLineFiles("inputFolder"), LateOct2013CfLineTest.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
