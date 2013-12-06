@@ -1,13 +1,14 @@
 Version 0.8.12 (2013-12-XX)
 ---------------------------
 Hadoop ETL: bumped to 0.3.6
-Hadoop ETL: bumped to SBT 0.13.0 (#404) - TODO
+Hadoop ETL: bumped to SBT 0.13.0 (#404)
+Hadoop ETL: bumped to using sbt-assembly 0.10.1 (#421)
+Hadoop ETL: upgraded useragent utils to 1.11 & moved to Maven dependency (#416) - TODO
 Hadoop ETL: numeric fields in tr_ and ti_ parsed to doubles, not madeTsvSafe strings (#400) - TODO
 Hadoop ETL: added ValidatedString as a type to package.scala (#328) - TODO
 Hadoop ETL: updated copyright messages to be Snowplow not SnowPlow, and to 2014 not 2013 (#419)
 Hadoop ETL: added missing validation to stringToJByte (#408) - TODO
 Hadoop ETL: updated CfRegex to reflect Cfcs(Cookie) can be empty (#410) - TODO
-Hadoop ETL: upgraded useragent utils to 1.11 & move to Maven dependency (#416) - TODO
 Hadoop ETL: moved ETL core into separate project scala-enrich-common (#417) - TODO
 Hadoop ETL: added test running back into sbt-assembly step (#420)
 Postgres: bumped cube-pages.sql to 0.1.1
