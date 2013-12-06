@@ -177,9 +177,9 @@ object EnrichmentManager {
           // Ecommerce transactions
           ("tr_id"   , (ME.toTsvSafe, "tr_orderid")),
           ("tr_af"   , (ME.toTsvSafe, "tr_affiliation")),
-          ("tr_tt"   , (ME.toTsvSafe, "tr_total")),
-          ("tr_tx"   , (ME.toTsvSafe, "tr_tax")),
-          ("tr_sh"   , (ME.toTsvSafe, "tr_shipping")),
+          ("tr_tt"   , (CU.stringToDoublelike, "tr_total")),
+          ("tr_tx"   , (CU.stringToDoublelike, "tr_tax")),
+          ("tr_sh"   , (CU.stringToDoublelike, "tr_shipping")),
           ("tr_ci"   , (ME.toTsvSafe, "tr_city")),
           ("tr_st"   , (ME.toTsvSafe, "tr_state")),
           ("tr_co"   , (ME.toTsvSafe, "tr_country")),
@@ -188,7 +188,7 @@ object EnrichmentManager {
           ("ti_sk"   , (ME.toTsvSafe, "ti_sku")),
           ("ti_na"   , (ME.toTsvSafe, "ti_name")),
           ("ti_ca"   , (ME.toTsvSafe, "ti_category")),
-          ("ti_pr"   , (ME.toTsvSafe, "ti_price")),
+          ("ti_pr"   , (CU.stringToDoublelike, "ti_price")),
           ("ti_qu"   , (ME.toTsvSafe, "ti_quantity")),
           // Page pings
           ("pp_mix"  , (CU.stringToJInteger, "pp_xoffset_min")),
