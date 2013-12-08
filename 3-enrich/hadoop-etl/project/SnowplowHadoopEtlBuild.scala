@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object SnowPlowHadoopEtlBuild extends Build {
+object SnowplowHadoopEtlBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
