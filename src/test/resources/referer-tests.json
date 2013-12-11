@@ -119,6 +119,14 @@
         "term": "CARA MEMASAK CUMI CUMI",
         "known": true
     },
+	{
+        "spec": "Ask toolbar search #2",
+        "uri": "http://search.tb.ask.com/search/GGmain.jhtml?&st=hp&p2=^ZU^xdm458^YYA^us&n=77fda1bd&ptb=F0B68CA5-4791-4376-BFCC-5F0100329FB6&si=CMKg9-nX07oCFSjZQgodcikACQ&tpr=hpsbsug&searchfor=test",
+        "medium": "search",
+        "source": "Ask Toolbar",
+        "term": "test",
+        "known": true
+    },
     {
         "spec": "Dale search",
         "uri": "http://www.dalesearch.com/?q=+lego.nl+%2Fclub&s=web&as=0&rlz=0&babsrc=HP_ss",
