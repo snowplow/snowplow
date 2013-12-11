@@ -79,6 +79,14 @@
         "term": "pendulums",
         "known": true
     },
+	{
+        "spec": "AOL search.com",
+        "uri": "http://www.aolsearch.com/search?s_pt=hp&s_gl=NL&query=voorbeeld+cv+competenties&invocationType=tb50hpcnnbie7-nl-nl",
+        "medium": "search",
+        "source": "AOL",
+        "term": "voorbeeld cv competenties",
+        "known": true
+    },
     {
         "spec": "Ask search",
         "uri": "http://uk.search-results.com/web?qsrc=1&o=1921&l=dis&q=pendulums&dm=ctry&atb=sysid%3D406%3Aappid%3D113%3Auid%3D8f40f651e7b608b5%3Auc%3D1346336505%3Aqu%3Dpendulums%3Asrc%3Dcrt%3Ao%3D1921&locale=en_GB",
@@ -103,6 +111,22 @@
         "term": "Blue Angel Oracle Blue Angel Oracle",
         "known": true
     },
+    {
+        "spec": "Ask toolbar search",
+        "uri": "http://search.tb.ask.com/search/GGmain.jhtml?cb=AYY&pg=GGmain&p2=%5EAYY%5Exdm071%5EYYA%5Eid&n=77fdaa55&qid=c2678d9147654034bb8b16daa7bfb48c&ss=sub&st=hp&ptb=F9FC6C22-EAE6-4D1E-8126-A70119B6E02F&si=flvrunner&tpr=hst&searchfor=CARA+MEMASAK+CUMI+CUMI&ots=1219016089614",
+        "medium": "search",
+        "source": "Ask Toolbar",
+        "term": "CARA MEMASAK CUMI CUMI",
+        "known": true
+    },
+    {
+        "spec": "Dale search",
+        "uri": "http://www.dalesearch.com/?q=+lego.nl+%2Fclub&s=web&as=0&rlz=0&babsrc=HP_ss",
+        "medium": "search",
+        "source": "Dalesearch",
+        "term": " lego.nl /club",
+        "known": true
+    },	
     {
         "spec": "Twitter redirect",
         "uri": "http://t.co/chrgFZDb",

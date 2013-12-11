@@ -432,10 +432,12 @@ search:
   AOL:
     parameters: 
       - q
+      - query
     domains:
       - search.aol.com
       - search.aol.it
       - aolsearch.aol.com
+      - aolsearch.com
       - www.aolrecherche.aol.fr
       - www.aolrecherches.aol.fr
       - www.aolimages.aol.fr
@@ -522,6 +524,12 @@ search:
       - www.search-results.com
       - int.search-results.com
 
+  Ask Toolbar:
+    parameters:
+      - searchfor
+    domains:
+      - search.tb.ask.com
+  
   Atlas:
     parameters: 
       - q
@@ -667,6 +675,12 @@ search:
     domains:
       - daemon-search.com
       - my.daemon-search.com
+
+  Dalesearch:
+    parameters:
+      - q
+    domains:
+      - www.dalesearch.com
 
   DasOertliche:
     parameters:
@@ -845,6 +859,12 @@ search:
       - Keywords
     domains:
       - suche.freenet.de
+  
+  Freshweather:
+    parameters:
+      - q
+    domains:
+      - www.fresh-weather.com
 
   FriendFeed:
     parameters:
@@ -2730,6 +2750,18 @@ search:
     domains:
       - www.mamma.com
       - mamma75.mamma.com
+
+  Marktplaats:
+    parameters:
+      - query
+    domains:
+      - www.marktplaats.nl
+
+  Maxwebsearch:
+    parameters:
+      - query
+    domains:
+      - maxwebsearch.com
 
   Meta:
     parameters:

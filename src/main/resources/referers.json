@@ -76,12 +76,14 @@
                 "p"
             ]
         }, 
-        "Nigma": {
+        "RPMFind": {
             "domains": [
-                "nigma.ru"
+                "rpmfind.net", 
+                "fr2.rpmfind.net"
             ], 
             "parameters": [
-                "s"
+                "rpmfind.net", 
+                "fr2.rpmfind.net"
             ]
         }, 
         "Comcast": {
@@ -190,6 +192,7 @@
                 "search.aol.com", 
                 "search.aol.it", 
                 "aolsearch.aol.com", 
+                "aolsearch.com", 
                 "www.aolrecherche.aol.fr", 
                 "www.aolrecherches.aol.fr", 
                 "www.aolimages.aol.fr", 
@@ -213,7 +216,8 @@
                 "search-intl.netscape.com"
             ], 
             "parameters": [
-                "q"
+                "q", 
+                "query"
             ]
         }, 
         "Acoon": {
@@ -1199,14 +1203,12 @@
                 "q"
             ]
         }, 
-        "RPMFind": {
+        "Nigma": {
             "domains": [
-                "rpmfind.net", 
-                "fr2.rpmfind.net"
+                "nigma.ru"
             ], 
             "parameters": [
-                "rpmfind.net", 
-                "fr2.rpmfind.net"
+                "s"
             ]
         }, 
         "Yahoo! Images": {
@@ -1396,6 +1398,14 @@
             ], 
             "parameters": [
                 "name"
+            ]
+        }, 
+        "Ask Toolbar": {
+            "domains": [
+                "search.tb.ask.com"
+            ], 
+            "parameters": [
+                "searchfor"
             ]
         }, 
         "Trusted-Search": {
@@ -1794,9 +1804,9 @@
                 "query"
             ]
         }, 
-        "Eurip": {
+        "Zoeken": {
             "domains": [
-                "www.eurip.com"
+                "www.zoeken.nl"
             ], 
             "parameters": [
                 "q"
@@ -1969,6 +1979,14 @@
                 "q"
             ]
         }, 
+        "Maxwebsearch": {
+            "domains": [
+                "maxwebsearch.com"
+            ], 
+            "parameters": [
+                "query"
+            ]
+        }, 
         "Euroseek": {
             "domains": [
                 "www.euroseek.com"
@@ -2136,6 +2154,14 @@
                 "words"
             ]
         }, 
+        "Freshweather": {
+            "domains": [
+                "www.fresh-weather.com"
+            ], 
+            "parameters": [
+                "q"
+            ]
+        }, 
         "AllTheWeb": {
             "domains": [
                 "www.alltheweb.com"
@@ -2160,12 +2186,12 @@
                 "q"
             ]
         }, 
-        "Zoeken": {
+        "Marktplaats": {
             "domains": [
-                "www.zoeken.nl"
+                "www.marktplaats.nl"
             ], 
             "parameters": [
-                "q"
+                "query"
             ]
         }, 
         "suche.info": {
@@ -2399,6 +2425,14 @@
         "Online.no": {
             "domains": [
                 "online.no"
+            ], 
+            "parameters": [
+                "q"
+            ]
+        }, 
+        "Eurip": {
+            "domains": [
+                "www.eurip.com"
             ], 
             "parameters": [
                 "q"
@@ -3412,6 +3446,14 @@
             ], 
             "parameters": [
                 "recherche"
+            ]
+        }, 
+        "Dalesearch": {
+            "domains": [
+                "www.dalesearch.com"
+            ], 
+            "parameters": [
+                "q"
             ]
         }, 
         "Alice Adsl": {
