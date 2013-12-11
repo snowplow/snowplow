@@ -2,7 +2,7 @@
 
 ## Introduction
 
-SnowPlow::EmrEtlRunner is a Ruby application (built with [Bundler] [bundler]) to run SnowPlow's Hive-based ETL (extract, transform, load) process on [Amazon Elastic MapReduce] [amazon-emr] with minimum fuss.
+SnowPlow::EmrEtlRunner is a Ruby application (built with [Bundler] [bundler]) to run SnowPlow's Scalding-based Enrichment process on [Amazon Elastic MapReduce] [amazon-emr] with minimum fuss.
 
 ## Find out more
 
