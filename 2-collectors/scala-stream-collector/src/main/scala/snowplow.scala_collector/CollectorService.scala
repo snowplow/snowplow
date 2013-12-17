@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013 SnowPlow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -56,6 +56,6 @@ class CollectorService extends Actor with ActorLogging {
     case _: HttpRequest => sender ! Responses.notFound
 
     case Timedout(HttpRequest(method, uri, _, _, _)) =>
-      sender ! Responses.timeout
+      sender ! Responses.timeout(method, uri)
   }
 }
