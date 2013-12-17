@@ -18,42 +18,34 @@ object Dependencies {
 
   val resolutionRepos = Seq(
     // For scala-util
-    "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/"
+    "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
+    "spray repo" at "http://repo.spray.io",
+    "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
   )
 
-  // TODO
   object V {
-    /*
     // Java
-    val logging    = "1.1.3"
-    val httpCore   = "4.3"
-    val httpClient = "4.3.1"
-    val jacksonCore = "2.3.0"
+    val mimepull = "1.9.4"
+
     // Scala
-    val argot      = "1.0.1"
-    val config     = "1.0.2"
-    val scalaUtil  = "0.1.0"
+    val sprayCan = "1.2.0"
+    val akka = "2.2.3"
+
     // Scala (test only)
-    val specs2     = "2.3.4"
-    // Add versions for your additional libraries here...
-    */
+    // TODO
+    // val specs2     = "2.3.4"
   }
 
-  // TODO
   object Libraries {
-    /*
     // Java
-    val logging     = "commons-logging"            %  "commons-logging" % V.logging
-    val httpCore    = "org.apache.httpcomponents"  %  "httpcore"        % V.httpCore
-    val httpClient  = "org.apache.httpcomponents"  %  "httpclient"      % V.httpClient
-    val jacksonCore = "com.fasterxml.jackson.core" % "jackson-core"     % V.jacksonCore
+    val mimepull = "org.jvnet.mimepull" % "mimepull" % V.mimepull
+
     // Scala
-    val argot       = "org.clapper"                %% "argot"           % V.argot
-    val config      = "com.typesafe"               %  "config"          % V.config
-    val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"      % V.scalaUtil
+    val sprayCan = "io.spray" % "spray-can" % V.sprayCan
+    val akka = "com.typesafe.akka" %% "akka-actor" % V.akka
+
     // Scala (test only)
-    val specs2      = "org.specs2"                 %% "specs2"          % V.specs2     % "test"
-    // Add additional libraries from mvnrepository.com (SBT syntax) here...
-    */
+    // TODO
+    // val specs2      = "org.specs2" %% "specs2"          % V.specs2     % "test"
   }
 }

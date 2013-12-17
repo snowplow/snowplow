@@ -24,8 +24,10 @@ object BuildSettings {
     version               :=  "0.0.1",
     description           :=  "TODO",
     scalaVersion          :=  "2.10.1",
-    scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8"),
+    scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
+                                  "-unchecked", "-feature"),
     scalacOptions in Test :=  Seq("-Yrangepos"),
+    maxErrors             := 5,
     resolvers             ++= Dependencies.resolutionRepos
   )
 
