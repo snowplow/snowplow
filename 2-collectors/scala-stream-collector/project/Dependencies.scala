@@ -31,6 +31,7 @@ object Dependencies {
     val sprayCan = "1.2.0"
     val akka = "2.2.3"
     val scallop = "0.9.4"
+    val logback = "1.0.13"
 
     // Scala (test only)
     // TODO
@@ -43,8 +44,11 @@ object Dependencies {
 
     // Scala
     val sprayCan = "io.spray" % "spray-can" % V.sprayCan
-    val akka = "com.typesafe.akka" %% "akka-actor" % V.akka
+    val akkaActor = "com.typesafe.akka" %% "akka-actor" % V.akka
+    val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % V.akka
+    val logback = "ch.qos.logback" % "logback-classic" % V.logback
     val scallop = "org.rogach" %% "scallop" % V.scallop
+
 
     // Scala (test only)
     // TODO

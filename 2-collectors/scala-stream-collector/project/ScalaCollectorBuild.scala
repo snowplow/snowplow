@@ -31,7 +31,9 @@ object ScalaCollectorBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
-        Libraries.akka,
+        Libraries.akkaActor,
+        Libraries.akkaSlf4j,
+        Libraries.logback,
         Libraries.mimepull,
         Libraries.scallop,
         Libraries.sprayCan

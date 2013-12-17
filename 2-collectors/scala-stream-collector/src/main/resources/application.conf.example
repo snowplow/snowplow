@@ -1,9 +1,8 @@
 # TODO: Comment this with relevant options.
 
 akka {
-  loglevel = INFO
-  // TODO
-  // event-handlers = ["akka.event.slf4j.Slf4jEventHandler"]
+  loglevel = DEBUG
+  loggers = ["akka.event.slf4j.Slf4jLogger"]
 }
 
 # Check the reference.conf in spray-can/src/main/resources for all
