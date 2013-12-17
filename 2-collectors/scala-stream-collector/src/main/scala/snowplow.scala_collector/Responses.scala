@@ -15,20 +15,16 @@
 
 package snowplow.scala_collector
 
-import akka.actor.{ActorSystem, Props}
-import akka.io.IO
-import spray.can.Http
+import org.slf4j.LoggerFactory
+import spray.http._
+import HttpMethods._
 
-import org.rogach.scallop.exceptions.ScallopException
-
-object ScalaCollector extends App {
-  implicit val system = ActorSystem()
-
-  val conf = new ScalaCollectorConf(args)
-
-  // The handler actor replies to incoming HttpRequests.
-  val handler = system.actorOf(Props[CollectorService], name = "handler")
-
-  IO(Http) ! Http.Bind(handler,
-    interface=conf.interface.apply(), port=conf.port.apply())
+object Responses {
+  def cookie() = HttpResponse(entity = "Cookie")
+  def notFound() = HttpResponse(status = 404, entity = "404 Not found")
+  def timeout() = HttpResponse(
+    status = 500,
+    entity = "The $method request to '$uri' has timed out."
+  )
+  def stop() = HttpResponse(entity = "Shutting down in 1 second ...")
 }
