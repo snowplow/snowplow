@@ -1,0 +1,21 @@
+# TODO: Comment this with relevant options.
+
+akka {
+  loglevel = INFO
+  // TODO
+  // event-handlers = ["akka.event.slf4j.Slf4jEventHandler"]
+}
+
+# Check the reference.conf in spray-can/src/main/resources for all
+# defined settings
+spray.can.server {
+  # uncomment the next line for making this an HTTPS example
+  # ssl-encryption = on
+  idle-timeout = 30 s
+  request-timeout = 10 s
+
+  request-chunk-aggregation-limit = 0
+
+  parsing.max-content-length = 5g
+  parsing.incoming-auto-chunking-threshold-size = 45k
+}
