@@ -31,9 +31,10 @@ object KinesisExampleScalaProducerBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
+        Libraries.akka,
         Libraries.mimepull,
-        Libraries.sprayCan,
-        Libraries.akka
+        Libraries.scallop,
+        Libraries.sprayCan
         // TODO
         // Libraries.specs2
       )
