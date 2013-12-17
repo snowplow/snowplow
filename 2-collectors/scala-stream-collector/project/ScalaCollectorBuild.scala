@@ -15,7 +15,7 @@
 import sbt._
 import Keys._
 
-object KinesisExampleScalaProducerBuild extends Build {
+object ScalaCollectorBuild extends Build {
 
   import Dependencies._
   import BuildSettings._

@@ -28,6 +28,8 @@ object BuildSettings {
                                   "-unchecked", "-feature"),
     scalacOptions in Test :=  Seq("-Yrangepos"),
     maxErrors             := 5,
+    // http://www.scala-sbt.org/0.13.0/docs/Detailed-Topics/Forking.html
+    fork in run           := true,
     resolvers             ++= Dependencies.resolutionRepos
   )
 
