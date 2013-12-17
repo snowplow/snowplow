@@ -33,14 +33,19 @@ object BuildSettings {
     resolvers             ++= Dependencies.resolutionRepos
   )
 
+  val production = true // TODO: Where should this go?
+
   // Makes our SBT app settings available from within the app
-  lazy val scalifySettings = Seq(sourceGenerators in Compile <+= (sourceManaged in Compile, version, name, organization) map { (d, v, n, o) =>
+  lazy val scalifySettings = Seq(sourceGenerators in Compile <+=
+      (sourceManaged in Compile, version, name, organization) map
+      { (d, v, n, o) =>
     val file = d / "settings.scala"
     IO.write(file, s"""package snowplow.scala_collector.generated
       |object Settings {
       |  val organization = "$o"
       |  val version = "$v"
       |  val name = "$n"
+      |  val production: Boolean = $production
       |}
       |""".stripMargin)
     Seq(file)
