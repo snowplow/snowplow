@@ -15,7 +15,7 @@
 
  // Reference: https://github.com/spray/spray/blob/master/examples/spray-can/simple-http-server/src/main/scala/spray/examples/DemoService.scala
 
-package snowplow.scala_collector
+package com.snowplowanalytics.scala_collector
 
 import scala.concurrent.duration._
 import akka.pattern.ask

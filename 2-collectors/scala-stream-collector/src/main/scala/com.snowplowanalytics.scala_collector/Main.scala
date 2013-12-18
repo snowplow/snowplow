@@ -13,7 +13,7 @@
  * governing permissions and limitations there under.
  */
 
-package snowplow.scala_collector
+package com.snowplowanalytics.scala_collector
 
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO

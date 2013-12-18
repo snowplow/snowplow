@@ -40,7 +40,7 @@ object BuildSettings {
       (sourceManaged in Compile, version, name, organization) map
       { (d, v, n, o) =>
     val file = d / "settings.scala"
-    IO.write(file, s"""package snowplow.scala_collector.generated
+    IO.write(file, s"""package com.snowplowanalytics.scala_collector.generated
       |object Settings {
       |  val organization = "$o"
       |  val version = "$v"
