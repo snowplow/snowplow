@@ -28,10 +28,11 @@ object Dependencies {
     val mimepull = "1.9.4"
 
     // Scala
-    val sprayCan = "1.2.0"
+    val spray = "1.2.0"
     val akka = "2.2.3"
     val scallop = "0.9.4"
     val logback = "1.0.13"
+    val commonsCodec = "1.5"
 
     // Scala (test only)
     // TODO
@@ -43,11 +44,13 @@ object Dependencies {
     val mimepull = "org.jvnet.mimepull" % "mimepull" % V.mimepull
 
     // Scala
-    val sprayCan = "io.spray" % "spray-can" % V.sprayCan
+    val sprayCan = "io.spray" % "spray-can" % V.spray
+    val sprayRouting = "io.spray" % "spray-routing" % V.spray
     val akkaActor = "com.typesafe.akka" %% "akka-actor" % V.akka
     val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % V.akka
     val logback = "ch.qos.logback" % "logback-classic" % V.logback
     val scallop = "org.rogach" %% "scallop" % V.scallop
+    val commonsCodec = "commons-codec" % "commons-codec" % V.commonsCodec
 
 
     // Scala (test only)

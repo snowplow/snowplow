@@ -36,7 +36,9 @@ object ScalaCollectorBuild extends Build {
         Libraries.logback,
         Libraries.mimepull,
         Libraries.scallop,
-        Libraries.sprayCan
+        Libraries.sprayCan,
+        Libraries.sprayRouting,
+        Libraries.commonsCodec
         // TODO
         // Libraries.specs2
       )
