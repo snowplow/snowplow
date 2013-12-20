@@ -15,12 +15,33 @@
 
 package com.snowplowanalytics.scala_collector
 
+import akka.actor._
 import org.slf4j.LoggerFactory
 import spray.http._
+import spray.http.HttpHeaders._
+import spray.http.ContentTypes._
+import spray.http.MediaType._
 import HttpMethods._
+import org.apache.commons.codec.binary.Base64
+import java.util.UUID
 
 object Responses {
-  def cookie() = HttpResponse(entity = "Cookie")
+  val pixel = Base64.decodeBase64(
+    "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==")
+  def cookie() = {
+    val response = HttpResponse(entity = pixel)
+    val cookie = HttpCookie(
+      "sp", UUID.randomUUID.toString()
+      // TODO: Expiration.
+    )
+    val headers = List(
+      // TODO: The Content-Type is still being returned as
+      // `application/octet-stream`.
+      // http://stackoverflow.com/questions/19396187
+      `Set-Cookie`(cookie)
+    )
+    response.withHeaders(headers)
+  }
   def notFound() = HttpResponse(status = 404, entity = "404 Not found")
   def timeout(method: HttpMethod, uri: Uri) = HttpResponse(
     status = 500,

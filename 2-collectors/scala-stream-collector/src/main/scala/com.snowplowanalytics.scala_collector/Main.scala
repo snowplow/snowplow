@@ -27,7 +27,7 @@ object ScalaCollector extends App {
   val conf = new ScalaCollectorConf(args)
 
   // The handler actor replies to incoming HttpRequests.
-  val handler = system.actorOf(Props[CollectorService], name = "handler")
+  val handler = system.actorOf(Props[CollectorServiceActor], name = "handler")
 
   IO(Http) ! Http.Bind(handler,
     interface=conf.interface.apply(), port=conf.port.apply())

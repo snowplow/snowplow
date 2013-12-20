@@ -13,8 +13,6 @@
  * governing permissions and limitations there under.
  */
 
- // Reference: https://github.com/spray/spray/blob/master/examples/spray-can/simple-http-server/src/main/scala/spray/examples/DemoService.scala
-
 package com.snowplowanalytics.scala_collector
 
 import scala.concurrent.duration._
@@ -28,34 +26,34 @@ import spray.http._
 import HttpMethods._
 import MediaTypes._
 import spray.can.Http.RegisterChunkHandler
+import scala.concurrent.duration.Duration
+import spray.routing.HttpService
+import spray.routing.authentication.BasicAuth
+import spray.routing.directives.CachingDirectives._
+import spray.httpx.encoding._
+// TODO: Clean imports.
 
-class CollectorService extends Actor with ActorLogging {
+import reflect.ClassTag
+
+
+class CollectorServiceActor extends Actor with HttpService {
   implicit val timeout: Timeout = 1.second // For the actor 'asks'
-  import context.dispatcher // ExecutionContext for the futures and scheduler.
 
-  // TODO: Currently, requests will be handled sequentially and will
-  // cause `receive` to block until a request is handled.
-  // Ideally, this should spawn off actors to handle requests.
-  // Use something like Spray routing
-  // (http://spray.io/documentation/1.2.0/spray-routing/)
-  // to route futures to fix this.
-  def receive = {
-    // Handle connections.
-    case _: Http.Connected => sender ! Http.Register(self)
+  def actorRefFactory = context
+  def receive = runRoute(route)
 
-    case HttpRequest(GET, Uri.Path("/i"), headers, content, protocol) =>
-      sender ! Responses.cookie
-
-    case HttpRequest(GET, Uri.Path("/stop"), _, _, _)
-        if !generated.Settings.production =>
-      sender ! Responses.stop
-      sender ! Http.Close
-      context.system.scheduler.scheduleOnce(1.second)
-        { context.system.shutdown() }
-
-    case _: HttpRequest => sender ! Responses.notFound
-
-    case Timedout(HttpRequest(method, uri, _, _, _)) =>
-      sender ! Responses.timeout(method, uri)
+  val route = {
+    path("i") {
+      get {
+        parameterMap {
+          queryParams =>
+            println(queryParams.toString)
+            complete(Responses.cookie)
+        }
+      }
+    }~
+    get {
+      complete(Responses.notFound)
+    }
   }
 }
