@@ -32,7 +32,9 @@ class CollectorServiceActor extends Actor with HttpService {
       get {
         parameterMap {
           queryParams =>
-            complete(Responses.cookie(queryParams))
+            optionalHeaderValueByName("Cookie") { reqCookie =>
+              complete(Responses.cookie(queryParams, reqCookie))
+            }
         }
       }
     }~

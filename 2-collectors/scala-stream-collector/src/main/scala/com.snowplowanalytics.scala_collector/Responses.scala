@@ -25,13 +25,22 @@ import java.util.UUID
 object Responses {
   val pixel = Base64.decodeBase64(
     "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==")
-  def cookie(queryParams: Map[String,String]) = {
-    val response = HttpResponse(entity = HttpEntity(`image/gif`, pixel))
+
+  def cookie(queryParams: Map[String,String], reqCookie: Option[String]) = {
+    // Use the same UUID if the request cookie contains `sp`.
+    var cookieUUID: Option[String] = None
+    if (reqCookie.isDefined && (reqCookie.get startsWith "sp=")) {
+      cookieUUID = Some(reqCookie.get substring 3)
+    } else {
+      cookieUUID = Some(UUID.randomUUID.toString())
+    }
+
     val cookie = HttpCookie(
-      "sp", UUID.randomUUID.toString(),
+      "sp", cookieUUID.get,
       expires=Some(DateTime.now+generated.Settings.cookieExpirationMs)
     )
     val headers = List(`Set-Cookie`(cookie))
+    val response = HttpResponse(entity = HttpEntity(`image/gif`, pixel))
     response.withHeaders(headers)
   }
 
