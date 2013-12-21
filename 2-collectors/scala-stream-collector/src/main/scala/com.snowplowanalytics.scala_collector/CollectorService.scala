@@ -24,7 +24,7 @@ import spray.can.server.Stats
 import spray.util._
 import spray.http._
 import HttpMethods._
-import MediaTypes._
+import spray.http.MediaTypes._
 import spray.can.Http.RegisterChunkHandler
 import scala.concurrent.duration.Duration
 import spray.routing.HttpService
@@ -47,8 +47,7 @@ class CollectorServiceActor extends Actor with HttpService {
       get {
         parameterMap {
           queryParams =>
-            println(queryParams.toString)
-            complete(Responses.cookie)
+            complete(Responses.cookie(queryParams))
         }
       }
     }~
