@@ -15,12 +15,10 @@
 
 package com.snowplowanalytics.scala_collector
 
-import akka.actor._
-import org.slf4j.LoggerFactory
+//import org.slf4j.LoggerFactory
 import spray.http._
-import spray.http.HttpHeaders._
-import spray.http.MediaTypes._
-import HttpMethods._
+import spray.http.HttpHeaders.`Set-Cookie`
+import spray.http.MediaTypes.`image/gif`
 import org.apache.commons.codec.binary.Base64
 import java.util.UUID
 

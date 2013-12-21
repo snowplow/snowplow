@@ -18,23 +18,8 @@ package com.snowplowanalytics.scala_collector
 import scala.concurrent.duration._
 import akka.pattern.ask
 import akka.util.Timeout
-import akka.actor._
-import spray.can.Http
-import spray.can.server.Stats
-import spray.util._
-import spray.http._
-import HttpMethods._
-import spray.http.MediaTypes._
-import spray.can.Http.RegisterChunkHandler
-import scala.concurrent.duration.Duration
+import akka.actor.Actor
 import spray.routing.HttpService
-import spray.routing.authentication.BasicAuth
-import spray.routing.directives.CachingDirectives._
-import spray.httpx.encoding._
-// TODO: Clean imports.
-
-import reflect.ClassTag
-
 
 class CollectorServiceActor extends Actor with HttpService {
   implicit val timeout: Timeout = 1.second // For the actor 'asks'
@@ -43,7 +28,7 @@ class CollectorServiceActor extends Actor with HttpService {
   def receive = runRoute(route)
 
   val route = {
-    path("i") {
+    (path("i") | path("ice")) { // 'ice' legacy name for 'i'.
       get {
         parameterMap {
           queryParams =>
