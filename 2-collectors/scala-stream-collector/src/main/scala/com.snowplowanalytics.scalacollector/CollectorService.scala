@@ -37,7 +37,7 @@ class CollectorServiceActor extends Actor with CollectorService {
 trait CollectorService extends HttpService {
   implicit def executionContext = actorRefFactory.dispatcher
   val route = {
-    (path("i") | path("ice")) { // 'ice' legacy name for 'i'.
+    path("i") {
       get {
         parameterMap {
           queryParams =>

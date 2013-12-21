@@ -14,7 +14,6 @@
  */
 
 package com.snowplowanalytics.scalacollector
-// TODO: Error with package name with '_'?
 
 import org.apache.commons.codec.binary.Base64
 import org.specs2.mutable.Specification
