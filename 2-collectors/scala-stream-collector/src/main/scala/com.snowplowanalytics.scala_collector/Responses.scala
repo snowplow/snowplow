@@ -28,17 +28,19 @@ object Responses {
   def cookie(queryParams: Map[String,String]) = {
     val response = HttpResponse(entity = HttpEntity(`image/gif`, pixel))
     val cookie = HttpCookie(
-      "sp", UUID.randomUUID.toString()
-      // TODO: Expiration.
+      "sp", UUID.randomUUID.toString(),
+      expires=Some(DateTime.now+generated.Settings.cookieExpirationMs)
     )
     val headers = List(`Set-Cookie`(cookie))
     response.withHeaders(headers)
   }
 
   def notFound() = HttpResponse(status = 404, entity = "404 Not found")
+
   def timeout(method: HttpMethod, uri: Uri) = HttpResponse(
     status = 500,
     entity = s"The $method request to '$uri' has timed out."
   )
+
   def stop() = HttpResponse(entity = "Shutting down in 1 second ...")
 }
