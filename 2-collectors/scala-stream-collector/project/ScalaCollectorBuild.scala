@@ -38,9 +38,9 @@ object ScalaCollectorBuild extends Build {
         Libraries.scallop,
         Libraries.sprayCan,
         Libraries.sprayRouting,
-        Libraries.commonsCodec
-        // TODO
-        // Libraries.specs2
+        Libraries.commonsCodec,
+        Libraries.sprayTestkit,
+        Libraries.specs2
       )
     )
 }
