@@ -15,16 +15,15 @@
 
 package com.snowplowanalytics.scala_collector
 
+import java.util.UUID
+import org.apache.commons.codec.binary.Base64
 //import org.slf4j.LoggerFactory
-import spray.http._
+import spray.http.{DateTime,HttpResponse,HttpEntity,HttpCookie}
 import spray.http.HttpHeaders.`Set-Cookie`
 import spray.http.MediaTypes.`image/gif`
-import org.apache.commons.codec.binary.Base64
-import java.util.UUID
 
 object Responses {
-  val pixel = Base64.decodeBase64(
-    "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==")
+  val pixel = Base64.decodeBase64("R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==")
 
   def cookie(queryParams: Map[String,String], reqCookie: Option[String]) = {
     // Use the same UUID if the request cookie contains `sp`.
@@ -45,11 +44,5 @@ object Responses {
   }
 
   def notFound() = HttpResponse(status = 404, entity = "404 Not found")
-
-  def timeout(method: HttpMethod, uri: Uri) = HttpResponse(
-    status = 500,
-    entity = s"The $method request to '$uri' has timed out."
-  )
-
-  def stop() = HttpResponse(entity = "Shutting down in 1 second ...")
+  def timeout = HttpResponse(status = 500, entity = s"Request timed out.")
 }

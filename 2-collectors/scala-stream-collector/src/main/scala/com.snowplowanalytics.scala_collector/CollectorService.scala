@@ -15,17 +15,23 @@
 
 package com.snowplowanalytics.scala_collector
 
-import scala.concurrent.duration._
+import akka.actor.Actor
 import akka.pattern.ask
 import akka.util.Timeout
-import akka.actor.Actor
+import scala.concurrent.duration._
+import spray.http.Timedout
 import spray.routing.HttpService
 
 class CollectorServiceActor extends Actor with HttpService {
   implicit val timeout: Timeout = 1.second // For the actor 'asks'
 
   def actorRefFactory = context
-  def receive = runRoute(route)
+  def receive = handleTimeouts orElse runRoute(route)
+
+  // http://spray.io/documentation/1.2.0/spray-routing/key-concepts/timeout-handling/
+  def handleTimeouts: Receive = {
+    case Timedout(_) => sender ! Responses.timeout
+  }
 
   val route = {
     (path("i") | path("ice")) { // 'ice' legacy name for 'i'.

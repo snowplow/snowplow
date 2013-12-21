@@ -17,9 +17,8 @@ package com.snowplowanalytics.scala_collector
 
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO
-import spray.can.Http
-
 import org.rogach.scallop.exceptions.ScallopException
+import spray.can.Http
 
 object ScalaCollector extends App {
   implicit val system = ActorSystem()
