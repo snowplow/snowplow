@@ -29,18 +29,18 @@ class CollectorServiceSpec extends Specification with Specs2RouteTest with
 
   "CollectorService service" should {
     "return an invisible pixel." in {
-      Get("/i") ~> route ~> check {
+      Get("/i") ~> collectorRoute ~> check {
         responseAs[Array[Byte]] === Base64.decodeBase64("R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==")
       }
     }
     "return a cookie expiring in a year." in {
-      Get("/i") ~> route ~> check {
+      Get("/i") ~> collectorRoute ~> check {
         (headers contains `Set-Cookie`) && false
         // TODO: Expires in a year
       }
     }
     "return the same cookie as passed in." in {
-      Get("/i") ~> route ~> check {
+      Get("/i") ~> collectorRoute ~> check {
         false // TODO
       }
     }

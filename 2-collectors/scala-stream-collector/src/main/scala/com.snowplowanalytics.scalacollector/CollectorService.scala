@@ -26,7 +26,7 @@ class CollectorServiceActor extends Actor with CollectorService {
   implicit val timeout: Timeout = 1.second // For the actor 'asks'
 
   def actorRefFactory = context
-  def receive = handleTimeouts orElse runRoute(route)
+  def receive = handleTimeouts orElse runRoute(collectorRoute)
 
   // http://spray.io/documentation/1.2.0/spray-routing/key-concepts/timeout-handling/
   def handleTimeouts: Receive = {
@@ -36,7 +36,7 @@ class CollectorServiceActor extends Actor with CollectorService {
 
 trait CollectorService extends HttpService {
   implicit def executionContext = actorRefFactory.dispatcher
-  val route = {
+  val collectorRoute = {
     path("i") {
       get {
         parameterMap {
