@@ -13,7 +13,7 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.scala_collector
+package com.snowplowanalytics.scalacollector
 
 import akka.actor.Actor
 import akka.pattern.ask
@@ -22,7 +22,7 @@ import scala.concurrent.duration._
 import spray.http.Timedout
 import spray.routing.HttpService
 
-class CollectorServiceActor extends Actor with HttpService {
+class CollectorServiceActor extends Actor with CollectorService {
   implicit val timeout: Timeout = 1.second // For the actor 'asks'
 
   def actorRefFactory = context
@@ -32,7 +32,10 @@ class CollectorServiceActor extends Actor with HttpService {
   def handleTimeouts: Receive = {
     case Timedout(_) => sender ! Responses.timeout
   }
+}
 
+trait CollectorService extends HttpService {
+  implicit def executionContext = actorRefFactory.dispatcher
   val route = {
     (path("i") | path("ice")) { // 'ice' legacy name for 'i'.
       get {

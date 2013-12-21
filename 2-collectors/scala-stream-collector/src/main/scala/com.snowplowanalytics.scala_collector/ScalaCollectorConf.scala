@@ -13,7 +13,7 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.scala_collector
+package com.snowplowanalytics.scalacollector
 
 import org.rogach.scallop.ScallopConf
 
