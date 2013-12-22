@@ -47,7 +47,7 @@ object DiscardableCfLinesTest {
 class DiscardableCfLinesTest extends Specification with TupleConversions {
 
   "A job which processes expected but discardable CloudFront input lines" should {
-    EtlJobTest.
+    EtlJobTest("cloudfront", "0").
       source(MultipleTextLineFiles("inputFolder"), DiscardableCfLinesTest.lines).
       sink[String](Tsv("outputFolder")){ output =>
         "not write any events" in {

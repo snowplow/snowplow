@@ -152,16 +152,14 @@ object TransactionItemCfLineTest {
 class TransactionItemCfLineTest extends Specification with TupleConversions {
 
   "A job which processes a CloudFront file containing 1 valid transaction item" should {
-    EtlJobTest.
+    EtlJobTest("cloudfront", "0").
       source(MultipleTextLineFiles("inputFolder"), TransactionItemCfLineTest.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 transaction item" in {
           buf.size must_== 1
           val actual = buf.head
           for (idx <- TransactionItemCfLineTest.expected.indices) {
-            if (idx != 6) { // We can't predict the event_id
-              actual.getString(idx) must_== TransactionItemCfLineTest.expected(idx)
-            }
+            actual.getString(idx) must beFieldEqualTo(TransactionItemCfLineTest.expected(idx), withIndex = idx)
           }
         }
       }.

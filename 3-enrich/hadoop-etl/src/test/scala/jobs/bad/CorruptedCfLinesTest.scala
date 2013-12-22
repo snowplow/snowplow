@@ -49,7 +49,7 @@ object CorruptedCfLinesTest {
 class CorruptedCfLinesTest extends Specification with TupleConversions {
 
   "A job which processes a corrupted input line" should {
-    EtlJobTest.
+    EtlJobTest("cloudfront", "0").
       source(MultipleTextLineFiles("inputFolder"), CorruptedCfLinesTest.lines).
       sink[String](Tsv("outputFolder")){ output => 
         "not write any events" in {

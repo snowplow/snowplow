@@ -18,3 +18,4 @@
     :username: ADD HERE 
     :password: ADD HERE 
     :maxerror: # Not required for Postgres
+    :comprows: # Not required for Postgres

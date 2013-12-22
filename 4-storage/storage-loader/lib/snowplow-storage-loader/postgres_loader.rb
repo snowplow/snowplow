@@ -24,18 +24,22 @@ module SnowPlow
       EVENT_FILES = "part-*"
       EVENT_FIELD_SEPARATOR = "	"
       NULL_STRING = ""
+      QUOTE_CHAR = "\\x01"
+      ESCAPE_CHAR = "\\x02"
 
       # Loads the SnowPlow event files into Postgres.
       #
       # Parameters:
       # +events_dir+:: the directory holding the event files to load 
       # +target+:: the configuration options for this target
-      def load_events(events_dir, target)
+      # +skip_steps+:: Array of steps to skip
+      # +include_steps+:: Array of optional steps to include
+      def load_events(events_dir, target, skip_steps, include_steps)
         puts "Loading Snowplow events into #{target[:name]} (PostgreSQL database)..."
 
         event_files = get_event_files(events_dir)
         queries = event_files.map { |f|
-          "COPY #{target[:table]} FROM '#{f}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}';"
+            "COPY #{target[:table]} FROM '#{f}' WITH CSV ESCAPE E'#{ESCAPE_CHAR}' QUOTE E'#{QUOTE_CHAR}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}';"
         }
         
         status = execute_transaction(target, queries)
@@ -43,10 +47,20 @@ module SnowPlow
           raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
         end
 
-        status = execute_queries(target, [ "VACUUM FULL ANALYZE #{target[:table]};" ] )
-        unless status == []
-          raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
-        end        
+        post_processing = nil
+        unless skip_steps.include?('analyze')
+          post_processing = "ANALYZE "
+        end
+        if include_steps.include?('vacuum')
+          post_processing = "VACUUM " + (post_processing || "")
+        end
+
+        unless post_processing.nil?
+          status = execute_queries(target, [ "#{post_processing}#{target[:table]};" ] )
+          unless status == []
+            raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
+          end
+        end  
       end
       module_function :load_events
 
@@ -97,7 +111,7 @@ module SnowPlow
         status = []
         queries.each do |q|
           begin
-            conn.exec("#{q};")
+            conn.exec("#{q}")
           rescue PG::Error => err
             status = [q, err.class, err.message]
             break

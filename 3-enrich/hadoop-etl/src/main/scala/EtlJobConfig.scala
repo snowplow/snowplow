@@ -14,6 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.hadoop
 
 // Java
 import java.net.URI
+import java.util.NoSuchElementException
 
 // Scalaz
 import scalaz._
@@ -25,6 +26,8 @@ import com.twitter.scalding.Args
 // This project
 import utils.ScalazArgs
 import utils.ConversionUtils
+import enrichments.PrivacyEnrichments.AnonQuartets
+import AnonQuartets._
 
 /**
  * The configuration for the SnowPlowEtlJob.
@@ -35,6 +38,7 @@ case class EtlJobConfig(
     maxmindFile: URI,
     outFolder: String,
     badFolder: String,
+    anonQuartets: AnonQuartets,
     exceptionsFolder: Option[String])
 
 /**
@@ -45,7 +49,7 @@ object EtlJobConfig {
 
   /**
    * Convert the Maxmind file from a
-   * Validation[String] to a Validation[URI].
+   * String to a Validation[URI].
    *
    * @param maxmindFile A String holding the
    *        URI to the hosted MaxMind file
@@ -57,6 +61,27 @@ object EtlJobConfig {
       case Some(u) => u.success
       case None => "URI to MaxMind file must be provided".fail
       })
+  }
+
+  /**
+   * Convert a Stringly-typed integer
+   * into the corresponding AnonQuartets
+   * Enum Value.
+   *
+   * Update the Validation Error if the
+   * conversion isn't possible.
+   *
+   * @param anonQuartets A String holding
+   *        the number of IP address
+   *        quartets to anonymize
+   * @return a Validation-boxed AnonQuartets
+   */
+  private def getAnonQuartets(anonQuartets: String): Validation[String, AnonQuartets] = {
+    try {
+      AnonQuartets.withName(anonQuartets).success
+    } catch {
+      case nse: NoSuchElementException => "IP address quartets to anonymize must be 0, 1, 2, 3 or 4".fail
+    }
   }
 
   /**
@@ -76,8 +101,9 @@ object EtlJobConfig {
     val maxmindFile = args.requiredz("maxmind_file").flatMap(f => getMaxmindUri(f))
     val outFolder = args.requiredz("output_folder")
     val badFolder = args.requiredz("bad_rows_folder")
+    val anonQuartets = args.requiredz("anon_ip_quartets").flatMap(q => getAnonQuartets(q))
     val exceptionsFolder = args.optionalz("exceptions_folder")
     
-    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_) }
+    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| anonQuartets.toValidationNel |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_) }
   }
 }

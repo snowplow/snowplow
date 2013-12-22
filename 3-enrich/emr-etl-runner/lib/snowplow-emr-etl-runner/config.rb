@@ -37,10 +37,11 @@ module SnowPlow
         options = Config.parse_args()
         config = YAML.load_file(options[:config])
 
-        # Add in the start and end dates, and our skip setting
+        # Add in the start and end dates, and our skip and debug settings
         config[:start] = options[:start]
         config[:end] = options[:end]
         config[:skip] = options[:skip]
+        config[:debug] = options[:debug]
 
         # Generate our run ID: based on the time now
         config[:run_id] = Time.new.strftime("%Y-%m-%d-%H-%M-%S")
@@ -102,6 +103,14 @@ module SnowPlow
                         end
         config[:etl][:continue_on_unexpected_error] = continue_on # Heinous mutability
 
+        # Now let's handle the enrichments.
+        anon_octets = if config[:enrichments][:anon_ip][:enabled]
+                        config[:enrichments][:anon_ip][:anon_octets].to_s
+                      else
+                        '0' # Anonymize 0 quartets == anonymization disabled
+                      end
+        config[:enrichments][:anon_ip_octets] = anon_octets
+
         config
       end
       module_function :get_config
@@ -115,6 +124,7 @@ module SnowPlow
         # Handle command-line arguments
         options = {}
         options[:skip] = []
+        options[:debug] = false
         optparse = OptionParser.new do |opts|
 
           opts.banner = "Usage: %s [options]" % NAME
@@ -122,6 +132,7 @@ module SnowPlow
           opts.separator "Specific options:"
 
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
+          opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
           opts.on('-s', '--skip staging,emr,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }

@@ -153,16 +153,14 @@ object PagePingCfLineTest {
 class PagePingCfLineTest extends Specification with TupleConversions {
 
   "A job which processes a CloudFront file containing 1 valid page ping" should {
-    EtlJobTest.
+    EtlJobTest("cloudfront", "0").
       source(MultipleTextLineFiles("inputFolder"), PagePingCfLineTest.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {
           buf.size must_== 1
           val actual = buf.head
           for (idx <- PagePingCfLineTest.expected.indices) {
-            if (idx != 6) { // We can't predict the event_id
-              actual.getString(idx) must_== PagePingCfLineTest.expected(idx)
-            }
+            actual.getString(idx) must beFieldEqualTo(PagePingCfLineTest.expected(idx), withIndex = idx)
           }
         }
       }.

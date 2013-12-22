@@ -20,6 +20,9 @@ import java.lang.{Integer => JInteger}
 import java.math.{BigDecimal => JBigDecimal}
 import java.lang.{Byte => JByte}
 
+// Apache Commons
+import org.apache.commons.lang.exception.ExceptionUtils
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -61,9 +64,9 @@ object ConversionUtils {
 
     // TODO: should we be using decodeString below instead?
     // Trouble is we can't be sure of the querystring's encoding.
-    val query    = fixTabsNewlines(uri.getQuery)
-    val path     = fixTabsNewlines(uri.getPath)
-    val fragment = fixTabsNewlines(uri.getFragment)
+    val query    = fixTabsNewlines(uri.getRawQuery)
+    val path     = fixTabsNewlines(uri.getRawPath)
+    val fragment = fixTabsNewlines(uri.getRawFragment)
 
     UriComponents(
       scheme   = uri.getScheme,
@@ -74,6 +77,17 @@ object ConversionUtils {
       fragment = fragment
       )
   }
+
+  /**
+   * Quick helper to make sure our Strings are TSV-safe,
+   * i.e. don't include tabs, special characters, newlines
+   * etc.
+   *
+   * @param str The string we want to make safe
+   * @return a safe String
+   */
+  def makeTsvSafe(str: String): String =
+    fixTabsNewlines(str).orNull
 
   /**
    * Replaces tabs with four spaces and removes
@@ -151,10 +165,11 @@ object ConversionUtils {
    */       
   def stringToUri(uri: String): Validation[String, Option[URI]] =
     try {
-      Some(URI.create(uri)).success
+      val r = uri.replaceAll(" ", "%20") // Because so many raw URIs are bad, #346
+      Some(URI.create(r)).success
     } catch {
-      case e: NullPointerException => None.success
-      case e: IllegalArgumentException => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, e.getMessage).fail
+      case npe: NullPointerException => None.success
+      case iae: IllegalArgumentException => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
       case e => "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).fail
     }
 

@@ -9,14 +9,18 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.2.1
+-- Version:     Ports version 0.2.1 to version 0.2.2
 -- URL:         -
 --
--- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep
+-- Authors:     Alex Dean
 -- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-CREATE TABLE events (
+-- Create the schema
+CREATE SCHEMA atomic;
+
+-- Create events table
+CREATE TABLE atomic.events (
 	-- App
 	app_id varchar(255) encode text255,
 	platform varchar(255) encode text255,
@@ -139,3 +143,11 @@ CREATE TABLE events (
 DISTSTYLE KEY
 DISTKEY (domain_userid)
 SORTKEY (collector_tstamp);
+
+-- Finally copy the table from old schema to new
+INSERT INTO atomic.events
+	SELECT
+	*
+    FROM public.events;
+
+-- Leave the user to manually drop the old table

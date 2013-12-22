@@ -36,11 +36,15 @@ module SnowPlow
         options = Config.parse_args()
         config = YAML.load_file(options[:config])
 
-        # Add in our skip setting
+        # Add in our skip and include settings
         config[:skip] = options[:skip]
+        config[:include] = options[:include]
 
         # Add trailing slashes if needed to the buckets and download folder
         config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
+
+        # Add in our comprows setting
+        config[:comprows] = options[:comprows]
         
         unless config[:download][:folder].nil? # TODO: remove when Sluice's trail_slash can handle nil
           config[:download][:folder] = Sluice::Storage::trail_slash(config[:download][:folder])
@@ -84,14 +88,15 @@ module SnowPlow
         # Handle command-line arguments
         options = {}
         options[:skip] = []
+        options[:include] = []
         optparse = OptionParser.new do |opts|
 
           opts.banner = "Usage: %s [options]" % NAME
           opts.separator ""
           opts.separator "Specific options:"
-
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
-          opts.on('-s', '--skip download|delete,load,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-i', '--include compupdate,vacuum', Array, 'include optional work step(s)') { |config| options[:include] = config }
+          opts.on('-s', '--skip download|delete,load,analyze,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
 
           opts.separator ""
           opts.separator "Common options:"
@@ -112,8 +117,15 @@ module SnowPlow
 
         # Check our skip argument
         options[:skip].each { |opt|
-          unless %w(download delete load archive).include?(opt)
-            raise ConfigError, "Invalid option: skip can be 'download', 'delete', 'load' or 'archive', not '#{opt}'"
+          unless %w(download delete load analyze archive).include?(opt)
+            raise ConfigError, "Invalid option: skip can be 'download', 'delete', 'load', 'analyze' or 'archive', not '#{opt}'"
+          end
+        }
+
+        # Check our include argument
+        options[:include].each { |opt|
+          unless %w(compupdate vacuum).include?(opt)
+            raise ConfigError, "Invalid option: include can be 'compupdate' or 'vacuum', not '#{opt}'"
           end
         }
 

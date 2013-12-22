@@ -52,7 +52,7 @@ object BadTrackerCfLinesTest {
 class BadTrackerCfLinesTest extends Specification with TupleConversions {
 
   "A job which processes input lines containing corrupted data from the tracker" should {
-    EtlJobTest.
+    EtlJobTest("cloudfront", "0").
       source(MultipleTextLineFiles("inputFolder"), BadTrackerCfLinesTest.lines).
       sink[String](Tsv("outputFolder")){ output => 
         "not write any events" in {

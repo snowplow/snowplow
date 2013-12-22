@@ -152,16 +152,14 @@ object StructEventCfLineTest {
 class StructEventCfLineTest extends Specification with TupleConversions {
 
   "A job which processes a CloudFront file containing 1 valid custom structured event" should {
-    EtlJobTest.
+    EtlJobTest("cloudfront", "0").
       source(MultipleTextLineFiles("inputFolder"), StructEventCfLineTest.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 custom structured event" in {
           buf.size must_== 1
           val actual = buf.head
           for (idx <- StructEventCfLineTest.expected.indices) {
-            if (idx != 6) { // We can't predict the event_id
-              actual.getString(idx) must_== StructEventCfLineTest.expected(idx)
-            }
+            actual.getString(idx) must beFieldEqualTo(StructEventCfLineTest.expected(idx), withIndex = idx)
           }
         }
       }.

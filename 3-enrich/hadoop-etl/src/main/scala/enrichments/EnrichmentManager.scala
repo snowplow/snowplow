@@ -37,8 +37,10 @@ import enrichments.{EventEnrichments => EE}
 import enrichments.{MiscEnrichments => ME}
 import enrichments.{ClientEnrichments => CE}
 import enrichments.{GeoEnrichments => GE}
-import web.{PageEnrichments => PE}
-import web.{AttributionEnrichments => AE}
+import enrichments.{PrivacyEnrichments => PE}
+import PE.AnonQuartets.AnonQuartets
+import web.{PageEnrichments => WPE}
+import web.{AttributionEnrichments => WAE}
 
 /**
  * A module to hold our enrichment process.
@@ -58,7 +60,7 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  def enrichEvent(geo: IpGeo, raw: CanonicalInput): ValidatedCanonicalOutput = {
+  def enrichEvent(geo: IpGeo, anonQuartets: AnonQuartets, raw: CanonicalInput): ValidatedCanonicalOutput = {
 
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
@@ -83,7 +85,7 @@ object EnrichmentManager {
       e.event_vendor = "com.snowplowanalytics" // TODO: this should be moved to Tracker Protocol
       e.v_collector = raw.source.collector // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion
-      raw.ipAddress.map(ip => e.user_ipaddress = ip)
+      raw.ipAddress.map(ip => e.user_ipaddress = PE.anonymizeIp(ip, anonQuartets))
     }
 
     // 2. Enrichments which can fail
@@ -124,27 +126,24 @@ object EnrichmentManager {
 
     // 2b. Failable enrichments using the payload
 
-    // Partially apply decodeString to create a TransformFunc
-    val decodeString: TransformFunc = CU.decodeString(raw.encoding, _, _)
-
     // We use a TransformMap which takes the format:
     // "source key" -> (transformFunction, field(s) to set)
     // Caution: by definition, a TransformMap loses type safety. Always unit test!
     val transformMap: TransformMap =
       Map(("e"       , (EE.extractEventType, "event")),
-          ("ip"      , (ME.identity, "user_ipaddress")),
-          ("aid"     , (ME.identity, "app_id")),
+          ("ip"      , (ME.toTsvSafe, "user_ipaddress")),
+          ("aid"     , (ME.toTsvSafe, "app_id")),
           ("p"       , (ME.extractPlatform, "platform")),
-          ("tid"     , (ME.identity, "txn_id")),
-          ("uid"     , (ME.identity, "user_id")),
-          ("duid"    , (ME.identity, "domain_userid")),
-          ("nuid"    , (ME.identity, "network_userid")),
-          ("fp"      , (ME.identity, "user_fingerprint")),
+          ("tid"     , (ME.toTsvSafe, "txn_id")),
+          ("uid"     , (ME.toTsvSafe, "user_id")),
+          ("duid"    , (ME.toTsvSafe, "domain_userid")),
+          ("nuid"    , (ME.toTsvSafe, "network_userid")),
+          ("fp"      , (ME.toTsvSafe, "user_fingerprint")),
           ("vid"     , (CU.stringToJInteger, "domain_sessionidx")),
           ("dtm"     , (EE.extractTimestamp, "dvce_tstamp")),
-          ("tv"      , (ME.identity, "v_tracker")),
-          ("cv"      , (ME.identity, "v_collector")),
-          ("lang"    , (ME.identity, "br_lang")),
+          ("tv"      , (ME.toTsvSafe, "v_tracker")),
+          ("cv"      , (ME.toTsvSafe, "v_collector")),
+          ("lang"    , (ME.toTsvSafe, "br_lang")),
           ("f_pdf"   , (CU.stringToJByte, "br_features_pdf")),
           ("f_fla"   , (CU.stringToJByte, "br_features_flash")),
           ("f_java"  , (CU.stringToJByte, "br_features_java")),
@@ -156,41 +155,41 @@ object EnrichmentManager {
           ("f_ag"    , (CU.stringToJByte, "br_features_silverlight")),
           ("cookie"  , (CU.stringToJByte, "br_cookies")),
           ("res"     , (CE.extractViewDimensions, ("dvce_screenwidth", "dvce_screenheight"))), // Note tuple target
-          ("cd"      , (ME.identity, "br_colordepth")),
-          ("tz"      , (decodeString, "os_timezone")),
-          ("refr"    , (decodeString, "page_referrer")),
-          ("url"     , (decodeString, "page_url")), // Note we may override this below
-          ("page"    , (decodeString, "page_title")),
-          ("cs"      , (ME.identity, "doc_charset")),
+          ("cd"      , (ME.toTsvSafe, "br_colordepth")),
+          ("tz"      , (ME.toTsvSafe, "os_timezone")),
+          ("refr"    , (ME.toTsvSafe, "page_referrer")),
+          ("url"     , (ME.toTsvSafe, "page_url")), // Note we may override this below
+          ("page"    , (ME.toTsvSafe, "page_title")),
+          ("cs"      , (ME.toTsvSafe, "doc_charset")),
           ("ds"      , (CE.extractViewDimensions, ("doc_width", "doc_height"))),
           ("vp"      , (CE.extractViewDimensions, ("br_viewwidth", "br_viewheight"))),
           // Custom structured events
-          ("ev_ca"   , (decodeString, "se_category")),   // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_ac"   , (decodeString, "se_action")),     // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_la"   , (decodeString, "se_label")),      // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_pr"   , (decodeString, "se_property")),   // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_ca"   , (ME.toTsvSafe, "se_category")),   // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_ac"   , (ME.toTsvSafe, "se_action")),     // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_la"   , (ME.toTsvSafe, "se_label")),      // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_pr"   , (ME.toTsvSafe, "se_property")),   // LEGACY tracker var. TODO: Remove in late 2013
           ("ev_va"   , (CU.stringToDoublelike, "se_value")), // LEGACY tracker var. TODO: Remove in late 2013
-          ("se_ca"   , (decodeString, "se_category")),
-          ("se_ac"   , (decodeString, "se_action")),
-          ("se_la"   , (decodeString, "se_label")),
-          ("se_pr"   , (decodeString, "se_property")),
+          ("se_ca"   , (ME.toTsvSafe, "se_category")),
+          ("se_ac"   , (ME.toTsvSafe, "se_action")),
+          ("se_la"   , (ME.toTsvSafe, "se_label")),
+          ("se_pr"   , (ME.toTsvSafe, "se_property")),
           ("se_va"   , (CU.stringToDoublelike, "se_value")),
           // Ecommerce transactions
-          ("tr_id"   , (decodeString, "tr_orderid")),
-          ("tr_af"   , (decodeString, "tr_affiliation")),
-          ("tr_tt"   , (decodeString, "tr_total")),
-          ("tr_tx"   , (decodeString, "tr_tax")),
-          ("tr_sh"   , (decodeString, "tr_shipping")),
-          ("tr_ci"   , (decodeString, "tr_city")),
-          ("tr_st"   , (decodeString, "tr_state")),
-          ("tr_co"   , (decodeString, "tr_country")),
+          ("tr_id"   , (ME.toTsvSafe, "tr_orderid")),
+          ("tr_af"   , (ME.toTsvSafe, "tr_affiliation")),
+          ("tr_tt"   , (ME.toTsvSafe, "tr_total")),
+          ("tr_tx"   , (ME.toTsvSafe, "tr_tax")),
+          ("tr_sh"   , (ME.toTsvSafe, "tr_shipping")),
+          ("tr_ci"   , (ME.toTsvSafe, "tr_city")),
+          ("tr_st"   , (ME.toTsvSafe, "tr_state")),
+          ("tr_co"   , (ME.toTsvSafe, "tr_country")),
           // Ecommerce transaction items
-          ("ti_id"   , (decodeString, "ti_orderid")),
-          ("ti_sk"   , (decodeString, "ti_sku")),
-          ("ti_na"   , (decodeString, "ti_name")),
-          ("ti_ca"   , (decodeString, "ti_category")),
-          ("ti_pr"   , (decodeString, "ti_price")),
-          ("ti_qu"   , (decodeString, "ti_quantity")),
+          ("ti_id"   , (ME.toTsvSafe, "ti_orderid")),
+          ("ti_sk"   , (ME.toTsvSafe, "ti_sku")),
+          ("ti_na"   , (ME.toTsvSafe, "ti_name")),
+          ("ti_ca"   , (ME.toTsvSafe, "ti_category")),
+          ("ti_pr"   , (ME.toTsvSafe, "ti_price")),
+          ("ti_qu"   , (ME.toTsvSafe, "ti_quantity")),
           // Page pings
           ("pp_mix"  , (CU.stringToJInteger, "pp_xoffset_min")),
           ("pp_max"  , (CU.stringToJInteger, "pp_xoffset_max")),
@@ -202,7 +201,7 @@ object EnrichmentManager {
     val transform = event.transform(sourceMap, transformMap)
 
     // Potentially update the page_url and set the page URL components
-    val pageUri = PE.extractPageUri(raw.refererUri, Option(event.page_url))
+    val pageUri = WPE.extractPageUri(raw.refererUri, Option(event.page_url))
     for (uri <- pageUri; u <- uri) {
       // Update the page_url
       event.page_url = u.toString
@@ -218,7 +217,7 @@ object EnrichmentManager {
     }
 
     // Get the geo-location from the IP address
-    val geoLocation = GE.extractGeoLocation(geo, event.user_ipaddress)
+    val geoLocation = GE.extractGeoLocation(geo, raw.ipAddress.orNull)
     for (loc <- geoLocation; l <- loc) {
       event.geo_country = l.countryCode
       event.geo_region = l.region.orNull
@@ -242,7 +241,7 @@ object EnrichmentManager {
       event.refr_urlfragment = components.fragment.orNull
 
       // Set the referrer details
-      for (refr <- AE.extractRefererDetails(u, event.page_urlhost)) {
+      for (refr <- WAE.extractRefererDetails(u, event.page_urlhost)) {
         event.refr_medium = refr.medium.toString
         event.refr_source = refr.source.orNull
         event.refr_term = refr.term.orNull
@@ -254,7 +253,7 @@ object EnrichmentManager {
       e => unitSuccessNel, // No fields updated
       uri => uri match {
         case Some(u) =>
-          AE.extractMarketingFields(u, raw.encoding).flatMap(cmp => {
+          WAE.extractMarketingFields(u, raw.encoding).flatMap(cmp => {
             event.mkt_medium = cmp.medium
             event.mkt_source = cmp.source
             event.mkt_term = cmp.term
@@ -275,6 +274,8 @@ object EnrichmentManager {
     event.refr_urlpath = CU.truncate(event.refr_urlpath, 1000)
     event.refr_urlquery = CU.truncate(event.refr_urlquery, 3000)
     event.refr_urlfragment = CU.truncate(event.refr_urlfragment, 255)
+    event.refr_term = CU.truncate(event.refr_term, 255)
+    event.se_label = CU.truncate(event.se_label, 255)
 
     // Collect our errors on Failure, or return our event on Success 
     (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| geoLocation.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {

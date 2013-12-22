@@ -1,3 +1,58 @@
+Version 0.8.11 (2013-10-22)
+---------------------------
+Hadoop ETL: bumped to 0.3.5
+Hadoop ETL: added Argonaut 6.0 as a dependency (#342)
+Hadoop ETL: added fromTimestamp to EventEnrichments (#340)
+Hadoop ETL: added makeTsvSafe to ConversionUtils (#338)
+Hadoop ETL: added JsonUtils (#323)
+Hadoop ETL: added support for 3 and 4 return values from MapTransformer (#324)
+Hadoop ETL: updated GetJsonPayload to use Argonaut and renamed to JsonPayload (#339)
+Hadoop ETL: added ability to mask IP addresses in ETL (#309)
+Hadoop ETL: refr_ and page_ fields now stored raw (#374)
+Hadoop ETL: defensively fixed raw spaces in page and referer URLs (#346)
+Hadoop ETL: fixed regression, single-encoded %s logic didn't account for % itself (#347)
+Hadoop ETL: added unit tests for fixTabsNewlines (#332)
+Hadoop ETL: tests now report the failing CanonicalOutput field (#325)
+Hadoop ETL: now handling all fields double-encoded as per CloudFront post-14-September (#348)
+Hadoop ETL: added support for 21 Oct CloudFront access log format (#384)
+Hadoop ETL: added truncation to refr_term (#379)
+Hadoop ETL: added truncation to se_label (#394)
+Hadoop ETL: made all prior ME.identity fields TSV-safe (#395)
+EmrEtlRunner: bumped to 0.5.0
+EmrEtlRunner: bumped Sluice to 0.1.5 (#96)
+EmrEtlRunner: bumped Elasticity to 2.6 (#345)
+EmrEtlRunner: enabled EMR Job Flow debugging for easier access to logs (#279)
+EmrEtlRunner: ETL job no longer fails if there's no data for last run period (#296)
+EmrEtlRunner: empty processing dir check now works if dir contains 1 file (#326)
+EmrEtlRunner: added ability to mask IP addresses in ETL (#309)
+EmrEtlRunner: made the examples match what you get from git out of the box, thanks @shermozle (#331)
+StorageLoader: bumped to 0.1.1
+StorageLoader: bumped Sluice to 0.1.5 (#96)
+StorageLoader: fixed "\" in fields acts as an escape character for Postgres, thanks @kingo55 (#329)
+StorageLoader: added ability to --skip analyze (#335)
+StorageLoader: moved VACUUM SORT ONLY to a --include step (#321)
+StorageLoader: added COMPROWS to config and --include compupdate option (#344)
+StorageLoader: changed Postgres VACUUM FULL to VACUUM (#357)
+StorageLoader: added TRUNCATECOLUMNS for Redshift load (#360)
+StorageLoader: added FILLRECORD to our Redshift COPY command (#380)
+Postgres: fixed error in `recipes_basic.technology_mobile` recipe (#397)
+
+Version 0.8.10 (2013-10-18)
+---------------------------
+Redshift: bumped table-def to 0.2.2
+Redshift: moved events table to a new atomic schema in atomic-def.sql (#301)
+Redshift: added migration script for 0.2.1 to 0.2.2
+Redshift: added SQL DDL to define Redshift recipes (#297)
+Redshift: added SQL DDL to define Redshift cubes (#298)
+Postgres: bumped table-def to 0.1.1
+Postgres: renamed table-def file to atomic-def.sql
+Postgres: added migration script for 0.1.0 to 0.1.1
+Postgres: moved NOT NULL constraint on event field to event_vendor field (#318)
+Postgres: added SQL DDL to define Postgres recipes (#303)
+Postgres: added SQL DDL to define Postgres cubes (#302)
+Documentation: fixed wrong path to no-js-tracker subdirectory, thanks @gregakespret (#343)
+Documentation: improved "Find out more" table in README, thanks @dideler (#353)
+
 Version 0.8.9 (2013-09-05)
 --------------------------
 Hadoop ETL: bumped to 0.3.4

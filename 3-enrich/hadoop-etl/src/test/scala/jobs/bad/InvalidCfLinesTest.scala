@@ -51,7 +51,7 @@ object InvalidCfLinesTest {
 class InvalidCfLinesTest extends Specification with TupleConversions {
 
   "A job which processes input lines not in CloudFront format" should {
-    EtlJobTest.
+    EtlJobTest("cloudfront", "0").
       source(MultipleTextLineFiles("inputFolder"), InvalidCfLinesTest.lines).
       sink[String](Tsv("outputFolder")){ output =>
         "not write any events" in {

@@ -39,6 +39,13 @@ object CloudFrontLoader extends CloudFrontLikeLoader {
    * we prevent duplication?
    */
   def getSource = InputSource("cloudfront", None)
+
+  /**
+   * This is an actual CloudFront log.
+   * Unfortunate as it means we
+   * have some ambiguities to resolve.
+   */
+  def isActualCloudFront = true
 }
 
 /**
@@ -65,8 +72,15 @@ object CljTomcatLoader extends CloudFrontLikeLoader {
    * String from getCollectorLoader. Can
    * we prevent duplication?
    */
-
   def getSource = InputSource("clj-tomcat", None)
+
+  /**
+   * This is not a real CloudFront log.
+   * Good because it means we can
+   * sidestep the ambiguities in the
+   * CloudFront access log format.
+   */
+  def isActualCloudFront = false
 }
 
 /**
@@ -97,6 +111,16 @@ trait CloudFrontLikeLoader extends CollectorLoader {
    */
   def getSource: InputSource
 
+  /**
+   * Whether this is true CloudFront or
+   * CloudFront-like. Important to
+   * distinguish because the CloudFront
+   * format has some ambiguities which
+   * we can sidestep if we know we are
+   * processing Clojure-Tomcat logs.
+   */
+  def isActualCloudFront: Boolean
+
   // The encoding used on CloudFront logs
   private val CfEncoding = "UTF-8"
 
@@ -107,21 +131,24 @@ trait CloudFrontLikeLoader extends CollectorLoader {
     val ow = "(?:" + w // Optional whitespace begins
     
     // Our regex follows
-    (   "([\\S]+)" +   // Date          / date
-    w + "([\\S]+)" +   // Time          / time
-    w + "([\\S]+)" +   // EdgeLocation  / x-edge-location
-    w + "([\\S]+)" +   // BytesSent     / sc-bytes
-    w + "([\\S]+)" +   // IPAddress     / c-ip
-    w + "([\\S]+)" +   // Operation     / cs-method
-    w + "([\\S]+)" +   // Domain        / cs(Host)
-    w + "([\\S]+)" +   // Object        / cs-uri-stem
-    w + "([\\S]+)" +   // HttpStatus    / sc-status
-    w + "([\\S]+)" +   // Referer       / cs(Referer)
-    w + "([\\S]+)" +   // UserAgent     / cs(User Agent)
-    w + "([\\S]+)" +   // Querystring   / cs-uri-query
-    ow + "[\\S]+"  +   // CookieHeader  / cs(Cookie)         added 12 Sep 2012
-    w +  "[\\S]+"  +   // ResultType    / x-edge-result-type added 12 Sep 2012
-    w +  "[\\S]+)?").r // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
+    (   "([\\S]+)"  +   // Date          / date
+    w + "([\\S]+)"  +   // Time          / time
+    w + "([\\S]+)"  +   // EdgeLocation  / x-edge-location
+    w + "([\\S]+)"  +   // BytesSent     / sc-bytes
+    w + "([\\S]+)"  +   // IPAddress     / c-ip
+    w + "([\\S]+)"  +   // Operation     / cs-method
+    w + "([\\S]+)"  +   // Domain        / cs(Host)
+    w + "([\\S]+)"  +   // Object        / cs-uri-stem
+    w + "([\\S]+)"  +   // HttpStatus    / sc-status
+    w + "([\\S]+)"  +   // Referer       / cs(Referer)
+    w + "([\\S]+)"  +   // UserAgent     / cs(User Agent)
+    w + "([\\S]+)"  +   // Querystring   / cs-uri-query
+    ow + "[\\S]+"   +   // CookieHeader  / cs(Cookie)         added 12 Sep 2012
+    w +  "[\\S]+"   +   // ResultType    / x-edge-result-type added 12 Sep 2012
+    w +  "[\\S]+)?" +   // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
+    ow + "[\\S]+"   +   // XHostHeader   / x-host-header      added 21 Oct 2013
+    w +  "[\\S]+"   +   // CsProtocol    / cs-protocol        added 21 Oct 2013
+    w +  "[\\S]+)?").r  // CsBytes       / cs-bytes           added 21 Oct 2013
   }
 
   /**
@@ -145,29 +172,31 @@ trait CloudFrontLikeLoader extends CollectorLoader {
                  time,
                  _,
                  _,
-                 ipAddress,
+                 ip,
                  _,
                  _,
                  objct,
                  _,
-                 referer,
-                 userAgent,
-                 querystring) => {
+                 rfr,
+                 ua,
+                 qs) => {
 
       // Is this a request for the tracker? Might be a browser favicon request or similar
       if (!isIceRequest(objct)) return None.success
 
       // Validations
+      // Let's strip double-encodings if this is an actual CloudFront row
       val timestamp = toTimestamp(date, time)
+      val querystring = if (isActualCloudFront) singleEncodePcts(qs) else qs
       val payload = toGetPayload(querystring)
 
       // No validation (yet) on the below
-      val ip  = toOption(ipAddress)
-      val ua  = toOption(userAgent)
-      val rfr = toOption(referer) map toCleanUri
+      val userAgent  = if (isActualCloudFront) singleEncodePcts(ua) else ua
+      val refr = if (isActualCloudFront) singleEncodePcts(rfr) else rfr
+      val referer = toOption(refr) map toCleanUri
 
       (timestamp.toValidationNel |@| payload.toValidationNel) { (t, p) =>
-        Some(CanonicalInput(t, NVGetPayload(p), getSource, CfEncoding, ip, ua, rfr, Nil, None)) // No headers or separate userId.
+        Some(CanonicalInput(t, NVGetPayload(p), getSource, CfEncoding, toOption(ip), toOption(userAgent), referer, Nil, None)) // No headers or separate userId.
       }
     }
 
@@ -234,4 +263,42 @@ trait CloudFrontLikeLoader extends CollectorLoader {
    */
   private def toCleanUri(uri: String): String = 
     StringUtils.removeEnd(uri, "%")
+
+  /**
+   * On 17th August 2013, Amazon made an
+   * unannounced change to their CloudFront
+   * log format - they went from always encoding
+   * % characters, to only encoding % characters
+   * which were not previously encoded. For a
+   * full discussion of this see:
+   *
+   * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
+   *
+   * On 14th September 2013, Amazon rolled out a further fix,
+   * from which point onwards all fields, including the
+   * referer and useragent, would have %s double-encoded.
+   *
+   * This causes issues, because the ETL process expects
+   * referers and useragents to be only single-encoded.
+   *
+   * This function turns a double-encoded percent (%) into
+   * a single-encoded one.
+   *
+   * Examples:
+   * 1. "page=Celestial%25Tarot"          -   no change (only single encoded)
+   * 2. "page=Dreaming%2520Way%2520Tarot" -> "page=Dreaming%20Way%20Tarot"
+   * 3. "loading 30%2525 complete"        -> "loading 30%25 complete"
+   *
+   * Limitation of this approach: %2588 is ambiguous. Is it a:
+   * a) A double-escaped caret "ˆ" (%2588 -> %88 -> ^), or:
+   * b) A single-escaped "%88" (%2588 -> %88)
+   *
+   * This code assumes it's a).
+   *
+   * @param str The String which potentially has double-encoded %s
+   * @return the String with %s now single-encoded
+   */
+  private[inputs] def singleEncodePcts(str: String): String =
+    str
+      .replaceAll("%25([0-9a-fA-F][0-9a-fA-F])", "%$1") // Decode %25XX to %XX
 }

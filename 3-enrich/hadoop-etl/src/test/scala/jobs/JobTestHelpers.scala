@@ -17,11 +17,14 @@ package jobs
 import scala.collection.mutable.ListBuffer
 
 // Specs2
-import org.specs2.matcher.Matcher
+import org.specs2.matcher.{Matcher, Expectable}
 import org.specs2.matcher.Matchers._
 
 // Scalding
 import com.twitter.scalding._
+
+// This project
+import outputs.CanonicalOutput
 
 /**
  * Holds helpers for running integration
@@ -32,7 +35,67 @@ object JobTestHelpers {
   /**
    * The current version of our Hadoop ETL
    */
-  val EtlVersion = "hadoop-0.3.4"
+  val EtlVersion = "hadoop-0.3.5"
+
+  /**
+   * Fields in our CanonicalOutput which are unmatchable
+   */
+  private val UnmatchableFields = List("event_id")
+
+  /**
+   * Fields in our CanonicalOutput which are discarded
+   */
+  private val DiscardedFields = List("page_url", "page_referrer")
+
+  /**
+   * The names of the fields written out
+   */
+  lazy val OutputFields = classOf[CanonicalOutput]
+      .getDeclaredFields
+      .map(_.getName)
+      .filter(f => !DiscardedFields.contains(f))
+
+  /**
+   * User-friendly wrapper to instantiate
+   * a BeFieldEqualTo Matcher.
+   */
+  def beFieldEqualTo(expected: String, withIndex: Int) = new BeFieldEqualTo(expected, withIndex)
+
+  /**
+   * A Specs2 matcher to check if a CanonicalOutput
+   * field is correctly set.
+   *
+   * A couple of neat tricks:
+   *
+   * 1. Skips the comparison if this is the event_id
+   *    field, because it has unpredictable values
+   * 2. On failure, print out the field's name as
+   *    well as the mismatch, to help with debugging
+   */
+  class BeFieldEqualTo(expected: String, index: Int) extends Matcher[String] {
+
+    private val field = OutputFields(index)
+    private val unmatcheable = isUnmatchable(field)
+
+    def apply[S <: String](actual: Expectable[S]) = {
+      result(unmatcheable || actual.value == expected,
+             "%s: %s".format(field, if (unmatcheable) "is unmatcheable" else "%s equals %s".format(actual.description, expected)),
+             "%s: %s does not equal %s".format(field, actual.description, expected),
+             actual)
+    }
+
+    /**
+     * Whether a field in CanonicalOutput is
+     * unmatchable - i.e. has unpredictable
+     * values.
+     *
+     * @param field The name of the field
+     * @return true if the field is unmatchable,
+     *         false otherwise
+     */
+    private def isUnmatchable(field: String): Boolean =
+      UnmatchableFields.contains(field)
+  }
 
   /**
    * A Specs2 matcher to check if a Scalding
@@ -81,12 +144,13 @@ object JobTestHelpers {
   implicit def Lines2ScaldingLines(lines : Lines): ScaldingLines = lines.numberedLines 
 
   // Standard JobTest definition used by all integration tests
-  val EtlJobTest = 
+  val EtlJobTest: (String, String) => JobTest = (collector, anonQuartets) => 
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob").
       arg("input_folder", "inputFolder").
-      arg("input_format", "cloudfront").
+      arg("input_format", collector).
       arg("maxmind_file", "-"). // Not needed when running locally, but error if not set
       arg("output_folder", "outputFolder").
       arg("bad_rows_folder", "badFolder").
+      arg("anon_ip_quartets", anonQuartets).
       arg("exceptions_folder", "exceptionsFolder")
 }
