@@ -15,21 +15,27 @@
 
 namespace java com.snowplowanalytics.generated
 
-struct GetPayload { /* TODO */ }
-struct NVGetPayload { /* TODO */ }
-struct JsonPayload { /* TODO */ }
-enum PayloadType { GET = 1, NVGET = 2, JSON = 3 }
+enum PayloadProtocol {
+  Http = 1
+}
 
-union TrackerPayload {
-  1: GetPayload getPayload,
-  2: NVGetPayload nvGetPayload,
-  3: JsonPayload jsonPayload,
+enum PayloadFormat {
+  HttpGet = 1
+  HttpPostUrlencodedForm = 10
+  HttpPostMultipartForm = 11
+}
+
+typedef string PayloadData
+
+struct TrackerPayload {
+  1: PayloadProtocol protocol
+  2: PayloadFormat format
+  3: PayloadData data
 }
 
 struct SnowplowEvent {
   01: i64 timestamp // Seconds since epoch.
   10: TrackerPayload payload
-  11: PayloadType payloadType
   20: string collector // Collector name/version.
   30: string encoding
   40: optional string hostname
