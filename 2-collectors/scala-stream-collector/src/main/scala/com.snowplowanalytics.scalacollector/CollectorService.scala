@@ -36,18 +36,36 @@ class CollectorServiceActor extends Actor with CollectorService {
 
 trait CollectorService extends HttpService {
   implicit def executionContext = actorRefFactory.dispatcher
+
+  private def paramString(param: (String, String)): String =
+    s"${param._1}=${param._2}"
+
   val collectorRoute = {
-    path("i") {
-      get {
-        parameterMap {
-          queryParams =>
-            optionalHeaderValueByName("Cookie") { reqCookie =>
-              complete(Responses.cookie(queryParams, reqCookie))
-            }
-        }
-      }
-    }~
     get {
+      path("i") {
+        parameterSeq { params =>
+        optionalHeaderValueByName("Cookie") { reqCookie =>
+        optionalHeaderValueByName("User-Agent") { userAgent =>
+        hostName { host =>
+        clientIP { ip =>
+          // Reference: http://spray.io/documentation/1.2.0/spray-routing/parameter-directives/parameterSeq/#parameterseq
+          // TODO: Reconstructing this string doesn't seem best,
+          // but I can't find a better way, so I posted to the
+          // spray mailing list, 2013.12.24.
+          val paramsString = "?" + params.map(paramString).mkString("&")
+          complete(Responses.cookie(
+            paramsString,
+            reqCookie,
+            userAgent,
+            host,
+            ip.toString
+          ))
+        }
+        }
+        }
+        }
+        }
+      }~
       complete(Responses.notFound)
     }
   }

@@ -15,6 +15,13 @@
 
 package com.snowplowanalytics.scalacollector
 
+import com.snowplowanalytics.generated.{
+  SnowplowEvent,
+  TrackerPayload,
+  PayloadProtocol,
+  PayloadFormat
+}
+
 import java.util.UUID
 import org.apache.commons.codec.binary.Base64
 //import org.slf4j.LoggerFactory
@@ -25,21 +32,61 @@ import spray.http.MediaTypes.`image/gif`
 object Responses {
   val pixel = Base64.decodeBase64("R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==")
 
-  def cookie(queryParams: Map[String,String], reqCookie: Option[String]) = {
+  def cookie(queryParams: String, reqCookie: Option[String],
+      userAgent: Option[String], hostname: String, ip: String) = {
     // Use the same UUID if the request cookie contains `sp`.
-    var cookieUUID: Option[String] = None
-    if (reqCookie.isDefined && (reqCookie.get startsWith "sp=")) {
-      cookieUUID = Some(reqCookie.get substring 3)
-    } else {
-      cookieUUID = Some(UUID.randomUUID.toString())
-    }
+    var cookieUUID: String =
+      if (reqCookie.isDefined && (reqCookie.get startsWith "sp="))
+        reqCookie.get substring 3
+      else UUID.randomUUID.toString()
 
     val cookie = HttpCookie(
-      "sp", cookieUUID.get,
+      "sp", cookieUUID,
       expires=Some(DateTime.now+generated.Settings.cookieExpirationMs)
     )
     val headers = List(`Set-Cookie`(cookie))
     val response = HttpResponse(entity = HttpEntity(`image/gif`, pixel))
+
+    // Construct an event object from the request.
+
+    // TODO: Should the time be in UTC or local?
+    // Should the scema make this more clear?
+    val timestamp: Long = System.currentTimeMillis / 1000
+
+    val payload = new TrackerPayload(
+      PayloadProtocol.Http,
+      PayloadFormat.HttpGet,
+      queryParams
+    )
+
+    val event = new SnowplowEvent(
+      timestamp,
+      payload,
+
+      // TODO: Should the collector name/version format be more
+      // strictly defined in the schema?
+      s"${generated.Settings.name}-${generated.Settings.version}",
+
+      // TODO: should we extract the encoding from the queryParams?
+      "UTF-8"
+    )
+
+    event.hostname = hostname
+    event.ipAddress = ip
+    if (userAgent.isDefined) event.userAgent = userAgent.get
+    // TODO: Not sure if the refererUri can be easily obtained.
+    // event.refererUri = 
+
+    // TODO: Use something like:
+    // http://spray.io/documentation/1.1-SNAPSHOT/spray-routing/basic-directives/mapHttpResponseHeaders/
+    // to map the HttpResponseHeaders into a list.
+    // event.headers = 
+
+    // TODO: Is the user ID the cookie we have associated with a user?
+    event.userId = cookieUUID
+
+    // TODO: Serialize and send event to Kinesis!
+
     response.withHeaders(headers)
   }
 
