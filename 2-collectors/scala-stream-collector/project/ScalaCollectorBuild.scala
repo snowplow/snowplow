@@ -40,7 +40,9 @@ object ScalaCollectorBuild extends Build {
         Libraries.sprayRouting,
         Libraries.commonsCodec,
         Libraries.sprayTestkit,
-        Libraries.specs2
+        Libraries.specs2,
+        Libraries.commonsLang3,
+        Libraries.thrift
       )
     )
 }

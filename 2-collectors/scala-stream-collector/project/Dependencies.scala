@@ -20,7 +20,9 @@ object Dependencies {
     // For scala-util
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
     "spray repo" at "http://repo.spray.io",
-    "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
+    "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
+    // For sbt-thrift
+    "bigtoast-github" at "http://bigtoast.github.com/repo/"
   )
 
   object V {
@@ -33,6 +35,10 @@ object Dependencies {
     val scallop = "0.9.4"
     val logback = "1.0.13"
     val commonsCodec = "1.5"
+
+    // Scala compile only for sbt-thrift.
+    val commonsLang3 = "3.1"
+    val thrift = "0.9.0"
 
     // Scala (test only)
     // Using the newest version of spec (2.3.6) causes
@@ -53,6 +59,9 @@ object Dependencies {
     val scallop = "org.rogach" %% "scallop" % V.scallop
     val commonsCodec = "commons-codec" % "commons-codec" % V.commonsCodec
 
+    // Scala compile only for sbt-thrift.
+    val commonsLang3 = "org.apache.commons" % "commons-lang3" % V.commonsLang3 % "compile"
+    val thrift = "org.apache.thrift" % "libthrift" % V.thrift % "compile"
 
     // Scala (test only)
     val specs2 = "org.specs2" %% "specs2" % V.specs2 % "test"
