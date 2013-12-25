@@ -60,11 +60,7 @@ trait CollectorService extends HttpService {
             host,
             ip.toString
           ))
-        }
-        }
-        }
-        }
-        }
+        }}}}}
       }~
       complete(Responses.notFound)
     }

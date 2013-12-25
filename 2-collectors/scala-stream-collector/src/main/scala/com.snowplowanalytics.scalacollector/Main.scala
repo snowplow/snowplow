@@ -20,14 +20,31 @@ import akka.io.IO
 import org.rogach.scallop.exceptions.ScallopException
 import spray.can.Http
 
+// Config
+import com.typesafe.config.ConfigFactory
+
+// Grab all the configuration variables one-time
+object CollectorConfig {
+  private val config = ConfigFactory.load("application")
+  private val collector = config.getConfig("collector")
+  val interface = collector.getString("interface")
+  val port = collector.getInt("port")
+
+  private val aws = collector.getConfig("aws")
+  val awsAccessKey = aws.getString("access-key")
+  val awsSecretKey = aws.getString("secret-key")
+
+  private val stream = collector.getConfig("stream")
+  val streamName = stream.getString("name")
+  val streamSize = stream.getInt("size")
+}
+
 object ScalaCollector extends App {
   implicit val system = ActorSystem()
-
-  val conf = new ScalaCollectorConf(args)
 
   // The handler actor replies to incoming HttpRequests.
   val handler = system.actorOf(Props[CollectorServiceActor], name = "handler")
 
   IO(Http) ! Http.Bind(handler,
-    interface=conf.interface.apply(), port=conf.port.apply())
+    interface=CollectorConfig.interface, port=CollectorConfig.port)
 }

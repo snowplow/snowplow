@@ -1,5 +1,19 @@
 # TODO: Comment this with relevant options.
 
+collector {
+  interface = "localhost"
+  port = 8888
+  aws {
+    access-key: "cpf"
+    secret-key: "cpf"
+  }
+  stream {
+    name: "snowplow_collector_example"
+    size: 1
+  }
+}
+
+
 akka {
   loglevel = DEBUG
   loggers = ["akka.event.slf4j.Slf4jLogger"]
@@ -8,8 +22,9 @@ akka {
 # Check the reference.conf in spray-can/src/main/resources for all
 # defined settings
 spray.can.server {
-  # uncomment the next line for making this an HTTPS example
-  # ssl-encryption = on
+  # adds the Remote-Address header to every request automatically
+  remote-address-header = on
+
   idle-timeout = 30 s
   request-timeout = 10 s
 
