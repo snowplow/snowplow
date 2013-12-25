@@ -3,6 +3,7 @@
 collector {
   interface = "localhost"
   port = 8888
+  timeout = 60 // seconds.
   aws {
     access-key: "cpf"
     secret-key: "cpf"

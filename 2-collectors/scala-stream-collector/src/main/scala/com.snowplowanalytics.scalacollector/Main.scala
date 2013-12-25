@@ -17,11 +17,13 @@ package com.snowplowanalytics.scalacollector
 
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO
-import org.rogach.scallop.exceptions.ScallopException
 import spray.can.Http
 
 // Config
 import com.typesafe.config.ConfigFactory
+
+// Logging.
+import org.slf4j.LoggerFactory
 
 // Grab all the configuration variables one-time
 object CollectorConfig {
@@ -29,6 +31,7 @@ object CollectorConfig {
   private val collector = config.getConfig("collector")
   val interface = collector.getString("interface")
   val port = collector.getInt("port")
+  val timeout = collector.getInt("timeout")
 
   private val aws = collector.getConfig("aws")
   val awsAccessKey = aws.getString("access-key")
@@ -40,11 +43,18 @@ object CollectorConfig {
 }
 
 object ScalaCollector extends App {
-  implicit val system = ActorSystem()
+  lazy val log = LoggerFactory.getLogger(getClass())
+  import log.{error, debug, info, trace}
 
-  // The handler actor replies to incoming HttpRequests.
-  val handler = system.actorOf(Props[CollectorServiceActor], name = "handler")
+  if (!KinesisInterface.createStream()) {
+    info("Error initializing or connecting to the stream.")
+  } else {
+    implicit val system = ActorSystem()
 
-  IO(Http) ! Http.Bind(handler,
-    interface=CollectorConfig.interface, port=CollectorConfig.port)
+    // The handler actor replies to incoming HttpRequests.
+    val handler = system.actorOf(Props[CollectorServiceActor], name = "handler")
+
+    IO(Http) ! Http.Bind(handler,
+      interface=CollectorConfig.interface, port=CollectorConfig.port)
+  }
 }

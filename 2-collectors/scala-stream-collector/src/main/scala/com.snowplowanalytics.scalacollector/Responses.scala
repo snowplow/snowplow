@@ -85,7 +85,8 @@ object Responses {
     // TODO: Is the user ID the cookie we have associated with a user?
     event.userId = cookieUUID
 
-    // TODO: Serialize and send event to Kinesis!
+    // TODO: What should the key be?
+    KinesisInterface.storeEvent(event, "key")
 
     response.withHeaders(headers)
   }

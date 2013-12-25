@@ -35,14 +35,14 @@ object ScalaCollectorBuild extends Build {
         Libraries.akkaSlf4j,
         Libraries.logback,
         Libraries.mimepull,
-        Libraries.scallop,
         Libraries.sprayCan,
         Libraries.sprayRouting,
         Libraries.commonsCodec,
         Libraries.sprayTestkit,
         Libraries.specs2,
         Libraries.commonsLang3,
-        Libraries.thrift
+        Libraries.thrift,
+        Libraries.scalazon
       )
     )
 }

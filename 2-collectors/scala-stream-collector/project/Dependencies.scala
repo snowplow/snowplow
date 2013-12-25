@@ -21,6 +21,8 @@ object Dependencies {
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
     "spray repo" at "http://repo.spray.io",
     "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
+    // For scalazon
+    "BintrayJCenter" at "http://jcenter.bintray.com",
     // For sbt-thrift
     "bigtoast-github" at "http://bigtoast.github.com/repo/"
   )
@@ -35,6 +37,7 @@ object Dependencies {
     val scallop = "0.9.4"
     val logback = "1.0.13"
     val commonsCodec = "1.5"
+    val scalazon   = "0.4"
 
     // Scala compile only for sbt-thrift.
     val commonsLang3 = "3.1"
@@ -56,8 +59,8 @@ object Dependencies {
     val akkaActor = "com.typesafe.akka" %% "akka-actor" % V.akka
     val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % V.akka
     val logback = "ch.qos.logback" % "logback-classic" % V.logback
-    val scallop = "org.rogach" %% "scallop" % V.scallop
     val commonsCodec = "commons-codec" % "commons-codec" % V.commonsCodec
+    val scalazon    = "io.github.cloudify"         %% "scalazon"        % V.scalazon
 
     // Scala compile only for sbt-thrift.
     val commonsLang3 = "org.apache.commons" % "commons-lang3" % V.commonsLang3 % "compile"
