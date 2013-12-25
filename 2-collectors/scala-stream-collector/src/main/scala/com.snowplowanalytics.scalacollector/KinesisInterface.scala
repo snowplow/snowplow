@@ -67,8 +67,6 @@ object KinesisInterface {
    * @param size The number of shards to support for this stream
    * @param timeout How long to keep checking if the stream became active,
    * in seconds
-   * @param interval How frequently to check if the stream has become active,
-   * in seconds
    *
    * @return a Boolean, where:
    * 1. true means the stream was successfully created or already exists
@@ -77,7 +75,7 @@ object KinesisInterface {
   def createStream(
       name: String = CollectorConfig.streamName,
       size: Int = CollectorConfig.streamSize,
-      timeout: Int = CollectorConfig.timeout): Boolean = {
+      timeout: Int = 60): Boolean = {
     info(s"Checking streams for $name.")
     val streamListFuture = for {
       s <- Kinesis.streams.list
@@ -151,7 +149,7 @@ object KinesisInterface {
    *   of the record written to.
    */
   private def writeRecord(data: ByteBuffer, key: String,
-      timeout: Int = CollectorConfig.timeout): PutResult = {
+      timeout: Int = 60): PutResult = {
     val putData = for {
       p <- stream.get.put(data, key)
     } yield p

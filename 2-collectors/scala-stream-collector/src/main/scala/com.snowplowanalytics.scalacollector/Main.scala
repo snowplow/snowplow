@@ -31,7 +31,8 @@ object CollectorConfig {
   private val collector = config.getConfig("collector")
   val interface = collector.getString("interface")
   val port = collector.getInt("port")
-  val timeout = collector.getInt("timeout")
+  val production = collector.getBoolean("production")
+  val cookieExpiration = collector.getMilliseconds("cookieExpiration")
 
   private val aws = collector.getConfig("aws")
   val awsAccessKey = aws.getString("access-key")

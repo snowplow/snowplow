@@ -33,10 +33,6 @@ object BuildSettings {
     resolvers             ++= Dependencies.resolutionRepos
   )
 
-  // TODO: Where should these go?
-  val production: Boolean = true
-  val cookieExpirationMs: Long = 365*24*60*60*1000L // 1 year.
-
   // Makes our SBT app settings available from within the app
   lazy val scalifySettings = Seq(sourceGenerators in Compile <+=
       (sourceManaged in Compile, version, name, organization) map
@@ -47,8 +43,6 @@ object BuildSettings {
       |  val organization = "$o"
       |  val version = "$v"
       |  val name = "$n"
-      |  val production: Boolean = $production
-      |  val cookieExpirationMs: Long = ${cookieExpirationMs}L
       |}
       |""".stripMargin)
     Seq(file)

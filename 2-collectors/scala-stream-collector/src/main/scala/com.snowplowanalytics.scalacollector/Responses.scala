@@ -42,7 +42,7 @@ object Responses {
 
     val cookie = HttpCookie(
       "sp", cookieUUID,
-      expires=Some(DateTime.now+generated.Settings.cookieExpirationMs)
+      expires=Some(DateTime.now+CollectorConfig.cookieExpiration)
     )
     val headers = List(`Set-Cookie`(cookie))
     val response = HttpResponse(entity = HttpEntity(`image/gif`, pixel))
