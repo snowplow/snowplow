@@ -3,11 +3,14 @@
 collector {
   interface = "localhost"
   port = 8888
-  timeout = 60 // seconds.
+  production = false
+  cookieExpiration = 365d
+
   aws {
     access-key: "cpf"
     secret-key: "cpf"
   }
+
   stream {
     name: "snowplow_collector_example"
     size: 1

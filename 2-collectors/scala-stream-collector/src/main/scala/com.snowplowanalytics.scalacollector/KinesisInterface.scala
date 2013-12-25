@@ -39,11 +39,14 @@ import scala.concurrent.duration._
 
 // Thrift.
 import org.apache.thrift.TSerializer
+import org.apache.thrift.TDeserializer
 
 // Logging.
 import org.slf4j.LoggerFactory
 
 import com.snowplowanalytics.generated.SnowplowEvent
+
+import scala.collection.mutable.StringBuilder
 
 /**
  * Interface to Kinesis for the Scala collector.
@@ -57,6 +60,7 @@ object KinesisInterface {
     CollectorConfig.awsAccessKey, CollectorConfig.awsSecretKey)
   private var stream: Option[Stream] = None
   private val thriftSerializer = new TSerializer()
+  private val thriftDeserializer = new TDeserializer()
 
   /**
    * Creates a new stream if one doesn't exist.
@@ -155,6 +159,36 @@ object KinesisInterface {
     } yield p
     val putResult = Await.result(putData, Duration(timeout, SECONDS))
     putResult
+  }
+
+  def dump():String = {
+    val getRecords = for {
+      shards <- stream.get.shards.list
+      iterators <- Future.sequence(shards.map {
+        shard => implicitExecute(shard.iterator)
+      })
+      records <- Future.sequence(iterators.map {
+        iterator => implicitExecute(iterator.nextRecords)
+      })
+    } yield records
+    val recordChunks = Await.result(getRecords, 30.seconds)
+
+    val sb = new StringBuilder()
+    for (recordChunk <- recordChunks) {
+      sb ++= "==Record chunk.\n"
+      for (record <- recordChunk.records) {
+        sb ++= s"sequenceNumber: ${record.sequenceNumber}\n"
+        sb ++= dumpEvent(record.data.array()) + "\n"
+        sb ++= s"partitionKey: ${record.partitionKey}\n"
+      }
+    }
+    sb.toString
+  }
+
+  private def dumpEvent(data: Array[Byte]): String = {
+    val event = new SnowplowEvent()
+    thriftDeserializer.deserialize(event, data)
+    event.toString
   }
 
   /**

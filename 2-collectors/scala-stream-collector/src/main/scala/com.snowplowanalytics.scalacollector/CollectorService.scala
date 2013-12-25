@@ -62,6 +62,11 @@ trait CollectorService extends HttpService {
           ))
         }}}}}
       }~
+      path("dump") {
+        // TODO: Is there a better way to handle a debug path?
+        if (!CollectorConfig.production) complete(Responses.dump)
+        else complete(Responses.notFound)
+      }~
       complete(Responses.notFound)
     }
   }
