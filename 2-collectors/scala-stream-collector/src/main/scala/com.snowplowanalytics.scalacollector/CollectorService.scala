@@ -52,7 +52,7 @@ trait CollectorService extends HttpService {
           // TODO: Reconstructing this string doesn't seem best,
           // but I can't find a better way, so I posted to the
           // spray mailing list, 2013.12.24.
-          val paramsString = "?" + params.map(paramString).mkString("&")
+          val paramsString = params.map(paramString).mkString("&")
           complete(Responses.cookie(
             paramsString,
             reqCookie,
