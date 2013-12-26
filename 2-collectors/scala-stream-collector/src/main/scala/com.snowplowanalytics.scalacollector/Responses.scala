@@ -32,20 +32,12 @@ import spray.http.MediaTypes.`image/gif`
 object Responses {
   val pixel = Base64.decodeBase64("R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==")
 
-  def cookie(queryParams: String, reqCookie: Option[String],
+  def cookie(queryParams: String, requestCookie: Option[HttpCookie],
       userAgent: Option[String], hostname: String, ip: String) = {
     // Use the same UUID if the request cookie contains `sp`.
-    var cookieUUID: String =
-      if (reqCookie.isDefined && (reqCookie.get startsWith "sp="))
-        reqCookie.get substring 3
+    val cookieUUID: String =
+      if (requestCookie.isDefined) requestCookie.get.content
       else UUID.randomUUID.toString()
-
-    val cookie = HttpCookie(
-      "sp", cookieUUID,
-      expires=Some(DateTime.now+CollectorConfig.cookieExpiration)
-    )
-    val headers = List(`Set-Cookie`(cookie))
-    val response = HttpResponse(entity = HttpEntity(`image/gif`, pixel))
 
     // Construct an event object from the request.
 
@@ -88,7 +80,14 @@ object Responses {
     // TODO: What should the key be?
     KinesisInterface.storeEvent(event, "key")
 
-    response.withHeaders(headers)
+    // Build the response.
+    val responseCookie = HttpCookie(
+      "sp", cookieUUID,
+      expires=Some(DateTime.now+CollectorConfig.cookieExpiration)
+    )
+    val headers = List(`Set-Cookie`(responseCookie))
+    HttpResponse(entity = HttpEntity(`image/gif`, pixel))
+      .withHeaders(headers)
   }
 
   def dump = HttpResponse(entity=KinesisInterface.dump)

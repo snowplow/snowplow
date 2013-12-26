@@ -44,7 +44,7 @@ trait CollectorService extends HttpService {
     get {
       path("i") {
         parameterSeq { params =>
-        optionalHeaderValueByName("Cookie") { reqCookie =>
+        optionalCookie("sp") { reqCookie =>
         optionalHeaderValueByName("User-Agent") { userAgent =>
         hostName { host =>
         clientIP { ip =>
@@ -66,8 +66,8 @@ trait CollectorService extends HttpService {
         // TODO: Is there a better way to handle a debug path?
         if (!CollectorConfig.production) complete(Responses.dump)
         else complete(Responses.notFound)
-      }~
-      complete(Responses.notFound)
-    }
+      }
+    }~
+    complete(Responses.notFound)
   }
 }
