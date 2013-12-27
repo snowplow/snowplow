@@ -38,7 +38,7 @@ object Dependencies {
     val scallop = "0.9.4"
     val logback = "1.0.13"
     val commonsCodec = "1.5"
-    val scalazon   = "0.4"
+    val scalazon   = "0.5"
 
     // Scala compile only for sbt-thrift.
     val commonsLang3 = "3.1"
