@@ -26,7 +26,11 @@ import com.amazonaws.auth.{
 // Scalazon (for Kinesis interaction)
 import io.github.cloudify.scala.aws.kinesis.Client
 import io.github.cloudify.scala.aws.kinesis.Client.ImplicitExecution._
-import io.github.cloudify.scala.aws.kinesis.Definitions.{Stream,PutResult}
+import io.github.cloudify.scala.aws.kinesis.Definitions.{
+  Stream,
+  PutResult,
+  Record
+}
 import io.github.cloudify.scala.aws.kinesis.KinesisDsl._
 
 // Config
@@ -46,7 +50,9 @@ import org.slf4j.LoggerFactory
 
 import com.snowplowanalytics.generated.SnowplowEvent
 
+// Mutable data structures.
 import scala.collection.mutable.StringBuilder
+import scala.collection.mutable.MutableList
 
 /**
  * Interface to Kinesis for the Scala collector.
@@ -62,6 +68,55 @@ object KinesisInterface {
   private val thriftSerializer = new TSerializer()
   private val thriftDeserializer = new TDeserializer()
 
+  // Set the current stream to $name.
+  def loadStream(name: String = CollectorConfig.streamName) = {
+    stream = Some(Kinesis.stream(name))
+  }
+
+  /**
+   * Checks if a stream exists.
+   *
+   * @param name The name of the stream to check.
+   * @param timeout How long to keep checking if the stream became active,
+   * in seconds
+   * @return true if the stream was loaded, false if the stream doesn't exist.
+   */
+  def streamExists(
+      name: String=CollectorConfig.streamName,
+      timeout: Int = 60): Boolean = {
+    val streamListFuture = for {
+      s <- Kinesis.streams.list
+    } yield s
+    val streamList: Iterable[String] =
+      Await.result(streamListFuture, Duration(timeout, SECONDS))
+    for (streamStr <- streamList) {
+      if (streamStr == name) {
+        info(s"Stream $name exists.")
+        return true
+      }
+    }
+
+    info(s"Stream $name doesn't exist.")
+    false
+  }
+
+  /**
+   * Deletes a stream.
+   */
+  def deleteStream(
+      name: String = CollectorConfig.streamName,
+      timeout: Int = 60): Unit = {
+    val localStream = Kinesis.stream(name)
+
+    info(s"Deleting stream $name.")
+    val deleteStream = for {
+      s <- localStream.delete
+    } yield s
+
+    Await.result(deleteStream, Duration(timeout, SECONDS))
+    info("Successfully deleted stream.")
+  }
+
   /**
    * Creates a new stream if one doesn't exist.
    * Arguments are optional - defaults to the values
@@ -76,25 +131,15 @@ object KinesisInterface {
    * 1. true means the stream was successfully created or already exists
    * 2. false means an error occurred
    */
-  def createStream(
+  def createAndLoadStream(
       name: String = CollectorConfig.streamName,
       size: Int = CollectorConfig.streamSize,
       timeout: Int = 60): Boolean = {
-    info(s"Checking streams for $name.")
-    val streamListFuture = for {
-      s <- Kinesis.streams.list
-    } yield s
-    val streamList: Iterable[String] =
-      Await.result(streamListFuture, Duration(timeout, SECONDS))
-    for (streamStr <- streamList) {
-      if (streamStr == name) {
-        info(s"String $name already exists.")
-        stream = Some(Kinesis.stream(name))
-        return true
-      }
+    if (streamExists(name)) {
+      loadStream(name)
+      return true
     }
 
-    info(s"Stream $name doesn't exist.")
     info(s"Creating stream $name of size $size.")
     val createStream = for {
       s <- Kinesis.streams.create(name)
@@ -161,7 +206,7 @@ object KinesisInterface {
     putResult
   }
 
-  def dump():String = {
+  def getRecords(): List[(SnowplowEvent,Record)] = {
     val getRecords = for {
       shards <- stream.get.shards.list
       iterators <- Future.sequence(shards.map {
@@ -173,19 +218,29 @@ object KinesisInterface {
     } yield records
     val recordChunks = Await.result(getRecords, 30.seconds)
 
-    val sb = new StringBuilder()
+    val recordList = new MutableList[(SnowplowEvent,Record)]
     for (recordChunk <- recordChunks) {
-      sb ++= "==Record chunk.\n"
       for (record <- recordChunk.records) {
-        sb ++= s"sequenceNumber: ${record.sequenceNumber}\n"
-        sb ++= dumpEvent(record.data.array()) + "\n"
-        sb ++= s"partitionKey: ${record.partitionKey}\n"
+        val event = new SnowplowEvent()
+        thriftDeserializer.deserialize(event, record.data.array)
+        recordList += ((event, record))
       }
+    }
+    recordList.toList
+  }
+
+  def getRecordsString(): String = {
+    val records = getRecords()
+    val sb = new StringBuilder
+    for (record <- records) {
+      sb ++= record._1.toString + "\n"
+      sb ++= s"sequenceNumber: ${record._2.sequenceNumber}\n"
+      sb ++= s"partitionKey: ${record._2.partitionKey}\n"
     }
     sb.toString
   }
 
-  private def dumpEvent(data: Array[Byte]): String = {
+  private def getEvent(data: Array[Byte]): String = {
     val event = new SnowplowEvent()
     thriftDeserializer.deserialize(event, data)
     event.toString

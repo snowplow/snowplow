@@ -90,7 +90,7 @@ object Responses {
       .withHeaders(headers)
   }
 
-  def dump = HttpResponse(entity=KinesisInterface.dump)
+  def dump = HttpResponse(entity=KinesisInterface.getRecordsString)
 
   def notFound = HttpResponse(status = 404, entity = "404 Not found")
   def timeout = HttpResponse(status = 500, entity = s"Request timed out.")

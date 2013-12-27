@@ -47,7 +47,7 @@ object ScalaCollector extends App {
   lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
-  if (!KinesisInterface.createStream()) {
+  if (!KinesisInterface.createAndLoadStream()) {
     info("Error initializing or connecting to the stream.")
   } else {
     implicit val system = ActorSystem()
