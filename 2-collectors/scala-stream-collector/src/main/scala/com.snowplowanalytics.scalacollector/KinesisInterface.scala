@@ -176,7 +176,7 @@ object KinesisInterface {
     }
 
   def storeEvent(event: SnowplowEvent, key: String): PutResult = {
-    info(s"Writing Thrift record to Kinesis.")
+    info(s"Writing Thrift record to Kinesis: ${event.toString}")
     val result = writeRecord(
       data = ByteBuffer.wrap(thriftSerializer.serialize(event)),
       key = key
@@ -222,7 +222,7 @@ object KinesisInterface {
     for (recordChunk <- recordChunks) {
       for (record <- recordChunk.records) {
         val event = new SnowplowEvent()
-        thriftDeserializer.deserialize(event, record.data.array)
+        thriftDeserializer.deserialize(event, record.data.array())
         recordList += ((event, record))
       }
     }
@@ -238,12 +238,6 @@ object KinesisInterface {
       sb ++= s"partitionKey: ${record._2.partitionKey}\n"
     }
     sb.toString
-  }
-
-  private def getEvent(data: Array[Byte]): String = {
-    val event = new SnowplowEvent()
-    thriftDeserializer.deserialize(event, data)
-    event.toString
   }
 
   /**
