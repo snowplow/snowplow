@@ -42,7 +42,8 @@ object ScalaCollectorBuild extends Build {
         Libraries.specs2,
         Libraries.commonsLang3,
         Libraries.thrift,
-        Libraries.scalazon
+        Libraries.scalazon,
+        Libraries.awsSdk
       )
     )
 }

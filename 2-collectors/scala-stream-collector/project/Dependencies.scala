@@ -30,6 +30,7 @@ object Dependencies {
   object V {
     // Java
     val mimepull = "1.9.4"
+    val awsSdk     = "1.6.10"
 
     // Scala
     val spray = "1.2.0"
@@ -61,6 +62,7 @@ object Dependencies {
     val logback = "ch.qos.logback" % "logback-classic" % V.logback
     val commonsCodec = "commons-codec" % "commons-codec" % V.commonsCodec
     val scalazon    = "io.github.cloudify"         %% "scalazon"        % V.scalazon
+    val awsSdk      = "com.amazonaws"              % "aws-java-sdk"     % V.awsSdk
 
     // Scala compile only for sbt-thrift.
     val commonsLang3 = "org.apache.commons" % "commons-lang3" % V.commonsLang3 % "compile"
