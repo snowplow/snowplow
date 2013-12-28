@@ -32,15 +32,27 @@ object CollectorConfig {
   val interface = collector.getString("interface")
   val port = collector.getInt("port")
   val production = collector.getBoolean("production")
-  val cookieExpiration = collector.getMilliseconds("cookieExpiration")
 
-  private val aws = collector.getConfig("aws")
-  val awsAccessKey = aws.getString("access-key")
-  val awsSecretKey = aws.getString("secret-key")
+  private val p3p = collector.getConfig("p3p")
+  val p3pPolicyRef = p3p.getString("policyref")
+  val p3pCP = p3p.getString("CP")
 
-  private val stream = collector.getConfig("stream")
+  private val cookie = collector.getConfig("cookie")
+  val cookieExpiration = cookie.getMilliseconds("expiration")
+  val cookieDomain = cookie.getString("domain")
+
+  private val backend = collector.getConfig("backend")
+  val backendType = backend.getString("type")
+
+  private val kinesis = backend.getConfig("kinesis")
+  val awsAccessKey = kinesis.getString("access-key")
+  val awsSecretKey = kinesis.getString("secret-key")
+  private val stream = kinesis.getConfig("stream")
   val streamName = stream.getString("name")
   val streamSize = stream.getInt("size")
+
+  private val plaintext = backend.getConfig("plaintext")
+  val plaintextDelimiter = plaintext.getInt("delimiter")
 }
 
 object ScalaCollector extends App {

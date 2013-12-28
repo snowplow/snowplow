@@ -1,39 +1,92 @@
-# TODO: Comment this with relevant options.
+# Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+#
+# This program is licensed to you under the Apache License Version 2.0, and
+# you may not use this file except in compliance with the Apache License
+# Version 2.0.  You may obtain a copy of the Apache License Version 2.0 at
+# http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the Apache License Version 2.0 is distributed on an "AS
+# IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.  See the Apache License Version 2.0 for the specific language
+# governing permissions and limitations there under.
 
+# This file (application.conf.example) contains a template with
+# configuration options for the Scala collector.
+# To use, copy this to 'application.conf' and modify the configuration options.
+
+# 'collector' contains configuration options for the main Scala collector.
 collector {
+  # The collector runs as a web service specified on the following
+  # interface and port.
   interface = "localhost"
-  port = 8888
-  production = false
-  cookieExpiration = 365d
+  port = 8080
 
-  aws {
-    access-key: "cpf"
-    secret-key: "cpf"
+  # Production mode disables additional services helpful for configuring and
+  # initializing the collector, such as a path '/dump' to view all
+  # records stored in the current stream.
+  production = true
+
+  # Configure the P3P policy header.
+  p3p {
+    policyref = "/w3c/p3p.xml"
+    CP = "NOI DSP COR NID PSA OUR IND COM NAV STA"
   }
 
-  stream {
-    name: "snowplow_collector_example"
-    size: 1
+  # The collector returns a cookie to clients for user identification
+  # with the following domain and expiration.
+  cookie {
+    expiration = 365d
+    domain = "collector.snplow.com"
+  }
+
+  # The collector has a configurable backend for storing data in
+  # different formats for the enrichment process.
+  backend {
+    # Backends currently supported are:
+    # 'kinesis' for Amazon Kinesis, and
+    # 'stdout' for printed Ctrl-A delimited ordered fields.
+    type = "kinesis"
+
+    kinesis {
+      # The following are used to authenticate for the Amazon Kinesis backend.
+      # 
+      # If both are set to 'cpf', a properties file on the classpath is used.
+      # http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/ClasspathPropertiesFileCredentialsProvider.html
+      access-key: "cpf"
+      secret-key: "cpf"
+
+      # Data will be stored in the following stream.
+      # If the stream does not exist, one will be created with $size shards.
+      stream {
+        name: "snowplow_collector_example"
+        size: 1
+      }
+    }
+
+    # The plaintext backend will first output a line of headings
+    # followed by the data.
+    plaintext {
+      # The delimiter used to separate each field is a single character
+      # and configured with a decimal ASCII value.
+      delimiter = 1 # 1 = Ctrl+A
+    }
   }
 }
 
-
+# Akka has a variety of possible configuration options defined at
+# http://doc.akka.io/docs/akka/2.2.3/general/configuration.html.
 akka {
   loglevel = DEBUG
   loggers = ["akka.event.slf4j.Slf4jLogger"]
 }
 
-# Check the reference.conf in spray-can/src/main/resources for all
-# defined settings
+# spray-can is the server the Stream collector uses and has configurable
+# options defined at
+# https://github.com/spray/spray/blob/master/spray-can/src/main/resources/reference.conf
 spray.can.server {
-  # adds the Remote-Address header to every request automatically
+  # To obtain the hostname in the collector, the 'remote-address' header
+  # should be set. By default, this is disabled, and enabling it
+  # adds the 'Remote-Address' header to every request automatically.
   remote-address-header = on
-
-  idle-timeout = 30 s
-  request-timeout = 10 s
-
-  request-chunk-aggregation-limit = 0
-
-  parsing.max-content-length = 5g
-  parsing.incoming-auto-chunking-threshold-size = 45k
 }
