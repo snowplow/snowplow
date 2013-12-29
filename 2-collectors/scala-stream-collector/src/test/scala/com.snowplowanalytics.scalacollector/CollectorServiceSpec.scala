@@ -114,6 +114,21 @@ class CollectorServiceSpec extends Specification with Specs2RouteTest with
         httpCookie.content must beEqualTo("UUID_Test")
       }
     }
+    "return a P3P header." in {
+      CollectorGet("/i") ~> collectorRoute ~> check {
+        print(headers)
+        val p3pHeaders = headers.filter {
+          h => h.name.equals("P3P")
+        }
+        p3pHeaders.size must beEqualTo(1)
+        val p3pHeader = p3pHeaders(0)
+
+        val policyRef = CollectorConfig.p3pPolicyRef
+        val CP = CollectorConfig.p3pCP
+        p3pHeader.value must beEqualTo(
+          s"""policyref="${policyRef}", CP="${CP}"""")
+      }
+    }
     "store a request in Kinesis." in {
       CollectorGet("/i?payload=true") ~> collectorRoute ~> check {
         // Sleep to let Kinesis store the data.
