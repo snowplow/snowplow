@@ -44,17 +44,19 @@ collector {
   # different formats for the enrichment process.
   backend {
     # Backends currently supported are:
-    # 'kinesis' for Amazon Kinesis, and
-    # 'stdout' for printed Ctrl-A delimited ordered fields.
-    type = "kinesis"
+    # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
+    # 'stdout' for writing plaintext, character-delimited records to stdout
+    enabled = "kinesis"
 
     kinesis {
       # The following are used to authenticate for the Amazon Kinesis backend.
       # 
       # If both are set to 'cpf', a properties file on the classpath is used.
       # http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/ClasspathPropertiesFileCredentialsProvider.html
-      access-key: "cpf"
-      secret-key: "cpf"
+      aws {
+        access-key: "cpf"
+        secret-key: "cpf"
+      }
 
       # Data will be stored in the following stream.
       # If the stream does not exist, one will be created with $size shards.
@@ -64,9 +66,9 @@ collector {
       }
     }
 
-    # The plaintext backend will first output a line of headings
+    # The stdout backend will first output a line of headings
     # followed by the data.
-    plaintext {
+    stdout {
       # The delimiter used to separate each field is a single character
       # and configured with a decimal ASCII value.
       delimiter = 1 # 1 = Ctrl+A
