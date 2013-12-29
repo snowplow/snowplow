@@ -25,7 +25,8 @@ import com.typesafe.config.{ConfigFactory,Config,ConfigException}
 // Logging.
 import org.slf4j.LoggerFactory
 
-// Grab all the configuration variables one-time
+// Grab all the configuration variables one-time.
+// Some are 'var' for the test suite to update on the fly.
 object CollectorConfig {
   // Return Options from the configuration.
   implicit class RichConfig(val underlying: Config) extends AnyVal {
@@ -47,7 +48,7 @@ object CollectorConfig {
 
   private val cookie = collector.getConfig("cookie")
   val cookieExpiration = cookie.getMilliseconds("expiration")
-  val cookieDomain = cookie.getOptionalString("domain")
+  var cookieDomain = cookie.getOptionalString("domain")
 
   private val backend = collector.getConfig("backend")
   val backendEnabled = backend.getString("enabled")

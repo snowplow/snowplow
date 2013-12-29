@@ -72,6 +72,8 @@ class CollectorServiceSpec extends Specification with Specs2RouteTest with
   // is not thread safe (currently).
   sequential
 
+  CollectorConfig.cookieDomain = Some("testdomain.com")
+
   "Snowplow's Scala collector" should {
     "return an invisible pixel." in {
       CollectorGet("/i") ~> collectorRoute ~> check {
@@ -93,6 +95,8 @@ class CollectorServiceSpec extends Specification with Specs2RouteTest with
         val httpCookie = httpCookies(0)
 
         httpCookie.name must be("sp")
+        httpCookie.domain must beSome
+        httpCookie.domain.get must be(CollectorConfig.cookieDomain.get)
         httpCookie.expires must beSome
         val expiration = httpCookie.expires.get
         val offset = expiration.clicks - CollectorConfig.cookieExpiration -
