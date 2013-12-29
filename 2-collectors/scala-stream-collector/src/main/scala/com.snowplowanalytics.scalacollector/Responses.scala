@@ -26,7 +26,7 @@ import java.util.UUID
 import org.apache.commons.codec.binary.Base64
 //import org.slf4j.LoggerFactory
 import spray.http.{DateTime,HttpResponse,HttpEntity,HttpCookie}
-import spray.http.HttpHeaders.`Set-Cookie`
+import spray.http.HttpHeaders.{`Set-Cookie`,RawHeader}
 import spray.http.MediaTypes.`image/gif`
 
 object Responses {
@@ -85,7 +85,12 @@ object Responses {
       "sp", cookieUUID,
       expires=Some(DateTime.now+CollectorConfig.cookieExpiration)
     )
-    val headers = List(`Set-Cookie`(responseCookie))
+    val policyRef = CollectorConfig.p3pPolicyRef
+    val CP = CollectorConfig.p3pCP
+    val headers = List(
+      RawHeader("P3P", s"""policyref="${policyRef}", CP="${CP}""""),
+      `Set-Cookie`(responseCookie)
+    )
     HttpResponse(entity = HttpEntity(`image/gif`, pixel))
       .withHeaders(headers)
   }
