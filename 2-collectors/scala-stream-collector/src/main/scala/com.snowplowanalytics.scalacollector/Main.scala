@@ -20,13 +20,21 @@ import akka.io.IO
 import spray.can.Http
 
 // Config
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ConfigFactory,Config,ConfigException}
 
 // Logging.
 import org.slf4j.LoggerFactory
 
 // Grab all the configuration variables one-time
 object CollectorConfig {
+  // Return Options from the configuration.
+  implicit class RichConfig(val underlying: Config) extends AnyVal {
+    def getOptionalString(path: String): Option[String] = try {
+      Some(underlying.getString(path))
+    } catch {
+      case e: ConfigException.Missing => None
+    }
+  }
   private val config = ConfigFactory.load("application")
   private val collector = config.getConfig("collector")
   val interface = collector.getString("interface")
@@ -39,7 +47,7 @@ object CollectorConfig {
 
   private val cookie = collector.getConfig("cookie")
   val cookieExpiration = cookie.getMilliseconds("expiration")
-  val cookieDomain = cookie.getString("domain")
+  val cookieDomain = cookie.getOptionalString("domain")
 
   private val backend = collector.getConfig("backend")
   val backendEnabled = backend.getString("enabled")

@@ -37,7 +37,9 @@ collector {
   # with the following domain and expiration.
   cookie {
     expiration = 365d
-    domain = "collector.snplow.com"
+    # The domain is optional and will make the cookie accessible to other
+    # applications on the domain.
+    # domain = "collector.snplow.com"
   }
 
   # The collector has a configurable backend for storing data in

@@ -83,7 +83,8 @@ object Responses {
     // Build the response.
     val responseCookie = HttpCookie(
       "sp", cookieUUID,
-      expires=Some(DateTime.now+CollectorConfig.cookieExpiration)
+      expires=Some(DateTime.now+CollectorConfig.cookieExpiration),
+      domain=CollectorConfig.cookieDomain
     )
     val policyRef = CollectorConfig.p3pPolicyRef
     val CP = CollectorConfig.p3pCP
