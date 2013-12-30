@@ -15,6 +15,8 @@
 
 package com.snowplowanalytics.scalacollector
 
+import com.snowplowanalytics.scalacollector.backends._
+
 // specs2 and spray testing libraries.
 import org.specs2.matcher.AnyMatchers
 import org.specs2.mutable.Specification
@@ -59,16 +61,16 @@ class CollectorServiceSpec extends Specification with Specs2RouteTest with
   }
 
   def beforeAll() {
-    if (!KinesisInterface.createAndLoadStream()) {
+    if (!KinesisBackend.createAndLoadStream()) {
       throw new RuntimeException("Unable to initialize Kinesis stream.")
     }
   }
 
   def afterAll() {
-    KinesisInterface.deleteStream()
+    KinesisBackend.deleteStream()
   }
 
-  // Don't run tests in parallel because KinesisInterface
+  // Don't run tests in parallel because KinesisBackend
   // is not thread safe (currently).
   sequential
 
@@ -140,7 +142,7 @@ class CollectorServiceSpec extends Specification with Specs2RouteTest with
 
         // TODO: Might not correctly retrieve data due to a bug.
         // https://github.com/cloudify/scalazon/issues/5
-        val kinesisRecords = KinesisInterface.getRecords()
+        val kinesisRecords = KinesisBackend.getRecords()
         println("Store: " + kinesisRecords.toString)
         val recordWithPayload = kinesisRecords.filter (
           record =>

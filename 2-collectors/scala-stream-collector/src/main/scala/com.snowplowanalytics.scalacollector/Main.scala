@@ -15,6 +15,8 @@
 
 package com.snowplowanalytics.scalacollector
 
+import com.snowplowanalytics.scalacollector.backends._
+
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO
 import spray.can.Http
@@ -36,6 +38,15 @@ object CollectorConfig {
       case e: ConfigException.Missing => None
     }
   }
+
+  // Instead of comparing strings and validating every time
+  // the backend is accessed, validate the string here and
+  // store this enumeration.
+  object Backend extends Enumeration {
+    type Backend = Value
+    val Kinesis, Stdout = Value
+  }
+
   private val config = ConfigFactory.load("application")
   private val collector = config.getConfig("collector")
   val interface = collector.getString("interface")
@@ -51,7 +62,10 @@ object CollectorConfig {
   var cookieDomain = cookie.getOptionalString("domain")
 
   private val backend = collector.getConfig("backend")
-  val backendEnabled = backend.getString("enabled")
+  private val backendEnabled = backend.getString("enabled")
+  val backendEnabledEnum = if (backendEnabled == "kinesis") Backend.Kinesis
+    else if (backendEnabled == "stdout") Backend.Stdout
+    else throw new RuntimeException("collector.backend.enabled must be 'kinesis' or 'stdout'.")
 
   private val kinesis = backend.getConfig("kinesis")
   private val aws = kinesis.getConfig("aws")
@@ -60,24 +74,30 @@ object CollectorConfig {
   private val stream = kinesis.getConfig("stream")
   val streamName = stream.getString("name")
   val streamSize = stream.getInt("size")
-
-  private val stdout = backend.getConfig("stdout")
-  val stdoutDelimiter = stdout.getInt("delimiter")
 }
 
 object ScalaCollector extends App {
   lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
-  if (!KinesisInterface.createAndLoadStream()) {
-    info("Error initializing or connecting to the stream.")
-  } else {
-    implicit val system = ActorSystem()
+  implicit val system = ActorSystem()
 
-    // The handler actor replies to incoming HttpRequests.
-    val handler = system.actorOf(Props[CollectorServiceActor], name = "handler")
+  refreshConfig
 
-    IO(Http) ! Http.Bind(handler,
-      interface=CollectorConfig.interface, port=CollectorConfig.port)
+  // The handler actor replies to incoming HttpRequests.
+  val handler = system.actorOf(Props[CollectorServiceActor], name = "handler")
+
+  IO(Http) ! Http.Bind(handler,
+    interface=CollectorConfig.interface, port=CollectorConfig.port)
+
+  // Support dynamically changing the configuration
+  // options when testing.
+  def refreshConfig = {
+    if (CollectorConfig.backendEnabledEnum == CollectorConfig.Backend.Kinesis) {
+      if (!KinesisBackend.createAndLoadStream()) {
+        error("Error initializing or connecting to the stream.")
+        sys.exit(-1)
+      }
+    }
   }
 }

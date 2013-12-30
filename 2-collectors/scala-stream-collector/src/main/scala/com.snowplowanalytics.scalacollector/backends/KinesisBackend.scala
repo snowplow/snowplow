@@ -11,7 +11,9 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.scalacollector
+package com.snowplowanalytics.scalacollector.backends
+
+import com.snowplowanalytics.scalacollector._
 
 // Java
 import java.nio.ByteBuffer
@@ -55,9 +57,9 @@ import scala.collection.mutable.StringBuilder
 import scala.collection.mutable.MutableList
 
 /**
- * Interface to Kinesis for the Scala collector.
+ * Kinesis Backend for the Scala collector.
  */
-object KinesisInterface {
+object KinesisBackend {
   lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 

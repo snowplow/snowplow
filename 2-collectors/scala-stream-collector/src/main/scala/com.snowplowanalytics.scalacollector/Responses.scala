@@ -21,6 +21,7 @@ import com.snowplowanalytics.generated.{
   PayloadProtocol,
   PayloadFormat
 }
+import com.snowplowanalytics.scalacollector.backends._
 
 import java.util.UUID
 import org.apache.commons.codec.binary.Base64
@@ -77,8 +78,12 @@ object Responses {
     // TODO: Is the user ID the cookie we have associated with a user?
     event.userId = cookieUUID
 
-    // TODO: What should the key be?
-    KinesisInterface.storeEvent(event, "key")
+    if (CollectorConfig.backendEnabledEnum == CollectorConfig.Backend.Kinesis) {
+      // TODO: What should the key be?
+      KinesisBackend.storeEvent(event, "key")
+    } else {
+      StdoutBackend.printEvent(event)
+    }
 
     // Build the response.
     val responseCookie = HttpCookie(
@@ -96,7 +101,7 @@ object Responses {
       .withHeaders(headers)
   }
 
-  def dump = HttpResponse(entity=KinesisInterface.getRecordsString)
+  def dump = HttpResponse(entity=KinesisBackend.getRecordsString)
 
   def notFound = HttpResponse(status = 404, entity = "404 Not found")
   def timeout = HttpResponse(status = 500, entity = s"Request timed out.")

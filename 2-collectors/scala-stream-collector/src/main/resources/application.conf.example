@@ -47,7 +47,7 @@ collector {
   backend {
     # Backends currently supported are:
     # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
-    # 'stdout' for writing plaintext, character-delimited records to stdout
+    # 'stdout' for writing Base64-encoded Thrift-serialized records to stdout
     enabled = "kinesis"
 
     kinesis {
@@ -66,14 +66,6 @@ collector {
         name: "snowplow_collector_example"
         size: 1
       }
-    }
-
-    # The stdout backend will first output a line of headings
-    # followed by the data.
-    stdout {
-      # The delimiter used to separate each field is a single character
-      # and configured with a decimal ASCII value.
-      delimiter = 1 # 1 = Ctrl+A
     }
   }
 }
