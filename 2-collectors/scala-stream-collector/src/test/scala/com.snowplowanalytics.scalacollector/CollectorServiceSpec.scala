@@ -74,6 +74,7 @@ class CollectorServiceSpec extends Specification with Specs2RouteTest with
   // is not thread safe (currently).
   sequential
 
+  CollectorConfig.backendEnabledEnum = CollectorConfig.Backend.Kinesis
   CollectorConfig.cookieDomain = Some("testdomain.com")
 
   "Snowplow's Scala collector" should {

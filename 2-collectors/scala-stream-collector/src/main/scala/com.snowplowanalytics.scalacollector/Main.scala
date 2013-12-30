@@ -63,7 +63,7 @@ object CollectorConfig {
 
   private val backend = collector.getConfig("backend")
   private val backendEnabled = backend.getString("enabled")
-  val backendEnabledEnum = if (backendEnabled == "kinesis") Backend.Kinesis
+  var backendEnabledEnum = if (backendEnabled == "kinesis") Backend.Kinesis
     else if (backendEnabled == "stdout") Backend.Stdout
     else throw new RuntimeException("collector.backend.enabled must be 'kinesis' or 'stdout'.")
 
