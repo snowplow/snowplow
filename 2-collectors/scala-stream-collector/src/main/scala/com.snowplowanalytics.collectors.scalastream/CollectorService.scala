@@ -13,7 +13,7 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.collectors.scalastream
+package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import akka.actor.Actor
 import akka.pattern.ask

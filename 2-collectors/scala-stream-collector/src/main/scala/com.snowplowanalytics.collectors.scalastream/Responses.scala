@@ -13,7 +13,7 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.collectors
+package com.snowplowanalytics.snowplow.collectors
 package scalastream
 
 import generated._
