@@ -27,7 +27,6 @@ import org.apache.commons.codec.binary.Base64
 object StdoutBackend {
   private val thriftSerializer = new TSerializer()
   def printEvent(event: SnowplowEvent) = {
-    println("[Snowplow] " +
-      Base64.encodeBase64String(thriftSerializer.serialize(event)))
+    println(Base64.encodeBase64String(thriftSerializer.serialize(event)))
   }
 }

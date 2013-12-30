@@ -48,6 +48,12 @@ collector {
     # Backends currently supported are:
     # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
     # 'stdout' for writing Base64-encoded Thrift-serialized records to stdout
+    #    Recommended settings for 'stdout' for each line printed to stdout
+    #    is a serialized record are:
+    #      1. Setting 'akka.loglevel = OFF' and 'akka.loggers = []'
+    #         to disable all logging.
+    #      2. Using 'sbt assembly' and 'java -jar ...' to disable
+    #         sbt logging.
     enabled = "kinesis"
 
     kinesis {
@@ -73,7 +79,7 @@ collector {
 # Akka has a variety of possible configuration options defined at
 # http://doc.akka.io/docs/akka/2.2.3/general/configuration.html.
 akka {
-  loglevel = DEBUG
+  loglevel = DEBUG # 'OFF' for no logging, 'DEBUG' for all logging.
   loggers = ["akka.event.slf4j.Slf4jLogger"]
 }
 
