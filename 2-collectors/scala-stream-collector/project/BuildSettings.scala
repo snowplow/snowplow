@@ -52,6 +52,7 @@ object BuildSettings {
   import sbtassembly.Plugin._
   import AssemblyKeys._
   lazy val sbtAssemblySettings = assemblySettings ++ Seq(
+    test in assembly := {}, // Don't run tests for 'assembly'.
     // Slightly cleaner jar name
     jarName in assembly := {
       name.value + "-" + version.value + ".jar"
