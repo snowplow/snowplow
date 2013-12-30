@@ -11,10 +11,12 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.scalacollector.backends
+package com.snowplowanalytics.collectors
+package scalastream
+package backends
 
-import com.snowplowanalytics.scalacollector._
-import com.snowplowanalytics.generated.SnowplowEvent
+import scalastream._
+import thrift.SnowplowEvent
 
 import java.nio.ByteBuffer
 import org.apache.thrift.TSerializer

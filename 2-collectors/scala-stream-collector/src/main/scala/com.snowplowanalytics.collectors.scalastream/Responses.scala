@@ -13,15 +13,12 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.scalacollector
+package com.snowplowanalytics.collectors
+package scalastream
 
-import com.snowplowanalytics.generated.{
-  SnowplowEvent,
-  TrackerPayload,
-  PayloadProtocol,
-  PayloadFormat
-}
-import com.snowplowanalytics.scalacollector.backends._
+import generated._
+import thrift._
+import backends._
 
 import java.util.UUID
 import org.apache.commons.codec.binary.Base64

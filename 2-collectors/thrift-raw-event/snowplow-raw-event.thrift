@@ -13,7 +13,7 @@
  * governing permissions and limitations there under.
  */
 
-namespace java com.snowplowanalytics.generated
+namespace java com.snowplowanalytics.collectors.thrift
 
 enum PayloadProtocol {
   Http = 1

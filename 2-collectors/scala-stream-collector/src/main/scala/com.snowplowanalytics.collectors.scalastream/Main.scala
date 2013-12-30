@@ -13,9 +13,9 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.scalacollector
+package com.snowplowanalytics.collectors.scalastream
 
-import com.snowplowanalytics.scalacollector.backends._
+import backends._
 
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO

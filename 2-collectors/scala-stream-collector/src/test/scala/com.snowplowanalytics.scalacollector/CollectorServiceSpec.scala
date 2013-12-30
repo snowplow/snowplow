@@ -13,9 +13,9 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.scalacollector
+package com.snowplowanalytics.collectors.scalastream
 
-import com.snowplowanalytics.scalacollector.backends._
+import com.snowplowanalytics.collectors.scalastream.backends._
 
 // specs2 and spray testing libraries.
 import org.specs2.matcher.AnyMatchers

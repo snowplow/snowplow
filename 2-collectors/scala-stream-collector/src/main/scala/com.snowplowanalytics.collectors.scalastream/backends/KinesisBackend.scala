@@ -11,9 +11,12 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.scalacollector.backends
+package com.snowplowanalytics.collectors
+package scalastream
+package backends
 
-import com.snowplowanalytics.scalacollector._
+import scalastream._
+import thrift.SnowplowEvent
 
 // Java
 import java.nio.ByteBuffer
@@ -49,8 +52,6 @@ import org.apache.thrift.TDeserializer
 
 // Logging.
 import org.slf4j.LoggerFactory
-
-import com.snowplowanalytics.generated.SnowplowEvent
 
 // Mutable data structures.
 import scala.collection.mutable.StringBuilder
