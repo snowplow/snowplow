@@ -31,7 +31,24 @@ object ScalaCommonEnrichBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
-
+        // Java
+        Libraries.httpClient,
+        Libraries.hadoopCore,
+        Libraries.yodaTime,
+        Libraries.yodaConvert,
+        Libraries.commonsLang,
+        Libraries.commonsIo,
+        Libraries.useragent,
+        // Scala
+        Libraries.scalaz7,
+        Libraries.argonaut,
+        Libraries.scalaUtil,
+        Libraries.refererParser,
+        Libraries.maxmindGeoip,
+        // Scala (test only)
+        Libraries.specs2,
+        Libraries.scalazSpecs2,
+        Libraries.scalaCheck
       )
     )
 }

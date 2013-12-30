@@ -29,21 +29,21 @@ object SnowplowHadoopEtlBuild extends Build {
     .settings(
       libraryDependencies ++= Seq(
         // Java
-        Libraries.httpClient,
+        // Libraries.httpClient,
         Libraries.hadoopCore,
-        Libraries.yodaTime,
-        Libraries.yodaConvert,
-        Libraries.commonsLang,
-        Libraries.commonsIo,
-        Libraries.useragent,
+        // Libraries.yodaTime,
+        // Libraries.yodaConvert,
+        // Libraries.commonsLang,
+        // Libraries.commonsIo,
+        // Libraries.useragent,
         // Scala
         Libraries.scaldingCore,
         Libraries.scaldingArgs,
         Libraries.scalaz7,
-        Libraries.argonaut,
-        Libraries.scalaUtil,
-        Libraries.refererParser,
-        Libraries.maxmindGeoip,
+        // Libraries.argonaut,
+        // Libraries.scalaUtil,
+        // Libraries.refererParser,
+        // Libraries.maxmindGeoip,
         // Scala (test only)
         Libraries.specs2,
         Libraries.scalazSpecs2,
