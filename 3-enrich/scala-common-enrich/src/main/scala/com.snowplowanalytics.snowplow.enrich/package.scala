@@ -36,7 +36,7 @@ import hadoop.outputs.CanonicalOutput
  * See:
  * http://www.artima.com/scalazine/articles/package_objects.html
  */
-package object hadoop {
+package object common {
 
   /**
    * Capture a client's

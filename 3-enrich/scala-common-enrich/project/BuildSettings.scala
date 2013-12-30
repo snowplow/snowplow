@@ -21,8 +21,8 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "Snowplow Analytics Ltd",
-    version               :=  "0.0.1",
-    description           :=  "TODO",
+    version               :=  "0.1.0",
+    description           :=  "Common functionality for enriching raw Snowplow events",
     scalaVersion          :=  "2.10.1",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
                                   "-unchecked", "-feature"),
@@ -30,7 +30,42 @@ object BuildSettings {
     resolvers             ++= Dependencies.resolutionRepos
   )
 
-  // TODO: publish settings
+  // Makes our SBT app settings available from within the ETL
+  lazy val scalifySettings = Seq(sourceGenerators in Compile <+= (sourceManaged in Compile, version, name, organization, scalaVersion) map { (d, v, n, o, sv) =>
+    val file = d / "settings.scala"
+    IO.write(file, """package com.snowplowanalytics.snowplow.enrich.hadoop.generated
+      |object ProjectSettings {
+      |  val version = "%s"
+      |  val name = "%s"
+      |  val organization = "%s"
+      |  val scalaVersion = "%s"
+      |}
+      |""".stripMargin.format(v, n, o, sv))
+    Seq(file)
+  })
+
+  // For MaxMind support in the test suite
+  import Dependencies._
+  lazy val maxmindSettings = Seq(
+
+    // Download the GeoLite City and add it into our jar
+    resourceGenerators in Test <+= (resourceManaged in Test) map { out =>
+      val gzRemote = new URL(Urls.maxmindData)
+      val datLocal = out / "maxmind" / "GeoLiteCity.dat"
+      
+      // Only fetch if we don't already have it (because MaxMind 403s if you download GeoIP.dat.gz too frequently)
+      if (!datLocal.exists()) {
+        // TODO: replace this with simply IO.gunzipURL(gzRemote, out / "maxmind") when https://github.com/harrah/xsbt/issues/529 implemented
+        val gzLocal = out / "GeoLiteCity.dat.gz"        
+        IO.download(gzRemote, gzLocal)
+        IO.createDirectory(out / "maxmind")
+        IO.gunzip(gzLocal, datLocal)
+        IO.delete(gzLocal)
+        // gunzipURL(gzRemote, out / "maxmind")
+      }
+      datLocal.get
+    }
+  )
 
   // Publish settings
   // TODO: update with ivy credentials etc when we start using Nexus
@@ -46,5 +81,5 @@ object BuildSettings {
     }
   )
 
-  lazy val buildSettings = basicSettings ++ scalifySettings ++ publishSettings
+  lazy val buildSettings = basicSettings ++ scalifySettings ++ maxmindSettings ++ publishSettings
 }
