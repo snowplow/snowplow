@@ -66,7 +66,8 @@ object Dependencies {
     // Scala
     val scaldingCore  = "com.twitter"                %% "scalding-core"       % V.scalding
     val scaldingArgs  = "com.twitter"                %% "scalding-args"       % V.scalding
-    val scalaz7       = "org.scalaz"                 %% "scalaz-core"         % V.scalaz7
+    val scalaz7       = "org.scalaz"                 %% "scalaz-core"         % V.scalaz7 // TODO: tidy up whitespace
+    val commonEnrich  = "com.snowplowanalytics"      % "snowplow-common-enrich" % V.commonEnrich
     val argonaut      = "io.argonaut"                %% "argonaut"            % V.argonaut
     val scalaUtil     = "com.snowplowanalytics"      %  "scala-util"          % V.scalaUtil
     val refererParser = "com.snowplowanalytics"      %  "referer-parser"      % V.refererParser
