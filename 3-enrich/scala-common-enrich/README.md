@@ -2,11 +2,11 @@
 
 ## Introduction
 
-Scala Common Enrich is a shared library for processing raw Snowplow events into validated and enriched Snowplow events, ready for loading into Storage.
+Scala Common Enrich is a shared library for processing raw Snowplow events into validated and enriched Snowplow events, ready for loading into [Storage] [storage].
 
 Scala Common Enrich provides record-level enrichment only: feeding in 1 raw Snowplow event will yield 0 or 1 records out, where a record may be an enriched Snowplow event or a reported bad record.
 
-Scala Common Enrich is designed to be used within a "host" ETL process. The currently supported host ETL process is our Hadoop (Scalding/Cascading) ETL process; we are working on a new Amazon Kinesis-based host ETL process.
+Scala Common Enrich is designed to be used within a "host" enrichment process. The currently supported host enrichment process is our [Hadoop Enrich] [hadoop-enrich]; however we are also working on a new [Amazon Kinesis] [kinesis]-based host enrichment process.
 
 ## Find out more
 
@@ -28,8 +28,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[]: 
-[]: 
+[storage]: https://github.com/snowplow/snowplow/tree/master/4-storage
+
+[hadoop-enrich]: https://github.com/snowplow/snowplow/tree/master/3-enrich/scala-hadoop-enrich
+[kinesis]: http://aws.amazon.com/kinesis/
 
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
