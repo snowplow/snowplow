@@ -10,7 +10,8 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.hadoop
+package com.snowplowanalytics.snowplow.enrich
+package hadoop
 
 // Scala
 import scala.collection.mutable.ListBuffer
@@ -22,8 +23,8 @@ import org.specs2.matcher.Matchers._
 // Scalding
 import com.twitter.scalding._
 
-// This project
-import outputs.CanonicalOutput
+// Snowplow Common Enrich
+import common.outputs.CanonicalOutput
 
 /**
  * Holds helpers for running integration
@@ -34,7 +35,7 @@ object JobTestHelpers {
   /**
    * The current version of our Hadoop ETL
    */
-  val EtlVersion = "hadoop-0.3.6"
+  val EtlVersion = "hadoop-0.3.6-common-0.1.0"
 
   /**
    * Fields in our CanonicalOutput which are unmatchable

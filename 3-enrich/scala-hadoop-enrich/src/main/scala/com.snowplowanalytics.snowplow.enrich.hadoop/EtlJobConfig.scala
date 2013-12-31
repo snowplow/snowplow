@@ -24,11 +24,13 @@ import Scalaz._
 // Scalding
 import com.twitter.scalding.Args
 
+// Snowplow Common Enrich
+import common.utils.ConversionUtils
+import common.enrichments.PrivacyEnrichments.AnonQuartets
+import AnonQuartets._
+
 // This project
 import utils.ScalazArgs
-import utils.ConversionUtils
-import enrichments.PrivacyEnrichments.AnonQuartets
-import AnonQuartets._
 
 /**
  * The configuration for the SnowPlowEtlJob.

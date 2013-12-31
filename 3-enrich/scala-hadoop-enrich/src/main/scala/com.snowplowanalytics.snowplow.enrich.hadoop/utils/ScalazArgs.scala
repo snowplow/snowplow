@@ -21,6 +21,9 @@ import Scalaz._
 // Scalding
 import com.twitter.scalding.Args
 
+// Snowplow Common Enrich
+import common._
+
 /**
  * Module to hold the pimped class
  */

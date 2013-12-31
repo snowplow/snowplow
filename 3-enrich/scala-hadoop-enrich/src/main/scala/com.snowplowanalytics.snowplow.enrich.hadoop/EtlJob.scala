@@ -29,12 +29,17 @@ import com.twitter.scalding._
 // Scala MaxMind GeoIP
 import com.snowplowanalytics.maxmind.geoip.IpGeo
 
+// Snowplow Common Enrich
+import common._
+import common.FatalEtlError
+import common.inputs.CollectorLoader
+import common.enrichments.EnrichmentManager
+import common.outputs.CanonicalOutput
+import common.enrichments.PrivacyEnrichments.AnonQuartets.AnonQuartets
+
 // This project
-import inputs.CollectorLoader
-import enrichments.EnrichmentManager
-import outputs.CanonicalOutput
 import utils.FileUtils
-import enrichments.PrivacyEnrichments.AnonQuartets.AnonQuartets
+import generated.ProjectSettings
 
 /**
  * Holds constructs to help build the ETL job's data
@@ -57,7 +62,7 @@ object EtlJob {
    */
   def toCanonicalOutput(geo: IpGeo, anonQuartets: AnonQuartets, input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
     input.flatMap {
-      _.cata(EnrichmentManager.enrichEvent(geo, anonQuartets, _).map(_.some),
+      _.cata(EnrichmentManager.enrichEvent(geo, etlVersion, anonQuartets, _).map(_.some),
              none.success)
     }
   }
@@ -98,6 +103,12 @@ object EtlJob {
    */
   def createIpGeo(ipGeoFile: String): IpGeo =
     IpGeo(ipGeoFile, memCache = true, lruCache = 20000)
+
+  /** 
+   * Generate our "host ETL" version string.
+   * @return our version String
+   */
+  val etlVersion = "hadoop-%s" format ProjectSettings.version
 
   // This should really be in Scalding
   private def jobConfOption(implicit mode: Mode): Option[Configuration] = {
