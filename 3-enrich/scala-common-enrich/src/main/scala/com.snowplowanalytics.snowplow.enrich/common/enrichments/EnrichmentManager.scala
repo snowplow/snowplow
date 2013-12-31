@@ -60,7 +60,7 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  def enrichEvent(geo: IpGeo, anonQuartets: AnonQuartets, raw: CanonicalInput): ValidatedCanonicalOutput = {
+  def enrichEvent(geo: IpGeo, hostEtlVersion: String, anonQuartets: AnonQuartets, raw: CanonicalInput): ValidatedCanonicalOutput = {
 
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
@@ -84,7 +84,7 @@ object EnrichmentManager {
       e.event_id = EE.generateEventId
       e.event_vendor = "com.snowplowanalytics" // TODO: this should be moved to Tracker Protocol
       e.v_collector = raw.source.collector // May be updated later if we have a `cv` parameter
-      e.v_etl = ME.etlVersion
+      e.v_etl = ME.etlVersion(hostEtlVersion)
       raw.ipAddress.map(ip => e.user_ipaddress = PE.anonymizeIp(ip, anonQuartets))
     }
 

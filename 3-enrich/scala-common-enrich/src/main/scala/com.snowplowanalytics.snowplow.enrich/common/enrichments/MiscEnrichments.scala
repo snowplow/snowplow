@@ -30,9 +30,15 @@ import generated.ProjectSettings
 object MiscEnrichments {
   
   /**
-   * The version of this ETL
+   * The version of this ETL. Appends this version
+   * to the supplied "host" ETL.
+   *
+   * @param hostEtlVersion The version of the host ETL
+   *        running this library
+   * @return the complete ETL version
    */
-  val etlVersion = "hadoop-%s" format ProjectSettings.version
+  def etlVersion(hostEtlVersion: String): String =
+    "%s-common-%s".format(hostEtlVersion, ProjectSettings.version)
 
   /**
    * Validate the specified
