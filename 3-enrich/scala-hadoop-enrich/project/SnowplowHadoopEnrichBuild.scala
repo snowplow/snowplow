@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object SnowplowHadoopEtlBuild extends Build {
+object SnowplowHadoopEnrichBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -24,31 +24,20 @@ object SnowplowHadoopEtlBuild extends Build {
   }
 
   // Define our project, with basic project information and library dependencies
-  lazy val project = Project("snowplow-hadoop-etl", file("."))
+  lazy val project = Project("snowplow-hadoop-etl", file(".")) // TODO: rename to snowplow-hadoop-enrich (will break EmrEtlRunner)
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
         // Java
-        // Libraries.httpClient,
         Libraries.hadoopCore,
-        // Libraries.yodaTime,
-        // Libraries.yodaConvert,
-        // Libraries.commonsLang,
-        // Libraries.commonsIo,
-        // Libraries.useragent,
         // Scala
         Libraries.scaldingCore,
         Libraries.scaldingArgs,
         Libraries.scalaz7,
         Libraries.commonEnrich,
-        // Libraries.argonaut,
-        // Libraries.scalaUtil,
-        // Libraries.refererParser,
-        // Libraries.maxmindGeoip,
         // Scala (test only)
         Libraries.specs2,
-        Libraries.scalazSpecs2,
-        Libraries.scalaCheck
+        Libraries.scalazSpecs2
       )
     )
 }
