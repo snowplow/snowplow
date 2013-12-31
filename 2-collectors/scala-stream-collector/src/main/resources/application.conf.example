@@ -48,7 +48,7 @@ collector {
     # Backends currently supported are:
     # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
     # 'stdout' for writing Base64-encoded Thrift-serialized records to stdout
-    #    Recommended settings for 'stdout' for each line printed to stdout
+    #    Recommended settings for 'stdout' so each line printed to stdout
     #    is a serialized record are:
     #      1. Setting 'akka.loglevel = OFF' and 'akka.loggers = []'
     #         to disable all logging.
