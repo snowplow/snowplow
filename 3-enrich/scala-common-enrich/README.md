@@ -1,15 +1,12 @@
-# Scala Collector
+# Scala Common Enrich
 
 ## Introduction
 
-The Scala Collector is an event collector for [SnowPlow] [snowplow],
-written in Scala.
-It sets a third-party cookie (TODO), allowing user tracking across domains.
-It is designed to be easy to setup on TODO.
+Scala Common Enrich is a shared library for processing raw Snowplow events into validated and enriched Snowplow events, ready for loading into Storage.
 
-The Scala Collector relies on TODO
-for SnowPlow event logging, and is built on top of
-TODO.
+Scala Common Enrich provides record-level enrichment only: feeding in 1 raw Snowplow event will yield 0 or 1 records out, where a record may be an enriched Snowplow event or a reported bad record.
+
+Scala Common Enrich is designed to be used within a "host" ETL process. The currently supported host ETL process is our Hadoop (Scalding/Cascading) ETL process; we are working on a new Amazon Kinesis-based host ETL process.
 
 ## Find out more
 
@@ -20,7 +17,7 @@ TODO.
 
 ## Copyright and license
 
-The Scala Collector is copyright 2012-2013 Snowplow Analytics Ltd.
+Scala Common Enrich is copyright 2012-2014 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
@@ -31,21 +28,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[snowplow]: http://snowplowanalytics.com
-[elastic-beanstalk]: http://aws.amazon.com/elasticbeanstalk/
-[tomcat]: http://tomcat.apache.org/
-[ring]: https://github.com/ring-clojure/ring
-[compojure]: https://github.com/weavejester/compojure
+[]: 
+[]: 
 
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
 [roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
 [contributing-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/contributing.png
 
-[techdocs]: https://github.com/snowplow/snowplow/wiki/Scala-collector
-[setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-the-Scala-collector
-[roadmap]: https://github.com/snowplow/snowplow/wiki/Scala-collector-roadmap
-[contributing]: https://github.com/snowplow/snowplow/wiki/Scala-collector-contributing
+[techdocs]: xxx
+[setup]: xxx
+[roadmap]: xxx
+[contributing]: xxx
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
 
