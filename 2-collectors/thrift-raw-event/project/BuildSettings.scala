@@ -64,6 +64,20 @@ object BuildSettings {
   // a thriftSourceDir that I can't figure out how to set to
   // `../thrift-raw-schema`, so I've symlinked the schema for now.
 
+  // Publish settings
+  // TODO: update with ivy credentials etc when we start using Nexus
+  lazy val publishSettings = Seq[Setting[_]](
+   
+    crossPaths := false,
+    publishTo <<= version { version =>
+      val keyFile = (Path.userHome / ".ssh" / "admin_keplar.osk")
+      val basePath = "/var/www/maven.snplow.com/prod/public/%s".format {
+        if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
+      }
+      Some(Resolver.sftp("SnowPlow Analytics Maven repository", "prodbox", 8686, basePath) as ("admin", keyFile))
+    }
+  )
+
   lazy val buildSettings = basicSettings ++ scalifySettings ++
-    sbtAssemblySettings ++ ThriftPlugin.thriftSettings
+    sbtAssemblySettings ++ ThriftPlugin.thriftSettings ++ publishSettings
 }
