@@ -1,8 +1,8 @@
-# Scala Collector
+# Scala Stream Collector
 
 ## Introduction
 
-The Scala Collector is an event collector for [SnowPlow] [snowplow],
+The Scala Stream Collector is an event collector for [SnowPlow] [snowplow],
 written in Scala.
 It sets a third-party cookie (TODO), allowing user tracking across domains.
 It is designed to be easy to setup on TODO.
@@ -20,7 +20,7 @@ TODO.
 
 ## Copyright and license
 
-The Scala Collector is copyright 2012-2013 Snowplow Analytics Ltd.
+The Scala Stream Collector is copyright 2013-2014 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
