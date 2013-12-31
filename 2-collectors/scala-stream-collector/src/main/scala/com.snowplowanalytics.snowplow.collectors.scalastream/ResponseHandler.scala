@@ -27,7 +27,9 @@ import spray.http.{DateTime,HttpResponse,HttpEntity,HttpCookie}
 import spray.http.HttpHeaders.{`Set-Cookie`,RawHeader}
 import spray.http.MediaTypes.`image/gif`
 
-object Responses {
+import com.typesafe.config.Config
+
+class ResponseHandler(collectorConfig: CollectorConfig, kinesisBackend: KinesisBackend) {
   val pixel = Base64.decodeBase64("R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==")
 
   def cookie(queryParams: String, requestCookie: Option[HttpCookie],
@@ -75,9 +77,9 @@ object Responses {
     // TODO: Is the user ID the cookie we have associated with a user?
     event.userId = cookieUUID
 
-    if (CollectorConfig.backendEnabledEnum == CollectorConfig.Backend.Kinesis) {
+    if (collectorConfig.backendEnabledEnum == collectorConfig.Backend.Kinesis) {
       // TODO: What should the key be?
-      KinesisBackend.storeEvent(event, "key")
+      kinesisBackend.storeEvent(event, "key")
     } else {
       StdoutBackend.printEvent(event)
     }
@@ -85,11 +87,11 @@ object Responses {
     // Build the response.
     val responseCookie = HttpCookie(
       "sp", cookieUUID,
-      expires=Some(DateTime.now+CollectorConfig.cookieExpiration),
-      domain=CollectorConfig.cookieDomain
+      expires=Some(DateTime.now+collectorConfig.cookieExpiration),
+      domain=collectorConfig.cookieDomain
     )
-    val policyRef = CollectorConfig.p3pPolicyRef
-    val CP = CollectorConfig.p3pCP
+    val policyRef = collectorConfig.p3pPolicyRef
+    val CP = collectorConfig.p3pCP
     val headers = List(
       RawHeader("P3P", s"""policyref="${policyRef}", CP="${CP}""""),
       `Set-Cookie`(responseCookie)
@@ -98,7 +100,7 @@ object Responses {
       .withHeaders(headers)
   }
 
-  def dump = HttpResponse(entity=KinesisBackend.getRecordsString)
+  def dump = HttpResponse(entity=kinesisBackend.getRecordsString)
 
   def notFound = HttpResponse(status = 404, entity = "404 Not found")
   def timeout = HttpResponse(status = 500, entity = s"Request timed out.")

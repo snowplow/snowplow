@@ -43,7 +43,8 @@ object ScalaCollectorBuild extends Build {
         Libraries.commonsLang3,
         Libraries.thrift,
         Libraries.scalazon,
-        Libraries.awsSdk
+        Libraries.awsSdk,
+        Libraries.argot
       )
     )
 }

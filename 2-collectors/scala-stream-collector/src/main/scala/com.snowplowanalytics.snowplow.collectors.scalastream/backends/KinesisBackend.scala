@@ -60,19 +60,19 @@ import scala.collection.mutable.MutableList
 /**
  * Kinesis Backend for the Scala collector.
  */
-object KinesisBackend {
+class KinesisBackend(collectorConfig: CollectorConfig) {
   lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
   // Initialize
   private implicit val kinesis = createKinesisClient(
-    CollectorConfig.awsAccessKey, CollectorConfig.awsSecretKey)
+    collectorConfig.awsAccessKey, collectorConfig.awsSecretKey)
   private var stream: Option[Stream] = None
   private val thriftSerializer = new TSerializer()
   private val thriftDeserializer = new TDeserializer()
 
   // Set the current stream to $name.
-  def loadStream(name: String = CollectorConfig.streamName) = {
+  def loadStream(name: String = collectorConfig.streamName) = {
     stream = Some(Kinesis.stream(name))
   }
 
@@ -85,7 +85,7 @@ object KinesisBackend {
    * @return true if the stream was loaded, false if the stream doesn't exist.
    */
   def streamExists(
-      name: String=CollectorConfig.streamName,
+      name: String=collectorConfig.streamName,
       timeout: Int = 60): Boolean = {
     val streamListFuture = for {
       s <- Kinesis.streams.list
@@ -107,7 +107,7 @@ object KinesisBackend {
    * Deletes a stream.
    */
   def deleteStream(
-      name: String = CollectorConfig.streamName,
+      name: String = collectorConfig.streamName,
       timeout: Int = 60): Unit = {
     val localStream = Kinesis.stream(name)
 
@@ -123,7 +123,7 @@ object KinesisBackend {
   /**
    * Creates a new stream if one doesn't exist.
    * Arguments are optional - defaults to the values
-   * provided in the CollectorConfig if not provided.
+   * provided in the collectorConfig if not provided.
    *
    * @param name The name of the stream to create
    * @param size The number of shards to support for this stream
@@ -135,8 +135,8 @@ object KinesisBackend {
    * 2. false means an error occurred
    */
   def createAndLoadStream(
-      name: String = CollectorConfig.streamName,
-      size: Int = CollectorConfig.streamSize,
+      name: String = collectorConfig.streamName,
+      size: Int = collectorConfig.streamSize,
       timeout: Int = 60): Boolean = {
     if (streamExists(name)) {
       loadStream(name)

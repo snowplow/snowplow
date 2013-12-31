@@ -39,6 +39,7 @@ object Dependencies {
     val logback = "1.0.13"
     val commonsCodec = "1.5"
     val scalazon   = "0.5"
+    val argot      = "1.0.1"
 
     // Scala compile only for sbt-thrift.
     val commonsLang3 = "3.1"
@@ -55,6 +56,7 @@ object Dependencies {
     val mimepull = "org.jvnet.mimepull" % "mimepull" % V.mimepull
 
     // Scala
+    val argot       = "org.clapper"                %% "argot"           % V.argot
     val sprayCan = "io.spray" % "spray-can" % V.spray
     val sprayRouting = "io.spray" % "spray-routing" % V.spray
     val akkaActor = "com.typesafe.akka" %% "akka-actor" % V.akka

@@ -14,6 +14,7 @@
  */
 
 package com.snowplowanalytics.snowplow.collectors.scalastream
+import backends._
 
 import akka.actor.Actor
 import akka.pattern.ask
@@ -22,20 +23,16 @@ import scala.concurrent.duration._
 import spray.http.Timedout
 import spray.routing.HttpService
 
-class CollectorServiceActor extends Actor with CollectorService {
+class CollectorService(collectorConfig: CollectorConfig, kinesisBackend: KinesisBackend) extends Actor with HttpService {
   implicit val timeout: Timeout = 1.second // For the actor 'asks'
+  private def responseHandler = new ResponseHandler(collectorConfig, kinesisBackend)
 
   def actorRefFactory = context
   def receive = handleTimeouts orElse runRoute(collectorRoute)
 
-  // http://spray.io/documentation/1.2.0/spray-routing/key-concepts/timeout-handling/
   def handleTimeouts: Receive = {
-    case Timedout(_) => sender ! Responses.timeout
+    case Timedout(_) => sender ! responseHandler.timeout
   }
-}
-
-trait CollectorService extends HttpService {
-  implicit def executionContext = actorRefFactory.dispatcher
 
   private def paramString(param: (String, String)): String =
     s"${param._1}=${param._2}"
@@ -53,7 +50,7 @@ trait CollectorService extends HttpService {
           // but I can't find a better way, so I posted to the
           // spray mailing list, 2013.12.24.
           val paramsString = params.map(paramString).mkString("&")
-          complete(Responses.cookie(
+          complete(responseHandler.cookie(
             paramsString,
             reqCookie,
             userAgent,
@@ -64,10 +61,10 @@ trait CollectorService extends HttpService {
       }~
       path("dump") {
         // TODO: Is there a better way to handle a debug path?
-        if (!CollectorConfig.production) complete(Responses.dump)
-        else complete(Responses.notFound)
+        if (!collectorConfig.production) complete(responseHandler.dump)
+        else complete(responseHandler.notFound)
       }
     }~
-    complete(Responses.notFound)
+    complete(responseHandler.notFound)
   }
 }

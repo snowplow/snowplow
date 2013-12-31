@@ -21,16 +21,20 @@ import akka.actor.{ActorSystem, Props}
 import akka.io.IO
 import spray.can.Http
 
+// Java
+import java.io.File
+
+// Argot
+import org.clapper.argot._
+
 // Config
 import com.typesafe.config.{ConfigFactory,Config,ConfigException}
 
 // Logging.
 import org.slf4j.LoggerFactory
 
-// Grab all the configuration variables one-time.
-// Some are 'var' for the test suite to update on the fly.
-object CollectorConfig {
-  // Return Options from the configuration.
+// Return Options from the configuration.
+object Helper {
   implicit class RichConfig(val underlying: Config) extends AnyVal {
     def getOptionalString(path: String): Option[String] = try {
       Some(underlying.getString(path))
@@ -38,6 +42,10 @@ object CollectorConfig {
       case e: ConfigException.Missing => None
     }
   }
+}
+
+class CollectorConfig(config: Config) {
+  import Helper.RichConfig
 
   // Instead of comparing strings and validating every time
   // the backend is accessed, validate the string here and
@@ -47,7 +55,6 @@ object CollectorConfig {
     val Kinesis, Stdout = Value
   }
 
-  private val config = ConfigFactory.load("application")
   private val collector = config.getConfig("collector")
   val interface = collector.getString("interface")
   val port = collector.getInt("port")
@@ -80,24 +87,53 @@ object ScalaCollector extends App {
   lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
-  implicit val system = ActorSystem()
+  // Argument specifications
+  import ArgotConverters._
 
-  refreshConfig
+  val parser = new ArgotParser(
+    programName = generated.Settings.name,
+    compactUsage = true,
+    preUsage = Some("%s: Version %s. Copyright (c) 2013, %s.".format(
+      generated.Settings.name,
+      generated.Settings.version,
+      generated.Settings.organization)
+    )
+  )
 
-  // The handler actor replies to incoming HttpRequests.
-  val handler = system.actorOf(Props[CollectorServiceActor], name = "handler")
+  // Optional config argument
+  val config = parser.option[Config](List("config"),
+                                     "filename",
+                                     "Configuration file. Defaults to \"resources/default.conf\" (within .jar) if not set") {
+    (c, opt) =>
 
-  IO(Http) ! Http.Bind(handler,
-    interface=CollectorConfig.interface, port=CollectorConfig.port)
-
-  // Support dynamically changing the configuration
-  // options when testing.
-  def refreshConfig = {
-    if (CollectorConfig.backendEnabledEnum == CollectorConfig.Backend.Kinesis) {
-      if (!KinesisBackend.createAndLoadStream()) {
-        error("Error initializing or connecting to the stream.")
-        sys.exit(-1)
+      val file = new File(c)
+      if (file.exists) {
+        ConfigFactory.parseFile(file)
+      } else {
+        parser.usage("Configuration file \"%s\" does not exist".format(c))
+        ConfigFactory.empty()
       }
+  }
+  // Grab the command line arguments
+  parser.parse(args)
+  val rawConf = config.value.getOrElse(ConfigFactory.load("application"))
+  implicit val system = ActorSystem.create("scala-stream-collector", rawConf)
+  val collectorConfig = new CollectorConfig(rawConf)
+  val kinesisBackend = new KinesisBackend(collectorConfig)
+
+  if (collectorConfig.backendEnabledEnum == collectorConfig.Backend.Kinesis) {
+    if (!kinesisBackend.createAndLoadStream()) {
+      error("Error initializing or connecting to the stream.")
+      sys.exit(-1)
     }
   }
+
+  // The handler actor replies to incoming HttpRequests.
+  val handler = system.actorOf(
+    Props(classOf[CollectorService], collectorConfig, kinesisBackend),
+    name = "handler"
+  )
+
+  IO(Http) ! Http.Bind(handler,
+    interface=collectorConfig.interface, port=collectorConfig.port)
 }
