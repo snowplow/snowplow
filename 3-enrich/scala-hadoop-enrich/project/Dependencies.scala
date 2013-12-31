@@ -21,7 +21,7 @@ object Dependencies {
     "Concurrent Maven Repo" at "http://conjars.org/repo",
      // For Twitter's util functions
     "Twitter Maven Repo" at "http://maven.twttr.com/",
-    // For scala-util and referer-parser
+    // For Scala Common Enrich
     "SnowPlow Analytics Maven repo" at "http://maven.snplow.com/releases/",
     // For user-agent-utils
     "user-agent-utils repo" at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/"
@@ -39,6 +39,7 @@ object Dependencies {
     // Scala
     val scalding      = "0.8.11"
     val scalaz7       = "7.0.0"
+    val commonEnrich  = "0.1.0"
     val argonaut      = "6.0"
     val scalaUtil     = "0.1.0"
     val refererParser = "0.1.1"

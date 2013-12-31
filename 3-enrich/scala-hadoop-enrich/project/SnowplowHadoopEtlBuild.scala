@@ -40,6 +40,7 @@ object SnowplowHadoopEtlBuild extends Build {
         Libraries.scaldingCore,
         Libraries.scaldingArgs,
         Libraries.scalaz7,
+        Libraries.commonEnrich,
         // Libraries.argonaut,
         // Libraries.scalaUtil,
         // Libraries.refererParser,
