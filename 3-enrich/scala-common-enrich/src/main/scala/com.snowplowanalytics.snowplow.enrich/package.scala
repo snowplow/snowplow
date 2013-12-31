@@ -26,8 +26,8 @@ import org.apache.http.NameValuePair
 import com.snowplowanalytics.maxmind.geoip.IpLocation
 
 // This project
-import hadoop.inputs.CanonicalInput
-import hadoop.outputs.CanonicalOutput
+import common.inputs.CanonicalInput
+import common.outputs.CanonicalOutput
 
 /**
  * Scala package object to hold types,

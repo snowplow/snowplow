@@ -21,7 +21,7 @@ import java.math.{BigDecimal => JBigDecimal}
 import java.lang.{Byte => JByte}
 
 // Apache Commons
-import org.apache.commons.lang.exception.ExceptionUtils
+import org.apache.commons.lang3.exception.ExceptionUtils
 
 // Scalaz
 import scalaz._

@@ -18,7 +18,7 @@ import scalaz._
 import Scalaz._
 
 // Apache Commons
-import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.StringUtils
 
 // Joda-Time
 import org.joda.time.DateTime

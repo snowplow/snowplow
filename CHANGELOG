@@ -1,4 +1,4 @@
-Version 0.8.12 (2013-12-XX)
+Version 0.8.12 (2014-01-XX)
 ---------------------------
 Hadoop ETL: bumped to 0.3.6
 Hadoop ETL: bumped to SBT 0.13.0 (#404)
@@ -14,6 +14,7 @@ Hadoop ETL: missing page URI no longer interpreted as bad row (#399)
 Hadoop ETL: updated CfRegex to reflect Cfcs(Cookie) can be empty (#410)
 Hadoop ETL: numeric fields in tr_ and ti_ now parsed to doubles, not madeTsvSafe strings (#400)
 Hadoop ETL: moved ETL core into separate project scala-enrich-common (#417) - TODO
+Scala Common Enrich: updated ETL versioning to include host and common versions (#448) - TODO
 Postgres: bumped cube-pages.sql to 0.1.1
 Postgres: minor fix: cube_pages.complete referenced non-existent table cube_pages.basic, thanks @mrwalker! (#414)
 

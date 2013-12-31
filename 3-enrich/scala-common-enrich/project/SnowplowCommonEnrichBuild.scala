@@ -15,7 +15,7 @@
 import sbt._
 import Keys._
 
-object ScalaCommonEnrichBuild extends Build {
+object SnowplowCommonEnrichBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -27,13 +27,12 @@ object ScalaCommonEnrichBuild extends Build {
 
   // Define our project, with basic project information and library
   // dependencies.
-  lazy val project = Project("scala-common-enrich", file("."))
+  lazy val project = Project("snowplow-common-enrich", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
         // Java
         Libraries.httpClient,
-        Libraries.hadoopCore,
         Libraries.yodaTime,
         Libraries.yodaConvert,
         Libraries.commonsLang,
