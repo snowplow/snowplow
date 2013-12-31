@@ -4,12 +4,12 @@
 
 The Scala Stream Collector is an event collector for [SnowPlow] [snowplow],
 written in Scala.
-It sets a third-party cookie (TODO), allowing user tracking across domains.
-It is designed to be easy to setup on TODO.
+It sets a third-party cookie, allowing user tracking across domains.
 
-The Scala Collector relies on TODO
-for SnowPlow event logging, and is built on top of
-TODO.
+The Scala Stream Collector is designed to be easy to setup and store
+[Thrift][thrift] Snowplow events to [Amazon Kinesis][kinesis],
+and is built on top of [spray][spray] and [akka][akka] Actors. 
+
 
 ## Find out more
 
@@ -32,20 +32,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 [snowplow]: http://snowplowanalytics.com
-[elastic-beanstalk]: http://aws.amazon.com/elasticbeanstalk/
-[tomcat]: http://tomcat.apache.org/
-[ring]: https://github.com/ring-clojure/ring
-[compojure]: https://github.com/weavejester/compojure
+
+[thrift]: http://thrift.apache.org
+[kinesis]: http://aws.amazon.com/kinesis
+[spray]: http://spray.io/
+[akka]: http://akka.io/
 
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
 [roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
 [contributing-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/contributing.png
 
-[techdocs]: https://github.com/snowplow/snowplow/wiki/Scala-collector
-[setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-the-Scala-collector
-[roadmap]: https://github.com/snowplow/snowplow/wiki/Scala-collector-roadmap
-[contributing]: https://github.com/snowplow/snowplow/wiki/Scala-collector-contributing
+[techdocs]: https://github.com/snowplow/snowplow/wiki/Scala-Stream-collector
+[setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-the-Scala-Stream-collector
+[roadmap]: https://github.com/snowplow/snowplow/wiki/Scala-Stream-collector-roadmap
+[contributing]: https://github.com/snowplow/snowplow/wiki/Scala-Stream-collector-contributing
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
-
