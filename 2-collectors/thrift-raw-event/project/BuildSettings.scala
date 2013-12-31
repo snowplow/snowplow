@@ -20,7 +20,7 @@ object BuildSettings {
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
-    organization          :=  "Snowplow Analytics Ltd",
+    organization          :=  "com.snowplowanalytics",
     version               :=  "0.0.1",
     description           :=  "Produce Java for the Thrift Raw Schema and publish to Maven",
     scalaVersion          :=  "2.10.1",
