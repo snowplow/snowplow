@@ -27,11 +27,22 @@ object SnowplowEventSpec extends Properties("SnowplowEvent"){
     val event = new SnowplowEvent(timestamp, null, "collector", "encoding")
     event.getTimestamp == timestamp
   }
-  // TODO: PayloadProtocol.Http
-  // TODO: PayloadFormat.{HttpGet,HttpPostUrlencodedForm,HttpPostMultipartForm}
+  property("protocolVal") = forAll (Gen.choose(1,100)) { (protocolVal) =>
+    val protocol = PayloadProtocol.findByValue(protocolVal)
+    val payload = new TrackerPayload(protocol, null, null)
+    val event = new SnowplowEvent(0L, payload, "collector", "encoding")
+    event.getPayload.getProtocol == protocol
+  }
+  property("protocolFormat") = forAll (Gen.choose(1,100)) { (formatVal) =>
+    val format = PayloadFormat.findByValue(formatVal)
+    val payload = new TrackerPayload(null, format, null)
+    val event = new SnowplowEvent(0L, payload, "collector", "encoding")
+    event.getPayload.getFormat == format
+  }
   property("payloadData") = forAll { (payloadData: String) =>
     val payload = new TrackerPayload(
-      PayloadProtocol.Http, PayloadFormat.HttpGet, payloadData)
+      PayloadProtocol.Http, PayloadFormat.HttpGet, payloadData
+    )
     val event = new SnowplowEvent(0L, payload, "collector", "encoding")
     event.getPayload.getData == payloadData
   }
