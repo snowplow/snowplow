@@ -34,7 +34,6 @@ object ScalaCollectorBuild extends Build {
         Libraries.commonsLang3,
         Libraries.thrift,
         Libraries.specs2,
-        Libraries.scalazSpecs2,
         Libraries.scalaCheck
       )
     )

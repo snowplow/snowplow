@@ -30,7 +30,6 @@ object Dependencies {
 
     // Scala (test only)
     val specs2 = "2.3.6"
-    val scalazSpecs2  = "0.1.5"
     val scalaCheck    = "1.11.1"
   }
 
@@ -41,7 +40,6 @@ object Dependencies {
 
     // Scala (test only)
     val specs2        = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
-    val scalazSpecs2  = "org.typelevel"              %% "scalaz-specs2"       % V.scalazSpecs2 % "test"
     val scalaCheck    = "org.scalacheck"             %% "scalacheck"          % V.scalaCheck   % "test"
   }
 }

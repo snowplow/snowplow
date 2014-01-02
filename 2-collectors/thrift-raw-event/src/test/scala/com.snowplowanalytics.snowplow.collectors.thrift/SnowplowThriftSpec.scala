@@ -19,7 +19,6 @@ import scala.collection.JavaConversions._
 
 // Specs2 and ScalaCheck
 import org.specs2.mutable.Specification
-import org.specs2.scalaz.ValidationMatchers
 import org.scalacheck.{Arbitrary,Gen,Properties}
 import org.scalacheck.Prop.forAll
 
