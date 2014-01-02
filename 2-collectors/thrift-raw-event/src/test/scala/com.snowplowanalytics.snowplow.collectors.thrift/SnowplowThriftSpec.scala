@@ -48,15 +48,15 @@ object SnowplowEventSpec extends Properties("SnowplowEvent"){
   type setFunc = Function2[SnowplowEvent,String,SnowplowEvent]
   type getFunc = Function1[SnowplowEvent,String]
   val f_hostname_set: setFunc = _.setHostname(_)
-  val f_hostname_get: getFunc = _.getHostname()
+  val f_hostname_get: getFunc = _.getHostname
   val f_ipAddress_set: setFunc = _.setIpAddress(_)
-  val f_ipAddress_get: getFunc = _.getIpAddress()
+  val f_ipAddress_get: getFunc = _.getIpAddress
   val f_userAgent_set: setFunc = _.setUserAgent(_)
-  val f_userAgent_get: getFunc = _.getUserAgent()
+  val f_userAgent_get: getFunc = _.getUserAgent
   val f_refererUri_set: setFunc = _.setRefererUri(_)
-  val f_refererUri_get: getFunc = _.getRefererUri()
+  val f_refererUri_get: getFunc = _.getRefererUri
   val f_userId_set: setFunc = _.setUserId(_)
-  val f_userId_get: getFunc = _.getUserId()
+  val f_userId_get: getFunc = _.getUserId
   for (optionalVar <- List(
         ("hostname", f_hostname_set, f_hostname_get),
         ("ipAddress", f_ipAddress_set, f_ipAddress_get),
