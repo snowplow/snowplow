@@ -33,7 +33,7 @@ struct TrackerPayload {
   3: PayloadData data
 }
 
-struct SnowplowEvent {
+struct SnowplowRawEvent {
   01: i64 timestamp // Milliseconds since epoch.
   10: TrackerPayload payload
   20: string collector // Collector name/version.

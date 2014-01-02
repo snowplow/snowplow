@@ -16,7 +16,7 @@ package scalastream
 package backends
 
 import scalastream._
-import thrift.SnowplowEvent
+import thrift.SnowplowRawEvent
 
 // Java
 import java.nio.ByteBuffer
@@ -178,7 +178,7 @@ class KinesisBackend(collectorConfig: CollectorConfig) {
       Client.fromCredentials(accessKey, secretKey)
     }
 
-  def storeEvent(event: SnowplowEvent, key: String): PutResult = {
+  def storeEvent(event: SnowplowRawEvent, key: String): PutResult = {
     info(s"Writing Thrift record to Kinesis: ${event.toString}")
     val result = writeRecord(
       data = ByteBuffer.wrap(thriftSerializer.serialize(event)),
@@ -209,7 +209,7 @@ class KinesisBackend(collectorConfig: CollectorConfig) {
     putResult
   }
 
-  def getRecords(): List[(SnowplowEvent,Record)] = {
+  def getRecords(): List[(SnowplowRawEvent,Record)] = {
     val getRecords = for {
       shards <- stream.get.shards.list
       iterators <- Future.sequence(shards.map {
@@ -221,10 +221,10 @@ class KinesisBackend(collectorConfig: CollectorConfig) {
     } yield records
     val recordChunks = Await.result(getRecords, 30.seconds)
 
-    val recordList = new MutableList[(SnowplowEvent,Record)]
+    val recordList = new MutableList[(SnowplowRawEvent,Record)]
     for (recordChunk <- recordChunks) {
       for (record <- recordChunk.records) {
-        val event = new SnowplowEvent()
+        val event = new SnowplowRawEvent()
         thriftDeserializer.deserialize(event, record.data.array())
         recordList += ((event, record))
       }

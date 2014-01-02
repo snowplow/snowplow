@@ -48,7 +48,7 @@ class ResponseHandler(collectorConfig: CollectorConfig, kinesisBackend: KinesisB
       queryParams
     )
 
-    val event = new SnowplowEvent(
+    val event = new SnowplowRawEvent(
       timestamp,
       payload,
 

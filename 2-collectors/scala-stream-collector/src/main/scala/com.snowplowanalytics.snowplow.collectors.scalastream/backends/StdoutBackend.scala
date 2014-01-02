@@ -16,7 +16,7 @@ package scalastream
 package backends
 
 import scalastream._
-import thrift.SnowplowEvent
+import thrift.SnowplowRawEvent
 
 import java.nio.ByteBuffer
 import org.apache.thrift.TSerializer
@@ -28,7 +28,7 @@ import org.apache.commons.codec.binary.Base64
  */
 object StdoutBackend {
   private val thriftSerializer = new TSerializer()
-  def printEvent(event: SnowplowEvent) = {
+  def printEvent(event: SnowplowRawEvent) = {
     println(Base64.encodeBase64String(thriftSerializer.serialize(event)))
   }
 }

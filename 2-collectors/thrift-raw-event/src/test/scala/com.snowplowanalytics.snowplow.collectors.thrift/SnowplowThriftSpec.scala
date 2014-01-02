@@ -22,42 +22,42 @@ import org.specs2.mutable.Specification
 import org.scalacheck.{Arbitrary,Gen,Properties}
 import org.scalacheck.Prop.forAll
 
-object SnowplowEventSpec extends Properties("SnowplowEvent"){
+object SnowplowRawEventSpec extends Properties("SnowplowRawEvent"){
   property("timestamp") = forAll { (timestamp: Long) =>
-    val event = new SnowplowEvent(timestamp, null, "collector", "encoding")
+    val event = new SnowplowRawEvent(timestamp, null, "collector", "encoding")
     event.getTimestamp == timestamp
   }
   property("protocolVal") = forAll (Gen.choose(1,100)) { (protocolVal) =>
     val protocol = PayloadProtocol.findByValue(protocolVal)
     val payload = new TrackerPayload(protocol, null, null)
-    val event = new SnowplowEvent(0L, payload, "collector", "encoding")
+    val event = new SnowplowRawEvent(0L, payload, "collector", "encoding")
     event.getPayload.getProtocol == protocol
   }
   property("protocolFormat") = forAll (Gen.choose(1,100)) { (formatVal) =>
     val format = PayloadFormat.findByValue(formatVal)
     val payload = new TrackerPayload(null, format, null)
-    val event = new SnowplowEvent(0L, payload, "collector", "encoding")
+    val event = new SnowplowRawEvent(0L, payload, "collector", "encoding")
     event.getPayload.getFormat == format
   }
   property("payloadData") = forAll { (payloadData: String) =>
     val payload = new TrackerPayload(
       PayloadProtocol.Http, PayloadFormat.HttpGet, payloadData
     )
-    val event = new SnowplowEvent(0L, payload, "collector", "encoding")
+    val event = new SnowplowRawEvent(0L, payload, "collector", "encoding")
     event.getPayload.getData == payloadData
   }
   property("collector") = forAll { (collector: String) =>
-    val event = new SnowplowEvent(0L, null, collector, "encoding")
+    val event = new SnowplowRawEvent(0L, null, collector, "encoding")
     event.getCollector == collector
   }
   property("encoding") = forAll { (encoding: String) =>
-    val event = new SnowplowEvent(0L, null, "collector", encoding)
+    val event = new SnowplowRawEvent(0L, null, "collector", encoding)
     event.getEncoding == encoding
   }
 
   // Check optional variables.
-  type setFunc = Function2[SnowplowEvent,String,SnowplowEvent]
-  type getFunc = Function1[SnowplowEvent,String]
+  type setFunc = Function2[SnowplowRawEvent,String,SnowplowRawEvent]
+  type getFunc = Function1[SnowplowRawEvent,String]
   val f_hostname_set: setFunc = _.setHostname(_)
   val f_hostname_get: getFunc = _.getHostname
   val f_ipAddress_set: setFunc = _.setIpAddress(_)
@@ -76,14 +76,14 @@ object SnowplowEventSpec extends Properties("SnowplowEvent"){
         ("userId", f_userId_set, f_userId_get)
       )) {
     property(optionalVar._1) = forAll { (value: String) =>
-      val event = new SnowplowEvent(0L, null, "collector", "encoding")
+      val event = new SnowplowRawEvent(0L, null, "collector", "encoding")
       optionalVar._2(event, value)
       optionalVar._3(event) == value
     }
   }
 
   property("headers") = forAll { (headers: List[String]) =>
-    val event = new SnowplowEvent(0L, null, "collector", "encoding")
+    val event = new SnowplowRawEvent(0L, null, "collector", "encoding")
     event.setHeaders(headers)
     event.getHeaders.toList.equals(headers)
   }
