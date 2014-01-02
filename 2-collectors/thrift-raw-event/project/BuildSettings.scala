@@ -21,8 +21,8 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "com.snowplowanalytics",
-    version               :=  "0.0.1",
-    description           :=  "Produce Java for the Thrift Raw Schema and publish to Maven",
+    version               :=  "0.1.0",
+    description           :=  "Generates POJOs for the Snowplow Raw Event as defined in Thrift IDL",
     scalaVersion          :=  "2.10.1",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
                                   "-unchecked", "-feature"),

@@ -15,7 +15,7 @@
 import sbt._
 import Keys._
 
-object ScalaCollectorBuild extends Build {
+object ThriftRawEventBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -27,7 +27,7 @@ object ScalaCollectorBuild extends Build {
 
   // Define our project, with basic project information and library
   // dependencies.
-  lazy val project = Project("snowplow-thrift", file("."))
+  lazy val project = Project("snowplow-thrift-raw-event", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
