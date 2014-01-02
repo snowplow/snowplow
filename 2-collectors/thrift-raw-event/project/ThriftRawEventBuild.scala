@@ -32,7 +32,10 @@ object ScalaCollectorBuild extends Build {
     .settings(
       libraryDependencies ++= Seq(
         Libraries.commonsLang3,
-        Libraries.thrift
+        Libraries.thrift,
+        Libraries.specs2,
+        Libraries.scalazSpecs2,
+        Libraries.scalaCheck
       )
     )
 }
