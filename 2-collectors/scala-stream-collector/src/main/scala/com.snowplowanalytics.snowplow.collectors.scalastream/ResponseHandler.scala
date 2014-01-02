@@ -40,10 +40,7 @@ class ResponseHandler(collectorConfig: CollectorConfig, kinesisBackend: KinesisB
       else UUID.randomUUID.toString()
 
     // Construct an event object from the request.
-
-    // TODO: Should the time be in UTC or local?
-    // Should the scema make this more clear?
-    val timestamp: Long = System.currentTimeMillis / 1000
+    val timestamp: Long = System.currentTimeMillis
 
     val payload = new TrackerPayload(
       PayloadProtocol.Http,

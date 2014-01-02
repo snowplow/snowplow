@@ -34,7 +34,7 @@ struct TrackerPayload {
 }
 
 struct SnowplowEvent {
-  01: i64 timestamp // Seconds since epoch.
+  01: i64 timestamp // Milliseconds since epoch.
   10: TrackerPayload payload
   20: string collector // Collector name/version.
   30: string encoding
