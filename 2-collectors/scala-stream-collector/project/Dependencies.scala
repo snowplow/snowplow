@@ -33,6 +33,7 @@ object Dependencies {
     val awsSdk     = "1.6.10"
 
     // Scala
+    val snowplowRawEvent = "0.2.0"
     val spray = "1.2.0"
     val akka = "2.2.3"
     val scallop = "0.9.4"
@@ -40,10 +41,6 @@ object Dependencies {
     val commonsCodec = "1.5"
     val scalazon   = "0.5"
     val argot      = "1.0.1"
-
-    // Scala compile only for sbt-thrift.
-    val commonsLang3 = "3.1"
-    val thrift = "0.9.0"
 
     // Scala (test only)
     // Using the newest version of spec (2.3.6) causes
@@ -56,6 +53,7 @@ object Dependencies {
     val mimepull = "org.jvnet.mimepull" % "mimepull" % V.mimepull
 
     // Scala
+    val snowplowRawEvent = "com.snowplowanalytics" % "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val argot       = "org.clapper"                %% "argot"           % V.argot
     val sprayCan = "io.spray" % "spray-can" % V.spray
     val sprayRouting = "io.spray" % "spray-routing" % V.spray
@@ -65,10 +63,6 @@ object Dependencies {
     val commonsCodec = "commons-codec" % "commons-codec" % V.commonsCodec
     val scalazon    = "io.github.cloudify"         %% "scalazon"        % V.scalazon
     val awsSdk      = "com.amazonaws"              % "aws-java-sdk"     % V.awsSdk
-
-    // Scala compile only for sbt-thrift.
-    val commonsLang3 = "org.apache.commons" % "commons-lang3" % V.commonsLang3 % "compile"
-    val thrift = "org.apache.thrift" % "libthrift" % V.thrift % "compile"
 
     // Scala (test only)
     val specs2 = "org.specs2" %% "specs2" % V.specs2 % "test"

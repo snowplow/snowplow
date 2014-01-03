@@ -40,11 +40,10 @@ object ScalaCollectorBuild extends Build {
         Libraries.commonsCodec,
         Libraries.sprayTestkit,
         Libraries.specs2,
-        Libraries.commonsLang3,
-        Libraries.thrift,
         Libraries.scalazon,
         Libraries.awsSdk,
-        Libraries.argot
+        Libraries.argot,
+        Libraries.snowplowRawEvent
       )
     )
 }
