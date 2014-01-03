@@ -1,4 +1,4 @@
-# Snowplow Thrift Raw Event
+# Thrift Raw Event
 
 ## Introduction
 
