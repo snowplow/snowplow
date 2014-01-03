@@ -1,12 +1,15 @@
-# Snowplow Raw Event Thrift Schema
+# Snowplow Thrift Raw Event
 
 ## Introduction
 
-This is a [Thrift] [thrift] Schema for [SnowPlow] [snowplow] raw events.
-It is contained within a Scala project to produce Java sources
-and publish to Snowplow's maven repository.
+This is a [Thrift] [thrift] schema for [Snowplow] [snowplow] raw events.
 
-## Using with Scala/sbt
+For the Thrift IDL please see [snowplow-raw-event.thrift] [thrift-idl].
+
+The Thrift IDL is defined within a Scala project to produce Java sources
+and publish to Snowplow's maven repository. Tests are written using Scala QuickCheck.
+
+## Using with Scala/SBT
 
 1. Add the Snowplow maven repository as a [resolver][dependencies]:
    `"Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/"`
@@ -16,8 +19,7 @@ and publish to Snowplow's maven repository.
 
 ## Copyright and license
 
-The Snowplow Raw Event Thrift Schema is copyright 2013-2014
-Snowplow Analytics Ltd.
+The Snowplow Thrift Raw Event is copyright 2013-2014 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
@@ -31,6 +33,7 @@ limitations under the License.
 [snowplow]: http://snowplowanalytics.com
 [thrift]: http://thrift.apache.org
 
+[thrift-idl]: https://github.com/snowplow/snowplow/blob/feature/scala-rt-coll/2-collectors/thrift-raw-event/src/main/thrift/snowplow-raw-event.thrift
 [dependencies]: http://www.scala-sbt.org/release/docs/Getting-Started/Library-Dependencies.html
 [versions]: http://maven.snplow.com/releases/com/snowplowanalytics/snowplow-thrift-raw-event/
 
