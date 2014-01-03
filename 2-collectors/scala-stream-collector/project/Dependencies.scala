@@ -36,7 +36,6 @@ object Dependencies {
     val snowplowRawEvent = "0.2.0"
     val spray = "1.2.0"
     val akka = "2.2.3"
-    val scallop = "0.9.4"
     val logback = "1.0.13"
     val commonsCodec = "1.5"
     val scalazon   = "0.5"
