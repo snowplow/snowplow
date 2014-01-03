@@ -4,7 +4,7 @@
 
 This is a [Thrift] [thrift] schema for [Snowplow] [snowplow] raw events.
 
-For the Thrift IDL please see [snowplow-raw-event.thrift] [thrift-idl]. The Thrift IDL is defined within a Scala/SBT project to produce Java sources and publish to Snowplow's maven repository. Tests are written using Scala QuickCheck.
+For the Thrift IDL please see [snowplow-raw-event.thrift] [thrift-idl]. The Thrift IDL is defined within a Scala/SBT project to produce Java sources and publish to Snowplow's maven repository. Tests are written using ScalaCheck.
 
 ## Using with Scala/SBT
 
