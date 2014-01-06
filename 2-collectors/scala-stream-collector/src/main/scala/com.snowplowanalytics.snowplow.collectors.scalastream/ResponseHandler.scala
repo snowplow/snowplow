@@ -71,8 +71,6 @@ class ResponseHandler(collectorConfig: CollectorConfig, kinesisBackend: KinesisB
     // to map the HttpResponseHeaders into a list.
     // event.headers = 
 
-    // TODO: userId
-
     event.networkUserId = networkUserId
 
     if (collectorConfig.backendEnabledEnum == collectorConfig.Backend.Kinesis) {
