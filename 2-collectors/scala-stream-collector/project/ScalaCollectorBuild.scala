@@ -27,7 +27,7 @@ object ScalaCollectorBuild extends Build {
 
   // Define our project, with basic project information and library
   // dependencies.
-  lazy val project = Project("snowplow-scala-collector", file("."))
+  lazy val project = Project("snowplow-stream-collector", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
