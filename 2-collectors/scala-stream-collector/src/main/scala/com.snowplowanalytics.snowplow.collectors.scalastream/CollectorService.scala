@@ -62,7 +62,7 @@ class CollectorService(collectorConfig: CollectorConfig, kinesisBackend: Kinesis
             }
           }
         }
-      }~
+      }
     }~
     complete(responseHandler.notFound)
   }
