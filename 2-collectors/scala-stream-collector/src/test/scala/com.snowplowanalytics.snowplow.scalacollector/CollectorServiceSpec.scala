@@ -136,23 +136,5 @@ class CollectorServiceSpec extends Specification with Specs2RouteTest with
           s"""policyref="${policyRef}", CP="${CP}"""")
       }
     }
-    "store a request in Kinesis." in {
-      CollectorGet("/i?payload=true") ~> collectorRoute ~> check {
-        // Sleep to let Kinesis store the data.
-        Thread.sleep(10000)
-
-        // TODO: Might not correctly retrieve data due to a bug.
-        // https://github.com/cloudify/scalazon/issues/5
-        val kinesisRecords = KinesisBackend.getRecords()
-        println("Store: " + kinesisRecords.toString)
-        val recordWithPayload = kinesisRecords.filter (
-          record =>
-            (record._1.payload != null &&
-             record._1.payload.data.equals("payload=true"))
-        )
-
-        recordWithPayload must not be empty
-      }
-    }
   }
 }

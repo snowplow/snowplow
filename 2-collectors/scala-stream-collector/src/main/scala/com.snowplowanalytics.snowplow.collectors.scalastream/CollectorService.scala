@@ -41,23 +41,27 @@ class CollectorService(collectorConfig: CollectorConfig, kinesisBackend: Kinesis
     get {
       path("i") {
         parameterSeq { params =>
-        optionalCookie("sp") { reqCookie =>
-        optionalHeaderValueByName("User-Agent") { userAgent =>
-        hostName { host =>
-        clientIP { ip =>
-          // Reference: http://spray.io/documentation/1.2.0/spray-routing/parameter-directives/parameterSeq/#parameterseq
-          // TODO: Reconstructing this string doesn't seem best,
-          // but I can't find a better way, so I posted to the
-          // spray mailing list, 2013.12.24.
-          val paramsString = params.map(paramString).mkString("&")
-          complete(responseHandler.cookie(
-            paramsString,
-            reqCookie,
-            userAgent,
-            host,
-            ip.toString
-          ))
-        }}}}}
+          optionalCookie("sp") { reqCookie =>
+            optionalHeaderValueByName("User-Agent") { userAgent =>
+              hostName { host =>
+                clientIP { ip =>
+                  // Reference: http://spray.io/documentation/1.2.0/spray-routing/parameter-directives/parameterSeq/#parameterseq
+                  // TODO: Reconstructing this string doesn't seem best,
+                  // but I can't find a better way, so I posted to the
+                  // spray mailing list, 2013.12.24.
+                  val paramsString = params.map(paramString).mkString("&")
+                  complete(responseHandler.cookie(
+                    paramsString,
+                    reqCookie,
+                    userAgent,
+                    host,
+                    ip.toString
+                  ))
+                }
+              }
+            }
+          }
+        }
       }~
       path("dump") {
         // TODO: Is there a better way to handle a debug path?
