@@ -13,7 +13,7 @@
 
 package com.snowplowanalytics.snowplow.collectors
 package scalastream
-package backends
+package sinks
 
 import scalastream._
 import thrift.SnowplowRawEvent
@@ -24,9 +24,9 @@ import com.typesafe.config.Config
 import org.apache.commons.codec.binary.Base64
 
 /**
- * Stdout Backend for the Scala collector.
+ * Stdout Sink for the Scala collector.
  */
-object StdoutBackend {
+object StdoutSink {
   private val thriftSerializer = new TSerializer()
   def printEvent(event: SnowplowRawEvent) = {
     println(Base64.encodeBase64String(thriftSerializer.serialize(event)))

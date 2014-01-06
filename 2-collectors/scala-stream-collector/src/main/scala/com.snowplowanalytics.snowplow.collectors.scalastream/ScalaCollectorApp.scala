@@ -15,7 +15,7 @@
 
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
-import backends._
+import sinks._
 
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO
@@ -48,10 +48,10 @@ class CollectorConfig(config: Config) {
   import Helper.RichConfig
 
   // Instead of comparing strings and validating every time
-  // the backend is accessed, validate the string here and
+  // the sink is accessed, validate the string here and
   // store this enumeration.
-  object Backend extends Enumeration {
-    type Backend = Value
+  object Sink extends Enumeration {
+    type Sink = Value
     val Kinesis, Stdout = Value
   }
 
@@ -68,13 +68,13 @@ class CollectorConfig(config: Config) {
   val cookieExpiration = cookie.getMilliseconds("expiration")
   var cookieDomain = cookie.getOptionalString("domain")
 
-  private val backend = collector.getConfig("backend")
-  val backendEnabled = backend.getString("enabled")
-  var backendEnabledEnum = if (backendEnabled == "kinesis") Backend.Kinesis
-    else if (backendEnabled == "stdout") Backend.Stdout
-    else throw new RuntimeException("collector.backend.enabled must be 'kinesis' or 'stdout'.")
+  private val sink = collector.getConfig("sink")
+  val sinkEnabled = sink.getString("enabled")
+  var sinkEnabledEnum = if (sinkEnabled == "kinesis") Sink.Kinesis
+    else if (sinkEnabled == "stdout") Sink.Stdout
+    else throw new RuntimeException("collector.sink.enabled must be 'kinesis' or 'stdout'.")
 
-  private val kinesis = backend.getConfig("kinesis")
+  private val kinesis = sink.getConfig("kinesis")
   private val aws = kinesis.getConfig("aws")
   val awsAccessKey = aws.getString("access-key")
   val awsSecretKey = aws.getString("secret-key")
@@ -119,10 +119,10 @@ object ScalaCollector extends App {
   val rawConf = config.value.getOrElse(ConfigFactory.load("application"))
   implicit val system = ActorSystem.create("scala-stream-collector", rawConf)
   val collectorConfig = new CollectorConfig(rawConf)
-  val kinesisBackend = new KinesisBackend(collectorConfig)
+  val kinesisSink = new KinesisSink(collectorConfig)
 
-  if (collectorConfig.backendEnabledEnum == collectorConfig.Backend.Kinesis) {
-    if (!kinesisBackend.createAndLoadStream()) {
+  if (collectorConfig.sinkEnabledEnum == collectorConfig.Sink.Kinesis) {
+    if (!kinesisSink.createAndLoadStream()) {
       error("Error initializing or connecting to the stream.")
       sys.exit(-1)
     }
@@ -130,7 +130,7 @@ object ScalaCollector extends App {
 
   // The handler actor replies to incoming HttpRequests.
   val handler = system.actorOf(
-    Props(classOf[CollectorService], collectorConfig, kinesisBackend),
+    Props(classOf[CollectorService], collectorConfig, kinesisSink),
     name = "handler"
   )
 

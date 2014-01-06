@@ -13,7 +13,7 @@
 
 package com.snowplowanalytics.snowplow.collectors
 package scalastream
-package backends
+package sinks
 
 import scalastream._
 import thrift.SnowplowRawEvent
@@ -58,9 +58,9 @@ import scala.collection.mutable.StringBuilder
 import scala.collection.mutable.MutableList
 
 /**
- * Kinesis Backend for the Scala collector.
+ * Kinesis Sink for the Scala collector.
  */
-class KinesisBackend(collectorConfig: CollectorConfig) {
+class KinesisSink(collectorConfig: CollectorConfig) {
   lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 

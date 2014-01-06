@@ -14,7 +14,7 @@
  */
 
 package com.snowplowanalytics.snowplow.collectors.scalastream
-import backends._
+import sinks._
 
 import akka.actor.Actor
 import akka.pattern.ask
@@ -23,9 +23,9 @@ import scala.concurrent.duration._
 import spray.http.Timedout
 import spray.routing.HttpService
 
-class CollectorService(collectorConfig: CollectorConfig, kinesisBackend: KinesisBackend) extends Actor with HttpService {
+class CollectorService(collectorConfig: CollectorConfig, kinesisSink: KinesisSink) extends Actor with HttpService {
   implicit val timeout: Timeout = 1.second // For the actor 'asks'
-  private def responseHandler = new ResponseHandler(collectorConfig, kinesisBackend)
+  private def responseHandler = new ResponseHandler(collectorConfig, kinesisSink)
 
   def actorRefFactory = context
   def receive = handleTimeouts orElse runRoute(collectorRoute)

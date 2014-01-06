@@ -18,7 +18,7 @@ package scalastream
 
 import generated._
 import thrift._
-import backends._
+import sinks._
 
 import java.util.UUID
 import org.apache.commons.codec.binary.Base64
@@ -29,7 +29,7 @@ import spray.http.MediaTypes.`image/gif`
 
 import com.typesafe.config.Config
 
-class ResponseHandler(collectorConfig: CollectorConfig, kinesisBackend: KinesisBackend) {
+class ResponseHandler(collectorConfig: CollectorConfig, kinesisSink: KinesisSink) {
   val pixel = Base64.decodeBase64("R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==")
 
   def cookie(queryParams: String, requestCookie: Option[HttpCookie],
@@ -51,7 +51,7 @@ class ResponseHandler(collectorConfig: CollectorConfig, kinesisBackend: KinesisB
     val event = new SnowplowRawEvent(
       timestamp,
       payload,
-      s"${generated.Settings.shortName}-${generated.Settings.version}-${collectorConfig.backendEnabled}",
+      s"${generated.Settings.shortName}-${generated.Settings.version}-${collectorConfig.sinkEnabled}",
       "UTF-8" // TODO: should we extract the encoding from the queryParams?
     )
 
@@ -68,11 +68,11 @@ class ResponseHandler(collectorConfig: CollectorConfig, kinesisBackend: KinesisB
 
     event.networkUserId = networkUserId
 
-    if (collectorConfig.backendEnabledEnum == collectorConfig.Backend.Kinesis) {
+    if (collectorConfig.sinkEnabledEnum == collectorConfig.Sink.Kinesis) {
       // TODO: What should the key be?
-      kinesisBackend.storeEvent(event, "key")
+      kinesisSink.storeEvent(event, "key")
     } else {
-      StdoutBackend.printEvent(event)
+      StdoutSink.printEvent(event)
     }
 
     // Build the response.

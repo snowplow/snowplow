@@ -15,7 +15,7 @@
 
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
-import com.snowplowanalytics.snowplow.collectors.scalastream.backends._
+import com.snowplowanalytics.snowplow.collectors.scalastream.sinks._
 
 // specs2 and spray testing libraries.
 import org.specs2.matcher.AnyMatchers
@@ -45,7 +45,7 @@ trait BeforeAllAfterAll extends Specification {
 
 // http://spray.io/documentation/1.2.0/spray-testkit/
 class CollectorServiceSpec extends Specification with Specs2RouteTest with
-     CollectorService with AnyMatchers with BeforeAllAfterAll {
+     AnyMatchers with BeforeAllAfterAll {
   def actorRefFactory = system
 
   // By default, spray will always add Remote-Address to every request
@@ -61,20 +61,20 @@ class CollectorServiceSpec extends Specification with Specs2RouteTest with
   }
 
   def beforeAll() {
-    if (!KinesisBackend.createAndLoadStream()) {
+    if (!KinesisSink.createAndLoadStream()) {
       throw new RuntimeException("Unable to initialize Kinesis stream.")
     }
   }
 
   def afterAll() {
-    KinesisBackend.deleteStream()
+    KinesisSink.deleteStream()
   }
 
-  // Don't run tests in parallel because KinesisBackend
+  // Don't run tests in parallel because KinesisSink
   // is not thread safe (currently).
   sequential
 
-  CollectorConfig.backendEnabledEnum = CollectorConfig.Backend.Kinesis
+  CollectorConfig.sinkEnabledEnum = CollectorConfig.Sink.Kinesis
   CollectorConfig.cookieDomain = Some("testdomain.com")
 
   "Snowplow's Scala collector" should {
