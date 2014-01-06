@@ -33,7 +33,7 @@ object Dependencies {
     val awsSdk     = "1.6.10"
 
     // Scala
-    val snowplowRawEvent = "0.2.0"
+    val snowplowRawEvent = "0.3.0"
     val spray = "1.2.0"
     val akka = "2.2.3"
     val logback = "1.0.13"

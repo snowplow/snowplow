@@ -71,8 +71,9 @@ class ResponseHandler(collectorConfig: CollectorConfig, kinesisBackend: KinesisB
     // to map the HttpResponseHeaders into a list.
     // event.headers = 
 
-    // TODO: Is the user ID the cookie we have associated with a user?
-    event.userId = cookieUUID
+    // TODO: userId
+
+    event.collectorUserId = cookieUUID
 
     if (collectorConfig.backendEnabledEnum == collectorConfig.Backend.Kinesis) {
       // TODO: What should the key be?
