@@ -63,11 +63,6 @@ class CollectorService(collectorConfig: CollectorConfig, kinesisBackend: Kinesis
           }
         }
       }~
-      path("dump") {
-        // TODO: Is there a better way to handle a debug path?
-        if (!collectorConfig.production) complete(responseHandler.dump)
-        else complete(responseHandler.notFound)
-      }
     }~
     complete(responseHandler.notFound)
   }

@@ -209,40 +209,6 @@ class KinesisBackend(collectorConfig: CollectorConfig) {
     putResult
   }
 
-  def getRecords(): List[(SnowplowRawEvent,Record)] = {
-    val getRecords = for {
-      shards <- stream.get.shards.list
-      iterators <- Future.sequence(shards.map {
-        shard => implicitExecute(shard.iterator)
-      })
-      records <- Future.sequence(iterators.map {
-        iterator => implicitExecute(iterator.nextRecords)
-      })
-    } yield records
-    val recordChunks = Await.result(getRecords, 30.seconds)
-
-    val recordList = new MutableList[(SnowplowRawEvent,Record)]
-    for (recordChunk <- recordChunks) {
-      for (record <- recordChunk.records) {
-        val event = new SnowplowRawEvent()
-        thriftDeserializer.deserialize(event, record.data.array())
-        recordList += ((event, record))
-      }
-    }
-    recordList.toList
-  }
-
-  def getRecordsString(): String = {
-    val records = getRecords()
-    val sb = new StringBuilder
-    for (record <- records) {
-      sb ++= record._1.toString + "\n"
-      sb ++= s"sequenceNumber: ${record._2.sequenceNumber}\n"
-      sb ++= s"partitionKey: ${record._2.partitionKey}\n"
-    }
-    sb.toString
-  }
-
   /**
    * Is the access/secret key set to the special value "cpf" i.e. use
    * the classpath properties file for credentials.
