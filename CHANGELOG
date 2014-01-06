@@ -1,4 +1,4 @@
-Version 0.8.12 (2014-01-XX)
+Version 0.8.12 (2014-01-07)
 ---------------------------
 Hadoop ETL: bumped to 0.3.6
 Hadoop ETL: bumped to SBT 0.13.0 (#404)
