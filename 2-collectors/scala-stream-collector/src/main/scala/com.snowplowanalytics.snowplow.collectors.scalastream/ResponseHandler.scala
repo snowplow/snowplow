@@ -35,7 +35,7 @@ class ResponseHandler(collectorConfig: CollectorConfig, kinesisBackend: KinesisB
   def cookie(queryParams: String, requestCookie: Option[HttpCookie],
       userAgent: Option[String], hostname: String, ip: String) = {
     // Use the same UUID if the request cookie contains `sp`.
-    val cookieUUID: String =
+    val networkUserId: String =
       if (requestCookie.isDefined) requestCookie.get.content
       else UUID.randomUUID.toString()
 
@@ -73,7 +73,7 @@ class ResponseHandler(collectorConfig: CollectorConfig, kinesisBackend: KinesisB
 
     // TODO: userId
 
-    event.collectorUserId = cookieUUID
+    event.networkUserId = networkUserId
 
     if (collectorConfig.backendEnabledEnum == collectorConfig.Backend.Kinesis) {
       // TODO: What should the key be?
@@ -84,7 +84,7 @@ class ResponseHandler(collectorConfig: CollectorConfig, kinesisBackend: KinesisB
 
     // Build the response.
     val responseCookie = HttpCookie(
-      "sp", cookieUUID,
+      "sp", networkUserId,
       expires=Some(DateTime.now+collectorConfig.cookieExpiration),
       domain=collectorConfig.cookieDomain
     )

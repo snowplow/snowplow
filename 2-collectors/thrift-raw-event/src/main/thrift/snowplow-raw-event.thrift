@@ -43,6 +43,5 @@ struct SnowplowRawEvent {
   50: optional string userAgent
   60: optional string refererUri
   70: optional list<string> headers
-  80: optional string userId
-  90: optional string collectorUserId
+  80: optional string networkUserId
 }

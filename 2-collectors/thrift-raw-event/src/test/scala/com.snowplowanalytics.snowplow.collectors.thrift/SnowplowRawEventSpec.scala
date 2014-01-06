@@ -66,14 +66,14 @@ object SnowplowRawEventSpec extends Properties("SnowplowRawEvent"){
   val f_userAgent_get: getFunc = _.getUserAgent
   val f_refererUri_set: setFunc = _.setRefererUri(_)
   val f_refererUri_get: getFunc = _.getRefererUri
-  val f_userId_set: setFunc = _.setUserId(_)
-  val f_userId_get: getFunc = _.getUserId
+  val f_networkUserId_set: setFunc = _.setNetworkUserId(_)
+  val f_networkUserId_get: getFunc = _.getNetworkUserId
   for (optionalVar <- List(
         ("hostname", f_hostname_set, f_hostname_get),
         ("ipAddress", f_ipAddress_set, f_ipAddress_get),
         ("userAgent", f_userAgent_set, f_userAgent_get),
         ("refererUri", f_refererUri_set, f_refererUri_get),
-        ("userId", f_userId_set, f_userId_get)
+        ("networkUserId", f_networkUserId_set, f_networkUserId_get)
       )) {
     property(optionalVar._1) = forAll { (value: String) =>
       val event = new SnowplowRawEvent(0L, null, "collector", "encoding")
