@@ -51,12 +51,13 @@ class ResponseHandler(collectorConfig: CollectorConfig, kinesisSink: KinesisSink
     val event = new SnowplowRawEvent(
       timestamp,
       payload,
-      s"${generated.Settings.shortName}-${generated.Settings.version}-${collectorConfig.sinkEnabled}",
-      "UTF-8" // TODO: should we extract the encoding from the queryParams?
+      collector = s"${generated.Settings.shortName}-${generated.Settings.version}-${collectorConfig.sinkEnabled}",
+      // TODO: should we extract the encoding from the queryParams?
+      encoding = "UTF-8",
+      ipAddress = ip
     )
 
     event.hostname = hostname
-    event.ipAddress = ip
     if (userAgent.isDefined) event.userAgent = userAgent.get
     // TODO: Not sure if the refererUri can be easily obtained.
     // event.refererUri = 
@@ -70,7 +71,7 @@ class ResponseHandler(collectorConfig: CollectorConfig, kinesisSink: KinesisSink
 
     if (collectorConfig.sinkEnabledEnum == collectorConfig.Sink.Kinesis) {
       // TODO: What should the key be?
-      kinesisSink.storeEvent(event, "key")
+      kinesisSink.storeEvent(event, ip)
     } else {
       StdoutSink.printEvent(event)
     }
