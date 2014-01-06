@@ -51,13 +51,8 @@ class ResponseHandler(collectorConfig: CollectorConfig, kinesisBackend: KinesisB
     val event = new SnowplowRawEvent(
       timestamp,
       payload,
-
-      // TODO: Should the collector name/version format be more
-      // strictly defined in the schema?
-      s"${generated.Settings.name}-${generated.Settings.version}",
-
-      // TODO: should we extract the encoding from the queryParams?
-      "UTF-8"
+      s"${generated.Settings.shortName}-${generated.Settings.version}-${collectorConfig.backendEnabled}",
+      "UTF-8" // TODO: should we extract the encoding from the queryParams?
     )
 
     event.hostname = hostname

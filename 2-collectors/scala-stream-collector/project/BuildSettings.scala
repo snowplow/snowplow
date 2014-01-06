@@ -22,7 +22,7 @@ object BuildSettings {
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "Snowplow Analytics Ltd",
     version               :=  "0.0.1",
-    description           :=  "TODO",
+    description           :=  "An event collector for Snowplow.",
     scalaVersion          :=  "2.10.1",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
                                   "-unchecked", "-feature"),
@@ -43,6 +43,7 @@ object BuildSettings {
       |  val organization = "$o"
       |  val version = "$v"
       |  val name = "$n"
+      |  val shortName = "ssc"
       |}
       |""".stripMargin)
     Seq(file)

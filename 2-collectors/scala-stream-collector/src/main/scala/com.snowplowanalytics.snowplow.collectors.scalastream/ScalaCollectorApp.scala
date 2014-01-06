@@ -69,7 +69,7 @@ class CollectorConfig(config: Config) {
   var cookieDomain = cookie.getOptionalString("domain")
 
   private val backend = collector.getConfig("backend")
-  private val backendEnabled = backend.getString("enabled")
+  val backendEnabled = backend.getString("enabled")
   var backendEnabledEnum = if (backendEnabled == "kinesis") Backend.Kinesis
     else if (backendEnabled == "stdout") Backend.Stdout
     else throw new RuntimeException("collector.backend.enabled must be 'kinesis' or 'stdout'.")
