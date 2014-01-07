@@ -1,3 +1,23 @@
+Version 0.8.12 (2014-01-07)
+---------------------------
+Hadoop ETL: bumped to 0.3.6
+Hadoop ETL: bumped to SBT 0.13.0 (#404)
+Hadoop ETL: bumped to using sbt-assembly 0.10.1 (#421)
+Hadoop ETL: bumped to Scala 2.10.3 (#423)
+Hadoop ETL: bumped to Scalding 0.8.11 (#422)
+Hadoop ETL: upgraded useragent utils to 1.11 & moved to Maven dependency (#416)
+Hadoop ETL: added test running back into sbt-assembly step (#420)
+Hadoop ETL: updated copyright messages to be Snowplow not SnowPlow, and to 2014 not 2013 (#419)
+Hadoop ETL: added ValidatedString as a type to package.scala (#328)
+Hadoop ETL: added missing validation to stringToJByte (#408)
+Hadoop ETL: missing page URI no longer interpreted as bad row (#399)
+Hadoop ETL: updated CfRegex to reflect Cfcs(Cookie) can be empty (#410)
+Hadoop ETL: numeric fields in tr_ and ti_ now parsed to doubles, not madeTsvSafe strings (#400)
+Hadoop ETL: moved ETL core into separate project scala-enrich-common (#417)
+Scala Common Enrich: updated ETL versioning to include host and common versions (#448)
+Postgres: bumped cube-pages.sql to 0.1.1
+Postgres: minor fix: cube_pages.complete referenced non-existent table cube_pages.basic, thanks @mrwalker! (#414)
+
 Version 0.8.11 (2013-10-22)
 ---------------------------
 Hadoop ETL: bumped to 0.3.5
