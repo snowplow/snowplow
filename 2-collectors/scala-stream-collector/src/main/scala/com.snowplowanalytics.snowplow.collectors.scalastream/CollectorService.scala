@@ -40,18 +40,21 @@ class CollectorService(collectorConfig: CollectorConfig, kinesisSink: KinesisSin
         parameterSeq { params =>
           optionalCookie("sp") { reqCookie =>
             optionalHeaderValueByName("User-Agent") { userAgent =>
-              headerValueByName("Raw-Request-URI") { rawRequest =>
-                hostName { host =>
-                  clientIP { ip =>
-                    requestInstance{ request =>
-                      complete(responseHandler.cookie(
-                        Uri(rawRequest).query.toString,
-                        reqCookie,
-                        userAgent,
-                        host,
-                        ip.toString,
-                        request
-                      ))
+              optionalHeaderValueByName("Referer") { refererURI =>
+                headerValueByName("Raw-Request-URI") { rawRequest =>
+                  hostName { host =>
+                    clientIP { ip =>
+                      requestInstance{ request =>
+                        complete(responseHandler.cookie(
+                          Uri(rawRequest).query.toString,
+                          reqCookie,
+                          userAgent,
+                          host,
+                          ip.toString,
+                          request,
+                          refererURI
+                        ))
+                      }
                     }
                   }
                 }

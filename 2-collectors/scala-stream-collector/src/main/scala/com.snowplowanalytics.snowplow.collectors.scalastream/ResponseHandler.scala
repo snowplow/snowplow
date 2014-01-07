@@ -37,7 +37,7 @@ class ResponseHandler(collectorConfig: CollectorConfig,
 
   def cookie(queryParams: String, requestCookie: Option[HttpCookie],
       userAgent: Option[String], hostname: String, ip: String,
-      request: HttpRequest) = {
+      request: HttpRequest, refererUri: Option[String]) = {
     // Use the same UUID if the request cookie contains `sp`.
     val networkUserId: String =
       if (requestCookie.isDefined) requestCookie.get.content
@@ -62,14 +62,11 @@ class ResponseHandler(collectorConfig: CollectorConfig,
 
     event.hostname = hostname
     if (userAgent.isDefined) event.userAgent = userAgent.get
-    // TODO: Not sure if the refererUri can be easily obtained.
-    // event.refererUri = 
-
+    if (refererUri.isDefined) event.refererUri = refererUri.get
     event.headers = request.headers.map { _.toString }
     event.networkUserId = networkUserId
 
     if (collectorConfig.sinkEnabledEnum == collectorConfig.Sink.Kinesis) {
-      // TODO: What should the key be?
       kinesisSink.storeEvent(event, ip)
     } else {
       StdoutSink.printEvent(event)
