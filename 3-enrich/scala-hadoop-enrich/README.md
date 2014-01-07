@@ -1,8 +1,8 @@
-# SnowPlow Hadoop ETL
+# Scala Hadoop Enrichment
 
 ## Introduction
 
-This is the SnowPlow ETL process implemented for Hadoop using [Scalding] [scalding]. The Hadoop ETL parses raw SnowPlow event logs, extracts the SnowPlow events, enriches them (e.g. with geo-location information) and then writes them out to SnowPlow-format event files.
+This is the Snowplow ETL process implemented for Hadoop using [Scalding] [scalding]. The Hadoop ETL parses raw SnowPlow event logs, extracts the SnowPlow events, enriches them (e.g. with geo-location information) and then writes them out to SnowPlow-format event files.
 
 The SnowPlow Hadoop ETL process is an alternative to the SnowPlow [Hive ETL] [hive-etl] process.
 
@@ -34,7 +34,7 @@ If you get errors reported in some tests, run those tests individually with `tes
 
 ## Copyright and license
 
-Copyright 2012-2013 SnowPlow Analytics Ltd.
+Copyright 2012-2014 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
