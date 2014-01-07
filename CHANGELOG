@@ -4,7 +4,7 @@ Version 0.8.14 (2014-01-XX)
 Scala Kinesis Enrich: added. Version 0.1.0 - TODO
 Scala Kinesis Enrich: Implement initial Kinesis-based enrichment (#460) - TODO
 Scala Common Enrich: bumped to 0.2.0
-Scala Common Enrich: added Thrift SnowplowRawEvent as a dependency to common-enrich (#475) - TODO
+Scala Common Enrich: added Thrift SnowplowRawEvent as a dependency to common-enrich (#475)
 Scala Common Enrich: added ability to read Thrift SnowplowRawEvent (Thrift) (#462) - TODO
 
 <Yali's 0.8.13>
