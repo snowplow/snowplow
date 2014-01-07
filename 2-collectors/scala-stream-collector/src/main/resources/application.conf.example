@@ -91,4 +91,7 @@ spray.can.server {
   # should be set. By default, this is disabled, and enabling it
   # adds the 'Remote-Address' header to every request automatically.
   remote-address-header = on
+
+  uri-parsing-mode = relaxed
+  raw-request-uri-header = on
 }

@@ -23,17 +23,21 @@ import sinks._
 import java.util.UUID
 import org.apache.commons.codec.binary.Base64
 //import org.slf4j.LoggerFactory
-import spray.http.{DateTime,HttpResponse,HttpEntity,HttpCookie}
+import spray.http.{DateTime,HttpRequest,HttpResponse,HttpEntity,HttpCookie}
 import spray.http.HttpHeaders.{`Set-Cookie`,RawHeader}
 import spray.http.MediaTypes.`image/gif`
 
 import com.typesafe.config.Config
 
-class ResponseHandler(collectorConfig: CollectorConfig, kinesisSink: KinesisSink) {
+import scala.collection.JavaConversions._
+
+class ResponseHandler(collectorConfig: CollectorConfig,
+    kinesisSink: KinesisSink) {
   val pixel = Base64.decodeBase64("R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==")
 
   def cookie(queryParams: String, requestCookie: Option[HttpCookie],
-      userAgent: Option[String], hostname: String, ip: String) = {
+      userAgent: Option[String], hostname: String, ip: String,
+      request: HttpRequest) = {
     // Use the same UUID if the request cookie contains `sp`.
     val networkUserId: String =
       if (requestCookie.isDefined) requestCookie.get.content
@@ -51,9 +55,8 @@ class ResponseHandler(collectorConfig: CollectorConfig, kinesisSink: KinesisSink
     val event = new SnowplowRawEvent(
       timestamp,
       payload,
-      collector = s"${generated.Settings.shortName}-${generated.Settings.version}-${collectorConfig.sinkEnabled}",
-      // TODO: should we extract the encoding from the queryParams?
-      encoding = "UTF-8",
+      s"${generated.Settings.shortName}-${generated.Settings.version}-${collectorConfig.sinkEnabled}",
+      "UTF-8", // TODO: should we extract the encoding from the queryParams?
       ipAddress = ip
     )
 
@@ -62,11 +65,7 @@ class ResponseHandler(collectorConfig: CollectorConfig, kinesisSink: KinesisSink
     // TODO: Not sure if the refererUri can be easily obtained.
     // event.refererUri = 
 
-    // TODO: Use something like:
-    // http://spray.io/documentation/1.1-SNAPSHOT/spray-routing/basic-directives/mapHttpResponseHeaders/
-    // to map the HttpResponseHeaders into a list.
-    // event.headers = 
-
+    event.headers = request.headers.map { _.toString }
     event.networkUserId = networkUserId
 
     if (collectorConfig.sinkEnabledEnum == collectorConfig.Sink.Kinesis) {

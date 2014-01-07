@@ -20,7 +20,7 @@ import akka.actor.Actor
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
-import spray.http.Timedout
+import spray.http.{Uri,Timedout,HttpRequest}
 import spray.routing.HttpService
 
 class CollectorService(collectorConfig: CollectorConfig, kinesisSink: KinesisSink) extends Actor with HttpService {
@@ -34,29 +34,26 @@ class CollectorService(collectorConfig: CollectorConfig, kinesisSink: KinesisSin
     case Timedout(_) => sender ! responseHandler.timeout
   }
 
-  private def paramString(param: (String, String)): String =
-    s"${param._1}=${param._2}"
-
   val collectorRoute = {
     get {
       path("i") {
         parameterSeq { params =>
           optionalCookie("sp") { reqCookie =>
             optionalHeaderValueByName("User-Agent") { userAgent =>
-              hostName { host =>
-                clientIP { ip =>
-                  // Reference: http://spray.io/documentation/1.2.0/spray-routing/parameter-directives/parameterSeq/#parameterseq
-                  // TODO: Reconstructing this string doesn't seem best,
-                  // but I can't find a better way, so I posted to the
-                  // spray mailing list, 2013.12.24.
-                  val paramsString = params.map(paramString).mkString("&")
-                  complete(responseHandler.cookie(
-                    paramsString,
-                    reqCookie,
-                    userAgent,
-                    host,
-                    ip.toString
-                  ))
+              headerValueByName("Raw-Request-URI") { rawRequest =>
+                hostName { host =>
+                  clientIP { ip =>
+                    requestInstance{ request =>
+                      complete(responseHandler.cookie(
+                        Uri(rawRequest).query.toString,
+                        reqCookie,
+                        userAgent,
+                        host,
+                        ip.toString,
+                        request
+                      ))
+                    }
+                  }
                 }
               }
             }
