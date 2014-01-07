@@ -1,0 +1,65 @@
+- connection: snowplow    # update with the name of the connection you created to your Snowplow data
+
+- scoping: true           # for backward compatibility
+- include: "*.lookml"     # include all the lookml files in the same directory as the model
+
+- base_view: events  
+  joins:
+  - join: visits
+    sql_on: |
+      events.domain_userid = visits.domain_userid AND
+      events.domain_sessionidx = visits.domain_sessionidx
+  - join: source
+    sql_on: | 
+      events.domain_userid = source.domain_userid AND
+      events.domain_sessionidx = source.domain_sessionidx
+  - join: geo
+    sql_on: | 
+      events.domain_userid = geo.domain_userid AND
+      events.domain_sessionidx = geo.domain_sessionidx
+  - join: landing_page
+    sql_on: | 
+      events.domain_userid = landing_page.domain_userid AND
+      events.domain_sessionidx = landing_page.domain_sessionidx
+  - join: last_page
+    sql_on: | 
+      events.domain_userid = last_page.domain_userid AND
+      events.domain_sessionidx = last_page.domain_sessionidx
+  - join: visitors
+    sql_foreign_key: events.domain_userid
+  - join: source_original
+    sql_foreign_key: events.domain_userid
+  - join: landing_page_original
+    sql_foreign_key: events.domain_userid
+    
+- base_view: visits
+  joins:
+  - join: visitors
+    sql_foreign_key: visits.domain_userid
+  - join: source
+    sql_on: | 
+      visits.domain_userid = source.domain_userid AND
+      visits.domain_sessionidx = source.domain_sessionidx
+  - join: geo
+    sql_on: | 
+      visits.domain_userid = geo.domain_userid AND
+      visits.domain_sessionidx = geo.domain_sessionidx
+  - join: landing_page
+    sql_on: | 
+      visits.domain_userid = landing_page.domain_userid AND
+      visits.domain_sessionidx = landing_page.domain_sessionidx
+  - join: last_page
+    sql_on: | 
+      visits.domain_userid = last_page.domain_userid AND
+      visits.domain_sessionidx = last_page.domain_sessionidx
+  - join: source_original
+    sql_foreign_key: visits.domain_userid
+  - join: landing_page_original
+    sql_foreign_key: visits.domain_userid
+
+- base_view: visitors
+  joins:
+  - join: source_original
+    sql_foreign_key: visitors.domain_userid
+  - join: landing_page_original
+    sql_foreign_key: visitors.domain_userid
