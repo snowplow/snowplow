@@ -4,18 +4,16 @@
 
 Looker is a next-generation BI tool that is particularly well suited to analyse Snowplow data.
 
-One of the great features about Looker is it boasts a lightweight metadata model where dimensions and metrics are defined in a set of YAML files. Looker makes the dimensions and metrics that are defined in the metadata model available to an analyst querying the data via its UI, and translates the different combinations of dimensions and metrics dragged / dropped on the UI into SQL to query the underlying Snowplow data.
-
 The metadata model included in this repo is a starting point to enable Snowplow users to get up and running quickly with Looker. It includes common dimensions and metrics that are likely to be useful to a broad range of Snowplow users e.g.
 
 * New vs returning visitor
 * Date / time a user first touched the website
 * Number of transactions, events, page views and page pings per visit and per visitor
 
-It should be straightforward for Snowplow users to build on this basic model to build:
+It should be straightforward for Snowplow users to build on this basic model to build e.g.:
 
-* Develop business-specific audience segments that make sense for the business
-* Recognise specific events on a user journey and join them together to form business-specific funnels
+* business-specific audience segments
+* recognise business-specific events on a user journey and join them together to form business-specific funnels
 * Develop business-specific metrics
 
 ## Contents
@@ -30,7 +28,7 @@ The contents of this folder are as follows:
 | Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
 |-----------------------------|-----------------------|--------------------------------------|
 | ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
-| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
+| _coming soon_               | [Setup Guide] [setup] | _coming soon_                        |
 
 ### Other useful resources
 
@@ -54,7 +52,7 @@ limitations under the License.
 [looker]: http://www.looker.com/
 [looker-intro-post]: http://snowplowanalytics.com/blog/2013/12/10/introducing-looker-a-fresh-approach-to-bi-on-snowplow-data/
 [license]: http://www.apache.org/licenses/LICENSE-2.0
-[setup]: https://github.com/snowplow/snowplow/wiki/setting-up-redshift
+[setup]: /snowplow/snowplow/wiki/Getting-started-with-Looker
 [techdocs]: https://github.com/snowplow/snowplow/wiki/amazon-redshift-storage
 [wiki]: https://github.com/snowplow/snowplow/wiki
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
