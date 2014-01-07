@@ -72,7 +72,6 @@ class ResponseHandler(collectorConfig: CollectorConfig,
       case _: `Remote-Address` | _: `Raw-Request-URI` => None
       case other => Some(other.toString)
     }
-    println(event.headers)
     event.networkUserId = networkUserId
 
     if (collectorConfig.sinkEnabledEnum == collectorConfig.Sink.Kinesis) {
