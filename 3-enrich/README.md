@@ -11,7 +11,7 @@ The **Enrich** process takes raw Snowplow events logged by a [Collector] [collec
 | ETL                             | Description                                                              | Status           |
 |---------------------------------|--------------------------------------------------------------------------|------------------|
 | [scala-hadoop-enrich] [e1] (1)  | The Snowplow Enrichment process built using Scalding for Apache Hadoop   | Production-ready |
-| [scala-kinesis-enrich] [e2]     | The Snowplow Enrichment process built as an Amazon Kinesis application   | Beta             |
+| [scala-kinesis-enrich] [e2] (2) | The Snowplow Enrichment process built as an Amazon Kinesis application   | Beta             |
 | [scala-common-enrich] [e3]      | A shared library for processing raw Snowplow events, used in (1) and (2) | Production-ready |
 | [emr-etl-runner] [e4]           | A Ruby app for running (1) on Amazon Elastic MapReduce                   | Production-ready |
 
