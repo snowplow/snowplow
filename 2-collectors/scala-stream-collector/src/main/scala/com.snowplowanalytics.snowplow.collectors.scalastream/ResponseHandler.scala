@@ -24,7 +24,12 @@ import java.util.UUID
 import org.apache.commons.codec.binary.Base64
 //import org.slf4j.LoggerFactory
 import spray.http.{DateTime,HttpRequest,HttpResponse,HttpEntity,HttpCookie}
-import spray.http.HttpHeaders.{`Set-Cookie`,RawHeader}
+import spray.http.HttpHeaders.{
+  `Set-Cookie`,
+  `Remote-Address`,
+  `Raw-Request-URI`,
+  RawHeader
+}
 import spray.http.MediaTypes.`image/gif`
 
 import com.typesafe.config.Config
@@ -56,14 +61,18 @@ class ResponseHandler(collectorConfig: CollectorConfig,
       timestamp,
       payload,
       s"${generated.Settings.shortName}-${generated.Settings.version}-${collectorConfig.sinkEnabled}",
-      "UTF-8", // TODO: should we extract the encoding from the queryParams?
-      ipAddress = ip
+      "UTF-8",
+      ip
     )
 
     event.hostname = hostname
     if (userAgent.isDefined) event.userAgent = userAgent.get
     if (refererUri.isDefined) event.refererUri = refererUri.get
-    event.headers = request.headers.map { _.toString }
+    event.headers = request.headers.flatMap {
+      case _: `Remote-Address` | _: `Raw-Request-URI` => None
+      case other => Some(other.toString)
+    }
+    println(event.headers)
     event.networkUserId = networkUserId
 
     if (collectorConfig.sinkEnabledEnum == collectorConfig.Sink.Kinesis) {
