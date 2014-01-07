@@ -57,7 +57,7 @@ collector {
   }
 
   cookie {
-    expiration = 365d
+    expiration = 365 days
     domain = "test-domain.com"
   }
 
