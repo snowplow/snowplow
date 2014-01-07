@@ -41,8 +41,7 @@ Next, start the enricher, making sure to specify your new config file:
 
 ## Copyright and license
 
-Copyright 2013-2014 Snowplow Analytics Ltd, with portions copyright
-2013 Amazon.com, Inc or its affiliates.
+Copyright 2014 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
