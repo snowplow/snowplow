@@ -13,9 +13,13 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.snowplow.collectors.scalastream
+package com.snowplowanalytics.snowplow.collectors
+package scalastream
 
-import com.snowplowanalytics.snowplow.collectors.scalastream.sinks._
+import sinks._
+
+// Akka.
+import akka.actor.{ActorSystem, Props}
 
 // specs2 and spray testing libraries.
 import org.specs2.matcher.AnyMatchers
@@ -25,28 +29,62 @@ import spray.testkit.Specs2RouteTest
 
 // Spray classes.
 import spray.http.{DateTime,HttpHeader,HttpCookie}
-import spray.http.HttpHeaders.{Cookie,`Set-Cookie`,`Remote-Address`}
+import spray.http.HttpHeaders.{
+  Cookie,
+  `Set-Cookie`,
+  `Remote-Address`,
+  `Raw-Request-URI`
+}
+
+// Config
+import com.typesafe.config.{ConfigFactory,Config,ConfigException}
 
 import scala.collection.mutable.MutableList
 
-import org.specs2.specification.Step
-
-// Trait allowing an entire Specification to be wrapped
-// with code executed before and after all tests have run.
-// http://stackoverflow.com/questions/16936811
-trait BeforeAllAfterAll extends Specification {
-  // see http://bit.ly/11I9kFM (specs2 User Guide)
-  override def map(fragments: =>Fragments) = 
-    Step(beforeAll) ^ fragments ^ Step(afterAll)
-
-  protected def beforeAll()
-  protected def afterAll()
-}
-
 // http://spray.io/documentation/1.2.0/spray-testkit/
 class CollectorServiceSpec extends Specification with Specs2RouteTest with
-     AnyMatchers with BeforeAllAfterAll {
-  def actorRefFactory = system
+     AnyMatchers {
+   val testConf: Config = ConfigFactory.parseString("""
+collector {
+  interface = "0.0.0.0"
+  port = 8080
+
+  production = true
+
+  p3p {
+    policyref = "/w3c/p3p.xml"
+    CP = "NOI DSP COR NID PSA OUR IND COM NAV STA"
+  }
+
+  cookie {
+    expiration = 365d
+    domain = "test-domain.com"
+  }
+
+  sink {
+    enabled = "stdout"
+
+    kinesis {
+      aws {
+        access-key: "cpf"
+        secret-key: "cpf"
+      }
+      stream {
+        name: "snowplow_collector_example"
+        size: 1
+      }
+    }
+  }
+}
+""")
+  val collectorConfig = new CollectorConfig(testConf)
+  val collectorService = new CollectorService(
+    collectorConfig,
+    null,
+    new ResponseHandler(collectorConfig, null),
+    system
+  )
+  val responseHandler = new ResponseHandler(collectorConfig, null)
 
   // By default, spray will always add Remote-Address to every request
   // when running with the `spray.can.server.remote-address-header`
@@ -55,36 +93,19 @@ class CollectorServiceSpec extends Specification with Specs2RouteTest with
   def CollectorGet(uri: String, cookie: Option[`HttpCookie`] = None,
       remoteAddr: String = "127.0.0.1") = {
     val headers: MutableList[HttpHeader] =
-      MutableList(`Remote-Address`(remoteAddr))
+      MutableList(`Remote-Address`(remoteAddr),`Raw-Request-URI`(uri))
     if (cookie.isDefined) headers += `Cookie`(cookie.get)
     Get(uri).withHeaders(headers.toList)
   }
 
-  def beforeAll() {
-    if (!KinesisSink.createAndLoadStream()) {
-      throw new RuntimeException("Unable to initialize Kinesis stream.")
-    }
-  }
-
-  def afterAll() {
-    KinesisSink.deleteStream()
-  }
-
-  // Don't run tests in parallel because KinesisSink
-  // is not thread safe (currently).
-  sequential
-
-  CollectorConfig.sinkEnabledEnum = CollectorConfig.Sink.Kinesis
-  CollectorConfig.cookieDomain = Some("testdomain.com")
-
   "Snowplow's Scala collector" should {
     "return an invisible pixel." in {
-      CollectorGet("/i") ~> collectorRoute ~> check {
-        responseAs[Array[Byte]] === Responses.pixel
+      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
+        responseAs[Array[Byte]] === responseHandler.pixel
       }
     }
     "return a cookie expiring at the correct time." in {
-      CollectorGet("/i") ~> collectorRoute ~> check {
+      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
         headers must not be empty
 
         val httpCookies: List[HttpCookie] = headers.collect {
@@ -99,17 +120,17 @@ class CollectorServiceSpec extends Specification with Specs2RouteTest with
 
         httpCookie.name must be("sp")
         httpCookie.domain must beSome
-        httpCookie.domain.get must be(CollectorConfig.cookieDomain.get)
+        httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
         httpCookie.expires must beSome
         val expiration = httpCookie.expires.get
-        val offset = expiration.clicks - CollectorConfig.cookieExpiration -
+        val offset = expiration.clicks - collectorConfig.cookieExpiration -
           DateTime.now.clicks
         offset.asInstanceOf[Int] must beCloseTo(0, 2000) // 1000 ms window.
       }
     }
     "return the same cookie as passed in." in {
       CollectorGet("/i", Some(HttpCookie("sp", "UUID_Test"))) ~>
-          collectorRoute ~> check {
+          collectorService.collectorRoute ~> check {
         val httpCookies: List[HttpCookie] = headers.collect {
           case `Set-Cookie`(hc) => hc
         }
@@ -122,7 +143,7 @@ class CollectorServiceSpec extends Specification with Specs2RouteTest with
       }
     }
     "return a P3P header." in {
-      CollectorGet("/i") ~> collectorRoute ~> check {
+      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
         print(headers)
         val p3pHeaders = headers.filter {
           h => h.name.equals("P3P")
@@ -130,8 +151,8 @@ class CollectorServiceSpec extends Specification with Specs2RouteTest with
         p3pHeaders.size must beEqualTo(1)
         val p3pHeader = p3pHeaders(0)
 
-        val policyRef = CollectorConfig.p3pPolicyRef
-        val CP = CollectorConfig.p3pCP
+        val policyRef = collectorConfig.p3pPolicyRef
+        val CP = collectorConfig.p3pCP
         p3pHeader.value must beEqualTo(
           s"""policyref="${policyRef}", CP="${CP}"""")
       }

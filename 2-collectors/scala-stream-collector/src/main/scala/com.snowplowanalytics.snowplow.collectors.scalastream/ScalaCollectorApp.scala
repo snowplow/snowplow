@@ -17,6 +17,7 @@ package com.snowplowanalytics.snowplow.collectors.scalastream
 
 import sinks._
 
+// Akka and Spray.
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO
 import spray.can.Http
@@ -130,7 +131,7 @@ object ScalaCollector extends App {
 
   // The handler actor replies to incoming HttpRequests.
   val handler = system.actorOf(
-    Props(classOf[CollectorService], collectorConfig, kinesisSink),
+    Props(classOf[CollectorServiceActor], collectorConfig, kinesisSink),
     name = "handler"
   )
 

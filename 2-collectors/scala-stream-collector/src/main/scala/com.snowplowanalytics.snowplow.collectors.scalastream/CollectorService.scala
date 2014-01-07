@@ -16,45 +16,61 @@
 package com.snowplowanalytics.snowplow.collectors.scalastream
 import sinks._
 
-import akka.actor.Actor
+import akka.actor.{Actor,ActorRefFactory}
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
 import spray.http.{Uri,Timedout,HttpRequest}
 import spray.routing.HttpService
 
-class CollectorService(collectorConfig: CollectorConfig, kinesisSink: KinesisSink) extends Actor with HttpService {
+class CollectorServiceActor(
+    collectorConfig: CollectorConfig,
+    kinesisSink: KinesisSink) extends Actor with HttpService {
   implicit val timeout: Timeout = 1.second // For the actor 'asks'
-  private def responseHandler = new ResponseHandler(collectorConfig, kinesisSink)
-
   def actorRefFactory = context
-  def receive = handleTimeouts orElse runRoute(collectorRoute)
+  private def responseHandler = new ResponseHandler(
+    collectorConfig,
+    kinesisSink
+  )
+  private val collectorService = new CollectorService(
+    collectorConfig,
+    kinesisSink,
+    responseHandler,
+    context
+  )
+
+  def receive = handleTimeouts orElse runRoute(collectorService.collectorRoute)
 
   def handleTimeouts: Receive = {
     case Timedout(_) => sender ! responseHandler.timeout
   }
+}
 
+class CollectorService(
+    collectorConfig: CollectorConfig,
+    kinesisSink: KinesisSink,
+    responseHandler: ResponseHandler,
+    context: ActorRefFactory) extends HttpService {
+  def actorRefFactory = context
   val collectorRoute = {
     get {
       path("i") {
-        parameterSeq { params =>
-          optionalCookie("sp") { reqCookie =>
-            optionalHeaderValueByName("User-Agent") { userAgent =>
-              optionalHeaderValueByName("Referer") { refererURI =>
-                headerValueByName("Raw-Request-URI") { rawRequest =>
-                  hostName { host =>
-                    clientIP { ip =>
-                      requestInstance{ request =>
-                        complete(responseHandler.cookie(
-                          Uri(rawRequest).query.toString,
-                          reqCookie,
-                          userAgent,
-                          host,
-                          ip.toString,
-                          request,
-                          refererURI
-                        ))
-                      }
+        optionalCookie("sp") { reqCookie =>
+          optionalHeaderValueByName("User-Agent") { userAgent =>
+            optionalHeaderValueByName("Referer") { refererURI =>
+              headerValueByName("Raw-Request-URI") { rawRequest =>
+                hostName { host =>
+                  clientIP { ip =>
+                    requestInstance{ request =>
+                      complete(responseHandler.cookie(
+                        Uri(rawRequest).query.toString,
+                        reqCookie,
+                        userAgent,
+                        host,
+                        ip.toString,
+                        request,
+                        refererURI
+                      ))
                     }
                   }
                 }
