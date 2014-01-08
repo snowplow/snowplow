@@ -14,7 +14,7 @@
 | [postgres-analytics] [e2] | Cubes and recipes for Snowplow events stored in Postgres        | Production-ready |
 | [redshift-analytics] [e3] | Cubes and recipes for Snowplow events stored in Amazon Redshift | Production-ready |
 
-**See also: [Snowplow Analytics Cookbook] [cookbook] on the website.**
+**See also: the [Snowplow Analytics Cookbook] [cookbook] on the website.**
 
 ## Documentation
 
