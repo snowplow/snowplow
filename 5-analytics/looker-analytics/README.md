@@ -1,4 +1,4 @@
-# Looker metadata model for Snowplow data
+# Looker Metadata Model for Snowplow
 
 ## Introduction
 
@@ -12,8 +12,8 @@ The metadata model included in this repo is a starting point to enable Snowplow 
 
 It should be straightforward for Snowplow users to build on this basic model to build e.g.:
 
-* business-specific audience segments
-* recognise business-specific events on a user journey and join them together to form business-specific funnels
+* Business-specific audience segments
+* Recognise business-specific events on a user journey and join them together to form business-specific funnels
 * Develop business-specific metrics
 
 ## Contents
@@ -35,10 +35,9 @@ The contents of this folder are as follows:
 * Blog post on [why Looker works so well with Snowplow] [looker-intro-post]
 * Recipes for analytics using Looker *(coming soon)*
 
-
 ## Copyright and license
 
-looker-analytics is copyright 2012-2013 Snowplow Analytics Ltd.
+Looker Metadata Model for Snowplow is copyright 2012-2013 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
