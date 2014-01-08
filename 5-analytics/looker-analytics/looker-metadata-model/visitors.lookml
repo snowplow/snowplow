@@ -12,7 +12,7 @@
       AND domain_userid <> ''
       GROUP BY 1
       
-    persist_for: 6 hour
+    persist_for: 3 hours
   
   fields:
   

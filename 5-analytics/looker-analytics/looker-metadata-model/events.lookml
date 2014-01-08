@@ -181,8 +181,6 @@
     sql: ${transaction_order_id}
     html: |
       <a href=events?fields=events.transaction_items_detail*&f[events.transaction_item_order_id]=<%= value%>>Transaction Items</a>
-    
-  
 
 # MEASURES #
 
@@ -299,8 +297,6 @@
     decimals: 2
     sql: ${approx_user_usage_in_minutes}/NULLIF(${visits_count}, 0)::REAL
 
-
-  
   - measure: transactions_value
     type: sum
     sql: ${transaction_value}

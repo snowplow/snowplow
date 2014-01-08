@@ -19,7 +19,7 @@
         WHERE rank_desc = 1                -- Filter so only return landing pages
         GROUP BY 1,2,3                     -- Remove duplicates (v. occasional case where two page views have exactly the same dvce_tstamp)
 
-    persist_for: 6 hour
+    persist_for: 3 hours
 
   fields:
     

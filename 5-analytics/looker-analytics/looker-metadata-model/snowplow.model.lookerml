@@ -1,4 +1,4 @@
-- connection: snowplow    # update with the name of the connection you created to your Snowplow data
+- connection: snowplow
 
 - scoping: true           # for backward compatibility
 - include: "*.lookml"     # include all the lookml files in the same directory as the model
@@ -56,6 +56,10 @@
     sql_foreign_key: visits.domain_userid
   - join: landing_page_original
     sql_foreign_key: visits.domain_userid
+  - join: transactions
+    sql_on: |
+      visits.domain_userid = transactions.domain_userid AND
+      visits.domain_sessionidx = transactions.domain_sessionidx
 
 - base_view: visitors
   joins:
@@ -63,3 +67,12 @@
     sql_foreign_key: visitors.domain_userid
   - join: landing_page_original
     sql_foreign_key: visitors.domain_userid
+  - join: transactions
+    sql_on: visitors.domain_userid = transactions.domain_userid
+    
+- base_view: transactions
+
+- base_view: transaction_items
+  joins:
+  - join: transactions
+    sql_foreign_key: transaction_items.ti_orderid

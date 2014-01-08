@@ -15,7 +15,7 @@
         AND domain_userid <> ''
       GROUP BY 1,2,3
     
-    persist_for: 6 hour
+    persist_for: 3 hours
     
 
   fields:
@@ -148,4 +148,5 @@
       - domain_sessionidx
       - occurred_time
       - time_on_site
+      - events_count
       - history

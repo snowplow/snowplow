@@ -13,7 +13,7 @@
       GROUP BY 1,2,3,4,5,5,6
       ORDER BY ti_orderid
     
-    persist_for: 6 hours
+    persist_for: 3 hours
     
   fields: 
     

@@ -21,7 +21,7 @@
         WHERE event = 'page_view') AS t
       GROUP BY 1,2,3,4,5,6,7; -- remove duplicates
 
-    persist_for: 6 hour
+    persist_for: 3 hours
 
   fields:
     
@@ -51,17 +51,6 @@
   - dimension: rank_desc
     type: int
     sql: rank_desc
-
-# Tried to get landing pages - now trying a different technique
-#  - dimension: landing_page_host
-#    sql: ${TABLE}.page_urlhost
-#    filters:
-#      rank_asc: 1
-#  
-#  - dimension: landing_page_path
-#    sql: ${TABLE}.page_urlpath
-#    filters:
-#      rank_asc: 1
     
   # MEASURES #
   
