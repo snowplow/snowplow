@@ -1,7 +1,7 @@
 Version 0.8.13 (2014-01-08)
 ---------------------------
-Analytics: created standard Snowplow data model for Looker BI (www.looker.com) (#472)
-
+Looker Analytics: added 0.1.0
+Looker Analytics: created Snowplow metadata model for Looker BI (www.looker.com) (#472)
 
 Version 0.8.12 (2014-01-07)
 ---------------------------
