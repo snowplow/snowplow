@@ -38,7 +38,7 @@ object Dependencies {
     // Scala
     val scalaz7          = "7.0.0"
     val argonaut         = "6.0"
-    val snowplowRawEvent = "0.3.0"
+    val snowplowRawEvent = "0.4.0"
     val scalaUtil        = "0.1.0"
     val refererParser    = "0.1.1"
     val maxmindGeoip     = "0.0.5"
@@ -46,6 +46,7 @@ object Dependencies {
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
     val scalaCheck       = "1.10.0"
+    val commonsCodec     = "1.5"
   }
 
   object Urls {
@@ -71,5 +72,6 @@ object Dependencies {
     val specs2           = "org.specs2"                 %% "specs2"                   % V.specs2       % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"            % V.scalazSpecs2 % "test"
     val scalaCheck       = "org.scalacheck"             %% "scalacheck"               % V.scalaCheck   % "test"
+    val commonsCodec = "commons-codec"                  % "commons-codec"             % V.commonsCodec % "test"
   }
 }
