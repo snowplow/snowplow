@@ -15,7 +15,7 @@ package inputs
 
 // Snowplow.
 import com.snowplowanalytics.snowplow.collectors.thrift.{
-  SnowplowEvent,
+  SnowplowRawEvent,
   TrackerPayload => ThriftTrackerPayload,
   PayloadProtocol,
   PayloadFormat
@@ -35,6 +35,9 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 // Thrift.
 import org.apache.thrift.TDeserializer
 
+// Java conversions.
+import scala.collection.JavaConversions._
+
 /**
  * Loader for Thrift SnowplowRawEvent objects.
  */
@@ -44,46 +47,52 @@ class ThriftLoader extends CollectorLoader {
   /**
    * Converts the source string into a MaybeCanonicalInput.
    *
-   * @param line A line of data to convert
+   * @param line A serialized Thrift object Byte array mapped to a String.
+   *   The method calling this should encode the serialized object
+   *   with `snowplowRawEventBytes.map(_.toChar)`.
+   *   Reference: http://stackoverflow.com/questions/5250324/
    * @return either a set of validation errors or an Option-boxed
    *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
    */
   def toCanonicalInput(line: String): ValidatedMaybeCanonicalInput = {
-    var snowplowEvent = new SnowplowEvent
+    var snowplowRawEvent = new SnowplowRawEvent
     try {
-      // TODO: Currently, Thrift events are stored as a byte array
-      // in Kinesis -- not as a Base64 string.
-      // Is this fine, or should we change to storing in a Base64 string
-      // so we're not passing a byte array as a string here?
-      thriftDeserializer.deserialize(snowplowEvent, line.getBytes)
+      thriftDeserializer.deserialize(
+        snowplowRawEvent,
+        line.toCharArray.map(_.toByte)
+      )
 
-      // TODO: Check isIceRequest.
+      val payload = TrackerPayload.extractGetPayload(
+        snowplowRawEvent.payload.data,
+        snowplowRawEvent.encoding
+      )
 
-      /*
-      TODO: Fill in and remove.
-      timestamp:  DateTime, // Collector timestamp
-      payload:    TrackerPayload, // See below for defn.
-      source:     InputSource,    // See below for defn.
-      encoding:   String, 
-      ipAddress:  Option[String],
-      userAgent:  Option[String],
-      refererUri: Option[String],
-      headers:    List[String],   // May be Nil so not a Nel
-      userId:     Option[String])
-      */
-      Some(
-        CanonicalInput(
-          null,
-          null,
-          null,
-          null,
-          None,
-          None,
-          None,
-          null,
-          None
+      // TODO: There's probably a better way to do this.
+      def getOptFromStr(s: String) = if (s == null) None else Some(s)
+      def getOptFromStrList(s: List[String]) = if (s == null) None else Some(s)
+
+      val ip = Some(snowplowRawEvent.ipAddress) // Required.
+      val hostname = getOptFromStr(snowplowRawEvent.hostname)
+      val userAgent = getOptFromStr(snowplowRawEvent.userAgent)
+      val refererUri = getOptFromStr(snowplowRawEvent.refererUri)
+      val headers = getOptFromStrList(snowplowRawEvent.headers)
+      val networkUserId = getOptFromStr(snowplowRawEvent.networkUserId)
+
+      (payload.toValidationNel) map { (p:NameValueNel) =>
+        Some(
+          CanonicalInput(
+            new DateTime(snowplowRawEvent.timestamp),
+            new NVGetPayload(p),
+            InputSource(snowplowRawEvent.collector, hostname),
+            snowplowRawEvent.encoding,
+            ip,
+            userAgent,
+            refererUri,
+            headers,
+            networkUserId
+          )
         )
-      ).success
+      }
     } catch {
       // TODO: Check for deserialization errors.
       case _: Throwable =>
