@@ -32,6 +32,10 @@
 
 [looker]: http://looker.com/
 
+[e1]: ./looker-analytics/
+[e2]: ./postgres-analytics/
+[e3]: ./redshift-analytics/
+
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
 [roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
