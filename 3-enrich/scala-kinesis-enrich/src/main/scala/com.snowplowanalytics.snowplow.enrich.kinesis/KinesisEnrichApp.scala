@@ -1,6 +1,5 @@
  /*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. with significant
- * portions copyright 2012-2014 Amazon.
+ * Copyright (c) 2013-2014 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -18,7 +17,7 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.kinesis.consumer
+package com.snowplowanalytics.snowplow.enrich.kinesis
 
 // Config
 import com.typesafe.config.{Config, ConfigFactory}
@@ -50,22 +49,37 @@ import com.amazonaws.services.kinesis.clientlibrary.lib.worker.{
 import com.amazonaws.services.kinesis.metrics.impl.NullMetricsFactory
 
 
-class KinesisConsumerConfig(config: Config) {
-  private val consumer = config.getConfig("consumer")
+class KinesisEnrichConfig(config: Config) {
+  private val enrich = config.getConfig("enrich")
 
-  private val aws = consumer.getConfig("aws")
+  private val aws = enrich.getConfig("aws")
   val accessKey = aws.getString("access-key")
   val secretKey = aws.getString("secret-key")
 
-  private val stream = consumer.getConfig("stream")
-  val appName = stream.getString("app-name")
-  val streamName = stream.getString("stream-name")
-  val initialPosition = stream.getString("initial-position")
-  val streamDataType = stream.getString("data-type")
-  val streamEndpoint = stream.getString("endpoint")
+  private val streams = enrich.getConfig("streams")
+  val appName = streams.getString("app-name")
+
+  private val inStreams = streams.getConfig("in")
+  val rawInStream = inStreams.getString("raw")
+
+  private val outStreams = streams.getConfig("out")
+  val enrichedOutStream = outStreams.getString("enriched")
+  val badOutStream = outStreams.getString("bad")
+
+  val initialPosition = streams.getString("initial-position")
+  val streamEndpoint = streams.getString("endpoint")
+
+  private val enrichments = enrich.getConfig("enrichments")
+  private val geo_ip = enrichments.getConfig("geo_ip")
+  val geo_ip_enabled = geo_ip.getBoolean("enabled")
+  val maxmind_file = geo_ip.getString("maxmind_file")
+
+  private val anon_ip = enrichments.getConfig("anon_ip")
+  val anon_ip_enabled = anon_ip.getBoolean("enabled")
+  val anon_octets = anon_ip.getInt("anon_octets")
 }
 
-object KinesisConsumerApp extends App {
+object KinesisEnrichApp extends App {
   val parser = new ArgotParser(
     programName = generated.Settings.name,
     compactUsage = true,
@@ -92,7 +106,7 @@ object KinesisConsumerApp extends App {
   }
 
   parser.parse(args)
-  val kinesisConsumerConfig = new KinesisConsumerConfig(
+  val kinesisEnrichConfig = new KinesisEnrichConfig(
     config.value.getOrElse(ConfigFactory.load("default"))
   )
 
@@ -101,24 +115,26 @@ object KinesisConsumerApp extends App {
   println("Using workerId: " + workerId)
 
   val kinesisCredentials = createKinesisCredentials(
-    kinesisConsumerConfig.accessKey,
-    kinesisConsumerConfig.secretKey
+    kinesisEnrichConfig.accessKey,
+    kinesisEnrichConfig.secretKey
   )
   val kinesisClientLibConfiguration = new KinesisClientLibConfiguration(
-    kinesisConsumerConfig.appName,
-    kinesisConsumerConfig.streamName, 
+    kinesisEnrichConfig.appName,
+    kinesisEnrichConfig.rawInStream, 
     kinesisCredentials,
     workerId
   ).withInitialPositionInStream(
-    InitialPositionInStream.valueOf(kinesisConsumerConfig.initialPosition)
+    InitialPositionInStream.valueOf(kinesisEnrichConfig.initialPosition)
   )
   
-  println(s"Running: ${kinesisConsumerConfig.appName}.")
-  println(s"Processing stream: ${kinesisConsumerConfig.streamName}")
+  println(s"Running: ${kinesisEnrichConfig.appName}.")
+  println(s"Processing raw input stream: ${kinesisEnrichConfig.rawInStream}")
   
-  val recordProcessorFactory = new RecordProcessorFactory(kinesisConsumerConfig)
+  val rawEventProcessorFactory = new RawEventProcessorFactory(
+    kinesisEnrichConfig
+  )
   val worker = new Worker(
-    recordProcessorFactory,
+    rawEventProcessorFactory,
     kinesisClientLibConfiguration,
     new NullMetricsFactory()
   )

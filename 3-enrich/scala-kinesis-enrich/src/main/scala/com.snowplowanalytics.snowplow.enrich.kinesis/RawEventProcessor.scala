@@ -1,6 +1,5 @@
  /*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. with significant
- * portions copyright 2012-2014 Amazon.
+ * Copyright (c) 2013-2014 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -18,10 +17,15 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.kinesis.consumer
+package com.snowplowanalytics.snowplow.enrich.kinesis
 
+// Snowplow events.
+import com.snowplowanalytics.snowplow.collectors.thrift._
+
+// Java.
 import java.util.List
 
+// Amazon.
 import com.amazonaws.services.kinesis.clientlibrary.exceptions.{
   InvalidStateException,
   ShutdownException,
@@ -29,18 +33,28 @@ import com.amazonaws.services.kinesis.clientlibrary.exceptions.{
 }
 import com.amazonaws.services.kinesis.clientlibrary.interfaces.{
   IRecordProcessor,
+  IRecordProcessorFactory,
   IRecordProcessorCheckpointer
 }
 import com.amazonaws.services.kinesis.clientlibrary.types.ShutdownReason
 import com.amazonaws.services.kinesis.model.Record
 
+// Scala.
 import scala.util.control.Breaks._
 import scala.collection.JavaConversions._
 
 // Thrift.
 import org.apache.thrift.TDeserializer
 
-class RecordProcessor(config: KinesisConsumerConfig)
+class RawEventProcessorFactory(config: KinesisEnrichConfig)
+    extends IRecordProcessorFactory {
+  @Override
+  def createProcessor: IRecordProcessor = {
+    return new RawEventProcessor(config);
+  }
+}
+
+class RawEventProcessor(config: KinesisEnrichConfig)
     extends IRecordProcessor {
   private val thriftDeserializer = new TDeserializer()
 
@@ -58,12 +72,6 @@ class RecordProcessor(config: KinesisConsumerConfig)
     this.kinesisShardId = shardId
   }
 
-  private val printData: (Array[Byte] => Unit) =
-    if (config.streamDataType == "string") printDataString
-    else if (config.streamDataType == "thrift") printDataThrift
-    else throw new RuntimeException(
-        "data-type configuration must be 'string' or 'thrift'.")
-
   @Override
   def processRecords(records: List[Record],
       checkpointer: IRecordProcessorCheckpointer) = {
@@ -77,27 +85,25 @@ class RecordProcessor(config: KinesisConsumerConfig)
     }
   }
 
+  private def enrichEvent(binaryData: Array[Byte]) = {
+    val rawEvent = new SnowplowRawEvent
+    thriftDeserializer.deserialize(rawEvent, binaryData)
+    // TODO: Enrich event.
+    // TODO: Store into enrichedOutStream.
+  }
+
   private def processRecordsWithRetries(records: List[Record]) = {
     for (record <- records) {
       try {
         println(s"Sequence number: ${record.getSequenceNumber}")
-        printData(record.getData.array)
         println(s"Partition key: ${record.getPartitionKey}")
+        enrichEvent(record.getData.array)
       } catch {
         case t: Throwable =>
           println(s"Caught throwable while processing record $record")
           println(t)
       }
     }
-  }
-
-  private def printDataString(data: Array[Byte]) =
-    println("data: " + new String(data))
-
-  private def printDataThrift(data: Array[Byte]) = {
-    var deserializedData: generated.StreamData = new generated.StreamData()
-    thriftDeserializer.deserialize(deserializedData, data)
-    println("data: " + deserializedData.toString)
   }
 
   @Override
@@ -111,25 +117,27 @@ class RecordProcessor(config: KinesisConsumerConfig)
     
   private def checkpoint(checkpointer: IRecordProcessorCheckpointer) = {
     println(s"Checkpointing shard $kinesisShardId")
-    breakable { for (i <- 0 to NUM_RETRIES-1) {
-      try {
-        checkpointer.checkpoint()
-        break
-      } catch {
-        case se: ShutdownException =>
-          println("Caught shutdown exception, skipping checkpoint.", se)
-        case e: ThrottlingException =>
-          if (i >= (NUM_RETRIES - 1)) {
-            println(s"Checkpoint failed after ${i+1} attempts.", e)
-          } else {
-            println(s"Transient issue when checkpointing - attempt ${i+1} of "
-              + NUM_RETRIES, e)
-          }
-        case e: InvalidStateException =>
-          println("Cannot save checkpoint to the DynamoDB table used by " +
-            "the Amazon Kinesis Client Library.", e)
+    breakable {
+      for (i <- 0 to NUM_RETRIES-1) {
+        try {
+          checkpointer.checkpoint()
+          break
+        } catch {
+          case se: ShutdownException =>
+            println("Caught shutdown exception, skipping checkpoint.", se)
+          case e: ThrottlingException =>
+            if (i >= (NUM_RETRIES - 1)) {
+              println(s"Checkpoint failed after ${i+1} attempts.", e)
+            } else {
+              println(s"Transient issue when checkpointing - attempt ${i+1} of "
+                + NUM_RETRIES, e)
+            }
+          case e: InvalidStateException =>
+            println("Cannot save checkpoint to the DynamoDB table used by " +
+              "the Amazon Kinesis Client Library.", e)
+        }
+        Thread.sleep(BACKOFF_TIME_IN_MILLIS)
       }
-      Thread.sleep(BACKOFF_TIME_IN_MILLIS)
     }
-  } }
+  }
 }
