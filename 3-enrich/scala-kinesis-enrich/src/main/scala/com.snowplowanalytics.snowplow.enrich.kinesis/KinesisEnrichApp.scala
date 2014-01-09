@@ -70,13 +70,13 @@ class KinesisEnrichConfig(config: Config) {
   val streamEndpoint = streams.getString("endpoint")
 
   private val enrichments = enrich.getConfig("enrichments")
-  private val geo_ip = enrichments.getConfig("geo_ip")
-  val geo_ip_enabled = geo_ip.getBoolean("enabled")
-  val maxmind_file = geo_ip.getString("maxmind_file")
+  private val geoIp = enrichments.getConfig("geo_ip")
+  val geoIpEnabled = geoIp.getBoolean("enabled")
+  val maxmindFile = geoIp.getString("maxmind_file")
 
-  private val anon_ip = enrichments.getConfig("anon_ip")
-  val anon_ip_enabled = anon_ip.getBoolean("enabled")
-  val anon_octets = anon_ip.getInt("anon_octets")
+  private val anonIp = enrichments.getConfig("anon_ip")
+  val anonIpEnabled = anonIp.getBoolean("enabled")
+  val anonOctets = anonIp.getInt("anon_octets")
 }
 
 object KinesisEnrichApp extends App {
