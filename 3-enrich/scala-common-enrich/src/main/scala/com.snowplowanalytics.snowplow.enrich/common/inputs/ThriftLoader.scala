@@ -75,6 +75,10 @@ class ThriftLoader extends CollectorLoader {
       val refererUri = getOptFromStr(snowplowRawEvent.refererUri)
       val networkUserId = getOptFromStr(snowplowRawEvent.networkUserId)
 
+      def getScalaList(s: java.util.List[String]): List[String] =
+        if (s == null) null else s.toList
+      val headers = getScalaList(snowplowRawEvent.headers)
+
       (payload.toValidationNel) map { (p:NameValueNel) =>
         Some(
           CanonicalInput(
@@ -85,7 +89,7 @@ class ThriftLoader extends CollectorLoader {
             ip,
             userAgent,
             refererUri,
-            snowplowRawEvent.headers.toList,
+            headers,
             networkUserId
           )
         )
