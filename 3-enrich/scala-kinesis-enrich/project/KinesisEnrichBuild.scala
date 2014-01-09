@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object KinesisExampleScalaConsumerBuild extends Build {
+object KinesisEnrichBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -24,7 +24,7 @@ object KinesisExampleScalaConsumerBuild extends Build {
   }
 
   // Define our project, with basic project information and library dependencies
-  lazy val project = Project("kinesis-example-scala-consumer", file("."))
+  lazy val project = Project("scala-kinesis-enrich", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
@@ -35,6 +35,7 @@ object KinesisExampleScalaConsumerBuild extends Build {
         Libraries.argot,
         Libraries.config,
         Libraries.scalaUtil,
+        Libraries.snowplowRawEvent,
         Libraries.scalazon,
         Libraries.specs2,
         Libraries.commonsLang3,

@@ -30,7 +30,7 @@ object BuildSettings {
   // Makes our SBT app settings available from within the app
   lazy val scalifySettings = Seq(sourceGenerators in Compile <+= (sourceManaged in Compile, version, name, organization) map { (d, v, n, o) =>
     val file = d / "settings.scala"
-    IO.write(file, """package com.snowplowanalytics.kinesis.consumer.generated
+    IO.write(file, """package com.snowplowanalytics.snowplow.enrich.kinesis.generated
       |object Settings {
       |  val organization = "%s"
       |  val version = "%s"

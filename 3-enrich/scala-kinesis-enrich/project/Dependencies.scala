@@ -36,6 +36,7 @@ object Dependencies {
     val argot      = "1.0.1"
     val config     = "1.0.2"
     val scalaUtil  = "0.1.0"
+    val snowplowRawEvent = "0.4.0"
     val scalazon   = "0.5"
     // Scala (test only)
     val specs2     = "2.3.4"
@@ -58,6 +59,7 @@ object Dependencies {
     val argot       = "org.clapper"                %% "argot"           % V.argot
     val config      = "com.typesafe"               %  "config"          % V.config
     val scalaUtil   = "com.snowplowanalytics"      %  "scala-util"      % V.scalaUtil
+    val snowplowRawEvent = "com.snowplowanalytics"      % "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val scalazon    = "io.github.cloudify"         %% "scalazon"        % V.scalazon
     // Scala (test only)
     val specs2      = "org.specs2"                 %% "specs2"          % V.specs2     % "test"
