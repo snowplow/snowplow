@@ -69,13 +69,10 @@ class ThriftLoader extends CollectorLoader {
 
       // TODO: There's probably a better way to do this.
       def getOptFromStr(s: String) = if (s == null) None else Some(s)
-      def getOptFromStrList(s: List[String]) = if (s == null) None else Some(s)
-
       val ip = Some(snowplowRawEvent.ipAddress) // Required.
       val hostname = getOptFromStr(snowplowRawEvent.hostname)
       val userAgent = getOptFromStr(snowplowRawEvent.userAgent)
       val refererUri = getOptFromStr(snowplowRawEvent.refererUri)
-      val headers = getOptFromStrList(snowplowRawEvent.headers)
       val networkUserId = getOptFromStr(snowplowRawEvent.networkUserId)
 
       (payload.toValidationNel) map { (p:NameValueNel) =>
@@ -88,7 +85,7 @@ class ThriftLoader extends CollectorLoader {
             ip,
             userAgent,
             refererUri,
-            headers,
+            snowplowRawEvent.headers.toList,
             networkUserId
           )
         )
