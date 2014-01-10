@@ -41,15 +41,15 @@ class ThriftLoaderSpec extends Specification {
 
   private val thriftLoader = new ThriftLoader
 
-  "Thrift SnowplowRawEvent objects" should {
-    val enrichedEvent = thriftLoader.toCanonicalInput(
+  "Thrift SnowplowRawEvent canonical objects" should {
+    val canonicalEvent = thriftLoader.toCanonicalInput(
       new String(snowplowRawEventBytes.map(_.toChar))
     ).toOption.get.get
     "correctly load original parameters" in {
-      enrichedEvent.timestamp must beEqualTo(
+      canonicalEvent.timestamp must beEqualTo(
         new DateTime(snowplowRawEvent.timestamp)
       )
-      enrichedEvent.encoding must beEqualTo(snowplowRawEvent.encoding)
+      canonicalEvent.encoding must beEqualTo(snowplowRawEvent.encoding)
     }
   }
 }
