@@ -36,6 +36,7 @@ object SnowplowKinesisEnrichBuild extends Build {
         Libraries.config,
         Libraries.scalaUtil,
         Libraries.snowplowRawEvent,
+        Libraries.snowplowCommonEnrich,
         Libraries.scalazon,
         Libraries.specs2,
         Libraries.commonsLang3,
