@@ -17,10 +17,15 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.snowplow.enrich.kinesis
+package com.snowplowanalytics.snowplow
+package enrich.kinesis
 
-// Snowplow events.
-import com.snowplowanalytics.snowplow.collectors.thrift._
+// Snowplow events and enrichment.
+import collectors.thrift._
+import enrich.common.inputs.{CanonicalInput,ThriftLoader}
+import enrich.common.MaybeCanonicalInput
+import enrich.common.outputs.CanonicalOutput
+import enrich.common.enrichments.EnrichmentManager
 
 // Java.
 import java.util.List
@@ -46,17 +51,18 @@ import scala.collection.JavaConversions._
 // Thrift.
 import org.apache.thrift.TDeserializer
 
-class RawEventProcessorFactory(config: KinesisEnrichConfig)
-    extends IRecordProcessorFactory {
+class RawEventProcessorFactory(config: KinesisEnrichConfig,
+    kinesisEnrichedSink: KinesisSink) extends IRecordProcessorFactory {
   @Override
   def createProcessor: IRecordProcessor = {
-    return new RawEventProcessor(config);
+    return new RawEventProcessor(config, kinesisEnrichedSink);
   }
 }
 
-class RawEventProcessor(config: KinesisEnrichConfig)
-    extends IRecordProcessor {
+class RawEventProcessor(config: KinesisEnrichConfig,
+    kinesisEnrichedSink: KinesisSink) extends IRecordProcessor {
   private val thriftDeserializer = new TDeserializer()
+  private val thriftLoader = new ThriftLoader()
 
   private var kinesisShardId: String = _
   private var nextCheckpointTimeInMillis: Long = _
@@ -86,10 +92,29 @@ class RawEventProcessor(config: KinesisEnrichConfig)
   }
 
   private def enrichEvent(binaryData: Array[Byte]) = {
-    val rawEvent = new SnowplowRawEvent
-    thriftDeserializer.deserialize(rawEvent, binaryData)
-    // TODO: Enrich event.
-    // TODO: Store into enrichedOutStream.
+    val canonicalInput = thriftLoader.toCanonicalInput(
+      new String(binaryData.map(_.toChar))
+    )
+
+    (canonicalInput.toValidationNel) map { (ci: MaybeCanonicalInput) =>
+      if (ci.isDefined) {
+        val canonicalOutput = EnrichmentManager.enrichEvent(
+          null, // TODO: geo
+          null, // TODO: hostEtlVersion
+          null, // TODO: anonQuartets
+          ci.get
+        )
+        (canonicalOutput.toValidationNel) map { (co: CanonicalOutput) =>
+          kinesisEnrichedSink.storeEnrichedEvent(
+            new Array[Byte](2), // TODO
+            co.user_ipaddress
+          )
+        }
+      } else {
+        // TODO: Store bad event if canonical input is None.
+      }
+      // TODO: Store bad event if canonical input not validated.
+    }
   }
 
   private def processRecordsWithRetries(records: List[Record]) = {

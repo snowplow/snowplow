@@ -64,7 +64,9 @@ class KinesisEnrichConfig(config: Config) {
 
   private val outStreams = streams.getConfig("out")
   val enrichedOutStream = outStreams.getString("enriched")
+  val enrichedOutStreamShards = outStreams.getInt("enriched_shards")
   val badOutStream = outStreams.getString("bad")
+  val badOutStreamShards = outStreams.getInt("bad_shards")
 
   val initialPosition = streams.getString("initial-position")
   val streamEndpoint = streams.getString("endpoint")
@@ -114,14 +116,14 @@ object KinesisEnrichApp extends App {
     ":" + UUID.randomUUID()
   println("Using workerId: " + workerId)
 
-  val kinesisCredentials = createKinesisCredentials(
+  val kinesisProvider = createKinesisProvider(
     kinesisEnrichConfig.accessKey,
     kinesisEnrichConfig.secretKey
   )
   val kinesisClientLibConfiguration = new KinesisClientLibConfiguration(
     kinesisEnrichConfig.appName,
     kinesisEnrichConfig.rawInStream, 
-    kinesisCredentials,
+    kinesisProvider,
     workerId
   ).withInitialPositionInStream(
     InitialPositionInStream.valueOf(kinesisEnrichConfig.initialPosition)
@@ -129,9 +131,21 @@ object KinesisEnrichApp extends App {
   
   println(s"Running: ${kinesisEnrichConfig.appName}.")
   println(s"Processing raw input stream: ${kinesisEnrichConfig.rawInStream}")
+
+  val kinesisEnrichedSink = new KinesisSink(kinesisProvider)
+  val successful = kinesisEnrichedSink.createAndLoadStream(
+    kinesisEnrichConfig.enrichedOutStream,
+    kinesisEnrichConfig.enrichedOutStreamShards
+  )
+  if (!successful) {
+    error("Error initializing or connecting to the stream.")
+    sys.exit(-1)
+  }
+
   
   val rawEventProcessorFactory = new RawEventProcessorFactory(
-    kinesisEnrichConfig
+    kinesisEnrichConfig,
+    kinesisEnrichedSink
   )
   val worker = new Worker(
     rawEventProcessorFactory,
@@ -141,7 +155,7 @@ object KinesisEnrichApp extends App {
 
   worker.run()
 
-  private def createKinesisCredentials(accessKey: String, secretKey: String):
+  private def createKinesisProvider(accessKey: String, secretKey: String):
       AWSCredentialsProvider =
     if (isCpf(accessKey) && isCpf(secretKey)) {
         new ClasspathPropertiesFileCredentialsProvider()
