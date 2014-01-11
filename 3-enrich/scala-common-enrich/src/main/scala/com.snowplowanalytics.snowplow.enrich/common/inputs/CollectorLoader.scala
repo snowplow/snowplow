@@ -35,9 +35,10 @@ object CollectorLoader {
    *         an an error message, boxed
    *         in a Scalaz Validation
    */
-  def getLoader(collector: String): Validation[String, CollectorLoader] = collector match {
+  def getLoader(collectorOrProtocol: String): Validation[String, CollectorLoader] = collectorOrProtocol match {
     case "cloudfront" => CloudFrontLoader.success
     case "clj-tomcat" => CljTomcatLoader.success
+    case "thrift-raw" => ThriftLoader.success // Finally - a data protocol rather than a piece of software
     case  c           => "[%s] is not a recognised Snowplow event collector".format(c).fail
   }
 }
