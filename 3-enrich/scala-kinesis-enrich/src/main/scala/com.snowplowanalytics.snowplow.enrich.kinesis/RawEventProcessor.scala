@@ -104,7 +104,7 @@ class RawEventProcessor(config: KinesisEnrichConfig,
   private def tabSeparateCanonicalOutput(output: CanonicalOutput): String = {
     output.getClass.getDeclaredFields.map{ field =>
       field.setAccessible(true)
-      field.getName + "\t" + field.get(output)
+      field.get(output)
     }.mkString("\t")
   }
 
