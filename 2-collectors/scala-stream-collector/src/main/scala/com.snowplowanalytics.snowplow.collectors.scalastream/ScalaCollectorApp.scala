@@ -104,7 +104,7 @@ object ScalaCollector extends App {
   // Optional config argument
   val config = parser.option[Config](List("config"),
                                      "filename",
-                                     "Configuration file. Defaults to \"resources/default.conf\" (within .jar) if not set") {
+                                     "Configuration file. Defaults to \"resources/application.conf\" (within .jar) if not set") {
     (c, opt) =>
 
       val file = new File(c)
