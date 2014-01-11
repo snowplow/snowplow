@@ -214,7 +214,7 @@ trait CloudfrontLikeLoader extends CollectorLoader {
    *         or an error String, all wrapped in
    *         a Scalaz Validation
    */
-  private def toTimestamp(date: String, time: String): Validation[String, DateTime] =
+  private[inputs] def toTimestamp(date: String, time: String): Validation[String, DateTime] =
     try {
       DateTime.parse("%sT%s+00:00".format(date, time)).success // Construct a UTC ISO date from CloudFront date and time
     } catch {
@@ -230,7 +230,7 @@ trait CloudfrontLikeLoader extends CollectorLoader {
    *         an error, all wrapped in a
    *         Scalaz Validation
    */
-  private def toGetPayload(querystring: String): ValidatedNameValueNel = toOption(querystring) match {
+  private[inputs] def toGetPayload(querystring: String): ValidatedNameValueNel = toOption(querystring) match {
     case Some(qs) => TrackerPayload.extractGetPayload(qs, CfEncoding)
     case None => "Querystring is empty, cannot extract GET payload".fail
   }
@@ -243,7 +243,7 @@ trait CloudfrontLikeLoader extends CollectorLoader {
    * @param field The field to check
    * @return True if the String was a hyphen "-"
    */
-  private def toOption(field: String): Option[String] = Option(field) match {
+  private[inputs] def toOption(field: String): Option[String] = Option(field) match {
     case Some("-") => None
     case Some("")  => None
     case s => s // Leaves any other Some(x) or None as-is
@@ -261,7 +261,7 @@ trait CloudfrontLikeLoader extends CollectorLoader {
    * @param s The String to clean
    * @return the cleaned string
    */
-  private def toCleanUri(uri: String): String = 
+  private[inputs] def toCleanUri(uri: String): String = 
     StringUtils.removeEnd(uri, "%")
 
   /**
