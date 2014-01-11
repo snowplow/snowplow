@@ -32,7 +32,7 @@ import enrich.common.inputs._ // TODO: Remove
 import enrich.common.MaybeCanonicalInput
 import enrich.common.outputs.CanonicalOutput
 import enrich.common.enrichments.EnrichmentManager
-import enrich.common.enrichments.PrivacyEnrichments.AnonQuartets
+import enrich.common.enrichments.PrivacyEnrichments.AnonOctets
 
 // Scala MaxMind GeoIP
 import com.snowplowanalytics.maxmind.geoip.IpGeo
@@ -120,16 +120,16 @@ class RawEventProcessor(config: KinesisEnrichConfig,
           memCache = false,
           lruCache = 20000
         )
-        val anonQuartets =
-          if (!config.anonIpEnabled || config.anonQuartets == 0) {
-            AnonQuartets.None
+        val anonOctets =
+          if (!config.anonIpEnabled || config.anonOctets == 0) {
+            AnonOctets.None
           } else {
-            AnonQuartets(config.anonQuartets)
+            AnonOctets(config.anonOctets)
           }
         val canonicalOutput = EnrichmentManager.enrichEvent(
           ipGeo,
           s"kinesis-${generated.Settings.version}",
-          anonQuartets,
+          anonOctets,
           ci.get
         )
         (canonicalOutput.toValidationNel) map { (co: CanonicalOutput) =>

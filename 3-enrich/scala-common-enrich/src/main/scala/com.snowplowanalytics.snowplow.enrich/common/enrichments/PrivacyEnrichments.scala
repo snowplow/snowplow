@@ -26,9 +26,9 @@ object PrivacyEnrichments {
   /**
    * How many quartets to anonymize?
    */
-  object AnonQuartets extends Enumeration {
+  object AnonOctets extends Enumeration {
 
-    type AnonQuartets = Value
+    type AnonOctets = Value
     
     val None  = Value(0, "0")
     val One   = Value(1, "1")
@@ -59,8 +59,8 @@ object PrivacyEnrichments {
    *        to anonymize
    * @return the anonymized IP address
    */
-  import AnonQuartets._
-  def anonymizeIp(ip: String, quartets: AnonQuartets): String =
+  import AnonOctets._
+  def anonymizeIp(ip: String, quartets: AnonOctets): String =
     Option(ip).map(_.split("\\.").zipWithIndex.map{
       case (q, i) => {
         if (quartets.id >= All.id - i) "x" else q
