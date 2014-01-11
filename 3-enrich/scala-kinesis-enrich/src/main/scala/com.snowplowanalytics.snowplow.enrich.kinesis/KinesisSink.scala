@@ -157,7 +157,7 @@ class KinesisSink(provider: AWSCredentialsProvider) {
   }
 
   def storeEnrichedEvent(rawEvent: Array[Byte], key: String): PutResult = {
-    //info(s"Writing Thrift record to Kinesis: ${event.toString}")
+    //info(s"Writing Thrift record to Kinesis: ${new String(rawEvent)}")
     val result = writeRecord(
       data = ByteBuffer.wrap(rawEvent),
       key = key

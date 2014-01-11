@@ -21,14 +21,25 @@ package com.snowplowanalytics.snowplow
 package enrich.kinesis
 
 // Snowplow events and enrichment.
-import collectors.thrift._
-import enrich.common.inputs.{CanonicalInput,ThriftLoader}
+import com.snowplowanalytics.snowplow.collectors.thrift.{
+  SnowplowRawEvent,
+  TrackerPayload => ThriftTrackerPayload,
+  PayloadProtocol,
+  PayloadFormat
+}
+//import enrich.common.inputs.{CanonicalInput,ThriftLoader}
+import enrich.common.inputs._ // TODO: Remove
 import enrich.common.MaybeCanonicalInput
 import enrich.common.outputs.CanonicalOutput
 import enrich.common.enrichments.EnrichmentManager
+import enrich.common.enrichments.PrivacyEnrichments.AnonQuartets
+
+// Scala MaxMind GeoIP
+import com.snowplowanalytics.maxmind.geoip.IpGeo
 
 // Java.
 import java.util.List
+import java.nio.ByteBuffer
 
 // Amazon.
 import com.amazonaws.services.kinesis.clientlibrary.exceptions.{
@@ -91,6 +102,13 @@ class RawEventProcessor(config: KinesisEnrichConfig,
     }
   }
 
+  private def tabSeparateCanonicalOutput(output: CanonicalOutput): String = {
+    output.getClass.getDeclaredFields.map{ field =>
+      field.setAccessible(true)
+      field.getName + "\t" + field.get(output)
+    }.mkString("\t")
+  }
+
   private def enrichEvent(binaryData: Array[Byte]) = {
     val canonicalInput = thriftLoader.toCanonicalInput(
       new String(binaryData.map(_.toChar))
@@ -98,15 +116,26 @@ class RawEventProcessor(config: KinesisEnrichConfig,
 
     (canonicalInput.toValidationNel) map { (ci: MaybeCanonicalInput) =>
       if (ci.isDefined) {
+        val ipGeo = new IpGeo(
+          dbFile = config.maxmindFile,
+          memCache = false,
+          lruCache = 20000
+        )
+        val anonQuartets =
+          if (!config.anonIpEnabled || config.anonQuartets == 0) {
+            AnonQuartets.None
+          } else {
+            AnonQuartets(config.anonQuartets)
+          }
         val canonicalOutput = EnrichmentManager.enrichEvent(
-          null, // TODO: geo
-          null, // TODO: hostEtlVersion
-          null, // TODO: anonQuartets
+          ipGeo,
+          s"kinesis-${generated.Settings.version}",
+          anonQuartets,
           ci.get
         )
         (canonicalOutput.toValidationNel) map { (co: CanonicalOutput) =>
           kinesisEnrichedSink.storeEnrichedEvent(
-            new Array[Byte](2), // TODO
+            tabSeparateCanonicalOutput(co).getBytes,
             co.user_ipaddress
           )
           // TODO: Store bad event if canonical output not validated.

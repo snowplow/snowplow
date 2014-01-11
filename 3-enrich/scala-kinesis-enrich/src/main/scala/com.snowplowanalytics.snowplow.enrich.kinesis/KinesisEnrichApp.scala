@@ -74,11 +74,11 @@ class KinesisEnrichConfig(config: Config) {
   private val enrichments = enrich.getConfig("enrichments")
   private val geoIp = enrichments.getConfig("geo_ip")
   val geoIpEnabled = geoIp.getBoolean("enabled")
-  val maxmindFile = geoIp.getString("maxmind_file")
+  val maxmindFile = new File(geoIp.getString("maxmind_file"))
 
   private val anonIp = enrichments.getConfig("anon_ip")
   val anonIpEnabled = anonIp.getBoolean("enabled")
-  val anonOctets = anonIp.getInt("anon_octets")
+  val anonQuartets = anonIp.getInt("anon_quartets")
 }
 
 object KinesisEnrichApp extends App {
@@ -138,7 +138,7 @@ object KinesisEnrichApp extends App {
     kinesisEnrichConfig.enrichedOutStreamShards
   )
   if (!successful) {
-    error("Error initializing or connecting to the stream.")
+    println("Error initializing or connecting to the stream.")
     sys.exit(-1)
   }
 
