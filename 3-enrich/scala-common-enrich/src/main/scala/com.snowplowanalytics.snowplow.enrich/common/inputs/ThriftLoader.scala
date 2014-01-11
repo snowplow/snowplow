@@ -41,7 +41,7 @@ import com.snowplowanalytics.snowplow.collectors.thrift.{
 /**
  * Loader for Thrift SnowplowRawEvent objects.
  */
-class ThriftLoader extends CollectorLoader {
+object ThriftLoader extends CollectorLoader {
   private val thriftDeserializer = new TDeserializer
 
   /**

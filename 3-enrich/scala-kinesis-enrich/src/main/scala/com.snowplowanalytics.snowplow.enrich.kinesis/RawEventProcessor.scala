@@ -73,7 +73,6 @@ class RawEventProcessorFactory(config: KinesisEnrichConfig,
 class RawEventProcessor(config: KinesisEnrichConfig,
     kinesisEnrichedSink: KinesisSink) extends IRecordProcessor {
   private val thriftDeserializer = new TDeserializer()
-  private val thriftLoader = new ThriftLoader()
 
   private var kinesisShardId: String = _
   private var nextCheckpointTimeInMillis: Long = _
@@ -110,7 +109,7 @@ class RawEventProcessor(config: KinesisEnrichConfig,
   }
 
   private def enrichEvent(binaryData: Array[Byte]) = {
-    val canonicalInput = thriftLoader.toCanonicalInput(
+    val canonicalInput = ThriftLoader.toCanonicalInput(
       new String(binaryData.map(_.toChar))
     )
 
