@@ -40,6 +40,7 @@ object Dependencies {
     val snowplowRawEvent = "0.4.0"
     val snowplowCommonEnrich = "0.2.0-SNAPSHOT"
     val scalazon   = "0.5"
+    val maxmindGeoip = "0.0.5"
     // Scala (test only)
     val specs2     = "2.3.4"
     // Scala compile only for sbt-thrift.
@@ -57,6 +58,7 @@ object Dependencies {
     val slf4j       = "org.slf4j"                  % "slf4j-simple"     % V.slf4j
     val awsSdk      = "com.amazonaws"              % "aws-java-sdk"     % V.awsSdk
     val kinesisClient = "com.amazonaws"            % "amazon-kinesis-client" % V.kinesisClient
+    val maxmindGeoip = "com.snowplowanalytics"     %% "scala-maxmind-geoip" % V.maxmindGeoip
     // Scala
     val argot       = "org.clapper"                %% "argot"           % V.argot
     val config      = "com.typesafe"               %  "config"          % V.config
