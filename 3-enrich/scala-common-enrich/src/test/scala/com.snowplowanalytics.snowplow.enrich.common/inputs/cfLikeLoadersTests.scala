@@ -28,10 +28,10 @@ class SingleEncodePctsTest extends Specification with DataTables {
   def is =
     "Single-encoding double-encoded % signs should work" ! e1
 
-  val cfLikeLoader = new CloudFrontLikeLoader {
+  val cfLikeLoader = new CloudfrontLikeLoader {
     // Make our trait whole
     def getSource = InputSource("mock", None)
-    def isActualCloudFront = false
+    def isActualCloudfront = false
   }
 
   def e1 =
