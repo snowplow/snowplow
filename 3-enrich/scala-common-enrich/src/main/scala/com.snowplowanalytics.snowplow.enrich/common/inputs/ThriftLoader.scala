@@ -13,18 +13,6 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package inputs
 
-// Snowplow.
-import com.snowplowanalytics.snowplow.collectors.thrift.{
-  SnowplowRawEvent,
-  TrackerPayload => ThriftTrackerPayload,
-  PayloadProtocol,
-  PayloadFormat
-}
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
 // Apache Commons
 import org.apache.commons.lang3.StringUtils
 
@@ -37,6 +25,18 @@ import org.apache.thrift.TDeserializer
 
 // Java conversions.
 import scala.collection.JavaConversions._
+
+// Scalaz
+import scalaz._
+import Scalaz._
+
+// Snowplow.
+import com.snowplowanalytics.snowplow.collectors.thrift.{
+  SnowplowRawEvent,
+  TrackerPayload => ThriftTrackerPayload,
+  PayloadProtocol,
+  PayloadFormat
+}
 
 /**
  * Loader for Thrift SnowplowRawEvent objects.
