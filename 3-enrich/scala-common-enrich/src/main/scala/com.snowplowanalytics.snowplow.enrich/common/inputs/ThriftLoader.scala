@@ -42,6 +42,7 @@ import com.snowplowanalytics.snowplow.collectors.thrift.{
  * Loader for Thrift SnowplowRawEvent objects.
  */
 object ThriftLoader extends CollectorLoader {
+  
   private val thriftDeserializer = new TDeserializer
 
   /**
@@ -97,7 +98,7 @@ object ThriftLoader extends CollectorLoader {
     } catch {
       // TODO: Check for deserialization errors.
       case _: Throwable =>
-        "Line does not match Thrift object.".failNel[Option[CanonicalInput]]
+        "Record does not match Thrift SnowplowRawEvent schema".failNel[Option[CanonicalInput]]
     }
   }
 }
