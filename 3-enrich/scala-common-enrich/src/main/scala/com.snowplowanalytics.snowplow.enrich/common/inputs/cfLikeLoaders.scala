@@ -196,7 +196,7 @@ trait CloudfrontLikeLoader extends CollectorLoader {
       val referer = toOption(refr) map toCleanUri
 
       (timestamp.toValidationNel |@| payload.toValidationNel) { (t, p) =>
-        Some(CanonicalInput(t, NVGetPayload(p), getSource, CfEncoding, toOption(ip), toOption(userAgent), referer, Nil, None)) // No headers or separate userId.
+        Some(CanonicalInput(t, NvGetPayload(p), getSource, CfEncoding, toOption(ip), toOption(userAgent), referer, Nil, None)) // No headers or separate userId.
       }
     }
 

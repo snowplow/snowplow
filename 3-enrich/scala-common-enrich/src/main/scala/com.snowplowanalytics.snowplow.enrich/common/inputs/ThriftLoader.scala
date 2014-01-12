@@ -81,7 +81,7 @@ object ThriftLoader extends CollectorLoader {
         Some(
           CanonicalInput(
             new DateTime(snowplowRawEvent.timestamp),
-            new NVGetPayload(p),
+            new NvGetPayload(p),
             InputSource(snowplowRawEvent.collector, hostname),
             snowplowRawEvent.encoding,
             ip,

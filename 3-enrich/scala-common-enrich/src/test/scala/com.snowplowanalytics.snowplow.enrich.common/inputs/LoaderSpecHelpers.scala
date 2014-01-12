@@ -37,12 +37,12 @@ object LoaderSpecHelpers {
 
   /**
    * Converts a List of NvPairs into an
-   * NVGetPayload.
+   * NvGetPayload.
    *
    * @param payload The List of (String, String)
    * to convert
-   * @return the populated NVGetPayload
+   * @return the populated NvGetPayload
    */
-  def toPayload(head: NvPair, tail: NvPair*): NVGetPayload =
-    new NVGetPayload(NonEmptyList(toNvPair(head), tail.map(toNvPair(_)): _*))
+  def toPayload(head: NvPair, tail: NvPair*): NvGetPayload =
+    new NvGetPayload(NonEmptyList(toNvPair(head), tail.map(toNvPair(_)): _*))
 }

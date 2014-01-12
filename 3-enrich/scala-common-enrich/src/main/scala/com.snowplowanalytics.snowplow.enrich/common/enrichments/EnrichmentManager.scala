@@ -27,7 +27,7 @@ import com.snowplowanalytics.util.Tap._
 import com.snowplowanalytics.maxmind.geoip.IpGeo
 
 // This project
-import inputs.{CanonicalInput, NVGetPayload}
+import inputs.{CanonicalInput, NvGetPayload}
 import outputs.CanonicalOutput
 
 import utils.{ConversionUtils => CU}
@@ -71,7 +71,7 @@ object EnrichmentManager {
     // TODO: add support for other
     // payload types in the future
     val parameters = raw.payload match {
-      case NVGetPayload(p) => p
+      case NvGetPayload(p) => p
       case _ => throw new FatalEtlError("Only name-value pair GET payloads are currently supported") // TODO: change back to FatalEtlException when Cascading FailureTrap supports exclusions
     }
 

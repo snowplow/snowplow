@@ -77,7 +77,7 @@ trait GetPayload extends TrackerPayload
  * via a set of name-value pairs on the querystring
  * of a GET.
  */
-case class NVGetPayload(payload: NameValueNel) extends GetPayload
+case class NvGetPayload(payload: NameValueNel) extends GetPayload
 
 /**
  * A tracker payload for a single event, expressed
