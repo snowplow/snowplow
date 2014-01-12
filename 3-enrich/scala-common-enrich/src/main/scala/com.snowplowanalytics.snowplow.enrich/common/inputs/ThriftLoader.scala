@@ -68,13 +68,11 @@ object ThriftLoader extends CollectorLoader {
         snowplowRawEvent.encoding
       )
 
-      // TODO: There's probably a better way to do this.
-      def getOptFromStr(s: String) = if (s == null) None else Some(s)
       val ip = Some(snowplowRawEvent.ipAddress) // Required.
-      val hostname = getOptFromStr(snowplowRawEvent.hostname)
-      val userAgent = getOptFromStr(snowplowRawEvent.userAgent)
-      val refererUri = getOptFromStr(snowplowRawEvent.refererUri)
-      val networkUserId = getOptFromStr(snowplowRawEvent.networkUserId)
+      val hostname = Option(snowplowRawEvent.hostname)
+      val userAgent = Option(snowplowRawEvent.userAgent)
+      val refererUri = Option(snowplowRawEvent.refererUri)
+      val networkUserId = Option(snowplowRawEvent.networkUserId)
 
       def getScalaList(s: java.util.List[String]): List[String] =
         if (s == null) null else s.toList
