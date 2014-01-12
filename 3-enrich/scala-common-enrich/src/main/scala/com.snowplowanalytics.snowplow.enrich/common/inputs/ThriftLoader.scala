@@ -75,7 +75,8 @@ object ThriftLoader extends CollectorLoader {
       val refererUri = Option(snowplowRawEvent.refererUri)
       val networkUserId = Option(snowplowRawEvent.networkUserId)
 
-      val headers = snowplowRawEvent.headers.toList
+      val headers = Option(snowplowRawEvent.headers)
+        .map(_.toList).getOrElse(Nil)
 
       (payload.toValidationNel) map { (p: NameValueNel) =>
         Some(
