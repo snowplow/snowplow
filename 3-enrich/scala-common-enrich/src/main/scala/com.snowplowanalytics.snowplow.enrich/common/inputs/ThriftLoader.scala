@@ -20,17 +20,17 @@ import org.apache.commons.lang3.StringUtils
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
-// Thrift.
+// Thrift
 import org.apache.thrift.TDeserializer
 
-// Java conversions.
+// Java conversions
 import scala.collection.JavaConversions._
 
 // Scalaz
 import scalaz._
 import Scalaz._
 
-// Snowplow.
+// Snowplow
 import com.snowplowanalytics.snowplow.collectors.thrift.{
   SnowplowRawEvent,
   TrackerPayload => ThriftTrackerPayload,
@@ -74,9 +74,7 @@ object ThriftLoader extends CollectorLoader {
       val refererUri = Option(snowplowRawEvent.refererUri)
       val networkUserId = Option(snowplowRawEvent.networkUserId)
 
-      def getScalaList(s: java.util.List[String]): List[String] =
-        if (s == null) null else s.toList
-      val headers = getScalaList(snowplowRawEvent.headers)
+      val headers = snowplowRawEvent.headers.toList
 
       (payload.toValidationNel) map { (p:NameValueNel) =>
         Some(
