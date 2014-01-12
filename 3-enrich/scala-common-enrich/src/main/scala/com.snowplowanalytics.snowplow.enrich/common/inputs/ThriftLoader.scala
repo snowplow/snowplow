@@ -56,7 +56,8 @@ object ThriftLoader extends CollectorLoader {
    *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
    */
   def toCanonicalInput(line: String): ValidatedMaybeCanonicalInput = {
-    var snowplowRawEvent = new SnowplowRawEvent
+    
+    var snowplowRawEvent = new SnowplowRawEvent()
     try {
       thriftDeserializer.deserialize(
         snowplowRawEvent,
@@ -76,7 +77,7 @@ object ThriftLoader extends CollectorLoader {
 
       val headers = snowplowRawEvent.headers.toList
 
-      (payload.toValidationNel) map { (p:NameValueNel) =>
+      (payload.toValidationNel) map { (p: NameValueNel) =>
         Some(
           CanonicalInput(
             new DateTime(snowplowRawEvent.timestamp),
