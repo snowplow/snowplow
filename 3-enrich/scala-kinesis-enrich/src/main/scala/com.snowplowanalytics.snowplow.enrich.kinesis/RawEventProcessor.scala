@@ -140,7 +140,7 @@ class RawEventProcessor(config: KinesisEnrichConfig,
           // TODO: Store bad event if canonical output not validated.
         }
       } else {
-        // TODO: Store bad event if canonical input is None.
+        // CanonicalInput is None: do nothing
       }
       // TODO: Store bad event if canonical input not validated.
     }
