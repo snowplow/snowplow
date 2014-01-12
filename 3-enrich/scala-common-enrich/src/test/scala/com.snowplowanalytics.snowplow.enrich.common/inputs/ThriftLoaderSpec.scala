@@ -37,7 +37,6 @@ import com.snowplowanalytics.snowplow.collectors.thrift.{
   PayloadFormat
 }
 import LoaderSpecHelpers._
-import ThriftLoaderSpec._
 
 // Specs2
 import org.specs2.{Specification, ScalaCheck}
@@ -76,6 +75,8 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
     val encoding = "UTF-8"
     val source   = InputSource("ssc-0.0.1-stdout", "127.0.0.1".some)
   }
+
+  import ThriftLoaderSpec._
 
   // TODO: add more specs into this data table
   def e1 =
