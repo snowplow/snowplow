@@ -18,7 +18,6 @@ import org.apache.commons.lang3.StringUtils
 
 // Joda-Time
 import org.joda.time.DateTime
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 // Thrift
 import org.apache.thrift.TDeserializer

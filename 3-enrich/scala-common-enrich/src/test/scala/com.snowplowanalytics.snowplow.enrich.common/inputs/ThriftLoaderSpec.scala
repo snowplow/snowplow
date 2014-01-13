@@ -10,7 +10,9 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
+package com.snowplowanalytics.snowplow
+package enrich
+package common
 package inputs
 
 // Commons Codec
@@ -19,23 +21,12 @@ import org.apache.commons.codec.binary.Base64
 // Joda-Time
 import org.joda.time.DateTime
 
-// Thrift
-import org.apache.thrift.TDeserializer
-
-// Apache URLEncodedUtils
-import org.apache.http.message.BasicNameValuePair
-
 // Scalaz
 import scalaz._
 import Scalaz._
 
 // Snowplow
-import com.snowplowanalytics.snowplow.collectors.thrift.{
-  SnowplowRawEvent,
-  TrackerPayload => ThriftTrackerPayload,
-  PayloadProtocol,
-  PayloadFormat
-}
+import collectors.thrift.SnowplowRawEvent
 import LoaderSpecHelpers._
 
 // Specs2
