@@ -50,7 +50,6 @@ class CloudfrontLikeLoaderSpec extends Specification with DataTables with Valida
     }
   }
 
-
   "toOption" should {
     "return a None if the querystring is empty" in {
       foreach(Seq(null, "", "-")) { empty: String =>
