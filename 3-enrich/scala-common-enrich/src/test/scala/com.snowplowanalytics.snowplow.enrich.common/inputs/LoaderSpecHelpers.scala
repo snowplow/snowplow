@@ -36,13 +36,27 @@ object LoaderSpecHelpers {
     new BasicNameValuePair(pair._1, pair._2)
 
   /**
-   * Converts a List of NvPairs into an
-   * NvGetPayload.
+   * Converts the supplied NvPairs into a 
+   * a NameValueNel.
    *
-   * @param payload The List of (String, String)
-   * to convert
+   * @param head The first NvPair to convert
+   * @param tail The rest of the NvPairs to
+   * convert
+   * @return the populated NvGetPayload
+   */
+  def toNameValueNel(head: NvPair, tail: NvPair*): NameValueNel =
+    NonEmptyList(toNvPair(head), tail.map(toNvPair(_)): _*)
+
+  /**
+   * Converts the supplied NvPairs into an
+   * NvGetPayload. See above for NvPair
+   * definition.
+   *
+   * @param head The first NvPair to convert
+   * @param tail The rest of the NvPairs to
+   * convert
    * @return the populated NvGetPayload
    */
   def toPayload(head: NvPair, tail: NvPair*): NvGetPayload =
-    new NvGetPayload(NonEmptyList(toNvPair(head), tail.map(toNvPair(_)): _*))
+    new NvGetPayload(toNameValueNel(head, tail: _*))
 }

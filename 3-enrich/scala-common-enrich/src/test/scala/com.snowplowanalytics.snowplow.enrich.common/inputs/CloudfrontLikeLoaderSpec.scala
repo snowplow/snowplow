@@ -19,6 +19,10 @@ import java.net.URI
 // Specs2
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
+import org.specs2.scalaz.ValidationMatchers
+
+// Snowplow
+import LoaderSpecHelpers._
 
 object CloudfrontLikeLoaderSpec {
 
@@ -29,12 +33,12 @@ object CloudfrontLikeLoaderSpec {
   }  
 }
 
-class CloudfrontLikeLoaderSpec extends Specification with DataTables {
+class CloudfrontLikeLoaderSpec extends Specification with DataTables with ValidationMatchers {
 
   import CloudfrontLikeLoaderSpec._
 
-  "Single-encoding double-encoded % signs" should {
-    "work correctly" in {
+  "singleEncodePcts" should {
+    "correctly single-encoding double-encoded % signs" in {
 
       "SPEC NAME"                                 || "QUERYSTRING"                                    | "EXP. QUERYSTRING"                               |
       "Double-encoded %s, modify"                 !! "e=pv&page=Celestial%2520Tarot%2520-%2520Psychic%2520Bazaar&dtm=1376487150616&tid=483686&vp=1097x482&ds=1097x1973&vid=1&duid=1f2719e9217b5e1b&p=web&tv=js-0.12.0&fp=3748874661&aid=pbzsite&lang=en-IE&cs=utf-8&tz=Europe%252FLondon&refr=http%253A%252F%252Fwww.psychicbazaar.com%252Fsearch%253Fsearch_query%253Dcelestial%252Btarot%252Bdeck&f_java=1&res=1097x617&cd=24&cookie=1&url=http%253A%252F%252Fwww.psychicbazaar.com%252Ftarot-cards%252F48-celestial-tarot.html" ! "e=pv&page=Celestial%20Tarot%20-%20Psychic%20Bazaar&dtm=1376487150616&tid=483686&vp=1097x482&ds=1097x1973&vid=1&duid=1f2719e9217b5e1b&p=web&tv=js-0.12.0&fp=3748874661&aid=pbzsite&lang=en-IE&cs=utf-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2Fsearch%3Fsearch_query%3Dcelestial%2Btarot%2Bdeck&f_java=1&res=1097x617&cd=24&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Ftarot-cards%2F48-celestial-tarot.html" |
@@ -43,14 +47,31 @@ class CloudfrontLikeLoaderSpec extends Specification with DataTables {
       "Single-encoded % sign itself, leave"       !! "Loading - 70%25 Complete"                       ! "Loading - 70%25 Complete"                     |> {
         (_, qs, expected) => {
           val actual = cfLikeLoader.singleEncodePcts(qs)     
-          actual  must_== expected
+          actual must_== expected
         }
       }
     }
   }
 
-  "Removing a trailing % from a URI" should {
-    "work correctly" in {
+  // TODO: add more here
+  "toGetPayload" should {
+    "return a Success-boxed NonEmptyList of NameValuePairs for a valid querystring" in {
+
+      "SPEC NAME"                                 || "QUERYSTRING"                                    | "EXP. NEL"                                                               |
+      "Simple querystring"                        !! "e=pv&dtm=1376487150616&tid=483686"              ! toNameValueNel("e" -> "pv", "dtm" -> "1376487150616", "tid" -> "483686") |> {
+
+        (_, qs, expected) => {
+          cfLikeLoader.toGetPayload(qs) must beSuccessful(expected)
+        }
+      }
+    }
+    "return a Failure if the querystring is null" in {
+      cfLikeLoader.toGetPayload(null) must beFailing("Querystring is empty, cannot extract GET payload")
+    }
+  }
+
+  "toCleanUri" should {
+    "remove a trailing % from a URI correctly" in {
 
       "SPEC NAME"                 || "URI"                                              | "EXP. URI"                                        |
       "URI with trailing % #1"    !! "https://github.com/snowplow/snowplow/issues/494%" ! "https://github.com/snowplow/snowplow/issues/494" |
