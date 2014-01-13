@@ -17,7 +17,7 @@ package inputs
 import org.apache.commons.lang3.StringUtils
 
 // Joda-Time
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, DateTimeZone}
 
 // Thrift
 import org.apache.thrift.TDeserializer
@@ -80,7 +80,7 @@ object ThriftLoader extends CollectorLoader {
       (payload.toValidationNel) map { (p: NameValueNel) =>
         Some(
           CanonicalInput(
-            new DateTime(snowplowRawEvent.timestamp),
+            new DateTime(snowplowRawEvent.timestamp, DateTimeZone.UTC),
             new NvGetPayload(p),
             InputSource(snowplowRawEvent.collector, hostname),
             snowplowRawEvent.encoding,
