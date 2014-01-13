@@ -188,7 +188,7 @@ trait CloudfrontLikeLoader extends CollectorLoader {
       // Let's strip double-encodings if this is an actual CloudFront row
       val timestamp = toTimestamp(date, time)
       val querystring = if (isActualCloudfront) singleEncodePcts(qs) else qs
-      val payload = toGetPayload(querystring)
+      val payload = TrackerPayload.extractGetPayload(toOption(querystring), CfEncoding)
 
       // No validation (yet) on the below
       val userAgent  = if (isActualCloudfront) singleEncodePcts(ua) else ua
@@ -220,20 +220,6 @@ trait CloudfrontLikeLoader extends CollectorLoader {
     } catch {
       case e => "Unexpected exception converting date [%s] and time [%s] to timestamp: [%s]".format(date, time, e.getMessage).fail
     }
-
-  /**
-   * Converts a raw querystring into a
-   * GetPayload object.
-   *
-   * @param querystring The raw querystring
-   * @return the GetPayload object, or
-   *         an error, all wrapped in a
-   *         Scalaz Validation
-   */
-  private[inputs] def toGetPayload(querystring: String): ValidatedNameValueNel = toOption(querystring) match {
-    case Some(qs) => TrackerPayload.extractGetPayload(qs, CfEncoding)
-    case None => "Querystring is empty, cannot extract GET payload".fail
-  }
 
   /**
    * Checks whether a String field is a hyphen

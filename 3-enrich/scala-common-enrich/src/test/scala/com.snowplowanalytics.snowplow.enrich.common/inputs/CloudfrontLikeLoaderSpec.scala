@@ -13,9 +13,6 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package inputs
 
-// Java
-import java.net.URI
-
 // Specs2
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
@@ -53,20 +50,12 @@ class CloudfrontLikeLoaderSpec extends Specification with DataTables with Valida
     }
   }
 
-  // TODO: add more here
-  "toGetPayload" should {
-    "return a Success-boxed NonEmptyList of NameValuePairs for a valid querystring" in {
 
-      "SPEC NAME"                                 || "QUERYSTRING"                                    | "EXP. NEL"                                                               |
-      "Simple querystring"                        !! "e=pv&dtm=1376487150616&tid=483686"              ! toNameValueNel("e" -> "pv", "dtm" -> "1376487150616", "tid" -> "483686") |> {
-
-        (_, qs, expected) => {
-          cfLikeLoader.toGetPayload(qs) must beSuccessful(expected)
-        }
+  "toOption" should {
+    "return a None if the querystring is empty" in {
+      foreach(Seq(null, "", "-")) { empty: String =>
+        cfLikeLoader.toOption(empty) must beNone
       }
-    }
-    "return a Failure if the querystring is null" in {
-      cfLikeLoader.toGetPayload(null) must beFailing("Querystring is empty, cannot extract GET payload")
     }
   }
 

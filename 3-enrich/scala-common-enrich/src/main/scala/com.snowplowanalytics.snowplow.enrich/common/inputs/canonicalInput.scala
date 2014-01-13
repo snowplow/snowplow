@@ -102,9 +102,9 @@ object TrackerPayload {
    * Returns a non-empty list of 
    * NameValuePairs, or an error.
    *
-   * @param qs The querystring
+   * @param qs Option-boxed querystring
    *        String to extract name-value
-   *        pairs from
+   *        pairs from, or None
    * @param encoding The encoding used
    *        by this querystring
    * @return either a NonEmptyList of
@@ -112,15 +112,24 @@ object TrackerPayload {
    *         message, boxed in a Scalaz
    *         Validation
    */
-  def extractGetPayload(qs: String, encoding: String): ValidatedNameValueNel =
-    try {
-      parseQs(qs, encoding) match {
-        case x :: xs => NonEmptyList[NameValuePair](x, xs: _*).success
-        case Nil => "No name-value pairs extractable from querystring [%s] with encoding [%s]".format(qs, encoding).fail
+  def extractGetPayload(qs: Option[String], encoding: String): ValidatedNameValueNel = {
+
+    val EmptyQsFail = "No name-value pairs extractable from querystring [%s] with encoding [%s]".format(qs.getOrElse(""), encoding).fail
+
+    qs match {
+      case Some(q) => {
+        try {
+          parseQs(q, encoding) match {
+            case x :: xs => NonEmptyList[NameValuePair](x, xs: _*).success
+            case Nil => EmptyQsFail
+          }
+        } catch {
+          case e => "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]".format(q, encoding, e.getMessage).fail
+        }
       }
-    } catch {
-      case e => "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]".format(qs, encoding, e.getMessage).fail
+      case None => EmptyQsFail
     }
+  }
 
   /**
    * Helper to extract NameValuePairs.

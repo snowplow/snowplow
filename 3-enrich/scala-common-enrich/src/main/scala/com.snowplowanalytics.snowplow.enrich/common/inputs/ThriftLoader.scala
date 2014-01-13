@@ -64,7 +64,7 @@ object ThriftLoader extends CollectorLoader {
       )
 
       val payload = TrackerPayload.extractGetPayload(
-        snowplowRawEvent.payload.data,
+        Option(snowplowRawEvent.payload.data),
         snowplowRawEvent.encoding
       )
 
