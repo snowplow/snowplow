@@ -38,10 +38,10 @@ struct SnowplowRawEvent {
   20: string collector // Collector name/version.
   30: string encoding
   40: string ipAddress
-  41: optional string hostname
+  41: optional TrackerPayload payload
+  45: optional string hostname
   50: optional string userAgent
   60: optional string refererUri
   70: optional list<string> headers
   80: optional string networkUserId
-  90: optional TrackerPayload payload
 }
