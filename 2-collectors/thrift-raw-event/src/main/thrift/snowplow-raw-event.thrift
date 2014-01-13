@@ -35,7 +35,6 @@ struct TrackerPayload {
 
 struct SnowplowRawEvent {
   01: i64 timestamp // Milliseconds since epoch.
-  10: TrackerPayload payload
   20: string collector // Collector name/version.
   30: string encoding
   40: string ipAddress
@@ -44,4 +43,5 @@ struct SnowplowRawEvent {
   60: optional string refererUri
   70: optional list<string> headers
   80: optional string networkUserId
+  90: optional TrackerPayload payload
 }
