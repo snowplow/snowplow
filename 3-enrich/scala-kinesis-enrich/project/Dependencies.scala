@@ -15,7 +15,7 @@ import sbt._
 object Dependencies {
 
   val resolutionRepos = Seq(
-    // For scala-util
+    // For Snowplow libs
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
     // For scalazon
