@@ -8,9 +8,12 @@ Scala Common Enrich: added Thrift SnowplowRawEvent as a dependency to common-enr
 Scala Common Enrich: added ability to read Thrift SnowplowRawEvent (Thrift) (#462) - TODO
 Scala Common Enrich: rename CloudFront to Cloudfront in code (#495)
 Scala Common Enrich: rename AnonQuartets to AnonOctets (#491)
-Scala Common Enrich: add raw -> CanonicalInput tests (#484)
+Scala Common Enrich: add raw -> CanonicalInput tests (#484) - TODO
 
-<Yali's 0.8.13>
+Version 0.8.13 (2014-01-08)
+---------------------------
+Looker Analytics: added 0.1.0
+Looker Analytics: created Snowplow metadata model for Looker BI (www.looker.com) (#472)
 
 Version 0.8.12 (2014-01-07)
 ---------------------------
