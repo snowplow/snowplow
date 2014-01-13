@@ -20,17 +20,18 @@ import java.net.URI
 import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
 
-class CloudfrontLikeLoaderSpec extends Specification with DataTables {
-
-  // def is = "Single-encoding double-encoded % signs should work" ! e1
+object CloudfrontLikeLoaderSpec {
 
   val cfLikeLoader = new CloudfrontLikeLoader {
     // Make our trait whole
     def getSource = InputSource("mock", None)
     def isActualCloudfront = false
-  }
+  }  
+}
 
-  // TODO: add other tests for other functions
+class CloudfrontLikeLoaderSpec extends Specification with DataTables {
+
+  import CloudfrontLikeLoaderSpec._
 
   "Single-encoding double-encoded % signs" should {
     "work correctly" in {
