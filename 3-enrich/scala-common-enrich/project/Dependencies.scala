@@ -21,8 +21,9 @@ object Dependencies {
     "Concurrent Maven Repo" at "http://conjars.org/repo",
      // For Twitter's util functions
     "Twitter Maven Repo" at "http://maven.twttr.com/",
-    // For scala-util and referer-parser
-    "SnowPlow Analytics Maven repo" at "http://maven.snplow.com/releases/",
+    // For Snowplow libs
+    "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
+    "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
     // For user-agent-utils
     "user-agent-utils repo" at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/"
   )
@@ -38,7 +39,7 @@ object Dependencies {
     // Scala
     val scalaz7          = "7.0.0"
     val argonaut         = "6.0"
-    val snowplowRawEvent = "0.5.0"
+    val snowplowRawEvent = "0.1.0-SNAPSHOT"
     val scalaUtil        = "0.1.0"
     val refererParser    = "0.1.1"
     val maxmindGeoip     = "0.0.5"
