@@ -34,10 +34,10 @@ class TrackerPayloadSpec extends Specification with DataTables with ValidationMa
     // TODO: add more tests
     "return a Success-boxed NonEmptyList of NameValuePairs for a valid querystring" in {
 
-      "SPEC NAME"                                   || "QUERYSTRING"                                                                    | "EXP. NEL"                                                                                                            |
-      "Simple querystring #1"                       !! "e=pv&dtm=1376487150616&tid=483686"                                              ! toNameValueNel("e" -> "pv", "dtm" -> "1376487150616", "tid" -> "483686")                                              |
-      "Simple querystring #2"                       !! "page=Celestial%2520Tarot%2520-%2520Psychic%2520Bazaar&vp=1097x482&ds=1097x1973" ! toNameValueNel("page" -> "Celestial%20Tarot%20-%20Psychic%20Bazaar", "vp" -> "1097x482", "ds" -> "1097x1973")         |
-      "Superfluous ? ends up in first param's name" !! "?e=pv&dtm=1376487150616&tid=483686"                                             ! toNameValueNel("?e" -> "pv", "dtm" -> "1376487150616", "tid" -> "483686")                                             |> {
+      "SPEC NAME"                                   || "QUERYSTRING"                                                                    | "EXP. NEL"                                                                                                    |
+      "Simple querystring #1"                       !! "e=pv&dtm=1376487150616&tid=483686"                                              ! toNameValueNel("e" -> "pv", "dtm" -> "1376487150616", "tid" -> "483686")                                      |
+      "Simple querystring #2"                       !! "page=Celestial%2520Tarot%2520-%2520Psychic%2520Bazaar&vp=1097x482&ds=1097x1973" ! toNameValueNel("page" -> "Celestial%20Tarot%20-%20Psychic%20Bazaar", "vp" -> "1097x482", "ds" -> "1097x1973") |
+      "Superfluous ? ends up in first param's name" !! "?e=pv&dtm=1376487150616&tid=483686"                                             ! toNameValueNel("?e" -> "pv", "dtm" -> "1376487150616", "tid" -> "483686")                                     |> {
 
         (_, qs, expected) => {
           TrackerPayload.extractGetPayload(qs.some, Encoding) must beSuccessful(expected)
@@ -45,11 +45,10 @@ class TrackerPayloadSpec extends Specification with DataTables with ValidationMa
       }
     }
 
-    // TODO: test missing
-    "return a Failure if the querystring is empty" in {
+    "return a Failure message if the querystring is empty" in {
       TrackerPayload.extractGetPayload(None, Encoding) must beFailing("No name-value pairs extractable from querystring [] with encoding [UTF-8]")
     }
 
-    // TODO: test invalid
+    // TODO: test invalid querystrings
   }
 }
