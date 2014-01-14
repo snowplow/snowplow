@@ -18,7 +18,11 @@ package scalastream
 
 // Snowplow
 import sinks._
-import thrift.SnowplowRawEvent
+import thrift.{
+  PayloadProtocol,
+  PayloadFormat,
+  SnowplowRawEvent
+}
 
 // Akka
 import akka.actor.{ActorSystem, Props}
@@ -158,7 +162,7 @@ collector {
           s"""policyref="${policyRef}", CP="${CP}"""")
       }
     }
-    "store the expected event as a serialized Thrift object in Kinesis." in {
+    "store the expected event as a serialized Thrift object in the enabled sink" in {
       CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
         val storedRecordBytes = responseHandler.lastStoredRecord.array
         val storedEvent = new SnowplowRawEvent
@@ -167,6 +171,9 @@ collector {
         storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 1000)
         storedEvent.encoding must beEqualTo("UTF-8")
         storedEvent.ipAddress must beEqualTo("127.0.0.1")
+        storedEvent.payload.protocol must beEqualTo(PayloadProtocol.Http)
+        storedEvent.payload.format must beEqualTo(PayloadFormat.HttpGet)
+        storedEvent.payload.data must beEqualTo("")
       }
     }
   }
