@@ -1,3 +1,9 @@
+Scala Stream Collector: added 0.1.0
+Scala Stream Collector: implemented new spray-can (Akka Http) Scala stream collector (#432)
+Thrift Raw Event: added 0.1.0
+Thrift Raw Event: specified Thrift IDL for new raw event schema (#430)
+Contrib NodeJS Collector: remove contrib-nodejs-collector from 2-collectors (#474)
+
 Version 0.8.13 (2014-01-08)
 ---------------------------
 Looker Analytics: added 0.1.0
