@@ -48,9 +48,32 @@ import com.amazonaws.services.kinesis.clientlibrary.lib.worker.{
 }
 import com.amazonaws.services.kinesis.metrics.impl.NullMetricsFactory
 
+object Source extends Enumeration {
+  type Source = Value
+  val Kinesis, Stdout, Test = Value
+}
+
+object Sink extends Enumeration {
+  type Sink = Value
+  val Kinesis, Stdout, Test = Value
+}
 
 class KinesisEnrichConfig(config: Config) {
   private val enrich = config.resolve.getConfig("enrich")
+
+  val source = enrich.getString("source") match {
+    case "kinesis" => Source.Kinesis
+    case "stdout" => Source.Stdout
+    case "test" => Source.Test
+    case _ => throw new RuntimeException("enrich.source unknown.")
+  }
+
+  val sink = enrich.getString("sink") match {
+    case "kinesis" => Sink.Kinesis
+    case "stdout" => Sink.Stdout
+    case "test" => Sink.Test
+    case _ => throw new RuntimeException("enrich.sink unknown.")
+  }
 
   private val aws = enrich.getConfig("aws")
   val accessKey = aws.getString("access-key")
