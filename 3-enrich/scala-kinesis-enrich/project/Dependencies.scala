@@ -42,7 +42,7 @@ object Dependencies {
     val scalazon   = "0.5"
     val maxmindGeoip = "0.0.5"
     // Scala (test only)
-    val specs2     = "2.3.4"
+    val specs2     = "2.3.6"
     // Scala compile only for sbt-thrift.
     val commonsLang3 = "3.1"
     val thrift = "0.9.0"
