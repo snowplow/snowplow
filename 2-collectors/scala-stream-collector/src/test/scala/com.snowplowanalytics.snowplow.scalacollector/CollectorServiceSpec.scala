@@ -16,18 +16,20 @@
 package com.snowplowanalytics.snowplow.collectors
 package scalastream
 
+// Snowplow
 import sinks._
+import thrift.SnowplowRawEvent
 
-// Akka.
+// Akka
 import akka.actor.{ActorSystem, Props}
 
-// specs2 and spray testing libraries.
+// specs2 and spray testing libraries
 import org.specs2.matcher.AnyMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.{Scope,Fragments}
 import spray.testkit.Specs2RouteTest
 
-// Spray classes.
+// Spray classes
 import spray.http.{DateTime,HttpHeader,HttpCookie}
 import spray.http.HttpHeaders.{
   Cookie,
@@ -38,6 +40,9 @@ import spray.http.HttpHeaders.{
 
 // Config
 import com.typesafe.config.{ConfigFactory,Config,ConfigException}
+
+// Thrift
+import org.apache.thrift.TDeserializer
 
 import scala.collection.mutable.MutableList
 
@@ -62,7 +67,7 @@ collector {
   }
 
   sink {
-    enabled = "stdout"
+    enabled = "test"
 
     kinesis {
       aws {
@@ -78,13 +83,10 @@ collector {
 }
 """)
   val collectorConfig = new CollectorConfig(testConf)
-  val collectorService = new CollectorService(
-    collectorConfig,
-    null,
-    new ResponseHandler(collectorConfig, null),
-    system
-  )
-  val responseHandler = new ResponseHandler(collectorConfig, null)
+  val kinesisSink = new KinesisSink(collectorConfig)
+  val responseHandler = new ResponseHandler(collectorConfig, kinesisSink)
+  val collectorService = new CollectorService(responseHandler, system)
+  val thriftDeserializer = new TDeserializer
 
   // By default, spray will always add Remote-Address to every request
   // when running with the `spray.can.server.remote-address-header`
@@ -101,7 +103,7 @@ collector {
   "Snowplow's Scala collector" should {
     "return an invisible pixel." in {
       CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
-        responseAs[Array[Byte]] === responseHandler.pixel
+        responseAs[Array[Byte]] === ResponseHandler.pixel
       }
     }
     "return a cookie expiring at the correct time." in {
@@ -144,7 +146,6 @@ collector {
     }
     "return a P3P header." in {
       CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
-        print(headers)
         val p3pHeaders = headers.filter {
           h => h.name.equals("P3P")
         }
@@ -155,6 +156,17 @@ collector {
         val CP = collectorConfig.p3pCP
         p3pHeader.value must beEqualTo(
           s"""policyref="${policyRef}", CP="${CP}"""")
+      }
+    }
+    "store the expected event as a serialized Thrift object in Kinesis." in {
+      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
+        val storedRecordBytes = responseHandler.lastStoredRecord.array
+        val storedEvent = new SnowplowRawEvent
+        thriftDeserializer.deserialize(storedEvent, storedRecordBytes)
+
+        storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 1000)
+        storedEvent.encoding must beEqualTo("UTF-8")
+        storedEvent.ipAddress must beEqualTo("127.0.0.1")
       }
     }
   }

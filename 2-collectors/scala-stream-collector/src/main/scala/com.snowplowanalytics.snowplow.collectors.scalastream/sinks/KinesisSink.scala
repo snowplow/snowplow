@@ -41,19 +41,18 @@ import io.github.cloudify.scala.aws.kinesis.KinesisDsl._
 // Config
 import com.typesafe.config.Config
 
-// Concurrent libraries.
+// Concurrent libraries
 import scala.concurrent.{Future,Await,TimeoutException}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-// Thrift.
+// Thrift
 import org.apache.thrift.TSerializer
-import org.apache.thrift.TDeserializer
 
-// Logging.
+// Logging
 import org.slf4j.LoggerFactory
 
-// Mutable data structures.
+// Mutable data structures
 import scala.collection.mutable.StringBuilder
 import scala.collection.mutable.MutableList
 
@@ -69,10 +68,9 @@ class KinesisSink(collectorConfig: CollectorConfig) {
     collectorConfig.awsAccessKey, collectorConfig.awsSecretKey)
   private var stream: Option[Stream] = None
   private val thriftSerializer = new TSerializer()
-  private val thriftDeserializer = new TDeserializer()
 
   // Set the current stream to $name.
-  def loadStream(name: String = collectorConfig.streamName) = {
+  def loadStream(name: String) = {
     stream = Some(Kinesis.stream(name))
   }
 
@@ -84,9 +82,7 @@ class KinesisSink(collectorConfig: CollectorConfig) {
    * in seconds
    * @return true if the stream was loaded, false if the stream doesn't exist.
    */
-  def streamExists(
-      name: String=collectorConfig.streamName,
-      timeout: Int = 60): Boolean = {
+  def streamExists(name: String, timeout: Int = 60): Boolean = {
     val streamListFuture = for {
       s <- Kinesis.streams.list
     } yield s
@@ -106,9 +102,7 @@ class KinesisSink(collectorConfig: CollectorConfig) {
   /**
    * Deletes a stream.
    */
-  def deleteStream(
-      name: String = collectorConfig.streamName,
-      timeout: Int = 60): Unit = {
+  def deleteStream(name: String, timeout: Int = 60): Unit = {
     val localStream = Kinesis.stream(name)
 
     info(s"Deleting stream $name.")
@@ -122,8 +116,6 @@ class KinesisSink(collectorConfig: CollectorConfig) {
 
   /**
    * Creates a new stream if one doesn't exist.
-   * Arguments are optional - defaults to the values
-   * provided in the collectorConfig if not provided.
    *
    * @param name The name of the stream to create
    * @param size The number of shards to support for this stream
@@ -134,10 +126,8 @@ class KinesisSink(collectorConfig: CollectorConfig) {
    * 1. true means the stream was successfully created or already exists
    * 2. false means an error occurred
    */
-  def createAndLoadStream(
-      name: String = collectorConfig.streamName,
-      size: Int = collectorConfig.streamSize,
-      timeout: Int = 60): Boolean = {
+  def createAndLoadStream(name: String, size: Int, timeout: Int = 60):
+      Boolean = {
     if (streamExists(name)) {
       loadStream(name)
       return true
@@ -178,12 +168,13 @@ class KinesisSink(collectorConfig: CollectorConfig) {
       Client.fromCredentials(accessKey, secretKey)
     }
 
+  def getDataFromEvent(event: SnowplowRawEvent): ByteBuffer = {
+    return ByteBuffer.wrap(thriftSerializer.serialize(event))
+  }
+
   def storeEvent(event: SnowplowRawEvent, key: String): PutResult = {
     info(s"Writing Thrift record to Kinesis: ${event.toString}")
-    val result = writeRecord(
-      data = ByteBuffer.wrap(thriftSerializer.serialize(event)),
-      key = key
-    )
+    val result = writeRecord(data = getDataFromEvent(event), key = key)
     info(s"Writing successful.")
     info(s"  + ShardId: ${result.shardId}")
     info(s"  + SequenceNumber: ${result.sequenceNumber}")

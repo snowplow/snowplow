@@ -32,12 +32,7 @@ class CollectorServiceActor(
     collectorConfig,
     kinesisSink
   )
-  private val collectorService = new CollectorService(
-    collectorConfig,
-    kinesisSink,
-    responseHandler,
-    context
-  )
+  private val collectorService = new CollectorService(responseHandler, context)
 
   def receive = handleTimeouts orElse runRoute(collectorService.collectorRoute)
 
@@ -47,8 +42,6 @@ class CollectorServiceActor(
 }
 
 class CollectorService(
-    collectorConfig: CollectorConfig,
-    kinesisSink: KinesisSink,
     responseHandler: ResponseHandler,
     context: ActorRefFactory) extends HttpService {
   def actorRefFactory = context
@@ -62,15 +55,17 @@ class CollectorService(
                 hostName { host =>
                   clientIP { ip =>
                     requestInstance{ request =>
-                      complete(responseHandler.cookie(
-                        Uri(rawRequest).query.toString,
-                        reqCookie,
-                        userAgent,
-                        host,
-                        ip.toString,
-                        request,
-                        refererURI
-                      ))
+                      complete(
+                        responseHandler.cookie(
+                          Uri(rawRequest).query.toString,
+                          reqCookie,
+                          userAgent,
+                          host,
+                          ip.toString,
+                          request,
+                          refererURI
+                        )
+                      )
                     }
                   }
                 }

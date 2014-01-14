@@ -53,7 +53,7 @@ class CollectorConfig(config: Config) {
   // store this enumeration.
   object Sink extends Enumeration {
     type Sink = Value
-    val Kinesis, Stdout = Value
+    val Kinesis, Stdout, Test = Value
   }
 
   private val collector = config.getConfig("collector")
@@ -71,9 +71,12 @@ class CollectorConfig(config: Config) {
 
   private val sink = collector.getConfig("sink")
   val sinkEnabled = sink.getString("enabled")
-  var sinkEnabledEnum = if (sinkEnabled == "kinesis") Sink.Kinesis
-    else if (sinkEnabled == "stdout") Sink.Stdout
-    else throw new RuntimeException("collector.sink.enabled must be 'kinesis' or 'stdout'.")
+  var sinkEnabledEnum = sinkEnabled match {
+    case "kinesis" => Sink.Kinesis
+    case "stdout" => Sink.Stdout
+    case "test" => Sink.Test
+    case _ => throw new RuntimeException("collector.sink.enabled unknown.")
+  }
 
   private val kinesis = sink.getConfig("kinesis")
   private val aws = kinesis.getConfig("aws")
@@ -123,7 +126,8 @@ object ScalaCollector extends App {
   val kinesisSink = new KinesisSink(collectorConfig)
 
   if (collectorConfig.sinkEnabledEnum == collectorConfig.Sink.Kinesis) {
-    if (!kinesisSink.createAndLoadStream()) {
+    if (!kinesisSink.createAndLoadStream(
+        collectorConfig.streamName, collectorConfig.streamSize)) {
       error("Error initializing or connecting to the stream.")
       sys.exit(-1)
     }

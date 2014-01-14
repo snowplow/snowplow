@@ -19,6 +19,7 @@ object Dependencies {
   val resolutionRepos = Seq(
     // For scala-util
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
+    "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
     "spray repo" at "http://repo.spray.io",
     "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
     // For scalazon
@@ -33,7 +34,7 @@ object Dependencies {
     val awsSdk     = "1.6.10"
 
     // Scala
-    val snowplowRawEvent = "0.4.0"
+    val snowplowRawEvent = "0.1.0-SNAPSHOT"
     val spray = "1.2.0"
     val akka = "2.2.3"
     val logback = "1.0.13"

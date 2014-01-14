@@ -16,13 +16,19 @@
 package com.snowplowanalytics.snowplow.collectors
 package scalastream
 
+// Snowplow
 import generated._
 import thrift._
 import sinks._
 
+// Java
+import java.nio.ByteBuffer
 import java.util.UUID
+
+// Apache commons
 import org.apache.commons.codec.binary.Base64
-//import org.slf4j.LoggerFactory
+
+// Spray
 import spray.http.{DateTime,HttpRequest,HttpResponse,HttpEntity,HttpCookie}
 import spray.http.HttpHeaders.{
   `Set-Cookie`,
@@ -32,13 +38,20 @@ import spray.http.HttpHeaders.{
 }
 import spray.http.MediaTypes.`image/gif`
 
+// Typesafe config
 import com.typesafe.config.Config
 
+// Java conversions
 import scala.collection.JavaConversions._
 
-class ResponseHandler(collectorConfig: CollectorConfig,
-    kinesisSink: KinesisSink) {
-  val pixel = Base64.decodeBase64("R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==")
+object ResponseHandler {
+  val pixel = Base64.decodeBase64(
+    "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+  )
+}
+
+class ResponseHandler(config: CollectorConfig, kinesisSink: KinesisSink) {
+  var lastStoredRecord: ByteBuffer = null
 
   def cookie(queryParams: String, requestCookie: Option[HttpCookie],
       userAgent: Option[String], hostname: String, ip: String,
@@ -59,12 +72,12 @@ class ResponseHandler(collectorConfig: CollectorConfig,
 
     val event = new SnowplowRawEvent(
       timestamp,
-      payload,
-      s"${generated.Settings.shortName}-${generated.Settings.version}-${collectorConfig.sinkEnabled}",
+      s"${generated.Settings.shortName}-${generated.Settings.version}-${config.sinkEnabled}",
       "UTF-8",
       ip
     )
 
+    event.payload = payload
     event.hostname = hostname
     if (userAgent.isDefined) event.userAgent = userAgent.get
     if (refererUri.isDefined) event.refererUri = refererUri.get
@@ -74,25 +87,26 @@ class ResponseHandler(collectorConfig: CollectorConfig,
     }
     event.networkUserId = networkUserId
 
-    if (collectorConfig.sinkEnabledEnum == collectorConfig.Sink.Kinesis) {
-      kinesisSink.storeEvent(event, ip)
-    } else {
-      StdoutSink.printEvent(event)
+    config.sinkEnabledEnum match {
+      case config.Sink.Kinesis => kinesisSink.storeEvent(event, ip)
+      case config.Sink.Test =>
+        lastStoredRecord = kinesisSink.getDataFromEvent(event)
+      case _ => StdoutSink.printEvent(event)
     }
 
     // Build the response.
     val responseCookie = HttpCookie(
       "sp", networkUserId,
-      expires=Some(DateTime.now+collectorConfig.cookieExpiration),
-      domain=collectorConfig.cookieDomain
+      expires=Some(DateTime.now+config.cookieExpiration),
+      domain=config.cookieDomain
     )
-    val policyRef = collectorConfig.p3pPolicyRef
-    val CP = collectorConfig.p3pCP
+    val policyRef = config.p3pPolicyRef
+    val CP = config.p3pCP
     val headers = List(
       RawHeader("P3P", s"""policyref="${policyRef}", CP="${CP}""""),
       `Set-Cookie`(responseCookie)
     )
-    HttpResponse(entity = HttpEntity(`image/gif`, pixel))
+    HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
       .withHeaders(headers)
   }
 
