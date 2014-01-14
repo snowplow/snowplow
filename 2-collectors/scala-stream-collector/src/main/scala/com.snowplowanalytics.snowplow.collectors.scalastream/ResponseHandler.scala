@@ -87,9 +87,9 @@ class ResponseHandler(config: CollectorConfig, kinesisSink: KinesisSink) {
     }
     event.networkUserId = networkUserId
 
-    config.sinkEnabledEnum match {
-      case config.Sink.Kinesis => kinesisSink.storeEvent(event, ip)
-      case config.Sink.Test =>
+    config.sinkEnabled match {
+      case Sink.Kinesis => kinesisSink.storeEvent(event, ip)
+      case Sink.Test =>
         lastStoredRecord = kinesisSink.getDataFromEvent(event)
       case _ => StdoutSink.printEvent(event)
     }

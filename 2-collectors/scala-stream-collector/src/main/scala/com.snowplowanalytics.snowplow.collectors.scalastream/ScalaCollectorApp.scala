@@ -45,16 +45,16 @@ object Helper {
   }
 }
 
+// Instead of comparing strings and validating every time
+// the sink is accessed, validate the string here and
+// store this enumeration.
+object Sink extends Enumeration {
+  type Sink = Value
+  val Kinesis, Stdout, Test = Value
+}
+
 class CollectorConfig(config: Config) {
   import Helper.RichConfig
-
-  // Instead of comparing strings and validating every time
-  // the sink is accessed, validate the string here and
-  // store this enumeration.
-  object Sink extends Enumeration {
-    type Sink = Value
-    val Kinesis, Stdout, Test = Value
-  }
 
   private val collector = config.getConfig("collector")
   val interface = collector.getString("interface")
@@ -70,8 +70,7 @@ class CollectorConfig(config: Config) {
   var cookieDomain = cookie.getOptionalString("domain")
 
   private val sink = collector.getConfig("sink")
-  val sinkEnabled = sink.getString("enabled")
-  var sinkEnabledEnum = sinkEnabled match {
+  val sinkEnabled = sink.getString("enabled") match {
     case "kinesis" => Sink.Kinesis
     case "stdout" => Sink.Stdout
     case "test" => Sink.Test
@@ -125,12 +124,14 @@ object ScalaCollector extends App {
   val collectorConfig = new CollectorConfig(rawConf)
   val kinesisSink = new KinesisSink(collectorConfig)
 
-  if (collectorConfig.sinkEnabledEnum == collectorConfig.Sink.Kinesis) {
-    if (!kinesisSink.createAndLoadStream(
-        collectorConfig.streamName, collectorConfig.streamSize)) {
-      error("Error initializing or connecting to the stream.")
-      sys.exit(-1)
-    }
+  collectorConfig.sinkEnabled match {
+    case Sink.Kinesis =>
+      val success = kinesisSink.createAndLoadStream(
+        collectorConfig.streamName, collectorConfig.streamSize)
+      if (!success) {
+        error("Error initializing or connecting to the stream.")
+        sys.exit(-1)
+      }
   }
 
   // The handler actor replies to incoming HttpRequests.
