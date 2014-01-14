@@ -50,14 +50,13 @@ import com.amazonaws.services.kinesis.metrics.impl.NullMetricsFactory
 
 
 class KinesisEnrichConfig(config: Config) {
-  private val enrich = config.getConfig("enrich")
+  private val enrich = config.resolve.getConfig("enrich")
 
   private val aws = enrich.getConfig("aws")
   val accessKey = aws.getString("access-key")
   val secretKey = aws.getString("secret-key")
 
   private val streams = enrich.getConfig("streams")
-  val appName = streams.getString("app-name")
 
   private val inStreams = streams.getConfig("in")
   val rawInStream = inStreams.getString("raw")
@@ -67,6 +66,8 @@ class KinesisEnrichConfig(config: Config) {
   val enrichedOutStreamShards = outStreams.getInt("enriched_shards")
   val badOutStream = outStreams.getString("bad")
   val badOutStreamShards = outStreams.getInt("bad_shards")
+
+  val appName = streams.getString("app-name")
 
   val initialPosition = streams.getString("initial-position")
   val streamEndpoint = streams.getString("endpoint")
