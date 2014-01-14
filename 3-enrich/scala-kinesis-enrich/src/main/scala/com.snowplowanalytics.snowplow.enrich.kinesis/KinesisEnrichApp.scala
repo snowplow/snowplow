@@ -78,7 +78,7 @@ class KinesisEnrichConfig(config: Config) {
 
   private val anonIp = enrichments.getConfig("anon_ip")
   val anonIpEnabled = anonIp.getBoolean("enabled")
-  val anonQuartets = anonIp.getInt("anon_quartets")
+  val anonOctets = anonIp.getInt("anon_octets")
 }
 
 object KinesisEnrichApp extends App {
