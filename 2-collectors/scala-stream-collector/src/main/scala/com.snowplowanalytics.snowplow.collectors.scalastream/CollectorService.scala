@@ -57,7 +57,9 @@ class CollectorService(
                     requestInstance{ request =>
                       complete(
                         responseHandler.cookie(
-                          Uri(rawRequest).query.toString,
+                          Option(Uri(rawRequest).query.toString).filter(
+                            _.trim.nonEmpty
+                          ).getOrElse(null),
                           reqCookie,
                           userAgent,
                           host,

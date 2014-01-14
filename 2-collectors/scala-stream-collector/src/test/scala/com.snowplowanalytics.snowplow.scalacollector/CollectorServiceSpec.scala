@@ -173,7 +173,7 @@ collector {
         storedEvent.ipAddress must beEqualTo("127.0.0.1")
         storedEvent.payload.protocol must beEqualTo(PayloadProtocol.Http)
         storedEvent.payload.format must beEqualTo(PayloadFormat.HttpGet)
-        storedEvent.payload.data must beEqualTo("")
+        storedEvent.payload.data must beNull
       }
     }
   }
