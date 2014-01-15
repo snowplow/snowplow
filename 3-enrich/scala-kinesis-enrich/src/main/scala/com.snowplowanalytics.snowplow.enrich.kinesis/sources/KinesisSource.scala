@@ -64,32 +64,35 @@ import scala.collection.JavaConversions._
 import org.apache.thrift.TDeserializer
 
 
-class KinesisSource(kinesisEnrichConfig: KinesisEnrichConfig) {
+class KinesisSource(config: KinesisEnrichConfig) {
+  // TODO: Clean this portion up.
+  var kinesisEnrichedSink: KinesisSink = null
+
   def run {
     val workerId = InetAddress.getLocalHost().getCanonicalHostName() +
       ":" + UUID.randomUUID()
     println("Using workerId: " + workerId)
 
     val kinesisProvider = createKinesisProvider(
-      kinesisEnrichConfig.accessKey,
-      kinesisEnrichConfig.secretKey
+      config.accessKey,
+      config.secretKey
     )
     val kinesisClientLibConfiguration = new KinesisClientLibConfiguration(
-      kinesisEnrichConfig.appName,
-      kinesisEnrichConfig.rawInStream, 
+      config.appName,
+      config.rawInStream, 
       kinesisProvider,
       workerId
     ).withInitialPositionInStream(
-      InitialPositionInStream.valueOf(kinesisEnrichConfig.initialPosition)
+      InitialPositionInStream.valueOf(config.initialPosition)
     )
     
-    println(s"Running: ${kinesisEnrichConfig.appName}.")
-    println(s"Processing raw input stream: ${kinesisEnrichConfig.rawInStream}")
+    println(s"Running: ${config.appName}.")
+    println(s"Processing raw input stream: ${config.rawInStream}")
 
-    val kinesisEnrichedSink = new KinesisSink(kinesisProvider)
+    kinesisEnrichedSink = new KinesisSink(kinesisProvider)
     val successful = kinesisEnrichedSink.createAndLoadStream(
-      kinesisEnrichConfig.enrichedOutStream,
-      kinesisEnrichConfig.enrichedOutStreamShards
+      config.enrichedOutStream,
+      config.enrichedOutStreamShards
     )
     if (!successful) {
       println("Error initializing or connecting to the stream.")
@@ -97,7 +100,7 @@ class KinesisSource(kinesisEnrichConfig: KinesisEnrichConfig) {
     }
     
     val rawEventProcessorFactory = new RawEventProcessorFactory(
-      kinesisEnrichConfig,
+      config,
       kinesisEnrichedSink
     )
     val worker = new Worker(
@@ -109,8 +112,60 @@ class KinesisSource(kinesisEnrichConfig: KinesisEnrichConfig) {
     worker.run()
   }
 
-  def runTest {
-    throw new RuntimeException("Unimplemented.")
+  def runTest(event: Array[Byte]) = {
+    enrichEvent(event)
+  }
+
+  private def enrichEvent(binaryData: Array[Byte]) = {
+    val canonicalInput = ThriftLoader.toCanonicalInput(
+      new String(binaryData.map(_.toChar))
+    )
+
+    (canonicalInput.toValidationNel) map { (ci: MaybeCanonicalInput) =>
+      if (ci.isDefined) {
+        val ipGeo = new IpGeo(
+          dbFile = config.maxmindFile,
+          memCache = false,
+          lruCache = 20000
+        )
+        val anonOctets =
+          if (!config.anonIpEnabled || config.anonOctets == 0) {
+            AnonOctets.None
+          } else {
+            AnonOctets(config.anonOctets)
+          }
+        val canonicalOutput = EnrichmentManager.enrichEvent(
+          ipGeo,
+          s"kinesis-${generated.Settings.version}",
+          anonOctets,
+          ci.get
+        )
+        (canonicalOutput.toValidationNel) map { (co: CanonicalOutput) =>
+          config.sink match {
+            case Sink.Kinesis =>
+              kinesisEnrichedSink.storeEnrichedEvent(
+                tabSeparateCanonicalOutput(co).getBytes,
+                co.user_ipaddress
+              )
+            case Sink.Stdouterr =>
+              throw new RuntimeException("Unimplemented.")
+            case Sink.Test =>
+              tabSeparateCanonicalOutput(co).getBytes
+          }
+          // TODO: Store bad event if canonical output not validated.
+        }
+      } else {
+        // CanonicalInput is None: do nothing
+      }
+      // TODO: Store bad event if canonical input not validated.
+    }
+  }
+
+  private def tabSeparateCanonicalOutput(output: CanonicalOutput): String = {
+    output.getClass.getDeclaredFields.map{ field =>
+      field.setAccessible(true)
+      Option(field.get(output)).getOrElse("")
+    }.mkString("\t")
   }
 
   private def createKinesisProvider(accessKey: String, secretKey: String):
@@ -167,50 +222,6 @@ class KinesisSource(kinesisEnrichConfig: KinesisEnrichConfig) {
       }
     }
 
-    private def tabSeparateCanonicalOutput(output: CanonicalOutput): String = {
-      output.getClass.getDeclaredFields.map{ field =>
-        field.setAccessible(true)
-        Option(field.get(output)).getOrElse("")
-      }.mkString("\t")
-    }
-
-    private def enrichEvent(binaryData: Array[Byte]) = {
-      val canonicalInput = ThriftLoader.toCanonicalInput(
-        new String(binaryData.map(_.toChar))
-      )
-
-      (canonicalInput.toValidationNel) map { (ci: MaybeCanonicalInput) =>
-        if (ci.isDefined) {
-          val ipGeo = new IpGeo(
-            dbFile = config.maxmindFile,
-            memCache = false,
-            lruCache = 20000
-          )
-          val anonOctets =
-            if (!config.anonIpEnabled || config.anonOctets == 0) {
-              AnonOctets.None
-            } else {
-              AnonOctets(config.anonOctets)
-            }
-          val canonicalOutput = EnrichmentManager.enrichEvent(
-            ipGeo,
-            s"kinesis-${generated.Settings.version}",
-            anonOctets,
-            ci.get
-          )
-          (canonicalOutput.toValidationNel) map { (co: CanonicalOutput) =>
-            kinesisEnrichedSink.storeEnrichedEvent(
-              tabSeparateCanonicalOutput(co).getBytes,
-              co.user_ipaddress
-            )
-            // TODO: Store bad event if canonical output not validated.
-          }
-        } else {
-          // CanonicalInput is None: do nothing
-        }
-        // TODO: Store bad event if canonical input not validated.
-      }
-    }
 
     private def processRecordsWithRetries(records: List[Record]) = {
       for (record <- records) {

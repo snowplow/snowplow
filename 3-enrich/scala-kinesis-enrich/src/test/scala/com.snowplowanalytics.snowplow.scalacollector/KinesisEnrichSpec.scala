@@ -17,11 +17,15 @@ package com.snowplowanalytics.snowplow
 package enrich.kinesis
 
 // Snowplow
+import sources._
 import collectors.thrift.{
   PayloadProtocol,
   PayloadFormat,
   SnowplowRawEvent
 }
+
+// Commons Codec
+import org.apache.commons.codec.binary.Base64
 
 // specs2 and spray testing libraries
 import org.specs2.matcher.AnyMatchers
@@ -35,7 +39,7 @@ import com.typesafe.config.{ConfigFactory,Config,ConfigException}
 import org.apache.thrift.TDeserializer
 
 class KinesisEnrichSpec extends Specification with AnyMatchers {
-  val testConf: Config = ConfigFactory.parseString("""
+  val config = new KinesisEnrichConfig(ConfigFactory.parseString("""
 enrich {
   source = "test"
   sink= "test"
@@ -70,10 +74,14 @@ enrich {
     }
   }
 }
-""")
+"""))
+
+  val kinesisSource = new KinesisSource(config)
+
   "Snowplow's Kinesis enricher" should {
-    "TODO" in {
-      true must beTrue
+    "enrich a valid SnowplowRawEvent." in {
+      val eventBytes = Base64.decodeBase64("CgABAAABQ3KVZkgMAAoIAAEAAAABCAACAAAAAQsAAwAAABh0ZXN0UGFyYW09MyZ0ZXN0UGFyYW0yPTQACwAUAAAAEHNzYy0wLjAuMS1zdGRvdXQLAB4AAAAFVVRGLTgLACgAAAAJMTI3LjAuMC4xCwApAAAACTEyNy4wLjAuMQsAMgAAAGhNb3ppbGxhLzUuMCAoWDExOyBMaW51eCB4ODZfNjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8zMS4wLjE2NTAuNjMgU2FmYXJpLzUzNy4zNg8ARgsAAAAHAAAAL0Nvb2tpZTogc3A9YzVmM2EwOWYtNzVmOC00MzA5LWJlYzUtZmVhNTYwZjc4NDU1AAAAHkFjY2VwdC1MYW5ndWFnZTogZW4tVVMsIGVuLCBldAAAACRBY2NlcHQtRW5jb2Rpbmc6IGd6aXAsIGRlZmxhdGUsIHNkY2gAAAB0VXNlci1BZ2VudDogTW96aWxsYS81LjAgKFgxMTsgTGludXggeDg2XzY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMzEuMC4xNjUwLjYzIFNhZmFyaS81MzcuMzYAAABWQWNjZXB0OiB0ZXh0L2h0bWwsIGFwcGxpY2F0aW9uL3hodG1sK3htbCwgYXBwbGljYXRpb24veG1sO3E9MC45LCBpbWFnZS93ZWJwLCAqLyo7cT0wLjgAAAAWQ29ubmVjdGlvbjoga2VlcC1hbGl2ZQAAABRIb3N0OiAxMjcuMC4wLjE6ODA4MAsAUAAAACRjNWYzYTA5Zi03NWY4LTQzMDktYmVjNS1mZWE1NjBmNzg0NTUA")
+      kinesisSource.runTest(eventBytes) must beEqualTo("TODO")
     }
   }
 }

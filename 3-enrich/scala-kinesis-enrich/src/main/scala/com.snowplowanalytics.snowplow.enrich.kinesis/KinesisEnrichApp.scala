@@ -123,6 +123,5 @@ object KinesisEnrichApp extends App {
   kinesisEnrichConfig.source match {
     case Source.Kinesis => new KinesisSource(kinesisEnrichConfig).run
     case Source.Stdin => new StdinSource(kinesisEnrichConfig)
-    case Source.Test => new KinesisSource(kinesisEnrichConfig).runTest
   }
 }
