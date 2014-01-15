@@ -35,8 +35,42 @@ import com.typesafe.config.{ConfigFactory,Config,ConfigException}
 import org.apache.thrift.TDeserializer
 
 class KinesisEnrichSpec extends Specification with AnyMatchers {
-//   val testConf: Config = ConfigFactory.parseString("""
-//""")
+  val testConf: Config = ConfigFactory.parseString("""
+enrich {
+  source = "test"
+  sink= "test"
+
+  aws {
+    access-key: "cpf"
+    secret-key: "cpf"
+  }
+
+  streams {
+    in: {
+      raw: "SnowplowRaw"
+    }
+    out: {
+      enriched: "SnowplowEnriched"
+      enriched_shards: 1 # Number of shards to use if created.
+      bad: "SnowplowBad" # Not used until #463
+      bad_shards: 1 # Number of shards to use if created.
+    }
+    app-name: SnowplowKinesisEnrich-${enrich.streams.in.raw}
+    initial-position = "TRIM_HORIZON"
+    endpoint: "https://kinesis.us-east-1.amazonaws.com"
+  }
+  enrichments {
+    geo_ip: {
+      enabled: true # false not yet suported
+      maxmind_file: "/tmp/GeoLiteCity.dat"
+    }
+    anon_ip: {
+      enabled: true
+      anon_octets: 1 # Or 2, 3 or 4. 0 is same as enabled: false
+    }
+  }
+}
+""")
   "Snowplow's Kinesis enricher" should {
     "TODO" in {
       true must beTrue

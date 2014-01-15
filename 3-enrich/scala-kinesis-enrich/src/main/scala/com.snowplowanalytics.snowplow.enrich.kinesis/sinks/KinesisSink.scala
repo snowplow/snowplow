@@ -17,7 +17,7 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.snowplow.enrich.kinesis
+package com.snowplowanalytics.snowplow.enrich.kinesis.sinks
 
 // Snowplow events.
 import com.snowplowanalytics.snowplow.collectors.thrift._

@@ -19,6 +19,10 @@
 
 package com.snowplowanalytics.snowplow.enrich.kinesis
 
+// Snowplow
+import sources._
+import sinks._
+
 // Config
 import com.typesafe.config.{Config, ConfigFactory}
 
@@ -26,36 +30,16 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.clapper.argot.ArgotParser
 
 // Java
-import java.io.{File,FileInputStream,IOException}
-import java.net.InetAddress
-import java.util.{Properties,UUID}
-
-// Amazon.
-import com.amazonaws.AmazonClientException
-import com.amazonaws.auth.{
-  AWSCredentials,
-  BasicAWSCredentials,
-  AWSCredentialsProvider,
-  ClasspathPropertiesFileCredentialsProvider
-}
-import com.amazonaws.auth.InstanceProfileCredentialsProvider
-import com.amazonaws.services.kinesis.AmazonKinesisClient
-import com.amazonaws.services.kinesis.clientlibrary.interfaces.IRecordProcessorFactory
-import com.amazonaws.services.kinesis.clientlibrary.lib.worker.{
-  InitialPositionInStream,
-  KinesisClientLibConfiguration,
-  Worker
-}
-import com.amazonaws.services.kinesis.metrics.impl.NullMetricsFactory
+import java.io.File
 
 object Source extends Enumeration {
   type Source = Value
-  val Kinesis, Stdout, Test = Value
+  val Kinesis, Stdin, Test = Value
 }
 
 object Sink extends Enumeration {
   type Sink = Value
-  val Kinesis, Stdout, Test = Value
+  val Kinesis, Stdouterr, Test = Value
 }
 
 class KinesisEnrichConfig(config: Config) {
@@ -63,14 +47,14 @@ class KinesisEnrichConfig(config: Config) {
 
   val source = enrich.getString("source") match {
     case "kinesis" => Source.Kinesis
-    case "stdout" => Source.Stdout
+    case "stdin" => Source.Stdin
     case "test" => Source.Test
     case _ => throw new RuntimeException("enrich.source unknown.")
   }
 
   val sink = enrich.getString("sink") match {
     case "kinesis" => Sink.Kinesis
-    case "stdout" => Sink.Stdout
+    case "stdouterr" => Sink.Stdouterr
     case "test" => Sink.Test
     case _ => throw new RuntimeException("enrich.sink unknown.")
   }
@@ -136,67 +120,9 @@ object KinesisEnrichApp extends App {
     config.value.getOrElse(ConfigFactory.load("default"))
   )
 
-  val workerId = InetAddress.getLocalHost().getCanonicalHostName() +
-    ":" + UUID.randomUUID()
-  println("Using workerId: " + workerId)
-
-  val kinesisProvider = createKinesisProvider(
-    kinesisEnrichConfig.accessKey,
-    kinesisEnrichConfig.secretKey
-  )
-  val kinesisClientLibConfiguration = new KinesisClientLibConfiguration(
-    kinesisEnrichConfig.appName,
-    kinesisEnrichConfig.rawInStream, 
-    kinesisProvider,
-    workerId
-  ).withInitialPositionInStream(
-    InitialPositionInStream.valueOf(kinesisEnrichConfig.initialPosition)
-  )
-  
-  println(s"Running: ${kinesisEnrichConfig.appName}.")
-  println(s"Processing raw input stream: ${kinesisEnrichConfig.rawInStream}")
-
-  val kinesisEnrichedSink = new KinesisSink(kinesisProvider)
-  val successful = kinesisEnrichedSink.createAndLoadStream(
-    kinesisEnrichConfig.enrichedOutStream,
-    kinesisEnrichConfig.enrichedOutStreamShards
-  )
-  if (!successful) {
-    println("Error initializing or connecting to the stream.")
-    sys.exit(-1)
+  kinesisEnrichConfig.source match {
+    case Source.Kinesis => new KinesisSource(kinesisEnrichConfig).run
+    case Source.Stdin => new StdinSource(kinesisEnrichConfig)
+    case Source.Test => new KinesisSource(kinesisEnrichConfig).runTest
   }
-
-  
-  val rawEventProcessorFactory = new RawEventProcessorFactory(
-    kinesisEnrichConfig,
-    kinesisEnrichedSink
-  )
-  val worker = new Worker(
-    rawEventProcessorFactory,
-    kinesisClientLibConfiguration,
-    new NullMetricsFactory()
-  )
-
-  worker.run()
-
-  private def createKinesisProvider(accessKey: String, secretKey: String):
-      AWSCredentialsProvider =
-    if (isCpf(accessKey) && isCpf(secretKey)) {
-        new ClasspathPropertiesFileCredentialsProvider()
-    } else if (isCpf(accessKey) || isCpf(secretKey)) {
-      throw new RuntimeException(
-        "access-key and secret-key must both be set to 'cpf', or neither"
-      )
-    } else {
-      new BasicAWSCredentialsProvider(
-        new BasicAWSCredentials(accessKey, secretKey)
-      )
-    }
-  private def isCpf(key: String): Boolean = (key == "cpf")
-}
-
-class BasicAWSCredentialsProvider(basic: BasicAWSCredentials) extends
-    AWSCredentialsProvider{
-  @Override def getCredentials: AWSCredentials = basic
-  @Override def refresh = {}
 }
