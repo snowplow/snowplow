@@ -19,7 +19,7 @@ package inputs
 import org.apache.commons.codec.binary.Base64
 
 // Joda-Time
-import org.joda.time.DateTime
+import org.joda.time.{DateTime,DateTimeZone}
 
 // Scalaz
 import scalaz._
@@ -72,26 +72,26 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
   // TODO: add more specs into this data table
   def e1 =
     "SPEC NAME"                 || "RAW" | "EXP. TIMESTAMP"                         | "EXP. PAYLOAD"                                     | "EXP. IP ADDRESS" | "EXP. USER AGENT"                                                                                               | "EXP. REFERER URI" | "EXP. HEADERS"                                                                                                                                                                                                                                                                                                                                                                                                    | "EXP. USER ID"                              |
-    "Thrift #1"                 !! "CgABAAABQ3KVZkgMAAoIAAEAAAABCAACAAAAAQsAAwAAABh0ZXN0UGFyYW09MyZ0ZXN0UGFyYW0yPTQACwAUAAAAEHNzYy0wLjAuMS1zdGRvdXQLAB4AAAAFVVRGLTgLACgAAAAJMTI3LjAuMC4xCwApAAAACTEyNy4wLjAuMQsAMgAAAGhNb3ppbGxhLzUuMCAoWDExOyBMaW51eCB4ODZfNjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8zMS4wLjE2NTAuNjMgU2FmYXJpLzUzNy4zNg8ARgsAAAAHAAAAL0Nvb2tpZTogc3A9YzVmM2EwOWYtNzVmOC00MzA5LWJlYzUtZmVhNTYwZjc4NDU1AAAAHkFjY2VwdC1MYW5ndWFnZTogZW4tVVMsIGVuLCBldAAAACRBY2NlcHQtRW5jb2Rpbmc6IGd6aXAsIGRlZmxhdGUsIHNkY2gAAAB0VXNlci1BZ2VudDogTW96aWxsYS81LjAgKFgxMTsgTGludXggeDg2XzY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMzEuMC4xNjUwLjYzIFNhZmFyaS81MzcuMzYAAABWQWNjZXB0OiB0ZXh0L2h0bWwsIGFwcGxpY2F0aW9uL3hodG1sK3htbCwgYXBwbGljYXRpb24veG1sO3E9MC45LCBpbWFnZS93ZWJwLCAqLyo7cT0wLjgAAAAWQ29ubmVjdGlvbjoga2VlcC1hbGl2ZQAAABRIb3N0OiAxMjcuMC4wLjE6ODA4MAsAUAAAACRjNWYzYTA5Zi03NWY4LTQzMDktYmVjNS1mZWE1NjBmNzg0NTUA" !
-                                           new DateTime("2014-01-08T16:00:30.280Z") ! toPayload("testParam" -> "3", "testParam2" -> "4") ! "127.0.0.1".some  ! "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36".some ! None               ! List("Cookie: sp=c5f3a09f-75f8-4309-bec5-fea560f78455", "Accept-Language: en-US, en, et", "Accept-Encoding: gzip, deflate, sdch", "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36", "Accept: text/html, application/xhtml+xml, application/xml;q=0.9, image/webp, */*;q=0.8", "Connection: keep-alive", "Host: 127.0.0.1:8080") ! "c5f3a09f-75f8-4309-bec5-fea560f78455".some |> {
+    "Thrift #1"                 !! "CgABAAABQ5iGqAYLABQAAAAQc3NjLTAuMC4xLVN0ZG91dAsAHgAAAAVVVEYtOAsAKAAAAAkxMjcuMC4wLjEMACkIAAEAAAABCAACAAAAAQsAAwAAABh0ZXN0UGFyYW09MyZ0ZXN0UGFyYW0yPTQACwAtAAAACTEyNy4wLjAuMQsAMgAAAGhNb3ppbGxhLzUuMCAoWDExOyBMaW51eCB4ODZfNjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8zMS4wLjE2NTAuNjMgU2FmYXJpLzUzNy4zNg8ARgsAAAAIAAAAL0Nvb2tpZTogc3A9YzVmM2EwOWYtNzVmOC00MzA5LWJlYzUtZmVhNTYwZjc4NDU1AAAAGkFjY2VwdC1MYW5ndWFnZTogZW4tVVMsIGVuAAAAJEFjY2VwdC1FbmNvZGluZzogZ3ppcCwgZGVmbGF0ZSwgc2RjaAAAAHRVc2VyLUFnZW50OiBNb3ppbGxhLzUuMCAoWDExOyBMaW51eCB4ODZfNjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8zMS4wLjE2NTAuNjMgU2FmYXJpLzUzNy4zNgAAAFZBY2NlcHQ6IHRleHQvaHRtbCwgYXBwbGljYXRpb24veGh0bWwreG1sLCBhcHBsaWNhdGlvbi94bWw7cT0wLjksIGltYWdlL3dlYnAsICovKjtxPTAuOAAAABhDYWNoZS1Db250cm9sOiBtYXgtYWdlPTAAAAAWQ29ubmVjdGlvbjoga2VlcC1hbGl2ZQAAABRIb3N0OiAxMjcuMC4wLjE6ODA4MAsAUAAAACRjNWYzYTA5Zi03NWY4LTQzMDktYmVjNS1mZWE1NjBmNzg0NTUA" !
+                                           new DateTime("2014-01-16T00:49:58.278Z", DateTimeZone.UTC) ! toPayload("testParam" -> "3", "testParam2" -> "4") ! "127.0.0.1".some  ! "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36".some ! None               ! List("Cookie: sp=c5f3a09f-75f8-4309-bec5-fea560f78455", "Accept-Language: en-US, en, et", "Accept-Encoding: gzip, deflate, sdch", "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36", "Accept: text/html, application/xhtml+xml, application/xml;q=0.9, image/webp, */*;q=0.8", "Connection: keep-alive", "Host: 127.0.0.1:8080") ! "c5f3a09f-75f8-4309-bec5-fea560f78455".some |> {
       (_, raw, timestamp, payload, ipAddress, userAgent, refererUri, headers, userId) => {
 
         val canonicalEvent = ThriftLoader
           .toCanonicalInput(base64ToBytestring(raw))
 
-        val expected = new CanonicalInput(
-          timestamp  = timestamp,
-          payload    = payload,
-          source     = Expected.source,
-          encoding   = Expected.encoding,
-          ipAddress  = ipAddress,
-          userAgent  = userAgent,
-          refererUri = refererUri,
-          headers    = headers,
-          userId     = userId
-          )
-    
-        canonicalEvent must beSuccessful(expected.some)
+        canonicalEvent must beSuccessful.like {
+          case e =>
+            e must beSome
+            e.get.timestamp must beEqualTo(timestamp)
+            e.get.payload must beEqualTo(payload)
+            e.get.source must beEqualTo(Expected.source)
+            e.get.encoding must beEqualTo(Expected.encoding)
+            e.get.ipAddress must beEqualTo(ipAddress)
+            e.get.userAgent must beEqualTo(userAgent)
+            e.get.refererUri must beEqualTo(refererUri)
+            e.get.headers must beEqualTo(headers)
+            e.get.userId must beEqualTo(userId)
+        }
       }
     }
 

@@ -58,10 +58,12 @@ object ThriftLoader extends CollectorLoader {
     
     var snowplowRawEvent = new SnowplowRawEvent()
     try {
-      thriftDeserializer.deserialize(
-        snowplowRawEvent,
-        line.toCharArray.map(_.toByte)
-      )
+      this.synchronized {
+        thriftDeserializer.deserialize(
+          snowplowRawEvent,
+          line.toCharArray.map(_.toByte)
+        )
+      }
 
       val payload = TrackerPayload.extractGetPayload(
         Option(snowplowRawEvent.payload.data),
