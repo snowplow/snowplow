@@ -2,7 +2,10 @@
 
 ## Introduction
 
-TODO
+Scala Kinesis Enrich processes raw [Snowplow][snowplow] events from an input
+[Amazon Kinesis][kinesis] stream and stores enriched events
+into output Kinesis streams.
+Events are enriched using the [scala-common-enrich][common-enrich] library.
 
 ## Building
 
@@ -14,10 +17,18 @@ Assuming you already have [SBT 0.13.0] [sbt] installed:
     
 ## Usage
 
-Scala Kinesi Enrich has the following command-line interface:
+Scala Kinesis Enrich has the following command-line interface:
 
 ```
-TODO
+snowplow-kinesis-enrich: Version 0.0.1. Copyright (c) 2013, Snowplow Analytics
+Ltd.
+
+Usage: snowplow-kinesis-enrich [OPTIONS]
+
+OPTIONS
+--config filename
+                   Configuration file. Defaults to \"resources/default.conf\"
+                   (within .jar) if not set
 ```
 
 ## Running
@@ -33,6 +44,13 @@ aws {
   access-key: "cpf"
   secret-key: "cpf"
 }
+```
+
+Next, download the latest version of the [GeoLite database][geolite].
+
+```
+$ wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz -O /tmp/GeoLiteCity.dat.gz
+$ gunzip /tmp/GeoLiteCity.dat.gz
 ```
 
 Next, start the enricher, making sure to specify your new config file:
@@ -54,8 +72,9 @@ limitations under the License.
 
 [kinesis]: http://aws.amazon.com/kinesis/
 [snowplow]: http://snowplowanalytics.com
+[common-enrich]: https://github.com/snowplow/snowplow/tree/master/3-enrich/scala-common-enrich
 [sbt]: http://typesafe.artifactoryonline.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.0/sbt-launch.jar
 
-[kinesis-ui]: https://console.aws.amazon.com/kinesis/?
+[geolite]: http://dev.maxmind.com/geoip/legacy/geolite/
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0
