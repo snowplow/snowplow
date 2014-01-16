@@ -17,10 +17,12 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.snowplow.enrich.kinesis.sinks
+package com.snowplowanalytics.snowplow.enrich
+package kinesis.sinks
 
-// Snowplow events.
+// Snowplow
 import com.snowplowanalytics.snowplow.collectors.thrift._
+import common.outputs.CanonicalOutput
 
 // Java
 import java.nio.ByteBuffer
@@ -63,7 +65,7 @@ import scala.collection.mutable.MutableList
 /**
  * Kinesis Sink for Scala enrichment.
  */
-class KinesisSink(provider: AWSCredentialsProvider) {
+class KinesisSink(provider: AWSCredentialsProvider) extends ISink {
   lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
@@ -72,6 +74,10 @@ class KinesisSink(provider: AWSCredentialsProvider) {
   private var stream: Option[Stream] = None
   private val thriftSerializer = new TSerializer()
   private val thriftDeserializer = new TDeserializer()
+
+  def storeCanonicalOutput(tabDelimCanonicalOutput: String, key: String) = {
+    storeEnrichedEvent(tabDelimCanonicalOutput.getBytes, key)
+  }
 
   // Set the current stream to $name.
   def loadStream(name: String) {

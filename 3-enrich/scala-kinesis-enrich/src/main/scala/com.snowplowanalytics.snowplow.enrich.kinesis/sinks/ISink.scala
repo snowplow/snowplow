@@ -17,17 +17,15 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.snowplow.enrich.kinesis
-package sinks
+package com.snowplowanalytics.snowplow.enrich
+package kinesis.sinks
 
-// Snowplow events.
-import com.snowplowanalytics.snowplow.collectors.thrift._
+// Snowplow
+import common.outputs.CanonicalOutput
 
-/**
- * Stdouterr Sink for Scala enrichment.
- */
-class StdouterrSink extends ISink {
-  def storeCanonicalOutput(bytes: String, key: String) {
-    println(bytes)
-  }
+// Amazon
+import com.amazonaws.auth._
+
+trait ISink {
+  def storeCanonicalOutput(bytes: String, key: String)
 }

@@ -20,14 +20,26 @@
 package com.snowplowanalytics.snowplow.enrich.kinesis
 package sinks
 
-// Snowplow events.
-import com.snowplowanalytics.snowplow.collectors.thrift._
+// Amazon
+import com.amazonaws.auth._
 
-/**
- * Stdouterr Sink for Scala enrichment.
- */
-class StdouterrSink extends ISink {
-  def storeCanonicalOutput(bytes: String, key: String) {
-    println(bytes)
-  }
+object SinkFactory {
+  def makeSink (config: KinesisEnrichConfig,
+      kinesisProvider: AWSCredentialsProvider): ISink =
+    config.sink match {
+      case Sink.Kinesis =>
+        val kinesisEnrichedSink = new KinesisSink(kinesisProvider)
+        val successful = kinesisEnrichedSink.createAndLoadStream(
+          config.enrichedOutStream,
+          config.enrichedOutStreamShards
+        )
+        if (!successful) {
+          throw new RuntimeException(
+            "Error initializing or connecting to the stream."
+          )
+        }
+        kinesisEnrichedSink
+      case Sink.Stdouterr => new StdouterrSink
+      case Sink.Test => null
+    }
 }

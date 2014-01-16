@@ -67,22 +67,22 @@ import org.apache.thrift.TDeserializer
 class KinesisSource(config: KinesisEnrichConfig) {
  
   /**
-   * Fields in our CanonicalOutput which are discarded for legacy Redshift space reasons
+   * Fields in our CanonicalOutput which are discarded for legacy
+   * Redshift space reasons
    */
   private val DiscardedFields = Array("page_url", "page_referrer")
  
-  // TODO: Clean this portion up.
-  var kinesisEnrichedSink: KinesisSink = null
+  private val kinesisProvider = createKinesisProvider(
+    config.accessKey,
+    config.secretKey
+  )
+  private val sink: ISink = SinkFactory.makeSink(config, kinesisProvider)
 
   def run {
     val workerId = InetAddress.getLocalHost().getCanonicalHostName() +
       ":" + UUID.randomUUID()
     println("Using workerId: " + workerId)
 
-    val kinesisProvider = createKinesisProvider(
-      config.accessKey,
-      config.secretKey
-    )
     val kinesisClientLibConfiguration = new KinesisClientLibConfiguration(
       config.appName,
       config.rawInStream, 
@@ -95,19 +95,10 @@ class KinesisSource(config: KinesisEnrichConfig) {
     println(s"Running: ${config.appName}.")
     println(s"Processing raw input stream: ${config.rawInStream}")
 
-    kinesisEnrichedSink = new KinesisSink(kinesisProvider)
-    val successful = kinesisEnrichedSink.createAndLoadStream(
-      config.enrichedOutStream,
-      config.enrichedOutStreamShards
-    )
-    if (!successful) {
-      println("Error initializing or connecting to the stream.")
-      sys.exit(-1)
-    }
     
     val rawEventProcessorFactory = new RawEventProcessorFactory(
       config,
-      kinesisEnrichedSink
+      sink
     )
     val worker = new Worker(
       rawEventProcessorFactory,
@@ -147,16 +138,11 @@ class KinesisSource(config: KinesisEnrichConfig) {
           ci.get
         )
         (canonicalOutput.toValidationNel) map { (co: CanonicalOutput) =>
-          config.sink match {
-            case Sink.Kinesis =>
-              kinesisEnrichedSink.storeEnrichedEvent(
-                tabSeparateCanonicalOutput(co).getBytes,
-                co.user_ipaddress
-              )
-            case Sink.Stdouterr =>
-              throw new RuntimeException("Unimplemented.")
-            case Sink.Test =>
-              return tabSeparateCanonicalOutput(co)
+          val ts = tabSeparateCanonicalOutput(co)
+          if (config.sink != Sink.Test) {
+            sink.storeCanonicalOutput(ts, co.user_ipaddress)
+          } else {
+            return ts
           }
           // TODO: Store bad event if canonical output not validated.
         }
@@ -194,16 +180,16 @@ class KinesisSource(config: KinesisEnrichConfig) {
     }
   private def isCpf(key: String): Boolean = (key == "cpf")
 
-  class RawEventProcessorFactory(config: KinesisEnrichConfig,
-      kinesisEnrichedSink: KinesisSink) extends IRecordProcessorFactory {
+  class RawEventProcessorFactory(config: KinesisEnrichConfig, sink: ISink)
+      extends IRecordProcessorFactory {
     @Override
     def createProcessor: IRecordProcessor = {
-      return new RawEventProcessor(config, kinesisEnrichedSink);
+      return new RawEventProcessor(config, sink);
     }
   }
 
-  class RawEventProcessor(config: KinesisEnrichConfig,
-      kinesisEnrichedSink: KinesisSink) extends IRecordProcessor {
+  class RawEventProcessor(config: KinesisEnrichConfig, sink: ISink)
+      extends IRecordProcessor {
     private val thriftDeserializer = new TDeserializer()
 
     private var kinesisShardId: String = _
