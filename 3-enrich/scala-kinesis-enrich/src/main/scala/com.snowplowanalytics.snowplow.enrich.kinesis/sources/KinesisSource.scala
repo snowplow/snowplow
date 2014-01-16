@@ -69,7 +69,7 @@ class KinesisSource(config: KinesisEnrichConfig) {
   /**
    * Fields in our CanonicalOutput which are discarded for legacy Redshift space reasons
    */
-  private val DiscardedFields = List("page_url", "page_referrer")
+  private val DiscardedFields = Array("page_url", "page_referrer")
  
   // TODO: Clean this portion up.
   var kinesisEnrichedSink: KinesisSink = null
