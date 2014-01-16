@@ -56,6 +56,7 @@ import scala.collection.JavaConversions._
 import org.apache.thrift.TDeserializer
 
 
+// Overarching class to read events from Kinesis.
 class KinesisSource(config: KinesisEnrichConfig)
     extends AbstractSource(config) {
   def run {
@@ -89,6 +90,8 @@ class KinesisSource(config: KinesisEnrichConfig)
     worker.run()
   }
 
+  // Factory needed by the Amazon Kinesis Consumer library to
+  // create a processor.
   class RawEventProcessorFactory(config: KinesisEnrichConfig, sink: ISink)
       extends IRecordProcessorFactory {
     @Override
@@ -97,6 +100,7 @@ class KinesisSource(config: KinesisEnrichConfig)
     }
   }
 
+  // Process events from a Kinesis stream.
   class RawEventProcessor(config: KinesisEnrichConfig, sink: ISink)
       extends IRecordProcessor {
     private val thriftDeserializer = new TDeserializer()

@@ -26,6 +26,7 @@ import common.outputs.CanonicalOutput
 // Amazon
 import com.amazonaws.auth._
 
+// Define an interface for all sinks to use to store events.
 trait ISink {
   def storeCanonicalOutput(bytes: String, key: String)
 }

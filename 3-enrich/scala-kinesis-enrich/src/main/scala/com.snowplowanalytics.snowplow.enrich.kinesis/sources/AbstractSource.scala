@@ -35,7 +35,7 @@ import common.enrichments.PrivacyEnrichments.AnonOctets
 import com.amazonaws.auth._
 
 abstract class AbstractSource(config: KinesisEnrichConfig) {
-  def run(): Unit
+  def run
 
   /**
    * Fields in our CanonicalOutput which are discarded for legacy
@@ -43,13 +43,18 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
    */
   private val DiscardedFields = Array("page_url", "page_referrer")
 
-  protected val kinesisProvider = createKinesisProvider(
-    config.accessKey,
-    config.secretKey
-  )
+  // Initialize a kinesis provider to use with a Kinesis source or sink.
+  protected val kinesisProvider = createKinesisProvider
 
-  protected val sink: ISink = SinkFactory.makeSink(config, kinesisProvider)
+  // Initialize the sink to output enriched events to.
+  protected val sink: ISink = config.sink match {
+    case Sink.Kinesis => new KinesisSink(kinesisProvider, config)
+    case Sink.Stdouterr => new StdouterrSink
+    case Sink.Test => null
+  }
 
+  // Iterate through an enriched CanonicalOutput object and tab separate
+  // the fields to a string.
   def tabSeparateCanonicalOutput(output: CanonicalOutput): String = {
     output.getClass.getDeclaredFields
     .filter { field =>
@@ -61,6 +66,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
     }.mkString("\t")
   }
 
+  // Helper method to enrich an event.
   def enrichEvent(binaryData: Array[Byte]): String = {
     val canonicalInput = ThriftLoader.toCanonicalInput(
       new String(binaryData.map(_.toChar))
@@ -102,21 +108,25 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
     return null
   }
 
-  private def createKinesisProvider(accessKey: String, secretKey: String):
-      AWSCredentialsProvider =
-    if (isCpf(accessKey) && isCpf(secretKey)) {
+  // Initialize a Kinesis provider with the given credentials.
+  private def createKinesisProvider(): AWSCredentialsProvider =  {
+    val a = config.accessKey
+    val s = config.secretKey
+    if (isCpf(a) && isCpf(s)) {
         new ClasspathPropertiesFileCredentialsProvider()
-    } else if (isCpf(accessKey) || isCpf(secretKey)) {
+    } else if (isCpf(a) || isCpf(s)) {
       throw new RuntimeException(
         "access-key and secret-key must both be set to 'cpf', or neither"
       )
     } else {
       new BasicAWSCredentialsProvider(
-        new BasicAWSCredentials(accessKey, secretKey)
+        new BasicAWSCredentials(a, s)
       )
     }
+  }
   private def isCpf(key: String): Boolean = (key == "cpf")
 
+  // Wrap BasicAWSCredential objects.
   class BasicAWSCredentialsProvider(basic: BasicAWSCredentials) extends
       AWSCredentialsProvider{
     @Override def getCredentials: AWSCredentials = basic

@@ -35,6 +35,8 @@ import org.apache.thrift.TDeserializer
 // Apache commons
 import org.apache.commons.codec.binary.Base64
 
+// Allow the testing framework to enrich events using the
+// same methods from AbstractSource as the other sources.
 class TestSource(config: KinesisEnrichConfig)
     extends AbstractSource(config) {
   def run = {

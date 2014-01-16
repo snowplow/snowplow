@@ -35,6 +35,7 @@ import org.apache.thrift.TDeserializer
 // Apache commons
 import org.apache.commons.codec.binary.Base64
 
+// Decode Base64 Thrift objects from stdin.
 class StdinSource(config: KinesisEnrichConfig)
     extends AbstractSource(config) {
   def run = {

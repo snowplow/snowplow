@@ -24,7 +24,7 @@ import sources._
 import sinks._
 
 // Config
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.{Config,ConfigFactory}
 
 // Argot
 import org.clapper.argot.ArgotParser
@@ -32,16 +32,59 @@ import org.clapper.argot.ArgotParser
 // Java
 import java.io.File
 
+// The enrichment process takes input SnowplowRawEvent objects from
+// an input source out outputs enriched objects to a sink,
+// as defined in the following enumerations.
 object Source extends Enumeration {
   type Source = Value
   val Kinesis, Stdin, Test = Value
 }
-
 object Sink extends Enumeration {
   type Sink = Value
   val Kinesis, Stdouterr, Test = Value
 }
 
+// The main entry point of the Scala Kinesis Enricher.
+object KinesisEnrichApp extends App {
+  val parser = new ArgotParser(
+    programName = generated.Settings.name,
+    compactUsage = true,
+    preUsage = Some("%s: Version %s. Copyright (c) 2013, %s.".format(
+      generated.Settings.name,
+      generated.Settings.version,
+      generated.Settings.organization)
+    )
+  )
+
+  // Optional config argument
+  val config = parser.option[Config](
+      List("config"), "filename", """
+        |Configuration file. Defaults to \"resources/default.conf\"
+        |(within .jar) if not set""".stripMargin) {
+    (c, opt) =>
+      val file = new File(c)
+      if (file.exists) {
+        ConfigFactory.parseFile(file)
+      } else {
+        parser.usage("Configuration file \"%s\" does not exist".format(c))
+        ConfigFactory.empty()
+      }
+  }
+
+  parser.parse(args)
+  val kinesisEnrichConfig = new KinesisEnrichConfig(
+    config.value.getOrElse(ConfigFactory.load("default"))
+  )
+
+  val source = kinesisEnrichConfig.source match {
+    case Source.Kinesis => new KinesisSource(kinesisEnrichConfig)
+    case Source.Stdin => new StdinSource(kinesisEnrichConfig)
+  }
+  source.run
+}
+
+// Rigidly load the configuration file here to error when
+// the enrichment process starts rather than later.
 class KinesisEnrichConfig(config: Config) {
   private val enrich = config.resolve.getConfig("enrich")
 
@@ -87,42 +130,4 @@ class KinesisEnrichConfig(config: Config) {
   private val anonIp = enrichments.getConfig("anon_ip")
   val anonIpEnabled = anonIp.getBoolean("enabled")
   val anonOctets = anonIp.getInt("anon_octets")
-}
-
-object KinesisEnrichApp extends App {
-  val parser = new ArgotParser(
-    programName = generated.Settings.name,
-    compactUsage = true,
-    preUsage = Some("%s: Version %s. Copyright (c) 2013, %s.".format(
-      generated.Settings.name,
-      generated.Settings.version,
-      generated.Settings.organization)
-    )
-  )
-
-  // Optional config argument
-  val config = parser.option[Config](
-      List("config"), "filename", """
-        |Configuration file. Defaults to \"resources/default.conf\"
-        |(within .jar) if not set""".stripMargin) {
-    (c, opt) =>
-      val file = new File(c)
-      if (file.exists) {
-        ConfigFactory.parseFile(file)
-      } else {
-        parser.usage("Configuration file \"%s\" does not exist".format(c))
-        ConfigFactory.empty()
-      }
-  }
-
-  parser.parse(args)
-  val kinesisEnrichConfig = new KinesisEnrichConfig(
-    config.value.getOrElse(ConfigFactory.load("default"))
-  )
-
-  val source = kinesisEnrichConfig.source match {
-    case Source.Kinesis => new KinesisSource(kinesisEnrichConfig)
-    case Source.Stdin => new StdinSource(kinesisEnrichConfig)
-  }
-  source.run
 }
