@@ -118,11 +118,11 @@ class KinesisSource(config: KinesisEnrichConfig) {
     worker.run()
   }
 
-  def runTest(event: Array[Byte]) = {
+  def runTest(event: Array[Byte]): String = {
     enrichEvent(event)
   }
 
-  private def enrichEvent(binaryData: Array[Byte]) = {
+  private def enrichEvent(binaryData: Array[Byte]): String = {
     val canonicalInput = ThriftLoader.toCanonicalInput(
       new String(binaryData.map(_.toChar))
     )
@@ -156,7 +156,7 @@ class KinesisSource(config: KinesisEnrichConfig) {
             case Sink.Stdouterr =>
               throw new RuntimeException("Unimplemented.")
             case Sink.Test =>
-              tabSeparateCanonicalOutput(co).getBytes
+              return tabSeparateCanonicalOutput(co)
           }
           // TODO: Store bad event if canonical output not validated.
         }
@@ -165,6 +165,7 @@ class KinesisSource(config: KinesisEnrichConfig) {
       }
       // TODO: Store bad event if canonical input not validated.
     }
+    return null
   }
 
   private def tabSeparateCanonicalOutput(output: CanonicalOutput): String = {

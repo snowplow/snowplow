@@ -27,10 +27,12 @@ import collectors.thrift.{
 // Commons Codec
 import org.apache.commons.codec.binary.Base64
 
-// specs2 and spray testing libraries
+// specs2 testing libraries
 import org.specs2.matcher.AnyMatchers
 import org.specs2.mutable.Specification
+import org.specs2.execute.Result
 import org.specs2.specification.{Scope,Fragments}
+import org.specs2.scalaz.ValidationMatchers
 
 // Config
 import com.typesafe.config.{ConfigFactory,Config,ConfigException}
@@ -80,8 +82,115 @@ enrich {
 
   "Snowplow's Kinesis enricher" should {
     "enrich a valid SnowplowRawEvent." in {
-      val eventBytes = Base64.decodeBase64("CgABAAABQ3KVZkgMAAoIAAEAAAABCAACAAAAAQsAAwAAABh0ZXN0UGFyYW09MyZ0ZXN0UGFyYW0yPTQACwAUAAAAEHNzYy0wLjAuMS1zdGRvdXQLAB4AAAAFVVRGLTgLACgAAAAJMTI3LjAuMC4xCwApAAAACTEyNy4wLjAuMQsAMgAAAGhNb3ppbGxhLzUuMCAoWDExOyBMaW51eCB4ODZfNjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8zMS4wLjE2NTAuNjMgU2FmYXJpLzUzNy4zNg8ARgsAAAAHAAAAL0Nvb2tpZTogc3A9YzVmM2EwOWYtNzVmOC00MzA5LWJlYzUtZmVhNTYwZjc4NDU1AAAAHkFjY2VwdC1MYW5ndWFnZTogZW4tVVMsIGVuLCBldAAAACRBY2NlcHQtRW5jb2Rpbmc6IGd6aXAsIGRlZmxhdGUsIHNkY2gAAAB0VXNlci1BZ2VudDogTW96aWxsYS81LjAgKFgxMTsgTGludXggeDg2XzY0KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMzEuMC4xNjUwLjYzIFNhZmFyaS81MzcuMzYAAABWQWNjZXB0OiB0ZXh0L2h0bWwsIGFwcGxpY2F0aW9uL3hodG1sK3htbCwgYXBwbGljYXRpb24veG1sO3E9MC45LCBpbWFnZS93ZWJwLCAqLyo7cT0wLjgAAAAWQ29ubmVjdGlvbjoga2VlcC1hbGl2ZQAAABRIb3N0OiAxMjcuMC4wLjE6ODA4MAsAUAAAACRjNWYzYTA5Zi03NWY4LTQzMDktYmVjNS1mZWE1NjBmNzg0NTUA")
-      kinesisSource.runTest(eventBytes) must beEqualTo("TODO")
+      val eventBytes = Base64.decodeBase64("CgABAAABQ5iGqAYLABQAAAAQc3NjLTAuMC4xLVN0ZG91dAsAHgAAAAVVVEYtOAsAKAAAAAkxMjcuMC4wLjEMACkIAAEAAAABCAACAAAAAQsAAwAAABh0ZXN0UGFyYW09MyZ0ZXN0UGFyYW0yPTQACwAtAAAACTEyNy4wLjAuMQsAMgAAAGhNb3ppbGxhLzUuMCAoWDExOyBMaW51eCB4ODZfNjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8zMS4wLjE2NTAuNjMgU2FmYXJpLzUzNy4zNg8ARgsAAAAIAAAAL0Nvb2tpZTogc3A9YzVmM2EwOWYtNzVmOC00MzA5LWJlYzUtZmVhNTYwZjc4NDU1AAAAGkFjY2VwdC1MYW5ndWFnZTogZW4tVVMsIGVuAAAAJEFjY2VwdC1FbmNvZGluZzogZ3ppcCwgZGVmbGF0ZSwgc2RjaAAAAHRVc2VyLUFnZW50OiBNb3ppbGxhLzUuMCAoWDExOyBMaW51eCB4ODZfNjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8zMS4wLjE2NTAuNjMgU2FmYXJpLzUzNy4zNgAAAFZBY2NlcHQ6IHRleHQvaHRtbCwgYXBwbGljYXRpb24veGh0bWwreG1sLCBhcHBsaWNhdGlvbi94bWw7cT0wLjksIGltYWdlL3dlYnAsICovKjtxPTAuOAAAABhDYWNoZS1Db250cm9sOiBtYXgtYWdlPTAAAAAWQ29ubmVjdGlvbjoga2VlcC1hbGl2ZQAAABRIb3N0OiAxMjcuMC4wLjE6ODA4MAsAUAAAACRjNWYzYTA5Zi03NWY4LTQzMDktYmVjNS1mZWE1NjBmNzg0NTUA")
+      val enrichedEvent = kinesisSource.runTest(eventBytes).split("\t")
+      val expected = Array[String](
+        "",
+        "",
+        "2014-01-16 00:49:58.278",
+        "",
+        "",
+        "com.snowplowanalytics",
+        "[0-9a-z-]*",
+        "",
+        "",
+        "ssc-0.0.1-Stdout",
+        "kinesis-0.0.1-common-0.2.0-SNAPSHOT",
+        "",
+        "127.0.0.x",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.63 Safari/537.36",
+        "Chrome 31",
+        "Chrome",
+        "31.0.1650.63",
+        "Browser",
+        "WEBKIT",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "Linux",
+        "Linux",
+        "Other",
+        "",
+        "Computer",
+        "0"
+      )
+      enrichedEvent.size must beEqualTo(expected.size)
+      Result.unit(
+        (0 to expected.size-1) foreach { i =>
+          if (i == 6) {
+            enrichedEvent(i) must beMatching(expected(i).r)
+          } else {
+            enrichedEvent(i) must beEqualTo(expected(i))
+          }
+        }
+      )
     }
   }
 }

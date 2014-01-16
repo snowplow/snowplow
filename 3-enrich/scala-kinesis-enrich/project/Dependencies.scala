@@ -40,9 +40,11 @@ object Dependencies {
     val snowplowRawEvent = "0.1.0-SNAPSHOT"
     val snowplowCommonEnrich = "0.2.0-SNAPSHOT"
     val scalazon   = "0.5"
+    val scalaz7    = "7.0.0"
     val maxmindGeoip = "0.0.5"
     // Scala (test only)
     val specs2     = "2.3.6"
+    val scalazSpecs2 = "0.1.2"
     // Scala compile only for sbt-thrift.
     val commonsLang3 = "3.1"
     val thrift = "0.9.0"
@@ -66,8 +68,10 @@ object Dependencies {
     val snowplowRawEvent = "com.snowplowanalytics" % "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val snowplowCommonEnrich = "com.snowplowanalytics" % "snowplow-common-enrich" % V.snowplowCommonEnrich
     val scalazon    = "io.github.cloudify"         %% "scalazon"        % V.scalazon
+    val scalaz7          = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7
     // Scala (test only)
     val specs2      = "org.specs2"                 %% "specs2"          % V.specs2     % "test"
+    val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"            % V.scalazSpecs2 % "test"
     // Scala compile only for sbt-thrift.
     val commonsLang3 = "org.apache.commons" % "commons-lang3" % V.commonsLang3 % "compile"
     val thrift = "org.apache.thrift" % "libthrift" % V.thrift % "compile"
