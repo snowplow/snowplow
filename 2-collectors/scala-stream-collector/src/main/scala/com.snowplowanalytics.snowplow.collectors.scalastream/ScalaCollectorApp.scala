@@ -132,6 +132,7 @@ object ScalaCollector extends App {
         error("Error initializing or connecting to the stream.")
         sys.exit(-1)
       }
+    case _ => ;
   }
 
   // The handler actor replies to incoming HttpRequests.
