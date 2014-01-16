@@ -65,6 +65,12 @@ import org.apache.thrift.TDeserializer
 
 
 class KinesisSource(config: KinesisEnrichConfig) {
+ 
+  /**
+   * Fields in our CanonicalOutput which are discarded for legacy Redshift space reasons
+   */
+  private val DiscardedFields = List("page_url", "page_referrer")
+ 
   // TODO: Clean this portion up.
   var kinesisEnrichedSink: KinesisSink = null
 
@@ -162,7 +168,11 @@ class KinesisSource(config: KinesisEnrichConfig) {
   }
 
   private def tabSeparateCanonicalOutput(output: CanonicalOutput): String = {
-    output.getClass.getDeclaredFields.map{ field =>
+    output.getClass.getDeclaredFields
+    .filter { field =>
+      !DiscardedFields.contains(field.getName)
+    }
+    .map{ field =>
       field.setAccessible(true)
       Option(field.get(output)).getOrElse("")
     }.mkString("\t")
