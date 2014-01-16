@@ -30,14 +30,6 @@ import collectors.thrift.{
   PayloadProtocol,
   PayloadFormat
 }
-import common.MaybeCanonicalInput
-import common.inputs.ThriftLoader
-import common.outputs.CanonicalOutput
-import common.enrichments.EnrichmentManager
-import common.enrichments.PrivacyEnrichments.AnonOctets
-
-// Scala MaxMind GeoIP
-import com.snowplowanalytics.maxmind.geoip.IpGeo
 
 // Java
 import java.io.{FileInputStream,IOException}
@@ -64,20 +56,8 @@ import scala.collection.JavaConversions._
 import org.apache.thrift.TDeserializer
 
 
-class KinesisSource(config: KinesisEnrichConfig) {
- 
-  /**
-   * Fields in our CanonicalOutput which are discarded for legacy
-   * Redshift space reasons
-   */
-  private val DiscardedFields = Array("page_url", "page_referrer")
- 
-  private val kinesisProvider = createKinesisProvider(
-    config.accessKey,
-    config.secretKey
-  )
-  private val sink: ISink = SinkFactory.makeSink(config, kinesisProvider)
-
+class KinesisSource(config: KinesisEnrichConfig)
+    extends AbstractSource(config) {
   def run {
     val workerId = InetAddress.getLocalHost().getCanonicalHostName() +
       ":" + UUID.randomUUID()
@@ -108,77 +88,6 @@ class KinesisSource(config: KinesisEnrichConfig) {
 
     worker.run()
   }
-
-  def runTest(event: Array[Byte]): String = {
-    enrichEvent(event)
-  }
-
-  private def enrichEvent(binaryData: Array[Byte]): String = {
-    val canonicalInput = ThriftLoader.toCanonicalInput(
-      new String(binaryData.map(_.toChar))
-    )
-
-    (canonicalInput.toValidationNel) map { (ci: MaybeCanonicalInput) =>
-      if (ci.isDefined) {
-        val ipGeo = new IpGeo(
-          dbFile = config.maxmindFile,
-          memCache = false,
-          lruCache = 20000
-        )
-        val anonOctets =
-          if (!config.anonIpEnabled || config.anonOctets == 0) {
-            AnonOctets.None
-          } else {
-            AnonOctets(config.anonOctets)
-          }
-        val canonicalOutput = EnrichmentManager.enrichEvent(
-          ipGeo,
-          s"kinesis-${generated.Settings.version}",
-          anonOctets,
-          ci.get
-        )
-        (canonicalOutput.toValidationNel) map { (co: CanonicalOutput) =>
-          val ts = tabSeparateCanonicalOutput(co)
-          if (config.sink != Sink.Test) {
-            sink.storeCanonicalOutput(ts, co.user_ipaddress)
-          } else {
-            return ts
-          }
-          // TODO: Store bad event if canonical output not validated.
-        }
-      } else {
-        // CanonicalInput is None: do nothing
-      }
-      // TODO: Store bad event if canonical input not validated.
-    }
-    return null
-  }
-
-  private def tabSeparateCanonicalOutput(output: CanonicalOutput): String = {
-    output.getClass.getDeclaredFields
-    .filter { field =>
-      !DiscardedFields.contains(field.getName)
-    }
-    .map{ field =>
-      field.setAccessible(true)
-      Option(field.get(output)).getOrElse("")
-    }.mkString("\t")
-  }
-
-  private def createKinesisProvider(accessKey: String, secretKey: String):
-      AWSCredentialsProvider =
-    if (isCpf(accessKey) && isCpf(secretKey)) {
-        new ClasspathPropertiesFileCredentialsProvider()
-    } else if (isCpf(accessKey) || isCpf(secretKey)) {
-      throw new RuntimeException(
-        "access-key and secret-key must both be set to 'cpf', or neither"
-      )
-    } else {
-      new BasicAWSCredentialsProvider(
-        new BasicAWSCredentials(accessKey, secretKey)
-      )
-    }
-  private def isCpf(key: String): Boolean = (key == "cpf")
 
   class RawEventProcessorFactory(config: KinesisEnrichConfig, sink: ISink)
       extends IRecordProcessorFactory {
@@ -268,12 +177,5 @@ class KinesisSource(config: KinesisEnrichConfig) {
         }
       }
     }
-  }
-
-
-  class BasicAWSCredentialsProvider(basic: BasicAWSCredentials) extends
-      AWSCredentialsProvider{
-    @Override def getCredentials: AWSCredentials = basic
-    @Override def refresh = {}
   }
 }

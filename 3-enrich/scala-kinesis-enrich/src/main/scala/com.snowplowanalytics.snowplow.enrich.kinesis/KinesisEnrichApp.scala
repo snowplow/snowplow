@@ -34,7 +34,7 @@ import java.io.File
 
 object Source extends Enumeration {
   type Source = Value
-  val Kinesis, Stdin, Test = Value
+  val Kinesis, Stdin = Value
 }
 
 object Sink extends Enumeration {
@@ -48,7 +48,6 @@ class KinesisEnrichConfig(config: Config) {
   val source = enrich.getString("source") match {
     case "kinesis" => Source.Kinesis
     case "stdin" => Source.Stdin
-    case "test" => Source.Test
     case _ => throw new RuntimeException("enrich.source unknown.")
   }
 
@@ -120,8 +119,9 @@ object KinesisEnrichApp extends App {
     config.value.getOrElse(ConfigFactory.load("default"))
   )
 
-  kinesisEnrichConfig.source match {
-    case Source.Kinesis => new KinesisSource(kinesisEnrichConfig).run
+  val source = kinesisEnrichConfig.source match {
+    case Source.Kinesis => new KinesisSource(kinesisEnrichConfig)
     case Source.Stdin => new StdinSource(kinesisEnrichConfig)
   }
+  source.run
 }

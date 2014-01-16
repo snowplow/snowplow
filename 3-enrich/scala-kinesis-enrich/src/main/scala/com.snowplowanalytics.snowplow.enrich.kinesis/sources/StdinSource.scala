@@ -25,12 +25,22 @@ import java.util.List
 import java.nio.ByteBuffer
 
 // Scala
+import scala.io
 import scala.util.control.Breaks._
 import scala.collection.JavaConversions._
 
 // Thrift
 import org.apache.thrift.TDeserializer
 
-class StdinSource(kinesisEnrichConfig: KinesisEnrichConfig) {
-  throw new RuntimeException("Unimplemented.")
+// Apache commons
+import org.apache.commons.codec.binary.Base64
+
+class StdinSource(config: KinesisEnrichConfig)
+    extends AbstractSource(config) {
+  def run = {
+    for (ln <- io.Source.stdin.getLines) {
+      val bytes = Base64.decodeBase64(ln)
+      enrichEvent(bytes)
+    }
+  }
 }
