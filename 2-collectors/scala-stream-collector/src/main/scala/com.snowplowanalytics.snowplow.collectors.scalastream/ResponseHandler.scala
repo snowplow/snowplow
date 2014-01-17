@@ -44,18 +44,21 @@ import com.typesafe.config.Config
 // Java conversions
 import scala.collection.JavaConversions._
 
+// Contains an invisible pixel to return for `/i` requests.
 object ResponseHandler {
   val pixel = Base64.decodeBase64(
     "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
   )
 }
 
-class ResponseHandler(config: CollectorConfig, kinesisSink: KinesisSink) {
-  var lastStoredRecord: ByteBuffer = null
-
+// Receive requests and store data into an output sink.
+class ResponseHandler(config: CollectorConfig, sink: AbstractSink) {
+  // When `/i` is requested, this is called and stores an event in the
+  // Kinisis sink and returns an invisible pixel with a cookie.
   def cookie(queryParams: String, requestCookie: Option[HttpCookie],
       userAgent: Option[String], hostname: String, ip: String,
-      request: HttpRequest, refererUri: Option[String]) = {
+      request: HttpRequest, refererUri: Option[String]):
+      (HttpResponse, Array[Byte]) = {
     // Use the same UUID if the request cookie contains `sp`.
     val networkUserId: String =
       if (requestCookie.isDefined) requestCookie.get.content
@@ -87,14 +90,10 @@ class ResponseHandler(config: CollectorConfig, kinesisSink: KinesisSink) {
     }
     event.networkUserId = networkUserId
 
-    config.sinkEnabled match {
-      case Sink.Kinesis => kinesisSink.storeEvent(event, ip)
-      case Sink.Test =>
-        lastStoredRecord = kinesisSink.getDataFromEvent(event)
-      case _ => StdoutSink.printEvent(event)
-    }
+    // Only the test sink responds with the serialized object.
+    val sinkResponse = sink.storeRawEvent(event, ip)
 
-    // Build the response.
+    // Build the HTTP response.
     val responseCookie = HttpCookie(
       "sp", networkUserId,
       expires=Some(DateTime.now+config.cookieExpiration),
@@ -106,8 +105,10 @@ class ResponseHandler(config: CollectorConfig, kinesisSink: KinesisSink) {
       RawHeader("P3P", s"""policyref="${policyRef}", CP="${CP}""""),
       `Set-Cookie`(responseCookie)
     )
-    HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
-      .withHeaders(headers)
+    val httpResponse = HttpResponse(
+      entity = HttpEntity(`image/gif`, ResponseHandler.pixel)
+    ).withHeaders(headers)
+    (httpResponse, sinkResponse)
   }
 
   def notFound = HttpResponse(status = 404, entity = "404 Not found")

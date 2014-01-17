@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd.
  * All rights reserved.
  *
@@ -22,18 +22,24 @@ package scalastream
 package sinks
 
 // Snowplow
-import scalastream._
 import thrift.SnowplowRawEvent
 
+// Java
 import java.nio.ByteBuffer
-import org.apache.thrift.TSerializer
-import com.typesafe.config.Config
-import org.apache.commons.codec.binary.Base64
 
-class StdoutSink extends AbstractSink {
-  // Print a Base64-encoded event.
-  def storeRawEvent(event: SnowplowRawEvent, key: String) = {
-    println(Base64.encodeBase64String(serializeEvent(event)))
-    null
-  }
+// Thrift
+import org.apache.thrift.TSerializer
+
+// Define an interface for all sinks to use to store events.
+trait AbstractSink {
+  def storeRawEvent(event: SnowplowRawEvent, key: String): Array[Byte]
+
+  // Serialize Thrift SnowplowRawEvent objects,
+  // and synchronize because TSerializer doesn't support multi-threaded
+  // serialization.
+  private val thriftSerializer = new TSerializer
+  def serializeEvent(event: SnowplowRawEvent): Array[Byte] =
+    this.synchronized {
+      thriftSerializer.serialize(event)
+    }
 }

@@ -30,10 +30,9 @@ import org.apache.thrift.TSerializer
 import com.typesafe.config.Config
 import org.apache.commons.codec.binary.Base64
 
-class StdoutSink extends AbstractSink {
-  // Print a Base64-encoded event.
-  def storeRawEvent(event: SnowplowRawEvent, key: String) = {
-    println(Base64.encodeBase64String(serializeEvent(event)))
-    null
-  }
+// Allow the testing framework to test collection events using the
+// same methods from AbstractSink as the other sinks.
+class TestSink extends AbstractSink {
+  def storeRawEvent(event: SnowplowRawEvent, key: String): Array[Byte] =
+    serializeEvent(event)
 }

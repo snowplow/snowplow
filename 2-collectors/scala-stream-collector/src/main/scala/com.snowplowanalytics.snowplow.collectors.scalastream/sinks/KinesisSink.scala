@@ -15,6 +15,7 @@ package com.snowplowanalytics.snowplow.collectors
 package scalastream
 package sinks
 
+// Snowplow
 import scalastream._
 import thrift.SnowplowRawEvent
 
@@ -46,9 +47,6 @@ import scala.concurrent.{Future,Await,TimeoutException}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-// Thrift
-import org.apache.thrift.TSerializer
-
 // Logging
 import org.slf4j.LoggerFactory
 
@@ -59,29 +57,17 @@ import scala.collection.mutable.MutableList
 /**
  * Kinesis Sink for the Scala collector.
  */
-class KinesisSink(collectorConfig: CollectorConfig) {
-  lazy val log = LoggerFactory.getLogger(getClass())
+class KinesisSink(config: CollectorConfig) extends AbstractSink {
+  private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
-  // Initialize
-  private implicit val kinesis = createKinesisClient(
-    collectorConfig.awsAccessKey, collectorConfig.awsSecretKey)
-  private var stream: Option[Stream] = None
-  private val thriftSerializer = new TSerializer()
+  // Create a Kinesis client for stream interactions.
+  private implicit val kinesis = createKinesisClient
 
-  // Set the current stream to $name.
-  def loadStream(name: String) = {
-    stream = Some(Kinesis.stream(name))
-  }
+  // The output stream for enriched events.
+  private val enrichedStream = createAndLoadStream()
 
-  /**
-   * Checks if a stream exists.
-   *
-   * @param name The name of the stream to check.
-   * @param timeout How long to keep checking if the stream became active,
-   * in seconds
-   * @return true if the stream was loaded, false if the stream doesn't exist.
-   */
+  // Checks if a stream exists.
   def streamExists(name: String, timeout: Int = 60): Boolean = {
     val streamListFuture = for {
       s <- Kinesis.streams.list
@@ -99,56 +85,34 @@ class KinesisSink(collectorConfig: CollectorConfig) {
     false
   }
 
-  /**
-   * Deletes a stream.
-   */
-  def deleteStream(name: String, timeout: Int = 60): Unit = {
-    val localStream = Kinesis.stream(name)
+  // Creates a new stream if one doesn't exist.
+  def createAndLoadStream(timeout: Int = 60): Stream = {
+    val name = config.streamName
+    val size = config.streamSize
 
-    info(s"Deleting stream $name.")
-    val deleteStream = for {
-      s <- localStream.delete
-    } yield s
-
-    Await.result(deleteStream, Duration(timeout, SECONDS))
-    info("Successfully deleted stream.")
-  }
-
-  /**
-   * Creates a new stream if one doesn't exist.
-   *
-   * @param name The name of the stream to create
-   * @param size The number of shards to support for this stream
-   * @param timeout How long to keep checking if the stream became active,
-   * in seconds
-   *
-   * @return a Boolean, where:
-   * 1. true means the stream was successfully created or already exists
-   * 2. false means an error occurred
-   */
-  def createAndLoadStream(name: String, size: Int, timeout: Int = 60):
-      Boolean = {
     if (streamExists(name)) {
-      loadStream(name)
-      return true
-    }
+      Kinesis.stream(name)
+    } else {
+      info(s"Creating stream $name of size $size.")
+      val createStream = for {
+        s <- Kinesis.streams.create(name)
+      } yield s
 
-    info(s"Creating stream $name of size $size.")
-    val createStream = for {
-      s <- Kinesis.streams.create(name)
-    } yield s
+      try {
+        val stream = Await.result(createStream, Duration(timeout, SECONDS))
+        
+        info(s"Successfully created stream $name. Waiting until it's active.")
+        Await.result(stream.waitActive.retrying(timeout),
+          Duration(timeout, SECONDS))
 
-    try {
-      stream = Some(Await.result(createStream, Duration(timeout, SECONDS)))
-      Await.result(stream.get.waitActive.retrying(timeout),
-        Duration(timeout, SECONDS))
-    } catch {
-      case _: TimeoutException =>
-        info("Error: Timed out.")
-        false
+        info(s"Stream $name active.")
+
+        stream
+      } catch {
+        case _: TimeoutException =>
+          throw new RuntimeException("Error: Timed out.")
+      }
     }
-    info("Successfully created stream.")
-    true
   }
 
   /**
@@ -158,8 +122,9 @@ class KinesisSink(collectorConfig: CollectorConfig) {
    *
    * @return the initialized AmazonKinesisClient
    */
-  private def createKinesisClient(
-      accessKey: String, secretKey: String): Client =
+  private def createKinesisClient: Client = {
+    val accessKey = config.awsAccessKey
+    val secretKey = config.awsSecretKey
     if (isCpf(accessKey) && isCpf(secretKey)) {
       Client.fromCredentials(new ClasspathPropertiesFileCredentialsProvider())
     } else if (isCpf(accessKey) || isCpf(secretKey)) {
@@ -167,37 +132,21 @@ class KinesisSink(collectorConfig: CollectorConfig) {
     } else {
       Client.fromCredentials(accessKey, secretKey)
     }
-
-  def getDataFromEvent(event: SnowplowRawEvent): ByteBuffer = {
-    return ByteBuffer.wrap(thriftSerializer.serialize(event))
   }
 
-  def storeEvent(event: SnowplowRawEvent, key: String): PutResult = {
+  def storeRawEvent(event: SnowplowRawEvent, key: String): Array[Byte] = {
     info(s"Writing Thrift record to Kinesis: ${event.toString}")
-    val result = writeRecord(data = getDataFromEvent(event), key = key)
+    val putData = for {
+      p <- enrichedStream.put(
+        ByteBuffer.wrap(serializeEvent(event)),
+        key
+      )
+    } yield p
+    val result = Await.result(putData, Duration(60, SECONDS))
     info(s"Writing successful.")
     info(s"  + ShardId: ${result.shardId}")
     info(s"  + SequenceNumber: ${result.sequenceNumber}")
-    result
-  }
-
-  /**
-   * Stores an event to the Kinesis stream.
-   *
-   * @param data The data for this record
-   * @param key The partition key for this record
-   * @param timeout Time in seconds to wait to put the data.
-   *
-   * @return A PutResult containing the ShardId and SequenceNumber
-   *   of the record written to.
-   */
-  private def writeRecord(data: ByteBuffer, key: String,
-      timeout: Int = 60): PutResult = {
-    val putData = for {
-      p <- stream.get.put(data, key)
-    } yield p
-    val putResult = Await.result(putData, Duration(timeout, SECONDS))
-    putResult
+    null
   }
 
   /**

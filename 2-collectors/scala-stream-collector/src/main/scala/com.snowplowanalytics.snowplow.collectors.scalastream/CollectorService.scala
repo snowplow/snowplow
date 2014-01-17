@@ -14,33 +14,44 @@
  */
 
 package com.snowplowanalytics.snowplow.collectors.scalastream
+
+// Snowplow
 import sinks._
 
+// Akka
 import akka.actor.{Actor,ActorRefFactory}
 import akka.pattern.ask
 import akka.util.Timeout
-import scala.concurrent.duration._
+
+// Spray
 import spray.http.{Uri,Timedout,HttpRequest}
 import spray.routing.HttpService
 
-class CollectorServiceActor(
-    collectorConfig: CollectorConfig,
-    kinesisSink: KinesisSink) extends Actor with HttpService {
+// Scala
+import scala.concurrent.duration._
+
+// Actor accepting Http requests for the Scala collector.
+class CollectorServiceActor(collectorConfig: CollectorConfig,
+    sink: AbstractSink) extends Actor with HttpService {
   implicit val timeout: Timeout = 1.second // For the actor 'asks'
   def actorRefFactory = context
-  private def responseHandler = new ResponseHandler(
-    collectorConfig,
-    kinesisSink
-  )
+
+  // Deletage responses (content and storing) to the ResponseHandler.
+  private val responseHandler = new ResponseHandler(collectorConfig, sink)
+
+  // Use CollectorService so the same route can be accessed differently
+  // in the testing framework.
   private val collectorService = new CollectorService(responseHandler, context)
 
-  def receive = handleTimeouts orElse runRoute(collectorService.collectorRoute)
-
-  def handleTimeouts: Receive = {
+  // Message loop for the Spray service.
+  def receive = {
     case Timedout(_) => sender ! responseHandler.timeout
+    case _ => runRoute(collectorService.collectorRoute)
   }
 }
 
+// Store the route in CollectorService to be accessed from
+// both CollectorServiceActor and from the testing framework.
 class CollectorService(
     responseHandler: ResponseHandler,
     context: ActorRefFactory) extends HttpService {
@@ -66,7 +77,7 @@ class CollectorService(
                           ip.toString,
                           request,
                           refererURI
-                        )
+                        )._1
                       )
                     }
                   }

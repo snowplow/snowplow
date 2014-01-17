@@ -33,8 +33,8 @@ import org.specs2.mutable.Specification
 import org.specs2.specification.{Scope,Fragments}
 import spray.testkit.Specs2RouteTest
 
-// Spray classes
-import spray.http.{DateTime,HttpHeader,HttpCookie}
+// Spray
+import spray.http.{DateTime,HttpHeader,HttpRequest,HttpCookie}
 import spray.http.HttpHeaders.{
   Cookie,
   `Set-Cookie`,
@@ -48,9 +48,9 @@ import com.typesafe.config.{ConfigFactory,Config,ConfigException}
 // Thrift
 import org.apache.thrift.TDeserializer
 
+// Scala
 import scala.collection.mutable.MutableList
 
-// http://spray.io/documentation/1.2.0/spray-testkit/
 class CollectorServiceSpec extends Specification with Specs2RouteTest with
      AnyMatchers {
    val testConf: Config = ConfigFactory.parseString("""
@@ -87,8 +87,8 @@ collector {
 }
 """)
   val collectorConfig = new CollectorConfig(testConf)
-  val kinesisSink = new KinesisSink(collectorConfig)
-  val responseHandler = new ResponseHandler(collectorConfig, kinesisSink)
+  val sink = new TestSink
+  val responseHandler = new ResponseHandler(collectorConfig, sink)
   val collectorService = new CollectorService(responseHandler, system)
   val thriftDeserializer = new TDeserializer
 
@@ -163,18 +163,21 @@ collector {
       }
     }
     "store the expected event as a serialized Thrift object in the enabled sink" in {
-      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
-        val storedRecordBytes = responseHandler.lastStoredRecord.array
-        val storedEvent = new SnowplowRawEvent
-        thriftDeserializer.deserialize(storedEvent, storedRecordBytes)
+      val payloadData = "param1=val1&param2=val2"
+      val storedRecordBytes = responseHandler.cookie(payloadData, None,
+        None, "localhost", "127.0.0.1", new HttpRequest(), None)._2
 
-        storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 1000)
-        storedEvent.encoding must beEqualTo("UTF-8")
-        storedEvent.ipAddress must beEqualTo("127.0.0.1")
-        storedEvent.payload.protocol must beEqualTo(PayloadProtocol.Http)
-        storedEvent.payload.format must beEqualTo(PayloadFormat.HttpGet)
-        storedEvent.payload.data must beNull
+      val storedEvent = new SnowplowRawEvent
+      this.synchronized {
+        thriftDeserializer.deserialize(storedEvent, storedRecordBytes)
       }
+
+      storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 1000)
+      storedEvent.encoding must beEqualTo("UTF-8")
+      storedEvent.ipAddress must beEqualTo("127.0.0.1")
+      storedEvent.payload.protocol must beEqualTo(PayloadProtocol.Http)
+      storedEvent.payload.format must beEqualTo(PayloadFormat.HttpGet)
+      storedEvent.payload.data must beEqualTo(payloadData)
     }
   }
 }
