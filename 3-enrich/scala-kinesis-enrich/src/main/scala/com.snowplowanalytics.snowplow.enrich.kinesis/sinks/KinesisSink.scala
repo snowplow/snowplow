@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory
 // Kinesis Sink for Scala enrichment.
 class KinesisSink(provider: AWSCredentialsProvider,
     config: KinesisEnrichConfig) extends ISink {
-  lazy val log = LoggerFactory.getLogger(getClass())
+  private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
   // Create a Kinesis client for stream interactions.
@@ -65,14 +65,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
   // The output stream for enriched events.
   private val enrichedStream = createAndLoadStream()
 
-  /**
-   * Checks if a stream exists.
-   *
-   * @param name The name of the stream to check.
-   * @param timeout How long to keep checking if the stream became active,
-   * in seconds
-   * @return true if the stream was loaded, false if the stream doesn't exist.
-   */
+  // Checks if a stream exists.
   def streamExists(name: String, timeout: Int = 60): Boolean = {
     val streamListFuture = for {
       s <- Kinesis.streams.list
@@ -105,9 +98,11 @@ class KinesisSink(provider: AWSCredentialsProvider,
       try {
         val stream = Await.result(createStream, Duration(timeout, SECONDS))
 
-        // Wait until the stream is active.
+        info(s"Successfully created stream $name. Waiting until it's active.")
         Await.result(stream.waitActive.retrying(timeout),
           Duration(timeout, SECONDS))
+
+        info(s"Stream $name active.")
 
         stream
       } catch {
