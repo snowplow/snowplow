@@ -44,9 +44,10 @@ class CollectorServiceActor(collectorConfig: CollectorConfig,
   private val collectorService = new CollectorService(responseHandler, context)
 
   // Message loop for the Spray service.
-  def receive = {
+  def receive = handleTimeouts orElse runRoute(collectorService.collectorRoute)
+
+  def handleTimeouts: Receive = {
     case Timedout(_) => sender ! responseHandler.timeout
-    case _ => runRoute(collectorService.collectorRoute)
   }
 }
 
