@@ -21,8 +21,8 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "Snowplow Analytics Ltd",
-    version               :=  "0.0.1",
-    description           :=  "An event collector for Snowplow.",
+    version               :=  "0.1.0",
+    description           :=  "Scala Stream Collector for Snowplow events",
     scalaVersion          :=  "2.10.1",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
                                   "-unchecked", "-feature"),
