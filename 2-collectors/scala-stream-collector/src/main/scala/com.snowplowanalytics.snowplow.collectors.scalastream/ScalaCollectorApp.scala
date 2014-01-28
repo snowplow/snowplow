@@ -121,6 +121,7 @@ class CollectorConfig(config: Config) {
   var cookieDomain = cookie.getOptionalString("domain")
 
   private val sink = collector.getConfig("sink")
+  // TODO: either change this to ADTs or switch to withName generation
   val sinkEnabled = sink.getString("enabled") match {
     case "kinesis" => Sink.Kinesis
     case "stdout" => Sink.Stdout

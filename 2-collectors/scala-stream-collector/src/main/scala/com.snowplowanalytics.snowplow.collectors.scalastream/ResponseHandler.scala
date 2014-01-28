@@ -53,6 +53,9 @@ object ResponseHandler {
 
 // Receive requests and store data into an output sink.
 class ResponseHandler(config: CollectorConfig, sink: AbstractSink) {
+  
+  val Collector = s"${generated.Settings.shortName}-${generated.Settings.version}-" + config.sinkEnabled.toString.toLowerCase
+
   // When `/i` is requested, this is called and stores an event in the
   // Kinisis sink and returns an invisible pixel with a cookie.
   def cookie(queryParams: String, requestCookie: Option[HttpCookie],
@@ -75,7 +78,7 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink) {
 
     val event = new SnowplowRawEvent(
       timestamp,
-      s"${generated.Settings.shortName}-${generated.Settings.version}-${config.sinkEnabled}",
+      Collector,
       "UTF-8",
       ip
     )

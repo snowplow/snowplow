@@ -70,7 +70,7 @@ object ThriftLoader extends CollectorLoader {
         snowplowRawEvent.encoding
       )
 
-      val ip = Some(snowplowRawEvent.ipAddress) // Required.
+      val ip = snowplowRawEvent.ipAddress.some // Required
       val hostname = Option(snowplowRawEvent.hostname)
       val userAgent = Option(snowplowRawEvent.userAgent)
       val refererUri = Option(snowplowRawEvent.refererUri)

@@ -8,10 +8,10 @@ Scala Kinesis Enrich: added. Version 0.1.0
 Scala Kinesis Enrich: implemented initial Kinesis-based enrichment (#460)                   - TODO
 Scala Common Enrich: bumped to 0.2.0                                                        - TODO (it's still a SNAPSHOT)
 Scala Common Enrich: added Thrift SnowplowRawEvent as a dependency to common-enrich (#475)
-Scala Common Enrich: added ability to read Thrift SnowplowRawEvent (Thrift) (#462)          - TODO
+Scala Common Enrich: added ability to read Thrift SnowplowRawEvent (Thrift) (#462)
 Scala Common Enrich: renamed CloudFront to Cloudfront in code (#495)
 Scala Common Enrich: renamed AnonQuartets to AnonOctets (#491)
-Scala Common Enrich: added raw -> CanonicalInput tests (#484)                               - TODO
+Scala Common Enrich: added raw -> CanonicalInput tests (#484)
 Scala Common Enrich: updated GET payload extraction to handle empty payloads (#502)
 Git submodules: changed git:// protocol in .gitmodules to https:// (#512)
 NodeJS Collector: removed contrib-nodejs-collector from 2-collectors (#474)
