@@ -12,7 +12,8 @@
 # governing permissions and limitations there under.
 
 # This file (application.conf.example) contains a template with
-# configuration options for the Scala collector.
+# configuration options for the Scala Stream Collector.
+#
 # To use, copy this to 'application.conf' and modify the configuration options.
 
 # 'collector' contains configuration options for the main Scala collector.
