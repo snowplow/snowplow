@@ -105,12 +105,12 @@ collector {
   }
 
   "Snowplow's Scala collector" should {
-    "return an invisible pixel." in {
+    "return an invisible pixel" in {
       CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
         responseAs[Array[Byte]] === ResponseHandler.pixel
       }
     }
-    "return a cookie expiring at the correct time." in {
+    "return a cookie expiring at the correct time" in {
       CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
         headers must not be empty
 
@@ -134,7 +134,7 @@ collector {
         offset.asInstanceOf[Int] must beCloseTo(0, 2000) // 1000 ms window.
       }
     }
-    "return the same cookie as passed in." in {
+    "return the same cookie as passed in" in {
       CollectorGet("/i", Some(HttpCookie("sp", "UUID_Test"))) ~>
           collectorService.collectorRoute ~> check {
         val httpCookies: List[HttpCookie] = headers.collect {
@@ -148,7 +148,7 @@ collector {
         httpCookie.content must beEqualTo("UUID_Test")
       }
     }
-    "return a P3P header." in {
+    "return a P3P header" in {
       CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
         val p3pHeaders = headers.filter {
           h => h.name.equals("P3P")
