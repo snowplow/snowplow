@@ -53,6 +53,10 @@ object Dependencies {
     // Add versions for your additional libraries here...
   }
 
+  object Urls {
+    val maxmindData = "http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz"
+  }
+
   object Libraries {
     // Java
     val logging     = "commons-logging"            %  "commons-logging" % V.logging

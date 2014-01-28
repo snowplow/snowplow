@@ -68,7 +68,7 @@ enrich {
   enrichments {
     geo_ip: {
       enabled: true # false not yet suported
-      maxmind_file: "/tmp/GeoLiteCity.dat"
+      maxmind_file: "/maxmind/GeoLiteCity.dat" # SBT auto-downloads into resource_managed/test
     }
     anon_ip: {
       enabled: true

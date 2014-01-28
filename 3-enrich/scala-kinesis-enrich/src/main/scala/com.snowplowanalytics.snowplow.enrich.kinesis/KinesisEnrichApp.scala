@@ -125,7 +125,16 @@ class KinesisEnrichConfig(config: Config) {
   private val enrichments = enrich.getConfig("enrichments")
   private val geoIp = enrichments.getConfig("geo_ip")
   val geoIpEnabled = geoIp.getBoolean("enabled")
-  val maxmindFile = new File(geoIp.getString("maxmind_file"))
+  val maxmindFile = {
+    val path = geoIp.getString("maxmind_file")
+    val file = new File(path)
+    if (file.exists) {
+      file
+    } else {
+      val uri = getClass.getResource(path).toURI
+      new File(uri)
+    } // TODO: add error handling if this still isn't found
+  }
 
   private val anonIp = enrichments.getConfig("anon_ip")
   val anonIpEnabled = anonIp.getBoolean("enabled")
