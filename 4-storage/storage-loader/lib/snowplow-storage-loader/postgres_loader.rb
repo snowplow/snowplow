@@ -26,6 +26,7 @@ module SnowPlow
       NULL_STRING = ""
       QUOTE_CHAR = "\\x01"
       ESCAPE_CHAR = "\\x02"
+      COPY_BUFFER_SIZE = 1024
 
       # Loads the SnowPlow event files into Postgres.
       #
@@ -38,12 +39,9 @@ module SnowPlow
         puts "Loading Snowplow events into #{target[:name]} (PostgreSQL database)..."
 
         event_files = get_event_files(events_dir)
-        event_files.each do |f|
-          copy_via_stdin(
-            target,
-            "COPY #{target[:table]} FROM STDIN WITH CSV ESCAPE E'#{ESCAPE_CHAR}' QUOTE E'#{QUOTE_CHAR}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}'",
-            f
-          )
+        status = copy_via_stdin(target, event_files)
+        unless status == []
+          raise DatabaseLoadError, "#{status[1]} error loading #{status[0]}: #{status[2]}"
         end
 
         post_processing = nil
@@ -63,14 +61,17 @@ module SnowPlow
       end
       module_function :load_events
 
-      COPY_BUFFER_SIZE = 1024
-
       # Adapted from:  https://bitbucket.org/ged/ruby-pg/raw/9812218e0654caa58f8604838bc368434f7b3828/sample/copyfrom.rb
-      # Streams a file from disk directly into the postgres copy statement
-      # FIXME: refactor COPY into this method
-      # FIXME: wrap transaction around sequential COPYs
-      # FIXME: battletest; how does this behave when it fails?
-      def copy_via_stdin(target, copy_statement, file)
+      #
+      # Execute a series of copies from stdin by streaming the given files
+      # directly into the postgres copy statement.  Stops as soon as an error
+      # is encountered.  At that point, it returns a 'tuple' of the error class
+      # and message and the file that caused the error.
+      #
+      # Parameters:
+      # +target+:: the configuration options for this target
+      # +files+:: the data files to copy into the database
+      def copy_via_stdin(target, files)
         puts "Opening database connection ..."
         conn = PG.connect({:host     => target[:host],
                            :dbname   => target[:database],
@@ -79,31 +80,44 @@ module SnowPlow
                            :password => target[:password]
                           })
 
-        puts "Running COPY command with data ..."
-        buf = ''
-        conn.transaction do
-          conn.exec(copy_statement)
+        copy_statement = "COPY #{target[:table]} FROM STDIN WITH CSV ESCAPE E'#{ESCAPE_CHAR}' QUOTE E'#{QUOTE_CHAR}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}'"
+
+        status = []
+        files.each do |file|
           begin
-            File.open(file, 'r+') do |copy_data|
-              while copy_data.read( COPY_BUFFER_SIZE, buf )
-                until conn.put_copy_data( buf )
-                  puts "  waiting for connection to be writable..."
-                  sleep 0.1
+            puts "Running COPY command with data from: #{file}"
+            buf = ''
+            conn.transaction do
+              conn.exec(copy_statement)
+              begin
+                File.open(file, 'r+') do |copy_data|
+                  while copy_data.read( COPY_BUFFER_SIZE, buf )
+                    until conn.put_copy_data( buf )
+                      puts 'Waiting for connection to be writable'
+                      sleep 0.1
+                    end
+                  end
+                end
+              rescue Errno => err
+                errmsg = "#{err.class.name} while reading copy data: #{err.message}"
+                conn.put_copy_end( errmsg )
+                status = [file, err.class, err.message]
+                break
+              else
+                conn.put_copy_end
+                while res = conn.get_result
+                  puts "Result of COPY is: #{res.res_status(res.result_status)}"
                 end
               end
             end
-          rescue Errno => err
-            errmsg = "%s while reading copy data: %s" % [ err.class.name, err.message ]
-            conn.put_copy_end( errmsg )
-          else
-            conn.put_copy_end
-            while res = conn.get_result
-              puts "Result of COPY is: %s" % [ res.res_status(res.result_status) ]
-            end
+          rescue PG::Error => err
+            status = [file, err.class, err.message]
+            break
           end
         end
 
         conn.finish
+        return status
       end
       module_function :copy_via_stdin
 
