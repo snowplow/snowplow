@@ -52,7 +52,6 @@ class CloudfrontLikeLoaderSpec extends Specification with DataTables with Valida
       }
 
     }
-
   }
 
   "toOption" should {
