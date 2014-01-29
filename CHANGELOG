@@ -18,6 +18,9 @@ NodeJS Collector: removed contrib-nodejs-collector from 2-collectors (#474)
 JavaScript Tracker: bumped JS Tracker submodule to 0.13.1 release (#511)                    - TODO
 
 TODO: can we make CollectorLoader generic and get rid of the byte -> string -> byte shuffle?
+TODO: let's replace all null uses in AbstractSource with Option[]s
+TODO: let's move the test helpers into their own file
+TODO: let's add a couple more tests
 
 Version 0.8.13 (2014-01-08)
 ---------------------------
