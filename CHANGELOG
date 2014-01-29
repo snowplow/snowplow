@@ -15,7 +15,7 @@ Scala Common Enrich: added raw -> CanonicalInput tests (#484)
 Scala Common Enrich: updated GET payload extraction to handle empty payloads (#502)
 Git submodules: changed git:// protocol in .gitmodules to https:// (#512)
 NodeJS Collector: removed contrib-nodejs-collector from 2-collectors (#474)
-JavaScript Tracker: bumped JS Tracker submodule to 0.13.1 release (#511)                    - TODO
+JavaScript Tracker: bumped JS Tracker submodule to 0.13.1 release (#511)
 
 TODO: can we make CollectorLoader generic and get rid of the byte -> string -> byte shuffle?
 TODO: let's replace all null uses in AbstractSource with Option[]s
