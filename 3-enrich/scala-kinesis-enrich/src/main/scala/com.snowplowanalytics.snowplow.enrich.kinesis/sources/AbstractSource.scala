@@ -76,7 +76,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
       new String(binaryData.map(_.toChar))
     )
 
-    (canonicalInput.toValidationNel) match { 
+    canonicalInput.toValidationNel match { 
 
       case Failure(f) =>
         println("// TODO: Store bad event if canonical input not validated: " + f)
@@ -101,7 +101,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
           ci
         )
 
-        (canonicalOutput.toValidationNel) match {
+        canonicalOutput.toValidationNel match {
           case Success(co) =>
             val ts = tabSeparateCanonicalOutput(co)
             if (config.sink != Sink.Test) {
