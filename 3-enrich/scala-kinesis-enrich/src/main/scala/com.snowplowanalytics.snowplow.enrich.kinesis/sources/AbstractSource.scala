@@ -21,6 +21,13 @@ package com.snowplowanalytics.snowplow.enrich
 package kinesis
 package sources
 
+// Amazon
+import com.amazonaws.auth._
+
+// Scalaz
+import scalaz.{Sink => _, _}
+import Scalaz._
+
 // Snowplow
 import sinks._
 import com.snowplowanalytics.maxmind.geoip.IpGeo
@@ -30,9 +37,6 @@ import common.MaybeCanonicalInput
 import common.outputs.CanonicalOutput
 import common.enrichments.EnrichmentManager
 import common.enrichments.PrivacyEnrichments.AnonOctets
-
-// Amazon
-import com.amazonaws.auth._
 
 abstract class AbstractSource(config: KinesisEnrichConfig) {
   def run
@@ -72,8 +76,13 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
       new String(binaryData.map(_.toChar))
     )
 
-    (canonicalInput.toValidationNel) map { (ci: MaybeCanonicalInput) =>
-      if (ci.isDefined) {
+    (canonicalInput.toValidationNel) match { 
+
+      case Failure(f) =>
+        println("// TODO: Store bad event if canonical input not validated: " + f)
+      case Success(None) =>
+        println("// CanonicalInput is None: do nothing")
+      case Success(Some(ci)) => {
         val ipGeo = new IpGeo(
           dbFile = config.maxmindFile,
           memCache = false,
@@ -89,23 +98,23 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
           ipGeo,
           s"kinesis-${generated.Settings.version}",
           anonOctets,
-          ci.get
+          ci
         )
-        (canonicalOutput.toValidationNel) map { (co: CanonicalOutput) =>
-          val ts = tabSeparateCanonicalOutput(co)
-          if (config.sink != Sink.Test) {
-            sink.storeCanonicalOutput(ts, co.user_ipaddress)
-          } else {
-            return ts
-          }
-          // TODO: Store bad event if canonical output not validated.
+
+        (canonicalOutput.toValidationNel) match {
+          case Success(co) =>
+            val ts = tabSeparateCanonicalOutput(co)
+            if (config.sink != Sink.Test) {
+              sink.storeCanonicalOutput(ts, co.user_ipaddress)
+            } else {
+              return ts
+            }
+          case Failure(f) =>
+            println("// TODO: Store bad event if canonical output not validated: " + f)
         }
-      } else {
-        // CanonicalInput is None: do nothing
       }
-      // TODO: Store bad event if canonical input not validated.
     }
-    return null
+    return null // TODO: change this method to Option[None]
   }
 
   // Initialize a Kinesis provider with the given credentials.
