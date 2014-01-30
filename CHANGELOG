@@ -17,7 +17,6 @@ Git submodules: changed git:// protocol in .gitmodules to https:// (#512)
 NodeJS Collector: removed contrib-nodejs-collector from 2-collectors (#474)
 JavaScript Tracker: bumped JS Tracker submodule to 0.13.1 release (#511)
 
-TODO: can we make CollectorLoader generic and get rid of the byte -> string -> byte shuffle?
 TODO: let's move the test helpers into their own file
 TODO: let's add a couple more tests
 

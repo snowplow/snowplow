@@ -35,7 +35,7 @@ object CollectorLoader {
    *         an an error message, boxed
    *         in a Scalaz Validation
    */
-  def getLoader(collectorOrProtocol: String): Validation[String, CollectorLoader] = collectorOrProtocol match {
+  def getLoader(collectorOrProtocol: String): Validation[String, CollectorLoader[_]] = collectorOrProtocol match {
     case "cloudfront" => CloudfrontLoader.success
     case "clj-tomcat" => CljTomcatLoader.success
     case "thrift-raw" => ThriftLoader.success // Finally - a data protocol rather than a piece of software
@@ -47,7 +47,7 @@ object CollectorLoader {
  * All loaders must implement this
  * abstract base class.
  */
-abstract class CollectorLoader {
+abstract class CollectorLoader[T] {
   
   import CanonicalInput._
 
@@ -64,7 +64,7 @@ abstract class CollectorLoader {
    *         boxed, or None if no input was
    *         extractable.
    */
-  def toCanonicalInput(line: String): ValidatedMaybeCanonicalInput
+  def toCanonicalInput(line: T): ValidatedMaybeCanonicalInput
 
   /**
    * Checks whether a request to

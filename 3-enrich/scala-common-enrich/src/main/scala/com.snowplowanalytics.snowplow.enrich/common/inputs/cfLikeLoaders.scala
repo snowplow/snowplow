@@ -96,7 +96,7 @@ object CljTomcatLoader extends CloudfrontLikeLoader {
  * For more details on this format, please see:
  * http://docs.amazonwebservices.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#LogFileFormat
  */
-trait CloudfrontLikeLoader extends CollectorLoader {
+trait CloudfrontLikeLoader extends CollectorLoader[String] {
 
   /**
    * Gets the source of this input.

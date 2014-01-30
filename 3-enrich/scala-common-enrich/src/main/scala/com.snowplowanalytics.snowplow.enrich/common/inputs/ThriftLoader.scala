@@ -40,7 +40,7 @@ import com.snowplowanalytics.snowplow.collectors.thrift.{
 /**
  * Loader for Thrift SnowplowRawEvent objects.
  */
-object ThriftLoader extends CollectorLoader {
+object ThriftLoader extends CollectorLoader[Array[Byte]] {
   
   private val thriftDeserializer = new TDeserializer
 
@@ -54,14 +54,14 @@ object ThriftLoader extends CollectorLoader {
    * @return either a set of validation errors or an Option-boxed
    *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
    */
-  def toCanonicalInput(line: String): ValidatedMaybeCanonicalInput = {
+  def toCanonicalInput(line: Array[Byte]): ValidatedMaybeCanonicalInput = {
     
     var snowplowRawEvent = new SnowplowRawEvent()
     try {
       this.synchronized {
         thriftDeserializer.deserialize(
           snowplowRawEvent,
-          line.toCharArray.map(_.toByte)
+          line
         )
       }
 

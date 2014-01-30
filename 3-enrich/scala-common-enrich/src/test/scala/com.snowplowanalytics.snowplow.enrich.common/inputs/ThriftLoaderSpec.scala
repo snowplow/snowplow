@@ -38,22 +38,6 @@ import org.specs2.scalaz.ValidationMatchers
 import org.scalacheck._
 import org.scalacheck.Arbitrary._
 
-object ThriftLoaderSpec {
-
-  /**
-   * Converts a base64-encoded String into
-   * an array of bytes, then turns that array
-   * into a String representation of those bytes.
-   *
-   * @param base64 Base64-encoded String
-   * @return String representation of the bytes
-   */
-  def base64ToBytestring(base64: String): String = {
-    val bytes = Base64.decodeBase64(base64)
-    new String(bytes.map(_.toChar))
-  }
-}
-
 class ThriftLoaderSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
 
   "This is a specification to test the ThriftLoader functionality"                                          ^
@@ -68,8 +52,6 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
     val collector = "ssc-0.0.1-Stdout" // Note we have since fixed -stdout to be lowercase
   }
 
-  import ThriftLoaderSpec._
-
   def e1 =
     "SPEC NAME"          || "RAW" | "EXP. TIMESTAMP"                                | "EXP. PAYLOAD"                                     | "EXP. HOSTNAME"   | "EXP. IP ADDRESS" | "EXP. USER AGENT"                                                                                               | "EXP. REFERER URI" | "EXP. HEADERS"                                                                                                                                                                                                                                                                                                                                                                                                    | "EXP. USER ID"                              |
     "Fake params"        !! "CgABAAABQ5iGqAYLABQAAAAQc3NjLTAuMC4xLVN0ZG91dAsAHgAAAAVVVEYtOAsAKAAAAAkxMjcuMC4wLjEMACkIAAEAAAABCAACAAAAAQsAAwAAABh0ZXN0UGFyYW09MyZ0ZXN0UGFyYW0yPTQACwAtAAAACTEyNy4wLjAuMQsAMgAAAGhNb3ppbGxhLzUuMCAoWDExOyBMaW51eCB4ODZfNjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8zMS4wLjE2NTAuNjMgU2FmYXJpLzUzNy4zNg8ARgsAAAAIAAAAL0Nvb2tpZTogc3A9YzVmM2EwOWYtNzVmOC00MzA5LWJlYzUtZmVhNTYwZjc4NDU1AAAAGkFjY2VwdC1MYW5ndWFnZTogZW4tVVMsIGVuAAAAJEFjY2VwdC1FbmNvZGluZzogZ3ppcCwgZGVmbGF0ZSwgc2RjaAAAAHRVc2VyLUFnZW50OiBNb3ppbGxhLzUuMCAoWDExOyBMaW51eCB4ODZfNjQpIEFwcGxlV2ViS2l0LzUzNy4zNiAoS0hUTUwsIGxpa2UgR2Vja28pIENocm9tZS8zMS4wLjE2NTAuNjMgU2FmYXJpLzUzNy4zNgAAAFZBY2NlcHQ6IHRleHQvaHRtbCwgYXBwbGljYXRpb24veGh0bWwreG1sLCBhcHBsaWNhdGlvbi94bWw7cT0wLjksIGltYWdlL3dlYnAsICovKjtxPTAuOAAAABhDYWNoZS1Db250cm9sOiBtYXgtYWdlPTAAAAAWQ29ubmVjdGlvbjoga2VlcC1hbGl2ZQAAABRIb3N0OiAxMjcuMC4wLjE6ODA4MAsAUAAAACRjNWYzYTA5Zi03NWY4LTQzMDktYmVjNS1mZWE1NjBmNzg0NTUA" !
@@ -82,7 +64,7 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
       (_, raw, timestamp, payload, hostname, ipAddress, userAgent, refererUri, headers, userId) => {
 
         val canonicalEvent = ThriftLoader
-          .toCanonicalInput(base64ToBytestring(raw))
+          .toCanonicalInput(Base64.decodeBase64(raw))
 
         val expected = new CanonicalInput(
           timestamp  = timestamp,
@@ -103,12 +85,12 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
   // TODO: maybe we should add a couple more in here
   def e2 = {
     val raw = "CgABAAABQ9o8zYULABQAAAAQc3NjLTAuMC4xLVN0ZG91dAsAHgAAAAVVVEYtOAsAKAAAAAgxMC4wLjIuMgwAKQgAAQAAAAEIAAIAAAABAAsALQAAAAlsb2NhbGhvc3QLADIAAABRTW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTAuOTsgcnY6MjYuMCkgR2Vja28vMjAxMDAxMDEgRmlyZWZveC8yNi4wDwBGCwAAAAgAAAAYQ2FjaGUtQ29udHJvbDogbWF4LWFnZT0wAAAAFkNvbm5lY3Rpb246IGtlZXAtYWxpdmUAAAJwQ29va2llOiBfX3V0bWE9MTExODcyMjgxLjg3ODA4NDQ4Ny4xMzkwMjM3MTA3LjEzOTA4NDg0ODcuMTM5MDkzMTUyMS42OyBfX3V0bXo9MTExODcyMjgxLjEzOTAyMzcxMDcuMS4xLnV0bWNzcj0oZGlyZWN0KXx1dG1jY249KGRpcmVjdCl8dXRtY21kPShub25lKTsgX3NwX2lkLjFmZmY9Yjg5YTZmYTYzMWVlZmFjMi4xMzkwMjM3MTA3LjYuMTM5MDkzMTU0NS4xMzkwODQ4NjQxOyBoYmxpZD1DUGpqdWh2RjA1emt0UDdKN001Vm8zTklHUExKeTFTRjsgb2xmc2s9b2xmc2s1NjI5MjM2MzU2MTc1NTQ7IF9fdXRtYz0xMTE4NzIyODE7IHdjc2lkPXVNbG9nMVFKVkQ3anVoRlo3TTVWb0JDeVBQeWlCeVNTOyBfb2tsdj0xMzkwOTMxNTg1NDQ1JTJDdU1sb2cxUUpWRDdqdWhGWjdNNVZvQkN5UFB5aUJ5U1M7IF9vaz05NzUyLTUwMy0xMC01MjI3OyBfb2tiaz1jZDQlM0R0cnVlJTJDdmk1JTNEMCUyQ3ZpNCUzRDEzOTA5MzE1MjExMjMlMkN2aTMlM0RhY3RpdmUlMkN2aTIlM0RmYWxzZSUyQ3ZpMSUzRGZhbHNlJTJDY2Q4JTNEY2hhdCUyQ2NkNiUzRDAlMkNjZDUlM0Rhd2F5JTJDY2QzJTNEZmFsc2UlMkNjZDIlM0QwJTJDY2QxJTNEMCUyQzsgc3A9NzVhMTM1ODMtNWM5OS00MGUzLTgxZmMtNTQxMDg0ZGZjNzg0AAAAHkFjY2VwdC1FbmNvZGluZzogZ3ppcCwgZGVmbGF0ZQAAABpBY2NlcHQtTGFuZ3VhZ2U6IGVuLVVTLCBlbgAAAEpBY2NlcHQ6IHRleHQvaHRtbCwgYXBwbGljYXRpb24veGh0bWwreG1sLCBhcHBsaWNhdGlvbi94bWw7cT0wLjksICovKjtxPTAuOAAAAF1Vc2VyLUFnZW50OiBNb3ppbGxhLzUuMCAoTWFjaW50b3NoOyBJbnRlbCBNYWMgT1MgWCAxMC45OyBydjoyNi4wKSBHZWNrby8yMDEwMDEwMSBGaXJlZm94LzI2LjAAAAAUSG9zdDogbG9jYWxob3N0OjQwMDELAFAAAAAkNzVhMTM1ODMtNWM5OS00MGUzLTgxZmMtNTQxMDg0ZGZjNzg0AA=="
-    ThriftLoader.toCanonicalInput(base64ToBytestring(raw)) must beFailing(NonEmptyList("No name-value pairs extractable from querystring [] with encoding [UTF-8]"))
+    ThriftLoader.toCanonicalInput(Base64.decodeBase64(raw)) must beFailing(NonEmptyList("No name-value pairs extractable from querystring [] with encoding [UTF-8]"))
   }
 
   // A bit of fun: the chances of generating a valid Thrift SnowplowRawEvent at random are
   // so low that we can just use ScalaCheck here
   def e3 =
-    check { (raw: String) => ThriftLoader.toCanonicalInput(base64ToBytestring(raw)) must beFailing(NonEmptyList("Record does not match Thrift SnowplowRawEvent schema")) }
+    check { (raw: String) => ThriftLoader.toCanonicalInput(Base64.decodeBase64(raw)) must beFailing(NonEmptyList("Record does not match Thrift SnowplowRawEvent schema")) }
 
 }
