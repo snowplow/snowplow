@@ -39,6 +39,7 @@ import common.enrichments.EnrichmentManager
 import common.enrichments.PrivacyEnrichments.AnonOctets
 
 abstract class AbstractSource(config: KinesisEnrichConfig) {
+  
   def run
 
   /**
@@ -51,10 +52,10 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
   protected val kinesisProvider = createKinesisProvider
 
   // Initialize the sink to output enriched events to.
-  protected val sink: ISink = config.sink match {
-    case Sink.Kinesis => new KinesisSink(kinesisProvider, config)
-    case Sink.Stdouterr => new StdouterrSink
-    case Sink.Test => null
+  protected val sink: Option[ISink] = config.sink match {
+    case Sink.Kinesis => new KinesisSink(kinesisProvider, config).some
+    case Sink.Stdouterr => new StdouterrSink().some
+    case Sink.Test => None
   }
 
   // Iterate through an enriched CanonicalOutput object and tab separate
@@ -71,7 +72,11 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
   }
 
   // Helper method to enrich an event.
-  def enrichEvent(binaryData: Array[Byte]): String = {
+  // TODO: this is a slightly odd design: it's a pure function if our
+  // our sink is Test, but it's an impure function (with
+  // storeCanonicalOutput side effect) for the other sinks. We should
+  // break this into a pure function with an impure wrapper.
+  def enrichEvent(binaryData: Array[Byte]): Option[String] = {
     val canonicalInput = ThriftLoader.toCanonicalInput(
       new String(binaryData.map(_.toChar))
     )
@@ -79,9 +84,8 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
     canonicalInput.toValidationNel match { 
 
       case Failure(f) =>
-        println("// TODO: Store bad event if canonical input not validated: " + f)
-      case Success(None) =>
-        println("// CanonicalInput is None: do nothing")
+        // TODO: Store bad event if canonical input not validated: " + f
+      case Success(None) => // Do nothing
       case Success(Some(ci)) => {
         val ipGeo = new IpGeo(
           dbFile = config.maxmindFile,
@@ -104,17 +108,16 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
         canonicalOutput.toValidationNel match {
           case Success(co) =>
             val ts = tabSeparateCanonicalOutput(co)
-            if (config.sink != Sink.Test) {
-              sink.storeCanonicalOutput(ts, co.user_ipaddress)
-            } else {
-              return ts
+            sink match {
+              case Some(s) => s.storeCanonicalOutput(ts, co.user_ipaddress)
+              case None    => return Some(ts)
             }
           case Failure(f) =>
-            println("// TODO: Store bad event if canonical output not validated: " + f)
+            // TODO: Store bad event if canonical output not validated: " + f
         }
       }
     }
-    return null // TODO: change this method to Option[None]
+    return None
   }
 
   // Initialize a Kinesis provider with the given credentials.

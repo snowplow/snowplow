@@ -79,7 +79,7 @@ class KinesisSource(config: KinesisEnrichConfig)
     
     val rawEventProcessorFactory = new RawEventProcessorFactory(
       config,
-      sink
+      sink.get // TODO: yech
     )
     val worker = new Worker(
       rawEventProcessorFactory,

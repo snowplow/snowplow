@@ -44,6 +44,6 @@ class TestSource(config: KinesisEnrichConfig)
   }
 
   def enrich(bytes: Array[Byte]): String = {
-    enrichEvent(bytes)
+    enrichEvent(bytes).get
   }
 }

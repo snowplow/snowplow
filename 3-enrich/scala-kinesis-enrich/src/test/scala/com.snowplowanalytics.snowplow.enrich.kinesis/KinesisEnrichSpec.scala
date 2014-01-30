@@ -113,6 +113,7 @@ enrich {
         "Computer",
         "0"
       )
+      
       enrichedEvent.size must beEqualTo(expected.size)
       Result.unit(
         (0 to expected.size-1) foreach { i =>
