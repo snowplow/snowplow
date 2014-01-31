@@ -13,12 +13,12 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package inputs
 
-// Snowplow
-import LoaderSpecHelpers._
-
 // Scalaz
 import scalaz._
 import Scalaz._
+
+// Snowplow
+import LoaderSpecHelpers._
 
 // Specs2
 import org.specs2.mutable.Specification

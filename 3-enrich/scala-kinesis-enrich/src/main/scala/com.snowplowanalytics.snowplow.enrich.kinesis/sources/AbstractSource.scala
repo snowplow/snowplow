@@ -83,9 +83,9 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
 
     canonicalInput.toValidationNel match { 
 
-      case Failure(f) =>
+      case Failure(f)        => None
         // TODO: Store bad event if canonical input not validated: " + f
-      case Success(None) => // Do nothing
+      case Success(None)     => None // Do nothing
       case Success(Some(ci)) => {
         val ipGeo = new IpGeo(
           dbFile = config.maxmindFile,
@@ -108,16 +108,16 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
         canonicalOutput.toValidationNel match {
           case Success(co) =>
             val ts = tabSeparateCanonicalOutput(co)
-            sink match {
-              case Some(s) => s.storeCanonicalOutput(ts, co.user_ipaddress)
-              case None    => return Some(ts)
+            for (s <- sink) {
+              // TODO: pull this side effect into parent function
+              s.storeCanonicalOutput(ts, co.user_ipaddress)
             }
-          case Failure(f) =>
+            Some(ts)
+          case Failure(f)  => None
             // TODO: Store bad event if canonical output not validated: " + f
         }
       }
     }
-    return None
   }
 
   // Initialize a Kinesis provider with the given credentials.

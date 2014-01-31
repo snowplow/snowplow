@@ -40,10 +40,6 @@ import org.apache.commons.codec.binary.Base64
 class TestSource(config: KinesisEnrichConfig)
     extends AbstractSource(config) {
   def run = {
-    throw new RuntimeException("'run' should not be called on TestSource.")
-  }
-
-  def enrich(bytes: Array[Byte]): String = {
-    enrichEvent(bytes).get
+    throw new RuntimeException("run() should not be called on TestSource")
   }
 }
