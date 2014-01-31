@@ -36,7 +36,7 @@ object KinesisEnrichSpec {
         "com.snowplowanalytics",
         SpecHelpers.uuid4Regexp,
         "", "",
-        "ssc-0.0.1-Stdout",
+        SpecHelpers.enrichVersion,
         "kinesis-0.1.0-common-0.2.0-SNAPSHOT",
         "",
         "127.0.0.x",

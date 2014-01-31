@@ -22,15 +22,19 @@ import com.typesafe.config.{ConfigFactory,Config,ConfigException}
 import sources.TestSource
 
 /**
- * Defines some useful helpers for the specs:
- *
- * 1. The regexp pattern for a Type 4 UUID
- * 2. The indices for CanonicalOutput fields
- *    which contain Type 4 UUIDs
- * 3. A TestSource configured for test source
- *    and test sink
+ * Defines some useful helpers for the specs.
  */
 object SpecHelpers {
+
+  /**
+   * The collector being used
+   */
+  val collectorVersion = "ssc-0.1.0-stdout"
+
+  /**
+   * The Kinesis Enrich being used
+   */
+  val enrichVersion = "kinesis-0.1.0-common-0.2.0"
 
   /**
    * The regexp pattern for a Type 4 UUID.
