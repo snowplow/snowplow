@@ -16,12 +16,10 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.enrich.kinesis
 
-// Snowplow
-import sources._
-import sinks._
+// Java
+import java.io.File
 
 // Config
 import com.typesafe.config.{Config,ConfigFactory}
@@ -29,8 +27,9 @@ import com.typesafe.config.{Config,ConfigFactory}
 // Argot
 import org.clapper.argot.ArgotParser
 
-// Java
-import java.io.File
+// Snowplow
+import sources._
+import sinks._
 
 // The enrichment process takes input SnowplowRawEvent objects from
 // an input source out outputs enriched objects to a sink,

@@ -16,20 +16,10 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow
 package enrich
 package kinesis
 package sources
-
-// Snowplow events and enrichment
-import sinks._
-import collectors.thrift.{
-  SnowplowRawEvent,
-  TrackerPayload => ThriftTrackerPayload,
-  PayloadProtocol,
-  PayloadFormat
-}
 
 // Java
 import java.io.{FileInputStream,IOException}
@@ -55,10 +45,24 @@ import scala.collection.JavaConversions._
 // Thrift
 import org.apache.thrift.TDeserializer
 
+// Snowplow events and enrichment
+import sinks._
+import collectors.thrift.{
+  SnowplowRawEvent,
+  TrackerPayload => ThriftTrackerPayload,
+  PayloadProtocol,
+  PayloadFormat
+}
 
-// Overarching class to read events from Kinesis.
+/**
+ * Source to read events from a Kinesis stream
+ */
 class KinesisSource(config: KinesisEnrichConfig)
     extends AbstractSource(config) {
+  
+  /**
+   * Never-ending processing loop over source stream.
+   */
   def run {
     val workerId = InetAddress.getLocalHost().getCanonicalHostName() +
       ":" + UUID.randomUUID()

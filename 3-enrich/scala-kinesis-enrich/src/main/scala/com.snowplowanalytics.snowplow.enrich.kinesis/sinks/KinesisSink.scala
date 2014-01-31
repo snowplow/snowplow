@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd.
  * All rights reserved.
  *
@@ -16,14 +16,9 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.enrich
 package kinesis
 package sinks
-
-// Snowplow
-import com.snowplowanalytics.snowplow.collectors.thrift._
-import common.outputs.CanonicalOutput
 
 // Java
 import java.nio.ByteBuffer
@@ -45,15 +40,21 @@ import io.github.cloudify.scala.aws.kinesis.KinesisDsl._
 // Config
 import com.typesafe.config.Config
 
-// Concurrent libraries.
+// Concurrent libraries
 import scala.concurrent.{Future,Await,TimeoutException}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-// Logging.
+// Logging
 import org.slf4j.LoggerFactory
 
-// Kinesis Sink for Scala enrichment.
+// Snowplow
+import com.snowplowanalytics.snowplow.collectors.thrift._
+import common.outputs.CanonicalOutput
+
+/**
+ * Kinesis Sink for Scala enrichment
+ */
 class KinesisSink(provider: AWSCredentialsProvider,
     config: KinesisEnrichConfig) extends ISink {
   private lazy val log = LoggerFactory.getLogger(getClass())
@@ -65,7 +66,9 @@ class KinesisSink(provider: AWSCredentialsProvider,
   // The output stream for enriched events.
   private val enrichedStream = createAndLoadStream()
 
-  // Checks if a stream exists.
+  /**
+   * Checks if a stream exists.
+   */
   def streamExists(name: String, timeout: Int = 60): Boolean = {
     val streamListFuture = for {
       s <- Kinesis.streams.list
@@ -83,7 +86,9 @@ class KinesisSink(provider: AWSCredentialsProvider,
     false
   }
 
-  // Creates a new stream if one doesn't exist.
+  /**
+   * Creates a new stream if one doesn't exist
+   */
   def createAndLoadStream(timeout: Int = 60): Stream = {
     val name = config.enrichedOutStream
     val size = config.enrichedOutStreamShards
@@ -112,12 +117,18 @@ class KinesisSink(provider: AWSCredentialsProvider,
     }
   }
 
-  // Store successfully validated events in tab delimited form
-  // to the enriched output stream.
-  def storeCanonicalOutput(tabDelimCanonicalOutput: String, key: String) = {
+  /**
+   * Side-effecting function to store the CanonicalOutput
+   * to the given output stream.
+   *
+   * CanonicalOutput takes the form of a tab-delimited
+   * String until such time as https://github.com/snowplow/snowplow/issues/211
+   * is implemented.
+   */
+  def storeCanonicalOutput(output: String, key: String) = {
     val putData = for {
       p <- enrichedStream.put(
-        ByteBuffer.wrap(tabDelimCanonicalOutput.getBytes),
+        ByteBuffer.wrap(output.getBytes),
         key
       )
     } yield p

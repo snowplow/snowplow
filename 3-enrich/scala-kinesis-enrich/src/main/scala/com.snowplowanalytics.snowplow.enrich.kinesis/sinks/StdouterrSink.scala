@@ -16,18 +16,26 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.enrich.kinesis
 package sinks
 
-// Snowplow events.
+// Snowplow
 import com.snowplowanalytics.snowplow.collectors.thrift._
 
 /**
- * Stdouterr Sink for Scala enrichment.
+ * Stdouterr Sink for Scala enrichment
  */
 class StdouterrSink extends ISink {
-  def storeCanonicalOutput(bytes: String, key: String) {
-    println(bytes)
+
+  /**
+   * Side-effecting function to store the CanonicalOutput
+   * to the given output stream.
+   *
+   * CanonicalOutput takes the form of a tab-delimited
+   * String until such time as https://github.com/snowplow/snowplow/issues/211
+   * is implemented.
+   */
+  def storeCanonicalOutput(output: String, key: String) {
+    println(output) // To stdout
   }
 }

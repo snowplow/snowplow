@@ -62,7 +62,7 @@ object KinesisEnrichSpec {
 
 class KinesisEnrichSpec extends Specification with AnyMatchers {
 
-  "Snowplow's Kinesis enricher" should {
+  "Scala Kinesis Enrich" should {
 
     "enrich a valid SnowplowRawEvent" in {
 

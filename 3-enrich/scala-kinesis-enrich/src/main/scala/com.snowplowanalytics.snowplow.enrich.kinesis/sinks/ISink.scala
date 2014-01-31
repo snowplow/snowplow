@@ -16,17 +16,19 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.enrich
 package kinesis.sinks
 
-// Snowplow
-import common.outputs.CanonicalOutput
-
-// Amazon
-import com.amazonaws.auth._
-
 // Define an interface for all sinks to use to store events.
 trait ISink {
-  def storeCanonicalOutput(bytes: String, key: String)
+
+  /**
+   * Side-effecting function to store the CanonicalOutput
+   * to the given output stream.
+   *
+   * CanonicalOutput takes the form of a tab-delimited
+   * String until such time as https://github.com/snowplow/snowplow/issues/211
+   * is implemented.
+   */
+  def storeCanonicalOutput(output: String, key: String)
 }

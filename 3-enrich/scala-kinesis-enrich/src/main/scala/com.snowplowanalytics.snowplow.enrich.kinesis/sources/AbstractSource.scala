@@ -16,7 +16,6 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.enrich
 package kinesis
 package sources
@@ -38,8 +37,15 @@ import common.outputs.CanonicalOutput
 import common.enrichments.EnrichmentManager
 import common.enrichments.PrivacyEnrichments.AnonOctets
 
+/**
+ * Abstract base for the different sources
+ * we support.
+ */
 abstract class AbstractSource(config: KinesisEnrichConfig) {
   
+  /**
+   * Never-ending processing loop over source stream.
+   */
   def run
 
   /**

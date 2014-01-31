@@ -16,29 +16,21 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.enrich.kinesis
 package sources
 
-// Java
-import java.util.List
-import java.nio.ByteBuffer
-
-// Scala
-import scala.io
-import scala.util.control.Breaks._
-import scala.collection.JavaConversions._
-
-// Thrift
-import org.apache.thrift.TDeserializer
-
-// Apache commons
-import org.apache.commons.codec.binary.Base64
-
-// Allow the testing framework to enrich events using the
-// same methods from AbstractSource as the other sources.
+/**
+ * Source to allow the testing framework to enrich events
+ * using the same methods from AbstractSource as the other
+ * sources.
+ */
 class TestSource(config: KinesisEnrichConfig)
     extends AbstractSource(config) {
+
+  /**
+   * Never-ending processing loop over source stream.
+   * Not supported for TestSource.
+   */
   def run = {
     throw new RuntimeException("run() should not be called on TestSource")
   }
