@@ -56,6 +56,8 @@ import collectors.thrift.{
 
 /**
  * Source to read events from a Kinesis stream
+ *
+ * TODO: replace printlns with using Java logger
  */
 class KinesisSource(config: KinesisEnrichConfig)
     extends AbstractSource(config) {

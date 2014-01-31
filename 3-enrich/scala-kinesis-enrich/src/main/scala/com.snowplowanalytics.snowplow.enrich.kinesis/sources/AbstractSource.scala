@@ -90,7 +90,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
     canonicalInput.toValidationNel match { 
 
       case Failure(f)        => None
-        // TODO: Store bad event if canonical input not validated: " + f
+        // TODO: https://github.com/snowplow/snowplow/issues/463
       case Success(None)     => None // Do nothing
       case Success(Some(ci)) => {
         val ipGeo = new IpGeo(
@@ -120,7 +120,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
             }
             Some(ts)
           case Failure(f)  => None
-            // TODO: Store bad event if canonical output not validated: " + f
+            // TODO: https://github.com/snowplow/snowplow/issues/463
         }
       }
     }
