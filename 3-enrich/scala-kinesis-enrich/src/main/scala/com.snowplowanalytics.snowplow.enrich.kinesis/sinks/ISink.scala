@@ -19,7 +19,9 @@
 package com.snowplowanalytics.snowplow.enrich
 package kinesis.sinks
 
-// Define an interface for all sinks to use to store events.
+/**
+ * An interface for all sinks to use to store events.
+ */
 trait ISink {
 
   /**

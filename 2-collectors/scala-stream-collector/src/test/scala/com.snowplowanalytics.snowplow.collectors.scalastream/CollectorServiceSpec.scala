@@ -12,22 +12,16 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.collectors
 package scalastream
 
-// Snowplow
-import sinks._
-import thrift.{
-  PayloadProtocol,
-  PayloadFormat,
-  SnowplowRawEvent
-}
+// Scala
+import scala.collection.mutable.MutableList
 
 // Akka
 import akka.actor.{ActorSystem, Props}
 
-// specs2 and spray testing libraries
+// Specs2 and Spray testing
 import org.specs2.matcher.AnyMatchers
 import org.specs2.mutable.Specification
 import org.specs2.specification.{Scope,Fragments}
@@ -48,8 +42,13 @@ import com.typesafe.config.{ConfigFactory,Config,ConfigException}
 // Thrift
 import org.apache.thrift.TDeserializer
 
-// Scala
-import scala.collection.mutable.MutableList
+// Snowplow
+import sinks._
+import thrift.{
+  PayloadProtocol,
+  PayloadFormat,
+  SnowplowRawEvent
+}
 
 class CollectorServiceSpec extends Specification with Specs2RouteTest with
      AnyMatchers {

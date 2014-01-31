@@ -12,11 +12,7 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.collectors.scalastream
-
-// Snowplow
-import sinks._
 
 // Akka and Spray
 import akka.actor.{ActorSystem, Props}
@@ -32,8 +28,11 @@ import org.clapper.argot._
 // Config
 import com.typesafe.config.{ConfigFactory,Config,ConfigException}
 
-// Logging.
+// Logging
 import org.slf4j.LoggerFactory
+
+// Snowplow
+import sinks._
 
 // Main entry point of the Scala collector.
 object ScalaCollector extends App {

@@ -12,11 +12,7 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.collectors.scalastream
-
-// Snowplow
-import sinks._
 
 // Akka
 import akka.actor.{Actor,ActorRefFactory}
@@ -29,6 +25,9 @@ import spray.routing.HttpService
 
 // Scala
 import scala.concurrent.duration._
+
+// Snowplow
+import sinks._
 
 // Actor accepting Http requests for the Scala collector.
 class CollectorServiceActor(collectorConfig: CollectorConfig,

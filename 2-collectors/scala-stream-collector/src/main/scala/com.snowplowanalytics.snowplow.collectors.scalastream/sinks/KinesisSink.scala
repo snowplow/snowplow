@@ -10,14 +10,9 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.collectors
 package scalastream
 package sinks
-
-// Snowplow
-import scalastream._
-import thrift.SnowplowRawEvent
 
 // Java
 import java.nio.ByteBuffer
@@ -54,6 +49,10 @@ import org.slf4j.LoggerFactory
 import scala.collection.mutable.StringBuilder
 import scala.collection.mutable.MutableList
 
+// Snowplow
+import scalastream._
+import thrift.SnowplowRawEvent
+
 /**
  * Kinesis Sink for the Scala collector.
  */
@@ -76,12 +75,12 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
       Await.result(streamListFuture, Duration(timeout, SECONDS))
     for (streamStr <- streamList) {
       if (streamStr == name) {
-        info(s"Stream $name exists.")
+        info(s"Stream $name exists")
         return true
       }
     }
 
-    info(s"Stream $name doesn't exist.")
+    info(s"Stream $name doesn't exist")
     false
   }
 
@@ -93,7 +92,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
-      info(s"Creating stream $name of size $size.")
+      info(s"Creating stream $name of size $size")
       val createStream = for {
         s <- Kinesis.streams.create(name)
       } yield s
@@ -101,16 +100,16 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
       try {
         val stream = Await.result(createStream, Duration(timeout, SECONDS))
         
-        info(s"Successfully created stream $name. Waiting until it's active.")
+        info(s"Successfully created stream $name. Waiting until it's active")
         Await.result(stream.waitActive.retrying(timeout),
           Duration(timeout, SECONDS))
 
-        info(s"Stream $name active.")
+        info(s"Stream $name active")
 
         stream
       } catch {
         case _: TimeoutException =>
-          throw new RuntimeException("Error: Timed out.")
+          throw new RuntimeException("Error: Timed out")
       }
     }
   }

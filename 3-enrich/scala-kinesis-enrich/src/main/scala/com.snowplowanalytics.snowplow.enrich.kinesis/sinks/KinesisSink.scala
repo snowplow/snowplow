@@ -77,12 +77,12 @@ class KinesisSink(provider: AWSCredentialsProvider,
       Await.result(streamListFuture, Duration(timeout, SECONDS))
     for (streamStr <- streamList) {
       if (streamStr == name) {
-        info(s"Stream $name exists.")
+        info(s"Stream $name exists")
         return true
       }
     }
 
-    info(s"Stream $name doesn't exist.")
+    info(s"Stream $name doesn't exist")
     false
   }
 
@@ -95,7 +95,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
-      info(s"Creating stream $name of size $size.")
+      info(s"Creating stream $name of size $size")
       val createStream = for {
         s <- Kinesis.streams.create(name)
       } yield s
@@ -103,16 +103,16 @@ class KinesisSink(provider: AWSCredentialsProvider,
       try {
         val stream = Await.result(createStream, Duration(timeout, SECONDS))
 
-        info(s"Successfully created stream $name. Waiting until it's active.")
+        info(s"Successfully created stream $name. Waiting until it's active")
         Await.result(stream.waitActive.retrying(timeout),
           Duration(timeout, SECONDS))
 
-        info(s"Stream $name active.")
+        info(s"Stream $name active")
 
         stream
       } catch {
         case _: TimeoutException =>
-          throw new RuntimeException("Error: Timed out.")
+          throw new RuntimeException("Error: Timed out")
       }
     }
   }
@@ -133,7 +133,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
       )
     } yield p
     val result = Await.result(putData, Duration(60, SECONDS))
-    info(s"Writing successful.")
+    info(s"Writing successful")
     info(s"  + ShardId: ${result.shardId}")
     info(s"  + SequenceNumber: ${result.sequenceNumber}")
   }

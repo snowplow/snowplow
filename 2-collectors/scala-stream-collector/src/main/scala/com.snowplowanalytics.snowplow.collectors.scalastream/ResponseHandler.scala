@@ -12,20 +12,14 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.collectors
 package scalastream
-
-// Snowplow
-import generated._
-import thrift._
-import sinks._
 
 // Java
 import java.nio.ByteBuffer
 import java.util.UUID
 
-// Apache commons
+// Apache Commons
 import org.apache.commons.codec.binary.Base64
 
 // Spray
@@ -43,6 +37,11 @@ import com.typesafe.config.Config
 
 // Java conversions
 import scala.collection.JavaConversions._
+
+// Snowplow
+import generated._
+import thrift._
+import sinks._
 
 // Contains an invisible pixel to return for `/i` requests.
 object ResponseHandler {

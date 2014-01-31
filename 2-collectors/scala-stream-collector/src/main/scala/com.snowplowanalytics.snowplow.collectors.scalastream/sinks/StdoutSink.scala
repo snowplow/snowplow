@@ -16,19 +16,25 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.collectors
 package scalastream
 package sinks
 
+// Java
+import java.nio.ByteBuffer
+
+// Apache Commons
+import org.apache.commons.codec.binary.Base64
+
+// Thrift
+import org.apache.thrift.TSerializer
+
+// Config
+import com.typesafe.config.Config
+
 // Snowplow
 import scalastream._
 import thrift.SnowplowRawEvent
-
-import java.nio.ByteBuffer
-import org.apache.thrift.TSerializer
-import com.typesafe.config.Config
-import org.apache.commons.codec.binary.Base64
 
 class StdoutSink extends AbstractSink {
   // Print a Base64-encoded event.
