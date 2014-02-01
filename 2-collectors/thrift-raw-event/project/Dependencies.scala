@@ -35,11 +35,11 @@ object Dependencies {
 
   object Libraries {
     // Scala - compile only for sbt-thrift
-    val commonsLang3 = "org.apache.commons"   % "commons-lang3"   % V.commonsLang3   % "compile"
-    val thrift       = "org.apache.thrift"    % "libthrift"       % V.thrift         % "compile"
+    val commonsLang3 = "org.apache.commons" %  "commons-lang3" % V.commonsLang3 % "compile"
+    val thrift       = "org.apache.thrift"  %  "libthrift"     % V.thrift       % "compile"
 
     // Scala - test only
-    val specs2       = "org.specs2"           %% "specs2"         % V.specs2         % "test"
-    val scalaCheck   = "org.scalacheck"       %% "scalacheck"     % V.scalaCheck     % "test"
+    val specs2       = "org.specs2"         %% "specs2"        % V.specs2       % "test"
+    val scalaCheck   = "org.scalacheck"     %% "scalacheck"    % V.scalaCheck   % "test"
   }
 }
