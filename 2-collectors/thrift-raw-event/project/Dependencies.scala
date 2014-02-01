@@ -20,7 +20,7 @@ object Dependencies {
     // For scala-util
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
     // For sbt-thrift
-    "bigtoast-github" at "http://bigtoast.github.com/repo/"
+    "bigtoast-github"               at "http://bigtoast.github.com/repo/"
   )
 
   object V {
