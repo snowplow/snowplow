@@ -29,11 +29,11 @@ import org.scalacheck.Arbitrary._
 // This project
 import SpecHelpers._
 
-class CorruptedThrift extends Specification with ScalaCheck { def is =
+class CorruptedThriftLinesSpec extends Specification with ScalaCheck { def is =
 
   "This is a specification to test handling of corrupted Thrift payloads"                                   ^
                                                                                                            p^
-  "Scala Kinesis Enrich should return None for a corrupted Thrift raw event"                                ! e1^
+  "Scala Kinesis Enrich should return None for any corrupted Thrift raw events"                             ! e1^
                                                                                                             end
 
   def e1 = check {
