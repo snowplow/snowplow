@@ -17,55 +17,54 @@ import sbt._
 object Dependencies {
 
   val resolutionRepos = Seq(
-    // For scala-util
-    "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
+    "Snowplow Analytics Maven repo"          at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
-    "spray repo" at "http://repo.spray.io",
-    "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
-    // For scalazon
-    "BintrayJCenter" at "http://jcenter.bintray.com",
+    "Spray repo"                             at "http://repo.spray.io",
+    "Typesafe repository"                    at "http://repo.typesafe.com/typesafe/releases/",
+    // For Scalazon
+    "BintrayJCenter"                         at "http://jcenter.bintray.com",
     // For sbt-thrift
-    "bigtoast-github" at "http://bigtoast.github.com/repo/"
+    "bigtoast-github"                        at "http://bigtoast.github.com/repo/"
   )
 
   object V {
     // Java
-    val mimepull = "1.9.4"
-    val awsSdk     = "1.6.10"
+    val mimepull         = "1.9.4"
+    val awsSdk           = "1.6.10"
 
     // Scala
     val snowplowRawEvent = "0.1.0"
-    val spray = "1.2.0"
-    val akka = "2.2.3"
-    val logback = "1.0.13"
-    val commonsCodec = "1.5"
-    val scalazon   = "0.5"
-    val argot      = "1.0.1"
+    val spray            = "1.2.0"
+    val akka             = "2.2.3"
+    val logback          = "1.0.13"
+    val commonsCodec     = "1.5"
+    val scalazon         = "0.5"
+    val argot            = "1.0.1"
 
     // Scala (test only)
     // Using the newest version of spec (2.3.6) causes
-    // conflicts with `spray` for `com.chuusai.shapeless`.
-    val specs2     = "2.2.3"
+    // conflicts with `spray` for `com.chuusai.shapeless`
+    val specs2           = "2.2.3"
   }
 
   object Libraries {
     // Java
-    val mimepull = "org.jvnet.mimepull" % "mimepull" % V.mimepull
+    val mimepull         = "org.jvnet.mimepull"    %  "mimepull"                  % V.mimepull
+    val awsSdk           = "com.amazonaws"         % "aws-java-sdk"               % V.awsSdk
 
     // Scala
-    val snowplowRawEvent = "com.snowplowanalytics" % "snowplow-thrift-raw-event" % V.snowplowRawEvent
-    val argot       = "org.clapper"                %% "argot"           % V.argot
-    val sprayCan = "io.spray" % "spray-can" % V.spray
-    val sprayRouting = "io.spray" % "spray-routing" % V.spray
-    val akkaActor = "com.typesafe.akka" %% "akka-actor" % V.akka
-    val akkaSlf4j = "com.typesafe.akka" %% "akka-slf4j" % V.akka
-    val logback = "ch.qos.logback" % "logback-classic" % V.logback
-    val commonsCodec = "commons-codec" % "commons-codec" % V.commonsCodec
-    val scalazon    = "io.github.cloudify"         %% "scalazon"        % V.scalazon
-    val awsSdk      = "com.amazonaws"              % "aws-java-sdk"     % V.awsSdk
+    val snowplowRawEvent = "com.snowplowanalytics" %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
+    val argot            = "org.clapper"           %% "argot"                     % V.argot
+    val sprayCan         = "io.spray"              %  "spray-can"                 % V.spray
+    val sprayRouting     = "io.spray"              %  "spray-routing"             % V.spray
+    val akkaActor        = "com.typesafe.akka"     %% "akka-actor"                % V.akka
+    val akkaSlf4j        = "com.typesafe.akka"     %% "akka-slf4j"                % V.akka
+    val logback          = "ch.qos.logback"        %  "logback-classic"           % V.logback
+    val commonsCodec     = "commons-codec"         %  "commons-codec"             % V.commonsCodec
+    val scalazon         = "io.github.cloudify"    %% "scalazon"                  % V.scalazon
 
     // Scala (test only)
-    val specs2 = "org.specs2" %% "specs2" % V.specs2 % "test"
-    val sprayTestkit = "io.spray" % "spray-testkit" % V.spray % "test"
+    val specs2           = "org.specs2"            %% "specs2"                    % V.specs2   % "test"
+    val sprayTestkit     = "io.spray"              %  "spray-testkit"             % V.spray    % "test"
   }
 }
