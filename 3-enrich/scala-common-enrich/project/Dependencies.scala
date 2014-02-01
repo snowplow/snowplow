@@ -39,7 +39,7 @@ object Dependencies {
     // Scala
     val scalaz7          = "7.0.0"
     val argonaut         = "6.0"
-    val snowplowRawEvent = "0.1.0-SNAPSHOT"
+    val snowplowRawEvent = "0.1.0"
     val scalaUtil        = "0.1.0"
     val refererParser    = "0.1.1"
     val maxmindGeoip     = "0.0.5"
