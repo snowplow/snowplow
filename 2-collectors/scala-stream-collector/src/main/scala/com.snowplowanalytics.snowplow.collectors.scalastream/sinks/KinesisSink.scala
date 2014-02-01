@@ -145,7 +145,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     info(s"Writing successful.")
     info(s"  + ShardId: ${result.shardId}")
     info(s"  + SequenceNumber: ${result.sequenceNumber}")
-    null
+    null // TODO: yech
   }
 
   /**

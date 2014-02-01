@@ -1,12 +1,12 @@
 Version 0.8.14 (2014-02-XX)
 ---------------------------
-Thrift Raw Event: added. Version 0.1.0                                                      - TODO (it's still a SNAPSHOT)
+Thrift Raw Event: added. Version 0.1.0
 Thrift Raw Event: specified Thrift IDL for new raw event schema (#430)
 Scala Stream Collector: added. Version 0.1.0
 Scala Stream Collector: implemented new spray-can (Akka Http) Scala stream collector (#432)
 Scala Kinesis Enrich: added. Version 0.1.0
 Scala Kinesis Enrich: implemented initial Kinesis-based enrichment (#460)
-Scala Common Enrich: bumped to 0.2.0                                                        - TODO (it's still a SNAPSHOT)
+Scala Common Enrich: bumped to 0.2.0
 Scala Common Enrich: added Thrift SnowplowRawEvent as a dependency to common-enrich (#475)
 Scala Common Enrich: added ability to read Thrift SnowplowRawEvent (Thrift) (#462)
 Scala Common Enrich: renamed CloudFront to Cloudfront in code (#495)
@@ -16,8 +16,6 @@ Scala Common Enrich: updated GET payload extraction to handle empty payloads (#5
 Git submodules: changed git:// protocol in .gitmodules to https:// (#512)
 NodeJS Collector: removed contrib-nodejs-collector from 2-collectors (#474)
 JavaScript Tracker: bumped JS Tracker submodule to 0.13.1 release (#511)
-
-TODO: let's add a couple more tests
 
 Version 0.8.13 (2014-01-08)
 ---------------------------
