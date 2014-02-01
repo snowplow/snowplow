@@ -26,6 +26,9 @@ import org.specs2.{Specification, ScalaCheck}
 import org.scalacheck._
 import org.scalacheck.Arbitrary._
 
+// This project
+import SpecHelpers._
+
 class CorruptedThrift extends Specification with ScalaCheck { def is =
 
   "This is a specification to test handling of corrupted Thrift payloads"                                   ^
@@ -36,7 +39,7 @@ class CorruptedThrift extends Specification with ScalaCheck { def is =
   def e1 = check {
     (raw: String) => {
       val eventBytes = Base64.decodeBase64(raw)
-      SpecHelpers.testSource.enrichEvent(eventBytes) must beNone
+      TestSource.enrichEvent(eventBytes) must beNone
     }
   }
 
