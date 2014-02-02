@@ -15,9 +15,6 @@
 import sbt._
 import Keys._
 
-// ThriftPlugin
-import com.github.bigtoast.sbtthrift.ThriftPlugin
-
 object BuildSettings {
 
   // Basic settings for our app
@@ -72,12 +69,12 @@ object BuildSettings {
   import sbtassembly.Plugin._
   import AssemblyKeys._
   lazy val sbtAssemblySettings = assemblySettings ++ Seq(
-    // Slightly cleaner jar name
-    jarName in assembly := {
-      name.value + "-" + version.value + ".jar"
-    }
+    // Executable jarfile
+    assemblyOption in assembly ~= { _.copy(prependShellScript = Some(defaultShellScript)) },
+    // Name it as an executable
+    jarName in assembly := { s"${name.value}-${version.value}" }
   )
 
   lazy val buildSettings = basicSettings ++ scalifySettings ++
-    maxmindSettings ++ sbtAssemblySettings ++ ThriftPlugin.thriftSettings
+    maxmindSettings ++ sbtAssemblySettings
 }
