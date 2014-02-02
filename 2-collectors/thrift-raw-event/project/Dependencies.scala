@@ -16,6 +16,7 @@ import sbt._
 
 object Dependencies {
 
+  // TODO: both of these can be removed
   val resolutionRepos = Seq(
     // For scala-util
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",

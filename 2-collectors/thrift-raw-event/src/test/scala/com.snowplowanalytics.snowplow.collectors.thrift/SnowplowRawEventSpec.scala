@@ -12,17 +12,20 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.collectors.thrift
 
+// Scala
 import scala.collection.JavaConversions._
 
-// Specs2 and ScalaCheck
-import org.specs2.mutable.Specification
+// ScalaCheck
 import org.scalacheck.{Arbitrary,Gen,Properties}
 import org.scalacheck.Prop.forAll
 
-object SnowplowRawEventSpec extends Properties("SnowplowRawEvent"){
+/**
+ * ScalaCheck specification testing all of the properties
+ * of the SnowplowRawEvent POJO.
+ */
+object SnowplowRawEventSpec extends Properties("SnowplowRawEvent") {
   property("timestamp") = forAll { (timestamp: Long) =>
     val event = new SnowplowRawEvent(timestamp, "collector", "encoding",
       "127.0.0.1")
