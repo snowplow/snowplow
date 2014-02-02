@@ -83,9 +83,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
   // storeCanonicalOutput side effect) for the other sinks. We should
   // break this into a pure function with an impure wrapper.
   def enrichEvent(binaryData: Array[Byte]): Option[String] = {
-    val canonicalInput = ThriftLoader.toCanonicalInput(
-      new String(binaryData.map(_.toChar))
-    )
+    val canonicalInput = ThriftLoader.toCanonicalInput(binaryData)
 
     canonicalInput.toValidationNel match { 
 
