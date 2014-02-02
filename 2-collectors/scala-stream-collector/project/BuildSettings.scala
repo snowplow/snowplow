@@ -22,7 +22,7 @@ object BuildSettings {
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "Snowplow Analytics Ltd",
     version               :=  "0.1.0",
-    description           :=  "Scala Stream Collector for Snowplow events",
+    description           :=  "Scala Stream Collector for Snowplow raw events",
     scalaVersion          :=  "2.10.1",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
                                   "-unchecked", "-feature"),
@@ -49,22 +49,15 @@ object BuildSettings {
     Seq(file)
   })
 
-  // sbt-assembly settings for building a fat jar
+  // sbt-assembly settings for building an executable
   import sbtassembly.Plugin._
   import AssemblyKeys._
   lazy val sbtAssemblySettings = assemblySettings ++ Seq(
-    test in assembly := {}, // Don't run tests for 'assembly'.
-    // Slightly cleaner jar name
-    jarName in assembly := {
-      name.value + "-" + version.value + ".jar"
-    }
+    // Executable jarfile
+    assemblyOption in assembly ~= { _.copy(prependShellScript = Some(defaultShellScript)) },
+    // Name it as an executable
+    jarName in assembly := { s"${name.value}-${version.value}" }
   )
 
-  import com.github.bigtoast.sbtthrift.ThriftPlugin
-  // TODO: https://github.com/bigtoast/sbt-thrift defined
-  // a thriftSourceDir that I can't figure out how to set to
-  // `../thrift-raw-schema`, so I've symlinked the schema for now.
-
-  lazy val buildSettings = basicSettings ++ scalifySettings ++
-    sbtAssemblySettings ++ ThriftPlugin.thriftSettings
+  lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings
 }
