@@ -36,11 +36,6 @@ import common.outputs.CanonicalOutput
 object SpecHelpers {
 
   /**
-   * The collector being used
-   */
-  val CollectorVersion = "ssc-0.1.0-stdout"
-
-  /**
    * The Kinesis Enrich being used
    */
   val EnrichVersion = "kinesis-0.1.0-common-0.2.0"
