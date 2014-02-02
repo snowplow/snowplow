@@ -16,6 +16,9 @@
 import sbt._
 import Keys._
 
+// Thrift
+import com.github.bigtoast.sbtthrift.ThriftPlugin
+
 object BuildSettings {
 
   // Basic settings for our app
@@ -48,17 +51,6 @@ object BuildSettings {
     Seq(file)
   })
 
-  // sbt-assembly settings for building a fat jar
-  import sbtassembly.Plugin._
-  import AssemblyKeys._
-  lazy val sbtAssemblySettings = assemblySettings ++ Seq(
-    test in assembly := {}, // Don't run tests for 'assembly'.
-    // Slightly cleaner jar name
-    jarName in assembly := {
-      name.value + "-" + version.value + ".jar"
-    }
-  )
-
   // Publish settings
   // TODO: update with ivy credentials etc when we start using Nexus
   lazy val publishSettings = Seq[Setting[_]](
@@ -73,9 +65,6 @@ object BuildSettings {
     }
   )
 
-  // Settings for generating POJOs from Thrift IDL
-  import com.github.bigtoast.sbtthrift.ThriftPlugin
-
   lazy val buildSettings = basicSettings ++ scalifySettings ++
-    sbtAssemblySettings ++ ThriftPlugin.thriftSettings ++ publishSettings
+    ThriftPlugin.thriftSettings ++ publishSettings
 }
