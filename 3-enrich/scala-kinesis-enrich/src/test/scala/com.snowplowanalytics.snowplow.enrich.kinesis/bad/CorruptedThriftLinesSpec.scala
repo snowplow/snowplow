@@ -36,6 +36,8 @@ class CorruptedThriftLinesSpec extends Specification with ScalaCheck { def is =
   "Scala Kinesis Enrich should return None for any corrupted Thrift raw events"                             ! e1^
                                                                                                             end
 
+  // A bit of fun: the chances of generating a valid Thrift SnowplowRawEvent at random are
+  // so low that we can just use ScalaCheck here
   def e1 = check {
     (raw: String) => {
       val eventBytes = Base64.decodeBase64(raw)
