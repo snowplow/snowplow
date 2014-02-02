@@ -59,11 +59,6 @@ object BuildSettings {
     }
   )
 
-  import com.github.bigtoast.sbtthrift.ThriftPlugin
-  // TODO: https://github.com/bigtoast/sbt-thrift defined
-  // a thriftSourceDir that I can't figure out how to set to
-  // `../thrift-raw-schema`, so I've symlinked the schema for now.
-
   // Publish settings
   // TODO: update with ivy credentials etc when we start using Nexus
   lazy val publishSettings = Seq[Setting[_]](
@@ -77,6 +72,9 @@ object BuildSettings {
       Some(Resolver.sftp("SnowPlow Analytics Maven repository", "prodbox", 8686, basePath) as ("admin", keyFile))
     }
   )
+
+  // Settings for generating POJOs from Thrift IDL
+  import com.github.bigtoast.sbtthrift.ThriftPlugin
 
   lazy val buildSettings = basicSettings ++ scalifySettings ++
     sbtAssemblySettings ++ ThriftPlugin.thriftSettings ++ publishSettings
