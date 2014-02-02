@@ -93,10 +93,10 @@ object SpecHelpers {
 
     def apply[S <: String](actual: Expectable[S]) = {
 
-      lazy val successMsg = s"$field: $actual.description %s $expected".format(
+      lazy val successMsg = s"$field: ${actual.description} %s $expected".format(
         if (regexp) "matches" else "equals")
 
-      lazy val failureMsg = s"$field: $actual.description does not %s $expected".format(
+      lazy val failureMsg = s"$field: ${actual.description} does not %s $expected".format(
         if (regexp) "match" else "equal")
 
       result(equalsOrMatches(regexp, actual.value, expected),
