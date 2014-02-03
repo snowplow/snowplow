@@ -20,9 +20,7 @@ package bad
 import org.apache.commons.codec.binary.Base64
 
 // Specs2
-import org.specs2.matcher.AnyMatchers
 import org.specs2.mutable.Specification
-import org.specs2.execute.Result
 
 // This project
 import SpecHelpers._

@@ -20,7 +20,6 @@ package good
 import org.apache.commons.codec.binary.Base64
 
 // Specs2
-import org.specs2.matcher.AnyMatchers
 import org.specs2.mutable.Specification
 import org.specs2.execute.Result
 
@@ -133,7 +132,7 @@ object StructEventWithContextSpec {
     )
 }
 
-class StructEventWithContextSpec extends Specification with AnyMatchers {
+class StructEventWithContextSpec extends Specification {
 
   "Scala Kinesis Enrich" should {
 
