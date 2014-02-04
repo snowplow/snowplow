@@ -1,5 +1,5 @@
-Version 0.8.14 (2014-02-XX)
----------------------------
+Version 0.9.0 (2014-02-04)
+--------------------------
 Thrift Raw Event: added. Version 0.1.0
 Thrift Raw Event: specified Thrift IDL for new raw event schema (#430)
 Scala Stream Collector: added. Version 0.1.0
