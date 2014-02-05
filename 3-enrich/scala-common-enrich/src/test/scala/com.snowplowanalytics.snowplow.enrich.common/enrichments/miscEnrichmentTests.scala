@@ -52,6 +52,8 @@ class ExtractPlatformTest extends Specification with DataTables {
     "SPEC NAME"                      || "INPUT VAL" | "EXPECTED OUTPUT" |
     "valid web"                      !! "web"       ! "web".success     |
     "valid iot (internet of things)" !! "iot"       ! "iot".success     |
+    "valid app"                      !! "app"       ! "app".success     |
+    "valid mob"                      !! "mob"       ! "mob".success     |
     "invalid empty"                  !! ""          !  err("").fail     |
     "invalid null"                   !! null        !  err(null).fail   |
     "invalid platform"               !! "ma"        !  err("ma").fail   |> {

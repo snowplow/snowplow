@@ -58,6 +58,8 @@ object MiscEnrichments {
     platform match {
       case "web" => "web".success // Web, including Mobile Web
       case "iot" => "iot".success // Internet of Things (e.g. Arduino tracker)
+      case "app" => "app".success // App
+      case "mob" => "mob".success // Mobile / Tablet
       case p => "Field [%s]: [%s] is not a supported tracking platform".format(field, p).fail
     }
   }
