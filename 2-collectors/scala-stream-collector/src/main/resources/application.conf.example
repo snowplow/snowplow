@@ -55,7 +55,7 @@ collector {
     #         to disable all logging.
     #      2. Using 'sbt assembly' and 'java -jar ...' to disable
     #         sbt logging.
-    enabled = "kinesis"
+    enabled = ["kinesis"]
 
     kinesis {
       # The following are used to authenticate for the Amazon Kinesis sink.

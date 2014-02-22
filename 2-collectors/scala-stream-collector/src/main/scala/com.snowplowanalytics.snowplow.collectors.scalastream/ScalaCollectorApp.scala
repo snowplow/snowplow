@@ -22,6 +22,9 @@ import spray.can.Http
 // Java
 import java.io.File
 
+// Java conversions
+import scala.collection.JavaConversions._
+
 // Argot
 import org.clapper.argot._
 
@@ -68,14 +71,16 @@ object ScalaCollector extends App {
   val rawConf = config.value.getOrElse(ConfigFactory.load("application"))
   implicit val system = ActorSystem.create("scala-stream-collector", rawConf)
   val collectorConfig = new CollectorConfig(rawConf)
-  val sink = collectorConfig.sinkEnabled match {
-    case Sink.Kinesis => new KinesisSink(collectorConfig)
-    case Sink.Stdout => new StdoutSink
-  }
+  val sinks = collectorConfig.sinksEnabled.map(s => {
+    s match {
+      case Sink.Kinesis => new KinesisSink(collectorConfig)
+      case Sink.Stdout => new StdoutSink
+    }
+  })
 
   // The handler actor replies to incoming HttpRequests.
   val handler = system.actorOf(
-    Props(classOf[CollectorServiceActor], collectorConfig, sink),
+    Props(classOf[CollectorServiceActor], collectorConfig, sinks),
     name = "handler"
   )
 
@@ -121,12 +126,14 @@ class CollectorConfig(config: Config) {
 
   private val sink = collector.getConfig("sink")
   // TODO: either change this to ADTs or switch to withName generation
-  val sinkEnabled = sink.getString("enabled") match {
-    case "kinesis" => Sink.Kinesis
-    case "stdout" => Sink.Stdout
-    case "test" => Sink.Test
-    case _ => throw new RuntimeException("collector.sink.enabled unknown.")
-  }
+  val sinksEnabled = sink.getStringList("enabled").toList.map({ s =>
+    s match {
+      case "kinesis" => Sink.Kinesis
+      case "stdout" => Sink.Stdout
+      case "test" => Sink.Test
+      case _ => throw new RuntimeException("collector.sink.enabled unknown.")
+    }
+  })
 
   private val kinesis = sink.getConfig("kinesis")
   private val aws = kinesis.getConfig("aws")
