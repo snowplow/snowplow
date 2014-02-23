@@ -50,10 +50,10 @@ object ResponseHandler {
   )
 }
 
-// Receive requests and store data into an output sink.
-class ResponseHandler(config: CollectorConfig, sink: AbstractSink) {
-  
-  val Collector = s"${generated.Settings.shortName}-${generated.Settings.version}-" + config.sinkEnabled.toString.toLowerCase
+// Receive requests and store data into several output sink.
+class ResponseHandler(config: CollectorConfig, sinks: List[AbstractSink]) {
+
+  val Collector = s"${generated.Settings.shortName}-${generated.Settings.version}"
 
   // When `/i` is requested, this is called and stores an event in the
   // Kinisis sink and returns an invisible pixel with a cookie.
@@ -93,7 +93,9 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink) {
     event.networkUserId = networkUserId
 
     // Only the test sink responds with the serialized object.
-    val sinkResponse = sink.storeRawEvent(event, ip)
+    val sinkResponses = sinks.map(sink => {
+        sink.storeRawEvent(event, ip)
+    })
 
     // Build the HTTP response.
     val responseCookie = HttpCookie(
@@ -110,7 +112,7 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink) {
     val httpResponse = HttpResponse(
       entity = HttpEntity(`image/gif`, ResponseHandler.pixel)
     ).withHeaders(headers)
-    (httpResponse, sinkResponse)
+    (httpResponse, sinkResponses(0))
   }
 
   def notFound = HttpResponse(status = 404, entity = "404 Not found")
