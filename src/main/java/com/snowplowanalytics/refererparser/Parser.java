@@ -19,6 +19,8 @@ package com.snowplowanalytics.refererparser;
 // Java
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -105,22 +107,16 @@ public class Parser {
   }
 
   public Referer parse(URI refererUri, String pageHost) {
-
-    // Have to declare up here without `final` due to try/catch scoping
-    String scheme;
-    String host;
-    String path;
-
-    // null unless we have a valid http: or https: URI
-    if (refererUri == null) return null;
-
-    try {
-      scheme = refererUri.getScheme();
-      host = refererUri.getHost();
-      path = refererUri.getPath();
-    } catch(Exception e) { // Not a valid URL
-      return null;
-    }
+    if (refererUri == null) { return null; }
+    return parse(refererUri.getScheme(), refererUri.getHost(), refererUri.getPath(), refererUri.getRawQuery(), pageHost);
+  }
+  
+  public Referer parse(URL refererUrl, String pageHost){
+    if(refererUrl == null) { return null; }
+    return parse(refererUrl.getProtocol(), refererUrl.getHost(), refererUrl.getPath(), refererUrl.getQuery(), pageHost);
+  }
+  
+  private Referer parse(String scheme, String host, String path, String query, String pageHost){
 
     if (scheme == null || (!scheme.equals("http") && !scheme.equals("https"))) return null;
 
@@ -142,7 +138,7 @@ public class Parser {
       return new Referer(Medium.UNKNOWN, null, null); // Unknown referer, nothing more to do
     } else {
       // Potentially add a search term
-      final String term = (referer.medium == Medium.SEARCH) ? extractSearchTerm(refererUri, referer.parameters) : null;
+      final String term = (referer.medium == Medium.SEARCH) ? extractSearchTerm(query, referer.parameters) : null;
       return new Referer(referer.medium, referer.source, term);
     }
   }
@@ -189,11 +185,11 @@ public class Parser {
     }
   }
 
-  private String extractSearchTerm(URI uri, List<String> possibleParameters) {
+  private String extractSearchTerm(String query, List<String> possibleParameters) {
 
     List<NameValuePair> params;
     try {
-      params = URLEncodedUtils.parse(uri, "UTF-8");
+      params = URLEncodedUtils.parse(query, Charset.forName("UTF-8"));
     } catch (IllegalArgumentException iae) {
       return null;
     }
