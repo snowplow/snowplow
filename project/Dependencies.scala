@@ -24,7 +24,7 @@ object Dependencies {
 
   object V {
     val yaml       = "1.10"
-    val http       = "4.1.1"
+    val http       = "4.3.3"
     val specs2     = "1.12.1"
     val scalaCheck = "1.10.0"
     val scalaUtil  = "0.1.0"
