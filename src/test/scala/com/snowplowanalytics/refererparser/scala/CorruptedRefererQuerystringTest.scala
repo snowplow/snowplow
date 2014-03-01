@@ -26,7 +26,7 @@ class CorruptedRefererQuerystringTest extends Specification {
 
   // Our data
   val refererUri = "http://www.google.com/search?q=Psychic+Bazaar&sugexp=chrome,mod=3&sourceid=chrome&ie=UTF-8"
-  val expected   = Some(Referer(Medium.Search, Some("Google"), None))
+  val expected   = Some(Referer(Medium.Search, Some("Google"), Some("Psychic Bazaar")))
 
   "A corrupted referer querystring" should {
     "identify the search engine but not the search term" in {
