@@ -35,7 +35,7 @@ object JobTestHelpers {
   /**
    * The current version of our Hadoop ETL
    */
-  val EtlVersion = "hadoop-0.3.6-common-0.1.0"
+  val EtlVersion = "hadoop-0.4.0-common-0.2.0"
 
   /**
    * Fields in our CanonicalOutput which are unmatchable
