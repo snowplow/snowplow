@@ -30,9 +30,5 @@
 			"type": "string"
 		}
 	},
-	"patternProperties": {
-		"id$": {
-			"type": "string"
-		}
-	}
+	"additionalProperties": false,
 }

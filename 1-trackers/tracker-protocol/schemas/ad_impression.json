@@ -23,5 +23,6 @@
 		"campaign_id": {
 			"type": "string"
 		}
-	}
+	},
+	"additionalProperties": false,
 }

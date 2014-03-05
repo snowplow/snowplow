@@ -30,5 +30,6 @@
 			"type": "string"
 		}
 	},
+	"additionalProperties": false,
 	"required": ["target_url"]
 }
