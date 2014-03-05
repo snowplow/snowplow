@@ -1,0 +1,29 @@
+{
+  "name": "tracker-protocol",
+  "version": "0.1.0",
+  "devDependencies": {
+    "grunt": "~0.4.2",
+    "intern": "~1.5.0",
+    "z-schema": "~2.4.6"
+  },
+  "contributors": [
+    "Alex Dean",
+    "Simon Andersson",
+    "Anthon Pang",
+    "Fred Blundun"
+  ],
+  "description": "Tracker protocol for Snowplow",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/snowplow/snowplow.git"
+  },
+  "bugs": "https://github.com/snowplow/snowplow/issues",
+  "keywords": [
+    "tracking",
+    "web analytics",
+    "events",
+    "open source",
+    "json schema"
+  ],
+  "license": "Simplified BSD"
+}

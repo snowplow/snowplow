@@ -1,0 +1,33 @@
+{
+	"description": "schema for and ad click event",
+	"type": "object",
+	"properties": {
+		"click_id": {
+			"type": "string"
+		},
+		"cost_if_cpc": {
+			"type": "number"
+		},
+		"target_url": {
+			"type": "string"
+		},
+		"banner_id": {
+			"type": "string"
+		},
+		"zone_id": {
+			"type": "string"
+		},
+		"impression_id": {
+			"type": "string"
+		},
+		"advertiser_id": {
+			"type": "string"
+		},
+		"cost_model": {
+			"enum": ["cpa", "cpc", "cpm"]
+		},
+		"campaign_id": {
+			"type": "string"
+		}
+	}
+}

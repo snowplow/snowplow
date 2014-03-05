@@ -1,7 +1,8 @@
 Version 0.10.0 (2014-03-XX)
 ---------------------------
+Selected and integrated a JSON schema validation tool (z-schema) (#551)
 Created new Tracker Protocol sub-project (#550)
-Selected and integrated a JSON schema validation tool into the sub-project (#551) (TODO)
+Selected and integrated a JSON schema validation tool into the sub-project (#551)
 Implemented Grunt(#552) (TODO)
 Implemented Intern(#553) (TODO)
 Added ad impression JSON schema and tests (#554) (TODO)
