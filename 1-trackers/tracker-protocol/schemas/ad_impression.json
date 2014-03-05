@@ -1,5 +1,5 @@
 {
-	"description": "schema for and ad impression event",
+	"description": "schema for an ad impression event",
 	"type": "object",
 	"properties": {
 		"impression_id": {

@@ -1,5 +1,5 @@
 {
-	"description": "schema for and ad click event",
+	"description": "schema for an ad click event",
 	"type": "object",
 	"properties": {
 		"click_id": {
@@ -29,5 +29,6 @@
 		"campaign_id": {
 			"type": "string"
 		}
-	}
+	},
+	"required": ["target_url"]
 }

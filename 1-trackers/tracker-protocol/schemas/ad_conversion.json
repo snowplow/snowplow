@@ -1,5 +1,5 @@
 {
-	"description": "schema for and ad conversion event",
+	"description": "schema for an ad conversion event",
 	"type": "object",
 	"properties": {
 		"conversion_id": {
@@ -27,6 +27,11 @@
 			"enum": ["cpa", "cpc", "cpm"]
 		},
 		"campaign_id": {
+			"type": "string"
+		}
+	},
+	"patternProperties": {
+		"id$": {
 			"type": "string"
 		}
 	}
