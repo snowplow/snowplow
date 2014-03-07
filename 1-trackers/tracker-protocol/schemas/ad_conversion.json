@@ -1,12 +1,14 @@
 {
-	"description": "schema for an ad conversion event",
+	"$schema": "http://json-schema.org/schema#",
+	"description": "Schema for an ad conversion event",
 	"type": "object",
 	"properties": {
 		"conversion_id": {
 			"type": "string"
 		},
 		"cost_if_cpa": {
-			"type": "number"
+			"type": "number",
+			"minimum": 0
 		},
 		"category": {
 			"type": "string"
@@ -18,7 +20,8 @@
 			"type": "string"
 		},
 		"initial_value": {
-			"type": "number"
+			"type": "number",
+			"minimum": 0
 		},
 		"advertiser_id": {
 			"type": "string"
@@ -30,5 +33,6 @@
 			"type": "string"
 		}
 	},
+	"minProperties": 1,
 	"additionalProperties": false
 }

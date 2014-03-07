@@ -2,18 +2,13 @@
 define([
 	'intern!object',
 	'intern/chai!assert',
-	'intern/chai!expect',
-	'intern/dojo/node!chai',
-	'intern/dojo/node!chai-json-schema',
 	'intern/dojo/node!../schemas/ad_click.json',
 	'intern/dojo/node!z-schema'
-], function(registerSuite, assert, expect, chai, chaiJsonSchema, adClickSchema, ZSchema) {
-
-	chai.use(chaiJsonSchema);
+], function(registerSuite, assert, adClickSchema, ZSchema) {
 
 	registerSuite({
 
-		name: 'Ad impression schema validation',
+		name: 'Ad click schema validation',
 
 		'Validate schema': function() {
 			
@@ -26,11 +21,12 @@ define([
 				"impression_id": "i",
 				"advertiser_id": "a",
 				"cost_model": "cpc",
-				"campaign_id": "c"
+				"campaign_id": "c",
+				"EXTRANEOUS": 100
 			}
 
 			var validator = new ZSchema({sync: true}),
-			valid = validator.validate(clickJson, adClickSchema);
+				valid = validator.validate(clickJson, adClickSchema);
 
 			assert.strictEqual(valid, true);
 

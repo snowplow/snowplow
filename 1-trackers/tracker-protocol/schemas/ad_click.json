@@ -1,15 +1,18 @@
 {
-	"description": "schema for an ad click event",
+	"$schema": "http://json-schema.org/schema#",
+	"description": "Schema for an ad click event",
 	"type": "object",
 	"properties": {
 		"click_id": {
 			"type": "string"
 		},
 		"cost_if_cpc": {
-			"type": "number"
+			"type": "number",
+			"minimum": 0
 		},
 		"target_url": {
-			"type": "string"
+			"type": "string",
+			"minLength": 1
 		},
 		"banner_id": {
 			"type": "string"
@@ -30,6 +33,6 @@
 			"type": "string"
 		}
 	},
-	"additionalProperties": false,
-	"required": ["target_url"]
+	"required": ["target_url"],
+	"additionalProperties": false
 }

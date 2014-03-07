@@ -1,12 +1,14 @@
 {
-	"description": "schema for an ad impression event",
+	"$schema": "http://json-schema.org/schema#",
+	"description": "Schema for an ad impression event",
 	"type": "object",
 	"properties": {
 		"impression_id": {
 			"type": "string"
 		},
 		"cost_if_cpm": {
-			"type": "number"
+			"type": "number",
+			"minimum": 0
 		},
 		"banner_id": {
 			"type": "string"
@@ -24,5 +26,6 @@
 			"type": "string"
 		}
 	},
+	"minProperties":1,
 	"additionalProperties": false
 }

@@ -13,6 +13,9 @@
 	],
 	"invalid": [
 		{
+			"cost_if_cpm": -4
+		},
+		{
 			"impression_id": "a",
 			"cost_if_cpm": 22,
 			"banner_id": "b",

@@ -1,5 +1,6 @@
 {
-	"description": "schema for a link click event",
+	"$schema": "http://json-schema.org/schema#",
+	"description": "Schema for a link click event",
 	"type": "object",
 	"properties": {
 		"element_id": {
@@ -15,7 +16,8 @@
 			"type": "string"
 		},
 		"target_url": {
-			"type": "string"
+			"type": "string",
+			"minLength": 1
 		}
 	},
 	"required": ["target_url"],

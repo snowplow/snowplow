@@ -15,6 +15,9 @@
 	],
 	"invalid": [
 		{
+			"cost_if_cpa": -1000
+		},
+		{
 			"conversion_id": "a",
 			"cost_if_cpa": 22,
 			"category": "business",
@@ -58,6 +61,9 @@
 			"advertiser_id": "a",
 			"cost_model": "invalid",
 			"campaign_id": "c"
+		},
+		{
+
 		}
 	]
 }
