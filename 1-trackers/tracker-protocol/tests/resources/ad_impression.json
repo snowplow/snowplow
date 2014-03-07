@@ -1,0 +1,52 @@
+{
+	"name": "ad_impression",
+	"valid": [
+		{
+			"impression_id": "a",
+			"cost_if_cpm": 22,
+			"banner_id": "b",
+			"zone_id": "c",
+			"advertiser_id": "d",
+			"cost_model": "cpc",
+			"campaign_id": "e"
+		}
+	],
+	"invalid": [
+		{
+			"impression_id": "a",
+			"cost_if_cpm": 22,
+			"banner_id": "b",
+			"zone_id": "c",
+			"advertiser_id": "d",
+			"cost_model": "cpc",
+			"campaign_id": "e",
+			"additional_property": null
+		},
+		{
+			"impression_id": 500,
+			"cost_if_cpm": 22,
+			"banner_id": "b",
+			"zone_id": "c",
+			"advertiser_id": "d",
+			"cost_model": "cpc",
+			"campaign_id": "e"
+		},
+		{
+			"impression_id": "a",
+			"cost_if_cpm": "string",
+			"banner_id": "b",
+			"zone_id": "c",
+			"cost_model": "cpc",
+			"campaign_id": "e"
+		},
+		{
+			"impression_id": "a",
+			"cost_if_cpm": 22,
+			"banner_id": "b",
+			"zone_id": "c",
+			"advertiser_id": "d",
+			"cost_model": "invalid",
+			"campaign_id": "e"
+		}
+	]
+}

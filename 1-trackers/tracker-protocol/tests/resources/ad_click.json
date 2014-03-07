@@ -1,0 +1,73 @@
+{
+	"name": "ad_click",
+	"valid": [
+		{
+			"click_id": "a",
+			"cost_if_cpc": 22,
+			"target_url": "www.example.com",
+			"banner_id": "b",
+			"zone_id": "z",
+			"impression_id": "i",
+			"advertiser_id": "a",
+			"cost_model": "cpc",
+			"campaign_id": "c"
+		}
+	],
+	"invalid": [
+		{
+			"click_id": "a",
+			"cost_if_cpc": 22,
+			"target_url": "www.example.com",
+			"banner_id": "b",
+			"zone_id": "z",
+			"impression_id": "i",
+			"advertiser_id": "a",
+			"cost_model": "cpc",
+			"campaign_id": "c",
+			"additional_property": null
+		},
+		{
+			"click_id": "a",
+			"cost_if_cpc": "22",
+			"target_url": "www.example.com",
+			"banner_id": "b",
+			"zone_id": "z",
+			"impression_id": "i",
+			"advertiser_id": "a",
+			"cost_model": "cpc",
+			"campaign_id": "c"
+		},
+		{
+			"click_id": 500,
+			"cost_if_cpc": 22,
+			"target_url": "www.example.com",
+			"banner_id": "b",
+			"zone_id": "z",
+			"impression_id": "i",
+			"advertiser_id": "a",
+			"cost_model": "cpc",
+			"campaign_id": "c"
+		},
+		{
+			"click_id": "a",
+			"cost_if_cpc": 22,
+			"target_url": "www.example.com",
+			"banner_id": "b",
+			"zone_id": "z",
+			"impression_id": "i",
+			"advertiser_id": "a",
+			"cost_model": "invalid",
+			"campaign_id": "c"
+		},
+		{
+			"click_id": "a",
+			"cost_if_cpc": 22,
+			"banner_id": "b",
+			"zone_id": "z",
+			"impression_id": "i",
+			"advertiser_id": "a",
+			"cost_model": "cpc",
+			"campaign_id": "c"
+		}
+	]
+}

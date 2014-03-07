@@ -1,0 +1,63 @@
+{
+	"name": "ad_conversion",
+	"valid": [
+		{
+			"conversion_id": "a",
+			"cost_if_cpa": 22,
+			"category": "business",
+			"action": "purchase",
+			"property": "adjective",
+			"initial_value": 1000,
+			"advertiser_id": "a",
+			"cost_model": "cpc",
+			"campaign_id": "c"
+		}
+	],
+	"invalid": [
+		{
+			"conversion_id": "a",
+			"cost_if_cpa": 22,
+			"category": "business",
+			"action": "purchase",
+			"property": "adjective",
+			"initial_value": 1000,
+			"advertiser_id": "a",
+			"cost_model": "cpc",
+			"campaign_id": "c",
+			"additional_property": null
+		},
+		{
+			"conversion_id": "a",
+			"cost_if_cpa": 22,
+			"category": "business",
+			"action": "purchase",
+			"property": "adjective",
+			"initial_value": "1000",
+			"advertiser_id": "a",
+			"cost_model": "cpc",
+			"campaign_id": "c"
+		},
+		{
+			"conversion_id": 500,
+			"cost_if_cpa": 22,
+			"category": "business",
+			"action": "purchase",
+			"property": "adjective",
+			"initial_value": 1000,
+			"advertiser_id": "a",
+			"cost_model": "cpc",
+			"campaign_id": "c"
+		},
+		{
+			"conversion_id": "a",
+			"cost_if_cpa": 22,
+			"category": "business",
+			"action": "purchase",
+			"property": "adjective",
+			"initial_value": 1000,
+			"advertiser_id": "a",
+			"cost_model": "invalid",
+			"campaign_id": "c"
+		}
+	]
+}

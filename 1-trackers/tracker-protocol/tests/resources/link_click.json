@@ -1,0 +1,32 @@
+{
+	"name": "link_click",
+	"valid": [
+		{
+			"element_id": "a",
+			"element_classes": ["a","b"],
+			"element_target": "_blank",
+			"target_url": "www.example.com"
+		}
+	],
+	"invalid":  [
+		{
+			"element_id": "a",
+			"element_classes": ["a","b"],
+			"element_target": "_blank",
+			"target_url": "www.example.com",
+			"additional_property": null
+		},
+		{
+			"element_id": 0,
+			"element_classes": ["a","b"],
+			"element_target": "_blank",
+			"target_url": "www.example.com"
+		},
+		{
+			"element_id": "a",
+			"element_classes": "string",
+			"element_target": "_blank",
+			"target_url": "www.example.com"
+		}
+	]
+}

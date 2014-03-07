@@ -1,0 +1,23 @@
+{
+	"description": "schema for a link click event",
+	"type": "object",
+	"properties": {
+		"element_id": {
+			"type": "string"
+		},
+		"element_classes": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		},
+		"element_target": {
+			"type": "string"
+		},
+		"target_url": {
+			"type": "string"
+		}
+	},
+	"required": ["target_url"],
+	"additionalProperties": false
+}
