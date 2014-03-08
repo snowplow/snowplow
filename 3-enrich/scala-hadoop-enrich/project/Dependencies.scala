@@ -19,8 +19,11 @@ object Dependencies {
     "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/releases/",
      // For some misc Scalding and Twitter libs
     "Concurrent Maven Repo" at "http://conjars.org/repo",
-    // For Scala Common Enrich
-    "SnowPlow Analytics Maven repo" at "http://maven.snplow.com/releases/"
+    // For Snowplow libs
+    "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
+    "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
+    // For user-agent-utils
+    "user-agent-utils repo" at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/"
   )
 
   object V {
