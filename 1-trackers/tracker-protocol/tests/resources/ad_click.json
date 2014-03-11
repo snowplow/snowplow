@@ -2,15 +2,15 @@
 	"name": "ad_click",
 	"valid": [
 		{
-			"click_id": "uuid",
+			"click_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
 			"cost_if_cpc": 22,
 			"target_url": "www.example.com",
-			"banner_id": "bid",
-			"zone_id": "zid",
-			"impression_id": "imid",
-			"advertiser_id": "aid",
+			"banner_id": "000397ff-3b12-12aefb328a00",
+			"zone_id": "fe80::bd0f:a8bc:6480:238b%11",
+			"impression_id": "01a9ffea-3115-045b-b245-739abefd243",
+			"advertiser_id": "0017a7320",
 			"cost_model": "cpc",
-			"campaign_id": "cid"
+			"campaign_id": "3475802750234875"
 		},
 		{
 			"click_id": "34657823546",
@@ -21,7 +21,7 @@
 		},
 		{
 			"click_id": "\\   `~1!2@3#4$5%6^7&8*9(0)-_=+]}[{/?.>,<;:'qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM",
-			"cost_if_cpc": 99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999,
+			"cost_if_cpc": 9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999,
 			"target_url": "www.example.com/path/path/path/path/path/path/path/path/path/path/path/path/path/path/path/path/path/path/path/path/path/"
 		}
 	],

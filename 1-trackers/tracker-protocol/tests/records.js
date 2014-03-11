@@ -1,4 +1,3 @@
-
 define([
 	'intern!object',
 	'intern/chai!assert',
@@ -10,14 +9,21 @@ define([
 	'intern/dojo/node!./resources/ad_impression',
 	'intern/dojo/node!./resources/ad_click',
 	'intern/dojo/node!./resources/ad_conversion',
-	'intern/dojo/node!./resources/link_click',
+	'intern/dojo/node!./resources/link_click'
 ], function(registerSuite, assert, ZSchema,
 			adImpressionSchema, adClickSchema, adConversionSchema, linkClickSchema,
-			adImpressionJson,   adClickJson,   adConversionJson,   linkClickJson) {
+			adImpressionJsons,  adClickJsons,  adConversionJsons,  linkClickJsons) {
 
-	var validator = new ZSchema({sync: true});
+	var validator = new ZSchema({sync: true}),
+		testArray = [
+			[adImpressionSchema, adImpressionJsons],
+			[adClickSchema, adClickJsons],
+			[adConversionSchema, adConversionJsons],
+			[linkClickSchema, linkClickJsons]
+		],
+		j;
 
-	function testSchema(schema, json) {
+	function testSchema(schema, json) { console.log(typeof schema, typeof json)
 		registerSuite({
 			name: json.name + ' schema validation',
 
@@ -43,8 +49,8 @@ define([
 		})
 	}
 
-	testSchema(adImpressionSchema, adImpressionJson);
-	testSchema(adClickSchema, adClickJson);
-	testSchema(adConversionSchema, adConversionJson);
-	testSchema(linkClickSchema, linkClickJson);
+	for (var j = 0; j < testArray.length; j++) {
+		testSchema(testArray[j][0], testArray[j][1])
+	}
+
 });
