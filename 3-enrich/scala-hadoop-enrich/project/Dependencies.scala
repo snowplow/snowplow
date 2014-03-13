@@ -13,12 +13,15 @@
 import sbt._
 
 object Dependencies {
-  
+
   val resolutionRepos = Seq(
     // Required for our Scalaz snapshot
     "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/releases/",
-     // For some misc Scalding and Twitter libs
+    // For some misc Scalding and Twitter libs
     "Concurrent Maven Repo" at "http://conjars.org/repo",
+    "Clojars Maven Repo" at "http://clojars.org/repo",
+    // For twitter libs
+    "Twitter maven libs" at "http://maven.twttr.com/",
     // For Snowplow libs
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
@@ -30,7 +33,7 @@ object Dependencies {
     // Java
     val hadoop           = "0.20.2"
     // Scala
-    val scalding         = "0.8.11"
+    val scalding         = "0.9.0rc4"
     val scalaz7          = "7.0.0"
     val snowplowRawEvent = "0.1.0"
     val commonEnrich     = "0.2.0"
@@ -49,6 +52,7 @@ object Dependencies {
     // Scala
     val scaldingCore     = "com.twitter"                %% "scalding-core"            % V.scalding
     val scaldingArgs     = "com.twitter"                %% "scalding-args"            % V.scalding
+    val scaldingCommons  = "com.twitter"                %% "scalding-commons"         % V.scalding
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7 // TODO: tidy up whitespace
     val snowplowRawEvent = "com.snowplowanalytics"      % "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val commonEnrich     = "com.snowplowanalytics"      % "snowplow-common-enrich"    % V.commonEnrich
