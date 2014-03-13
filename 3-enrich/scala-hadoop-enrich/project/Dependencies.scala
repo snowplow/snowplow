@@ -33,7 +33,7 @@ object Dependencies {
     // Java
     val hadoop           = "0.20.2"
     // Scala
-    val scalding         = "0.9.0rc4"
+    val scalding         = "0.9.0rc15"
     val scalaz7          = "7.0.0"
     val snowplowRawEvent = "0.1.0"
     val commonEnrich     = "0.2.0"
@@ -53,6 +53,7 @@ object Dependencies {
     val scaldingCore     = "com.twitter"                %% "scalding-core"            % V.scalding
     val scaldingArgs     = "com.twitter"                %% "scalding-args"            % V.scalding
     val scaldingCommons  = "com.twitter"                %% "scalding-commons"         % V.scalding
+    val scaldingJson     = "com.twitter"                %% "scalding-json"            % V.scalding
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7 // TODO: tidy up whitespace
     val snowplowRawEvent = "com.snowplowanalytics"      % "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val commonEnrich     = "com.snowplowanalytics"      % "snowplow-common-enrich"    % V.commonEnrich

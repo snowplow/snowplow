@@ -150,7 +150,7 @@ object PagePingCfLineTest {
  * (CloudFront format) are successfully
  * extracted.
  */
-class PagePingCfLineTest extends Specification with TupleConversions {
+class PagePingCfLineTest extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid page ping" should {
     EtlJobTest("cloudfront", "0").

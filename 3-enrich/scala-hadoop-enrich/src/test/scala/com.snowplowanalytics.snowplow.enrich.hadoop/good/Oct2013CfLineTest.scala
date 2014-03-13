@@ -154,7 +154,7 @@ object Oct2013CfLineTest {
  * For details:
  * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
  */
-class Oct2013CfLineTest extends Specification with TupleConversions {
+class Oct2013CfLineTest extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid page ping" should {
     EtlJobTest("cloudfront", "0").

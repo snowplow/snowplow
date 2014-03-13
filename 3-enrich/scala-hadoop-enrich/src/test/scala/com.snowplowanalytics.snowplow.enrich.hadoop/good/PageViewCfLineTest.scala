@@ -149,7 +149,7 @@ object PageViewCfLineTest {
  * Check that all tuples in a raw page view event
  * (CloudFront format) are successfully extracted.
  */
-class PageViewCfLineTest extends Specification with TupleConversions {
+class PageViewCfLineTest extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid page view event" should {
     EtlJobTest("cloudfront", "1"). // Anonymize 1 IP address quartet

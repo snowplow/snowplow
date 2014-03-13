@@ -169,7 +169,7 @@ object LzoThriftTest {
  * For details:
  * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
  */
-class LzoThriftTest extends Specification with TupleConversions {
+class LzoThriftTest extends Specification {
 
   "A job which processes a RawThrift file containing 1 valid page view" should {
     EtlJobTest("thrift-raw", "2").

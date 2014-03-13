@@ -34,6 +34,7 @@ object SnowplowHadoopEnrichBuild extends Build {
         Libraries.scaldingCore,
         Libraries.scaldingArgs,
         Libraries.scaldingCommons,
+        Libraries.scaldingJson,
         Libraries.scalaz7,
         Libraries.snowplowRawEvent,
         Libraries.commonEnrich,

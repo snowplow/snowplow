@@ -153,7 +153,7 @@ object CljTomcatLineTest {
  * For details:
  * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
  */
-class CljTomcatLineTest extends Specification with TupleConversions {
+class CljTomcatLineTest extends Specification {
 
   "A job which processes a Clojure-Tomcat file containing 1 valid page view" should {
     EtlJobTest("clj-tomcat", "2").

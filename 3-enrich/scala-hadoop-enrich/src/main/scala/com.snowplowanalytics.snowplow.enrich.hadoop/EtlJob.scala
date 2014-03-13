@@ -27,6 +27,10 @@ import Scalaz._
 import com.twitter.scalding._
 import com.twitter.scalding.commons.source._
 
+// Cascading
+import cascading.tuple.Fields
+import cascading.tap.SinkMode
+
 // Scala MaxMind GeoIP
 import com.snowplowanalytics.maxmind.geoip.IpGeo
 
@@ -107,7 +111,12 @@ class EtlJob(args: Args) extends Job(args) {
   // Aliases for our job
   val input = MultipleTextLineFiles(etlConfig.inFolder).read
   val goodOutput = Tsv(etlConfig.outFolder)
-  val badOutput = JsonLine(etlConfig.badFolder)
+
+  // TODO: find a better way to do this
+  val badOutput = jobConfOption match {
+    case Some(conf: Configuration) => JsonLine(etlConfig.badFolder)
+    case None => LocalJsonLine(etlConfig.badFolder)
+  }
 
   // Do we add a failure trap?
   val trappableInput = etlConfig.exceptionsFolder match {
@@ -178,4 +187,12 @@ class EtlJob(args: Args) extends Job(args) {
       case _ => None
     }
   }
+}
+
+object LocalJsonLine {
+  def apply(p: String, fields: Fields = Fields.ALL) = new LocalJsonLine(p, fields)
+}
+
+class LocalJsonLine(p: String, fields: Fields) extends JsonLine(p, fields, SinkMode.REPLACE) {
+  override val transformInTest = true
 }

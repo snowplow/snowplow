@@ -44,7 +44,7 @@ object DiscardableCfLinesTest {
  * CloudFront-format rows which should
  * be discarded.
  */
-class DiscardableCfLinesTest extends Specification with TupleConversions {
+class DiscardableCfLinesTest extends Specification {
 
   "A job which processes expected but discardable CloudFront input lines" should {
     EtlJobTest("cloudfront", "0").

@@ -48,7 +48,7 @@ object InvalidCfLinesTest {
  * Input data _is_ not in the
  * expected CloudFront format.
  */
-class InvalidCfLinesTest extends Specification with TupleConversions {
+class InvalidCfLinesTest extends Specification {
 
   "A job which processes input lines not in CloudFront format" should {
     EtlJobTest("cloudfront", "0").

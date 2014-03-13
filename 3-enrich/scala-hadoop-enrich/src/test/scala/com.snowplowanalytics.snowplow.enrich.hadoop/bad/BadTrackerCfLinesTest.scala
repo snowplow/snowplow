@@ -49,7 +49,7 @@ object BadTrackerCfLinesTest {
  * CloudFront-format rows which contain "bad data"
  * from the tracker.
  */
-class BadTrackerCfLinesTest extends Specification with TupleConversions {
+class BadTrackerCfLinesTest extends Specification {
 
   "A job which processes input lines containing corrupted data from the tracker" should {
     EtlJobTest("cloudfront", "0").
