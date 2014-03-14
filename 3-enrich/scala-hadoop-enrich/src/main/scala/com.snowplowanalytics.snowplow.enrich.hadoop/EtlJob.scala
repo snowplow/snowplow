@@ -30,9 +30,12 @@ import com.twitter.scalding.commons.source._
 // Cascading
 import cascading.tuple.Fields
 import cascading.tap.SinkMode
+import cascading.pipe.Pipe
 
 // Scala MaxMind GeoIP
 import com.snowplowanalytics.maxmind.geoip.IpGeo
+
+import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
 
 // Snowplow Common Enrich
 import common._
@@ -109,7 +112,7 @@ class EtlJob(args: Args) extends Job(args) {
   lazy val ipGeo = EtlJob.createIpGeo(ipGeoFile)
 
   // Aliases for our job
-  val input = getInputSource(etlConfig.inFormat, etlConfig.inFolder).read
+  val inputPipe = getInputPipe(etlConfig.inFormat, etlConfig.inFolder)
   val goodOutput = Tsv(etlConfig.outFolder)
 
   // TODO: find a better way to do this
@@ -118,17 +121,28 @@ class EtlJob(args: Args) extends Job(args) {
     case None => LocalJsonLine(etlConfig.badFolder)
   }
 
+  // TODO: remove this when common-enrich ThriftLoader
+  // is able to convert SnowPlowRawEvents
+  lazy val serializer = new org.apache.thrift.TSerializer();
+
   // Do we add a failure trap?
   val trappableInput = etlConfig.exceptionsFolder match {
-    case Some(folder) => input.addTrap(Tsv(folder))
-    case None => input
+    case Some(folder) => inputPipe.addTrap(Tsv(folder))
+    case None => inputPipe
   }
 
   // Scalding data pipeline
-  val common = trappableInput
-    .map('line -> 'output) { l: Any =>
-      EtlJob.toCanonicalOutput(ipGeo, etlConfig.anonOctets, loader.asInstanceOf[CollectorLoader[Any]].toCanonicalInput(l))
+  val common = inputPipe.map('line -> 'output) { l: Any => {
+    // TODO: remove this hack and change ThriftLoader to convert
+    // SnowplowRawEvent instead of Array[Byte]
+    val b = {
+      if (l.isInstanceOf[SnowplowRawEvent])
+        serializer.serialize(l.asInstanceOf[SnowplowRawEvent])
+      else l
     }
+
+    EtlJob.toCanonicalOutput(ipGeo, etlConfig.anonOctets, loader.asInstanceOf[CollectorLoader[Any]].toCanonicalInput(b))
+  }}
 
   // Handle bad rows
   val bad = common
@@ -188,10 +202,11 @@ class EtlJob(args: Args) extends Job(args) {
     }
   }
 
-  private def getInputSource(format: String, path: String): FixedPathSource = {
+  private def getInputPipe(format: String, path: String): Pipe = {
+    import TDsl._
     format match {
-      case "thrift-raw" => LzoThriftSource(path)
-      case _ => MultipleTextLineFiles(path)
+      case "thrift-raw" => LzoThriftSource(path).toPipe('line)
+      case _ => MultipleTextLineFiles(path).read
     }
   }
 }

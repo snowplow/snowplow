@@ -48,8 +48,9 @@ object LzoThriftTest {
   val payload = new TrackerPayload(
     PayloadProtocol.Http, PayloadFormat.HttpGet, payloadData
   )
-  val thriftObject = new SnowplowRawEvent(1381200474L, "collector", "UTF-8", "127.0.0.1");
+  val thriftObject = new SnowplowRawEvent(1381175274000L, "collector", "UTF-8", "255.255.x.x");
   thriftObject.setPayload(payload);
+  thriftObject.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.8 Safari/537.36");
 
   val lines = List(
     (thriftObject, 1L)
@@ -126,9 +127,9 @@ object LzoThriftTest {
     null, //
     null, //
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.8 Safari/537.36",
+    "Chrome 31",
     "Chrome",
-    "Chrome",
-    null,
+    "31.0.1650.8",
     "Browser",
     "WEBKIT",
     "en-US",
@@ -145,8 +146,8 @@ object LzoThriftTest {
     "24",
     "1440",
     "802",
-    "Mac OS",
-    "Mac OS",
+    "Mac OS X",
+    "Mac OS X",
     "Apple Inc.",
     "Europe/London",
     "Computer",
