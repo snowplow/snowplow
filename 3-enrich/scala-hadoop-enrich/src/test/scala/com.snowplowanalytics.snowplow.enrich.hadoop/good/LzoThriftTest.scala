@@ -52,7 +52,7 @@ object LzoThriftTest {
   thriftObject.setPayload(payload);
 
   val lines = List(
-    (thriftObject -> 0L)
+    (thriftObject, 1L)
   )
 
   val expected = List(
@@ -172,7 +172,7 @@ object LzoThriftTest {
 class LzoThriftTest extends Specification {
 
   "A job which processes a RawThrift file containing 1 valid page view" should {
-    EtlJobTest("thrift-raw", "2").
+    EtlJobTest("thrift-raw", "0").
       source(LzoThriftSource("inputFolder"), LzoThriftTest.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {
