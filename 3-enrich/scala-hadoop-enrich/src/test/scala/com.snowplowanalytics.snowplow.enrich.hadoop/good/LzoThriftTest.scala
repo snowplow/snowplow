@@ -52,7 +52,7 @@ object LzoThriftTest {
   thriftObject.setPayload(payload);
 
   val lines = List(
-    (thriftObject, 1L)
+    (thriftObject -> 0L)
   )
 
   val expected = List(

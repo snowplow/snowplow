@@ -109,7 +109,7 @@ class EtlJob(args: Args) extends Job(args) {
   lazy val ipGeo = EtlJob.createIpGeo(ipGeoFile)
 
   // Aliases for our job
-  val input = MultipleTextLineFiles(etlConfig.inFolder).read
+  val input = getInputSource(etlConfig.inFormat, etlConfig.inFolder).read
   val goodOutput = Tsv(etlConfig.outFolder)
 
   // TODO: find a better way to do this
@@ -185,6 +185,13 @@ class EtlJob(args: Args) extends Job(args) {
     implicitly[Mode] match {
       case Hdfs(_, conf) => Option[Configuration](conf)
       case _ => None
+    }
+  }
+
+  private def getInputSource(format: String, path: String): FixedPathSource = {
+    format match {
+      case "thrift-raw" => LzoThriftSource(path)
+      case _ => MultipleTextLineFiles(path)
     }
   }
 }
