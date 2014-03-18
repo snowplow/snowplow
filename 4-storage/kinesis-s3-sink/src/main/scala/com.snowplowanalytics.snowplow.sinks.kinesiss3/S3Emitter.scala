@@ -3,7 +3,11 @@ package com.snowplowanalytics.snowplow.sinks
 import scala.collection.JavaConverters._
 
 // Java libs
-import java.io.{ByteArrayInputStream,ByteArrayOutputStream,IOException}
+import java.io.{DataOutputStream,ByteArrayInputStream,ByteArrayOutputStream,IOException}
+
+// Java lzo
+import org.apache.hadoop.conf.Configuration
+import com.hadoop.compression.lzo.LzopCodec;
 
 // Logging
 import org.apache.commons.logging.{Log,LogFactory}
@@ -31,12 +35,17 @@ class S3Emitter(config: KinesisConnectorConfiguration) extends IEmitter[ Array[B
   val client = new AmazonS3Client(config.AWS_CREDENTIALS_PROVIDER)
   client.setEndpoint(config.S3_ENDPOINT)
 
+  val lzoCodec = new LzopCodec()
+  val conf = new Configuration()
+  conf.set("io.compression.codecs", classOf[LzopCodec].getName)
+  lzoCodec.setConf(conf)
+
   /**
    * Determines the filename in S3, which is the corresponding
    * Kinesis sequence range of records in the file.
    */
   protected def getFileName(firstSeq: String, lastSeq: String): String = {
-    firstSeq + "-" + lastSeq
+    firstSeq + "-" + lastSeq + lzoCodec.getDefaultExtension()
   }
 
   /**
@@ -49,12 +58,14 @@ class S3Emitter(config: KinesisConnectorConfiguration) extends IEmitter[ Array[B
   override def emit(buffer: UnmodifiableBuffer[ Array[Byte] ]): java.util.List[ Array[Byte] ] = {
     val records = buffer.getRecords().asScala
 
+    val indexOutputStream = new ByteArrayOutputStream()
     val outputStream = new ByteArrayOutputStream(config.BUFFER_BYTE_SIZE_LIMIT.toInt)
+    val lzoOutputStream = lzoCodec.createIndexedOutputStream(outputStream, new DataOutputStream(indexOutputStream))
 
     // Popular the output stream with records
     records.foreach({ record =>
       try {
-        outputStream.write(record)
+        lzoOutputStream.write(record)
       } catch {
         case e: IOException => {
           log.error(e)
@@ -64,14 +75,19 @@ class S3Emitter(config: KinesisConnectorConfiguration) extends IEmitter[ Array[B
     })
 
     val filename = getFileName(buffer.getFirstSequenceNumber, buffer.getLastSequenceNumber)
+    val indexFilename = filename + ".index"
     val obj = new ByteArrayInputStream(outputStream.toByteArray)
+    val indexObj = new ByteArrayInputStream(indexOutputStream.toByteArray)
     val objMeta = new ObjectMetadata()
+    val indexObjMeta = new ObjectMetadata()
 
     objMeta.setContentLength(outputStream.size)
+    indexObjMeta.setContentLength(indexOutputStream.size)
 
     try {
       client.putObject(bucket, filename, obj, objMeta)
-      log.info("Successfully emitted " + buffer.getRecords.size + " records to S3 in s3://" + bucket + "/" + filename)
+      client.putObject(bucket, indexFilename, indexObj, indexObjMeta)
+      log.info("Successfully emitted " + buffer.getRecords.size + " records to S3 in s3://" + bucket + "/" + filename + " with index " + indexFilename)
 
       // Success means we return an empty list i.e. there are no failed items to retry
       java.util.Collections.emptyList().asInstanceOf[ java.util.List[ Array[Byte] ] ]
