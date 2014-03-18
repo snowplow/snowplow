@@ -2,31 +2,55 @@
 	"name": "link_click",
 	"valid": [
 		{
-			"element_id": "a",
-			"element_classes": ["a","b"],
+			"element_id": "top",
+			"element_classes": ["first","head"],
 			"element_target": "_blank",
 			"target_url": "www.example.com"
+		},
+		{
+			"element_id": "\\  \" `~1!2@3#4$5%6^7&8*9(0)-_=+]}[{/?.>,<;:'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM",
+			"element_classes": ["null", "undefined"],
+			"element_target": "",
+			"target_url": "'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''"
+		},
+		{
+			"target_url": "a"
 		}
 	],
 	"invalid":  [
 		{
-			"element_id": "a",
-			"element_classes": ["a","b"],
+			"element_id": "top",
+			"element_classes": ["first","head"],
 			"element_target": "_blank",
 			"target_url": "www.example.com",
 			"additional_property": null
 		},
 		{
 			"element_id": 0,
-			"element_classes": ["a","b"],
+			"element_classes": ["first","head"],
 			"element_target": "_blank",
 			"target_url": "www.example.com"
 		},
 		{
-			"element_id": "a",
+			"element_id": "top",
 			"element_classes": "string",
 			"element_target": "_blank",
 			"target_url": "www.example.com"
+		},
+		{
+			"element_id": "top",
+			"element_classes": "string",
+			"element_target": true,
+			"target_url": "www.example.com"
+		},
+		{
+			"element_id": "top",
+			"element_classes": "string",
+			"element_target": true,
+			"target_url": ["array"]
+		},
+		{
+
 		}
 	]
 }

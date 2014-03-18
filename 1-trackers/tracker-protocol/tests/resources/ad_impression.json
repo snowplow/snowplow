@@ -2,13 +2,17 @@
 	"name": "ad_impression",
 	"valid": [
 		{
-			"impression_id": "a",
+			"impression_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
 			"cost_if_cpm": 22,
-			"banner_id": "b",
-			"zone_id": "c",
-			"advertiser_id": "d",
+			"banner_id": "000397ff-3b12-12aefb328a00",
+			"zone_id": "fe80:bd0f:a8bc:6480:238b%11",
+			"advertiser_id": "0017a7320",
 			"cost_model": "cpc",
-			"campaign_id": "e"
+			"campaign_id": "3475802750234875"
+		},
+		{
+			"impression_id": "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
+			"cost_if_cpm": 999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
 		}
 	],
 	"invalid": [
@@ -16,40 +20,66 @@
 			"cost_if_cpm": -4
 		},
 		{
-			"impression_id": "a",
+			"impression_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
 			"cost_if_cpm": 22,
-			"banner_id": "b",
-			"zone_id": "c",
-			"advertiser_id": "d",
+			"banner_id": "000397ff-3b12-12aefb328a00",
+			"zone_id": "fe80:bd0f:a8bc:6480:238b%11",
+			"advertiser_id": "0017a7320",
 			"cost_model": "cpc",
-			"campaign_id": "e",
+			"campaign_id": "3475802750234875",
 			"additional_property": null
 		},
 		{
 			"impression_id": 500,
 			"cost_if_cpm": 22,
-			"banner_id": "b",
-			"zone_id": "c",
-			"advertiser_id": "d",
+			"banner_id": "000397ff-3b12-12aefb328a00",
+			"advertiser_id": "0017a7320",
 			"cost_model": "cpc",
-			"campaign_id": "e"
+			"campaign_id": "3475802750234875"
 		},
 		{
-			"impression_id": "a",
+			"impression_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
 			"cost_if_cpm": "string",
-			"banner_id": "b",
-			"zone_id": "c",
+			"banner_id": "000397ff-3b12-12aefb328a00",
 			"cost_model": "cpc",
-			"campaign_id": "e"
+			"campaign_id": "3475802750234875"
 		},
 		{
-			"impression_id": "a",
+			"impression_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
 			"cost_if_cpm": 22,
-			"banner_id": "b",
-			"zone_id": "c",
-			"advertiser_id": "d",
+			"banner_id": "000397ff-3b12-12aefb328a00",
+			"advertiser_id": "0017a7320",
 			"cost_model": "invalid",
-			"campaign_id": "e"
+			"campaign_id": "3475802750234875"
+		},
+		{
+			"impression_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
+			"cost_if_cpm": 22,
+			"banner_id": {},
+			"zone_id": "fe80:bd0f:a8bc:6480:238b%11",
+			"advertiser_id": "0017a7320",
+			"cost_model": "cpc",
+			"campaign_id": "3475802750234875"
+		},
+		{
+			"impression_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
+			"cost_if_cpm": 22,
+			"banner_id": "000397ff-3b12-12aefb328a00",
+			"zone_id": ["array"],
+			"advertiser_id": "0017a7320",
+			"cost_model": "cpc",
+			"campaign_id": "3475802750234875"
+		},
+		{
+			"impression_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
+			"cost_if_cpm": 22,
+			"banner_id": "000397ff-3b12-12aefb328a00",
+			"zone_id": "fe80:bd0f:a8bc:6480:238b%11",
+			"advertiser_id": false,
+			"cost_model": "cpc",
+			"campaign_id": "3475802750234875"
 		}
+
+
 	]
 }

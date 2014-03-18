@@ -2,15 +2,25 @@
 	"name": "ad_conversion",
 	"valid": [
 		{
-			"conversion_id": "a",
+			"conversion_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
 			"cost_if_cpa": 22,
 			"category": "business",
 			"action": "purchase",
 			"property": "adjective",
 			"initial_value": 1000,
-			"advertiser_id": "a",
+			"advertiser_id": "a390a0820834b089a",
 			"cost_model": "cpc",
-			"campaign_id": "c"
+			"campaign_id": "3475802750234875"
+		},
+		{
+			"conversion_id": "\\  \" `~1!2@3#4$5%6^7&8*9(0)-_=+]}[{/?.>,<;:'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM",
+			"cost_if_cpa": 999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999,
+			"category": "\"\\\"'''''''",
+			"action": "null",
+			"property": "undefined",
+			"initial_value": 0.1,
+			"cost_model": "cpc",
+			"campaign_id": ""
 		}
 	],
 	"invalid": [
@@ -18,16 +28,7 @@
 			"cost_if_cpa": -1000
 		},
 		{
-			"conversion_id": "a",
-			"cost_if_cpa": 22,
-			"category": "business",
-			"action": "purchase",
-			"property": "adjective",
-			"initial_value": 1000,
-			"advertiser_id": "a",
-			"cost_model": "cpc",
-			"campaign_id": "c",
-			"additional_property": null
+			"initial_value": -1
 		},
 		{
 			"conversion_id": "a",
@@ -35,10 +36,22 @@
 			"category": "business",
 			"action": "purchase",
 			"property": "adjective",
-			"initial_value": "1000",
-			"advertiser_id": "a",
+			"initial_value": 1000,
+			"advertiser_id": "a390a0820834b089a",
 			"cost_model": "cpc",
-			"campaign_id": "c"
+			"campaign_id": "3475802750234875",
+			"additional_property": null
+		},
+		{
+			"conversion_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
+			"cost_if_cpa": 22,
+			"category": "business",
+			"action": "purchase",
+			"property": "adjective",
+			"initial_value": "1000",
+			"advertiser_id": "a390a0820834b089a",
+			"cost_model": "cpc",
+			"campaign_id": "3475802750234875"
 		},
 		{
 			"conversion_id": 500,
@@ -47,20 +60,31 @@
 			"action": "purchase",
 			"property": "adjective",
 			"initial_value": 1000,
-			"advertiser_id": "a",
+			"advertiser_id": "a390a0820834b089a",
 			"cost_model": "cpc",
-			"campaign_id": "c"
+			"campaign_id": "3475802750234875"
 		},
 		{
-			"conversion_id": "a",
+			"conversion_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
 			"cost_if_cpa": 22,
 			"category": "business",
 			"action": "purchase",
 			"property": "adjective",
 			"initial_value": 1000,
-			"advertiser_id": "a",
+			"advertiser_id": "a390a0820834b089a",
 			"cost_model": "invalid",
-			"campaign_id": "c"
+			"campaign_id": "3475802750234875"
+		},
+		{
+			"conversion_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
+			"cost_if_cpa": 22,
+			"category": "business",
+			"action": "purchase",
+			"property": "adjective",
+			"initial_value": 1000,
+			"advertiser_id": "a390a0820834b089a",
+			"cost_model": "invalid",
+			"campaign_id": [""]
 		},
 		{
 
