@@ -40,6 +40,7 @@ object Dependencies {
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
+    var compress         = "0.4.19"
   }
 
   object Urls {
@@ -60,5 +61,6 @@ object Dependencies {
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                   % V.specs2       % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"            % V.scalazSpecs2 % "test"
+    val compress         = "com.hadoop.gplcompression"  % "hadoop-lzo"                % V.compress
   }
 }

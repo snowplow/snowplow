@@ -40,7 +40,8 @@ object SnowplowHadoopEnrichBuild extends Build {
         Libraries.commonEnrich,
         // Scala (test only)
         Libraries.specs2,
-        Libraries.scalazSpecs2
+        Libraries.scalazSpecs2,
+        Libraries.compress
       )
     )
 }
