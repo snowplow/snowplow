@@ -197,8 +197,15 @@ object EnrichmentManager {
           ("pp_may"  , (CU.stringToJInteger, "pp_yoffset_max")))
 
     val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
-  
+
     val transform = event.transform(sourceMap, transformMap)
+
+    if (event.network_userid == null) {
+      raw.userId match {
+        case s:Some[String] => event.network_userid = s.get
+        case _ => ()
+      }
+    }
 
     // Potentially update the page_url and set the page URL components
     val pageUri = WPE.extractPageUri(raw.refererUri, Option(event.page_url))
@@ -230,7 +237,7 @@ object EnrichmentManager {
     // Potentially set the referrer details and URL components
     val refererUri = CU.stringToUri(event.page_referrer)
     for (uri <- refererUri; u <- uri) {
-      
+
       // Set the URL components
       val components = CU.explodeUri(u)
       event.refr_urlscheme = components.scheme
@@ -277,7 +284,7 @@ object EnrichmentManager {
     event.refr_term = CU.truncate(event.refr_term, 255)
     event.se_label = CU.truncate(event.se_label, 255)
 
-    // Collect our errors on Failure, or return our event on Success 
+    // Collect our errors on Failure, or return our event on Success
     (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| geoLocation.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {
       (_,_,_,_,_,_,_) => event
     }

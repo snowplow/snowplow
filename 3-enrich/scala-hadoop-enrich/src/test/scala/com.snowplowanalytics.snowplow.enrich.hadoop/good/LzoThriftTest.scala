@@ -44,12 +44,13 @@ import org.apache.thrift.{TSerializer,TDeserializer}
  */
 object LzoThriftTest {
 
-  val payloadData = "e=pv&page=Snowplow%20in%20a%20Universal%20Analytics%20world%20-%20what%20the%20new%20version%20of%20Google%20Analytics%20means%20for%20companies%20adopting%20Snowplow%20-%20Snowplow%20Analytics&dtm=1381175274123&tid=958446&vp=1440x802&ds=1425x4674&vid=1&duid=d159c05f2aa8e1b9&p=web&tv=js-0.12.0&fp=812263905&aid=snowplowweb&lang=en-US&cs=UTF-8&tz=Europe%2FLondon&refr=https%3A%2F%2Fwww.google.co.uk%2Furl%3Fsa%3Dt%26rct%3Dj%26q%3D%26esrc%3Ds%26source%3Dweb%26cd%3D3%26ved%3D0CDsQFjAC%26url%3Dhttp%253A%252F%252Fsnowplowanalytics.com%252Fblog%252F2012%252F10%252F31%252Fsnowplow-in-a-universal-analytics-world-what-the-new-version-of-google-analytics-means-for-companies-adopting-snowplow%252F%26ei%3DuQ9TUonxBcLL0QXc74DoDg%26usg%3DAFQjCNFWhV4rr2zmRm1fe4hNiay6Td9VrA%26bvm%3Dbv.53537100%2Cd.d2k&f_pdf=1&f_qt=1&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1440x900&cd=24&cookie=1&url=http%3A%2F%2Fsnowplowanalytics.com%2Fblog%2F2012%2F10%2F31%2Fsnowplow-in-a-universal-analytics-world-what-the-new-version-of-google-analytics-means-for-companies-adopting-snowplow%2F&cv=clj-0.5.0-tom-0.0.4&nuid=8712a379-4bcb-46ee-815d-85f26540577f"
+  val payloadData = "e=pv&page=Snowplow%20in%20a%20Universal%20Analytics%20world%20-%20what%20the%20new%20version%20of%20Google%20Analytics%20means%20for%20companies%20adopting%20Snowplow%20-%20Snowplow%20Analytics&dtm=1381175274123&tid=958446&vp=1440x802&ds=1425x4674&vid=1&duid=d159c05f2aa8e1b9&p=web&tv=js-0.12.0&fp=812263905&aid=snowplowweb&lang=en-US&cs=UTF-8&tz=Europe%2FLondon&refr=https%3A%2F%2Fwww.google.co.uk%2Furl%3Fsa%3Dt%26rct%3Dj%26q%3D%26esrc%3Ds%26source%3Dweb%26cd%3D3%26ved%3D0CDsQFjAC%26url%3Dhttp%253A%252F%252Fsnowplowanalytics.com%252Fblog%252F2012%252F10%252F31%252Fsnowplow-in-a-universal-analytics-world-what-the-new-version-of-google-analytics-means-for-companies-adopting-snowplow%252F%26ei%3DuQ9TUonxBcLL0QXc74DoDg%26usg%3DAFQjCNFWhV4rr2zmRm1fe4hNiay6Td9VrA%26bvm%3Dbv.53537100%2Cd.d2k&f_pdf=1&f_qt=1&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1440x900&cd=24&cookie=1&url=http%3A%2F%2Fsnowplowanalytics.com%2Fblog%2F2012%2F10%2F31%2Fsnowplow-in-a-universal-analytics-world-what-the-new-version-of-google-analytics-means-for-companies-adopting-snowplow%2F&cv=clj-0.5.0-tom-0.0.4"
   val payload = new TrackerPayload(
     PayloadProtocol.Http, PayloadFormat.HttpGet, payloadData
   )
   val thriftObject = new SnowplowRawEvent(1381175274000L, "collector", "UTF-8", "255.255.x.x");
   thriftObject.setPayload(payload);
+  thriftObject.setNetworkUserId("8712a379-4bcb-46ee-815d-85f26540577f")
   thriftObject.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.8 Safari/537.36");
 
   val lines = List(

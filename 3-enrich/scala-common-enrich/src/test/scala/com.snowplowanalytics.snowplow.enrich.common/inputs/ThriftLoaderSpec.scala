@@ -77,7 +77,7 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
           headers    = headers,
           userId     = userId
           )
-    
+
         canonicalEvent must beSuccessful(expected.some)
       }
     }
