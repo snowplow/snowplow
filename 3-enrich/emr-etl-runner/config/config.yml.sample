@@ -25,6 +25,7 @@
     :task_instance_count: 0 # Increase to use spot instances
     :task_instance_type: m1.small
     :task_instance_bid: 0.015 # In USD. Adjust bid, or leave blank for non-spot-priced (i.e. on-demand) task instances
+    :visible_to_all_users: false # Can switch to 'true' to see the job in AWS Console
 :etl:
   :job_name: SnowPlow ETL # Give your job a name
   :hadoop_etl_version: 0.3.6 # Version of the Hadoop ETL
