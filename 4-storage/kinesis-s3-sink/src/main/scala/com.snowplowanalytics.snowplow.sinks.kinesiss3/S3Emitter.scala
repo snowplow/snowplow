@@ -3,11 +3,25 @@ package com.snowplowanalytics.snowplow.sinks
 import scala.collection.JavaConverters._
 
 // Java libs
-import java.io.{DataOutputStream,ByteArrayInputStream,ByteArrayOutputStream,IOException}
+import java.io.{
+  OutputStream,
+  DataOutputStream,
+  ByteArrayInputStream,
+  ByteArrayOutputStream,
+  IOException
+}
 
 // Java lzo
 import org.apache.hadoop.conf.Configuration
-import com.hadoop.compression.lzo.LzopCodec;
+import com.hadoop.compression.lzo.LzopCodec
+
+// Elephant bird
+import com.twitter.elephantbird.mapreduce.io.{
+  ThriftBlockWriter
+}
+
+// Snowplow
+import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
 
 // Logging
 import org.apache.commons.logging.{Log,LogFactory}
@@ -29,7 +43,7 @@ import com.amazonaws.services.kinesis.connectors.interfaces.IEmitter
  *
  * Once the buffer is full, the emit function is called.
  */
-class S3Emitter(config: KinesisConnectorConfiguration) extends IEmitter[ Array[Byte] ] {
+class S3Emitter(config: KinesisConnectorConfiguration) extends IEmitter[ SnowplowRawEvent ] {
   val bucket = config.S3_BUCKET
   val log = LogFactory.getLog(classOf[S3Emitter])
   val client = new AmazonS3Client(config.AWS_CREDENTIALS_PROVIDER)
@@ -55,17 +69,22 @@ class S3Emitter(config: KinesisConnectorConfiguration) extends IEmitter[ Array[B
    * failed to be written out to S3, under the assumption that
    * the operation will be retried at some point later.
    */
-  override def emit(buffer: UnmodifiableBuffer[ Array[Byte] ]): java.util.List[ Array[Byte] ] = {
+  override def emit(buffer: UnmodifiableBuffer[ SnowplowRawEvent ]): java.util.List[ SnowplowRawEvent ] = {
     val records = buffer.getRecords().asScala
 
     val indexOutputStream = new ByteArrayOutputStream()
     val outputStream = new ByteArrayOutputStream(config.BUFFER_BYTE_SIZE_LIMIT.toInt)
+
+    // This writes to the underlying outputstream and indexoutput stream
     val lzoOutputStream = lzoCodec.createIndexedOutputStream(outputStream, new DataOutputStream(indexOutputStream))
+
+    // This writes to the underlying lzo stream
+    val thriftBlockWriter = new ThriftBlockWriter[SnowplowRawEvent](lzoOutputStream, classOf[SnowplowRawEvent], config.BUFFER_BYTE_SIZE_LIMIT.toInt)
 
     // Popular the output stream with records
     records.foreach({ record =>
       try {
-        lzoOutputStream.write(record)
+        thriftBlockWriter.write(record)
       } catch {
         case e: IOException => {
           log.error(e)
@@ -73,6 +92,8 @@ class S3Emitter(config: KinesisConnectorConfiguration) extends IEmitter[ Array[B
         }
       }
     })
+
+    thriftBlockWriter.close
 
     val filename = getFileName(buffer.getFirstSequenceNumber, buffer.getLastSequenceNumber)
     val indexFilename = filename + ".index"
@@ -90,7 +111,7 @@ class S3Emitter(config: KinesisConnectorConfiguration) extends IEmitter[ Array[B
       log.info("Successfully emitted " + buffer.getRecords.size + " records to S3 in s3://" + bucket + "/" + filename + " with index " + indexFilename)
 
       // Success means we return an empty list i.e. there are no failed items to retry
-      java.util.Collections.emptyList().asInstanceOf[ java.util.List[ Array[Byte] ] ]
+      java.util.Collections.emptyList().asInstanceOf[ java.util.List[ SnowplowRawEvent ] ]
     } catch {
       case e: AmazonServiceException => {
         log.error(e)
@@ -105,10 +126,10 @@ class S3Emitter(config: KinesisConnectorConfiguration) extends IEmitter[ Array[B
     client.shutdown
   }
 
-  override def fail(records: java.util.List[ Array[Byte] ]) {
-    records.asScala.foreach({ record =>
-      log.error("Record failed: " + new String(record))
-    })
+  override def fail(records: java.util.List[ SnowplowRawEvent ]) {
+    records.asScala.foreach { record =>
+      log.error("Record failed: " + record)
+    }
   }
 
 }

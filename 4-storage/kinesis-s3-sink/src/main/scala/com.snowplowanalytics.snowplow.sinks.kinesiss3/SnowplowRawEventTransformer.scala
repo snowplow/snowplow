@@ -15,7 +15,7 @@ import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
 /**
  * Thrift serializer/deserializer class
  */
-class SnowplowRawEventTransformer extends ITransformer[ SnowplowRawEvent, Array[Byte] ] {
+class SnowplowRawEventTransformer extends ITransformer[ SnowplowRawEvent, SnowplowRawEvent ] {
   lazy val serializer = new TSerializer()
   lazy val deserializer = new TDeserializer()
 
@@ -25,7 +25,5 @@ class SnowplowRawEventTransformer extends ITransformer[ SnowplowRawEvent, Array[
     obj
   }
 
-  override def fromClass(record: SnowplowRawEvent): Array[Byte] = {
-    serializer.serialize(record)
-  }
+  override def fromClass(record: SnowplowRawEvent) = record
 }

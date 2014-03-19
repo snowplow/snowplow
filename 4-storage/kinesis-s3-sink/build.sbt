@@ -28,6 +28,8 @@ libraryDependencies += "org.apache.hadoop"          % "hadoop-core"             
 
 libraryDependencies += "com.hadoop.gplcompression"  % "hadoop-lzo"                  % "0.4.19"
 
+libraryDependencies += "com.twitter.elephantbird"   % "elephant-bird-core"          % "3.0.6"
+
 assemblySettings
 
 jarName in assembly := "kinesis-s3-sink"

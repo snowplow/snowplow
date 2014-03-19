@@ -13,11 +13,11 @@ import com.amazonaws.services.kinesis.connectors.{
 /**
  * Boilerplate class for Kinessis Conenector
  */
-class S3SinkExecutor(config: KinesisConnectorConfiguration) extends KinesisConnectorExecutorBase[ SnowplowRawEvent, Array[Byte] ] {
+class S3SinkExecutor(config: KinesisConnectorConfiguration) extends KinesisConnectorExecutorBase[ SnowplowRawEvent, SnowplowRawEvent ] {
   super.initialize(config)
 
-  override def getKinesisConnectorRecordProcessorFactory: KinesisConnectorRecordProcessorFactory[ SnowplowRawEvent, Array[Byte] ] = {
-    new KinesisConnectorRecordProcessorFactory[ SnowplowRawEvent, Array[Byte] ](new S3Pipeline(), config)
+  override def getKinesisConnectorRecordProcessorFactory = {
+    new KinesisConnectorRecordProcessorFactory[ SnowplowRawEvent, SnowplowRawEvent ](new S3Pipeline(), config)
   }
 
 }
