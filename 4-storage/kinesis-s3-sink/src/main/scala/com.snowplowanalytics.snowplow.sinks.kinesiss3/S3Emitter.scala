@@ -70,16 +70,19 @@ class S3Emitter(config: KinesisConnectorConfiguration) extends IEmitter[ Snowplo
    * the operation will be retried at some point later.
    */
   override def emit(buffer: UnmodifiableBuffer[ SnowplowRawEvent ]): java.util.List[ SnowplowRawEvent ] = {
+
+    log.info("Flushing buffer with " + buffer.getRecords.size + " records.")
+
     val records = buffer.getRecords().asScala
 
     val indexOutputStream = new ByteArrayOutputStream()
-    val outputStream = new ByteArrayOutputStream(config.BUFFER_BYTE_SIZE_LIMIT.toInt)
+    val outputStream = new ByteArrayOutputStream()
 
     // This writes to the underlying outputstream and indexoutput stream
     val lzoOutputStream = lzoCodec.createIndexedOutputStream(outputStream, new DataOutputStream(indexOutputStream))
 
     // This writes to the underlying lzo stream
-    val thriftBlockWriter = new ThriftBlockWriter[SnowplowRawEvent](lzoOutputStream, classOf[SnowplowRawEvent], config.BUFFER_BYTE_SIZE_LIMIT.toInt)
+    val thriftBlockWriter = new ThriftBlockWriter[SnowplowRawEvent](lzoOutputStream, classOf[SnowplowRawEvent], buffer.getRecords().size)
 
     // Popular the output stream with records
     records.foreach({ record =>

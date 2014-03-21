@@ -87,6 +87,8 @@ object SinkApp extends App {
     props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_BYTE_SIZE_LIMIT, byteLimit)
     props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_RECORD_COUNT_LIMIT, recordLimit)
 
+    props.setProperty(KinesisConnectorConfiguration.PROP_MAX_RECORDS, "10000")
+
     new KinesisConnectorConfiguration(props, new DefaultAWSCredentialsProviderChain())
   }
 
