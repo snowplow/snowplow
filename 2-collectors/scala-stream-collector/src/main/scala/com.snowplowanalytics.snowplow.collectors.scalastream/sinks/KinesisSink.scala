@@ -39,7 +39,6 @@ import com.typesafe.config.Config
 
 // Concurrent libraries
 import scala.concurrent.{Future,Await,TimeoutException}
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 // Logging
@@ -48,6 +47,7 @@ import org.slf4j.LoggerFactory
 // Mutable data structures
 import scala.collection.mutable.StringBuilder
 import scala.collection.mutable.MutableList
+import scala.util.{Success, Failure}
 
 // Snowplow
 import scalastream._
@@ -59,6 +59,12 @@ import thrift.SnowplowRawEvent
 class KinesisSink(config: CollectorConfig) extends AbstractSink {
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
+
+  implicit lazy val ec = {
+    info("Creating thread pool of size " + config.threadpoolSize)
+    val executorService = java.util.concurrent.Executors.newFixedThreadPool(config.threadpoolSize)
+    concurrent.ExecutionContext.fromExecutorService(executorService)
+  }
 
   // Create a Kinesis client for stream interactions.
   private implicit val kinesis = createKinesisClient
@@ -99,7 +105,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
 
       try {
         val stream = Await.result(createStream, Duration(timeout, SECONDS))
-        
+
         info(s"Successfully created stream $name. Waiting until it's active")
         Await.result(stream.waitActive.retrying(timeout),
           Duration(timeout, SECONDS))
@@ -133,7 +139,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     }
   }
 
-  def storeRawEvent(event: SnowplowRawEvent, key: String): Array[Byte] = {
+  def storeRawEvent(event: SnowplowRawEvent, key: String) = {
     info(s"Writing Thrift record to Kinesis: ${event.toString}")
     val putData = for {
       p <- enrichedStream.put(
@@ -141,11 +147,20 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
         key
       )
     } yield p
-    val result = Await.result(putData, Duration(60, SECONDS))
-    info(s"Writing successful.")
-    info(s"  + ShardId: ${result.shardId}")
-    info(s"  + SequenceNumber: ${result.sequenceNumber}")
-    null // TODO: yech
+
+    putData onComplete {
+      case Success(result) => {
+        info(s"Writing successful.")
+        info(s"  + ShardId: ${result.shardId}")
+        info(s"  + SequenceNumber: ${result.sequenceNumber}")
+      }
+      case Failure(f) => {
+        error(s"Writing failed.")
+        error(s"  + " + f.getMessage)
+      }
+    }
+
+    null
   }
 
   /**
