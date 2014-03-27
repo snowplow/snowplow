@@ -10,6 +10,8 @@ import java.io.{
   ByteArrayOutputStream,
   IOException
 }
+import java.util.Calendar
+import java.text.SimpleDateFormat
 
 // Java lzo
 import org.apache.hadoop.conf.Configuration
@@ -54,12 +56,15 @@ class S3Emitter(config: KinesisConnectorConfiguration) extends IEmitter[ Snowplo
   conf.set("io.compression.codecs", classOf[LzopCodec].getName)
   lzoCodec.setConf(conf)
 
+  val dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
   /**
    * Determines the filename in S3, which is the corresponding
    * Kinesis sequence range of records in the file.
    */
   protected def getFileName(firstSeq: String, lastSeq: String): String = {
-    firstSeq + "-" + lastSeq + lzoCodec.getDefaultExtension()
+    dateFormat.format(Calendar.getInstance().getTime()) +
+      "-" + firstSeq + "-" + lastSeq + lzoCodec.getDefaultExtension()
   }
 
   /**
