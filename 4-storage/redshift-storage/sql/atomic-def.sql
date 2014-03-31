@@ -30,7 +30,7 @@ CREATE TABLE atomic.events (
 	-- Event
 	event varchar(128) encode text255,
 	event_vendor varchar(128) encode text32k not null,
-	event_id char(36) not null unique,                -- Changed from varchar(38) in 0.3.0
+	event_id char(36) not null unique,                 -- Changed from varchar(38) in 0.3.0
 	txn_id int,
 	-- Versioning
 	v_tracker varchar(100) encode text255,
@@ -141,5 +141,5 @@ CREATE TABLE atomic.events (
 	CONSTRAINT event_id_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
-DISTKEY (domain_userid)
+DISTKEY (event_id)                                     -- Changed from domain_userid in 0.3.0
 SORTKEY (collector_tstamp);
