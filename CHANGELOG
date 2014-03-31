@@ -19,7 +19,7 @@ EmrEtlRunner: bumped to 0.6.0
 EmrEtlRunner: bumped Elasticity to 3.0.2 (#587)
 EmrEtlRunner: allowed AWS VPC selection in EmrEtlRunner (#581)
 EmrEtlRunner: set :visible_to_all_users to true for EMR jobs (#560)
-Redshift: atomic-def script bumped to 0.3.0 - TODO
+Redshift: atomic-def script bumped to 0.3.0
 Redshift: migration script added for 0.2.x to 0.3.0 - TODO
 Redshift: added new unstructured fields to Redshift table definition (#361) - TODO
 Redshift: changed distkey to be event_id, not domain_userid (#584) - TODO
