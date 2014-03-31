@@ -24,12 +24,12 @@ import com.twitter.scalding._
 import cascading.tuple.TupleEntry
 
 // This project
-import JobTestHelpers._
+import JobSpecHelpers._
 
 /**
  * Holds the input data for the test
  */
-object DiscardableCfLinesTest {
+object DiscardableCfLinesSpec {
 
   val lines = Lines(
     "#Version: 1.0",
@@ -44,11 +44,11 @@ object DiscardableCfLinesTest {
  * CloudFront-format rows which should
  * be discarded.
  */
-class DiscardableCfLinesTest extends Specification with TupleConversions {
+class DiscardableCfLinesSpec extends Specification with TupleConversions {
 
   "A job which processes expected but discardable CloudFront input lines" should {
-    EtlJobTest("cloudfront", "0").
-      source(MultipleTextLineFiles("inputFolder"), DiscardableCfLinesTest.lines).
+    EtlJobSpec("cloudfront", "0").
+      source(MultipleTextLineFiles("inputFolder"), DiscardableCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output =>
         "not write any events" in {
           output must beEmpty

@@ -27,13 +27,13 @@ import com.twitter.scalding._
 import cascading.tuple.TupleEntry
 
 // This project
-import JobTestHelpers._
+import JobSpecHelpers._
 
 /**
  * Holds the input and expected data
  * for the test.
  */
-object Oct2013CfLineTest {
+object Oct2013CfLineSpec {
 
   // October 2013: all fields are now double-encoded
   val lines = Lines(
@@ -154,17 +154,17 @@ object Oct2013CfLineTest {
  * For details:
  * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
  */
-class Oct2013CfLineTest extends Specification with TupleConversions {
+class Oct2013CfLineSpec extends Specification with TupleConversions {
 
   "A job which processes a CloudFront file containing 1 valid page ping" should {
-    EtlJobTest("cloudfront", "0").
-      source(MultipleTextLineFiles("inputFolder"), Oct2013CfLineTest.lines).
+    EtlJobSpec("cloudfront", "0").
+      source(MultipleTextLineFiles("inputFolder"), Oct2013CfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {
           buf.size must_== 1
           val actual = buf.head
-          for (idx <- Oct2013CfLineTest.expected.indices) {
-            actual.getString(idx) must beFieldEqualTo(Oct2013CfLineTest.expected(idx), withIndex = idx)
+          for (idx <- Oct2013CfLineSpec.expected.indices) {
+            actual.getString(idx) must beFieldEqualTo(Oct2013CfLineSpec.expected(idx), withIndex = idx)
           }
         }
       }.

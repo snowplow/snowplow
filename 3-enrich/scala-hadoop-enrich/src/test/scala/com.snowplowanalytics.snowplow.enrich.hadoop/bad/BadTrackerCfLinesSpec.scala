@@ -24,13 +24,13 @@ import com.twitter.scalding._
 import cascading.tuple.TupleEntry
 
 // This project
-import JobTestHelpers._
+import JobSpecHelpers._
 
 /**
  * Holds the input and expected data
  * for the test.
  */
-object BadTrackerCfLinesTest {
+object BadTrackerCfLinesSpec {
 
   val lines = Lines(
     "2012-05-24  00:08:40  LHR5  3397  74.125.17.210 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(Linux;%20U;%20Android%202.3.4;%20generic)%20AppleWebKit/535.1%20(KHTML,%20like%20Gecko;%20Google%20Web%20Preview)%20Version/4.0%20Mobile%20Safari/535.1  e=pv&p=mobile&page=Psycards%2520book%2520and%2520deck%2520starter%2520pack%2520-%2520Psychic%2520Bazaar&tid=721410&uid=3798cdce0493133e&vid=1&lang=en&refr=http%253A%252F%252Fwww.google.com%252Fm%252Fsearch&res=640x960&cookie=1",
@@ -49,11 +49,11 @@ object BadTrackerCfLinesTest {
  * CloudFront-format rows which contain "bad data"
  * from the tracker.
  */
-class BadTrackerCfLinesTest extends Specification with TupleConversions {
+class BadTrackerCfLinesSpec extends Specification with TupleConversions {
 
   "A job which processes input lines containing corrupted data from the tracker" should {
-    EtlJobTest("cloudfront", "0").
-      source(MultipleTextLineFiles("inputFolder"), BadTrackerCfLinesTest.lines).
+    EtlJobSpec("cloudfront", "0").
+      source(MultipleTextLineFiles("inputFolder"), BadTrackerCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output => 
         "not write any events" in {
           output must beEmpty
@@ -66,8 +66,8 @@ class BadTrackerCfLinesTest extends Specification with TupleConversions {
       }.
       sink[String](JsonLine("badFolder")){ buf =>
         "write bad row JSONs, each containing an input line and the errors" in {
-          buf(0) must_== BadTrackerCfLinesTest.expected(0)
-          buf(1) must_== BadTrackerCfLinesTest.expected(1)
+          buf(0) must_== BadTrackerCfLinesSpec.expected(0)
+          buf(1) must_== BadTrackerCfLinesSpec.expected(1)
         }
       }.
       run.

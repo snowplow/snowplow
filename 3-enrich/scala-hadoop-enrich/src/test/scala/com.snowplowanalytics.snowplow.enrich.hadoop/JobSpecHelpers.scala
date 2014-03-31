@@ -30,7 +30,7 @@ import common.outputs.CanonicalOutput
  * Holds helpers for running integration
  * tests on SnowPlow EtlJobs.
  */
-object JobTestHelpers {
+object JobSpecHelpers {
 
   /**
    * The current version of our Hadoop ETL
@@ -137,8 +137,8 @@ object JobTestHelpers {
    */
   implicit def Lines2ScaldingLines(lines : Lines): ScaldingLines = lines.numberedLines 
 
-  // Standard JobTest definition used by all integration tests
-  val EtlJobTest: (String, String) => JobTest = (collector, anonQuartets) => 
+  // Standard JobSpec definition used by all integration tests
+  val EtlJobSpec: (String, String) => JobTest = (collector, anonQuartets) => 
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob").
       arg("input_folder", "inputFolder").
       arg("input_format", collector).

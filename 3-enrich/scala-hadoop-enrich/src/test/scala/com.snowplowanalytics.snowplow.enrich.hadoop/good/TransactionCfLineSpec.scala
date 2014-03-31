@@ -27,16 +27,16 @@ import com.twitter.scalding._
 import cascading.tuple.TupleEntry
 
 // This project
-import JobTestHelpers._
+import JobSpecHelpers._
 
 /**
  * Holds the input and expected data
  * for the test.
  */
-object TransactionItemCfLineTest {
+object TransactionCfLineSpec {
 
   val lines = Lines(
-    "2012-05-27  11:35:53  DFW3  3343  255.255.255.255 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/internal/_session/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=ti&ti_id=order-123&ti_sk=PBZ1001&ti_na=Blue%20t-shirt&ti_ca=APPAREL&ti_pr=2000&ti_qu=2&dtm=1364177017342&tid=851830&duid=a279872d76480afb&vid=1&aid=CFe23a&lang=en-GB&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F119-psycards-book-and-deck-starter-pack.html%3Fview%3Dprint%23detail"
+    "2012-05-27  11:35:53  DFW3  3343  128.232.0.0 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 - Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=tr&tr_id=order-123&tr_af=psychicbazaar&tr_tt=8000&tr_tx=200&tr_sh=50&tr_ci=London&tr_st=England&tr_co=UK&dtm=1364177017342&tid=028288&duid=a279872d76480afb&vid=1&aid=CFe23a&lang=en-GB&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F119-psycards-book-and-deck-starter-pack.html%3Fview%3Dprint%23detail&cv=clj-0.3.0-tom-0.0.2"
     )
 
   val expected = List(
@@ -44,25 +44,25 @@ object TransactionItemCfLineTest {
     null, // Not set (legacy input line)
     "2012-05-27 11:35:53.000",
     "2013-03-25 02:03:37.342",
-    "transaction_item",
+    "transaction",
     "com.snowplowanalytics",
     null, // We can't predict the event_id
-    "851830",
+    "028288",
     null, // Not set (legacy input line)
-    "cloudfront",
+    "clj-0.3.0-tom-0.0.2",
     EtlVersion,
     null, // No user_id set
-    "255.255.255.255",
+    "x.x.x.x",
     null, // Not set (legacy input line)
     "a279872d76480afb",
     "1",
     null, // No network_userid set
-    null, // No geo-location for this IP address
+    "GB", // UK geo-location
+    "C3",
+    "Cambridge",
     null,
-    null,
-    null,
-    null,
-    null,
+    "52.199997",
+    "0.11669922",
     "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail",
     null, // No page title for transactions
     null,
@@ -91,20 +91,20 @@ object TransactionItemCfLineTest {
     null, //
     null, //
     null, //
-    null, // Transaction fields empty 
+    "order-123",     // Transaction fields are set 
+    "psychicbazaar", //
+    "8000",          //
+    "200",           //
+    "50",            //
+    "London",        //
+    "England",       //
+    "UK",            //
+    null, // Transaction item fields empty
     null, //
     null, //
     null, //
     null, //
     null, //
-    null, //
-    null, //
-    "order-123",    // Transaction item fields are set
-    "PBZ1001",      //
-    "Blue t-shirt", //
-    "APPAREL",      //
-    "2000",         //
-    "2",            //
     null, // Page ping fields are empty
     null, //
     null, //
@@ -149,17 +149,17 @@ object TransactionItemCfLineTest {
  * Check that all tuples in a transaction event
  * (CloudFront format) are successfully extracted.
  */
-class TransactionItemCfLineTest extends Specification with TupleConversions {
+class TransactionCfLineSpec extends Specification with TupleConversions {
 
-  "A job which processes a CloudFront file containing 1 valid transaction item" should {
-    EtlJobTest("cloudfront", "0").
-      source(MultipleTextLineFiles("inputFolder"), TransactionItemCfLineTest.lines).
+  "A job which processes a CloudFront file containing 1 valid transaction" should {
+    EtlJobSpec("cloudfront", "4").
+      source(MultipleTextLineFiles("inputFolder"), TransactionCfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
-        "correctly output 1 transaction item" in {
+        "correctly output 1 transaction" in {
           buf.size must_== 1
           val actual = buf.head
-          for (idx <- TransactionItemCfLineTest.expected.indices) {
-            actual.getString(idx) must beFieldEqualTo(TransactionItemCfLineTest.expected(idx), withIndex = idx)
+          for (idx <- TransactionCfLineSpec.expected.indices) {
+            actual.getString(idx) must beFieldEqualTo(TransactionCfLineSpec.expected(idx), withIndex = idx)
           }
         }
       }.
