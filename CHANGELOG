@@ -12,7 +12,8 @@ Scala Stream Collector: bumped to 0.2.0 - TODO
 Scala Stream Collector: replaced stream list with describe to tighten permissions, thanks @pkallos (#535) - TODO
 Scala Stream Collector: added support for IAM roles, thanks @pkallos (#534) - TODO
 EmrEtlRunner: bumped to 0.6.0
-EmrEtlRunner: bumped Elasticity to 3.0.2 (#587) - TODO
+EmrEtlRunner: bumped Elasticity to 3.0.2 (#587)
+EmrEtlRunner: allowed AWS VPC selection in EmrEtlRunner (#581) - TODO
 
 Version 0.9.0 (2014-02-04)
 --------------------------
