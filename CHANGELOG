@@ -6,9 +6,15 @@ Scala Hadoop Enrich: renamed AnonQuartets to AnonOctets (#498)
 Scala Hadoop Enrich: renamed all Snowplow Hadoop Tests to Specs (#515) - TODO
 Scala Hadoop Enrich: renamed CloudFront to Cloudfront in code (#496) - TODO
 Scala Hadoop Enrich: updated POJO in Scalding ETL to include new unstructured fields (#362) - TODO
+Scala Hadoop Enrich: updated POJO in Scalding ETL to include t_namespace field (#595) - TODO
 Scala Common Enrich: bumped to 0.3.0 - TODO
+Scala Common Enrich: added page_url and page_referrer back into ETL's output (#483) - TODO
 Scala Common Enrich: added app and mob as valid platform codes, thanks @kinabalu! (#524) - TODO
 Scala Common Enrich: added support for remaining platform codes (#516) - TODO
+Scala Common Enrich: now cleaning up incoming event and context JSONs (#589) - TODO
+Scala Common Enrich: now making sure to error a JSON if > length (#567) - TODO
+Scala Common Enrich: now extracting and validating unstructured event (#597) - TODO
+Scala Common Enrich: now extracting and validating custom contexts (#598) - TODO
 EmrEtlRunner: bumped to 0.6.0
 EmrEtlRunner: bumped Elasticity to 3.0.2 (#587)
 EmrEtlRunner: allowed AWS VPC selection in EmrEtlRunner (#581)
@@ -17,9 +23,15 @@ Redshift: atomic-def script bumped to 0.3.0 - TODO
 Redshift: migration script added for 0.2.x to 0.3.0 - TODO
 Redshift: added new unstructured fields to Redshift table definition (#361) - TODO
 Redshift: changed distkey to be event_id, not domain_userid (#584) - TODO
+Redshift: added raw page and referer URLs into Redshift table (#591) - TODO
+Redshift: added t_namespace field to Redshift table (#594) - TODO
+Redshift: converted Redshift varchar(38) for event IDs to char(36) (#282) - TODO
 Postgres: atomic-def script bumped to 0.2.0 - TODO
 Postgres: migration script added for 0.1.x to 0.2.0 - TODO
-Posgres: added new unstructured fields to Postgres table definition (#359) - TODO
+Postgres: added new unstructured fields to Postgres table definition (#359) - TODO
+Postgres: added raw page and referer URLs into Postgres table (#592) - TODO
+Postgres: added t_namespace field to Postgres table (#593) - TODO
+Postgres: convert varchar(36) for event IDs to char(36) (#596) - TODO
 JavaScript Tracker: bumped git submodule to 1.0.0 (#585)
 Python Tracker: added git submodule pointing to 0.1.0 (#586)
 
