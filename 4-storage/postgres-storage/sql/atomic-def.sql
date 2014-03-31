@@ -31,6 +31,7 @@ CREATE TABLE "atomic"."events" (
 	"event_id" char(36) NOT NULL,           -- Changed from varchar(38) in 0.2.0
 	"txn_id" integer,
 	-- Versioning
+	"name_tracker" varchar(128),            -- Added in 0.2.0
 	"v_tracker" varchar(100),
 	"v_collector" varchar(100) NOT NULL,
 	"v_etl" varchar(100) NOT NULL,
