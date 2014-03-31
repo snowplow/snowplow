@@ -55,14 +55,14 @@ CREATE TABLE atomic.events (
 	-- Page URL components
 	page_urlscheme varchar(16) encode text255,
 	page_urlhost varchar(255) encode text255,
-	page_urlport int,                          -- Increased size in 0.2.1
+	page_urlport int,
 	page_urlpath varchar(1000) encode text32k,
 	page_urlquery varchar(3000),
 	page_urlfragment varchar(255),
 	-- Referrer URL components
 	refr_urlscheme varchar(16) encode text255,
 	refr_urlhost varchar(255) encode text255,
-	refr_urlport int,                          -- Increased size in 0.2.1
+	refr_urlport int,
 	refr_urlpath varchar(1000) encode text32k,
 	refr_urlquery varchar(3000),
 	refr_urlfragment varchar(255),
@@ -81,7 +81,7 @@ CREATE TABLE atomic.events (
 	se_action varchar(255) encode text255,
 	se_label varchar(255) encode text32k,
 	se_property varchar(255) encode text32k,
-	se_value double precision,                 -- Increased size in 0.2.1
+	se_value double precision,
 	-- Ecommerce
 	tr_orderid varchar(255) encode raw,
 	tr_affiliation varchar(255) encode text255,
