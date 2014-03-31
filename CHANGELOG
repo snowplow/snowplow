@@ -1,4 +1,4 @@
-Version 0.9.1 (2014-03-XX)
+Version 0.9.1 (2014-04-XX)
 --------------------------
 Scala Hadoop Enrich: bumped to 0.4.0
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.3.0 (#497) - TODO (so far bumped to 0.2.0)
@@ -8,12 +8,11 @@ Scala Hadoop Enrich: renamed CloudFront to Cloudfront in code (#496) - TODO
 Scala Common Enrich: bumped to 0.3.0 - TODO
 Scala Common Enrich: added tests for getLoader function (#588) - TODO
 Scala Common Enrich: ...
-Scala Stream Collector: bumped to 0.2.0 - TODO
-Scala Stream Collector: replaced stream list with describe to tighten permissions, thanks @pkallos (#535) - TODO
-Scala Stream Collector: added support for IAM roles, thanks @pkallos (#534) - TODO
 EmrEtlRunner: bumped to 0.6.0
 EmrEtlRunner: bumped Elasticity to 3.0.2 (#587)
 EmrEtlRunner: allowed AWS VPC selection in EmrEtlRunner (#581) - TODO
+JavaScript Tracker: bumped git submodule to 1.0.0 (#585) - TODO
+Python Tracker: added git submodule pointing to 0.1.0 (#586) - TODO
 
 Version 0.9.0 (2014-02-04)
 --------------------------
