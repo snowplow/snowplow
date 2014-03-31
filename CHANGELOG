@@ -30,7 +30,7 @@ Postgres: migration script added for 0.1.x to 0.2.0 - TODO
 Postgres: added new unstructured fields to Postgres table definition (#359) - TODO
 Postgres: added raw page_url and page_referrer into Postgres table (#592) - TODO
 Postgres: added t_namespace field to Postgres table (#593) - TODO
-Postgres: convert varchar(36) for event IDs to char(36) (#596) - TODO
+Postgres: convert varchar(36) for event IDs to char(36) (#596)
 JavaScript Tracker: bumped git submodule to 1.0.0 (#585)
 Python Tracker: added git submodule pointing to 0.1.0 (#586)
 
