@@ -51,7 +51,9 @@ CREATE TABLE atomic.events (
 	geo_latitude double precision,
 	geo_longitude double precision,
 	-- Page
+	page_url varchar(4096),                            -- Added in 0.3.0
 	page_title varchar(2000),
+	page_referrer varchar(4096),                       -- Added in 0.3.0
 	-- Page URL components
 	page_urlscheme varchar(16) encode text255,
 	page_urlhost varchar(255) encode text255,
