@@ -5,12 +5,21 @@ Scala Hadoop Enrich: bumped to Scala Common Enrich 0.3.0 (#497) - TODO (so far b
 Scala Hadoop Enrich: renamed AnonQuartets to AnonOctets (#498)
 Scala Hadoop Enrich: renamed all Snowplow Hadoop Tests to Specs (#515) - TODO
 Scala Hadoop Enrich: renamed CloudFront to Cloudfront in code (#496) - TODO
+Scala Hadoop Enrich: updated POJO in Scalding ETL to include new unstructured fields (#362) - TODO
 Scala Common Enrich: bumped to 0.3.0 - TODO
-Scala Common Enrich: added tests for getLoader function (#588) - TODO
-Scala Common Enrich: ...
+Scala Common Enrich: added app and mob as valid platform codes, thanks @kinabalu! (#524) - TODO
+Scala Common Enrich: added support for remaining platform codes (#516) - TODO
 EmrEtlRunner: bumped to 0.6.0
 EmrEtlRunner: bumped Elasticity to 3.0.2 (#587)
 EmrEtlRunner: allowed AWS VPC selection in EmrEtlRunner (#581)
+EmrEtlRunner: set :visible_to_all_users to true for EMR jobs (#560) - TODO 
+Redshift: atomic-def script bumped to 0.3.0 - TODO
+Redshift: migration script added for 0.2.x to 0.3.0 - TODO
+Redshift: added new unstructured fields to Redshift table definition (#361) - TODO
+Redshift: changed distkey to be event_id, not domain_userid (#584) - TODO
+Postgres: atomic-def script bumped to 0.2.0 - TODO
+Postgres: migration script added for 0.1.x to 0.2.0 - TODO
+Posgres: added new unstructured fields to Postgres table definition (#359) - TODO
 JavaScript Tracker: bumped git submodule to 1.0.0 (#585)
 Python Tracker: added git submodule pointing to 0.1.0 (#586)
 
