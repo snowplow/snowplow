@@ -1,0 +1,13 @@
+{
+  "jsonpaths": [ 
+	
+	"$.snowplow.event_id", 
+	"$.snowplow.event_name",
+	"$.snowplow.collector_tstamp",
+
+	"$.element_id",
+	"$.element_classes",
+	"$.element_target",
+	"$.target_url",
+	] 
+}
