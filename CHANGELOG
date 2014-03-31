@@ -1,35 +1,35 @@
 Version 0.9.1 (2014-04-XX)
 --------------------------
 Scala Hadoop Enrich: bumped to 0.4.0
-Scala Hadoop Enrich: bumped to Scala Common Enrich 0.3.0 (#497) - TODO (so far bumped to 0.2.0)
+Scala Hadoop Enrich: bumped to Scala Common Enrich 0.3.0 (#497)                             - TODO (so far bumped to 0.2.0)
 Scala Hadoop Enrich: renamed AnonQuartets to AnonOctets (#498)
-Scala Hadoop Enrich: renamed all Snowplow Hadoop Tests to Specs (#515) - TODO
-Scala Common Enrich: bumped to 0.3.0 - TODO
-Scala Common Enrich: added page_url and page_referrer back into ETL's output (#483) - TODO
-Scala Common Enrich: added app and mob as valid platform codes, thanks @kinabalu! (#524) - TODO
-Scala Common Enrich: added support for remaining platform codes (#516) - TODO
+Scala Hadoop Enrich: renamed all Snowplow Hadoop Tests to Specs (#515)                      - TODO
+Scala Common Enrich: bumped to 0.3.0                                                        - TODO
+Scala Common Enrich: added page_url and page_referrer back into ETL's output (#483)         - TODO
+Scala Common Enrich: added app and mob as valid platform codes, thanks @kinabalu! (#524)    - TODO
+Scala Common Enrich: added support for remaining platform codes (#516)                      - TODO
 Scala Common Enrich: updated POJO in Scalding ETL to include new unstructured fields (#362) - TODO
-Scala Common Enrich: updated POJO in Scalding ETL to include t_namespace field (#595) - TODO
-Scala Common Enrich: now extracting and validating unstructured event (#597) - TODO
-Scala Common Enrich: now extracting and validating custom contexts (#598) - TODO
-Scala Common Enrich: now cleaning up incoming event and context JSONs (#589) - TODO
-Scala Common Enrich: now making sure to error a JSON if > length (#567) - TODO
+Scala Common Enrich: updated POJO in Scalding ETL to include t_namespace field (#595)       - TODO
+Scala Common Enrich: now extracting and validating unstructured event (#597)                - TODO
+Scala Common Enrich: now extracting and validating custom contexts (#598)                   - TODO
+Scala Common Enrich: now cleaning up incoming event and context JSONs (#589)                - TODO
+Scala Common Enrich: now making sure to error a JSON if > length (#567)                     - TODO
 EmrEtlRunner: bumped to 0.6.0
 EmrEtlRunner: bumped Elasticity to 3.0.2 (#587)
 EmrEtlRunner: allowed AWS VPC selection in EmrEtlRunner (#581)
 EmrEtlRunner: set :visible_to_all_users to true for EMR jobs (#560)
 Redshift: atomic-def script bumped to 0.3.0
-Redshift: migration script added for 0.2.x to 0.3.0 - TODO
-Redshift: added new unstructured fields to Redshift table definition (#361) - TODO
-Redshift: changed distkey to be event_id, not domain_userid (#584) - TODO
-Redshift: added raw page_url and page_referrer into Redshift table (#591) - TODO
-Redshift: added t_namespace field to Redshift table (#594) - TODO
+Redshift: migration script added for 0.2.x to 0.3.0                          - TODO
+Redshift: added new unstructured fields to Redshift table definition (#361)  - TODO
+Redshift: changed distkey to be event_id, not domain_userid (#584)           - TODO
+Redshift: added raw page_url and page_referrer into Redshift table (#591)    - TODO
+Redshift: added t_namespace field to Redshift table (#594)                   - TODO
 Redshift: converted Redshift varchar(38) for event IDs to char(36) (#282)
 Postgres: atomic-def script bumped to 0.2.0
-Postgres: migration script added for 0.1.x to 0.2.0 - TODO
-Postgres: added new unstructured fields to Postgres table definition (#359) - TODO
-Postgres: added raw page_url and page_referrer into Postgres table (#592) - TODO
-Postgres: added t_namespace field to Postgres table (#593) - TODO
+Postgres: migration script added for 0.1.x to 0.2.0                          - TODO
+Postgres: added new unstructured fields to Postgres table definition (#359)  - TODO
+Postgres: added raw page_url and page_referrer into Postgres table (#592)    - TODO
+Postgres: added t_namespace field to Postgres table (#593)                   - TODO
 Postgres: converted varchar(36) for event IDs to char(36) (#596)
 JavaScript Tracker: bumped git submodule to 1.0.0 (#585)
 Python Tracker: added git submodule pointing to 0.1.0 (#586)
