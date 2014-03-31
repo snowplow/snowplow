@@ -10,7 +10,7 @@ Scala Common Enrich: added tests for getLoader function (#588) - TODO
 Scala Common Enrich: ...
 EmrEtlRunner: bumped to 0.6.0
 EmrEtlRunner: bumped Elasticity to 3.0.2 (#587)
-EmrEtlRunner: allowed AWS VPC selection in EmrEtlRunner (#581) - TODO
+EmrEtlRunner: allowed AWS VPC selection in EmrEtlRunner (#581)
 JavaScript Tracker: bumped git submodule to 1.0.0 (#585)
 Python Tracker: added git submodule pointing to 0.1.0 (#586)
 
