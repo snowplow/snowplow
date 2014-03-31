@@ -32,7 +32,8 @@ CREATE TABLE atomic.events (
 	event_vendor varchar(128) encode text32k not null,
 	event_id char(36) not null unique,                 -- Changed from varchar(38) in 0.3.0
 	txn_id int,
-	-- Versioning
+	-- Namespacing and versioning
+	name_tracker varchar(128) encode text255,          -- Added in 0.3.0
 	v_tracker varchar(100) encode text255,
 	v_collector varchar(100) encode text255 not null,
 	v_etl varchar(100) encode text255 not null,
