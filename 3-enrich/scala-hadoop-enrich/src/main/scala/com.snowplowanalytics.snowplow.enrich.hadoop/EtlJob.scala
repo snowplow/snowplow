@@ -132,9 +132,10 @@ class EtlJob(args: Args) extends Job(args) {
     c => c)
 
   // Wait until we're on the nodes to instantiate with lazy
+  // TODO: let's fix this Any typing
   lazy val loader = CollectorLoader.getLoader(etlConfig.inFormat).fold(
     e => throw FatalEtlError(e),
-    c => c)
+    c => c).asInstanceOf[CollectorLoader[Any]]
 
   val ipGeoFile = EtlJob.installIpGeoFile(etlConfig.maxmindFile)
   lazy val ipGeo = EtlJob.createIpGeo(ipGeoFile)
@@ -151,8 +152,9 @@ class EtlJob(args: Args) extends Job(args) {
   }
 
   // Scalding data pipeline
+  // TODO: let's fix this Any typing
   val common = trappableInput
-    .map('line -> 'output) { l: String =>
+    .map('line -> 'output) { l: Any =>
       EtlJob.toCanonicalOutput(ipGeo, etlConfig.anonOctets, loader.toCanonicalInput(l))
     }
 
