@@ -74,9 +74,9 @@ class CanonicalOutput {
   @BeanProperty var geo_longitude: JFloat = _
 
   // Page
-  @BeanProperty var page_url: String = _ // Note: we project this out in Scalding (because we don't have space in Redshift currently)
+  @BeanProperty var page_url: String = _
   @BeanProperty var page_title: String = _
-  @BeanProperty var page_referrer: String = _ // Note: we project this out in Scalding (because we don't have space in Redshift currently)
+  @BeanProperty var page_referrer: String = _
 
   // Page URL components
   @BeanProperty var page_urlscheme: String = _  
