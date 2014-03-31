@@ -64,9 +64,9 @@ object Aug2013CfLineTest {
     null,
     null,
     null,
-    // Raw page URL is discarded 
+    "http://snowplowanalytics.com/analytics/index.html",
     "Introduction - Snowplow Analytics%",
-    // Raw referer URL is discarded
+    "http://www.metacrawler.com/search/web?fcoid=417&fcop=topnav&fpid=27&q=snowplow+analytics&ql=",
     "http",
     "snowplowanalytics.com",
     "80",

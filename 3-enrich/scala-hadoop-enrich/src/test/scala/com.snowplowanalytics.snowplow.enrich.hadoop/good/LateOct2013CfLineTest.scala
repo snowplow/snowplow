@@ -64,9 +64,9 @@ object LateOct2013CfLineTest {
     null,
     null,
     null,
-    // Raw page URL is discarded 
+    "http://www.psychicbazaar.com/tarot-cards/304-russian-tarot-of-st-petersburg-set.html",
     "Russian Tarot of St Petersburg Deck - Psychic Bazaar",
-    // Raw referer URL is discarded
+    "http://www.psychicbazaar.com/2-tarot-cards?utm_source=GoogleSearch&utm_term=tarot%20decks&utm_content=42017425288&utm_medium=cpc&utm_campaign=uk-tarot--TAROT-CARDS-GENERAL&gclid=CJ7G8MSaqboCFfHKtAodPS0AIw",
     "http",
     "www.psychicbazaar.com",
     "80",

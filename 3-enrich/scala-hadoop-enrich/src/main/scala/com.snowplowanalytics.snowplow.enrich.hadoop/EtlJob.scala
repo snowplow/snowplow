@@ -176,6 +176,5 @@ class EtlJob(args: Args) extends Job(args) {
       }
     }
     .unpackTo[CanonicalOutput]('good -> '*)
-    .discard('page_url, 'page_referrer) // We don't have space to store these raw URLs in Redshift currently
     .write(goodOutput)
 }

@@ -63,9 +63,9 @@ object StructEventCfLineTest {
     null,
     "52.199997",
     "0.11669922",
-    // Raw page URL is discarded 
+    "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail",
     null, // No page title for events
-    // Raw referer URL is discarded
+    "http://www.psychicbazaar.com/",
     "http",
     "www.psychicbazaar.com",
     "80",

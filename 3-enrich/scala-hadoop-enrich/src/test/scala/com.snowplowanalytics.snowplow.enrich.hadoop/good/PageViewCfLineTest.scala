@@ -63,9 +63,9 @@ object PageViewCfLineTest {
     null,
     "52.199997",
     "0.11669922",
-    // Raw page URL is discarded 
+    "http://www.psychicbazaar.com/crystals/335-howlite-tumble-stone.html?view=print#detail",
     "Psychic Bazaar    Shop",
-    // Raw referer URL is discarded
+    "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari",
     "http",
     "www.psychicbazaar.com",
     "80",
