@@ -53,6 +53,7 @@ class CanonicalOutput {
   @BeanProperty var txn_id: String = _
 
   // Versioning
+  @BeanProperty var name_tracker: String = _
   @BeanProperty var v_tracker: String = _
   @BeanProperty var v_collector: String = _
   @BeanProperty var v_etl: String = _
