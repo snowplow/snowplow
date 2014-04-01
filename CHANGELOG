@@ -6,9 +6,10 @@ Scala Hadoop Enrich: renamed AnonQuartets to AnonOctets (#498)
 Scala Hadoop Enrich: renamed all Snowplow Hadoop Tests to Specs (#515)
 Scala Hadoop Enrich: added page_url and page_referrer back into ETL's output (#483)
 Scala Common Enrich: bumped to 0.3.0                                                        - TODO (so far bumped to 0.3.0-SNAPSHOT)
-Scala Common Enrich: added app and mob as valid platform codes, thanks @kinabalu! (#524)    - TODO
+Scala Common Enrich: added app and mob as valid platform codes, thanks @kinabalu! (#524)
 Scala Common Enrich: added support for remaining platform codes (#516)                      - TODO
 Scala Common Enrich: extract e_vn from Tracker Protocol (#604)                              - TODO
+Scala Common Enrich: extract tna from Tracker Protocol (#616)                               - TODO
 Scala Common Enrich: updated POJO in Scalding ETL to include new unstructured fields (#362) - TODO
 Scala Common Enrich: updated POJO in Scalding ETL to include name_tracker field (#595)      - TODO
 Scala Common Enrich: now extracting and validating unstructured events (#142)               - TODO
