@@ -51,9 +51,13 @@ class ExtractPlatformTest extends Specification with DataTables {
   def e1 =
     "SPEC NAME"                      || "INPUT VAL" | "EXPECTED OUTPUT" |
     "valid web"                      !! "web"       ! "web".success     |
+    "valid mobile/tablet"            !! "mob"       ! "mob".success     |
+    "valid desktop/laptop/netbook"   !! "pc"        ! "pc".success      |
+    "valid server-side app"          !! "srv"       ! "srv".success     |
+    "valid general app"              !! "app"       ! "app".success     |
+    "valid connected TV"             !! "tv"        ! "tv".success      |
+    "valid games console"            !! "cnsl"      ! "cnsl".success    |
     "valid iot (internet of things)" !! "iot"       ! "iot".success     |
-    "valid app"                      !! "app"       ! "app".success     |
-    "valid mob"                      !! "mob"       ! "mob".success     |
     "invalid empty"                  !! ""          !  err("").fail     |
     "invalid null"                   !! null        !  err(null).fail   |
     "invalid platform"               !! "ma"        !  err("ma").fail   |> {
