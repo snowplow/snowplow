@@ -79,12 +79,17 @@ CREATE TABLE atomic.events (
 	mkt_term varchar(255) encode raw,
 	mkt_content varchar(500) encode raw,
 	mkt_campaign varchar(255) encode text32k,
+	-- Custom contexts
+	contexts varchar(10000) encode raw,                -- Added in 0.3.0
 	-- Custom structured event
 	se_category varchar(255) encode text255,
 	se_action varchar(255) encode text255,
 	se_label varchar(255) encode text32k,
 	se_property varchar(255) encode text32k,
 	se_value double precision,
+	-- Custom unstructured event
+	ue_name varchar(255) encode text255,               -- Added in 0.3.0
+	ue_properties varchar(10000) encode raw,           -- Added in 0.3.0
 	-- Ecommerce
 	tr_orderid varchar(255) encode raw,
 	tr_affiliation varchar(255) encode text255,
