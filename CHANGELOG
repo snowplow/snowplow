@@ -1,7 +1,7 @@
 Version 0.9.1 (2014-04-XX)
 --------------------------
 Scala Hadoop Enrich: bumped to 0.4.0
-Scala Hadoop Enrich: bumped to Scala Common Enrich 0.3.0 (#497)                             - TODO (so far bumped to 0.2.0)
+Scala Hadoop Enrich: bumped to Scala Common Enrich 0.3.0 (#497)                             - TODO (so far bumped to 0.3.0-SNAPSHOT, published local)
 Scala Hadoop Enrich: renamed AnonQuartets to AnonOctets (#498)
 Scala Hadoop Enrich: renamed all Snowplow Hadoop Tests to Specs (#515)
 Scala Hadoop Enrich: added page_url and page_referrer back into ETL's output (#483)
