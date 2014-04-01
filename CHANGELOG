@@ -33,8 +33,8 @@ Postgres: added raw page_url and page_referrer into Postgres table (#592)
 Postgres: added name_tracker field to Postgres table (#593)
 Postgres: converted varchar(36) for event IDs to char(36) (#596)
 StorageLoader: bumped to 0.2.0
-StorageLoader: added TIMEFORMAT 'auto' to StorageLoader to handle outlier dvce_timestamps (#427) - TODO
-StorageLoader: changed PostgresSQL COPY to \copy (#487)                      - TODO
+StorageLoader: added TIMEFORMAT 'auto' to StorageLoader to handle outlier dvce_timestamps (#427)
+StorageLoader: changed PostgresSQL COPY to \copy, thanks @luxerama! (#487)
 JavaScript Tracker: bumped git submodule to 1.0.0 (#585)
 Python Tracker: added git submodule pointing to 0.1.0 (#586)
 
