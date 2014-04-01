@@ -8,10 +8,11 @@ Scala Hadoop Enrich: added page_url and page_referrer back into ETL's output (#4
 Scala Common Enrich: bumped to 0.3.0
 Scala Common Enrich: added app and mob as valid platform codes, thanks @kinabalu! (#524)    - TODO
 Scala Common Enrich: added support for remaining platform codes (#516)                      - TODO
+Scala Common Enrich: extract e_vn from Tracker Protocol (#604)                              - TODO
 Scala Common Enrich: updated POJO in Scalding ETL to include new unstructured fields (#362) - TODO
 Scala Common Enrich: updated POJO in Scalding ETL to include name_tracker field (#595)      - TODO
-Scala Common Enrich: now extracting and validating unstructured events (#597)               - TODO
-Scala Common Enrich: now extracting and validating custom contexts (#598)                   - TODO
+Scala Common Enrich: now extracting and validating unstructured events (#142)               - TODO
+Scala Common Enrich: now extracting and validating custom contexts (#426)                   - TODO
 Scala Common Enrich: now cleaning up incoming event and context JSONs (#589)                - TODO
 Scala Common Enrich: now making sure to error a JSON if > length (#567)                     - TODO
 EmrEtlRunner: bumped to 0.6.0
@@ -31,6 +32,9 @@ Postgres: added new unstructured fields to Postgres table definition (#359)  - T
 Postgres: added raw page_url and page_referrer into Postgres table (#592)
 Postgres: added name_tracker field to Postgres table (#593)
 Postgres: converted varchar(36) for event IDs to char(36) (#596)
+StorageLoader: bumped to 0.2.0                                               - TODO
+StorageLoader: added TIMEFORMAT 'auto' to StorageLoader to handle outlier dvce_timestamps (#427) - TODO
+StorageLoader: changed PostgresSQL COPY to \copy (#487)                      - TODO
 JavaScript Tracker: bumped git submodule to 1.0.0 (#585)
 Python Tracker: added git submodule pointing to 0.1.0 (#586)
 
