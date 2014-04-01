@@ -21,6 +21,7 @@ CREATE TABLE atomic.ev_link_clicks (
 	event_id varchar(38) encode raw not null unique,
 	-- Store the event_name as it might change one day
 	event_name varchar(128) encode runlength not null,
+	event_vendor varchar(128) encode text32k not null,
 	-- Storing timestamp improves join performance
 	collector_tstamp timestamp encode raw not null,
 	-- Properties of this event
