@@ -48,6 +48,7 @@ object PageViewCfLineSpec {
     "com.snowplowanalytics",
     null, // We can't predict the event_id
     "637309",
+    null, // No tracker namespace
     "js-0.11.1",
     "clj-0.5.0-tom-0.0.4",
     EtlVersion,
@@ -86,10 +87,13 @@ object PageViewCfLineSpec {
     null, //
     null, //
     null, //
+    null, // No custom contexts
     null, // Structured event fields empty
     null, //
     null, //
     null, //
+    null, //
+    null, // Unstructured event fields empty
     null, //
     null, // Transaction fields empty 
     null, //

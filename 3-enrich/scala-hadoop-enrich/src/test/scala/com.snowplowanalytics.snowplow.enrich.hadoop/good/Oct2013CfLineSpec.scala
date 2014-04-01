@@ -49,6 +49,7 @@ object Oct2013CfLineSpec {
     "com.snowplowanalytics",
     null, // We can't predict the event_id
     "734991",
+    null, // No tracker namespace
     "js-0.12.0",
     "cloudfront",
     EtlVersion,
@@ -87,10 +88,13 @@ object Oct2013CfLineSpec {
     "native american tarot deck",
     "39254295088",
     "uk-tarot--native-american",
-    null, // Event fields empty
+    null, // No custom contexts
+    null, // Structured event fields empty
     null, //
     null, //
     null, //
+    null, //
+    null, // Unstructured event fields empty
     null, //
     null, // Transaction fields empty 
     null, //

@@ -48,6 +48,7 @@ object PagePingCfLineSpec {
     "com.snowplowanalytics",
     null, // We can't predict the event_id
     "128574",
+    null, // No tracker namespace
     "js-0.11.1",
     "cloudfront",
     EtlVersion,
@@ -86,10 +87,13 @@ object PagePingCfLineSpec {
     "buy tarot",
     null,
     "spring_sale",
-    null, // Event fields empty
+    null, // No custom contexts
+    null, // Structured event fields empty
     null, //
     null, //
     null, //
+    null, //
+    null, // Unstructured event fields empty
     null, //
     null, // Transaction fields empty 
     null, //

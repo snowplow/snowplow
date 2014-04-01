@@ -48,6 +48,7 @@ object StructEventCfLineSpec {
     "com.snowplowanalytics",
     null, // We can't predict the event_id
     "598951",
+    null, // No tracker namespace
     "js-0.11.1",
     "cloudfront",
     EtlVersion,
@@ -86,11 +87,14 @@ object StructEventCfLineSpec {
     null, //
     null, //
     null, //
-    "ecomm",         // Unstructured event fields are set
+    null, // No custom contexts
+    "ecomm",         // Structured event fields are set
     "add-to-basket", //
     "PBZ00110",      //
     "1",             //
-    "35708.23",     //
+    "35708.23",      //
+    null, // Unstructured event fields empty
+    null, //
     null, // Transaction fields empty 
     null, //
     null, //

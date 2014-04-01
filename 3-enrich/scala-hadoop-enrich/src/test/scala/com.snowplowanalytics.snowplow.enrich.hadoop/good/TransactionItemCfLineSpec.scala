@@ -48,6 +48,7 @@ object TransactionItemCfLineSpec {
     "com.snowplowanalytics",
     null, // We can't predict the event_id
     "851830",
+    null, // No tracker namespace
     null, // Not set (legacy input line)
     "cloudfront",
     EtlVersion,
@@ -86,10 +87,13 @@ object TransactionItemCfLineSpec {
     null, //
     null, //
     null, //
+    null, // No custom contexts
+    null, // Structured event fields empty
+    null, //
+    null, //
+    null, //
+    null, //
     null, // Unstructured event fields empty
-    null, //
-    null, //
-    null, //
     null, //
     null, // Transaction fields empty 
     null, //

@@ -48,6 +48,7 @@ object CljTomcatLineSpec {
     "com.snowplowanalytics",
     null, // We can't predict the event_id
     "958446",
+    null, // No tracker namespace
     "js-0.12.0",
     "clj-0.5.0-tom-0.0.4",
     EtlVersion,
@@ -86,10 +87,13 @@ object CljTomcatLineSpec {
     null, //
     null, //
     null, //
-    null, // Event fields empty
+    null, // No custom contexts
+    null, // Structured event fields empty
     null, //
     null, //
     null, //
+    null, //
+    null, // Unstructured event fields empty
     null, //
     null, // Transaction fields empty 
     null, //
