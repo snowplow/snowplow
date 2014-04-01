@@ -2,12 +2,13 @@
   "jsonpaths": [ 
 	
 	"$.es.event_id", 
-	"$.ts.event_name",
+	"$.us.event_name",
+	"$.us.event_vendor",
 	"$.cs.collector_tstamp",
 
-	"$.ts.element_id",
-	"$.ts.element_classes",
-	"$.ts.element_target",
-	"$.ts.target_url",
+	"$.us.element_id",
+	"$.us.element_classes",
+	"$.us.element_target",
+	"$.us.target_url",
 	] 
 }
