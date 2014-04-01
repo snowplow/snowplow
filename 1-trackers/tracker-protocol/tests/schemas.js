@@ -6,10 +6,11 @@ define([
 	'intern/dojo/node!../schemas/ad_impression',
 	'intern/dojo/node!../schemas/ad_click',
 	'intern/dojo/node!../schemas/ad_conversion',
-	'intern/dojo/node!../schemas/link_click'
-], function(registerSuite, expect, ZSchema, adImpression, adClick, adConversion, linkClick) {
+	'intern/dojo/node!../schemas/link_click',
+	'intern/dojo/node!../schemas/screen_view'
+], function(registerSuite, expect, ZSchema, adImpression, adClick, adConversion, linkClick, screenView) {
 
-	var schemas = [adImpression, adClick, adConversion, linkClick],
+	var schemas = [adImpression, adClick, adConversion, linkClick, screenView],
 		validator = new ZSchema({sync:true}),
 		i;
 

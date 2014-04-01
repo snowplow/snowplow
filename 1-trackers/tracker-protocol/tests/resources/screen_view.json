@@ -1,0 +1,30 @@
+{
+	"name": "screen_view",
+	"valid": [
+		{
+			"name": "screen_1",
+			"id": "0017a7320"
+		},
+		{
+			"name": ""
+		}
+	],
+	"invalid":  [
+		{
+			"name": "screen_1",
+			"id": 54321
+		},
+		{
+			"name": null,
+			"id": "0017a7320"
+		},
+		{
+			"name": "screen_1",
+			"id": "0017a7320",
+			"extra": "unwanted"
+		},
+		{
+
+		}
+	]
+}

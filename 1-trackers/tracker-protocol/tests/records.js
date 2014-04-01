@@ -6,20 +6,23 @@ define([
 	'intern/dojo/node!../schemas/ad_click',
 	'intern/dojo/node!../schemas/ad_conversion',
 	'intern/dojo/node!../schemas/link_click',
+	'intern/dojo/node!../schemas/screen_view',
 	'intern/dojo/node!./resources/ad_impression',
 	'intern/dojo/node!./resources/ad_click',
 	'intern/dojo/node!./resources/ad_conversion',
-	'intern/dojo/node!./resources/link_click'
+	'intern/dojo/node!./resources/link_click',
+	'intern/dojo/node!./resources/screen_view'
 ], function(registerSuite, assert, ZSchema,
-			adImpressionSchema, adClickSchema, adConversionSchema, linkClickSchema,
-			adImpressionJsons,  adClickJsons,  adConversionJsons,  linkClickJsons) {
+			adImpressionSchema, adClickSchema, adConversionSchema, linkClickSchema, screenViewSchema,
+			adImpressionJsons,  adClickJsons,  adConversionJsons,  linkClickJsons,  screenViewJsons) {
 
 	var validator = new ZSchema({sync: true}),
 		testArray = [
 			[adImpressionSchema, adImpressionJsons],
 			[adClickSchema, adClickJsons],
 			[adConversionSchema, adConversionJsons],
-			[linkClickSchema, linkClickJsons]
+			[linkClickSchema, linkClickJsons],
+			[screenViewSchema, screenViewJsons]
 		],
 		j;
 
@@ -27,7 +30,7 @@ define([
 		registerSuite({
 			name: json.name + ' schema validation',
 
-			'Validate JSONs should pass validation': function() {
+			'Valid JSONs should pass validation': function() {
 				var validJsons = json.valid,
 					valid,
 					i;

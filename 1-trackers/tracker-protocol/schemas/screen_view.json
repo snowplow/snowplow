@@ -1,0 +1,15 @@
+{
+	"$schema": "http://json-schema.org/schema#",
+	"description": "Schema for a screen view event",
+	"type": "object",
+	"properties": {
+		"name": {
+			"type": "string"
+		},
+		"id": {
+			"type": "string"
+		}
+	},
+	"minProperties": 1,
+	"additionalProperties": false
+}
