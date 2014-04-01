@@ -17,7 +17,7 @@
 -- License:     Apache License Version 2.0
 
 -- Rename existing table
-ALTER TABLE "atomic"."events" RENAME TO "atomic.events_old"
+ALTER TABLE "atomic"."events" RENAME TO "atomic.events_01x"
 
 -- Create the table
 CREATE TABLE "atomic"."events" (
@@ -258,4 +258,4 @@ INSERT INTO atomic.events
 	"doc_charset",
 	"doc_width",
 	"doc_height"
-    FROM atomic.events_old;
+    FROM atomic.events_01x;
