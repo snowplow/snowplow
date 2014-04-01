@@ -8,7 +8,7 @@ Scala Hadoop Enrich: added page_url and page_referrer back into ETL's output (#4
 Scala Common Enrich: bumped to 0.3.0                                                        - TODO (so far bumped to 0.3.0-SNAPSHOT)
 Scala Common Enrich: added app and mob as valid platform codes, thanks @kinabalu! (#524)
 Scala Common Enrich: added support for remaining platform codes (#516)
-Scala Common Enrich: updated POJO in Scalding ETL to include new unstructured fields (#362) - TODO
+Scala Common Enrich: updated POJO in Scalding ETL to include new unstructured fields (#362)
 Scala Common Enrich: updated POJO in Scalding ETL to include name_tracker field (#595)
 Scala Common Enrich: extract e_vn from Tracker Protocol (#604)                              - TODO
 Scala Common Enrich: extract tna from Tracker Protocol (#616)                               - TODO

@@ -107,12 +107,19 @@ class CanonicalOutput {
   @BeanProperty var mkt_content: String = _
   @BeanProperty var mkt_campaign: String = _
 
-  // Event
+  // Custom Contexts
+  @BeanProperty var contexts: String = _
+
+  // Structured Event
   @BeanProperty var se_category: String = _
   @BeanProperty var se_action: String = _
   @BeanProperty var se_label: String = _
   @BeanProperty var se_property: String = _
   @BeanProperty var se_value: String = _ // Technically should be a Double but may be rendered incorrectly by Cascading with scientific notification (which Redshift can't process)
+
+  // Unstructured Event
+  @BeanProperty var ue_name: String = _
+  @BeanProperty var ue_properties: String = _
 
   // Ecommerce transaction (from querystring)
   @BeanProperty var tr_orderid: String = _
