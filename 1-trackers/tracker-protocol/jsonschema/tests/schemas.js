@@ -3,11 +3,11 @@ define([
 	'intern!object',
 	'intern/chai!expect',
 	'intern/dojo/node!z-schema',
-	'intern/dojo/node!../schemas/ad_impression',
-	'intern/dojo/node!../schemas/ad_click',
-	'intern/dojo/node!../schemas/ad_conversion',
-	'intern/dojo/node!../schemas/link_click',
-	'intern/dojo/node!../schemas/screen_view'
+	'intern/dojo/node!../events/ad_impression',
+	'intern/dojo/node!../events/ad_click',
+	'intern/dojo/node!../events/ad_conversion',
+	'intern/dojo/node!../events/link_click',
+	'intern/dojo/node!../events/screen_view'
 ], function(registerSuite, expect, ZSchema, adImpression, adClick, adConversion, linkClick, screenView) {
 
 	var schemas = [adImpression, adClick, adConversion, linkClick, screenView],

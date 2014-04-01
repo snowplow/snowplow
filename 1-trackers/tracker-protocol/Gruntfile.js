@@ -6,7 +6,7 @@ module.exports = function(grunt) {
       tests: {
         options: {
           runType: 'client',
-          config: 'tests/intern.js'
+          config: 'jsonschema/tests/intern.js'
         }
       }
     },
