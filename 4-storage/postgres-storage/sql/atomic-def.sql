@@ -77,12 +77,17 @@ CREATE TABLE "atomic"."events" (
 	"mkt_term" varchar(255),
 	"mkt_content" varchar(500),
 	"mkt_campaign" varchar(255),
+	-- Custom contexts
+	"contexts" json,                        -- Added in 0.2.0. Consider jsonb type coming soon to PG
 	-- Custom structured event
 	"se_category" varchar(255),
 	"se_action" varchar(255),
 	"se_label" varchar(255),
 	"se_property" varchar(255),
 	"se_value" double precision,
+	-- Custom unstructured event
+	"ue_name" varchar(255),                 -- Added in 0.2.0
+	"ue_properties" json,                   -- Added in 0.2.0. Consider jsonb type coming soon to PG
 	-- Ecommerce
 	"tr_orderid" varchar(255),
 	"tr_affiliation" varchar(255),
