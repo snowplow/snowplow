@@ -45,7 +45,7 @@ object TransactionCfLineSpec {
     "2012-05-27 11:35:53.000",
     "2013-03-25 02:03:37.342",
     "transaction",
-    "com.snowplowanalytics",
+    null, // No event vendor set
     null, // We can't predict the event_id
     "028288",
     null, // No tracker namespace

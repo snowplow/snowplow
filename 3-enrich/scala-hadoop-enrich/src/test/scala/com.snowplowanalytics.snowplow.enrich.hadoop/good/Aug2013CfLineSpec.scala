@@ -46,7 +46,7 @@ object Aug2013CfLineSpec {
     "2013-08-29 00:18:48.000",
     "2013-08-29 00:19:17.970",
     "page_view",
-    "com.snowplowanalytics",
+    null, // No event vendor set
     null, // We can't predict the event_id
     "567074",
     "main", // Tracker namespace

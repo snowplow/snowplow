@@ -10,7 +10,7 @@ Scala Common Enrich: added app and mob as valid platform codes, thanks @kinabalu
 Scala Common Enrich: added support for remaining platform codes (#516)
 Scala Common Enrich: updated POJO in Scalding ETL to include new unstructured fields (#362)
 Scala Common Enrich: updated POJO in Scalding ETL to include name_tracker field (#595)
-Scala Common Enrich: extract evn from Tracker Protocol (#604)                               - TODO
+Scala Common Enrich: extract evn from Tracker Protocol (#604)
 Scala Common Enrich: extract tna from Tracker Protocol (#616)
 Scala Common Enrich: now extracting and validating unstructured events (#142)               - TODO
 Scala Common Enrich: now extracting and validating custom contexts (#426)                   - TODO

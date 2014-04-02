@@ -82,7 +82,6 @@ object EnrichmentManager {
     val event = new CanonicalOutput().tap { e =>
       e.collector_tstamp = EE.toTimestamp(raw.timestamp)
       e.event_id = EE.generateEventId
-      e.event_vendor = "com.snowplowanalytics" // TODO: this should be moved to Tracker Protocol
       e.v_collector = raw.source.collector // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
       raw.ipAddress.map(ip => e.user_ipaddress = PE.anonymizeIp(ip, anonOctets))
@@ -131,6 +130,7 @@ object EnrichmentManager {
     // Caution: by definition, a TransformMap loses type safety. Always unit test!
     val transformMap: TransformMap =
       Map(("e"       , (EE.extractEventType, "event")),
+          ("evn"     , (ME.toTsvSafe, "event_vendor")),
           ("ip"      , (ME.toTsvSafe, "user_ipaddress")),
           ("aid"     , (ME.toTsvSafe, "app_id")),
           ("p"       , (ME.extractPlatform, "platform")),
