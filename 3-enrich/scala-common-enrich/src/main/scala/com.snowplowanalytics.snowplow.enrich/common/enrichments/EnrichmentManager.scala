@@ -165,11 +165,11 @@ object EnrichmentManager {
           ("ds"      , (CE.extractViewDimensions, ("doc_width", "doc_height"))),
           ("vp"      , (CE.extractViewDimensions, ("br_viewwidth", "br_viewheight"))),
           // Custom structured events
-          ("ev_ca"   , (ME.toTsvSafe, "se_category")),   // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_ac"   , (ME.toTsvSafe, "se_action")),     // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_la"   , (ME.toTsvSafe, "se_label")),      // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_pr"   , (ME.toTsvSafe, "se_property")),   // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_va"   , (CU.stringToDoublelike, "se_value")), // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_ca"   , (ME.toTsvSafe, "se_category")),   // LEGACY tracker var. Leave for backwards compat
+          ("ev_ac"   , (ME.toTsvSafe, "se_action")),     // LEGACY tracker var. Leave for backwards compat
+          ("ev_la"   , (ME.toTsvSafe, "se_label")),      // LEGACY tracker var. Leave for backwards compat
+          ("ev_pr"   , (ME.toTsvSafe, "se_property")),   // LEGACY tracker var. Leave for backwards compat
+          ("ev_va"   , (CU.stringToDoublelike, "se_value")), // LEGACY tracker var. Leave for backwards compat
           ("se_ca"   , (ME.toTsvSafe, "se_category")),
           ("se_ac"   , (ME.toTsvSafe, "se_action")),
           ("se_la"   , (ME.toTsvSafe, "se_label")),
