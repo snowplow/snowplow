@@ -12,10 +12,10 @@ Scala Common Enrich: updated POJO in Scalding ETL to include new unstructured fi
 Scala Common Enrich: updated POJO in Scalding ETL to include name_tracker field (#595)
 Scala Common Enrich: extract evn from Tracker Protocol (#604)
 Scala Common Enrich: extract tna from Tracker Protocol (#616)
-Scala Common Enrich: now extracting and validating unstructured events (#142)               - TODO
-Scala Common Enrich: now extracting and validating custom contexts (#426)                   - TODO
-Scala Common Enrich: now cleaning up incoming event and context JSONs (#589)                - TODO
-Scala Common Enrich: now making sure to error a JSON if > length (#567)                     - TODO
+Scala Common Enrich: extract and validate unstructured events (#142)               - TODO
+Scala Common Enrich: extract and validate custom contexts (#426)
+Scala Common Enrich: reformat incoming event and context JSONs (#589) 
+Scala Common Enrich: make sure to error a JSON if > length (#567)                  - TODO
 EmrEtlRunner: bumped to 0.6.0
 EmrEtlRunner: bumped Elasticity to 3.0.2 (#587)
 EmrEtlRunner: allowed AWS VPC selection in EmrEtlRunner (#581)

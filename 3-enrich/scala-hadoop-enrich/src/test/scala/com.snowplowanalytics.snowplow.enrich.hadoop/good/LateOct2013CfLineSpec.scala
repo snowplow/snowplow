@@ -37,7 +37,7 @@ object LateOct2013CfLineSpec {
 
   // 21 Oct 2013: Amazon added three fields onto the end of the CloudFront access log format
   val lines = Lines(
-    "2013-10-22 00:41:30    LHR3    828 255.255.255.255   GET d10wr4jwvp55f9.cloudfront.net   /i  200 http://www.psychicbazaar.com/tarot-cards/304-russian-tarot-of-st-petersburg-set.html    Mozilla/5.0%2520(Macintosh;%2520Intel%2520Mac%2520OS%2520X%252010_7_2)%2520AppleWebKit/537.36%2520(KHTML,%2520like%2520Gecko)%2520Chrome/29.0.1547.76%2520Safari/537.36 e=pv&page=Russian%2520Tarot%2520of%2520St%2520Petersburg%2520Deck%2520-%2520Psychic%2520Bazaar&dtm=1382402513725&tid=888087&vp=1364x694&ds=1364x1570&vid=1&duid=be5a361443c84ba7&p=web&tv=js-0.12.0&fp=3596254824&aid=pbzsite&lang=zh-TW&cs=UTF-8&tz=Europe%252FLondon&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%253Futm_source%253DGoogleSearch%2526utm_term%253Dtarot%252520decks%2526utm_content%253D42017425288%2526utm_medium%253Dcpc%2526utm_campaign%253Duk-tarot--TAROT-CARDS-GENERAL%2526gclid%253DCJ7G8MSaqboCFfHKtAodPS0AIw&f_pdf=1&f_qt=1&f_realp=1&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1440x900&cd=24&cookie=1&url=http%253A%252F%252Fwww.psychicbazaar.com%252Ftarot-cards%252F304-russian-tarot-of-st-petersburg-set.html    -   Hit wYSiKLXqmO2meYhvy7UrHoV8fFGt6jOYGY5rV2zYg05j1Qkirt83GA==    d10wr4jwvp55f9.cloudfront.net   http    1119"
+    "2013-10-22 00:41:30    LHR3    828 255.255.255.255   GET d10wr4jwvp55f9.cloudfront.net   /i  200 http://www.psychicbazaar.com/tarot-cards/304-russian-tarot-of-st-petersburg-set.html    Mozilla/5.0%2520(Macintosh;%2520Intel%2520Mac%2520OS%2520X%252010_7_2)%2520AppleWebKit/537.36%2520(KHTML,%2520like%2520Gecko)%2520Chrome/29.0.1547.76%2520Safari/537.36 e=pv&page=Russian%2520Tarot%2520of%2520St%2520Petersburg%2520Deck%2520-%2520Psychic%2520Bazaar&co=%257B%2522page%2522%253A%257B%2522category%2522%253A%2522product%2522%252C%2522sku%2522%253A382%257D%257D&dtm=1382402513725&tid=888087&vp=1364x694&ds=1364x1570&vid=1&duid=be5a361443c84ba7&p=web&tv=js-0.12.0&fp=3596254824&aid=pbzsite&lang=zh-TW&cs=UTF-8&tz=Europe%252FLondon&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%253Futm_source%253DGoogleSearch%2526utm_term%253Dtarot%252520decks%2526utm_content%253D42017425288%2526utm_medium%253Dcpc%2526utm_campaign%253Duk-tarot--TAROT-CARDS-GENERAL%2526gclid%253DCJ7G8MSaqboCFfHKtAodPS0AIw&f_pdf=1&f_qt=1&f_realp=1&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1440x900&cd=24&cookie=1&url=http%253A%252F%252Fwww.psychicbazaar.com%252Ftarot-cards%252F304-russian-tarot-of-st-petersburg-set.html    -   Hit wYSiKLXqmO2meYhvy7UrHoV8fFGt6jOYGY5rV2zYg05j1Qkirt83GA==    d10wr4jwvp55f9.cloudfront.net   http    1119"
     )
 
   val expected = List(
@@ -88,7 +88,7 @@ object LateOct2013CfLineSpec {
     null, //
     null, //
     null, //
-    null, // No custom contexts
+    """{"page":{"category":"product","sku":382}}""", // No custom contexts
     null, // Structured event fields empty
     null, //
     null, //

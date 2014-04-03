@@ -24,6 +24,10 @@ import Scalaz._
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
 
+// This project
+import utils.{ConversionUtils => CU}
+import utils.{JsonUtils => JU}
+
 /**
  * Holds the enrichments related to events.
  */
@@ -93,6 +97,7 @@ object EventEnrichments {
     code match {
       case "se" => "struct".success
       case "ev" => "struct".success // Leave in for legacy.
+      case "ue" => "unstruct".success
       case "ad" => "ad_impression".success
       case "tr" => "transaction".success
       case "ti" => "transaction_item".success
@@ -100,6 +105,30 @@ object EventEnrichments {
       case "pp" => "page_ping".success
       case  ec  => "[%s] is not a recognised event code".format(ec).fail
     }
+
+  /**
+   * Noodling in support of below.
+   */
+  private def validateAndReformatJson(field: String, str: String): Validation[String, String] = {
+    JU.extractJson(str).bimap(
+      e => "Field [%s]: invalid JSON with parsing error: %s".format(field, e),
+      f => f.nospaces)
+  }
+
+  /**
+   * Decodes URL-encoded String then validates
+   * it as correct JSON.
+   */
+  // TODO: remove/rewrite when Avro introduced
+  val extractUrlEncJson: (Int, String, String, String) => Validation[String, String] = (maxLength, enc, field, str) =>
+    CU.decodeString(enc, field, str).flatMap(json => validateAndReformatJson(field, json))
+
+  /**
+   * Decodes Base64 (URL safe)-encoded String then
+   * validates it as correct JSON.
+   */
+  val extractBase64EncJson: (Int, String, String) => Validation[String, String] = (maxLength, field, str) =>
+    CU.decodeBase64Url(field, str).flatMap(json => validateAndReformatJson(field, json))
 
   /**
    * Returns a unique event ID. The event ID is 
