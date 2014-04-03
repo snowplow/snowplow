@@ -92,7 +92,7 @@ object EventEnrichments {
   val extractEventType: (String, String) => ValidatedString = (field, code) =>
     code match {
       case "se" => "struct".success
-      case "ev" => "struct".success // LEGACY. Remove late 2013
+      case "ev" => "struct".success // Leave in for legacy.
       case "ad" => "ad_impression".success
       case "tr" => "transaction".success
       case "ti" => "transaction_item".success
