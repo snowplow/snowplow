@@ -13,7 +13,7 @@ Scala Common Enrich: updated POJO in Scalding ETL to include new unstructured fi
 Scala Common Enrich: updated POJO in Scalding ETL to include name_tracker field (#595)
 Scala Common Enrich: extract evn from Tracker Protocol (#604)
 Scala Common Enrich: extract tna from Tracker Protocol (#616)
-Scala Common Enrich: extract and validate unstructured events (#142)               - TODO
+Scala Common Enrich: extract and validate unstructured events (#142)
 Scala Common Enrich: extract and validate custom contexts (#426)
 Scala Common Enrich: reformat incoming event and context JSONs (#589) 
 Scala Common Enrich: make sure to error a JSON if > length (#567)
@@ -38,7 +38,7 @@ StorageLoader: bumped to 0.2.0
 StorageLoader: added TIMEFORMAT 'auto' to StorageLoader to handle outlier dvce_timestamps (#427)
 StorageLoader: changed PostgresSQL COPY to \copy, thanks @luxerama! (#487)
 Looker Analytics: bumped to 0.2.0
-Looker Analytics: updated LookML model(s) to match new atomic.events fields (#619)          - TODO 
+Looker Analytics: updated LookML model(s) to match new atomic.events fields (#619)                    - TODO 
 JavaScript Tracker: bumped git submodule to 1.0.0 (#585)
 Python Tracker: added git submodule pointing to 0.1.0 (#586)
 
