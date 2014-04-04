@@ -96,14 +96,14 @@ object EventEnrichments {
   val extractEventType: (String, String) => ValidatedString = (field, code) =>
     code match {
       case "se" => "struct".success
-      case "ev" => "struct".success // Leave in for legacy.
+      case "ev" => "struct".success        // Leave in for legacy.
       case "ue" => "unstruct".success
-      case "ad" => "ad_impression".success
+      case "ad" => "ad_impression".success // Leave in for legacy.
       case "tr" => "transaction".success
       case "ti" => "transaction_item".success
       case "pv" => "page_view".success
       case "pp" => "page_ping".success
-      case  ec  => "[%s] is not a recognised event code".format(ec).fail
+      case  ec  => "Field [%s]: [%s] is not a recognised event code".format(field, ec).fail
     }
 
   /**
