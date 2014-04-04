@@ -32,9 +32,9 @@ import JobSpecHelpers._
 object MasterCfLinesSpec {
 
   // Concatenate ALL lines from ALL other jobs
-  val lines = bad.BadTrackerCfLinesSpec.lines ++      // 2 bad
+  val lines = bad.BadTrackerCfLinesSpec.lines ++      // 3 bad
               bad.CorruptedCfLinesSpec.lines ++       // 1 bad
-              bad.InvalidCfLinesSpec.lines ++         // 3 bad  = 6 BAD
+              bad.InvalidCfLinesSpec.lines ++         // 3 bad  = 7 BAD
               good.Aug2013CfLineSpec.lines ++         // 1 good
               good.Sep2013CfLineSpec.lines ++         // 1 good
               good.Oct2013CfLineSpec.lines ++         // 1 good
@@ -43,13 +43,14 @@ object MasterCfLinesSpec {
               good.PagePingCfLineSpec.lines ++        // 1 good
               good.PageViewCfLineSpec.lines ++        // 1 good
               good.StructEventCfLineSpec.lines ++     // 1 good
+              good.UnstructEventCfLineSpec.lines ++   // 1 good
               good.TransactionCfLineSpec.lines ++     // 1 good
-              good.TransactionItemCfLineSpec.lines ++ // 1 good = 10 GOOD
+              good.TransactionItemCfLineSpec.lines ++ // 1 good = 11 GOOD
               misc.DiscardableCfLinesSpec.lines       // 3 discarded
 
   object expected {
-    val goodCount = 10
-    val badCount = 6
+    val goodCount = 11
+    val badCount = 7
   }
 }
 
@@ -65,7 +66,7 @@ class MasterCfLinesSpec extends Specification with TupleConversions {
     EtlJobSpec("cloudfront", "0"). // Technically CljTomcatLineSpec isn't CloudFront format but won't break this test
       source(MultipleTextLineFiles("inputFolder"), MasterCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output =>
-        "write 10 events" in {
+        "write 11 events" in {
           output.size must_== MasterCfLinesSpec.expected.goodCount
         }
       }.
@@ -75,7 +76,7 @@ class MasterCfLinesSpec extends Specification with TupleConversions {
         }
       }.
       sink[String](JsonLine("badFolder")){ error =>
-        "write 6 bad rows" in {
+        "write 7 bad rows" in {
           error.size must_== MasterCfLinesSpec.expected.badCount
         }
       }.
