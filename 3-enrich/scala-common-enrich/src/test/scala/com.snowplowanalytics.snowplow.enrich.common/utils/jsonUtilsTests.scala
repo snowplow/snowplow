@@ -25,13 +25,42 @@ import argonaut._
 import Argonaut._
 
 // Specs2
-import org.specs2.{Specification, ScalaCheck}
+import org.specs2.Specification
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
-import org.scalacheck._
-import org.scalacheck.Arbitrary._
 
-class JsonAsStringTest extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
+class ValidateAndReformatJsonTest extends Specification with DataTables with ValidationMatchers { def is =
+
+  "This is a specification to test the validateAndReformatJson function"                           ^
+                                                                                                         p^
+  // "extracting and reformatting (where necessary) valid JSONs with work"                             ! e1^
+  "extracting invalid JSONs should fail"                            ! e2^
+  // "extracting valid JSONs which would need truncating should fail"                                 ! e3^
+                                                                                                          end
+
+  val FieldName = "json"
+  val MaxLength = 24
+
+  def err = "Field [%s]: invalid JSON with parsing error: JSON terminates unexpectedly".format(FieldName)
+  def err2: String => String = str => "Field [%s]: invalid JSON with parsing error: Unexpected content found: %s".format(FieldName, str)
+  def err3: String => String = suffix => "Field [%s]: invalid JSON with parsing error: JSON contains invalid suffix content: %s".format(FieldName, suffix)
+  def err4: String => String = pair => "Field [%s]: invalid JSON with parsing error: Expected string bounds but found: %s".format(FieldName, pair)
+
+  def e2 =
+    "SPEC NAME"       || "INPUT STR"     | "EXPECTED"       |
+    "Empty string"    !! ""              ! err              |
+    "Random noise"    !! "^45fj_"        ! err2("^45fj_")   |
+    // "Null"         !! null            ! err              | // Currently Argonaut's Parse throws an exception if passed in null
+    "Invalid JSON #1" !! """{"a":9}}}""" ! err3("}}")       |
+    "Invalid JSON #2" !! """{9:"a"}"""   ! err4("9:\"a\"}") |
+    "Invalid JSON #3" !! """[];[]"""     ! err3(";[]")      |> {
+      (_, str, expected) =>
+        JsonUtils.validateAndReformatJson(MaxLength, FieldName, str) must beFailing(expected)
+    }
+
+}
+
+class JsonAsStringTest extends Specification with DataTables with ValidationMatchers { def is =
 
   "This is a specification to test the asString extraction function for JSON Strings"                     ^
                                                                                                          p^

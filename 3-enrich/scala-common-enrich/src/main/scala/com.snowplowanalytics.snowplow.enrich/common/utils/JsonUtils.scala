@@ -40,14 +40,14 @@ object JsonUtils {
    * it as correct JSON.
    */
   val extractUrlEncJson: (Int, String, String, String) => Validation[String, String] = (maxLength, enc, field, str) =>
-    CU.decodeString(enc, field, str).flatMap(json => validateAndReformatJson(field, json, maxLength))
+    CU.decodeString(enc, field, str).flatMap(json => validateAndReformatJson(maxLength, field, json))
 
   /**
    * Decodes a Base64 (URL safe)-encoded String then
    * validates it as correct JSON.
    */
   val extractBase64EncJson: (Int, String, String) => Validation[String, String] = (maxLength, field, str) =>
-    CU.decodeBase64Url(field, str).flatMap(json => validateAndReformatJson(field, json, maxLength))
+    CU.decodeBase64Url(field, str).flatMap(json => validateAndReformatJson(maxLength, field, json))
 
   /**
    * Validates and reformats a JSON:
@@ -63,7 +63,7 @@ object JsonUtils {
    * @return a Scalaz Validation, wrapping either an error
    *         String or the reformatted JSON String
    */
-  private def validateAndReformatJson(field: String, str: String, maxLength: Int): Validation[String, String] =
+  private[utils] def validateAndReformatJson(maxLength: Int, field: String, str: String): Validation[String, String] =
     extractJson(str)
       .bimap(
         e => "Field [%s]: invalid JSON with parsing error: %s".format(field, e),
@@ -76,6 +76,7 @@ object JsonUtils {
    * @return a Scalaz Validation, wrapping either an error
    *         String or the extracted Json
    */
+  // TODO: handle nulls
   def extractJson(json: String): Validation[String, Json] =
     Parse.parse(json).validation
 
