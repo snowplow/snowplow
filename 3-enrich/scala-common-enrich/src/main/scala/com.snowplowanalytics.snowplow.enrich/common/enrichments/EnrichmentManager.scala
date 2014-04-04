@@ -31,6 +31,7 @@ import inputs.{CanonicalInput, NvGetPayload}
 import outputs.CanonicalOutput
 
 import utils.{ConversionUtils => CU}
+import utils.{JsonUtils => JU}
 import utils.MapTransformer._
 
 import enrichments.{EventEnrichments => EE}
@@ -127,8 +128,8 @@ object EnrichmentManager {
 
     // Partially apply functions which need an encoding, to create a TransformFunc
     val MaxJsonLength = 10000
-    val extractUrlEncJson: TransformFunc = EE.extractUrlEncJson(MaxJsonLength, raw.encoding, _, _)
-    val extractBase64EncJson: TransformFunc = EE.extractBase64EncJson(MaxJsonLength, _, _)
+    val extractUrlEncJson: TransformFunc = JU.extractUrlEncJson(MaxJsonLength, raw.encoding, _, _)
+    val extractBase64EncJson: TransformFunc = JU.extractBase64EncJson(MaxJsonLength, _, _)
 
     // We use a TransformMap which takes the format:
     // "source key" -> (transformFunction, field(s) to set)

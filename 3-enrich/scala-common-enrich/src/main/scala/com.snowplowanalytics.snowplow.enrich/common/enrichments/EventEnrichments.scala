@@ -107,30 +107,6 @@ object EventEnrichments {
     }
 
   /**
-   * Noodling in support of below.
-   */
-  private def validateAndReformatJson(field: String, str: String): Validation[String, String] = {
-    JU.extractJson(str).bimap(
-      e => "Field [%s]: invalid JSON with parsing error: %s".format(field, e),
-      f => f.nospaces)
-  }
-
-  /**
-   * Decodes URL-encoded String then validates
-   * it as correct JSON.
-   */
-  // TODO: remove/rewrite when Avro introduced
-  val extractUrlEncJson: (Int, String, String, String) => Validation[String, String] = (maxLength, enc, field, str) =>
-    CU.decodeString(enc, field, str).flatMap(json => validateAndReformatJson(field, json))
-
-  /**
-   * Decodes Base64 (URL safe)-encoded String then
-   * validates it as correct JSON.
-   */
-  val extractBase64EncJson: (Int, String, String) => Validation[String, String] = (maxLength, field, str) =>
-    CU.decodeBase64Url(field, str).flatMap(json => validateAndReformatJson(field, json))
-
-  /**
    * Returns a unique event ID. The event ID is 
    * generated as a type 4 UUID, then converted
    * to a String.
