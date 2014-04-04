@@ -68,6 +68,9 @@ object JsonUtils {
       .bimap(
         e => "Field [%s]: invalid JSON with parsing error: %s".format(field, e),
         f => f.nospaces)
+      .flatMap(j => if (j.length > maxLength) {
+        "Field [%s]: reformatted JSON length [%s] exceeds maximum allowed length [%s]".format(field, j.length, maxLength).fail
+        } else j.success)
 
   /**
    * Converts a JSON string into a Validation[String, Json]

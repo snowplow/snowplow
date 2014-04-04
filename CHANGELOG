@@ -15,7 +15,7 @@ Scala Common Enrich: extract tna from Tracker Protocol (#616)
 Scala Common Enrich: extract and validate unstructured events (#142)               - TODO
 Scala Common Enrich: extract and validate custom contexts (#426)
 Scala Common Enrich: reformat incoming event and context JSONs (#589) 
-Scala Common Enrich: make sure to error a JSON if > length (#567)                  - TODO
+Scala Common Enrich: make sure to error a JSON if > length (#567)
 EmrEtlRunner: bumped to 0.6.0
 EmrEtlRunner: bumped Elasticity to 3.0.2 (#587)
 EmrEtlRunner: allowed AWS VPC selection in EmrEtlRunner (#581)
