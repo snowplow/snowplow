@@ -33,7 +33,7 @@ class ValidateAndReformatJsonTest extends Specification with DataTables with Val
 
   "This is a specification to test the validateAndReformatJson function"                           ^
                                                                                                          p^
-  // "extracting and reformatting (where necessary) valid JSONs with work"                             ! e1^
+  "extracting and reformatting (where necessary) valid JSONs with work"                            ! e1^
   "extracting invalid JSONs should fail"                            ! e2^
   // "extracting valid JSONs which would need truncating should fail"                                 ! e3^
                                                                                                           end
@@ -45,6 +45,21 @@ class ValidateAndReformatJsonTest extends Specification with DataTables with Val
   def err2: String => String = str => "Field [%s]: invalid JSON with parsing error: Unexpected content found: %s".format(FieldName, str)
   def err3: String => String = suffix => "Field [%s]: invalid JSON with parsing error: JSON contains invalid suffix content: %s".format(FieldName, suffix)
   def err4: String => String = pair => "Field [%s]: invalid JSON with parsing error: Expected string bounds but found: %s".format(FieldName, pair)
+
+  def e1 =
+    "SPEC NAME"           || "INPUT STR"               | "EXPECTED"            |
+    "Empty JSON"          !! "{}"                      ! "{}"                  |
+    "Simple JSON #1"      !! """{"key":"value"}"""     ! """{"key":"value"}""" |
+    "Simple JSON #2"      !! """[1,2,3]"""             ! """[1,2,3]"""         |
+    "Reformatted JSON #1" !! """{ "key" : 23 }"""      ! """{"key":23}"""      |
+    "Reformatted JSON #2" !! """[1.00, 2.00, 3.00]"""  ! """[1,2,3]"""         |
+    "Reformatted JSON #4" !! """
+      {
+        "a": 23
+      }"""                                             ! """{"a":23}"""         |> {
+      (_, str, expected) =>
+        JsonUtils.validateAndReformatJson(MaxLength, FieldName, str) must beSuccessful(expected)
+    }
 
   def e2 =
     "SPEC NAME"       || "INPUT STR"     | "EXPECTED"       |
