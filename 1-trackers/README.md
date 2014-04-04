@@ -8,12 +8,13 @@
 
 ## Available trackers
 
-| Tracker                   | Description                                          | Status               |
-|---------------------------|------------------------------------------------------|----------------------|
-| [javascript-tracker] [t1] | A client-side JavaScript tracker for web browser use | Production-ready     |
-| [no-js-tracker] [t2]      | A pixel-based tracker for no-JavaScript web environments | Production-ready |
-| [arduino-tracker] [t3]    | An event tracker for IP-connected Arduino boards     | Production-ready     |
-| [lua-tracker] [t4]        | An event tracker for Lua apps, games and plugins     | Production-ready     |
+| Tracker                   | Description                                                    | Status           |
+|---------------------------|----------------------------------------------------------------|------------------|
+| [javascript-tracker] [t1] | A client-side JavaScript tracker for web browser use           | Production-ready |
+| [no-js-tracker] [t2]      | A pixel-based tracker for no-JavaScript web environments       | Production-ready |
+| [python-tracker] [t3]     | An event tracker for Python and Django webapps, apps and games | Beta             |
+| [arduino-tracker] [t4]    | An event tracker for IP-connected Arduino boards               | Production-ready |
+| [lua-tracker] [t5]        | An event tracker for Lua apps, games and plugins               | Production-ready |
 
 For other trackers (e.g. iOS, Android) and their approximate timelines, please see the [Product Roadmap][roadmap].
 
@@ -30,8 +31,9 @@ For other trackers (e.g. iOS, Android) and their approximate timelines, please s
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
 [t1]: https://github.com/snowplow/snowplow-javascript-tracker
 [t2]: ./no-js-tracker/
-[t3]: https://github.com/snowplow/snowplow-arduino-tracker
-[t4]: https://github.com/snowplow/snowplow-lua-tracker
+[t3]: https://github.com/snowplow/snowplow-python-tracker
+[t4]: https://github.com/snowplow/snowplow-arduino-tracker
+[t5]: https://github.com/snowplow/snowplow-lua-tracker
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-a-Tracker
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/trackers
 [wiki]: https://github.com/snowplow/snowplow/wiki
