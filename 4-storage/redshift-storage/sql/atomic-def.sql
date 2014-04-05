@@ -29,7 +29,7 @@ CREATE TABLE atomic.events (
 	dvce_tstamp timestamp,
 	-- Event
 	event varchar(128) encode text255,
-	event_vendor varchar(128) encode text32k not null,
+	event_vendor varchar(128) encode text32k,          -- Removed not null constraint in 0.3.0
 	event_id char(36) not null unique,                 -- Changed from varchar(38) in 0.3.0
 	txn_id int,
 	-- Namespacing and versioning
