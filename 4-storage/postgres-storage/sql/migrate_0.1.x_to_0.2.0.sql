@@ -29,7 +29,7 @@ CREATE TABLE "atomic"."events" (
 	"dvce_tstamp" timestamp,
 	-- Date/time
 	"event" varchar(128),
-	"event_vendor" varchar(128) NOT NULL,
+	"event_vendor" varchar(128),            -- Removed not null constraint in 0.3.0
 	"event_id" char(36) NOT NULL,           -- Changed from varchar(38) in 0.2.0
 	"txn_id" integer,
 	-- Versioning
