@@ -36,7 +36,6 @@ Postgres: added name_tracker field to Postgres table (#593)
 Postgres: converted varchar(36) for event IDs to char(36) (#596)
 StorageLoader: bumped to 0.2.0
 StorageLoader: added TIMEFORMAT 'auto' to StorageLoader to handle outlier dvce_timestamps (#427)
-StorageLoader: changed PostgresSQL COPY to \copy, thanks @luxerama! (#487)
 Looker Analytics: bumped to 0.2.0
 Looker Analytics: updated LookML model(s) to match new atomic.events fields (#619)                    - TODO 
 JavaScript Tracker: bumped git submodule to 1.0.0 (#585)
