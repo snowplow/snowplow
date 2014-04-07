@@ -1,0 +1,98 @@
+# Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+#
+# This program is licensed to you under the Apache License Version 2.0, and
+# you may not use this file except in compliance with the Apache License
+# Version 2.0.  You may obtain a copy of the Apache License Version 2.0 at
+# http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the Apache License Version 2.0 is distributed on an "AS
+# IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.  See the Apache License Version 2.0 for the specific language
+# governing permissions and limitations there under.
+
+# This file (application.conf.example) contains a template with
+# configuration options for the Scala Stream Collector.
+#
+# To use, copy this to 'application.conf' and modify the configuration options.
+
+# 'collector' contains configuration options for the main Scala collector.
+collector {
+  # The collector runs as a web service specified on the following
+  # interface and port.
+  interface = "0.0.0.0"
+  port = 8080
+
+  # Production mode disables additional services helpful for configuring and
+  # initializing the collector, such as a path '/dump' to view all
+  # records stored in the current stream.
+  production = true
+
+  # Configure the P3P policy header.
+  p3p {
+    policyref = "/w3c/p3p.xml"
+    CP = "NOI DSP COR NID PSA OUR IND COM NAV STA"
+  }
+
+  # The collector returns a cookie to clients for user identification
+  # with the following domain and expiration.
+  cookie {
+    expiration = 365 days
+    # The domain is optional and will make the cookie accessible to other
+    # applications on the domain.
+    # domain = "collector.snplow.com"
+  }
+
+  # The collector has a configurable sink for storing data in
+  # different formats for the enrichment process.
+  sink {
+    # Sinks currently supported are:
+    # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
+    # 'stdout' for writing Base64-encoded Thrift-serialized records to stdout
+    #    Recommended settings for 'stdout' so each line printed to stdout
+    #    is a serialized record are:
+    #      1. Setting 'akka.loglevel = OFF' and 'akka.loggers = []'
+    #         to disable all logging.
+    #      2. Using 'sbt assembly' and 'java -jar ...' to disable
+    #         sbt logging.
+    enabled = "kinesis"
+
+    kinesis {
+      # The following are used to authenticate for the Amazon Kinesis sink.
+      # 
+      # If both are set to 'cpf', a properties file on the classpath is used.
+      # http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/ClasspathPropertiesFileCredentialsProvider.html
+      aws {
+        access-key: "cpf"
+        secret-key: "cpf"
+      }
+
+      # Data will be stored in the following stream.
+      # If the stream does not exist, one will be created with $size shards.
+      stream {
+        name: "snowplow_collector_example"
+        size: 1
+      }
+    }
+  }
+}
+
+# Akka has a variety of possible configuration options defined at
+# http://doc.akka.io/docs/akka/2.2.3/general/configuration.html.
+akka {
+  loglevel = DEBUG # 'OFF' for no logging, 'DEBUG' for all logging.
+  loggers = ["akka.event.slf4j.Slf4jLogger"]
+}
+
+# spray-can is the server the Stream collector uses and has configurable
+# options defined at
+# https://github.com/spray/spray/blob/master/spray-can/src/main/resources/reference.conf
+spray.can.server {
+  # To obtain the hostname in the collector, the 'remote-address' header
+  # should be set. By default, this is disabled, and enabling it
+  # adds the 'Remote-Address' header to every request automatically.
+  remote-address-header = on
+
+  uri-parsing-mode = relaxed
+  raw-request-uri-header = on
+}

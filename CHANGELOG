@@ -1,3 +1,47 @@
+Version 0.9.0 (2014-02-04)
+--------------------------
+Thrift Raw Event: added. Version 0.1.0
+Thrift Raw Event: specified Thrift IDL for new raw event schema (#430)
+Scala Stream Collector: added. Version 0.1.0
+Scala Stream Collector: implemented new spray-can (Akka Http) Scala stream collector (#432)
+Scala Kinesis Enrich: added. Version 0.1.0
+Scala Kinesis Enrich: implemented initial Kinesis-based enrichment (#460)
+Scala Common Enrich: bumped to 0.2.0
+Scala Common Enrich: added Thrift SnowplowRawEvent as a dependency to common-enrich (#475)
+Scala Common Enrich: added ability to read Thrift SnowplowRawEvent (Thrift) (#462)
+Scala Common Enrich: renamed CloudFront to Cloudfront in code (#495)
+Scala Common Enrich: renamed AnonQuartets to AnonOctets (#491)
+Scala Common Enrich: added raw -> CanonicalInput tests (#484)
+Scala Common Enrich: updated GET payload extraction to handle empty payloads (#502)
+Git submodules: changed git:// protocol in .gitmodules to https:// (#512)
+NodeJS Collector: removed contrib-nodejs-collector from 2-collectors (#474)
+JavaScript Tracker: bumped JS Tracker submodule to 0.13.1 release (#511)
+
+Version 0.8.13 (2014-01-08)
+---------------------------
+Looker Analytics: added 0.1.0
+Looker Analytics: created Snowplow metadata model for Looker BI (www.looker.com) (#472)
+
+Version 0.8.12 (2014-01-07)
+---------------------------
+Hadoop ETL: bumped to 0.3.6
+Hadoop ETL: bumped to SBT 0.13.0 (#404)
+Hadoop ETL: bumped to using sbt-assembly 0.10.1 (#421)
+Hadoop ETL: bumped to Scala 2.10.3 (#423)
+Hadoop ETL: bumped to Scalding 0.8.11 (#422)
+Hadoop ETL: upgraded useragent utils to 1.11 & moved to Maven dependency (#416)
+Hadoop ETL: added test running back into sbt-assembly step (#420)
+Hadoop ETL: updated copyright messages to be Snowplow not SnowPlow, and to 2014 not 2013 (#419)
+Hadoop ETL: added ValidatedString as a type to package.scala (#328)
+Hadoop ETL: added missing validation to stringToJByte (#408)
+Hadoop ETL: missing page URI no longer interpreted as bad row (#399)
+Hadoop ETL: updated CfRegex to reflect Cfcs(Cookie) can be empty (#410)
+Hadoop ETL: numeric fields in tr_ and ti_ now parsed to doubles, not madeTsvSafe strings (#400)
+Hadoop ETL: moved ETL core into separate project scala-enrich-common (#417)
+Scala Common Enrich: updated ETL versioning to include host and common versions (#448)
+Postgres: bumped cube-pages.sql to 0.1.1
+Postgres: minor fix: cube_pages.complete referenced non-existent table cube_pages.basic, thanks @mrwalker! (#414)
+
 Version 0.8.11 (2013-10-22)
 ---------------------------
 Hadoop ETL: bumped to 0.3.5
@@ -35,6 +79,7 @@ StorageLoader: added COMPROWS to config and --include compupdate option (#344)
 StorageLoader: changed Postgres VACUUM FULL to VACUUM (#357)
 StorageLoader: added TRUNCATECOLUMNS for Redshift load (#360)
 StorageLoader: added FILLRECORD to our Redshift COPY command (#380)
+Postgres: fixed error in `recipes_basic.technology_mobile` recipe (#397)
 
 Version 0.8.10 (2013-10-18)
 ---------------------------
@@ -59,7 +104,7 @@ Hadoop ETL: updated to handle singly-encoded %s in CloudFront querystring field 
 
 Version 0.8.8 (2013-08-04)
 --------------------------
-JS tracker: moved into own repo (#277)
+JavaScript Tracker: moved into own repo (#277)
 Hadoop ETL: bumped to 0.3.3
 Hadoop ETL: URL-decodes "%3D" to "=" to allow Hive-style directory names as arguments (#305)
 Hadoop ETL: bumped referer-parser to 0.1.1 to fix java.lang.NullPointerException (#314)
@@ -85,13 +130,13 @@ StorageLoader: added support for loading into multiple storage targets (#311)
 
 Version 0.8.7 (2013-07-07)
 --------------------------
-JS tracker: bumped to 0.12.0
-JS tracker: fixed document reference to use documentAlias (#247)
-JS tracker: fixed bug with setCustomUrl (#267)
-JS tracker: changed ev_ to se_ for structured events (#197)
-JS tracker: fixed Firefox failure when "Always ask" set for cookies (#163)
-JS tracker: fixed bug in page ping functionality detected in IE 8 (#260)
-JS tracker: replaced forEach as not supported in IE 6-8 (#295)
+JavaScript Tracker: bumped to 0.12.0
+JavaScript Tracker: fixed document reference to use documentAlias (#247)
+JavaScript Tracker: fixed bug with setCustomUrl (#267)
+JavaScript Tracker: changed ev_ to se_ for structured events (#197)
+JavaScript Tracker: fixed Firefox failure when "Always ask" set for cookies (#163)
+JavaScript Tracker: fixed bug in page ping functionality detected in IE 8 (#260)
+JavaScript Tracker: replaced forEach as not supported in IE 6-8 (#295)
 EmrEtlRunner: fixed bug in config.yml.sample (#291)
 Arduino tracker: added git submodule link (#292)
 
@@ -151,9 +196,9 @@ Redshift: rename ev_ fields to se_ for structured events (#227)
 
 Version 0.8.3 (2013-05-14)
 --------------------------
-JS tracker: bumped to 0.11.2
-JS tracker: added unstructured events, thanks @rgabo, @tarsolya, @lackac (#198)
-JS tracker: remove leading ampersand in querystring (#188)
+JavaScript Tracker: bumped to 0.11.2
+JavaScript Tracker: added unstructured events, thanks @rgabo, @tarsolya, @lackac (#198)
+JavaScript Tracker: remove leading ampersand in querystring (#188)
 Clojure Collector: bumped to 0.5.0
 Clojure Collector: upgraded to use Tomcat AccessLogValve 0.0.4 (#240)
 Clojure Collector: now logging Clojure Collector and Tomcat AccessLogValve versions (#239)
@@ -217,19 +262,19 @@ Serde: fixed and enabled broken tests (#14). Version unchanged
 
 Version 0.7.5 (2013-02-25)
 --------------------------
-JS tracker: bumped to 0.11.1
-JS tracker: fixed bug with cookie secure flag killing user ID cookies (#181)
+JavaScript Tracker: bumped to 0.11.1
+JavaScript Tracker: fixed bug with cookie secure flag killing user ID cookies (#181)
 
 Version 0.7.4 (2013-02-22)
 --------------------------
-JS tracker: bumped to 0.11.0
-JS tracker: introduced setAppId() and deprecated setSiteId() (#168)
-JS tracker: 1st party user ID now transmitted as duid (domain uid) (part of #150)
-JS tracker: now sends dtm - the client timestamp (#149)
-JS tracker: deprecated and disabled attachUserId()
-JS tracker: deprecated getVisitorId() and getVisitorInfo() - use getDomainUserId() and getDomainUserInfo() instead
-JS tracker: add setUserId which sets the uid field (#167)
-JS tracker: SnowPlow cookies no longer tied to site ID (#148)
+JavaScript Tracker: bumped to 0.11.0
+JavaScript Tracker: introduced setAppId() and deprecated setSiteId() (#168)
+JavaScript Tracker: 1st party user ID now transmitted as duid (domain uid) (part of #150)
+JavaScript Tracker: now sends dtm - the client timestamp (#149)
+JavaScript Tracker: deprecated and disabled attachUserId()
+JavaScript Tracker: deprecated getVisitorId() and getVisitorInfo() - use getDomainUserId() and getDomainUserInfo() instead
+JavaScript Tracker: add setUserId which sets the uid field (#167)
+JavaScript Tracker: SnowPlow cookies no longer tied to site ID (#148)
 Clojure Collector: bumped to 0.3.0
 Clojure Collector: now append nuid (network aka 3rd party) user ID, not uid (#150)
 Serde: bumped to 0.5.5
@@ -251,16 +296,16 @@ Infobright: added migration script 0.0.6 Clojure collector -> 0.0.7
 
 Version 0.7.3 (2013-02-15)
 --------------------------
-JS tracker: bumped to 0.10.0
-JS tracker: updated copyright notices
-JS tracker: removed deprecated setAccount(), setTracker(), setHeartBeatTimer() - BREAKING CHANGE (#86)
-JS tracker: added document charset to querystring (#138)
-JS tracker: page ping no longer killed by 1 heartbeat w/o activity (#132)
-JS tracker: added document & viewport dimensions (#94)
-JS tracker: introduced trackStructEvent and deprecated trackEvent (#143)
-JS tracker: cleaned up getRequest code to use improved requestStringBuilder
-JS tracker: fixed logImpression (was using wrong argument names) (#162)
-JS tracker: added scroll offsets to page ping (#127)
+JavaScript Tracker: bumped to 0.10.0
+JavaScript Tracker: updated copyright notices
+JavaScript Tracker: removed deprecated setAccount(), setTracker(), setHeartBeatTimer() - BREAKING CHANGE (#86)
+JavaScript Tracker: added document charset to querystring (#138)
+JavaScript Tracker: page ping no longer killed by 1 heartbeat w/o activity (#132)
+JavaScript Tracker: added document & viewport dimensions (#94)
+JavaScript Tracker: introduced trackStructEvent and deprecated trackEvent (#143)
+JavaScript Tracker: cleaned up getRequest code to use improved requestStringBuilder
+JavaScript Tracker: fixed logImpression (was using wrong argument names) (#162)
+JavaScript Tracker: added scroll offsets to page ping (#127)
 Serde: bumped to 0.5.4
 Serde: updated copyright notices
 Serde: structured events now logged as "struct" not "custom" - DATA CHANGE
@@ -280,9 +325,9 @@ Infobright: added charset, document & viewport, URL components, event_vendor enh
 
 Version 0.7.2 (2013-01-29)
 --------------------------
-No-JS tracker: added. Version 0.1.0
-JS tracker: bumped to 0.9.1
-JS tracker: fixed bug where secure flag not being set on cookies sent via HTTPS
+No-JavaScript Tracker: added. Version 0.1.0
+JavaScript Tracker: bumped to 0.9.1
+JavaScript Tracker: fixed bug where secure flag not being set on cookies sent via HTTPS
 Clojure Collector: bumped to 0.2.0
 Clojure Collector: fixed Tomcat config issue of times being recorded in 12-hour clock
 Serde: added NoJsTrackerTest
@@ -325,13 +370,13 @@ Infobright: user_id field widened to 38 chars to support UUID
 
 Version 0.6.5 (2012-12-26)
 --------------------------
-JS tracker: bumped to 0.9.0
-JS tracker: each event now sent with an event type `e` (#63)
-JS tracker: refactoring of event definition code
-JS tracker: added attachUserId(boolean) method (#92)
-JS tracker: removed configCustomData from logImpression (#115)
-JS tracker: cleaned up activity tracking (page pings)
-JS tracker: added a combine only option to snowpak.sh
+JavaScript Tracker: bumped to 0.9.0
+JavaScript Tracker: each event now sent with an event type `e` (#63)
+JavaScript Tracker: refactoring of event definition code
+JavaScript Tracker: added attachUserId(boolean) method (#92)
+JavaScript Tracker: removed configCustomData from logImpression (#115)
+JavaScript Tracker: cleaned up activity tracking (page pings)
+JavaScript Tracker: added a combine only option to snowpak.sh
 Serde: bumped to 0.5.3
 Serde: now extracts event type (`e`) from querystring (#63)
 Serde: now attaches UUID event_id to each event (#89)
@@ -353,31 +398,31 @@ Infobright: removed lookup from fields which slow a large load (#107)
 
 Version 0.6.3 (2012-12-18)
 --------------------------
-JS tracker: bumped to 0.8.2
-JS tracker: fixed regressions from splitting JS into multiple files (#103)
+JavaScript Tracker: bumped to 0.8.2
+JavaScript Tracker: fixed regressions from splitting JS into multiple files (#103)
 HiveQL: hive-rolling-etl.q bumped to 0.5.2
 HiveQL: addded missing comma in hive-rolling-etl.q (#112)
 
 Version 0.6.2 (2012-11-29)
 --------------------------
-JS tracker: bumped to 0.8.1
-JS tracker: fixed bug with trailing comma (#102)
-JS tracker: removed console.log when not debugging (#101)
-JS tracker: removed minified sp.js from version control (added .gitignore to keep it out)
+JavaScript Tracker: bumped to 0.8.1
+JavaScript Tracker: fixed bug with trailing comma (#102)
+JavaScript Tracker: removed console.log when not debugging (#101)
+JavaScript Tracker: removed minified sp.js from version control (added .gitignore to keep it out)
 SnowCannon: bumped submodule to latest shermozle/SnowCannon commit
 
 Version 0.6.1 (2012-11-28)
 --------------------------
-JS tracker: bumped to 0.8.0
-JS tracker: rename ice.png to i - BREAKING CHANGE (#29)
-JS tracker: added setCollectorCf() and deprecated setAccount() (#32)
-JS tracker: Tracker constructor now supports Cf or Url (part of #44)
-JS tracker: getTrackerCf() and -Url() added, getTracker() deprecated (part of #44)
-JS tracker: added tracker version (`tv`) to querystring (#41)
-JS tracker: added color depth tracking (part of #69)
-JS tracker: added timezone tracking (part of #69)
-JS tracker: added user fingerprinting (#70)
-JS tracker: broke out .js into multiple files (#55)
+JavaScript Tracker: bumped to 0.8.0
+JavaScript Tracker: rename ice.png to i - BREAKING CHANGE (#29)
+JavaScript Tracker: added setCollectorCf() and deprecated setAccount() (#32)
+JavaScript Tracker: Tracker constructor now supports Cf or Url (part of #44)
+JavaScript Tracker: getTrackerCf() and -Url() added, getTracker() deprecated (part of #44)
+JavaScript Tracker: added tracker version (`tv`) to querystring (#41)
+JavaScript Tracker: added color depth tracking (part of #69)
+JavaScript Tracker: added timezone tracking (part of #69)
+JavaScript Tracker: added user fingerprinting (#70)
+JavaScript Tracker: broke out .js into multiple files (#55)
 EmrEtlRunner: bumped to 0.0.6
 EmrEtlRunner: --skip takes multiple args (part of #83, supercedes #80)
 EmrEtlRunner: add --process-bucket to process a bucket directly (part of #83)

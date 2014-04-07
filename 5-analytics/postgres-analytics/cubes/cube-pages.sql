@@ -11,7 +11,7 @@
 --
 -- OLAP compatible views at page level of granularity
 --
--- Version:     0.1.0
+-- Version:     0.1.1
 -- URL:         -
 --
 -- Authors:     Yali Sassoon
@@ -89,7 +89,7 @@ CREATE VIEW cubes_pages.complete AS
 		v.pageviews,
 		pp.pagepings
 	FROM
-		cubes_pages.basic basic
+		cubes_pages.pages_basic basic
 		LEFT JOIN cubes_pages.views_by_session AS v 
 			ON basic.page_urlscheme = v.page_urlscheme
 			AND basic.page_urlhost = v.page_urlhost
