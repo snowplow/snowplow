@@ -37,7 +37,7 @@ Postgres: converted varchar(36) for event IDs to char(36) (#596)
 StorageLoader: bumped to 0.2.0
 StorageLoader: added TIMEFORMAT 'auto' to StorageLoader to handle outlier dvce_timestamps (#427)
 Looker Analytics: bumped to 0.2.0
-JavaScript Tracker: bumped git submodule to 1.0.0 (#585)
+JavaScript Tracker: bumped git submodule to 1.0.1 (#585)
 Python Tracker: added git submodule pointing to 0.1.0 (#586)
 
 Version 0.9.0 (2014-02-04)
