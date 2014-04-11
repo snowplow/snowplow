@@ -42,8 +42,10 @@ module SnowPlow
         @jobflow.hadoop_version = config[:emr][:hadoop_version]
         @jobflow.ec2_key_name = config[:emr][:ec2_key_name]
         @jobflow.placement = config[:emr][:placement]
+        @jobflow.ec2_subnet_id = config[:emr][:ec2_subnet_id]
         @jobflow.log_uri = config[:s3][:buckets][:log]
         @jobflow.enable_debugging = config[:debug]
+        @jobflow.visible_to_all_users = true
 
         # Add extra configuration
         if config[:emr][:jobflow].respond_to?(:each)

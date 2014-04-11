@@ -19,5 +19,5 @@ ruby "1.9.3"
 # ErmEtlRunner is a Ruby app (not a RubyGem)
 # built with Bundler, so we add in the
 # RubyGems it requires here.
-gem "elasticity", "~> 2.6"
+gem "elasticity", "~> 3.0.2"
 gem "sluice", "~> 0.1.5"

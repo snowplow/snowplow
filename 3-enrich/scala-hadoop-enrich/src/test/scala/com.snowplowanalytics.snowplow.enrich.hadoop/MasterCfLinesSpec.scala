@@ -23,33 +23,34 @@ import com.twitter.scalding._
 import cascading.tuple.TupleEntry
 
 // This project
-import JobTestHelpers._
+import JobSpecHelpers._
 
 /**
  * Holds the input and expected output data
  * (counts) for the test.
  */
-object MasterCfLinesTest {
+object MasterCfLinesSpec {
 
   // Concatenate ALL lines from ALL other jobs
-  val lines = bad.BadTrackerCfLinesTest.lines ++      // 2 bad
-              bad.CorruptedCfLinesTest.lines ++       // 1 bad
-              bad.InvalidCfLinesTest.lines ++         // 3 bad  = 6 BAD
-              good.Aug2013CfLineTest.lines ++         // 1 good
-              good.Sep2013CfLineTest.lines ++         // 1 good
-              good.Oct2013CfLineTest.lines ++         // 1 good
-              good.LateOct2013CfLineTest.lines ++     // 1 good
-              good.CljTomcatLineTest.lines ++         // 1 good
-              good.PagePingCfLineTest.lines ++        // 1 good
-              good.PageViewCfLineTest.lines ++        // 1 good
-              good.StructEventCfLineTest.lines ++     // 1 good
-              good.TransactionCfLineTest.lines ++     // 1 good
-              good.TransactionItemCfLineTest.lines ++ // 1 good = 10 GOOD
-              misc.DiscardableCfLinesTest.lines       // 3 discarded
+  val lines = bad.BadTrackerCfLinesSpec.lines ++      // 3 bad
+              bad.CorruptedCfLinesSpec.lines ++       // 1 bad
+              bad.InvalidCfLinesSpec.lines ++         // 3 bad  = 7 BAD
+              good.Aug2013CfLineSpec.lines ++         // 1 good
+              good.Sep2013CfLineSpec.lines ++         // 1 good
+              good.Oct2013CfLineSpec.lines ++         // 1 good
+              good.LateOct2013CfLineSpec.lines ++     // 1 good
+              good.CljTomcatLineSpec.lines ++         // 1 good
+              good.PagePingCfLineSpec.lines ++        // 1 good
+              good.PageViewCfLineSpec.lines ++        // 1 good
+              good.StructEventCfLineSpec.lines ++     // 1 good
+              good.UnstructEventCfLineSpec.lines ++   // 1 good
+              good.TransactionCfLineSpec.lines ++     // 1 good
+              good.TransactionItemCfLineSpec.lines ++ // 1 good = 11 GOOD
+              misc.DiscardableCfLinesSpec.lines       // 3 discarded
 
   object expected {
-    val goodCount = 10
-    val badCount = 6
+    val goodCount = 11
+    val badCount = 7
   }
 }
 
@@ -59,14 +60,14 @@ object MasterCfLinesTest {
  * Master test which runs using all of the
  * individual good, bad and misc tests
  */
-class MasterCfLinesTest extends Specification with TupleConversions {
+class MasterCfLinesSpec extends Specification with TupleConversions {
 
   "A job which processes a CloudFront file containing 10 valid events, 6 bad lines and 3 discardable lines" should {
-    EtlJobTest("cloudfront", "0"). // Technically CljTomcatLineTest isn't CloudFront format but won't break this test
-      source(MultipleTextLineFiles("inputFolder"), MasterCfLinesTest.lines).
+    EtlJobSpec("cloudfront", "0"). // Technically CljTomcatLineSpec isn't CloudFront format but won't break this test
+      source(MultipleTextLineFiles("inputFolder"), MasterCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output =>
-        "write 10 events" in {
-          output.size must_== MasterCfLinesTest.expected.goodCount
+        "write 11 events" in {
+          output.size must_== MasterCfLinesSpec.expected.goodCount
         }
       }.
       sink[TupleEntry](Tsv("exceptionsFolder")){ trap =>
@@ -75,8 +76,8 @@ class MasterCfLinesTest extends Specification with TupleConversions {
         }
       }.
       sink[String](JsonLine("badFolder")){ error =>
-        "write 6 bad rows" in {
-          error.size must_== MasterCfLinesTest.expected.badCount
+        "write 7 bad rows" in {
+          error.size must_== MasterCfLinesSpec.expected.badCount
         }
       }.
       run.

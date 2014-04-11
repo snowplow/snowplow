@@ -27,13 +27,13 @@ import com.twitter.scalding._
 import cascading.tuple.TupleEntry
 
 // This project
-import JobTestHelpers._
+import JobSpecHelpers._
 
 /**
  * Holds the input and expected data
  * for the test.
  */
-object Sep2013CfLineTest {
+object Sep2013CfLineSpec {
 
   // September 2013: UA and referer are now double-encoded, querystring is single-encoded until CloudFront nodes update
   val lines = Lines(
@@ -46,9 +46,10 @@ object Sep2013CfLineTest {
     "2013-10-07 21:32:22.000",
     "2013-10-07 21:30:37.923",
     "page_view",
-    "com.snowplowanalytics",
+    null, // No event vendor set
     null, // We can't predict the event_id
     "390328",
+    null, // No tracker namespace
     "js-0.12.0",
     "cloudfront",
     EtlVersion,
@@ -64,9 +65,9 @@ object Sep2013CfLineTest {
     null,
     null,
     null,
-    // Raw page URL is discarded 
+    "http://www.psychicbazaar.com/tarot-cards/312-dreaming-way-tarot.html?utm_source=GoogleSearch&utm_term=rome%20choi%20tarot&utm_content=42017424088&utm_medium=cpc&utm_campaign=uk-tarot-decks--pbz00316",
     "Dreaming Way Tarot - Psychic Bazaar",
-    // Raw referer URL is discarded
+    "http://www.google.com/url?sa=t&rct=j&q=www.psychicbazaar.com+312-dreaming-way-tarot&source=web&cd=1&ved=0CFwQFjAD&url=http://www.psychicbazaar.com/tarot-cards/312-dreaming-way-tarot.html?utm_source=GoogleSearch&utm_term=rome%20choi%20tarot&utm_content=42017424088&utm_medium=cpc&utm_campaign=uk-tarot-decks--pbz00316&ei=2CdTUo3DJqf9oAa_Fg&usg=AFQjCNGGq8p48SyYds9oznKs1F5RQYtx_A",
     "http",
     "www.psychicbazaar.com",
     "80",
@@ -88,10 +89,13 @@ object Sep2013CfLineTest {
     "rome choi tarot",
     "42017424088",
     "uk-tarot-decks--pbz00316",
-    null, // Event fields empty
+    null, // No custom contexts
+    null, // Structured event fields empty
     null, //
     null, //
     null, //
+    null, //
+    null, // Unstructured event fields empty
     null, //
     null, // Transaction fields empty 
     null, //
@@ -155,17 +159,17 @@ object Sep2013CfLineTest {
  * For details:
  * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
  */
-class Sep2013CfLineTest extends Specification with TupleConversions {
+class Sep2013CfLineSpec extends Specification with TupleConversions {
 
   "A job which processes a CloudFront file containing 1 valid page view" should {
-    EtlJobTest("cloudfront", "0").
-      source(MultipleTextLineFiles("inputFolder"), Sep2013CfLineTest.lines).
+    EtlJobSpec("cloudfront", "0").
+      source(MultipleTextLineFiles("inputFolder"), Sep2013CfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {
           buf.size must_== 1
           val actual = buf.head
-          for (idx <- Sep2013CfLineTest.expected.indices) {
-            actual.getString(idx) must beFieldEqualTo(Sep2013CfLineTest.expected(idx), withIndex = idx)
+          for (idx <- Sep2013CfLineSpec.expected.indices) {
+            actual.getString(idx) must beFieldEqualTo(Sep2013CfLineSpec.expected(idx), withIndex = idx)
           }
         }
       }.

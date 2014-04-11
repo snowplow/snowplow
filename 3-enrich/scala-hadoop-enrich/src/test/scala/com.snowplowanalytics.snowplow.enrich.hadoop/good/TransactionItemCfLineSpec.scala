@@ -27,13 +27,13 @@ import com.twitter.scalding._
 import cascading.tuple.TupleEntry
 
 // This project
-import JobTestHelpers._
+import JobSpecHelpers._
 
 /**
  * Holds the input and expected data
  * for the test.
  */
-object TransactionItemCfLineTest {
+object TransactionItemCfLineSpec {
 
   val lines = Lines(
     "2012-05-27  11:35:53  DFW3  3343  255.255.255.255 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/internal/_session/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=ti&ti_id=order-123&ti_sk=PBZ1001&ti_na=Blue%20t-shirt&ti_ca=APPAREL&ti_pr=2000&ti_qu=2&dtm=1364177017342&tid=851830&duid=a279872d76480afb&vid=1&aid=CFe23a&lang=en-GB&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F119-psycards-book-and-deck-starter-pack.html%3Fview%3Dprint%23detail"
@@ -45,9 +45,10 @@ object TransactionItemCfLineTest {
     "2012-05-27 11:35:53.000",
     "2013-03-25 02:03:37.342",
     "transaction_item",
-    "com.snowplowanalytics",
+    null, // No event vendor set
     null, // We can't predict the event_id
     "851830",
+    null, // No tracker namespace
     null, // Not set (legacy input line)
     "cloudfront",
     EtlVersion,
@@ -63,9 +64,9 @@ object TransactionItemCfLineTest {
     null,
     null,
     null,
-    // Raw page URL is discarded 
+    "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail",
     null, // No page title for transactions
-    // Raw referer URL is discarded
+    null,
     "http",
     "www.psychicbazaar.com",
     "80",
@@ -86,10 +87,13 @@ object TransactionItemCfLineTest {
     null, //
     null, //
     null, //
+    null, // No custom contexts
+    null, // Structured event fields empty
+    null, //
+    null, //
+    null, //
+    null, //
     null, // Unstructured event fields empty
-    null, //
-    null, //
-    null, //
     null, //
     null, // Transaction fields empty 
     null, //
@@ -149,17 +153,17 @@ object TransactionItemCfLineTest {
  * Check that all tuples in a transaction event
  * (CloudFront format) are successfully extracted.
  */
-class TransactionItemCfLineTest extends Specification with TupleConversions {
+class TransactionItemCfLineSpec extends Specification with TupleConversions {
 
   "A job which processes a CloudFront file containing 1 valid transaction item" should {
-    EtlJobTest("cloudfront", "0").
-      source(MultipleTextLineFiles("inputFolder"), TransactionItemCfLineTest.lines).
+    EtlJobSpec("cloudfront", "0").
+      source(MultipleTextLineFiles("inputFolder"), TransactionItemCfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 transaction item" in {
           buf.size must_== 1
           val actual = buf.head
-          for (idx <- TransactionItemCfLineTest.expected.indices) {
-            actual.getString(idx) must beFieldEqualTo(TransactionItemCfLineTest.expected(idx), withIndex = idx)
+          for (idx <- TransactionItemCfLineSpec.expected.indices) {
+            actual.getString(idx) must beFieldEqualTo(TransactionItemCfLineSpec.expected(idx), withIndex = idx)
           }
         }
       }.

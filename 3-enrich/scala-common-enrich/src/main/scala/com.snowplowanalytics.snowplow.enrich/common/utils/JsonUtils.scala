@@ -36,12 +36,50 @@ import utils.{ConversionUtils => CU}
 object JsonUtils {
 
   /**
+   * Decodes a URL-encoded String then validates
+   * it as correct JSON.
+   */
+  val extractUrlEncJson: (Int, String, String, String) => Validation[String, String] = (maxLength, enc, field, str) =>
+    CU.decodeString(enc, field, str).flatMap(json => validateAndReformatJson(maxLength, field, json))
+
+  /**
+   * Decodes a Base64 (URL safe)-encoded String then
+   * validates it as correct JSON.
+   */
+  val extractBase64EncJson: (Int, String, String) => Validation[String, String] = (maxLength, field, str) =>
+    CU.decodeBase64Url(field, str).flatMap(json => validateAndReformatJson(maxLength, field, json))
+
+  /**
+   * Validates and reformats a JSON:
+   * 1. Checks the JSON is valid
+   * 2. Reformats, including removing unnecessary whitespace
+   * 3. Checks if reformatted JSON is <= maxLength, because
+   *    a truncated JSON causes chaos in Redshift et al
+   *
+   * @param field the name of the field containing the JSON
+   * @param str the String hopefully containing JSON
+   * @param maxLength the maximum allowed length for this
+   *        JSON when reformatted
+   * @return a Scalaz Validation, wrapping either an error
+   *         String or the reformatted JSON String
+   */
+  private[utils] def validateAndReformatJson(maxLength: Int, field: String, str: String): Validation[String, String] =
+    extractJson(str)
+      .bimap(
+        e => "Field [%s]: invalid JSON with parsing error: %s".format(field, e),
+        f => f.nospaces)
+      .flatMap(j => if (j.length > maxLength) {
+        "Field [%s]: reformatted JSON length [%s] exceeds maximum allowed length [%s]".format(field, j.length, maxLength).fail
+        } else j.success)
+
+  /**
    * Converts a JSON string into a Validation[String, Json]
    *
    * @param json The JSON string to parse
    * @return a Scalaz Validation, wrapping either an error
    *         String or the extracted Json
    */
+  // TODO: handle nulls
   def extractJson(json: String): Validation[String, Json] =
     Parse.parse(json).validation
 

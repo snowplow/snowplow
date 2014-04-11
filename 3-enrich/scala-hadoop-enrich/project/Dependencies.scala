@@ -19,20 +19,24 @@ object Dependencies {
     "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/releases/",
      // For some misc Scalding and Twitter libs
     "Concurrent Maven Repo" at "http://conjars.org/repo",
-    // For Scala Common Enrich
-    "SnowPlow Analytics Maven repo" at "http://maven.snplow.com/releases/"
+    // For Snowplow libs
+    "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
+    "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
+    // For user-agent-utils
+    "user-agent-utils repo" at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/"
   )
 
   object V {
     // Java
-    val hadoop        = "0.20.2"
+    val hadoop           = "0.20.2"
     // Scala
-    val scalding      = "0.8.11"
-    val scalaz7       = "7.0.0"
-    val commonEnrich  = "0.1.0"
+    val scalding         = "0.8.11"
+    val scalaz7          = "7.0.0"
+    val snowplowRawEvent = "0.1.0"
+    val commonEnrich     = "0.3.0"
     // Scala (test only)
-    val specs2        = "1.14"
-    val scalazSpecs2  = "0.1.2"
+    val specs2           = "1.14"
+    val scalazSpecs2     = "0.1.2"
   }
 
   object Urls {
@@ -41,14 +45,15 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val hadoopCore    = "org.apache.hadoop"          %  "hadoop-core"         % V.hadoop       % "provided"
+    val hadoopCore       = "org.apache.hadoop"          %  "hadoop-core"              % V.hadoop       % "provided"
     // Scala
-    val scaldingCore  = "com.twitter"                %% "scalding-core"       % V.scalding
-    val scaldingArgs  = "com.twitter"                %% "scalding-args"       % V.scalding
-    val scalaz7       = "org.scalaz"                 %% "scalaz-core"         % V.scalaz7 // TODO: tidy up whitespace
-    val commonEnrich  = "com.snowplowanalytics"      % "snowplow-common-enrich" % V.commonEnrich
+    val scaldingCore     = "com.twitter"                %% "scalding-core"            % V.scalding
+    val scaldingArgs     = "com.twitter"                %% "scalding-args"            % V.scalding
+    val scalaz7          = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7 // TODO: tidy up whitespace
+    val snowplowRawEvent = "com.snowplowanalytics"      % "snowplow-thrift-raw-event" % V.snowplowRawEvent
+    val commonEnrich     = "com.snowplowanalytics"      % "snowplow-common-enrich"    % V.commonEnrich
     // Scala (test only)
-    val specs2        = "org.specs2"                 %% "specs2"              % V.specs2       % "test"
-    val scalazSpecs2  = "org.typelevel"              %% "scalaz-specs2"       % V.scalazSpecs2 % "test"
+    val specs2           = "org.specs2"                 %% "specs2"                   % V.specs2       % "test"
+    val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"            % V.scalazSpecs2 % "test"
   }
 }

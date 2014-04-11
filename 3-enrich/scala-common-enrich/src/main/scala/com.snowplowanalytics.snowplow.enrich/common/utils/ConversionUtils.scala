@@ -23,6 +23,9 @@ import java.lang.{Byte => JByte}
 // Apache Commons
 import org.apache.commons.lang3.exception.ExceptionUtils
 
+// Apache Commons Codec
+import org.apache.commons.codec.binary.Base64
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -110,6 +113,39 @@ object ConversionUtils {
   }
 
   /**
+   * Decodes a URL-safe Base64 string.
+   *
+   * For details on the Base 64 Encoding with URL
+   * and Filename Safe Alphabet see:
+   *
+   * http://tools.ietf.org/html/rfc4648#page-7
+   *
+   * @param str The encoded string to be
+   * decoded
+   * @param field The name of the field
+   * @return a Scalaz Validation, wrapping either an
+   * an error String or the decoded String
+   */
+   // TODO: probably better to change the functionality and signature
+   // a little:
+   //
+   // 1. Signature -> : Validation[String, Option[String]]
+   // 2. Functionality:
+   // 1. If passed in null or "", return Success(None)
+   // 2. If passed in a non-empty string but result == "", then return a Failure, because we have failed to decode something meaningful
+  def decodeBase64Url(field: String, str: String): Validation[String, String] = {
+    try {
+      val decoder = new Base64(true) // true means "url safe"
+      val decodedBytes = decoder.decode(str)
+      val result = new String(decodedBytes)
+      result.success
+    } catch {
+      case e =>
+      "Field [%s]: exception Base64-decoding [%s] (URL-safe encoding): [%s]".format(field, str, e.getMessage).fail
+    }
+  }
+
+  /**
    * Decodes a String in the specific encoding,
    * also removing:
    * * Newlines - because they will break Hive
@@ -143,7 +179,7 @@ object ConversionUtils {
       r.success
     } catch {
       case e =>
-        "Exception decoding [%s] from [%s] encoding: [%s]".format(str, enc, e.getMessage).fail
+        "Field [%s]: Exception URL-decoding [%s] (encoding [%s]): [%s]".format(field, str, enc, e.getMessage).fail
     }
 
   /**

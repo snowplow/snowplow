@@ -22,6 +22,6 @@ require_relative 'snowplow-emr-etl-runner/errors'
 module SnowPlow
   module EmrEtlRunner
     NAME          = "snowplow-emr-etl-runner"
-    VERSION       = "0.5.0"
+    VERSION       = "0.6.0"
   end
 end

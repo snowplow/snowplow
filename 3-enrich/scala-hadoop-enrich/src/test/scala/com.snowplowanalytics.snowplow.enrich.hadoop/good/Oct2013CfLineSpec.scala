@@ -27,13 +27,13 @@ import com.twitter.scalding._
 import cascading.tuple.TupleEntry
 
 // This project
-import JobTestHelpers._
+import JobSpecHelpers._
 
 /**
  * Holds the input and expected data
  * for the test.
  */
-object Oct2013CfLineTest {
+object Oct2013CfLineSpec {
 
   // October 2013: all fields are now double-encoded
   val lines = Lines(
@@ -46,9 +46,10 @@ object Oct2013CfLineTest {
     "2013-10-07 23:35:30.000",
     "2013-10-07 23:35:27.571",
     "page_ping",
-    "com.snowplowanalytics",
+    null, // No event vendor set
     null, // We can't predict the event_id
     "734991",
+    null, // No tracker namespace
     "js-0.12.0",
     "cloudfront",
     EtlVersion,
@@ -64,9 +65,9 @@ object Oct2013CfLineTest {
     null,
     null,
     null,
-    // Raw page URL is discarded 
+    "http://www.psychicbazaar.com/2-tarot-cards/genre/native%20american/type/all/view/list?utm_source=GoogleSearch&utm_medium=cpc&utm_term=native%20american%20tarot%20deck&utm_content=39254295088&utm_campaign=uk-tarot--native-american&gclid=CI6thtbxhboCFTMctAod0FcAdQ",
     "Tarot cards - Native american - Psychic Bazaar",
-    // Raw referer URL is discarded
+    "http://www.google.com/uds/afs?q=native%20american%20tarot%20deck%20religion%20and%20spirituality%20card%20corn%20dance%203&client=monstermarketplace-infosites-search&channel=outboundteleservices&hl=en&adtest=false&oe=utf8&ie=utf8&r=m&adpage=1&fexp=21404%2C7000108&jsei=4&format=n3%7Cn3&ad=n6&nocache=8231381188870735&num=0&output=uds_ads_only&v=3&u_his=2&u_tz=60&dt=1381188870736&u_w=1024&u_h=768&biw=784&bih=515&psw=784&psh=269&frm=0&ui=uv3atlt20ld20lv20ff1st14sd12sv12sa10af3srslipva-wi562-wi562&rurl=http%3A%2F%2Fwww.vivasearch.com%2Fsearch%2F%3Fq%3Dnative%2Bamerican%2Btarot%2Bdeck%2Breligion%2Band%2Bspirituality%2Bcard%2Bcorn%2Bdance%2B3%26t%3DH476469%26gc%3Dw13%26sid%3DCNCRousx1br-1GbJoA3wpw%26utm_source%3DH%26utm_medium%3Dpaid%26utm_campaign%3DH476469&referer=http%3A%2F%2F14468.6103.1.gameshud.com%2Ffp%3Fip%3D81.106.34.172%26q%3DNative%2BAmerican%2BTarot%2BDeck%2B%2528Religion%2Band%2BSpirituality%2529%2B%255BCards%255D%2Bcorn%2Bdance%2B3%26ua%3DMozilla%252F5.0%2B%2528compatible%253B%2BMSIE%2B9.0%253B%2BWindows%2BNT%2B6.0%253B%2BTrident%252F5.0%2529%26ts%3D1381188845562%26sig%3D3f9mz-69KddNRBXDy8jc95VhqkjyWeTKvvhqTWa9tyDVTnCAEJ6B79LSwsgKcBLPtUfE62OQnCJuvbfJXoGdIS92QkObhKYW1G5yhSG7vCdt61Y6z7RcSupxJ2Y4bw3mzYbSBaegl5DlBva7KCE-JtnOCTrRa7e6hNMxUVr_gL1oBeYFqwy8JZx0VuXyaYisBjdRKQeAyHYf5cb3I6d1CmZXTN3J7h7X2bV1Vp2TkAuJRzcfAj-WOJtneQ",
     "http",
     "www.psychicbazaar.com",
     "80",
@@ -87,10 +88,13 @@ object Oct2013CfLineTest {
     "native american tarot deck",
     "39254295088",
     "uk-tarot--native-american",
-    null, // Event fields empty
+    null, // No custom contexts
+    null, // Structured event fields empty
     null, //
     null, //
     null, //
+    null, //
+    null, // Unstructured event fields empty
     null, //
     null, // Transaction fields empty 
     null, //
@@ -154,17 +158,17 @@ object Oct2013CfLineTest {
  * For details:
  * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
  */
-class Oct2013CfLineTest extends Specification with TupleConversions {
+class Oct2013CfLineSpec extends Specification with TupleConversions {
 
   "A job which processes a CloudFront file containing 1 valid page ping" should {
-    EtlJobTest("cloudfront", "0").
-      source(MultipleTextLineFiles("inputFolder"), Oct2013CfLineTest.lines).
+    EtlJobSpec("cloudfront", "0").
+      source(MultipleTextLineFiles("inputFolder"), Oct2013CfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {
           buf.size must_== 1
           val actual = buf.head
-          for (idx <- Oct2013CfLineTest.expected.indices) {
-            actual.getString(idx) must beFieldEqualTo(Oct2013CfLineTest.expected(idx), withIndex = idx)
+          for (idx <- Oct2013CfLineSpec.expected.indices) {
+            actual.getString(idx) must beFieldEqualTo(Oct2013CfLineSpec.expected(idx), withIndex = idx)
           }
         }
       }.

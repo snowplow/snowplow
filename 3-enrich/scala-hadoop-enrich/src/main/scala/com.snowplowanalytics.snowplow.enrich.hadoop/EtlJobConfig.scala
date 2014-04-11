@@ -26,8 +26,8 @@ import com.twitter.scalding.Args
 
 // Snowplow Common Enrich
 import common.utils.ConversionUtils
-import common.enrichments.PrivacyEnrichments.AnonQuartets
-import AnonQuartets._
+import common.enrichments.PrivacyEnrichments.AnonOctets
+import AnonOctets._
 
 // This project
 import utils.ScalazArgs
@@ -41,7 +41,7 @@ case class EtlJobConfig(
     maxmindFile: URI,
     outFolder: String,
     badFolder: String,
-    anonQuartets: AnonQuartets,
+    anonOctets: AnonOctets,
     exceptionsFolder: Option[String])
 
 /**
@@ -60,6 +60,11 @@ object EtlJobConfig {
    */
   private def getMaxmindUri(maxmindFile: String): Validation[String, URI] = {
 
+    // TODO: fix compiler warning, match may not be exhaustive.
+    // [warn] It would fail on the following input: None
+    // [warn]     ConversionUtils.stringToUri(maxmindFile).flatMap(_ match {
+    // [warn]                                                      ^
+    // [warn] there were 1 feature warning(s); re-run with -feature for details
     ConversionUtils.stringToUri(maxmindFile).flatMap(_ match {
       case Some(u) => u.success
       case None => "URI to MaxMind file must be provided".fail
@@ -74,14 +79,14 @@ object EtlJobConfig {
    * Update the Validation Error if the
    * conversion isn't possible.
    *
-   * @param anonQuartets A String holding
+   * @param anonOctets A String holding
    *        the number of IP address
    *        quartets to anonymize
    * @return a Validation-boxed AnonQuartets
    */
-  private def getAnonQuartets(anonQuartets: String): Validation[String, AnonQuartets] = {
+  private def getAnonOctets(anonOctets: String): Validation[String, AnonOctets] = {
     try {
-      AnonQuartets.withName(anonQuartets).success
+      AnonOctets.withName(anonOctets).success
     } catch {
       case nse: NoSuchElementException => "IP address quartets to anonymize must be 0, 1, 2, 3 or 4".fail
     }
@@ -104,9 +109,9 @@ object EtlJobConfig {
     val maxmindFile = args.requiredz("maxmind_file").flatMap(f => getMaxmindUri(f))
     val outFolder = args.requiredz("output_folder")
     val badFolder = args.requiredz("bad_rows_folder")
-    val anonQuartets = args.requiredz("anon_ip_quartets").flatMap(q => getAnonQuartets(q))
+    val anonOctets = args.requiredz("anon_ip_quartets").flatMap(q => getAnonOctets(q))
     val exceptionsFolder = args.optionalz("exceptions_folder")
     
-    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| anonQuartets.toValidationNel |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_) }
+    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| anonOctets.toValidationNel |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_) }
   }
 }

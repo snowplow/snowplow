@@ -35,7 +35,7 @@ import common.FatalEtlError
 import common.inputs.CollectorLoader
 import common.enrichments.EnrichmentManager
 import common.outputs.CanonicalOutput
-import common.enrichments.PrivacyEnrichments.AnonQuartets.AnonQuartets
+import common.enrichments.PrivacyEnrichments.AnonOctets.AnonOctets
 
 // This project
 import utils.FileUtils
@@ -60,9 +60,9 @@ object EtlJob {
    *         flatMap, will include any validation errors
    *         contained within the ValidatedMaybeCanonicalInput
    */
-  def toCanonicalOutput(geo: IpGeo, anonQuartets: AnonQuartets, input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
+  def toCanonicalOutput(geo: IpGeo, anonOctets: AnonOctets, input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
     input.flatMap {
-      _.cata(EnrichmentManager.enrichEvent(geo, etlVersion, anonQuartets, _).map(_.some),
+      _.cata(EnrichmentManager.enrichEvent(geo, etlVersion, anonOctets, _).map(_.some),
              none.success)
     }
   }
@@ -132,9 +132,10 @@ class EtlJob(args: Args) extends Job(args) {
     c => c)
 
   // Wait until we're on the nodes to instantiate with lazy
+  // TODO: let's fix this Any typing
   lazy val loader = CollectorLoader.getLoader(etlConfig.inFormat).fold(
     e => throw FatalEtlError(e),
-    c => c)
+    c => c).asInstanceOf[CollectorLoader[Any]]
 
   val ipGeoFile = EtlJob.installIpGeoFile(etlConfig.maxmindFile)
   lazy val ipGeo = EtlJob.createIpGeo(ipGeoFile)
@@ -151,9 +152,10 @@ class EtlJob(args: Args) extends Job(args) {
   }
 
   // Scalding data pipeline
+  // TODO: let's fix this Any typing
   val common = trappableInput
-    .map('line -> 'output) { l: String =>
-      EtlJob.toCanonicalOutput(ipGeo, etlConfig.anonQuartets, loader.toCanonicalInput(l))
+    .map('line -> 'output) { l: Any =>
+      EtlJob.toCanonicalOutput(ipGeo, etlConfig.anonOctets, loader.toCanonicalInput(l))
     }
 
   // Handle bad rows
@@ -174,6 +176,5 @@ class EtlJob(args: Args) extends Job(args) {
       }
     }
     .unpackTo[CanonicalOutput]('good -> '*)
-    .discard('page_url, 'page_referrer) // We don't have space to store these raw URLs in Redshift currently
     .write(goodOutput)
 }

@@ -24,19 +24,19 @@ import com.twitter.scalding._
 import cascading.tuple.TupleEntry
 
 // This project
-import JobTestHelpers._
+import JobSpecHelpers._
 
 /**
  * Holds the input and expected output data
  * for the test.
  */
-object CorruptedCfLinesTest {
+object CorruptedCfLinesSpec {
 
   val lines = Lines(
     "20yy-05-24  00:08:40  LHR5  3397  74.125.17.210 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(Linux;%20U;%20Android%202.3.4;%20generic)%20AppleWebKit/535.1%20(KHTML,%20like%20Gecko;%20Google%20Web%20Preview)%20Version/4.0%20Mobile%20Safari/535.1  -"
     )
 
-  val expected = """{"line":"20yy-05-24  00:08:40  LHR5  3397  74.125.17.210 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(Linux;%20U;%20Android%202.3.4;%20generic)%20AppleWebKit/535.1%20(KHTML,%20like%20Gecko;%20Google%20Web%20Preview)%20Version/4.0%20Mobile%20Safari/535.1  -","errors":["Unexpected exception converting date [20yy-05-24] and time [00:08:40] to timestamp: [Invalid format: \"20yy-05-24T00:08:40+00:00\" is malformed at \"yy-05-24T00:08:40+00:00\"]","Querystring is empty, cannot extract GET payload"]}"""
+  val expected = """{"line":"20yy-05-24  00:08:40  LHR5  3397  74.125.17.210 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html Mozilla/5.0%20(Linux;%20U;%20Android%202.3.4;%20generic)%20AppleWebKit/535.1%20(KHTML,%20like%20Gecko;%20Google%20Web%20Preview)%20Version/4.0%20Mobile%20Safari/535.1  -","errors":["Unexpected exception converting date [20yy-05-24] and time [00:08:40] to timestamp: [Invalid format: \"20yy-05-24T00:08:40+00:00\" is malformed at \"yy-05-24T00:08:40+00:00\"]","No name-value pairs extractable from querystring [] with encoding [UTF-8]"]}"""
 }
 
 /**
@@ -46,11 +46,11 @@ object CorruptedCfLinesTest {
  * access log format, but the fields
  * are somehow corrupted.
  */
-class CorruptedCfLinesTest extends Specification with TupleConversions {
+class CorruptedCfLinesSpec extends Specification with TupleConversions {
 
   "A job which processes a corrupted input line" should {
-    EtlJobTest("cloudfront", "0").
-      source(MultipleTextLineFiles("inputFolder"), CorruptedCfLinesTest.lines).
+    EtlJobSpec("cloudfront", "0").
+      source(MultipleTextLineFiles("inputFolder"), CorruptedCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output => 
         "not write any events" in {
           output must beEmpty
@@ -64,7 +64,7 @@ class CorruptedCfLinesTest extends Specification with TupleConversions {
       sink[String](JsonLine("badFolder")){ buf =>
         val json = buf.head
         "write a bad row JSON containing the input line and all errors" in {
-          json must_== CorruptedCfLinesTest.expected
+          json must_== CorruptedCfLinesSpec.expected
         }
       }.
       run.
