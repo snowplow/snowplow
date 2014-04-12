@@ -25,9 +25,9 @@ CREATE TABLE atomic.ev_link_clicks (
 	-- Storing timestamp improves join performance
 	collector_tstamp timestamp encode raw not null,
 	-- Properties of this event
-	element_id varchar(256) encode text32k,
+	element_id varchar(255) encode text32k,
 	element_classes varchar(2048), -- Holds a JSON array. TODO: should be a child table really
-	element_target varchar(256) encode text255,
+	element_target varchar(255) encode text255,
 	target_url varchar(4096) encode text32k not null, 
 	-- Constraints
 	CONSTRAINT ev_link_clicks_010_pk PRIMARY KEY(event_id)
