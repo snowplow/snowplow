@@ -1,14 +1,14 @@
 {
-  "jsonpaths": [ 
-	
-	"$.es.event_id", 
-	"$.cs.collector_tstamp",
-	"$.ts.event_name",
-	"$.ts.event_vendor",
+  "jsonpaths": [
+  
+    "$.es.event_id", 
+    "$.cs.collector_tstamp",
+    "$.ts.event_name",
+    "$.ts.event_vendor",
 
-	"$.us.element_id",
-	"$.us.element_classes",
-	"$.us.element_target",
-	"$.us.target_url",
-	] 
+    "$.us.element_id",
+    "$.us.element_classes",
+    "$.us.element_target",
+    "$.us.target_url"
+    ]
 }
