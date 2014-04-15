@@ -2,22 +2,27 @@ define([
 	'intern!object',
 	'intern/chai!assert',
 	'intern/dojo/node!z-schema',
+	'intern/dojo/node!../contexts/custom_contexts',
 	'intern/dojo/node!../events/ad_impression',
 	'intern/dojo/node!../events/ad_click',
 	'intern/dojo/node!../events/ad_conversion',
 	'intern/dojo/node!../events/link_click',
 	'intern/dojo/node!../events/screen_view',
+	'intern/dojo/node!./resources/custom_contexts',
 	'intern/dojo/node!./resources/ad_impression',
 	'intern/dojo/node!./resources/ad_click',
 	'intern/dojo/node!./resources/ad_conversion',
 	'intern/dojo/node!./resources/link_click',
 	'intern/dojo/node!./resources/screen_view'
 ], function(registerSuite, assert, ZSchema,
+			customContextsSchema,
 			adImpressionSchema, adClickSchema, adConversionSchema, linkClickSchema, screenViewSchema,
+			customContextsJsons,
 			adImpressionJsons,  adClickJsons,  adConversionJsons,  linkClickJsons,  screenViewJsons) {
 
 	var validator = new ZSchema({sync: true}),
 		testArray = [
+			[customContextsSchema, customContextsJsons],
 			[adImpressionSchema, adImpressionJsons],
 			[adClickSchema, adClickJsons],
 			[adConversionSchema, adConversionJsons],

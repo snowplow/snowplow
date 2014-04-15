@@ -1,0 +1,67 @@
+{
+	"name": "ad_click",
+	"valid": [
+		{
+			"context_1": {
+				"fb_id": "38e7b61a8543089cf"
+			},
+			"context_2": {
+				"property_1": true,
+				"property_2": 13,
+				"property_3": ["London", "France"]
+			}
+		},
+		{
+			"context_1": {
+				"fb_id": "38e7b61a8543089cf"
+			},
+			"context_2": {
+				"property_1": [1, false, {
+					"nested": true
+					}]
+			}
+		},
+		{
+			"arrays_context": {
+				"arrays": [[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]
+			}
+		}
+	],
+	"invalid": [
+		{
+
+		},
+		[
+			{
+				"fb_id": "38e7b61a8543089cf"
+			},
+			{
+				"property_1": true,
+				"property_2": 13,
+				"property_3": ["London", "France"]
+			}
+		],
+
+		{
+			"fb_id": "38e7b61a8543089cf"
+		},
+
+		{
+			"id_array": [24564, 64536, 23464563456]
+		},
+
+		{
+			"object_in_array": [{
+				"fb_id": "38e7b61a8543089cf"
+				}]
+		},
+
+		"not_an_object",
+
+		345,
+
+		false,
+
+		null
+	]
+}

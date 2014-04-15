@@ -1,0 +1,9 @@
+{
+	"$schema": "http://json-schema.org/schema#",
+	"description": "Schema for an envelope of custom contexts",
+	"type": "object",
+	"additionalProperties": {
+		"type": "object"
+	},
+	"minProperties": 1
+}
