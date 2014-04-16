@@ -16,23 +16,23 @@
 -- Copyright:   Copyright (c) 2014 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-CREATE TABLE atomic.ev_link_clicks (
-	-- Identify the parent event this context belongs to
-	event_id varchar(38) encode raw not null unique,
-	-- Store the event_name as it might change one day
-	event_name varchar(128) encode runlength not null,
-	event_vendor varchar(128) encode text32k not null,
-	-- Storing timestamp improves join performance
-	collector_tstamp timestamp encode raw not null,
-	-- Properties of this event
-	element_id varchar(255) encode text32k,
-	element_classes varchar(2048), -- Holds a JSON array. TODO: should be a child table really
-	element_target varchar(255) encode text255,
-	target_url varchar(4096) encode text32k not null, 
-	-- Constraints
-	CONSTRAINT ev_link_clicks_010_pk PRIMARY KEY(event_id)
+CREATE TABLE atomic.com_snowplowanalytics_link_click (
+	-- Parentage of this type
+	root_id      char(36)  encode raw not null,
+	root_tstamp  timestamp encode raw not null,
+	ref_root     varchar(128)  encode runlength not null,
+	ref_ancestry varchar(1000) encode runlength not null,
+	ref_parent   varchar(128)  encode runlength not null,
+	-- Nature of this type
+	type_name    varchar(128) encode runlength not null,
+	type_vendor  varchar(128) encode runlength not null,
+	-- Properties of this type
+	element_id      varchar(255) encode text32k,
+	element_classes varchar(2048) encode raw, -- Holds a JSON array. TODO: should reference off to 
+	element_target  varchar(255) encode text255,
+	target_url      varchar(4096) encode text32k not null, 
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
-DISTKEY (event_id)
-SORTKEY (collector_tstamp);
+DISTKEY (root_id)
+SORTKEY (root_tstamp);
