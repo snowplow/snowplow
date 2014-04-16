@@ -23,12 +23,12 @@ CREATE TABLE atomic.com_snowplowanalytics_link_click (
 	-- Parentage of this type
 	root_id      char(36)  encode raw not null,
 	root_tstamp  timestamp encode raw not null,
-	ref_root     varchar(128)  encode runlength not null,
-	ref_ancestry varchar(1000) encode runlength not null,
-	ref_parent   varchar(128)  encode runlength not null,
+	ref_root     varchar(255)  encode runlength not null,
+	ref_tree     varchar(1500) encode runlength not null,
+	ref_parent   varchar(255)  encode runlength not null,
 	-- Properties of this type
 	element_id      varchar(255) encode text32k,
-	element_classes varchar(2048) encode raw, -- Holds a JSON array. TODO: should reference off to 
+	element_classes varchar(2048) encode raw, -- Holds a JSON array. TODO: will replace with a ref_ following https://github.com/snowplow/snowplow/issues/647
 	element_target  varchar(255) encode text255,
 	target_url      varchar(4096) encode text32k not null
 )

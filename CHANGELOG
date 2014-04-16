@@ -28,13 +28,13 @@ EmrEtlRunner: added shred_jsons option (#638)                                   
 EmrEtlRunner: improved load performance by switching ETL to write out to HDFS (#278)    - TODO
 StorageLoader: bumped to 0.3.0                                                          - TODO
 StorageLoader: added ACCEPTINVARS to StorageLoader (#411)                               - TODO
-StorageLoader: wrote JSON Path file for link_click (#599)                               - TODO
+StorageLoader: wrote JSON Path file for link_click (#599)
 StorageLoader: write JSON Path file for ad_* events (#642)                              - TODO
 StorageLoader: write JSON Path file for screen_view (#643)                              - TODO 
 StorageLoader: added hosted_assets setting for StorageLoader (#606)                     - TODO
 StorageLoader: added ability to load custom tables using JSON Paths (#607)              - TODO
 Redshift: added types/ad-def.sql for ad_* events (#639)                                 - TODO
-Redshift: added types/web-def.sql for link_click events (#600)                          - TODO
+Redshift: added types/web-def.sql for link_click events (#600)
 Redshift: added types/app-def.sql for screen_view events (#640)                         - TODO
 Looker Analytics: bumped to 0.2.0                                                       - TODO
 Looker Analytics: wrote LookML for ad_* events (#605)                                   - TODO

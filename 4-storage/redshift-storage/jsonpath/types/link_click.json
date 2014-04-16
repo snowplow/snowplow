@@ -1,0 +1,18 @@
+{
+  "jsonpaths": [
+  
+    "$.ss.type_name",
+    "$.ss.type_vendor",
+
+    "$.ss.root_id",
+    "$.ss.root_tstamp",
+    "$.ss.ref_root",
+    "$.ss.ref_tree",
+    "$.ss.ref_parent",
+
+    "$.us.element_id",
+    "$.us.element_classes",
+    "$.us.element_target",
+    "$.us.target_url"
+    ]
+}
