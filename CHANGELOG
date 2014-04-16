@@ -19,7 +19,7 @@ Scala Hadoop Enrich: added second stage to ETL which shreds U.E. and context JSO
 Scala Common Enrich: bumped to 0.4.0                                                    - TODO
 Scala Common Enrich: added shredding function (#644)                                    - TODO
 Scala Common Enrich: now validating that custom contexts envelope conforms to schema (#626) - TODO
-EmrEtlRunner: bumped to 0.7.0                                                           - TODO
+EmrEtlRunner: bumped to 0.7.0
 EmrEtlRunner: updated S3DistCp steps to use new S3DistCpStep from Elasticity (#629)     - TODO
 EmrEtlRunner: added ability to start Spark in EmrEtlRunner (#641)                       - TODO 
 EmrEtlRunner: added ability to start Lingual in EmrEtlRunner (#623)                     - TODO 
