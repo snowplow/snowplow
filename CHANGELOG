@@ -26,7 +26,7 @@ EmrEtlRunner: added ability to start Lingual in EmrEtlRunner (#623)             
 EmrEtlRunner: added ability to start HBase in EmrEtlRunner (#622)                       - TODO
 EmrEtlRunner: added shred_jsons option (#638)                                           - TODO
 EmrEtlRunner: improved load performance by switching ETL to write out to HDFS (#278)    - TODO
-StorageLoader: bumped to 0.3.0                                                          - TODO
+StorageLoader: bumped to 0.3.0
 StorageLoader: added ACCEPTINVARS to StorageLoader (#411)                               - TODO
 StorageLoader: wrote JSON Path file for link_click (#599)
 StorageLoader: write JSON Path file for ad_* events (#642)                              - TODO
