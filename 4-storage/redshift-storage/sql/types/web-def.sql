@@ -30,7 +30,7 @@ CREATE TABLE atomic.com_snowplowanalytics_link_click (
 	element_id      varchar(255) encode text32k,
 	element_classes varchar(2048) encode raw, -- Holds a JSON array. TODO: should reference off to 
 	element_target  varchar(255) encode text255,
-	target_url      varchar(4096) encode text32k not null, 
+	target_url      varchar(4096) encode text32k not null
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
