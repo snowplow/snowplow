@@ -17,15 +17,15 @@
 -- License:     Apache License Version 2.0
 
 CREATE TABLE atomic.com_snowplowanalytics_link_click (
+	-- Nature of this type
+	type_name    varchar(128) encode runlength not null,
+	type_vendor  varchar(128) encode runlength not null,
 	-- Parentage of this type
 	root_id      char(36)  encode raw not null,
 	root_tstamp  timestamp encode raw not null,
 	ref_root     varchar(128)  encode runlength not null,
 	ref_ancestry varchar(1000) encode runlength not null,
 	ref_parent   varchar(128)  encode runlength not null,
-	-- Nature of this type
-	type_name    varchar(128) encode runlength not null,
-	type_vendor  varchar(128) encode runlength not null,
 	-- Properties of this type
 	element_id      varchar(255) encode text32k,
 	element_classes varchar(2048) encode raw, -- Holds a JSON array. TODO: should reference off to 
