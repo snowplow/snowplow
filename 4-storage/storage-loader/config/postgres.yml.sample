@@ -4,6 +4,7 @@
 :s3:
   :region: ADD HERE # S3 bucket region
   :buckets:
+    :assets: s3://snowplow-hosted-assets # ONLY CHANGE if you are adding your own JSON Path files in your own bucket
     :in: ADD HERE
     :archive: ADD HERE
 :download:

@@ -4,6 +4,7 @@
 :s3:
   :region: ADD HERE # S3 bucket region must be the same as Redshift cluster region
   :buckets:
+    :assets: s3://snowplow-hosted-assets # ONLY CHANGE if you are adding your own JSON Path files in your own bucket
     :in: ADD HERE # Must be s3:// not s3n:// for Redshift
     :archive: ADD HERE
 :download:
