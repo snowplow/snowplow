@@ -6,10 +6,12 @@
 		"conversion_id": {
 			"type": "string"
 		},
-		"cost_if_cpa": {
-			"type": "number",
-			"minimum": 0
+		"campaign_id": {
+			"type": "string"
 		},
+		"advertiser_id": {
+			"type": "string"
+		},		
 		"category": {
 			"type": "string"
 		},
@@ -19,18 +21,16 @@
 		"property": {
 			"type": "string"
 		},
-		"initial_value": {
-			"type": "number",
-			"minimum": 0
-		},
-		"advertiser_id": {
-			"type": "string"
-		},
 		"cost_model": {
 			"enum": ["cpa", "cpc", "cpm"]
 		},
-		"campaign_id": {
-			"type": "string"
+		"cost_if_cpa": {
+			"type": "number",
+			"minimum": 0
+		},
+		"initial_value": {
+			"type": "number",
+			"minimum": 0
 		}
 	},
 	"minProperties": 1,

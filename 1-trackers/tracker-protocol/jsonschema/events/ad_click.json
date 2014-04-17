@@ -6,31 +6,31 @@
 		"click_id": {
 			"type": "string"
 		},
-		"cost_if_cpc": {
-			"type": "number",
-			"minimum": 0
-		},
-		"target_url": {
-			"type": "string",
-			"minLength": 1
-		},
-		"banner_id": {
+		"impression_id": {
 			"type": "string"
 		},
 		"zone_id": {
 			"type": "string"
 		},
-		"impression_id": {
+		"banner_id": {
+			"type": "string"
+		},
+		"campaign_id": {
 			"type": "string"
 		},
 		"advertiser_id": {
 			"type": "string"
 		},
+		"target_url": {
+			"type": "string",
+			"minLength": 1
+		},
 		"cost_model": {
 			"enum": ["cpa", "cpc", "cpm"]
 		},
-		"campaign_id": {
-			"type": "string"
+		"cost_if_cpc": {
+			"type": "number",
+			"minimum": 0
 		}
 	},
 	"required": ["target_url"],
