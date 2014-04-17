@@ -30,7 +30,7 @@ StorageLoader: bumped to 0.3.0
 StorageLoader: added ACCEPTINVCHARS to StorageLoader (#411)
 StorageLoader: wrote JSON Path file for link_click (#599)
 StorageLoader: write JSON Path files for ad_* events (#642)                             - TODO
-StorageLoader: write JSON Path file for screen_view (#643) 
+StorageLoader: write JSON Path file for screen_view (#643)
 StorageLoader: added hosted_assets setting for StorageLoader (#606)
 StorageLoader: added ability to load custom tables using JSON Paths (#607)              - TODO
 Redshift: added com.snowplowanalytics/ad-def.sql for ad_* events (#639)
