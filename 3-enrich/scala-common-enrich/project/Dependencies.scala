@@ -13,7 +13,7 @@
 import sbt._
 
 object Dependencies {
-  
+
   val resolutionRepos = Seq(
     // Required for our Scalaz snapshot
     "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/releases/",
@@ -35,7 +35,7 @@ object Dependencies {
     val commonsIo        = "2.4"
     val yodaTime         = "2.1"
     val yodaConvert      = "1.2"
-    val useragent        = "1.11"
+    val useragent        = "1.13"
     // Scala
     val scalaz7          = "7.0.0"
     val argonaut         = "6.0.3"
