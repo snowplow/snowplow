@@ -22,6 +22,7 @@ EmrEtlRunner: added ability to start Lingual in EmrEtlRunner (#623)             
 EmrEtlRunner: added ability to start HBase in EmrEtlRunner (#622)                       - TODO
 EmrEtlRunner: improved load performance by switching ETL to write out to HDFS (#278)    - TODO
 EmrEtlRunner: now invoking Scala Hadoop Shredder after main job (#644)                  - TODO
+EmrEtlRunner: added --skip shred option (#659)                                          - TODO
 StorageLoader: bumped to 0.3.0
 StorageLoader: added ACCEPTINVCHARS to StorageLoader (#411)
 StorageLoader: wrote JSON Path file for link_click (#599)
@@ -29,6 +30,7 @@ StorageLoader: write JSON Path files for ad_* events (#642)                     
 StorageLoader: write JSON Path file for screen_view (#643)
 StorageLoader: added hosted_assets setting for StorageLoader (#606)
 StorageLoader: added ability to load custom tables using JSON Paths (#607)              - TODO
+StorageLoader: added --skip shred option (#660)                                         - TODO
 Redshift: added com.snowplowanalytics/ad-def.sql for ad_* events (#639)
 Redshift: added com.snowplowanalytics/web-def.sql for link_click events (#600)
 Redshift: added com.snowplowanalytics/app-def.sql for screen_view events (#640)
