@@ -2,7 +2,6 @@ Version 0.9.2 (2014-04-XX)
 --------------------------
 
 << Add PartitionTap support to Scalding (#609) >>
-<< New ticket around invoking shred from EmrEtlRunner? >>
 
 Ruby Tracker: added git submodule. Version 0.1.0 (#645)                                 - TODO
 JavaScript Tracker: bumped git submodule to 2.0.0 (#635)                                - TODO
@@ -14,18 +13,15 @@ Tracker Protocol: implemented Intern (#553)
 Tracker Protocol: added ad_* JSON Schema and tests (#554)
 Tracker Protocol: added link_click JSON Schema and tests (#601)
 Tracker Protocol: added screen_view JSON Schema and tests (#590)
-Scala Hadoop Enrich: bumped to 0.5.0                                                    - TODO
-Scala Hadoop Enrich: bumped to Scala Common Enrich 0.4.0 (#646)                         - TODO
-Scala Hadoop Enrich: added second stage to ETL which shreds U.E. and context JSONs (#608) - TODO
-Scala Common Enrich: bumped to 0.4.0                                                    - TODO
-Scala Common Enrich: added shredding function (#644)                                    - TODO
-Scala Common Enrich: now validating that custom contexts envelope conforms to schema (#626) - TODO
+Tracker Protocol: added JSON Schema and tests for custom context (#627)
+Scala Hadoop Shredder: added. Version 0.1.0                                             - TODO
 EmrEtlRunner: bumped to 0.7.0
 EmrEtlRunner: updated S3DistCp steps to use new S3DistCpStep from Elasticity (#629)     - TODO
 EmrEtlRunner: added ability to start Spark in EmrEtlRunner (#641)                       - TODO 
 EmrEtlRunner: added ability to start Lingual in EmrEtlRunner (#623)                     - TODO 
 EmrEtlRunner: added ability to start HBase in EmrEtlRunner (#622)                       - TODO
 EmrEtlRunner: improved load performance by switching ETL to write out to HDFS (#278)    - TODO
+EmrEtlRunner: now invoking Scala Hadoop Shredder after main job (#644)                  - TODO
 StorageLoader: bumped to 0.3.0
 StorageLoader: added ACCEPTINVCHARS to StorageLoader (#411)
 StorageLoader: wrote JSON Path file for link_click (#599)
