@@ -16,6 +16,7 @@ Tracker Protocol: added screen_view JSON Schema and tests (#590)
 Tracker Protocol: added JSON Schema and tests for custom context (#627)
 Scala Hadoop Shredder: added. Version 0.1.0                                             - TODO
 EmrEtlRunner: bumped to 0.7.0
+EmrEtlRunner: bump Elasticity to 3.0.3 (#665)                                           - TODO
 EmrEtlRunner: updated S3DistCp steps to use new S3DistCpStep from Elasticity (#629)     - TODO
 EmrEtlRunner: added ability to start Spark in EmrEtlRunner (#641)                       - TODO 
 EmrEtlRunner: added ability to start Lingual in EmrEtlRunner (#623)                     - TODO 
