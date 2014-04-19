@@ -86,7 +86,7 @@ module Snowplow
           hadoop_input = config[:s3][:buckets][:processing]
         
         else
-          hadoop_input = "hdfs:///local/snowplow-logs"
+          hadoop_input = "hdfs:///local/snowplow/raw-events"
 
           # Create the Hadoop MR step for the file crushing
           filecrush_step = Elasticity::S3DistCpStep.new(
@@ -112,6 +112,9 @@ module Snowplow
           }
         end
 
+        # We don't write direct to S3 for the enriched events
+        hadoop_output = "hdfs:///local/snowplow/enriched-events"
+
         # We need to partition our output buckets by run ID
         # Note buckets already have trailing slashes
         partition = lambda { |bucket| "#{bucket}run%3D#{run_id}/" } # TODO: s/%3D/=/ when Scalding Args supports it
@@ -122,7 +125,7 @@ module Snowplow
           "--input_folder"      , hadoop_input, # Argument names are "--arguments" too
           "--input_format"      , config[:etl][:collector_format],
           "--maxmind_file"      , assets[:maxmind],
-          "--output_folder"     , partition.call(config[:s3][:buckets][:out]),
+          "--output_folder"     , hadoop_output,
           "--bad_rows_folder"   , partition.call(config[:s3][:buckets][:out_bad_rows]),
           "--anon_ip_quartets"  , self.class.get_anon_ip_octets(config[:enrichments][:anon_ip])
         ]
@@ -137,6 +140,17 @@ module Snowplow
         # Finally add to our jobflow
         @jobflow.add_step(hadoop_step)
 
+        # We need to copy our enriched events from HDFS back to S3
+        copy_to_s3_step = Elasticity::S3DistCpStep.new(
+          :src        => hadoop_output,
+          :dest       => partition.call(config[:s3][:buckets][:out]),
+          :s3Endpoint => config[:s3][:endpoint],
+          :srcPattern => "part-*"
+        )
+
+        # Add to our jobflow
+        @jobflow.add_step(copy_to_s3_step)
+      
         self
       end
 

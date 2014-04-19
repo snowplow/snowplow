@@ -21,7 +21,7 @@ EmrEtlRunner: updated S3DistCp steps to use new S3DistCpStep from Elasticity (#6
 EmrEtlRunner: added ability to start Spark in EmrEtlRunner (#641)                       - TODO 
 EmrEtlRunner: added ability to start Lingual in EmrEtlRunner (#623)                     - TODO 
 EmrEtlRunner: added ability to start HBase in EmrEtlRunner (#622)                       - TODO
-EmrEtlRunner: improved load performance by switching ETL to write out to HDFS (#278)    - TODO
+EmrEtlRunner: improved load performance by switching ETL to write out to HDFS (#278)
 EmrEtlRunner: now invoking Scala Hadoop Shredder after main job (#644)                  - TODO
 EmrEtlRunner: added --skip shred option (#659)                                          - TODO
 StorageLoader: bumped to 0.3.0
