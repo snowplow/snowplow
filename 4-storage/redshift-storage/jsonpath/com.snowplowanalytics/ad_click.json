@@ -10,9 +10,14 @@
     "$.ss.ref_tree",
     "$.ss.ref_parent",
 
-    "$.us.",
-    "$.us.",
-    "$.us.",
-    "$.us."
+    "$.us.click_id",
+    "$.us.impression_id",
+    "$.us.zone_id",
+    "$.us.banner_id",
+    "$.us.campaign_id",
+    "$.us.advertiser_id",
+    "$.us.target_url",
+    "$.us.cost_model",
+    "$.us.cost_if_cpc"
     ]
 }

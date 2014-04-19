@@ -10,9 +10,14 @@
     "$.ss.ref_tree",
     "$.ss.ref_parent",
 
-    "$.us.",
-    "$.us.",
-    "$.us.",
-    "$.us."
+    "$.us.conversion_id",
+    "$.us.campaign_id",
+    "$.us.advertiser_id",
+    "$.us.category",
+    "$.us.action",
+    "$.us.property",
+    "$.us.cost_model",
+    "$.us.cost_if_cpa",
+    "$.us.initial_value"
     ]
 }

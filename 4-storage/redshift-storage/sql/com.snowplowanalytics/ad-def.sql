@@ -59,7 +59,7 @@ CREATE TABLE atomic.com_snowplowanalytics_ad_click (
     advertiser_id varchar(255)   encode runlength,
     target_url    varchar(4096)  encode runlength,
     cost_model    char(3)        encode runlength,
-    cost_if_cpm   decimal(15,10) encode runlength
+    cost_if_cpc   decimal(15,10) encode runlength
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
@@ -78,8 +78,8 @@ CREATE TABLE atomic.com_snowplowanalytics_ad_conversion (
     ref_parent    varchar(255)   encode runlength not null,
     -- Properties of this type
     conversion_id varchar(255)   encode raw,
-    banner_id     varchar(255)   encode raw,
     campaign_id   varchar(255)   encode runlength,
+    advertiser_id varchar(255)   encode runlength,
     category      varchar(255)   encode runlength,
     action        varchar(255)   encode runlength,
     property      varchar(255)   encode runlength,
