@@ -85,9 +85,13 @@ module SnowPlow
         config[:maxmind_asset] = "%sthird-party/maxmind/GeoLiteCity.dat" % asset_host
 
         # Construct path to our Hadoop ETL
-        config[:hadoop_asset] = "%s3-enrich/hadoop-etl/snowplow-hadoop-etl-%s.jar" % [
+        config[:enrich_asset] = "%s3-enrich/hadoop-etl/snowplow-hadoop-etl-%s.jar" % [
                                   config[:s3][:buckets][:assets],
                                   config[:etl][:hadoop_etl_version]
+                                ]
+        config[:shred_asset] = "%s3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-%s.jar" % [
+                                  config[:s3][:buckets][:assets],
+                                  config[:etl][:hadoop_shred_version]
                                 ]
 
         # Should we continue on unexpected error or not?

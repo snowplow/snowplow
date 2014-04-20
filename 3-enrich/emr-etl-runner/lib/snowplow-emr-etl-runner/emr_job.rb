@@ -116,15 +116,14 @@ module Snowplow
         csbe = config[:s3][:buckets][:enriched]
 
         enrich_step = build_scalding_step(
-          config[:hadoop_asset], # TODO fix this
+          config[:enrich_asset],
           "Enrich Raw Events",
           "enrich.hadoop.EtlJob",
           { :in     => enrich_input,
             :good   => enrich_output,
             :bad    => partition_by_run(csbe[:bad],    config[:run_id]),
-            :errors => partition_by_run(csbe[:errors], config[:run_id])
+            :errors => partition_by_run(csbe[:errors], config[:run_id], config[:etl][:continue_on_unexpected_error])
           },
-          config,
           { :input_format     => config[:etl][:collector_format],
             :maxmind_file     => config[:maxmind_asset],
             :anon_ip_quartets => config[:enrichments][:anon_ip_octets]
@@ -150,15 +149,14 @@ module Snowplow
           csbs = config[:s3][:buckets][:shredded]
           
           shredded_step = build_scalding_step(
-            config[:hadoop_asset], # TODO fix this
+            config[:shred_asset],
             "Shred Enriched Events",
             "enrich.hadoop.ShredJob",
             { :in     => enrich_output,
               :good   => shred_output,
               :bad    => partition_by_run(csbs[:bad],    config[:run_id]),
-              :errors => partition_by_run(csbs[:errors], config[:run_id])
-            },
-            config
+              :errors => partition_by_run(csbs[:errors], config[:run_id], config[:etl][:continue_on_unexpected_error])
+            }
           )
           @jobflow.add_step(shredded_step)
 
@@ -202,32 +200,24 @@ module Snowplow
       # +step_name+:: name of step
       # +main_class+:: Java main class to run
       # +folders+:: hash of in, good, bad, errors S3/HDFS folders
-      # +config+:: all config options
       # +extra_step_args+:: additional arguments to pass to the step
       #
       # Returns a step ready for adding to the jobflow.
-      def build_scalding_step(step_name, jar, main_class, folders, config, extra_step_args={})
+      def build_scalding_step(step_name, jar, main_class, folders, extra_step_args={})
 
         # Build our argument hash
         arguments = extra_step_args
           .merge({
             :input_folder      => folders[:in],
             :output_folder     => folders[:good],
-            :bad_rows_folder   => partition.call(folders[:bad]),
-            :exceptions_folder => partition.call(folders[:errors]) if config[:etl][:continue_on_unexpected_error]
+            :bad_rows_folder   => folders[:bad],
+            :exceptions_folder => folders[:errors]
           })
-          .reject { |k, v| v.nil? }
+          .reject { |k, v| v.nil? } # Because folders[:errors] may be empty
 
         # Now create the Hadoop MR step for the jobflow
         scalding_step = ScaldingStep.new(jar, "#{JAVA_PACKAGE}.#{main_class}", arguments)
         scalding_step.name << ": #{step_name}"
-
-        # Add extra configuration (undocumented feature)
-        if config[:emr][:hadoop_step].respond_to?(:each)
-          config[:emr][:hadoop_step].each { |key, value|
-            scalding_step.send("#{key}=", value)
-          }
-        end
 
         scalding_step
       end
@@ -238,11 +228,12 @@ module Snowplow
       # Parameters:
       # +folder+:: the folder to append a run ID folder to
       # +run_id+:: the run ID to append
+      # +retain+:: set to false if this folder should be nillified 
       #
       # Return the folder with a run ID folder appended
-      def partition_by_run(folder, run_id)
+      def partition_by_run(folder, run_id, retain=true)
         # TODO: s/%3D/=/ when Scalding Args supports it
-        "#{folder}run%3D#{run_id}/" }
+        "#{folder}run%3D#{run_id}/" if retain
       end
 
       # Wait for a jobflow.

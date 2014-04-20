@@ -38,6 +38,7 @@
 :etl:
   :job_name: Snowplow ETL # Give your job a name
   :hadoop_etl_version: 0.5.0 # Version of the Hadoop Enrichment process
+  :hadoop_shred_version: 0.1.0 # Version of the Hadoop Shredding process
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
   :continue_on_unexpected_error: false # You can switch to 'true' (and set :out_errors: above) if you really don't want the ETL throwing exceptions
 :enrichments:
