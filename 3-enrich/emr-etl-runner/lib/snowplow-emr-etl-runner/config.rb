@@ -51,6 +51,7 @@ module SnowPlow
         end
 
         # Add trailing slashes if needed to the non-nil buckets
+        # TODO: move this to a procedure and make recursive
         config[:s3][:buckets].reject{|k,v| v.nil?}.update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
 
         # TODO: can we get this functionality for free with Fog?

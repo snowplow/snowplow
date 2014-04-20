@@ -8,12 +8,19 @@
   :buckets:
     :assets: s3://snowplow-hosted-assets # DO NOT CHANGE unless you are hosting the jarfiles etc yourself in your own bucket
     :log: ADD HERE
-    :in: ADD HERE
-    :processing: ADD HERE
-    :out: ADD HERE WITH SUB-FOLDER # e.g. s3://my-out-bucket/events
-    :out_bad_rows: ADD HERE        # e.g. s3://my-out-bucket/bad-rows
-    :out_errors: ADD HERE # Leave blank unless :continue_on_unexpected_error: set to true below
-    :archive: ADD HERE
+    :raw:
+      :in: ADD HERE
+      :processing: ADD HERE
+    :enriched:
+      :good: ADD HERE       # e.g. s3://my-out-bucket/enriched/good
+      :bad: ADD HERE        # e.g. s3://my-out-bucket/enriched/bad
+      :errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
+      :archive: ADD HERE    # e.g. s3://my-archive-bucket/enriched
+    :shredded:
+      :good:                # e.g. s3://my-out-bucket/shredded/good
+      :bad: ADD HERE        # e.g. s3://my-out-bucket/shredded/bad
+      :errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
+      :archive: ADD HERE    # e.g. s3://my-archive-bucket/shredded
 :emr:
   :ami_version: 2.4.2      # Choose as per http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/emr-plan-ami.html
   :region: ADD HERE        # Always set this

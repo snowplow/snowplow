@@ -25,6 +25,9 @@ module Snowplow
   module EmrEtlRunner
     class EmrJob
 
+      # Constants
+      JAVA_PACKAGE = "com.snowplowanalytics.snowplow"
+
       # Need to understand the status of all our jobflow steps
       @@running_states = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
       @@failed_states  = Set.new(%w(FAILED CANCELLED))
@@ -81,16 +84,18 @@ module Snowplow
           @jobflow.set_task_instance_group(instance_group)
         end
 
+        csbr = config[:s3][:buckets][:raw]
+
         # We only consolidate files on HDFS folder for CloudFront currently
         unless config[:etl][:collector_format] == "cloudfront"
-          hadoop_input = config[:s3][:buckets][:processing]
+          hadoop_input = csbr[:processing]
         
         else
           hadoop_input = "hdfs:///local/snowplow/raw-events"
 
           # Create the Hadoop MR step for the file crushing
           filecrush_step = Elasticity::S3DistCpStep.new(
-            :src         => config[:s3][:buckets][:processing],
+            :src         => csbr[:processing],
             :dest        => hadoop_input,
             :groupBy     => ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
             :targetSize  => "128",
@@ -102,40 +107,23 @@ module Snowplow
           @jobflow.add_step(filecrush_step)
         end
 
-        # Now create the Hadoop MR step for the jobflow
-        hadoop_step = Elasticity::CustomJarStep.new(assets[:hadoop])
-
-        # Add extra configuration (undocumented feature)
-        if config[:emr][:hadoop_step].respond_to?(:each)
-          config[:emr][:hadoop_step].each { |key, value|
-            hadoop_step.send("#{key}=", value)
-          }
-        end
-
         # We don't write direct to S3 for the enriched events
         hadoop_output = "hdfs:///local/snowplow/enriched-events"
+        csbe = config[:s3][:buckets][:enriched]
 
-        # We need to partition our output buckets by run ID
-        # Note buckets already have trailing slashes
-        partition = lambda { |bucket| "#{bucket}run%3D#{run_id}/" } # TODO: s/%3D/=/ when Scalding Args supports it
-
-        hadoop_step.arguments = [
-          "com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob", # Job to run
-          "--hdfs", # Always --hdfs mode, never --local
-          "--input_folder"      , hadoop_input, # Argument names are "--arguments" too
-          "--input_format"      , config[:etl][:collector_format],
-          "--maxmind_file"      , assets[:maxmind],
-          "--output_folder"     , hadoop_output,
-          "--bad_rows_folder"   , partition.call(config[:s3][:buckets][:out_bad_rows]),
-          "--anon_ip_quartets"  , self.class.get_anon_ip_octets(config[:enrichments][:anon_ip])
-        ]
-
-        # Conditionally add exceptions_folder
-        if config[:etl][:continue_on_unexpected_error]
-          hadoop_step.arguments.concat [
-            "--exceptions_folder" , partition.call(config[:s3][:buckets][:out_errors])
+        enrich_step = build_scalding_step(
+          "enrich.hadoop.EtlJob",
+          [ :in     => hadoop_input,
+            :good   => hadoop_output,
+            :bad    => partition_by_run(csbe[:bad],    config[:run_id]),
+            :errors => partition_by_run(csbe[:errors], config[:run_id])
           ]
-        end
+          config,
+          [ :input_format     => config[:etl][:collector_format],
+            :maxmind_file     => config[:maxmind_asset],
+            :anon_ip_quartets => config[:enrichments][:anon_ip_octets]
+          ]
+        )
 
         # Finally add to our jobflow
         @jobflow.add_step(hadoop_step)
@@ -143,7 +131,7 @@ module Snowplow
         # We need to copy our enriched events from HDFS back to S3
         copy_to_s3_step = Elasticity::S3DistCpStep.new(
           :src        => hadoop_output,
-          :dest       => partition.call(config[:s3][:buckets][:out]),
+          :dest       => partition_by_run(csbe[:good], config[:run_id]),
           :s3Endpoint => config[:s3][:endpoint],
           :srcPattern => "part-*"
         )
@@ -177,6 +165,62 @@ module Snowplow
       end
 
     private
+
+      # Defines a Scalding data processing job as an Elasticity
+      # jobflow step.
+      #
+      # Parameters:
+      # +main_class+:: Java main class to run
+      # +folders+:: hash of in, good, bad, errors S3/HDFS folders
+      # +config+:: all config options
+      # +extra_step_args+:: additional arguments to pass to the step
+      #
+      # Returns a step ready for adding to the jobflow.
+      def build_scalding_step(main_class, folders, config, extra_step_args)
+
+        # Now create the Hadoop MR step for the jobflow
+        scalding_step = Elasticity::CustomJarStep.new(config[:hadoop_asset])
+
+        # Add extra configuration (undocumented feature)
+        if config[:emr][:hadoop_step].respond_to?(:each)
+          config[:emr][:hadoop_step].each { |key, value|
+            scalding_step.send("#{key}=", value)
+          }
+        end
+
+        scalding_step.arguments = [
+          "#{JAVA_PACKAGE}.#{main_class}",                           # Job to run
+          "--hdfs",                                                  # Always --hdfs mode, never --local
+          # Argument names are "--arguments" too
+          "--input_folder"        , folders[:in],                    # HDFS
+          "--output_folder"       , folders[:good],                  # HDFS
+          "--bad_rows_folder"     , partition.call(folders[:bad])    # S3, so partition with run ID
+        ]
+
+        # Conditionally add exceptions_folder
+        if config[:etl][:continue_on_unexpected_error]
+          scalding_step.arguments.concat [
+            "--exceptions_folder" , partition.call(folders[:errors]) # S3, so partition with run ID
+          ]
+        end
+
+        scalding_step.concat(extra_step_args)
+
+        scalding_step
+      end
+
+      # We need to partition our output buckets by run ID
+      # Note buckets already have trailing slashes
+      #
+      # Parameters:
+      # +folder+:: the folder to append a run ID folder to
+      # +run_id+:: the run ID to append
+      #
+      # Return the folder with a run ID folder appended
+      def partition_by_run(folder, run_id)
+        # TODO: s/%3D/=/ when Scalding Args supports it
+        "#{folder}run%3D#{run_id}/" }
+      end
 
       # Wait for a jobflow.
       # Check its status every 5 minutes till it completes.
