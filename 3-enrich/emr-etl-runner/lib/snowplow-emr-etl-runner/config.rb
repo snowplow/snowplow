@@ -50,7 +50,6 @@ module SnowPlow
         # Add trailing slashes if needed to the non-nil buckets
         config[:s3][:buckets] = fix_buckets(config[:s3][:buckets])
 
-        # TODO: can we get this functionality for free with Fog?
         if config[:s3][:region] == "us-east-1"
           config[:s3][:endpoint] = "s3.amazonaws.com"
         else
@@ -190,17 +189,20 @@ module SnowPlow
 
       # Fix (non-nil) bucket names by adding a trailing slash
       def fix_buckets(buckets)
-        # TODO: doesn't work
+
+        b = {}
         buckets.each { |k, v|
-          case v
-          when nil
-            nil
-          when String
-            Sluice::Storage::trail_slash(v)
-          when Hash
-            fix_buckets(v)
-          end
+          b[k] = 
+            case v
+            when String
+              Sluice::Storage::trail_slash(v)
+            when Hash
+              fix_buckets(v)
+            else
+              v
+            end
         }
+        b
       end
       module_function :fix_buckets
 
