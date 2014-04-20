@@ -18,8 +18,8 @@ Scala Hadoop Shredder: added. Version 0.1.0                                     
 EmrEtlRunner: bumped to 0.7.0
 EmrEtlRunner: bumped Elasticity to 3.0.3 (#665)
 EmrEtlRunner: updated S3DistCp steps to use new S3DistCpStep from Elasticity (#629)
-EmrEtlRunner: added ability to start Lingual in EmrEtlRunner (#623)                     - TODO 
-EmrEtlRunner: added ability to start HBase in EmrEtlRunner (#622)                       - TODO
+EmrEtlRunner: added ability to start Lingual in EmrEtlRunner (#623)
+EmrEtlRunner: added ability to start HBase in EmrEtlRunner (#622)
 EmrEtlRunner: improved load performance by switching ETL to write out to HDFS (#278)
 EmrEtlRunner: now invoking Scala Hadoop Shredder after main job (#644)
 EmrEtlRunner: added --skip shred option (#659)

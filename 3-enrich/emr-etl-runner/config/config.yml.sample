@@ -27,9 +27,9 @@
   :placement: ADD HERE     # Set this if not running in VPC. Leave blank otherwise
   :ec2_subnet_id: ADD HERE # Set this if running in VPC. Leave blank otherwise
   :ec2_key_name: ADD HERE
-  :with_software:
-    :hbase: false
-    :lingual: false
+  :software:
+    :hbase: false          # Or version, 0.92.0
+    :lingual: false        # Or version, 1.1
   # Adjust your Hadoop cluster below
   :jobflow:
     :master_instance_type: m1.small

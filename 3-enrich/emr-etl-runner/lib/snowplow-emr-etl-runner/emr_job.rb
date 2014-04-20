@@ -66,6 +66,24 @@ module Snowplow
         @jobflow.master_instance_type = config[:emr][:jobflow][:master_instance_type]
         @jobflow.slave_instance_type  = config[:emr][:jobflow][:core_instance_type]
 
+        hbase = config[:emr][:software][:hbase]
+        unless not hbase
+          install_hbase_action = Elasticity::BootstrapAction.new("s3://#{config[:s3][:region]}.elasticmapreduce/bootstrap-actions/setup-hbase")
+          @jobflow.add_bootstrap_action(install_hbase_action)
+
+          start_hbase_step = Elasticity::CustomJarStep.new('/home/hadoop/lib/hbase-#{hbase}.jar')
+          start_hbase_step.name = "Start HBase #{hbase}"
+          start_hbase_step.arguments = [ 'emr.hbase.backup.Main', '--start-master' ]
+          @jobflow.add_step(start_hbase_step)
+        end
+
+        # Install Lingual
+        lingual = config[:emr][:software][:lingual]
+        unless not lingual
+          install_lingual_action = Elasticity::BootstrapAction.new("s3://files.concurrentinc.com/lingual/#{lingual}lingual-client/install-lingual-client.sh")
+          @jobflow.add_bootstrap_action(install_lingual_action)
+        end
+
         # Now let's add our task group if required
         tic = config[:emr][:jobflow][:task_instance_count]
         if tic > 0
