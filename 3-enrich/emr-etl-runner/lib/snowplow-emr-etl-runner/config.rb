@@ -189,10 +189,20 @@ module SnowPlow
       module_function :parse_args
 
       # Fix (non-nil) bucket names by adding a trailing slash
-      # TODO: make this work with nested buckets
       def fix_buckets(buckets)
-        buckets.reject{|k,v| v.nil?}.update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
+        # TODO: doesn't work
+        buckets.each { |k, v|
+          case v
+          when nil
+            nil
+          when String
+            Sluice::Storage::trail_slash(v)
+          when Hash
+            fix_buckets(v)
+          end
+        }
       end
+      module_function :fix_buckets
 
     end
   end
