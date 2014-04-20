@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,22 +10,25 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-# Ruby 1.9.2 onwards doesn't add . into $LOAD_PATH by default - use require_relative instead
-require_relative 'snowplow-emr-etl-runner/errors'
-require_relative 'snowplow-emr-etl-runner/logging'
-require_relative 'snowplow-emr-etl-runner/contracts'
-require_relative 'snowplow-emr-etl-runner/cli'
-require_relative 'snowplow-emr-etl-runner/s3_tasks'
-require_relative 'snowplow-emr-etl-runner/scalding_step'
-require_relative 'snowplow-emr-etl-runner/emr_job'
-require_relative 'snowplow-emr-etl-runner/runner'
+require 'elasticity'
 
-module Snowplow
+module SnowPlow
   module EmrEtlRunner
-    NAME          = "snowplow-emr-etl-runner"
-    VERSION       = "0.7.0"
+
+    class ScaldingStep < Elasticity::CustomJarStep
+
+      def initialize(jar, main_class, options)
+        @name = 'Elasticity Scalding Step'
+        @jar = jar
+        @arguments = [ main_class, '--hdfs' ]
+        options.each do |argument, value|
+          @arguments << "--#{argument}" << value
+        end
+      end
+    end
+
   end
 end

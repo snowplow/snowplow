@@ -86,15 +86,17 @@ module Snowplow
 
         csbr = config[:s3][:buckets][:raw]
 
+        # 1. Compaction to HDFS
+
         # We only consolidate files on HDFS folder for CloudFront currently
         unless config[:etl][:collector_format] == "cloudfront"
-          hadoop_input = csbr[:processing]
+          enrich_input = csbr[:processing]
         
         else
-          hadoop_input = "hdfs:///local/snowplow/raw-events"
+          enrich_input = "hdfs:///local/snowplow/raw-events"
 
           # Create the Hadoop MR step for the file crushing
-          filecrush_step = Elasticity::S3DistCpStep.new(
+          compact_to_hdfs_step = Elasticity::S3DistCpStep.new(
             :src         => csbr[:processing],
             :dest        => hadoop_input,
             :groupBy     => ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
@@ -102,45 +104,72 @@ module Snowplow
             :outputCodec => "lzo",
             :s3Endpoint  => config[:s3][:endpoint]
           )
+          compact_to_hdfs_step.name << ": Raw S3 -> HDFS"
 
           # Add to our jobflow
-          @jobflow.add_step(filecrush_step)
+          @jobflow.add_step(compact_to_hdfs_step)
         end
 
-        # We don't write direct to S3 for the enriched events
-        hadoop_output = "hdfs:///local/snowplow/enriched-events"
+        # 2. Enrichment
+
+        enrich_output = "hdfs:///local/snowplow/enriched-events"
         csbe = config[:s3][:buckets][:enriched]
 
         enrich_step = build_scalding_step(
+          config[:hadoop_asset], # TODO fix this
+          "Enrich Raw Events",
           "enrich.hadoop.EtlJob",
-          [ :in     => hadoop_input,
-            :good   => hadoop_output,
+          { :in     => enrich_input,
+            :good   => enrich_output,
             :bad    => partition_by_run(csbe[:bad],    config[:run_id]),
             :errors => partition_by_run(csbe[:errors], config[:run_id])
-          ]
+          },
           config,
-          [ :input_format     => config[:etl][:collector_format],
+          { :input_format     => config[:etl][:collector_format],
             :maxmind_file     => config[:maxmind_asset],
             :anon_ip_quartets => config[:enrichments][:anon_ip_octets]
-          ]
+          }
         )
-
-        # Finally add to our jobflow
-        @jobflow.add_step(hadoop_step)
+        @jobflow.add_step(enrich_step)
 
         # We need to copy our enriched events from HDFS back to S3
         copy_to_s3_step = Elasticity::S3DistCpStep.new(
-          :src        => hadoop_output,
+          :src        => enrich_output,
           :dest       => partition_by_run(csbe[:good], config[:run_id]),
-          :s3Endpoint => config[:s3][:endpoint],
-          :srcPattern => "part-*"
+          :srcPattern => "part-*",
+          :s3Endpoint => config[:s3][:endpoint]
         )
-
-        # Add to our jobflow
+        copy_to_s3_step.name << ": Enriched HDFS -> S3"
         @jobflow.add_step(copy_to_s3_step)
 
+        # 3. Shredding
+
         unless config[:skip].include?('shred')
-          # Add shredding code
+          
+          shred_output = "hdfs:///local/snowplow/shredded-events"
+          csbs = config[:s3][:buckets][:shredded]
+          
+          shredded_step = build_scalding_step(
+            config[:hadoop_asset], # TODO fix this
+            "Shred Enriched Events",
+            "enrich.hadoop.ShredJob",
+            { :in     => enrich_output,
+              :good   => shred_output,
+              :bad    => partition_by_run(csbs[:bad],    config[:run_id]),
+              :errors => partition_by_run(csbs[:errors], config[:run_id])
+            },
+            config
+          )
+          @jobflow.add_step(shredded_step)
+
+          copy_to_s3_step = Elasticity::S3DistCpStep.new(
+            :src        => shred_output,
+            :dest       => partition_by_run(csbs[:good], config[:run_id]),
+            :srcPattern => "part-*",
+            :s3Endpoint => config[:s3][:endpoint]
+          )
+          copy_to_s3_step.name << ": Shredded HDFS -> S3"
+          @jobflow.add_step(copy_to_s3_step)
         end
 
         self
@@ -170,16 +199,28 @@ module Snowplow
       # jobflow step.
       #
       # Parameters:
+      # +step_name+:: name of step
       # +main_class+:: Java main class to run
       # +folders+:: hash of in, good, bad, errors S3/HDFS folders
       # +config+:: all config options
       # +extra_step_args+:: additional arguments to pass to the step
       #
       # Returns a step ready for adding to the jobflow.
-      def build_scalding_step(main_class, folders, config, extra_step_args)
+      def build_scalding_step(step_name, jar, main_class, folders, config, extra_step_args={})
+
+        # Build our argument hash
+        arguments = extra_step_args
+          .merge({
+            :input_folder      => folders[:in],
+            :output_folder     => folders[:good],
+            :bad_rows_folder   => partition.call(folders[:bad]),
+            :exceptions_folder => partition.call(folders[:errors]) if config[:etl][:continue_on_unexpected_error]
+          })
+          .reject { |k, v| v.nil? }
 
         # Now create the Hadoop MR step for the jobflow
-        scalding_step = Elasticity::CustomJarStep.new(config[:hadoop_asset])
+        scalding_step = ScaldingStep.new(jar, "#{JAVA_PACKAGE}.#{main_class}", arguments)
+        scalding_step.name << ": #{step_name}"
 
         # Add extra configuration (undocumented feature)
         if config[:emr][:hadoop_step].respond_to?(:each)
@@ -187,24 +228,6 @@ module Snowplow
             scalding_step.send("#{key}=", value)
           }
         end
-
-        scalding_step.arguments = [
-          "#{JAVA_PACKAGE}.#{main_class}",                           # Job to run
-          "--hdfs",                                                  # Always --hdfs mode, never --local
-          # Argument names are "--arguments" too
-          "--input_folder"        , folders[:in],                    # HDFS
-          "--output_folder"       , folders[:good],                  # HDFS
-          "--bad_rows_folder"     , partition.call(folders[:bad])    # S3, so partition with run ID
-        ]
-
-        # Conditionally add exceptions_folder
-        if config[:etl][:continue_on_unexpected_error]
-          scalding_step.arguments.concat [
-            "--exceptions_folder" , partition.call(folders[:errors]) # S3, so partition with run ID
-          ]
-        end
-
-        scalding_step.concat(extra_step_args)
 
         scalding_step
       end
