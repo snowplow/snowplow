@@ -27,9 +27,6 @@ module SnowPlow
       @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
       @@storage_formats = Set.new(%w(hive redshift mysql-infobright))
 
-      # TODO: would be nice to move this to using Kwalify
-      # TODO: would be nice to support JSON as well as YAML
-
       # Return the configuration loaded from the supplied YAML file, plus
       # the additional constants above.
       def get_config()
@@ -51,8 +48,7 @@ module SnowPlow
         end
 
         # Add trailing slashes if needed to the non-nil buckets
-        # TODO: move this to a procedure and make recursive
-        config[:s3][:buckets].reject{|k,v| v.nil?}.update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
+        config[:s3][:buckets] = fix_buckets(config[:s3][:buckets])
 
         # TODO: can we get this functionality for free with Fog?
         if config[:s3][:region] == "us-east-1"
@@ -191,6 +187,12 @@ module SnowPlow
         options
       end
       module_function :parse_args
+
+      # Fix (non-nil) bucket names by adding a trailing slash
+      # TODO: make this work with nested buckets
+      def fix_buckets(buckets)
+        buckets.reject{|k,v| v.nil?}.update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
+      end
 
     end
   end
