@@ -30,12 +30,12 @@ import common.outputs.CanonicalOutput
  * Holds helpers for running integration
  * tests on SnowPlow EtlJobs.
  */
-object JobTestHelpers {
+object JobSpecHelpers {
 
   /**
    * The current version of our Hadoop ETL
    */
-  val EtlVersion = "hadoop-0.4.0-common-0.2.0"
+  val EtlVersion = "hadoop-0.4.0-common-0.3.0"
 
   /**
    * Fields in our CanonicalOutput which are unmatchable
@@ -43,17 +43,11 @@ object JobTestHelpers {
   private val UnmatchableFields = List("event_id")
 
   /**
-   * Fields in our CanonicalOutput which are discarded
-   */
-  private val DiscardedFields = List("page_url", "page_referrer")
-
-  /**
    * The names of the fields written out
    */
   lazy val OutputFields = classOf[CanonicalOutput]
       .getDeclaredFields
       .map(_.getName)
-      .filter(f => !DiscardedFields.contains(f))
 
   /**
    * User-friendly wrapper to instantiate
@@ -143,8 +137,8 @@ object JobTestHelpers {
    */
   implicit def Lines2ScaldingLines(lines : Lines): ScaldingLines = lines.numberedLines 
 
-  // Standard JobTest definition used by all integration tests
-  val EtlJobTest: (String, String) => JobTest = (collector, anonQuartets) => 
+  // Standard JobSpec definition used by all integration tests
+  val EtlJobSpec: (String, String) => JobTest = (collector, anonQuartets) => 
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob").
       arg("input_folder", "inputFolder").
       arg("input_format", collector).

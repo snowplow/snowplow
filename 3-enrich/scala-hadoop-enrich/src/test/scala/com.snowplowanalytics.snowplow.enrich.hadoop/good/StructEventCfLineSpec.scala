@@ -27,71 +27,75 @@ import com.twitter.scalding._
 import cascading.tuple.TupleEntry
 
 // This project
-import JobTestHelpers._
+import JobSpecHelpers._
 
 /**
  * Holds the input and expected data
  * for the test.
  */
-object TransactionItemCfLineTest {
+object StructEventCfLineSpec {
 
   val lines = Lines(
-    "2012-05-27  11:35:53  DFW3  3343  255.255.255.255 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/internal/_session/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=ti&ti_id=order-123&ti_sk=PBZ1001&ti_na=Blue%20t-shirt&ti_ca=APPAREL&ti_pr=2000&ti_qu=2&dtm=1364177017342&tid=851830&duid=a279872d76480afb&vid=1&aid=CFe23a&lang=en-GB&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F119-psycards-book-and-deck-starter-pack.html%3Fview%3Dprint%23detail"
+    "2012-05-27  11:35:53  DFW3  3343  128.232.0.0 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/internal/_session/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=se&se_ca=ecomm&se_ac=add-to-basket&se_la=PBZ00110&se_pr=1&se_va=35708.23&dtm=1364230969450&tid=598951&evn=com.snowplowanalytics&vp=2560x934&ds=2543x1420&vid=43&duid=9795bd0203804cd1&p=web&tv=js-0.11.1&fp=2876815413&aid=pbzsite&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2F&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=2560x1440&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F119-psycards-book-and-deck-starter-pack.html%3Fview%3Dprint%23detail"
     )
 
   val expected = List(
-    "CFe23a",
-    null, // Not set (legacy input line)
+    "pbzsite",
+    "web",
     "2012-05-27 11:35:53.000",
-    "2013-03-25 02:03:37.342",
-    "transaction_item",
+    "2013-03-25 17:02:49.450",
+    "struct",
     "com.snowplowanalytics",
     null, // We can't predict the event_id
-    "851830",
-    null, // Not set (legacy input line)
+    "598951",
+    null, // No tracker namespace
+    "js-0.11.1",
     "cloudfront",
     EtlVersion,
     null, // No user_id set
-    "255.255.255.255",
-    null, // Not set (legacy input line)
-    "a279872d76480afb",
-    "1",
+    "128.232.0.0",
+    "2876815413",
+    "9795bd0203804cd1",
+    "43",
     null, // No network_userid set
-    null, // No geo-location for this IP address
+    "GB", // UK geo-location
+    "C3",
+    "Cambridge",
     null,
-    null,
-    null,
-    null,
-    null,
-    // Raw page URL is discarded 
-    null, // No page title for transactions
-    // Raw referer URL is discarded
+    "52.199997",
+    "0.11669922",
+    "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail",
+    null, // No page title for events
+    "http://www.psychicbazaar.com/",
     "http",
     "www.psychicbazaar.com",
     "80",
     "/oracles/119-psycards-book-and-deck-starter-pack.html",
     "view=print",
     "detail",
-    null, // No referrer URL components
-    null, //
-    null, //
-    null, //
-    null, //
-    null, //
-    null, // No referrer details
-    null, //
-    null, //
+    "http",
+    "www.psychicbazaar.com",
+    "80",
+    "/",
+    null,
+    null,
+    "internal", // Internal referer
+    null,
+    null,
     null, // No marketing campaign info
     null, //
     null, //
     null, //
     null, //
+    null, // No custom contexts
+    "ecomm",         // Structured event fields are set
+    "add-to-basket", //
+    "PBZ00110",      //
+    "1",             //
+    "35708.23",      //
     null, // Unstructured event fields empty
     null, //
-    null, //
-    null, //
-    null, //
-    null, // Transaction fields empty 
+    null, // Transaction fields empty
     null, //
     null, //
     null, //
@@ -99,12 +103,12 @@ object TransactionItemCfLineTest {
     null, //
     null, //
     null, //
-    "order-123",    // Transaction item fields are set
-    "PBZ1001",      //
-    "Blue t-shirt", //
-    "APPAREL",      //
-    "2000",         //
-    "2",            //
+    null, // Transaction item fields empty
+    null, //
+    null, //
+    null, //
+    null, //
+    null, //
     null, // Page ping fields are empty
     null, //
     null, //
@@ -116,50 +120,50 @@ object TransactionItemCfLineTest {
     "Browser",
     "GECKO",
     "en-GB",
-    "0",
     "1",
     "1",
-    "0",
-    "1",
-    "0",
     "1",
     "0",
     "0",
+    "0",
+    "0",
+    "0",
     "1",
-    null, // Not set (legacy input lines)
-    null, //
-    null, //
+    "1",
+    "32",
+    "2560",
+    "934",
     "Windows",
     "Windows",
     "Microsoft Corporation",
-    null, // Not set (legacy input line)
+    "Europe/London",
     "Computer",
     "0",
-    "1920",
-    "1080",
-    null, // Not set (legacy input lines)
-    null, //
-    null  //
+    "2560",
+    "1440",
+    "UTF-8",
+    "2543",
+    "1420"
     )
 }
 
 /**
  * Integration test for the EtlJob:
  *
- * Check that all tuples in a transaction event
+ * Check that all tuples in a custom structured event
  * (CloudFront format) are successfully extracted.
  */
-class TransactionItemCfLineTest extends Specification {
+class StructEventCfLineSpec extends Specification {
 
-  "A job which processes a CloudFront file containing 1 valid transaction item" should {
-    EtlJobTest("cloudfront", "0").
-      source(MultipleTextLineFiles("inputFolder"), TransactionItemCfLineTest.lines).
+  "A job which processes a CloudFront file containing 1 valid custom structured event" should {
+    EtlJobSpec("cloudfront", "0").
+      source(MultipleTextLineFiles("inputFolder"), StructEventCfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
-        "correctly output 1 transaction item" in {
+        "correctly output 1 custom structured event" in {
           buf.size must_== 1
           val actual = buf.head
-          for (idx <- TransactionItemCfLineTest.expected.indices) {
-            actual.getString(idx) must beFieldEqualTo(TransactionItemCfLineTest.expected(idx), withIndex = idx)
+          for (idx <- StructEventCfLineSpec.expected.indices) {
+            actual.getString(idx) must beFieldEqualTo(StructEventCfLineSpec.expected(idx), withIndex = idx)
           }
         }
       }.

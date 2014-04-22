@@ -1,16 +1,43 @@
-Version 0.9.1 (2014-03-XX)
+Version 0.9.1 (2014-04-11)
 --------------------------
 Scala Hadoop Enrich: bumped to 0.4.0
-Scala Hadoop Enrich: bumped to Scala Common Enrich 0.3.0 (#497) - TODO (so far bumped to 0.2.0)
+Scala Hadoop Enrich: bumped to Scala Common Enrich 0.3.0 (#497)
 Scala Hadoop Enrich: renamed AnonQuartets to AnonOctets (#498)
-Scala Hadoop Enrich: renamed all Snowplow Hadoop Tests to Specs (#515) - TODO
-Scala Hadoop Enrich: renamed CloudFront to Cloudfront in code (#496) - TODO
-Scala Common Enrich: bumped to 0.3.0 - TODO
-Scala Common Enrich: added tests for getLoader function (#588) - TODO
-Scala Common Enrich: ...
-Scala Stream Collector: bumped to 0.2.0 - TODO
-Scala Stream Collector: replaced stream list with describe to tighten permissions, thanks @pkallos (#535) - TODO
-Scala Stream Collector: added support for IAM roles, thanks @pkallos (#534) - TODO
+Scala Hadoop Enrich: renamed all Snowplow Hadoop Tests to Specs (#515)
+Scala Hadoop Enrich: added page_url and page_referrer back into ETL's output (#483)
+Scala Common Enrich: bumped to 0.3.0
+Scala Common Enrich: bumped Argonaut to 6.0.3 (#620) 
+Scala Common Enrich: added app and mob as valid platform codes, thanks @kinabalu! (#524)
+Scala Common Enrich: added support for remaining platform codes (#516)
+Scala Common Enrich: updated POJO in Scalding ETL to include new unstructured fields (#362)
+Scala Common Enrich: updated POJO in Scalding ETL to include name_tracker field (#595)
+Scala Common Enrich: extract evn from Tracker Protocol (#604)
+Scala Common Enrich: extract tna from Tracker Protocol (#616)
+Scala Common Enrich: extract and validate unstructured events (#142)
+Scala Common Enrich: extract and validate custom contexts (#426)
+Scala Common Enrich: reformat incoming event and context JSONs (#589) 
+Scala Common Enrich: make sure to error a JSON if > length (#567)
+EmrEtlRunner: bumped to 0.6.0
+EmrEtlRunner: bumped Elasticity to 3.0.2 (#587)
+EmrEtlRunner: allowed AWS VPC selection in EmrEtlRunner (#581)
+EmrEtlRunner: set :visible_to_all_users to true for EMR jobs, thanks @smugryan! (#560)
+Redshift: atomic-def script bumped to 0.3.0
+Redshift: migration script added for 0.2.2 to 0.3.0
+Redshift: added new unstructured fields to Redshift table definition (#361)
+Redshift: changed distkey to be event_id, not domain_userid (#584)
+Redshift: added raw page_url and page_referrer into Redshift table (#591)
+Redshift: added name_tracker field to Redshift table (#594)
+Redshift: converted Redshift varchar(38) for event IDs to char(36) (#282)
+Postgres: atomic-def script bumped to 0.2.0
+Postgres: migration script added for 0.1.x to 0.2.0
+Postgres: added new unstructured fields to Postgres table definition (#359)
+Postgres: added raw page_url and page_referrer into Postgres table (#592)
+Postgres: added name_tracker field to Postgres table (#593)
+Postgres: converted varchar(36) for event IDs to char(36) (#596)
+StorageLoader: bumped to 0.2.0
+StorageLoader: added TIMEFORMAT 'auto' to StorageLoader to handle outlier dvce_timestamps (#427)
+JavaScript Tracker: bumped git submodule to 1.0.1 (#585)
+Python Tracker: added git submodule pointing to 0.1.0 (#586)
 
 Version 0.9.0 (2014-02-04)
 --------------------------

@@ -27,17 +27,17 @@ import com.twitter.scalding._
 import cascading.tuple.TupleEntry
 
 // This project
-import JobTestHelpers._
+import JobSpecHelpers._
 
 /**
  * Holds the input and expected data
  * for the test.
  */
-object Aug2013CfLineTest {
+object Aug2013CfLineSpec {
 
   // August 2013: Amazon broke the CloudFront access log file format. They stopped double-encoding the querystring
   val lines = Lines(
-    "2013-08-29	00:18:48	LAX3	830	255.255.255.255	GET	d3v6ndkyapxc2w.cloudfront.net	/i	200	http://snowplowanalytics.com/analytics/index.html	Mozilla/5.0%20(Windows%20NT%205.1;%20rv:23.0)%20Gecko/20100101%20Firefox/23.0	e=pv&page=Introduction%20-%20Snowplow%20Analytics%25&dtm=1377735557970&tid=567074&vp=1024x635&ds=1024x635&vid=1&duid=7969620089de36eb&p=web&tv=js-0.12.0&fp=308909339&aid=snowplowweb&lang=en-US&cs=UTF-8&tz=America%2FLos_Angeles&refr=http%3A%2F%2Fwww.metacrawler.com%2Fsearch%2Fweb%3Ffcoid%3D417%26fcop%3Dtopnav%26fpid%3D27%26q%3Dsnowplow%2Banalytics%26ql%3D&f_pdf=1&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1024x768&cd=24&cookie=1&url=http%3A%2F%2Fsnowplowanalytics.com%2Fanalytics%2Findex.html	-	Hit	wQ1OBZtQlGgfM_tPEJ-lIQLsdra0U-lXgmfJfwja2KAV_SfTdT3lZg=="
+    "2013-08-29	00:18:48	LAX3	830	255.255.255.255	GET	d3v6ndkyapxc2w.cloudfront.net	/i	200	http://snowplowanalytics.com/analytics/index.html	Mozilla/5.0%20(Windows%20NT%205.1;%20rv:23.0)%20Gecko/20100101%20Firefox/23.0	e=pv&page=Introduction%20-%20Snowplow%20Analytics%25&dtm=1377735557970&tid=567074&vp=1024x635&ds=1024x635&vid=1&tna=main&duid=7969620089de36eb&p=web&tv=js-0.12.0&fp=308909339&aid=snowplowweb&lang=en-US&cs=UTF-8&tz=America%2FLos_Angeles&refr=http%3A%2F%2Fwww.metacrawler.com%2Fsearch%2Fweb%3Ffcoid%3D417%26fcop%3Dtopnav%26fpid%3D27%26q%3Dsnowplow%2Banalytics%26ql%3D&f_pdf=1&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1024x768&cd=24&cookie=1&url=http%3A%2F%2Fsnowplowanalytics.com%2Fanalytics%2Findex.html	-	Hit	wQ1OBZtQlGgfM_tPEJ-lIQLsdra0U-lXgmfJfwja2KAV_SfTdT3lZg=="
     )
 
   val expected = List(
@@ -46,9 +46,10 @@ object Aug2013CfLineTest {
     "2013-08-29 00:18:48.000",
     "2013-08-29 00:19:17.970",
     "page_view",
-    "com.snowplowanalytics",
+    null, // No event vendor set
     null, // We can't predict the event_id
     "567074",
+    "main", // Tracker namespace
     "js-0.12.0",
     "cloudfront",
     EtlVersion,
@@ -64,9 +65,9 @@ object Aug2013CfLineTest {
     null,
     null,
     null,
-    // Raw page URL is discarded 
+    "http://snowplowanalytics.com/analytics/index.html",
     "Introduction - Snowplow Analytics%",
-    // Raw referer URL is discarded
+    "http://www.metacrawler.com/search/web?fcoid=417&fcop=topnav&fpid=27&q=snowplow+analytics&ql=",
     "http",
     "snowplowanalytics.com",
     "80",
@@ -87,12 +88,15 @@ object Aug2013CfLineTest {
     null, //
     null, //
     null, //
-    null, // Event fields empty
+    null, // No custom contexts
+    null, // Structured event fields empty
     null, //
     null, //
     null, //
     null, //
-    null, // Transaction fields empty 
+    null, // Unstructured event fields empty
+    null, //
+    null, // Transaction fields empty
     null, //
     null, //
     null, //
@@ -154,17 +158,17 @@ object Aug2013CfLineTest {
  * For details:
  * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
  */
-class Aug2013CfLineTest extends Specification {
+class Aug2013CfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid page view" should {
-    EtlJobTest("cloudfront", "0").
-      source(MultipleTextLineFiles("inputFolder"), Aug2013CfLineTest.lines).
+    EtlJobSpec("cloudfront", "0").
+      source(MultipleTextLineFiles("inputFolder"), Aug2013CfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {
           buf.size must_== 1
           val actual = buf.head
-          for (idx <- Aug2013CfLineTest.expected.indices) {
-            actual.getString(idx) must beFieldEqualTo(Aug2013CfLineTest.expected(idx), withIndex = idx)
+          for (idx <- Aug2013CfLineSpec.expected.indices) {
+            actual.getString(idx) must beFieldEqualTo(Aug2013CfLineSpec.expected(idx), withIndex = idx)
           }
         }
       }.

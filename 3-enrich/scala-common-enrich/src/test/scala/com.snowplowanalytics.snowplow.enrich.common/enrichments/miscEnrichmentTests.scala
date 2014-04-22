@@ -31,7 +31,7 @@ class EtlVersionTest extends MutSpecification {
 
   "The ETL version" should {
     "be successfully returned" in {
-      MiscEnrichments.etlVersion("hadoop-0.3.6") must_== "hadoop-0.3.6-common-0.2.0"
+      MiscEnrichments.etlVersion("hadoop-0.4.0") must_== "hadoop-0.4.0-common-0.3.0"
     }
   }
 }
@@ -51,6 +51,12 @@ class ExtractPlatformTest extends Specification with DataTables {
   def e1 =
     "SPEC NAME"                      || "INPUT VAL" | "EXPECTED OUTPUT" |
     "valid web"                      !! "web"       ! "web".success     |
+    "valid mobile/tablet"            !! "mob"       ! "mob".success     |
+    "valid desktop/laptop/netbook"   !! "pc"        ! "pc".success      |
+    "valid server-side app"          !! "srv"       ! "srv".success     |
+    "valid general app"              !! "app"       ! "app".success     |
+    "valid connected TV"             !! "tv"        ! "tv".success      |
+    "valid games console"            !! "cnsl"      ! "cnsl".success    |
     "valid iot (internet of things)" !! "iot"       ! "iot".success     |
     "invalid empty"                  !! ""          !  err("").fail     |
     "invalid null"                   !! null        !  err(null).fail   |

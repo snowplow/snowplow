@@ -9,17 +9,17 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.3.0
+-- Version:     Ports version 0.2.2 to version 0.3.0
 -- URL:         -
 --
--- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep
--- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
+-- Authors:     Alex Dean
+-- Copyright:   Copyright (c) 2014 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
--- Create the schema
-CREATE SCHEMA atomic;
+-- First rename the existing table (don't delete it)
+ALTER TABLE atomic.events RENAME TO events_022;
 
--- Create events table
+-- Create new events table
 CREATE TABLE atomic.events (
 	-- App
 	app_id varchar(255) encode text255,
@@ -151,3 +151,112 @@ CREATE TABLE atomic.events (
 DISTSTYLE KEY
 DISTKEY (event_id)                                     -- Changed from domain_userid in 0.3.0
 SORTKEY (collector_tstamp);
+
+-- Now copy into new from events_old
+INSERT INTO atomic.events
+	SELECT
+	app_id,
+	platform,
+	collector_tstamp,
+	dvce_tstamp,
+	event,
+	event_vendor,
+	event_id,                                          -- Changed from varchar(38) in 0.2.0
+	txn_id,
+	NULL AS name_tracker,                              --  Added in 0.2.0
+	v_tracker,
+	v_collector,
+	v_etl,
+	user_id,
+	user_ipaddress,
+	user_fingerprint,
+	domain_userid,
+	domain_sessionidx,
+	network_userid,
+	geo_country,
+	geo_region,
+	geo_city,
+	geo_zipcode,
+	geo_latitude,
+	geo_longitude,
+	NULL AS page_url,                                  -- Added in 0.2.0
+	page_title,
+	NULL AS page_referrer,                             -- Added in 0.2.0
+	page_urlscheme,
+	page_urlhost,
+	page_urlport,
+	page_urlpath,
+	page_urlquery,
+	page_urlfragment,
+	refr_urlscheme,
+	refr_urlhost,
+	refr_urlport,
+	refr_urlpath,
+	refr_urlquery,
+	refr_urlfragment,
+	refr_medium,
+	refr_source,
+	refr_term,
+	mkt_medium,
+	mkt_source,
+	mkt_term,
+	mkt_content,
+	mkt_campaign,
+	NULL AS contexts,                                  -- Added in 0.2.0
+	se_category,
+	se_action,
+	se_label,
+	se_property,
+	se_value,
+	NULL AS ue_name,                                   -- Added in 0.2.0
+	NULL AS ue_properties,                             -- Added in 0.2.0
+	tr_orderid,
+	tr_affiliation,
+	tr_total,
+	tr_tax,
+	tr_shipping,
+	tr_city,
+	tr_state,
+	tr_country,
+	ti_orderid,
+	ti_sku,
+	ti_name,
+	ti_category,
+	ti_price,
+	ti_quantity,
+	pp_xoffset_min,
+	pp_xoffset_max,
+	pp_yoffset_min,
+	pp_yoffset_max,
+	useragent,
+	br_name,
+	br_family,
+	br_version,
+	br_type,
+	br_renderengine,
+	br_lang,
+	br_features_pdf,
+	br_features_flash,
+	br_features_java,
+	br_features_director,
+	br_features_quicktime,
+	br_features_realplayer,
+	br_features_windowsmedia,
+	br_features_gears,
+	br_features_silverlight,
+	br_cookies,
+	br_colordepth,
+	br_viewwidth,
+	br_viewheight,
+	os_name,
+	os_family,
+	os_manufacturer,
+	os_timezone,
+	dvce_type,
+	dvce_ismobile,
+	dvce_screenwidth,
+	dvce_screenheight,
+	doc_charset,
+	doc_width,
+	doc_height
+    FROM atomic.events_022;

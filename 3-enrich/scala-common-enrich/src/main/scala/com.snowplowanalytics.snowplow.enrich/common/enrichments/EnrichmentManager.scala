@@ -31,6 +31,7 @@ import inputs.{CanonicalInput, NvGetPayload}
 import outputs.CanonicalOutput
 
 import utils.{ConversionUtils => CU}
+import utils.{JsonUtils => JU}
 import utils.MapTransformer._
 
 import enrichments.{EventEnrichments => EE}
@@ -82,7 +83,6 @@ object EnrichmentManager {
     val event = new CanonicalOutput().tap { e =>
       e.collector_tstamp = EE.toTimestamp(raw.timestamp)
       e.event_id = EE.generateEventId
-      e.event_vendor = "com.snowplowanalytics" // TODO: this should be moved to Tracker Protocol
       e.v_collector = raw.source.collector // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
       raw.ipAddress.map(ip => e.user_ipaddress = PE.anonymizeIp(ip, anonOctets))
@@ -126,11 +126,17 @@ object EnrichmentManager {
 
     // 2b. Failable enrichments using the payload
 
+    // Partially apply functions which need an encoding, to create a TransformFunc
+    val MaxJsonLength = 10000
+    val extractUrlEncJson: TransformFunc = JU.extractUrlEncJson(MaxJsonLength, raw.encoding, _, _)
+    val extractBase64EncJson: TransformFunc = JU.extractBase64EncJson(MaxJsonLength, _, _)
+
     // We use a TransformMap which takes the format:
     // "source key" -> (transformFunction, field(s) to set)
     // Caution: by definition, a TransformMap loses type safety. Always unit test!
     val transformMap: TransformMap =
       Map(("e"       , (EE.extractEventType, "event")),
+          ("evn"     , (ME.toTsvSafe, "event_vendor")),
           ("ip"      , (ME.toTsvSafe, "user_ipaddress")),
           ("aid"     , (ME.toTsvSafe, "app_id")),
           ("p"       , (ME.extractPlatform, "platform")),
@@ -141,6 +147,7 @@ object EnrichmentManager {
           ("fp"      , (ME.toTsvSafe, "user_fingerprint")),
           ("vid"     , (CU.stringToJInteger, "domain_sessionidx")),
           ("dtm"     , (EE.extractTimestamp, "dvce_tstamp")),
+          ("tna"     , (ME.toTsvSafe, "name_tracker")),
           ("tv"      , (ME.toTsvSafe, "v_tracker")),
           ("cv"      , (ME.toTsvSafe, "v_collector")),
           ("lang"    , (ME.toTsvSafe, "br_lang")),
@@ -163,17 +170,24 @@ object EnrichmentManager {
           ("cs"      , (ME.toTsvSafe, "doc_charset")),
           ("ds"      , (CE.extractViewDimensions, ("doc_width", "doc_height"))),
           ("vp"      , (CE.extractViewDimensions, ("br_viewwidth", "br_viewheight"))),
+          // Custom contexts
+          ("co"   , (extractUrlEncJson, "contexts")),
+          ("cx"   , (extractBase64EncJson, "contexts")),
           // Custom structured events
-          ("ev_ca"   , (ME.toTsvSafe, "se_category")),   // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_ac"   , (ME.toTsvSafe, "se_action")),     // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_la"   , (ME.toTsvSafe, "se_label")),      // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_pr"   , (ME.toTsvSafe, "se_property")),   // LEGACY tracker var. TODO: Remove in late 2013
-          ("ev_va"   , (CU.stringToDoublelike, "se_value")), // LEGACY tracker var. TODO: Remove in late 2013
+          ("ev_ca"   , (ME.toTsvSafe, "se_category")),   // LEGACY tracker var. Leave for backwards compat
+          ("ev_ac"   , (ME.toTsvSafe, "se_action")),     // LEGACY tracker var. Leave for backwards compat
+          ("ev_la"   , (ME.toTsvSafe, "se_label")),      // LEGACY tracker var. Leave for backwards compat
+          ("ev_pr"   , (ME.toTsvSafe, "se_property")),   // LEGACY tracker var. Leave for backwards compat
+          ("ev_va"   , (CU.stringToDoublelike, "se_value")), // LEGACY tracker var. Leave for backwards compat
           ("se_ca"   , (ME.toTsvSafe, "se_category")),
           ("se_ac"   , (ME.toTsvSafe, "se_action")),
           ("se_la"   , (ME.toTsvSafe, "se_label")),
           ("se_pr"   , (ME.toTsvSafe, "se_property")),
           ("se_va"   , (CU.stringToDoublelike, "se_value")),
+          // Custom unstructured events
+          ("ue_na"   , (ME.toTsvSafe, "ue_name")),
+          ("ue_pr"   , (extractUrlEncJson, "ue_properties")),
+          ("ue_px"   , (extractBase64EncJson, "ue_properties")),
           // Ecommerce transactions
           ("tr_id"   , (ME.toTsvSafe, "tr_orderid")),
           ("tr_af"   , (ME.toTsvSafe, "tr_affiliation")),

@@ -60,6 +60,11 @@ object EtlJobConfig {
    */
   private def getMaxmindUri(maxmindFile: String): Validation[String, URI] = {
 
+    // TODO: fix compiler warning, match may not be exhaustive.
+    // [warn] It would fail on the following input: None
+    // [warn]     ConversionUtils.stringToUri(maxmindFile).flatMap(_ match {
+    // [warn]                                                      ^
+    // [warn] there were 1 feature warning(s); re-run with -feature for details
     ConversionUtils.stringToUri(maxmindFile).flatMap(_ match {
       case Some(u) => u.success
       case None => "URI to MaxMind file must be provided".fail

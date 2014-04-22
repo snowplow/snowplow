@@ -24,18 +24,18 @@ import com.twitter.scalding._
 import cascading.tuple.TupleEntry
 
 // This project
-import JobTestHelpers._
+import JobSpecHelpers._
 
 /**
  * Holds the input data for the test
  */
-object DiscardableCfLinesTest {
+object DiscardableCfLinesSpec {
 
   val lines = Lines(
     "#Version: 1.0",
     "#Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status cs(Referer) cs(User-Agent) cs-uri-query",
     "2012-05-24  11:35:53  DFW3  3343  99.116.172.58 GET d3gs014xn8p70.cloudfront.net  /not-ice.png  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=5 Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  e=pv&page=Tarot%2520cards%2520-%2520Psychic%2520Bazaar&tid=344260&uid=288112e0a5003be2&vid=1&lang=en-US&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fp%253D4&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1366x768&cookie=1"
-    )  
+    )
 }
 
 /**
@@ -44,11 +44,11 @@ object DiscardableCfLinesTest {
  * CloudFront-format rows which should
  * be discarded.
  */
-class DiscardableCfLinesTest extends Specification {
+class DiscardableCfLinesSpec extends Specification {
 
   "A job which processes expected but discardable CloudFront input lines" should {
-    EtlJobTest("cloudfront", "0").
-      source(MultipleTextLineFiles("inputFolder"), DiscardableCfLinesTest.lines).
+    EtlJobSpec("cloudfront", "0").
+      source(MultipleTextLineFiles("inputFolder"), DiscardableCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output =>
         "not write any events" in {
           output must beEmpty

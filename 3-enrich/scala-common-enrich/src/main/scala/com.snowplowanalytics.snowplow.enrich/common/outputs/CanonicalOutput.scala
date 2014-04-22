@@ -53,6 +53,7 @@ class CanonicalOutput {
   @BeanProperty var txn_id: String = _
 
   // Versioning
+  @BeanProperty var name_tracker: String = _
   @BeanProperty var v_tracker: String = _
   @BeanProperty var v_collector: String = _
   @BeanProperty var v_etl: String = _
@@ -74,9 +75,9 @@ class CanonicalOutput {
   @BeanProperty var geo_longitude: JFloat = _
 
   // Page
-  @BeanProperty var page_url: String = _ // Note: we project this out in Scalding (because we don't have space in Redshift currently)
+  @BeanProperty var page_url: String = _
   @BeanProperty var page_title: String = _
-  @BeanProperty var page_referrer: String = _ // Note: we project this out in Scalding (because we don't have space in Redshift currently)
+  @BeanProperty var page_referrer: String = _
 
   // Page URL components
   @BeanProperty var page_urlscheme: String = _  
@@ -106,12 +107,19 @@ class CanonicalOutput {
   @BeanProperty var mkt_content: String = _
   @BeanProperty var mkt_campaign: String = _
 
-  // Event
+  // Custom Contexts
+  @BeanProperty var contexts: String = _
+
+  // Structured Event
   @BeanProperty var se_category: String = _
   @BeanProperty var se_action: String = _
   @BeanProperty var se_label: String = _
   @BeanProperty var se_property: String = _
   @BeanProperty var se_value: String = _ // Technically should be a Double but may be rendered incorrectly by Cascading with scientific notification (which Redshift can't process)
+
+  // Unstructured Event
+  @BeanProperty var ue_name: String = _
+  @BeanProperty var ue_properties: String = _
 
   // Ecommerce transaction (from querystring)
   @BeanProperty var tr_orderid: String = _

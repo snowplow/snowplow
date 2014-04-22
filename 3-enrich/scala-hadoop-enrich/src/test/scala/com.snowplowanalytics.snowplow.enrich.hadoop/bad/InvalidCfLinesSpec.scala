@@ -24,14 +24,14 @@ import com.twitter.scalding._
 import cascading.tuple.TupleEntry
 
 // This project
-import JobTestHelpers._
+import JobSpecHelpers._
 
 /**
  * Holds the input data for the test,
  * plus a lambda to create the expected
  * output.
  */
-object InvalidCfLinesTest {
+object InvalidCfLinesSpec {
 
   val lines = Lines(
     "",
@@ -48,11 +48,11 @@ object InvalidCfLinesTest {
  * Input data _is_ not in the
  * expected CloudFront format.
  */
-class InvalidCfLinesTest extends Specification {
+class InvalidCfLinesSpec extends Specification {
 
   "A job which processes input lines not in CloudFront format" should {
-    EtlJobTest("cloudfront", "0").
-      source(MultipleTextLineFiles("inputFolder"), InvalidCfLinesTest.lines).
+    EtlJobSpec("cloudfront", "0").
+      source(MultipleTextLineFiles("inputFolder"), InvalidCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output =>
         "not write any events" in {
           output must beEmpty
@@ -66,7 +66,7 @@ class InvalidCfLinesTest extends Specification {
       sink[String](JsonLine("badFolder")){ json =>
         "write a bad row JSON with input line and error message for each input line" in {
           for (i <- json.indices) {
-            json(i) must_== InvalidCfLinesTest.expected(InvalidCfLinesTest.lines(i)._2)
+            json(i) must_== InvalidCfLinesSpec.expected(InvalidCfLinesSpec.lines(i)._2)
           }
         }
       }.

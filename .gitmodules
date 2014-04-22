@@ -7,3 +7,6 @@
 [submodule "1-trackers/javascript-tracker"]
 	path = 1-trackers/javascript-tracker
 	url = https://github.com/snowplow/snowplow-javascript-tracker
+[submodule "1-trackers/python-tracker"]
+	path = 1-trackers/python-tracker
+	url = https://github.com/snowplow/snowplow-python-tracker

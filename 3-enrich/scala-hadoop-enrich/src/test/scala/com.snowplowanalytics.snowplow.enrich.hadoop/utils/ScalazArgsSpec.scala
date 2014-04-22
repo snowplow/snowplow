@@ -27,9 +27,9 @@ import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
 /**
- * Tests the explodeUri function
+ * Specs the explodeUri function
  */
-class ScalazArgsTest extends Specification with DataTables with ValidationMatchers { def is =
+class ScalazArgsSpec extends Specification with DataTables with ValidationMatchers { def is =
 
   "This is a specification to test the ScalazArgs functionality"  ^
                                                                  p^
