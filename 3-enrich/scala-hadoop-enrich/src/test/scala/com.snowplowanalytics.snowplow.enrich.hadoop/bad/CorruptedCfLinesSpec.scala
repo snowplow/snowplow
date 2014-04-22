@@ -18,7 +18,10 @@ package bad
 import org.specs2.mutable.Specification
 
 // Scalding
-import com.twitter.scalding._
+import com.twitter.scalding.{
+  Tsv,
+  MultipleTextLineFiles
+}
 
 // Cascading
 import cascading.tuple.TupleEntry
@@ -46,12 +49,15 @@ object CorruptedCfLinesSpec {
  * access log format, but the fields
  * are somehow corrupted.
  */
-class CorruptedCfLinesSpec extends Specification with TupleConversions {
+class CorruptedCfLinesSpec extends Specification {
+
+  // TODO: find a better way to do this
+  // val JsonLine = LocalJsonLine
 
   "A job which processes a corrupted input line" should {
     EtlJobSpec("cloudfront", "0").
       source(MultipleTextLineFiles("inputFolder"), CorruptedCfLinesSpec.lines).
-      sink[String](Tsv("outputFolder")){ output => 
+      sink[String](Tsv("outputFolder")){ output =>
         "not write any events" in {
           output must beEmpty
         }
@@ -61,7 +67,7 @@ class CorruptedCfLinesSpec extends Specification with TupleConversions {
           trap must beEmpty
         }
       }.
-      sink[String](JsonLine("badFolder")){ buf =>
+      sink[String](LocalJsonLine("badFolder")){ buf =>
         val json = buf.head
         "write a bad row JSON containing the input line and all errors" in {
           json must_== CorruptedCfLinesSpec.expected

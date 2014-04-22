@@ -96,7 +96,7 @@ object Oct2013CfLineSpec {
     null, //
     null, // Unstructured event fields empty
     null, //
-    null, // Transaction fields empty 
+    null, // Transaction fields empty
     null, //
     null, //
     null, //
@@ -158,7 +158,7 @@ object Oct2013CfLineSpec {
  * For details:
  * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
  */
-class Oct2013CfLineSpec extends Specification with TupleConversions {
+class Oct2013CfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid page ping" should {
     EtlJobSpec("cloudfront", "0").

@@ -95,7 +95,7 @@ object TransactionItemCfLineSpec {
     null, //
     null, // Unstructured event fields empty
     null, //
-    null, // Transaction fields empty 
+    null, // Transaction fields empty
     null, //
     null, //
     null, //
@@ -153,7 +153,7 @@ object TransactionItemCfLineSpec {
  * Check that all tuples in a transaction event
  * (CloudFront format) are successfully extracted.
  */
-class TransactionItemCfLineSpec extends Specification with TupleConversions {
+class TransactionItemCfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid transaction item" should {
     EtlJobSpec("cloudfront", "0").

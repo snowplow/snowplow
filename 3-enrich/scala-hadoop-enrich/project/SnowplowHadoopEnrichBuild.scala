@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -33,12 +33,15 @@ object SnowplowHadoopEnrichBuild extends Build {
         // Scala
         Libraries.scaldingCore,
         Libraries.scaldingArgs,
+        Libraries.scaldingCommons,
+        Libraries.scaldingJson,
         Libraries.scalaz7,
         Libraries.snowplowRawEvent,
         Libraries.commonEnrich,
         // Scala (test only)
         Libraries.specs2,
-        Libraries.scalazSpecs2
+        Libraries.scalazSpecs2,
+        Libraries.compress
       )
     )
 }

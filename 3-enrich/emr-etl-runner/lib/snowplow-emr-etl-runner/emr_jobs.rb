@@ -47,6 +47,17 @@ module SnowPlow
         @jobflow.enable_debugging = config[:debug]
         @jobflow.visible_to_all_users = true
 
+        # Add bootstap action
+        # Ideal buffer size for S3 and look in user classpath first
+        if config[:etl][:collector_format] == 'thrift-raw'
+            [
+              Elasticity::HadoopBootstrapAction.new('-s', 'io.file.buffer.size=65536'),
+              Elasticity::HadoopBootstrapAction.new('-m', 'mapreduce.user.classpath.first=true')
+            ].each do |action|
+              @jobflow.add_bootstrap_action(action)
+            end
+        end
+
         # Add extra configuration
         if config[:emr][:jobflow].respond_to?(:each)
           config[:emr][:jobflow].each { |key, value|
@@ -76,7 +87,7 @@ module SnowPlow
         # We only consolidate files on HDFS folder for CloudFront currently
         unless config[:etl][:collector_format] == "cloudfront"
           hadoop_input = config[:s3][:buckets][:processing]
-        
+
         else
           hadoop_input = "hdfs:///local/snowplow-logs"
 

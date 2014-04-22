@@ -95,7 +95,7 @@ object StructEventCfLineSpec {
     "35708.23",      //
     null, // Unstructured event fields empty
     null, //
-    null, // Transaction fields empty 
+    null, // Transaction fields empty
     null, //
     null, //
     null, //
@@ -153,7 +153,7 @@ object StructEventCfLineSpec {
  * Check that all tuples in a custom structured event
  * (CloudFront format) are successfully extracted.
  */
-class StructEventCfLineSpec extends Specification with TupleConversions {
+class StructEventCfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid custom structured event" should {
     EtlJobSpec("cloudfront", "0").

@@ -60,7 +60,7 @@ object MasterCfLinesSpec {
  * Master test which runs using all of the
  * individual good, bad and misc tests
  */
-class MasterCfLinesSpec extends Specification with TupleConversions {
+class MasterCfLinesSpec extends Specification {
 
   "A job which processes a CloudFront file containing 10 valid events, 6 bad lines and 3 discardable lines" should {
     EtlJobSpec("cloudfront", "0"). // Technically CljTomcatLineSpec isn't CloudFront format but won't break this test

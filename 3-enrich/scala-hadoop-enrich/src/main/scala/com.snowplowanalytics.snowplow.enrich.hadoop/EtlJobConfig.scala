@@ -111,7 +111,7 @@ object EtlJobConfig {
     val badFolder = args.requiredz("bad_rows_folder")
     val anonOctets = args.requiredz("anon_ip_quartets").flatMap(q => getAnonOctets(q))
     val exceptionsFolder = args.optionalz("exceptions_folder")
-    
+
     (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| anonOctets.toValidationNel |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_) }
   }
 }

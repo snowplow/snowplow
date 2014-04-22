@@ -25,9 +25,17 @@ import Scalaz._
 
 // Scalding
 import com.twitter.scalding._
+import com.twitter.scalding.commons.source._
+
+// Cascading
+import cascading.tuple.Fields
+import cascading.tap.SinkMode
+import cascading.pipe.Pipe
 
 // Scala MaxMind GeoIP
 import com.snowplowanalytics.maxmind.geoip.IpGeo
+
+import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
 
 // Snowplow Common Enrich
 import common._
@@ -44,7 +52,7 @@ import generated.ProjectSettings
 /**
  * Holds constructs to help build the ETL job's data
  * flow (see below).
- */ 
+ */
 object EtlJob {
 
   /**
@@ -68,34 +76,6 @@ object EtlJob {
   }
 
   /**
-   * A helper to source the MaxMind data file we 
-   * use for IP location -> geo-location lookups
-   *
-   * How we source the MaxMind data file depends
-   * on whether we are running locally or on HDFS:
-   *
-   * 1. On HDFS - source the file at `hdfsPath`,
-   *    add it to Hadoop's distributed cache and
-   *    return the symlink
-   * 2. On local (test) - find the copy of the
-   *    file on our resource path (downloaded for
-   *    us by SBT) and return that path
-   *
-   * @param fileUri The URI to the Maxmind GeoLiteCity.dat file
-   * @return the path to the Maxmind GeoLiteCity.dat to use
-   */
-  def installIpGeoFile(fileUri: URI): String = {
-    jobConfOption match {
-      case Some(conf) => {   // We're on HDFS
-        val hdfsPath = FileUtils.sourceFile(conf, fileUri).valueOr(e => throw FatalEtlError(e))
-        FileUtils.addToDistCache(conf, hdfsPath, "geoip")
-      }
-      case None =>           // We're in local mode
-        getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
-    }
-  }
-
-  /**
    * A helper to create the new IpGeo object.
    *
    * @param ipGeoFile The path to the MaxMind GeoLiteCity.dat file
@@ -104,25 +84,17 @@ object EtlJob {
   def createIpGeo(ipGeoFile: String): IpGeo =
     IpGeo(ipGeoFile, memCache = true, lruCache = 20000)
 
-  /** 
+  /**
    * Generate our "host ETL" version string.
    * @return our version String
    */
   val etlVersion = "hadoop-%s" format ProjectSettings.version
-
-  // This should really be in Scalding
-  private def jobConfOption(implicit mode: Mode): Option[Configuration] = {
-    mode match {
-      case Hdfs(_, conf) => Option(conf)
-      case _ => None
-    }
-  }
 }
 
 /**
  * The SnowPlow ETL job, written in Scalding
  * (the Scala DSL on top of Cascading).
- */ 
+ */
 class EtlJob(args: Args) extends Job(args) {
 
   // Job configuration. Scalaz recommends using fold()
@@ -137,26 +109,42 @@ class EtlJob(args: Args) extends Job(args) {
     e => throw FatalEtlError(e),
     c => c).asInstanceOf[CollectorLoader[Any]]
 
-  val ipGeoFile = EtlJob.installIpGeoFile(etlConfig.maxmindFile)
+  val ipGeoFile = installIpGeoFile(etlConfig.maxmindFile)
   lazy val ipGeo = EtlJob.createIpGeo(ipGeoFile)
 
   // Aliases for our job
-  val input = MultipleTextLineFiles(etlConfig.inFolder).read
+  val inputPipe = getInputPipe(etlConfig.inFormat, etlConfig.inFolder)
   val goodOutput = Tsv(etlConfig.outFolder)
-  val badOutput = JsonLine(etlConfig.badFolder)
+
+  // TODO: find a better way to do this
+  val badOutput = jobConfOption match {
+    case Some(conf: Configuration) => JsonLine(etlConfig.badFolder)
+    case None => LocalJsonLine(etlConfig.badFolder)
+  }
+
+  // TODO: remove this when common-enrich ThriftLoader
+  // is able to convert SnowPlowRawEvents
+  lazy val serializer = new org.apache.thrift.TSerializer();
 
   // Do we add a failure trap?
   val trappableInput = etlConfig.exceptionsFolder match {
-    case Some(folder) => input.addTrap(Tsv(folder))
-    case None => input
+    case Some(folder) => inputPipe.addTrap(Tsv(folder))
+    case None => inputPipe
   }
 
   // Scalding data pipeline
   // TODO: let's fix this Any typing
-  val common = trappableInput
-    .map('line -> 'output) { l: Any =>
-      EtlJob.toCanonicalOutput(ipGeo, etlConfig.anonOctets, loader.toCanonicalInput(l))
+  val common = inputPipe.map('line -> 'output) { l: Any => {
+    // TODO: remove this hack and change ThriftLoader to convert
+    // SnowplowRawEvent instead of Array[Byte]
+    val b = {
+      if (l.isInstanceOf[SnowplowRawEvent])
+        serializer.serialize(l.asInstanceOf[SnowplowRawEvent])
+      else l
     }
+
+    EtlJob.toCanonicalOutput(ipGeo, etlConfig.anonOctets, loader.asInstanceOf[CollectorLoader[Any]].toCanonicalInput(b))
+  }}
 
   // Handle bad rows
   val bad = common
@@ -177,4 +165,57 @@ class EtlJob(args: Args) extends Job(args) {
     }
     .unpackTo[CanonicalOutput]('good -> '*)
     .write(goodOutput)
+
+  /**
+   * A helper to source the MaxMind data file we
+   * use for IP location -> geo-location lookups
+   *
+   * How we source the MaxMind data file depends
+   * on whether we are running locally or on HDFS:
+   *
+   * 1. On HDFS - source the file at `hdfsPath`,
+   *    add it to Hadoop's distributed cache and
+   *    return the symlink
+   * 2. On local (test) - find the copy of the
+   *    file on our resource path (downloaded for
+   *    us by SBT) and return that path
+   *
+   * @param fileUri The URI to the Maxmind GeoLiteCity.dat file
+   * @return the path to the Maxmind GeoLiteCity.dat to use
+   */
+  def installIpGeoFile(fileUri: URI): String = {
+    jobConfOption match {
+      case Some(conf: Configuration) => {   // We're on HDFS
+        val hdfsPath = FileUtils.sourceFile(conf, fileUri).valueOr(e => throw FatalEtlError(e))
+        FileUtils.addToDistCache(conf, hdfsPath, "geoip")
+      }
+      case None =>           // We're in local mode
+        getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
+    }
+  }
+
+
+  // This should really be in Scalding
+  private def jobConfOption(): Option[Configuration] = {
+    implicitly[Mode] match {
+      case Hdfs(_, conf) => Option[Configuration](conf)
+      case _ => None
+    }
+  }
+
+  private def getInputPipe(format: String, path: String): Pipe = {
+    import TDsl._
+    format match {
+      case "thrift-raw" => LzoThriftSource(path).toPipe('line)
+      case _ => MultipleTextLineFiles(path).read
+    }
+  }
+}
+
+object LocalJsonLine {
+  def apply(p: String, fields: Fields = Fields.ALL) = new LocalJsonLine(p, fields)
+}
+
+class LocalJsonLine(p: String, fields: Fields) extends JsonLine(p, fields, SinkMode.REPLACE) {
+  override val transformInTest = true
 }

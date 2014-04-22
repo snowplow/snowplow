@@ -24,7 +24,7 @@ module SnowPlow
   module EmrEtlRunner
     module Config
 
-      @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
+      @@collector_formats = Set.new(%w(cloudfront clj-tomcat thrift-raw))
       @@storage_formats = Set.new(%w(hive redshift mysql-infobright))
 
       # TODO: would be nice to move this to using Kwalify
@@ -66,7 +66,7 @@ module SnowPlow
         config[:emr][:jobflow].delete_if {|k, _| k.to_s.start_with?("core_") }
 
         # Validate the collector format
-        unless @@collector_formats.include?(config[:etl][:collector_format]) 
+        unless @@collector_formats.include?(config[:etl][:collector_format])
           raise ConfigError, "collector_format '%s' not supported" % config[:etl][:collector_format]
         end
 
@@ -136,7 +136,7 @@ module SnowPlow
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
           opts.on('-s', '--skip staging,emr,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
-          opts.on('-b', '--process-bucket BUCKET', 'run emr only on specified bucket. Implies --skip staging,archive') { |config| 
+          opts.on('-b', '--process-bucket BUCKET', 'run emr only on specified bucket. Implies --skip staging,archive') { |config|
             options[:processbucket] = config
             options[:skip] = %w(staging archive)
           }

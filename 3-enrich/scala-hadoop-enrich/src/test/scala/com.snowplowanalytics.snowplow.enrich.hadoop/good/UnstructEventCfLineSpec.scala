@@ -153,7 +153,7 @@ object UnstructEventCfLineSpec {
  * Check that all tuples in a custom unstructured event
  * (CloudFront format) are successfully extracted.
  */
-class UnstructEventCfLineSpec extends Specification with TupleConversions {
+class UnstructEventCfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid custom unstructured event" should {
     EtlJobSpec("cloudfront", "0").

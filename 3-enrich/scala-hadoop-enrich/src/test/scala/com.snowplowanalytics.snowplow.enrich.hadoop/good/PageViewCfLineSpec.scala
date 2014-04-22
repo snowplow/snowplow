@@ -95,7 +95,7 @@ object PageViewCfLineSpec {
     null, //
     null, // Unstructured event fields empty
     null, //
-    null, // Transaction fields empty 
+    null, // Transaction fields empty
     null, //
     null, //
     null, //
@@ -153,7 +153,7 @@ object PageViewCfLineSpec {
  * Check that all tuples in a raw page view event
  * (CloudFront format) are successfully extracted.
  */
-class PageViewCfLineSpec extends Specification with TupleConversions {
+class PageViewCfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid page view event" should {
     EtlJobSpec("cloudfront", "1"). // Anonymize 1 IP address quartet

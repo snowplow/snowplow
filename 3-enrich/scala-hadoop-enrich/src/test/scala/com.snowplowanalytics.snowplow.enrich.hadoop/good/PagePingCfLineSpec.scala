@@ -95,7 +95,7 @@ object PagePingCfLineSpec {
     null, //
     null, // Unstructured event fields empty
     null, //
-    null, // Transaction fields empty 
+    null, // Transaction fields empty
     null, //
     null, //
     null, //
@@ -154,7 +154,7 @@ object PagePingCfLineSpec {
  * (CloudFront format) are successfully
  * extracted.
  */
-class PagePingCfLineSpec extends Specification with TupleConversions {
+class PagePingCfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid page ping" should {
     EtlJobSpec("cloudfront", "0").
