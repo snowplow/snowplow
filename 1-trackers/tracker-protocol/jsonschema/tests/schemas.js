@@ -3,12 +3,12 @@ define([
 	'intern!object',
 	'intern/chai!expect',
 	'intern/dojo/node!z-schema',
-	'intern/dojo/node!../contexts/custom_contexts',
-	'intern/dojo/node!../events/ad_impression',
-	'intern/dojo/node!../events/ad_click',
-	'intern/dojo/node!../events/ad_conversion',
-	'intern/dojo/node!../events/link_click',
-	'intern/dojo/node!../events/screen_view'
+	'intern/dojo/node!../com.snowplowanalytics/custom_contexts',
+	'intern/dojo/node!../com.snowplowanalytics/ad_impression',
+	'intern/dojo/node!../com.snowplowanalytics/ad_click',
+	'intern/dojo/node!../com.snowplowanalytics/ad_conversion',
+	'intern/dojo/node!../com.snowplowanalytics/link_click',
+	'intern/dojo/node!../com.snowplowanalytics/screen_view'
 ], function(registerSuite, expect, ZSchema, customContexts, adImpression, adClick, adConversion, linkClick, screenView) {
 
 	var schemas = [customContexts, adImpression, adClick, adConversion, linkClick, screenView],
