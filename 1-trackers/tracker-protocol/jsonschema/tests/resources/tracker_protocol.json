@@ -1,0 +1,78 @@
+{
+	"name": "link_click",
+	"valid": [
+		{
+			"duid": "aeb1691c5a0ee5a6",
+			"vid": "2",
+			"tid": "508780",
+			"aid": "pbzsite",
+			"p": "web",
+			"e": "pv",
+			"url": "http%3A%2F%2Ftest.psybazaar.com%2F2-tarot-cards",
+			"page": "Tarot%20cards",
+			"refr": "http%3A%2F%2Ftest.psybazaar.com%2F",
+			"lang": "en-US",
+			"fp": "3511643688",
+			"f_pdf": "1",
+			"f_qt": "0",
+			"cd": "32",
+			"cookie": "1",
+			"tz": "Europe%20London",
+			"evn": "com.snowplowanalytics",
+			"tv": "js-2.0.0"
+		},
+		{
+			"e": "ue",
+			"tv": "py-0.3.0",
+			"evn": "com.acme_company",
+			"p": "mob"
+		},
+		{
+			"e": "ti",
+			"tv": "rb-0.1.0",
+			"evn": "com.snowplowanalytics",
+			"p": "mob",
+			"cx": "eyJhIjogeyJiIjogImMifX0=",
+			"cv": "com.acme_company"
+		}
+	],
+	"invalid":  [
+			{
+			"duid": "aeb1691c5a0ee5a6",
+			"vid": 2,
+			"tid": "508780",
+			"aid": "pbzsite",
+			"p": "web",
+			"e": "pv",
+			"url": "http%3A%2F%2Ftest.psybazaar.com%2F2-tarot-cards",
+			"page": "Tarot%20cards",
+			"refr": "http%3A%2F%2Ftest.psybazaar.com%2F",
+			"lang": "en-US",
+			"fp": 3511643688,
+			"f_pdf": 1,
+			"f_qt": 0,
+			"cd": 32,
+			"cookie": 1,
+			"tz": "Europe%20London",
+			"evn": "com.snowplowanalytics",
+			"tv": "js-2.0.0"
+		},
+		{
+			"e": "ue",
+			"tv": "py-0.3.0",
+			"evn": "com.acme_company",
+			"p": null
+		},
+		{
+			"e": "ti",
+			"tv": "rb-0.1.0",
+			"evn": "com.snowplowanalytics",
+			"p": "mob",
+			"cx": {"social": {"id": "843892347710"}},
+			"cv": "com.acme_company"
+		},
+		{
+
+		}
+	]
+}

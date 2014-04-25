@@ -1,0 +1,228 @@
+{
+	"$schema": "http://json-schema.org/schema#",
+	"description": "Schema for a Snowplow payload",
+	"type": "object",
+	"properties": {
+		"tna": {
+			"type": "string"
+		},
+		"evn": {
+			"type": "string"
+		},
+		"aid": {
+			"type": "string"
+		},
+		"p": {
+			"type": "string"
+		},
+		"dtm": {
+			"type": "string"
+		},
+		"tz": {
+			"type": "string"
+		},
+		"e": {
+			"type": "string"
+		},
+		"tid": {
+			"type": "string"
+		},
+		"tv": {
+			"type": "string"
+		},
+		"duid": {
+			"type": "string"
+		},
+		"nuid": {
+			"type": "string"
+		},
+		"uid": {
+			"type": "string"
+		},
+		"vid": {
+			"type": "string"
+		},
+		"ip": {
+			"type": "string"
+		},
+		"res": {
+			"type": "string"
+		},
+		"url": {
+			"type": "string"
+		},
+		"page": {
+			"type": "string"
+		},
+		"refr": {
+			"type": "string"
+		},
+		"fp": {
+			"type": "string"
+		},
+		"ctype": {
+			"type": "string"
+		},
+		"cookie": {
+			"type": "string"
+		},
+		"lang": {
+			"type": "string"
+		},
+		"f_pdf": {
+			"type": "string"
+		},
+		"f_qt": {
+			"type": "string"
+		},
+		"f_realp": {
+			"type": "string"
+		},
+		"f_wma": {
+			"type": "string"
+		},
+		"f_dir": {
+			"type": "string"
+		},
+		"f_fla": {
+			"type": "string"
+		},
+		"f_java": {
+			"type": "string"
+		},
+		"f_gears": {
+			"type": "string"
+		},
+		"f_ag": {
+			"type": "string"
+		},
+		"cd": {
+			"type": "string"
+		},
+		"ds": {
+			"type": "string"
+		},
+		"cs": {
+			"type": "string"
+		},
+		"vp": {
+			"type": "string"
+		},
+		"mac": {
+			"type": "string"
+		},
+		"pp_mix": {
+			"type": "string"
+		},
+		"pp_max": {
+			"type": "string"
+		},
+		"pp_miy": {
+			"type": "string"
+		},
+		"pp_may": {
+			"type": "string"
+		},
+		"ad_ba": {
+			"type": "string"
+		},
+		"ad_ca": {
+			"type": "string"
+		},
+		"ad_ad": {
+			"type": "string"
+		},
+		"ad_uid": {
+			"type": "string"
+		},
+		"tr_id": {
+			"type": "string"
+		},
+		"tr_af": {
+			"type": "string"
+		},
+		"tr_tt": {
+			"type": "string"
+		},
+		"tr_tx": {
+			"type": "string"
+		},
+		"tr_sh": {
+			"type": "string"
+		},
+		"tr_ci": {
+			"type": "string"
+		},
+		"tr_st": {
+			"type": "string"
+		},
+		"tr_co": {
+			"type": "string"
+		},
+		"ti_id": {
+			"type": "string"
+		},
+		"ti_sk": {
+			"type": "string"
+		},
+		"ti_nm": {
+			"type": "string"
+		},
+		"ti_ca": {
+			"type": "string"
+		},
+		"ti_pr": {
+			"type": "string"
+		},
+		"ti_qu": {
+			"type": "string"
+		},
+		"sa": {
+			"type": "string"
+		},
+		"sn": {
+			"type": "string"
+		},
+		"st": {
+			"type": "string"
+		},
+		"sp": {
+			"type": "string"
+		},
+		"se_ca": {
+			"type": "string"
+		},
+		"se_ac": {
+			"type": "string"
+		},
+		"se_la": {
+			"type": "string"
+		},
+		"se_pr": {
+			"type": "string"
+		},
+		"se_va": {
+			"type": "string"
+		},
+		"ue_na": {
+			"type": "string"
+		},
+		"ue_pr": {
+			"type": "string"
+		},
+		"ue_px": {
+			"type": "string"
+		},
+		"cv": {
+			"type": "string"
+		},
+		"co": {
+			"type": "string"
+		},
+		"cx": {
+			"type": "string"
+		}
+	},
+	"required": ["tv", "p", "e", "evn"],
+	"additionalProperties": false
+}
