@@ -10,3 +10,6 @@
 [submodule "1-trackers/python-tracker"]
 	path = 1-trackers/python-tracker
 	url = https://github.com/snowplow/snowplow-python-tracker
+[submodule "1-trackers/snowplow-ruby-tracker"]
+	path = 1-trackers/snowplow-ruby-tracker
+	url = https://github.com/snowplow/snowplow-ruby-tracker.git

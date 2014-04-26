@@ -4,7 +4,7 @@ Version 0.9.2 (2014-04-XX)
 << Add PartitionTap support to Scalding (#609) >>
 << Elasticity to 3.0.4 >>
 
-Ruby Tracker: added git submodule. Version 0.1.0 (#645)                                 - TODO
+Ruby Tracker: added git submodule. Version 0.1.0 (#645)
 JavaScript Tracker: bumped git submodule to 2.0.0 (#635)                                - TODO
 Python Tracker: bumped Python Tracker git submodule to 0.3.0 (#634)
 Tracker Protocol: added. Version 0.1.0
