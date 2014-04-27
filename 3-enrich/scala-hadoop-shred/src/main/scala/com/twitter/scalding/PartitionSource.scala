@@ -44,7 +44,7 @@ abstract class PartitionSource extends SchemedSource {
   // ALL doesn't make sense as partitioned fields are discarded from output by default (see below)
   def pathFields: Fields = Fields.FIRST
   // Whether to remove path fields prior to writing. 
-  def discardPathFields: Boolean = true
+  def discardPathFields: Boolean = false
 
   /**
    * Creates the partition tap.
@@ -113,7 +113,7 @@ case class PartitionedTsv(
   override val basePath: String,
   override val delimiter: String = "/",
   override val pathFields: Fields = Fields.FIRST,
-  override val discardPathFields: Boolean = true,
+  override val discardPathFields: Boolean = false,
   override val writeHeader: Boolean = false,
   override val sinkMode: SinkMode = SinkMode.REPLACE)
     extends PartitionSource with DelimitedScheme
@@ -133,7 +133,7 @@ case class PartitionedSequenceFile(
   override val delimiter: String = "/",
   val sequenceFields: Fields = Fields.ALL,
   override val pathFields: Fields = Fields.FIRST,
-  override val discardPathFields: Boolean = true,
+  override val discardPathFields: Boolean = false,
   override val sinkMode: SinkMode = SinkMode.REPLACE)
     extends PartitionSource with SequenceFileScheme {
 
