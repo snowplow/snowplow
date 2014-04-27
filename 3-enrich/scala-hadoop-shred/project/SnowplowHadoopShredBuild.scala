@@ -37,7 +37,8 @@ object SnowplowHadoopShredBuild extends Build {
         Libraries.scalaz7,
         Libraries.argonaut,
         // Scala (test only)
-        Libraries.specs2
+        Libraries.specs2,
+        Libraries.specs1
       )
     )
 }

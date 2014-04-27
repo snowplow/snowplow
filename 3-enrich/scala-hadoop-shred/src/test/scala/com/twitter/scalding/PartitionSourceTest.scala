@@ -13,58 +13,55 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-package com.snowplowanalytics.hadoop.scalding
+
+package com.twitter.scalding
 
 import java.io.File
 import scala.io.{Source => ScalaSource}
 
-// Specs2
-import org.specs2.mutable.Specification
+import org.specs._
 
 import cascading.tap.SinkMode
 import cascading.tuple.Fields
 
-// Scalding
-import com.twitter.scalding._
-
-class ShredTestJob(args: Args) extends Job(args) {
+class PartitionTestJob(args: Args) extends Job(args) {
   try {
-    Tsv("input", ('col1, 'col2, 'col3)).read.write(TemplatedTsv("base", "%s/%s", ('col1, 'col2)))
+    Tsv("input", ('col1, 'col2)).read.write(PartitionedTsv("base", "%s", 'col1))
   } catch {
     case e : Exception => e.printStackTrace()
   }
 }
 
-class ShredTest extends Specification {
-
+class PartitionSourceTest extends Specification {
+  noDetailedDiffs()
   import Dsl._
-  "ShredTest" should {
-    "split output by partition" in {
-      val input = Seq(("A", "a", 1), ("A", "a", 2), ("B", "b", 3))
+  "PartitionedTsv" should {
+    "split output by template" in {
+      val input = Seq(("A", 1), ("A", 2), ("B", 3))
 
       // Need to save the job to allow, find the temporary directory data was written to
       var job: Job = null;
       def buildJob(args: Args): Job = {
-        job = new ShredTestJob(args)
+        job = new PartitionTestJob(args)
         job
       }
 
       JobTest(buildJob(_))
-        .source(Tsv("input", ('col1, 'col2, 'col3)), input)
+        .source(Tsv("input", ('col1, 'col2)), input)
         .runHadoop
         .finish
 
       val testMode = job.mode.asInstanceOf[HadoopTest]
 
-      val directory = new File(testMode.getWritePathFor(TemplatedTsv("base", "%s/%s", ('col1, 'col2))))
+      val directory = new File(testMode.getWritePathFor(PartitionedTsv("base", "%s", 'col1)))
 
       directory.listFiles().map({ _.getName() }).toSet mustEqual Set("A", "B")
 
-      val aSource = ScalaSource.fromFile(new File(directory, "A/a/part-00000"))
-      val bSource = ScalaSource.fromFile(new File(directory, "B/b/part-00000"))
+      val aSource = ScalaSource.fromFile(new File(directory, "A/part-00000"))
+      val bSource = ScalaSource.fromFile(new File(directory, "B/part-00000"))
 
-      aSource.getLines.toList mustEqual Seq("A\ta\t1", "A\ta\t2")
-      bSource.getLines.toList mustEqual Seq("B\tb\t3")
+      aSource.getLines.toList mustEqual Seq("A\t1", "A\t2")
+      bSource.getLines.toList mustEqual Seq("B\t3")
     }
   }
 }
