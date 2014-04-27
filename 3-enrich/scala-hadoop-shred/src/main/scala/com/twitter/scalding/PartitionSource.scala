@@ -23,9 +23,12 @@ import cascading.scheme.hadoop.{ TextDelimited => CHTextDelimited }
 import cascading.scheme.hadoop.TextLine.Compress
 import cascading.scheme.Scheme
 import cascading.tap.hadoop.Hfs
-import cascading.tap.hadoop.{ TemplateTap => HTemplateTap }
+import cascading.tap.hadoop.{ TemplateTap => HTemplateTap } // TODO: remove this
+import cascading.tap.hadoop.{ PartitionTap => HPartitionTap }
 import cascading.tap.local.FileTap
-import cascading.tap.local.{ TemplateTap => LTemplateTap }
+import cascading.tap.local.{ TemplateTap => LTemplateTap } // TODO: remove this
+import cascading.tap.local.{ PartitionTap => LPartitionTap }
+import cascading.tap.partition.DelimitedPartition
 import cascading.tap.SinkMode
 import cascading.tap.Tap
 import cascading.tuple.Fields
@@ -58,15 +61,18 @@ abstract class PartitionSource extends SchemedSource {
         mode match {
           case Local(_) => {
             val localTap = new FileTap(localScheme, basePath, sinkMode)
-            new LTemplateTap(localTap, template, pathFields)
+            val partition = new DelimitedPartition(pathFields, "/" )
+            new LPartitionTap(localTap, partition)
           }
           case hdfsMode @ Hdfs(_, _) => {
             val hfsTap = new Hfs(hdfsScheme, basePath, sinkMode)
-            new HTemplateTap(hfsTap, template, pathFields)
+            val partition = new DelimitedPartition(pathFields, "/" )
+            new HPartitionTap(hfsTap, partition)
           }
           case hdfsTest @ HadoopTest(_, _) => {
             val hfsTap = new Hfs(hdfsScheme, hdfsTest.getWritePathFor(this), sinkMode)
-            new HTemplateTap(hfsTap, template, pathFields)
+            val partition = new DelimitedPartition(pathFields, "/" )
+            new HPartitionTap(hfsTap, partition)
           }
           case _ => TestTapFactory(this, hdfsScheme).createTap(readOrWrite)
         }
@@ -82,6 +88,8 @@ abstract class PartitionSource extends SchemedSource {
   override def validateTaps(mode: Mode): Unit = {
     if (basePath == null) {
       throw new InvalidSourceException("basePath cannot be null for TemplateTap")
+    } else if (pathFields == Fields.ALL) {
+      throw new InvalidSourceException("Fields.ALL for pathFields leaves no fields to write")
     } else if (template == null) {
       throw new InvalidSourceException("template cannot be null for TemplateTap")
     }
