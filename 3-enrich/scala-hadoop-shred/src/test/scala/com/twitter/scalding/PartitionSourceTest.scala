@@ -26,7 +26,7 @@ import cascading.tuple.Fields
 
 class PartitionTestJob(args: Args) extends Job(args) {
   try {
-    Tsv("input", ('col1, 'col2)).read.write(PartitionedTsv("base", "/", 'col1))
+    Tsv("input", ('col1, 'col2)).read.write(PartitionedTsv("base", "/", 'col1, true))
   } catch {
     case e : Exception => e.printStackTrace()
   }
@@ -53,7 +53,7 @@ class PartitionSourceTest extends Specification {
 
       val testMode = job.mode.asInstanceOf[HadoopTest]
 
-      val directory = new File(testMode.getWritePathFor(PartitionedTsv("base", "/", 'col1)))
+      val directory = new File(testMode.getWritePathFor(PartitionedTsv("base", "/", 'col1, true)))
 
       directory.listFiles().map({ _.getName() }).toSet mustEqual Set("A", "B")
 
