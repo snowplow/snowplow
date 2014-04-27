@@ -44,8 +44,6 @@ abstract class PartitionSource extends SchemedSource {
   // ALL doesn't make sense as partitioned fields are discarded from output by default (see below)
   def pathFields: Fields = Fields.FIRST
 
-  def tmpFields: Fields
-
   // Whether to remove path fields prior to writing. 
   def discardPathFields: Boolean = true
 
@@ -63,22 +61,23 @@ abstract class PartitionSource extends SchemedSource {
       case Write => {
         mode match {
           case Local(_) => {
-            localScheme.setSinkFields(tmpFields) // TODO fix  
+            // TODO add support for discardPathFields  
             val localTap = new FileTap(localScheme, basePath, sinkMode)
             val partition = new DelimitedPartition(pathFields, delimiter)
             new LPartitionTap(localTap, partition)
           }
           case hdfsMode @ Hdfs(_, _) => {
-            hdfsScheme.setSinkFields(tmpFields) // TODO fix  
+            // TODO add support for discardPathFields 
             val hfsTap = new Hfs(hdfsScheme, basePath, sinkMode)
             val partition = new DelimitedPartition(pathFields, delimiter)
             new HPartitionTap(hfsTap, partition)
           }
           case hdfsTest @ HadoopTest(_, _) => {
-            System.out.print(tmpFields.printVerbose)
-            System.out.print(tmpFields.isUnknown)
-            hdfsScheme.setSinkFields(tmpFields) // TODO fix
-            System.out.println(hdfsScheme.getSinkFields)         
+            // Doesn't work
+            if (discardPathFields) {
+              hdfsScheme.setSinkFields(hdfsScheme.getSinkFields.subtract(pathFields))
+            }
+
             val hfsTap = new Hfs(hdfsScheme, hdfsTest.getWritePathFor(this), sinkMode)
             val partition = new DelimitedPartition(pathFields, delimiter)
             new HPartitionTap(hfsTap, partition)
@@ -115,7 +114,6 @@ case class PartitionedTsv(
   override val basePath: String,
   override val delimiter: String = "/",
   override val pathFields: Fields = Fields.FIRST,
-  override val tmpFields: Fields,
   override val discardPathFields: Boolean = true,
   override val writeHeader: Boolean = false,
   override val sinkMode: SinkMode = SinkMode.REPLACE)
@@ -136,7 +134,6 @@ case class PartitionedSequenceFile(
   override val delimiter: String = "/",
   val sequenceFields: Fields = Fields.ALL,
   override val pathFields: Fields = Fields.FIRST,
-  override val tmpFields: Fields,
   override val discardPathFields: Boolean = true,
   override val sinkMode: SinkMode = SinkMode.REPLACE)
     extends PartitionSource with SequenceFileScheme {
