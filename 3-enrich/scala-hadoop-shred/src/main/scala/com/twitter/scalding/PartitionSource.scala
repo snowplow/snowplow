@@ -43,7 +43,6 @@ abstract class PartitionSource extends SchemedSource {
   // The fields to apply to the partition.
   // ALL doesn't make sense as partitioned fields are discarded from output by default (see below)
   def pathFields: Fields = Fields.FIRST
-
   // Whether to remove path fields prior to writing. 
   def discardPathFields: Boolean = true
 
