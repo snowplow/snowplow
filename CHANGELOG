@@ -1,7 +1,7 @@
 Version 0.9.2 (2014-04-XX)
 --------------------------
 
-<< Add PartitionTap support to Scalding (#609) >>
+<< Add PartitionSource, PartitionedTsv to Scalding (#609) >>
 << Elasticity to 3.0.4 >>
 
 Ruby Tracker: added git submodule. Version 0.1.0 (#645)
