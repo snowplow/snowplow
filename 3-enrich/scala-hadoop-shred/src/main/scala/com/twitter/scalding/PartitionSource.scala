@@ -23,10 +23,8 @@ import cascading.scheme.hadoop.{ TextDelimited => CHTextDelimited }
 import cascading.scheme.hadoop.TextLine.Compress
 import cascading.scheme.Scheme
 import cascading.tap.hadoop.Hfs
-import cascading.tap.hadoop.{ TemplateTap => HTemplateTap } // TODO: remove this
 import cascading.tap.hadoop.{ PartitionTap => HPartitionTap }
 import cascading.tap.local.FileTap
-import cascading.tap.local.{ TemplateTap => LTemplateTap } // TODO: remove this
 import cascading.tap.local.{ PartitionTap => LPartitionTap }
 import cascading.tap.partition.DelimitedPartition
 import cascading.tap.SinkMode
@@ -38,13 +36,15 @@ import cascading.tuple.Fields
 */
 abstract class PartitionSource extends SchemedSource {
 
-  // The root path of the templated output.
+  // The root path of the partitioned output.
   def basePath: String
-  // The template as a java Formatter string. e.g. %s/%s for a two part template.
-  def template: String
+  // The path delimiter for creating (sub-)directory bins.
+  def delimiter: String = "/"
   // The fields to apply to the partition.
-  // ALL doesn't make sense as partitioned fields are omitted from output
+  // ALL doesn't make sense as partitioned fields are discarded from output by default (see below)
   def pathFields: Fields = Fields.FIRST
+  // Whether to remove path fields prior to writing. 
+  def discardPathFields: Boolean = true
 
   /**
    * Creates the partition tap.
@@ -52,26 +52,26 @@ abstract class PartitionSource extends SchemedSource {
    * @param readOrWrite Describes if this source is being read from or written to.
    * @param mode The mode of the job. (implicit)
    *
-   * @returns A cascading TemplateTap.
+   * @returns A cascading PartitionTap.
    */
   override def createTap(readOrWrite: AccessMode)(implicit mode: Mode): Tap[_, _, _] = {
     readOrWrite match {
-      case Read => throw new InvalidSourceException("Use PartitionSource for input not yet implemented")
+      case Read => throw new InvalidSourceException("Using PartitionSource for input not yet implemented")
       case Write => {
         mode match {
           case Local(_) => {
             val localTap = new FileTap(localScheme, basePath, sinkMode)
-            val partition = new DelimitedPartition(pathFields, "/" )
+            val partition = new DelimitedPartition(pathFields, delimiter )
             new LPartitionTap(localTap, partition)
           }
           case hdfsMode @ Hdfs(_, _) => {
             val hfsTap = new Hfs(hdfsScheme, basePath, sinkMode)
-            val partition = new DelimitedPartition(pathFields, "/" )
+            val partition = new DelimitedPartition(pathFields, delimiter )
             new HPartitionTap(hfsTap, partition)
           }
           case hdfsTest @ HadoopTest(_, _) => {
             val hfsTap = new Hfs(hdfsScheme, hdfsTest.getWritePathFor(this), sinkMode)
-            val partition = new DelimitedPartition(pathFields, "/" )
+            val partition = new DelimitedPartition(pathFields, delimiter )
             new HPartitionTap(hfsTap, partition)
           }
           case _ => TestTapFactory(this, hdfsScheme).createTap(readOrWrite)
@@ -81,52 +81,52 @@ abstract class PartitionSource extends SchemedSource {
   }
 
   /**
-   * Validates the taps, makes sure there are no nulls as the path or template.
+   * Validates the taps, makes sure there are no nulls in the path.
    *
    * @param mode The mode of the job.
    */
   override def validateTaps(mode: Mode): Unit = {
     if (basePath == null) {
       throw new InvalidSourceException("basePath cannot be null for TemplateTap")
-    } else if (pathFields == Fields.ALL) {
-      throw new InvalidSourceException("Fields.ALL for pathFields leaves no fields to write")
-    } else if (template == null) {
-      throw new InvalidSourceException("template cannot be null for TemplateTap")
     }
   }
 }
 
 /**
- * An implementation of TSV output, split over a template tap.
+ * An implementation of TSV output, split over a partition tap.
  *
  * @param basePath The root path for the output.
- * @param template The java formatter style string to use as the template. e.g. %s/%s.
+ * @param delimiter The path delimiter, defaults to / to create sub-directory bins.
  * @param pathFields The set of fields to apply to the path.
+ * @param discardPathFields Whether to remove path fields prior to writing.
  * @param writeHeader Flag to indicate that the header should be written to the file.
  * @param sinkMode How to handle conflicts with existing output.
  */
 case class PartitionedTsv(
   override val basePath: String,
-  override val template: String,
-  override val pathFields: Fields = Fields.ALL,
+  override val delimiter: String = "/",
+  override val pathFields: Fields = Fields.FIRST,
+  override val discardPathFields: Boolean = true,
   override val writeHeader: Boolean = false,
   override val sinkMode: SinkMode = SinkMode.REPLACE)
     extends PartitionSource with DelimitedScheme
 
 /**
- * An implementation of SequenceFile output, split over a template tap.
+ * An implementation of SequenceFile output, split over a partition tap.
  *
  * @param basePath The root path for the output.
- * @param template The java formatter style string to use as the template. e.g. %s/%s.
+ * @param delimiter The path delimiter, defaults to / to create sub-directory bins.
  * @param sequenceFields The set of fields to use for the sequence file.
  * @param pathFields The set of fields to apply to the path.
+ * @param discardPathFields Whether to remove path fields prior to writing.
  * @param sinkMode How to handle conflicts with existing output.
  */
 case class PartitionedSequenceFile(
   override val basePath: String,
-  override val template: String,
+  override val delimiter: String = "/",
   val sequenceFields: Fields = Fields.ALL,
-  override val pathFields: Fields = Fields.ALL,
+  override val pathFields: Fields = Fields.FIRST,
+  override val discardPathFields: Boolean = true,
   override val sinkMode: SinkMode = SinkMode.REPLACE)
     extends PartitionSource with SequenceFileScheme {
 

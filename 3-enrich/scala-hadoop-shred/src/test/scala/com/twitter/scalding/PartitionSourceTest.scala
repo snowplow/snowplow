@@ -36,7 +36,7 @@ class PartitionSourceTest extends Specification {
   noDetailedDiffs()
   import Dsl._
   "PartitionedTsv" should {
-    "split output by template" in {
+    "split output by partition" in {
       val input = Seq(("A", 1), ("A", 2), ("B", 3))
 
       // Need to save the job to allow, find the temporary directory data was written to
@@ -57,8 +57,8 @@ class PartitionSourceTest extends Specification {
 
       directory.listFiles().map({ _.getName() }).toSet mustEqual Set("A", "B")
 
-      val aSource = ScalaSource.fromFile(new File(directory, "A/part-00000"))
-      val bSource = ScalaSource.fromFile(new File(directory, "B/part-00000"))
+      val aSource = ScalaSource.fromFile(new File(directory, "A/part-00000-00000"))
+      val bSource = ScalaSource.fromFile(new File(directory, "B/part-00000-00001"))
 
       aSource.getLines.toList mustEqual Seq("A\t1", "A\t2")
       bSource.getLines.toList mustEqual Seq("B\t3")
