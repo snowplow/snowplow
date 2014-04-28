@@ -1,7 +1,6 @@
 Version 0.9.2 (2014-04-XX)
 --------------------------
 
-<< Add PartitionSource, PartitionedTsv to Scalding (#609) >>
 << Elasticity to 3.0.4 >>
 
 Ruby Tracker: added git submodule. Version 0.1.0 (#645)
@@ -16,6 +15,7 @@ Tracker Protocol: added link_click JSON Schema and tests (#601)
 Tracker Protocol: added screen_view JSON Schema and tests (#590)
 Tracker Protocol: added JSON Schema and tests for custom context (#627)
 Scala Hadoop Shred: added. Version 0.1.0                                                - TODO
+Scala Hadoop Shred: implement PartitionSource, PartitionedTap for Scalding (#609)       - TODO 
 EmrEtlRunner: bumped to 0.7.0
 EmrEtlRunner: bumped Elasticity to 3.0.3 (#665)
 EmrEtlRunner: updated S3DistCp steps to use new S3DistCpStep from Elasticity (#629)
