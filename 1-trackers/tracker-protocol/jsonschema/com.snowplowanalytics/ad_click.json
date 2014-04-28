@@ -34,6 +34,6 @@
 		}
 	},
 	"required": ["target_url"],
-	"dependencies": {"zone_id": ["target_url"]},
+	"dependencies": {"cost": ["cost_model"]},
 	"additionalProperties": false
 }
