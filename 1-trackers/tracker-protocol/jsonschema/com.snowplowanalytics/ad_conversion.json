@@ -34,5 +34,6 @@
 		}
 	},
 	"minProperties": 1,
+	"dependencies": {"cost": ["cost_model"]},
 	"additionalProperties": false
 }
