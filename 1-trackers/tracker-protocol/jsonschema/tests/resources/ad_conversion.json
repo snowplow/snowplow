@@ -3,7 +3,7 @@
 	"valid": [
 		{
 			"conversion_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
-			"cost_if_cpa": 22,
+			"cost": 22,
 			"category": "business",
 			"action": "purchase",
 			"property": "adjective",
@@ -14,7 +14,7 @@
 		},
 		{
 			"conversion_id": "\\  \" `~1!2@3#4$5%6^7&8*9(0)-_=+]}[{/?.>,<;:'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM",
-			"cost_if_cpa": 999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999,
+			"cost": 999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999,
 			"category": "\"\\\"'''''''",
 			"action": "null",
 			"property": "undefined",
@@ -25,14 +25,14 @@
 	],
 	"invalid": [
 		{
-			"cost_if_cpa": -1000
+			"cost": -1000
 		},
 		{
 			"initial_value": -1
 		},
 		{
 			"conversion_id": "a",
-			"cost_if_cpa": 22,
+			"cost": 22,
 			"category": "business",
 			"action": "purchase",
 			"property": "adjective",
@@ -44,7 +44,7 @@
 		},
 		{
 			"conversion_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
-			"cost_if_cpa": 22,
+			"cost": 22,
 			"category": "business",
 			"action": "purchase",
 			"property": "adjective",
@@ -55,7 +55,7 @@
 		},
 		{
 			"conversion_id": 500,
-			"cost_if_cpa": 22,
+			"cost": 22,
 			"category": "business",
 			"action": "purchase",
 			"property": "adjective",
@@ -66,7 +66,7 @@
 		},
 		{
 			"conversion_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
-			"cost_if_cpa": 22,
+			"cost": 22,
 			"category": "business",
 			"action": "purchase",
 			"property": "adjective",
@@ -77,7 +77,7 @@
 		},
 		{
 			"conversion_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
-			"cost_if_cpa": 22,
+			"cost": 22,
 			"category": "business",
 			"action": "purchase",
 			"property": "adjective",

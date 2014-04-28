@@ -24,7 +24,7 @@
 		"cost_model": {
 			"enum": ["cpa", "cpc", "cpm"]
 		},
-		"cost_if_cpa": {
+		"cost": {
 			"type": "number",
 			"minimum": 0
 		},

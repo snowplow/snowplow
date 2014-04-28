@@ -28,11 +28,12 @@
 		"cost_model": {
 			"enum": ["cpa", "cpc", "cpm"]
 		},
-		"cost_if_cpc": {
+		"cost": {
 			"type": "number",
 			"minimum": 0
 		}
 	},
 	"required": ["target_url"],
+	"dependencies": {"zone_id": ["target_url"]},
 	"additionalProperties": false
 }

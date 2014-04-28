@@ -18,14 +18,19 @@
 		"advertiser_id": {
 			"type": "string"
 		},
+		"target_url": {
+			"type": "string",
+			"minLength": 1
+		},
 		"cost_model": {
 			"enum": ["cpa", "cpc", "cpm"]
 		},
-		"cost_if_cpm": {
+		"cost": {
 			"type": "number",
 			"minimum": 0
 		}
 	},
 	"minProperties":1,
+	"dependencies": {"cost": ["cost_model"]},
 	"additionalProperties": false
 }
