@@ -94,7 +94,7 @@ abstract class PartitionSource extends SchemedSource {
    */
   override def validateTaps(mode: Mode): Unit = {
     if (basePath == null) {
-      throw new InvalidSourceException("basePath cannot be null for TemplateTap")
+      throw new InvalidSourceException("basePath cannot be null for PartitionTap")
     }
   }
 }
