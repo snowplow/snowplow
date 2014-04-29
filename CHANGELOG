@@ -1,3 +1,9 @@
+Version 0.9.2 (2014-04-29)
+--------------------------
+Scala Hadoop Enrich: bumped to 0.5.0
+Scala Hadoop Enrich: bumped to Scala Common Enrich 0.3.0 (#699)
+Scala Common Enrich: upgraded to support new CloudFront file format (#698)
+
 Version 0.9.1 (2014-04-11)
 --------------------------
 Scala Hadoop Enrich: bumped to 0.4.0
