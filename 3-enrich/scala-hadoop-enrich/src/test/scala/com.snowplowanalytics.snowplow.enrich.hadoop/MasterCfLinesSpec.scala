@@ -39,17 +39,18 @@ object MasterCfLinesSpec {
               good.Sep2013CfLineSpec.lines ++         // 1 good
               good.Oct2013CfLineSpec.lines ++         // 1 good
               good.LateOct2013CfLineSpec.lines ++     // 1 good
+              good.Apr2014CfLineSpec.lines ++         // 1 good
               good.CljTomcatLineSpec.lines ++         // 1 good
               good.PagePingCfLineSpec.lines ++        // 1 good
               good.PageViewCfLineSpec.lines ++        // 1 good
               good.StructEventCfLineSpec.lines ++     // 1 good
               good.UnstructEventCfLineSpec.lines ++   // 1 good
               good.TransactionCfLineSpec.lines ++     // 1 good
-              good.TransactionItemCfLineSpec.lines ++ // 1 good = 11 GOOD
+              good.TransactionItemCfLineSpec.lines ++ // 1 good = 12 GOOD
               misc.DiscardableCfLinesSpec.lines       // 3 discarded
 
   object expected {
-    val goodCount = 11
+    val goodCount = 12
     val badCount = 7
   }
 }
@@ -62,11 +63,11 @@ object MasterCfLinesSpec {
  */
 class MasterCfLinesSpec extends Specification with TupleConversions {
 
-  "A job which processes a CloudFront file containing 10 valid events, 6 bad lines and 3 discardable lines" should {
+  "A job which processes a CloudFront file containing 12 valid events, 6 bad lines and 3 discardable lines" should {
     EtlJobSpec("cloudfront", "0"). // Technically CljTomcatLineSpec isn't CloudFront format but won't break this test
       source(MultipleTextLineFiles("inputFolder"), MasterCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output =>
-        "write 11 events" in {
+        "write 12 events" in {
           output.size must_== MasterCfLinesSpec.expected.goodCount
         }
       }.
