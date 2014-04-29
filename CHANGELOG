@@ -7,7 +7,6 @@ Scala Hadoop Enrich: bumped to using using sbt-assembly 0.11.2 (#704)
 Scala Common Enrich: bumped to 0.4.0
 Scala Common Enrich: upgraded to support new CloudFront file format (#698)
 Scala Common Enrich: bumped SBT to 0.13.2 (#703)
-Scala Common Enrich: bumped to using using sbt-assembly 0.11.2 (#705)
 
 Version 0.9.1 (2014-04-11)
 --------------------------
