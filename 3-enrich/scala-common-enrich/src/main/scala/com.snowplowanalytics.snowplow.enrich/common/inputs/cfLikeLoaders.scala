@@ -149,7 +149,8 @@ trait CloudfrontLikeLoader extends CollectorLoader[String] {
     ow + "[\\S]+"   +   // XHostHeader   / x-host-header      added 21 Oct 2013
     w +  "[\\S]+"   +   // CsProtocol    / cs-protocol        added 21 Oct 2013
     w +  "[\\S]+)?" +   // CsBytes       / cs-bytes           added 21 Oct 2013
-    ow + "[\\S]+)?").r  // TimeTaken     / time-taken         added 29 Apr 2014
+    ow + "[\\S]+"   +   // TimeTaken     / time-taken         added 29 Apr 2014
+    w +      ".*)?").r  // Anything added in the future by Amazon  
   }
 
   /**
