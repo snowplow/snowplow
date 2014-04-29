@@ -143,12 +143,14 @@ trait CloudfrontLikeLoader extends CollectorLoader[String] {
     w + "([\\S]+)"  +   // Referer       / cs(Referer)
     w + "([\\S]+)"  +   // UserAgent     / cs(User Agent)
     w + "([\\S]+)"  +   // Querystring   / cs-uri-query
-    ow + "[\\S]*"   +   // CookieHeader  / cs(Cookie)         added 12 Sep 2012
+    ow + "[\\S]*"   +   // CookieHeader  / cs(Cookie)         added 12 Sep 2012 // TODO: why the *?
     w +  "[\\S]+"   +   // ResultType    / x-edge-result-type added 12 Sep 2012
     w +  "[\\S]+)?" +   // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
     ow + "[\\S]+"   +   // XHostHeader   / x-host-header      added 21 Oct 2013
     w +  "[\\S]+"   +   // CsProtocol    / cs-protocol        added 21 Oct 2013
-    w +  "[\\S]+)?").r  // CsBytes       / cs-bytes           added 21 Oct 2013
+    w +  "[\\S]+)?" +   // CsBytes       / cs-bytes           added 21 Oct 2013
+    ow + "[\\S]+"   +   // TimeTaken     / time-taken         added 29 Apr 2014
+    w +      ".*)?").r  // Anything added in the future by Amazon  
   }
 
   /**
