@@ -31,7 +31,7 @@ class EtlVersionTest extends MutSpecification {
 
   "The ETL version" should {
     "be successfully returned" in {
-      MiscEnrichments.etlVersion("hadoop-0.4.0") must_== "hadoop-0.4.0-common-0.3.0"
+      MiscEnrichments.etlVersion("hadoop-0.4.0") must_== "hadoop-0.4.0-common-0.4.0"
     }
   }
 }
