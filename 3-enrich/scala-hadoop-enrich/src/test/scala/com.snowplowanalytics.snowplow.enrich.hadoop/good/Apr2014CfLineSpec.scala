@@ -37,27 +37,27 @@ object Apr2014CfLineSpec {
 
   // August 2013: Amazon broke the CloudFront access log file format. They stopped double-encoding the querystring
   val lines = Lines(
-    "2014-04-29	09:00:54	CDG51	830	83.167.37.146	GET	d3v6ndkyapxc2w.cloudfront.net	/i	200	http://snowplowanalytics.com/blog/2013/11/20/loading-json-data-into-redshift/	Mozilla/5.0%2520(Macintosh;%2520Intel%2520Mac%2520OS%2520X%252010_9_2)%2520AppleWebKit/537.36%2520(KHTML,%2520like%2520Gecko)%2520Chrome/34.0.1847.131%2520Safari/537.36	e=pp&page=Loading%2520JSON%2520data%2520into%2520Redshift%2520-%2520the%2520challenges%2520of%2520quering%2520JSON%2520data%252C%2520and%2520how%2520Snowplow%2520can%2520be%2520used%2520to%2520meet%2520those%2520challenges&pp_mix=0&pp_max=1&pp_miy=64&pp_may=935&cx=eyJwYWdlIjp7InVybCI6ImJsb2cifX0&dtm=1398762054889&tid=612876&vp=1279x610&ds=1279x5614&vid=2&duid=44082d3af0e30126&p=web&tv=2.0.0&fp=2071613637&aid=snowplowweb&lang=fr&cs=UTF-8&tz=Europe%252FBerlin&tna=cloudfront&evn=com.snowplowanalytics&refr=http%253A%252F%252Fsnowplowanalytics.com%252Fservices%252Fpipelines.html&f_pdf=1&f_qt=1&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1280x800&cd=24&cookie=1&url=http%253A%252F%252Fsnowplowanalytics.com%252Fblog%252F2013%252F11%252F20%252Floading-json-data-into-redshift%252F%2523weaknesses	-	Hit	cN-iKWE_3tTwxIKGkSnUOjGpmNjsDUyk4ctemoxU_zIG7Md_fH87sg==	d3v6ndkyapxc2w.cloudfront.net	http	1163	0.001"
+    "2014-04-29	09:00:54	CDG51	830	255.255.255.255	GET	d3v6ndkyapxc2w.cloudfront.net	/i	200	http://snowplowanalytics.com/blog/2013/11/20/loading-json-data-into-redshift/	Mozilla/5.0%2520(Macintosh;%2520Intel%2520Mac%2520OS%2520X%252010_9_2)%2520AppleWebKit/537.36%2520(KHTML,%2520like%2520Gecko)%2520Chrome/34.0.1847.131%2520Safari/537.36	e=pp&page=Loading%2520JSON%2520data%2520into%2520Redshift%2520-%2520the%2520challenges%2520of%2520quering%2520JSON%2520data%252C%2520and%2520how%2520Snowplow%2520can%2520be%2520used%2520to%2520meet%2520those%2520challenges&pp_mix=0&pp_max=1&pp_miy=64&pp_may=935&cx=eyJwYWdlIjp7InVybCI6ImJsb2cifX0&dtm=1398762054889&tid=612876&vp=1279x610&ds=1279x5614&vid=2&duid=44082d3af0e30126&p=web&tv=js-2.0.0&fp=2071613637&aid=snowplowweb&lang=fr&cs=UTF-8&tz=Europe%252FBerlin&tna=cloudfront&evn=com.snowplowanalytics&refr=http%253A%252F%252Fsnowplowanalytics.com%252Fservices%252Fpipelines.html&f_pdf=1&f_qt=1&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1280x800&cd=24&cookie=1&url=http%253A%252F%252Fsnowplowanalytics.com%252Fblog%252F2013%252F11%252F20%252Floading-json-data-into-redshift%252F%2523weaknesses	-	Hit	cN-iKWE_3tTwxIKGkSnUOjGpmNjsDUyk4ctemoxU_zIG7Md_fH87sg==	d3v6ndkyapxc2w.cloudfront.net	http	1163	0.001"
     )
 
   val expected = List(
     "snowplowweb",
     "web",
-    "2013-08-29 00:18:48.000",
-    "2013-08-29 00:19:17.970",
-    "page_view",
-    null, // No event vendor set
+    "2014-04-29 09:00:54.000",
+    "2014-04-29 09:00:54.889",
+    "page_ping",
+    "com.snowplowanalytics",
     null, // We can't predict the event_id
-    "567074",
-    "main", // Tracker namespace
-    "js-0.12.0",
+    "612876",
+    "cloudfront", // Tracker namespace
+    "js-2.0.0",
     "cloudfront",
     EtlVersion,
     null, // No user_id set
     "255.255.255.255",
-    "308909339",
-    "7969620089de36eb",
-    "1",
+    "2071613637",
+    "44082d3af0e30126",
+    "2",
     null, // No network_userid set
     null, // No geo-location for this IP address
     null,
@@ -65,30 +65,30 @@ object Apr2014CfLineSpec {
     null,
     null,
     null,
-    "http://snowplowanalytics.com/analytics/index.html",
-    "Introduction - Snowplow Analytics%",
-    "http://www.metacrawler.com/search/web?fcoid=417&fcop=topnav&fpid=27&q=snowplow+analytics&ql=",
+    "http://snowplowanalytics.com/blog/2013/11/20/loading-json-data-into-redshift/#weaknesses",
+    "Loading JSON data into Redshift - the challenges of quering JSON data, and how Snowplow can be used to meet those challenges",
+    "http://snowplowanalytics.com/services/pipelines.html",
     "http",
     "snowplowanalytics.com",
     "80",
-    "/analytics/index.html",
+    "/blog/2013/11/20/loading-json-data-into-redshift/",
     null,
-    null,
+    "weaknesses",
     "http",
-    "www.metacrawler.com",
+    "snowplowanalytics.com",
     "80",
-    "/search/web",
-    "fcoid=417&fcop=topnav&fpid=27&q=snowplow+analytics&ql=",
+    "/services/pipelines.html",
     null,
-    "search", // Search referer
-    "InfoSpace",
-    "snowplow analytics",
+    null,
+    "internal", // Internal referer
+    null,
+    null,
     null, // Marketing campaign fields empty
     null, //
     null, //
     null, //
     null, //
-    null, // No custom contexts
+    """{"page":{"url":"blog"}}""",
     null, // Structured event fields empty
     null, //
     null, //
@@ -110,41 +110,41 @@ object Apr2014CfLineSpec {
     null, //
     null, //
     null, //
-    null, // Page ping fields empty
-    null, //
-    null, //
-    null, //
-    "Mozilla/5.0 (Windows NT 5.1; rv:23.0) Gecko/20100101 Firefox/23.0",
-    "Firefox 23",
-    "Firefox",
-    "23.0",
+    "0", // Page ping fields
+    "1", //
+    "64", //
+    "935", //
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36",
+    "Chrome",
+    "Chrome",
+    "34.0.1847.131",
     "Browser",
-    "GECKO",
-    "en-US",
+    "WEBKIT",
+    "fr",
     "1",
     "1",
     "1",
     "0",
     "1",
     "0",
-    "1",
+    "0",
     "0",
     "0",
     "1",
     "24",
-    "1024",
-    "635",
-    "Windows",
-    "Windows",
-    "Microsoft Corporation",
-    "America/Los_Angeles",
+    "1279",
+    "610",
+    "Mac OS",
+    "Mac OS",
+    "Apple Inc.",
+    "Europe/Berlin",
     "Computer",
     "0",
-    "1024",
-    "768",
+    "1280",
+    "800",
     "UTF-8",
-    "1024",
-    "635"
+    "1279",
+    "5614"
     )
 }
 
