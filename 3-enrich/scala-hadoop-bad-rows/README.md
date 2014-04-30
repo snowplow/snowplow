@@ -1,12 +1,12 @@
-# Scalding Example Project [![Build Status](https://travis-ci.org/snowplow/scalding-example-project.png)](https://travis-ci.org/snowplow/scalding-example-project)
+# Snowplow Hadoop Bad Rows
 
 ## Introduction
 
-To come.
+Use this Scalding job to extract raw Snowplow events from your Snowplow bad rows JSONs, ready for reprocessing.
 
-### Run
+## Usage
 
-You are ready to run this job using the [Amazon Ruby EMR client] [emr-client]:
+Run this job using the [Amazon Ruby EMR client] [emr-client]:
 
     $ elastic-mapreduce --create --name "Extract raw events from Snowplow bad row JSONs" \
       --instance-type m1.xlarge --instance-count 3 \
@@ -16,26 +16,11 @@ You are ready to run this job using the [Amazon Ruby EMR client] [emr-client]:
       --arg --input --arg s3n://{{PATH_TO_YOUR_FIXABLE_BAD_ROWS}} \
       --arg --output --arg s3n://{{PATH_WILL_BE_STAGING_FOR_EMRETLRUNNER}}
 
-Replace `{{JAR_BUCKET}}`, `{{IN_BUCKET}}` and `{{OUT_BUCKET}}` with the appropriate paths.
-
-## Next steps
-
-Fork this project and adapt it into your own custom Scalding job.
-
-To invoke/schedule your Scalding job on EMR, check out:
-
-* [Spark Plug] [spark-plug] for Scala
-* [Elasticity] [elasticity] for Ruby
-* [Boto] [boto] for Python
-* [Lemur] [lemur] for Clojure
-
-## Roadmap
-
-Nothing planned currently.
+Replace the `{{...}}` placeholders above with the appropriate paths.
 
 ## Copyright and license
 
-Copyright 2012-2014 Snowplow Analytics Ltd, with significant portions copyright 2012 Twitter, Inc.
+Copyright 2014 Snowplow Analytics Ltd, with significant portions copyright 2012 Twitter, Inc.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
