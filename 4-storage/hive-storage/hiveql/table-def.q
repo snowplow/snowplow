@@ -41,7 +41,9 @@ geo_city string,
 geo_zipcode string,
 geo_latitude double,
 geo_longitude double,
+page_url string,                   -- Added in 0.1.0
 page_title string,
+page_referrer string,              -- Added in 0.1.0
 page_urlscheme string,
 page_urlhost string,
 page_urlport int, 
