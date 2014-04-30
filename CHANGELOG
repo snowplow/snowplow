@@ -1,4 +1,4 @@
-Version 0.9.2 (2014-04-29)
+Version 0.9.2 (2014-04-30)
 --------------------------
 Scala Hadoop Enrich: bumped to 0.5.0
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.3.0 (#699)
@@ -7,6 +7,11 @@ Scala Hadoop Enrich: bumped to using using sbt-assembly 0.11.2 (#704)
 Scala Common Enrich: bumped to 0.4.0
 Scala Common Enrich: upgraded to support new and future CloudFront file formats (#698)
 Scala Common Enrich: bumped SBT to 0.13.2 (#703)
+Scala Hadoop Bad Rows: added. Version 0.1.0
+Hive Storage: bumped table-def.q to 0.1.0
+Hive Storage: added new unstructured fields to Hive table definition (#TODO)
+Hive Storage: added raw page_url and page_referrer into Hive table (#TODO)
+Hive Storage: added name_tracker field to Hive table (#TODO)
 
 Version 0.9.1 (2014-04-11)
 --------------------------
