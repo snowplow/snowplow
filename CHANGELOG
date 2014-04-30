@@ -9,9 +9,9 @@ Scala Common Enrich: upgraded to support new and future CloudFront file formats 
 Scala Common Enrich: bumped SBT to 0.13.2 (#703)
 Scala Hadoop Bad Rows: added. Version 0.1.0
 Hive Storage: bumped table-def.q to 0.1.0
-Hive Storage: added new unstructured fields to Hive table definition (#TODO)
-Hive Storage: added raw page_url and page_referrer into Hive table (#TODO)
-Hive Storage: added name_tracker field to Hive table (#TODO)
+Hive Storage: added new unstructured fields to Hive table definition (#709)
+Hive Storage: added raw page_url and page_referrer into Hive table (#710)
+Hive Storage: added name_tracker field to Hive table (#711)
 
 Version 0.9.1 (2014-04-11)
 --------------------------
