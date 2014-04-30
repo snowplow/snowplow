@@ -13,7 +13,7 @@
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
--- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
+-- Copyright:   Copyright (c) 2013-2014 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 CREATE EXTERNAL TABLE IF NOT EXISTS `events` (
