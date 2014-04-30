@@ -16,7 +16,7 @@ Run this job using the [Amazon Ruby EMR client] [emr-client]:
       --arg --input --arg s3n://{{PATH_TO_YOUR_FIXABLE_BAD_ROWS}} \
       --arg --output --arg s3n://{{PATH_WILL_BE_STAGING_FOR_EMRETLRUNNER}}
 
-Replace the `{{...}}` placeholders above with the appropriate paths.
+Replace the `{{...}}` placeholders above with the appropriate bucket paths.
 
 ## Copyright and license
 
