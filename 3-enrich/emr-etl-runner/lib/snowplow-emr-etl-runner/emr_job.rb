@@ -114,14 +114,15 @@ module Snowplow
           enrich_input = "hdfs:///local/snowplow/raw-events"
 
           # Create the Hadoop MR step for the file crushing
-          compact_to_hdfs_step = Elasticity::S3DistCpStep.new(
-            :src         => csbr[:processing],
-            :dest        => hadoop_input,
-            :groupBy     => ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
-            :targetSize  => "128",
-            :outputCodec => "lzo",
-            :s3Endpoint  => config[:s3][:endpoint]
-          )
+          compact_to_hdfs_step = Elasticity::S3DistCpStep.new
+          compact_to_hdfs_step.arguments = [
+            "--src"         , csbr[:processing],
+            "--dest"        , hadoop_input,
+            "--groupBy"     , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
+            "--targetSize"  , "128",
+            "--outputCodec" , "lzo",
+            "--s3Endpoint"  , config[:s3][:endpoint]
+          ]
           compact_to_hdfs_step.name << ": Raw S3 -> HDFS"
 
           # Add to our jobflow
@@ -150,12 +151,13 @@ module Snowplow
         @jobflow.add_step(enrich_step)
 
         # We need to copy our enriched events from HDFS back to S3
-        copy_to_s3_step = Elasticity::S3DistCpStep.new(
-          :src        => enrich_output,
-          :dest       => partition_by_run(csbe[:good], config[:run_id]),
-          :srcPattern => "part-*",
-          :s3Endpoint => config[:s3][:endpoint]
-        )
+        copy_to_s3_step = Elasticity::S3DistCpStep.new
+        copy_to_s3_step.arguments = [        
+          "--src"        , enrich_output,
+          "--dest"       , partition_by_run(csbe[:good], config[:run_id]),
+          "--srcPattern" , "part-*",
+          "--s3Endpoint" , config[:s3][:endpoint]
+        ]
         copy_to_s3_step.name << ": Enriched HDFS -> S3"
         @jobflow.add_step(copy_to_s3_step)
 
@@ -178,12 +180,14 @@ module Snowplow
           )
           @jobflow.add_step(shredded_step)
 
-          copy_to_s3_step = Elasticity::S3DistCpStep.new(
-            :src        => shred_output,
-            :dest       => partition_by_run(csbs[:good], config[:run_id]),
-            :srcPattern => "part-*",
-            :s3Endpoint => config[:s3][:endpoint]
-          )
+          # We need to copy our shredded types from HDFS back to S3
+          copy_to_s3_step = Elasticity::S3DistCpStep
+          copy_to_s3_step.arguments = [
+            "--src"        , shred_output,
+            "--dest"       , partition_by_run(csbs[:good], config[:run_id]),
+            "--srcPattern" , "part-*",
+            "--s3Endpoint" , config[:s3][:endpoint]
+          ]
           copy_to_s3_step.name << ": Shredded HDFS -> S3"
           @jobflow.add_step(copy_to_s3_step)
         end

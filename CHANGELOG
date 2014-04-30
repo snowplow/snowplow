@@ -1,7 +1,5 @@
-Version 0.9.3 (2014-04-XX)
+Version 0.9.3 (2014-05-XX)
 --------------------------
-
-<< Elasticity to 3.0.4 >>
 
 Ruby Tracker: added git submodule. Version 0.1.0 (#645)
 JavaScript Tracker: bumped git submodule to 2.0.0 (#635)                                - TODO
@@ -17,7 +15,7 @@ Tracker Protocol: added JSON Schema and tests for custom context (#627)
 Scala Hadoop Shred: added. Version 0.1.0                                                - TODO
 Scala Hadoop Shred: implement PartitionSource, PartitionedTap for Scalding (#609)       - TODO 
 EmrEtlRunner: bumped to 0.7.0
-EmrEtlRunner: bumped Elasticity to 3.0.3 (#665)
+EmrEtlRunner: bumped Elasticity to 3.0.4 (#665)
 EmrEtlRunner: updated S3DistCp steps to use new S3DistCpStep from Elasticity (#629)
 EmrEtlRunner: added ability to start Lingual in EmrEtlRunner (#623)
 EmrEtlRunner: added ability to start HBase in EmrEtlRunner (#622)
