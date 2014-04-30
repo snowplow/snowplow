@@ -181,7 +181,7 @@ module Snowplow
           @jobflow.add_step(shredded_step)
 
           # We need to copy our shredded types from HDFS back to S3
-          copy_to_s3_step = Elasticity::S3DistCpStep
+          copy_to_s3_step = Elasticity::S3DistCpStep.new
           copy_to_s3_step.arguments = [
             "--src"        , shred_output,
             "--dest"       , partition_by_run(csbs[:good], config[:run_id]),
