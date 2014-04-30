@@ -25,6 +25,7 @@ event string,
 event_vendor string,
 event_id string,
 txn_id int,
+name_tracker string,               -- Added in 0.1.0
 v_tracker string,
 v_collector string,
 v_etl string,
