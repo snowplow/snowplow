@@ -64,11 +64,14 @@ mkt_source string,
 mkt_term string,
 mkt_content string,
 mkt_campaign string,
+contexts string,                   -- Added in 0.1.0
 se_category string,
 se_action string,
 se_label string,
 se_property string,
 se_value double,
+ue_name string,                    -- Added in 0.1.0
+ue_properties string,              -- Added in 0.1.0
 tr_orderid string,
 tr_affiliation string,
 tr_total double,
