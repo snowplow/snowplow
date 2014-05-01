@@ -37,7 +37,7 @@ object PartitionSourceTestHelpers {
   class CustomPartition(val partitionFields: Fields) extends Partition {
 
     def getPartitionFields(): Fields = partitionFields
-    def getPathDepth(): Int = partitionFields.size
+    def getPathDepth(): Int = 1
     
     def toPartition(tupleEntry: TupleEntry): String =
       "{" + Util.join(tupleEntry.asIterableOf(classOf[String]), "}->{", true) + "}"
