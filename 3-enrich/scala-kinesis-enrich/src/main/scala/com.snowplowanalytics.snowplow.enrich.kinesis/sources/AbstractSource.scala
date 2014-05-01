@@ -64,6 +64,12 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
     case Sink.Test => None
   }
 
+  private lazy val ipGeo = new IpGeo(
+    dbFile = config.maxmindFile,
+    memCache = false,
+    lruCache = 20000
+  )
+
   // Iterate through an enriched CanonicalOutput object and tab separate
   // the fields to a string.
   def tabSeparateCanonicalOutput(output: CanonicalOutput): String = {
@@ -85,17 +91,12 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
   def enrichEvent(binaryData: Array[Byte]): Option[String] = {
     val canonicalInput = ThriftLoader.toCanonicalInput(binaryData)
 
-    canonicalInput.toValidationNel match { 
+    canonicalInput.toValidationNel match {
 
       case Failure(f)        => None
         // TODO: https://github.com/snowplow/snowplow/issues/463
       case Success(None)     => None // Do nothing
       case Success(Some(ci)) => {
-        val ipGeo = new IpGeo(
-          dbFile = config.maxmindFile,
-          memCache = false,
-          lruCache = 20000
-        )
         val anonOctets =
           if (!config.anonIpEnabled || config.anonOctets == 0) {
             AnonOctets.None
@@ -134,12 +135,26 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
       throw new RuntimeException(
         "access-key and secret-key must both be set to 'cpf', or neither"
       )
+    } else if (isIam(a) && isIam(s)) {
+      new InstanceProfileCredentialsProvider()
+    } else if (isIam(a) || isIam(s)) {
+      throw new RuntimeException("access-key and secret-key must both be set to 'iam', or neither of them")
     } else {
       new BasicAWSCredentialsProvider(
         new BasicAWSCredentials(a, s)
       )
     }
   }
+
+  /**
+   * Is the access/secret key set to the special value "iam" i.e. use
+   * the IAM role to get credentials.
+   *
+   * @param key The key to check
+   * @return true if key is iam, false otherwise
+   */
+  private def isIam(key: String): Boolean = (key == "iam")
+
   private def isCpf(key: String): Boolean = (key == "cpf")
 
   // Wrap BasicAWSCredential objects.
