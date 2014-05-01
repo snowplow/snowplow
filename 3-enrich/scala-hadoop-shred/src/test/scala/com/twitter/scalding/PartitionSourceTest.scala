@@ -26,25 +26,25 @@ import cascading.tuple.Fields
 
 import com.twitter.scalding.{PartitionedTsv => StandardPartitionedTsv, _}
 
-object PartitionSourceTest {
+object DelimitedPartitionSourceTest {
   import Dsl._
   // Define once otherwise testMode.getWritePathFor() won't work
-  val PartitionedTsv = StandardPartitionedTsv("base", "/", 'col1)
+  val DelimitedPartitionedTsv = StandardPartitionedTsv("base", "/", 'col1)
 }
 
-class PartitionTestJob(args: Args) extends Job(args) {
-  import PartitionSourceTest._
+class DelimitedPartitionTestJob(args: Args) extends Job(args) {
+  import DelimitedPartitionSourceTest._
   try {
-    Tsv("input", ('col1, 'col2)).read.write(PartitionedTsv)
+    Tsv("input", ('col1, 'col2)).read.write(DelimitedPartitionedTsv)
   } catch {
     case e : Exception => e.printStackTrace()
   }
 }
 
-class PartitionSourceTest extends Specification {
+class DelimitedPartitionSourceTest extends Specification {
   noDetailedDiffs()
   import Dsl._
-  import PartitionSourceTest._
+  import DelimitedPartitionSourceTest._
   "PartitionedTsv" should {
     "split output by partition" in {
       val input = Seq(("A", 1), ("A", 2), ("B", 3))
@@ -52,7 +52,7 @@ class PartitionSourceTest extends Specification {
       // Need to save the job to allow, find the temporary directory data was written to
       var job: Job = null;
       def buildJob(args: Args): Job = {
-        job = new PartitionTestJob(args)
+        job = new DelimitedPartitionTestJob(args)
         job
       }
 
@@ -63,15 +63,15 @@ class PartitionSourceTest extends Specification {
 
       val testMode = job.mode.asInstanceOf[HadoopTest]
 
-      val directory = new File(testMode.getWritePathFor(PartitionedTsv))
+      val directory = new File(testMode.getWritePathFor(DelimitedPartitionedTsv))
 
       directory.listFiles().map({ _.getName() }).toSet mustEqual Set("A", "B")
 
       val aSource = ScalaSource.fromFile(new File(directory, "A/part-00000-00000"))
       val bSource = ScalaSource.fromFile(new File(directory, "B/part-00000-00001"))
 
-      // aSource.getLines.toList mustEqual Seq("A\t1", "A\t2")
-      // bSource.getLines.toList mustEqual Seq("B\t3")
+      aSource.getLines.toList mustEqual Seq("A\t1", "A\t2")
+      bSource.getLines.toList mustEqual Seq("B\t3")
     }
   }
 }
