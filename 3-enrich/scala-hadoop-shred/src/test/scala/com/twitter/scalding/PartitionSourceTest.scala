@@ -42,7 +42,8 @@ object PartitionSourceTestHelpers {
     def toPartition(tupleEntry: TupleEntry): String =
       "{" + Util.join(tupleEntry.asIterableOf(classOf[String]), "}->{", true) + "}"
     
-    def toTuple(partition: String, tupleEntry: TupleEntry): Unit = ???
+    def toTuple(partition: String, tupleEntry: TupleEntry): Unit =
+      throw new RuntimeException("toTuple for reading not implemented")
   }
 
   // Define once, here, otherwise testMode.getWritePathFor() won't work
