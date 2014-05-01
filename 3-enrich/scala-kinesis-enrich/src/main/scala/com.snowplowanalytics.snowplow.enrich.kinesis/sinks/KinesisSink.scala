@@ -44,6 +44,7 @@ import com.typesafe.config.Config
 import scala.concurrent.{Future,Await,TimeoutException}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.util.{Success, Failure}
 
 // Logging
 import org.slf4j.LoggerFactory
@@ -70,19 +71,18 @@ class KinesisSink(provider: AWSCredentialsProvider,
    * Checks if a stream exists.
    */
   def streamExists(name: String, timeout: Int = 60): Boolean = {
-    val streamListFuture = for {
-      s <- Kinesis.streams.list
+    val streamDescribeFuture = for {
+       s <- Kinesis.stream(name).describe
     } yield s
-    val streamList: Iterable[String] =
-      Await.result(streamListFuture, Duration(timeout, SECONDS))
-    for (streamStr <- streamList) {
-      if (streamStr == name) {
-        info(s"Stream $name exists")
-        return true
-      }
+
+    val description = Await.result(streamDescribeFuture, Duration(timeout, SECONDS))
+
+    if (description.isActive) {
+      info(s"Stream $name exists and is active")
+      return true
     }
 
-    info(s"Stream $name doesn't exist")
+    info(s"Stream $name doesn't exist or isn't active")
     false
   }
 
@@ -132,9 +132,17 @@ class KinesisSink(provider: AWSCredentialsProvider,
         key
       )
     } yield p
-    val result = Await.result(putData, Duration(60, SECONDS))
-    info(s"Writing successful")
-    info(s"  + ShardId: ${result.shardId}")
-    info(s"  + SequenceNumber: ${result.sequenceNumber}")
+
+    putData onComplete {
+      case Success(result) => {
+        info(s"Writing successful")
+        info(s"  + ShardId: ${result.shardId}")
+        info(s"  + SequenceNumber: ${result.sequenceNumber}")
+      }
+      case Failure(f) => {
+        error(s"Writing failed.")
+        error(s"  + " + f.getMessage)
+      }
+    }
   }
 }
