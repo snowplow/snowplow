@@ -22,20 +22,47 @@ import scala.io.{Source => ScalaSource}
 import org.specs._
 
 import cascading.tap.SinkMode
-import cascading.tuple.Fields
+import cascading.tuple.{
+  Fields,
+  TupleEntry
+}
+import cascading.util.Util
+import cascading.tap.partition.Partition
 
 import com.twitter.scalding.{PartitionedTsv => StandardPartitionedTsv, _}
 
 object PartitionSourceTestHelpers {
   import Dsl._
-  // Define once otherwise testMode.getWritePathFor() won't work
+
+  class CustomPartition(val partitionFields: Fields) extends Partition {
+
+    def getPartitionFields(): Fields = partitionFields
+    def getPathDepth(): Int = partitionFields.size
+    
+    def toPartition(tupleEntry: TupleEntry): String =
+      "{" + Util.join(tupleEntry.asIterableOf(classOf[String]), "}->{", true) + "}"
+    
+    def toTuple(partition: String, tupleEntry: TupleEntry): Unit = ???
+  }
+
+  // Define once, here, otherwise testMode.getWritePathFor() won't work
   val DelimitedPartitionedTsv = StandardPartitionedTsv("base", "/", 'col1)
+  val CustomPartitionedTsv = StandardPartitionedTsv("base", new CustomPartition('col1, 'col2), false, SinkMode.REPLACE)
 }
 
 class DelimitedPartitionTestJob(args: Args) extends Job(args) {
   import PartitionSourceTestHelpers._
   try {
     Tsv("input", ('col1, 'col2)).read.write(DelimitedPartitionedTsv)
+  } catch {
+    case e : Exception => e.printStackTrace()
+  }
+}
+
+class CustomPartitionTestJob(args: Args) extends Job(args) {
+  import PartitionSourceTestHelpers._
+  try {
+    Tsv("input", ('col1, 'col2, 'col3)).read.write(CustomPartitionedTsv)
   } catch {
     case e : Exception => e.printStackTrace()
   }
@@ -72,6 +99,41 @@ class DelimitedPartitionSourceTest extends Specification {
 
       aSource.getLines.toList mustEqual Seq("A\t1", "A\t2")
       bSource.getLines.toList mustEqual Seq("B\t3")
+    }
+  }
+}
+
+class CustomPartitionSourceTest extends Specification {
+  noDetailedDiffs()
+  import Dsl._
+  import PartitionSourceTestHelpers._
+  "PartitionedTsv fed a CustomPartition" should {
+    "split output by the custom path" in {
+      val input = Seq(("A", "x", 1), ("A", "x", 2), ("B", "y", 3))
+
+      // Need to save the job to allow, find the temporary directory data was written to
+      var job: Job = null;
+      def buildJob(args: Args): Job = {
+        job = new CustomPartitionTestJob(args)
+        job
+      }
+
+      JobTest(buildJob(_))
+        .source(Tsv("input", ('col1, 'col2)), input)
+        .runHadoop
+        .finish
+
+      val testMode = job.mode.asInstanceOf[HadoopTest]
+
+      val directory = new File(testMode.getWritePathFor(CustomPartitionedTsv))
+
+      directory.listFiles().map({ _.getName() }).toSet mustEqual Set("{A}->{x}", "{B}->{y}")
+
+      val aSource = ScalaSource.fromFile(new File(directory, "{A}->{x}/part-00000-00000"))
+      val bSource = ScalaSource.fromFile(new File(directory, "{B}->{y}/part-00000-00001"))
+
+      aSource.getLines.toList mustEqual Seq("A\tx\t1", "A\tx\t2")
+      bSource.getLines.toList mustEqual Seq("B\ty\t3")
     }
   }
 }
