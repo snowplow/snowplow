@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -36,9 +36,10 @@ object PagePingWithContextSpec {
     "2014-02-02 20:21:19.167",
     "2014-02-02 20:21:19.329",
     "page_ping",
-    "com.snowplowanalytics",
+    "",
     Uuid4Regexp, // Regexp match
     "576668",
+    "",
     "js-0.13.1",
     "ssc-0.1.0-stdout",
     EnrichVersion,
@@ -54,7 +55,9 @@ object PagePingWithContextSpec {
     "",
     "",
     "",
+    "file://file:///Users/alex/Development/dev-environment/demo/1-tracker/events.html/overridden-url/",
     "Asynchronous website/webapp examples for snowplow.js",
+    "",
     "file",
     "file",
     "80",
@@ -73,6 +76,9 @@ object PagePingWithContextSpec {
     "",
     "",
     "",
+    "",
+    "",
+    "{\"page\":{\"page_type\":\"test\",\"last_updated$tms\":1393372800000},\"user\":{\"user_type\":\"tester\"}}",
     "",
     "",
     "",
@@ -139,7 +145,7 @@ class PagePingWithContextSpec extends Specification {
     "enrich a valid page ping with context" in {
 
       val rawEvent = Base64.decodeBase64(PagePingWithContextSpec.raw)
-      
+
       val enrichedEvent = TestSource.enrichEvent(rawEvent)
       enrichedEvent must beSome
 

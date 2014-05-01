@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -36,9 +36,10 @@ object PageViewWithContextSpec {
     "2014-02-02 20:19:39.427",
     "2014-02-02 20:19:39.318",
     "page_view",
-    "com.snowplowanalytics",
+    "",
     Uuid4Regexp, // Regexp match
     "125546",
+    "",
     "js-0.13.1",
     "ssc-0.1.0-stdout",
     EnrichVersion,
@@ -54,7 +55,9 @@ object PageViewWithContextSpec {
     "",
     "",
     "",
+    "file://file:///Users/alex/Development/dev-environment/demo/1-tracker/events.html/overridden-url/",
     "Asynchronous website/webapp examples for snowplow.js",
+    "",
     "file",
     "file",
     "80",
@@ -73,6 +76,9 @@ object PageViewWithContextSpec {
     "",
     "",
     "",
+    "",
+    "",
+    "{\"page\":{\"page_type\":\"test\",\"last_updated$tms\":1393372800000},\"user\":{\"user_type\":\"tester\"}}",
     "",
     "",
     "",
@@ -139,7 +145,7 @@ class PageViewWithContextSpec extends Specification {
     "enrich a valid page view with context" in {
 
       val rawEvent = Base64.decodeBase64(PageViewWithContextSpec.raw)
-      
+
       val enrichedEvent = TestSource.enrichEvent(rawEvent)
       enrichedEvent must beSome
 

@@ -42,17 +42,11 @@ import common.enrichments.PrivacyEnrichments.AnonOctets
  * we support.
  */
 abstract class AbstractSource(config: KinesisEnrichConfig) {
-  
+
   /**
    * Never-ending processing loop over source stream.
    */
   def run
-
-  /**
-   * Fields in our CanonicalOutput which are discarded for legacy
-   * Redshift space reasons
-   */
-  private val DiscardedFields = Array("page_url", "page_referrer")
 
   // Initialize a kinesis provider to use with a Kinesis source or sink.
   protected val kinesisProvider = createKinesisProvider
@@ -74,9 +68,6 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
   // the fields to a string.
   def tabSeparateCanonicalOutput(output: CanonicalOutput): String = {
     output.getClass.getDeclaredFields
-    .filter { field =>
-      !DiscardedFields.contains(field.getName)
-    }
     .map{ field =>
       field.setAccessible(true)
       Option(field.get(output)).getOrElse("")
