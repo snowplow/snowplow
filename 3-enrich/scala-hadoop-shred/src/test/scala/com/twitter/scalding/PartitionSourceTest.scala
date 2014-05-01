@@ -26,14 +26,14 @@ import cascading.tuple.Fields
 
 import com.twitter.scalding.{PartitionedTsv => StandardPartitionedTsv, _}
 
-object DelimitedPartitionSourceTest {
+object PartitionSourceTestHelpers {
   import Dsl._
   // Define once otherwise testMode.getWritePathFor() won't work
   val DelimitedPartitionedTsv = StandardPartitionedTsv("base", "/", 'col1)
 }
 
 class DelimitedPartitionTestJob(args: Args) extends Job(args) {
-  import DelimitedPartitionSourceTest._
+  import PartitionSourceTestHelpers._
   try {
     Tsv("input", ('col1, 'col2)).read.write(DelimitedPartitionedTsv)
   } catch {
@@ -44,7 +44,7 @@ class DelimitedPartitionTestJob(args: Args) extends Job(args) {
 class DelimitedPartitionSourceTest extends Specification {
   noDetailedDiffs()
   import Dsl._
-  import DelimitedPartitionSourceTest._
+  import PartitionSourceTestHelpers._
   "PartitionedTsv" should {
     "split output by partition" in {
       val input = Seq(("A", 1), ("A", 2), ("B", 3))
