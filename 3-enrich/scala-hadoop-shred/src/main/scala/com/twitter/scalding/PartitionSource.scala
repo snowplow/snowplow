@@ -26,7 +26,10 @@ import cascading.tap.hadoop.Hfs
 import cascading.tap.hadoop.{ PartitionTap => HPartitionTap }
 import cascading.tap.local.FileTap
 import cascading.tap.local.{ PartitionTap => LPartitionTap }
-import cascading.tap.partition.DelimitedPartition
+import cascading.tap.partition.{
+  DelimitedPartition,
+  Partition
+}
 import cascading.tap.SinkMode
 import cascading.tap.Tap
 import cascading.tuple.Fields
@@ -38,13 +41,8 @@ abstract class PartitionSource extends SchemedSource {
 
   // The root path of the partitioned output.
   def basePath: String
-  // The path delimiter for creating (sub-)directory bins.
-  def delimiter: String = "/"
-  // The fields to apply to the partition.
-  // ALL doesn't make sense as partitioned fields are discarded from output by default (see below)
-  def pathFields: Fields = Fields.FIRST
-  // Whether to remove path fields prior to writing. 
-  def discardPathFields: Boolean = false
+  // The partition.
+  def partition: Partition = new DelimitedPartition(Fields.ALL, "/")
 
   /**
    * Creates the partition tap.
@@ -60,25 +58,15 @@ abstract class PartitionSource extends SchemedSource {
       case Write => {
         mode match {
           case Local(_) => {
-            // TODO add support for discardPathFields  
             val localTap = new FileTap(localScheme, basePath, sinkMode)
-            val partition = new DelimitedPartition(pathFields, delimiter)
             new LPartitionTap(localTap, partition)
           }
           case hdfsMode @ Hdfs(_, _) => {
-            // TODO add support for discardPathFields 
             val hfsTap = new Hfs(hdfsScheme, basePath, sinkMode)
-            val partition = new DelimitedPartition(pathFields, delimiter)
             new HPartitionTap(hfsTap, partition)
           }
           case hdfsTest @ HadoopTest(_, _) => {
-            // Doesn't work
-            if (discardPathFields) {
-              hdfsScheme.setSinkFields(hdfsScheme.getSinkFields.subtract(pathFields))
-            }
-
             val hfsTap = new Hfs(hdfsScheme, hdfsTest.getWritePathFor(this), sinkMode)
-            val partition = new DelimitedPartition(pathFields, delimiter)
             new HPartitionTap(hfsTap, partition)
           }
           case _ => TestTapFactory(this, hdfsScheme).createTap(readOrWrite)
@@ -102,39 +90,75 @@ abstract class PartitionSource extends SchemedSource {
 /**
  * An implementation of TSV output, split over a partition tap.
  *
+ * apply assumes user wants a DelimitedPartition (the only
+ * strategy bundled with Cascading).
+ *
  * @param basePath The root path for the output.
  * @param delimiter The path delimiter, defaults to / to create sub-directory bins.
  * @param pathFields The set of fields to apply to the path.
- * @param discardPathFields Whether to remove path fields prior to writing.
+ * @param writeHeader Flag to indicate that the header should be written to the file.
+ * @param sinkMode How to handle conflicts with existing output.
+ */
+object PartitionedTsv {
+  def apply(
+    basePath: String,
+    delimiter: String = "/",
+    pathFields: Fields = Fields.ALL,
+    writeHeader: Boolean = false,
+    sinkMode: SinkMode = SinkMode.REPLACE
+  ) = new PartitionedTsv(basePath, new DelimitedPartition(pathFields, delimiter), writeHeader, sinkMode)
+}
+
+/**
+ * An implementation of TSV output, split over a partition tap.
+ *
+ * @param basePath The root path for the output.
+ * @param partition The partitioning strategy to use.
  * @param writeHeader Flag to indicate that the header should be written to the file.
  * @param sinkMode How to handle conflicts with existing output.
  */
 case class PartitionedTsv(
   override val basePath: String,
-  override val delimiter: String = "/",
-  override val pathFields: Fields = Fields.FIRST,
-  override val discardPathFields: Boolean = false,
-  override val writeHeader: Boolean = false,
-  override val sinkMode: SinkMode = SinkMode.REPLACE)
+  override val partition: Partition,
+  override val writeHeader: Boolean,
+  override val sinkMode: SinkMode)
     extends PartitionSource with DelimitedScheme
 
 /**
  * An implementation of SequenceFile output, split over a partition tap.
  *
+ * apply assumes user wants a DelimitedPartition (the only
+ * strategy bundled with Cascading).
+ *
  * @param basePath The root path for the output.
  * @param delimiter The path delimiter, defaults to / to create sub-directory bins.
- * @param sequenceFields The set of fields to use for the sequence file.
  * @param pathFields The set of fields to apply to the path.
- * @param discardPathFields Whether to remove path fields prior to writing.
+ * @param sequenceFields The set of fields to use for the sequence file.
+ * @param sinkMode How to handle conflicts with existing output.
+ */
+object PartitionedSequenceFile {
+  def apply(
+    basePath: String,
+    delimiter: String = "/",
+    pathFields: Fields = Fields.ALL,
+    sequenceFields: Fields = Fields.ALL,
+    sinkMode: SinkMode = SinkMode.REPLACE
+  ) = new PartitionedSequenceFile(basePath, new DelimitedPartition(pathFields, delimiter), sequenceFields, sinkMode)
+}
+
+/**
+ * An implementation of SequenceFile output, split over a partition tap.
+ *
+ * @param basePath The root path for the output.
+ * @param partition The partitioning strategy to use.
+ * @param sequenceFields The set of fields to use for the sequence file.
  * @param sinkMode How to handle conflicts with existing output.
  */
 case class PartitionedSequenceFile(
   override val basePath: String,
-  override val delimiter: String = "/",
-  val sequenceFields: Fields = Fields.ALL,
-  override val pathFields: Fields = Fields.FIRST,
-  override val discardPathFields: Boolean = false,
-  override val sinkMode: SinkMode = SinkMode.REPLACE)
+  override val partition: Partition,
+  val sequenceFields: Fields,
+  override val sinkMode: SinkMode)
     extends PartitionSource with SequenceFileScheme {
 
   override val fields = sequenceFields
