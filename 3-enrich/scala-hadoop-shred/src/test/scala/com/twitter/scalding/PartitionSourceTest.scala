@@ -45,8 +45,8 @@ class DelimitedPartitionSourceTest extends Specification {
   noDetailedDiffs()
   import Dsl._
   import PartitionSourceTestHelpers._
-  "PartitionedTsv" should {
-    "split output by partition" in {
+  "PartitionedTsv fed a DelimitedPartition" should {
+    "split output by the delimited path" in {
       val input = Seq(("A", 1), ("A", 2), ("B", 3))
 
       // Need to save the job to allow, find the temporary directory data was written to
