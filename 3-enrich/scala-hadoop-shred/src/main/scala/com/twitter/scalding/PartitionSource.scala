@@ -66,6 +66,8 @@ abstract class PartitionSource extends SchemedSource {
             new HPartitionTap(hfsTap, partition)
           }
           case hdfsTest @ HadoopTest(_, _) => {
+            System.out.println(hdfsScheme.getSourceFields.printVerbose) // => [{?}:UNKNOWN]
+            System.out.println(hdfsScheme.getSinkFields.printVerbose)   // => [{?}:ALL]
             val hfsTap = new Hfs(hdfsScheme, hdfsTest.getWritePathFor(this), sinkMode)
             new HPartitionTap(hfsTap, partition)
           }

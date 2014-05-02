@@ -69,6 +69,24 @@ class CustomPartitionTestJob(args: Args) extends Job(args) {
   }
 }
 
+class DiscardPartitionTestJob(args: Args) extends Job(args) {
+  import PartitionSourceTestHelpers._
+
+  val colOne = Field[String]('col1)
+  val colTwo = Field[String]('col2)
+
+  try {
+    TextLine("input").read
+      .mapTo('line -> (colOne, colTwo)) { line: String =>
+      val spl = line.split(",")
+        (spl(0), spl(1))
+      }
+      .write(DelimitedPartitionedTsv)
+  } catch {
+    case e : Exception => e.printStackTrace()
+  }
+}
+
 class DelimitedPartitionSourceTest extends Specification {
   noDetailedDiffs()
   import Dsl._
@@ -104,6 +122,11 @@ class DelimitedPartitionSourceTest extends Specification {
   }
 }
 
+/*
+class DiscardPathsPartitionSourceTest extends Specification {
+
+} */
+
 class CustomPartitionSourceTest extends Specification {
   noDetailedDiffs()
   import Dsl._
@@ -119,8 +142,11 @@ class CustomPartitionSourceTest extends Specification {
         job
       }
 
+      val colOne = Field[String]('col1)
+      val colTwo = Field[String]('col2)
+
       JobTest(buildJob(_))
-        .source(Tsv("input", ('col1, 'col2)), input)
+        .source(Tsv("input", (colOne, colTwo)), input)
         .runHadoop
         .finish
 
@@ -138,3 +164,38 @@ class CustomPartitionSourceTest extends Specification {
     }
   }
 }
+
+class DiscardPartitionSourceTest extends Specification {
+  noDetailedDiffs()
+  import Dsl._
+  import PartitionSourceTestHelpers._
+  "PartitionedTsv fed a DelimitedPartition with discardPathFields enabled" should {
+    "split output by the delimited path, discarding the path field" in {
+
+      // Need to save the job to allow, find the temporary directory data was written to
+      var job: Job = null;
+      def buildJob(args: Args): Job = {
+        job = new DiscardPartitionTestJob(args)
+        job
+      }
+
+      JobTest(buildJob(_))
+        .source(TextLine("input"), List("0" -> "A,1", "1" -> "A,2", "2" -> "B,3"))
+        .runHadoop
+        .finish
+
+      val testMode = job.mode.asInstanceOf[HadoopTest]
+
+      val directory = new File(testMode.getWritePathFor(DelimitedPartitionedTsv))
+
+      directory.listFiles().map({ _.getName() }).toSet mustEqual Set("A", "B")
+
+      val aSource = ScalaSource.fromFile(new File(directory, "A/part-00000-00000"))
+      val bSource = ScalaSource.fromFile(new File(directory, "B/part-00000-00001"))
+
+      aSource.getLines.toList mustEqual Seq("A\t1", "A\t2")
+      bSource.getLines.toList mustEqual Seq("B\t3")
+    }
+  }
+}
+
