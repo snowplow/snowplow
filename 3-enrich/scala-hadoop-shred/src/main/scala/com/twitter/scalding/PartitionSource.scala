@@ -105,8 +105,9 @@ object PartitionedTsv {
     delimiter: String = "/",
     pathFields: Fields = Fields.ALL,
     writeHeader: Boolean = false,
+    tsvFields: Fields = Fields.ALL,
     sinkMode: SinkMode = SinkMode.REPLACE
-  ) = new PartitionedTsv(basePath, new DelimitedPartition(pathFields, delimiter), writeHeader, sinkMode)
+  ) = new PartitionedTsv(basePath, new DelimitedPartition(pathFields, delimiter), writeHeader, tsvFields, sinkMode)
 }
 
 /**
@@ -121,19 +122,11 @@ case class PartitionedTsv(
   override val basePath: String,
   override val partition: Partition,
   override val writeHeader: Boolean,
-  override val sinkMode: SinkMode,
-  override val fields: Fields)
-    extends PartitionSource with DelimitedScheme
+  val tsvFields: Fields,
+  override val sinkMode: SinkMode)
+    extends PartitionSource with DelimitedScheme {
 
-/**
-* Mix this in for delimited schemes such as TSV or one-separated values
-* By default, TSV is given
-*/
-import cascading.scheme.local.{TextLine => CLTextLine, TextDelimited => CLTextDelimited}
-import cascading.scheme.hadoop.{
-  TextLine => CHTextLine,
-  TextDelimited => CHTextDelimited,
-  SequenceFile => CHSequenceFile
+  override val fields = tsvFields
 }
 
 /**
@@ -170,8 +163,7 @@ case class PartitionedSequenceFile(
   override val basePath: String,
   override val partition: Partition,
   val sequenceFields: Fields,
-  override val sinkMode: SinkMode,
-  override val fields: Fields)
+  override val sinkMode: SinkMode)
     extends PartitionSource with SequenceFileScheme {
 
   override val fields = sequenceFields
