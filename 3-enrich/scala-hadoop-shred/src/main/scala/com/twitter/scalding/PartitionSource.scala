@@ -90,6 +90,10 @@ abstract class PartitionSource extends SchemedSource {
 /**
  * An implementation of TSV output, split over a partition tap.
  *
+ * Similar to TemplateSource, but with addition of tsvFields, to
+ * let users explicitly specify which fields they want to see in
+ * the TSV (allows user to discard path fields).
+ *
  * apply assumes user wants a DelimitedPartition (the only
  * strategy bundled with Cascading).
  *
@@ -97,6 +101,7 @@ abstract class PartitionSource extends SchemedSource {
  * @param delimiter The path delimiter, defaults to / to create sub-directory bins.
  * @param pathFields The set of fields to apply to the path.
  * @param writeHeader Flag to indicate that the header should be written to the file.
+ * @param tsvFields The set of fields to include in the TSV output.
  * @param sinkMode How to handle conflicts with existing output.
  */
 object PartitionedTsv {

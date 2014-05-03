@@ -50,7 +50,7 @@ object PartitionSourceTestHelpers {
   // Define once, here, otherwise testMode.getWritePathFor() won't work
   val DelimitedPartitionedTsv = StandardPartitionedTsv("base", "/", 'col1)
   val CustomPartitionedTsv = StandardPartitionedTsv("base", new CustomPartition('col1, 'col2), false, Fields.ALL, SinkMode.REPLACE)
-  val PartialPartitionedTsv = StandardPartitionedTsv("base", new DelimitedPartition(('col1, 'col2)), false, ('col1, 'col3), SinkMode.REPLACE)
+  val PartialPartitionedTsv = StandardPartitionedTsv("base", "/", ('col1, 'col2), false, ('col1, 'col3))
 }
 
 class DelimitedPartitionTestJob(args: Args) extends Job(args) {
