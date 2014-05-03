@@ -28,6 +28,7 @@ import cascading.tuple.{
 }
 import cascading.util.Util
 import cascading.tap.partition.Partition
+import cascading.tap.partition.DelimitedPartition
 
 import com.twitter.scalding.{PartitionedTsv => StandardPartitionedTsv, _}
 
@@ -49,7 +50,7 @@ object PartitionSourceTestHelpers {
   // Define once, here, otherwise testMode.getWritePathFor() won't work
   val DelimitedPartitionedTsv = StandardPartitionedTsv("base", "/", 'col1)
   val CustomPartitionedTsv = StandardPartitionedTsv("base", new CustomPartition('col1, 'col2), false, Fields.ALL, SinkMode.REPLACE)
-  val PartialPartitionedTsv = StandardPartitionedTsv("base", new CustomPartition('col1, 'col2), false, ('col1, 'col2), SinkMode.REPLACE)
+  val PartialPartitionedTsv = StandardPartitionedTsv("base", new DelimitedPartition(('col1, 'col2)), false, ('col1, 'col3), SinkMode.REPLACE)
 }
 
 class DelimitedPartitionTestJob(args: Args) extends Job(args) {
