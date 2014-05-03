@@ -186,4 +186,3 @@ class PartialPartitionSourceTest extends Specification {
     }
   }
 }
-
