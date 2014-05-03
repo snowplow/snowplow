@@ -66,8 +66,6 @@ abstract class PartitionSource extends SchemedSource {
             new HPartitionTap(hfsTap, partition)
           }
           case hdfsTest @ HadoopTest(_, _) => {
-            System.out.println(hdfsScheme.getSourceFields.printVerbose) // => [{?}:UNKNOWN]
-            System.out.println(hdfsScheme.getSinkFields.printVerbose)   // => [{?}:ALL]
             val hfsTap = new Hfs(hdfsScheme, hdfsTest.getWritePathFor(this), sinkMode)
             new HPartitionTap(hfsTap, partition)
           }
@@ -124,7 +122,21 @@ case class PartitionedTsv(
   override val partition: Partition,
   override val writeHeader: Boolean,
   override val sinkMode: SinkMode)
-    extends PartitionSource with DelimitedScheme
+    extends PartitionSource with DelimitedScheme {
+
+      override val fields = new Fields ( "col2")
+    }
+
+/**
+* Mix this in for delimited schemes such as TSV or one-separated values
+* By default, TSV is given
+*/
+import cascading.scheme.local.{TextLine => CLTextLine, TextDelimited => CLTextDelimited}
+import cascading.scheme.hadoop.{
+  TextLine => CHTextLine,
+  TextDelimited => CHTextDelimited,
+  SequenceFile => CHSequenceFile
+}
 
 /**
  * An implementation of SequenceFile output, split over a partition tap.
@@ -165,3 +177,11 @@ case class PartitionedSequenceFile(
 
   override val fields = sequenceFields
 }
+
+case class TypedPartitionedTsv(
+  override val basePath: String,
+  override val partition: Partition,
+  override val skipHeader: Boolean = false,
+  override val writeHeader: Boolean,
+  override val sinkMode: SinkMode)
+    extends PartitionSource with TypedSeperatedFile with DelimitedScheme

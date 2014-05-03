@@ -72,15 +72,10 @@ class CustomPartitionTestJob(args: Args) extends Job(args) {
 class DiscardPartitionTestJob(args: Args) extends Job(args) {
   import PartitionSourceTestHelpers._
 
-  val colOne = Field[String]('col1)
-  val colTwo = Field[String]('col2)
-
   try {
-    TextLine("input").read
-      .mapTo('line -> (colOne, colTwo)) { line: String =>
-      val spl = line.split(",")
-        (spl(0), spl(1))
-      }
+    TypedTsv[(String, String)]("input")
+      .read
+      .rename((0,1) -> ('col1, 'col2))
       .write(DelimitedPartitionedTsv)
   } catch {
     case e : Exception => e.printStackTrace()
@@ -121,11 +116,6 @@ class DelimitedPartitionSourceTest extends Specification {
     }
   }
 }
-
-/*
-class DiscardPathsPartitionSourceTest extends Specification {
-
-} */
 
 class CustomPartitionSourceTest extends Specification {
   noDetailedDiffs()
@@ -172,6 +162,8 @@ class DiscardPartitionSourceTest extends Specification {
   "PartitionedTsv fed a DelimitedPartition with discardPathFields enabled" should {
     "split output by the delimited path, discarding the path field" in {
 
+      val input = Seq(("A", "x", 1), ("A", "x", 2), ("B", "y", 3))
+
       // Need to save the job to allow, find the temporary directory data was written to
       var job: Job = null;
       def buildJob(args: Args): Job = {
@@ -180,7 +172,7 @@ class DiscardPartitionSourceTest extends Specification {
       }
 
       JobTest(buildJob(_))
-        .source(TextLine("input"), List("0" -> "A,1", "1" -> "A,2", "2" -> "B,3"))
+        .source(TypedTsv[(String, String)]("input"), input)
         .runHadoop
         .finish
 
