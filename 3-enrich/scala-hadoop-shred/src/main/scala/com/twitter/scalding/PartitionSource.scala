@@ -121,11 +121,9 @@ case class PartitionedTsv(
   override val basePath: String,
   override val partition: Partition,
   override val writeHeader: Boolean,
-  override val sinkMode: SinkMode)
-    extends PartitionSource with DelimitedScheme {
-
-      override val fields = new Fields ( "col2")
-    }
+  override val sinkMode: SinkMode,
+  override val fields: Fields)
+    extends PartitionSource with DelimitedScheme
 
 /**
 * Mix this in for delimited schemes such as TSV or one-separated values
@@ -172,16 +170,9 @@ case class PartitionedSequenceFile(
   override val basePath: String,
   override val partition: Partition,
   val sequenceFields: Fields,
-  override val sinkMode: SinkMode)
+  override val sinkMode: SinkMode,
+  override val fields: Fields)
     extends PartitionSource with SequenceFileScheme {
 
   override val fields = sequenceFields
 }
-
-case class TypedPartitionedTsv(
-  override val basePath: String,
-  override val partition: Partition,
-  override val skipHeader: Boolean = false,
-  override val writeHeader: Boolean,
-  override val sinkMode: SinkMode)
-    extends PartitionSource with TypedSeperatedFile with DelimitedScheme
