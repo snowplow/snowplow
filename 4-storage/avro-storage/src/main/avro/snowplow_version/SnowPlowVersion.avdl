@@ -1,0 +1,13 @@
+/**
+ * SnowPlow version is the object that tracks the version
+ * of SnowPlow used to record this event
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol SnowPlowVersionProtocol {
+	record SnowPlowVersion {
+		union{string, null} tracker_version;
+		union{string, null} collector_version;
+		union{string, null} etl_version;
+	}
+}

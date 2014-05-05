@@ -1,0 +1,260 @@
+{
+	"namespace": "com.snowplowanalytics.snowplow.storage.avro.schema",
+	"type": "record",
+	"name": "event",
+	"fields": [
+		{ "name": "event_id", "type": "string" },
+		{ "name": "app_id", "type": "string" },
+		{ "name": "user_id", "type": "string"},
+		{ "name": "timestamp", "type": {
+			"type": "record",
+			"name": "timestamp_record",
+			"fields": [
+				{"name": "collector_tstamp", "type": "long"},
+				{"name": "device_tstamp", "type": ["long", "null"]}
+			]
+		}},
+		{ 	"name": "snowplow_version",
+			"type": { 
+				"type": "record",
+				"name": "snowplow_version_record",
+				"fields": [
+					{ "name": "tracker_version", "type": "string" },
+					{ "name": "collector_version", "type": "string" },
+					{ "name": "etl_version", "type": "string"}
+				]
+			}	
+			
+		},
+		{ "name": "event_vendor", "type": {
+			"type": "record",
+			"name": "event_vendor_record",
+			"fields": [
+				{"name": "event_vendor_name", "type": {
+					"type": "record",
+					"name": "com_snowplowanalytics",
+					"fields": [
+						{"name": "event_type", "type": [
+							{
+								"type": "record",
+								"name": "page_view",
+								"fields": [
+									{"name": "page_title", "type": "string"}
+								]
+							},
+							{
+								"type": "record",
+								"name": "page_ping",
+								"fields": [
+									{"name": "page_title", "type": "string"},
+									{"name": "xoffset_min", "type": "int"},
+									{"name": "xoffset_max", "type": "int"},
+									{"name": "yoffset_min", "type": "int"},
+									{"name": "yoffset_max", "type": "int"}
+								]
+							},
+							{
+								"type": "record",
+								"name": "transaction",
+								"fields": [
+									{"name": "order_id", "type": "string"},
+									{"name": "affiliation", "type": "string"},
+									{"name": "value", "type": {
+										"type": "record",
+										"name": "value_record",
+										"fields": [
+											{"name": "total", "type": "float"},
+											{"name": "tax", "type": "float"},
+											{"name": "shipping", "type": "float"}
+										]}},
+									{"name": "delivery_address", "type": {
+										"type": "record",
+										"name": "delivery_address_record",
+										"fields": [
+											{"name": "city", "type": "string"},
+											{"name": "state", "type": "string"},
+											{"name": "country", "type": "string"}
+										]
+									}},
+									{"name": "products", "type": {
+										"type": "array",
+										"items": {
+											"type": "record",
+											"name": "product_record",
+											"fields": [
+												{"name": "sku", "type": "string"},
+												{"name": "name", "type": "string"},
+												{"name": "category", "type": "string"},
+												{"name": "unit_price", "type": "float"},
+												{"name": "quantity", "type": "float"}
+											]
+										}
+									}}
+								]
+							},
+							{
+								"type": "record",
+								"name": "social_event",
+								"fields": [
+									{"name": "action", "type": "string"},
+									{"name": "network", "type": "string"},
+									{"name": "target", "type": "string"},
+									{"name": "page_path", "type": "string"}
+								]
+							},
+							{
+								"type": "record",
+								"name": "item_view",
+								"fields": [
+									{"name": "id", "type": "string"},
+									{"name": "name", "type": "string"},
+									{"name": "display_format", "type": "string"},
+									{"name": "rank", "type": "int"},
+									{"name": "location", "type": "string"}
+								]
+							},
+							{
+								"type": "record",
+								"name": "ad_impression",
+								"fields": [
+									{"name": "bannerid", "type": "string"},
+									{"name": "campaignid", "type": "string"},
+									{"name": "advertiserid", "type": "string"},
+									{"name": "userid", "type": "string"},
+									{"name": "zoneid", "type": "string"}
+								]
+							},
+							{
+								"type": "record",
+								"name": "custom_structured_event",
+								"fields": [
+									{"name": "category", "type": "string"},
+									{"name": "action", "type": "string"},
+									{"name": "label", "type": "string"},
+									{"name": "property", "type": "string"},
+									{"name": "value", "type": "float"}
+								]
+							}							
+						]}
+					]
+				}
+			}]
+		}},
+		{
+			"name": "platform",
+			"type": {
+				"type": "record",
+				"name": "platform_record",
+				"fields": [
+					{
+						"name": "web",
+						"type": {
+							"type": "record",
+							"name": "web_record",
+							"fields": [
+								{"name": "txn_id", "type": "string"},
+								{"name": "user", "type": {
+									"type": "record",
+									"name": "user_record",
+									"fields": [
+										{"name": "domain_userid", "type": "string"},
+										{"name": "network_userid", "type": "string"},
+										{"name": "domain_session_idx", "type": "int"},
+										{"name": "ip_address", "type": "string"}
+									]
+								}},
+								{"name": "page", "type": {
+									"type": "record",
+									"name": "page_record", 
+									"fields": [
+										{"name": "url_scheme", "type": "string"},
+										{"name": "url_host", "type": "string"},
+										{"name": "url_port", "type": "string"},
+										{"name": "url_path", "type": "string"},
+										{"name": "url_query", "type": "string"},
+										{"name": "url_fragment", "type": "string"},
+										{"name": "title", "type": "string"},
+										{"name": "referrer", "type": {
+											"type": "record",
+											"name": "referrer_record",
+											"fields": [
+												{"name": "source", "type": "string"},
+												{"name": "medium", "type": "string"},
+												{"name": "term", "type": "string"},
+												{"name": "content", "type": "string"},
+												{"name": "campaign", "type": "string"},
+												{"name": "url_scheme", "type": "string"},
+												{"name": "url_host", "type": "string"},
+												{"name": "url_port", "type": "string"},
+												{"name": "url_path", "type": "string"},
+												{"name": "url_query", "type": "string"},
+												{"name": "url_fragment", "type": "string"}
+											]
+										}}
+									]
+								}},
+								{"name": "document", "type":{
+									"type": "record",
+									"name": "document",
+									"fields": [
+										{"name": "character_set", "type": "string"},
+										{"name": "width", "type": "string"},
+										{"name": "height", "type": "int"},
+										{"name": "page_type", "type": "string"}
+									]
+								}},
+								{"name": "useragent", "type": "string"},
+								{"name": "browser", "type": {
+									"type": "record",
+									"name": "browser_record",
+									"fields": [
+										{"name": "user_fingerprint", "type": "string"},
+										{"name": "cookie", "type": "boolean"},
+										{"name": "language", "type": "string"},
+										{"name": "features", "type": {"type": "array", "items": "string"}},
+										{"name": "colordepth", "type": "int"},
+										{"name": "js_version", "type": "string"},
+										{"name": "view_height", "type": "int"},
+										{"name": "view_width", "type": "int"}
+									]
+								}},
+								{"name": "operating_system", "type": {
+									"type": "record",
+									"name": "operating_system_record",
+									"fields": [
+										{"name": "name", "type": "string"},
+										{"name": "family", "type": "string"},
+										{"name": "manufacturer", "type": "string"},
+										{"name": "time_zone", "type": "string"}
+									]
+								}},
+								{"name": "device", "type": {
+									"type": "record",
+									"name": "device_record",
+									"fields": [
+										{"name": "type", "type": "string"},
+										{"name": "is_mobile", "type": "boolean"},
+										{"name": "screen_height", "type": "int"},
+										{"name": "screen_width", "type": "int"}
+									]
+								}},
+								{"name": "location", "type": {
+									"type": "record",
+									"name": "location_record",
+									"fields": [
+										{"name": "country", "type": "string"},
+										{"name": "region", "type": "string"},
+										{"name": "city", "type": "string"},
+										{"name": "postcode", "type": "string"},
+										{"name": "latitude", "type": "string"},
+										{"name": "longitude", "type": "string"}
+									]
+								}}							
+							]
+						}
+					}
+				]
+			}
+		}
+	]
+}

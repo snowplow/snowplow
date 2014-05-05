@@ -1,0 +1,12 @@
+/**
+ * SnowPlow version is the object that tracks the timestamp
+ * when the event occured
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol TimestampProtocol {
+	record Timestamp {
+		long collector;
+		long device;
+	}
+}

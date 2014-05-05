@@ -1,0 +1,37 @@
+/**
+ * Transaction event_type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol TransactionProtocol {
+	import idl "../../simple_types/Properties.avdl";
+
+	record Value {
+		float total;
+		float shipping;
+		float tax;
+	}
+
+	record DeliveryAddress {
+		string city;
+		string state;
+		string country;
+	}
+
+	record LineItems {
+		string sku;
+		union{string, null} name;
+		union{string, null} category;
+		float unit_price;
+		float quantity;
+	}
+
+	record Transaction {
+		string id;
+		union{string, null} affiliation;
+		Value value;
+		DeliveryAddress delivery_address;
+		array<LineItems> line_items;
+		union{map<Properties>, null} custom_variables;
+	}
+}

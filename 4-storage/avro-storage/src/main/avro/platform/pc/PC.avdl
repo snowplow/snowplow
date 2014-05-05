@@ -1,0 +1,10 @@
+/**
+ * PC platform type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol PCProtocol {
+	record PC {
+		
+	}
+}

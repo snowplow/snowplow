@@ -1,0 +1,10 @@
+/**
+ * mobile platform type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol MobileProtocol {
+	record Mobile {
+		
+	}
+}

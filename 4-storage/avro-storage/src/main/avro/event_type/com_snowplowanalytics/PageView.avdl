@@ -1,0 +1,13 @@
+/**
+ * PageView event_type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol PageViewProtocol {
+	import idl "../../simple_types/Properties.avdl";
+	
+	record PageView {
+		string page_title;
+		union{map<Properties>, null} custom_variables;
+	}
+}

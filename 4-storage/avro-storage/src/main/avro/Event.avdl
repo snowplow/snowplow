@@ -1,0 +1,24 @@
+/**
+ * SnowPlow event object definition
+ *
+ * This is being called "Event2" temporarily so that there is no conflict with the equivalent 
+ * definition in `event.avsc`
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol EventProtocol {
+	import idl "simple_types/Timestamp.avdl";
+	import idl "snowplow_version/SnowPlowVersion.avdl";
+	import idl "event_type/EventType.avdl";
+	import idl "platform/Platform.avdl";
+
+	record Event {
+		union {string, null} event_id;
+		User user;
+		Timestamp collector_tstamp;
+		union {Timestamp, null} device_tstamp;
+		SnowPlowVersion snowplow_version;
+		EventType event_type;
+		Platform platform;
+	}
+}

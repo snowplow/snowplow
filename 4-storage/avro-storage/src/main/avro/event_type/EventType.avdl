@@ -1,0 +1,12 @@
+/**
+ * EventType is the company that defined the event type recorded
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol EventTypeProtocol {
+	import idl "EventVendor.avdl";
+
+	record EventType {
+		EventVendor event_vendor;
+	}
+}

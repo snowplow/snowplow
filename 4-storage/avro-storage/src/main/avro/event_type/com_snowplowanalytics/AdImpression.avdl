@@ -1,0 +1,18 @@
+/**
+ * AdImpression event_type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol AdImpressionProtocol {
+	import idl "../../simple_types/Properties.avdl";
+
+	record AdImpression {
+		union {string, null} banner_id;
+		union {string, null} campaign_id;
+		union {string, null} advertiser_id;
+		union {string, null} user_id;
+		union {string, null} zone_id;
+		union {string, null} publisher_id;
+		union {map<Properties>, null} custom_variables;
+	}
+}

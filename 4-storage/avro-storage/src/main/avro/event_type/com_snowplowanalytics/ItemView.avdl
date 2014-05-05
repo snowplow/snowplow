@@ -1,0 +1,17 @@
+/**
+ * ItemView event_type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol ItemViewProtocol {
+	import idl "../../simple_types/Properties.avdl";
+	
+	record ItemView {
+		string id;
+		string name;
+		union{string, null} display_format;
+		union{int, null} rank;
+		union{string, null} location;
+		union{map<Properties>, null} custom_variables;
+	}
+}

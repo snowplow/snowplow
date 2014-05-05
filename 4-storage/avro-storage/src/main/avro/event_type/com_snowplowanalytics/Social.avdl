@@ -1,0 +1,16 @@
+/**
+ * Social event_type
+ */
+
+@namespace("com.snowplowanalytics.snowplow.storage.avro")
+protocol SocialProtocol {
+	import idl "../../simple_types/Properties.avdl";
+
+	record Social {
+		string action;
+		string network;
+		union{string, null} target;
+		union{string, null} page_path;
+		union{map<Properties>, null} custom_variables;
+	}
+}
