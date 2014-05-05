@@ -200,6 +200,10 @@ public class SnowPlowEventStruct {
                                                    + ow + "[\\S]+"    // CookieHeader  / cs(Cookie)         added 12 Sep 2012
                                                    + w +  "[\\S]+"    // ResultType    / x-edge-result-type added 12 Sep 2012
                                                    + w +  "[\\S]+)?"  // X-Amz-Cf-Id   / x-edge-request-id  added 12 Sep 2012
+                                                   + ow + "[\\S]+"    // XHostHeader   / x-host-header      added 21 Oct 2013
+                                                   + w +  "[\\S]+"      // CsProtocol    / cs-protocol        added 21 Oct 2013
+                                                   + w +  "[\\S]+)?"    // CsBytes       / cs-bytes           added 21 Oct 2013
+                                                   + ow + "[\\S]+)?"    // TimeTaken     / time-taken         added 29 Apr 2014
                                          );
 
   // Logging helper instantiated lazily
