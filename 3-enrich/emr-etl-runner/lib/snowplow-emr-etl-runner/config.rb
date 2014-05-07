@@ -50,6 +50,11 @@ module SnowPlow
           config[:s3][:buckets][:processing] = options[:processbucket]
         end
 
+        unless options[:processarchive].nil?
+          config[:s3][:buckets][:processing] = config[:s3][:buckets][:archive]
+          config[:s3][:archived] = true
+        end
+
         # Add trailing slashes if needed to the non-nil buckets
         config[:s3][:buckets].reject{|k,v| v.nil?}.update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
 
@@ -66,7 +71,7 @@ module SnowPlow
         config[:emr][:jobflow].delete_if {|k, _| k.to_s.start_with?("core_") }
 
         # Validate the collector format
-        unless @@collector_formats.include?(config[:etl][:collector_format]) 
+        unless @@collector_formats.include?(config[:etl][:collector_format])
           raise ConfigError, "collector_format '%s' not supported" % config[:etl][:collector_format]
         end
 
@@ -136,8 +141,12 @@ module SnowPlow
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
           opts.on('-s', '--skip staging,emr,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
-          opts.on('-b', '--process-bucket BUCKET', 'run emr only on specified bucket. Implies --skip staging,archive') { |config| 
+          opts.on('-b', '--process-bucket BUCKET', 'run emr only on specified bucket. Implies --skip staging,archive') { |config|
             options[:processbucket] = config
+            options[:skip] = %w(staging archive)
+          }
+          opts.on('-a', '--process-archive', 'run emr only on archive bucket. Requires --start, implies --skip staging,archive') {
+            options[:processarchive] = true
             options[:skip] = %w(staging archive)
           }
 
@@ -177,6 +186,11 @@ module SnowPlow
         # Check the config file exists
         unless File.file?(options[:config])
           raise ConfigError, "Configuration file '#{options[:config]}' does not exist, or is not a file."
+        end
+
+        # Check if archived directories are processed, start is set
+        if options[:processarchive] and options[:start].nil?
+          raise ConfigError, "Missing option: start must be set when processing archive bucket."
         end
 
         # Finally check that start is before end, if both set

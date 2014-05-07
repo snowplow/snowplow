@@ -9,11 +9,11 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.0.1
+-- Version:     0.1.0
 -- URL:         -
 --
--- Authors:     Yali Sassoon
--- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
+-- Authors:     Yali Sassoon, Alex Dean
+-- Copyright:   Copyright (c) 2013-2014 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 CREATE EXTERNAL TABLE IF NOT EXISTS `events` (
@@ -25,6 +25,7 @@ event string,
 event_vendor string,
 event_id string,
 txn_id int,
+name_tracker string,               -- Added in 0.1.0
 v_tracker string,
 v_collector string,
 v_etl string,
@@ -40,7 +41,9 @@ geo_city string,
 geo_zipcode string,
 geo_latitude double,
 geo_longitude double,
+page_url string,                   -- Added in 0.1.0
 page_title string,
+page_referrer string,              -- Added in 0.1.0
 page_urlscheme string,
 page_urlhost string,
 page_urlport int, 
@@ -61,11 +64,14 @@ mkt_source string,
 mkt_term string,
 mkt_content string,
 mkt_campaign string,
+contexts string,                   -- Added in 0.1.0
 se_category string,
 se_action string,
 se_label string,
 se_property string,
 se_value double,
+ue_name string,                    -- Added in 0.1.0
+ue_properties string,              -- Added in 0.1.0
 tr_orderid string,
 tr_affiliation string,
 tr_total double,
