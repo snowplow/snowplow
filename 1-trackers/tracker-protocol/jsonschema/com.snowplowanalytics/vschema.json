@@ -1,0 +1,28 @@
+{
+	"$schema": "http://json-schema.org/schema#",
+	"description": "Top-level schema for the validation process",
+	"type": "object",
+
+	"properties": {
+
+		"header": {
+			"type": "object",
+			"properties": {
+				"vendor": {
+					"type": "string"
+				},
+				"type": {
+					"type": "string"
+				},
+				"version": {
+					"type": "string"
+				}
+			},
+			"required": ["vendor", "type", "version"]
+		},
+
+		"data": {}
+	},
+
+	"required": ["header", "data"]
+}

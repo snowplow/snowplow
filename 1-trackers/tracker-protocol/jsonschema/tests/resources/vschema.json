@@ -1,0 +1,135 @@
+{
+	"name": "ad_click",
+	"valid": [
+
+		{
+			"header": {
+				"vendor":"com.snowplowanalytics",
+				"type":"unstruct_event",
+				"version":"2.0.0"				
+			},
+			"data": {
+				"header": {
+					"type":"link_click",
+					"version":"1.0.0",
+					"vendor":"com.snowplowanalytics"
+				},
+				"data": {
+					"elementId": "first-link",
+					"targetUrl": "http://www.example.com"
+				}
+			}
+		},
+
+		{
+			"header": {
+				"vendor": "com.snowplowanalytics",
+				"type": "contexts",
+				"version": "1.0.0"				
+			},
+			"data": {
+				"header": {
+					"type":"contexts",
+					"version":"1.0.0",
+					"vendor":"com.snowplowanalytics"
+				},
+				"data":[
+				{
+					"header":{
+						"vendor": "com.example_company",
+						"name": "page",
+						"version": "1.1.0"
+					},
+					"data":{
+						"page_type": "test",
+						"last_updated": "2014-02-26T00:00:00.000Z"
+					}
+				},
+				{
+					"header":{
+						"vendor": "com.example_company",
+						"name": "user",
+						"version": "2.0.0"
+					},
+					"data":{
+						"user_type": "tester"
+					}
+				}
+				]
+			}
+		},
+
+		{
+			"header": {
+				"vendor": "com.acme",
+				"type": "mixed_array",
+				"version": "1.0.0"				
+			},
+			"data": [null, 15, ""]
+		},
+
+		{
+			"header": {
+				"vendor":"com.acme",
+				"type":"nothing",
+				"version":"1.0.0"				
+			},
+			"data": null
+		}		
+
+	],
+	"invalid": [
+
+		{
+
+		},
+
+		{
+			"data": {
+				"header": {
+					"vendor": "com.snowplowanalytics",
+					"type": "unstruct_event",
+					"version": "2.0.0"				
+				},
+				"data": {
+					"header": {
+						"type": "link_click",
+						"version": "1.0.0",
+						"vendor": "com.snowplowanalytics"
+					},
+					"data": {
+						"elementId": "first-link",
+						"targetUrl": "http://www.example.com"
+					}
+				}
+			}
+		},
+
+		{
+			"header": {
+				"vendor": "com.snowplowanalytics",
+				"type": "unstruct_event",
+				"version": "2.0.0"				
+			}
+		},
+
+		{
+			"header": {
+				"vendor": "com.snowplowanalytics",
+				"type": "unstruct_event"
+			},
+			"data": {
+				"header": {
+					"type": "link_click",
+					"version": "1.0.0",
+					"vendor": "com.snowplowanalytics"
+				},
+				"data": {
+					"elementId": "first-link",
+					"targetUrl": "http://www.example.com"
+				}
+			}
+		}		
+
+	]
+}

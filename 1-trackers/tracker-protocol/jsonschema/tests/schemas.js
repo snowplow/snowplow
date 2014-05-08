@@ -3,6 +3,7 @@ define([
 	'intern!object',
 	'intern/chai!expect',
 	'intern/dojo/node!z-schema',
+	'intern/dojo/node!../com.snowplowanalytics/vschema',	
 	'intern/dojo/node!../com.snowplowanalytics/tracker_protocol',
 	'intern/dojo/node!../com.snowplowanalytics/contexts',
 	'intern/dojo/node!../com.snowplowanalytics/unstruct_event',
@@ -11,9 +12,9 @@ define([
 	'intern/dojo/node!../com.snowplowanalytics/ad_conversion',
 	'intern/dojo/node!../com.snowplowanalytics/link_click',
 	'intern/dojo/node!../com.snowplowanalytics/screen_view'
-], function(registerSuite, expect, ZSchema, trackerProtocol, customContexts, unstructEvent, adImpression, adClick, adConversion, linkClick, screenView) {
+], function(registerSuite, expect, ZSchema, vschema, trackerProtocol, customContexts, unstructEvent, adImpression, adClick, adConversion, linkClick, screenView) {
 
-	var schemas = [trackerProtocol, customContexts, unstructEvent, adImpression, adClick, adConversion, linkClick, screenView],
+	var schemas = [trackerProtocol, customContexts, unstructEvent, vschema, trackerProtocol, customContexts, unstructEvent, adImpression, adClick, adConversion, linkClick, screenView],
 		validator = new ZSchema({sync:true}),
 		i;
 
