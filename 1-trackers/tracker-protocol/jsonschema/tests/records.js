@@ -4,6 +4,7 @@ define([
 	'intern/dojo/node!z-schema',
 	'intern/dojo/node!../com.snowplowanalytics/tracker_protocol',
 	'intern/dojo/node!../com.snowplowanalytics/contexts',
+	'intern/dojo/node!../com.snowplowanalytics/unstruct_event',
 	'intern/dojo/node!../com.snowplowanalytics/ad_impression',
 	'intern/dojo/node!../com.snowplowanalytics/ad_click',
 	'intern/dojo/node!../com.snowplowanalytics/ad_conversion',
@@ -11,6 +12,7 @@ define([
 	'intern/dojo/node!../com.snowplowanalytics/screen_view',
 	'intern/dojo/node!./resources/tracker_protocol',
 	'intern/dojo/node!./resources/contexts',
+	'intern/dojo/node!./resources/unstruct_event',
 	'intern/dojo/node!./resources/ad_impression',
 	'intern/dojo/node!./resources/ad_click',
 	'intern/dojo/node!./resources/ad_conversion',
@@ -18,15 +20,17 @@ define([
 	'intern/dojo/node!./resources/screen_view'
 ], function(registerSuite, assert, ZSchema,
 			trackerProtocolSchema,
-			customContextsSchema,
+			customContextsSchema, unstructEventSchema,
 			adImpressionSchema, adClickSchema, adConversionSchema, linkClickSchema, screenViewSchema,
 			trackerProtocolJsons,
-			customContextsJsons,
+			customContextsJsons, unstructEventJsons,
 			adImpressionJsons,  adClickJsons,  adConversionJsons,  linkClickJsons,  screenViewJsons) {
 
 	var validator = new ZSchema({sync: true}),
 		testArray = [
+			[trackerProtocolSchema, trackerProtocolJsons],
 			[customContextsSchema, customContextsJsons],
+			[unstructEventSchema, unstructEventJsons],
 			[adImpressionSchema, adImpressionJsons],
 			[adClickSchema, adClickJsons],
 			[adConversionSchema, adConversionJsons],

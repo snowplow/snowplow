@@ -1,43 +1,68 @@
 {
-	"name": "us_contexts",
+	"name": "contexts",
 	"valid": [
-		[{
-			"vendor": "com.acme",			
-			"name": "movie_poster",
-			"version": "1.0.0", 
-			"properties": {
-				"moviewName":"Jaws",
-				"posterYear": 1995
-			}
-		},
-		{
-			"vendor": "com.acme",			
-			"name": "customer",
-			"version": "2.1.0", 
-			"properties": {
-				"pBuy": 0.23,
-				"segment": "whale"
-			}			
-		}],
 
-		[{
-			"vendor": "com.acme",
-			"name": "customer",
-			"version": "2.1.0", 
-			"properties": {
-				"pBuy": 0.23,
-				"segment": "whale"
+		[
+			{
+				"header": {
+					"vendor":"com.example_company",
+					"type":"page",
+					"version":"1.1.0"
+				},
+				"data":{
+					"page_type":"test",
+					"last_updated":"2014-02-26T00:00:00.000Z"
+				}
+			},
+			{
+				"header": {
+					"vendor":"com.example_company",
+					"type":"user",
+					"version":"2.0.0"
+				},
+				"data":{
+					"userType":"tester"
+				}
 			}
-		}],
+		],
 
-		[{
-			"vendor": "a",
-			"name": "453",
-			"version": "9",
-			"properties": {
-				"propertyOne": 4
+		[
+			{
+				"header": {
+					"vendor": "com.acme",			
+					"type": "movie_poster",
+					"version": "1.0.0"
+				},
+				"data": {
+					"movieName":"Jaws",
+					"posterYear": 1995
+				}
+			},
+			{
+				"header": {
+					"vendor": "com.acme",			
+					"type": "customer",
+					"version": "2.1.0"
+				},
+				"data": {
+					"pBuy": 0.23,
+					"segment": "whale"
+				}			
 			}
-		}]
+		],
+
+		[
+			{
+				"header": {
+					"vendor": "com.acme",			
+					"type": "customer",
+					"version": "2.1.0"
+				},
+				"data": {
+
+				}
+			}
+		]
 
 	],
 	"invalid": [
@@ -45,34 +70,46 @@
 
 		],
 
-		[{
-			"name": "customer",
-			"version": 2, 
-			"properties": {
-				"pBuy": 0.23,
-				"segment": "whale"
+		[
+			{
+				"header": {
+					"type": "customer",
+					"version": "2.1.0"
+				},
+				"data": {
+					"pBuy": 0.23,
+					"segment": "whale"					
+				}
 			}
-		}],		
+		],
 
-		{
-			"vendor": "com.acme",
-			"name": "customer",
-			"version": "2.1.0", 
-			"properties": {
-				"pBuy": 0.23,
-				"segment": "whale"
+		[
+			{
+				"header": {
+					"vendor": "com.acme",
+					"type": "customer",
+					"version": 4
+				},
+				"data": {
+					"pBuy": 0.23,
+					"segment": "whale"					
+				}
 			}
-		},
+		],
 
-		[{
-			"vendor": "com.acme",
-			"name": "customer",
-			"version": 2, 
-			"properties": {
-				"pBuy": 0.23,
-				"segment": "whale"
+		[
+			{
+				"header": {
+					"vendor": "com.acme",
+					"type": "customer",
+					"version": "2.1.0"
+				},
+				"data": [{
+					"pBuy": 0.23,
+					"segment": "whale"					
+				}]
 			}
-		}],
+		],
 
 		[{
 			"vendor": "com.acme",

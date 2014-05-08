@@ -1,0 +1,90 @@
+{
+	"name": "unstruct_event",
+	"valid": [
+
+		{
+			"header": {
+				"vendor": "com.acme",
+				"type": "view_product",
+				"version": "3.0.0"
+			},
+			"data": {
+				"productId": "e00057972",
+				"viewDuration": 23
+			}
+		},
+
+		{
+			"header": {
+				"vendor": "com.snowplowanalytics",
+				"type": "link_click",
+				"version": "1.0.0"
+			},
+			"data": {
+				"elementId": "top",
+				"elementClasses": ["first","head"],
+				"elementTarget": "_blank",
+				"targetUrl": "www.example.com"
+			}
+		},
+
+		{
+			"header": {
+				"vendor": "com.snowplowanalytics",
+				"type": "link_click",
+				"version": "1.0.0"
+			},
+			"data": {
+
+			}
+		}	
+
+	],
+
+	"invalid":  [
+
+		{
+			"header": {
+				"type": "view_product",
+				"version": "3.0.0"
+			},
+			"data": {
+				"productId": "e00057972",
+				"viewDuration": 23
+			}
+		},
+
+		{
+			"header": {
+				"vendor": "com.acme",
+				"type": "view_product",
+				"version": 3
+			},
+			"data": {
+				"productId": "e00057972",
+				"viewDuration": 23
+			}
+		},
+
+		{
+			"header": {
+				"vendor": "com.acme",
+				"type": "view_product",
+				"version": "3.0.0"
+			},
+			"data": [{
+				"productId": "e00057972",
+				"viewDuration": 23
+			}]
+		},
+
+		{
+			"header": {
+				"vendor": "com.acme",
+				"type": "view_product",
+				"version": "3.0.0"
+			}
+		}
+		
+	]
+}

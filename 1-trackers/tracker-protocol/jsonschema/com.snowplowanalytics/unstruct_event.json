@@ -1,0 +1,30 @@
+{
+	"$schema": "http://json-schema.org/schema#",
+	"description": "Schema for a Snowplow unstructured event",
+	"type": "object",
+
+	"properties": {
+
+		"header": {
+			"type": "object",
+			"properties": {
+				"vendor": {
+					"type": "string"
+				},
+				"type": {
+					"type": "string"
+				},
+				"version": {
+					"type": "string"
+				}
+			},
+			"required": ["vendor", "type", "version"]
+		},
+
+		"data": {
+			"type": "object"
+		}
+	},
+
+	"required": ["header", "data"]
+}
