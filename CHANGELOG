@@ -1,3 +1,10 @@
+Version 0.9.3 (2014-05-XX)
+--------------------------
+EmrEtlRunner: fixed disabling catching Cascading errors (#721)                                              - TODO
+EmrEtlRunner: renamed Clojure Collector log files in processing bucket to support multiple instances (#717) - TODO
+Clojure Collector: load balancer IP address getting stored in logs (#719)                                   - TODO
+Documentation: removed all Snowplow tracking from READMEs, thanks @acinader! (#720)                         - TODO
+
 Version 0.9.2 (2014-04-30)
 --------------------------
 Scala Hadoop Enrich: bumped to 0.5.0
