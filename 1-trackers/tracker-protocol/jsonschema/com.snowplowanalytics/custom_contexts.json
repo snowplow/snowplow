@@ -1,9 +1,30 @@
 {
 	"$schema": "http://json-schema.org/schema#",
 	"description": "Schema for an envelope of custom contexts",
-	"type": "object",
-	"additionalProperties": {
-		"type": "object"
+	"type": "array",
+	"items": {
+
+		"type": "object",
+
+		"properties": {
+			"vendor": {
+				"type": "string"
+			},
+			"name": {
+				"type": "string"
+			},
+			"version": {
+				"type": "string"
+			},
+			"properties": {
+				"type": "object",
+				"minProperties": 1
+			}
+		},
+
+		"required": ["vendor", "name", "version", "properties"]
+
 	},
-	"minProperties": 1
+
+	"minItems": 1
 }

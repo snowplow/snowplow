@@ -1,54 +1,91 @@
 {
-	"name": "ad_click",
+	"name": "us_contexts",
 	"valid": [
-		{
-			"context_1": {
-				"fb_id": "38e7b61a8543089cf"
-			},
-			"context_2": {
-				"property_1": true,
-				"property_2": 13,
-				"property_3": ["London", "France"]
+		[{
+			"vendor": "com.acme",			
+			"name": "movie_poster",
+			"version": "1.0.0", 
+			"properties": {
+				"moviewName":"Jaws",
+				"posterYear": 1995
 			}
 		},
 		{
-			"context_1": {
-				"fb_id": "38e7b61a8543089cf"
-			},
-			"context_2": {
-				"property_1": [1, false, {
-					"nested": true
-					}]
+			"vendor": "com.acme",			
+			"name": "customer",
+			"version": "2.1.0", 
+			"properties": {
+				"pBuy": 0.23,
+				"segment": "whale"
+			}			
+		}],
+
+		[{
+			"vendor": "com.acme",
+			"name": "customer",
+			"version": "2.1.0", 
+			"properties": {
+				"pBuy": 0.23,
+				"segment": "whale"
 			}
-		},
-		{
-			"arrays_context": {
-				"arrays": [[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]
+		}],
+
+		[{
+			"vendor": "a",
+			"name": "453",
+			"version": "9",
+			"properties": {
+				"propertyOne": 4
 			}
-		}
+		}]
+
 	],
 	"invalid": [
-		{
-
-		},
 		[
-			{
-				"fb_id": "38e7b61a8543089cf"
-			},
-			{
-				"property_1": true,
-				"property_2": 13,
-				"property_3": ["London", "France"]
-			}
+
 		],
 
-		{
-			"fb_id": "38e7b61a8543089cf"
-		},
+		[{
+			"name": "customer",
+			"version": 2, 
+			"properties": {
+				"pBuy": 0.23,
+				"segment": "whale"
+			}
+		}],		
 
 		{
-			"id_array": [24564, 64536, 23464563456]
+			"vendor": "com.acme",
+			"name": "customer",
+			"version": "2.1.0", 
+			"properties": {
+				"pBuy": 0.23,
+				"segment": "whale"
+			}
 		},
+
+		[{
+			"vendor": "com.acme",
+			"name": "customer",
+			"version": 2, 
+			"properties": {
+				"pBuy": 0.23,
+				"segment": "whale"
+			}
+		}],
+
+		[{
+			"vendor": "com.acme",
+			"name": "customer",
+			"version": "2.1.0", 
+			"properties": {
+
+			}
+		}],		
+
+		[{
+			"id_array": [24564, 64536, 23464563456]
+		}],
 
 		{
 			"object_in_array": [{
@@ -56,7 +93,7 @@
 				}]
 		},
 
-		"not_an_object",
+		"string",
 
 		345,
 
