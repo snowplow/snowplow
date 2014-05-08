@@ -3,26 +3,26 @@
 	"description": "Schema for an ad impression event",
 	"type": "object",
 	"properties": {
-		"impression_id": {
+		"impressionId": {
 			"type": "string"
 		},
-		"zone_id": {
+		"zoneId": {
 			"type": "string"
 		},
-		"banner_id": {
+		"bannerId": {
 			"type": "string"
 		},
-		"campaign_id": {
+		"campaignId": {
 			"type": "string"
 		},
-		"advertiser_id": {
+		"advertiserId": {
 			"type": "string"
 		},
-		"target_url": {
+		"targetUrl": {
 			"type": "string",
 			"minLength": 1
 		},
-		"cost_model": {
+		"costModel": {
 			"enum": ["cpa", "cpc", "cpm"]
 		},
 		"cost": {
@@ -31,6 +31,6 @@
 		}
 	},
 	"minProperties":1,
-	"dependencies": {"cost": ["cost_model"]},
+	"dependencies": {"cost": ["costModel"]},
 	"additionalProperties": false
 }

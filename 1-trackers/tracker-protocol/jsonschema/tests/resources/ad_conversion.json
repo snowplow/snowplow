@@ -2,25 +2,25 @@
 	"name": "ad_conversion",
 	"valid": [
 		{
-			"conversion_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
+			"conversionId": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
 			"cost": 22,
 			"category": "business",
 			"action": "purchase",
 			"property": "adjective",
-			"initial_value": 1000,
-			"advertiser_id": "a390a0820834b089a",
-			"cost_model": "cpc",
-			"campaign_id": "3475802750234875"
+			"initialValue": 1000,
+			"advertiserId": "a390a0820834b089a",
+			"costModel": "cpc",
+			"campaignId": "3475802750234875"
 		},
 		{
-			"conversion_id": "\\  \" `~1!2@3#4$5%6^7&8*9(0)-_=+]}[{/?.>,<;:'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM",
+			"conversionId": "\\  \" `~1!2@3#4$5%6^7&8*9(0)-_=+]}[{/?.>,<;:'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM",
 			"cost": 999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999,
 			"category": "\"\\\"'''''''",
 			"action": "null",
 			"property": "undefined",
-			"initial_value": 0.1,
-			"cost_model": "cpc",
-			"campaign_id": ""
+			"initialValue": 0.1,
+			"costModel": "cpc",
+			"campaignId": ""
 		}
 	],
 	"invalid": [
@@ -28,63 +28,63 @@
 			"cost": -1000
 		},
 		{
-			"initial_value": -1
+			"initialValue": -1
 		},
 		{
-			"conversion_id": "a",
+			"conversionId": "a",
 			"cost": 22,
 			"category": "business",
 			"action": "purchase",
 			"property": "adjective",
-			"initial_value": 1000,
-			"advertiser_id": "a390a0820834b089a",
-			"cost_model": "cpc",
-			"campaign_id": "3475802750234875",
-			"additional_property": null
+			"initialValue": 1000,
+			"advertiserId": "a390a0820834b089a",
+			"costModel": "cpc",
+			"campaignId": "3475802750234875",
+			"additionalProperty": null
 		},
 		{
-			"conversion_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
+			"conversionId": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
 			"cost": 22,
 			"category": "business",
 			"action": "purchase",
 			"property": "adjective",
-			"initial_value": "1000",
-			"advertiser_id": "a390a0820834b089a",
-			"cost_model": "cpc",
-			"campaign_id": "3475802750234875"
+			"initialValue": "1000",
+			"advertiserId": "a390a0820834b089a",
+			"costModel": "cpc",
+			"campaignId": "3475802750234875"
 		},
 		{
-			"conversion_id": 500,
+			"conversionId": 500,
 			"cost": 22,
 			"category": "business",
 			"action": "purchase",
 			"property": "adjective",
-			"initial_value": 1000,
-			"advertiser_id": "a390a0820834b089a",
-			"cost_model": "cpc",
-			"campaign_id": "3475802750234875"
+			"initialValue": 1000,
+			"advertiserId": "a390a0820834b089a",
+			"costModel": "cpc",
+			"campaignId": "3475802750234875"
 		},
 		{
-			"conversion_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
+			"conversionId": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
 			"cost": 22,
 			"category": "business",
 			"action": "purchase",
 			"property": "adjective",
-			"initial_value": 1000,
-			"advertiser_id": "a390a0820834b089a",
-			"cost_model": "invalid",
-			"campaign_id": "3475802750234875"
+			"initialValue": 1000,
+			"advertiserId": "a390a0820834b089a",
+			"costModel": "invalid",
+			"campaignId": "3475802750234875"
 		},
 		{
-			"conversion_id": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
+			"conversionId": "1f4ce360-a61a-11e3-a5e2-0800200c9a66",
 			"cost": 22,
 			"category": "business",
 			"action": "purchase",
 			"property": "adjective",
-			"initial_value": 1000,
-			"advertiser_id": "a390a0820834b089a",
-			"cost_model": "invalid",
-			"campaign_id": [""]
+			"initialValue": 1000,
+			"advertiserId": "a390a0820834b089a",
+			"costModel": "invalid",
+			"campaignId": [""]
 		},
 		{
 

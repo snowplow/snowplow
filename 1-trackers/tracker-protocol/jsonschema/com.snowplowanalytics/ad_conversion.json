@@ -3,13 +3,13 @@
 	"description": "Schema for an ad conversion event",
 	"type": "object",
 	"properties": {
-		"conversion_id": {
+		"conversionId": {
 			"type": "string"
 		},
-		"campaign_id": {
+		"campaignId": {
 			"type": "string"
 		},
-		"advertiser_id": {
+		"advertiserId": {
 			"type": "string"
 		},		
 		"category": {
@@ -21,19 +21,19 @@
 		"property": {
 			"type": "string"
 		},
-		"cost_model": {
+		"costModel": {
 			"enum": ["cpa", "cpc", "cpm"]
 		},
 		"cost": {
 			"type": "number",
 			"minimum": 0
 		},
-		"initial_value": {
+		"initialValue": {
 			"type": "number",
 			"minimum": 0
 		}
 	},
 	"minProperties": 1,
-	"dependencies": {"cost": ["cost_model"]},
+	"dependencies": {"cost": ["costModel"]},
 	"additionalProperties": false
 }

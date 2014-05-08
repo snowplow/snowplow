@@ -3,29 +3,29 @@
 	"description": "Schema for an ad click event",
 	"type": "object",
 	"properties": {
-		"click_id": {
+		"clickId": {
 			"type": "string"
 		},
-		"impression_id": {
+		"impressionId": {
 			"type": "string"
 		},
-		"zone_id": {
+		"zoneId": {
 			"type": "string"
 		},
-		"banner_id": {
+		"bannerId": {
 			"type": "string"
 		},
-		"campaign_id": {
+		"campaignId": {
 			"type": "string"
 		},
-		"advertiser_id": {
+		"advertiserId": {
 			"type": "string"
 		},
-		"target_url": {
+		"targetUrl": {
 			"type": "string",
 			"minLength": 1
 		},
-		"cost_model": {
+		"costModel": {
 			"enum": ["cpa", "cpc", "cpm"]
 		},
 		"cost": {
@@ -33,7 +33,7 @@
 			"minimum": 0
 		}
 	},
-	"required": ["target_url"],
-	"dependencies": {"cost": ["cost_model"]},
+	"required": ["targetUrl"],
+	"dependencies": {"cost": ["costModel"]},
 	"additionalProperties": false
 }

@@ -3,23 +3,23 @@
 	"description": "Schema for a link click event",
 	"type": "object",
 	"properties": {
-		"element_id": {
+		"elementId": {
 			"type": "string"
 		},
-		"element_classes": {
+		"elementClasses": {
 			"type": "array",
 			"items": {
 				"type": "string"
 			}
 		},
-		"element_target": {
+		"elementTarget": {
 			"type": "string"
 		},
-		"target_url": {
+		"targetUrl": {
 			"type": "string",
 			"minLength": 1
 		}
 	},
-	"required": ["target_url"],
+	"required": ["targetUrl"],
 	"additionalProperties": false
 }
