@@ -4,7 +4,7 @@ define([
 	'intern/chai!expect',
 	'intern/dojo/node!z-schema',
 	'intern/dojo/node!../com.snowplowanalytics/tracker_protocol',
-	'intern/dojo/node!../com.snowplowanalytics/custom_contexts',
+	'intern/dojo/node!../com.snowplowanalytics/us_contexts',
 	'intern/dojo/node!../com.snowplowanalytics/ad_impression',
 	'intern/dojo/node!../com.snowplowanalytics/ad_click',
 	'intern/dojo/node!../com.snowplowanalytics/ad_conversion',
