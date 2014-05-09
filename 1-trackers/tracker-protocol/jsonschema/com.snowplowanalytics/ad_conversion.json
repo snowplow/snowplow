@@ -1,5 +1,6 @@
 {
 	"$schema": "http://json-schema.org/schema#",
+	"title": "com.snowplowanalytics/ad_conversion/1.0.0",
 	"description": "Schema for an ad conversion event",
 	"type": "object",
 	"properties": {

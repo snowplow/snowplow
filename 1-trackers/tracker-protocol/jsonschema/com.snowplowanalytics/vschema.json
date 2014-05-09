@@ -1,28 +1,18 @@
 {
 	"$schema": "http://json-schema.org/schema#",
+	"title": "com.snowplowanalytics/vschema/1.0.0",	
 	"description": "Top-level schema for the validation process",
 	"type": "object",
 
 	"properties": {
 
-		"header": {
-			"type": "object",
-			"properties": {
-				"vendor": {
-					"type": "string"
-				},
-				"type": {
-					"type": "string"
-				},
-				"version": {
-					"type": "string"
-				}
+		"schema": {
+				"type": "string",
+				"pattern": "^[a-zA-Z0-9_.]+/[a-zA-Z0-9_.]+/[0-9]+.[0-9]+.[0-9]+$"
 			},
-			"required": ["vendor", "type", "version"]
-		},
 
 		"data": {}
 	},
 
-	"required": ["header", "data"]
+	"required": ["schema", "data"]
 }

@@ -4,22 +4,14 @@
 
 		[
 			{
-				"header": {
-					"vendor":"com.example_company",
-					"type":"page",
-					"version":"1.1.0"
-				},
+				"schema": "com.example_company/page/1.1.0",
 				"data":{
 					"page_type":"test",
 					"last_updated":"2014-02-26T00:00:00.000Z"
 				}
 			},
 			{
-				"header": {
-					"vendor":"com.example_company",
-					"type":"user",
-					"version":"2.0.0"
-				},
+				"schema": "com.example_company/user/2.1.0",
 				"data":{
 					"userType":"tester"
 				}
@@ -28,22 +20,14 @@
 
 		[
 			{
-				"header": {
-					"vendor": "com.acme",			
-					"type": "movie_poster",
-					"version": "1.0.0"
-				},
+				"schema": "com.acme/movie_poster/1.0.2",
 				"data": {
 					"movieName":"Jaws",
 					"posterYear": 1995
 				}
 			},
 			{
-				"header": {
-					"vendor": "com.acme",			
-					"type": "customer",
-					"version": "2.1.0"
-				},
+				"schema": "com.acme/customer/1.0.0",
 				"data": {
 					"pBuy": 0.23,
 					"segment": "whale"
@@ -53,11 +37,7 @@
 
 		[
 			{
-				"header": {
-					"vendor": "com.acme",			
-					"type": "customer",
-					"version": "2.1.0"
-				},
+				"schema": "com.example_company/page/1.1.0",
 				"data": {
 
 				}
@@ -72,10 +52,7 @@
 
 		[
 			{
-				"header": {
-					"type": "customer",
-					"version": "2.1.0"
-				},
+				"schema": "customer/1.0.0",
 				"data": {
 					"pBuy": 0.23,
 					"segment": "whale"					
@@ -85,11 +62,7 @@
 
 		[
 			{
-				"header": {
-					"vendor": "com.acme",
-					"type": "customer",
-					"version": 4
-				},
+				"schema": "com.acme//1.0.0",
 				"data": {
 					"pBuy": 0.23,
 					"segment": "whale"					
@@ -99,11 +72,7 @@
 
 		[
 			{
-				"header": {
-					"vendor": "com.acme",
-					"type": "customer",
-					"version": "2.1.0"
-				},
+				"schema": "com.acme/customer/1.0.0",
 				"data": [{
 					"pBuy": 0.23,
 					"segment": "whale"					

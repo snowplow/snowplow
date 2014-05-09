@@ -1,24 +1,14 @@
 {
 	"$schema": "http://json-schema.org/schema#",
+	"title": "com.snowplowanalytics/unstruct_event/1.0.0",	
 	"description": "Schema for a Snowplow unstructured event",
 	"type": "object",
 
 	"properties": {
 
-		"header": {
-			"type": "object",
-			"properties": {
-				"vendor": {
-					"type": "string"
-				},
-				"type": {
-					"type": "string"
-				},
-				"version": {
-					"type": "string"
-				}
-			},
-			"required": ["vendor", "type", "version"]
+		"schema": {
+			"type": "string",
+			"pattern": "^[a-zA-Z0-9_.]+/[a-zA-Z0-9_.]+/[0-9]+.[0-9]+.[0-9]+$"
 		},
 
 		"data": {
@@ -26,5 +16,5 @@
 		}
 	},
 
-	"required": ["header", "data"]
+	"required": ["schema", "data"]
 }

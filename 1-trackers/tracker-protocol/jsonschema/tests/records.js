@@ -22,17 +22,17 @@ define([
 	'intern/dojo/node!./resources/screen_view'
 ], function(registerSuite, assert, ZSchema,
 			vschemaSchema, trackerProtocolSchema,
-			customContextsSchema, unstructEventSchema,
+			contextsSchema, unstructEventSchema,
 			adImpressionSchema, adClickSchema, adConversionSchema, linkClickSchema, screenViewSchema,
 			vschemaJsons, trackerProtocolJsons,
-			customContextsJsons, unstructEventJsons,
+			contextsJsons, unstructEventJsons,
 			adImpressionJsons,  adClickJsons,  adConversionJsons,  linkClickJsons,  screenViewJsons) {
 
 	var validator = new ZSchema({sync: true}),
 		testArray = [
 			[vschemaSchema, vschemaJsons],
 			[trackerProtocolSchema, trackerProtocolJsons],
-			[customContextsSchema, customContextsJsons],
+			[contextsSchema, contextsJsons],
 			[unstructEventSchema, unstructEventJsons],
 			[adImpressionSchema, adImpressionJsons],
 			[adClickSchema, adClickJsons],
