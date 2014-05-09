@@ -11,16 +11,17 @@
 		"properties": {
 
 			"schema": {
-					"type": "string",
-					"pattern": "^[a-zA-Z0-9_.]+/[a-zA-Z0-9_.]+/[0-9]+.[0-9]+.[0-9]+$"
-				},
+				"type": "string",
+				"pattern": "^[a-zA-Z0-9_.]+/[a-zA-Z0-9_.]+/[0-9]+.[0-9]+.[0-9]+$"
+			},
 
 			"data": {
 				"type": "object"
 			}
 		},
 
-		"required": ["schema", "data"]
+		"required": ["schema", "data"],
+		"additionalProperties": false
 	},
 
 	"minItems": 1
