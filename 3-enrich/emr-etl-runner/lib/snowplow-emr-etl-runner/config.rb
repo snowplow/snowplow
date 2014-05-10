@@ -93,15 +93,10 @@ module SnowPlow
                                 ]
 
         # Should we continue on unexpected error or not?
-        continue_on = case config[:etl][:continue_on_unexpected_error]
-                        when true
-                          '1'
-                        when false
-                          '0'
-                        else
-                          raise ConfigError, "continue_on_unexpected_error '%s' not supported (only 'true' or 'false')" % config[:etl][:continue_on_unexpected_error]
-                        end
-        config[:etl][:continue_on_unexpected_error] = continue_on # Heinous mutability
+        coue = config[:etl][:continue_on_unexpected_error]
+        unless is_boolean(coue)
+          raise ConfigError, "continue_on_unexpected_error '%s' not supported (only 'true' or 'false')" % coue
+        end
 
         # Now let's handle the enrichments.
         anon_octets = if config[:enrichments][:anon_ip][:enabled]
@@ -116,6 +111,11 @@ module SnowPlow
       module_function :get_config
 
       private
+
+      # Boolean check
+      def is_boolean(obj)
+        obj.is_a?(TrueClass) or obj.is_a?(FalseClass)
+      end
 
       # Parse the command-line arguments
       # Returns: the hash of parsed options
