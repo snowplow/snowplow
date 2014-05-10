@@ -1,7 +1,5 @@
 Version 0.9.3 (2014-05-XX)
 --------------------------
-< Rename 721 in github >
-
 EmrEtlRunner: fixed disabling of Cascading error catching (#721)
 EmrEtlRunner: renamed Clojure Collector log files in processing bucket to support multiple instances (#717) - TODO
 Clojure Collector: load balancer IP address getting stored in logs (#719)                                   - TODO
