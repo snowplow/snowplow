@@ -22,8 +22,6 @@ The **Enrich** process takes raw Snowplow events logged by a [Collector] [collec
 | ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
 | [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
 
-![Tracker](https://collector.snplow.com/i?&e=pv&page=3%20ETL%20README&aid=snowplowgithub&p=web&tv=no-js-0.1.0)
-
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/3-enrich.png
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
 [storage]: https://github.com/snowplow/snowplow/tree/master/4-storage

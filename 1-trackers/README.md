@@ -25,8 +25,6 @@ For other trackers (e.g. iOS, Android) and their approximate timelines, please s
 | ![i1] [techdocs-image]       | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
 | [Technical Docs] [tech-docs] | [Setup Guide] [setup] | _coming soon_                        |
 
-![Tracker](https://collector.snplow.com/i?&e=pv&page=1%20Trackers%20README&aid=snowplowgithub&p=web&tv=no-js-0.1.0)
-
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/1-trackers.png
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
 [t1]: https://github.com/snowplow/snowplow-javascript-tracker
