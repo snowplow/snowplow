@@ -1,7 +1,13 @@
 {
 	"$schema": "http://json-schema.org/schema#",
-	"title": "com.snowplowanalytics/link_click/1.0.0",
 	"description": "Schema for a link click event",
+	"self": {
+		"vendor": "com.snowplowanalytics",
+		"name": "link_click",
+		"format": "json",
+		"version": "1-0-0"
+	},
+
 	"type": "object",
 	"properties": {
 		"elementId": {

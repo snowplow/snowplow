@@ -1,7 +1,13 @@
 {
 	"$schema": "http://json-schema.org/schema#",
-	"title": "com.snowplowanalytics/vschema/1.0.0",	
 	"description": "Top-level schema for the validation process",
+	"self": {
+		"vendor": "com.snowplowanalytics",
+		"name": "vschema",
+		"format": "json",
+		"version": "1-0-0"
+	},
+	
 	"type": "object",
 
 	"properties": {

@@ -1,7 +1,13 @@
 {
 	"$schema": "http://json-schema.org/schema#",
-	"title": "com.snowplowanalytics/screen_view/1.0.0",
 	"description": "Schema for a screen view event",
+	"self": {
+		"vendor": "com.snowplowanalytics",
+		"name": "screen_view",
+		"format": "json",
+		"version": "1-0-0"
+	},
+
 	"type": "object",
 	"properties": {
 		"name": {

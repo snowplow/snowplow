@@ -1,7 +1,13 @@
 {
 	"$schema": "http://json-schema.org/schema#",
-	"title": "com.snowplowanalytics/tracker_protocol/1.0.0",
 	"description": "Schema for a Snowplow payload",
+	"self": {
+		"vendor": "com.snowplowanalytics",
+		"name": "tracker_protocol",
+		"format": "json",
+		"version": "1-0-0"
+	},
+
 	"type": "object",
 	"properties": {
 		"tna": {
