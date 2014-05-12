@@ -1,5 +1,6 @@
 Version 0.9.3 (2014-05-XX)
 --------------------------
+< Update Gemfile.lock >
 EmrEtlRunner: bumped to 0.7.0
 EmrEtlRunner: bumped Sluice to 0.2.0 (#405)
 EmrEtlRunner: fixed regression where 0 files staged still kicks off EMR (#409)
