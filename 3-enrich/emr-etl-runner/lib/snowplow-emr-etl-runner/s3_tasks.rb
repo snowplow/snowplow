@@ -76,7 +76,7 @@ module SnowPlow
         if files_moved.length == 0
           false
         else
-          # Wait for s3 to eventually become consistant
+          # Wait for s3 to eventually become consistent
           puts "Waiting a minute to allow S3 to settle (eventual consistency)"
           sleep(60)
 
