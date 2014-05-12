@@ -3,7 +3,7 @@
 	"valid": [
 
 		{
-			"schema": "com.acme/view_product/3.0.0",
+			"schema": "com.acme/view_product/json/3-0-0",
 			"data": {
 				"productId": "e00057972",
 				"viewDuration": 23
@@ -11,7 +11,7 @@
 		},
 
 		{
-			"schema": "com.snowplowanalytics/link_click/1.0.0",
+			"schema": "com.snowplowanalytics/link_click/json/1-0-0",
 			"data": {
 				"elementId": "top",
 				"elementClasses": ["first","head"],
@@ -21,7 +21,7 @@
 		},
 
 		{
-			"schema": "com.acme/view_product/3.0.0",
+			"schema": "com.acme/view_product/json/3-0-0",
 			"data": {
 
 			}
@@ -32,7 +32,7 @@
 	"invalid":  [
 
 		{
-			"schema": "view_product/3.0.0",
+			"schema": "view_product/json/3-0-0",
 			"data": {
 				"productId": "e00057972",
 				"viewDuration": 23
@@ -48,7 +48,7 @@
 		},
 
 		{
-			"schema": "com.acme/view_product/3.0.0",
+			"schema": "com.acme/view_product/3-0-0",
 			"data": [{
 				"productId": "e00057972",
 				"viewDuration": 23
@@ -56,7 +56,7 @@
 		},
 
 		{
-			"schema": "com.acme/view_product/3.0.0"
+			"schema": "com.acme/view_product/json/3-0-0"
 		}
 		
 	]

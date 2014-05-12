@@ -4,14 +4,14 @@
 
 		[
 			{
-				"schema": "com.example_company/page/1.1.0",
+				"schema": "com.example_company/page/json/1-1-0",
 				"data":{
 					"page_type":"test",
 					"last_updated":"2014-02-26T00:00:00.000Z"
 				}
 			},
 			{
-				"schema": "com.example_company/user/2.1.0",
+				"schema": "com.example_company/user/json/2-1-0",
 				"data":{
 					"userType":"tester"
 				}
@@ -20,14 +20,14 @@
 
 		[
 			{
-				"schema": "com.acme/movie_poster/1.0.2",
+				"schema": "com.acme/movie_poster/json/1-0-2",
 				"data": {
 					"movieName":"Jaws",
 					"posterYear": 1995
 				}
 			},
 			{
-				"schema": "com.acme/customer/1.0.0",
+				"schema": "com.acme/customer/json/1-0-0",
 				"data": {
 					"pBuy": 0.23,
 					"segment": "whale"
@@ -37,7 +37,7 @@
 
 		[
 			{
-				"schema": "com.example_company/page/1.1.0",
+				"schema": "com.example_company/page/json/1-1-0",
 				"data": {
 
 				}
@@ -52,7 +52,7 @@
 
 		[
 			{
-				"schema": "customer/1.0.0",
+				"schema": "customer/1-0-0",
 				"data": {
 					"pBuy": 0.23,
 					"segment": "whale"					
@@ -62,7 +62,7 @@
 
 		[
 			{
-				"schema": "com.acme//1.0.0",
+				"schema": "com.acme//1-0-0",
 				"data": {
 					"pBuy": 0.23,
 					"segment": "whale"					
@@ -72,7 +72,7 @@
 
 		[
 			{
-				"schema": "com.acme/customer/1.0.0",
+				"schema": "com.acme/customer/1-0-0",
 				"data": [{
 					"pBuy": 0.23,
 					"segment": "whale"					
