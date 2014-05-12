@@ -1,11 +1,11 @@
 Version 0.9.3 (2014-05-XX)
 --------------------------
 EmrEtlRunner: bumped to 0.7.0
-EmrEtlRunner: bumped Sluice to 0.2.0 (#405)                                                                 - TODO 
+EmrEtlRunner: bumped Sluice to 0.2.0 (#405)
 EmrEtlRunner: fixed regression where 0 files staged still kicks off EMR (#409)
-EmrEtlRunner: stopped Sluice file operation threads being killed by folders (#401)                          - TODO  
+EmrEtlRunner: stopped Sluice file operation threads being killed by folders (#401)
 EmrEtlRunner: fixed disabling of Cascading error catching (#721)
-EmrEtlRunner: renamed Clojure Collector log files in processing bucket to support multiple instances (#717) - TODO
+EmrEtlRunner: renamed Clojure Collector log files in processing bucket to support multiple instances (#717)
 Clojure Collector: load balancer IP address getting stored in logs (#719)                                   - TODO
 Documentation: removed all Snowplow tracking from READMEs, thanks @acinader! (#720)
 

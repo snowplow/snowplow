@@ -62,16 +62,22 @@ module SnowPlow
           Sluice::Storage::files_between(config[:start], config[:end], CF_DATE_FORMAT, CF_FILE_EXT)
         end
 
-        # Hive ignores files which begin with underscores
-        strip_underscore = lambda { |filepath|
-          if m = filepath.match('^_+(.*\.gz)$')
-            return m[1]
+        fix_filenames = lambda { |basename, filepath|
+          # Prepend sub-dir to prevent one set of files
+          # from overwriting same-named in other sub-dir
+          if m = filepath.match('([^/]+)/[^/]+$')
+            return m[1] + '-' + filepath
           else
-            return filepath
+            # Hive ignores files which begin with underscores
+            if m = filepath.match('^_+(.*\.gz)$')
+              return m[1]
+            else
+              return filepath
+            end
           end
         }
 
-        files_moved = Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move, strip_underscore, true)
+        files_moved = Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move, fix_filenames, true)
 
         if files_moved.length == 0
           false

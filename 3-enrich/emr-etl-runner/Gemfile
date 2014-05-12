@@ -20,4 +20,4 @@ ruby "1.9.3"
 # built with Bundler, so we add in the
 # RubyGems it requires here.
 gem "elasticity", "~> 3.0.2"
-gem "sluice", "~> 0.1.5"
+gem "sluice", "~> 0.2.0"
