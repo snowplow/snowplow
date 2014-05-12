@@ -73,7 +73,7 @@ module SnowPlow
 
         files_moved = Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move, strip_underscore, true)
 
-        if files_moved == 0
+        if files_moved.length == 0
           false
         else
           # Wait for s3 to eventually become consistant
