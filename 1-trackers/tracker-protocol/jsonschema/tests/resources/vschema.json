@@ -3,9 +3,9 @@
 	"valid": [
 
 		{
-			"schema": "com.snowplowanalytics/unstruct_event/json/2-0-0",
+			"schema": "com.snowplowanalytics/unstruct_event/jsonschema/2-0-0",
 			"data": {
-				"schema": "com.snowplowanalytics/link_click/json/1-0-0",
+				"schema": "com.snowplowanalytics/link_click/jsonschema/1-0-0",
 				"data": {
 					"elementId": "first-link",
 					"targetUrl": "http://www.example.com"
@@ -14,19 +14,19 @@
 		},
 
 		{
-			"schema": "com.snowplowanalytics/contexts/json/1-0-0",
+			"schema": "com.snowplowanalytics/contexts/jsonschema/1-0-0",
 			"data": {
-				"schema": "com.snowplowanalytics/contexts/json/1-0-0",
+				"schema": "com.snowplowanalytics/contexts/jsonschema/1-0-0",
 				"data":[
 				{
-					"schema": "com.example_company/page/json/1-1-0",
+					"schema": "com.example_company/page/jsonschema/1-1-0",
 					"data":{
 						"page_type": "test",
 						"last_updated": "2014-02-26T00:00:00.000Z"
 					}
 				},
 				{
-					"schema": "com.example_company/user/json/2-0-0",
+					"schema": "com.example_company/user/jsonschema/2-0-0",
 					"data":{
 						"user_type": "tester"
 					}
@@ -36,12 +36,12 @@
 		},
 
 		{
-			"schema": "com.acme/mixed_array/json/1-0-0",
+			"schema": "com.acme/mixed_array/jsonschema/1-0-0",
 			"data": [null, 15, ""]
 		},
 
 		{
-			"schema": "com.acme/nothing/json/91-1-0",
+			"schema": "com.acme/nothing/jsonschema/91-1-0",
 			"data": null
 		}		
 
@@ -54,19 +54,19 @@
 
 		{
 			"data": {
-				"schema": "com.snowplowanalytics/contexts/json/1-0-0",
+				"schema": "com.snowplowanalytics/contexts/jsonschema/1-0-0",
 				"data": {
-					"schema": "com.snowplowanalytics/contexts/json/1-0-0",
+					"schema": "com.snowplowanalytics/contexts/jsonschema/1-0-0",
 					"data":[
 					{
-						"schema": "com.example_company/page/json/1-1-0",
+						"schema": "com.example_company/page/jsonschema/1-1-0",
 						"data":{
 							"page_type": "test",
 							"last_updated": "2014-02-26T00:00:00.000Z"
 						}
 					},
 					{
-						"schema": "com.example_company/user/json/2-0-0",
+						"schema": "com.example_company/user/jsonschema/2-0-0",
 						"data":{
 							"user_type": "tester"
 						}
@@ -77,7 +77,7 @@
 		},
 
 		{
-			"schema": "com.snowplowanalytics/contexts/json/1-0-0"
+			"schema": "com.snowplowanalytics/contexts/jsonschema/1-0-0"
 		},
 
 		{
