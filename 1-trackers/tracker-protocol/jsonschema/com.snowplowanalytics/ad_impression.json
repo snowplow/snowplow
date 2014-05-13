@@ -4,7 +4,7 @@
 	"self": {
 		"vendor": "com.snowplowanalytics",
 		"name": "ad_impression",
-		"format": "json",
+		"format": "jsonschema",
 		"version": "1-0-0"
 	},
 

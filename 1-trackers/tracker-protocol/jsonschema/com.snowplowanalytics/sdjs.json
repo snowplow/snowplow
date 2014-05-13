@@ -4,7 +4,7 @@
 	"self": {
 		"vendor": "com.snowplowanalytics",
 		"name": "sdjs",
-		"format": "json",
+		"format": "jsonschema",
 		"version": "1-0-0"
 	},
 

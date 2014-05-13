@@ -4,7 +4,7 @@
 	"self": {
 		"vendor": "com.snowplowanalytics",
 		"name": "tracker_protocol",
-		"format": "json",
+		"format": "jsonschema",
 		"version": "1-0-0"
 	},
 
