@@ -1475,12 +1475,13 @@
                 "query"
             ]
         }, 
-        "Searchy": {
+        "Amazon": {
             "domains": [
-                "www.searchy.co.uk"
+                "amazon.com", 
+                "www.amazon.com"
             ], 
             "parameters": [
-                "q"
+                "keywords"
             ]
         }, 
         "Onet": {
@@ -1715,6 +1716,14 @@
                 "q"
             ]
         }, 
+        "Searchy": {
+            "domains": [
+                "www.searchy.co.uk"
+            ], 
+            "parameters": [
+                "q"
+            ]
+        }, 
         "Blogdigger": {
             "domains": [
                 "www.blogdigger.com"
@@ -1896,15 +1905,6 @@
                 "q"
             ]
         }, 
-        "Austronaut": {
-            "domains": [
-                "www2.austronaut.at", 
-                "www1.astronaut.at"
-            ], 
-            "parameters": [
-                "q"
-            ]
-        }, 
         "Vindex": {
             "domains": [
                 "www.vindex.nl", 
@@ -1912,6 +1912,15 @@
             ], 
             "parameters": [
                 "search_for"
+            ]
+        }, 
+        "Babylon": {
+            "domains": [
+                "search.babylon.com", 
+                "searchassist.babylon.com"
+            ], 
+            "parameters": [
+                "q"
             ]
         }, 
         "TrovaRapido": {
@@ -2522,10 +2531,10 @@
                 "q"
             ]
         }, 
-        "Babylon": {
+        "Austronaut": {
             "domains": [
-                "search.babylon.com", 
-                "searchassist.babylon.com"
+                "www2.austronaut.at", 
+                "www1.astronaut.at"
             ], 
             "parameters": [
                 "q"
@@ -3441,15 +3450,6 @@
                 "q"
             ]
         }, 
-        "Amazon": {
-            "domains": [
-                "amazon.com", 
-                "www.amazon.com"
-            ], 
-            "parameters": [
-                "keywords"
-            ]
-        }, 
         "Hooseek.com": {
             "domains": [
                 "www.hooseek.com"
@@ -3700,6 +3700,11 @@
         "XING": {
             "domains": [
                 "xing.com"
+            ]
+        }, 
+        "Instagram": {
+            "domains": [
+                "instagram.com"
             ]
         }, 
         "Vkontakte": {

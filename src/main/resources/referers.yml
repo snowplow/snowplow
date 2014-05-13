@@ -100,6 +100,10 @@ social:
       - twitter.com
       - t.co
 
+  Instagram:
+    domains:
+      - instagram.com
+
   Renren:
     domains:
       - renren.com
