@@ -1,6 +1,13 @@
 {
 	"$schema": "http://json-schema.org/draft-04/schema#",
 	"description": "Meta-schema for self-describing JSON schema",
+	"self": {
+		"vendor": "com.snowplowanalytics",
+		"name": "sdjs",
+		"format": "json",
+		"version": "1-0-0"
+	},
+
 	"definitions": {
 		"schemaArray": {
 			"type": "array",
