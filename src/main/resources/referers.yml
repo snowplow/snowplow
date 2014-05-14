@@ -104,6 +104,15 @@ social:
     domains:
       - instagram.com
 
+  Youtube:
+    domains:
+      - youtube.com
+      - youtu.be
+
+  Vimeo:
+    domains:
+      - vimeo.com
+
   Renren:
     domains:
       - renren.com

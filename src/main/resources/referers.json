@@ -3672,6 +3672,11 @@
                 "weeworld.com"
             ]
         }, 
+        "Vimeo": {
+            "domains": [
+                "vimeo.com"
+            ]
+        }, 
         "Geni": {
             "domains": [
                 "geni.com"
@@ -3819,6 +3824,12 @@
         "Bebo": {
             "domains": [
                 "bebo.com"
+            ]
+        }, 
+        "Youtube": {
+            "domains": [
+                "youtube.com", 
+                "youtu.be"
             ]
         }, 
         "Reddit": {
