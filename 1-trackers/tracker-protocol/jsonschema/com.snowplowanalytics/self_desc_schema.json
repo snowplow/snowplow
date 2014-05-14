@@ -3,7 +3,7 @@
 	"description": "Meta-schema for self-describing JSON schema",
 	"self": {
 		"vendor": "com.snowplowanalytics",
-		"name": "sdjs",
+		"name": "self_desc_schema",
 		"format": "jsonschema",
 		"version": "1-0-0"
 	},
@@ -168,9 +168,9 @@
 		"oneOf": { "$ref": "#/definitions/schemaArray" },
 		"not": { "$ref": "#" }
 	},
+	"required": ["self"],
 	"dependencies": {
 		"exclusiveMaximum": [ "maximum" ],
 		"exclusiveMinimum": [ "minimum" ]
-	},
-	"default": {}
+	}
 }

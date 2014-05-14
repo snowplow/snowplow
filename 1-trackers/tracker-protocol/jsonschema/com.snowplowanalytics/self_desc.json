@@ -3,7 +3,7 @@
 	"description": "Top-level schema for the validation process",
 	"self": {
 		"vendor": "com.snowplowanalytics",
-		"name": "vschema",
+		"name": "self_desc",
 		"format": "jsonschema",
 		"version": "1-0-0"
 	},
