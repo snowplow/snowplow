@@ -3,7 +3,7 @@
 	"description": "Meta-schema for self-describing JSON schema",
 	"self": {
 		"vendor": "com.snowplowanalytics",
-		"name": "self_desc_schema",
+		"name": "schema",
 		"format": "jsonschema",
 		"version": "1-0-0"
 	},
@@ -51,13 +51,16 @@
 			"type": "object",
 			"properties": {
 				"vendor": {
-					"type": "string"
+					"type": "string",
+					"pattern": "^[a-zA-Z0-9-_.]+$"
 				},
 				"name": {
-					"type": "string"
+					"type": "string",
+					"pattern": "^[a-zA-Z0-9-_]+$"
 				},
 				"format": {
-					"type": "string"
+					"type": "string",
+					"pattern": "^[a-zA-Z0-9-_]+$"
 				},
 				"version": {
 					"type": "string",
@@ -168,7 +171,6 @@
 		"oneOf": { "$ref": "#/definitions/schemaArray" },
 		"not": { "$ref": "#" }
 	},
-	"required": ["self"],
 	"dependencies": {
 		"exclusiveMaximum": [ "maximum" ],
 		"exclusiveMinimum": [ "minimum" ]

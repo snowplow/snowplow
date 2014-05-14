@@ -1,7 +1,7 @@
 {
 	"name": "link_click",
 	"valid": [
-		{
+		[{
 			"duid": "aeb1691c5a0ee5a6",
 			"vid": "2",
 			"tid": "508780",
@@ -20,8 +20,8 @@
 			"tz": "Europe%20London",
 			"evn": "com.snowplowanalytics",
 			"tv": "js-2.0.0"
-		},
-		{
+		}],
+		[{
 			"e": "ue",
 			"tv": "py-0.3.0",
 			"evn": "com.acme_company",
@@ -34,10 +34,10 @@
 			"p": "mob",
 			"cx": "eyJhIjogeyJiIjogImMifX0=",
 			"cv": "com.acme_company"
-		}
+		}]
 	],
 	"invalid":  [
-			{
+			[{
 			"duid": "aeb1691c5a0ee5a6",
 			"vid": 2,
 			"tid": "508780",
@@ -56,23 +56,24 @@
 			"tz": "Europe%20London",
 			"evn": "com.snowplowanalytics",
 			"tv": "js-2.0.0"
-		},
-		{
+		}],
+		[{
 			"e": "ue",
 			"tv": "py-0.3.0",
 			"evn": "com.acme_company",
 			"p": null
-		},
-		{
+		}],
+		[{
 			"e": "ti",
 			"tv": "rb-0.1.0",
 			"evn": "com.snowplowanalytics",
 			"p": "mob",
 			"cx": {"social": {"id": "843892347710"}},
 			"cv": "com.acme_company"
-		},
-		{
+		}],
+		[{
 
-		}
+		}],
+		[]
 	]
 }

@@ -1,0 +1,101 @@
+{
+	"name": "schema",
+	"valid": [
+		{
+			"$schema": "http://json-schema.org/schema#",
+			"description": "Schema for an ad click event",
+			"self": {
+				"vendor": "com.snowplowanalytics",
+				"name": "ad_click",
+				"format": "jsonschema",
+				"version": "1-0-0"
+			},
+
+			"type": "object",
+			"properties": {
+				"clickId": {
+					"type": "string"
+				},
+				"impressionId": {
+					"type": "string"
+				},
+				"zoneId": {
+					"type": "string"
+				},
+				"bannerId": {
+					"type": "string"
+				},
+				"campaignId": {
+					"type": "string"
+				},
+				"advertiserId": {
+					"type": "string"
+				},
+				"targetUrl": {
+					"type": "string",
+					"minLength": 1
+				},
+				"costModel": {
+					"enum": ["cpa", "cpc", "cpm"]
+				},
+				"cost": {
+					"type": "number",
+					"minimum": 0
+				}
+			},
+			"required": ["targetUrl"],
+			"dependencies": {"cost": ["costModel"]},
+			"additionalProperties": false
+		}
+
+		
+	],
+	"invalid": [
+		{
+			"$schema": "http://json-schema.org/schema#",
+			"description": "Schema for an ad click event",
+			"self": {
+				"vendor": "com.snowplowanalytics",
+				"name": "ad_click",
+				"format": "json.schema",
+				"version": "1-0-0"
+			},
+
+			"type": "object",
+			"properties": {
+				"clickId": {
+					"type": "string"
+				},
+				"impressionId": {
+					"type": "string"
+				},
+				"zoneId": {
+					"type": "string"
+				},
+				"bannerId": {
+					"type": "string"
+				},
+				"campaignId": {
+					"type": "string"
+				},
+				"advertiserId": {
+					"type": "string"
+				},
+				"targetUrl": {
+					"type": "string",
+					"minLength": 1
+				},
+				"costModel": {
+					"enum": ["cpa", "cpc", "cpm"]
+				},
+				"cost": {
+					"type": "number",
+					"minimum": 0
+				}
+			},
+			"required": ["targetUrl"],
+			"dependencies": {"cost": ["costModel"]},
+			"additionalProperties": false
+		}
+	]
+}
