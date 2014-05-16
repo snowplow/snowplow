@@ -15,8 +15,12 @@
 		"schema": {
 			"type": "string",
 			"anyOf": [
-			{"pattern": "^iglu://[a-zA-Z0-9-_.]+/[a-zA-Z0-9-_]+/[a-zA-Z0-9-_]+/[0-9]+-[0-9]+-[0-9]+$"},
-			{"format": "strict-uri"}
+				{
+					"pattern": "^iglu://[a-zA-Z0-9-_.]+/[a-zA-Z0-9-_]+/[a-zA-Z0-9-_]+/[0-9]+-[0-9]+-[0-9]+$"
+				},
+				{
+					"format": "strict-uri"
+				}
 			]
 		},
 
