@@ -3,7 +3,7 @@
 	"valid": [
 
 		{
-			"schema": "com.acme/view_product/jsonschema/3-0-0",
+			"schema": "iglu://com.acme/view_product/jsonschema/3-0-0",
 			"data": {
 				"productId": "e00057972",
 				"viewDuration": 23
@@ -11,7 +11,7 @@
 		},
 
 		{
-			"schema": "com.snowplowanalytics/link_click/jsonschema/1-0-0",
+			"schema": "iglu://com.snowplowanalytics/link_click/jsonschema/1-0-0",
 			"data": {
 				"elementId": "top",
 				"elementClasses": ["first","head"],
@@ -21,7 +21,7 @@
 		},
 
 		{
-			"schema": "com.acme/view_product/jsonschema/3-0-0",
+			"schema": "iglu://com.acme/view_product/jsonschema/3-0-0",
 			"data": {
 
 			}
@@ -40,7 +40,7 @@
 		},
 
 		{
-			"schema": "com.acme/view_product/3",
+			"schema": "iglu://com.acme/view_product/3",
 			"data": {
 				"productId": "e00057972",
 				"viewDuration": 23
@@ -48,7 +48,7 @@
 		},
 
 		{
-			"schema": "com.acme/view_product/3-0-0",
+			"schema": "iglu://com.acme/view_product/3-0-0",
 			"data": [{
 				"productId": "e00057972",
 				"viewDuration": 23
@@ -56,7 +56,7 @@
 		},
 
 		{
-			"schema": "com.acme/view_product/jsonschema/3-0-0"
+			"schema": "iglu://com.acme/view_product/jsonschema/3-0-0"
 		}
 		
 	]
