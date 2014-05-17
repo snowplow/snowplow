@@ -66,7 +66,7 @@ module SnowPlow
             :skip => skip,
             :process_bucket => process_bucket
           },
-          :config => YAML.load_file(config_file)
+          :config => config
         }
       end
 
