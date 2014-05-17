@@ -31,7 +31,7 @@ module Snowplow
       def initialize(args, config)
 
         # Let's set our logging level immediately
-        Logging::set_level @config[:logging][:level]
+        Logging::set_level config[:logging][:level]
 
         @args = args
         @config = validate_and_coalesce(args, config)
@@ -67,7 +67,7 @@ module Snowplow
       # Make updates to the configuration Hash based on the
       # arguments
       Contract ArgsHash, ConfigHash => ConfigHash
-      def self.validate_and_coalesce(args, config)
+      def validate_and_coalesce(args, config)
 
         # Check our skip argument
         args[:skip].each { |opt|

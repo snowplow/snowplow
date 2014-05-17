@@ -28,7 +28,7 @@ module Snowplow
 
     # The Hash of the CLI arguments.
     ArgsHash = ({
-      :debug => Boolean,
+      :debug => Bool,
       :start => Maybe[String],
       :end => Maybe[String],
       :skip => Maybe[ArrayOf[String]],
@@ -38,7 +38,7 @@ module Snowplow
     # The Hash for the IP anonymization enrichment.
     AnonIpHash = ({
       :enabled => Bool,
-      :anon_octets: Num
+      :anon_octets => Num
       })
 
     # The Hash containing effectively the configuration YAML.
@@ -69,12 +69,12 @@ module Snowplow
         :ec2_subnet_id => Maybe[String],
         :ec2_key_name => String,
         :jobflow => ({
-          :master_instance_type: String
-          :core_instance_count: Num
-          :core_instance_type: String
-          :task_instance_count: Num
-          :task_instance_type: String
-          :task_instance_bid: Maybe[Num]
+          :master_instance_type => String,
+          :core_instance_count => Num,
+          :core_instance_type => String,
+          :task_instance_count => Num,
+          :task_instance_type => String,
+          :task_instance_bid => Maybe[Num]
           })
         }),
       :etl => ({

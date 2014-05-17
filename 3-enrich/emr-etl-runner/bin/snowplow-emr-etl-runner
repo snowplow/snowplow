@@ -35,8 +35,8 @@ fatal = runner::Logging.method(:fatal_with)
 begin
 
   args, config = runner::Cli.get_args_config()
-  runner = runner::Runner.new(args, config)
-  runner.run()
+  r = runner::Runner.new(args, config)
+  r.run()
 
 # Catch any Snowplow error
 rescue runner::Error => e

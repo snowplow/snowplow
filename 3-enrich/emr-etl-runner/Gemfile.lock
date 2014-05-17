@@ -48,5 +48,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  contracts (~> 0.4)
   elasticity (~> 3.0.2)
   sluice (~> 0.2.0)

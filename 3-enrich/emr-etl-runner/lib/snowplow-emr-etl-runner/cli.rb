@@ -38,33 +38,10 @@ module Snowplow
       Contract None => ArgsConfigTuple
       def self.get_args_config
         
-        options = parse_args()
-        
-        args = {
-          :debug          => options[:debug],
-          :start          => options[:start],
-          :end            => options[:end],
-          :skip           => options[:skip],
-          :process_bucket => options[:process_bucket]
-        }
-        config = load_file(options[:config_file])
-
-        [args, config]
-      end
-
-    private
-
-      # Parse the command-line arguments
-      # Returns: the hash of parsed options
-      #
-      # Returns a hash of parsed arguments
-      Contract None => ParsedArgsHash
-      def self.parse_args
-
         # Defaults
         options = {
           :skip => [],
-          :debug = false
+          :debug => false
         }
 
         optparse = OptionParser.new do |opts|
@@ -73,7 +50,7 @@ module Snowplow
           opts.separator ""
           opts.separator "Specific options:"
 
-          opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
+          opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config_file] = config }
           opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
@@ -104,12 +81,23 @@ module Snowplow
           raise ConfigError, "#{$!.to_s}\n#{optparse}"
         end
 
-        options
+        args = {
+          :debug          => options[:debug],
+          :start          => options[:start],
+          :end            => options[:end],
+          :skip           => options[:skip],
+          :process_bucket => options[:process_bucket]
+        }
+        config = load_file(options[:config_file], optparse.to_s)
+
+        [args, config]
       end
 
+    private
+
       # Validate our args, load our config YAML, check config and args don't conflict
-      Contract String => ConfigHash
-      def self.load_file(config_file)
+      Contract String, String => ConfigHash
+      def self.load_file(config_file, optparse)
 
         # Check we have a config file argument and it exists
         if config_file.nil?
