@@ -19,9 +19,9 @@ require 'elasticity'
 require 'contracts'
 include Contracts
 
-# Ruby class to execute SnowPlow's Hive jobs against Amazon EMR
+# Ruby class to execute Snowplow's Hive jobs against Amazon EMR
 # using Elasticity (https://github.com/rslifka/elasticity).
-module SnowPlow
+module Snowplow
   module EmrEtlRunner
     class EmrJob
 

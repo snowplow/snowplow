@@ -20,7 +20,7 @@ require_relative 'snowplow-emr-etl-runner/cli'
 require_relative 'snowplow-emr-etl-runner/s3_tasks'
 require_relative 'snowplow-emr-etl-runner/emr_jobs'
 
-module SnowPlow
+module Snowplow
   module EmrEtlRunner
     NAME          = "snowplow-emr-etl-runner"
     VERSION       = "0.7.0"

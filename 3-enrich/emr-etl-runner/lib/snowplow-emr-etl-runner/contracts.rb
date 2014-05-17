@@ -16,7 +16,7 @@
 require 'contracts'
 include Contracts
 
-module SnowPlow
+module Snowplow
   module EmrEtlRunner
 
     # The Hash containing assets for Hadoop.

@@ -19,7 +19,7 @@ require 'yaml'
 require 'contracts'
 include Contracts
 
-module SnowPlow
+module Snowplow
   module EmrEtlRunner
     module Cli
 

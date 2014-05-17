@@ -14,7 +14,7 @@
 # License::   Apache License Version 2.0
 
 # All errors
-module SnowPlow
+module Snowplow
   module EmrEtlRunner
 
     # The base error class for all <tt>EmrEtlRunner</tt> error classes.

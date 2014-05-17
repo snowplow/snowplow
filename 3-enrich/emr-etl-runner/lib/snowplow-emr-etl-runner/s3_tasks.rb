@@ -20,7 +20,7 @@ include Contracts
 
 # Ruby module to support the S3-related actions required by
 # the Hive-based ETL process.
-module SnowPlow
+module Snowplow
   module EmrEtlRunner
     module S3Tasks
 
