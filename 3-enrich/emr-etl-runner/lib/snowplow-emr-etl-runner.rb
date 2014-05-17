@@ -15,11 +15,10 @@
 
 # Ruby 1.9.2 onwards doesn't add . into $LOAD_PATH by default - use require_relative instead
 require_relative 'snowplow-emr-etl-runner/contracts'
+require_relative 'snowplow-emr-etl-runner/errors'
 require_relative 'snowplow-emr-etl-runner/cli'
-require_relative 'snowplow-emr-etl-runner/config'
 require_relative 'snowplow-emr-etl-runner/s3_tasks'
 require_relative 'snowplow-emr-etl-runner/emr_jobs'
-require_relative 'snowplow-emr-etl-runner/errors'
 
 module SnowPlow
   module EmrEtlRunner
