@@ -15,6 +15,9 @@
 
 require 'sluice'
 
+require 'contracts'
+include Contracts
+
 # Ruby module to support the S3-related actions required by
 # the Hive-based ETL process.
 module SnowPlow
@@ -29,7 +32,10 @@ module SnowPlow
       #
       # Parameters:
       # +config+:: the hash of configuration options
-      def stage_logs_for_emr(config)
+      #
+      # Returns true if file(s) were staged
+      Contract ConfigHash => Bool
+      def self.stage_logs_for_emr(config)
         puts 'Staging CloudFront logs...'
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
@@ -89,14 +95,14 @@ module SnowPlow
           true
         end
       end
-      module_function :stage_logs_for_emr
 
       # Moves (archives) the processed CloudFront logs to an archive bucket.
       # Prevents the same log files from being processed again.
       #
       # Parameters:
       # +config+:: the hash of configuration options
-      def archive_logs(config)
+      Contract ConfigHash => nil
+      def self.archive_logs(config)
         puts 'Archiving CloudFront logs...'
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
@@ -121,9 +127,8 @@ module SnowPlow
 
         # Move all the files in the Processing Bucket
         Sluice::Storage::S3::move_files(s3, processing_location, archive_location, '.+', add_date_path)
-
+        nil
       end
-      module_function :archive_logs
 
     end
   end
