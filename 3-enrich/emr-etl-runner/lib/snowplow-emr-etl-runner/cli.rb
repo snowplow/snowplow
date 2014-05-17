@@ -13,17 +13,6 @@
 # Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-# PROPRIETARY AND CONFIDENTIAL
-#
-# dw-loader / Load Daemon
-#
-# Holds functions related to CLI argument parsing
-# and config file reading to support Redshift loading.
-#
-# Unauthorized copying of this file via any medium is strictly prohibited.
-#
-# Copyright (c) 2013 ArtsandTV.company, Inc. All rights reserved.
-
 require 'optparse'
 require 'yaml'
 
