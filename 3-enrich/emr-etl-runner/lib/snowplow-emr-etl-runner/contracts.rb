@@ -88,11 +88,8 @@ module Snowplow
         })
       })
 
-    # The Hash containing the configuration YAML and CLI arguments.
-    ArgsConfigHash = ({
-      :args => ArgsHash
-      :config => ConfigHash
-      })
+    # The Array (Tuple2) containing the configuration YAML and CLI arguments.
+    ArgsConfigTuple = [ArgsHash, ConfigHash]
 
   end
 end

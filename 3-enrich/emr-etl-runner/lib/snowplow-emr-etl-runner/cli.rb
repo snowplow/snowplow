@@ -39,35 +39,32 @@ module Snowplow
       #
       # Returns a Hash containing our runtime
       # arguments and our configuration.
-      Contract Maybe[String], Maybe[Bool], Maybe[String], Maybe[String], Maybe[ArrayOf[String]], Maybe[String] => ArgsConfigHash
+      Contract Maybe[String], Maybe[Bool], Maybe[String], Maybe[String], Maybe[ArrayOf[String]], Maybe[String] => ArgsConfigTuple
       def self.get_args_config(config_file=nil, debug=nil, start=nil, _end=nil, skip=nil, process_bucket=nil)
 
         # Try the CLI if we don't have args passed in
         if config_file.nil? || debug.nil? || start.nil? || _end.nil? || skip.nil? || process.nil? then
           options = parse_args
-
-          config_file = options[:config_file]
-
-          debug = options[:debug]
-          start = options[:start]
-          _end = options[:end]
-          skip = options[:skip]
+          config_file    = options[:config_file]
+          debug          = options[:debug]
+          start          = options[:start]
+          _end           = options[:end]
+          skip           = options[:skip]
           process_bucket = options[:process_bucket]
         end
+
+        args = {
+          :debug => debug,
+          :start => start,
+          :end => _end,
+          :skip => skip,
+          :process_bucket => process_bucket          
+        }
 
         config = validate_and_load(config_file, start, _end, skip, process_bucket)
 
         # Return our args & config
-        {
-          :args => {
-            :debug => debug,
-            :start => start,
-            :end => _end,
-            :skip => skip,
-            :process_bucket => process_bucket
-          },
-          :config => config
-        }
+        [args, config]
       end
 
       private

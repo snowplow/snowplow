@@ -34,8 +34,8 @@ module Snowplow
       # +config+:: the hash of configuration options
       #
       # Returns true if file(s) were staged
-      Contract ConfigHash => Bool
-      def self.stage_logs_for_emr(config)
+      Contract ArgsHash, ConfigHash => Bool
+      def self.stage_logs_for_emr(args, config)
         puts 'Staging CloudFront logs...'
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
@@ -54,18 +54,18 @@ module Snowplow
 
         # Move the files we need to move (within the date span)
         files_to_move = case
-        when (config[:start].nil? and config[:end].nil?)
+        when (args[:start].nil? and args[:end].nil?)
           if config[:etl][:collector_format] == 'clj-tomcat'
             '.*localhost\_access\_log\.txt\-.*'
           else
             '.+'
           end
-        when config[:start].nil?
-          Sluice::Storage::files_up_to(config[:end], CF_DATE_FORMAT, CF_FILE_EXT)
-        when config[:end].nil?
-          Sluice::Storage::files_from(config[:start], CF_DATE_FORMAT, CF_FILE_EXT)
+        when args[:start].nil?
+          Sluice::Storage::files_up_to(args[:end], CF_DATE_FORMAT, CF_FILE_EXT)
+        when args[:end].nil?
+          Sluice::Storage::files_from(args[:start], CF_DATE_FORMAT, CF_FILE_EXT)
         else
-          Sluice::Storage::files_between(config[:start], config[:end], CF_DATE_FORMAT, CF_FILE_EXT)
+          Sluice::Storage::files_between(args[:start], args[:end], CF_DATE_FORMAT, CF_FILE_EXT)
         end
 
         fix_filenames = lambda { |basename, filepath|

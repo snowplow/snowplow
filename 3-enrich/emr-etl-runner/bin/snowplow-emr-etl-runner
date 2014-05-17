@@ -17,7 +17,10 @@
 
 # Don't edit $LOAD_PATH, go straight to main Ruby file
 require File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'snowplow-emr-etl-runner'))
-runner = Snowplow::EmrEtlRunner # Alias
+
+# Initialization
+runner = Snowplow::EmrEtlRunner
+fatal = runner::Logging.method(:fatal_with)
 
 # This Ruby script runs the ETL (extract, transform, load)
 # process which transforms the raw Snowplow event logs into
@@ -30,35 +33,19 @@ runner = Snowplow::EmrEtlRunner # Alias
 #
 # Note that each step is only actioned if the previous step succeeded without error.
 begin
-  config = runner::Config.get_config()
 
-  unless config[:skip].include?('staging')
-    unless runner::S3Tasks.stage_logs_for_emr(config)
-      puts "No Snowplow logs to process since last run, exiting"
-      exit 0
-    end
-  end
-
-  unless config[:skip].include?('emr')
-    job = runner::EmrJob.new(config)
-    job.run()
-  end
-
-  unless config[:skip].include?('archive')
-    runner::S3Tasks.archive_logs(config)
-  end
-
-  puts "Completed successfully"
+  args_config = runner::Cli.get_args_config()
+  runner = runner::Runner.new(args_config)
+  runner.run()
 
 # Catch any Snowplow error
 rescue runner::Error => e
-  $stderr.puts(e.message)
+  fatal.call(e)
   exit 1
 rescue SystemExit => e
   exit 1
 rescue Exception => e
-  $stderr.puts("Unexpected error: " + e.message)
-  $stderr.puts(e.backtrace.join("\n"))
+  fatal.call(e)
   exit 1
 end
 

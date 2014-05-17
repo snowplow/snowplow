@@ -30,8 +30,8 @@ module Snowplow
       @@failed_states  = Set.new(%w(FAILED CANCELLED))
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract String, Bool, ConfigHash, AssetsHash => EmrJob
-      def initialize(run_id, debug, config, assets)
+      Contract Bool, ConfigHash => EmrJob
+      def initialize(debug, config)
 
         puts "Initializing EMR jobflow"
 
@@ -138,7 +138,7 @@ module Snowplow
       # Run (and wait for) the daily ETL job.
       #
       # Throws a RuntimeError if the jobflow does not succeed.
-      Contract nil => nil
+      Contract None => nil
       def run()
 
         jobflow_id = @jobflow.run
@@ -196,7 +196,7 @@ module Snowplow
       #
       # Returns true if the jobflow completed without error,
       # false otherwise.
-      Contract nil => nil
+      Contract None => nil
       def wait_for()
 
         # Loop until we can quit...
