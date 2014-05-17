@@ -88,7 +88,7 @@ module Snowplow
         })
       })
 
-    # The Array (Tuple2) containing the configuration YAML and CLI arguments.
+    # The Array (Tuple2) containing the CLI arguments and configuration YAML.
     ArgsConfigTuple = [ArgsHash, ConfigHash]
 
   end

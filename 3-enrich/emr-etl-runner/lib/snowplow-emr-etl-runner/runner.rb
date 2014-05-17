@@ -20,16 +20,23 @@ module Snowplow
   module EmrEtlRunner
     class Runner
 
+      # Supported options
+      @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
+      @@skip_options = Set.new(%w(staging emr archive))
+
       include Logging
 
       # Initialize the class.
-      Contract ArgsConfigTuple => Runner
-      def initialize(args_config)
-
-        @args, @config = args_config
+      Contract ArgsHash, ConfigHash => Runner
+      def initialize(args, config)
 
         # Let's set our logging level immediately
-        Logging::set_level config[:logging][:level]
+        Logging::set_level @config[:logging][:level]
+
+        @args = args
+        @config = validate_and_coalesce(args, config)
+        
+        self
       end
 
       # Our core flow
@@ -54,6 +61,46 @@ module Snowplow
         end
 
         logger.info "Completed successfully"
+      end
+
+      # Validate our arguments against the configuration Hash
+      # Make updates to the configuration Hash based on the
+      # arguments
+      Contract ArgsHash, ConfigHash => ConfigHash
+      def self.validate_and_coalesce(args, config)
+
+        # Check our skip argument
+        args[:skip].each { |opt|
+          unless @@skip_options.include?(opt)
+            raise ConfigError, "Invalid option: skip can be 'staging', 'emr' or 'archive', not '#{opt}'"
+          end
+        }
+
+        # Check that start is before end, if both set
+        if !args[:start].nil? and !args[:end].nil?
+          if args[:start] > args[:end]
+            raise ConfigError, "Invalid options: end date '#{_end}' is before start date '#{start}'"
+          end
+        end
+
+        # Validate the collector format
+        unless @@collector_formats.include?(config[:etl][:collector_format]) 
+          raise ConfigError, "collector_format '%s' not supported" % config[:etl][:collector_format]
+        end
+
+        # Currently we only support start/end times for the CloudFront collector format. See #120 for details
+        unless config[:etl][:collector_format] == 'cloudfront' or (args[:start].nil? and args[:end].nil?)
+          raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
+        end
+
+        unless args[:process_bucket].nil?
+          config[:s3][:buckets][:processing] = args[:process_bucket]
+        end
+
+        # Add trailing slashes if needed to the non-nil buckets
+        config[:s3][:buckets].reject{|k,v| v.nil?}.update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
+
+        config
       end
 
     end

@@ -23,10 +23,6 @@ module Snowplow
   module EmrEtlRunner
     module Cli
 
-      # Supported options
-      @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
-      @@skip_options = Set.new(%w(staging emr archive))
-
       # Get our arguments and configuration.
       #
       # Source from parse_args (i.e. the CLI)
@@ -39,35 +35,24 @@ module Snowplow
       #
       # Returns a Hash containing our runtime
       # arguments and our configuration.
-      Contract Maybe[String], Maybe[Bool], Maybe[String], Maybe[String], Maybe[ArrayOf[String]], Maybe[String] => ArgsConfigTuple
-      def self.get_args_config(config_file=nil, debug=nil, start=nil, _end=nil, skip=nil, process_bucket=nil)
-
-        # Try the CLI if we don't have args passed in
-        if config_file.nil? || debug.nil? || start.nil? || _end.nil? || skip.nil? || process.nil? then
-          options = parse_args
-          config_file    = options[:config_file]
-          debug          = options[:debug]
-          start          = options[:start]
-          _end           = options[:end]
-          skip           = options[:skip]
-          process_bucket = options[:process_bucket]
-        end
-
+      Contract None => ArgsConfigTuple
+      def self.get_args_config
+        
+        options = parse_args()
+        
         args = {
-          :debug => debug,
-          :start => start,
-          :end => _end,
-          :skip => skip,
-          :process_bucket => process_bucket          
+          :debug          => options[:debug],
+          :start          => options[:start],
+          :end            => options[:end],
+          :skip           => options[:skip],
+          :process_bucket => options[:process_bucket]
         }
+        config = load_file(options[:config_file])
 
-        config = validate_and_load(config_file, start, _end, skip, process_bucket)
-
-        # Return our args & config
         [args, config]
       end
 
-      private
+    private
 
       # Parse the command-line arguments
       # Returns: the hash of parsed options
@@ -122,51 +107,20 @@ module Snowplow
         options
       end
 
-      Contract String, Maybe[String], Maybe[String], Maybe[ArrayOf[String]], Maybe[String] => ConfigHash
-      def self.validate_and_load(config_file, start, _end, skip, process_bucket)
+      # Validate our args, load our config YAML, check config and args don't conflict
+      Contract String => ConfigHash
+      def self.load_file(config_file)
 
         # Check we have a config file argument and it exists
         if config_file.nil?
           raise ConfigError, "Missing option: config\n#{optparse}"
         end
+
         unless File.file?(config_file)
           raise ConfigError, "Configuration file '#{config_file}' does not exist, or is not a file."
         end
 
-        # Check our skip argument
-        skip.each { |opt|
-          unless @@skip_options.include?(opt)
-            raise ConfigError, "Invalid option: skip can be 'staging', 'emr' or 'archive', not '#{opt}'"
-          end
-        }
-
-        # Check that start is before end, if both set
-        if !start.nil? and !_end.nil?
-          if start > _end
-            raise ConfigError, "Invalid options: end date '#{_end}' is before start date '#{start}'"
-          end
-        end
-
-        config = YAML.load_file(config_file)
-
-        # Validate the collector format
-        unless @@collector_formats.include?(config[:etl][:collector_format]) 
-          raise ConfigError, "collector_format '%s' not supported" % config[:etl][:collector_format]
-        end
-
-        # Currently we only support start/end times for the CloudFront collector format. See #120 for details
-        unless config[:etl][:collector_format] == 'cloudfront' or (start.nil? and _end.nil?)
-          raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
-        end
-
-        unless process_bucket.nil?
-          config[:s3][:buckets][:processing] = process_bucket
-        end
-
-        # Add trailing slashes if needed to the non-nil buckets
-        config[:s3][:buckets].reject{|k,v| v.nil?}.update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
-
-        config
+        YAML.load_file(config_file)
       end
 
     end

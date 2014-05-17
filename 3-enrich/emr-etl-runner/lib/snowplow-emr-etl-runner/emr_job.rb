@@ -33,7 +33,7 @@ module Snowplow
       Contract Bool, ConfigHash => EmrJob
       def initialize(debug, config)
 
-        puts "Initializing EMR jobflow"
+        logger.debug "Initializing EMR jobflow"
 
         # Configuration
         assets = get_assets(config[:s3][:assets], config[:etl][:hadoop_etl_version])
@@ -142,14 +142,14 @@ module Snowplow
       def run()
 
         jobflow_id = @jobflow.run
-        puts "EMR jobflow #{jobflow_id} started, waiting for jobflow to complete..."
+        logger.debug "EMR jobflow #{jobflow_id} started, waiting for jobflow to complete..."
         status = wait_for(jobflow_id)
 
         if !status
           raise EmrExecutionError, "EMR jobflow #{jobflow_id} failed, check Amazon EMR console and Hadoop logs for details (help: https://github.com/snowplow/snowplow/wiki/Troubleshooting-jobs-on-Elastic-MapReduce). Data files not archived."
         end
 
-        puts "EMR jobflow #{jobflow_id} completed successfully."
+        logger.debug "EMR jobflow #{jobflow_id} completed successfully."
         nil
       end
 
@@ -216,7 +216,7 @@ module Snowplow
             sleep(120)
 
           rescue SocketError => se
-            puts "Got socket error #{se}, waiting 5 minutes before checking jobflow again"
+            logger.warn "Got socket error #{se}, waiting 5 minutes before checking jobflow again"
             sleep(300)
           end
         end
