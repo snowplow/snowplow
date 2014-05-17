@@ -6,7 +6,7 @@ EmrEtlRunner: fixed regression where 0 files staged still kicks off EMR (#409)
 EmrEtlRunner: stopped Sluice file operation threads being killed by folders (#401)
 EmrEtlRunner: fixed disabling of Cascading error catching (#721)
 EmrEtlRunner: renamed Clojure Collector log files in processing bucket to support multiple instances (#717)
-EmrEtlRunner: added initial Ruby.contracts support into EmrEtlRunner (#392)                                 - TODO
+EmrEtlRunner: added initial Ruby.contracts support into EmrEtlRunner (#392)
 EmrEtlRunner: added initial unit tests to EmrEtlRunner (#672)                                               - TODO
 Clojure Collector: load balancer IP address getting stored in logs (#719)                                   - TODO
 Documentation: removed all Snowplow tracking from READMEs, thanks @acinader! (#720)

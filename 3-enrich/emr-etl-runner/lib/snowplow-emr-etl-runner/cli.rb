@@ -46,16 +46,16 @@ module SnowPlow
         if config_file.nil? || debug.nil? || start.nil? || _end.nil? || skip.nil? || process.nil? then
           options = parse_args
 
+          config_file = options[:config_file]
+
           debug = options[:debug]
           start = options[:start]
           _end = options[:end]
           skip = options[:skip]
           process_bucket = options[:process_bucket]
-
-          config_file = options[:config_file]
         end
 
-        config = validate_and_load(config_file)
+        config = validate_and_load(config_file, start, _end, skip, process_bucket)
 
         # Return our args & config
         {
@@ -125,8 +125,8 @@ module SnowPlow
         options
       end
 
-      Contract String, Maybe[String], Maybe[String], Maybe[ArrayOf[String]] => ConfigHash
-      def self.validate(config_file, start, _end, skip)
+      Contract String, Maybe[String], Maybe[String], Maybe[ArrayOf[String]], Maybe[String] => ConfigHash
+      def self.validate_and_load(config_file, start, _end, skip, process_bucket)
 
         # Check we have a config file argument and it exists
         if config_file.nil?
@@ -158,9 +158,16 @@ module SnowPlow
         end
 
         # Currently we only support start/end times for the CloudFront collector format. See #120 for details
-        unless config[:etl][:collector_format] == 'cloudfront' or (args[:start].nil? and args[:end].nil?)
+        unless config[:etl][:collector_format] == 'cloudfront' or (start.nil? and _end.nil?)
           raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
         end
+
+        unless process_bucket.nil?
+          config[:s3][:buckets][:processing] = process_bucket
+        end
+
+        # Add trailing slashes if needed to the non-nil buckets
+        config[:s3][:buckets].reject{|k,v| v.nil?}.update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
 
         config
       end

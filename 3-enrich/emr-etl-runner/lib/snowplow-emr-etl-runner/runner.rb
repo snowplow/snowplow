@@ -27,6 +27,7 @@ module SnowPlow
 
       attr_reader :args,
                   :config,
+                  :assets,
                   :run_id
 
       # Initialize the class.
@@ -40,29 +41,20 @@ module SnowPlow
         @args = args_config[:args]
         @config = args_config[:config]
 
-        # Generate our run ID: based on the time now
-        @run_id = Time.new.strftime("%Y-%m-%d-%H-%M-%S")
-
-        unless @args[:process_bucket].nil?
-          @config[:s3][:buckets][:processing] = @options[:process_bucket]
-        end
-
-        # Add trailing slashes if needed to the non-nil buckets
-        @config[:s3][:buckets].reject{|k,v| v.nil?}.update(@config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
-
-        # TODO: can we get this functionality for free with Fog?
-        if @config[:s3][:region] == "us-east-1"
-          @config[:s3][:endpoint] = "s3.amazonaws.com"
-        else
-          @config[:s3][:endpoint] = "s3-#{@config[:s3][:region]}.amazonaws.com"
-        end
-
         # We have to rename some config fields for Elasticity - and make a manual adjustment
         @config[:emr][:jobflow][:slave_instance_type] = @config[:emr][:jobflow][:core_instance_type]
         @config[:emr][:jobflow][:instance_count] = @config[:emr][:jobflow][:core_instance_count] + 1 # +1 for the master instance
-        @config[:emr][:jobflow].delete_if {|k, _| k.to_s.start_with?("core_") }
+        @config[:emr][:jobflow].delete_if { |k, _|
+          k.to_s.start_with?("core_")
+        }
+
+        @assets = get_assets(@config[:s3][:assets], @config[:etl][:hadoop_etl_version])
+
+        # Generate our run ID: based on the time now
+        @run_id = Time.new.strftime("%Y-%m-%d-%H-%M-%S")
 
         # Now let's handle the enrichments.
+        # TODO: let's fix this up.
         anon_octets = if @config[:enrichments][:anon_ip][:enabled]
                         @config[:enrichments][:anon_ip][:anon_octets].to_s
                       else
@@ -78,14 +70,15 @@ module SnowPlow
       Contract String, String => AssetsHash
       def get_assets(assets_bucket, hadoop_etl_version)
 
-        if config[:s3][:buckets][:assets] == "s3://snowplow-hosted-assets/"
-          asset_host = "http://snowplow-hosted-assets.s3.amazonaws.com/" # Use the public S3 URL
-        else
-          asset_host = config[:s3][:buckets][:assets]
-        end
+        asset_host = 
+          if assets_bucket == "s3://snowplow-hosted-assets/"
+            "http://snowplow-hosted-assets.s3.amazonaws.com/" # Use the public S3 URL
+          else
+            assets_bucket
+          end
 
-        { :maxmind  => "#{asset_host}third-party/maxmind/GeoLiteCity.dat"
-          :s3distcp => "/home/hadoop/lib/emr-s3distcp-1.0.jar"
+        { :maxmind  => "#{asset_host}third-party/maxmind/GeoLiteCity.dat",
+          :s3distcp => "/home/hadoop/lib/emr-s3distcp-1.0.jar",
           :hadoop   => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-etl-#{hadoop_etl_version}.jar"
         }
       end
