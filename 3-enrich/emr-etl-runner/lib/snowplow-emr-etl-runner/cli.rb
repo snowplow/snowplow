@@ -55,6 +55,8 @@ module SnowPlow
           config_file = options[:config_file]
         end
 
+        config = validate_and_load(config_file)
+
         # Return our args & config
         {
           :args => {
@@ -123,6 +125,7 @@ module SnowPlow
         options
       end
 
+      Contract String, Maybe[String], Maybe[String], Maybe[ArrayOf[String]] => ConfigHash
       def self.validate(config_file, start, _end, skip)
 
         # Check we have a config file argument and it exists
@@ -147,6 +150,8 @@ module SnowPlow
           end
         end
 
+        config = YAML.load_file(config_file)
+
         # Validate the collector format
         unless @@collector_formats.include?(config[:etl][:collector_format]) 
           raise ConfigError, "collector_format '%s' not supported" % config[:etl][:collector_format]
@@ -157,6 +162,7 @@ module SnowPlow
           raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
         end
 
+        config
       end
 
     end
