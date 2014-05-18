@@ -24,7 +24,7 @@ gem "elasticity", "~> 3.0.2"
 gem "sluice", "~> 0.2.0"
 
 group :development do
-	gem "rspec", "~> 2.14", ">= 2.14.1"
+  gem "rspec", "~> 2.14", ">= 2.14.1"
   gem "coveralls"
   
   gem "warbler" if RUBY_PLATFORM == 'java'
