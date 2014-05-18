@@ -38,7 +38,7 @@ module Snowplow
         logger.debug "Initializing EMR jobflow"
 
         # Configuration
-        assets = self.class.get_assets(config[:s3][:assets], config[:etl][:hadoop_etl_version])
+        assets = self.class.get_assets(config[:s3][:buckets][:assets], config[:etl][:hadoop_etl_version])
         run_id = Time.new.strftime("%Y-%m-%d-%H-%M-%S")
 
         # Create a job flow with your AWS credentials
