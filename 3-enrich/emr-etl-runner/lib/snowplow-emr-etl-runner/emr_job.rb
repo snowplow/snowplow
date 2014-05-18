@@ -38,7 +38,7 @@ module Snowplow
         logger.debug "Initializing EMR jobflow"
 
         # Configuration
-        assets = get_assets(config[:s3][:assets], config[:etl][:hadoop_etl_version])
+        assets = self.class.get_assets(config[:s3][:assets], config[:etl][:hadoop_etl_version])
         run_id = Time.new.strftime("%Y-%m-%d-%H-%M-%S")
 
         # Create a job flow with your AWS credentials
@@ -92,7 +92,7 @@ module Snowplow
             "--groupBy"           , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
             "--targetSize"        , "128",
             "--outputCodec"       , "lzo",
-            "--s3Endpoint"        , get_s3_endpoint(config[:s3][:region]),
+            "--s3Endpoint"        , self.class.get_s3_endpoint(config[:s3][:region]),
           ]
 
           # Add to our jobflow
@@ -121,7 +121,7 @@ module Snowplow
           "--maxmind_file"      , assets[:maxmind],
           "--output_folder"     , partition.call(config[:s3][:buckets][:out]),
           "--bad_rows_folder"   , partition.call(config[:s3][:buckets][:out_bad_rows]),
-          "--anon_ip_quartets"  , get_anon_ip_octets(config[:enrichments][:anon_ip_octets])
+          "--anon_ip_quartets"  , self.class.get_anon_ip_octets(config[:enrichments][:anon_ip_octets])
         ]
 
         # Conditionally add exceptions_folder
