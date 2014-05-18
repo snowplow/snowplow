@@ -121,7 +121,7 @@ module Snowplow
           "--maxmind_file"      , assets[:maxmind],
           "--output_folder"     , partition.call(config[:s3][:buckets][:out]),
           "--bad_rows_folder"   , partition.call(config[:s3][:buckets][:out_bad_rows]),
-          "--anon_ip_quartets"  , self.class.get_anon_ip_octets(config[:enrichments][:anon_ip_octets])
+          "--anon_ip_quartets"  , self.class.get_anon_ip_octets(config[:enrichments][:anon_ip])
         ]
 
         # Conditionally add exceptions_folder
