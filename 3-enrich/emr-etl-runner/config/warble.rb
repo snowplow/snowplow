@@ -13,16 +13,8 @@
 # Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-source "https://rubygems.org"
-ruby "1.9.3"
-
-# ErmEtlRunner is a Ruby app (not a RubyGem)
-# built with Bundler, so we add in the
-# RubyGems it requires here.
-gem "contracts", "~> 0.4"
-gem "elasticity", "~> 3.0.2"
-gem "sluice", "~> 0.2.0"
-
-group :development do
-  gem "warbler" if RUBY_PLATFORM == 'java'
+# Warbler jar application assembly configuration file
+Warbler::Config.new do |config|
+  config.autodeploy_dir = "deploy"
+  config.jar_name = "snowplow-emr-etl-runner"
 end
