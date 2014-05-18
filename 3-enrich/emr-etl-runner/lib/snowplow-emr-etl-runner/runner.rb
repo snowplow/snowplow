@@ -61,6 +61,7 @@ module Snowplow
         end
 
         logger.info "Completed successfully"
+        nil
       end
 
       # Validate our arguments against the configuration Hash
