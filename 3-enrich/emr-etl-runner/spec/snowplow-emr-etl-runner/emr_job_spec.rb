@@ -10,22 +10,29 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-source "https://rubygems.org"
-ruby "1.9.3"
+require 'spec_helper'
 
-# ErmEtlRunner is a Ruby app (not a RubyGem)
-# built with Bundler, so we add in the
-# RubyGems it requires here.
-gem "contracts", "~> 0.4"
-gem "elasticity", "~> 3.0.2"
-gem "sluice", "~> 0.2.0"
+EmrJob = Snowplow::EmrEtlRunner::EmrJob
 
-group :development do
-	gem "rspec", "~> 2.14", ">= 2.14.1"
-  gem "coveralls"
-  
-  gem "warbler" if RUBY_PLATFORM == 'java'
+describe EmrJob do
+
+  it 'gets the correct S3 endpoint for us-east-1' do
+    EmrJob.get_s3_endpoint('us-east-1').should eql 's3.amazonaws.com'
+  end
+
+  it 'gets the correct S3 endpoint for other regions' do
+    EmrJob.get_s3_endpoint('eu-west-1').should eql 's3-eu-west-1.amazonaws.com'
+  end
+
+  it 'returns the Hadoop assets' do
+    EmrJob.get_assets("s3://hadoop-assets/", "1.0.0").should == {
+      :maxmind  => "s3://hadoop-assets/third-party/maxmind/GeoLiteCity.dat",
+      :s3distcp => "/home/hadoop/lib/emr-s3distcp-1.0.jar",
+      :hadoop   => "s3://hadoop-assets/3-enrich/hadoop-etl/snowplow-hadoop-etl-1.0.0.jar"
+    }
+  end
+
 end

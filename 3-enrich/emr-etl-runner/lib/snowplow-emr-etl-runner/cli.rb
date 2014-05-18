@@ -96,7 +96,7 @@ module Snowplow
     private
 
       # Validate our args, load our config YAML, check config and args don't conflict
-      Contract String, String => ConfigHash
+      Contract Maybe[String], String => ConfigHash
       def self.load_file(config_file, optparse)
 
         # Check we have a config file argument and it exists
@@ -105,7 +105,7 @@ module Snowplow
         end
 
         unless File.file?(config_file)
-          raise ConfigError, "Configuration file '#{config_file}' does not exist, or is not a file."
+          raise ConfigError, "Configuration file '#{config_file}' does not exist, or is not a file\n#{optparse}"
         end
 
         YAML.load_file(config_file)

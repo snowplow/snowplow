@@ -157,42 +157,6 @@ module Snowplow
 
     private
 
-      Contract AnonIpHash => String
-      def get_anon_ip_octets(anon_ip)
-        if anon_ip[:enabled]
-          anon_ip[:anon_octets].to_s
-        else
-          '0' # Anonymize 0 quartets == anonymization disabled
-        end
-      end
-
-      Contract String, String => AssetsHash
-      def get_assets(assets_bucket, hadoop_etl_version)
-
-        asset_host = 
-          if assets_bucket == "s3://snowplow-hosted-assets/"
-            "http://snowplow-hosted-assets.s3.amazonaws.com/" # Use the public S3 URL
-          else
-            assets_bucket
-          end
-
-        { :maxmind  => "#{asset_host}third-party/maxmind/GeoLiteCity.dat",
-          :s3distcp => "/home/hadoop/lib/emr-s3distcp-1.0.jar",
-          :hadoop   => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-etl-#{hadoop_etl_version}.jar"
-        }
-      end
-
-      # Returns the S3 endpoint for a given
-      # S3 region
-      Contract String => String
-      def get_s3_endpoint(s3_region)
-        if s3_region == "us-east-1"
-          "s3.amazonaws.com"
-        else
-          "s3-#{s3_region}.amazonaws.com"
-        end
-      end
-
       # Wait for a jobflow.
       # Check its status every 5 minutes till it completes.
       #
@@ -223,6 +187,42 @@ module Snowplow
           end
         end
         nil
+      end
+
+      Contract AnonIpHash => String
+      def self.get_anon_ip_octets(anon_ip)
+        if anon_ip[:enabled]
+          anon_ip[:anon_octets].to_s
+        else
+          '0' # Anonymize 0 quartets == anonymization disabled
+        end
+      end
+
+      Contract String, String => AssetsHash
+      def self.get_assets(assets_bucket, hadoop_etl_version)
+
+        asset_host = 
+          if assets_bucket == "s3://snowplow-hosted-assets/"
+            "http://snowplow-hosted-assets.s3.amazonaws.com/" # Use the public S3 URL
+          else
+            assets_bucket
+          end
+
+        { :maxmind  => "#{asset_host}third-party/maxmind/GeoLiteCity.dat",
+          :s3distcp => "/home/hadoop/lib/emr-s3distcp-1.0.jar",
+          :hadoop   => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-etl-#{hadoop_etl_version}.jar"
+        }
+      end
+
+      # Returns the S3 endpoint for a given
+      # S3 region
+      Contract String => String
+      def self.get_s3_endpoint(s3_region)
+        if s3_region == "us-east-1"
+          "s3.amazonaws.com"
+        else
+          "s3-#{s3_region}.amazonaws.com"
+        end
       end
 
     end
