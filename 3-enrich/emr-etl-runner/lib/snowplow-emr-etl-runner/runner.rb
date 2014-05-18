@@ -56,7 +56,7 @@ module Snowplow
           job.run()
         end
 
-        unless @config[:skip].include?('archive')
+        unless @args[:skip].include?('archive')
           S3Tasks.archive_logs(@config)
         end
 
