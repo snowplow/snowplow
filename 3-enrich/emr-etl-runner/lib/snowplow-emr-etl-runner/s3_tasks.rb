@@ -72,13 +72,13 @@ module Snowplow
           # Prepend sub-dir to prevent one set of files
           # from overwriting same-named in other sub-dir
           if m = filepath.match('([^/]+)/[^/]+$')
-            return m[1] + '-' + filepath
+            return m[1] + '-' + basename
           else
             # Hive ignores files which begin with underscores
-            if m = filepath.match('^_+(.*\.gz)$')
+            if m = basename.match('^_+(.*\.gz)$')
               return m[1]
             else
-              return filepath
+              return basename
             end
           end
         }
