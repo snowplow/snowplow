@@ -145,7 +145,7 @@ module Snowplow
 
         jobflow_id = @jobflow.run
         logger.debug "EMR jobflow #{jobflow_id} started, waiting for jobflow to complete..."
-        status = wait_for(jobflow_id)
+        status = wait_for()
 
         if !status
           raise EmrExecutionError, "EMR jobflow #{jobflow_id} failed, check Amazon EMR console and Hadoop logs for details (help: https://github.com/snowplow/snowplow/wiki/Troubleshooting-jobs-on-Elastic-MapReduce). Data files not archived."
