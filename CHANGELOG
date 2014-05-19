@@ -18,7 +18,7 @@ Documentation: removed all Snowplow tracking from READMEs, thanks @acinader! (#7
 Version 0.9.2 (2014-04-30)
 --------------------------
 Scala Hadoop Enrich: bumped to 0.5.0
-Scala Hadoop Enrich: bumped to Scala Common Enrich 0.3.0 (#699)
+Scala Hadoop Enrich: bumped to Scala Common Enrich 0.4.0 (#699)
 Scala Hadoop Enrich: bumped SBT to 0.13.2 (#702)
 Scala Hadoop Enrich: bumped to using using sbt-assembly 0.11.2 (#704)
 Scala Common Enrich: bumped to 0.4.0
