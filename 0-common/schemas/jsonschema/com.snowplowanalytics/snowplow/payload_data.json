@@ -16,9 +16,6 @@
 			"tna": {
 				"type": "string"
 			},
-			"evn": {
-				"type": "string"
-			},
 			"aid": {
 				"type": "string"
 			},
@@ -223,9 +220,6 @@
 			"ue_px": {
 				"type": "string"
 			},
-			"cv": {
-				"type": "string"
-			},
 			"co": {
 				"type": "string"
 			},
@@ -233,7 +227,7 @@
 				"type": "string"
 			}
 		},
-		"required": ["tv", "p", "e", "evn"],
+		"required": ["tv", "p", "e"],
 		"additionalProperties": false
 	},
 	"minItems": 1

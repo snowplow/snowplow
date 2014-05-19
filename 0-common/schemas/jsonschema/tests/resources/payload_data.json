@@ -1,5 +1,5 @@
 {
-	"name": "link_click",
+	"name": "payload_data",
 	"valid": [
 		[{
 			"duid": "aeb1691c5a0ee5a6",
@@ -18,22 +18,18 @@
 			"cd": "32",
 			"cookie": "1",
 			"tz": "Europe%20London",
-			"evn": "com.snowplowanalytics",
 			"tv": "js-2.0.0"
 		}],
 		[{
 			"e": "ue",
 			"tv": "py-0.3.0",
-			"evn": "com.acme_company",
 			"p": "mob"
 		},
 		{
 			"e": "ti",
 			"tv": "rb-0.1.0",
-			"evn": "com.snowplowanalytics",
 			"p": "mob",
-			"cx": "eyJhIjogeyJiIjogImMifX0=",
-			"cv": "com.acme_company"
+			"cx": "eyJhIjogeyJiIjogImMifX0="
 		}]
 	],
 	"invalid":  [
@@ -54,22 +50,18 @@
 			"cd": 32,
 			"cookie": 1,
 			"tz": "Europe%20London",
-			"evn": "com.snowplowanalytics",
 			"tv": "js-2.0.0"
 		}],
 		[{
 			"e": "ue",
 			"tv": "py-0.3.0",
-			"evn": "com.acme_company",
 			"p": null
 		}],
 		[{
 			"e": "ti",
 			"tv": "rb-0.1.0",
-			"evn": "com.snowplowanalytics",
 			"p": "mob",
-			"cx": {"social": {"id": "843892347710"}},
-			"cv": "com.acme_company"
+			"cx": {"social": {"id": "843892347710"}}
 		}],
 		[{
 
