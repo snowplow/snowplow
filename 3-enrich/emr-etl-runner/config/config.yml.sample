@@ -1,5 +1,5 @@
 :logging:
-  :level: DEBUG # Switch to INFO for production
+  :level: DEBUG # You can optionally switch to INFO for production
 :aws:
   :access_key_id: ADD HERE
   :secret_access_key: ADD HERE
