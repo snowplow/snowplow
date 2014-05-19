@@ -125,7 +125,10 @@
             unpackWARs="true" autoDeploy="true">
         
         <!--Following class replaces the apparent client remote IP address and hostname for the request with the IP address list presented by a proxy or a load balancer via a request headers (e.g. "X-Forwarded-For").-->
-        <Valve className="org.apache.catalina.valves.RemoteIpValve" protocolHeader="X-Forwarded-Proto" />
+        <Valve className="org.apache.catalina.valves.RemoteIpValve"
+           remoteIpHeader="x-forwarded-for"
+           remoteIpProxiesHeader="x-forwarded-by"
+           protocolHeader="x-forwarded-proto"/>
 
         <!-- Access log processes.
              Documentation at: /docs/config/valve.html
