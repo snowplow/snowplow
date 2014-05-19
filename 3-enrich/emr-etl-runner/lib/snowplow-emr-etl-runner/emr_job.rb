@@ -162,8 +162,10 @@ module Snowplow
       #
       # Returns true if the jobflow completed without error,
       # false otherwise.
-      Contract None => nil
+      Contract None => Bool
       def wait_for()
+
+        success = false
 
         # Loop until we can quit...
         while true do
@@ -175,18 +177,20 @@ module Snowplow
 
             # If no step is still running, then quit
             if statuses[0] == 0
-              return statuses[1] == 0 # True if no failures
+              success = statuses[1] == 0 # True if no failures
+              break
+            else
+              # Sleep a while before we check again
+              sleep(120)              
             end
-
-            # Sleep a while before we check again
-            sleep(120)
 
           rescue SocketError => se
             logger.warn "Got socket error #{se}, waiting 5 minutes before checking jobflow again"
             sleep(300)
           end
         end
-        nil
+
+        success
       end
 
       Contract AnonIpHash => String
