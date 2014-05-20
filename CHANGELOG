@@ -17,6 +17,7 @@ EmrEtlRunner: added initial unit tests to EmrEtlRunner (#672)
 Clojure Collector: bumped to 0.6.0
 Clojure Collector: load balancer IP address getting stored in logs (#719)
 Documentation: removed all Snowplow tracking from READMEs, thanks @acinader! (#720)
+Documentation: fixed EmrEtlRunner documentation is (slightly) inconsistent, thanks @pvdb! (#749)
 
 Version 0.9.2 (2014-04-30)
 --------------------------
