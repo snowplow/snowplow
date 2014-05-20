@@ -20,7 +20,7 @@ ruby "1.9.3"
 # built with Bundler, so we add in the
 # RubyGems it requires here.
 gem "contracts", "~> 0.4"
-gem "elasticity", "3.0.2"
+gem "elasticity", "~> 3.0.4"
 gem "sluice", "~> 0.2.0"
 
 group :development do
