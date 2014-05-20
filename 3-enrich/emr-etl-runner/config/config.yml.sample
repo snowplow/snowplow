@@ -15,7 +15,7 @@
     :out_errors: ADD HERE # Leave blank unless :continue_on_unexpected_error: set to true below
     :archive: ADD HERE
 :emr:
-  :hadoop_version: 1.0.3   # Choose as per http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/emr-plan-ami.html
+  :ami_version: 2.4.2      # Choose as per http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/emr-plan-ami.html
   :region: ADD HERE        # Always set this
   :placement: ADD HERE     # Set this if not running in VPC. Leave blank otherwise
   :ec2_subnet_id: ADD HERE # Set this if running in VPC. Leave blank otherwise

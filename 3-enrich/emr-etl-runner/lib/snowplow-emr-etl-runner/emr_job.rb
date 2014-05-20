@@ -46,7 +46,7 @@ module Snowplow
 
         # Configure
         @jobflow.name                 = config[:etl][:job_name]
-        @jobflow.hadoop_version       = config[:emr][:hadoop_version]
+        @jobflow.ami_version          = config[:emr][:ami_version]
         @jobflow.ec2_key_name         = config[:emr][:ec2_key_name]
 
         @jobflow.instance_variable_set(:@region, config[:emr][:region]) # Workaround until https://github.com/snowplow/snowplow/issues/753

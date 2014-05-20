@@ -64,7 +64,7 @@ module Snowplow
           })
         }),
       :emr => ({
-        :hadoop_version => String,
+        :ami_version => String,
         :region => String,
         :placement => Maybe[String],
         :ec2_subnet_id => Maybe[String],

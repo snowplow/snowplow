@@ -1,8 +1,9 @@
 Version 0.9.3 (2014-05-XX)
 --------------------------
 EmrEtlRunner: bumped to 0.7.0
-EmrEtlRunner: bumped Sluice to 0.2.0 (#405)
+EmrEtlRunner: bumped Sluice to 0.2.1 (#405)                                                      - TODO
 EmrEtlRunner: bumped Elasticity to 3.0.4 (#665)                                                  - TODO
+EmrEtlRunner: replaced hadoop_version setting with ami_version setting (#701)
 EmrEtlRunner: fixed handling of region, placement and ec2_subnet_id (#754)
 EmrEtlRunner: fixed regression where 0 files staged still kicks off EMR (#409)
 EmrEtlRunner: stopped Sluice file operation threads being killed by folders (#401)
