@@ -13,7 +13,7 @@ EmrEtlRunner: added initial Ruby.contracts support into EmrEtlRunner (#392)
 EmrEtlRunner: updated to use logging Rubygem (#194)
 EmrEtlRunner: updated so it's embeddable in other applications (#128)
 EmrEtlRunner: added ability to bundle as a JRuby fat jar (#674) 
-EmrEtlRunner: added initial unit tests to EmrEtlRunner (#672)
+EmrEtlRunner: added initial unit tests (#672)
 Clojure Collector: bumped to 0.6.0
 Clojure Collector: load balancer IP address getting stored in logs (#719)
 Documentation: removed all Snowplow tracking from READMEs, thanks @acinader! (#720)
