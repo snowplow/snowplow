@@ -1,7 +1,7 @@
 Version 0.9.3 (2014-05-XX)
 --------------------------
 EmrEtlRunner: bumped to 0.7.0
-EmrEtlRunner: bumped Sluice to 0.2.1 (#405)                                                      - TODO
+EmrEtlRunner: bumped Sluice to 0.2.1 (#405)
 EmrEtlRunner: bumped Elasticity to 3.0.4 (#665)
 EmrEtlRunner: replaced hadoop_version setting with ami_version setting (#701)
 EmrEtlRunner: fixed handling of region, placement and ec2_subnet_id (#754)
