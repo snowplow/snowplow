@@ -15,10 +15,10 @@
     :out_errors: ADD HERE # Leave blank unless :continue_on_unexpected_error: set to true below
     :archive: ADD HERE
 :emr:
-  # Can bump the below as EMR upgrades Hadoop
-  :hadoop_version: 1.0.3
-  :placement: ADD HERE     # Set even if running in VPC
-  :ec2_subnet_id: ADD HERE # Leave blank if not running in VPC
+  :hadoop_version: 1.0.3   # Choose as per http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/emr-plan-ami.html
+  :region: ADD HERE        # Always set this
+  :placement: ADD HERE     # Set this if not running in VPC. Leave blank otherwise
+  :ec2_subnet_id: ADD HERE # Set this if running in VPC. Leave blank otherwise
   :ec2_key_name: ADD HERE
   # Adjust your Hadoop cluster below
   :jobflow:

@@ -48,8 +48,13 @@ module Snowplow
         @jobflow.name                 = config[:etl][:job_name]
         @jobflow.hadoop_version       = config[:emr][:hadoop_version]
         @jobflow.ec2_key_name         = config[:emr][:ec2_key_name]
+
+        @jobflow.instance_variable_set(:@region, config[:emr][:region]) # Workaround until https://github.com/snowplow/snowplow/issues/753
         @jobflow.placement            = config[:emr][:placement]
-        @jobflow.ec2_subnet_id        = config[:emr][:ec2_subnet_id]
+        unless @jobflow.ec2_subnet_id.nil? # Nils placement so do last
+          @jobflow.ec2_subnet_id        = config[:emr][:ec2_subnet_id]
+        end
+
         @jobflow.log_uri              = config[:s3][:buckets][:log]
         @jobflow.enable_debugging     = debug
         @jobflow.visible_to_all_users = true
