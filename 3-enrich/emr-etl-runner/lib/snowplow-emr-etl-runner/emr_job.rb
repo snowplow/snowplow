@@ -52,7 +52,7 @@ module Snowplow
         @jobflow.instance_variable_set(:@region, config[:emr][:region]) # Workaround until https://github.com/snowplow/snowplow/issues/753
         @jobflow.placement            = config[:emr][:placement]
         unless @jobflow.ec2_subnet_id.nil? # Nils placement so do last
-          @jobflow.ec2_subnet_id        = config[:emr][:ec2_subnet_id]
+          @jobflow.ec2_subnet_id      = config[:emr][:ec2_subnet_id]
         end
 
         @jobflow.log_uri              = config[:s3][:buckets][:log]
