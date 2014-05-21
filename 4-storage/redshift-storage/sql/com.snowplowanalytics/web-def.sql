@@ -16,7 +16,7 @@
 -- Copyright:   Copyright (c) 2014 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-CREATE TABLE atomic.com_snowplowanalytics_link_click (
+CREATE TABLE atomic.com_snowplowanalytics_link_click_1 (
 	-- Nature of this type
 	type_name    varchar(128) encode runlength not null,
 	type_vendor  varchar(128) encode runlength not null,

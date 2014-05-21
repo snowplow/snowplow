@@ -16,7 +16,7 @@
 -- Copyright:   Copyright (c) 2014 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-CREATE TABLE atomic.com_snowplowanalytics_ad_impression (
+CREATE TABLE atomic.com_snowplowanalytics_ad_impression_1 (
     -- Nature of this type
     type_name     varchar(128)  encode runlength not null,
     type_vendor   varchar(128)  encode runlength not null,
@@ -40,7 +40,7 @@ DISTSTYLE KEY
 DISTKEY (root_id)
 SORTKEY (root_tstamp);
 
-CREATE TABLE atomic.com_snowplowanalytics_ad_click (
+CREATE TABLE atomic.com_snowplowanalytics_ad_click_1 (
     -- Nature of this type
     type_name     varchar(128)   encode runlength not null,
     type_vendor   varchar(128)   encode runlength not null,
@@ -66,7 +66,7 @@ DISTSTYLE KEY
 DISTKEY (root_id)
 SORTKEY (root_tstamp);
 
-CREATE TABLE atomic.com_snowplowanalytics_ad_conversion (
+CREATE TABLE atomic.com_snowplowanalytics_ad_conversion_1 (
     -- Nature of this type
     type_name     varchar(128)   encode runlength not null,
     type_vendor   varchar(128)   encode runlength not null,
