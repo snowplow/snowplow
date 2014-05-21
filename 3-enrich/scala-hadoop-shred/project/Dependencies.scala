@@ -26,12 +26,11 @@ object Dependencies {
     val hadoop       = "1.1.2"
     // Scala
     val commonEnrich = "0.3.0"
-    val scalding     = "0.9.1" // TODO: bump when PartitionedTsv released
+    val scalding     = "0.10.0"
     val scalaz7      = "7.0.0"
     val argonaut     = "6.0.4"
     // Scala (test only)
     val specs2       = "2.3.11"
-    val specs1       = "1.6.9" // TODO: remove when PartitionedTsv released
   }
 
   object Libraries {
