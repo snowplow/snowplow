@@ -14,7 +14,6 @@ Tracker Protocol: added JSON Schema and tests for custom context (#627)
 Scala Hadoop Shred: added. Version 0.1.0                                                - TODO
 Scala Hadoop Shred: implement PartitionSource, PartitionedTap for Scalding (#609)       - TODO 
 EmrEtlRunner: bumped to 0.7.0
-EmrEtlRunner: bumped Elasticity to 3.0.4 (#665)                                         - TODO remove as this was done in 0.9.3
 EmrEtlRunner: updated S3DistCp steps to use new S3DistCpStep from Elasticity (#629)
 EmrEtlRunner: added ability to start Lingual in EmrEtlRunner (#623)
 EmrEtlRunner: added ability to start HBase in EmrEtlRunner (#622)
