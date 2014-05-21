@@ -125,14 +125,17 @@
             unpackWARs="true" autoDeploy="true">
         
         <!--Following class replaces the apparent client remote IP address and hostname for the request with the IP address list presented by a proxy or a load balancer via a request headers (e.g. "X-Forwarded-For").-->
-        <Valve className="org.apache.catalina.valves.RemoteIpValve" protocolHeader="X-Forwarded-Proto" />
+        <Valve className="org.apache.catalina.valves.RemoteIpValve"
+           remoteIpHeader="x-forwarded-for"
+           proxiesHeader="x-forwarded-by"
+           protocolHeader="x-forwarded-proto"/>
 
         <!-- Access log processes.
              Documentation at: /docs/config/valve.html
              Note: The pattern used ensures that the access log format matches that produced by the Cloudfront Collector. (So that the same ETL process can be employed for both collectors.) -->
         <Valve className="com.snowplowanalytics.tomcat.CfAccessLogValve" directory="logs"
                prefix="localhost_access_log" suffix=".txt" rotatable="false" requestAttributesEnabled="true"
-               pattern="%{yyyy-MM-dd}t&#9;%{HH:mm:ss}t&#9;-&#9;%b&#9;%a&#9;%m&#9;%h&#9;%U&#9;%s&#9;%{Referer}i&#9;%{User-Agent}I&#9;%q&amp;cv=clj-0.5.0-%v&amp;nuid=%{sp}C&#9;-&#9;-&#9;-" />
+               pattern="%{yyyy-MM-dd}t&#9;%{HH:mm:ss}t&#9;-&#9;%b&#9;%a&#9;%m&#9;%h&#9;%U&#9;%s&#9;%{Referer}i&#9;%{User-Agent}I&#9;%q&amp;cv=clj-0.6.0-%v&amp;nuid=%{sp}C&#9;-&#9;-&#9;-" />
 
 
       </Host>

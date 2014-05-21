@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,11 +10,11 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2013 SnowPlow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 # All errors
-module SnowPlow
+module Snowplow
   module EmrEtlRunner
 
     # The base error class for all <tt>EmrEtlRunner</tt> error classes.

@@ -13,18 +13,44 @@
 # Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-# Ruby 1.9.2 onwards doesn't add . into $LOAD_PATH by default - use require_relative instead
-require_relative 'snowplow-emr-etl-runner/errors'
-require_relative 'snowplow-emr-etl-runner/logging'
-require_relative 'snowplow-emr-etl-runner/contracts'
-require_relative 'snowplow-emr-etl-runner/cli'
-require_relative 'snowplow-emr-etl-runner/s3_tasks'
-require_relative 'snowplow-emr-etl-runner/emr_job'
-require_relative 'snowplow-emr-etl-runner/runner'
+require 'logger'
+
+require 'contracts'
+include Contracts
 
 module Snowplow
   module EmrEtlRunner
-    NAME          = "snowplow-emr-etl-runner"
-    VERSION       = "0.7.0"
+    module Logging
+
+      $stdout.sync = true
+
+      # Get the Logger
+      Contract None => Logger
+      def logger
+        Logging.logger
+      end
+
+      # Global, memoized, lazy initialized instance of a logger
+      Contract None => Logger 
+      def self.logger
+        @logger ||= Logger.new($stdout)
+      end
+
+      # Log a fatal Exception
+      Contract Exception => nil
+      def self.fatal_with(exception)
+        logger.fatal("\n\n#{exception.class} (#{exception.message}):\n    " +
+                     exception.backtrace.join("\n    ") +
+                     "\n\n")
+        nil
+      end
+
+      # Set the logging level
+      Contract String => nil
+      def self.set_level(level)
+        logger.level = Logger.const_get level.upcase
+        nil
+      end
+    end
   end
 end

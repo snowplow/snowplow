@@ -1,7 +1,28 @@
+Version 0.9.3 (2014-05-21)
+--------------------------
+EmrEtlRunner: bumped to 0.7.0
+EmrEtlRunner: bumped Sluice to 0.2.1 (#405)
+EmrEtlRunner: bumped Elasticity to 3.0.4 (#665)
+EmrEtlRunner: replaced hadoop_version setting with ami_version setting (#701)
+EmrEtlRunner: fixed handling of region, placement and ec2_subnet_id (#754)
+EmrEtlRunner: fixed regression where 0 files staged still kicks off EMR (#409)
+EmrEtlRunner: stopped Sluice file operation threads being killed by folders (#401)
+EmrEtlRunner: fixed disabling of Cascading error catching (#721)
+EmrEtlRunner: renamed Clojure Collector log files in processing bucket to support multiple instances (#717)
+EmrEtlRunner: added initial Ruby.contracts support into EmrEtlRunner (#392)
+EmrEtlRunner: updated to use the Ruby Logger (#194)
+EmrEtlRunner: updated so it's embeddable in other applications (#128)
+EmrEtlRunner: added ability to bundle as a JRuby fat jar (#674) 
+EmrEtlRunner: added initial unit tests (#672)
+Clojure Collector: bumped to 0.6.0
+Clojure Collector: load balancer IP address getting stored in logs (#719)
+Documentation: removed all Snowplow tracking from READMEs, thanks @acinader! (#720)
+Documentation: fixed EmrEtlRunner documentation is (slightly) inconsistent, thanks @pvdb! (#749)
+
 Version 0.9.2 (2014-04-30)
 --------------------------
 Scala Hadoop Enrich: bumped to 0.5.0
-Scala Hadoop Enrich: bumped to Scala Common Enrich 0.3.0 (#699)
+Scala Hadoop Enrich: bumped to Scala Common Enrich 0.4.0 (#699)
 Scala Hadoop Enrich: bumped SBT to 0.13.2 (#702)
 Scala Hadoop Enrich: bumped to using using sbt-assembly 0.11.2 (#704)
 Scala Common Enrich: bumped to 0.4.0

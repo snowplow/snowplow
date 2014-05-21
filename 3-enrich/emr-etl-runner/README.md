@@ -1,8 +1,8 @@
-# SnowPlow::EmrEtlRunner
+# Snowplow::EmrEtlRunner
 
 ## Introduction
 
-SnowPlow::EmrEtlRunner is a Ruby application (built with [Bundler] [bundler]) to run SnowPlow's Scalding-based Enrichment process on [Amazon Elastic MapReduce] [amazon-emr] with minimum fuss.
+Snowplow::EmrEtlRunner is a Ruby application (built with [Bundler] [bundler]) to run Snowplow's Scalding-based Enrichment process on [Amazon Elastic MapReduce] [amazon-emr] with minimum fuss.
 
 ## Find out more
 
@@ -13,13 +13,13 @@ SnowPlow::EmrEtlRunner is a Ruby application (built with [Bundler] [bundler]) to
 
 ## Credits and thanks
 
-SnowPlow::EmrEtlRunner was primarily developed by [Alex Dean] [alexanderdean] ([SnowPlow Analytics] [snowplow-analytics]), with very substantial contributions from [Michael Tibben] [mtibben] ([99designs] [99designs]). Huge thanks Michael!
+Snowplow::EmrEtlRunner was primarily developed by [Alex Dean] [alexanderdean] ([Snowplow Analytics] [snowplow-analytics]), with very substantial contributions from [Michael Tibben] [mtibben] ([99designs] [99designs]). Huge thanks Michael!
 
 EmrEtlRunner in turn depends heavily on [Rob Slifka] [rslifka]'s excellent [Elasticity] [elasticity] Ruby gem, which provides programmatic access to Amazon EMR. Big thanks to Rob for writing Elasticity!
 
 ## Copyright and license
 
-SnowPlow::EmrEtlRunner is copyright 2012-2013 SnowPlow Analytics Ltd.
+Snowplow::EmrEtlRunner is copyright 2012-2014 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.

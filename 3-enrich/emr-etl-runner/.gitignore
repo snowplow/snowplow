@@ -16,5 +16,8 @@ test/tmp
 test/version_tmp
 tmp
 
+deploy/*.jar
+deploy/*.jarx
+
 # Added as per http://ryan.mcgeary.org/2011/02/09/vendor-everything-still-applies/
 vendor/bundle/ruby
