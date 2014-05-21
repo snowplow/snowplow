@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,53 +12,40 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2013 SnowPlow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 # Don't edit $LOAD_PATH, go straight to main Ruby file
 require File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'snowplow-emr-etl-runner'))
-runner = SnowPlow::EmrEtlRunner # Alias
+
+# Initialization
+runner = Snowplow::EmrEtlRunner
+fatal = runner::Logging.method(:fatal_with)
 
 # This Ruby script runs the ETL (extract, transform, load)
-# process which transforms the raw SnowPlow event logs into
-# SnowPlow-formatted Hive data tables, optimised for analysis.
+# process which transforms the raw Snowplow event logs into
+# Snowplow-formatted Hive data tables, optimised for analysis.
 #
 # This is a three-step process:
-# 1. Transfer the raw SnowPlow event logs from the In Bucket to the Processing Bucket
-# 2. Run the Hive ETL process on the logs using Amazon EMR (populates processed SnowPlow events into the Out Bucket)
+# 1. Transfer the raw Snowplow event logs from the In Bucket to the Processing Bucket
+# 2. Run the Hive ETL process on the logs using Amazon EMR (populates processed Snowplow events into the Out Bucket)
 # 3. Archive the processed event logs from Processing Bucket to Archive Bucket
 #
 # Note that each step is only actioned if the previous step succeeded without error.
 begin
-  config = runner::Config.get_config()
 
-  unless config[:skip].include?('staging')
-    unless runner::S3Tasks.stage_logs_for_emr(config)
-      puts "No Snowplow logs to process since last run, exiting"
-      exit 0
-    end
-  end
+  args, config = runner::Cli.get_args_config()
+  r = runner::Runner.new(args, config)
+  r.run()
 
-  unless config[:skip].include?('emr')
-    job = runner::EmrJob.new(config)
-    job.run()
-  end
-
-  unless config[:skip].include?('archive')
-    runner::S3Tasks.archive_logs(config)
-  end
-
-  puts "Completed successfully"
-
-# Catch any SnowPlow error
+# Catch any Snowplow error
 rescue runner::Error => e
-  $stderr.puts(e.message)
+  fatal.call(e)
   exit 1
 rescue SystemExit => e
   exit 1
 rescue Exception => e
-  $stderr.puts("Unexpected error: " + e.message)
-  $stderr.puts(e.backtrace.join("\n"))
+  fatal.call(e)
   exit 1
 end
 
