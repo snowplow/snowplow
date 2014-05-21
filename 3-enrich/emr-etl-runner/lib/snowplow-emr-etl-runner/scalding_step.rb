@@ -18,6 +18,7 @@ require 'elasticity'
 module SnowPlow
   module EmrEtlRunner
 
+    # TODO: move this into Elasticity at some point
     class ScaldingStep < Elasticity::CustomJarStep
 
       def initialize(jar, main_class, options)
