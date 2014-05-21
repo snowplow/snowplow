@@ -32,6 +32,7 @@ CREATE TABLE atomic.com_snowplowanalytics_ad_impression_1 (
     banner_id     varchar(255)   encode raw,
     campaign_id   varchar(255)   encode runlength,
     advertiser_id varchar(255)   encode runlength,
+    target_url    varchar(4096)  encode runlength,
     cost_model    char(3)        encode runlength,
     cost          decimal(15,10) encode runlength
 )
