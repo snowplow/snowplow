@@ -44,6 +44,5 @@ object Dependencies {
     val argonaut         = "io.argonaut"                %% "argonaut"                % V.argonaut
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                  % V.specs2        % "test"
-    val specs1           = "org.scala-tools.testing"    %% "specs"                   % V.specs1        % "test"
   }
 }
