@@ -68,7 +68,7 @@ module Snowplow
 
         hbase = config[:emr][:software][:hbase]
         unless not hbase
-          install_hbase_action = Elasticity::BootstrapAction.new("s3://#{config[:s3][:region]}.elasticmapreduce/bootstrap-actions/setup-hbase")
+          install_hbase_action = Elasticity::BootstrapAction.new("s3://#{config[:emr][:region]}.elasticmapreduce/bootstrap-actions/setup-hbase")
           @jobflow.add_bootstrap_action(install_hbase_action)
 
           start_hbase_step = Elasticity::CustomJarStep.new('/home/hadoop/lib/hbase-#{hbase}.jar')
