@@ -10,7 +10,7 @@ EmrEtlRunner: stopped Sluice file operation threads being killed by folders (#40
 EmrEtlRunner: fixed disabling of Cascading error catching (#721)
 EmrEtlRunner: renamed Clojure Collector log files in processing bucket to support multiple instances (#717)
 EmrEtlRunner: added initial Ruby.contracts support into EmrEtlRunner (#392)
-EmrEtlRunner: updated to use logging Rubygem (#194)
+EmrEtlRunner: updated to use the Ruby Logger (#194)
 EmrEtlRunner: updated so it's embeddable in other applications (#128)
 EmrEtlRunner: added ability to bundle as a JRuby fat jar (#674) 
 EmrEtlRunner: added initial unit tests (#672)
