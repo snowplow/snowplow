@@ -13,7 +13,7 @@ Tracker Protocol: added screen_view JSON Schema and tests (#590)
 Tracker Protocol: added JSON Schema and tests for custom context (#627)
 Scala Hadoop Shred: added. Version 0.1.0                                                - TODO
 Scala Hadoop Shred: implement PartitionSource, PartitionedTap for Scalding (#609)       - TODO 
-EmrEtlRunner: bumped to 0.7.0
+EmrEtlRunner: bumped to 0.8.0
 EmrEtlRunner: updated S3DistCp steps to use new S3DistCpStep from Elasticity (#629)
 EmrEtlRunner: added ability to start Lingual in EmrEtlRunner (#623)
 EmrEtlRunner: added ability to start HBase in EmrEtlRunner (#622)
