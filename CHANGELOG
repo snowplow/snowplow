@@ -3,15 +3,16 @@ Version 0.9.3 (2014-06-XX)
 Ruby Tracker: added git submodule. Version 0.1.0 (#645)
 JavaScript Tracker: bumped git submodule to 2.0.0 (#635)                                - TODO
 Python Tracker: bumped Python Tracker git submodule to 0.3.0 (#634)
-Tracker Protocol: added. Version 0.1.0
-Tracker Protocol: selected and integrated a JSON Schema validation tool (#551)
-Tracker Protocol: implemented Grunt (#552)
-Tracker Protocol: implemented Intern (#553)
-Tracker Protocol: added ad_* JSON Schema and tests (#554)
-Tracker Protocol: added link_click JSON Schema and tests (#601)
-Tracker Protocol: added screen_view JSON Schema and tests (#590)
-Tracker Protocol: added JSON Schema and tests for custom context (#627)
-Tracker Protocol: added JSON Schema and tests for unstructured events (#741)
+Schemas: added. Version 0.1.0
+Schemas: selected and integrated a JSON Schema validation tool (#551)
+Schemas: implemented Grunt (#552)
+Schemas: implemented Intern (#553)
+Schemas: added ad_* JSON Schema and tests (#554)
+Schemas: added link_click JSON Schema and tests (#601)
+Schemas: added screen_view JSON Schema and tests (#590)
+Schemas: added JSON Schema and tests for custom context (#627)
+Schemas: added JSON Schema and tests for unstructured events (#741)
+Schemas: added self-describing JSON Schema instance and schema (#736) 
 Scala Hadoop Shred: added. Version 0.1.0                                                - TODO
 Scala Hadoop Shred: implement PartitionSource, PartitionedTap for Scalding (#609)       - TODO 
 EmrEtlRunner: bumped to 0.8.0
