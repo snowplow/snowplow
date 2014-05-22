@@ -66,6 +66,7 @@ module Snowplow
         @jobflow.master_instance_type = config[:emr][:jobflow][:master_instance_type]
         @jobflow.slave_instance_type  = config[:emr][:jobflow][:core_instance_type]
 
+        # Install and launch HBase
         hbase = config[:emr][:software][:hbase]
         unless not hbase
           install_hbase_action = Elasticity::BootstrapAction.new("s3://#{config[:emr][:region]}.elasticmapreduce/bootstrap-actions/setup-hbase")
