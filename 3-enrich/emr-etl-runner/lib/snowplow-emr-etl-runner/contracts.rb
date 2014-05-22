@@ -22,7 +22,8 @@ module Snowplow
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
       :maxmind  => String,
-      :hadoop   => String
+      :enrich   => String,
+      :shred    => String
       })
 
     # The Hash of the CLI arguments.
