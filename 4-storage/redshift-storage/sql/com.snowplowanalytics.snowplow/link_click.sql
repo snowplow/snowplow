@@ -9,14 +9,13 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     1-0-0
--- URL:         -
---
 -- Authors:     Alex Dean
 -- Copyright:   Copyright (c) 2014 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
+--
+-- Version:     1-0-0
 
-CREATE TABLE atomic.com_snowplowanalytics_screen_view_1 (
+CREATE TABLE atomic.com_snowplowanalytics_link_click_1 (
 	-- Nature of this type
 	type_name    varchar(128) encode runlength not null,
 	type_vendor  varchar(128) encode runlength not null,
@@ -27,8 +26,10 @@ CREATE TABLE atomic.com_snowplowanalytics_screen_view_1 (
 	ref_tree     varchar(1500) encode runlength not null,
 	ref_parent   varchar(255)  encode runlength not null,
 	-- Properties of this type
-	name         varchar(255) encode text32k,
-	id           varchar(255) encode text32k
+	element_id      varchar(255) encode text32k,
+	element_classes varchar(2048) encode raw, -- Holds a JSON array. TODO: will replace with a ref_ following https://github.com/snowplow/snowplow/issues/647
+	element_target  varchar(255) encode text255,
+	target_url      varchar(4096) encode text32k not null
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
