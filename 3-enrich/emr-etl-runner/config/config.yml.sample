@@ -28,8 +28,8 @@
   :ec2_subnet_id: ADD HERE # Set this if running in VPC. Leave blank otherwise
   :ec2_key_name: ADD HERE
   :software:
-    :hbase: false          # Or version, 0.92.0
-    :lingual: false        # Or version, 1.1
+    :hbase:                # To launch on cluster, provide version, 0.92.0
+    :lingual:              # To launch on cluster, provide version, 1.1
   # Adjust your Hadoop cluster below
   :jobflow:
     :master_instance_type: m1.small
@@ -40,10 +40,11 @@
     :task_instance_bid: 0.015 # In USD. Adjust bid, or leave blank for non-spot-priced (i.e. on-demand) task instances
 :etl:
   :job_name: Snowplow ETL # Give your job a name
-  :hadoop_etl_version: 0.5.0 # Version of the Hadoop Enrichment process
-  :hadoop_shred_version: 0.1.0 # Version of the Hadoop Shredding process
+  :versions:
+    :hadoop_enrich: 0.5.0 # Version of the Hadoop Enrichment process
+    :hadoop_shred: 0.1.0 # Version of the Hadoop Shredding process
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
-  :continue_on_unexpected_error: false # You can switch to 'true' (and set :out_errors: above) if you really don't want the ETL throwing exceptions
+  :continue_on_unexpected_error: false # Set to 'true' (and set :out_errors: above) if you don't want any exceptions thrown from ETL
 :enrichments:
   :anon_ip:
     :enabled: false

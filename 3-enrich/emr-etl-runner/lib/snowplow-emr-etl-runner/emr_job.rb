@@ -35,13 +35,13 @@ module Snowplow
       include Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, ConfigHash => EmrJob
-      def initialize(debug, config)
+      Contract Bool, Bool, ConfigHash => EmrJob
+      def initialize(debug, shred, config)
 
         logger.debug "Initializing EMR jobflow"
 
         # Configuration
-        assets = self.class.get_assets(config[:s3][:buckets][:assets], config[:etl][:hadoop_etl_version])
+        assets = self.class.get_assets(config[:s3][:buckets][:assets], config[:etl][:versions][:hadoop_enrich], config[:etl][:versions][:hadoop_shred])
         run_id = Time.new.strftime("%Y-%m-%d-%H-%M-%S")
 
         # Create a job flow with your AWS credentials
@@ -136,16 +136,16 @@ module Snowplow
         csbe = config[:s3][:buckets][:enriched]
 
         enrich_step = build_scalding_step(
-          config[:enrich_asset],
+          assets[:enrich],
           "Enrich Raw Events",
           "enrich.hadoop.EtlJob",
           { :in     => enrich_input,
             :good   => enrich_output,
-            :bad    => partition_by_run(csbe[:bad],    config[:run_id]),
-            :errors => partition_by_run(csbe[:errors], config[:run_id], config[:etl][:continue_on_unexpected_error])
+            :bad    => partition_by_run(csbe[:bad],    run_id),
+            :errors => partition_by_run(csbe[:errors], run_id, config[:etl][:continue_on_unexpected_error])
           },
           { :input_format     => config[:etl][:collector_format],
-            :maxmind_file     => config[:maxmind_asset],
+            :maxmind_file     => assets[:maxmind],
             :anon_ip_quartets => config[:enrichments][:anon_ip_octets]
           }
         )
@@ -155,7 +155,7 @@ module Snowplow
         copy_to_s3_step = Elasticity::S3DistCpStep.new
         copy_to_s3_step.arguments = [        
           "--src"        , enrich_output,
-          "--dest"       , partition_by_run(csbe[:good], config[:run_id]),
+          "--dest"       , partition_by_run(csbe[:good], run_id),
           "--srcPattern" , "part-*",
           "--s3Endpoint" , config[:s3][:endpoint]
         ]
@@ -164,19 +164,19 @@ module Snowplow
 
         # 3. Shredding
 
-        unless config[:skip].include?('shred')
+        if shred
           
           shred_output = "hdfs:///local/snowplow/shredded-events"
           csbs = config[:s3][:buckets][:shredded]
           
           shredded_step = build_scalding_step(
-            config[:shred_asset],
+            assets[:shred],
             "Shred Enriched Events",
             "enrich.hadoop.ShredJob",
             { :in     => enrich_output,
               :good   => shred_output,
-              :bad    => partition_by_run(csbs[:bad],    config[:run_id]),
-              :errors => partition_by_run(csbs[:errors], config[:run_id], config[:etl][:continue_on_unexpected_error])
+              :bad    => partition_by_run(csbs[:bad],    run_id),
+              :errors => partition_by_run(csbs[:errors], run_id, config[:etl][:continue_on_unexpected_error])
             }
           )
           @jobflow.add_step(shredded_step)
@@ -185,7 +185,7 @@ module Snowplow
           copy_to_s3_step = Elasticity::S3DistCpStep.new
           copy_to_s3_step.arguments = [
             "--src"        , shred_output,
-            "--dest"       , partition_by_run(csbs[:good], config[:run_id]),
+            "--dest"       , partition_by_run(csbs[:good], run_id),
             "--srcPattern" , "part-*",
             "--s3Endpoint" , config[:s3][:endpoint]
           ]
@@ -304,8 +304,8 @@ module Snowplow
         end
       end
 
-      Contract String, String => AssetsHash
-      def self.get_assets(assets_bucket, hadoop_etl_version)
+      Contract String, String, String => AssetsHash
+      def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version)
 
         asset_host = 
           if assets_bucket == "s3://snowplow-hosted-assets/"
@@ -315,7 +315,8 @@ module Snowplow
           end
 
         { :maxmind  => "#{asset_host}third-party/maxmind/GeoLiteCity.dat",
-          :hadoop   => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-etl-#{hadoop_etl_version}.jar"
+          :enrich   => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-etl-#{hadoop_enrich_version}.jar",
+          :shred    => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
         }
       end
 

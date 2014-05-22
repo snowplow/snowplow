@@ -52,7 +52,8 @@ module Snowplow
         end
 
         unless @args[:skip].include?('emr')
-          job = EmrJob.new(@args[:debug], @config)
+          shred = not @args[:skip].include?('shred')
+          job = EmrJob.new(@args[:debug], shred, @config)
           job.run()
         end
 
