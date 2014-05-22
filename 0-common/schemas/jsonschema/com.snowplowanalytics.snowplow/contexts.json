@@ -23,14 +23,12 @@
 						"pattern": "^iglu://[a-zA-Z0-9-_.]+/[a-zA-Z0-9-_]+/[a-zA-Z0-9-_]+/[0-9]+-[0-9]+-[0-9]+$"
 					},
 					{
-						"format": "strict-uri"
+						"format": "uri"
 					}
 				]
 			},
 
-			"data": {
-				"type": "object"
-			}
+			"data": {}
 		},
 
 		"required": ["schema", "data"],
