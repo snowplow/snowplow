@@ -55,12 +55,22 @@ module Snowplow
         :buckets => ({
           :assets => String,
           :log => String,
-          :in => String,
-          :processing => String,
-          :out => String,
-          :out_bad_rows => String,
-          :out_errors => Maybe[String],
-          :archive => String
+          :raw => ({
+            :in => String,
+            :processing => String
+            )}
+          :enriched => ({
+            :good => String,
+            :bad => String,
+            :errors => Maybe[String],
+            :archive => String
+            })
+          :shredded => ({
+            :good => String,
+            :bad => String,
+            :errors => Maybe[String],
+            :archive => String
+            })
           })
         }),
       :emr => ({
@@ -69,6 +79,10 @@ module Snowplow
         :placement => Maybe[String],
         :ec2_subnet_id => Maybe[String],
         :ec2_key_name => String,
+        :software => ({
+          :hbase => String,
+          :lingual => String
+          })
         :jobflow => ({
           :master_instance_type => String,
           :core_instance_count => Num,
@@ -80,7 +94,10 @@ module Snowplow
         }),
       :etl => ({
         :job_name => String,
-        :hadoop_etl_version => String,
+        :versions => ({
+          :hadoop_enrich => String,
+          :hadoop_shred => String
+          })
         :collector_format => String,
         :continue_on_unexpected_error => Bool
         }),
