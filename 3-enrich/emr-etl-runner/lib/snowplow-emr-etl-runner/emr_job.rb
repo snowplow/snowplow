@@ -315,7 +315,6 @@ module Snowplow
           end
 
         { :maxmind  => "#{asset_host}third-party/maxmind/GeoLiteCity.dat",
-          :s3distcp => "/home/hadoop/lib/emr-s3distcp-1.0.jar",
           :hadoop   => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-etl-#{hadoop_etl_version}.jar"
         }
       end
