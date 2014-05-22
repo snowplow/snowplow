@@ -7,13 +7,13 @@ Schemas: added. Version 0.1.0
 Schemas: selected and integrated a JSON Schema validation tool (#551)
 Schemas: implemented Grunt (#552)
 Schemas: implemented Intern (#553)
+Schemas: added contexts JSON Schema and tests (#627)
+Schemas: added unstructured events JSON Schema and tests (#741)
+Schemas: added payload_data JSON Schema and tests (#760)
 Schemas: added ad_* JSON Schema and tests (#554)
 Schemas: added link_click JSON Schema and tests (#601)
 Schemas: added screen_view JSON Schema and tests (#590)
-Schemas: added JSON Schema and tests for custom context (#627)
-Schemas: added JSON Schema and tests for unstructured events (#741)
 Schemas: added self-describing JSON Schema instance and schema (#736)
-Schemas: added JSON Schema and tests for payload_data (#760)
 Scala Hadoop Shred: added. Version 0.1.0                                                - TODO
 Scala Hadoop Shred: implement PartitionSource, PartitionedTap for Scalding (#609)       - TODO 
 EmrEtlRunner: bumped to 0.8.0
