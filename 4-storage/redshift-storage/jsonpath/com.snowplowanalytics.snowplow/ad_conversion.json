@@ -17,7 +17,7 @@
     "$.us.action",
     "$.us.property",
     "$.us.cost_model",
-    "$.us.cost_if_cpa",
+    "$.us.cost",
     "$.us.initial_value"
     ]
 }

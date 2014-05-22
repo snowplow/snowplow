@@ -16,6 +16,6 @@
     "$.us.campaign_id",
     "$.us.advertiser_id",
     "$.us.cost_model",
-    "$.us.cost_if_cpm"
+    "$.us.cost"
     ]
 }

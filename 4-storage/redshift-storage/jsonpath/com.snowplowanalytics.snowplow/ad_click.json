@@ -18,6 +18,6 @@
     "$.us.advertiser_id",
     "$.us.target_url",
     "$.us.cost_model",
-    "$.us.cost_if_cpc"
+    "$.us.cost"
     ]
 }
