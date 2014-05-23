@@ -80,7 +80,7 @@ object JobSpecHelpers {
 
   // Standard JobSpec definition used by all integration tests
   val ShredJobSpec = 
-    JobTest("com.snowplowanalytics.snowplow.enrich.shred.ShredJob").
+    JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.ShredJob").
       arg("input_folder", "inputFolder").
       arg("output_folder", "outputFolder").
       arg("bad_rows_folder", "badFolder").
