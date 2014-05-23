@@ -10,7 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.hadoop
+package com.snowplowanalytics.snowplow.enrich
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
@@ -29,7 +29,7 @@ import Scalaz._
  * See:
  * http://www.artima.com/scalazine/articles/package_objects.html
  */
-package object common {
+package object hadoop {
 
   /**
    * Type alias for a `ValidationNel`

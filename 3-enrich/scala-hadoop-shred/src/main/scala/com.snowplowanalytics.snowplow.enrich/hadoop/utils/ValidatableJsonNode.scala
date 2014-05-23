@@ -14,10 +14,6 @@ package com.snowplowanalytics.snowplow.enrich
 package hadoop
 package utils
 
-// Scalaz
-import scalaz._
-import Scalaz._
-
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
 
@@ -30,8 +26,16 @@ import com.github.fge.jsonschema.main.{
 }
 import com.github.fge.jsonschema.core.report.{
   ListReportProvider,
+  ProcessingMessage,
   LogLevel
 }
+
+// Scala
+import scala.collection.JavaConversions._
+
+// Scalaz
+import scalaz._
+import Scalaz._
 
 // Snowplow Common Enrich
 import common._
@@ -63,9 +67,12 @@ object ValidatableJsonNode {
    *         JSON, or a Failure boxing
    *         TODO
    */
-  def validateAgainstSchema(json: JsonNode, schema: JsonNode): Validated[JsonNode] = {
+  def validateAgainstSchema(json: JsonNode, schema: JsonNode): ValidatedJsonNode = {
     val report = JsonSchemaValidator.validate(schema, json)
-    if (report.isSuccess) json.success else "OH NO".failNel
+    report.iterator.toList match {
+      case x :: xs => NonEmptyList[ProcessingMessage](x, xs: _*).fail
+      case Nil => json.success
+    }
   }
 
   /**
@@ -97,6 +104,6 @@ object ValidatableJsonNode {
 
 class ValidatableJsonNode(jsonNode: JsonNode) {
 
-  def validate(schema: JsonNode): Validated[JsonNode] = 
+  def validate(schema: JsonNode): ValidatedJsonNode = 
     ValidatableJsonNode.validateAgainstSchema(jsonNode, schema)
 }
