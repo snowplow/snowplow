@@ -28,6 +28,10 @@ import com.github.fge.jsonschema.main.{
   JsonSchemaFactory,
   JsonValidator
 }
+import com.github.fge.jsonschema.core.report.{
+  ListReportProvider,
+  LogLevel
+}
 
 // Snowplow Common Enrich
 import common._
@@ -75,12 +79,15 @@ object ValidatableJsonNode {
    */
   private def getJsonSchemaValidator(version: SchemaVersion): JsonValidator = {
     
+    // Override the ReportProvider so we never throw Exceptions and only collect ERRORS+
+    val rep = new ListReportProvider(LogLevel.ERROR, LogLevel.NONE)
     val cfg = ValidationConfiguration
                 .newBuilder
                 .setDefaultVersion(version)
                 .freeze
     val fac = JsonSchemaFactory
                 .newBuilder
+                .setReportProvider(rep)
                 .setValidationConfiguration(cfg)
                 .freeze
     
