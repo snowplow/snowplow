@@ -30,6 +30,7 @@ object SnowplowHadoopShredBuild extends Build {
       libraryDependencies ++= Seq(
         // Java
         Libraries.hadoopCore,
+        Libraries.jacksonDatabind,
         Libraries.jsonValidator,
         // Scala
         Libraries.commonEnrich,
@@ -37,7 +38,6 @@ object SnowplowHadoopShredBuild extends Build {
         Libraries.scaldingArgs,
         Libraries.scaldingJson,
         Libraries.scalaz7,
-        Libraries.argonaut,
         // Scala (test only)
         Libraries.specs2
       )

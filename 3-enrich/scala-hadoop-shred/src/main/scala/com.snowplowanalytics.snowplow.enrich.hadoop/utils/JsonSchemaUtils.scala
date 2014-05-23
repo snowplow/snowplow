@@ -14,6 +14,10 @@ package com.snowplowanalytics.snowplow.enrich
 package hadoop
 package utils
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
 
@@ -25,19 +29,30 @@ import com.github.fge.jsonschema.main.{
   JsonValidator
 }
 
+// Snowplow Common Enrich
+import common._
+
 object JsonSchemaUtils {
 
   private lazy val JsonSchemaValidator = getJsonSchemaValidator(SchemaVersion.DRAFTV4)
 
   /**
    * Validates a JSON against a given
-   * JSON Schema.
+   * JSON Schema. On success, simply
+   * passes through the original JSON.
+   * On Failure, TODO
    *
-   * TODO: fix this up
+   * @param json The JSON to validate
+   * @param schema The JSON Schema to
+   *        validate the JSON against
+   *
+   * @return either Success boxing the
+   *         JSON, or a Failure boxing
+   *         TODO
    */
-  def validateAgainstSchema(json: JsonNode, schema: JsonNode): Boolean = {
+  def validateAgainstSchema(json: JsonNode, schema: JsonNode): Validated[JsonNode] = {
     val report = JsonSchemaValidator.validate(schema, json)
-    report.isSuccess
+    if (report.isSuccess) json.success else "OH NO".failNel
   }
 
   /**

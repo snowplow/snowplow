@@ -23,20 +23,22 @@ object Dependencies {
 
   object V {
     // Java
-    val hadoop        = "1.1.2"
-    val jsonValidator = "2.2.3"
+    val hadoop          = "1.1.2"
+    val jacksonDatabind = "2.2.3"
+    val jsonValidator   = "2.2.3"
     // Scala
-    val commonEnrich  = "0.3.0"
-    val scalding      = "0.10.0"
-    val scalaz7       = "7.0.0"
-    val argonaut      = "6.0.4"
+    val commonEnrich    = "0.3.0"
+    val scalding        = "0.10.0"
+    val scalaz7         = "7.0.0"
+    val argonaut        = "6.0.4"
     // Scala (test only)
-    val specs2        = "2.3.11"
+    val specs2          = "2.3.11"
   }
 
   object Libraries {
     // Java
-    val hadoopCore       = "org.apache.hadoop"          %  "hadoop-core"             % V.hadoop        % "provided"
+    val hadoopCore       = "org.apache.hadoop"          %  "hadoop-core"             % V.hadoop          % "provided"
+    val jacksonDatabind  = "com.fasterxml.jackson.core" %  "jackson-databind"        % V.jacksonDatabind
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"   % V.jsonValidator
     // Scala
     val commonEnrich     = "com.snowplowanalytics"      %  "snowplow-common-enrich"  % V.commonEnrich
@@ -44,8 +46,7 @@ object Dependencies {
     val scaldingArgs     = "com.twitter"                %% "scalding-args"           % V.scalding
     val scaldingJson     = "com.twitter"                %% "scalding-json"           % V.scalding
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"             % V.scalaz7
-    val argonaut         = "io.argonaut"                %% "argonaut"                % V.argonaut
     // Scala (test only)
-    val specs2           = "org.specs2"                 %% "specs2"                  % V.specs2        % "test"
+    val specs2           = "org.specs2"                 %% "specs2"                  % V.specs2          % "test"
   }
 }
