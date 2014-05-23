@@ -2,7 +2,7 @@
 	"$schema": "http://json-schema.org/schema#",
 	"description": "Schema for an ad click event",
 	"self": {
-		"vendor": "com.snowplowanalytics",
+		"vendor": "com.snowplowanalytics.snowplow",
 		"name": "ad_click",
 		"format": "jsonschema",
 		"version": "1-0-0"

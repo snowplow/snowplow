@@ -2,7 +2,7 @@
 	"$schema": "http://json-schema.org/draft-04/schema#",
 	"description": "Meta-schema for self-describing JSON schema",
 	"self": {
-		"vendor": "com.snowplowanalytics",
+		"vendor": "com.snowplowanalytics.self-desc",
 		"name": "schema",
 		"format": "jsonschema",
 		"version": "1-0-0"

@@ -2,7 +2,7 @@
 	"$schema": "http://json-schema.org/schema#",
 	"description": "Schema for a screen view event",
 	"self": {
-		"vendor": "com.snowplowanalytics",
+		"vendor": "com.snowplowanalytics.snowplow",
 		"name": "screen_view",
 		"format": "jsonschema",
 		"version": "1-0-0"

@@ -2,7 +2,7 @@
 	"$schema": "http://json-schema.org/schema#",
 	"description": "Schema for a Snowplow unstructured event",
 	"self": {
-		"vendor": "com.snowplowanalytics",
+		"vendor": "com.snowplowanalytics.snowplow",
 		"name": "unstruct_event",
 		"format": "jsonschema",
 		"version": "1-0-0"
