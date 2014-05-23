@@ -14,6 +14,10 @@ package com.snowplowanalytics.snowplow.enrich
 package hadoop
 package utils
 
+// Jackson
+import com.fasterxml.jackson.databind.JsonNode
+
+// JSON Schema Validator
 import com.github.fge.jsonschema.SchemaVersion
 import com.github.fge.jsonschema.cfg.ValidationConfiguration
 import com.github.fge.jsonschema.main.{
@@ -24,6 +28,17 @@ import com.github.fge.jsonschema.main.{
 object JsonSchemaUtils {
 
   private lazy val JsonSchemaValidator = getJsonSchemaValidator(SchemaVersion.DRAFTV4)
+
+  /**
+   * Validates a JSON against a given
+   * JSON Schema.
+   *
+   * TODO: fix this up
+   */
+  def validateAgainstSchema(json: JsonNode, schema: JsonNode): Boolean = {
+    val report = JsonSchemaValidator.validate(schema, json)
+    report.isSuccess
+  }
 
   /**
    * Factory for retrieving a JSON Schema
