@@ -19,9 +19,9 @@ import org.specs2.mutable.Specification
 // Scalding
 import com.twitter.scalding._
 
-class WordCountTest extends Specification {
+class ShredTest extends Specification {
   "A WordCount job" should {
-    JobTest("com.snowplowanalytics.snowplow.enrich.shred.WordCountJob").
+    JobTest("com.snowplowanalytics.snowplow.enrich.shred.ShredJob").
       arg("input", "inputFile").
       arg("output", "outputFile").
       source(TextLine("inputFile"), List("0" -> "hack hack hack and hack")).

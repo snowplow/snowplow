@@ -13,10 +13,26 @@
 package com.snowplowanalytics.snowplow.enrich
 package shred
 
+// Snowplow Common Enrich
+import common._
+import common.FatalEtlError
+import common.outputs.CanonicalOutput
+
 // Scalding
 import com.twitter.scalding._
 
-class WordCountJob(args : Args) extends Job(args) {
+/**
+ * The Snowplow Shred job, written in Scalding
+ * (the Scala DSL on top of Cascading).
+ */ 
+class ShredJob(args : Args) extends Job(args) {
+
+  // Job configuration. Scalaz recommends using fold()
+  // for unpicking a Validation
+  val etlConfig = ShredJobConfig.loadConfigFrom(args).fold(
+    e => throw FatalEtlError(e),
+    c => c)
+
   TextLine( args("input") )
     .flatMap('line -> 'word) { line : String => tokenize(line) }
     .groupBy('word) { _.size }
