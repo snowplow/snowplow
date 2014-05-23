@@ -1,0 +1,18 @@
+{
+  "jsonpaths": [
+  
+    "$.ss.typeName",
+    "$.ss.typeVendor",
+
+    "$.ss.rootId",
+    "$.ss.rootTstamp",
+    "$.ss.refRoot",
+    "$.ss.refTree",
+    "$.ss.refParent",
+
+    "$.us.category",
+    "$.us.subCategory",
+    "$.us.author",
+    "$.us.topics"
+    ]
+}

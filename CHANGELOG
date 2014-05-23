@@ -28,6 +28,7 @@ StorageLoader: added ACCEPTINVCHARS to StorageLoader (#411)
 StorageLoader: wrote JSON Path files for ad_* events (#642)
 StorageLoader: wrote JSON Path file for link_click (#599)
 StorageLoader: wrote JSON Path file for screen_view (#643)
+StorageLoader: wrote JSON Path file for website's page_context (#772)
 StorageLoader: added hosted_assets setting for StorageLoader (#606)
 StorageLoader: added ability to load custom tables using JSON Paths (#607)              - TODO
 StorageLoader: added --skip shred option (#660)                                         - TODO
