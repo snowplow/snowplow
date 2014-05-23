@@ -48,12 +48,12 @@ class ValidatableJsonNodeSpec extends Specification with DataTables with Validat
   "a JsonNode should be pimped to a ValidatableJsonNode as needed"         ! e1^
                                                                            end
 
-  val EventSchema = JsonLoader.fromResource("/jsonschema/simple.json")
+  val SimpleSchema = JsonLoader.fromResource("/jsonschema/simple_schema.json")
 
   import ValidatableJsonNode._
 
   def e1 = {
-    val json = ValidatableJsonNodeSpec.asJsonNode("[]")
-    json.validate(EventSchema) must beSuccessful(json)
+    val json = ValidatableJsonNodeSpec.asJsonNode("""{"country": "JP", "beers": ["Asahi", "Orion", "..."]}""")
+    json.validate(SimpleSchema) must beSuccessful(json)
   }
 }

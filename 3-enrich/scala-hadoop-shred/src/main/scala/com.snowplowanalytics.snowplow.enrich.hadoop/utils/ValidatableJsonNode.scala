@@ -40,7 +40,7 @@ object ValidatableJsonNode {
    * Implicit to pimp a JsonNode to our
    * Scalaz Validation-friendly version.
    *
-   * @param jsonNode A node of JSON
+   * @param jsonNode A JsonNode
    * @return the pimped ValidatableJsonNode
    */
   implicit def pimpJsonNode(jsonNode: JsonNode) = new ValidatableJsonNode(jsonNode)
