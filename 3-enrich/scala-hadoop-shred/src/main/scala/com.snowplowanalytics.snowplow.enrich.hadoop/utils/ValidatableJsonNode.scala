@@ -32,9 +32,18 @@ import com.github.fge.jsonschema.main.{
 // Snowplow Common Enrich
 import common._
 
-object JsonSchemaUtils {
+object ValidatableJsonNode {
 
   private lazy val JsonSchemaValidator = getJsonSchemaValidator(SchemaVersion.DRAFTV4)
+
+  /**
+   * Implicit to pimp a JsonNode to our
+   * Scalaz Validation-friendly version.
+   *
+   * @param jsonNode A node of JSON
+   * @return the pimped ValidatableJsonNode
+   */
+  implicit def pimpJsonNode(jsonNode: JsonNode) = new ValidatableJsonNode(jsonNode)
 
   /**
    * Validates a JSON against a given
@@ -77,5 +86,10 @@ object JsonSchemaUtils {
     
     fac.getValidator
   }
+}
 
+class ValidatableJsonNode(jsonNode: JsonNode) {
+
+  def validate(schema: JsonNode): Validated[JsonNode] = 
+    ValidatableJsonNode.validateAgainstSchema(jsonNode, schema)
 }

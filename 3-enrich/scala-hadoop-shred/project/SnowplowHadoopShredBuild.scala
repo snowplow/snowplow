@@ -39,7 +39,8 @@ object SnowplowHadoopShredBuild extends Build {
         Libraries.scaldingJson,
         Libraries.scalaz7,
         // Scala (test only)
-        Libraries.specs2
+        Libraries.specs2,
+        Libraries.scalazSpecs2
       )
     )
 }

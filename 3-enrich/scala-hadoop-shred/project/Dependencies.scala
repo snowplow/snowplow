@@ -33,6 +33,7 @@ object Dependencies {
     val argonaut        = "6.0.4"
     // Scala (test only)
     val specs2          = "2.3.11"
+    val scalazSpecs2     = "0.1.2"
   }
 
   object Libraries {
@@ -48,5 +49,6 @@ object Dependencies {
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"             % V.scalaz7
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                  % V.specs2          % "test"
+    val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"           % V.scalazSpecs2    % "test"
   }
 }
