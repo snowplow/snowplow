@@ -2,7 +2,7 @@
 	"$schema": "http://json-schema.org/schema#",
 	"description": "Top-level schema for the validation process",
 	"self": {
-		"vendor": "com.snowplowanalytics",
+		"vendor": "com.snowplowanalytics.self-desc",
 		"name": "instance",
 		"format": "jsonschema",
 		"version": "1-0-0"
