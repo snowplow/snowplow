@@ -10,6 +10,12 @@
 
 	"type": "object",
 	"properties": {
+		"category": {
+			"type": "string"
+		},
+		"subCategory": {
+			"type": "string"
+		},
 		"author": {
 			"type": "string"
 		},

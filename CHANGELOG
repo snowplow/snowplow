@@ -13,6 +13,7 @@ Schemas: added payload_data JSON Schema and tests (#760)
 Schemas: added ad_* JSON Schema and tests (#554)
 Schemas: added link_click JSON Schema and tests (#601)
 Schemas: added screen_view JSON Schema and tests (#590)
+Schemas: added JSON Schema and tests for website's page_context (#768)                  - TODO
 Schemas: added self-describing JSON Schema instance and schema (#736)
 Scala Hadoop Shred: added. Version 0.1.0                                                - TODO
 EmrEtlRunner: bumped to 0.8.0
@@ -33,10 +34,12 @@ StorageLoader: added --skip shred option (#660)                                 
 Redshift: added Redshift DDL for ad_* events (#639)
 Redshift: added Redshift DDL for link_click events (#600)
 Redshift: added Redshift DDL for screen_view events (#640)
+Redshift: added Redshift DDL for website's page_context (#771)
 Looker Analytics: improved existing LookML definitions to 0.2.0 (#697)
 Looker Analytics: wrote LookML for ad_* events (#605)
 Looker Analytics: wrote LookML for screen_view events (#637)
 Looker Analytics: wrote LookML for link_click events (#636)
+Looker Analytics: wrote LookML for website's page_context (#770)                        - TODO
 
 Version 0.9.4 (2014-05-30)
 ---------------------------
