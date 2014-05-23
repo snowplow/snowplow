@@ -35,6 +35,7 @@ object SnowplowHadoopShredBuild extends Build {
         Libraries.commonEnrich,
         Libraries.scaldingCore,
         Libraries.scaldingArgs,
+        Libraries.scaldingJson,
         Libraries.scalaz7,
         Libraries.argonaut,
         // Scala (test only)

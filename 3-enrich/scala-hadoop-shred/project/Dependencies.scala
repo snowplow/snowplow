@@ -37,11 +37,12 @@ object Dependencies {
   object Libraries {
     // Java
     val hadoopCore       = "org.apache.hadoop"          %  "hadoop-core"             % V.hadoop        % "provided"
-    val jsonValidator    = "com.github.fge"             % "json-schema-validator"    % V.jsonValidator
+    val jsonValidator    = "com.github.fge"             %  "json-schema-validator"   % V.jsonValidator
     // Scala
     val commonEnrich     = "com.snowplowanalytics"      %  "snowplow-common-enrich"  % V.commonEnrich
     val scaldingCore     = "com.twitter"                %% "scalding-core"           % V.scalding
     val scaldingArgs     = "com.twitter"                %% "scalding-args"           % V.scalding
+    val scaldingJson     = "com.twitter"                %% "scalding-json"           % V.scalding
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"             % V.scalaz7
     val argonaut         = "io.argonaut"                %% "argonaut"                % V.argonaut
     // Scala (test only)

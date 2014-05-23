@@ -33,10 +33,10 @@ class ShredJob(args : Args) extends Job(args) {
     e => throw FatalEtlError(e),
     c => c)
 
-  TextLine( args("input") )
+  MultipleTextLineFiles(etlConfig.inFolder)
     .flatMap('line -> 'word) { line : String => tokenize(line) }
     .groupBy('word) { _.size }
-    .write( Tsv( args("output") ) )
+    .write( Tsv( etlConfig.outFolder ) )
 
   // Split a piece of text into individual words.
   def tokenize(text : String) : Array[String] = {
