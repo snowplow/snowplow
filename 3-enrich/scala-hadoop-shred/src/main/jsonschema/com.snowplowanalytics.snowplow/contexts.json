@@ -1,0 +1,39 @@
+{
+	"$schema": "http://json-schema.org/schema#",
+	"description": "Schema for custom contexts",
+	"self": {
+		"vendor": "com.snowplowanalytics.snowplow",
+		"name": "contexts",
+		"format": "jsonschema",
+		"version": "1-0-0"
+	},
+
+	"type": "array",
+
+	"items": {
+
+		"type": "object",
+
+		"properties": {
+
+			"schema": {
+				"type": "string",
+				"anyOf": [
+					{
+						"pattern": "^iglu://[a-zA-Z0-9-_.]+/[a-zA-Z0-9-_]+/[a-zA-Z0-9-_]+/[0-9]+-[0-9]+-[0-9]+$"
+					},
+					{
+						"format": "uri"
+					}
+				]
+			},
+
+			"data": {}
+		},
+
+		"required": ["schema", "data"],
+		"additionalProperties": false
+	},
+
+	"minItems": 1
+}
