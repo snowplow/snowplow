@@ -15,7 +15,7 @@
 --
 -- Version:     1-0-0
 
-CREATE TABLE atomic.com_snowplowanalytics_link_click_1 (
+CREATE TABLE atomic.com_snowplowanalytics_snowplow_link_click_1 (
 	-- Nature of this type
 	type_name    varchar(128) encode runlength not null,
 	type_vendor  varchar(128) encode runlength not null,
