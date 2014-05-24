@@ -69,9 +69,11 @@ object ValidatableJsonNode {
    */
   def validateAgainstSchema(json: JsonNode, schema: JsonNode): ValidatedJsonNode = {
     val report = JsonSchemaValidator.validate(schema, json)
-    report.iterator.toList match {
-      case x :: xs => NonEmptyList[ProcessingMessage](x, xs: _*).fail
-      case Nil => json.success
+    val msgs = report.iterator.toList
+    msgs match {
+      case x :: xs if !report.isSuccess => NonEmptyList[ProcessingMessage](x, xs: _*).fail
+      case Nil     if  report.isSuccess => json.success
+      case _                            => throw new FatalEtlError(s"Validation report success [$report.isSuccess] conflicts with message count [$msgs.length]")
     }
   }
 
