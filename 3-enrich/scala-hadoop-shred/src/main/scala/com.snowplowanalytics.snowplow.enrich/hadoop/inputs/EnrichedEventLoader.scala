@@ -70,11 +70,11 @@ object EnrichedEventLoader {
     }
 
     // Get and validate the event ID
-    val eventId = validateUuid("collector_tstamp", fields(FieldIndexes.eventId))
+    val eventId = validateUuid("event_id", fields(FieldIndexes.eventId))
     for (id <- eventId) { event.event_id = id }
 
     // Get and validate the collector timestamp
-    val collectorTstamp = validateTimestamp(fields(FieldIndexes.collectorTstamp))
+    val collectorTstamp = validateTimestamp("collector_tstamp", fields(FieldIndexes.collectorTstamp))
     for (tstamp <- collectorTstamp) { event.collector_tstamp = tstamp }
 
     (eventId.toValidationNel |@| collectorTstamp.toValidationNel) {
@@ -95,5 +95,5 @@ object EnrichedEventLoader {
   }
 
   // TODO: implement this
-  def validateTimestamp(str: String): ValidatedString = str.success
+  def validateTimestamp(field: String, str: String): ValidatedString = str.success
 }

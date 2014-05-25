@@ -37,4 +37,11 @@ package object hadoop {
    * or a successfully validated `JsonNode`.
    */
   type ValidatedJsonNode = ValidationNel[ProcessingMessage, JsonNode]
+
+  /**
+   * Type alias for a `ValidationNel` containing
+   * either error `JsonNode`s or a successfully
+   * validated `JsonNode`.
+   */
+  type ValidatedShreddedJson = ValidationNel[JsonNode, JsonNode]
 }
