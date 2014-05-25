@@ -68,7 +68,7 @@ object ValidatableJsonNode {
    *         TODO
    */
   def validateAgainstSchema(json: JsonNode, schema: JsonNode): ValidatedJsonNode = {
-    val report = JsonSchemaValidator.validate(schema, json)
+    val report = JsonSchemaValidator.validateUnchecked(schema, json)
     val msgs = report.iterator.toList
     msgs match {
       case x :: xs if !report.isSuccess => NonEmptyList[ProcessingMessage](x, xs: _*).fail
