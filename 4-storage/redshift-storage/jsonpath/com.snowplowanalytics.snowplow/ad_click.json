@@ -1,23 +1,25 @@
 {
   "jsonpaths": [
   
-    "$.ss.typeName",
-    "$.ss.typeVendor",
+    "$.schema.vendor",
+    "$.schema.name",
+    "$.schema.format",
+    "$.schema.version",
 
-    "$.ss.rootId",
-    "$.ss.rootTstamp",
-    "$.ss.refRoot",
-    "$.ss.refTree",
-    "$.ss.refParent",
+    "$.hierarchy.rootId",
+    "$.hierarchy.rootTstamp",
+    "$.hierarchy.refRoot",
+    "$.hierarchy.refTree",
+    "$.hierarchy.refParent",
 
-    "$.us.clickId",
-    "$.us.impressionId",
-    "$.us.zoneId",
-    "$.us.bannerId",
-    "$.us.campaignId",
-    "$.us.advertiserId",
-    "$.us.targetUrl",
-    "$.us.costModel",
-    "$.us.cost"
+    "$.data.clickId",
+    "$.data.impressionId",
+    "$.data.zoneId",
+    "$.data.bannerId",
+    "$.data.campaignId",
+    "$.data.advertiserId",
+    "$.data.targetUrl",
+    "$.data.costModel",
+    "$.data.cost"
     ]
 }

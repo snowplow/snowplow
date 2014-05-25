@@ -1,16 +1,18 @@
 {
   "jsonpaths": [
   
-    "$.ss.typeName",
-    "$.ss.typeVendor",
+    "$.schema.vendor",
+    "$.schema.name",
+    "$.schema.format",
+    "$.schema.version",
 
-    "$.ss.rootId",
-    "$.ss.rootTstamp",
-    "$.ss.refRoot",
-    "$.ss.refTree",
-    "$.ss.refParent",
+    "$.hierarchy.rootId",
+    "$.hierarchy.rootTstamp",
+    "$.hierarchy.refRoot",
+    "$.hierarchy.refTree",
+    "$.hierarchy.refParent",
 
-    "$.us.name",
-    "$.us.id"
+    "$.data.name",
+    "$.data.id"
     ]
 }
