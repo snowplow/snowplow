@@ -43,13 +43,17 @@ object EnrichedEventLoader {
 
   /**
    * Converts the source string into a 
-   * ValidatedCanonicalOutput.
+   * ValidatedCanonicalOutput. Note that
+   * this loads the bare minimum required
+   * for shredding - basically four fields.
    *
    * @param line A line of data to convert
    * @return either a set of validation
    *         Failures or a CanonicalOutput
    *         Success.
    */
+  // TODO: potentially in the future this could be replaced by some
+  // kind of Scalding pack()
   def toEnrichedEvent(line: String): ValidatedCanonicalOutput = {
 
     val fields = line.split("\t")
