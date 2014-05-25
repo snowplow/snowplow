@@ -35,6 +35,7 @@ object JsonUtils {
   /**
    * Converts a JSON string into a Validation[String, Json]
    *
+   * @param field The name of the field containing JSON
    * @param json The JSON string to parse
    * @return a Scalaz Validation, wrapping either an error
    *         String or the extracted JsonNode

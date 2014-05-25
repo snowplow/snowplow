@@ -32,6 +32,9 @@ import outputs.CanonicalOutput
  */
 object EnrichedEventLoader {
 
+  // Taken from http://stackoverflow.com/a/6640851/255627
+  private val UuidRegex = "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})".r
+
   private val FieldCount = 104
 
   private object FieldIndexes { // 0 indexed
@@ -67,7 +70,7 @@ object EnrichedEventLoader {
     }
 
     // Get and validate the event ID
-    val eventId = validateUuid(fields(FieldIndexes.eventId))
+    val eventId = validateUuid("collector_tstamp", fields(FieldIndexes.eventId))
     for (id <- eventId) { event.event_id = id }
 
     // Get and validate the collector timestamp
@@ -79,8 +82,17 @@ object EnrichedEventLoader {
     }
   }
 
-  // TODO: implement this
-  def validateUuid(str: String): ValidatedString = str.success
+  /**
+   * Validates that the given field contains a valid UUID.
+   *
+   * @param field The name of the field being validated
+   * @param str The String hopefully containing a UUID
+   * @return a Scalaz ValidatedString
+   */
+  def validateUuid(field: String, str: String): ValidatedString = str match {
+    case UuidRegex(uuid) => uuid.success
+    case _ => s"Field [$field]: [$str] is not a valid UUID".fail
+  }
 
   // TODO: implement this
   def validateTimestamp(str: String): ValidatedString = str.success
