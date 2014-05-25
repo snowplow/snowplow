@@ -29,14 +29,25 @@ class ShredJob(args : Args) extends Job(args) {
 
   // Job configuration. Scalaz recommends using fold()
   // for unpicking a Validation
-  val etlConfig = ShredJobConfig.loadConfigFrom(args).fold(
+  val shredConfig = ShredJobConfig.loadConfigFrom(args).fold(
     e => throw FatalEtlError(e),
     c => c)
 
-  MultipleTextLineFiles(etlConfig.inFolder)
+  // Aliases for our job
+  val input = MultipleTextLineFiles(shredConfig.inFolder).read
+  val goodOutput = Tsv(shredConfig.outFolder)
+  val badOutput = JsonLine(shredConfig.badFolder)
+
+  // Do we add a failure trap?
+  val trappableInput = shredConfig.exceptionsFolder match {
+    case Some(folder) => input.addTrap(Tsv(folder))
+    case None => input
+  }
+
+  input
     .flatMap('line -> 'word) { line : String => tokenize(line) }
     .groupBy('word) { _.size }
-    .write( Tsv( etlConfig.outFolder ) )
+    .write( Tsv( shredConfig.outFolder ) )
 
   // Split a piece of text into individual words.
   def tokenize(text : String) : Array[String] = {
