@@ -16,25 +16,27 @@
 -- Version:     1-0-0
 
 CREATE TABLE atomic.com_snowplowanalytics_snowplow_ad_click_1 (
-    -- Nature of this type
-    type_name     varchar(128)   encode runlength not null,
-    type_vendor   varchar(128)   encode runlength not null,
+    -- Schema of this type
+    schema_vendor  varchar(128)   encode runlength not null,
+    schema_name    varchar(128)   encode runlength not null,
+    schema_format  varchar(128)   encode runlength not null,
+    schema_version varchar(128)   encode runlength not null,
     -- Parentage of this type
-    root_id       char(36)       encode raw not null,
-    root_tstamp   timestamp      encode raw not null,
-    ref_root      varchar(255)   encode runlength not null,
-    ref_tree      varchar(1500)  encode runlength not null,
-    ref_parent    varchar(255)   encode runlength not null,
+    root_id        char(36)       encode raw not null,
+    root_tstamp    timestamp      encode raw not null,
+    ref_root       varchar(255)   encode runlength not null,
+    ref_tree       varchar(1500)  encode runlength not null,
+    ref_parent     varchar(255)   encode runlength not null,
     -- Properties of this type
-    click_id      varchar(255)   encode raw,
-    impression_id varchar(255)   encode raw,
-    zone_id       varchar(255)   encode raw,
-    banner_id     varchar(255)   encode raw,
-    campaign_id   varchar(255)   encode runlength,
-    advertiser_id varchar(255)   encode runlength,
-    target_url    varchar(4096)  encode runlength,
-    cost_model    char(3)        encode runlength,
-    cost          decimal(15,10) encode runlength
+    click_id       varchar(255)   encode raw,
+    impression_id  varchar(255)   encode raw,
+    zone_id        varchar(255)   encode raw,
+    banner_id      varchar(255)   encode raw,
+    campaign_id    varchar(255)   encode runlength,
+    advertiser_id  varchar(255)   encode runlength,
+    target_url     varchar(4096)  encode runlength,
+    cost_model     char(3)        encode runlength,
+    cost           decimal(15,10) encode runlength
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
