@@ -65,7 +65,8 @@ object ValidatableJsonNode {
    *
    * @return either Success boxing the
    *         JSON, or a Failure boxing
-   *         TODO
+   *         a NonEmptyList of
+   *         ProcessingMessages
    */
   def validateAgainstSchema(instance: JsonNode, schema: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = {
     val report = JsonSchemaValidator.validateUnchecked(schema, instance)

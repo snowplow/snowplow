@@ -80,8 +80,20 @@ object Shredder {
       JsonUtils.unsafeExtractJson(err)
     }.toValidationNel
 
-  // Convert the Nel of ProcessingMessages to Jsons
-  def validateAgainstSchema(instance: JsonNode, schema: JsonNode): ValidatedJsonNode =
+  /**
+   * Wrapper around ValidatableJsonNode's
+   * validateAgainstSchema, to convert the
+   * Failure Nel of ProcessingMessages to
+   * a Failure Nel of Jsons.
+   *
+   * @param instance The JSON to validate
+   * @param schema The JSON Schema to
+   *        validate the JSON against
+   * @return either Success boxing the
+   *         JSON, or a Failure boxing
+   *         a NonEmptyList of JsonNodes
+   */
+  private def validateAgainstSchema(instance: JsonNode, schema: JsonNode): ValidatedJsonNode =
     ValidatableJsonNode.validateAgainstSchema(instance, schema).leftMap {
       _.map(_.asJson)
     }
