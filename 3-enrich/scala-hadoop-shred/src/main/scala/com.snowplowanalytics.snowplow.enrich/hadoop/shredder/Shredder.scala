@@ -36,8 +36,11 @@ object Shredder {
 
   def shred(event: CanonicalOutput): ValidatedShreddedJsons = {
 
-    val ueProperties = event.ue_properties
-    val contexts = event.contexts
+    val contexts = Option(event.contexts).map(str =>
+      JsonUtils.extractJson("context", str))
+    val ueProperties = Option(event.ue_properties).map(str =>
+      JsonUtils.extractJson("ue_properties", str))
+
 
     JsonUtils.extractJson("todo", "[]").leftMap(e => NonEmptyList(JsonUtils.extractJson("err", e).toOption.get)).map(j => List(j))
   }

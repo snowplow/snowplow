@@ -37,7 +37,7 @@ object EnrichedEventLoader {
 
   private val FieldCount = 104
 
-  private object FieldIndexes { // 0 indexed
+  private object FieldIndexes { // 0-indexed
     val collectorTstamp = 2
     val eventId = 6
     val contexts = 47
@@ -59,7 +59,7 @@ object EnrichedEventLoader {
   // kind of Scalding pack()
   def toEnrichedEvent(line: String): ValidatedCanonicalOutput = {
 
-    val fields = line.split("\t")
+    val fields = line.split("\t").map(f => if (f == "") null else f)
     val len = fields.length
     if (len != FieldCount)
       return s"Line does not match Snowplow enriched event (expected $FieldCount fields; found $len)".failNel[CanonicalOutput]
@@ -89,11 +89,11 @@ object EnrichedEventLoader {
    * @param str The String hopefully containing a UUID
    * @return a Scalaz ValidatedString
    */
-  def validateUuid(field: String, str: String): ValidatedString = str match {
+  private def validateUuid(field: String, str: String): ValidatedString = str match {
     case UuidRegex(uuid) => uuid.success
     case _ => s"Field [$field]: [$str] is not a valid UUID".fail
   }
 
   // TODO: implement this
-  def validateTimestamp(field: String, str: String): ValidatedString = str.success
+  private def validateTimestamp(field: String, str: String): ValidatedString = str.success
 }
