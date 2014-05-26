@@ -88,7 +88,7 @@ class ValidatableJsonNodeSpec extends Specification with DataTables with Validat
 
   def e1 = {
     val json = asJsonNode("""{"country": "JP", "beers": ["Asahi", "Orion", "..."]}""")
-    json.validate(SimpleSchema) must beSuccessful(json)
+    json.validateAgainst(SimpleSchema) must beSuccessful(json)
   }
 
   def e2 =
@@ -99,7 +99,7 @@ class ValidatableJsonNodeSpec extends Specification with DataTables with Validat
     )) {
       str: String => {
         val json = asJsonNode(str)
-        json.validate(SimpleSchema) must beSuccessful(json)
+        json.validateAgainst(SimpleSchema) must beSuccessful(json)
       }
     }
 
@@ -111,7 +111,7 @@ class ValidatableJsonNodeSpec extends Specification with DataTables with Validat
 
       (_, input, message, schema, instance, keyword, foundExpected, requiredMissing) => {
         val json = asJsonNode(input)
-        json.validate(SimpleSchema) must beLike {
+        json.validateAgainst(SimpleSchema) must beLike {
           case Failure(NonEmptyList(head, tail @ _*)) if tail.isEmpty =>
             head.toString must_== asProcessingMessage(message, schema, instance, keyword, foundExpected, requiredMissing).toString
         }

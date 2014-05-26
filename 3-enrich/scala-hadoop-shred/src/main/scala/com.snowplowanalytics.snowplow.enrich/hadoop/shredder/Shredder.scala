@@ -29,7 +29,10 @@ import common._
 import outputs.CanonicalOutput
 
 // This project
-import hadoop.utils.JsonUtils
+import hadoop.utils.{
+  JsonUtils,
+  ValidatableJsonNode
+}
 
 /**
  * The shredder takes the two fields containing JSONs
@@ -56,7 +59,10 @@ object Shredder {
   }
 
   private def extractAndValidateJson(field: String, instance: Option[String], schema: JsonNode): MaybeValidatedJson =
-    instance.map(i => extractJson(field, i))
+    instance.map { i =>
+      val json = extractJson(field, i)
+      json.flatMap(j => validateAgainstSchema(j, schema))
+    }
 
   /**
    * Wrapper around JsonUtils' extractJson which
@@ -74,4 +80,9 @@ object Shredder {
       JsonUtils.unsafeExtractJson(err)
     }.toValidationNel
 
+  // Convert the Nel of ProcessingMessages to Jsons
+  def validateAgainstSchema(instance: JsonNode, schema: JsonNode): ValidatedJsonNode =
+    ValidatableJsonNode.validateAgainstSchema(instance, schema).leftMap {
+      _.map(_.asJson)
+    }
 }

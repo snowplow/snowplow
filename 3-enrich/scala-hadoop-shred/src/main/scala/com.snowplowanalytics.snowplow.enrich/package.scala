@@ -36,7 +36,14 @@ package object hadoop {
    * containing either error `ProcessingMessage`s
    * or a successfully validated `JsonNode`.
    */
-  type ValidatedJsonNode = ValidationNel[ProcessingMessage, JsonNode]
+  type RawValidatedJsonNode = ValidationNel[ProcessingMessage, JsonNode]
+
+  /**
+   * Type alias for a `ValidationNel`
+   * containing either error `JsonNode`s
+   * or a successfully validated `JsonNode`.
+   */
+  type ValidatedJsonNode = ValidationNel[JsonNode, JsonNode]
 
   /**
    * Type alias for a `ValidationNel` containing either

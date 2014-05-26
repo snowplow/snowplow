@@ -48,10 +48,10 @@ object ValidatableJsonNode {
    * Implicit to pimp a JsonNode to our
    * Scalaz Validation-friendly version.
    *
-   * @param jsonNode A JsonNode
+   * @param instance A JsonNode
    * @return the pimped ValidatableJsonNode
    */
-  implicit def pimpJsonNode(jsonNode: JsonNode) = new ValidatableJsonNode(jsonNode)
+  implicit def pimpJsonNode(instance: JsonNode) = new ValidatableJsonNode(instance)
 
   /**
    * Validates a JSON against a given
@@ -59,7 +59,7 @@ object ValidatableJsonNode {
    * passes through the original JSON.
    * On Failure, TODO
    *
-   * @param json The JSON to validate
+   * @param instance The JSON to validate
    * @param schema The JSON Schema to
    *        validate the JSON against
    *
@@ -67,12 +67,12 @@ object ValidatableJsonNode {
    *         JSON, or a Failure boxing
    *         TODO
    */
-  def validateAgainstSchema(json: JsonNode, schema: JsonNode): ValidatedJsonNode = {
-    val report = JsonSchemaValidator.validateUnchecked(schema, json)
+  def validateAgainstSchema(instance: JsonNode, schema: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = {
+    val report = JsonSchemaValidator.validateUnchecked(schema, instance)
     val msgs = report.iterator.toList
     msgs match {
       case x :: xs if !report.isSuccess => NonEmptyList[ProcessingMessage](x, xs: _*).fail
-      case Nil     if  report.isSuccess => json.success
+      case Nil     if  report.isSuccess => instance.success
       case _                            => throw new FatalEtlError(s"Validation report success [$report.isSuccess] conflicts with message count [$msgs.length]")
     }
   }
@@ -104,8 +104,9 @@ object ValidatableJsonNode {
   }
 }
 
-class ValidatableJsonNode(jsonNode: JsonNode) {
+class ValidatableJsonNode(instance: JsonNode) {
 
-  def validate(schema: JsonNode): ValidatedJsonNode = 
-    ValidatableJsonNode.validateAgainstSchema(jsonNode, schema)
+  def validateAgainst(schema: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = 
+    ValidatableJsonNode.validateAgainstSchema(instance, schema)
+
 }
