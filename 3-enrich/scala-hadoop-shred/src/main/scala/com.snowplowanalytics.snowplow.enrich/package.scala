@@ -39,9 +39,21 @@ package object hadoop {
   type ValidatedJsonNode = ValidationNel[ProcessingMessage, JsonNode]
 
   /**
-   * Type alias for a `ValidationNel` containing
-   * either error `JsonNode`s or a successfully
+   * Type alias for a `ValidationNel` containing either
+   * error `JsonNode`s or a single successfully
    * validated `JsonNode`.
    */
-  type ValidatedShreddedJsons = ValidationNel[JsonNode, List[JsonNode]]
+  type ValidatedJson = ValidationNel[JsonNode, JsonNode]
+
+  /**
+   * Wraps a `ValidatedJson` in an `Option`.
+   */
+  type MaybeValidatedJson = Option[ValidatedJson]
+
+  /**
+   * Type alias for a `ValidationNel` containing
+   * either error `JsonNode`s or a List of successfully
+   * validated `JsonNode`s.
+   */
+  type ValidatedJsonList = ValidationNel[JsonNode, List[JsonNode]]
 }

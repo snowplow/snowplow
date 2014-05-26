@@ -14,6 +14,12 @@ package com.snowplowanalytics.snowplow.enrich
 package hadoop
 package shredder
 
+// Jackson
+import com.github.fge.jackson.JsonLoader
+import com.fasterxml.jackson.databind.{
+  JsonNode
+}
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -34,16 +40,38 @@ import hadoop.utils.JsonUtils
  */
 object Shredder {
 
-  def shred(event: CanonicalOutput): ValidatedShreddedJsons = {
-
-    val contexts = Option(event.contexts).map(str =>
-      JsonUtils.extractJson("context", str))
-    val ueProperties = Option(event.ue_properties).map(str =>
-      JsonUtils.extractJson("ue_properties", str))
-
-
-    JsonUtils.extractJson("todo", "[]").leftMap(e => NonEmptyList(JsonUtils.extractJson("err", e).toOption.get)).map(j => List(j))
+  private object Schemas {
+    private val path = "/jsonschema/com.snowplowanalytics.snowplow"
+    val Contexts = JsonLoader.fromResource(s"$path/contexts.json")
+    val UnstructEvent = JsonLoader.fromResource(s"$path/unstruct_event.json")
   }
 
+  def shred(event: CanonicalOutput): ValidatedJsonList = {
+
+    val contexts = extractAndValidateJson("context", Option(event.contexts), Schemas.Contexts)
+    val unstructEvent = extractAndValidateJson("ue_properties", Option(event.ue_properties), Schemas.UnstructEvent)
+
+    // Placeholder for compilation
+    JsonUtils.extractJson("todo", "[]").leftMap(e => JsonUtils.unsafeExtractJson(e)).map(j => List(j)).toValidationNel
+  }
+
+  private def extractAndValidateJson(field: String, instance: Option[String], schema: JsonNode): MaybeValidatedJson =
+    instance.map(i => extractJson(field, i))
+
+  /**
+   * Wrapper around JsonUtils' extractJson which
+   * converts the failure to a JsonNode Nel, for
+   * compatibility with subsequent JSON Schema
+   * checks.
+   *
+   * @param field The name of the field
+   *        containing JSON
+   * @param instance The JSON instance itself
+   * @return the pimped ScalazArgs
+   */
+  private def extractJson(field: String, instance: String): ValidatedJson =
+    JsonUtils.extractJson(field, instance).leftMap { err =>
+      JsonUtils.unsafeExtractJson(err)
+    }.toValidationNel
 
 }
