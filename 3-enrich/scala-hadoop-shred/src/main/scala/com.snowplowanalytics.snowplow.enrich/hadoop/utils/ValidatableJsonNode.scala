@@ -62,9 +62,8 @@ object ValidatableJsonNode {
    * @param instance The JSON to validate
    * @param schema The JSON Schema to
    *        validate the JSON against
-   *
    * @return either Success boxing the
-   *         JSON, or a Failure boxing
+   *         JsonNode, or a Failure boxing
    *         a NonEmptyList of
    *         ProcessingMessages
    */
@@ -84,7 +83,6 @@ object ValidatableJsonNode {
    *
    * @param version The version of the JSON
    *        Schema spec to validate against
-   *
    * @return a JsonValidator
    */
   private def getJsonSchemaValidator(version: SchemaVersion): JsonValidator = {
@@ -105,9 +103,12 @@ object ValidatableJsonNode {
   }
 }
 
+/**
+ * A pimped JsonNode which supports validation
+ * using JSON Schema.
+ */
 class ValidatableJsonNode(instance: JsonNode) {
 
   def validateAgainst(schema: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = 
     ValidatableJsonNode.validateAgainstSchema(instance, schema)
-
 }

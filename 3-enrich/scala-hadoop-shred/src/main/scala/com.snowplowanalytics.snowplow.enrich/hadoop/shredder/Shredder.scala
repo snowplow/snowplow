@@ -51,13 +51,38 @@ object Shredder {
 
   def shred(event: CanonicalOutput): ValidatedJsonList = {
 
-    val contexts = extractAndValidateJson("context", Option(event.contexts), Schemas.Contexts)
-    val unstructEvent = extractAndValidateJson("ue_properties", Option(event.ue_properties), Schemas.UnstructEvent)
+    val contexts = extractAndValidateJson(
+      "context",
+      Option(event.contexts),
+      Schemas.Contexts)
+
+    val unstructEvent = extractAndValidateJson(
+      "ue_properties",
+      Option(event.ue_properties),
+      Schemas.UnstructEvent)
 
     // Placeholder for compilation
     JsonUtils.extractJson("todo", "[]").leftMap(e => JsonUtils.unsafeExtractJson(e)).map(j => List(j)).toValidationNel
   }
 
+  /**
+   * Extract the JSON from a String, and
+   * validate it against the supplied
+   * JSON Schema.
+   *
+   * @param field The name of the field
+   *        containing the JSON instance
+   * @param instance An Option-boxed JSON
+   *        instance
+   * @param schema The JSON Schema to
+   *        validate this JSON instance
+   *        against
+   * @return an Option-boxed Validation
+   *         containing either a Nel of
+   *         JsonNodes error message on
+   *         Failure, or a singular
+   *         JsonNode on success
+   */
   private def extractAndValidateJson(field: String, instance: Option[String], schema: JsonNode): MaybeValidatedJson =
     instance.map { i =>
       val json = extractJson(field, i)
