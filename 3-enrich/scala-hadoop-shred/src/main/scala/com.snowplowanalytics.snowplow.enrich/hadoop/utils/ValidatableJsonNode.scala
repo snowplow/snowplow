@@ -55,9 +55,10 @@ object ValidatableJsonNode {
 
   /**
    * Validates a JSON against a given
-   * JSON Schema. On success, simply
+   * JSON Schema. On Success, simply
    * passes through the original JSON.
-   * On Failure, TODO
+   * On Failure, return a NonEmptyList
+   * of failure messages.
    *
    * @param instance The JSON to validate
    * @param schema The JSON Schema to
