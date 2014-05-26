@@ -11,37 +11,36 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-
-// Jackson
-import com.fasterxml.jackson.databind.JsonNode
-
-// JSON Schema Validator
-import com.github.fge.jsonschema.core.report.ProcessingMessage
+package hadoop
+package shredder
 
 // Scalaz
 import scalaz._
 import Scalaz._
 
+// Snowplow Common Enrich
+import common._
+import outputs.CanonicalOutput
+
+// This project
+import hadoop.utils.JsonUtils
+
 /**
- * Scala package object to hold types,
- * helper methods etc.
- *
- * See:
- * http://www.artima.com/scalazine/articles/package_objects.html
+ * The shredder takes the two fields containing JSONs
+ * (contexts and unstructured event properties) and
+ * "shreds" their contents into a List of JsonNodes
+ * ready for loading into dedicated tables in the
+ * database.
  */
-package object hadoop {
+object Shredder {
 
-  /**
-   * Type alias for a `ValidationNel`
-   * containing either error `ProcessingMessage`s
-   * or a successfully validated `JsonNode`.
-   */
-  type ValidatedJsonNode = ValidationNel[ProcessingMessage, JsonNode]
+  def shred(event: CanonicalOutput): ValidatedShreddedJsons = {
 
-  /**
-   * Type alias for a `ValidationNel` containing
-   * either error `JsonNode`s or a successfully
-   * validated `JsonNode`.
-   */
-  type ValidatedShreddedJsons = ValidationNel[JsonNode, List[JsonNode]]
+    val ueProperties = event.ue_properties
+    val contexts = event.contexts
+
+    JsonUtils.extractJson("todo", "[]").leftMap(e => NonEmptyList(JsonUtils.extractJson("err", e).toOption.get)).map(j => List(j))
+  }
+
+
 }

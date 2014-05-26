@@ -11,37 +11,27 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-
-// Jackson
-import com.fasterxml.jackson.databind.JsonNode
-
-// JSON Schema Validator
-import com.github.fge.jsonschema.core.report.ProcessingMessage
+package hadoop
+package shredder
 
 // Scalaz
 import scalaz._
 import Scalaz._
 
+// Snowplow Common Enrich
+import common._
+import outputs.CanonicalOutput
+
+// This project
+import hadoop.utils.JsonUtils
+
 /**
- * Scala package object to hold types,
- * helper methods etc.
- *
- * See:
- * http://www.artima.com/scalazine/articles/package_objects.html
+ * Expresses the hierarchy for this type. 
  */
-package object hadoop {
-
-  /**
-   * Type alias for a `ValidationNel`
-   * containing either error `ProcessingMessage`s
-   * or a successfully validated `JsonNode`.
-   */
-  type ValidatedJsonNode = ValidationNel[ProcessingMessage, JsonNode]
-
-  /**
-   * Type alias for a `ValidationNel` containing
-   * either error `JsonNode`s or a successfully
-   * validated `JsonNode`.
-   */
-  type ValidatedShreddedJsons = ValidationNel[JsonNode, List[JsonNode]]
-}
+case class Hierarchy(
+  val rootId: String,
+  val rootTstamp: String,
+  val refRoot: String,
+  val refTree: List[String],
+  val refParent: String
+  )
