@@ -83,7 +83,7 @@ object Shredder {
    *         Failure, or a singular
    *         JsonNode on success
    */
-  private def extractAndValidateJson(field: String, instance: Option[String], schema: JsonNode): MaybeValidatedJson =
+  private[shredder] def extractAndValidateJson(field: String, instance: Option[String], schema: JsonNode): MaybeValidatedJson =
     instance.map { i =>
       val json = extractJson(field, i)
       json.flatMap(j => validateAgainstSchema(j, schema))
@@ -100,7 +100,7 @@ object Shredder {
    * @param instance The JSON instance itself
    * @return the pimped ScalazArgs
    */
-  private def extractJson(field: String, instance: String): ValidatedJson =
+  private[shredder] def extractJson(field: String, instance: String): ValidatedJson =
     JsonUtils.extractJson(field, instance).leftMap { err =>
       JsonUtils.unsafeExtractJson(err)
     }.toValidationNel
@@ -118,7 +118,7 @@ object Shredder {
    *         JSON, or a Failure boxing
    *         a NonEmptyList of JsonNodes
    */
-  private def validateAgainstSchema(instance: JsonNode, schema: JsonNode): ValidatedJsonNode =
+  private[shredder] def validateAgainstSchema(instance: JsonNode, schema: JsonNode): ValidatedJsonNode =
     ValidatableJsonNode.validateAgainstSchema(instance, schema).leftMap {
       _.map(_.asJson)
     }
