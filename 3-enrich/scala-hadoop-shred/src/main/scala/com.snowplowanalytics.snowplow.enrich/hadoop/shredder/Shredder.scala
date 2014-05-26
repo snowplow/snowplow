@@ -49,17 +49,36 @@ object Shredder {
     val UnstructEvent = JsonLoader.fromResource(s"$path/unstruct_event.json")
   }
 
+  /**
+   * Shred the CanonicalOutput's two fields which
+   * contain JSONs: contexts and unstructured event
+   * properties. By shredding we mean:
+   *
+   * 1. Verify the two fields contain valid JSONs
+   * 2. Validate they conform to JSON Schema
+   * 3. For the contexts, break the singular JsonNode
+   *    into a List of individual context JsonNodes
+   * 4. Collect the unstructured event and contexts
+   *    into a singular List
+   *
+   * @param event The Snowplow enriched event to
+   *        shred JSONs from
+   * @return a Validation containing on Success a
+   *         List (possible empty) of JsonNodes
+   *         and on Failure a NonEmptyList of
+   *         JsonNodes containing error messages
+   */
   def shred(event: CanonicalOutput): ValidatedJsonList = {
-
-    val contexts = extractAndValidateJson(
-      "context",
-      Option(event.contexts),
-      Schemas.Contexts)
 
     val unstructEvent = extractAndValidateJson(
       "ue_properties",
       Option(event.ue_properties),
       Schemas.UnstructEvent)
+
+    val contexts = extractAndValidateJson(
+      "context",
+      Option(event.contexts),
+      Schemas.Contexts)
 
     // Placeholder for compilation
     JsonUtils.extractJson("todo", "[]").leftMap(e => JsonUtils.unsafeExtractJson(e)).map(j => List(j)).toValidationNel
