@@ -52,7 +52,7 @@ object ValidatableJsonNode {
   private lazy val JsonSchemaValidator = getJsonSchemaValidator(SchemaVersion.DRAFTV4)
 
   private lazy val SelfDescSchema = SchemaRepo.unsafeLookupSchema(
-    SchemaKey("com.snowplowanalytics.self-desc", "iglu-instance", "jsonschema", "1-0-0"))
+    SchemaKey("com.snowplowanalytics.self-desc", "instance-iglu-only", "jsonschema", "1-0-0"))
 
   /**
    * Implicit to pimp a JsonNode to our
@@ -98,7 +98,7 @@ object ValidatableJsonNode {
    *
    * @return instance The self-describing JSON
    *         to validate
-   * @reutrn either Success boxing the
+   * @return either Success boxing the
    *         JsonNode, or a Failure boxing
    *         a NonEmptyList of
    *         ProcessingMessages
