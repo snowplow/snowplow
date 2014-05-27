@@ -1,0 +1,38 @@
+{
+	"name": "page_context",
+	"valid": [
+		{
+			"category": "blog",
+			"subCategory": "release",
+			"author": "alex",
+			"topics": ["Python", "Analytics"]
+		},
+		{
+			"category": "analytics"
+		},
+		{
+			"topics": []
+		}		
+	],
+	"invalid":  [
+		{
+			"category": "blog",
+			"subCategory": "release",
+			"author": "alex",
+			"topics": [2.0]
+		},
+		{
+			"category": "blog",
+			"subCategory": "release",
+			"author": "alex",
+			"topics": "Analytics"
+		},
+		{
+			"category": "analytics",
+			"date": "27/08/2015"
+		},
+		{
+
+		}
+	]
+}

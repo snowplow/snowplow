@@ -12,6 +12,7 @@ define([
 	'intern/dojo/node!../com.snowplowanalytics.snowplow/ad_conversion',
 	'intern/dojo/node!../com.snowplowanalytics.snowplow/link_click',
 	'intern/dojo/node!../com.snowplowanalytics.snowplow/screen_view',
+	'intern/dojo/node!../com.snowplowanalytics.website/page_context',
 	'intern/dojo/node!./resources/schema',
 	'intern/dojo/node!./resources/instance',
 	'intern/dojo/node!./resources/payload_data',
@@ -21,16 +22,19 @@ define([
 	'intern/dojo/node!./resources/ad_click',
 	'intern/dojo/node!./resources/ad_conversion',
 	'intern/dojo/node!./resources/link_click',
-	'intern/dojo/node!./resources/screen_view'
+	'intern/dojo/node!./resources/screen_view',
+	'intern/dojo/node!./resources/page_context'
 ], function(registerSuite, assert, ZSchema,
 			schemaSchema,
 			instanceSchema, payloadDataSchema,
 			contextsSchema, unstructEventSchema,
 			adImpressionSchema, adClickSchema, adConversionSchema, linkClickSchema, screenViewSchema,
+			pageContextSchema,
 			schemaJsons,
 			instanceJsons, payloadDataJsons,
 			contextsJsons, unstructEventJsons,
-			adImpressionJsons,  adClickJsons,  adConversionJsons,  linkClickJsons,  screenViewJsons) {
+			adImpressionJsons,  adClickJsons,  adConversionJsons,  linkClickJsons,  screenViewJsons,
+			pageContextJsons) {
 
 	var validator = new ZSchema({sync: true, strictUris: true}),
 		testArray = [
@@ -43,7 +47,8 @@ define([
 			[adClickSchema, adClickJsons],
 			[adConversionSchema, adConversionJsons],
 			[linkClickSchema, linkClickJsons],
-			[screenViewSchema, screenViewJsons]
+			[screenViewSchema, screenViewJsons],
+			[pageContextSchema, pageContextJsons]
 		],
 		j;
 

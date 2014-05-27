@@ -12,10 +12,11 @@ define([
 	'intern/dojo/node!../com.snowplowanalytics.snowplow/ad_click',
 	'intern/dojo/node!../com.snowplowanalytics.snowplow/ad_conversion',
 	'intern/dojo/node!../com.snowplowanalytics.snowplow/link_click',
-	'intern/dojo/node!../com.snowplowanalytics.snowplow/screen_view'
-], function(registerSuite, expect, ZSchema, schema, instance, trackerProtocol, customContexts, unstructEvent, adImpression, adClick, adConversion, linkClick, screenView) {
+	'intern/dojo/node!../com.snowplowanalytics.snowplow/screen_view',
+	'intern/dojo/node!../com.snowplowanalytics.website/page_context'
+], function(registerSuite, expect, ZSchema, schema, instance, trackerProtocol, customContexts, unstructEvent, adImpression, adClick, adConversion, linkClick, screenView, pageContext) {
 
-	var schemas = [trackerProtocol, customContexts, unstructEvent, schema, instance, trackerProtocol, customContexts, unstructEvent, adImpression, adClick, adConversion, linkClick, screenView],
+	var schemas = [trackerProtocol, customContexts, unstructEvent, schema, instance, trackerProtocol, customContexts, unstructEvent, adImpression, adClick, adConversion, linkClick, screenView, pageContext],
 		validator = new ZSchema({sync:true}),
 		i;
 
