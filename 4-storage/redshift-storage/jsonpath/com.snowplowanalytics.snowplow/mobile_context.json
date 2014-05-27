@@ -16,6 +16,6 @@
     "$.data.osVersion",
     "$.data.deviceVendor",
     "$.data.deviceModel",
-    "$.data.carrier",
+    "$.data.carrier"
     ]
 }
