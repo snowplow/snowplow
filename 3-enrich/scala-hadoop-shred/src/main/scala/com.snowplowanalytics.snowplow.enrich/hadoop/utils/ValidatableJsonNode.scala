@@ -91,6 +91,20 @@ object ValidatableJsonNode {
   }
 
   /**
+   * Validates that this JSON is a self-
+   * describing JSON.
+   *
+   * @param instance The JSON to check
+   * @return either Success boxing the
+   *         JsonNode, or a Failure boxing
+   *         a NonEmptyList of
+   *         ProcessingMessages
+   */
+  private def validateAsSelfDescribing(instance: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = {
+    validateAgainstSchema(instance, SelfDescSchema)
+  }
+
+  /**
    * Validates a self-describing JSON against
    * its specified JSON Schema.
    *
@@ -116,20 +130,6 @@ object ValidatableJsonNode {
       js <- SchemaRepo.lookupSchema(s).toProcessingMessageNel
       v  <- validateAgainstSchema(d, js)
     } yield if (dataOnly) d else v
-
-  /**
-   * Validates that this JSON is a self-
-   * describing JSON.
-   *
-   * @param instance The JSON to check
-   * @return either Success boxing the
-   *         JsonNode, or a Failure boxing
-   *         a NonEmptyList of
-   *         ProcessingMessages
-   */
-  private def validateAsSelfDescribing(instance: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = {
-    validateAgainstSchema(instance, SelfDescSchema)
-  }
 
   /**
    * Factory for retrieving a JSON Schema
