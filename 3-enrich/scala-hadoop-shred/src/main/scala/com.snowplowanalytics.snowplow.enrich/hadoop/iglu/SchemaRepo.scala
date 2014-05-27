@@ -77,7 +77,8 @@ object SchemaRepo {
 
   /**
    * Retrieves an IgluSchema from the Iglu Repo as
-   * a JsonNode. Unsafe.
+   * a JsonNode. Unsafe - only use when you know the
+   * schema is available locally.
    *
    * @param schemaKey The SchemaKey uniquely identifies
    *        the schema in Iglu
