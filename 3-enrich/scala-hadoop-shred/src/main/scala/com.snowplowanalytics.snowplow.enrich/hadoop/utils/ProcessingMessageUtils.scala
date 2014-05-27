@@ -23,6 +23,9 @@ import com.github.fge.jsonschema.core.report.{
 import scalaz._
 import Scalaz._
 
+/**
+ * Makes it easier to work with ProcessingMessages.
+ */
 object ProcessingMessageUtils {
 
   /**
@@ -60,6 +63,11 @@ object ProcessingMessageUtils {
 
 }
 
+/**
+ * A wrapper for the Scalaz Validation, to make it easy to convert
+ * Strings to ProcessingMessages on the Failure side of
+ * Validations.
+ */
 class ProcMsgValidation[+A](validation: Validation[String, A]) {
 
   def toProcessingMessage: Validation[ProcessingMessage, A] =
