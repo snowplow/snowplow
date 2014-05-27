@@ -19,6 +19,10 @@
 		"author": {
 			"type": "string"
 		},
+		"whenPublished": {
+			"type": "string",
+			"format": "date"
+		},
 		"topics": {
 			"type": "array",
 			"items": {

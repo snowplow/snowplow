@@ -1,5 +1,6 @@
 {
 	"name": "page_context",
+
 	"valid": [
 		{
 			"category": "blog",
@@ -11,9 +12,14 @@
 			"category": "analytics"
 		},
 		{
+			"category": "analytics",
+			"whenPublished": "2015-08-27"
+		},		
+		{
 			"topics": []
 		}		
 	],
+	
 	"invalid":  [
 		{
 			"category": "blog",
@@ -29,7 +35,7 @@
 		},
 		{
 			"category": "analytics",
-			"date": "27/08/2015"
+			"whenPublished": "27-08-2015"
 		},
 		{
 
