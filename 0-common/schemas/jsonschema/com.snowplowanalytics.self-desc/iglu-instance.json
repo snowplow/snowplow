@@ -1,0 +1,25 @@
+{
+	"$schema": "http://json-schema.org/schema#",
+	"description": "Top-level schema for the validation process (Iglu-only)",
+	"self": {
+		"vendor": "com.snowplowanalytics.self-desc",
+		"name": "instance",
+		"format": "jsonschema",
+		"version": "1-0-0"
+	},
+	
+	"type": "object",
+
+	"properties": {
+
+		"schema": {
+			"type": "string",
+			"pattern": "^iglu://[a-zA-Z0-9-_.]+/[a-zA-Z0-9-_]+/[a-zA-Z0-9-_]+/[0-9]+-[0-9]+-[0-9]+$"
+		},
+
+		"data": {}
+	},
+
+	"required": ["schema", "data"],
+	"additionalProperties": false
+}
