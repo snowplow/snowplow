@@ -53,9 +53,27 @@ object SchemaRepo {
     try {
       unsafeLookupSchema(schemaKey).success
     } catch {
-      case e: Throwable => s"Cannot load schema ${schemaKey} from Iglu: ${e.getMessage}".fail
+      case e: Throwable =>
+        s"Cannot load schema ${schemaKey} from Iglu: ${e.getMessage}".fail
     }
   }
+
+  /**
+   * Retrieves an IgluSchema from the Iglu Repo as
+   * a JsonNode. Convenience function which converts
+   * an Iglu-format schema URI to a SchemaKey to
+   * perform the lookup.
+   *
+   * @param schemaUri The Iglu-format schema URI
+   * @return a Validation boxing either the Schema's
+   *         JsonNode on Success, or an error String
+   *         on Failure
+   */
+  def lookupSchema(schemaUri: String): Validation[String, JsonNode] =
+    for {
+      k <- SchemaKey(schemaUri)
+      s <- lookupSchema(k)
+    } yield s
 
   /**
    * Retrieves an IgluSchema from the Iglu Repo as
@@ -66,17 +84,7 @@ object SchemaRepo {
    * @return the JsonNode representing this schema
    */
   def unsafeLookupSchema(schemaKey: SchemaKey): JsonNode = {
-    val schemaPath =  s"${localPath}/${schemaKey.toPath}"
+    val schemaPath = s"${localPath}/${schemaKey.toPath}"
     JsonLoader.fromResource(schemaPath)
   }
-
-  /**
-   * Retrieves an IgluSchema from the Iglu Repo as
-   * a JsonNode. Convenience function which converts
-   * an Iglu-format schema URI to a SchemaKey to
-   * perform the lookup.
-   */
-  // def lookupSchema(schemaUri: SchemaUri): JsonNode
-  // TODO: finish implementing when above method has
-  // error handling
 }

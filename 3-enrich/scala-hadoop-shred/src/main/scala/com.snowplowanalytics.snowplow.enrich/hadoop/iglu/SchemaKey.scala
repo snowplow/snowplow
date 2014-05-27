@@ -63,8 +63,8 @@ case class SchemaKey(
    * Converts a SchemaKey into a path which is compatible
    * with most local and remote Iglu schema repositories.
    *
-   * @return a path usable for local and remote Iglu schema
-   *         addressing
+   * @return a path usable for addressing local and remote
+   *         Iglu schema lookups
    */
   def toPath: String =
     s"$vendor/$name/$format/$version"
