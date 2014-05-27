@@ -163,6 +163,9 @@ object ValidatableJsonNode {
  */
 class ValidatableJsonNode(instance: JsonNode) {
 
-  def validateAgainst(schema: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = 
+  def validateAgainstSchema(schema: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = 
     ValidatableJsonNode.validateAgainstSchema(instance, schema)
+
+  def validate(dataOnly: Boolean): ValidationNel[ProcessingMessage, JsonNode] =
+    ValidatableJsonNode.validate(instance, dataOnly)
 }

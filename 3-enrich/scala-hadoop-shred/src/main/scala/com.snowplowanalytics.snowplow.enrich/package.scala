@@ -36,21 +36,7 @@ package object hadoop {
    * containing either error `ProcessingMessage`s
    * or a successfully validated `JsonNode`.
    */
-  type RawValidatedJsonNode = ValidationNel[ProcessingMessage, JsonNode]
-
-  /**
-   * Type alias for a `ValidationNel`
-   * containing either error `JsonNode`s
-   * or a successfully validated `JsonNode`.
-   */
-  type ValidatedJsonNode = ValidationNel[JsonNode, JsonNode]
-
-  /**
-   * Type alias for a `ValidationNel` containing either
-   * error `JsonNode`s or a single successfully
-   * validated `JsonNode`.
-   */
-  type ValidatedJson = ValidationNel[JsonNode, JsonNode]
+  type ValidatedJson = ValidationNel[ProcessingMessage, JsonNode]
 
   /**
    * Wraps a `ValidatedJson` in an `Option`.
@@ -64,6 +50,11 @@ package object hadoop {
    */
   type ValidatedJsonList = ValidationNel[JsonNode, List[JsonNode]]
 
-  // TODO: need to fix this
+  /**
+   * Type alias for a SchemaVer-based version.
+   *
+   * We may update this in the future to be
+   * a full-fledged case class or similar.
+   */
   type SchemaVer = String
 }

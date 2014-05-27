@@ -28,11 +28,14 @@ import common._
 import outputs.CanonicalOutput
 
 // This project
+import iglu.SchemaRepo
 import hadoop.utils.{
   JsonUtils,
-  ValidatableJsonNode
+  ValidatableJsonNode,
+  ProcessingMessageUtils
 }
-import iglu.SchemaRepo
+import ValidatableJsonNode._
+import ProcessingMessageUtils._
 
 /**
  * The shredder takes the two fields containing JSONs
@@ -64,16 +67,8 @@ object Shredder {
    */
   def shred(event: CanonicalOutput): ValidatedJsonList = {
 
-    /*
-    val unstructEvent = extractAndValidateJson(
-      "ue_properties",
-      Option(event.ue_properties),
-      IgluRepo.Schemas.UnstructEvent)
-
-    val contexts = extractAndValidateJson(
-      "context",
-      Option(event.contexts),
-      IgluRepo.Schemas.Contexts) */
+    val ue = extractAndValidateJson("ue_properties", Option(event.ue_properties))
+    val c  = extractAndValidateJson("context", Option(event.contexts))
 
     // Placeholder for compilation
     JsonUtils.extractJson("todo", "[]").leftMap(e => JsonUtils.unsafeExtractJson(e)).map(j => List(j)).toValidationNel
@@ -88,19 +83,16 @@ object Shredder {
    *        containing the JSON instance
    * @param instance An Option-boxed JSON
    *        instance
-   * @param schema The JSON Schema to
-   *        validate this JSON instance
-   *        against
    * @return an Option-boxed Validation
    *         containing either a Nel of
    *         JsonNodes error message on
    *         Failure, or a singular
    *         JsonNode on success
    */
-  private[shredder] def extractAndValidateJson(field: String, instance: Option[String], schema: JsonNode): MaybeValidatedJson =
+  private[shredder] def extractAndValidateJson(field: String, instance: Option[String]): MaybeValidatedJson =
     instance.map { i =>
       val json = extractJson(field, i)
-      json.flatMap(j => validateAgainstSchema(j, schema))
+      json.flatMap(_.validate(true))
     }
 
   /**
@@ -115,25 +107,5 @@ object Shredder {
    * @return the pimped ScalazArgs
    */
   private[shredder] def extractJson(field: String, instance: String): ValidatedJson =
-    JsonUtils.extractJson(field, instance).leftMap { err =>
-      JsonUtils.unsafeExtractJson(err)
-    }.toValidationNel
-
-  /**
-   * Wrapper around ValidatableJsonNode's
-   * validateAgainstSchema, to convert the
-   * Failure Nel of ProcessingMessages to
-   * a Failure Nel of Jsons.
-   *
-   * @param instance The JSON to validate
-   * @param schema The JSON Schema to
-   *        validate the JSON against
-   * @return either Success boxing the
-   *         JSON, or a Failure boxing
-   *         a NonEmptyList of JsonNodes
-   */
-  private[shredder] def validateAgainstSchema(instance: JsonNode, schema: JsonNode): ValidatedJsonNode =
-    ValidatableJsonNode.validateAgainstSchema(instance, schema).leftMap {
-      _.map(_.asJson)
-    }
+    JsonUtils.extractJson(field, instance).toProcessingMessageNel
 }
