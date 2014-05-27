@@ -11,7 +11,7 @@
 :targets:
   - :name: "My PostgreSQL database"
     :type: postgres
-    :host: ADD HERE # Hostname of database server
+    :host: ADD HERE # Hostname of database server. Use 'localhost' to benefit from COPY query.
     :database: ADD HERE # Name of database 
     :port: 5432 # Default Postgres port
     :table: atomic.events
