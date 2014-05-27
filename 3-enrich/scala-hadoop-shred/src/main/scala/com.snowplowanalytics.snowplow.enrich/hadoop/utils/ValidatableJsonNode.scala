@@ -52,7 +52,7 @@ object ValidatableJsonNode {
 
   private lazy val JsonSchemaValidator = getJsonSchemaValidator(SchemaVersion.DRAFTV4)
 
-  // Unsafe because we know this exists
+  // Unsafe is fine here because we know this schema exists in our resources folder
   private lazy val SelfDescSchema = SchemaRepo.unsafeLookupSchema(
     SchemaKey("com.snowplowanalytics.self-desc", "instance-iglu-only", "jsonschema", "1-0-0"))
 
