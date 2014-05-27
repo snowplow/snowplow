@@ -46,11 +46,13 @@ import iglu.{
   SchemaRepo,
   SchemaKey
 }
+import ProcessingMessageUtils._
 
 object ValidatableJsonNode {
 
   private lazy val JsonSchemaValidator = getJsonSchemaValidator(SchemaVersion.DRAFTV4)
 
+  // Unsafe because we know this exists
   private lazy val SelfDescSchema = SchemaRepo.unsafeLookupSchema(
     SchemaKey("com.snowplowanalytics.self-desc", "instance-iglu-only", "jsonschema", "1-0-0"))
 
@@ -96,22 +98,24 @@ object ValidatableJsonNode {
    * the JSON Schema (i.e. MODEL-REVISION-ADDITION)
    * must be available from the IgluRepo.
    *
-   * @return instance The self-describing JSON
+   * @param instance The self-describing JSON
    *         to validate
-   * @return either Success boxing the
-   *         JsonNode, or a Failure boxing
-   *         a NonEmptyList of
-   *         ProcessingMessages
-   *
-  def validate(instance: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = {
-    val verified = verifyIsSelfDescribing(instance)
+   * @param dataOnly Whether the returned JsonNode
+   *        should be the data only, or the whole
+   *        JSON (schema + data)
+   * @return either Success boxing the JsonNode
+   *         or a Failure boxing a NonEmptyList
+   *         of ProcessingMessages
+   */
+  def validate(instance: JsonNode, dataOnly: Boolean = false): ValidationNel[ProcessingMessage, JsonNode] =
     for {
-      v <- verified
-      s = v.get("schema")
-
-      validateAgainstSchema(v, schema)
-
-  } */
+      j  <- validateAsSelfDescribing(instance)
+      // These two gets could only fail if our defn of a self-describing schema changes fundamentally
+      s  =  j.get("schema").asText
+      d  =  j.get("data")
+      js <- SchemaRepo.lookupSchema(s).toProcessingMessageNel
+      v  <- validateAgainstSchema(d, js)
+    } yield if (dataOnly) d else v
 
   /**
    * Validates that this JSON is a self-
@@ -123,7 +127,7 @@ object ValidatableJsonNode {
    *         a NonEmptyList of
    *         ProcessingMessages
    */
-  private def verifyIsSelfDescribing(instance: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = {
+  private def validateAsSelfDescribing(instance: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = {
     validateAgainstSchema(instance, SelfDescSchema)
   }
 
