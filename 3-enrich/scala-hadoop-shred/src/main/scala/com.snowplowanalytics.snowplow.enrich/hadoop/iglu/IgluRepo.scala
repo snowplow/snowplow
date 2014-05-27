@@ -30,6 +30,6 @@ object IgluRepo {
 
   object SelfDesc {
     private val path = "/jsonschema/com.snowplowanalytics.self-desc"
-    val Schema = JsonLoader.fromResource(s"$path/instance.json")
+    val Schema = JsonLoader.fromResource(s"$path/iglu-instance.json")
   }
 }
