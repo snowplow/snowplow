@@ -48,7 +48,6 @@ object SchemaRepo {
    *         JsonNode on Success, or an error String
    *         on Failure 
    */
-  // TODO: add error handling if this lookup fails
   def lookupSchema(schemaKey: SchemaKey): Validation[String, JsonNode] = {
     try {
       unsafeLookupSchema(schemaKey).success
