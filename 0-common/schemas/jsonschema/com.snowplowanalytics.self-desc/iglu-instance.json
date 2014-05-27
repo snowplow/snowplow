@@ -3,7 +3,7 @@
 	"description": "Top-level schema for the validation process (Iglu-only)",
 	"self": {
 		"vendor": "com.snowplowanalytics.self-desc",
-		"name": "instance",
+		"name": "iglu-instance",
 		"format": "jsonschema",
 		"version": "1-0-0"
 	},
