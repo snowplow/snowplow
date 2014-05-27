@@ -15,7 +15,6 @@ package hadoop
 package shredder
 
 // Jackson
-import com.github.fge.jackson.JsonLoader
 import com.fasterxml.jackson.databind.{
   JsonNode
 }
@@ -33,6 +32,7 @@ import hadoop.utils.{
   JsonUtils,
   ValidatableJsonNode
 }
+import iglu.IgluRepo
 
 /**
  * The shredder takes the two fields containing JSONs
@@ -42,12 +42,6 @@ import hadoop.utils.{
  * database.
  */
 object Shredder {
-
-  private object Schemas {
-    private val path = "/jsonschema/com.snowplowanalytics.snowplow"
-    val Contexts = JsonLoader.fromResource(s"$path/contexts.json")
-    val UnstructEvent = JsonLoader.fromResource(s"$path/unstruct_event.json")
-  }
 
   /**
    * Shred the CanonicalOutput's two fields which
@@ -73,12 +67,12 @@ object Shredder {
     val unstructEvent = extractAndValidateJson(
       "ue_properties",
       Option(event.ue_properties),
-      Schemas.UnstructEvent)
+      IgluRepo.Schemas.UnstructEvent)
 
     val contexts = extractAndValidateJson(
       "context",
       Option(event.contexts),
-      Schemas.Contexts)
+      IgluRepo.Schemas.Contexts)
 
     // Placeholder for compilation
     JsonUtils.extractJson("todo", "[]").leftMap(e => JsonUtils.unsafeExtractJson(e)).map(j => List(j)).toValidationNel

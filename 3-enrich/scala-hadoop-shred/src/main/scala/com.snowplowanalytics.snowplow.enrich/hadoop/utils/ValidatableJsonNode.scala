@@ -15,6 +15,7 @@ package hadoop
 package utils
 
 // Jackson
+import com.github.fge.jackson.JsonLoader
 import com.fasterxml.jackson.databind.JsonNode
 
 // JSON Schema Validator
@@ -39,6 +40,9 @@ import Scalaz._
 
 // Snowplow Common Enrich
 import common._
+
+// This project
+import iglu.IgluRepo
 
 object ValidatableJsonNode {
 
@@ -76,6 +80,20 @@ object ValidatableJsonNode {
       case Nil     if  report.isSuccess => instance.success
       case _                            => throw new FatalEtlError(s"Validation report success [$report.isSuccess] conflicts with message count [$msgs.length]")
     }
+  }
+
+  /**
+   * Validates that this JSON is a self-
+   * describing JSON.
+   *
+   * @param instance The JSON to check
+   * @return either Success boxing the
+   *         JsonNode, or a Failure boxing
+   *         a NonEmptyList of
+   *         ProcessingMessages
+   */
+  def verifyIsSelfDescribing(instance: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = {
+    validateAgainstSchema(instance, IgluRepo.SelfDesc.Schema)
   }
 
   /**
