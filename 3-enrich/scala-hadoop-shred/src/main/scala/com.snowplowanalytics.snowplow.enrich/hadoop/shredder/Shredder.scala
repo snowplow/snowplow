@@ -90,10 +90,12 @@ object Shredder {
    *         JsonNode on success
    */
   private[shredder] def extractAndValidateJson(field: String, instance: Option[String]): MaybeValidatedJson =
-    instance.map { i =>
-      val json = extractJson(field, i)
-      json.flatMap(_.validate(true))
-    }
+    for {
+      i <- instance
+    } yield for {
+      j <- extractJson(field, i)
+      v <- j.validate(true)
+    } yield v
 
   /**
    * Wrapper around JsonUtils' extractJson which
