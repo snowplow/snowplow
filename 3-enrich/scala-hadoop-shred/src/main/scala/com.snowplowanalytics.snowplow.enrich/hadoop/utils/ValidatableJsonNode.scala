@@ -80,7 +80,7 @@ object ValidatableJsonNode {
    *         a NonEmptyList of
    *         ProcessingMessages
    */
-  def validateAgainstSchema(instance: JsonNode, schema: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = {
+  def validateAgainstSchema(instance: JsonNode, schema: JsonNode): ValidatedJson = {
     val report = JsonSchemaValidator.validateUnchecked(schema, instance)
     val msgs = report.iterator.toList
     msgs match {
@@ -100,7 +100,7 @@ object ValidatableJsonNode {
    *         a NonEmptyList of
    *         ProcessingMessages
    */
-  private def validateAsSelfDescribing(instance: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = {
+  private def validateAsSelfDescribing(instance: JsonNode): ValidatedJson = {
     validateAgainstSchema(instance, SelfDescSchema)
   }
 
@@ -121,7 +121,7 @@ object ValidatableJsonNode {
    *         or a Failure boxing a NonEmptyList
    *         of ProcessingMessages
    */
-  def validate(instance: JsonNode, dataOnly: Boolean = false): ValidationNel[ProcessingMessage, JsonNode] =
+  def validate(instance: JsonNode, dataOnly: Boolean = false): ValidatedJson =
     for {
       j  <- validateAsSelfDescribing(instance)
       // These two gets could only fail if our defn of a self-describing schema changes fundamentally
@@ -163,9 +163,9 @@ object ValidatableJsonNode {
  */
 class ValidatableJsonNode(instance: JsonNode) {
 
-  def validateAgainstSchema(schema: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = 
+  def validateAgainstSchema(schema: JsonNode): ValidatedJson = 
     ValidatableJsonNode.validateAgainstSchema(instance, schema)
 
-  def validate(dataOnly: Boolean): ValidationNel[ProcessingMessage, JsonNode] =
+  def validate(dataOnly: Boolean): ValidatedJson =
     ValidatableJsonNode.validate(instance, dataOnly)
 }
