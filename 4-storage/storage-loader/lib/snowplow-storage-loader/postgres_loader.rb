@@ -28,7 +28,6 @@ module SnowPlow
       NULL_STRING = ""
       QUOTE_CHAR = "\\x01"
       ESCAPE_CHAR = "\\x02"
-      BATCH_SIZE = 1000
 
       # Loads the SnowPlow event files into Postgres.
       #
