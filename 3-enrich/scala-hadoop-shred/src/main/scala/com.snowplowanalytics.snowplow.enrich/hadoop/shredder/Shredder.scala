@@ -32,7 +32,7 @@ import hadoop.utils.{
   JsonUtils,
   ValidatableJsonNode
 }
-import iglu.IgluRepo
+import iglu.SchemaRepo
 
 /**
  * The shredder takes the two fields containing JSONs
@@ -64,6 +64,7 @@ object Shredder {
    */
   def shred(event: CanonicalOutput): ValidatedJsonList = {
 
+    /*
     val unstructEvent = extractAndValidateJson(
       "ue_properties",
       Option(event.ue_properties),
@@ -72,7 +73,7 @@ object Shredder {
     val contexts = extractAndValidateJson(
       "context",
       Option(event.contexts),
-      IgluRepo.Schemas.Contexts)
+      IgluRepo.Schemas.Contexts) */
 
     // Placeholder for compilation
     JsonUtils.extractJson("todo", "[]").leftMap(e => JsonUtils.unsafeExtractJson(e)).map(j => List(j)).toValidationNel

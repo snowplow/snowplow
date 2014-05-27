@@ -42,11 +42,17 @@ import Scalaz._
 import common._
 
 // This project
-import iglu.IgluRepo
+import iglu.{
+  SchemaRepo,
+  SchemaKey
+}
 
 object ValidatableJsonNode {
 
   private lazy val JsonSchemaValidator = getJsonSchemaValidator(SchemaVersion.DRAFTV4)
+
+  private lazy val SelfDescSchema = SchemaRepo.unsafeLookupSchema(
+    SchemaKey("com.snowplowanalytics.self-desc", "iglu-instance", "jsonschema", "1-0-0"))
 
   /**
    * Implicit to pimp a JsonNode to our
@@ -83,6 +89,31 @@ object ValidatableJsonNode {
   }
 
   /**
+   * Validates a self-describing JSON against
+   * its specified JSON Schema.
+   *
+   * IMPORTANT: currently the exact version of
+   * the JSON Schema (i.e. MODEL-REVISION-ADDITION)
+   * must be available from the IgluRepo.
+   *
+   * @return instance The self-describing JSON
+   *         to validate
+   * @reutrn either Success boxing the
+   *         JsonNode, or a Failure boxing
+   *         a NonEmptyList of
+   *         ProcessingMessages
+   *
+  def validate(instance: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = {
+    val verified = verifyIsSelfDescribing(instance)
+    for {
+      v <- verified
+      s = v.get("schema")
+
+      validateAgainstSchema(v, schema)
+
+  } */
+
+  /**
    * Validates that this JSON is a self-
    * describing JSON.
    *
@@ -92,8 +123,8 @@ object ValidatableJsonNode {
    *         a NonEmptyList of
    *         ProcessingMessages
    */
-  def verifyIsSelfDescribing(instance: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = {
-    validateAgainstSchema(instance, IgluRepo.SelfDesc.Schema)
+  private def verifyIsSelfDescribing(instance: JsonNode): ValidationNel[ProcessingMessage, JsonNode] = {
+    validateAgainstSchema(instance, SelfDescSchema)
   }
 
   /**

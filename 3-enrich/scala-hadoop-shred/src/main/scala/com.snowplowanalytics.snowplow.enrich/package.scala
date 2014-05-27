@@ -63,4 +63,7 @@ package object hadoop {
    * validated `JsonNode`s.
    */
   type ValidatedJsonList = ValidationNel[JsonNode, List[JsonNode]]
+
+  // TODO: need to fix this
+  type SchemaVer = String
 }

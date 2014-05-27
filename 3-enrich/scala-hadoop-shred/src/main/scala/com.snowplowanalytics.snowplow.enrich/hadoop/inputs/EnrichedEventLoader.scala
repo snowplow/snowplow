@@ -33,6 +33,7 @@ import outputs.CanonicalOutput
 object EnrichedEventLoader {
 
   // Taken from http://stackoverflow.com/a/6640851/255627
+  // TODO: replace with a proper UUID check.
   private val UuidRegex = "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})".r
 
   private val FieldCount = 104

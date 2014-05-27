@@ -47,7 +47,6 @@ object JsonUtils {
       case e: Throwable => s"Field [$field]: invalid JSON [$instance] with parsing error: $e.getMessage".fail
     }
 
-
   /**
    * Converts a JSON string into a JsonNode.
    *
