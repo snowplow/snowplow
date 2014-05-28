@@ -48,7 +48,7 @@ package object hadoop {
    * either error `JsonNode`s or a List of successfully
    * validated `JsonNode`s.
    */
-  type ValidatedJsonList = ValidationNel[JsonNode, List[JsonNode]]
+  type ValidatedJsonList = ValidationNel[ProcessingMessage, List[JsonNode]]
 
   /**
    * Type alias for a SchemaVer-based version.

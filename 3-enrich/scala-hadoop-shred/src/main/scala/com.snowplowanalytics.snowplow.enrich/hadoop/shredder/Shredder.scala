@@ -19,6 +19,9 @@ import com.fasterxml.jackson.databind.{
   JsonNode
 }
 
+// Scala
+import scala.collection.JavaConversions._
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -67,11 +70,27 @@ object Shredder {
    */
   def shred(event: CanonicalOutput): ValidatedJsonList = {
 
-    val ue = extractAndValidateJson("ue_properties", Option(event.ue_properties))
-    val c  = extractAndValidateJson("context", Option(event.contexts))
+    // Get our unstructured event and List of contexts, both Option-boxed
+    val ue = for {
+      v <- extractAndValidateJson("ue_properties", Option(event.ue_properties))
+    } yield for {
+      j <- v; v = List(j)
+    } yield v
+    
+    val c  = for {
+      v <- extractAndValidateJson("context", Option(event.contexts))
+    } yield for {
+      j <- v; v = j.iterator.toList
+    } yield v // : List[JsonNode]
 
-    // Placeholder for compilation
-    JsonUtils.extractJson("todo", "[]").leftMap(e => JsonUtils.unsafeExtractJson(e)).map(j => List(j)).toValidationNel
+    def strip(opt: Option[ValidatedJsonList]): ValidatedJsonList = opt match {
+      case Some(vjl) => vjl
+      case None => List[JsonNode]().success
+    }
+
+    // Let's harmonize our Option[JsonNode] and Option[List[JsonNode]]
+    // into a List[JsonNode]
+    (strip(ue) |@| strip(c)) { _ ++ _ }
   }
 
   /**
