@@ -132,6 +132,32 @@ object ValidatableJsonNode {
     } yield if (dataOnly) d2 else v
 
   /**
+   * The same as validate(), but on Success returns
+   * a tuple containing the SchemaKey as well as
+   * the JsonNode.
+   *
+   * @param instance The self-describing JSON
+   *         to validate
+   * @param dataOnly Whether the returned JsonNode
+   *        should be the data only, or the whole
+   *        JSON (schema + data)
+   * @return either Success boxing a Tuple2 of the
+   *         JSON's SchemaKey plus its JsonNode,
+   *         or a Failure boxing a NonEmptyList
+   *         of ProcessingMessages
+   */
+  def validateAndIdentify(instance: JsonNode, dataOnly: Boolean = false): ValidatedJsonAndSchemaKey =
+    for {
+      j  <- validateAsSelfDescribing(instance)
+      s  =  j.get("schema").asText
+      d1 =  j.get("data")
+      sk <- SchemaKey(s).toProcessingMessageNel
+      js <- SchemaRepo.lookupSchema(sk).toProcessingMessageNel
+      v  <- validateAgainstSchema(d1, js)
+      d2 =  v.get("data")
+    } yield if (dataOnly) (sk, d2) else (sk, v)
+
+  /**
    * Factory for retrieving a JSON Schema
    * validator with the specific version.
    *

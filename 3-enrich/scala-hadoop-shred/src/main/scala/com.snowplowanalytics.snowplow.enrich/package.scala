@@ -22,6 +22,9 @@ import com.github.fge.jsonschema.core.report.ProcessingMessage
 import scalaz._
 import Scalaz._
 
+// This project
+import hadoop.iglu.SchemaKey
+
 /**
  * Scala package object to hold types,
  * helper methods etc.
@@ -37,6 +40,14 @@ package object hadoop {
    * or a successfully validated `JsonNode`.
    */
   type ValidatedJson = ValidationNel[ProcessingMessage, JsonNode]
+
+  /**
+   * Type alias for a `ValidationNel`
+   * containing either error `ProcessingMessage`s
+   * or a successfully validated tuple of a
+   * JSON's `SchemaKey` and its `JsonNode`.
+   */
+  type ValidatedJsonAndSchemaKey = ValidationNel[ProcessingMessage, Tuple2[SchemaKey, JsonNode]]
 
   /**
    * Wraps a `ValidatedJson` in an `Option`.
