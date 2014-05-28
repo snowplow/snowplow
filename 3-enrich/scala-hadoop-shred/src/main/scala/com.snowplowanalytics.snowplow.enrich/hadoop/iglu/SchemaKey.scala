@@ -14,6 +14,10 @@ package com.snowplowanalytics.snowplow.enrich
 package hadoop
 package iglu
 
+// Jackson
+import com.github.fge.jackson.JacksonUtils
+import com.fasterxml.jackson.databind.JsonNode
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -23,6 +27,8 @@ import Scalaz._
  * an Iglu SchemaKey.
  */
 object SchemaKey {
+
+  private val NodeFactory = JacksonUtils.nodeFactory()
 
   private val SchemaUriRegex = "^iglu://([a-zA-Z0-9-_.]+)/([a-zA-Z0-9-_]+)/([a-zA-Z0-9-_]+)/([0-9]+-[0-9]+-[0-9]+)$".r
 
@@ -58,6 +64,21 @@ case class SchemaKey(
   val name: String,
   val format: String,
   val version: SchemaVer) {
+
+  /**
+   * Converts a SchemaKey into a JSON containing each
+   * element. The properties in this JSON conform to
+   * the self-describing JSON schema.
+   *
+   * @return the SchemaKey as a JSON
+   */
+  // TODO: there must be a way of doing this automatically
+  def asJson: JsonNode =
+    SchemaKey.NodeFactory.objectNode()
+      .put("vendor", vendor)
+      .put("name", vendor)
+      .put("format", format)
+      .put("version", version)
 
   /**
    * Converts a SchemaKey into a path which is compatible

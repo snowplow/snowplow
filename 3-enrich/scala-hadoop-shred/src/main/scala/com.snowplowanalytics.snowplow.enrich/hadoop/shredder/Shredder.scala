@@ -49,7 +49,7 @@ import ProcessingMessageUtils._
  */
 object Shredder {
 
-  private val TypeHierarchyRoot = "events" // All shredded JSONs have the events table as their ultimate parent
+  private val TypeHierarchyRoot = "events" // All shredded JSONs have the events type (aka table) as their ultimate parent
 
   /**
    * Shred the CanonicalOutput's two fields which
@@ -94,10 +94,7 @@ object Shredder {
     // into a List[JsonNode], collecting Failures too
     val all = (strip(ue) |@| strip(c)) { _ ++ _ }
 
-    // Now let's validate against the self-describing schemas
-    // TODO
-
-    // Let's define what we know so far of the type hierarchy.
+    // Define what we know so far of the type hierarchy.
     val partialHierarchy = TypeHierarchy(
       rootId     = event.event_id,
       rootTstamp = event.collector_tstamp,
@@ -107,8 +104,46 @@ object Shredder {
     )
     // all.map
 
+    // Now let's iterate through and attach metadata
+
     all
   }
+
+  /**
+   * Adds shred-related metadata to the JSON.
+   * There are two envelopes of metadata to
+   * attach:
+   *
+   * 1. schema - we replace the existing schema
+   *    URI string with a full schema key object
+   *    containing name, vendor, format and
+   *    version as separate string properties
+   * 2. hierarchy - we add a new object expressing
+   *    the type hierarchy for this shredded JSON
+   *
+   * @param instance The JSON to attach the type
+   *        hierarchy to
+   * @param partialHierarchy The type hierarchy to
+   *        attach. Partial because the refTree is
+   *        still incomplete
+   * @return the JSON with schema updated to hold
+   *         the full schema key, and a new
+   *         hierarchy
+   */
+  private[shredder] def attachShredMetadata(
+    instance: JsonNode,
+    partialHierarchy: TypeHierarchy): JsonNode = {
+
+    // TODO: implement this.
+    instance
+  }
+
+  /**
+   * A Scalaz Lens to complete the refTree within
+   * a TypeHierarchy object.
+   */
+  private[shredder] val hierarchyLens: Lens[TypeHierarchy, List[String]] =
+    Lens.lensu((ph, rt) => ph.copy(refTree = ph.refTree ++ rt), _.refTree)
 
   /**
    * Attach a "type hierarchy" to a given JSON.
@@ -123,8 +158,8 @@ object Shredder {
    * @param instance The JSON to attach the type
    *        hierarchy to
    * @param partialHierarchy The type hierarchy to
-   *        attach. Partial because we need to
-   *        append the selfType to the refTree
+   *        attach. Partial because the refTree is
+   *        still incomplete
    * @param schemaName The schema name of the JSON
    *        whose hierarchy we are describing
    * @return the JSON with type hierarchy attached
@@ -133,8 +168,11 @@ object Shredder {
   private[shredder] def attachHierarchy(
     instance: JsonNode,
     partialHierarchy: TypeHierarchy,
-    schemaName: String): JsonNode =
+    schemaName: String): JsonNode = {
+    
+    val fullHierarchy = hierarchyLens.set(partialHierarchy, List(schemaName))
     instance // .set()
+  }
 
   /**
    * Extract the JSON from a String, and
