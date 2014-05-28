@@ -68,5 +68,4 @@ case class TypeHierarchy(
       .put("refParent", refParent) // TODO: fix order
       .putArray("refTree") // TODO: fix this
 
-
 }
