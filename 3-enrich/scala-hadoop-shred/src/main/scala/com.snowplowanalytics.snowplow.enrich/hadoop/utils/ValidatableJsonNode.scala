@@ -124,12 +124,12 @@ object ValidatableJsonNode {
   def validate(instance: JsonNode, dataOnly: Boolean = false): ValidatedJson =
     for {
       j  <- validateAsSelfDescribing(instance)
-      // These two gets could only fail if our defn of a self-describing schema changes fundamentally
       s  =  j.get("schema").asText
-      d  =  j.get("data")
+      d1 =  j.get("data")
       js <- SchemaRepo.lookupSchema(s).toProcessingMessageNel
-      v  <- validateAgainstSchema(d, js)
-    } yield if (dataOnly) d else v
+      v  <- validateAgainstSchema(d1, js)
+      d2 =  v.get("data")
+    } yield if (dataOnly) d2 else v
 
   /**
    * Factory for retrieving a JSON Schema
