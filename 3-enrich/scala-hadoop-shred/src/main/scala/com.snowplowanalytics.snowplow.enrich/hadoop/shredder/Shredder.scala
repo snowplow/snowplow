@@ -103,7 +103,10 @@ object Shredder {
 
     // Let's validate the instances against their schemas, and
     // then attach metadata to the nodes
-    val vld: ValidationNel[com.github.fge.jsonschema.core.report.ProcessingMessage, List[ValidationNel[com.github.fge.jsonschema.core.report.ProcessingMessage, JsonSchemaPair]]] =
+    all.map(list => list.map { node =>
+      val tmp = node.validateAndIdentifySchema(false)
+      tmp.map(t => attachMetadata(t, partialHierarchy))
+    }).flatMap(_.sequenceU)
  
  /*     for {
         list <- all
@@ -113,24 +116,6 @@ object Shredder {
         js   <- node.validateAndIdentifySchema(false)
         mj   =  attachMetadata(js, partialHierarchy)
       } yield mj */
-
-      all.map(_.map { node =>
-        val tmp = node.validateAndIdentifySchema(false)
-        tmp.map(t => attachMetadata(t, partialHierarchy))
-      })
-
-    val vld2: ValidatedJsonSchemaPairList =
-      vld.flatMap(_.sequenceU)
-
-      //vld.map(good => good.sequenceU)
-
-    // val tgt: ValidationNel[com.github.fge.jsonschema.core.report.ProcessingMessage, List[JsonSchemaPair]] =
-    //  vld.sequenceU
-
-    // results.foldLeft(0.successNel[String])(_ +++ _.toValidationNel)
-
-    // "oh no".failure.toProcessingMessageNel
-    vld2
   }
 
   /**
