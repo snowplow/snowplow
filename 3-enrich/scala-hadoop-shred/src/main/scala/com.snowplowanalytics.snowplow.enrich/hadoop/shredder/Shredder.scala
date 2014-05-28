@@ -99,18 +99,24 @@ object Shredder {
 
     // Let's harmonize our Option[JsonNode] and Option[List[JsonNode]]
     // into a List[JsonNode], collecting Failures too
-    val all = (strip(ue) |@| strip(c)) { _ ++ _ }
+    val all: ValidationNel[com.github.fge.jsonschema.core.report.ProcessingMessage, List[JsonNode]] = (strip(ue) |@| strip(c)) { _ ++ _ }
 
     // Let's validate and get back the schemas
-    val vld = for {
+    val vld: ValidationNel[com.github.fge.jsonschema.core.report.ProcessingMessage, List[Tuple2[SchemaKey, JsonNode]]] =
+      all.map(_.map(node => (SchemaKey("", "", "", ""), node)))
+//        node.validateAndIdentifySchema(false))))
+
+
+/*
+     for {
       list <- all
     } yield for {
       node <- list
     } yield for {
       res  <- node.validateAndIdentifySchema(false)
-      met  =  attachMetadata(res._2, res._1, partialHierarchy)
-    } yield met
-
+      // met  =  attachMetadata(res._2, res._1, partialHierarchy)
+    } yield res // met
+*/
 
     //  met  =  attachMetadata(vld._2, vld._1, partialHierarchy)
 
