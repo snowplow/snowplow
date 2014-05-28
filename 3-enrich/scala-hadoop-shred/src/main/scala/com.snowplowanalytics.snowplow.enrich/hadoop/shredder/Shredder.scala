@@ -103,19 +103,14 @@ object Shredder {
 
     // Let's validate the instances against their schemas, and
     // then attach metadata to the nodes
-    all.map(list => list.map { node =>
-      val tmp = node.validateAndIdentifySchema(false)
-      tmp.map(t => attachMetadata(t, partialHierarchy))
-    }).flatMap(_.sequenceU)
- 
- /*     for {
-        list <- all
-      } yield for {
-        node <- list
-      } yield for {
-        js   <- node.validateAndIdentifySchema(false)
-        mj   =  attachMetadata(js, partialHierarchy)
-      } yield mj */
+    (for {
+      list <- all
+    } yield for {
+      node <- list
+    } yield for {
+      js   <- node.validateAndIdentifySchema(false)
+      mj   =  attachMetadata(js, partialHierarchy)
+    } yield mj).flatMap(_.sequenceU) // Swap nested List[scalaz.Validation[...]
   }
 
   /**
