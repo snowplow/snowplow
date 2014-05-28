@@ -136,6 +136,10 @@ object ValidatableJsonNode {
    * a tuple containing the SchemaKey as well as
    * the JsonNode.
    *
+   * IMPORTANT: currently the exact version of
+   * the JSON Schema (i.e. MODEL-REVISION-ADDITION)
+   * must be available from the IgluRepo.
+   *
    * @param instance The self-describing JSON
    *         to validate
    * @param dataOnly Whether the returned JsonNode

@@ -111,13 +111,18 @@ object Shredder {
         node <- list
       } yield for {
         js   <- node.validateAndIdentifySchema(false)
-        mj   =  attachMetadata(js._2, js._1, partialHierarchy)
+        mj   =  attachMetadata(js, partialHierarchy)
       } yield mj */
 
       all.map(_.map { node =>
         val tmp = node.validateAndIdentifySchema(false)
         tmp.map(t => attachMetadata(t, partialHierarchy))
       })
+
+    // val tgt: ValidationNel[com.github.fge.jsonschema.core.report.ProcessingMessage, List[JsonSchemaPair]] =
+    //   vld.sequenceU
+
+    // results.foldLeft(0.successNel[String])(_ +++ _.toValidationNel)
 
     "oh no".failure.toProcessingMessageNel
   }
