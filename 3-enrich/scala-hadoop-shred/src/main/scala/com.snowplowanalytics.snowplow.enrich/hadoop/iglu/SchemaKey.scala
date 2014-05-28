@@ -73,6 +73,7 @@ case class SchemaKey(
    * @return the SchemaKey as a JSON
    */
   // TODO: there must be a way of doing this automatically
+  // using jackson-module-scala
   def asJson: JsonNode =
     SchemaKey.NodeFactory.objectNode()
       .put("vendor", vendor)

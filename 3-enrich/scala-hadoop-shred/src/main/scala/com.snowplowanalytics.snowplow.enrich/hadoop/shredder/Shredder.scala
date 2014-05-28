@@ -167,7 +167,12 @@ object Shredder {
     partialHierarchy: TypeHierarchy): JsonSchemaPair = {
 
     val (schemaKey, instance) = instanceSchemaPair
-    val fullHierarchy = hierarchyLens.set(partialHierarchy, List(schemaKey.name))
+
+    val schemaNode = schemaKey.asJson
+    val hierarchyNode = {
+      val full = hierarchyLens.set(partialHierarchy, List(schemaKey.name))
+      full.toJson
+    }
 
     // TODO: write this MAGIC
     val updatedInstance = instance

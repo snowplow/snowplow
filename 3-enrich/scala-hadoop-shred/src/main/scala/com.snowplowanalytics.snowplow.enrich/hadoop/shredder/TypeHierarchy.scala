@@ -14,6 +14,13 @@ package com.snowplowanalytics.snowplow.enrich
 package hadoop
 package shredder
 
+// Jackson
+import com.github.fge.jackson.JacksonUtils
+import com.fasterxml.jackson.databind.JsonNode
+
+// Scala
+import scala.collection.JavaConversions._
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -26,6 +33,14 @@ import outputs.CanonicalOutput
 import hadoop.utils.JsonUtils
 
 /**
+ * Companion object contains helpers.
+ */
+object TypeHierarchy {
+
+  private val NodeFactory = JacksonUtils.nodeFactory()
+}
+
+/**
  * Expresses the hierarchy of types for this type. 
  */
 case class TypeHierarchy(
@@ -34,4 +49,24 @@ case class TypeHierarchy(
   val refRoot: String,
   val refTree: List[String],
   val refParent: String
-  )
+  ) {
+
+  /**
+   * Converts a TypeHierarchy into a JSON containing
+   * each element.
+   *
+   * @return the TypeHierarchy as a JSON
+   */
+  // TODO: this doesn't populate refTree yet
+  // TODO: there must be a way of doing this automatically
+  // using jackson-module-scala
+  def asJson: JsonNode =
+    TypeHierarchy.NodeFactory.objectNode()
+      .put("rootId", rootId)
+      .put("rootTstamp", rootTstamp)
+      .put("refRoot", refRoot)
+      .put("refParent", refParent) // TODO: fix order
+      .putArray("refTree") // TODO: fix this
+
+
+}
