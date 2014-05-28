@@ -92,14 +92,14 @@ object Shredder {
       j <- v; v = j.iterator.toList
     } yield v
 
-    def strip(o: Option[ValidatedJsonList]): ValidatedJsonList = o match {
+    def flatten(o: Option[ValidatedJsonList]): ValidatedJsonList = o match {
       case Some(vjl) => vjl
       case None => List[JsonNode]().success
     }
 
     // Let's harmonize our Option[JsonNode] and Option[List[JsonNode]]
     // into a List[JsonNode], collecting Failures too
-    val all = (strip(ue) |@| strip(c)) { _ ++ _ }
+    val all = (flatten(ue) |@| flatten(c)) { _ ++ _ }
 
     // Let's validate the instances against their schemas, and
     // then attach metadata to the nodes
@@ -119,12 +119,18 @@ object Shredder {
         tmp.map(t => attachMetadata(t, partialHierarchy))
       })
 
+    val vld2: ValidatedJsonSchemaPairList =
+      vld.flatMap(_.sequenceU)
+
+      //vld.map(good => good.sequenceU)
+
     // val tgt: ValidationNel[com.github.fge.jsonschema.core.report.ProcessingMessage, List[JsonSchemaPair]] =
-    //   vld.sequenceU
+    //  vld.sequenceU
 
     // results.foldLeft(0.successNel[String])(_ +++ _.toValidationNel)
 
-    "oh no".failure.toProcessingMessageNel
+    // "oh no".failure.toProcessingMessageNel
+    vld2
   }
 
   /**
