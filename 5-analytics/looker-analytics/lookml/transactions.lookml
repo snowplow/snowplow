@@ -1,19 +1,3 @@
-# Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
-#
-# This program is licensed to you under the Apache License Version 2.0,
-# and you may not use this file except in compliance with the Apache License Version 2.0.
-# You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the Apache License Version 2.0 is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
-#
-# Version:     0.1.0
-#
-# Author(s):   Yali Sassoon
-# Copyright:   Copyright (c) 2013-2014 Snowplow Analytics Ltd
-# License:     Apache License Version 2.0
 
 - view: transactions
   derived_table:
@@ -21,6 +5,7 @@
       SELECT 
         domain_userid,
         domain_sessionidx,
+        domain_userid || '-' || domain_sessionidx AS visit_id,
         tr_orderid,
         tr_affiliation,
         tr_total,
@@ -31,23 +16,34 @@
         MIN(collector_tstamp) AS tr_tstamp
       FROM atomic.events 
       WHERE event = 'transaction'
-      GROUP BY 1,2,3,4,5,5,6,7,8,9
+      GROUP BY 1,2,3,4,5,5,6,7,8,9,10
       ORDER BY tr_orderid
     
-    persist_for: 3 hours
+    # generate table at 6am and 11pm
+    sql_trigger_value: |
+      SELECT 
+       CASE
+        WHEN FLOOR(EXTRACT(hour FROM (current_time))) BETWEEN 6 AND 23
+        THEN ‘inside’
+        ELSE ‘outside’
+       END
+    
+    distkey: visit_id
+    sortkeys: visit_id
     
   fields:
   
   # DIMENSIONS #
   
-  - dimension: domain_userid
+  - dimension: domain_user_id
     sql: ${TABLE}.domain_userid
-    hidden: true
     
-  - dimension: domain_sessionidx
+  - dimension: domain_session_index
     type: int
     sql: ${TABLE}.domain_sessionidx
-    hidden: true
+    
+  - dimension: visit_id
+    sql: ${TABLE}.visit_id
     
   # Transaction fields #
   

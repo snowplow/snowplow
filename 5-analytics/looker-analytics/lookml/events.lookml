@@ -1,49 +1,85 @@
-# Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
-#
-# This program is licensed to you under the Apache License Version 2.0,
-# and you may not use this file except in compliance with the Apache License Version 2.0.
-# You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the Apache License Version 2.0 is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
-#
-# Version:     0.1.0
-#
-# Author(s):   Yali Sassoon
-# Copyright:   Copyright (c) 2013-2014 Snowplow Analytics Ltd
-# License:     Apache License Version 2.0
-
 - view: events
-  sql_table_name: atomic.events
+  derived_table:
+    sql: |
+      SELECT
+      domain_userid, 
+      domain_sessionidx,
+      event_id,
+      event,
+      collector_tstamp,
+      dvce_tstamp,
+      page_title,
+      page_urlscheme,
+      page_urlhost,
+      page_urlpath,
+      page_urlport,
+      page_urlquery,
+      page_urlfragment,
+      refr_medium,
+      refr_source,
+      refr_term,
+      refr_urlhost,
+      refr_urlpath,
+      pp_xoffset_max,
+      pp_xoffset_min,
+      pp_yoffset_max,
+      pp_yoffset_min,
+      se_category,
+      se_action,
+      se_label,
+      se_property,
+      se_value,
+      doc_height,
+      doc_width,
+      tr_orderid,
+      tr_affiliation,
+      tr_total,
+      tr_tax,
+      tr_city,
+      tr_state,
+      tr_country,
+      ti_orderid,
+      ti_category,
+      ti_sku,
+      ti_name,
+      ti_price,
+      ti_quantity
+      FROM atomic.events
+      WHERE domain_userid IS NOT NULL
+    
+    sql_trigger_value: SELECT MAX(collector_tstamp) FROM atomic.events
+    distkey: domain_userid
+    sortkeys: [domain_userid, domain_sessionidx, collector_tstamp]
+    
   fields:
-
-# DIMENSIONS # 
-
+  # DIMENSIONS #
+  
   - dimension: event_id
     primary_key: true
     sql: ${TABLE}.event_id
   
   - dimension: event_type
     sql: ${TABLE}.event
+    
+  - dimension: timestamp
+    sql: ${TABLE}.collector_tstamp
 
-  - dimension_group: occurred
+  - dimension_group: timestamp
     type: time
     timeframes: [time, date, week, month]
     sql: ${TABLE}.collector_tstamp
 
-  - dimension: domain_sessionidx
+  - dimension: session_index
     type: number
     sql: ${TABLE}.domain_sessionidx
 
-  - dimension: domain_userid
+  - dimension: user_id
     sql: ${TABLE}.domain_userid
 
-  - dimension: visit_id
+  - dimension: session_id
     sql: ${TABLE}.domain_userid || '-' || ${TABLE}.domain_sessionidx
 
-  - dimension_group: dvce_tstamp
+  - dimension_group: device_timestamp
     type: time
     timeframes: [time, date, week, month]
     sql: ${TABLE}.dvce_tstamp
@@ -52,25 +88,25 @@
   - dimension: page_title
     sql: ${TABLE}.page_title
 
-  - dimension: page_urlscheme
+  - dimension: page_url_scheme
     sql: ${TABLE}.page_urlscheme
 
-  - dimension: page_urlhost
+  - dimension: page_url_host
     sql: ${TABLE}.page_urlhost
       
-  - dimension: page_urlpath
+  - dimension: page_url_path
     sql: ${TABLE}.page_urlpath
 
-  - dimension: page_urlport
+  - dimension: page_url_port
     type: int
     sql: ${TABLE}.page_urlport
     hidden: true
 
-  - dimension: page_urlquery
+  - dimension: page_url_query
     sql: ${TABLE}.page_urlquery
     hidden: true
 
-  - dimension: page_urlfragment
+  - dimension: page_url_fragment
     sql: ${TABLE}.page_urlfragment
     hidden: true
     
@@ -91,10 +127,10 @@
   - dimension: refr_term
     sql: ${TABLE}.refr_term
     
-  - dimension: refr_urlhost
+  - dimension: refr_url_host
     sql: ${TABLE}.refr_urlhost
     
-  - dimension: refr_urlpath
+  - dimension: refr_url_path
     sql: ${TABLE}.refr_urlpath
 
   - dimension: x_offset
@@ -115,26 +151,23 @@
     sql: ${TABLE}.pp_yoffset_min
     hidden: true
 
-  - dimension: se_action
+  - dimension: structured_event_action
     sql: ${TABLE}.se_action
 
-  - dimension: se_category
+  - dimension: structured_event_category
     sql: ${TABLE}.se_category
 
-  - dimension: se_label
+  - dimension: structured_event_label
     sql: ${TABLE}.se_label
 
-  - dimension: se_property
+  - dimension: structured_event_property
     sql: ${TABLE}.se_property
 
-  - dimension: se_value
+  - dimension: structured_event_value
     type: number
     sql: ${TABLE}.se_value
     
-  - dimension: tr_orderid
-    sql: ${TABLE}.tr_orderid
-
-  - dimension: useragent
+  - dimension: user_agent
     sql: ${TABLE}.useragent
     hidden: true
     
@@ -201,7 +234,7 @@
 
 # MEASURES #
 
-  - measure: events_count
+  - measure: count
     type: count
     detail: event_detail*
 
@@ -227,61 +260,53 @@
   - measure: distinct_pages_viewed_count
     type: count_distinct
     detail: page_views_detail*
-    sql: ${page_urlpath}
-
-  - measure: average_page_pings_per_visit
+    sql: ${page_url_path}
+    
+  - measure: sessions_count
+    type: count_distinct
+    sql: ${session_id}
+    detail: detail*
+    
+  - measure: page_pings_per_session
     type: number
     decimals: 2
-    sql: NULLIF(${page_pings_count},0)/NULLIF(${visits_count},0)::REAL
+    sql: NULLIF(${page_pings_count},0)/NULLIF(${sessions_count},0)::REAL
 
-  - measure: average_page_pings_per_visitor
+  - measure: page_pings_per_visitor
     type: number
     decimals: 2
     sql: NULLIF(${page_pings_count},0)/NULLIF(${visitors_count},0)::REAL
       
-  - measure: transactions_per_visit
+  - measure: transactions_per_session
     type: number
     decimals: 3
-    sql: NULLIF(${transactions_count},0)/NULLIF(${visits_count},0)::REAL
+    sql: NULLIF(${transactions_count},0)/NULLIF(${sessions_count},0)::REAL
     
   - measure: transactions_per_visitor
     type: number
     decimals: 2
     sql: NULLIF(${transactions_count},0)/NULLIF(${visitors_count},0)::REAL
+
   - measure: visitors_count
     type: count_distinct
-    sql: ${domain_userid}
-    detail: visitors_detail*
-
-  - measure: visits_count
-    type: count_distinct
-    sql: ${visit_id}
-    detail: visit_detail*
+    sql: ${user_id}
+    detail: visitors_detail
+    hidden: true  # Not to be shown in the UI (in UI only show visitors count for visitors table)
     
-  - measure: visits_per_visitor
+  - measure: events_per_session
     type: number
     decimals: 2
-    sql: ${visits_count}/NULLIF(${visitors_count},0)::REAL
-    
-  - measure: events_per_visit
-    type: number
-    decimals: 2
-    sql: ${events_count}/NULLIF(${visits_count},0)::REAL
+    sql: ${count}/NULLIF(${sessions_count},0)::REAL
     
   - measure: events_per_visitor
     type: number
     decimals: 2
-    sql: ${events_count}/NULLIF(${visitors_count},0)::REAL
-    
-  - measure: page_pings_per_visit
-    type: number
-    decimals: 2
-    sql: ${page_pings_count}/NULLIF(${visits_count},0)::REAL
+    sql: ${count}/NULLIF(${visitors_count},0)::REAL
 
-  - measure: page_views_per_visit
+  - measure: page_views_per_sessions
     type: number
     decimals: 2
-    sql: ${page_views_count}/NULLIF(${visits_count},0)::REAL
+    sql: ${page_views_count}/NULLIF(${sessions_count},0)::REAL
     
   - measure: page_views_per_visitor
     type: number
@@ -301,67 +326,75 @@
       first_event_in_session: no
       
   - measure: approx_user_usage_in_minutes
-    type: count_distinct
-    sql : CONCAT(FLOOR(EXTRACT (EPOCH FROM ${TABLE}.collector_tstamp)/(60*2))*2 , ${TABLE}.domain_userid)
+    type: number
+    decimals: 2
+    sql: APPROXIMATE COUNT( DISTINCT CONCAT(FLOOR(EXTRACT (EPOCH FROM ${TABLE}.collector_tstamp)/10), ${TABLE}.domain_userid) ) /6
     
-  - measure: approx_usage_per_visitor_in_minutes
+  - measure: approx_usage_per_visitor_in_seconds
     type: number
     decimals: 2
     sql: ${approx_user_usage_in_minutes}/NULLIF(${visitors_count}, 0)::REAL
     
-  - measure: approx_usage_per_visit_in_minutes
+  - measure: approx_usage_per_visit_in_seconds
     type: number
     decimals: 2
-    sql: ${approx_user_usage_in_minutes}/NULLIF(${visits_count}, 0)::REAL
+    sql: ${approx_user_usage_in_minutes}/NULLIF(${sessions_count}, 0)::REAL
 
   - measure: transactions_value
     type: sum
     sql: ${transaction_value}
     filters:
       event_type: transaction
-
+  
+  
   # ----- Detail ------
   sets:
     event_detail:
       - event_type
-      - occurred_time
-      - dvce_tstamp
-      - page_urlhost
-      - page_urlpath
+      - timestamp_time
+      - device_timestamp
+      - page_url_host
+      - page_url_path
     
     page_views_detail:
-      - page_urlhost
-      - page_urlpath
-      - occurred_time
-      - dvce_tstamp
+      - page_url_host
+      - page_url_path
+      - timestamp_time
+      - device_timestamp
     
     visit_detail:
-      - domain_userid
-      - domain_sessionidx
-      - visits.occurred_time
-      - visits.time_on_site
-      - approx_user_usage_in_minutes
-      - events_count
-      - visits.distinct_pages_viewed_count
+      - user_id
+      - domain_session_index
+      - sessions.timestamp_time
+      - source.refr_url_host
+      - source.refr_url_path
+      - landing_page.landing_page
+      - sessions.visit_duration_seconds
+      - count
+      - sessions.distinct_pages_viewed
       - transactions_count
-      - visits.history    
-    
+      - sessions.history 
+      
     visitors_detail:
-      - domain_userid
+      - user_id
       - visitors.first_touch_time
+      - source_first_visit.refr_url_host
+      - source_first_visit.refr_url_path
+      - landing_page_first_visit.page_url_path
       - visitors.last_touch_time
-      - visits_count
-      - events_count
-      - page_views_count
-      - distinct_pages_count
+      - visitors.lifetime_sessions
+      - visitors.visit_history
+      - visitors.lifetime_distinct_pages_viewed
+      - visitors.lifetime_events
+      - visitors.event_history
       - transactions_count
       - visitors.history
-    
+
     transaction_detail:
       - transaction_order_id
-      - occurred_time
-      - domain_userid
-      - domain_sessionidx
+      - timestamp_time
+      - user_id
+      - domain_session_index
       - transaction_value
       - transaction_address_city
       - transaction_address_state
@@ -370,7 +403,7 @@
     
     transaction_items_detail:
       - transaction_item_order_id
-      - occurred_time
+      - timestamp_time
       - transaction_item_sku
       - transaction_item_name
       - transaction_item_price

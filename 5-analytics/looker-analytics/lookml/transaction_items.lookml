@@ -1,20 +1,3 @@
-# Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
-#
-# This program is licensed to you under the Apache License Version 2.0,
-# and you may not use this file except in compliance with the Apache License Version 2.0.
-# You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the Apache License Version 2.0 is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
-#
-# Version:     0.1.0
-#
-# Author(s):   Yali Sassoon
-# Copyright:   Copyright (c) 2013-2014 Snowplow Analytics Ltd
-# License:     Apache License Version 2.0
-
 - view: transaction_items
   derived_table: 
     sql: |
@@ -30,7 +13,17 @@
       GROUP BY 1,2,3,4,5,5,6
       ORDER BY ti_orderid
     
-    persist_for: 3 hours
+    # generate table at 6am and 11pm
+    sql_trigger_value: |
+      SELECT 
+       CASE
+        WHEN FLOOR(EXTRACT(hour FROM (current_time))) BETWEEN 6 AND 23
+        THEN ‘inside’
+        ELSE ‘outside’
+       END
+       
+    distkey: ti_orderid
+    sortkeys: ti_orderid
     
   fields: 
     
@@ -92,13 +85,16 @@
     decimals: 2
     sql: ${sales_value} / NULLIF(${orders_count},0)::REAL
     
+  - measure: count
+    type: count
+    
   # ----- Detail ------
   sets:
     transaction_detail:
       - transactions.order_id
       - transactions.occurred_time
-      - transactions.domain_userid
-      - transactions.domain_sessionidx
+      - transactions.domain_user_id
+      - transactions.domain_session_index
       - transactions.transaction_value
       - transactions.city
       - transactions.state
