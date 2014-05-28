@@ -146,7 +146,7 @@ object ValidatableJsonNode {
    *         or a Failure boxing a NonEmptyList
    *         of ProcessingMessages
    */
-  def validateAndIdentifySchema(instance: JsonNode, dataOnly: Boolean = false): ValidatedJsonAndSchemaKey =
+  def validateAndIdentifySchema(instance: JsonNode, dataOnly: Boolean = false): ValidatedJsonSchemaPair =
     for {
       j  <- validateAsSelfDescribing(instance)
       s  =  j.get("schema").asText
@@ -195,6 +195,6 @@ class ValidatableJsonNode(instance: JsonNode) {
   def validate(dataOnly: Boolean): ValidatedJson =
     ValidatableJsonNode.validate(instance, dataOnly)
 
-  def validateAndIdentifySchema(dataOnly: Boolean): ValidatedJsonAndSchemaKey =
+  def validateAndIdentifySchema(dataOnly: Boolean): ValidatedJsonSchemaPair =
     ValidatableJsonNode.validateAndIdentifySchema(instance, dataOnly)
 }

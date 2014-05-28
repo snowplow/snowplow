@@ -73,7 +73,7 @@ object Shredder {
    *         and on Failure a NonEmptyList of
    *         JsonNodes containing error messages
    */
-  def shred(event: CanonicalOutput): ValidatedJsonList = {
+  def shred(event: CanonicalOutput): ValidatedJsonSchemaPairList = {
 
     // Define what we know so far of the type hierarchy.
     val partialHierarchy = makePartialHierarchy(
@@ -104,47 +104,22 @@ object Shredder {
     // Let's validate the instances against their schemas, and
     // then attach metadata to the nodes
     val vld: ValidationNel[com.github.fge.jsonschema.core.report.ProcessingMessage, List[ValidationNel[com.github.fge.jsonschema.core.report.ProcessingMessage, JsonNode]]] =
-      for {
+ 
+ /*     for {
         list <- all
       } yield for {
         node <- list
       } yield for {
         js   <- node.validateAndIdentifySchema(false)
         mj   =  attachMetadata(js._2, js._1, partialHierarchy)
-      } yield mj
-/*
+      } yield mj */
+
       all.map(_.map { node =>
         val tmp = node.validateAndIdentifySchema(false)
         tmp.map(t => attachMetadata(t._2, t._1, partialHierarchy))
       })
 
-*/
-//        node.validateAndIdentifySchema(false))))
-
-
-/*
-     for {
-      list <- all
-    } yield for {
-      node <- list
-    } yield for {
-      res  <- node.validateAndIdentifySchema(false)
-      // met  =  attachMetadata(res._2, res._1, partialHierarchy)
-    } yield res // met
-*/
-
-    //  met  =  attachMetadata(vld._2, vld._1, partialHierarchy)
-
-    // Now let's attach our metadata to our JSONs
-
-
-    // all.map
-
-    // Now
-
-    // Now let's iterate through and attach metadata
-
-    all
+    "oh no".failure.toProcessingMessageNel
   }
 
   /**

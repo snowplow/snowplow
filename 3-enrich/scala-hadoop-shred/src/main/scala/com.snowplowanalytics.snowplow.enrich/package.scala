@@ -42,12 +42,19 @@ package object hadoop {
   type ValidatedJson = ValidationNel[ProcessingMessage, JsonNode]
 
   /**
+   * Type alias for a `Tuple2`
+   * containing a SchemaKey and its
+   * corresponding `JsonNode`.
+   */
+  type JsonSchemaPair = Tuple2[SchemaKey, JsonNode]
+
+  /**
    * Type alias for a `ValidationNel`
    * containing either error `ProcessingMessage`s
    * or a successfully validated tuple of a
    * JSON's `SchemaKey` and its `JsonNode`.
    */
-  type ValidatedJsonAndSchemaKey = ValidationNel[ProcessingMessage, Tuple2[SchemaKey, JsonNode]]
+  type ValidatedJsonSchemaPair = ValidationNel[ProcessingMessage, JsonSchemaPair]
 
   /**
    * Wraps a `ValidatedJson` in an `Option`.
@@ -60,6 +67,13 @@ package object hadoop {
    * validated `JsonNode`s.
    */
   type ValidatedJsonList = ValidationNel[ProcessingMessage, List[JsonNode]]
+
+  /**
+   * Type alias for a `ValidationNel` containing
+   * either error `JsonNode`s or a `List` of `Tuple2`s containing
+   * the `SchemaKey` and the successfully validated `JsonNode`.
+   */
+  type ValidatedJsonSchemaPairList = ValidationNel[ProcessingMessage, List[JsonSchemaPair]]
 
   /**
    * Type alias for a SchemaVer-based version.
