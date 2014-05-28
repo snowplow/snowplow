@@ -31,7 +31,10 @@ import common._
 import outputs.CanonicalOutput
 
 // This project
-import iglu.SchemaRepo
+import iglu.{
+  SchemaKey,
+  SchemaRepo
+}
 import hadoop.utils.{
   JsonUtils,
   ValidatableJsonNode,
@@ -72,6 +75,10 @@ object Shredder {
    */
   def shred(event: CanonicalOutput): ValidatedJsonList = {
 
+    // Define what we know so far of the type hierarchy.
+    val partialHierarchy = makePartialHierarchy(
+      event.event_id, event.collector_tstamp)
+
     // Get our unstructured event and List of contexts, both Option-boxed
     val ue = for {
       v <- extractAndValidateJson("ue_properties", Option(event.ue_properties))
@@ -94,20 +101,49 @@ object Shredder {
     // into a List[JsonNode], collecting Failures too
     val all = (strip(ue) |@| strip(c)) { _ ++ _ }
 
-    // Define what we know so far of the type hierarchy.
-    val partialHierarchy = TypeHierarchy(
-      rootId     = event.event_id,
-      rootTstamp = event.collector_tstamp,
-      refRoot    = TypeHierarchyRoot,
-      refTree    = List(TypeHierarchyRoot), // This is a partial tree. Need to complete later
-      refParent  = TypeHierarchyRoot        // Hardcode as nested shredding not supported yet
-    )
+    // Let's validate and get back the schemas
+    val vld = for {
+      list <- all
+    } yield for {
+      node <- list
+    } yield for {
+      res  <- node.validateAndIdentifySchema(false)
+      met  =  attachMetadata(res._2, res._1, partialHierarchy)
+    } yield met
+
+
+    //  met  =  attachMetadata(vld._2, vld._1, partialHierarchy)
+
+    // Now let's attach our metadata to our JSONs
+
+
     // all.map
+
+    // Now
 
     // Now let's iterate through and attach metadata
 
     all
   }
+
+  /**
+   * Convenience to make a partial TypeHierarchy.
+   * Partial because we don't have the complete
+   * refTree yet.
+   *
+   * @param rootId The ID of the root element
+   * @param rootTstamp The timestamp of the root
+   *        element
+   * @return the partially complete TypeHierarchy
+   */
+  private[shredder] def makePartialHierarchy(rootId: String, rootTstamp: String): TypeHierarchy =
+    TypeHierarchy(
+      rootId     = rootId,
+      rootTstamp = rootId,
+      refRoot    = TypeHierarchyRoot,
+      refTree    = List(TypeHierarchyRoot), // This is a partial tree. Need to complete later
+      refParent  = TypeHierarchyRoot        // Hardcode as nested shredding not supported yet
+    )
 
   /**
    * Adds shred-related metadata to the JSON.
@@ -123,6 +159,8 @@ object Shredder {
    *
    * @param instance The JSON to attach the type
    *        hierarchy to
+   * @param schemaKey The SchemaKey identifying the
+   *        schema for this JSON
    * @param partialHierarchy The type hierarchy to
    *        attach. Partial because the refTree is
    *        still incomplete
@@ -130,8 +168,9 @@ object Shredder {
    *         the full schema key, and a new
    *         hierarchy
    */
-  private[shredder] def attachShredMetadata(
+  private[shredder] def attachMetadata(
     instance: JsonNode,
+    schemaKey: SchemaKey,
     partialHierarchy: TypeHierarchy): JsonNode = {
 
     // TODO: implement this.
