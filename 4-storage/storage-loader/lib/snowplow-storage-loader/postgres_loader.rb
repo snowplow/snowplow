@@ -84,13 +84,13 @@ module SnowPlow
       # Returns number of queries that were executed.
       def execute_from_csv(target, csv)
         status = []
-        conn = connect(target)
         csv_counter = 1
         total = 0
         csv.each do |f|
           n = 0
           prepared = false
-          CSV.foreach(csv, options={ :col_sep => EVENT_FIELD_SEPARATOR, :quote_char => "\x01" }) do |row|
+          conn = connect(target)
+          CSV.foreach(f, options={ :col_sep => EVENT_FIELD_SEPARATOR, :quote_char => "\x01" }) do |row|
             if not prepared
               query = "INSERT INTO #{target[:table]} VALUES ("
               for i in 1..row.length
@@ -110,12 +110,11 @@ module SnowPlow
           puts "   Load file #{csv_counter}/#{csv.length} completed, #{n} records loaded successfully."
           csv_counter += 1
           total += n
+          conn.finish
           if status != []
             break
           end
         end
-
-        conn.finish
 
         puts "Load completed, #{total} records."
         return status
