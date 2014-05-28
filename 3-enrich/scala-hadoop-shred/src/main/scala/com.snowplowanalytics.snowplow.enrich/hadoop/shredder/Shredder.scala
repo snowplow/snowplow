@@ -49,6 +49,8 @@ import ProcessingMessageUtils._
  */
 object Shredder {
 
+  private val TypeHierarchyRoot = "events" // All shredded JSONs have the events table as their ultimate parent
+
   /**
    * Shred the CanonicalOutput's two fields which
    * contain JSONs: contexts and unstructured event
@@ -83,15 +85,56 @@ object Shredder {
       j <- v; v = j.iterator.toList
     } yield v
 
-    def strip(opt: Option[ValidatedJsonList]): ValidatedJsonList = opt match {
+    def strip(o: Option[ValidatedJsonList]): ValidatedJsonList = o match {
       case Some(vjl) => vjl
       case None => List[JsonNode]().success
     }
 
     // Let's harmonize our Option[JsonNode] and Option[List[JsonNode]]
     // into a List[JsonNode], collecting Failures too
-    (strip(ue) |@| strip(c)) { _ ++ _ }
+    val all = (strip(ue) |@| strip(c)) { _ ++ _ }
+
+    // Now let's validate against the self-describing schemas
+    // TODO
+
+    // Let's define what we know so far of the type hierarchy.
+    val partialHierarchy = TypeHierarchy(
+      rootId     = event.event_id,
+      rootTstamp = event.collector_tstamp,
+      refRoot    = TypeHierarchyRoot,
+      refTree    = List(TypeHierarchyRoot), // This is a partial tree. Need to complete later
+      refParent  = TypeHierarchyRoot        // Hardcode as nested shredding not supported yet
+    )
+    // all.map
+
+    all
   }
+
+  /**
+   * Attach a "type hierarchy" to a given JSON.
+   * The hierarchy makes it possible for an
+   * analyst to understand the relationship
+   * between this JSON and its parent types in the
+   * tree, all the way back to its root type.
+   *
+   * NOTE: in the future this will get more complex
+   * when we support shredding of nested types
+   *
+   * @param instance The JSON to attach the type
+   *        hierarchy to
+   * @param partialHierarchy The type hierarchy to
+   *        attach. Partial because we need to
+   *        append the selfType to the refTree
+   * @param schemaName The schema name of the JSON
+   *        whose hierarchy we are describing
+   * @return the JSON with type hierarchy attached
+   */
+  // TODO: important we need to fully populate the refTree
+  private[shredder] def attachHierarchy(
+    instance: JsonNode,
+    partialHierarchy: TypeHierarchy,
+    schemaName: String): JsonNode =
+    instance // .set()
 
   /**
    * Extract the JSON from a String, and

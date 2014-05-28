@@ -26,9 +26,9 @@ import outputs.CanonicalOutput
 import hadoop.utils.JsonUtils
 
 /**
- * Expresses the hierarchy for this type. 
+ * Expresses the hierarchy of types for this type. 
  */
-case class Hierarchy(
+case class TypeHierarchy(
   val rootId: String,
   val rootTstamp: String,
   val refRoot: String,
