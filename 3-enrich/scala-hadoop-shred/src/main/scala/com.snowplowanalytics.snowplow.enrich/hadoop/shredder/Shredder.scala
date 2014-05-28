@@ -81,7 +81,7 @@ object Shredder {
       v <- extractAndValidateJson("context", Option(event.contexts))
     } yield for {
       j <- v; v = j.iterator.toList
-    } yield v // : List[JsonNode]
+    } yield v
 
     def strip(opt: Option[ValidatedJsonList]): ValidatedJsonList = opt match {
       case Some(vjl) => vjl
@@ -89,7 +89,7 @@ object Shredder {
     }
 
     // Let's harmonize our Option[JsonNode] and Option[List[JsonNode]]
-    // into a List[JsonNode]
+    // into a List[JsonNode], collecting Failures too
     (strip(ue) |@| strip(c)) { _ ++ _ }
   }
 
