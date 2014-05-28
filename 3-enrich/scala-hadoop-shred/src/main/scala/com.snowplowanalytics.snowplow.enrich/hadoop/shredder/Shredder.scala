@@ -103,7 +103,7 @@ object Shredder {
 
     // Let's validate the instances against their schemas, and
     // then attach metadata to the nodes
-    val vld: ValidationNel[com.github.fge.jsonschema.core.report.ProcessingMessage, List[ValidationNel[com.github.fge.jsonschema.core.report.ProcessingMessage, JsonNode]]] =
+    val vld: ValidationNel[com.github.fge.jsonschema.core.report.ProcessingMessage, List[ValidationNel[com.github.fge.jsonschema.core.report.ProcessingMessage, JsonSchemaPair]]] =
  
  /*     for {
         list <- all
@@ -116,7 +116,7 @@ object Shredder {
 
       all.map(_.map { node =>
         val tmp = node.validateAndIdentifySchema(false)
-        tmp.map(t => attachMetadata(t._2, t._1, partialHierarchy))
+        tmp.map(t => attachMetadata(t, partialHierarchy))
       })
 
     "oh no".failure.toProcessingMessageNel
@@ -160,26 +160,28 @@ object Shredder {
    * 2. hierarchy - we add a new object expressing
    *    the type hierarchy for this shredded JSON
    *
-   * @param instance The JSON to attach the type
-   *        hierarchy to
-   * @param schemaKey The SchemaKey identifying the
-   *        schema for this JSON
+   * @param instanceSchemaPair Tuple2 containing:
+   *        1. The SchemaKey identifying the schema
+   *           for this JSON 
+   *        2. The JsonNode for this JSON
    * @param partialHierarchy The type hierarchy to
    *        attach. Partial because the refTree is
    *        still incomplete
-   * @return the JSON with schema updated to hold
-   *         the full schema key, and a new
-   *         hierarchy
+   * @return the Tuple2, with the JSON updated to
+   *         contain the full schema key, plus the
+   *         now-finalized hierarchy
    */
   private[shredder] def attachMetadata(
-    instance: JsonNode,
-    schemaKey: SchemaKey,
-    partialHierarchy: TypeHierarchy): JsonNode = {
+    instanceSchemaPair: JsonSchemaPair,
+    partialHierarchy: TypeHierarchy): JsonSchemaPair = {
 
+    val (schemaKey, instance) = instanceSchemaPair
     val fullHierarchy = hierarchyLens.set(partialHierarchy, List(schemaKey.name))
 
-    // TODO: implement this.
-    instance
+    // TODO: write this MAGIC
+    val updatedInstance = instance
+
+    (schemaKey, updatedInstance)
   }
 
   /**
