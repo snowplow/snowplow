@@ -15,6 +15,8 @@
 
 require 'pg'
 
+require 'csv'
+
 # Ruby module to support the load of Snowplow events into PostgreSQL.
 module SnowPlow
   module StorageLoader
@@ -38,13 +40,21 @@ module SnowPlow
         puts "Loading Snowplow events into #{target[:name]} (PostgreSQL database)..."
 
         event_files = get_event_files(events_dir)
-        queries = event_files.map { |f|
-            "COPY #{target[:table]} FROM '#{f}' WITH CSV ESCAPE E'#{ESCAPE_CHAR}' QUOTE E'#{QUOTE_CHAR}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}';"
-        }
-        
-        status = execute_transaction(target, queries)
-        unless status == []
-          raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
+
+        if target[:host] == 'localhost'
+          queries = event_files.map { |f|
+              "COPY #{target[:table]} FROM '#{f}' WITH CSV ESCAPE E'#{ESCAPE_CHAR}' QUOTE E'#{QUOTE_CHAR}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}';"
+          }
+          
+          status = execute_transaction(target, queries)
+          unless status == []
+            raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
+          end
+        else
+          status = execute_from_csv(target, event_files)
+          unless status == []
+            raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
+          end
         end
 
         post_processing = nil
@@ -63,6 +73,53 @@ module SnowPlow
         end  
       end
       module_function :load_events
+
+
+      # Parse CSV and execute queries in a prepared statement
+      #
+      # Parameters:
+      # +target+:: the configuration options for this target
+      # +csv+:: the CSV file
+      #
+      # Returns number of queries that were executed.
+      def execute_from_csv(target, csv)
+        status = []
+        csv_counter = 1
+        total = 0
+        csv.each do |f|
+          n = 0
+          prepared = false
+          conn = connect(target)
+          CSV.foreach(f, options={ :col_sep => EVENT_FIELD_SEPARATOR, :quote_char => "\x01" }) do |row|
+            if not prepared
+              query = "INSERT INTO #{target[:table]} VALUES ("
+              for i in 1..row.length
+                query += "$#{i},"
+              end
+              conn.prepare('insert1', query.chomp(',') + ')')
+              prepared = true
+            end
+            begin
+              conn.exec_prepared('insert1', row)
+            rescue PG::Error => err
+              status = [q, err.class, err.message]
+              break
+            end
+            n += 1
+          end
+          puts "   Load file #{csv_counter}/#{csv.length} completed, #{n} records loaded successfully."
+          csv_counter += 1
+          total += n
+          conn.finish
+          if status != []
+            break
+          end
+        end
+
+        puts "Load completed, #{total} records."
+        return status
+      end
+      module_function :execute_from_csv
 
       # Converts a set of queries into a
       # single Redshift read-write
@@ -101,12 +158,7 @@ module SnowPlow
       # a list of the form [query, err_class, err_message]
       def execute_queries(target, queries)
 
-        conn = PG.connect({:host     => target[:host],
-                           :dbname   => target[:database],
-                           :port     => target[:port],
-                           :user     => target[:username],
-                           :password => target[:password]
-                          })
+        conn = connect(target)
 
         status = []
         queries.each do |q|
@@ -139,6 +191,26 @@ module SnowPlow
       end
       module_function :get_event_files
 
+
+      # Connect to PostgreSQL database
+      #
+      # Parameters:
+      # +target+:: the configuration options for this target
+      #
+      # Return a PGconn object
+      def connect(target)
+        conn = PG.connect({:host     => target[:host],
+                           :dbname   => target[:database],
+                           :port     => target[:port],
+                           :user     => target[:username],
+                           :password => target[:password]
+                          })
+        return conn
+      end
+      module_function :connect
+
     end
   end
 end
+
+# vim: set tabstop=2 shiftwidth=2 expandtab :
