@@ -15,9 +15,8 @@ package hadoop
 package shredder
 
 // Jackson
-import com.fasterxml.jackson.databind.{
-  JsonNode
-}
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ObjectNode
 
 // Scala
 import scala.collection.JavaConversions._
@@ -171,13 +170,18 @@ object Shredder {
     val schemaNode = schemaKey.asJson
     val hierarchyNode = {
       val full = hierarchyLens.set(partialHierarchy, List(schemaKey.name))
-      full.toJson
+      full.asJson
     }
 
-    // TODO: write this MAGIC
-    val updatedInstance = instance
+    // This might look unsafe but we're only here
+    // if this instance has been validated as a
+    // self-describing JSON, i.e. we can assume the
+    // below structure
+    val updated = instance.asInstanceOf[ObjectNode]
+    updated.replace("schema", schemaNode)
+    updated.put("hierarchy", hierarchyNode)
 
-    (schemaKey, updatedInstance)
+    (schemaKey, updated)
   }
 
   /**
