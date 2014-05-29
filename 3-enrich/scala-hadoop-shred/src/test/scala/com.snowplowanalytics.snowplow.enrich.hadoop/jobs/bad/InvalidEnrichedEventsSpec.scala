@@ -23,6 +23,7 @@ import com.twitter.scalding._
 
 // Cascading
 import cascading.tuple.TupleEntry
+import cascading.tap.SinkMode
 
 // This project
 import JobSpecHelpers._
@@ -51,10 +52,12 @@ object InvalidEnrichedEventsSpec {
  */
 class InvalidEnrichedEventsSpec extends Specification {
 
+  import Dsl._
+
   "A job which processes input lines not containing Snowplow enriched events" should {
     ShredJobSpec.
       source(MultipleTextLineFiles("inputFolder"), InvalidEnrichedEventsSpec.lines).
-      sink[String](Tsv("outputFolder")){ output =>
+      sink[String](PartitionedTsv("outputFolder", ShredJob.ShreddedPartition, false, ('json), SinkMode.REPLACE)){ output =>
         "not write any events" in {
           output must beEmpty
         }

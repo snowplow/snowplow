@@ -13,8 +13,12 @@
 package com.snowplowanalytics.snowplow.enrich
 package hadoop
 
-// Jackson
-// import com.github.fge.jsonschema.core.report.ProcessingMessage
+// Cascading
+import cascading.tap.SinkMode
+import cascading.tuple.Fields
+
+// Scala
+import scala.collection.mutable.Buffer
 
 // Scalaz
 import scalaz._
@@ -33,7 +37,7 @@ import inputs.EnrichedEventLoader
 import shredder.Shredder
 import outputs.{
   BadRow,
-  ShreddedPartition
+  ShreddedPartition => UrShreddedPartition
 }
 import utils.ProcessingMessageUtils
 
@@ -93,6 +97,9 @@ object ShredJob {
       e => None, // Discard
       c => Some(c)) // List -> Some(List) of JsonSchemaPairs
 
+  // Have to define here so can be shared with tests
+  import Dsl._
+  val ShreddedPartition = new UrShreddedPartition('schema)
 }
 
 /**
@@ -109,7 +116,7 @@ class ShredJob(args : Args) extends Job(args) {
 
   // Aliases for our job
   val input = MultipleTextLineFiles(shredConfig.inFolder).read
-  val goodOutput = Tsv(shredConfig.outFolder) // Technically JSONs but use Tsv for partitioning
+  val goodOutput = PartitionedTsv(shredConfig.outFolder, ShredJob.ShreddedPartition, false, ('json), SinkMode.REPLACE)
   val badOutput = Tsv(shredConfig.badFolder)  // Technically JSONs but use Tsv for custom JSON creation
 
   // Do we add a failure trap?
@@ -135,15 +142,14 @@ class ShredJob(args : Args) extends Job(args) {
     .write(badOutput)        // JSON containing line and error(s)
 
   // Handle good rows
-  // TODO: implement this
-  val good = input
-    .flatMap('line -> 'word) { line : String => tokenize(line) }
-    .groupBy('word) { _.size }
-    .write( goodOutput )
-
-  // Split a piece of text into individual words.
-  def tokenize(text : String) : Array[String] = {
-    // Lowercase each word and remove punctuation.
-    text.toLowerCase.replaceAll("[^a-zA-Z0-9\\s]", "").split("\\s+")
-  }
+  val good = common
+    .flatMapTo('output -> 'good) { o: ValidatedJsonSchemaPairList =>
+      ShredJob.isolateGoods(o)
+    }
+    .flatMapTo('good -> ('schema, 'json)) { pairs: Buffer[JsonSchemaPair] =>
+      pairs.toList.map { pair =>
+        (pair._1.toSchemaUri, pair._2.toString)
+      }
+    }
+    .write(goodOutput)
 }
