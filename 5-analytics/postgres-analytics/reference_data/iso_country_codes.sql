@@ -1,11 +1,11 @@
 CREATE SCHEMA reference_data;
 	
 CREATE TABLE reference_data.country_codes (	
+	"name" varchar(50) unique,
 	"two_letter_iso_code" char(2),
 	"three_letter_iso_code" char(3),
-	"name" varchar(50) unique
-	PRIMARY KEY ("two_letter_iso-code")
-)	WITH (OIDS=FALSE)
+	PRIMARY KEY ("two_letter_iso_code")
+)	WITH (OIDS=FALSE);
 
 
 INSERT INTO reference_data.country_codes VALUES
