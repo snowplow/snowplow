@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -21,11 +21,25 @@ class TypeHierarchySpec extends Specification { def is =
 
   "This is a specification to test the TypeHierarchy case class"               ^
                                                                               p^
-  "completeHierarchy should finalize a partial TypeHierarchy"                  ! e2^
+  "a TypeHierarchy should be convertible to JSON"                              ! e1^
+  "the complete method should finalize a partial TypeHierarchy"                ! e2^
                                                                                end 
 
   val EventId = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
   val CollectorTimestamp = "2014-04-29 09:00:54.000"
+
+  def e1 = {
+    val hierarchy =
+      TypeHierarchy(
+        rootId =      EventId,
+        rootTstamp =  CollectorTimestamp,
+        refRoot =    "events",
+        refTree =     List("events", "new_ticket"),
+        refParent =  "events")
+
+    // TODO: add missing refTree
+    hierarchy.asJson.toString must_== s"""{"rootId":"${EventId}","rootTstamp":"${CollectorTimestamp}","refRoot":"events","refParent":"events"}"""
+  }
 
   def e2 = {
     val partial = Shredder.makePartialHierarchy(EventId, CollectorTimestamp)

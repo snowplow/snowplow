@@ -66,7 +66,8 @@ case class TypeHierarchy(
       .put("rootTstamp", rootTstamp)
       .put("refRoot", refRoot)
       .put("refParent", refParent) // TODO: fix order
-      .putArray("refTree") // TODO: fix this
+
+      //.putArray("refTree") // TODO: fix this
 
   /**
    * Completes a partial TypeHierarchy with
