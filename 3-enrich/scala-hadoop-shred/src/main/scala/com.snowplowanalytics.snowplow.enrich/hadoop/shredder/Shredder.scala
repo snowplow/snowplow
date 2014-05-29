@@ -135,7 +135,7 @@ object Shredder {
    * A Scalaz Lens to complete the refTree within
    * a TypeHierarchy object.
    */
-  private[shredder] val hierarchyLens: Lens[TypeHierarchy, List[String]] =
+  private[shredder] val partialHierarchyLens: Lens[TypeHierarchy, List[String]] =
     Lens.lensu((ph, rt) => ph.copy(refTree = ph.refTree ++ rt), _.refTree)
 
   /**
@@ -169,20 +169,35 @@ object Shredder {
 
     val schemaNode = schemaKey.asJson
     val hierarchyNode = {
-      val full = hierarchyLens.set(partialHierarchy, List(schemaKey.name))
+      val full = completeHierarchy(partialHierarchy, List(schemaKey.name))
       full.asJson
     }
 
     // This might look unsafe but we're only here
     // if this instance has been validated as a
     // self-describing JSON, i.e. we can assume the
-    // below structure
+    // below structure.
     val updated = instance.asInstanceOf[ObjectNode]
     updated.replace("schema", schemaNode)
     updated.put("hierarchy", hierarchyNode)
 
     (schemaKey, updated)
   }
+
+  /**
+   * Completes a partial TypeHierarchy with
+   * the supplied refTree elements.
+   *
+   * @param partialHierarchy: the TypeHierarchy
+   *        to complete
+   * @param refTree the rest of the type tree
+   *        to append onto existing refTree
+   * @return the completed TypeHierarchy
+   */
+  private[shredder] def completeHierarchy(
+    partialHierarchy: TypeHierarchy,
+    refTree: List[String]): TypeHierarchy =
+    partialHierarchyLens.set(partialHierarchy, refTree)
 
   /**
    * Extract the JSON from a String, and
@@ -199,7 +214,8 @@ object Shredder {
    *         Failure, or a singular
    *         JsonNode on success
    */
-  private[shredder] def extractAndValidateJson(field: String, instance: Option[String]): MaybeValidatedJson =
+  private[shredder] def extractAndValidateJson(field: String, instance: Option[String]):
+    MaybeValidatedJson =
     for {
       i <- instance
     } yield for {
