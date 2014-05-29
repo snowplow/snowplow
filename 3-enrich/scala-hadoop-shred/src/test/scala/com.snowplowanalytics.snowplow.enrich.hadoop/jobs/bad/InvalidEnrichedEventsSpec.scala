@@ -46,8 +46,8 @@ object InvalidEnrichedEventsSpec {
 /**
  * Integration test for the EtlJob:
  *
- * Input data _is_ not in the
- * expected CloudFront format.
+ * Input data is _not_ in the expected
+ * Snowplow enriched event format.
  */
 class InvalidEnrichedEventsSpec extends Specification {
 
