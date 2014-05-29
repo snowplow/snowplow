@@ -19,6 +19,9 @@ import cascading.tuple.Fields
 import cascading.tuple.TupleEntry
 import cascading.tap.partition.Partition
 
+// Scala
+import scala.collection.JavaConversions._
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -37,14 +40,17 @@ class ShreddedPartition(val partitionFields: Fields) extends Partition {
   
   def toPartition(tupleEntry: TupleEntry): String = {
 
-    if (tupleEntry.size != 1)
-      throw new IllegalArgumentException(s"ShreddedPartition expects 1 argument; got ${tupleEntry.size}")
-    val schemaUri = tupleEntry.getObject(0, classOf[String]).asInstanceOf[String]
+    val fields = tupleEntry.asIterableOf(classOf[String]).toList
+    val schemaUri = fields match {
+      case key :: Nil => key
+      case _ =>
+        throw new IllegalArgumentException(s"ShreddedPartition expects 1 field; got ${fields.size}")
+    }
 
     // Round-tripping through a SchemaKey ensures we have a valid path
     SchemaKey(schemaUri) match {
       case Failure(err) =>
-        throw new RuntimeException("ShreddedPartition expects a valid Iglu-format URI as its path; ${err}")
+        throw new IllegalArgumentException("ShreddedPartition expects a valid Iglu-format URI as its path; got: ${err}")
       case Success(key) => key.toPath
     }
   }
