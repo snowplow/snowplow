@@ -62,7 +62,7 @@ class ShreddedPartitionTestJob(args: Args) extends Job(args) {
 }
 
 class CustomPartitionSourceTest extends Specification {
-  // noDetailedDiffs()
+
   import Dsl._
   import PartitionSourceTestHelpers._
   "PartitionedTsv fed a ShreddedPartition" should {
