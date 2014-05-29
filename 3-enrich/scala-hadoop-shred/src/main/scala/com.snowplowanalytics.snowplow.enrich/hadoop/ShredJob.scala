@@ -62,10 +62,14 @@ object ShredJob {
    * Isolates our Failures into a Some; Successes
    * become a None will be silently dropped by
    * Scalding in this pipeline.
+   *
+   * @param all The Validation containing either
+   *        our Successes or our Failures
+   * @return an Option boxing either our List of
+   *         Processing Messages on Failure, or
+   *         None on Success
    */
-  // TODO: params
-  // TODO: type alias
-  def isolateBads(all: ValidatedJsonSchemaPairList): Option[List[ProcessingMessage]] =
+  def isolateBads(all: ValidatedJsonSchemaPairList): MaybeProcMsgList =
     all.fold(
       e => Some(e.toList), // Nel -> Some(List) of ProcessingMessages
       c => None)
@@ -79,7 +83,7 @@ object ShredJob {
   // TODO: type alias
   // TODO: move to separate file
   // TODO: clean up this implementation, it's hideous. just to get tests passing
-  def buildBadJson(line: String, errors: List[ProcessingMessage]): String = {
+  def buildBadJson(line: String, errors: ProcMsgList): String = {
     val front = s"""{"line":"${line}","errors":[""""
     val mid1: List[String] = errors.map(_.asJson.toString)
     val mid2 = mid1.mkString("""",""")

@@ -62,6 +62,16 @@ package object hadoop {
   type MaybeValidatedJson = Option[ValidatedJson]
 
   /**
+   * A possibly-empty List of ProcessingMessages
+   */
+  type ProcMsgList = List[ProcessingMessage]
+
+  /**
+   * An Option-boxed List of Processing Messages
+   */
+  type MaybeProcMsgList = Option[ProcMsgList]
+
+  /**
    * Type alias for a `ValidationNel` containing
    * either error `JsonNode`s or a List of successfully
    * validated `JsonNode`s.
