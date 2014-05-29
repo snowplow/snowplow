@@ -125,7 +125,7 @@ object Shredder {
   private[shredder] def makePartialHierarchy(rootId: String, rootTstamp: String): TypeHierarchy =
     TypeHierarchy(
       rootId     = rootId,
-      rootTstamp = rootId,
+      rootTstamp = rootTstamp,
       refRoot    = TypeHierarchyRoot,
       refTree    = List(TypeHierarchyRoot), // This is a partial tree. Need to complete later
       refParent  = TypeHierarchyRoot        // Hardcode as nested shredding not supported yet
@@ -162,7 +162,7 @@ object Shredder {
 
     val schemaNode = schemaKey.asJson
     val hierarchyNode = {
-      val full = completeHierarchy(partialHierarchy, List(schemaKey.name))
+      val full = partialHierarchy.complete(List(schemaKey.name))
       full.asJson
     }
 
@@ -176,28 +176,6 @@ object Shredder {
 
     (schemaKey, updated)
   }
-
-  /**
-   * A Scalaz Lens to complete the refTree within
-   * a TypeHierarchy object.
-   */
-  private val partialHierarchyLens: Lens[TypeHierarchy, List[String]] =
-    Lens.lensu((ph, rt) => ph.copy(refTree = ph.refTree ++ rt), _.refTree)
-
-  /**
-   * Completes a partial TypeHierarchy with
-   * the supplied refTree elements.
-   *
-   * @param partialHierarchy: the TypeHierarchy
-   *        to complete
-   * @param refTree the rest of the type tree
-   *        to append onto existing refTree
-   * @return the completed TypeHierarchy
-   */
-  private[shredder] def completeHierarchy(
-    partialHierarchy: TypeHierarchy,
-    refTree: List[String]): TypeHierarchy =
-    partialHierarchyLens.set(partialHierarchy, refTree)
 
   /**
    * Extract the JSON from a String, and

@@ -68,4 +68,43 @@ case class TypeHierarchy(
       .put("refParent", refParent) // TODO: fix order
       .putArray("refTree") // TODO: fix this
 
+  /**
+   * Completes a partial TypeHierarchy with
+   * the supplied refTree elements, and uses
+   * the final refTree to replace the refParent
+   * too.
+   *
+   * @param refTree the rest of the type tree
+   *        to append onto existing refTree
+   * @return the completed TypeHierarchy
+   */
+  def complete(
+    refTree: List[String]): TypeHierarchy =
+    partialHierarchyLens.set(this, refTree)
+
+  /**
+   * A Scalaz Lens to complete the refTree within
+   * a TypeHierarchy object.
+   */
+  // TODO: can we tidy this up?
+  private val partialHierarchyLens: Lens[TypeHierarchy, List[String]] =
+    Lens.lensu((ph, rt) => ph.copy(
+      refTree   = ph.refTree ++ rt,
+      refParent = secondTail(ph.refTree ++ rt)
+      ), _.refTree)
+
+  /**
+   * Get the last-but-one element ("tail-tail")
+   * from a list.
+   *
+   * @param ls The list to return the last-but-one
+   *        element from
+   * @return the last-but-one element from this list
+   */
+  private[shredder] def secondTail[A](ls: List[A]): A = ls match {
+    case h :: _ :: Nil => h
+    case _ :: tail     => secondTail(tail)
+    case _             => throw new NoSuchElementException
+  }
+
 }
