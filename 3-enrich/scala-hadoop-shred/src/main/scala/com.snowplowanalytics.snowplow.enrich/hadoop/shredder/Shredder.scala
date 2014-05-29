@@ -132,13 +132,6 @@ object Shredder {
     )
 
   /**
-   * A Scalaz Lens to complete the refTree within
-   * a TypeHierarchy object.
-   */
-  private[shredder] val partialHierarchyLens: Lens[TypeHierarchy, List[String]] =
-    Lens.lensu((ph, rt) => ph.copy(refTree = ph.refTree ++ rt), _.refTree)
-
-  /**
    * Adds shred-related metadata to the JSON.
    * There are two envelopes of metadata to
    * attach:
@@ -183,6 +176,13 @@ object Shredder {
 
     (schemaKey, updated)
   }
+
+  /**
+   * A Scalaz Lens to complete the refTree within
+   * a TypeHierarchy object.
+   */
+  private val partialHierarchyLens: Lens[TypeHierarchy, List[String]] =
+    Lens.lensu((ph, rt) => ph.copy(refTree = ph.refTree ++ rt), _.refTree)
 
   /**
    * Completes a partial TypeHierarchy with
