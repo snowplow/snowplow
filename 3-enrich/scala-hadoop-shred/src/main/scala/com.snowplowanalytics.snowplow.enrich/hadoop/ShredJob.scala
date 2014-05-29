@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.enrich
 package hadoop
 
 // Jackson
-import com.github.fge.jsonschema.core.report.ProcessingMessage
+// import com.github.fge.jsonschema.core.report.ProcessingMessage
 
 // Scalaz
 import scalaz._
@@ -31,7 +31,10 @@ import common.outputs.CanonicalOutput
 // This project
 import inputs.EnrichedEventLoader
 import shredder.Shredder
-import outputs.ShreddedPartition
+import outputs.{
+  BadRow,
+  ShreddedPartition
+}
 import utils.ProcessingMessageUtils
 
 /**
@@ -69,27 +72,10 @@ object ShredJob {
    *         Processing Messages on Failure, or
    *         None on Success
    */
-  def isolateBads(all: ValidatedJsonSchemaPairList): MaybeProcMsgList =
+  def isolateBads(all: ValidatedJsonSchemaPairList): MaybeProcMsgNel =
     all.fold(
-      e => Some(e.toList), // Nel -> Some(List) of ProcessingMessages
+      e => Some(e), // Nel -> Some(List) of ProcessingMessages
       c => None)
-
-  /**
-   * Converts our original raw line and our List of
-   * ProcessingMessages into a single JSON encapsulating
-   * both.
-   */
-  // TODO: params
-  // TODO: type alias
-  // TODO: move to separate file
-  // TODO: clean up this implementation, it's hideous. just to get tests passing
-  def buildBadJson(line: String, errors: ProcMsgList): String = {
-    val front = s"""{"line":"${line}","errors":[""""
-    val mid1: List[String] = errors.map(_.asJson.toString)
-    val mid2 = mid1.mkString("""",""")
-    val end = """"]}"""
-    front + mid2 + end
-  }
 }
 
 /**
@@ -126,8 +112,8 @@ class ShredJob(args : Args) extends Job(args) {
     .flatMap('output -> 'errors) { o: ValidatedJsonSchemaPairList =>
       ShredJob.isolateBads(o)
     }
-    .mapTo(('line, 'errors) -> 'json) { both: (String, List[ProcessingMessage]) =>
-      ShredJob.buildBadJson(both._1, both._2)
+    .mapTo(('line, 'errors) -> 'json) { both: (String, ProcMsgNel) =>
+      BadRow(both._1, both._2).asJsonString
     }
     .write(badOutput)        // JSON containing line and error(s)
 

@@ -64,12 +64,12 @@ package object hadoop {
   /**
    * A possibly-empty List of ProcessingMessages
    */
-  type ProcMsgList = List[ProcessingMessage]
+  type ProcMsgNel = NonEmptyList[ProcessingMessage]
 
   /**
    * An Option-boxed List of Processing Messages
    */
-  type MaybeProcMsgList = Option[ProcMsgList]
+  type MaybeProcMsgNel = Option[ProcMsgNel]
 
   /**
    * Type alias for a `ValidationNel` containing
