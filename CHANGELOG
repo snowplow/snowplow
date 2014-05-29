@@ -1,3 +1,16 @@
+Looker Refresh (2014-05-xx)
+---------------------------
+Analytics: added reference_data.country_codes (#779)
+LookML: New 'traffic_pulse' dashboard with globally configurable drill-down variables (#765)
+LookML: Snowplow website specific dimensions and metrics removed: base model is now company-generic (#764)
+LookML: cleaner joining of data sets in Looker model (#763)
+LookML: dimensions and metrics renamed to make it clearer for an analyst getting started with the data (#761)
+LookML: added distkeys and sortkeys to derived tables to speed up query times (#696)
+LookML: derived tables now auto-generated when new data is loaded into atomic.events (#688)
+LookML: 'visits' renamed to 'sessions' (#762)
+LookML: LookML models versioned using SchemaVer (#766)
+
+
 Version 0.9.3 (2014-05-21)
 --------------------------
 EmrEtlRunner: bumped to 0.7.0
