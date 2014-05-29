@@ -12,6 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich
 package hadoop
+package jobs
 
 // Scala
 import scala.collection.mutable.ListBuffer

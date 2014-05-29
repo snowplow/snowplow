@@ -12,7 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich
 package hadoop
-package shredder
+package inputs
 
 // Scalaz
 import scalaz._

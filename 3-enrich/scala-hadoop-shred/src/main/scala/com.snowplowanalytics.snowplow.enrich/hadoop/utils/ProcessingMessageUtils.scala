@@ -38,6 +38,8 @@ object ProcessingMessageUtils {
    */
   implicit def pimpValidation[A](validation: Validation[String, A]) = new ProcMsgValidation[A](validation)
 
+  implicit def pimpValidationNel[A](validation: ValidationNel[String, A]) = new ProcMsgValidationNel[A](validation)
+
   /**
    * A helper method to convert a String into
    * a ProcessingMessage. Assume that the
@@ -57,6 +59,8 @@ object ProcessingMessageUtils {
       .setLogLevel(logLevel)
       .setMessage(message)
 
+  def toProcMsg(messages: NonEmptyList[String], logLevel: LogLevel): NonEmptyList[ProcessingMessage] =
+    messages.map(msg => toProcMsg(msg, logLevel))
 
   def toProcMsgNel(message: String, logLevel: LogLevel = LogLevel.ERROR): NonEmptyList[ProcessingMessage] =
     NonEmptyList(toProcMsg(message, logLevel))
@@ -77,4 +81,17 @@ class ProcMsgValidation[+A](validation: Validation[String, A]) {
 
   def toProcessingMessageNel: ValidationNel[ProcessingMessage, A] =
     toProcessingMessage.toValidationNel
+}
+
+/**
+ * A wrapper for the Scalaz Validation, to make it easy to convert
+ * Strings to ProcessingMessages on the Failure side of
+ * Validations.
+ */
+class ProcMsgValidationNel[+A](validation: ValidationNel[String, A]) {
+
+  def toProcessingMessages: ValidationNel[ProcessingMessage, A] =
+    validation.leftMap { err =>
+      ProcessingMessageUtils.toProcMsg(err, LogLevel.ERROR)
+    }
 }

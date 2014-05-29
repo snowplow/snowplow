@@ -13,13 +13,80 @@
 package com.snowplowanalytics.snowplow.enrich
 package hadoop
 
+// Jackson
+import com.github.fge.jsonschema.core.report.ProcessingMessage
+
+// Scalaz
+import scalaz._
+import Scalaz._
+
+// Scalding
+import com.twitter.scalding._
+
 // Snowplow Common Enrich
 import common._
 import common.FatalEtlError
 import common.outputs.CanonicalOutput
 
-// Scalding
-import com.twitter.scalding._
+// This project
+import inputs.EnrichedEventLoader
+import shredder.Shredder
+import outputs.ShreddedPartition
+import utils.ProcessingMessageUtils
+
+/**
+ * Helpers for our data processing pipeline.
+ */
+object ShredJob {
+
+  import utils.ProcessingMessageUtils._
+
+  /**
+   * Pipelines our loading of raw lines into
+   * shredding the JSONs.
+   *
+   * @param line The incoming raw line (hopefully
+   *        holding a Snowplow enriched event)
+   * @return a Validation boxing either a Nel of
+   *         ProcessingMessages on Failure, or a
+   *         (possibly empty) List of JSON instances
+   *         + schemas on Success
+   */
+  def loadAndShred(line: String): ValidatedJsonSchemaPairList =
+    for {
+      event <- EnrichedEventLoader.toEnrichedEvent(line).toProcessingMessages
+      shred <- Shredder.shred(event)
+    } yield shred
+
+  /**
+   * Isolates our Failures into a Some; Successes
+   * become a None will be silently dropped by
+   * Scalding in this pipeline.
+   */
+  // TODO: params
+  // TODO: type alias
+  def isolateBads(all: ValidatedJsonSchemaPairList): Option[List[ProcessingMessage]] =
+    all.fold(
+      e => Some(e.toList), // Nel -> Some(List) of ProcessingMessages
+      c => None)
+
+  /**
+   * Converts our original raw line and our List of
+   * ProcessingMessages into a single JSON encapsulating
+   * both.
+   */
+  // TODO: params
+  // TODO: type alias
+  // TODO: move to separate file
+  // TODO: clean up this implementation, it's hideous. just to get tests passing
+  def buildBadJson(line: String, errors: List[ProcessingMessage]): String = {
+    val front = s"""{"line":"${line}","errors":[""""
+    val mid1: List[String] = errors.map(_.asJson.toString)
+    val mid2 = mid1.mkString("""",""")
+    val end = """"]}"""
+    front + mid2 + end
+  }
+}
 
 /**
  * The Snowplow Shred job, written in Scalding
@@ -35,8 +102,8 @@ class ShredJob(args : Args) extends Job(args) {
 
   // Aliases for our job
   val input = MultipleTextLineFiles(shredConfig.inFolder).read
-  val goodOutput = Tsv(shredConfig.outFolder)
-  val badOutput = JsonLine(shredConfig.badFolder)
+  val goodOutput = Tsv(shredConfig.outFolder) // Technically JSONs but use Tsv for partitioning
+  val badOutput = Tsv(shredConfig.badFolder)  // Technically JSONs but use Tsv for custom JSON creation
 
   // Do we add a failure trap?
   val trappableInput = shredConfig.exceptionsFolder match {
@@ -44,10 +111,28 @@ class ShredJob(args : Args) extends Job(args) {
     case None => input
   }
 
-  input
+  // Scalding data pipeline
+  val common = trappableInput
+    .map('line -> 'output) { l: String =>
+      ShredJob.loadAndShred(l)
+    }
+
+  // Handle bad rows
+  val bad = common
+    .flatMap('output -> 'errors) { o: ValidatedJsonSchemaPairList =>
+      ShredJob.isolateBads(o)
+    }
+    .mapTo(('line, 'errors) -> 'json) { both: (String, List[ProcessingMessage]) =>
+      ShredJob.buildBadJson(both._1, both._2)
+    }
+    .write(badOutput)        // JSON containing line and error(s)
+
+  // Handle good rows
+  // TODO: implement this
+  val good = input
     .flatMap('line -> 'word) { line : String => tokenize(line) }
     .groupBy('word) { _.size }
-    .write( Tsv( shredConfig.outFolder ) )
+    .write( goodOutput )
 
   // Split a piece of text into individual words.
   def tokenize(text : String) : Array[String] = {
