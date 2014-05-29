@@ -75,7 +75,24 @@ object ShredJob {
   def isolateBads(all: ValidatedJsonSchemaPairList): MaybeProcMsgNel =
     all.fold(
       e => Some(e), // Nel -> Some(List) of ProcessingMessages
-      c => None)
+      c => None)    // Discard
+
+  /**
+   * Isolates our Failures into a Some; Successes
+   * become a None will be silently dropped by
+   * Scalding in this pipeline.
+   *
+   * @param all The Validation containing either
+   *        our Successes or our Failures
+   * @return an Option boxing either our List of
+   *         Processing Messages on Failure, or
+   *         None on Success
+   */
+  def isolateGoods(all: ValidatedJsonSchemaPairList): Option[List[JsonSchemaPair]] =
+    all.fold(
+      e => None, // Discard
+      c => Some(c)) // List -> Some(List) of JsonSchemaPairs
+
 }
 
 /**
