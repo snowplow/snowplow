@@ -1,6 +1,7 @@
 Version 0.9.4 (2014-05-30)
 ---------------------------
-Analytics: added reference_data.country_codes (#779)
+Redshift: added reference_data.country_codes (#779)
+Postgres: added reference_data.country_codes (#781) 
 Looker Analytics: New 'traffic_pulse' dashboard with globally configurable drill-down variables (#765)
 Looker Analytics: Snowplow website specific dimensions and metrics removed: base model is now company-generic (#764)
 Looker Analytics: cleaner joining of data sets in Looker model (#763)
