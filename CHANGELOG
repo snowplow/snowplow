@@ -1,3 +1,16 @@
+Version 0.9.4 (2014-05-30)
+---------------------------
+Redshift: added reference_data.country_codes (#779)
+Postgres: added reference_data.country_codes (#781) 
+Looker Analytics: New 'traffic_pulse' dashboard with globally configurable drill-down variables (#765)
+Looker Analytics: Snowplow website specific dimensions and metrics removed: base model is now company-generic (#764)
+Looker Analytics: cleaner joining of data sets in Looker model (#763)
+Looker Analytics: dimensions and metrics renamed to make it clearer for an analyst getting started with the data (#761)
+Looker Analytics: added distkeys and sortkeys to derived tables to speed up query times (#696)
+Looker Analytics: derived tables now auto-generated when new data is loaded into atomic.events (#688)
+Looker Analytics: 'visits' renamed to 'sessions' (#762)
+Looker Analytics: LookML models versioned using SchemaVer (#766)
+
 Version 0.9.3 (2014-05-21)
 --------------------------
 EmrEtlRunner: bumped to 0.7.0

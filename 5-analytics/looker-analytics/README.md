@@ -20,7 +20,7 @@ It should be straightforward for Snowplow users to build on this basic model to 
 
 The contents of this folder are as follows:
 
-* This `README.md` and teh `LICENSE-2.0.txt` Apache license file
+* This `README.md` and the `LICENSE-2.0.txt` Apache license file
 * `looker-metadata-model` contains the YAML metadata model files
 
 ## Documentation
