@@ -28,4 +28,3 @@ import cascading.tap.SinkMode
 // This project
 import JobSpecHelpers._
 
-// TODO: add in a couple of rows with invalid UUIDs
