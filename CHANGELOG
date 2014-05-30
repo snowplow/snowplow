@@ -1,4 +1,4 @@
-Looker Refresh (2014-05-30)
+Version 0.9.4 (2014-05-30)
 ---------------------------
 Analytics: added reference_data.country_codes (#779)
 Looker Analytics: New 'traffic_pulse' dashboard with globally configurable drill-down variables (#765)
