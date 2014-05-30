@@ -9,11 +9,12 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 #
-# Version:     0.1.0
+# Version: 2-0-0
 #
-# Author(s):   Yali Sassoon
-# Copyright:   Copyright (c) 2013-2014 Snowplow Analytics Ltd
-# License:     Apache License Version 2.0
+# Author(s): Yali Sassoon
+# Copyright: Copyright (c) 2013-2014 Snowplow Analytics Ltd
+# License: Apache License Version 2.0
+
 
 - view: transactions
   derived_table:
@@ -31,23 +32,27 @@
         MIN(collector_tstamp) AS tr_tstamp
       FROM atomic.events 
       WHERE event = 'transaction'
-      GROUP BY 1,2,3,4,5,5,6,7,8,9
+      GROUP BY 1,2,3,4,5,5,6,7,8,9,10
       ORDER BY tr_orderid
     
-    persist_for: 3 hours
+    
+    sql_trigger_value: SELECT MAX(collector_tstamp) FROM atomic.events
+    distkey: domain_userid
+    sortkeys: [domain_sessionidx, tr_orderid]
     
   fields:
   
   # DIMENSIONS #
   
-  - dimension: domain_userid
+  - dimension: user_id
     sql: ${TABLE}.domain_userid
-    hidden: true
     
-  - dimension: domain_sessionidx
+  - dimension: session_index
     type: int
     sql: ${TABLE}.domain_sessionidx
-    hidden: true
+    
+  - dimension: session_id
+    sql: ${TABLE}.domain_userid || '-' || ${TABLE}.domain_sessionidx
     
   # Transaction fields #
   

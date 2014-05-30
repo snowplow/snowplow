@@ -15,36 +15,5 @@
 # Copyright: Copyright (c) 2013-2014 Snowplow Analytics Ltd
 # License: Apache License Version 2.0
 
-- connection: snowplow
-
-- scoping: true                  # for backward compatibility
-- include: "*.view.lookml"       # include all the views
-- include: "*.dashboard.lookml"  # include all the dashboards
-
-- base_view: events  
-  joins:
-  - join: sessions
-    sql_on: |
-      events.domain_userid = sessions.domain_userid AND
-      events.domain_sessionidx = sessions.domain_sessionidx
-  - join: visitors
-    sql_on: |
-      events.domain_userid = visitors.domain_userid
-
-# Views to support events
-- base_view: atomic_events
-
-- base_view: sessions
-  joins: 
-  - join: visitors
-    sql_on: |
-      sessions.domain_userid = visitors.domain_userid
-
-- base_view: visitors
-
-- base_view: transactions
-
-- base_view: transaction_items
-  joins:
-  - join: transactions
-    sql_foreign_key: transaction_items.ti_orderid
+- view: atomic_events
+  sql_table_name: atomic.events
