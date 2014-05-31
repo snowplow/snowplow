@@ -125,11 +125,10 @@ object ValidatableJsonNode {
     for {
       j  <- validateAsSelfDescribing(instance)
       s  =  j.get("schema").asText
-      d1 =  j.get("data")
+      d  =  j.get("data")
       js <- SchemaRepo.lookupSchema(s).toProcessingMessageNel
-      v  <- validateAgainstSchema(d1, js)
-      d2 =  v.get("data")
-    } yield if (dataOnly) d2 else v
+      v  <- validateAgainstSchema(d, js)
+    } yield if (dataOnly) d else v
 
   /**
    * The same as validate(), but on Success returns
@@ -154,12 +153,11 @@ object ValidatableJsonNode {
     for {
       j  <- validateAsSelfDescribing(instance)
       s  =  j.get("schema").asText
-      d1 =  j.get("data")
+      d  =  j.get("data")
       sk <- SchemaKey(s).toProcessingMessageNel
       js <- SchemaRepo.lookupSchema(sk).toProcessingMessageNel
-      v  <- validateAgainstSchema(d1, js)
-      d2 =  v.get("data")
-    } yield if (dataOnly) (sk, d2) else (sk, v)
+      v  <- validateAgainstSchema(d, js)
+    } yield if (dataOnly) (sk, d) else (sk, v)
 
   /**
    * Factory for retrieving a JSON Schema

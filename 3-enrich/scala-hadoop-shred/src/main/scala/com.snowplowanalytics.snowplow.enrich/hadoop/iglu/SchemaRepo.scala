@@ -84,7 +84,7 @@ object SchemaRepo {
    * @return the JsonNode representing this schema
    */
   def unsafeLookupSchema(schemaKey: SchemaKey): JsonNode = {
-    val schemaPath = s"${localPath}/${schemaKey.toPath}"
+    val schemaPath = s"${localPath}/schemas/${schemaKey.toPath}"
     JsonLoader.fromResource(schemaPath)
   }
 }

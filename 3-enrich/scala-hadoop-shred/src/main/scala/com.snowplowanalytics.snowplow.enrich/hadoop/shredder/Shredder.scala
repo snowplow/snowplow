@@ -82,14 +82,16 @@ object Shredder {
     val ue = for {
       v <- extractAndValidateJson("ue_properties", Option(event.ue_properties))
     } yield for {
-      j <- v; v = List(j)
-    } yield v
-    
+      j <- v
+      l = List(j)
+    } yield l
+
     val c  = for {
       v <- extractAndValidateJson("context", Option(event.contexts))
     } yield for {
-      j <- v; v = j.iterator.toList
-    } yield v
+      j <- v
+      l = j.iterator.toList
+    } yield l
 
     def flatten(o: Option[ValidatedJsonList]): ValidatedJsonList = o match {
       case Some(vjl) => vjl

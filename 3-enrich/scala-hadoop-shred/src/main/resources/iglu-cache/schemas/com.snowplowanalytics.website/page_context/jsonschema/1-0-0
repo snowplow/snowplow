@@ -1,0 +1,35 @@
+{
+	"$schema": "http://json-schema.org/schema#",
+	"description": "Schema for a page context",
+	"self": {
+		"vendor": "com.snowplowanalytics.website",
+		"name": "page_context",
+		"format": "jsonschema",
+		"version": "1-0-0"
+	},
+
+	"type": "object",
+	"properties": {
+		"category": {
+			"type": "string"
+		},
+		"subCategory": {
+			"type": "string"
+		},
+		"author": {
+			"type": "string"
+		},
+		"whenPublished": {
+			"type": "string",
+			"format": "date"
+		},
+		"topics": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		}
+	},
+	"minProperties": 1,
+	"additionalProperties": false
+}
