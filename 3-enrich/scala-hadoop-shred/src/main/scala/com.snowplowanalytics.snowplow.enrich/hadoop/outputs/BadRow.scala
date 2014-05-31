@@ -40,7 +40,7 @@ case class BadRow(
   def asJsonString: String = {
     val front = s"""{"line":"${line}","errors":["""
     val mid1  = errors.map(_.asJson.toString)
-    val mid2  = mid1.toList.mkString("""",""")
+    val mid2  = mid1.toList.mkString(""",""")
     val end   = """]}"""
     front + mid2 + end
   }
