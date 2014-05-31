@@ -14,6 +14,16 @@ package com.snowplowanalytics.snowplow.enrich
 package hadoop
 package inputs
 
+// Java
+import java.util.UUID
+
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.DateTimeFormat
+
+// Scala
+import scala.util.Try
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -32,9 +42,7 @@ import outputs.CanonicalOutput
  */
 object EnrichedEventLoader {
 
-  // Taken from http://stackoverflow.com/a/6640851/255627
-  // TODO: replace with a proper UUID check.
-  private val UuidRegex = "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})".r
+  private val RedshiftTstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").withZone(DateTimeZone.UTC)
 
   private val FieldCount = 104
 
@@ -88,13 +96,37 @@ object EnrichedEventLoader {
    *
    * @param field The name of the field being validated
    * @param str The String hopefully containing a UUID
-   * @return a Scalaz ValidatedString
+   * @return a Scalaz ValidatedString containing either
+   *         the original String on Success, or an error
+   *         String on Failure.
    */
-  private def validateUuid(field: String, str: String): ValidatedString = str match {
-    case UuidRegex(uuid) => uuid.success
-    case _ => s"Field [$field]: [$str] is not a valid UUID".fail
+  private def validateUuid(field: String, str: String): ValidatedString = {
+
+    def check(s: String)(u: UUID): Boolean = (u != null && s == u.toString)
+    val uuid = Try(UUID.fromString(str)).toOption.filter(check(str))
+    uuid match {
+      case Some(_) => str.success
+      case None    => s"Field [$field]: [$str] is not a valid UUID".fail
+    }
   }
 
-  // TODO: implement this
-  private def validateTimestamp(field: String, str: String): ValidatedString = str.success
+  /**
+   * Validates that the given field contains a valid
+   * (Redshift/Postgres-compatible) timestamp.
+   *
+   * @param field The name of the field being validated
+   * @param str The String hopefully containing a
+   *        Redshift/PG-compatible timestamp
+   * @return a Scalaz ValidatedString containing either
+   *         the original String on Success, or an error
+   *         String on Failure.
+   */
+  private def validateTimestamp(field: String, str: String): ValidatedString =
+    try {
+      val _ = RedshiftTstampFormat.parseDateTime(str)
+      str.success
+    } catch {
+      case e: Throwable =>
+        s"Field [$field]: [$str] is not a valid Redshift/Postgres timestamp".fail
+    }
 }
