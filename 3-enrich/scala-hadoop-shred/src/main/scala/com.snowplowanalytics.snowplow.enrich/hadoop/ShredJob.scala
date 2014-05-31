@@ -66,7 +66,7 @@ object ShredJob {
     } yield shred
 
   /**
-   * Isolates our Failures into a Some; Successes
+   * Projects our Failures into a Some; Successes
    * become a None will be silently dropped by
    * Scalding in this pipeline.
    *
@@ -76,15 +76,15 @@ object ShredJob {
    *         Processing Messages on Failure, or
    *         None on Success
    */
-  def isolateBads(all: ValidatedJsonSchemaPairList): MaybeProcMsgNel =
+  def projectBads(all: ValidatedJsonSchemaPairList): MaybeProcMsgNel =
     all.fold(
       e => Some(e), // Nel -> Some(List) of ProcessingMessages
       c => None)    // Discard
 
   /**
-   * Isolates our Failures into a Some; Successes
-   * become a None will be silently dropped by
-   * Scalding in this pipeline.
+   * Projects our non-empty Successes into a
+   * Some; everything else will be silently
+   * dropped by Scalding in this pipeline.
    *
    * @param all The Validation containing either
    *        our Successes or our Failures
@@ -92,10 +92,10 @@ object ShredJob {
    *         Processing Messages on Failure, or
    *         None on Success
    */
-  def isolateGoods(all: ValidatedJsonSchemaPairList): Option[List[JsonSchemaPair]] =
-    all.fold(
-      e => None, // Discard
-      c => Some(c)) // List -> Some(List) of JsonSchemaPairs
+  def projectGoods(all: ValidatedJsonSchemaPairList): Option[List[JsonSchemaPair]] = all match {
+    case Success(nel @ _ :: Nil) => Some(nel) // (Non-empty) List -> Some(List) of JsonSchemaPairs
+    case _                       => None      // Discard
+  }
 
   // Have to define here so can be shared with tests
   import Dsl._
@@ -134,7 +134,7 @@ class ShredJob(args : Args) extends Job(args) {
   // Handle bad rows
   val bad = common
     .flatMap('output -> 'errors) { o: ValidatedJsonSchemaPairList =>
-      ShredJob.isolateBads(o)
+      ShredJob.projectBads(o)
     }
     .mapTo(('line, 'errors) -> 'json) { both: (String, ProcMsgNel) =>
       BadRow(both._1, both._2).asJsonString
@@ -144,7 +144,7 @@ class ShredJob(args : Args) extends Job(args) {
   // Handle good rows
   val good = common
     .flatMapTo('output -> 'good) { o: ValidatedJsonSchemaPairList =>
-      ShredJob.isolateGoods(o)
+      ShredJob.projectGoods(o)
     }
     .flatMapTo('good -> ('schema, 'json)) { pairs: Buffer[JsonSchemaPair] =>
       pairs.toList.map { pair =>
