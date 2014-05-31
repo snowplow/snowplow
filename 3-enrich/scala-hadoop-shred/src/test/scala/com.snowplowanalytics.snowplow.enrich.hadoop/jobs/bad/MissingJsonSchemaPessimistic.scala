@@ -45,8 +45,8 @@ object MissingJonsSchemaPessimistic {
 /**
  * Integration test for the EtlJob:
  *
- * Input data is _not_ in the expected
- * Snowplow enriched event format.
+ * The JSON Schema for the context
+ * cannot be located.
  */
 class MissingJonsSchemaPessimistic extends Specification {
 
