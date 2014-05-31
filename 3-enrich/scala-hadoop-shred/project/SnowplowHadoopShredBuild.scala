@@ -30,6 +30,7 @@ object SnowplowHadoopShredBuild extends Build {
       libraryDependencies ++= Seq(
         // Java
         Libraries.hadoopCore,
+        Libraries.json4sJackson,
         Libraries.jacksonDatabind,
         Libraries.jsonValidator,
         Libraries.yodaTime,

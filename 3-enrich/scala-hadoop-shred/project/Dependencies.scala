@@ -24,6 +24,7 @@ object Dependencies {
   object V {
     // Java
     val hadoop          = "1.1.2"
+    val json4sJackson   = "3.2.11-SNAPSHOT"
     val jacksonDatabind = "2.2.3"
     val jsonValidator   = "2.2.3"
     val yodaTime        = "2.1"
@@ -41,6 +42,7 @@ object Dependencies {
   object Libraries {
     // Java
     val hadoopCore       = "org.apache.hadoop"          %  "hadoop-core"             % V.hadoop          % "provided"
+    val json4sJackson    = "org.json4s"                 %% "json4s-jackson"          % V.json4sJackson
     val jacksonDatabind  = "com.fasterxml.jackson.core" %  "jackson-databind"        % V.jacksonDatabind
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"   % V.jsonValidator
     val yodaTime         = "joda-time"                  %  "joda-time"               % V.yodaTime
