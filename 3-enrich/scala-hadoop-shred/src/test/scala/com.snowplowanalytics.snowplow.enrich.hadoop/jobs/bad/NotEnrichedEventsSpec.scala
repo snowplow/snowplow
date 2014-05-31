@@ -41,7 +41,7 @@ object NotEnrichedEventsSpec {
     "2012-05-21  07:14:47  FRA2  3343  83.4.209.35 GET d3t05xllj8hhgj.cloudfront.net"
     )
 
-  val expected = (line: String) => s"""{"line":"${line}","errors":["{"level":"error","message":"Line does not match Snowplow enriched event (expected 104 fields; found 1)"}"]}"""
+  val expected = (line: String) => s"""{"line":"${line}","errors":[{"level":"error","message":"Line does not match Snowplow enriched event (expected 104 fields; found 1)"}]}"""
 }
 
 /**
