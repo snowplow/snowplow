@@ -15,9 +15,6 @@ package hadoop
 package jobs
 package bad
 
-// Specs2
-import org.specs2.mutable.Specification
-
 // Scalding
 import com.twitter.scalding._
 
@@ -27,6 +24,9 @@ import cascading.tap.SinkMode
 
 // This project
 import JobSpecHelpers._
+
+// Specs2
+import org.specs2.mutable.Specification
 
 /**
  * Holds the input data for the test,
