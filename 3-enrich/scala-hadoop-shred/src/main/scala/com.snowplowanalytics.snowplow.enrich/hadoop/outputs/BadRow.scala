@@ -38,10 +38,10 @@ case class BadRow(
   // TODO: fix method name, not nice
   // TODO: clean up this implementation, it's hideous. It's here just to get tests passing
   def asJsonString: String = {
-    val front = s"""{"line":"${line}","errors":[""""
+    val front = s"""{"line":"${line}","errors":["""
     val mid1  = errors.map(_.asJson.toString)
     val mid2  = mid1.toList.mkString("""",""")
-    val end   = """"]}"""
+    val end   = """]}"""
     front + mid2 + end
   }
 }
