@@ -26,6 +26,8 @@ object Dependencies {
     val hadoop          = "1.1.2"
     val jacksonDatabind = "2.2.3"
     val jsonValidator   = "2.2.3"
+    val yodaTime        = "2.1"
+    val yodaConvert     = "1.2"
     // Scala
     val commonEnrich    = "0.3.0"
     val scalding        = "0.10.0"
@@ -41,6 +43,8 @@ object Dependencies {
     val hadoopCore       = "org.apache.hadoop"          %  "hadoop-core"             % V.hadoop          % "provided"
     val jacksonDatabind  = "com.fasterxml.jackson.core" %  "jackson-databind"        % V.jacksonDatabind
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"   % V.jsonValidator
+    val yodaTime         = "joda-time"                  %  "joda-time"               % V.yodaTime
+    val yodaConvert      = "org.joda"                   %  "joda-convert"            % V.yodaConvert
     // Scala
     val commonEnrich     = "com.snowplowanalytics"      %  "snowplow-common-enrich"  % V.commonEnrich
     val scaldingCore     = "com.twitter"                %% "scalding-core"           % V.scalding

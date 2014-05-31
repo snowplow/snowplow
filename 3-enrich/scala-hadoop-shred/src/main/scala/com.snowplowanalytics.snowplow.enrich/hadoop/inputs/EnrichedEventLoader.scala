@@ -127,6 +127,6 @@ object EnrichedEventLoader {
       str.success
     } catch {
       case e: Throwable =>
-        s"Field [$field]: [$str] is not a valid Redshift/Postgres timestamp".fail
+        s"Field [$field]: [$str] is not in the expected Redshift/Postgres timestamp format".fail
     }
 }
