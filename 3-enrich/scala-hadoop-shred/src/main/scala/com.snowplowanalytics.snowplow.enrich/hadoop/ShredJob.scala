@@ -146,8 +146,8 @@ class ShredJob(args : Args) extends Job(args) {
     .flatMapTo('output -> 'good) { o: ValidatedJsonSchemaPairList =>
       ShredJob.projectGoods(o)
     }
-    .flatMapTo('good -> ('schema, 'json)) { pairs: Buffer[JsonSchemaPair] =>
-      pairs.toList.map { pair =>
+    .flatMapTo('good -> ('schema, 'json)) { pairs: List[JsonSchemaPair] =>
+      pairs.map { pair =>
         (pair._1.toSchemaUri, pair._2.toString)
       }
     }
