@@ -114,8 +114,14 @@ object JobSpecHelpers {
       arg("bad_rows_folder", "badFolder").
       arg("exceptions_folder", "exceptionsFolder")
 
-  // Tool-invoked-job builder
-  // TODO: comment and make input N lines
+  /**
+   * Run the ShredJob using the Scalding Tool.
+   *
+   * @param lines The input lines to shred
+   * @return a Tuple3 containing open File
+   *         objects for the output, bad rows
+   *         and exceptions temporary directories.
+   */
   def runJobInTool(lines: Lines): Tuple3[File, File, File] = {
 
     def mkTmpDir(tag: String, createParents: Boolean = false, containing: Option[Lines] = None): File = {
