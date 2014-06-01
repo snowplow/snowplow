@@ -73,7 +73,8 @@ class WebsitePageContextSpec extends Specification {
 
   "A job which is provided with a valid website page_context" should {
 
-    val (output, badRows, exceptions) = JobSpecHelpers.runJobInTool(WebsitePageContextSpec.lines)
+    val Sinks =
+      JobSpecHelpers.runJobInTool(WebsitePageContextSpec.lines)
 
     "shred the custom context into its appropriate path" in {
       // TODO: move this out
@@ -81,7 +82,7 @@ class WebsitePageContextSpec extends Specification {
       import java.io.File
       // Scala
       import scala.io.{Source => ScalaSource}
-      val pageContextSource = ScalaSource.fromFile(new File(output, WebsitePageContextSpec.expected.path))
+      val pageContextSource = ScalaSource.fromFile(new File(Sinks.output, WebsitePageContextSpec.expected.path))
       pageContextSource.getLines.toList mustEqual Seq(WebsitePageContextSpec.expected.contents)
     }
 
@@ -89,16 +90,13 @@ class WebsitePageContextSpec extends Specification {
       1 must_== 1 // TODO
     }
     "not trap any exceptions" in {
-      badRows must beEmptyDir
+      Sinks.badRows must beEmptyDir
     }
     "not write any bad row JSONs" in {
-      exceptions must beEmptyDir
+      Sinks.exceptions must beEmptyDir
     }
 
-    for (f <- List(exceptions, badRows, output)) {
-      f.delete()
-    }
-
+    Sinks.deleteAll()
     ()
   }
 }

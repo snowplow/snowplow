@@ -114,6 +114,18 @@ object JobSpecHelpers {
       arg("bad_rows_folder", "badFolder").
       arg("exceptions_folder", "exceptionsFolder")
 
+  case class Sinks(
+    val output:     File,
+    val badRows:    File,
+    val exceptions: File) {
+
+    def deleteAll() {
+      for (f <- List(exceptions, badRows, output)) {
+        f.delete()
+      }
+    }
+  }
+
   /**
    * Run the ShredJob using the Scalding Tool.
    *
@@ -122,7 +134,7 @@ object JobSpecHelpers {
    *         objects for the output, bad rows
    *         and exceptions temporary directories.
    */
-  def runJobInTool(lines: Lines): Tuple3[File, File, File] = {
+  def runJobInTool(lines: Lines): Sinks = {
 
     def mkTmpDir(tag: String, createParents: Boolean = false, containing: Option[Lines] = None): File = {
       val f = File.createTempFile(s"snowplow-shred-job-${tag}-", "")
@@ -146,7 +158,7 @@ object JobSpecHelpers {
     Tool.main(args)
     input.delete()
 
-    (output, badRows, exceptions)
+    Sinks(output, badRows, exceptions)
   }
 
 }
