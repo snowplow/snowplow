@@ -40,13 +40,13 @@ object InvalidJsonsSpec {
     )
 
   val expected = (line: String) =>
-  	s"""|{
-  		  |"line":"${line}",
-  	      |"errors":[
-  	        |{"level":"error","message":"Field [ue_properties]: invalid JSON [|%|] with parsing error: Unexpected character ('|' (code 124)): expected a valid value (number, String, array, object, 'true', 'false' or 'null')\\n at [Source: java.io.StringReader@xxxxxx; line: 1, column: 2]"},
-  	        |{"level":"error","message":"Field [context]: invalid JSON [&&&] with parsing error: Unexpected character ('&' (code 38)): expected a valid value (number, String, array, object, 'true', 'false' or 'null')\\n at [Source: java.io.StringReader@xxxxxx; line: 1, column: 2]"}
-  	      |]
-  	    |}""".stripMargin.replaceAll("[\n\r]","")
+    s"""|{
+          |"line":"${line}",
+          |"errors":[
+            |{"level":"error","message":"Field [ue_properties]: invalid JSON [|%|] with parsing error: Unexpected character ('|' (code 124)): expected a valid value (number, String, array, object, 'true', 'false' or 'null')\\n at [Source: java.io.StringReader@xxxxxx; line: 1, column: 2]"},
+            |{"level":"error","message":"Field [context]: invalid JSON [&&&] with parsing error: Unexpected character ('&' (code 38)): expected a valid value (number, String, array, object, 'true', 'false' or 'null')\\n at [Source: java.io.StringReader@xxxxxx; line: 1, column: 2]"}
+          |]
+        |}""".stripMargin.replaceAll("[\n\r]","")
 }
 
 /**
