@@ -87,12 +87,14 @@ case class TypeHierarchy(
    * A Scalaz Lens to complete the refTree within
    * a TypeHierarchy object.
    */
-  // TODO: can we tidy this up?
   private val partialHierarchyLens: Lens[TypeHierarchy, List[String]] =
-    Lens.lensu((ph, rt) => ph.copy(
-      refTree   = ph.refTree ++ rt,
-      refParent = secondTail(ph.refTree ++ rt)
-      ), _.refTree)
+    Lens.lensu((ph, rt) => {
+      val full = ph.refTree ++ rt
+      ph.copy(
+        refTree   = full,
+        refParent = secondTail(full)
+      )}, _.refTree
+    )
 
   /**
    * Get the last-but-one element ("tail-tail")
