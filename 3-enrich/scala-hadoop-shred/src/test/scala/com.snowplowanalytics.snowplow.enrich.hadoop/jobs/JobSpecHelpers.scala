@@ -14,12 +14,17 @@ package com.snowplowanalytics.snowplow.enrich
 package hadoop
 package jobs
 
+// Java
+import java.io.File
+import java.io.BufferedWriter
+import java.io.FileWriter
+
 // Scala
 import scala.collection.mutable.ListBuffer
 
-// Specs2
-import org.specs2.matcher.{Matcher, Expectable}
-import org.specs2.matcher.Matchers._
+// Scalaz
+import scalaz._
+import Scalaz._
 
 // Scalding
 import com.twitter.scalding._
@@ -27,6 +32,9 @@ import com.twitter.scalding._
 // Snowplow Common Enrich
 import common.outputs.CanonicalOutput
 
+// Specs2
+import org.specs2.matcher.{Matcher, Expectable}
+import org.specs2.matcher.Matchers._
 /**
  * Holds helpers for running integration
  * tests on SnowPlow EtlJobs.
@@ -39,6 +47,13 @@ object JobSpecHelpers {
    */
   val beEmpty: Matcher[ListBuffer[_]] =
     ((_: ListBuffer[_]).isEmpty, "is not empty")
+
+  /**
+   * A Specs2 matcher to check if a directory
+   * on disk is empty or not.
+   */
+  val beEmptyDir: Matcher[File] =
+    ((f: File) => !f.isDirectory || f.list.length > 0, "is populated directory, or not a directory")
 
   /**
    * How Scalding represents input lines
@@ -56,6 +71,18 @@ object JobSpecHelpers {
 
     val lines = l.toList
     val numberedLines = number(lines)
+
+    /**
+     * Writes the lines to the given file
+     *
+     * @param file The file to write the
+     *        lines to
+     */
+    def writeTo(file: File) = {
+      val writer = new BufferedWriter(new FileWriter(file))
+      for (line <- lines) writer.write(line)
+      writer.close()
+    }
 
     /**
      * Numbers the lines in the Scalding format.
@@ -86,4 +113,34 @@ object JobSpecHelpers {
       arg("output_folder", "outputFolder").
       arg("bad_rows_folder", "badFolder").
       arg("exceptions_folder", "exceptionsFolder")
+
+  // Tool-invoked-job builder
+  // TODO: comment and make input N lines
+  def runJobInTool(lines: Lines): Tuple3[File, File, File] = {
+
+    def mkTmpDir(tag: String, createParents: Boolean = false, containing: Option[Lines] = None): File = {
+      val f = File.createTempFile(s"snowplow-shred-job-${tag}-", "")
+      if (createParents) f.mkdirs() else f.mkdir()
+      containing.map(_.writeTo(f))
+      f
+    }
+
+    val input      = mkTmpDir("input", createParents = true, containing = lines.some)
+    val output     = mkTmpDir("output")
+    val badRows    = mkTmpDir("bad-rows")
+    val exceptions = mkTmpDir("exceptions")  
+
+    val args = Array[String]("com.snowplowanalytics.snowplow.enrich.hadoop.ShredJob", "--local",
+      "--input_folder",      input.getAbsolutePath,
+      "--output_folder",     output.getAbsolutePath,
+      "--bad_rows_folder",   badRows.getAbsolutePath,
+      "--exceptions_folder", exceptions.getAbsolutePath)
+
+    // Execute
+    Tool.main(args)
+    input.delete()
+
+    (output, badRows, exceptions)
+  }
+
 }
