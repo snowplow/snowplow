@@ -77,7 +77,7 @@ case class SchemaKey(
   def asJson: JsonNode =
     SchemaKey.NodeFactory.objectNode()
       .put("vendor", vendor)
-      .put("name", vendor)
+      .put("name", name)
       .put("format", format)
       .put("version", version)
 

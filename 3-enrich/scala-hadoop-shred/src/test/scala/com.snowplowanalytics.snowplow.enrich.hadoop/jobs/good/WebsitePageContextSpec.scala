@@ -43,16 +43,18 @@ object WebsitePageContextSpec {
     val path = s"${vendor}/page_context/jsonschema/1-0-0"
     val contents  = 
       s"""|{
-            |"author":"Alex Dean",
-            |"topics":["hive","udf","serde","java","hadoop"],
-            |"subCategory":"inside the plow",
-            |"category":"blog",
-            |"whenPublished":"2013-02-08",
             |"schema":{
               |"vendor":"com.snowplowanalytics.website",
-              |"name":"com.snowplowanalytics.website",
+              |"name":"page_context",
               |"format":"jsonschema",
               |"version":"1-0-0"
+            |},
+            |"data":{
+              |"author":"Alex Dean",
+              |"topics":["hive","udf","serde","java","hadoop"],
+              |"subCategory":"inside the plow",
+              |"category":"blog",
+              |"whenPublished":"2013-02-08"
             |},
             |"hierarchy":{
               |"rootId":"a4583919-4df8-496a-917b-d40fa1c8ca7f",
@@ -77,7 +79,7 @@ class WebsitePageContextSpec extends Specification {
     val Sinks =
       JobSpecHelpers.runJobInTool(WebsitePageContextSpec.lines)
 
-    "shred the custom context into its appropriate path" in {
+    "shred the website page_context into its appropriate path" in {
       // TODO: move this out
       // Java
       import java.io.File
@@ -91,10 +93,12 @@ class WebsitePageContextSpec extends Specification {
       1 must_== 1 // TODO
     }
     "not trap any exceptions" in {
-      Sinks.badRows must beEmptyDir
+      // TODO: not working
+      Sinks.exceptions must beEmptyDir
     }
     "not write any bad row JSONs" in {
-      Sinks.exceptions must beEmptyDir
+      // TODO: not working
+      Sinks.badRows must beEmptyDir
     }
 
     Sinks.deleteAll()

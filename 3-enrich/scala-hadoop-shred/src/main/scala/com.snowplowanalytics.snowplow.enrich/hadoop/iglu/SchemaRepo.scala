@@ -53,7 +53,7 @@ object SchemaRepo {
       unsafeLookupSchema(schemaKey).success
     } catch {
       case e: Throwable =>
-        s"Cannot load schema ${schemaKey} from Iglu".fail
+        s"Cannot find schema ${schemaKey} in any Iglu repository".fail
     }
   }
 

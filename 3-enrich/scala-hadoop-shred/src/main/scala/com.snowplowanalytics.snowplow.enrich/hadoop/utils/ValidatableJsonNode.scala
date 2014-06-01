@@ -128,7 +128,7 @@ object ValidatableJsonNode {
       d  =  j.get("data")
       js <- SchemaRepo.lookupSchema(s).toProcessingMessageNel
       v  <- validateAgainstSchema(d, js)
-    } yield if (dataOnly) d else v
+    } yield if (dataOnly) d else instance
 
   /**
    * The same as validate(), but on Success returns
@@ -157,7 +157,7 @@ object ValidatableJsonNode {
       sk <- SchemaKey(s).toProcessingMessageNel
       js <- SchemaRepo.lookupSchema(sk).toProcessingMessageNel
       v  <- validateAgainstSchema(d, js)
-    } yield if (dataOnly) (sk, d) else (sk, v)
+    } yield if (dataOnly) (sk, d) else (sk, instance)
 
   /**
    * Factory for retrieving a JSON Schema

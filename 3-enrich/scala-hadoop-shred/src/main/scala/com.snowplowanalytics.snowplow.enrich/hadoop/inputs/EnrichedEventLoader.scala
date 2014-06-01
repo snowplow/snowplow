@@ -70,8 +70,8 @@ object EnrichedEventLoader {
 
     val fields = line.split("\t").map(f => if (f == "") null else f)
     val len = fields.length
-    if (len != FieldCount)
-      return s"Line does not match Snowplow enriched event (expected $FieldCount fields; found $len)".failNel[CanonicalOutput]
+    if (len < FieldCount)
+      return s"Line does not match Snowplow enriched event (expected ${FieldCount}+ fields; found $len)".failNel[CanonicalOutput]
 
     val event = new CanonicalOutput().tap { e =>
       e.contexts = fields(FieldIndexes.contexts)
