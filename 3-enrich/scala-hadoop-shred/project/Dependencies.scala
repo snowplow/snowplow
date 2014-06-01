@@ -37,7 +37,7 @@ object Dependencies {
     val argonaut        = "6.0.4"
     // Scala (test only)
     val specs2          = "1.14" // Downgrade to prevent issues in job tests. WAS: "2.3.11"
-    val scalazSpecs2     = "0.1.2"
+    val scalazSpecs2    = "0.1.2"
   }
 
   object Libraries {

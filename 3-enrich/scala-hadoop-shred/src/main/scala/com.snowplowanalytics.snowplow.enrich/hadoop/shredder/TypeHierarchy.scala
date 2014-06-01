@@ -25,6 +25,11 @@ import scala.collection.JavaConversions._
 import scalaz._
 import Scalaz._
 
+// json4s
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+
 // Snowplow Common Enrich
 import common._
 import outputs.CanonicalOutput
@@ -61,13 +66,21 @@ case class TypeHierarchy(
   // TODO: there must be a way of doing this automatically
   // using jackson-module-scala
   def asJson: JsonNode =
+    //asJsonNode(this.toJValue)
+
     TypeHierarchy.NodeFactory.objectNode()
       .put("rootId", rootId)
       .put("rootTstamp", rootTstamp)
       .put("refRoot", refRoot)
       .put("refParent", refParent) // TODO: fix order
-
       //.putArray("refTree") // TODO: fix this
+
+  private def toJValue: JValue =
+    ("rootId"     -> rootId) ~
+    ("rootTstamp" -> rootTstamp) ~
+    ("refRoot"    -> refRoot) ~
+    ("refTree"    -> refTree) ~
+    ("refParent"  -> refParent)
 
   /**
    * Completes a partial TypeHierarchy with
