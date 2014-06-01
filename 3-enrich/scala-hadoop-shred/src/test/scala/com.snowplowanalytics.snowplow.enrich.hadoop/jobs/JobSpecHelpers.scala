@@ -111,8 +111,8 @@ object JobSpecHelpers {
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.ShredJob").
       arg("input_folder", "inputFolder").
       arg("output_folder", "outputFolder").
-      arg("bad_rows_folder", "badFolder").
-      arg("exceptions_folder", "exceptionsFolder")
+      arg("bad_rows_folder", "badFolder")//.
+      //arg("exceptions_folder", "exceptionsFolder")
 
   case class Sinks(
     val output:     File,

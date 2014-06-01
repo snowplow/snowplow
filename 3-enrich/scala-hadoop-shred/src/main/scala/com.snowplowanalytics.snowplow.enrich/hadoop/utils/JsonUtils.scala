@@ -44,7 +44,7 @@ object JsonUtils {
     try {
       Mapper.readTree(instance).success
     } catch {
-      case e: Throwable => s"Field [$field]: invalid JSON [$instance] with parsing error: $e.getMessage".fail
+      case e: Throwable => s"Field [$field]: invalid JSON [%s] with parsing error: %s".format(instance, stripInstance(e.getMessage)).fail
     }
 
   /**
@@ -59,4 +59,22 @@ object JsonUtils {
    */
   def unsafeExtractJson(instance: String): JsonNode =
     Mapper.readTree(instance)
+
+  /**
+   * Strips the instance information from a Jackson
+   * parsing exception message:
+   *
+   * "... at [Source: java.io.StringReader@1fe7a8f8; line: 1, column: 2]""
+   *                                       ^^^^^^^^
+   *
+   * Because this makes it hard to test.
+   *
+   * @param message The exception message which is
+   *        leaking instance information
+   * @return the same exception message, but with
+   *         instance information removed
+   */
+  private[utils] def stripInstance(message: String): String = {
+    message.replaceAll("@[0-9a-z]+;", "@xxxxxx;")
+  }
 }

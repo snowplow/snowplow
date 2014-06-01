@@ -42,7 +42,8 @@ object WebsitePageContextSpec {
     val vendor = "com.snowplowanalytics.website"
     val path = s"${vendor}/page_context/jsonschema/1-0-0"
     val contents  = 
-      s"""|{"author":"Alex Dean",
+      s"""|{
+            |"author":"Alex Dean",
             |"topics":["hive","udf","serde","java","hadoop"],
             |"subCategory":"inside the plow",
             |"category":"blog",
@@ -52,14 +53,14 @@ object WebsitePageContextSpec {
               |"name":"com.snowplowanalytics.website",
               |"format":"jsonschema",
               |"version":"1-0-0"
-              |},
+            |},
             |"hierarchy":{
               |"rootId":"a4583919-4df8-496a-917b-d40fa1c8ca7f",
               |"rootTstamp":"2014-05-29 18:04:12.000",
               |"refRoot":"events",
               |"refParent":"events"
-              |}
-            |}""".stripMargin.replaceAll("[\n\r]","")
+            |}
+          |}""".stripMargin.replaceAll("[\n\r]","")
   }
 }
 

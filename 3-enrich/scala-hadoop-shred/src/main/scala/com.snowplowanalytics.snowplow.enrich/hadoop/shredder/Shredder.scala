@@ -102,6 +102,10 @@ object Shredder {
     // into a List[JsonNode], collecting Failures too
     val all = (flatten(ue) |@| flatten(c)) { _ ++ _ }
 
+    // TODO: does the below collect schema validation
+    // failures or short-circuit them? It should do the
+    // latter
+
     // Let's validate the instances against their schemas, and
     // then attach metadata to the nodes
     (for {
