@@ -57,6 +57,7 @@ object LinkClickEventSpec {
               |"rootId":"2b1b25a4-c0df-4859-8201-cf21492ad61b",
               |"rootTstamp":"2014-05-29 18:16:35.000",
               |"refRoot":"events",
+              |"refTree":["events","link_click"],
               |"refParent":"events"
             |}
           |}""".stripMargin.replaceAll("[\n\r]","")

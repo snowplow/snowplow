@@ -38,7 +38,7 @@ class TypeHierarchySpec extends Specification { def is =
         refParent =  "events")
 
     // TODO: add missing refTree
-    hierarchy.asJson.toString must_== s"""{"rootId":"${EventId}","rootTstamp":"${CollectorTimestamp}","refRoot":"events","refParent":"events"}"""
+    hierarchy.toJsonNode.toString must_== s"""{"rootId":"${EventId}","rootTstamp":"${CollectorTimestamp}","refRoot":"events","refTree":["events","new_ticket"],"refParent":"events"}"""
   }
 
   def e2 = {

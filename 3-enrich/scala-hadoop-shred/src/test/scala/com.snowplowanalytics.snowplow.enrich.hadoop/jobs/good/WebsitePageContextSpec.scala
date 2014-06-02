@@ -60,6 +60,7 @@ object WebsitePageContextSpec {
               |"rootId":"a4583919-4df8-496a-917b-d40fa1c8ca7f",
               |"rootTstamp":"2014-05-29 18:04:12.000",
               |"refRoot":"events",
+              |"refTree":["events","page_context"],
               |"refParent":"events"
             |}
           |}""".stripMargin.replaceAll("[\n\r]","")

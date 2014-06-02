@@ -60,22 +60,18 @@ case class TypeHierarchy(
    * Converts a TypeHierarchy into a JSON containing
    * each element.
    *
-   * @return the TypeHierarchy as a JSON
+   * @return the TypeHierarchy as a Jackson JsonNode
    */
-  // TODO: this doesn't populate refTree yet
-  // TODO: there must be a way of doing this automatically
-  // using jackson-module-scala
-  def asJson: JsonNode =
-    //asJsonNode(this.toJValue)
+  def toJsonNode: JsonNode =
+    asJsonNode(this.toJValue)
 
-    TypeHierarchy.NodeFactory.objectNode()
-      .put("rootId", rootId)
-      .put("rootTstamp", rootTstamp)
-      .put("refRoot", refRoot)
-      .put("refParent", refParent) // TODO: fix order
-      //.putArray("refTree") // TODO: fix this
-
-  private def toJValue: JValue =
+  /**
+   * Converts a TypeHierarchy into a JSON containing
+   * each element.
+   *
+   * @return the TypeHierarchy as a json4s JValue
+   */
+  def toJValue: JValue =
     ("rootId"     -> rootId) ~
     ("rootTstamp" -> rootTstamp) ~
     ("refRoot"    -> refRoot) ~

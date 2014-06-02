@@ -167,7 +167,7 @@ object Shredder {
     val schemaNode = schemaKey.asJson
     val hierarchyNode = {
       val full = partialHierarchy.complete(List(schemaKey.name))
-      full.asJson
+      full.toJsonNode
     }
 
     // This might look unsafe but we're only here
