@@ -18,6 +18,11 @@ package outputs
 import scalaz._
 import Scalaz._
 
+// json4s
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+
 /**
  * Models our report on a bad row. Consists of:
  * 1. Our original input line (which was meant
@@ -30,18 +35,23 @@ case class BadRow(
   ) {
 
   /**
+   * Converts a TypeHierarchy into a JSON containing
+   * each element.
+   *
+   * @return the TypeHierarchy as a json4s JValue
+   */
+  // TODO: fix issue where the errors are being
+  // stringified before being added
+  def toJValue: JValue =
+    ("line"     -> line) ~
+    ("errors"   -> errors.map(e => fromJsonNode(e.asJson)).toList)
+
+  /**
    * Converts our BadRow into a single JSON encapsulating
    * both the input line and errors.
    *
-   * @return this BadRow as a stringified JSON
+   * @return this BadRow as a compact stringified JSON
    */
-  // TODO: fix method name, not nice
-  // TODO: clean up this implementation, it's hideous. It's here just to get tests passing
-  def asJsonString: String = {
-    val front = s"""{"line":"${line}","errors":["""
-    val mid1  = errors.map(_.asJson.toString)
-    val mid2  = mid1.toList.mkString(""",""")
-    val end   = """]}"""
-    front + mid2 + end
-  }
+  def toCompactJson: String =
+    compact(this.toJValue)
 }
