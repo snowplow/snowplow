@@ -31,16 +31,16 @@ object SnowplowHadoopShredBuild extends Build {
         // Java
         Libraries.hadoopCore,
         // Libraries.commonsLang,
-        Libraries.json4sJackson,
         Libraries.jacksonDatabind,
         Libraries.jsonValidator,
         Libraries.yodaTime,
         Libraries.yodaConvert,
         // Scala
+        Libraries.json4sJackson,
         Libraries.commonEnrich,
         Libraries.scaldingCore,
         Libraries.scaldingArgs,
-        Libraries.scaldingJson,
+        // Libraries.scaldingJson,
         Libraries.scalaz7,
         // Scala (test only)
         Libraries.specs2,

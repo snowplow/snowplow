@@ -18,23 +18,24 @@ object Dependencies {
     "Concurrent Maven Repo" at "http://conjars.org/repo", // For Scalding, Cascading etc
     // For Snowplow libs
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
-    "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/"
+    "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
+    // For user-agent-utils
+    "user-agent-utils repo" at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/"
   )
 
   object V {
     // Java
     val hadoop          = "1.1.2"
     // val commonsLang      = "3.1"
-    val json4sJackson   = "3.2.11-SNAPSHOT"
     val jacksonDatabind = "2.2.3"
     val jsonValidator   = "2.2.3"
     val yodaTime        = "2.1"
     val yodaConvert     = "1.2"
     // Scala
+    val json4sJackson   = "3.2.11-SNAPSHOT"
     val commonEnrich    = "0.3.0"
     val scalding        = "0.10.0"
     val scalaz7         = "7.0.0"
-    val argonaut        = "6.0.4"
     // Scala (test only)
     val specs2          = "1.14" // Downgrade to prevent issues in job tests. WAS: "2.3.11"
     val scalazSpecs2    = "0.1.2"
@@ -44,16 +45,16 @@ object Dependencies {
     // Java
     val hadoopCore       = "org.apache.hadoop"          %  "hadoop-core"             % V.hadoop          % "provided"
     // val commonsLang      = "org.apache.commons"         %  "commons-lang3"           % V.commonsLang
-    val json4sJackson    = "org.json4s"                 %% "json4s-jackson"          % V.json4sJackson
     val jacksonDatabind  = "com.fasterxml.jackson.core" %  "jackson-databind"        % V.jacksonDatabind
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"   % V.jsonValidator
     val yodaTime         = "joda-time"                  %  "joda-time"               % V.yodaTime
     val yodaConvert      = "org.joda"                   %  "joda-convert"            % V.yodaConvert
     // Scala
+    val json4sJackson    = "org.json4s"                 %% "json4s-jackson"          % V.json4sJackson
     val commonEnrich     = "com.snowplowanalytics"      %  "snowplow-common-enrich"  % V.commonEnrich
     val scaldingCore     = "com.twitter"                %% "scalding-core"           % V.scalding
     val scaldingArgs     = "com.twitter"                %% "scalding-args"           % V.scalding
-    val scaldingJson     = "com.twitter"                %% "scalding-json"           % V.scalding
+    // val scaldingJson     = "com.twitter"                %% "scalding-json"           % V.scalding
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"             % V.scalaz7
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                  % V.specs2          % "test"
