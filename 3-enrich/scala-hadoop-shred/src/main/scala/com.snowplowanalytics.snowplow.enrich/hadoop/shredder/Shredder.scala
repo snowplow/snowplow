@@ -29,11 +29,13 @@ import Scalaz._
 import common._
 import outputs.CanonicalOutput
 
-// This project
-import iglu.{
+// Iglu
+import com.snowplowanalytics.iglu.client.{
   SchemaKey,
   SchemaRepo
 }
+
+// This project
 import hadoop.utils.{
   JsonUtils,
   ValidatableJsonNode,

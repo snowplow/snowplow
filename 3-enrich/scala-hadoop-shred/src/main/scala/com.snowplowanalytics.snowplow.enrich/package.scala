@@ -22,8 +22,8 @@ import com.github.fge.jsonschema.core.report.ProcessingMessage
 import scalaz._
 import Scalaz._
 
-// This project
-import hadoop.iglu.SchemaKey
+// Iglu
+import com.snowplowanalytics.iglu.client.SchemaKey
 
 /**
  * Scala package object to hold types,
@@ -85,11 +85,4 @@ package object hadoop {
    */
   type ValidatedJsonSchemaPairList = ValidationNel[ProcessingMessage, List[JsonSchemaPair]]
 
-  /**
-   * Type alias for a SchemaVer-based version.
-   *
-   * We may update this in the future to be
-   * a full-fledged case class or similar.
-   */
-  type SchemaVer = String
 }

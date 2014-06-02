@@ -26,9 +26,8 @@ import scala.collection.JavaConversions._
 import scalaz._
 import Scalaz._
 
-// This project
-import iglu.SchemaKey
-
+// Iglu
+import com.snowplowanalytics.iglu.client.SchemaKey
 /**
  * Custom Partition to write out our JSONs into
  * schema-delimited paths.

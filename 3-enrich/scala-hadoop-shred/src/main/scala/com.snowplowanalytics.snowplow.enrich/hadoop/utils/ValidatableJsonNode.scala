@@ -41,11 +41,13 @@ import Scalaz._
 // Snowplow Common Enrich
 import common._
 
-// This project
-import iglu.{
-  SchemaRepo,
-  SchemaKey
+// Iglu
+import com.snowplowanalytics.iglu.client.{
+  SchemaKey,
+  SchemaRepo
 }
+
+// This project
 import ProcessingMessageUtils._
 
 object ValidatableJsonNode {

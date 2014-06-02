@@ -42,6 +42,7 @@ object SnowplowHadoopShredBuild extends Build {
         Libraries.scaldingArgs,
         // Libraries.scaldingJson,
         Libraries.scalaz7,
+        Libraries.igluClient,
         // Scala (test only)
         Libraries.specs2,
         Libraries.scalazSpecs2
