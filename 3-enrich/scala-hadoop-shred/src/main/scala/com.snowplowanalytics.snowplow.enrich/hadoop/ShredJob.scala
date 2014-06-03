@@ -137,7 +137,7 @@ class ShredJob(args : Args) extends Job(args) {
       ShredJob.projectBads(o)
     }
     .mapTo(('line, 'errors) -> 'json) { both: (String, ProcMsgNel) =>
-      BadRow(both._1, both._2).asJsonString
+      BadRow(both._1, both._2).toCompactJson
     }
     .write(badOutput)        // JSON containing line and error(s)
 
