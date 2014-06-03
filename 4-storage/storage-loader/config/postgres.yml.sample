@@ -5,7 +5,7 @@
   :region: ADD HERE # S3 bucket region
   :buckets:
     :assets: s3://snowplow-hosted-assets # ONLY CHANGE if you are adding your own JSON Path files in your own bucket
-    :in: ADD HERE
+    :in: ADD HERE # This is the same as the :out: bucket specified for EmrEtlRunner
     :archive: ADD HERE
 :download:
   :folder: ADD HERE # Postgres-only config option. Where to store the downloaded files

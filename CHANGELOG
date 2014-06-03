@@ -33,7 +33,7 @@ StorageLoader: wrote JSON Path file for website's page_context (#772)
 StorageLoader: added hosted_assets setting for StorageLoader (#606)
 StorageLoader: added ability to load custom tables using JSON Paths (#607)              - TODO
 StorageLoader: added --skip shred option (#660)                                         - TODO
-StorageLoader: added hint on Redshift configuration file, thanks @joaolcorreia! (#755)  - TODO
+StorageLoader: added :in: hint on StorageLoader configuration, thanks @joaolcorreia! (#755)
 Redshift: added Redshift DDL for ad_* events (#639)
 Redshift: added Redshift DDL for link_click events (#600)
 Redshift: added Redshift DDL for screen_view events (#640)
