@@ -3,16 +3,17 @@
 // Date: 5/28/14
 // Use: The implementation for the PayloadMap interface
 
-import org.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
+import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
-// org.json class files used as well
+import java.util.LinkedHashMap;
+import java.util.Random;
+import java.util.Set;
 
 
-public class PayloadMapC implements PayloadMap{
+public class PayloadMapC implements PayloadMap {
     private LinkedHashMap<String,String> parameters;
     private LinkedHashMap<String,Boolean> configurations;
 
@@ -21,7 +22,6 @@ public class PayloadMapC implements PayloadMap{
     public PayloadMapC(){
         this.parameters = new LinkedHashMap<String, String>();
         this.configurations = new LinkedHashMap<String, Boolean>();
-        setTransactionID();
         setTimestamp();
     }
 
@@ -42,9 +42,14 @@ public class PayloadMapC implements PayloadMap{
         int tid = r.nextInt(999999-100000+1) + 100000;
         this.parameters.put("tid", String.valueOf(tid));
     }
+    private String makeTransactionID(){
+        Random r = new Random(); //NEED ID RANGE
+        return String.valueOf(r.nextInt(999999-100000+1) + 100000);
+    }
 
-    private void setTimestamp(){
+    public PayloadMap setTimestamp(){
         this.parameters.put("dtm", String.valueOf(System.currentTimeMillis()));
+        return new PayloadMapC(this.parameters, this.configurations);
     }
 
     /* Addition functions
@@ -113,14 +118,12 @@ public class PayloadMapC implements PayloadMap{
     */
 
     public PayloadMap track_page_view_config(String page_url, String page_title, String referrer,
-                                             String vendor, JSONObject context) throws UnsupportedEncodingException{
-        Map<String, Object> page_view_config = new HashMap<String, Object>();
-        this.setTimestamp();
+             JSONObject context) throws UnsupportedEncodingException{
         this.parameters.put("e", "pv");
         this.parameters.put("url", page_url);
         this.parameters.put("page", page_title);
         this.parameters.put("refr", referrer);
-        this.parameters.put("evn", vendor);
+        this.parameters.put("evn", TrackerC.DEFAULT_VENDOR);
         if (context==null)
             return new PayloadMapC(this.parameters, this.configurations);
         PayloadMap tmp = new PayloadMapC(this.parameters, this.configurations);
@@ -129,16 +132,15 @@ public class PayloadMapC implements PayloadMap{
     }
 
     public PayloadMap track_struct_event_config(String category, String action, String label, String property,
-                                                String value, String vendor, JSONObject context)
+            String value, JSONObject context)
             throws UnsupportedEncodingException{
-        this.setTimestamp();
         this.parameters.put("e","se");
         this.parameters.put("se_ca", category);
         this.parameters.put("se_ac", action);
         this.parameters.put("se_la", label);
         this.parameters.put("se_pr", property);
         this.parameters.put("se_va", value);
-        this.parameters.put("evn", vendor);
+        this.parameters.put("evn", TrackerC.DEFAULT_VENDOR);
         if (context==null)
             return new PayloadMapC(this.parameters, this.configurations);
         PayloadMap tmp = new PayloadMapC(this.parameters, this.configurations);
@@ -148,9 +150,9 @@ public class PayloadMapC implements PayloadMap{
 
     public PayloadMap track_unstruct_event_config(String eventVendor, String eventName, JSONObject dictInfo,
                                                   JSONObject context) throws UnsupportedEncodingException{
-        this.setTimestamp();
         this.parameters.put("e","ue");
         this.parameters.put("ue_na", eventName);
+        this.parameters.put("evn", eventVendor);
         PayloadMap tmp = new PayloadMapC(this.parameters, this.configurations);
         tmp = tmp.add_unstruct(dictInfo, this.configurations.get("encode_base64"));
         if (context==null)
@@ -159,10 +161,11 @@ public class PayloadMapC implements PayloadMap{
         return tmp;
     }
 
-    public PayloadMap track_ecommerce_transaction_item_config(String order_id, String sku, double price, int quantity,
-            String name, String category, String currency, String vendor, JSONObject context)
+    public PayloadMap track_ecommerce_transaction_item_config(String order_id, String sku, String price, String quantity,
+            String name, String category, String currency, JSONObject context, String transaction_id)
             throws UnsupportedEncodingException{
         this.parameters.put("e","ti");
+        this.parameters.put("tid", (transaction_id==null) ? String.valueOf(makeTransactionID()) : transaction_id);
         this.parameters.put("ti_id", order_id);
         this.parameters.put("ti_sk", sku);
         this.parameters.put("ti_nm", name);
@@ -170,13 +173,37 @@ public class PayloadMapC implements PayloadMap{
         this.parameters.put("ti_pr", String.valueOf(price));
         this.parameters.put("ti_qu", String.valueOf(quantity));
         this.parameters.put("ti_cu", currency);
-        this.parameters.put("evn", vendor);
+        this.parameters.put("evn", TrackerC.DEFAULT_VENDOR);
         if (context==null)
             return new PayloadMapC(this.parameters, this.configurations);
         PayloadMap tmp = new PayloadMapC(this.parameters, this.configurations);
         tmp = tmp.add_json(context, this.configurations.get("encode_base64"));
         return tmp;
     }
+
+    public PayloadMap track_ecommerce_transaction_config(String order_id, String total_value, String affiliation, String tax_value,
+            String shipping, String city, String state, String country, String currency, JSONObject context)
+            throws UnsupportedEncodingException{
+        this.setTransactionID();
+        this.parameters.put("e", "tr");
+        this.parameters.put("tr_id", order_id);
+        this.parameters.put("tr_tt", total_value);
+        this.parameters.put("tr_af", affiliation);
+        this.parameters.put("tr_tx", tax_value);
+        this.parameters.put("tr_sh", shipping);
+        this.parameters.put("tr_ci", city);
+        this.parameters.put("tr_st", state);
+        this.parameters.put("tr_co", country);
+        this.parameters.put("tr_cu", currency);
+        this.parameters.put("evn", TrackerC.DEFAULT_VENDOR);
+        if (context==null)
+            return new PayloadMapC(this.parameters, this.configurations);
+        PayloadMap tmp = new PayloadMapC(this.parameters, this.configurations);
+        tmp = tmp.add_json(context, this.configurations.get("encode_base64"));
+        return tmp;
+    }
+
+
 
     /* Getter functions.
      *  Can be used to get key sets of parameters and configurations

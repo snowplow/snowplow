@@ -115,5 +115,4 @@ public class PlowContractor<T> {
         Date date = new Date(System.currentTimeMillis());
         System.out.println(date.toString());
     }
-
 }

@@ -4,9 +4,10 @@
 // Use: Version and instruction for Tracking process
 
 public class Version {
-    static final String VERSION = "0.0.1";
+    static final String VERSION = "0.0.2";
 }
-/* JavaPlow Tracker
+/**
+ * JavaPlow Tracker
 
     Instructions to Use:
 
@@ -16,8 +17,8 @@ public class Version {
 
      Configure payload if needed:
       pd.add_json("{
-                    \"Movie\":\"Shawshank Redemption\",
-                    \"Time\" :\"100 Minutes\"
+                    'Movie':'Shawshank Redemption',
+                    'Time' :'100 Minutes'
                    }");
 
      Attach the payload to the Tracker:
@@ -55,6 +56,4 @@ public class Version {
     Testing Phases:
      [X] JSON converter
      [ ] Dictionary add
-
-
 */

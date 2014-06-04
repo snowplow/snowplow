@@ -14,26 +14,29 @@
  *     Get request sent to server
  */
 
-import org.apache.http.*;
+import org.apache.http.Header;
+import org.apache.http.HeaderIterator;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class TrackerC implements Tracker {
     //Static Class variables
     private static final String VERSION = Version.VERSION;
     private static final String DEFAULT_PLATFORM = "pc";
-    private static final String DEFAULT_VENDOR = "com.saggezza";
+    public static final String DEFAULT_VENDOR = "com.saggezza";
 
     //Instance Variables
     private PayloadMap payload = new PayloadMapC();
@@ -75,6 +78,7 @@ public class TrackerC implements Tracker {
      */
     public void track() throws URISyntaxException, ClientProtocolException, IOException{
         URI uri = buildURI("https", collector_uri, "/i");
+        this.payload = this.payload.setTimestamp();
         System.out.println("Payload:\n" + this.payload.toString());
         HttpGet httpGet = makeHttpGet(uri);
         System.out.println("URI: " + uri);
@@ -87,10 +91,10 @@ public class TrackerC implements Tracker {
         assert this.stringContractor.checkContract(this.contracts, PlowContractor.non_empty_string, page_url);
         if (context != null && !context.equals("")) {
             JSONObject jsonContext = stringToJSON(context);
-            this.payload = this.payload.track_page_view_config(page_url, page_title, referrer, DEFAULT_VENDOR, jsonContext);
+            this.payload = this.payload.track_page_view_config(page_url, page_title, referrer, jsonContext);
         }
         else {
-            this.payload = this.payload.track_page_view_config(page_url, page_title, referrer, DEFAULT_VENDOR, null);
+            this.payload = this.payload.track_page_view_config(page_url, page_title, referrer, null);
 
         }
         this.track();
@@ -105,10 +109,10 @@ public class TrackerC implements Tracker {
         if (context != null && !context.equals("")) {
             JSONObject jsonContext = stringToJSON(context);
             this.payload = this.payload.track_struct_event_config(category, action, label, property, valueStr,
-                    DEFAULT_VENDOR, jsonContext);
+                    jsonContext);
         } else {
             this.payload = this.payload.track_struct_event_config(category, action, label, property, valueStr,
-                    DEFAULT_VENDOR, null);
+                    null);
         }
         this.track();
     }
@@ -138,24 +142,60 @@ public class TrackerC implements Tracker {
         this.track_unstruct_event(DEFAULT_VENDOR, "screen_view", screenViewProperties, context);
     }
 
-    public void track_ecommerce_transaction_item(String order_id, String sku, double price, int quantity, String name,
-            String category, String currency, String context)
+    public void track_ecommerce_transaction_item(String order_id, String sku, Double price, Integer quantity,
+            String name, String category, String currency, String context, String transaction_id)
             throws JSONException, URISyntaxException, IOException {
         assert this.stringContractor.checkContract(this.contracts, PlowContractor.non_empty_string, order_id);
         assert this.stringContractor.checkContract(this.contracts, PlowContractor.non_empty_string, sku);
-        String[] nullFix = new String[] {name, category, currency};
-        for (int i=0; i<3; i++)
-            if (nullFix[i]==null)
-                nullFix[i]="";
         if (context != null && !context.equals("")) {
             JSONObject jsonContext = stringToJSON(context);
-            this.payload = this.payload.track_ecommerce_transaction_item_config(order_id, sku, price, quantity, nullFix[0],
-                    nullFix[1], nullFix[2], DEFAULT_VENDOR, jsonContext);
+            this.payload = this.payload.track_ecommerce_transaction_item_config(order_id, sku, doubleCheck(price),
+                    integerCheck(quantity), stringCheck(name), stringCheck(category), stringCheck(currency), jsonContext, null);
         } else {
-            this.payload = this.payload.track_ecommerce_transaction_item_config(order_id, sku, price, quantity, nullFix[0],
-                    nullFix[1], nullFix[2], DEFAULT_VENDOR, null);
+            this.payload = this.payload.track_ecommerce_transaction_item_config(order_id, sku, doubleCheck(price),
+                    integerCheck(quantity), stringCheck(name), stringCheck(category), stringCheck(currency), null, null);
         }
         this.track();
+    }
+
+    public void track_ecommerce_transaction(String order_id, Double total_value, String affiliation, Double tax_value,
+            Double shipping, String city, String state, String country, String currency, List<Map<String,String>> items, String context)
+            throws JSONException, UnsupportedEncodingException, IOException, URISyntaxException{
+        assert this.stringContractor.checkContract(this.contracts, PlowContractor.non_empty_string, order_id);
+        //Track ecommerce event.
+        if (context != null && !context.equals("")) {
+            JSONObject jsonContext = stringToJSON(context);
+            this.payload = this.payload.track_ecommerce_transaction_config(order_id, doubleCheck(total_value), stringCheck(affiliation),
+                    doubleCheck(tax_value), doubleCheck(shipping), stringCheck(city), stringCheck(state), stringCheck(country),
+                    stringCheck(currency), jsonContext);
+        } else {
+            this.payload = this.payload.track_ecommerce_transaction_config(order_id, doubleCheck(total_value), stringCheck(affiliation),
+                    doubleCheck(tax_value), doubleCheck(shipping), stringCheck(city), stringCheck(state), stringCheck(country),
+                    stringCheck(currency), null);
+        }
+        this.track();
+        for (Map<String,String> item : items){
+            this.track_ecommerce_transaction_item(order_id, mapCheck(item, "sku"), dParseCatch(mapCheck(item, "price")),
+                    iParseCatch(mapCheck(item, "quantity")), mapCheck(item, "name"), mapCheck(item, "category"), mapCheck(item, "currency"), null,
+                    this.payload.getParam("tid"));
+        }
+    }
+
+    /* Checker or Helper functions
+     *   doubleCheck is used to catch fields that aren't required but double cant be null
+     *    and it gets messier handling it with Integers that can be null
+     */
+    private String integerCheck(Integer i) { return i==null ? "" : String.valueOf(i); }
+    private String doubleCheck(Double d) { return d==null ? "" : String.valueOf(d); }
+    private String stringCheck(String s) { return s==null ? "" : s; }
+    private String mapCheck(Map<String,String> m, String s){ return m.containsKey(s) ? m.get(s) : ""; }
+    private double dParseCatch(String s){
+        try{ return Double.parseDouble(s); }
+        catch (NumberFormatException nfe) { throw new NumberFormatException("Item requires fields: 'sku', 'price','quantity'"); }
+    }
+    private int iParseCatch(String s){
+        try{ return Integer.parseInt(s); }
+        catch (NumberFormatException nfe) { throw new NumberFormatException("Item requires fields: 'sku', 'price','quantity'"); }
     }
 
     /* Web functions
@@ -299,27 +339,33 @@ public class TrackerC implements Tracker {
 
     //Test case main function
     public static void main(String[] args) throws URISyntaxException, IOException, ClientProtocolException, JSONException {
-//        PayloadMap pd = new PayloadMapC();
-//        Tracker t1 = new TrackerC("d31jxa70e9zxsp.cloudfront.net","HelloWorld");
-//        t1.track();
-//        t1.setPayload(pd);
-//        Tracker t1 = new TrackerC("d31jxa70e9zxsp.cloudfront.net", "Tracker Test", "JavaPlow", "com.saggezza", true, true);
-        //TEST, Distro 2:
+        ///// GENERICS
         Tracker t1 = new TrackerC("d2pac8zn4o1kva.cloudfront.net", "Tracker Test", "JavaPlow", "com.saggezza", true, true);
+//        t1.track();
         t1.setUserID("User1");
         t1.setLanguage("ital");
         t1.setPlatform("mob");
         t1.setScreenResolution(760, 610);
         String context = "{'Zone':'USA', 'Phone':'Droid', 'Time':'2pm'}";
+
+        ///// E COMMERCE TEST
+        Map<String,String> items = new HashMap<String, String>();
+        items.put("sku", "SKUVAL"); items.put("quantity","2"); items.put("price","19.99");
+        List<Map<String,String>> lst = new LinkedList<Map<String, String>>();
+        lst.add(items);
+
+        /////TRACK TEST
         for (int i = 0; i < 5; i++) {
+//            t1.track();
+            try { Thread.sleep(2000); }
+            catch (InterruptedException e){}
             System.out.println("Loop " + i);
             String dict = "{'Iteration Number':'" + i + "'}";
 //            t1.track_unstruct_event("Lube Insights", "Data Loop", dict, context);
 //            t1.track_struct_event("Items", "Stuff", "Pants", "Green Blue", 3, DEFAULT_VENDOR, context);
 //            t1.track_page_view("www.saggezza.com", "Saggezza Home", "Kevin Gleason", null);
-            t1.track_ecommerce_transaction_item("IT1023", "SKUVAL", 29.99, 2, "boots", "Shoes","USD",context);
+//            t1.track_ecommerce_transaction_item("IT1023", "SKUVAL", 29.99, 2, "boots", "Shoes","USD",null,null);
+            t1.track_ecommerce_transaction("OID", 19.99, "Kohls", 2.50, 1.99, "Chagrin", "OH", "USA", "USD", lst, context);
         }
     }
 }
-
-
