@@ -339,7 +339,7 @@ public class TrackerC implements Tracker {
     //Test case main function
     public static void main(String[] args) throws URISyntaxException, IOException, ClientProtocolException, JSONException {
         ///// GENERICS
-        Tracker t1 = new TrackerC("d2pac8zn4o1kva.cloudfront.net", "javaplow.Tracker Test", "JavaPlow", "com.saggezza", true, true);
+        Tracker t1 = new TrackerC("d3rkrsqld9gmqf.cloudfront.net", "javaplow.Tracker Test", "JavaPlow", "com.saggezza", true, true);
 //        t1.track();
         t1.setUserID("User1");
         t1.setLanguage("ital");

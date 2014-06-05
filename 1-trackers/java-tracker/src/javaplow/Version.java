@@ -18,10 +18,7 @@ public class Version {
       javaplow.Tracker t1 = new javaplow.TrackerC("collector_uri","namespace");
 
      Configure payload if needed:
-      pd.add_json("{
-                    \"Movie\":\"Shawshank Redemption\",
-                    \"Time\" :\"100 Minutes\"
-                   }");
+      pd.add_json("{'Movie':'Shawshank Redemption', 'Time':'100 Minutes' }");
 
      Attach the payload to the javaplow.Tracker:
       t1.setPayload(pd);

@@ -9,7 +9,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.LinkedHashMap;
 import java.util.Random;
 import java.util.Set;
@@ -61,7 +61,7 @@ public class PayloadMapC implements PayloadMap{
      */
     private String base64encode(String string) throws UnsupportedEncodingException{
         Base64 b64 = new Base64(true);
-        String safe_str = b64.encodeBase64String(string.getBytes(StandardCharsets.US_ASCII));
+        String safe_str = b64.encodeBase64String(string.getBytes(Charset.forName("US-ASCII")));
         return safe_str;
     }
 

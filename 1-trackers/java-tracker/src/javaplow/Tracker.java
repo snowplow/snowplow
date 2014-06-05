@@ -19,7 +19,7 @@ public interface Tracker {
     public void track_page_view(String page_url, String page_title, String referrer, String context)
             throws IOException, URISyntaxException, JSONException;
     public void track_struct_event(String category, String action, String label, String property,
-            int value, String vendor, String context)throws JSONException, URISyntaxException, IOException;
+            int value, String vendor, String context) throws JSONException, URISyntaxException, IOException;
     public void track_unstruct_event(String eventVendor, String eventName, String dictInfo, String context)
             throws JSONException, IOException, URISyntaxException;
     public void track_screen_view(String name, String id, String context)
