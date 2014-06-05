@@ -1,11 +1,20 @@
-// File: javaplow.Tracker.java
-// Author: Kevin Gleason
-// Date: 5/28/14
-// Use: The implementation of the javaplow.Tracker interface
+/*
+ * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ *
+ * This program is licensed to you under the Apache License Version 2.0,
+ * and you may not use this file except in compliance with the Apache License Version 2.0.
+ * You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the Apache License Version 2.0 is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+ */
 
 package javaplow;
 
-/* To use:
+/**
+ *  To use:
  *   You must first declare a payload and a tracker.
  *   Build up the payload with whatever it needs
  *   Add the payload to javaplow.Tracker with setPayload()
@@ -13,6 +22,7 @@ package javaplow;
  *   Call the Track specific track event
  *     Payload will be configured further
  *     Get request sent to server
+ *  @author Kevin Gleason
  */
 
 import org.apache.http.*;
