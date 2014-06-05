@@ -4,8 +4,6 @@
 
 Add analytics to your Java programs and data pipelines with the [Snowplow] [snowplow] event tracker for [Java] [java].
 
-
-
 ## Quick Start
 
 ### Downloads
@@ -18,7 +16,9 @@ Place the javaplow package in your projects src folder or root. If performed cor
 
 ### Set up the Tracker
 
-More documentation on functions will come soon, but to instantiate a tracker in your code (can be global or local to the process being tracked) simply instantiate the `Tracker` interface with one of the following:
+Documentation on functions are available [here][documentation]. 
+
+To instantiate a tracker in your code (can be global or local to the process being tracked) simply instantiate the `Tracker` interface with one of the following:
 
     TrackerC(String collector_URI, String namespace)
 

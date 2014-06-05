@@ -4,65 +4,21 @@
 
 Add analytics to your Java programs and data pipelines with the [Snowplow] [snowplow] event tracker for [Java] [java].
 
+## Current Build
 
+Since production is still early and large changes are being made daily, I have not uploaded any jar files yet. Class files can be found in the out folder. At the moment the source files are set up as a package.
 
-## Quick Start
+To get started, move into the src folder and follow the set up guide!
 
-### Downloads
+Note: The set up there is for the package "javaplow", this means you should leave all source files in the javaplow folder, and drag the folder into your project. 
 
-There are a few ways to get the Java tracker started. Since production is still early and large changes are being made daily, I have not uploaded any jar files yet. Class files can be found in the out folder. At the moment the source files are set up as a package.
+### About the Tracker
 
-To get started, download the javaplow package and install the three library dependencies [Here] [dependencies].
+All tracking methods have been tested successfully, but more bugs are discovered every day. If you find one, let me know by email or github.
 
-Place the javaplow package in your projects src folder or root. If performed correctly you should be able to compile and ready to instantiate a tracker.
-
-### Set up the Tracker
-
-More documentation on functions will come soon, but to instantiate a tracker in your code (can be global or local to the process being tracked) simply instantiate the `Tracker` interface with one of the following:
-
-    TrackerC(String collector_URI, String namespace)
-
-    TrackerC(String collector_uri, String namespace, String app_id, String context_vendor, boolean base64_encode, boolean enable_contracts)
-
-e.g.
-
-    Tracker t1 = new TrackerC("d3rkrsqld9gmqf.cloudfront.net", "Snowplow Java Tracker Test", "testing_app", "com.snowplow", true, true);
-
-There are more options you can configure, which will be documented soon. 
-
-    t1.setUserID("Kevin"); 
-    t1.setLanguage("eng");
-    t1.setPlatform("cnsl");
-    t1.setScreenResolution(1260, 1080);
-    t1.track();
-
-----
-
-Now, locally in the function you would like to track, place a tracking call to one of the supported methods. Currently implemented are:
-
-    t1.track_page_view(String page_url, String page_title, String referrer, String context)
-
-    t1.track_struct_event(String category, String action, String label, String property, int value, String vendor, String context)
-
-    t1.track_unstruct_event(String eventVendor, String eventName, String dictInfo, String context)
-
-    t1.track_screen_view(String name, String id, String context)
-
-    t1.track_ecommerce_transaction_item(String order_id, String sku, Double price, Integer quantity, String name, String category, String currency, String context, String transaction_id) *
-
-    t1.track_ecommerce_transaction(String order_id, Double total_value, String affiliation, Double tax_value,Double shipping, String city, String state, String country, String currency, List<Map<String, String>> items, String context) *
-
-###### * Tested and succeeded, but not as much as other functions. Potentially contains bugs.
-
-And thats it! When the tracking function is called, all the information gathered will be sent to the collector URI you have set!
-
-Now you're ready to [view the documentation][documentation]!
+###Ready to [view the documentation][documentation]?
 
 Dont have the collector configured? [See Snowplow setup] [setup]
-
-#### Don't need to fill in every field?
-
-A few fields are required, like collector_uri and namespace, or page_url or catrgory and action etc. For the most part, if you dont need a field you can use null! The code will convert those values whether they be number or letters to empty strings which in turn will not show up in the final database.
 
 ## Comments
 
