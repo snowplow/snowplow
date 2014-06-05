@@ -52,8 +52,8 @@ class CustomPartitionSourceTest extends Specification {
   "PartitionedTsv fed a ShreddedPartition" should {
     "split output by the schema path" in {
       val input = Seq(
-        ("iglu://com.snowplowanalytics.snowplow/ad_click/jsonschema/1-0-0", """{ "event": "ad_click" } """),
-        ("iglu://com.zendesk/new-ticket/jsonschema/1-1-0", """{ "event": "new-ticket" } """)
+        ("iglu:com.snowplowanalytics.snowplow/ad_click/jsonschema/1-0-0", """{ "event": "ad_click" } """),
+        ("iglu:com.zendesk/new-ticket/jsonschema/1-1-0", """{ "event": "new-ticket" } """)
         )
 
       // Need to save the job to allow us to find the temporary directory data was written to
