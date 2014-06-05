@@ -4,6 +4,8 @@
 
 Add analytics to your Java programs and data pipelines with the [Snowplow] [snowplow] event tracker for [Java] [java].
 
+
+
 ## Quick Start
 
 ### Downloads
@@ -54,6 +56,8 @@ Now, locally in the function you would like to track, place a tracking call to o
 
 And thats it! When the tracking function is called, all the information gathered will be sent to the collector URI you have set!
 
+Now you're ready to [view the documentation][documentation]!
+
 Dont have the collector configured? [See Snowplow setup] [setup]
 
 #### Don't need to fill in every field?
@@ -92,6 +96,7 @@ limitations under the License.
 [snowplow]: http://snowplowanalytics.com
 
 [dependencies]: https://drive.google.com/folderview?id=0B9v7AAtH8DSpWWZ1c3RUZjU3WlU&usp=sharing
+[documentation]: https://gleasonk.github.io/Saggezza/JavaDoc/index.html
 
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png

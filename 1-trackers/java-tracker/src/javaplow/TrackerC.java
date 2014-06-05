@@ -64,7 +64,7 @@ public class TrackerC implements Tracker {
     public TrackerC(String collector_uri, String namespace) {
         this.collector_uri = (collector_uri);
         this.namespace = namespace;
-        this.app_id = this.context_vendor = null;
+        this.app_id = this.context_vendor = "";
         this.base64_encode = this.contracts = true;
         this.setPayload(new PayloadMapC());
     }
@@ -297,7 +297,7 @@ public class TrackerC implements Tracker {
 
     //Only called once when the Payload class is attacked to the javaplow.Tracker
     private void setStandardNV(){
-        this.payload = this.payload.add_standard_nv_pairs(DEFAULT_PLATFORM, VERSION, this.namespace, "");
+        this.payload = this.payload.add_standard_nv_pairs(DEFAULT_PLATFORM, VERSION, this.namespace, this.app_id);
     }
 
     // Set a generic parameter - maybe not needed if using table, maybe unstructured
