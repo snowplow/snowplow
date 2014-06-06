@@ -6,7 +6,7 @@ Add analytics to your Java programs and data pipelines with the [Snowplow] [snow
 
 ## Current Build
 
-Since production is still early and large changes are being made daily, I have not uploaded any jar files yet. Class files can be found in the out folder. At the moment the source files are set up as a package.
+Since production is still early and large changes are being made daily, jar files may not be up to date, check the version associated with the jar. Class files can be found in the out folder. At the moment the source files are set up as a package.
 
 To get started, move into the src folder and follow the set up guide!
 
