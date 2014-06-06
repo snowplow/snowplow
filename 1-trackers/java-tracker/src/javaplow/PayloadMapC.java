@@ -22,20 +22,33 @@ import java.util.LinkedHashMap;
 import java.util.Random;
 import java.util.Set;
 
+/**
+ * PayloadMapC implements the PayloadMap interface
+ *  The PayloadMap is used to store all the parameters and configurations that are used
+ *  to send data via the HTTP GET request.
+ *
+ * @version 0.0.2
+ * @author Kevin Gleason
+ */
 
 public class PayloadMapC implements PayloadMap{
     private LinkedHashMap<String,String> parameters;
     private LinkedHashMap<String,Boolean> configurations;
 
-
-    //Create empty javaplow.PayloadMap
+    /**
+     * Create an empty PayloadMap with a timestamp.
+     */
     public PayloadMapC(){
         this.parameters = new LinkedHashMap<String, String>();
         this.configurations = new LinkedHashMap<String, Boolean>();
         setTimestamp();
     }
 
-    //Fill tree with preset parameters
+    /**
+     * Can be constructed with the two payload lists.
+     * @param parameters A list of all parameter key-value-pairs
+     * @param configurations A list of all configurations.
+     */
     public PayloadMapC(LinkedHashMap<String,String> parameters, LinkedHashMap<String,Boolean> configurations){
         this.parameters = parameters;
         this.configurations = configurations;
@@ -52,11 +65,16 @@ public class PayloadMapC implements PayloadMap{
         int tid = r.nextInt(999999-100000+1) + 100000;
         this.parameters.put("tid", String.valueOf(tid));
     }
+
     private String makeTransactionID(){
         Random r = new Random(); //NEED ID RANGE
         return String.valueOf(r.nextInt(999999-100000+1) + 100000);
     }
 
+    /**
+     * {@inheritDoc}
+     * @return
+     */
     public PayloadMap setTimestamp(){
         this.parameters.put("dtm", String.valueOf(System.currentTimeMillis()));
         return new PayloadMapC(this.parameters, this.configurations);
@@ -73,11 +91,24 @@ public class PayloadMapC implements PayloadMap{
         return safe_str;
     }
 
+    /**
+     * {@inheritDoc}
+     * @param key The parameter key
+     * @param val The parameter value
+     * @return
+     */
     public PayloadMap add(String key, String val){
         this.parameters.put(key, val);
         return new PayloadMapC(parameters, configurations);
     }
 
+    /**
+     * {@inheritDoc}
+     * @param dictInfo Information is parsed elsewhere from string to JSON then passed here
+     * @param encode_base64 Whether or not to encode before transferring to web. Default true.
+     * @return
+     * @throws UnsupportedEncodingException
+     */
     public PayloadMap add_unstruct(JSONObject dictInfo, boolean encode_base64)
             throws UnsupportedEncodingException{
         //Encode parameter
@@ -93,8 +124,13 @@ public class PayloadMapC implements PayloadMap{
         return new PayloadMapC(this.parameters, this.configurations);
     }
 
-    // Assert that JSONObject is not empty
-    // How to handle the json input? Strings/Map/what?
+    /**
+     * {@inheritDoc}
+     * @param jsonObject JSON object to be added
+     * @param encode_base64 Whether or not to encode before transferring to web. Default true.
+     * @return
+     * @throws UnsupportedEncodingException
+     */
     public PayloadMap add_json(JSONObject jsonObject, boolean encode_base64)
         throws UnsupportedEncodingException{
         //Encode parameter
@@ -110,6 +146,14 @@ public class PayloadMapC implements PayloadMap{
         return new PayloadMapC(this.parameters, this.configurations);
     }
 
+    /**
+     * {@inheritDoc}
+     * @param p Platform
+     * @param tv Tracker Version
+     * @param tna Namespace
+     * @param aid App_id
+     * @return
+     */
     public PayloadMap add_standard_nv_pairs(String p, String tv, String tna, String aid){
         this.parameters.put("p",p);
         this.parameters.put("tv",tv);
@@ -118,15 +162,27 @@ public class PayloadMapC implements PayloadMap{
         return new PayloadMapC(this.parameters, this.configurations);
     }
 
+    /**
+     * {@inheritDoc}
+     * @param config_title Key of the configuration
+     * @param config Value of the configuration
+     * @return
+     */
     public PayloadMap add_config(String config_title, boolean config){
         this.configurations.put(config_title, config);
         return new PayloadMapC(this.parameters, this.configurations);
     }
 
-    /* Web javaplow.Tracker functions
-     *   Functions used to configure the different types of trackers
-    */
-
+    //// WEB RELATED FUNCTIONS
+    /**
+     * {@inheritDoc}
+     * @param page_url The URL or the page being tracked.
+     * @param page_title The Title of the page being tracked.
+     * @param referrer The referrer of the page being tracked.
+     * @param context Additional JSON context (optional)
+     * @return
+     * @throws UnsupportedEncodingException
+     */
     public PayloadMap track_page_view_config(String page_url, String page_title, String referrer,
              JSONObject context) throws UnsupportedEncodingException{
         this.parameters.put("e", "pv");
@@ -141,6 +197,17 @@ public class PayloadMapC implements PayloadMap{
         return tmp;
     }
 
+    /**
+     * {@inheritDoc}
+     * @param category Category of the event being tracked.
+     * @param action Action of the event being tracked
+     * @param label Label of the event being tracked.
+     * @param property Property of the event being tracked.
+     * @param value Value associated with the property being tracked.
+     * @param context Additional JSON context (optional)
+     * @return
+     * @throws UnsupportedEncodingException
+     */
     public PayloadMap track_struct_event_config(String category, String action, String label, String property,
             String value, JSONObject context)
             throws UnsupportedEncodingException{
@@ -158,6 +225,15 @@ public class PayloadMapC implements PayloadMap{
         return tmp;
     }
 
+    /**
+     * {@inheritDoc}
+     * @param eventVendor The vendor the the event information.
+     * @param eventName A name for the unstructured event being tracked.
+     * @param dictInfo The unstructured information being tracked in dictionary form.
+     * @param context Additional JSON context for the tracking call (optional)
+     * @return
+     * @throws UnsupportedEncodingException
+     */
     public PayloadMap track_unstruct_event_config(String eventVendor, String eventName, JSONObject dictInfo,
                                                   JSONObject context) throws UnsupportedEncodingException{
         this.parameters.put("e","ue");
@@ -171,6 +247,20 @@ public class PayloadMapC implements PayloadMap{
         return tmp;
     }
 
+    /**
+     * {@inheritDoc}
+     * @param order_id ID of the item.
+     * @param sku SKU value of the item.
+     * @param price Prive of the item.
+     * @param quantity Quantity of the item.
+     * @param name Name of the item.
+     * @param category Category of the item.
+     * @param currency Currency used for the purchase.
+     * @param context Additional JSON context for the tracking call (optional)
+     * @param transaction_id Transaction ID, if left blank new value will be generated.
+     * @return
+     * @throws UnsupportedEncodingException
+     */
     public PayloadMap track_ecommerce_transaction_item_config(String order_id, String sku, String price, String quantity,
             String name, String category, String currency, JSONObject context, String transaction_id)
             throws UnsupportedEncodingException{
@@ -191,6 +281,21 @@ public class PayloadMapC implements PayloadMap{
         return tmp;
     }
 
+    /**
+     * {@inheritDoc}
+     * @param order_id The transaction ID, will be generated if left null
+     * @param total_value The total value of the transaction.
+     * @param affiliation Affiliations to the transaction (optional)
+     * @param tax_value Tax value of the transaction (optional)
+     * @param shipping Shipping costs of the transaction (optional)
+     * @param city The customers city.
+     * @param state The customers state.
+     * @param country The customers country.
+     * @param currency The currency used for the purchase
+     * @param context Additional JSON context for the tracking call (optional)
+     * @return
+     * @throws UnsupportedEncodingException
+     */
     public PayloadMap track_ecommerce_transaction_config(String order_id, String total_value, String affiliation, String tax_value,
             String shipping, String city, String state, String country, String currency, JSONObject context)
             throws UnsupportedEncodingException{
@@ -212,8 +317,6 @@ public class PayloadMapC implements PayloadMap{
         tmp = tmp.add_json(context, this.configurations.get("encode_base64"));
         return tmp;
     }
-
-
 
     /* Getter functions.
      *  Can be used to get key sets of parameters and configurations

@@ -13,6 +13,14 @@
 
 package javaplow;
 
+/**
+ * The version class is used for documentation purposes.
+ * It follows the python convention of creating a version identity class
+ *
+ * @version 0.0.2
+ * @author Kevin Gleason
+ */
+
 public class Version {
     static final String VERSION = "0.0.2";
 }

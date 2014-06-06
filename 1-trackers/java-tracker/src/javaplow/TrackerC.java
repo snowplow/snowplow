@@ -13,19 +13,9 @@
 
 package javaplow;
 
-/**
- *  To use:
- *   You must first declare a payload and a tracker.
- *   Build up the payload with whatever it needs
- *   Add the payload to javaplow.Tracker with setPayload()
- *     Payload will configure itself further and prepare for request
- *   Call the Track specific track event
- *     Payload will be configured further
- *     Get request sent to server
- *  @author Kevin Gleason
- */
-
-import org.apache.http.*;
+import org.apache.http.Header;
+import org.apache.http.HeaderIterator;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -41,11 +31,30 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+/**
+ *  TrackerC is the implementing class for the Tracker interface.
+ *   It can be used to track many different types of events. The current version
+ *   of the tracker is 0.0.2 meaning it is functional but still in beta testing.
+ *
+ *  To use:
+ *   You must first declare a payload and a tracker.
+ *   Build up the payload with whatever it needs
+ *   Add the payload to javaplow.Tracker with setPayload()
+ *     Payload will configure itself further and prepare for request
+ *   Call the Track specific track event
+ *     Payload will be configured further
+ *     Get request sent to server
+ *
+ *  @version 0.0.2
+ *  @author Kevin Gleason
+ */
+
 public class TrackerC implements Tracker {
     //Static Class variables
     private static final String VERSION = Version.VERSION;
     private static final String DEFAULT_PLATFORM = "pc";
     public static final String DEFAULT_VENDOR = "com.saggezza";
+    public static boolean debug = false;
 
     //Instance Variables
     private PayloadMap payload = new PayloadMapC();
@@ -81,20 +90,34 @@ public class TrackerC implements Tracker {
         this.setPayload(new PayloadMapC());
     }
 
-    /* javaplow.Tracker functions
-     *   A fre types of tracker functions depending on object being tracked
-     *   All call the main track() function after configuring payload.
+    /**
+     * {@inheritDoc}
+     * @throws URISyntaxException
+     * @throws IOException
      */
-    public void track() throws URISyntaxException, ClientProtocolException, IOException{
+    public void track() throws URISyntaxException, IOException{
         URI uri = buildURI("https", collector_uri, "/i");
         this.payload = this.payload.setTimestamp();
-        System.out.println("Payload:\n" + this.payload.toString());
         HttpGet httpGet = makeHttpGet(uri);
-        System.out.println("URI: " + uri);
-        System.out.println("Making HttpGet...");
+        if (debug) {
+            System.out.println("Payload:\n" + this.payload.toString());
+            System.out.println("URI: " + uri);
+            System.out.println("Making HttpGet...");
+        }
         makeRequest(httpGet);
-    }
+        this.clearPayload();
+   }
 
+    /**
+     * {@inheritDoc}
+     * @param page_url The url of the page where the tracking call lies.
+     * @param page_title The title of the page where the tracking call lies. (optional)
+     * @param referrer The one who referred you to the page (optional)
+     * @param context Additional JSON context for the tracking call (optional)
+     * @throws URISyntaxException
+     * @throws JSONException
+     * @throws IOException
+     */
     public void track_page_view(String page_url, String page_title, String referrer, String context)
             throws URISyntaxException, JSONException, IOException{
         assert this.stringContractor.checkContract(this.contracts, PlowContractor.non_empty_string, page_url);
@@ -104,11 +127,23 @@ public class TrackerC implements Tracker {
         }
         else {
             this.payload = this.payload.track_page_view_config(page_url, page_title, referrer, null);
-
         }
         this.track();
     }
 
+    /**
+     * {@inheritDoc}
+     * @param category The category of the structured event.
+     * @param action The action that is being tracked. (optional)
+     * @param label A label for the tracking event. (optional)
+     * @param property The property of the structured event being tracked. (optional)
+     * @param value The value associated with the property being tracked.
+     * @param vendor The vendor the the property being tracked. (optional)
+     * @param context Additional JSON context for the tracking call (optional)
+     * @throws JSONException
+     * @throws URISyntaxException
+     * @throws IOException
+     */
     public void track_struct_event(String category, String action, String label, String property,
                                    int value, String vendor, String context)
             throws JSONException, URISyntaxException, IOException {
@@ -126,7 +161,16 @@ public class TrackerC implements Tracker {
         this.track();
     }
 
-    //How to do unstructured. Need to have a dictionary of String:*, make it a Map<String,Object>?
+    /**
+     * {@inheritDoc}
+     * @param eventVendor The vendor the the event information.
+     * @param eventName A name for the unstructured event being tracked.
+     * @param dictInfo The unstructured information being tracked in dictionary form.
+     * @param context Additional JSON context for the tracking call (optional)
+     * @throws JSONException
+     * @throws IOException
+     * @throws URISyntaxException
+     */
     public void track_unstruct_event(String eventVendor, String eventName, String dictInfo, String context)
             throws JSONException, IOException, URISyntaxException{
         assert this.stringContractor.checkContract(this.contracts, PlowContractor.non_empty_string, eventVendor);
@@ -142,6 +186,15 @@ public class TrackerC implements Tracker {
         this.track();
     }
 
+    /**
+     * {@inheritDoc}
+     * @param name The name of the screen view being tracked
+     * @param id The ID of the screen view being tracked.
+     * @param context Additional JSON context for the tracking call (optional)
+     * @throws JSONException
+     * @throws IOException
+     * @throws URISyntaxException
+     */
     public void track_screen_view(String name, String id, String context)
             throws JSONException, IOException, URISyntaxException{
         assert this.stringContractor.checkContract(this.contracts, PlowContractor.non_empty_string, name);
@@ -151,6 +204,21 @@ public class TrackerC implements Tracker {
         this.track_unstruct_event(DEFAULT_VENDOR, "screen_view", screenViewProperties, context);
     }
 
+    /**
+     * {@inheritDoc}
+     * @param order_id ID of the item.
+     * @param sku SKU value of the item.
+     * @param price Prive of the item.
+     * @param quantity Quantity of the item.
+     * @param name Name of the item.
+     * @param category Category of the item.
+     * @param currency Currency used for the purchase.
+     * @param context Additional JSON context for the tracking call (optional)
+     * @param transaction_id Transaction ID, if left blank new value will be generated.
+     * @throws JSONException
+     * @throws URISyntaxException
+     * @throws IOException
+     */
     public void track_ecommerce_transaction_item(String order_id, String sku, Double price, Integer quantity,
             String name, String category, String currency, String context, String transaction_id)
             throws JSONException, URISyntaxException, IOException {
@@ -167,9 +235,27 @@ public class TrackerC implements Tracker {
         this.track();
     }
 
+    /**
+     * {@inheritDoc}
+     * @param order_id The transaction ID, will be generated if left null
+     * @param total_value The total value of the transaction.
+     * @param affiliation Affiliations to the transaction (optional)
+     * @param tax_value Tax value of the transaction (optional)
+     * @param shipping Shipping costs of the transaction (optional)
+     * @param city The customers city.
+     * @param state The customers state.
+     * @param country The customers country.
+     * @param currency The currency used for the purchase
+     * @param items A list containing a Map of Strings. Each item must have order ID, sku, price, and quantity.
+     * @param context Additional JSON context for the tracking call (optional)
+     * @throws JSONException
+     * @throws UnsupportedEncodingException
+     * @throws IOException
+     * @throws URISyntaxException
+     */
     public void track_ecommerce_transaction(String order_id, Double total_value, String affiliation, Double tax_value,
             Double shipping, String city, String state, String country, String currency, List<Map<String,String>> items, String context)
-            throws JSONException, UnsupportedEncodingException, IOException, URISyntaxException{
+            throws JSONException, IOException, URISyntaxException{
         assert this.stringContractor.checkContract(this.contracts, PlowContractor.non_empty_string, order_id);
         //Track ecommerce event.
         if (context != null && !context.equals("")) {
@@ -241,9 +327,11 @@ public class TrackerC implements Tracker {
             throw new Error("HTTP Error - Error code " + statusCode);
         }
         try{
-            Header[] headers = response.getAllHeaders();
-            for (Header h : headers)
-                System.out.println(h.toString()); //DEBUG
+            if (debug) {
+                Header[] headers = response.getAllHeaders();
+                for (Header h : headers)
+                    System.out.println(h.toString());
+            }
         }
         finally {
             response.close();
@@ -253,6 +341,17 @@ public class TrackerC implements Tracker {
     //Turn String input into JSONObject
     private JSONObject stringToJSON(String jsonStr) throws JSONException{
         return new JSONObject(jsonStr);
+    }
+
+    //Clear Payload for next iterations
+    private void clearPayload() {
+        String[] standards = new String[] {"uid", "res", "vp", "cd", "tz", "lang"};
+        PayloadMap standPairs = new PayloadMapC();
+        Map<String, String> currentParam = this.payload.getParams();
+        for (String s : standards)
+            if (currentParam.containsKey(s))
+                standPairs.add(s, currentParam.get(s));
+        this.setPayload(standPairs);
     }
 
     //View all headers on an HttpResponse
@@ -273,14 +372,12 @@ public class TrackerC implements Tracker {
         return headers;
     }
 
-    /* Setter functions
-     *   Used to set different attributes of the payload.
-     *   ID checker should be called on instantiation.
-     *   Timestamp sets time value and allows overwriting
-     *   Need to add Contractor checks for values.
+    /**
+     * {@inheritDoc}
+     * @param integerContractor A contractor of type integer.
+     * @param stringContractor A contractory of type String
+     * @param dictionaryContractor A Contractor of type Map with key value of String, Object
      */
-
-    // Will be used if employing custom contracts.
     public void setContractors(PlowContractor<Integer> integerContractor, PlowContractor<String> stringContractor,
                                PlowContractor<Map<String,Object>> dictionaryContractor){
         this.integerContractor=integerContractor;
@@ -288,8 +385,7 @@ public class TrackerC implements Tracker {
         this.dictionaryContractor=dictionaryContractor;
     }
 
-    //Needs to be called before tracking can accurately happen.
-    public void setPayload(PayloadMap payload){
+    private void setPayload(PayloadMap payload){
         this.payload=payload;
         this.payload = this.payload.add_config("encode_base64", this.base64_encode);
         setStandardNV();
@@ -300,50 +396,86 @@ public class TrackerC implements Tracker {
         this.payload = this.payload.add_standard_nv_pairs(DEFAULT_PLATFORM, VERSION, this.namespace, this.app_id);
     }
 
-    // Set a generic parameter - maybe not needed if using table, maybe unstructured
+    /**
+     * {@inheritDoc}
+     * @param param Parameter to be set.
+     * @param val Value for the parameter.
+     */
     public void setParam(String param, String val){
         this.payload = this.payload.add(param, val);
     }
 
-    //Default platform is pc, only call if using different platform.
+    /**
+     * {@inheritDoc}
+     * @param platform The platform being tracked, currently supports "pc", "tv", "mob", "cnsl", and "iot".
+     */
     public void setPlatform(String platform){//contract true
         assert this.stringContractor.checkContract(this.contracts, PlowContractor.is_supported_platform, platform);
         this.payload = this.payload.add("p", platform);
     }
 
+    /**
+     * {@inheritDoc}
+     * @param userID The User ID String.
+     */
     public void setUserID(String userID){
         assert this.stringContractor.checkContract(this.contracts, PlowContractor.non_empty_string, userID);
         this.payload = this.payload.add("uid", userID);
     }
 
+    /**
+     * {@inheritDoc}
+     * @param width Width of the screen in pixels.
+     * @param height Height of the screen in pixels.
+     */
     public void setScreenResolution(int width, int height){
         assert this.integerContractor.checkContract(this.contracts, PlowContractor.positive_number, height);
         assert this.integerContractor.checkContract(this.contracts, PlowContractor.positive_number, width);
         this.payload = this.payload.add("res", String.valueOf(width) + "x" + String.valueOf(height));
     }
 
+    /**
+     * {@inheritDoc}
+     * @param width Width of the viewport in pixels.
+     * @param height Height of the viewport in pixels.
+     */
     public void setViewport(int width, int height){
         assert this.integerContractor.checkContract(this.contracts, PlowContractor.positive_number, height);
         assert this.integerContractor.checkContract(this.contracts, PlowContractor.positive_number, width);
         this.payload = this.payload.add("vp", String.valueOf(width) + "x" + String.valueOf(height));
     }
 
+    /**
+     * {@inheritDoc}
+     * @param depth Depth of the color.
+     */
     public void setColorDepth(int depth){
         assert this.integerContractor.checkContract(this.contracts, PlowContractor.positive_number, depth) || depth==0;
         this.payload = this.payload.add("cd", String.valueOf(depth));
     }
 
+    /**
+     * {@inheritDoc}
+     * @param timezone Timezone where tracking takes place.
+     */
     public void setTimezone(String timezone){
         assert this.stringContractor.checkContract(this.contracts, PlowContractor.non_empty_string, timezone);
         this.payload = this.payload.add("tz", timezone);
     }
 
+    /**
+     * {@inheritDoc}
+     * @param language Language for info tracked.
+     */
     public void setLanguage(String language){
         assert this.stringContractor.checkContract(this.contracts, PlowContractor.non_empty_string, language);
         this.payload = this.payload.add("lang", language);
     }
 
-    //Getter functions
+    /**
+     * {@inheritDoc}
+     * @return
+     */
     public PayloadMap getPayload(){ return this.payload; }
 
     //Test case main function
@@ -362,16 +494,17 @@ public class TrackerC implements Tracker {
         items.put("sku", "SKUVAL"); items.put("quantity","2"); items.put("price","19.99");
         List<Map<String,String>> lst = new LinkedList<Map<String, String>>();
         lst.add(items);
+        TrackerC.debug=true;
 
         /////TRACK TEST
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 2; i++) {
 //            t1.track();
             try { Thread.sleep(2000); }
             catch (InterruptedException e){}
             System.out.println("Loop " + i);
             String dict = "{'Iteration Number':'" + i + "'}";
-//            t1.track_unstruct_event("Lube Insights", "Data Loop", dict, context);
-//            t1.track_struct_event("Items", "Stuff", "Pants", "Green Blue", 3, DEFAULT_VENDOR, context);
+            t1.track_unstruct_event("Lube Insights", "Data Loop", dict, context);
+            t1.track_struct_event("Items", "Stuff", "Pants", "Green Blue", 3, DEFAULT_VENDOR, context);
 //            t1.track_page_view("www.saggezza.com", "Saggezza Home", "Kevin Gleason", null);
 //            t1.track_ecommerce_transaction_item("IT1023", "SKUVAL", 29.99, 2, "boots", "Shoes","USD",null,null);
             t1.track_ecommerce_transaction("OID", 19.99, "Kohls", 2.50, 1.99, "Chagrin", "OH", "USA", "USD", lst, context);
