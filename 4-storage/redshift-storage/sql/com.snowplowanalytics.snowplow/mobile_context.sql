@@ -15,7 +15,7 @@
 --
 -- Version:     1-0-0
 
-CREATE TABLE atomic.com_snowplowanalytics_mobile_context_1 (
+CREATE TABLE atomic.com_snowplowanalytics_snowplow_mobile_context_1 (
     -- Schema of this type
     schema_vendor  varchar(128)  encode runlength not null,
     schema_name    varchar(128)  encode runlength not null,
