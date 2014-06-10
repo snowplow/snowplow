@@ -45,6 +45,15 @@
     :hadoop_shred: 0.1.0 # Version of the Hadoop Shredding process
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
   :continue_on_unexpected_error: false # Set to 'true' (and set :out_errors: above) if you don't want any exceptions thrown from ETL
+:iglu:
+  :resolvers:
+    - :name: "Iglu Central"
+      :connection:
+        :http:
+          :uri: //iglucentral.com
+      :priority: 0
+      :vendor_prefixes:
+        - com.snowplowanalytics
 :enrichments:
   :anon_ip:
     :enabled: false
