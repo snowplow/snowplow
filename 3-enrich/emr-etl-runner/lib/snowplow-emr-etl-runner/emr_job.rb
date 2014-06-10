@@ -16,6 +16,9 @@
 require 'set'
 require 'elasticity'
 
+require 'awrence'
+require 'json'
+
 require 'contracts'
 include Contracts
 
@@ -300,7 +303,8 @@ module Snowplow
 
       Contract IgluConfigHash => String
       def self.jsonify(iglu_hash)
-        # TODO: check the numeric values stay numbers
+        # TODO: add in base64-encoding
+        iglu_hash.to_camelback_keys.to_json
       end
 
       Contract AnonIpHash => String

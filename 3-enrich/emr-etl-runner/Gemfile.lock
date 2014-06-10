@@ -1,6 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    awrence (0.1.0)
     builder (3.2.2)
     contracts (0.4)
     coveralls (0.7.0)
@@ -73,6 +74,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  awrence (~> 0.1.0)
   contracts (~> 0.4)
   coveralls
   elasticity (~> 3.0.4)
