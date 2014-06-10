@@ -173,10 +173,13 @@ module Snowplow
             assets[:shred],
             "Shred Enriched Events",
             "enrich.hadoop.ShredJob",
-            { :in     => enrich_output,
-              :good   => shred_output,
-              :bad    => partition_by_run(csbs[:bad],    run_id),
-              :errors => partition_by_run(csbs[:errors], run_id, config[:etl][:continue_on_unexpected_error])
+            { :in          => enrich_output,
+              :good        => shred_output,
+              :bad         => partition_by_run(csbs[:bad],    run_id),
+              :errors      => partition_by_run(csbs[:errors], run_id, config[:etl][:continue_on_unexpected_error])
+            },
+            {
+              :iglu_config => jsonify(config[:iglu])
             }
           )
           @jobflow.add_step(shredded_step)
@@ -293,6 +296,11 @@ module Snowplow
         end
 
         success
+      end
+
+      Contract IgluConfigHash => String
+      def self.jsonify(iglu_hash)
+        # TODO: check the numeric values stay numbers
       end
 
       Contract AnonIpHash => String

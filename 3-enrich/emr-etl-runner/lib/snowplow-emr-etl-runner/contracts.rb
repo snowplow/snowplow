@@ -41,6 +41,24 @@ module Snowplow
       :anon_octets => Num
       })
 
+    # The Hash for the Iglu client config
+    IgluConfigHash = ({
+      :schema => String,
+      :data => ({
+        :cache => Num,
+        :resolvers => ArrayOf[({
+          :name => String,
+          :connection => ({
+            :http => ({
+              :uri => String
+              })
+            }),
+          :priority => Num,
+          :vendor_prefixes => ArrayOf[String]
+          })]
+        })
+      })
+
     # The Hash containing effectively the configuration YAML.
     ConfigHash = ({
       :logging => ({
@@ -101,19 +119,7 @@ module Snowplow
         :collector_format => String,
         :continue_on_unexpected_error => Bool
         }),
-      :iglu => ({
-        :cache => Num,
-        :resolvers => ArrayOf[({
-          :name => String,
-          :connection => ({
-            :http => ({
-              :uri => String
-              })
-            }),
-          :priority => Num,
-          :vendor_prefixes => ArrayOf[String]
-          })]
-        }),
+      :iglu => IgluConfigHash,
       :enrichments => ({
         :anon_ip => AnonIpHash
         })
