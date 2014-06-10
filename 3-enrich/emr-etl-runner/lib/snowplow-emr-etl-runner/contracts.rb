@@ -21,9 +21,9 @@ module Snowplow
 
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
-      :maxmind  => String,
-      :enrich   => String,
-      :shred    => String
+      :maxmind => String,
+      :enrich  => String,
+      :shred   => String
       })
 
     # The Hash of the CLI arguments.
@@ -58,13 +58,13 @@ module Snowplow
           :raw => ({
             :in => String,
             :processing => String
-            )}
+            }),
           :enriched => ({
             :good => String,
             :bad => String,
             :errors => Maybe[String],
             :archive => String
-            })
+            }),
           :shredded => ({
             :good => String,
             :bad => String,
@@ -80,9 +80,9 @@ module Snowplow
         :ec2_subnet_id => Maybe[String],
         :ec2_key_name => String,
         :software => ({
-          :hbase => String,
-          :lingual => String
-          })
+          :hbase => Maybe[String],
+          :lingual => Maybe[String]
+          }),
         :jobflow => ({
           :master_instance_type => String,
           :core_instance_count => Num,
@@ -97,9 +97,22 @@ module Snowplow
         :versions => ({
           :hadoop_enrich => String,
           :hadoop_shred => String
-          })
+          }),
         :collector_format => String,
         :continue_on_unexpected_error => Bool
+        }),
+      :iglu => ({
+        :cache => Num,
+        :resolvers => ArrayOf[({
+          :name => String,
+          :connection => ({
+            :http => ({
+              :uri => String
+              })
+            }),
+          :priority => Num,
+          :vendor_prefixes => ArrayOf[String]
+          })]
         }),
       :enrichments => ({
         :anon_ip => AnonIpHash

@@ -17,7 +17,7 @@
       :errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
       :archive: ADD HERE    # e.g. s3://my-archive-bucket/enriched
     :shredded:
-      :good:                # e.g. s3://my-out-bucket/shredded/good
+      :good: ADD HERE       # e.g. s3://my-out-bucket/shredded/good
       :bad: ADD HERE        # e.g. s3://my-out-bucket/shredded/bad
       :errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
       :archive: ADD HERE    # e.g. s3://my-archive-bucket/shredded
@@ -46,7 +46,7 @@
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
   :continue_on_unexpected_error: false # Set to 'true' (and set :out_errors: above) if you don't want any exceptions thrown from ETL
 :iglu:
-  :cache: 100
+  :cache: 500
   :resolvers:
     - :name: "Iglu Central"
       :connection:
