@@ -146,7 +146,7 @@ module Snowplow
           },
           { :input_format     => config[:etl][:collector_format],
             :maxmind_file     => assets[:maxmind],
-            :anon_ip_quartets => config[:enrichments][:anon_ip_octets]
+            :anon_ip_quartets => self.class.get_anon_ip_octets(config[:enrichments][:anon_ip])
           }
         )
         @jobflow.add_step(enrich_step)
