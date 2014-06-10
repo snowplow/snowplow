@@ -46,6 +46,7 @@
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
   :continue_on_unexpected_error: false # Set to 'true' (and set :out_errors: above) if you don't want any exceptions thrown from ETL
 :iglu:
+  :cache: 100
   :resolvers:
     - :name: "Iglu Central"
       :connection:
