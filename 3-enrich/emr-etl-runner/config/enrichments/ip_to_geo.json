@@ -1,0 +1,11 @@
+{
+    "schema": "iglu:com.snowplowanalytics.snowplow/ip_to_geo/jsonschema/1-0-0",
+
+    "data": {
+
+        "enabled": true,
+        "parameters": {
+                "maxmind_file": "./maxmind"
+        }
+    }
+}
