@@ -35,28 +35,6 @@ import com.snowplowanalytics.iglu.client.SchemaKey
 package object hadoop {
 
   /**
-   * Type alias for a `ValidationNel`
-   * containing either error `ProcessingMessage`s
-   * or a successfully validated `JsonNode`.
-   */
-  type ValidatedJson = ValidationNel[ProcessingMessage, JsonNode]
-
-  /**
-   * Type alias for a `Tuple2`
-   * containing a SchemaKey and its
-   * corresponding `JsonNode`.
-   */
-  type JsonSchemaPair = Tuple2[SchemaKey, JsonNode]
-
-  /**
-   * Type alias for a `ValidationNel`
-   * containing either error `ProcessingMessage`s
-   * or a successfully validated tuple of a
-   * JSON's `SchemaKey` and its `JsonNode`.
-   */
-  type ValidatedJsonSchemaPair = ValidationNel[ProcessingMessage, JsonSchemaPair]
-
-  /**
    * Wraps a `ValidatedJson` in an `Option`.
    */
   type MaybeValidatedJson = Option[ValidatedJson]
