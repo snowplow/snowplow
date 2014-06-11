@@ -8,7 +8,7 @@ Add analytics to your Java programs and data pipelines with the [Snowplow] [snow
 
 ### Downloads
 
-There are a few ways to get the Java tracker started. Since production is still early and large changes are being made daily, jar files may not be up to date. Check the version associated with the jar. Class files can be found in the out folder. At the moment the source files are set up as a package.
+There are a few ways to get the Java tracker started. Adding the jar file to your project dependencies is the recommended method of getting started. Since production is still early and large changes are being made daily, jar files may not be up to date. Check the version associated with the jar. Class files can be found in the out folder. At the moment the source files are set up as a package.
 
 #### Easiest Method - Jar:
 
@@ -17,21 +17,25 @@ The quickest and easiest way to incorporate the Snowplow Java Tracker into your 
     git clone https://github.com/snowplow/snowplow.git
     cd snowplow/1-trackers/java-tracker
 
-You should now see all the java tracker files, including a folder called JavaPlow-VERSION-jar. Add the jar file in there to your projects dependencies.
+You should now see all the java tracker files, including a folder called JavaPlow_VERSION_jar. Add the jar file in there to your projects dependencies.
 
-Here are setup options for populr IDEs [IntelliJ 13][intellij] or [Eclipse][eclipse].
+Here are setup options for popular IDEs: [IntelliJ 13][intellij] or [Eclipse][eclipse].
 
 Thats it! Skip down to setting up the tracker.
 
 #### Source Files: 
 
-To get started with the javaplow source files, download the javaplow package and either add the javaplow-0.0.2 jar file to the list of dependencies or install the three library dependencies [Here] [dependencies].
+To get started with the javaplow source files, download the javaplow package and either add the javaplow jar file to the list of dependencies or install the three library dependencies [Here][dependencies].
 
 Place the javaplow package in your projects src folder or root. If performed correctly you should be able to compile and ready to instantiate a tracker.
 
 ### Set up the Tracker
 
 Documentation on functions are available [here][documentation]. 
+
+All Snowplow java-tracker files are part of the `com.snowplow.javaplow` package. Before you can work with them you must `import` them as follows:
+
+    import com.snowplow.javaplow.*;
 
 To instantiate a tracker in your code (can be global or local to the process being tracked) simply instantiate the `Tracker` interface with one of the following:
 
@@ -45,7 +49,7 @@ e.g.
 
 There are more options you can configure, which will be documented soon. 
 
-    t1.setUserID("Kevin"); 
+    t1.setUserID("Kevin Gleason"); 
     t1.setLanguage("eng");
     t1.setPlatform("cnsl");
     t1.setScreenResolution(1260, 1080);
