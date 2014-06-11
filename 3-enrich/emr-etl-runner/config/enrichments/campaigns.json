@@ -1,17 +1,20 @@
 {
-    "schema": "iglu:com.snowplowanalytics.snowplow/anon_ip/jsonschema/1-0-0",
+	"schema": "iglu:com.snowplowanalytics.snowplow/campaigns/jsonschema/1-0-0",
 
-    "data": {
-    	"enabled": false,
-    	"properties": {
-    		"mapping": "static",
-    		"fields": {
-    			"mkt_medium": [],
-    			"mkt_source": [],
-    			"mkt_term": [],
-    			"mkt_content": [],
-    			"mkt_campaign": [],
-    		}
-    	}
-    }
+	"data": {
+
+		"name": "campaigns",
+		"vendor": "com.snowplowanalytics.snowplow",		
+		"enabled": false,
+		"properties": {
+			"mapping": "static",
+			"fields": {
+				"mkt_medium": ["utm_medium"],
+				"mkt_source": ["medium"],
+				"mkt_term": ["term"],
+				"mkt_content": ["content"],
+				"mkt_campaign": ["campaign"],
+			}
+		}
+	}
 }

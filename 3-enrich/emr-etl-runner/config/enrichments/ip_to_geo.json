@@ -1,11 +1,14 @@
 {
-    "schema": "iglu:com.snowplowanalytics.snowplow/ip_to_geo/jsonschema/1-0-0",
+	"schema": "iglu:com.snowplowanalytics.snowplow/ip_to_geo/jsonschema/1-0-0",
 
-    "data": {
+	"data": {
 
-        "enabled": true,
-        "parameters": {
-                "maxmind_file": "./maxmind"
-        }
-    }
+		"name": "ip_to_geo",
+		"vendor": "com.snowplowanalytics.snowplow",
+		"enabled": true,
+		"parameters": {
+			"maxminddatabase": "GeoLiteCity",
+			"maxmind_uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/
+		}
+	}
 }
