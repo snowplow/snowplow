@@ -1,0 +1,31 @@
+{
+	"$schema": "http://json-schema.org/schema#",
+	"description": "Schema for an IP anonymization enrichment",
+	"self": {
+		"vendor": "com.snowplowanalytics.snowplow",
+		"name": "ip_to_geo",
+		"format": "jsonschema",
+		"version": "1-0-0"
+	},
+
+	"type": "object",
+	"properties": {
+		"enabled": {
+			"type": "boolean"
+		},
+		"parameters": {
+			"type": "object",
+			"properties": {
+				"anon_octets": {
+					"type": "number",
+					"minimum": 0,
+					"maximum": 4
+				}
+			},
+			"required": ["anon_octets"],
+			"additionalProperties": false
+		}
+	},
+	"required": ["enabled", "parameters"],
+	"additionalProperties": false
+}

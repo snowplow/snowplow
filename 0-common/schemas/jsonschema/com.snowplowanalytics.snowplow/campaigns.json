@@ -1,0 +1,61 @@
+{
+	"$schema": "http://json-schema.org/schema#",
+	"description": "Schema for a campaign attribution enrichment",
+	"self": {
+		"vendor": "com.snowplowanalytics.snowplow",
+		"name": "ip_to_geo",
+		"format": "jsonschema",
+		"version": "1-0-0"
+	},
+
+	"type": "object",
+	"properties": {
+		"enabled": {
+			"type": "boolean"
+		},
+		"parameters": {
+			"type": "object",
+			"properties": {
+				"mapping": {
+					"enum": ["static", "script"]
+				},
+				"fields": {
+					"type": "object",
+					"properties": {
+						"mkt_medium": {
+							"$ref": "#/definitions/stringArray"
+						},
+						"mkt_source": {
+							"$ref": "#/definitions/stringArray"
+						},
+						"mkt_term": {
+							"$ref": "#/definitions/stringArray"
+						},
+						"mkt_content": {
+							"$ref": "#/definitions/stringArray"
+						},
+						"mkt_campaign": {
+							"$ref": "#/definitions/stringArray"
+						}
+					},
+					"required": ["mkt_medium", "mkt_source", "mkt_term", "mkt_content", "mkt_campaign"],
+					"additionalProperties": false
+				}
+			},
+			"required": ["fields"],
+			"additionalProperties": false
+		}
+	},
+
+	"definitions": {
+		"stringArray": {
+			"type": "array",
+			"items": {
+				"type": "string"
+			}
+		}
+	},
+
+	"required": ["enabled", "parameters"],
+	"additionalProperties": false
+}
