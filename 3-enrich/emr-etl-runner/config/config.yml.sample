@@ -56,7 +56,7 @@
           - com.snowplowanalytics
         :connection:
           :http:
-            :uri: //iglucentral.com
+            :uri: http://iglucentral.com
 :enrichments:
   :anon_ip:
     :enabled: false
