@@ -160,7 +160,7 @@ module Snowplow
           },
           { :input_format     => config[:etl][:collector_format],
             :maxmind_file     => assets[:maxmind],
-            :anon_ip_quartets => self.class.get_anon_ip_octets(config[:enrichments][:anon_ip])
+            :anon_ip_octets   => self.class.get_anon_ip_octets(config[:enrichments][:anon_ip])
           }
         )
         @jobflow.add_step(enrich_step)
@@ -339,7 +339,7 @@ module Snowplow
         if anon_ip[:enabled]
           anon_ip[:anon_octets].to_s
         else
-          '0' # Anonymize 0 quartets == anonymization disabled
+          '0' # Anonymize 0 octets == anonymization disabled
         end
       end
 

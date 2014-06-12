@@ -24,7 +24,7 @@ import Scalaz._
 object PrivacyEnrichments {
 
   /**
-   * How many quartets to anonymize?
+   * How many octets to anonymize?
    */
   object AnonOctets extends Enumeration {
 
@@ -40,7 +40,7 @@ object PrivacyEnrichments {
   /**
    * Anonymize the supplied IP address.
    *
-   * quartets is the number of quartets
+   * octets is the number of octets
    * in the IP address to anonymize, starting
    * from the right. For example:
    *
@@ -55,15 +55,15 @@ object PrivacyEnrichments {
    * address is somehow invalid or incomplete.
    *
    * @param ip The IP address to anonymize
-   * @param quartets The number of quartets
+   * @param octets The number of octets
    *        to anonymize
    * @return the anonymized IP address
    */
   import AnonOctets._
-  def anonymizeIp(ip: String, quartets: AnonOctets): String =
+  def anonymizeIp(ip: String, octets: AnonOctets): String =
     Option(ip).map(_.split("\\.").zipWithIndex.map{
       case (q, i) => {
-        if (quartets.id >= All.id - i) "x" else q
+        if (octets.id >= All.id - i) "x" else q
       }
     }.mkString(".")).orNull
 }

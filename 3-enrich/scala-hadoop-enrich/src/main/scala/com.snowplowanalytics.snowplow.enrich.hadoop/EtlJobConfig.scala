@@ -73,7 +73,7 @@ object EtlJobConfig {
 
   /**
    * Convert a Stringly-typed integer
-   * into the corresponding AnonQuartets
+   * into the corresponding AnonOctets
    * Enum Value.
    *
    * Update the Validation Error if the
@@ -81,14 +81,14 @@ object EtlJobConfig {
    *
    * @param anonOctets A String holding
    *        the number of IP address
-   *        quartets to anonymize
-   * @return a Validation-boxed AnonQuartets
+   *        octets to anonymize
+   * @return a Validation-boxed AnonOctets
    */
   private def getAnonOctets(anonOctets: String): Validation[String, AnonOctets] = {
     try {
       AnonOctets.withName(anonOctets).success
     } catch {
-      case nse: NoSuchElementException => "IP address quartets to anonymize must be 0, 1, 2, 3 or 4".fail
+      case nse: NoSuchElementException => "IP address octets to anonymize must be 0, 1, 2, 3 or 4".fail
     }
   }
 
@@ -109,7 +109,7 @@ object EtlJobConfig {
     val maxmindFile = args.requiredz("maxmind_file").flatMap(f => getMaxmindUri(f))
     val outFolder = args.requiredz("output_folder")
     val badFolder = args.requiredz("bad_rows_folder")
-    val anonOctets = args.requiredz("anon_ip_quartets").flatMap(q => getAnonOctets(q))
+    val anonOctets = args.requiredz("anon_ip_octets").flatMap(q => getAnonOctets(q))
     val exceptionsFolder = args.optionalz("exceptions_folder")
     
     (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| anonOctets.toValidationNel |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_) }

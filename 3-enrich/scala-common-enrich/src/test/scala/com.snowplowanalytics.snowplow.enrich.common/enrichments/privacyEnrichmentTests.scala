@@ -28,7 +28,7 @@ class AnonymizeIpTest extends Specification with DataTables {
     "Anonymizing 0-4 octets across a variety of IP addresses should work" ! e1
 
   def e1 =
-    "SPEC NAME"              || "IP ADDRESS"      | "ANONYMIZE QUARTETS"   | "EXPECTED OUTPUT"   |
+    "SPEC NAME"              || "IP ADDRESS"      | "ANONYMIZE OCTETS"   | "EXPECTED OUTPUT"   |
     "valid, anonymize 0"     !! "168.23.101.20"   ! AnonOctets(0)        ! "168.23.101.20"     |
     "valid, anonymize 1"     !! "0.23.0.20"       ! AnonOctets(1)        ! "0.23.0.x"          |
     "valid, anonymize 2"     !! "168.192.102.4"   ! AnonOctets(2)        ! "168.192.x.x"       |
@@ -40,6 +40,6 @@ class AnonymizeIpTest extends Specification with DataTables {
     "invalid, anonymize 4"   !! "hello;goodbye"   ! AnonOctets(3)        ! "hello;goodbye"     |
     "empty, anonymize 2"     !! null              ! AnonOctets(2)        ! null                |
     "empty, anonymize 4"     !! ""                ! AnonOctets(4)        ! "x"                 |> {
-      (_, ip, quartets, expected) => PrivacyEnrichments.anonymizeIp(ip, quartets) must_== expected
+      (_, ip, octets, expected) => PrivacyEnrichments.anonymizeIp(ip, octets) must_== expected
     }
 }
