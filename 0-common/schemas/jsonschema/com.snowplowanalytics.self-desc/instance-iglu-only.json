@@ -1,5 +1,5 @@
 {
-	"$schema": "http://json-schema.org/schema#",
+	"$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
 	"description": "Top-level schema for the validation process (Iglu-only)",
 	"self": {
 		"vendor": "com.snowplowanalytics.self-desc",

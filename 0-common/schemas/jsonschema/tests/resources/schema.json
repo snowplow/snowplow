@@ -2,7 +2,7 @@
 	"name": "schema",
 	"valid": [
 		{
-			"$schema": "http://json-schema.org/schema#",
+			"$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
 			"description": "Schema for an ad click event",
 			"self": {
 				"vendor": "com.snowplowanalytics",
@@ -52,7 +52,7 @@
 	],
 	"invalid": [
 		{
-			"$schema": "http://json-schema.org/schema#",
+			"$schema": "http://iglucentral.com/schemas/com.snowplowanalytics.self-desc/schema/jsonschema/1-0-0#",
 			"description": "Schema for an ad click event",
 			"self": {
 				"vendor": "com.snowplowanalytics",
