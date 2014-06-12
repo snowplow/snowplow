@@ -48,15 +48,15 @@
 :iglu:
   :schema: iglu:com.snowplowanalytics.iglu/client_config/jsonschema/1-0-0
   :data:
-    :cache: 500
-    :resolvers:
+    :cache_size: 500
+    :repositories:
       - :name: "Iglu Central"
-        :connection:
-          :http:
-            :uri: //iglucentral.com
         :priority: 0
         :vendor_prefixes:
           - com.snowplowanalytics
+        :connection:
+          :http:
+            :uri: //iglucentral.com
 :enrichments:
   :anon_ip:
     :enabled: false
