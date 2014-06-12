@@ -49,7 +49,7 @@ object LinkClickEventSpec {
               |"format":"jsonschema",
               |"version":"1-0-0"
             |},
-             |"data":{
+            |"data":{
               |"targetUrl":"http://snowplowanalytics.com/blog/page2",
               |"elementClasses":["next"]
             |},
