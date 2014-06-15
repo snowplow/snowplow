@@ -10,7 +10,9 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
+package com.snowplowanalytics
+package snowplow
+package enrich
 package hadoop
 package shredder
 
@@ -29,20 +31,16 @@ import Scalaz._
 import common._
 import outputs.CanonicalOutput
 
-// Iglu
-import com.snowplowanalytics.iglu.client.{
+// Iglu Scala Client
+import iglu.client.{
   SchemaKey,
   SchemaRepo
 }
+import iglu.client.validation.ProcessingMessageMethods._
+import iglu.client.validation.ValidatableJsonNode._
 
 // This project
-import hadoop.utils.{
-  JsonUtils,
-  ValidatableJsonNode,
-  ProcessingMessageUtils
-}
-import ValidatableJsonNode._
-import ProcessingMessageUtils._
+import hadoop.utils.JsonUtils
 
 /**
  * The shredder takes the two fields containing JSONs

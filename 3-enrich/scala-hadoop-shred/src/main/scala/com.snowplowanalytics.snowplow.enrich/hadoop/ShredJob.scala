@@ -10,7 +10,9 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
+package com.snowplowanalytics
+package snowplow
+package enrich
 package hadoop
 
 // Cascading
@@ -32,6 +34,9 @@ import common._
 import common.FatalEtlError
 import common.outputs.CanonicalOutput
 
+// Iglu Scala Client
+import iglu.client.validation.ProcessingMessageMethods._
+
 // This project
 import inputs.EnrichedEventLoader
 import shredder.Shredder
@@ -39,14 +44,11 @@ import outputs.{
   BadRow,
   ShreddedPartition => UrShreddedPartition
 }
-import utils.ProcessingMessageUtils
 
 /**
  * Helpers for our data processing pipeline.
  */
 object ShredJob {
-
-  import utils.ProcessingMessageUtils._
 
   /**
    * Pipelines our loading of raw lines into

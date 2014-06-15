@@ -57,7 +57,7 @@ object Dependencies {
     val scaldingArgs     = "com.twitter"                %% "scalding-args"           % V.scalding
     // val scaldingJson     = "com.twitter"                %% "scalding-json"           % V.scalding
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"             % V.scalaz7
-    val igluClient       = "com.snowplowanalytics"      %% "iglu-java-scala-client"  % V.igluClient
+    val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"       % V.igluClient
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                  % V.specs2          % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"           % V.scalazSpecs2    % "test"

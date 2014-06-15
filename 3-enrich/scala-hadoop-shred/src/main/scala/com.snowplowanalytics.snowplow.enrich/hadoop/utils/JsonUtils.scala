@@ -74,6 +74,7 @@ object JsonUtils {
    * @return the same exception message, but with
    *         instance information removed
    */
+  // TODO: get this out of Iglu Scala Client
   private[utils] def stripInstance(message: String): String = {
     message.replaceAll("@[0-9a-z]+;", "@xxxxxx;")
   }

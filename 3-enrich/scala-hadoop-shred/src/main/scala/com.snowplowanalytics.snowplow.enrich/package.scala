@@ -10,7 +10,9 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
+package com.snowplowanalytics
+package snowplow
+package enrich
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
@@ -22,8 +24,8 @@ import com.github.fge.jsonschema.core.report.ProcessingMessage
 import scalaz._
 import Scalaz._
 
-// Iglu
-import com.snowplowanalytics.iglu.client.SchemaKey
+// Iglu Scala Client
+import iglu.client.JsonSchemaPair
 
 /**
  * Scala package object to hold types,
@@ -33,21 +35,6 @@ import com.snowplowanalytics.iglu.client.SchemaKey
  * http://www.artima.com/scalazine/articles/package_objects.html
  */
 package object hadoop {
-
-  /**
-   * Wraps a `ValidatedJson` in an `Option`.
-   */
-  type MaybeValidatedJson = Option[ValidatedJson]
-
-  /**
-   * A possibly-empty List of ProcessingMessages
-   */
-  type ProcMsgNel = NonEmptyList[ProcessingMessage]
-
-  /**
-   * An Option-boxed List of Processing Messages
-   */
-  type MaybeProcMsgNel = Option[ProcMsgNel]
 
   /**
    * Type alias for a `ValidationNel` containing
