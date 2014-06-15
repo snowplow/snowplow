@@ -47,7 +47,7 @@ class ShreddedPartition(val partitionFields: Fields) extends Partition {
     }
 
     // Round-tripping through a SchemaKey ensures we have a valid path
-    SchemaKey(schemaUri) match {
+    SchemaKey.parse(schemaUri) match {
       case Failure(err) =>
         throw new IllegalArgumentException("ShreddedPartition expects a valid Iglu-format URI as its path; got: ${err}")
       case Success(key) => key.toPath

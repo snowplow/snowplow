@@ -162,7 +162,7 @@ object Shredder {
 
     val (schemaKey, instance) = instanceSchemaPair
 
-    val schemaNode = schemaKey.asJson
+    val schemaNode = schemaKey.toJsonNode
     val hierarchyNode = {
       val full = partialHierarchy.complete(List(schemaKey.name))
       full.toJsonNode
