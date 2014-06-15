@@ -10,7 +10,9 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
+package com.snowplowanalytics
+package snowplow
+package enrich
 package hadoop
 package outputs
 
@@ -23,6 +25,9 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
+// Iglu Scala Client
+import iglu.client.ProcessingMessageNel
+
 /**
  * Models our report on a bad row. Consists of:
  * 1. Our original input line (which was meant
@@ -31,7 +36,7 @@ import org.json4s.jackson.JsonMethods._
  */
 case class BadRow(
   val line: String,
-  val errors: ProcMsgNel
+  val errors: ProcessingMessageNel
   ) {
 
   /**

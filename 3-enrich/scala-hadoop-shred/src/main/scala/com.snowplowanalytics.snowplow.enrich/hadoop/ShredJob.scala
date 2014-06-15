@@ -35,6 +35,10 @@ import common.FatalEtlError
 import common.outputs.CanonicalOutput
 
 // Iglu Scala Client
+import iglu.client.{
+  ProcessingMessageNel,
+  JsonSchemaPair
+}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
@@ -78,7 +82,7 @@ object ShredJob {
    *         Processing Messages on Failure, or
    *         None on Success
    */
-  def projectBads(all: ValidatedJsonSchemaPairList): MaybeProcMsgNel =
+  def projectBads(all: ValidatedJsonSchemaPairList): Option[ProcessingMessageNel] =
     all.fold(
       e => Some(e), // Nel -> Some(List) of ProcessingMessages
       c => None)    // Discard
@@ -138,7 +142,7 @@ class ShredJob(args : Args) extends Job(args) {
     .flatMap('output -> 'errors) { o: ValidatedJsonSchemaPairList =>
       ShredJob.projectBads(o)
     }
-    .mapTo(('line, 'errors) -> 'json) { both: (String, ProcMsgNel) =>
+    .mapTo(('line, 'errors) -> 'json) { both: (String, ProcessingMessageNel) =>
       BadRow(both._1, both._2).toCompactJson
     }
     .write(badOutput)        // JSON containing line and error(s)

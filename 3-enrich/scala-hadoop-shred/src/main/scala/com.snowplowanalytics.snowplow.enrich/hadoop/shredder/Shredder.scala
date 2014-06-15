@@ -34,10 +34,10 @@ import outputs.CanonicalOutput
 // Iglu Scala Client
 import iglu.client.{
   SchemaKey,
-  SchemaRepo
+  JsonSchemaPair
 }
 import iglu.client.validation.ProcessingMessageMethods._
-import iglu.client.validation.ValidatableJsonNode._
+import iglu.client.validation.ValidatableJsonMethods._
 
 // This project
 import hadoop.utils.JsonUtils
@@ -195,7 +195,7 @@ object Shredder {
    *         JsonNode on success
    */
   private[shredder] def extractAndValidateJson(field: String, instance: Option[String]):
-    MaybeValidatedJson =
+    Option[ValidatedJson] =
     for {
       i <- instance
     } yield for {
