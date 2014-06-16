@@ -28,7 +28,7 @@ import com.twitter.scalding.Args
 import common.utils.ConversionUtils
 import common.enrichments.PrivacyEnrichments.AnonOctets
 import AnonOctets._
-import com.snowplowanalytics.snowplow.enrich.common.enrichments.EventEnrichments
+import common.enrichments.EventEnrichments
 
 // This project
 import utils.ScalazArgs
