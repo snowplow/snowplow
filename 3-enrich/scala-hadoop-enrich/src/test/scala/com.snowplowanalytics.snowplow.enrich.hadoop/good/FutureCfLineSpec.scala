@@ -94,7 +94,7 @@ object FutureCfLineSpec {
     null, //
     null, //
     null, //
-    null, // Unstructured event fields empty
+    null, // Unstructured event field empty
     null, // Transaction fields empty 
     null, //
     null, //

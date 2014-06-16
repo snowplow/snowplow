@@ -93,7 +93,7 @@ object StructEventCfLineSpec {
     "PBZ00110",      //
     "1",             //
     "35708.23",      //
-    null, // Unstructured event fields empty
+    null, // Unstructured event field empty
     null, // Transaction fields empty 
     null, //
     null, //

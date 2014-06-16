@@ -93,7 +93,7 @@ object TransactionCfLineSpec {
     null, //
     null, //
     null, //
-    null, // Unstructured event fields empty
+    null, // Unstructured event field empty
     "order-123",     // Transaction fields are set 
     "psychicbazaar", //
     "8000",          //
