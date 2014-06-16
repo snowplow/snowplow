@@ -42,6 +42,7 @@ object UnstructEventCfLineSpec {
   val expected = List(
     "pbzsite",
     "web",
+    EtlTimestamp,
     "2012-05-27 11:35:53.000",
     "2013-03-25 17:02:49.450",
     "unstruct",

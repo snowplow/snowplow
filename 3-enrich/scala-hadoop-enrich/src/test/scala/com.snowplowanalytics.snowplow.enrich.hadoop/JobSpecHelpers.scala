@@ -23,6 +23,10 @@ import org.specs2.matcher.Matchers._
 // Scalding
 import com.twitter.scalding._
 
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.DateTimeFormat
+
 // Snowplow Common Enrich
 import common.outputs.CanonicalOutput
 
@@ -35,7 +39,9 @@ object JobSpecHelpers {
   /**
    * The current version of our Hadoop ETL
    */
-  val EtlVersion = "hadoop-0.5.0-common-0.4.0"
+  val EtlVersion = "hadoop-0.5.0-common-0.5.0-SNAPSHOT"
+
+  val EtlTimestamp = "2001-09-09 01:46:40.000"
 
   /**
    * Fields in our CanonicalOutput which are unmatchable
@@ -146,5 +152,6 @@ object JobSpecHelpers {
       arg("output_folder", "outputFolder").
       arg("bad_rows_folder", "badFolder").
       arg("anon_ip_octets", anonOctets).
-      arg("exceptions_folder", "exceptionsFolder")
+      arg("exceptions_folder", "exceptionsFolder").
+      arg("etl_tstamp", "1000000000000")
 }

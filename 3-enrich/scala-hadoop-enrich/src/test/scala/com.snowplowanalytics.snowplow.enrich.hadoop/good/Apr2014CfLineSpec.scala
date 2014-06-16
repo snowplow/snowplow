@@ -43,6 +43,7 @@ object Apr2014CfLineSpec {
   val expected = List(
     "snowplowweb",
     "web",
+    EtlTimestamp,
     "2014-04-29 09:00:54.000",
     "2014-04-29 09:00:54.889",
     "page_ping",

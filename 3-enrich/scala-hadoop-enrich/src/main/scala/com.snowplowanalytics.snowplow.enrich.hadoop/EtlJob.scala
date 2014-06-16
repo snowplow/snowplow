@@ -60,9 +60,9 @@ object EtlJob {
    *         flatMap, will include any validation errors
    *         contained within the ValidatedMaybeCanonicalInput
    */
-  def toCanonicalOutput(geo: IpGeo, anonOctets: AnonOctets, input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
+  def toCanonicalOutput(geo: IpGeo, anonOctets: AnonOctets, input: ValidatedMaybeCanonicalInput, etlTstamp: String): ValidatedMaybeCanonicalOutput = {
     input.flatMap {
-      _.cata(EnrichmentManager.enrichEvent(geo, etlVersion, anonOctets, _).map(_.some),
+      _.cata(EnrichmentManager.enrichEvent(geo, etlVersion, anonOctets, etlTstamp, _).map(_.some),
              none.success)
     }
   }
@@ -140,6 +140,8 @@ class EtlJob(args: Args) extends Job(args) {
   val ipGeoFile = EtlJob.installIpGeoFile(etlConfig.maxmindFile)
   lazy val ipGeo = EtlJob.createIpGeo(ipGeoFile)
 
+  val etlTstamp = etlConfig.etl_tstamp
+
   // Aliases for our job
   val input = MultipleTextLineFiles(etlConfig.inFolder).read
   val goodOutput = Tsv(etlConfig.outFolder)
@@ -155,7 +157,7 @@ class EtlJob(args: Args) extends Job(args) {
   // TODO: let's fix this Any typing
   val common = trappableInput
     .map('line -> 'output) { l: Any =>
-      EtlJob.toCanonicalOutput(ipGeo, etlConfig.anonOctets, loader.toCanonicalInput(l))
+      EtlJob.toCanonicalOutput(ipGeo, etlConfig.anonOctets, loader.toCanonicalInput(l), etlTstamp)
     }
 
   // Handle bad rows

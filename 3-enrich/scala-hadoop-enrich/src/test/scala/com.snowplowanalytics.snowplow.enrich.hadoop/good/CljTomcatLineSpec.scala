@@ -42,6 +42,7 @@ object CljTomcatLineSpec {
   val expected = List(
     "snowplowweb",
     "web",
+    EtlTimestamp,
     "2013-10-07 19:47:54.000",
     "2013-10-07 19:47:54.123",
     "page_view",

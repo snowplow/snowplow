@@ -42,6 +42,7 @@ object PagePingCfLineSpec {
   val expected = List(
     "pbzsite",
     "web",
+    EtlTimestamp,
     "2013-03-25 02:04:00.000",
     "2013-03-25 02:03:37.342",
     "page_ping",

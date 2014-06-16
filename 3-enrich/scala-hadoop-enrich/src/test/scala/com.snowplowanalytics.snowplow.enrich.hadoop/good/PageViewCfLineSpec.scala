@@ -42,6 +42,7 @@ object PageViewCfLineSpec {
   val expected = List(
     "pbzsite",
     "web",
+    EtlTimestamp,
     "2012-05-24 00:06:42.000",
     "2013-03-25 13:52:09.188",
     "page_view",

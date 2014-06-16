@@ -61,7 +61,7 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  def enrichEvent(geo: IpGeo, hostEtlVersion: String, anonOctets: AnonOctets, raw: CanonicalInput): ValidatedCanonicalOutput = {
+  def enrichEvent(geo: IpGeo, hostEtlVersion: String, anonOctets: AnonOctets, etlTstamp: String, raw: CanonicalInput): ValidatedCanonicalOutput = {
 
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
@@ -297,6 +297,7 @@ object EnrichmentManager {
     event.refr_urlfragment = CU.truncate(event.refr_urlfragment, 255)
     event.refr_term = CU.truncate(event.refr_term, 255)
     event.se_label = CU.truncate(event.se_label, 255)
+    event.etl_tstamp = etlTstamp
 
     // Collect our errors on Failure, or return our event on Success
     (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| geoLocation.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {

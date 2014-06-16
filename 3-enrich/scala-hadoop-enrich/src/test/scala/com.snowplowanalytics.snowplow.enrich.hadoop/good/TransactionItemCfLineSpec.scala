@@ -42,6 +42,7 @@ object TransactionItemCfLineSpec {
   val expected = List(
     "CFe23a",
     null, // Not set (legacy input line)
+    EtlTimestamp,
     "2012-05-27 11:35:53.000",
     "2013-03-25 02:03:37.342",
     "transaction_item",
