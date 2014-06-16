@@ -10,7 +10,9 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
+package com.snowplowanalytics
+package snowplow
+package enrich
 package hadoop
 package utils
 
@@ -23,6 +25,9 @@ import com.fasterxml.jackson.databind.{
 // Scalaz
 import scalaz._
 import Scalaz._
+
+// Iglu Scala Client
+import iglu.client.utils.ValidationExceptions
 
 /**
  * Contains general purpose extractors and other
@@ -44,7 +49,7 @@ object JsonUtils {
     try {
       Mapper.readTree(instance).success
     } catch {
-      case e: Throwable => s"Field [$field]: invalid JSON [%s] with parsing error: %s".format(instance, stripInstance(e.getMessage)).fail
+      case e: Throwable => s"Field [$field]: invalid JSON [%s] with parsing error: %s".format(instance, ValidationExceptions.stripInstanceEtc(e.getMessage)).fail
     }
 
   /**
@@ -60,22 +65,4 @@ object JsonUtils {
   def unsafeExtractJson(instance: String): JsonNode =
     Mapper.readTree(instance)
 
-  /**
-   * Strips the instance information from a Jackson
-   * parsing exception message:
-   *
-   * "... at [Source: java.io.StringReader@1fe7a8f8; line: 1, column: 2]""
-   *                                       ^^^^^^^^
-   *
-   * Because this makes it hard to test.
-   *
-   * @param message The exception message which is
-   *        leaking instance information
-   * @return the same exception message, but with
-   *         instance information removed
-   */
-  // TODO: get this out of Iglu Scala Client
-  private[utils] def stripInstance(message: String): String = {
-    message.replaceAll("@[0-9a-z]+;", "@xxxxxx;")
-  }
 }
