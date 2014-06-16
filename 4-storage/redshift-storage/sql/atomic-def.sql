@@ -9,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.3.0
+-- Version:     0.4.0
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep
@@ -25,7 +25,7 @@ CREATE TABLE atomic.events (
 	app_id varchar(255) encode text255,
 	platform varchar(255) encode text255,
 	-- Date/time
-	etl_tstamp timestamp not null,                     -- Added in 0.5.0
+	etl_tstamp timestamp,                              -- Added in 0.4.0
 	collector_tstamp timestamp not null,
 	dvce_tstamp timestamp,
 	-- Event
