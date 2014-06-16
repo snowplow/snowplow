@@ -1,4 +1,4 @@
--- Copyright (c) 2013 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     Ports version 0.2.2 to version 0.3.0
+-- Version:     Ports version 0.3.0 to version 0.4.0
 -- URL:         -
 --
 -- Authors:     Fred Blundun
@@ -31,10 +31,10 @@ CREATE TABLE atomic.events (
 	-- Event
 	event varchar(128) encode text255,
 	                                                   -- Removed event_vendor in 0.4.0
-	event_id char(36) not null unique,                 -- Changed from varchar(38) in 0.3.0
+	event_id char(36) not null unique,
 	txn_id int,
 	-- Namespacing and versioning
-	name_tracker varchar(128) encode text255,          -- Added in 0.3.0
+	name_tracker varchar(128) encode text255,
 	v_tracker varchar(100) encode text255,
 	v_collector varchar(100) encode text255 not null,
 	v_etl varchar(100) encode text255 not null,
@@ -53,9 +53,9 @@ CREATE TABLE atomic.events (
 	geo_latitude double precision,
 	geo_longitude double precision,
 	-- Page
-	page_url varchar(4096),                            -- Added in 0.3.0
+	page_url varchar(4096),
 	page_title varchar(2000),
-	page_referrer varchar(4096),                       -- Added in 0.3.0
+	page_referrer varchar(4096),
 	-- Page URL components
 	page_urlscheme varchar(16) encode text255,
 	page_urlhost varchar(255) encode text255,
@@ -81,7 +81,7 @@ CREATE TABLE atomic.events (
 	mkt_content varchar(500) encode raw,
 	mkt_campaign varchar(255) encode text32k,
 	-- Custom contexts
-	contexts varchar(10000) encode raw,                -- Added in 0.3.0
+	contexts varchar(10000) encode raw,
 	-- Custom structured event
 	se_category varchar(255) encode text255,
 	se_action varchar(255) encode text255,
@@ -147,10 +147,10 @@ CREATE TABLE atomic.events (
 	doc_charset varchar(128) encode text255,
 	doc_width integer,
 	doc_height integer,
-	CONSTRAINT event_id_040_pk PRIMARY KEY(event_id)   -- Made constraint version-specific in 0.3.0
+	CONSTRAINT event_id_040_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
-DISTKEY (event_id)                                     -- Changed from domain_userid in 0.3.0
+DISTKEY (event_id)
 SORTKEY (collector_tstamp);
 
 -- Now copy into new from events_old
@@ -261,4 +261,4 @@ INSERT INTO atomic.events
 	doc_charset,
 	doc_width,
 	doc_height
-    FROM atomic.events_022;
+    FROM atomic.events_030;

@@ -1,4 +1,4 @@
--- Copyright (c) 2013 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -260,4 +260,4 @@ INSERT INTO atomic.events
 	"doc_charset",
 	"doc_width",
 	"doc_height"
-    FROM atomic.events_01x;
+    FROM atomic.events_020;
