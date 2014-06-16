@@ -140,7 +140,7 @@ class EtlJob(args: Args) extends Job(args) {
   val ipGeoFile = EtlJob.installIpGeoFile(etlConfig.maxmindFile)
   lazy val ipGeo = EtlJob.createIpGeo(ipGeoFile)
 
-  val etlTstamp = etlConfig.etl_tstamp
+  val etlTstamp = etlConfig.etlTstamp
 
   // Aliases for our job
   val input = MultipleTextLineFiles(etlConfig.inFolder).read
