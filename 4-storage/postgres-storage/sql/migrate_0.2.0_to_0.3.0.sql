@@ -17,7 +17,7 @@
 -- License:     Apache License Version 2.0
 
 -- Rename existing table
-ALTER TABLE "atomic"."events" RENAME TO "events_02x"
+ALTER TABLE "atomic"."events" RENAME TO "events_020"
 
 -- Create the table
 CREATE TABLE "atomic"."events" (
