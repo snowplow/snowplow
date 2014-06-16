@@ -29,6 +29,9 @@ import com.twitter.scalding.Args
 import iglu.client.Resolver
 import iglu.client.validation.ProcessingMessageMethods._
 
+// Snowplow Common Enrich
+import common.utils.ConversionUtils
+
 // This project
 import utils.ScalazArgs
 
@@ -48,6 +51,8 @@ case class ShredJobConfig(
  */
 object ShredJobConfig {
 
+  private val IgluConfigArg = "iglu_config"
+
   /**
    * Loads the Config from the Scalding
    * job's supplied Args.
@@ -64,10 +69,14 @@ object ShredJobConfig {
     val outFolder = args.requiredz("output_folder").toProcessingMessageNel
     val badFolder = args.requiredz("bad_rows_folder").toProcessingMessageNel
     val exceptionsFolder = args.optionalz("exceptions_folder").toProcessingMessageNel
-    val resolver  = args.requiredz("iglu_config").fold(
-      e => e.toProcessingMessageNel.fail,
-      s => base64ToJsonNode(s).flatMap(Resolver.parse(_))
-    )
+
+    val resolver  = args.requiredz(IgluConfigArg) match {
+      case Failure(e) => e.toProcessingMessageNel.fail
+      case Success(s) => for {
+        node <- base64ToJsonNode(s)
+        rslv <- Resolver.parse(node)
+      } yield rslv
+    }
 
     (inFolder |@| outFolder |@| badFolder |@| exceptionsFolder |@| resolver) { ShredJobConfig(_,_,_,_,_) }
   }
@@ -82,8 +91,9 @@ object ShredJobConfig {
    *         ProcessingMessages on
    *         Failure 
    */
-  private def base64ToJsonNode(str: String): ValidatedNel[JsonNode] = {
+  private[hadoop] def base64ToJsonNode(str: String): ValidatedNel[JsonNode] = {
     // TODO: implement this
+    val a = ConversionUtils.decodeBase64Url(IgluConfigArg, "TODO").toProcessingMessageNel
     "TODO".toProcessingMessageNel.fail
   }
 }
