@@ -74,8 +74,8 @@ object ShredJobConfig {
       case Failure(e) => e.toProcessingMessageNel.fail
       case Success(s) => for {
         node <- base64ToJsonNode(s)
-        rslv <- Resolver.parse(node)
-      } yield rslv
+        reso <- Resolver.parse(node)
+      } yield reso
     }
 
     (inFolder |@| outFolder |@| badFolder |@| exceptionsFolder |@| resolver) { ShredJobConfig(_,_,_,_,_) }
@@ -91,9 +91,10 @@ object ShredJobConfig {
    *         ProcessingMessages on
    *         Failure 
    */
-  private[hadoop] def base64ToJsonNode(str: String): ValidatedNel[JsonNode] = {
-    // TODO: implement this
-    val a = ConversionUtils.decodeBase64Url(IgluConfigArg, "TODO").toProcessingMessageNel
-    "TODO".toProcessingMessageNel.fail
-  }
+  private[hadoop] def base64ToJsonNode(str: String): ValidatedNel[JsonNode] =
+    for {
+      raw  <- ConversionUtils.decodeBase64Url(IgluConfigArg, str).toProcessingMessageNel
+      node <- "TODO".toProcessingMessageNel.fail[JsonNode]
+    } yield node
+
 }
