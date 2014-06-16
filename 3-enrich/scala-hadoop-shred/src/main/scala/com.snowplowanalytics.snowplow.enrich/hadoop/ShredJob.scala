@@ -117,7 +117,7 @@ class ShredJob(args : Args) extends Job(args) {
   // Job configuration. Scalaz recommends using fold()
   // for unpicking a Validation
   val shredConfig = ShredJobConfig.loadConfigFrom(args).fold(
-    e => throw FatalEtlError(e),
+    e => throw FatalEtlError(e.map(_.toString)),
     c => c)
 
   // Aliases for our job
