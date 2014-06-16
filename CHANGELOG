@@ -18,7 +18,7 @@ Schemas: added self-describing JSON Schema instance and schema (#736)
 Scala Hadoop Shred: added. Version 0.1.0                                                - TODO (remove -SNAPSHOT and deps)
 EmrEtlRunner: bumped to 0.8.0
 EmrEtlRunner: updated S3DistCp steps to use new S3DistCpStep from Elasticity (#629)
-EmrEtlRunner: added --skip s3distcp option (#313)                                       - TODO
+EmrEtlRunner: added --skip s3distcp option (#313)
 EmrEtlRunner: added ability to start Lingual in EmrEtlRunner (#623)
 EmrEtlRunner: added ability to start HBase in EmrEtlRunner (#622)
 EmrEtlRunner: improved load performance by switching ETL to write out to HDFS (#278)

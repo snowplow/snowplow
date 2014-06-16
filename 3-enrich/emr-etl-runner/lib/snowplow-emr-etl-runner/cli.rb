@@ -54,7 +54,7 @@ module Snowplow
           opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
-          opts.on('-s', '--skip staging,emr,shred,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-s', '--skip staging,s3distcp,emr,shred,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
           opts.on('-b', '--process-bucket BUCKET', 'run emr only on specified bucket. Implies --skip staging,shred,archive') { |config| 
             options[:processbucket] = config
             options[:skip] = %w(staging shred archive)

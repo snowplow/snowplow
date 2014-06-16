@@ -53,7 +53,8 @@ module Snowplow
 
         unless @args[:skip].include?('emr')
           shred = not(@args[:skip].include?('shred'))
-          job = EmrJob.new(@args[:debug], shred, @config)
+          s3distcp = not(@args[:skip].include?('s3distcp'))
+          job = EmrJob.new(@args[:debug], shred, s3distcp, @config)
           job.run()
         end
 
