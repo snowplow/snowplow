@@ -23,6 +23,7 @@ CREATE TABLE "atomic"."events" (
 	"app_id" varchar(255),
 	"platform" varchar(255),
 	-- Date/time
+	"etl_tstamp" timestamp,
 	"collector_tstamp" timestamp NOT NULL,
 	"dvce_tstamp" timestamp,
 	-- Date/time

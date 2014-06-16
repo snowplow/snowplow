@@ -1,7 +1,9 @@
 Version 0.9.X (2014-XX-XX)
 --------------------------
 Redshift: bumped table-def to 0.4.0
+Redshift: added etl_tstamp to atomic.events (#819)
 Postgres: bumped table-def to 0.3.0
+Postgres: added etl_tstamp to atomic.events (#820)
 
 Version 0.9.5 (2014-07-09)
 --------------------------
