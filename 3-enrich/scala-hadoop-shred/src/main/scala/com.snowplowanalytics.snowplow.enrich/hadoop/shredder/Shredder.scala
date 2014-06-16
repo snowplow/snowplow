@@ -72,7 +72,7 @@ object Shredder {
    *         and on Failure a NonEmptyList of
    *         JsonNodes containing error messages
    */
-  def shred(event: CanonicalOutput): ValidatedJsonSchemaPairList = {
+  def shred(event: CanonicalOutput): ValidatedNel[JsonSchemaPairs] = {
 
     // Define what we know so far of the type hierarchy.
     val partialHierarchy = makePartialHierarchy(
@@ -93,7 +93,7 @@ object Shredder {
       l = j.iterator.toList
     } yield l
 
-    def flatten(o: Option[ValidatedJsonList]): ValidatedJsonList = o match {
+    def flatten(o: Option[ValidatedNel[JsonNodes]]): ValidatedNel[JsonNodes] = o match {
       case Some(vjl) => vjl
       case None => List[JsonNode]().success
     }
@@ -195,7 +195,7 @@ object Shredder {
    *         JsonNode on success
    */
   private[shredder] def extractAndValidateJson(field: String, instance: Option[String]):
-    Option[ValidatedJson] =
+    Option[ValidatedNel[JsonNode]] =
     for {
       i <- instance
     } yield for {
@@ -214,6 +214,6 @@ object Shredder {
    * @param instance The JSON instance itself
    * @return the pimped ScalazArgs
    */
-  private[shredder] def extractJson(field: String, instance: String): ValidatedJson =
+  private[shredder] def extractJson(field: String, instance: String): ValidatedNel[JsonNode] =
     JsonUtils.extractJson(field, instance).toProcessingMessageNel
 }

@@ -65,7 +65,7 @@ object ShredJob {
    *         (possibly empty) List of JSON instances
    *         + schemas on Success
    */
-  def loadAndShred(line: String): ValidatedJsonSchemaPairList =
+  def loadAndShred(line: String): ValidatedNel[JsonSchemaPairs] =
     for {
       event <- EnrichedEventLoader.toEnrichedEvent(line).toProcessingMessages
       shred <- Shredder.shred(event)
@@ -82,7 +82,7 @@ object ShredJob {
    *         Processing Messages on Failure, or
    *         None on Success
    */
-  def projectBads(all: ValidatedJsonSchemaPairList): Option[ProcessingMessageNel] =
+  def projectBads(all: ValidatedNel[JsonSchemaPairs]): Option[ProcessingMessageNel] =
     all.fold(
       e => Some(e), // Nel -> Some(List) of ProcessingMessages
       c => None)    // Discard
@@ -98,7 +98,7 @@ object ShredJob {
    *         Processing Messages on Failure, or
    *         None on Success
    */
-  def projectGoods(all: ValidatedJsonSchemaPairList): Option[List[JsonSchemaPair]] = all match {
+  def projectGoods(all: ValidatedNel[JsonSchemaPairs]): Option[List[JsonSchemaPair]] = all match {
     case Success(nel @ _ :: Nil) => Some(nel) // (Non-empty) List -> Some(List) of JsonSchemaPairs
     case _                       => None      // Discard
   }
@@ -139,7 +139,7 @@ class ShredJob(args : Args) extends Job(args) {
 
   // Handle bad rows
   val bad = common
-    .flatMap('output -> 'errors) { o: ValidatedJsonSchemaPairList =>
+    .flatMap('output -> 'errors) { o: ValidatedNel[JsonSchemaPairs] =>
       ShredJob.projectBads(o)
     }
     .mapTo(('line, 'errors) -> 'json) { both: (String, ProcessingMessageNel) =>
@@ -149,7 +149,7 @@ class ShredJob(args : Args) extends Job(args) {
 
   // Handle good rows
   val good = common
-    .flatMapTo('output -> 'good) { o: ValidatedJsonSchemaPairList =>
+    .flatMapTo('output -> 'good) { o: ValidatedNel[JsonSchemaPairs] =>
       ShredJob.projectGoods(o)
     }
     .flatMapTo('good -> ('schema, 'json)) { pairs: List[JsonSchemaPair] =>

@@ -37,17 +37,19 @@ import iglu.client.JsonSchemaPair
 package object hadoop {
 
   /**
-   * Type alias for a `ValidationNel` containing
-   * either error `JsonNode`s or a List of successfully
-   * validated `JsonNode`s.
+   * Helpful archetypes
    */
-  type ValidatedJsonList = ValidationNel[ProcessingMessage, List[JsonNode]]
+  type Validated[A] = Validation[ProcessingMessage, A]
+  type ValidatedNel[A] = ValidationNel[ProcessingMessage, A]
 
   /**
-   * Type alias for a `ValidationNel` containing
-   * either error `JsonNode`s or a `List` of `Tuple2`s containing
-   * the `SchemaKey` and the successfully validated `JsonNode`.
+   * A (possibly empty) list of JsonNodes
    */
-  type ValidatedJsonSchemaPairList = ValidationNel[ProcessingMessage, List[JsonSchemaPair]]
+  type JsonNodes = List[JsonNode]
+
+  /**
+   * A (possibly empty) list of JsonSchemaPairs
+   */
+  type JsonSchemaPairs = List[JsonSchemaPair]
 
 }
