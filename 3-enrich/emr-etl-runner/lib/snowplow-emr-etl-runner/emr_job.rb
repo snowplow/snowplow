@@ -344,7 +344,7 @@ module Snowplow
 
         { :maxmind  => "#{asset_host}third-party/maxmind/GeoLiteCity.dat",
           :enrich   => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-etl-#{hadoop_enrich_version}.jar",
-          :shred    => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
+          :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
         }
       end
 
