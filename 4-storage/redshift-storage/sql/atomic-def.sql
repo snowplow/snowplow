@@ -25,6 +25,7 @@ CREATE TABLE atomic.events (
 	app_id varchar(255) encode text255,
 	platform varchar(255) encode text255,
 	-- Date/time
+	etl_tstamp timestamp not null,                     -- Added in 0.5.0
 	collector_tstamp timestamp not null,
 	dvce_tstamp timestamp,
 	-- Event
