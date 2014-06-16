@@ -28,7 +28,7 @@ CREATE TABLE "atomic"."events" (
 	"dvce_tstamp" timestamp,
 	-- Date/time
 	"event" varchar(128),
-	"event_vendor" varchar(128),            -- Removed not null constraint in 0.3.0
+                                            -- Removed event_vendor in 0.3.0
 	"event_id" char(36) NOT NULL,           -- Changed from varchar(38) in 0.2.0
 	"txn_id" integer,
 	-- Versioning
@@ -87,8 +87,8 @@ CREATE TABLE "atomic"."events" (
 	"se_property" varchar(255),
 	"se_value" double precision,
 	-- Custom unstructured event
-	"ue_name" varchar(255),                 -- Added in 0.2.0
-	"ue_properties" json,                   -- Added in 0.2.0. Consider jsonb type coming soon to PG
+	                                        -- Removed ue_name in 0.3.0
+	"unstruct_event" json,                  -- Renamed ue_properties to unstruct_event in 0.3.0
 	-- Ecommerce
 	"tr_orderid" varchar(255),
 	"tr_affiliation" varchar(255),

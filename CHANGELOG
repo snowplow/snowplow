@@ -6,6 +6,7 @@ Redshift: added etl_tstamp to atomic.events (#819)
 Redshift: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#834)
 Postgres: bumped table-def to 0.3.0
 Postgres: added etl_tstamp to atomic.events (#820)
+Postgres: remove event_vendor and ue_name and rename ue_properties to unstruct_event (#833)
 
 Version 0.9.5 (2014-07-09)
 --------------------------
