@@ -33,7 +33,10 @@ import iglu.client.validation.ProcessingMessageMethods._
 import common.utils.ConversionUtils
 
 // This project
-import utils.ScalazArgs
+import utils.{
+  ScalazArgs,
+  JsonUtils
+}
 
 /**
  * The configuration for the SnowPlowEtlJob.
@@ -92,9 +95,9 @@ object ShredJobConfig {
    *         Failure 
    */
   private[hadoop] def base64ToJsonNode(str: String): ValidatedNel[JsonNode] =
-    for {
-      raw  <- ConversionUtils.decodeBase64Url(IgluConfigArg, str).toProcessingMessageNel
-      node <- "TODO".toProcessingMessageNel.fail[JsonNode]
-    } yield node
+    (for {
+      raw  <- ConversionUtils.decodeBase64Url(IgluConfigArg, str)
+      node <- JsonUtils.extractJson(IgluConfigArg, raw)
+    } yield node).toProcessingMessageNel
 
 }
