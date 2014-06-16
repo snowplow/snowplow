@@ -19,6 +19,9 @@ import java.io.File
 import java.io.BufferedWriter
 import java.io.FileWriter
 
+// Apache Commons Codec
+import org.apache.commons.codec.binary.Base64
+
 // Scala
 import scala.collection.mutable.ListBuffer
 
@@ -59,6 +62,36 @@ object JobSpecHelpers {
    * How Scalding represents input lines
    */
   type ScaldingLines = List[(String, String)]
+
+  /**
+   * Base64-urlsafe encoded version of this standard
+   * Iglu configuration.
+   */
+  private val IgluConfig = {
+    val encoder = new Base64(true) // true means "url safe"
+    new String(encoder.encode(
+       """|{
+            |"schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
+            |"data": {
+              |"cacheSize": 500,
+              |"repositories": [
+                |{
+                  |"name": "Iglu Central",
+                  |"priority": 0,
+                  |"vendorPrefixes": [ "com.snowplowanalytics" ],
+                  |"connection": {
+                    |"http": {
+                      |"uri": "http://iglucentral.com"
+                    |}
+                  |}
+                |}
+              |]
+            |}
+          |}""".stripMargin.replaceAll("[\n\r]","").getBytes
+      )
+    )
+  }
+
 
   /**
    * A case class to make it easy to write out input
@@ -112,7 +145,8 @@ object JobSpecHelpers {
       arg("input_folder", "inputFolder").
       arg("output_folder", "outputFolder").
       arg("bad_rows_folder", "badFolder").
-      arg("exceptions_folder", "exceptionsFolder")
+      arg("exceptions_folder", "exceptionsFolder").
+      arg("iglu_config", IgluConfig)
 
   case class Sinks(
     val output:     File,
@@ -152,7 +186,9 @@ object JobSpecHelpers {
       "--input_folder",      input.getAbsolutePath,
       "--output_folder",     output.getAbsolutePath,
       "--bad_rows_folder",   badRows.getAbsolutePath,
-      "--exceptions_folder", exceptions.getAbsolutePath)
+      "--exceptions_folder", exceptions.getAbsolutePath,
+      "--iglu_config",       IgluConfig)
+
 
     // Execute
     Tool.main(args)
