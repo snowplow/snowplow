@@ -39,7 +39,7 @@ module Snowplow
       include Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, ConfigHash => EmrJob
+      Contract Bool, Bool, Bool, ConfigHash => EmrJob
       def initialize(debug, shred, s3distcp, config)
 
         logger.debug "Initializing EMR jobflow"
