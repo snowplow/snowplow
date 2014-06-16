@@ -9,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.2.0
+-- Version:     0.3.0
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
