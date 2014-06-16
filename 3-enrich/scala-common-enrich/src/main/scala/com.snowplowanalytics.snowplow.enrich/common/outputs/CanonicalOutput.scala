@@ -49,7 +49,6 @@ class CanonicalOutput {
 
   // Transaction (i.e. this logging event)
   @BeanProperty var event: String = _
-  @BeanProperty var event_vendor: String = _
   @BeanProperty var event_id: String = _
   @BeanProperty var txn_id: String = _
 
@@ -119,8 +118,7 @@ class CanonicalOutput {
   @BeanProperty var se_value: String = _ // Technically should be a Double but may be rendered incorrectly by Cascading with scientific notification (which Redshift can't process)
 
   // Unstructured Event
-  @BeanProperty var ue_name: String = _
-  @BeanProperty var ue_properties: String = _
+  @BeanProperty var unstruct_event: String = _
 
   // Ecommerce transaction (from querystring)
   @BeanProperty var tr_orderid: String = _

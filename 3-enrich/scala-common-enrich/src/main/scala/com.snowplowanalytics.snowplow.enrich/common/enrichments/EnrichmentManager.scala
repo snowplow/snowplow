@@ -136,7 +136,6 @@ object EnrichmentManager {
     // Caution: by definition, a TransformMap loses type safety. Always unit test!
     val transformMap: TransformMap =
       Map(("e"       , (EE.extractEventType, "event")),
-          ("evn"     , (ME.toTsvSafe, "event_vendor")),
           ("ip"      , (ME.toTsvSafe, "user_ipaddress")),
           ("aid"     , (ME.toTsvSafe, "app_id")),
           ("p"       , (ME.extractPlatform, "platform")),
@@ -185,9 +184,8 @@ object EnrichmentManager {
           ("se_pr"   , (ME.toTsvSafe, "se_property")),
           ("se_va"   , (CU.stringToDoublelike, "se_value")),
           // Custom unstructured events
-          ("ue_na"   , (ME.toTsvSafe, "ue_name")),
-          ("ue_pr"   , (extractUrlEncJson, "ue_properties")),
-          ("ue_px"   , (extractBase64EncJson, "ue_properties")),
+          ("ue_pr"   , (extractUrlEncJson, "unstruct_event")),
+          ("ue_px"   , (extractBase64EncJson, "unstruct_event")),
           // Ecommerce transactions
           ("tr_id"   , (ME.toTsvSafe, "tr_orderid")),
           ("tr_af"   , (ME.toTsvSafe, "tr_affiliation")),
