@@ -43,6 +43,7 @@ class CanonicalOutput {
   @BeanProperty var platform: String = _
 
   // Date/time
+  @BeanProperty var etl_tstamp: String = _
   @BeanProperty var collector_tstamp: String = _
   @BeanProperty var dvce_tstamp: String = _
 
