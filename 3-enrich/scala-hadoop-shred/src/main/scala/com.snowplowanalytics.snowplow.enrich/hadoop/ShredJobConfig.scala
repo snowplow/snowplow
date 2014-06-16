@@ -46,7 +46,7 @@ case class ShredJobConfig(
     outFolder: String,
     badFolder: String,
     exceptionsFolder: Option[String],
-    resolver: Resolver)
+    igluResolver: Resolver)
 
 /**
  * Module to handle configuration for
@@ -73,7 +73,7 @@ object ShredJobConfig {
     val badFolder = args.requiredz("bad_rows_folder").toProcessingMessageNel
     val exceptionsFolder = args.optionalz("exceptions_folder").toProcessingMessageNel
 
-    val resolver  = args.requiredz(IgluConfigArg) match {
+    val igluResolver = args.requiredz(IgluConfigArg) match {
       case Failure(e) => e.toProcessingMessageNel.fail
       case Success(s) => for {
         node <- base64ToJsonNode(s)
@@ -81,7 +81,7 @@ object ShredJobConfig {
       } yield reso
     }
 
-    (inFolder |@| outFolder |@| badFolder |@| exceptionsFolder |@| resolver) { ShredJobConfig(_,_,_,_,_) }
+    (inFolder |@| outFolder |@| badFolder |@| exceptionsFolder |@| igluResolver) { ShredJobConfig(_,_,_,_,_) }
   }
 
   /**

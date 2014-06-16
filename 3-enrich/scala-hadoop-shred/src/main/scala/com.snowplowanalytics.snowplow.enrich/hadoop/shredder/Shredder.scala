@@ -34,7 +34,8 @@ import outputs.CanonicalOutput
 // Iglu Scala Client
 import iglu.client.{
   SchemaKey,
-  JsonSchemaPair
+  JsonSchemaPair,
+  Resolver
 }
 import iglu.client.validation.ProcessingMessageMethods._
 import iglu.client.validation.ValidatableJsonMethods._
@@ -67,12 +68,14 @@ object Shredder {
    *
    * @param event The Snowplow enriched event to
    *        shred JSONs from
+   * @param resolver Our implicit Iglu
+   *        Resolver, for schema lookups
    * @return a Validation containing on Success a
    *         List (possible empty) of JsonNodes
    *         and on Failure a NonEmptyList of
    *         JsonNodes containing error messages
    */
-  def shred(event: CanonicalOutput): ValidatedNel[JsonSchemaPairs] = {
+  def shred(event: CanonicalOutput)(implicit resolver: Resolver): ValidatedNel[JsonSchemaPairs] = {
 
     // Define what we know so far of the type hierarchy.
     val partialHierarchy = makePartialHierarchy(
@@ -188,13 +191,15 @@ object Shredder {
    *        containing the JSON instance
    * @param instance An Option-boxed JSON
    *        instance
+   * @param resolver Our implicit Iglu
+   *        Resolver, for schema lookups
    * @return an Option-boxed Validation
    *         containing either a Nel of
    *         JsonNodes error message on
    *         Failure, or a singular
    *         JsonNode on success
    */
-  private[shredder] def extractAndValidateJson(field: String, instance: Option[String]):
+  private[shredder] def extractAndValidateJson(field: String, instance: Option[String])(implicit resolver: Resolver):
     Option[ValidatedNel[JsonNode]] =
     for {
       i <- instance

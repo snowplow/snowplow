@@ -37,7 +37,8 @@ import common.outputs.CanonicalOutput
 // Iglu Scala Client
 import iglu.client.{
   ProcessingMessageNel,
-  JsonSchemaPair
+  JsonSchemaPair,
+  Resolver
 }
 import iglu.client.validation.ProcessingMessageMethods._
 
@@ -60,12 +61,14 @@ object ShredJob {
    *
    * @param line The incoming raw line (hopefully
    *        holding a Snowplow enriched event)
+   * @param resolver Our implicit Iglu
+   *        Resolver, for schema lookups
    * @return a Validation boxing either a Nel of
    *         ProcessingMessages on Failure, or a
    *         (possibly empty) List of JSON instances
    *         + schemas on Success
    */
-  def loadAndShred(line: String): ValidatedNel[JsonSchemaPairs] =
+  def loadAndShred(line: String)(implicit resolver: Resolver): ValidatedNel[JsonSchemaPairs] =
     for {
       event <- EnrichedEventLoader.toEnrichedEvent(line).toProcessingMessages
       shred <- Shredder.shred(event)
@@ -124,6 +127,7 @@ class ShredJob(args : Args) extends Job(args) {
   val input = MultipleTextLineFiles(shredConfig.inFolder).read
   val goodOutput = PartitionedTsv(shredConfig.outFolder, ShredJob.ShreddedPartition, false, ('json), SinkMode.REPLACE)
   val badOutput = Tsv(shredConfig.badFolder)  // Technically JSONs but use Tsv for custom JSON creation
+  implicit val resolver = shredConfig.igluResolver
 
   // Do we add a failure trap?
   val trappableInput = shredConfig.exceptionsFolder match {
