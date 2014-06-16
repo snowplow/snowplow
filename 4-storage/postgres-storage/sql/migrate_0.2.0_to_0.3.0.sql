@@ -157,6 +157,7 @@ INSERT INTO atomic.events
 	SELECT
 	"app_id",
 	"platform",
+	NULL AS "etl_tstamp",
 	"collector_tstamp",
 	"dvce_tstamp",
 	"event",
