@@ -147,7 +147,7 @@ CREATE TABLE atomic.events (
 	doc_charset varchar(128) encode text255,
 	doc_width integer,
 	doc_height integer,
-	CONSTRAINT event_id_030_pk PRIMARY KEY(event_id)   -- Made constraint version-specific in 0.3.0
+	CONSTRAINT event_id_040_pk PRIMARY KEY(event_id)   -- Made constraint version-specific in 0.3.0
 )
 DISTSTYLE KEY
 DISTKEY (event_id)                                     -- Changed from domain_userid in 0.3.0
