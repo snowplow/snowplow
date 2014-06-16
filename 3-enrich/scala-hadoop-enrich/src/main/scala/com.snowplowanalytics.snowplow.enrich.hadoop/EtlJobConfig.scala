@@ -42,6 +42,7 @@ case class EtlJobConfig(
     outFolder: String,
     badFolder: String,
     anonOctets: AnonOctets,
+    etl_tstamp: String,
     exceptionsFolder: Option[String])
 
 /**
