@@ -46,7 +46,6 @@ object UnstructEventCfLineSpec {
     "2012-05-27 11:35:53.000",
     "2013-03-25 17:02:49.450",
     "unstruct",
-    "com.acme",
     null, // We can't predict the event_id
     "598951",
     null, // No tracker namespace
@@ -94,8 +93,7 @@ object UnstructEventCfLineSpec {
     null, //
     null, //
     null, //
-    "viewed_product",               // Unstructured event fields set
-    """{"age":23,"name":"John"}""", //
+    """{"age":23,"name":"John"}""", // Unstructured event fields set
     null, // Transaction fields empty
     null, //
     null, //

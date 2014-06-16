@@ -46,7 +46,6 @@ object TransactionCfLineSpec {
     "2012-05-27 11:35:53.000",
     "2013-03-25 02:03:37.342",
     "transaction",
-    null, // No event vendor set
     null, // We can't predict the event_id
     "028288",
     null, // No tracker namespace
@@ -95,7 +94,6 @@ object TransactionCfLineSpec {
     null, //
     null, //
     null, // Unstructured event fields empty
-    null, //
     "order-123",     // Transaction fields are set 
     "psychicbazaar", //
     "8000",          //

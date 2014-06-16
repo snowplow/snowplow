@@ -46,7 +46,6 @@ object PageViewCfLineSpec {
     "2012-05-24 00:06:42.000",
     "2013-03-25 13:52:09.188",
     "page_view",
-    null, // No event vendor set
     null, // We can't predict the event_id
     "637309",
     null, // No tracker namespace
@@ -95,7 +94,6 @@ object PageViewCfLineSpec {
     null, //
     null, //
     null, // Unstructured event fields empty
-    null, //
     null, // Transaction fields empty 
     null, //
     null, //

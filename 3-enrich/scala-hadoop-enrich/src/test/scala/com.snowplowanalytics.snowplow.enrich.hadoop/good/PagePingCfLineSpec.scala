@@ -46,7 +46,6 @@ object PagePingCfLineSpec {
     "2013-03-25 02:04:00.000",
     "2013-03-25 02:03:37.342",
     "page_ping",
-    "com.snowplowanalytics",
     null, // We can't predict the event_id
     "128574",
     "TMP TEST", // Tracker namespace
@@ -95,7 +94,6 @@ object PagePingCfLineSpec {
     null, //
     null, //
     null, // Unstructured event fields empty
-    null, //
     null, // Transaction fields empty 
     null, //
     null, //

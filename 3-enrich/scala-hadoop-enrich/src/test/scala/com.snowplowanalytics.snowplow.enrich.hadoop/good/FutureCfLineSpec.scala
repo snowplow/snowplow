@@ -47,7 +47,6 @@ object FutureCfLineSpec {
     "2015-04-29 09:00:54.000",
     "2015-04-29 08:00:54.889",
     "page_ping",
-    "com.snowplowanalytics",
     null, // We can't predict the event_id
     "612876",
     "cloudfront", // Tracker namespace
@@ -96,7 +95,6 @@ object FutureCfLineSpec {
     null, //
     null, //
     null, // Unstructured event fields empty
-    null, //
     null, // Transaction fields empty 
     null, //
     null, //

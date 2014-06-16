@@ -46,7 +46,6 @@ object StructEventCfLineSpec {
     "2012-05-27 11:35:53.000",
     "2013-03-25 17:02:49.450",
     "struct",
-    "com.snowplowanalytics",
     null, // We can't predict the event_id
     "598951",
     null, // No tracker namespace
@@ -95,7 +94,6 @@ object StructEventCfLineSpec {
     "1",             //
     "35708.23",      //
     null, // Unstructured event fields empty
-    null, //
     null, // Transaction fields empty 
     null, //
     null, //

@@ -46,7 +46,6 @@ object CljTomcatLineSpec {
     "2013-10-07 19:47:54.000",
     "2013-10-07 19:47:54.123",
     "page_view",
-    "com.snowplowanalytics",
     null, // We can't predict the event_id
     "958446",
     null, // No tracker namespace
@@ -95,7 +94,6 @@ object CljTomcatLineSpec {
     null, //
     null, //
     null, // Unstructured event fields empty
-    null, //
     null, // Transaction fields empty 
     null, //
     null, //

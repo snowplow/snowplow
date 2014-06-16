@@ -47,7 +47,6 @@ object Sep2013CfLineSpec {
     "2013-10-07 21:32:22.000",
     "2013-10-07 21:30:37.923",
     "page_view",
-    null, // No event vendor set
     null, // We can't predict the event_id
     "390328",
     null, // No tracker namespace
@@ -97,7 +96,6 @@ object Sep2013CfLineSpec {
     null, //
     null, //
     null, // Unstructured event fields empty
-    null, //
     null, // Transaction fields empty 
     null, //
     null, //
