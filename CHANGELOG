@@ -15,7 +15,7 @@ Schemas: added link_click JSON Schema and tests (#601)
 Schemas: added screen_view JSON Schema and tests (#590)
 Schemas: added JSON Schema and tests for website's page_context (#768)
 Schemas: added self-describing JSON Schema instance and schema (#736)
-Scala Hadoop Shred: added. Version 0.1.0                                                - TODO
+Scala Hadoop Shred: added. Version 0.1.0                                                - TODO (remove -SNAPSHOT and deps)
 EmrEtlRunner: bumped to 0.8.0
 EmrEtlRunner: updated S3DistCp steps to use new S3DistCpStep from Elasticity (#629)
 EmrEtlRunner: added --skip s3distcp option (#313)                                       - TODO
@@ -24,7 +24,7 @@ EmrEtlRunner: added ability to start HBase in EmrEtlRunner (#622)
 EmrEtlRunner: improved load performance by switching ETL to write out to HDFS (#278)
 EmrEtlRunner: now invoking Scala Hadoop Shredder after main job (#644)
 EmrEtlRunner: added :iglu: section to config.yml for Scala Hadoop Shred (#814)
-EmrEtlRunner: updated to run Scala Hadoop Shred following Hadoop Enrich (#815)          - TODO
+EmrEtlRunner: updated to run Scala Hadoop Shred following Hadoop Enrich (#815)
 EmrEtlRunner: added --skip shred option (#659)
 StorageLoader: bumped to 0.3.0
 StorageLoader: added ACCEPTINVCHARS to StorageLoader (#411)
