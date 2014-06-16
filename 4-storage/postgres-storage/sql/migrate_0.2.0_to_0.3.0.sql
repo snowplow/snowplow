@@ -12,12 +12,12 @@
 -- Version:     Ports version 0.2.0 to version 0.3.0
 -- URL:         -
 --
--- Authors:     Alex Dean
+-- Authors:     Fred Blundun
 -- Copyright:   Copyright (c) 2014 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 -- Rename existing table
-ALTER TABLE "atomic"."events" RENAME TO "events_01x"
+ALTER TABLE "atomic"."events" RENAME TO "events_02x"
 
 -- Create the table
 CREATE TABLE "atomic"."events" (
@@ -161,7 +161,7 @@ INSERT INTO atomic.events
 	"dvce_tstamp",
 	"event",
 	                                        -- Removed event_vendor in 0.3.0
-	"event_id",                             -- Changed from varchar(38) in 0.2.0
+	"event_id",
 	"txn_id",
 	"name_tracker",
 	"v_tracker",
