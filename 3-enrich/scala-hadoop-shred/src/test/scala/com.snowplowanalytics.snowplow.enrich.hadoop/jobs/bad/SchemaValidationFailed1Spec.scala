@@ -40,9 +40,9 @@ object SchemaValidationFailed1Spec {
     )
 
   val expected = (line: String) =>
-    s"""|{"line":"${line}","errors":[
-          |{"level":"error","schema":{"loadingURI":"#","pointer":""},"instance":{"pointer":""},"domain":"validation","keyword":"required","message":"object has missing required properties ([\\"targetUrl\\"])","required":["targetUrl"],"missing":["targetUrl"]}
-        |]}""".stripMargin.replaceAll("[\n\r]","")
+    """|{"line":"%s","errors":[
+          |{"level":"error","schema":{"loadingURI":"#","pointer":""},"instance":{"pointer":""},"domain":"validation","keyword":"required","message":"object has missing required properties ([\"targetUrl\"])","required":["targetUrl"],"missing":["targetUrl"]}
+        |]}""".stripMargin.format(line.replaceAll("\"", "\\\\\"")).replaceAll("[\n\r]","").replaceAll("[\t]","\\\\t")
 }
 
 /**
