@@ -66,6 +66,25 @@ module Snowplow
         nil
       end
 
+      # Add trailing slashes to all leaves in the hash
+      Contract BucketHash => BucketHash
+      def add_trailing_slashes(bucketsHash)
+        with_slashes_added = {}
+        for k0 in bucketsHash.keys
+          if bucketsHash[k0].class == ''.class
+            puts k0
+            with_slashes_added[k0] = Sluice::Storage::trail_slash(bucketsHash[k0])
+          else
+            y = {}
+            for k1 in bucketsHash[k0].keys
+              y[k1] = Sluice::Storage::trail_slash(bucketsHash[k0][k1])
+            end
+            with_slashes_added[k0] = y
+          end
+        end
+        with_slashes_added
+      end
+
       # Validate our arguments against the configuration Hash
       # Make updates to the configuration Hash based on the
       # arguments
@@ -101,9 +120,7 @@ module Snowplow
         end
 
         # Add trailing slashes if needed to the non-nil buckets
-        config[:s3][:buckets].reject{|k,v| v.nil?}.update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
-
-        config
+        config[:s3][:buckets] = add_trailing_slashes(config[:s3][:buckets].reject{|k,v| v.nil?})
       end
 
     end

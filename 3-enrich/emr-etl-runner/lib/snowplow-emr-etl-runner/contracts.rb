@@ -59,6 +59,28 @@ module Snowplow
         })
       })
 
+    # The Hash containing the buckets field from the configuration YAML
+    BucketHash = ({
+      :assets => String,
+      :log => String,
+      :raw => ({
+        :in => String,
+        :processing => String
+        }),
+      :enriched => ({
+        :good => String,
+        :bad => String,
+        :errors => Maybe[String],
+        :archive => String
+        }),
+      :shredded => ({
+        :good => String,
+        :bad => String,
+        :errors => Maybe[String],
+        :archive => String
+        })
+      })
+
     # The Hash containing effectively the configuration YAML.
     ConfigHash = ({
       :logging => ({
@@ -70,26 +92,7 @@ module Snowplow
         }),
       :s3 => ({
         :region => String,
-        :buckets => ({
-          :assets => String,
-          :log => String,
-          :raw => ({
-            :in => String,
-            :processing => String
-            }),
-          :enriched => ({
-            :good => String,
-            :bad => String,
-            :errors => Maybe[String],
-            :archive => String
-            }),
-          :shredded => ({
-            :good => String,
-            :bad => String,
-            :errors => Maybe[String],
-            :archive => String
-            })
-          })
+        :buckets => BucketHash
         }),
       :emr => ({
         :ami_version => String,
