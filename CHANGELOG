@@ -10,6 +10,7 @@ Scala Common Enrich: bumped to 0.5.0                                            
 Scala Common Enrich: added JSON dependencies
 Scala Common Enrich: stored etl_tstamp in new field in CanonicalOutput (#818)
 Scala Common Enrich: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#836)
+Scala Common Enrich: added JacksonJsonUtils
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.5.0                                - TODO
 Scala Hadoop Enrich: passed etl_tstamp into Scala Common Enrich (#817)
 Scala Hadoop Enrich: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#835)
