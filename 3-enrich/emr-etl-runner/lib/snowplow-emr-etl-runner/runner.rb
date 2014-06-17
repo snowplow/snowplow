@@ -66,8 +66,7 @@ module Snowplow
         nil
       end
 
-      # Adds trailing slashes to all bucket names in the hash
-      # Removes all empty fields from the hash
+      # Adds trailing slashes to all non-nil bucket names in the hash
       Contract BucketHash => BucketHash
       def add_trailing_slashes(bucketsHash)
         with_slashes_added = {}
@@ -77,9 +76,11 @@ module Snowplow
           elsif bucketsHash[k0].class == {}.class
             y = {}
             for k1 in bucketsHash[k0].keys
-              y[k1] = Sluice::Storage::trail_slash(bucketsHash[k0][k1]) unless bucketsHash[k0][k1].nil?
+              y[k1] = bucketsHash[k0][k1].nil? ? nil : Sluice::Storage::trail_slash(bucketsHash[k0][k1])
             end
             with_slashes_added[k0] = y
+          else
+            with_slashes_added[k0] = nil
           end
         end
 
