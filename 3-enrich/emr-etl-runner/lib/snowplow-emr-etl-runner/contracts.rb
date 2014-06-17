@@ -121,9 +121,7 @@ module Snowplow
         :continue_on_unexpected_error => Bool
         }),
       :iglu => IgluConfigHash,
-      :enrichments => ({
-        :anon_ip => AnonIpHash
-        })
+      :enrichments => String
       })
 
     # The Array (Tuple2) containing the CLI arguments and configuration YAML.
