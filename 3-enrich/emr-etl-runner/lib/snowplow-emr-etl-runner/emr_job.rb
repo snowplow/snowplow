@@ -335,14 +335,14 @@ module Snowplow
       def self.build_enrichments_json(config)
         enrichments_json_data = []
         enrichment_files = Dir.glob(config[:enrichments] + '/*.json')
-        for file in enrichment_files do
-          enrichments_json_data.push(JSON.parse(file))
+        for filename in enrichment_files do
+          enrichments_json_data.push(JSON.parse(File.read(filename)))
         end
         enrichments_json = {
           'schema' => 'iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0',
           'data'   => enrichments_json_data
         }
-        
+
         Base64.strict_encode(JSON.generate(enrichments_json))
       end
 
