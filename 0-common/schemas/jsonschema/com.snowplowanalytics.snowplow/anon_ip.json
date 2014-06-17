@@ -3,13 +3,19 @@
 	"description": "Schema for an IP anonymization enrichment",
 	"self": {
 		"vendor": "com.snowplowanalytics.snowplow",
-		"name": "ip_to_geo",
+		"name": "anon_ip",
 		"format": "jsonschema",
 		"version": "1-0-0"
 	},
 
 	"type": "object",
 	"properties": {
+		"vendor": {
+			"type": "string"
+		},
+		"name": {
+			"type": "string"
+		},		
 		"enabled": {
 			"type": "boolean"
 		},
@@ -26,6 +32,6 @@
 			"additionalProperties": false
 		}
 	},
-	"required": ["enabled", "parameters"],
+	"required": ["name", "vendor", "enabled", "parameters"],
 	"additionalProperties": false
 }

@@ -10,6 +10,12 @@
 
 	"type": "object",
 	"properties": {
+		"vendor": {
+			"type": "string"
+		},
+		"name": {
+			"type": "string"
+		},		
 		"enabled": {
 			"type": "boolean"
 		},
@@ -24,6 +30,6 @@
 			}
 		}
 	},
-	"required": ["enabled", "parameters"],
+	"required": ["name", "vendor", "enabled", "parameters"],
 	"additionalProperties": false
 }
