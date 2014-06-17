@@ -35,7 +35,9 @@ object Dependencies {
     val commonsIo        = "2.4"
     val yodaTime         = "2.1"
     val yodaConvert      = "1.2"
-    val useragent        = "1.13"
+    val useragent        = "1.11"
+    val jacksonDatabind  = "2.2.3"
+    val jsonValidator    = "2.2.3"    
     // Scala
     val scalaz7          = "7.0.0"
     val argonaut         = "6.0.3"
@@ -43,6 +45,7 @@ object Dependencies {
     val scalaUtil        = "0.1.0"
     val refererParser    = "0.1.1"
     val maxmindGeoip     = "0.0.5"
+    val json4s           = "3.2.11-SNAPSHOT"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
@@ -62,6 +65,8 @@ object Dependencies {
     val yodaTime         = "joda-time"                 %  "joda-time"                 % V.yodaTime
     val yodaConvert      = "org.joda"                  %  "joda-convert"              % V.yodaConvert
     val useragent        = "bitwalker"                 %  "UserAgentUtils"            % V.useragent
+    val jacksonDatabind  = "com.fasterxml.jackson.core" % "jackson-databind"          % V.jacksonDatabind
+    val jsonValidator    = "com.github.fge"            % "json-schema-validator"      % V.jsonValidator    
     // Scala
     val scalaz7          = "org.scalaz"                %% "scalaz-core"               % V.scalaz7
     val argonaut         = "io.argonaut"               %% "argonaut"                  % V.argonaut
@@ -69,6 +74,8 @@ object Dependencies {
     val scalaUtil        = "com.snowplowanalytics"     %  "scala-util"                % V.scalaUtil
     val refererParser    = "com.snowplowanalytics"     %  "referer-parser"            % V.refererParser
     val maxmindGeoip     = "com.snowplowanalytics"     %% "scala-maxmind-geoip"       % V.maxmindGeoip
+    val json4sJackson    = "org.json4s"                %% "json4s-jackson"            % V.json4s
+    val json4sScalaz     = "org.json4s"                %% "json4s-scalaz"             % V.json4s    
     // Scala (test only)
     val specs2           = "org.specs2"                %% "specs2"                    % V.specs2         % "test"
     val scalazSpecs2     = "org.typelevel"             %% "scalaz-specs2"             % V.scalazSpecs2   % "test"

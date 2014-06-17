@@ -38,6 +38,8 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.commonsLang,
         Libraries.commonsIo,
         Libraries.useragent,
+        Libraries.jacksonDatabind,
+        Libraries.jsonValidator,        
         // Scala
         Libraries.scalaz7,
         Libraries.argonaut,
@@ -45,6 +47,8 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.scalaUtil,
         Libraries.refererParser,
         Libraries.maxmindGeoip,
+        Libraries.json4sJackson,
+        Libraries.json4sScalaz,        
         // Scala (test only)
         Libraries.specs2,
         Libraries.scalazSpecs2,

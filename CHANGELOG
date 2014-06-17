@@ -7,6 +7,7 @@ Schemas: added ip_to_geo schema (#803)
 EmrEtlRunner: Removed enrichment-specific code (#811)
 EmrEtlRunner: Replaced enrichment-specific args to Hadoop Enrich with enrichments JSON (#808)
 Scala Common Enrich: bumped to 0.5.0                                                    - TODO
+Scala Common Enrich: added JSON dependencies
 Scala Common Enrich: stored etl_tstamp in new field in CanonicalOutput (#818)
 Scala Common Enrich: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#836)
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.5.0                                - TODO
