@@ -342,6 +342,7 @@ module Snowplow
           'schema' => 'iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0',
           'data'   => enrichments_json_data
         }
+        
         Base64.strict_encode(JSON.generate(enrichments_json))
       end
 

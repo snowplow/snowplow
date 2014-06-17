@@ -53,4 +53,7 @@
         :priority: 0
         :vendor_prefixes:
           - com.snowplowanalytics
+        :connection:
+          :http:
+            :uri: http://iglucentral.coms
 :enrichments: ./enrichments
