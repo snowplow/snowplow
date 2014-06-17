@@ -123,6 +123,8 @@ module Snowplow
 
         # Add trailing slashes if needed to the non-nil buckets
         config[:s3][:buckets] = add_trailing_slashes(config[:s3][:buckets])
+
+        config
       end
 
     end

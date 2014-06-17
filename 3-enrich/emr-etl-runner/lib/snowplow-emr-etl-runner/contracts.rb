@@ -45,16 +45,16 @@ module Snowplow
     IgluConfigHash = ({
       :schema => String,
       :data => ({
-        :cache => Num,
-        :resolvers => ArrayOf[({
+        :cache_size => Num,
+        :repositories => ArrayOf[({
           :name => String,
+          :priority => Num,
+          :vendor_prefixes => ArrayOf[String],          
           :connection => ({
             :http => ({
               :uri => String
               })
-            }),
-          :priority => Num,
-          :vendor_prefixes => ArrayOf[String]
+            })
           })]
         })
       })
