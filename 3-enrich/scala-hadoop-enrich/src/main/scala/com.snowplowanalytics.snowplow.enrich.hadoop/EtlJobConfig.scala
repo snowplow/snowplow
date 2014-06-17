@@ -17,6 +17,9 @@ package hadoop
 import java.net.URI
 import java.util.NoSuchElementException
 
+// Jackson
+import com.fasterxml.jackson.databind.JsonNode
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -25,7 +28,11 @@ import Scalaz._
 import com.twitter.scalding.Args
 
 // Snowplow Common Enrich
-import common.utils.ConversionUtils
+import common.utils.{
+  ConversionUtils,
+  JacksonJsonUtils
+}
+import common.utils.JacksonJsonUtils
 import common.enrichments.PrivacyEnrichments.AnonOctets
 import AnonOctets._
 import common.enrichments.EventEnrichments
@@ -44,6 +51,7 @@ case class EtlJobConfig(
     badFolder: String,
     anonOctets: AnonOctets,
     etlTstamp: String,
+    enrichments: NonEmptyList[JsonNode],
     exceptionsFolder: Option[String])
 
 /**
@@ -51,6 +59,8 @@ case class EtlJobConfig(
  * the SnowPlowEtlJob
  */
 object EtlJobConfig {
+  // TODO comment
+  //private val EnrichmentsSchema = SchemaKey("com.snowplowanalytics.xx", "xx", "jsonschema", "1-0-0")
 
   /**
    * Convert the Maxmind file from a
@@ -113,8 +123,67 @@ object EtlJobConfig {
     val badFolder = args.requiredz("bad_rows_folder")
     val anonOctets = args.requiredz("anon_ip_octets").flatMap(q => getAnonOctets(q))
     val etlTstamp = args.requiredz("etl_tstamp").flatMap(t => EventEnrichments.extractTimestamp("etl_tstamp", t))
+    val enrichments = /*for {
+      str  <- args.requiredz("enrichments") // : Validation[String, String]
+      node <- base64ToJsonNode(str)
+      } yield node */ "TODO".failNel[NonEmptyList[JsonNode]]
     val exceptionsFolder = args.optionalz("exceptions_folder")
     
-    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| anonOctets.toValidationNel |@| etlTstamp.toValidationNel |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_,_) }
+    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| anonOctets.toValidationNel |@| etlTstamp.toValidationNel |@| enrichments |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_,_,_) }
   }
+
+  /**
+   * Takes an incoming JsonNode and:
+   * 1. Validates it against its own
+   *    schema
+   * 2. Confirms that that schema is
+   *    a enrichments JSON Schema
+   * 3. Breaks it into an array of
+   *    child JsonNodes
+   * 4. Validates each of those
+   *    JsonNodes against their own
+   *    internal schema
+   * 5. Adds new entries to List[JsonNode]
+   *    with enabled: false for any
+   *    enrichments we support that are not
+   *    found
+   *
+  // TODO: move this to Scala Common Enrich
+  def validateEnrichments(node: JsonNode): ValidationNel[String, List[JsonNode]] = {
+
+    // Check it passes validation
+    config.validateAndIdentifySchema(dataOnly = true) match {
+      case Success((key, node)) if key == EnrichmentsSchema => {
+
+        val json = fromJsonNode(node) // => :JValue
+        val enrichmentConfigs: ValidatedNel[String, JsonNode] = (field[List[JValue]]("repositories")(json)).fold(
+          f => f.map(_.toString.toProcessingMessage).fail,
+          s => getEnrichmentConfigs(s)
+        )
+        (cacheSize |@| repositoryRefs) {
+          Resolver(_, _)
+        }
+      }
+      case Success((key, node)) if key != EnrichmentsSchema =>
+        s"Expected a ${ConfigurationSchema} as resolver configuration, got: ${key}".fail.toProcessingMessageNel
+      case Failure(err) =>
+        (err.<::("Resolver configuration failed JSON Schema validation".toProcessingMessage)).fail[Resolver]
+    }
+  } */
+
+  /**
+   * Converts a base64-encoded JSON
+   * String into a JsonNode.
+   *
+   * @param str base64-encoded JSON
+   * @return a JsonNode on Success,
+   * a NonEmptyList of
+   * ProcessingMessages on
+   * Failure
+   */
+  private def base64ToJsonNode(str: String): Validation[String, JsonNode] =
+    for {
+      raw <-  ConversionUtils.decodeBase64Url("enrichments", str)
+      node <- JacksonJsonUtils.extractJson("enrichments", raw)
+    } yield node
 }
