@@ -9,11 +9,11 @@
 		"properties": {
 			"mapping": "static",
 			"fields": {
-				"mkt_medium": ["utm_medium"],
-				"mkt_source": ["medium"],
-				"mkt_term": ["term"],
-				"mkt_content": ["content"],
-				"mkt_campaign": ["campaign"],
+				"mktMedium": ["medium"],
+				"mktSource": ["source"],
+				"mktTerm": ["term"],
+				"mktContent": ["content"],
+				"mktCampaign": ["campaign"],
 			}
 		}
 	}

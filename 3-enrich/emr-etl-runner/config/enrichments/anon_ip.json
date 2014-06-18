@@ -7,7 +7,7 @@
 		"vendor": "com.snowplowanalytics.snowplow",
 		"enabled": false,
 		"parameters": {
-				"anon_octets": 1
+				"anonOctets": 1
 		}
 	}
 }

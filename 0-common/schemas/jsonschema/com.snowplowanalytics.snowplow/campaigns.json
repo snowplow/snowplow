@@ -28,23 +28,23 @@
 				"fields": {
 					"type": "object",
 					"properties": {
-						"mkt_medium": {
+						"mktMedium": {
 							"$ref": "#/definitions/stringArray"
 						},
-						"mkt_source": {
+						"mktSource": {
 							"$ref": "#/definitions/stringArray"
 						},
-						"mkt_term": {
+						"mktTerm": {
 							"$ref": "#/definitions/stringArray"
 						},
-						"mkt_content": {
+						"mktContent": {
 							"$ref": "#/definitions/stringArray"
 						},
-						"mkt_campaign": {
+						"mktCampaign": {
 							"$ref": "#/definitions/stringArray"
 						}
 					},
-					"required": ["mkt_medium", "mkt_source", "mkt_term", "mkt_content", "mkt_campaign"],
+					"required": ["mktMedium", "mktSource", "mktTerm", "mktContent", "mktCampaign"],
 					"additionalProperties": false
 				}
 			},

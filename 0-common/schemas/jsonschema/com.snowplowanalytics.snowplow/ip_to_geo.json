@@ -22,10 +22,13 @@
 		"parameters": {
 			"type": "object",
 			"properties": {
-				"maxmind_file": {
+				"maxmindDatabase": {
 					"type": "string"
 				},
-				"required": ["maxmind_file"],
+				"maxmindUri": {
+					"type": "string"
+				},
+				"required": ["maxmindDatabase", "maxmindUri"],
 				"additionalProperties": false
 			}
 		}

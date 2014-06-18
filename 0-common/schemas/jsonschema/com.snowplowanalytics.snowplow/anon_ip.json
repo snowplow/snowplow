@@ -22,13 +22,13 @@
 		"parameters": {
 			"type": "object",
 			"properties": {
-				"anon_octets": {
+				"anonOctets": {
 					"type": "number",
 					"minimum": 0,
 					"maximum": 4
 				}
 			},
-			"required": ["anon_octets"],
+			"required": ["anonOctets"],
 			"additionalProperties": false
 		}
 	},
