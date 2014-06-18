@@ -29,7 +29,7 @@ import org.json4s.jackson.JsonMethods._
 // Iglu
 import com.snowplowanalytics.iglu.client._
 
-// Specs2 & Scalaz-Specs2
+// Specs2
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
 
