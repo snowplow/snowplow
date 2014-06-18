@@ -13,6 +13,8 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package config
 
+import utils.ScalazJson4sUtils
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -26,14 +28,27 @@ import org.json4s.jackson.JsonMethods._
 // Iglu
 import com.snowplowanalytics.iglu.client._
 
-import com.snowplowanalytics.snowplow.enrich.common.utils._
-
+/**
+ * Trait inherited by every enrichment config case class
+ */
 trait EnrichmentConfig
 
+/**
+ * Trait to hold helpers relating to enrichment config
+ */
 trait EnrichmentConfigParseable {
 
   val supportedSchemaKey: SchemaKey
 
+  /**
+   * Tests whether a JSON is parseable by a
+   * specific EnrichmentConfig constructor
+   *
+   * @param config The JSON
+   * @param schemaKey The schemaKey which needs
+   * to be checked
+   * @return The JSON or an error message, boxed
+   */
   def isParseable(config: JValue, schemaKey: SchemaKey): ValidationNel[String, JValue] = {
     if (schemaKey == supportedSchemaKey) {
       config.success
@@ -42,6 +57,13 @@ trait EnrichmentConfigParseable {
     }
   }
 
+  /**
+   * Shortcut for getting a value from within
+   * the "parameters" field of a JSON
+   *
+   * @param property The name of the field
+   * @return NonEmptyList of the inner value
+   */
   def parameter(property: String) = NonEmptyList("parameters", property)
 }
 
