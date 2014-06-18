@@ -45,11 +45,8 @@ class EnrichmentConfigsTest extends Specification with ValidationMatchers {
           }
         }""")
 
-      val ipAnonResult = AnonIpEnrichmentConfig.parse(ipAnonJson)
-
-      val expectedAnonIpEnrichmentConfig = AnonIpEnrichmentConfig(2)      
-
-      ipAnonResult must beSuccessful(expectedAnonIpEnrichmentConfig)
+      val result = AnonIpEnrichmentConfig.parse(ipAnonJson)
+      result must beSuccessful(AnonIpEnrichmentConfig(2))
 
     }
   }
@@ -65,11 +62,10 @@ class EnrichmentConfigsTest extends Specification with ValidationMatchers {
           }
         }""")
 
-      val ipToGeoResult = IpToGeoEnrichmentConfig.parse(ipToGeoJson)
+      val expected = IpToGeoEnrichmentConfig("GeoLiteCity", "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/")
 
-      val expectedIpToGeoEnrichmentConfig = IpToGeoEnrichmentConfig("GeoLiteCity", "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/")
-
-      ipToGeoResult must beSuccessful(expectedIpToGeoEnrichmentConfig)
+      val result = IpToGeoEnrichmentConfig.parse(ipToGeoJson)
+      result must beSuccessful(expected)
 
     }
   }

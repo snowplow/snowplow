@@ -29,11 +29,12 @@ import org.json4s.jackson.JsonMethods._
 
 // Specs2
 import org.specs2.mutable.Specification
+import org.specs2.scalaz.ValidationMatchers
 
 /**
  * Tests ScalazJson4sUtils
  */
-class JsonExtractionTest extends Specification {
+class JsonExtractionTest extends Specification with ValidationMatchers {
 
   val testJson = parse("""{
     "outer": "1",
@@ -46,7 +47,7 @@ class JsonExtractionTest extends Specification {
     "successfully access an outer string field" in {
 
       val result = ScalazJson4sUtils.extractString(testJson, NonEmptyList("outer"))
-      result must_== "1".success
+      result must beSuccessful("1")
     }
   }
 
@@ -55,7 +56,7 @@ class JsonExtractionTest extends Specification {
     "successfully access an inner string field" in {
 
       val result = ScalazJson4sUtils.extractInt(testJson, NonEmptyList("inner", "value"))
-      result must_== 2.success
+      result must beSuccessful(2)
     }
   }
 
