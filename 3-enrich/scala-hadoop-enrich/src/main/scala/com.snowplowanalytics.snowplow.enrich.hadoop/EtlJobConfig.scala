@@ -32,7 +32,7 @@ import common.utils.{
   ConversionUtils,
   JacksonJsonUtils
 }
-import common.utils.JacksonJsonUtils
+
 import common.enrichments.PrivacyEnrichments.AnonOctets
 import AnonOctets._
 import common.enrichments.EventEnrichments
