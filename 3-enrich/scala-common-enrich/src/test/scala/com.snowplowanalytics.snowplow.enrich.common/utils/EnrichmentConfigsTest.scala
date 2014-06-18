@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package utils
+package config
 
 // Java
 import java.lang.{Byte => JByte}
@@ -25,6 +25,9 @@ import org.json4s.scalaz.JsonScalaz._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+
+// Iglu
+import com.snowplowanalytics.iglu.client._
 
 // Specs2 & Scalaz-Specs2
 import org.specs2.mutable.Specification
@@ -45,7 +48,9 @@ class EnrichmentConfigsTest extends Specification with ValidationMatchers {
           }
         }""")
 
-      val result = AnonIpEnrichmentConfig.parse(ipAnonJson)
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", "1-0-0")
+
+      val result = AnonIpEnrichmentConfig.parse(ipAnonJson, schemaKey)
       result must beSuccessful(AnonIpEnrichmentConfig(2))
 
     }
@@ -62,9 +67,11 @@ class EnrichmentConfigsTest extends Specification with ValidationMatchers {
           }
         }""")
 
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_to_geo", "jsonschema", "1-0-0")
+
       val expected = IpToGeoEnrichmentConfig("GeoLiteCity", "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/")
 
-      val result = IpToGeoEnrichmentConfig.parse(ipToGeoJson)
+      val result = IpToGeoEnrichmentConfig.parse(ipToGeoJson, schemaKey)
       result must beSuccessful(expected)
 
     }

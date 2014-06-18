@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package utils
+package config
 
 // Scalaz
 import scalaz._
@@ -23,13 +23,33 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
+// Iglu
+import com.snowplowanalytics.iglu.client._
+
+import com.snowplowanalytics.snowplow.enrich.common.utils._
+
 trait EnrichmentConfig
+
+trait EnrichmentConfigParseable {
+
+  val supportedSchemaKey: SchemaKey
+
+  def isParseable(config: JValue, schemaKey: SchemaKey): ValidationNel[String, JValue] = {
+    if (schemaKey == supportedSchemaKey) {
+      config.success
+    } else {
+      ("Wrong type of JSON for an enrichment of type %").format(schemaKey.name).fail.toValidationNel
+    }
+  }
+}
 
 /**
 * Companion object. Lets us create a IpToGeoEnrichmentConfig
 * from a JValue.
 */
-object IpToGeoEnrichmentConfig {
+object IpToGeoEnrichmentConfig extends EnrichmentConfig with EnrichmentConfigParseable {
+
+  val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_to_geo", "jsonschema", "1-0-0")
 
   /**
    * Creates an IpToGeoEnrichmentConfig instance from a JValue.
@@ -37,13 +57,15 @@ object IpToGeoEnrichmentConfig {
    * @param config The ip_to_geo enrichment JSON
    * @return a configured IpToGeoEnrichmentConfig instance
    */
-  def parse(config: JValue): ValidationNel[String, IpToGeoEnrichmentConfig] = {
-    val geoDb  = ScalazJson4sUtils.extractString(config, NonEmptyList("parameters", "maxmindDatabase"))
-    val geoUri = ScalazJson4sUtils.extractString(config, NonEmptyList("parameters", "maxmindUri"))
-    
-    (geoDb.toValidationNel |@| geoUri.toValidationNel) {
-      IpToGeoEnrichmentConfig(_, _)
-    }
+  def parse(config: JValue, schemaKey: SchemaKey): ValidationNel[String, IpToGeoEnrichmentConfig] = {
+    isParseable(config, schemaKey).flatMap( conf => {
+      val geoDb  = ScalazJson4sUtils.extractString(conf, NonEmptyList("parameters", "maxmindDatabase"))
+      val geoUri = ScalazJson4sUtils.extractString(conf, NonEmptyList("parameters", "maxmindUri"))
+      
+      (geoDb.toValidationNel |@| geoUri.toValidationNel) {
+        IpToGeoEnrichmentConfig(_, _)
+      }
+    })
   }
 
 }
@@ -61,9 +83,9 @@ case class IpToGeoEnrichmentConfig(
 * Companion object. Lets us create a AnonIpEnrichmentConfig
 * from a JValue.
 */
-object AnonIpEnrichmentConfig extends EnrichmentConfig {
+object AnonIpEnrichmentConfig extends EnrichmentConfig with EnrichmentConfigParseable {
 
-  implicit val formats = DefaultFormats
+  val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", "1-0-0")
 
   /**
    * Creates an AnonIpEnrichmentConfig instance from a JValue.
@@ -71,13 +93,15 @@ object AnonIpEnrichmentConfig extends EnrichmentConfig {
    * @param config The anon_ip enrichment JSON
    * @return a configured AnonIpEnrichmentConfig instance
    */
-  def parse(config: JValue): ValidationNel[String, AnonIpEnrichmentConfig] = {
-    val anonOctets = ScalazJson4sUtils.extractInt(config, NonEmptyList("parameters", "anonOctets"))
+  def parse(config: JValue, schemaKey: SchemaKey): ValidationNel[String, AnonIpEnrichmentConfig] = {
+    isParseable(config, schemaKey).flatMap( conf => {
+      val anonOctets = ScalazJson4sUtils.extractInt(config, NonEmptyList("parameters", "anonOctets"))
 
-    (anonOctets).bimap(
-      e => NonEmptyList(e.toString),
-      s => AnonIpEnrichmentConfig(s)
-    )
+      (anonOctets).bimap(
+        e => NonEmptyList(e.toString),
+        s => AnonIpEnrichmentConfig(s)
+      )
+    })
   }
   
 }
