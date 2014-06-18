@@ -3,18 +3,6 @@ Version 0.9.5 (2014-06-XX)
 Ruby Tracker: added git submodule. Version 0.1.0 (#645)
 JavaScript Tracker: bumped git submodule to 2.0.0 (#635)                                - TODO
 Python Tracker: bumped Python Tracker git submodule to 0.4.0 (#634)
-Schemas: added. Version 0.1.0
-Schemas: selected and integrated a JSON Schema validation tool (#551)
-Schemas: implemented Grunt (#552)
-Schemas: implemented Intern (#553)
-Schemas: added contexts JSON Schema and tests (#627)
-Schemas: added unstructured events JSON Schema and tests (#741)
-Schemas: added payload_data JSON Schema and tests (#760)
-Schemas: added ad_* JSON Schema and tests (#554)
-Schemas: added link_click JSON Schema and tests (#601)
-Schemas: added screen_view JSON Schema and tests (#590)
-Schemas: added JSON Schema and tests for website's page_context (#768)
-Schemas: added self-describing JSON Schema instance and schema (#736)
 Scala Hadoop Shred: added. Version 0.1.0                                                - TODO (remove -SNAPSHOT on deps)
 EmrEtlRunner: bumped to 0.8.0
 EmrEtlRunner: updated S3DistCp steps to use new S3DistCpStep from Elasticity (#629)
