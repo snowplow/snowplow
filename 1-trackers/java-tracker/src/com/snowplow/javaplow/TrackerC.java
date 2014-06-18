@@ -34,7 +34,9 @@ import java.util.*;
 /**
  *  <p>TrackerC is the implementing class for the Tracker interface.</p>
  *  <p>It can be used to track many different types of events. The current version
- *   of the tracker is 0.0.2 meaning it is functional but still in beta testing.</p>
+ *   of the tracker is 0.1.0 meaning it is functional but likely contains some bugs.
+ *   If you find any please contact me at kaagleason@gmail.com or contact snowplow
+ *   via their website.</p>
  *
  *  <p><b>To use:</b></p>
  *  <ul>
@@ -54,7 +56,7 @@ import java.util.*;
  *      sending logs to your S3 bucket, put `TrackerC.track = false` in your code.</li>
  *    <li>Default values are `TrackerC.debug = false` and `TrackerC.track = true`</li>
  *  </ul>
- *  @version 0.0.2
+ *  @version 0.1.0
  *  @author Kevin Gleason
  */
 
@@ -395,24 +397,6 @@ public class TrackerC implements Tracker {
                 standPairs.add(s, currentParam.get(s));
         this.setPayload(standPairs);
     }
-///DELETE
-    //View all headers on an HttpResponse
-    private List<Object> viewHeaders(HttpResponse response) {
-        HeaderIterator hi = response.headerIterator();
-        List<Object> headers = new ArrayList<Object>();
-        while (hi.hasNext())
-            headers.add(hi.next());
-        return headers;
-    }
-
-    //View headers corresponding to certain string
-    private List<Object> viewHeaders(HttpResponse response, String s) {
-        HeaderIterator hi = response.headerIterator(s);
-        List<Object> headers = new ArrayList<Object>();
-        while (hi.hasNext())
-            headers.add(hi.next());
-        return headers;
-    }
 
     /**
      * {@inheritDoc}
@@ -548,7 +532,7 @@ public class TrackerC implements Tracker {
             dict.put("Iteration", i);
             t1.track_unstruct_event("Lube Insights", "Data Loop", dict, context);
             t1.track_struct_event("Items", "Stuff", "Pants", "Green Blue", 3, DEFAULT_VENDOR, context);
-            t1.track_page_view("www.saggezza.com", "Saggezza Home", "Kevin Gleason", null);
+            t1.track_page_view("www.saggezza.com", "Saggezza Home", "KG", null);
             t1.track_ecommerce_transaction_item("IT1023", "SKUVAL", 29.99, 2, "boots", "Shoes","USD",null,null);
             t1.track_ecommerce_transaction("OID", 19.99, "Kohls", 2.50, 1.99, "Chagrin", "OH", "USA", "USD", lst, context);
         }

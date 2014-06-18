@@ -28,7 +28,7 @@ import java.util.Map;
  *  Contractor to verify preconditions, post conditions and invariants.
  *  Uses data structure to hold custom ID contracts for specific jobs
  *
- * @version 0.0.2
+ * @version 0.1.0
  * @author Kevin Gleason
  */
 

@@ -17,7 +17,7 @@ package com.snowplow.javaplow;
  * The version class is used for documentation purposes.
  * It follows the python convention of creating a version identity class
  *
- * @version 0.0.2
+ * @version 0.1.0
  * @author Kevin Gleason
  */
 
@@ -63,12 +63,9 @@ public class Version {
        Configures the URI further adding page data to payload
 
     Notes:
-     Dictionary and JSON context values should be in String format e.g. "{'name':'Kevin', ...}"
+     Dictionary and JSON context values should be in String format or Map<String,Object> e.g. "{'name':'Kevin', ...}"
      I would recommend using one tracker for one tracking instance type.
        This is because only certain fields are refreshed every loop to reduce overhead at high iteration speed.
      Arrays, Dictionaries, JSON contest is all homogeneous, must all be of the String type.
 
-    Testing Phases:
-     [X] JSON converter
-     [ ] Dictionary add
 */

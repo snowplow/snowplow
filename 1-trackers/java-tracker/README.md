@@ -10,7 +10,7 @@ Since production is still early and large changes are being made daily, jar file
 
 To get started, move into the src folder and follow the set up guide!
 
-Note: The set up there is for the package "javaplow", this means you should leave all source files in the javaplow folder, and drag the folder into your project. 
+Note: The set up there is for the package "com.snowplow.javaplow", this means you should leave all source files in the folders, and drag the entire package folder into your project. 
 
 ### About the Tracker
 
@@ -18,14 +18,18 @@ All tracking methods have been tested successfully, but more bugs are discovered
 
 ###Ready to [view the documentation][documentation]?
 
-Dont have the collector configured? [See Snowplow setup] [setup]
+Dont have the collector configured? [See Snowplow setup][setup]
 
 ## Comments
 
 - For a full list of available functions, look into the packages interfaces.
-- Context is meant to be in JSON String format
+- Context is meant to be in JSON String format, unstructured data can be string or Map<String,Object>
 
-    `String i = "{'Movie':'Shawshank Redemption', 'Time':'100 Minutes' }"`
+	String context = "{'Movie':'Shawshank Redemption', 'Time':'142 Minutes' }"
+	Map<String,Object> unstruct_info = new LinkedHashMap<String,Object>();
+	unstruct_info.put("Gross movie profit", 28341469);
+	...
+
 
 ## Find out more
 
