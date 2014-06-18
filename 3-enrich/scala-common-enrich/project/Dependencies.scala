@@ -46,6 +46,7 @@ object Dependencies {
     val refererParser    = "0.1.1"
     val maxmindGeoip     = "0.0.5"
     val json4s           = "3.2.11-SNAPSHOT"
+    val igluClient       = "0.1.0-SNAPSHOT"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
@@ -76,6 +77,7 @@ object Dependencies {
     val maxmindGeoip     = "com.snowplowanalytics"     %% "scala-maxmind-geoip"       % V.maxmindGeoip
     val json4sJackson    = "org.json4s"                %% "json4s-jackson"            % V.json4s
     val json4sScalaz     = "org.json4s"                %% "json4s-scalaz"             % V.json4s    
+    val igluClient       = "com.snowplowanalytics"     %% "iglu-scala-client"         % V.igluClient
     // Scala (test only)
     val specs2           = "org.specs2"                %% "specs2"                    % V.specs2         % "test"
     val scalazSpecs2     = "org.typelevel"             %% "scalaz-specs2"             % V.scalazSpecs2   % "test"

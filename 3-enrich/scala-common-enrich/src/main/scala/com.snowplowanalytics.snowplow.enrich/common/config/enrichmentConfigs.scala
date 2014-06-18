@@ -41,13 +41,15 @@ trait EnrichmentConfigParseable {
       ("Wrong type of JSON for an enrichment of type %").format(schemaKey.name).fail.toValidationNel
     }
   }
+
+  def parameter(property: String) = NonEmptyList("parameters", property)
 }
 
 /**
 * Companion object. Lets us create a IpToGeoEnrichmentConfig
 * from a JValue.
 */
-object IpToGeoEnrichmentConfig extends EnrichmentConfig with EnrichmentConfigParseable {
+object IpToGeoEnrichmentConfig extends EnrichmentConfigParseable {
 
   val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_to_geo", "jsonschema", "1-0-0")
 
@@ -59,8 +61,8 @@ object IpToGeoEnrichmentConfig extends EnrichmentConfig with EnrichmentConfigPar
    */
   def parse(config: JValue, schemaKey: SchemaKey): ValidationNel[String, IpToGeoEnrichmentConfig] = {
     isParseable(config, schemaKey).flatMap( conf => {
-      val geoDb  = ScalazJson4sUtils.extractString(conf, NonEmptyList("parameters", "maxmindDatabase"))
-      val geoUri = ScalazJson4sUtils.extractString(conf, NonEmptyList("parameters", "maxmindUri"))
+      val geoDb  = ScalazJson4sUtils.extractString(conf, parameter("maxmindDatabase"))
+      val geoUri = ScalazJson4sUtils.extractString(conf, parameter("maxmindUri"))
       
       (geoDb.toValidationNel |@| geoUri.toValidationNel) {
         IpToGeoEnrichmentConfig(_, _)
@@ -83,7 +85,7 @@ case class IpToGeoEnrichmentConfig(
 * Companion object. Lets us create a AnonIpEnrichmentConfig
 * from a JValue.
 */
-object AnonIpEnrichmentConfig extends EnrichmentConfig with EnrichmentConfigParseable {
+object AnonIpEnrichmentConfig extends EnrichmentConfigParseable {
 
   val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", "1-0-0")
 
@@ -95,7 +97,7 @@ object AnonIpEnrichmentConfig extends EnrichmentConfig with EnrichmentConfigPars
    */
   def parse(config: JValue, schemaKey: SchemaKey): ValidationNel[String, AnonIpEnrichmentConfig] = {
     isParseable(config, schemaKey).flatMap( conf => {
-      val anonOctets = ScalazJson4sUtils.extractInt(config, NonEmptyList("parameters", "anonOctets"))
+      val anonOctets = ScalazJson4sUtils.extractInt(config, parameter("anonOctets"))
 
       (anonOctets).bimap(
         e => NonEmptyList(e.toString),

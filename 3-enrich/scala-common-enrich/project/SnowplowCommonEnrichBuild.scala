@@ -48,7 +48,8 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.refererParser,
         Libraries.maxmindGeoip,
         Libraries.json4sJackson,
-        Libraries.json4sScalaz,        
+        Libraries.json4sScalaz,
+        Libraries.igluClient,        
         // Scala (test only)
         Libraries.specs2,
         Libraries.scalazSpecs2,
