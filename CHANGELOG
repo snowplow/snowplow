@@ -11,11 +11,11 @@ Scala Common Enrich: added JSON dependencies
 Scala Common Enrich: stored etl_tstamp in new field in CanonicalOutput (#818)
 Scala Common Enrich: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#836)
 Scala Common Enrich: added JacksonJsonUtils
+Scala Common Enrich: created ScalazJson4sUtils.scala
+Scala Common Enrich: created enrichmentConfigs.scala
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.5.0                                - TODO
 Scala Hadoop Enrich: passed etl_tstamp into Scala Common Enrich (#817)
 Scala Hadoop Enrich: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#835)
-Scala Hadoop Enrich: created ScalazJson4sUtils.scala
-Scala Hadoop Enrich: created enrichmentConfigs.scala
 Redshift: bumped table-def to 0.4.0
 Redshift: added etl_tstamp to atomic.events (#819)
 Redshift: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#834)
