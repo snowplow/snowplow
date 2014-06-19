@@ -10,7 +10,10 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
+package com.snowplowanalytics
+package snowplow
+package enrich
+package common
 package config
 
 import utils.ScalazJson4sUtils
@@ -29,7 +32,8 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 // Iglu
-import com.snowplowanalytics.iglu.client._
+import iglu.client._
+import iglu.client.validation.ValidatableJsonMethods._
 
 /**
  * Companion which holds a constructor
@@ -37,18 +41,54 @@ import com.snowplowanalytics.iglu.client._
  */
 object EnrichmentConfigRegistry {
 
+  private val EnrichmentConfigSchemaKey = SchemaKey("blah", "blah", "blah", "blah")
+
   /**
    * Constructs our EnrichmentConfigRegistry
    * from the supplied JSON JValue.
    *
    * TODO: rest of docstring 
    */
-  def parse(node: JValue): ValidationNel[String, EnrichmentConfigRegistry] =  {
-    
+  def parse(node: JValue)(implicit resolver: Resolver): ValidationNel[String, EnrichmentConfigRegistry] =  {
+
+    val configs: ValidationNel[String, JValue] = asJsonNode(node).validateAndIdentifySchema(dataOnly = true)
+      .leftMap(_.map(_.toString))
+      .flatMap( s =>
+        if (s._1 != EnrichmentConfigSchemaKey) {
+          "Oh no, I only know how to handle enrichments 1-0-0".failNel
+        } else {
+          fromJsonNode(s._2).success
+        })
+
     // Break into individual enrichment configs
+    // TODO fix this
     val enrichmentJsons: ValidationNel[String, List[JValue]] = (field[List[JValue]]("data")(node)).leftMap(
       _.map(_.toString)
       )
+
+    // Validate each JSON against its own schema
+    //val validatedEnrichmentJsons: ValidationNel[String, List[JValue]] = enrichmentJsons.map(ej => ej.map(json => validateJValueAgainstSchema(json \ "schema", json \ "data", igluResolver)))
+
+    val validatedEnrichmentJsonTuples: ValidationNel[String, List[JsonSchemaPair]] = (for {
+      jsons <- enrichmentJsons // <- Success
+    } yield for {    
+      json  <- jsons           // <- List
+    } yield for {
+      valid <- asJsonNode(json).validateAndIdentifySchema(dataOnly = true).leftMap(_.map(_.toString))
+    } yield valid).flatMap(_.sequenceU) // Swap nested List[scalaz.Validation[...]
+
+    val configTuples: ValidationNel[String, List[(String, EnrichmentConfig)]] = (for {
+        tuples <- validatedEnrichmentJsonTuples // <- Success
+      } yield for {
+        tuple <- tuples                         // <- List
+      } yield for {
+        result <- buildEnrichmentConfig(fromJsonNode(tuple._2), tuple._1)
+      } yield result)
+      .flatMap(_.sequenceU) // Explain what this is doing
+      .map(_.flatten)       // Eliminate our Option boxing (drop Nones)
+
+    val enrichmentsMap: ValidationNel[String, Map[String, EnrichmentConfig]] = configTuples.map(_.toMap)
+
 
     // Loop through and for each:
 
@@ -76,9 +116,17 @@ object EnrichmentConfigRegistry {
   /**
    * TODO: desc
    */
+  def validateJValueAgainstSchema(node: JValue, schema: JValue)(implicit resolver: Resolver): ValidationNel[String, JValue] ={
+
+    asJsonNode(node).validateAgainstSchema(asJsonNode(schema)).map(fromJsonNode(_)).leftMap(_.map(_.toString))
+  }
+
+  /**
+   * TODO: desc
+   */
   private def buildEnrichmentConfig(enrichmentConfig: JValue, schemaKey: SchemaKey): ValidationNel[String, Option[Tuple2[String, EnrichmentConfig]]] = {
 
-    val name = ScalazJson4sUtils.extractString(enrichmentConfig, NonEmptyList("name")).toValidationNel
+    val name: ValidationNel[String, String] = ScalazJson4sUtils.extractString(enrichmentConfig, NonEmptyList("name")).toValidationNel
     name.flatMap( nm => {
 
       if (nm == "ip_to_geo") {

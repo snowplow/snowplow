@@ -23,6 +23,12 @@ import org.apache.hadoop.conf.Configuration
 import scalaz._
 import Scalaz._
 
+// json4s
+import org.json4s.scalaz.JsonScalaz._
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+
 // Scalding
 import com.twitter.scalding._
 
@@ -34,6 +40,7 @@ import common._
 import common.FatalEtlError
 import common.inputs.CollectorLoader
 import common.enrichments.EnrichmentManager
+import common.config.EnrichmentConfigRegistry
 import common.outputs.CanonicalOutput
 import common.enrichments.PrivacyEnrichments.AnonOctets.AnonOctets
 
@@ -146,6 +153,10 @@ class EtlJob(args: Args) extends Job(args) {
   val input = MultipleTextLineFiles(etlConfig.inFolder).read
   val goodOutput = Tsv(etlConfig.outFolder)
   val badOutput = JsonLine(etlConfig.badFolder)
+
+  implicit val resolver = etlConfig.igluResolver
+
+  val enrichmentRegistry = EnrichmentConfigRegistry.parse(fromJsonNode(etlConfig.enrichments))
 
   // Do we add a failure trap?
   val trappableInput = etlConfig.exceptionsFolder match {

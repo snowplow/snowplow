@@ -27,6 +27,9 @@ import Scalaz._
 // Scalding
 import com.twitter.scalding.Args
 
+// Iglu
+import com.snowplowanalytics.iglu.client._
+
 // Snowplow Common Enrich
 import common.utils.{
   ConversionUtils,
@@ -51,8 +54,9 @@ case class EtlJobConfig(
     badFolder: String,
     anonOctets: AnonOctets,
     etlTstamp: String,
-    enrichments: NonEmptyList[JsonNode],
-    exceptionsFolder: Option[String])
+    enrichments: JsonNode,
+    exceptionsFolder: Option[String],
+    igluResolver: Resolver)
 
 /**
  * Module to handle configuration for
@@ -116,6 +120,7 @@ object EtlJobConfig {
   def loadConfigFrom(args: Args): ValidationNel[String, EtlJobConfig] = {
 
     import ScalazArgs._
+
     val inFolder  = args.requiredz("input_folder")
     val inFormat = args.requiredz("input_format") // TODO: check it's a valid format
     val maxmindFile = args.requiredz("maxmind_file").flatMap(f => getMaxmindUri(f))
@@ -123,13 +128,22 @@ object EtlJobConfig {
     val badFolder = args.requiredz("bad_rows_folder")
     val anonOctets = args.requiredz("anon_ip_octets").flatMap(q => getAnonOctets(q))
     val etlTstamp = args.requiredz("etl_tstamp").flatMap(t => EventEnrichments.extractTimestamp("etl_tstamp", t))
-    val enrichments = /*for {
-      str  <- args.requiredz("enrichments") // : Validation[String, String]
-      node <- base64ToJsonNode(str)
-      } yield node */ "TODO".failNel[NonEmptyList[JsonNode]]
     val exceptionsFolder = args.optionalz("exceptions_folder")
     
-    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| anonOctets.toValidationNel |@| etlTstamp.toValidationNel |@| enrichments |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_,_,_) }
+    val igluResolver: ValidationNel[String, Resolver] = args.requiredz("iglu_config") match {
+      case Failure(e) => e.failNel[Resolver]
+      case Success(s) => for {
+        node <- base64ToJsonNode(s)
+        reso <- Resolver.parse(node).leftMap(_.map(_.toString))
+      } yield reso
+    }
+
+    val enrichments = for {
+      str  <- (args.requiredz("enrichments").toValidationNel: ValidationNel[String, String])
+      node <-  base64ToJsonNode(str)
+      } yield node
+
+    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| anonOctets.toValidationNel |@| etlTstamp.toValidationNel |@| enrichments |@| exceptionsFolder.toValidationNel |@| igluResolver) { EtlJobConfig(_,_,_,_,_,_,_,_,_,_) }
   }
 
   /**
@@ -181,9 +195,9 @@ object EtlJobConfig {
    * ProcessingMessages on
    * Failure
    */
-  private def base64ToJsonNode(str: String): Validation[String, JsonNode] =
-    for {
+  private def base64ToJsonNode(str: String): ValidationNel[String, JsonNode] =
+    (for {
       raw <-  ConversionUtils.decodeBase64Url("enrichments", str)
       node <- JacksonJsonUtils.extractJson("enrichments", raw)
-    } yield node
+    } yield node).toValidationNel
 }
