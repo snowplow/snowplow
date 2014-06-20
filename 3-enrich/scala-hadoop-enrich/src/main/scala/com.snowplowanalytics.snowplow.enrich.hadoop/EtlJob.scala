@@ -13,18 +13,12 @@
 package com.snowplowanalytics.snowplow.enrich
 package hadoop
 
-// Java
-import java.net.URI
-
 // Hadoop
 import org.apache.hadoop.conf.Configuration
 
 // Scalaz
 import scalaz._
 import Scalaz._
-
-// json4s
-import org.json4s.jackson.JsonMethods._
 
 // Scalding
 import com.twitter.scalding._
