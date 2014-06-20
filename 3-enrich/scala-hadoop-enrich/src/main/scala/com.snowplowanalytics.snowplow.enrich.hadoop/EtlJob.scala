@@ -24,9 +24,6 @@ import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.scalaz.JsonScalaz._
-import org.json4s._
-import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 // Scalding
@@ -37,12 +34,13 @@ import com.snowplowanalytics.maxmind.geoip.IpGeo
 
 // Snowplow Common Enrich
 import common._
+import common.utils.ConversionUtils
 import common.FatalEtlError
 import common.inputs.CollectorLoader
 import common.enrichments.EnrichmentManager
 import common.config.EnrichmentConfigRegistry
+import enrichments._
 import common.outputs.CanonicalOutput
-import common.enrichments.PrivacyEnrichments.AnonOctets.AnonOctets
 
 // This project
 import utils.FileUtils
@@ -67,9 +65,9 @@ object EtlJob {
    *         flatMap, will include any validation errors
    *         contained within the ValidatedMaybeCanonicalInput
    */
-  def toCanonicalOutput(geo: IpGeo, anonOctets: AnonOctets, input: ValidatedMaybeCanonicalInput, etlTstamp: String): ValidatedMaybeCanonicalOutput = {
+  def toCanonicalOutput(registry: EnrichmentConfigRegistry, etlTstamp: String, input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
     input.flatMap {
-      _.cata(EnrichmentManager.enrichEvent(geo, etlVersion, anonOctets, etlTstamp, _).map(_.some),
+      _.cata(EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, _).map(_.some),
              none.success)
     }
   }
@@ -91,25 +89,16 @@ object EtlJob {
    * @param fileUri The URI to the Maxmind GeoLiteCity.dat file
    * @return the path to the Maxmind GeoLiteCity.dat to use
    */
-  def installIpGeoFile(fileUri: URI): String = {
+  def installIpGeoFile(ipToGeoEnrichment: IpToGeoEnrichment): String = {
     jobConfOption match {
       case Some(conf) => {   // We're on HDFS
-        val hdfsPath = FileUtils.sourceFile(conf, fileUri).valueOr(e => throw FatalEtlError(e))
+        val hdfsPath = FileUtils.sourceFile(conf, ipToGeoEnrichment.getRemotePath).valueOr(e => throw FatalEtlError(e))
         FileUtils.addToDistCache(conf, hdfsPath, "geoip")
       }
       case None =>           // We're in local mode
-        getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
+        getClass.getResource(ipToGeoEnrichment.getLocalPath).toURI.getPath
     }
   }
-
-  /**
-   * A helper to create the new IpGeo object.
-   *
-   * @param ipGeoFile The path to the MaxMind GeoLiteCity.dat file
-   * @return an IpGeo object ready to perform IP->geo lookups
-   */
-  def createIpGeo(ipGeoFile: String): IpGeo =
-    IpGeo(ipGeoFile, memCache = true, lruCache = 20000)
 
   /** 
    * Generate our "host ETL" version string.
@@ -144,8 +133,12 @@ class EtlJob(args: Args) extends Job(args) {
     e => throw FatalEtlError(e),
     c => c).asInstanceOf[CollectorLoader[Any]]
 
-  val ipGeoFile = EtlJob.installIpGeoFile(etlConfig.maxmindFile)
-  lazy val ipGeo = EtlJob.createIpGeo(ipGeoFile)
+  val enrichmentRegistry = etlConfig.registry
+
+  // Only install file if enrichment is enabled
+  for (ipToGeo <- enrichmentRegistry.getIpToGeoEnrichment) {
+    EtlJob.installIpGeoFile(ipToGeo)
+  }
 
   val etlTstamp = etlConfig.etlTstamp
 
@@ -153,10 +146,6 @@ class EtlJob(args: Args) extends Job(args) {
   val input = MultipleTextLineFiles(etlConfig.inFolder).read
   val goodOutput = Tsv(etlConfig.outFolder)
   val badOutput = JsonLine(etlConfig.badFolder)
-
-  implicit val resolver = etlConfig.igluResolver
-
-  val enrichmentRegistry = EnrichmentConfigRegistry.parse(fromJsonNode(etlConfig.enrichments))
 
   // Do we add a failure trap?
   val trappableInput = etlConfig.exceptionsFolder match {
@@ -168,7 +157,7 @@ class EtlJob(args: Args) extends Job(args) {
   // TODO: let's fix this Any typing
   val common = trappableInput
     .map('line -> 'output) { l: Any =>
-      EtlJob.toCanonicalOutput(ipGeo, etlConfig.anonOctets, loader.toCanonicalInput(l), etlTstamp)
+      EtlJob.toCanonicalOutput(enrichmentRegistry, etlTstamp, loader.toCanonicalInput(l))
     }
 
   // Handle bad rows

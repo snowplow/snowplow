@@ -13,17 +13,79 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
+import config._
+import utils.ScalazJson4sUtils
+
+// Java
+import java.net.URI
+
 // Scalaz
 import scalaz._
 import Scalaz._
+
+// json4s
+import org.json4s.scalaz.JsonScalaz._
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+
+// Iglu
+import com.snowplowanalytics.iglu.client._
 
 // Scala MaxMind GeoIP
 import com.snowplowanalytics.maxmind.geoip.{IpGeo, IpLocation}
 
 /**
+* Companion object. Lets us create a IpToGeoEnrichment
+* from a JValue.
+*/
+object IpToGeoEnrichment extends EnrichmentConfigParseable {
+
+  val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_to_geo", "jsonschema", "1-0-0")
+
+  /**
+   * Creates an IpToGeoEnrichment instance from a JValue.
+   * 
+   * @param config The ip_to_geo enrichment JSON
+   * @return a configured IpToGeoEnrichment instance
+   */
+  def parse(config: JValue, schemaKey: SchemaKey): ValidationNel[String, IpToGeoEnrichment] = {
+    isParseable(config, schemaKey).flatMap( conf => {
+      val geoUri = ScalazJson4sUtils.extractString(conf, parameter("maxmindUri"))
+      val geoDb  = ScalazJson4sUtils.extractString(conf, parameter("maxmindDatabase"))
+      
+      (geoUri.toValidationNel |@| geoDb.toValidationNel) {
+        IpToGeoEnrichment(_, _)
+      }
+    })
+  }
+
+}
+
+/**
  * Contains enrichments related to geo-location.
  */
-object GeoEnrichments {
+case class IpToGeoEnrichment(
+  maxmindUri: String,
+  maxmindDatabase: String
+  ) extends EnrichmentConfig {
+
+  lazy val ipGeo = createIpGeo(maxmindUri + maxmindDatabase)
+
+  /**
+   * A helper to create the new IpGeo object.
+   *
+   * @param ipGeoFile The path to the MaxMind GeoLiteCity.dat file
+   * @return an IpGeo object ready to perform IP->geo lookups
+   */
+  private def createIpGeo(ipGeoFile: String): IpGeo =
+    IpGeo(ipGeoFile, memCache = true, lruCache = 20000)
+
+  def getRemotePath: URI =
+    getClass.getResource("/maxmind/" + maxmindDatabase).toURI
+
+  def getLocalPath: String =
+    getClass.getResource("/maxmind/" + maxmindDatabase).toURI.getPath
 
   /**
    * Extract the geo-location using the
@@ -47,10 +109,10 @@ object GeoEnrichments {
    *         boxed in a Scalaz Validation
    */
   // TODO: can we move the IpGeo to an implicit?
-  def extractGeoLocation(geo: IpGeo, ip: String): Validation[String, MaybeIpLocation] = {
+  def extractGeoLocation(ip: String): Validation[String, MaybeIpLocation] = {
 
     try {
-      geo.getLocation(ip).success
+      ipGeo.getLocation(ip).success
     } catch {
       case _ => return "Could not extract geo-location from IP address [%s]".format(ip).fail
     }

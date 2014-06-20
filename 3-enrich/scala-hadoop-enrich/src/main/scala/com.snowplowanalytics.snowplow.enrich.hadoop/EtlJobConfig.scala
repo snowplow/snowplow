@@ -24,6 +24,9 @@ import com.fasterxml.jackson.databind.JsonNode
 import scalaz._
 import Scalaz._
 
+// json4s
+import org.json4s.jackson.JsonMethods._
+
 // Scalding
 import com.twitter.scalding.Args
 
@@ -36,9 +39,8 @@ import common.utils.{
   JacksonJsonUtils
 }
 
-import common.enrichments.PrivacyEnrichments.AnonOctets
-import AnonOctets._
 import common.enrichments.EventEnrichments
+import common.config.EnrichmentConfigRegistry
 
 // This project
 import utils.ScalazArgs
@@ -47,16 +49,15 @@ import utils.ScalazArgs
  * The configuration for the SnowPlowEtlJob.
  */
 case class EtlJobConfig(
-    inFolder: String,
-    inFormat: String,
-    maxmindFile: URI,
-    outFolder: String,
-    badFolder: String,
-    anonOctets: AnonOctets,
-    etlTstamp: String,
-    enrichments: JsonNode,
-    exceptionsFolder: Option[String],
-    igluResolver: Resolver)
+  inFolder: String,
+  inFormat: String,
+  maxmindFile: URI,
+  outFolder: String,
+  badFolder: String,
+  etlTstamp: String,
+  registry: EnrichmentConfigRegistry,
+  exceptionsFolder: Option[String]
+  )
 
 /**
  * Module to handle configuration for
@@ -87,26 +88,7 @@ object EtlJobConfig {
       })
   }
 
-  /**
-   * Convert a Stringly-typed integer
-   * into the corresponding AnonOctets
-   * Enum Value.
-   *
-   * Update the Validation Error if the
-   * conversion isn't possible.
-   *
-   * @param anonOctets A String holding
-   *        the number of IP address
-   *        octets to anonymize
-   * @return a Validation-boxed AnonOctets
-   */
-  private def getAnonOctets(anonOctets: String): Validation[String, AnonOctets] = {
-    try {
-      AnonOctets.withName(anonOctets).success
-    } catch {
-      case nse: NoSuchElementException => "IP address octets to anonymize must be 0, 1, 2, 3 or 4".fail
-    }
-  }
+
 
   /**
    * Loads the Config from the Scalding
@@ -126,7 +108,6 @@ object EtlJobConfig {
     val maxmindFile = args.requiredz("maxmind_file").flatMap(f => getMaxmindUri(f))
     val outFolder = args.requiredz("output_folder")
     val badFolder = args.requiredz("bad_rows_folder")
-    val anonOctets = args.requiredz("anon_ip_octets").flatMap(q => getAnonOctets(q))
     val etlTstamp = args.requiredz("etl_tstamp").flatMap(t => EventEnrichments.extractTimestamp("etl_tstamp", t))
     val exceptionsFolder = args.optionalz("exceptions_folder")
     
@@ -138,12 +119,25 @@ object EtlJobConfig {
       } yield reso
     }
 
-    val enrichments = for {
+    val enrichments: ValidationNel[String, JsonNode] = for {
       str  <- (args.requiredz("enrichments").toValidationNel: ValidationNel[String, String])
       node <-  base64ToJsonNode(str)
       } yield node
 
-    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| anonOctets.toValidationNel |@| etlTstamp.toValidationNel |@| enrichments |@| exceptionsFolder.toValidationNel |@| igluResolver) { EtlJobConfig(_,_,_,_,_,_,_,_,_,_) }
+    val registry = (enrichments |@| igluResolver) {
+      buildEnrichmentRegistry(_)(_)
+    }
+
+    val test: ValidationNel[String, EnrichmentConfigRegistry] = registry.flatMap(s => s)
+
+    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| etlTstamp.toValidationNel |@| test |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_,_) }
+  }
+
+  /**
+   * TODO: desc
+   */
+  def buildEnrichmentRegistry(enrichments:JsonNode)(implicit resolver: Resolver): ValidationNel[String, EnrichmentConfigRegistry] = {
+    EnrichmentConfigRegistry.parse(fromJsonNode(enrichments))
   }
 
   /**

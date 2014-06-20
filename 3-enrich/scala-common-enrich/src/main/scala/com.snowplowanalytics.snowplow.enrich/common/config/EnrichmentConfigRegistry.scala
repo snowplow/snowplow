@@ -17,6 +17,10 @@ package common
 package config
 
 import utils.ScalazJson4sUtils
+import enrichments.{
+  AnonIpEnrichment,
+  IpToGeoEnrichment
+}
 
 // Scalaz
 import scalaz._
@@ -119,9 +123,9 @@ object EnrichmentConfigRegistry {
     name.flatMap( nm => {
 
       if (nm == "ip_to_geo") {
-        IpToGeoEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+        IpToGeoEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
       } else if (nm == "anon_ip") {
-        AnonIpEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+        AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
       } else {
         None.success
       }
@@ -139,6 +143,14 @@ object EnrichmentConfigRegistry {
  */
 case class EnrichmentConfigRegistry(private val configs: Map[String, EnrichmentConfig]) {
 
+  // TODO desc
+  def getAnonIpEnrichment: Option[AnonIpEnrichment] =
+    getEnrichment[AnonIpEnrichment]("anon_ip")
+
+  // TODO desc
+  def getIpToGeoEnrichment: Option[IpToGeoEnrichment] = 
+    getEnrichment[IpToGeoEnrichment]("ip_to_geo")
+
   /**
    * Tells us if this enrichment is enabled
    * or not. An enabled enrichment will be
@@ -146,6 +158,10 @@ case class EnrichmentConfigRegistry(private val configs: Map[String, EnrichmentC
    *
    * TODO rest of docstring
    */
-  def isEnabled(enrichmentName: String): Boolean =
-    configs.isDefinedAt(enrichmentName)
+  private def getEnrichment[A <: EnrichmentConfig : Manifest](name: String): Option[A] =
+    configs.get(name).map(cast[A](_))
+
+  // Adapted from http://stackoverflow.com/questions/6686992/scala-asinstanceof-with-parameterized-types
+  private def cast[A <: AnyRef : Manifest](a : Any) : A 
+    = manifest.runtimeClass.cast(a).asInstanceOf[A]
 }

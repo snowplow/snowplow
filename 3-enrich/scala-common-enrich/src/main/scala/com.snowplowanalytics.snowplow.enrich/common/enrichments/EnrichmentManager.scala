@@ -37,11 +37,13 @@ import utils.MapTransformer._
 import enrichments.{EventEnrichments => EE}
 import enrichments.{MiscEnrichments => ME}
 import enrichments.{ClientEnrichments => CE}
-import enrichments.{GeoEnrichments => GE}
-import enrichments.{PrivacyEnrichments => PE}
-import PE.AnonOctets.AnonOctets
+//import enrichments.{IpToGeoEnrichment => GE}
+//import enrichments.{AnonIpEnrichment => PE}
+//import PE.AnonOctets.AnonOctets
 import web.{PageEnrichments => WPE}
 import web.{AttributionEnrichments => WAE}
+
+import config._
 
 /**
  * A module to hold our enrichment process.
@@ -61,7 +63,7 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  def enrichEvent(geo: IpGeo, hostEtlVersion: String, anonOctets: AnonOctets, etlTstamp: String, raw: CanonicalInput): ValidatedCanonicalOutput = {
+  def enrichEvent(registry: EnrichmentConfigRegistry, hostEtlVersion: String, etlTstamp: String, raw: CanonicalInput): ValidatedCanonicalOutput = {
 
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
@@ -85,7 +87,10 @@ object EnrichmentManager {
       e.event_id = EE.generateEventId
       e.v_collector = raw.source.collector // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
-      raw.ipAddress.map(ip => e.user_ipaddress = PE.anonymizeIp(ip, anonOctets))
+      raw.ipAddress.map(ip => e.user_ipaddress = registry.getAnonIpEnrichment match{
+        case Some(anon) => anon.anonymizeIp(ip)
+        case None => ip
+      })
     }
 
     // 2. Enrichments which can fail
@@ -235,15 +240,24 @@ object EnrichmentManager {
       event.page_urlfragment = components.fragment.orNull
     }
 
-    // Get the geo-location from the IP address
-    val geoLocation = GE.extractGeoLocation(geo, raw.ipAddress.orNull)
-    for (loc <- geoLocation; l <- loc) {
-      event.geo_country = l.countryCode
-      event.geo_region = l.region.orNull
-      event.geo_city = l.city.orNull
-      event.geo_zipcode = l.postalCode.orNull
-      event.geo_latitude = l.latitude
-      event.geo_longitude = l.longitude
+    // If our IpToGeo enrichment is enabled,
+    // get the geo-location from the IP address
+    val geoLocation = {
+      registry.getIpToGeoEnrichment match {
+        case Some(geo) => {
+          val geoLoc = geo.extractGeoLocation(raw.ipAddress.orNull)
+          for (loc <- geoLoc; l <- loc) {
+            event.geo_country = l.countryCode
+            event.geo_region = l.region.orNull
+            event.geo_city = l.city.orNull
+            event.geo_zipcode = l.postalCode.orNull
+            event.geo_latitude = l.latitude
+            event.geo_longitude = l.longitude
+          }
+          geoLoc
+        }
+        case None => unitSuccess
+      }
     }
 
     // Potentially set the referrer details and URL components
