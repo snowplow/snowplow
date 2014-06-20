@@ -18,9 +18,6 @@ package config
 
 import utils.ScalazJson4sUtils
 
-// Scala
-import scala.collection.immutable.HashMap
-
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -41,7 +38,7 @@ import iglu.client.validation.ValidatableJsonMethods._
  */
 object EnrichmentConfigRegistry {
 
-  private val EnrichmentConfigSchemaKey = SchemaKey("blah", "blah", "blah", "blah")
+  private val EnrichmentConfigSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "enrichments", "jsonschema", "1-0-0")
 
   /**
    * Constructs our EnrichmentConfigRegistry
@@ -66,9 +63,9 @@ object EnrichmentConfigRegistry {
       _.map(_.toString)
       )
 
-    // Validate each JSON against its own schema
-    //val validatedEnrichmentJsons: ValidationNel[String, List[JValue]] = enrichmentJsons.map(ej => ej.map(json => validateJValueAgainstSchema(json \ "schema", json \ "data", igluResolver)))
+    // Loop through and for each:
 
+    // 1. Check it validates against its own schema
     val validatedEnrichmentJsonTuples: ValidationNel[String, List[JsonSchemaPair]] = (for {
       jsons <- enrichmentJsons // <- Success
     } yield for {    
@@ -77,6 +74,13 @@ object EnrichmentConfigRegistry {
       valid <- asJsonNode(json).validateAndIdentifySchema(dataOnly = true).leftMap(_.map(_.toString))
     } yield valid).flatMap(_.sequenceU) // Swap nested List[scalaz.Validation[...]
 
+    // 2. Identify the name of this enrichment config
+    // 3. If the enrichment config is one of the ones
+    //    we know how to parse, then:
+    //    3.1 Check that the schemaKey for the given
+    //        config matches the one we expect
+    //    3.2 Use the companion parse to attempt to
+    //        construct the config
     val configTuples: ValidationNel[String, List[(String, EnrichmentConfig)]] = (for {
         tuples <- validatedEnrichmentJsonTuples // <- Success
       } yield for {
@@ -87,30 +91,15 @@ object EnrichmentConfigRegistry {
       .flatMap(_.sequenceU) // Explain what this is doing
       .map(_.flatten)       // Eliminate our Option boxing (drop Nones)
 
+    //    3.3 Collect the results and build a Map
+    //        from the output (or Failure)
     val enrichmentsMap: ValidationNel[String, Map[String, EnrichmentConfig]] = configTuples.map(_.toMap)
 
-
-    // Loop through and for each:
-
-
-    // 1. Check it validates against its own schema
-    // 2. Identify the name of this enrichment config
-    // 3. If the enrichment config is one of the ones
-    //    we know how to parse, then:
-    //    3.1 Check that the schemaKey for the given
-    //        config matches the one we expect
-    //    3.2 Use the companion parse to attempt to
-    //        construct the config
-    //    3.3 Collect the results and build a HashMap
-    //        from the output (or Failure)
-
-    // Validate that each of the enrichments passes its own schema
-
-    // Loop through, and handle specific enrichments we know how to construct
-
-      // do nothing
-
-    NonEmptyList("OH NO").fail
+    // 4 Build an EnrichmentConfigRegistry from the Map
+    enrichmentsMap.bimap(
+      e => NonEmptyList(e.toString),
+      s => EnrichmentConfigRegistry(s)
+      )
   }
 
   /**
@@ -148,12 +137,12 @@ object EnrichmentConfigRegistry {
  * In the future this may evolve to holding
  * all of our enrichments themselves.
  */
-case class EnrichmentConfigRegistry(private val configs: HashMap[String, EnrichmentConfig]) {
+case class EnrichmentConfigRegistry(private val configs: Map[String, EnrichmentConfig]) {
 
   /**
    * Tells us if this enrichment is enabled
    * or not. An enabled enrichment will be
-   * present in the HashMap of configs.
+   * present in the Map of configs.
    *
    * TODO rest of docstring
    */
