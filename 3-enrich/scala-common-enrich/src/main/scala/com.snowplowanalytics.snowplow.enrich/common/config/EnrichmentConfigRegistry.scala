@@ -107,15 +107,13 @@ object EnrichmentConfigRegistry {
   }
 
   /**
-   * TODO: desc
-   */
-  def validateJValueAgainstSchema(node: JValue, schema: JValue)(implicit resolver: Resolver): ValidationNel[String, JValue] ={
-
-    asJsonNode(node).validateAgainstSchema(asJsonNode(schema)).map(fromJsonNode(_)).leftMap(_.map(_.toString))
-  }
-
-  /**
-   * TODO: desc
+   * Builds an EnrichmentConfig from a JValue if it has a 
+   * recognized name field and matches a schema key 
+   *
+   * @param enrichmentConfig JValue with enrichment information
+   * @param schemaKey SchemaKey for the JValue
+   * @return ValidationNel boxing Option boxing Tuple2 containing
+   * the EnrichmentConfig object and the schemaKey
    */
   private def buildEnrichmentConfig(enrichmentConfig: JValue, schemaKey: SchemaKey): ValidationNel[String, Option[Tuple2[String, EnrichmentConfig]]] = {
 
@@ -143,20 +141,32 @@ object EnrichmentConfigRegistry {
  */
 case class EnrichmentConfigRegistry(private val configs: Map[String, EnrichmentConfig]) {
 
-  // TODO desc
+  /**
+   * Returns an Option boxing the AnonIpEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the AnonIpEnrichment instance
+   */
   def getAnonIpEnrichment: Option[AnonIpEnrichment] =
     getEnrichment[AnonIpEnrichment]("anon_ip")
 
-  // TODO desc
+  /**
+   * Returns an Option boxing the IpToGeoEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the IpToGeoEnrichment instance
+   */
   def getIpToGeoEnrichment: Option[IpToGeoEnrichment] = 
     getEnrichment[IpToGeoEnrichment]("ip_to_geo")
 
   /**
-   * Tells us if this enrichment is enabled
-   * or not. An enabled enrichment will be
-   * present in the Map of configs.
+   * Returns an Option boxing an Enrichment
+   * config value if present, or None if not
    *
-   * TODO rest of docstring
+   * @tparam A Expected type of the enrichment to get
+   * @param name The name of the enrichment to get
+   * @return Option boxing the enrichment
+   * to the 
    */
   private def getEnrichment[A <: EnrichmentConfig : Manifest](name: String): Option[A] =
     configs.get(name).map(cast[A](_))

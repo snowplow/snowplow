@@ -83,7 +83,7 @@ object AnonOctets extends Enumeration {
    */
   def fromInt(anonOctets: Int): Validation[String, AnonOctets] = {
     try {
-      AnonOctets.withName(anonOctets.toString).success
+      AnonOctets(anonOctets).success
     } catch {
       case nse: NoSuchElementException => "IP address octets to anonymize must be 0, 1, 2, 3 or 4".fail
     }

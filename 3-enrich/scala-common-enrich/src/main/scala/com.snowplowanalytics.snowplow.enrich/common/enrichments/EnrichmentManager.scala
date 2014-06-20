@@ -37,9 +37,6 @@ import utils.MapTransformer._
 import enrichments.{EventEnrichments => EE}
 import enrichments.{MiscEnrichments => ME}
 import enrichments.{ClientEnrichments => CE}
-//import enrichments.{IpToGeoEnrichment => GE}
-//import enrichments.{AnonIpEnrichment => PE}
-//import PE.AnonOctets.AnonOctets
 import web.{PageEnrichments => WPE}
 import web.{AttributionEnrichments => WAE}
 
@@ -87,7 +84,7 @@ object EnrichmentManager {
       e.event_id = EE.generateEventId
       e.v_collector = raw.source.collector // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
-      raw.ipAddress.map(ip => e.user_ipaddress = registry.getAnonIpEnrichment match{
+      raw.ipAddress.map(ip => e.user_ipaddress = registry.getAnonIpEnrichment match {
         case Some(anon) => anon.anonymizeIp(ip)
         case None => ip
       })
