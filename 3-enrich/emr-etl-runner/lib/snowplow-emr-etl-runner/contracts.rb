@@ -70,14 +70,12 @@ module Snowplow
       :enriched => ({
         :good => String,
         :bad => String,
-        :errors => Maybe[String],
-        :archive => String
+        :errors => Maybe[String]
         }),
       :shredded => ({
         :good => String,
         :bad => String,
-        :errors => Maybe[String],
-        :archive => String
+        :errors => Maybe[String]
         })
       })
 
