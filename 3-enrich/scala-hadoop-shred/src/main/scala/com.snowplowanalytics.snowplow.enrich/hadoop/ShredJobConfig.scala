@@ -68,20 +68,20 @@ object ShredJobConfig {
   def loadConfigFrom(args: Args): ValidatedNel[ShredJobConfig] = {
 
     import ScalazArgs._
-    val inFolder  = args.requiredz("input_folder").toProcessingMessageNel
-    val outFolder = args.requiredz("output_folder").toProcessingMessageNel
-    val badFolder = args.requiredz("bad_rows_folder").toProcessingMessageNel
-    val exceptionsFolder = args.optionalz("exceptions_folder").toProcessingMessageNel
+    val inFolder  = args.requiredz("input_folder")
+    val outFolder = args.requiredz("output_folder")
+    val badFolder = args.requiredz("bad_rows_folder")
+    val exceptionsFolder = args.optionalz("exceptions_folder")
 
     val igluResolver = args.requiredz(IgluConfigArg) match {
-      case Failure(e) => e.toProcessingMessageNel.fail
+      case Failure(e) => e.failNel
       case Success(s) => for {
-        node <- base64ToJsonNode(s)
+        node <- (base64ToJsonNode(s).toValidationNel: ValidatedNel[JsonNode])
         reso <- Resolver.parse(node)
       } yield reso
     }
 
-    (inFolder |@| outFolder |@| badFolder |@| exceptionsFolder |@| igluResolver) { ShredJobConfig(_,_,_,_,_) }
+    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| exceptionsFolder.toValidationNel |@| igluResolver) { ShredJobConfig(_,_,_,_,_) }
   }
 
   /**
@@ -94,10 +94,10 @@ object ShredJobConfig {
    *         ProcessingMessages on
    *         Failure 
    */
-  private[hadoop] def base64ToJsonNode(str: String): ValidatedNel[JsonNode] =
+  private[hadoop] def base64ToJsonNode(str: String): Validated[JsonNode] =
     (for {
       raw  <- ConversionUtils.decodeBase64Url(IgluConfigArg, str)
       node <- JsonUtils.extractJson(IgluConfigArg, raw)
-    } yield node).toProcessingMessageNel
+    } yield node).toProcessingMessage
 
 }

@@ -10,7 +10,9 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
+package com.snowplowanalytics
+package snowplow
+package enrich
 package hadoop
 package utils
 
@@ -21,8 +23,8 @@ import Scalaz._
 // Scalding
 import com.twitter.scalding.Args
 
-// Snowplow Common Enrich
-import common._
+// Iglu Scala Client
+import iglu.client.validation.ProcessingMessageMethods._
 
 // TODO: move this into scala-util
 
@@ -68,10 +70,10 @@ class ScalazArgs(args: Args) {
    *         message, boxed in a
    *         Scalaz Validation
    */
-  def requiredz(key: String): ValidatedString = args.list(key) match {
-    case List() => "Required argument [%s] not found".format(key).fail
+  def requiredz(key: String): Validated[String] = args.list(key) match {
+    case List() => "Required argument [%s] not found".format(key).toProcessingMessage.fail[String]
     case List(a) => decodeEquals(a).success
-    case _ => "List of values found for argument [%s], should be one".format(key).fail
+    case _ => "List of values found for argument [%s], should be one".format(key).toProcessingMessage.fail[String]
   }
 
   /**
@@ -81,10 +83,10 @@ class ScalazArgs(args: Args) {
    * Use it to compose validation errors if
    * a key is missing.
    */
-  def optionalz(key: String): Validation[String, Option[String]] = args.list(key) match {
+  def optionalz(key: String): Validated[Option[String]] = args.list(key) match {
     case List() => None.success
     case List(a) => Some(decodeEquals(a)).success
-    case _ => "List of values found for argument [%s], should be at most one".format(key).fail
+    case _ => "List of values found for argument [%s], should be at most one".format(key).toProcessingMessage.fail
   }
 
   /**
