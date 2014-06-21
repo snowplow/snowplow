@@ -28,8 +28,8 @@
   :ec2_subnet_id: ADD HERE # Set this if running in VPC. Leave blank otherwise
   :ec2_key_name: ADD HERE
   :software:
-    :hbase:                # To launch on cluster, provide version, 0.92.0
-    :lingual:              # To launch on cluster, provide version, 1.1
+    :hbase:                # To launch on cluster, provide version, "0.92.0", keep quotes
+    :lingual:              # To launch on cluster, provide version, "1.1", keep quotes
   # Adjust your Hadoop cluster below
   :jobflow:
     :master_instance_type: m1.small
