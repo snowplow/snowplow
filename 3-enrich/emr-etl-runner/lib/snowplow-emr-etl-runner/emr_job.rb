@@ -85,7 +85,7 @@ module Snowplow
         # Install Lingual
         lingual = config[:emr][:software][:lingual]
         unless not lingual
-          install_lingual_action = Elasticity::BootstrapAction.new("s3://files.concurrentinc.com/lingual/#{lingual}lingual-client/install-lingual-client.sh")
+          install_lingual_action = Elasticity::BootstrapAction.new("s3://files.concurrentinc.com/lingual/#{lingual}/lingual-client/install-lingual-client.sh")
           @jobflow.add_bootstrap_action(install_lingual_action)
         end
 
@@ -108,6 +108,7 @@ module Snowplow
         end
 
         csbr = config[:s3][:buckets][:raw]
+        s3_endpoint = self.class.get_s3_endpoint(config[:s3][:region])
 
         # 1. Compaction to HDFS
 
@@ -128,7 +129,7 @@ module Snowplow
             "--groupBy"     , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
             "--targetSize"  , "128",
             "--outputCodec" , "lzo",
-            "--s3Endpoint"  , config[:s3][:endpoint]
+            "--s3Endpoint"  , s3_endpoint
           ]
           compact_to_hdfs_step.name << ": Raw S3 -> HDFS"
 
@@ -169,7 +170,7 @@ module Snowplow
             "--src"        , enrich_step_output,
             "--dest"       , enrich_final_output,
             "--srcPattern" , "part-*",
-            "--s3Endpoint" , config[:s3][:endpoint]
+            "--s3Endpoint" , s3_endpoint
           ]
           copy_to_s3_step.name << ": Enriched HDFS -> S3"
           @jobflow.add_step(copy_to_s3_step)
@@ -187,7 +188,7 @@ module Snowplow
             shred_final_output
           end
           
-          shredded_step = build_scalding_step(
+          shred_step = build_scalding_step(
             assets[:shred],
             "Shred Enriched Events",
             "enrich.hadoop.ShredJob",
@@ -200,7 +201,7 @@ module Snowplow
               :iglu_config => self.class.jsonify(config[:iglu])
             }
           )
-          @jobflow.add_step(shredded_step)
+          @jobflow.add_step(shred_step)
 
           if s3distcp
             # We need to copy our shredded types from HDFS back to S3
@@ -209,7 +210,7 @@ module Snowplow
               "--src"        , shred_step_output,
               "--dest"       , shred_final_output,
               "--srcPattern" , "part-*",
-              "--s3Endpoint" , config[:s3][:endpoint]
+              "--s3Endpoint" , s3_endpoint
             ]
             copy_to_s3_step.name << ": Shredded HDFS -> S3"
             @jobflow.add_step(copy_to_s3_step)

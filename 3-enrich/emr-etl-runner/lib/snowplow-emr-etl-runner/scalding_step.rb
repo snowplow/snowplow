@@ -24,7 +24,9 @@ module Snowplow
       def initialize(jar, main_class, options)
         @name = 'Elasticity Scalding Step'
         @jar = jar
-        @arguments = [ main_class, '--hdfs' ]
+        @action_on_failure = 'TERMINATE_JOB_FLOW'
+
+        @arguments = [ main_class, '--hdfs' ]        
         options.each do |argument, value|
           @arguments << "--#{argument}" << value
         end
