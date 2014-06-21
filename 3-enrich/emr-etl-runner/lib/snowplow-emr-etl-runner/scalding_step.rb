@@ -15,7 +15,7 @@
 
 require 'elasticity'
 
-module SnowPlow
+module Snowplow
   module EmrEtlRunner
 
     # TODO: move this into Elasticity at some point

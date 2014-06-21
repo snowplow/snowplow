@@ -197,7 +197,7 @@ module Snowplow
               :errors      => partition_by_run(csbs[:errors], run_id, config[:etl][:continue_on_unexpected_error])
             },
             {
-              :iglu_config => jsonify(config[:iglu])
+              :iglu_config => self.class.jsonify(config[:iglu])
             }
           )
           @jobflow.add_step(shredded_step)
@@ -320,7 +320,7 @@ module Snowplow
 
       Contract IgluConfigHash => String
       def self.jsonify(iglu_hash)
-        Base64.strict_encode(iglu_hash.to_camelback_keys.to_json)
+        Base64.strict_encode64(iglu_hash.to_camelback_keys.to_json)
       end
 
       Contract AnonIpHash => String
