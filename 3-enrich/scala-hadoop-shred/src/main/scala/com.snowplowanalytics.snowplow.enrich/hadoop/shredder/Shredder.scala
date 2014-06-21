@@ -52,7 +52,14 @@ import hadoop.utils.JsonUtils
  */
 object Shredder {
 
-  private val TypeHierarchyRoot = "events" // All shredded JSONs have the events type (aka table) as their ultimate parent
+  // All shredded JSONs have the events type (aka table) as their ultimate parent
+  private val TypeHierarchyRoot = "events"
+
+  // Self-describing schema for a ue_properties
+  private val UePropertiesSchema = SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", "1-0-0")
+
+  // Self-describing schema for a contexts
+  private val ContextsSchema = SchemaKey("com.snowplowanalytics.snowplow", "contexts", "jsonschema", "1-0-0")
 
   /**
    * Shred the CanonicalOutput's two fields which
@@ -83,14 +90,14 @@ object Shredder {
 
     // Get our unstructured event and List of contexts, both Option-boxed
     val ue = for {
-      v <- extractAndValidateJson("ue_properties", Option(event.ue_properties))
+      v <- extractAndValidateJson("ue_properties", UePropertiesSchema, Option(event.ue_properties))
     } yield for {
       j <- v
       l = List(j)
     } yield l
 
     val c  = for {
-      v <- extractAndValidateJson("context", Option(event.contexts))
+      v <- extractAndValidateJson("context", ContextsSchema, Option(event.contexts))
     } yield for {
       j <- v
       l = j.iterator.toList
@@ -189,6 +196,9 @@ object Shredder {
    *
    * @param field The name of the field
    *        containing the JSON instance
+   * @param schemaKey The schema that we
+   *        expected this self-describing
+   *        JSON to conform to
    * @param instance An Option-boxed JSON
    *        instance
    * @param resolver Our implicit Iglu
@@ -199,13 +209,13 @@ object Shredder {
    *         Failure, or a singular
    *         JsonNode on success
    */
-  private[shredder] def extractAndValidateJson(field: String, instance: Option[String])(implicit resolver: Resolver):
+  private[shredder] def extractAndValidateJson(field: String, schemaKey: SchemaKey, instance: Option[String])(implicit resolver: Resolver):
     Option[ValidatedNel[JsonNode]] =
     for {
       i <- instance
     } yield for {
       j <- extractJson(field, i)
-      v <- j.validate(true)
+      v <- j.verifySchemaAndValidate(schemaKey, true)
     } yield v
 
   /**
