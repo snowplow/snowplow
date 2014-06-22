@@ -193,7 +193,7 @@ module Snowplow
             "Shred Enriched Events",
             assets[:shred],
             "enrich.hadoop.ShredJob",
-            { :in          => enrich_final_output,
+            { :in          => enrich_step_output,
               :good        => shred_step_output,
               :bad         => partition_by_run(csbs[:bad],    run_id),
               :errors      => partition_by_run(csbs[:errors], run_id, config[:etl][:continue_on_unexpected_error])
