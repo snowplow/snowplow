@@ -31,6 +31,7 @@ module Snowplow
 
       # Constants
       JAVA_PACKAGE = "com.snowplowanalytics.snowplow"
+      PARTFILE_REGEXP = ".*part-.*"
 
       # Need to understand the status of all our jobflow steps
       @@running_states = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
@@ -115,7 +116,7 @@ module Snowplow
         # We only consolidate files on HDFS folder for CloudFront currently
         raw_input = csbr[:processing]
         enrich_step_input = if config[:etl][:collector_format] == "cloudfront" and s3distcp
-          "hdfs:///local/snowplow/raw-events"
+          "hdfs:///local/snowplow/raw-events/"
         else
           raw_input
         end
@@ -142,7 +143,7 @@ module Snowplow
         csbe = config[:s3][:buckets][:enriched]
         enrich_final_output = partition_by_run(csbe[:good], run_id)
         enrich_step_output = if s3distcp
-          "hdfs:///local/snowplow/enriched-events"
+          "hdfs:///local/snowplow/enriched-events/"
         else
           enrich_final_output
         end
@@ -169,7 +170,7 @@ module Snowplow
           copy_to_s3_step.arguments = [
             "--src"        , enrich_step_output,
             "--dest"       , enrich_final_output,
-            "--srcPattern" , "part-.*",
+            "--srcPattern" , PARTFILE_REGEXP,
             "--s3Endpoint" , s3_endpoint
           ]
           copy_to_s3_step.name << ": Enriched HDFS -> S3"
@@ -183,7 +184,7 @@ module Snowplow
           csbs = config[:s3][:buckets][:shredded]
           shred_final_output = partition_by_run(csbs[:good], run_id)
           shred_step_output = if s3distcp
-            "hdfs:///local/snowplow/shredded-events"
+            "hdfs:///local/snowplow/shredded-events/"
           else
             shred_final_output
           end
@@ -209,7 +210,7 @@ module Snowplow
             copy_to_s3_step.arguments = [
               "--src"        , shred_step_output,
               "--dest"       , shred_final_output,
-              "--srcPattern" , "part-.*",
+              "--srcPattern" , PARTFILE_REGEXP,
               "--s3Endpoint" , s3_endpoint
             ]
             copy_to_s3_step.name << ": Shredded HDFS -> S3"
