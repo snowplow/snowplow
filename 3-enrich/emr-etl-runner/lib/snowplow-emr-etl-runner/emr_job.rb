@@ -146,7 +146,7 @@ module Snowplow
           "hdfs:///local/snowplow/enriched-events/"
         else
           # Need to replace =s because Hadoop Enrich is on an old version of Scalding Args (can remove when upgrade)
-          enrich_final_output.gsub! '=', '%3D'
+          self.class.fix_equals(enrich_final_output)
         end
 
         enrich_step = build_scalding_step(
@@ -155,8 +155,8 @@ module Snowplow
           "enrich.hadoop.EtlJob",
           { :in     => enrich_step_input,
             :good   => enrich_step_output,
-            :bad    => self.class.partition_by_run(csbe[:bad],    run_id),
-            :errors => self.class.partition_by_run(csbe[:errors], run_id, config[:etl][:continue_on_unexpected_error])
+            :bad    => self.class.fix_equals(self.class.partition_by_run(csbe[:bad],    run_id)),
+            :errors => self.class.fix_equals(self.class.partition_by_run(csbe[:errors], run_id, config[:etl][:continue_on_unexpected_error]))
           },
           { :input_format     => config[:etl][:collector_format],
             :maxmind_file     => assets[:maxmind],
@@ -324,6 +324,10 @@ module Snowplow
 
       # Makes a folder name Scalding-safe. This is because
       # currently Scalding cannot support =s
+      Contract Maybe[String] => Maybe[String]
+      def self.fix_equals(path)
+        path.gsub!('=', '%3D') if path
+      end
 
       Contract IgluConfigHash => String
       def self.jsonify(iglu_hash)

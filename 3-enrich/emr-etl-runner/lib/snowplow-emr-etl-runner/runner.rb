@@ -22,7 +22,7 @@ module Snowplow
 
       # Supported options
       @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
-      @@skip_options = Set.new(%w(staging emr shred archive))
+      @@skip_options = Set.new(%w(staging s3distcp emr shred archive))
 
       include Logging
 
