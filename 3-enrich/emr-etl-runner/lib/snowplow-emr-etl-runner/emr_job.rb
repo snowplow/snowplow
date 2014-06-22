@@ -148,8 +148,8 @@ module Snowplow
         end
 
         enrich_step = build_scalding_step(
-          assets[:enrich],
           "Enrich Raw Events",
+          assets[:enrich],
           "enrich.hadoop.EtlJob",
           { :in     => enrich_step_input,
             :good   => enrich_step_output,
@@ -189,8 +189,8 @@ module Snowplow
           end
           
           shred_step = build_scalding_step(
-            assets[:shred],
             "Shred Enriched Events",
+            assets[:shred],
             "enrich.hadoop.ShredJob",
             { :in          => enrich_final_output,
               :good        => shred_step_output,
@@ -250,6 +250,7 @@ module Snowplow
       # +extra_step_args+:: additional arguments to pass to the step
       #
       # Returns a step ready for adding to the jobflow.
+      Contract String, String, String, Hash, Hash => ScaldingStep
       def build_scalding_step(step_name, jar, main_class, folders, extra_step_args={})
 
         # Build our argument hash
