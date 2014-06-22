@@ -169,7 +169,7 @@ module Snowplow
           copy_to_s3_step.arguments = [
             "--src"        , enrich_step_output,
             "--dest"       , enrich_final_output,
-            "--srcPattern" , "part-*",
+            "--srcPattern" , "part-.*",
             "--s3Endpoint" , s3_endpoint
           ]
           copy_to_s3_step.name << ": Enriched HDFS -> S3"
@@ -209,7 +209,7 @@ module Snowplow
             copy_to_s3_step.arguments = [
               "--src"        , shred_step_output,
               "--dest"       , shred_final_output,
-              "--srcPattern" , "part-*",
+              "--srcPattern" , "part-.*",
               "--s3Endpoint" , s3_endpoint
             ]
             copy_to_s3_step.name << ": Shredded HDFS -> S3"
