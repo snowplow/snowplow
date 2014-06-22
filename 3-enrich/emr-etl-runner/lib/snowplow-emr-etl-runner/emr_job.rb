@@ -141,11 +141,12 @@ module Snowplow
         # 2. Enrichment
 
         csbe = config[:s3][:buckets][:enriched]
-        enrich_final_output = partition_by_run(csbe[:good], run_id)
+        enrich_final_output = self.class.partition_by_run(csbe[:good], run_id)
         enrich_step_output = if s3distcp
           "hdfs:///local/snowplow/enriched-events/"
         else
-          enrich_final_output
+          # Need to replace =s because Hadoop Enrich is on an old version of Scalding Args (can remove when upgrade)
+          enrich_final_output.gsub! '=', '%3D'
         end
 
         enrich_step = build_scalding_step(
@@ -154,8 +155,8 @@ module Snowplow
           "enrich.hadoop.EtlJob",
           { :in     => enrich_step_input,
             :good   => enrich_step_output,
-            :bad    => partition_by_run(csbe[:bad],    run_id),
-            :errors => partition_by_run(csbe[:errors], run_id, config[:etl][:continue_on_unexpected_error])
+            :bad    => self.class.partition_by_run(csbe[:bad],    run_id),
+            :errors => self.class.partition_by_run(csbe[:errors], run_id, config[:etl][:continue_on_unexpected_error])
           },
           { :input_format     => config[:etl][:collector_format],
             :maxmind_file     => assets[:maxmind],
@@ -182,7 +183,7 @@ module Snowplow
         if shred
 
           csbs = config[:s3][:buckets][:shredded]
-          shred_final_output = partition_by_run(csbs[:good], run_id)
+          shred_final_output = self.class.partition_by_run(csbs[:good], run_id)
           shred_step_output = if s3distcp
             "hdfs:///local/snowplow/shredded-events/"
           else
@@ -195,8 +196,8 @@ module Snowplow
             "enrich.hadoop.ShredJob",
             { :in          => enrich_step_output,
               :good        => shred_step_output,
-              :bad         => partition_by_run(csbs[:bad],    run_id),
-              :errors      => partition_by_run(csbs[:errors], run_id, config[:etl][:continue_on_unexpected_error])
+              :bad         => self.class.partition_by_run(csbs[:bad],    run_id),
+              :errors      => self.class.partition_by_run(csbs[:errors], run_id, config[:etl][:continue_on_unexpected_error])
             },
             {
               :iglu_config => self.class.jsonify(config[:iglu])
@@ -271,20 +272,6 @@ module Snowplow
         scalding_step
       end
 
-      # We need to partition our output buckets by run ID
-      # Note buckets already have trailing slashes
-      #
-      # Parameters:
-      # +folder+:: the folder to append a run ID folder to
-      # +run_id+:: the run ID to append
-      # +retain+:: set to false if this folder should be nillified 
-      #
-      # Return the folder with a run ID folder appended
-      def partition_by_run(folder, run_id, retain=true)
-        # TODO: s/%3D/=/ when Scalding Args supports it
-        "#{folder}run%3D#{run_id}/" if retain
-      end
-
       # Wait for a jobflow.
       # Check its status every 5 minutes till it completes.
       #
@@ -320,6 +307,23 @@ module Snowplow
 
         success
       end
+
+      # We need to partition our output buckets by run ID
+      # Note buckets already have trailing slashes
+      #
+      # Parameters:
+      # +folder+:: the folder to append a run ID folder to
+      # +run_id+:: the run ID to append
+      # +retain+:: set to false if this folder should be nillified
+      #
+      # Return the folder with a run ID folder appended
+      Contract String, String, Boolean => String
+      def self.partition_by_run(folder, run_id, retain=true)
+        "#{folder}run=#{run_id}/" if retain
+      end
+
+      # Makes a folder name Scalding-safe. This is because
+      # currently Scalding cannot support =s
 
       Contract IgluConfigHash => String
       def self.jsonify(iglu_hash)
