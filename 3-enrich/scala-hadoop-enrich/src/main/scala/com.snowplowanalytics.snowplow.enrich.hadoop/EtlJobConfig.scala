@@ -72,29 +72,6 @@ object EtlJobConfig {
   //private val EnrichmentsSchema = SchemaKey("com.snowplowanalytics.xx", "xx", "jsonschema", "1-0-0")
 
   /**
-   * Convert the Maxmind file from a
-   * String to a Validation[URI].
-   *
-   * @param maxmindFile A String holding the
-   *        URI to the hosted MaxMind file
-   * @return a Validation-boxed URI
-   */
-  private def getMaxmindUri(maxmindFile: String): ValidatedMessage[URI] = {
-
-    // TODO: fix compiler warning, match may not be exhaustive.
-    // [warn] It would fail on the following input: None
-    // [warn]     ConversionUtils.stringToUri(maxmindFile).flatMap(_ match {
-    // [warn]                                                      ^
-    // [warn] there were 1 feature warning(s); re-run with -feature for details
-    ConversionUtils.stringToUri(maxmindFile).flatMap(_ match {
-      case Some(u) => u.success
-      case None => "URI to MaxMind file must be provided".fail
-      }).leftMap(_.toProcessingMessage)
-  }
-
-
-
-  /**
    * Loads the Config from the Scalding
    * job's supplied Args.
    *
@@ -103,7 +80,7 @@ object EtlJobConfig {
    *         more error messages, boxed
    *         in a Scalaz Validation Nel
    */
-  def loadConfigFrom(args: Args): ValidatedNelMessage[EtlJobConfig] = {
+  def loadConfigFrom(args: Args, localMode: Boolean): ValidatedNelMessage[EtlJobConfig] = {
 
     import ScalazArgs._
 
@@ -129,7 +106,7 @@ object EtlJobConfig {
       } yield node
 
     val registry: ValidatedNelMessage[EnrichmentConfigRegistry] = (enrichments |@| igluResolver) {
-      buildEnrichmentRegistry(_)(_)
+      buildEnrichmentRegistry(_, localMode)(_)
     }.flatMap(s => s)
 
     (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| etlTstamp.toValidationNel |@| registry |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_,_) }
@@ -138,8 +115,8 @@ object EtlJobConfig {
   /**
    * TODO: desc
    */
-  def buildEnrichmentRegistry(enrichments:JsonNode)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentConfigRegistry] = {
-    EnrichmentConfigRegistry.parse(fromJsonNode(enrichments))
+  private def buildEnrichmentRegistry(enrichments:JsonNode, localMode: Boolean)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentConfigRegistry] = {
+    EnrichmentConfigRegistry.parse(fromJsonNode(enrichments), localMode)
   }
 
   /**

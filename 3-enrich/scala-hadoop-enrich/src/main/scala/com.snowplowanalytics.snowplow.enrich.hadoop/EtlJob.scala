@@ -83,14 +83,10 @@ object EtlJob {
    * @param fileUri The URI to the Maxmind GeoLiteCity.dat file
    * @return the path to the Maxmind GeoLiteCity.dat to use
    */
-  def installIpGeoFile(ipToGeoEnrichment: IpToGeoEnrichment): String = {
-    jobConfOption match {
-      case Some(conf) => {   // We're on HDFS
-        val hdfsPath = FileUtils.sourceFile(conf, ipToGeoEnrichment.getRemotePath).valueOr(e => throw FatalEtlError(e.toString))
-        FileUtils.addToDistCache(conf, hdfsPath, "geoip")
-      }
-      case None =>           // We're in local mode
-        getClass.getResource(ipToGeoEnrichment.getLocalPath).toURI.getPath
+  def installIpGeoFile(conf: Configuration, ipToGeoEnrichment: IpToGeoEnrichment) {
+    for (cachePath <- ipToGeoEnrichment.cachePath) { // We have a distributed cache to install to
+      val hdfsPath = FileUtils.sourceFile(conf, ipToGeoEnrichment.uri).valueOr(e => throw FatalEtlError(e.toString))
+      FileUtils.addToDistCache(conf, hdfsPath, cachePath)
     }
   }
 
@@ -101,7 +97,7 @@ object EtlJob {
   val etlVersion = "hadoop-%s" format ProjectSettings.version
 
   // This should really be in Scalding
-  private def jobConfOption(implicit mode: Mode): Option[Configuration] = {
+  def getJobConf(implicit mode: Mode): Option[Configuration] = {
     mode match {
       case Hdfs(_, conf) => Option(conf)
       case _ => None
@@ -115,9 +111,12 @@ object EtlJob {
  */ 
 class EtlJob(args: Args) extends Job(args) {
 
+  // Very first thing we do is grab the Hadoop conf
+  val conf = EtlJob.getJobConf
+
   // Job configuration. Scalaz recommends using fold()
   // for unpicking a Validation
-  val etlConfig = EtlJobConfig.loadConfigFrom(args).fold(
+  val etlConfig = EtlJobConfig.loadConfigFrom(args, !conf.isDefined).fold(
     e => throw FatalEtlError(e.toString),
     c => c)
 
@@ -131,7 +130,7 @@ class EtlJob(args: Args) extends Job(args) {
 
   // Only install file if enrichment is enabled
   for (ipToGeo <- enrichmentRegistry.getIpToGeoEnrichment) {
-    EtlJob.installIpGeoFile(ipToGeo)
+    EtlJob.installIpGeoFile(conf, ipToGeo)
   }
 
   val etlTstamp = etlConfig.etlTstamp

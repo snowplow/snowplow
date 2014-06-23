@@ -10,10 +10,16 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
-package config
+package com.snowplowanalytics
+package snowplow
+package enrich
+package common
+package enrichments
+
+import config._
 
 // Java
+import java.net.URI
 import java.lang.{Byte => JByte}
 
 // Scalaz
@@ -50,8 +56,8 @@ class EnrichmentConfigsTest extends Specification with ValidationMatchers {
 
       val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", "1-0-0")
 
-      val result = AnonIpEnrichmentConfig.parse(ipAnonJson, schemaKey)
-      result must beSuccessful(AnonIpEnrichmentConfig(2))
+      val result = AnonIpEnrichment.parse(ipAnonJson, schemaKey)
+      result must beSuccessful(AnonIpEnrichment(AnonOctets(2)))
 
     }
   }
@@ -62,19 +68,21 @@ class EnrichmentConfigsTest extends Specification with ValidationMatchers {
       val ipToGeoJson = parse("""{
         "enabled": true,
         "parameters": {
-          "maxmindDatabase": "GeoLiteCity",
-          "maxmindUri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/"
+          "maxmindDatabase": "GeoLiteCity.dat",
+          "maxmindUri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
           }
         }""")
 
       val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_to_geo", "jsonschema", "1-0-0")
 
-      val expected = IpToGeoEnrichmentConfig("GeoLiteCity", "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/")
+      val expected = IpToGeoEnrichment(new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoLiteCity.dat"), "GeoLiteCity.dat", true)
 
-      val result = IpToGeoEnrichmentConfig.parse(ipToGeoJson, schemaKey)
+      val result = IpToGeoEnrichment.parse(ipToGeoJson, schemaKey, true)
       result must beSuccessful(expected)
 
     }
   }
+
+  // TODO: a test in HDFS mode too?
 
 }

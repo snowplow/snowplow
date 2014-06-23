@@ -13,6 +13,9 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 
+// Java
+import java.net.URI
+
 // Specs2, Scalaz-Specs2 & ScalaCheck
 import org.specs2.{Specification, ScalaCheck}
 import org.specs2.matcher.DataTables
@@ -35,12 +38,14 @@ class ExtractGeoLocationTest extends Specification with DataTables with Validati
   "extractGeoLocation should correctly extract location data from IP addresses where possible"      ! e2^
                                                                                                     end
 
-  val dbFile = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
-  val ipGeo = IpGeo(dbFile, memCache = true, lruCache = 20000)
+  //val dbFile = getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
+  //val ipGeo = IpGeo(dbFile, memCache = true, lruCache = 20000)
+
+  val config = IpToGeoEnrichment(new URI("/not-used/"), "GeoLiteCity.dat", true)
 
   // Impossible to make extractIpLocation throw a validation error
   def e1 =
-    check { (ipAddress: String) => GeoEnrichments.extractGeoLocation(ipGeo, ipAddress) must beSuccessful }
+    check { (ipAddress: String) => config.extractGeoLocation(ipAddress) must beSuccessful }
 
   def e2 =
     "SPEC NAME"             || "IP ADDRESS"  | "EXPECTED LOCATION" |
@@ -61,6 +66,6 @@ class ExtractGeoLocationTest extends Specification with DataTables with Validati
                                                  metroCode = None
                                                ))                  |> {
       (_, ipAddress, expected) =>
-        GeoEnrichments.extractGeoLocation(ipGeo, ipAddress) must beSuccessful(expected)
+        config.extractGeoLocation(ipAddress) must beSuccessful(expected)
     }
 }

@@ -54,7 +54,7 @@ object EnrichmentConfigRegistry {
    * @todo remove all the JsonNode round-tripping when
    *       we have ValidatableJValue
    */
-  def parse(node: JValue)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentConfigRegistry] =  {
+  def parse(node: JValue, localMode: Boolean)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentConfigRegistry] =  {
 
     // Check schema, validate against schema, convert to List[JValue]
     val enrichments: ValidatedNelMessage[List[JValue]] = for {
@@ -70,7 +70,7 @@ object EnrichmentConfigRegistry {
         json  <- jsons
       } yield for {
         pair  <- asJsonNode(json).validateAndIdentifySchema(dataOnly = true)
-        conf  <- buildEnrichmentConfig(pair._1, fromJsonNode(pair._2))
+        conf  <- buildEnrichmentConfig(pair._1, fromJsonNode(pair._2), localMode)
       } yield conf)
       .flatMap(_.sequenceU) // Swap nested List[scalaz.Validation[...]
       .map(_.flatten.toMap) // Eliminate our Option boxing (drop Nones)
@@ -90,13 +90,13 @@ object EnrichmentConfigRegistry {
    * @return ValidatedNelMessage boxing Option boxing Tuple2 containing
    *         the EnrichmentConfig object and the schemaKey
    */
-  private def buildEnrichmentConfig(schemaKey: SchemaKey, enrichmentConfig: JValue): ValidatedNelMessage[Option[Tuple2[String, EnrichmentConfig]]] = {
+  private def buildEnrichmentConfig(schemaKey: SchemaKey, enrichmentConfig: JValue, localMode: Boolean): ValidatedNelMessage[Option[Tuple2[String, EnrichmentConfig]]] = {
 
     val name: ValidatedNelMessage[String] = ScalazJson4sUtils.extractString(enrichmentConfig, NonEmptyList("name")).toValidationNel
     name.flatMap( nm => {
 
       if (nm == "ip_to_geo") {
-        IpToGeoEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+        IpToGeoEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
       } else if (nm == "anon_ip") {
         AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
       } else {

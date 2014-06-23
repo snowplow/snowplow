@@ -16,7 +16,7 @@ package enrich
 package common
 package enrichments
 
-import config._
+// This project but has to be defined before Scalaz
 import utils.ScalazJson4sUtils
 
 // Java
@@ -37,7 +37,14 @@ import iglu.client._
 import iglu.client.validation.ProcessingMessageMethods._
 
 // Scala MaxMind GeoIP
-import com.snowplowanalytics.maxmind.geoip.{IpGeo, IpLocation}
+import maxmind.geoip.{
+  IpGeo,
+  IpLocation
+}
+
+// This project
+import config._
+import common.utils.ConversionUtils
 
 /**
 * Companion object. Lets us create a IpToGeoEnrichment
@@ -53,54 +60,60 @@ object IpToGeoEnrichment extends EnrichmentConfigParseable {
    * @param config The ip_to_geo enrichment JSON
    * @return a configured IpToGeoEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[IpToGeoEnrichment] = {
+  def parse(config: JValue, schemaKey: SchemaKey, localMode: Boolean): ValidatedNelMessage[IpToGeoEnrichment] = {
     isParseable(config, schemaKey).flatMap( conf => {
       val geoUri = ScalazJson4sUtils.extractString(conf, parameter("maxmindUri"))
       val geoDb  = ScalazJson4sUtils.extractString(conf, parameter("maxmindDatabase"))
       
-      (geoUri.toValidationNel |@| geoDb.toValidationNel) {
-        IpToGeoEnrichment(_, _)
-      }
+      (geoUri.toValidationNel |@| geoDb.toValidationNel) { (uri, db) =>
+        for {
+          u <- (getMaxmindUri(uri, db).toValidationNel: ValidatedNelMessage[URI])
+          e =  IpToGeoEnrichment(u, db, localMode)
+        } yield e
+      }.flatMap(x => x) // No flatten in Scalaz
     })
   }
+
+  /**
+   * Convert the Maxmind file from a
+   * String to a Validation[URI].
+   *
+   * @param maxmindFile A String holding the
+   *        URI to the hosted MaxMind file
+   * @return a Validation-boxed URI
+   */
+  private def getMaxmindUri(uri: String, database: String): ValidatedMessage[URI] =
+    ConversionUtils.stringToUri(uri + "/" + database).flatMap(_ match {
+      case Some(u) => u.success
+      case None => "URI to MaxMind file must be provided".fail
+      }).toProcessingMessage
 
 }
 
 /**
  * Contains enrichments related to geo-location.
+ *
+ * TODO: add params to make clear uri is now full URI
  */
 case class IpToGeoEnrichment(
-  maxmindUri: String,
-  maxmindDatabase: String
+  uri: URI,
+  database: String,
+  localMode: Boolean
   ) extends EnrichmentConfig {
 
-  lazy val ipGeo = createIpGeo(maxmindUri + maxmindDatabase)
+  // Checked in Hadoop Enrich to decide whether to copy to
+  // the Hadoop dist cache or not
+  val cachePath = if (!localMode) "./geoip".some else None
 
-  /**
-   * A helper to create the new IpGeo object.
-   *
-   * @param ipGeoFile The path to the MaxMind GeoLiteCity.dat file
-   * @return an IpGeo object ready to perform IP->geo lookups
-   */
-  private def createIpGeo(ipGeoFile: String): IpGeo =
-    IpGeo(ipGeoFile, memCache = true, lruCache = 20000)
+  private lazy val MaxmindResourcePath =
+    getClass.getResource("/maxmind/" + database).toURI.getPath
 
-  /**
-   * Returns the URI of the MaxMind database
-   *
-   * @return URI of the MaxMind database
-   */
-  def getRemotePath: URI =
-    getClass.getResource(maxmindUri + "/" + maxmindDatabase).toURI
-
-  /**
-   * Returns the filepath of the local database.
-   * Used for testing only.
-   *
-   * @return Filepath of the mock MaxMind database
-   */
-  def getLocalPath: String =
-    getClass.getResource("/maxmind/" + maxmindDatabase).toURI.getPath
+  // Initialize our IpGeo object. Hopefully the database
+  // has been copied to our cache path by Hadoop Enrich 
+  val ipGeo = {
+    val path = cachePath.getOrElse(MaxmindResourcePath)
+    IpGeo(path, memCache = true, lruCache = 20000)
+  }
 
   /**
    * Extract the geo-location using the
@@ -129,7 +142,7 @@ case class IpToGeoEnrichment(
     try {
       ipGeo.getLocation(ip).success
     } catch {
-      case _ => return "Could not extract geo-location from IP address [%s]".format(ip).fail
+      case _: Throwable => return "Could not extract geo-location from IP address [%s]".format(ip).fail
     }
   }
 }
