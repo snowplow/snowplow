@@ -35,7 +35,7 @@ import org.json4s.jackson.JsonMethods._
 // Iglu
 import iglu.client._
 import iglu.client.validation.ValidatableJsonMethods._
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import iglu.client.validation.ProcessingMessageMethods._
 
 /**
  * Companion which holds a constructor

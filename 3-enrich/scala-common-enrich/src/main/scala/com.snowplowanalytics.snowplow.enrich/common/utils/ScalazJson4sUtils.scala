@@ -10,7 +10,10 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
+package com.snowplowanalytics
+package snowplow
+package enrich
+package common
 package utils
 
 // Scalaz
@@ -24,7 +27,7 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 // Iglu
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import iglu.client.validation.ProcessingMessageMethods._
 
 object ScalazJson4sUtils {
 

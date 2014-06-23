@@ -10,7 +10,9 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
+package com.snowplowanalytics
+package snowplow
+package enrich
 package hadoop
 
 // Java
@@ -31,8 +33,8 @@ import org.json4s.jackson.JsonMethods._
 import com.twitter.scalding.Args
 
 // Iglu
-import com.snowplowanalytics.iglu.client._
-import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+import iglu.client._
+import iglu.client.validation.ProcessingMessageMethods._
 
 // Snowplow Common Enrich
 import common._
