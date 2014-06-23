@@ -35,6 +35,7 @@ Looker Analytics: wrote LookML for screen_view events (#637)                    
 Looker Analytics: wrote LookML for link_click events (#636)                             - TOMERGE (feature/ads-lookml)
 Looker Analytics: wrote LookML for website's page_context (#770)                        - TOMERGE (feature/ads-lookml)
 Looker Analytics: updated LookML to fix bug with table autogeneration (#831)            - TODO
+Looker Analytics: updated LookML to use liquid templating (#851)                        - TODO
 
 Version 0.9.4 (2014-05-30)
 ---------------------------
