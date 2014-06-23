@@ -32,8 +32,10 @@ import com.twitter.scalding.Args
 
 // Iglu
 import com.snowplowanalytics.iglu.client._
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 
 // Snowplow Common Enrich
+import common._
 import common.utils.{
   ConversionUtils,
   JacksonJsonUtils
@@ -75,7 +77,7 @@ object EtlJobConfig {
    *        URI to the hosted MaxMind file
    * @return a Validation-boxed URI
    */
-  private def getMaxmindUri(maxmindFile: String): Validation[String, URI] = {
+  private def getMaxmindUri(maxmindFile: String): ValidatedMessage[URI] = {
 
     // TODO: fix compiler warning, match may not be exhaustive.
     // [warn] It would fail on the following input: None
@@ -85,7 +87,7 @@ object EtlJobConfig {
     ConversionUtils.stringToUri(maxmindFile).flatMap(_ match {
       case Some(u) => u.success
       case None => "URI to MaxMind file must be provided".fail
-      })
+      }).leftMap(_.toProcessingMessage)
   }
 
 
@@ -99,7 +101,7 @@ object EtlJobConfig {
    *         more error messages, boxed
    *         in a Scalaz Validation Nel
    */
-  def loadConfigFrom(args: Args): ValidationNel[String, EtlJobConfig] = {
+  def loadConfigFrom(args: Args): ValidatedNelMessage[EtlJobConfig] = {
 
     import ScalazArgs._
 
@@ -108,35 +110,33 @@ object EtlJobConfig {
     val maxmindFile = args.requiredz("maxmind_file").flatMap(f => getMaxmindUri(f))
     val outFolder = args.requiredz("output_folder")
     val badFolder = args.requiredz("bad_rows_folder")
-    val etlTstamp = args.requiredz("etl_tstamp").flatMap(t => EventEnrichments.extractTimestamp("etl_tstamp", t))
+    val etlTstamp = args.requiredz("etl_tstamp").flatMap(t => EventEnrichments.extractTimestamp("etl_tstamp", t).leftMap(_.toProcessingMessage))
     val exceptionsFolder = args.optionalz("exceptions_folder")
     
-    val igluResolver: ValidationNel[String, Resolver] = args.requiredz("iglu_config") match {
-      case Failure(e) => e.failNel[Resolver]
+    val igluResolver: ValidatedNelMessage[Resolver] = args.requiredz("iglu_config") match {
+      case Failure(e) => e.toString.toProcessingMessage.failNel[Resolver]
       case Success(s) => for {
         node <- base64ToJsonNode(s)
-        reso <- Resolver.parse(node).leftMap(_.map(_.toString))
+        reso <- Resolver.parse(node)
       } yield reso
     }
 
-    val enrichments: ValidationNel[String, JsonNode] = for {
-      str  <- (args.requiredz("enrichments").toValidationNel: ValidationNel[String, String])
+    val enrichments: ValidatedNelMessage[JsonNode] = for {
+      str  <- (args.requiredz("enrichments").toValidationNel: ValidatedNelMessage[String])
       node <-  base64ToJsonNode(str)
       } yield node
 
-    val registry = (enrichments |@| igluResolver) {
+    val registry: ValidatedNelMessage[EnrichmentConfigRegistry] = (enrichments |@| igluResolver) {
       buildEnrichmentRegistry(_)(_)
-    }
+    }.flatMap(s => s)
 
-    val test: ValidationNel[String, EnrichmentConfigRegistry] = registry.flatMap(s => s)
-
-    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| etlTstamp.toValidationNel |@| test |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_,_) }
+    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| maxmindFile.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| etlTstamp.toValidationNel |@| registry |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_,_) }
   }
 
   /**
    * TODO: desc
    */
-  def buildEnrichmentRegistry(enrichments:JsonNode)(implicit resolver: Resolver): ValidationNel[String, EnrichmentConfigRegistry] = {
+  def buildEnrichmentRegistry(enrichments:JsonNode)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentConfigRegistry] = {
     EnrichmentConfigRegistry.parse(fromJsonNode(enrichments))
   }
 
@@ -189,9 +189,9 @@ object EtlJobConfig {
    * ProcessingMessages on
    * Failure
    */
-  private def base64ToJsonNode(str: String): ValidationNel[String, JsonNode] =
+  private def base64ToJsonNode(str: String): ValidatedNelMessage[JsonNode] =
     (for {
       raw <-  ConversionUtils.decodeBase64Url("enrichments", str)
       node <- JacksonJsonUtils.extractJson("enrichments", raw)
-    } yield node).toValidationNel
+    } yield node).leftMap(_.toProcessingMessage).toValidationNel
 }

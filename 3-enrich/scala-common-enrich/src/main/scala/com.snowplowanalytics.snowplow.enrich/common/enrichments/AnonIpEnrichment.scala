@@ -28,6 +28,7 @@ import org.json4s.jackson.JsonMethods._
 
 // Iglu
 import com.snowplowanalytics.iglu.client._
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 
 
 /**
@@ -44,7 +45,7 @@ object AnonIpEnrichment extends EnrichmentConfigParseable {
    * @param config The anon_ip enrichment JSON
    * @return a configured AnonIpEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidationNel[String, AnonIpEnrichment] = {
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[AnonIpEnrichment] = {
     isParseable(config, schemaKey).flatMap( conf => {
       (for {
         param  <- ScalazJson4sUtils.extractInt(config, parameter("anonOctets"))
@@ -81,11 +82,11 @@ object AnonOctets extends Enumeration {
    *        octets to anonymize
    * @return a Validation-boxed AnonOctets
    */
-  def fromInt(anonOctets: Int): Validation[String, AnonOctets] = {
+  def fromInt(anonOctets: Int): ValidatedMessage[AnonOctets] = {
     try {
       AnonOctets(anonOctets).success
     } catch {
-      case nse: NoSuchElementException => "IP address octets to anonymize must be 0, 1, 2, 3 or 4".fail
+      case nse: NoSuchElementException => "IP address octets to anonymize must be 0, 1, 2, 3 or 4".toProcessingMessage.fail
     }
   }
 }

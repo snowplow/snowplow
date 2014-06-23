@@ -23,6 +23,9 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
+// Iglu
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
+
 object ScalazJson4sUtils {
 
   implicit val formats = DefaultFormats
@@ -37,12 +40,12 @@ object ScalazJson4sUtils {
    * @return the String extracted from the JSON on success,
    * or an error String on failure
    */
-  def extractString(config: JValue, field: NonEmptyList[String]): Validation[String, String] =
+  def extractString(config: JValue, field: NonEmptyList[String]): ValidatedMessage[String] =
     
     try {
       field.foldLeft(config)(_ \ _).extract[String].success
     } catch {
-      case me: MappingException => s"Could not extract %s as String from supplied JSON".format(field.toList.mkString(".")).fail
+      case me: MappingException => s"Could not extract %s as String from supplied JSON".format(field.toList.mkString(".")).toProcessingMessage.fail
     }
 
   /**
@@ -55,10 +58,10 @@ object ScalazJson4sUtils {
    * @return the Int extracted from the JSON on success,
    * or an error String on failure
    */
-  def extractInt(config: JValue, field: NonEmptyList[String]): Validation[String, Int] =
+  def extractInt(config: JValue, field: NonEmptyList[String]): ValidatedMessage[Int] =
     try {
       field.foldLeft(config)(_ \ _).extract[Int].success 
     } catch {
-      case me: MappingException => s"Could not extract %s as Int from supplied JSON".format(field.toList.mkString(".")).fail
+      case me: MappingException => s"Could not extract %s as Int from supplied JSON".format(field.toList.mkString(".")).toProcessingMessage.fail
     }    
 }

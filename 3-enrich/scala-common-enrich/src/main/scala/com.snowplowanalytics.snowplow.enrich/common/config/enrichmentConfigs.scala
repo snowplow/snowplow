@@ -27,6 +27,7 @@ import org.json4s.jackson.JsonMethods._
 
 // Iglu
 import com.snowplowanalytics.iglu.client._
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 
 /**
  * Trait inherited by every enrichment config case class
@@ -49,11 +50,11 @@ trait EnrichmentConfigParseable {
    * to be checked
    * @return The JSON or an error message, boxed
    */
-  def isParseable(config: JValue, schemaKey: SchemaKey): ValidationNel[String, JValue] = {
+  def isParseable(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[JValue] = {
     if (schemaKey == supportedSchemaKey) {
       config.success
     } else {
-      ("Wrong type of JSON for an enrichment of type %").format(schemaKey.name).fail.toValidationNel
+      ("Wrong type of JSON for an enrichment of type %").format(schemaKey.name).toProcessingMessage.fail.toValidationNel
     }
   }
 

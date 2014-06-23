@@ -29,6 +29,9 @@ import com.snowplowanalytics.maxmind.geoip.IpLocation
 import common.inputs.CanonicalInput
 import common.outputs.CanonicalOutput
 
+// JSON Schema Validator
+import com.github.fge.jsonschema.core.report.ProcessingMessage
+
 /**
  * Scala package object to hold types,
  * helper methods etc.
@@ -63,6 +66,10 @@ package object common {
    * @tparam A the type of `Success`
    */
   type Validated[A] = ValidationNel[String, A]
+
+  type ValidatedMessage[A] = Validation[ProcessingMessage, A]
+
+  type ValidatedNelMessage[A] = ValidationNel[ProcessingMessage, A]
 
   /**
    * Type alias for a `Validation`

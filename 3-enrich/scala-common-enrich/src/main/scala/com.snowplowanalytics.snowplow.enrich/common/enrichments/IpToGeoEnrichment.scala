@@ -31,6 +31,7 @@ import org.json4s.jackson.JsonMethods._
 
 // Iglu
 import com.snowplowanalytics.iglu.client._
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 
 // Scala MaxMind GeoIP
 import com.snowplowanalytics.maxmind.geoip.{IpGeo, IpLocation}
@@ -49,7 +50,7 @@ object IpToGeoEnrichment extends EnrichmentConfigParseable {
    * @param config The ip_to_geo enrichment JSON
    * @return a configured IpToGeoEnrichment instance
    */
-  def parse(config: JValue, schemaKey: SchemaKey): ValidationNel[String, IpToGeoEnrichment] = {
+  def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[IpToGeoEnrichment] = {
     isParseable(config, schemaKey).flatMap( conf => {
       val geoUri = ScalazJson4sUtils.extractString(conf, parameter("maxmindUri"))
       val geoDb  = ScalazJson4sUtils.extractString(conf, parameter("maxmindDatabase"))

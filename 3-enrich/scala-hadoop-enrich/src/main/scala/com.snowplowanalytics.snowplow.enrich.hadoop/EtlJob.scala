@@ -86,7 +86,7 @@ object EtlJob {
   def installIpGeoFile(ipToGeoEnrichment: IpToGeoEnrichment): String = {
     jobConfOption match {
       case Some(conf) => {   // We're on HDFS
-        val hdfsPath = FileUtils.sourceFile(conf, ipToGeoEnrichment.getRemotePath).valueOr(e => throw FatalEtlError(e))
+        val hdfsPath = FileUtils.sourceFile(conf, ipToGeoEnrichment.getRemotePath).valueOr(e => throw FatalEtlError(e.toString))
         FileUtils.addToDistCache(conf, hdfsPath, "geoip")
       }
       case None =>           // We're in local mode
@@ -118,7 +118,7 @@ class EtlJob(args: Args) extends Job(args) {
   // Job configuration. Scalaz recommends using fold()
   // for unpicking a Validation
   val etlConfig = EtlJobConfig.loadConfigFrom(args).fold(
-    e => throw FatalEtlError(e),
+    e => throw FatalEtlError(e.toString),
     c => c)
 
   // Wait until we're on the nodes to instantiate with lazy

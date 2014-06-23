@@ -35,6 +35,7 @@ import org.json4s.jackson.JsonMethods._
 // Iglu
 import iglu.client._
 import iglu.client.validation.ValidatableJsonMethods._
+import com.snowplowanalytics.iglu.client.validation.ProcessingMessageMethods._
 
 /**
  * Companion which holds a constructor
@@ -50,32 +51,31 @@ object EnrichmentConfigRegistry {
    *
    * TODO: rest of docstring 
    */
-  def parse(node: JValue)(implicit resolver: Resolver): ValidationNel[String, EnrichmentConfigRegistry] =  {
+  def parse(node: JValue)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentConfigRegistry] =  {
 
-    val configs: ValidationNel[String, JValue] = asJsonNode(node).validateAndIdentifySchema(dataOnly = true)
-      .leftMap(_.map(_.toString))
+    val configs: ValidatedNelMessage[JValue] = asJsonNode(node).validateAndIdentifySchema(dataOnly = true)
       .flatMap( s =>
         if (s._1 != EnrichmentConfigSchemaKey) {
-          "Oh no, I only know how to handle enrichments 1-0-0".failNel
+          "Oh no, I only know how to handle enrichments 1-0-0".toProcessingMessage.failNel
         } else {
           fromJsonNode(s._2).success
         })
 
     // Break into individual enrichment configs
     // TODO fix this
-    val enrichmentJsons: ValidationNel[String, List[JValue]] = (field[List[JValue]]("data")(node)).leftMap(
-      _.map(_.toString)
+    val enrichmentJsons: ValidatedNelMessage[List[JValue]] = (field[List[JValue]]("data")(node)).leftMap(
+      _.map(_.toString.toProcessingMessage)
       )
 
     // Loop through and for each:
 
     // 1. Check it validates against its own schema
-    val validatedEnrichmentJsonTuples: ValidationNel[String, List[JsonSchemaPair]] = (for {
+    val validatedEnrichmentJsonTuples: ValidatedNelMessage[List[JsonSchemaPair]] = (for {
       jsons <- enrichmentJsons // <- Success
     } yield for {    
       json  <- jsons           // <- List
     } yield for {
-      valid <- asJsonNode(json).validateAndIdentifySchema(dataOnly = true).leftMap(_.map(_.toString))
+      valid <- asJsonNode(json).validateAndIdentifySchema(dataOnly = true)
     } yield valid).flatMap(_.sequenceU) // Swap nested List[scalaz.Validation[...]
 
     // 2. Identify the name of this enrichment config
@@ -85,7 +85,7 @@ object EnrichmentConfigRegistry {
     //        config matches the one we expect
     //    3.2 Use the companion parse to attempt to
     //        construct the config
-    val configTuples: ValidationNel[String, List[(String, EnrichmentConfig)]] = (for {
+    val configTuples: ValidatedNelMessage[List[(String, EnrichmentConfig)]] = (for {
         tuples <- validatedEnrichmentJsonTuples // <- Success
       } yield for {
         tuple <- tuples                         // <- List
@@ -97,11 +97,11 @@ object EnrichmentConfigRegistry {
 
     //    3.3 Collect the results and build a Map
     //        from the output (or Failure)
-    val enrichmentsMap: ValidationNel[String, Map[String, EnrichmentConfig]] = configTuples.map(_.toMap)
+    val enrichmentsMap: ValidatedNelMessage[Map[String, EnrichmentConfig]] = configTuples.map(_.toMap)
 
     // 4 Build an EnrichmentConfigRegistry from the Map
     enrichmentsMap.bimap(
-      e => NonEmptyList(e.toString),
+      e => NonEmptyList(e.toString.toProcessingMessage),
       s => EnrichmentConfigRegistry(s)
       )
   }
@@ -112,12 +112,12 @@ object EnrichmentConfigRegistry {
    *
    * @param enrichmentConfig JValue with enrichment information
    * @param schemaKey SchemaKey for the JValue
-   * @return ValidationNel boxing Option boxing Tuple2 containing
+   * @return ValidatedNelMessage boxing Option boxing Tuple2 containing
    *         the EnrichmentConfig object and the schemaKey
    */
-  private def buildEnrichmentConfig(enrichmentConfig: JValue, schemaKey: SchemaKey): ValidationNel[String, Option[Tuple2[String, EnrichmentConfig]]] = {
+  private def buildEnrichmentConfig(enrichmentConfig: JValue, schemaKey: SchemaKey): ValidatedNelMessage[Option[Tuple2[String, EnrichmentConfig]]] = {
 
-    val name: ValidationNel[String, String] = ScalazJson4sUtils.extractString(enrichmentConfig, NonEmptyList("name")).toValidationNel
+    val name: ValidatedNelMessage[String] = ScalazJson4sUtils.extractString(enrichmentConfig, NonEmptyList("name")).toValidationNel
     name.flatMap( nm => {
 
       if (nm == "ip_to_geo") {
