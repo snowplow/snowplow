@@ -113,7 +113,7 @@ object EnrichmentConfigRegistry {
    * @param enrichmentConfig JValue with enrichment information
    * @param schemaKey SchemaKey for the JValue
    * @return ValidationNel boxing Option boxing Tuple2 containing
-   * the EnrichmentConfig object and the schemaKey
+   *         the EnrichmentConfig object and the schemaKey
    */
   private def buildEnrichmentConfig(enrichmentConfig: JValue, schemaKey: SchemaKey): ValidationNel[String, Option[Tuple2[String, EnrichmentConfig]]] = {
 
@@ -166,7 +166,6 @@ case class EnrichmentConfigRegistry(private val configs: Map[String, EnrichmentC
    * @tparam A Expected type of the enrichment to get
    * @param name The name of the enrichment to get
    * @return Option boxing the enrichment
-   * to the 
    */
   private def getEnrichment[A <: EnrichmentConfig : Manifest](name: String): Option[A] =
     configs.get(name).map(cast[A](_))

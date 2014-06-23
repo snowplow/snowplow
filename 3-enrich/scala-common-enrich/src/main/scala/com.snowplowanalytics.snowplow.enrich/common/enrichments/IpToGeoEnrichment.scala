@@ -82,9 +82,9 @@ case class IpToGeoEnrichment(
     IpGeo(ipGeoFile, memCache = true, lruCache = 20000)
 
   /**
-   * Returns the URI of the Maxmind database
+   * Returns the URI of the MaxMind database
    *
-   * @return URI of the Maxmind database
+   * @return URI of the MaxMind database
    */
   def getRemotePath: URI =
     getClass.getResource(maxmindUri + "/" + maxmindDatabase).toURI
@@ -93,7 +93,7 @@ case class IpToGeoEnrichment(
    * Returns the filepath of the local database.
    * Used for testing only.
    *
-   * @return Filepath of the mock Maxmind database
+   * @return Filepath of the mock MaxMind database
    */
   def getLocalPath: String =
     getClass.getResource("/maxmind/" + maxmindDatabase).toURI.getPath
