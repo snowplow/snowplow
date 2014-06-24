@@ -9,11 +9,11 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Authors:     Alex Dean
--- Copyright:   Copyright (c) 2014 Snowplow Analytics Ltd
--- License:     Apache License Version 2.0
+-- Authors:       Alex Dean
+-- Copyright:     Copyright (c) 2014 Snowplow Analytics Ltd
+-- License:       Apache License Version 2.0
 --
--- Version:     1-0-0
+-- Compatibility: iglu:com.snowplowanalytics.snowplow/ad_impression/jsonschema/1-0-0
 
 CREATE TABLE atomic.com_snowplowanalytics_snowplow_ad_impression_1 (
     -- Schema of this type
