@@ -68,5 +68,22 @@ object ScalazJson4sUtils {
       field.foldLeft(config)(_ \ _).extract[Int].success 
     } catch {
       case me: MappingException => s"Could not extract %s as Int from supplied JSON".format(field.toList.mkString(".")).toProcessingMessage.fail
+    }
+
+  /**
+   * Returns a Boolean field at the end of a JSON path.
+   *
+   * @param JValue The JSON from which the Boolean is
+   *        to be extracted
+   * @param field NonEmptyList containing the Strings
+   *        which make up the path
+   * @return the Boolean extracted from the JSON on
+   *         success or an error String on failure
+   */
+  def extractBoolean(config: JValue, field: NonEmptyList[String]): ValidatedMessage[Boolean] =
+    try {
+      field.foldLeft(config)(_ \ _).extract[Boolean].success 
+    } catch {
+      case me: MappingException => s"Could not extract %s as Boolean from supplied JSON".format(field.toList.mkString(".")).toProcessingMessage.fail
     }    
 }
