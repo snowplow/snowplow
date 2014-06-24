@@ -4,8 +4,10 @@ Schemas: added schema for collection of all enrichments (#806)
 Schemas: added campaigns schema (#805)
 Schemas: added ip_anon schema (#804)
 Schemas: added ip_to_geo schema (#803)
+Hadoop Etl: Bumped Scalding to 0.10.0 (#848)                                            - TODO
 EmrEtlRunner: Removed enrichment-specific code (#811)
 EmrEtlRunner: Replaced enrichment-specific args to Hadoop Enrich with enrichments JSON (#808)
+Scala Hadoop Enrich: removed %3D support (#849)                                         - TODO
 Scala Common Enrich: bumped to 0.5.0                                                    - TODO
 Scala Common Enrich: added JSON dependencies
 Scala Common Enrich: stored etl_tstamp in new field in CanonicalOutput (#818)
@@ -14,10 +16,13 @@ Scala Common Enrich: added JacksonJsonUtils
 Scala Common Enrich: created ScalazJson4sUtils.scala
 Scala Common Enrich: created enrichmentConfigs.scala
 Scala Common Enrich: added tests for ScalazJson4sUtils and enrichmentConfigs
+Scala Common Enrich: Added validation of enrichments JSON (#807)                        - TODO
+Scala Common Enrich: Replaced "quartets" with "octets" in AnonIpEnrichment (#547)
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.5.0                                - TODO
 Scala Hadoop Enrich: created EnrichmentConfigRegistry.scala
 Scala Hadoop Enrich: passed etl_tstamp into Scala Common Enrich (#817)
 Scala Hadoop Enrich: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#835)
+Scala Hadoop Enrich: removed %3D support (#850)                                         - TODO
 Redshift: bumped table-def to 0.4.0
 Redshift: added etl_tstamp to atomic.events (#819)
 Redshift: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#834)
@@ -26,6 +31,7 @@ Postgres: bumped table-def to 0.3.0
 Postgres: added etl_tstamp to atomic.events (#820)
 Postgres: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#833)
 Postgres: migration script added for 0.2.0 to 0.3.0 (#837)
+Fixed sortkeys for atomic.events (#844)                                                  - TODO
 
 Version 0.9.5 (2014-07-09)
 --------------------------

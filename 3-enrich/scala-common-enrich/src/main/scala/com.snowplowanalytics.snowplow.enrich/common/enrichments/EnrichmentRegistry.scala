@@ -16,8 +16,6 @@ package enrich
 package common
 package enrichments
 
-import utils.ScalazJson4sUtils
-
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -29,12 +27,21 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 // Iglu
-import iglu.client._
+import iglu.client.{
+  SchemaKey, 
+  Resolver
+}
 import iglu.client.validation.ValidatableJsonMethods._
 import iglu.client.validation.ProcessingMessageMethods._
 import iglu.client.validation.ValidatableJsonNode
 
-import registry._
+// This project
+import registry.{
+  Enrichment,
+  AnonIpEnrichment,
+  IpToGeoEnrichment
+}
+import utils.ScalazJson4sUtils
 
 /**
  * Companion which holds a constructor
@@ -48,7 +55,13 @@ object EnrichmentConfigRegistry {
    * Constructs our EnrichmentConfigRegistry
    * from the supplied JSON JValue.
    *
-   * TODO: rest of docstring 
+   * @param node A JValue representing an array of enrichment JSONs
+   * @param localMode Whether to use the local MaxMind data file
+   *        Enabled for tests
+   * @param resolver (implicit) The Iglu resolver used for
+   *        schema lookup and validation
+   * @return Validation boxing an EnrichmentConfigRegistry object
+   *         containing enrichments configured from node
    * @todo remove all the JsonNode round-tripping when
    *       we have ValidatableJValue
    */
@@ -62,7 +75,7 @@ object EnrichmentConfigRegistry {
       } yield arr).flatten
 
     // Check each enrichment validates against its own schema
-    val configs: ValidatedNelMessage[Map[String, Enrichment]] = (for {
+    val configs: ValidatedNelMessage[EnrichmentMap] = (for {
         jsons <- enrichments
       } yield for {    
         json  <- jsons
@@ -85,12 +98,14 @@ object EnrichmentConfigRegistry {
    *
    * @param enrichmentConfig JValue with enrichment information
    * @param schemaKey SchemaKey for the JValue
+   * @param localMode Whether to use the local MaxMind data file
+   *        Enabled for tests
    * @return ValidatedNelMessage boxing Option boxing Tuple2 containing
    *         the Enrichment object and the schemaKey
    */
   private def buildEnrichmentConfig(schemaKey: SchemaKey, enrichmentConfig: JValue, localMode: Boolean): ValidatedNelMessage[Option[Tuple2[String, Enrichment]]] = {
 
-    val name: ValidatedNelMessage[String] = ScalazJson4sUtils.extractString(enrichmentConfig, NonEmptyList("name")).toValidationNel
+    val name = ScalazJson4sUtils.extractString(enrichmentConfig, NonEmptyList("name")).toValidationNel
     name.flatMap( nm => {
 
       if (nm == "ip_to_geo") {
@@ -111,8 +126,12 @@ object EnrichmentConfigRegistry {
  *
  * In the future this may evolve to holding
  * all of our enrichments themselves.
+ *
+ * @param configs Map whose keys are enrichment
+ *        names and whose values are the
+ *        corresponding enrichment objects
  */
-case class EnrichmentConfigRegistry(private val configs: Map[String, Enrichment]) {
+case class EnrichmentConfigRegistry(private val configs: EnrichmentMap) {
 
   /**
    * Returns an Option boxing the AnonIpEnrichment
@@ -143,7 +162,15 @@ case class EnrichmentConfigRegistry(private val configs: Map[String, Enrichment]
   private def getEnrichment[A <: Enrichment: Manifest](name: String): Option[A] =
     configs.get(name).map(cast[A](_))
 
-  // Adapted from http://stackoverflow.com/questions/6686992/scala-asinstanceof-with-parameterized-types
+  /**
+   * Adapted from http://stackoverflow.com/questions/6686992/scala-asinstanceof-with-parameterized-types
+   * Used to convert an Enrichment to a
+   * specific subtype of Enrichment
+   * 
+   * @tparam A Type to cast to
+   * @param a The object to cast to type A
+   * @return a, converted to type A
+   */
   private def cast[A <: AnyRef : Manifest](a : Any) : A 
     = manifest.runtimeClass.cast(a).asInstanceOf[A]
 }

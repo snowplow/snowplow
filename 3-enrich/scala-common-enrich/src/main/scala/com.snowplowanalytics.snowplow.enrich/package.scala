@@ -25,12 +25,13 @@ import org.apache.http.NameValuePair
 // Scala MaxMind GeoIP
 import com.snowplowanalytics.maxmind.geoip.IpLocation
 
+// JSON Schema Validator
+import com.github.fge.jsonschema.core.report.ProcessingMessage
+
 // This project
 import common.inputs.CanonicalInput
 import common.outputs.CanonicalOutput
-
-// JSON Schema Validator
-import com.github.fge.jsonschema.core.report.ProcessingMessage
+import common.enrichments.registry.Enrichment
 
 /**
  * Scala package object to hold types,
@@ -53,6 +54,13 @@ package object common {
   type HttpHeaders = List[String]
 
   /**
+   * Type alias for a map whose
+   * keys are enrichment names and
+   * whose values are enrichments
+   */
+  type EnrichmentMap = Map[String, Enrichment]
+
+  /**
    * Type alias for a non-empty
    * set of name-value pairs
    */
@@ -66,10 +74,6 @@ package object common {
    * @tparam A the type of `Success`
    */
   type Validated[A] = ValidationNel[String, A]
-
-  type ValidatedMessage[A] = Validation[ProcessingMessage, A]
-
-  type ValidatedNelMessage[A] = ValidationNel[ProcessingMessage, A]
 
   /**
    * Type alias for a `Validation`
@@ -128,4 +132,23 @@ package object common {
    * or a MaybeCanonicalOutput for `Success`.
    */
   type ValidatedMaybeCanonicalOutput = Validated[MaybeCanonicalOutput]
+
+  /**
+   * Type alias for a `Validation`
+   * containing ProcessingMessages
+   * for `Failure` or any type for
+   * `Success`
+   *
+   * @tparam A the type of `Success`
+   */
+  type ValidatedMessage[A] = Validation[ProcessingMessage, A]
+
+  /**
+   * Type alias for a `ValidationNel`
+   * containing ProcessingMessage
+   * for `Failure` or any type for
+   * `Success`
+   */
+  type ValidatedNelMessage[A] = ValidationNel[ProcessingMessage, A]
+  
 }

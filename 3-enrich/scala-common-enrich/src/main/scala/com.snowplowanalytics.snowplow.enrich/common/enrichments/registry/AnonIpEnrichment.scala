@@ -17,22 +17,19 @@ package common
 package enrichments
 package registry
 
-import utils.ScalazJson4sUtils
-
 // Scalaz
 import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.scalaz.JsonScalaz._
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
+import org.json4s.JValue
 
 // Iglu
-import iglu.client._
+import iglu.client.SchemaKey
 import iglu.client.validation.ProcessingMessageMethods._
 
+// This project
+import utils.ScalazJson4sUtils
 
 /**
 * Companion object. Lets us create a AnonIpEnrichment
@@ -46,6 +43,8 @@ object AnonIpEnrichment extends ParseableEnrichment {
    * Creates an AnonIpEnrichment instance from a JValue.
    * 
    * @param config The anon_ip enrichment JSON
+   * @param schemaKey The SchemaKey provided for the enrichment
+   *        Must be a supported SchemaKey for this enrichment   
    * @return a configured AnonIpEnrichment instance
    */
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[AnonIpEnrichment] = {
@@ -96,6 +95,8 @@ object AnonOctets extends Enumeration {
 
 /**
  * Config for an anon_ip enrichment
+ *
+ * @param octets The number of octets to anonymize
  */
 case class AnonIpEnrichment(
   octets: AnonOctets.AnonOctets

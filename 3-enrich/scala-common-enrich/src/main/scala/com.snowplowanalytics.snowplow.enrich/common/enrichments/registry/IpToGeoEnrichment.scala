@@ -17,9 +17,6 @@ package common
 package enrichments
 package registry
 
-// This project but has to be defined before Scalaz
-import utils.ScalazJson4sUtils
-
 // Java
 import java.net.URI
 
@@ -28,13 +25,10 @@ import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.scalaz.JsonScalaz._
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
+import org.json4s.JValue
 
 // Iglu
-import iglu.client._
+import iglu.client.SchemaKey
 import iglu.client.validation.ProcessingMessageMethods._
 
 // Scala MaxMind GeoIP
@@ -45,6 +39,7 @@ import maxmind.geoip.{
 
 // This project
 import common.utils.ConversionUtils
+import utils.ScalazJson4sUtils
 
 /**
 * Companion object. Lets us create a IpToGeoEnrichment
@@ -58,6 +53,10 @@ object IpToGeoEnrichment extends ParseableEnrichment {
    * Creates an IpToGeoEnrichment instance from a JValue.
    * 
    * @param config The ip_to_geo enrichment JSON
+   * @param schemaKey The SchemaKey provided for the enrichment
+   *        Must be a supported SchemaKey for this enrichment
+   * @param localMode Whether to use the local MaxMind data file
+   *        Enabled for tests
    * @return a configured IpToGeoEnrichment instance
    */
   def parse(config: JValue, schemaKey: SchemaKey, localMode: Boolean): ValidatedNelMessage[IpToGeoEnrichment] = {
@@ -80,6 +79,8 @@ object IpToGeoEnrichment extends ParseableEnrichment {
    *
    * @param maxmindFile A String holding the
    *        URI to the hosted MaxMind file
+   * @param database Name of the MaxMind
+   *        database
    * @return a Validation-boxed URI
    */
   private def getMaxmindUri(uri: String, database: String): ValidatedMessage[URI] =
@@ -93,7 +94,10 @@ object IpToGeoEnrichment extends ParseableEnrichment {
 /**
  * Contains enrichments related to geo-location.
  *
- * TODO: add params to make clear uri is now full URI
+ * @param uri Full URI to the MaxMind data file
+ * @param database Name of the MaxMind database
+ * @param localMode Whether to use the local
+ *        MaxMind data file. Enabled for tests.
  */
 case class IpToGeoEnrichment(
   uri: URI,

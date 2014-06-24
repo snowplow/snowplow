@@ -21,10 +21,12 @@ import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.scalaz.JsonScalaz._
-import org.json4s._
+import org.json4s.{
+  DefaultFormats,
+  JValue,
+  MappingException
+}
 import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
 
 // Iglu
 import iglu.client.validation.ProcessingMessageMethods._

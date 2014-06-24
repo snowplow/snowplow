@@ -10,7 +10,10 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
+package com.snowplowanalytics
+package snowplow
+package enrich
+package common
 package enrichments
 
 // Scala
@@ -21,10 +24,10 @@ import scalaz._
 import Scalaz._
 
 // SnowPlow Utils
-import com.snowplowanalytics.util.Tap._
+import util.Tap._
 
 // Scala MaxMind GeoIP
-import com.snowplowanalytics.maxmind.geoip.IpGeo
+import maxmind.geoip.IpGeo
 
 // This project
 import inputs.{CanonicalInput, NvGetPayload}
@@ -51,7 +54,11 @@ object EnrichmentManager {
   /**
    * Runs our enrichment process.
    *
-   * @param input Our canonical input
+   * @param registry Contains configuration
+   *        for all enrichments to apply
+   * @param hostEtlVersion ETL version
+   * @param etlTstamp ETL timestamp
+   * @param raw Our canonical input
    *        to enrich
    * @return a MaybeCanonicalOutput - i.e.
    *         a ValidationNel containing

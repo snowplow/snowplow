@@ -21,11 +21,7 @@ import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.scalaz.JsonScalaz._
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-
+import org.json4s.jackson.JsonMethods.parse
 
 // Specs2
 import org.specs2.mutable.Specification

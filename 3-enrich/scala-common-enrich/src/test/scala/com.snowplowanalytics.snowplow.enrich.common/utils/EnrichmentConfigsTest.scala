@@ -26,13 +26,10 @@ import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.scalaz.JsonScalaz._
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.JsonMethods.parse
 
 // Iglu
-import com.snowplowanalytics.iglu.client._
+import com.snowplowanalytics.iglu.client.SchemaKey
 
 // Specs2
 import org.specs2.mutable.Specification

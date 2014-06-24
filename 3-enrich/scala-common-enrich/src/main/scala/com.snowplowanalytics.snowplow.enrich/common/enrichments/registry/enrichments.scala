@@ -17,21 +17,19 @@ package common
 package enrichments
 package registry
 
-import utils.ScalazJson4sUtils
-
 // Scalaz
 import scalaz._
 import Scalaz._
 
 // json4s
-import org.json4s.scalaz.JsonScalaz._
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
+import org.json4s.JValue
 
 // Iglu
-import iglu.client._
+import iglu.client.SchemaKey
 import iglu.client.validation.ProcessingMessageMethods._
+
+// This project
+import utils.ScalazJson4sUtils
 
 /**
  * Trait inherited by every enrichment config case class
@@ -58,7 +56,7 @@ trait ParseableEnrichment {
     if (schemaKey == supportedSchemaKey) {
       config.success
     } else {
-      ("Wrong type of JSON for an enrichment of type %").format(schemaKey.name).toProcessingMessage.fail.toValidationNel
+      ("Wrong type of JSON for an enrichment of type %s").format(schemaKey.name).toProcessingMessage.fail.toValidationNel
     }
   }
 

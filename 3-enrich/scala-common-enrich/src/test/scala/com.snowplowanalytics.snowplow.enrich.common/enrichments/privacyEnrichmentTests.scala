@@ -18,8 +18,6 @@ package registry
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 
-import AnonIpEnrichment._
-
 /**
  * Tests the anonymzeIp function
  */
