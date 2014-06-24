@@ -35,7 +35,7 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_ad_impression_1 (
     advertiser_id  varchar(255)   encode runlength,
     target_url     varchar(4096)  encode runlength,
     cost_model     char(3)        encode runlength,
-    cost           decimal(15,10) encode runlength
+    cost           decimal(15,2) encode runlength
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
