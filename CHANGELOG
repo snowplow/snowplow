@@ -29,13 +29,11 @@ Redshift: added Redshift DDL for ad_* events (#639)
 Redshift: added Redshift DDL for link_click events (#600)
 Redshift: added Redshift DDL for screen_view events (#640)
 Redshift: added Redshift DDL for schema.org's WebPage (#771)
-Looker Analytics: improved existing LookML definitions to 0.2.0 (#697)                  - TOMERGE (feature/ads-lookml)
-Looker Analytics: wrote LookML for ad_* events (#605)                                   - TOMERGE (feature/ads-lookml)
-Looker Analytics: wrote LookML for screen_view events (#637)                            - TOMERGE (feature/ads-lookml)
-Looker Analytics: wrote LookML for link_click events (#636)                             - TOMERGE (feature/ads-lookml)
-Looker Analytics: wrote LookML for schema.org's WebPage (#770)                          - TOMERGE (feature/ads-lookml)
-Looker Analytics: updated LookML to fix bug with table autogeneration (#831)            - TODO
-Looker Analytics: updated LookML to use liquid templating (#851)                        - TODO
+Looker Analytics: wrote LookML for ad_* events (#605)
+Looker Analytics: wrote LookML for screen_view events (#637)
+Looker Analytics: wrote LookML for link_click events (#636)
+Looker Analytics: wrote LookML for schema.org's WebPage (#770)                          - TODO
+Looker Analytics: updated LookML to use liquid templating (#851)
 
 Version 0.9.4 (2014-05-30)
 ---------------------------
