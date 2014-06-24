@@ -31,9 +31,11 @@ import common._
 import common.utils.ConversionUtils
 import common.FatalEtlError
 import common.inputs.CollectorLoader
-import common.enrichments.EnrichmentManager
-import common.config.EnrichmentConfigRegistry
-import enrichments._
+import common.enrichments.{
+  EnrichmentConfigRegistry,
+  EnrichmentManager
+}
+import enrichments.registry._
 import common.outputs.CanonicalOutput
 
 // This project
@@ -54,7 +56,10 @@ object EtlJob {
    * expects a raw CanonicalInput as its argument, not
    * a MaybeCanonicalInput.
    *
-   * @param input The ValidatedMaybeCanonicalInput
+   * @param registry Contains configuration for all
+   *        enrichments to apply   
+   * @param etlTstamp The ETL timestamp
+   * @param input The ValidatedMaybeCanonicalInput   
    * @return the ValidatedMaybeCanonicalOutput. Thanks to
    *         flatMap, will include any validation errors
    *         contained within the ValidatedMaybeCanonicalInput
@@ -81,7 +86,8 @@ object EtlJob {
    *    us by SBT) and return that path
    *
    * @param fileUri The URI to the Maxmind GeoLiteCity.dat file
-   * @return the path to the Maxmind GeoLiteCity.dat to use
+   * @param conf Our current job Configuration
+   * @param ipToGeoEnrichment The configured IpToGeoEnrichment
    */
   def installIpGeoFile(conf: Configuration, ipToGeoEnrichment: IpToGeoEnrichment) {
     for (cachePath <- ipToGeoEnrichment.cachePath) { // We have a distributed cache to install to
@@ -112,11 +118,11 @@ object EtlJob {
 class EtlJob(args: Args) extends Job(args) {
 
   // Very first thing we do is grab the Hadoop conf
-  val conf = EtlJob.getJobConf
+  val confOption: Option[Configuration] = EtlJob.getJobConf
 
   // Job configuration. Scalaz recommends using fold()
   // for unpicking a Validation
-  val etlConfig = EtlJobConfig.loadConfigFrom(args, !conf.isDefined).fold(
+  val etlConfig = EtlJobConfig.loadConfigFrom(args, !confOption.isDefined).fold(
     e => throw FatalEtlError(e.toString),
     c => c)
 
@@ -130,7 +136,9 @@ class EtlJob(args: Args) extends Job(args) {
 
   // Only install file if enrichment is enabled
   for (ipToGeo <- enrichmentRegistry.getIpToGeoEnrichment) {
-    EtlJob.installIpGeoFile(conf, ipToGeo)
+    for (conf <- confOption) {
+      EtlJob.installIpGeoFile(conf, ipToGeo)
+    }
   }
 
   val etlTstamp = etlConfig.etlTstamp

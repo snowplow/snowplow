@@ -13,6 +13,9 @@
 package com.snowplowanalytics.snowplow.enrich
 package hadoop
 
+// Apache Commons Codec
+import org.apache.commons.codec.binary.Base64
+
 // Scala
 import scala.collection.mutable.ListBuffer
 
@@ -54,6 +57,35 @@ object JobSpecHelpers {
   lazy val OutputFields = classOf[CanonicalOutput]
       .getDeclaredFields
       .map(_.getName)
+
+  /**
+   * Base64-urlsafe encoded version of this standard
+   * Iglu configuration.
+   */
+  private val IgluConfig = {
+    val encoder = new Base64(true) // true means "url safe"
+    new String(encoder.encode(
+       """|{
+            |"schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
+            |"data": {
+              |"cacheSize": 500,
+              |"repositories": [
+                |{
+                  |"name": "Iglu Central",
+                  |"priority": 0,
+                  |"vendorPrefixes": [ "com.snowplowanalytics" ],
+                  |"connection": {
+                    |"http": {
+                      |"uri": "http://iglucentral.com"
+                    |}
+                  |}
+                |}
+              |]
+            |}
+          |}""".stripMargin.replaceAll("[\n\r]","").getBytes
+      )
+    )
+  }
 
   /**
    * User-friendly wrapper to instantiate
@@ -144,14 +176,51 @@ object JobSpecHelpers {
   implicit def Lines2ScaldingLines(lines : Lines): ScaldingLines = lines.numberedLines 
 
   // Standard JobSpec definition used by all integration tests
-  val EtlJobSpec: (String, String) => JobTest = (collector, anonOctets) => 
+  val EtlJobSpec: (String, String) => JobTest = (collector, anonOctets) => {
+
+    val encoder = new Base64(true) // true means "url safe"
+    val enrichments = new String(encoder.encode(
+       """|{
+            |"schema": "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0",
+            |"data": [
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/anon_ip/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics",
+                  |"name": "anon_ip",
+                  |"enabled": true,
+                  |"parameters": {
+                    |"anonOctets": %s
+                  |}
+                |}
+              |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/ip_to_geo/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics",
+                  |"name": "ip_to_geo",
+                  |"enabled": true,
+                  |"parameters": {
+                    |"maxmindDatabase": "GeoLiteCity",
+                    |"maxmindUri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/"
+                  |}
+                |}  
+              |}
+            |]
+          |}""".format(anonOctets).stripMargin.replaceAll("[\n\r]","").getBytes
+      )
+    )
+
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob").
       arg("input_folder", "inputFolder").
       arg("input_format", collector).
-      arg("maxmind_file", "-"). // Not needed when running locally, but error if not set
+      //arg("maxmind_file", "-"). // Not needed when running locally, but error if not set
       arg("output_folder", "outputFolder").
       arg("bad_rows_folder", "badFolder").
-      arg("anon_ip_octets", anonOctets).
+      //arg("anon_ip_octets", anonOctets).
+      arg("etl_tstamp", "1000000000000").      
       arg("exceptions_folder", "exceptionsFolder").
-      arg("etl_tstamp", "1000000000000")
+      arg("iglu_config", IgluConfig).
+      arg("enrichments", enrichments)
+    }
 }
