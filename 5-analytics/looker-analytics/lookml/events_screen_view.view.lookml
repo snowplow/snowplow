@@ -13,7 +13,7 @@
 # Copyright: Copyright (c) 2013-2014 Snowplow Analytics Ltd
 # License: Apache License Version 2.0
 #
-# Compatibility: iglu:com.snowplowanalytics.snowplow/ad_impression/jsonschema/1-0-0
+# Compatibility: iglu:com.snowplowanalytics.snowplow/screen_view/jsonschema/1-0-0
 
 - view: screen_views
   sql_table_name: atomic.com_snowplowanalytics_snowplow_screen_view_1
