@@ -65,12 +65,12 @@
     
   - dimension_group: first_touch
     type: time
-    timeframes: [time, date, week, month]
+    timeframes: [time, hour, date, week, month]
     sql: ${TABLE}.first_touch
     
   - dimension: last_touch
     type: time
-    timeframes: [time, date, week, month]
+    timeframes: [time, hour, date, week, month]
     sql: ${TABLE}.last_touch
     
   - dimension: events_during_lifetime

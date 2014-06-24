@@ -84,7 +84,7 @@
 
   - dimension_group: timestamp
     type: time
-    timeframes: [time, date, week, month]
+    timeframes: [time, hour, date, week, month]
     sql: ${TABLE}.collector_tstamp
 
   - dimension: session_index
@@ -99,7 +99,7 @@
 
   - dimension_group: device_timestamp
     type: time
-    timeframes: [time, date, week, month]
+    timeframes: [time, hour, date, week, month]
     sql: ${TABLE}.dvce_tstamp
     hidden: true
 

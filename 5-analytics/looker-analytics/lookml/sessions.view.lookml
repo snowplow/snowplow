@@ -116,7 +116,7 @@
   
   - dimension_group: start
     type: time
-    timeframes: [time, date, week, month]
+    timeframes: [time, hour, date, week, month]
     sql: ${TABLE}.session_start_ts
     
   - dimension: end
