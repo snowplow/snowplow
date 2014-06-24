@@ -14,13 +14,9 @@ package com.snowplowanalytics
 package snowplow
 package enrich
 package common
-package config
+package enrichments
 
 import utils.ScalazJson4sUtils
-import enrichments.{
-  AnonIpEnrichment,
-  IpToGeoEnrichment
-}
 
 // Scalaz
 import scalaz._
@@ -37,6 +33,8 @@ import iglu.client._
 import iglu.client.validation.ValidatableJsonMethods._
 import iglu.client.validation.ProcessingMessageMethods._
 import iglu.client.validation.ValidatableJsonNode
+
+import registry._
 
 /**
  * Companion which holds a constructor
@@ -64,7 +62,7 @@ object EnrichmentConfigRegistry {
       } yield arr).flatten
 
     // Check each enrichment validates against its own schema
-    val configs: ValidatedNelMessage[Map[String, EnrichmentConfig]] = (for {
+    val configs: ValidatedNelMessage[Map[String, Enrichment]] = (for {
         jsons <- enrichments
       } yield for {    
         json  <- jsons
@@ -82,15 +80,15 @@ object EnrichmentConfigRegistry {
   }
 
   /**
-   * Builds an EnrichmentConfig from a JValue if it has a 
+   * Builds an Enrichment from a JValue if it has a 
    * recognized name field and matches a schema key 
    *
    * @param enrichmentConfig JValue with enrichment information
    * @param schemaKey SchemaKey for the JValue
    * @return ValidatedNelMessage boxing Option boxing Tuple2 containing
-   *         the EnrichmentConfig object and the schemaKey
+   *         the Enrichment object and the schemaKey
    */
-  private def buildEnrichmentConfig(schemaKey: SchemaKey, enrichmentConfig: JValue, localMode: Boolean): ValidatedNelMessage[Option[Tuple2[String, EnrichmentConfig]]] = {
+  private def buildEnrichmentConfig(schemaKey: SchemaKey, enrichmentConfig: JValue, localMode: Boolean): ValidatedNelMessage[Option[Tuple2[String, Enrichment]]] = {
 
     val name: ValidatedNelMessage[String] = ScalazJson4sUtils.extractString(enrichmentConfig, NonEmptyList("name")).toValidationNel
     name.flatMap( nm => {
@@ -114,7 +112,7 @@ object EnrichmentConfigRegistry {
  * In the future this may evolve to holding
  * all of our enrichments themselves.
  */
-case class EnrichmentConfigRegistry(private val configs: Map[String, EnrichmentConfig]) {
+case class EnrichmentConfigRegistry(private val configs: Map[String, Enrichment]) {
 
   /**
    * Returns an Option boxing the AnonIpEnrichment
@@ -142,7 +140,7 @@ case class EnrichmentConfigRegistry(private val configs: Map[String, EnrichmentC
    * @param name The name of the enrichment to get
    * @return Option boxing the enrichment
    */
-  private def getEnrichment[A <: EnrichmentConfig : Manifest](name: String): Option[A] =
+  private def getEnrichment[A <: Enrichment: Manifest](name: String): Option[A] =
     configs.get(name).map(cast[A](_))
 
   // Adapted from http://stackoverflow.com/questions/6686992/scala-asinstanceof-with-parameterized-types

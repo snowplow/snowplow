@@ -15,6 +15,7 @@ package snowplow
 package enrich
 package common
 package enrichments
+package registry
 
 // This project but has to be defined before Scalaz
 import utils.ScalazJson4sUtils
@@ -43,14 +44,13 @@ import maxmind.geoip.{
 }
 
 // This project
-import config._
 import common.utils.ConversionUtils
 
 /**
 * Companion object. Lets us create a IpToGeoEnrichment
 * from a JValue.
 */
-object IpToGeoEnrichment extends EnrichmentConfigParseable {
+object IpToGeoEnrichment extends ParseableEnrichment {
 
   val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_to_geo", "jsonschema", "1-0-0")
 
@@ -99,7 +99,7 @@ case class IpToGeoEnrichment(
   uri: URI,
   database: String,
   localMode: Boolean
-  ) extends EnrichmentConfig {
+  ) extends Enrichment {
 
   // Checked in Hadoop Enrich to decide whether to copy to
   // the Hadoop dist cache or not

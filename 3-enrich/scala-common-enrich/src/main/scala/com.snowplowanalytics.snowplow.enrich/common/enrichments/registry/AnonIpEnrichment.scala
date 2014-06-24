@@ -15,8 +15,8 @@ package snowplow
 package enrich
 package common
 package enrichments
+package registry
 
-import config._
 import utils.ScalazJson4sUtils
 
 // Scalaz
@@ -38,7 +38,7 @@ import iglu.client.validation.ProcessingMessageMethods._
 * Companion object. Lets us create a AnonIpEnrichment
 * from a JValue.
 */
-object AnonIpEnrichment extends EnrichmentConfigParseable {
+object AnonIpEnrichment extends ParseableEnrichment {
 
   val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", "1-0-0")
 
@@ -99,7 +99,7 @@ object AnonOctets extends Enumeration {
  */
 case class AnonIpEnrichment(
   octets: AnonOctets.AnonOctets
-  ) extends EnrichmentConfig {
+  ) extends Enrichment {
 
   /**
    * Anonymize the supplied IP address.

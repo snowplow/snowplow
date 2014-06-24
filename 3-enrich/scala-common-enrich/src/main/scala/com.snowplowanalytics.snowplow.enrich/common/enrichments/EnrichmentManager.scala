@@ -40,8 +40,6 @@ import enrichments.{ClientEnrichments => CE}
 import web.{PageEnrichments => WPE}
 import web.{AttributionEnrichments => WAE}
 
-import config._
-
 /**
  * A module to hold our enrichment process.
  *

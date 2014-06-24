@@ -15,8 +15,7 @@ package snowplow
 package enrich
 package common
 package enrichments
-
-import config._
+package registry
 
 // Java
 import java.net.URI

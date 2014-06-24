@@ -14,7 +14,8 @@ package com.snowplowanalytics
 package snowplow
 package enrich
 package common
-package config
+package enrichments
+package registry
 
 import utils.ScalazJson4sUtils
 
@@ -35,12 +36,12 @@ import iglu.client.validation.ProcessingMessageMethods._
 /**
  * Trait inherited by every enrichment config case class
  */
-trait EnrichmentConfig
+trait Enrichment
 
 /**
  * Trait to hold helpers relating to enrichment config
  */
-trait EnrichmentConfigParseable {
+trait ParseableEnrichment {
 
   val supportedSchemaKey: SchemaKey
 

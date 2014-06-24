@@ -12,6 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
+package registry
 
 // Java
 import java.net.URI

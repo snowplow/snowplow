@@ -12,6 +12,7 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
+package registry
 
 // Specs2
 import org.specs2.Specification
