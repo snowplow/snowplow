@@ -12,9 +12,13 @@
     "$.hierarchy.refTree",
     "$.hierarchy.refParent",
 
-    "$.data.category",
-    "$.data.subCategory",
+    "$.data.breadcrumb",
+    "$.data.genre",
     "$.data.author",
-    "$.data.topics"
+    "$.data.dateCreated",
+    "$.data.dateModified",
+    "$.data.datePublished",
+    "$.data.inLanguage",
+    "$.data.keywords"
     ]
 }
