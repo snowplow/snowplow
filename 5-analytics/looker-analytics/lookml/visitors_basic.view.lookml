@@ -88,12 +88,12 @@
   - dimension: session_stream
     sql: ${user_id}
     html: |
-      <a href=sessions?fields=sessions.individual_detail*&f[sessions.user_id]=<%=value%>>Session Stream</a>
+      <a href=sessions?fields=sessions.individual_detail*&f[sessions.user_id]={{value}}>Session Stream</a>
       
   - dimension: event_stream
     sql: ${user_id}
     html: |
-      <a href=events?fields=events.individual_detail*&f[events.user_id]=<%=value%>>Event stream</a>
+      <a href=events?fields=events.individual_detail*&f[events.user_id]={{value}}>Event stream</a>
       
   - measure: count
     type: count_distinct

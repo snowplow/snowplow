@@ -247,7 +247,7 @@
   - dimension: transaction_items_list
     sql: ${transaction_order_id}
     html: |
-      <a href=events?fields=events.transaction_items_detail*&f[events.transaction_item_order_id]=<%= value%>>Transaction Items</a>
+      <a href=events?fields=events.transaction_items_detail*&f[events.transaction_item_order_id]={{value}}>Transaction Items</a>
 
 # MEASURES #
 

@@ -90,7 +90,7 @@
   - dimension: order_items
     sql: ${order_id}
     html: |
-      <a href=transaction_items?fields=transaction_items.transaction_items_detail*&f[transaction_items.order_id]=<%= value%>>Transaction Items</a>
+      <a href=transaction_items?fields=transaction_items.transaction_items_detail*&f[transaction_items.order_id]={{value}}>Transaction Items</a>
   
     
 

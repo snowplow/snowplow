@@ -108,7 +108,7 @@
   - dimension: history
     sql: ${session_id}
     html: |
-      <a href=events?fields=events.event_detail*&f[events.visit_id]=<%= value%>>Event Stream</a>
+      <a href=events?fields=events.event_detail*&f[events.visit_id]={{value}}>Event Stream</a>
   
   
 
