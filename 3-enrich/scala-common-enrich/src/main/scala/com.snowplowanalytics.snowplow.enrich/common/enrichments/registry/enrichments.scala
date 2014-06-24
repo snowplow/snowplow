@@ -49,14 +49,16 @@ trait ParseableEnrichment {
    *
    * @param config The JSON
    * @param schemaKey The schemaKey which needs
-   * to be checked
+   *        to be checked
    * @return The JSON or an error message, boxed
    */
   def isParseable(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[JValue] = {
     if (schemaKey == supportedSchemaKey) {
       config.success
     } else {
-      ("Schema key %s is not supported. '%s' enrichments must have schema %s.").format(schemaKey, supportedSchemaKey.name, supportedSchemaKey)
+      ("Schema key %s is not supported. '%s' enrichments must have schema %s.")
+      .format(schemaKey, supportedSchemaKey.name, supportedSchemaKey)
+      .toProcessingMessage.fail.toValidationNel
     }
   }
 
