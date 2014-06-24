@@ -23,6 +23,21 @@
 
 - base_view: events  
   joins:
+  - join: ad_clicks
+    foreign_key: events.event_id
+    join_type: one_to_one
+  - join: ad_conversions
+    foreign_key: events.event_id
+    join_type: events.event_id
+  - join: ad_impressions
+    foreign_key: event_id
+    join_type: one_to_one
+  - join: link_click
+    foreign_key: events.event_id
+    join_type: one_to_one
+  - join: screen_view
+    foreign_key: events.event_id
+    join_type: one_to_one
   - join: sessions
     sql_on: |
       events.domain_userid = sessions.domain_userid AND
@@ -30,9 +45,6 @@
   - join: visitors
     sql_on: |
       events.domain_userid = visitors.domain_userid
-
-# Views to support events
-- base_view: atomic_events
 
 - base_view: sessions
   joins: 
