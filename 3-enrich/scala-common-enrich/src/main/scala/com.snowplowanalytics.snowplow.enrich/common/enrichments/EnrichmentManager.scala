@@ -26,9 +26,6 @@ import Scalaz._
 // SnowPlow Utils
 import util.Tap._
 
-// Scala MaxMind GeoIP
-import maxmind.geoip.IpGeo
-
 // This project
 import inputs.{CanonicalInput, NvGetPayload}
 import outputs.CanonicalOutput

@@ -56,7 +56,7 @@ trait ParseableEnrichment {
     if (schemaKey == supportedSchemaKey) {
       config.success
     } else {
-      ("Wrong type of JSON for an enrichment of type %s").format(schemaKey.name).toProcessingMessage.fail.toValidationNel
+      ("Schema key %s is not supported. '%s' enrichments must have schema %s.").format(schemaKey, supportedSchemaKey.name, supportedSchemaKey)
     }
   }
 

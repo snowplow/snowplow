@@ -39,11 +39,11 @@ object ScalazJson4sUtils {
    * Returns a String field at the end of a JSON path.
    *
    * @param JValue The JSON from which the String is
-   * to be extracted
-   * @param path NonEmptyList containing the Strings
-   * which make up the path
+   *        to be extracted
+   * @param field NonEmptyList containing the Strings
+   *        which make up the path
    * @return the String extracted from the JSON on success,
-   * or an error String on failure
+   *         or an error String on failure
    */
   def extractString(config: JValue, field: NonEmptyList[String]): ValidatedMessage[String] =
     
@@ -57,11 +57,11 @@ object ScalazJson4sUtils {
    * Returns an Int field at the end of a JSON path.
    *
    * @param JValue The JSON from which the Int is
-   * to be extracted
-   * @param path NonEmptyList containing the Strings
-   * which make up the path
+   *        to be extracted
+   * @param field NonEmptyList containing the Strings
+   *        which make up the path
    * @return the Int extracted from the JSON on success,
-   * or an error String on failure
+   *         or an error String on failure
    */
   def extractInt(config: JValue, field: NonEmptyList[String]): ValidatedMessage[Int] =
     try {

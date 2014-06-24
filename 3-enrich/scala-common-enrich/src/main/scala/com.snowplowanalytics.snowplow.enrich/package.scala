@@ -25,7 +25,7 @@ import org.apache.http.NameValuePair
 // Scala MaxMind GeoIP
 import com.snowplowanalytics.maxmind.geoip.IpLocation
 
-// JSON Schema Validator
+// JSON Schema
 import com.github.fge.jsonschema.core.report.ProcessingMessage
 
 // This project
@@ -150,5 +150,5 @@ package object common {
    * `Success`
    */
   type ValidatedNelMessage[A] = ValidationNel[ProcessingMessage, A]
-  
+
 }
