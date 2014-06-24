@@ -66,7 +66,7 @@
 
 # MEASURES #
 
-  - measure: conversion_count
+  - measure: count
     type: count_distinct
     sql: ${event_id}
 

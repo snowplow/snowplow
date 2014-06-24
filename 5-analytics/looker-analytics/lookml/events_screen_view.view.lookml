@@ -13,10 +13,10 @@
 # Copyright: Copyright (c) 2013-2014 Snowplow Analytics Ltd
 # License: Apache License Version 2.0
 #
-# Compatibility: iglu:com.snowplowanalytics.snowplow/ad_click/jsonschema/1-0-0
+# Compatibility: iglu:com.snowplowanalytics.snowplow/ad_impression/jsonschema/1-0-0
 
-- view: ad_clicks
-  sql_table_name: atomic.com_snowplowanalytics_ad_click_1
+- view: screen_views
+  sql_table_name: atomic.com_snowplowanalytics_snowplow_screen_view_1
   fields:
 
 # DIMENSIONS #
@@ -25,47 +25,22 @@
     primary_key: true
     sql: ${TABLE}.root_id
 
-  - dimension: click_id
-    sql: ${TABLE}.click_id
+  - dimension: timestamp
+    sql: ${TABLE}.root_tstamp
 
-  - dimension: impression_id
-    sql: ${TABLE}.impression_id
+  - dimension_group: timestamp
+    type: time
+    timeframes: [time, hour, date, week, month]
+    sql: ${TABLE}.root_tstamp
 
-  - dimension: zone_id
-    sql: ${TABLE}.zone_id
+  - dimension: name
+    sql: ${TABLE}.name
 
-  - dimension: banner_id
-    sql: ${TABLE}.banner_id
+  - dimension: id
+    sql: ${TABLE}.id
 
-  - dimension: campaign_id
-    sql: ${TABLE}.campaign_id
 
-  - dimension: advertiser_id
-    sql: ${TABLE}.advertiser_id
-
-  - dimension: target_url
-    sql: ${TABLE}.target_url
-
-  - dimension: cost_model
-    sql: ${TABLE}.cost_model
-
-  - dimension: cost
-    type: number
-    decimals: 2
-    sql: ${TABLE}.cost
-
- # MEASURES #
-
-  - measure: ad_click_count
+# MEASURES #
+  - measure: count
     type: count_distinct
     sql: ${event_id}
-    filters:
-      event_type: ad_click
-
-  - measure: cpc_cost
-    type: sum
-    decimals: 2
-    sql: ${cost}
-    filters:
-      cost_model: "cpc"
-    

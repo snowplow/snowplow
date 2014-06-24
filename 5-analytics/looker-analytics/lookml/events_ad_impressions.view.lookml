@@ -61,11 +61,9 @@
 
 # MEASURES #
 
-  - measure: impressions_count
+  - measure: count
     type: count_distinct
     sql: ${event_id}
-    filters:
-      event_type: ad_impression
 
   - measure: cpm_cost
     type: number
