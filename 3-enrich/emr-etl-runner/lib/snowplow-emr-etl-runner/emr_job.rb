@@ -147,8 +147,7 @@ module Snowplow
         enrich_step_output = if s3distcp
           "hdfs:///local/snowplow/enriched-events/"
         else
-          # Need to replace =s because Hadoop Enrich is on an old version of Scalding Args (can remove when upgrade)
-          self.class.fix_equals(enrich_final_output)
+          enrich_final_output
         end
 
         enrich_step = build_scalding_step(
@@ -157,8 +156,8 @@ module Snowplow
           "enrich.hadoop.EtlJob",
           { :in     => enrich_step_input,
             :good   => enrich_step_output,
-            :bad    => self.class.fix_equals(self.class.partition_by_run(csbe[:bad],    run_id)),
-            :errors => self.class.fix_equals(self.class.partition_by_run(csbe[:errors], run_id, config[:etl][:continue_on_unexpected_error]))
+            :bad    => self.class.partition_by_run(csbe[:bad],    run_id),
+            :errors => self.class.partition_by_run(csbe[:errors], run_id, config[:etl][:continue_on_unexpected_error])
           },
           { :input_format     => config[:etl][:collector_format],
             :etl_tstamp       => etl_tstamp,
@@ -322,13 +321,6 @@ module Snowplow
       Contract String, String, Bool => Maybe[String]
       def self.partition_by_run(folder, run_id, retain=true)
         "#{folder}run=#{run_id}/" if retain
-      end
-
-      # Makes a folder name Scalding-safe. This is because
-      # currently Scalding cannot support =s
-      Contract Maybe[String] => Maybe[String]
-      def self.fix_equals(path)
-        path.gsub!('=', '%3D') if path
       end
 
       # Returns a base64-encoded JSON containing an array of enrichment JSONs

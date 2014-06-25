@@ -4,7 +4,7 @@ EmrEtlRunner: passed etl_tstamp into Hadoop Enrich as an argument (#396)
 EmrEtlRunner: removed enrichment-specific code (#811)
 EmrEtlRunner: removed enrichment-specific parameters from config.yml.sample (#809)
 EmrEtlRunner: replaced enrichment-specific arguments from EmrEtlRunner (#808)
-EmrEtlRunner: removed %3D code following Scalding upgrade (#849)                        - TODO
+EmrEtlRunner: removed %3D code following Scalding upgrade (#849)
 Scala Hadoop Enrich: bumped to 0.6.0
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.5.0                                - TODO (currently -SNAPSHOT)
 Scala Hadoop Enrich: bumped Scalding to 0.10.0 (#848)
