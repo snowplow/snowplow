@@ -15,9 +15,11 @@ Scala Common Enrich: added JacksonJsonUtils
 Scala Common Enrich: created ScalazJson4sUtils.scala
 Scala Common Enrich: created enrichmentConfigs.scala
 Scala Common Enrich: added tests for ScalazJson4sUtils and enrichmentConfigs
-Scala Common Enrich: Added validation of enrichments JSON (#807)                        - TODO
+Scala Common Enrich: Added validation of enrichments JSON (#807)
 Scala Common Enrich: Replaced "quartets" with "octets" in AnonIpEnrichment (#547)
 Scala Common Enrich: Bumped user-agent-utils version (#662)                             - TODO
+Scala Common Enrich: Added ability to extract event_id from querystring (#723)          - TODO
+Scala Common Enrich: extracted CanonicalInput's userId as network_userid (#855)         - TODO
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.5.0                                - TODO
 Scala Hadoop Enrich: created EnrichmentConfigRegistry.scala
 Scala Hadoop Enrich: passed etl_tstamp into Scala Common Enrich (#817)
