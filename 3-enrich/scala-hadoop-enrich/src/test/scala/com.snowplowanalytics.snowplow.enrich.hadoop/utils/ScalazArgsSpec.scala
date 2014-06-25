@@ -41,11 +41,11 @@ class ScalazArgsSpec extends Specification with DataTables with ValidationMatche
   "a Scalding Args should be pimped to a ScalazArgs as needed"    ! e1^
   "required keys should be successfully validated by ScalazArgs"  ! e2^
   "optional keys should be successfully validated by ScalazArgs"  ! e3^
-  "for a required key, %3D should be decoded to ="                ! e4^
-  "for an optional key, %3D should be decoded to ="               ! e5^
+  "for a required key, = should be decoded to ="                ! e4^
+  "for an optional key, = should be decoded to ="               ! e5^
                                                                   end
 
-  val scaldingArgs = Args(Array("--alpha", "123", "--beta", "456", "--delta", "789", "abc", "--hive", "run%3D2013-07-07"))
+  val scaldingArgs = Args(Array("--alpha", "123", "--beta", "456", "--delta", "789", "abc", "--hive", "run=2013-07-07"))
 
   import ScalazArgs._
   def e1 = scaldingArgs.requiredz("alpha").leftMap(_.toString).map(_.toString) must beSuccessful("123")
