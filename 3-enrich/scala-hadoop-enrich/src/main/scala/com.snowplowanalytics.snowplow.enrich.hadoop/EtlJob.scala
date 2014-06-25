@@ -116,11 +116,11 @@ object EtlJob {
    * become a None will be silently dropped by
    * Scalding in this pipeline.
    *
-   * @param all The Validation containing either
+   * @param in The Validation containing either
    *        our Successes or our Failures
    * @return an Option boxing either our List of
-   *         Processing Messages on Failure, or
-   *         None on Success
+   *         Strings on Failure, or None on
+   *         Success
    */
   def projectBads(in: ValidatedMaybeCanonicalOutput): Option[NonEmptyList[String]] =
     in.fold(

@@ -45,8 +45,6 @@ case class BadRow(
    *
    * @return the TypeHierarchy as a json4s JValue
    */
-  // TODO: fix issue where the errors are being
-  // stringified before being added
   def toJValue: JValue =
     ("line"     -> line) ~
     ("errors"   -> errors.toList)
