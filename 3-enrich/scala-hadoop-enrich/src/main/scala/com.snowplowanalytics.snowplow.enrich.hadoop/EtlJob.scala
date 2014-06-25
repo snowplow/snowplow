@@ -41,6 +41,7 @@ import common.outputs.CanonicalOutput
 // This project
 import utils.FileUtils
 import generated.ProjectSettings
+import outputs.BadRow
 
 /**
  * Holds constructs to help build the ETL job's data
@@ -109,6 +110,22 @@ object EtlJob {
       case _ => None
     }
   }
+
+  /**
+   * Projects our Failures into a Some; Successes
+   * become a None will be silently dropped by
+   * Scalding in this pipeline.
+   *
+   * @param all The Validation containing either
+   *        our Successes or our Failures
+   * @return an Option boxing either our List of
+   *         Processing Messages on Failure, or
+   *         None on Success
+   */
+  def projectBads(in: ValidatedMaybeCanonicalOutput): Option[NonEmptyList[String]] =
+    in.fold(
+      e => Some(e), // Nel -> Some(List)
+      c => None)    // Discard
 }
 
 /**
@@ -144,7 +161,7 @@ class EtlJob(args: Args) extends Job(args) {
   // Aliases for our job
   val input = MultipleTextLineFiles(etlConfig.inFolder).read
   val goodOutput = Tsv(etlConfig.outFolder)
-  val badOutput = JsonLine(etlConfig.badFolder)
+  val badOutput = Tsv(etlConfig.badFolder)
 
   // Do we add a failure trap?
   val trappableInput = etlConfig.exceptionsFolder match {
@@ -161,11 +178,12 @@ class EtlJob(args: Args) extends Job(args) {
 
   // Handle bad rows
   val bad = common
-    .flatMap('output -> 'errors) { o: ValidatedMaybeCanonicalOutput => o.fold(
-      e => Some(e.toList), // Nel -> Some(List)
-      c => None)
+    .flatMap('output -> 'errors) { o: ValidatedMaybeCanonicalOutput =>
+      EtlJob.projectBads(o)
     }
-    .project('line, 'errors)
+    .mapTo(('line, 'errors) -> 'json) { both: (String, NonEmptyList[String]) =>
+      BadRow(both._1, both._2).toCompactJson
+    }    
     .write(badOutput) // JSON containing line and error(s)
 
   // Handle good rows

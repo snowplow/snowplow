@@ -51,10 +51,10 @@ object BadTrackerCfLinesSpec {
  * CloudFront-format rows which contain "bad data"
  * from the tracker.
  */
-class BadTrackerCfLinesSpec extends Specification with TupleConversions {
+class BadTrackerCfLinesSpec extends Specification {
 
   "A job which processes input lines containing corrupted data from the tracker" should {
-    EtlJobSpec("cloudfront", "0").
+    EtlJobSpec("cloudfront", "1", false).
       source(MultipleTextLineFiles("inputFolder"), BadTrackerCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output => 
         "not write any events" in {
@@ -66,7 +66,7 @@ class BadTrackerCfLinesSpec extends Specification with TupleConversions {
           trap must beEmpty
         }
       }.
-      sink[String](JsonLine("badFolder")){ buf =>
+      sink[String](Tsv("badFolder")){ buf =>
         "write bad row JSONs, each containing an input line and the errors" in {
           buf(0) must_== BadTrackerCfLinesSpec.expected(0)
           buf(1) must_== BadTrackerCfLinesSpec.expected(1)

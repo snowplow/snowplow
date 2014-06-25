@@ -48,10 +48,10 @@ object InvalidCfLinesSpec {
  * Input data _is_ not in the
  * expected CloudFront format.
  */
-class InvalidCfLinesSpec extends Specification with TupleConversions {
+class InvalidCfLinesSpec extends Specification {
 
   "A job which processes input lines not in CloudFront format" should {
-    EtlJobSpec("cloudfront", "0").
+    EtlJobSpec("cloudfront", "1", false).
       source(MultipleTextLineFiles("inputFolder"), InvalidCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output =>
         "not write any events" in {
@@ -63,7 +63,7 @@ class InvalidCfLinesSpec extends Specification with TupleConversions {
           trap must beEmpty
         }
       }.
-      sink[String](JsonLine("badFolder")){ json =>
+      sink[String](Tsv("badFolder")){ json =>
         "write a bad row JSON with input line and error message for each input line" in {
           for (i <- json.indices) {
             json(i) must_== InvalidCfLinesSpec.expected(InvalidCfLinesSpec.lines(i)._2)

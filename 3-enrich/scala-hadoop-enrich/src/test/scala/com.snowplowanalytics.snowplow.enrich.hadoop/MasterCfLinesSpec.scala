@@ -77,7 +77,7 @@ class MasterCfLinesSpec extends Specification {
           trap must beEmpty
         }
       }.
-      sink[String](JsonLine("badFolder")){ error =>
+      sink[String](Tsv("badFolder")){ error =>
         "write 7 bad rows" in {
           error.size must_== MasterCfLinesSpec.expected.badCount
         }

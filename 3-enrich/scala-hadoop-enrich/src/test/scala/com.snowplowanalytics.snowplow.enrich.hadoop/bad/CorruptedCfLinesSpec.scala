@@ -46,10 +46,10 @@ object CorruptedCfLinesSpec {
  * access log format, but the fields
  * are somehow corrupted.
  */
-class CorruptedCfLinesSpec extends Specification with TupleConversions {
+class CorruptedCfLinesSpec extends Specification {
 
   "A job which processes a corrupted input line" should {
-    EtlJobSpec("cloudfront", "0").
+    EtlJobSpec("cloudfront", "1", false).
       source(MultipleTextLineFiles("inputFolder"), CorruptedCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output => 
         "not write any events" in {
@@ -61,7 +61,7 @@ class CorruptedCfLinesSpec extends Specification with TupleConversions {
           trap must beEmpty
         }
       }.
-      sink[String](JsonLine("badFolder")){ buf =>
+      sink[String](Tsv("badFolder")){ buf =>
         val json = buf.head
         "write a bad row JSON containing the input line and all errors" in {
           json must_== CorruptedCfLinesSpec.expected
