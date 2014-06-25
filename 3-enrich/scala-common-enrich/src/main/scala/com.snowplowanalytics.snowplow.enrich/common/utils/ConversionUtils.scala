@@ -19,6 +19,10 @@ import java.net.URLDecoder
 import java.lang.{Integer => JInteger}
 import java.math.{BigDecimal => JBigDecimal}
 import java.lang.{Byte => JByte}
+import java.util.UUID
+
+// Scala
+import scala.util.Try
 
 // Apache Commons
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -144,6 +148,25 @@ object ConversionUtils {
       "Field [%s]: exception Base64-decoding [%s] (URL-safe encoding): [%s]".format(field, str, e.getMessage).fail
     }
   }
+
+  /**
+   * Validates that the given field contains a valid UUID.
+   *
+   * @param field The name of the field being validated
+   * @param str The String hopefully containing a UUID
+   * @return a Scalaz ValidatedString containing either
+   *         the original String on Success, or an error
+   *         String on Failure.
+   */
+  val validateUuid: (String, String) => ValidatedString = (field, str) => {
+
+    def check(s: String)(u: UUID): Boolean = (u != null && s == u.toString)
+    val uuid = Try(UUID.fromString(str)).toOption.filter(check(str))
+    uuid match {
+      case Some(_) => str.success
+      case None    => s"Field [$field]: [$str] is not a valid UUID".fail
+    }
+  } 
 
   /**
    * Decodes a String in the specific encoding,
@@ -351,5 +374,5 @@ object ConversionUtils {
     else if (b == 1)
       true.success
     else
-      "Cannot convert byte [%s] to boolean, only 1 or 0.".format(b).fail
+      "Cannot convert byte [%s] to boolean, only 1 or 0.".format(b).fail   
 }

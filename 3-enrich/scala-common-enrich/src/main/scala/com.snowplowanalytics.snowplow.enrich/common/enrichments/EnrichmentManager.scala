@@ -83,7 +83,7 @@ object EnrichmentManager {
     // with the fields which cannot error
     val event = new CanonicalOutput().tap { e =>
       e.collector_tstamp = EE.toTimestamp(raw.timestamp)
-      e.event_id = EE.generateEventId
+      e.event_id = EE.generateEventId      // May be updated later if we have an `eid` parameter
       e.v_collector = raw.source.collector // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
       raw.ipAddress.map(ip => e.user_ipaddress = registry.getAnonIpEnrichment match {
@@ -173,6 +173,7 @@ object EnrichmentManager {
           ("cs"      , (ME.toTsvSafe, "doc_charset")),
           ("ds"      , (CE.extractViewDimensions, ("doc_width", "doc_height"))),
           ("vp"      , (CE.extractViewDimensions, ("br_viewwidth", "br_viewheight"))),
+          ("eid"     , (CU.validateUuid, "event_id")),
           // Custom contexts
           ("co"   , (extractUrlEncJson, "contexts")),
           ("cx"   , (extractBase64EncJson, "contexts")),

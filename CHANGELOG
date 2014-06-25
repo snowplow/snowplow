@@ -16,7 +16,7 @@ Scala Common Enrich: added tests for ScalazJson4sUtils and enrichmentConfigs
 Scala Common Enrich: added validation of enrichments JSON (#807)
 Scala Common Enrich: replaced "anon_ip_quartets" with "anon_ip_octets" everywhere (#547)
 Scala Common Enrich: bumped user-agent-utils version (#662)                             - TODO
-Scala Common Enrich: added ability to extract event_id from querystring (#723)          - TODO
+Scala Common Enrich: added ability to extract event_id from querystring (#723)
 Scala Common Enrich: extracted CanonicalInput's userId as network_userid (#855)         - TODO
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.5.0                                - TODO
 Scala Hadoop Enrich: created EnrichmentConfigRegistry.scala
