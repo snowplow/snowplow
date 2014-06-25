@@ -153,10 +153,10 @@ object PagePingCfLineSpec {
  * (CloudFront format) are successfully
  * extracted.
  */
-class PagePingCfLineSpec extends Specification with TupleConversions {
+class PagePingCfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid page ping" should {
-    EtlJobSpec("cloudfront", "0").
+    EtlJobSpec("cloudfront", "1", false).
       source(MultipleTextLineFiles("inputFolder"), PagePingCfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {

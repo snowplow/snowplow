@@ -157,10 +157,10 @@ object Aug2013CfLineSpec {
  * For details:
  * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
  */
-class Aug2013CfLineSpec extends Specification with TupleConversions {
+class Aug2013CfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid page view" should {
-    EtlJobSpec("cloudfront", "0").
+    EtlJobSpec("cloudfront", "1", false).
       source(MultipleTextLineFiles("inputFolder"), Aug2013CfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {

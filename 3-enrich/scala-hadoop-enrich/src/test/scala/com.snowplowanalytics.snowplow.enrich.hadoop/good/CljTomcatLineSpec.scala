@@ -156,10 +156,10 @@ object CljTomcatLineSpec {
  * For details:
  * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
  */
-class CljTomcatLineSpec extends Specification with TupleConversions {
+class CljTomcatLineSpec extends Specification {
 
   "A job which processes a Clojure-Tomcat file containing 1 valid page view" should {
-    EtlJobSpec("clj-tomcat", "2").
+    EtlJobSpec("clj-tomcat", "2", true).
       source(MultipleTextLineFiles("inputFolder"), CljTomcatLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {

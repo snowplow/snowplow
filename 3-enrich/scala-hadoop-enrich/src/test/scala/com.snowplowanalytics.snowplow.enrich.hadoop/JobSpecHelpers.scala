@@ -176,7 +176,7 @@ object JobSpecHelpers {
   implicit def Lines2ScaldingLines(lines : Lines): ScaldingLines = lines.numberedLines 
 
   // Standard JobSpec definition used by all integration tests
-  val EtlJobSpec: (String, String) => JobTest = (collector, anonOctets) => {
+  val EtlJobSpec: (String, String, Boolean) => JobTest = (collector, anonOctets, anonOctetsEnabled) => {
 
     val encoder = new Base64(true) // true means "url safe"
     val enrichments = new String(encoder.encode(
@@ -188,7 +188,7 @@ object JobSpecHelpers {
                 |"data": {
                   |"vendor": "com.snowplowanalytics",
                   |"name": "anon_ip",
-                  |"enabled": true,
+                  |"enabled": %s,
                   |"parameters": {
                     |"anonOctets": %s
                   |}
@@ -201,25 +201,23 @@ object JobSpecHelpers {
                   |"name": "ip_to_geo",
                   |"enabled": true,
                   |"parameters": {
-                    |"maxmindDatabase": "GeoLiteCity",
+                    |"maxmindDatabase": "GeoLiteCity.dat",
                     |"maxmindUri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/"
                   |}
                 |}  
               |}
             |]
-          |}""".format(anonOctets).stripMargin.replaceAll("[\n\r]","").getBytes
+          |}""".format(anonOctetsEnabled, anonOctets).stripMargin.replaceAll("[\n\r]","").getBytes
       )
     )
 
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob").
       arg("input_folder", "inputFolder").
       arg("input_format", collector).
-      //arg("maxmind_file", "-"). // Not needed when running locally, but error if not set
       arg("output_folder", "outputFolder").
       arg("bad_rows_folder", "badFolder").
-      //arg("anon_ip_octets", anonOctets).
       arg("etl_tstamp", "1000000000000").      
-      arg("exceptions_folder", "exceptionsFolder").
+      //arg("exceptions_folder", "exceptionsFolder").
       arg("iglu_config", IgluConfig).
       arg("enrichments", enrichments)
     }

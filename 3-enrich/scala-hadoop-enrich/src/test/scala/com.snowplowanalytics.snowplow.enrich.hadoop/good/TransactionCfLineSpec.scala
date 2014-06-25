@@ -152,10 +152,10 @@ object TransactionCfLineSpec {
  * Check that all tuples in a transaction event
  * (CloudFront format) are successfully extracted.
  */
-class TransactionCfLineSpec extends Specification with TupleConversions {
+class TransactionCfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid transaction" should {
-    EtlJobSpec("cloudfront", "4").
+    EtlJobSpec("cloudfront", "4", true).
       source(MultipleTextLineFiles("inputFolder"), TransactionCfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 transaction" in {
