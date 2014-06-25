@@ -4,8 +4,11 @@ Schemas: added schema for collection of all enrichments (#806)
 Schemas: added campaigns schema (#805)
 Schemas: added ip_anon schema (#804)
 Schemas: added ip_to_geo schema (#803)
+EmrEtlRunner: passed etl_tstamp into Hadoop Enrich as an argument (#396)
 EmrEtlRunner: Removed enrichment-specific code (#811)
-EmrEtlRunner: Replaced enrichment-specific args to Hadoop Enrich with enrichments JSON (#808)
+EmrEtlRunner: Removed enrichment-specific parameters from config.yml.sample (#809)
+EmrEtlRunner: Replaced enrichment-specific arguments from EmrEtlRunner (#808)
+EmrEtlRunner: remove %3D code for old Scalding support (#849)                           - TODO
 Scala Hadoop Enrich: removed %3D support for old Scalding support (#849)                - TODO
 Scala Common Enrich: bumped to 0.5.0                                                    - TODO
 Scala Common Enrich: added JSON dependencies
@@ -16,7 +19,7 @@ Scala Common Enrich: created ScalazJson4sUtils.scala
 Scala Common Enrich: created enrichmentConfigs.scala
 Scala Common Enrich: added tests for ScalazJson4sUtils and enrichmentConfigs
 Scala Common Enrich: Added validation of enrichments JSON (#807)
-Scala Common Enrich: Replaced "quartets" with "octets" in AnonIpEnrichment (#547)
+Scala Common Enrich: Replaced "anon_ip_quartets" with "anon_ip_octets" everywhere (#547)
 Scala Common Enrich: Bumped user-agent-utils version (#662)                             - TODO
 Scala Common Enrich: Added ability to extract event_id from querystring (#723)          - TODO
 Scala Common Enrich: extracted CanonicalInput's userId as network_userid (#855)         - TODO
@@ -30,11 +33,11 @@ Redshift: bumped table-def to 0.4.0
 Redshift: added etl_tstamp to atomic.events (#819)
 Redshift: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#834)
 Redshift: migration script added for 0.3.0 to 0.4.0 (#838)
+Redshift: fixed sortkeys for atomic.events (#844)                                       - TODO
 Postgres: bumped table-def to 0.3.0
 Postgres: added etl_tstamp to atomic.events (#820)
 Postgres: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#833)
 Postgres: migration script added for 0.2.0 to 0.3.0 (#837)
-Fixed sortkeys for atomic.events (#844)                                                  - TODO
 
 Version 0.9.5 (2014-07-09)
 --------------------------
