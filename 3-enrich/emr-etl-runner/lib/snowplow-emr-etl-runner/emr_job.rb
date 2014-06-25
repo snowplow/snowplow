@@ -329,6 +329,7 @@ module Snowplow
       Contract Maybe[String] => Maybe[String]
       def self.fix_equals(path)
         path.gsub!('=', '%3D') if path
+      end
 
       # Returns a base64-encoded JSON containing an array of enrichment JSONs
       Contract ConfigHash => String
