@@ -202,7 +202,7 @@ object JobSpecHelpers {
                   |"enabled": true,
                   |"parameters": {
                     |"maxmindDatabase": "GeoLiteCity.dat",
-                    |"maxmindUri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/"
+                    |"maxmindUri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
                   |}
                 |}  
               |}

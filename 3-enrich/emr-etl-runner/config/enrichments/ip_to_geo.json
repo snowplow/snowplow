@@ -7,8 +7,8 @@
 		"vendor": "com.snowplowanalytics.snowplow",
 		"enabled": true,
 		"parameters": {
-			"maxmindDatabase": "GeoLiteCity",
-			"maxmindUri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/"
+			"maxmindDatabase": "GeoLiteCity.dat",
+			"maxmindUri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
 		}
 	}
 }

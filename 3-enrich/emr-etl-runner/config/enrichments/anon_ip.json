@@ -5,7 +5,7 @@
 
 		"name": "anon_ip",
 		"vendor": "com.snowplowanalytics.snowplow",
-		"enabled": false,
+		"enabled": true,
 		"parameters": {
 				"anonOctets": 1
 		}
