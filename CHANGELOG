@@ -1,14 +1,10 @@
 Version 0.9.X (2014-XX-XX)
 --------------------------
-Schemas: added schema for collection of all enrichments (#806)
-Schemas: added campaigns schema (#805)
-Schemas: added ip_anon schema (#804)
-Schemas: added ip_to_geo schema (#803)
 EmrEtlRunner: passed etl_tstamp into Hadoop Enrich as an argument (#396)
-EmrEtlRunner: Removed enrichment-specific code (#811)
-EmrEtlRunner: Removed enrichment-specific parameters from config.yml.sample (#809)
-EmrEtlRunner: Replaced enrichment-specific arguments from EmrEtlRunner (#808)
-EmrEtlRunner: remove %3D code for old Scalding support (#849)                           - TODO
+EmrEtlRunner: removed enrichment-specific code (#811)
+EmrEtlRunner: removed enrichment-specific parameters from config.yml.sample (#809)
+EmrEtlRunner: replaced enrichment-specific arguments from EmrEtlRunner (#808)
+EmrEtlRunner: removed %3D code for old Scalding support (#849)                           - TODO
 Scala Common Enrich: bumped to 0.5.0                                                    - TODO
 Scala Common Enrich: added JSON dependencies
 Scala Common Enrich: stored etl_tstamp in new field in CanonicalOutput (#818)
@@ -17,10 +13,10 @@ Scala Common Enrich: added JacksonJsonUtils
 Scala Common Enrich: created ScalazJson4sUtils.scala
 Scala Common Enrich: created enrichmentConfigs.scala
 Scala Common Enrich: added tests for ScalazJson4sUtils and enrichmentConfigs
-Scala Common Enrich: Added validation of enrichments JSON (#807)
-Scala Common Enrich: Replaced "anon_ip_quartets" with "anon_ip_octets" everywhere (#547)
-Scala Common Enrich: Bumped user-agent-utils version (#662)                             - TODO
-Scala Common Enrich: Added ability to extract event_id from querystring (#723)          - TODO
+Scala Common Enrich: added validation of enrichments JSON (#807)
+Scala Common Enrich: replaced "anon_ip_quartets" with "anon_ip_octets" everywhere (#547)
+Scala Common Enrich: bumped user-agent-utils version (#662)                             - TODO
+Scala Common Enrich: added ability to extract event_id from querystring (#723)          - TODO
 Scala Common Enrich: extracted CanonicalInput's userId as network_userid (#855)         - TODO
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.5.0                                - TODO
 Scala Hadoop Enrich: created EnrichmentConfigRegistry.scala
