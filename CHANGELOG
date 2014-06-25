@@ -4,27 +4,29 @@ EmrEtlRunner: passed etl_tstamp into Hadoop Enrich as an argument (#396)
 EmrEtlRunner: removed enrichment-specific code (#811)
 EmrEtlRunner: removed enrichment-specific parameters from config.yml.sample (#809)
 EmrEtlRunner: replaced enrichment-specific arguments from EmrEtlRunner (#808)
-EmrEtlRunner: removed %3D code for old Scalding support (#849)                           - TODO
+EmrEtlRunner: removed %3D code for old Scalding support (#849)                          - TODO
+Scala Hadoop Enrich: bumped to 0.6.0                                                    - TODO
+Scala Hadoop Enrich: bumped to Scala Common Enrich 0.5.0                                - TODO
+Scala Hadoop Enrich: bumped Scalding to 0.10.0 (#848)
+Scala Hadoop Enrich: created EnrichmentConfigRegistry.scala
+Scala Hadoop Enrich: passed etl_tstamp into Scala Common Enrich (#817)
+Scala Hadoop Enrich: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#835)
+Scala Hadoop Enrich: removed %3D support (#850)
+Scala Hadoop Enrich: removed %3D support for old Scalding support (#849)                - TODO
 Scala Common Enrich: bumped to 0.5.0                                                    - TODO
+Scala Common Enrich: bumped user-agent-utils version (#662)                             - TODO
 Scala Common Enrich: added JSON dependencies
 Scala Common Enrich: stored etl_tstamp in new field in CanonicalOutput (#818)
 Scala Common Enrich: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#836)
+Scala Common Enrich: made referer parsing configurable with list of internal domains (#857) - TODO
 Scala Common Enrich: added JacksonJsonUtils
 Scala Common Enrich: created ScalazJson4sUtils.scala
 Scala Common Enrich: created enrichmentConfigs.scala
 Scala Common Enrich: added tests for ScalazJson4sUtils and enrichmentConfigs
 Scala Common Enrich: added validation of enrichments JSON (#807)
 Scala Common Enrich: replaced "anon_ip_quartets" with "anon_ip_octets" everywhere (#547)
-Scala Common Enrich: bumped user-agent-utils version (#662)                             - TODO
 Scala Common Enrich: added ability to extract event_id from querystring (#723)
 Scala Common Enrich: extracted CanonicalInput's userId as network_userid (#855)         - TODO
-Scala Hadoop Enrich: bumped to Scala Common Enrich 0.5.0                                - TODO
-Scala Hadoop Enrich: created EnrichmentConfigRegistry.scala
-Scala Hadoop Enrich: passed etl_tstamp into Scala Common Enrich (#817)
-Scala Hadoop Enrich: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#835)
-Scala Hadoop Enrich: removed %3D support (#850)
-Scala Hadoop Enrich: bumped Scalding to 0.10.0 (#848)
-Scala Hadoop Enrich: removed %3D support for old Scalding support (#849)                - TODO
 Redshift: bumped table-def to 0.4.0
 Redshift: added etl_tstamp to atomic.events (#819)
 Redshift: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#834)
