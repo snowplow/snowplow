@@ -44,7 +44,7 @@ import common.utils.{
 }
 
 import common.enrichments.{
-  EnrichmentConfigRegistry,
+  EnrichmentRegistry,
   EventEnrichments
 }
 
@@ -73,7 +73,7 @@ case class EtlJobConfig(
   outFolder: String,
   badFolder: String,
   etlTstamp: String,
-  registry: EnrichmentConfigRegistry,
+  registry: EnrichmentRegistry,
   exceptionsFolder: Option[String]
   )
 
@@ -119,7 +119,7 @@ object EtlJobConfig {
       node <-  base64ToJsonNode(str)
       } yield node
 
-    val registry: ValidatedNelMessage[EnrichmentConfigRegistry] = (enrichments |@| igluResolver) {
+    val registry: ValidatedNelMessage[EnrichmentRegistry] = (enrichments |@| igluResolver) {
       buildEnrichmentRegistry(_, localMode)(_)
     }.flatMap(s => s)
 
@@ -136,8 +136,8 @@ object EtlJobConfig {
    * @param resolver (implicit) The Iglu resolver used
    *        for schema lookup and validation
    */
-  private def buildEnrichmentRegistry(enrichments:JsonNode, localMode: Boolean)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentConfigRegistry] = {
-    EnrichmentConfigRegistry.parse(fromJsonNode(enrichments), localMode)
+  private def buildEnrichmentRegistry(enrichments:JsonNode, localMode: Boolean)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentRegistry] = {
+    EnrichmentRegistry.parse(fromJsonNode(enrichments), localMode)
   }
 
   /**

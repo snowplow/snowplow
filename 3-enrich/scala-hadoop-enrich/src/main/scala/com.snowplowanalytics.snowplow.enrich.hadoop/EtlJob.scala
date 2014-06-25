@@ -32,7 +32,7 @@ import common.utils.ConversionUtils
 import common.FatalEtlError
 import common.inputs.CollectorLoader
 import common.enrichments.{
-  EnrichmentConfigRegistry,
+  EnrichmentRegistry,
   EnrichmentManager
 }
 import enrichments.registry._
@@ -64,7 +64,7 @@ object EtlJob {
    *         flatMap, will include any validation errors
    *         contained within the ValidatedMaybeCanonicalInput
    */
-  def toCanonicalOutput(registry: EnrichmentConfigRegistry, etlTstamp: String, input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
+  def toCanonicalOutput(registry: EnrichmentRegistry, etlTstamp: String, input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
     input.flatMap {
       _.cata(EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, _).map(_.some),
              none.success)
@@ -141,8 +141,6 @@ class EtlJob(args: Args) extends Job(args) {
     }
   }
 
-  val etlTstamp = etlConfig.etlTstamp
-
   // Aliases for our job
   val input = MultipleTextLineFiles(etlConfig.inFolder).read
   val goodOutput = Tsv(etlConfig.outFolder)
@@ -158,7 +156,7 @@ class EtlJob(args: Args) extends Job(args) {
   // TODO: let's fix this Any typing
   val common = trappableInput
     .map('line -> 'output) { l: Any =>
-      EtlJob.toCanonicalOutput(enrichmentRegistry, etlTstamp, loader.toCanonicalInput(l))
+      EtlJob.toCanonicalOutput(enrichmentRegistry, etlConfig.etlTstamp, loader.toCanonicalInput(l))
     }
 
   // Handle bad rows

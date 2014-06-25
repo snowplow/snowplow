@@ -45,14 +45,14 @@ import utils.ScalazJson4sUtils
 
 /**
  * Companion which holds a constructor
- * for the EnrichmentConfigRegistry.
+ * for the EnrichmentRegistry.
  */
-object EnrichmentConfigRegistry {
+object EnrichmentRegistry {
 
   private val EnrichmentConfigSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "enrichments", "jsonschema", "1-0-0")
 
   /**
-   * Constructs our EnrichmentConfigRegistry
+   * Constructs our EnrichmentRegistry
    * from the supplied JSON JValue.
    *
    * @param node A JValue representing an array of enrichment JSONs
@@ -60,12 +60,12 @@ object EnrichmentConfigRegistry {
    *        Enabled for tests
    * @param resolver (implicit) The Iglu resolver used for
    *        schema lookup and validation
-   * @return Validation boxing an EnrichmentConfigRegistry object
+   * @return Validation boxing an EnrichmentRegistry object
    *         containing enrichments configured from node
    * @todo remove all the JsonNode round-tripping when
    *       we have ValidatableJValue
    */
-  def parse(node: JValue, localMode: Boolean)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentConfigRegistry] =  {
+  def parse(node: JValue, localMode: Boolean)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentRegistry] =  {
 
     // Check schema, validate against schema, convert to List[JValue]
     val enrichments: ValidatedNelMessage[List[JValue]] = for {
@@ -86,10 +86,10 @@ object EnrichmentConfigRegistry {
       .flatMap(_.sequenceU) // Swap nested List[scalaz.Validation[...]
       .map(_.flatten.toMap) // Eliminate our Option boxing (drop Nones)
 
-    // Build an EnrichmentConfigRegistry from the Map
+    // Build an EnrichmentRegistry from the Map
     configs.bimap(
       e => NonEmptyList(e.toString.toProcessingMessage),
-      s => EnrichmentConfigRegistry(s))
+      s => EnrichmentRegistry(s))
   }
 
   /**
@@ -139,7 +139,7 @@ object EnrichmentConfigRegistry {
  *        names and whose values are the
  *        corresponding enrichment objects
  */
-case class EnrichmentConfigRegistry(private val configs: EnrichmentMap) {
+case class EnrichmentRegistry(private val configs: EnrichmentMap) {
 
   /**
    * Returns an Option boxing the AnonIpEnrichment
