@@ -108,7 +108,8 @@
                 "www.lemoteur.fr"
             ], 
             "parameters": [
-                "rdata"
+                "rdata", 
+                "kw"
             ]
         }, 
         "Nifty": {
