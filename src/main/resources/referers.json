@@ -1475,12 +1475,13 @@
                 "query"
             ]
         }, 
-        "Searchy": {
+        "Amazon": {
             "domains": [
-                "www.searchy.co.uk"
+                "amazon.com", 
+                "www.amazon.com"
             ], 
             "parameters": [
-                "q"
+                "keywords"
             ]
         }, 
         "Onet": {
@@ -1659,6 +1660,15 @@
                 "query"
             ]
         }, 
+        "Naver Images": {
+            "domains": [
+                "image.search.naver.com", 
+                "imagesearch.naver.com"
+            ], 
+            "parameters": [
+                "query"
+            ]
+        }, 
         "Zapmeta": {
             "domains": [
                 "www.zapmeta.com", 
@@ -1710,6 +1720,14 @@
         "Skynet": {
             "domains": [
                 "www.skynet.be"
+            ], 
+            "parameters": [
+                "q"
+            ]
+        }, 
+        "Searchy": {
+            "domains": [
+                "www.searchy.co.uk"
             ], 
             "parameters": [
                 "q"
@@ -1896,15 +1914,6 @@
                 "q"
             ]
         }, 
-        "Austronaut": {
-            "domains": [
-                "www2.austronaut.at", 
-                "www1.astronaut.at"
-            ], 
-            "parameters": [
-                "q"
-            ]
-        }, 
         "Vindex": {
             "domains": [
                 "www.vindex.nl", 
@@ -1912,6 +1921,15 @@
             ], 
             "parameters": [
                 "search_for"
+            ]
+        }, 
+        "Babylon": {
+            "domains": [
+                "search.babylon.com", 
+                "searchassist.babylon.com"
+            ], 
+            "parameters": [
+                "q"
             ]
         }, 
         "TrovaRapido": {
@@ -2522,10 +2540,10 @@
                 "q"
             ]
         }, 
-        "Babylon": {
+        "Austronaut": {
             "domains": [
-                "search.babylon.com", 
-                "searchassist.babylon.com"
+                "www2.austronaut.at", 
+                "www1.astronaut.at"
             ], 
             "parameters": [
                 "q"
@@ -3439,15 +3457,6 @@
             ], 
             "parameters": [
                 "q"
-            ]
-        }, 
-        "Amazon": {
-            "domains": [
-                "amazon.com", 
-                "www.amazon.com"
-            ], 
-            "parameters": [
-                "keywords"
             ]
         }, 
         "Hooseek.com": {

@@ -127,7 +127,7 @@ social:
 
   Orkut:
     domains:
-      - orkut.com 
+      - orkut.com
 
   Myspace:
     domains:
@@ -188,7 +188,7 @@ social:
 
   Flickr:
     domains:
-      - flickr.com 
+      - flickr.com
 
   WeeWorld:
     domains:
@@ -220,7 +220,7 @@ social:
 
   Skyrock:
     domains:
-      - skyrock.com 
+      - skyrock.com
 
   BlackPlanet:
     domains:
@@ -272,7 +272,7 @@ social:
 
   XING:
     domains:
-      - xing.com 
+      - xing.com
 
   Taringa!:
     domains:
@@ -351,7 +351,7 @@ social:
 search:
 
   1.cz:
-    parameters: 
+    parameters:
       - q
     domains:
       - 1.cz
@@ -359,16 +359,16 @@ search:
   # 123people TODO
 
   1und1:
-    parameters: 
+    parameters:
       - su
     domains:
       - search.1und1.de
 
   Abacho:
-    parameters: 
+    parameters:
       - q
     domains:
-      - www.abacho.de 
+      - www.abacho.de
       - www.abacho.com
       - www.abacho.co.uk
       - www.se.abacho.com
@@ -380,45 +380,45 @@ search:
       - www.abacho.it
 
   ABCsøk:
-    parameters: 
+    parameters:
       - q
     domains:
       - abcsolk.no
       - verden.abcsok.no
 
   Acoon:
-    parameters: 
+    parameters:
       - begriff
     domains:
       - www.acoon.de
 
   Alexa:
-    parameters: 
+    parameters:
       - q
     domains:
       - alexa.com
       - search.toolbars.alexa.com
 
   Alice Adsl:
-    parameters: 
+    parameters:
       - q
     domains:
       - rechercher.aliceadsl.fr
 
   AllTheWeb:
-    parameters: 
+    parameters:
       - q
-    domains: 
+    domains:
       - www.alltheweb.com
 
   all.by:
-    parameters: 
+    parameters:
       - query
     domains:
       - all.by
 
   Altavista:
-    parameters: 
+    parameters:
       - q
     domains:
       - www.altavista.com
@@ -429,13 +429,13 @@ search:
       - be-nl.altavista.com
       - be-fr.altavista.com
   Amazon:
-    parameters: 
+    parameters:
       - keywords
     domains:
       - amazon.com
       - www.amazon.com
   AOL:
-    parameters: 
+    parameters:
       - q
       - query
     domains:
@@ -466,13 +466,13 @@ search:
       - search-intl.netscape.com
 
   Apollo Latvia:
-    parameters: 
+    parameters:
       - q
-    domains: 
+    domains:
       - apollo.lv/portal/search/
 
   APOLL07:
-    parameters: 
+    parameters:
       - query
     domains:
       - apollo7.de
@@ -485,32 +485,32 @@ search:
       - www.apontador.com.br
 
   Aport:
-    parameters: 
+    parameters:
       - r
     domains:
       - sm.aport.ru
 
   arama:
-    parameters: 
+    parameters:
       - q
     domains:
       - arama.com
 
   Arcor:
-    parameters: 
+    parameters:
       - Keywords
     domains:
       - www.arcor.de
 
   Arianna:
-    parameters: 
+    parameters:
       - query
     domains:
       - arianna.libero.it
       - www.arianna.com
 
   Ask:
-    parameters: 
+    parameters:
       - q
     domains:
       - ask.com
@@ -535,29 +535,29 @@ search:
       - searchfor
     domains:
       - search.tb.ask.com
-  
+
   Atlas:
-    parameters: 
+    parameters:
       - q
     domains:
       - searchatlas.centrum.cz
 
   Austronaut:
-    parameters: 
+    parameters:
       - q
     domains:
       - www2.austronaut.at
       - www1.astronaut.at
 
   Babylon:
-    parameters: 
+    parameters:
       - q
-    domains: 
+    domains:
      - search.babylon.com
      - searchassist.babylon.com
 
   Baidu:
-    parameters: 
+    parameters:
       - wd
       - word
       - kw
@@ -571,7 +571,7 @@ search:
       - web.gougou.com
 
   Biglobe:
-    parameters: 
+    parameters:
       - q
     domains:
       - cgi.search.biglobe.ne.jp
@@ -865,7 +865,7 @@ search:
       - Keywords
     domains:
       - suche.freenet.de
-  
+
   Freshweather:
     parameters:
       - q
@@ -2581,7 +2581,7 @@ search:
       - www.highbeam.com
 
   Hit-Parade:
-    parameters: 
+    parameters:
       - p7
     domains:
       - req.-hit-parade.com
@@ -2803,7 +2803,7 @@ search:
       - www.meinestadt.de
 
   Mister Wong:
-    parameters: 
+    parameters:
       - Keywords
     domains:
       - www.mister-wong.com
@@ -2859,6 +2859,13 @@ search:
       - query
     domains:
       - search.naver.com
+
+  Naver Images:
+    parameters:
+      - query
+    domains:
+      - image.search.naver.com
+      - imagesearch.naver.com
 
   Needtofind:
     parameters:
@@ -2946,7 +2953,7 @@ search:
       - www.pricerunner.co.uk
 
   qip:
-    parameters: 
+    parameters:
       - query
     domains:
       - search.qip.ru
@@ -2967,7 +2974,7 @@ search:
       - websearch.rakuten.co.jp
 
   Rambler:
-    parameters: 
+    parameters:
      - query
      - words
     domains:
@@ -3100,7 +3107,7 @@ search:
       - www.talktalk.co.uk
 
   Technorati:
-    parameters: 
+    parameters:
       - q
     domains:
       - technorati.com
@@ -3231,7 +3238,7 @@ search:
       - www.walhello.nl
 
   Web.de:
-    parameters: 
+    parameters:
       - su
     domains:
       - suche.web.de
@@ -3385,7 +3392,7 @@ search:
   Yasni:
     parameters:
       - query
-    domains: 
+    domains:
       - www.yasni.de
       - www.yasni.com
       - www.yasni.co.uk
@@ -3398,7 +3405,7 @@ search:
     domains:
       - www.yatedo.com
       - www.yatedo.fr
-    
+
   # Add Yellowmap:
 
   Yippy:
