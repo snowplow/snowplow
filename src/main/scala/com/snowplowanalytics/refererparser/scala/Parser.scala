@@ -17,12 +17,14 @@
 package com.snowplowanalytics.refererparser.scala
 
 // Java
-import java.util.{List => JavaList}
 import java.net.{URI, URISyntaxException}
 
 // RefererParser Java impl
 import com.snowplowanalytics.refererparser.{Parser => JParser}
 import com.snowplowanalytics.refererparser.{Medium => JMedium}
+
+// Scala
+import scala.collection.JavaConversions._ 
 
 /**
  * Enumeration for supported mediums.
@@ -126,12 +128,7 @@ object Parser {
   def parse(refererUri: URI, pageHost: String, internalDomains: List[String]): MaybeReferer = {
     
     try {
-
-      // Convert from a Scala list to a Java list
-      val javaInternalDomains = new java.util.ArrayList[String](internalDomains.size)
-      internalDomains.foreach (javaInternalDomains.add(_))
-
-      val jrefr = Option(jp.parse(refererUri, pageHost, javaInternalDomains))
+      val jrefr = Option(jp.parse(refererUri, pageHost, internalDomains))
       jrefr.map(jr =>
         Referer(Medium.fromJava(jr.medium), Option(jr.source), Option(jr.term))
       )
