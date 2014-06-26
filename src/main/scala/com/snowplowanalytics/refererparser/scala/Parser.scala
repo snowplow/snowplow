@@ -86,26 +86,48 @@ object Parser {
    * URI to return either Some Referer, or None.
    */
   def parse(refererUri: URI, pageUri: URI): MaybeReferer =
-    parse(refererUri, getHostSafely(pageUri));
+    parse(refererUri, getHostSafely(pageUri), Nil);
+
+  /**
+   * Parses a `refererUri` UR and a `pageUri`
+   * URI to return either Some Referer, or None.
+   */
+  def parse(refererUri: URI, pageUri: URI, internalDomains: List[String]): MaybeReferer =
+    parse(refererUri, getHostSafely(pageUri), internalDomains);
 
   /**
    * Parses a `refererUri` String and a `pageUri`
    * URI to return either Some Referer, or None.
    */
   def parse(refererUri: String, pageUri: URI): MaybeReferer =
-    parse(refererUri, getHostSafely(pageUri));
+    parse(refererUri, getHostSafely(pageUri), Nil);
+
+  /**
+   * Parses a `refererUri` String and a `pageUri`
+   * URI to return either Some Referer, or None.
+   */
+  def parse(refererUri: String, pageUri: URI, internalDomains: List[String]): MaybeReferer =
+    parse(refererUri, getHostSafely(pageUri), internalDomains);
 
   /**
    * Parses a `refererUri` String and a `pageUri`
    * URI to return either some Referer, or None.
    */
   def parse(refererUri: String, pageHost: String): MaybeReferer = {
+    parse(refererUri, pageHost, Nil)
+  }
+
+  /**
+   * Parses a `refererUri` String and a `pageUri`
+   * URI to return either some Referer, or None.
+   */
+  def parse(refererUri: String, pageHost: String, internalDomains: List[String]): MaybeReferer = {
 
     if (refererUri == null || refererUri == "") {
       None
     } else {
       try {
-        parse(new URI(refererUri), pageHost)
+        parse(new URI(refererUri), pageHost, internalDomains)
       } catch {
         case use: URISyntaxException => None
       }
@@ -117,7 +139,7 @@ object Parser {
    * either Some Referer, or None.
    */
   def parse(refererUri: URI, pageHost: String): MaybeReferer = {
-    parse(refererUri, pageHost, List[String]())
+    parse(refererUri, pageHost, Nil)
 }
 
 
