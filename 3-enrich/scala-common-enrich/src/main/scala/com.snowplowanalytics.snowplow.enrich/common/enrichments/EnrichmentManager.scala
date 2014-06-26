@@ -274,10 +274,15 @@ object EnrichmentManager {
       event.refr_urlfragment = components.fragment.orNull
 
       // Set the referrer details
-      for (refr <- WAE.extractRefererDetails(u, event.page_urlhost)) {
-        event.refr_medium = refr.medium.toString
-        event.refr_source = refr.source.orNull
-        event.refr_term = refr.term.orNull
+      registry.getRefererParserEnrichment match {
+        case Some(rp) => {
+          for (refr <- rp.extractRefererDetails(u, event.page_urlhost)) {
+            event.refr_medium = refr.medium.toString
+            event.refr_source = refr.source.orNull
+            event.refr_term = refr.term.orNull
+          }
+        }
+        case None => unitSuccess
       }
     }
 

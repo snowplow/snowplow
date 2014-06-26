@@ -205,7 +205,18 @@ object JobSpecHelpers {
                     |"maxmindUri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
                   |}
                 |}  
-              |}
+              |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics",
+                  |"name": "referer_parser",
+                  |"enabled": true,
+                  |"parameters": {
+                    |"internalDomains": []
+                  |}
+                |}  
+              |}              
             |]
           |}""".format(anonOctetsEnabled, anonOctets).stripMargin.replaceAll("[\n\r]","").getBytes
       )

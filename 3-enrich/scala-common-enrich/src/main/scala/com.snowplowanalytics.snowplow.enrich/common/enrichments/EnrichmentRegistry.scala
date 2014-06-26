@@ -39,7 +39,8 @@ import iglu.client.validation.ValidatableJsonNode
 import registry.{
   Enrichment,
   AnonIpEnrichment,
-  IpToGeoEnrichment
+  IpToGeoEnrichment,
+  RefererParserEnrichment
 }
 import utils.ScalazJson4sUtils
 
@@ -117,6 +118,8 @@ object EnrichmentRegistry {
             IpToGeoEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
           } else if (nm == "anon_ip") {
             AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "referer_parser") {
+            RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)            
           } else {
             None.success // Enrichment is not recognized yet
           }
@@ -158,6 +161,16 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getIpToGeoEnrichment: Option[IpToGeoEnrichment] = 
     getEnrichment[IpToGeoEnrichment]("ip_to_geo")
+
+
+  /**
+   * Returns an Option boxing the RefererParserEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the RefererParserEnrichment instance
+   */
+  def getRefererParserEnrichment: Option[RefererParserEnrichment] = 
+    getEnrichment[RefererParserEnrichment]("referer_parser")
 
   /**
    * Returns an Option boxing an Enrichment
