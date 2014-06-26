@@ -58,23 +58,62 @@ unknown:
 
 email:
 
+  126 Mail:
+    domains:
+      - mail.126.com
+
+  163 Mail:
+    domains:
+      - mail.163.com
+  
+  AOL Mail:
+    domains:
+      - mail.aol.com
+  
+  Bigpond:
+    domains:
+      - webmail.bigpond.com
+      - webmail2.bigpond.com
+  
+  Daum Mail:
+    domains:
+      - mail2.daum.net
+
   Gmail:
     domains:
       - mail.google.com
 
+  Naver Mail:
+    domains:
+      - mail.naver.com
+
+  Optus Zoo:
+    domains:
+      - webmail.optuszoo.com.au  
+  
+  Orange Webmail:
+    domains:
+      - orange.fr/webmail
+  
   Outlook.com:
     domains:
       - mail.live.com
 
+  QQ Mail:
+    domains:
+      - mail.qq.com  
+  
+  Seznam Mail:
+    domains:
+      - email.seznam.cz  
+  
   Yahoo! Mail:
     domains:
       - mail.yahoo.net
       - mail.yahoo.com
       - mail.yahoo.co.uk
-
-  Orange Webmail:
-    domains:
-      - orange.fr/webmail
+      - mail.yahoo.co.jp
+  
 
 # #######################################################################################################
 #
@@ -356,6 +395,13 @@ social:
       - weibo.com
       - t.cn
 
+  Delicious:
+    domains:
+      - delicious.com
+
+  Pocket:
+    domains:
+      - getpocket.com
 
 # #######################################################################################################
 #
@@ -376,6 +422,13 @@ search:
       - su
     domains:
       - search.1und1.de
+
+  360.cn:
+    parameters:
+      - q
+    domains:
+      - so.360.cn
+      - www.so.com
 
   Abacho:
     parameters:
@@ -404,7 +457,7 @@ search:
       - begriff
     domains:
       - www.acoon.de
-
+  
   Alexa:
     parameters:
       - q
@@ -441,12 +494,14 @@ search:
       - altavista.fr
       - be-nl.altavista.com
       - be-fr.altavista.com
+
   Amazon:
     parameters:
       - keywords
     domains:
       - amazon.com
       - www.amazon.com
+  
   AOL:
     parameters:
       - q
@@ -646,6 +701,12 @@ search:
       - serach.centrum.cz
       - morfeo.centrum.cz
 
+  Certified-Toolbar:
+    parameters:
+      - q
+    domains:
+      - search.certified-toolbar.com
+  
   Charter:
     parameters:
       - q
@@ -658,6 +719,12 @@ search:
     domains:
       - pesquisa.clix.pt
 
+  Comcast:
+    parameters:
+      - q
+    domains:
+      - search.comcast.net
+  
   Conduit:
     parameters:
       - q
@@ -826,6 +893,12 @@ search:
     domains:
       - recherche.francite.com
 
+  Findwide:
+    parameters:
+      - k
+    domains:
+      - search.findwide.com
+  
   Fireball:
     parameters:
       - q
@@ -903,6 +976,12 @@ search:
     domains:
       - geona.net
 
+  Genieo:
+    parameters:
+      - q
+    domains:
+      - search.genieo.com
+  
   Gigablast:
     parameters:
       - q
@@ -910,6 +989,13 @@ search:
       - www.gigablast.com
       - dir.gigablast.com
 
+  Globososo:
+    parameters:
+      - q
+    domains:
+      - searches.globososo.com
+      - search.globososo.com
+  
   GMX:
     parameters:
       - su
@@ -2995,8 +3081,7 @@ search:
 
   RPMFind:
     parameters:
-      - rpmfind.net
-      - fr2.rpmfind.net
+      - query
     domains:
       - rpmfind.net
       - fr2.rpmfind.net
@@ -3083,6 +3168,12 @@ search:
     domains:
       - www.soso.com
 
+  Snapdo:
+    parameters:
+      - q
+    domains:
+      - search.snapdo.com
+  
   Startpagina:
     parameters:
       - q

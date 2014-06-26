@@ -76,14 +76,22 @@
                 "p"
             ]
         }, 
+        "360.cn": {
+            "domains": [
+                "so.360.cn", 
+                "www.so.com"
+            ], 
+            "parameters": [
+                "q"
+            ]
+        }, 
         "RPMFind": {
             "domains": [
                 "rpmfind.net", 
                 "fr2.rpmfind.net"
             ], 
             "parameters": [
-                "rpmfind.net", 
-                "fr2.rpmfind.net"
+                "query"
             ]
         }, 
         "Comcast": {
@@ -1308,6 +1316,14 @@
                 "query"
             ]
         }, 
+        "Blogdigger": {
+            "domains": [
+                "www.blogdigger.com"
+            ], 
+            "parameters": [
+                "q"
+            ]
+        }, 
         "Startpagina": {
             "domains": [
                 "startgoogle.startpagina.nl"
@@ -1406,14 +1422,6 @@
             ], 
             "parameters": [
                 "searchfor"
-            ]
-        }, 
-        "Aport": {
-            "domains": [
-                "sm.aport.ru"
-            ], 
-            "parameters": [
-                "r"
             ]
         }, 
         "Trusted-Search": {
@@ -1624,6 +1632,15 @@
                 "q"
             ]
         }, 
+        "Globososo": {
+            "domains": [
+                "searches.globososo.com", 
+                "search.globososo.com"
+            ], 
+            "parameters": [
+                "q"
+            ]
+        }, 
         "WWW": {
             "domains": [
                 "search.www.ee"
@@ -1733,12 +1750,12 @@
                 "q"
             ]
         }, 
-        "Blogdigger": {
+        "Findwide": {
             "domains": [
-                "www.blogdigger.com"
+                "search.findwide.com"
             ], 
             "parameters": [
-                "q"
+                "k"
             ]
         }, 
         "WebSearch": {
@@ -1833,6 +1850,14 @@
         "Zoeken": {
             "domains": [
                 "www.zoeken.nl"
+            ], 
+            "parameters": [
+                "q"
+            ]
+        }, 
+        "Startsiden": {
+            "domains": [
+                "www.startsiden.no"
             ], 
             "parameters": [
                 "q"
@@ -2183,6 +2208,14 @@
         "AllTheWeb": {
             "domains": [
                 "www.alltheweb.com"
+            ], 
+            "parameters": [
+                "q"
+            ]
+        }, 
+        "Snapdo": {
+            "domains": [
+                "search.snapdo.com"
             ], 
             "parameters": [
                 "q"
@@ -2573,6 +2606,14 @@
                 "query"
             ]
         }, 
+        "Certified-Toolbar": {
+            "domains": [
+                "search.certified-toolbar.com"
+            ], 
+            "parameters": [
+                "q"
+            ]
+        }, 
         "Yahoo!": {
             "domains": [
                 "search.yahoo.com", 
@@ -2663,12 +2704,12 @@
                 "Keywords"
             ]
         }, 
-        "Startsiden": {
+        "Aport": {
             "domains": [
-                "www.startsiden.no"
+                "sm.aport.ru"
             ], 
             "parameters": [
-                "q"
+                "r"
             ]
         }, 
         "Web.de": {
@@ -3525,6 +3566,14 @@
                 "q"
             ]
         }, 
+        "Genieo": {
+            "domains": [
+                "search.genieo.com"
+            ], 
+            "parameters": [
+                "q"
+            ]
+        }, 
         "Tiscali": {
             "domains": [
                 "search.tiscali.it", 
@@ -3546,9 +3595,58 @@
         }
     }, 
     "email": {
+        "Bigpond": {
+            "domains": [
+                "webmail.bigpond.com", 
+                "webmail2.bigpond.com"
+            ]
+        }, 
+        "Naver Mail": {
+            "domains": [
+                "mail.naver.com"
+            ]
+        }, 
+        "Optus Zoo": {
+            "domains": [
+                "webmail.optuszoo.com.au"
+            ]
+        }, 
+        "Seznam Mail": {
+            "domains": [
+                "email.seznam.cz"
+            ]
+        }, 
+        "126 Mail": {
+            "domains": [
+                "mail.126.com"
+            ]
+        }, 
         "Outlook.com": {
             "domains": [
                 "mail.live.com"
+            ]
+        }, 
+        "AOL Mail": {
+            "domains": [
+                "mail.aol.com"
+            ]
+        }, 
+        "Daum Mail": {
+            "domains": [
+                "mail2.daum.net"
+            ]
+        }, 
+        "Yahoo! Mail": {
+            "domains": [
+                "mail.yahoo.net", 
+                "mail.yahoo.com", 
+                "mail.yahoo.co.uk", 
+                "mail.yahoo.co.jp"
+            ]
+        }, 
+        "163 Mail": {
+            "domains": [
+                "mail.163.com"
             ]
         }, 
         "Orange Webmail": {
@@ -3556,11 +3654,9 @@
                 "orange.fr/webmail"
             ]
         }, 
-        "Yahoo! Mail": {
+        "QQ Mail": {
             "domains": [
-                "mail.yahoo.net", 
-                "mail.yahoo.com", 
-                "mail.yahoo.co.uk"
+                "mail.qq.com"
             ]
         }, 
         "Gmail": {
@@ -3793,6 +3889,11 @@
                 "global.cyworld.com"
             ]
         }, 
+        "Pocket": {
+            "domains": [
+                "getpocket.com"
+            ]
+        }, 
         "Skyrock": {
             "domains": [
                 "skyrock.com"
@@ -3823,6 +3924,11 @@
         "Nasza-klasa.pl": {
             "domains": [
                 "nk.pl"
+            ]
+        }, 
+        "Qzone": {
+            "domains": [
+                "qzone.qq.com"
             ]
         }, 
         "Douban": {
@@ -3891,9 +3997,9 @@
                 "news.ycombinator.com"
             ]
         }, 
-        "Qzone": {
+        "Delicious": {
             "domains": [
-                "qzone.qq.com"
+                "delicious.com"
             ]
         }, 
         "Hyves": {
