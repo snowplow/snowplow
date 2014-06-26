@@ -24,6 +24,7 @@ import Scalaz._
 import org.json4s.{
   DefaultFormats,
   JValue,
+  JString,
   MappingException
 }
 import org.json4s.JsonDSL._
@@ -85,5 +86,24 @@ object ScalazJson4sUtils {
       field.foldLeft(config)(_ \ _).extract[Boolean].success 
     } catch {
       case me: MappingException => s"Could not extract %s as Boolean from supplied JSON".format(field.toList.mkString(".")).toProcessingMessage.fail
-    }    
+    }
+
+  /**
+   * Returns a List[String] field at the end of a JSON path.
+   *
+   * @param JValue The JSON from which the list is
+   *        to be extracted
+   * @param field NonEmptyList containing the Strings
+   *        which make up the path
+   * @return the list extracted from the JSON on
+   *         success or an error String on failure
+   */
+  def extractListString(config: JValue, field: NonEmptyList[String]): ValidatedMessage[List[String]] =
+    try {
+      (for {
+        JString(rawString) <- field.foldLeft(config)(_ \ _).extract[List[JString]]
+      } yield rawString).success
+    } catch {
+      case me: MappingException => s"Could not extract %s as List[String] from supplied JSON".format(field.toList.mkString(".")).toProcessingMessage.fail
+    }
 }
