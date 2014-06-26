@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Collections;
 
 // SnakeYAML
 import org.yaml.snakeyaml.Yaml;
@@ -107,8 +108,12 @@ public class Parser {
   }
 
   public Referer parse(URI refererUri, String pageHost) {
+    return parse(refererUri, pageHost, Collections.<String>emptyList());
+  }
+
+  public Referer parse(URI refererUri, String pageHost, List<String> internalDomains) {
     if (refererUri == null) { return null; }
-    return parse(refererUri.getScheme(), refererUri.getHost(), refererUri.getPath(), refererUri.getRawQuery(), pageHost);
+    return parse(refererUri.getScheme(), refererUri.getHost(), refererUri.getPath(), refererUri.getRawQuery(), pageHost, internalDomains);
   }
   
   public Referer parse(URL refererUrl, String pageHost){
@@ -117,6 +122,10 @@ public class Parser {
   }
   
   private Referer parse(String scheme, String host, String path, String query, String pageHost){
+    return parse(scheme, host, path, query, pageHost, Collections.<String>emptyList());
+  }
+
+  private Referer parse(String scheme, String host, String path, String query, String pageHost, List<String> internalDomains){
 
     if (scheme == null || (!scheme.equals("http") && !scheme.equals("https"))) return null;
 
@@ -126,6 +135,10 @@ public class Parser {
     // 2. Have an algo for stripping subdomains before checking match
     if (host == null) return null; // Not a valid URL
     if (host.equals(pageHost)) return new Referer(Medium.INTERNAL, null, null);
+    for (String s : internalDomains) {
+      if (s.trim().equals(host))
+        return new Referer(Medium.INTERNAL, null, null);
+    }
 
     // Try to lookup our referer. First check with paths, then without.
     // This is the safest way of handling lookups

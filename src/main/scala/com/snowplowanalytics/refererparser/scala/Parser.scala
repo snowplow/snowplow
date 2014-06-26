@@ -17,6 +17,7 @@
 package com.snowplowanalytics.refererparser.scala
 
 // Java
+import java.util.{List => JavaList}
 import java.net.{URI, URISyntaxException}
 
 // RefererParser Java impl
@@ -114,9 +115,23 @@ object Parser {
    * either Some Referer, or None.
    */
   def parse(refererUri: URI, pageHost: String): MaybeReferer = {
+    parse(refererUri, pageHost, List[String]())
+}
+
+
+  /**
+   * Parses a `refererUri` URI to return
+   * either Some Referer, or None.
+   */
+  def parse(refererUri: URI, pageHost: String, internalDomains: List[String]): MaybeReferer = {
     
     try {
-      val jrefr = Option(jp.parse(refererUri, pageHost))
+
+      // Convert from a Scala list to a Java list
+      val javaInternalDomains = new java.util.ArrayList[String](internalDomains.size)
+      internalDomains.foreach (javaInternalDomains.add(_))
+
+      val jrefr = Option(jp.parse(refererUri, pageHost, javaInternalDomains))
       jrefr.map(jr =>
         Referer(Medium.fromJava(jr.medium), Option(jr.source), Option(jr.term))
       )
