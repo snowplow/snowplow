@@ -12,7 +12,7 @@
 |---------------------------|----------------------------------------------------------------|------------------|
 | [javascript-tracker] [t1] | A client-side JavaScript tracker for web browser use           | Production-ready |
 | [no-js-tracker] [t2]      | A pixel-based tracker for no-JavaScript web environments       | Production-ready |
-| [python-tracker] [t3]     | An event tracker for Python and Django webapps, apps and games | Beta             |
+| [python-tracker] [t3]     | An event tracker for Python and Django webapps, apps and games | Production-ready |
 | [ruby-tracker] [t4]       | An event tracker for Ruby and Rails apps and gems              | Beta             |
 | [java-tracker] [t5]       | An event tracker for Java-based desktop and server apps, servlets and games | Beta |
 | [arduino-tracker] [t6]    | An event tracker for IP-connected Arduino boards               | Production-ready |
