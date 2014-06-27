@@ -40,4 +40,4 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_ad_impression_1 (
 DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
-SORTKEY (root_tstamp, root_id);
+SORTKEY (root_tstamp);
