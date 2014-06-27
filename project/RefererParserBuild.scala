@@ -38,11 +38,8 @@ object RefererParserBuild extends Build {
         Libraries.scalaCheck,
         Libraries.scalaUtil,
         Libraries.junit,
-        Libraries.json,
-        Libraries.jacksonDatabind,
-        Libraries.jsonValidator,        
-        Libraries.json4sJackson,
-        Libraries.json4sScalaz        
+        Libraries.json,      
+        Libraries.json4sJackson
       )
     )
 }

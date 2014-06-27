@@ -31,8 +31,6 @@ object Dependencies {
     val junit      = "4.11"
     val json       = "20140107"
     val json4s     = "3.2.11-SNAPSHOT"
-    val jacksonDatabind  = "2.2.3"
-    val jsonValidator = "2.2.3" 
   }
 
   object Libraries {
@@ -45,7 +43,5 @@ object Dependencies {
     val scalaUtil     = "com.snowplowanalytics"      %  "scala-util"           % V.scalaUtil   % "test"
     val json4sJackson = "org.json4s"                %% "json4s-jackson"        % V.json4s      % "test"
     val json4sScalaz  = "org.json4s"                %% "json4s-scalaz"         % V.json4s      % "test"
-    val jacksonDatabind  = "com.fasterxml.jackson.core" % "jackson-databind"          % V.jacksonDatabind    
-    val jsonValidator    = "com.github.fge"            % "json-schema-validator"      % V.jsonValidator        
   }
 }

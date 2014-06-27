@@ -33,9 +33,7 @@ import org.json.JSONArray;
 */
 
 // json4s
-import org.json4s.scalaz.JsonScalaz._
 import org.json4s._
-import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 // Specs2
