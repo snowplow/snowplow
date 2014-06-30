@@ -20,6 +20,9 @@ package registry
 // Java
 import java.net.URI
 
+// Maven Artifact
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -104,6 +107,8 @@ case class IpToGeoEnrichment(
   database: String,
   localMode: Boolean
   ) extends Enrichment {
+
+  val version = new DefaultArtifactVersion("0.1.0")
 
   // Checked in Hadoop Enrich to decide whether to copy to
   // the Hadoop dist cache or not

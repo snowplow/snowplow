@@ -37,7 +37,8 @@ object Dependencies {
     val yodaConvert      = "1.2"
     val useragent        = "1.11"
     val jacksonDatabind  = "2.2.3"
-    val jsonValidator    = "2.2.3"    
+    val jsonValidator    = "2.2.3"
+    val mavenArtifact    = "3.2.2" 
     // Scala
     val scalaz7          = "7.0.0"
     val argonaut         = "6.0.3"
@@ -60,28 +61,29 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val httpClient       = "org.apache.httpcomponents" %  "httpclient"                % V.http
-    val commonsLang      = "org.apache.commons"        %  "commons-lang3"             % V.commonsLang
-    val commonsIo        = "commons-io"                %  "commons-io"                % V.commonsIo
-    val yodaTime         = "joda-time"                 %  "joda-time"                 % V.yodaTime
-    val yodaConvert      = "org.joda"                  %  "joda-convert"              % V.yodaConvert
-    val useragent        = "bitwalker"                 %  "UserAgentUtils"            % V.useragent
-    val jacksonDatabind  = "com.fasterxml.jackson.core" % "jackson-databind"          % V.jacksonDatabind
-    val jsonValidator    = "com.github.fge"            % "json-schema-validator"      % V.jsonValidator    
+    val httpClient       = "org.apache.httpcomponents"  %  "httpclient"                % V.http
+    val commonsLang      = "org.apache.commons"         %  "commons-lang3"             % V.commonsLang
+    val commonsIo        = "commons-io"                 %  "commons-io"                % V.commonsIo
+    val yodaTime         = "joda-time"                  %  "joda-time"                 % V.yodaTime
+    val yodaConvert      = "org.joda"                   %  "joda-convert"              % V.yodaConvert
+    val useragent        = "bitwalker"                  %  "UserAgentUtils"            % V.useragent
+    val jacksonDatabind  = "com.fasterxml.jackson.core" %  "jackson-databind"          % V.jacksonDatabind
+    val jsonValidator    = "com.github.fge"             %  "json-schema-validator"     % V.jsonValidator    
+    val mavenArtifact    = "org.apache.maven"           %  "maven-artifact"            % V.mavenArtifact
     // Scala
-    val scalaz7          = "org.scalaz"                %% "scalaz-core"               % V.scalaz7
-    val argonaut         = "io.argonaut"               %% "argonaut"                  % V.argonaut
-    val snowplowRawEvent = "com.snowplowanalytics"     %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
-    val scalaUtil        = "com.snowplowanalytics"     %  "scala-util"                % V.scalaUtil
-    val refererParser    = "com.snowplowanalytics"     %  "referer-parser"            % V.refererParser
-    val maxmindGeoip     = "com.snowplowanalytics"     %% "scala-maxmind-geoip"       % V.maxmindGeoip
-    val json4sJackson    = "org.json4s"                %% "json4s-jackson"            % V.json4s
-    val json4sScalaz     = "org.json4s"                %% "json4s-scalaz"             % V.json4s    
-    val igluClient       = "com.snowplowanalytics"     %% "iglu-scala-client"         % V.igluClient
+    val scalaz7          = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
+    val argonaut         = "io.argonaut"                %% "argonaut"                  % V.argonaut
+    val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
+    val scalaUtil        = "com.snowplowanalytics"      %  "scala-util"                % V.scalaUtil
+    val refererParser    = "com.snowplowanalytics"      %  "referer-parser"            % V.refererParser
+    val maxmindGeoip     = "com.snowplowanalytics"      %% "scala-maxmind-geoip"       % V.maxmindGeoip
+    val json4sJackson    = "org.json4s"                 %% "json4s-jackson"            % V.json4s
+    val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s    
+    val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"         % V.igluClient
     // Scala (test only)
-    val specs2           = "org.specs2"                %% "specs2"                    % V.specs2         % "test"
-    val scalazSpecs2     = "org.typelevel"             %% "scalaz-specs2"             % V.scalazSpecs2   % "test"
-    val scalaCheck       = "org.scalacheck"            %% "scalacheck"                % V.scalaCheck     % "test"
-    val commonsCodec     = "commons-codec"             %  "commons-codec"             % V.commonsCodec   % "test"
+    val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"
+    val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"
+    val scalaCheck       = "org.scalacheck"             %% "scalacheck"                % V.scalaCheck     % "test"
+    val commonsCodec     = "commons-codec"              %  "commons-codec"             % V.commonsCodec   % "test"
   }
 }

@@ -39,7 +39,8 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.commonsIo,
         Libraries.useragent,
         Libraries.jacksonDatabind,
-        Libraries.jsonValidator,        
+        Libraries.jsonValidator,  
+        Libraries.mavenArtifact,      
         // Scala
         Libraries.scalaz7,
         Libraries.argonaut,

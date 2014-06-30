@@ -14,7 +14,7 @@ Scala Hadoop Enrich: removed event_vendor and ue_name and renamed ue_properties 
 Scala Hadoop Enrich: removed %3D handling for compatibility with old Scalding Args (#850) 
 Scala Common Enrich: bumped to 0.5.0                                                    - TODO (currently -SNAPSHOT)
 Scala Common Enrich: bumped user-agent-utils version, thanks @pkallos! (#662)
-Scala Common Enrich: bumped referer-parser to 0.3.0 (#864)                              - TODO
+Scala Common Enrich: bumped referer-parser to 0.3.0 (#864)                              - TODO (currently -SNAPSHOT)
 Scala Common Enrich: stored etl_tstamp in new field in CanonicalOutput (#818)
 Scala Common Enrich: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#836)
 Scala Common Enrich: made referer parsing configurable with list of internal domains (#857)
@@ -28,7 +28,7 @@ Redshift: bumped table-def to 0.4.0
 Redshift: added etl_tstamp to atomic.events (#819)
 Redshift: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#834)
 Redshift: migration script added for 0.3.0 to 0.4.0 (#838)
-Redshift: fixed sortkeys for atomic.events (#844)                                       - TODO by Alex
+Redshift: fixed sortkeys for atomic.events (#844)
 Postgres: bumped table-def to 0.3.0
 Postgres: added etl_tstamp to atomic.events (#820)
 Postgres: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#833)

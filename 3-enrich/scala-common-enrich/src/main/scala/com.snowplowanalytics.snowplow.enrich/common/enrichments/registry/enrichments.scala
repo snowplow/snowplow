@@ -21,6 +21,9 @@ package registry
 import scalaz._
 import Scalaz._
 
+// Maven Artifact
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion
+
 // json4s
 import org.json4s.JValue
 
@@ -34,7 +37,9 @@ import utils.ScalazJson4sUtils
 /**
  * Trait inherited by every enrichment config case class
  */
-trait Enrichment
+trait Enrichment {
+  val version: DefaultArtifactVersion
+}
 
 /**
  * Trait to hold helpers relating to enrichment config

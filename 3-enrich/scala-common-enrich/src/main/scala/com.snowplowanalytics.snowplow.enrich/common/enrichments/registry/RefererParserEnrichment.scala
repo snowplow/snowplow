@@ -20,6 +20,9 @@ package registry
 // Java
 import java.net.URI
 
+// Maven Artifact
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -76,6 +79,8 @@ object RefererParserEnrichment extends ParseableEnrichment {
 case class RefererParserEnrichment(
   domains: List[String]
   ) extends Enrichment {
+
+  val version = new DefaultArtifactVersion("0.1.0")
 
   /**
    * A Scalaz Lens to update the term within

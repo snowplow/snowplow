@@ -17,6 +17,10 @@ package common
 package enrichments
 package registry
 
+// Maven Artifact
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion
+
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -101,6 +105,8 @@ object AnonOctets extends Enumeration {
 case class AnonIpEnrichment(
   octets: AnonOctets.AnonOctets
   ) extends Enrichment {
+
+  val version = new DefaultArtifactVersion("0.1.0")
 
   /**
    * Anonymize the supplied IP address.
