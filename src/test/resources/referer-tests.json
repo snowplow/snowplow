@@ -79,7 +79,7 @@
         "term": "pendulums",
         "known": true
     },
-	{
+    {
         "spec": "AOL search.com",
         "uri": "http://www.aolsearch.com/search?s_pt=hp&s_gl=NL&query=voorbeeld+cv+competenties&invocationType=tb50hpcnnbie7-nl-nl",
         "medium": "search",
@@ -119,9 +119,9 @@
         "term": "CARA MEMASAK CUMI CUMI",
         "known": true
     },
-	{
+    {
         "spec": "Ask toolbar search #2",
-        "uri": "http://search.tb.ask.com/search/GGmain.jhtml?&st=hp&p2=^ZU^xdm458^YYA^us&n=77fda1bd&ptb=F0B68CA5-4791-4376-BFCC-5F0100329FB6&si=CMKg9-nX07oCFSjZQgodcikACQ&tpr=hpsbsug&searchfor=test",
+        "uri": "http://search.tb.ask.com/search/GGmain.jhtml?&st=hp&p2=%5EZU%5Exdm458%5EYYA%5Eus&n=77fda1bd&ptb=F0B68CA5-4791-4376-BFCC-5F0100329FB6&si=CMKg9-nX07oCFSjZQgodcikACQ&tpr=hpsbsug&searchfor=test",
         "medium": "search",
         "source": "Ask Toolbar",
         "term": "test",
@@ -129,7 +129,7 @@
     },
     {
         "spec": "Voila search",
-        "uri": "http://lemoteur.ke.voila.fr/?module=voila&bhv=web_fr&kw=test",
+        "uri": "http://search.ke.voila.fr/?module=voila&bhv=web_fr&kw=test",
         "medium": "search",
         "source": "Voila",
         "term": "test",
@@ -142,7 +142,7 @@
         "source": "Dalesearch",
         "term": " lego.nl /club",
         "known": true
-    },	
+    },  
     {
         "spec": "Twitter redirect",
         "uri": "http://t.co/chrgFZDb",
@@ -230,5 +230,21 @@
         "source": null,
         "term": null,
         "known": false
-    }
+    },
+    {
+        "spec": "Internal subdomain HTTP",
+        "uri": "http://www.subdomain1.snowplowanalytics.com/account/profile",
+        "medium": "internal",
+        "source": null,
+        "term": null,
+        "known": false
+    },
+    {
+        "spec": "Internal subdomain HTTPS",
+        "uri": "http://www.subdomain2.snowplowanalytics.com/account/profile",
+        "medium": "internal",
+        "source": null,
+        "term": null,
+        "known": false
+    }           
 ]
