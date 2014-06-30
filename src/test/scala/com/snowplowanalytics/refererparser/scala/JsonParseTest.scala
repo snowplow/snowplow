@@ -16,22 +16,6 @@
 
 package com.snowplowanalytics.refererparser.scala
 
-// Java
-import java.net.URI
-import java.io.IOException;
-import java.net.URL;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-
-// JSON
-/*
-import org.json.JSONException;
-import org.json.JSONTokener;
-import org.json.JSONObject;
-import org.json.JSONArray;
-*/
-
 // json4s
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
