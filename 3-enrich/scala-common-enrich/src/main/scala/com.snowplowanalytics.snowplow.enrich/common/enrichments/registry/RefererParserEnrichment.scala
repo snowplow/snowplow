@@ -68,12 +68,12 @@ object RefererParserEnrichment extends ParseableEnrichment {
 
 }
 
-  /**
-   * Config for a referer_parser enrichment
-   *
-   * @param domains List of internal domains
-   */
-  case class RefererParserEnrichment(
+/**
+ * Config for a referer_parser enrichment
+ *
+ * @param domains List of internal domains
+ */
+case class RefererParserEnrichment(
   domains: List[String]
   ) extends Enrichment {
 
@@ -99,7 +99,7 @@ object RefererParserEnrichment extends ParseableEnrichment {
    */
   def extractRefererDetails(uri: URI, pageHost: String): Option[Referer] = {
     for {
-      r <- RefererParser.parse(uri, pageHost)
+      r <- RefererParser.parse(uri, pageHost, domains)
       t = r.term.flatMap(t => CU.fixTabsNewlines(t))
     } yield termLens.set(r, t)
   }

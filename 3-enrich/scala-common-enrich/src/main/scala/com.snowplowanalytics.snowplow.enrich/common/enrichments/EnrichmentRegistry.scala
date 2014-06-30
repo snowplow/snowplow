@@ -71,9 +71,9 @@ object EnrichmentRegistry {
     // Check schema, validate against schema, convert to List[JValue]
     val enrichments: ValidatedNelMessage[List[JValue]] = for {
         d <- asJsonNode(node).verifySchemaAndValidate(EnrichmentConfigSchemaKey, true)
-      } yield (for {
-        JArray(arr) <- fromJsonNode(d)
-      } yield arr).flatten
+      } yield (fromJsonNode(d) match {
+        case JArray(x) => x
+      })
 
     // Check each enrichment validates against its own schema
     val configs: ValidatedNelMessage[EnrichmentMap] = (for {

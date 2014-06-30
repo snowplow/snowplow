@@ -33,7 +33,7 @@ import org.json4s.jackson.JsonMethods._
 import com.twitter.scalding.Args
 
 // Iglu
-import iglu.client._
+import iglu.client.Resolver
 import iglu.client.validation.ProcessingMessageMethods._
 
 // Snowplow Common Enrich

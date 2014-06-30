@@ -83,7 +83,7 @@ object Sep2013CfLineSpec {
     null,
     "search", // Search referer
     "Google",
-    null, // Note this should be "www.psychicbazaar.com 312-dreaming-way-tarot"
+    "www.psychicbazaar.com 312-dreaming-way-tarot",
     "cpc",
     "GoogleSearch",
     "rome choi tarot",

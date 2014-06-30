@@ -186,7 +186,7 @@ object JobSpecHelpers {
               |{
                 |"schema": "iglu:com.snowplowanalytics.snowplow/anon_ip/jsonschema/1-0-0",
                 |"data": {
-                  |"vendor": "com.snowplowanalytics",
+                  |"vendor": "com.snowplowanalytics.snowplow",
                   |"name": "anon_ip",
                   |"enabled": %s,
                   |"parameters": {
@@ -197,7 +197,7 @@ object JobSpecHelpers {
               |{
                 |"schema": "iglu:com.snowplowanalytics.snowplow/ip_to_geo/jsonschema/1-0-0",
                 |"data": {
-                  |"vendor": "com.snowplowanalytics",
+                  |"vendor": "com.snowplowanalytics.snowplow",
                   |"name": "ip_to_geo",
                   |"enabled": true,
                   |"parameters": {
@@ -209,11 +209,11 @@ object JobSpecHelpers {
               |{
                 |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
                 |"data": {
-                  |"vendor": "com.snowplowanalytics",
+                  |"vendor": "com.snowplowanalytics.snowplow",
                   |"name": "referer_parser",
                   |"enabled": true,
                   |"parameters": {
-                    |"internalDomains": []
+                    |"internalDomains": ["www.subdomain1.snowplowanalytics.com"]
                   |}
                 |}  
               |}              
@@ -228,7 +228,6 @@ object JobSpecHelpers {
       arg("output_folder", "outputFolder").
       arg("bad_rows_folder", "badFolder").
       arg("etl_tstamp", "1000000000000").      
-      //arg("exceptions_folder", "exceptionsFolder").
       arg("iglu_config", IgluConfig).
       arg("enrichments", enrichments)
     }

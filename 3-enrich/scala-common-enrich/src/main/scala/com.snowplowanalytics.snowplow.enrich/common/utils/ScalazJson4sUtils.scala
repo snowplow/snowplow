@@ -100,9 +100,7 @@ object ScalazJson4sUtils {
    */
   def extractListString(config: JValue, field: NonEmptyList[String]): ValidatedMessage[List[String]] =
     try {
-      (for {
-        JString(rawString) <- field.foldLeft(config)(_ \ _).extract[List[JString]]
-      } yield rawString).success
+      field.foldLeft(config)(_ \ _).extract[List[String]].success
     } catch {
       case me: MappingException => s"Could not extract %s as List[String] from supplied JSON".format(field.toList.mkString(".")).toProcessingMessage.fail
     }
