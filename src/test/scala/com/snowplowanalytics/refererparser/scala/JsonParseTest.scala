@@ -33,6 +33,7 @@ class JsonParseTest extends Specification {
   // Convert the JSON to a List of JObjects
   val testJson = (parse(testString)) match {
     case JArray(lst) => lst
+    case _ => throw new Exception("referer-tests.json is not an array - this should never happen")
   }
 
   val pageHost = "www.snowplowanalytics.com"
@@ -42,6 +43,7 @@ class JsonParseTest extends Specification {
   def getString(node: JValue, name: String): String = 
     (node \ name) match {
       case JString(s) => s
+      case _ => throw new Exception("The value of field '%s' in referer-tests.json is not a string - this should never happen".format(name))
   }
 
   "parse" should {
