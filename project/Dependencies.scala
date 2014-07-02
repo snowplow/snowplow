@@ -30,7 +30,7 @@ object Dependencies {
     val scalaUtil  = "0.1.0"
     val junit      = "4.11"
     val json       = "20140107"
-    val json4s     = "3.2.11-SNAPSHOT"
+    val json4s     = "3.2.9"
   }
 
   object Libraries {
