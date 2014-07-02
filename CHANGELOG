@@ -1,5 +1,6 @@
 Version 0.3.0 (2014-07-02)
 --------------------------
 Added configurable list of domains which should count as "internal" (#18)
+Remove sbt-assembly and legacy Maven publish code (#71)
 Made tests JSON-driven (#4)
 Added CHANGELOG (#68)

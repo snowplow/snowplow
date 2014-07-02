@@ -29,33 +29,11 @@ object BuildSettings {
     resolvers     ++= Dependencies.resolutionRepos
   )
 
-  // sbt-assembly settings for building a fat jar
-  import sbtassembly.Plugin._
-  import AssemblyKeys._
-  lazy val sbtAssemblySettings = assemblySettings ++ Seq(
-    assembleArtifact in packageScala := false,
-    jarName in assembly <<= (name, version) { (name, version) => name + "-" + version + ".jar" },
-    mergeStrategy in assembly <<= (mergeStrategy in assembly) {
-      (old) => {
-        case x if x.startsWith("META-INF/") => MergeStrategy.discard
-        case x => old(x)
-      }
-    }
-  )
-
   // Publish settings
   // TODO: update with ivy credentials etc when we start using Nexus
   lazy val publishSettings = Seq[Setting[_]](
-   
-    crossPaths := false,
-    publishTo <<= version { version =>
-      val keyFile = (Path.userHome / ".ssh" / "admin_keplar.osk")
-      val basePath = "/var/www/maven.snplow.com/prod/public/%s".format {
-        if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
-      }
-      Some(Resolver.sftp("SnowPlow Analytics Maven repository", "prodbox", 8686, basePath) as ("admin", keyFile))
-    }
+    crossPaths := false
   )
 
-  lazy val buildSettings = basicSettings ++ sbtAssemblySettings ++ publishSettings
+  lazy val buildSettings = basicSettings ++ publishSettings
 }
