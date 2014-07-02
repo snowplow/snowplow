@@ -1,4 +1,4 @@
-Version 0.1.0 (2014-07-02)
+Version 0.3.0 (2014-07-02)
 --------------------------
 Added configurable list of domains which should count as "internal" (#18)
 Made tests JSON-driven (#4)
