@@ -90,7 +90,7 @@ module SnowPlow
             ^
             (?<vendor>.+)
             \/
-            (?<namey>.+)
+            (?<name>.+)
             \/
             (?<format>.+)
             \/
@@ -102,10 +102,10 @@ module SnowPlow
         # Replace any periods in vendor or name with underscore
         # Any camelCase or PascalCase to snake_case
         fix = lambda { |value|
-          Hash.new.send(:to_snake_keys, value).tr!('.', '_')
+          Hash.new.send(:underscore, value).tr('.', '_')
         }
         vendor = fix.call(parts[:vendor])
-        name   = fix.call(parts[:namey])
+        name   = fix.call(parts[:name])
         model  = parts[:model]
 
         "#{vendor}_#{name}_#{model}"
