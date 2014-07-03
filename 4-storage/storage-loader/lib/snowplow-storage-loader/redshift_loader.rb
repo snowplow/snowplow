@@ -90,11 +90,11 @@ module SnowPlow
             ^
             (?<vendor>.+)
             \/
-            (?<name>.+)
+            (?<namey>.+)
             \/
             (?<format>.+)
             \/
-            (?<version_model>.+)
+            (?<model>.+)
             $
         /x
         parts = partial_key_regexp.match(partial_key)
@@ -102,12 +102,13 @@ module SnowPlow
         # Replace any periods in vendor or name with underscore
         # Any camelCase or PascalCase to snake_case
         fix = lambda { |value|
-          value.to_snake_keys.tr!('.', '_')
+          Hash.new.send(:to_snake_keys, value).tr!('.', '_')
         }
-        fixed_vendor = fix.call(parts[:vendor])
-        fixed_name   = fix.call(parts[:name])
+        vendor = fix.call(parts[:vendor])
+        name   = fix.call(parts[:namey])
+        model  = parts[:model]
 
-        "#{fixed_vendor}_#{fixed_name}_#{version_model}"
+        "#{vendor}_#{name}_#{model}"
       end
       module_function :partial_key_as_table
 
