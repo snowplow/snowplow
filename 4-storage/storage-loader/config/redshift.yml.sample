@@ -5,8 +5,12 @@
   :region: ADD HERE # S3 bucket region must be the same as Redshift cluster region
   :buckets:
     :assets: s3://snowplow-hosted-assets # ONLY CHANGE if you are adding your own JSON Path files in your own bucket
-    :in: ADD HERE # Must be s3:// not s3n:// for Redshift. This is the same as the :out: bucket specified for EmrEtlRunner
-    :archive: ADD HERE
+    :enriched:
+      :good: ADD HERE # Must be s3:// not s3n:// for Redshift. This is the same as the :enriched:good: bucket specified for EmrEtlRunner
+      :archive ADD HERE # Where to archive enriched events to
+    :shredded:
+      :good: ADD HERE # Must be s3:// not s3n:// for Redshift. This is the same as the :shredded:good: bucket specified for EmrEtlRunner
+      :archive: ADD HERE # Where to archive shredded types to
 :download:
   :folder: # Not required for Redshift
 :targets:
