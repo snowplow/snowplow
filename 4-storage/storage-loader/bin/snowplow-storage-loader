@@ -54,7 +54,7 @@ begin
 
   # Archive
   unless config[:skip].include?('archive')
-    loader::S3Tasks.archive_events(config)
+    loader::S3Tasks.archive_files(config)
   end
 
   # Delete local files if required

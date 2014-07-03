@@ -31,7 +31,7 @@ module SnowPlow
       # Parameters:
       # +config+:: the hash of configuration options
       def download_events(config)
-        puts "Downloading SnowPlow events..."
+        puts "Downloading Snowplow events..."
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:s3][:region],
@@ -39,7 +39,7 @@ module SnowPlow
           config[:aws][:secret_access_key])
 
         # Get S3 location of In Bucket plus local directory
-        in_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:in])
+        in_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:enriched][:good])
         download_dir = config[:download][:folder]
 
         # Exclude event files which match EMPTY_FILES
@@ -56,8 +56,8 @@ module SnowPlow
       #
       # Parameters:
       # +config+:: the hash of configuration options
-      def archive_events(config)
-        puts 'Archiving SnowPlow events...'
+      def archive_files(config)
+        puts 'Archiving Snowplow events...'
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:s3][:region],
@@ -65,14 +65,31 @@ module SnowPlow
           config[:aws][:secret_access_key])
 
         # Get S3 locations
-        in_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:in]);
-        archive_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:archive]);
+        archive_file_type(config, s3, :enriched)
+        archive_file_type(config, s3, :shredded) if config[:update].include?('shred')
+      end
+      module_function :archive_files
 
-        # Move all the files in the In Bucket
-        Sluice::Storage::S3::move_files(s3, in_location, archive_location, '.+')
+    private
+
+      # Moves (archives) a set of files: either enriched events
+      # or shredded types
+      #
+      # Parameters:
+      # +config+:: the hash of configuration options
+      # +s3+:: the S3 connection
+      # +file_type+:: the type of files (a symbol)
+      def archive_files_of_type(config, s3, file_type)
+
+        # Get S3 locations
+        good_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][file_type][:good])
+        archive_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][file_type][:archive])
+
+        # Move all the files of this type
+        Sluice::Storage::S3::move_files(s3, good_location, archive_location, '.+')
 
       end
-      module_function :archive_events
+      module_function :archive_files_of_type
 
     end
   end
