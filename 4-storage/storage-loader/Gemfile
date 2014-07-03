@@ -21,3 +21,4 @@ ruby "1.9.3"
 # RubyGems it requires here.
 gem "sluice", "~> 0.1.5"
 gem "pg", "~> 0.14.1"
+gem "plissken", "~> 0.1.0"

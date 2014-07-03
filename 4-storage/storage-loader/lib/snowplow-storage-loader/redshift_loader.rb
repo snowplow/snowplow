@@ -13,6 +13,8 @@
 # Copyright:: Copyright (c) 2012-2013 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
+require 'plissken'
+
 # Ruby module to support the load of Snowplow events into Redshift
 module SnowPlow
   module StorageLoader
@@ -47,7 +49,7 @@ module SnowPlow
         if config[:include].include?('vacuum')
           queries << "VACUUM SORT ONLY #{target[:table]};"
         end
-        unless config[:update].include?('shred')
+        unless config[:skip].include?('shred')
           queries << load_shredded_types(config, types)
         end
 
@@ -58,6 +60,8 @@ module SnowPlow
       end
       module_function :load_events
 
+    private
+
       # Generates a COPY FROM JSON for each shredded JSON
       #
       # Parameters:
@@ -67,6 +71,45 @@ module SnowPlow
         []
       end
       module_function :load_shredded_types
+
+      # Derives the table name in Redshift from the Iglu
+      # schema key.
+      #
+      # Should convert:
+      #   org.schema/WebPage/jsonschema/1
+      # to:
+      #   org_schema_web_page_1
+      #
+      # Parameters:
+      # +partial_key+:: the Iglu schema key to determine the
+      #                 table name for. Partial because the
+      #                 verison contains only the MODEL (not
+      #                 the whole SchemaVer).
+      def partial_key_as_table(partial_key)
+        partial_key_regexp = /
+            ^
+            (?<vendor>.+)
+            \/
+            (?<name>.+)
+            \/
+            (?<format>.+)
+            \/
+            (?<version_model>.+)
+            $
+        /x
+        parts = partial_key_regexp.match(partial_key)
+
+        # Replace any periods in vendor or name with underscore
+        # Any camelCase or PascalCase to snake_case
+        fix = lambda { |value|
+          value.to_snake_keys.tr!('.', '_')
+        }
+        fixed_vendor = fix.call(parts[:vendor])
+        fixed_name   = fix.call(parts[:name])
+
+        "#{fixed_vendor}_#{fixed_name}_#{version_model}"
+      end
+      module_function :partial_key_as_table
 
     end
   end
