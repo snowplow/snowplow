@@ -24,6 +24,7 @@ GEM
     nokogiri (1.6.0)
       mini_portile (~> 0.5.0)
     pg (0.14.1)
+    plissken (0.1.0)
     ruby-hmac (0.4.0)
     sluice (0.1.5)
       contracts (~> 0.2.3)
@@ -34,4 +35,5 @@ PLATFORMS
 
 DEPENDENCIES
   pg (~> 0.14.1)
+  plissken (~> 0.1.0)
   sluice (~> 0.1.5)
