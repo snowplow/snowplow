@@ -23,7 +23,7 @@ StorageLoader: wrote JSON Path file for screen_view (#643)
 StorageLoader: wrote JSON Path file for schema.org's WebPage (#772)
 StorageLoader: added hosted_assets setting for StorageLoader (#606)
 StorageLoader: added ability to load custom tables using JSON Paths (#607)              - TODO
-StorageLoader: added --skip shred option (#660)                                         - TODO
+StorageLoader: added --skip shred option (#660)
 StorageLoader: added :in: hint on StorageLoader configuration, thanks @joaolcorreia! (#755)
 Redshift: added Redshift DDL for ad_* events (#639)
 Redshift: added Redshift DDL for link_click events (#600)

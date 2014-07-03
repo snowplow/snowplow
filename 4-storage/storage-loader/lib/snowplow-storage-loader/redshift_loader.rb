@@ -13,7 +13,7 @@
 # Copyright:: Copyright (c) 2012-2013 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-# Ruby module to support the load of SnowPlow events into Redshift
+# Ruby module to support the load of Snowplow events into Redshift
 module SnowPlow
   module StorageLoader
     module RedshiftLoader
@@ -21,10 +21,11 @@ module SnowPlow
       # Constants for the load process
       EVENT_FIELD_SEPARATOR = "\\t"
 
-      # Loads the SnowPlow event files into Redshift.
+      # Loads the Snowplow event files into Redshift.
       #
       # Parameters:
-      # +target+:: the configuration options for this target
+      # +config+:: the configuration options
+      # +target+:: the configuration for this specific target
       def load_events(config, target)
         puts "Loading Snowplow events into #{target[:name]} (Redshift cluster)..."
 
@@ -46,13 +47,26 @@ module SnowPlow
         if config[:include].include?('vacuum')
           queries << "VACUUM SORT ONLY #{target[:table]};"
         end
+        unless config[:update].include?('shred')
+          queries << load_shredded_types(config, types)
+        end
 
-        status = PostgresLoader.execute_queries(target, queries)
+        status = PostgresLoader.execute_transaction(target, queries)
         unless status == []
           raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
         end
       end
       module_function :load_events
+
+      # Generates a COPY FROM JSON for each shredded JSON
+      #
+      # Parameters:
+      # +config+:: the configuration options
+      # +target+:: the configuration for this specific target
+      def load_shredded_types(config, target)
+        []
+      end
+      module_function :load_shredded_types
 
     end
   end
