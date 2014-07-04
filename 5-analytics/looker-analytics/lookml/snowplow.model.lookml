@@ -23,6 +23,8 @@
 
 - base_view: events  
   joins:
+  - join: web_page
+    foreign_key: events.event_id
   - join: ad_clicks
     foreign_key: events.event_id
     join_type: one_to_one
