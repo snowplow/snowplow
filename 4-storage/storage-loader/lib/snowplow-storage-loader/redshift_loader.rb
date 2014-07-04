@@ -31,25 +31,14 @@ module SnowPlow
       def load_events(config, target)
         puts "Loading Snowplow events into #{target[:name]} (Redshift cluster)..."
 
-        # Assemble the relevant parameters for the bulk load query
-        credentials = get_credentials(config)
-        comprows = if config[:include].include?('compudate')
-                     "COMPUPDATE COMPROWS #{config[:comprows]}"
-                   else
-                     ""
-                   end
+        # First let's get our statements for shredding (if any)
+        shredded_statements = get_shredded_statements(config, target)
 
         # Build our main transaction, consisting of COPY and COPY FROM JSON
         # statements, and potentially also a set of table ANALYZE statements.
         copy_analyze_statements = [
-          "COPY #{target[:table]} FROM '#{config[:s3][:buckets][:in]}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{target[:maxerror]} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS #{comprows} TIMEFORMAT 'auto' ACCEPTINVCHARS;",
+          build_copy_from_tsv_statement(config, config[:s3][:buckets][:enriched][:good], target[:table], target[:maxerror])
         ]
-        shredded_statements =
-          if config[:skip].include?('shred')
-            [ [], [], [] ] # COPY FROM JSON, ANALYZE, VACUUM all empty
-          else
-            get_shredded_statements(config, target)
-          end
         copy_analyze_statements.push(*shredded_statements[0])
 
         unless config[:skip].include?('analyze')
@@ -96,7 +85,11 @@ module SnowPlow
         # table = "%s%s" % [ get_schema(target[:table]), partial_key_as_table(partial_key) ]
         # objectpath = get_s3_objectpath(config[:s3][:buckets][:shredded][:good], run_id, partial_key)
 
-        [ [], [], [] ] # COPY FROM JSON, ANALYZE, VACUUM all empty
+        if config[:skip].include?('shred') # All empty
+          [ [], [], [] ] # COPY FROM JSON, ANALYZE, VACUUM all empty
+        else
+          [ [], [], [] ] # COPY FROM JSON, ANALYZE, VACUUM all empty
+        end
       end
       module_function :get_shredded_statements
 
@@ -180,8 +173,18 @@ module SnowPlow
       end
       module_function :extract_schema
 
-      def build_copy_from_tsv_statement()
-        ""
+      def build_copy_from_tsv_statement(config, s3_objectpath, table, maxerror)
+
+        # Assemble the relevant parameters for the bulk load query
+        credentials = get_credentials(config)
+        comprows =
+          if config[:include].include?('compudate')
+            "COMPUPDATE COMPROWS #{config[:comprows]}"
+          else
+            ""
+          end
+
+        "COPY #{table} FROM '#{s3_objectpath}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{maxerror} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS #{comprows} TIMEFORMAT 'auto' ACCEPTINVCHARS;",
       end
       module_function :build_copy_from_tsv_statement
 
@@ -200,7 +203,7 @@ module SnowPlow
       # +maxerror+:: how many errors to allow for this COPY
       def build_copy_from_json_statement(config, s3_objectpath, jsonpaths_file, table, maxerror)
         credentials = get_credentials(config)
-        # TODO: what about COMPROWS?
+        # TODO: what about COMPUPDATE/ROWS?
         "COPY #{table} FROM '#{objectpath}' CREDENTIALS '#{credentials}' JSON AS '#{jsonpaths_file}' MAXERROR #{maxerror} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS TIMEFORMAT 'auto' ACCEPTINVCHARS;"
       end
       module_function :build_copy_from_json_statement
