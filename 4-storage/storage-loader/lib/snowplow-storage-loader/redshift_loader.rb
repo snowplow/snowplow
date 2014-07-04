@@ -173,6 +173,16 @@ module SnowPlow
       end
       module_function :extract_schema
 
+      # Constructs the COPY statement to load the enriched
+      # event TSV files into Redshift.
+      #
+      # Parameters:
+      # +config+:: the configuration options
+      # +s3_object_path+:: the S3 path to the files containing
+      #                    this shredded type
+      # +table+:: the name of the table to load, including
+      #           optional schema
+      # +maxerror+:: how many errors to allow for this COPY
       def build_copy_from_tsv_statement(config, s3_objectpath, table, maxerror)
 
         # Assemble the relevant parameters for the bulk load query
@@ -208,11 +218,21 @@ module SnowPlow
       end
       module_function :build_copy_from_json_statement
 
+      # Builds an ANALYZE statement for the
+      # given table.
+      #
+      # Parameters:
+      # +table+:: the name of the table to analyze
       def build_analyze_statement(table)
         "ANALYZE #{table};"
       end
       module_function :build_analyze_statement
 
+      # Builds a VACUUM statement for the
+      # given table.
+      #
+      # Parameters:
+      # +table+:: the name of the table to analyze
       def build_vacuum_statement(table)
         "VACUUM SORT ONLY #{table};"
       end
