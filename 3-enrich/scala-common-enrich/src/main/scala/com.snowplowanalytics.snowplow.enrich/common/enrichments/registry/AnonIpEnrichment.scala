@@ -54,7 +54,7 @@ object AnonIpEnrichment extends ParseableEnrichment {
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[AnonIpEnrichment] = {
     isParseable(config, schemaKey).flatMap( conf => {
       (for {
-        param  <- ScalazJson4sUtils.extractInt(config, parameter("anonOctets"))
+        param  <- ScalazJson4sUtils.extract[Int](config, parameter("anonOctets"))
         octets <- AnonOctets.fromInt(param)
         enrich =  AnonIpEnrichment(octets)
       } yield enrich).toValidationNel

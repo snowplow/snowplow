@@ -37,71 +37,19 @@ object ScalazJson4sUtils {
   implicit val formats = DefaultFormats
 
   /**
-   * Returns a String field at the end of a JSON path.
+   * Returns a field of type A at the end of a
+   * JSON path
    *
-   * @param JValue The JSON from which the String is
-   *        to be extracted
-   * @param field NonEmptyList containing the Strings
-   *        which make up the path
-   * @return the String extracted from the JSON on success,
-   *         or an error String on failure
-   */
-  def extractString(config: JValue, field: NonEmptyList[String]): ValidatedMessage[String] =
-    
-    try {
-      field.foldLeft(config)(_ \ _).extract[String].success
-    } catch {
-      case me: MappingException => s"Could not extract %s as String from supplied JSON".format(field.toList.mkString(".")).toProcessingMessage.fail
-    }
-
-  /**
-   * Returns an Int field at the end of a JSON path.
-   *
-   * @param JValue The JSON from which the Int is
-   *        to be extracted
-   * @param field NonEmptyList containing the Strings
-   *        which make up the path
-   * @return the Int extracted from the JSON on success,
-   *         or an error String on failure
-   */
-  def extractInt(config: JValue, field: NonEmptyList[String]): ValidatedMessage[Int] =
-    try {
-      field.foldLeft(config)(_ \ _).extract[Int].success 
-    } catch {
-      case me: MappingException => s"Could not extract %s as Int from supplied JSON".format(field.toList.mkString(".")).toProcessingMessage.fail
-    }
-
-  /**
-   * Returns a Boolean field at the end of a JSON path.
-   *
-   * @param JValue The JSON from which the Boolean is
-   *        to be extracted
-   * @param field NonEmptyList containing the Strings
-   *        which make up the path
-   * @return the Boolean extracted from the JSON on
-   *         success or an error String on failure
-   */
-  def extractBoolean(config: JValue, field: NonEmptyList[String]): ValidatedMessage[Boolean] =
-    try {
-      field.foldLeft(config)(_ \ _).extract[Boolean].success 
-    } catch {
-      case me: MappingException => s"Could not extract %s as Boolean from supplied JSON".format(field.toList.mkString(".")).toProcessingMessage.fail
-    }
-
-  /**
-   * Returns a List[String] field at the end of a JSON path.
-   *
-   * @param JValue The JSON from which the list is
-   *        to be extracted
-   * @param field NonEmptyList containing the Strings
-   *        which make up the path
+   * @tparam A Type of the field to extract
+   * @param field NonEmptyList containing the 
+   *        Strings which make up the path
    * @return the list extracted from the JSON on
    *         success or an error String on failure
    */
-  def extractListString(config: JValue, field: NonEmptyList[String]): ValidatedMessage[List[String]] =
+  def extract[A: Manifest](config: JValue, field: NonEmptyList[String]): ValidatedMessage[A] =
     try {
-      field.foldLeft(config)(_ \ _).extract[List[String]].success
+      field.foldLeft(config)(_ \ _).extract[A].success 
     } catch {
-      case me: MappingException => s"Could not extract %s as List[String] from supplied JSON".format(field.toList.mkString(".")).toProcessingMessage.fail
+      case me: MappingException => s"Could not extract %s as %s from supplied JSON".format(field.toList.mkString("."), manifest[A]).toProcessingMessage.fail
     }
 }

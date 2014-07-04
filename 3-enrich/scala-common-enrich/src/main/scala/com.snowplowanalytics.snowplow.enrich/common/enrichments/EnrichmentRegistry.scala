@@ -106,12 +106,12 @@ object EnrichmentRegistry {
    */
   private def buildEnrichmentConfig(schemaKey: SchemaKey, enrichmentConfig: JValue, localMode: Boolean): ValidatedNelMessage[Option[Tuple2[String, Enrichment]]] = {
 
-    val enabled = ScalazJson4sUtils.extractBoolean(enrichmentConfig, NonEmptyList("enabled")).toValidationNel
+    val enabled = ScalazJson4sUtils.extract[Boolean](enrichmentConfig, NonEmptyList("enabled")).toValidationNel
         
     enabled match {
       case Success(false) => None.success.toValidationNel // Enrichment is disabled
       case e => {
-        val name = ScalazJson4sUtils.extractString(enrichmentConfig, NonEmptyList("name")).toValidationNel
+        val name = ScalazJson4sUtils.extract[String](enrichmentConfig, NonEmptyList("name")).toValidationNel
         name.flatMap( nm => {
 
           if (nm == "ip_to_geo") {

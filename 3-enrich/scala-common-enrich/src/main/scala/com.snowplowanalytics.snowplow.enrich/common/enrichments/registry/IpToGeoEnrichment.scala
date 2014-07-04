@@ -64,8 +64,8 @@ object IpToGeoEnrichment extends ParseableEnrichment {
    */
   def parse(config: JValue, schemaKey: SchemaKey, localMode: Boolean): ValidatedNelMessage[IpToGeoEnrichment] = {
     isParseable(config, schemaKey).flatMap( conf => {
-      val geoUri = ScalazJson4sUtils.extractString(conf, parameter("maxmindUri"))
-      val geoDb  = ScalazJson4sUtils.extractString(conf, parameter("maxmindDatabase"))
+      val geoUri = ScalazJson4sUtils.extract[String](conf, parameter("maxmindUri"))
+      val geoDb  = ScalazJson4sUtils.extract[String](conf, parameter("maxmindDatabase"))
       
       (geoUri.toValidationNel |@| geoDb.toValidationNel) { (uri, db) =>
         for {
