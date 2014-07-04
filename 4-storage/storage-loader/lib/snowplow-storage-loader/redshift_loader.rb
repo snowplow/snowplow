@@ -39,38 +39,66 @@ module SnowPlow
                      ""
                    end
 
-        # Build the Array of queries we will run
-        queries = [
+        # Build our main transaction, consisting of COPY and COPY FROM JSON
+        # statements, and potentially also a set of table ANALYZE statements.
+        copy_analyze_statements = [
           "COPY #{target[:table]} FROM '#{config[:s3][:buckets][:in]}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{target[:maxerror]} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS #{comprows} TIMEFORMAT 'auto' ACCEPTINVCHARS;",
         ]
+        shredded_statements =
+          if config[:skip].include?('shred')
+            [ [], [], [] ] # COPY FROM JSON, ANALYZE, VACUUM all empty
+          else
+            get_shredded_statements(config, target)
+          end
+        copy_analyze_statements.push(*shredded_statements[0])
+
         unless config[:skip].include?('analyze')
           queries << "ANALYZE #{target[:table]};"
-        end
-        if config[:include].include?('vacuum')
-          queries << "VACUUM SORT ONLY #{target[:table]};"
-        end
-        unless config[:skip].include?('shred')
-          queries << load_shredded_types(config, types)
+          copy_analyze_statements.push(*shredded_statements[1])
         end
 
-        status = PostgresLoader.execute_transaction(target, queries)
+        status = PostgresLoader.execute_transaction(target, copy_analyze_statements)
         unless status == []
           raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
         end
+
+        # If vacuum is requested, build a set of VACUUM statements
+        # and execute them in series. VACUUMs cannot be performed
+        # inside of a transaction
+        if config[:include].include?('vacuum')
+          vacuum_statements = [
+            "VACUUM SORT ONLY #{target[:table]};"
+          ]
+          vacuum_statements.push(*shredded_statements[2])
+
+          status = PostgresLoader.execute_queries(target, vacuum_statements)
+          unless status == []
+            raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
+          end      
+        end
+
       end
       module_function :load_events
 
     private
 
-      # Generates a COPY FROM JSON for each shredded JSON
+      # Generates a tuple3 of all shredded statements:
+      #
+      # [ COPY FROM JSON, ANALYZE, VACUUM ]
+      #
+      # Each entry in the tuple3 is itself a list of
+      # statements.
       #
       # Parameters:
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
-      def load_shredded_types(config, target)
-        []
+      def get_shredded_statements(config, target)
+        # table = "%s%s" % [ get_schema(target[:table]), partial_key_as_table(partial_key) ]
+        # objectpath = get_s3_objectpath(config[:s3][:buckets][:shredded][:good], run_id, partial_key)
+
+        [ [], [], [] ] # COPY FROM JSON, ANALYZE, VACUUM all empty
       end
-      module_function :load_shredded_types
+      module_function :get_shredded_statements
 
       # Derives the table name in Redshift from the Iglu
       # schema key.
@@ -142,29 +170,36 @@ module SnowPlow
       end
       module_function :get_s3_objectpath
 
-      # Constructs a COPY FROM JSON of a shredded JSON
-      # into a dedicated table
+      # Looks at the events table to determine if there's
+      # a schema we should use for the shredded type tables.
+      #
+      # Parameters:
+      # +events_table+:: the events table to load into
+      def extract_schema(events_table)
+        "TODO"
+      end
+      module_function :extract_schema
+
+      # Constructs the COPY FROM JSON statement required for
+      # loading a shredded JSON into a dedicated table; also
+      # returns the table name.
       #
       # Parameters:
       # +config+:: the configuration options
-      # +run_id+:: the folder for this run, e.g.
-      #            run=2014-06-24-08-19-52
-      # +partial_key+:: the Iglu schema key to determine the
-      #                 table name for. Partial because the
-      #                 verison contains only the MODEL (not
-      #                 the whole SchemaVer)
+      # +s3_object_path+:: the S3 path to the files containing
+      #                    this shredded type
       # +jsonpaths_file+:: the file on S3 containing the JSON Path
       #                    statements to load the JSON
-      def build_copy_for_shredded_type(config, run_id, partial_key, jsonpaths_file)
+      # +table+:: the name of the table to load, including
+      #           optional schema
+      # +maxerror+:: how many errors to allow for this COPY
+      def build_copy_from_json_statement(config, s3_objectpath, jsonpaths_file, table, maxerror)
 
-        schema = "TODO"
-        table = partial_key_as_table(partial_key)
-        objectpath = get_s3_objectpath(config[:s3][:buckets][:shredded][:good], run_id, partial_key)
         credentials = get_credentials(config)
-
-        "COPY #{schema}#{table} FROM '#{objectpath}' CREDENTIALS '#{credentials}' JSON '#{jsonpaths_file}';"
+        # TODO: what about COMPROWS?
+        "COPY #{table} FROM '#{objectpath}' CREDENTIALS '#{credentials}' JSON AS '#{jsonpaths_file}' MAXERROR #{maxerror} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS TIMEFORMAT 'auto' ACCEPTINVCHARS;"
       end
-      module_function :build_copy_for_shredded_type
+      module_function :build_copy_from_json_statement
 
     end
   end
