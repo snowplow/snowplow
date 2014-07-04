@@ -33,7 +33,7 @@ Redshift: added Redshift DDL for schema.org's WebPage (#771)
 Looker Analytics: wrote LookML for ad_* events (#605)
 Looker Analytics: wrote LookML for screen_view events (#637)
 Looker Analytics: wrote LookML for link_click events (#636)
-Looker Analytics: wrote LookML for schema.org's WebPage (#770)                          - TODO
+Looker Analytics: wrote LookML for schema.org's WebPage (#770)
 Looker Analytics: updated LookML to use liquid templating (#851)
 
 Version 0.9.4 (2014-05-30)
