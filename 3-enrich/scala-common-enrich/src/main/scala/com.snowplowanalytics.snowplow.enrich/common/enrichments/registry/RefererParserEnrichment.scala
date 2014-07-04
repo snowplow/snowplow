@@ -53,14 +53,13 @@ object RefererParserEnrichment extends ParseableEnrichment {
   val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", "1-0-0")
 
   /**
-   * Creates an AnonIpEnrichment instance from a JValue.
+   * Creates a RefererParserEnrichment instance from a JValue.
    * 
-   * @param config The anon_ip enrichment JSON
+   * @param config The referer_parser enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
    *        Must be a supported SchemaKey for this enrichment   
-   * @return a configured AnonIpEnrichment instance
+   * @return a configured RefererParserEnrichment instance
    */
-  // TODO: change docstring
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] = {
     isParseable(config, schemaKey).flatMap( conf => {
       (for {
