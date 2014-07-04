@@ -162,7 +162,7 @@ module SnowPlow
         objectpath = get_s3_objectpath(config[:s3][:buckets][:shredded][:good], run_id, partial_key)
         credentials = get_credentials(config)
 
-        "COPY #{schema}#{table} FROM '#{objectpath}' CREDENTIALS '#{credential}' JSON '#{jsonpaths_file}';"
+        "COPY #{schema}#{table} FROM '#{objectpath}' CREDENTIALS '#{credentials}' JSON '#{jsonpaths_file}';"
       end
       module_function :build_copy_for_shredded_type
 
