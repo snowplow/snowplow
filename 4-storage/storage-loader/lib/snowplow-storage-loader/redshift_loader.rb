@@ -112,6 +112,25 @@ module SnowPlow
       end
       module_function :partial_key_as_table
 
+      # Constructs a COPY FROM JSON of a shredded JSON
+      # into a dedicated table
+      #
+      # Parameters:
+      # +config+:: 
+      # +run_id+:: 
+      # +partial_key+:: 
+      def build_copy_for_shredded_type(config, run_id, partial_key)
+
+        table = partial_key_as_table(partial_key)
+
+        "COPY atomic.com_snowplowanalytics_website_page_context_1
+        from 's3://snowplow-test-data-eu-west-1/hadoop-redshift/shredded/good/run=2014-06-24-08-19-52/com.snowplowanalytics.website/page_context'
+        credentials 'aws_access_key_id=xxx;aws_secret_access_key=yyy' 
+        json 's3:///snowplow-hosted-assets/4-storage/redshift-storage/jsonpath/com.snowplowanalytics.website/page_context.json';"
+
+      end
+      module_function :build_copy_for_shredded_type
+
     end
   end
 end
