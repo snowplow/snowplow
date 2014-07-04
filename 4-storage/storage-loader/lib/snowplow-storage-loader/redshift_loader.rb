@@ -53,7 +53,7 @@ module SnowPlow
         copy_analyze_statements.push(*shredded_statements[0])
 
         unless config[:skip].include?('analyze')
-          queries << "ANALYZE #{target[:table]};"
+          queries << build_analyze_statement(target[:table])
           copy_analyze_statements.push(*shredded_statements[1])
         end
 
@@ -67,7 +67,7 @@ module SnowPlow
         # inside of a transaction
         if config[:include].include?('vacuum')
           vacuum_statements = [
-            "VACUUM SORT ONLY #{target[:table]};"
+            build_vacuum_statement(target[:table])
           ]
           vacuum_statements.push(*shredded_statements[2])
 
@@ -180,6 +180,11 @@ module SnowPlow
       end
       module_function :extract_schema
 
+      def build_copy_from_tsv_statement()
+        ""
+      end
+      module_function :build_copy_from_tsv_statement
+
       # Constructs the COPY FROM JSON statement required for
       # loading a shredded JSON into a dedicated table; also
       # returns the table name.
@@ -194,12 +199,21 @@ module SnowPlow
       #           optional schema
       # +maxerror+:: how many errors to allow for this COPY
       def build_copy_from_json_statement(config, s3_objectpath, jsonpaths_file, table, maxerror)
-
         credentials = get_credentials(config)
         # TODO: what about COMPROWS?
         "COPY #{table} FROM '#{objectpath}' CREDENTIALS '#{credentials}' JSON AS '#{jsonpaths_file}' MAXERROR #{maxerror} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS TIMEFORMAT 'auto' ACCEPTINVCHARS;"
       end
       module_function :build_copy_from_json_statement
+
+      def build_analyze_statement(table)
+        "ANALYZE #{table};"
+      end
+      module_function :build_analyze_statement
+
+      def build_vacuum_statement(table)
+        "VACUUM SORT ONLY #{table};"
+      end
+      module_function :build_vacuum_statement
 
     end
   end
