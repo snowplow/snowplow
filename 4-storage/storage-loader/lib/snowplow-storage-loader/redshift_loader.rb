@@ -32,7 +32,7 @@ module SnowPlow
         puts "Loading Snowplow events into #{target[:name]} (Redshift cluster)..."
 
         # Assemble the relevant parameters for the bulk load query
-        credentials = "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
+        credentials = get_credentials(config)
         comprows = if config[:include].include?('compudate')
                      "COMPUPDATE COMPROWS #{config[:comprows]}"
                    else
@@ -112,22 +112,57 @@ module SnowPlow
       end
       module_function :partial_key_as_table
 
+      # Constructs the credentials expression for a
+      # Redshift COPY statement.
+      #
+      # Parameters:
+      # +config+:: the configuration options
+      def get_credentials(config)
+        "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
+      end
+      module_function :get_credentials
+
+      # Creates an S3 objectpath for the COPY FROM JSON.
+      # Note that Redshift COPY treats the S3 objectpath
+      # as a prefixed path - i.e. you get "file globbing"
+      # for free by specifying a partial folder path.
+      #
+      # Parameters:
+      # +shredded_path+:: the S3 path to the shredded types
+      # +run_id+:: the folder for this run, e.g.
+      #            run=2014-06-24-08-19-52
+      # +partial_key+:: the Iglu schema key to determine the
+      #                 table name for. Partial because the
+      #                 verison contains only the MODEL (not
+      #                 the whole SchemaVer).
+      def get_s3_objectpath(shredded_path, run_id, partial_key)
+        # Trailing hyphen ensures we don't accidentally load
+        # 11-x-x versions into a 1-x-x table
+        "#{shredded_path}#{run_id}/#{partial_key}-"
+      end
+      module_function :get_s3_objectpath
+
       # Constructs a COPY FROM JSON of a shredded JSON
       # into a dedicated table
       #
       # Parameters:
-      # +config+:: 
-      # +run_id+:: 
-      # +partial_key+:: 
-      def build_copy_for_shredded_type(config, run_id, partial_key)
+      # +config+:: the configuration options
+      # +run_id+:: the folder for this run, e.g.
+      #            run=2014-06-24-08-19-52
+      # +partial_key+:: the Iglu schema key to determine the
+      #                 table name for. Partial because the
+      #                 verison contains only the MODEL (not
+      #                 the whole SchemaVer)
+      # +jsonpaths_file+:: the file on S3 containing the JSON Path
+      #                    statements to load the JSON
+      def build_copy_for_shredded_type(config, run_id, partial_key, jsonpaths_file)
 
+        schema = "TODO"
         table = partial_key_as_table(partial_key)
+        objectpath = get_s3_objectpath(config[:s3][:buckets][:shredded][:good], run_id, partial_key)
+        credentials = get_credentials(config)
 
-        "COPY atomic.com_snowplowanalytics_website_page_context_1
-        from 's3://snowplow-test-data-eu-west-1/hadoop-redshift/shredded/good/run=2014-06-24-08-19-52/com.snowplowanalytics.website/page_context'
-        credentials 'aws_access_key_id=xxx;aws_secret_access_key=yyy' 
-        json 's3:///snowplow-hosted-assets/4-storage/redshift-storage/jsonpath/com.snowplowanalytics.website/page_context.json';"
-
+        "COPY #{schema}#{table} FROM '#{objectpath}' CREDENTIALS '#{credential}' JSON '#{jsonpaths_file}';"
       end
       module_function :build_copy_for_shredded_type
 
