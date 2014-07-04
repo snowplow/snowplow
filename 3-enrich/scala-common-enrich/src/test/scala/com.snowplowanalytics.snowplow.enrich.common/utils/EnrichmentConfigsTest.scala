@@ -47,8 +47,8 @@ class EnrichmentConfigsTest extends Specification with ValidationMatchers {
         "enabled": true,
         "parameters": {
           "anonOctets": 2
-          }
-        }""")
+        }
+      }""")
 
       val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", "1-0-0")
 
@@ -66,8 +66,8 @@ class EnrichmentConfigsTest extends Specification with ValidationMatchers {
         "parameters": {
           "maxmindDatabase": "GeoLiteCity.dat",
           "maxmindUri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
-          }
-        }""")
+        }
+      }""")
 
       val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_to_geo", "jsonschema", "1-0-0")
 
@@ -77,6 +77,29 @@ class EnrichmentConfigsTest extends Specification with ValidationMatchers {
       result must beSuccessful(expected)
 
     }
+  }
+
+  "Parsing a valid referer_parser enrichment JSON" should {
+    "successfully construct a GeoIpEnrichmentConfig case class" in {
+
+      val refererParserJson = parse("""{
+        "enabled": true,
+        "parameters": {
+          "internalDomains": [
+            "www.subdomain1.snowplowanalytics.com", 
+            "www.subdomain2.snowplowanalytics.com"
+          ]
+        }
+      }""")
+
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", "1-0-0")
+
+      val expected = RefererParserEnrichment(List("www.subdomain1.snowplowanalytics.com", "www.subdomain2.snowplowanalytics.com"))
+
+      val result = RefererParserEnrichment.parse(refererParserJson, schemaKey)
+      result must beSuccessful(expected)
+
+    }      
   }
 
   // TODO: a test in HDFS mode too?
