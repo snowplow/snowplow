@@ -73,6 +73,7 @@ object EnrichmentRegistry {
         d <- asJsonNode(node).verifySchemaAndValidate(EnrichmentConfigSchemaKey, true)
       } yield (fromJsonNode(d) match {
         case JArray(x) => x
+        case _ => throw new Exception("Enrichments JSON not an array - the enrichments JSON schema should prevent this happening")
       })
 
     // Check each enrichment validates against its own schema
@@ -106,12 +107,12 @@ object EnrichmentRegistry {
    */
   private def buildEnrichmentConfig(schemaKey: SchemaKey, enrichmentConfig: JValue, localMode: Boolean): ValidatedNelMessage[Option[Tuple2[String, Enrichment]]] = {
 
-    val enabled = ScalazJson4sUtils.extract[Boolean](enrichmentConfig, NonEmptyList("enabled")).toValidationNel
+    val enabled = ScalazJson4sUtils.extract[Boolean](enrichmentConfig, "enabled").toValidationNel
         
     enabled match {
       case Success(false) => None.success.toValidationNel // Enrichment is disabled
       case e => {
-        val name = ScalazJson4sUtils.extract[String](enrichmentConfig, NonEmptyList("name")).toValidationNel
+        val name = ScalazJson4sUtils.extract[String](enrichmentConfig, "name").toValidationNel
         name.flatMap( nm => {
 
           if (nm == "ip_to_geo") {
@@ -192,6 +193,6 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    * @param a The object to cast to type A
    * @return a, converted to type A
    */
-  private def cast[A <: AnyRef : Manifest](a : Any) : A 
-    = manifest.runtimeClass.cast(a).asInstanceOf[A]
+  private def cast[A <: AnyRef : Manifest](a : Any) : A =
+    manifest.runtimeClass.cast(a).asInstanceOf[A]
 }

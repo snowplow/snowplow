@@ -66,13 +66,4 @@ trait ParseableEnrichment {
         .toProcessingMessage.fail.toValidationNel
     }
   }
-
-  /**
-   * Shortcut for getting a value from within
-   * the "parameters" field of a JSON
-   *
-   * @param property The name of the field
-   * @return NonEmptyList of the inner value
-   */
-  def parameter(property: String) = NonEmptyList("parameters", property)
 }

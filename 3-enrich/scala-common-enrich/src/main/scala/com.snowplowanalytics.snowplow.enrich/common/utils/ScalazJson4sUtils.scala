@@ -41,15 +41,21 @@ object ScalazJson4sUtils {
    * JSON path
    *
    * @tparam A Type of the field to extract
-   * @param field NonEmptyList containing the 
-   *        Strings which make up the path
+   * @param head The first field in the JSON path
+   *        Exists to ensure the path is nonempty
+   * @param tail The rest of the fields in the
+   *        JSON path
    * @return the list extracted from the JSON on
    *         success or an error String on failure
    */
-  def extract[A: Manifest](config: JValue, field: NonEmptyList[String]): ValidatedMessage[A] =
+  def extract[A: Manifest](config: JValue, head: String, tail: String*): ValidatedMessage[A] = {
+    
+    val path = head +: tail
+
     try {
-      field.foldLeft(config)(_ \ _).extract[A].success 
+      path.foldLeft(config)(_ \ _).extract[A].success
     } catch {
-      case me: MappingException => s"Could not extract %s as %s from supplied JSON".format(field.toList.mkString("."), manifest[A]).toProcessingMessage.fail
+      case me: MappingException => s"Could not extract %s as %s from supplied JSON".format(path.mkString("."), manifest[A]).toProcessingMessage.fail
     }
+  }
 }

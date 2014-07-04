@@ -64,7 +64,7 @@ object RefererParserEnrichment extends ParseableEnrichment {
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[RefererParserEnrichment] = {
     isParseable(config, schemaKey).flatMap( conf => {
       (for {
-        param  <- ScalazJson4sUtils.extract[List[String]](config, parameter("internalDomains"))
+        param  <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "internalDomains")
         enrich =  RefererParserEnrichment(param)
       } yield enrich).toValidationNel
     })

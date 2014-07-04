@@ -42,7 +42,7 @@ class JsonExtractionTest extends Specification with ValidationMatchers {
   "Applying extractString" should {
     "successfully access an outer string field" in {
 
-      val result = ScalazJson4sUtils.extract[String](testJson, NonEmptyList("outer"))
+      val result = ScalazJson4sUtils.extract[String](testJson, "outer")
       result must beSuccessful("1")
     }
   }
@@ -51,7 +51,7 @@ class JsonExtractionTest extends Specification with ValidationMatchers {
 
     "successfully access an inner string field" in {
 
-      val result = ScalazJson4sUtils.extract[Int](testJson, NonEmptyList("inner", "value"))
+      val result = ScalazJson4sUtils.extract[Int](testJson, "inner", "value")
       result must beSuccessful(2)
     }
   }
