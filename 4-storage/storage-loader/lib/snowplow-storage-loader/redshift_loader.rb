@@ -85,7 +85,7 @@ module SnowPlow
         # table = "%s%s" % [ get_schema(target[:table]), partial_key_as_table(partial_key) ]
         # objectpath = get_s3_objectpath(config[:s3][:buckets][:shredded][:good], run_id, partial_key)
 
-        if config[:skip].include?('shred') # All empty
+        if config[:skip].include?('shred') # No shredded types to load
           [ [], [], [] ] # COPY FROM JSON, ANALYZE, VACUUM all empty
         else
           [ [], [], [] ] # COPY FROM JSON, ANALYZE, VACUUM all empty
