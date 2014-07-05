@@ -120,7 +120,8 @@ module SnowPlow
       # +events_table+:: the events table to load into
       Config String => Maybe[String]
       def extract_schema(events_table)
-        "TODO"
+        parts = events_table.split(/\./)
+        if (parts.size) > 1 then parts[0] else nil end
       end
       module_function :extract_schema
 
