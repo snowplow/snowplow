@@ -4,7 +4,7 @@ Ruby Tracker: added git submodule. Version 0.1.0 (#645)
 Java Tracker: added git submodule. Version 0.2.0 (#843)
 JavaScript Tracker: bumped git submodule to 2.0.0 (#635)
 Python Tracker: bumped Python Tracker git submodule to 0.4.0 (#634)
-Scala Hadoop Shred: added. Version 0.1.0                                                - TODO (remove -SNAPSHOT on deps)
+Scala Hadoop Shred: added. Version 0.1.0
 EmrEtlRunner: bumped to 0.8.0
 EmrEtlRunner: updated S3DistCp steps to use new S3DistCpStep from Elasticity (#629)
 EmrEtlRunner: added --skip s3distcp option (#313)
