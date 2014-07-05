@@ -13,6 +13,9 @@
 # Copyright:: Copyright (c) 2012-2013 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
+require 'contracts'
+include Contracts
+
 # Ruby module to support the load of Snowplow events into Redshift
 module SnowPlow
   module StorageLoader
@@ -29,6 +32,7 @@ module SnowPlow
       # Parameters:
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
+      Contract Hash, Hash => nil
       def load_events_and_shredded_types(config, target)
         puts "Loading Snowplow events into #{target[:name]} (Redshift cluster)..."
 
@@ -67,6 +71,7 @@ module SnowPlow
           end      
         end
 
+        nil
       end
       module_function :load_events_and_shredded_types
 
@@ -78,6 +83,7 @@ module SnowPlow
       # Parameters:
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
+      Contract Hash, Hash => ArrayOf[SqlStatements]
       def get_shredded_statements(config, target)
 
         if config[:skip].include?('shred') # No shredded types to load
@@ -91,7 +97,7 @@ module SnowPlow
           schema = extract_schema(target[:table])
                     
           ShreddedType.discover_shredded_types(s3, s3_path, schema).map { |st|
-            
+
             jsonpaths_file = st.discover_jsonpaths_file(s3, config[:s3][:buckets][:assets])
             if jsonpaths_file.nil?
               raise DatabaseLoadError, "Cannot find JSON Paths file to load #{st.s3_objectpath} into #{st.table}"
@@ -112,6 +118,7 @@ module SnowPlow
       #
       # Parameters:
       # +events_table+:: the events table to load into
+      Config String => Maybe[String]
       def extract_schema(events_table)
         "TODO"
       end
@@ -127,6 +134,7 @@ module SnowPlow
       # +table+:: the name of the table to load, including
       #           optional schema
       # +maxerror+:: how many errors to allow for this COPY
+      Config Hash, String, String, Num => String
       def build_copy_from_tsv_statement(config, s3_objectpath, table, maxerror)
 
         # Assemble the relevant parameters for the bulk load query
@@ -155,6 +163,7 @@ module SnowPlow
       # +table+:: the name of the table to load, including
       #           optional schema
       # +maxerror+:: how many errors to allow for this COPY
+      Config Hash, String, String, String, Num => String
       def build_copy_from_json_statement(config, s3_objectpath, jsonpaths_file, table, maxerror)
         credentials = get_credentials(config)
         # TODO: what about COMPUPDATE/ROWS?
@@ -167,6 +176,7 @@ module SnowPlow
       #
       # Parameters:
       # +table+:: the name of the table to analyze
+      Config Hash => String
       def build_analyze_statement(table)
         "ANALYZE #{table};"
       end
@@ -177,6 +187,7 @@ module SnowPlow
       #
       # Parameters:
       # +table+:: the name of the table to analyze
+      Config Hash => String
       def build_vacuum_statement(table)
         "VACUUM SORT ONLY #{table};"
       end
@@ -187,6 +198,7 @@ module SnowPlow
       #
       # Parameters:
       # +config+:: the configuration options
+      Config Hash => String
       def get_credentials(config)
         "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
       end

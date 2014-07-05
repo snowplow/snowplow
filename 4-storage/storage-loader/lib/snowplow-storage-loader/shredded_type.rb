@@ -13,7 +13,11 @@
 # Copyright:: Copyright (c) 2012-2013 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
+require 'fog'
 require 'plissken'
+
+require 'contracts'
+include Contracts
 
 # Ruby module to support the load of Snowplow events into Redshift
 module SnowPlow
@@ -31,6 +35,7 @@ module SnowPlow
       # +s3+:: the Fog object for accessing S3
       # +s3_path+:: the S3 path to the shredded type files
       # +schema+:: the schema that tables should live in
+      Contract FogStorage, String, Maybe[String] => ArrayOf[ShreddedType]
       def self.discover_shredded_types(s3, s3_path, schema)
         []
       end
@@ -46,6 +51,7 @@ module SnowPlow
       # +vendor+:: the shredded type's Iglu key's vendor
       # +format+:: the shredded type's Iglu key's format
       # +version_model+:: the MODEL portion of the shredded type's Iglu key's SchemaVer version
+      Contract String, Maybe[String], String, String, String, String => ShreddedType
       def initialize(s3_path, schema, run_id, name, vendor, format, version_model)
         @s3_path = s3_path
         @schema = schema
@@ -54,12 +60,15 @@ module SnowPlow
         @vendor = vendor
         @format = format
         @version_model = version_model
+
+        self
       end
 
       # Creates an S3 objectpath for the COPY FROM JSON.
       # Note that Redshift COPY treats the S3 objectpath
       # as a prefixed path - i.e. you get "file globbing"
       # for free by specifying a partial folder path.
+      Contract None => String
       def s3_objectpath
         # Trailing hyphen ensures we don't accidentally load
         # 11-x-x versions into a 1-x-x table
@@ -73,6 +82,7 @@ module SnowPlow
       #   org.schema/WebPage/jsonschema/1
       # to:
       #   org_schema_web_page_1
+      Contract None => String
       def table
         vendor = make_sql_safe(@vendor)
         name   = make_sql_safe(@name)
@@ -86,6 +96,7 @@ module SnowPlow
       # Parameters:
       # +s3+:: the Fog object for accessing S3
       # +assets+:: path to custom assets (e.g. JSON Path files)
+      Contract FogStorage, String => Maybe[String]
       def discover_jsonpaths_file(s3, assets)
         name = make_sql_safe(@name)
         file = "#{vendor}/#{name}_#{version}.json"
@@ -106,11 +117,13 @@ module SnowPlow
       #
       # Parameters:
       # +value+:: the value to make SQL-safe
+      Contract String => String
       def make_sql_safe(value)
         Hash.new.send(:underscore, value).tr('.', '_')
       end
 
       # Returns the partial key
+      Contract None => String
       def partial_key
         "#{name}/#{vendor}/#{format}/#{version_model}"
       end

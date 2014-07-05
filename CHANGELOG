@@ -16,7 +16,7 @@ EmrEtlRunner: added :iglu: section to config.yml for Scala Hadoop Shred (#814)
 EmrEtlRunner: updated to run Scala Hadoop Shred following Hadoop Enrich (#815)
 EmrEtlRunner: added --skip shred option (#659)
 StorageLoader: bumped to 0.3.0
-StorageLoader: added initial Ruby.contracts support (#391)                              - TODO
+StorageLoader: added initial Ruby.contracts support (#391)
 StorageLoader: updated config.yml to support shredding (#897)
 StorageLoader: added ACCEPTINVCHARS to StorageLoader (#411)
 StorageLoader: wrote JSON Path files for ad_* events (#642)
