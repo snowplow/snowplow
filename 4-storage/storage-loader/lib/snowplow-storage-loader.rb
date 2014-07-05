@@ -19,6 +19,7 @@ require_relative 'snowplow-storage-loader/config'
 require_relative 'snowplow-storage-loader/file_tasks'
 require_relative 'snowplow-storage-loader/s3_tasks'
 require_relative 'snowplow-storage-loader/postgres_loader'
+require_relative 'snowplow-storage-loader/shredded_type'
 require_relative 'snowplow-storage-loader/redshift_loader'
 
 module SnowPlow

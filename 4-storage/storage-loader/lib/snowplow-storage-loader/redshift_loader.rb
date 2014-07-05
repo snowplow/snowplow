@@ -13,8 +13,6 @@
 # Copyright:: Copyright (c) 2012-2013 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'plissken'
-
 # Ruby module to support the load of Snowplow events into Redshift
 module SnowPlow
   module StorageLoader
@@ -22,6 +20,8 @@ module SnowPlow
 
       # Constants for the load process
       EVENT_FIELD_SEPARATOR = "\\t"
+
+      SqlStatements = Struct.new(:copy, :analyze, :vacuum)
 
       # Loads the Snowplow event files and shredded type
       # files into Redshift.
@@ -40,11 +40,11 @@ module SnowPlow
         copy_analyze_statements = [
           build_copy_from_tsv_statement(config, config[:s3][:buckets][:enriched][:good], target[:table], target[:maxerror])
         ]
-        copy_analyze_statements.push(*shredded_statements[0])
+        copy_analyze_statements.push(*shredded_statements.map(&:copy))
 
         unless config[:skip].include?('analyze')
           queries << build_analyze_statement(target[:table])
-          copy_analyze_statements.push(*shredded_statements[1])
+          copy_analyze_statements.push(*shredded_statements.map(&:analyze))
         end
 
         status = PostgresLoader.execute_transaction(target, copy_analyze_statements)
@@ -59,7 +59,7 @@ module SnowPlow
           vacuum_statements = [
             build_vacuum_statement(target[:table])
           ]
-          vacuum_statements.push(*shredded_statements[2])
+          vacuum_statements.push(*shredded_statements.map(&:vacuum))
 
           status = PostgresLoader.execute_queries(target, vacuum_statements)
           unless status == []
@@ -72,97 +72,42 @@ module SnowPlow
 
     private
 
-      # Generates a tuple3 of all shredded statements:
-      #
-      # [ COPY FROM JSON, ANALYZE, VACUUM ]
-      #
-      # Each entry in the tuple3 is itself a list of
-      # statements.
+      # Generates an array of SQL statements for loading
+      # the shredded types.
       #
       # Parameters:
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
       def get_shredded_statements(config, target)
-        # table = "%s%s" % [ get_schema(target[:table]), partial_key_as_table(partial_key) ]
-        # objectpath = get_s3_objectpath(config[:s3][:buckets][:shredded][:good], run_id, partial_key)
 
         if config[:skip].include?('shred') # No shredded types to load
-          [ [], [], [] ] # COPY FROM JSON, ANALYZE, VACUUM all empty
+          []
         else
-          [ [], [], [] ] # COPY FROM JSON, ANALYZE, VACUUM all empty
+          s3 = Sluice::Storage::S3::new_fog_s3_from(
+            config[:s3][:region],
+            config[:aws][:access_key_id],
+            config[:aws][:secret_access_key])
+
+          s3_path = config[:s3][:buckets][:shredded][:good]
+          schema = extract_schema(target[:table])
+          
+          shredded_types = ShreddedType.discover_shredded_types(s3, s3_path, schema)
+          copy_statements = shredded_types.map { |st|
+
+            jsonpaths_file = st.discover_jsonpaths_file(s3, config[:s3][:buckets][:assets])
+            if jsonpaths_file.nil?
+              raise DatabaseLoadError, "Cannot find JSON Paths file to load #{st.s3_objectpath} into #{st.table}"
+            end
+
+            SqlStatements(
+              build_copy_from_json_statement(config, st.s3_objectpath, jsonpaths_file, st.table, target[:maxerror]),
+              build_analyze_statement(st.table)
+              build_vacuum_statement(st.table)
+            )
+          }
         end
       end
       module_function :get_shredded_statements
-
-      # Derives the table name in Redshift from the Iglu
-      # schema key.
-      #
-      # Should convert:
-      #   org.schema/WebPage/jsonschema/1
-      # to:
-      #   org_schema_web_page_1
-      #
-      # Parameters:
-      # +partial_key+:: the Iglu schema key to determine the
-      #                 table name for. Partial because the
-      #                 verison contains only the MODEL (not
-      #                 the whole SchemaVer).
-      def partial_key_as_table(partial_key)
-        partial_key_regexp = /
-            ^
-            (?<vendor>.+)
-            \/
-            (?<name>.+)
-            \/
-            (?<format>.+)
-            \/
-            (?<model>.+)
-            $
-        /x
-        parts = partial_key_regexp.match(partial_key)
-
-        # Replace any periods in vendor or name with underscore
-        # Any camelCase or PascalCase to snake_case
-        fix = lambda { |value|
-          Hash.new.send(:underscore, value).tr('.', '_')
-        }
-        vendor = fix.call(parts[:vendor])
-        name   = fix.call(parts[:name])
-        model  = parts[:model]
-
-        "#{vendor}_#{name}_#{model}"
-      end
-      module_function :partial_key_as_table
-
-      # Constructs the credentials expression for a
-      # Redshift COPY statement.
-      #
-      # Parameters:
-      # +config+:: the configuration options
-      def get_credentials(config)
-        "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
-      end
-      module_function :get_credentials
-
-      # Creates an S3 objectpath for the COPY FROM JSON.
-      # Note that Redshift COPY treats the S3 objectpath
-      # as a prefixed path - i.e. you get "file globbing"
-      # for free by specifying a partial folder path.
-      #
-      # Parameters:
-      # +shredded_path+:: the S3 path to the shredded types
-      # +run_id+:: the folder for this run, e.g.
-      #            run=2014-06-24-08-19-52
-      # +partial_key+:: the Iglu schema key to determine the
-      #                 table name for. Partial because the
-      #                 verison contains only the MODEL (not
-      #                 the whole SchemaVer).
-      def get_s3_objectpath(shredded_path, run_id, partial_key)
-        # Trailing hyphen ensures we don't accidentally load
-        # 11-x-x versions into a 1-x-x table
-        "#{shredded_path}#{run_id}/#{partial_key}-"
-      end
-      module_function :get_s3_objectpath
 
       # Looks at the events table to determine if there's
       # a schema we should use for the shredded type tables.
@@ -238,6 +183,16 @@ module SnowPlow
         "VACUUM SORT ONLY #{table};"
       end
       module_function :build_vacuum_statement
+
+      # Constructs the credentials expression for a
+      # Redshift COPY statement.
+      #
+      # Parameters:
+      # +config+:: the configuration options
+      def get_credentials(config)
+        "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
+      end
+      module_function :get_credentials
 
     end
   end
