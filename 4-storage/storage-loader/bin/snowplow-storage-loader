@@ -45,7 +45,7 @@ begin
     config[:targets].each { |t|
       case t[:type]
         when 'redshift'
-          loader::RedshiftLoader.load_events(config, t)
+          loader::RedshiftLoader.load_events_and_shredded_types(config, t)
         when 'postgres'
           loader::PostgresLoader.load_events(config[:download][:folder], t, config[:skip], config[:include])
       end

@@ -23,12 +23,13 @@ module SnowPlow
       # Constants for the load process
       EVENT_FIELD_SEPARATOR = "\\t"
 
-      # Loads the Snowplow event files into Redshift.
+      # Loads the Snowplow event files and shredded type
+      # files into Redshift.
       #
       # Parameters:
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
-      def load_events(config, target)
+      def load_events_and_shredded_types(config, target)
         puts "Loading Snowplow events into #{target[:name]} (Redshift cluster)..."
 
         # First let's get our statements for shredding (if any)
@@ -48,7 +49,7 @@ module SnowPlow
 
         status = PostgresLoader.execute_transaction(target, copy_analyze_statements)
         unless status == []
-          raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
+          raise DatabaseLoadError, "#{status[1]} error executing COPY and ANALYZE statements: #{status[0]}: #{status[2]}"
         end
 
         # If vacuum is requested, build a set of VACUUM statements
@@ -62,12 +63,12 @@ module SnowPlow
 
           status = PostgresLoader.execute_queries(target, vacuum_statements)
           unless status == []
-            raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
+            raise DatabaseLoadError, "#{status[1]} error executing VACUUM statements: #{status[0]}: #{status[2]}"
           end      
         end
 
       end
-      module_function :load_events
+      module_function :load_events_and_shredded_types
 
     private
 
