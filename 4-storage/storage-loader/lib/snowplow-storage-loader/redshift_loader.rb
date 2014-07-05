@@ -121,7 +121,7 @@ module SnowPlow
       Config String => Maybe[String]
       def extract_schema(events_table)
         parts = events_table.split(/\./)
-        if (parts.size) > 1 then parts[0] else nil end
+        if parts.size > 1 then parts[0] else nil end
       end
       module_function :extract_schema
 
