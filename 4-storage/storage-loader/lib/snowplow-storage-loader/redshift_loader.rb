@@ -87,13 +87,11 @@ module SnowPlow
             config[:s3][:region],
             config[:aws][:access_key_id],
             config[:aws][:secret_access_key])
-
           s3_path = config[:s3][:buckets][:shredded][:good]
           schema = extract_schema(target[:table])
-          
-          shredded_types = ShreddedType.discover_shredded_types(s3, s3_path, schema)
-          copy_statements = shredded_types.map { |st|
-
+                    
+          ShreddedType.discover_shredded_types(s3, s3_path, schema).map { |st|
+            
             jsonpaths_file = st.discover_jsonpaths_file(s3, config[:s3][:buckets][:assets])
             if jsonpaths_file.nil?
               raise DatabaseLoadError, "Cannot find JSON Paths file to load #{st.s3_objectpath} into #{st.table}"
