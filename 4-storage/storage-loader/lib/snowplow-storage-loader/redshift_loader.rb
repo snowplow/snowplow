@@ -13,6 +13,8 @@
 # Copyright:: Copyright (c) 2012-2013 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
+require 'sluice'
+
 require 'contracts'
 include Contracts
 
@@ -104,7 +106,7 @@ module SnowPlow
             end
 
             SqlStatements(
-              build_copy_from_json_statement(config, st.s3_objectpath, jsonpaths_file, st.table, target[:maxerror]),
+              build_copy_from_json_statement(config, st.s3_path, jsonpaths_file, st.table, target[:maxerror]),
               build_analyze_statement(st.table),
               build_vacuum_statement(st.table)
             )
