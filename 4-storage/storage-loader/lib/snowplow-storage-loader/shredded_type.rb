@@ -13,7 +13,6 @@
 # Copyright:: Copyright (c) 2012-2013 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'fog'
 require 'plissken'
 
 require 'contracts'
@@ -86,7 +85,7 @@ module SnowPlow
       def table
         vendor = make_sql_safe(@vendor)
         name   = make_sql_safe(@name)
-        schema = if @schema.nil? "" else "#{@schema}."
+        schema = if @schema.nil? then "" else "#{@schema}." end
         "#{schema}#{vendor}_#{name}_#{@version_model}"
       end
 

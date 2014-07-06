@@ -105,7 +105,7 @@ module SnowPlow
 
             SqlStatements(
               build_copy_from_json_statement(config, st.s3_objectpath, jsonpaths_file, st.table, target[:maxerror]),
-              build_analyze_statement(st.table)
+              build_analyze_statement(st.table),
               build_vacuum_statement(st.table)
             )
           }
@@ -118,7 +118,7 @@ module SnowPlow
       #
       # Parameters:
       # +events_table+:: the events table to load into
-      Config String => Maybe[String]
+      Contract String => Maybe[String]
       def extract_schema(events_table)
         parts = events_table.split(/\./)
         if parts.size > 1 then parts[0] else nil end
@@ -135,7 +135,7 @@ module SnowPlow
       # +table+:: the name of the table to load, including
       #           optional schema
       # +maxerror+:: how many errors to allow for this COPY
-      Config Hash, String, String, Num => String
+      Contract Hash, String, String, Num => String
       def build_copy_from_tsv_statement(config, s3_objectpath, table, maxerror)
 
         # Assemble the relevant parameters for the bulk load query
@@ -147,7 +147,7 @@ module SnowPlow
             ""
           end
 
-        "COPY #{table} FROM '#{s3_objectpath}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{maxerror} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS #{comprows} TIMEFORMAT 'auto' ACCEPTINVCHARS;",
+        "COPY #{table} FROM '#{s3_objectpath}' CREDENTIALS '#{credentials}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{maxerror} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS #{comprows} TIMEFORMAT 'auto' ACCEPTINVCHARS;"
       end
       module_function :build_copy_from_tsv_statement
 
@@ -164,7 +164,7 @@ module SnowPlow
       # +table+:: the name of the table to load, including
       #           optional schema
       # +maxerror+:: how many errors to allow for this COPY
-      Config Hash, String, String, String, Num => String
+      Contract Hash, String, String, String, Num => String
       def build_copy_from_json_statement(config, s3_objectpath, jsonpaths_file, table, maxerror)
         credentials = get_credentials(config)
         # TODO: what about COMPUPDATE/ROWS?
@@ -177,7 +177,7 @@ module SnowPlow
       #
       # Parameters:
       # +table+:: the name of the table to analyze
-      Config Hash => String
+      Contract Hash => String
       def build_analyze_statement(table)
         "ANALYZE #{table};"
       end
@@ -188,7 +188,7 @@ module SnowPlow
       #
       # Parameters:
       # +table+:: the name of the table to analyze
-      Config Hash => String
+      Contract Hash => String
       def build_vacuum_statement(table)
         "VACUUM SORT ONLY #{table};"
       end
@@ -199,7 +199,7 @@ module SnowPlow
       #
       # Parameters:
       # +config+:: the configuration options
-      Config Hash => String
+      Contract Hash => String
       def get_credentials(config)
         "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
       end
