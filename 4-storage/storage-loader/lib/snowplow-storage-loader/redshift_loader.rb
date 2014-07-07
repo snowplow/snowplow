@@ -44,12 +44,12 @@ module Snowplow
         # Build our main transaction, consisting of COPY and COPY FROM JSON
         # statements, and potentially also a set of table ANALYZE statements.
         copy_analyze_statements = [
-          # build_copy_from_tsv_statement(config, config[:s3][:buckets][:enriched][:good], target[:table], target[:maxerror])
+          build_copy_from_tsv_statement(config, config[:s3][:buckets][:enriched][:good], target[:table], target[:maxerror])
         ]
         copy_analyze_statements.push(*shredded_statements.map(&:copy))
 
         unless config[:skip].include?('analyze')
-          queries << build_analyze_statement(target[:table])
+          copy_analyze_statements << build_analyze_statement(target[:table])
           copy_analyze_statements.push(*shredded_statements.map(&:analyze))
         end
 
@@ -105,7 +105,7 @@ module Snowplow
               raise DatabaseLoadError, "Cannot find JSON Paths file to load #{st.s3_objectpath} into #{st.table}"
             end
 
-            SqlStatements(
+            SqlStatements.new(
               build_copy_from_json_statement(config, st.s3_objectpath, jsonpaths_file, st.table, target[:maxerror]),
               build_analyze_statement(st.table),
               build_vacuum_statement(st.table)
@@ -170,7 +170,7 @@ module Snowplow
       def build_copy_from_json_statement(config, s3_objectpath, jsonpaths_file, table, maxerror)
         credentials = get_credentials(config)
         # TODO: what about COMPUPDATE/ROWS?
-        "COPY #{table} FROM '#{objectpath}' CREDENTIALS '#{credentials}' JSON AS '#{jsonpaths_file}' MAXERROR #{maxerror} EMPTYASNULL TRUNCATECOLUMNS TIMEFORMAT 'auto' ACCEPTINVCHARS;"
+        "COPY #{table} FROM '#{s3_objectpath}' CREDENTIALS '#{credentials}' JSON AS '#{jsonpaths_file}' MAXERROR #{maxerror} EMPTYASNULL TRUNCATECOLUMNS TIMEFORMAT 'auto' ACCEPTINVCHARS;"
       end
       module_function :build_copy_from_json_statement
 

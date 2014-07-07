@@ -28,7 +28,9 @@ module Snowplow
 
       attr_reader :s3_objectpath, :table
 
-      @@snowplow_hosted_assets = "s3://keplar-hosted-assets/4-storage/" # "s3://snowplow-hosted-assets/4-storage/redshift-storage/jsonpaths/"
+      @@snowplow_hosted_assets = "s3://snowplow-hosted-assets/4-storage/redshift-storage/jsonpaths/"
+
+      @@jsonpaths_files = Hash.new
 
       # Searches S3 for all the files we can find
       # containing shredded types.
@@ -77,18 +79,29 @@ module Snowplow
         name = make_sql_safe(@name)
         file = "#{name}_#{@version_model}.json"
 
+        # Check the cache first
+        cache_key = "#{@vendor}/#{file}"
+        unless @@jsonpaths_files[cache_key].nil?
+          return @@jsonpaths_files[cache_key]
+        end
+
         # Let's do the custom check first (allows a user to
         # override one of our JSON Path files with one of theirs)
         # Look for it in the custom assets (if any)
         custom_dir = "#{assets}#{@vendor}/"
+
         if file_exists?(s3, custom_dir, file)
-          return "#{custom_dir}#{file}"
+          f = "#{custom_dir}#{file}"
+          @@jsonpaths_files[cache_key] = f
+          return f
         end
 
         # Look for it in Snowplow's hosted assets
         snowplow_dir = "#{@@snowplow_hosted_assets}#{@vendor}/"
         if file_exists?(s3, snowplow_dir, file)
-          return "#{snowplow_dir}#{file}"
+          f = "#{snowplow_dir}#{file}"
+          @@jsonpaths_files[cache_key] = f
+          return f
         end
 
         nil # Not found
