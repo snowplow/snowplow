@@ -54,7 +54,7 @@ module SnowPlow
         @s3_objectpath = s3_objectpath
         @schema = schema
 
-        parts = /^.*\/(?<vendor>[^\/]+)\/(?<name>[^\/]+)\/[^\/]+\/(?<version_model>[^\/]+)-$/.match(s3_objectpath)
+        parts = /^.*\/(?<vendor>[^\/]+)\/(?<name>[^\/]+)\/(?<format>[^\/]+)\/(?<version_model>[^\/]+)-$/.match(s3_objectpath)
         @vendor = parts[:vendor]
         @name = parts[:name]
         @version_model = parts[:version_model]
