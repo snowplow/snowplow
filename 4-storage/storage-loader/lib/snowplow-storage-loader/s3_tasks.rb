@@ -48,6 +48,7 @@ module Snowplow
         # Download
         Sluice::Storage::S3::download_files(s3, in_location, download_dir, event_files)
 
+        nil
       end
       module_function :download_events
 
@@ -65,8 +66,10 @@ module Snowplow
           config[:aws][:secret_access_key])
 
         # Get S3 locations
-        archive_file_type(config, s3, :enriched)
-        archive_file_type(config, s3, :shredded) if config[:update].include?('shred')
+        archive_files_of_type(s3, config, :enriched)
+        archive_files_of_type(s3, config, :shredded) unless config[:skip].include?('shred')
+      
+        nil
       end
       module_function :archive_files
 
@@ -76,10 +79,10 @@ module Snowplow
       # or shredded types
       #
       # Parameters:
-      # +config+:: the hash of configuration options
       # +s3+:: the S3 connection
+      # +config+:: the hash of configuration options
       # +file_type+:: the type of files (a symbol)
-      def archive_files_of_type(config, s3, file_type)
+      def archive_files_of_type(s3, config, file_type)
 
         # Get S3 locations
         good_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][file_type][:good])
@@ -88,6 +91,7 @@ module Snowplow
         # Move all the files of this type
         Sluice::Storage::S3::move_files(s3, good_location, archive_location, '.+')
 
+        nil
       end
       module_function :archive_files_of_type
 

@@ -26,7 +26,7 @@ module Snowplow
     # Locates a shredded type in S3
     class ShreddedType
 
-      @@snowplow_hosted_assets = "s3://snowplow-hosted-assets/4-storage/redshift-storage/jsonpath/"
+      @@snowplow_hosted_assets = "s3://snowplow-hosted-assets/4-storage/redshift-storage/jsonpaths/"
 
       # Searches S3 for all the files we can find
       # containing shredded types.
@@ -87,7 +87,7 @@ module Snowplow
       Contract FogStorage, String => Maybe[String]
       def discover_jsonpaths_file(s3, assets)
         name = make_sql_safe(@name)
-        file = "#{name}_#{version}.json"
+        file = "#{name}_#{@version_model}.json"
 
         # Let's do the custom check first (allows a user to
         # override one of our JSON Path files with one of theirs)
