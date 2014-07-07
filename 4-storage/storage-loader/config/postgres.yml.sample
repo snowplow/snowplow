@@ -4,7 +4,7 @@
 :s3:
   :region: ADD HERE # S3 bucket region
   :buckets:
-    :assets: # Not required for Postgres
+    :jsonpath_assets: # Not required for Postgres
     :enriched:
       :good: ADD HERE # This is the same as the :enriched:good: bucket specified for EmrEtlRunner
       :archive ADD HERE # Where to archive enriched events to

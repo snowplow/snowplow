@@ -4,7 +4,7 @@
 :s3:
   :region: ADD HERE # S3 bucket region must be the same as Redshift cluster region
   :buckets:
-    :assets: # If you have defined your own JSON Schemas, add the s3:// path to your own JSON Path files in your own bucket here
+    :jsonpath_assets: # If you have defined your own JSON Schemas, add the s3:// path to your own JSON Path files in your own bucket here
     :enriched:
       :good: ADD HERE # Must be s3:// not s3n:// for Redshift. This is the same as the :enriched:good: bucket specified for EmrEtlRunner
       :archive ADD HERE # Where to archive enriched events to

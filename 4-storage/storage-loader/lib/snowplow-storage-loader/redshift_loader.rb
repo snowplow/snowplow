@@ -100,7 +100,7 @@ module Snowplow
 
           ShreddedType.discover_shredded_types(s3, location, schema).map { |st|
 
-            jsonpaths_file = st.discover_jsonpaths_file(s3, config[:s3][:buckets][:assets])
+            jsonpaths_file = st.discover_jsonpaths_file(s3, config[:s3][:buckets][:jsonpath_assets])
             if jsonpaths_file.nil?
               raise DatabaseLoadError, "Cannot find JSON Paths file to load #{st.s3_objectpath} into #{st.table}"
             end

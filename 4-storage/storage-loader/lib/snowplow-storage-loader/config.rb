@@ -56,9 +56,6 @@ module Snowplow
             raise ConfigError, "Storage type '#{t[:type]}' not supported"
           end
         }
-
-        # Determine whether we need to shred JSONs
-        config[:jsonpaths] = "#{config[:s3][:buckets][:assets]}/4-storage/redshift-storage/jsonpaths/"
             
         # Determine whether we need to download events
         config[:download_required] = config[:targets].count { |t| t[:type] == "postgres" } > 0

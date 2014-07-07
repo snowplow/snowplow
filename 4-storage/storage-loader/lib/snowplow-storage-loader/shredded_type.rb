@@ -25,7 +25,7 @@ module Snowplow
     # Locates a shredded type in S3
     class ShreddedType
 
-      @@snowplow_hosted_assets = "s3://snowplow-hosted-assets/4-storage/redshift-storage/jsonpath"
+      @@snowplow_hosted_assets = "s3://snowplow-hosted-assets/4-storage/redshift-storage/jsonpath/"
 
       # Searches S3 for all the files we can find
       # containing shredded types.
@@ -89,10 +89,12 @@ module Snowplow
         file = "#{vendor}/#{name}_#{version}.json"
 
         # Look for it in the custom assets (if any)
-        # TODO
+        custom_file = "#{assets}#{file}"
+        # TODO: check
 
         # Look for it in Snowplow's hosted assets
-        # TODO
+        snowplow_file = "#{@@snowplow_hosted_assets}#{file}"
+        # TODO: check
 
         nil # Not found
       end
