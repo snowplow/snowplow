@@ -15,6 +15,7 @@
 
 require 'fog'
 require 'fog/aws/models/storage/file'
+require 'sluice'
 
 require 'contracts'
 include Contracts
