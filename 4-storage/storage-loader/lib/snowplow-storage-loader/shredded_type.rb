@@ -40,8 +40,8 @@ module Snowplow
 
         Sluice::Storage::S3::list_files(s3, s3_location).map { |file|
           "s3://" + in_location.bucket + "/" + /^(?<s3_path>.*-)[^-]+-[^-]+\/[^\/]+$/.match(file.key)[:s3_path]
-        }.uniq.map { |s3_objectpath|
-          ShreddedType.new(s3_objectpath, schema)
+        }.uniq.map { |s3_path|
+          ShreddedType.new(s3_path, schema)
         }
       end
 
@@ -72,9 +72,9 @@ module Snowplow
       #   org_schema_web_page_1
       Contract None => String
       def table
+        schema = if @schema.nil? then "" else "#{@schema}." end
         vendor = make_sql_safe(@vendor)
         name   = make_sql_safe(@name)
-        schema = if @schema.nil? then "" else "#{@schema}." end
         "#{schema}#{vendor}_#{name}_#{@version_model}"
       end
 
