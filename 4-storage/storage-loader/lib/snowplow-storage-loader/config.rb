@@ -40,8 +40,8 @@ module SnowPlow
         config[:skip] = options[:skip]
         config[:include] = options[:include]
 
-        # Add trailing slashes if needed to the buckets and download folder
-        config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
+        # Add trailing slashes if needed to the non-nil buckets
+        config[:s3][:buckets] = add_trailing_slashes(config[:s3][:buckets])
 
         # Add in our comprows setting
         config[:comprows] = options[:comprows]
@@ -82,7 +82,28 @@ module SnowPlow
       end  
       module_function :get_config
 
-      private
+    private
+
+      # Add trailing slashes
+      def add_trailing_slashes(bucketsHash)
+        with_slashes_added = {}
+        for k0 in bucketsHash.keys
+          if bucketsHash[k0].class == ''.class
+            with_slashes_added[k0] = Sluice::Storage::trail_slash(bucketsHash[k0])
+          elsif bucketsHash[k0].class == {}.class
+            y = {}
+            for k1 in bucketsHash[k0].keys
+              y[k1] = bucketsHash[k0][k1].nil? ? nil : Sluice::Storage::trail_slash(bucketsHash[k0][k1])
+            end
+            with_slashes_added[k0] = y
+          else
+            with_slashes_added[k0] = nil
+          end
+        end
+
+        with_slashes_added
+      end
+      module_function :add_trailing_slashes
 
       # Parse the command-line arguments
       # Returns: the hash of parsed options

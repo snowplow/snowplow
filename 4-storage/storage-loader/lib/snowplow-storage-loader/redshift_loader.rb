@@ -95,10 +95,10 @@ module SnowPlow
             config[:s3][:region],
             config[:aws][:access_key_id],
             config[:aws][:secret_access_key])
-          s3_path = config[:s3][:buckets][:shredded][:good]
           schema = extract_schema(target[:table])
-                    
-          ShreddedType.discover_shredded_types(s3, s3_path, schema).map { |st|
+          location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:shredded][:good])
+
+          ShreddedType.discover_shredded_types(s3, location, schema).map { |st|
 
             jsonpaths_file = st.discover_jsonpaths_file(s3, config[:s3][:buckets][:assets])
             if jsonpaths_file.nil?
@@ -106,7 +106,7 @@ module SnowPlow
             end
 
             SqlStatements(
-              build_copy_from_json_statement(config, st.s3_path, jsonpaths_file, st.table, target[:maxerror]),
+              build_copy_from_json_statement(config, st.s3_objectpath, jsonpaths_file, st.table, target[:maxerror]),
               build_analyze_statement(st.table),
               build_vacuum_statement(st.table)
             )

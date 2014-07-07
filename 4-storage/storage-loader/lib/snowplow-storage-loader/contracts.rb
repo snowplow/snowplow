@@ -24,6 +24,7 @@ module SnowPlow
 
       # Aliases for Contracts
       FogStorage = Fog::Storage::AWS::Real
+      SluiceLocation = Sluice::Storage::S3::Location
 
   end
 end

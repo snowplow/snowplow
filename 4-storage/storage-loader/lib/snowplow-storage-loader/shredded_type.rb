@@ -34,18 +34,13 @@ module SnowPlow
       # +s3+:: the Fog object for accessing S3
       # +s3_path+:: the S3 path to the shredded type files
       # +schema+:: the schema that tables should live in
-      Contract FogStorage, String, Maybe[String] => ArrayOf[ShreddedType]
-      def self.discover_shredded_types(s3, s3_path, schema)
+      Contract FogStorage, SluiceLocation, Maybe[String] => ArrayOf[ShreddedType]
+      def self.discover_shredded_types(s3, s3_location, schema)
 
-        # TODO: move this out
-        in_location = Sluice::Storage::S3::Location.new("s3n://snowplow-saas-data-eu-west-1/snplow2/shredded/good/")
-
-        files = Sluice::Storage::S3::list_files(s3, in_location)
-
-        files.map { |file|
+        Sluice::Storage::S3::list_files(s3, s3_location).map { |file|
           "s3://" + in_location.bucket + "/" + /^(?<s3_path>.*-)[^-]+-[^-]+\/[^\/]+$/.match(file.key)[:s3_path]
-        }.uniq.map { |s3_path|
-          ShreddedType.new(s3_path, schema)
+        }.uniq.map { |s3_objectpath|
+          ShreddedType.new(s3_objectpath, schema)
         }
       end
 
@@ -55,11 +50,11 @@ module SnowPlow
       # +s3_path+:: the S3 path to the shredded type files
       # +schema+:: the schema that tables should live in
       Contract String, Maybe[String] => ShreddedType
-      def initialize(s3_path, schema)
-        @s3_path = s3_path
+      def initialize(s3_objectpath, schema)
+        @s3_objectpath = s3_objectpath
         @schema = schema
 
-        parts = /^.*\/(?<vendor>[^\/]+)\/(?<name>[^\/]+)\/[^\/]+\/(?<version_model>[^\/]+)-$/.match(path)
+        parts = /^.*\/(?<vendor>[^\/]+)\/(?<name>[^\/]+)\/[^\/]+\/(?<version_model>[^\/]+)-$/.match(s3_objectpath)
         @vendor = parts[:vendor]
         @name = parts[:name]
         @version_model = parts[:version_model]
