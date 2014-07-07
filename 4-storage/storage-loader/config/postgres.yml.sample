@@ -7,7 +7,7 @@
     :jsonpath_assets: # Not required for Postgres
     :enriched:
       :good: ADD HERE # This is the same as the :enriched:good: bucket specified for EmrEtlRunner
-      :archive ADD HERE # Where to archive enriched events to
+      :archive: ADD HERE # Where to archive enriched events to
     :shredded:
       :good: # Not required for Postgres
       :archive: # Not required for Postgres
