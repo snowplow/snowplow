@@ -13,6 +13,7 @@
 # Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
+require 'sluice'
 require 'plissken'
 
 require 'contracts'
@@ -86,20 +87,34 @@ module Snowplow
       Contract FogStorage, String => Maybe[String]
       def discover_jsonpaths_file(s3, assets)
         name = make_sql_safe(@name)
-        file = "#{vendor}/#{name}_#{version}.json"
+        file = "#{name}_#{version}.json"
 
+        # Let's do the custom check first (allows a user to
+        # override one of our JSON Path files with one of theirs)
         # Look for it in the custom assets (if any)
-        custom_file = "#{assets}#{file}"
-        # TODO: check
+        custom_dir = "#{assets}#{vendor}/"
+        if file_exists?(s3, custom_dir, file)
+          return "#{custom_dir}#{file}"
+        end
 
         # Look for it in Snowplow's hosted assets
-        snowplow_file = "#{@@snowplow_hosted_assets}#{file}"
-        # TODO: check
+        snowplow_dir = "#{@@snowplow_hosted_assets}#{vendor}/"
+        if file_exists?(s3, snowplow_dir, file)
+          return "#{snowplow_dir}#{file}"
+        end
 
         nil # Not found
       end
 
     private
+
+      # Check if a file exists in a given directory
+      Contract String, String => Bool
+      def file_exists?(s3, directory, file)
+        loc = Sluice::Storage::S3::Location.new(directory)
+        dir = s3.directories.get(loc.bucket, prefix: loc.dir_as_path)
+        (not dir.files.head(loc.dir_as_path + file).nil?)
+      end
 
       # Replace any periods in vendor or name with underscore
       # Any camelCase or PascalCase to snake_case
