@@ -39,9 +39,10 @@ module Snowplow
       def self.discover_shredded_types(s3, s3_location, schema)
 
         Sluice::Storage::S3::list_files(s3, s3_location).map { |file|
+          # Strip off the final sub-folder's SchemaVer REVISION and ADDITION components
           "s3://" + in_location.bucket + "/" + /^(?<s3_path>.*-)[^-]+-[^-]+\/[^\/]+$/.match(file.key)[:s3_path]
-        }.uniq.map { |s3_path|
-          ShreddedType.new(s3_path, schema)
+        }.uniq.map { |s3_objectpath|
+          ShreddedType.new(s3_objectpath, schema)
         }
       end
 
