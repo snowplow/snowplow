@@ -84,8 +84,6 @@ module Snowplow
           [ "COMMIT;" ]
         ).join("\n")
 
-        puts transaction
-
         execute_queries(target, [ transaction ])
       end
       module_function :execute_transaction
