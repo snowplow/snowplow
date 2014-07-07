@@ -44,7 +44,7 @@ module Snowplow
         # Build our main transaction, consisting of COPY and COPY FROM JSON
         # statements, and potentially also a set of table ANALYZE statements.
         copy_analyze_statements = [
-          build_copy_from_tsv_statement(config, config[:s3][:buckets][:enriched][:good], target[:table], target[:maxerror])
+          # build_copy_from_tsv_statement(config, config[:s3][:buckets][:enriched][:good], target[:table], target[:maxerror])
         ]
         copy_analyze_statements.push(*shredded_statements.map(&:copy))
 

@@ -26,7 +26,9 @@ module Snowplow
     # Locates a shredded type in S3
     class ShreddedType
 
-      @@snowplow_hosted_assets = "s3://snowplow-hosted-assets/4-storage/redshift-storage/jsonpaths/"
+      attr_reader :s3_objectpath, :table
+
+      @@snowplow_hosted_assets = "s3://keplar-hosted-assets/4-storage/" # "s3://snowplow-hosted-assets/4-storage/redshift-storage/jsonpaths/"
 
       # Searches S3 for all the files we can find
       # containing shredded types.
@@ -40,7 +42,7 @@ module Snowplow
 
         Sluice::Storage::S3::list_files(s3, s3_location).map { |file|
           # Strip off the final sub-folder's SchemaVer REVISION and ADDITION components
-          "s3://" + in_location.bucket + "/" + /^(?<s3_path>.*-)[^-]+-[^-]+\/[^\/]+$/.match(file.key)[:s3_path]
+          "s3://" + s3_location.bucket + "/" + /^(?<s3_path>.*-)[^-]+-[^-]+\/[^\/]+$/.match(file.key)[:s3_path]
         }.uniq.map { |s3_objectpath|
           ShreddedType.new(s3_objectpath, schema)
         }
@@ -54,29 +56,14 @@ module Snowplow
       Contract String, Maybe[String] => ShreddedType
       def initialize(s3_objectpath, schema)
         @s3_objectpath = s3_objectpath
-        @schema = schema
 
         parts = /^.*\/(?<vendor>[^\/]+)\/(?<name>[^\/]+)\/(?<format>[^\/]+)\/(?<version_model>[^\/]+)-$/.match(s3_objectpath)
         @vendor = parts[:vendor]
         @name = parts[:name]
         @version_model = parts[:version_model]
 
+        @table = get_table(schema, @vendor, @name, @version_model)
         self
-      end
-
-      # Derives the table name in Redshift from the Iglu
-      # schema key.
-      #
-      # Should convert:
-      #   org.schema/WebPage/jsonschema/1
-      # to:
-      #   org_schema_web_page_1
-      Contract None => String
-      def table
-        schema = if @schema.nil? then "" else "#{@schema}." end
-        vendor = make_sql_safe(@vendor)
-        name   = make_sql_safe(@name)
-        "#{schema}#{vendor}_#{name}_#{@version_model}"
       end
 
       # Finds the JSON Paths file required to load
@@ -93,13 +80,13 @@ module Snowplow
         # Let's do the custom check first (allows a user to
         # override one of our JSON Path files with one of theirs)
         # Look for it in the custom assets (if any)
-        custom_dir = "#{assets}#{vendor}/"
+        custom_dir = "#{assets}#{@vendor}/"
         if file_exists?(s3, custom_dir, file)
           return "#{custom_dir}#{file}"
         end
 
         # Look for it in Snowplow's hosted assets
-        snowplow_dir = "#{@@snowplow_hosted_assets}#{vendor}/"
+        snowplow_dir = "#{@@snowplow_hosted_assets}#{@vendor}/"
         if file_exists?(s3, snowplow_dir, file)
           return "#{snowplow_dir}#{file}"
         end
@@ -109,8 +96,26 @@ module Snowplow
 
     private
 
+      # Derives the table name in Redshift from the Iglu
+      # schema key.
+      #
+      # Should convert:
+      #   org.schema/WebPage/jsonschema/1
+      # to:
+      #   org_schema_web_page_1
+      #
+      # Parameters:
+      # +schema+:: the schema that tables should live in      
+      Contract String => String
+      def get_table(schema, vendor, name, version_model)
+        schema = if schema.nil? then "" else "#{schema}." end
+        v = make_sql_safe(vendor)
+        n = make_sql_safe(name)
+        "#{schema}#{v}_#{n}_#{version_model}"
+      end
+
       # Check if a file exists in a given directory
-      Contract String, String => Bool
+      Contract FogStorage, String, String => Bool
       def file_exists?(s3, directory, file)
         loc = Sluice::Storage::S3::Location.new(directory)
         dir = s3.directories.get(loc.bucket, prefix: loc.dir_as_path)
