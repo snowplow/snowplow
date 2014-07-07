@@ -17,14 +17,14 @@ require 'sluice'
 
 # Ruby module to support the S3-related actions required by
 # the Hive-based ETL process.
-module SnowPlow
+module Snowplow
   module StorageLoader
     module S3Tasks
 
       # We ignore the Hadoop success files
       EMPTY_FILES = "_SUCCESS"
 
-      # Downloads the SnowPlow event files from the In
+      # Downloads the Snowplow event files from the In
       # Bucket to the local filesystem, ready to be loaded
       # into different storage options.
       #
@@ -51,7 +51,7 @@ module SnowPlow
       end
       module_function :download_events
 
-      # Moves (archives) the loaded SnowPlow event files to the
+      # Moves (archives) the loaded Snowplow event files to the
       # Archive Bucket.
       #
       # Parameters:

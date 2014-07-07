@@ -19,7 +19,7 @@ require 'contracts'
 include Contracts
 
 # Ruby module to support the load of Snowplow events into Redshift
-module SnowPlow
+module Snowplow
   module StorageLoader
     module RedshiftLoader
 

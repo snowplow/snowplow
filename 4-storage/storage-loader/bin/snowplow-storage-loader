@@ -17,14 +17,14 @@
 
 # Don't edit $LOAD_PATH, go straight to main Ruby file
 require File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'snowplow-storage-loader'))
-loader = SnowPlow::StorageLoader
+loader = Snowplow::StorageLoader
 
 # This Ruby script runs the Snowplow StorageLoader.
 #
 # This is a four-step process:
 #
 # 1. Download Snowplow event files from S3 (only if 1+ storage targets are local e.g. Postgres)
-# 2. Load SnowPlow event files (either local or remote) into storage target
+# 2. Load Snowplow event files (either local or remote) into storage target
 # 3. Archive event files in S3
 # 4. Delete local Snowplow event files (only if 1+ storage targets are local e.g. Postgres)
 begin
@@ -66,7 +66,7 @@ begin
 
   puts "Completed successfully"
 
-# Catch any SnowPlow error
+# Catch any Snowplow error
 rescue loader::Error => e
   $stderr.puts(e.message)
   exit 1

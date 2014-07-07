@@ -19,7 +19,7 @@ require 'fog/aws/models/storage/file'
 require 'contracts'
 include Contracts
 
-module SnowPlow
+module Snowplow
   module StorageLoader
 
       # Aliases for Contracts

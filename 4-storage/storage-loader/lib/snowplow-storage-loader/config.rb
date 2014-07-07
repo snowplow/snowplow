@@ -20,7 +20,7 @@ require 'sluice'
 
 # Config module to hold functions related to CLI argument parsing
 # and config file reading to support storage loading.
-module SnowPlow
+module Snowplow
   module StorageLoader
     module Config
 

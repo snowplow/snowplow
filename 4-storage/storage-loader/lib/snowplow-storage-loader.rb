@@ -23,7 +23,7 @@ require_relative 'snowplow-storage-loader/postgres_loader'
 require_relative 'snowplow-storage-loader/shredded_type'
 require_relative 'snowplow-storage-loader/redshift_loader'
 
-module SnowPlow
+module Snowplow
   module StorageLoader
   	NAME          = "snowplow-storage-loader"
     VERSION       = "0.3.0"
