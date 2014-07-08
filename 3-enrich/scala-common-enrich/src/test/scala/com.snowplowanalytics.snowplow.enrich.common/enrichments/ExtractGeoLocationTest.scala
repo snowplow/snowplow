@@ -65,6 +65,6 @@ class ExtractGeoLocationTest extends Specification with DataTables with Validati
                                                  regionName = Some("Cambridgeshire")
                                                ))                  |> {
       (_, ipAddress, expected) =>
-        config.extractGeoLocation(ipAddress) must beSuccessful(expected)
+        config.extractGeoLocation(ipAddress).map(_._1) must beSuccessful(expected)
     }
 }

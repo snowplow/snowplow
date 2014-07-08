@@ -75,6 +75,11 @@ class CanonicalOutput {
   @BeanProperty var geo_longitude: JFloat = _
   @BeanProperty var geo_region_name: String = _
 
+  // Other IP lookups
+  @BeanProperty var isp: String = _
+  @BeanProperty var org: String = _
+  @BeanProperty var domain: String = _
+
   // Page
   @BeanProperty var page_url: String = _
   @BeanProperty var page_title: String = _

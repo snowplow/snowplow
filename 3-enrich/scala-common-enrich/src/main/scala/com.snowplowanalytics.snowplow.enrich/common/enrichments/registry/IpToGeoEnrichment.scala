@@ -35,7 +35,10 @@ import iglu.client.SchemaKey
 import iglu.client.validation.ProcessingMessageMethods._
 
 // Scala MaxMind GeoIP
-import maxmind.iplookups.IpLookups
+import maxmind.iplookups.{
+  IpLookups,
+  IpLookupResult
+}
 
 // This project
 import common.utils.ConversionUtils
@@ -143,10 +146,10 @@ case class IpToGeoEnrichment(
    *         boxed in a Scalaz Validation
    */
   // TODO: can we move the IpGeo to an implicit?
-  def extractGeoLocation(ip: String): Validation[String, MaybeIpLocation] = {
+  def extractGeoLocation(ip: String): Validation[String, IpLookupResult] = {
 
     try {
-      ipGeo.performLookups(ip)._1.success
+      ipGeo.performLookups(ip).success
     } catch {
       case _: Throwable => return "Could not extract geo-location from IP address [%s]".format(ip).fail
     }

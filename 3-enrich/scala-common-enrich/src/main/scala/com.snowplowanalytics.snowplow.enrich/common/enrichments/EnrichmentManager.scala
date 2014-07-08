@@ -245,17 +245,22 @@ object EnrichmentManager {
     val geoLocation = {
       registry.getIpToGeoEnrichment match {
         case Some(geo) => {
-          val geoLoc = geo.extractGeoLocation(raw.ipAddress.orNull)
-          for (loc <- geoLoc; l <- loc) {
-            event.geo_country = l.countryCode
-            event.geo_region = l.region.orNull
-            event.geo_city = l.city.orNull
-            event.geo_zipcode = l.postalCode.orNull
-            event.geo_latitude = l.latitude
-            event.geo_longitude = l.longitude
-            event.geo_region_name = l.regionName.orNull
+          val ipLookupResult = geo.extractGeoLocation(raw.ipAddress.orNull)
+          for (res <- ipLookupResult) {
+            for ( loc <- res._1) {
+              event.geo_country = loc.countryCode
+              event.geo_region = loc.region.orNull
+              event.geo_city = loc.city.orNull
+              event.geo_zipcode = loc.postalCode.orNull
+              event.geo_latitude = loc.latitude
+              event.geo_longitude = loc.longitude
+              event.geo_region_name = loc.regionName.orNull
+            }
+            event.isp = res._2.orNull
+            event.org = res._3.orNull
+            event.domain = res._4.orNull
           }
-          geoLoc
+          ipLookupResult
         }
         case None => unitSuccess
       }
