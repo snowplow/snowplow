@@ -147,7 +147,7 @@ module Snowplow
       # +value+:: the value to make SQL-safe
       Contract String => String
       def make_sql_safe(value)
-        Hash.new.send(:underscore, value).tr('.', '_')
+        Hash.new.send(:underscore, value).tr('.', '_').tr('-', '_')
       end
 
     end
