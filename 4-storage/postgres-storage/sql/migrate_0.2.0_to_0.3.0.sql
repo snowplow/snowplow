@@ -185,10 +185,10 @@ INSERT INTO atomic.events
 	"geo_zipcode",
 	"geo_latitude",
 	"geo_longitude",
-	NULL AS "geo_region_name"               -- Added in 0.3.0
-	NULL AS "ip_isp"                        -- Added in 0.3.0
-	NULL AS "ip_org"                        -- Added in 0.3.0
-	NULL AS "ip_domain"                     -- Added in 0.3.0	
+	NULL AS "geo_region_name",              -- Added in 0.3.0
+	NULL AS "ip_isp",                       -- Added in 0.3.0
+	NULL AS "ip_org",                       -- Added in 0.3.0
+	NULL AS "ip_domain",                    -- Added in 0.3.0	
 	"page_url",
 	"page_title",
 	"page_referrer",
