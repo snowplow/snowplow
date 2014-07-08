@@ -64,6 +64,7 @@ object UnstructEventCfLineSpec {
     "67060",
     "37.543304",
     "-97.3657",
+    "Kansas",
     "http://www.psychicbazaar.com/2-tarot-cards",
     null, // No page title for events
     "http://www.psychicbazaar.com/",

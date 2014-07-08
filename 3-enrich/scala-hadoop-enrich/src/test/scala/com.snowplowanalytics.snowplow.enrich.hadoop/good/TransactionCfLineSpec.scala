@@ -64,6 +64,7 @@ object TransactionCfLineSpec {
     null,
     "52.199997",
     "0.11669922",
+    "Cambridgeshire",
     "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail",
     null, // No page title for transactions
     null,

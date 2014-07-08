@@ -65,6 +65,7 @@ object RefererParserCfLineSpec {
     null,
     null,
     null,
+    null,
     "http://snowplowanalytics.com/blog/2013/11/20/loading-json-data-into-redshift/#weaknesses",
     "Loading JSON data into Redshift - the challenges of quering JSON data, and how Snowplow can be used to meet those challenges",
     "http://www.subdomain1.snowplowanalytics.com/services/pipelines.html",
