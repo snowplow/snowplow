@@ -52,6 +52,11 @@ CREATE TABLE atomic.events (
 	geo_zipcode varchar(15),
 	geo_latitude double precision,
 	geo_longitude double precision,
+	geo_region_name varchar(100),                      -- Added in 0.4.0
+	-- IP lookups
+	ip_isp varchar(100),                               -- Added in 0.4.0
+	ip_org varchar(100),                               -- Added in 0.4.0
+	ip_domain varchar(100),                            -- Added in 0.4.0
 	-- Page
 	page_url varchar(4096),                            -- Added in 0.3.0
 	page_title varchar(2000),

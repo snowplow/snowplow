@@ -29,7 +29,7 @@ Scala Common Enrich: added IP -> ISP lookup (#861)                              
 Redshift: bumped table-def to 0.4.0
 Redshift: added etl_tstamp to atomic.events (#819)
 Redshift: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#834)
-Redshift: added new MaxMind fields (#871)                                               - TODO
+Redshift: added new MaxMind fields (#871)
 Redshift: migration script added for 0.3.0 to 0.4.0 (#838)
 Postgres: bumped table-def to 0.3.0
 Postgres: added etl_tstamp to atomic.events (#820)
