@@ -84,8 +84,12 @@ module Snowplow
       # +file_type+:: the type of files (a symbol)
       def archive_files_of_type(s3, config, file_type)
 
+        # Check we have shredding configured
+        good_path = config[:s3][:buckets][file_type][:good]
+        return nil if file_type == :shredded and good_path.nil?
+
         # Get S3 locations
-        good_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][file_type][:good])
+        good_location = Sluice::Storage::S3::Location.new(good_path)
         archive_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][file_type][:archive])
 
         # Move all the files of this type
