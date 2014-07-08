@@ -39,15 +39,20 @@ module Snowplow
       # +s3+:: the Fog object for accessing S3
       # +s3_path+:: the S3 path to the shredded type files
       # +schema+:: the schema that tables should live in
-      Contract FogStorage, SluiceLocation, Maybe[String] => ArrayOf[ShreddedType]
-      def self.discover_shredded_types(s3, s3_location, schema)
+      Contract FogStorage, Maybe[String], Maybe[String] => ArrayOf[ShreddedType]
+      def self.discover_shredded_types(s3, s3_path, schema)
 
-        Sluice::Storage::S3::list_files(s3, s3_location).map { |file|
-          # Strip off the final sub-folder's SchemaVer REVISION and ADDITION components
-          "s3://" + s3_location.bucket + "/" + /^(?<s3_path>.*-)[^-]+-[^-]+\/[^\/]+$/.match(file.key)[:s3_path]
-        }.uniq.map { |s3_objectpath|
-          ShreddedType.new(s3_objectpath, schema)
-        }
+        if s3_path.nil?
+          []
+        else
+          loc = Sluice::Storage::S3::Location.new(s3_path)
+          Sluice::Storage::S3::list_files(s3, loc).map { |file|
+            # Strip off the final sub-folder's SchemaVer REVISION and ADDITION components
+            "s3://" + loc.bucket + "/" + /^(?<s3_path>.*-)[^-]+-[^-]+\/[^\/]+$/.match(file.key)[:s3_path]
+          }.uniq.map { |s3_objectpath|
+            ShreddedType.new(s3_objectpath, schema)
+          }
+        end
       end
 
       # Constructor
