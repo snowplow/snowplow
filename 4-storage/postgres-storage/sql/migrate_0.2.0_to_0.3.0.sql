@@ -25,7 +25,7 @@ CREATE TABLE "atomic"."events" (
 	"app_id" varchar(255),
 	"platform" varchar(255),
 	-- Date/time
-	"etl_tstamp" timestamp,
+	"etl_tstamp" timestamp,                 -- Added in 0.3.0
 	"collector_tstamp" timestamp NOT NULL,
 	"dvce_tstamp" timestamp,
 	-- Date/time
@@ -52,6 +52,11 @@ CREATE TABLE "atomic"."events" (
 	"geo_zipcode" varchar(15),
 	"geo_latitude" double precision,
 	"geo_longitude" double precision,
+	"geo_region_name" varchar(100)          -- Added in 0.3.0
+	-- IP lookups
+	"ip_isp" varchar(100)                   -- Added in 0.3.0
+	"ip_org" varchar(100)                   -- Added in 0.3.0
+	"ip_domain" varchar(100)                -- Added in 0.3.0
 	-- Page
 	"page_url" text,
 	"page_title" varchar(2000),
@@ -180,6 +185,10 @@ INSERT INTO atomic.events
 	"geo_zipcode",
 	"geo_latitude",
 	"geo_longitude",
+	NULL AS "geo_region_name"               -- Added in 0.3.0
+	NULL AS "ip_isp"                        -- Added in 0.3.0
+	NULL AS "ip_org"                        -- Added in 0.3.0
+	NULL AS "ip_domain"                     -- Added in 0.3.0	
 	"page_url",
 	"page_title",
 	"page_referrer",
