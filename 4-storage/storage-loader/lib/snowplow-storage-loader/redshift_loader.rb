@@ -50,7 +50,7 @@ module Snowplow
 
         unless config[:skip].include?('analyze')
           copy_analyze_statements << build_analyze_statement(target[:table])
-          copy_analyze_statements.push(*shredded_statements.map(&:analyze))
+          copy_analyze_statements.push(*shredded_statements.map(&:analyze).uniq)
         end
 
         status = PostgresLoader.execute_transaction(target, copy_analyze_statements)
@@ -65,7 +65,7 @@ module Snowplow
           vacuum_statements = [
             build_vacuum_statement(target[:table])
           ]
-          vacuum_statements.push(*shredded_statements.map(&:vacuum))
+          vacuum_statements.push(*shredded_statements.map(&:vacuum).uniq)
 
           status = PostgresLoader.execute_queries(target, vacuum_statements)
           unless status == []
