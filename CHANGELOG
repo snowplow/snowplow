@@ -24,7 +24,7 @@ Scala Common Enrich: added validation of enrichments JSON (#807)
 Scala Common Enrich: replaced "anon_ip_quartets" with "anon_ip_octets" everywhere (#547)
 Scala Common Enrich: added ability to extract event_id from querystring (#723)
 Scala Common Enrich: extracted CanonicalInput's userId as network_userid, thanks @pkallos! (#855)
-Scala Common Enrich: added MaxMind region field (#873)                                  - TODO
+Scala Common Enrich: added MaxMind region_name field (#873)
 Scala Common Enrich: added IP -> ISP lookup (#861)                                      - TODO
 Redshift: bumped table-def to 0.4.0
 Redshift: added etl_tstamp to atomic.events (#819)

@@ -253,6 +253,7 @@ object EnrichmentManager {
             event.geo_zipcode = l.postalCode.orNull
             event.geo_latitude = l.latitude
             event.geo_longitude = l.longitude
+            event.geo_region_name = l.regionName.orNull
           }
           geoLoc
         }

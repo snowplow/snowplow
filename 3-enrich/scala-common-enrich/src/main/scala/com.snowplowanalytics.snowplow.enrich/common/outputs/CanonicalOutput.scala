@@ -73,6 +73,7 @@ class CanonicalOutput {
   @BeanProperty var geo_zipcode: String = _
   @BeanProperty var geo_latitude: JFloat = _
   @BeanProperty var geo_longitude: JFloat = _
+  @BeanProperty var geo_region_name: String = _
 
   // Page
   @BeanProperty var page_url: String = _
