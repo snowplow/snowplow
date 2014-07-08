@@ -55,7 +55,7 @@ CREATE TABLE atomic.events (
 	geo_region_name varchar(100),                      -- Added in 0.3.0
 	-- IP lookups
 	ip_isp varchar(100)                                -- Added in 0.3.0
-	ip_org varchar(100)                                -- Added in 0.3.0
+	ip_organization varchar(100)                       -- Added in 0.3.0
 	ip_domain varchar(100)                             -- Added in 0.3.0	
 	-- Page
 	page_url varchar(4096),
@@ -188,7 +188,7 @@ INSERT INTO atomic.events
 	geo_longitude,
 	NULL AS geo_region_name,                           -- Added in 0.4.0
 	NULL AS ip_isp,                                    -- Added in 0.4.0
-	NULL AS ip_org,                                    -- Added in 0.4.0
+	NULL AS ip_organization,                           -- Added in 0.4.0
 	NULL AS ip_domain,                                 -- Added in 0.4.0
 	page_url,
 	page_title,
