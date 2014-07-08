@@ -256,9 +256,9 @@ object EnrichmentManager {
               event.geo_longitude = loc.longitude
               event.geo_region_name = loc.regionName.orNull
             }
-            event.isp = res._2.orNull
-            event.org = res._3.orNull
-            event.domain = res._4.orNull
+            event.ip_isp = res._2.orNull
+            event.ip_org = res._3.orNull
+            event.ip_domain = res._4.orNull
           }
           ipLookupResult
         }

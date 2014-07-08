@@ -117,9 +117,9 @@ case class IpToGeoEnrichment(
   private lazy val MaxmindResourcePath =
     getClass.getResource("/maxmind/" + database).toURI.getPath
 
-  // Initialize our IpGeo object. Hopefully the database
+  // Initialize our IpLookups object. Hopefully the database
   // has been copied to our cache path by Hadoop Enrich 
-  val ipGeo = {
+  val ipLookups = {
     val path = cachePath.getOrElse(MaxmindResourcePath)
     IpLookups(Some(path), None, None, None, memCache = true, lruCache = 20000)
   }
@@ -149,7 +149,7 @@ case class IpToGeoEnrichment(
   def extractGeoLocation(ip: String): Validation[String, IpLookupResult] = {
 
     try {
-      ipGeo.performLookups(ip).success
+      ipLookups.performLookups(ip).success
     } catch {
       case _: Throwable => return "Could not extract geo-location from IP address [%s]".format(ip).fail
     }

@@ -76,9 +76,9 @@ class CanonicalOutput {
   @BeanProperty var geo_region_name: String = _
 
   // Other IP lookups
-  @BeanProperty var isp: String = _
-  @BeanProperty var org: String = _
-  @BeanProperty var domain: String = _
+  @BeanProperty var ip_isp: String = _
+  @BeanProperty var ip_org: String = _
+  @BeanProperty var ip_domain: String = _
 
   // Page
   @BeanProperty var page_url: String = _
