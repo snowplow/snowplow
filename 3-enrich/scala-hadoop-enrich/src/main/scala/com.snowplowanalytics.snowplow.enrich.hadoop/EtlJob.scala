@@ -23,9 +23,6 @@ import Scalaz._
 // Scalding
 import com.twitter.scalding._
 
-// Scala MaxMind GeoIP
-import com.snowplowanalytics.maxmind.geoip.IpGeo
-
 // Snowplow Common Enrich
 import common._
 import common.utils.ConversionUtils

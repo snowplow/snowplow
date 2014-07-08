@@ -23,7 +23,7 @@ import Scalaz._
 import org.apache.http.NameValuePair
 
 // Scala MaxMind GeoIP
-import com.snowplowanalytics.maxmind.geoip.IpLocation
+import com.snowplowanalytics.maxmind.iplookups.IpLocation
 
 // JSON Schema
 import com.github.fge.jsonschema.core.report.ProcessingMessage

@@ -29,7 +29,7 @@ import scalaz._
 import Scalaz._
 
 // Scala MaxMind GeoIP
-import com.snowplowanalytics.maxmind.geoip.{IpGeo, IpLocation}
+import com.snowplowanalytics.maxmind.iplookups.{IpLookups, IpLocation}
 
 class ExtractGeoLocationTest extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
 
@@ -61,7 +61,8 @@ class ExtractGeoLocationTest extends Specification with DataTables with Validati
                                                  postalCode = None,
                                                  dmaCode = None,
                                                  areaCode = None,
-                                                 metroCode = None
+                                                 metroCode = None,
+                                                 regionName = Some("Cambridgeshire")
                                                ))                  |> {
       (_, ipAddress, expected) =>
         config.extractGeoLocation(ipAddress) must beSuccessful(expected)

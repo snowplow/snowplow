@@ -35,10 +35,7 @@ import iglu.client.SchemaKey
 import iglu.client.validation.ProcessingMessageMethods._
 
 // Scala MaxMind GeoIP
-import maxmind.geoip.{
-  IpGeo,
-  IpLocation
-}
+import maxmind.iplookups.IpLookups
 
 // This project
 import common.utils.ConversionUtils
@@ -121,7 +118,7 @@ case class IpToGeoEnrichment(
   // has been copied to our cache path by Hadoop Enrich 
   val ipGeo = {
     val path = cachePath.getOrElse(MaxmindResourcePath)
-    IpGeo(path, memCache = true, lruCache = 20000)
+    IpLookups(Some(path), None, None, None, memCache = true, lruCache = 20000)
   }
 
   /**
@@ -149,7 +146,7 @@ case class IpToGeoEnrichment(
   def extractGeoLocation(ip: String): Validation[String, MaybeIpLocation] = {
 
     try {
-      ipGeo.getLocation(ip).success
+      ipGeo.performLookups(ip)._1.success
     } catch {
       case _: Throwable => return "Could not extract geo-location from IP address [%s]".format(ip).fail
     }

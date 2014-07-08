@@ -47,7 +47,7 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.snowplowRawEvent,
         Libraries.scalaUtil,
         Libraries.refererParser,
-        Libraries.maxmindGeoip,
+        Libraries.maxmindIplookups,
         Libraries.json4sJackson,
         Libraries.json4sScalaz,
         Libraries.igluClient,        
