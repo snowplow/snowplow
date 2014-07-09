@@ -45,8 +45,8 @@ import common.utils.ConversionUtils
 import utils.ScalazJson4sUtils
 
 /**
-* Companion object. Lets us create a IpLookupsEnrichment
-* from a JValue.
+* Companion object. Lets us create an IpLookupsEnrichment
+* instance from a JValue.
 */
 object IpLookupsEnrichment extends ParseableEnrichment {
 
@@ -153,7 +153,7 @@ case class IpLookupsEnrichment(
 
   val version = new DefaultArtifactVersion("0.1.0")
 
-  val lookupMap: Map[String, (URI, String)] = Map("geo" -> geoTuple, "isp" -> ispTuple, "org" -> orgTuple, "domain" -> domainTuple)
+  val lookupMap: Map[String, (URI, String)] = Map("geo" -> geoTuple, "isp" -> ispTuple, "organization" -> orgTuple, "domain" -> domainTuple)
                     .collect{case (key, Some(tuple)) => (key, tuple)}
 
   private def getCachePath(name: String): Option[String] = if (!localMode) ("./ip_" + name).some else None
