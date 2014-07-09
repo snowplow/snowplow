@@ -9,7 +9,7 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 #
-# Version: 2-0-0
+# Version: 2-0-1
 #
 # Author(s): Yali Sassoon
 # Copyright: Copyright (c) 2013-2014 Snowplow Analytics Ltd
@@ -62,7 +62,7 @@
   
   - dimension_group: start
     type: time
-    timeframes: [time, date, week, month]
+    timeframes: [time, hour, date, week, month]
     sql: ${TABLE}.session_start_ts
     
   - dimension: end
@@ -108,7 +108,7 @@
   - dimension: history
     sql: ${session_id}
     html: |
-      <a href=events?fields=events.event_detail*&f[events.visit_id]=<%= value%>>Event Stream</a>
+      <a href=events?fields=events.event_detail*&f[events.visit_id]={{value}}>Event Stream</a>
   
   
 

@@ -9,11 +9,12 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 #
-# Version: 2-0-0
+# Version: 2-0-1
 #
 # Author(s): Yali Sassoon
 # Copyright: Copyright (c) 2013-2014 Snowplow Analytics Ltd
 # License: Apache License Version 2.0
+
 
 - view: events
   derived_table:
@@ -83,7 +84,7 @@
 
   - dimension_group: timestamp
     type: time
-    timeframes: [time, date, week, month]
+    timeframes: [time, hour, date, week, month]
     sql: ${TABLE}.collector_tstamp
 
   - dimension: session_index
@@ -98,7 +99,7 @@
 
   - dimension_group: device_timestamp
     type: time
-    timeframes: [time, date, week, month]
+    timeframes: [time, hour, date, week, month]
     sql: ${TABLE}.dvce_tstamp
     hidden: true
 
@@ -247,7 +248,7 @@
   - dimension: transaction_items_list
     sql: ${transaction_order_id}
     html: |
-      <a href=events?fields=events.transaction_items_detail*&f[events.transaction_item_order_id]=<%= value%>>Transaction Items</a>
+      <a href=events?fields=events.transaction_items_detail*&f[events.transaction_item_order_id]={{value}}>Transaction Items</a>
 
 # MEASURES #
 

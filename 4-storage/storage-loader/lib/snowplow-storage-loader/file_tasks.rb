@@ -14,7 +14,7 @@
 # License::   Apache License Version 2.0
 
 # Ruby module to support the load of Snowplow events into local databases.
-module SnowPlow
+module Snowplow
   module StorageLoader
     module FileTasks
 

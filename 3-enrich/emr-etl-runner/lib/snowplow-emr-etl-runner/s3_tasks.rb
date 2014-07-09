@@ -44,8 +44,8 @@ module Snowplow
           config[:aws][:secret_access_key])
 
         # Get S3 locations
-        in_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:in])
-        processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:processing])
+        in_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:raw][:in])
+        processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:raw][:processing])
 
         # Check whether our processing directory is empty
         unless Sluice::Storage::S3::is_empty?(s3, processing_location)
@@ -111,8 +111,8 @@ module Snowplow
           config[:aws][:secret_access_key])
 
         # Get S3 locations
-        processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:processing]);
-        archive_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:archive]);
+        processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:raw][:processing]);
+        archive_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:raw][:archive]);
 
         # Attach date path if filenames include datestamp
         add_date_path = lambda { |filepath|

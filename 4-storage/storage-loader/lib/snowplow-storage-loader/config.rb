@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2013 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2013 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'optparse'
@@ -20,7 +20,7 @@ require 'sluice'
 
 # Config module to hold functions related to CLI argument parsing
 # and config file reading to support storage loading.
-module SnowPlow
+module Snowplow
   module StorageLoader
     module Config
 
@@ -40,8 +40,8 @@ module SnowPlow
         config[:skip] = options[:skip]
         config[:include] = options[:include]
 
-        # Add trailing slashes if needed to the buckets and download folder
-        config[:s3][:buckets].update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
+        # Add trailing slashes if needed to the non-nil buckets
+        config[:s3][:buckets] = add_trailing_slashes(config[:s3][:buckets])
 
         # Add in our comprows setting
         config[:comprows] = options[:comprows]
@@ -79,7 +79,28 @@ module SnowPlow
       end  
       module_function :get_config
 
-      private
+    private
+
+      # Add trailing slashes
+      def add_trailing_slashes(bucketsHash)
+        with_slashes_added = {}
+        for k0 in bucketsHash.keys
+          if bucketsHash[k0].class == ''.class
+            with_slashes_added[k0] = Sluice::Storage::trail_slash(bucketsHash[k0])
+          elsif bucketsHash[k0].class == {}.class
+            y = {}
+            for k1 in bucketsHash[k0].keys
+              y[k1] = bucketsHash[k0][k1].nil? ? nil : Sluice::Storage::trail_slash(bucketsHash[k0][k1])
+            end
+            with_slashes_added[k0] = y
+          else
+            with_slashes_added[k0] = nil
+          end
+        end
+
+        with_slashes_added
+      end
+      module_function :add_trailing_slashes
 
       # Parse the command-line arguments
       # Returns: the hash of parsed options
@@ -96,7 +117,7 @@ module SnowPlow
           opts.separator "Specific options:"
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
           opts.on('-i', '--include compupdate,vacuum', Array, 'include optional work step(s)') { |config| options[:include] = config }
-          opts.on('-s', '--skip download|delete,load,analyze,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-s', '--skip download|delete,load,shred,analyze,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
 
           opts.separator ""
           opts.separator "Common options:"
@@ -117,7 +138,7 @@ module SnowPlow
 
         # Check our skip argument
         options[:skip].each { |opt|
-          unless %w(download delete load analyze archive).include?(opt)
+          unless %w(download delete load shred analyze archive).include?(opt)
             raise ConfigError, "Invalid option: skip can be 'download', 'delete', 'load', 'analyze' or 'archive', not '#{opt}'"
           end
         }

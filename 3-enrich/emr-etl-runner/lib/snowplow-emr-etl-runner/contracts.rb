@@ -21,9 +21,9 @@ module Snowplow
 
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
-      :maxmind  => String,
-      :s3distcp => String,
-      :hadoop   => String
+      :maxmind => String,
+      :enrich  => String,
+      :shred   => String
       })
 
     # The Hash of the CLI arguments.
@@ -41,6 +41,44 @@ module Snowplow
       :anon_octets => Num
       })
 
+    # The Hash for the Iglu client config
+    IgluConfigHash = ({
+      :schema => String,
+      :data => ({
+        :cache_size => Num,
+        :repositories => ArrayOf[({
+          :name => String,
+          :priority => Num,
+          :vendor_prefixes => ArrayOf[String],          
+          :connection => ({
+            :http => ({
+              :uri => String
+              })
+            })
+          })]
+        })
+      })
+
+    # The Hash containing the buckets field from the configuration YAML
+    BucketHash = ({
+      :assets => String,
+      :log => String,
+      :raw => ({
+        :in => String,
+        :processing => String
+        }),
+      :enriched => ({
+        :good => String,
+        :bad => String,
+        :errors => Maybe[String]
+        }),
+      :shredded => ({
+        :good => String,
+        :bad => String,
+        :errors => Maybe[String]
+        })
+      })
+
     # The Hash containing effectively the configuration YAML.
     ConfigHash = ({
       :logging => ({
@@ -52,16 +90,7 @@ module Snowplow
         }),
       :s3 => ({
         :region => String,
-        :buckets => ({
-          :assets => String,
-          :log => String,
-          :in => String,
-          :processing => String,
-          :out => String,
-          :out_bad_rows => String,
-          :out_errors => Maybe[String],
-          :archive => String
-          })
+        :buckets => BucketHash
         }),
       :emr => ({
         :ami_version => String,
@@ -69,6 +98,10 @@ module Snowplow
         :placement => Maybe[String],
         :ec2_subnet_id => Maybe[String],
         :ec2_key_name => String,
+        :software => ({
+          :hbase => Maybe[String],
+          :lingual => Maybe[String]
+          }),
         :jobflow => ({
           :master_instance_type => String,
           :core_instance_count => Num,
@@ -80,10 +113,14 @@ module Snowplow
         }),
       :etl => ({
         :job_name => String,
-        :hadoop_etl_version => String,
+        :versions => ({
+          :hadoop_enrich => String,
+          :hadoop_shred => String
+          }),
         :collector_format => String,
         :continue_on_unexpected_error => Bool
         }),
+      :iglu => IgluConfigHash,
       :enrichments => ({
         :anon_ip => AnonIpHash
         })

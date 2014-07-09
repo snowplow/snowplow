@@ -22,7 +22,7 @@ module Snowplow
 
       # Supported options
       @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
-      @@skip_options = Set.new(%w(staging emr archive))
+      @@skip_options = Set.new(%w(staging s3distcp emr shred archive))
 
       include Logging
 
@@ -52,7 +52,9 @@ module Snowplow
         end
 
         unless @args[:skip].include?('emr')
-          job = EmrJob.new(@args[:debug], @config)
+          shred = not(@args[:skip].include?('shred'))
+          s3distcp = not(@args[:skip].include?('s3distcp'))
+          job = EmrJob.new(@args[:debug], shred, s3distcp, @config)
           job.run()
         end
 
@@ -62,6 +64,27 @@ module Snowplow
 
         logger.info "Completed successfully"
         nil
+      end
+
+      # Adds trailing slashes to all non-nil bucket names in the hash
+      Contract BucketHash => BucketHash
+      def add_trailing_slashes(bucketsHash)
+        with_slashes_added = {}
+        for k0 in bucketsHash.keys
+          if bucketsHash[k0].class == ''.class
+            with_slashes_added[k0] = Sluice::Storage::trail_slash(bucketsHash[k0])
+          elsif bucketsHash[k0].class == {}.class
+            y = {}
+            for k1 in bucketsHash[k0].keys
+              y[k1] = bucketsHash[k0][k1].nil? ? nil : Sluice::Storage::trail_slash(bucketsHash[k0][k1])
+            end
+            with_slashes_added[k0] = y
+          else
+            with_slashes_added[k0] = nil
+          end
+        end
+
+        with_slashes_added
       end
 
       # Validate our arguments against the configuration Hash
@@ -99,7 +122,7 @@ module Snowplow
         end
 
         # Add trailing slashes if needed to the non-nil buckets
-        config[:s3][:buckets].reject{|k,v| v.nil?}.update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
+        config[:s3][:buckets] = add_trailing_slashes(config[:s3][:buckets])
 
         config
       end

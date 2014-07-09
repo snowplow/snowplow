@@ -16,6 +16,10 @@
 require 'set'
 require 'elasticity'
 
+require 'awrence'
+require 'json'
+require 'base64'
+
 require 'contracts'
 include Contracts
 
@@ -25,6 +29,10 @@ module Snowplow
   module EmrEtlRunner
     class EmrJob
 
+      # Constants
+      JAVA_PACKAGE = "com.snowplowanalytics.snowplow"
+      PARTFILE_REGEXP = ".*part-.*"
+
       # Need to understand the status of all our jobflow steps
       @@running_states = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
       @@failed_states  = Set.new(%w(FAILED CANCELLED))
@@ -32,13 +40,13 @@ module Snowplow
       include Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, ConfigHash => EmrJob
-      def initialize(debug, config)
+      Contract Bool, Bool, Bool, ConfigHash => EmrJob
+      def initialize(debug, shred, s3distcp, config)
 
         logger.debug "Initializing EMR jobflow"
 
         # Configuration
-        assets = self.class.get_assets(config[:s3][:buckets][:assets], config[:etl][:hadoop_etl_version])
+        assets = self.class.get_assets(config[:s3][:buckets][:assets], config[:etl][:versions][:hadoop_enrich], config[:etl][:versions][:hadoop_shred])
         run_id = Time.new.strftime("%Y-%m-%d-%H-%M-%S")
 
         # Create a job flow with your AWS credentials
@@ -63,6 +71,25 @@ module Snowplow
         @jobflow.master_instance_type = config[:emr][:jobflow][:master_instance_type]
         @jobflow.slave_instance_type  = config[:emr][:jobflow][:core_instance_type]
 
+        # Install and launch HBase
+        hbase = config[:emr][:software][:hbase]
+        unless not hbase
+          install_hbase_action = Elasticity::BootstrapAction.new("s3://#{config[:emr][:region]}.elasticmapreduce/bootstrap-actions/setup-hbase")
+          @jobflow.add_bootstrap_action(install_hbase_action)
+
+          start_hbase_step = Elasticity::CustomJarStep.new("/home/hadoop/lib/hbase-#{hbase}.jar")
+          start_hbase_step.name = "Start HBase #{hbase}"
+          start_hbase_step.arguments = [ 'emr.hbase.backup.Main', '--start-master' ]
+          @jobflow.add_step(start_hbase_step)
+        end
+
+        # Install Lingual
+        lingual = config[:emr][:software][:lingual]
+        unless not lingual
+          install_lingual_action = Elasticity::BootstrapAction.new("s3://files.concurrentinc.com/lingual/#{lingual}/lingual-client/install-lingual-client.sh")
+          @jobflow.add_bootstrap_action(install_lingual_action)
+        end
+
         # Now let's add our task group if required
         tic = config[:emr][:jobflow][:task_instance_count]
         if tic > 0
@@ -81,63 +108,116 @@ module Snowplow
           @jobflow.set_task_instance_group(instance_group)
         end
 
+        csbr = config[:s3][:buckets][:raw]
+        s3_endpoint = self.class.get_s3_endpoint(config[:s3][:region])
+
+        # 1. Compaction to HDFS
+
         # We only consolidate files on HDFS folder for CloudFront currently
-        unless config[:etl][:collector_format] == "cloudfront"
-          hadoop_input = config[:s3][:buckets][:processing]
-        
+        raw_input = csbr[:processing]
+        enrich_step_input = if config[:etl][:collector_format] == "cloudfront" and s3distcp
+          "hdfs:///local/snowplow/raw-events/"
         else
-          hadoop_input = "hdfs:///local/snowplow-logs"
+          raw_input
+        end
 
+        if config[:etl][:collector_format] == "cloudfront" and s3distcp
           # Create the Hadoop MR step for the file crushing
-          filecrush_step = Elasticity::CustomJarStep.new(assets[:s3distcp])
-
-          filecrush_step.arguments = [
-            "--src"               , config[:s3][:buckets][:processing],
-            "--dest"              , hadoop_input,
-            "--groupBy"           , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
-            "--targetSize"        , "128",
-            "--outputCodec"       , "lzo",
-            "--s3Endpoint"        , self.class.get_s3_endpoint(config[:s3][:region]),
+          compact_to_hdfs_step = Elasticity::S3DistCpStep.new
+          compact_to_hdfs_step.arguments = [
+            "--src"         , raw_input,
+            "--dest"        , enrich_step_input,
+            "--groupBy"     , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
+            "--targetSize"  , "128",
+            "--outputCodec" , "lzo",
+            "--s3Endpoint"  , s3_endpoint
           ]
+          compact_to_hdfs_step.name << ": Raw S3 -> HDFS"
 
           # Add to our jobflow
-          @jobflow.add_step(filecrush_step)
+          @jobflow.add_step(compact_to_hdfs_step)
         end
 
-        # Now create the Hadoop MR step for the jobflow
-        hadoop_step = Elasticity::CustomJarStep.new(assets[:hadoop])
+        # 2. Enrichment
 
-        # Add extra configuration (undocumented feature)
-        if config[:emr][:hadoop_step].respond_to?(:each)
-          config[:emr][:hadoop_step].each { |key, value|
-            hadoop_step.send("#{key}=", value)
+        csbe = config[:s3][:buckets][:enriched]
+        enrich_final_output = self.class.partition_by_run(csbe[:good], run_id)
+        enrich_step_output = if s3distcp
+          "hdfs:///local/snowplow/enriched-events/"
+        else
+          # Need to replace =s because Hadoop Enrich is on an old version of Scalding Args (can remove when upgrade)
+          self.class.fix_equals(enrich_final_output)
+        end
+
+        enrich_step = build_scalding_step(
+          "Enrich Raw Events",
+          assets[:enrich],
+          "enrich.hadoop.EtlJob",
+          { :in     => enrich_step_input,
+            :good   => enrich_step_output,
+            :bad    => self.class.fix_equals(self.class.partition_by_run(csbe[:bad],    run_id)),
+            :errors => self.class.fix_equals(self.class.partition_by_run(csbe[:errors], run_id, config[:etl][:continue_on_unexpected_error]))
+          },
+          { :input_format     => config[:etl][:collector_format],
+            :maxmind_file     => assets[:maxmind],
+            :anon_ip_quartets => self.class.get_anon_ip_octets(config[:enrichments][:anon_ip])
           }
-        end
+        )
+        @jobflow.add_step(enrich_step)
 
-        # We need to partition our output buckets by run ID
-        # Note buckets already have trailing slashes
-        partition = lambda { |bucket| "#{bucket}run%3D#{run_id}/" } # TODO: s/%3D/=/ when Scalding Args supports it
-
-        hadoop_step.arguments = [
-          "com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob", # Job to run
-          "--hdfs", # Always --hdfs mode, never --local
-          "--input_folder"      , hadoop_input, # Argument names are "--arguments" too
-          "--input_format"      , config[:etl][:collector_format],
-          "--maxmind_file"      , assets[:maxmind],
-          "--output_folder"     , partition.call(config[:s3][:buckets][:out]),
-          "--bad_rows_folder"   , partition.call(config[:s3][:buckets][:out_bad_rows]),
-          "--anon_ip_quartets"  , self.class.get_anon_ip_octets(config[:enrichments][:anon_ip])
-        ]
-
-        # Conditionally add exceptions_folder
-        if config[:etl][:continue_on_unexpected_error]
-          hadoop_step.arguments.concat [
-            "--exceptions_folder" , partition.call(config[:s3][:buckets][:out_errors])
+        if s3distcp
+          # We need to copy our enriched events from HDFS back to S3
+          copy_to_s3_step = Elasticity::S3DistCpStep.new
+          copy_to_s3_step.arguments = [
+            "--src"        , enrich_step_output,
+            "--dest"       , enrich_final_output,
+            "--srcPattern" , PARTFILE_REGEXP,
+            "--s3Endpoint" , s3_endpoint
           ]
+          copy_to_s3_step.name << ": Enriched HDFS -> S3"
+          @jobflow.add_step(copy_to_s3_step)
         end
 
-        # Finally add to our jobflow
-        @jobflow.add_step(hadoop_step)
+        # 3. Shredding
+
+        if shred
+
+          csbs = config[:s3][:buckets][:shredded]
+          shred_final_output = self.class.partition_by_run(csbs[:good], run_id)
+          shred_step_output = if s3distcp
+            "hdfs:///local/snowplow/shredded-events/"
+          else
+            shred_final_output
+          end
+          
+          shred_step = build_scalding_step(
+            "Shred Enriched Events",
+            assets[:shred],
+            "enrich.hadoop.ShredJob",
+            { :in          => enrich_step_output,
+              :good        => shred_step_output,
+              :bad         => self.class.partition_by_run(csbs[:bad],    run_id),
+              :errors      => self.class.partition_by_run(csbs[:errors], run_id, config[:etl][:continue_on_unexpected_error])
+            },
+            {
+              :iglu_config => self.class.jsonify(config[:iglu])
+            }
+          )
+          @jobflow.add_step(shred_step)
+
+          if s3distcp
+            # We need to copy our shredded types from HDFS back to S3
+            copy_to_s3_step = Elasticity::S3DistCpStep.new
+            copy_to_s3_step.arguments = [
+              "--src"        , shred_step_output,
+              "--dest"       , shred_final_output,
+              "--srcPattern" , PARTFILE_REGEXP,
+              "--s3Endpoint" , s3_endpoint
+            ]
+            copy_to_s3_step.name << ": Shredded HDFS -> S3"
+            @jobflow.add_step(copy_to_s3_step)
+          end
+        end
 
         self
       end
@@ -161,6 +241,36 @@ module Snowplow
       end
 
     private
+
+      # Defines a Scalding data processing job as an Elasticity
+      # jobflow step.
+      #
+      # Parameters:
+      # +step_name+:: name of step
+      # +main_class+:: Java main class to run
+      # +folders+:: hash of in, good, bad, errors S3/HDFS folders
+      # +extra_step_args+:: additional arguments to pass to the step
+      #
+      # Returns a step ready for adding to the jobflow.
+      Contract String, String, String, Hash, Hash => ScaldingStep
+      def build_scalding_step(step_name, jar, main_class, folders, extra_step_args={})
+
+        # Build our argument hash
+        arguments = extra_step_args
+          .merge({
+            :input_folder      => folders[:in],
+            :output_folder     => folders[:good],
+            :bad_rows_folder   => folders[:bad],
+            :exceptions_folder => folders[:errors]
+          })
+          .reject { |k, v| v.nil? } # Because folders[:errors] may be empty
+
+        # Now create the Hadoop MR step for the jobflow
+        scalding_step = ScaldingStep.new(jar, "#{JAVA_PACKAGE}.#{main_class}", arguments)
+        scalding_step.name << ": #{step_name}"
+
+        scalding_step
+      end
 
       # Wait for a jobflow.
       # Check its status every 5 minutes till it completes.
@@ -198,6 +308,32 @@ module Snowplow
         success
       end
 
+      # We need to partition our output buckets by run ID
+      # Note buckets already have trailing slashes
+      #
+      # Parameters:
+      # +folder+:: the folder to append a run ID folder to
+      # +run_id+:: the run ID to append
+      # +retain+:: set to false if this folder should be nillified
+      #
+      # Return the folder with a run ID folder appended
+      Contract String, String, Bool => Maybe[String]
+      def self.partition_by_run(folder, run_id, retain=true)
+        "#{folder}run=#{run_id}/" if retain
+      end
+
+      # Makes a folder name Scalding-safe. This is because
+      # currently Scalding cannot support =s
+      Contract Maybe[String] => Maybe[String]
+      def self.fix_equals(path)
+        path.gsub!('=', '%3D') if path
+      end
+
+      Contract IgluConfigHash => String
+      def self.jsonify(iglu_hash)
+        Base64.strict_encode64(iglu_hash.to_camelback_keys.to_json)
+      end
+
       Contract AnonIpHash => String
       def self.get_anon_ip_octets(anon_ip)
         if anon_ip[:enabled]
@@ -207,8 +343,8 @@ module Snowplow
         end
       end
 
-      Contract String, String => AssetsHash
-      def self.get_assets(assets_bucket, hadoop_etl_version)
+      Contract String, String, String => AssetsHash
+      def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version)
 
         asset_host = 
           if assets_bucket == "s3://snowplow-hosted-assets/"
@@ -218,8 +354,8 @@ module Snowplow
           end
 
         { :maxmind  => "#{asset_host}third-party/maxmind/GeoLiteCity.dat",
-          :s3distcp => "/home/hadoop/lib/emr-s3distcp-1.0.jar",
-          :hadoop   => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-etl-#{hadoop_etl_version}.jar"
+          :enrich   => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-etl-#{hadoop_enrich_version}.jar",
+          :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
         }
       end
 

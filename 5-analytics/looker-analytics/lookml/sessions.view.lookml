@@ -9,7 +9,7 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 #
-# Version: 2-0-0
+# Version: 2-0-1
 #
 # Author(s): Yali Sassoon
 # Copyright: Copyright (c) 2013-2014 Snowplow Analytics Ltd
@@ -116,7 +116,7 @@
   
   - dimension_group: start
     type: time
-    timeframes: [time, date, week, month]
+    timeframes: [time, hour, date, week, month]
     sql: ${TABLE}.session_start_ts
     
   - dimension: end
@@ -155,8 +155,8 @@
       returning: ${TABLE}.domain_sessionidx > 1
       else: unknown
     html: |
-      <%= linked_value %>
-      <a href="/dashboards/snowplow/traffic_pulse?new_vs_returning=<%= value %>" target="_new">
+      {{linked_value}}
+      <a href="/dashboards/snowplow/traffic_pulse?new_vs_returning={{value}}" target="_new">
       <img src="/images/qr-graph-line@2x.png" height=20 width=20></a>
 
   # Pages visited #
@@ -171,15 +171,15 @@
   - dimension: event_stream
     sql: ${session_id}
     html: |
-      <a href=events?fields=events.event_detail*&f[events.session_id]=<%= value%>>Event Stream</a>
+      <a href=events?fields=events.event_detail*&f[events.session_id]={{value}}>Event Stream</a>
   
   # Geo fields #
   
   - dimension: geography_country
     sql: ${TABLE}.geo_country
     html: |
-      <%= linked_value %>
-      <a href="/dashboards/snowplow/traffic_pulse?country=<%= value %>" target="_new">
+      {{linked_value}}
+      <a href="/dashboards/snowplow/traffic_pulse?country={{value}}" target="_new">
       <img src="/images/qr-graph-line@2x.png" height=20 width=20></a>
     
   - dimension: geography_country_three_letter_iso_code
@@ -211,8 +211,8 @@
   - dimension: landing_page_path
     sql: ${TABLE}.landing_page_path
     html: |
-      <%= linked_value %>
-      <a href="/dashboards/snowplow/traffic_pulse?landing_page=<%= value %>%25" target="_new">
+      {{linked_value}}
+      <a href="/dashboards/snowplow/traffic_pulse?landing_page={{value}}%25" target="_new">
       <img src="/images/qr-graph-line@2x.png" height=20 width=20></a>
     
   - dimension: landing_page
@@ -239,8 +239,8 @@
       other_website: ${TABLE}.refr_medium = 'unknown'
       else: direct
     html: |
-      <%= linked_value %>
-      <a href="/dashboards/snowplow/traffic_pulse?referer_medium=<%= value %>" target="_new">
+      {{linked_value}}
+      <a href="/dashboards/snowplow/traffic_pulse?referer_medium={{value}}" target="_new">
       <img src="/images/qr-graph-line@2x.png" height=20 width=20></a>
     
   - dimension: referer_source

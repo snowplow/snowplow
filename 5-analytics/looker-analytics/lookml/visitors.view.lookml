@@ -9,7 +9,7 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 #
-# Version: 2-0-0
+# Version: 2-0-1
 #
 # Author(s): Yali Sassoon
 # Copyright: Copyright (c) 2013-2014 Snowplow Analytics Ltd
@@ -65,12 +65,12 @@
     
   - dimension_group: first_touch
     type: time
-    timeframes: [time, date, week, month]
+    timeframes: [time, hour, date, week, month]
     sql: ${TABLE}.first_touch
     
   - dimension: last_touch
     type: time
-    timeframes: [time, date, week, month]
+    timeframes: [time, hour, date, week, month]
     sql: ${TABLE}.last_touch
     
   - dimension: events_during_lifetime
@@ -107,12 +107,12 @@
   - dimension: session_stream
     sql: ${user_id}
     html: |
-      <a href=sessions?fields=sessions.individual_detail*&f[sessions.user_id]=<%=value%>>Session Stream</a>
+      <a href=sessions?fields=sessions.individual_detail*&f[sessions.user_id]={{value}}>Session Stream</a>
       
   - dimension: event_stream
     sql: ${user_id}
     html: |
-      <a href=events?fields=events.event_detail*&f[events.user_id]=<%=value%>>Event stream</a>
+      <a href=events?fields=events.event_detail*&f[events.user_id]={{value}}>Event stream</a>
       
   # Landing page dimensions #
   

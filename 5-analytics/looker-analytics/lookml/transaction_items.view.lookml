@@ -9,7 +9,7 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 #
-# Version: 2-0-0
+# Version: 2-0-1
 #
 # Author(s): Yali Sassoon
 # Copyright: Copyright (c) 2013-2014 Snowplow Analytics Ltd
@@ -65,7 +65,7 @@
   - dimension: order_items
     sql: ${order_id}
     html: |
-      <a href=transaction_items?fields=transaction_items.transaction_items_detail*&f[order_id]=<%= value%>>Transaction Items</a>
+      <a href=transaction_items?fields=transaction_items.transaction_items_detail*&f[order_id]={{value}}>Transaction Items</a>
     
     
   # MEASURES #

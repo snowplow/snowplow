@@ -19,12 +19,13 @@ require_relative 'snowplow-emr-etl-runner/logging'
 require_relative 'snowplow-emr-etl-runner/contracts'
 require_relative 'snowplow-emr-etl-runner/cli'
 require_relative 'snowplow-emr-etl-runner/s3_tasks'
+require_relative 'snowplow-emr-etl-runner/scalding_step'
 require_relative 'snowplow-emr-etl-runner/emr_job'
 require_relative 'snowplow-emr-etl-runner/runner'
 
 module Snowplow
   module EmrEtlRunner
     NAME          = "snowplow-emr-etl-runner"
-    VERSION       = "0.7.0"
+    VERSION       = "0.8.0"
   end
 end

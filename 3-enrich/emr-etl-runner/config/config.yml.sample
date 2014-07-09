@@ -8,18 +8,27 @@
   :buckets:
     :assets: s3://snowplow-hosted-assets # DO NOT CHANGE unless you are hosting the jarfiles etc yourself in your own bucket
     :log: ADD HERE
-    :in: ADD HERE
-    :processing: ADD HERE
-    :out: ADD HERE WITH SUB-FOLDER # e.g. s3://my-out-bucket/events
-    :out_bad_rows: ADD HERE        # e.g. s3://my-out-bucket/bad-rows
-    :out_errors: ADD HERE # Leave blank unless :continue_on_unexpected_error: set to true below
-    :archive: ADD HERE
+    :raw:
+      :in: ADD HERE
+      :processing: ADD HERE
+      :archive: ADD HERE    # e.g. s3://my-archive-bucket/raw
+    :enriched:
+      :good: ADD HERE       # e.g. s3://my-out-bucket/enriched/good
+      :bad: ADD HERE        # e.g. s3://my-out-bucket/enriched/bad
+      :errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
+    :shredded:
+      :good: ADD HERE       # e.g. s3://my-out-bucket/shredded/good
+      :bad: ADD HERE        # e.g. s3://my-out-bucket/shredded/bad
+      :errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
 :emr:
   :ami_version: 2.4.2      # Choose as per http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/emr-plan-ami.html
   :region: ADD HERE        # Always set this
   :placement: ADD HERE     # Set this if not running in VPC. Leave blank otherwise
   :ec2_subnet_id: ADD HERE # Set this if running in VPC. Leave blank otherwise
   :ec2_key_name: ADD HERE
+  :software:
+    :hbase:                # To launch on cluster, provide version, "0.92.0", keep quotes
+    :lingual:              # To launch on cluster, provide version, "1.1", keep quotes
   # Adjust your Hadoop cluster below
   :jobflow:
     :master_instance_type: m1.small
@@ -30,9 +39,23 @@
     :task_instance_bid: 0.015 # In USD. Adjust bid, or leave blank for non-spot-priced (i.e. on-demand) task instances
 :etl:
   :job_name: Snowplow ETL # Give your job a name
-  :hadoop_etl_version: 0.5.0 # Version of the Hadoop Enrichment process
+  :versions:
+    :hadoop_enrich: 0.5.0 # Version of the Hadoop Enrichment process
+    :hadoop_shred: 0.1.0 # Version of the Hadoop Shredding process
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
-  :continue_on_unexpected_error: false # You can switch to 'true' (and set :out_errors: above) if you really don't want the ETL throwing exceptions
+  :continue_on_unexpected_error: false # Set to 'true' (and set :out_errors: above) if you don't want any exceptions thrown from ETL
+:iglu:
+  :schema: iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0
+  :data:
+    :cache_size: 500
+    :repositories:
+      - :name: "Iglu Central"
+        :priority: 0
+        :vendor_prefixes:
+          - com.snowplowanalytics
+        :connection:
+          :http:
+            :uri: http://iglucentral.com
 :enrichments:
   :anon_ip:
     :enabled: false
