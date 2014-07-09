@@ -68,7 +68,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
 
     isParseable(config, schemaKey).flatMap( conf => {
 
-      val argsList: List[Option[ValidatedNelMessage[(URI, String)]]] = List("geo", "isp", "org", "domain").map(getArgumentFromName(conf,_))
+      val argsList: List[Option[ValidatedNelMessage[(URI, String)]]] = lookupNames.map(getArgumentFromName(conf,_))
 
       val switchedArgsList: List[ValidatedNelMessage[Option[(URI, String)]]] = argsList.map(x => {
         x match {
@@ -124,11 +124,11 @@ object IpLookupsEnrichment extends ParseableEnrichment {
 
  * @param geoTuple (Full URI to the geo lookup
  *        MaxMind data file, database name)
- * @param geoTuple (Full URI to the ISP lookup
+ * @param ispTuple (Full URI to the ISP lookup
  *        MaxMind data file, database name)
- * @param geoTuple (Full URI to the organization
+ * @param orgTuple (Full URI to the organization
  *        lookup MaxMind data file
- * @param geoTuple (Full URI to the domain lookup
+ * @param domainTuple (Full URI to the domain lookup
  *        MaxMind data file, database name)
  * @param localMode Whether to use the local
  *        MaxMind data file. Enabled for tests. 
@@ -152,7 +152,7 @@ case class IpLookupsEnrichment(
 
   // Checked in Hadoop Enrich to decide whether to copy to
   // the Hadoop dist cache or not
-  private val cacheMap = lookupMap.map(kv => (kv._1, getCachePath(kv._1)))
+  val cachePathMap = lookupMap.map(kv => (kv._1, getCachePath(kv._1)))
 
   val lookupPaths = lookupNames.map(lookupName => {
     if (lookupMap.contains(lookupName)) {
@@ -161,7 +161,7 @@ case class IpLookupsEnrichment(
         getClass.getResource("/maxmind/" + lookupMap(lookupName)._2).toURI.getPath
 
      // Hopefully the database has been copied to our cache path by Hadoop Enrich 
-      val path = cacheMap(lookupName) match {
+      val path = cachePathMap(lookupName) match {
         case None => Some(maxmindResourcePath)
         case Some(s) => Some(s)
       }

@@ -67,13 +67,18 @@ class EnrichmentConfigsTest extends Specification with ValidationMatchers {
           "geo": {
             "database": "GeoLiteCity.dat",
             "uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
+          },
+          "organization": {
+            "database": "GeoIPOrg.dat",
+            "uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"            
           }
         }
       }""")
 
       val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_to_geo", "jsonschema", "1-0-0")
 
-      val expected = IpLookupsEnrichment(Some(new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoLiteCity.dat"), "GeoLiteCity.dat"), None, None, None, true)
+      val expected = IpLookupsEnrichment(Some(new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoLiteCity.dat"), "GeoLiteCity.dat"), None,
+                                         Some(new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPOrg.dat"), "GeoIPOrg.dat"), None, true)
 
       val result = IpLookupsEnrichment.parse(ipToGeoJson, schemaKey, true)
       result must beSuccessful(expected)
