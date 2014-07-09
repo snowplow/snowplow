@@ -39,7 +39,7 @@ import iglu.client.validation.ValidatableJsonNode
 import registry.{
   Enrichment,
   AnonIpEnrichment,
-  IpToGeoEnrichment,
+  IpLookupsEnrichment,
   RefererParserEnrichment
 }
 import utils.ScalazJson4sUtils
@@ -116,7 +116,7 @@ object EnrichmentRegistry {
         name.flatMap( nm => {
 
           if (nm == "ip_to_geo") {
-            IpToGeoEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
+            IpLookupsEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
           } else if (nm == "anon_ip") {
             AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "referer_parser") {
@@ -155,13 +155,13 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
     getEnrichment[AnonIpEnrichment]("anon_ip")
 
   /**
-   * Returns an Option boxing the IpToGeoEnrichment
+   * Returns an Option boxing the IpLookupsEnrichment
    * config value if present, or None if not
    *
-   * @return Option boxing the IpToGeoEnrichment instance
+   * @return Option boxing the IpLookupsEnrichment instance
    */
-  def getIpToGeoEnrichment: Option[IpToGeoEnrichment] = 
-    getEnrichment[IpToGeoEnrichment]("ip_to_geo")
+  def getIpLookupsEnrichment: Option[IpLookupsEnrichment] = 
+    getEnrichment[IpLookupsEnrichment]("ip_to_geo")
 
 
   /**

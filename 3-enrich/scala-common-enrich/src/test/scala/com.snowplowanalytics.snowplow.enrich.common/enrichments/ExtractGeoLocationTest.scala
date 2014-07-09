@@ -39,7 +39,7 @@ class ExtractGeoLocationTest extends Specification with DataTables with Validati
   "extractGeoLocation should correctly extract location data from IP addresses where possible"      ! e2^
                                                                                                     end
 
-  val config = IpToGeoEnrichment(new URI("/not-used/"), "GeoLiteCity.dat", true)
+  val config = IpLookupsEnrichment(Some(new URI("/not-used/"), "GeoLiteCity.dat"), None, None, None, true)
 
   // Impossible to make extractIpLocation throw a validation error
   def e1 =

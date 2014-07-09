@@ -243,7 +243,7 @@ object EnrichmentManager {
     // If our IpToGeo enrichment is enabled,
     // get the geo-location from the IP address
     val geoLocation = {
-      registry.getIpToGeoEnrichment match {
+      registry.getIpLookupsEnrichment match {
         case Some(geo) => {
           raw.ipAddress match {
             case Some(address) => {
