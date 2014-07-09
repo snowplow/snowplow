@@ -65,6 +65,9 @@ object TransactionCfLineSpec {
     "52.199997",
     "0.11669922",
     "Cambridgeshire",
+    null, // No additional MaxMind databases used
+    null,
+    null,
     "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail",
     null, // No page title for transactions
     null,

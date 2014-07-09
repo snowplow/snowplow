@@ -45,24 +45,24 @@ import common.utils.ConversionUtils
 import utils.ScalazJson4sUtils
 
 /**
-* Companion object. Lets us create a IpToGeoEnrichment
+* Companion object. Lets us create a IpLookupsEnrichment
 * from a JValue.
 */
 object IpLookupsEnrichment extends ParseableEnrichment {
 
-  val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_to_geo", "jsonschema", "1-0-0")
+  val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", "1-0-0")
 
   private val lookupNames = List("geo", "isp", "organization", "domain")
 
   /**
-   * Creates an IpToGeoEnrichment instance from a JValue.
+   * Creates an IpLookupsEnrichment instance from a JValue.
    * 
-   * @param config The ip_to_geo enrichment JSON
+   * @param config The ip_lookups enrichment JSON
    * @param schemaKey The SchemaKey provided for the enrichment
    *        Must be a supported SchemaKey for this enrichment
    * @param localMode Whether to use the local MaxMind data file
    *        Enabled for tests
-   * @return a configured IpToGeoEnrichment instance
+   * @return a configured IpLookupsEnrichment instance
    */
   def parse(config: JValue, schemaKey: SchemaKey, localMode: Boolean): ValidatedNelMessage[IpLookupsEnrichment] = {
 

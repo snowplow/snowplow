@@ -65,6 +65,9 @@ object CljTomcatLineSpec {
     null,
     null,
     null,
+    null, // No additional MaxMind databases used
+    null,
+    null,
     "http://snowplowanalytics.com/blog/2012/10/31/snowplow-in-a-universal-analytics-world-what-the-new-version-of-google-analytics-means-for-companies-adopting-snowplow/",
     "Snowplow in a Universal Analytics world - what the new version of Google Analytics means for companies adopting Snowplow - Snowplow Analytics",
     "https://www.google.co.uk/url?sa=t&rct=j&q=&esrc=s&source=web&cd=3&ved=0CDsQFjAC&url=http%3A%2F%2Fsnowplowanalytics.com%2Fblog%2F2012%2F10%2F31%2Fsnowplow-in-a-universal-analytics-world-what-the-new-version-of-google-analytics-means-for-companies-adopting-snowplow%2F&ei=uQ9TUonxBcLL0QXc74DoDg&usg=AFQjCNFWhV4rr2zmRm1fe4hNiay6Td9VrA&bvm=bv.53537100,d.d2k",

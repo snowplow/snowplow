@@ -58,7 +58,7 @@ class EnrichmentConfigsTest extends Specification with ValidationMatchers {
     }
   }
 
-  "Parsing a valid ip_to_geo enrichment JSON" should {
+  "Parsing a valid ip_lookups enrichment JSON" should {
     "successfully construct a GeoIpEnrichmentConfig case class" in {
 
       val ipToGeoJson = parse("""{
@@ -75,7 +75,7 @@ class EnrichmentConfigsTest extends Specification with ValidationMatchers {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_to_geo", "jsonschema", "1-0-0")
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", "1-0-0")
 
       val expected = IpLookupsEnrichment(Some(new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoLiteCity.dat"), "GeoLiteCity.dat"), None,
                                          Some(new URI("http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind/GeoIPOrg.dat"), "GeoIPOrg.dat"), None, true)

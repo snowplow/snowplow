@@ -195,14 +195,16 @@ object JobSpecHelpers {
                 |}
               |},
               |{
-                |"schema": "iglu:com.snowplowanalytics.snowplow/ip_to_geo/jsonschema/1-0-0",
+                |"schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/1-0-0",
                 |"data": {
                   |"vendor": "com.snowplowanalytics.snowplow",
-                  |"name": "ip_to_geo",
+                  |"name": "ip_lookups",
                   |"enabled": true,
                   |"parameters": {
-                    |"maxmindDatabase": "GeoLiteCity.dat",
-                    |"maxmindUri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
+                    |"geo": {
+                      |"database": "GeoLiteCity.dat",
+                      |"uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
+                    |}
                   |}
                 |}  
               |},

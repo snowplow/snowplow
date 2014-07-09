@@ -85,11 +85,12 @@ object EtlJob {
    *
    * @param fileUri The URI to the Maxmind GeoLiteCity.dat file
    * @param conf Our current job Configuration
-   * @param ipToGeoEnrichment The configured IpToGeoEnrichment
+   * @param ipLookupsEnrichment The configured IpLookupsEnrichment
    */
-  def installIpGeoFile(conf: Configuration, ipToGeoEnrichment: IpToGeoEnrichment) {
-    for (cachePath <- ipToGeoEnrichment.cachePath) { // We have a distributed cache to install to
-      val hdfsPath = FileUtils.sourceFile(conf, ipToGeoEnrichment.uri).valueOr(e => throw FatalEtlError(e.toString))
+  def installIpLookupsFiles(conf: Configuration, ipLookupsEnrichment: IpLookupsEnrichment) {
+    for (kv <- ipLookupsEnrichment.cachePathMap; cachePath <- kv._2) { // We have a distributed cache to install to
+      println(kv)
+      val hdfsPath = FileUtils.sourceFile(conf, ipLookupsEnrichment.lookupMap(kv._1)._1).valueOr(e => throw FatalEtlError(e.toString))
       FileUtils.addToDistCache(conf, hdfsPath, cachePath)
     }
   }
@@ -149,12 +150,12 @@ class EtlJob(args: Args) extends Job(args) {
   val enrichmentRegistry = etlConfig.registry
 
   // Only install file if enrichment is enabled
-  for (ipToGeo <- enrichmentRegistry.getIpToGeoEnrichment) {
+  for (ipLookupsEnrichment <- enrichmentRegistry.getIpLookupsEnrichment) {
     for (conf <- confOption) {
-      EtlJob.installIpGeoFile(conf, ipToGeo)
+      EtlJob.installIpLookupsFiles(conf, ipLookupsEnrichment)
     }
   }
-
+println(enrichmentRegistry.getIpLookupsEnrichment)
   // Aliases for our job
   val input = MultipleTextLineFiles(etlConfig.inFolder).read
   val goodOutput = Tsv(etlConfig.outFolder)

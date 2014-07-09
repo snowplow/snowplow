@@ -115,7 +115,7 @@ object EnrichmentRegistry {
         val name = ScalazJson4sUtils.extract[String](enrichmentConfig, "name").toValidationNel
         name.flatMap( nm => {
 
-          if (nm == "ip_to_geo") {
+          if (nm == "ip_lookups") {
             IpLookupsEnrichment.parse(enrichmentConfig, schemaKey, localMode).map((nm, _).some)
           } else if (nm == "anon_ip") {
             AnonIpEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
@@ -161,7 +161,7 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    * @return Option boxing the IpLookupsEnrichment instance
    */
   def getIpLookupsEnrichment: Option[IpLookupsEnrichment] = 
-    getEnrichment[IpLookupsEnrichment]("ip_to_geo")
+    getEnrichment[IpLookupsEnrichment]("ip_lookups")
 
 
   /**
