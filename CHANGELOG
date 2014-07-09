@@ -12,6 +12,7 @@ Scala Hadoop Enrich: created EnrichmentConfigRegistry.scala
 Scala Hadoop Enrich: passed etl_tstamp into Scala Common Enrich (#817)
 Scala Hadoop Enrich: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#835)
 Scala Hadoop Enrich: removed %3D handling for compatibility with old Scalding Args (#850) 
+Scala Hadoop Enrich: added ability to download additional MaxMind databases (#885)
 Scala Common Enrich: bumped to 0.5.0                                                    - TODO (currently -SNAPSHOT)
 Scala Common Enrich: bumped user-agent-utils version, thanks @pkallos! (#662)
 Scala Common Enrich: bumped referer-parser to 0.2.0 (#864)
@@ -25,7 +26,9 @@ Scala Common Enrich: replaced "anon_ip_quartets" with "anon_ip_octets" everywher
 Scala Common Enrich: added ability to extract event_id from querystring (#723)
 Scala Common Enrich: extracted CanonicalInput's userId as network_userid, thanks @pkallos! (#855)
 Scala Common Enrich: added MaxMind region_name field (#873)
-Scala Common Enrich: added IP -> ISP lookup (#861)                                      - TODO
+Scala Common Enrich: added IP -> ISP lookup (#861)
+Scala Common Enrich: added IP -> organization lookup (#887)
+Scala Common Enrich: added IP -> domain lookup (#886)
 Redshift: bumped table-def to 0.4.0
 Redshift: added etl_tstamp to atomic.events (#819)
 Redshift: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#834)
