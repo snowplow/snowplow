@@ -24,7 +24,7 @@ import Scalaz._
 import org.json4s.{
   DefaultFormats,
   JValue,
-  JString,
+  JNothing,
   MappingException
 }
 import org.json4s.JsonDSL._
@@ -58,4 +58,20 @@ object ScalazJson4sUtils {
       case me: MappingException => s"Could not extract %s as %s from supplied JSON".format(path.mkString("."), manifest[A]).toProcessingMessage.fail
     }
   }
+
+  /**
+   * Determines whether a JSON contains a specific
+   * JSON path
+   *
+   * @param head The first field in the JSON path
+   *        Exists to ensure the path is nonempty
+   * @param tail The rest of the fields in the
+   *        JSON path
+   * @return Whether the path is valid
+   */
+  def fieldExists(config: JValue, head: String, tail: String*): Boolean = 
+    (head +: tail).foldLeft(config)(_ \ _) match {
+      case JNothing => false
+      case s => true
+    }
 }
