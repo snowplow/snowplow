@@ -52,11 +52,16 @@ object ScalazJson4sUtils {
     
     val path = head +: tail
 
-    try {
-      path.foldLeft(config)(_ \ _).extract[A].success
-    } catch {
-      case me: MappingException => s"Could not extract %s as %s from supplied JSON".format(path.mkString("."), manifest[A]).toProcessingMessage.fail
-    }
+    // This check is necessary because attempting to follow 
+    // an invalid path yields a JNothing, which would be
+    // interpreted as an empty list if type A is List[String]
+    if (fieldExists(config, head, tail: _*)) {
+      try {
+        path.foldLeft(config)(_ \ _).extract[A].success
+      } catch {
+        case me: MappingException => s"Could not extract %s as %s from supplied JSON".format(path.mkString("."), manifest[A]).toProcessingMessage.fail
+      }
+    } else s"JSON path %s not found".format(path.mkString(".")).toProcessingMessage.fail
   }
 
   /**
