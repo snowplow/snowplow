@@ -70,10 +70,10 @@ object EtlJob {
   }
 
   /**
-   * A helper to source the MaxMind data file we 
+   * A helper to source the MaxMind data file(s) we 
    * use for IP location -> geo-location lookups
    *
-   * How we source the MaxMind data file depends
+   * How we source each MaxMind data file depends
    * on whether we are running locally or on HDFS:
    *
    * 1. On HDFS - source the file at `hdfsPath`,
@@ -83,13 +83,11 @@ object EtlJob {
    *    file on our resource path (downloaded for
    *    us by SBT) and return that path
    *
-   * @param fileUri The URI to the Maxmind GeoLiteCity.dat file
    * @param conf Our current job Configuration
    * @param ipLookupsEnrichment The configured IpLookupsEnrichment
    */
   def installIpLookupsFiles(conf: Configuration, ipLookupsEnrichment: IpLookupsEnrichment) {
     for (kv <- ipLookupsEnrichment.cachePathMap; cachePath <- kv._2) { // We have a distributed cache to install to
-      println(kv)
       val hdfsPath = FileUtils.sourceFile(conf, ipLookupsEnrichment.lookupMap(kv._1)._1).valueOr(e => throw FatalEtlError(e.toString))
       FileUtils.addToDistCache(conf, hdfsPath, cachePath)
     }
@@ -149,13 +147,13 @@ class EtlJob(args: Args) extends Job(args) {
 
   val enrichmentRegistry = etlConfig.registry
 
-  // Only install file if enrichment is enabled
+  // Only install MaxMind file(s) if enrichment is enabled
   for (ipLookupsEnrichment <- enrichmentRegistry.getIpLookupsEnrichment) {
     for (conf <- confOption) {
       EtlJob.installIpLookupsFiles(conf, ipLookupsEnrichment)
     }
   }
-println(enrichmentRegistry.getIpLookupsEnrichment)
+
   // Aliases for our job
   val input = MultipleTextLineFiles(etlConfig.inFolder).read
   val goodOutput = Tsv(etlConfig.outFolder)

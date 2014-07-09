@@ -70,8 +70,9 @@ object IpLookupsEnrichment extends ParseableEnrichment {
 
       val argsList: List[Option[ValidatedNelMessage[(URI, String)]]] = lookupNames.map(getArgumentFromName(conf,_))
 
-      val switchedArgsList: List[ValidatedNelMessage[Option[(URI, String)]]] = argsList.map(x => {
-        x match {
+      // Switch the order of the ValidatedNelMessage and the Option
+      val switchedArgsList: List[ValidatedNelMessage[Option[(URI, String)]]] = argsList.map(arg => {
+        arg match {
           case None => None.success.toValidationNel
           case Some(Failure(f)) => f.fail
           case Some(Success(s)) => Some(s).success.toValidationNel
@@ -81,8 +82,17 @@ object IpLookupsEnrichment extends ParseableEnrichment {
     })
   }
 
-
-  // TODO: docstring
+  /**
+   * Creates the (URI, String) tuple arguments
+   * which are the case class parameters
+   *
+   * @param conf The ip_lookups enrichment JSON
+   * @param name The name of the lookup:
+   *        "geo", "isp", "organization", "domain"
+   * @return None if the database isn't being used,
+   *         Some(Failure) if its URI is invalid,
+   *         Some(Success) if it is found
+   */
   private def getArgumentFromName(conf: JValue, name: String): Option[ValidatedNelMessage[(URI, String)]] = {
     if (ScalazJson4sUtils.fieldExists(conf, "parameters", name)) {
       val uri = ScalazJson4sUtils.extract[String](conf, "parameters", name, "uri")
@@ -143,8 +153,6 @@ case class IpLookupsEnrichment(
 
   val version = new DefaultArtifactVersion("0.1.0")
 
-  val lookupNames = List("geo", "isp", "organization", "domain")
-
   val lookupMap: Map[String, (URI, String)] = Map("geo" -> geoTuple, "isp" -> ispTuple, "org" -> orgTuple, "domain" -> domainTuple)
                     .collect{case (key, Some(tuple)) => (key, tuple)}
 
@@ -154,7 +162,7 @@ case class IpLookupsEnrichment(
   // the Hadoop dist cache or not
   val cachePathMap = lookupMap.map(kv => (kv._1, getCachePath(kv._1)))
 
-  val lookupPaths = lookupNames.map(lookupName => {
+  private val lookupPaths = IpLookupsEnrichment.lookupNames.map(lookupName => {
     if (lookupMap.contains(lookupName)) {
 
       lazy val maxmindResourcePath = 
@@ -170,7 +178,7 @@ case class IpLookupsEnrichment(
     else None
   })
 
-  val ipLookups = IpLookups(lookupPaths(0), lookupPaths(1), lookupPaths(2), lookupPaths(3), memCache = true, lruCache = 20000)
+  private val ipLookups = IpLookups(lookupPaths(0), lookupPaths(1), lookupPaths(2), lookupPaths(3), memCache = true, lruCache = 20000)
 
   /**
    * Extract the geo-location using the
