@@ -69,6 +69,7 @@ object LateOct2013CfLineSpec {
     null, // No additional MaxMind databases used
     null,
     null,
+    null,
     "http://www.psychicbazaar.com/tarot-cards/304-russian-tarot-of-st-petersburg-set.html",
     "Russian Tarot of St Petersburg Deck - Psychic Bazaar",
     "http://www.psychicbazaar.com/2-tarot-cards?utm_source=GoogleSearch&utm_term=tarot%20decks&utm_content=42017425288&utm_medium=cpc&utm_campaign=uk-tarot--TAROT-CARDS-GENERAL&gclid=CJ7G8MSaqboCFfHKtAodPS0AIw",

@@ -69,6 +69,7 @@ object Sep2013CfLineSpec {
     null, // No additional MaxMind databases used
     null,
     null,
+    null,
     "http://www.psychicbazaar.com/tarot-cards/312-dreaming-way-tarot.html?utm_source=GoogleSearch&utm_term=rome%20choi%20tarot&utm_content=42017424088&utm_medium=cpc&utm_campaign=uk-tarot-decks--pbz00316",
     "Dreaming Way Tarot - Psychic Bazaar",
     "http://www.google.com/url?sa=t&rct=j&q=www.psychicbazaar.com+312-dreaming-way-tarot&source=web&cd=1&ved=0CFwQFjAD&url=http://www.psychicbazaar.com/tarot-cards/312-dreaming-way-tarot.html?utm_source=GoogleSearch&utm_term=rome%20choi%20tarot&utm_content=42017424088&utm_medium=cpc&utm_campaign=uk-tarot-decks--pbz00316&ei=2CdTUo3DJqf9oAa_Fg&usg=AFQjCNGGq8p48SyYds9oznKs1F5RQYtx_A",

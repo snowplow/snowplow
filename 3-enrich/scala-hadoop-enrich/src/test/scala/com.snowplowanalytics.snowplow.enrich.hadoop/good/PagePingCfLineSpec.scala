@@ -68,6 +68,7 @@ object PagePingCfLineSpec {
     null, // No additional MaxMind databases used
     null,
     null,
+    null,
     "http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?utm_source=google&utm_medium=cpc&utm_term=buy+tarot&utm_campaign=spring_sale",
     "Tarot cards - Psychic Bazaar",
     "http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?n=48",
