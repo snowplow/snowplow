@@ -52,10 +52,11 @@ CREATE TABLE atomic.events (
 	geo_zipcode varchar(15) encode runlength,
 	geo_latitude double precision encode runlength,
 	geo_longitude double precision encode runlength,
-	geo_region_name varchar(100) encode runlength,     -- Added in 0.3.0
+	geo_region_name varchar(100) encode runlength,     -- Added in 0.4.0
 	-- IP lookups
-	ip_isp varchar(100) encode runlength,              -- Added in 0.3.0
-	ip_organization varchar(100) encode runlength,     -- Added in 0.3.0
+	ip_isp varchar(100) encode runlength,              -- Added in 0.4.0
+	ip_organization varchar(100) encode runlength,     -- Added in 0.4.0
+	ip_domain varchar(100) encode runlength,           -- Added in 0.4.0	
 	ip_domain varchar(100) encode runlength,           -- Added in 0.3.0	
 	-- Page
 	page_url varchar(4096),
@@ -190,6 +191,7 @@ INSERT INTO atomic.events
 	NULL AS ip_isp,                                    -- Added in 0.4.0
 	NULL AS ip_organization,                           -- Added in 0.4.0
 	NULL AS ip_domain,                                 -- Added in 0.4.0
+	NULL AS ip_netspeed,                               -- Added in 0.4.0	
 	page_url,
 	page_title,
 	page_referrer,

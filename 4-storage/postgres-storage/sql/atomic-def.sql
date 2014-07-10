@@ -55,6 +55,7 @@ CREATE TABLE "atomic"."events" (
 	"ip_isp" varchar(100),                  -- Added in 0.3.0
 	"ip_organization" varchar(100),         -- Added in 0.3.0
 	"ip_domain" varchar(100),               -- Added in 0.3.0	
+	"ip_netspeed" varchar(100),             -- Added in 0.3.0		
 	-- Page
 	"page_url" text,                        -- Added in 0.2.0
 	"page_title" varchar(2000),

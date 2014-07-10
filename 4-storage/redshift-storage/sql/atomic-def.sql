@@ -57,6 +57,7 @@ CREATE TABLE atomic.events (
 	ip_isp varchar(100) encode runlength,              -- Added in 0.4.0
 	ip_organization varchar(100) encode runlength,     -- Added in 0.4.0
 	ip_domain varchar(100) encode runlength,           -- Added in 0.4.0
+	ip_netspeed varchar(100) encode runlength,         -- Added in 0.4.0
 	-- Page
 	page_url varchar(4096),                            -- Added in 0.3.0
 	page_title varchar(2000),
