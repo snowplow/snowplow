@@ -207,7 +207,7 @@ case class IpLookupsEnrichment(
     try {
       ipLookups.performLookups(ip).success
     } catch {
-      case e: java.lang.IllegalArgumentException => (None, None, None, None).success
+      case _: Throwable => "Could not extract geo-location from IP address [%s]".format(ip).fail
     }
   }
 }
