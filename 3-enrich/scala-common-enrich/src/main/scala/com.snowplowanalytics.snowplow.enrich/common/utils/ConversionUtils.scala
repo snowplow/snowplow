@@ -169,6 +169,21 @@ object ConversionUtils {
   } 
 
   /**
+   * @param field The name of the field being validated
+   * @param str The String hopefully parseable as an integer
+   * @return a Scalaz ValidatedString containing either
+   *         the original String on Success, or an error
+   *         String on Failure.
+   */
+  val validateInteger: (String, String) => ValidatedString = (field, str) => {
+    try {
+      str.toInt.toString.success
+    } catch {
+      case _ : java.lang.NumberFormatException => s"Field [$field]: [$str] is not a valid integer".fail
+    }
+  }
+
+  /**
    * Decodes a String in the specific encoding,
    * also removing:
    * * Newlines - because they will break Hive

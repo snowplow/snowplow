@@ -143,7 +143,7 @@ object EnrichmentManager {
           ("ip"      , (ME.toTsvSafe, "user_ipaddress")),
           ("aid"     , (ME.toTsvSafe, "app_id")),
           ("p"       , (ME.extractPlatform, "platform")),
-          ("tid"     , (ME.toTsvSafe, "txn_id")),
+          ("tid"     , (CU.validateInteger, "txn_id")),
           ("uid"     , (ME.toTsvSafe, "user_id")),
           ("duid"    , (ME.toTsvSafe, "domain_userid")),
           ("nuid"    , (ME.toTsvSafe, "network_userid")),

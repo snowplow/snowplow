@@ -28,6 +28,7 @@ Scala Common Enrich: added MaxMind region_name field (#873)
 Scala Common Enrich: added IP -> ISP lookup (#861)
 Scala Common Enrich: added IP -> organization lookup (#887)
 Scala Common Enrich: added IP -> domain lookup (#886)
+Scala Common Enrich: added validation for transaction ID (#428)
 Redshift: bumped table-def to 0.4.0
 Redshift: added etl_tstamp to atomic.events (#819)
 Redshift: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#834)
