@@ -52,7 +52,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
 
   val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", "1-0-0")
 
-  private val lookupNames = List("geo", "isp", "organization", "domain")
+  private val lookupNames = List("geo", "isp", "organization", "domain", "netspeed")
 
   /**
    * Creates an IpLookupsEnrichment instance from a JValue.
@@ -78,7 +78,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
           case Some(Success(s)) => Some(s).success.toValidationNel
         }
       })
-      (switchedArgsList(0) |@| switchedArgsList(1) |@| switchedArgsList(2) |@| switchedArgsList(3)) { IpLookupsEnrichment(_,_,_,_, localMode) }
+      (switchedArgsList(0) |@| switchedArgsList(1) |@| switchedArgsList(2) |@| switchedArgsList(3) |@| switchedArgsList(4)) { IpLookupsEnrichment(_,_,_,_,_,localMode) }
     })
   }
 
@@ -140,6 +140,8 @@ object IpLookupsEnrichment extends ParseableEnrichment {
  *        lookup MaxMind data file
  * @param domainTuple (Full URI to the domain lookup
  *        MaxMind data file, database name)
+ * @param netspeedTuple (Full URI to the netspeed
+ *        lookup MaxMind data file, database name)
  * @param localMode Whether to use the local
  *        MaxMind data file. Enabled for tests. 
  */
@@ -148,12 +150,13 @@ case class IpLookupsEnrichment(
   ispTuple: Option[(URI, String)],
   orgTuple: Option[(URI, String)],
   domainTuple: Option[(URI, String)],
+  netspeedTuple: Option[(URI, String)],
   localMode: Boolean
   ) extends Enrichment {
 
   val version = new DefaultArtifactVersion("0.1.0")
 
-  val lookupMap: Map[String, (URI, String)] = Map("geo" -> geoTuple, "isp" -> ispTuple, "organization" -> orgTuple, "domain" -> domainTuple)
+  val lookupMap: Map[String, (URI, String)] = Map("geo" -> geoTuple, "isp" -> ispTuple, "organization" -> orgTuple, "domain" -> domainTuple, "netspeed" -> netspeedTuple)
                     .collect{case (key, Some(tuple)) => (key, tuple)}
 
   private def getCachePath(name: String): Option[String] = if (!localMode) ("./ip_" + name).some else None
@@ -178,7 +181,7 @@ case class IpLookupsEnrichment(
     else None
   })
 
-  private val ipLookups = IpLookups(lookupPaths(0), lookupPaths(1), lookupPaths(2), lookupPaths(3), memCache = true, lruCache = 20000)
+  private val ipLookups = IpLookups(lookupPaths(0), lookupPaths(1), lookupPaths(2), lookupPaths(3), lookupPaths(4), memCache = true, lruCache = 20000)
 
   /**
    * Extract the geo-location using the
