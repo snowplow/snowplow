@@ -261,6 +261,7 @@ object EnrichmentManager {
                 event.ip_isp = res._2.orNull
                 event.ip_org = res._3.orNull
                 event.ip_domain = res._4.orNull
+                event.ip_netspeed = res._5.orNull
               }
               ipLookupResult
             }

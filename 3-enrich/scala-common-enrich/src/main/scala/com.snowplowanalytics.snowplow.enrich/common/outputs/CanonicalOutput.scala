@@ -79,6 +79,7 @@ class CanonicalOutput {
   @BeanProperty var ip_isp: String = _
   @BeanProperty var ip_org: String = _
   @BeanProperty var ip_domain: String = _
+  @BeanProperty var ip_netspeed: String = _
 
   // Page
   @BeanProperty var page_url: String = _
