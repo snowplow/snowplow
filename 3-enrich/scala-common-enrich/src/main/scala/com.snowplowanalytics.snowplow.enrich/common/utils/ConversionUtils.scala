@@ -177,7 +177,8 @@ object ConversionUtils {
    */
   val validateInteger: (String, String) => ValidatedString = (field, str) => {
     try {
-      str.toInt.toString.success
+      str.toInt
+      str.success
     } catch {
       case _ : java.lang.NumberFormatException => s"Field [$field]: [$str] is not a valid integer".fail
     }
