@@ -1,9 +1,9 @@
 {
-	"schema": "iglu:com.snowplowanalytics.snowplow/ip_to_geo/jsonschema/1-0-0",
+	"schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/1-0-0",
 
 	"data": {
 
-		"name": "ip_to_geo",
+		"name": "ip_lookups",
 		"vendor": "com.snowplowanalytics.snowplow",
 		"enabled": true,
 		"parameters": {
