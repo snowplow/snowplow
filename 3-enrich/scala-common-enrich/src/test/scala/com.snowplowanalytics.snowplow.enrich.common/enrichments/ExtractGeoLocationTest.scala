@@ -39,7 +39,7 @@ class ExtractGeoLocationTest extends Specification with DataTables with Validati
   "extractGeoLocation should correctly extract location data from IP addresses where possible"      ! e2^
                                                                                                     end
 
-  val config = IpLookupsEnrichment(Some(new URI("/not-used/"), "GeoLiteCity.dat"), None, None, None, true)
+  val config = IpLookupsEnrichment(Some(new URI("/not-used/"), "GeoIPCity.dat"), None, None, None, None, true)
 
   // Impossible to make extractIpLocation throw a validation error
   def e1 =
@@ -51,18 +51,18 @@ class ExtractGeoLocationTest extends Specification with DataTables with Validati
     "null IP address"       !! null          ! None                |
     "invalid IP address #1" !! "localhost"   ! None                |
     "invalid IP address #2" !! "hello"       ! None                |
-    "valid IP address"      !! "128.232.0.0" ! Some(IpLocation(    // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
-                                                 countryCode = "GB",
-                                                 countryName = "United Kingdom",
-                                                 region = Some("C3"),
-                                                 city = Some("Cambridge"),
-                                                 latitude = 52.199997F,
-                                                 longitude = 0.11669922F,
+    "valid IP address"      !! "70.46.123.145" ! Some(IpLocation(    // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
+                                                 countryCode = "US",
+                                                 countryName = "United States",
+                                                 region = Some("FL"),
+                                                 city = Some("Delray Beach"),
+                                                 latitude = 26.461502F,
+                                                 longitude = -80.0728F,
                                                  postalCode = None,
-                                                 dmaCode = None,
-                                                 areaCode = None,
-                                                 metroCode = None,
-                                                 regionName = Some("Cambridgeshire")
+                                                 dmaCode = Some(548),
+                                                 areaCode = Some(561),
+                                                 metroCode = Some(548),
+                                                 regionName = Some("Florida")
                                                ))                  |> {
       (_, ipAddress, expected) =>
         config.extractGeoLocation(ipAddress).map(_._1) must beSuccessful(expected)

@@ -165,13 +165,13 @@ case class IpLookupsEnrichment(
   // the Hadoop dist cache or not
   val cachePathMap = lookupMap.map(kv => (kv._1, getCachePath(kv._1)))
 
-  private val lookupPaths = IpLookupsEnrichment.lookupNames.map(lookupName => {
+  lazy private val lookupPaths = IpLookupsEnrichment.lookupNames.map(lookupName => {
     if (lookupMap.contains(lookupName)) {
 
       lazy val maxmindResourcePath = 
-        getClass.getResource("/maxmind/" + lookupMap(lookupName)._2).toURI.getPath
+        getClass.getResource(lookupMap(lookupName)._2).toURI.getPath
 
-     // Hopefully the database has been copied to our cache path by Hadoop Enrich 
+      // Hopefully the database has been copied to our cache path by Hadoop Enrich 
       val path = cachePathMap(lookupName) match {
         case None => Some(maxmindResourcePath)
         case Some(s) => Some(s)
@@ -181,7 +181,7 @@ case class IpLookupsEnrichment(
     else None
   })
 
-  private val ipLookups = IpLookups(lookupPaths(0), lookupPaths(1), lookupPaths(2), lookupPaths(3), lookupPaths(4), memCache = true, lruCache = 20000)
+  lazy private val ipLookups = IpLookups(lookupPaths(0), lookupPaths(1), lookupPaths(2), lookupPaths(3), lookupPaths(4), memCache = true, lruCache = 20000)
 
   /**
    * Extract the geo-location using the
