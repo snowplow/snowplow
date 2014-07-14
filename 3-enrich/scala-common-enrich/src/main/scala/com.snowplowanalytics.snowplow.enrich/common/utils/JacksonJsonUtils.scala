@@ -24,38 +24,38 @@ import scalaz._
 import Scalaz._
 
 /**
-* Contains general purpose extractors and other
-* utilities for JSONs. Jackson-based.
-*/
+ * Contains general purpose extractors and other
+ * utilities for JSONs. Jackson-based.
+ */
 object JacksonJsonUtils {
 
   private lazy val Mapper = new ObjectMapper
 
   /**
-* Converts a JSON string into a Validation[String, JsonNode]
-*
-* @param field The name of the field containing JSON
-* @param instance The JSON string to parse
-* @return a Scalaz Validation, wrapping either an error
-* String or the extracted JsonNode
-*/
+   * Converts a JSON string into a Validation[String, JsonNode]
+   *
+   * @param field The name of the field containing JSON
+   * @param instance The JSON string to parse
+   * @return a Scalaz Validation, wrapping either an error
+   *         String or the extracted JsonNode
+   */
   def extractJson(field: String, instance: String): Validation[String, JsonNode] =
     try {
       Mapper.readTree(instance).success
     } catch {
-      case e: Throwable => s"Field [$field]: invalid JSON [%s] with parsing error: %s".fail
+      case e: Throwable => s"Field [$field]: invalid JSON [$instance] with parsing error: $e".fail
     }
 
   /**
-* Converts a JSON string into a JsonNode.
-*
-* UNSAFE - only use it for Strings you have
-* created yourself. Use extractJson for all
-* external Strings.
-*
-* @param instance The JSON string to parse
-* @return the extracted JsonNode
-*/
+   * Converts a JSON string into a JsonNode.
+   *
+   * UNSAFE - only use it for Strings you have
+   * created yourself. Use extractJson for all
+   * external Strings.
+   *
+   * @param instance The JSON string to parse
+   * @return the extracted JsonNode
+   */
   def unsafeExtractJson(instance: String): JsonNode =
     Mapper.readTree(instance)
 
