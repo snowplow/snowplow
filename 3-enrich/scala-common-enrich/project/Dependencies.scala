@@ -72,7 +72,7 @@ object Dependencies {
     val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val scalaUtil        = "com.snowplowanalytics"      %  "scala-util"                % V.scalaUtil
     val refererParser    = "com.snowplowanalytics"      %  "referer-parser"            % V.refererParser
-    val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-geoip"       % V.maxmindIplookups
+    val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-iplookups"   % V.maxmindIplookups
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"            % V.json4s
     val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s    
     val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"         % V.igluClient
