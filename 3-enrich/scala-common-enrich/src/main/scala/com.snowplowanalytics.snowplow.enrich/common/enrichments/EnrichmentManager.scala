@@ -247,7 +247,7 @@ object EnrichmentManager {
         case Some(geo) => {
           raw.ipAddress match {
             case Some(address) => {
-              val ipLookupResult = geo.extractGeoLocation(address)
+              val ipLookupResult = geo.extractIpInformation(address)
               for (res <- ipLookupResult) {
                 for ( loc <- res._1) {
                   event.geo_country = loc.countryCode

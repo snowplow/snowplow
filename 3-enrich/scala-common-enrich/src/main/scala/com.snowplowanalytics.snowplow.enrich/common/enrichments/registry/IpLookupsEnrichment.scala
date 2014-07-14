@@ -205,7 +205,7 @@ case class IpLookupsEnrichment(
    *         boxed in a Scalaz Validation
    */
   // TODO: can we move the IpGeo to an implicit?
-  def extractGeoLocation(ip: String): Validation[String, IpLookupResult] = {
+  def extractIpInformation(ip: String): Validation[String, IpLookupResult] = {
 
     try {
       ipLookups.performLookups(ip).success

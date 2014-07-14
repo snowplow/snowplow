@@ -31,26 +31,27 @@ import Scalaz._
 // Scala MaxMind GeoIP
 import com.snowplowanalytics.maxmind.iplookups.{IpLookups, IpLocation}
 
-class ExtractGeoLocationTest extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
+class extractIpInformationTest extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
 
-  "This is a specification to test the extractGeoLocation function"                                 ^
+  "This is a specification to test the extractIpInformation function"                                 ^
                                                                                                    p^
-  "extractGeoLocation should not return failure for any valid or invalid IP address"                ! e1^
-  "extractGeoLocation should correctly extract location data from IP addresses where possible"      ! e2^
+  "extractIpInformation should not return failure for any valid or invalid IP address"                ! e1^
+  "extractIpInformation should correctly extract location data from IP addresses where possible"      ! e2^
+  "extractIpInformation should correctly extract ISP data from IP addresses where possible"           ! e3^
                                                                                                     end
 
-  val config = IpLookupsEnrichment(Some(new URI("/not-used/"), "GeoIPCity.dat"), None, None, None, None, true)
+  val config = IpLookupsEnrichment(Some(new URI("/not-used/"), "GeoIPCity.dat"), Some(new URI("/not-used/"), "GeoIPISP.dat"), None, None, None, true)
 
-  // Impossible to make extractIpLocation throw a validation error
+  // Impossible to make extractIpInformation throw a validation error
   def e1 =
-    check { (ipAddress: String) => config.extractGeoLocation(ipAddress) must beSuccessful }
+    check { (ipAddress: String) => config.extractIpInformation(ipAddress) must beSuccessful }
 
   def e2 =
-    "SPEC NAME"             || "IP ADDRESS"  | "EXPECTED LOCATION" |
-    "blank IP address"      !! ""            ! None                |
-    "null IP address"       !! null          ! None                |
-    "invalid IP address #1" !! "localhost"   ! None                |
-    "invalid IP address #2" !! "hello"       ! None                |
+    "SPEC NAME"             || "IP ADDRESS"    | "EXPECTED LOCATION" |
+    "blank IP address"      !! ""              ! None                |
+    "null IP address"       !! null            ! None                |
+    "invalid IP address #1" !! "localhost"     ! None                |
+    "invalid IP address #2" !! "hello"         ! None                |
     "valid IP address"      !! "70.46.123.145" ! Some(IpLocation(    // Taken from scala-maxmind-geoip. See that test suite for other valid IP addresses
                                                  countryCode = "US",
                                                  countryName = "United States",
@@ -65,6 +66,8 @@ class ExtractGeoLocationTest extends Specification with DataTables with Validati
                                                  regionName = Some("Florida")
                                                ))                  |> {
       (_, ipAddress, expected) =>
-        config.extractGeoLocation(ipAddress).map(_._1) must beSuccessful(expected)
+        config.extractIpInformation(ipAddress).map(_._1) must beSuccessful(expected)
     }
+
+  def e3 = config.extractIpInformation("70.46.123.145").map(_._2) must beSuccessful(Some("FDN Communications"))
 }
