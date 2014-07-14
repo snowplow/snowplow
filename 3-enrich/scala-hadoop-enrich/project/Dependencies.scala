@@ -39,10 +39,6 @@ object Dependencies {
     val scalazSpecs2     = "0.1.2"
   }
 
-  object Urls {
-    val maxmindData = "http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz"
-  }
-
   object Libraries {
     // Java
     val hadoopCore       = "org.apache.hadoop"          %  "hadoop-core"              % V.hadoop       % "provided"
