@@ -163,7 +163,7 @@ object RefererParserCfLineSpec {
 class RefererParserCfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid page ping with an internal subdomain referer" should {
-    EtlJobSpec("cloudfront", "1", false).
+    EtlJobSpec("cloudfront", "1", false, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), RefererParserCfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {

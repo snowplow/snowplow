@@ -175,10 +175,32 @@ object JobSpecHelpers {
    */
   implicit def Lines2ScaldingLines(lines : Lines): ScaldingLines = lines.numberedLines 
 
+  /**
+   * Creates the the part of the ip_lookups
+   * JSON corresponding to a single lookup
+   *
+   * @param lookup One of the lookup types
+   * @return JSON fragment containing the
+   *         lookup's database and URI
+   */
+  def getLookupJson(lookup: String): String = {
+     """|"%s": {
+          |"database": "%s",
+          |"uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
+        |}""".format(lookup, lookup match {
+      case "geo"          => "GeoIPCity.dat"
+      case "isp"          => "GeoIPISP.dat"
+      case "organization" => "GeoIPOrg.dat"
+      case "domain"       => "GeoIPDomain.dat"
+      case "netspeed"     => "GeoIPNetSpeedCell.dat"
+      })
+  }
+
   // Standard JobSpec definition used by all integration tests
-  val EtlJobSpec: (String, String, Boolean) => JobTest = (collector, anonOctets, anonOctetsEnabled) => {
+  val EtlJobSpec: (String, String, Boolean, List[String]) => JobTest = (collector, anonOctets, anonOctetsEnabled, lookups) => {
 
     val encoder = new Base64(true) // true means "url safe"
+
     val enrichments = new String(encoder.encode(
        """|{
             |"schema": "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0",
@@ -201,10 +223,7 @@ object JobSpecHelpers {
                   |"name": "ip_lookups",
                   |"enabled": true,
                   |"parameters": {
-                    |"geo": {
-                      |"database": "GeoLiteCity.dat",
-                      |"uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
-                    |}
+                    %s
                   |}
                 |}  
               |},
@@ -220,7 +239,7 @@ object JobSpecHelpers {
                 |}  
               |}              
             |]
-          |}""".format(anonOctetsEnabled, anonOctets).stripMargin.replaceAll("[\n\r]","").getBytes
+          |}""".format(anonOctetsEnabled, anonOctets, lookups.map(getLookupJson(_)).mkString(",\n")).stripMargin.replaceAll("[\n\r]","").getBytes
       )
     )
 

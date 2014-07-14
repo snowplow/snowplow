@@ -164,7 +164,7 @@ object CljTomcatLineSpec {
 class CljTomcatLineSpec extends Specification {
 
   "A job which processes a Clojure-Tomcat file containing 1 valid page view" should {
-    EtlJobSpec("clj-tomcat", "2", true).
+    EtlJobSpec("clj-tomcat", "2", true, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), CljTomcatLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {

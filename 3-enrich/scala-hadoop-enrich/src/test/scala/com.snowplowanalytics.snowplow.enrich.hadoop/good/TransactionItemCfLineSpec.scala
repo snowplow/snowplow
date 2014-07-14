@@ -160,7 +160,7 @@ object TransactionItemCfLineSpec {
 class TransactionItemCfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid transaction item" should {
-    EtlJobSpec("cloudfront", "1", false).
+    EtlJobSpec("cloudfront", "1", false, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), TransactionItemCfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 transaction item" in {

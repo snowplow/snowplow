@@ -49,7 +49,7 @@ object CorruptedCfLinesSpec {
 class CorruptedCfLinesSpec extends Specification {
 
   "A job which processes a corrupted input line" should {
-    EtlJobSpec("cloudfront", "1", false).
+    EtlJobSpec("cloudfront", "1", false, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), CorruptedCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output => 
         "not write any events" in {

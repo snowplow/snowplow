@@ -47,7 +47,7 @@ object DiscardableCfLinesSpec {
 class DiscardableCfLinesSpec extends Specification {
 
   "A job which processes expected but discardable CloudFront input lines" should {
-    EtlJobSpec("cloudfront", "1", false).
+    EtlJobSpec("cloudfront", "1", false, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), DiscardableCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output =>
         "not write any events" in {

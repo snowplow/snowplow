@@ -51,7 +51,7 @@ object InvalidCfLinesSpec {
 class InvalidCfLinesSpec extends Specification {
 
   "A job which processes input lines not in CloudFront format" should {
-    EtlJobSpec("cloudfront", "1", false).
+    EtlJobSpec("cloudfront", "1", false, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), InvalidCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output =>
         "not write any events" in {

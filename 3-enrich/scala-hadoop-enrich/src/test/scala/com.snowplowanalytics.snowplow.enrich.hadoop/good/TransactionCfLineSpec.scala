@@ -36,7 +36,7 @@ import JobSpecHelpers._
 object TransactionCfLineSpec {
 
   val lines = Lines(
-    "2012-05-27  11:35:53  DFW3  3343  128.232.0.0 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 - Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=tr&tr_id=order-123&tr_af=psychicbazaar&tr_tt=8000&tr_tx=200&tr_sh=50&tr_ci=London&tr_st=England&tr_co=UK&dtm=1364177017342&cx=ewoicGFnZSI6eyJjYXRlZ29yeSI6InByb2R1Y3QiLCJza3UiOjM4Mn0sICJjb3VudHMiOiBbMS4wLCAyLjAsIDMuMCwgNC4wXQp9&tid=028288&duid=a279872d76480afb&vid=1&aid=CFe23a&lang=en-GB&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F119-psycards-book-and-deck-starter-pack.html%3Fview%3Dprint%23detail&cv=clj-0.3.0-tom-0.0.2"
+    "2012-05-27  11:35:53  DFW3  3343  70.46.123.145 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 - Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=tr&tr_id=order-123&tr_af=psychicbazaar&tr_tt=8000&tr_tx=200&tr_sh=50&tr_ci=London&tr_st=England&tr_co=UK&dtm=1364177017342&cx=ewoicGFnZSI6eyJjYXRlZ29yeSI6InByb2R1Y3QiLCJza3UiOjM4Mn0sICJjb3VudHMiOiBbMS4wLCAyLjAsIDMuMCwgNC4wXQp9&tid=028288&duid=a279872d76480afb&vid=1&aid=CFe23a&lang=en-GB&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F119-psycards-book-and-deck-starter-pack.html%3Fview%3Dprint%23detail&cv=clj-0.3.0-tom-0.0.2"
     )
 
   val expected = List(
@@ -58,17 +58,17 @@ object TransactionCfLineSpec {
     "a279872d76480afb",
     "1",
     null, // No network_userid set
-    "GB", // UK geo-location
-    "C3",
-    "Cambridge",
+    "US", // US geolocation
+    "FL",
+    "Delray Beach",
     null,
-    "52.199997",
-    "0.11669922",
-    "Cambridgeshire",
-    null, // No additional MaxMind databases used
-    null,
+    "26.461502",
+    "-80.0728",
+    "Florida",
     null,
     null,
+    null,
+    "Cable/DSL", // Using the MaxMind netspeed lookup service
     "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail",
     null, // No page title for transactions
     null,
@@ -160,7 +160,7 @@ object TransactionCfLineSpec {
 class TransactionCfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid transaction" should {
-    EtlJobSpec("cloudfront", "4", true).
+    EtlJobSpec("cloudfront", "4", true, List("geo", "netspeed")).
       source(MultipleTextLineFiles("inputFolder"), TransactionCfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 transaction" in {

@@ -165,7 +165,7 @@ object Apr2014CfLineSpec {
 class Apr2014CfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid page view" should {
-    EtlJobSpec("cloudfront", "1", false).
+    EtlJobSpec("cloudfront", "1", false, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), Apr2014CfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {

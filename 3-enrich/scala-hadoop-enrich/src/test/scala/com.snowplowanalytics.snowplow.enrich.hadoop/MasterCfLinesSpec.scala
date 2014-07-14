@@ -66,7 +66,7 @@ object MasterCfLinesSpec {
 class MasterCfLinesSpec extends Specification {
 
   "A job which processes a CloudFront file containing 14 valid events, 6 bad lines and 3 discardable lines" should {
-    EtlJobSpec("cloudfront", "1", false). // Technically CljTomcatLineSpec isn't CloudFront format but won't break this test
+    EtlJobSpec("cloudfront", "1", false, List("geo")). // Technically CljTomcatLineSpec isn't CloudFront format but won't break this test
       source(MultipleTextLineFiles("inputFolder"), MasterCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output =>
         "write 14 events" in {
