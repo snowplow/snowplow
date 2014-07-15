@@ -53,11 +53,10 @@ object BuildSettings {
    
     crossPaths := false,
     publishTo <<= version { version =>
-      val keyFile = (Path.userHome / ".ssh" / "admin_keplar.osk")
       val basePath = "/var/www/maven.snplow.com/prod/public/%s".format {
         if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
       }
-      Some(Resolver.sftp("SnowPlow Analytics Maven repository", "prodbox", 8686, basePath) as ("admin", keyFile))
+      Some(Resolver.file("Local Maven repository", file(basePath)) transactional())
     }
   )
 
