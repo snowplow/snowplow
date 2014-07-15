@@ -96,6 +96,7 @@ module Snowplow
         # If no enrichments argument is passed, make the array of enrichments empty
         if enrichments.nil?
           return [args, config, []]
+        end
 
         # Check the enrichments directory exists and is a directory
         unless Dir.exists?(enrichments)
