@@ -93,13 +93,17 @@ module Snowplow
 
         enrichments = options[:enrichments_directory]
 
+        # If no enrichments argument is passed, make the array of enrichments empty
+        if enrichments.nil?
+          return [args, config, []]
+
+        # Check the enrichments directory exists and is a directory
         unless Dir.exists?(enrichments)
           raise ConfigError, "Enrichments directory '#{enrichments}' does not exist, or is not a directory"
         end
 
-        if enrichments.nil?
-          return [args, config, []]
-        elsif enrichments[-1] != '/'
+        # Add a trailing slash if necessary to make globbing work
+        if enrichments[-1] != '/'
           enrichments += '/'
         end
 
