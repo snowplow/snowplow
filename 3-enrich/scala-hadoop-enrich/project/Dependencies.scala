@@ -33,7 +33,7 @@ object Dependencies {
     val scalding         = "0.10.0"
     val scalaz7          = "7.0.0"
     val snowplowRawEvent = "0.1.0"
-    val commonEnrich     = "0.5.0-SNAPSHOT"
+    val commonEnrich     = "0.5.0"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
@@ -41,15 +41,15 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val hadoopCore       = "org.apache.hadoop"          %  "hadoop-core"              % V.hadoop       % "provided"
+    val hadoopCore       = "org.apache.hadoop"          %  "hadoop-core"               % V.hadoop       % "provided"
     // Scala
-    val scaldingCore     = "com.twitter"                %% "scalding-core"            % V.scalding
-    val scaldingArgs     = "com.twitter"                %% "scalding-args"            % V.scalding
-    val scalaz7          = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7 // TODO: tidy up whitespace
-    val snowplowRawEvent = "com.snowplowanalytics"      % "snowplow-thrift-raw-event" % V.snowplowRawEvent
-    val commonEnrich     = "com.snowplowanalytics"      % "snowplow-common-enrich"    % V.commonEnrich
+    val scaldingCore     = "com.twitter"                %% "scalding-core"             % V.scalding
+    val scaldingArgs     = "com.twitter"                %% "scalding-args"             % V.scalding
+    val scalaz7          = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
+    val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
+    val commonEnrich     = "com.snowplowanalytics"      %  "snowplow-common-enrich"    % V.commonEnrich
     // Scala (test only)
-    val specs2           = "org.specs2"                 %% "specs2"                   % V.specs2       % "test"
-    val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"            % V.scalazSpecs2 % "test"
+    val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2       % "test"
+    val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2 % "test"
   }
 }
