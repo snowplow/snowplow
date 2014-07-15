@@ -53,7 +53,7 @@ object BuildSettings {
    
     crossPaths := false,
     publishTo <<= version { version =>
-      val basePath = "/var/www/maven.snplow.com/prod/public/%s".format {
+      val basePath = "target/repo/%s".format {
         if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
       }
       Some(Resolver.file("Local Maven repository", file(basePath)) transactional())
