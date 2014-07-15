@@ -93,6 +93,10 @@ module Snowplow
 
         enrichments = options[:enrichments_directory]
 
+        unless Dir.exists?(enrichments)
+          raise ConfigError, "Enrichments directory '#{enrichments}' does not exist, or is not a directory"
+        end
+
         if enrichments.nil?
           return [args, config, []]
         elsif enrichments[-1] != '/'
