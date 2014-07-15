@@ -318,7 +318,7 @@ module Snowplow
       # +retain+:: set to false if this folder should be nillified
       #
       # Return the folder with a run ID folder appended
-      Contract String, String, Bool => Maybe[String]
+      Contract Maybe[String], String, Bool => Maybe[String]
       def self.partition_by_run(folder, run_id, retain=true)
         "#{folder}run=#{run_id}/" if retain
       end
