@@ -56,4 +56,3 @@
         :connection:
           :http:
             :uri: http://iglucentral.coms
-:enrichments: ./enrichments

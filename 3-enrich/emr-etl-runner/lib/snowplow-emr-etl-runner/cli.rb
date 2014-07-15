@@ -36,7 +36,7 @@ module Snowplow
       # Returns a Hash containing our runtime
       # arguments and our configuration.
       Contract None => ArgsConfigTuple
-      def self.get_args_config
+      def self.get_args_config_enrichments
         
         # Defaults
         options = {
@@ -51,6 +51,7 @@ module Snowplow
           opts.separator "Specific options:"
 
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config_file] = config }
+          opts.on('-n', '--enrichments ENRICHMENTS', 'enrichments directory') {|config| options[:enrichments_directory] = config}
           opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
@@ -90,7 +91,15 @@ module Snowplow
         }
         config = load_file(options[:config_file], optparse.to_s)
 
-        [args, config]
+        enrichments = options[:enrichments_directory]
+
+        if enrichments[-1] != '/'
+          enrichments += '/'
+        end
+
+        enrichments_array = Dir.glob(enrichments + '*.json').map {|f| File.read(f)}
+
+        [args, config, enrichments_array]
       end
 
     private

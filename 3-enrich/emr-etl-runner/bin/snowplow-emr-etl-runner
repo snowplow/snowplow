@@ -34,8 +34,8 @@ fatal = runner::Logging.method(:fatal_with)
 # Note that each step is only actioned if the previous step succeeded without error.
 begin
 
-  args, config = runner::Cli.get_args_config()
-  r = runner::Runner.new(args, config)
+  args, config, enrichments = runner::Cli.get_args_config_enrichments()
+  r = runner::Runner.new(args, config, enrichments)
   r.run()
 
 # Catch any Snowplow error

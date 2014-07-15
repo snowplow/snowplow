@@ -120,8 +120,7 @@ module Snowplow
         :collector_format => String,
         :continue_on_unexpected_error => Bool
         }),
-      :iglu => IgluConfigHash,
-      :enrichments => String
+      :iglu => IgluConfigHash
       })
 
     # The Array (Tuple2) containing the CLI arguments and configuration YAML.

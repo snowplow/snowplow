@@ -40,8 +40,8 @@ module Snowplow
       include Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, ConfigHash => EmrJob
-      def initialize(debug, shred, s3distcp, config)
+      Contract Bool, Bool, Bool, ConfigHash, ArrayOf[String] => EmrJob
+      def initialize(debug, shred, s3distcp, config, enrichments_array)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -161,7 +161,7 @@ module Snowplow
           },
           { :input_format     => config[:etl][:collector_format],
             :etl_tstamp       => etl_tstamp,
-            :enrichments      => build_enrichments_json(config)
+            :enrichments      => build_enrichments_json(enrichments_array)
           }
         )
         @jobflow.add_step(enrich_step)
@@ -325,12 +325,8 @@ module Snowplow
 
       # Returns a base64-encoded JSON containing an array of enrichment JSONs
       Contract ConfigHash => String
-      def self.build_enrichments_json(config)
-        enrichments_json_data = []
-        enrichment_files = Dir.glob(config[:enrichments] + '/*.json')
-        for filename in enrichment_files do
-          enrichments_json_data.push(JSON.parse(File.read(filename)))
-        end
+      def self.build_enrichments_json(enrichments_array)
+        enrichments_json_data = enrichments_array.map {|e| JSON.parse(e)}
         enrichments_json = {
           'schema' => 'iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0',
           'data'   => enrichments_json_data
