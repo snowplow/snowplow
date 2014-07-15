@@ -93,7 +93,9 @@ module Snowplow
 
         enrichments = options[:enrichments_directory]
 
-        if enrichments[-1] != '/'
+        if enrichments.nil?
+          return [args, config, []]
+        elsif enrichments[-1] != '/'
           enrichments += '/'
         end
 
