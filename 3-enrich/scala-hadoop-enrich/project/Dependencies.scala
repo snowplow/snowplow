@@ -37,6 +37,7 @@ object Dependencies {
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
+    val commonsCodec     = "1.5"
   }
 
   object Libraries {
@@ -51,5 +52,6 @@ object Dependencies {
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2       % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2 % "test"
+    val commonsCodec     = "commons-codec"              %  "commons-codec"             % V.commonsCodec % "test"
   }
 }

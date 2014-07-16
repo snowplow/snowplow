@@ -44,7 +44,7 @@ object Dependencies {
     val argonaut         = "6.0.3"
     val snowplowRawEvent = "0.1.0"
     val scalaUtil        = "0.1.0"
-    val refererParser    = "0.2.0"
+    val refererParser    = "0.2.1"
     val maxmindIplookups = "0.1.0"
     val json4s           = "3.2.11-SNAPSHOT"
     val igluClient       = "0.1.0"
@@ -71,7 +71,7 @@ object Dependencies {
     val argonaut         = "io.argonaut"                %% "argonaut"                  % V.argonaut
     val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val scalaUtil        = "com.snowplowanalytics"      %  "scala-util"                % V.scalaUtil
-    val refererParser    = "com.snowplowanalytics"      %  "referer-parser"            % V.refererParser
+    val refererParser    = "com.snowplowanalytics"      %% "referer-parser"            % V.refererParser
     val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-iplookups"   % V.maxmindIplookups
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"            % V.json4s
     val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s    
