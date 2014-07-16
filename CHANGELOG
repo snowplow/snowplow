@@ -19,6 +19,7 @@ Scala Hadoop Enrich: added ability to download additional MaxMind databases (#88
 Scala Common Enrich: bumped to 0.5.0
 Scala Common Enrich: bumped user-agent-utils version, thanks @pkallos! (#662)
 Scala Common Enrich: bumped referer-parser to 0.2.0 (#864)
+Scala Common Enrich: bumped httpclient to 4.3.3 (#897)
 Scala Common Enrich: bumped scala-maxmind-geoip to scala-maxmind-iplookups 0.1.0 (#882)
 Scala Common Enrich: stored etl_tstamp in new field in CanonicalOutput (#818)
 Scala Common Enrich: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#836)
