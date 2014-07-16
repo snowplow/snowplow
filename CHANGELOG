@@ -7,7 +7,8 @@ EmrEtlRunner: removed enrichment-specific parameters from config.yml.sample (#80
 EmrEtlRunner: replaced enrichment-specific arguments from EmrEtlRunner (#808)
 EmrEtlRunner: removed %3D code following Scalding upgrade (#849)
 EmrEtlRunner: fixed contract on partition_by_run (#894)
-StorageLoader: looked in eu-west-1 region for s3://snowplow-hosted-assets (#895) - TODO
+StorageLoader: bumped to 0.3.1
+StorageLoader: now looking in eu-west-1 region for s3://snowplow-hosted-assets (#895)
 Scala Hadoop Enrich: bumped to 0.6.0
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.5.0
 Scala Hadoop Enrich: bumped Scalding to 0.10.0 (#848)
