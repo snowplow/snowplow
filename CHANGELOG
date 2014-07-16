@@ -1,3 +1,9 @@
+Version 0.2.1 (2014-07-16)
+--------------------------
+Updated build process for local Maven publishing (#72)
+Bumped SBT to 0.13.2 (#73)
+Added support for Scala 2.10.4 and 2.11.1 (#75)
+
 Version 0.2.0 (2014-07-02)
 --------------------------
 Added configurable list of domains which should count as "internal" (#18)

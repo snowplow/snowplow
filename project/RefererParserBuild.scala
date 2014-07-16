@@ -31,15 +31,18 @@ object RefererParserBuild extends Build {
   lazy val project = Project("referer-parser", file("."))
     .settings(buildSettings: _*)
     .settings(
-      libraryDependencies ++= Seq(
-        Libraries.yaml,
-        Libraries.httpClient,
-        Libraries.specs2,
-        Libraries.scalaCheck,
-        Libraries.scalaUtil,
-        Libraries.junit,
-        Libraries.json,      
-        Libraries.json4sJackson
+      libraryDependencies <++= Dependencies.onVersion(
+        all = Seq(
+          Libraries.yaml,
+          Libraries.httpClient,
+          Libraries.scalaCheck,
+          Libraries.scalaUtil,
+          Libraries.junit,
+          Libraries.json,
+          Libraries.json4sJackson),
+        on29 = Seq(Libraries.specs2._29),
+        on210 = Seq(Libraries.specs2._210),
+        on211 = Seq(Libraries.specs2._211)
       )
     )
 }

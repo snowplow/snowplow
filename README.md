@@ -60,8 +60,8 @@ Then add into your project's `pom.xml`:
 ```xml
 <dependency>
     <groupId>com.snowplowanalytics</groupId>
-    <artifactId>referer-parser</artifactId>
-    <version>0.3.0</version>
+    <artifactId>referer-parser_2.11</artifactId>
+    <version>0.2.1</version>
 </dependency>
 ```
 
@@ -118,7 +118,7 @@ Add this to your SBT config:
 val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
 
 // Dependency
-val refererParser = "com.snowplowanalytics"   % "referer-parser"   % "0.3.0"
+val refererParser = "com.snowplowanalytics" %% "referer-parser" % "0.2.1"
 ```
 
 ## Contributing

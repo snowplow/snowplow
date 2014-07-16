@@ -22,9 +22,10 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    version       := "0.2.0",
+    version       := "0.2.1",
     description   := "Library for extracting marketing attribution data from referer URLs",
     scalaVersion  := "2.9.1",
+    crossScalaVersions := Seq("2.9.1", "2.10.4", "2.11.1"),
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= Dependencies.resolutionRepos
   )
@@ -32,7 +33,15 @@ object BuildSettings {
   // Publish settings
   // TODO: update with ivy credentials etc when we start using Nexus
   lazy val publishSettings = Seq[Setting[_]](
-    crossPaths := false
+    // Enables publishing to maven repo
+    publishMavenStyle := true,
+
+    publishTo <<= version { version =>
+      val basePath = "target/repo/%s".format {
+        if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
+      }
+      Some(Resolver.file("Local Maven repository", file(basePath)) transactional())
+    }
   )
 
   lazy val buildSettings = basicSettings ++ publishSettings
