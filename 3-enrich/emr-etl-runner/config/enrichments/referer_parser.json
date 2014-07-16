@@ -7,7 +7,7 @@
 		"vendor": "com.snowplowanalytics.snowplow",
 		"enabled": true,
 		"parameters": {
-				"internalDomains": []
+			"internalDomains": []
 		}
 	}
 }
