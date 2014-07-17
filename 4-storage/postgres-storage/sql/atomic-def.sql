@@ -29,10 +29,10 @@ CREATE TABLE "atomic"."events" (
 	-- Date/time
 	"event" varchar(128),
                                             -- Removed event_vendor in 0.3.0
-	"event_id" char(36) NOT NULL,           -- Changed from varchar(38) in 0.2.0
+	"event_id" char(36) NOT NULL,
 	"txn_id" integer,
 	-- Versioning
-	"name_tracker" varchar(128),            -- Added in 0.2.0
+	"name_tracker" varchar(128),
 	"v_tracker" varchar(100),
 	"v_collector" varchar(100) NOT NULL,
 	"v_etl" varchar(100) NOT NULL,
@@ -57,9 +57,9 @@ CREATE TABLE "atomic"."events" (
 	"ip_domain" varchar(100),               -- Added in 0.3.0	
 	"ip_netspeed" varchar(100),             -- Added in 0.3.0		
 	-- Page
-	"page_url" text,                        -- Added in 0.2.0
+	"page_url" text,
 	"page_title" varchar(2000),
-	"page_referrer" text,                   -- Added in 0.2.0
+	"page_referrer" text,
 	-- Page URL components
 	"page_urlscheme" varchar(16),
 	"page_urlhost" varchar(255),
@@ -85,7 +85,7 @@ CREATE TABLE "atomic"."events" (
 	"mkt_content" varchar(500),
 	"mkt_campaign" varchar(255),
 	-- Custom contexts
-	"contexts" json,                        -- Added in 0.2.0. Consider jsonb type coming soon to PG
+	"contexts" json,
 	-- Custom structured event
 	"se_category" varchar(255),
 	"se_action" varchar(255),
