@@ -110,7 +110,7 @@ object JobSpecHelpers {
     private val unmatcheable = isUnmatchable(field)
 
     def apply[S <: String](actual: Expectable[S]) = {
-      result(unmatcheable || actual.value == expected,
+      result((unmatcheable && expected == null) || actual.value == expected,
              "%s: %s".format(field, if (unmatcheable) "is unmatcheable" else "%s equals %s".format(actual.description, expected)),
              "%s: %s does not equal %s".format(field, actual.description, expected),
              actual)
