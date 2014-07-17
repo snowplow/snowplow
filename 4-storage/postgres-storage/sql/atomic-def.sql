@@ -23,12 +23,12 @@ CREATE TABLE "atomic"."events" (
 	"app_id" varchar(255),
 	"platform" varchar(255),
 	-- Date/time
-	"etl_tstamp" timestamp,
+	"etl_tstamp" timestamp,                 -- Added in 0.3.0
 	"collector_tstamp" timestamp NOT NULL,
 	"dvce_tstamp" timestamp,
 	-- Date/time
 	"event" varchar(128),
-                                            -- Removed event_vendor in 0.3.0
+	                                        -- Removed event_vendor in 0.3.0
 	"event_id" char(36) NOT NULL,
 	"txn_id" integer,
 	-- Versioning
@@ -54,8 +54,8 @@ CREATE TABLE "atomic"."events" (
 	-- IP lookups
 	"ip_isp" varchar(100),                  -- Added in 0.3.0
 	"ip_organization" varchar(100),         -- Added in 0.3.0
-	"ip_domain" varchar(100),               -- Added in 0.3.0	
-	"ip_netspeed" varchar(100),             -- Added in 0.3.0		
+	"ip_domain" varchar(100),               -- Added in 0.3.0
+	"ip_netspeed" varchar(100),             -- Added in 0.3.0
 	-- Page
 	"page_url" text,
 	"page_title" varchar(2000),
