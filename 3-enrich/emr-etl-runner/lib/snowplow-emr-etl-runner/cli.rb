@@ -35,7 +35,7 @@ module Snowplow
       #
       # Returns a Hash containing our runtime
       # arguments and our configuration.
-      Contract None => ArgsConfigTuple
+      Contract None => ArgsConfigEnrichmentsTuple
       def self.get_args_config_enrichments
         
         # Defaults
@@ -104,9 +104,7 @@ module Snowplow
         end
 
         # Add a trailing slash if necessary to make globbing work
-        if enrichments[-1] != '/'
-          enrichments += '/'
-        end
+        enrichments = Sluice::Storage::trail_slash(enrichments)
 
         enrichments_array = Dir.glob(enrichments + '*.json').map {|f| File.read(f)}
 
