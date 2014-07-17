@@ -30,7 +30,7 @@ CREATE TABLE "atomic"."events" (
 	"dvce_tstamp" timestamp,
 	-- Date/time
 	"event" varchar(128),
-                                            -- Removed event_vendor in 0.3.0
+	                                        -- Removed event_vendor in 0.3.0
 	"event_id" char(36) NOT NULL,
 	"txn_id" integer,
 	-- Versioning

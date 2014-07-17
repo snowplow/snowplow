@@ -55,4 +55,4 @@
           - com.snowplowanalytics
         :connection:
           :http:
-            :uri: http://iglucentral.coms
+            :uri: http://iglucentral.com
