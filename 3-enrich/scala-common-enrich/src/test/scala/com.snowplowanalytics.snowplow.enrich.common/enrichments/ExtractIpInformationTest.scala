@@ -34,13 +34,13 @@ import com.snowplowanalytics.maxmind.iplookups.{IpLookups, IpLocation}
 class extractIpInformationTest extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
 
   "This is a specification to test the extractIpInformation function"                                 ^
-                                                                                                   p^
+                                                                                                     p^
   "extractIpInformation should not return failure for any valid or invalid IP address"                ! e1^
   "extractIpInformation should correctly extract location data from IP addresses where possible"      ! e2^
   "extractIpInformation should correctly extract ISP data from IP addresses where possible"           ! e3^
                                                                                                     end
-
-  val config = IpLookupsEnrichment(Some(new URI("/not-used/"), "GeoIPCity.dat"), Some(new URI("/not-used/"), "GeoIPISP.dat"), None, None, None, true)
+  // When testing, localMode is set to true, so the URIs are ignored and the databases are loaded from test/resources
+  val config = IpLookupsEnrichment(Some(new URI("/ignored-in-test/"), "GeoIPCity.dat"), Some(new URI("/ignored-in-test/"), "GeoIPISP.dat"), None, None, None, true)
 
   // Impossible to make extractIpInformation throw a validation error
   def e1 =
