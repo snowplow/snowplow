@@ -21,7 +21,6 @@ module Snowplow
 
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
-      :maxmind => String,
       :enrich  => String,
       :shred   => String
       })
