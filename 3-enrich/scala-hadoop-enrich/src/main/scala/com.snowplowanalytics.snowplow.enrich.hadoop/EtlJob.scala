@@ -145,7 +145,8 @@ class EtlJob(args: Args) extends Job(args) {
     e => throw FatalEtlError(e),
     c => c).asInstanceOf[CollectorLoader[Any]]
 
-  val enrichmentRegistry = etlConfig.registry
+  // Wait until we're on the nodes to instantiate with lazy
+  lazy val enrichmentRegistry = etlConfig.registry
 
   // Only install MaxMind file(s) if enrichment is enabled
   for (ipLookupsEnrichment <- enrichmentRegistry.getIpLookupsEnrichment) {
