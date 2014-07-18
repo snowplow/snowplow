@@ -161,6 +161,7 @@ module Snowplow
           },
           { :input_format     => config[:etl][:collector_format],
             :etl_tstamp       => etl_tstamp,
+            :iglu_config      => self.class.build_iglu_config_json(config[:iglu]),
             :enrichments      => self.class.build_enrichments_json(enrichments_array)
           }
         )
@@ -201,7 +202,7 @@ module Snowplow
               :errors      => self.class.partition_by_run(csbs[:errors], run_id, config[:etl][:continue_on_unexpected_error])
             },
             {
-              :iglu_config => self.class.jsonify(config[:iglu])
+              :iglu_config => self.class.build_iglu_config_json(config[:iglu])
             }
           )
           @jobflow.add_step(shred_step)
@@ -336,7 +337,7 @@ module Snowplow
       end
 
       Contract IgluConfigHash => String
-      def self.jsonify(iglu_hash)
+      def self.build_iglu_config_json(iglu_hash)
         Base64.strict_encode64(iglu_hash.to_camelback_keys.to_json)
       end
 
