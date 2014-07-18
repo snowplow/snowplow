@@ -49,7 +49,7 @@ module Snowplow
         assets = self.class.get_assets(config[:s3][:buckets][:assets], config[:etl][:versions][:hadoop_enrich], config[:etl][:versions][:hadoop_shred])
         run_tstamp = Time.new
         run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
-        etl_tstamp = run_tstamp.to_i
+        etl_tstamp = run_tstamp.to_i.to_s
 
         # Create a job flow with your AWS credentials
         @jobflow = Elasticity::JobFlow.new(config[:aws][:access_key_id], config[:aws][:secret_access_key])
@@ -161,7 +161,7 @@ module Snowplow
           },
           { :input_format     => config[:etl][:collector_format],
             :etl_tstamp       => etl_tstamp,
-            :enrichments      => build_enrichments_json(enrichments_array)
+            :enrichments      => self.class.build_enrichments_json(enrichments_array)
           }
         )
         @jobflow.add_step(enrich_step)
@@ -324,7 +324,7 @@ module Snowplow
       end
 
       # Returns a base64-encoded JSON containing an array of enrichment JSONs
-      Contract ConfigHash => String
+      Contract ArrayOf[String] => String
       def self.build_enrichments_json(enrichments_array)
         enrichments_json_data = enrichments_array.map {|e| JSON.parse(e)}
         enrichments_json = {
@@ -332,7 +332,7 @@ module Snowplow
           'data'   => enrichments_json_data
         }
 
-        Base64.strict_encode(JSON.generate(enrichments_json))
+        Base64.strict_encode64(enrichments_json.to_json)
       end
 
       Contract IgluConfigHash => String
