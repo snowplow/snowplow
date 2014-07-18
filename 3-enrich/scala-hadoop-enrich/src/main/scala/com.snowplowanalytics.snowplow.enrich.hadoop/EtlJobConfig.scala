@@ -73,6 +73,8 @@ case class EtlJobConfig(
   outFolder: String,
   badFolder: String,
   etlTstamp: String,
+  igluConfig: String,
+  enrichments: String,
   registry: EnrichmentRegistry,
   exceptionsFolder: Option[String]
   )
@@ -106,7 +108,8 @@ object EtlJobConfig {
     val etlTstamp = args.requiredz("etl_tstamp").flatMap(t => EventEnrichments.extractTimestamp("etl_tstamp", t).leftMap(_.toProcessingMessage))
     val exceptionsFolder = args.optionalz("exceptions_folder")
     
-    val igluResolver: ValidatedNelMessage[Resolver] = args.requiredz("iglu_config") match {
+    val igluConfig = args.requiredz("iglu_config")
+    val igluResolver: ValidatedNelMessage[Resolver] = igluConfig match {
       case Failure(e) => e.toString.toProcessingMessage.failNel[Resolver]
       case Success(s) => for {
         node <- base64ToJsonNode(s)
@@ -114,16 +117,17 @@ object EtlJobConfig {
       } yield reso
     }
 
-    val enrichments: ValidatedNelMessage[JsonNode] = for {
-      str  <- (args.requiredz("enrichments").toValidationNel: ValidatedNelMessage[String])
+    val enrichments = args.requiredz("enrichments")
+    val enrichmentsNode: ValidatedNelMessage[JsonNode] = for {
+      str  <- (enrichments.toValidationNel: ValidatedNelMessage[String])
       node <-  base64ToJsonNode(str)
       } yield node
 
-    val registry: ValidatedNelMessage[EnrichmentRegistry] = (enrichments |@| igluResolver) {
+    val registry: ValidatedNelMessage[EnrichmentRegistry] = (enrichmentsNode |@| igluResolver) {
       buildEnrichmentRegistry(_, localMode)(_)
     }.flatMap(s => s)
 
-    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| etlTstamp.toValidationNel |@| registry |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_) }
+    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| etlTstamp.toValidationNel |@| igluConfig.toValidationNel |@| enrichments.toValidationNel |@| registry |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_,_,_) }
   }
 
   /**

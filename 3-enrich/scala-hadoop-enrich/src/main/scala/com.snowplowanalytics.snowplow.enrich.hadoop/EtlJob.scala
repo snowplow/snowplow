@@ -149,7 +149,7 @@ class EtlJob(args: Args) extends Job(args) {
   lazy val enrichmentRegistry = etlConfig.registry
 
   // Only install MaxMind file(s) if enrichment is enabled
-  for (ipLookupsEnrichment <- enrichmentRegistry.getIpLookupsEnrichment) {
+  for (ipLookupsEnrichment <- etlConfig.registry.getIpLookupsEnrichment) {
     for (conf <- confOption) {
       EtlJob.installIpLookupsFiles(conf, ipLookupsEnrichment)
     }
