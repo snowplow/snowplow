@@ -75,7 +75,6 @@ case class EtlJobConfig(
   etlTstamp: String,
   igluConfig: String,
   enrichments: String,
-  registry: EnrichmentRegistry,
   exceptionsFolder: Option[String]
   )
 
@@ -97,7 +96,7 @@ object EtlJobConfig {
    *         more error messages, boxed
    *         in a Scalaz Validation Nel
    */
-  def loadConfigFrom(args: Args, localMode: Boolean): ValidatedNelMessage[EtlJobConfig] = {
+  def loadConfigFrom(args: Args, localMode: Boolean): ValidatedNelMessage[Tuple2[EtlJobConfig, EnrichmentRegistry]] = {
 
     import ScalazArgs._
 
@@ -127,7 +126,35 @@ object EtlJobConfig {
       buildEnrichmentRegistry(_, localMode)(_)
     }.flatMap(s => s)
 
-    (inFolder.toValidationNel |@| inFormat.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| etlTstamp.toValidationNel |@| igluConfig.toValidationNel |@| enrichments.toValidationNel |@| registry |@| exceptionsFolder.toValidationNel) { EtlJobConfig(_,_,_,_,_,_,_,_,_) }
+    // Discard registry (and rebuild later) because it causes serialization problems
+    (inFolder.toValidationNel     |@|
+      inFormat.toValidationNel    |@|
+      outFolder.toValidationNel   |@|
+      badFolder.toValidationNel   |@|
+      etlTstamp.toValidationNel   |@|
+      igluConfig.toValidationNel  |@|
+      enrichments.toValidationNel |@|
+      registry                    |@|
+      exceptionsFolder.toValidationNel) { (ifo, ifm, ofo, bfo, tms, ic, en, reg, efo) =>
+        (EtlJobConfig(ifo, ifm, ofo, bfo, tms, ic, en, efo), reg)
+      }
+  }
+
+  def buildRegistry(enrichments: String, igluConfig: String, localMode: Boolean): EnrichmentRegistry = {
+
+    val igluResolver =
+      for {
+        node <- base64ToJsonNode(igluConfig)
+        reso <- Resolver.parse(node)
+      } yield reso
+
+    val enrichmentsNode =
+      base64ToJsonNode(enrichments)
+
+    (enrichmentsNode |@| igluResolver) {
+      buildEnrichmentRegistry(_, localMode)(_)
+    }.flatMap(s => s)
+    .valueOr(f => throw new FatalEtlError(f.toList.map(_.toString).mkString))
   }
 
   /**

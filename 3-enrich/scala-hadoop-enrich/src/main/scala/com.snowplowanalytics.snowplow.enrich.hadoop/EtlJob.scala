@@ -135,9 +135,9 @@ class EtlJob(args: Args) extends Job(args) {
 
   // Job configuration. Scalaz recommends using fold()
   // for unpicking a Validation
-  val etlConfig = EtlJobConfig.loadConfigFrom(args, !confOption.isDefined).fold(
+  val (etlConfig, registry) = EtlJobConfig.loadConfigFrom(args, !confOption.isDefined).fold(
     e => throw FatalEtlError(e.toString),
-    c => c)
+    c => (c._1, c._2))
 
   // Wait until we're on the nodes to instantiate with lazy
   // TODO: let's fix this Any typing
@@ -146,10 +146,10 @@ class EtlJob(args: Args) extends Job(args) {
     c => c).asInstanceOf[CollectorLoader[Any]]
 
   // Wait until we're on the nodes to instantiate with lazy
-  lazy val enrichmentRegistry = etlConfig.registry
+  lazy val enrichmentRegistry = EtlJobConfig.buildRegistry(etlConfig.enrichments, etlConfig.igluConfig, !confOption.isDefined)
 
   // Only install MaxMind file(s) if enrichment is enabled
-  for (ipLookupsEnrichment <- etlConfig.registry.getIpLookupsEnrichment) {
+  for (ipLookupsEnrichment <- registry.getIpLookupsEnrichment) {
     for (conf <- confOption) {
       EtlJob.installIpLookupsFiles(conf, ipLookupsEnrichment)
     }
