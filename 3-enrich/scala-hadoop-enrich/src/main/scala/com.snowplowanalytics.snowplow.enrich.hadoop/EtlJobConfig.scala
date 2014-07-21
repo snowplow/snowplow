@@ -80,22 +80,30 @@ case class EtlJobConfig(
   )
 
 /**
- * Module to handle configuration for
- * the SnowPlowEtlJob
+ * Module to handle loading of EtlJobConfig, the
+ * case class holding  configuration for the
+ * EtlJob. Underscore at the end to keep these
+ * functions from being added to the EtlJobConfig
+ * as static class methods (which would break
+ * serialization).
  */
 object EtlJobConfig_ {
 
   /**
-   * Loads the Config from the Scalding
-   * job's supplied Args.
+   * Loads the EtlJobConfig and the
+   * EnrichmentRegistry from the Scalding
+   * job's supplied Args. Returns the two
+   * instances separately because the
+   * EnrichmentRegistry cannot be serialized.
    *
    * @param args The arguments to parse
    * @param localMode Whether to use the
    *        local MaxMind data file. 
    *        Enabled for tests.
-   * @return the EtLJobConfig, or one or
-   *         more error messages, boxed
-   *         in a Scalaz Validation Nel
+   * @return a Tuple2 containg the EtLJobConfig
+   *         and the EnrichmentRegistry, or one
+   *         or more error messages, boxed in a
+   *         Scalaz Validation Nel.
    */
   def loadConfigAndRegistry(args: Args, localMode: Boolean): ValidatedNelMessage[Tuple2[EtlJobConfig, EnrichmentRegistry]] = {
 
@@ -141,6 +149,9 @@ object EtlJobConfig_ {
       }
   }
 
+  /**
+   * TODO
+   */
   def reloadRegistryOnNode(enrichments: String, igluConfig: String, localMode: Boolean): EnrichmentRegistry = {
 
     val igluResolver =
