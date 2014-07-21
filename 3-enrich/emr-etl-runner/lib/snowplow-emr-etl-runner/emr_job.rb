@@ -92,6 +92,10 @@ module Snowplow
           @jobflow.add_bootstrap_action(install_lingual_action)
         end
 
+        # For serialization debugging. TODO doesn't work yet
+        # install_ser_debug_action = Elasticity::BootstrapAction.new("s3://snowplow-hosted-assets/common/emr/cascading-ser-debug.sh")
+        # @jobflow.add_bootstrap_action(install_ser_debug_action)
+
         # Now let's add our task group if required
         tic = config[:emr][:jobflow][:task_instance_count]
         if tic > 0

@@ -13,8 +13,17 @@
 package com.snowplowanalytics.snowplow.enrich
 package hadoop
 
+// Java
+import java.io.File
+import java.io.BufferedWriter
+import java.io.FileWriter
+
 // Apache Commons Codec
 import org.apache.commons.codec.binary.Base64
+
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.DateTimeFormat
 
 // Scala
 import scala.collection.mutable.ListBuffer
@@ -26,12 +35,12 @@ import org.specs2.matcher.Matchers._
 // Scalding
 import com.twitter.scalding._
 
-// Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.DateTimeFormat
-
 // Snowplow Common Enrich
 import common.outputs.CanonicalOutput
+
+// Scalaz
+import scalaz._
+import Scalaz._
 
 /**
  * Holds helpers for running integration
@@ -94,6 +103,13 @@ object JobSpecHelpers {
   def beFieldEqualTo(expected: String, withIndex: Int) = new BeFieldEqualTo(expected, withIndex)
 
   /**
+   * A Specs2 matcher to check if a directory
+   * on disk is empty or not.
+   */
+  val beEmptyDir: Matcher[File] =
+    ((f: File) => !f.isDirectory || f.list.length > 0, "is populated directory, or not a directory")
+
+  /**
    * A Specs2 matcher to check if a CanonicalOutput
    * field is correctly set.
    *
@@ -154,6 +170,18 @@ object JobSpecHelpers {
     val numberedLines = number(lines)
 
     /**
+     * Writes the lines to the given file
+     *
+     * @param file The file to write the
+     *        lines to
+     */
+    def writeTo(file: File) = {
+      val writer = new BufferedWriter(new FileWriter(file))
+      for (line <- lines) writer.write(line)
+      writer.close()
+    }
+
+    /**
      * Numbers the lines in the Scalding format.
      * Converts "My line" to ("0" -> "My line")
      *
@@ -196,12 +224,9 @@ object JobSpecHelpers {
       })
   }
 
-  // Standard JobSpec definition used by all integration tests
-  val EtlJobSpec: (String, String, Boolean, List[String]) => JobTest = (collector, anonOctets, anonOctetsEnabled, lookups) => {
-
+  def getEnrichments(collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String]): String = {
     val encoder = new Base64(true) // true means "url safe"
-
-    val enrichments = new String(encoder.encode(
+    new String(encoder.encode(
        """|{
             |"schema": "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0",
             |"data": [
@@ -240,9 +265,11 @@ object JobSpecHelpers {
               |}              
             |]
           |}""".format(anonOctetsEnabled, anonOctets, lookups.map(getLookupJson(_)).mkString(",\n")).stripMargin.replaceAll("[\n\r]","").getBytes
-      )
-    )
+      ))
+  }
 
+  // Standard JobSpec definition used by all integration tests
+  val EtlJobSpec: (String, String, Boolean, List[String]) => JobTest = (collector, anonOctets, anonOctetsEnabled, lookups) =>
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob").
       arg("input_folder", "inputFolder").
       arg("input_format", collector).
@@ -250,6 +277,56 @@ object JobSpecHelpers {
       arg("bad_rows_folder", "badFolder").
       arg("etl_tstamp", "1000000000000").      
       arg("iglu_config", IgluConfig).
-      arg("enrichments", enrichments)
+      arg("enrichments", getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups))
+
+  case class Sinks(
+    val output:     File,
+    val badRows:    File,
+    val exceptions: File) {
+
+    def deleteAll() {
+      for (f <- List(exceptions, badRows, output)) {
+        f.delete()
+      }
     }
+  }
+
+  /**
+   * Run the ShredJob using the Scalding Tool.
+   *
+   * @param lines The input lines to shred
+   * @return a Tuple3 containing open File
+   *         objects for the output, bad rows
+   *         and exceptions temporary directories.
+   */
+  def runJobInTool(lines: Lines, collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String]): Sinks = {
+
+    def mkTmpDir(tag: String, createParents: Boolean = false, containing: Option[Lines] = None): File = {
+      val f = File.createTempFile(s"scala-hadoop-enrich-${tag}-", "")
+      if (createParents) f.mkdirs() else f.mkdir()
+      containing.map(_.writeTo(f))
+      f
+    }
+
+    val input      = mkTmpDir("input", createParents = true, containing = lines.some)
+    val output     = mkTmpDir("output")
+    val badRows    = mkTmpDir("bad-rows")
+    val exceptions = mkTmpDir("exceptions")
+
+    val args = Array[String]("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob", "--local",
+      "--input_folder",      input.getAbsolutePath,
+      "--input_format",      collector,
+      "--output_folder",     output.getAbsolutePath,
+      "--bad_rows_folder",   badRows.getAbsolutePath,
+      "--exceptions_folder", exceptions.getAbsolutePath,
+      "--etl_tstamp",        "1000000000000",
+      "--iglu_config",       IgluConfig,
+      "--enrichments",       getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups))
+
+    // Execute
+    Tool.main(args)
+    input.delete()
+
+    Sinks(output, badRows, exceptions)
+  }
 }

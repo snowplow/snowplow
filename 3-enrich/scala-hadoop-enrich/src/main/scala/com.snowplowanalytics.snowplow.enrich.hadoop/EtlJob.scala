@@ -135,7 +135,7 @@ class EtlJob(args: Args) extends Job(args) {
 
   // Job configuration. Scalaz recommends using fold()
   // for unpicking a Validation
-  val (etlConfig, registry) = EtlJobConfig_.loadConfigAndRegistry(args, !confOption.isDefined).fold(
+  val (etlConfig, _) = EtlJobConfig_.loadConfigAndRegistry(args, !confOption.isDefined).fold(
     e => throw FatalEtlError(e.toString),
     c => (c._1, c._2))
 
@@ -149,11 +149,11 @@ class EtlJob(args: Args) extends Job(args) {
   lazy val enrichmentRegistry = EtlJobConfig_.reloadRegistryOnNode(etlConfig.enrichments, etlConfig.igluConfig, etlConfig.localMode)
 
   // Only install MaxMind file(s) if enrichment is enabled
-  for (ipLookupsEnrichment <- registry.getIpLookupsEnrichment) {
+  /*for (ipLookupsEnrichment <- registry.getIpLookupsEnrichment) {
     for (conf <- confOption) {
       EtlJob.installIpLookupsFiles(conf, ipLookupsEnrichment)
     }
-  }
+  }*/
 
   // Aliases for our job
   val input = MultipleTextLineFiles(etlConfig.inFolder).read
