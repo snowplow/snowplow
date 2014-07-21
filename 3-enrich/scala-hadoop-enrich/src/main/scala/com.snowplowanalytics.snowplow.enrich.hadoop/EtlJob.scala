@@ -135,7 +135,7 @@ class EtlJob(args: Args) extends Job(args) {
 
   // Job configuration. Scalaz recommends using fold()
   // for unpicking a Validation
-  val (etlConfig, registry) = EtlJobConfig.loadConfigFrom(args, !confOption.isDefined).fold(
+  val (etlConfig, registry) = EtlJobConfig_.loadConfigAndRegistry(args, !confOption.isDefined).fold(
     e => throw FatalEtlError(e.toString),
     c => (c._1, c._2))
 
@@ -146,7 +146,7 @@ class EtlJob(args: Args) extends Job(args) {
     c => c).asInstanceOf[CollectorLoader[Any]]
 
   // Wait until we're on the nodes to instantiate with lazy
-  lazy val enrichmentRegistry = EtlJobConfig.buildRegistry(etlConfig.enrichments, etlConfig.igluConfig, !confOption.isDefined)
+  lazy val enrichmentRegistry = EtlJobConfig_.reloadRegistryOnNode(etlConfig.enrichments, etlConfig.igluConfig, etlConfig.localMode)
 
   // Only install MaxMind file(s) if enrichment is enabled
   for (ipLookupsEnrichment <- registry.getIpLookupsEnrichment) {

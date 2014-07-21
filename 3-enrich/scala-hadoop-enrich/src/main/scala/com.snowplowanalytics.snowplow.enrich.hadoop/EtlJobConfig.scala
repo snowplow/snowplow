@@ -75,6 +75,7 @@ case class EtlJobConfig(
   etlTstamp: String,
   igluConfig: String,
   enrichments: String,
+  localMode: Boolean,
   exceptionsFolder: Option[String]
   )
 
@@ -82,7 +83,7 @@ case class EtlJobConfig(
  * Module to handle configuration for
  * the SnowPlowEtlJob
  */
-object EtlJobConfig {
+object EtlJobConfig_ {
 
   /**
    * Loads the Config from the Scalding
@@ -96,7 +97,7 @@ object EtlJobConfig {
    *         more error messages, boxed
    *         in a Scalaz Validation Nel
    */
-  def loadConfigFrom(args: Args, localMode: Boolean): ValidatedNelMessage[Tuple2[EtlJobConfig, EnrichmentRegistry]] = {
+  def loadConfigAndRegistry(args: Args, localMode: Boolean): ValidatedNelMessage[Tuple2[EtlJobConfig, EnrichmentRegistry]] = {
 
     import ScalazArgs._
 
@@ -127,20 +128,20 @@ object EtlJobConfig {
     }.flatMap(s => s)
 
     // Discard registry (and rebuild later) because it causes serialization problems
-    (inFolder.toValidationNel     |@|
-      inFormat.toValidationNel    |@|
-      outFolder.toValidationNel   |@|
-      badFolder.toValidationNel   |@|
-      etlTstamp.toValidationNel   |@|
-      igluConfig.toValidationNel  |@|
-      enrichments.toValidationNel |@|
-      registry                    |@|
-      exceptionsFolder.toValidationNel) { (ifo, ifm, ofo, bfo, tms, ic, en, reg, efo) =>
-        (EtlJobConfig(ifo, ifm, ofo, bfo, tms, ic, en, efo), reg)
+    (inFolder.toValidationNel          |@|
+      inFormat.toValidationNel         |@|
+      outFolder.toValidationNel        |@|
+      badFolder.toValidationNel        |@|
+      etlTstamp.toValidationNel        |@|
+      igluConfig.toValidationNel       |@|
+      enrichments.toValidationNel      |@|
+      exceptionsFolder.toValidationNel |@|
+      registry) { (ifo, ifm, ofo, bfo, tms, ic, en, efo, reg) =>
+        (EtlJobConfig(ifo, ifm, ofo, bfo, tms, ic, en, localMode, efo), reg)
       }
   }
 
-  def buildRegistry(enrichments: String, igluConfig: String, localMode: Boolean): EnrichmentRegistry = {
+  def reloadRegistryOnNode(enrichments: String, igluConfig: String, localMode: Boolean): EnrichmentRegistry = {
 
     val igluResolver =
       for {
