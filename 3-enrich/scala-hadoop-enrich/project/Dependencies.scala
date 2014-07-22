@@ -28,9 +28,9 @@ object Dependencies {
 
   object V {
     // Java
-    val hadoop           = "0.20.2"
+    val hadoop           = "1.2.1"
     // Scala
-    val scalding         = "0.10.0"
+    val scalding         = "0.11.1"
     val scalaz7          = "7.0.0"
     val snowplowRawEvent = "0.1.0"
     val commonEnrich     = "0.5.0"
