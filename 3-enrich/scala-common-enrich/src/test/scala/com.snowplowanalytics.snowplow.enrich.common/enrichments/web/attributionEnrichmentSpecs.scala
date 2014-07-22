@@ -36,7 +36,7 @@ import com.snowplowanalytics.refererparser.scala.{Medium, Referer}
  * Tests the extractMarketingFields function.
  * Uses DataTables.
  */
-class ExtractMarketingFieldsTest extends Specification with DataTables with ValidationMatchers {
+class ExtractMarketingFieldsSpec extends Specification with DataTables with ValidationMatchers {
 
   val Encoding = "UTF-8"
 
@@ -73,7 +73,7 @@ class ExtractMarketingFieldsTest extends Specification with DataTables with Vali
  *
  * https://github.com/snowplow/referer-parser/tree/master/java-scala/src/test/scala/com/snowplowanalytics/refererparser/scala
  */
-class ExtractRefererDetailsTest extends Specification with DataTables { def is =
+class ExtractRefererDetailsSpec extends Specification with DataTables { def is =
 
   "This is a specification to test extractRefererDetails"              ^
                                                                       p^

@@ -38,7 +38,7 @@ import org.specs2.scalaz.ValidationMatchers
 /**
  * Tests enrichmentConfigs
  */
-class EnrichmentConfigsTest extends Specification with ValidationMatchers {
+class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
 
   "Parsing a valid anon_ip enrichment JSON" should {
     "successfully construct an AnonIpEnrichmentConfig case class" in {

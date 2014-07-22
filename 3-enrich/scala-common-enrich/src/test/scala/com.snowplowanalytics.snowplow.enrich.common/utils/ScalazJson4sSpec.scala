@@ -30,7 +30,7 @@ import org.specs2.scalaz.ValidationMatchers
 /**
  * Tests ScalazJson4sUtils
  */
-class JsonExtractionTest extends Specification with ValidationMatchers {
+class JsonExtractionSpec extends Specification with ValidationMatchers {
 
   val testJson = parse("""{
     "outer": "1",

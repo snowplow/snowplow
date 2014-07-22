@@ -27,7 +27,7 @@ import org.specs2.scalaz.ValidationMatchers
 import org.scalacheck._
 import org.scalacheck.Arbitrary._
 
-class StringToUriTest extends Specification with DataTables {
+class StringToUriSpec extends Specification with DataTables {
 
   def is =
     "Parsing Strings into URIs should work" ! e1
@@ -46,7 +46,7 @@ class StringToUriTest extends Specification with DataTables {
     }
 }
 
-class ExplodeUriTest extends Specification with DataTables {
+class ExplodeUriSpec extends Specification with DataTables {
 
   def is =
     "Exploding URIs into their component pieces with explodeUri should work" ! e1
@@ -71,7 +71,7 @@ class ExplodeUriTest extends Specification with DataTables {
     }
 }
 
-class FixTabsNewlinesTest extends Specification with DataTables {
+class FixTabsNewlinesSpec extends Specification with DataTables {
 
   val SafeTab = "    "
 
@@ -97,7 +97,7 @@ class FixTabsNewlinesTest extends Specification with DataTables {
 
 // TODO: note that we have some functionality tweaks planned.
 // See comments on ConversionUtils.decodeBase64Url for details.
-class DecodeBase64UrlTest extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
+class DecodeBase64UrlSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
 
   "This is a specification to test the decodeBase64Url function" ^
                                                                                         p^
@@ -139,7 +139,7 @@ class DecodeBase64UrlTest extends Specification with DataTables with ValidationM
   }
 }
 
-class StringToDoublelikeTest extends Specification with DataTables with ValidationMatchers { def is =
+class StringToDoublelikeSpec extends Specification with DataTables with ValidationMatchers { def is =
 
   "This is a specification to test the stringToDoublelike function"                                       ^
                                                                                                          p^
@@ -187,7 +187,7 @@ class StringToDoublelikeTest extends Specification with DataTables with Validati
 
 }
 
-class StringToBooleanlikeJByte extends Specification with DataTables with ValidationMatchers { def is =
+class StringToBooleanlikeJByteSpec extends Specification with DataTables with ValidationMatchers { def is =
 
   "This is a specification to test the stringToBooleanlikeJByte function"                                    ^
                                                                                                             p^

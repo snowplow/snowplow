@@ -29,7 +29,7 @@ import org.specs2.Specification
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class ValidateAndReformatJsonTest extends Specification with DataTables with ValidationMatchers { def is =
+class ValidateAndReformatJsonSpec extends Specification with DataTables with ValidationMatchers { def is =
 
   "This is a specification to test the validateAndReformatJson function"    ^
                                                                            p^
@@ -84,7 +84,7 @@ class ValidateAndReformatJsonTest extends Specification with DataTables with Val
 
 }
 
-class JsonAsStringTest extends Specification with DataTables with ValidationMatchers { def is =
+class JsonAsStringSpec extends Specification with DataTables with ValidationMatchers { def is =
 
   "This is a specification to test the asString extraction function for JSON Strings"                     ^
                                                                                                          p^
@@ -116,7 +116,7 @@ class JsonAsStringTest extends Specification with DataTables with ValidationMatc
     }
 }
 
-class JsonAsJByteTest extends Specification with DataTables with ValidationMatchers { def is =
+class JsonAsJByteSpec extends Specification with DataTables with ValidationMatchers { def is =
 
   "This is a specification to test the asJByte extraction function for JSON Booleans"                     ^
                                                                                                          p^
@@ -147,7 +147,7 @@ class JsonAsJByteTest extends Specification with DataTables with ValidationMatch
     }
 }
 
-class JsonAsJDoubleTest extends Specification with DataTables with ValidationMatchers { def is =
+class JsonAsJDoubleSpec extends Specification with DataTables with ValidationMatchers { def is =
 
   "This is a specification to test the asJDouble extraction function for JSON Numbers"                     ^
                                                                                                          p^
@@ -180,7 +180,7 @@ class JsonAsJDoubleTest extends Specification with DataTables with ValidationMat
     }
 }
 
-class JsonAsJIntegerTest extends Specification with DataTables with ValidationMatchers { def is =
+class JsonAsJIntegerSpec extends Specification with DataTables with ValidationMatchers { def is =
 
   "This is a specification to test the asJInteger extraction function for JSON Numbers"                   ^
                                                                                                          p^

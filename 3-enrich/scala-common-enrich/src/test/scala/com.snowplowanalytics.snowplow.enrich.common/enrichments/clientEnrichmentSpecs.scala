@@ -25,7 +25,7 @@ import Scalaz._
 /**
  * Tests the extractViewDimensions function
  */
-class ExtractViewDimensionsTest extends Specification with DataTables {
+class ExtractViewDimensionsSpec extends Specification with DataTables {
 
   val FieldName = "res"
   def err: (String) => String = input => "Field [%s]: [%s] does not contain valid view dimensions".format(FieldName, input)
@@ -50,7 +50,7 @@ class ExtractViewDimensionsTest extends Specification with DataTables {
     }
 }
 
-class UserAgentParseTest extends org.specs2.mutable.Specification with ValidationMatchers with DataTables {
+class UserAgentParseSpec extends org.specs2.mutable.Specification with ValidationMatchers with DataTables {
   import ClientEnrichments._
 
   "useragent parser" should {
