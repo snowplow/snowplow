@@ -52,8 +52,6 @@ object IpLookupsEnrichment extends ParseableEnrichment {
 
   val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ip_lookups", "jsonschema", "1-0-0")
 
-  private val lookupNames = List("geo", "isp", "organization", "domain", "netspeed")
-
   /**
    * Creates an IpLookupsEnrichment instance from a JValue.
    * 
@@ -68,17 +66,16 @@ object IpLookupsEnrichment extends ParseableEnrichment {
 
     isParseable(config, schemaKey).flatMap( conf => {
 
-      val argsList: List[Option[ValidatedNelMessage[(URI, String)]]] = lookupNames.map(getArgumentFromName(conf,_))
-
-      // Switch the order of the ValidatedNelMessage and the Option
-      val switchedArgsList: List[ValidatedNelMessage[Option[(URI, String)]]] = argsList.map(arg => {
+      def db(name: String): ValidatedNelMessage[Option[(String, URI, String)]] = {
+        val arg: Option[ValidatedNelMessage[(String, URI, String)]] = getArgumentFromName(conf, name)
         arg match {
           case None => None.success.toValidationNel
           case Some(Failure(f)) => f.fail
           case Some(Success(s)) => Some(s).success.toValidationNel
         }
-      })
-      (switchedArgsList(0) |@| switchedArgsList(1) |@| switchedArgsList(2) |@| switchedArgsList(3) |@| switchedArgsList(4)) { IpLookupsEnrichment(_,_,_,_,_,localMode) }
+      }
+
+      (db("geo") |@| db("isp") |@| db("organization") |@| db("domain") |@| db("netspeed")) { IpLookupsEnrichment(_,_,_,_,_,localMode) }
     })
   }
 
@@ -93,7 +90,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
    *         Some(Failure) if its URI is invalid,
    *         Some(Success) if it is found
    */
-  private def getArgumentFromName(conf: JValue, name: String): Option[ValidatedNelMessage[(URI, String)]] = {
+  private def getArgumentFromName(conf: JValue, name: String): Option[ValidatedNelMessage[(String, URI, String)]] = {
     if (ScalazJson4sUtils.fieldExists(conf, "parameters", name)) {
       val uri = ScalazJson4sUtils.extract[String](conf, "parameters", name, "uri")
       val db  = ScalazJson4sUtils.extract[String](conf, "parameters", name, "database")
@@ -101,7 +98,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
       Some((uri.toValidationNel |@| db.toValidationNel) { (uri, db) =>
         for {
           u <- (getMaxmindUri(uri, db).toValidationNel: ValidatedNelMessage[URI])
-        } yield (u, db)
+        } yield (name, u, db)
 
       }.flatMap(x => x))
 
@@ -146,42 +143,49 @@ object IpLookupsEnrichment extends ParseableEnrichment {
  *        MaxMind data file. Enabled for tests. 
  */
 case class IpLookupsEnrichment(
-  geoTuple: Option[(URI, String)],
-  ispTuple: Option[(URI, String)],
-  orgTuple: Option[(URI, String)],
-  domainTuple: Option[(URI, String)],
-  netspeedTuple: Option[(URI, String)],
+  geoTuple: Option[(String, URI, String)],
+  ispTuple: Option[(String, URI, String)],
+  orgTuple: Option[(String, URI, String)],
+  domainTuple: Option[(String, URI, String)],
+  netspeedTuple: Option[(String, URI, String)],
   localMode: Boolean
   ) extends Enrichment {
 
   val version = new DefaultArtifactVersion("0.1.0")
 
-  val lookupMap: Map[String, (URI, String)] = Map("geo" -> geoTuple, "isp" -> ispTuple, "organization" -> orgTuple, "domain" -> domainTuple, "netspeed" -> netspeedTuple)
-                    .collect{case (key, Some(tuple)) => (key, tuple)}
+  type DbFilename = String
+  type FinalPath = String
+  type DbEntry = Option[(Option[URI], FinalPath)]
 
-  private def getCachePath(name: String): Option[String] = if (!localMode) ("./ip_" + name).some else None
+  // Construct a Tuple5 of all the IP Lookup databases
+  private val dbs: Tuple5[DbEntry, DbEntry, DbEntry, DbEntry, DbEntry] = {
 
-  // Checked in Hadoop Enrich to decide whether to copy to
-  // the Hadoop dist cache or not
-  val cachePathMap = lookupMap.map(kv => (kv._1, getCachePath(kv._1)))
-
-  lazy private val lookupPaths = IpLookupsEnrichment.lookupNames.map(lookupName => {
-    if (lookupMap.contains(lookupName)) {
-
-      lazy val maxmindResourcePath = 
-        getClass.getResource(lookupMap(lookupName)._2).toURI.getPath
-
-      // Hopefully the database has been copied to our cache path by Hadoop Enrich 
-      val path = cachePathMap(lookupName) match {
-        case None => Some(maxmindResourcePath)
-        case Some(s) => Some(s)
+    def db(dbPath: Option[(String, URI, DbFilename)]): DbEntry = dbPath.map { case (name, uri, file) =>
+      if (localMode) {
+        (None, getClass.getResource(file).toURI.getPath)
+      } else {
+        (Some(uri), "./ip_")
       }
-      path
     }
-    else None
-  })
 
-  lazy private val ipLookups = IpLookups(lookupPaths(0), lookupPaths(1), lookupPaths(2), lookupPaths(3), lookupPaths(4), memCache = true, lruCache = 20000)
+    (db(geoTuple),
+     db(ispTuple),
+     db(orgTuple),
+     db(domainTuple),
+     db(netspeedTuple)
+    )
+  }
+
+  // Collect the cache paths to install
+  val dbsToCache: List[(URI, FinalPath)] =
+    (dbs._1 ++ dbs._2 ++ dbs._3 ++ dbs._4 ++ dbs._5).collect {
+      case (Some(uri), finalPath) => (uri, finalPath)
+    }.toList
+
+  private val ipLookups = {
+    def path(db: DbEntry): Option[FinalPath] = db.map(_._2)
+    IpLookups(path(dbs._1), path(dbs._2), path(dbs._3), path(dbs._4), path(dbs._5), memCache = true, lruCache = 20000)
+  }
 
   /**
    * Extract the geo-location using the

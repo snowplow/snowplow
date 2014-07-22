@@ -40,7 +40,7 @@ class extractIpInformationTest extends Specification with DataTables with Valida
   "extractIpInformation should correctly extract ISP data from IP addresses where possible"           ! e3^
                                                                                                     end
   // When testing, localMode is set to true, so the URIs are ignored and the databases are loaded from test/resources
-  val config = IpLookupsEnrichment(Some(new URI("/ignored-in-test/"), "GeoIPCity.dat"), Some(new URI("/ignored-in-test/"), "GeoIPISP.dat"), None, None, None, true)
+  val config = IpLookupsEnrichment(Some("geo", new URI("/ignored-in-test/"), "GeoIPCity.dat"), Some("isp", new URI("/ignored-in-test/"), "GeoIPISP.dat"), None, None, None, true)
 
   // Impossible to make extractIpInformation throw a validation error
   def e1 =
