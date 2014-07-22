@@ -152,7 +152,7 @@ case class IpLookupsEnrichment(
       if (localMode) {
         (None, getClass.getResource(file).toURI.getPath)
       } else {
-        (Some(uri), "./ip_")
+        (Some(uri), "./ip_" + name)
       }
     }
 
