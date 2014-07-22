@@ -111,7 +111,6 @@ object IpLookupsEnrichment extends ParseableEnrichment {
       case Some(u) => u.success
       case None => "URI to MaxMind file must be provided".fail
       }).toProcessingMessage
-
 }
 
 /**
@@ -144,7 +143,7 @@ case class IpLookupsEnrichment(
 
   val version = new DefaultArtifactVersion("0.1.0")
 
-  type DbEntry = Option[(Option[URI], FinalPath)]
+  private type DbEntry = Option[(Option[URI], FinalPath)]
 
   // Construct a Tuple5 of all the IP Lookup databases
   private val dbs: Tuple5[DbEntry, DbEntry, DbEntry, DbEntry, DbEntry] = {
@@ -160,7 +159,7 @@ case class IpLookupsEnrichment(
     (db(geoTuple), db(ispTuple), db(orgTuple), db(domainTuple), db(netspeedTuple))
   }
 
-  type FinalPath = String
+  private type FinalPath = String
 
   // Collect the cache paths to install
   val dbsToCache: List[(URI, FinalPath)] =

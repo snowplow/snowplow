@@ -21,7 +21,7 @@ import org.specs2.matcher.DataTables
 /**
  * Tests the anonymzeIp function
  */
-class AnonymizeIpTest extends Specification with DataTables {
+class AnonIpEnrichmentTest extends Specification with DataTables {
 
   def is =
     "Anonymizing 0-4 octets across a variety of IP addresses should work" ! e1

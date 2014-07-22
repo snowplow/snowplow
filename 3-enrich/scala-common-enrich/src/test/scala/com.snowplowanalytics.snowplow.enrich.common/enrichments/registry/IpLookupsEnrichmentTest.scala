@@ -31,7 +31,7 @@ import Scalaz._
 // Scala MaxMind GeoIP
 import com.snowplowanalytics.maxmind.iplookups.{IpLookups, IpLocation}
 
-class extractIpInformationTest extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
+class IpLookupsEnrichmentTest extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
 
   "This is a specification to test the extractIpInformation function"                                 ^
                                                                                                      p^
