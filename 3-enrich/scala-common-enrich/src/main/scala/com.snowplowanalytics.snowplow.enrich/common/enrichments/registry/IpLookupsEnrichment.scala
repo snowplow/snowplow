@@ -65,16 +65,7 @@ object IpLookupsEnrichment extends ParseableEnrichment {
   def parse(config: JValue, schemaKey: SchemaKey, localMode: Boolean): ValidatedNelMessage[IpLookupsEnrichment] = {
 
     isParseable(config, schemaKey).flatMap( conf => {
-
-      def db(name: String): ValidatedNelMessage[Option[(String, URI, String)]] = {
-        val arg: Option[ValidatedNelMessage[(String, URI, String)]] = getArgumentFromName(conf, name)
-        arg match {
-          case None => None.success.toValidationNel
-          case Some(Failure(f)) => f.fail
-          case Some(Success(s)) => Some(s).success.toValidationNel
-        }
-      }
-
+      def db(name: String) = getArgumentFromName(conf, name).sequenceU
       (db("geo") |@| db("isp") |@| db("organization") |@| db("domain") |@| db("netspeed")) { IpLookupsEnrichment(_,_,_,_,_,localMode) }
     })
   }
@@ -153,14 +144,12 @@ case class IpLookupsEnrichment(
 
   val version = new DefaultArtifactVersion("0.1.0")
 
-  type DbFilename = String
-  type FinalPath = String
   type DbEntry = Option[(Option[URI], FinalPath)]
 
   // Construct a Tuple5 of all the IP Lookup databases
   private val dbs: Tuple5[DbEntry, DbEntry, DbEntry, DbEntry, DbEntry] = {
 
-    def db(dbPath: Option[(String, URI, DbFilename)]): DbEntry = dbPath.map { case (name, uri, file) =>
+    def db(dbPath: Option[(String, URI, String)]): DbEntry = dbPath.map { case (name, uri, file) =>
       if (localMode) {
         (None, getClass.getResource(file).toURI.getPath)
       } else {
@@ -168,13 +157,10 @@ case class IpLookupsEnrichment(
       }
     }
 
-    (db(geoTuple),
-     db(ispTuple),
-     db(orgTuple),
-     db(domainTuple),
-     db(netspeedTuple)
-    )
+    (db(geoTuple), db(ispTuple), db(orgTuple), db(domainTuple), db(netspeedTuple))
   }
+
+  type FinalPath = String
 
   // Collect the cache paths to install
   val dbsToCache: List[(URI, FinalPath)] =
