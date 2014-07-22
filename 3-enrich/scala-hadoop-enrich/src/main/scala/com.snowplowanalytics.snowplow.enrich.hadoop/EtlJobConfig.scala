@@ -87,7 +87,7 @@ case class EtlJobConfig(
  * as static class methods (which would break
  * serialization).
  */
-object EtlJobConfig_ {
+object EtlJobConfig {
 
   /**
    * Loads the EtlJobConfig and the
@@ -105,7 +105,7 @@ object EtlJobConfig_ {
    *         or more error messages, boxed in a
    *         Scalaz Validation Nel.
    */
-  def loadConfigAndRegistry(args: Args, localMode: Boolean): ValidatedNelMessage[Tuple2[EtlJobConfig, EnrichmentRegistry]] = {
+  def loadConfigAndFilesToCache(args: Args, localMode: Boolean): ValidatedNelMessage[Tuple2[EtlJobConfig, List[(URI, String)]]] = {
 
     import ScalazArgs._
 
@@ -135,6 +135,15 @@ object EtlJobConfig_ {
       buildEnrichmentRegistry(_, localMode)(_)
     }.flatMap(s => s)
 
+    val filesToCache = registry match {
+      case Success(reg) =>
+        reg.getIpLookupsEnrichment match {
+          case Some(ipLookups) => ipLookups.dbsToCache
+          case None => Nil
+        }
+      case Failure(f) => Nil
+    }
+
     // Discard registry (and rebuild later) because it causes serialization problems
     (inFolder.toValidationNel          |@|
       inFormat.toValidationNel         |@|
@@ -144,13 +153,22 @@ object EtlJobConfig_ {
       igluConfig.toValidationNel       |@|
       enrichments.toValidationNel      |@|
       exceptionsFolder.toValidationNel |@|
-      registry) { (ifo, ifm, ofo, bfo, tms, ic, en, efo, reg) =>
-        (EtlJobConfig(ifo, ifm, ofo, bfo, tms, ic, en, localMode, efo), reg)
+      registry) { (ifo, ifm, ofo, bfo, tms, ic, en, efo, _) =>
+        (EtlJobConfig(ifo, ifm, ofo, bfo, tms, ic, en, localMode, efo), filesToCache)
       }
   }
 
   /**
-   * TODO
+   * Reload the registry once we are on the nodes.
+   * This avoid Kyro serialization of the registry,
+   * which would fail.
+   *
+   * @param enrichments The JSON array of enrichment
+   *        configurations
+   * @param igluConfig The JSON specifying Iglu repos
+   * @param localMode Whether we are running in local
+   *        mode (i.e. not on a Hadoop cluster)
+   * @return the instantiated EnrichmentRegistry
    */
   def reloadRegistryOnNode(enrichments: String, igluConfig: String, localMode: Boolean): EnrichmentRegistry = {
 
@@ -166,7 +184,7 @@ object EtlJobConfig_ {
     (enrichmentsNode |@| igluResolver) {
       buildEnrichmentRegistry(_, localMode)(_)
     }.flatMap(s => s)
-    .valueOr(f => throw new FatalEtlError(f.toList.map(_.toString).mkString))
+    .valueOr(e => throw new FatalEtlError(e.toString))
   }
 
   /**

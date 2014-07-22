@@ -13,6 +13,9 @@
 package com.snowplowanalytics.snowplow.enrich
 package hadoop
 
+// Java
+import java.net.URI
+
 // Hadoop
 import org.apache.hadoop.conf.Configuration
 
@@ -70,26 +73,18 @@ object EtlJob {
   }
 
   /**
-   * A helper to source the MaxMind data file(s) we 
-   * use for IP location -> geo-location lookups
-   *
-   * How we source each MaxMind data file depends
-   * on whether we are running locally or on HDFS:
-   *
-   * 1. On HDFS - source the file at `hdfsPath`,
-   *    add it to Hadoop's distributed cache and
-   *    return the symlink
-   * 2. On local (test) - find the copy of the
-   *    file on our resource path (downloaded for
-   *    us by SBT) and return that path
+   * A helper to install files in the distributed
+   * cache on HDFS.
    *
    * @param conf Our current job Configuration
-   * @param ipLookupsEnrichment The configured IpLookupsEnrichment
+   * @param filesToCache The files to install in
+   *        the cache, a list of the URI to the
+   *        file plus where it should be installed.
    */
-  def installIpLookupsFiles(conf: Configuration, ipLookupsEnrichment: IpLookupsEnrichment) {
-    for (kv <- ipLookupsEnrichment.cachePathMap; cachePath <- kv._2) { // We have a distributed cache to install to
-      val hdfsPath = FileUtils.sourceFile(conf, ipLookupsEnrichment.lookupMap(kv._1)._1).valueOr(e => throw FatalEtlError(e.toString))
-      FileUtils.addToDistCache(conf, hdfsPath, cachePath)
+  def installFilesInCache(conf: Configuration, filesToCache: List[(URI, String)]) {
+    for (file <- filesToCache) {
+      val hdfsPath = FileUtils.sourceFile(conf, file._1).valueOr(e => throw FatalEtlError(e.toString))
+      FileUtils.addToDistCache(conf, hdfsPath, file._2)
     }
   }
 
@@ -106,6 +101,9 @@ object EtlJob {
       case _ => None
     }
   }
+
+  // This should really be in Scalding
+  def isLocalMode(implicit mode: Mode) = !getJobConf.isDefined
 
   /**
    * Projects our Failures into a Some; Successes
@@ -125,17 +123,18 @@ object EtlJob {
 }
 
 /**
- * The SnowPlow ETL job, written in Scalding
+ * The Snowplow ETL job, written in Scalding
  * (the Scala DSL on top of Cascading).
+ *
+ * Note that EtlJob has to be serializable by
+ * Kyro - so be super careful what you add as
+ * fields.
  */ 
 class EtlJob(args: Args) extends Job(args) {
 
-  // Very first thing we do is grab the Hadoop conf
-  val confOption: Option[Configuration] = EtlJob.getJobConf
-
   // Job configuration. Scalaz recommends using fold()
   // for unpicking a Validation
-  val (etlConfig, _) = EtlJobConfig_.loadConfigAndRegistry(args, !confOption.isDefined).fold(
+  val (etlConfig, filesToCache) = EtlJobConfig.loadConfigAndFilesToCache(args, EtlJob.isLocalMode).fold(
     e => throw FatalEtlError(e.toString),
     c => (c._1, c._2))
 
@@ -146,14 +145,12 @@ class EtlJob(args: Args) extends Job(args) {
     c => c).asInstanceOf[CollectorLoader[Any]]
 
   // Wait until we're on the nodes to instantiate with lazy
-  lazy val enrichmentRegistry = EtlJobConfig_.reloadRegistryOnNode(etlConfig.enrichments, etlConfig.igluConfig, etlConfig.localMode)
+  lazy val enrichmentRegistry = EtlJobConfig.reloadRegistryOnNode(etlConfig.enrichments, etlConfig.igluConfig, etlConfig.localMode)
 
-  // Only install MaxMind file(s) if enrichment is enabled
-  /*for (ipLookupsEnrichment <- registry.getIpLookupsEnrichment) {
-    for (conf <- confOption) {
-      EtlJob.installIpLookupsFiles(conf, ipLookupsEnrichment)
-    }
-  }*/
+  // Install MaxMind file(s) if we have them
+  for (conf <- EtlJob.getJobConf) {
+    EtlJob.installFilesInCache(conf, filesToCache)
+  }
 
   // Aliases for our job
   val input = MultipleTextLineFiles(etlConfig.inFolder).read
