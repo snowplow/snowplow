@@ -166,7 +166,9 @@ case class IpLookupsEnrichment(
       case (Some(uri), finalPath) => (uri, finalPath)
     }.toList
 
-  private val ipLookups = {
+  // Must be lazy as we don't have the files copied to
+  // the Dist Cache on HDFS yet
+  private lazy val ipLookups = {
     def path(db: DbEntry): Option[FinalPath] = db.map(_._2)
     IpLookups(path(dbs._1), path(dbs._2), path(dbs._3), path(dbs._4), path(dbs._5), memCache = true, lruCache = 20000)
   }
