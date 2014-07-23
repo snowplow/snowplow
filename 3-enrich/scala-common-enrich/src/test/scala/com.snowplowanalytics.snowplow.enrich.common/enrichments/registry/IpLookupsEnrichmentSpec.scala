@@ -33,11 +33,12 @@ import com.snowplowanalytics.maxmind.iplookups.{IpLookups, IpLocation}
 
 class IpLookupsEnrichmentSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
 
-  "This is a specification to test the extractIpInformation function"                                 ^
+  "This is a specification to test the IpLookupsEnrichment"                                           ^
                                                                                                      p^
   "extractIpInformation should not return failure for any valid or invalid IP address"                ! e1^
   "extractIpInformation should correctly extract location data from IP addresses where possible"      ! e2^
   "extractIpInformation should correctly extract ISP data from IP addresses where possible"           ! e3^
+  "an IpLookupsEnrichment instance should expose the correct list of database files to cache"         ! e4^
                                                                                                     end
   // When testing, localMode is set to true, so the URIs are ignored and the databases are loaded from test/resources
   val config = IpLookupsEnrichment(Some("geo", new URI("/ignored-in-test/"), "GeoIPCity.dat"), Some("isp", new URI("/ignored-in-test/"), "GeoIPISP.dat"), None, None, None, true)
@@ -70,4 +71,6 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
     }
 
   def e3 = config.extractIpInformation("70.46.123.145").map(_._2) must beSuccessful(Some("FDN Communications"))
+
+  def e4 = config.dbsToCache must_== Nil
 }

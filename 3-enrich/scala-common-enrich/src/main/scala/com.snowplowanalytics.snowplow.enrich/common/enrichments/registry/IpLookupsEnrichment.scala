@@ -143,6 +143,7 @@ case class IpLookupsEnrichment(
 
   val version = new DefaultArtifactVersion("0.1.0")
 
+  private type FinalPath = String
   private type DbEntry = Option[(Option[URI], FinalPath)]
 
   // Construct a Tuple5 of all the IP Lookup databases
@@ -158,8 +159,6 @@ case class IpLookupsEnrichment(
 
     (db(geoTuple), db(ispTuple), db(orgTuple), db(domainTuple), db(netspeedTuple))
   }
-
-  private type FinalPath = String
 
   // Collect the cache paths to install
   val dbsToCache: List[(URI, FinalPath)] =
