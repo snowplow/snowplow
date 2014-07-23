@@ -38,7 +38,8 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
   "extractIpInformation should not return failure for any valid or invalid IP address"                ! e1^
   "extractIpInformation should correctly extract location data from IP addresses where possible"      ! e2^
   "extractIpInformation should correctly extract ISP data from IP addresses where possible"           ! e3^
-  "an IpLookupsEnrichment instance should expose the correct list of database files to cache"         ! e4^
+  "an IpLookupsEnrichment instance should expose no database files to cache in local mode"            ! e4^
+  "an IpLookupsEnrichment instance should expose a list of database files to cache in non-local mode" ! e5^
                                                                                                     end
   // When testing, localMode is set to true, so the URIs are ignored and the databases are loaded from test/resources
   val config = IpLookupsEnrichment(Some("geo", new URI("/ignored-in-test/"), "GeoIPCity.dat"), Some("isp", new URI("/ignored-in-test/"), "GeoIPISP.dat"), None, None, None, true)
@@ -73,4 +74,8 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
   def e3 = config.extractIpInformation("70.46.123.145").map(_._2) must beSuccessful(Some("FDN Communications"))
 
   def e4 = config.dbsToCache must_== Nil
+
+  val configRemote = IpLookupsEnrichment(Some("geo", new URI("/ignored-in-test/"), "GeoIPCity.dat"), Some("isp", new URI("/ignored-in-test/"), "GeoIPISP.dat"), None, None, None, false)
+
+  def e5 = configRemote.dbsToCache must_== Nil
 }
