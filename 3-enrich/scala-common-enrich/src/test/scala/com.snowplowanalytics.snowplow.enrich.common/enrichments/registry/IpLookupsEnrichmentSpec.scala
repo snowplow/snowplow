@@ -29,7 +29,10 @@ import scalaz._
 import Scalaz._
 
 // Scala MaxMind GeoIP
-import com.snowplowanalytics.maxmind.iplookups.{IpLookups, IpLocation}
+import com.snowplowanalytics.maxmind.iplookups.{
+  IpLookups,
+  IpLocation
+}
 
 class IpLookupsEnrichmentSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
 
@@ -42,7 +45,7 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
   "an IpLookupsEnrichment instance should expose a list of database files to cache in non-local mode" ! e5^
                                                                                                     end
   // When testing, localMode is set to true, so the URIs are ignored and the databases are loaded from test/resources
-  val config = IpLookupsEnrichment(Some("geo", new URI("/ignored-in-local-mode/"), "GeoIPCity.dat"), Some("isp", new URI("/ignored-in-local-mode/"), "GeoIPISP.dat"), None, None, None, true)
+  val config = IpLookupsEnrichment(Some(("geo", new URI("/ignored-in-local-mode/"), "GeoIPCity.dat")), Some(("isp", new URI("/ignored-in-local-mode/"), "GeoIPISP.dat")), None, None, None, true)
 
   // Impossible to make extractIpInformation throw a validation error
   def e1 =
@@ -75,7 +78,7 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
 
   def e4 = config.dbsToCache must_== Nil
 
-  val configRemote = IpLookupsEnrichment(Some("geo", new URI("http://public-website.com/files/GeoLiteCity.dat"), "GeoLiteCity.dat"), Some("isp", new URI("s3://private-bucket/files/GeoIPISP.dat"), "GeoIPISP.dat"), None, None, None, false)
+  val configRemote = IpLookupsEnrichment(Some(("geo", new URI("http://public-website.com/files/GeoLiteCity.dat"), "GeoLiteCity.dat")), Some(("isp", new URI("s3://private-bucket/files/GeoIPISP.dat"), "GeoIPISP.dat")), None, None, None, false)
 
   def e5 = configRemote.dbsToCache must_== List(
     (new URI("http://public-website.com/files/GeoLiteCity.dat"), "./ip_geo"),
