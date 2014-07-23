@@ -75,7 +75,7 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
 
   def e4 = config.dbsToCache must_== Nil
 
-  val configRemote = IpLookupsEnrichment(Some("geo", new URI("http://public-website.com/files"), "GeoLiteCity.dat"), Some("isp", new URI("s3://private-bucket/files"), "GeoIPISP.dat"), None, None, None, false)
+  val configRemote = IpLookupsEnrichment(Some("geo", new URI("http://public-website.com/files/GeoLiteCity.dat"), "GeoLiteCity.dat"), Some("isp", new URI("s3://private-bucket/files/GeoIPISP.dat"), "GeoIPISP.dat"), None, None, None, false)
 
   def e5 = configRemote.dbsToCache must_== List(
     (new URI("http://public-website.com/files/GeoLiteCity.dat"), "./ip_geo"),
