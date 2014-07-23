@@ -117,7 +117,7 @@ public class Parser {
   }
   
   public Referer parse(URL refererUrl, String pageHost){
-    if(refererUrl == null) { return null; }
+    if (refererUrl == null) { return null; }
     return parse(refererUrl.getProtocol(), refererUrl.getHost(), refererUrl.getPath(), refererUrl.getQuery(), pageHost);
   }
   
@@ -202,8 +202,11 @@ public class Parser {
 
     List<NameValuePair> params;
     try {
-      params = URLEncodedUtils.parse(query, Charset.forName("UTF-8"));
+      params = URLEncodedUtils.parse(new URI("http://localhost?" + query), "UTF-8");
+      // params = URLEncodedUtils.parse(query, Charset.forName("UTF-8")); because https://github.com/snowplow/referer-parser/issues/76
     } catch (IllegalArgumentException iae) {
+      return null;
+    } catch (URISyntaxException use) { // For new URI
       return null;
     }
 

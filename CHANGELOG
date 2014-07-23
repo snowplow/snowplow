@@ -1,3 +1,7 @@
+Version 0.2.2 (2014-07-23)
+--------------------------
+Fixed Java referer-parser doesn't work on Hadoop (#76)
+
 Version 0.2.1 (2014-07-16)
 --------------------------
 Updated build process for local Maven publishing (#72)
