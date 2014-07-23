@@ -82,16 +82,17 @@ object IpLookupsEnrichment extends ParseableEnrichment {
    *         Some(Success) if it is found
    */
   private def getArgumentFromName(conf: JValue, name: String): Option[ValidatedNelMessage[(String, URI, String)]] = {
+
     if (ScalazJson4sUtils.fieldExists(conf, "parameters", name)) {
       val uri = ScalazJson4sUtils.extract[String](conf, "parameters", name, "uri")
       val db  = ScalazJson4sUtils.extract[String](conf, "parameters", name, "database")
 
-      Some((uri.toValidationNel |@| db.toValidationNel) { (uri, db) =>
+      (uri.toValidationNel |@| db.toValidationNel) { (uri, db) =>
         for {
           u <- (getMaxmindUri(uri, db).toValidationNel: ValidatedNelMessage[URI])
         } yield (name, u, db)
 
-      }.flatMap(x => x))
+      }.flatMap(x => x).some
 
     } else None
   }
