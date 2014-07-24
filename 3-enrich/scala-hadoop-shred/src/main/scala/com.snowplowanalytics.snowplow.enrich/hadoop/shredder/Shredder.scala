@@ -90,7 +90,7 @@ object Shredder {
 
     // Get our unstructured event and List of contexts, both Option-boxed
     val ue = for {
-      v <- extractAndValidateJson("ue_properties", UePropertiesSchema, Option(event.ue_properties))
+      v <- extractAndValidateJson("ue_properties", UePropertiesSchema, Option(event.unstruct_event))
     } yield for {
       j <- v
       l = List(j)

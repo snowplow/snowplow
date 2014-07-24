@@ -44,13 +44,13 @@ object EnrichedEventLoader {
 
   private val RedshiftTstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS").withZone(DateTimeZone.UTC)
 
-  private val FieldCount = 104
+  private val FieldCount = 108
 
   private object FieldIndexes { // 0-indexed
-    val collectorTstamp = 2
+    val collectorTstamp = 3
     val eventId = 6
-    val contexts = 47
-    val ueProperties = 54
+    val contexts = 52
+    val unstructEvent = 58
   }
 
   /**
@@ -75,7 +75,7 @@ object EnrichedEventLoader {
 
     val event = new CanonicalOutput().tap { e =>
       e.contexts = fields(FieldIndexes.contexts)
-      e.ue_properties = fields(FieldIndexes.ueProperties)
+      e.unstruct_event = fields(FieldIndexes.unstructEvent)
     }
 
     // Get and validate the event ID
