@@ -1,10 +1,10 @@
 Version 0.9.7 (2014-08-XX)
 --------------------------
 Clojure Collector: bumped to 0.7.0
-Clojure Collector: merged snowplow/tomcat-cf-access-log-valve into snowplow/snowplow (#898)
-Clojure Collector: changed tomcat-cf-access-log-valve to use Gradle (#899)                              - TODO
-Clojure Collector: updated tomcat-cf-access-log-valve to log POSTs (#901)                               - TODO
-Clojure Collector: changed tomcat-cf-access-log-valve to publish to war-resources/.ebextensions (#900)  - TODO
+Clojure Collector: merged snowplow/tomcat-cf-access-log-valve into Snowplow as clojure-collector/access-valve (#898)
+Clojure Collector: changed access-valve to use Gradle (#899)                              - TODO
+Clojure Collector: updated access-valve to log POSTs (#901)                               - TODO
+Clojure Collector: changed access-valve to publish to war-resources/.ebextensions (#900)  - TODO
 Clojure Collector: fixed IP address forwarding for VPC-based environments (#854)                        - TODO
 Clojure Collector: added support for POST as well as GET (#654)                                         - TODO
 Scala Common Enrich: added support for GET querystring containing N raw events as JSON (#543)           - TODO
