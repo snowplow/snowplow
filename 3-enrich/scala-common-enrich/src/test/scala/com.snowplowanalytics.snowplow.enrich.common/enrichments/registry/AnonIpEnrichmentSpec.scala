@@ -12,24 +12,22 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
+package registry
 
 // Specs2
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
 
-import PrivacyEnrichments._
-
 /**
  * Tests the anonymzeIp function
  */
-class AnonymizeIpTest extends Specification with DataTables {
+class AnonIpEnrichmentSpec extends Specification with DataTables {
 
   def is =
     "Anonymizing 0-4 octets across a variety of IP addresses should work" ! e1
 
   def e1 =
-    "SPEC NAME"              || "IP ADDRESS"      | "ANONYMIZE QUARTETS"   | "EXPECTED OUTPUT"   |
-    "valid, anonymize 0"     !! "168.23.101.20"   ! AnonOctets(0)        ! "168.23.101.20"     |
+    "SPEC NAME"              || "IP ADDRESS"      | "ANONYMIZE OCTETS"   | "EXPECTED OUTPUT"   |
     "valid, anonymize 1"     !! "0.23.0.20"       ! AnonOctets(1)        ! "0.23.0.x"          |
     "valid, anonymize 2"     !! "168.192.102.4"   ! AnonOctets(2)        ! "168.192.x.x"       |
     "valid, anonymize 3"     !! "54.242.102.43"   ! AnonOctets(3)        ! "54.x.x.x"          |
@@ -40,6 +38,6 @@ class AnonymizeIpTest extends Specification with DataTables {
     "invalid, anonymize 4"   !! "hello;goodbye"   ! AnonOctets(3)        ! "hello;goodbye"     |
     "empty, anonymize 2"     !! null              ! AnonOctets(2)        ! null                |
     "empty, anonymize 4"     !! ""                ! AnonOctets(4)        ! "x"                 |> {
-      (_, ip, quartets, expected) => PrivacyEnrichments.anonymizeIp(ip, quartets) must_== expected
+      (_, ip, octets, expected) => AnonIpEnrichment(octets).anonymizeIp(ip) must_== expected
     }
 }

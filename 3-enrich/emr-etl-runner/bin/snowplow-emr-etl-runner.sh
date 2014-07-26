@@ -18,6 +18,7 @@
 rvm_path=/path/to/.rvm # Typically in the $HOME of the user who installed RVM
 RUNNER_PATH=/path/to/snowplow/3-enrich/snowplow-emr-etl-runner
 RUNNER_CONFIG=/path/to/your-config.yml
+RUNNER_ENRICHMENTS=/path/to/your/enrichment-jsons
 
 # Load the RVM environment
 export PATH=$PATH:${rvm_path}/bin
@@ -25,4 +26,4 @@ source ${rvm_path}/scripts/rvm
 
 # Run the ETL job on EMR
 export BUNDLE_GEMFILE=${RUNNER_PATH}/Gemfile
-bundle exec ${RUNNER_PATH}/bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG}
+bundle exec ${RUNNER_PATH}/bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG} --enrichments ${RUNNER_ENRICHMENTS}

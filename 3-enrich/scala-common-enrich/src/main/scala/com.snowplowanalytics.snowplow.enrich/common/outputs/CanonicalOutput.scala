@@ -43,12 +43,12 @@ class CanonicalOutput {
   @BeanProperty var platform: String = _
 
   // Date/time
+  @BeanProperty var etl_tstamp: String = _
   @BeanProperty var collector_tstamp: String = _
   @BeanProperty var dvce_tstamp: String = _
 
   // Transaction (i.e. this logging event)
   @BeanProperty var event: String = _
-  @BeanProperty var event_vendor: String = _
   @BeanProperty var event_id: String = _
   @BeanProperty var txn_id: String = _
 
@@ -73,6 +73,13 @@ class CanonicalOutput {
   @BeanProperty var geo_zipcode: String = _
   @BeanProperty var geo_latitude: JFloat = _
   @BeanProperty var geo_longitude: JFloat = _
+  @BeanProperty var geo_region_name: String = _
+
+  // Other IP lookups
+  @BeanProperty var ip_isp: String = _
+  @BeanProperty var ip_org: String = _
+  @BeanProperty var ip_domain: String = _
+  @BeanProperty var ip_netspeed: String = _
 
   // Page
   @BeanProperty var page_url: String = _
@@ -118,8 +125,7 @@ class CanonicalOutput {
   @BeanProperty var se_value: String = _ // Technically should be a Double but may be rendered incorrectly by Cascading with scientific notification (which Redshift can't process)
 
   // Unstructured Event
-  @BeanProperty var ue_name: String = _
-  @BeanProperty var ue_properties: String = _
+  @BeanProperty var unstruct_event: String = _
 
   // Ecommerce transaction (from querystring)
   @BeanProperty var tr_orderid: String = _

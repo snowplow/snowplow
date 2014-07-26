@@ -63,7 +63,7 @@ final class TargetBean {
 /**
  * Tests the MapTransformer.
  */
-class MapTransformerTest extends Specification with ValidationMatchers {
+class MapTransformerSpec extends Specification with ValidationMatchers {
 
   val sourceMap = Map("p"       -> "web",
                       "f_pdf"   -> "1",

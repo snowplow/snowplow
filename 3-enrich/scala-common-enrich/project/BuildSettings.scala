@@ -21,7 +21,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "com.snowplowanalytics",
-    version               :=  "0.4.0",
+    version               :=  "0.5.0",
     description           :=  "Common functionality for enriching raw Snowplow events",
     scalaVersion          :=  "2.10.1",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
@@ -46,26 +46,6 @@ object BuildSettings {
 
   // For MaxMind support in the test suite
   import Dependencies._
-  lazy val maxmindSettings = Seq(
-
-    // Download the GeoLite City and add it into our jar
-    resourceGenerators in Test <+= (resourceManaged in Test) map { out =>
-      val gzRemote = new URL(Urls.maxmindData)
-      val datLocal = out / "maxmind" / "GeoLiteCity.dat"
-      
-      // Only fetch if we don't already have it (because MaxMind 403s if you download GeoIP.dat.gz too frequently)
-      if (!datLocal.exists()) {
-        // TODO: replace this with simply IO.gunzipURL(gzRemote, out / "maxmind") when https://github.com/harrah/xsbt/issues/529 implemented
-        val gzLocal = out / "GeoLiteCity.dat.gz"        
-        IO.download(gzRemote, gzLocal)
-        IO.createDirectory(out / "maxmind")
-        IO.gunzip(gzLocal, datLocal)
-        IO.delete(gzLocal)
-        // gunzipURL(gzRemote, out / "maxmind")
-      }
-      datLocal.get
-    }
-  )
 
   // Publish settings
   // TODO: update with ivy credentials etc when we start using Nexus
@@ -73,13 +53,12 @@ object BuildSettings {
    
     crossPaths := false,
     publishTo <<= version { version =>
-      val keyFile = (Path.userHome / ".ssh" / "admin_keplar.osk")
-      val basePath = "/var/www/maven.snplow.com/prod/public/%s".format {
+      val basePath = "target/repo/%s".format {
         if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
       }
-      Some(Resolver.sftp("SnowPlow Analytics Maven repository", "prodbox", 8686, basePath) as ("admin", keyFile))
+      Some(Resolver.file("Local Maven repository", file(basePath)) transactional())
     }
   )
 
-  lazy val buildSettings = basicSettings ++ scalifySettings ++ maxmindSettings ++ publishSettings
+  lazy val buildSettings = basicSettings ++ scalifySettings ++ publishSettings
 }

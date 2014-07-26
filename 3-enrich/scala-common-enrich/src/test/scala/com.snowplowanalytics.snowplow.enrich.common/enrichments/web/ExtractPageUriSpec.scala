@@ -29,7 +29,7 @@ import Scalaz._
 // SnowPlow Utils
 import com.snowplowanalytics.util.Tap._
 
-class ExtractPageUriTest extends Specification with DataTables with ValidationMatchers { def is =
+class ExtractPageUriSpec extends Specification with DataTables with ValidationMatchers { def is =
 
   "This is a specification to test the extractPageUri function"                                ^
                                                                                               p^

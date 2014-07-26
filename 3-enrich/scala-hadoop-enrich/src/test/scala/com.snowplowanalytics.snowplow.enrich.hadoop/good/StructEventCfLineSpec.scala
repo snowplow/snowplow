@@ -36,16 +36,16 @@ import JobSpecHelpers._
 object StructEventCfLineSpec {
 
   val lines = Lines(
-    "2012-05-27  11:35:53  DFW3  3343  128.232.0.0 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/internal/_session/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=se&se_ca=ecomm&se_ac=add-to-basket&se_la=PBZ00110&se_pr=1&se_va=35708.23&dtm=1364230969450&tid=598951&evn=com.snowplowanalytics&vp=2560x934&ds=2543x1420&vid=43&duid=9795bd0203804cd1&p=web&tv=js-0.11.1&fp=2876815413&aid=pbzsite&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2F&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=2560x1440&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F119-psycards-book-and-deck-starter-pack.html%3Fview%3Dprint%23detail"
+    "2012-05-27  11:35:53  DFW3  3343  70.46.123.145 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/internal/_session/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=se&se_ca=ecomm&se_ac=add-to-basket&se_la=PBZ00110&se_pr=1&se_va=35708.23&dtm=1364230969450&tid=598951&evn=com.snowplowanalytics&vp=2560x934&ds=2543x1420&vid=43&duid=9795bd0203804cd1&p=web&tv=js-0.11.1&fp=2876815413&aid=pbzsite&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2F&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=2560x1440&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F119-psycards-book-and-deck-starter-pack.html%3Fview%3Dprint%23detail"
     )
 
   val expected = List(
     "pbzsite",
     "web",
+    EtlTimestamp,
     "2012-05-27 11:35:53.000",
     "2013-03-25 17:02:49.450",
     "struct",
-    "com.snowplowanalytics",
     null, // We can't predict the event_id
     "598951",
     null, // No tracker namespace
@@ -53,17 +53,22 @@ object StructEventCfLineSpec {
     "cloudfront",
     EtlVersion,
     null, // No user_id set
-    "128.232.0.0",
+    "70.46.123.145",
     "2876815413",
     "9795bd0203804cd1",
     "43",
     null, // No network_userid set
-    "GB", // UK geo-location
-    "C3",
-    "Cambridge",
+    "US", // US geolocation
+    "FL",
+    "Delray Beach",
     null,
-    "52.199997",
-    "0.11669922",
+    "26.461502",
+    "-80.0728",
+    "Florida",
+    null, // No additional MaxMind databases used
+    "DSLAM WAN Allocation", // Using the MaxMind organization lookup service
+    null,
+    null,
     "http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail",
     null, // No page title for events
     "http://www.psychicbazaar.com/",
@@ -93,8 +98,7 @@ object StructEventCfLineSpec {
     "PBZ00110",      //
     "1",             //
     "35708.23",      //
-    null, // Unstructured event fields empty
-    null, //
+    null, // Unstructured event field empty
     null, // Transaction fields empty 
     null, //
     null, //
@@ -153,10 +157,10 @@ object StructEventCfLineSpec {
  * Check that all tuples in a custom structured event
  * (CloudFront format) are successfully extracted.
  */
-class StructEventCfLineSpec extends Specification with TupleConversions {
+class StructEventCfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid custom structured event" should {
-    EtlJobSpec("cloudfront", "0").
+    EtlJobSpec("cloudfront", "1", false, List("geo", "organization")).
       source(MultipleTextLineFiles("inputFolder"), StructEventCfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 custom structured event" in {
@@ -172,7 +176,7 @@ class StructEventCfLineSpec extends Specification with TupleConversions {
           trap must beEmpty
         }
       }.
-      sink[String](JsonLine("badFolder")){ error =>
+      sink[String](Tsv("badFolder")){ error =>
         "not write any bad rows" in {
           error must beEmpty
         }

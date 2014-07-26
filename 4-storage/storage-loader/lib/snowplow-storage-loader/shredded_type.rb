@@ -29,6 +29,7 @@ module Snowplow
       attr_reader :s3_objectpath, :table
 
       @@snowplow_hosted_assets = "s3://snowplow-hosted-assets/4-storage/redshift-storage/jsonpaths/"
+      @@snowplow_hosted_assets_region = "eu-west-1"
 
       @@jsonpaths_files = Hash.new
 
@@ -103,7 +104,8 @@ module Snowplow
 
         # Look for it in Snowplow's hosted assets
         snowplow_dir = "#{@@snowplow_hosted_assets}#{@vendor}/"
-        if file_exists?(s3, snowplow_dir, file)
+        _s3 = copy_with_new_region(s3, @@snowplow_hosted_assets_region)
+        if file_exists?(_s3, snowplow_dir, file)
           f = "#{snowplow_dir}#{file}"
           @@jsonpaths_files[cache_key] = f
           return f
@@ -113,6 +115,19 @@ module Snowplow
       end
 
     private
+
+      # Generic shallow copy of a FogStorage, updating
+      # the region and host based on the supplied region.
+      #
+      # Parameters:
+      # +s3+:: the Fog object for accessing S3
+      Contract FogStorage, String => FogStorage
+      def copy_with_new_region(s3, region)
+        s3.dup.tap { |s3|
+          s3.region = region
+          s3.instance_variable_set(:@host, s3.send(:region_to_host, region))
+        }
+      end
 
       # Derives the table name in Redshift from the Iglu
       # schema key.

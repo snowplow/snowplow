@@ -35,8 +35,8 @@ module Snowplow
       #
       # Returns a Hash containing our runtime
       # arguments and our configuration.
-      Contract None => ArgsConfigTuple
-      def self.get_args_config
+      Contract None => ArgsConfigEnrichmentsTuple
+      def self.get_args_config_enrichments
         
         # Defaults
         options = {
@@ -51,6 +51,7 @@ module Snowplow
           opts.separator "Specific options:"
 
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config_file] = config }
+          opts.on('-n', '--enrichments ENRICHMENTS', 'enrichments directory') {|config| options[:enrichments_directory] = config}
           opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
@@ -90,7 +91,24 @@ module Snowplow
         }
         config = load_file(options[:config_file], optparse.to_s)
 
-        [args, config]
+        enrichments = options[:enrichments_directory]
+
+        # If no enrichments argument is passed, make the array of enrichments empty
+        if enrichments.nil?
+          return [args, config, []]
+        end
+
+        # Check the enrichments directory exists and is a directory
+        unless Dir.exists?(enrichments)
+          raise ConfigError, "Enrichments directory '#{enrichments}' does not exist, or is not a directory"
+        end
+
+        # Add a trailing slash if necessary to make globbing work
+        enrichments = Sluice::Storage::trail_slash(enrichments)
+
+        enrichments_array = Dir.glob(enrichments + '*.json').map {|f| File.read(f)}
+
+        [args, config, enrichments_array]
       end
 
     private

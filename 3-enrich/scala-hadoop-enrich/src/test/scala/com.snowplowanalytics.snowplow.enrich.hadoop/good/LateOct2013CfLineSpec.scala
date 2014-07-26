@@ -43,10 +43,10 @@ object LateOct2013CfLineSpec {
   val expected = List(
     "pbzsite",
     "web",
+    EtlTimestamp,
     "2013-10-22 00:41:30.000",
     "2013-10-22 00:41:53.725",
     "page_view",
-    null, // No event vendor set
     null, // We can't predict the event_id
     "888087",
     null, // No tracker namespace
@@ -62,6 +62,11 @@ object LateOct2013CfLineSpec {
     null, // No geo-location for this IP address
     null,
     null,
+    null,
+    null,
+    null,
+    null,
+    null, // No additional MaxMind databases used
     null,
     null,
     null,
@@ -94,8 +99,7 @@ object LateOct2013CfLineSpec {
     null, //
     null, //
     null, //
-    null, // Unstructured event fields empty
-    null, //
+    null, // Unstructured event field empty
     null, // Transaction fields empty 
     null, //
     null, //
@@ -158,10 +162,10 @@ object LateOct2013CfLineSpec {
  * For details:
  * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
  */
-class LateOct2013CfLineSpec extends Specification with TupleConversions {
+class LateOct2013CfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid page view" should {
-    EtlJobSpec("cloudfront", "0").
+    EtlJobSpec("cloudfront", "1", false, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), LateOct2013CfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {
@@ -177,7 +181,7 @@ class LateOct2013CfLineSpec extends Specification with TupleConversions {
           trap must beEmpty
         }
       }.
-      sink[String](JsonLine("badFolder")){ error =>
+      sink[String](Tsv("badFolder")){ error =>
         "not write any bad rows" in {
           error must beEmpty
         }

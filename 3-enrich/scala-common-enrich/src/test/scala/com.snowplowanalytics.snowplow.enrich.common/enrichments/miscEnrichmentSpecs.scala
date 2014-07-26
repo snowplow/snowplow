@@ -27,11 +27,11 @@ import Scalaz._
  * Tests the etlVersion variable.
  * Uses mutable.Specification.
  */
-class EtlVersionTest extends MutSpecification {
+class EtlVersionSpec extends MutSpecification {
 
   "The ETL version" should {
     "be successfully returned" in {
-      MiscEnrichments.etlVersion("hadoop-0.4.0") must_== "hadoop-0.4.0-common-0.4.0"
+      MiscEnrichments.etlVersion("hadoop-0.6.0") must_== "hadoop-0.6.0-common-0.5.0"
     }
   }
 }
@@ -40,7 +40,7 @@ class EtlVersionTest extends MutSpecification {
  * Tests the extractPlatform function.
  * Uses DataTables.
  */
-class ExtractPlatformTest extends Specification with DataTables {
+class ExtractPlatformSpec extends Specification with DataTables {
 
   val FieldName = "p"
   def err: (String) => String = input => "Field [%s]: [%s] is not a supported tracking platform".format(FieldName, input)
@@ -70,7 +70,7 @@ class ExtractPlatformTest extends Specification with DataTables {
  * Tests the identity function.
  * Uses ScalaCheck.
  */
-class IdentityTest extends Specification with ScalaCheck {
+class IdentitySpec extends Specification with ScalaCheck {
 
   def is =
     "The identity function should work for any pair of Strings" ! e1

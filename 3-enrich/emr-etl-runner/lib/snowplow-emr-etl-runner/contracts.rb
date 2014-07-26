@@ -21,7 +21,6 @@ module Snowplow
 
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
-      :maxmind => String,
       :enrich  => String,
       :shred   => String
       })
@@ -120,14 +119,11 @@ module Snowplow
         :collector_format => String,
         :continue_on_unexpected_error => Bool
         }),
-      :iglu => IgluConfigHash,
-      :enrichments => ({
-        :anon_ip => AnonIpHash
-        })
+      :iglu => IgluConfigHash
       })
 
-    # The Array (Tuple2) containing the CLI arguments and configuration YAML.
-    ArgsConfigTuple = [ArgsHash, ConfigHash]
+    # The Array (Tuple3) containing the CLI arguments, configuration YAML, and configuration JSONs
+    ArgsConfigEnrichmentsTuple = [ArgsHash, ConfigHash, ArrayOf[String]]
 
   end
 end

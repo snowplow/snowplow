@@ -40,14 +40,16 @@ module Snowplow
       include Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, ConfigHash => EmrJob
-      def initialize(debug, shred, s3distcp, config)
+      Contract Bool, Bool, Bool, ConfigHash, ArrayOf[String] => EmrJob
+      def initialize(debug, shred, s3distcp, config, enrichments_array)
 
         logger.debug "Initializing EMR jobflow"
 
         # Configuration
         assets = self.class.get_assets(config[:s3][:buckets][:assets], config[:etl][:versions][:hadoop_enrich], config[:etl][:versions][:hadoop_shred])
-        run_id = Time.new.strftime("%Y-%m-%d-%H-%M-%S")
+        run_tstamp = Time.new
+        run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
+        etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
 
         # Create a job flow with your AWS credentials
         @jobflow = Elasticity::JobFlow.new(config[:aws][:access_key_id], config[:aws][:secret_access_key])
@@ -89,6 +91,10 @@ module Snowplow
           install_lingual_action = Elasticity::BootstrapAction.new("s3://files.concurrentinc.com/lingual/#{lingual}/lingual-client/install-lingual-client.sh")
           @jobflow.add_bootstrap_action(install_lingual_action)
         end
+
+        # For serialization debugging. TODO doesn't work yet
+        # install_ser_debug_action = Elasticity::BootstrapAction.new("s3://snowplow-hosted-assets/common/emr/cascading-ser-debug.sh")
+        # @jobflow.add_bootstrap_action(install_ser_debug_action)
 
         # Now let's add our task group if required
         tic = config[:emr][:jobflow][:task_instance_count]
@@ -145,8 +151,7 @@ module Snowplow
         enrich_step_output = if s3distcp
           "hdfs:///local/snowplow/enriched-events/"
         else
-          # Need to replace =s because Hadoop Enrich is on an old version of Scalding Args (can remove when upgrade)
-          self.class.fix_equals(enrich_final_output)
+          enrich_final_output
         end
 
         enrich_step = build_scalding_step(
@@ -155,12 +160,13 @@ module Snowplow
           "enrich.hadoop.EtlJob",
           { :in     => enrich_step_input,
             :good   => enrich_step_output,
-            :bad    => self.class.fix_equals(self.class.partition_by_run(csbe[:bad],    run_id)),
-            :errors => self.class.fix_equals(self.class.partition_by_run(csbe[:errors], run_id, config[:etl][:continue_on_unexpected_error]))
+            :bad    => self.class.partition_by_run(csbe[:bad],    run_id),
+            :errors => self.class.partition_by_run(csbe[:errors], run_id, config[:etl][:continue_on_unexpected_error])
           },
           { :input_format     => config[:etl][:collector_format],
-            :maxmind_file     => assets[:maxmind],
-            :anon_ip_quartets => self.class.get_anon_ip_octets(config[:enrichments][:anon_ip])
+            :etl_tstamp       => etl_tstamp,
+            :iglu_config      => self.class.build_iglu_config_json(config[:iglu]),
+            :enrichments      => self.class.build_enrichments_json(enrichments_array)
           }
         )
         @jobflow.add_step(enrich_step)
@@ -200,7 +206,7 @@ module Snowplow
               :errors      => self.class.partition_by_run(csbs[:errors], run_id, config[:etl][:continue_on_unexpected_error])
             },
             {
-              :iglu_config => self.class.jsonify(config[:iglu])
+              :iglu_config => self.class.build_iglu_config_json(config[:iglu])
             }
           )
           @jobflow.add_step(shred_step)
@@ -317,43 +323,31 @@ module Snowplow
       # +retain+:: set to false if this folder should be nillified
       #
       # Return the folder with a run ID folder appended
-      Contract String, String, Bool => Maybe[String]
+      Contract Maybe[String], String, Bool => Maybe[String]
       def self.partition_by_run(folder, run_id, retain=true)
         "#{folder}run=#{run_id}/" if retain
       end
 
-      # Makes a folder name Scalding-safe. This is because
-      # currently Scalding cannot support =s
-      Contract Maybe[String] => Maybe[String]
-      def self.fix_equals(path)
-        path.gsub!('=', '%3D') if path
+      # Returns a base64-encoded JSON containing an array of enrichment JSONs
+      Contract ArrayOf[String] => String
+      def self.build_enrichments_json(enrichments_array)
+        enrichments_json_data = enrichments_array.map {|e| JSON.parse(e)}
+        enrichments_json = {
+          'schema' => 'iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0',
+          'data'   => enrichments_json_data
+        }
+
+        Base64.strict_encode64(enrichments_json.to_json)
       end
 
       Contract IgluConfigHash => String
-      def self.jsonify(iglu_hash)
+      def self.build_iglu_config_json(iglu_hash)
         Base64.strict_encode64(iglu_hash.to_camelback_keys.to_json)
-      end
-
-      Contract AnonIpHash => String
-      def self.get_anon_ip_octets(anon_ip)
-        if anon_ip[:enabled]
-          anon_ip[:anon_octets].to_s
-        else
-          '0' # Anonymize 0 quartets == anonymization disabled
-        end
       end
 
       Contract String, String, String => AssetsHash
       def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version)
-
-        asset_host = 
-          if assets_bucket == "s3://snowplow-hosted-assets/"
-            "http://snowplow-hosted-assets.s3.amazonaws.com/" # Use the public S3 URL
-          else
-            assets_bucket
-          end
-
-        { :maxmind  => "#{asset_host}third-party/maxmind/GeoLiteCity.dat",
+        {
           :enrich   => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-etl-#{hadoop_enrich_version}.jar",
           :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
         }

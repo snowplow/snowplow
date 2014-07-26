@@ -22,7 +22,7 @@ import org.specs2.scalaz.ValidationMatchers
 import scalaz._
 import Scalaz._
 
-class ExtractEventTypeTest extends Specification with DataTables with ValidationMatchers { def is =
+class ExtractEventTypeSpec extends Specification with DataTables with ValidationMatchers { def is =
 
   "This is a specification to test the extractEventType function"                  ^
                                                                                   p^

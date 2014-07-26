@@ -42,10 +42,10 @@ object TransactionItemCfLineSpec {
   val expected = List(
     "CFe23a",
     null, // Not set (legacy input line)
+    EtlTimestamp,
     "2012-05-27 11:35:53.000",
     "2013-03-25 02:03:37.342",
     "transaction_item",
-    null, // No event vendor set
     null, // We can't predict the event_id
     "851830",
     null, // No tracker namespace
@@ -61,6 +61,11 @@ object TransactionItemCfLineSpec {
     null, // No geo-location for this IP address
     null,
     null,
+    null,
+    null,
+    null,
+    null,
+    null, // No additional MaxMind databases used
     null,
     null,
     null,
@@ -93,8 +98,7 @@ object TransactionItemCfLineSpec {
     null, //
     null, //
     null, //
-    null, // Unstructured event fields empty
-    null, //
+    null, // Unstructured event field empty
     null, // Transaction fields empty 
     null, //
     null, //
@@ -153,10 +157,10 @@ object TransactionItemCfLineSpec {
  * Check that all tuples in a transaction event
  * (CloudFront format) are successfully extracted.
  */
-class TransactionItemCfLineSpec extends Specification with TupleConversions {
+class TransactionItemCfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid transaction item" should {
-    EtlJobSpec("cloudfront", "0").
+    EtlJobSpec("cloudfront", "1", false, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), TransactionItemCfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 transaction item" in {
@@ -172,7 +176,7 @@ class TransactionItemCfLineSpec extends Specification with TupleConversions {
           trap must beEmpty
         }
       }.
-      sink[String](JsonLine("badFolder")){ error =>
+      sink[String](Tsv("badFolder")){ error =>
         "not write any bad rows" in {
           error must beEmpty
         }

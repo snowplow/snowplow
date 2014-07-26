@@ -42,10 +42,10 @@ object CljTomcatLineSpec {
   val expected = List(
     "snowplowweb",
     "web",
+    EtlTimestamp,
     "2013-10-07 19:47:54.000",
     "2013-10-07 19:47:54.123",
     "page_view",
-    "com.snowplowanalytics",
     null, // We can't predict the event_id
     "958446",
     null, // No tracker namespace
@@ -61,6 +61,11 @@ object CljTomcatLineSpec {
     null, // No geo-location for this IP address
     null,
     null,
+    null,
+    null,
+    null,
+    null,
+    null, // No additional MaxMind databases used
     null,
     null,
     null,
@@ -93,8 +98,7 @@ object CljTomcatLineSpec {
     null, //
     null, //
     null, //
-    null, // Unstructured event fields empty
-    null, //
+    null, // Unstructured event field empty
     null, // Transaction fields empty 
     null, //
     null, //
@@ -157,10 +161,10 @@ object CljTomcatLineSpec {
  * For details:
  * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
  */
-class CljTomcatLineSpec extends Specification with TupleConversions {
+class CljTomcatLineSpec extends Specification {
 
   "A job which processes a Clojure-Tomcat file containing 1 valid page view" should {
-    EtlJobSpec("clj-tomcat", "2").
+    EtlJobSpec("clj-tomcat", "2", true, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), CljTomcatLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {
@@ -176,7 +180,7 @@ class CljTomcatLineSpec extends Specification with TupleConversions {
           trap must beEmpty
         }
       }.
-      sink[String](JsonLine("badFolder")){ error =>
+      sink[String](Tsv("badFolder")){ error =>
         "not write any bad rows" in {
           error must beEmpty
         }

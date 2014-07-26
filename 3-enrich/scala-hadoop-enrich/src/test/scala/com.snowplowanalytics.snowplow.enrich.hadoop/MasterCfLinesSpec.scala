@@ -44,14 +44,15 @@ object MasterCfLinesSpec {
               good.CljTomcatLineSpec.lines ++         // 1 good
               good.PagePingCfLineSpec.lines ++        // 1 good
               good.PageViewCfLineSpec.lines ++        // 1 good
+              good.RefererParserCfLineSpec.lines ++   // 1 good
               good.StructEventCfLineSpec.lines ++     // 1 good
               good.UnstructEventCfLineSpec.lines ++   // 1 good
               good.TransactionCfLineSpec.lines ++     // 1 good
-              good.TransactionItemCfLineSpec.lines ++ // 1 good = 13 GOOD
+              good.TransactionItemCfLineSpec.lines ++ // 1 good = 14 GOOD
               misc.DiscardableCfLinesSpec.lines       // 3 discarded
 
   object expected {
-    val goodCount = 13
+    val goodCount = 14
     val badCount = 7
   }
 }
@@ -62,13 +63,13 @@ object MasterCfLinesSpec {
  * Master test which runs using all of the
  * individual good, bad and misc tests
  */
-class MasterCfLinesSpec extends Specification with TupleConversions {
+class MasterCfLinesSpec extends Specification {
 
-  "A job which processes a CloudFront file containing 13 valid events, 6 bad lines and 3 discardable lines" should {
-    EtlJobSpec("cloudfront", "0"). // Technically CljTomcatLineSpec isn't CloudFront format but won't break this test
+  "A job which processes a CloudFront file containing 14 valid events, 6 bad lines and 3 discardable lines" should {
+    EtlJobSpec("cloudfront", "1", false, List("geo")). // Technically CljTomcatLineSpec isn't CloudFront format but won't break this test
       source(MultipleTextLineFiles("inputFolder"), MasterCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output =>
-        "write 13 events" in {
+        "write 14 events" in {
           output.size must_== MasterCfLinesSpec.expected.goodCount
         }
       }.
@@ -77,7 +78,7 @@ class MasterCfLinesSpec extends Specification with TupleConversions {
           trap must beEmpty
         }
       }.
-      sink[String](JsonLine("badFolder")){ error =>
+      sink[String](Tsv("badFolder")){ error =>
         "write 7 bad rows" in {
           error.size must_== MasterCfLinesSpec.expected.badCount
         }

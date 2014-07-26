@@ -10,7 +10,10 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
+package com.snowplowanalytics
+package snowplow
+package enrich
+package common
 package enrichments
 
 // Scala
@@ -21,10 +24,7 @@ import scalaz._
 import Scalaz._
 
 // SnowPlow Utils
-import com.snowplowanalytics.util.Tap._
-
-// Scala MaxMind GeoIP
-import com.snowplowanalytics.maxmind.geoip.IpGeo
+import util.Tap._
 
 // This project
 import inputs.{CanonicalInput, NvGetPayload}
@@ -37,9 +37,6 @@ import utils.MapTransformer._
 import enrichments.{EventEnrichments => EE}
 import enrichments.{MiscEnrichments => ME}
 import enrichments.{ClientEnrichments => CE}
-import enrichments.{GeoEnrichments => GE}
-import enrichments.{PrivacyEnrichments => PE}
-import PE.AnonOctets.AnonOctets
 import web.{PageEnrichments => WPE}
 import web.{AttributionEnrichments => WAE}
 
@@ -54,14 +51,18 @@ object EnrichmentManager {
   /**
    * Runs our enrichment process.
    *
-   * @param input Our canonical input
+   * @param registry Contains configuration
+   *        for all enrichments to apply
+   * @param hostEtlVersion ETL version
+   * @param etlTstamp ETL timestamp
+   * @param raw Our canonical input
    *        to enrich
    * @return a MaybeCanonicalOutput - i.e.
    *         a ValidationNel containing
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  def enrichEvent(geo: IpGeo, hostEtlVersion: String, anonOctets: AnonOctets, raw: CanonicalInput): ValidatedCanonicalOutput = {
+  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: String, raw: CanonicalInput): ValidatedCanonicalOutput = {
 
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
@@ -82,10 +83,13 @@ object EnrichmentManager {
     // with the fields which cannot error
     val event = new CanonicalOutput().tap { e =>
       e.collector_tstamp = EE.toTimestamp(raw.timestamp)
-      e.event_id = EE.generateEventId
+      e.event_id = EE.generateEventId      // May be updated later if we have an `eid` parameter
       e.v_collector = raw.source.collector // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
-      raw.ipAddress.map(ip => e.user_ipaddress = PE.anonymizeIp(ip, anonOctets))
+      raw.ipAddress.map(ip => e.user_ipaddress = registry.getAnonIpEnrichment match {
+        case Some(anon) => anon.anonymizeIp(ip)
+        case None => ip
+      })
     }
 
     // 2. Enrichments which can fail
@@ -136,11 +140,10 @@ object EnrichmentManager {
     // Caution: by definition, a TransformMap loses type safety. Always unit test!
     val transformMap: TransformMap =
       Map(("e"       , (EE.extractEventType, "event")),
-          ("evn"     , (ME.toTsvSafe, "event_vendor")),
           ("ip"      , (ME.toTsvSafe, "user_ipaddress")),
           ("aid"     , (ME.toTsvSafe, "app_id")),
           ("p"       , (ME.extractPlatform, "platform")),
-          ("tid"     , (ME.toTsvSafe, "txn_id")),
+          ("tid"     , (CU.validateInteger, "txn_id")),
           ("uid"     , (ME.toTsvSafe, "user_id")),
           ("duid"    , (ME.toTsvSafe, "domain_userid")),
           ("nuid"    , (ME.toTsvSafe, "network_userid")),
@@ -170,6 +173,7 @@ object EnrichmentManager {
           ("cs"      , (ME.toTsvSafe, "doc_charset")),
           ("ds"      , (CE.extractViewDimensions, ("doc_width", "doc_height"))),
           ("vp"      , (CE.extractViewDimensions, ("br_viewwidth", "br_viewheight"))),
+          ("eid"     , (CU.validateUuid, "event_id")),
           // Custom contexts
           ("co"   , (extractUrlEncJson, "contexts")),
           ("cx"   , (extractBase64EncJson, "contexts")),
@@ -185,9 +189,8 @@ object EnrichmentManager {
           ("se_pr"   , (ME.toTsvSafe, "se_property")),
           ("se_va"   , (CU.stringToDoublelike, "se_value")),
           // Custom unstructured events
-          ("ue_na"   , (ME.toTsvSafe, "ue_name")),
-          ("ue_pr"   , (extractUrlEncJson, "ue_properties")),
-          ("ue_px"   , (extractBase64EncJson, "ue_properties")),
+          ("ue_pr"   , (extractUrlEncJson, "unstruct_event")),
+          ("ue_px"   , (extractBase64EncJson, "unstruct_event")),
           // Ecommerce transactions
           ("tr_id"   , (ME.toTsvSafe, "tr_orderid")),
           ("tr_af"   , (ME.toTsvSafe, "tr_affiliation")),
@@ -211,8 +214,15 @@ object EnrichmentManager {
           ("pp_may"  , (CU.stringToJInteger, "pp_yoffset_max")))
 
     val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
-  
+
     val transform = event.transform(sourceMap, transformMap)
+
+    if (event.network_userid == null) {
+      raw.userId match {
+        case s:Some[String] => event.network_userid = s.get
+        case _ => ()
+      }
+    }
 
     // Potentially update the page_url and set the page URL components
     val pageUri = WPE.extractPageUri(raw.refererUri, Option(event.page_url))
@@ -230,21 +240,42 @@ object EnrichmentManager {
       event.page_urlfragment = components.fragment.orNull
     }
 
-    // Get the geo-location from the IP address
-    val geoLocation = GE.extractGeoLocation(geo, raw.ipAddress.orNull)
-    for (loc <- geoLocation; l <- loc) {
-      event.geo_country = l.countryCode
-      event.geo_region = l.region.orNull
-      event.geo_city = l.city.orNull
-      event.geo_zipcode = l.postalCode.orNull
-      event.geo_latitude = l.latitude
-      event.geo_longitude = l.longitude
+    // If our IpToGeo enrichment is enabled,
+    // get the geo-location from the IP address
+    val geoLocation = {
+      registry.getIpLookupsEnrichment match {
+        case Some(geo) => {
+          raw.ipAddress match {
+            case Some(address) => {
+              val ipLookupResult = geo.extractIpInformation(address)
+              for (res <- ipLookupResult) {
+                for ( loc <- res._1) {
+                  event.geo_country = loc.countryCode
+                  event.geo_region = loc.region.orNull
+                  event.geo_city = loc.city.orNull
+                  event.geo_zipcode = loc.postalCode.orNull
+                  event.geo_latitude = loc.latitude
+                  event.geo_longitude = loc.longitude
+                  event.geo_region_name = loc.regionName.orNull
+                }
+                event.ip_isp = res._2.orNull
+                event.ip_org = res._3.orNull
+                event.ip_domain = res._4.orNull
+                event.ip_netspeed = res._5.orNull
+              }
+              ipLookupResult
+            }
+            case None => unitSuccess
+          }
+        }
+        case None => unitSuccess
+      }
     }
 
     // Potentially set the referrer details and URL components
     val refererUri = CU.stringToUri(event.page_referrer)
     for (uri <- refererUri; u <- uri) {
-      
+
       // Set the URL components
       val components = CU.explodeUri(u)
       event.refr_urlscheme = components.scheme
@@ -255,10 +286,15 @@ object EnrichmentManager {
       event.refr_urlfragment = components.fragment.orNull
 
       // Set the referrer details
-      for (refr <- WAE.extractRefererDetails(u, event.page_urlhost)) {
-        event.refr_medium = refr.medium.toString
-        event.refr_source = refr.source.orNull
-        event.refr_term = refr.term.orNull
+      registry.getRefererParserEnrichment match {
+        case Some(rp) => {
+          for (refr <- rp.extractRefererDetails(u, event.page_urlhost)) {
+            event.refr_medium = refr.medium.toString
+            event.refr_source = refr.source.orNull
+            event.refr_term = refr.term.orNull
+          }
+        }
+        case None => unitSuccess
       }
     }
 
@@ -290,8 +326,9 @@ object EnrichmentManager {
     event.refr_urlfragment = CU.truncate(event.refr_urlfragment, 255)
     event.refr_term = CU.truncate(event.refr_term, 255)
     event.se_label = CU.truncate(event.se_label, 255)
+    event.etl_tstamp = etlTstamp
 
-    // Collect our errors on Failure, or return our event on Success 
+    // Collect our errors on Failure, or return our event on Success
     (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| geoLocation.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {
       (_,_,_,_,_,_,_) => event
     }

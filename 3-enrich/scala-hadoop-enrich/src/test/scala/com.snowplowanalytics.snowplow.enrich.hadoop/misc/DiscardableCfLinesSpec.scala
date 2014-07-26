@@ -44,10 +44,10 @@ object DiscardableCfLinesSpec {
  * CloudFront-format rows which should
  * be discarded.
  */
-class DiscardableCfLinesSpec extends Specification with TupleConversions {
+class DiscardableCfLinesSpec extends Specification {
 
   "A job which processes expected but discardable CloudFront input lines" should {
-    EtlJobSpec("cloudfront", "0").
+    EtlJobSpec("cloudfront", "1", false, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), DiscardableCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output =>
         "not write any events" in {
@@ -59,7 +59,7 @@ class DiscardableCfLinesSpec extends Specification with TupleConversions {
           trap must beEmpty
         }
       }.
-      sink[String](JsonLine("badFolder")){ error =>
+      sink[String](Tsv("badFolder")){ error =>
         "not write any bad rows" in {
           error must beEmpty
         }
