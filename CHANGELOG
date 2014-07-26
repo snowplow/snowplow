@@ -15,7 +15,7 @@ StorageLoader: updated combined Bash script to support enrichments path (#917)
 Scala Hadoop Enrich: bumped to 0.6.0
 Scala Hadoop Enrich: bumped Scala to 2.10.4 (#912)
 Scala Hadoop Enrich: bumped Scalding to 0.11.1 (#911)
-Scala Hadoop Enrich: bump Hadoop to 1.2.1 (#913)
+Scala Hadoop Enrich: bumped Hadoop to 1.2.1 (#913)
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.5.0 (#788)
 Scala Hadoop Enrich: passed etl_tstamp into Scala Common Enrich (#817)
 Scala Hadoop Enrich: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#835)
@@ -41,10 +41,10 @@ Scala Common Enrich: added IP -> organization lookup (#887)
 Scala Common Enrich: added IP -> domain lookup (#886)
 Scala Common Enrich: added IP -> net speed lookup (#889)
 Scala Common Enrich: added validation for transaction ID (#428)
-Scala Common Enrich: rename Tests to Specs for consistency (#618)
+Scala Common Enrich: renamed Tests to Specs for consistency (#618)
 Scala Hadoop Shred: bumped to 0.2.0
 Scala Hadoop Shred: bumped to Scala Common Enrich 0.5.0 (#918)
-Scala Hadoop Shred: trailing empty fields no longer causes shredding for that row to fail (#921)
+Scala Hadoop Shred: trailing empty fields no longer cause shredding for that row to fail (#921)
 Scala Hadoop Shred: updated column offsets for enriched events TSV (#915)
 Redshift: bumped table-def to 0.4.0
 Redshift: migration script added for 0.3.0 to 0.4.0
