@@ -16,6 +16,8 @@
     "$.data.osVersion",
     "$.data.deviceVendor",
     "$.data.deviceModel",
-    "$.data.carrier"
+    "$.data.carrier",
+    "$.data.openIdfa",
+    "$.data.appleIdfa"
     ]
 }
