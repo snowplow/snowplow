@@ -15,7 +15,7 @@
 
 (ns snowplow.clojure-collector.core
   "Core app handler"
-  (:use [compojure.core              :only [defroutes GET]]
+  (:use [compojure.core              :only [defroutes GET POST]]
         [ring.middleware.cookies     :only [wrap-cookies]]
         [ring.middleware.reload      :only [wrap-reload]]
         [ring.middleware.stacktrace  :only [wrap-stacktrace]]
@@ -26,27 +26,26 @@
             [snowplow.clojure-collector.config     :as config]
             [snowplow.clojure-collector.middleware :as mware]))
 
-(defn- send-cookie-etc'
-  "Wrapper for send-cookie-etc, pulling
-   in the configuration settings"
-  [cookies]
-  (responses/send-cookie-etc
+(defn- send-cookie-pixel-or-200'
+  "Wrapper for send-cookie-pixel-or-200,
+   pulling in the configuration settings"
+  [cookies pixel]
+  (responses/send-cookie-pixel-or-200
     cookies
     config/duration
     config/domain
     config/p3p-header
-    nil))
+    pixel))
 
 (defroutes routes
   "Our routes"
-  (GET "/i"                  {c :cookies} (send-cookie-etc' c))
-  (GET "/:vendor/:version/i" {c :cookies} (send-cookie-etc' c)) ; to support new namespacing
-  (GET "/i"                  {c :cookies} (send-cookie-etc' c))
-  (GET "/ice.png"            {c :cookies} (send-cookie-etc' c)) ; legacy name for i
-  (GET "/healthcheck"        request responses/send-200)
-  ;GET "/status"             from expose-metrics-as-json, only in development env
-  ;HEAD "/"                  from beanstalk.clj
-  (compojure.route/not-found responses/send-404))
+  (GET  "/i"                  {c :cookies} (send-cookie-pixel-or-200' c true))
+  (GET  "/ice.png"            {c :cookies} (send-cookie-pixel-or-200' c true))  ; legacy name for i
+  (POST "/:vendor/:version/i" {c :cookies} (send-cookie-pixel-or-200' c false)) ; for tracker POST support, no pixel
+  (GET  "/healthcheck"        request responses/send-200)
+  ;GET "/status"              available from expose-metrics-as-json, only in development env
+  ;HEAD "/"                   available from beanstalk.clj
+  (compojure.route/not-found  responses/send-404))
 
 (def app
   "Our routes plus selected wraps.

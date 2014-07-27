@@ -59,7 +59,7 @@
   [url id]
     (str url "&" id-name "=" id))
 
-(defn- send-pixel
+(defn- send-cookie-pixel
   "Respond with a transparent pixel,
    attaching `cookies` and `headers`"
   [cookies headers]
@@ -70,26 +70,24 @@
      :cookies cookies
      :body    (ByteArrayInputStream. pixel)})   
 
-(defn- send-redirect
-  "Respond with a 303 redirect,
+(defn- send-cookie-200
+  "Respond with a 200,
    attaching `cookies` and `headers`"
-  [cookies headers url]
-    {:status  303
-     :headers (assoc headers
-                    "Location" url)
-     :cookies cookies
-     :body    ""})
+  [cookies headers]
+    {:status  200
+     :headers headers
+     :cookies cookies})   
 
-(defn send-cookie-etc
+(defn send-cookie-pixel-or-200
   "Respond with the cookie and either a
-   transparent pixel or a redirect"
-  [cookies duration domain p3p-header url]
+   transparent pixel or a 200"
+  [cookies duration domain p3p-header pixel]
   (let [id      (generate-id cookies)
         cookies {cookie-name (set-cookie id duration domain)}
         headers {"P3P" p3p-header}]
-    (if (nil? url)
-      (send-pixel cookies headers)
-      (send-redirect cookies headers (attach-id url id)))))
+    (if pixel
+      (send-cookie-pixel cookies headers)
+      (send-cookie-200 cookies headers))))
 
 
 (def send-404
