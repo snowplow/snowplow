@@ -39,12 +39,14 @@
 
 (defroutes routes
   "Our routes"
-  (GET "/i"           {c :cookies} (send-cookie-etc' c))
-  (GET "/ice.png"     {c :cookies} (send-cookie-etc' c)) ; legacy name for i
-  (GET "/healthcheck" request responses/send-200)
-  ;GET "/status"      from expose-metrics-as-json, only in development env
-  ;HEAD "/"           from beanstalk.clj
-  (compojure.route/not-found  responses/send-404))
+  (GET "/i"                  {c :cookies} (send-cookie-etc' c))
+  (GET "/:vendor/:version/i" {c :cookies} (send-cookie-etc' c)) ; to support new namespacing
+  (GET "/i"                  {c :cookies} (send-cookie-etc' c))
+  (GET "/ice.png"            {c :cookies} (send-cookie-etc' c)) ; legacy name for i
+  (GET "/healthcheck"        request responses/send-200)
+  ;GET "/status"             from expose-metrics-as-json, only in development env
+  ;HEAD "/"                  from beanstalk.clj
+  (compojure.route/not-found responses/send-404))
 
 (def app
   "Our routes plus selected wraps.
