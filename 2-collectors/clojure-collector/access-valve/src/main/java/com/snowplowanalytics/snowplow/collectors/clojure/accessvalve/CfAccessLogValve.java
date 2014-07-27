@@ -10,8 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-
-package com.snowplowanalytics.tomcat;
+package com.snowplowanalytics.snowplow.collectors.clojure.accessvalve;
 
 // Java
 import java.util.Date;
@@ -26,7 +25,7 @@ import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 
 // Get our project settings
-import com.snowplowanalytics.tomcat.generated.ProjectSettings;
+import com.snowplowanalytics.snowplow.collectors.clojure.accessvalve.generated.Version;
 
 /**
  * A custom AccessLogValve for Tomcat to help generate CloudFront-like access logs.
@@ -103,7 +102,7 @@ public class CfAccessLogValve extends AccessLogValve {
         public void addElement(StringBuilder buf, Date date, Request request,
                 Response response, long time) {
             buf.append("tom-");
-            buf.append(ProjectSettings.VERSION);
+            buf.append(Version.VERSION);
         }
     }
 
