@@ -7,7 +7,7 @@ Clojure Collector: changed access-valve's package path to com.snowplowanalytics.
 Clojure Collector: changed access-valve to use Gradle (#899)
 Clojure Collector: changed access-valve to publish to war-resources/.ebextensions (#900)
 Clojure Collector: updated access-valve to log POSTs (#901)                               - TODO
-Clojure Collector: fixed IP address forwarding for VPC-based environments (#854)                        - TODO
+Clojure Collector: fixed IP address forwarding for VPC-based environments (#854)
 Clojure Collector: added support for POST as well as GET (#654)                                         - TODO
 Scala Common Enrich: added support for GET querystring containing N raw events as JSON (#543)           - TODO
 Scala Common Enrich: updated EnrichmentManager to process JSON fields (#903)                            - TODO
