@@ -48,8 +48,6 @@ dependencies {
     testCompile 'junit:junit:4.11'
 }
 
-buildDirName = '../../../..'
-
 task generateSources {
     project.ext.set("outputDir", "src/main/java/com/snowplowanalytics/snowplow/collectors/clojure/accessvalve/generated")
     doFirst {
@@ -88,4 +86,12 @@ jar {
       'Built-Date': new Date(),
       'Built-JDK': System.getProperty('java.version')
   }
+}
+
+task installJarInServlet(type: Copy) {
+    it.dependsOn jar
+
+    from 'build/libs'
+    into '../java-servlet/war-resources/.ebextensions'
+    include '**/*.jar'
 }
