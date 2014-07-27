@@ -5,7 +5,7 @@ Clojure Collector: merged snowplow/tomcat-cf-access-log-valve into Snowplow as c
 Clojure Collector: bumped access-valve to 0.1.0
 Clojure Collector: changed access-valve's package path to com.snowplowanalytics.snowplow.collectors.clojure.accessvalve (#924)
 Clojure Collector: changed access-valve to use Gradle (#899)
-Clojure Collector: changed access-valve to publish to war-resources/.ebextensions (#900)  - TODO
+Clojure Collector: changed access-valve to publish to war-resources/.ebextensions (#900)
 Clojure Collector: updated access-valve to log POSTs (#901)                               - TODO
 Clojure Collector: fixed IP address forwarding for VPC-based environments (#854)                        - TODO
 Clojure Collector: added support for POST as well as GET (#654)                                         - TODO
