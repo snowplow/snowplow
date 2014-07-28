@@ -11,10 +11,11 @@ Compared to the standard `AccessLogValve`, this valve:
 3. Re-implements the pattern 'i' to ensure that "" (empty string) is replaced with "-"
 4. Re-implements the pattern 'q' to remove the "?" and ensure "" (empty string) is replaced with "-"
 5. Overwrites the 'v' pattern, to write the version of this AccessLogValve, rather than the local server name
+6. Introduces a new pattern, 'w' to capture the request's body
+7. Introduces a new pattern, '~' to capture the request's content type
 
 To build:
 
     $ git clone git@github.com:snowplow/tomcat-cf-access-log-valve.git
     $ cd tomcat-cf-access-log-valve
-    $ sbt assembly
-
+    $ gradle jar

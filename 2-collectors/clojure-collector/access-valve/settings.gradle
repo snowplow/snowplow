@@ -16,4 +16,4 @@ include 'api'
 include 'services:webservice'
 */
 
-rootProject.name = 'cf-access-log-valve'
+rootProject.name = 'snowplow-access-valve'

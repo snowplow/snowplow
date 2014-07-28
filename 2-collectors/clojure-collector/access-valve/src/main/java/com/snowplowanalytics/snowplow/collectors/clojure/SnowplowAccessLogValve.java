@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2014 SnowPlow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,22 +10,32 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.collectors.clojure.accessvalve;
+package com.snowplowanalytics.snowplow.collectors.clojure;
 
 // Java
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.net.URLEncoder;
+import java.io.BufferedReader;
 import java.io.UnsupportedEncodingException;
+import java.io.IOException;
+import java.nio.charset.Charset;
 
-// Tomcat
+// Apache Commons
+import org.apache.commons.codec.binary.Base64;
+
+// Tomcat, Catalina and Coyote
 import org.apache.catalina.valves.AccessLogValve;
+import org.apache.catalina.Context;
+import org.apache.catalina.connector.Connector;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
+import org.apache.tomcat.util.buf.ByteChunk;
+import org.apache.coyote.ActionCode;
 
-// Get our project settings
-import com.snowplowanalytics.snowplow.collectors.clojure.accessvalve.generated.Version;
+// This project
+import com.snowplowanalytics.snowplow.collectors.clojure.generated.ProjectSettings;
 
 /**
  * A custom AccessLogValve for Tomcat to help generate CloudFront-like access logs.
@@ -33,24 +43,26 @@ import com.snowplowanalytics.snowplow.collectors.clojure.accessvalve.generated.V
  *
  * Introduces a new pattern, 'I', to escape an incoming header
  * Introduces a new pattern, 'C', to fetch a cookie stored on the response
+ * Introduces a new pattern, 'w' to capture the request's body
+ * Introduces a new pattern, '~' to capture the request's content type
  * Re-implements the pattern 'i' to ensure that "" (empty string) is replaced with "-"
  * Re-implements the pattern 'q' to remove the "?" and ensure "" (empty string) is replaced with "-"
  * Overwrites the 'v' pattern, to write the version of this AccessLogValve, rather than the local server name
  *
  * This is adapted from the original AccessLogValve code here:
- * http://javasourcecode.org/html/open-source/tomcat/tomcat-7.0.29/org/apache/catalina/valves/AccessLogValve.java.html
+ * http://grepcode.com/file/repo1.maven.org/maven2/org.apache.tomcat/tomcat-catalina/7.0.29/org/apache/catalina/valves/AccessLogValve.java
  */
-public class CfAccessLogValve extends AccessLogValve {
-
-    private static final String cfEncoding = "UTF-8";
+public class SnowplowAccessLogValve extends AccessLogValve {
 
     /**
-     * Create an AccessLogElement implementation which needs header string.
+     * Create an AccessLogElement implementation which operates on a
+     * header string.
      *
      * Changes:
      * - Added 'I' pattern, to escape an incoming header
      * - Added 'C' pattern, to fetch a cookie on the response (not request)
      * - Fixed 'i' pattern, to replace "" (empty string) with "-"
+     * - Added 'w' pattern, to capture the request's body
      */
     @Override
     protected AccessLogElement createAccessLogElement(String header, char pattern) {
@@ -72,11 +84,12 @@ public class CfAccessLogValve extends AccessLogValve {
     }
 
     /**
-     * create an AccessLogElement implementation which doesn't need a header string.
+     * Create an AccessLogElement implementation which doesn't need a header string.
      *
      * Changes:
      * - Fixed 'q' pattern, to remove the "?" and ensure "" (empty string) is replaced with "-"
-     * - Overwrote 'v' pattern, to write the version of this AccessLogValve, rather than the local server name  
+     * - Overwrote 'v' pattern, to write the version of this AccessLogValve, rather than the local server name
+     * - Added '~' pattern, to capture the request's content type
      */
     @Override
     protected AccessLogElement createAccessLogElement(char pattern) {
@@ -87,6 +100,12 @@ public class CfAccessLogValve extends AccessLogValve {
             // Return the version of this AccessLogValve
             case 'v':
                 return new ValveVersionElement();
+            // Return the request body
+            case 'w':
+                return new Base64EncodedBodyElement();
+            // Return the content type of the request
+            case '~':
+                return new EscapedContentTypeElement();
             // Back to AccessLogValve's handler
             default:
                 return super.createAccessLogElement(pattern);
@@ -102,7 +121,7 @@ public class CfAccessLogValve extends AccessLogValve {
         public void addElement(StringBuilder buf, Date date, Request request,
                 Response response, long time) {
             buf.append("tom-");
-            buf.append(Version.VERSION);
+            buf.append(ProjectSettings.VERSION);
         }
     }
 
@@ -152,9 +171,9 @@ public class CfAccessLogValve extends AccessLogValve {
                 Response response, long time) {
             Enumeration<String> iter = request.getHeaders(header);
             if (iter.hasMoreElements()) {
-                buf.append(encodeStringSafely(iter.nextElement()));
+                buf.append(uriEncodeSafely(iter.nextElement()));
                 while (iter.hasMoreElements()) {
-                    buf.append(',').append(encodeStringSafely(iter.nextElement()));
+                    buf.append(',').append(uriEncodeSafely(iter.nextElement()));
                 }
                 return;
             }
@@ -214,6 +233,39 @@ public class CfAccessLogValve extends AccessLogValve {
     }
 
     /**
+     * A new element - returns the content-type
+     * for the request's body, Base64-URL-safe-encoded.
+     */
+    protected static class EscapedContentTypeElement implements AccessLogElement {
+        @Override
+        public void addElement(StringBuilder buf, Date date, Request request,
+                Response response, long time) {
+
+            final String contentType = request.getContentType();
+            if (contentType != null) {
+                buf.append(uriEncodeSafely(contentType));
+                return;
+            }
+            buf.append('-');
+        }
+    }
+
+    /**
+     * A new element - returns the request's body,
+     * Base64-URL-safe-encoded.
+     */
+    protected static class Base64EncodedBodyElement implements AccessLogElement {
+        @Override
+        public void addElement(StringBuilder buf, Date date, Request request,
+                Response response, long time) {
+
+            buf.append(readBodyFromAttribute(request));
+        }
+    }
+
+
+
+    /**
      * Replaces a null or empty string with
      * a hyphen, to avoid the logs ending up
      * with any <TAB><TAB> entries (which can
@@ -231,16 +283,55 @@ public class CfAccessLogValve extends AccessLogValve {
     }
 
     /**
+     * Base64-URL-safe encodes a string or returns a
+     * "-" if not possible.
+     *
+     * @param b The byte array to encode
+     * @return The encoded string, or "-" if not possible
+     */
+    protected static String base64EncodeSafely(byte[] b) {
+        try {
+            return Base64.encodeBase64URLSafeString(b);
+        } catch (Exception e) {
+            return "-";
+        }
+    }
+
+    /**
      * Encodes a string or returns a "-" if not possible.
      *
      * @param s The String to encode
      * @return The encoded string
      */
-    protected static String encodeStringSafely(String s) {
+    protected static String uriEncodeSafely(String s) {
         try {
-            return URLEncoder.encode(s, cfEncoding);
+            return URLEncoder.encode(s, ProjectSettings.DEFAULT_ENCODING);
         } catch (Exception e) {
             return "-";
         }
-    }    
+    }
+
+    /**
+     * Reads the body from an attribute on the request.
+     * We assume this attribute has been set by the
+     * BodyRequestWrapper, which was pulled in by the
+     * XXX.
+     *
+     * @param request The request
+     * @return The request's body
+     */
+    protected static String readBodyFromAttribute(Request request) {
+
+        Object body = request.getAttribute(ProjectSettings.BODY_ATTRIBUTE);
+        if (body == null) {
+            return "-null";
+        }
+
+        try {
+            String str = (String) body;
+            return base64EncodeSafely(str.getBytes(ProjectSettings.DEFAULT_ENCODING));
+        } catch (Exception e) {
+            return "-cast";
+        }
+    }
 }

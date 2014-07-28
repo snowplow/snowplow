@@ -37,4 +37,4 @@
 .nb-gradle
 
 # Project specific
-Version.java
+ProjectSettings.java
