@@ -27,7 +27,7 @@ import Scalaz._
 import util.Tap._
 
 // This project
-import loaders.{CanonicalInput, NvGetPayload}
+import loaders.{CanonicalInput, GetPayload}
 import outputs.CanonicalOutput
 
 import utils.{ConversionUtils => CU}
@@ -73,7 +73,7 @@ object EnrichmentManager {
     // TODO: add support for other
     // payload types in the future
     val parameters = raw.payload match {
-      case NvGetPayload(_, _, p) => p
+      case GetPayload(_, _, p) => p
       case _ => throw new FatalEtlError("Only name-value pair GET payloads are currently supported") // TODO: change back to FatalEtlException when Cascading FailureTrap supports exclusions
     }
 
