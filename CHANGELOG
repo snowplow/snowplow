@@ -21,7 +21,7 @@ Scala Hadoop Enrich: bumped to 0.7.0                                            
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.6.0 (#940)                                             - TODO
 Scala Hadoop Enrich: updated to support generating multiple enriched events from one raw payload (#902)     - TODO
 StorageLoader: bumped to 0.3.2
-StorageLoader: removed EMPTYASNULL for loading JSONs (#942)                                                 - TODO
+StorageLoader: removed EMPTYASNULL for loading JSONs (#942)
 StorageLoader: wrote JSON Path file for mobile_context (#776)
 Redshift: added Redshift DDL for mobile_context (#542)
 
