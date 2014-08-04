@@ -17,22 +17,15 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.net.URLEncoder;
-import java.io.BufferedReader;
-import java.io.UnsupportedEncodingException;
-import java.io.IOException;
-import java.nio.charset.Charset;
 
 // Apache Commons
 import org.apache.commons.codec.binary.Base64;
 
 // Tomcat, Catalina and Coyote
 import org.apache.catalina.valves.AccessLogValve;
-import org.apache.catalina.Context;
-import org.apache.catalina.connector.Connector;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.coyote.ActionCode;
 
 // This project
 import com.snowplowanalytics.snowplow.collectors.clojure.generated.ProjectSettings;
