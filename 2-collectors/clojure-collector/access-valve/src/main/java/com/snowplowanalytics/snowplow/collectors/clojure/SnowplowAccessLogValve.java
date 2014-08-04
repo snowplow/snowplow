@@ -310,7 +310,7 @@ public class SnowplowAccessLogValve extends AccessLogValve {
      * Reads the body from an attribute on the request.
      * We assume this attribute has been set by the
      * BodyRequestWrapper, which was pulled in by the
-     * XXX.
+     * SnowplowBodyFilter.
      *
      * @param request The request
      * @return The request's body
@@ -319,14 +319,18 @@ public class SnowplowAccessLogValve extends AccessLogValve {
 
         Object body = request.getAttribute(ProjectSettings.BODY_ATTRIBUTE);
         if (body == null) {
-            return "-null";
+            return "-";
         }
 
         try {
             String str = (String) body;
-            return base64EncodeSafely(str.getBytes(ProjectSettings.DEFAULT_ENCODING));
+            if (str.equals("")) {
+                return "-";
+            } else {
+                return base64EncodeSafely(str.getBytes(ProjectSettings.DEFAULT_ENCODING));
+            }
         } catch (Exception e) {
-            return "-cast";
+            return "-";
         }
     }
 }
