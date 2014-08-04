@@ -29,7 +29,7 @@ import com.snowplowanalytics.maxmind.iplookups.IpLocation
 import com.github.fge.jsonschema.core.report.ProcessingMessage
 
 // This project
-import common.inputs.CanonicalInput
+import common.loaders.CanonicalInput
 import common.outputs.CanonicalOutput
 import common.enrichments.registry.Enrichment
 

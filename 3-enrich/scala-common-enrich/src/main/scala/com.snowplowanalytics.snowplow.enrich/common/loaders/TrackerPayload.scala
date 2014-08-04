@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package inputs
+package loaders
 
 // Java
 import java.net.URI
@@ -19,6 +19,7 @@ import java.net.URLDecoder
 
 // Scala
 import scala.collection.JavaConversions._
+import scala.language.existentials
 
 // Scalaz
 import scalaz._
@@ -32,49 +33,32 @@ import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTime
 
 /**
- * The canonical input format for the ETL
- * process: it should be possible to
- * convert any collector input format to
- * this format, ready for the main,
- * collector-agnostic stage of the ETL.
- */
-final case class CanonicalInput(
-    timestamp:  DateTime, // Collector timestamp
-    payload:    TrackerPayload, // See below for defn.
-    source:     InputSource,    // See below for defn.
-    encoding:   String, 
-    ipAddress:  Option[String],
-    userAgent:  Option[String],
-    refererUri: Option[String],
-    headers:    List[String],   // May be Nil so not a Nel
-    userId:     Option[String])
-
-/**
- * Unambiguously identifies the collector
- * source of this input line.
- */
-final case class InputSource(
-    collector: String, // Collector name/version
-    hostname:  Option[String])
-
-/**
  * All payloads sent by trackers must inherit from
  * this class.
  */
-trait TrackerPayload
+abstract class TrackerPayload[P](
+  val vendor:  String,
+  val version: String,
+  val payload: P)
 
 /**
  * All GET payloads sent by trackers inherit from
  * this class.
  */
-trait GetPayload extends TrackerPayload
+abstract class GetPayload[P](
+  override val vendor:  String,
+  override val version: String,
+  override val payload: P) extends TrackerPayload(vendor, version, payload)
 
 /**
  * A tracker payload for a single event, delivered
  * via a set of name-value pairs on the querystring
  * of a GET.
  */
-case class NvGetPayload(payload: NameValueNel) extends GetPayload
+case class NvGetPayload(
+  override val vendor: String,
+  override val version: String,
+  override val payload: NameValueNel) extends GetPayload[NameValueNel](vendor, version, payload)
 
 /**
  * A companion object which holds
@@ -83,6 +67,15 @@ case class NvGetPayload(payload: NameValueNel) extends GetPayload
  * and related types.
  */
 object TrackerPayload {
+
+  /**
+   * Defaults for the tracker vendor and version
+   * before we implemented this into Snowplow.
+   */
+  object Defaults {
+    val vendor = "com.snowplowanalytics.snowplow"
+    val version = "tp1"
+  }
 
   /**
    * Converts a querystring String
