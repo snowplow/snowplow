@@ -27,8 +27,23 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 /**
  * The dedicated loader for events
  * collected by CloudFront.
+ *
+ * We support the following CloudFront access
+ * log formats:
+ *
+ * 1. Pre-12 Sep 2012
+ * 2. 12 Sep 2012 - 21 Oct 2013
+ * 3. 21 Oct 2013 - 29 Apr 2014
+ * 4. Potential future updates, provided they
+ *    are solely additive in nature
+ *
+ * For more details on this format, please see:
+ * http://docs.amazonwebservices.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#LogFileFormat
  */
-object CloudfrontLoader extends CloudfrontLikeLoader {
+object CloudfrontLoader extends CollectorLoader[String] {
+
+  // The encoding used on CloudFront logs
+  private val CfEncoding = "UTF-8"
 
   /**
    * Returns the InputSource for this
@@ -40,89 +55,6 @@ object CloudfrontLoader extends CloudfrontLikeLoader {
    */
   def getSource = InputSource("cloudfront", None)
 
-  /**
-   * This is an actual CloudFront log.
-   * Unfortunate as it means we
-   * have some ambiguities to resolve.
-   */
-  def isActualCloudfront = true
-}
-
-/**
- * The dedicated loader for events
- * collected by the Clojure
- * Collector running on Tomcat (with
- * a Tomcat log format which
- * approximates the CloudFront format).
- */
-object CljTomcatLoader extends CloudfrontLikeLoader {
-
-  /**
-   * Returns the InputSource for this
-   * loader.
-   *
-   *
-   * TODO: we need to update this in
-   * this future when we have a way
-   * of retrieving the Clojure Collector's
-   * version (currently it's hardcoded
-   * to clj-tomcat).
-   *
-   * TODO: repetition of the identifier
-   * String from getCollectorLoader. Can
-   * we prevent duplication?
-   */
-  def getSource = InputSource("clj-tomcat", None)
-
-  /**
-   * This is not a real CloudFront log.
-   * Good because it means we can
-   * sidestep the ambiguities in the
-   * CloudFront access log format.
-   */
-  def isActualCloudfront = false
-}
-
-/**
- * Trait to hold helpers related to the
- * CloudFront input format.
- *
- * By "CloudFront input format", we mean the
- * CloudFront access log format for download
- * distributions (not streaming), September
- * 2012 release but with support for the pre-
- * September 2012 format as well.
- *
- * For more details on this format, please see:
- * http://docs.amazonwebservices.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#LogFileFormat
- */
-trait CloudfrontLikeLoader extends CollectorLoader[String] {
-
-  /**
-   * Gets the source of this input.
-   * Implemented by the implementing
-   * objects (see above).
-   *
-   * TODO: we need to update this in
-   * this future when we have a way
-   * of retrieving the Clojure Collector's
-   * version (currently it's hardcoded
-   * to clj-tomcat).
-   */
-  def getSource: InputSource
-
-  /**
-   * Whether this is true CloudFront or
-   * CloudFront-like. Important to
-   * distinguish because the CloudFront
-   * format has some ambiguities which
-   * we can sidestep if we know we are
-   * processing Clojure-Tomcat logs.
-   */
-  def isActualCloudfront: Boolean
-
-  // The encoding used on CloudFront logs
-  private val CfEncoding = "UTF-8"
 
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
@@ -186,15 +118,14 @@ trait CloudfrontLikeLoader extends CollectorLoader[String] {
       // Is this a request for the tracker? Might be a browser favicon request or similar
       if (!isIceRequest(objct)) return None.success
 
-      // Validations
-      // Let's strip double-encodings if this is an actual CloudFront row
+      // Validations, and let's strip double-encodings
       val timestamp = toTimestamp(date, time)
-      val querystring = if (isActualCloudfront) singleEncodePcts(qs) else qs
+      val querystring = singleEncodePcts(qs)
       val payload = TrackerPayload.extractGetPayload(toOption(querystring), CfEncoding)
 
       // No validation (yet) on the below
-      val userAgent  = if (isActualCloudfront) singleEncodePcts(ua) else ua
-      val refr = if (isActualCloudfront) singleEncodePcts(rfr) else rfr
+      val userAgent  = singleEncodePcts(ua)
+      val refr = singleEncodePcts(rfr)
       val referer = toOption(refr) map toCleanUri
 
       (timestamp.toValidationNel |@| payload.toValidationNel) { (t, p) =>
@@ -216,7 +147,7 @@ trait CloudfrontLikeLoader extends CollectorLoader[String] {
    *         or an error String, all wrapped in
    *         a Scalaz Validation
    */
-  private[inputs] def toTimestamp(date: String, time: String): Validation[String, DateTime] =
+  def toTimestamp(date: String, time: String): Validation[String, DateTime] =
     try {
       DateTime.parse("%sT%s+00:00".format(date, time)).success // Construct a UTC ISO date from CloudFront date and time
     } catch {
@@ -231,7 +162,7 @@ trait CloudfrontLikeLoader extends CollectorLoader[String] {
    * @param field The field to check
    * @return True if the String was a hyphen "-"
    */
-  private[inputs] def toOption(field: String): Option[String] = Option(field) match {
+  def toOption(field: String): Option[String] = Option(field) match {
     case Some("-") => None
     case Some("")  => None
     case s => s // Leaves any other Some(x) or None as-is
