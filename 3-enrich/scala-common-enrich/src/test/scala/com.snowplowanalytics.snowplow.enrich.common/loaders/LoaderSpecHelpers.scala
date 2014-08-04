@@ -57,6 +57,6 @@ object LoaderSpecHelpers {
    * convert
    * @return the populated NvGetPayload
    */
-  def toPayload(head: NvPair, tail: NvPair*): NvGetPayload =
-    new NvGetPayload("com.snowplowanalytics.snowplow", "tp1", toNameValueNel(head, tail: _*))
+  def toPayload(head: NvPair, tail: NvPair*): GetPayload =
+    new GetPayload("com.snowplowanalytics.snowplow", "tp1", toNameValueNel(head, tail: _*))
 }

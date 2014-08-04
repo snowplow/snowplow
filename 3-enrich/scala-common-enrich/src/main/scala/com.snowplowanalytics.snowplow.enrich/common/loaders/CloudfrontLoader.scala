@@ -131,7 +131,7 @@ object CloudfrontLoader extends CollectorLoader[String] {
       (timestamp.toValidationNel |@| payload.toValidationNel) { (t, p) =>
         CanonicalInput(
         t,
-        NvGetPayload(TrackerPayload.Defaults.vendor, TrackerPayload.Defaults.version, p),
+        GetPayload(TrackerPayload.Defaults.vendor, TrackerPayload.Defaults.version, p),
         getSource,
         CfEncoding,
         toOption(ip),

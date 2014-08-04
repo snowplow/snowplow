@@ -42,23 +42,14 @@ abstract class TrackerPayload[P](
   val payload: P)
 
 /**
- * All GET payloads sent by trackers inherit from
- * this class.
- */
-abstract class GetPayload[P](
-  override val vendor:  String,
-  override val version: String,
-  override val payload: P) extends TrackerPayload(vendor, version, payload)
-
-/**
  * A tracker payload for a single event, delivered
  * via a set of name-value pairs on the querystring
  * of a GET.
  */
-case class NvGetPayload(
+case class GetPayload(
   override val vendor: String,
   override val version: String,
-  override val payload: NameValueNel) extends GetPayload[NameValueNel](vendor, version, payload)
+  override val payload: NameValueNel) extends TrackerPayload[NameValueNel](vendor, version, payload)
 
 /**
  * A companion object which holds
