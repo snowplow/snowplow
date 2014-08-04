@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package inputs
+package loaders
 
 // Scalaz
 import scalaz._
@@ -106,7 +106,7 @@ object CljTomcatLoader extends CollectorLoader[String] {
       (timestamp.toValidationNel |@| payload.toValidationNel) { (t, p) =>
         CanonicalInput(
           t,
-          NvGetPayload(p),
+          NvGetPayload(TrackerPayload.Defaults.vendor, TrackerPayload.Defaults.version, p),
           getSource,
           CljTomcatEncoding,
           CloudfrontLoader.toOption(ip),

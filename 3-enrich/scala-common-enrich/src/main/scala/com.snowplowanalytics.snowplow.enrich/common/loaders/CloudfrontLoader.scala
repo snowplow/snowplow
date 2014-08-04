@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package inputs
+package loaders
 
 // Scalaz
 import scalaz._
@@ -129,7 +129,16 @@ object CloudfrontLoader extends CollectorLoader[String] {
       val referer = toOption(refr) map toCleanUri
 
       (timestamp.toValidationNel |@| payload.toValidationNel) { (t, p) =>
-        Some(CanonicalInput(t, NvGetPayload(p), getSource, CfEncoding, toOption(ip), toOption(userAgent), referer, Nil, None)) // No headers or separate userId.
+        CanonicalInput(
+        t,
+        NvGetPayload(TrackerPayload.Defaults.vendor, TrackerPayload.Defaults.version, p),
+        getSource,
+        CfEncoding,
+        toOption(ip),
+        toOption(userAgent),
+        referer,
+        Nil,
+        None).some
       }
     }
 
@@ -180,7 +189,7 @@ object CloudfrontLoader extends CollectorLoader[String] {
    * @param s The String to clean
    * @return the cleaned string
    */
-  private[inputs] def toCleanUri(uri: String): String = 
+  private[loaders] def toCleanUri(uri: String): String = 
     StringUtils.removeEnd(uri, "%")
 
   /**
@@ -217,7 +226,7 @@ object CloudfrontLoader extends CollectorLoader[String] {
    * @param str The String which potentially has double-encoded %s
    * @return the String with %s now single-encoded
    */
-  private[inputs] def singleEncodePcts(str: String): String =
+  private[loaders] def singleEncodePcts(str: String): String =
     str
       .replaceAll("%25([0-9a-fA-F][0-9a-fA-F])", "%$1") // Decode %25XX to %XX
 }

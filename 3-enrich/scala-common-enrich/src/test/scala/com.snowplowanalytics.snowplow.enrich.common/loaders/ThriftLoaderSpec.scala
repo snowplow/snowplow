@@ -13,7 +13,7 @@
 package com.snowplowanalytics.snowplow
 package enrich
 package common
-package inputs
+package loaders
 
 // Commons Codec
 import org.apache.commons.codec.binary.Base64

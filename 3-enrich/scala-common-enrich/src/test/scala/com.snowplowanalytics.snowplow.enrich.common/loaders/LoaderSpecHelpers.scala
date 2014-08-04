@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package inputs
+package loaders
 
 // Apache URLEncodedUtils
 import org.apache.http.message.BasicNameValuePair
@@ -58,5 +58,5 @@ object LoaderSpecHelpers {
    * @return the populated NvGetPayload
    */
   def toPayload(head: NvPair, tail: NvPair*): NvGetPayload =
-    new NvGetPayload(toNameValueNel(head, tail: _*))
+    new NvGetPayload("com.snowplowanalytics.snowplow", "tp1", toNameValueNel(head, tail: _*))
 }

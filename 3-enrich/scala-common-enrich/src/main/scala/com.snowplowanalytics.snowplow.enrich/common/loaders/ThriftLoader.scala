@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich.common
-package inputs
+package loaders
 
 // Apache Commons
 import org.apache.commons.lang3.StringUtils
@@ -83,7 +83,7 @@ object ThriftLoader extends CollectorLoader[Array[Byte]] {
         Some(
           CanonicalInput(
             new DateTime(snowplowRawEvent.timestamp, DateTimeZone.UTC),
-            new NvGetPayload(p),
+            new NvGetPayload(TrackerPayload.Defaults.vendor, TrackerPayload.Defaults.version, p),
             InputSource(snowplowRawEvent.collector, hostname),
             snowplowRawEvent.encoding,
             ip,
