@@ -31,9 +31,6 @@ import org.apache.http.client.utils.URLEncodedUtils
 // Joda-Time
 import org.joda.time.DateTime
 
-// Argonaut
-import argonaut.Json
-
 /**
  * The canonical input format for the ETL
  * process: it should be possible to
@@ -78,13 +75,6 @@ trait GetPayload extends TrackerPayload
  * of a GET.
  */
 case class NvGetPayload(payload: NameValueNel) extends GetPayload
-
-/**
- * A tracker payload for a single event, expressed
- * as JSON.
- *
- */
-case class JsonPayload(payload: Json) extends TrackerPayload
 
 /**
  * A companion object which holds
