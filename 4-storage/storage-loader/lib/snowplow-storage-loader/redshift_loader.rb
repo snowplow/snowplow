@@ -169,7 +169,7 @@ module Snowplow
       def build_copy_from_json_statement(config, s3_objectpath, jsonpaths_file, table, maxerror)
         credentials = get_credentials(config)
         # TODO: what about COMPUPDATE/ROWS?
-        "COPY #{table} FROM '#{s3_objectpath}' CREDENTIALS '#{credentials}' JSON AS '#{jsonpaths_file}' MAXERROR #{maxerror} EMPTYASNULL TRUNCATECOLUMNS TIMEFORMAT 'auto' ACCEPTINVCHARS;"
+        "COPY #{table} FROM '#{s3_objectpath}' CREDENTIALS '#{credentials}' JSON AS '#{jsonpaths_file}' MAXERROR #{maxerror} TRUNCATECOLUMNS TIMEFORMAT 'auto' ACCEPTINVCHARS;"
       end
       module_function :build_copy_from_json_statement
 
