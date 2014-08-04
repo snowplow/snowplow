@@ -41,7 +41,7 @@
   "Our routes"
   (GET  "/i"                  {c :cookies} (send-cookie-pixel-or-200' c true))
   (GET  "/ice.png"            {c :cookies} (send-cookie-pixel-or-200' c true))  ; legacy name for i
-  (POST "/:vendor/:version/i" {c :cookies} (send-cookie-pixel-or-200' c false)) ; for tracker POST support, no pixel
+  (POST "/:vendor/:version"   {c :cookies} (send-cookie-pixel-or-200' c false)) ; for tracker POST support, no pixel
   (GET  "/healthcheck"        request responses/send-200)
   ;GET "/status"              available from expose-metrics-as-json, only in development env
   ;HEAD "/"                   available from beanstalk.clj
