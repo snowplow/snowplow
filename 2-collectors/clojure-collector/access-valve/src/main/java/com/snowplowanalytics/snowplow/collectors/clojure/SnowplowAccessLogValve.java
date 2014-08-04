@@ -176,7 +176,9 @@ public class SnowplowAccessLogValve extends AccessLogValve {
 
     /**
      * Write Querystring _without_ an initial '?', for compatibility with CloudFront - %q
-     * Makes sure to hyphenate in the case of null/empty element.
+     * Makes sure to leave empty ("") in case of null/empty element - necessary because
+     * we will be manually appending some values to the querystring in the server.xml,
+     * and we don't want "-&amp;cv=clj-0.7.0-tom-0.1.0&amp;..."
      */
     protected static class BetterQueryElement implements AccessLogElement {
         @Override
@@ -189,7 +191,7 @@ public class SnowplowAccessLogValve extends AccessLogValve {
                     return;
                 }
             }
-            buf.append('-');
+            buf.append(""); // No hyphen
         }
     }
 
