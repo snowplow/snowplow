@@ -36,9 +36,13 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
 
   "This is a specification to test the CloudfrontLoader functionality"                                      ^
                                                                                                            p^
-  "toCanonicalInput should return a CanonicalInput for a valid CloudFront log record"                       ! e1^
-  "toCanonicalInput should return a None for a CloudFront log record not representing a Snowplow raw event" ! e2^
-  "toCanonicalInput should return a Validation Failure for an invalid or corrupted CloudFront log record"   ! e3^
+  "toTimestamp should create a DateTime from valid date and time Strings"                                   ! e1^
+  "toOption should return a None if the querystring is empty"                                               ! e2^
+  "toCleanUri should remove a trailing % from a URI correctly"                                              ! e3^
+  "singleEncodePcts should correctly single-encoding double-encoded % signs"                                ! e4^
+  "toCanonicalInput should return a CanonicalInput for a valid CloudFront log record"                       ! e5^
+  "toCanonicalInput should return a None for a CloudFront log record not representing a Snowplow raw event" ! e6^
+  "toCanonicalInput should return a Validation Failure for an invalid or corrupted CloudFront log record"   ! e7^
                                                                                                             end
 
   object Expected {
@@ -46,7 +50,48 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
     val source   = InputSource("cloudfront", None)
   }
 
-  def e1 =
+  def e1 = 
+    "SPEC NAME"           || "DATE"       | "TIME"         | "EXP. DATETIME"                                 |
+    "Valid with ms #1"    !! "2003-12-04" ! "00:18:48.234" ! DateTime.parse("2003-12-04T00:18:48.234+00:00") |
+    "Valid with ms #2"    !! "2011-08-29" ! "23:56:01.003" ! DateTime.parse("2011-08-29T23:56:01.003+00:00") |
+    "Valid without ms #1" !! "2013-05-12" ! "17:34:10"     ! DateTime.parse("2013-05-12T17:34:10+00:00")     |
+    "Valid without ms #2" !! "1980-04-01" ! "21:20:04"     ! DateTime.parse("1980-04-01T21:20:04+00:00")     |> {
+      (_, date, time, expected) => {
+        val actual = CloudfrontLoader.toTimestamp(date, time)     
+        actual must beSuccessful(expected)
+      }
+    }
+
+  def e2 =
+    foreach(Seq(null, "", "-")) { empty: String =>
+        CloudfrontLoader.toOption(empty) must beNone
+      }
+
+  def e3 =
+    "SPEC NAME"                 || "URI"                                              | "EXP. URI"                                        |
+    "URI with trailing % #1"    !! "https://github.com/snowplow/snowplow/issues/494%" ! "https://github.com/snowplow/snowplow/issues/494" |
+    "URI with trailing % #2"    !! "http://bbc.co.uk%"                                ! "http://bbc.co.uk"                                |
+    "URI without trailing % #1" !! "https://github.com/snowplow/snowplow/issues/494"  ! "https://github.com/snowplow/snowplow/issues/494" |
+    "URI without trailing % #2" !! "http://bbc.co.uk"                                 ! "http://bbc.co.uk"                                |> {
+      (_, uri, expected) => {
+        val actual = CloudfrontLoader.toCleanUri(uri)     
+        actual  must_== expected
+      }
+    }
+
+  def e4 =
+    "SPEC NAME"                                 || "QUERYSTRING"                                    | "EXP. QUERYSTRING"                             |
+    "Double-encoded %s, modify"                 !! "e=pv&page=Celestial%2520Tarot%2520-%2520Psychic%2520Bazaar&dtm=1376487150616&tid=483686&vp=1097x482&ds=1097x1973&vid=1&duid=1f2719e9217b5e1b&p=web&tv=js-0.12.0&fp=3748874661&aid=pbzsite&lang=en-IE&cs=utf-8&tz=Europe%252FLondon&refr=http%253A%252F%252Fwww.psychicbazaar.com%252Fsearch%253Fsearch_query%253Dcelestial%252Btarot%252Bdeck&f_java=1&res=1097x617&cd=24&cookie=1&url=http%253A%252F%252Fwww.psychicbazaar.com%252Ftarot-cards%252F48-celestial-tarot.html" ! "e=pv&page=Celestial%20Tarot%20-%20Psychic%20Bazaar&dtm=1376487150616&tid=483686&vp=1097x482&ds=1097x1973&vid=1&duid=1f2719e9217b5e1b&p=web&tv=js-0.12.0&fp=3748874661&aid=pbzsite&lang=en-IE&cs=utf-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2Fsearch%3Fsearch_query%3Dcelestial%2Btarot%2Bdeck&f_java=1&res=1097x617&cd=24&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Ftarot-cards%2F48-celestial-tarot.html" |
+    "Ambiguous - assume double-encoded, modify" !! "%2588 is 1x-encoded 25 percent OR 2x-encoded ^" ! "%88 is 1x-encoded 25 percent OR 2x-encoded ^" |
+    "Single-encoded %s, leave"                  !! "e=pp&page=Dreaming%20Way%20Tarot%20-%20Psychic%20Bazaar&pp_mix=0&pp_max=0&pp_miy=0&pp_may=0&dtm=1376984181667&tid=056188&vp=1440x838&ds=1440x1401&vid=1&duid=8ac2d67163d6d36a&p=web&tv=js-0.12.0&fp=1569742263&aid=pbzsite&lang=en-us&cs=UTF-8&tz=Australia%2FSydney&f_pdf=1&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1440x900&cd=24&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Ftarot-cards%2F312-dreaming-way-tarot.html" ! "e=pp&page=Dreaming%20Way%20Tarot%20-%20Psychic%20Bazaar&pp_mix=0&pp_max=0&pp_miy=0&pp_may=0&dtm=1376984181667&tid=056188&vp=1440x838&ds=1440x1401&vid=1&duid=8ac2d67163d6d36a&p=web&tv=js-0.12.0&fp=1569742263&aid=pbzsite&lang=en-us&cs=UTF-8&tz=Australia%2FSydney&f_pdf=1&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1440x900&cd=24&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Ftarot-cards%2F312-dreaming-way-tarot.html" |
+    "Single-encoded % sign itself, leave"       !! "Loading - 70%25 Complete"                       ! "Loading - 70%25 Complete"                     |> {
+      (_, qs, expected) => {
+        val actual = CloudfrontLoader.singleEncodePcts(qs)     
+        actual must_== expected
+      }
+    }
+
+  def e5 =
     "SPEC NAME"                || "RAW" | "EXP. TIMESTAMP"                                | "EXP. PAYLOAD" | "EXP. IP ADDRESS"      | "EXP. USER AGENT"                                                                    | "EXP. REFERER URI"                                       | "EXP. HEADERS" | "EXP. USER ID" |
     "CloudFront with 2 spaces" !! "2013-08-29  00:18:48  LAX3  830 255.255.255.255 GET d3v6ndkyapxc2w.cloudfront.net /i  200 http://snowplowanalytics.com/analytics/index.html Mozilla/5.0%20(Windows%20NT%205.1;%20rv:23.0)%20Gecko/20100101%20Firefox/23.0 e=pv&page=Introduction%20-%20Snowplow%20Analytics%25&dtm=1377735557970&tid=567074&vp=1024x635&ds=1024x635&vid=1&duid=7969620089de36eb&p=web&tv=js-0.12.0&fp=308909339&aid=snowplowweb&lang=en-US&cs=UTF-8&tz=America%2FLos_Angeles&refr=http%3A%2F%2Fwww.metacrawler.com%2Fsearch%2Fweb%3Ffcoid%3D417%26fcop%3Dtopnav%26fpid%3D27%26q%3Dsnowplow%2Banalytics%26ql%3D&f_pdf=1&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1024x768&cd=24&cookie=1&url=http%3A%2F%2Fsnowplowanalytics.com%2Fanalytics%2Findex.html - Hit wQ1OBZtQlGgfM_tPEJ-lIQLsdra0U-lXgmfJfwja2KAV_SfTdT3lZg==" !
                                           DateTime.parse("2013-08-29T00:18:48.000+00:00") ! toPayload("e" -> "pv", "page" -> "Introduction - Snowplow Analytics%", "dtm" -> "1377735557970", "tid" -> "567074", "vp" -> "1024x635", "ds" -> "1024x635", "vid" -> "1", "duid" -> "7969620089de36eb", "p" -> "web", "tv" -> "js-0.12.0", "fp" -> "308909339", "aid" -> "snowplowweb", "lang" -> "en-US", "cs" -> "UTF-8", "tz" -> "America/Los_Angeles", "refr" -> "http://www.metacrawler.com/search/web?fcoid=417&fcop=topnav&fpid=27&q=snowplow+analytics&ql=", "f_pdf" -> "1", "f_qt" -> "1", "f_realp" -> "0", "f_wma" -> "1", "f_dir" -> "0", "f_fla" -> "1", "f_java" -> "1", "f_gears" -> "0", "f_ag" -> "0", "res" -> "1024x768", "cd" -> "24", "cookie" -> "1", "url" -> "http://snowplowanalytics.com/analytics/index.html") !
@@ -79,7 +124,7 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
       }
     }
 
-  def e2 = foreach(Seq(
+  def e6 = foreach(Seq(
     "#Version: 1.0",
     "#Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status cs(Referer) cs(User-Agent) cs-uri-query",
     "2012-05-24  11:35:53  DFW3  3343  99.116.172.58 GET d3gs014xn8p70.cloudfront.net  /not-ice.png  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=5 Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  e=pv&page=Tarot%2520cards%2520-%2520Psychic%2520Bazaar&tid=344260&uid=288112e0a5003be2&vid=1&lang=en-US&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fp%253D4&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1366x768&cookie=1"
@@ -90,6 +135,6 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
 
   // A bit of fun: the chances of generating a valid CloudFront row at random are
   // so low that we can just use ScalaCheck here
-  def e3 =
+  def e7 =
     check { (raw: String) => CloudfrontLoader.toCanonicalInput(raw) must beFailing(NonEmptyList("Line does not match CloudFront header or data row formats")) }
 }
