@@ -107,13 +107,16 @@ object CloudfrontLoader extends CollectorLoader[String] {
                  _,
                  _,
                  ip,
-                 _,
+                 op,
                  _,
                  objct,
                  _,
                  rfr,
                  ua,
                  qs) => {
+
+      // Is this a GET? Cloudfront Collector only supports GETs
+      if (op.toUpperCase != "GET") return None.success
 
       // Is this a request for the tracker? Might be a browser favicon request or similar
       if (!isIceRequest(objct)) return None.success
