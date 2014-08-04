@@ -8,7 +8,7 @@ Clojure Collector: changed access-valve's package path to com.snowplowanalytics.
 Clojure Collector: changed access-valve to use Gradle (#899)
 Clojure Collector: changed access-valve to publish to war-resources/.ebextensions (#900)
 Clojure Collector: updated access-valve and added web.xml to log request body and content type (#901)
-Clojure Collector: fixed empty querystring in access-valve (#938)                                           - TODO
+Clojure Collector: fixed empty querystring in access-valve (#938)
 Clojure Collector: fixed IP address forwarding for VPC-based environments (#854)
 Clojure Collector: added support for API vendor and version in routing (#925)
 Clojure Collector: added support for POST as well as GET (#654)
