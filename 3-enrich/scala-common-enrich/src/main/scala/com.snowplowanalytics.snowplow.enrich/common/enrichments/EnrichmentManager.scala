@@ -27,7 +27,7 @@ import Scalaz._
 import util.Tap._
 
 // This project
-import loaders.CollectorPayload
+import adapters.RawEvent
 import outputs.CanonicalOutput
 
 import utils.{ConversionUtils => CU}
@@ -62,15 +62,12 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: String, raw: CollectorPayload): ValidatedCanonicalOutput = {
+  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: String, raw: RawEvent): ValidatedCanonicalOutput = {
 
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
     val unitSuccess = ().success[String]
     val unitSuccessNel = ().successNel[String]
-
-    // Retrieve the payload
-    val parameters = raw.querystring
 
     // 1. Enrichments not expected to fail
 
@@ -208,7 +205,7 @@ object EnrichmentManager {
           ("pp_miy"  , (CU.stringToJInteger, "pp_yoffset_min")),
           ("pp_may"  , (CU.stringToJInteger, "pp_yoffset_max")))
 
-    val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
+    val sourceMap: SourceMap = raw.parameters
 
     val transform = event.transform(sourceMap, transformMap)
 
