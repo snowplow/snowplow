@@ -12,28 +12,11 @@
  */
 package com.snowplowanalytics.snowplow.enrich.common
 package adapters
-
-// Scalaz
-import scalaz._
-import Scalaz._
+package registry
 
 // This project
 import loaders.CollectorPayload
-import registry.SnowplowAdapter
 
-/**
- * The AdapterRegistry lets us convert a CollectorPayload
- * into one or more RawEvents, using a given adapter.
- */
-object AdapterRegistry {
-
-  private val SnowplowVendor = "com.snowplownalytics.snowplow"
-
-  def toRawEvents(payload: CollectorPayload): ValidatedRawEvents = (payload.vendor, payload.version) match {
-
-    case (SnowplowVendor, "tp1") => SnowplowAdapter.Tp1.toRawEvents(payload)
-    case (SnowplowVendor, "tp2") => SnowplowAdapter.Tp2.toRawEvents(payload)
-    case _ => throw new Exception("FAIL")
-  }
-
+trait Adapter {
+  def toRawEvents(payload: CollectorPayload): ValidatedRawEvents
 }
