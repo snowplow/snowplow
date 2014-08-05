@@ -27,7 +27,7 @@ import Scalaz._
 import util.Tap._
 
 // This project
-import loaders.{CanonicalInput, GetPayload}
+import loaders.CollectorPayload
 import outputs.CanonicalOutput
 
 import utils.{ConversionUtils => CU}
@@ -62,7 +62,7 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: String, raw: CanonicalInput): ValidatedCanonicalOutput = {
+  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: String, raw: CollectorPayload): ValidatedCanonicalOutput = {
 
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
@@ -70,12 +70,7 @@ object EnrichmentManager {
     val unitSuccessNel = ().successNel[String]
 
     // Retrieve the payload
-    // TODO: add support for other
-    // payload types in the future
-    val parameters = raw.payload /*raw.payload match {
-      case GetPayload(_, _, p) => p
-      case _ => throw new FatalEtlError("Only name-value pair GET payloads are currently supported") // TODO: change back to FatalEtlException when Cascading FailureTrap supports exclusions
-    } */
+    val parameters = raw.querystring
 
     // 1. Enrichments not expected to fail
 

@@ -87,7 +87,7 @@ object CloudfrontLoader extends CollectorLoader[String] {
 
   /**
    * Converts the source string into a 
-   * MaybeCanonicalInput.
+   * ValidatedMaybeCollectorPayload.
    *
    * @param line A line of data to convert
    * @return either a set of validation
@@ -95,7 +95,7 @@ object CloudfrontLoader extends CollectorLoader[String] {
    *         CanonicalInput object, wrapped
    *         in a Scalaz ValidatioNel.
    */
-  def toCanonicalInput(line: String): ValidatedMaybeCanonicalInput = line match {
+  def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = line match {
     
     // 1. Header row
     case h if (h.startsWith("#Version:") ||
@@ -124,7 +124,7 @@ object CloudfrontLoader extends CollectorLoader[String] {
       // Validations, and let's strip double-encodings
       val timestamp = toTimestamp(date, time)
       val querystring = singleEncodePcts(qs)
-      val payload = TrackerPayload.extractGetPayload(toOption(querystring), CfEncoding)
+      val payload = CollectorPayload.extractGetPayload(toOption(querystring), CfEncoding)
 
       // No validation (yet) on the below
       val userAgent  = singleEncodePcts(ua)
@@ -132,10 +132,10 @@ object CloudfrontLoader extends CollectorLoader[String] {
       val referer = toOption(refr) map toCleanUri
 
       (timestamp.toValidationNel |@| payload.toValidationNel) { (t, p) =>
-        CanonicalInput(
+        CollectorPayload(
         t,
-        CanonicalInput.Defaults.vendor,
-        CanonicalInput.Defaults.version,
+        CollectorPayload.Defaults.vendor,
+        CollectorPayload.Defaults.version,
         p,
         getSource,
         CfEncoding,
@@ -148,7 +148,7 @@ object CloudfrontLoader extends CollectorLoader[String] {
     }
 
     // 3. Row not recognised
-    case _ => "Line does not match CloudFront header or data row formats".failNel[Option[CanonicalInput]]
+    case _ => "Line does not match CloudFront header or data row formats".failNel[Option[CollectorPayload]]
   }
 
   /**

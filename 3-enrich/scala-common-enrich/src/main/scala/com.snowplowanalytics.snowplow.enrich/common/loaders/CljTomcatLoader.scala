@@ -69,7 +69,7 @@ object CljTomcatLoader extends CollectorLoader[String] {
 
   /**
    * Converts the source string into a 
-   * MaybeCanonicalInput.
+   * ValidatedMaybeCollectorPayload.
    *
    * @param line A line of data to convert
    * @return either a set of validation
@@ -77,7 +77,7 @@ object CljTomcatLoader extends CollectorLoader[String] {
    *         CanonicalInput object, wrapped
    *         in a Scalaz ValidatioNel.
    */
-  def toCanonicalInput(line: String): ValidatedMaybeCanonicalInput = line match {
+  def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = line match {
     
     // 2. Row matches CloudFront format
     case CljTomcatRegex(date,
@@ -101,13 +101,13 @@ object CljTomcatLoader extends CollectorLoader[String] {
 
       // Validations
       val timestamp = CloudfrontLoader.toTimestamp(date, time)
-      val payload = TrackerPayload.extractGetPayload(CloudfrontLoader.toOption(qs), CljTomcatEncoding)
+      val payload = CollectorPayload.extractGetPayload(CloudfrontLoader.toOption(qs), CljTomcatEncoding)
 
       (timestamp.toValidationNel |@| payload.toValidationNel) { (t, p) =>
-        CanonicalInput(
+        CollectorPayload(
           t,
-          CanonicalInput.Defaults.vendor,
-          CanonicalInput.Defaults.version,
+          CollectorPayload.Defaults.vendor,
+          CollectorPayload.Defaults.version,
           p,
           getSource,
           CljTomcatEncoding,
@@ -120,6 +120,6 @@ object CljTomcatLoader extends CollectorLoader[String] {
     }
 
     // 3. Row not recognised
-    case _ => "Line does not match raw event format for Clojure Collector".failNel[Option[CanonicalInput]]
+    case _ => "Line does not match raw event format for Clojure Collector".failNel[Option[CollectorPayload]]
   }
 }
