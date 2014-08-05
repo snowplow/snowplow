@@ -28,15 +28,20 @@ import loaders.CollectorPayload
  */
 object SnowplowAdapter {
 
+  /**
+   * Version 1 of the Tracker Protocol is GET only.
+   * All data comes in on the querystring.
+   */
   object Tp1 extends Adapter {
 
+    // TODO: add code which complains if querystring is empty.
+
     def toRawEvents(payload: CollectorPayload): ValidatedRawEvents =
       List(RawEvent(
         timestamp    = payload.timestamp,
         vendor       = payload.vendor,
         version      = payload.version,
         parameters   = payload.querystring.map(p => (p.getName -> p.getValue)).toList.toMap,
-        // body:     String,
         source       = payload.source,
         encoding     = payload.encoding,
         ipAddress    = payload.ipAddress,
@@ -47,15 +52,26 @@ object SnowplowAdapter {
         )).success
   }
 
+  /**
+   * Version 2 of the Tracker Protocol is POST only, but
+   * data can still be passed on the querystring.
+   */
   object Tp2 extends Adapter {
 
-    def toRawEvents(payload: CollectorPayload): ValidatedRawEvents =
+    def toRawEvents(payload: CollectorPayload): ValidatedRawEvents = {
+      
+      // TODO:
+      // 1. Validate the JSON
+      // 2. Convert the JSON to a map
+      // 3. Merge the querystring into the map (qs should take priority)
+      // 4. Complain if final map is empty
+
+      // Placeholder for now
       List(RawEvent(
         timestamp    = payload.timestamp,
         vendor       = payload.vendor,
         version      = payload.version,
         parameters   = payload.querystring.map(p => (p.getName -> p.getValue)).toList.toMap,
-        // body:     String,
         source       = payload.source,
         encoding     = payload.encoding,
         ipAddress    = payload.ipAddress,
@@ -65,5 +81,7 @@ object SnowplowAdapter {
         userId       = payload.userId
         )).success
   }
+
+  // TODO: add helper method for querystring to map
 
 }
