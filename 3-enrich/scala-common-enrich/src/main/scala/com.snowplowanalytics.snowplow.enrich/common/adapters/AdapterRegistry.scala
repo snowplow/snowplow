@@ -32,6 +32,7 @@ object AdapterRegistry {
   def toRawEvents(payload: CollectorPayload): ValidatedRawEvents = (payload.vendor, payload.version) match {
     case (SnowplowVendor, "tp1") => SnowplowAdapter.Tp1.toRawEvents(payload)
     case (SnowplowVendor, "tp2") => SnowplowAdapter.Tp2.toRawEvents(payload)
+    // TODO: add Sendgrid et al
     case _ => throw new Exception("FAIL")
   }
 
