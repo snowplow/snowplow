@@ -19,4 +19,9 @@ import loaders.CollectorPayload
 
 trait Adapter {
   def toRawEvents(payload: CollectorPayload): ValidatedRawEvents
+
+  // TODO: add a helper method for "map is empty"
+
+  // TODO: add helper method for querystring to map
+
 }

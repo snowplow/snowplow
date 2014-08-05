@@ -82,6 +82,4 @@ object SnowplowAdapter {
         )).success
   }
 
-  // TODO: add helper method for querystring to map
-
 }
