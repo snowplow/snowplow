@@ -20,7 +20,10 @@ import scalaz._
 import Scalaz._
 
 // This project
-import adapters.RawEvent
+import adapters.{
+  RawEvent,
+  AdapterRegistry
+}
 import enrichments.{
   EnrichmentRegistry,
   EnrichmentManager
@@ -50,32 +53,21 @@ object EtlPipeline {
    *         flatMap, will include any validation errors
    *         contained within the ValidatedMaybeCanonicalInput
    */
-  def processEvents(registry: EnrichmentRegistry, etlVersion: String, etlTstamp: String, input: ValidatedMaybeCollectorPayload): ValidatedMaybeCanonicalOutput = {
-    
-    // TODO: move this into the adapter
-    val rawEvent = for {
-      mp <- input
-    } yield for {
-      p <- mp
-      e = RawEvent(
-        timestamp    = p.timestamp,
-        vendor       = p.vendor,
-        version      = p.version,
-        parameters   = p.querystring.map(p => (p.getName -> p.getValue)).toList.toMap,
-        // body:     String,
-        source       = p.source,
-        encoding     = p.encoding,
-        ipAddress    = p.ipAddress,
-        userAgent    = p.userAgent,
-        refererUri   = p.refererUri,
-        headers      = p.headers,
-        userId       = p.userId
-        )
-    } yield e
+  def processEvents(registry: EnrichmentRegistry, etlVersion: String, etlTstamp: String, input: ValidatedMaybeCollectorPayload): ValidatedCanonicalOutputs = {
 
-    rawEvent.flatMap {
-      _.cata(EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, _).map(_.some),
-             none.success)
-    }
+    def toRawEvents(maybePayload: MaybeCollectorPayload): ValidatedRawEvents =
+      maybePayload.cata(AdapterRegistry.toRawEvents(_), Nil.success)
+
+    type ListVld[A] = List[Validated[A]]
+    def flattenToList[A](v: Validated[ListVld[A]]): ListVld[A] = v.fold(
+      f => List(Failure(f)), s => s)
+
+    flattenToList(for {
+      maybePayload <- input
+      events       <- toRawEvents(maybePayload)
+    } yield for {
+      event        <- events
+      enriched      = EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, event)
+    } yield enriched)
   }
 }

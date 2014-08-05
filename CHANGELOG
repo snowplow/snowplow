@@ -16,8 +16,9 @@ Scala Common Enrich: bumped to 0.6.0
 Scala Common Enrich: split out Clojure and CloudFront Collector event processing (#943)
 Scala Common Enrich: filtering non-GETs from CloudfrontLoader (#944)
 Scala Common Enrich: replaced all Argonaut code with json4s (#945)
+Scala Common Enrich: replaced CanonicalInput and TrackerPayload with CollectorPayload and RawEvent (#XXX)   - TODO
+Scala Common Enrich: updated EnrichmentManager to process RawEvent not CanonicalInput (#903)                - TODO
 Scala Common Enrich: added input adapter to convert NV pairs to JSON (#904)                                 - TODO
-Scala Common Enrich: updated EnrichmentManager to process JSON fields (#903)                                - TODO
 Scala Common Enrich: added parsing of request body and content type for Clojure Collector raw events (#930) - TODO
 Scala Hadoop Enrich: bumped to 0.7.0                                                                        - TODO
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.6.0 (#940)                                             - TODO
