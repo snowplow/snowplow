@@ -61,6 +61,7 @@ object CollectorPayload {
    *         message, boxed in a Scalaz
    *         Validation
    */
+  // TODO: remove code here which complains about empty querystring
   def extractGetPayload(qs: Option[String], encoding: String): ValidatedNameValueNel = {
 
     val EmptyQsFail = "No name-value pairs extractable from querystring [%s] with encoding [%s]".format(qs.getOrElse(""), encoding).fail
