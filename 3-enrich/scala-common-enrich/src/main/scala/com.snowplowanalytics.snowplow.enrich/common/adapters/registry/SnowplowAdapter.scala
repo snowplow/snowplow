@@ -41,7 +41,7 @@ object SnowplowAdapter {
         timestamp    = payload.timestamp,
         vendor       = payload.vendor,
         version      = payload.version,
-        parameters   = payload.querystring.map(p => (p.getName -> p.getValue)).toList.toMap,
+        parameters   = toMap(payload.querystring),
         source       = payload.source,
         encoding     = payload.encoding,
         ipAddress    = payload.ipAddress,
@@ -53,8 +53,8 @@ object SnowplowAdapter {
   }
 
   /**
-   * Version 2 of the Tracker Protocol is POST only, but
-   * data can still be passed on the querystring.
+   * Version 2 of the Tracker Protocol supports GET and POST. Note that
+   * with POST, data can still be passed on the querystring.
    */
   object Tp2 extends Adapter {
 
@@ -71,7 +71,7 @@ object SnowplowAdapter {
         timestamp    = payload.timestamp,
         vendor       = payload.vendor,
         version      = payload.version,
-        parameters   = payload.querystring.map(p => (p.getName -> p.getValue)).toList.toMap,
+        parameters   = toMap(payload.querystring),
         source       = payload.source,
         encoding     = payload.encoding,
         ipAddress    = payload.ipAddress,
@@ -80,6 +80,7 @@ object SnowplowAdapter {
         headers      = payload.headers,
         userId       = payload.userId
         )).success
+    }
   }
 
 }
