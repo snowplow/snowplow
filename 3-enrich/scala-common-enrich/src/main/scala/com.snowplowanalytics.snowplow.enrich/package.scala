@@ -135,20 +135,6 @@ package object common {
   type ValidatedCanonicalOutput = Validated[CanonicalOutput]
 
   /**
-   * Type alias for either a `ValidationNel`
-   * containing `String`s for `Failure`
-   * or a MaybeCanonicalOutput for `Success`.
-   * TODO: delete me
-   */
-  type ValidatedMaybeCanonicalOutput = Validated[MaybeCanonicalOutput]
-
-  /**
-   * Type alias for a `List` (possibly empty)
-   * of `ValidatedCanonicalOutput`s.
-   */
-  type ValidatedCanonicalOutputs = List[ValidatedCanonicalOutput]
-
-  /**
    * Type alias for a `Validation`
    * containing ProcessingMessages
    * for `Failure` or any type for

@@ -53,7 +53,7 @@ object EtlPipeline {
    *         flatMap, will include any validation errors
    *         contained within the ValidatedMaybeCanonicalInput
    */
-  def processEvents(registry: EnrichmentRegistry, etlVersion: String, etlTstamp: String, input: ValidatedMaybeCollectorPayload): ValidatedCanonicalOutputs = {
+  def processEvents(registry: EnrichmentRegistry, etlVersion: String, etlTstamp: String, input: ValidatedMaybeCollectorPayload): List[ValidatedCanonicalOutput] = {
 
     def toRawEvents(maybePayload: MaybeCollectorPayload): ValidatedRawEvents =
       maybePayload.cata(AdapterRegistry.toRawEvents(_), Nil.success)
