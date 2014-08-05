@@ -30,6 +30,7 @@ import com.github.fge.jsonschema.core.report.ProcessingMessage
 
 // This project
 import common.loaders.CollectorPayload
+import common.adapters.RawEvent
 import common.outputs.CanonicalOutput
 import common.enrichments.registry.Enrichment
 
@@ -108,6 +109,13 @@ package object common {
   type ValidatedMaybeCollectorPayload = Validated[MaybeCollectorPayload]
 
   /**
+   * Type alias for either a `ValidationNel`
+   * containing `String`s for `Failure`
+   * or a `List` of `RawEvent`s for `Success`.
+   */
+  type ValidatedRawEvents = Validated[List[RawEvent]]
+
+  /**
    * Type alias for an `Option`-boxed
    * `CanonicalOutput`.
    */
@@ -130,8 +138,15 @@ package object common {
    * Type alias for either a `ValidationNel`
    * containing `String`s for `Failure`
    * or a MaybeCanonicalOutput for `Success`.
+   * TODO: delete me
    */
   type ValidatedMaybeCanonicalOutput = Validated[MaybeCanonicalOutput]
+
+  /**
+   * Type alias for a `List` (possibly empty)
+   * of `ValidatedCanonicalOutput`s.
+   */
+  type ValidatedCanonicalOutputs = List[ValidatedCanonicalOutput]
 
   /**
    * Type alias for a `Validation`
