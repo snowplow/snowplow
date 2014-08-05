@@ -28,15 +28,14 @@ import loaders.InputSource
  * stage of the Enrichment.
  */
 final case class RawEvent(
-    timestamp:   DateTime, // Collector timestamp
+    timestamp:   DateTime,
     vendor:      String,
     version:     String,
     parameters:  Map[String, String],
-    // body:     String,
-    source:      InputSource,    // See below for defn.
+    source:      InputSource,
     encoding:    String, 
     ipAddress:   Option[String],
     userAgent:   Option[String],
     refererUri:  Option[String],
-    headers:     List[String],   // May be Nil so not a Nel
+    headers:     List[String],
     userId:      Option[String])
