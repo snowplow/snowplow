@@ -32,6 +32,18 @@ import org.apache.http.client.utils.URLEncodedUtils
 // Joda-Time
 import org.joda.time.DateTime
 
+object CanonicalInput {
+
+  /**
+   * Defaults for the tracker vendor and version
+   * before we implemented this into Snowplow.
+   */
+  object Defaults {
+    val vendor = "com.snowplowanalytics.snowplow"
+    val version = "tp1"
+  }
+}
+
 /**
  * The canonical input format for the ETL
  * process: it should be possible to
@@ -41,7 +53,9 @@ import org.joda.time.DateTime
  */
 final case class CanonicalInput(
     timestamp:  DateTime, // Collector timestamp
-    payload:    TrackerPayload[_], // See below for defn.
+    vendor:     String,
+    version:    String,
+    payload:    NameValueNel,
     source:     InputSource,    // See below for defn.
     encoding:   String, 
     ipAddress:  Option[String],

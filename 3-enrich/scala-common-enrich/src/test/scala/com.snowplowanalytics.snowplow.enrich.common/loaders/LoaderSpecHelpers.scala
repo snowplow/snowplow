@@ -46,17 +46,4 @@ object LoaderSpecHelpers {
    */
   def toNameValueNel(head: NvPair, tail: NvPair*): NameValueNel =
     NonEmptyList(toNvPair(head), tail.map(toNvPair(_)): _*)
-
-  /**
-   * Converts the supplied NvPairs into an
-   * NvGetPayload. See above for NvPair
-   * definition.
-   *
-   * @param head The first NvPair to convert
-   * @param tail The rest of the NvPairs to
-   * convert
-   * @return the populated NvGetPayload
-   */
-  def toPayload(head: NvPair, tail: NvPair*): GetPayload =
-    new GetPayload("com.snowplowanalytics.snowplow", "tp1", toNameValueNel(head, tail: _*))
 }

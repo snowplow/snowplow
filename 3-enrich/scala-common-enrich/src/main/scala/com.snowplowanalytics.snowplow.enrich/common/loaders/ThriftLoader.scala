@@ -83,7 +83,9 @@ object ThriftLoader extends CollectorLoader[Array[Byte]] {
         Some(
           CanonicalInput(
             new DateTime(snowplowRawEvent.timestamp, DateTimeZone.UTC),
-            new GetPayload(TrackerPayload.Defaults.vendor, TrackerPayload.Defaults.version, p),
+            CanonicalInput.Defaults.vendor,
+            CanonicalInput.Defaults.version,
+            p,
             InputSource(snowplowRawEvent.collector, hostname),
             snowplowRawEvent.encoding,
             ip,
