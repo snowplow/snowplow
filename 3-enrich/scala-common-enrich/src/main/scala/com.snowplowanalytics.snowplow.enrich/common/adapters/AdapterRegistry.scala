@@ -27,7 +27,7 @@ import registry.SnowplowAdapter
  */
 object AdapterRegistry {
 
-  private val SnowplowVendor = "com.snowplownalytics.snowplow"
+  private val SnowplowVendor = "com.snowplowanalytics.snowplow"
 
   def toRawEvents(payload: CollectorPayload): ValidatedRawEvents = (payload.vendor, payload.version) match {
     case (SnowplowVendor, "tp1") => SnowplowAdapter.Tp1.toRawEvents(payload)
