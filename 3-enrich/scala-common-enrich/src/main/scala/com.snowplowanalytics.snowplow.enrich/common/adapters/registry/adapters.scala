@@ -14,6 +14,10 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 // This project
 import loaders.CollectorPayload
 
@@ -22,6 +26,19 @@ trait Adapter {
 
   // TODO: add a helper method for "map is empty"
 
-  // TODO: add helper method for querystring to map
+  /**
+   *
+   *
+   *
+  def failIfEmpty(parameters: Map[String, String]): XXX */
 
+  /**
+   * Converts a NonEmptyList of name:value
+   * pairs into a Map.
+   *
+   * @param parameters A NonEmptyList of name:value pairs
+   * @return the name:value pairs in Map form
+   */
+  def toMap(parameters: NameValueNel): Map[String, String] =
+    parameters.map(p => (p.getName -> p.getValue)).toList.toMap
 }

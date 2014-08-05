@@ -29,6 +29,19 @@ object AdapterRegistry {
 
   private val SnowplowVendor = "com.snowplowanalytics.snowplow"
 
+  /**
+   * Router to determine which adapter we use
+   * to convert the CollectorPayload into
+   * one or more RawEvents.
+   *
+   * @param payload The CollectorPayload we
+   *        are transforming
+   * @return a Validation boxing either a
+   *         List (possibly empty?!?) of
+   *         RawEvents on Success, or a NEL
+   *         of Strings on Failure
+   */
+  // TODO: why is the List possibly empty?
   def toRawEvents(payload: CollectorPayload): ValidatedRawEvents = (payload.vendor, payload.version) match {
     case (SnowplowVendor, "tp1") => SnowplowAdapter.Tp1.toRawEvents(payload)
     case (SnowplowVendor, "tp2") => SnowplowAdapter.Tp2.toRawEvents(payload)
