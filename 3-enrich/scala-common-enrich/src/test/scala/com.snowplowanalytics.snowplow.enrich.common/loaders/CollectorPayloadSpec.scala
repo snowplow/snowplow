@@ -25,7 +25,7 @@ import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class TrackerPayloadSpec extends Specification with DataTables with ValidationMatchers {
+class CollectorPayloadSpec extends Specification with DataTables with ValidationMatchers {
 
   "extractGetPayload" should {
 
@@ -40,13 +40,13 @@ class TrackerPayloadSpec extends Specification with DataTables with ValidationMa
       "Superfluous ? ends up in first param's name" !! "?e=pv&dtm=1376487150616&tid=483686"                                             ! toNameValueNel("?e" -> "pv", "dtm" -> "1376487150616", "tid" -> "483686")                                     |> {
 
         (_, qs, expected) => {
-          TrackerPayload.extractGetPayload(qs.some, Encoding) must beSuccessful(expected)
+          CollectorPayload.extractGetPayload(qs.some, Encoding) must beSuccessful(expected)
         }
       }
     }
 
     "return a Failure message if the querystring is empty" in {
-      TrackerPayload.extractGetPayload(None, Encoding) must beFailing("No name-value pairs extractable from querystring [] with encoding [UTF-8]")
+      CollectorPayload.extractGetPayload(None, Encoding) must beFailing("No name-value pairs extractable from querystring [] with encoding [UTF-8]")
     }
 
     // TODO: test invalid querystrings

@@ -32,32 +32,7 @@ import org.apache.http.client.utils.URLEncodedUtils
 // Joda-Time
 import org.joda.time.DateTime
 
-/**
- * All payloads sent by trackers must inherit from
- * this class.
- */
-abstract class TrackerPayload[P](
-  val vendor:  String,
-  val version: String,
-  val payload: P)
-
-/**
- * A tracker payload for a single event, delivered
- * via a set of name-value pairs on the querystring
- * of a GET.
- */
-case class GetPayload(
-  override val vendor: String,
-  override val version: String,
-  override val payload: NameValueNel) extends TrackerPayload[NameValueNel](vendor, version, payload)
-
-/**
- * A companion object which holds
- * factories to extract the
- * different possible payloads,
- * and related types.
- */
-object TrackerPayload {
+object CollectorPayload {
 
   /**
    * Defaults for the tracker vendor and version
@@ -124,3 +99,32 @@ object TrackerPayload {
     URLEncodedUtils.parse(URI.create("http://localhost/?" + qs), encoding).toList
   }
 }
+
+/**
+ * The canonical input format for the ETL
+ * process: it should be possible to
+ * convert any collector input format to
+ * this format, ready for the main,
+ * collector-agnostic stage of the ETL.
+ */
+final case class CollectorPayload(
+    timestamp:   DateTime, // Collector timestamp
+    vendor:      String,
+    version:     String,
+    querystring: NameValueNel,
+    // body:     String,
+    source:      InputSource,    // See below for defn.
+    encoding:    String, 
+    ipAddress:   Option[String],
+    userAgent:   Option[String],
+    refererUri:  Option[String],
+    headers:     List[String],   // May be Nil so not a Nel
+    userId:      Option[String])
+
+/**
+ * Unambiguously identifies the collector
+ * source of this input line.
+ */
+final case class InputSource(
+    collector: String, // Collector name/version
+    hostname:  Option[String])

@@ -49,7 +49,7 @@ object CollectorLoader {
  */
 abstract class CollectorLoader[T] {
   
-  import CanonicalInput._
+  import CollectorPayload._
 
   /**
    * Converts the source string into a 
@@ -64,7 +64,7 @@ abstract class CollectorLoader[T] {
    *         boxed, or None if no input was
    *         extractable.
    */
-  def toCanonicalInput(line: T): ValidatedMaybeCanonicalInput
+  def toCollectorPayload(line: T): ValidatedMaybeCollectorPayload
 
   /**
    * Checks whether a request to

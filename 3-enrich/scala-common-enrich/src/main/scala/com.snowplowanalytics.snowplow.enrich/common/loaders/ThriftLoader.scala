@@ -45,7 +45,7 @@ object ThriftLoader extends CollectorLoader[Array[Byte]] {
   private val thriftDeserializer = new TDeserializer
 
   /**
-   * Converts the source string into a MaybeCanonicalInput.
+   * Converts the source string into a ValidatedMaybeCollectorPayload.
    *
    * @param line A serialized Thrift object Byte array mapped to a String.
    *   The method calling this should encode the serialized object
@@ -54,7 +54,7 @@ object ThriftLoader extends CollectorLoader[Array[Byte]] {
    * @return either a set of validation errors or an Option-boxed
    *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
    */
-  def toCanonicalInput(line: Array[Byte]): ValidatedMaybeCanonicalInput = {
+  def toCollectorPayload(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
     
     var snowplowRawEvent = new SnowplowRawEvent()
     try {
@@ -65,7 +65,7 @@ object ThriftLoader extends CollectorLoader[Array[Byte]] {
         )
       }
 
-      val payload = TrackerPayload.extractGetPayload(
+      val payload = CollectorPayload.extractGetPayload(
         Option(snowplowRawEvent.payload.data),
         snowplowRawEvent.encoding
       )
@@ -81,10 +81,10 @@ object ThriftLoader extends CollectorLoader[Array[Byte]] {
 
       (payload.toValidationNel) map { (p: NameValueNel) =>
         Some(
-          CanonicalInput(
+          CollectorPayload(
             new DateTime(snowplowRawEvent.timestamp, DateTimeZone.UTC),
-            CanonicalInput.Defaults.vendor,
-            CanonicalInput.Defaults.version,
+            CollectorPayload.Defaults.vendor,
+            CollectorPayload.Defaults.version,
             p,
             InputSource(snowplowRawEvent.collector, hostname),
             snowplowRawEvent.encoding,
@@ -99,7 +99,7 @@ object ThriftLoader extends CollectorLoader[Array[Byte]] {
     } catch {
       // TODO: Check for deserialization errors.
       case _: Throwable =>
-        "Record does not match Thrift SnowplowRawEvent schema".failNel[Option[CanonicalInput]]
+        "Record does not match Thrift SnowplowRawEvent schema".failNel[Option[CollectorPayload]]
     }
   }
 }

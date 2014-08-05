@@ -29,7 +29,7 @@ import com.snowplowanalytics.maxmind.iplookups.IpLocation
 import com.github.fge.jsonschema.core.report.ProcessingMessage
 
 // This project
-import common.loaders.CanonicalInput
+import common.loaders.CollectorPayload
 import common.outputs.CanonicalOutput
 import common.enrichments.registry.Enrichment
 
@@ -96,16 +96,16 @@ package object common {
 
   /**
    * Type alias for an `Option`-boxed
-   * `CanonicalInput`.
+   * `CollectorPayload`.
    */
-  type MaybeCanonicalInput = Option[CanonicalInput]
+  type MaybeCollectorPayload = Option[CollectorPayload]
 
   /**
    * Type alias for either a `ValidationNel`
    * containing `String`s for `Failure`
    * or a `MaybeCanonicalInput` for `Success`.
    */
-  type ValidatedMaybeCanonicalInput = Validated[MaybeCanonicalInput]
+  type ValidatedMaybeCollectorPayload = Validated[MaybeCollectorPayload]
 
   /**
    * Type alias for an `Option`-boxed

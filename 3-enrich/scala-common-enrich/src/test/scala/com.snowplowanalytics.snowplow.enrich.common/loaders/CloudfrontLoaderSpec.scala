@@ -40,9 +40,9 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
   "toOption should return a None if the querystring is empty"                                               ! e2^
   "toCleanUri should remove a trailing % from a URI correctly"                                              ! e3^
   "singleEncodePcts should correctly single-encoding double-encoded % signs"                                ! e4^
-  "toCanonicalInput should return a CanonicalInput for a valid CloudFront log record"                       ! e5^
-  "toCanonicalInput should return a None for a CloudFront log record not representing a Snowplow raw event" ! e6^
-  "toCanonicalInput should return a Validation Failure for an invalid or corrupted CloudFront log record"   ! e7^
+  "toCollectorPayload should return a CanonicalInput for a valid CloudFront log record"                       ! e5^
+  "toCollectorPayload should return a None for a CloudFront log record not representing a Snowplow raw event" ! e6^
+  "toCollectorPayload should return a Validation Failure for an invalid or corrupted CloudFront log record"   ! e7^
                                                                                                             end
 
   object Expected {
@@ -106,20 +106,20 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
       (_, raw, timestamp, payload, ipAddress, userAgent, refererUri, headers, userId) => {
 
         val canonicalEvent = CloudfrontLoader
-          .toCanonicalInput(raw)
+          .toCollectorPayload(raw)
 
-        val expected = new CanonicalInput(
-          timestamp  = timestamp,
-          vendor     = CanonicalInput.Defaults.vendor,
-          version    = CanonicalInput.Defaults.version,
-          payload    = payload,
-          source     = Expected.source,
-          encoding   = Expected.encoding,
-          ipAddress  = ipAddress,
-          userAgent  = userAgent,
-          refererUri = refererUri,
-          headers    = headers,
-          userId     = userId
+        val expected  = new CollectorPayload(
+          timestamp   = timestamp,
+          vendor      = CollectorPayload.Defaults.vendor,
+          version     = CollectorPayload.Defaults.version,
+          querystring = payload,
+          source      = Expected.source,
+          encoding    = Expected.encoding,
+          ipAddress   = ipAddress,
+          userAgent   = userAgent,
+          refererUri  = refererUri,
+          headers     = headers,
+          userId      = userId
           )
     
         canonicalEvent must beSuccessful(expected.some)
@@ -131,12 +131,12 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
     "#Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status cs(Referer) cs(User-Agent) cs-uri-query",
     "2012-05-24  11:35:53  DFW3  3343  99.116.172.58 GET d3gs014xn8p70.cloudfront.net  /not-ice.png  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=5 Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  e=pv&page=Tarot%2520cards%2520-%2520Psychic%2520Bazaar&tid=344260&uid=288112e0a5003be2&vid=1&lang=en-US&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fp%253D4&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1366x768&cookie=1"
     )) { raw =>
-      val actual = CloudfrontLoader.toCanonicalInput(raw)
+      val actual = CloudfrontLoader.toCollectorPayload(raw)
       actual must beSuccessful(None)
     }
 
   // A bit of fun: the chances of generating a valid CloudFront row at random are
   // so low that we can just use ScalaCheck here
   def e7 =
-    check { (raw: String) => CloudfrontLoader.toCanonicalInput(raw) must beFailing(NonEmptyList("Line does not match CloudFront header or data row formats")) }
+    check { (raw: String) => CloudfrontLoader.toCollectorPayload(raw) must beFailing(NonEmptyList("Line does not match CloudFront header or data row formats")) }
 }

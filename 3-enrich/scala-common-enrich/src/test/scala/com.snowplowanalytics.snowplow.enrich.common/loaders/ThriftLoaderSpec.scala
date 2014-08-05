@@ -42,9 +42,9 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
 
   "This is a specification to test the ThriftLoader functionality"                                          ^
                                                                                                            p^
-  "toCanonicalInput should return a CanonicalInput for a valid Thrift SnowplowRawEvent"                     ! e1^
-  "toCanonicalInput should return a Validation Failure for a valid Thrift SnowplowRawEvent with no payload" ! e2^
-  "toCanonicalInput should return a Validation Failure for an invalid or corrupted Thrift SnowplowRawEvent" ! e3^
+  "toCollectorPayload should return a CanonicalInput for a valid Thrift SnowplowRawEvent"                     ! e1^
+  "toCollectorPayload should return a Validation Failure for a valid Thrift SnowplowRawEvent with no payload" ! e2^
+  "toCollectorPayload should return a Validation Failure for an invalid or corrupted Thrift SnowplowRawEvent" ! e3^
                                                                                                             end
 
   object Expected {
@@ -64,20 +64,20 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
       (_, raw, timestamp, payload, hostname, ipAddress, userAgent, refererUri, headers, userId) => {
 
         val canonicalEvent = ThriftLoader
-          .toCanonicalInput(Base64.decodeBase64(raw))
+          .toCollectorPayload(Base64.decodeBase64(raw))
 
-        val expected = new CanonicalInput(
-          timestamp  = timestamp,
-          vendor     = CanonicalInput.Defaults.vendor,
-          version    = CanonicalInput.Defaults.version,
-          payload    = payload,
-          source     = InputSource(Expected.collector, hostname),
-          encoding   = Expected.encoding,
-          ipAddress  = ipAddress,
-          userAgent  = userAgent,
-          refererUri = refererUri,
-          headers    = headers,
-          userId     = userId
+        val expected  = new CollectorPayload(
+          timestamp   = timestamp,
+          vendor      = CollectorPayload.Defaults.vendor,
+          version     = CollectorPayload.Defaults.version,
+          querystring = payload,
+          source      = InputSource(Expected.collector, hostname),
+          encoding    = Expected.encoding,
+          ipAddress   = ipAddress,
+          userAgent   = userAgent,
+          refererUri  = refererUri,
+          headers     = headers,
+          userId      = userId
           )
 
         canonicalEvent must beSuccessful(expected.some)
@@ -87,12 +87,12 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
   // TODO: maybe we should add a couple more in here
   def e2 = {
     val raw = "CgABAAABQ9o8zYULABQAAAAQc3NjLTAuMC4xLVN0ZG91dAsAHgAAAAVVVEYtOAsAKAAAAAgxMC4wLjIuMgwAKQgAAQAAAAEIAAIAAAABAAsALQAAAAlsb2NhbGhvc3QLADIAAABRTW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTAuOTsgcnY6MjYuMCkgR2Vja28vMjAxMDAxMDEgRmlyZWZveC8yNi4wDwBGCwAAAAgAAAAYQ2FjaGUtQ29udHJvbDogbWF4LWFnZT0wAAAAFkNvbm5lY3Rpb246IGtlZXAtYWxpdmUAAAJwQ29va2llOiBfX3V0bWE9MTExODcyMjgxLjg3ODA4NDQ4Ny4xMzkwMjM3MTA3LjEzOTA4NDg0ODcuMTM5MDkzMTUyMS42OyBfX3V0bXo9MTExODcyMjgxLjEzOTAyMzcxMDcuMS4xLnV0bWNzcj0oZGlyZWN0KXx1dG1jY249KGRpcmVjdCl8dXRtY21kPShub25lKTsgX3NwX2lkLjFmZmY9Yjg5YTZmYTYzMWVlZmFjMi4xMzkwMjM3MTA3LjYuMTM5MDkzMTU0NS4xMzkwODQ4NjQxOyBoYmxpZD1DUGpqdWh2RjA1emt0UDdKN001Vm8zTklHUExKeTFTRjsgb2xmc2s9b2xmc2s1NjI5MjM2MzU2MTc1NTQ7IF9fdXRtYz0xMTE4NzIyODE7IHdjc2lkPXVNbG9nMVFKVkQ3anVoRlo3TTVWb0JDeVBQeWlCeVNTOyBfb2tsdj0xMzkwOTMxNTg1NDQ1JTJDdU1sb2cxUUpWRDdqdWhGWjdNNVZvQkN5UFB5aUJ5U1M7IF9vaz05NzUyLTUwMy0xMC01MjI3OyBfb2tiaz1jZDQlM0R0cnVlJTJDdmk1JTNEMCUyQ3ZpNCUzRDEzOTA5MzE1MjExMjMlMkN2aTMlM0RhY3RpdmUlMkN2aTIlM0RmYWxzZSUyQ3ZpMSUzRGZhbHNlJTJDY2Q4JTNEY2hhdCUyQ2NkNiUzRDAlMkNjZDUlM0Rhd2F5JTJDY2QzJTNEZmFsc2UlMkNjZDIlM0QwJTJDY2QxJTNEMCUyQzsgc3A9NzVhMTM1ODMtNWM5OS00MGUzLTgxZmMtNTQxMDg0ZGZjNzg0AAAAHkFjY2VwdC1FbmNvZGluZzogZ3ppcCwgZGVmbGF0ZQAAABpBY2NlcHQtTGFuZ3VhZ2U6IGVuLVVTLCBlbgAAAEpBY2NlcHQ6IHRleHQvaHRtbCwgYXBwbGljYXRpb24veGh0bWwreG1sLCBhcHBsaWNhdGlvbi94bWw7cT0wLjksICovKjtxPTAuOAAAAF1Vc2VyLUFnZW50OiBNb3ppbGxhLzUuMCAoTWFjaW50b3NoOyBJbnRlbCBNYWMgT1MgWCAxMC45OyBydjoyNi4wKSBHZWNrby8yMDEwMDEwMSBGaXJlZm94LzI2LjAAAAAUSG9zdDogbG9jYWxob3N0OjQwMDELAFAAAAAkNzVhMTM1ODMtNWM5OS00MGUzLTgxZmMtNTQxMDg0ZGZjNzg0AA=="
-    ThriftLoader.toCanonicalInput(Base64.decodeBase64(raw)) must beFailing(NonEmptyList("No name-value pairs extractable from querystring [] with encoding [UTF-8]"))
+    ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw)) must beFailing(NonEmptyList("No name-value pairs extractable from querystring [] with encoding [UTF-8]"))
   }
 
   // A bit of fun: the chances of generating a valid Thrift SnowplowRawEvent at random are
   // so low that we can just use ScalaCheck here
   def e3 =
-    check { (raw: String) => ThriftLoader.toCanonicalInput(Base64.decodeBase64(raw)) must beFailing(NonEmptyList("Record does not match Thrift SnowplowRawEvent schema")) }
+    check { (raw: String) => ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw)) must beFailing(NonEmptyList("Record does not match Thrift SnowplowRawEvent schema")) }
 
 }
