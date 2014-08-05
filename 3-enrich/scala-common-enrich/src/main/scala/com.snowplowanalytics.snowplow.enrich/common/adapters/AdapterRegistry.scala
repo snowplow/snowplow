@@ -30,7 +30,6 @@ object AdapterRegistry {
   private val SnowplowVendor = "com.snowplownalytics.snowplow"
 
   def toRawEvents(payload: CollectorPayload): ValidatedRawEvents = (payload.vendor, payload.version) match {
-
     case (SnowplowVendor, "tp1") => SnowplowAdapter.Tp1.toRawEvents(payload)
     case (SnowplowVendor, "tp2") => SnowplowAdapter.Tp2.toRawEvents(payload)
     case _ => throw new Exception("FAIL")
