@@ -72,10 +72,10 @@ object EnrichmentManager {
     // Retrieve the payload
     // TODO: add support for other
     // payload types in the future
-    val parameters = raw.payload match {
+    val parameters = raw.payload /*raw.payload match {
       case GetPayload(_, _, p) => p
       case _ => throw new FatalEtlError("Only name-value pair GET payloads are currently supported") // TODO: change back to FatalEtlException when Cascading FailureTrap supports exclusions
-    }
+    } */
 
     // 1. Enrichments not expected to fail
 
