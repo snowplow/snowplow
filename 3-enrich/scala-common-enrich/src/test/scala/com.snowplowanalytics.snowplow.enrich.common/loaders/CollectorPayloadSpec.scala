@@ -25,8 +25,11 @@ import org.specs2.mutable.Specification
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class CollectorPayloadSpec extends Specification with DataTables with ValidationMatchers {
+// object LoaderMock extends CollectorLoader[String]
 
+class LoaderSpec extends Specification with DataTables with ValidationMatchers {
+
+/*
   "extractGetPayload" should {
 
     val Encoding = "UTF-8"
@@ -35,20 +38,20 @@ class CollectorPayloadSpec extends Specification with DataTables with Validation
     "return a Success-boxed NonEmptyList of NameValuePairs for a valid querystring" in {
 
       "SPEC NAME"                                   || "QUERYSTRING"                                                                    | "EXP. NEL"                                                                                                    |
-      "Simple querystring #1"                       !! "e=pv&dtm=1376487150616&tid=483686"                                              ! toNameValueNel("e" -> "pv", "dtm" -> "1376487150616", "tid" -> "483686")                                      |
-      "Simple querystring #2"                       !! "page=Celestial%2520Tarot%2520-%2520Psychic%2520Bazaar&vp=1097x482&ds=1097x1973" ! toNameValueNel("page" -> "Celestial%20Tarot%20-%20Psychic%20Bazaar", "vp" -> "1097x482", "ds" -> "1097x1973") |
-      "Superfluous ? ends up in first param's name" !! "?e=pv&dtm=1376487150616&tid=483686"                                             ! toNameValueNel("?e" -> "pv", "dtm" -> "1376487150616", "tid" -> "483686")                                     |> {
+      "Simple querystring #1"                       !! "e=pv&dtm=1376487150616&tid=483686"                                              ! toNameValuePairs("e" -> "pv", "dtm" -> "1376487150616", "tid" -> "483686")                                      |
+      "Simple querystring #2"                       !! "page=Celestial%2520Tarot%2520-%2520Psychic%2520Bazaar&vp=1097x482&ds=1097x1973" ! toNameValuePairs("page" -> "Celestial%20Tarot%20-%20Psychic%20Bazaar", "vp" -> "1097x482", "ds" -> "1097x1973") |
+      "Superfluous ? ends up in first param's name" !! "?e=pv&dtm=1376487150616&tid=483686"                                             ! toNameValuePairs("?e" -> "pv", "dtm" -> "1376487150616", "tid" -> "483686")                                     |> {
 
         (_, qs, expected) => {
-          CollectorPayload.extractGetPayload(qs.some, Encoding) must beSuccessful(expected)
+          LoaderMock.parseQuerystring(qs.some, Encoding) must beSuccessful(expected)
         }
       }
     }
 
     "return a Failure message if the querystring is empty" in {
-      CollectorPayload.extractGetPayload(None, Encoding) must beFailing("No name-value pairs extractable from querystring [] with encoding [UTF-8]")
+      LoaderMock.parseQuerystring(None, Encoding) must beFailing("No name-value pairs extractable from querystring [] with encoding [UTF-8]")
     }
 
     // TODO: test invalid querystrings
-  }
+  } */
 }

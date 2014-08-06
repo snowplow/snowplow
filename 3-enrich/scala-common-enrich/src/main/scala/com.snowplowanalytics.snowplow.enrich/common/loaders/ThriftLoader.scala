@@ -16,6 +16,9 @@ package loaders
 // Apache Commons
 import org.apache.commons.lang3.StringUtils
 
+// Apache URLEncodedUtils
+import org.apache.http.NameValuePair
+
 // Joda-Time
 import org.joda.time.{DateTime, DateTimeZone}
 
@@ -40,7 +43,7 @@ import com.snowplowanalytics.snowplow.collectors.thrift.{
 /**
  * Loader for Thrift SnowplowRawEvent objects.
  */
-object ThriftLoader extends CollectorLoader[Array[Byte]] {
+object ThriftLoader extends Loader[Array[Byte]] {
   
   private val thriftDeserializer = new TDeserializer
 
@@ -65,7 +68,7 @@ object ThriftLoader extends CollectorLoader[Array[Byte]] {
         )
       }
 
-      val payload = CollectorPayload.extractGetPayload(
+      val payload = parseQuerystring(
         Option(snowplowRawEvent.payload.data),
         snowplowRawEvent.encoding
       )
@@ -79,7 +82,7 @@ object ThriftLoader extends CollectorLoader[Array[Byte]] {
       val headers = Option(snowplowRawEvent.headers)
         .map(_.toList).getOrElse(Nil)
 
-      (payload.toValidationNel) map { (p: NameValueNel) =>
+      (payload.toValidationNel) map { (p: List[NameValuePair]) =>
         Some(
           CollectorPayload(
             new DateTime(snowplowRawEvent.timestamp, DateTimeZone.UTC),
