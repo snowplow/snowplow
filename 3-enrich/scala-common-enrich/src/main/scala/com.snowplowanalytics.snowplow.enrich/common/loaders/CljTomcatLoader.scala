@@ -24,7 +24,7 @@ import Scalaz._
  * CloudFront format, but has now diverged as
  * we add support for POST payloads.
  */
-object CljTomcatLoader extends CollectorLoader[String] {
+object CljTomcatLoader extends Loader[String] {
 
   // The encoding used on these logs
   private val CljTomcatEncoding = "UTF-8"
@@ -101,7 +101,7 @@ object CljTomcatLoader extends CollectorLoader[String] {
 
       // Validations
       val timestamp = CloudfrontLoader.toTimestamp(date, time)
-      val payload = CollectorPayload.extractGetPayload(CloudfrontLoader.toOption(qs), CljTomcatEncoding)
+      val payload = parseQuerystring(CloudfrontLoader.toOption(qs), CljTomcatEncoding)
 
       (timestamp.toValidationNel |@| payload.toValidationNel) { (t, p) =>
         CollectorPayload(

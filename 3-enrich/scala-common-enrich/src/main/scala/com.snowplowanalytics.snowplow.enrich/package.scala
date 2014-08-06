@@ -62,12 +62,6 @@ package object common {
   type EnrichmentMap = Map[String, Enrichment]
 
   /**
-   * Type alias for a non-empty
-   * set of name-value pairs
-   */
-  type NameValueNel = NonEmptyList[NameValuePair]
-
-  /**
    * Type alias for a `ValidationNel`
    * containing Strings for `Failure`
    * or any type of `Success`.
@@ -88,7 +82,7 @@ package object common {
    * containing either error `String`s
    * or a `NameValueNel`.
    */
-  type ValidatedNameValueNel = Validation[String, NameValueNel] // Note not Validated[]
+  type ValidatedNameValuePairs = Validation[String, List[NameValuePair]] // Note not Validated[]
 
   /**
    * Type alias for an `Option`-boxed String

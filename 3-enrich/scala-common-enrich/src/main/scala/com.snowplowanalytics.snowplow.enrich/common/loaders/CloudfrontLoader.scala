@@ -40,7 +40,7 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
  * For more details on this format, please see:
  * http://docs.amazonwebservices.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html#LogFileFormat
  */
-object CloudfrontLoader extends CollectorLoader[String] {
+object CloudfrontLoader extends Loader[String] {
 
   // The encoding used on CloudFront logs
   private val CfEncoding = "UTF-8"
@@ -123,20 +123,22 @@ object CloudfrontLoader extends CollectorLoader[String] {
 
       // Validations, and let's strip double-encodings
       val timestamp = toTimestamp(date, time)
-      val querystring = singleEncodePcts(qs)
-      val payload = CollectorPayload.extractGetPayload(toOption(querystring), CfEncoding)
+      val querystring = {
+        val q = toOption(singleEncodePcts(qs))
+        parseQuerystring(q, CfEncoding)
+      }
 
       // No validation (yet) on the below
       val userAgent  = singleEncodePcts(ua)
       val refr = singleEncodePcts(rfr)
       val referer = toOption(refr) map toCleanUri
 
-      (timestamp.toValidationNel |@| payload.toValidationNel) { (t, p) =>
+      (timestamp.toValidationNel |@| querystring.toValidationNel) { (t, q) =>
         CollectorPayload(
         t,
         CollectorPayload.Defaults.vendor,
         CollectorPayload.Defaults.version,
-        p,
+        q,
         getSource,
         CfEncoding,
         toOption(ip),

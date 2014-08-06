@@ -34,22 +34,36 @@ object SnowplowAdapter {
    */
   object Tp1 extends Adapter {
 
-    // TODO: add code which complains if querystring is empty.
+    /**
+     * Converts a CollectorPayload instance into raw events.
+     *
+     * @param payload The CollectorPaylod containing one or more
+     *        raw events as collected by a Snowplow collector
+     * @return a Validation boxing either a List of RawEvents on
+     *         Success, or a NEL of Failure Strings
+     */
+    // TODO: update comment when List -> NEL
+    def toRawEvents(payload: CollectorPayload): ValidatedRawEvents = {
 
-    def toRawEvents(payload: CollectorPayload): ValidatedRawEvents =
-      List(RawEvent(
-        timestamp    = payload.timestamp,
-        vendor       = payload.vendor,
-        version      = payload.version,
-        parameters   = toMap(payload.querystring),
-        source       = payload.source,
-        encoding     = payload.encoding,
-        ipAddress    = payload.ipAddress,
-        userAgent    = payload.userAgent,
-        refererUri   = payload.refererUri,
-        headers      = payload.headers,
-        userId       = payload.userId
-        )).success
+      val params = toMap(payload.querystring)
+      if (params.isEmpty) {
+        "Querystring is empty: no raw event to process".failNel
+      } else {
+        List(RawEvent(
+          timestamp    = payload.timestamp,
+          vendor       = payload.vendor,
+          version      = payload.version,
+          parameters   = params,
+          source       = payload.source,
+          encoding     = payload.encoding,
+          ipAddress    = payload.ipAddress,
+          userAgent    = payload.userAgent,
+          refererUri   = payload.refererUri,
+          headers      = payload.headers,
+          userId       = payload.userId
+          )).success
+      }
+    }
   }
 
   /**
@@ -58,6 +72,15 @@ object SnowplowAdapter {
    */
   object Tp2 extends Adapter {
 
+    /**
+     * Converts a CollectorPayload instance into raw events.
+     *
+     * @param payload The CollectorPaylod containing one or more
+     *        raw events as collected by a Snowplow collector
+     * @return a Validation boxing either a List of RawEvents on
+     *         Success, or a NEL of Failure Strings
+     */
+    // TODO: update comment when List -> NEL
     def toRawEvents(payload: CollectorPayload): ValidatedRawEvents = {
       
       // TODO:
@@ -66,20 +89,30 @@ object SnowplowAdapter {
       // 3. Merge the querystring into the map (qs should take priority)
       // 4. Complain if final map is empty
 
-      // Placeholder for now
-      List(RawEvent(
-        timestamp    = payload.timestamp,
-        vendor       = payload.vendor,
-        version      = payload.version,
-        parameters   = toMap(payload.querystring),
-        source       = payload.source,
-        encoding     = payload.encoding,
-        ipAddress    = payload.ipAddress,
-        userAgent    = payload.userAgent,
-        refererUri   = payload.refererUri,
-        headers      = payload.headers,
-        userId       = payload.userId
-        )).success
+      val qsParams = toMap(payload.querystring)
+
+      // Parameters in the querystring take priority, i.e.
+      // override the same parameter in the POST body
+      val allParams = qsParams // TODO: fix this
+
+      if (allParams.isEmpty) {
+        "No parameters found for this raw event".failNel
+      } else {
+        List(RawEvent(
+          timestamp    = payload.timestamp,
+          vendor       = payload.vendor,
+          version      = payload.version,
+          parameters   = allParams,
+          source       = payload.source,
+          encoding     = payload.encoding,
+          ipAddress    = payload.ipAddress,
+          userAgent    = payload.userAgent,
+          refererUri   = payload.refererUri,
+          headers      = payload.headers,
+          userId       = payload.userId
+          )).success
+      }
+
     }
   }
 

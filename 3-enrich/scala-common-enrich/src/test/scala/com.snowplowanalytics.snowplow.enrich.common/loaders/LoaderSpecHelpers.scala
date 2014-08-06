@@ -14,6 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
 // Apache URLEncodedUtils
+import org.apache.http.NameValuePair
 import org.apache.http.message.BasicNameValuePair
 
 // Scalaz
@@ -44,6 +45,6 @@ object LoaderSpecHelpers {
    * convert
    * @return the populated NvGetPayload
    */
-  def toNameValueNel(head: NvPair, tail: NvPair*): NameValueNel =
-    NonEmptyList(toNvPair(head), tail.map(toNvPair(_)): _*)
+  def toNameValuePairs(pairs: NvPair*): List[NameValuePair] =
+    List(pairs.map(toNvPair(_)): _*)
 }

@@ -14,6 +14,9 @@ package com.snowplowanalytics.snowplow.enrich.common
 package adapters
 package registry
 
+// Apache URLEncodedUtils
+import org.apache.http.NameValuePair
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -22,15 +25,17 @@ import Scalaz._
 import loaders.CollectorPayload
 
 trait Adapter {
-  def toRawEvents(payload: CollectorPayload): ValidatedRawEvents
-
-  // TODO: add a helper method for "map is empty"
 
   /**
+   * Converts a CollectorPayload instance into raw events.
    *
-   *
-   *
-  def failIfEmpty(parameters: Map[String, String]): XXX */
+   * @param payload The CollectorPaylod containing one or more
+   *        raw events as collected by a Snowplow collector
+   * @return a Validation boxing either a List of RawEvents on
+   *         Success, or a NEL of Failure Strings
+   */
+  // TODO: update comment when List -> NEL
+  def toRawEvents(payload: CollectorPayload): ValidatedRawEvents
 
   /**
    * Converts a NonEmptyList of name:value
@@ -39,6 +44,6 @@ trait Adapter {
    * @param parameters A NonEmptyList of name:value pairs
    * @return the name:value pairs in Map form
    */
-  def toMap(parameters: NameValueNel): Map[String, String] =
+  def toMap(parameters: List[NameValuePair]): Map[String, String] =
     parameters.map(p => (p.getName -> p.getValue)).toList.toMap
 }

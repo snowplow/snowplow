@@ -13,6 +13,15 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package loaders
 
+// Java
+import java.net.URI
+
+// Apache URLEncodedUtils
+import org.apache.http.client.utils.URLEncodedUtils
+
+// Scala
+import scala.collection.JavaConversions._
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -21,7 +30,7 @@ import Scalaz._
  * Companion object to the CollectorLoader.
  * Contains factory methods.
  */
-object CollectorLoader {
+object Loader {
 
   /**
    * Factory to return a CollectorLoader
@@ -35,7 +44,7 @@ object CollectorLoader {
    *         an an error message, boxed
    *         in a Scalaz Validation
    */
-  def getLoader(collectorOrProtocol: String): Validation[String, CollectorLoader[_]] = collectorOrProtocol match {
+  def getLoader(collectorOrProtocol: String): Validation[String, Loader[_]] = collectorOrProtocol match {
     case "cloudfront" => CloudfrontLoader.success
     case "clj-tomcat" => CljTomcatLoader.success
     case "thrift-raw" => ThriftLoader.success // Finally - a data protocol rather than a piece of software
@@ -47,7 +56,7 @@ object CollectorLoader {
  * All loaders must implement this
  * abstract base class.
  */
-abstract class CollectorLoader[T] {
+abstract class Loader[T] {
   
   import CollectorPayload._
 
@@ -79,4 +88,33 @@ abstract class CollectorLoader[T] {
     path.startsWith("/ice.png") || // Legacy name for /i
     path.equals("/i") ||
     path.startsWith("/i?")
+
+  /**
+   * Converts a querystring String
+   * into a non-empty list of NameValuePairs.
+   *
+   * Returns a non-empty list of 
+   * NameValuePairs on Success, or a Failure
+   * String.
+   *
+   * @param qs Option-boxed querystring
+   *        String to extract name-value
+   *        pairs from, or None
+   * @param encoding The encoding used
+   *        by this querystring
+   * @return either a NonEmptyList of
+   *         NameValuePairs or an error
+   *         message, boxed in a Scalaz
+   *         Validation
+   */
+  protected def parseQuerystring(qs: Option[String], enc: String): ValidatedNameValuePairs = qs match {
+    case Some(q) => {
+      try {
+        URLEncodedUtils.parse(URI.create("http://localhost/?" + q), enc).toList.success
+      } catch {
+        case e => "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]".format(q, enc, e.getMessage).fail
+      }
+    }
+    case None => Nil.success
+  }
 }
