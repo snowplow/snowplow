@@ -52,7 +52,7 @@ object CollectorPayload {
    */
   def apply(
     querystring: List[NameValuePair],
-    sourceNameWithVersion: String,
+    sourceName: String,
     sourceEncoding: String,
     sourceHostname: Option[String],
     contextTimestamp: DateTime,
@@ -62,31 +62,7 @@ object CollectorPayload {
     contextHeaders: List[String],
     contextUserId: Option[String]): CollectorPayload = {
 
-    val source  = CollectorSource(sourceNameWithVersion, sourceEncoding, sourceHostname)
-    val context = CollectorContext(contextTimestamp, contextIpAddress, contextUseragent, contextRefererUri, contextHeaders, contextUserId)
-    CollectorPayload(TrackerDefaults.vendor, TrackerDefaults.version, querystring, None, None, source, context) 
-  }
-
-  /**
-   * A constructor version to use with tp1
-   * (Snowplow Tracker Protocol version 1).
-   *
-   * Only provides querystring and tracker
-   * vendor and version
-   */
-  def apply(
-    querystring: List[NameValuePair],
-    sourceNameWithVersion: String,
-    sourceEncoding: String,
-    sourceHostname: Option[String],
-    contextTimestamp: DateTime,
-    contextIpAddress: Option[String],
-    contextUseragent: Option[String],
-    contextRefererUri: Option[String],
-    contextHeaders: List[String],
-    contextUserId: Option[String]): CollectorPayload = {
-
-    val source  = CollectorSource(sourceNameWithVersion, sourceEncoding, sourceHostname)
+    val source  = CollectorSource(sourceName, sourceEncoding, sourceHostname)
     val context = CollectorContext(contextTimestamp, contextIpAddress, contextUseragent, contextRefererUri, contextHeaders, contextUserId)
     CollectorPayload(TrackerDefaults.vendor, TrackerDefaults.version, querystring, None, None, source, context) 
   }
@@ -97,9 +73,9 @@ object CollectorPayload {
  * source of this input line.
  */
 final case class CollectorSource(
-  nameWithVersion: String,
-  encoding:        String,
-  hostname:        Option[String]
+  name:     String,
+  encoding: String,
+  hostname: Option[String]
   )
 
 /**
