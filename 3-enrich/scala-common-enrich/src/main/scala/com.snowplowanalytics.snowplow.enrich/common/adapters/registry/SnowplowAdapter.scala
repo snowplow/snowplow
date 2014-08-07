@@ -50,17 +50,12 @@ object SnowplowAdapter {
         "Querystring is empty: no raw event to process".failNel
       } else {
         List(RawEvent(
-          timestamp    = payload.timestamp,
           vendor       = payload.vendor,
           version      = payload.version,
           parameters   = params,
+          contentType  = payload.contentType,
           source       = payload.source,
-          encoding     = payload.encoding,
-          ipAddress    = payload.ipAddress,
-          userAgent    = payload.userAgent,
-          refererUri   = payload.refererUri,
-          headers      = payload.headers,
-          userId       = payload.userId
+          context      = payload.context
           )).success
       }
     }
@@ -99,17 +94,12 @@ object SnowplowAdapter {
         "No parameters found for this raw event".failNel
       } else {
         List(RawEvent(
-          timestamp    = payload.timestamp,
           vendor       = payload.vendor,
           version      = payload.version,
           parameters   = allParams,
+          contentType  = payload.contentType,
           source       = payload.source,
-          encoding     = payload.encoding,
-          ipAddress    = payload.ipAddress,
-          userAgent    = payload.userAgent,
-          refererUri   = payload.refererUri,
-          headers      = payload.headers,
-          userId       = payload.userId
+          context      = payload.context
           )).success
       }
 
