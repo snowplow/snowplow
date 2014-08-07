@@ -27,18 +27,10 @@ import Scalaz._
 object CljTomcatLoader extends Loader[String] {
 
   // The encoding used on these logs
-  private val CljTomcatEncoding = "UTF-8"
+  private val CollectorEncoding = "UTF-8"
 
-  /**
-   * Returns the InputSource for this
-   * loader.
-   *
-   * TODO: repetition of the identifier
-   * String from getCollectorLoader. Can
-   * we prevent duplication?
-   */
-  def getSource = InputSource("clj-tomcat", None)
-
+  // The name of this collector
+  private val CollectorName = "clj-tomcat"
 
   // Define the regular expression for extracting the fields
   // Adapted and evolved from the Clojure Collector's
@@ -97,25 +89,26 @@ object CljTomcatLoader extends Loader[String] {
                  body) => {
 
       // Is this a request for the tracker? Might be a browser favicon request or similar
+      // TODO: this is for GET only
       if (!isIceRequest(objct)) return None.success
 
       // Validations
       val timestamp = CloudfrontLoader.toTimestamp(date, time)
-      val payload = parseQuerystring(CloudfrontLoader.toOption(qs), CljTomcatEncoding)
+      val querystring = parseQuerystring(CloudfrontLoader.toOption(qs), CollectorEncoding)
 
-      (timestamp.toValidationNel |@| payload.toValidationNel) { (t, p) =>
+      (timestamp.toValidationNel |@| querystring.toValidationNel) { (t, q) =>
         CollectorPayload(
+          q,
+          CollectorName,
+          CollectorEncoding,
+          None, // No hostname for CloudFront
           t,
-          CollectorPayload.Defaults.vendor,
-          CollectorPayload.Defaults.version,
-          p,
-          getSource,
-          CljTomcatEncoding,
           CloudfrontLoader.toOption(ip),
           CloudfrontLoader.toOption(ua),
           CloudfrontLoader.toOption(refr),
-          Nil,
-          None).some
+          Nil,  // No headers for CloudFront
+          None  // No collector-set user ID for CloudFront
+        ).some
       }
     }
 
