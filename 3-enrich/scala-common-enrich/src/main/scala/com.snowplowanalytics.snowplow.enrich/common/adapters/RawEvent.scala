@@ -17,7 +17,10 @@ package adapters
 import org.joda.time.DateTime
 
 // This project
-import loaders.InputSource
+import loaders.{
+  CollectorSource,
+  CollectorContext
+}
 
 /**
  * The canonical input format for the ETL
@@ -28,14 +31,10 @@ import loaders.InputSource
  * stage of the Enrichment.
  */
 final case class RawEvent(
-    timestamp:   DateTime,
-    vendor:      String,
-    version:     String,
-    parameters:  Map[String, String],
-    source:      InputSource,
-    encoding:    String, 
-    ipAddress:   Option[String],
-    userAgent:   Option[String],
-    refererUri:  Option[String],
-    headers:     List[String],
-    userId:      Option[String])
+  vendor:      String,
+  version:     String,
+  parameters:  Map[String, String],
+  contentType: Option[String], // Not yet used but should be logged
+  source:      CollectorSource,
+  context:     CollectorContext
+  )
