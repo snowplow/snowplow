@@ -107,7 +107,7 @@ abstract class Loader[T] {
    *         message, boxed in a Scalaz
    *         Validation
    */
-  protected def parseQuerystring(qs: Option[String], enc: String): ValidatedNameValuePairs = qs match {
+  protected[loaders] def parseQuerystring(qs: Option[String], enc: String): ValidatedNameValuePairs = qs match {
     case Some(q) => {
       try {
         URLEncodedUtils.parse(URI.create("http://localhost/?" + q), enc).toList.success
