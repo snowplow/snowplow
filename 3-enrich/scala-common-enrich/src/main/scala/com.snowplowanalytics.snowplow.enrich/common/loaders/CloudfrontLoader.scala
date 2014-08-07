@@ -124,22 +124,22 @@ object CloudfrontLoader extends Loader[String] {
 
       (timestamp.toValidationNel |@| querystring.toValidationNel) { (t, q) =>
         CollectorPayload(
-        q,
-        CollectorName,
-        CollectorEncoding,
-        None, // No hostname for CloudFront
-        t,
-        toOption(ip),
-        toOption(userAgent),
-        referer,
-        Nil,  // No headers for CloudFront
-        None  // No collector-set user ID for CloudFront
+          q,
+          CollectorName,
+          CollectorEncoding,
+          None, // No hostname for CloudFront
+          t,
+          toOption(ip),
+          toOption(userAgent),
+          referer,
+          Nil,  // No headers for CloudFront
+          None  // No collector-set user ID for CloudFront
         ).some
       }
     }
 
     // 3. Row not recognised
-    case _: Throwable => "Line does not match CloudFront header or data row formats".failNel[Option[CollectorPayload]]
+    case _ => "Line does not match CloudFront header or data row formats".failNel[Option[CollectorPayload]]
   }
 
   /**

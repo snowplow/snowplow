@@ -74,11 +74,11 @@ object EnrichmentManager {
     // Let's start populating the CanonicalOutput
     // with the fields which cannot error
     val event = new CanonicalOutput().tap { e =>
-      e.collector_tstamp = EE.toTimestamp(raw.timestamp)
+      e.collector_tstamp = EE.toTimestamp(raw.context.timestamp)
       e.event_id = EE.generateEventId      // May be updated later if we have an `eid` parameter
-      e.v_collector = raw.source.collector // May be updated later if we have a `cv` parameter
+      e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
-      raw.ipAddress.map(ip => e.user_ipaddress = registry.getAnonIpEnrichment match {
+      raw.context.ipAddress.map(ip => e.user_ipaddress = registry.getAnonIpEnrichment match {
         case Some(anon) => anon.anonymizeIp(ip)
         case None => ip
       })
@@ -89,9 +89,9 @@ object EnrichmentManager {
     // 2a. Failable enrichments which don't need the payload
 
     // Attempt to decode the useragent
-    val useragent = raw.userAgent match {
+    val useragent = raw.context.useragent match {
       case Some(ua) =>
-        val u = CU.decodeString(raw.encoding, "useragent", ua)
+        val u = CU.decodeString(raw.source.encoding, "useragent", ua)
         u.flatMap(ua => {
           event.useragent = ua
           ua.success
@@ -100,7 +100,7 @@ object EnrichmentManager {
     }
 
     // Parse the useragent
-    val client = raw.userAgent match {
+    val client = raw.context.useragent match {
       case Some(ua) =>
         val ca = CE.extractClientAttributes(ua)
         ca.flatMap(c => {
@@ -124,7 +124,7 @@ object EnrichmentManager {
 
     // Partially apply functions which need an encoding, to create a TransformFunc
     val MaxJsonLength = 10000
-    val extractUrlEncJson: TransformFunc = JU.extractUrlEncJson(MaxJsonLength, raw.encoding, _, _)
+    val extractUrlEncJson: TransformFunc = JU.extractUrlEncJson(MaxJsonLength, raw.source.encoding, _, _)
     val extractBase64EncJson: TransformFunc = JU.extractBase64EncJson(MaxJsonLength, _, _)
 
     // We use a TransformMap which takes the format:
@@ -210,14 +210,14 @@ object EnrichmentManager {
     val transform = event.transform(sourceMap, transformMap)
 
     if (event.network_userid == null) {
-      raw.userId match {
+      raw.context.userId match {
         case s:Some[String] => event.network_userid = s.get
         case _ => ()
       }
     }
 
     // Potentially update the page_url and set the page URL components
-    val pageUri = WPE.extractPageUri(raw.refererUri, Option(event.page_url))
+    val pageUri = WPE.extractPageUri(raw.context.refererUri, Option(event.page_url))
     for (uri <- pageUri; u <- uri) {
       // Update the page_url
       event.page_url = u.toString
@@ -237,7 +237,7 @@ object EnrichmentManager {
     val geoLocation = {
       registry.getIpLookupsEnrichment match {
         case Some(geo) => {
-          raw.ipAddress match {
+          raw.context.ipAddress match {
             case Some(address) => {
               val ipLookupResult = geo.extractIpInformation(address)
               for (res <- ipLookupResult) {
@@ -295,7 +295,7 @@ object EnrichmentManager {
       e => unitSuccessNel, // No fields updated
       uri => uri match {
         case Some(u) =>
-          WAE.extractMarketingFields(u, raw.encoding).flatMap(cmp => {
+          WAE.extractMarketingFields(u, raw.source.encoding).flatMap(cmp => {
             event.mkt_medium = cmp.medium
             event.mkt_source = cmp.source
             event.mkt_term = cmp.term
