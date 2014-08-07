@@ -43,18 +43,10 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 object CloudfrontLoader extends Loader[String] {
 
   // The encoding used on CloudFront logs
-  private val CfEncoding = "UTF-8"
+  private val CollectorEncoding = "UTF-8"
 
-  /**
-   * Returns the InputSource for this
-   * loader.
-   *
-   * TODO: repetition of the identifier
-   * String from getCollectorLoader. Can
-   * we prevent duplication?
-   */
-  def getSource = InputSource("cloudfront", None)
-
+  // The name of this collector
+  private val CollectorName = "cloudfront"
 
   // Define the regular expression for extracting the fields
   // Adapted from Amazon's own cloudfront-loganalyzer.tgz
@@ -125,7 +117,7 @@ object CloudfrontLoader extends Loader[String] {
       val timestamp = toTimestamp(date, time)
       val querystring = {
         val q = toOption(singleEncodePcts(qs))
-        parseQuerystring(q, CfEncoding)
+        parseQuerystring(q, CollectorEncoding)
       }
 
       // No validation (yet) on the below
@@ -135,22 +127,22 @@ object CloudfrontLoader extends Loader[String] {
 
       (timestamp.toValidationNel |@| querystring.toValidationNel) { (t, q) =>
         CollectorPayload(
-        t,
-        CollectorPayload.Defaults.vendor,
-        CollectorPayload.Defaults.version,
         q,
-        getSource,
-        CfEncoding,
+        CollectorName,
+        CollectorEncoding,
+        None, // No hostname for CloudFront
+        t,
         toOption(ip),
         toOption(userAgent),
         referer,
-        Nil,
-        None).some
+        Nil,  // No headers for CloudFront
+        None  // No collector-set user ID for CloudFront
+        ).some
       }
     }
 
     // 3. Row not recognised
-    case _ => "Line does not match CloudFront header or data row formats".failNel[Option[CollectorPayload]]
+    case _: Throwable => "Line does not match CloudFront header or data row formats".failNel[Option[CollectorPayload]]
   }
 
   /**

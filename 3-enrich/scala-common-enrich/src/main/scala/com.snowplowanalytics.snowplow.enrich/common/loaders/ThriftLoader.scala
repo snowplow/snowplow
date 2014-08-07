@@ -68,7 +68,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
         )
       }
 
-      val payload = parseQuerystring(
+      val querystring = parseQuerystring(
         Option(snowplowRawEvent.payload.data),
         snowplowRawEvent.encoding
       )
@@ -82,15 +82,14 @@ object ThriftLoader extends Loader[Array[Byte]] {
       val headers = Option(snowplowRawEvent.headers)
         .map(_.toList).getOrElse(Nil)
 
-      (payload.toValidationNel) map { (p: List[NameValuePair]) =>
+      (querystring.toValidationNel) map { (q: List[NameValuePair]) =>
         Some(
           CollectorPayload(
-            new DateTime(snowplowRawEvent.timestamp, DateTimeZone.UTC),
-            CollectorPayload.Defaults.vendor,
-            CollectorPayload.Defaults.version,
-            p,
-            InputSource(snowplowRawEvent.collector, hostname),
+            q,
+            snowplowRawEvent.collector,
             snowplowRawEvent.encoding,
+            hostname,
+            new DateTime(snowplowRawEvent.timestamp, DateTimeZone.UTC),
             ip,
             userAgent,
             refererUri,
