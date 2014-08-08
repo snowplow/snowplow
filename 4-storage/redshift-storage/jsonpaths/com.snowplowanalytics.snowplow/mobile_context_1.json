@@ -18,6 +18,7 @@
     "$.data.deviceModel",
     "$.data.carrier",
     "$.data.openIdfa",
-    "$.data.appleIdfa"
+    "$.data.appleIdfa",
+    "$.data.androidIdfa"
     ]
 }
