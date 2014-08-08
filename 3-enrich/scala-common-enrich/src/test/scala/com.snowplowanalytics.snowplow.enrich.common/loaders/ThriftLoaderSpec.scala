@@ -49,6 +49,8 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
   object Expected {
     val encoding  = "UTF-8"
     val collector = "ssc-0.0.1-Stdout" // Note we have since fixed -stdout to be lowercase
+    val vendor    = "com.snowplowanalytics.snowplow"
+    val version   = "tp1"
   }
 
   def e1 =
@@ -67,18 +69,14 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
         val canonicalEvent = ThriftLoader
           .toCollectorPayload(Base64.decodeBase64(raw))
 
-        val expected  = new CollectorPayload(
-          timestamp   = timestamp,
-          vendor      = CollectorPayload.Defaults.vendor,
-          version     = CollectorPayload.Defaults.version,
-          querystring = payload,
-          source      = InputSource(Expected.collector, hostname),
-          encoding    = Expected.encoding,
-          ipAddress   = ipAddress,
-          userAgent   = userAgent,
-          refererUri  = refererUri,
-          headers     = headers,
-          userId      = userId
+        val expected = CollectorPayload(
+          vendor       = Expected.vendor,
+          version      = Expected.version,
+          querystring  = payload,
+          body         = None,
+          contentType  = None,
+          source       = CollectorSource(Expected.collector, Expected.encoding, None),
+          context      = CollectorContext(timestamp, ipAddress, userAgent, refererUri, headers, userId)          
           )
 
         canonicalEvent must beSuccessful(expected.some)
