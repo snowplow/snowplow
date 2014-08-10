@@ -17,6 +17,7 @@
     "$.data.bannerId",
     "$.data.campaignId",
     "$.data.advertiserId",
+    "$.data.targetUrl",
     "$.data.costModel",
     "$.data.cost"
     ]
