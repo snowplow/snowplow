@@ -16,6 +16,7 @@ Clojure Collector: fixed empty querystring in access-valve (#938)
 Clojure Collector: fixed IP address forwarding for VPC-based environments (#854)
 Clojure Collector: added support for API vendor and version in routing (#925)
 Clojure Collector: added support for POST as well as GET (#654)
+Scala Stream Collector: fixed broken link to `thrift-raw-event` (#955)                                      - TODO
 Scala Common Enrich: bumped to 0.6.0
 Scala Common Enrich: split out Clojure and CloudFront Collector event processing (#943)
 Scala Common Enrich: added CljTomcatLoaderSpec tests (#XXX)                                                 - TODO
@@ -29,11 +30,11 @@ Scala Hadoop Enrich: bumped to 0.7.0                                            
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.6.0 (#940)                                             - TODO
 Scala Hadoop Enrich: updated to support generating multiple enriched events from one raw payload (#902)     - TODO
 EmrEtlRunner: bumped to 0.9.1                                                                               - TODO
-EmrEtlRunner: fixed @jobflow.ec2_subnet_id not being set due to incorrect guard, thanks @rslifka! (#XXX)    - TODO
+EmrEtlRunner: fixed @jobflow.ec2_subnet_id not being set due to incorrect guard, thanks @rslifka! (#956)    - TODO
 StorageLoader: bumped to 0.3.2
 StorageLoader: removed EMPTYASNULL for loading JSONs (#942)
 StorageLoader: wrote JSON Path file for mobile_context (#776)
-StorageLoader: XXXXXXXXXXX, thanks @gisripa! (#951)                                                         - TODO
+StorageLoader: added missing targetUrl field to ad_impression JSON Path file, thanks @gisripa! (#951)       - TODO
 Redshift: added Redshift DDL for mobile_context (#542)
 
 Version 0.9.6 (2014-07-26)
