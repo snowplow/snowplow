@@ -78,10 +78,9 @@ object EnrichmentManager {
       e.event_id = EE.generateEventId      // May be updated later if we have an `eid` parameter
       e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
-      raw.context.ipAddress.map(ip => e.user_ipaddress = registry.getAnonIpEnrichment match {
-        case Some(anon) => anon.anonymizeIp(ip)
-        case None => ip
-      })
+      for (ip <- raw.context.ipAddress) {
+        e.user_ipaddress = ip
+      }
     }
 
     // 2. Enrichments which can fail
@@ -237,7 +236,7 @@ object EnrichmentManager {
     val geoLocation = {
       registry.getIpLookupsEnrichment match {
         case Some(geo) => {
-          raw.context.ipAddress match {
+          Option(event.user_ipaddress) match {
             case Some(address) => {
               val ipLookupResult = geo.extractIpInformation(address)
               for (res <- ipLookupResult) {
@@ -263,6 +262,12 @@ object EnrichmentManager {
         case None => unitSuccess
       }
     }
+
+    // Finally anonymize the IP address
+    Option(event.user_ipaddress).map(ip => event.user_ipaddress = registry.getAnonIpEnrichment match {
+      case Some(anon) => anon.anonymizeIp(ip)
+      case None => ip
+    })
 
     // Potentially set the referrer details and URL components
     val refererUri = CU.stringToUri(event.page_referrer)

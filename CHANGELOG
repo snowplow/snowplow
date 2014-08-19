@@ -27,8 +27,8 @@ Scala Common Enrich: replaced CanonicalInput and TrackerPayload with CollectorPa
 Scala Common Enrich: updated EnrichmentManager to process RawEvent not CanonicalInput (#903)                - TODO
 Scala Common Enrich: added input adapter to convert NV pairs to JSON (#904)                                 - TODO fix this title
 Scala Common Enrich: added parsing of request body and content type for Clojure Collector raw events (#930) - TODO
-Scala Common Enrich: geo-IP lookup now supports ip parameter on querystring (#961)                          - TODO
-Scala Common Enrich: IP address anonymization now works with ip parameter on querystring (#960)             - TODO 
+Scala Common Enrich: geo-IP lookup now supports ip parameter on querystring (#961)
+Scala Common Enrich: IP address anonymization now works with ip parameter on querystring (#960)
 Scala Hadoop Enrich: bumped to 0.7.0                                                                        - TODO
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.6.0 (#940)                                             - TODO
 Scala Hadoop Enrich: updated to support generating multiple enriched events from one raw payload (#902)     - TODO
