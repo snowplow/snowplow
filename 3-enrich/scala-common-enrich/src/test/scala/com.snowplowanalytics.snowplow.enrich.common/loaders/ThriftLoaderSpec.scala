@@ -75,7 +75,7 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
           querystring  = payload,
           body         = None,
           contentType  = None,
-          source       = CollectorSource(Expected.collector, Expected.encoding, None),
+          source       = CollectorSource(Expected.collector, Expected.encoding, hostname),
           context      = CollectorContext(timestamp, ipAddress, userAgent, refererUri, headers, userId)          
           )
 
