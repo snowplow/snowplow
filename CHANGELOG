@@ -16,7 +16,7 @@ Clojure Collector: fixed empty querystring in access-valve (#938)
 Clojure Collector: fixed IP address forwarding for VPC-based environments (#854)
 Clojure Collector: added support for API vendor and version in routing (#925)
 Clojure Collector: added support for POST as well as GET (#654)
-Scala Stream Collector: fixed broken link to `thrift-raw-event` (#955)                                      - TODO
+Scala Stream Collector: fixed broken link to `thrift-raw-event` (#955)
 Scala Common Enrich: bumped to 0.6.0
 Scala Common Enrich: split out Clojure and CloudFront Collector event processing (#943)
 Scala Common Enrich: added CljTomcatLoaderSpec tests (#XXX)                                                 - TODO
