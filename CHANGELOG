@@ -3,7 +3,7 @@ Version 0.9.7 (2014-08-XX)
 TODO: fix toRawEvents
 
 Ruby Tracker: bumped git submodule to 0.2.0 (#939)
-Java Tracker: bumped git submodule to 0.5.0 (#948)                                                          - TODO
+Java Tracker: bumped git submodule to 0.5.1 (#948)                                                          - TODO
 Node.js Tracker: added git submodule. Version 0.1.0 (#949)                                                  - TODO don't forget README
 Clojure Collector: bumped to 0.7.0
 Clojure Collector: merged snowplow/tomcat-cf-access-log-valve into Snowplow as clojure-collector/access-valve (#898)
