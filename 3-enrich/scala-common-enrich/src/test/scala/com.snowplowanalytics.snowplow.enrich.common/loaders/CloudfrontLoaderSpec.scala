@@ -137,7 +137,7 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
 
   def e7 = {
     val raw = "2012-05-24  11:35:53  DFW3  3343  99.116.172.58 POST d3gs014xn8p70.cloudfront.net  /i  200 http://www.psychicbazaar.com/2-tarot-cards/genre/all/type/all?p=5 Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  e=pv&page=Tarot%2520cards%2520-%2520Psychic%2520Bazaar&tid=344260&uid=288112e0a5003be2&vid=1&lang=en-US&refr=http%253A%252F%252Fwww.psychicbazaar.com%252F2-tarot-cards%252Fgenre%252Fall%252Ftype%252Fall%253Fp%253D4&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=1366x768&cookie=1"
-    CloudfrontLoader.toCollectorPayload(raw) must beFailing(NonEmptyList("Oh no"))
+    CloudfrontLoader.toCollectorPayload(raw) must beFailing(NonEmptyList("Only GET operations supported for CloudFront Collector, not POST"))
   }
 
   // A bit of fun: the chances of generating a valid CloudFront row at random are
