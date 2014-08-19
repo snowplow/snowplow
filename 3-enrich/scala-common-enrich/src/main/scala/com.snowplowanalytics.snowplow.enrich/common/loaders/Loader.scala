@@ -84,7 +84,7 @@ abstract class Loader[T] {
    * @return true if this is a request
    *         for the ice pixel
    */
-  protected def isIceRequest(path: String): Boolean =
+  protected[loaders] def isIceRequest(path: String): Boolean =
     path.startsWith("/ice.png") || // Legacy name for /i
     path.equals("/i") ||
     path.startsWith("/i?")

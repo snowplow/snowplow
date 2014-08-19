@@ -34,12 +34,12 @@ import org.scalacheck.Arbitrary._
 
 class CloudfrontLoaderSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
 
-  "This is a specification to test the CloudfrontLoader functionality"                                      ^
-                                                                                                           p^
-  "toTimestamp should create a DateTime from valid date and time Strings"                                   ! e1^
-  "toOption should return a None if the querystring is empty"                                               ! e2^
-  "toCleanUri should remove a trailing % from a URI correctly"                                              ! e3^
-  "singleEncodePcts should correctly single-encoding double-encoded % signs"                                ! e4^
+  "This is a specification to test the CloudfrontLoader functionality"                                        ^
+                                                                                                             p^
+  "toTimestamp should create a DateTime from valid date and time Strings"                                     ! e1^
+  "toOption should return a None if the querystring is empty"                                                 ! e2^
+  "toCleanUri should remove a trailing % from a URI correctly"                                                ! e3^
+  "singleEncodePcts should correctly single-encoding double-encoded % signs"                                  ! e4^
   "toCollectorPayload should return a CanonicalInput for a valid CloudFront log record"                       ! e5^
   "toCollectorPayload should return a None for a CloudFront log record not representing a Snowplow raw event" ! e6^
   "toCollectorPayload should return a Validation Failure for an invalid or corrupted CloudFront log record"   ! e7^
