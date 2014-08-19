@@ -37,11 +37,11 @@ EmrEtlRunner: fixed @jobflow.ec2_subnet_id not being set due to incorrect guard,
 StorageLoader: bumped to 0.3.2
 StorageLoader: removed EMPTYASNULL for loading JSONs (#942)                                                 - TODO
 StorageLoader: wrote JSON Path file for mobile_context (#776)
-StorageLoader: wrote JSON Path file for geolocation_context (#962)                                          - TODO
-StorageLoader: added missing targetUrl field to ad_impression JSON Path file, thanks @gisripa! (#951)       - TODO
+StorageLoader: wrote JSON Path file for geolocation_context (#962)
+StorageLoader: added missing targetUrl field to ad_impression JSON Path file, thanks @gisripa! (#951)
 StorageLoader: made providing jsonpath_assets optional (#958)                                               - TODO 
 Redshift: added Redshift DDL for mobile_context (#542)
-Redshift: added Redshift DDL for geolocation_context (#950)
+Redshift: added Redshift DDL for geolocation_context (#950)                                                 - TODO
 
 Version 0.9.7 (2014-09-02)
 --------------------------
