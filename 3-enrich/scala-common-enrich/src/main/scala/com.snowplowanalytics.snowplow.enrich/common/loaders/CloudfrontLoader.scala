@@ -90,10 +90,18 @@ object CloudfrontLoader extends Loader[String] {
   def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = line match {
     
     // 1. Header row
-    case h if (h.startsWith("#Version:") ||
-               h.startsWith("#Fields:"))    => None.success
+    case h if (h.startsWith("#Version:") || h.startsWith("#Fields:")) =>
+      None.success
     
-    // 2. Row matches CloudFront format
+    // 2. Not a request for /i
+    case CfRegex(_, _, _, _, _, _, _, objct, _, _, _, _) if !isIceRequest(objct) =>
+      None.success
+
+    // 3. Not a GET request for /i
+    case CfRegex(_, _, _, _, _, op, _, _, _, _, _, _) if op.toUpperCase != "GET" =>
+      s"Only GET operations supported for CloudFront Collector, not ${op.toUpperCase}".failNel[Option[CollectorPayload]]
+
+    // 4. Row matches CloudFront format
     case CfRegex(date,
                  time,
                  _,
@@ -106,9 +114,6 @@ object CloudfrontLoader extends Loader[String] {
                  rfr,
                  ua,
                  qs) => {
-
-      // Is this a request for the tracker? Might be a browser favicon request or similar
-      if (!isIceRequest(objct)) return None.success
 
       // Validations, and let's strip double-encodings
       val timestamp = toTimestamp(date, time)
