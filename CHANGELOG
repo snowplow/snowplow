@@ -5,6 +5,7 @@ TODO: fix toRawEvents
 Ruby Tracker: bumped git submodule to 0.2.0 (#939)
 Java Tracker: bumped git submodule to 0.5.1 (#948)                                                          - TODO
 Node.js Tracker: added git submodule. Version 0.1.0 (#949)                                                  - TODO don't forget README
+Trackers: fixed broken git submodule links, thanks @OAGr! (#957)                                            - TODO 
 Clojure Collector: bumped to 0.7.0
 Clojure Collector: merged snowplow/tomcat-cf-access-log-valve into Snowplow as clojure-collector/access-valve (#898)
 Clojure Collector: bumped access-valve to 0.1.0
@@ -16,16 +17,18 @@ Clojure Collector: fixed empty querystring in access-valve (#938)
 Clojure Collector: fixed IP address forwarding for VPC-based environments (#854)
 Clojure Collector: added support for API vendor and version in routing (#925)
 Clojure Collector: added support for POST as well as GET (#654)
-Scala Stream Collector: fixed broken link to `thrift-raw-event` (#955)
+Scala Stream Collector: fixed broken link to `thrift-raw-event`, thanks @bamos! (#955)
 Scala Common Enrich: bumped to 0.6.0
 Scala Common Enrich: split out Clojure and CloudFront Collector event processing (#943)
-Scala Common Enrich: added CljTomcatLoaderSpec tests (#XXX)                                                 - TODO
+Scala Common Enrich: added CljTomcatLoaderSpec tests (#963)                                                 - TODO
 Scala Common Enrich: filtering non-GETs from CloudfrontLoader (#944)
 Scala Common Enrich: replaced all Argonaut code with json4s (#945)
 Scala Common Enrich: replaced CanonicalInput and TrackerPayload with CollectorPayload and RawEvent (#946)   - TODO
 Scala Common Enrich: updated EnrichmentManager to process RawEvent not CanonicalInput (#903)                - TODO
 Scala Common Enrich: added input adapter to convert NV pairs to JSON (#904)                                 - TODO fix this title
 Scala Common Enrich: added parsing of request body and content type for Clojure Collector raw events (#930) - TODO
+Scala Common Enrich: geo-IP lookup now supports ip parameter on querystring (#961)                          - TODO
+Scala Common Enrich: IP address anonymization now works with ip parameter on querystring (#960)             - TODO 
 Scala Hadoop Enrich: bumped to 0.7.0                                                                        - TODO
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.6.0 (#940)                                             - TODO
 Scala Hadoop Enrich: updated to support generating multiple enriched events from one raw payload (#902)     - TODO
@@ -34,8 +37,11 @@ EmrEtlRunner: fixed @jobflow.ec2_subnet_id not being set due to incorrect guard,
 StorageLoader: bumped to 0.3.2
 StorageLoader: removed EMPTYASNULL for loading JSONs (#942)                                                 - TODO
 StorageLoader: wrote JSON Path file for mobile_context (#776)
+StorageLoader: wrote JSON Path file for geolocation_context (#962)                                          - TODO
 StorageLoader: added missing targetUrl field to ad_impression JSON Path file, thanks @gisripa! (#951)       - TODO
+StorageLoader: made providing jsonpath_assets optional (#958)                                               - TODO 
 Redshift: added Redshift DDL for mobile_context (#542)
+Redshift: added Redshift DDL for geolocation_context (#950)
 
 Version 0.9.7 (2014-09-02)
 --------------------------
