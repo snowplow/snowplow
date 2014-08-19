@@ -16,3 +16,6 @@
 [submodule "1-trackers/ruby-tracker"]
 	path = 1-trackers/ruby-tracker
 	url = https://github.com/snowplow/snowplow-ruby-tracker.git
+[submodule "1-trackers/nodejs-tracker"]
+	path = 1-trackers/nodejs-tracker
+	url = https://github.com/snowplow/snowplow-nodejs-tracker.git
