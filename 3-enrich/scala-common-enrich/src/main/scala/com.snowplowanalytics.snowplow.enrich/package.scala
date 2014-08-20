@@ -107,7 +107,7 @@ package object common {
    * containing `String`s for `Failure`
    * or a `List` of `RawEvent`s for `Success`.
    */
-  type ValidatedRawEvents = Validated[List[RawEvent]]
+  type ValidatedRawEvents = Validated[NonEmptyList[RawEvent]]
 
   /**
    * Type alias for an `Option`-boxed

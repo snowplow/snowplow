@@ -28,6 +28,7 @@ import enrichments.{
   EnrichmentRegistry,
   EnrichmentManager
 }
+import outputs.CanonicalOutput
 
 /**
  * Expresses the end-to-end event pipeline
@@ -38,7 +39,8 @@ object EtlPipeline {
 
   /**
    * A helper method to take a ValidatedMaybeCanonicalInput
-   * and flatMap it into a ValidatedMaybeCanonicalOutput.
+   * and transform it into a List (possibly empty) of
+   * ValidatedCanonicalOutputs.
    *
    * We have to do some unboxing because enrichEvent
    * expects a raw CanonicalInput as its argument, not
@@ -55,19 +57,25 @@ object EtlPipeline {
    */
   def processEvents(registry: EnrichmentRegistry, etlVersion: String, etlTstamp: String, input: ValidatedMaybeCollectorPayload): List[ValidatedCanonicalOutput] = {
 
-    def toRawEvents(maybePayload: MaybeCollectorPayload): ValidatedRawEvents =
-      maybePayload.cata(AdapterRegistry.toRawEvents(_), Nil.success)
+    def flattenToList[A](v: Validated[Option[Validated[NonEmptyList[Validated[A]]]]]): List[Validated[A]] = v match {
+      case Success(Some(Success(nel))) => nel.toList
+      case Success(Some(Failure(f)))   => List(f.fail)
+      case Failure(f)                  => List(f.fail)
+      case Success(None)               => Nil
+    }
 
-    type ListVld[A] = List[Validated[A]]
-    def flattenToList[A](v: Validated[ListVld[A]]): ListVld[A] = v.fold(
-      f => List(Failure(f)), s => s)
+    val e: Validated[Option[Validated[NonEmptyList[ValidatedCanonicalOutput]]]] =
+      for {
+        maybePayload  <- input
+      } yield for {
+        payload       <- maybePayload
+      } yield for {
+        events        <- AdapterRegistry.toRawEvents(payload)
+      } yield for {
+        event         <- events
+        enriched       = EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, event)
+      } yield enriched
 
-    flattenToList(for {
-      maybePayload <- input
-      events       <- toRawEvents(maybePayload)
-    } yield for {
-      event        <- events
-      enriched      = EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, event)
-    } yield enriched)
+    flattenToList[CanonicalOutput](e)
   }
 }

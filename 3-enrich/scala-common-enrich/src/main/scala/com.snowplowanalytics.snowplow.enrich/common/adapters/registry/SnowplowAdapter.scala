@@ -39,17 +39,16 @@ object SnowplowAdapter {
      *
      * @param payload The CollectorPaylod containing one or more
      *        raw events as collected by a Snowplow collector
-     * @return a Validation boxing either a List of RawEvents on
+     * @return a Validation boxing either a NEL of RawEvents on
      *         Success, or a NEL of Failure Strings
      */
-    // TODO: update comment when List -> NEL
     def toRawEvents(payload: CollectorPayload): ValidatedRawEvents = {
 
       val params = toMap(payload.querystring)
       if (params.isEmpty) {
         "Querystring is empty: no raw event to process".failNel
       } else {
-        List(RawEvent(
+        NonEmptyList(RawEvent(
           vendor       = payload.vendor,
           version      = payload.version,
           parameters   = params,
@@ -72,10 +71,9 @@ object SnowplowAdapter {
      *
      * @param payload The CollectorPaylod containing one or more
      *        raw events as collected by a Snowplow collector
-     * @return a Validation boxing either a List of RawEvents on
+     * @return a Validation boxing either a NEL of RawEvents on
      *         Success, or a NEL of Failure Strings
      */
-    // TODO: update comment when List -> NEL
     def toRawEvents(payload: CollectorPayload): ValidatedRawEvents = {
       
       // TODO:
@@ -93,7 +91,7 @@ object SnowplowAdapter {
       if (allParams.isEmpty) {
         "No parameters found for this raw event".failNel
       } else {
-        List(RawEvent(
+        NonEmptyList(RawEvent(
           vendor       = payload.vendor,
           version      = payload.version,
           parameters   = allParams,

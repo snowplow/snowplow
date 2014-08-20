@@ -31,10 +31,9 @@ trait Adapter {
    *
    * @param payload The CollectorPaylod containing one or more
    *        raw events as collected by a Snowplow collector
-   * @return a Validation boxing either a List of RawEvents on
+   * @return a Validation boxing either a NEL of RawEvents on
    *         Success, or a NEL of Failure Strings
    */
-  // TODO: update comment when List -> NEL
   def toRawEvents(payload: CollectorPayload): ValidatedRawEvents
 
   /**
