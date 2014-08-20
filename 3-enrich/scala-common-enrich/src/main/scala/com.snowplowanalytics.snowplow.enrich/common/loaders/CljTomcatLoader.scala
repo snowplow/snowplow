@@ -71,7 +71,17 @@ object CljTomcatLoader extends Loader[String] {
    */
   def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = line match {
     
-    // 2. Row matches CloudFront format
+    // A: Expecting a GET request to /i
+
+    // A.1 Not a request for /i
+    case CljTomcatRegex(_, _, _, _, _, _, _, objct, _, _, _, _) if !isIceRequest(objct) =>
+      None.success
+
+    // A.2 Not a GET request for /i
+    case CljTomcatRegex(_, _, _, _, _, op, _, _, _, _, _, _) if op.toUpperCase != "GET" =>
+      s"Operation must be GET, not ${op.toUpperCase}, for Clojure Collector if request content type and body not provided".failNel[Option[CollectorPayload]]
+
+    // A.3 GET request for /i as expected
     case CljTomcatRegex(date,
                  time,
                  _,
@@ -83,14 +93,10 @@ object CljTomcatLoader extends Loader[String] {
                  _,
                  refr,
                  ua,
-                 qs,
+                 qs/*,
                  _,
                  ct,
-                 body) => {
-
-      // Is this a request for the tracker? Might be a browser favicon request or similar
-      // TODO: this is for GET only
-      if (!isIceRequest(objct)) return None.success
+                 body*/) => {
 
       // Validations
       val timestamp = CloudfrontLoader.toTimestamp(date, time)
@@ -112,7 +118,10 @@ object CljTomcatLoader extends Loader[String] {
       }
     }
 
-    // 3. Row not recognised
+    // B: Expecting a POST request to <api vendor>/<api version>
+    // TODO
+
+    // C. Row not recognised
     case _ => "Line does not match raw event format for Clojure Collector".failNel[Option[CollectorPayload]]
   }
 }
