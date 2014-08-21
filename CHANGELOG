@@ -16,11 +16,12 @@ Clojure Collector: fixed IP address forwarding for VPC-based environments (#854)
 Clojure Collector: added support for API vendor and version in routing (#925)
 Clojure Collector: added support for POST as well as GET (#654)
 Scala Stream Collector: fixed broken link to `thrift-raw-event`, thanks @bamos! (#955)
-Scala Common Enrich: bumped to 0.6.0
+Scala Common Enrich: bumped to 0.6.0                                                                        - TODO (snapshot currently)
 Scala Common Enrich: split out Clojure and CloudFront Collector event processing (#943)
 Scala Common Enrich: added CljTomcatLoaderSpec tests (#963)
 Scala Common Enrich: filtering non-GETs from CloudfrontLoader (#944)
 Scala Common Enrich: replaced all Argonaut code with json4s (#945)
+Scala Common Enrich: renamed CanonicalOutput to EnrichedEvent (#964)
 Scala Common Enrich: replaced CanonicalInput and TrackerPayload with CollectorPayload and RawEvent (#946)   - TODO
 Scala Common Enrich: updated EnrichmentManager to process RawEvent not CanonicalInput (#903)                - TODO
 Scala Common Enrich: added input adapter to convert NV pairs to JSON (#904)                                 - TODO fix this title

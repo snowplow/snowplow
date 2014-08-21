@@ -28,7 +28,7 @@ import util.Tap._
 
 // This project
 import adapters.RawEvent
-import outputs.CanonicalOutput
+import outputs.EnrichedEvent
 
 import utils.{ConversionUtils => CU}
 import utils.{JsonUtils => JU}
@@ -62,7 +62,7 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: String, raw: RawEvent): ValidatedCanonicalOutput = {
+  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: String, raw: RawEvent): ValidatedEnrichedEvent = {
 
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
@@ -73,7 +73,7 @@ object EnrichmentManager {
 
     // Let's start populating the CanonicalOutput
     // with the fields which cannot error
-    val event = new CanonicalOutput().tap { e =>
+    val event = new EnrichedEvent().tap { e =>
       e.collector_tstamp = EE.toTimestamp(raw.context.timestamp)
       e.event_id = EE.generateEventId      // May be updated later if we have an `eid` parameter
       e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter

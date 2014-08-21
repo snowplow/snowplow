@@ -22,7 +22,7 @@ import java.lang.{Byte => JByte}
 import scala.reflect.BeanProperty
 
 /**
- * The canonical output format.
+ * The canonical output format for enriched events.
  *
  * For simplicity, we are using our Redshift format
  * as the canonical format, i.e. the below is
@@ -35,8 +35,8 @@ import scala.reflect.BeanProperty
  * Array for browser features, and
  * switch remaining Bytes to Booleans).
  */
-// TODO: make the Canonical Output Avro-format, not Redshift-specific
-class CanonicalOutput {
+// TODO: make the EnrichedEvent Avro-format, not Redshift-specific
+class EnrichedEvent {
 
   // The application (site, game, app etc) this event belongs to, and the tracker platform
   @BeanProperty var app_id: String = _

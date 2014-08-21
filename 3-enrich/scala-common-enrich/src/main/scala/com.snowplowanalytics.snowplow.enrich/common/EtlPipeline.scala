@@ -28,7 +28,7 @@ import enrichments.{
   EnrichmentRegistry,
   EnrichmentManager
 }
-import outputs.CanonicalOutput
+import outputs.EnrichedEvent
 
 /**
  * Expresses the end-to-end event pipeline
@@ -55,7 +55,7 @@ object EtlPipeline {
    *         flatMap, will include any validation errors
    *         contained within the ValidatedMaybeCanonicalInput
    */
-  def processEvents(registry: EnrichmentRegistry, etlVersion: String, etlTstamp: String, input: ValidatedMaybeCollectorPayload): List[ValidatedCanonicalOutput] = {
+  def processEvents(registry: EnrichmentRegistry, etlVersion: String, etlTstamp: String, input: ValidatedMaybeCollectorPayload): List[ValidatedEnrichedEvent] = {
 
     def flattenToList[A](v: Validated[Option[Validated[NonEmptyList[Validated[A]]]]]): List[Validated[A]] = v match {
       case Success(Some(Success(nel))) => nel.toList
@@ -64,7 +64,7 @@ object EtlPipeline {
       case Success(None)               => Nil
     }
 
-    val e: Validated[Option[Validated[NonEmptyList[ValidatedCanonicalOutput]]]] =
+    val e: Validated[Option[Validated[NonEmptyList[ValidatedEnrichedEvent]]]] =
       for {
         maybePayload  <- input
       } yield for {
@@ -76,6 +76,6 @@ object EtlPipeline {
         enriched       = EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, event)
       } yield enriched
 
-    flattenToList[CanonicalOutput](e)
+    flattenToList[EnrichedEvent](e)
   }
 }

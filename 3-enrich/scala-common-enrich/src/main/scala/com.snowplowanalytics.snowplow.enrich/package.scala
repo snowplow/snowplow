@@ -31,7 +31,7 @@ import com.github.fge.jsonschema.core.report.ProcessingMessage
 // This project
 import common.loaders.CollectorPayload
 import common.adapters.RawEvent
-import common.outputs.CanonicalOutput
+import common.outputs.EnrichedEvent
 import common.enrichments.registry.Enrichment
 
 /**
@@ -113,7 +113,7 @@ package object common {
    * Type alias for an `Option`-boxed
    * `CanonicalOutput`.
    */
-  type MaybeCanonicalOutput = Option[CanonicalOutput]
+  type MaybeEnrichedEvent = Option[EnrichedEvent]
 
   /**
    * Type alias for an `Option`-boxed
@@ -126,7 +126,7 @@ package object common {
    * containing `String`s for `Failure`
    * or a CanonicalOutput for `Success`.
    */
-  type ValidatedCanonicalOutput = Validated[CanonicalOutput]
+  type ValidatedEnrichedEvent = Validated[EnrichedEvent]
 
   /**
    * Type alias for a `Validation`
