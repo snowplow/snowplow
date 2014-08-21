@@ -14,11 +14,12 @@
 
     "$.data.osType",
     "$.data.osVersion",
-    "$.data.deviceVendor",
+    "$.data.deviceManufacturer",
     "$.data.deviceModel",
     "$.data.carrier",
     "$.data.openIdfa",
     "$.data.appleIdfa",
+    "$.data.appleIdfv",
     "$.data.androidIdfa"
     ]
 }
