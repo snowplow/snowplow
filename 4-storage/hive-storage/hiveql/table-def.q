@@ -9,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.1.0
+-- Version:     0.2.0
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean
@@ -19,13 +19,14 @@
 CREATE EXTERNAL TABLE IF NOT EXISTS `events` (
 app_id string,
 platform string,
+etl_tstamp timestamp,              -- Added in 0.2.0
 collector_tstamp timestamp,
 dvce_tstamp timestamp,
 event string,
-event_vendor string,
+                                   -- Removed event_vendor in 0.2.0
 event_id string,
 txn_id int,
-name_tracker string,               -- Added in 0.1.0
+name_tracker string,
 v_tracker string,
 v_collector string,
 v_etl string,
@@ -41,9 +42,14 @@ geo_city string,
 geo_zipcode string,
 geo_latitude double,
 geo_longitude double,
-page_url string,                   -- Added in 0.1.0
+geo_region_name string,            -- Added in 0.2.0
+ip_isp string,                     -- Added in 0.2.0
+ip_organization string,            -- Added in 0.2.0
+ip_domain string,                  -- Added in 0.2.0
+ip_netspeed string,                -- Added in 0.2.0
+page_url string,
 page_title string,
-page_referrer string,              -- Added in 0.1.0
+page_referrer string,
 page_urlscheme string,
 page_urlhost string,
 page_urlport int, 
@@ -64,14 +70,14 @@ mkt_source string,
 mkt_term string,
 mkt_content string,
 mkt_campaign string,
-contexts string,                   -- Added in 0.1.0
+contexts string,
 se_category string,
 se_action string,
 se_label string,
 se_property string,
 se_value double,
-ue_name string,                    -- Added in 0.1.0
-ue_properties string,              -- Added in 0.1.0
+                                   -- Removed ue_name in 0.2.0
+unstruct_event string,             -- Renamed ue_properties to unstruct_event in 0.2.0
 tr_orderid string,
 tr_affiliation string,
 tr_total double,

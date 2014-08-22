@@ -40,6 +40,9 @@ StorageLoader: wrote JSON Path file for geolocation_context (#962)              
 StorageLoader: added missing targetUrl field to ad_impression JSON Path file, thanks @gisripa! (#951)
 StorageLoader: made providing jsonpath_assets optional (#958)                                               - TODO
 Redshift: added Redshift DDL for mobile_context (#542)
+Redshift: added Redshift DDL for geolocation_context (#950)                                                 - TODO
+Hive Storage: bumped table-def.q to 0.2.0
+Hive Storage: added and removed fields to synchronize with 0.9.6's enriched event format (#965)
 
 Version 0.9.6 (2014-07-26)
 --------------------------
