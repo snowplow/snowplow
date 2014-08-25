@@ -31,7 +31,7 @@ Scala Common Enrich: added input adapter to convert NV pairs to JSON (#904)     
 Scala Hadoop Enrich: bumepd to 0.7.0                                                                        - TODO
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.6.0 (#940)                                             - TODO
 Scala Hadoop Enrich: updated to support generating multiple enriched events from one raw payload (#902)     - TODO
-EmrEtlRunner: bumped to 0.9.1                                                                               - TODO
+EmrEtlRunner: bumped to 0.9.1
 EmrEtlRunner: fixed @jobflow.ec2_subnet_id not being set due to incorrect guard, thanks @rslifka! (#956)
 StorageLoader: bumped to 0.3.2
 StorageLoader: removed EMPTYASNULL for loading JSONs (#942)
