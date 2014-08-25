@@ -79,8 +79,8 @@ module Snowplow
       #
       # Parameters:
       # +s3+:: the Fog object for accessing S3
-      # +assets+:: path to custom assets (e.g. JSON Path files)
-      Contract FogStorage, String => Maybe[String]
+      # +assets+:: path to user's own JSON Path files, if provided
+      Contract FogStorage, Maybe[String] => Maybe[String]
       def discover_jsonpaths_file(s3, assets)
         name = make_sql_safe(@name)
         file = "#{name}_#{@version_model}.json"
@@ -94,15 +94,18 @@ module Snowplow
         # Let's do the custom check first (allows a user to
         # override one of our JSON Path files with one of theirs)
         # Look for it in the custom assets (if any)
-        custom_dir = "#{assets}#{@vendor}/"
+        unless assets.nil?
+          custom_dir = "#{assets}#{@vendor}/"
 
-        if file_exists?(s3, custom_dir, file)
-          f = "#{custom_dir}#{file}"
-          @@jsonpaths_files[cache_key] = f
-          return f
+          if file_exists?(s3, custom_dir, file)
+            f = "#{custom_dir}#{file}"
+            @@jsonpaths_files[cache_key] = f
+            return f
+          end
         end
 
-        # Look for it in Snowplow's hosted assets
+        # Look for it in Snowplow's hosted assets, which
+        # will definitely exist
         snowplow_dir = "#{@@snowplow_hosted_assets}#{@vendor}/"
         _s3 = copy_with_new_region(s3, @@snowplow_hosted_assets_region)
         if file_exists?(_s3, snowplow_dir, file)
