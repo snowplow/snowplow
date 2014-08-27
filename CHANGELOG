@@ -1,7 +1,7 @@
 Version 0.9.7 (2014-08-XX)
 --------------------------
 Ruby Tracker: bumped git submodule to 0.2.0 (#939)
-Java Tracker: bumped git submodule to 0.5.1 (#948)                                                          - TODO
+Java Tracker: bumped git submodule to 0.5.1 (#948)
 Node.js Tracker: added git submodule. Version 0.1.0 (#949)
 Trackers: fixed broken git submodule links, thanks @OAGr! (#957)
 EmrEtlRunner: bumped to 0.9.1
