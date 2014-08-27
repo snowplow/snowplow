@@ -13,8 +13,8 @@ StorageLoader: made providing jsonpath_assets optional (#958)
 Hive Storage: bumped table-def.q to 0.2.0
 Hive Storage: added and removed fields to synchronize with 0.9.6's enriched event format (#965)
 Scala Hadoop Shred: bumped to version 0.2.1
-Scala Hadoop Shred: fixed multiple JSONs not being shredded for a single row (#968)                        - TODO
-Scala Hadoop Shred: strengthened test suite (#967)                                                         - TODO
+Scala Hadoop Shred: fixed multiple JSONs not being shredded for a single row (#968)
+Scala Hadoop Shred: strengthened test suite (#967)
 
 Version 0.9.6 (2014-07-26)
 --------------------------
