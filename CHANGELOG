@@ -1,4 +1,4 @@
-Version 0.9.7 (2014-08-XX)
+Version 0.9.7 (2014-09-XX)
 --------------------------
 Ruby Tracker: bumped git submodule to 0.3.0 (#939)
 Java Tracker: bumped git submodule to 0.5.1 (#948)
@@ -6,7 +6,9 @@ Node.js Tracker: added git submodule. Version 0.1.0 (#949)
 Trackers: fixed broken git submodule links, thanks @OAGr! (#957)
 EmrEtlRunner: bumped to 0.9.1
 EmrEtlRunner: fixed @jobflow.ec2_subnet_id not being set due to incorrect guard, thanks @rslifka! (#956)
-EmrEtlRunner: now allows shredding without prior enrichment (#927)                                       - TODO 
+EmrEtlRunner: fixed bugs in --process-bucket (#973)
+EmrEtlRunner: renamed --process-bucket option to --process-enrich (#972)
+EmrEtlRunner: now allows shredding without prior enrichment (#927)
 StorageLoader: bumped to 0.3.2
 StorageLoader: removed EMPTYASNULL for loading JSONs (#942)
 StorageLoader: added missing targetUrl field to ad_impression JSON Path file, thanks @gisripa! (#951)

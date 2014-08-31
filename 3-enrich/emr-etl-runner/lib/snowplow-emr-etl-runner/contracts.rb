@@ -31,7 +31,8 @@ module Snowplow
       :start => Maybe[String],
       :end => Maybe[String],
       :skip => Maybe[ArrayOf[String]],
-      :process_bucket => Maybe[String]
+      :process_enrich_location => Maybe[String],
+      :process_shred_location => Maybe[String]
       })
 
     # The Hash for the IP anonymization enrichment.
