@@ -124,7 +124,7 @@ module Snowplow
         end
 
         # We can't process enrich and process shred
-        unless options[:process_enrich_location].nil? or options[:process_enrich_location].nil?
+        unless args[:process_enrich_location].nil? or args[:process_enrich_location].nil?
           raise ConfigError, "Cannot process enrich and process shred, choose one"
         end
         unless args[:process_enrich_location].nil?
