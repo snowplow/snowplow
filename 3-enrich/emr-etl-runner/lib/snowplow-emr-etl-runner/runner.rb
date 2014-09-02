@@ -22,7 +22,7 @@ module Snowplow
 
       # Supported options
       @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
-      @@skip_options = Set.new(%w(staging s3distcp emr shred archive))
+      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred archive))
 
       include Logging
 
@@ -53,9 +53,10 @@ module Snowplow
         end
 
         unless @args[:skip].include?('emr')
+          enrich = not(@args[:skip].include?('enrich'))
           shred = not(@args[:skip].include?('shred'))
           s3distcp = not(@args[:skip].include?('s3distcp'))
-          job = EmrJob.new(@args[:debug], shred, s3distcp, @config, @enrichments_array)
+          job = EmrJob.new(@args[:debug], enrich, shred, s3distcp, @config, @enrichments_array)
           job.run()
         end
 
@@ -97,9 +98,13 @@ module Snowplow
         # Check our skip argument
         args[:skip].each { |opt|
           unless @@skip_options.include?(opt)
-            raise ConfigError, "Invalid option: skip can be 'staging', 'emr' or 'archive', not '#{opt}'"
+            raise ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred' or 'archive', not '#{opt}'"
           end
         }
+
+        if args[:skip].include?('shred') and args[:skip].include?('enrich') and !args[:skip].include?('emr')
+          args[:skip] << 'emr'
+        end
 
         # Check that start is before end, if both set
         if !args[:start].nil? and !args[:end].nil?
@@ -118,8 +123,15 @@ module Snowplow
           raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
         end
 
-        unless args[:process_bucket].nil?
-          config[:s3][:buckets][:processing] = args[:process_bucket]
+        # We can't process enrich and process shred
+        unless args[:process_enrich_location].nil? or args[:process_enrich_location].nil?
+          raise ConfigError, "Cannot process enrich and process shred, choose one"
+        end
+        unless args[:process_enrich_location].nil?
+          config[:s3][:buckets][:raw][:processing] = args[:process_enrich_location]
+        end
+        unless args[:process_shred_location].nil?
+          config[:s3][:buckets][:enriched][:good] = args[:process_shred_location]
         end
 
         # Add trailing slashes if needed to the non-nil buckets

@@ -17,6 +17,7 @@
 | [java-tracker] [t5]       | An event tracker for Java-based desktop and server apps, servlets and games | Beta |
 | [arduino-tracker] [t6]    | An event tracker for IP-connected Arduino boards               | Production-ready |
 | [lua-tracker] [t7]        | An event tracker for Lua apps, games and plugins               | Production-ready |
+| [nodejs-tracker] [t8]     | An event tracker for node.js apps and servers                  | Beta             |
 
 For other trackers (e.g. iOS, Android) and their approximate timelines, please see the [Product Roadmap][roadmap].
 
@@ -29,13 +30,14 @@ For other trackers (e.g. iOS, Android) and their approximate timelines, please s
 
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/1-trackers.png
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
-[t1]: https://github.com/snowplow/javascript-tracker
+[t1]: https://github.com/snowplow/snowplow-javascript-tracker
 [t2]: ./no-js-tracker/
-[t3]: https://github.com/snowplow/python-tracker
-[t4]: https://github.com/snowplow/ruby-tracker
-[t5]: https://github.com/snowplow/java-tracker
-[t6]: https://github.com/snowplow/arduino-tracker
-[t7]: https://github.com/snowplow/lua-tracker
+[t3]: https://github.com/snowplow/snowplow-python-tracker
+[t4]: https://github.com/snowplow/snowplow-ruby-tracker
+[t5]: https://github.com/snowplow/snowplow-java-tracker
+[t6]: https://github.com/snowplow/snowplow-arduino-tracker
+[t7]: https://github.com/snowplow/snowplow-lua-tracker
+[t8]: https://github.com/snowplow/snowplow-nodejs-tracker
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-a-Tracker
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/trackers
 [wiki]: https://github.com/snowplow/snowplow/wiki

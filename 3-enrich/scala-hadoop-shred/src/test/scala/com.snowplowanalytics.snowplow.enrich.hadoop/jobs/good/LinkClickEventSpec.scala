@@ -83,8 +83,8 @@ class LinkClickEventSpec extends Specification {
       import java.io.File
       // Scala
       import scala.io.{Source => ScalaSource}
-      val pageContextSource = ScalaSource.fromFile(new File(Sinks.output, LinkClickEventSpec.expected.path))
-      pageContextSource.getLines.toList mustEqual Seq(LinkClickEventSpec.expected.contents)
+      val linkClickEventSource = ScalaSource.fromFile(new File(Sinks.output, LinkClickEventSpec.expected.path))
+      linkClickEventSource.getLines.toList mustEqual Seq(LinkClickEventSpec.expected.contents)
     }
 
     "not shred any unexpected JSONs" in {

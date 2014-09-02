@@ -1,3 +1,26 @@
+Version 0.9.7 (2014-09-02)
+--------------------------
+Ruby Tracker: bumped git submodule to 0.3.0 (#939)
+Java Tracker: bumped git submodule to 0.5.1 (#948)
+Node.js Tracker: added git submodule. Version 0.1.0 (#949)
+Trackers: fixed broken git submodule links, thanks @OAGr! (#957)
+EmrEtlRunner: bumped to 0.9.1
+EmrEtlRunner: fixed @jobflow.ec2_subnet_id not being set due to incorrect guard, thanks @rslifka! (#956)
+EmrEtlRunner: fixed bugs in --process-bucket (#973)
+EmrEtlRunner: renamed --process-bucket option to --process-enrich (#972)
+EmrEtlRunner: changed -s option for --skip to -x prevent clash with -s for --start (#975)
+EmrEtlRunner: now allows shredding without prior enrichment (#927)
+StorageLoader: bumped to 0.3.2
+StorageLoader: removed EMPTYASNULL for loading JSONs (#942)
+StorageLoader: added missing targetUrl field to ad_impression JSON Path file, thanks @gisripa! (#951)
+StorageLoader: made providing jsonpath_assets optional (#958)
+StorageLoader: added support for cross-region Redshift COPY (#971)
+Hive Storage: bumped table-def.q to 0.2.0
+Hive Storage: added and removed fields to synchronize with 0.9.6's enriched event format (#965)
+Scala Hadoop Shred: bumped to version 0.2.1
+Scala Hadoop Shred: fixed multiple JSONs not being shredded for a single row (#968)
+Scala Hadoop Shred: strengthened test suite (#967)
+
 Version 0.9.6 (2014-07-26)
 --------------------------
 Java Tracker: bumped git submodule to 0.4.0 (#892)
