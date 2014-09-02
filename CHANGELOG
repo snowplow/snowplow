@@ -8,6 +8,7 @@ EmrEtlRunner: bumped to 0.9.1
 EmrEtlRunner: fixed @jobflow.ec2_subnet_id not being set due to incorrect guard, thanks @rslifka! (#956)
 EmrEtlRunner: fixed bugs in --process-bucket (#973)
 EmrEtlRunner: renamed --process-bucket option to --process-enrich (#972)
+EmrEtlRunner: changed -s option for --skip to -x prevent clash with -s for --start (#975)
 EmrEtlRunner: now allows shredding without prior enrichment (#927)
 StorageLoader: bumped to 0.3.2
 StorageLoader: removed EMPTYASNULL for loading JSONs (#942)

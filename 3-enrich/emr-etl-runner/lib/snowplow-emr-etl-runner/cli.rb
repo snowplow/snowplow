@@ -55,7 +55,7 @@ module Snowplow
           opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
-          opts.on('-s', '--skip staging,s3distcp,emr{enrich,shred},archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-x', '--skip staging,s3distcp,emr{enrich,shred},archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
           opts.on('-E', '--process-enrich LOCATION', 'run enrichment only on specified location. Implies --skip staging,shred,archive') { |config|
             options[:process_enrich_location] = config
             options[:skip] = %w(staging shred archive)
