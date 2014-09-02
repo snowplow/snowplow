@@ -15,8 +15,8 @@ import sbt._
 object Dependencies {
 
   val resolutionRepos = Seq(
-    // Required for our Scalaz snapshot
-    "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/releases/",
+    // Required for our json4s snapshot
+    "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
      // For some misc Scalding and Twitter libs
     "Concurrent Maven Repo" at "http://conjars.org/repo",
      // For Twitter's util functions
