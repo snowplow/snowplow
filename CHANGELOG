@@ -40,7 +40,7 @@ Scala Hadoop Shred: fixed multiple JSONs not being shredded for a single row (#9
 Scala Hadoop Shred: strengthened test suite (#967)
 
 Version 0.9.6 (2014-07-26)
-Version 0.9.6 (2014-07-26)
+--------------------------
 Java Tracker: bumped git submodule to 0.4.0 (#892)
 EmrEtlRunner: bumped to 0.9.0
 EmrEtlRunner: passed etl_tstamp into Hadoop Enrich as an argument (#396)
