@@ -20,7 +20,7 @@ Scala Common Enrich: replaced all Argonaut code with json4s (#945)
 Scala Common Enrich: renamed CanonicalOutput to EnrichedEvent (#964)
 Scala Common Enrich: replaced CanonicalInput and TrackerPayload with CollectorPayload and RawEvent (#946)
 Scala Common Enrich: updated EnrichmentManager to process RawEvent not CanonicalInput (#903)
-Scala Common Enrich: added input adapter to convert NV pairs to JSON (#904)                                 - TODO fix this title
+Scala Common Enrich: added Adapter to convert event JSON to NEL of RawEvents (#904)                         - TODO
 Scala Common Enrich: added parsing of request body and content type for Clojure Collector raw events (#930) - TODO
 Scala Common Enrich: geo-IP lookup now supports ip parameter on querystring (#961)
 Scala Common Enrich: IP address anonymization now works with ip parameter on querystring (#960)
