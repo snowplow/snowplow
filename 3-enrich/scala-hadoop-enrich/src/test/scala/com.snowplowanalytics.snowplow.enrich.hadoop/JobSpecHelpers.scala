@@ -253,6 +253,24 @@ object JobSpecHelpers {
                 |}  
               |},
               |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "campaign_attribution",
+                  |"enabled": true,
+                  |"parameters": {
+                    |"mapping": "static",
+                    |"fields": {
+                      |"mktMedium": ["utm_medium", "medium"],
+                      |"mktSource": ["utm_source", "source"],
+                      |"mktTerm": ["utm_term", "legacy_term"],
+                      |"mktContent": ["utm_content"],
+                      |"mktCampaign": ["utm_campaign", "cid", "legacy_campaign"]
+                    |}
+                  |}
+                |}  
+              |},              
+              |{
                 |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
                 |"data": {
                   |"vendor": "com.snowplowanalytics.snowplow",

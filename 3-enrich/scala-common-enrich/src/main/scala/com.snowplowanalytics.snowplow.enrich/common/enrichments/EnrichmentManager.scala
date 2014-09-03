@@ -38,7 +38,6 @@ import enrichments.{EventEnrichments => EE}
 import enrichments.{MiscEnrichments => ME}
 import enrichments.{ClientEnrichments => CE}
 import web.{PageEnrichments => WPE}
-import web.{AttributionEnrichments => WAE}
 
 /**
  * A module to hold our enrichment process.
@@ -300,14 +299,18 @@ object EnrichmentManager {
       e => unitSuccessNel, // No fields updated
       uri => uri match {
         case Some(u) =>
-          WAE.extractMarketingFields(u, raw.source.encoding).flatMap(cmp => {
-            event.mkt_medium = cmp.medium
-            event.mkt_source = cmp.source
-            event.mkt_term = cmp.term
-            event.mkt_content = cmp.content
-            event.mkt_campaign = cmp.campaign
-            cmp.success
-            })
+          registry.getCampaignAttributionEnrichment match {
+            case Some(ce) =>
+              ce.extractMarketingFields(u, raw.source.encoding).flatMap(cmp => {
+                event.mkt_medium = cmp.medium.orNull
+                event.mkt_source = cmp.source.orNull
+                event.mkt_term = cmp.term.orNull
+                event.mkt_content = cmp.content.orNull
+                event.mkt_campaign = cmp.campaign.orNull
+                cmp.success
+                })
+            case None => unitSuccessNel
+          }
         case None => unitSuccessNel // No fields updated
         })
 
