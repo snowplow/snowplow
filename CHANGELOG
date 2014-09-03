@@ -26,7 +26,7 @@ Scala Common Enrich: geo-IP lookup now supports ip parameter on querystring (#96
 Scala Common Enrich: IP address anonymization now works with ip parameter on querystring (#960)
 Scala Hadoop Enrich: bumped to 0.7.0
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.6.0 (#940)                                             - TODO (snapshot currently)
-Scala Hadoop Enrich: updated to support generating multiple enriched events from one raw payload (#902)     - TODO
+Scala Hadoop Enrich: updated to support generating multiple enriched events from one raw payload (#902)
 StorageLoader: wrote JSON Path file for mobile_context (#776)
 StorageLoader: wrote JSON Path file for geolocation_context (#962)
 Redshift: added Redshift DDL for mobile_context (#542)

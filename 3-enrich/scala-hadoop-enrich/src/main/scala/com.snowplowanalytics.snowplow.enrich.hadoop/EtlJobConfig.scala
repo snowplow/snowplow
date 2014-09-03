@@ -40,7 +40,7 @@ import iglu.client.validation.ProcessingMessageMethods._
 import common._
 import common.utils.{
   ConversionUtils,
-  JacksonJsonUtils
+  JsonUtils
 }
 
 import common.enrichments.{
@@ -214,6 +214,6 @@ object EtlJobConfig {
   private def base64ToJsonNode(str: String): ValidatedNelMessage[JsonNode] =
     (for {
       raw <-  ConversionUtils.decodeBase64Url("enrichments", str)
-      node <- JacksonJsonUtils.extractJson("enrichments", raw)
+      node <- JsonUtils.extractJson("enrichments", raw)
     } yield node).leftMap(_.toProcessingMessage).toValidationNel
 }

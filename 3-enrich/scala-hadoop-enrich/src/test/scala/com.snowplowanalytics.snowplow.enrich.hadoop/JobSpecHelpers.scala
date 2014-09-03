@@ -36,7 +36,7 @@ import org.specs2.matcher.Matchers._
 import com.twitter.scalding._
 
 // Snowplow Common Enrich
-import common.outputs.CanonicalOutput
+import common.outputs.EnrichedEvent
 
 // Scalaz
 import scalaz._
@@ -63,7 +63,7 @@ object JobSpecHelpers {
   /**
    * The names of the fields written out
    */
-  lazy val OutputFields = classOf[CanonicalOutput]
+  lazy val OutputFields = classOf[EnrichedEvent]
       .getDeclaredFields
       .map(_.getName)
 

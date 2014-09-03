@@ -30,13 +30,13 @@ import com.twitter.scalding._
 import common._
 import common.utils.ConversionUtils
 import common.FatalEtlError
-import common.inputs.CollectorLoader
+import common.loaders.Loader
 import common.enrichments.{
   EnrichmentRegistry,
   EnrichmentManager
 }
 import enrichments.registry._
-import common.outputs.CanonicalOutput
+import common.outputs.EnrichedEvent
 
 // This project
 import utils.FileUtils
@@ -48,29 +48,6 @@ import outputs.BadRow
  * flow (see below).
  */ 
 object EtlJob {
-
-  /**
-   * A helper method to take a ValidatedMaybeCanonicalInput
-   * and flatMap it into a ValidatedMaybeCanonicalOutput.
-   *
-   * We have to do some unboxing because enrichEvent
-   * expects a raw CanonicalInput as its argument, not
-   * a MaybeCanonicalInput.
-   *
-   * @param registry Contains configuration for all
-   *        enrichments to apply   
-   * @param etlTstamp The ETL timestamp
-   * @param input The ValidatedMaybeCanonicalInput   
-   * @return the ValidatedMaybeCanonicalOutput. Thanks to
-   *         flatMap, will include any validation errors
-   *         contained within the ValidatedMaybeCanonicalInput
-   */
-  def toCanonicalOutput(registry: EnrichmentRegistry, etlTstamp: String, input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
-    input.flatMap {
-      _.cata(EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, _).map(_.some),
-             none.success)
-    }
-  }
 
   /**
    * A helper to install files in the distributed
@@ -92,7 +69,7 @@ object EtlJob {
    * Generate our "host ETL" version string.
    * @return our version String
    */
-  val etlVersion = "hadoop-%s" format ProjectSettings.version
+  val etlVersion = s"hadoop-${ProjectSettings.version}"
 
   // This should really be in Scalding
   def getJobConf(implicit mode: Mode): Option[Configuration] = {
@@ -110,16 +87,32 @@ object EtlJob {
    * become a None will be silently dropped by
    * Scalding in this pipeline.
    *
-   * @param in The Validation containing either
-   *        our Successes or our Failures
-   * @return an Option boxing either our List of
-   *         Strings on Failure, or None on
-   *         Success
+   * @param all A List of Validations each containing either
+   *        an EnrichedEvent on Success or Failure Strings
+   * @return a (possibly empty) List of failures, where
+   *         each failure is represented by a NEL of
+   *         Strings
    */
-  def projectBads(in: ValidatedMaybeCanonicalOutput): Option[NonEmptyList[String]] =
-    in.fold(
-      e => Some(e), // Nel -> Some(List)
-      c => None)    // Discard
+  def projectBads(all: List[ValidatedEnrichedEvent]): List[NonEmptyList[String]] = all
+    .map(_.swap.toOption)
+    .collect { case Some(errs) =>
+      errs
+    }
+
+  /**
+   * Projects our non-empty Successes into a
+   * Some; everything else will be silently
+   * dropped by Scalding in this pipeline.
+   *
+   * @param all A List of Validations each containing either
+   *        an EnrichedEvent on Success or Failure Strings
+   * @return a (possibly empty) List of EnrichedEvents
+   */
+  def projectGoods(all: List[ValidatedEnrichedEvent]): List[EnrichedEvent] = all
+    .map(_.toOption)
+    .collect { case Some(gd) =>
+      gd
+    }
 }
 
 /**
@@ -140,9 +133,9 @@ class EtlJob(args: Args) extends Job(args) {
 
   // Wait until we're on the nodes to instantiate with lazy
   // TODO: let's fix this Any typing
-  lazy val loader = CollectorLoader.getLoader(etlConfig.inFormat).fold(
+  lazy val loader = Loader.getLoader(etlConfig.inFormat).fold(
     e => throw FatalEtlError(e),
-    c => c).asInstanceOf[CollectorLoader[Any]]
+    c => c).asInstanceOf[Loader[Any]]
 
   // Wait until we're on the nodes to instantiate with lazy
   lazy val enrichmentRegistry = EtlJobConfig.reloadRegistryOnNode(etlConfig.enrichments, etlConfig.igluConfig, etlConfig.localMode)
@@ -166,28 +159,28 @@ class EtlJob(args: Args) extends Job(args) {
   // Scalding data pipeline
   // TODO: let's fix this Any typing
   val common = trappableInput
-    .map('line -> 'output) { l: Any =>
-      EtlJob.toCanonicalOutput(enrichmentRegistry, etlConfig.etlTstamp, loader.toCanonicalInput(l))
+    .map('line -> 'all) { l: Any =>
+      EtlPipeline.processEvents(enrichmentRegistry, EtlJob.etlVersion, etlConfig.etlTstamp, loader.toCollectorPayload(l))
     }
 
   // Handle bad rows
   val bad = common
-    .flatMap('output -> 'errors) { o: ValidatedMaybeCanonicalOutput =>
+    .map('all -> 'errors) { o: List[ValidatedEnrichedEvent] =>
       EtlJob.projectBads(o)
-    }
-    .mapTo(('line, 'errors) -> 'json) { both: (String, NonEmptyList[String]) =>
-      BadRow(both._1, both._2).toCompactJson
-    }    
-    .write(badOutput) // JSON containing line and error(s)
+    } // : List[NonEmptyList[String]]
+    .flatMapTo(('line, 'errors) -> 'json) { both: (String, List[NonEmptyList[String]]) =>
+      for {
+        error <- both._2
+        bad    = BadRow(both._1, error).toCompactJson
+      } yield bad // : List[BadRow]
+    }   
+    .write(badOutput) // N JSONs containing line and error(s)
 
   // Handle good rows
   val good = common
-    .flatMapTo('output -> 'good) { o: ValidatedMaybeCanonicalOutput =>
-      o match {
-        case Success(Some(s)) => Some(s)
-        case _ => None // Drop errors *and* blank rows
-      }
-    }
-    .unpackTo[CanonicalOutput]('good -> '*)
-    .write(goodOutput)
+    .flatMapTo('all -> 'events) { o: List[ValidatedEnrichedEvent] =>
+      EtlJob.projectGoods(o)
+    } // : List[EnrichedEvent]
+    .unpackTo[EnrichedEvent]('events -> '*)
+    .write(goodOutput) // N EnrichedEvents as tuples
 }
