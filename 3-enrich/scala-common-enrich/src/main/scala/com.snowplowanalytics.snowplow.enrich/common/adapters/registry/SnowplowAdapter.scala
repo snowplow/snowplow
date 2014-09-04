@@ -76,6 +76,8 @@ object SnowplowAdapter {
    */
   object Tp2 extends Adapter {
 
+    val ContentType = ""
+
     /**
      * Converts a CollectorPayload instance into N raw events.
      *
@@ -95,6 +97,14 @@ object SnowplowAdapter {
       // 4. Complain if final map is empty
 
       val qsParams = toMap(payload.querystring)
+
+      (payload.body, payload.contentType) match {
+        case (Some(bdy), Some(ct) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType}".failNel
+        case (Some(bdy), None)     => s"Request body provided but content type missing, expected ${ContentType}".failNel
+        case (Some(bdy), Some(ct)) => // Good
+        case (None, Some(ct)       => s"Content type of ${ContentType} provided but request body missing".failNel
+        case (None, None)          => // Do nothing. NEL of an Empty Map instead?
+      }
 
       // Parameters in the querystring take priority, i.e.
       // override the same parameter in the POST body
