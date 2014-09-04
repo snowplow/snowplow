@@ -138,8 +138,8 @@ class EtlJob(args: Args) extends Job(args) {
     c => c).asInstanceOf[Loader[Any]]
 
   // Wait until we're on the nodes to instantiate with lazy
-  implicit lazy val igluResolver = EtlJobConfig.reloadResolverOnNode(etlConfig.igluConfig) // TODO: harmonize with enrichmentRegistry
-  lazy val enrichmentRegistry = EtlJobConfig.reloadRegistryOnNode(etlConfig.enrichments, etlConfig.igluConfig, etlConfig.localMode)
+  implicit lazy val igluResolver = EtlJobConfig.reloadResolverOnNode(etlConfig.igluConfig)
+  lazy val enrichmentRegistry = EtlJobConfig.reloadRegistryOnNode(etlConfig.enrichments, etlConfig.localMode)
 
   // Install MaxMind file(s) if we have them
   for (conf <- EtlJob.getJobConf) {
