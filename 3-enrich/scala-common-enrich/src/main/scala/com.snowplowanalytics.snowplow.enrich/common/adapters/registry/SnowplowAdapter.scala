@@ -42,6 +42,8 @@ object SnowplowAdapter {
 
     /**
      * Converts a CollectorPayload instance into raw events.
+     * Tracker Protocol 1 only supports a single event in a
+     * payload.
      *
      * @param payload The CollectorPaylod containing one or more
      *        raw events as collected by a Snowplow collector
@@ -75,7 +77,7 @@ object SnowplowAdapter {
   object Tp2 extends Adapter {
 
     /**
-     * Converts a CollectorPayload instance into raw events.
+     * Converts a CollectorPayload instance into N raw events.
      *
      * @param payload The CollectorPaylod containing one or more
      *        raw events as collected by a Snowplow collector

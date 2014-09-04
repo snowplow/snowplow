@@ -159,9 +159,24 @@ object EtlJobConfig {
   }
 
   /**
+   * Reload the Iglu Resolver once we are on the nodes.
+   * This avoids Kyro serialization of the registry,
+   * which might fail (haven't tested this).
+   *
+   * @param igluConfig The JSON specifying Iglu repos
+   * @return the instantiated Iglu Resolver
+   */
+  def reloadResolverOnNode(igluConfig: String): Resolver =
+    (for {
+        node <- base64ToJsonNode(igluConfig)
+        reso <- Resolver.parse(node)
+      } yield reso)
+      .valueOr(e => throw new FatalEtlError(e.toString))
+
+  /**
    * Reload the registry once we are on the nodes.
-   * This avoid Kyro serialization of the registry,
-   * which would fail.
+   * This avoids Kyro serialization of the registry,
+   * which fails.
    *
    * @param enrichments The JSON array of enrichment
    *        configurations
@@ -170,6 +185,7 @@ object EtlJobConfig {
    *        mode (i.e. not on a Hadoop cluster)
    * @return the instantiated EnrichmentRegistry
    */
+  // TODO: can simplify using reloadResolverOnNode to get the Resolver
   def reloadRegistryOnNode(enrichments: String, igluConfig: String, localMode: Boolean): EnrichmentRegistry = {
 
     val igluResolver =
@@ -197,7 +213,7 @@ object EtlJobConfig {
    * @param resolver (implicit) The Iglu resolver used
    *        for schema lookup and validation
    */
-  private def buildEnrichmentRegistry(enrichments:JsonNode, localMode: Boolean)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentRegistry] = {
+  private def buildEnrichmentRegistry(enrichments: JsonNode, localMode: Boolean)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentRegistry] = {
     EnrichmentRegistry.parse(fromJsonNode(enrichments), localMode)
   }
 
