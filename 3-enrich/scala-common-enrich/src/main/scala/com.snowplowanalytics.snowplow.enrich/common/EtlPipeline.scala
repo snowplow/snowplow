@@ -15,6 +15,9 @@ package snowplow
 package enrich
 package common
 
+// Iglu
+import iglu.client.Resolver
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -50,12 +53,14 @@ object EtlPipeline {
    *        enrichments to apply
    * @param etlVersion The ETL version
    * @param etlTstamp The ETL timestamp
-   * @param input The ValidatedMaybeCanonicalInput   
+   * @param input The ValidatedMaybeCanonicalInput
+   * @param resolver (implicit) The Iglu resolver used for
+   *        schema lookup and validation
    * @return the ValidatedMaybeCanonicalOutput. Thanks to
    *         flatMap, will include any validation errors
    *         contained within the ValidatedMaybeCanonicalInput
    */
-  def processEvents(registry: EnrichmentRegistry, etlVersion: String, etlTstamp: String, input: ValidatedMaybeCollectorPayload): List[ValidatedEnrichedEvent] = {
+  def processEvents(registry: EnrichmentRegistry, etlVersion: String, etlTstamp: String, input: ValidatedMaybeCollectorPayload)(implicit resolver: Resolver): List[ValidatedEnrichedEvent] = {
 
     def flattenToList[A](v: Validated[Option[Validated[NonEmptyList[Validated[A]]]]]): List[Validated[A]] = v match {
       case Success(Some(Success(nel))) => nel.toList

@@ -10,12 +10,18 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
+package com.snowplowanalytics
+package snowplow
+package enrich
+package common
 package adapters
 package registry
 
 // Apache URLEncodedUtils
 import org.apache.http.NameValuePair
+
+// Iglu
+import iglu.client.Resolver
 
 // Scalaz
 import scalaz._
@@ -31,10 +37,12 @@ trait Adapter {
    *
    * @param payload The CollectorPaylod containing one or more
    *        raw events as collected by a Snowplow collector
+   * @param resolver (implicit) The Iglu resolver used for
+   *        schema lookup and validation
    * @return a Validation boxing either a NEL of RawEvents on
    *         Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload): ValidatedRawEvents
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents
 
   /**
    * Converts a NonEmptyList of name:value
