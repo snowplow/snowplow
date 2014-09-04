@@ -77,7 +77,7 @@ class KinesisSource(config: KinesisEnrichConfig)
       workerId
     ).withInitialPositionInStream(
       InitialPositionInStream.valueOf(config.initialPosition)
-    )
+    ).withKinesisEndpoint(config.streamEndpoint)
     
     println(s"Running: ${config.appName}.")
     println(s"Processing raw input stream: ${config.rawInStream}")
