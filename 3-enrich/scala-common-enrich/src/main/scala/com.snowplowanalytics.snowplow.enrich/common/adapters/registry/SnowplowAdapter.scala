@@ -17,8 +17,18 @@ package common
 package adapters
 package registry
 
+// Jackson
+import com.fasterxml.jackson.databind.JsonNode
+
+// Scala
+import scala.collection.JavaConversions._
+
 // Iglu
-import iglu.client.Resolver
+import iglu.client.{
+  SchemaKey,
+  Resolver
+}
+import iglu.client.validation.ValidatableJsonMethods._
 
 // Scalaz
 import scalaz._
@@ -26,6 +36,7 @@ import Scalaz._
 
 // This project
 import loaders.CollectorPayload
+import utils.JsonUtils
 
 /**
  * Transforms a collector payload which conforms to
@@ -76,7 +87,11 @@ object SnowplowAdapter {
    */
   object Tp2 extends Adapter {
 
-    val ContentType = ""
+    // Expected content type for a request body
+    private val ContentType = "Content-type: application/json; charset=utf-8"
+
+    // Request body expected to validate against this JSON Schema
+    private val PayloadDataSchema = SchemaKey("com.snowplowanalytics.snowplow", "payload_data", "jsonschema", "1-0-0")
 
     /**
      * Converts a CollectorPayload instance into N raw events.
@@ -90,40 +105,63 @@ object SnowplowAdapter {
      */
     def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
       
-      // TODO:
-      // 1. Validate the JSON
-      // 2. Convert the JSON to a map
-      // 3. Merge the querystring into the map (qs should take priority)
-      // 4. Complain if final map is empty
-
       val qsParams = toMap(payload.querystring)
 
-      (payload.body, payload.contentType) match {
-        case (Some(bdy), Some(ct) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType}".failNel
-        case (Some(bdy), None)     => s"Request body provided but content type missing, expected ${ContentType}".failNel
-        case (Some(bdy), Some(ct)) => // Good
-        case (None, Some(ct)       => s"Content type of ${ContentType} provided but request body missing".failNel
-        case (None, None)          => // Do nothing. NEL of an Empty Map instead?
-      }
+      // Verify: body + content type set; content type matches expected; body contains expected JSON Schema; body passes schema validation
+      val validatedParamsNel: Validated[NonEmptyList[RawEventParameters]] =
+        (payload.body, payload.contentType) match {
+          case (_,         Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType}".failNel
+          case (None,      None)     if qsParams.isEmpty => s"Request body and querystring parameters empty, expected at least one populated".failNel
+          case (Some(_),   None)     => s"Request body provided but content type empty, expected ${ContentType}".failNel
+          case (None,      Some(ct)) => s"Content type of ${ct} provided but request body empty".failNel
+          case (None,      None)     => NonEmptyList(qsParams).success
+          case (Some(bdy), Some(_))  => // Build our NEL of parameters
+            for {
+              json <- extractAndValidateJson("Body", PayloadDataSchema, bdy)
+              nel  <- toParametersNel(json, qsParams)
+            } yield nel
+        }
 
-      // Parameters in the querystring take priority, i.e.
-      // override the same parameter in the POST body
-      val allParams = qsParams // TODO: fix this
-
-      if (allParams.isEmpty) {
-        "No parameters found for this raw event".failNel
-      } else {
-        NonEmptyList(RawEvent(
-          vendor       = payload.vendor,
-          version      = payload.version,
-          parameters   = allParams,
-          contentType  = payload.contentType,
-          source       = payload.source,
-          context      = payload.context
-          )).success
-      }
-
+      // Validated NEL of parameters -> Validated NEL of raw events
+      for {
+        paramsNel <- validatedParamsNel
+      } yield for {
+        params    <- paramsNel
+        p         =  payload // Alias to save typing
+      } yield RawEvent(p.vendor, p.version, params, p.contentType, p.source, p.context)
     }
-  }
 
+    // Parameters in the querystring take priority, i.e.
+    // override the same parameter in the POST body
+    // TODO: implement this
+    private def toParametersNel(instance: JsonNode, mergeWith: RawEventParameters): Validated[NonEmptyList[RawEventParameters]] = {
+      NonEmptyList(Map("a" -> "a")).success
+    }
+
+    /**
+     * Extract the JSON from a String, and
+     * validate it against the supplied
+     * JSON Schema.
+     *
+     * @param field The name of the field
+     *        containing the JSON instance
+     * @param schemaKey The schema that we
+     *        expected this self-describing
+     *        JSON to conform to
+     * @param instance A JSON instance as String
+     * @param resolver Our implicit Iglu
+     *        Resolver, for schema lookups
+     * @return an Option-boxed Validation
+     *         containing either a Nel of
+     *         JsonNodes error message on
+     *         Failure, or a singular
+     *         JsonNode on success
+     */
+    private def extractAndValidateJson(field: String, schemaKey: SchemaKey, instance: String)(implicit resolver: Resolver): Validated[JsonNode] =
+      for {
+        j <- (JsonUtils.extractJson(field, instance).toValidationNel: Validated[JsonNode])
+        v <- j.verifySchemaAndValidate(schemaKey, true).leftMap(_.map(_.toString))
+      } yield v
+
+  }
 }

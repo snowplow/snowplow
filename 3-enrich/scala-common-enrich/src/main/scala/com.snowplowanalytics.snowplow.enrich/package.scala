@@ -146,4 +146,8 @@ package object common {
    */
   type ValidatedNelMessage[A] = ValidationNel[ProcessingMessage, A]
 
+  /**
+   * Parameters inside of a raw event
+   */
+  type RawEventParameters = Map[String, String]
 }

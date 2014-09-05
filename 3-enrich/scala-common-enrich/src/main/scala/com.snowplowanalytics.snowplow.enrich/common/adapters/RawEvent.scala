@@ -33,7 +33,7 @@ import loaders.{
 final case class RawEvent(
   vendor:      String,
   version:     String,
-  parameters:  Map[String, String],
+  parameters:  RawEventParameters,
   contentType: Option[String], // Not yet used but should be logged
   source:      CollectorSource,
   context:     CollectorContext
