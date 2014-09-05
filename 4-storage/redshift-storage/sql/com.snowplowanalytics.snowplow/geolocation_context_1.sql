@@ -28,13 +28,13 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_geolocation_context_1 (
     ref_tree       varchar(1500)  encode runlength not null,
     ref_parent     varchar(255)   encode runlength not null,
     -- Properties of this type
-    latitude                    varchar(255)   encode raw not null,
-    longitude                   varchar(255)   encode raw not null,
-    latitude_longitude_accuracy varchar(255)   encode raw,
-    altitude                    varchar(255)   encode raw,
-    altitude_accuracy           varchar(255)   encode raw,
-    bearing                     varchar(255)   encode raw,
-    speed                       varchar(255)   encode raw
+    latitude                    float not null,
+    longitude                   float not null,
+    latitude_longitude_accuracy float,
+    altitude                    float,
+    altitude_accuracy           float,
+    bearing                     float,
+    speed                       float
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
