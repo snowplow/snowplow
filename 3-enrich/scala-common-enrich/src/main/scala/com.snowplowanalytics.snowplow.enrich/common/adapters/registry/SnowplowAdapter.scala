@@ -17,6 +17,9 @@ package common
 package adapters
 package registry
 
+// Java
+import java.util.Map.{Entry => JMapEntry}
+
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
 
@@ -131,11 +134,74 @@ object SnowplowAdapter {
       } yield RawEvent(p.vendor, p.version, params, p.contentType, p.source, p.context)
     }
 
-    // Parameters in the querystring take priority, i.e.
-    // override the same parameter in the POST body
-    // TODO: implement this
+    /**
+     * Converts a JSON Node into a Validated NEL
+     * of parameters for a RawEvent. The parameters
+     * take the form Map[String, String].
+     *
+     * Takes a second set of parameters to merge with
+     * the generated parameters (the second set takes
+     * precedence in case of a clash).
+     *
+     * @param instance The JSON Node to convert
+     * @param mergeWith A second set of parameters to
+     *        merge (and possibly overwrite) parameters
+     *        from the instance
+     * @return a NEL of Map[String, String] parameters
+     *         on Succeess, a NEL of Strings on Failure
+     */
     private def toParametersNel(instance: JsonNode, mergeWith: RawEventParameters): Validated[NonEmptyList[RawEventParameters]] = {
+
+      val events: List[List[Validation[String,(String, String)]]] = for {
+        event <- instance.iterator.toList
+      } yield for {
+        entry <- event.fields.toList
+      } yield toParameter(entry)
+
+      val failures: List[String] = events.flatten.collect {
+        case Failure(f) => f
+      }
+
+      // We don't bother doing this conditionally because we
+      // don't expect any failures, so any performance gain
+      // from conditionality would be miniscule
+      val successes: List[RawEventParameters] = (for {
+        params <- events
+      } yield (for {
+        param  <- params
+      } yield param).collect {
+        case Success(p) => p
+      }.toMap)
+
+      (successes, failures) match {
+        case (s :: ss, Nil)     => NonEmptyList(s, ss).success // No Failures collected
+        case (s :: ss, f :: fs) => NonEmptyList(f, fs).fail    // Some Failures, return those
+        case (Nil,     _)       => "List of events is empty (should never happen, did JSON Schema change?)".fail
+      }
+
+      // TODO: don't forget to merge
+
       NonEmptyList(Map("a" -> "a")).success
+    }
+
+    /**
+     * Converts a Java Map.Entry containing a JsonNode
+     * into a (String -> String) parameter.
+     *
+     * @param entry The Java Map.Entry to convert
+     * @return a Validation boxing either our parameter
+     *         on Success, or an error String on Failure.
+     *
+     */
+    private def toParameter(entry: JMapEntry[String, JsonNode]): Validation[String, Tuple2[String, String]] = {
+      val key = entry.getKey
+      val rawValue = entry.getValue
+
+      Option(rawValue.textValue) match {
+        case Some(txt) => (key, txt).success
+        case None if rawValue.isTextual => s"Value for key ${key} is a null String (should never happen, did Jackson implementation change?)".fail
+        case _ => s"Value for key ${key} is not a String (should never happen, did JSON Schema change?)".fail
+      }
     }
 
     /**
