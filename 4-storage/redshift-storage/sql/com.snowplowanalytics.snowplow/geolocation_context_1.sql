@@ -13,7 +13,7 @@
 -- Copyright:     Copyright (c) 2014 Snowplow Analytics Ltd
 -- License:       Apache License Version 2.0
 --
--- Compatibility: iglu:com.snowplowanalytics.snowplow/ad_impression/jsonschema/1-0-0
+-- Compatibility: iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-0-0
 
 CREATE TABLE atomic.com_snowplowanalytics_snowplow_geolocation_context_1 (
     -- Schema of this type
@@ -31,10 +31,10 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_geolocation_context_1 (
     latitude                    varchar(255)   encode raw not null,
     longitude                   varchar(255)   encode raw not null,
     latitude_longitude_accuracy varchar(255)   encode raw,
-    altitude                    varchar(255)   encode runlength,
-    altitude_accuracy           varchar(255)   encode runlength,
-    bearing                     varchar(255)   encode runlength,
-    speed                       varchar(255)   encode runlength
+    altitude                    varchar(255)   encode raw,
+    altitude_accuracy           varchar(255)   encode raw,
+    bearing                     varchar(255)   encode raw,
+    speed                       varchar(255)   encode raw
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
