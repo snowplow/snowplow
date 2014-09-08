@@ -19,7 +19,8 @@ import org.joda.time.DateTime
 // This project
 import loaders.{
   CollectorSource,
-  CollectorContext
+  CollectorContext,
+  CollectorApi
 }
 
 /**
@@ -31,8 +32,7 @@ import loaders.{
  * stage of the Enrichment.
  */
 final case class RawEvent(
-  vendor:      String,
-  version:     String,
+  api:         CollectorApi,
   parameters:  RawEventParameters,
   contentType: Option[String], // Not yet used but should be logged
   source:      CollectorSource,

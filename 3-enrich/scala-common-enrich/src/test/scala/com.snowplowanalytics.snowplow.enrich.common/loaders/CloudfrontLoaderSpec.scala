@@ -49,8 +49,7 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
   object Expected {
     val collector = "cloudfront"
     val encoding  = "UTF-8"
-    val vendor    = "com.snowplowanalytics.snowplow"
-    val version   = "tp1"
+    val api       = CollectorApi("com.snowplowanalytics.snowplow", "tp1")
   }
 
   def e1 = 
@@ -112,8 +111,7 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
           .toCollectorPayload(raw)
 
         val expected = CollectorPayload(
-          vendor       = Expected.vendor,
-          version      = Expected.version,
+          api          = Expected.api,
           querystring  = payload,
           body         = None,
           contentType  = None,

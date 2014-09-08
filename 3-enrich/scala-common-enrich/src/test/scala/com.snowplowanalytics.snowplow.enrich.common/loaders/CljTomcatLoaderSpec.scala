@@ -59,8 +59,7 @@ class CljTomcatLoaderSpec extends Specification with DataTables with ValidationM
           .toCollectorPayload(raw)
 
         val expected = CollectorPayload(
-          vendor       = Expected.vendor,
-          version      = version,
+          api          = CollectorApi(Expected.vendor, version),
           querystring  = payload,
           body         = None,
           contentType  = None,

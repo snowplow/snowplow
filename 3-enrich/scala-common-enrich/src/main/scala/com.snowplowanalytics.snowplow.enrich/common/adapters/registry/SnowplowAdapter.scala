@@ -73,8 +73,7 @@ object SnowplowAdapter {
         "Querystring is empty: no raw event to process".failNel
       } else {
         NonEmptyList(RawEvent(
-          vendor       = payload.vendor,
-          version      = payload.version,
+          api          = payload.api,
           parameters   = params,
           contentType  = payload.contentType,
           source       = payload.source,
@@ -91,7 +90,7 @@ object SnowplowAdapter {
   object Tp2 extends Adapter {
 
     // Expected content type for a request body
-    private val ContentType = "Content-type: application/json; charset=utf-8"
+    private val ContentType = "application/json; charset=utf-8"
 
     // Request body expected to validate against this JSON Schema
     private val PayloadDataSchema = SchemaKey("com.snowplowanalytics.snowplow", "payload_data", "jsonschema", "1-0-0")
@@ -131,7 +130,7 @@ object SnowplowAdapter {
       } yield for {
         params    <- paramsNel
         p         =  payload // Alias to save typing
-      } yield RawEvent(p.vendor, p.version, params, p.contentType, p.source, p.context)
+      } yield RawEvent(p.api, params, p.contentType, p.source, p.context)
     }
 
     /**

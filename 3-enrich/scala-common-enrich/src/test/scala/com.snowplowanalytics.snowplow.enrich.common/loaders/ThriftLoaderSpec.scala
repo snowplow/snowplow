@@ -49,8 +49,7 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
   object Expected {
     val encoding  = "UTF-8"
     val collector = "ssc-0.0.1-Stdout" // Note we have since fixed -stdout to be lowercase
-    val vendor    = "com.snowplowanalytics.snowplow"
-    val version   = "tp1"
+    val api       = CollectorApi("com.snowplowanalytics.snowplow", "tp1")
   }
 
   def e1 =
@@ -70,8 +69,7 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
           .toCollectorPayload(Base64.decodeBase64(raw))
 
         val expected = CollectorPayload(
-          vendor       = Expected.vendor,
-          version      = Expected.version,
+          api          = Expected.api,
           querystring  = payload,
           body         = None,
           contentType  = None,

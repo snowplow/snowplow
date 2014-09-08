@@ -39,16 +39,13 @@ object CollectorPayload {
    * before we implemented this into Snowplow.
    */
   private object TrackerDefaults {
-    val vendor = "com.snowplowanalytics.snowplow"
-    val version = "tp1"
+    val api = CollectorApi("com.snowplowanalytics.snowplow", "tp1")
   }
 
   /**
-   * A constructor version to use with tp1
-   * (Snowplow Tracker Protocol version 1).
-   *
-   * Only provides querystring and tracker
-   * vendor and version
+   * A constructor version to use. Supports legacy
+   * tp1 (where no API vendor or version provided
+   * as well as Snowplow).
    */
   def apply(
     querystring: List[NameValuePair],
@@ -60,11 +57,17 @@ object CollectorPayload {
     contextUseragent: Option[String],
     contextRefererUri: Option[String],
     contextHeaders: List[String],
-    contextUserId: Option[String]): CollectorPayload = {
+    contextUserId: Option[String],
+    api: Option[CollectorApi],
+    contentType: Option[String],
+    body: Option[String]): CollectorPayload = {
 
     val source  = CollectorSource(sourceName, sourceEncoding, sourceHostname)
     val context = CollectorContext(contextTimestamp, contextIpAddress, contextUseragent, contextRefererUri, contextHeaders, contextUserId)
-    CollectorPayload(TrackerDefaults.vendor, TrackerDefaults.version, querystring, None, None, source, context) 
+    api match {
+      case Some(a) => CollectorPayload(a, querystring, contentType, body, source, context)
+      case None    => CollectorPayload(TrackerDefaults.api, querystring, contentType, body, source, context)
+    }
   }
 }
 
@@ -91,6 +94,15 @@ final case class CollectorContext(
   )
 
 /**
+ * Define the vendor and version
+ * of the payload.
+ */
+final case class CollectorApi(
+  vendor:      String,
+  version:     String
+)
+
+/**
  * The canonical input format for the ETL
  * process: it should be possible to
  * convert any collector input format to
@@ -98,11 +110,10 @@ final case class CollectorContext(
  * collector-agnostic stage of the ETL.
  */
 final case class CollectorPayload(
-  vendor:      String,
-  version:     String,
+  api:         CollectorApi,
   querystring: List[NameValuePair], // Could be empty in future trackers
-  body:        Option[String],      // Not set for GETs
   contentType: Option[String],      // Not always set
+  body:        Option[String],      // Not set for GETs
   source:      CollectorSource,
   context:     CollectorContext
   )

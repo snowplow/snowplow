@@ -138,7 +138,10 @@ object CloudfrontLoader extends Loader[String] {
           toOption(userAgent),
           referer,
           Nil,  // No headers for CloudFront
-          None  // No collector-set user ID for CloudFront
+          None, // No collector-set user ID for CloudFront
+          None, // API vendor/version unknown
+          None, // No content type
+          None  // No request body
         ).some
       }
     }

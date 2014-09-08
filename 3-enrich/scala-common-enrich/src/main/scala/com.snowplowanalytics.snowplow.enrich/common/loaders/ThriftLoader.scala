@@ -94,7 +94,10 @@ object ThriftLoader extends Loader[Array[Byte]] {
             userAgent,
             refererUri,
             headers,
-            networkUserId
+            networkUserId,
+            None, // No way of storing API vendor/version in Thrift yet
+            None, // No way of storing content type in Thrift yet
+            None  // No way of storing request body in Thrift yet
           )
         )
       }
