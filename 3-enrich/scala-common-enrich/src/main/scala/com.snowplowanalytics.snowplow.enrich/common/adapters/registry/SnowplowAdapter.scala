@@ -171,17 +171,13 @@ object SnowplowAdapter {
         param  <- params
       } yield param).collect {
         case Success(p) => p
-      }.toMap)
+      }.toMap ++ mergeWith) // Overwrite with mergeWith
 
       (successes, failures) match {
-        case (s :: ss, Nil)     => NonEmptyList(s, ss).success // No Failures collected
-        case (s :: ss, f :: fs) => NonEmptyList(f, fs).fail    // Some Failures, return those
-        case (Nil,     _)       => "List of events is empty (should never happen, did JSON Schema change?)".fail
+        case (s :: ss, Nil)     =>  NonEmptyList(s, ss: _*).success // No Failures collected
+        case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some Failures, return those
+        case (Nil,     _)       => "List of events is empty (should never happen, did JSON Schema change?)".failNel
       }
-
-      // TODO: don't forget to merge
-
-      NonEmptyList(Map("a" -> "a")).success
     }
 
     /**
