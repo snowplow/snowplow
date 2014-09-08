@@ -40,7 +40,7 @@ object Source extends Enumeration {
 }
 object Sink extends Enumeration {
   type Sink = Value
-  val Kinesis, Stdouterr, Test = Value
+  val Kinesis, Stdouterr, RollingLogFiles, Test = Value
 }
 
 // The main entry point of the Scala Kinesis Enricher.
@@ -97,6 +97,7 @@ class KinesisEnrichConfig(config: Config) {
   val sink = enrich.getString("sink") match {
     case "kinesis" => Sink.Kinesis
     case "stdouterr" => Sink.Stdouterr
+    case "logs" => Sink.RollingLogFiles
     case "test" => Sink.Test
     case _ => throw new RuntimeException("enrich.sink unknown.")
   }
@@ -115,6 +116,11 @@ class KinesisEnrichConfig(config: Config) {
   val enrichedOutStreamShards = outStreams.getInt("enriched_shards")
   val badOutStream = outStreams.getString("bad")
   val badOutStreamShards = outStreams.getInt("bad_shards")
+
+  // for Rolling Log Files sink:
+  val logFile = outStreams.getString("log-file")
+  val logCompressedFiles = outStreams.getString("log-compressed-files")
+  val logMaxSize = outStreams.getString("log-max-size")
 
   val appName = streams.getString("app-name")
 

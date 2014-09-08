@@ -30,9 +30,9 @@ object Dependencies {
     val httpCore             = "4.3"
     val httpClient           = "4.3.1"
     val jacksonCore          = "2.3.0"
-    val slf4j                = "1.7.5"
     val awsSdk               = "1.6.11"
     val kinesisClient        = "1.0.0"
+    val logback              = "1.1.2"
     // Scala
     val argot                = "1.0.1"
     val config               = "1.0.2"
@@ -60,10 +60,11 @@ object Dependencies {
     val httpCore             = "org.apache.httpcomponents"  %  "httpcore"                 % V.httpCore
     val httpClient           = "org.apache.httpcomponents"  %  "httpclient"               % V.httpClient
     val jacksonCore          = "com.fasterxml.jackson.core" %  "jackson-core"             % V.jacksonCore
-    val slf4j                = "org.slf4j"                  %  "slf4j-simple"             % V.slf4j
     val awsSdk               = "com.amazonaws"              %  "aws-java-sdk"             % V.awsSdk
     val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"    % V.kinesisClient
     val maxmindGeoip         = "com.snowplowanalytics"      %% "scala-maxmind-geoip"      % V.maxmindGeoip
+    val logbackCore          = "ch.qos.logback"             %  "logback-core"             % V.logback
+    val logbackClassic       = "ch.qos.logback"             %  "logback-classic"          % V.logback
     // Scala
     val argot                = "org.clapper"                %% "argot"                    % V.argot
     val config               = "com.typesafe"               %  "config"                   % V.config

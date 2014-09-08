@@ -164,6 +164,9 @@ enrich {
       enriched_shards: 1 # Number of shards to use if created.
       bad: "SnowplowBad" # Not used until #463
       bad_shards: 1 # Number of shards to use if created.
+      log-file: "/tmp/sp.log"
+      log-compressed-files: "/tmp/sp.%i.log.gz"
+      log-max-size: "1MB"
     }
     app-name: SnowplowKinesisEnrich-${enrich.streams.in.raw}
     initial-position = "TRIM_HORIZON"
