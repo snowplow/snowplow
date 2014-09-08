@@ -109,5 +109,5 @@ task installFatJarInServlet(type: Copy) {
 
     from 'build/libs'
     into '../java-servlet/war-resources/.ebextensions'
-    include '**/*.jar'
+    include '**/' + project.name + '-all-*.jar'
 }
