@@ -61,6 +61,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
   protected val sink: Option[ISink] = config.sink match {
     case Sink.Kinesis => new KinesisSink(kinesisProvider, config).some
     case Sink.Stdouterr => new StdouterrSink().some
+    case Sink.RollingLogFiles => new RollingLogFilesSink(config).some
     case Sink.Test => None
   }
 
