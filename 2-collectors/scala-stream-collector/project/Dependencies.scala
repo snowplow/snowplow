@@ -39,7 +39,15 @@ object Dependencies {
     val logback          = "1.0.13"
     val commonsCodec     = "1.5"
     val scalazon         = "0.5"
-    val argot            = "1.0.1"
+    val argot            = "1.0.1" 
+
+    // Kafka
+    // kafka beta was built in a way that pom generated with a jar isn't valid and maven could not recognize it and parse properly, see :
+    // https://issues.apache.org/jira/browse/KAFKA-1064
+    val kafka            = "0.8.1"
+    val log4j            = "1.2.17"
+    val metrics          = "2.2.0"
+    val snappy           = "1.1.1.3"
 
     // Scala (test only)
     // Using the newest version of spec (2.3.6) causes
@@ -62,6 +70,10 @@ object Dependencies {
     val logback          = "ch.qos.logback"        %  "logback-classic"           % V.logback
     val commonsCodec     = "commons-codec"         %  "commons-codec"             % V.commonsCodec
     val scalazon         = "io.github.cloudify"    %% "scalazon"                  % V.scalazon
+    val kafka            = "org.apache.kafka"      %% "kafka"                     % V.kafka intransitive()
+    val log4j            = "log4j"                 %  "log4j"                     % V.log4j intransitive()
+    val metrics          = "com.yammer.metrics"    %  "metrics-core"              % V.metrics
+    val snappy           = "org.xerial.snappy"     %  "snappy-java"               % V.snappy
 
     // Scala (test only)
     val specs2           = "org.specs2"            %% "specs2"                    % V.specs2   % "test"
