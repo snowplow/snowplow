@@ -43,6 +43,10 @@ object ScalaCollectorBuild extends Build {
         Libraries.scalazon,
         Libraries.awsSdk,
         Libraries.argot,
+        Libraries.kafka,
+        Libraries.log4j,
+        Libraries.metrics,
+        Libraries.snappy,
         Libraries.snowplowRawEvent
       )
     )

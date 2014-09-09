@@ -82,6 +82,13 @@ collector {
         size: 1
       }
     }
+
+    kafka {
+      brokers: "localhost:9092"
+      topic: "snowplow-events"
+      async: false
+      batch-size: 1
+    }
   }
 }
 """)
