@@ -163,7 +163,7 @@ object CljTomcatTp1SingleEventSpec {
  */
 class CljTomcatTp1SingleEventSpec extends Specification {
 
-  "A job which processes a Clojure-Tomcat file containing 1 valid page view" should {
+  "A job which processes a Clojure-Tomcat file containing a GET raw event representing 1 valid page view" should {
     EtlJobSpec("clj-tomcat", "2", true, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), CljTomcatTp1SingleEventSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>

@@ -408,7 +408,7 @@ object CljTomcatTp2MultiEventsSpec {
  */
 class CljTomcatTp2MultiEventsSpec extends Specification {
 
-  "A job which processes a Clojure-Tomcat file containing a POST raw event containing 3 events" should {
+  "A job which processes a Clojure-Tomcat file containing a POST raw event representing 3 events" should {
     EtlJobSpec("clj-tomcat", "2", true, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), CljTomcatTp2MultiEventsSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
