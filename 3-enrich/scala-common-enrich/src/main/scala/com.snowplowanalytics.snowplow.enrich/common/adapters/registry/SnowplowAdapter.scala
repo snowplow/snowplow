@@ -112,8 +112,8 @@ object SnowplowAdapter {
       // Verify: body + content type set; content type matches expected; body contains expected JSON Schema; body passes schema validation
       val validatedParamsNel: Validated[NonEmptyList[RawEventParameters]] =
         (payload.body, payload.contentType) match {
+          case (None,      _)        if qsParams.isEmpty => s"Request body and querystring parameters empty, expected at least one populated".failNel
           case (_,         Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType}".failNel
-          case (None,      None)     if qsParams.isEmpty => s"Request body and querystring parameters empty, expected at least one populated".failNel
           case (Some(_),   None)     => s"Request body provided but content type empty, expected ${ContentType}".failNel
           case (None,      Some(ct)) => s"Content type of ${ct} provided but request body empty".failNel
           case (None,      None)     => NonEmptyList(qsParams).success
@@ -174,7 +174,7 @@ object SnowplowAdapter {
 
       (successes, failures) match {
         case (s :: ss, Nil)     =>  NonEmptyList(s, ss: _*).success // No Failures collected
-        case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some Failures, return those
+        case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some Failures, return those. Should never happen, unless JSON Schema changed
         case (Nil,     _)       => "List of events is empty (should never happen, did JSON Schema change?)".failNel
       }
     }

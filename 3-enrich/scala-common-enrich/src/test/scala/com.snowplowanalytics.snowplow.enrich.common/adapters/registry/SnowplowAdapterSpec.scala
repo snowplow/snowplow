@@ -39,17 +39,28 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
 
   "This is a specification to test the SnowplowAdapter functionality"                                                   ^
                                                                                                                        p^
-  "Tp1.toRawEvents should return a NEL containing one RawEvent if the querystring is populated"                         ! e2^
+  "Tp1.toRawEvents should return a NEL containing one RawEvent if the querystring is populated"                         ! e1^
   "Tp1.toRawEvents should return a Validation Failure if the querystring is empty"                                      ! e2^
+  "Tp2.toRawEvents should return a Validation Failure if the content type is incorrect"                                 ! e3^
+  "Tp2.toRawEvents should return a Validation Failure if neither querystring nor body are populated"                    ! e4^
+  "Tp2.toRawEvents should return a Validation Failure if body is populated but content type is missing"                 ! e5^
+  "Tp2.toRawEvents should return a Validation Failure if (correct) content type is provided but body is missing"        ! e6^
+  "Tp2.toRawEvents should return a Validation Failure if the body is not a JSON"                                        ! e7^
                                                                                                                         end
+
+  // TODO: add a test where payload validates but is wrong schema
+  // TODO: add a test where payload fails schema validation
+  // TODO: add a test where a payload -> N events
+  // TODO: add a test where a qs field is added to payload
+  // TODO: add a test where a qs field overwrites a body field
+
+  implicit val resolver = SpecHelpers.IgluResolver
 
   object Expected {
     val api: (String) => CollectorApi = version => CollectorApi("com.snowplowanalytics.snowplow", version)
-  	val source = CollectorSource("clj-tomcat", "UTF-8", None)
-  	val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00"), "37.157.33.123".some, None, None, Nil, None)
+    val source = CollectorSource("clj-tomcat", "UTF-8", None)
+    val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00"), "37.157.33.123".some, None, None, Nil, None)
   }
-
-  implicit val resolver = SpecHelpers.IgluResolver
 
   def e1 = {
     val api = Expected.api("tp1")
@@ -62,5 +73,35 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
   	val payload = CollectorPayload(Expected.api("tp1"), Nil, None, None, Expected.source, Expected.context)
   	val actual = SnowplowAdapter.Tp1.toRawEvents(payload)
   	actual must beFailing(NonEmptyList("Querystring is empty: no raw event to process"))
+  }
+
+  def e3 = {
+    val payload = CollectorPayload(Expected.api("tp2"), Nil, "text/plain".some, "body".some, Expected.source, Expected.context)
+    val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
+    actual must beFailing(NonEmptyList("Content type of text/plain provided, expected application/json; charset=utf-8"))
+  }
+
+  def e4 = {
+    val payload = CollectorPayload(Expected.api("tp2"), Nil, None, None, Expected.source, Expected.context)
+    val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
+    actual must beFailing(NonEmptyList("Request body and querystring parameters empty, expected at least one populated"))
+  }
+
+  def e5 = {
+    val payload = CollectorPayload(Expected.api("tp2"), Nil, None, "body".some, Expected.source, Expected.context)
+    val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
+    actual must beFailing(NonEmptyList("Request body provided but content type empty, expected application/json; charset=utf-8"))
+  }
+
+  def e6 = {
+    val payload = CollectorPayload(Expected.api("tp2"), toNameValuePairs("aid" -> "test"), "application/json; charset=utf-8".some, None, Expected.source, Expected.context)
+    val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
+    actual must beFailing(NonEmptyList("Content type of application/json; charset=utf-8 provided but request body empty"))
+  }
+
+  def e7 = {
+    val payload = CollectorPayload(Expected.api("tp2"), toNameValuePairs("aid" -> "test"), "application/json; charset=utf-8".some, "<<not a json>>".some, Expected.source, Expected.context)
+    val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
+    actual must beFailing(NonEmptyList("Field [Body]: invalid JSON [<<not a json>>] with parsing error: Unexpected character ('<' (code 60)): expected a valid value (number, String, array, object, 'true', 'false' or 'null') at [Source: java.io.StringReader@xxxxxx; line: 1, column: 2]"))
   }
 }
