@@ -27,7 +27,7 @@ import Scalaz._
 
 // Snowplow
 import collectors.thrift.SnowplowRawEvent
-import LoaderSpecHelpers._
+import SpecHelpers._
 
 // Specs2
 import org.specs2.{Specification, ScalaCheck}

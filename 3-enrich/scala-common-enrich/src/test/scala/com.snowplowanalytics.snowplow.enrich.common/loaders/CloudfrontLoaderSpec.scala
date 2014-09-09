@@ -21,7 +21,7 @@ import scalaz._
 import Scalaz._
 
 // Snowplow
-import LoaderSpecHelpers._
+import SpecHelpers._
 
 // Specs2
 import org.specs2.{Specification, ScalaCheck}
