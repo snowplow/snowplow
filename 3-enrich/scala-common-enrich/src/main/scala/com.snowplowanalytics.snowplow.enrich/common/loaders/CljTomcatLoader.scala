@@ -119,7 +119,7 @@ object CljTomcatLoader extends Loader[String] {
         None.success
 
       // A.2 Not a GET request for /i
-      case CljTomcatRegex(_, _, _, _, _, op, _, _, _, _, _, _, _, null, null) if op.toUpperCase != "GET" =>
+      case CljTomcatRegex(_, _, _, _, _, op, _, _, _, _, _, _, null, null) if op.toUpperCase != "GET" =>
         s"Operation must be GET, not ${op.toUpperCase}, if request content type and body are not provided".failNel[Option[CollectorPayload]]
 
       // A.3 GET request for /i as expected
@@ -135,7 +135,7 @@ object CljTomcatLoader extends Loader[String] {
       // B.2 A POST, let's check we can discern API format
       case CljTomcatRegex(date, time, _, _, ip, _, _, objct, _, refr, ua, qs, ct, bdy) => objct match {
         case ApiPathRegex(vnd, ver) => build(qs, date, time, ip, ua, refr, CollectorApi(vnd, ver).some, ct.some, bdy.some)
-        case _                      => s"Cannot determine format of request body, because requested object does not match (/){vendor}/{version}(/) pattern".failNel[Option[CollectorPayload]]
+        case _                      => s"Requested object ${objct} does not match (/)vendor/version(/) pattern".failNel[Option[CollectorPayload]]
       }
 
       // C. Row not recognised
