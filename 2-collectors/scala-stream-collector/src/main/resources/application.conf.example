@@ -48,6 +48,7 @@ collector {
   sink {
     # Sinks currently supported are:
     # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
+    # 'kafka' for writing Thrift-serialized records to kafka
     # 'stdout' for writing Base64-encoded Thrift-serialized records to stdout
     #    Recommended settings for 'stdout' so each line printed to stdout
     #    is a serialized record are:
@@ -73,6 +74,13 @@ collector {
         name: "snowplow_collector_example"
         size: 1
       }
+    }
+
+    kafka {
+      brokers: "localhost:9092"
+      topic: "snowplow-events"
+      async: false
+      batch-size: 1
     }
   }
 }
