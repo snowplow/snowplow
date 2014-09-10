@@ -40,7 +40,7 @@ object Source extends Enumeration {
 }
 object Sink extends Enumeration {
   type Sink = Value
-  val Kinesis, Stdouterr, Test = Value
+  val Kinesis, Kafka, Stdouterr, Test = Value
 }
 
 // The main entry point of the Scala Kinesis Enricher.
@@ -104,6 +104,7 @@ class KinesisEnrichConfig(config: Config) {
 
   val sink = enrich.getString("sink") match {
     case "kinesis" => Sink.Kinesis
+    case "kafka" => Sink.Kafka
     case "stdouterr" => Sink.Stdouterr
     case "test" => Sink.Test
     case _ => throw new RuntimeException("enrich.sink unknown.")
@@ -124,9 +125,19 @@ class KinesisEnrichConfig(config: Config) {
   val badOutStream = outStreams.getString("bad")
   val badOutStreamShards = outStreams.getInt("bad_shards")
   
-  private val kafkaStreams = streams.getConfig("kafka")
-  val zookeeper = kafkaStreams.getString("zookeeper")
-  val kafkaTopic = kafkaStreams.getString("topic")
+  private val kafkaStreams = enrich.getConfig("kafka")
+  private val kafkaOutStreams = kafkaStreams.getConfig("out")
+  private val kafkaInStreams = kafkaStreams.getConfig("in")
+  val zookeeper = kafkaInStreams.getString("zookeeper")
+  val kafkaTopic = kafkaInStreams.getString("topic")
+  val kafkaEnrichedTopic = kafkaOutStreams.getString("topic")
+  val kafkaBrokers = kafkaOutStreams.getString("brokers")
+  val kafkaAsync = kafkaOutStreams.getBoolean("async")
+  val kafkaBatchSize = kafkaOutStreams.getInt("batch-size")
+  // small checks
+  if (kafkaTopic == kafkaEnrichedTopic) {
+    throw new RuntimeException("topics must be different")
+  }
 
   val appName = streams.getString("app-name")
 
