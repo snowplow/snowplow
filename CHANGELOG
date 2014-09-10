@@ -1,5 +1,7 @@
 Version 0.9.8 (2014-09-XX)
 --------------------------
+iOS Tracker: added git submodule. Version 0.1.1 (#982)                                                       - TODO
+Android Tracker: added git submodule. Version 0.1.1 (#983)                                                   - TODO
 Clojure Collector: bumped to 0.7.0
 Clojure Collector: merged snowplow/tomcat-cf-access-log-valve into Snowplow as clojure-collector/access-valve (#898)
 Clojure Collector: bumped access-valve to 0.1.0
