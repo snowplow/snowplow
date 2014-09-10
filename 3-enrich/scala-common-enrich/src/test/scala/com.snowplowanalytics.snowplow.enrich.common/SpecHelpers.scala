@@ -88,4 +88,16 @@ object SpecHelpers {
    */
   def toNameValuePairs(pairs: NvPair*): List[NameValuePair] =
     List(pairs.map(toNvPair(_)): _*)
+
+  /**
+   * Builds a self-describing JSON by
+   * wrapping the supplied JSON with
+   * schema and data properties
+   *
+   * @param json The JSON to use as the request body
+   * @param schema The name of the schema to insert
+   * @return a self-describing JSON
+   */
+  def toSelfDescJson(json: String, schema: String): String =
+    s"""{"schema":"iglu:com.snowplowanalytics.snowplow/${schema}/jsonschema/1-0-0","data":${json}}"""
 }
