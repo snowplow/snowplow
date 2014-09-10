@@ -49,6 +49,12 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
   def run
 
   /**
+   * shutdown gracefully if necessary
+   */
+  def stop {
+  }
+
+  /**
    * Fields in our CanonicalOutput which are discarded for legacy
    * Redshift space reasons
    */

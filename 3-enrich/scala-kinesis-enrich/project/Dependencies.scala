@@ -48,6 +48,14 @@ object Dependencies {
     // Scala (compile only)
     val commonsLang3         = "3.1"
     val thrift               = "0.9.0"
+    // Kafka
+    // kafka beta was built in a way that pom generated with a jar isn't valid and maven could not recognize it and parse properly, see :
+    // https://issues.apache.org/jira/browse/KAFKA-1064
+    val kafka            = "0.8.1"
+    val log4j            = "1.2.17"
+    val metrics          = "2.2.0"
+    val snappy           = "1.1.1.3"
+    val zkclient         = "0.1"
   }
 
   object Urls {
@@ -72,6 +80,11 @@ object Dependencies {
     val snowplowCommonEnrich = "com.snowplowanalytics"      % "snowplow-common-enrich"    % V.snowplowCommonEnrich
     val scalazon             = "io.github.cloudify"         %% "scalazon"                 % V.scalazon
     val scalaz7              = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7
+    val kafka                = "org.apache.kafka"           %% "kafka"                    % V.kafka intransitive()
+    val log4j                = "log4j"                      %  "log4j"                    % V.log4j intransitive()
+    val metrics              = "com.yammer.metrics"         %  "metrics-core"             % V.metrics
+    val snappy               = "org.xerial.snappy"          %  "snappy-java"              % V.snappy
+    val zkclient             = "com.github.sgroschupf"      %  "zkclient"                 % V.zkclient
     // Scala (test only)
     val specs2               = "org.specs2"                 %% "specs2"                   % V.specs2         % "test"
     val scalazSpecs2         = "org.typelevel"              %% "scalaz-specs2"            % V.scalazSpecs2   % "test"

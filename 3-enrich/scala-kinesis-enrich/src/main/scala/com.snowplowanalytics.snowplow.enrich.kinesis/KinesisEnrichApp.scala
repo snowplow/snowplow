@@ -36,7 +36,7 @@ import sinks._
 // as defined in the following enumerations.
 object Source extends Enumeration {
   type Source = Value
-  val Kinesis, Stdin, Test = Value
+  val Kinesis, Kafka, Stdin, Test = Value
 }
 object Sink extends Enumeration {
   type Sink = Value
@@ -77,8 +77,15 @@ object KinesisEnrichApp extends App {
 
   val source = kinesisEnrichConfig.source match {
     case Source.Kinesis => new KinesisSource(kinesisEnrichConfig)
+    case Source.Kafka => new KafkaSource(kinesisEnrichConfig)
     case Source.Stdin => new StdinSource(kinesisEnrichConfig)
   }
+
+  // Graceful shutdown 
+  sys addShutdownHook {
+    source.stop
+  }
+
   source.run
 }
 
@@ -89,6 +96,7 @@ class KinesisEnrichConfig(config: Config) {
 
   val source = enrich.getString("source") match {
     case "kinesis" => Source.Kinesis
+    case "kafka" => Source.Kafka
     case "stdin" => Source.Stdin
     case "test" => Source.Test
     case _ => throw new RuntimeException("enrich.source unknown.")
@@ -115,6 +123,10 @@ class KinesisEnrichConfig(config: Config) {
   val enrichedOutStreamShards = outStreams.getInt("enriched_shards")
   val badOutStream = outStreams.getString("bad")
   val badOutStreamShards = outStreams.getInt("bad_shards")
+  
+  private val kafkaStreams = streams.getConfig("kafka")
+  val zookeeper = kafkaStreams.getString("zookeeper")
+  val kafkaTopic = kafkaStreams.getString("topic")
 
   val appName = streams.getString("app-name")
 
