@@ -21,10 +21,8 @@ import java.net.InetAddress
 // Kafka
 import kafka.common._
 import kafka.utils._
-//import kafka.serializer._
 import kafka.message._
 import kafka.producer._
-//import kafka.consumer._
 
 // Config
 import com.typesafe.config.Config
