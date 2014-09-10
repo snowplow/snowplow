@@ -3,8 +3,8 @@
 ## Introduction
 
 Scala Kinesis Enrich processes raw [Snowplow][snowplow] events from an input
-[Amazon Kinesis][kinesis] stream or a [Apache Kafka][kafka] and stores enriched events
-into output Kinesis streams.
+[Amazon Kinesis][kinesis] or [Apache Kafka][kafka] stream and stores enriched events
+into output Kinesis or Kafka streams.
 Events are enriched using the [scala-common-enrich][common-enrich] library.
 
 ## Building
