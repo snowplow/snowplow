@@ -162,6 +162,10 @@ enrich {
     app-name: SnowplowKinesisEnrich-${enrich.streams.in.raw}
     initial-position = "TRIM_HORIZON"
     endpoint: "https://kinesis.us-east-1.amazonaws.com"
+    kafka: {
+      zookeeper: "localhost:2181"
+      topic: "snowplow-events"
+    }
   }
   enrichments {
     geo_ip: {

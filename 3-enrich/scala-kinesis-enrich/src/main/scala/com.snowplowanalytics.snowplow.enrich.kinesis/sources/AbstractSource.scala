@@ -48,6 +48,12 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
    */
   def run
 
+  /**
+   * shutdown gracefully if necessary
+   */
+  def stop {
+  }
+
   // Initialize a kinesis provider to use with a Kinesis source or sink.
   protected val kinesisProvider = createKinesisProvider
 
