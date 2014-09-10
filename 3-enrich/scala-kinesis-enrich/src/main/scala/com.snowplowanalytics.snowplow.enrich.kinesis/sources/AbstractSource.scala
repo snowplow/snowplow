@@ -60,6 +60,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
   // Initialize the sink to output enriched events to.
   protected val sink: Option[ISink] = config.sink match {
     case Sink.Kinesis => new KinesisSink(kinesisProvider, config).some
+    case Sink.Kafka => new KafkaSink(config).some
     case Sink.Stdouterr => new StdouterrSink().some
     case Sink.Test => None
   }
