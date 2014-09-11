@@ -42,7 +42,7 @@ import common.outputs.CanonicalOutput
  */
 class KafkaSink(config: KinesisEnrichConfig) extends ISink with Logging {
   private var kafka = createKafkaProducer(config)
-  private val topic = config.kafkaTopic
+  private val topic = config.kafkaEnrichedTopic
 
   def createKafkaProducer(config: KinesisEnrichConfig): Producer[AnyRef, AnyRef] = {
     val compress: Boolean = true
@@ -74,9 +74,9 @@ class KafkaSink(config: KinesisEnrichConfig) extends ISink with Logging {
    * is implemented.
    */
   def storeCanonicalOutput(output: String, key: String) = {
-    debug(s"Writing record to Kafka: ${output}")
+    debug(s"Writing record to Kafka (topic '${topic}') : ${output}")
     try {
-      kafka.send(new KeyedMessage(topic, output))
+      kafka.send(new KeyedMessage(topic, output.getBytes("UTF8")))
     } catch {
       case e: Exception=>
         warn("unable to send event, see kafka log for more details")
