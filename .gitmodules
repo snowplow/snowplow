@@ -22,3 +22,6 @@
 [submodule "1-trackers/ios-tracker"]
 	path = 1-trackers/ios-tracker
 	url = https://github.com/snowplow/snowplow-ios-tracker
+[submodule "1-trackers/android-tracker"]
+	path = 1-trackers/android-tracker
+	url = https://github.com/snowplow/snowplow-android-tracker

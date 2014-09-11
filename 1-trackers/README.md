@@ -10,6 +10,7 @@
 
 | Tracker                   | Description                                                    | Status           |
 |---------------------------|----------------------------------------------------------------|------------------|
+| [android-tracker] [t0]    | An event tracker for Android apps and games                    | Beta             |
 | [arduino-tracker] [t1]    | An event tracker for IP-connected Arduino boards               | Production-ready |
 | [ios-tracker] [t2]        | An event tracker for iOS apps and games                        | Beta             |
 | [java-tracker] [t3]       | An event tracker for Java-based desktop and server apps, servlets and games | Beta |
@@ -31,6 +32,7 @@ For other trackers (e.g. PHP, Go) and their approximate timelines, please see th
 
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/1-trackers.png
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
+[t0]: https://github.com/snowplow/snowplow-android-tracker
 [t1]: https://github.com/snowplow/snowplow-arduino-tracker
 [t2]: https://github.com/snowplow/snowplow-ios-tracker
 [t3]: https://github.com/snowplow/snowplow-java-tracker
