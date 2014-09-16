@@ -110,6 +110,14 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
 
         canonicalOutput.toValidationNel match {
           case Success(co) =>
+            // ugly patch ... should be removed with scala-common-enrich 0.5.0
+            if (co.network_userid == null) {
+              ci.userId match {
+              case s:Some[String] => co.network_userid = s.get
+              case _ => ()
+              }
+            }
+
             val ts = tabSeparateCanonicalOutput(co)
             for (s <- sink) {
               // TODO: pull this side effect into parent function
