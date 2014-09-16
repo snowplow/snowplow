@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -38,7 +38,7 @@ object SpecHelpers {
   /**
    * The Kinesis Enrich being used
    */
-  val EnrichVersion = "kinesis-0.1.0-common-0.2.0"
+  val EnrichVersion = "kinesis-0.1.0-common-0.3.0"
 
   /**
    * The regexp pattern for a Type 4 UUID.
@@ -57,17 +57,11 @@ object SpecHelpers {
   private val UseRegexpFields = List("event_id")
 
   /**
-   * Fields in our CanonicalOutput which are discarded
-   */
-  private val DiscardedFields = List("page_url", "page_referrer")
-
-  /**
    * The names of the fields written out
    */
   lazy val OutputFields = classOf[CanonicalOutput]
       .getDeclaredFields
       .map(_.getName)
-      .filter(f => !DiscardedFields.contains(f))
 
   /**
    * User-friendly wrapper to instantiate
