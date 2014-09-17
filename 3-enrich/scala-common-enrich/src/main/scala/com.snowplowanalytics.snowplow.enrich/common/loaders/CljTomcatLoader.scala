@@ -112,7 +112,7 @@ object CljTomcatLoader extends Loader[String] {
     }
 
     line match {
-      // A: For a GET request to /i
+      // A: For a GET request to /i, CljTomcat collector <= v0.6.0
 
       // A.1 Not a request for /i, drop the row silently
       case CljTomcatRegex(_, _, _, _, _, _, _, objct, _, _, _, _, null, null) if !isIceRequest(objct) =>
@@ -126,19 +126,33 @@ object CljTomcatLoader extends Loader[String] {
       case CljTomcatRegex(date, time, _, _, ip, _, _, _, _, refr, ua, qs, null, null) =>
         build(qs, date, time, ip, ua, refr, None, None, None) // API, content type and request body all unavailable
 
-      // B: For a POST request with content type and body to /<api vendor>/<api version>
+      // B: For a GET request to /i, CljTomcat collector >= v0.7.0
 
-      // B.1 Not a POST request
+      // B.1 Not a request for /i, drop the row silently
+      case CljTomcatRegex(_, _, _, _, _, _, _, objct, _, _, _, _, "-", "-") if !isIceRequest(objct) =>
+        None.success
+
+      // B.2 Not a GET request for /i
+      case CljTomcatRegex(_, _, _, _, _, op, _, _, _, _, _, _, "-", "_") if op.toUpperCase != "GET" =>
+        s"Operation must be GET, not ${op.toUpperCase}, if request content type and body are not provided".failNel[Option[CollectorPayload]]
+
+      // B.3 GET request for /i as expected
+      case CljTomcatRegex(date, time, _, _, ip, _, _, _, _, refr, ua, qs, "-", "-") =>
+        build(qs, date, time, ip, ua, refr, None, None, None) // API, content type and request body all unavailable      
+
+      // C: For a POST request with content type and body to /<api vendor>/<api version>, CljTomcat collector >= v0.7.0
+
+      // C.1 Not a POST request
       case CljTomcatRegex(_, _, _, _, _, op, _, _, _, _, _, _, _, _) if op.toUpperCase != "POST" =>
         s"Operation must be POST, not ${op.toUpperCase}, if request content type and body are provided".failNel[Option[CollectorPayload]]
 
-      // B.2 A POST, let's check we can discern API format
+      // C.2 A POST, let's check we can discern API format
       case CljTomcatRegex(date, time, _, _, ip, _, _, objct, _, refr, ua, qs, ct, bdy) => objct match {
         case ApiPathRegex(vnd, ver) => build(qs, date, time, ip, ua, refr, CollectorApi(vnd, ver).some, ct.some, bdy.some)
         case _                      => s"Requested object ${objct} does not match (/)vendor/version(/) pattern".failNel[Option[CollectorPayload]]
       }
 
-      // C. Row not recognised
+      // D. Row not recognised
       case _ =>
         "Line does not match raw event format for Clojure Collector".failNel[Option[CollectorPayload]]
     }
