@@ -43,7 +43,6 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.mavenArtifact,      
         // Scala
         Libraries.scalaz7,
-        Libraries.argonaut,
         Libraries.snowplowRawEvent,
         Libraries.scalaUtil,
         Libraries.refererParser,

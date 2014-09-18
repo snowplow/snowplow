@@ -29,8 +29,9 @@ import com.snowplowanalytics.maxmind.iplookups.IpLocation
 import com.github.fge.jsonschema.core.report.ProcessingMessage
 
 // This project
-import common.inputs.CanonicalInput
-import common.outputs.CanonicalOutput
+import common.loaders.CollectorPayload
+import common.adapters.RawEvent
+import common.outputs.EnrichedEvent
 import common.enrichments.registry.Enrichment
 
 /**
@@ -61,12 +62,6 @@ package object common {
   type EnrichmentMap = Map[String, Enrichment]
 
   /**
-   * Type alias for a non-empty
-   * set of name-value pairs
-   */
-  type NameValueNel = NonEmptyList[NameValuePair]
-
-  /**
    * Type alias for a `ValidationNel`
    * containing Strings for `Failure`
    * or any type of `Success`.
@@ -87,7 +82,7 @@ package object common {
    * containing either error `String`s
    * or a `NameValueNel`.
    */
-  type ValidatedNameValueNel = Validation[String, NameValueNel] // Note not Validated[]
+  type ValidatedNameValuePairs = Validation[String, List[NameValuePair]] // Note not Validated[]
 
   /**
    * Type alias for an `Option`-boxed String
@@ -96,22 +91,29 @@ package object common {
 
   /**
    * Type alias for an `Option`-boxed
-   * `CanonicalInput`.
+   * `CollectorPayload`.
    */
-  type MaybeCanonicalInput = Option[CanonicalInput]
+  type MaybeCollectorPayload = Option[CollectorPayload]
 
   /**
    * Type alias for either a `ValidationNel`
    * containing `String`s for `Failure`
    * or a `MaybeCanonicalInput` for `Success`.
    */
-  type ValidatedMaybeCanonicalInput = Validated[MaybeCanonicalInput]
+  type ValidatedMaybeCollectorPayload = Validated[MaybeCollectorPayload]
+
+  /**
+   * Type alias for either a `ValidationNel`
+   * containing `String`s for `Failure`
+   * or a `List` of `RawEvent`s for `Success`.
+   */
+  type ValidatedRawEvents = Validated[NonEmptyList[RawEvent]]
 
   /**
    * Type alias for an `Option`-boxed
    * `CanonicalOutput`.
    */
-  type MaybeCanonicalOutput = Option[CanonicalOutput]
+  type MaybeEnrichedEvent = Option[EnrichedEvent]
 
   /**
    * Type alias for an `Option`-boxed
@@ -124,14 +126,7 @@ package object common {
    * containing `String`s for `Failure`
    * or a CanonicalOutput for `Success`.
    */
-  type ValidatedCanonicalOutput = Validated[CanonicalOutput]
-
-  /**
-   * Type alias for either a `ValidationNel`
-   * containing `String`s for `Failure`
-   * or a MaybeCanonicalOutput for `Success`.
-   */
-  type ValidatedMaybeCanonicalOutput = Validated[MaybeCanonicalOutput]
+  type ValidatedEnrichedEvent = Validated[EnrichedEvent]
 
   /**
    * Type alias for a `Validation`
@@ -151,4 +146,8 @@ package object common {
    */
   type ValidatedNelMessage[A] = ValidationNel[ProcessingMessage, A]
 
+  /**
+   * Parameters inside of a raw event
+   */
+  type RawEventParameters = Map[String, String]
 }

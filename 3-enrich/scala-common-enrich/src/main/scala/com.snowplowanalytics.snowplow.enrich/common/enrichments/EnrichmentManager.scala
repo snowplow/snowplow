@@ -27,8 +27,8 @@ import Scalaz._
 import util.Tap._
 
 // This project
-import inputs.{CanonicalInput, NvGetPayload}
-import outputs.CanonicalOutput
+import adapters.RawEvent
+import outputs.EnrichedEvent
 
 import utils.{ConversionUtils => CU}
 import utils.{JsonUtils => JU}
@@ -62,34 +62,25 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: String, raw: CanonicalInput): ValidatedCanonicalOutput = {
+  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: String, raw: RawEvent): ValidatedEnrichedEvent = {
 
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
     val unitSuccess = ().success[String]
     val unitSuccessNel = ().successNel[String]
 
-    // Retrieve the payload
-    // TODO: add support for other
-    // payload types in the future
-    val parameters = raw.payload match {
-      case NvGetPayload(p) => p
-      case _ => throw new FatalEtlError("Only name-value pair GET payloads are currently supported") // TODO: change back to FatalEtlException when Cascading FailureTrap supports exclusions
-    }
-
     // 1. Enrichments not expected to fail
 
     // Let's start populating the CanonicalOutput
     // with the fields which cannot error
-    val event = new CanonicalOutput().tap { e =>
-      e.collector_tstamp = EE.toTimestamp(raw.timestamp)
+    val event = new EnrichedEvent().tap { e =>
+      e.collector_tstamp = EE.toTimestamp(raw.context.timestamp)
       e.event_id = EE.generateEventId      // May be updated later if we have an `eid` parameter
-      e.v_collector = raw.source.collector // May be updated later if we have a `cv` parameter
+      e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
-      raw.ipAddress.map(ip => e.user_ipaddress = registry.getAnonIpEnrichment match {
-        case Some(anon) => anon.anonymizeIp(ip)
-        case None => ip
-      })
+      for (ip <- raw.context.ipAddress) {
+        e.user_ipaddress = ip
+      }
     }
 
     // 2. Enrichments which can fail
@@ -97,9 +88,9 @@ object EnrichmentManager {
     // 2a. Failable enrichments which don't need the payload
 
     // Attempt to decode the useragent
-    val useragent = raw.userAgent match {
+    val useragent = raw.context.useragent match {
       case Some(ua) =>
-        val u = CU.decodeString(raw.encoding, "useragent", ua)
+        val u = CU.decodeString(raw.source.encoding, "useragent", ua)
         u.flatMap(ua => {
           event.useragent = ua
           ua.success
@@ -108,7 +99,7 @@ object EnrichmentManager {
     }
 
     // Parse the useragent
-    val client = raw.userAgent match {
+    val client = raw.context.useragent match {
       case Some(ua) =>
         val ca = CE.extractClientAttributes(ua)
         ca.flatMap(c => {
@@ -132,7 +123,7 @@ object EnrichmentManager {
 
     // Partially apply functions which need an encoding, to create a TransformFunc
     val MaxJsonLength = 10000
-    val extractUrlEncJson: TransformFunc = JU.extractUrlEncJson(MaxJsonLength, raw.encoding, _, _)
+    val extractUrlEncJson: TransformFunc = JU.extractUrlEncJson(MaxJsonLength, raw.source.encoding, _, _)
     val extractBase64EncJson: TransformFunc = JU.extractBase64EncJson(MaxJsonLength, _, _)
 
     // We use a TransformMap which takes the format:
@@ -213,19 +204,19 @@ object EnrichmentManager {
           ("pp_miy"  , (CU.stringToJInteger, "pp_yoffset_min")),
           ("pp_may"  , (CU.stringToJInteger, "pp_yoffset_max")))
 
-    val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
+    val sourceMap: SourceMap = raw.parameters
 
     val transform = event.transform(sourceMap, transformMap)
 
     if (event.network_userid == null) {
-      raw.userId match {
+      raw.context.userId match {
         case s:Some[String] => event.network_userid = s.get
         case _ => ()
       }
     }
 
     // Potentially update the page_url and set the page URL components
-    val pageUri = WPE.extractPageUri(raw.refererUri, Option(event.page_url))
+    val pageUri = WPE.extractPageUri(raw.context.refererUri, Option(event.page_url))
     for (uri <- pageUri; u <- uri) {
       // Update the page_url
       event.page_url = u.toString
@@ -245,7 +236,7 @@ object EnrichmentManager {
     val geoLocation = {
       registry.getIpLookupsEnrichment match {
         case Some(geo) => {
-          raw.ipAddress match {
+          Option(event.user_ipaddress) match {
             case Some(address) => {
               val ipLookupResult = geo.extractIpInformation(address)
               for (res <- ipLookupResult) {
@@ -271,6 +262,12 @@ object EnrichmentManager {
         case None => unitSuccess
       }
     }
+
+    // Finally anonymize the IP address
+    Option(event.user_ipaddress).map(ip => event.user_ipaddress = registry.getAnonIpEnrichment match {
+      case Some(anon) => anon.anonymizeIp(ip)
+      case None => ip
+    })
 
     // Potentially set the referrer details and URL components
     val refererUri = CU.stringToUri(event.page_referrer)
@@ -303,7 +300,7 @@ object EnrichmentManager {
       e => unitSuccessNel, // No fields updated
       uri => uri match {
         case Some(u) =>
-          WAE.extractMarketingFields(u, raw.encoding).flatMap(cmp => {
+          WAE.extractMarketingFields(u, raw.source.encoding).flatMap(cmp => {
             event.mkt_medium = cmp.medium
             event.mkt_source = cmp.source
             event.mkt_term = cmp.term

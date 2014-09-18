@@ -1,0 +1,15 @@
+pom.xml
+pom.xml.asc
+*jar
+*war
+/lib/
+/classes/
+/target/
+/checkouts/
+.lein-deps-sum
+.lein-repl-history
+.lein-plugins/
+.lein-failures
+
+# Inclusions
+!/war-resources/.ebextensions/*jar
