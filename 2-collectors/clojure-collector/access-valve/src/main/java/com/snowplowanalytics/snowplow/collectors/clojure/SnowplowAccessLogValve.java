@@ -82,7 +82,9 @@ public class SnowplowAccessLogValve extends AccessLogValve {
      * Changes:
      * - Fixed 'q' pattern, to remove the "?" and ensure "" (empty string) is replaced with "-"
      * - Overwrote 'v' pattern, to write the version of this AccessLogValve, rather than the local server name
+     * - Added 'w' pattern, to return the request's body
      * - Added '~' pattern, to capture the request's content type
+     * - Overwrote 'a' pattern, to get remote IP more reliably, even through proxies
      */
     @Override
     protected AccessLogElement createAccessLogElement(char pattern) {
@@ -99,6 +101,9 @@ public class SnowplowAccessLogValve extends AccessLogValve {
             // Return the content type of the request
             case '~':
                 return new EscapedContentTypeElement();
+            // Return the remote IP address
+            case 'a':
+                return new ProxyAwareRemoteAddrElement();
             // Back to AccessLogValve's handler
             default:
                 return super.createAccessLogElement(pattern);
@@ -242,6 +247,39 @@ public class SnowplowAccessLogValve extends AccessLogValve {
                 return;
             }
             buf.append('-');
+        }
+    }
+
+    /**
+     * Write remote IP address - %a.
+     * Will check first for an X-Forwarded-For header, and use that
+     * if set. If not set, will revert to using the standard remote
+     * IP address.
+     */
+    protected class ProxyAwareRemoteAddrElement implements AccessLogElement {
+        @Override
+        public void addElement(StringBuilder buf, Date date, Request request,
+                Response response, long time) {
+
+            Enumeration<String> headers = request.getHeaders("X-Forwarded-For");
+            if (headers.hasMoreElements()) {
+                String[] ips = headers.nextElement().split(", "); // If multiple X-Forwarded-For headers, take first
+                if (ips.length > 0 && !ips[0].equals("127.0.0.1")) {
+                    buf.append(handleBlankSafely(ips[0])); // If multiple IPs, remote is the first (rest are proxies)
+                    return;
+                }
+            }
+
+            if (requestAttributesEnabled) {
+                String addr = (String) request.getAttribute(REMOTE_ADDR_ATTRIBUTE);
+                if (addr == null) {
+                    buf.append(handleBlankSafely(request.getRemoteAddr()));
+                } else {
+                    buf.append(handleBlankSafely(addr));
+                }
+            } else {
+                buf.append(handleBlankSafely(request.getRemoteAddr()));
+            }
         }
     }
 
