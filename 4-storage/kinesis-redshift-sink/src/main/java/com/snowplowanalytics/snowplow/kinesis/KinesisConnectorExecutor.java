@@ -250,30 +250,139 @@ public abstract class KinesisConnectorExecutor<T,U> extends KinesisConnectorExec
      * Helper method to build the data table
      * 
      * @return Fields for the data table
+     * Supported data types: http://docs.aws.amazon.com/redshift/latest/dg/c_Supported_data_types.html
+     * Snowplow cannonical event model code: https://github.com/snowplow/snowplow/blob/c4189163f71ec99215485eff72398ca7bfc3556d/3-enrich/scala-common-enrich/src/main/scala/com.snowplowanalytics.snowplow.enrich/common/outputs/EnrichedEvent.scala#L39
+     * Snowplow cannonical event model descriptions/types: https://github.com/snowplow/snowplow/wiki/Canonical-event-model
      *
      * @deprecated
      */
     @Deprecated
     private static List<String> getKinesisMessageModelFields() {
         List<String> fields = new ArrayList<String>();
-        fields.add("userid integer not null distkey sortkey");
-        fields.add("username char(8)");
-        fields.add("firstname varchar(30)");
-        fields.add("lastname varchar(30)");
-        fields.add("city varchar(30)");
-        fields.add("state char(2)");
-        fields.add("email varchar(100)");
-        fields.add("phone char(14)");
-        fields.add("likesports boolean");
-        fields.add("liketheatre boolean");
-        fields.add("likeconcerts boolean");
-        fields.add("likejazz boolean");
-        fields.add("likeclassical boolean");
-        fields.add("likeopera boolean");
-        fields.add("likerock boolean");
-        fields.add("likevegas boolean");
-        fields.add("likebroadway boolean");
-        fields.add("likemusicals boolean");
+        // The application (site, game, app etc) this event belongs to, and the tracker platform
+        fields.add("app_id varchar(30)"); // Ex: "force"
+        fields.add("platform varchar(30)"); // Ex: "web"
+        // Date/time
+        fields.add("etl_tstamp timestamp"); // Ex: "2014-09-18 15:50:33.333"
+        fields.add("collector_tstamp timestamp"); // Ex: "2014-09-18 15:50:15.156"
+        // Transaction (i.e. this logging event)
+        fields.add("event varchar(30)"); // Ex: "struct"
+        fields.add("name_org varchar(30)"); // Ex: "com.snowplowanalytics"
+        fields.add("event_id char(36)"); // Ex: "4b25d258-2831-4fdc-8125-43ebf2d5b12b"
+        fields.add("txn_id integer"); // Ex: "644474"
+        // Versioning
+        fields.add("v_tracker varchar(30)"); // Ex: "js-2.0.0"
+        fields.add("v_collector varchar(30)"); // Ex: "ssc-0.1.0-kinesis"
+        fields.add("v_etl varchar(30)"); // Ex: "kinesis-0.1.0-common-0.2.0"
+        // User and visit
+        fields.add("user_id char(24)"); // Ex: "541afb78636172313c000000"
+        fields.add("user_ipaddress varchar(30)"); // Ex: "108.27.195.x"
+        fields.add("user_fingerprint integer"); // Ex: "4135552504"
+        fields.add("domain_userid char(16)"); // Ex: "7940bcc0dffc1363"
+        fields.add("domain_sessionidx integer"); // Ex: "1"
+        fields.add("network_userid char(36)"); // Ex: ""
+        // Location
+        fields.add("geo_country char(2)"); // Ex: "US"
+        fields.add("geo_region char(2)"); // Ex: "NY"
+        fields.add("geo_city varchar(120)"); // Ex: "New York"
+        fields.add("geo_zipcode varchar(30)"); // Ex: "10023"
+        fields.add("geo_latitude varchar(30)"); // Ex: "40.7769"
+        fields.add("geo_longitude varchar(30)"); // Ex: "-73.9813"
+        fields.add("geo_region_name varchar(120)"); // Ex: ""
+        // Other IP lookups SKIPPED
+        // Page SKIPPED
+        // Page URL components
+        fields.add("page_urlscheme varchar(8)"); // Ex: "http"
+        fields.add("page_urlhost varchar(120)"); // Ex: "localhost"
+        fields.add("page_urlport integer"); // Ex: "5000"
+        fields.add("page_urlpath varchar(2000)"); // Ex: "/artwork/ben-jones-cubes"
+        fields.add("page_urlquery varchar(2000)"); // Ex: ""
+        fields.add("page_urlfragment varchar(2000)"); // Ex: ""
+        // Referrer URL components
+        fields.add("refr_urlscheme varchar(8)"); // Ex: "http"
+        fields.add("refr_urlhost varchar(120)"); // Ex: "localhost"
+        fields.add("refr_urlport integer"); // Ex: "5000"
+        fields.add("refr_urlpath varchar(2000)"); // Ex: "/"
+        fields.add("refr_urlquery varchar(2000)"); // Ex: ""
+        fields.add("refr_urlfragment varchar(2000)"); // Ex: ""
+        // Referrer details
+        fields.add("refr_medium varchar(30)"); // Ex: "internal"
+        fields.add("refr_source varchar(120)"); // Ex: ""
+        fields.add("refr_term varchar(260)"); // Ex: ""
+        // Marketing
+        fields.add("mkt_medium varchar(120)"); // Ex: 'social'
+        fields.add("mkt_source varchar(120)"); // Ex: 'Facebook'
+        fields.add("mkt_term varchar(120)"); // Ex: 'new age tarot decks'
+        fields.add("mkt_content varchar(120)"); // Ex: 13894723
+        fields.add("mkt_campaign varchar(120)"); // Ex: 'diageo-123'
+        // Custom Contexts SKIPPED
+        // Structured Event
+        fields.add("se_category varchar(30)"); // Ex: "inquiry"
+        fields.add("se_action varchar(30)"); // Ex: "submit"
+        fields.add("se_label varchar(120)"); // Ex: "541afb78636172313c000000"
+        fields.add("se_property varchar(30)"); // Ex: "artwork"
+        fields.add("se_value real"); // Ex: "0.0"
+        // Unstructured Event SKIPPED
+        // Ecommerce transaction (from querystring)
+        fields.add("tr_orderid varchar(30)"); //  Ex: '#134'
+        fields.add("tr_affiliation varchar(30)"); //  Ex: 'web'
+        fields.add("tr_total real"); //  Ex: 12.99
+        fields.add("tr_tax real"); //  Ex: 3.00
+        fields.add("tr_shipping real"); //  Ex: 0.00
+        fields.add("tr_city varchar(30)"); //  Ex: 'London'
+        fields.add("tr_state varchar(30)"); //  Ex: 'Washington'
+        fields.add("tr_country varchar(30)"); //  Ex: 'France'
+        // Ecommerce transaction item (from querystring)
+        fields.add("ti_orderid varchar(30)"); // Ex: '#134'
+        fields.add("ti_sku varchar(30)"); // Ex: 'pbz00123'
+        fields.add("ti_name varchar(30)"); // Ex: Cone 'pendulum'
+        fields.add("ti_category varchar(30)"); // Ex: 'New Age'
+        fields.add("ti_price varchar(30)"); // Ex: '9.99'
+        fields.add("ti_quantity varchar(30)"); // Ex: '2'
+        // Page Pings
+        fields.add("pp_xoffset_min integer"); // Ex: 0
+        fields.add("pp_xoffset_max integer"); // Ex: 100
+        fields.add("pp_yoffset_min integer"); // Ex: 0
+        fields.add("pp_yoffset_max integer"); // Ex: 200
+        // User Agent
+        fields.add("useragent varchar(2000)"); // Ex: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.120 Safari/537.36"
+        // Browser (from user-agent)
+        fields.add("br_name varchar(120)"); // Ex: "Chrome"
+        fields.add("br_family varchar(120)"); // Ex: "Chrome"
+        fields.add("br_version varchar(120)"); // Ex: "37.0.2062.120"
+        fields.add("br_type varchar(120)"); // Ex: "Browser"
+        fields.add("br_renderengine varchar(120)"); // Ex: "WEBKIT"
+        // Browser (from querystring)
+        fields.add("br_lang varchar(30)"); // Ex: "en-US"
+        // Individual feature fields for non-Hive targets (e.g. Infobright)
+        fields.add("br_features_pdf boolean"); // Ex: "1"
+        fields.add("br_features_flash boolean"); // Ex: "1"
+        fields.add("br_features_java boolean"); // Ex: "1"
+        fields.add("br_features_director boolean"); // Ex: "0"
+        fields.add("br_features_quicktime boolean"); // Ex: "1"
+        fields.add("br_features_realplayer boolean"); // Ex: "0"
+        fields.add("br_features_windowsmedia boolean"); // Ex: "0"
+        fields.add("br_features_gears boolean"); // Ex: "0"
+        fields.add("br_features_silverlight boolean"); // Ex: "1"
+        fields.add("br_cookies boolean"); // Ex: "1"
+        fields.add("br_colordepth integer"); // Ex: "24"
+        fields.add("br_viewwidth integer"); // Ex: "1680"
+        fields.add("br_viewheight integer"); // Ex: "517"
+        // OS (from user-agent)
+        fields.add("os_name varchar(120)"); // Ex: "Mac OS X"
+        fields.add("os_family varchar(120)"); // Ex: "Mac OS X"
+        fields.add("os_manufacturer varchar(120)"); // Ex: "Apple Inc."
+        fields.add("os_timezone varchar(120)"); // Ex: "America/New_York"
+        // Device/Hardware (from user-agent)
+        fields.add("dvce_type varchar(30)"); // Ex: "Computer"
+        fields.add("dvce_ismobile boolean"); // Ex: "0"
+        // Device (from querystring)
+        fields.add("dvce_screenwidth integer"); // Ex: "1680"
+        fields.add("dvce_screenheight integer"); // Ex: "1050"
+        // Document
+        fields.add("doc_charset varchar(30)"); // Ex: "UTF-8"
+        fields.add("doc_width integer"); // Ex: "1680"
+        fields.add("doc_height integer"); // Ex: "1293"
         return fields;
     }
 
