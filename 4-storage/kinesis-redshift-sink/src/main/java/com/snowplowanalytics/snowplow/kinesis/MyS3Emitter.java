@@ -1,3 +1,5 @@
+// An augmentation of amazon's library here: https://github.com/awslabs/amazon-kinesis-connectors/blob/49e674efeae04734abe6f7385d7037788ea70145/src/main/java/com/amazonaws/services/kinesis/connectors/s3/S3Emitter.java#L39
+
 package com.snowplowanalytics.snowplow.kinesis;
 
 import java.io.ByteArrayInputStream;

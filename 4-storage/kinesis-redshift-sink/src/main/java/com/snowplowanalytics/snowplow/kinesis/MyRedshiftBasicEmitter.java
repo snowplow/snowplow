@@ -1,3 +1,6 @@
+// Coppied from amazon's library here: https://github.com/awslabs/amazon-kinesis-connectors/blob/49e674efeae04734abe6f7385d7037788ea70145/src/main/java/com/amazonaws/services/kinesis/connectors/redshift/RedshiftBasicEmitter.java#L51
+
+
 /*
  * Copyright 2013 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
