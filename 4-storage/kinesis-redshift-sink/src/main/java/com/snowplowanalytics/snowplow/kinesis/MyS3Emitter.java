@@ -31,7 +31,9 @@ public class MyS3Emitter extends S3Emitter {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         for (byte[] record : records) {
             try {
-                baos.write(record);
+                String string = new String(record, "UTF-8") + "\n";
+                byte[] recordWithNewline = string.getBytes();
+                baos.write(recordWithNewline);
             } catch (IOException e) {
                 LOG.error(e);
                 return buffer.getRecords();
