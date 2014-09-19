@@ -23,7 +23,7 @@ import com.amazonaws.services.kinesis.connectors.interfaces.IEmitter;
 import com.amazonaws.services.kinesis.connectors.interfaces.IFilter;
 import com.amazonaws.services.kinesis.connectors.interfaces.IKinesisConnectorPipeline;
 import com.amazonaws.services.kinesis.connectors.interfaces.ITransformer;
-import com.amazonaws.services.kinesis.connectors.redshift.RedshiftBasicEmitter;
+import com.snowplowanalytics.snowplow.kinesis.MyRedshiftBasicEmitter;
 
 /**
  * The Pipeline used by the Redshift basic sample. Uses:
@@ -38,7 +38,7 @@ public class RedshiftBasicPipeline implements IKinesisConnectorPipeline<String, 
 
     @Override
     public IEmitter<byte[]> getEmitter(KinesisConnectorConfiguration configuration) {
-        return new RedshiftBasicEmitter(configuration);
+        return new MyRedshiftBasicEmitter(configuration);
     }
 
     @Override
