@@ -269,7 +269,7 @@ public abstract class KinesisConnectorExecutor<T,U> extends KinesisConnectorExec
         fields.add("event varchar(30)"); // Ex: "struct"
         fields.add("name_org varchar(30)"); // Ex: "com.snowplowanalytics"
         fields.add("event_id char(36)"); // Ex: "4b25d258-2831-4fdc-8125-43ebf2d5b12b"
-        fields.add("txn_id integer"); // Ex: "644474"
+        fields.add("txn_id bigint"); // Ex: "644474"
         // Versioning
         fields.add("v_tracker varchar(30)"); // Ex: "js-2.0.0"
         fields.add("v_collector varchar(30)"); // Ex: "ssc-0.1.0-kinesis"
@@ -277,9 +277,9 @@ public abstract class KinesisConnectorExecutor<T,U> extends KinesisConnectorExec
         // User and visit
         fields.add("user_id char(24)"); // Ex: "541afb78636172313c000000"
         fields.add("user_ipaddress varchar(30)"); // Ex: "108.27.195.x"
-        fields.add("user_fingerprint integer"); // Ex: "4135552504"
+        fields.add("user_fingerprint bigint"); // Ex: "4135552504"
         fields.add("domain_userid char(16)"); // Ex: "7940bcc0dffc1363"
-        fields.add("domain_sessionidx integer"); // Ex: "1"
+        fields.add("domain_sessionidx bigint"); // Ex: "1"
         fields.add("network_userid char(36)"); // Ex: ""
         // Location
         fields.add("geo_country char(2)"); // Ex: "US"
