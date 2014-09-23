@@ -25,6 +25,7 @@ import com.snowplowanalytics.snowplow.kinesis.utils.DynamoDBUtils;
 import com.snowplowanalytics.snowplow.kinesis.utils.KinesisUtils;
 import com.snowplowanalytics.snowplow.kinesis.utils.RedshiftUtils;
 import com.snowplowanalytics.snowplow.kinesis.utils.S3Utils;
+import com.snowplowanalytics.snowplow.kinesis.utils.PropertiesUtils;
 
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
@@ -83,8 +84,15 @@ public abstract class KinesisConnectorExecutor<T,U> extends KinesisConnectorExec
      *            The name of the configuration file to look for on the classpath
      */
     public KinesisConnectorExecutor(String configFile) {
-        InputStream configStream = Thread.currentThread().getContextClassLoader()
+        InputStream configStream;
+        InputStream rawConfigStream = Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream(configFile);
+        try {
+            configStream = PropertiesUtils.parseConfigStream(rawConfigStream);
+        } catch (IOException e) {
+            String msg = "Could not parse resource " + configFile + " for environment variables";
+            throw new IllegalStateException(msg, e);
+        }
 
         if (configStream == null) {
             String msg = "Could not find resource " + configFile + " in the classpath";
