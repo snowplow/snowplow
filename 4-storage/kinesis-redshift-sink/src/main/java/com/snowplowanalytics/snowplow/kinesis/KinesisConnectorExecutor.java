@@ -288,9 +288,9 @@ public abstract class KinesisConnectorExecutor<T,U> extends KinesisConnectorExec
         fields.add("geo_zipcode varchar(30)"); // Ex: "10023"
         fields.add("geo_latitude varchar(30)"); // Ex: "40.7769"
         fields.add("geo_longitude varchar(30)"); // Ex: "-73.9813"
-        fields.add("geo_region_name varchar(120)"); // Ex: ""
         // Other IP lookups SKIPPED
-        // Page SKIPPED
+        // Page
+        fields.add("page_title varchar(2000)"); // Ex: 'Using ChartIO to visualize and interrogate Snowplow data - Snowplow Analytics'
         // Page URL components
         fields.add("page_urlscheme varchar(8)"); // Ex: "http"
         fields.add("page_urlhost varchar(120)"); // Ex: "localhost"
