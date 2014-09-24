@@ -64,6 +64,7 @@ class IpLookupsEnrichmentSpec extends Specification with DataTables with Validat
                                                  city = Some("Delray Beach"),
                                                  latitude = 26.461502F,
                                                  longitude = -80.0728F,
+                                                 timezone = Some("America/New_York"),
                                                  postalCode = None,
                                                  dmaCode = Some(548),
                                                  areaCode = Some(561),
