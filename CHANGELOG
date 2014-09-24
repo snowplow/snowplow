@@ -1,3 +1,12 @@
+Version 0.9.9 (2014-xx-xx)
+--------------------------
+Scala Common Enrich: bumped to 0.7.0 (TODO)
+Scala Common Enrich: bumped scala-maxmind-iplookups to 0.2.0 (#1002) (TODO)
+Scala Common Enrich: added support for non-GA campaign attribution: phase 1 (#402) (TODO)
+Scala Common Enrich: rewrote AttributionEnrichments tests as RefererParserEnrichment tests (#974) (TODO)
+Scala Hadoop Enrich: bumped to 0.8.0 (TODO)
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.7.0 (#995) (TODO)
+
 Version 0.9.8 (2014-09-18)
 --------------------------
 iOS Tracker: added git submodule. Version 0.1.1 (#982)
