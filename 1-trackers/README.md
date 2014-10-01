@@ -19,6 +19,7 @@
 | [lua-tracker] [lua]               | An event tracker for Lua apps, games and plugins               | Production-ready |
 | [no-js-tracker] [no-js]           | A pixel-based tracker for no-JavaScript web environments       | Production-ready |
 | [nodejs-tracker] [nodejs]         | An event tracker for node.js apps and servers                  | Beta             |
+| [php-tracker] [php]               | An event tracker for PHP apps and scripts                      | Beta             |
 | [python-tracker] [python]         | An event tracker for Python and Django webapps, apps and games | Production-ready |
 | [ruby-tracker] [ruby]             | An event tracker for Ruby and Rails apps and gems              | Beta             |
 
@@ -42,6 +43,7 @@ For other trackers (e.g. PHP, Go) and their approximate timelines, please see th
 [lua]: https://github.com/snowplow/snowplow-lua-tracker
 [no-js]: ./no-js-tracker/
 [nodejs]: https://github.com/snowplow/snowplow-nodejs-tracker
+[php]: https://github.com/snowplow/snowplow-php-tracker
 [python]: https://github.com/snowplow/snowplow-python-tracker
 [ruby]: https://github.com/snowplow/snowplow-ruby-tracker
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-a-Tracker
