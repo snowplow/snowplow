@@ -1,5 +1,6 @@
-Version 0.9.9 (2014-xx-xx)
+Version 0.9.9 (2014-10-xx)
 --------------------------
+.NET Tracker: add git submodule. Version 0.1.0 (#1000)
 Scala Common Enrich: bumped to 0.7.0
 Scala Common Enrich: bumped scala-maxmind-iplookups to 0.2.0 (#1002)
 Scala Common Enrich: added support for non-GA campaign attribution: phase 1 (#402)

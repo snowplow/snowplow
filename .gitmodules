@@ -25,3 +25,6 @@
 [submodule "1-trackers/android-tracker"]
 	path = 1-trackers/android-tracker
 	url = https://github.com/snowplow/snowplow-android-tracker
+[submodule "1-trackers/dotnet-tracker"]
+	path = 1-trackers/dotnet-tracker
+	url = https://github.com/snowplow/snowplow-dotnet-tracker.git
