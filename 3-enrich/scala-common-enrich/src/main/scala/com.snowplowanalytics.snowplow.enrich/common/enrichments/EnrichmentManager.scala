@@ -79,9 +79,8 @@ object EnrichmentManager {
       e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
       e.etl_tstamp = etlTstamp
-      for (ip <- raw.context.ipAddress) {
-        e.user_ipaddress = ip
-      }
+      e.network_userid = raw.context.userId.orNull    // May be updated later by 'nuid'
+      e.user_ipaddress = raw.context.ipAddress.orNull // May be updated later by 'ip'
     }
 
     // 2. Enrichments which can fail
@@ -209,14 +208,6 @@ object EnrichmentManager {
           })
         ca
       case None => unitSuccess // No fields updated
-    }
-
-    // TODO: clean up (not idiomatic Scala)
-    if (event.network_userid == null) {
-      raw.context.userId match {
-        case s:Some[String] => event.network_userid = s.get
-        case _ => ()
-      }
     }
 
     // Potentially update the page_url and set the page URL components
