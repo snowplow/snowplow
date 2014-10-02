@@ -89,6 +89,7 @@ object EnrichmentManager {
     // 2a. Failable enrichments which don't need the payload
 
     // Attempt to decode the useragent
+    // May be updated later if we have a `ua` parameter
     val useragent = raw.context.useragent match {
       case Some(ua) =>
         val u = CU.decodeString(raw.source.encoding, "useragent", ua)
@@ -96,27 +97,6 @@ object EnrichmentManager {
           event.useragent = ua
           ua.success
           })
-      case None => unitSuccess // No fields updated
-    }
-
-    // Parse the useragent
-    val client = raw.context.useragent match {
-      case Some(ua) =>
-        val ca = CE.extractClientAttributes(ua)
-        ca.flatMap(c => {
-          event.br_name = c.browserName
-          event.br_family = c.browserFamily
-          c.browserVersion.map(bv => event.br_version = bv)
-          event.br_type = c.browserType
-          event.br_renderengine = c.browserRenderEngine
-          event.os_name = c.osName
-          event.os_family = c.osFamily
-          event.os_manufacturer = c.osManufacturer
-          event.dvce_type = c.deviceType
-          event.dvce_ismobile = CU.booleanToJByte(c.deviceIsMobile)
-          c.success
-          })
-        ca
       case None => unitSuccess // No fields updated
     }
 
@@ -139,6 +119,7 @@ object EnrichmentManager {
           ("uid"     , (ME.toTsvSafe, "user_id")),
           ("duid"    , (ME.toTsvSafe, "domain_userid")),
           ("nuid"    , (ME.toTsvSafe, "network_userid")),
+          ("ua"      , (ME.toTsvSafe, "useragent")),
           ("fp"      , (ME.toTsvSafe, "user_fingerprint")),
           ("vid"     , (CU.stringToJInteger, "domain_sessionidx")),
           ("dtm"     , (EE.extractTimestamp, "dvce_tstamp")),
@@ -209,6 +190,28 @@ object EnrichmentManager {
 
     val transform = event.transform(sourceMap, transformMap)
 
+    // Parse the useragent
+    val client = Option(event.useragent) match {
+      case Some(ua) =>
+        val ca = CE.extractClientAttributes(ua)
+        ca.flatMap(c => {
+          event.br_name = c.browserName
+          event.br_family = c.browserFamily
+          c.browserVersion.map(bv => event.br_version = bv)
+          event.br_type = c.browserType
+          event.br_renderengine = c.browserRenderEngine
+          event.os_name = c.osName
+          event.os_family = c.osFamily
+          event.os_manufacturer = c.osManufacturer
+          event.dvce_type = c.deviceType
+          event.dvce_ismobile = CU.booleanToJByte(c.deviceIsMobile)
+          c.success
+          })
+        ca
+      case None => unitSuccess // No fields updated
+    }
+
+    // TODO: clean up (not idiomatic Scala)
     if (event.network_userid == null) {
       raw.context.userId match {
         case s:Some[String] => event.network_userid = s.get
