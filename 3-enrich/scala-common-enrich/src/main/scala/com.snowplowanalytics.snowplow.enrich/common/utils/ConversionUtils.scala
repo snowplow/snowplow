@@ -160,10 +160,10 @@ object ConversionUtils {
    */
   val validateUuid: (String, String) => ValidatedString = (field, str) => {
 
-    def check(s: String)(u: UUID): Boolean = (u != null && s == u.toString)
+    def check(s: String)(u: UUID): Boolean = (u != null && s.toLowerCase == u.toString)
     val uuid = Try(UUID.fromString(str)).toOption.filter(check(str))
     uuid match {
-      case Some(_) => str.success
+      case Some(_) => str.toLowerCase.success
       case None    => s"Field [$field]: [$str] is not a valid UUID".fail
     }
   } 
