@@ -77,6 +77,7 @@ object EnrichmentManager {
       e.event_id = EE.generateEventId      // May be updated later if we have an `eid` parameter
       e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
+      e.etl_tstamp = etlTstamp
       for (ip <- raw.context.ipAddress) {
         e.user_ipaddress = ip
       }
@@ -326,7 +327,6 @@ object EnrichmentManager {
     event.refr_urlfragment = CU.truncate(event.refr_urlfragment, 255)
     event.refr_term = CU.truncate(event.refr_term, 255)
     event.se_label = CU.truncate(event.se_label, 255)
-    event.etl_tstamp = etlTstamp
 
     // Collect our errors on Failure, or return our event on Success
     (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| geoLocation.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {
