@@ -16,11 +16,11 @@
 -- Compatibility: iglu:com.snowplowanalytics.snowplow/change_form/jsonschema/1-0-0
 
 CREATE TABLE atomic.com_snowplowanalytics_snowplow_change_form_1 (
-    -- Schema of this type
-    schema_vendor   varchar(128)  encode runlength not null,
-    schema_name     varchar(128)  encode runlength not null,
-    schema_format   varchar(128)  encode runlength not null,
-    schema_version  varchar(128)  encode runlength not null,
+	-- Schema of this type
+	schema_vendor   varchar(128)  encode runlength not null,
+	schema_name     varchar(128)  encode runlength not null,
+	schema_format   varchar(128)  encode runlength not null,
+	schema_version  varchar(128)  encode runlength not null,
 	-- Parentage of this type
 	root_id         char(36)      encode raw not null,
 	root_tstamp     timestamp     encode raw not null,

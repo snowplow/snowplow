@@ -16,25 +16,25 @@
 -- Compatibility: iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-0-0
 
 CREATE TABLE atomic.com_snowplowanalytics_snowplow_geolocation_context_1 (
-    -- Schema of this type
-    schema_vendor  varchar(128)   encode runlength not null,
-    schema_name    varchar(128)   encode runlength not null,
-    schema_format  varchar(128)   encode runlength not null,
-    schema_version varchar(128)   encode runlength not null,
-    -- Parentage of this type
-    root_id        char(36)       encode raw not null,
-    root_tstamp    timestamp      encode raw not null,
-    ref_root       varchar(255)   encode runlength not null,
-    ref_tree       varchar(1500)  encode runlength not null,
-    ref_parent     varchar(255)   encode runlength not null,
-    -- Properties of this type
-    latitude                    float not null,
-    longitude                   float not null,
-    latitude_longitude_accuracy float,
-    altitude                    float,
-    altitude_accuracy           float,
-    bearing                     float,
-    speed                       float
+	-- Schema of this type
+	schema_vendor  varchar(128)   encode runlength not null,
+	schema_name    varchar(128)   encode runlength not null,
+	schema_format  varchar(128)   encode runlength not null,
+	schema_version varchar(128)   encode runlength not null,
+	-- Parentage of this type
+	root_id        char(36)       encode raw not null,
+	root_tstamp    timestamp      encode raw not null,
+	ref_root       varchar(255)   encode runlength not null,
+	ref_tree       varchar(1500)  encode runlength not null,
+	ref_parent     varchar(255)   encode runlength not null,
+	-- Properties of this type
+	latitude                    float not null,
+	longitude                   float not null,
+	latitude_longitude_accuracy float,
+	altitude                    float,
+	altitude_accuracy           float,
+	bearing                     float,
+	speed                       float
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
