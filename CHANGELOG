@@ -1,3 +1,38 @@
+Version 0.9.8 (2014-09-18)
+--------------------------
+iOS Tracker: added git submodule. Version 0.1.1 (#982)
+Android Tracker: added git submodule. Version 0.1.1 (#983)
+Clojure Collector: bumped to 0.7.0
+Clojure Collector: merged snowplow/tomcat-cf-access-log-valve into Snowplow as clojure-collector/access-valve (#898)
+Clojure Collector: bumped access-valve to 0.1.0
+Clojure Collector: changed access-valve's package path to com.snowplowanalytics.snowplow.collectors.clojure.accessvalve (#924)
+Clojure Collector: changed access-valve to use Gradle (#899)
+Clojure Collector: changed access-valve to publish to war-resources/.ebextensions (#900)
+Clojure Collector: updated access-valve and added web.xml to log request body and content type (#901)
+Clojure Collector: fixed empty querystring in access-valve (#938)
+Clojure Collector: fixed IP address forwarding for VPC-based environments (#854)
+Clojure Collector: added support for API vendor and version in routing (#925)
+Clojure Collector: added support for POST as well as GET (#654)
+Scala Stream Collector: fixed broken link to `thrift-raw-event`, thanks @bamos! (#955)
+Scala Common Enrich: bumped to 0.6.0
+Scala Common Enrich: split out Clojure and CloudFront Collector event processing (#943)
+Scala Common Enrich: added CljTomcatLoaderSpec tests (#963)
+Scala Common Enrich: filtering non-GETs from CloudfrontLoader (#944)
+Scala Common Enrich: replaced all Argonaut code with json4s (#945)
+Scala Common Enrich: renamed CanonicalOutput to EnrichedEvent (#964)
+Scala Common Enrich: replaced CanonicalInput and TrackerPayload with CollectorPayload and RawEvent (#946)
+Scala Common Enrich: updated EnrichmentManager to process RawEvent not CanonicalInput (#903)
+Scala Common Enrich: added Snowplow Tp2 Adapter to convert event JSON to NEL of RawEvents (#904)
+Scala Common Enrich: geo-IP lookup now supports ip parameter on querystring (#961)
+Scala Common Enrich: IP address anonymization now works with ip parameter on querystring (#960)
+Scala Hadoop Enrich: bumped to 0.7.0
+Scala Hadoop Enrich: bumped to Scala Common Enrich 0.6.0 (#940)
+Scala Hadoop Enrich: updated to support generating multiple enriched events from one raw payload (#902)
+StorageLoader: wrote JSON Path file for mobile_context (#776)
+StorageLoader: wrote JSON Path file for geolocation_context (#962)
+Redshift: added Redshift DDL for mobile_context (#542)
+Redshift: added Redshift DDL for geolocation_context (#950)
+
 Version 0.9.7 (2014-09-02)
 --------------------------
 Ruby Tracker: bumped git submodule to 0.3.0 (#939)

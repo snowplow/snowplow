@@ -15,8 +15,8 @@ import sbt._
 object Dependencies {
   
   val resolutionRepos = Seq(
-    // Required for our Scalaz snapshot
-    "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/releases/",
+    // Required for our json4s snapshot
+    "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
      // For some misc Scalding and Twitter libs
     "Concurrent Maven Repo" at "http://conjars.org/repo",
     // For Snowplow libs
@@ -33,7 +33,7 @@ object Dependencies {
     val scalding         = "0.11.1"
     val scalaz7          = "7.0.0"
     val snowplowRawEvent = "0.1.0"
-    val commonEnrich     = "0.5.0"
+    val commonEnrich     = "0.6.0"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"

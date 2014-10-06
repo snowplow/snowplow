@@ -36,7 +36,7 @@ import org.specs2.matcher.Matchers._
 import com.twitter.scalding._
 
 // Snowplow Common Enrich
-import common.outputs.CanonicalOutput
+import common.outputs.EnrichedEvent
 
 // Scalaz
 import scalaz._
@@ -51,7 +51,7 @@ object JobSpecHelpers {
   /**
    * The current version of our Hadoop ETL
    */
-  val EtlVersion = "hadoop-0.6.0-common-0.5.0"
+  val EtlVersion = "hadoop-0.7.0-common-0.6.0"
 
   val EtlTimestamp = "2001-09-09 01:46:40.000"
 
@@ -63,7 +63,7 @@ object JobSpecHelpers {
   /**
    * The names of the fields written out
    */
-  lazy val OutputFields = classOf[CanonicalOutput]
+  lazy val OutputFields = classOf[EnrichedEvent]
       .getDeclaredFields
       .map(_.getName)
 

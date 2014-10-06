@@ -42,7 +42,7 @@ import common.enrichments.PrivacyEnrichments.AnonOctets
  * we support.
  */
 abstract class AbstractSource(config: KinesisEnrichConfig) {
-  
+
   /**
    * Never-ending processing loop over source stream.
    */
@@ -53,12 +53,6 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
    */
   def stop {
   }
-
-  /**
-   * Fields in our CanonicalOutput which are discarded for legacy
-   * Redshift space reasons
-   */
-  private val DiscardedFields = Array("page_url", "page_referrer")
 
   // Initialize a kinesis provider to use with a Kinesis source or sink.
   protected val kinesisProvider = createKinesisProvider
@@ -71,13 +65,16 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
     case Sink.Test => None
   }
 
+  private lazy val ipGeo = new IpGeo(
+    dbFile = config.maxmindFile,
+    memCache = false,
+    lruCache = 20000
+  )
+
   // Iterate through an enriched CanonicalOutput object and tab separate
   // the fields to a string.
   def tabSeparateCanonicalOutput(output: CanonicalOutput): String = {
     output.getClass.getDeclaredFields
-    .filter { field =>
-      !DiscardedFields.contains(field.getName)
-    }
     .map{ field =>
       field.setAccessible(true)
       Option(field.get(output)).getOrElse("")
@@ -92,17 +89,12 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
   def enrichEvent(binaryData: Array[Byte]): Option[String] = {
     val canonicalInput = ThriftLoader.toCanonicalInput(binaryData)
 
-    canonicalInput.toValidationNel match { 
+    canonicalInput.toValidationNel match {
 
       case Failure(f)        => None
         // TODO: https://github.com/snowplow/snowplow/issues/463
       case Success(None)     => None // Do nothing
       case Success(Some(ci)) => {
-        val ipGeo = new IpGeo(
-          dbFile = config.maxmindFile,
-          memCache = false,
-          lruCache = 20000
-        )
         val anonOctets =
           if (!config.anonIpEnabled || config.anonOctets == 0) {
             AnonOctets.None
@@ -118,6 +110,14 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
 
         canonicalOutput.toValidationNel match {
           case Success(co) =>
+            // ugly patch ... should be removed with scala-common-enrich 0.5.0
+            if (co.network_userid == null) {
+              ci.userId match {
+              case s:Some[String] => co.network_userid = s.get
+              case _ => ()
+              }
+            }
+
             val ts = tabSeparateCanonicalOutput(co)
             for (s <- sink) {
               // TODO: pull this side effect into parent function
@@ -141,12 +141,26 @@ abstract class AbstractSource(config: KinesisEnrichConfig) {
       throw new RuntimeException(
         "access-key and secret-key must both be set to 'cpf', or neither"
       )
+    } else if (isIam(a) && isIam(s)) {
+      new InstanceProfileCredentialsProvider()
+    } else if (isIam(a) || isIam(s)) {
+      throw new RuntimeException("access-key and secret-key must both be set to 'iam', or neither of them")
     } else {
       new BasicAWSCredentialsProvider(
         new BasicAWSCredentials(a, s)
       )
     }
   }
+
+  /**
+   * Is the access/secret key set to the special value "iam" i.e. use
+   * the IAM role to get credentials.
+   *
+   * @param key The key to check
+   * @return true if key is iam, false otherwise
+   */
+  private def isIam(key: String): Boolean = (key == "iam")
+
   private def isCpf(key: String): Boolean = (key == "cpf")
 
   // Wrap BasicAWSCredential objects.
