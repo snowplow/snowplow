@@ -12,11 +12,11 @@
     "$.hierarchy.refTree",
     "$.hierarchy.refParent",
 
-    "$.data.ti_sku",
-    "$.data.ti_name",
-    "$.data.ti_category",
-    "$.data.ti_price",
-    "$.data.ti_quantity",
-    "$.data.ti_currency"
+    "$.data.sku",
+    "$.data.name",
+    "$.data.category",
+    "$.data.price",
+    "$.data.quantity",
+    "$.data.currency"
     ]
 }

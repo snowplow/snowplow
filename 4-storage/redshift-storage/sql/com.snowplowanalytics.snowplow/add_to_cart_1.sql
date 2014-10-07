@@ -28,12 +28,12 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_add_to_cart_1 (
 	ref_tree        varchar(1500) encode runlength not null,
 	ref_parent      varchar(255)  encode runlength not null,
 	-- Properties of this type
-	ti_sku          varchar(255)  encode text32k not null,
-	ti_name         varchar(255)  encode text32k,
-	ti_category     varchar(255)  encode text32k,
-	ti_price        decimal(15,2) encode runlength not null,
-	ti_quantity     int           encode runlength not null,
-	ti_currency     varchar(31)   encode runlength
+	sku             varchar(255)  encode text32k not null,
+	name            varchar(255)  encode text32k,
+	category        varchar(255)  encode text32k,
+	price           decimal(15,2) encode runlength not null,
+	quantity        int           encode runlength not null,
+	currency        varchar(31)   encode runlength
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
