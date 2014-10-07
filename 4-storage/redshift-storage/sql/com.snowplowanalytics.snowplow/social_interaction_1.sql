@@ -30,8 +30,7 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_site_search_1 (
 	-- Properties of this type
 	action          varchar(255)  encode text32k not null,
 	network         varchar(255)  encode runlength not null,
-	target          varchar(255)  encode text32k,
-	pagepath        varchar(255)  encode text32k
+	target          varchar(255)  encode text32k
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
