@@ -5,6 +5,8 @@ PHP Tracker: added git submodule. Version 0.1.0 (#1013)
 Clojure Collector: bumped to 0.8.0
 Clojure Collector: fixed regression in log record format caused by #854 (#992)
 Clojure Collector: correctly handles multiple IPs in X-Forwarded-For (#970)
+StorageLoader: bumped to 0.3.3
+StorageLoader: selecting Snowplow's hosted-assets bucket based on region (#1012)
 Scala Common Enrich: bumped to 0.7.0
 Scala Common Enrich: bumped scala-maxmind-iplookups to 0.2.0 (#1002)
 Scala Common Enrich: added support for non-GA campaign attribution: phase 1 (#402)

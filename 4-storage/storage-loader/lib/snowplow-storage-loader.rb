@@ -26,6 +26,6 @@ require_relative 'snowplow-storage-loader/redshift_loader'
 module Snowplow
   module StorageLoader
   	NAME          = "snowplow-storage-loader"
-    VERSION       = "0.3.2"
+    VERSION       = "0.3.3"
   end
 end
