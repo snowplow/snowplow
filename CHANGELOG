@@ -7,6 +7,8 @@ Clojure Collector: fixed regression in log record format caused by #854 (#992)
 Clojure Collector: correctly handles multiple IPs in X-Forwarded-For (#970)
 StorageLoader: bumped to 0.3.3
 StorageLoader: selecting Snowplow's hosted-assets bucket based on region (#1012)
+EmrEtlRunner: bumped to 0.9.2
+EmrEtlRunner: no rows to process now returns 0, not 1 (#1018)
 Scala Common Enrich: bumped to 0.7.0
 Scala Common Enrich: bumped scala-maxmind-iplookups to 0.2.0 (#1002)
 Scala Common Enrich: added support for non-GA campaign attribution: phase 1 (#402)
