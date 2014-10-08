@@ -31,7 +31,7 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_add_to_cart_1 (
 	sku             varchar(255)  encode text32k not null,
 	name            varchar(255)  encode text32k,
 	category        varchar(255)  encode text32k,
-	price           decimal(15,2) encode runlength not null,
+	unit_price      decimal(15,2) encode runlength,
 	quantity        int           encode runlength not null,
 	currency        varchar(31)   encode runlength
 )

@@ -15,7 +15,7 @@
     "$.data.sku",
     "$.data.name",
     "$.data.category",
-    "$.data.price",
+    "$.data.unitPrice",
     "$.data.quantity",
     "$.data.currency"
     ]
