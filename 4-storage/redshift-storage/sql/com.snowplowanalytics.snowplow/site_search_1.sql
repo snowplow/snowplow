@@ -29,7 +29,7 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_site_search_1 (
 	ref_parent      varchar(255)  encode runlength not null,
 	-- Properties of this type
 	terms           varchar(2048) encode raw not null, -- Holds a JSON array. TODO: will replace with a ref_ following https://github.com/snowplow/snowplow/issues/647
-	filters         varchar(2048) encode raw, -- Holds a JSON array. TODO: will replace with a ref_ following https://github.com/snowplow/snowplow/issues/647
+	filters         varchar(2048) encode raw, -- Holds a JSON object. TODO: will replace with a ref_ following https://github.com/snowplow/snowplow/issues/647
 	total_results   int encode raw,
 	page_results    int encode runlength
 )
