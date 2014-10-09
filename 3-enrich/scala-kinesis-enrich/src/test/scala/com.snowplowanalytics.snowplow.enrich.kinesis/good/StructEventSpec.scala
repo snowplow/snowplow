@@ -54,6 +54,8 @@ object StructEventSpec {
     "",
     "",
     "",
+    "file://file:///Users/alex/Development/dev-environment/demo/1-tracker/events.html/overridden-url/",
+    "",
     "",
     "file",
     "file",
@@ -139,7 +141,7 @@ class StructEventSpec extends Specification {
     "enrich a valid structured event" in {
 
       val rawEvent = Base64.decodeBase64(StructEventSpec.raw)
-      
+
       val enrichedEvent = TestSource.enrichEvent(rawEvent)
       enrichedEvent must beSome
 

@@ -54,6 +54,8 @@ object TransactionSpec {
     "",
     "",
     "",
+    "file://file:///Users/alex/Development/dev-environment/demo/1-tracker/events.html/overridden-url/",
+    "",
     "",
     "file",
     "file",

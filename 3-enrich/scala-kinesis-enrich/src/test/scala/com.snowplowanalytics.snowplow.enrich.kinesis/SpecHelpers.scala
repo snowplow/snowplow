@@ -57,17 +57,11 @@ object SpecHelpers {
   private val UseRegexpFields = List("event_id")
 
   /**
-   * Fields in our CanonicalOutput which are discarded
-   */
-  private val DiscardedFields = List("page_url", "page_referrer")
-
-  /**
    * The names of the fields written out
    */
   lazy val OutputFields = classOf[CanonicalOutput]
       .getDeclaredFields
       .map(_.getName)
-      .filter(f => !DiscardedFields.contains(f))
 
   /**
    * User-friendly wrapper to instantiate
