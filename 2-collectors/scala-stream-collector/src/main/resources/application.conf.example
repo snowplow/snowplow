@@ -58,6 +58,8 @@ collector {
     enabled = "kinesis"
 
     kinesis {
+      thread-pool-size: 10 # Thread pool size for Kinesis API requests
+
       # The following are used to authenticate for the Amazon Kinesis sink.
       #
       # If both are set to 'cpf', a properties file on the classpath is used.
