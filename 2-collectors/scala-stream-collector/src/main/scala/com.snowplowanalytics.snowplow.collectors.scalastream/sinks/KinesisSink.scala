@@ -33,6 +33,7 @@ import io.github.cloudify.scala.aws.kinesis.Definitions.{
   Record
 }
 import io.github.cloudify.scala.aws.kinesis.KinesisDsl._
+import io.github.cloudify.scala.aws.auth.CredentialsProvider.InstanceProfile
 
 // Config
 import com.typesafe.config.Config
@@ -99,7 +100,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
 
       try {
         val stream = Await.result(createStream, Duration(timeout, SECONDS))
-        
+
         info(s"Successfully created stream $name. Waiting until it's active")
         Await.result(stream.waitActive.retrying(timeout),
           Duration(timeout, SECONDS))
@@ -128,6 +129,10 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
       Client.fromCredentials(new ClasspathPropertiesFileCredentialsProvider())
     } else if (isCpf(accessKey) || isCpf(secretKey)) {
       throw new RuntimeException("access-key and secret-key must both be set to 'cpf', or neither of them")
+    } else if (isIam(accessKey) && isIam(secretKey)) {
+      Client.fromCredentials(InstanceProfile)
+    } else if (isIam(accessKey) || isIam(secretKey)) {
+      throw new RuntimeException("access-key and secret-key must both be set to 'iam', or neither of them")
     } else {
       Client.fromCredentials(accessKey, secretKey)
     }
@@ -156,4 +161,13 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
    * @return true if key is cpf, false otherwise
    */
   private def isCpf(key: String): Boolean = (key == "cpf")
+
+  /**
+   * Is the access/secret key set to the special value "iam" i.e. use
+   * the IAM role to get credentials.
+   *
+   * @param key The key to check
+   * @return true if key is iam, false otherwise
+   */
+  private def isIam(key: String): Boolean = (key == "iam")
 }
