@@ -26,6 +26,9 @@ import java.nio.ByteBuffer
 // Amazon
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.AWSCredentialsProvider
+import com.amazonaws.services.kinesis.AmazonKinesisClient
+import com.amazonaws.services.kinesis.AmazonKinesis
+import com.amazonaws.regions._
 
 // Scalazon (for Kinesis interaction)
 import io.github.cloudify.scala.aws.kinesis.Client
@@ -60,9 +63,13 @@ class KinesisSink(provider: AWSCredentialsProvider,
     config: KinesisEnrichConfig) extends ISink {
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
-
+  
+  // explicitly create a client so we can configure the end point
+  val client = new AmazonKinesisClient(provider)
+  client.setEndpoint(config.streamEndpoint)
+  
   // Create a Kinesis client for stream interactions.
-  private implicit val kinesis = Client.fromCredentials(provider)
+  private implicit val kinesis = Client.fromClient(client)
 
   // The output stream for enriched events.
   private val enrichedStream = createAndLoadStream()

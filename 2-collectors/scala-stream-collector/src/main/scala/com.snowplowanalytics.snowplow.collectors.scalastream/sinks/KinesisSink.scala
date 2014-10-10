@@ -23,6 +23,7 @@ import com.amazonaws.auth.{
   BasicAWSCredentials,
   ClasspathPropertiesFileCredentialsProvider
 }
+import com.amazonaws.services.kinesis.AmazonKinesisClient
 
 // Scalazon (for Kinesis interaction)
 import io.github.cloudify.scala.aws.kinesis.Client
@@ -130,15 +131,21 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     val accessKey = config.awsAccessKey
     val secretKey = config.awsSecretKey
     if (isCpf(accessKey) && isCpf(secretKey)) {
-      Client.fromCredentials(new ClasspathPropertiesFileCredentialsProvider())
+      val client = new AmazonKinesisClient(new ClasspathPropertiesFileCredentialsProvider())
+      client.setEndpoint(config.streamEndpoint)
+      Client.fromClient(client)
     } else if (isCpf(accessKey) || isCpf(secretKey)) {
       throw new RuntimeException("access-key and secret-key must both be set to 'cpf', or neither of them")
     } else if (isIam(accessKey) && isIam(secretKey)) {
-      Client.fromCredentials(InstanceProfile)
+      val client = new AmazonKinesisClient(InstanceProfile)
+      client.setEndpoint(config.streamEndpoint)
+      Client.fromClient(client)
     } else if (isIam(accessKey) || isIam(secretKey)) {
       throw new RuntimeException("access-key and secret-key must both be set to 'iam', or neither of them")
     } else {
-      Client.fromCredentials(accessKey, secretKey)
+      val client = new AmazonKinesisClient(new BasicAWSCredentials(accessKey, secretKey))
+      client.setEndpoint(config.streamEndpoint)
+      Client.fromClient(client)
     }
   }
 

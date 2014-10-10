@@ -78,6 +78,7 @@ collector {
         secret-key: "cpf"
       }
       stream {
+        region: "us-east-1"
         name: "snowplow_collector_example"
         size: 1
       }
