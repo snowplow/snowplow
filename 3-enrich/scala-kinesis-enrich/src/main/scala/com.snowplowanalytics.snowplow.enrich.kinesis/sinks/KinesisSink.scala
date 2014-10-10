@@ -70,7 +70,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
   
   // Create a Kinesis client for stream interactions.
   private implicit val kinesis = Client.fromClient(client)
-    
+
   // The output stream for enriched events.
   private val enrichedStream = createAndLoadStream()
 
