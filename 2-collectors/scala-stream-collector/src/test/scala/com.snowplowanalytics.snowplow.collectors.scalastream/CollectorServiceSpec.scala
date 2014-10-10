@@ -78,6 +78,7 @@ collector {
         secret-key: "cpf"
       }
       stream {
+        endpoint: "https://kinesis.us-east-1.amazonaws.com"
         name: "snowplow_collector_example"
         size: 1
       }
