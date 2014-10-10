@@ -69,19 +69,17 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
 
   // Checks if a stream exists.
   def streamExists(name: String, timeout: Int = 60): Boolean = {
-    val streamListFuture = for {
-      s <- Kinesis.streams.list
+    val streamDescribeFuture = for {
+      s <- Kinesis.stream(name).describe
     } yield s
-    val streamList: Iterable[String] =
-      Await.result(streamListFuture, Duration(timeout, SECONDS))
-    for (streamStr <- streamList) {
-      if (streamStr == name) {
-        info(s"Stream $name exists")
-        return true
-      }
+    val description =
+      Await.result(streamDescribeFuture, Duration(timeout, SECONDS))
+    if (description.isActive) {
+      info(s"Stream $name exists and is active")
+      return true
     }
 
-    info(s"Stream $name doesn't exist")
+    info(s"Stream $name doesn't exist or is not active")
     false
   }
 
