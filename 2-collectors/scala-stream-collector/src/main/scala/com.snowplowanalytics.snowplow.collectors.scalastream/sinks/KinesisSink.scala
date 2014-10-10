@@ -137,7 +137,9 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     } else if (isCpf(accessKey) || isCpf(secretKey)) {
       throw new RuntimeException("access-key and secret-key must both be set to 'cpf', or neither of them")
     } else if (isIam(accessKey) && isIam(secretKey)) {
-      Client.fromCredentials(InstanceProfile)
+      val client = new AmazonKinesisClient(InstanceProfile)
+      client.setEndpoint(config.streamEndpoint)
+      Client.fromClient(client)
     } else if (isIam(accessKey) || isIam(secretKey)) {
       throw new RuntimeException("access-key and secret-key must both be set to 'iam', or neither of them")
     } else {
