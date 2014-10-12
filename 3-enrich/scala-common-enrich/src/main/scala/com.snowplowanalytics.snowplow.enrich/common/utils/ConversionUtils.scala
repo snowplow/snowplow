@@ -294,7 +294,7 @@ object ConversionUtils {
    */
   val stringToDoublelike: (String, String) => ValidatedString = (field, str) =>
     try {
-      if (str == "null") { // LEGACY. Yech, to handle a bug in the JavaScript tracker
+      if (Option(str).isEmpty || str == "null") { // "null" String check is LEGACY to handle a bug in the JavaScript tracker
         null.asInstanceOf[String].success
       } else {
         val jbigdec = new JBigDecimal(str)

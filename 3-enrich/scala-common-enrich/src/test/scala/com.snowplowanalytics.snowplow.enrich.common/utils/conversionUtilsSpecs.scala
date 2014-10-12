@@ -200,6 +200,8 @@ class StringToDoublelikeSpec extends Specification with DataTables with Validati
     "Integer #1"            !! "23"              ! "23"                  |
     "Integer #2"            !! "23."             ! "23"                  |
     "Negative integer"      !! "-2012103"        ! "-2012103"            |
+    "Null value (raw)"      !! null              ! null                  |
+    "Null value (String)"   !! "null"            ! null                  |
     "Arabic number"         !! "٤٥٦٧.٦٧"         ! "4567.67"             |
     "Floating point #1"     !! "1999.99"         ! "1999.99"             |
     "Floating point #2"     !! "1999.00"         ! "1999.00"             |
