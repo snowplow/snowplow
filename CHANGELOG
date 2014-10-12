@@ -15,6 +15,7 @@ Scala Common Enrich: added support for non-GA campaign attribution: phase 1 (#40
 Scala Common Enrich: rewrote AttributionEnrichments tests as RefererParserEnrichment tests (#974)
 Scala Common Enrich: allow but downcase a-f characters in incoming event_id (#1006)
 Scala Common Enrich: extract useragent from ua parameter (#1011)
+Scala Common Enrich: fix regression where unset fields now cause an NPE (#1062) - TODO
 Scala Hadoop Enrich: bumped to 0.8.0
 Scala Hadoop Enrich: bumped Scala Common Enrich to 0.7.0 (#995)
 
