@@ -1293,9 +1293,11 @@
                 "yandex.ru", 
                 "yandex.ua", 
                 "yandex.com", 
+                "yandex.by", 
                 "www.yandex.ru", 
                 "www.yandex.ua", 
-                "www.yandex.com"
+                "www.yandex.com", 
+                "www.yandex.by"
             ], 
             "parameters": [
                 "text"
