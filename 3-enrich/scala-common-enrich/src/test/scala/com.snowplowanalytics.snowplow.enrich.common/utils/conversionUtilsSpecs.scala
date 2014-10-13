@@ -247,7 +247,8 @@ class StringToJIntegerSpec extends Specification with DataTables with Validation
     "Integer #1"            !! "0"               ! 0                   |
     "Integer #2"            !! "23"              ! 23                  |
     "Negative integer #1"   !! "-2012103"        ! -2012103            |
-    "Negative integer #2"   !! "-1"              ! -1                  |> {
+    "Negative integer #2"   !! "-1"              ! -1                  |
+    "Null"                  !! null              ! null                |> {
       (_, str, expected) =>
         ConversionUtils.stringToJInteger(FieldName, str) must beSuccessful(expected)
     }

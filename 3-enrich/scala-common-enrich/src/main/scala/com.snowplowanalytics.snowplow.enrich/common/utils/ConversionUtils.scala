@@ -265,12 +265,16 @@ object ConversionUtils {
    *         a Success JInt
    */
   val stringToJInteger: (String, String) => Validation[String, JInteger] = (field, str) =>
-    try {
-      val jint: JInteger = str.toInt
-      jint.success
-    } catch {
-      case nfe: NumberFormatException =>
-        "Field [%s]: cannot convert [%s] to Int".format(field, str).fail
+    if (Option(str).isEmpty) {
+      null.asInstanceOf[JInteger].success
+    } else {
+      try {
+        val jint: JInteger = str.toInt
+        jint.success
+      } catch {
+        case nfe: NumberFormatException =>
+          "Field [%s]: cannot convert [%s] to Int".format(field, str).fail
+      }
     }
 
   /**
