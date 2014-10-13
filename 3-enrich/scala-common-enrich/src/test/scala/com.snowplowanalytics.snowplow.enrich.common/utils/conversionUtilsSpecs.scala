@@ -219,6 +219,40 @@ class StringToDoublelikeSpec extends Specification with DataTables with Validati
 
 }
 
+class StringToJIntegerSpec extends Specification with DataTables with ValidationMatchers { def is =
+
+  "This is a specification to test the stringToJInteger function"                                         ^
+                                                                                                         p^
+  "stringToJInteger should fail if the supplied String is not parseable as an Integer"                    ! e1^
+  "stringToJInteger should convert valid Strings to Java Integers"                                        ! e2^
+                                                                                                          end
+
+  val FieldName = "val"
+  def err: (String) => String = input => "Field [%s]: cannot convert [%s] to Int".format(FieldName, input)
+
+  def e1 =
+    "SPEC NAME"             || "INPUT STR"       | "EXPECTED"            |
+    "Empty string"          !! ""                ! err("")               |
+    "Floating point #1"     !! "1999."           ! err("1999.")          |
+    "Floating point #2"     !! "1999.00"         ! err("1999.00")        |
+    "Hexadecimal number"    !! "0x54"            ! err("0x54")           |
+    "NaN"                   !! "NaN"             ! err("NaN")            |
+    "Sci. notation"         !! "6.72E5"          ! err("6.72E5")         |> {
+      (_, str, expected) =>
+        ConversionUtils.stringToJInteger(FieldName, str) must beFailing(expected)
+    }
+
+  def e2 =
+    "SPEC NAME"             || "INPUT STR"       | "EXPECTED"          |
+    "Integer #1"            !! "0"               ! 0                   |
+    "Integer #2"            !! "23"              ! 23                  |
+    "Negative integer #1"   !! "-2012103"        ! -2012103            |
+    "Negative integer #2"   !! "-1"              ! -1                  |> {
+      (_, str, expected) =>
+        ConversionUtils.stringToJInteger(FieldName, str) must beSuccessful(expected)
+    }
+}
+
 class StringToBooleanlikeJByteSpec extends Specification with DataTables with ValidationMatchers { def is =
 
   "This is a specification to test the stringToBooleanlikeJByte function"                                    ^
