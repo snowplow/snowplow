@@ -25,7 +25,8 @@ object BuildSettings {
     description           :=  "Common functionality for enriching raw Snowplow events",
     scalaVersion          :=  "2.10.1",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
-                                  "-unchecked", "-feature"),
+                                  "-unchecked", "-feature",
+                                  "-target:jvm-1.7"),
     scalacOptions in Test :=  Seq("-Yrangepos"),
     resolvers             ++= Dependencies.resolutionRepos
   )
