@@ -137,7 +137,7 @@ object TransactionCfLineSpec {
     null, // Not set (legacy input lines)
     null, //
     null, //
-    "Windows",
+    "Windows 7",
     "Windows",
     "Microsoft Corporation",
     null, // Not set (legacy input line)

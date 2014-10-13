@@ -137,7 +137,7 @@ object RunHadoopSpec {
     "32",
     "2560",
     "934",
-    "Windows",
+    "Windows 7",
     "Windows",
     "Microsoft Corporation",
     "Europe/London",

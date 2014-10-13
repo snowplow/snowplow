@@ -120,9 +120,9 @@ object Sep2013CfLineSpec {
     null, //
     null, //
     "IE 7 - Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30)",
+    "Internet Explorer 7",
     "Internet Explorer",
-    "Internet Explorer",
-    null,
+    "7.0",
     "Browser",
     "TRIDENT",
     "en-us",
@@ -139,7 +139,7 @@ object Sep2013CfLineSpec {
     "24",
     "1003",
     "611",
-    "Windows",
+    "Windows XP",
     "Windows",
     "Microsoft Corporation",
     "America/Santa_Isabel",

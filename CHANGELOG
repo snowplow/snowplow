@@ -23,6 +23,7 @@ Scala Hadoop Enrich: bumped to 0.8.0
 Scala Hadoop Enrich: bumped Scala Common Enrich to 0.7.0 (#995)
 Scala Hadoop Enrich: added test for empty integer and double fields to ensure no NPE thrown (#1063) - TODO
 Scala Hadoop Enrich: now enforcing Java 7 for compilation (#1066)
+Scala Hadoop Enrich: update test jobs to reflect updated useragent parsing (#1070)
 
 Version 0.9.8 (2014-09-18)
 --------------------------
