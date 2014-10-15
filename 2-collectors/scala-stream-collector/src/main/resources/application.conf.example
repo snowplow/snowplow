@@ -100,4 +100,9 @@ spray.can.server {
 
   uri-parsing-mode = relaxed
   raw-request-uri-header = on
+
+  # Define the maximum request length (the default is 2048)
+  parsing {
+    max-uri-length = 32768
+  }
 }
