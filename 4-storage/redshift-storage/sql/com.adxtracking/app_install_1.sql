@@ -28,7 +28,7 @@ CREATE TABLE atomic.com_adxtracking_app_install_1 (
 	ref_tree        varchar(1500) encode runlength not null,
 	ref_parent      varchar(255)  encode runlength not null,
 	-- Properties of this type
-	user            varchar(255)  encode raw not null,
+	"user"          varchar(255)  encode raw not null,
 	publisher_name  varchar(255)  encode raw not null,
 	sub_campaign    varchar(255)  encode runlength,
 	tracking_id     varchar(255)  encode runlength,
