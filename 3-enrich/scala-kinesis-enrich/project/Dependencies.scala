@@ -41,7 +41,6 @@ object Dependencies {
     val snowplowCommonEnrich = "0.7.0"
     val scalazon             = "0.5"
     val scalaz7              = "7.0.0"
-    val maxmindGeoip         = "0.0.5"
     val igluClient           = "0.1.0"
     // Scala (test only)
     val specs2               = "2.3.6"
@@ -49,10 +48,6 @@ object Dependencies {
     // Scala (compile only)
     val commonsLang3         = "3.1"
     val thrift               = "0.9.0"
-  }
-
-  object Urls {
-    val maxmindData = "http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz"
   }
 
   object Libraries {
@@ -64,7 +59,6 @@ object Dependencies {
     val slf4j                = "org.slf4j"                  %  "slf4j-simple"             % V.slf4j
     val awsSdk               = "com.amazonaws"              %  "aws-java-sdk"             % V.awsSdk
     val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"    % V.kinesisClient
-    val maxmindGeoip         = "com.snowplowanalytics"      %% "scala-maxmind-geoip"      % V.maxmindGeoip
     // Scala
     val argot                = "org.clapper"                %% "argot"                    % V.argot
     val config               = "com.typesafe"               %  "config"                   % V.config

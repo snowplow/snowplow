@@ -43,7 +43,6 @@ import iglu.client.validation.ProcessingMessageMethods._
 
 // Snowplow
 import sinks._
-import com.snowplowanalytics.maxmind.geoip.IpGeo
 import common.outputs.{
   EnrichedEvent,
   BadRow
@@ -61,7 +60,8 @@ import common.utils.JsonUtils
  * Abstract base for the different sources
  * we support.
  */
-abstract class AbstractSource(config: KinesisEnrichConfig, resolverConfig: String, enrichmentConfig: String) {
+abstract class AbstractSource(config: KinesisEnrichConfig, resolverConfig: String,
+                              enrichmentConfig: String, localMode: Boolean = false) {
   
   /**
    * Never-ending processing loop over source stream.
@@ -83,13 +83,6 @@ abstract class AbstractSource(config: KinesisEnrichConfig, resolverConfig: Strin
     case Sink.Stdouterr => new StdouterrSink(InputType.Bad).some
     case Sink.Test => None
   }
-
-  /*private lazy val ipGeo = new IpGeo(
-    dbFile = config.maxmindFile,
-    memCache = false,
-    lruCache = 20000
-  )*/
-
 
   implicit val igluResolver: Resolver = Resolver.parse(JsonUtils.extractJson("", resolverConfig) match {
       case Success(r) => r
@@ -116,7 +109,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, resolverConfig: Strin
 
     val registry = EnrichmentRegistry.parse(fromJsonNode(JsonUtils.extractJson("", enrichmentConfig) match {
       case Success(s) => s
-    }), false)
+    }), localMode)
 
     registry match {
       case Success(r) => r // TODO make this more rigorous

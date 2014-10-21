@@ -16,10 +16,14 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.kinesis
+package com.snowplowanalytics.snowplow.enrich
+package kinesis
 
 // Java
 import java.io.File
+
+// Scala
+import sys.process._
 
 // Config
 import com.typesafe.config.{Config,ConfigFactory}
@@ -27,7 +31,19 @@ import com.typesafe.config.{Config,ConfigFactory}
 // Argot
 import org.clapper.argot.ArgotParser
 
+// Scalaz
+import scalaz.{Sink => _, _}
+import Scalaz._
+
+// json4s
+import org.json4s.jackson.JsonMethods._
+
+// Iglu
+import com.snowplowanalytics.iglu.client.Resolver
+
 // Snowplow
+import common.enrichments.EnrichmentRegistry
+import common.utils.JsonUtils
 import sources._
 import sinks._
 
@@ -121,7 +137,36 @@ object KinesisEnrichApp extends App {
     """{"schema":"iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0","data":[%s]}""".format(enrichmentJsonStrings)
   }
 
-  lazy val enrichmentConfig = getEnrichmentConfig
+  val enrichmentConfig = getEnrichmentConfig
+
+  implicit val igluResolver: Resolver = Resolver.parse(JsonUtils.extractJson("", resolverConfig) match {
+      case Success(r) => r
+    }) bimap (
+      e => throw new ArithmeticException(e.head.toString),
+      s => s
+    ) match {
+      case Success(x) => x // TODO make this more rigorous
+    }
+
+  val registry = EnrichmentRegistry.parse(fromJsonNode(JsonUtils.extractJson("", enrichmentConfig) match {
+    case Success(s) => s
+  }), false)
+
+  val filesToCache = registry match {
+    case Success(reg) => reg.getIpLookupsEnrichment match {
+      case Some(ipLookups) => ipLookups.dbsToCache
+      case None => Nil
+    }
+    case Failure(f) => Nil
+  }
+
+  for (uriFilePair <- filesToCache) {
+    val targetFile = new File(uriFilePair._2)
+    if (! targetFile.exists) {
+      val downloadProcessBuilder = uriFilePair._1.toURL #> targetFile // using sys.process
+      downloadProcessBuilder.run
+    }
+  }
 
   val source = kinesisEnrichConfig.source match {
     case Source.Kinesis => new KinesisSource(kinesisEnrichConfig, resolverConfig, enrichmentConfig)
@@ -170,22 +215,4 @@ class KinesisEnrichConfig(config: Config) {
 
   private val streamRegion = streams.getString("region")
   val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
-
-  private val enrichments = enrich.getConfig("enrichments")
-  private val geoIp = enrichments.getConfig("geo_ip")
-  val geoIpEnabled = geoIp.getBoolean("enabled")
-  val maxmindFile = {
-    val path = geoIp.getString("maxmind_file")
-    val file = new File(path)
-    if (file.exists) {
-      file
-    } else {
-      val uri = getClass.getResource(path).toURI
-      new File(uri)
-    } // TODO: add error handling if this still isn't found
-  }
-
-  private val anonIp = enrichments.getConfig("anon_ip")
-  val anonIpEnabled = anonIp.getBoolean("enabled")
-  val anonOctets = anonIp.getInt("anon_octets")
 }

@@ -162,7 +162,10 @@ object SpecHelpers {
             |"name": "ip_lookups",
             |"enabled": true,
             |"parameters": {
-              
+              |"geo": {
+                |"database": "GeoIPCity.dat",
+                |"uri":  "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
+              |}
             |}
           |}  
         |},
@@ -257,6 +260,6 @@ enrich {
     ]
   }
 }
-""", enrichmentConfig)
+""", enrichmentConfig, true)
   }
 }

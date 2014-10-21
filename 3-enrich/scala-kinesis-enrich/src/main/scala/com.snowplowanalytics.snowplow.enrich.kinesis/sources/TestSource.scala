@@ -24,8 +24,8 @@ package sources
  * using the same methods from AbstractSource as the other
  * sources.
  */
-class TestSource(config: KinesisEnrichConfig, resolverConfig: String, enrichmentDirectory: String)
-    extends AbstractSource(config, resolverConfig, enrichmentDirectory) {
+class TestSource(config: KinesisEnrichConfig, resolverConfig: String, enrichmentDirectory: String, localMode: Boolean)
+    extends AbstractSource(config, resolverConfig, enrichmentDirectory, localMode) {
 
   /**
    * Never-ending processing loop over source stream.
