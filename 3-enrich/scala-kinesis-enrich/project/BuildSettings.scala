@@ -24,7 +24,7 @@ object BuildSettings {
     description           :=  "The Snowplow Enrichment process, implemented as an Amazon Kinesis app",
     scalaVersion          :=  "2.10.1",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
-                                  "-feature"),
+                                  "-feature", "-target:jvm-1.7"),
     scalacOptions in Test :=  Seq("-Yrangepos"),
     resolvers             ++= Dependencies.resolutionRepos
   )
