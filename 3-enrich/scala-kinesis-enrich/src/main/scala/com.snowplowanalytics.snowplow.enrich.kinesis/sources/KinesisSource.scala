@@ -16,7 +16,8 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow
+package com.snowplowanalytics
+package snowplow
 package enrich
 package kinesis
 package sources
@@ -48,7 +49,11 @@ import scala.collection.JavaConversions._
 // Thrift
 import org.apache.thrift.TDeserializer
 
+// Iglu
+import iglu.client.Resolver
+
 // Snowplow events and enrichment
+import common.enrichments.EnrichmentRegistry
 import sinks._
 import collectors.thrift.{
   SnowplowRawEvent,
@@ -60,8 +65,8 @@ import collectors.thrift.{
 /**
  * Source to read events from a Kinesis stream
  */
-class KinesisSource(config: KinesisEnrichConfig, resolverConfig: String, enrichmentConfig: String)
-    extends AbstractSource(config, resolverConfig, enrichmentConfig) {
+class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry)
+    extends AbstractSource(config, igluResolver, enrichmentRegistry) {
   
   lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}

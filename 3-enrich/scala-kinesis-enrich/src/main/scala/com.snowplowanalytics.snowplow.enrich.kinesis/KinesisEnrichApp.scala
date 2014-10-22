@@ -139,25 +139,25 @@ object KinesisEnrichApp extends App {
 
   val enrichmentConfig = getEnrichmentConfig
 
-  implicit val igluResolver: Resolver = Resolver.parse(JsonUtils.extractJson("", resolverConfig) match {
-      case Success(r) => r
-    }) bimap (
-      e => throw new ArithmeticException(e.head.toString),
-      s => s
-    ) match {
-      case Success(x) => x // TODO make this more rigorous
-    }
+  implicit val igluResolver: Resolver = (for {
+    json <- JsonUtils.extractJson("", resolverConfig)
+    resolver <- Resolver.parse(json).leftMap(_.toString)
+  } yield resolver) fold (
+    e => throw new RuntimeException(e),
+    s => s
+  )
 
-  val registry = EnrichmentRegistry.parse(fromJsonNode(JsonUtils.extractJson("", enrichmentConfig) match {
-    case Success(s) => s
-  }), false)
+  val registry: EnrichmentRegistry = (for {
+    registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
+    reg <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), false).leftMap(_.toString)
+  } yield reg) fold (
+    e => throw new RuntimeException(e),
+    s => s
+  )
 
-  val filesToCache = registry match {
-    case Success(reg) => reg.getIpLookupsEnrichment match {
-      case Some(ipLookups) => ipLookups.dbsToCache
-      case None => Nil
-    }
-    case Failure(f) => Nil
+  val filesToCache = registry.getIpLookupsEnrichment match {
+    case Some(ipLookups) => ipLookups.dbsToCache
+    case None => Nil
   }
 
   for (uriFilePair <- filesToCache) {
@@ -169,8 +169,8 @@ object KinesisEnrichApp extends App {
   }
 
   val source = kinesisEnrichConfig.source match {
-    case Source.Kinesis => new KinesisSource(kinesisEnrichConfig, resolverConfig, enrichmentConfig)
-    case Source.Stdin => new StdinSource(kinesisEnrichConfig, resolverConfig, enrichmentConfig)
+    case Source.Kinesis => new KinesisSource(kinesisEnrichConfig, igluResolver, registry)
+    case Source.Stdin => new StdinSource(kinesisEnrichConfig, igluResolver, registry)
   }
   source.run
 }

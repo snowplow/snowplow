@@ -19,6 +19,10 @@ package kinesis
 // Java
 import java.util.regex.Pattern
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 // Config
 import com.typesafe.config.{ConfigFactory,Config,ConfigException}
 
@@ -26,9 +30,17 @@ import com.typesafe.config.{ConfigFactory,Config,ConfigException}
 import org.specs2.matcher.{Matcher, Expectable}
 import org.specs2.matcher.Matchers._
 
+// json4s
+import org.json4s.jackson.JsonMethods._
+
+// Iglu
+import com.snowplowanalytics.iglu.client.Resolver
+
 // Snowplow
 import sources.TestSource
 import common.outputs.EnrichedEvent
+import common.utils.JsonUtils
+import common.enrichments.EnrichmentRegistry
 
 /**
  * Defines some useful helpers for the specs.
@@ -238,28 +250,46 @@ enrich {
 }
 """
 
+    val validatedResolver = for {
+      json <- JsonUtils.extractJson("", """{
+        "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
+        "data": {
+
+          "cacheSize": 500,
+          "repositories": [
+            {
+              "name": "Iglu Central",
+              "priority": 0,
+              "vendorPrefixes": [ "com.snowplowanalytics" ],
+              "connection": {
+                "http": {
+                  "uri": "http://iglucentral.com"
+                }
+              }
+            }
+          ]
+        }
+      }
+      """)
+      resolver <- Resolver.parse(json).leftMap(_.toString)
+    } yield resolver
+
+    implicit val resolver: Resolver = validatedResolver.fold(
+      e => throw new RuntimeException(e),
+      s => s
+    )
+
+    val enrichmentRegistry = (for {
+      registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
+      reg <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), true).leftMap(_.toString)
+    } yield reg) fold (
+      e => throw new RuntimeException(e),
+      s => s
+    )
+
     val conf = ConfigFactory.parseString(config)
     val kec = new KinesisEnrichConfig(conf)
 
-    new TestSource(kec, """{
-  "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
-  "data": {
-
-    "cacheSize": 500,
-    "repositories": [
-      {
-        "name": "Iglu Central",
-        "priority": 0,
-        "vendorPrefixes": [ "com.snowplowanalytics" ],
-        "connection": {
-          "http": {
-            "uri": "http://iglucentral.com"
-          }
-        }
-      }
-    ]
-  }
-}
-""", enrichmentConfig, true)
+    new TestSource(kec, resolver, enrichmentRegistry)
   }
 }

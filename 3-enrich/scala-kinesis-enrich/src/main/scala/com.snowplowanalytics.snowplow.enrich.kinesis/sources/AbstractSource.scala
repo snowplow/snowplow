@@ -60,8 +60,8 @@ import common.utils.JsonUtils
  * Abstract base for the different sources
  * we support.
  */
-abstract class AbstractSource(config: KinesisEnrichConfig, resolverConfig: String,
-                              enrichmentConfig: String, localMode: Boolean = false) {
+abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolver,
+                              enrichmentRegistry: EnrichmentRegistry) {
   
   /**
    * Never-ending processing loop over source stream.
@@ -84,14 +84,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, resolverConfig: Strin
     case Sink.Test => None
   }
 
-  implicit val igluResolver: Resolver = Resolver.parse(JsonUtils.extractJson("", resolverConfig) match {
-      case Success(r) => r
-    }) bimap (
-      e => throw new ArithmeticException(e.head.toString),
-      s => s
-    ) match {
-      case Success(x) => x // TODO make this more rigorous
-    }
+  implicit val resolver: Resolver = igluResolver
 
   // Iterate through an enriched EnrichedEvent object and tab separate
   // the fields to a string.
@@ -103,22 +96,6 @@ abstract class AbstractSource(config: KinesisEnrichConfig, resolverConfig: Strin
     }.mkString("\t")
   }
 
-
-  // TODO fill this in  
-  def getEnrichmentRegistry: EnrichmentRegistry = {
-
-    val registry = EnrichmentRegistry.parse(fromJsonNode(JsonUtils.extractJson("", enrichmentConfig) match {
-      case Success(s) => s
-    }), localMode)
-
-    registry match {
-      case Success(r) => r // TODO make this more rigorous
-      case Failure(e) => throw new UnsupportedOperationException(e.head.toString)
-    }
-  }
-
-  private val registry: EnrichmentRegistry = getEnrichmentRegistry
-
   // Helper method to enrich an event.
   // TODO: this is a slightly odd design: it's a pure function if our
   // our sink is Test, but it's an impure function (with
@@ -127,7 +104,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, resolverConfig: Strin
   def enrichEvents(binaryData: Array[Byte]): List[Option[String]] = {
     val canonicalInput: ValidatedMaybeCollectorPayload = ThriftLoader.toCollectorPayload(binaryData)
     val processedEvents: List[ValidationNel[String, EnrichedEvent]] = EtlPipeline.processEvents(
-      registry, s"kinesis-${generated.Settings.version}", System.currentTimeMillis.toString, canonicalInput)
+      enrichmentRegistry, s"kinesis-${generated.Settings.version}", System.currentTimeMillis.toString, canonicalInput)
     processedEvents.map(validatedMaybeEvent => {
       validatedMaybeEvent match {
         case Success(co) => {
