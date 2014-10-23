@@ -49,7 +49,7 @@ object MasterCfLinesSpec {
               good.UnstructEventCfLineSpec.lines ++       // 1 good
               good.TransactionCfLineSpec.lines ++         // 1 good
               good.TransactionItemCfLineSpec.lines ++     // 1 good = 14 GOOD
-              misc.DiscardableCfLinesSpec.lines           // 3 discarded
+              misc.DiscardableCfLinesSpec.lines           // 2 discarded
 
   object expected {
     val goodCount = 14
