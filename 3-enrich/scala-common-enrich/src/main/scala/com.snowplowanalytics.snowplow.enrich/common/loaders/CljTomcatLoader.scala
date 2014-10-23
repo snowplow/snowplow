@@ -133,7 +133,7 @@ object CljTomcatLoader extends Loader[String] {
         None.success
 
       // B.2 Not a GET request for /i
-      case CljTomcatRegex(_, _, _, _, _, op, _, _, _, _, _, _, "-", "_") if op.toUpperCase != "GET" =>
+      case CljTomcatRegex(_, _, _, _, _, op, _, _, _, _, _, _, "-", "-") if op.toUpperCase != "GET" =>
         s"Operation must be GET, not ${op.toUpperCase}, if request content type and body are not provided".failNel[Option[CollectorPayload]]
 
       // B.3 GET request for /i as expected
