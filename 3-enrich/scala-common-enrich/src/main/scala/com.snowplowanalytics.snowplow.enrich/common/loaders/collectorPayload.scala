@@ -35,14 +35,6 @@ import org.joda.time.DateTime
 object CollectorPayload {
 
   /**
-   * Defaults for the tracker vendor and version
-   * before we implemented this into Snowplow.
-   */
-  private object TrackerDefaults {
-    val api = CollectorApi("com.snowplowanalytics.snowplow", "tp1")
-  }
-
-  /**
    * A constructor version to use. Supports legacy
    * tp1 (where no API vendor or version provided
    * as well as Snowplow).
@@ -58,17 +50,57 @@ object CollectorPayload {
     contextRefererUri: Option[String],
     contextHeaders: List[String],
     contextUserId: Option[String],
-    api: Option[CollectorApi],
+    api: CollectorApi,
     contentType: Option[String],
     body: Option[String]): CollectorPayload = {
 
     val source  = CollectorSource(sourceName, sourceEncoding, sourceHostname)
     val context = CollectorContext(contextTimestamp, contextIpAddress, contextUseragent, contextRefererUri, contextHeaders, contextUserId)
-    api match {
-      case Some(a) => CollectorPayload(a, querystring, contentType, body, source, context)
-      case None    => CollectorPayload(TrackerDefaults.api, querystring, contentType, body, source, context)
-    }
+    
+    CollectorPayload(api, querystring, contentType, body, source, context)
   }
+}
+
+object CollectorApi {
+
+  // Defaults for the tracker vendor and version
+  // before we implemented this into Snowplow.
+  // TODO: make private once the ThriftLoader is updated
+  val SnowplowTp1 = CollectorApi("com.snowplowanalytics.snowplow", "tp1")
+
+  // To extract the API vendor and version from the
+  // the path to the requested object.
+  // TODO: move this to somewhere not specific to
+  // this collector
+  private val ApiPathRegex = """^[\/]?([^\/]+)\/([^\/]+)[\/]?$""".r
+
+  /**
+   * Parses the requested URI path to determine the
+   * specific API version this payload follows.
+   *
+   * @param path The request path
+   * @return a Validation boxing either a
+   *         CollectorApi or a Failure String.
+   */
+  def parse(path: String): Validation[String, CollectorApi] = path match {
+    case ApiPathRegex(vnd, ver)   => CollectorApi(vnd, ver).success
+    case _ if isIceRequest(path)  => SnowplowTp1.success
+    case _                        => s"Request path ${path} does not match (/)vendor/version(/) pattern nor is a legacy /i(ce.png) request".fail
+  }
+
+  /**
+   * Checks whether a request to
+   * a collector is a tracker
+   * hitting the ice pixel.
+   *
+   * @param path The request path
+   * @return true if this is a request
+   *         for the ice pixel
+   */
+  protected[loaders] def isIceRequest(path: String): Boolean =
+    path.startsWith("/ice.png") || // Legacy name for /i
+    path.equals("/i") ||           // Legacy name for /com.snowplowanalytics.snowplow/tp1
+    path.startsWith("/i?")
 }
 
 /**

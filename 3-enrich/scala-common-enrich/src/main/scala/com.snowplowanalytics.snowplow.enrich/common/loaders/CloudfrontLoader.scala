@@ -93,11 +93,7 @@ object CloudfrontLoader extends Loader[String] {
     case h if (h.startsWith("#Version:") || h.startsWith("#Fields:")) =>
       None.success
     
-    // 2. Not a request for /i
-    case CfRegex(_, _, _, _, _, _, _, objct, _, _, _, _) if !isIceRequest(objct) =>
-      None.success
-
-    // 3. Not a GET request for /i
+    // 2. Not a GET request
     case CfRegex(_, _, _, _, _, op, _, _, _, _, _, _) if op.toUpperCase != "GET" =>
       s"Only GET operations supported for CloudFront Collector, not ${op.toUpperCase}".failNel[Option[CollectorPayload]]
 
@@ -127,7 +123,9 @@ object CloudfrontLoader extends Loader[String] {
       val refr = singleEncodePcts(rfr)
       val referer = toOption(refr) map toCleanUri
 
-      (timestamp.toValidationNel |@| querystring.toValidationNel) { (t, q) =>
+      val api = CollectorApi.parse(objct)
+
+      (timestamp.toValidationNel |@| querystring.toValidationNel |@| api.toValidationNel) { (t, q, a) =>
         CollectorPayload(
           q,
           CollectorName,
@@ -139,7 +137,7 @@ object CloudfrontLoader extends Loader[String] {
           referer,
           Nil,  // No headers for CloudFront
           None, // No collector-set user ID for CloudFront
-          None, // API vendor/version unknown
+          a,    // API vendor/version
           None, // No content type
           None  // No request body
         ).some

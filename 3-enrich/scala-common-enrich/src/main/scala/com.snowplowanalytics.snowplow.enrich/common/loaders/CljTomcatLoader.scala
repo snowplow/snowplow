@@ -62,12 +62,6 @@ object CljTomcatLoader extends Loader[String] {
     w  +  "([\\S]+)?)?$").r  // PostBody      /                    POST support
   }
 
-  // To extract the API vendor and version from the
-  // the path to the requested object.
-  // TODO: move this to somewhere not specific to
-  // this collector
-  private val ApiPathRegex = """^[\/]?([^\/]+)\/([^\/]+)[\/]?$""".r
-
   /**
    * Converts the source string into a 
    * ValidatedMaybeCollectorPayload.
@@ -80,7 +74,7 @@ object CljTomcatLoader extends Loader[String] {
    */
   def toCollectorPayload(line: String): ValidatedMaybeCollectorPayload = {
 
-    def build(qs: String, date: String, time: String, ip: String, ua: String, refr: String, api: Option[CollectorApi], ct: Option[String], bdy: Option[String]): ValidatedMaybeCollectorPayload = {
+    def build(qs: String, date: String, time: String, ip: String, ua: String, refr: String, objct: String, ct: Option[String], bdy: Option[String]): ValidatedMaybeCollectorPayload = {
       val querystring = parseQuerystring(CloudfrontLoader.toOption(qs), CollectorEncoding)
       val timestamp = CloudfrontLoader.toTimestamp(date, time)
       val contentType = (for {
@@ -91,8 +85,9 @@ object CljTomcatLoader extends Loader[String] {
         b64 <- bdy
         raw  = ConversionUtils.decodeBase64Url("Body", b64)
       } yield raw).sequenceU
+      val api = CollectorApi.parse(objct)
 
-      (timestamp.toValidationNel |@| querystring.toValidationNel |@| contentType.toValidationNel |@| body.toValidationNel) { (t, q, c, b) =>
+      (timestamp.toValidationNel |@| querystring.toValidationNel |@| api.toValidationNel |@| contentType.toValidationNel |@| body.toValidationNel) { (t, q, a, c, b) =>
         CollectorPayload(
           q,
           CollectorName,
@@ -104,7 +99,7 @@ object CljTomcatLoader extends Loader[String] {
           CloudfrontLoader.toOption(refr),
           Nil,  // No headers for CljTomcat
           None, // No collector-set user ID for CljTomcat
-          api,  // We may have API vendor and version
+          a,    // API vendor and version
           c,    // We may have content type
           b     // We may have request body
         ).some
@@ -114,31 +109,23 @@ object CljTomcatLoader extends Loader[String] {
     line match {
       // A: For a GET request to /i, CljTomcat collector <= v0.6.0
 
-      // A.1 Not a request for /i, drop the row silently
-      case CljTomcatRegex(_, _, _, _, _, _, _, objct, _, _, _, _, null, null) if !isIceRequest(objct) =>
-        None.success
-
-      // A.2 Not a GET request for /i
+      // A.1 Not a GET request
       case CljTomcatRegex(_, _, _, _, _, op, _, _, _, _, _, _, null, null) if op.toUpperCase != "GET" =>
         s"Operation must be GET, not ${op.toUpperCase}, if request content type and body are not provided".failNel[Option[CollectorPayload]]
 
-      // A.3 GET request for /i as expected
-      case CljTomcatRegex(date, time, _, _, ip, _, _, _, _, refr, ua, qs, null, null) =>
-        build(qs, date, time, ip, ua, refr, None, None, None) // API, content type and request body all unavailable
+      // A.2 GET request as expected
+      case CljTomcatRegex(date, time, _, _, ip, _, _, objct, _, refr, ua, qs, null, null) =>
+        build(qs, date, time, ip, ua, refr, objct, None, None) // API, content type and request body all unavailable
 
       // B: For a GET request to /i, CljTomcat collector >= v0.7.0
 
-      // B.1 Not a request for /i, drop the row silently
-      case CljTomcatRegex(_, _, _, _, _, _, _, objct, _, _, _, _, "-", "-") if !isIceRequest(objct) =>
-        None.success
-
-      // B.2 Not a GET request for /i
+      // B.21 Not a GET request
       case CljTomcatRegex(_, _, _, _, _, op, _, _, _, _, _, _, "-", "-") if op.toUpperCase != "GET" =>
         s"Operation must be GET, not ${op.toUpperCase}, if request content type and body are not provided".failNel[Option[CollectorPayload]]
 
-      // B.3 GET request for /i as expected
-      case CljTomcatRegex(date, time, _, _, ip, _, _, _, _, refr, ua, qs, "-", "-") =>
-        build(qs, date, time, ip, ua, refr, None, None, None) // API, content type and request body all unavailable      
+      // B.2 GET request as expected
+      case CljTomcatRegex(date, time, _, _, ip, _, _, objct, _, refr, ua, qs, "-", "-") =>
+        build(qs, date, time, ip, ua, refr, objct, None, None) // API, content type and request body all unavailable      
 
       // C: For a POST request with content type and body to /<api vendor>/<api version>, CljTomcat collector >= v0.7.0
 
@@ -147,10 +134,8 @@ object CljTomcatLoader extends Loader[String] {
         s"Operation must be POST, not ${op.toUpperCase}, if request content type and body are provided".failNel[Option[CollectorPayload]]
 
       // C.2 A POST, let's check we can discern API format
-      case CljTomcatRegex(date, time, _, _, ip, _, _, objct, _, refr, ua, qs, ct, bdy) => objct match {
-        case ApiPathRegex(vnd, ver) => build(qs, date, time, ip, ua, refr, CollectorApi(vnd, ver).some, ct.some, bdy.some)
-        case _                      => s"Requested object ${objct} does not match (/)vendor/version(/) pattern".failNel[Option[CollectorPayload]]
-      }
+      case CljTomcatRegex(date, time, _, _, ip, _, _, objct, _, refr, ua, qs, ct, bdy) =>
+        build(qs, date, time, ip, ua, refr, objct, ct.some, bdy.some)
 
       // D. Row not recognised
       case _ =>
