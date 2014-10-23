@@ -54,6 +54,16 @@ object Dependencies {
     val commonsCodec     = "1.5"
   }
 
+ /**
+  * [1] Instructions for json4sJackson
+  * TODO: remove these when it's available on Sonatype
+  *
+  * $ git clone https://github.com/json4s/json4s.git
+  * $ cd json4s
+  * $ git checkout c037629a0960756185b86d6cb088384c788e2b25
+  * $ sbt publish-local
+  */
+
   object Libraries {
     // Java
     val httpClient       = "org.apache.httpcomponents"  %  "httpclient"                % V.http
