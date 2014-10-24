@@ -70,6 +70,33 @@ object KinesisEnrichApp extends App {
       }
   }
 
+  // Iglu resolver configuration file
+  val resolver = parser.option[String](
+      List("resolver"), "filename", """
+        |Iglu resolver configuration JSON file. Defaults to \"resources/iglu.json\"
+        |(within .jar) if not set""".stripMargin) {
+    (c, opt) =>
+      val file = new File(c)
+      if (file.exists) {
+        c
+      } else {
+        parser.usage("Iglu resolver configuration file \"%s\" does not exist".format(c))
+      }
+  }
+
+  // Optional directory of enrichment configuration JSONs
+  val enrichmentsDirectory = parser.option[String](
+      List("enrichments"), "filename", """
+        |Directory of enrichment configuration JSONs.""".stripMargin) {
+    (c, opt) =>
+      val file = new File(c)
+      if (file.exists) {
+        c
+      } else {
+        parser.usage("Enrichments directory \"%s\" does not exist".format(c))
+      }
+  }
+
   parser.parse(args)
   val kinesisEnrichConfig = new KinesisEnrichConfig(
     config.value.getOrElse(ConfigFactory.load("default"))
