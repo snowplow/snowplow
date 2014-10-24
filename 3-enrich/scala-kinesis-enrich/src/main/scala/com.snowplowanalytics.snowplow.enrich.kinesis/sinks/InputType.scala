@@ -16,29 +16,12 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.kinesis
-package sinks
-
-// Snowplow
-import com.snowplowanalytics.snowplow.collectors.thrift._
+package com.snowplowanalytics.snowplow.enrich.kinesis.sinks
 
 /**
- * Stdouterr Sink for Scala enrichment
+ * Whether the sink is for good rows or bad rows
  */
-class StdouterrSink(inputType: InputType.InputType) extends ISink {
-
-  /**
-   * Side-effecting function to store the EnrichedEvent
-   * to the given output stream.
-   *
-   * EnrichedEvent takes the form of a tab-delimited
-   * String until such time as https://github.com/snowplow/snowplow/issues/211
-   * is implemented.
-   */
-  def storeEnrichedEvent(output: String, key: String) {
-    inputType match {
-      case InputType.Good => println(output) // To stdout
-      case InputType.Bad => Console.err.println(output) // To stderr
-    }
-  }
+object InputType extends Enumeration {
+  type InputType = Value
+  val Good, Bad = Value
 }

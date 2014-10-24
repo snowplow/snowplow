@@ -60,7 +60,7 @@ import common.outputs.EnrichedEvent
  * Kinesis Sink for Scala enrichment
  */
 class KinesisSink(provider: AWSCredentialsProvider,
-    config: KinesisEnrichConfig) extends ISink {
+    config: KinesisEnrichConfig, inputType: InputType.InputType) extends ISink {
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
   
@@ -97,8 +97,11 @@ class KinesisSink(provider: AWSCredentialsProvider,
    * Creates a new stream if one doesn't exist
    */
   def createAndLoadStream(timeout: Int = 60): Stream = {
-    val name = config.enrichedOutStream
-    val size = config.enrichedOutStreamShards
+    val (name, size) = inputType match {
+      case InputType.Good => (config.enrichedOutStream, config.enrichedOutStreamShards)
+      case InputType.Bad => (config.badOutStream, config.badOutStreamShards)
+    }
+
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {

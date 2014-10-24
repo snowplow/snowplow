@@ -24,6 +24,9 @@ package sources
 // Amazon
 import com.amazonaws.auth._
 
+// Apache commons
+import org.apache.commons.codec.binary.Base64
+
 // Scalaz
 import scalaz.{Sink => _, _}
 import Scalaz._
@@ -70,8 +73,14 @@ abstract class AbstractSource(config: KinesisEnrichConfig, resolverConfig: Strin
 
   // Initialize the sink to output enriched events to.
   protected val sink: Option[ISink] = config.sink match {
-    case Sink.Kinesis => new KinesisSink(kinesisProvider, config).some
-    case Sink.Stdouterr => new StdouterrSink().some
+    case Sink.Kinesis => new KinesisSink(kinesisProvider, config, InputType.Good).some
+    case Sink.Stdouterr => new StdouterrSink(InputType.Good).some
+    case Sink.Test => None
+  }
+
+  protected val badSink: Option[ISink] = config.sink match {
+    case Sink.Kinesis => new KinesisSink(kinesisProvider, config, InputType.Bad).some
+    case Sink.Stdouterr => new StdouterrSink(InputType.Bad).some
     case Sink.Test => None
   }
 
@@ -136,10 +145,15 @@ abstract class AbstractSource(config: KinesisEnrichConfig, resolverConfig: Strin
           }
           Some(ts)
         }
-        case Failure(f) => {throw new ArithmeticException(f.toString); None} // TODO: https://github.com/snowplow/snowplow/issues/463
+        case Failure(errors) => {
+          for (s <- badSink) {
+            val line = new String(Base64.encodeBase64(binaryData))
+            s.storeEnrichedEvent(BadRow(line, errors).toCompactJson, "fail")
+          }
+          None
+        }
       }
     })
-
   }
 
   // Initialize a Kinesis provider with the given credentials.
