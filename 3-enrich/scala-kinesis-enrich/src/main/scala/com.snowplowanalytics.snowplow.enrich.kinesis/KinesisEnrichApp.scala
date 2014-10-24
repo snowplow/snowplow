@@ -119,7 +119,9 @@ class KinesisEnrichConfig(config: Config) {
   val appName = streams.getString("app-name")
 
   val initialPosition = streams.getString("initial-position")
-  val streamEndpoint = streams.getString("endpoint")
+
+  private val streamRegion = streams.getString("region")
+  val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
 
   private val enrichments = enrich.getConfig("enrichments")
   private val geoIp = enrichments.getConfig("geo_ip")

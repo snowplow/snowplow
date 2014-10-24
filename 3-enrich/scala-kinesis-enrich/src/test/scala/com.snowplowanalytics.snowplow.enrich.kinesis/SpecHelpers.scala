@@ -161,7 +161,7 @@ enrich {
     }
     app-name: SnowplowKinesisEnrich-${enrich.streams.in.raw}
     initial-position = "TRIM_HORIZON"
-    endpoint: "https://kinesis.us-east-1.amazonaws.com"
+    region: "us-east-1"
   }
   enrichments {
     geo_ip: {

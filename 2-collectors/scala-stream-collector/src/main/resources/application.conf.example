@@ -74,7 +74,7 @@ collector {
       # Data will be stored in the following stream.
       # If the stream does not exist, one will be created with $size shards.
       stream {
-        endpoint: "https://kinesis.ap-southeast-2.amazonaws.com"
+        region: "us-east-1"
         name: "snowplow_collector_example"
         size: 1
       }
