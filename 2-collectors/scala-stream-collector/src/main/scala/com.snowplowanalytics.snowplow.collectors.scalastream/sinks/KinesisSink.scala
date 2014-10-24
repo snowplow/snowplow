@@ -130,23 +130,24 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
   private def createKinesisClient: Client = {
     val accessKey = config.awsAccessKey
     val secretKey = config.awsSecretKey
-    if (isCpf(accessKey) && isCpf(secretKey)) {
-      val client = new AmazonKinesisClient(new ClasspathPropertiesFileCredentialsProvider())
-      client.setEndpoint(config.streamEndpoint)
-      Client.fromClient(client)
+    val client = if (isCpf(accessKey) && isCpf(secretKey)) {
+      new AmazonKinesisClient(new ClasspathPropertiesFileCredentialsProvider())
     } else if (isCpf(accessKey) || isCpf(secretKey)) {
       throw new RuntimeException("access-key and secret-key must both be set to 'cpf', or neither of them")
     } else if (isIam(accessKey) && isIam(secretKey)) {
-      val client = new AmazonKinesisClient(InstanceProfile)
-      client.setEndpoint(config.streamEndpoint)
-      Client.fromClient(client)
+      new AmazonKinesisClient(InstanceProfile)
     } else if (isIam(accessKey) || isIam(secretKey)) {
       throw new RuntimeException("access-key and secret-key must both be set to 'iam', or neither of them")
+    } else if (isEnv(accessKey) && isEnv(secretKey)) {
+      new AmazonKinesisClient()
+    } else if (isEnv(accessKey) || isEnv(secretKey)) {
+      throw new RuntimeException("access-key and secret-key must both be set to 'env', or neither of them")
     } else {
-      val client = new AmazonKinesisClient(new BasicAWSCredentials(accessKey, secretKey))
-      client.setEndpoint(config.streamEndpoint)
-      Client.fromClient(client)
+      new AmazonKinesisClient(new BasicAWSCredentials(accessKey, secretKey))
     }
+
+    client.setEndpoint(config.streamEndpoint)
+    Client.fromClient(client)
   }
 
   def storeRawEvent(event: SnowplowRawEvent, key: String) = {
@@ -190,4 +191,13 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
    * @return true if key is iam, false otherwise
    */
   private def isIam(key: String): Boolean = (key == "iam")
+
+  /**
+   * Is the access/secret key set to the special value "env" i.e. get
+   * the credentials from environment variables
+   *
+   * @param key The key to check
+   * @return true if key is iam, false otherwise
+   */
+  private def isEnv(key: String): Boolean = (key == "env")
 }
