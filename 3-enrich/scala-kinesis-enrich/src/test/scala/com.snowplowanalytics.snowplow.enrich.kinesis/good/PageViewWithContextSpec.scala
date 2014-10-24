@@ -142,7 +142,7 @@ class PageViewWithContextSpec extends Specification {
 
       val rawEvent = Base64.decodeBase64(PageViewWithContextSpec.raw)
       
-      val enrichedEvent = TestSource.enrichEvent(rawEvent)
+      val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
       enrichedEvent must beSome
 
       val fields = enrichedEvent.get.split("\t")

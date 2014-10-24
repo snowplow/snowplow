@@ -31,8 +31,8 @@ import org.apache.commons.codec.binary.Base64
  * Source to decode raw events (in base64)
  * from stdin.
  */
-class StdinSource(config: KinesisEnrichConfig)
-    extends AbstractSource(config) {
+class StdinSource(config: KinesisEnrichConfig, resolverConfig: String, enrichmentConfig: String)
+    extends AbstractSource(config, resolverConfig, enrichmentConfig) {
 
   /**
    * Never-ending processing loop over source stream.
@@ -40,7 +40,7 @@ class StdinSource(config: KinesisEnrichConfig)
   def run = {
     for (ln <- io.Source.stdin.getLines) {
       val bytes = Base64.decodeBase64(ln)
-      enrichEvent(bytes)
+      enrichEvents(bytes)
     }
   }
 }

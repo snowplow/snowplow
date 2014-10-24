@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory
 
 // Snowplow
 import com.snowplowanalytics.snowplow.collectors.thrift._
-import common.outputs.CanonicalOutput
+import common.outputs.EnrichedEvent
 
 /**
  * Kinesis Sink for Scala enrichment
@@ -125,14 +125,14 @@ class KinesisSink(provider: AWSCredentialsProvider,
   }
 
   /**
-   * Side-effecting function to store the CanonicalOutput
+   * Side-effecting function to store the EnrichedEvent
    * to the given output stream.
    *
-   * CanonicalOutput takes the form of a tab-delimited
+   * EnrichedEvent takes the form of a tab-delimited
    * String until such time as https://github.com/snowplow/snowplow/issues/211
    * is implemented.
    */
-  def storeCanonicalOutput(output: String, key: String) = {
+  def storeEnrichedEvent(output: String, key: String) = {
     val putData = for {
       p <- enrichedStream.put(
         ByteBuffer.wrap(output.getBytes),

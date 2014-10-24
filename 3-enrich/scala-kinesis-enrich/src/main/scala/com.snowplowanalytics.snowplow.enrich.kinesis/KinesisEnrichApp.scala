@@ -98,13 +98,34 @@ object KinesisEnrichApp extends App {
   }
 
   parser.parse(args)
+
   val kinesisEnrichConfig = new KinesisEnrichConfig(
     config.value.getOrElse(ConfigFactory.load("default"))
   )
 
+  val resolverConfigPath = resolver.value.getOrElse(getClass.getResource("/resolver.json").getPath)
+
+  val resolverConfig = scala.io.Source.fromFile(new File(resolverConfigPath)).mkString
+
+  // TODO comment
+  // TODO build JSON by parsing rather than by string manipulation
+  def getEnrichmentConfig: String = {
+    val enrichmentJsonStrings: String = enrichmentsDirectory.value match {
+      case Some(dir) => {
+        val enrichmentJsonFiles = new java.io.File(dir).listFiles.filter(_.getName.endsWith(".json"))
+        enrichmentJsonFiles.map(scala.io.Source.fromFile(_).mkString).mkString(",")
+      }
+      case None => ""
+    }
+
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0","data":[%s]}""".format(enrichmentJsonStrings)
+  }
+
+  lazy val enrichmentConfig = getEnrichmentConfig
+
   val source = kinesisEnrichConfig.source match {
-    case Source.Kinesis => new KinesisSource(kinesisEnrichConfig)
-    case Source.Stdin => new StdinSource(kinesisEnrichConfig)
+    case Source.Kinesis => new KinesisSource(kinesisEnrichConfig, resolverConfig, enrichmentConfig)
+    case Source.Stdin => new StdinSource(kinesisEnrichConfig, resolverConfig, enrichmentConfig)
   }
   source.run
 }

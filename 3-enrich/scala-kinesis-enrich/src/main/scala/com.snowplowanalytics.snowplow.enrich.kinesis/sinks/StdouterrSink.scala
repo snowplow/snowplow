@@ -28,14 +28,14 @@ import com.snowplowanalytics.snowplow.collectors.thrift._
 class StdouterrSink extends ISink {
 
   /**
-   * Side-effecting function to store the CanonicalOutput
+   * Side-effecting function to store the EnrichedEvent
    * to the given output stream.
    *
-   * CanonicalOutput takes the form of a tab-delimited
+   * EnrichedEvent takes the form of a tab-delimited
    * String until such time as https://github.com/snowplow/snowplow/issues/211
    * is implemented.
    */
-  def storeCanonicalOutput(output: String, key: String) {
+  def storeEnrichedEvent(output: String, key: String) {
     println(output) // To stdout
   }
 }

@@ -141,8 +141,8 @@ class TransactionItemSpec extends Specification {
     "enrich a valid transaction item" in {
 
       val rawEvent = Base64.decodeBase64(TransactionItemSpec.raw)
-      
-      val enrichedEvent = TestSource.enrichEvent(rawEvent)
+
+      val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
       enrichedEvent must beSome
 
       val fields = enrichedEvent.get.split("\t")

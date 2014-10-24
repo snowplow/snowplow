@@ -59,8 +59,8 @@ import collectors.thrift.{
  *
  * TODO: replace printlns with using Java logger
  */
-class KinesisSource(config: KinesisEnrichConfig)
-    extends AbstractSource(config) {
+class KinesisSource(config: KinesisEnrichConfig, resolverConfig: String, enrichmentConfig: String)
+    extends AbstractSource(config, resolverConfig, enrichmentConfig) {
   
   /**
    * Never-ending processing loop over source stream.
@@ -144,7 +144,7 @@ class KinesisSource(config: KinesisEnrichConfig)
         try {
           println(s"Sequence number: ${record.getSequenceNumber}")
           println(s"Partition key: ${record.getPartitionKey}")
-          enrichEvent(record.getData.array)
+          enrichEvents(record.getData.array)
         } catch {
           case t: Throwable =>
             println(s"Caught throwable while processing record $record")
