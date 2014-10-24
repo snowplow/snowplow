@@ -139,13 +139,26 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
     } else if (isIam(a) && isIam(s)) {
       new InstanceProfileCredentialsProvider()
     } else if (isIam(a) || isIam(s)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'iam', or neither of them")
+      throw new RuntimeException("access-key and secret-key must both be set to 'iam', or neither")
+    } else if (isEnv(a) && isEnv(s)) {
+      new EnvironmentVariableCredentialsProvider()
+    } else if (isEnv(a) || isEnv(s)) {
+      throw new RuntimeException("access-key and secret-key must both be set to 'env', or neither")
     } else {
       new BasicAWSCredentialsProvider(
         new BasicAWSCredentials(a, s)
       )
     }
   }
+
+  /**
+   * Is the access/secret key set to the special value "cpf" i.e. use
+   * the classpath properties file for credentials.
+   *
+   * @param key The key to check
+   * @return true if key is cpf, false otherwise
+   */
+  private def isCpf(key: String): Boolean = (key == "cpf")
 
   /**
    * Is the access/secret key set to the special value "iam" i.e. use
@@ -156,7 +169,14 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
    */
   private def isIam(key: String): Boolean = (key == "iam")
 
-  private def isCpf(key: String): Boolean = (key == "cpf")
+  /**
+   * Is the access/secret key set to the special value "env" i.e. get
+   * the credentials from environment variables
+   *
+   * @param key The key to check
+   * @return true if key is iam, false otherwise
+   */
+  private def isEnv(key: String): Boolean = (key == "env")
 
   // Wrap BasicAWSCredential objects.
   class BasicAWSCredentialsProvider(basic: BasicAWSCredentials) extends
