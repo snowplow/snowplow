@@ -13,7 +13,7 @@
 package com.snowplowanalytics
 package snowplow
 package enrich
-package hadoop
+package common
 package outputs
 
 // Scalaz

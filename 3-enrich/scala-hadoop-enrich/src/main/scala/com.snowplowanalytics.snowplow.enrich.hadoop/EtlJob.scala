@@ -36,12 +36,14 @@ import common.enrichments.{
   EnrichmentManager
 }
 import enrichments.registry._
-import common.outputs.EnrichedEvent
+import common.outputs.{
+  EnrichedEvent,
+  BadRow
+}
 
 // This project
 import utils.FileUtils
 import generated.ProjectSettings
-import outputs.BadRow
 
 /**
  * Holds constructs to help build the ETL job's data
