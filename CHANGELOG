@@ -1,3 +1,32 @@
+Version 0.9.9 (2014-10-27)
+--------------------------
+.NET Tracker: added git submodule. Version 0.1.0 (#1000)
+PHP Tracker: added git submodule. Version 0.1.0 (#1013)
+Clojure Collector: bumped to 0.8.0
+Clojure Collector: fixed regression in log record format caused by #854 (#992)
+Clojure Collector: correctly handles multiple IPs in X-Forwarded-For (#970)
+StorageLoader: bumped to 0.3.3
+StorageLoader: selecting Snowplow's hosted-assets bucket based on region (#1012)
+EmrEtlRunner: bumped to 0.9.2
+EmrEtlRunner: no rows to process now returns 0, not 1 (#1018)
+EmrEtlRunner: fixed bug where --process-enrich doesn't work, thanks @kingo55! (#1089)
+EmrEtlRunner: now checking that output directories are empty before running (#1124)
+Scala Common Enrich: bumped to 0.7.0
+Scala Common Enrich: bumped scala-maxmind-iplookups to 0.2.0 (#1002)
+Scala Common Enrich: added support for non-GA campaign attribution: phase 1 (#402)
+Scala Common Enrich: rewrote AttributionEnrichments tests as RefererParserEnrichment tests (#974)
+Scala Common Enrich: allow but downcase a-f characters in incoming event_id (#1006)
+Scala Common Enrich: extract useragent from ua parameter (#1011)
+Scala Common Enrich: fixed issue where unset integer fields throw an NPE (#570)
+Scala Common Enrich: fixed issue where unset double fields throw an NPE (#1062)
+Scala Common Enrich: added tests for ConversionUtils.stringToJInteger (#1064)
+Scala Common Enrich: now enforcing Java 7 for compilation (#1065)
+Scala Hadoop Enrich: bumped to 0.8.0
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.7.0 (#995)
+Scala Hadoop Enrich: added test for empty integer and double fields to ensure no NPE thrown (#1063)
+Scala Hadoop Enrich: now enforcing Java 7 for compilation (#1066)
+Scala Hadoop Enrich: updated test jobs to reflect updated useragent parsing (#1070)
+
 Version 0.9.8 (2014-09-18)
 --------------------------
 iOS Tracker: added git submodule. Version 0.1.1 (#982)

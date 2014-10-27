@@ -38,7 +38,6 @@ import enrichments.{EventEnrichments => EE}
 import enrichments.{MiscEnrichments => ME}
 import enrichments.{ClientEnrichments => CE}
 import web.{PageEnrichments => WPE}
-import web.{AttributionEnrichments => WAE}
 
 /**
  * A module to hold our enrichment process.
@@ -62,6 +61,7 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
+  // TODO: etlTstamp shouldn't be stringly typed really
   def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: String, raw: RawEvent): ValidatedEnrichedEvent = {
 
     // Placeholders for where the Success value doesn't matter.
@@ -78,9 +78,9 @@ object EnrichmentManager {
       e.event_id = EE.generateEventId      // May be updated later if we have an `eid` parameter
       e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
-      for (ip <- raw.context.ipAddress) {
-        e.user_ipaddress = ip
-      }
+      e.etl_tstamp = etlTstamp
+      e.network_userid = raw.context.userId.orNull    // May be updated later by 'nuid'
+      e.user_ipaddress = raw.context.ipAddress.orNull // May be updated later by 'ip'
     }
 
     // 2. Enrichments which can fail
@@ -88,6 +88,7 @@ object EnrichmentManager {
     // 2a. Failable enrichments which don't need the payload
 
     // Attempt to decode the useragent
+    // May be updated later if we have a `ua` parameter
     val useragent = raw.context.useragent match {
       case Some(ua) =>
         val u = CU.decodeString(raw.source.encoding, "useragent", ua)
@@ -95,27 +96,6 @@ object EnrichmentManager {
           event.useragent = ua
           ua.success
           })
-      case None => unitSuccess // No fields updated
-    }
-
-    // Parse the useragent
-    val client = raw.context.useragent match {
-      case Some(ua) =>
-        val ca = CE.extractClientAttributes(ua)
-        ca.flatMap(c => {
-          event.br_name = c.browserName
-          event.br_family = c.browserFamily
-          c.browserVersion.map(bv => event.br_version = bv)
-          event.br_type = c.browserType
-          event.br_renderengine = c.browserRenderEngine
-          event.os_name = c.osName
-          event.os_family = c.osFamily
-          event.os_manufacturer = c.osManufacturer
-          event.dvce_type = c.deviceType
-          event.dvce_ismobile = CU.booleanToJByte(c.deviceIsMobile)
-          c.success
-          })
-        ca
       case None => unitSuccess // No fields updated
     }
 
@@ -138,6 +118,7 @@ object EnrichmentManager {
           ("uid"     , (ME.toTsvSafe, "user_id")),
           ("duid"    , (ME.toTsvSafe, "domain_userid")),
           ("nuid"    , (ME.toTsvSafe, "network_userid")),
+          ("ua"      , (ME.toTsvSafe, "useragent")),
           ("fp"      , (ME.toTsvSafe, "user_fingerprint")),
           ("vid"     , (CU.stringToJInteger, "domain_sessionidx")),
           ("dtm"     , (EE.extractTimestamp, "dvce_tstamp")),
@@ -208,11 +189,25 @@ object EnrichmentManager {
 
     val transform = event.transform(sourceMap, transformMap)
 
-    if (event.network_userid == null) {
-      raw.context.userId match {
-        case s:Some[String] => event.network_userid = s.get
-        case _ => ()
-      }
+    // Parse the useragent
+    val client = Option(event.useragent) match {
+      case Some(ua) =>
+        val ca = CE.extractClientAttributes(ua)
+        ca.flatMap(c => {
+          event.br_name = c.browserName
+          event.br_family = c.browserFamily
+          c.browserVersion.map(bv => event.br_version = bv)
+          event.br_type = c.browserType
+          event.br_renderengine = c.browserRenderEngine
+          event.os_name = c.osName
+          event.os_family = c.osFamily
+          event.os_manufacturer = c.osManufacturer
+          event.dvce_type = c.deviceType
+          event.dvce_ismobile = CU.booleanToJByte(c.deviceIsMobile)
+          c.success
+          })
+        ca
+      case None => unitSuccess // No fields updated
     }
 
     // Potentially update the page_url and set the page URL components
@@ -300,14 +295,18 @@ object EnrichmentManager {
       e => unitSuccessNel, // No fields updated
       uri => uri match {
         case Some(u) =>
-          WAE.extractMarketingFields(u, raw.source.encoding).flatMap(cmp => {
-            event.mkt_medium = cmp.medium
-            event.mkt_source = cmp.source
-            event.mkt_term = cmp.term
-            event.mkt_content = cmp.content
-            event.mkt_campaign = cmp.campaign
-            cmp.success
-            })
+          registry.getCampaignAttributionEnrichment match {
+            case Some(ce) =>
+              ce.extractMarketingFields(u, raw.source.encoding).flatMap(cmp => {
+                event.mkt_medium = cmp.medium.orNull
+                event.mkt_source = cmp.source.orNull
+                event.mkt_term = cmp.term.orNull
+                event.mkt_content = cmp.content.orNull
+                event.mkt_campaign = cmp.campaign.orNull
+                cmp.success
+                })
+            case None => unitSuccessNel
+          }
         case None => unitSuccessNel // No fields updated
         })
 
@@ -323,7 +322,6 @@ object EnrichmentManager {
     event.refr_urlfragment = CU.truncate(event.refr_urlfragment, 255)
     event.refr_term = CU.truncate(event.refr_term, 255)
     event.se_label = CU.truncate(event.se_label, 255)
-    event.etl_tstamp = etlTstamp
 
     // Collect our errors on Failure, or return our event on Success
     (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| geoLocation.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {

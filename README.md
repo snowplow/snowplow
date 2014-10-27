@@ -19,11 +19,11 @@ The repository structure follows the conceptual architecture of Snowplow, which 
 
 To briefly explain these five sub-systems:
 
-* **Trackers** fire Snowplow events. Currently we have JavaScript, no-JavaScript (pixel), Lua and Arduino trackers
-* **Collectors** receive Snowplow events from trackers. Currently we have a CloudFront-based collector and a Clojure-based collector
-* **Enrich** cleans up the raw Snowplow events, enriches them and puts them into storage. Currently we have a Hadoop-based enrichment processes
+* **Trackers** fire Snowplow events. Currently we have 12 trackers, covering web, mobile, desktop, server and IoT
+* **Collectors** receive Snowplow events from trackers. Currently we have three different event collectors, sinking events either to Amazon S3 or Amazon Kinesis
+* **Enrich** cleans up the raw Snowplow events, enriches them and puts them into storage. Currently we have a Hadoop-based enrichment process, and a Kinesis-based process
 * **Storage** is where the Snowplow events live. Currently we store the Snowplow events in a flatfile structure on S3, and in the Redshift and Postgres databases
-* **Analytics** are performed on the Snowplow events. Currently we have a set of recipes and cubes as SQL views for both Redshift and Postgres, and an online cookbook of ad hoc analyses that work with Redshift, Postgres and Hive 
+* **Analytics** are performed on the Snowplow events. Currently we have a set of recipes and cubes as SQL views for both Redshift and Postgres, and an online cookbook of ad hoc analyses that work with Redshift, Postgres and Hive. We also have data models for [Looker] [looker] in LookML
 
 **For more information on the current Snowplow architecture, please see the [Technical architecture] [architecture-doc]**.
 
@@ -68,6 +68,7 @@ limitations under the License.
 [tracker-protocol]: https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol
 [collector-logs]: https://github.com/snowplow/snowplow/wiki/Collector-logging-formats
 [data-structure]: https://github.com/snowplow/snowplow/wiki/canonical-event-model
+[looker]: http://www.looker.com/
 
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png

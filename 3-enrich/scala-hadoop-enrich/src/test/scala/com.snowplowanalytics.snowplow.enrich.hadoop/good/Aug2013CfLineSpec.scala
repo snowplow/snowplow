@@ -138,7 +138,7 @@ object Aug2013CfLineSpec {
     "24",
     "1024",
     "635",
-    "Windows",
+    "Windows XP",
     "Windows",
     "Microsoft Corporation",
     "America/Los_Angeles",

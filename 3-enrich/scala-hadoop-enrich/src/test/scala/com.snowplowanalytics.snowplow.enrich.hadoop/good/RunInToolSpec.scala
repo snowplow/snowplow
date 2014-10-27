@@ -138,7 +138,7 @@ object RunInToolSpec {
     "24",
     "1364",
     "694",
-    "Mac OS",
+    "Mac OS X",
     "Mac OS",
     "Apple Inc.",
     "Europe/London",

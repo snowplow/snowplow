@@ -118,9 +118,9 @@ object CljTomcatTp1SingleEventSpec {
     null, //
     null, //
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.8 Safari/537.36",
+    "Chrome 31",
     "Chrome",
-    "Chrome",
-    null,
+    "31.0.1650.8",
     "Browser",
     "WEBKIT",
     "en-US",
@@ -137,8 +137,8 @@ object CljTomcatTp1SingleEventSpec {
     "24",
     "1440",
     "802",
-    "Mac OS",
-    "Mac OS",
+    "Mac OS X",
+    "Mac OS X",
     "Apple Inc.",
     "Europe/London",
     "Computer",

@@ -16,6 +16,8 @@
 require 'set'
 require 'elasticity'
 
+require 'sluice'
+
 require 'awrence'
 require 'json'
 require 'base64'
@@ -50,6 +52,10 @@ module Snowplow
         run_tstamp = Time.new
         run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
+        s3 = Sluice::Storage::S3::new_fog_s3_from(
+          config[:s3][:region],
+          config[:aws][:access_key_id],
+          config[:aws][:secret_access_key])
 
         # Create a job flow with your AWS credentials
         @jobflow = Elasticity::JobFlow.new(config[:aws][:access_key_id], config[:aws][:secret_access_key])
@@ -178,6 +184,12 @@ module Snowplow
               :enrichments      => self.class.build_enrichments_json(enrichments_array)
             }
           )
+
+          # Late check whether our target directory is empty
+          csbe_good_loc = Sluice::Storage::S3::Location.new(csbe[:good])
+          unless Sluice::Storage::S3::is_empty?(s3, csbe_good_loc)
+            raise DirectoryNotEmptyError, "Cannot safely add enrichment step to jobflow, #{csbe_good_loc} is not empty"
+          end
           @jobflow.add_step(enrich_step)
 
           if s3distcp
@@ -231,6 +243,12 @@ module Snowplow
               :iglu_config => self.class.build_iglu_config_json(config[:iglu])
             }
           )
+
+          # Late check whether our target directory is empty
+          csbs_good_loc = Sluice::Storage::S3::Location.new(csbs[:good])
+          unless Sluice::Storage::S3::is_empty?(s3, csbs_good_loc)
+            raise DirectoryNotEmptyError, "Cannot safely add shredding step to jobflow, #{csbs_good_loc} is not empty"
+          end
           @jobflow.add_step(shred_step)
 
           if s3distcp

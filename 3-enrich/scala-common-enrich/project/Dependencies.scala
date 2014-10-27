@@ -44,7 +44,7 @@ object Dependencies {
     val snowplowRawEvent = "0.1.0"
     val scalaUtil        = "0.1.0"
     val refererParser    = "0.2.2"
-    val maxmindIplookups = "0.1.0"
+    val maxmindIplookups = "0.2.0"
     val json4s           = "3.2.11-SNAPSHOT"
     val igluClient       = "0.1.0"
     // Scala (test only)

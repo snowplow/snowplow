@@ -137,7 +137,7 @@ object PagePingCfLineSpec {
     "32",
     "1366",
     "630",
-    "Windows",
+    "Windows 7",
     "Windows",
     "Microsoft Corporation",
     "America/Sao_Paulo",

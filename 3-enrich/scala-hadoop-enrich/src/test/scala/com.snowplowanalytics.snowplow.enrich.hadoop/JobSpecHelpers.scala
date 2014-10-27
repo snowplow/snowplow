@@ -51,7 +51,7 @@ object JobSpecHelpers {
   /**
    * The current version of our Hadoop ETL
    */
-  val EtlVersion = "hadoop-0.7.0-common-0.6.0"
+  val EtlVersion = "hadoop-0.8.0-common-0.7.0"
 
   val EtlTimestamp = "2001-09-09 01:46:40.000"
 
@@ -252,6 +252,24 @@ object JobSpecHelpers {
                   |}
                 |}  
               |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "campaign_attribution",
+                  |"enabled": true,
+                  |"parameters": {
+                    |"mapping": "static",
+                    |"fields": {
+                      |"mktMedium": ["utm_medium", "medium"],
+                      |"mktSource": ["utm_source", "source"],
+                      |"mktTerm": ["utm_term", "legacy_term"],
+                      |"mktContent": ["utm_content"],
+                      |"mktCampaign": ["utm_campaign", "cid", "legacy_campaign"]
+                    |}
+                  |}
+                |}  
+              |},              
               |{
                 |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
                 |"data": {

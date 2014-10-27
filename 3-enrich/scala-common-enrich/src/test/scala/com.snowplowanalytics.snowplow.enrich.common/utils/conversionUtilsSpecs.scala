@@ -121,22 +121,52 @@ class DecodeBase64UrlSpec extends Specification with DataTables with ValidationM
   // 2. Manual tests of the JavaScript Tracker's trackUnstructEvent()
   // 3. Misc edge cases worth checking
   def e3 =
-    "SPEC NAME" || "ENCODED STRING" | "EXPECTED" |
-    "Lua Tracker String #1" !! "Sm9oblNtaXRo" ! "JohnSmith" |
-    "Lua Tracker String #2" !! "am9obitzbWl0aA" ! "john+smith" |
-    "Lua Tracker String #3" !! "Sm9obiBTbWl0aA" ! "John Smith" |
-    "Lua Tracker JSON #1" !! "eyJhZ2UiOjIzLCJuYW1lIjoiSm9obiJ9" ! """{"age":23,"name":"John"}""" |
-    "Lua Tracker JSON #2" !! "eyJteVRlbXAiOjIzLjMsIm15VW5pdCI6ImNlbHNpdXMifQ" ! """{"myTemp":23.3,"myUnit":"celsius"}""" |
-    "Lua Tracker JSON #3" !! "eyJldmVudCI6InBhZ2VfcGluZyIsIm1vYmlsZSI6dHJ1ZSwicHJvcGVydGllcyI6eyJtYXhfeCI6OTYwLCJtYXhfeSI6MTA4MCwibWluX3giOjAsIm1pbl95IjotMTJ9fQ" ! """{"event":"page_ping","mobile":true,"properties":{"max_x":960,"max_y":1080,"min_x":0,"min_y":-12}}""" |
-    "Lua Tracker JSON #4" !! "eyJldmVudCI6ImJhc2tldF9jaGFuZ2UiLCJwcmljZSI6MjMuMzksInByb2R1Y3RfaWQiOiJQQlowMDAzNDUiLCJxdWFudGl0eSI6LTIsInRzdGFtcCI6MTY3ODAyMzAwMH0" ! """{"event":"basket_change","price":23.39,"product_id":"PBZ000345","quantity":-2,"tstamp":1678023000}""" |
-    "JS Tracker JSON #1" !! "eyJwcm9kdWN0X2lkIjoiQVNPMDEwNDMiLCJjYXRlZ29yeSI6IkRyZXNzZXMiLCJicmFuZCI6IkFDTUUiLCJyZXR1cm5pbmciOnRydWUsInByaWNlIjo0OS45NSwic2l6ZXMiOlsieHMiLCJzIiwibCIsInhsIiwieHhsIl0sImF2YWlsYWJsZV9zaW5jZSRkdCI6MTU4MDF9" ! """{"product_id":"ASO01043","category":"Dresses","brand":"ACME","returning":true,"price":49.95,"sizes":["xs","s","l","xl","xxl"],"available_since$dt":15801}""" |
-    "Unescaped characters" !! "äöü - &" ! "" |
-    "Blank string" !! "" ! "" |> {
+    "SPEC NAME"             || "ENCODED STRING"                                 | "EXPECTED"                     |
+    "Lua Tracker String #1" !! "Sm9oblNtaXRo"                                   ! "JohnSmith"                    |
+    "Lua Tracker String #2" !! "am9obitzbWl0aA"                                 ! "john+smith"                   |
+    "Lua Tracker String #3" !! "Sm9obiBTbWl0aA"                                 ! "John Smith"                   |
+    "Lua Tracker JSON #1"   !! "eyJhZ2UiOjIzLCJuYW1lIjoiSm9obiJ9"               ! """{"age":23,"name":"John"}""" |
+    "Lua Tracker JSON #2"   !! "eyJteVRlbXAiOjIzLjMsIm15VW5pdCI6ImNlbHNpdXMifQ" ! """{"myTemp":23.3,"myUnit":"celsius"}""" |
+    "Lua Tracker JSON #3"   !! "eyJldmVudCI6InBhZ2VfcGluZyIsIm1vYmlsZSI6dHJ1ZSwicHJvcGVydGllcyI6eyJtYXhfeCI6OTYwLCJtYXhfeSI6MTA4MCwibWluX3giOjAsIm1pbl95IjotMTJ9fQ" ! """{"event":"page_ping","mobile":true,"properties":{"max_x":960,"max_y":1080,"min_x":0,"min_y":-12}}""" |
+    "Lua Tracker JSON #4"   !! "eyJldmVudCI6ImJhc2tldF9jaGFuZ2UiLCJwcmljZSI6MjMuMzksInByb2R1Y3RfaWQiOiJQQlowMDAzNDUiLCJxdWFudGl0eSI6LTIsInRzdGFtcCI6MTY3ODAyMzAwMH0" ! """{"event":"basket_change","price":23.39,"product_id":"PBZ000345","quantity":-2,"tstamp":1678023000}""" |
+    "JS Tracker JSON #1"    !! "eyJwcm9kdWN0X2lkIjoiQVNPMDEwNDMiLCJjYXRlZ29yeSI6IkRyZXNzZXMiLCJicmFuZCI6IkFDTUUiLCJyZXR1cm5pbmciOnRydWUsInByaWNlIjo0OS45NSwic2l6ZXMiOlsieHMiLCJzIiwibCIsInhsIiwieHhsIl0sImF2YWlsYWJsZV9zaW5jZSRkdCI6MTU4MDF9" ! """{"product_id":"ASO01043","category":"Dresses","brand":"ACME","returning":true,"price":49.95,"sizes":["xs","s","l","xl","xxl"],"available_since$dt":15801}""" |
+    "Unescaped characters"  !! "äöü - &"                                        ! ""                             |
+    "Blank string"          !! ""                                               ! ""                             |> {
 
     (_, str, expected) => {
       ConversionUtils.decodeBase64Url(FieldName, str) must beSuccessful(expected)
     }
   }
+}
+
+class ValidateUuidSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
+
+  "This is a specification to test the validateUuid function"                             ^
+                                                                                         p^
+  "validateUuid should return a lowercased UUID for a valid lower/upper-case UUID"        ! e1^
+  "validateUuid should fail if the supplied String is not a valid lower/upper-case UUID"  ! e2^
+                                                                                          end
+
+  val FieldName = "uuid"
+
+  def e1 = {
+    "SPEC NAME"         || "INPUT STR"                            | "EXPECTED"                             |
+    "Lowercase UUID #1" !! "f732d278-120e-4ab6-845b-c1f11cd85dc7" ! "f732d278-120e-4ab6-845b-c1f11cd85dc7" |
+    "Lowercase UUID #2" !! "a729d278-110a-4ac6-845b-d1f12ce45ac7" ! "a729d278-110a-4ac6-845b-d1f12ce45ac7" |
+    "Uppercase UUID #1" !! "A729D278-110A-4AC6-845B-D1F12CE45AC7" ! "a729d278-110a-4ac6-845b-d1f12ce45ac7" |
+    "Uppercase UUID #2" !! "F732D278-120E-4AB6-845B-C1F11CD85DC7" ! "f732d278-120e-4ab6-845b-c1f11cd85dc7" |> {
+    // Note: MS-style {GUID} is not supported
+
+      (_, str, expected) => {
+        ConversionUtils.validateUuid(FieldName, str) must beSuccessful(expected)
+      }
+    }
+  }
+
+  // A bit of fun: the chances of generating a valid UUID at random are
+  // so low that we can just use ScalaCheck here. Checks null too
+  def e2 =
+    check { (str: String) => ConversionUtils.validateUuid(FieldName, str) must beFailing(s"Field [$FieldName]: [$str] is not a valid UUID") }
 }
 
 class StringToDoublelikeSpec extends Specification with DataTables with ValidationMatchers { def is =
@@ -170,6 +200,8 @@ class StringToDoublelikeSpec extends Specification with DataTables with Validati
     "Integer #1"            !! "23"              ! "23"                  |
     "Integer #2"            !! "23."             ! "23"                  |
     "Negative integer"      !! "-2012103"        ! "-2012103"            |
+    "Null value (raw)"      !! null              ! null                  |
+    "Null value (String)"   !! "null"            ! null                  |
     "Arabic number"         !! "٤٥٦٧.٦٧"         ! "4567.67"             |
     "Floating point #1"     !! "1999.99"         ! "1999.99"             |
     "Floating point #2"     !! "1999.00"         ! "1999.00"             |
@@ -185,6 +217,41 @@ class StringToDoublelikeSpec extends Specification with DataTables with Validati
   val BigNumber = "78694235323.00000001" // Redshift only supports 15 significant digits for a Double
   def e3 = ConversionUtils.stringToDoublelike(FieldName, BigNumber) must beSuccessful(BigNumber)
 
+}
+
+class StringToJIntegerSpec extends Specification with DataTables with ValidationMatchers { def is =
+
+  "This is a specification to test the stringToJInteger function"                                         ^
+                                                                                                         p^
+  "stringToJInteger should fail if the supplied String is not parseable as an Integer"                    ! e1^
+  "stringToJInteger should convert valid Strings to Java Integers"                                        ! e2^
+                                                                                                          end
+
+  val FieldName = "val"
+  def err: (String) => String = input => "Field [%s]: cannot convert [%s] to Int".format(FieldName, input)
+
+  def e1 =
+    "SPEC NAME"             || "INPUT STR"       | "EXPECTED"            |
+    "Empty string"          !! ""                ! err("")               |
+    "Floating point #1"     !! "1999."           ! err("1999.")          |
+    "Floating point #2"     !! "1999.00"         ! err("1999.00")        |
+    "Hexadecimal number"    !! "0x54"            ! err("0x54")           |
+    "NaN"                   !! "NaN"             ! err("NaN")            |
+    "Sci. notation"         !! "6.72E5"          ! err("6.72E5")         |> {
+      (_, str, expected) =>
+        ConversionUtils.stringToJInteger(FieldName, str) must beFailing(expected)
+    }
+
+  def e2 =
+    "SPEC NAME"             || "INPUT STR"       | "EXPECTED"          |
+    "Integer #1"            !! "0"               ! 0                   |
+    "Integer #2"            !! "23"              ! 23                  |
+    "Negative integer #1"   !! "-2012103"        ! -2012103            |
+    "Negative integer #2"   !! "-1"              ! -1                  |
+    "Null"                  !! null              ! null                |> {
+      (_, str, expected) =>
+        ConversionUtils.stringToJInteger(FieldName, str) must beSuccessful(expected)
+    }
 }
 
 class StringToBooleanlikeJByteSpec extends Specification with DataTables with ValidationMatchers { def is =
@@ -218,6 +285,4 @@ class StringToBooleanlikeJByteSpec extends Specification with DataTables with Va
       (_, str, expected) =>
         ConversionUtils.stringToBooleanlikeJByte(FieldName, str) must beSuccessful(expected)
     }
-
-
 }
