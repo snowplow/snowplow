@@ -26,7 +26,11 @@ import java.io.File
 import sys.process._
 
 // Config
-import com.typesafe.config.{Config,ConfigFactory}
+import com.typesafe.config.{
+  Config,
+  ConfigFactory,
+  ConfigRenderOptions
+}
 
 // Argot
 import org.clapper.argot.ArgotParser
@@ -85,20 +89,6 @@ object KinesisEnrichApp extends App {
       }
   }
 
-  // Iglu resolver configuration file
-  val resolver = parser.option[String](
-      List("resolver"), "filename", """
-        |Iglu resolver configuration JSON file. Defaults to \"resources/iglu.json\"
-        |(within .jar) if not set""".stripMargin) {
-    (c, opt) =>
-      val file = new File(c)
-      if (file.exists) {
-        c
-      } else {
-        parser.usage("Iglu resolver configuration file \"%s\" does not exist".format(c))
-      }
-  }
-
   // Optional directory of enrichment configuration JSONs
   val enrichmentsDirectory = parser.option[String](
       List("enrichments"), "filename", """
@@ -114,18 +104,18 @@ object KinesisEnrichApp extends App {
 
   parser.parse(args)
 
-  val parsedConfig = config.value.getOrElse(throw new RuntimeException("--config option must be provided"))
+  val parsedConfig = config.value.getOrElse(throw new RuntimeException("--config argument must be provided"))
 
-  val kinesisEnrichConfig = new KinesisEnrichConfig(
-    config.value.getOrElse(ConfigFactory.load("default"))
-  )
+  val kinesisEnrichConfig = new KinesisEnrichConfig(parsedConfig)
 
-  val resolverConfigPath = resolver.value.getOrElse(getClass.getResource("/resolver.json").getPath)
+  val resolverConfig = parsedConfig.resolve.getConfig("enrich").getConfig("resolver").root.render(ConfigRenderOptions.concise())
 
-  val resolverConfig = scala.io.Source.fromFile(new File(resolverConfigPath)).mkString
-
-  // TODO comment
-  // TODO build JSON by parsing rather than by string manipulation
+  /**
+   * Build the JSON string for the enrichment configuration from
+   * the JSON files in the enrichments directory
+   *
+   * @return enrichments JSON string
+   */
   def getEnrichmentConfig: String = {
     val enrichmentJsonStrings: String = enrichmentsDirectory.value match {
       case Some(dir) => {
