@@ -71,11 +71,10 @@ object KinesisEnrichApp extends App {
     )
   )
 
-  // Optional config argument
+  // Mandatory config argument
   val config = parser.option[Config](
       List("config"), "filename", """
-        |Configuration file. Defaults to \"resources/default.conf\"
-        |(within .jar) if not set""".stripMargin) {
+        |Configuration file.""".stripMargin) {
     (c, opt) =>
       val file = new File(c)
       if (file.exists) {
@@ -114,6 +113,8 @@ object KinesisEnrichApp extends App {
   }
 
   parser.parse(args)
+
+  val parsedConfig = config.value.getOrElse(throw new RuntimeException("--config option must be provided"))
 
   val kinesisEnrichConfig = new KinesisEnrichConfig(
     config.value.getOrElse(ConfigFactory.load("default"))
