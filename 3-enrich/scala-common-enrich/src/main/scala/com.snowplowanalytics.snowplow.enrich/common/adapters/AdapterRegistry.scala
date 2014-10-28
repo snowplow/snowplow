@@ -27,7 +27,8 @@ import Scalaz._
 import loaders.CollectorPayload
 import registry.{
   SnowplowAdapter,
-  AdXTrackingAdapter
+  AdXTrackingAdapter,
+  CallrailAdapter
 }
 
 /**
@@ -36,8 +37,11 @@ import registry.{
  */
 object AdapterRegistry {
 
-  private val SnowplowVendor = "com.snowplowanalytics.snowplow"
-  private val AdXTrackingVendor = "com.adxtracking"
+  private object Vendor {
+    val Snowplow = "com.snowplowanalytics.snowplow"
+    val AdXTracking = "com.adxtracking"
+    val Callrail = "com.callrail"
+  }
 
   /**
    * Router to determine which adapter we use
@@ -53,9 +57,10 @@ object AdapterRegistry {
    *         or a NEL of Strings on Failure
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = (payload.api.vendor, payload.api.version) match {
-    case (SnowplowVendor,    "tp1") => SnowplowAdapter.Tp1.toRawEvents(payload)
-    case (SnowplowVendor,    "tp2") => SnowplowAdapter.Tp2.toRawEvents(payload)
-    case (AdXTrackingVendor, "v1")  => AdXTrackingAdapter.toRawEvents(payload)
+    case (Vendor.Snowplow,    "tp1") => SnowplowAdapter.Tp1.toRawEvents(payload)
+    case (Vendor.Snowplow,    "tp2") => SnowplowAdapter.Tp2.toRawEvents(payload)
+    case (Vendor.AdXTracking, "v1")  => AdXTrackingAdapter.toRawEvents(payload)
+    case (Vendor.Callrail,    "v1")  => CallrailAdapter.toRawEvents(payload)
     // TODO: add Sendgrid et al
     case _ => s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".failNel
   }
