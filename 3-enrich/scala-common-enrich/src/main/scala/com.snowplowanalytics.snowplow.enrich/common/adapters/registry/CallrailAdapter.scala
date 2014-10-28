@@ -89,7 +89,7 @@ object CallrailAdapter extends Adapter {
       NonEmptyList(RawEvent(
         api          = payload.api,
         parameters   = toUnstructEventParams(TrackerVersion, params,
-                         SchemaUris.CallComplete, CallrailFormatter, "srv"),
+                         SchemaUris.CallComplete, CallrailFormatter, "srv"), 
         contentType  = payload.contentType,
         source       = payload.source,
         context      = payload.context
