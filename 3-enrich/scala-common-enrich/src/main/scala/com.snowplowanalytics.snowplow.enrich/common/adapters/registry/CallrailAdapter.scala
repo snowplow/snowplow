@@ -17,6 +17,9 @@ package common
 package adapters
 package registry
 
+// Java
+import java.math.{BigInteger => JBigInteger}
+
 // Iglu
 import iglu.client.{
   SchemaKey,
@@ -26,6 +29,10 @@ import iglu.client.{
 // Scalaz
 import scalaz._
 import Scalaz._
+
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 // json4s
 import org.json4s._
@@ -51,6 +58,27 @@ object CallrailAdapter extends Adapter {
     val UnstructEvent = SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", "1-0-0").toSchemaUri
     val CallComplete = SchemaKey("com.callrail", "call_complete", "jsonschema", "1-0-0").toSchemaUri
   }
+
+  // Datetime format used by CallRail (as we will need to massage)
+  private val CallrailDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
+
+  // TODO: move this out
+  private val JsonSchemaDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZ").withZone(DateTimeZone.UTC)
+
+  // Fields known to need datatype cleaning/conversion ready for JSON Schema validation
+  private val BoolFields = List("first_call", "answered")
+  private val IntFields  = List("duration")
+  private val DateFields = List("datetime")
+
+  /**
+   * Converts a Joda DateTime into
+   * a JSON Schema-compatible date-time string.
+   *
+   * @param datetime The Joda DateTime
+   *        to convert to a timestamp String
+   * @return the timestamp String
+   */
+  def toJsonSchemaDateTime(dateTime: DateTime): String = JsonSchemaDateTimeFormat.print(dateTime)
 
   /**
    * Converts a CollectorPayload instance into raw events.
@@ -97,11 +125,15 @@ object CallrailAdapter extends Adapter {
   private def toUnstructEventParams(tracker: String, parameters: RawEventParameters):
     RawEventParameters = {
 
-    val params = compact {
+    val params: JObject = for {
+      p <- (parameters -("nuid", "aid", "cv", "p")).toList
+    } yield toJField(p._1, p._2, BoolFields, IntFields, DateFields)
+
+    val json = compact {
       ("schema" -> SchemaUris.UnstructEvent) ~
       ("data"   -> (
         ("schema" -> SchemaUris.CallComplete) ~
-        ("data"   -> (parameters -("nuid", "aid", "cv", "p")))
+        ("data"   -> params)
       ))
     }
 
@@ -109,7 +141,56 @@ object CallrailAdapter extends Adapter {
       "tv"    -> tracker,
       "e"     -> "ue",
       "p"     -> parameters.getOrElse("p", "app"), // Required field
-      "ue_pr" -> params) ++
+      "ue_pr" -> json) ++
     parameters.filterKeys(Set("nuid", "aid", "cv"))
   }
+
+  /**
+   * Converts a String of value "true" or "false"
+   * to true or false respectively. Any other
+   * value is passed through intact. This makes
+   * this adapter less brittle and stops us from
+   * validating in two places (once in the adapter
+   * and a second time in the shreder).
+   *
+   * @param str The String to convert
+   * @return true for "true", false for "false",
+   *         null for "" and otherwise the original
+   *         String
+   */
+  def toMaybeJBool(str: String): JValue = str match {
+    case "true" => JBool(true)
+    case "false" => JBool(false)
+    case _ => JString(str)
+  }
+
+  def toMaybeJInt(str: String): JValue =
+    try {
+      JInt(new JBigInteger(str))
+    } catch {
+      case nfe: NumberFormatException =>
+        JString(str)
+    }
+
+  def fixDateTime(str: String, fromFormat: DateTimeFormatter): JValue =
+    try {
+      val dt = DateTime.parse(str, fromFormat)
+      JString(toJsonSchemaDateTime(dt))
+    } catch {
+      case iae: IllegalArgumentException => {
+        JString(str)
+      }
+    }
+
+  def toJField(key: String, value: String, bools: List[String], ints: List[String], dates: List[String]): JField = {
+    val v = value match {
+      case ""                       => JNull
+      case _ if bools.contains(key) => toMaybeJBool(value)
+      case _ if ints.contains(key)  => toMaybeJInt(value)
+      case _ if dates.contains(key) => fixDateTime(value, CallrailDateTimeFormat) // TODO: make this pluggable
+      case _                        => JString(value)
+    }
+    (key, v)
+  }
+
 }
