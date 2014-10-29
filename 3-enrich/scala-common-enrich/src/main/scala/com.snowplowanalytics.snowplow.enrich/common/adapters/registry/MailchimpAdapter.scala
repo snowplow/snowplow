@@ -45,6 +45,7 @@ import Scalaz._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import org.json4s.scalaz.JsonScalaz._
 
 // This project
 import loaders.CollectorPayload
@@ -87,11 +88,7 @@ object MailchimpAdapter extends Adapter {
    *         Success, or a NEL of Failure Strings
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
-    // Get the Query string parameters
     val qsParams = toMap(payload.querystring)
-
-
-
     payload.body match {
       case (None) if qsParams.isEmpty => s"Request body and querystring parameters empty, expected at least one populated".failNel
       case (None)                     => s"Event body empty".failNel
@@ -122,78 +119,17 @@ object MailchimpAdapter extends Adapter {
    *         Snowplow unstructured event
    */
   private def toUnstructEventParams(tracker: String, qsParams: RawEventParameters, body: String): RawEventParameters = {
-    val bodyMap = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
-    val schema = getSchemaKeyString(bodyMap.get("type"))
-    val parameters = qsParams ++ bodyMap
-
-    println(parameters)
-
-    val tempMap = scala.collection.mutable.Map[Array[String],String]()
-
-    parameters foreach {
-      case (key, value) => tempMap(key.split("\\]?\\[")) = value
-    }
-
-    //data={"action":"unsub","merges":{"FNAME":"Joshua"}}
-    //List(tv=0, nuid=123)
-    /*Map(
-      data[ip_opt] -> 82.225.169.220, 
-      data[merges][LNAME] -> Beemster, 
-      tv -> 0, 
-      data[email] -> josh@snowplowanalytics.com, 
-      data[list_id] -> f1243a3b12, 
-      nuid -> 123, 
-      data[email_type] -> html, 
-      data[reason] -> manual, 
-      data[id] -> 94826aa750, 
-      data[merges][FNAME] -> Joshua, 
-      fired_at -> 2014-10-22 13:10:40, 
-      data[action] -> unsub, 
-      type -> unsubscribe, 
-      data[web_id] -> 203740265, 
-      data[merges][EMAIL] -> josh@snowplowanalytics.com
-    )*/
-
-    val finalMap = scala.collection.mutable.Map[String,Any]()
-    val mapObj = scala.collection.mutable.Map[String,Any]()
-
-    tempMap foreach { case (keys, value) => 
-      val count = keys.length
-
-      if (count > 1) {
-        val tempList = new ArrayList(0)
-        var x = 0
-
-        for (x <- 0 to count-1) {
-          var key = keys(x)
-          if (!finalMap.contains(key)) {
-            var toAdd = mapObj
-
-            if (x == 0) {
-              finalMap += key -> toAdd
-            }
-            else if (x == 1) {
-              finalMap += key -> toAdd
-            }
-          }
-        }
-      }
-      else {
-        var key = keys(0)
-        finalMap += key -> value
-      }
-    }
-
-    println(finalMap)
-
+    val parameters = ((toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList) 
+                       ++ qsParams) - ("nuid", "aid", "cv", "p"))
+    val myJsonObject = mergeJObjects(getJsonObject(parameters))
+    val schema = getSchema(parameters.get("type"))
     val params = compact {
       ("schema" -> SchemaUris.UnstructEvent) ~
       ("data"   -> (
         ("schema" -> schema) ~
-        ("data"   -> (parameters - ("nuid", "aid", "cv", "p")))
+        ("data"   -> myJsonObject)
       ))
     }
-
     Map(
       "tv"    -> tracker,
       "e"     -> "ue",
@@ -203,9 +139,59 @@ object MailchimpAdapter extends Adapter {
   }
 
   /**
-   * Gets the correct Schema URI for the event passed from Mailchimp
+   * Generates a list of maps from the body of the event
+   * 
+   * @param paramMap The map of all the parameters 
+   *                 for this event 
    */
-  private def getSchemaKeyString(eventType: Option[String]) : String = {
+  def getJsonObject(paramMap: Map[String,String]) =
+    for {
+      (k, v) <- paramMap
+    } yield (recurse(toKeys(k), v))
+
+  /**
+   * Returns a list of keys from a string
+   * 
+   * @param formKey The Key String that (may) need to be split.
+   *                Will return either a list of multiple keys 
+   *                or a list with a single key if no splitting 
+   *                was required.
+   */
+  def toKeys(formKey: String): List[String] = 
+    formKey.split("\\]?(\\[|\\])").toList
+
+  /**
+   * Recursively generates a correct Json Object
+   *
+   * @param keys The list of Keys generated from toKeys()
+   * @param nestedMap The value for the list of keys
+   */
+  def recurse(keys: List[String], nestedMap: String): JObject =
+    keys match {
+      case Nil => throw new RuntimeException("This should never happen - recurse error.")
+      case head :: tail if tail.size == 0 => JObject(head -> JString(nestedMap))
+      case head :: tail => JObject(head -> recurse(tail, nestedMap))
+    }
+
+  /**
+   * Merges all of the JObjects together
+
+   * @param listOfJObjects The list of JObjects which needs to be
+   *                       merged together
+   */
+  def mergeJObjects(listOfJObjects: Iterable[JObject]): JObject = 
+    listOfJObjects match {
+      case Nil => throw new RuntimeException("This should never happen - mergeJObjects error.")
+      case head :: tail => tail.foldLeft(head)(_ merge _)
+    }
+
+  /**
+   * Gets the correct Schema URI for the event passed from Mailchimp
+
+   * @param eventType The string pertaining to the type 
+   *                  of event schema we are looking for
+   */
+  private def getSchema(eventType: Option[String]) : String = {
     eventType match {
       case Some(event) if event == "subscribe" => return SchemaUris.Subscribe
       case Some(event) if event == "unsubscribe" => return SchemaUris.Unsubscribe
@@ -213,7 +199,7 @@ object MailchimpAdapter extends Adapter {
       case Some(event) if event == "cleaned" => return SchemaUris.CleanedEmail
       case Some(event) if event == "upemail" => return SchemaUris.EmailAddressChange
       case Some(event) if event == "profile" => return SchemaUris.ProfileUpdate
-      case Some(_) => return s"Bad event type sent"
+      case Some(_) => throw new RuntimeException("Invalid Event Type specified.")
     }
   }
 }
