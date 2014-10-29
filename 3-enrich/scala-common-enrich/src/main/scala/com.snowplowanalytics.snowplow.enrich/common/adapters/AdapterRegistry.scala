@@ -28,7 +28,8 @@ import loaders.CollectorPayload
 import registry.{
   SnowplowAdapter,
   AdxtrackingAdapter,
-  CallrailAdapter
+  CallrailAdapter,
+  MailchimpAdapter
 }
 
 /**
@@ -41,6 +42,7 @@ object AdapterRegistry {
     val Snowplow = "com.snowplowanalytics.snowplow"
     val Adxtracking = "com.adxtracking"
     val Callrail = "com.callrail"
+    val Mailchimp = "com.mailchimp"
   }
 
   /**
@@ -60,7 +62,8 @@ object AdapterRegistry {
     case (Vendor.Snowplow,    "tp1") => SnowplowAdapter.Tp1.toRawEvents(payload)
     case (Vendor.Snowplow,    "tp2") => SnowplowAdapter.Tp2.toRawEvents(payload)
     case (Vendor.Adxtracking, "v1")  => AdxtrackingAdapter.toRawEvents(payload)
-    case (Vendor.Callrail,    "v1")  => CallrailAdapter.toRawEvents(payload) 
+    case (Vendor.Callrail,    "v1")  => CallrailAdapter.toRawEvents(payload)
+    case (Vendor.Mailchimp,   "v1")  => MailchimpAdapter.toRawEvents(payload)
     // TODO: add Sendgrid et al
     case _ => s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".failNel
   }
