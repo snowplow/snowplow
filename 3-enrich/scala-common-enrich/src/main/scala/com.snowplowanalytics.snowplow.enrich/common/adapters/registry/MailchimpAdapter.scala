@@ -191,7 +191,7 @@ object MailchimpAdapter extends Adapter {
    * @param eventType The string pertaining to the type 
    *                  of event schema we are looking for
    */
-  private def getSchema(eventType: Option[String]) : String = {
+  def getSchema(eventType: Option[String]) : String = {
     eventType match {
       case Some(event) if event == "subscribe" => return SchemaUris.Subscribe
       case Some(event) if event == "unsubscribe" => return SchemaUris.Unsubscribe
