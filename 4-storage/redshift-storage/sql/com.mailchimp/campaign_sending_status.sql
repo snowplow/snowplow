@@ -30,11 +30,11 @@ CREATE TABLE atomic.com_mailchimp_campaign_sending_status_1 (
     -- Properties of this type
     type           varchar(255)   encode raw,
     fired_at       timestamp      encode raw,
-    data.id        varchar(255)   encode raw,
-    data.list_id   varchar(255)   encode raw,
-    data.reason    varchar(255)   encode raw,
-    data.status    varchar(255)   encode raw,
-    data.subject   varchar(255)   encode raw,
+    "data.id"      varchar(255)   encode raw,
+    "data.list_id" varchar(255)   encode raw,
+    "data.reason"  varchar(255)   encode raw,
+    "data.status"  varchar(255)   encode raw,
+    "data.subject" varchar(255)   encode raw,
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
