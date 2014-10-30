@@ -12,7 +12,7 @@
     "$.hierarchy.refTree",
     "$.hierarchy.refParent",
 
-    "$.data.type"
+    "$.data.type",
     "$.data.fired_at",
     "$.data.data.id",
     "$.data.data.list_id",
