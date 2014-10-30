@@ -12,8 +12,11 @@
     "$.hierarchy.refTree",
     "$.hierarchy.refParent",
 
-    "$.data.data",
+    "$.data.type",
     "$.data.fired_at",
-    "$.data.type"
+    "$.data.data.campaign_id",
+    "$.data.data.email",
+    "$.data.data.list_id",
+    "$.data.data.reason"
     ]
 }
