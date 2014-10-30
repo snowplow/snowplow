@@ -199,7 +199,7 @@ object CallrailAdapter extends Adapter {
    * @return a JString, of the reformatted date-time if
    *         possible, or otherwise the original String
    */
-  def reformatDateTime(str: String, fromFormat: DateTimeFormatter): JString =
+  def dateTimeToJValue(str: String, fromFormat: DateTimeFormatter): JString =
     JString(try {
       val dt = DateTime.parse(str, fromFormat)
       toJsonSchemaDateTime(dt)
@@ -235,7 +235,7 @@ object CallrailAdapter extends Adapter {
       case _ if bools.contains(key) => booleanToJValue(value)
       case _ if ints.contains(key)  => integerToJValue(value)
       case (_, Some((nel, fmt)))
-        if nel.toList.contains(key) => reformatDateTime(value, fmt)
+        if nel.toList.contains(key) => dateTimeToJValue(value, fmt)
       case _                        => JString(value)
     }
     (key, v)
