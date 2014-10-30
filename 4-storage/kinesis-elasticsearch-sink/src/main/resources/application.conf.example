@@ -1,0 +1,19 @@
+connector {
+  aws {
+    access-key: "env"
+    secret-key: "env"
+  }
+  kinesis {
+    endpoint: "us-east-1"
+    stream-name: "" # Kinesis stream name
+    app-name: "" # App name for this consumer
+  }
+  elasticsearch {
+    cluster-name: "elasticsearch"
+    endpoint: "localhost" # Put s3 Bucket here
+  }
+  buffer {
+      byte-limit: 5242880 # 5MB
+      record-limit: 1000 # 1K records
+  }
+}
