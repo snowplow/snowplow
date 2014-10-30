@@ -26,9 +26,7 @@ import iglu.client.validation.ValidatableJsonMethods._
 
 // Java
 import java.util.Map.{Entry => JMapEntry}
-import java.util.ArrayList
 import java.net.URI
-import java.net.URLDecoder
 import org.apache.http.client.utils.URLEncodedUtils
 
 // Jackson
@@ -49,7 +47,6 @@ import org.json4s.scalaz.JsonScalaz._
 
 // This project
 import loaders.CollectorPayload
-import utils.JsonUtils
 
 /**
  * Transforms a collector payload which conforms to
@@ -110,11 +107,12 @@ object MailchimpAdapter extends Adapter {
    * must contain e, p and tv parameters, so we
    * make sure to set those.
    *
-   * @param tracker The name and version of this
-   *        tracker
-   * @param parameters The raw-event parameters
-   *        we will nest into the unstructured event
-   * @param schema The schema for the event passed
+   * @param tracker  The name and version of this
+   *                 tracker
+   * @param qsParams The raw-event parameters we will
+   *                 nest into the unstructured event
+   * @param body     The body of the mailchimp event
+   *                 passed as a string
    * @return the raw-event parameters for a valid
    *         Snowplow unstructured event
    */
