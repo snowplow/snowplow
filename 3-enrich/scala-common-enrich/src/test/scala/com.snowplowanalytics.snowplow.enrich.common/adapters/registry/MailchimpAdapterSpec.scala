@@ -46,11 +46,17 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
 
   "This is a specification to test the MailchimpAdapter functionality"                                                       ^
                                                                                                                             p^
-  "getSchema should return the correct schema for the type of event or throw a runtime exception"                            ! e1^
-  "toKeys should return a valid List of Keys from a string containing braces (or not)"                                       ! e2^
-  "recurse should return a valid JObject which contains the toKeys list and value supplied"                                  ! e3^
-  "getJsonObject should return a valid list JObjects which pertain to the map supplied"                                      ! e4^
-  "mergeJObjects should return a correctly merged JSON which matches the expectation"                                        ! e5^
+  "toKeys should return a valid List of Keys from a string containing braces (or not)"                                       ! e1^
+  "recurse should return a valid JObject which contains the toKeys list and value supplied"                                  ! e2^
+  "getJsonObject should return a valid list JObjects which pertain to the map supplied"                                      ! e3^
+  "mergeJObjects should return a correctly merged JSON which matches the expectation"                                        ! e4^
+  "getSchema should return the correct schema for the subscribe event type"                                                  ! e5^
+  "getSchema should return the correct schema for the unsubscribe event type"                                                ! e6^
+  "getSchema should return the correct schema for the campaign event type"                                                   ! e7^
+  "getSchema should return the correct schema for the cleaned event type"                                                    ! e8^
+  "getSchema should return the correct schema for the upemail event type"                                                    ! e9^
+  "getSchema should return the correct schema for the profile event type"                                                    ! e10^
+  "getSchema should return a runtime error for a bad event type"                                                             ! e11^
                                                                                                                              end
   implicit val resolver = SpecHelpers.IgluResolver
 
@@ -74,19 +80,12 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   val ContentType = "application/x-www-form-urlencoded; charset=utf-8"
 
   def e1 = {
-    val schemaType = "subscribe"
-    val schemaReturn = MailchimpAdapter.getSchema(Some(schemaType))
-    val expected = "iglu:com.mailchimp/subscribe/jsonschema/1-0-0"
-    schemaReturn mustEqual expected
-  }
-
-  def e2 = {
     val toKeysTest = MailchimpAdapter.toKeys("data[merges][LNAME]")
     val expected = List("data","merges","LNAME")
     toKeysTest mustEqual expected
   }
 
-  def e3 = {
+  def e2 = {
     val keysArray = List("data","merges","LNAME")
     val value = "Beemster"
     val expected = JObject(List(("data",JObject(List(("merges",JObject(List(("LNAME",JString("Beemster"))))))))))
@@ -94,18 +93,65 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
     testRecursive mustEqual expected
   }
 
-  def e4 = {
+  def e3 = {
     val m = Map("data[merges][LNAME]" -> "Beemster")
     val expected = List(JObject(List(("data",JObject(List(("merges",JObject(List(("LNAME",JString("Beemster")))))))))))
     val testMap = MailchimpAdapter.getJsonObject(m)
     testMap mustEqual expected
   }
 
-  def e5 = {
+  def e4 = {
     val m = Map("data[merges][LNAME]" -> "Beemster", "data[merges][FNAME]" -> "Joshua")
     val jsonObject = MailchimpAdapter.getJsonObject(m)
     val mergedJsonString = compact(render(MailchimpAdapter.mergeJObjects(jsonObject)))
     val expected = "{\"data\":{\"merges\":{\"LNAME\":\"Beemster\",\"FNAME\":\"Joshua\"}}}"
     mergedJsonString mustEqual expected
+  }
+
+  def e5 = {
+    val schemaType = "subscribe"
+    val schemaReturn = MailchimpAdapter.getSchema(Some(schemaType))
+    val expected = "iglu:com.mailchimp/subscribe/jsonschema/1-0-0"
+    schemaReturn mustEqual expected
+  }
+
+  def e6 = {
+    val schemaType = "unsubscribe"
+    val schemaReturn = MailchimpAdapter.getSchema(Some(schemaType))
+    val expected = "iglu:com.mailchimp/unsubscribe/jsonschema/1-0-0"
+    schemaReturn mustEqual expected
+  }
+
+  def e7 = {
+    val schemaType = "campaign"
+    val schemaReturn = MailchimpAdapter.getSchema(Some(schemaType))
+    val expected = "iglu:com.mailchimp/campaign_sending_status/jsonschema/1-0-0"
+    schemaReturn mustEqual expected
+  }
+
+  def e8 = {
+    val schemaType = "cleaned"
+    val schemaReturn = MailchimpAdapter.getSchema(Some(schemaType))
+    val expected = "iglu:com.mailchimp/cleaned_email/jsonschema/1-0-0"
+    schemaReturn mustEqual expected
+  }
+
+  def e9 = {
+    val schemaType = "upemail"
+    val schemaReturn = MailchimpAdapter.getSchema(Some(schemaType))
+    val expected = "iglu:com.mailchimp/email_address_change/jsonschema/1-0-0"
+    schemaReturn mustEqual expected
+  }
+
+  def e10 = {
+    val schemaType = "profile"
+    val schemaReturn = MailchimpAdapter.getSchema(Some(schemaType))
+    val expected = "iglu:com.mailchimp/profile_update/jsonschema/1-0-0"
+    schemaReturn mustEqual expected
+  }
+
+  def e11 = {
+    (MailchimpAdapter.getSchema(Some("")) must throwA[RuntimeException]).message mustEqual 
+      "Got the exception java.lang.RuntimeException: Invalid Event Type specified."
   }
 }
