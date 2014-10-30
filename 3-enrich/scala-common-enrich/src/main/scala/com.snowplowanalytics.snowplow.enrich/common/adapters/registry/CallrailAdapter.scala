@@ -41,7 +41,7 @@ import org.json4s.jackson.JsonMethods._
 
 // This project
 import loaders.CollectorPayload
-import utils.JsonUtils
+import utils.{JsonUtils => JU}
 
 /**
  * Transforms a collector payload which conforms to
@@ -62,23 +62,12 @@ object CallrailAdapter extends Adapter {
   // Datetime format used by CallRail (as we will need to massage)
   private val CallrailDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
 
-  // TODO: move this out
-  private val JsonSchemaDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
-
   // Fields known to need datatype cleaning/conversion ready for JSON Schema validation
-  private val BoolFields = List("first_call", "answered")
-  private val IntFields  = List("duration")
-  private val DateFields = Some(NonEmptyList("datetime"), CallrailDateTimeFormat)
-
-  /**
-   * Converts a Joda DateTime into
-   * a JSON Schema-compatible date-time string.
-   *
-   * @param datetime The Joda DateTime
-   *        to convert to a timestamp String
-   * @return the timestamp String
-   */
-  def toJsonSchemaDateTime(dateTime: DateTime): String = JsonSchemaDateTimeFormat.print(dateTime)
+  private object Fields {
+    val Bools = List("first_call", "answered")
+    val Ints = List("duration")
+    val DateTimes: JU.DateTimeFields = Some(NonEmptyList("datetime"), CallrailDateTimeFormat)
+  }
 
   /**
    * Converts a CollectorPayload instance into raw events.
@@ -99,7 +88,8 @@ object CallrailAdapter extends Adapter {
     } else {
       NonEmptyList(RawEvent(
         api          = payload.api,
-        parameters   = toUnstructEventParams(TrackerVersion, params),
+        parameters   = toUnstructEventParams(TrackerVersion, params,
+                         SchemaUris.CallComplete, Fields.Bools, Fields.Ints, Fields.DateTimes),
         contentType  = payload.contentType,
         source       = payload.source,
         context      = payload.context
@@ -118,21 +108,30 @@ object CallrailAdapter extends Adapter {
    *        tracker
    * @param parameters The raw-event parameters
    *        we will nest into the unstructured event
+   * @param schema The schema key which defines this
+   *        unstructured event as a String
+   * @param bools A List of keys whose values should be
+   *        processed as boolean-like Strings
+   * @param ints A List of keys whose values should be
+   *        processed as integer-like Strings
+   * @param dates If Some, a NEL of keys whose values should
+   *        be treated as date-time-like Strings, which will
+   *        require processing from the specified format
    * @return the raw-event parameters for a valid
    *         Snowplow unstructured event
    */
   // TODO: move this out and standardize
-  private def toUnstructEventParams(tracker: String, parameters: RawEventParameters):
-    RawEventParameters = {
+  private def toUnstructEventParams(tracker: String, parameters: RawEventParameters, schema: String,
+    bools: List[String], ints: List[String], dateTimes: JU.DateTimeFields): RawEventParameters = {
 
     val params: JObject = for {
       p <- (parameters -("nuid", "aid", "cv", "p")).toList
-    } yield toJField(p._1, p._2, BoolFields, IntFields, DateFields)
+    } yield JU.toJField(p._1, p._2, bools, ints, dateTimes)
 
     val json = compact {
       ("schema" -> SchemaUris.UnstructEvent) ~
       ("data"   -> (
-        ("schema" -> SchemaUris.CallComplete) ~
+        ("schema" -> schema) ~
         ("data"   -> params)
       ))
     }
@@ -143,102 +142,6 @@ object CallrailAdapter extends Adapter {
       "p"     -> parameters.getOrElse("p", "app"), // Required field
       "ue_pr" -> json) ++
     parameters.filterKeys(Set("nuid", "aid", "cv"))
-  }
-
-  /**
-   * Converts a boolean-like String of value "true"
-   * or "false" to a JBool value of true or false
-   * respectively. Any other value becomes a
-   * JString.
-   *
-   * No erroring if the String is not boolean-like,
-   * leave it to eventual JSON Schema validation
-   * to enforce that. 
-   *
-   * @param str The boolean-like String to convert
-   * @return true for "true", false for "false",
-   *         and otherwise a JString wrapping the
-   *         original String
-   */
-  def booleanToJValue(str: String): JValue = str match {
-    case "true" => JBool(true)
-    case "false" => JBool(false)
-    case _ => JString(str)
-  }
-
-  /**
-   * Converts an integer-like String to a
-   * JInt value. Any other value becomes a
-   * JString.
-   *
-   * No erroring if the String is not integer-like,
-   * leave it to eventual JSON Schema validation
-   * to enforce that.
-   *
-   * @param str The integer-like String to convert
-   * @return a JInt if the String was integer-like,
-   *         or else a JString wrapping the original
-   *         String.
-   */
-  def integerToJValue(str: String): JValue =
-    try {
-      JInt(new JBigInteger(str))
-    } catch {
-      case nfe: NumberFormatException =>
-        JString(str)
-    }
-
-  /**
-   * Reformats a non-standard date-time into a format
-   * compatible with JSON Schema's date-time format
-   * validation. If the String does not match the
-   * expected date format, then return the original String.
-   *
-   * @param str The date-time-like String to reformat
-   *        to pass JSON Schema validation
-   * @return a JString, of the reformatted date-time if
-   *         possible, or otherwise the original String
-   */
-  def dateTimeToJValue(str: String, fromFormat: DateTimeFormatter): JString =
-    JString(try {
-      val dt = DateTime.parse(str, fromFormat)
-      toJsonSchemaDateTime(dt)
-    } catch {
-      case iae: IllegalArgumentException => str
-    })
-
-  /**
-   * Converts an incoming key, value into a json4s JValue.
-   * Uses the lists of keys which should contain bools,
-   * ints and dates to apply specific processing to
-   * those values when found.
-   *
-   * @param key The key of the field to generate. Also used
-   *        to determine what additional processing should
-   *        be applied to the value
-   * @param value The value of the field
-   * @param bools A List of keys whose values should be
-   *        processed as boolean-like Strings
-   * @param ints A List of keys whose values should be
-   *        processed as integer-like Strings
-   * @param dates If Some, a NEL of keys whose values should
-   *        be treated as date-time-like Strings, which will
-   *        require processing from the specified format
-   * @return a JField, containing the original key and the
-   *         processed String, now as a JValue
-   */
-  def toJField(key: String, value: String, bools: List[String], ints: List[String],
-    dates: Option[Tuple2[NonEmptyList[String], DateTimeFormatter]]): JField = {
-    
-    val v = (value, dates) match {
-      case ("", _)                  => JNull
-      case _ if bools.contains(key) => booleanToJValue(value)
-      case _ if ints.contains(key)  => integerToJValue(value)
-      case (_, Some((nel, fmt)))
-        if nel.toList.contains(key) => dateTimeToJValue(value, fmt)
-      case _                        => JString(value)
-    }
-    (key, v)
   }
 
 }
