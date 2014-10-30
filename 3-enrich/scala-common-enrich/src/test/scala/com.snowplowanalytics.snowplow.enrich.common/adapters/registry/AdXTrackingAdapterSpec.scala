@@ -86,9 +86,9 @@ class AdXTrackingAdapterSpec extends Specification with DataTables with Validati
             |"data":{
               |"schema":"iglu:com.adxtracking/app_install/jsonschema/1-0-0",
               |"data":{
-                |"sub_adgroup":"",
-                |"sub_campaign":"",
-                |"tracking_id":"",
+                |"sub_adgroup":null,
+                |"sub_campaign":null,
+                |"tracking_id":null,
                 |"publisher_name":"Organic",
                 |"user":"6353af9b-e288-4cf3-9f1c-b377a9c84dac"
               |}
@@ -159,7 +159,7 @@ class AdXTrackingAdapterSpec extends Specification with DataTables with Validati
                 |"data":{
                   |"sub_adgroup":"UN-11-b",
                   |"sub_campaign":"newsfeed",
-                  |"tracking_id":"",
+                  |"tracking_id":null,
                   |"publisher_name":"Organic",
                   |"user":"6353af9b-e288-4cf3-9f1c-b377a9c84dac"
                 |}

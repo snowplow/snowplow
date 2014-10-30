@@ -48,7 +48,6 @@ object AdXTrackingAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private object SchemaUris {
-    val UnstructEvent = SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", "1-0-0").toSchemaUri
     val AppInstall = SchemaKey("com.adxtracking", "app_install", "jsonschema", "1-0-0").toSchemaUri
   }
 
@@ -77,45 +76,12 @@ object AdXTrackingAdapter extends Adapter {
         case Some(_) =>
           NonEmptyList(RawEvent(
             api          = payload.api,
-            parameters   = toUnstructEventParams(TrackerVersion, params - "name"),
+            parameters   = toUnstructEventParams(TrackerVersion, params - "name", SchemaUris.AppInstall, Nil, Nil, None),
             contentType  = payload.contentType,
             source       = payload.source,
             context      = payload.context
             )).success
       }
     }
-  }
-
-  /**
-   * Fabricates a Snowplow unstructured event from
-   * the supplied parameters. Note that to be a
-   * valid Snowplow unstructured event, the event
-   * must contain e, p and tv parameters, so we
-   * make sure to set those.
-   *
-   * @param tracker The name and version of this
-   *        tracker
-   * @param parameters The raw-event parameters
-   *        we will nest into the unstructured event
-   * @return the raw-event parameters for a valid
-   *         Snowplow unstructured event
-   */
-  private def toUnstructEventParams(tracker: String, parameters: RawEventParameters):
-    RawEventParameters = {
-
-    val params = compact {
-      ("schema" -> SchemaUris.UnstructEvent) ~
-      ("data"   -> (
-        ("schema" -> SchemaUris.AppInstall) ~
-        ("data"   -> (parameters -("nuid", "aid", "cv", "p")))
-      ))
-    }
-
-    Map(
-      "tv"    -> tracker,
-      "e"     -> "ue",
-      "p"     -> parameters.getOrElse("p", "app"), // Required field
-      "ue_pr" -> params) ++
-    parameters.filterKeys(Set("nuid", "aid", "cv"))
   }
 }
