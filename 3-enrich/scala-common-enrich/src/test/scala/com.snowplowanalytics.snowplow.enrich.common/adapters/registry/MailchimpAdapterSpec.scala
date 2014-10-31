@@ -51,8 +51,10 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   "getJsonObject should return a valid list JObjects which pertain to the map supplied"                               ! e3^
   "mergeJObjects should return a correctly merged JSON which matches the expectation"                                 ! e4^
   "getSchema should return the correct schema for a valid event type"                                                 ! e5^
-  "getSchema should return a runtime error for a bad event type"                                                      ! e6^
-  "toRawEvents should return a NEL containing a query string and raw events"                                          ! e7^
+  "getSchema should return a Nel Failure error for a bad event type"                                                  ! e6^
+  "toRawEvents should return a NEL containing an unsubscribe event and query string parameters"                       ! e7^
+  "toRawEvents must be failing if no type parameter is passed in the body"                                            ! e8^
+  "toRawEvents must be failing if the body content is empty"                                                          ! e9^
                                                                                                                      end
   implicit val resolver = SpecHelpers.IgluResolver
 
@@ -112,12 +114,11 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
     "Valid, type email"       !! "upemail"      ! "iglu:com.mailchimp/email_address_change/jsonschema/1-0-0"      |
     "Valid, type cleaned"     !! "cleaned"      ! "iglu:com.mailchimp/cleaned_email/jsonschema/1-0-0"             |
     "Valid, type campaign"    !! "campaign"     ! "iglu:com.mailchimp/campaign_sending_status/jsonschema/1-0-0"   |> {
-      (_, schema, expected) => MailchimpAdapter.getSchema(Some(schema)) mustEqual expected
+      (_, schema, expected) => MailchimpAdapter.getSchema(Some(schema)) must beSuccessful(expected)
   }
 
   def e6 = {
-    (MailchimpAdapter.getSchema(Some("")) must throwA[RuntimeException]).message mustEqual 
-      "Got the exception java.lang.RuntimeException: Invalid Event Type specified."
+    MailchimpAdapter.getSchema(Some("")) must beFailing(NonEmptyList("Invalid event type passed"))
   }
 
   def e7 = {
@@ -152,7 +153,23 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
             |}
           |}""".stripMargin.replaceAll("[\n\r]","")
     val actual = MailchimpAdapter.toRawEvents(payload)
-    
+
     actual must beSuccessful(NonEmptyList(RawEvent(Shared.api, Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "app", "ue_pr" -> expectedJson), ContentType.some, Shared.cfSource, Shared.context)))
+  }
+
+  def e8 = {
+    val body = "fired_at=2014-10-22+13%3A10%3A40"
+    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cfSource, Shared.context)
+    val actual = MailchimpAdapter.toRawEvents(payload)
+
+    actual must beFailing(NonEmptyList("No event type passed with event body"))
+  }
+
+  def e9 = {
+    val body = ""
+    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cfSource, Shared.context)
+    val actual = MailchimpAdapter.toRawEvents(payload)
+
+    actual must beFailing(NonEmptyList("Mailchimp Events require information to be in the body"))
   }
 }
