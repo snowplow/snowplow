@@ -28,6 +28,7 @@ import iglu.client.validation.ValidatableJsonMethods._
 import java.util.Map.{Entry => JMapEntry}
 import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
+import org.apache.http.NameValuePair
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
