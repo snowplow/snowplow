@@ -63,9 +63,9 @@ trait Adapter {
    * @param parameters A NonEmptyList of name:value pairs
    * @return the name:value pairs in Map form
    */
-  def toMap(parameters: List[NameValuePair]): Map[String, String] =
+  // TODO: can this become private?
+  protected[registry] def toMap(parameters: List[NameValuePair]): Map[String, String] =
     parameters.map(p => (p.getName -> p.getValue)).toList.toMap
-
 
   /**
    * Fabricates a Snowplow unstructured event from
@@ -90,7 +90,7 @@ trait Adapter {
    * @return the raw-event parameters for a valid
    *         Snowplow unstructured event
    */
-  def toUnstructEventParams(tracker: String, parameters: RawEventParameters, schema: String,
+  protected[registry] def toUnstructEventParams(tracker: String, parameters: RawEventParameters, schema: String,
     bools: List[String], ints: List[String], dateTimes: JU.DateTimeFields): RawEventParameters = {
 
     val params: JObject = for {

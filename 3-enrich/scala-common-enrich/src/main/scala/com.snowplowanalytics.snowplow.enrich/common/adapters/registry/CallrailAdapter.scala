@@ -31,8 +31,8 @@ import scalaz._
 import Scalaz._
 
 // Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+import org.joda.time.DateTimeZone
+import org.joda.time.format.DateTimeFormat
 
 // json4s
 import org.json4s._
