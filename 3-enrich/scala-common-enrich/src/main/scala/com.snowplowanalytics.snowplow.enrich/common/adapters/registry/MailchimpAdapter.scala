@@ -86,17 +86,23 @@ object MailchimpAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
     val qsParams = toMap(payload.querystring)
-    payload.body match {
-      case (None) if qsParams.isEmpty => s"Request body and querystring parameters empty, expected at least one populated".failNel
-      case (None)                     => s"Event body empty".failNel
-      case (Some(body))               => // Build our NEL of parameters
-        NonEmptyList(RawEvent(
-          api          = payload.api,
-          parameters   = toUnstructEventParams(TrackerVersion, qsParams, body),
-          contentType  = payload.contentType,
-          source       = payload.source,
-          context      = payload.context
-          )).success
+    val bodyParams = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + payload.body.get), "UTF-8").toList)
+
+    Some(bodyParams) match {
+      case (Some(body)) if body.size == 0                     => s"Mailchimp Events require information to be in the body".failNel
+      case (Some(body)) if !body.contains("type")             => s"No event type passed with event body".failNel
+      case (Some(body))                                       => // Build our NEL of parameters
+        for {
+          unstructEventParams <- toUnstructEventParams(TrackerVersion, qsParams, body)
+        } yield {
+          NonEmptyList(RawEvent(
+            api          = payload.api,
+            parameters   = unstructEventParams,
+            contentType  = payload.contentType,
+            source       = payload.source,
+            context      = payload.context
+          ))
+        }
       }
   }
 
@@ -116,28 +122,30 @@ object MailchimpAdapter extends Adapter {
    * @return the raw-event parameters for a valid
    *         Snowplow unstructured event
    */
-  private def toUnstructEventParams(tracker: String, qsParams: RawEventParameters, body: String): RawEventParameters = {
-    val parameters = ((toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList) 
-                       ++ qsParams) - ("nuid", "aid", "cv", "p"))
-    val myJsonObject = mergeJObjects(getJsonObject(parameters))
-    val schema = getSchema(parameters.get("type"))
-    val params = compact {
-      ("schema" -> SchemaUris.UnstructEvent) ~
-      ("data"   -> (
-        ("schema" -> schema) ~
-        ("data"   -> myJsonObject)
-      ))
+  private def toUnstructEventParams(tracker: String, qsParams: RawEventParameters, body: RawEventParameters):  Validated[RawEventParameters] = {
+    for {
+      schema <- getSchema(body.get("type"))
+    } yield {
+      val myJsonObject = mergeJObjects(getJsonObject(body))
+      val parameters = body ++ qsParams - ("nuid", "aid", "cv", "p")
+      val params = compact {
+        ("schema" -> SchemaUris.UnstructEvent) ~
+        ("data"   -> (
+          ("schema" -> schema) ~
+          ("data"   -> myJsonObject)
+        ))
+      }
+      Map(
+        "tv"    -> tracker,
+        "e"     -> "ue",
+        "p"     -> parameters.getOrElse("p", "app"),
+        "ue_pr" -> params
+      ) ++ parameters.filterKeys(Set("nuid", "aid", "cv"))
     }
-    Map(
-      "tv"    -> tracker,
-      "e"     -> "ue",
-      "p"     -> parameters.getOrElse("p", "app"),
-      "ue_pr" -> params
-    ) ++ parameters.filterKeys(Set("nuid", "aid", "cv"))
   }
 
   /**
-   * Generates a list of maps from the body of the event
+   * Generates a list of Json Objects from the body of the event
    * 
    * @param paramMap The map of all the parameters 
    *                 for this event 
@@ -166,7 +174,6 @@ object MailchimpAdapter extends Adapter {
    */
   def recurse(keys: List[String], nestedMap: String): JObject =
     keys match {
-      case Nil => throw new RuntimeException("This should never happen - recurse error.")
       case head :: tail if tail.size == 0 => JObject(head -> JString(nestedMap))
       case head :: tail => JObject(head -> recurse(tail, nestedMap))
     }
@@ -189,15 +196,15 @@ object MailchimpAdapter extends Adapter {
    * @param eventType The string pertaining to the type 
    *                  of event schema we are looking for
    */
-  def getSchema(eventType: Option[String]) : String = {
+  def getSchema(eventType: Option[String]): Validation[NonEmptyList[String],String] = {
     eventType match {
-      case Some(event) if event == "subscribe" => return SchemaUris.Subscribe
-      case Some(event) if event == "unsubscribe" => return SchemaUris.Unsubscribe
-      case Some(event) if event == "campaign" => return SchemaUris.CampaignSendingStatus
-      case Some(event) if event == "cleaned" => return SchemaUris.CleanedEmail
-      case Some(event) if event == "upemail" => return SchemaUris.EmailAddressChange
-      case Some(event) if event == "profile" => return SchemaUris.ProfileUpdate
-      case Some(_) => throw new RuntimeException("Invalid Event Type specified.")
+      case Some(event) if event == "subscribe" => SchemaUris.Subscribe.success
+      case Some(event) if event == "unsubscribe" => SchemaUris.Unsubscribe.success
+      case Some(event) if event == "campaign" => SchemaUris.CampaignSendingStatus.success
+      case Some(event) if event == "cleaned" => SchemaUris.CleanedEmail.success
+      case Some(event) if event == "upemail" => SchemaUris.EmailAddressChange.success
+      case Some(event) if event == "profile" => SchemaUris.ProfileUpdate.success
+      case Some(_) => "Invalid event type passed".failNel
     }
   }
 }
