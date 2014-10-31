@@ -89,9 +89,9 @@ object MailchimpAdapter extends Adapter {
     val bodyParams = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + payload.body.get), "UTF-8").toList)
 
     Some(bodyParams) match {
-      case (Some(body)) if body.size == 0                     => s"Mailchimp Events require information to be in the body".failNel
-      case (Some(body)) if !body.contains("type")             => s"No event type passed with event body".failNel
-      case (Some(body))                                       => // Build our NEL of parameters
+      case (Some(body)) if body.size == 0         => s"Mailchimp Events require information to be in the body".failNel
+      case (Some(body)) if !body.contains("type") => s"No event type passed with event body".failNel
+      case (Some(body))                           => // Build our NEL of parameters
         for {
           unstructEventParams <- toUnstructEventParams(TrackerVersion, qsParams, body)
         } yield {
@@ -124,15 +124,15 @@ object MailchimpAdapter extends Adapter {
    */
   private def toUnstructEventParams(tracker: String, qsParams: RawEventParameters, body: RawEventParameters):  Validated[RawEventParameters] = {
     for {
-      schema <- getSchema(body.get("type"))
+      schema           <- getSchema(body.get("type"))
+      mergedJsonObject <- mergeJObjects(getJsonObject(body))
     } yield {
-      val myJsonObject = mergeJObjects(getJsonObject(body))
       val parameters = body ++ qsParams - ("nuid", "aid", "cv", "p")
       val params = compact {
         ("schema" -> SchemaUris.UnstructEvent) ~
         ("data"   -> (
           ("schema" -> schema) ~
-          ("data"   -> myJsonObject)
+          ("data"   -> mergedJsonObject)
         ))
       }
       Map(
@@ -150,10 +150,11 @@ object MailchimpAdapter extends Adapter {
    * @param paramMap The map of all the parameters 
    *                 for this event 
    */
-  def getJsonObject(paramMap: Map[String,String]) =
+  def getJsonObject(paramMap: Map[String,String]): Iterable[JObject] = {
     for {
       (k, v) <- paramMap
     } yield (recurse(toKeys(k), v))
+  }
 
   /**
    * Returns a list of keys from a string
@@ -175,7 +176,7 @@ object MailchimpAdapter extends Adapter {
   def recurse(keys: List[String], nestedMap: String): JObject =
     keys match {
       case head :: tail if tail.size == 0 => JObject(head -> JString(nestedMap))
-      case head :: tail => JObject(head -> recurse(tail, nestedMap))
+      case head :: tail                   => JObject(head -> recurse(tail, nestedMap))
     }
 
   /**
@@ -184,10 +185,10 @@ object MailchimpAdapter extends Adapter {
    * @param listOfJObjects The list of JObjects which needs to be
    *                       merged together
    */
-  def mergeJObjects(listOfJObjects: Iterable[JObject]): JObject = 
+  def mergeJObjects(listOfJObjects: Iterable[JObject]): Validated[JObject] = 
     listOfJObjects match {
-      case Nil => throw new RuntimeException("This should never happen - mergeJObjects error.")
-      case head :: tail => tail.foldLeft(head)(_ merge _)
+      case Nil          => s"No JObjects to merge".failNel
+      case head :: tail => tail.foldLeft(head)(_ merge _).success
     }
 
   /**
@@ -196,15 +197,16 @@ object MailchimpAdapter extends Adapter {
    * @param eventType The string pertaining to the type 
    *                  of event schema we are looking for
    */
-  def getSchema(eventType: Option[String]): Validation[NonEmptyList[String],String] = {
+  def getSchema(eventType: Option[String]): Validated[String] = {
     eventType match {
-      case Some(event) if event == "subscribe" => SchemaUris.Subscribe.success
-      case Some(event) if event == "unsubscribe" => SchemaUris.Unsubscribe.success
-      case Some(event) if event == "campaign" => SchemaUris.CampaignSendingStatus.success
-      case Some(event) if event == "cleaned" => SchemaUris.CleanedEmail.success
-      case Some(event) if event == "upemail" => SchemaUris.EmailAddressChange.success
-      case Some(event) if event == "profile" => SchemaUris.ProfileUpdate.success
-      case Some(_) => "Invalid event type passed".failNel
+      case Some("subscribe")   => SchemaUris.Subscribe.success
+      case Some("unsubscribe") => SchemaUris.Unsubscribe.success
+      case Some("campaign")    => SchemaUris.CampaignSendingStatus.success
+      case Some("cleaned")     => SchemaUris.CleanedEmail.success
+      case Some("upemail")     => SchemaUris.EmailAddressChange.success
+      case Some("profile")     => SchemaUris.ProfileUpdate.success
+      case Some(event)         => s"Invalid event type passed to getSchema - $event".failNel
+      case None                => s"No event type passed to getSchema".failNel
     }
   }
 }
