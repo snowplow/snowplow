@@ -53,7 +53,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   "mergeJObjects should return a Nel Failure for an empty List of JObjects"                                           ! e5^
   "getSchema should return the correct schema for a valid event type"                                                 ! e6^
   "getSchema should return a Nel Failure error for a bad event type"                                                  ! e7^
-  "toRawEvents should return a NEL containing an unsubscribe event and query string parameters"                       ! e8^
+  "toRawEvents should return a Nel Success containing an unsubscribe event and query string parameters"               ! e8^
   "toRawEvents must be failing if no type parameter is passed in the body"                                            ! e9^
   "toRawEvents must be failing if the body content is empty"                                                          ! e10^
                                                                                                                      end
