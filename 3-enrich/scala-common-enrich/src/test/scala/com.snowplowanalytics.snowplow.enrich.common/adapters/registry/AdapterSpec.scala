@@ -24,6 +24,11 @@ import iglu.client.Resolver
 import scalaz._
 import Scalaz._
 
+// json4s
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+
 // Snowplow
 import loaders.CollectorPayload
 import SpecHelpers._
@@ -38,6 +43,7 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
   "This is a specification to test the Adapter trait's functionality"                                                  ^
                                                                                                                       p^
   "toMap should convert a list of name-value pairs into a map"                                                         ! e1^
+  "toUnstructEventParams should generate a boilerplate set of parameters for an empty unstructured event"              ! e2^
                                                                                                                        end
 
   implicit val resolver = SpecHelpers.IgluResolver
@@ -49,6 +55,16 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
   def e1 = {
     val pairs = toNameValuePairs("a" -> "1", "b" -> "2", "c" -> "3")
     BaseAdapter.toMap(pairs) must_== Map("a" -> "1", "b" -> "2", "c" -> "3")
+  }
+
+  def e2 = {
+    val params = BaseAdapter.toUnstructEventParams("tv", Map[String, String](), "iglu:foo", _ => List[JField]())
+    params must_== Map(
+      "tv"    -> "tv",
+      "e"     -> "ue",
+      "p"     -> "app",
+      "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:foo","data":{}}}"""
+    )
   }
 
 }
