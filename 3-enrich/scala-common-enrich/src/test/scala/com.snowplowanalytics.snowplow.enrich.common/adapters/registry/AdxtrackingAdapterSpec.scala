@@ -36,9 +36,9 @@ import org.specs2.{Specification, ScalaCheck}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class AdXTrackingAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
+class AdxtrackingAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
 
-  "This is a specification to test the AdXTrackingAdapter functionality"                                                     ^
+  "This is a specification to test the AdxtrackingAdapter functionality"                                                     ^
                                                                                                                             p^
   "toRawEvents should return a NEL containing one RawEvent if the CloudFront querystring is minimally populated"             ! e1^
   "toRawEvents should return a NEL containing one RawEvent if the CloudFront querystring is maximally populated"             ! e2^
@@ -78,7 +78,7 @@ class AdXTrackingAdapterSpec extends Specification with DataTables with Validati
       "sub_adgroup"    -> ""
       )
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
-    val actual = AdXTrackingAdapter.toRawEvents(payload)
+    val actual = AdxtrackingAdapter.toRawEvents(payload)
 
     val expectedJson =
       """|{
@@ -109,7 +109,7 @@ class AdXTrackingAdapterSpec extends Specification with DataTables with Validati
       "aid"            -> "webhooks"
       )    
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
-    val actual = AdXTrackingAdapter.toRawEvents(payload)
+    val actual = AdxtrackingAdapter.toRawEvents(payload)
     
     val expectedMap = {
       val json =
@@ -148,7 +148,7 @@ class AdXTrackingAdapterSpec extends Specification with DataTables with Validati
       "nuid"           -> ""
       )
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.cljSource, Shared.context)
-    val actual = AdXTrackingAdapter.toRawEvents(payload)
+    val actual = AdxtrackingAdapter.toRawEvents(payload)
     
     val expectedMap = {
       val json =
@@ -184,7 +184,7 @@ class AdXTrackingAdapterSpec extends Specification with DataTables with Validati
       "p"              -> "mob"
       )
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
-    val actual = AdXTrackingAdapter.toRawEvents(payload)
+    val actual = AdxtrackingAdapter.toRawEvents(payload)
 
     val expectedJson =
       """|{
@@ -204,7 +204,7 @@ class AdXTrackingAdapterSpec extends Specification with DataTables with Validati
   def e5 = {
     val params = toNameValuePairs()
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
-    val actual = AdXTrackingAdapter.toRawEvents(payload)
+    val actual = AdxtrackingAdapter.toRawEvents(payload)
 
     actual must beFailing(NonEmptyList("Querystring is empty: no AD-X Tracking event to process"))
   }
@@ -214,7 +214,7 @@ class AdXTrackingAdapterSpec extends Specification with DataTables with Validati
       "user" -> "6353af9b-e288-4cf3-9f1c-b377a9c84dac"
       )
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
-    val actual = AdXTrackingAdapter.toRawEvents(payload)
+    val actual = AdxtrackingAdapter.toRawEvents(payload)
 
     actual must beFailing(NonEmptyList("Querystring does not contain name parameter: cannot determine type of AD-X Tracking event"))
   }
@@ -224,7 +224,7 @@ class AdXTrackingAdapterSpec extends Specification with DataTables with Validati
       "name" -> "Uninstall"
       )
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
-    val actual = AdXTrackingAdapter.toRawEvents(payload)
+    val actual = AdxtrackingAdapter.toRawEvents(payload)
 
     actual must beFailing(NonEmptyList("Unexpected name parameter Uninstall for AD-X Tracking event; expected Install"))
   }

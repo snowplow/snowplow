@@ -41,7 +41,7 @@ import utils.JsonUtils
  * a known version of the AD-X Tracking webhook
  * into raw events.
  */
-object AdXTrackingAdapter extends Adapter {
+object AdxtrackingAdapter extends Adapter {
 
   // Tracker version for an AD-X Tracking webhook
   private val TrackerVersion = "com.adxtracking-v1"
