@@ -44,7 +44,9 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
                                                                                                                       p^
   "toMap should convert a list of name-value pairs into a map"                                                         ! e1^
   "toUnstructEventParams should generate a boilerplate set of parameters for an empty unstructured event"              ! e2^
+  "toUnstructEventParams should preserve nuid, aid, cv and p outside of the unstructured event"                        ! e3^
                                                                                                                        end
+  // TODO: add test for buildFormatter()
 
   implicit val resolver = SpecHelpers.IgluResolver
 
@@ -63,6 +65,16 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
       "tv"    -> "tv",
       "e"     -> "ue",
       "p"     -> "app",
+      "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:foo","data":{}}}"""
+    )
+  }
+
+  def e3 = {
+    val shared = Map("nuid" -> "123", "aid" -> "42", "cv" -> "clj-tomcat", "p" -> "srv")
+    val params = BaseAdapter.toUnstructEventParams("tv", shared, "iglu:foo", _ => List[JField]())
+    params must_== shared ++ Map(
+      "tv"    -> "tv",
+      "e"     -> "ue",
       "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:foo","data":{}}}"""
     )
   }
