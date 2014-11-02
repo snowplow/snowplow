@@ -124,12 +124,16 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
   private def createKinesisClient: Client = {
     val accessKey = config.awsAccessKey
     val secretKey = config.awsSecretKey
+    val endpoint  = config.awsEndpoint
     if (isCpf(accessKey) && isCpf(secretKey)) {
       Client.fromCredentials(new ClasspathPropertiesFileCredentialsProvider())
     } else if (isCpf(accessKey) || isCpf(secretKey)) {
       throw new RuntimeException("access-key and secret-key must both be set to 'cpf', or neither of them")
     } else {
-      Client.fromCredentials(accessKey, secretKey)
+      endpoint match {
+        case Some(url) => Client.fromCredentials(accessKey, secretKey, url)
+        case None => Client.fromCredentials(accessKey, secretKey)
+      }
     }
   }
 
