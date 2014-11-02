@@ -51,6 +51,9 @@ object AdXTrackingAdapter extends Adapter {
     val AppInstall = SchemaKey("com.adxtracking", "app_install", "jsonschema", "1-0-0").toSchemaUri
   }
 
+  // Create a simple formatter function
+  private val AdxtrackingFormatter = buildFormatter() // For defaults
+
   /**
    * Converts a CollectorPayload instance into raw events.
    * An AD-X Tracking payload only contains a single event.
@@ -76,7 +79,7 @@ object AdXTrackingAdapter extends Adapter {
         case Some(_) =>
           NonEmptyList(RawEvent(
             api          = payload.api,
-            parameters   = toUnstructEventParams(TrackerVersion, params - "name", SchemaUris.AppInstall, Nil, Nil, None),
+            parameters   = toUnstructEventParams(TrackerVersion, params - "name", SchemaUris.AppInstall, AdxtrackingFormatter),
             contentType  = payload.contentType,
             source       = payload.source,
             context      = payload.context

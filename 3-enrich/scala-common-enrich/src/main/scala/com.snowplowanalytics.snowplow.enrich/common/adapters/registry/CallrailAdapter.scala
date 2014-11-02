@@ -61,11 +61,12 @@ object CallrailAdapter extends Adapter {
   // Datetime format used by CallRail (as we will need to massage)
   private val CallrailDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
 
-  // Fields known to need datatype cleaning/conversion ready for JSON Schema validation
-  private object Fields {
-    val Bools = List("first_call", "answered")
-    val Ints = List("duration")
-    val DateTimes: JU.DateTimeFields = Some(NonEmptyList("datetime"), CallrailDateTimeFormat)
+  // Create a simple formatter function
+  private val CallrailFormatter = {
+    val bools = List("first_call", "answered")
+    val ints = List("duration")
+    val dateTimes: JU.DateTimeFields = Some(NonEmptyList("datetime"), CallrailDateTimeFormat)
+    buildFormatter(bools, ints, dateTimes)
   }
 
   /**
@@ -88,7 +89,7 @@ object CallrailAdapter extends Adapter {
       NonEmptyList(RawEvent(
         api          = payload.api,
         parameters   = toUnstructEventParams(TrackerVersion, params,
-                         SchemaUris.CallComplete, Fields.Bools, Fields.Ints, Fields.DateTimes),
+                         SchemaUris.CallComplete, CallrailFormatter),
         contentType  = payload.contentType,
         source       = payload.source,
         context      = payload.context

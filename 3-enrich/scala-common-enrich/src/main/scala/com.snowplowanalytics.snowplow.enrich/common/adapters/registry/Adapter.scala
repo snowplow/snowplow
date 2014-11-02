@@ -68,6 +68,28 @@ trait Adapter {
     parameters.map(p => (p.getName -> p.getValue)).toList.toMap
 
   /**
+   * Convenience function to build a simple formatter
+   * of RawEventParameters.
+   *
+   * @param bools A List of keys whose values should be
+   *        processed as boolean-like Strings
+   * @param ints A List of keys whose values should be
+   *        processed as integer-like Strings
+   * @param dates If Some, a NEL of keys whose values should
+   *        be treated as date-time-like Strings, which will
+   *        require processing from the specified format
+   * @return a formatter function which converts
+   *         RawEventParameters into a cleaned JObject
+   */
+  protected[registry] def buildFormatter(bools: List[String] = Nil, ints: List[String] = Nil,
+    dateTimes: JU.DateTimeFields = None): (RawEventParameters) => JObject = {
+
+    (parameters: RawEventParameters) => for {
+      p <- parameters.toList
+    } yield JU.toJField(p._1, p._2, bools, ints, dateTimes)
+  }
+
+  /**
    * Fabricates a Snowplow unstructured event from
    * the supplied parameters. Note that to be a
    * valid Snowplow unstructured event, the event
@@ -80,22 +102,17 @@ trait Adapter {
    *        we will nest into the unstructured event
    * @param schema The schema key which defines this
    *        unstructured event as a String
-   * @param bools A List of keys whose values should be
-   *        processed as boolean-like Strings
-   * @param ints A List of keys whose values should be
-   *        processed as integer-like Strings
-   * @param dates If Some, a NEL of keys whose values should
-   *        be treated as date-time-like Strings, which will
-   *        require processing from the specified format
+   * @param formatter A function to take the raw event
+   *        parameters and turn them into a correctly
+   *        formatted JObject that should pass JSON
+   *        Schema validation
    * @return the raw-event parameters for a valid
    *         Snowplow unstructured event
    */
   protected[registry] def toUnstructEventParams(tracker: String, parameters: RawEventParameters, schema: String,
-    bools: List[String], ints: List[String], dateTimes: JU.DateTimeFields): RawEventParameters = {
+    formatter: (RawEventParameters) => JObject): RawEventParameters = {
 
-    val params: JObject = for {
-      p <- (parameters -("nuid", "aid", "cv", "p")).toList
-    } yield JU.toJField(p._1, p._2, bools, ints, dateTimes)
+    val params = formatter(parameters -("nuid", "aid", "cv", "p"))
 
     val json = compact {
       ("schema" -> UnstructEvent) ~
