@@ -106,11 +106,13 @@ trait Adapter {
    *        parameters and turn them into a correctly
    *        formatted JObject that should pass JSON
    *        Schema validation
+   * @return platform The default platform to assign
+   *         the event to
    * @return the raw-event parameters for a valid
    *         Snowplow unstructured event
    */
   protected[registry] def toUnstructEventParams(tracker: String, parameters: RawEventParameters, schema: String,
-    formatter: (RawEventParameters) => JObject): RawEventParameters = {
+    formatter: (RawEventParameters) => JObject, platform: String = "app"): RawEventParameters = {
 
     val params = formatter(parameters -("nuid", "aid", "cv", "p"))
 
@@ -125,7 +127,7 @@ trait Adapter {
     Map(
       "tv"    -> tracker,
       "e"     -> "ue",
-      "p"     -> parameters.getOrElse("p", "app"), // Required field
+      "p"     -> parameters.getOrElse("p", platform), // Required field
       "ue_pr" -> json) ++
     parameters.filterKeys(Set("nuid", "aid", "cv"))
   }
