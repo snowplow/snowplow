@@ -132,6 +132,7 @@ class CollectorConfig(config: Config) {
   private val aws = kinesis.getConfig("aws")
   val awsAccessKey = aws.getString("access-key")
   val awsSecretKey = aws.getString("secret-key")
+  val awsEndpoint = aws.getOptionalString("endpoint")
   private val stream = kinesis.getConfig("stream")
   val streamName = stream.getString("name")
   val streamSize = stream.getInt("size")
