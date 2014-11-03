@@ -141,9 +141,44 @@ class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
     "doc_width",
     "doc_height")
 
-  private val intFields = new Set("todo")
-  private val doubleFields = new Set("todo")
-  private val boolFields = new Set("todo")
+  private val intFields = new Set(
+    "txn_id",
+    "domain_sessionidx",
+    "page_urlport",
+    "refr_urlport",
+    "ti_quantity",
+    "pp_xoffset_min",
+    "pp_xoffset_max",
+    "pp_yoffset_min",
+    "pp_yoffset_max",
+    "br_viewwidth",
+    "br_viewheight",
+    "dvce_screenwidth",
+    "dvce_screenheight",
+    "doc_width",
+    "doc_height"
+    )
+  private val doubleFields = new Set(
+    "geo_latitude",
+    "geo_longitude",
+    "tr_total",
+    "tr_tax",
+    "tr_shipping",
+    "ti_price",
+    )
+  private val boolFields = new Set(
+    "br_features_pdf",
+    "br_features_flash",
+    "br_features_java",
+    "br_features_director",
+    "br_features_quicktime",
+    "br_features_realplayer",
+    "br_features_windowsmedia",
+    "br_features_gears boolean",
+    "br_features_silverlight",
+    "br_cookies",
+    "dvce_ismobile"
+    )
 
   private val converter: (entry: (String, String) => (String, Any)) = e => {
     try {
