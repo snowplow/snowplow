@@ -52,7 +52,7 @@ object AdxtrackingAdapter extends Adapter {
   }
 
   // Create a simple formatter function
-  private val AdxtrackingFormatter = buildFormatter() // For defaults
+  private val AdxtrackingFormatter: FormatterFunc = buildFormatter() // For defaults
 
   /**
    * Converts a CollectorPayload instance into raw events.

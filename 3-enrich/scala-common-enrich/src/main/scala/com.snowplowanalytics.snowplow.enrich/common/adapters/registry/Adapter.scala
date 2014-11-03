@@ -44,6 +44,9 @@ trait Adapter {
   // The Iglu schema URI for a Snowplow unstructured event
   private val UnstructEvent = SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", "1-0-0").toSchemaUri
 
+  // Signature for a Formatter function
+  type FormatterFunc = (RawEventParameters) => JObject
+
   /**
    * Converts a CollectorPayload instance into raw events.
    *
@@ -82,7 +85,7 @@ trait Adapter {
    *         RawEventParameters into a cleaned JObject
    */
   protected[registry] def buildFormatter(bools: List[String] = Nil, ints: List[String] = Nil,
-    dateTimes: JU.DateTimeFields = None): (RawEventParameters) => JObject = {
+    dateTimes: JU.DateTimeFields = None): FormatterFunc = {
 
     (parameters: RawEventParameters) => for {
       p <- parameters.toList
@@ -112,7 +115,7 @@ trait Adapter {
    *         Snowplow unstructured event
    */
   protected[registry] def toUnstructEventParams(tracker: String, parameters: RawEventParameters, schema: String,
-    formatter: (RawEventParameters) => JObject, platform: String = "app"): RawEventParameters = {
+    formatter: FormatterFunc, platform: String = "app"): RawEventParameters = {
 
     val params = formatter(parameters -("nuid", "aid", "cv", "p"))
 
