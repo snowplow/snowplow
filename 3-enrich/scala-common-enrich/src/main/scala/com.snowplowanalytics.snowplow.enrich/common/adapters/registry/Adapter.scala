@@ -109,7 +109,7 @@ trait Adapter {
    *        parameters and turn them into a correctly
    *        formatted JObject that should pass JSON
    *        Schema validation
-   * @return platform The default platform to assign
+   * @param platform The default platform to assign
    *         the event to
    * @return the raw-event parameters for a valid
    *         Snowplow unstructured event
