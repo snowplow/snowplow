@@ -141,11 +141,31 @@ class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
     "doc_width",
     "doc_height")
 
+  private val intFields = new Set("todo")
+  private val doubleFields = new Set("todo")
+  private val boolFields = new Set("todo")
+
+  private val converter: (entry: (String, String) => (String, Any)) = e => {
+    try {
+      if (intFields.contains(e._1)) {
+        (e._1, e._2.toInt)
+      } else if (doubleFields.contains(e._1)) {
+        (e._1, e._2.toDouble)
+      } else if boolFields.contains(e._1) {
+        (e._1, e._2.toBoolean)
+      } else {
+          e
+      }
+    catch {
+      IllegalArgumentException(iae) => e // TODO: log the exception
+    }
+  }
+
   override def toClass(record: Record): String = {
 
     val fieldValues = new String(record.getData.array).split("\t")
 
-    val fieldsMap = fields.zip(fieldValues).filter(! _._2.isEmpty).toMap
+    val fieldsMap = fields.zip(fieldValues).filter(! _._2.isEmpty).map(converter).toMap
 
     JSONObject(fieldsMap).toString()
   }
