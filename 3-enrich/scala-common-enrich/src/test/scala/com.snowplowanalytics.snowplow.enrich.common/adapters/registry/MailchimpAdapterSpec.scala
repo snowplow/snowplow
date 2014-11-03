@@ -143,7 +143,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
                   |"action":"unsub",
                   |"web_id":"203740265"
                 |},
-                |"fired_at":"2014-10-22 13:10:40",
+                |"fired_at":"2014-10-22T13:10:40Z",
                 |"type":"unsubscribe"
               |}
             |}

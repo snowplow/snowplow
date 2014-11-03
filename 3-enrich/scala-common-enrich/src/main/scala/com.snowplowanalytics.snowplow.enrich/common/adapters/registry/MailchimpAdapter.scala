@@ -30,6 +30,10 @@ import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
 import org.apache.http.NameValuePair
 
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
 
@@ -48,6 +52,7 @@ import org.json4s.scalaz.JsonScalaz._
 
 // This project
 import loaders.CollectorPayload
+import utils.{JsonUtils => JU}
 
 /**
  * Transforms a collector payload which conforms to
@@ -93,6 +98,7 @@ object MailchimpAdapter extends Adapter {
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
     val qsParams = toMap(payload.querystring)
     val bodyParams = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + payload.body.get), "UTF-8").toList)
+    val params = qsParams ++ fixParamVals(bodyParams)
 
     Some(bodyParams) match {
       case (Some(body)) if body.size == 0         => s"Mailchimp Events require information to be in the body".failNel
@@ -101,7 +107,6 @@ object MailchimpAdapter extends Adapter {
         for {
           schema <- getSchema(body.get("type"))
         } yield {
-          val params = qsParams ++ bodyParams
           NonEmptyList(RawEvent(
             api          = payload.api,
             parameters   = toUnstructEventParams(TrackerVersion, params, schema, MailchimpFormatter, "srv"),
@@ -158,6 +163,27 @@ object MailchimpAdapter extends Adapter {
     listOfJObjects match {
       case head :: tail => tail.foldLeft(head)(_ merge _)
     }
+
+  /**
+   * Fixes the parameter values of the event
+   *
+   * @param bodyParams The parameters to be checked for fixing
+   */
+  def fixParamVals(bodyParams: RawEventParameters): RawEventParameters =
+    Some(bodyParams) match {
+      case (Some(body)) if body.contains("fired_at") =>
+        val temp = body.get("fired_at").get
+        body.updated("fired_at", getDateTime(temp))
+      case (Some(body))                              => bodyParams
+    }
+
+  /**
+   * Return the date time formatted correctly for JSON
+   *
+   * @param value The datetime string to be formatted
+   */
+  def getDateTime(value: String): String =
+    value.replace(" ","T").concat("Z")
 
   /**
    * Gets the correct Schema URI for the event passed from Mailchimp
