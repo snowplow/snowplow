@@ -28,7 +28,7 @@ CREATE TABLE atomic.org_w3_performance_timing_1 (
 	ref_tree                       varchar(1500) encode runlength not null,
 	ref_parent                     varchar(255)  encode runlength not null,
 	-- Properties of this type
-	nagivation_start               bigint encode raw,
+	navigation_start               bigint encode raw,
 	redirect_start                 bigint encode raw,
 	fetch_start                    bigint encode raw,
 	domain_lookup_start            bigint encode raw,
