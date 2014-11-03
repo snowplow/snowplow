@@ -15,15 +15,13 @@ import sbt._
 object Dependencies {
 
   val resolutionRepos = Seq(
-    // For Snowplow
+    // For Snowplow and amazon-kinesis-connectors
     "Snowplow Analytics Maven releases repo" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
     // For Scalazon
     "BintrayJCenter"                         at "http://jcenter.bintray.com",
     // For user-agent-utils
-    "user-agent-utils repo"                  at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/",
-    // TODO host this
-    "aws-kinesis-connectors-mvn-repos"       at "file:///vagrant/repository"
+    "user-agent-utils repo"                  at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/"
   )
 
   object V {
