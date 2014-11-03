@@ -46,7 +46,7 @@ object Dependencies {
     val refererParser    = "0.2.2"
     val maxmindIplookups = "0.2.0"
     val json4s           = "3.2.11-SNAPSHOT"
-    val igluClient       = "0.1.0"
+    val igluClient       = "0.1.1"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
