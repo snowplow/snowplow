@@ -72,6 +72,11 @@ object MailchimpAdapter extends Adapter {
     val CampaignSendingStatus = SchemaKey("com.mailchimp", "campaign_sending_status", "jsonschema", "1-0-0").toSchemaUri
   }
 
+  // Formatter Function to convert RawEventParameters into a merged Json Object
+  private val MailchimpFormatter: FormatterFunc = {
+    (parameters: RawEventParameters) => mergeJObjects(getJsonObject(parameters))
+  }
+
   /**
    * Converts a CollectorPayload instance into raw events.
    * An Mailchimp Tracking payload only contains a single event.
@@ -94,55 +99,18 @@ object MailchimpAdapter extends Adapter {
       case (Some(body)) if !body.contains("type") => s"No event type passed with event body".failNel
       case (Some(body))                           => // Build our NEL of parameters
         for {
-          unstructEventParams <- toUnstructEventParams(TrackerVersion, qsParams, body)
+          schema <- getSchema(body.get("type"))
         } yield {
+          val params = qsParams ++ bodyParams
           NonEmptyList(RawEvent(
             api          = payload.api,
-            parameters   = unstructEventParams,
+            parameters   = toUnstructEventParams(TrackerVersion, params, schema, MailchimpFormatter, "srv"),
             contentType  = payload.contentType,
             source       = payload.source,
             context      = payload.context
           ))
         }
       }
-  }
-
-  /**
-   * Fabricates a Snowplow unstructured event from
-   * the supplied parameters setup git in ubuntu. Note that to be a
-   * valid Snowplow unstructured event, the event
-   * must contain e, p and tv parameters, so we
-   * make sure to set those.
-   *
-   * @param tracker  The name and version of this
-   *                 tracker
-   * @param qsParams The raw-event parameters we will
-   *                 nest into the unstructured event
-   * @param body     The body of the mailchimp event
-   *                 passed as a string
-   * @return the raw-event parameters for a valid
-   *         Snowplow unstructured event
-   */
-  private def toUnstructEventParams(tracker: String, qsParams: RawEventParameters, body: RawEventParameters):  Validated[RawEventParameters] = {
-    for {
-      schema           <- getSchema(body.get("type"))
-      mergedJsonObject <- mergeJObjects(getJsonObject(body))
-    } yield {
-      val parameters = body ++ qsParams - ("nuid", "aid", "cv", "p")
-      val params = compact {
-        ("schema" -> SchemaUris.UnstructEvent) ~
-        ("data"   -> (
-          ("schema" -> schema) ~
-          ("data"   -> mergedJsonObject)
-        ))
-      }
-      Map(
-        "tv"    -> tracker,
-        "e"     -> "ue",
-        "p"     -> parameters.getOrElse("p", "app"),
-        "ue_pr" -> params
-      ) ++ parameters.filterKeys(Set("nuid", "aid", "cv"))
-    }
   }
 
   /**
@@ -186,10 +154,9 @@ object MailchimpAdapter extends Adapter {
    * @param listOfJObjects The list of JObjects which needs to be
    *                       merged together
    */
-  def mergeJObjects(listOfJObjects: Iterable[JObject]): Validated[JObject] = 
+  def mergeJObjects(listOfJObjects: Iterable[JObject]): JObject = 
     listOfJObjects match {
-      case Nil          => s"No JObjects to merge".failNel
-      case head :: tail => tail.foldLeft(head)(_ merge _).success
+      case head :: tail => tail.foldLeft(head)(_ merge _)
     }
 
   /**
