@@ -183,25 +183,25 @@ class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
     "dvce_ismobile"
     )
 
-  private val converter: (((String, String)) => JObject) = e => {
+  private val converter: (((String, String)) => JObject) = e => (e._1,
     if (e._2.isEmpty) {
-        (e._1, JNull)
+        JNull
     } else {
       try {
         if (intFields.contains(e._1)) {
-          (e._1, JInt(e._2.toInt))
+          JInt(e._2.toInt)
         } else if (doubleFields.contains(e._1)) {
-          (e._1, JDouble(e._2.toDouble))
+          JDouble(e._2.toDouble)
         } else if (boolFields.contains(e._1)) {
-          (e._1, JBool(e._2 == "1"))
+          JBool(e._2 == "1")
         } else {
-            (e._1, JString(e._2))
+          JString(e._2)
         }
       } catch {
-        case iae: IllegalArgumentException => (e._1, JString(e._2)) // TODO: log the exception
+        case iae: IllegalArgumentException => JString(e._2) // TODO: log the exception
       }
     }
-  }
+  )
 
   def jsonifyGoodEvent(event: Array[String]): String = {
     val jObjects: Array[JObject] = fields.zip(event).map(converter)
