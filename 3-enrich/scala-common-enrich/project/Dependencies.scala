@@ -45,24 +45,14 @@ object Dependencies {
     val scalaUtil        = "0.1.0"
     val refererParser    = "0.2.2"
     val maxmindIplookups = "0.2.0"
-    val json4s           = "3.2.11-SNAPSHOT"
-    val igluClient       = "0.1.0"
+    val json4s           = "3.2.11"
+    val igluClient       = "0.1.1"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
     val scalaCheck       = "1.10.0"
     val commonsCodec     = "1.5"
   }
-
- /**
-  * [1] Instructions for json4sJackson
-  * TODO: remove these when it's available on Sonatype
-  *
-  * $ git clone https://github.com/json4s/json4s.git
-  * $ cd json4s
-  * $ git checkout c037629a0960756185b86d6cb088384c788e2b25
-  * $ sbt publish-local
-  */
 
   object Libraries {
     // Java

@@ -68,7 +68,7 @@ object SnowplowAdapter {
      */
     def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
 
-      val params = toMap(payload.querystring)      
+      val params = toMap(payload.querystring)
       if (params.isEmpty) {
         "Querystring is empty: no raw event to process".failNel
       } else {
@@ -218,11 +218,11 @@ object SnowplowAdapter {
      *         Failure, or a singular
      *         JsonNode on success
      */
-    private def extractAndValidateJson(field: String, schemaKey: SchemaKey, instance: String)(implicit resolver: Resolver): Validated[JsonNode] = {
+    private def extractAndValidateJson(field: String, schemaKey: SchemaKey, instance: String)(implicit resolver: Resolver): Validated[JsonNode] =
       for {
         j <- (JsonUtils.extractJson(field, instance).toValidationNel: Validated[JsonNode])
         v <- j.verifySchemaAndValidate(schemaKey, true).leftMap(_.map(_.toString))
       } yield v
-    }
+
   }
 }

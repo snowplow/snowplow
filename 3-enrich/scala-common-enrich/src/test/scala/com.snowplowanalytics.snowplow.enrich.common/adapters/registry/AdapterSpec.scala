@@ -78,4 +78,5 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
       "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:foo","data":{}}}"""
     )
   }
+
 }
