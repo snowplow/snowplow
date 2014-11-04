@@ -30,6 +30,7 @@ CREATE TABLE atomic.org_w3_performance_timing_1 (
 	-- Properties of this type
 	navigation_start               bigint encode raw,
 	redirect_start                 bigint encode raw,
+	redirect_end                   bigint encode raw,
 	fetch_start                    bigint encode raw,
 	domain_lookup_start            bigint encode raw,
 	domain_lookup_end              bigint encode raw,
