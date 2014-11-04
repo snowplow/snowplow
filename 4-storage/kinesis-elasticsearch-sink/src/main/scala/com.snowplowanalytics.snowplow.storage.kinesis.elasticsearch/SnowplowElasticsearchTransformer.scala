@@ -26,8 +26,10 @@ import com.amazonaws.services.kinesis.connectors.elasticsearch.{
 }
 import com.amazonaws.services.kinesis.model.Record
 
-// Scala
-import scala.util.parsing.json.JSONObject
+// json4s
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.JsonDSL._
 
 class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
   with ITransformer[String, ElasticsearchObject] {
@@ -181,34 +183,36 @@ class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
     "dvce_ismobile"
     )
 
-  private val converter: (((String, String)) => (String, Any)) = e => {
-    try {
-      if (intFields.contains(e._1)) {
-        (e._1, e._2.toInt)
-      } else if (doubleFields.contains(e._1)) {
-        (e._1, e._2.toDouble)
-      } else if (boolFields.contains(e._1)) {
-        (e._1, e._2 == "1")
-      } else {
-          e
+  private val converter: (((String, String)) => JObject) = e => {
+    if (e._2.isEmpty) {
+        (e._1, JNull)
+    } else {
+      try {
+        if (intFields.contains(e._1)) {
+          (e._1, JInt(e._2.toInt))
+        } else if (doubleFields.contains(e._1)) {
+          (e._1, JDouble(e._2.toDouble))
+        } else if (boolFields.contains(e._1)) {
+          (e._1, JBool(e._2 == "1"))
+        } else {
+            (e._1, JString(e._2))
+        }
+      } catch {
+        case iae: IllegalArgumentException => (e._1, JString(e._2)) // TODO: log the exception
       }
-    } catch {
-      case iae: IllegalArgumentException => e // TODO: log the exception
     }
   }
 
   def jsonifyGoodEvent(event: Array[String]): String = {
-    val fieldsMap = fields.zip(event).filter(! _._2.isEmpty).map(converter).toMap
-
-    JSONObject(fieldsMap).toString()
+    val jObjects: Array[JObject] = fields.zip(event).map(converter)
+    compact(render(jObjects.fold(JObject())(_ ~ _)))
   }
+
 
   override def toClass(record: Record): String =
     jsonifyGoodEvent(new String(record.getData.array).split("\t"))
 
-
   override def fromClass(record: String): ElasticsearchObject  =  {
-
     val e = new ElasticsearchObject("events", "sometype", "event", record)
     e.setCreate(true)
     e
