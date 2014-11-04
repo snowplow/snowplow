@@ -128,7 +128,7 @@ object MailchimpAdapter extends Adapter {
    *         JObjects which represents every value 
    *         in the JSON with its own full path
    */
-  def getJsonObject(paramMap: Map[String,String]): Iterable[JObject] = {
+  private def getJsonObject(paramMap: Map[String,String]): Iterable[JObject] = {
     for {
       (k, v) <- paramMap
     } yield (recurse(toKeys(k), v))
@@ -141,7 +141,7 @@ object MailchimpAdapter extends Adapter {
    * @return List[String] Generates a list of string based on 
    *         the below regex
    */
-  def toKeys(formKey: String): List[String] = 
+  private def toKeys(formKey: String): List[String] = 
     formKey.split("\\]?(\\[|\\])").toList
 
   /**
@@ -152,7 +152,7 @@ object MailchimpAdapter extends Adapter {
    * @return JObject Generates a JObject out of a list of 
    *         keys and a value
    */
-  def recurse(keys: List[String], nestedMap: String): JObject =
+  private def recurse(keys: List[String], nestedMap: String): JObject =
     keys match {
       case head :: tail if tail.size == 0 => JObject(head -> JString(nestedMap))
       case head :: tail                   => JObject(head -> recurse(tail, nestedMap))
@@ -166,7 +166,7 @@ object MailchimpAdapter extends Adapter {
    * @return JObject Creates a fully merged JObject from the List 
    *         provided
    */
-  def mergeJObjects(listOfJObjects: Iterable[JObject]): JObject = 
+  private def mergeJObjects(listOfJObjects: Iterable[JObject]): JObject = 
     listOfJObjects match {
       case head :: tail => tail.foldLeft(head)(_ merge _)
     }
@@ -174,14 +174,14 @@ object MailchimpAdapter extends Adapter {
   /**
    * Fixes the parameter values of the event
    *
-   * @param bodyParams The parameters to be checked for fixing
+   * @param params The parameters to be checked for fixing
    * @return RawEventParameters Either with a fixed Date Time 
    *         if the key was found or the original parameters
    */
-  private def reformatBadParamValues(bodyParams: RawEventParameters): RawEventParameters =
-    bodyParams.get("fired_at") match {
-      case Some(param) => bodyParams.updated("fired_at", reformateDateTimeForJsonSchema(param))
-      case None        => bodyParams
+  private def reformatBadParamValues(params: RawEventParameters): RawEventParameters =
+    params.get("fired_at") match {
+      case Some(param) => params.updated("fired_at", reformateDateTimeForJsonSchema(param))
+      case None        => params
     }
 
   /**
@@ -201,7 +201,7 @@ object MailchimpAdapter extends Adapter {
    * @return Validated[String] Returns the schema for the 
    *         event or a failNel if we provide invalid input
    */
-  def getSchema(eventType: Option[String]): Validated[String] = {
+  private def getSchema(eventType: Option[String]): Validated[String] = {
     eventType match {
       case Some("subscribe")   => SchemaUris.Subscribe.success
       case Some("unsubscribe") => SchemaUris.Unsubscribe.success
@@ -209,8 +209,8 @@ object MailchimpAdapter extends Adapter {
       case Some("cleaned")     => SchemaUris.CleanedEmail.success
       case Some("upemail")     => SchemaUris.EmailAddressChange.success
       case Some("profile")     => SchemaUris.ProfileUpdate.success
+      case Some("")            => s"No event type passed to getSchema".failNel
       case Some(event)         => s"Invalid event type passed to getSchema - $event".failNel
-      case None                => s"No event type passed to getSchema".failNel
     }
   }
 }

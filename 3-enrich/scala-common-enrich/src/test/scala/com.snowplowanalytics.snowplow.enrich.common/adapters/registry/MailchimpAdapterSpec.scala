@@ -46,15 +46,13 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
 
   "This is a specification to test the MailchimpAdapter functionality"                                                ^
                                                                                                                      p^
-  "toKeys should return a valid List of Keys from a string containing braces (or not)"                                ! e1^
-  "recurse should return a valid JObject which contains the toKeys list and value supplied"                           ! e2^
-  "getJsonObject should return a valid list JObjects which pertain to the map supplied"                               ! e3^
-  "mergeJObjects should return a correctly merged JSON which matches the expectation"                                 ! e4^
-  "getSchema should return the correct schema for a valid event type"                                                 ! e5^
-  "getSchema should return a Nel Failure error for a bad event type"                                                  ! e6^
-  "toRawEvents should return a Nel Success containing an unsubscribe event and query string parameters"               ! e7^
-  "toRawEvents must be failing if the body content is empty"                                                          ! e8^
-  "toRawEvents must be failing if no type parameter is passed in the body"                                            ! e9^
+  "toRawEvents must return a Nel Success with a correctly formatted ue_pr json"                                     ! e1^
+  "toRawEvents must return a Nel Success with a correctly merged and formatted ue_pr json"                          ! e2^
+  "toRawEvents must return a Nel Success for a supported event type"                                                ! e3^
+  "toRawEvents must return a Nel Failure error for an unsupported event type"                                       ! e4^
+  "toRawEvents must return a Nel Success containing an unsubscribe event and query string parameters"               ! e5^
+  "toRawEvents must return a Nel Failure if the body content is empty"                                              ! e6^
+  "toRawEvents must return a Nel Failure if no type parameter is passed in the body"                                ! e7^
                                                                                                                      end
   implicit val resolver = SpecHelpers.IgluResolver
 
@@ -67,39 +65,53 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   val ContentType = "application/x-www-form-urlencoded; charset=utf-8"
 
   def e1 = {
-    val toKeysTest = MailchimpAdapter.toKeys("data[merges][LNAME]")
-    val expected = List("data","merges","LNAME")
+    val body = "type=subscribe&data%5Bmerges%5D%5BLNAME%5D=Beemster"
+    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
+    val expectedJson = 
+      """|{
+            |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+            |"data":{
+              |"schema":"iglu:com.mailchimp/subscribe/jsonschema/1-0-0",
+              |"data":{
+                |"type":"subscribe",
+                |"data":{
+                  |"merges":{
+                    |"LNAME":"Beemster"
+                  |}
+                |}
+              |}
+            |}
+          |}""".stripMargin.replaceAll("[\n\r]","")
 
-    toKeysTest mustEqual expected
+    val actual = MailchimpAdapter.toRawEvents(payload)
+    actual must beSuccessful(NonEmptyList(RawEvent(Shared.api, Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson), ContentType.some, Shared.cljSource, Shared.context)))
   }
 
   def e2 = {
-    val keysArray = List("data","merges","LNAME")
-    val value = "Beemster"
-    val expected = JObject(List(("data",JObject(List(("merges",JObject(List(("LNAME",JString("Beemster"))))))))))
-    val testRecursive = MailchimpAdapter.recurse(keysArray, value)
+    val body = "type=subscribe&data%5Bmerges%5D%5BFNAME%5D=Agent&data%5Bmerges%5D%5BLNAME%5D=Smith"
+    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
+    val expectedJson = 
+      """|{
+            |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+            |"data":{
+              |"schema":"iglu:com.mailchimp/subscribe/jsonschema/1-0-0",
+              |"data":{
+                |"type":"subscribe",
+                |"data":{
+                  |"merges":{
+                    |"FNAME":"Agent",
+                    |"LNAME":"Smith"
+                  |}
+                |}
+              |}
+            |}
+          |}""".stripMargin.replaceAll("[\n\r]","")
 
-    testRecursive mustEqual expected
+    val actual = MailchimpAdapter.toRawEvents(payload)
+    actual must beSuccessful(NonEmptyList(RawEvent(Shared.api, Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson), ContentType.some, Shared.cljSource, Shared.context)))
   }
 
-  def e3 = {
-    val m = Map("data[merges][LNAME]" -> "Beemster")
-    val expected = List(JObject(List(("data",JObject(List(("merges",JObject(List(("LNAME",JString("Beemster")))))))))))
-    val testMap = MailchimpAdapter.getJsonObject(m)
-
-    testMap mustEqual expected
-  }
-
-  def e4 = {
-    val m = Map("data[merges][LNAME]" -> "Beemster", "data[merges][FNAME]" -> "Joshua")
-    val jsonObject = MailchimpAdapter.getJsonObject(m)
-    val actual = MailchimpAdapter.mergeJObjects(jsonObject)
-    val expected = JObject(List(("data",JObject(List(("merges",JObject(List(("LNAME",JString("Beemster")), ("FNAME",JString("Joshua"))))))))))
-
-    actual mustEqual expected
-  }
-
-  def e5 = 
+  def e3 = 
     "SPEC NAME"               || "SCHEMA TYPE"  | "EXPECTED OUTPUT"                                               |
     "Valid, type subscribe"   !! "subscribe"    ! "iglu:com.mailchimp/subscribe/jsonschema/1-0-0"                 |
     "Valid, type unsubscribe" !! "unsubscribe"  ! "iglu:com.mailchimp/unsubscribe/jsonschema/1-0-0"               |
@@ -107,21 +119,30 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
     "Valid, type email"       !! "upemail"      ! "iglu:com.mailchimp/email_address_change/jsonschema/1-0-0"      |
     "Valid, type cleaned"     !! "cleaned"      ! "iglu:com.mailchimp/cleaned_email/jsonschema/1-0-0"             |
     "Valid, type campaign"    !! "campaign"     ! "iglu:com.mailchimp/campaign_sending_status/jsonschema/1-0-0"   |> {
-      (_, schema, expected) => MailchimpAdapter.getSchema(Some(schema)) must beSuccessful(expected)
+      (_, schema, expected) => 
+        val body = "type="+schema
+        val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
+        val expectedJson = "{\"schema\":\"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0\",\"data\":{\"schema\":\""+expected+"\",\"data\":{\"type\":\""+schema+"\"}}}"
+
+        val actual = MailchimpAdapter.toRawEvents(payload)
+        actual must beSuccessful(NonEmptyList(RawEvent(Shared.api, Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson), ContentType.some, Shared.cljSource, Shared.context)))
   }
 
-  def e6 = 
+  def e4 = 
     "SPEC NAME"               || "SCHEMA TYPE"  | "EXPECTED OUTPUT"                                               |
-    "Invalid, bad type"       !! Some("bad")    ! "Invalid event type passed to getSchema - bad"                  |
-    "Invalid, no type"        !! None           ! "No event type passed to getSchema"                             |> {
-      (_, schema, expected) => MailchimpAdapter.getSchema(schema) must beFailing(NonEmptyList(expected))
+    "Invalid, bad type"       !! "bad"          ! "Invalid event type passed to getSchema - bad"                  |
+    "Invalid, no type"        !! ""             ! "No event type passed to getSchema"                             |> {
+      (_, schema, expected) =>
+        val body = "type="+schema
+        val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
+        val actual = MailchimpAdapter.toRawEvents(payload)
+        actual must beFailing(NonEmptyList(expected))
   }
 
-  def e7 = {
+  def e5 = {
     val body = "type=unsubscribe&fired_at=2014-10-22+13%3A10%3A40&data%5Baction%5D=unsub&data%5Breason%5D=manual&data%5Bid%5D=94826aa750&data%5Bemail%5D=josh%40snowplowanalytics.com&data%5Bemail_type%5D=html&data%5Bip_opt%5D=82.225.169.220&data%5Bweb_id%5D=203740265&data%5Bmerges%5D%5BEMAIL%5D=josh%40snowplowanalytics.com&data%5Bmerges%5D%5BFNAME%5D=Joshua&data%5Bmerges%5D%5BLNAME%5D=Beemster&data%5Blist_id%5D=f1243a3b12"
     val qs = toNameValuePairs("nuid" -> "123")
     val payload = CollectorPayload(Shared.api, qs, ContentType.some, body.some, Shared.cljSource, Shared.context)
-
     val expectedJson = 
       """|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
@@ -148,18 +169,19 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
               |}
             |}
           |}""".stripMargin.replaceAll("[\n\r]","")
+
     val actual = MailchimpAdapter.toRawEvents(payload)
     actual must beSuccessful(NonEmptyList(RawEvent(Shared.api, Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson, "nuid" -> "123"), ContentType.some, Shared.cljSource, Shared.context)))
   }
 
-  def e8 = {
+  def e6 = {
     val body = ""
     val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
     val actual = MailchimpAdapter.toRawEvents(payload)
     actual must beFailing(NonEmptyList("Mailchimp Events require information to be in the body"))
   }
 
-  def e9 = {
+  def e7 = {
     val body = "fired_at=2014-10-22+13%3A10%3A40"
     val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
     val actual = MailchimpAdapter.toRawEvents(payload)
