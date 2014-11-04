@@ -183,22 +183,26 @@ class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
     "dvce_ismobile"
     )
 
-  private val converter: (((String, String)) => JObject) = e => (e._1,
-    if (e._2.isEmpty) {
+  private val converter: (((String, String)) => JObject) = kvPair => (kvPair._1,
+    if (kvPair._2.isEmpty) {
         JNull
     } else {
       try {
-        if (intFields.contains(e._1)) {
-          JInt(e._2.toInt)
-        } else if (doubleFields.contains(e._1)) {
-          JDouble(e._2.toDouble)
-        } else if (boolFields.contains(e._1)) {
-          JBool(e._2 == "1")
+        if (intFields.contains(kvPair._1)) {
+          JInt(kvPair._2.toInt)
+        } else if (doubleFields.contains(kvPair._1)) {
+          JDouble(kvPair._2.toDouble)
+        } else if (boolFields.contains(kvPair._1)) {
+          kvPair._2 match {
+            case "1" => JBool(true)
+            case "0" => JBool(false)
+            case s   => JString(s)
+          }
         } else {
-          JString(e._2)
+          JString(kvPair._2)
         }
       } catch {
-        case iae: IllegalArgumentException => JString(e._2) // TODO: log the exception
+        case iae: IllegalArgumentException => JString(kvPair._2) // TODO: log the exception
       }
     }
   )
