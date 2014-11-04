@@ -48,7 +48,9 @@ CREATE TABLE atomic.org_w3_performance_timing_1 (
 	dom_content_loaded_event_end   bigint encode raw,
 	dom_complete                   bigint encode raw,
 	load_event_start               bigint encode raw,
-	load_event_end                 bigint encode raw
+	load_event_end                 bigint encode raw,
+	ms_first_paint                 bigint encode raw,
+	chrome_first_paint             bigint encode raw
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

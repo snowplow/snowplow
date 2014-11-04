@@ -32,6 +32,8 @@
     "$.data.domContentLoadedEventEnd",
     "$.data.domComplete",
     "$.data.loadEventStart",
-    "$.data.loadEventEnd"
+    "$.data.loadEventEnd",
+    "$.data.msFirstPaint",
+    "$.data.chromeFirstPaint"
     ]
 }
