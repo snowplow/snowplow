@@ -93,6 +93,7 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       "se_action" -> "",
       "se_label" -> "",
       "se_property" -> "",
+      "se_value" -> "",
       "unstruct_event" -> "",
       "tr_orderid" -> "",
       "tr_affiliation" -> "",
@@ -152,7 +153,7 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       ScalazJson4sUtils.extract[Double](result, "geo_latitude") must beSuccessful(37.443604)
       ScalazJson4sUtils.extract[Boolean](result, "br_features_pdf") must beSuccessful(true)
       ScalazJson4sUtils.extract[Boolean](result, "br_features_flash") must beSuccessful(false)
-      ScalazJson4sUtils.extract[Boolean](result, "ti_sku") must beSuccessful(null)
+      ScalazJson4sUtils.extract[String](result, "ti_sku") must beSuccessful(null)
 
       // check that IllegalArgumentExceptions are caught
       ScalazJson4sUtils.extract[String](result, "doc_height") must beSuccessful("illegal")

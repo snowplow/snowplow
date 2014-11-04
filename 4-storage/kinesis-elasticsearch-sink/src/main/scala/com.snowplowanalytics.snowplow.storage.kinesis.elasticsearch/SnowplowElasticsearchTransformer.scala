@@ -92,6 +92,7 @@ class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
     "se_action",
     "se_label",
     "se_property",
+    "se_value",
     "unstruct_event",
     "tr_orderid",
     "tr_affiliation",
@@ -177,7 +178,7 @@ class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
     "br_features_quicktime",
     "br_features_realplayer",
     "br_features_windowsmedia",
-    "br_features_gears boolean",
+    "br_features_gears",
     "br_features_silverlight",
     "br_cookies",
     "dvce_ismobile"
