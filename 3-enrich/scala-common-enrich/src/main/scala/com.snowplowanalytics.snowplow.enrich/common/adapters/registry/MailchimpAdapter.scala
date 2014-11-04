@@ -25,10 +25,8 @@ import iglu.client.{
 import iglu.client.validation.ValidatableJsonMethods._
 
 // Java
-import java.util.Map.{Entry => JMapEntry}
 import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
-import org.apache.http.NameValuePair
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
@@ -52,7 +50,6 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 // This project
 import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
 
 /**
  * Transforms a collector payload which conforms to
@@ -67,17 +64,17 @@ object MailchimpAdapter extends Adapter {
   private val ContentType = "application/x-www-form-urlencoded; charset=utf-8"
 
   // DateTime Formatters
-  private val dtfIn:  DateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
-  private val dtfOut: DateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
+  private val DtfIn:  DateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
+  private val DtfOut: DateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(DateTimeZone.UTC)
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private object SchemaUris {
-    val UnstructEvent = SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", "1-0-0").toSchemaUri
-    val Subscribe = SchemaKey("com.mailchimp", "subscribe", "jsonschema", "1-0-0").toSchemaUri
-    val Unsubscribe = SchemaKey("com.mailchimp", "unsubscribe", "jsonschema", "1-0-0").toSchemaUri
-    val ProfileUpdate = SchemaKey("com.mailchimp", "profile_update", "jsonschema", "1-0-0").toSchemaUri
-    val EmailAddressChange = SchemaKey("com.mailchimp", "email_address_change", "jsonschema", "1-0-0").toSchemaUri
-    val CleanedEmail = SchemaKey("com.mailchimp", "cleaned_email", "jsonschema", "1-0-0").toSchemaUri
+    val UnstructEvent         = SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", "1-0-0").toSchemaUri
+    val Subscribe             = SchemaKey("com.mailchimp", "subscribe", "jsonschema", "1-0-0").toSchemaUri
+    val Unsubscribe           = SchemaKey("com.mailchimp", "unsubscribe", "jsonschema", "1-0-0").toSchemaUri
+    val ProfileUpdate         = SchemaKey("com.mailchimp", "profile_update", "jsonschema", "1-0-0").toSchemaUri
+    val EmailAddressChange    = SchemaKey("com.mailchimp", "email_address_change", "jsonschema", "1-0-0").toSchemaUri
+    val CleanedEmail          = SchemaKey("com.mailchimp", "cleaned_email", "jsonschema", "1-0-0").toSchemaUri
     val CampaignSendingStatus = SchemaKey("com.mailchimp", "campaign_sending_status", "jsonschema", "1-0-0").toSchemaUri
   }
 
@@ -111,7 +108,6 @@ object MailchimpAdapter extends Adapter {
           schema <- getSchema(body.get("type"))
         } yield {
           val params = qsParams ++ reformatBadParamValues(bodyParams)
-          println(params)
           NonEmptyList(RawEvent(
             api          = payload.api,
             parameters   = toUnstructEventParams(TrackerVersion, params, schema, MailchimpFormatter, "srv"),
@@ -127,7 +123,10 @@ object MailchimpAdapter extends Adapter {
    * Generates a list of Json Objects from the body of the event
    * 
    * @param paramMap The map of all the parameters 
-   *                 for this event 
+   *        for this event 
+   * @return Iterable[JObject] Generates a list of 
+   *         JObjects which represents every value 
+   *         in the JSON with its own full path
    */
   def getJsonObject(paramMap: Map[String,String]): Iterable[JObject] = {
     for {
@@ -139,9 +138,8 @@ object MailchimpAdapter extends Adapter {
    * Returns a list of keys from a string
    * 
    * @param formKey The Key String that (may) need to be split.
-   *                Will return either a list of multiple keys 
-   *                or a list with a single key if no splitting 
-   *                was required.
+   * @return List[String] Generates a list of string based on 
+   *         the below regex
    */
   def toKeys(formKey: String): List[String] = 
     formKey.split("\\]?(\\[|\\])").toList
@@ -151,6 +149,8 @@ object MailchimpAdapter extends Adapter {
    *
    * @param keys The list of Keys generated from toKeys()
    * @param nestedMap The value for the list of keys
+   * @return JObject Generates a JObject out of a list of 
+   *         keys and a value
    */
   def recurse(keys: List[String], nestedMap: String): JObject =
     keys match {
@@ -162,7 +162,9 @@ object MailchimpAdapter extends Adapter {
    * Merges all of the JObjects together
 
    * @param listOfJObjects The list of JObjects which needs to be
-   *                       merged together
+   *        merged together
+   * @return JObject Creates a fully merged JObject from the List 
+   *         provided
    */
   def mergeJObjects(listOfJObjects: Iterable[JObject]): JObject = 
     listOfJObjects match {
@@ -173,30 +175,31 @@ object MailchimpAdapter extends Adapter {
    * Fixes the parameter values of the event
    *
    * @param bodyParams The parameters to be checked for fixing
+   * @return RawEventParameters Either with a fixed Date Time 
+   *         if the key was found or the original parameters
    */
   private def reformatBadParamValues(bodyParams: RawEventParameters): RawEventParameters =
     bodyParams.get("fired_at") match {
-      case param => 
-        val dt = bodyParams.get("fired_at").get
-        bodyParams.updated("fired_at", reformateDateTimeForJsonSchema(dt))
-      case None  => bodyParams
+      case Some(param) => bodyParams.updated("fired_at", reformateDateTimeForJsonSchema(param))
+      case None        => bodyParams
     }
 
   /**
    * Return the date time formatted correctly for JSON
    *
    * @param value The datetime string to be formatted
+   * @return String Correctly Formatted DateTime
    */
-  private def reformateDateTimeForJsonSchema(value: String): String = {
-    val dt: DateTime = DateTime.parse(value, dtfIn)
-    dtfOut.print(dt)
-  }
+  private def reformateDateTimeForJsonSchema(value: String): String =
+    DtfOut.print(DateTime.parse(value, DtfIn))
 
   /**
    * Gets the correct Schema URI for the event passed from Mailchimp
 
    * @param eventType The string pertaining to the type 
-   *                  of event schema we are looking for
+   *        of event schema we are looking for
+   * @return Validated[String] Returns the schema for the 
+   *         event or a failNel if we provide invalid input
    */
   def getSchema(eventType: Option[String]): Validated[String] = {
     eventType match {
