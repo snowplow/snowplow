@@ -112,7 +112,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   }
 
   def e3 = 
-    "SPEC NAME"               || "SCHEMA TYPE"  | "EXPECTED OUTPUT"                                               |
+    "SPEC NAME"               || "SCHEMA TYPE"  | "EXPECTED SCHEMA"                                               |
     "Valid, type subscribe"   !! "subscribe"    ! "iglu:com.mailchimp/subscribe/jsonschema/1-0-0"                 |
     "Valid, type unsubscribe" !! "unsubscribe"  ! "iglu:com.mailchimp/unsubscribe/jsonschema/1-0-0"               |
     "Valid, type profile"     !! "profile"      ! "iglu:com.mailchimp/profile_update/jsonschema/1-0-0"            |
@@ -129,9 +129,9 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   }
 
   def e4 = 
-    "SPEC NAME"               || "SCHEMA TYPE"  | "EXPECTED OUTPUT"                                               |
-    "Invalid, bad type"       !! "bad"          ! "Invalid event type passed to getSchema - bad"                  |
-    "Invalid, no type"        !! ""             ! "No event type passed to getSchema"                             |> {
+    "SPEC NAME"               || "SCHEMA TYPE"  | "EXPECTED OUTPUT"                                                   |
+    "Invalid, bad type"       !! "bad"          ! "MailChimp type parameter [bad] not recognized"                     |
+    "Invalid, no type"        !! ""             ! "MailChimp type parameter is empty: cannot determine event type"    |> {
       (_, schema, expected) =>
         val body = "type="+schema
         val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
@@ -178,13 +178,13 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
     val body = ""
     val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
     val actual = MailchimpAdapter.toRawEvents(payload)
-    actual must beFailing(NonEmptyList("Mailchimp Events require information to be in the body"))
+    actual must beFailing(NonEmptyList("No MailChimp type parameter provided: cannot determine event type"))
   }
 
   def e7 = {
     val body = "fired_at=2014-10-22+13%3A10%3A40"
     val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
     val actual = MailchimpAdapter.toRawEvents(payload)
-    actual must beFailing(NonEmptyList("No event type passed with event body"))
+    actual must beFailing(NonEmptyList("No MailChimp type parameter provided: cannot determine event type"))
   }
 }

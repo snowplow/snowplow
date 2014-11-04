@@ -96,28 +96,32 @@ object MailchimpAdapter extends Adapter {
    * @return a Validation boxing either a NEL of RawEvents on
    *         Success, or a NEL of Failure Strings
    */
-  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
-    val qsParams = toMap(payload.querystring)
-    val bodyParams = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + payload.body.get), "UTF-8").toList)
+  def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
+    payload.body match {
+      case None       => s"Request body is empty: no MailChimp event to process".failNel
+      case Some(body) => {
 
-    bodyParams match {
-      case body if body.size == 0         => s"Mailchimp Events require information to be in the body".failNel
-      case body if !body.contains("type") => s"No event type passed with event body".failNel
-      case body                           => // Build our NEL of parameters
-        for {
-          schema <- getSchema(body.get("type"))
-        } yield {
-          val params = qsParams ++ reformatBadParamValues(bodyParams)
-          NonEmptyList(RawEvent(
-            api          = payload.api,
-            parameters   = toUnstructEventParams(TrackerVersion, params, schema, MailchimpFormatter, "srv"),
-            contentType  = payload.contentType,
-            source       = payload.source,
-            context      = payload.context
-          ))
+        val params = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
+        params.get("type") match {
+          case None => s"No MailChimp type parameter provided: cannot determine event type".failNel
+          case Some(eventType) => {
+
+            val allParams = toMap(payload.querystring) ++ reformatBadParamValues(params)
+            for {
+              schema <- (lookupSchema(eventType).toValidationNel: Validated[String])
+            } yield {
+              NonEmptyList(RawEvent(
+                api          = payload.api,
+                parameters   = toUnstructEventParams(TrackerVersion, allParams, schema, MailchimpFormatter, "srv"),
+                contentType  = payload.contentType,
+                source       = payload.source,
+                context      = payload.context
+              ))
+            }
+          }
         }
       }
-  }
+    }
 
   /**
    * Generates a list of Json Objects from the body of the event
@@ -198,19 +202,17 @@ object MailchimpAdapter extends Adapter {
 
    * @param eventType The string pertaining to the type 
    *        of event schema we are looking for
-   * @return Validated[String] Returns the schema for the 
-   *         event or a failNel if we provide invalid input
+   * @return the schema for the event or a Failure-boxed String
+   *         if we can't recognize the event type
    */
-  private def getSchema(eventType: Option[String]): Validated[String] = {
-    eventType match {
-      case Some("subscribe")   => SchemaUris.Subscribe.success
-      case Some("unsubscribe") => SchemaUris.Unsubscribe.success
-      case Some("campaign")    => SchemaUris.CampaignSendingStatus.success
-      case Some("cleaned")     => SchemaUris.CleanedEmail.success
-      case Some("upemail")     => SchemaUris.EmailAddressChange.success
-      case Some("profile")     => SchemaUris.ProfileUpdate.success
-      case Some("")            => s"No event type passed to getSchema".failNel
-      case Some(event)         => s"Invalid event type passed to getSchema - $event".failNel
-    }
+  private def lookupSchema(eventType: String): Validation[String, String] = eventType match {
+    case "subscribe"   => SchemaUris.Subscribe.success
+    case "unsubscribe" => SchemaUris.Unsubscribe.success
+    case "campaign"    => SchemaUris.CampaignSendingStatus.success
+    case "cleaned"     => SchemaUris.CleanedEmail.success
+    case "upemail"     => SchemaUris.EmailAddressChange.success
+    case "profile"     => SchemaUris.ProfileUpdate.success
+    case ""            => s"MailChimp type parameter is empty: cannot determine event type".fail
+    case et            => s"MailChimp type parameter [$et] not recognized".fail
   }
 }
