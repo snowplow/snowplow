@@ -45,8 +45,6 @@ class AdxtrackingAdapterSpec extends Specification with DataTables with Validati
   "toRawEvents should return a NEL containing one RawEvent if the Clojure-Tomcat querystring is populated"                   ! e3^
   "toRawEvents should return a NEL containing one RawEvent with a non-app platform if specified"                             ! e4^
   "toRawEvents should return a Validation Failure if there are no parameters on the CloudFront querystring"                  ! e5^
-  "toRawEvents should return a Validation Failure if the name parameter is missing from the CloudFront querystring"          ! e6^
-  "toRawEvents should return a Validation Failure if the name parameter is not set to Install in the CloudFront querystring" ! e7^
                                                                                                                              end
 
   implicit val resolver = SpecHelpers.IgluResolver
@@ -71,7 +69,7 @@ class AdxtrackingAdapterSpec extends Specification with DataTables with Validati
   def e1 = {
     val params = toNameValuePairs(
       "user"           -> "6353af9b-e288-4cf3-9f1c-b377a9c84dac",
-      "name"           -> "Install",
+      "name"           -> "download",
       "publisher_name" -> "Organic",
       "sub_campaign"   -> "",
       "tracking_id"    -> "",
@@ -84,8 +82,9 @@ class AdxtrackingAdapterSpec extends Specification with DataTables with Validati
       """|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
             |"data":{
-              |"schema":"iglu:com.adxtracking/app_install/jsonschema/1-0-0",
+              |"schema":"iglu:com.adxtracking/user_interaction/jsonschema/1-0-0",
               |"data":{
+                |"name":"download",
                 |"sub_adgroup":null,
                 |"sub_campaign":null,
                 |"tracking_id":null,
@@ -101,7 +100,7 @@ class AdxtrackingAdapterSpec extends Specification with DataTables with Validati
   def e2 = {
     val params = toNameValuePairs(
       "user"           -> "6353af9b-e288-4cf3-9f1c-b377a9c84dac",
-      "name"           -> "Install",
+      "name"           -> "install",
       "publisher_name" -> "Organic",
       "sub_campaign"   -> "newsfeed",
       "tracking_id"    -> "3353af9c-e298-2cf3-9f1c-b377a9c84dad",
@@ -116,8 +115,9 @@ class AdxtrackingAdapterSpec extends Specification with DataTables with Validati
         """|{
               |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
               |"data":{
-                |"schema":"iglu:com.adxtracking/app_install/jsonschema/1-0-0",
+                |"schema":"iglu:com.adxtracking/user_interaction/jsonschema/1-0-0",
                 |"data":{
+                  |"name":"install",
                   |"sub_adgroup":"UN-11-b",
                   |"sub_campaign":"newsfeed",
                   |"tracking_id":"3353af9c-e298-2cf3-9f1c-b377a9c84dad",
@@ -138,7 +138,7 @@ class AdxtrackingAdapterSpec extends Specification with DataTables with Validati
   def e3 = {
     val params = toNameValuePairs(
       "user"           -> "6353af9b-e288-4cf3-9f1c-b377a9c84dac",
-      "name"           -> "Install",
+      "name"           -> "retarget",
       "publisher_name" -> "Organic",
       "sub_campaign"   -> "newsfeed",
       "tracking_id"    -> "",
@@ -155,8 +155,9 @@ class AdxtrackingAdapterSpec extends Specification with DataTables with Validati
         """|{
               |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
               |"data":{
-                |"schema":"iglu:com.adxtracking/app_install/jsonschema/1-0-0",
+                |"schema":"iglu:com.adxtracking/user_interaction/jsonschema/1-0-0",
                 |"data":{
+                  |"name":"retarget",
                   |"sub_adgroup":"UN-11-b",
                   |"sub_campaign":"newsfeed",
                   |"tracking_id":null,
@@ -179,7 +180,7 @@ class AdxtrackingAdapterSpec extends Specification with DataTables with Validati
   def e4 = {
     val params = toNameValuePairs(
       "user"           -> "6353af9b-e288-4cf3-9f1c-b377a9c84dac",
-      "name"           -> "Install",
+      "name"           -> "download",
       "publisher_name" -> "Organic",
       "p"              -> "mob"
       )
@@ -190,9 +191,10 @@ class AdxtrackingAdapterSpec extends Specification with DataTables with Validati
       """|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
             |"data":{
-              |"schema":"iglu:com.adxtracking/app_install/jsonschema/1-0-0",
+              |"schema":"iglu:com.adxtracking/user_interaction/jsonschema/1-0-0",
               |"data":{
                 |"user":"6353af9b-e288-4cf3-9f1c-b377a9c84dac",
+                |"name":"download",
                 |"publisher_name":"Organic"
               |}
             |}
@@ -207,25 +209,5 @@ class AdxtrackingAdapterSpec extends Specification with DataTables with Validati
     val actual = AdxtrackingAdapter.toRawEvents(payload)
 
     actual must beFailing(NonEmptyList("Querystring is empty: no AD-X Tracking event to process"))
-  }
-
-  def e6 = {
-    val params = toNameValuePairs(
-      "user" -> "6353af9b-e288-4cf3-9f1c-b377a9c84dac"
-      )
-    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
-    val actual = AdxtrackingAdapter.toRawEvents(payload)
-
-    actual must beFailing(NonEmptyList("Querystring does not contain name parameter: cannot determine type of AD-X Tracking event"))
-  }
-
-  def e7 = {
-    val params = toNameValuePairs(
-      "name" -> "Uninstall"
-      )
-    val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
-    val actual = AdxtrackingAdapter.toRawEvents(payload)
-
-    actual must beFailing(NonEmptyList("Unexpected name parameter Uninstall for AD-X Tracking event; expected Install"))
   }
 }
