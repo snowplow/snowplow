@@ -30,10 +30,6 @@ import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
 import org.apache.http.NameValuePair
 
-// Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
 
@@ -50,6 +46,10 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+
 // This project
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
@@ -65,6 +65,10 @@ object MailchimpAdapter extends Adapter {
 
   // Expected content type for a request body
   private val ContentType = "application/x-www-form-urlencoded; charset=utf-8"
+
+  // DateTime Formatters
+  private val dtfIn:  DateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss")
+  private val dtfOut: DateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private object SchemaUris {
@@ -98,15 +102,16 @@ object MailchimpAdapter extends Adapter {
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
     val qsParams = toMap(payload.querystring)
     val bodyParams = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + payload.body.get), "UTF-8").toList)
-    val params = qsParams ++ fixParamVals(bodyParams)
 
-    Some(bodyParams) match {
-      case (Some(body)) if body.size == 0         => s"Mailchimp Events require information to be in the body".failNel
-      case (Some(body)) if !body.contains("type") => s"No event type passed with event body".failNel
-      case (Some(body))                           => // Build our NEL of parameters
+    bodyParams match {
+      case body if body.size == 0         => s"Mailchimp Events require information to be in the body".failNel
+      case body if !body.contains("type") => s"No event type passed with event body".failNel
+      case body                           => // Build our NEL of parameters
         for {
           schema <- getSchema(body.get("type"))
         } yield {
+          val params = qsParams ++ reformatBadParamValues(bodyParams)
+          println(params)
           NonEmptyList(RawEvent(
             api          = payload.api,
             parameters   = toUnstructEventParams(TrackerVersion, params, schema, MailchimpFormatter, "srv"),
@@ -169,12 +174,12 @@ object MailchimpAdapter extends Adapter {
    *
    * @param bodyParams The parameters to be checked for fixing
    */
-  def fixParamVals(bodyParams: RawEventParameters): RawEventParameters =
-    Some(bodyParams) match {
-      case (Some(body)) if body.contains("fired_at") =>
-        val temp = body.get("fired_at").get
-        body.updated("fired_at", getDateTime(temp))
-      case (Some(body))                              => bodyParams
+  private def reformatBadParamValues(bodyParams: RawEventParameters): RawEventParameters =
+    bodyParams.get("fired_at") match {
+      case param => 
+        val dt = bodyParams.get("fired_at").get
+        bodyParams.updated("fired_at", reformateDateTimeForJsonSchema(dt))
+      case None  => bodyParams
     }
 
   /**
@@ -182,8 +187,10 @@ object MailchimpAdapter extends Adapter {
    *
    * @param value The datetime string to be formatted
    */
-  def getDateTime(value: String): String =
-    value.replace(" ","T").concat("Z")
+  private def reformateDateTimeForJsonSchema(value: String): String = {
+    val dt: DateTime = DateTime.parse(value, dtfIn)
+    dtfOut.print(dt)
+  }
 
   /**
    * Gets the correct Schema URI for the event passed from Mailchimp
