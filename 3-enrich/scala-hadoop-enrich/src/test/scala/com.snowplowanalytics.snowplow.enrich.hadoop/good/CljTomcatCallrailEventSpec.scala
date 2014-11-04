@@ -41,7 +41,7 @@ object CljTomcatCallrailEventSpec {
 
   val expected = List(
     "bnb",
-    "app",
+    "srv",
     EtlTimestamp,
     "2014-10-09 16:28:31.000",
     null,
