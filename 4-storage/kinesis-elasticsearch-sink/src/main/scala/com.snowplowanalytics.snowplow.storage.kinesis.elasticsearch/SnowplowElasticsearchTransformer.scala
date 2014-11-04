@@ -139,9 +139,10 @@ class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
     "dvce_screenheight",
     "doc_charset",
     "doc_width",
-    "doc_height")
+    "doc_height"
+    )
 
-  private val intFields = new Set(
+  private val intFields = Set(
     "txn_id",
     "domain_sessionidx",
     "page_urlport",
@@ -158,15 +159,15 @@ class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
     "doc_width",
     "doc_height"
     )
-  private val doubleFields = new Set(
+  private val doubleFields = Set(
     "geo_latitude",
     "geo_longitude",
     "tr_total",
     "tr_tax",
     "tr_shipping",
-    "ti_price",
+    "ti_price"
     )
-  private val boolFields = new Set(
+  private val boolFields = Set(
     "br_features_pdf",
     "br_features_flash",
     "br_features_java",
@@ -180,30 +181,31 @@ class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
     "dvce_ismobile"
     )
 
-  private val converter: (entry: (String, String) => (String, Any)) = e => {
+  private val converter: (((String, String)) => (String, Any)) = e => {
     try {
       if (intFields.contains(e._1)) {
         (e._1, e._2.toInt)
       } else if (doubleFields.contains(e._1)) {
         (e._1, e._2.toDouble)
-      } else if boolFields.contains(e._1) {
-        (e._1, e._2.toBoolean)
+      } else if (boolFields.contains(e._1)) {
+        (e._1, e._2 == "1")
       } else {
           e
       }
-    catch {
-      IllegalArgumentException(iae) => e // TODO: log the exception
+    } catch {
+      case iae: IllegalArgumentException => e // TODO: log the exception
     }
   }
 
-  override def toClass(record: Record): String = {
-
-    val fieldValues = new String(record.getData.array).split("\t")
-
-    val fieldsMap = fields.zip(fieldValues).filter(! _._2.isEmpty).map(converter).toMap
+  def jsonifyGoodEvent(event: Array[String]): String = {
+    val fieldsMap = fields.zip(event).filter(! _._2.isEmpty).map(converter).toMap
 
     JSONObject(fieldsMap).toString()
   }
+
+  override def toClass(record: Record): String =
+    jsonifyGoodEvent(new String(record.getData.array).split("\t"))
+
 
   override def fromClass(record: String): ElasticsearchObject  =  {
 
