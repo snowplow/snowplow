@@ -139,27 +139,33 @@ object MailchimpAdapter extends Adapter {
   }
 
   /**
-   * Returns a list of keys from a string
+   * Returns a NonEmptyList of nested keys from a String representing
+   * a field from a URI-encoded POST body.
    * 
-   * @param formKey The Key String that (may) need to be split.
-   * @return List[String] Generates a list of string based on 
-   *         the below regex
+   * @param formKey The key String that (may) need to be split based on
+   *        the below regex
+   * @return the key or keys as a NonEmptyList of Strings
    */
-  private def toKeys(formKey: String): List[String] = 
-    formKey.split("\\]?(\\[|\\])").toList
+  private def toKeys(formKey: String): NonEmptyList[String] = {
+    val keys = formKey.split("\\]?(\\[|\\])").toList
+    NonEmptyList(keys(0), keys.tail: _*) // Safe only because split() never produces an empty Array
+  }
 
   /**
-   * Recursively generates a correct Json Object
+   * Recursively generates a correct JObject
    *
-   * @param keys The list of Keys generated from toKeys()
-   * @param nestedMap The value for the list of keys
-   * @return JObject Generates a JObject out of a list of 
-   *         keys and a value
+   * @param keys The NEL of keys remaining to
+   *        nest into our JObject
+   * @param value The value we are going to
+   *        finally insert when we run out
+   *        of keys
+   * @return a JObject built from the list of key(s) and
+   *         a value
    */
-  private def recurse(keys: List[String], nestedMap: String): JObject =
-    keys match {
-      case head :: tail if tail.size == 0 => JObject(head -> JString(nestedMap))
-      case head :: tail                   => JObject(head -> recurse(tail, nestedMap))
+  private def recurse(keys: NonEmptyList[String], value: String): JObject =
+    keys.toList match {
+      case head :: second :: tail => JObject(head -> recurse(NonEmptyList(second, tail: _*), value))
+      case head :: Nil            => JObject(head -> JString(value))
     }
 
   /**
