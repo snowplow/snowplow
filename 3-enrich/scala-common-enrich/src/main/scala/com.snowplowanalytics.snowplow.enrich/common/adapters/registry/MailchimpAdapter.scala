@@ -50,6 +50,7 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 // This project
 import loaders.CollectorPayload
+import utils.{JsonUtils => JU}
 
 /**
  * Transforms a collector payload which conforms to
@@ -63,10 +64,6 @@ object MailchimpAdapter extends Adapter {
   // Expected content type for a request body
   private val ContentType = "application/x-www-form-urlencoded; charset=utf-8"
 
-  // DateTime Formatters
-  private val DtfIn:  DateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
-  private val DtfOut: DateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(DateTimeZone.UTC)
-
   // Schemas for reverse-engineering a Snowplow unstructured event
   private object SchemaUris {
     val UnstructEvent         = SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", "1-0-0").toSchemaUri
@@ -77,6 +74,9 @@ object MailchimpAdapter extends Adapter {
     val CleanedEmail          = SchemaKey("com.mailchimp", "cleaned_email", "jsonschema", "1-0-0").toSchemaUri
     val CampaignSendingStatus = SchemaKey("com.mailchimp", "campaign_sending_status", "jsonschema", "1-0-0").toSchemaUri
   }
+
+  // Datetime format used by MailChimp (as we will need to massage)
+  private val MailchimpDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
 
   // Formatter Function to convert RawEventParameters into a merged Json Object
   private val MailchimpFormatter: FormatterFunc = {
@@ -170,7 +170,7 @@ object MailchimpAdapter extends Adapter {
 
   /**
    * Merges all of the JObjects together
-
+   *
    * @param listOfJObjects The list of JObjects which needs to be
    *        merged together
    * @return JObject Creates a fully merged JObject from the List 
@@ -190,22 +190,13 @@ object MailchimpAdapter extends Adapter {
    */
   private[registry] def reformatBadParamValues(params: RawEventParameters): RawEventParameters =
     params.get("fired_at") match {
-      case Some(param) => params.updated("fired_at", reformateDateTimeForJsonSchema(param))
+      case Some(param) => params.updated("fired_at", JU.toJsonSchemaDateTime(param, MailchimpDateTimeFormat))
       case None        => params
     }
 
   /**
-   * Return the date time formatted correctly for JSON
-   *
-   * @param value The datetime string to be formatted
-   * @return String Correctly Formatted DateTime
-   */
-  private[registry] def reformateDateTimeForJsonSchema(value: String): String =
-    DtfOut.print(DateTime.parse(value, DtfIn))
-
-  /**
    * Gets the correct Schema URI for the event passed from Mailchimp
-
+   *
    * @param eventType The string pertaining to the type 
    *        of event schema we are looking for
    * @return the schema for the event or a Failure-boxed String

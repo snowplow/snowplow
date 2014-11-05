@@ -126,16 +126,16 @@ object JsonUtils {
    *
    * @param str The date-time-like String to reformat
    *        to pass JSON Schema validation
-   * @return a JString, of the reformatted date-time if
+   * @return the reformatted date-time String if
    *         possible, or otherwise the original String
    */
-  private[utils] def dateTimeToJValue(str: String, fromFormat: DateTimeFormatter): JString =
-    JString(try {
+  def toJsonSchemaDateTime(str: String, fromFormat: DateTimeFormatter): String =
+    try {
       val dt = DateTime.parse(str, fromFormat)
       toJsonSchemaDateTime(dt)
     } catch {
       case iae: IllegalArgumentException => str
-    })
+    }
 
   /**
    * Converts an incoming key, value into a json4s JValue.
@@ -165,7 +165,7 @@ object JsonUtils {
       case _ if bools.contains(key) => booleanToJValue(value)
       case _ if ints.contains(key)  => integerToJValue(value)
       case (_, Some((nel, fmt)))
-        if nel.toList.contains(key) => dateTimeToJValue(value, fmt)
+        if nel.toList.contains(key) => JString(toJsonSchemaDateTime(value, fmt))
       case _                        => JString(value)
     }
     (key, v)
