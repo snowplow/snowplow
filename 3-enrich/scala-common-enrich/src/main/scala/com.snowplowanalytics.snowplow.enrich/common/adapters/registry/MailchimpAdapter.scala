@@ -80,7 +80,7 @@ object MailchimpAdapter extends Adapter {
 
   // Formatter Function to convert RawEventParameters into a merged Json Object
   private val MailchimpFormatter: FormatterFunc = {
-    (parameters: RawEventParameters) => mergeJObjects(getJsonObject(parameters))
+    (parameters: RawEventParameters) => mergeJFields(toJFields(parameters))
   }
 
   /**
@@ -124,18 +124,17 @@ object MailchimpAdapter extends Adapter {
     }
 
   /**
-   * Generates a list of Json Objects from the body of the event
+   * Generates a list of JFields from the body of the event
    * 
-   * @param paramMap The map of all the parameters 
-   *        for this event 
-   * @return Iterable[JObject] Generates a list of 
-   *         JObjects which represents every value 
-   *         in the JSON with its own full path
+   * @param parameters The Map of all the parameters
+   *        for this raw event
+   * @return a (possibly-empty) List of JFields, where each
+   *         JField represents an entry from teh incoming Map
    */
-  private[registry] def getJsonObject(paramMap: Map[String,String]): Iterable[JObject] = {
+  private[registry] def toJFields(parameters: RawEventParameters): List[JField] = {
     for {
-      (k, v) <- paramMap
-    } yield (recurse(toKeys(k), v))
+      (k, v) <- parameters.toList
+    } yield recurse(toKeys(k), v)
   }
 
   /**
@@ -162,23 +161,30 @@ object MailchimpAdapter extends Adapter {
    * @return a JObject built from the list of key(s) and
    *         a value
    */
-  private[registry] def recurse(keys: NonEmptyList[String], value: String): JObject =
+  private[registry] def recurse(keys: NonEmptyList[String], value: String): JField =
     keys.toList match {
-      case head :: second :: tail => JObject(head -> recurse(NonEmptyList(second, tail: _*), value))
-      case head :: Nil            => JObject(head -> JString(value))
+      case head :: second :: tail => JField(head, recurse(NonEmptyList(second, tail: _*), value))
+      case head :: Nil            => JField(head, JString(value))
     }
 
   /**
-   * Merges all of the JObjects together
+   * Merges a List of possibly overlapping nested JFields together,
+   * thus:
    *
-   * @param listOfJObjects The list of JObjects which needs to be
-   *        merged together
-   * @return JObject Creates a fully merged JObject from the List 
-   *         provided
+   * val a: JField = ("data", JField("nested", JField("more-nested", JField("str", "hi"))))
+   * val b: JField = ("data", JField("nested", JField("more-nested", JField("num", 42))))
+   * => JObject(List((data,JObject(List((nested,JObject(List((more-nested,JObject(List((str,JString(hi)), (num,JInt(42)))))))))))))
+   *    aka {"data":{"nested":{"more-nested":{"str":"hi","num":42}}}}
+   *
+   * @param jfields A (possibly-empty) list of JFields which
+   *        need to be merged together
+   * @return a fully merged JObject from the List of JFields provided,
+   *         or a JObject(Nil) if the List was empty
    */
-  private[registry] def mergeJObjects(listOfJObjects: Iterable[JObject]): JObject = 
-    listOfJObjects match {
-      case head :: tail => tail.foldLeft(head)(_ merge _)
+  private[registry] def mergeJFields(jfields: List[JField]): JObject =
+    jfields match {
+      case x :: xs => xs.foldLeft(JObject(x))(_ merge JObject(_))
+      case Nil => JObject(Nil)
     }
 
   /**

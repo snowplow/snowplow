@@ -44,15 +44,15 @@ import org.specs2.scalaz.ValidationMatchers
 
 class MailchimpAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
 
-  "This is a specification to test the MailchimpAdapter functionality"                                                ^
-                                                                                                                     p^
+  "This is a specification to test the MailchimpAdapter functionality"                                              ^
+                                                                                                                   p^
   "toKeys should return a valid List of Keys from a string containing braces (or not)"                              ! e1^
   "recurse should return a valid JObject which contains the toKeys list and value supplied"                         ! e2^
-  "getJsonObject should return a valid list of JSON Objects which pertains to the map supplied"                     ! e3^
-  "mergeJObjects should return a correctly merged JSON which matches the expectation"                               ! e4^
+  "toJFields should return a valid list of JFields based on the Map supplied"                                       ! e3^
+  "mergeJFields should return a correctly merged JSON which matches the expectation"                                ! e4^
   "getSchema should return the correct schema for a valid event type"                                               ! e5^
   "getSchema should return a Nel Failure error for a bad event type"                                                ! e6^
-  "reformatParameters should return a parameter Map with correctly formatted values"                            ! e7^
+  "reformatParameters should return a parameter Map with correctly formatted values"                                ! e7^
   "toRawEvents must return a Nel Success with a correctly formatted ue_pr json"                                     ! e8^
   "toRawEvents must return a Nel Success with a correctly merged and formatted ue_pr json"                          ! e9^
   "toRawEvents must return a Nel Success for a supported event type"                                                ! e10^
@@ -60,7 +60,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   "toRawEvents must return a Nel Success containing an unsubscribe event and query string parameters"               ! e12^
   "toRawEvents must return a Nel Failure if the body content is empty"                                              ! e13^
   "toRawEvents must return a Nel Failure if no type parameter is passed in the body"                                ! e14^
-                                                                                                                     end
+                                                                                                                    end
   implicit val resolver = SpecHelpers.IgluResolver
 
   object Shared {
@@ -72,32 +72,39 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   val ContentType = "application/x-www-form-urlencoded; charset=utf-8"
 
   def e1 = {
-    val expected = NonEmptyList("data","merges","LNAME")
-    val actual = MailchimpAdapter.toKeys("data[merges][LNAME]")
-    actual mustEqual expected
+    val keys = "data[merges][LNAME]"
+    val expected = NonEmptyList("data", "merges", "LNAME")
+
+    MailchimpAdapter.toKeys(keys) mustEqual expected
   }
 
   def e2 = {
-    val keysArray = NonEmptyList("data","merges","LNAME")
+    val keys = NonEmptyList("data", "merges", "LNAME")
     val value = "Beemster"
-    val expected = JObject(List(("data",JObject(List(("merges",JObject(List(("LNAME",JString("Beemster"))))))))))
-    val actual = MailchimpAdapter.recurse(keysArray, value)
-    actual mustEqual expected
+    val expected = JField("data", JObject(List(("merges", JObject(List(("LNAME", JString("Beemster"))))))))
+
+    MailchimpAdapter.recurse(keys, value) mustEqual expected
   }
 
   def e3 = {
-    val m = Map("data[merges][LNAME]" -> "Beemster")
-    val expected = List(JObject(List(("data",JObject(List(("merges",JObject(List(("LNAME",JString("Beemster")))))))))))
-    val actual = MailchimpAdapter.getJsonObject(m)
-    actual mustEqual expected
+    val map = Map(
+      "data[merges][LNAME]" -> "Beemster",
+      "data[merges][FNAME]" -> "Joshua"
+    )
+    val expected = List(
+      JField("data", JObject(List(("merges", JObject(List(("LNAME", JString("Beemster")))))))),
+      JField("data", JObject(List(("merges", JObject(List(("FNAME", JString("Joshua"))))))))
+    )
+
+    MailchimpAdapter.toJFields(map) mustEqual expected
   }
 
   def e4 = {
-    val m = Map("data[merges][LNAME]" -> "Beemster", "data[merges][FNAME]" -> "Joshua")
-    val jsonObject = MailchimpAdapter.getJsonObject(m)
-    val expected = JObject(List(("data",JObject(List(("merges",JObject(List(("LNAME",JString("Beemster")), ("FNAME",JString("Joshua"))))))))))
-    val actual = MailchimpAdapter.mergeJObjects(jsonObject)
-    actual mustEqual expected
+    val a = JField("l1", JField("l2", JField("l3", JField("str", "hi"))))
+    val b = JField("l1", JField("l2", JField("l3", JField("num", 42))))
+    val expected = JObject(List(("l1", JObject(List(("l2", JObject(List(("l3", JObject(List(("str", JString("hi")), ("num", JInt(42)))))))))))))
+
+    MailchimpAdapter.mergeJFields(List(a, b)) mustEqual expected
   }
 
   def e5 = 
