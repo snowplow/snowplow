@@ -106,7 +106,7 @@ object MailchimpAdapter extends Adapter {
           case None => s"No MailChimp type parameter provided: cannot determine event type".failNel
           case Some(eventType) => {
 
-            val allParams = toMap(payload.querystring) ++ reformatBadParamValues(params)
+            val allParams = toMap(payload.querystring) ++ reformatParameters(params)
             for {
               schema <- (lookupSchema(eventType).toValidationNel: Validated[String])
             } yield {
@@ -182,16 +182,18 @@ object MailchimpAdapter extends Adapter {
     }
 
   /**
-   * Fixes the parameter values of the event
+   * Reformats the date-time stored in the fired_at parameter
+   * (if found) so that it can pass JSON Schema date-time validation.
    *
-   * @param params The parameters to be checked for fixing
-   * @return RawEventParameters Either with a fixed Date Time 
-   *         if the key was found or the original parameters
+   * @param parameters The parameters to be checked for fixing
+   * @return the event parameters, either with a fixed date-time
+   *         for fired_at if that key was found, or else the original
+   *         parameters
    */
-  private[registry] def reformatBadParamValues(params: RawEventParameters): RawEventParameters =
-    params.get("fired_at") match {
-      case Some(param) => params.updated("fired_at", JU.toJsonSchemaDateTime(param, MailchimpDateTimeFormat))
-      case None        => params
+  private def reformatParameters(parameters: RawEventParameters): RawEventParameters =
+    parameters.get("fired_at") match {
+      case Some(firedAt) => parameters.updated("fired_at", JU.toJsonSchemaDateTime(firedAt, MailchimpDateTimeFormat))
+      case None          => parameters
     }
 
   /**
