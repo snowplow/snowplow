@@ -88,13 +88,13 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       "mkt_term" -> "",
       "mkt_content" -> "",
       "mkt_campaign" -> "",
-      "contexts" -> "",
+      "contexts" -> "bad json",
       "se_category" -> "",
       "se_action" -> "",
       "se_label" -> "",
       "se_property" -> "",
       "se_value" -> "",
-      "unstruct_event" -> "",
+      "unstruct_event" -> """{"path": {"to": {"value": 100}}}""",
       "tr_orderid" -> "",
       "tr_affiliation" -> "",
       "tr_total" -> "",
@@ -148,15 +148,20 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
 
       val eventValues = nvPairs.unzip._2.toArray
       val result = parse(new SnowplowElasticsearchTransformer().jsonifyGoodEvent(eventValues))
+
       ScalazJson4sUtils.extract[String](result, "platform") must beSuccessful("web")
       ScalazJson4sUtils.extract[Int](result, "domain_sessionidx") must beSuccessful(3)
       ScalazJson4sUtils.extract[Double](result, "geo_latitude") must beSuccessful(37.443604)
       ScalazJson4sUtils.extract[Boolean](result, "br_features_pdf") must beSuccessful(true)
       ScalazJson4sUtils.extract[Boolean](result, "br_features_flash") must beSuccessful(false)
+      ScalazJson4sUtils.extract[Int](result, "unstruct_event", "path", "to", "value") must beSuccessful(100)
       ScalazJson4sUtils.extract[String](result, "ti_sku") must beSuccessful(null)
 
       // check that IllegalArgumentExceptions are caught
       ScalazJson4sUtils.extract[String](result, "doc_height") must beSuccessful("illegal")
+
+      // check that JsonParseExceptions are caught
+      ScalazJson4sUtils.extract[String](result, "contexts") must beSuccessful("bad json")
     }
   }
 

@@ -31,6 +31,9 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 
+// Jackson
+import com.fasterxml.jackson.core.JsonParseException
+
 class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
   with ITransformer[String, ElasticsearchObject] {
 
@@ -183,6 +186,10 @@ class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
     "br_cookies",
     "dvce_ismobile"
     )
+  private val jsonFields = Set(
+    "contexts",
+    "unstruct_event"
+    )
 
   private val converter: (((String, String)) => JObject) = kvPair => (kvPair._1,
     if (kvPair._2.isEmpty) {
@@ -199,11 +206,14 @@ class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
             case "0" => JBool(false)
             case s   => JString(s)
           }
+        } else if (jsonFields.contains(kvPair._1)) {
+          parse(kvPair._2)
         } else {
           JString(kvPair._2)
         }
       } catch {
         case iae: IllegalArgumentException => JString(kvPair._2) // TODO: log the exception
+        case jpe: JsonParseException => JString(kvPair._2) // TODO: log the exception
       }
     }
   )
