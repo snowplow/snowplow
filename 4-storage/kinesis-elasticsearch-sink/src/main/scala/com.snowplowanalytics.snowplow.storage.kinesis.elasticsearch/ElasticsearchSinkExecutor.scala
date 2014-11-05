@@ -18,9 +18,6 @@
  */
 package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
 
-// Snowplow Thrift
-import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
-
 // AWS Kinesis Connector libs
 import com.amazonaws.services.kinesis.connectors.elasticsearch.ElasticsearchObject
 import com.amazonaws.services.kinesis.connectors.{
@@ -32,9 +29,12 @@ import com.amazonaws.services.kinesis.connectors.{
 /**
 * Boilerplate class for Kinesis Conenector
 */
-class ElasticsearchSinkExecutor(config: KinesisConnectorConfiguration) extends KinesisConnectorExecutorBase[ String, ElasticsearchObject ] {
-  super.initialize(config)
+class ElasticsearchSinkExecutor(streamType: String, documentIndex: String, documentType: String, config: KinesisConnectorConfiguration)
+  extends KinesisConnectorExecutorBase[String, ElasticsearchObject] {
+
+  initialize(config)
   override def getKinesisConnectorRecordProcessorFactory = {
-    new KinesisConnectorRecordProcessorFactory[ String, ElasticsearchObject ](new ElasticsearchPipeline(), config)
+    new KinesisConnectorRecordProcessorFactory[ String, ElasticsearchObject ](
+      new ElasticsearchPipeline(streamType, documentIndex, documentType), config)
   }
 }

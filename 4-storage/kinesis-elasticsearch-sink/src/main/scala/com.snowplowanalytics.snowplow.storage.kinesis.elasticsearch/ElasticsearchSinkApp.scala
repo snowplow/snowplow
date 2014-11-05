@@ -69,71 +69,53 @@ object KinesisEnrichApp extends App {
     case Source.Stdin => new StdinSource(kinesisEnrichConfig)
   }*/
 
-  val configValue: Config = config.value.getOrElse(throw new RuntimeException("todo"))
+  val configValue: Config = config.value.getOrElse(throw new RuntimeException("todo")).resolve.getConfig("connector")
 
-  val executor = new ElasticsearchSinkExecutor(convertConfig(configValue))
+  val streamType = configValue.getConfig("kinesis").getString("stream-type")
+  val location = configValue.getConfig("location")
+  val documentIndex = location.getString("index")
+  val documentType = location.getString("type")
+
+  val executor = new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue))
 
   executor.run
 
-  def convertConfig(conf: Config): KinesisConnectorConfiguration = {
+  def convertConfig(connector: Config): KinesisConnectorConfiguration = {
+
+    val aws = connector.getConfig("aws")
+    val accessKey = aws.getString("access-key")
+    val secretKey = aws.getString("secret-key")
+
+    val elasticsearch = connector.getConfig("elasticsearch")
+    val elasticsearchEndpoint = elasticsearch.getString("endpoint")
+    val clusterName = elasticsearch.getString("cluster-name")
+
+    val kinesis = connector.getConfig("kinesis")
+    val streamRegion = kinesis.getString("region")
+    val appName = kinesis.getString("app-name")
+    val initialPosition = kinesis.getString("initial-position")
+    val streamName = kinesis.getString("stream-name")
+    val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
+
+    val buffer = connector.getConfig("buffer")
+    val byteLimit = buffer.getString("byte-limit")
+    val recordLimit = buffer.getString("record-limit")
+
 
     val props = new Properties
 
-    props.setProperty(KinesisConnectorConfiguration.PROP_KINESIS_INPUT_STREAM, "enrichedfbtest")
-    props.setProperty(KinesisConnectorConfiguration.PROP_KINESIS_ENDPOINT, "https://kinesis.us-east-1.amazonaws.com")
-    props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_PORT, "9300")
-    props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_ENDPOINT, "localhost")
-    props.setProperty(KinesisConnectorConfiguration.DEFAULT_ELASTICSEARCH_CLUSTER_NAME, "elasticsearch")
+    props.setProperty(KinesisConnectorConfiguration.PROP_KINESIS_INPUT_STREAM, streamName)
+    props.setProperty(KinesisConnectorConfiguration.PROP_KINESIS_ENDPOINT, streamEndpoint)
+    props.setProperty(KinesisConnectorConfiguration.PROP_APP_NAME, appName)
+    props.setProperty(KinesisConnectorConfiguration.PROP_INITIAL_POSITION_IN_STREAM, initialPosition)
+
+    props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_ENDPOINT, elasticsearchEndpoint)
+    props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_CLUSTER_NAME, clusterName)
+
+    props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_BYTE_SIZE_LIMIT, byteLimit)
+    props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_RECORD_COUNT_LIMIT, recordLimit)
 
     new KinesisConnectorConfiguration(props, new DefaultAWSCredentialsProviderChain())
   }
 
 }
-
-// Rigidly load the configuration file here to error when
-// the enrichment process starts rather than later.
-// TODO: this is duplicated from Kinesis Enrich
-/*
-class KinesisEnrichConfig(config: Config) {
-  private val enrich = config.resolve.getConfig("enrich")
-
-  val source = enrich.getString("source") match {
-    case "kinesis" => Source.Kinesis
-    case "stdin" => Source.Stdin
-    case "test" => Source.Test
-    case _ => throw new RuntimeException("enrich.source unknown.")
-  }
-
-  private val aws = enrich.getConfig("aws")
-  val accessKey = aws.getString("access-key")
-  val secretKey = aws.getString("secret-key")
-
-  private val streams = enrich.getConfig("streams")
-
-  private val inStreams = streams.getConfig("in")
-  val rawInStream = inStreams.getString("raw")
-
-  val appName = streams.getString("app-name")
-
-  val initialPosition = streams.getString("initial-position")
-  val streamEndpoint = streams.getString("endpoint")
-
-  private val enrichments = enrich.getConfig("enrichments")
-  private val geoIp = enrichments.getConfig("geo_ip")
-  val geoIpEnabled = geoIp.getBoolean("enabled")
-  val maxmindFile = {
-    val path = geoIp.getString("maxmind_file")
-    val file = new File(path)
-    if (file.exists) {
-      file
-    } else {
-      val uri = getClass.getResource(path).toURI
-      new File(uri)
-    } // TODO: add error handling if this still isn't found
-  }
-
-  private val anonIp = enrichments.getConfig("anon_ip")
-  val anonIpEnabled = anonIp.getBoolean("enabled")
-  val anonOctets = anonIp.getInt("anon_octets")
-}
-*/

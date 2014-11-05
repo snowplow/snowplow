@@ -34,15 +34,18 @@ import com.amazonaws.services.kinesis.connectors.interfaces.{
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 import com.amazonaws.services.kinesis.connectors.impl.{BasicMemoryBuffer,AllPassFilter}
 
-// Snowplow Thrift todo remove?
-import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
-
 /**
 * ElasticsearchPipeline class sets up the Emitter/Buffer/Transformer/Filter
 */
-class ElasticsearchPipeline extends IKinesisConnectorPipeline[ String, ElasticsearchObject ] {
+class ElasticsearchPipeline(streamType: String, documentIndex: String, documentType: String)
+  extends IKinesisConnectorPipeline[String, ElasticsearchObject] {
+
   override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[ElasticsearchObject] = new ElasticsearchEmitter(configuration)
   override def getBuffer(configuration: KinesisConnectorConfiguration) = new BasicMemoryBuffer[String](configuration)
-  override def getTransformer(c: KinesisConnectorConfiguration) = new SnowplowElasticsearchTransformer()
+  override def getTransformer(c: KinesisConnectorConfiguration) = streamType match {
+    case "good" => new SnowplowElasticsearchTransformer(documentIndex, documentType)
+    case "bad" => new BadEventTransformer(documentIndex, documentType)
+    case _ => throw new RuntimeException("\"stream-type\" must be set to \"good\" or \"bad\"")
+  }
   override def getFilter(c: KinesisConnectorConfiguration) = new AllPassFilter[String]()
 }

@@ -34,7 +34,7 @@ import org.json4s.JsonDSL._
 // Jackson
 import com.fasterxml.jackson.core.JsonParseException
 
-class BadEventTransformer extends ElasticsearchTransformer[String]
+class BadEventTransformer(documentIndex: String, documentType: String) extends ElasticsearchTransformer[String]
   with ITransformer[String, ElasticsearchObject] {
 
   override def toClass(record: Record): String =
@@ -43,7 +43,7 @@ class BadEventTransformer extends ElasticsearchTransformer[String]
   override def fromClass(record: String): ElasticsearchObject  =  {
     println(">>>>>>>>>>>>>>>>>>> CALLING FROMCLASS ON BadEventTransformer")
     println(record)
-    val e = new ElasticsearchObject("events", "bad", record)
+    val e = new ElasticsearchObject(documentIndex, documentType, record)
     e.setCreate(true)
     e
   }

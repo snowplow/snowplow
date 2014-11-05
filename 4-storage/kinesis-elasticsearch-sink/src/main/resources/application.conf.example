@@ -1,19 +1,27 @@
+# Default configuration for kinesis-elasticsearch-sink
+
 connector {
   aws {
     access-key: "env"
     secret-key: "env"
   }
   kinesis {
-    endpoint: "us-east-1"
-    stream-name: "" # Kinesis stream name
-    app-name: "" # App name for this consumer
+    stream-type: "good" # or "bad"
+    region: "us-east-1"
+    stream-name: "enrichedfbtest" # Kinesis stream name
+    app-name: "elasticsearch_app" # App name for this consumer
+    initial-position: "TRIM_HORIZON"
   }
   elasticsearch {
     cluster-name: "elasticsearch"
-    endpoint: "localhost" # Put s3 Bucket here
+    endpoint: "localhost"
+  }
+  location {
+    index: "snowplow" # Elasticsearch index name
+    type: "good" # Elasticsearch type name
   }
   buffer {
-      byte-limit: 5242880 # 5MB
-      record-limit: 1000 # 1K records
+    byte-limit: 5242880 # 5MB
+    record-limit: 1 # 1 record
   }
 }

@@ -34,7 +34,7 @@ import org.json4s.JsonDSL._
 // Jackson
 import com.fasterxml.jackson.core.JsonParseException
 
-class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
+class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ElasticsearchTransformer[String]
   with ITransformer[String, ElasticsearchObject] {
 
   private val fields = Array(
@@ -191,7 +191,7 @@ class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
     "unstruct_event"
     )
 
-  private val converter: (((String, String)) => JObject) = kvPair => (kvPair._1,
+  private def converter(kvPair: (String, String)): JObject = (kvPair._1,
     if (kvPair._2.isEmpty) {
         JNull
     } else {
@@ -223,12 +223,11 @@ class SnowplowElasticsearchTransformer extends ElasticsearchTransformer[String]
     compact(render(jObjects.fold(JObject())(_ ~ _)))
   }
 
-
   override def toClass(record: Record): String =
     jsonifyGoodEvent(new String(record.getData.array).split("\t"))
 
   override def fromClass(record: String): ElasticsearchObject  =  {
-    val e = new ElasticsearchObject("events", "sometype", "event", record)
+    val e = new ElasticsearchObject(documentIndex, documentType, record)
     e.setCreate(true)
     e
   }
