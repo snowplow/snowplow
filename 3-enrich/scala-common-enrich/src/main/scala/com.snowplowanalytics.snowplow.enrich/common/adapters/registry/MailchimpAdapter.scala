@@ -190,7 +190,7 @@ object MailchimpAdapter extends Adapter {
    *         for fired_at if that key was found, or else the original
    *         parameters
    */
-  private def reformatParameters(parameters: RawEventParameters): RawEventParameters =
+  private[registry] def reformatParameters(parameters: RawEventParameters): RawEventParameters =
     parameters.get("fired_at") match {
       case Some(firedAt) => parameters.updated("fired_at", JU.toJsonSchemaDateTime(firedAt, MailchimpDateTimeFormat))
       case None          => parameters
