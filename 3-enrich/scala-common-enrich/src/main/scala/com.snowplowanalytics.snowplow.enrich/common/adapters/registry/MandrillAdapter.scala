@@ -30,7 +30,10 @@ import org.apache.http.client.utils.URLEncodedUtils
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
+<<<<<<< HEAD
 import com.fasterxml.jackson.core.JsonParseException
+=======
+>>>>>>> Initial Mandrill Adapter commit
 
 // Scala
 import scala.collection.JavaConversions._
@@ -311,7 +314,7 @@ object MandrillAdapter extends Adapter {
 
   /**
    * Gets the correct Schema URI for the event passed from Mandrill
-   *
+   * 
    * @param eventType The string pertaining to the type 
    *        of event schema we are looking for
    * @return the schema for the event or a Failure-boxed String
