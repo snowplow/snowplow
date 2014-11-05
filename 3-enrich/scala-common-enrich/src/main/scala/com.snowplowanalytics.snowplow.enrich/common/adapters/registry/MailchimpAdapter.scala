@@ -124,7 +124,7 @@ object MailchimpAdapter extends Adapter {
     }
 
   /**
-   * Generates a list of JFields from the body of the event
+   * Generates a List of JFields from the raw event parameters.
    * 
    * @param parameters The Map of all the parameters
    *        for this raw event
@@ -134,7 +134,7 @@ object MailchimpAdapter extends Adapter {
   private[registry] def toJFields(parameters: RawEventParameters): List[JField] = {
     for {
       (k, v) <- parameters.toList
-    } yield recurse(toKeys(k), v)
+    } yield toNestedJField(toKeys(k), v)
   }
 
   /**
@@ -142,7 +142,7 @@ object MailchimpAdapter extends Adapter {
    * a field from a URI-encoded POST body.
    * 
    * @param formKey The key String that (may) need to be split based on
-   *        the below regex
+   *        the supplied regexp
    * @return the key or keys as a NonEmptyList of Strings
    */
   private[registry] def toKeys(formKey: String): NonEmptyList[String] = {
@@ -151,19 +151,20 @@ object MailchimpAdapter extends Adapter {
   }
 
   /**
-   * Recursively generates a correct JObject
+   * Recursively generates a correct JField,
+   * working through the supplied NEL of keys.
    *
    * @param keys The NEL of keys remaining to
    *        nest into our JObject
    * @param value The value we are going to
    *        finally insert when we run out
    *        of keys
-   * @return a JObject built from the list of key(s) and
+   * @return a JField built from the list of key(s) and
    *         a value
    */
-  private[registry] def recurse(keys: NonEmptyList[String], value: String): JField =
+  private[registry] def toNestedJField(keys: NonEmptyList[String], value: String): JField =
     keys.toList match {
-      case head :: second :: tail => JField(head, recurse(NonEmptyList(second, tail: _*), value))
+      case head :: second :: tail => JField(head, toNestedJField(NonEmptyList(second, tail: _*), value))
       case head :: Nil            => JField(head, JString(value))
     }
 

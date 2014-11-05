@@ -47,7 +47,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   "This is a specification to test the MailchimpAdapter functionality"                                              ^
                                                                                                                    p^
   "toKeys should return a valid List of Keys from a string containing braces (or not)"                              ! e1^
-  "recurse should return a valid JObject which contains the toKeys list and value supplied"                         ! e2^
+  "toNestedJField should return a valid JField nested to contain all keys and then the supplied value"              ! e2^
   "toJFields should return a valid list of JFields based on the Map supplied"                                       ! e3^
   "mergeJFields should return a correctly merged JSON which matches the expectation"                                ! e4^
   "getSchema should return the correct schema for a valid event type"                                               ! e5^
@@ -83,7 +83,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
     val value = "Beemster"
     val expected = JField("data", JObject(List(("merges", JObject(List(("LNAME", JString("Beemster"))))))))
 
-    MailchimpAdapter.recurse(keys, value) mustEqual expected
+    MailchimpAdapter.toNestedJField(keys, value) mustEqual expected
   }
 
   def e3 = {
@@ -102,7 +102,10 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   def e4 = {
     val a = JField("l1", JField("l2", JField("l3", JField("str", "hi"))))
     val b = JField("l1", JField("l2", JField("l3", JField("num", 42))))
-    val expected = JObject(List(("l1", JObject(List(("l2", JObject(List(("l3", JObject(List(("str", JString("hi")), ("num", JInt(42)))))))))))))
+    val expected = JObject(List(("l1", JObject(List(("l2", JObject(List(("l3", JObject(List(
+      ("str", JString("hi")),
+      ("num", JInt(42))
+    )))))))))))
 
     MailchimpAdapter.mergeJFields(List(a, b)) mustEqual expected
   }
