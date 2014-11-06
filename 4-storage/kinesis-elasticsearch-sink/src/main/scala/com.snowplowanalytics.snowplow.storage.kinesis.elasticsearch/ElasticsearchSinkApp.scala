@@ -60,14 +60,6 @@ object KinesisEnrichApp extends App {
   }
 
   parser.parse(args)
-  //val kinesisEnrichConfig = new KinesisEnrichConfig(
-  //  config.value.getOrElse(ConfigFactory.load("default"))
-  //)
-/*
-  val source = kinesisEnrichConfig.source match {
-    case Source.Kinesis => new KinesisSource(kinesisEnrichConfig)
-    case Source.Stdin => new StdinSource(kinesisEnrichConfig)
-  }*/
 
   val configValue: Config = config.value.getOrElse(throw new RuntimeException("todo")).resolve.getConfig("connector")
 
@@ -80,6 +72,12 @@ object KinesisEnrichApp extends App {
 
   executor.run
 
+  /**
+   * Builds a KinesisConnectorConfiguration from the "connector" field of the configuration HOCON
+   *
+   * @param connector The "connector" field of the configuration HOCON
+   * @return A KinesisConnectorConfiguration
+   */
   def convertConfig(connector: Config): KinesisConnectorConfiguration = {
 
     val aws = connector.getConfig("aws")

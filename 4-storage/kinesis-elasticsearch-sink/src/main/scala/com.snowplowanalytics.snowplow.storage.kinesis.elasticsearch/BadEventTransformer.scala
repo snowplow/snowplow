@@ -31,18 +31,27 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 
-// Jackson
-import com.fasterxml.jackson.core.JsonParseException
-
+/**
+ * Class to convert bad events to ElasticsearchObjects
+ */
 class BadEventTransformer(documentIndex: String, documentType: String) extends ElasticsearchTransformer[String]
   with ITransformer[String, ElasticsearchObject] {
 
-  override def toClass(record: Record): String =
-    new String(record.getData.array)
+  /**
+   * Convert an Amazon Kinesis record to a JSON string
+   *
+   * @param record Byte array representation of a bad row string
+   * @return JSON string for the event
+   */
+  override def toClass(record: Record): String = new String(record.getData.array)
 
+  /**
+   * Convert a buffered bad event JSON to an ElasticsearchObject
+   *
+   * @param record Bad event JSON
+   * @return An ElasticsearchObject
+   */
   override def fromClass(record: String): ElasticsearchObject  =  {
-    println(">>>>>>>>>>>>>>>>>>> CALLING FROMCLASS ON BadEventTransformer")
-    println(record)
     val e = new ElasticsearchObject(documentIndex, documentType, record)
     e.setCreate(true)
     e

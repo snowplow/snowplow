@@ -34,6 +34,9 @@ import org.json4s.JsonDSL._
 // Jackson
 import com.fasterxml.jackson.core.JsonParseException
 
+/**
+ * Class to convert successfully enriched events to ElasticsearchObjects
+ */
 class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ElasticsearchTransformer[String]
   with ITransformer[String, ElasticsearchObject] {
 
@@ -191,9 +194,15 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     "unstruct_event"
     )
 
+  /**
+   * Convert the value of a field to a JValue based on the name of the field
+   *
+   * @param kvPair Tuple2 of the name and value of the field
+   * @return JObject representing a single field in the JSON
+   */
   private def converter(kvPair: (String, String)): JObject = (kvPair._1,
     if (kvPair._2.isEmpty) {
-        JNull
+      JNull
     } else {
       try {
         if (intFields.contains(kvPair._1)) {
@@ -218,14 +227,32 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     }
   )
 
+  /**
+   * Converts an aray of field values to a JSON whose keys are the field names
+   *
+   * @param event Array of values for the event
+   * @return JSON string representing the event
+   */
   def jsonifyGoodEvent(event: Array[String]): String = {
     val jObjects: Array[JObject] = fields.zip(event).map(converter)
     compact(render(jObjects.fold(JObject())(_ ~ _)))
   }
 
+  /**
+   * Convert an Amazon Kinesis record to a JSON string
+   *
+   * @param record Byte array representation of an enriched event string
+   * @return JSON string for the event
+   */
   override def toClass(record: Record): String =
     jsonifyGoodEvent(new String(record.getData.array).split("\t"))
 
+  /**
+   * Convert a buffered event JSON to an ElasticsearchObject
+   *
+   * @param record Event JSON
+   * @return An ElasticsearchObject
+   */
   override def fromClass(record: String): ElasticsearchObject  =  {
     val e = new ElasticsearchObject(documentIndex, documentType, record)
     e.setCreate(true)
