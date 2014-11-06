@@ -258,13 +258,10 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    * @param record Event JSON
    * @return An ElasticsearchObject
    */
-  override def fromClass(record: JsonRecord): ElasticsearchObject  =  {
-    val e = record.id match {
+  override def fromClass(record: JsonRecord): ElasticsearchObject =
+    record.id match {
       case Some(id) => new ElasticsearchObject(documentIndex, documentType, id, record.json)
       case None => new ElasticsearchObject(documentIndex, documentType, record.json)
     }
-    e.setCreate(true)
-    e
-  }
 
 }

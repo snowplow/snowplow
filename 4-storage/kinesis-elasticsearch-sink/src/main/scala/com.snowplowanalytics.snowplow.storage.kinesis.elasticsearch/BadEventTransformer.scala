@@ -47,10 +47,7 @@ class BadEventTransformer(documentIndex: String, documentType: String) extends E
    * @param record Bad event JSON
    * @return An ElasticsearchObject
    */
-  override def fromClass(record: JsonRecord): ElasticsearchObject  =  {
-    val e = new ElasticsearchObject(documentIndex, documentType, record.json)
-    e.setCreate(true)
-    e
-  }
+  override def fromClass(record: JsonRecord): ElasticsearchObject =
+    new ElasticsearchObject(documentIndex, documentType, "duplicated", record.json)
 
 }
