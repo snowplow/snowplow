@@ -235,7 +235,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    * Converts an aray of field values to a JSON whose keys are the field names
    *
    * @param event Array of values for the event
-   * @return JSON string representing the event
+   * @return JsonRecord containing JSON for the event and the event_id (if it exists)
    */
   def jsonifyGoodEvent(event: Array[String]): JsonRecord = {
     val jObjects: Array[JObject] = fields.zip(event).map(converter)
@@ -247,7 +247,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    * Convert an Amazon Kinesis record to a JSON string
    *
    * @param record Byte array representation of an enriched event string
-   * @return JSON string for the event
+   * @return JsonRecord for the event
    */
   override def toClass(record: Record): JsonRecord =
     jsonifyGoodEvent(new String(record.getData.array).split("\t"))
@@ -255,7 +255,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
   /**
    * Convert a buffered event JSON to an ElasticsearchObject
    *
-   * @param record Event JSON
+   * @param record JsonRecord containing a good event JSON
    * @return An ElasticsearchObject
    */
   override def fromClass(record: JsonRecord): ElasticsearchObject =

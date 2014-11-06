@@ -17,7 +17,7 @@ connector {
 
     # LATEST: most recent data.
     # TRIM_HORIZON: oldest available data.
-    # Note: This only effects the first run of this application
+    # Note: This only affects the first run of this application
     # on a stream.
     initial-position: "TRIM_HORIZON"
 

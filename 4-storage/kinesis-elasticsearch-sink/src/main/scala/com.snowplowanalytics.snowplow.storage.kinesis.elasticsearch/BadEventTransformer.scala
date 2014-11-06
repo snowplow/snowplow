@@ -36,7 +36,7 @@ class BadEventTransformer(documentIndex: String, documentType: String) extends E
    * Convert an Amazon Kinesis record to a JSON string
    *
    * @param record Byte array representation of a bad row string
-   * @return JSON string for the event
+   * @return JsonRecord containing JSON string for the event and no event_id
    */
   override def toClass(record: Record): JsonRecord =
     JsonRecord(new String(record.getData.array), None)
@@ -44,7 +44,7 @@ class BadEventTransformer(documentIndex: String, documentType: String) extends E
   /**
    * Convert a buffered bad event JSON to an ElasticsearchObject
    *
-   * @param record Bad event JSON
+   * @param record JsonRecord containing a bad event JSON
    * @return An ElasticsearchObject
    */
   override def fromClass(record: JsonRecord): ElasticsearchObject =
