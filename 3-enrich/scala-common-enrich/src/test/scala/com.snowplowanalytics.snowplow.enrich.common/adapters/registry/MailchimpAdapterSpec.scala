@@ -58,8 +58,10 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   "toRawEvents must return a Nel Success for a supported event type"                                                ! e10^
   "toRawEvents must return a Nel Failure error for an unsupported event type"                                       ! e11^
   "toRawEvents must return a Nel Success containing an unsubscribe event and query string parameters"               ! e12^
-  "toRawEvents must return a Nel Failure if the body content is empty"                                              ! e13^
-  "toRawEvents must return a Nel Failure if no type parameter is passed in the body"                                ! e14^
+  "toRawEvents must return a Nel Failure if the request body is missing"                                            ! e13^
+  "toRawEvents must return a Nel Failure if the content type is missing"                                            ! e14^
+  "toRawEvents must return a Nel Failure if the content type is incorrect"                                          ! e15^
+  "toRawEvents must return a Nel Failure if the request body does not contain a type parameter"                     ! e16^
                                                                                                                     end
   implicit val resolver = SpecHelpers.IgluResolver
 
@@ -247,13 +249,24 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   }
 
   def e13 = {
-    val body = ""
-    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
+    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
     val actual = MailchimpAdapter.toRawEvents(payload)
-    actual must beFailing(NonEmptyList("No MailChimp type parameter provided: cannot determine event type"))
+    actual must beFailing(NonEmptyList("Request body is empty: no MailChimp event to process"))
   }
 
   def e14 = {
+    val payload = CollectorPayload(Shared.api, Nil, None, "stub".some, Shared.cljSource, Shared.context)
+    val actual = MailchimpAdapter.toRawEvents(payload)
+    actual must beFailing(NonEmptyList("Request body provided but content type empty, expected application/x-www-form-urlencoded; charset=utf-8 for MailChimp"))
+  }
+
+  def e15 = {
+    val payload = CollectorPayload(Shared.api, Nil, "application/json".some, "stub".some, Shared.cljSource, Shared.context)
+    val actual = MailchimpAdapter.toRawEvents(payload)
+    actual must beFailing(NonEmptyList("Content type of application/json provided, expected application/x-www-form-urlencoded; charset=utf-8 for MailChimp"))
+  }
+
+  def e16 = {
     val body = "fired_at=2014-10-22+13%3A10%3A40"
     val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
     val actual = MailchimpAdapter.toRawEvents(payload)

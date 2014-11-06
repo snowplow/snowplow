@@ -58,11 +58,12 @@ import utils.{JsonUtils => JU}
  * into raw events.
  */
 object MailchimpAdapter extends Adapter {
-  // Tracker version for an Mailchimp Tracking webhook
-  private val TrackerVersion = "com.mailchimp-v1"
 
   // Expected content type for a request body
   private val ContentType = "application/x-www-form-urlencoded; charset=utf-8"
+
+  // Tracker version for an Mailchimp Tracking webhook
+  private val TrackerVersion = "com.mailchimp-v1"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private object SchemaUris {
@@ -97,9 +98,11 @@ object MailchimpAdapter extends Adapter {
    *         Success, or a NEL of Failure Strings
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
-    payload.body match {
-      case None       => s"Request body is empty: no MailChimp event to process".failNel
-      case Some(body) => {
+    (payload.body, payload.contentType) match {
+      case (None, _)                          => s"Request body is empty: no MailChimp event to process".failNel
+      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for MailChimp".failNel
+      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for MailChimp".failNel
+      case (Some(body), _)                    => {
 
         val params = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
         params.get("type") match {
