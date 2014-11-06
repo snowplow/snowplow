@@ -71,7 +71,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
     val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00"), "37.157.33.123".some, None, None, Nil, None)
   }
 
-  val ContentType = "application/x-www-form-urlencoded; charset=utf-8"
+  val ContentType = "application/x-www-form-urlencoded"
 
   def e1 = {
     val keys = "data[merges][LNAME]"
@@ -257,13 +257,13 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   def e14 = {
     val payload = CollectorPayload(Shared.api, Nil, None, "stub".some, Shared.cljSource, Shared.context)
     val actual = MailchimpAdapter.toRawEvents(payload)
-    actual must beFailing(NonEmptyList("Request body provided but content type empty, expected application/x-www-form-urlencoded; charset=utf-8 for MailChimp"))
+    actual must beFailing(NonEmptyList("Request body provided but content type empty, expected application/x-www-form-urlencoded for MailChimp"))
   }
 
   def e15 = {
     val payload = CollectorPayload(Shared.api, Nil, "application/json".some, "stub".some, Shared.cljSource, Shared.context)
     val actual = MailchimpAdapter.toRawEvents(payload)
-    actual must beFailing(NonEmptyList("Content type of application/json provided, expected application/x-www-form-urlencoded; charset=utf-8 for MailChimp"))
+    actual must beFailing(NonEmptyList("Content type of application/json provided, expected application/x-www-form-urlencoded for MailChimp"))
   }
 
   def e16 = {

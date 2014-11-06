@@ -60,7 +60,7 @@ import utils.{JsonUtils => JU}
 object MailchimpAdapter extends Adapter {
 
   // Expected content type for a request body
-  private val ContentType = "application/x-www-form-urlencoded; charset=utf-8"
+  private val ContentType = "application/x-www-form-urlencoded"
 
   // Tracker version for an Mailchimp Tracking webhook
   private val TrackerVersion = "com.mailchimp-v1"
