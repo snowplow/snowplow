@@ -32,7 +32,8 @@ CREATE TABLE atomic.com_adxtracking_app_install_1 (
 	publisher_name  varchar(255)  encode raw not null,
 	sub_campaign    varchar(255)  encode runlength,
 	tracking_id     varchar(255)  encode runlength,
-	sub_adgroup     varchar(255)  encode runlength
+	sub_adgroup     varchar(255)  encode runlength,
+	name            varchar(255)  encode runlength
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

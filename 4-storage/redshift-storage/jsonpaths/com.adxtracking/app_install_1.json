@@ -16,6 +16,7 @@
     "$.data.publisher_name",
     "$.data.sub_campaign",
     "$.data.tracking_id",
-    "$.data.sub_adgroup"
+    "$.data.sub_adgroup",
+    "$.data.name"
     ]
 }
