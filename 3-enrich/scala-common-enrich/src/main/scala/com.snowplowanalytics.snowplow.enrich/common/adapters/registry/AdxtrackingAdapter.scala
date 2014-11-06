@@ -48,7 +48,7 @@ object AdxtrackingAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private object SchemaUris {
-    val AppInstall = SchemaKey("com.adxtracking", "user_interaction", "jsonschema", "1-0-0").toSchemaUri
+    val AppInstall = SchemaKey("com.adxtracking", "app_install", "jsonschema", "1-0-0").toSchemaUri
   }
 
   // Create a simple formatter function

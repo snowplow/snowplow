@@ -82,7 +82,7 @@ class AdxtrackingAdapterSpec extends Specification with DataTables with Validati
       """|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
             |"data":{
-              |"schema":"iglu:com.adxtracking/user_interaction/jsonschema/1-0-0",
+              |"schema":"iglu:com.adxtracking/app_install/jsonschema/1-0-0",
               |"data":{
                 |"name":"download",
                 |"sub_adgroup":null,
@@ -115,7 +115,7 @@ class AdxtrackingAdapterSpec extends Specification with DataTables with Validati
         """|{
               |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
               |"data":{
-                |"schema":"iglu:com.adxtracking/user_interaction/jsonschema/1-0-0",
+                |"schema":"iglu:com.adxtracking/app_install/jsonschema/1-0-0",
                 |"data":{
                   |"name":"install",
                   |"sub_adgroup":"UN-11-b",
@@ -155,7 +155,7 @@ class AdxtrackingAdapterSpec extends Specification with DataTables with Validati
         """|{
               |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
               |"data":{
-                |"schema":"iglu:com.adxtracking/user_interaction/jsonschema/1-0-0",
+                |"schema":"iglu:com.adxtracking/app_install/jsonschema/1-0-0",
                 |"data":{
                   |"name":"retarget",
                   |"sub_adgroup":"UN-11-b",
@@ -191,7 +191,7 @@ class AdxtrackingAdapterSpec extends Specification with DataTables with Validati
       """|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
             |"data":{
-              |"schema":"iglu:com.adxtracking/user_interaction/jsonschema/1-0-0",
+              |"schema":"iglu:com.adxtracking/app_install/jsonschema/1-0-0",
               |"data":{
                 |"user":"6353af9b-e288-4cf3-9f1c-b377a9c84dac",
                 |"name":"download",
