@@ -36,11 +36,11 @@ import JobSpecHelpers._
 object CljTomcatMailchimpEventSpec {
 
   val lines = Lines(
-    "2014-10-09  16:28:31    -   13  255.255.255.255   POST    255.255.255.255   /com.mailchimp/v1   404 -  -    type=subscribe&fired_at=2014-11-04+09%3A42%3A31&data%5Bid%5D=e7c77d3852&data%5Bemail%5D=agentsmith%40snowplowtest.com&data%5Bemail_type%5D=html&data%5Bip_opt%5D=82.225.169.220&data%5Bweb_id%5D=210833825&data%5Bmerges%5D%5BEMAIL%5D=agentsmith%40snowplowtest.com&data%5Bmerges%5D%5BFNAME%5D=Agent&data%5Bmerges%5D%5BLNAME%5D=Smith&data%5Blist_id%5D=f1243a3b12&cv=clj-0.6.0-tom-0.0.4&nuid=-   -   -   -"
+    "2014-10-09  16:28:31    -   13  255.255.255.255   POST    255.255.255.255   /com.mailchimp/v1   404 -  -    aid=email&cv=clj-0.6.0-tom-0.0.4&nuid=-   -   -   -   application%2Fx-www-form-urlencoded   dHlwZT1zdWJzY3JpYmUmZmlyZWRfYXQ9MjAxNC0xMS0wNCswOSUzQTQyJTNBMzEmZGF0YSU1QmlkJTVEPWU3Yzc3ZDM4NTImZGF0YSU1QmVtYWlsJTVEPWFnZW50c21pdGglNDBzbm93cGxvd3Rlc3QuY29tJmRhdGElNUJlbWFpbF90eXBlJTVEPWh0bWwmZGF0YSU1QmlwX29wdCU1RD04Mi4yMjUuMTY5LjIyMCZkYXRhJTVCd2ViX2lkJTVEPTIxMDgzMzgyNSZkYXRhJTVCbWVyZ2VzJTVEJTVCRU1BSUwlNUQ9YWdlbnRzbWl0aCU0MHNub3dwbG93dGVzdC5jb20mZGF0YSU1Qm1lcmdlcyU1RCU1QkZOQU1FJTVEPUFnZW50JmRhdGElNUJtZXJnZXMlNUQlNUJMTkFNRSU1RD1TbWl0aCZkYXRhJTVCbGlzdF9pZCU1RD1mMTI0M2EzYjEy"
     )
 
   val expected = List(
-    null,
+    "email",
     "srv",
     EtlTimestamp,
     "2014-10-09 16:28:31.000",
@@ -98,7 +98,7 @@ object CljTomcatMailchimpEventSpec {
     null, //
     null, //
     null, //
-    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.mailchimp/subscribe/jsonschema/1-0-0","data":{"type":"subscribe","fired_at":"2014-11-04 09:42:31","data":{"id":"e7c77d3852","email":"agentsmith@snowplowtest.com","email_type":"html","ip_opt":"82.225.169.220","web_id":"210833825","list_id":"f1243a3b12","merges":{"EMAIL":"agentsmith@snowplowtest.com","FNAME":"Agent","LNAME":"Smith"}}}}}""",
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.mailchimp/subscribe/jsonschema/1-0-0","data":{"data":{"ip_opt":"82.225.169.220","merges":{"LNAME":"Smith","FNAME":"Agent","EMAIL":"agentsmith@snowplowtest.com"},"email":"agentsmith@snowplowtest.com","list_id":"f1243a3b12","email_type":"html","id":"e7c77d3852","web_id":"210833825"},"fired_at":"2014-11-04T09:42:31.000Z","type":"subscribe"}}}""",
     null, // Transaction fields empty
     null, //
     null, //
