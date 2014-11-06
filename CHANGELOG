@@ -1,3 +1,21 @@
+Version 0.9.10 (2014-11-06)
+---------------------------
+StorageLoader: wrote JSON Path file for PerformanceTiming (#1147)
+StorageLoader: wrote JSON Path file for social_interaction (#1029)
+StorageLoader: wrote JSON Path file for site_search (#1027)
+StorageLoader: wrote JSON Path file for change_form (#1025)
+StorageLoader: wrote JSON Path file for submit_form (#1023)
+StorageLoader: wrote JSON Path file for remove_from_cart (#1021)
+StorageLoader: wrote JSON Path file for add_to_cart (#1019)
+Redshift: converted all Redshift DDLs to use tabs (#1034)
+Redshift: added Redshift DDL for PerformanceTiming (#1032)
+Redshift: added Redshift DDL for social_interaction (#1030)
+Redshift: added Redshift DDL for site_search (#1028)
+Redshift: added Redshift DDL for change_form (#1026)
+Redshift: added Redshift DDL for submit_form (#1024)
+Redshift: added Redshift DDL for remove_from_cart (#1022)
+Redshift: added Redshift DDL for add_to_cart (#1020)
+
 Version 0.9.9 (2014-10-27)
 --------------------------
 .NET Tracker: added git submodule. Version 0.1.0 (#1000)

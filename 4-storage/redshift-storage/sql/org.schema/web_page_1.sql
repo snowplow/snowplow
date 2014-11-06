@@ -16,26 +16,26 @@
 -- Compatibility: iglu:org.schema/WebPage/jsonschema/1-0-0
 
 CREATE TABLE atomic.org_schema_web_page_1 (
-    -- Schema of this type
-    schema_vendor  varchar(128)  encode runlength not null,
-    schema_name    varchar(128)  encode runlength not null,
-    schema_format  varchar(128)  encode runlength not null,
-    schema_version varchar(128)  encode runlength not null,
-  -- Parentage of this type
-    root_id        char(36)      encode raw not null,
-    root_tstamp    timestamp     encode raw not null,
-    ref_root       varchar(255)  encode runlength not null,
-    ref_tree       varchar(1500) encode runlength not null,
-    ref_parent     varchar(255)  encode runlength not null,
-    -- Properties of this type
-    breadcrumb     varchar(2048) encode runlength, -- Holds a JSON array. TODO: will replace with a ref_ following https://github.com/snowplow/snowplow/issues/647
-    genre          varchar(255)  encode text255,
-    author         varchar(255)  encode text255,
-    date_created   timestamp     encode runlength,
-    date_modified  timestamp     encode runlength,
-    date_published timestamp     encode runlength,
-    in_language    varchar(255)  encode runlength,
-    keywords       varchar(2048) encode runlength  -- Holds a JSON array. TODO: will replace with a ref_ following https://github.com/snowplow/snowplow/issues/647
+	-- Schema of this type
+	schema_vendor  varchar(128)  encode runlength not null,
+	schema_name    varchar(128)  encode runlength not null,
+	schema_format  varchar(128)  encode runlength not null,
+	schema_version varchar(128)  encode runlength not null,
+	-- Parentage of this type
+	root_id        char(36)      encode raw not null,
+	root_tstamp    timestamp     encode raw not null,
+	ref_root       varchar(255)  encode runlength not null,
+	ref_tree       varchar(1500) encode runlength not null,
+	ref_parent     varchar(255)  encode runlength not null,
+	-- Properties of this type
+	breadcrumb     varchar(2048) encode runlength, -- Holds a JSON array. TODO: will replace with a ref_ following https://github.com/snowplow/snowplow/issues/647
+	genre          varchar(255)  encode text255,
+	author         varchar(255)  encode text255,
+	date_created   timestamp     encode runlength,
+	date_modified  timestamp     encode runlength,
+	date_published timestamp     encode runlength,
+	in_language    varchar(255)  encode runlength,
+	keywords       varchar(2048) encode runlength  -- Holds a JSON array. TODO: will replace with a ref_ following https://github.com/snowplow/snowplow/issues/647
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
