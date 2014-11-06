@@ -36,12 +36,12 @@ import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 
 object KinesisEnrichApp extends App {
   val parser = new ArgotParser(
-    programName = "atodo",//generated.Settings.name,
+    programName = generated.Settings.name,
     compactUsage = true,
     preUsage = Some("%s: Version %s. Copyright (c) 2013, %s.".format(
-      "btodo",//generated.Settings.name,
-      "ctodo",//generated.Settings.version,
-      "dtodo")//generated.Settings.organization)
+      generated.Settings.name,
+      generated.Settings.version,
+      generated.Settings.organization)
     )
   )
 
