@@ -61,7 +61,8 @@ object KinesisEnrichApp extends App {
 
   parser.parse(args)
 
-  val configValue: Config = config.value.getOrElse(throw new RuntimeException("todo")).resolve.getConfig("connector")
+  val configValue: Config = config.value.getOrElse(
+    throw new RuntimeException("--config argument must be provided")).resolve.getConfig("connector")
 
   val streamType = configValue.getConfig("kinesis").getString("stream-type")
   val location = configValue.getConfig("location")
@@ -98,7 +99,7 @@ object KinesisEnrichApp extends App {
     val buffer = connector.getConfig("buffer")
     val byteLimit = buffer.getString("byte-limit")
     val recordLimit = buffer.getString("record-limit")
-
+    val timeLimit = buffer.getString("time-limit")
 
     val props = new Properties
 
@@ -112,6 +113,9 @@ object KinesisEnrichApp extends App {
 
     props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_BYTE_SIZE_LIMIT, byteLimit)
     props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_RECORD_COUNT_LIMIT, recordLimit)
+    props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_MILLISECONDS_LIMIT, timeLimit)
+
+    props.setProperty(KinesisConnectorConfiguration.PROP_CONNECTOR_DESTINATION, "elasticsearch")
 
     new KinesisConnectorConfiguration(props, new DefaultAWSCredentialsProviderChain())
   }

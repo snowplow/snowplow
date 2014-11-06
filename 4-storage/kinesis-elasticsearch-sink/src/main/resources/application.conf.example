@@ -23,5 +23,6 @@ connector {
   buffer {
     byte-limit: 5242880 # 5MB
     record-limit: 1 # 1 record
+    time-limit: 3600000 # 1 hour
   }
 }
