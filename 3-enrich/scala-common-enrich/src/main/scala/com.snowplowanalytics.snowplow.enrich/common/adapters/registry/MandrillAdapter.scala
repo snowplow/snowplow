@@ -58,11 +58,12 @@ import utils.{JsonUtils => JU}
  * into raw events.
  */
 object MandrillAdapter extends Adapter {
+
+  // Needed for json4s default extraction formats
+  implicit val formats = DefaultFormats
+
   // Tracker version for an Mandrill Tracking webhook
   private val TrackerVersion = "com.mandrill-v1"
-
-  // Expected content type for a request body - [CHECK THIS]
-  private val ContentType = "application/x-www-form-urlencoded; charset=utf-8"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private object SchemaUris {
@@ -80,11 +81,6 @@ object MandrillAdapter extends Adapter {
 
   // Datetime format used by Mandrill (as we will need to massage) - [CHECK THIS]
   private val MandrillDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
-
-  // Formatter Function to convert RawEventParameters into a merged Json Object
-  private val MandrillFormatter: FormatterFunc = {
-    (parameters: RawEventParameters) => JObject(List(("data",JObject(List(("merges",JObject(List(("LNAME",JString("Beemster"))))))))))
-  }
 
   /**
    * Converts a CollectorPayload instance into raw events.
@@ -105,61 +101,102 @@ object MandrillAdapter extends Adapter {
       case None       => s"Request body is empty: no Mandrill events to process".failNel
       case Some(body) => {
 
-        // STEPS TO PROCESS MANDRILL EVENTS
-        // 1. Trim "mandrill_events=" from the front of the body payload
-        // 2. Parse remaining into a valid json string
-        //    - Function: URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toString
-        // 3. Split the json blocks inside into seperate events
-        // 4. Process each event seperately and return the ValidatedRawEvents
-
-        val eventsList = eventsStringToList(body)
-
-        // Loop through events and add them to the NonEmptyList
-        for {
-          event <- eventsList
-        } 
-        yield {
-          // Check the type of the event, if it validates continue
-          
-        }
-
-
-        val params = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
-
-        // Need to case match against all events in the body payload here
-        // Need to add query string params against all events sent.
-
-        params.get("event") match {
-          case None => s"No Mandrill event parameter provided: cannot determine event type".failNel
-          case Some(eventType) => {
-
-            val allParams = toMap(payload.querystring) ++ params
-            for {
-              schema <- (lookupSchema(eventType).toValidationNel: Validated[String])
-            } yield {
-              NonEmptyList(RawEvent(
-                api          = payload.api,
-                parameters   = toUnstructEventParams(TrackerVersion, allParams, schema, MandrillFormatter, "srv"),
-                contentType  = payload.contentType,
-                source       = payload.source,
-                context      = payload.context
-              ))
+        val eventList = eventStringToList(body)
+        eventList match {
+          case head :: tail => {
+            extractKeyValueFromJson("event", head) match {
+              case None => s"No Mandrill event parameter provided: cannot determine event type".failNel
+              case Some(eventType) => {
+                val params = toMap(payload.querystring)
+                for {
+                  schema <- (lookupSchema(eventType).toValidationNel: Validated[String])
+                } yield {
+                  NonEmptyList(RawEvent(
+                    api          = payload.api,
+                    parameters   = toUnstructEventParamsMandrill(TrackerVersion, params, head, schema, "srv"),
+                    contentType  = payload.contentType,
+                    source       = payload.source,
+                    context      = payload.context
+                  ))
+                }
+              }
             }
           }
+          case Nil => s"This should never happen".failNel
         }
       }
     }
+
+  /**
+   * Fabricates a Snowplow unstructured event from
+   * the supplied parameters. Note that to be a
+   * valid Snowplow unstructured event, the event
+   * must contain e, p and tv parameters, so we
+   * make sure to set those.
+   *
+   * @param tracker The name and version of this
+   *        tracker
+   * @param qsParams The query-string parameters
+   *        we will nest into the unstructured event
+   * @param schema The schema key which defines this
+   *        unstructured event as a String
+   * @param formatter A function to take the raw event
+   *        parameters and turn them into a correctly
+   *        formatted JObject that should pass JSON
+   *        Schema validation
+   * @param platform The default platform to assign
+   *         the event to
+   * @return the raw-event parameters for a valid
+   *         Snowplow unstructured event
+   */
+  def toUnstructEventParamsMandrill(tracker: String, params: RawEventParameters, eventJson: JValue, 
+    schema: String, platform: String = "app"): RawEventParameters = {
+
+    val json = compact {
+      ("schema" -> SchemaUris.UnstructEvent) ~
+      ("data"   -> (
+        ("schema" -> schema) ~
+        ("data"   -> eventJson)
+      ))
+    }
+
+    Map(
+      "tv"    -> tracker,
+      "e"     -> "ue",
+      "p"     -> params.getOrElse("p", platform), // Required field
+      "ue_pr" -> json) ++
+    params.filterKeys(Set("nuid", "aid", "cv"))
+  }
   
-  def eventStringToList(rawEventsString: String): List[JObject] = {
-    val eventStr = rawEventsString.drop(16) // Drop mandrill_events= from string
-    val parsedStr = parse(URLEncodedUtils.parse(URI.create("http://localhost/?" + eventStr), "UTF-8").toString) // Convert string into JObject
+  /**
+   * Returns a list of JValue formatted JSONs from 
+   * the Mandrill Event String
+   * - Should return at least one event
+   *
+   * @param rawEventString The http encoded string 
+   *        from the Mandrill POST event body
+   * @return a list of single events formatted as 
+   *         json4s JValue JSONs
+   */
+  def eventStringToList(rawEventString: String): List[JValue] = {
+    val eventStr = rawEventString.drop(16)
+    val parsedStr = parse(URLEncodedUtils.parse(URI.create("http://localhost/?" + eventStr), "UTF-8").toString)
     for {
       JArray(List(JArray(x))) <- parsedStr
-      listOfEvents <- x
-    } yield listOfEvents 
+      event <- x
+    } yield event
   }
 
-  def returnJStringValForKey(key: String, event: JValue): String =
+  /**
+   * Extracts the value of a key from a json4s JObject
+   * TODO - Better case analysis for returned type
+   *
+   * @param key The key pertaining to the value we 
+  *         want returned from the event JSON
+   * @param event A single JSON Event from Mandrill
+   * @return the value for the key or none
+   */
+  def extractKeyValueFromJson(key: String, event: JValue): Option[String] = 
     (event \ key).extractOpt[String]
 
   /**
@@ -170,17 +207,18 @@ object MandrillAdapter extends Adapter {
    * @return the schema for the event or a Failure-boxed String
    *         if we can't recognize the event type
    */
-  private[registry] def lookupSchema(eventType: String): Validation[String, String] = eventType match {
-    case "hard_bounce" => SchemaUris.MessageBounced.success
-    case "click"       => SchemaUris.MessageClicked.success
-    case "deferral"    => SchemaUris.MessageDelayed.success
-    case "spam"        => SchemaUris.MessageMarkedAsSpam.success
-    case "open"        => SchemaUris.MessageOpened.success
-    case "reject"      => SchemaUris.MessageRejected.success
-    case "send"        => SchemaUris.MessageSent.success
-    case "soft_bounce" => SchemaUris.MessageSoftBounced.success
-    case "unsub"       => SchemaUris.RecipientUnsubscribed.success
-    case ""            => s"Mandrill event parameter is empty: cannot determine event type".fail
-    case et            => s"Mandrill event parameter [$et] not recognized".fail
-  }
+  private[registry] def lookupSchema(eventType: String): Validation[String, String] = 
+    eventType match {
+      case "hard_bounce" => SchemaUris.MessageBounced.success
+      case "click"       => SchemaUris.MessageClicked.success
+      case "deferral"    => SchemaUris.MessageDelayed.success
+      case "spam"        => SchemaUris.MessageMarkedAsSpam.success
+      case "open"        => SchemaUris.MessageOpened.success
+      case "reject"      => SchemaUris.MessageRejected.success
+      case "send"        => SchemaUris.MessageSent.success
+      case "soft_bounce" => SchemaUris.MessageSoftBounced.success
+      case "unsub"       => SchemaUris.RecipientUnsubscribed.success
+      case ""            => s"Mandrill event parameter is empty: cannot determine event type".fail
+      case et            => s"Mandrill event parameter [$et] not recognized".fail
+    }
 }
