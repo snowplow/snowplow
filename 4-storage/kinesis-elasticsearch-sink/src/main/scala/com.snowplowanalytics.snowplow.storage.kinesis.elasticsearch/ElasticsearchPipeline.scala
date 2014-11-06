@@ -38,14 +38,14 @@ import com.amazonaws.services.kinesis.connectors.impl.{BasicMemoryBuffer,AllPass
 * ElasticsearchPipeline class sets up the Emitter/Buffer/Transformer/Filter
 */
 class ElasticsearchPipeline(streamType: String, documentIndex: String, documentType: String)
-  extends IKinesisConnectorPipeline[String, ElasticsearchObject] {
+  extends IKinesisConnectorPipeline[JsonRecord, ElasticsearchObject] {
 
   override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[ElasticsearchObject] = new ElasticsearchEmitter(configuration)
-  override def getBuffer(configuration: KinesisConnectorConfiguration) = new BasicMemoryBuffer[String](configuration)
+  override def getBuffer(configuration: KinesisConnectorConfiguration) = new BasicMemoryBuffer[JsonRecord](configuration)
   override def getTransformer(c: KinesisConnectorConfiguration) = streamType match {
     case "good" => new SnowplowElasticsearchTransformer(documentIndex, documentType)
     case "bad" => new BadEventTransformer(documentIndex, documentType)
     case _ => throw new RuntimeException("\"stream-type\" must be set to \"good\" or \"bad\"")
   }
-  override def getFilter(c: KinesisConnectorConfiguration) = new AllPassFilter[String]()
+  override def getFilter(c: KinesisConnectorConfiguration) = new AllPassFilter[JsonRecord]()
 }

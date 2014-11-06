@@ -26,16 +26,11 @@ import com.amazonaws.services.kinesis.connectors.elasticsearch.{
 }
 import com.amazonaws.services.kinesis.model.Record
 
-// json4s
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
-import org.json4s.JsonDSL._
-
 /**
  * Class to convert bad events to ElasticsearchObjects
  */
-class BadEventTransformer(documentIndex: String, documentType: String) extends ElasticsearchTransformer[String]
-  with ITransformer[String, ElasticsearchObject] {
+class BadEventTransformer(documentIndex: String, documentType: String) extends ElasticsearchTransformer[JsonRecord]
+  with ITransformer[JsonRecord, ElasticsearchObject] {
 
   /**
    * Convert an Amazon Kinesis record to a JSON string
@@ -43,7 +38,8 @@ class BadEventTransformer(documentIndex: String, documentType: String) extends E
    * @param record Byte array representation of a bad row string
    * @return JSON string for the event
    */
-  override def toClass(record: Record): String = new String(record.getData.array)
+  override def toClass(record: Record): JsonRecord =
+    JsonRecord(new String(record.getData.array), None)
 
   /**
    * Convert a buffered bad event JSON to an ElasticsearchObject
@@ -51,8 +47,8 @@ class BadEventTransformer(documentIndex: String, documentType: String) extends E
    * @param record Bad event JSON
    * @return An ElasticsearchObject
    */
-  override def fromClass(record: String): ElasticsearchObject  =  {
-    val e = new ElasticsearchObject(documentIndex, documentType, record)
+  override def fromClass(record: JsonRecord): ElasticsearchObject  =  {
+    val e = new ElasticsearchObject(documentIndex, documentType, record.json)
     e.setCreate(true)
     e
   }

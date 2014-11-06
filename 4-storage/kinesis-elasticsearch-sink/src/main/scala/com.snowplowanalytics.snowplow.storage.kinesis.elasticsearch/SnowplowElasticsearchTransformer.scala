@@ -16,7 +16,8 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
+package com.snowplowanalytics.snowplow
+package storage.kinesis.elasticsearch
 
 // Amazon
 import com.amazonaws.services.kinesis.connectors.interfaces.ITransformer
@@ -34,11 +35,14 @@ import org.json4s.JsonDSL._
 // Jackson
 import com.fasterxml.jackson.core.JsonParseException
 
+// Snowplow
+import enrich.common.utils.ScalazJson4sUtils
+
 /**
  * Class to convert successfully enriched events to ElasticsearchObjects
  */
-class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ElasticsearchTransformer[String]
-  with ITransformer[String, ElasticsearchObject] {
+class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ElasticsearchTransformer[JsonRecord]
+  with ITransformer[JsonRecord, ElasticsearchObject] {
 
   private val fields = Array(
     "app_id",
@@ -233,9 +237,10 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    * @param event Array of values for the event
    * @return JSON string representing the event
    */
-  def jsonifyGoodEvent(event: Array[String]): String = {
+  def jsonifyGoodEvent(event: Array[String]): JsonRecord = {
     val jObjects: Array[JObject] = fields.zip(event).map(converter)
-    compact(render(jObjects.fold(JObject())(_ ~ _)))
+    val eventJson = jObjects.fold(JObject())(_ ~ _)
+    JsonRecord(compact(render(eventJson)), ScalazJson4sUtils.extract[String](eventJson, "event_id").toOption)
   }
 
   /**
@@ -244,7 +249,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    * @param record Byte array representation of an enriched event string
    * @return JSON string for the event
    */
-  override def toClass(record: Record): String =
+  override def toClass(record: Record): JsonRecord =
     jsonifyGoodEvent(new String(record.getData.array).split("\t"))
 
   /**
@@ -253,8 +258,11 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    * @param record Event JSON
    * @return An ElasticsearchObject
    */
-  override def fromClass(record: String): ElasticsearchObject  =  {
-    val e = new ElasticsearchObject(documentIndex, documentType, record)
+  override def fromClass(record: JsonRecord): ElasticsearchObject  =  {
+    val e = record.id match {
+      case Some(id) => new ElasticsearchObject(documentIndex, documentType, id, record.json)
+      case None => new ElasticsearchObject(documentIndex, documentType, record.json)
+    }
     e.setCreate(true)
     e
   }

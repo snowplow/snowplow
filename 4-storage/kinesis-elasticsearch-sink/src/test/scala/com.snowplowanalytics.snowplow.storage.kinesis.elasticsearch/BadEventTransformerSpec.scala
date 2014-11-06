@@ -36,7 +36,7 @@ class BadEventTransformerSpec extends Specification with ValidationMatchers {
   "The from method" should {
     "successfully convert a bad event JSON to an ElasticsearchObject" in {
       val input = """{"line":"failed","errors":["Record does not match Thrift SnowplowRawEvent schema"]}"""
-      val result = new BadEventTransformer("snowplow", "bad").fromClass(input)
+      val result = new BadEventTransformer("snowplow", "bad").fromClass(JsonRecord(input, None))
       result.getIndex must_== "snowplow"
       result.getType must_== "bad"
       result.getSource must_== input

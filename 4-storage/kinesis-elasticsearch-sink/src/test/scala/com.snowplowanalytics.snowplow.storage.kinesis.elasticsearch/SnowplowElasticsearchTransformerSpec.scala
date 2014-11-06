@@ -147,7 +147,10 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       )
 
       val eventValues = nvPairs.unzip._2.toArray
-      val result = parse(new SnowplowElasticsearchTransformer("index", "type").jsonifyGoodEvent(eventValues))
+      val jsonRecord = new SnowplowElasticsearchTransformer("index", "type").jsonifyGoodEvent(eventValues)
+      val result = parse(jsonRecord.json)
+
+      jsonRecord.id must beSome("c6ef3124-b53a-4b13-a233-0088f79dcbcb")
 
       ScalazJson4sUtils.extract[String](result, "platform") must beSuccessful("web")
       ScalazJson4sUtils.extract[Int](result, "domain_sessionidx") must beSuccessful(3)

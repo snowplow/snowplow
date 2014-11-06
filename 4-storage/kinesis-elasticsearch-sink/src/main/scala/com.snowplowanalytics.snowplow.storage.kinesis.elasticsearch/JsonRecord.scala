@@ -18,23 +18,10 @@
  */
 package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
 
-// AWS Kinesis Connector libs
-import com.amazonaws.services.kinesis.connectors.elasticsearch.ElasticsearchObject
-import com.amazonaws.services.kinesis.connectors.{
-  KinesisConnectorConfiguration,
-  KinesisConnectorExecutorBase,
-  KinesisConnectorRecordProcessorFactory
-}
-
 /**
-* Boilerplate class for Kinesis Conenector
-*/
-class ElasticsearchSinkExecutor(streamType: String, documentIndex: String, documentType: String, config: KinesisConnectorConfiguration)
-  extends KinesisConnectorExecutorBase[JsonRecord, ElasticsearchObject] {
-
-  initialize(config)
-  override def getKinesisConnectorRecordProcessorFactory = {
-    new KinesisConnectorRecordProcessorFactory[JsonRecord, ElasticsearchObject](
-      new ElasticsearchPipeline(streamType, documentIndex, documentType), config)
-  }
-}
+ * Format in which Snowplow events are buffered
+ *
+ * @param json The JSON string for the event
+ * @param id The event ID (if it exists)
+ */
+case class JsonRecord(json: String, id: Option[String])
