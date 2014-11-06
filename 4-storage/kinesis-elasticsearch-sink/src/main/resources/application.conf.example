@@ -1,28 +1,48 @@
 # Default configuration for kinesis-elasticsearch-sink
 
 connector {
+
   aws {
     access-key: "env"
     secret-key: "env"
   }
+
   kinesis {
-    stream-type: "good" # or "bad"
     region: "us-east-1"
-    stream-name: "enrichedfbtest" # Kinesis stream name
-    app-name: "elasticsearch_app" # App name for this consumer
+    stream-name: "SnowplowEnriched" # Kinesis stream name
+
+    # "good" for a stream of successfully enriched events
+    # "bad" for a stream of bad events
+    stream-type: "good"
+
+    # LATEST: most recent data.
+    # TRIM_HORIZON: oldest available data.
+    # Note: This only effects the first run of this application
+    # on a stream.
     initial-position: "TRIM_HORIZON"
+
+    # `app-name` is used for a DynamoDB table to maintain stream state.
+    app-name: SnowplowElasticsearchSink-${connector.kinesis.stream-name}
   }
+
   elasticsearch {
     cluster-name: "elasticsearch"
     endpoint: "localhost"
   }
+
   location {
     index: "snowplow" # Elasticsearch index name
-    type: "good" # Elasticsearch type name
+    type: "enriched" # Elasticsearch type name
   }
+
+  # Events are accumulated in a buffer before being sent to Elasticsearch.
+  # The buffer is emptied whenever:
+  # - the combined size of the stored records exceeds byte-limit or
+  # - the number of stored records exceeds record-limit or
+  # - the time in milliseconds since it was last emptied exceeds time-limit
   buffer {
     byte-limit: 5242880 # 5MB
-    record-limit: 1 # 1 record
-    time-limit: 3600000 # 1 hour
+    record-limit: 1000 # 1000 records
+    time-limit: 60000 # 1 minute
   }
 }
