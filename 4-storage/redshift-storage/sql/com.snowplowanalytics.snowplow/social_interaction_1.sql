@@ -9,13 +9,13 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Authors:       Alex Dean
+-- Authors:       Fred Blundun
 -- Copyright:     Copyright (c) 2014 Snowplow Analytics Ltd
 -- License:       Apache License Version 2.0
 --
--- Compatibility: iglu:com.snowplowanalytics.snowplow/site_search/jsonschema/1-0-0
+-- Compatibility: iglu:com.snowplowanalytics.snowplow/social_interaction/jsonschema/1-0-0
 
-CREATE TABLE atomic.com_snowplowanalytics_snowplow_site_search_1 (
+CREATE TABLE atomic.com_snowplowanalytics_snowplow_social_interaction_1 (
 	-- Schema of this type
 	schema_vendor   varchar(128)  encode runlength not null,
 	schema_name     varchar(128)  encode runlength not null,
