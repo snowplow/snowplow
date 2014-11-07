@@ -34,7 +34,7 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 // AWS Kinesis Connector libs
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 
-object KinesisEnrichApp extends App {
+object ElasticsearchSinkApp extends App {
   val parser = new ArgotParser(
     programName = generated.Settings.name,
     compactUsage = true,
@@ -69,8 +69,27 @@ object KinesisEnrichApp extends App {
   val documentIndex = location.getString("index")
   val documentType = location.getString("type")
 
-  val executor = new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue))
+  val executor = configValue.getString("source") match {
+    case "kinesis" => new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue))
+    case "stdin" => new Runnable {
+      val transformer = new SnowplowElasticsearchTransformer(documentIndex, documentType)
+      def run = for (ln <- scala.io.Source.stdin.getLines) {
+        println(transformer.fromClass(transformer.jsonifyGoodEvent(ln.split("\t"))).getSource())
+      }
+    }
+    case _ => throw new RuntimeException("Source must be set to 'stdin' or 'kinesis'")
+  }
 
+  //val executor = new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue))
+
+/*  val t = new SnowplowElasticsearchTransformer(documentIndex, documentType)
+
+  val executor = new Runnable {
+    def run = for (ln <- scala.io.Source.stdin.getLines) {
+      println(t.fromClass(t.jsonifyGoodEvent(ln.split("\t"))).getSource())
+    }
+  }
+*/
   executor.run
 
   /**

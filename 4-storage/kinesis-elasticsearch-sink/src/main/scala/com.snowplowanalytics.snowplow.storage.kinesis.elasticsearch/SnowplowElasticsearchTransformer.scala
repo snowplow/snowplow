@@ -27,6 +27,13 @@ import com.amazonaws.services.kinesis.connectors.elasticsearch.{
 }
 import com.amazonaws.services.kinesis.model.Record
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
+// Scala
+import scala.util.matching.Regex
+
 // json4s
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -197,6 +204,20 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     "contexts",
     "unstruct_event"
     )
+
+  private def fixSchema(prefix: String, schema: String): String = {
+    val schemaPatter = """.+:((?:[a-zA-Z]+\.)+[a-zA-Z]+)/([a-zA-Z_]+)/[^/]+/(.*)""".r
+    schema match {
+      case schemaPatter(organization, name, schemaVer) => {
+        val snakeCaseOrganization = organization.replaceAll("""\.""", "_").toLowerCase
+        val snakeCaseName = name.replaceAll("([^_])([A-Z])", "$1_$2").toLowerCase
+        val model = schemaVer.split("-")(0)
+        s"${prefix}.${snakeCaseOrganization}_${snakeCaseName}_${model}"
+      }
+      // TODO decide whether we want to fall back to the original schema string
+      case _ => s"${prefix}.${schema}"
+    }
+  }
 
   /**
    * Convert the value of a field to a JValue based on the name of the field
