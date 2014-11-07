@@ -10,7 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics 
+package com.snowplowanalytics
 package snowplow
 package enrich
 package common
@@ -20,6 +20,7 @@ package registry
 // Java
 import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
+import org.apache.commons.lang3.StringUtils
 
 // Joda-Time
 import org.joda.time.{DateTime, DateTimeZone}
