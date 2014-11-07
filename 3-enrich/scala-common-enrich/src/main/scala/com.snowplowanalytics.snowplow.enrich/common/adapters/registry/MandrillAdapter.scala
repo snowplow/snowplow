@@ -27,6 +27,7 @@ import iglu.client.validation.ValidatableJsonMethods._
 // Java
 import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
+import org.apache.commons.lang3.StringUtils
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
@@ -136,7 +137,7 @@ object MandrillAdapter extends Adapter {
             }
 
             // Send out our ValidatedRawEvents (either a Nel of Failures or a Nel of RawEvents)
-            // If we have any Failures we will discard everything but these Failures.
+            // If we have any Failures we will discard everything but these Failures. 
             (successes, failures) match {
               case (s :: ss,     Nil) =>  NonEmptyList(s, ss: _*).success // No Failures collected!
               case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some Failures, return those. Will only happen if the event fails validation in jsonToRawEvent
@@ -185,7 +186,6 @@ object MandrillAdapter extends Adapter {
         }
       }
     }
-
 
   /**
    * Fabricates a Snowplow unstructured event from
