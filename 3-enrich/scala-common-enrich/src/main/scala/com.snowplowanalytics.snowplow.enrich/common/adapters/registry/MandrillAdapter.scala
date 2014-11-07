@@ -30,10 +30,7 @@ import org.apache.http.client.utils.URLEncodedUtils
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
-<<<<<<< HEAD
 import com.fasterxml.jackson.core.JsonParseException
-=======
->>>>>>> Initial Mandrill Adapter commit
 
 // Scala
 import scala.collection.JavaConversions._
@@ -188,6 +185,7 @@ object MandrillAdapter extends Adapter {
         }
       }
     }
+
 
   /**
    * Fabricates a Snowplow unstructured event from
