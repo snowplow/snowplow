@@ -37,28 +37,24 @@ import loaders.CollectorPayload
 import utils.JsonUtils
 
 /**
- * Transforms a collector payload which conforms to
- * a known version of the AD-X Tracking webhook
- * into raw events.
+ * Transforms a collector payload which provides a set
+ * of name-value pairs on a GET querystring, along
+ * with a &schema=[[iglu schema uri]] parameter to
+ * attribute the name-value pairs to an
+ * Iglu-compatible self-describing JSON.
  */
-object AdxtrackingAdapter extends Adapter {
+object IgluAdapter extends Adapter {
 
-  // Tracker version for an AD-X Tracking webhook
-  private val TrackerVersion = "com.adxtracking-v1"
-
-  // Schemas for reverse-engineering a Snowplow unstructured event
-  private object SchemaUris {
-    val AppInstall = SchemaKey("com.adxtracking", "app_install", "jsonschema", "1-0-0").toSchemaUri
-  }
+  // Tracker version for an Iglu-compatible webhook
+  private val TrackerVersion = "com.snowplowanalytics.iglu-v1"
 
   // Create a simple formatter function
-  private val AdxtrackingFormatter: FormatterFunc = buildFormatter() // For defaults
+  private val IgluFormatter: FormatterFunc = buildFormatter() // For defaults
 
   /**
    * Converts a CollectorPayload instance into raw events.
-   * An AD-X Tracking payload only contains a single event.
-   * We expect the name parameter to be "Install", otherwise
-   * we have an unsupported event type.
+   * Currently we only support a single event Iglu-compatible
+   * self-describing event passed in on the querystring.
    *
    * @param payload The CollectorPaylod containing one or more
    *        raw events as collected by a Snowplow collector
@@ -71,15 +67,22 @@ object AdxtrackingAdapter extends Adapter {
 
     val params = toMap(payload.querystring)
     if (params.isEmpty) {
-      "Querystring is empty: no AD-X Tracking event to process".failNel
+      "Querystring is empty: no Iglu-compatible event to process".failNel
     } else {
-      NonEmptyList(RawEvent(
-        api          = payload.api,
-        parameters   = toUnstructEventParams(TrackerVersion, params, SchemaUris.AppInstall, AdxtrackingFormatter),
-        contentType  = payload.contentType,
-        source       = payload.source,
-        context      = payload.context
-        )).success
+      params.get("schema") match {
+        case None => "Querystring does not contain schema parameter: not an Iglu-compatible self-describing event".failNel
+        case Some(schemaUri) => SchemaKey.parse(schemaUri) match {
+          case Failure(procMsg) => procMsg.getMessage.failNel
+          case Success(_)       =>
+            NonEmptyList(RawEvent(
+              api          = payload.api,
+              parameters   = toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, IgluFormatter),
+              contentType  = payload.contentType,
+              source       = payload.source,
+              context      = payload.context
+              )).success
+        }
+      }
     }
   }
 }

@@ -27,7 +27,7 @@ import Scalaz._
 import loaders.CollectorPayload
 import registry.{
   SnowplowAdapter,
-  AdxtrackingAdapter,
+  IgluAdapter,
   CallrailAdapter,
   MailchimpAdapter
 }
@@ -40,7 +40,7 @@ object AdapterRegistry {
 
   private object Vendor {
     val Snowplow = "com.snowplowanalytics.snowplow"
-    val Adxtracking = "com.adxtracking"
+    val Iglu = "com.snowplowanalytics.iglu"
     val Callrail = "com.callrail"
     val Mailchimp = "com.mailchimp"
   }
@@ -61,7 +61,7 @@ object AdapterRegistry {
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = (payload.api.vendor, payload.api.version) match {
     case (Vendor.Snowplow,    "tp1") => SnowplowAdapter.Tp1.toRawEvents(payload)
     case (Vendor.Snowplow,    "tp2") => SnowplowAdapter.Tp2.toRawEvents(payload)
-    case (Vendor.Adxtracking, "v1")  => AdxtrackingAdapter.toRawEvents(payload)
+    case (Vendor.Iglu,        "v1")  => IgluAdapter.toRawEvents(payload)
     case (Vendor.Callrail,    "v1")  => CallrailAdapter.toRawEvents(payload)
     case (Vendor.Mailchimp,   "v1")  => MailchimpAdapter.toRawEvents(payload)
     // TODO: add Sendgrid et al
