@@ -186,6 +186,7 @@ object MandrillAdapter extends Adapter {
       }
     }
 
+
   /**
    * Fabricates a Snowplow unstructured event from
    * the supplied parameters. Note that to be a
