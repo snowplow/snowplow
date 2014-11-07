@@ -27,6 +27,7 @@ import iglu.client.validation.ValidatableJsonMethods._
 // Java
 import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
+import org.apache.commons.lang3.StringUtils
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
@@ -102,55 +103,69 @@ object MandrillAdapter extends Adapter {
       case Some(body) if !body.startsWith("mandrill_events=") => s"Request body is formatted incorrectly: cannot process".failNel
       case Some(body) => {
 
-        val eventList = eventStringToList(body)
-        val rawEventsList: List[Validation[NonEmptyList[String],RawEvent]] = { //List[Validation[NonEmptyList[String],RawEvent]]
-          for { 
-            event <- eventList // List[JValue]
-          } 
-          yield {
-            extractKeyValueFromJson("event", event) match { // Option[String] || None
-              case None => s"No Mandrill event parameter provided: cannot determine event type".failNel
-              case Some(eventType) => {
+        eventStringToJValueList(body) match {
+          case Failure(str)  => str.failNel
+          case Success(list) => {
 
-                val params = toMap(payload.querystring) // RawEventParameters
-                for {
-                  schema <- (lookupSchema(eventType).toValidationNel: Validated[String]) // Validation[NonEmptyList[String],String]
-                } yield {
-                  RawEvent(
-                    api          = payload.api,
-                    parameters   = toUnstructEventParamsMandrill(TrackerVersion, params, event, schema, "srv"), // RawEventParameters
-                    contentType  = payload.contentType,
-                    source       = payload.source,
-                    context      = payload.context
-                  )
-                }
+            // Create our list of Validated RawEvents
+            val rawEventsList: List[Validation[NonEmptyList[String],RawEvent]] = {
+              for { 
+                event <- list
+              } yield {
+                jsonToRawEvent(payload, event)
               }
             }
+            
+            // Gather all of our successes and failures into seperate lists
+            val successes: List[RawEvent] = {
+              for {
+                Success(s) <- rawEventsList 
+              } yield s
+            }
+            val failures: List[String] = {
+              for {
+                Failure(NonEmptyList(f)) <- rawEventsList 
+              } yield f
+            }
+
+            // Send out our ValidatedRawEvents (either a Nel of failures or a Nel of RawEvents)
+            (successes, failures) match {
+              case (s :: ss, Nil)     =>  NonEmptyList(s, ss: _*).success // No Failures collected
+              case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some Failures, return those. Should never happen, unless JSON Schema changed
+              case (Nil,     _)       => "List of events is empty (should never happen, did JSON Schema change?)".failNel
+            }
           }
-        }
-        
-        // Gather all of our successes and failures into seperate lists.
-        val successes: List[RawEvent] = {
-          for {
-            Success(s) <- rawEventsList 
-          } yield s
-        }
-
-        val failures: List[String] = {
-          for {
-            Failure(NonEmptyList(f)) <- rawEventsList 
-          } yield f
-        }
-
-        // Send out our ValidatedRawEvents (either a Nel of failures or a Nel of RawEvents)
-        (successes, failures) match {
-          case (s :: ss, Nil)     =>  NonEmptyList(s, ss: _*).success // No Failures collected
-          case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some Failures, return those. Should never happen, unless JSON Schema changed
-          case (Nil,     _)       => "List of events is empty (should never happen, did JSON Schema change?)".failNel
         }
       }
     }
 
+  /**
+   * Returns a Failure(NonEmptyList(String)) or Success(RawEvent)
+   *
+   * @param payload The CollectorPayload containing one or more
+   *        raw events as collected by a Snowplow collector
+   * @param json The event JSON we want to construct a RawEvent for
+   * @return a RawEvent containing the payload and json information
+   */
+  def jsonToRawEvent(payload: CollectorPayload, json: JValue): Validated[RawEvent] = 
+    extractKeyValueFromJson("event", json) match {
+      case None => s"No Mandrill event parameter provided: cannot determine event type".failNel
+      case Some(eventType) => {
+
+        val params = toMap(payload.querystring)
+        for {
+          schema <- (lookupSchema(eventType).toValidationNel: Validated[String])
+        } yield {
+          RawEvent(
+            api          = payload.api,
+            parameters   = toUnstructEventParamsMandrill(TrackerVersion, params, json, schema, "srv"),
+            contentType  = payload.contentType,
+            source       = payload.source,
+            context      = payload.context
+          )
+        }
+      }
+    }
 
   /**
    * Fabricates a Snowplow unstructured event from
@@ -203,13 +218,25 @@ object MandrillAdapter extends Adapter {
    * @return a list of single events formatted as 
    *         json4s JValue JSONs
    */
-  private[registry] def eventStringToList(rawEventString: String): List[JValue] = {
-    val eventStr = rawEventString.replace("mandrill_events=","") //TODO: Slightly less heinous but still pretty bad
-    val parsedStr = parse(URLEncodedUtils.parse(URI.create("http://localhost/?" + eventStr), "UTF-8").toString)
-    for {
-      JArray(List(JArray(x))) <- parsedStr
-      event <- x
-    } yield event
+  private[registry] def eventStringToJValueList(rawEventString: String): Validation[String,List[JValue]] = {
+    val eventStr = StringUtils.replaceOnce(rawEventString, "mandrill_events=", "")
+    val decodedStr = URLEncodedUtils.parse(URI.create("http://localhost/?" + eventStr), "UTF-8").toString
+
+    // Attempt to parse the string into valid JSON...
+    try {
+      val parsed = parse(decodedStr)
+      val eventList: List[JValue] = for {
+        JArray(List(JArray(x))) <- parsed // TODO: Should probably find a way to check if we are within two walls...
+        event <- x
+      } yield event
+      eventList.success
+    }
+    catch {
+      case e: Exception => {
+        val exception = e.toString
+        s"Mandrill events string failed to parse into json [Exception: $exception]".fail
+      }
+    }
   }
 
   /**
