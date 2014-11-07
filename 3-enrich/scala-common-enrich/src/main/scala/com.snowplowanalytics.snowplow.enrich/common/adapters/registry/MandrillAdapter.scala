@@ -99,33 +99,58 @@ object MandrillAdapter extends Adapter {
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     payload.body match {
       case None       => s"Request body is empty: no Mandrill events to process".failNel
+      case Some(body) if !body.startsWith("mandrill_events=") => s"Request body is formatted incorrectly: cannot process".failNel
       case Some(body) => {
 
         val eventList = eventStringToList(body)
-        eventList match {
-          case head :: tail => {
-            extractKeyValueFromJson("event", head) match {
+        val rawEventsList: List[Validation[NonEmptyList[String],RawEvent]] = { //List[Validation[NonEmptyList[String],RawEvent]]
+          for { 
+            event <- eventList // List[JValue]
+          } 
+          yield {
+            extractKeyValueFromJson("event", event) match { // Option[String] || None
               case None => s"No Mandrill event parameter provided: cannot determine event type".failNel
               case Some(eventType) => {
-                val params = toMap(payload.querystring)
+
+                val params = toMap(payload.querystring) // RawEventParameters
                 for {
-                  schema <- (lookupSchema(eventType).toValidationNel: Validated[String])
+                  schema <- (lookupSchema(eventType).toValidationNel: Validated[String]) // Validation[NonEmptyList[String],String]
                 } yield {
-                  NonEmptyList(RawEvent(
+                  RawEvent(
                     api          = payload.api,
-                    parameters   = toUnstructEventParamsMandrill(TrackerVersion, params, head, schema, "srv"),
+                    parameters   = toUnstructEventParamsMandrill(TrackerVersion, params, event, schema, "srv"), // RawEventParameters
                     contentType  = payload.contentType,
                     source       = payload.source,
                     context      = payload.context
-                  ))
+                  )
                 }
               }
             }
           }
-          case Nil => s"This should never happen".failNel
+        }
+        
+        // Gather all of our successes and failures into seperate lists.
+        val successes: List[RawEvent] = {
+          for {
+            Success(s) <- rawEventsList 
+          } yield s
+        }
+
+        val failures: List[String] = {
+          for {
+            Failure(NonEmptyList(f)) <- rawEventsList 
+          } yield f
+        }
+
+        // Send out our ValidatedRawEvents (either a Nel of failures or a Nel of RawEvents)
+        (successes, failures) match {
+          case (s :: ss, Nil)     =>  NonEmptyList(s, ss: _*).success // No Failures collected
+          case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some Failures, return those. Should never happen, unless JSON Schema changed
+          case (Nil,     _)       => "List of events is empty (should never happen, did JSON Schema change?)".failNel
         }
       }
     }
+
 
   /**
    * Fabricates a Snowplow unstructured event from
@@ -149,7 +174,7 @@ object MandrillAdapter extends Adapter {
    * @return the raw-event parameters for a valid
    *         Snowplow unstructured event
    */
-  def toUnstructEventParamsMandrill(tracker: String, params: RawEventParameters, eventJson: JValue, 
+  private[registry] def toUnstructEventParamsMandrill(tracker: String, params: RawEventParameters, eventJson: JValue, 
     schema: String, platform: String = "app"): RawEventParameters = {
 
     val json = compact {
@@ -178,8 +203,8 @@ object MandrillAdapter extends Adapter {
    * @return a list of single events formatted as 
    *         json4s JValue JSONs
    */
-  def eventStringToList(rawEventString: String): List[JValue] = {
-    val eventStr = rawEventString.drop(16)
+  private[registry] def eventStringToList(rawEventString: String): List[JValue] = {
+    val eventStr = rawEventString.replace("mandrill_events=","") //TODO: Slightly less heinous but still pretty bad
     val parsedStr = parse(URLEncodedUtils.parse(URI.create("http://localhost/?" + eventStr), "UTF-8").toString)
     for {
       JArray(List(JArray(x))) <- parsedStr
@@ -196,7 +221,7 @@ object MandrillAdapter extends Adapter {
    * @param event A single JSON Event from Mandrill
    * @return the value for the key or none
    */
-  def extractKeyValueFromJson(key: String, event: JValue): Option[String] = 
+  private[registry] def extractKeyValueFromJson(key: String, event: JValue): Option[String] = 
     (event \ key).extractOpt[String]
 
   /**
