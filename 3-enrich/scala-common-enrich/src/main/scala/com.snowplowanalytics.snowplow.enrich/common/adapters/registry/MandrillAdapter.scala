@@ -27,6 +27,7 @@ import iglu.client.validation.ValidatableJsonMethods._
 // Java
 import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
+import org.apache.commons.lang3.StringUtils
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
@@ -185,7 +186,6 @@ object MandrillAdapter extends Adapter {
         }
       }
     }
-
 
   /**
    * Fabricates a Snowplow unstructured event from
