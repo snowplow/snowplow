@@ -13,9 +13,9 @@
 -- Copyright:     Copyright (c) 2014 Snowplow Analytics Ltd
 -- License:       Apache License Version 2.0
 --
--- Compatibility: iglu:com.snowplowanalytics.snowplow/link_click/jsonschema/1-0-0
+-- Compatibility: iglu:com.snowplowanalytics.snowplow/change_form/jsonschema/1-0-0
 
-CREATE TABLE atomic.com_snowplowanalytics_snowplow_link_click_1 (
+CREATE TABLE atomic.com_snowplowanalytics_snowplow_change_form_1 (
 	-- Schema of this type
 	schema_vendor   varchar(128)  encode runlength not null,
 	schema_name     varchar(128)  encode runlength not null,
@@ -28,10 +28,12 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_link_click_1 (
 	ref_tree        varchar(1500) encode runlength not null,
 	ref_parent      varchar(255)  encode runlength not null,
 	-- Properties of this type
-	element_id      varchar(255)  encode text32k,
+	form_id         varchar(255)  encode text32k not null,
+	element_id      varchar(255)  encode text32k not null,
+	node_name       varchar(8)    encode runlength not null,
+	type            varchar(15)   encode runlength,
 	element_classes varchar(2048) encode raw, -- Holds a JSON array. TODO: will replace with a ref_ following https://github.com/snowplow/snowplow/issues/647
-	element_target  varchar(255)  encode text255,
-	target_url      varchar(4096) encode text32k not null
+	value           varchar(2048) encode raw not null
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
