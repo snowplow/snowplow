@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -36,9 +36,10 @@ object TransactionItemSpec {
     "2014-02-02 22:05:16.153",
     "2014-02-02 22:05:16.275",
     "transaction_item",
-    "com.snowplowanalytics",
+    "",
     Uuid4Regexp, // Regexp match
     "400017",
+    "",
     "js-0.13.1",
     "ssc-0.1.0-stdout",
     EnrichVersion,
@@ -54,11 +55,16 @@ object TransactionItemSpec {
     "",
     "",
     "",
+    "file://file:///Users/alex/Development/dev-environment/demo/1-tracker/events.html/overridden-url/",
+    "",
     "",
     "file",
     "file",
     "80",
     "///Users/alex/Development/dev-environment/demo/1-tracker/events.html/overridden-url/",
+    "",
+    "",
+    "",
     "",
     "",
     "",
@@ -139,7 +145,7 @@ class TransactionItemSpec extends Specification {
     "enrich a valid transaction item" in {
 
       val rawEvent = Base64.decodeBase64(TransactionItemSpec.raw)
-      
+
       val enrichedEvent = TestSource.enrichEvent(rawEvent)
       enrichedEvent must beSome
 

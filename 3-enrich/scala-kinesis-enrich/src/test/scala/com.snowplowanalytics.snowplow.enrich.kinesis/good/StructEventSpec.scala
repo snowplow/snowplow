@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -36,9 +36,10 @@ object StructEventSpec {
     "2014-02-02 22:01:20.941",
     "2014-02-02 22:01:21.071",
     "struct",
-    "com.snowplowanalytics",
+    "",
     Uuid4Regexp, // Regexp match
     "344214",
+    "", // name tracker
     "js-0.13.1",
     "ssc-0.1.0-stdout",
     EnrichVersion,
@@ -53,6 +54,8 @@ object StructEventSpec {
     "",
     "",
     "",
+    "",
+    "file://file:///Users/alex/Development/dev-environment/demo/1-tracker/events.html/overridden-url/",
     "",
     "",
     "file",
@@ -75,11 +78,14 @@ object StructEventSpec {
     "",
     "",
     "",
+    "",
     "Mixes",
     "Play",
     "MRC/fabric-0503-mix",
     "",
     "0.0",
+    "", // UE name
+    "", // UE properties
     "",
     "",
     "",
@@ -139,7 +145,7 @@ class StructEventSpec extends Specification {
     "enrich a valid structured event" in {
 
       val rawEvent = Base64.decodeBase64(StructEventSpec.raw)
-      
+
       val enrichedEvent = TestSource.enrichEvent(rawEvent)
       enrichedEvent must beSome
 

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -36,9 +36,10 @@ object StructEventWithContextSpec {
     "2014-02-02 22:02:45.361",
     "2014-02-02 22:02:45.493",
     "struct",
-    "com.snowplowanalytics",
+    "",
     Uuid4Regexp, // Regexp match
     "782449",
+    "",
     "js-0.13.1",
     "ssc-0.1.0-stdout",
     EnrichVersion,
@@ -53,6 +54,8 @@ object StructEventWithContextSpec {
     "",
     "",
     "",
+    "",
+    "file://file:///Users/alex/Development/dev-environment/demo/1-tracker/events.html/overridden-url/",
     "",
     "",
     "file",
@@ -75,11 +78,14 @@ object StructEventWithContextSpec {
     "",
     "",
     "",
+    "{\"user\":{\"fb_uid\":\"123456 x\"}}",
     "Checkout",
     "Add",
     "ASO01043",
     "blue:xxl",
     "2.0",
+    "",
+    "",
     "",
     "",
     "",
@@ -139,7 +145,7 @@ class StructEventWithContextSpec extends Specification {
     "enrich a valid structured event with context" in {
 
       val rawEvent = Base64.decodeBase64(StructEventWithContextSpec.raw)
-      
+
       val enrichedEvent = TestSource.enrichEvent(rawEvent)
       enrichedEvent must beSome
 
