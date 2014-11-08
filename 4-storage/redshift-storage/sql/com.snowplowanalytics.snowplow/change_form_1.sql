@@ -33,7 +33,7 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_change_form_1 (
 	node_name       varchar(8)    encode runlength not null,
 	type            varchar(15)   encode runlength,
 	element_classes varchar(2048) encode raw, -- Holds a JSON array. TODO: will replace with a ref_ following https://github.com/snowplow/snowplow/issues/647
-	value           varchar(2048) encode raw not null
+	value           varchar(2048) encode raw -- Cannot enforce not null due to https://github.com/snowplow/snowplow/issues/1134
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

@@ -15,7 +15,7 @@ Scala Hadoop Enrich: added job test for unrecognized api name/version (#1115)
 Scala Hadoop Enrich: updated DiscardableCfLinesSpec given /not-ice.png is no longer discarded (#1114)
 Scala Hadoop Enrich: added test job for MailchimpAdapter (#1159)
 Scala Hadoop Enrich: added test job for CallrailAdapter (#1160)
-Redshift: removed not null constraint on change_form's value column (#1162)             - TODO
+Redshift: removed not null constraint on change_form's value column (#1162)
 Redshift: added Redshift DDL for a com.callrail/call_complete event (#1110)
 Redshift: added Redshift DDL for a com.mailchimp/campaign_sending_status event (#1085)
 Redshift: added Redshift DDL for a com.mailchimp/cleaned_email event (#1084)
