@@ -26,8 +26,9 @@ import iglu.client.validation.ValidatableJsonMethods._
 
 // Java
 import java.net.URI
-import org.apache.http.client.utils.URLEncodedUtils
+import java.net.URLDecoder
 import org.apache.commons.lang3.StringUtils
+import org.apache.http.client.utils.URLEncodedUtils
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
@@ -103,7 +104,7 @@ object MandrillAdapter extends Adapter {
       case Some(body) if !body.startsWith("mandrill_events=") => s"Request body is formatted incorrectly: cannot process".failNel
       case Some(body) => {
 
-        eventStringToJValueList(body) match {
+        bodyToEventList(body) match {
           case Failure(str)  => str.failNel
           case Success(list) => {
 
@@ -140,16 +141,18 @@ object MandrillAdapter extends Adapter {
     }
 
   /**
-   * Returns a Failure(NonEmptyList(String)) or Success(RawEvent)
+   * Converts a Mandrill JSON Formatted Event into a Validated RawEvent
+   * - Will check that the event JSON has an event parameter
+   * - Will validate that the event parameter is of a valid type
    *
    * @param payload The CollectorPayload containing one or more
    *        raw events as collected by a Snowplow collector
    * @param json The event JSON we want to construct a RawEvent for
    * @return a RawEvent containing the payload and json information
    */
-  def jsonToRawEvent(payload: CollectorPayload, json: JValue): Validated[RawEvent] = 
+  def jsonToRawEvent(payload: CollectorPayload, json: JValue): Validated[RawEvent] =
     extractKeyValueFromJson("event", json) match {
-      case None => s"No Mandrill event parameter provided: cannot determine event type".failNel
+      case None => s"Mandrill event parameter not provided: cannot determine event type".failNel
       case Some(eventType) => {
 
         val params = toMap(payload.querystring)
@@ -191,7 +194,6 @@ object MandrillAdapter extends Adapter {
    */
   private[registry] def toUnstructEventParamsMandrill(tracker: String, params: RawEventParameters, eventJson: JValue, 
     schema: String, platform: String = "app"): RawEventParameters = {
-
     val json = compact {
       ("schema" -> SchemaUris.UnstructEvent) ~
       ("data"   -> (
@@ -210,43 +212,57 @@ object MandrillAdapter extends Adapter {
   
   /**
    * Returns a list of JValue formatted JSONs from 
-   * the Mandrill Event String
-   * - Should return at least one event
+   * the Mandrill Event String, each event will 
+   * be a seperate JValue
+   * - Will check that the event string is not empty
+   * - Will check that the decoded string has opening and closing square braces
+   *   This ensures that the JSON is a JArray with a list of jsons inside
+   * - Will check that the size of the returned list of events is > 0
+   * - If the decoded string fails to parse it will return a failure exception string
    *
    * @param rawEventString The http encoded string 
    *        from the Mandrill POST event body
    * @return a list of single events formatted as 
    *         json4s JValue JSONs
    */
-  private[registry] def eventStringToJValueList(rawEventString: String): Validation[String,List[JValue]] = {
+  private[registry] def bodyToEventList(rawEventString: String): Validation[String,List[JValue]] = {
     val eventStr = StringUtils.replaceOnce(rawEventString, "mandrill_events=", "")
-    val decodedStr = URLEncodedUtils.parse(URI.create("http://localhost/?" + eventStr), "UTF-8").toString
+    val decodedStr = URLDecoder.decode(eventStr, "UTF-8")
 
-    // Attempt to parse the string into valid JSON...
-    try {
-      val parsed = parse(decodedStr)
-      val eventList: List[JValue] = for {
-        JArray(List(JArray(x))) <- parsed // TODO: Should probably find a way to check if we are within two walls...
-        event <- x
-      } yield event
-      eventList.success
-    }
-    catch {
-      case e: Exception => {
-        val exception = e.toString
-        s"Mandrill events string failed to parse into json [Exception: $exception]".fail
+    (decodedStr, eventStr) match {
+      case (_, "") => s"Mandrill events string is empty: nothing to parse".fail
+      case (dStr, _) if !dStr.startsWith("[") && !dStr.endsWith("]") => 
+        s"Mandrill decoded events string is in an unexpected format: cannot parse".fail
+      case (dStr, _) => {
+        try {
+          val parsed = parse(dStr)
+          parsed match {
+            case JArray(list) if list.size == 0 => s"Mandrill events list is empty: nothing to process".fail
+            case JArray(list) => list.success
+            case _ => s"Should never happen: Mandrill event JSON was in an unexpected format".fail
+          }
+        } catch {
+          case e: Exception => {
+            val exception = e.toString
+            s"Mandrill events string failed to parse into json: Exception [$exception]".fail
+          }
+        }
       }
     }
   }
 
   /**
    * Extracts the value of a key from a json4s JObject
-   * TODO - Better case analysis for returned type
+   * - Will only search for a key in the first layer 
+   *   of the JSON
+   * - Will return either an Option[String] if the key
+   *   is valid or None if the key is not valid or it
+   *   cannot convert the value found into a String
    *
    * @param key The key pertaining to the value we 
-  *         want returned from the event JSON
-   * @param event A single JSON Event from Mandrill
-   * @return the value for the key or none
+   *        want returned from the event JSON
+   * @param event A single JValue JSON Event from Mandrill
+   * @return an Option[String] or None
    */
   private[registry] def extractKeyValueFromJson(key: String, event: JValue): Option[String] = 
     (event \ key).extractOpt[String]
