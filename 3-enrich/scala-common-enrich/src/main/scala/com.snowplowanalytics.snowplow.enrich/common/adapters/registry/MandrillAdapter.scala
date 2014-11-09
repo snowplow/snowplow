@@ -19,8 +19,9 @@ package registry
 
 // Java
 import java.net.URI
-import org.apache.http.client.utils.URLEncodedUtils
+import java.net.URLDecoder
 import org.apache.commons.lang3.StringUtils
+import org.apache.http.client.utils.URLEncodedUtils
 
 // Joda-Time
 import org.joda.time.{DateTime, DateTimeZone}
@@ -181,7 +182,6 @@ object MandrillAdapter extends Adapter {
               }
             }
           }
-          case Nil => s"This should never happen".failNel
         }
       }
     }
