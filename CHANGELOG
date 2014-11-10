@@ -1,4 +1,4 @@
-Version 0.9.11 (2014-11-XX)
+Version 0.9.11 (2014-11-10)
 ---------------------------
 Clojure Collector: bumped to 0.9.0
 Clojure Collector: add support for /:vendor/:version to GET (#1131)
