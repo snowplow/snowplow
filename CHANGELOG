@@ -28,9 +28,9 @@ StorageLoader: wrote JSON Path file for com.callrail/call_complete event (#1109)
 StorageLoader: wrote JSON Path file for com.mailchimp/campaign_sending_status event (#1079)
 StorageLoader: wrote JSON Path file for com.mailchimp/cleaned_email event (#1078)
 StorageLoader: wrote JSON Path file for com.mailchimp/email_address_change event (#1077)
-StorageLoader: write JSON Path file for com.mailchimp/profile_update event (#1076)
-StorageLoader: write JSON Path file for com.mailchimp/unsubscribe event (#1075)
-StorageLoader: write JSON Path file for com.mailchimp/subscribe event (#1074)
+StorageLoader: wrote JSON Path file for com.mailchimp/profile_update event (#1076)
+StorageLoader: wrote JSON Path file for com.mailchimp/unsubscribe event (#1075)
+StorageLoader: wrote JSON Path file for com.mailchimp/subscribe event (#1074)
 
 Version 0.9.10 (2014-11-06)
 ---------------------------
