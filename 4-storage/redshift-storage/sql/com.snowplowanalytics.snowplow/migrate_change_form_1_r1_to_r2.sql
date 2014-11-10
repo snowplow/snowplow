@@ -17,7 +17,7 @@
 -- License:     Apache License Version 2.0
 
 -- First rename the existing table (don't delete it)
-ALTER TABLE atomic.change_form_1 RENAME TO change_form_1_r1;
+ALTER TABLE atomic.com_snowplowanalytics_snowplow_change_form_1 RENAME TO com_snowplowanalytics_snowplow_change_form_1_r1;
 
 CREATE TABLE atomic.com_snowplowanalytics_snowplow_change_form_1 (
 	-- Schema of this type
@@ -45,7 +45,7 @@ DISTKEY (root_id)
 SORTKEY (root_tstamp);
 
 -- Finally copy all the old data into the new format
-INSERT INTO atomic.change_form_1
+INSERT INTO atomic.com_snowplowanalytics_snowplow_change_form_1
 	SELECT
 	*
-	FROM atomic.change_form_1_r1;
+	FROM atomic.com_snowplowanalytics_snowplow_change_form_1_r1;
