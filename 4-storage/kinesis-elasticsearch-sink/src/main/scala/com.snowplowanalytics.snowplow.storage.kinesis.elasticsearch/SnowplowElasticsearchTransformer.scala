@@ -212,11 +212,20 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
         val snakeCaseOrganization = organization.replaceAll("""\.""", "_").toLowerCase
         val snakeCaseName = name.replaceAll("([^_])([A-Z])", "$1_$2").toLowerCase
         val model = schemaVer.split("-")(0)
+        // TODO find out whether Elasticsearch field names can contain dots
         s"${prefix}.${snakeCaseOrganization}_${snakeCaseName}_${model}"
       }
       // TODO decide whether we want to fall back to the original schema string
       case _ => s"${prefix}.${schema}"
     }
+  }
+
+  private def parseContexts(contexts: String): JObject = {
+    val json = parse(contexts)
+    val data = json \ "data"
+    val r = data.children.map(x => (x \ "schema", x \ "data")).collect({
+      case (JString(s), a) if a != JNothing => (fixSchema("contexts", s), a)
+    }).groupBy(_._1).map(pair => (pair._1, pair._2.map(_._2)))
   }
 
   /**
