@@ -223,9 +223,9 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
   private def parseContexts(contexts: String): JObject = {
     val json = parse(contexts)
     val data = json \ "data"
-    val r = data.children.map(x => (x \ "schema", x \ "data")).collect({
-      case (JString(s), a) if a != JNothing => (fixSchema("contexts", s), a)
-    }).groupBy(_._1).map(pair => (pair._1, pair._2.map(_._2)))
+    data.children.map(context => (context \ "schema", context \ "data")).collect({
+      case (JString(schema), innerData) if innerData != JNothing => (fixSchema("contexts", schema), innerData)
+    }).groupBy(_._1).map((schema, schemaDataPairList) => (schema, schemaDataPairList.map(_._2)))
   }
 
   /**
