@@ -33,6 +33,7 @@ CREATE TABLE atomic.com_mailchimp_subscribe_1 (
     "data.email"            varchar(255)   encode raw,
     "data.email_type"       varchar(255)   encode raw,
     "data.id"               varchar(255)   encode raw,
+    "data.web_id"           varchar(255)   encode raw,
     "data.ip_opt"           varchar(255)   encode raw,
     "data.ip_signup"        varchar(255)   encode raw,
     "data.list_id"          varchar(255)   encode raw,

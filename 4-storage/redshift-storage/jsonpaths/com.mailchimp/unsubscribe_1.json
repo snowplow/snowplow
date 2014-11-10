@@ -19,6 +19,7 @@
     "$.data.data.email",
     "$.data.data.email_type",
     "$.data.data.id",
+    "$.data.data.web_id",
     "$.data.data.ip_opt",
     "$.data.data.list_id",
     "$.data.data.reason",
