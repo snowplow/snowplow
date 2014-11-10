@@ -32,8 +32,8 @@ class ShredderSpec extends Specification with ValidationMatchers {
 
   "The fixSchema method" should {
     "fix up a snake_case schema" in {
-      val actual = new Shredder().fixSchema("unstruct", "iglu:com.snowplowanalytics.snowplow/change_form/jsonschema/1-0-0")
-      actual must_== "unstruct_com_snowplowanalytics_snowplow_change_form_1"
+      val actual = new Shredder().fixSchema("unstruct_event", "iglu:com.snowplowanalytics.snowplow/change_form/jsonschema/1-0-0")
+      actual must_== "unstruct_event_com_snowplowanalytics_snowplow_change_form_1"
     }
 
     "fix up a PascalCase schema" in {
@@ -54,7 +54,7 @@ class ShredderSpec extends Specification with ValidationMatchers {
           }
         }
       }""")
-      val expected = "unstruct_com_snowplowanalytics_snowplow_social_interaction_1" ->
+      val expected = "unstruct_event_com_snowplowanalytics_snowplow_social_interaction_1" ->
         (("action" -> "like") ~ ("network" -> "fb"))
       actual diff expected must_== Diff(JNothing, JNothing, JNothing)
     }

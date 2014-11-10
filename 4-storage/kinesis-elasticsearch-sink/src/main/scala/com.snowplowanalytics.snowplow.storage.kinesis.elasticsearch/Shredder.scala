@@ -61,7 +61,7 @@ class Shredder {
     val schema = data \ "schema"
     val innerData = data \ "data"
     val fixedSchema = schema match {
-      case JString(s) => fixSchema("unstruct", s)
+      case JString(s) => fixSchema("unstruct_event", s)
       case _ => throw new RuntimeException("TODO: badly formatted event")
     }
     (fixedSchema, innerData)

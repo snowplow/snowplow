@@ -225,7 +225,7 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       ScalazJson4sUtils.extract[String](result, "doc_height") must beSuccessful("illegal")
 
       // unstructured event shredding
-      result \ "unstruct_com_snowplowanalytics_snowplow_link_click_1" \ "elementId" must_== JString("exampleLink")
+      result \ "unstruct_event_com_snowplowanalytics_snowplow_link_click_1" \ "elementId" must_== JString("exampleLink")
 
       // contexts shredding
       result \ "contexts_org_schema_web_page_1" \ "genre" must_== JString("blog")
