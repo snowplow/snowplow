@@ -88,7 +88,7 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       "mkt_term" -> "",
       "mkt_content" -> "",
       "mkt_campaign" -> "",
-      "contexts" -> "bad json",
+      "contexts" -> """{"schema":"any", "data": {"schema":"iglu:com.snowplowanalytics.snowplow/WebPage/jsonschema/1-0-0","data":[{"a":"b"}]}}""",
       "se_category" -> "",
       "se_action" -> "",
       "se_label" -> "",

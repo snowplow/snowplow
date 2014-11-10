@@ -78,7 +78,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     "geo_longitude",
     "geo_region_name",
     "ip_isp",
-    "ip_org",
+    "ip_organization",
     "ip_domain",
     "ip_netspeed",
     "page_url",
