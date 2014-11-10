@@ -26,12 +26,11 @@ import iglu.client.validation.ValidatableJsonMethods._
 
 // Java
 import java.net.URI
-import java.net.URLDecoder
-import org.apache.commons.lang3.StringUtils
 import org.apache.http.client.utils.URLEncodedUtils
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.core.JsonParseException
 
 // Scala
 import scala.collection.JavaConversions._
@@ -67,6 +66,9 @@ object MandrillAdapter extends Adapter {
   // Tracker version for an Mandrill Tracking webhook
   private val TrackerVersion = "com.mandrill-v1"
 
+  // Expected content type for a request body
+  private val ContentType = "application/x-www-form-urlencoded"
+
   // Schemas for reverse-engineering a Snowplow unstructured event
   private object SchemaUris {
     val UnstructEvent         = SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", "1-0-0").toSchemaUri
@@ -82,6 +84,8 @@ object MandrillAdapter extends Adapter {
   }
 
   // Datetime format used by Mandrill (as we will need to massage) - [CHECK THIS]
+  // TODO: Work out which keys mandrill sends that need to be date time formatted
+
   private val MandrillDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
 
   /**
@@ -99,10 +103,11 @@ object MandrillAdapter extends Adapter {
    *         Success, or a NEL of Failure Strings
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
-    payload.body match {
-      case None       => s"Request body is empty: no Mandrill events to process".failNel
-      case Some(body) if !body.startsWith("mandrill_events=") => s"Request body is formatted incorrectly: cannot process".failNel
-      case Some(body) => {
+    (payload.body, payload.contentType) match {
+      case (None, _)                          => s"Request body is empty: no Mandrill events to process".failNel
+      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for Mandrill".failNel
+      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for Mandrill".failNel
+      case (Some(body),_)                     => {
 
         bodyToEventList(body) match {
           case Failure(str)  => str.failNel
@@ -131,9 +136,9 @@ object MandrillAdapter extends Adapter {
 
             // Send out our ValidatedRawEvents (either a Nel of failures or a Nel of RawEvents)
             (successes, failures) match {
-              case (s :: ss, Nil)     =>  NonEmptyList(s, ss: _*).success // No Failures collected
+              case (s :: ss,     Nil) =>  NonEmptyList(s, ss: _*).success // No Failures collected
               case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some Failures, return those. Should never happen, unless JSON Schema changed
-              case (Nil,     _)       => "List of events is empty (should never happen, did JSON Schema change?)".failNel
+              case (Nil,           _) => "List of events is empty (should never happen, not catching empty list properly)".failNel
             }
           }
         }
@@ -141,8 +146,8 @@ object MandrillAdapter extends Adapter {
     }
 
   /**
-   * Converts a Mandrill JSON Formatted Event into a Validated RawEvent
-   * - Will check that the event JSON has an event parameter
+   * Converts a Mandrill Event into a Validated[RawEvent]
+   * - Will validate that the event JSON has an event parameter
    * - Will validate that the event parameter is of a valid type
    *
    * @param payload The CollectorPayload containing one or more
@@ -154,11 +159,10 @@ object MandrillAdapter extends Adapter {
     extractKeyValueFromJson("event", json) match {
       case None => s"Mandrill event parameter not provided: cannot determine event type".failNel
       case Some(eventType) => {
-
-        val params = toMap(payload.querystring)
         for {
           schema <- (lookupSchema(eventType).toValidationNel: Validated[String])
         } yield {
+          val params = toMap(payload.querystring)
           RawEvent(
             api          = payload.api,
             parameters   = toUnstructEventParamsMandrill(TrackerVersion, params, json, schema, "srv"),
@@ -194,6 +198,7 @@ object MandrillAdapter extends Adapter {
    */
   private[registry] def toUnstructEventParamsMandrill(tracker: String, params: RawEventParameters, eventJson: JValue, 
     schema: String, platform: String = "app"): RawEventParameters = {
+
     val json = compact {
       ("schema" -> SchemaUris.UnstructEvent) ~
       ("data"   -> (
@@ -211,40 +216,39 @@ object MandrillAdapter extends Adapter {
   }
   
   /**
-   * Returns a list of JValue formatted JSONs from 
-   * the Mandrill Event String, each event will 
-   * be a seperate JValue
-   * - Will check that the event string is not empty
-   * - Will check that the decoded string has opening and closing square braces
-   *   This ensures that the JSON is a JArray with a list of jsons inside
-   * - Will check that the size of the returned list of events is > 0
-   * - If the decoded string fails to parse it will return a failure exception string
+   * Returns a list of events from a Mandrill events string, 
+   * each event will be a JValue formatted JSON
    *
-   * @param rawEventString The http encoded string 
+   * @param rawEventString The UTF-8 encoded string 
    *        from the Mandrill POST event body
    * @return a list of single events formatted as 
    *         json4s JValue JSONs
    */
   private[registry] def bodyToEventList(rawEventString: String): Validation[String,List[JValue]] = {
-    val eventStr = StringUtils.replaceOnce(rawEventString, "mandrill_events=", "")
-    val decodedStr = URLDecoder.decode(eventStr, "UTF-8")
 
-    (decodedStr, eventStr) match {
-      case (_, "") => s"Mandrill events string is empty: nothing to parse".fail
-      case (dStr, _) if !dStr.startsWith("[") && !dStr.endsWith("]") => 
-        s"Mandrill decoded events string is in an unexpected format: cannot parse".fail
-      case (dStr, _) => {
-        try {
-          val parsed = parse(dStr)
-          parsed match {
-            case JArray(list) if list.size == 0 => s"Mandrill events list is empty: nothing to process".fail
-            case JArray(list) => list.success
-            case _ => s"Should never happen: Mandrill event JSON was in an unexpected format".fail
-          }
-        } catch {
-          case e: Exception => {
-            val exception = e.toString
-            s"Mandrill events string failed to parse into json: Exception [$exception]".fail
+    val bodyMap = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + rawEventString), "UTF-8").toList)
+
+    bodyMap match {
+      case map if map.size != 1                    => s"Mapped Mandrill body has invalid count of keys".fail
+      case map if !map.contains("mandrill_events") => s"Mapped Mandrill body does not have 'mandrill_events' as its only key".fail
+      case map                                     => {
+        map.get("mandrill_events") match {
+          case Some("")   => s"Mandrill events string is empty: nothing to process".fail
+          case None       => s"Should never happen: no Mandrill events string available for processing".fail
+          case Some(dStr) => {
+            try {
+              val parsed = parse(dStr)
+              parsed match {
+                case JArray(list) => list.success
+                case _            => s"Could not resolve Mandrill payload into a JSON array of events".fail
+              }
+            }
+            catch {
+              case e: JsonParseException => {
+                val exception = JU.stripInstanceEtc(e.toString)
+                s"Mandrill events string failed to parse into JSON: [$exception]".fail
+              }
+            }
           }
         }
       }
@@ -253,8 +257,6 @@ object MandrillAdapter extends Adapter {
 
   /**
    * Extracts the value of a key from a json4s JObject
-   * - Will only search for a key in the first layer 
-   *   of the JSON
    * - Will return either an Option[String] if the key
    *   is valid or None if the key is not valid or it
    *   cannot convert the value found into a String
