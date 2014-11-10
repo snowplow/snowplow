@@ -26,8 +26,6 @@ import iglu.client.validation.ValidatableJsonMethods._
 
 // Java
 import java.net.URI
-import java.net.URLDecoder
-import org.apache.commons.lang3.StringUtils
 import org.apache.http.client.utils.URLEncodedUtils
 
 // Jackson
@@ -212,6 +210,7 @@ object MandrillAdapter extends Adapter {
    */
   private[registry] def toUnstructEventParamsMandrill(tracker: String, params: RawEventParameters, eventJson: JValue, 
     schema: String, platform: String = "app"): RawEventParameters = {
+
     val json = compact {
       ("schema" -> SchemaUris.UnstructEvent) ~
       ("data"   -> (
