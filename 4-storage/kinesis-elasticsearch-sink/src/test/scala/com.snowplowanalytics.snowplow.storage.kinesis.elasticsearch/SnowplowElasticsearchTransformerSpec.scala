@@ -33,6 +33,68 @@ import enrich.common.utils.ScalazJson4sUtils
  */
 class SnowplowElasticsearchTransformerSpec extends Specification with ValidationMatchers {
 
+  val unstructJson = """{
+    "schema": "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0",
+    "data": {
+      "schema": "iglu:com.snowplowanalytics.snowplow/link_click/jsonschema/1-0-1",
+      "data": {
+        "targetUrl": "http://www.example.com",
+        "elementClasses": ["foreground"],
+        "elementId": "exampleLink"
+      }
+    }
+  }"""
+
+  val contextsJson = """{
+    "schema": "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0",
+    "data": [
+      {
+        "schema": "iglu:org.schema/WebPage/jsonschema/1-0-0",
+        "data": {
+          "genre": "blog",
+          "inLanguage": "en-US",
+          "datePublished": "2014-11-06T00:00:00Z",
+          "author": "Fred Blundun",
+          "breadcrumb": [
+            "blog",
+            "releases"
+          ],
+          "keywords": [
+            "snowplow",
+            "javascript",
+            "tracker",
+            "event"
+          ]
+        }
+      },
+      {
+        "schema": "iglu:org.w3/PerformanceTiming/jsonschema/1-0-0",
+        "data": {
+          "navigationStart": 1415358089861,
+          "unloadEventStart": 1415358090270,
+          "unloadEventEnd": 1415358090287,
+          "redirectStart": 0,
+          "redirectEnd": 0,
+          "fetchStart": 1415358089870,
+          "domainLookupStart": 1415358090102,
+          "domainLookupEnd": 1415358090102,
+          "connectStart": 1415358090103,
+          "connectEnd": 1415358090183,
+          "requestStart": 1415358090183,
+          "responseStart": 1415358090265,
+          "responseEnd": 1415358090265,
+          "domLoading": 1415358090270,
+          "domInteractive": 1415358090886,
+          "domContentLoadedEventStart": 1415358090968,
+          "domContentLoadedEventEnd": 1415358091309,
+          "domComplete": 0,
+          "loadEventStart": 0,
+          "loadEventEnd": 0
+        }
+      }
+    ]
+  }"""
+
   "The 'fromClass' method" should {
     "successfully convert a tab-separated event string to JSON" in {
       val nvPairs = List(
@@ -62,7 +124,7 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       "geo_longitude" -> "-122.4124",
       "geo_region_name" -> "Florida",
       "ip_isp" -> "FDN Communications",
-      "ip_org" -> "Bouygues Telecom",
+      "ip_organization" -> "Bouygues Telecom",
       "ip_domain" -> "nuvox.net",
       "ip_netspeed" -> "Cable/DSL",
       "page_url" -> "http://www.snowplowanalytics.com",
@@ -88,13 +150,13 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       "mkt_term" -> "",
       "mkt_content" -> "",
       "mkt_campaign" -> "",
-      "contexts" -> """{"schema":"any", "data": {"schema":"iglu:com.snowplowanalytics.snowplow/WebPage/jsonschema/1-0-0","data":[{"a":"b"}]}}""",
+      "contexts" -> contextsJson,
       "se_category" -> "",
       "se_action" -> "",
       "se_label" -> "",
       "se_property" -> "",
       "se_value" -> "",
-      "unstruct_event" -> """{"path": {"to": {"value": 100}}}""",
+      "unstruct_event" -> unstructJson,
       "tr_orderid" -> "",
       "tr_affiliation" -> "",
       "tr_total" -> "",
@@ -157,14 +219,16 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       ScalazJson4sUtils.extract[Double](result, "geo_latitude") must beSuccessful(37.443604)
       ScalazJson4sUtils.extract[Boolean](result, "br_features_pdf") must beSuccessful(true)
       ScalazJson4sUtils.extract[Boolean](result, "br_features_flash") must beSuccessful(false)
-      ScalazJson4sUtils.extract[Int](result, "unstruct_event", "path", "to", "value") must beSuccessful(100)
       ScalazJson4sUtils.extract[String](result, "ti_sku") must beSuccessful(null)
 
       // check that IllegalArgumentExceptions are caught
       ScalazJson4sUtils.extract[String](result, "doc_height") must beSuccessful("illegal")
 
-      // check that JsonParseExceptions are caught
-      ScalazJson4sUtils.extract[String](result, "contexts") must beSuccessful("bad json")
+      // unstructured event shredding
+      result \ "unstruct_com_snowplowanalytics_snowplow_link_click_1" \ "elementId" must_== JString("exampleLink")
+
+      // contexts shredding
+      result \ "contexts_org_schema_web_page_1" \ "genre" must_== JString("blog")
     }
   }
 

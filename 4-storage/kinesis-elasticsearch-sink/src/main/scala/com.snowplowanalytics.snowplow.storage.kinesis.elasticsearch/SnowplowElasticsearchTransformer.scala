@@ -200,20 +200,15 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     "br_cookies",
     "dvce_ismobile"
     )
-  private val jsonFields = Set(
-    "contexts",
-    "unstruct_event"
-    )
 
   private def fixSchema(prefix: String, schema: String): String = {
-    val schemaPatter = """.+:((?:[a-zA-Z]+\.)+[a-zA-Z]+)/([a-zA-Z_]+)/[^/]+/(.*)""".r
+    val schemaPatter = """.+:([a-zA-Z0-9_\.]+)/([a-zA-Z0-9_]+)/[^/]+/(.*)""".r
     schema match {
       case schemaPatter(organization, name, schemaVer) => {
         val snakeCaseOrganization = organization.replaceAll("""\.""", "_").toLowerCase
         val snakeCaseName = name.replaceAll("([^_])([A-Z])", "$1_$2").toLowerCase
         val model = schemaVer.split("-")(0)
-        // TODO find out whether Elasticsearch field names can contain dots
-        s"${prefix}.${snakeCaseOrganization}_${snakeCaseName}_${model}"
+        s"${prefix}_${snakeCaseOrganization}_${snakeCaseName}_${model}"
       }
       // TODO decide whether we want to fall back to the original schema string
       case _ => s"${prefix}.${schema}"
@@ -225,7 +220,19 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     val data = json \ "data"
     data.children.map(context => (context \ "schema", context \ "data")).collect({
       case (JString(schema), innerData) if innerData != JNothing => (fixSchema("contexts", schema), innerData)
-    }).groupBy(_._1).map((schema, schemaDataPairList) => (schema, schemaDataPairList.map(_._2)))
+    }).groupBy(_._1).map(pair => (pair._1, pair._2.map(_._2)))
+  }
+
+  private def parseUnstruct(unstruct: String): JObject = {
+    val json = parse(unstruct)
+    val data = json \ "data"
+    val schema = data \ "schema"
+    val innerData = data \ "data"
+    val fixedSchema = schema match {
+      case JString(s) => fixSchema("unstruct", s)
+      case _ => throw new RuntimeException("TODO: badly formatted event")
+    }
+    (fixedSchema, innerData)
   }
 
   /**
@@ -234,32 +241,35 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    * @param kvPair Tuple2 of the name and value of the field
    * @return JObject representing a single field in the JSON
    */
-  private def converter(kvPair: (String, String)): JObject = (kvPair._1,
-    if (kvPair._2.isEmpty) {
-      JNull
+  private def converter(kvPair: (String, String)): JObject = {
+    val (key, value) = kvPair
+    if (value.isEmpty) {
+      (key, JNull)
     } else {
       try {
-        if (intFields.contains(kvPair._1)) {
-          JInt(kvPair._2.toInt)
-        } else if (doubleFields.contains(kvPair._1)) {
-          JDouble(kvPair._2.toDouble)
-        } else if (boolFields.contains(kvPair._1)) {
-          kvPair._2 match {
+        if (intFields.contains(key)) {
+          (key, JInt(value.toInt))
+        } else if (doubleFields.contains(key)) {
+          (key, JDouble(value.toDouble))
+        } else if (boolFields.contains(key)) {
+          (key, value match {
             case "1" => JBool(true)
             case "0" => JBool(false)
             case s   => JString(s)
-          }
-        } else if (jsonFields.contains(kvPair._1)) {
-          parse(kvPair._2)
+          })
+        } else if (key == "contexts") {
+          parseContexts(value)
+        } else if (key == "unstruct_event") {
+          parseUnstruct(value)
         } else {
-          JString(kvPair._2)
+          (key, JString(value))
         }
       } catch {
-        case iae: IllegalArgumentException => JString(kvPair._2) // TODO: log the exception
-        case jpe: JsonParseException => JString(kvPair._2) // TODO: log the exception
+        case iae: IllegalArgumentException => (key, JString(value)) // TODO: log the exception
+        case jpe: JsonParseException => (key, JString(value)) // TODO: log the exception
       }
     }
-  )
+  }
 
   /**
    * Converts an aray of field values to a JSON whose keys are the field names
