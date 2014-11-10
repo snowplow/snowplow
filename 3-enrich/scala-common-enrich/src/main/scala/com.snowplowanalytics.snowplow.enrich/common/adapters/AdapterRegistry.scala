@@ -25,7 +25,12 @@ import Scalaz._
 
 // This project
 import loaders.CollectorPayload
-import registry.SnowplowAdapter
+import registry.{
+  SnowplowAdapter,
+  IgluAdapter,
+  CallrailAdapter,
+  MailchimpAdapter
+}
 
 /**
  * The AdapterRegistry lets us convert a CollectorPayload
@@ -33,7 +38,12 @@ import registry.SnowplowAdapter
  */
 object AdapterRegistry {
 
-  private val SnowplowVendor = "com.snowplowanalytics.snowplow"
+  private object Vendor {
+    val Snowplow = "com.snowplowanalytics.snowplow"
+    val Iglu = "com.snowplowanalytics.iglu"
+    val Callrail = "com.callrail"
+    val Mailchimp = "com.mailchimp"
+  }
 
   /**
    * Router to determine which adapter we use
@@ -49,8 +59,11 @@ object AdapterRegistry {
    *         or a NEL of Strings on Failure
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = (payload.api.vendor, payload.api.version) match {
-    case (SnowplowVendor, "tp1") => SnowplowAdapter.Tp1.toRawEvents(payload)
-    case (SnowplowVendor, "tp2") => SnowplowAdapter.Tp2.toRawEvents(payload)
+    case (Vendor.Snowplow,    "tp1") => SnowplowAdapter.Tp1.toRawEvents(payload)
+    case (Vendor.Snowplow,    "tp2") => SnowplowAdapter.Tp2.toRawEvents(payload)
+    case (Vendor.Iglu,        "v1")  => IgluAdapter.toRawEvents(payload)
+    case (Vendor.Callrail,    "v1")  => CallrailAdapter.toRawEvents(payload)
+    case (Vendor.Mailchimp,   "v1")  => MailchimpAdapter.toRawEvents(payload)
     // TODO: add Sendgrid et al
     case _ => s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".failNel
   }

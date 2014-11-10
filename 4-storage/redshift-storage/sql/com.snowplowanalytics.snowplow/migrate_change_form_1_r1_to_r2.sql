@@ -1,4 +1,4 @@
--- Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2013 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,12 +9,15 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Authors:       Alex Dean
--- Copyright:     Copyright (c) 2014 Snowplow Analytics Ltd
--- License:       Apache License Version 2.0
--- Release:       2
+-- Version:     Ports release 1 to release 2
+-- URL:         -
 --
--- Compatibility: iglu:com.snowplowanalytics.snowplow/change_form/jsonschema/1-0-0
+-- Authors:     Alex Dean
+-- Copyright:   Copyright (c) 2014 Snowplow Analytics Ltd
+-- License:     Apache License Version 2.0
+
+-- First rename the existing table (don't delete it)
+ALTER TABLE atomic.com_snowplowanalytics_snowplow_change_form_1 RENAME TO com_snowplowanalytics_snowplow_change_form_1_r1;
 
 CREATE TABLE atomic.com_snowplowanalytics_snowplow_change_form_1 (
 	-- Schema of this type
@@ -40,3 +43,9 @@ DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
 SORTKEY (root_tstamp);
+
+-- Finally copy all the old data into the new format
+INSERT INTO atomic.com_snowplowanalytics_snowplow_change_form_1
+	SELECT
+	*
+	FROM atomic.com_snowplowanalytics_snowplow_change_form_1_r1;

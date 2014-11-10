@@ -34,7 +34,8 @@ object MasterCfLinesSpec {
   // Concatenate ALL lines from ALL other jobs
   val lines = bad.BadTrackerCfLinesSpec.lines ++          // 3 bad
               bad.CorruptedCfLinesSpec.lines ++           // 1 bad
-              bad.InvalidCfLinesSpec.lines ++             // 3 bad  = 7 BAD
+              bad.InvalidCfLinesSpec.lines ++             // 3 bad
+              bad.UnsupportedPayloadCfLinesSpec.lines ++  // 1 bad = 8 BAD
               good.Aug2013CfLineSpec.lines ++             // 1 good
               good.Sep2013CfLineSpec.lines ++             // 1 good
               good.Oct2013CfLineSpec.lines ++             // 1 good
@@ -49,11 +50,11 @@ object MasterCfLinesSpec {
               good.UnstructEventCfLineSpec.lines ++       // 1 good
               good.TransactionCfLineSpec.lines ++         // 1 good
               good.TransactionItemCfLineSpec.lines ++     // 1 good = 14 GOOD
-              misc.DiscardableCfLinesSpec.lines           // 3 discarded
+              misc.DiscardableCfLinesSpec.lines           // 2 discarded
 
   object expected {
     val goodCount = 14
-    val badCount = 7
+    val badCount = 8
   }
 }
 

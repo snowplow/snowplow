@@ -13,11 +13,18 @@
 package com.snowplowanalytics.snowplow.enrich.common
 package utils
 
+// Java
+import java.math.{BigInteger => JBigInteger}
+
 // Jackson
 import com.fasterxml.jackson.databind.{
   ObjectMapper,
   JsonNode
 }
+
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 // Scalaz
 import scalaz._
@@ -37,7 +44,12 @@ import utils.{ConversionUtils => CU}
  */
 object JsonUtils {
 
+  type DateTimeFields = Option[Tuple2[NonEmptyList[String], DateTimeFormatter]]
+
   private lazy val Mapper = new ObjectMapper
+
+  // Defines the maximalist JSON Schema-compatible date-time format
+  private val JsonSchemaDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   /**
    * Decodes a URL-encoded String then validates
@@ -52,6 +64,112 @@ object JsonUtils {
    */
   val extractBase64EncJson: (Int, String, String) => Validation[String, String] = (maxLength, field, str) =>
     CU.decodeBase64Url(field, str).flatMap(json => validateAndReformatJson(maxLength, field, json))
+
+  /**
+   * Converts a Joda DateTime into
+   * a JSON Schema-compatible date-time string.
+   *
+   * @param datetime The Joda DateTime
+   *        to convert to a timestamp String
+   * @return the timestamp String
+   */
+  private[utils] def toJsonSchemaDateTime(dateTime: DateTime): String = JsonSchemaDateTimeFormat.print(dateTime)
+
+  /**
+   * Converts a boolean-like String of value "true"
+   * or "false" to a JBool value of true or false
+   * respectively. Any other value becomes a
+   * JString.
+   *
+   * No erroring if the String is not boolean-like,
+   * leave it to eventual JSON Schema validation
+   * to enforce that.
+   *
+   * @param str The boolean-like String to convert
+   * @return true for "true", false for "false",
+   *         and otherwise a JString wrapping the
+   *         original String
+   */
+  private[utils] def booleanToJValue(str: String): JValue = str match {
+    case "true" => JBool(true)
+    case "false" => JBool(false)
+    case _ => JString(str)
+  }
+
+  /**
+   * Converts an integer-like String to a
+   * JInt value. Any other value becomes a
+   * JString.
+   *
+   * No erroring if the String is not integer-like,
+   * leave it to eventual JSON Schema validation
+   * to enforce that.
+   *
+   * @param str The integer-like String to convert
+   * @return a JInt if the String was integer-like,
+   *         or else a JString wrapping the original
+   *         String.
+   */
+  private[utils] def integerToJValue(str: String): JValue =
+    try {
+      JInt(new JBigInteger(str))
+    } catch {
+      case nfe: NumberFormatException =>
+        JString(str)
+    }
+
+  /**
+   * Reformats a non-standard date-time into a format
+   * compatible with JSON Schema's date-time format
+   * validation. If the String does not match the
+   * expected date format, then return the original String.
+   *
+   * @param str The date-time-like String to reformat
+   *        to pass JSON Schema validation
+   * @return the reformatted date-time String if
+   *         possible, or otherwise the original String
+   */
+  def toJsonSchemaDateTime(str: String, fromFormat: DateTimeFormatter): String =
+    try {
+      val dt = DateTime.parse(str, fromFormat)
+      toJsonSchemaDateTime(dt)
+    } catch {
+      case iae: IllegalArgumentException => str
+    }
+
+  /**
+   * Converts an incoming key, value into a json4s JValue.
+   * Uses the lists of keys which should contain bools,
+   * ints and dates to apply specific processing to
+   * those values when found.
+   *
+   * @param key The key of the field to generate. Also used
+   *        to determine what additional processing should
+   *        be applied to the value
+   * @param value The value of the field
+   * @param bools A List of keys whose values should be
+   *        processed as boolean-like Strings
+   * @param ints A List of keys whose values should be
+   *        processed as integer-like Strings
+   * @param dates If Some, a NEL of keys whose values should
+   *        be treated as date-time-like Strings, which will
+   *        require processing from the specified format
+   * @return a JField, containing the original key and the
+   *         processed String, now as a JValue
+   */
+  def toJField(key: String, value: String, bools: List[String], ints: List[String],
+    dateTimes: DateTimeFields): JField = {
+
+    val v = (value, dateTimes) match {
+      case ("", _)                  => JNull
+      case _ if bools.contains(key) => booleanToJValue(value)
+      case _ if ints.contains(key)  => integerToJValue(value)
+      case (_, Some((nel, fmt)))
+        if nel.toList.contains(key) => JString(toJsonSchemaDateTime(value, fmt))
+      case _                        => JString(value)
+    }
+    (key, v)
+  }
 
   /**
    * Validates and reformats a JSON:

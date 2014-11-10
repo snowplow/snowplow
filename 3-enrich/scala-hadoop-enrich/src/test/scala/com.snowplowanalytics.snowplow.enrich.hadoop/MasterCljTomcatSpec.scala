@@ -33,11 +33,12 @@ object MasterCljTomcatSpec {
 
   // Concatenate ALL lines from ALL other jobs
   val lines = good.CljTomcatTp1SingleEventSpec.lines ++  // 1 good
+              good.CljTomcatCallrailEventSpec.lines ++   // 1 good
               good.CljTomcatTp2MultiEventsSpec.lines ++  // 3 good
-              good.CljTomcatTp2MegaEventsSpec.lines      // 7,500 good = 7,504 GOOD
+              good.CljTomcatTp2MegaEventsSpec.lines      // 7,500 good = 7,505 GOOD
 
   object expected {
-    val goodCount = 7504
+    val goodCount = 7505
     val badCount = 0
   }
 }
@@ -50,11 +51,11 @@ object MasterCljTomcatSpec {
  */
 class MasterCljTomcatSpec extends Specification {
 
-  "A job which processes a Clojure-Tomcat file containing 7,504 valid events, 0 bad lines and 3 discardable lines" should {
+  "A job which processes a Clojure-Tomcat file containing 7,505 valid events, 0 bad lines and 3 discardable lines" should {
     EtlJobSpec("clj-tomcat", "1", false, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), MasterCljTomcatSpec.lines).
       sink[String](Tsv("outputFolder")){ output =>
-        "write 7,504 events" in {
+        "write 7,505 events" in {
           output.size must_== MasterCljTomcatSpec.expected.goodCount
         }
       }.

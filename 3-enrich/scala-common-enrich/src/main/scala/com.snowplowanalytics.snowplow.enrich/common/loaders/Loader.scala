@@ -76,20 +76,6 @@ abstract class Loader[T] {
   def toCollectorPayload(line: T): ValidatedMaybeCollectorPayload
 
   /**
-   * Checks whether a request to
-   * a collector is a tracker
-   * hitting the ice pixel.
-   *
-   * @param path The request path
-   * @return true if this is a request
-   *         for the ice pixel
-   */
-  protected[loaders] def isIceRequest(path: String): Boolean =
-    path.startsWith("/ice.png") || // Legacy name for /i
-    path.equals("/i") ||
-    path.startsWith("/i?")
-
-  /**
    * Converts a querystring String
    * into a non-empty list of NameValuePairs.
    *

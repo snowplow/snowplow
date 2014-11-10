@@ -1,3 +1,37 @@
+Version 0.9.11 (2014-11-10)
+---------------------------
+Clojure Collector: bumped to 0.9.0
+Clojure Collector: add support for /:vendor/:version to GET (#1131)
+Scala Common Enrich: bumped to 0.8.0
+Scala Common Enrich: bumped json4s to 3.2.11 (#1141)
+Scala Common Enrich: bumped Scala Iglu Client to 0.1.1 (#1140)
+Scala Common Enrich: removed check that POST request has body and content-type (#1132)
+Scala Common Enrich: moved payload API detection into CollectorApi.parse (#1113)
+Scala Common Enrich: fixed bug in CljTomcatLoader expecting request body to be "_" instead of "-" (#1112)
+Scala Common Enrich: added Adapter to pre-process CallRail events (#1108)
+Scala Common Enrich: added Adapter to pre-process MailChimp events (#1086)
+Scala Common Enrich: added Adapter to pre-process Iglu-compatible events (#1060)
+Scala Hadoop Enrich: bumped to 0.9.0
+Scala Hadoop Enrich: added job test for unrecognized api name/version (#1115)
+Scala Hadoop Enrich: updated DiscardableCfLinesSpec given /not-ice.png is no longer discarded (#1114)
+Scala Hadoop Enrich: added test job for MailchimpAdapter (#1159)
+Scala Hadoop Enrich: added test job for CallrailAdapter (#1160)
+Redshift: removed not null constraint on change_form's value column (#1162)
+Redshift: added Redshift DDL for a com.callrail/call_complete event (#1110)
+Redshift: added Redshift DDL for a com.mailchimp/campaign_sending_status event (#1085)
+Redshift: added Redshift DDL for a com.mailchimp/cleaned_email event (#1084)
+Redshift: added Redshift DDL for a com.mailchimp/email_address_change event (#1083)
+Redshift: added Redshift DDL for a com.mailchimp/profile_update event (#1082)
+Redshift: added Redshift DDL for a com.mailchimp/unsubscribe event (#1081)
+Redshift: added Redshift DDL for a com.mailchimp/subscribe event (#1080)
+StorageLoader: wrote JSON Path file for com.callrail/call_complete event (#1109)
+StorageLoader: wrote JSON Path file for com.mailchimp/campaign_sending_status event (#1079)
+StorageLoader: wrote JSON Path file for com.mailchimp/cleaned_email event (#1078)
+StorageLoader: wrote JSON Path file for com.mailchimp/email_address_change event (#1077)
+StorageLoader: write JSON Path file for com.mailchimp/profile_update event (#1076)
+StorageLoader: write JSON Path file for com.mailchimp/unsubscribe event (#1075)
+StorageLoader: write JSON Path file for com.mailchimp/subscribe event (#1074)
+
 Version 0.9.10 (2014-11-06)
 ---------------------------
 StorageLoader: wrote JSON Path file for PerformanceTiming (#1147)

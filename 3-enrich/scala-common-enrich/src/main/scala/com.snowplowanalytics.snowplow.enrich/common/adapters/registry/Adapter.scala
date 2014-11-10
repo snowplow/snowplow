@@ -21,16 +21,31 @@ package registry
 import org.apache.http.NameValuePair
 
 // Iglu
-import iglu.client.Resolver
+import iglu.client.{
+  SchemaKey,
+  Resolver
+}
 
 // Scalaz
 import scalaz._
 import Scalaz._
 
+// json4s
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+
 // This project
 import loaders.CollectorPayload
+import utils.{JsonUtils => JU}
 
 trait Adapter {
+
+  // The Iglu schema URI for a Snowplow unstructured event
+  private val UnstructEvent = SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", "1-0-0").toSchemaUri
+
+  // Signature for a Formatter function
+  type FormatterFunc = (RawEventParameters) => JObject
 
   /**
    * Converts a CollectorPayload instance into raw events.
@@ -51,6 +66,72 @@ trait Adapter {
    * @param parameters A NonEmptyList of name:value pairs
    * @return the name:value pairs in Map form
    */
-  def toMap(parameters: List[NameValuePair]): Map[String, String] =
+  // TODO: can this become private?
+  protected[registry] def toMap(parameters: List[NameValuePair]): Map[String, String] =
     parameters.map(p => (p.getName -> p.getValue)).toList.toMap
+
+  /**
+   * Convenience function to build a simple formatter
+   * of RawEventParameters.
+   *
+   * @param bools A List of keys whose values should be
+   *        processed as boolean-like Strings
+   * @param ints A List of keys whose values should be
+   *        processed as integer-like Strings
+   * @param dates If Some, a NEL of keys whose values should
+   *        be treated as date-time-like Strings, which will
+   *        require processing from the specified format
+   * @return a formatter function which converts
+   *         RawEventParameters into a cleaned JObject
+   */
+  protected[registry] def buildFormatter(bools: List[String] = Nil, ints: List[String] = Nil,
+    dateTimes: JU.DateTimeFields = None): FormatterFunc = {
+
+    (parameters: RawEventParameters) => for {
+      p <- parameters.toList
+    } yield JU.toJField(p._1, p._2, bools, ints, dateTimes)
+  }
+
+  /**
+   * Fabricates a Snowplow unstructured event from
+   * the supplied parameters. Note that to be a
+   * valid Snowplow unstructured event, the event
+   * must contain e, p and tv parameters, so we
+   * make sure to set those.
+   *
+   * @param tracker The name and version of this
+   *        tracker
+   * @param parameters The raw-event parameters
+   *        we will nest into the unstructured event
+   * @param schema The schema key which defines this
+   *        unstructured event as a String
+   * @param formatter A function to take the raw event
+   *        parameters and turn them into a correctly
+   *        formatted JObject that should pass JSON
+   *        Schema validation
+   * @param platform The default platform to assign
+   *         the event to
+   * @return the raw-event parameters for a valid
+   *         Snowplow unstructured event
+   */
+  protected[registry] def toUnstructEventParams(tracker: String, parameters: RawEventParameters, schema: String,
+    formatter: FormatterFunc, platform: String = "app"): RawEventParameters = {
+
+    val params = formatter(parameters -("nuid", "aid", "cv", "p"))
+
+    val json = compact {
+      ("schema" -> UnstructEvent) ~
+      ("data"   -> (
+        ("schema" -> schema) ~
+        ("data"   -> params)
+      ))
+    }
+
+    Map(
+      "tv"    -> tracker,
+      "e"     -> "ue",
+      "p"     -> parameters.getOrElse("p", platform), // Required field
+      "ue_pr" -> json) ++
+    parameters.filterKeys(Set("nuid", "aid", "cv"))
+  }
 }

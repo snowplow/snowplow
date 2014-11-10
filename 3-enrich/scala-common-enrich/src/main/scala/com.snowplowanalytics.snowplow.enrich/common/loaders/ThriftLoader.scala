@@ -95,7 +95,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
             refererUri,
             headers,
             networkUserId,
-            None, // No way of storing API vendor/version in Thrift yet
+            CollectorApi.SnowplowTp1, // No way of storing API vendor/version in Thrift yet, assume Snowplow TP1
             None, // No way of storing content type in Thrift yet
             None  // No way of storing request body in Thrift yet
           )
