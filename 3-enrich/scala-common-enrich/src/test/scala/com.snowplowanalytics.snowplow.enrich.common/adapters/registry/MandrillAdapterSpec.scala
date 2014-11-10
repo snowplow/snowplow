@@ -69,7 +69,7 @@ class MandrillAdapterSpec extends Specification with DataTables with ValidationM
     val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00"), "37.157.33.123".some, None, None, Nil, None)
   }
 
-  val ContentType = "application/x-www-form-urlencoded"
+  val ContentType = "application/x-www-form-urlencoded" 
 
   def e1 = 
     "SPEC NAME"               || "KEY"   | "JSON"                             | "EXPECTED OUTPUT"  |
