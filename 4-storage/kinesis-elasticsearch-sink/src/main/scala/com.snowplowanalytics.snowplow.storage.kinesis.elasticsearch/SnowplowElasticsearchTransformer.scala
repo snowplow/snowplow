@@ -51,6 +51,8 @@ import enrich.common.utils.ScalazJson4sUtils
 class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ElasticsearchTransformer[JsonRecord]
   with ITransformer[JsonRecord, ElasticsearchObject] {
 
+  private val shredder = new Shredder
+
   private val fields = Array(
     "app_id",
     "platform",
@@ -201,40 +203,6 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     "dvce_ismobile"
     )
 
-  private def fixSchema(prefix: String, schema: String): String = {
-    val schemaPatter = """.+:([a-zA-Z0-9_\.]+)/([a-zA-Z0-9_]+)/[^/]+/(.*)""".r
-    schema match {
-      case schemaPatter(organization, name, schemaVer) => {
-        val snakeCaseOrganization = organization.replaceAll("""\.""", "_").toLowerCase
-        val snakeCaseName = name.replaceAll("([^_])([A-Z])", "$1_$2").toLowerCase
-        val model = schemaVer.split("-")(0)
-        s"${prefix}_${snakeCaseOrganization}_${snakeCaseName}_${model}"
-      }
-      // TODO decide whether we want to fall back to the original schema string
-      case _ => s"${prefix}.${schema}"
-    }
-  }
-
-  private def parseContexts(contexts: String): JObject = {
-    val json = parse(contexts)
-    val data = json \ "data"
-    data.children.map(context => (context \ "schema", context \ "data")).collect({
-      case (JString(schema), innerData) if innerData != JNothing => (fixSchema("contexts", schema), innerData)
-    }).groupBy(_._1).map(pair => (pair._1, pair._2.map(_._2)))
-  }
-
-  private def parseUnstruct(unstruct: String): JObject = {
-    val json = parse(unstruct)
-    val data = json \ "data"
-    val schema = data \ "schema"
-    val innerData = data \ "data"
-    val fixedSchema = schema match {
-      case JString(s) => fixSchema("unstruct", s)
-      case _ => throw new RuntimeException("TODO: badly formatted event")
-    }
-    (fixedSchema, innerData)
-  }
-
   /**
    * Convert the value of a field to a JValue based on the name of the field
    *
@@ -258,9 +226,9 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
             case s   => JString(s)
           })
         } else if (key == "contexts") {
-          parseContexts(value)
+          shredder.parseContexts(value)
         } else if (key == "unstruct_event") {
-          parseUnstruct(value)
+          shredder.parseUnstruct(value)
         } else {
           (key, JString(value))
         }
