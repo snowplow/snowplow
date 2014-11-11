@@ -115,23 +115,22 @@ object MandrillAdapter extends Adapter {
           case Success(list) => {
 
             // Create our list of Validated RawEvents
-            val rawEventsList: List[Validation[NonEmptyList[String],RawEvent]] =
+            val rawEventsList: List[Validation[NonEmptyList[String],RawEvent]] = 
               for { 
                 (event, index) <- list.zipWithIndex
               } yield jsonToRawEvent(payload, event, index)
             
             // Gather all of our Successes and Failures into seperate lists
-            val successes: List[RawEvent] = {
+            val successes: List[RawEvent] = 
               for {
                 Success(s) <- rawEventsList 
               } yield s
-            }
-            val failures: List[String] = {
+
+            val failures: List[String] = 
               for {
                 Failure(NonEmptyList(f)) <- rawEventsList 
               } yield f
-            }
-            
+
             // Send out our ValidatedRawEvents (either a Nel of Failures or a Nel of RawEvents)
             // If we have any Failures we will discard everything but these Failures. 
             (successes, failures) match {
@@ -166,7 +165,7 @@ object MandrillAdapter extends Adapter {
    */
   def jsonToRawEvent(payload: CollectorPayload, json: JValue, index: Int): Validated[RawEvent] =
     extractKeyValueFromJson("event", json) match {
-      case None => s"Mandrill Event at index [$index] failed: event parameter not provided - cannot determine event type".failNel
+      case None => s"Mandrill event at index [$index] failed: event parameter not provided - cannot determine event type".failNel
       case Some(eventType) => {
 
         for {
@@ -314,6 +313,8 @@ object MandrillAdapter extends Adapter {
    *
    * @param eventType The string pertaining to the type 
    *        of event schema we are looking for
+   * @param index The index of the event we are trying to
+   *        get a schema URI for
    * @return the schema for the event or a Failure-boxed String
    *         if we can't recognize the event type
    */
@@ -328,7 +329,7 @@ object MandrillAdapter extends Adapter {
       case "send"        => SchemaUris.MessageSent.success
       case "soft_bounce" => SchemaUris.MessageSoftBounced.success
       case "unsub"       => SchemaUris.RecipientUnsubscribed.success
-      case ""            => s"Mandrill Event at index [$index] failed: event parameter is empty - cannot determine event type".fail
-      case et            => s"Mandrill Event at index [$index] failed: event parameter [$et] not recognized".fail
+      case ""            => s"Mandrill event at index [$index] failed: event parameter is empty - cannot determine event type".fail
+      case et            => s"Mandrill event at index [$index] failed: event parameter [$et] not recognized".fail
     }
 }
