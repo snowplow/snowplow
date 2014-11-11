@@ -83,10 +83,8 @@ object MandrillAdapter extends Adapter {
     val RecipientUnsubscribed = SchemaKey("com.mandrill", "recipient_unsubscribed", "jsonschema", "1-0-0").toSchemaUri
   }
 
-  // Datetime format used by Mandrill (as we will need to massage) - [CHECK THIS]
-  // TODO: Work out which keys mandrill sends that need to be date time formatted
-
-  private val MandrillDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
+  // Datetime format we need for all 'ts' fields within a Mandrill Event
+  private val JsonSchemaDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   /**
    * Converts a CollectorPayload instance into raw events.
@@ -140,8 +138,8 @@ object MandrillAdapter extends Adapter {
             // Send out our ValidatedRawEvents (either a Nel of Failures or a Nel of RawEvents)
             // If we have any Failures we will discard everything but these Failures.
             (successes, failures) match {
-              case (s :: ss,     Nil) =>  NonEmptyList(s, ss: _*).success // No Failures collected
-              case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some Failures, return those. Should never happen, unless JSON Schema changed
+              case (s :: ss,     Nil) =>  NonEmptyList(s, ss: _*).success // No Failures collected!
+              case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some Failures, return those. Will only happen if the event fails validation in jsonToRawEvent
               case (Nil,           _) => "List of events is empty (should never happen, not catching empty list properly)".failNel
             }
           }
@@ -175,10 +173,11 @@ object MandrillAdapter extends Adapter {
         for {
           schema <- (lookupSchema(eventType).toValidationNel: Validated[String])
         } yield {
-          val params = toMap(payload.querystring)
+          val qsParams = toMap(payload.querystring)
+          val formattedJson = reformatParameters(json)
           RawEvent(
             api          = payload.api,
-            parameters   = toUnstructEventParamsMandrill(TrackerVersion, params, json, schema, "srv"),
+            parameters   = toUnstructEventParamsMandrill(TrackerVersion, qsParams, formattedJson, schema, "srv"),
             contentType  = payload.contentType,
             source       = payload.source,
             context      = payload.context
@@ -248,7 +247,10 @@ object MandrillAdapter extends Adapter {
     val bodyMap = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + rawEventString), "UTF-8").toList)
 
     bodyMap match {
-      case map if map.size != 1 => s"Mapped Mandrill body has invalid count of keys".fail
+      case map if map.size != 1 => {
+        val count = map.size
+        s"Mapped Mandrill body has invalid count of keys: $count".fail
+      }
       case map                  => {
         map.get("mandrill_events") match {
           case None       => s"Mapped Mandrill body does not have 'mandrill_events' as a key".fail
@@ -273,6 +275,25 @@ object MandrillAdapter extends Adapter {
   }
 
   /**
+   * Returns an updated Mandrill Event JSON where 
+   * all of the timestamp fields ("ts":_) have been 
+   * changed to a valid JsonSchema date-time format
+   *
+   * @param json The event JSON which we need to
+   *        update values for
+   * @return the updated JSON with valid date-time
+   *         values in the 'ts' fields
+   */
+  private[registry] def reformatParameters(json: JValue): JValue = {
+    json transformField {
+      case ("ts", JInt(x)) => {
+        val dt: DateTime = new DateTime(x.longValue() * 1000)
+        ("ts", JString(JsonSchemaDateTimeFormat.print(dt)))
+      }
+    }
+  }
+
+  /**
    * Extracts the value of a key from a json4s JSON
    * - Will return either an Option[String] if the key
    *   is valid or None if the key is not valid or it
@@ -286,7 +307,7 @@ object MandrillAdapter extends Adapter {
    *         None
    */
   private[registry] def extractKeyValueFromJson(key: String, json: JValue): Option[String] = 
-    (event \ key).extractOpt[String]
+    (json \ key).extractOpt[String]
 
   /**
    * Gets the correct Schema URI for the event passed from Mandrill
