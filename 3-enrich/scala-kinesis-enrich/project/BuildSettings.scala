@@ -19,7 +19,7 @@ object BuildSettings {
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
-    organization          :=  "Snowplow Analytics Ltd",
+    organization          :=  "com.snowplowanalytics",
     version               :=  "0.2.0",
     description           :=  "The Snowplow Enrichment process, implemented as an Amazon Kinesis app",
     scalaVersion          :=  "2.10.1",
