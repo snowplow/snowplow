@@ -115,13 +115,10 @@ object MandrillAdapter extends Adapter {
           case Success(list) => {
 
             // Create our list of Validated RawEvents
-            val rawEventsList: List[Validation[NonEmptyList[String],RawEvent]] = {
+            val rawEventsList: List[Validation[NonEmptyList[String],RawEvent]] =
               for { 
-                event <- list
-              } yield {
-                jsonToRawEvent(payload, event)
-              }
-            }
+                (event, index) <- list.zipWithIndex
+              } yield jsonToRawEvent(payload, event, index)
             
             // Gather all of our Successes and Failures into seperate lists
             val successes: List[RawEvent] = {
@@ -134,7 +131,7 @@ object MandrillAdapter extends Adapter {
                 Failure(NonEmptyList(f)) <- rawEventsList 
               } yield f
             }
-
+            
             // Send out our ValidatedRawEvents (either a Nel of Failures or a Nel of RawEvents)
             // If we have any Failures we will discard everything but these Failures.
             (successes, failures) match {
@@ -162,16 +159,18 @@ object MandrillAdapter extends Adapter {
    *        which we will nest into the RawEvent
    * @param json The event JSON we will be nesting
    *        into the RawEvent
+   * @param index The index of the event we are 
+   *        trying to fabricate
    * @return a RawEvent containing the payload 
    *         and JSON information or a Failure Nel
    */
-  def jsonToRawEvent(payload: CollectorPayload, json: JValue): Validated[RawEvent] =
+  def jsonToRawEvent(payload: CollectorPayload, json: JValue, index: Int): Validated[RawEvent] =
     extractKeyValueFromJson("event", json) match {
-      case None => s"Mandrill event parameter not provided: cannot determine event type".failNel
+      case None => s"Mandrill Event at index [$index] failed: event parameter not provided - cannot determine event type".failNel
       case Some(eventType) => {
 
         for {
-          schema <- (lookupSchema(eventType).toValidationNel: Validated[String])
+          schema <- (lookupSchema(eventType, index).toValidationNel: Validated[String])
         } yield {
           val qsParams = toMap(payload.querystring)
           val formattedJson = reformatParameters(json)
@@ -317,7 +316,7 @@ object MandrillAdapter extends Adapter {
    * @return the schema for the event or a Failure-boxed String
    *         if we can't recognize the event type
    */
-  private[registry] def lookupSchema(eventType: String): Validation[String, String] = 
+  private[registry] def lookupSchema(eventType: String, index: Int): Validation[String, String] = 
     eventType match {
       case "hard_bounce" => SchemaUris.MessageBounced.success
       case "click"       => SchemaUris.MessageClicked.success
@@ -328,7 +327,7 @@ object MandrillAdapter extends Adapter {
       case "send"        => SchemaUris.MessageSent.success
       case "soft_bounce" => SchemaUris.MessageSoftBounced.success
       case "unsub"       => SchemaUris.RecipientUnsubscribed.success
-      case ""            => s"Mandrill event parameter is empty: cannot determine event type".fail
-      case et            => s"Mandrill event parameter [$et] not recognized".fail
+      case ""            => s"Mandrill Event at index [$index] failed: event parameter is empty - cannot determine event type".fail
+      case et            => s"Mandrill Event at index [$index] failed: event parameter [$et] not recognized".fail
     }
 }
