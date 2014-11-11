@@ -47,7 +47,7 @@ import iglu.client.{
   Resolver
 }
 
-// This project 
+// This project
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
