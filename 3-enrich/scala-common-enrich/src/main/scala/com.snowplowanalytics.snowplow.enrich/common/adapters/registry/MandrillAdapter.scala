@@ -247,10 +247,7 @@ object MandrillAdapter extends Adapter {
     val bodyMap = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + rawEventString), "UTF-8").toList)
 
     bodyMap match {
-      case map if map.size != 1 => {
-        val count = map.size
-        s"Mapped Mandrill body has invalid count of keys: $count".fail
-      }
+      case map if map.size != 1 => s"Mapped Mandrill body has invalid count of keys: ${map.size}".fail
       case map                  => {
         map.get("mandrill_events") match {
           case None       => s"Mapped Mandrill body does not have 'mandrill_events' as a key".fail
@@ -284,14 +281,17 @@ object MandrillAdapter extends Adapter {
    * @return the updated JSON with valid date-time
    *         values in the 'ts' fields
    */
-  private[registry] def reformatParameters(json: JValue): JValue = {
+  private[registry] def reformatParameters(json: JValue): JValue =
     json transformField {
       case ("ts", JInt(x)) => {
-        val dt: DateTime = new DateTime(x.longValue() * 1000)
-        ("ts", JString(JsonSchemaDateTimeFormat.print(dt)))
+        try {
+          val dt: DateTime = new DateTime(x.longValue() * 1000)
+          ("ts", JString(JsonSchemaDateTimeFormat.print(dt)))
+        } catch {
+          case _ : Throwable => ("ts", JInt(x))
+        }
       }
     }
-  }
 
   /**
    * Extracts the value of a key from a json4s JSON
