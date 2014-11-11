@@ -91,9 +91,12 @@ object MandrillAdapter extends Adapter {
   /**
    * Converts a CollectorPayload instance into raw events.
    *
-   * A Mandrill Tracking payload contains many events in a JSON structure
-   * We expect the event parameter to be 1 of 9 options otherwise we have 
-   * an unsupported event type.
+   * A Mandrill Tracking payload contains many events in 
+   * the body of the payload, stored within a HTTP encoded
+   * string.
+   * We expect the event parameter of these events to be 
+   * 1 of 9 options otherwise we have an unsupported event 
+   * type.
    *
    * @param payload The CollectorPayload containing one or more
    *        raw events as collected by a Snowplow collector
@@ -122,7 +125,7 @@ object MandrillAdapter extends Adapter {
               }
             }
             
-            // Gather all of our successes and failures into seperate lists
+            // Gather all of our Successes and Failures into seperate lists
             val successes: List[RawEvent] = {
               for {
                 Success(s) <- rawEventsList 
@@ -134,7 +137,8 @@ object MandrillAdapter extends Adapter {
               } yield f
             }
 
-            // Send out our ValidatedRawEvents (either a Nel of failures or a Nel of RawEvents)
+            // Send out our ValidatedRawEvents (either a Nel of Failures or a Nel of RawEvents)
+            // If we have any Failures we will discard everything but these Failures.
             (successes, failures) match {
               case (s :: ss,     Nil) =>  NonEmptyList(s, ss: _*).success // No Failures collected
               case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some Failures, return those. Should never happen, unless JSON Schema changed
@@ -146,19 +150,28 @@ object MandrillAdapter extends Adapter {
     }
 
   /**
-   * Converts a Mandrill Event into a Validated[RawEvent]
-   * - Will validate that the event JSON has an event parameter
-   * - Will validate that the event parameter is of a valid type
+   * Fabricates a Validated RawEvent from a
+   * Collecter Payload and an Event JSON.
+   *  
+   * To return a RawEvent we need to:
+   * - Validate that the event JSON has an 
+   *   event parameter
+   * - Validate that the event parameter 
+   *   within the JSON returns a valid schema
+   *   URI
    *
-   * @param payload The CollectorPayload containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param json The event JSON we want to construct a RawEvent for
-   * @return a RawEvent containing the payload and json information
+   * @param payload The CollectorPayload parameters 
+   *        which we will nest into the RawEvent
+   * @param json The event JSON we will be nesting
+   *        into the RawEvent
+   * @return a RawEvent containing the payload 
+   *         and JSON information or a Failure Nel
    */
   def jsonToRawEvent(payload: CollectorPayload, json: JValue): Validated[RawEvent] =
     extractKeyValueFromJson("event", json) match {
       case None => s"Mandrill event parameter not provided: cannot determine event type".failNel
       case Some(eventType) => {
+
         for {
           schema <- (lookupSchema(eventType).toValidationNel: Validated[String])
         } yield {
@@ -216,25 +229,30 @@ object MandrillAdapter extends Adapter {
   }
   
   /**
-   * Returns a list of events from a Mandrill events string, 
-   * each event will be a JValue formatted JSON
+   * Returns a list of events from the payload 
+   * body of a Mandrill Event.  Each event will
+   * be formatted as an individual JSON of type
+   * JValue.
+   * 
+   * NOTE:
+   * The payload.body string must adhere to UTF-8
+   * encoding standards.
    *
-   * @param rawEventString The UTF-8 encoded string 
-   *        from the Mandrill POST event body
+   * @param rawEventString The encoded string 
+   *        from the Mandrill payload body
    * @return a list of single events formatted as 
-   *         json4s JValue JSONs
+   *         json4s JValue JSONs or a Failure String
    */
   private[registry] def bodyToEventList(rawEventString: String): Validation[String,List[JValue]] = {
 
     val bodyMap = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + rawEventString), "UTF-8").toList)
 
     bodyMap match {
-      case map if map.size != 1                    => s"Mapped Mandrill body has invalid count of keys".fail
-      case map if !map.contains("mandrill_events") => s"Mapped Mandrill body does not have 'mandrill_events' as its only key".fail
-      case map                                     => {
+      case map if map.size != 1 => s"Mapped Mandrill body has invalid count of keys".fail
+      case map                  => {
         map.get("mandrill_events") match {
+          case None       => s"Mapped Mandrill body does not have 'mandrill_events' as a key".fail
           case Some("")   => s"Mandrill events string is empty: nothing to process".fail
-          case None       => s"Should never happen: no Mandrill events string available for processing".fail
           case Some(dStr) => {
             try {
               val parsed = parse(dStr)
@@ -242,8 +260,7 @@ object MandrillAdapter extends Adapter {
                 case JArray(list) => list.success
                 case _            => s"Could not resolve Mandrill payload into a JSON array of events".fail
               }
-            }
-            catch {
+            } catch {
               case e: JsonParseException => {
                 val exception = JU.stripInstanceEtc(e.toString)
                 s"Mandrill events string failed to parse into JSON: [$exception]".fail
@@ -256,17 +273,19 @@ object MandrillAdapter extends Adapter {
   }
 
   /**
-   * Extracts the value of a key from a json4s JObject
+   * Extracts the value of a key from a json4s JSON
    * - Will return either an Option[String] if the key
    *   is valid or None if the key is not valid or it
    *   cannot convert the value found into a String
    *
    * @param key The key pertaining to the value we 
    *        want returned from the event JSON
-   * @param event A single JValue JSON Event from Mandrill
-   * @return an Option[String] or None
+   * @param json The JValue JSON we want to get a 
+   *        value from
+   * @return an Option[String] with the value we want or
+   *         None
    */
-  private[registry] def extractKeyValueFromJson(key: String, event: JValue): Option[String] = 
+  private[registry] def extractKeyValueFromJson(key: String, json: JValue): Option[String] = 
     (event \ key).extractOpt[String]
 
   /**
