@@ -49,7 +49,7 @@ import org.json4s.scalaz.JsonScalaz._
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
-// This project 
+// This project
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
