@@ -30,7 +30,7 @@ import org.json4s.JsonDSL._
 // Scala
 import scala.util.matching.Regex
 
-class Shredder {
+object Shredder {
 
   private val schemaPattern = """.+:([a-zA-Z0-9_\.]+)/([a-zA-Z0-9_]+)/[^/]+/(.*)""".r
 

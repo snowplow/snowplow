@@ -51,8 +51,6 @@ import enrich.common.utils.ScalazJson4sUtils
 class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ElasticsearchTransformer[JsonRecord]
   with ITransformer[JsonRecord, ElasticsearchObject] {
 
-  private val shredder = new Shredder
-
   private val fields = Array(
     "app_id",
     "platform",
@@ -226,9 +224,9 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
             case s   => JString(s)
           })
         } else if (key == "contexts") {
-          shredder.parseContexts(value)
+          Shredder.parseContexts(value)
         } else if (key == "unstruct_event") {
-          shredder.parseUnstruct(value)
+          Shredder.parseUnstruct(value)
         } else {
           (key, JString(value))
         }

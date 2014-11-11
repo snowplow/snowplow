@@ -32,19 +32,19 @@ class ShredderSpec extends Specification with ValidationMatchers {
 
   "The fixSchema method" should {
     "fix up a snake_case schema" in {
-      val actual = new Shredder().fixSchema("unstruct_event", "iglu:com.snowplowanalytics.snowplow/change_form/jsonschema/1-0-0")
+      val actual = Shredder.fixSchema("unstruct_event", "iglu:com.snowplowanalytics.snowplow/change_form/jsonschema/1-0-0")
       actual must_== "unstruct_event_com_snowplowanalytics_snowplow_change_form_1"
     }
 
     "fix up a PascalCase schema" in {
-      val actual = new Shredder().fixSchema("contexts", "iglu:com.acme/PascalCaseContext/jsonschema/1-0-0")
+      val actual = Shredder.fixSchema("contexts", "iglu:com.acme/PascalCaseContext/jsonschema/1-0-0")
       actual must_== "contexts_com_acme_pascal_case_context_1"
     }
   }
 
   "The parseUnstruct method" should {
     "fix up an unstructured event JSON" in {
-      val actual = new Shredder().parseUnstruct("""{
+      val actual = Shredder.parseUnstruct("""{
         "schema": "any",
         "data": {
           "schema": "iglu:com.snowplowanalytics.snowplow/social_interaction/jsonschema/1-0-0",
@@ -62,7 +62,7 @@ class ShredderSpec extends Specification with ValidationMatchers {
 
   "The parseContexts method" should {
     "fix up a custom contexts JSON" in {
-      val actual = new Shredder().parseContexts("""{
+      val actual = Shredder.parseContexts("""{
         "schema": "any",
         "data": [
           {
