@@ -246,15 +246,17 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    * @return ValidatedRecord containing JSON for the event and the event_id (if it exists)
    */
   def jsonifyGoodEvent(event: Array[String]): ValidationNel[String, JsonRecord] = {
-    val validatedJObjects: Array[ValidationNel[String, JObject]] = fields.zip(event).map(converter)
-    val switched: ValidationNel[String, List[JObject]] = validatedJObjects.toList.sequenceU
-    switched.map( x => {
-      val j = x.fold(JObject())(_ ~ _)
-      JsonRecord(compact(render(j)), ScalazJson4sUtils.extract[String](j, "event_id").toOption)
+    if (event.size == fields.size) {
+      val validatedJObjects: Array[ValidationNel[String, JObject]] = fields.zip(event).map(converter)
+      val switched: ValidationNel[String, List[JObject]] = validatedJObjects.toList.sequenceU
+      switched.map( x => {
+        val j = x.fold(JObject())(_ ~ _)
+        JsonRecord(compact(render(j)), ScalazJson4sUtils.extract[String](j, "event_id").toOption)
       })
-
-    //ValidatedRecord(compact(render(eventJson)), ScalazJson4sUtils.extract[String](eventJson, "event_id").toOption)
-
+    } else {
+      "Event does not have the correct number of fields: expected %s, found %s"
+        .format(fields.size, event.size).failNel
+    }
   }
 
   /**
@@ -265,7 +267,9 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    */
   override def toClass(record: Record): ValidatedRecord = {
     val recordString = new String(record.getData.array) // TODO: just use the original record
-    (recordString, jsonifyGoodEvent(recordString.split("\t")).leftMap(_.toList))
+
+    // The -1 is necessary to prevent trailing empty strings from being discarded
+    (recordString, jsonifyGoodEvent(recordString.split("\t", -1)).leftMap(_.toList))
   }
 
   /**
