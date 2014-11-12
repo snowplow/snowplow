@@ -205,11 +205,15 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       "dvce_screenheight" -> "",
       "doc_charset" -> "",
       "doc_width" -> "",
-      "doc_height" -> "illegal"
+      "doc_height" -> ""
       )
 
       val eventValues = nvPairs.unzip._2.toArray
-      val jsonRecord = new SnowplowElasticsearchTransformer("index", "type").jsonifyGoodEvent(eventValues)
+
+      val jsonRecord = new SnowplowElasticsearchTransformer("index", "type")
+        .jsonifyGoodEvent(eventValues)
+        .getOrElse(throw new RuntimeException("Event failed transformation"))
+
       val result = parse(jsonRecord.json)
 
       jsonRecord.id must beSome("c6ef3124-b53a-4b13-a233-0088f79dcbcb")
@@ -220,9 +224,6 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       ScalazJson4sUtils.extract[Boolean](result, "br_features_pdf") must beSuccessful(true)
       ScalazJson4sUtils.extract[Boolean](result, "br_features_flash") must beSuccessful(false)
       ScalazJson4sUtils.extract[String](result, "ti_sku") must beSuccessful(null)
-
-      // check that IllegalArgumentExceptions are caught
-      ScalazJson4sUtils.extract[String](result, "doc_height") must beSuccessful("illegal")
 
       // unstructured event shredding
       result \ "unstruct_event_com_snowplowanalytics_snowplow_link_click_1" \ "elementId" must_== JString("exampleLink")

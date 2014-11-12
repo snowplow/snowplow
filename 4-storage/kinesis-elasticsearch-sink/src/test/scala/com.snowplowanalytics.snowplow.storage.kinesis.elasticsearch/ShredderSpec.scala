@@ -33,12 +33,12 @@ class ShredderSpec extends Specification with ValidationMatchers {
   "The fixSchema method" should {
     "fix up a snake_case schema" in {
       val actual = Shredder.fixSchema("unstruct_event", "iglu:com.snowplowanalytics.snowplow/change_form/jsonschema/1-0-0")
-      actual must_== "unstruct_event_com_snowplowanalytics_snowplow_change_form_1"
+      actual must beSuccessful("unstruct_event_com_snowplowanalytics_snowplow_change_form_1")
     }
 
     "fix up a PascalCase schema" in {
       val actual = Shredder.fixSchema("contexts", "iglu:com.acme/PascalCaseContext/jsonschema/1-0-0")
-      actual must_== "contexts_com_acme_pascal_case_context_1"
+      actual must beSuccessful("contexts_com_acme_pascal_case_context_1")
     }
   }
 
@@ -54,9 +54,10 @@ class ShredderSpec extends Specification with ValidationMatchers {
           }
         }
       }""")
-      val expected = "unstruct_event_com_snowplowanalytics_snowplow_social_interaction_1" ->
-        (("action" -> "like") ~ ("network" -> "fb"))
-      actual diff expected must_== Diff(JNothing, JNothing, JNothing)
+      val expected = JObject("unstruct_event_com_snowplowanalytics_snowplow_social_interaction_1" ->
+        (("action" -> "like") ~ ("network" -> "fb")))
+
+      actual must beSuccessful(expected)//must_== Diff(JNothing, JNothing, JNothing)
     }
   }
 
@@ -88,7 +89,7 @@ class ShredderSpec extends Specification with ValidationMatchers {
       val expected = ("contexts_com_acme_duplicated_20" -> List(("value" -> 1), ("value" -> 2))) ~
         ("contexts_com_acme_unduplicated_1" -> List(("type" -> "test")))
 
-      actual diff expected must_== Diff(JNothing, JNothing, JNothing)
+      actual must beSuccessful(expected)//must_== Diff(JNothing, JNothing, JNothing)
     }
   }
 
