@@ -58,7 +58,6 @@ import com.amazonaws.services.kinesis.connectors.{
 // Java
 import java.io.IOException
 import java.util.ArrayList
-import java.util.Collections
 import java.util.List
 
 // Scala
@@ -218,7 +217,7 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration)
                     || failure.getMessage.contains("VersionConflictEngineException")) {
                   numberOfSkippedRecords += 1
                 } else {
-                  failures.add(successfulRecords.get(i))
+                  failures.add(successfulRecords.get(i)._1 -> scala.collection.immutable.List(failure.getMessage).fail)
                 }
               }
             }
@@ -264,7 +263,7 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration)
    * Closes the Elasticsearch client which the KinesisConnectorRecordProcessor is shut down
    */
   override def shutdown {
-      elasticsearchClient.close
+    elasticsearchClient.close
   }
 
   /**
@@ -273,11 +272,11 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration)
    * @param sleepTime Length of time between tries
    */
   private def sleep(sleepTime: Long): Unit = {
-      try {
-          Thread.sleep(sleepTime)
-      } catch {
-        case e: InterruptedException => ()
-      }
+    try {
+      Thread.sleep(sleepTime)
+    } catch {
+      case e: InterruptedException => ()
+    }
   }
 
   /**
@@ -287,11 +286,11 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration)
     val healthRequestBuilder = elasticsearchClient.admin.cluster.prepareHealth()
     val response = healthRequestBuilder.execute.actionGet
     if (response.getStatus.equals(ClusterHealthStatus.RED)) {
-        Log.error("Cluster health is RED. Indexing ability will be limited")
+      Log.error("Cluster health is RED. Indexing ability will be limited")
     } else if (response.getStatus.equals(ClusterHealthStatus.YELLOW)) {
-        Log.warn("Cluster health is YELLOW.")
+      Log.warn("Cluster health is YELLOW.")
     } else if (response.getStatus.equals(ClusterHealthStatus.GREEN)) {
-        Log.info("Cluster health is GREEN.")
+      Log.info("Cluster health is GREEN.")
     }
   }
 
