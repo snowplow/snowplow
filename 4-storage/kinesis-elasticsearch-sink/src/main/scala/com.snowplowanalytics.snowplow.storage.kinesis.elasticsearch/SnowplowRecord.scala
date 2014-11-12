@@ -16,28 +16,25 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
+// TODO make this a package object
+
 package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
 
-// AWS Kinesis Connector libs
+// Amazon
 import com.amazonaws.services.kinesis.connectors.elasticsearch.ElasticsearchObject
-import com.amazonaws.services.kinesis.connectors.{
-  KinesisConnectorConfiguration,
-  KinesisConnectorExecutorBase,
-  KinesisConnectorRecordProcessorFactory
-}
 
-// TODO use a package object
-import SnowplowRecord._
+// Scalaz
+import scalaz._
+import Scalaz._
 
-/**
-* Boilerplate class for Kinesis Conenector
-*/
-class ElasticsearchSinkExecutor(streamType: String, documentIndex: String, documentType: String, config: KinesisConnectorConfiguration)
-  extends KinesisConnectorExecutorBase[ValidatedRecord, EmitterInput] {
+object SnowplowRecord {
 
-  initialize(config)
-  override def getKinesisConnectorRecordProcessorFactory = {
-    new KinesisConnectorRecordProcessorFactory[ValidatedRecord, EmitterInput](
-      new ElasticsearchPipeline(streamType, documentIndex, documentType), config)
-  }
+  // The original tab separated enriched event together with
+  // a validated ElasticsearchObject created from it (or list of errors
+  // if the creation process failed)
+  // Can't use NonEmptyList as it isn't serializable
+  // TODO consider replacing JsonRecord with a Tuple2
+  type ValidatedRecord = (String, Validation[List[String], JsonRecord])
+
+  type EmitterInput = (String, Validation[List[String], ElasticsearchObject])
 }

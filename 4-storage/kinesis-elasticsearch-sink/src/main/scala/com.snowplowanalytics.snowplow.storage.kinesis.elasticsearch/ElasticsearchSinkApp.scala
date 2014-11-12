@@ -71,12 +71,12 @@ object ElasticsearchSinkApp extends App {
 
   val executor = configValue.getString("source") match {
     case "kinesis" => new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue))
-    case "stdin" => new Runnable {
+    /*case "stdin" => new Runnable {
       val transformer = new SnowplowElasticsearchTransformer(documentIndex, documentType)
       def run = for (ln <- scala.io.Source.stdin.getLines) {
         println(transformer.fromClass(transformer.jsonifyGoodEvent(ln.split("\t"))).getSource())
       }
-    }
+    }*/ // TODO stdio
     case _ => throw new RuntimeException("Source must be set to 'stdin' or 'kinesis'")
   }
 

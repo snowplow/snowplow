@@ -51,7 +51,7 @@ import SnowplowRecord._
 /**
  * Class to convert successfully enriched events to EmitterInputs
  */
-class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ITransformer[ValidatedRecord, EmitterInput] {
+class TSnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ITransformer[ValidatedRecord, EmitterInput] {
 
   private val fields = Array(
     "app_id",
@@ -226,9 +226,9 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
             case _   => "Value [%s] is not valid for field [%s]: expected 0 or 1".format(value, key).failNel
           }
         } else if (key == "contexts") {
-          Shredder.parseContexts(value)
+          TempShredder.parseContexts(value)
         } else if (key == "unstruct_event") {
-          Shredder.parseUnstruct(value)
+          TempShredder.parseUnstruct(value)
         } else {
           JObject(key -> JString(value)).successNel
         }
