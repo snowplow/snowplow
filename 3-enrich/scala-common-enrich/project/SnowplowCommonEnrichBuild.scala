@@ -50,6 +50,7 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.json4sJackson,
         Libraries.json4sScalaz,
         Libraries.igluClient,        
+        Libraries.scalaUri,
         // Scala (test only)
         Libraries.specs2,
         Libraries.scalazSpecs2,

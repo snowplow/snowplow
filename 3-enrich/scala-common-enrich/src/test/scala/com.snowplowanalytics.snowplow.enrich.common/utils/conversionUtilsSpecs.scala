@@ -38,7 +38,7 @@ class StringToUriSpec extends Specification with DataTables {
     "Simple URI"                          !! "https://google.com" ! Some(URI.create("https://google.com")).success |
     "Complex URI"                         !! "http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari" ! Some(URI.create("http://www.google.com/search?q=gateway+oracle+cards+denise+linn&hl=en&client=safari")).success |
     "Salvageable bad URI with raw spaces" !! "http://www.psychicbazaar.com/2-tarot-cards/genre/gothic/type/all/view/grid?n=24&utm_source=GoogleSearch&utm_medium=cpc&utm_campaign=uk-tarot--gothic-tarot&utm_term=bohemian gothic tarot&utm_content=33088202008&gclid=CN2LmteX2LkCFQKWtAodrSMASw" ! Some(URI.create("http://www.psychicbazaar.com/2-tarot-cards/genre/gothic/type/all/view/grid?n=24&utm_source=GoogleSearch&utm_medium=cpc&utm_campaign=uk-tarot--gothic-tarot&utm_term=bohemian%20gothic%20tarot&utm_content=33088202008&gclid=CN2LmteX2LkCFQKWtAodrSMASw")).success |
-    "Unsalvageable bad URI"               !! "http://adserver.adtech.de/adlink|3.0" ! "Provided URI string [http://adserver.adtech.de/adlink|3.0] violates RFC 2396: [Illegal character in path at index 32: http://adserver.adtech.de/adlink|3.0]".fail |> {
+    "New Salvageable bad URI"           !! "http://adserver.adtech.de/adlink|3.0" ! Some(URI.create("http://adserver.adtech.de/adlink%7C3.0")).success |> {
 
       (_, uri, expected) => {    
         ConversionUtils.stringToUri(uri)  must_== expected

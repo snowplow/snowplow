@@ -46,12 +46,13 @@ object Dependencies {
     val refererParser    = "0.2.2"
     val maxmindIplookups = "0.2.0"
     val json4s           = "3.2.11"
-    val igluClient       = "0.1.1"
+    val igluClient       = "0.1.0"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
     val scalaCheck       = "1.10.0"
     val commonsCodec     = "1.5"
+    val scalaUri         = "0.4.3"
   }
 
   object Libraries {
@@ -73,7 +74,8 @@ object Dependencies {
     val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-iplookups"   % V.maxmindIplookups
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"            % V.json4s
     val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s    
-    val igluClient       = "com.snowplowanalytics"      %  "iglu-scala-client"         % V.igluClient
+    val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"         % V.igluClient
+    val scalaUri         = "com.netaporter"             %% "scala-uri"                 % V.scalaUri
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"
