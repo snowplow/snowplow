@@ -55,10 +55,14 @@ module Snowplow
           opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
-          opts.on('-s', '--skip staging,s3distcp,emr,shred,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
-          opts.on('-b', '--process-bucket BUCKET', 'run emr only on specified bucket. Implies --skip staging,shred,archive') { |config| 
-            options[:processbucket] = config
+          opts.on('-x', '--skip staging,s3distcp,emr{enrich,shred},archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-E', '--process-enrich LOCATION', 'run enrichment only on specified location. Implies --skip staging,shred,archive') { |config|
+            options[:process_enrich_location] = config
             options[:skip] = %w(staging shred archive)
+          }
+          opts.on('-S', '--process-shred LOCATION', 'run shredding only on specified location. Implies --skip staging,enrich,archive') { |config|
+            options[:process_shred_location] = config
+            options[:skip] = %w(staging enrich archive)
           }
 
           opts.separator ""
@@ -83,11 +87,12 @@ module Snowplow
         end
 
         args = {
-          :debug          => options[:debug],
-          :start          => options[:start],
-          :end            => options[:end],
-          :skip           => options[:skip],
-          :process_bucket => options[:process_bucket]
+          :debug                   => options[:debug],
+          :start                   => options[:start],
+          :end                     => options[:end],
+          :skip                    => options[:skip],
+          :process_enrich_location => options[:process_enrich_location],
+          :process_shred_location  => options[:process_shred_location]
         }
         config = load_file(options[:config_file], optparse.to_s)
 

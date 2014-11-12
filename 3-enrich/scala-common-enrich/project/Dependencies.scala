@@ -15,8 +15,8 @@ import sbt._
 object Dependencies {
 
   val resolutionRepos = Seq(
-    // Required for our Scalaz snapshot
-    "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/releases/",
+    // Required for our json4s snapshot
+    "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
      // For some misc Scalding and Twitter libs
     "Concurrent Maven Repo" at "http://conjars.org/repo",
      // For Twitter's util functions
@@ -41,13 +41,12 @@ object Dependencies {
     val mavenArtifact    = "3.2.2" 
     // Scala
     val scalaz7          = "7.0.0"
-    val argonaut         = "6.0.3"
     val snowplowRawEvent = "0.1.0"
     val scalaUtil        = "0.1.0"
     val refererParser    = "0.2.2"
-    val maxmindIplookups = "0.1.0"
-    val json4s           = "3.2.11-SNAPSHOT"
-    val igluClient       = "0.1.0"
+    val maxmindIplookups = "0.2.0"
+    val json4s           = "3.2.11"
+    val igluClient       = "0.1.1"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
@@ -68,14 +67,13 @@ object Dependencies {
     val mavenArtifact    = "org.apache.maven"           %  "maven-artifact"            % V.mavenArtifact
     // Scala
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
-    val argonaut         = "io.argonaut"                %% "argonaut"                  % V.argonaut
     val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val scalaUtil        = "com.snowplowanalytics"      %  "scala-util"                % V.scalaUtil
     val refererParser    = "com.snowplowanalytics"      %% "referer-parser"            % V.refererParser
     val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-iplookups"   % V.maxmindIplookups
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"            % V.json4s
     val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s    
-    val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"         % V.igluClient
+    val igluClient       = "com.snowplowanalytics"      %  "iglu-scala-client"         % V.igluClient
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"

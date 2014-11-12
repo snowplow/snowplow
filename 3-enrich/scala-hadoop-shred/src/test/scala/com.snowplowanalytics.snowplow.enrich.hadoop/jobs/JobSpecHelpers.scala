@@ -69,29 +69,9 @@ object JobSpecHelpers {
    */
   private val IgluConfig = {
     val encoder = new Base64(true) // true means "url safe"
-    new String(encoder.encode(
-       """|{
-            |"schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
-            |"data": {
-              |"cacheSize": 500,
-              |"repositories": [
-                |{
-                  |"name": "Iglu Central",
-                  |"priority": 0,
-                  |"vendorPrefixes": [ "com.snowplowanalytics" ],
-                  |"connection": {
-                    |"http": {
-                      |"uri": "http://iglucentral.com"
-                    |}
-                  |}
-                |}
-              |]
-            |}
-          |}""".stripMargin.replaceAll("[\n\r]","").getBytes
-      )
+    new String(encoder.encode(SpecHelpers.IgluConfig.getBytes)
     )
   }
-
 
   /**
    * A case class to make it easy to write out input

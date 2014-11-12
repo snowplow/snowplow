@@ -92,7 +92,7 @@ object TransactionCfLineSpec {
     null, //
     null, //
     null, //
-    """{"page":{"category":"product","sku":382},"counts":[1,2,3,4]}""",
+    """{"page":{"category":"product","sku":382},"counts":[1.0,2.0,3.0,4.0]}""",
     null, // Structured event fields empty
     null, //
     null, //
@@ -137,7 +137,7 @@ object TransactionCfLineSpec {
     null, // Not set (legacy input lines)
     null, //
     null, //
-    "Windows",
+    "Windows 7",
     "Windows",
     "Microsoft Corporation",
     null, // Not set (legacy input line)

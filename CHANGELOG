@@ -1,3 +1,142 @@
+Version 0.9.11 (2014-11-10)
+---------------------------
+Clojure Collector: bumped to 0.9.0
+Clojure Collector: add support for /:vendor/:version to GET (#1131)
+Scala Common Enrich: bumped to 0.8.0
+Scala Common Enrich: bumped json4s to 3.2.11 (#1141)
+Scala Common Enrich: bumped Scala Iglu Client to 0.1.1 (#1140)
+Scala Common Enrich: removed check that POST request has body and content-type (#1132)
+Scala Common Enrich: moved payload API detection into CollectorApi.parse (#1113)
+Scala Common Enrich: fixed bug in CljTomcatLoader expecting request body to be "_" instead of "-" (#1112)
+Scala Common Enrich: added Adapter to pre-process CallRail events (#1108)
+Scala Common Enrich: added Adapter to pre-process MailChimp events (#1086)
+Scala Common Enrich: added Adapter to pre-process Iglu-compatible events (#1060)
+Scala Hadoop Enrich: bumped to 0.9.0
+Scala Hadoop Enrich: added job test for unrecognized api name/version (#1115)
+Scala Hadoop Enrich: updated DiscardableCfLinesSpec given /not-ice.png is no longer discarded (#1114)
+Scala Hadoop Enrich: added test job for MailchimpAdapter (#1159)
+Scala Hadoop Enrich: added test job for CallrailAdapter (#1160)
+Redshift: removed not null constraint on change_form's value column (#1162)
+Redshift: added Redshift DDL for a com.callrail/call_complete event (#1110)
+Redshift: added Redshift DDL for a com.mailchimp/campaign_sending_status event (#1085)
+Redshift: added Redshift DDL for a com.mailchimp/cleaned_email event (#1084)
+Redshift: added Redshift DDL for a com.mailchimp/email_address_change event (#1083)
+Redshift: added Redshift DDL for a com.mailchimp/profile_update event (#1082)
+Redshift: added Redshift DDL for a com.mailchimp/unsubscribe event (#1081)
+Redshift: added Redshift DDL for a com.mailchimp/subscribe event (#1080)
+StorageLoader: wrote JSON Path file for com.callrail/call_complete event (#1109)
+StorageLoader: wrote JSON Path file for com.mailchimp/campaign_sending_status event (#1079)
+StorageLoader: wrote JSON Path file for com.mailchimp/cleaned_email event (#1078)
+StorageLoader: wrote JSON Path file for com.mailchimp/email_address_change event (#1077)
+StorageLoader: wrote JSON Path file for com.mailchimp/profile_update event (#1076)
+StorageLoader: wrote JSON Path file for com.mailchimp/unsubscribe event (#1075)
+StorageLoader: wrote JSON Path file for com.mailchimp/subscribe event (#1074)
+
+Version 0.9.10 (2014-11-06)
+---------------------------
+StorageLoader: wrote JSON Path file for PerformanceTiming (#1147)
+StorageLoader: wrote JSON Path file for social_interaction (#1029)
+StorageLoader: wrote JSON Path file for site_search (#1027)
+StorageLoader: wrote JSON Path file for change_form (#1025)
+StorageLoader: wrote JSON Path file for submit_form (#1023)
+StorageLoader: wrote JSON Path file for remove_from_cart (#1021)
+StorageLoader: wrote JSON Path file for add_to_cart (#1019)
+Redshift: converted all Redshift DDLs to use tabs (#1034)
+Redshift: added Redshift DDL for PerformanceTiming (#1032)
+Redshift: added Redshift DDL for social_interaction (#1030)
+Redshift: added Redshift DDL for site_search (#1028)
+Redshift: added Redshift DDL for change_form (#1026)
+Redshift: added Redshift DDL for submit_form (#1024)
+Redshift: added Redshift DDL for remove_from_cart (#1022)
+Redshift: added Redshift DDL for add_to_cart (#1020)
+
+Version 0.9.9 (2014-10-27)
+--------------------------
+.NET Tracker: added git submodule. Version 0.1.0 (#1000)
+PHP Tracker: added git submodule. Version 0.1.0 (#1013)
+Clojure Collector: bumped to 0.8.0
+Clojure Collector: fixed regression in log record format caused by #854 (#992)
+Clojure Collector: correctly handles multiple IPs in X-Forwarded-For (#970)
+StorageLoader: bumped to 0.3.3
+StorageLoader: selecting Snowplow's hosted-assets bucket based on region (#1012)
+EmrEtlRunner: bumped to 0.9.2
+EmrEtlRunner: no rows to process now returns 0, not 1 (#1018)
+EmrEtlRunner: fixed bug where --process-enrich doesn't work, thanks @kingo55! (#1089)
+EmrEtlRunner: now checking that output directories are empty before running (#1124)
+Scala Common Enrich: bumped to 0.7.0
+Scala Common Enrich: bumped scala-maxmind-iplookups to 0.2.0 (#1002)
+Scala Common Enrich: added support for non-GA campaign attribution: phase 1 (#402)
+Scala Common Enrich: rewrote AttributionEnrichments tests as RefererParserEnrichment tests (#974)
+Scala Common Enrich: allow but downcase a-f characters in incoming event_id (#1006)
+Scala Common Enrich: extract useragent from ua parameter (#1011)
+Scala Common Enrich: fixed issue where unset integer fields throw an NPE (#570)
+Scala Common Enrich: fixed issue where unset double fields throw an NPE (#1062)
+Scala Common Enrich: added tests for ConversionUtils.stringToJInteger (#1064)
+Scala Common Enrich: now enforcing Java 7 for compilation (#1065)
+Scala Hadoop Enrich: bumped to 0.8.0
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.7.0 (#995)
+Scala Hadoop Enrich: added test for empty integer and double fields to ensure no NPE thrown (#1063)
+Scala Hadoop Enrich: now enforcing Java 7 for compilation (#1066)
+Scala Hadoop Enrich: updated test jobs to reflect updated useragent parsing (#1070)
+
+Version 0.9.8 (2014-09-18)
+--------------------------
+iOS Tracker: added git submodule. Version 0.1.1 (#982)
+Android Tracker: added git submodule. Version 0.1.1 (#983)
+Clojure Collector: bumped to 0.7.0
+Clojure Collector: merged snowplow/tomcat-cf-access-log-valve into Snowplow as clojure-collector/access-valve (#898)
+Clojure Collector: bumped access-valve to 0.1.0
+Clojure Collector: changed access-valve's package path to com.snowplowanalytics.snowplow.collectors.clojure.accessvalve (#924)
+Clojure Collector: changed access-valve to use Gradle (#899)
+Clojure Collector: changed access-valve to publish to war-resources/.ebextensions (#900)
+Clojure Collector: updated access-valve and added web.xml to log request body and content type (#901)
+Clojure Collector: fixed empty querystring in access-valve (#938)
+Clojure Collector: fixed IP address forwarding for VPC-based environments (#854)
+Clojure Collector: added support for API vendor and version in routing (#925)
+Clojure Collector: added support for POST as well as GET (#654)
+Scala Stream Collector: fixed broken link to `thrift-raw-event`, thanks @bamos! (#955)
+Scala Common Enrich: bumped to 0.6.0
+Scala Common Enrich: split out Clojure and CloudFront Collector event processing (#943)
+Scala Common Enrich: added CljTomcatLoaderSpec tests (#963)
+Scala Common Enrich: filtering non-GETs from CloudfrontLoader (#944)
+Scala Common Enrich: replaced all Argonaut code with json4s (#945)
+Scala Common Enrich: renamed CanonicalOutput to EnrichedEvent (#964)
+Scala Common Enrich: replaced CanonicalInput and TrackerPayload with CollectorPayload and RawEvent (#946)
+Scala Common Enrich: updated EnrichmentManager to process RawEvent not CanonicalInput (#903)
+Scala Common Enrich: added Snowplow Tp2 Adapter to convert event JSON to NEL of RawEvents (#904)
+Scala Common Enrich: geo-IP lookup now supports ip parameter on querystring (#961)
+Scala Common Enrich: IP address anonymization now works with ip parameter on querystring (#960)
+Scala Hadoop Enrich: bumped to 0.7.0
+Scala Hadoop Enrich: bumped to Scala Common Enrich 0.6.0 (#940)
+Scala Hadoop Enrich: updated to support generating multiple enriched events from one raw payload (#902)
+StorageLoader: wrote JSON Path file for mobile_context (#776)
+StorageLoader: wrote JSON Path file for geolocation_context (#962)
+Redshift: added Redshift DDL for mobile_context (#542)
+Redshift: added Redshift DDL for geolocation_context (#950)
+
+Version 0.9.7 (2014-09-02)
+--------------------------
+Ruby Tracker: bumped git submodule to 0.3.0 (#939)
+Java Tracker: bumped git submodule to 0.5.1 (#948)
+Node.js Tracker: added git submodule. Version 0.1.0 (#949)
+Trackers: fixed broken git submodule links, thanks @OAGr! (#957)
+EmrEtlRunner: bumped to 0.9.1
+EmrEtlRunner: fixed @jobflow.ec2_subnet_id not being set due to incorrect guard, thanks @rslifka! (#956)
+EmrEtlRunner: fixed bugs in --process-bucket (#973)
+EmrEtlRunner: renamed --process-bucket option to --process-enrich (#972)
+EmrEtlRunner: changed -s option for --skip to -x prevent clash with -s for --start (#975)
+EmrEtlRunner: now allows shredding without prior enrichment (#927)
+StorageLoader: bumped to 0.3.2
+StorageLoader: removed EMPTYASNULL for loading JSONs (#942)
+StorageLoader: added missing targetUrl field to ad_impression JSON Path file, thanks @gisripa! (#951)
+StorageLoader: made providing jsonpath_assets optional (#958)
+StorageLoader: added support for cross-region Redshift COPY (#971)
+Hive Storage: bumped table-def.q to 0.2.0
+Hive Storage: added and removed fields to synchronize with 0.9.6's enriched event format (#965)
+Scala Hadoop Shred: bumped to version 0.2.1
+Scala Hadoop Shred: fixed multiple JSONs not being shredded for a single row (#968)
+Scala Hadoop Shred: strengthened test suite (#967)
+
 Version 0.9.6 (2014-07-26)
 --------------------------
 Java Tracker: bumped git submodule to 0.4.0 (#892)

@@ -36,7 +36,7 @@ import org.specs2.matcher.Matchers._
 import com.twitter.scalding._
 
 // Snowplow Common Enrich
-import common.outputs.CanonicalOutput
+import common.outputs.EnrichedEvent
 
 // Scalaz
 import scalaz._
@@ -51,7 +51,7 @@ object JobSpecHelpers {
   /**
    * The current version of our Hadoop ETL
    */
-  val EtlVersion = "hadoop-0.6.0-common-0.5.0"
+  val EtlVersion = "hadoop-0.9.0-common-0.8.0"
 
   val EtlTimestamp = "2001-09-09 01:46:40.000"
 
@@ -63,7 +63,7 @@ object JobSpecHelpers {
   /**
    * The names of the fields written out
    */
-  lazy val OutputFields = classOf[CanonicalOutput]
+  lazy val OutputFields = classOf[EnrichedEvent]
       .getDeclaredFields
       .map(_.getName)
 
@@ -252,6 +252,24 @@ object JobSpecHelpers {
                   |}
                 |}  
               |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "campaign_attribution",
+                  |"enabled": true,
+                  |"parameters": {
+                    |"mapping": "static",
+                    |"fields": {
+                      |"mktMedium": ["utm_medium", "medium"],
+                      |"mktSource": ["utm_source", "source"],
+                      |"mktTerm": ["utm_term", "legacy_term"],
+                      |"mktContent": ["utm_content"],
+                      |"mktCampaign": ["utm_campaign", "cid", "legacy_campaign"]
+                    |}
+                  |}
+                |}  
+              |},              
               |{
                 |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
                 |"data": {

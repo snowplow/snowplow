@@ -272,4 +272,4 @@ INSERT INTO atomic.events
 	doc_charset,
 	doc_width,
 	doc_height
-    FROM atomic.events_030;
+	FROM atomic.events_030;

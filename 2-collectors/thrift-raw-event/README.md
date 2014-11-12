@@ -30,7 +30,7 @@ limitations under the License.
 [snowplow]: http://snowplowanalytics.com
 [thrift]: http://thrift.apache.org
 
-[thrift-idl]: https://github.com/snowplow/snowplow/blob/feature/scala-rt-coll/2-collectors/thrift-raw-event/src/main/thrift/snowplow-raw-event.thrift
+[thrift-idl]: https://github.com/snowplow/snowplow/blob/master/2-collectors/thrift-raw-event/src/main/thrift/snowplow-raw-event.thrift
 [dependencies]: http://www.scala-sbt.org/release/docs/Getting-Started/Library-Dependencies.html
 [versions]: http://maven.snplow.com/releases/com/snowplowanalytics/snowplow-thrift-raw-event/
 

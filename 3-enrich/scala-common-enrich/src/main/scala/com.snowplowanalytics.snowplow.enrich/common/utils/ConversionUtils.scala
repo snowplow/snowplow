@@ -160,10 +160,10 @@ object ConversionUtils {
    */
   val validateUuid: (String, String) => ValidatedString = (field, str) => {
 
-    def check(s: String)(u: UUID): Boolean = (u != null && s == u.toString)
+    def check(s: String)(u: UUID): Boolean = (u != null && s.toLowerCase == u.toString)
     val uuid = Try(UUID.fromString(str)).toOption.filter(check(str))
     uuid match {
-      case Some(_) => str.success
+      case Some(_) => str.toLowerCase.success
       case None    => s"Field [$field]: [$str] is not a valid UUID".fail
     }
   } 
@@ -265,12 +265,16 @@ object ConversionUtils {
    *         a Success JInt
    */
   val stringToJInteger: (String, String) => Validation[String, JInteger] = (field, str) =>
-    try {
-      val jint: JInteger = str.toInt
-      jint.success
-    } catch {
-      case nfe: NumberFormatException =>
-        "Field [%s]: cannot convert [%s] to Int".format(field, str).fail
+    if (Option(str).isEmpty) {
+      null.asInstanceOf[JInteger].success
+    } else {
+      try {
+        val jint: JInteger = str.toInt
+        jint.success
+      } catch {
+        case nfe: NumberFormatException =>
+          "Field [%s]: cannot convert [%s] to Int".format(field, str).fail
+      }
     }
 
   /**
@@ -294,7 +298,7 @@ object ConversionUtils {
    */
   val stringToDoublelike: (String, String) => ValidatedString = (field, str) =>
     try {
-      if (str == "null") { // LEGACY. Yech, to handle a bug in the JavaScript tracker
+      if (Option(str).isEmpty || str == "null") { // "null" String check is LEGACY to handle a bug in the JavaScript tracker
         null.asInstanceOf[String].success
       } else {
         val jbigdec = new JBigDecimal(str)

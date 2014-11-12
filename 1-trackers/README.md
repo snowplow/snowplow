@@ -8,17 +8,22 @@
 
 ## Available trackers
 
-| Tracker                   | Description                                                    | Status           |
-|---------------------------|----------------------------------------------------------------|------------------|
-| [javascript-tracker] [t1] | A client-side JavaScript tracker for web browser use           | Production-ready |
-| [no-js-tracker] [t2]      | A pixel-based tracker for no-JavaScript web environments       | Production-ready |
-| [python-tracker] [t3]     | An event tracker for Python and Django webapps, apps and games | Production-ready |
-| [ruby-tracker] [t4]       | An event tracker for Ruby and Rails apps and gems              | Beta             |
-| [java-tracker] [t5]       | An event tracker for Java-based desktop and server apps, servlets and games | Beta |
-| [arduino-tracker] [t6]    | An event tracker for IP-connected Arduino boards               | Production-ready |
-| [lua-tracker] [t7]        | An event tracker for Lua apps, games and plugins               | Production-ready |
+| Tracker                           | Description                                                    | Status           |
+|-----------------------------------|----------------------------------------------------------------|------------------|
+| [android-tracker] [android]       | An event tracker for Android apps and games                    | Beta             |
+| [arduino-tracker] [arduino]       | An event tracker for IP-connected Arduino boards               | Production-ready |
+| [dotnet-tracker] [dotnet]         | An event tracker for the .NET platform                         | Beta             |
+| [ios-tracker] [ios]               | An event tracker for iOS apps and games                        | Beta             |
+| [java-tracker] [java]             | An event tracker for Java-based desktop and server apps, servlets and games | Beta |
+| [javascript-tracker] [javascript] | A client-side JavaScript tracker for web browser use           | Production-ready |
+| [lua-tracker] [lua]               | An event tracker for Lua apps, games and plugins               | Production-ready |
+| [no-js-tracker] [no-js]           | A pixel-based tracker for no-JavaScript web environments       | Production-ready |
+| [nodejs-tracker] [nodejs]         | An event tracker for node.js apps and servers                  | Beta             |
+| [php-tracker] [php]               | An event tracker for PHP apps and scripts                      | Beta             |
+| [python-tracker] [python]         | An event tracker for Python and Django webapps, apps and games | Production-ready |
+| [ruby-tracker] [ruby]             | An event tracker for Ruby and Rails apps and gems              | Beta             |
 
-For other trackers (e.g. iOS, Android) and their approximate timelines, please see the [Product Roadmap][roadmap].
+For other trackers (e.g. PHP, Go) and their approximate timelines, please see the [Product Roadmap][roadmap].
 
 ## Find out more
 
@@ -29,13 +34,18 @@ For other trackers (e.g. iOS, Android) and their approximate timelines, please s
 
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/1-trackers.png
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
-[t1]: https://github.com/snowplow/javascript-tracker
-[t2]: ./no-js-tracker/
-[t3]: https://github.com/snowplow/python-tracker
-[t4]: https://github.com/snowplow/ruby-tracker
-[t5]: https://github.com/snowplow/java-tracker
-[t6]: https://github.com/snowplow/arduino-tracker
-[t7]: https://github.com/snowplow/lua-tracker
+[android]: https://github.com/snowplow/snowplow-android-tracker
+[arduino]: https://github.com/snowplow/snowplow-arduino-tracker
+[dotnet]: https://github.com/snowplow/snowplow-dotnet-tracker
+[ios]: https://github.com/snowplow/snowplow-ios-tracker
+[java]: https://github.com/snowplow/snowplow-java-tracker
+[javascript]: https://github.com/snowplow/snowplow-javascript-tracker
+[lua]: https://github.com/snowplow/snowplow-lua-tracker
+[no-js]: ./no-js-tracker/
+[nodejs]: https://github.com/snowplow/snowplow-nodejs-tracker
+[php]: https://github.com/snowplow/snowplow-php-tracker
+[python]: https://github.com/snowplow/snowplow-python-tracker
+[ruby]: https://github.com/snowplow/snowplow-ruby-tracker
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-a-Tracker
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/trackers
 [wiki]: https://github.com/snowplow/snowplow/wiki

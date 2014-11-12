@@ -43,7 +43,7 @@ rescue runner::Error => e
   fatal.call(e)
   exit 1
 rescue SystemExit => e
-  exit 1
+  exit e.status
 rescue Exception => e
   fatal.call(e)
   exit 1

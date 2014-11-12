@@ -41,7 +41,7 @@ import org.specs2.scalaz.ValidationMatchers
 class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
 
   "Parsing a valid anon_ip enrichment JSON" should {
-    "successfully construct an AnonIpEnrichmentConfig case class" in {
+    "successfully construct an AnonIpEnrichment case class" in {
 
       val ipAnonJson = parse("""{
         "enabled": true,
@@ -59,7 +59,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
   }
 
   "Parsing a valid ip_lookups enrichment JSON" should {
-    "successfully construct a GeoIpEnrichmentConfig case class" in {
+    "successfully construct a GeoIpEnrichment case class" in {
 
       val ipToGeoJson = parse("""{
         "enabled": true,
@@ -88,7 +88,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
   }
 
   "Parsing a valid referer_parser enrichment JSON" should {
-    "successfully construct a GeoIpEnrichmentConfig case class" in {
+    "successfully construct a RefererParserEnrichment case class" in {
 
       val refererParserJson = parse("""{
         "enabled": true,
@@ -110,6 +110,37 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
     }      
   }
 
-  // TODO: a test in HDFS mode too?
+  "Parsing a valid campaign_attribution enrichment JSON" should {
+    "successfully construct a CampaignAttributionEnrichment case class" in {
+
+      val campaignAttributionEnrichmentJson = parse("""{
+        "enabled": true,
+        "parameters": {
+          "mapping": "static",
+          "fields": {
+            "mktMedium": ["utm_medium", "medium"],
+            "mktSource": ["utm_source", "source"],
+            "mktTerm": ["utm_term"],
+            "mktContent": [],
+            "mktCampaign": ["utm _ campaign", "CID", "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|"]
+          }
+        }
+      }""")
+
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "campaign_attribution", "jsonschema", "1-0-0")
+
+      val expected = CampaignAttributionEnrichment(
+        List("utm_medium", "medium"),
+        List("utm_source", "source"),
+        List("utm_term"),
+        List(),
+        List("utm _ campaign", "CID", "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|")
+      )
+
+      val result = CampaignAttributionEnrichment.parse(campaignAttributionEnrichmentJson, schemaKey)
+      result must beSuccessful(expected)
+
+    }      
+  }
 
 }

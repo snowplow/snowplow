@@ -102,8 +102,8 @@ object ShredJob {
    *         None on Success
    */
   def projectGoods(all: ValidatedNel[JsonSchemaPairs]): Option[List[JsonSchemaPair]] = all match {
-    case Success(nel @ _ :: Nil) => Some(nel) // (Non-empty) List -> Some(List) of JsonSchemaPairs
-    case _                       => None      // Discard
+    case Success(nel @ _ :: _) => Some(nel) // (Non-empty) List -> Some(List) of JsonSchemaPairs
+    case _                     => None      // Discard
   }
 
   // Have to define here so can be shared with tests

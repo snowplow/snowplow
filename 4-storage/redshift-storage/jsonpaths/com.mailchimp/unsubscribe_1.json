@@ -1,0 +1,31 @@
+{
+  "jsonpaths": [
+  
+    "$.schema.vendor",
+    "$.schema.name",
+    "$.schema.format",
+    "$.schema.version",
+
+    "$.hierarchy.rootId",
+    "$.hierarchy.rootTstamp",
+    "$.hierarchy.refRoot",
+    "$.hierarchy.refTree",
+    "$.hierarchy.refParent",
+
+    "$.data.type",
+    "$.data.fired_at",
+    "$.data.data.action",
+    "$.data.data.campaign_id",
+    "$.data.data.email",
+    "$.data.data.email_type",
+    "$.data.data.id",
+    "$.data.data.web_id",
+    "$.data.data.ip_opt",
+    "$.data.data.list_id",
+    "$.data.data.reason",
+    "$.data.data.merges.EMAIL",
+    "$.data.data.merges.FNAME",
+    "$.data.data.merges.LNAME",
+    "$.data.data.merges.INTERESTS"
+    ]
+}

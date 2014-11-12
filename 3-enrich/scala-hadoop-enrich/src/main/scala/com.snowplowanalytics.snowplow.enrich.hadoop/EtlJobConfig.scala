@@ -40,7 +40,7 @@ import iglu.client.validation.ProcessingMessageMethods._
 import common._
 import common.utils.{
   ConversionUtils,
-  JacksonJsonUtils
+  JsonUtils
 }
 
 import common.enrichments.{
@@ -159,33 +159,39 @@ object EtlJobConfig {
   }
 
   /**
+   * Reload the Iglu Resolver once we are on the nodes.
+   * This avoids Kyro serialization of the resolver,
+   * which might fail (haven't tested if it does).
+   *
+   * @param igluConfig The JSON specifying Iglu repos
+   * @return the instantiated Iglu Resolver
+   */
+  def reloadResolverOnNode(igluConfig: String): Resolver =
+    (for {
+        node <- base64ToJsonNode(igluConfig)
+        reso <- Resolver.parse(node)
+      } yield reso)
+      .valueOr(e => throw new FatalEtlError(e.toString))
+
+  /**
    * Reload the registry once we are on the nodes.
-   * This avoid Kyro serialization of the registry,
-   * which would fail.
+   * This avoids Kyro serialization of the registry,
+   * which fails.
    *
    * @param enrichments The JSON array of enrichment
    *        configurations
-   * @param igluConfig The JSON specifying Iglu repos
    * @param localMode Whether we are running in local
    *        mode (i.e. not on a Hadoop cluster)
+   * @param resolver (implicit) The Iglu resolver used
+   *        for schema lookup and validation
    * @return the instantiated EnrichmentRegistry
    */
-  def reloadRegistryOnNode(enrichments: String, igluConfig: String, localMode: Boolean): EnrichmentRegistry = {
-
-    val igluResolver =
-      for {
-        node <- base64ToJsonNode(igluConfig)
-        reso <- Resolver.parse(node)
-      } yield reso
-
-    val enrichmentsNode =
-      base64ToJsonNode(enrichments)
-
-    (enrichmentsNode |@| igluResolver) {
-      buildEnrichmentRegistry(_, localMode)(_)
-    }.flatMap(s => s)
-    .valueOr(e => throw new FatalEtlError(e.toString))
-  }
+  def reloadRegistryOnNode(enrichments: String, localMode: Boolean)(implicit resolver: Resolver): EnrichmentRegistry =
+    (for {
+        node <- base64ToJsonNode(enrichments)
+        reg  <- buildEnrichmentRegistry(node, localMode)
+      } yield reg)
+      .valueOr(e => throw new FatalEtlError(e.toString))
 
   /**
    * Builds an EnrichmentRegistry from the enrichments arg
@@ -197,9 +203,8 @@ object EtlJobConfig {
    * @param resolver (implicit) The Iglu resolver used
    *        for schema lookup and validation
    */
-  private def buildEnrichmentRegistry(enrichments:JsonNode, localMode: Boolean)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentRegistry] = {
+  private def buildEnrichmentRegistry(enrichments: JsonNode, localMode: Boolean)(implicit resolver: Resolver): ValidatedNelMessage[EnrichmentRegistry] =
     EnrichmentRegistry.parse(fromJsonNode(enrichments), localMode)
-  }
 
   /**
    * Converts a base64-encoded JSON
@@ -213,7 +218,7 @@ object EtlJobConfig {
    */
   private def base64ToJsonNode(str: String): ValidatedNelMessage[JsonNode] =
     (for {
-      raw <-  ConversionUtils.decodeBase64Url("enrichments", str)
-      node <- JacksonJsonUtils.extractJson("enrichments", raw)
+      raw  <- ConversionUtils.decodeBase64Url("enrichments", str)
+      node <- JsonUtils.extractJson("enrichments", raw)
     } yield node).leftMap(_.toProcessingMessage).toValidationNel
 }

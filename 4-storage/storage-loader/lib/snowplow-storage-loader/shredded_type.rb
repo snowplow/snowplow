@@ -28,10 +28,10 @@ module Snowplow
 
       attr_reader :s3_objectpath, :table
 
-      @@snowplow_hosted_assets = "s3://snowplow-hosted-assets/4-storage/redshift-storage/jsonpaths/"
-      @@snowplow_hosted_assets_region = "eu-west-1"
+      @@snowplow_hosted_assets_root = "s3://snowplow-hosted-assets"
+      @@jsonpaths_path = "/4-storage/redshift-storage/jsonpaths/"
 
-      @@jsonpaths_files = Hash.new
+      @@jsonpaths_files = Hash.new # Our cache
 
       # Searches S3 for all the files we can find
       # containing shredded types.
@@ -79,8 +79,8 @@ module Snowplow
       #
       # Parameters:
       # +s3+:: the Fog object for accessing S3
-      # +assets+:: path to custom assets (e.g. JSON Path files)
-      Contract FogStorage, String => Maybe[String]
+      # +assets+:: path to user's own JSON Path files, if provided
+      Contract FogStorage, Maybe[String] => Maybe[String]
       def discover_jsonpaths_file(s3, assets)
         name = make_sql_safe(@name)
         file = "#{name}_#{@version_model}.json"
@@ -94,18 +94,21 @@ module Snowplow
         # Let's do the custom check first (allows a user to
         # override one of our JSON Path files with one of theirs)
         # Look for it in the custom assets (if any)
-        custom_dir = "#{assets}#{@vendor}/"
+        unless assets.nil?
+          custom_dir = "#{assets}#{@vendor}/"
 
-        if file_exists?(s3, custom_dir, file)
-          f = "#{custom_dir}#{file}"
-          @@jsonpaths_files[cache_key] = f
-          return f
+          if file_exists?(s3, custom_dir, file)
+            f = "#{custom_dir}#{file}"
+            @@jsonpaths_files[cache_key] = f
+            return f
+          end
         end
 
-        # Look for it in Snowplow's hosted assets
-        snowplow_dir = "#{@@snowplow_hosted_assets}#{@vendor}/"
-        _s3 = copy_with_new_region(s3, @@snowplow_hosted_assets_region)
-        if file_exists?(_s3, snowplow_dir, file)
+        # Look for it in Snowplow's hosted assets, which
+        # will definitely exist
+        hosted_assets_bucket = get_hosted_assets_bucket(s3.region)
+        snowplow_dir = "#{hosted_assets_bucket}#{@@jsonpaths_path}#{@vendor}/"
+        if file_exists?(s3, snowplow_dir, file)
           f = "#{snowplow_dir}#{file}"
           @@jsonpaths_files[cache_key] = f
           return f
@@ -116,17 +119,16 @@ module Snowplow
 
     private
 
-      # Generic shallow copy of a FogStorage, updating
-      # the region and host based on the supplied region.
+      # Builds the region-appropriate bucket name for Snowplow's
+      # hosted assets. Has to be region-specific as all aspects of
+      # a Redshift COPY must be within the same region.
       #
       # Parameters:
-      # +s3+:: the Fog object for accessing S3
-      Contract FogStorage, String => FogStorage
-      def copy_with_new_region(s3, region)
-        s3.dup.tap { |s3|
-          s3.region = region
-          s3.instance_variable_set(:@host, s3.send(:region_to_host, region))
-        }
+      # +region+:: the AWS region to source hosted assets from
+      Contract String => String
+      def get_hosted_assets_bucket(region)
+        suffix = if region.eql? "eu-west-1" then "" else "-#{region}" end
+        "#{@@snowplow_hosted_assets_root}#{suffix}"
       end
 
       # Derives the table name in Redshift from the Iglu
