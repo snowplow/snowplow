@@ -177,38 +177,39 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration)
     }
 
     val bulkRequest: BulkRequestBuilder = elasticsearchClient.prepareBulk()
-    val successfulRecords = records.filter(_._2.isSuccess)
-    val unsuccessfulRecords = records.partition(_._2.isSuccess)._2.toList
 
     val (validRecords, invalidRecords) = records.partition(_._2.isSuccess)
 
     records.foreach(recordTuple => recordTuple.map(record => record.map(validRecord => {
-      val indexRequestBuilder =
-        elasticsearchClient.prepareIndex(validRecord.getIndex, validRecord.getType, validRecord.getId)
-      indexRequestBuilder.setSource(validRecord.getSource)
-      val version = validRecord.getVersion
-      if (version != null) {
-        indexRequestBuilder.setVersion(version)
-      }
-      val ttl = validRecord.getTtl
-      if (ttl != null) {
-        indexRequestBuilder.setTTL(ttl)
-      }
-      val create = validRecord.getCreate
-      if (create != null) {
-        indexRequestBuilder.setCreate(create)
+      val indexRequestBuilder = {
+        val irb =
+          elasticsearchClient.prepareIndex(validRecord.getIndex, validRecord.getType, validRecord.getId)
+        irb.setSource(validRecord.getSource)
+        val version = validRecord.getVersion
+        if (version != null) {
+          irb.setVersion(version)
+        }
+        val ttl = validRecord.getTtl
+        if (ttl != null) {
+          irb.setTTL(ttl)
+        }
+        val create = validRecord.getCreate
+        if (create != null) {
+          irb.setCreate(create)
+        }
+        irb
       }
       bulkRequest.add(indexRequestBuilder)
     })))
 
-    if (successfulRecords.length > 0) {
+    if (validRecords.length > 0) {
       @tailrec
-      def attemptEmit(): List[EmitterInput] = {println("ACTUALLY IN HERE")
+      def attemptEmit(): List[EmitterInput] = {
         try {
           val bulkResponse = bulkRequest.execute.actionGet
           val responses = bulkResponse.getItems
 
-          val allFailures = responses.toList.filter(_.isFailed).zip(successfulRecords).map(pair => {
+          val allFailures = responses.toList.filter(_.isFailed).zip(validRecords).map(pair => {
             val (response, record) = pair
             Log.error("Record failed with message: " + response.getFailureMessage)
             val failure = response.getFailure
@@ -221,7 +222,7 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration)
           })
 
           val numberOfSkippedRecords = allFailures.count(_.isEmpty)
-          val failures = allFailures.flatten ++ unsuccessfulRecords
+          val failures = allFailures.flatten ++ invalidRecords
 
           Log.info("Emitted " + (records.size - failures.size - numberOfSkippedRecords)
             + " records to Elasticsearch")
@@ -244,11 +245,9 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration)
           }
         }
       }
-
       attemptEmit()
-
     } else {
-      unsuccessfulRecords
+      invalidRecords
     }
   }
 
