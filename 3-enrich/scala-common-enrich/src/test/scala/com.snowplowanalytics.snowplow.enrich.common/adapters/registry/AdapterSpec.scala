@@ -60,7 +60,7 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
   }
 
   def e2 = {
-    val params = BaseAdapter.toUnstructEventParams("tv", Map[String, String](), "iglu:foo", _ => List[JField]())
+    val params = BaseAdapter.toUnstructEventParams("tv", Map[String, String](), "iglu:foo", _ => List[JField](), "app")
     params must_== Map(
       "tv"    -> "tv",
       "e"     -> "ue",
@@ -71,7 +71,7 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
 
   def e3 = {
     val shared = Map("nuid" -> "123", "aid" -> "42", "cv" -> "clj-tomcat", "p" -> "srv")
-    val params = BaseAdapter.toUnstructEventParams("tv", shared, "iglu:foo", _ => List[JField]())
+    val params = BaseAdapter.toUnstructEventParams("tv", shared, "iglu:foo", _ => List[JField](), "app")
     params must_== shared ++ Map(
       "tv"    -> "tv",
       "e"     -> "ue",
