@@ -242,5 +242,4 @@ object JsonUtils {
     .replaceAll("\\p{Cntrl}", "") // Any other control character
     .trim
   }
-
 }
