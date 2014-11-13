@@ -93,20 +93,41 @@ object PagerdutyAdapter extends Adapter {
       case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for PagerDuty".failNel
       case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for PagerDuty".failNel
       case (Some(body),_)                     => {
-
         payloadBodyToEventList(body) match {
           case Failure(str)  => str.failNel
           case Success(list) => {
+
             // Create our list of Validated RawEvents
             val rawEventsList: List[Validation[NonEmptyList[String],RawEvent]] = 
               for { 
                 (event, index) <- list.zipWithIndex
               } yield {
-                val formattedEvent = reformatParameters(event)
-                eventJsonToRawEvent(VendorName, TrackerVersion, index, "type", payload, formattedEvent, EventSchemaMap)
+
+                // Create an Option[String] to pass as an arg for lookupSchema
+                val typeOpt = (event \ "type").extractOpt[String]
+
+                // If schema lookup is a success we can make a RawEvent
+                for {
+                  schema <- lookupSchema(typeOpt, VendorName, index, EventSchemaMap)
+                } yield {
+
+                  // Construct an unstructured event from the payload and the event json
+                  val formattedEvent = reformatParameters(event)
+                  val qsParams = toMap(payload.querystring)
+                  val unstructEvent = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv")
+
+                  // Make a validated RawEvent
+                  RawEvent(
+                    api          = payload.api,
+                    parameters   = unstructEvent,
+                    contentType  = payload.contentType,
+                    source       = payload.source,
+                    context      = payload.context
+                  )
+                }
               }
 
-            // Process and return our ValidatedRawEvents
+            // Processes the List for Failures and Successes and returns ValidatedRawEvents
             rawEventsListProcessor(rawEventsList)
           }
         }
