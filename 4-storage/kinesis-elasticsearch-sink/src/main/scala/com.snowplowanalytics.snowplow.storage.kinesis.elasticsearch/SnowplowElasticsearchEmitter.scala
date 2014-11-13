@@ -62,10 +62,16 @@ import java.util.List
 
 // Scala
 import scala.collection.JavaConversions._
+import scala.annotation.tailrec
 
 // Scalaz
 import scalaz._
 import Scalaz._
+
+// json4s
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.JsonDSL._
 
 // Logging
 import org.apache.commons.logging.{
@@ -202,47 +208,49 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration)
     }
 
     if (successfulRecords.length > 0) {
-      while (true) {
+      @tailrec
+      def attemptEmit(): ArrayList[EmitterInput] = {
         try {
-            val bulkResponse = bulkRequest.execute.actionGet
-            val responses = bulkResponse.getItems
-            val failures = new ArrayList[EmitterInput]
-            failures.addAll(unsuccessfulRecords)
-            var numberOfSkippedRecords = 0
-            for (i <- 0 until responses.length) {
-              if (responses(i).isFailed) {
-                Log.error("Record failed with message: " + responses(i).getFailureMessage)
-                val failure = responses(i).getFailure
-                if (failure.getMessage.contains("DocumentAlreadyExistsException")
-                    || failure.getMessage.contains("VersionConflictEngineException")) {
-                  numberOfSkippedRecords += 1
-                } else {
-                  failures.add(successfulRecords.get(i)._1 -> scala.collection.immutable.List(failure.getMessage).fail)
-                }
+          val bulkResponse = bulkRequest.execute.actionGet
+          val responses = bulkResponse.getItems
+          val failures = new ArrayList[EmitterInput]
+          failures.addAll(unsuccessfulRecords)
+          var numberOfSkippedRecords = 0
+          for (i <- 0 until responses.length) {
+            if (responses(i).isFailed) {
+              Log.error("Record failed with message: " + responses(i).getFailureMessage)
+              val failure = responses(i).getFailure
+              if (failure.getMessage.contains("DocumentAlreadyExistsException")
+                  || failure.getMessage.contains("VersionConflictEngineException")) {
+                numberOfSkippedRecords += 1
+              } else {
+                failures.add(successfulRecords.get(i)._1 -> scala.collection.immutable.List(failure.getMessage).fail)
               }
             }
-            Log.info("Emitted " + (records.size - failures.size - numberOfSkippedRecords)
-              + " records to Elasticsearch")
-            if (!failures.isEmpty) {
-              printClusterStatus
-              Log.warn("Returning " + failures.size + " records as failed")
-            }
-            return failures
+          }
+          Log.info("Emitted " + (records.size - failures.size - numberOfSkippedRecords)
+            + " records to Elasticsearch")
+          if (!failures.isEmpty) {
+            printClusterStatus
+            Log.warn("Returning " + failures.size + " records as failed")
+          }
+          failures
         } catch {
           case nnae: NoNodeAvailableException => {
             Log.error("No nodes found at " + elasticsearchEndpoint + ":" + elasticsearchPort + ". Retrying in "
               + BACKOFF_PERIOD + " milliseconds", nnae)
             sleep(BACKOFF_PERIOD)
+            attemptEmit()
           }
           case e: Exception => {
             Log.error("ElasticsearchEmitter threw an unexpected exception ", e)
             sleep(BACKOFF_PERIOD)
+            attemptEmit()
           }
         }
       }
 
-      // The compiler requires this
-      throw new IllegalStateException("The while loop should only exit when the emit method returns")
+      attemptEmit()
 
     } else {
       unsuccessfulRecords
