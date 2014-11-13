@@ -57,8 +57,7 @@ import com.amazonaws.services.kinesis.connectors.{
 
 // Java
 import java.io.IOException
-import java.util.ArrayList
-import java.util.List
+import java.util.{List => JList}
 
 // Scala
 import scala.collection.JavaConversions._
@@ -171,7 +170,7 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration)
    * @return list of inputs which failed transformation or which Elasticsearch rejected
    */
   @throws[IOException]
-  override def emit(buffer: UnmodifiableBuffer[EmitterInput]): List[EmitterInput] = {
+  override def emit(buffer: UnmodifiableBuffer[EmitterInput]): JList[EmitterInput] = {
     val records = buffer.getRecords
     if (records.isEmpty) {
         return Nil
@@ -179,55 +178,51 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration)
 
     val bulkRequest: BulkRequestBuilder = elasticsearchClient.prepareBulk()
     val successfulRecords = records.filter(_._2.isSuccess)
-    val unsuccessfulRecords = new ArrayList[EmitterInput]
+    val unsuccessfulRecords = records.partition(_._2.isSuccess)._2.toList
 
-    for {
-      recordTuple <- records
-    } yield {
-      recordTuple._2.fold(
-        badRecord => unsuccessfulRecords.add(recordTuple._1 -> badRecord.fail),
-        validRecord => {
-          val indexRequestBuilder =
-            elasticsearchClient.prepareIndex(validRecord.getIndex, validRecord.getType, validRecord.getId)
-          indexRequestBuilder.setSource(validRecord.getSource)
-          val version = validRecord.getVersion
-          if (version != null) {
-            indexRequestBuilder.setVersion(version)
-          }
-          val ttl = validRecord.getTtl
-          if (ttl != null) {
-            indexRequestBuilder.setTTL(ttl)
-          }
-          val create = validRecord.getCreate
-          if (create != null) {
-            indexRequestBuilder.setCreate(create)
-          }
-          bulkRequest.add(indexRequestBuilder)
-        }
-      )
-    }
+    val (validRecords, invalidRecords) = records.partition(_._2.isSuccess)
+
+    records.foreach(recordTuple => recordTuple.map(record => record.map(validRecord => {
+      val indexRequestBuilder =
+        elasticsearchClient.prepareIndex(validRecord.getIndex, validRecord.getType, validRecord.getId)
+      indexRequestBuilder.setSource(validRecord.getSource)
+      val version = validRecord.getVersion
+      if (version != null) {
+        indexRequestBuilder.setVersion(version)
+      }
+      val ttl = validRecord.getTtl
+      if (ttl != null) {
+        indexRequestBuilder.setTTL(ttl)
+      }
+      val create = validRecord.getCreate
+      if (create != null) {
+        indexRequestBuilder.setCreate(create)
+      }
+      bulkRequest.add(indexRequestBuilder)
+    })))
 
     if (successfulRecords.length > 0) {
       @tailrec
-      def attemptEmit(): ArrayList[EmitterInput] = {
+      def attemptEmit(): List[EmitterInput] = {println("ACTUALLY IN HERE")
         try {
           val bulkResponse = bulkRequest.execute.actionGet
           val responses = bulkResponse.getItems
-          val failures = new ArrayList[EmitterInput]
-          failures.addAll(unsuccessfulRecords)
-          var numberOfSkippedRecords = 0
-          for (i <- 0 until responses.length) {
-            if (responses(i).isFailed) {
-              Log.error("Record failed with message: " + responses(i).getFailureMessage)
-              val failure = responses(i).getFailure
-              if (failure.getMessage.contains("DocumentAlreadyExistsException")
-                  || failure.getMessage.contains("VersionConflictEngineException")) {
-                numberOfSkippedRecords += 1
-              } else {
-                failures.add(successfulRecords.get(i)._1 -> scala.collection.immutable.List(failure.getMessage).fail)
-              }
+
+          val allFailures = responses.toList.filter(_.isFailed).zip(successfulRecords).map(pair => {
+            val (response, record) = pair
+            Log.error("Record failed with message: " + response.getFailureMessage)
+            val failure = response.getFailure
+            if (failure.getMessage.contains("DocumentAlreadyExistsException")
+                || failure.getMessage.contains("VersionConflictEngineException")) {
+              None
+            } else {
+              Some(record._1 -> List(failure.getMessage).fail)
             }
-          }
+          })
+
+          val numberOfSkippedRecords = allFailures.count(_.isEmpty)
+          val failures = allFailures.flatten ++ unsuccessfulRecords
+
           Log.info("Emitted " + (records.size - failures.size - numberOfSkippedRecords)
             + " records to Elasticsearch")
           if (!failures.isEmpty) {
