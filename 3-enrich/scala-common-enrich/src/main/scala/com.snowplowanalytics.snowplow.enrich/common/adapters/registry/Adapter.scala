@@ -47,6 +47,9 @@ trait Adapter {
   // Signature for a Formatter function
   type FormatterFunc = (RawEventParameters) => JObject
 
+  // Needed for json4s default extraction formats
+  implicit val formats = DefaultFormats
+
   /**
    * Converts a CollectorPayload instance into raw events.
    *
@@ -115,7 +118,7 @@ trait Adapter {
    *         Snowplow unstructured event
    */
   protected[registry] def toUnstructEventParams(tracker: String, parameters: RawEventParameters, schema: String,
-    formatter: FormatterFunc, platform: String = "app"): RawEventParameters = {
+    formatter: FormatterFunc, platform: String): RawEventParameters = {
 
     val params = formatter(parameters -("nuid", "aid", "cv", "p"))
 
@@ -134,4 +137,151 @@ trait Adapter {
       "ue_pr" -> json) ++
     parameters.filterKeys(Set("nuid", "aid", "cv"))
   }
+
+  /**
+   * Fabricates a Snowplow unstructured event from
+   * the supplied parameters. Note that to be a
+   * valid Snowplow unstructured event, the event
+   * must contain e, p and tv parameters, so we
+   * make sure to set those.
+   *
+   * @param tracker The name and version of this
+   *        tracker
+   * @param qsParams The query-string parameters
+   *        we will nest into the unstructured event
+   * @param schema The schema key which defines this
+   *        unstructured event as a String
+   * @param eventJson The event which we want to nest
+   *        into the unstructured event
+   * @param platform The default platform to assign
+   *         the event to
+   * @return the raw-event parameters for a valid
+   *         Snowplow unstructured event
+   */
+  protected[registry] def toUnstructEventParams(tracker: String, qsParams: RawEventParameters, schema: String,
+    eventJson: JValue, platform: String): RawEventParameters = {
+
+    val json = compact {
+      ("schema" -> UnstructEvent) ~
+      ("data"   -> (
+        ("schema" -> schema) ~
+        ("data"   -> eventJson)
+      ))
+    }
+
+    Map(
+      "tv"    -> tracker,
+      "e"     -> "ue",
+      "p"     -> qsParams.getOrElse("p", platform), // Required field
+      "ue_pr" -> json) ++
+    qsParams.filterKeys(Set("nuid", "aid", "cv"))
+  }
+
+  /**
+   * USAGE: Multiple event payloads
+   *
+   * Processes a list of individual Validated RawEvents 
+   * into a ValidatedRawEvents object.
+   *
+   * @param rawEventsList The list of RawEvents that needs
+   *        to be processed
+   * @return the ValidatedRawEvents which will be comprised
+   *         of either Successful RawEvents or Failures
+   */
+  protected[registry] def rawEventsListProcessor(rawEventsList: List[Validated[RawEvent]]): ValidatedRawEvents = {
+    // Gather successes and failures into seperate lists.
+    val successes: List[RawEvent] = 
+      for {
+        Success(s) <- rawEventsList 
+      } yield s
+
+    val failures: List[String] = 
+      for {
+        Failure(NonEmptyList(f)) <- rawEventsList 
+      } yield f
+
+    // Return a ValidatedRawEvents of either Successful RawEvents or a Nel of Failures.
+    (successes, failures) match {
+      case (s :: ss,     Nil) =>  NonEmptyList(s, ss: _*).success // No Failures collected.
+      case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some Failures, return only those.
+      case (Nil,           _) => "List of events is empty (should never happen, not catching empty list properly)".failNel
+    }
+  }
+
+  /**
+   * USAGE: Multiple event payloads
+   *
+   * Fabricates a Validated RawEvent from a Collecter Payload 
+   * and an Event JSON.
+   *  
+   * To return a RawEvent we need to:
+   * - Validate that the JSON has an event parameter
+   * - Validate that the event parameter within the JSON returns 
+   *   a valid schema URI
+   *
+   * @param vendor The vendor we are creating a RawEvent for; 
+   *        i.e. MailChimp or PagerDuty
+   * @param tracker The tracker version of the vendor
+   * @param index The index of the event we are turning into a 
+   *        RawEvent
+   * @param typeParameter The name of the field which will return our 
+   *        event type; is specific to the vendor
+   * @param payload The CollectorPayload parameters which we 
+   *        will nest into the RawEvent
+   * @param json The event we will be nesting into the RawEvent
+   * @param eventSchemaMap The map of event types and schemas needed 
+   *        for event type validation
+   * @return a RawEvent containing the payload and JSON information 
+   *         or a Failure Nel
+   */
+  protected[registry] def eventJsonToRawEvent(vendor: String, tracker: String, index: Int, typeParameter: String, 
+    payload: CollectorPayload, json: JValue, eventSchemaMap: Map[String,String]): Validated[RawEvent] =
+
+    (json \ typeParameter).extractOpt[String] match {
+      case None => s"$vendor event at index [$index] failed: type parameter not provided - cannot determine event type".failNel
+      case Some(eventType) => {
+
+        for {
+          schema <- lookupSchema(vendor, index, eventType, eventSchemaMap)
+        } yield {
+          val qsParams = toMap(payload.querystring)
+          RawEvent(
+            api          = payload.api,
+            parameters   = toUnstructEventParams(tracker, qsParams, schema, json, "srv"),
+            contentType  = payload.contentType,
+            source       = payload.source,
+            context      = payload.context
+          )
+        }
+      }
+    }
+
+  /**
+   * USAGE: Multiple event payloads
+   *
+   * Gets the correct Schema URI for the event 
+   * passed from the vendor payload
+   *
+   * @param vendor The vendor we are doing a schema
+   *        lookup for; i.e. MailChimp or PagerDuty
+   * @param index The index of the event we are trying to
+   *        get a schema URI for
+   * @param eventType The string pertaining to the type 
+   *        of event schema we are looking for
+   * @param eventSchemaMap A map of event types linked
+   *        to their relevant schema URI's
+   * @return the schema for the event or a Failure-boxed String
+   *         if we can't recognize the event type
+   */
+  protected[registry] def lookupSchema(vendor: String, index: Int, eventType: String, eventSchemaMap: Map[String,String]): Validated[String] =
+    eventType match {
+      case event if eventSchemaMap.contains(event) => {
+        eventSchemaMap.get(event) match {
+          case Some(schema) => schema.success
+          case None => s"$vendor event at index [$index] failed: event schema map incorrectly setup".failNel
+        }
+      }
+      case "" => s"$vendor event at index [$index] failed: type parameter is empty - cannot determine event type".failNel
+      case et => s"$vendor event at index [$index] failed: type parameter [$et] not recognized".failNel
+    }
 }
