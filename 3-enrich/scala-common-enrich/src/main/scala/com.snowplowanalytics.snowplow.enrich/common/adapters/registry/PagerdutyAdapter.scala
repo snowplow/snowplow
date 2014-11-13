@@ -93,6 +93,7 @@ object PagerdutyAdapter extends Adapter {
       case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for PagerDuty".failNel
       case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for PagerDuty".failNel
       case (Some(body),_)                     => {
+
         payloadBodyToEventList(body) match {
           case Failure(str)  => str.failNel
           case Success(list) => {
@@ -104,22 +105,21 @@ object PagerdutyAdapter extends Adapter {
               } yield {
 
                 // Create an Option[String] to pass as an arg for lookupSchema
-                val typeOpt = (event \ "type").extractOpt[String]
+                val eventOpt: Option[String] = (event \ "type").extractOpt[String]
 
                 // If schema lookup is a success we can make a RawEvent
                 for {
-                  schema <- lookupSchema(typeOpt, VendorName, index, EventSchemaMap)
+                  schema <- lookupSchema(eventOpt, VendorName, index, EventSchemaMap)
                 } yield {
 
                   // Construct an unstructured event from the payload and the event json
                   val formattedEvent = reformatParameters(event)
                   val qsParams = toMap(payload.querystring)
-                  val unstructEvent = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv")
 
                   // Make a validated RawEvent
                   RawEvent(
                     api          = payload.api,
-                    parameters   = unstructEvent,
+                    parameters   = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
                     contentType  = payload.contentType,
                     source       = payload.source,
                     context      = payload.context
@@ -170,6 +170,6 @@ object PagerdutyAdapter extends Adapter {
    */
   private[registry] def reformatParameters(json: JValue): JValue =
     json transformField {
-      case (key, JString("null")) => (key, null)
+      case (key, JString("null")) => (key, JNull)
     }
 }
