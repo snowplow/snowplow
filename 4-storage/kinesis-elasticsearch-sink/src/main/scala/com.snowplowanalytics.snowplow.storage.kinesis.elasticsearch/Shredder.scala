@@ -34,18 +34,68 @@ object Shredder {
 
   private val schemaPattern = """.+:([a-zA-Z0-9_\.]+)/([a-zA-Z0-9_]+)/[^/]+/(.*)""".r
 
+  /**
+   * Create an Elasticsearch field name from a schema
+   *
+   * "iglu:com.acme/PascalCase/jsonschema/13-0-0" -> "context_com_acme_pascal_case_13"
+   *
+   * @param prefix "context" or "unstruct_event"
+   * @param schema Schema field from an incoming JSON
+   */
   def fixSchema(prefix: String, schema: String): ValidationNel[String, String] = {
     schema match {
       case schemaPattern(organization, name, schemaVer) => {
+
+        // Split the vendor's reversed domain name using underscores rather than dots
         val snakeCaseOrganization = organization.replaceAll("""\.""", "_").toLowerCase
+
+        // Change the name from PascalCase to snake_case if necessary
         val snakeCaseName = name.replaceAll("([^_])([A-Z])", "$1_$2").toLowerCase
+
+        // Extract the schemaver version's model
         val model = schemaVer.split("-")(0)
+
         s"${prefix}_${snakeCaseOrganization}_${snakeCaseName}_${model}".successNel
       }
       case _ => "Schema %s does not conform to regular expression %s".format(schema, schemaPattern.toString).failNel
     }
   }
 
+  /**
+   * Convert a contexts JSON to an Elasticsearch-compatible JObject
+   * For example, the JSON
+   *
+   *  {
+   *    "schema": "iglu:com.snowplowanalytics.snowplow\/contexts\/jsonschema\/1-0-0",
+   *    "data": [
+   *      {
+   *        "schema": "iglu:com.acme/unduplicated/jsonschema/1-0-0",
+   *        "data": {
+   *          "unique": true
+   *        }
+   *      },
+   *      {
+   *        "schema": "iglu:com.acme/duplicated/jsonschema/1-0-0",
+   *        "data": {
+   *          "value": 1
+   *        }
+   *      }
+   *      {
+   *        "schema": "iglu:com.acme/duplicated/jsonschema/1-0-0",
+   *        "data": {
+   *          "value": 2
+   *        }
+   *      }
+   *    ]
+   *  }
+   *
+   * would become
+   *
+   *  {
+   *    "com_acme_duplicated_1": [{"value": 1}, {"value": 2}]
+   *    "com_acme_unduplicated": [{"unique": true}]
+   *  }
+   */
   def parseContexts(contexts: String): ValidationNel[String, JObject] = {
     val json = parse(contexts)
     val data = json \ "data"
@@ -70,6 +120,26 @@ object Shredder {
     innerContexts.map(_.groupBy(_._1).map(pair => (pair._1, pair._2.map(_._2))))
   }
 
+  /**
+   * Convert an unstructured event JSON to an Elasticsearch-compatible JObject
+   * For example, the JSON
+   *
+   *  {
+   *    "schema": "iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+   *    "data": {
+   *      "schema": "iglu:com.snowplowanalytics.snowplow/link_click/jsonschema/1-0-1",
+   *      "data": {
+   *        "key": "value"
+   *      }
+   *    }
+   *  }
+   *
+   * would become
+   *
+   *  {
+   *    "com_snowplowanalytics_snowplow_link_click_1": {"key": "value"}
+   *  }
+   */
   def parseUnstruct(unstruct: String): ValidationNel[String, JObject] = {
     val json = parse(unstruct)
     val data = json \ "data"
@@ -77,7 +147,7 @@ object Shredder {
     val innerData = data \ "data"
     val fixedSchema = schema match {
       case JString(s) => fixSchema("unstruct_event", s)
-      case _ => "Unstructured event JSON did not contain a string schema field".failNel
+      case _ => "Unstructured event JSON did not contain a stringly typed schema field".failNel
     }
     fixedSchema.map(succ => (succ, innerData))
   }
