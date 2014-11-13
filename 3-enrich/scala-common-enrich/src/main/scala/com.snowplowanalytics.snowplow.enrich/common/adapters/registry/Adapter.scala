@@ -194,13 +194,11 @@ trait Adapter {
       for {
         Success(s) <- rawEventsList 
       } yield s
-
     val failures: List[String] = 
       for {
         Failure(NonEmptyList(f)) <- rawEventsList 
       } yield f
 
-    // Return a ValidatedRawEvents of either Successful RawEvents or a Nel of Failures.
     (successes, failures) match {
       case (s :: ss,     Nil) =>  NonEmptyList(s, ss: _*).success // No Failures collected.
       case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some Failures, return only those.
@@ -209,13 +207,47 @@ trait Adapter {
   }
 
   /**
+   * USAGE: Single event payloads
+   *
+   * Gets the correct Schema URI for the event 
+   * passed from the vendor payload
+   *
+   * @param eventOpt An Option[String] which will contain a 
+   *        String or None
+   * @param vendor The vendor we are doing a schema
+   *        lookup for; i.e. MailChimp or PagerDuty
+   * @param eventType The string pertaining to the type 
+   *        of event schema we are looking for
+   * @param eventSchemaMap A map of event types linked
+   *        to their relevant schema URI's
+   * @return the schema for the event or a Failure-boxed String
+   *         if we cannot recognize the event type
+   */
+  protected[registry] def lookupSchema(eventOpt: Option[String], vendor: String, eventSchemaMap: Map[String,String]): Validated[String] =
+    eventOpt match {
+      case None            => s"$vendor event failed: type parameter not provided - cannot determine event type".failNel
+      case Some(eventType) => {
+        eventType match {
+          case et if eventSchemaMap.contains(et) => {
+            eventSchemaMap.get(et) match {
+              case None         => s"$vendor event failed: type parameter [$et] has no schema associated with it - check event-schema map".failNel
+              case Some(schema) => schema.success
+            }
+          }
+          case "" => s"$vendor event failed: type parameter is empty - cannot determine event type".failNel
+          case et => s"$vendor event failed: type parameter [$et] not recognized".failNel
+        }
+      }
+    }
+
+  /**
    * USAGE: Multiple event payloads
    *
    * Gets the correct Schema URI for the event 
    * passed from the vendor payload
    *
-   * @param typeOpt An Option[String] which will contain a 
-   *        String for us to match against or None
+   * @param eventOpt An Option[String] which will contain a 
+   *        String or None
    * @param vendor The vendor we are doing a schema
    *        lookup for; i.e. MailChimp or PagerDuty
    * @param index The index of the event we are trying to
@@ -225,19 +257,17 @@ trait Adapter {
    * @param eventSchemaMap A map of event types linked
    *        to their relevant schema URI's
    * @return the schema for the event or a Failure-boxed String
-   *         if we can't recognize the event type
+   *         if we cannot recognize the event type
    */
-  protected[registry] def lookupSchema(typeOpt: Option[String], vendor: String, index: Int, 
-    eventSchemaMap: Map[String,String]): Validated[String] = {
-    
-    typeOpt match {
+  protected[registry] def lookupSchema(eventOpt: Option[String], vendor: String, index: Int, eventSchemaMap: Map[String,String]): Validated[String] =
+    eventOpt match {
       case None            => s"$vendor event at index [$index] failed: type parameter not provided - cannot determine event type".failNel
       case Some(eventType) => {
         eventType match {
           case et if eventSchemaMap.contains(et) => {
             eventSchemaMap.get(et) match {
+              case None         => s"$vendor event at index [$index] failed: type parameter [$et] has no schema associated with it - check event-schema map".failNel
               case Some(schema) => schema.success
-              case None         => s"$vendor event at index [$index] failed: event-schema map has no schema for this type".failNel
             }
           }
           case "" => s"$vendor event at index [$index] failed: type parameter is empty - cannot determine event type".failNel
@@ -245,5 +275,4 @@ trait Adapter {
         }
       }
     }
-  }
 }
