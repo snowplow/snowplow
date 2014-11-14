@@ -41,6 +41,7 @@ object Shredder {
    *
    * @param prefix "context" or "unstruct_event"
    * @param schema Schema field from an incoming JSON
+   * @return Elasticsearch field name
    */
   def fixSchema(prefix: String, schema: String): ValidationNel[String, String] = {
     schema match {
@@ -92,8 +93,8 @@ object Shredder {
    * would become
    *
    *  {
-   *    "context_com_acme_duplicated_1": [{"value": 1}, {"value": 2}]
-   *    "context_com_acme_unduplicated": [{"unique": true}]
+   *    "context_com_acme_duplicated_1": [{"value": 1}, {"value": 2}],
+   *    "context_com_acme_unduplicated_1": [{"unique": true}]
    *  }
    *
    * @param contexts Contexts JSON
@@ -134,7 +135,7 @@ object Shredder {
    *    "unstruct_com_snowplowanalytics_snowplow_link_click_1": {"key": "value"}
    *  }
    *
-   * @param contexts Unstructured event JSON
+   * @param unstruct Unstructured event JSON
    * @return Unstructured event JSON in an Elasticsearch-compatible format
    */
   def parseUnstruct(unstruct: String): ValidationNel[String, JObject] = {
