@@ -24,6 +24,7 @@ package sinks
 import java.nio.ByteBuffer
 
 // Amazon
+import com.amazonaws.services.kinesis.model.ResourceNotFoundException
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.kinesis.AmazonKinesisClient
@@ -74,23 +75,28 @@ class KinesisSink(provider: AWSCredentialsProvider,
   // The output stream for enriched events.
   private val enrichedStream = createAndLoadStream()
 
-  /**
-   * Checks if a stream exists.
-   */
+  // Checks if a stream exists.
   def streamExists(name: String, timeout: Int = 60): Boolean = {
-    val streamDescribeFuture = for {
-       s <- Kinesis.stream(name).describe
-    } yield s
 
-    val description = Await.result(streamDescribeFuture, Duration(timeout, SECONDS))
+    val exists: Boolean = try {
+      val streamDescribeFuture = for {
+        s <- Kinesis.stream(name).describe
+      } yield s
 
-    if (description.isActive) {
-      info(s"Stream $name exists and is active")
-      return true
+      val description = Await.result(streamDescribeFuture, Duration(timeout, SECONDS))
+      description.isActive
+
+    } catch {
+      case rnfe: ResourceNotFoundException => false
     }
 
-    info(s"Stream $name doesn't exist or isn't active")
-    false
+    if (exists) {
+      info(s"Stream $name exists and is active")
+    } else {
+      info(s"Stream $name doesn't exist or is not active")
+    }
+
+    exists
   }
 
   /**
