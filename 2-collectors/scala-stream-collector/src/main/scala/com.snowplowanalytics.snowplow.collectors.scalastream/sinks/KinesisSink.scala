@@ -18,6 +18,7 @@ package sinks
 import java.nio.ByteBuffer
 
 // Amazon
+import com.amazonaws.services.kinesis.model.ResourceNotFoundException
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.{
   BasicAWSCredentials,
@@ -76,18 +77,26 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
 
   // Checks if a stream exists.
   def streamExists(name: String, timeout: Int = 60): Boolean = {
-    val streamDescribeFuture = for {
-      s <- Kinesis.stream(name).describe
-    } yield s
-    val description =
-      Await.result(streamDescribeFuture, Duration(timeout, SECONDS))
-    if (description.isActive) {
-      info(s"Stream $name exists and is active")
-      return true
+
+    val exists: Boolean = try {
+      val streamDescribeFuture = for {
+        s <- Kinesis.stream(name).describe
+      } yield s
+
+      val description = Await.result(streamDescribeFuture, Duration(timeout, SECONDS))
+      description.isActive
+
+    } catch {
+      case rnfe: ResourceNotFoundException => false
     }
 
-    info(s"Stream $name doesn't exist or is not active")
-    false
+    if (exists) {
+      info(s"Stream $name exists and is active")
+    } else {
+      info(s"Stream $name doesn't exist or is not active")
+    }
+
+    exists
   }
 
   // Creates a new stream if one doesn't exist.
