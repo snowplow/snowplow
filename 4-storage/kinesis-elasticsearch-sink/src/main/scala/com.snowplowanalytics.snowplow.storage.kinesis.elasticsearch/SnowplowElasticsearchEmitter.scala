@@ -154,7 +154,7 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration,
    * The amount of time to wait in between unsuccessful index requests (in milliseconds).
    * 10 seconds = 10 * 1000 = 10000
    */
-  private val BACKOFF_PERIOD = 10000
+  private val BackoffPeriod = 10000
 
   elasticsearchClient.addTransportAddress(new InetSocketTransportAddress(elasticsearchEndpoint, elasticsearchPort))
        
@@ -261,13 +261,13 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration,
       } catch {
         case nnae: NoNodeAvailableException => {
           Log.error("No nodes found at " + elasticsearchEndpoint + ":" + elasticsearchPort + ". Retrying in "
-            + BACKOFF_PERIOD + " milliseconds", nnae)
-          sleep(BACKOFF_PERIOD)
+            + BackoffPeriod + " milliseconds", nnae)
+          sleep(BackoffPeriod)
           attemptEmit()
         }
         case e: Exception => {
           Log.error("ElasticsearchEmitter threw an unexpected exception ", e)
-          sleep(BACKOFF_PERIOD)
+          sleep(BackoffPeriod)
           attemptEmit()
         }
       }
