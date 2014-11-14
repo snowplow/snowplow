@@ -79,7 +79,7 @@ object Shredder {
    *        "data": {
    *          "value": 1
    *        }
-   *      }
+   *      },
    *      {
    *        "schema": "iglu:com.acme/duplicated/jsonschema/1-0-0",
    *        "data": {
@@ -92,22 +92,16 @@ object Shredder {
    * would become
    *
    *  {
-   *    "com_acme_duplicated_1": [{"value": 1}, {"value": 2}]
-   *    "com_acme_unduplicated": [{"unique": true}]
+   *    "context_com_acme_duplicated_1": [{"value": 1}, {"value": 2}]
+   *    "context_com_acme_unduplicated": [{"unique": true}]
    *  }
+   *
+   * @param contexts Contexts JSON
+   * @return Contexts JSON in an Elasticsearch-compatible format
    */
   def parseContexts(contexts: String): ValidationNel[String, JObject] = {
     val json = parse(contexts)
     val data = json \ "data"
-    /*
-    data.children.map(context => (context \ "schema", context \ "data")).collect({
-      case (JString(schema), innerData) if innerData != JNothing => (fixSchema("contexts", schema), innerData)
-    }).groupBy(_._1).map(pair => (pair._1, pair._2.map(_._2)))
-    */
-    /*json \ "data" match {
-      case JArray(data) => data.map(context => (context \ "schema", context \ "data")
-      case _ => "Contexts JSON data field is not an array".failNel
-    }*/
 
     val innerContexts: ValidationNel[String, List[(String, JValue)]] =
       data.children.map(context => (context \ "schema", context \ "data")).collect({
@@ -137,8 +131,11 @@ object Shredder {
    * would become
    *
    *  {
-   *    "com_snowplowanalytics_snowplow_link_click_1": {"key": "value"}
+   *    "unstruct_com_snowplowanalytics_snowplow_link_click_1": {"key": "value"}
    *  }
+   *
+   * @param contexts Unstructured event JSON
+   * @return Unstructured event JSON in an Elasticsearch-compatible format
    */
   def parseUnstruct(unstruct: String): ValidationNel[String, JObject] = {
     val json = parse(unstruct)
