@@ -37,17 +37,20 @@ import com.amazonaws.services.kinesis.connectors.impl.{BasicMemoryBuffer,AllPass
 // TODO use a package object
 import SnowplowRecord._
 
+// This project
+import sinks._
+
 /**
 * ElasticsearchPipeline class sets up the Emitter/Buffer/Transformer/Filter
 */
-class ElasticsearchPipeline(streamType: String, documentIndex: String, documentType: String)
+class ElasticsearchPipeline(streamType: String, documentIndex: String, documentType: String, goodSink: Option[ISink], badSink: ISink)
   extends IKinesisConnectorPipeline[ValidatedRecord, EmitterInput] {
 
-  override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[EmitterInput] = new SnowplowElasticsearchEmitter(configuration)
+  override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[EmitterInput] = new SnowplowElasticsearchEmitter(configuration, goodSink, badSink)
   override def getBuffer(configuration: KinesisConnectorConfiguration) = new BasicMemoryBuffer[ValidatedRecord](configuration)
   override def getTransformer(c: KinesisConnectorConfiguration) = streamType match {
     case "good" => new SnowplowElasticsearchTransformer(documentIndex, documentType)
-    //case "bad" => new BadEventTransformer(documentIndex, documentType) // TODO
+    case "bad" => new BadEventTransformer(documentIndex, documentType)
     case _ => throw new RuntimeException("\"stream-type\" must be set to \"good\" or \"bad\"")
   }
   override def getFilter(c: KinesisConnectorConfiguration) = new AllPassFilter[ValidatedRecord]()

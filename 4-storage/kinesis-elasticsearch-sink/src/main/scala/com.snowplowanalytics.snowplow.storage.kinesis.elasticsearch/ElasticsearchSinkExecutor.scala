@@ -29,15 +29,18 @@ import com.amazonaws.services.kinesis.connectors.{
 // TODO use a package object
 import SnowplowRecord._
 
+// This project
+import sinks._
+
 /**
 * Boilerplate class for Kinesis Conenector
 */
-class ElasticsearchSinkExecutor(streamType: String, documentIndex: String, documentType: String, config: KinesisConnectorConfiguration)
+class ElasticsearchSinkExecutor(streamType: String, documentIndex: String, documentType: String, config: KinesisConnectorConfiguration, goodSink: Option[ISink], badSink: ISink)
   extends KinesisConnectorExecutorBase[ValidatedRecord, EmitterInput] {
 
   initialize(config)
   override def getKinesisConnectorRecordProcessorFactory = {
     new KinesisConnectorRecordProcessorFactory[ValidatedRecord, EmitterInput](
-      new ElasticsearchPipeline(streamType, documentIndex, documentType), config)
+      new ElasticsearchPipeline(streamType, documentIndex, documentType, goodSink, badSink), config)
   }
 }

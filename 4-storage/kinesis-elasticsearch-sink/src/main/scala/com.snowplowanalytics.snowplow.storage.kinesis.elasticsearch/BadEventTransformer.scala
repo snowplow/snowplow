@@ -26,11 +26,19 @@ import com.amazonaws.services.kinesis.connectors.elasticsearch.{
 }
 import com.amazonaws.services.kinesis.model.Record
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
+// TODO use a package object
+// TODO give BadEventTransformer its own types
+import SnowplowRecord._
+
 /**
  * Class to convert bad events to ElasticsearchObjects
  */
-class BadEventTransformer(documentIndex: String, documentType: String) extends ElasticsearchTransformer[JsonRecord]
-  with ITransformer[JsonRecord, ElasticsearchObject] {
+class BadEventTransformer(documentIndex: String, documentType: String)
+  extends ITransformer[ValidatedRecord, EmitterInput] {
 
   /**
    * Convert an Amazon Kinesis record to a JSON string
@@ -38,8 +46,10 @@ class BadEventTransformer(documentIndex: String, documentType: String) extends E
    * @param record Byte array representation of a bad row string
    * @return JsonRecord containing JSON string for the event and no event_id
    */
-  override def toClass(record: Record): JsonRecord =
-    JsonRecord(new String(record.getData.array), None)
+  override def toClass(record: Record): ValidatedRecord = {
+    val recordString = new String(record.getData.array)
+    (recordString, JsonRecord(recordString, None).success)
+  }
 
   /**
    * Convert a buffered bad event JSON to an ElasticsearchObject
@@ -47,7 +57,7 @@ class BadEventTransformer(documentIndex: String, documentType: String) extends E
    * @param record JsonRecord containing a bad event JSON
    * @return An ElasticsearchObject
    */
-  override def fromClass(record: JsonRecord): ElasticsearchObject =
-    new ElasticsearchObject(documentIndex, documentType, "duplicated", record.json)
+  override def fromClass(record: ValidatedRecord): EmitterInput =
+    (record._1, record._2.map(j => new ElasticsearchObject(documentIndex, documentType, j.json)))
 
 }

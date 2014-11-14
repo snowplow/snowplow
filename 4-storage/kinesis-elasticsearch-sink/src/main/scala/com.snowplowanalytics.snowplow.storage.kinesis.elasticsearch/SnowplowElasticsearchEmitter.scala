@@ -80,13 +80,12 @@ import org.apache.commons.logging.{
 
 // TODO use a package object
 import SnowplowRecord._
-
-// TODO make this file more functional
+import sinks._
 
 /**
  * Class to send valid records to Elasticsearch and invalid records to Kinesis
  */
-class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration)
+class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration, goodSink: Option[ISink], badSink: ISink)
   extends IEmitter[EmitterInput] {
 
   private val Log = LogFactory.getLog(getClass)
@@ -162,23 +161,51 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration)
   Log.info("ElasticsearchEmitter using elasticsearch endpoint " + elasticsearchEndpoint + ":" + elasticsearchPort)
 
   /**
-   * Emits good records to Elasticsearch and bad records to Kinesis. 
-   * All valid records in the buffer get sent to Elasticsearch in a bulk request.
-   * All invalid requests and all requests which failed transformation get sent to Kinesis.
+   * Emits good records to stdout or Elasticsearch.
+   * All records which Elasticsearch rejects and all records which failed transformation
+   * get sent to to stderr or Kinesis.
    *
    * @param buffer BasicMemoryBuffer containing EmitterInputs
    * @return list of inputs which failed transformation or which Elasticsearch rejected
    */
   @throws[IOException]
   override def emit(buffer: UnmodifiableBuffer[EmitterInput]): JList[EmitterInput] = {
-    val records = buffer.getRecords
+
+    val records = buffer.getRecords.toList
+
     if (records.isEmpty) {
-        return Nil
+      Nil
+    } else {
+
+      val (validRecords, invalidRecords) = records.partition(_._2.isSuccess)
+
+      val elasticsearchRejects = goodSink match {
+        case Some(s) => {
+          validRecords.foreach(recordTuple => recordTuple.map(record => record.map(r => s.store(r.getSource, None, true))))
+          invalidRecords
+        }
+        case None => if (validRecords.isEmpty) {
+          invalidRecords
+        } else {
+          sendToElasticsearch(validRecords)
+        }
+      }
+
+      invalidRecords ++ elasticsearchRejects
     }
+  }
+
+  /**
+   * Emits good records to Elasticsearch and bad records to Kinesis.
+   * All valid records in the buffer get sent to Elasticsearch in a bulk request.
+   * All invalid requests and all requests which failed transformation get sent to Kinesis.
+   *
+   * @param records List of records to send to Elasticsearch
+   * @return list of inputs which Elasticsearch rejected
+   */
+  private def sendToElasticsearch(records: List[EmitterInput]): List[EmitterInput] = {
 
     val bulkRequest: BulkRequestBuilder = elasticsearchClient.prepareBulk()
-
-    val (validRecords, invalidRecords) = records.partition(_._2.isSuccess)
 
     records.foreach(recordTuple => recordTuple.map(record => record.map(validRecord => {
       val indexRequestBuilder = {
@@ -202,53 +229,51 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration)
       bulkRequest.add(indexRequestBuilder)
     })))
 
-    if (validRecords.length > 0) {
-      @tailrec
-      def attemptEmit(): List[EmitterInput] = {
-        try {
-          val bulkResponse = bulkRequest.execute.actionGet
-          val responses = bulkResponse.getItems
+    @tailrec
+    def attemptEmit(): List[EmitterInput] = {
+      try {
+        val bulkResponse = bulkRequest.execute.actionGet
+        val responses = bulkResponse.getItems
 
-          val allFailures = responses.toList.zip(validRecords).filter(_._1.isFailed).map(pair => {
-            val (response, record) = pair
-            Log.error("Record failed with message: " + response.getFailureMessage)
-            val failure = response.getFailure
-            if (failure.getMessage.contains("DocumentAlreadyExistsException")
-                || failure.getMessage.contains("VersionConflictEngineException")) {
-              None
-            } else {
-              Some(record._1 -> List(failure.getMessage).fail)
-            }
-          })
+        val allFailures = responses.toList.zip(records).filter(_._1.isFailed).map(pair => {
+          val (response, record) = pair
+          Log.error("Record failed with message: " + response.getFailureMessage)
+          val failure = response.getFailure
+          if (failure.getMessage.contains("DocumentAlreadyExistsException")
+              || failure.getMessage.contains("VersionConflictEngineException")) {
+            None
+          } else {
+            Some(record._1 -> List("Elasticsearch rejected record with message: %s"
+              .format(failure.getMessage)).fail)
+          }
+        })
 
-          val numberOfSkippedRecords = allFailures.count(_.isEmpty)
-          val failures = allFailures.flatten ++ invalidRecords
+        val numberOfSkippedRecords = allFailures.count(_.isEmpty)
+        val failures = allFailures.flatten
 
-          Log.info("Emitted " + (records.size - failures.size - numberOfSkippedRecords)
-            + " records to Elasticsearch")
-          if (!failures.isEmpty) {
-            printClusterStatus
-            Log.warn("Returning " + failures.size + " records as failed")
-          }
-          failures
-        } catch {
-          case nnae: NoNodeAvailableException => {
-            Log.error("No nodes found at " + elasticsearchEndpoint + ":" + elasticsearchPort + ". Retrying in "
-              + BACKOFF_PERIOD + " milliseconds", nnae)
-            sleep(BACKOFF_PERIOD)
-            attemptEmit()
-          }
-          case e: Exception => {
-            Log.error("ElasticsearchEmitter threw an unexpected exception ", e)
-            sleep(BACKOFF_PERIOD)
-            attemptEmit()
-          }
+        Log.info("Emitted " + (records.size - failures.size - numberOfSkippedRecords)
+          + " records to Elasticsearch")
+        if (!failures.isEmpty) {
+          printClusterStatus
+          Log.warn("Returning " + failures.size + " records as failed")
+        }
+        failures
+      } catch {
+        case nnae: NoNodeAvailableException => {
+          Log.error("No nodes found at " + elasticsearchEndpoint + ":" + elasticsearchPort + ". Retrying in "
+            + BACKOFF_PERIOD + " milliseconds", nnae)
+          sleep(BACKOFF_PERIOD)
+          attemptEmit()
+        }
+        case e: Exception => {
+          Log.error("ElasticsearchEmitter threw an unexpected exception ", e)
+          sleep(BACKOFF_PERIOD)
+          attemptEmit()
         }
       }
-      attemptEmit()
-    } else {
-      invalidRecords
     }
+
+    attemptEmit()
   }
 
   /**
@@ -256,16 +281,24 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration)
    *
    * @param records List of failed records
    */
-  override def fail(records: java.util.List[EmitterInput]) {
-    // TODO: send the records to Kinesis
-    println(records)
+  override def fail(records: JList[EmitterInput]) {
+    records foreach {
+      record => {
+        val output = compact(render(("line" -> record._1) ~ ("errors" -> record._2.swap.getOrElse(Nil))))
+        badSink.store(output, Some("key"), false)
+      }
+    }
   }
 
   /**
-   * Closes the Elasticsearch client which the KinesisConnectorRecordProcessor is shut down
+   * Closes the Elasticsearch client when the KinesisConnectorRecordProcessor is shut down
    */
   override def shutdown {
     elasticsearchClient.close
+  }
+
+  def formatFailure(record: EmitterInput): String = {
+    compact(render(("line" -> record._1) ~ ("errors" -> record._2.swap.getOrElse(Nil))))
   }
 
   /**

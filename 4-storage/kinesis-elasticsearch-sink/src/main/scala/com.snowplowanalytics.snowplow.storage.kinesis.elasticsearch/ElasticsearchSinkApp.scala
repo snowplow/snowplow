@@ -18,6 +18,11 @@
  */
 package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
 
+// json4s
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.JsonDSL._
+
 // Java
 import java.io.File
 import java.util.Properties
@@ -34,6 +39,12 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 // AWS Kinesis Connector libs
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 
+// This project
+import sinks._
+
+/**
+ * Main entry point for the Elasticsearch sink
+ */
 object ElasticsearchSinkApp extends App {
   val parser = new ArgotParser(
     programName = generated.Settings.name,
@@ -64,32 +75,49 @@ object ElasticsearchSinkApp extends App {
   val configValue: Config = config.value.getOrElse(
     throw new RuntimeException("--config argument must be provided")).resolve.getConfig("connector")
 
-  val streamType = configValue.getConfig("kinesis").getString("stream-type")
+  val streamType = configValue.getConfig("kinesis").getConfig("in").getString("stream-type")
   val location = configValue.getConfig("location")
   val documentIndex = location.getString("index")
   val documentType = location.getString("type")
 
   val executor = configValue.getString("source") match {
-    case "kinesis" => new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue))
-    /*case "stdin" => new Runnable {
+
+    // Read records from Kinesis
+    case "kinesis" => {
+      val (goodSink, badSink) = configValue.getString("sink") match {
+        case "elasticsearch-kinesis" => {
+          val kinesis = configValue.getConfig("kinesis")
+          val kinesisSink = kinesis.getConfig("out")
+          val kinesisSinkName = kinesisSink.getString("stream-name")
+          val kinesisSinkShards = kinesisSink.getInt("shards")
+          val kinesisSinkRegion = kinesis.getString("region")
+          val kinesisSinkEndpoint = s"https://kinesis.${kinesisSinkRegion}.amazonaws.com"
+          (None, new KinesisSink(new DefaultAWSCredentialsProviderChain,
+            kinesisSinkEndpoint, kinesisSinkName, kinesisSinkShards))
+        }
+        case "stdouterr" => (Some(new StdouterrSink), new StdouterrSink)
+        case _ => throw new RuntimeException("Sink type must be 'stdouterr' or 'kinesis'")
+      }
+
+      new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue), goodSink, badSink)
+    }
+
+    // Run locally, reading from stdin and sending events to stdout / stderr rather than Elasticsearch / Kinesis
+    // TODO reduce code duplication
+    case "stdin" => new Runnable {
       val transformer = new SnowplowElasticsearchTransformer(documentIndex, documentType)
       def run = for (ln <- scala.io.Source.stdin.getLines) {
-        println(transformer.fromClass(transformer.jsonifyGoodEvent(ln.split("\t"))).getSource())
+        val emitterInput = transformer.fromClass(ln -> transformer.jsonifyGoodEvent(ln.split("\t", -1))
+          .leftMap(_.list))
+        emitterInput._2.bimap(
+          f => Console.err.println(compact(render(("line" -> emitterInput._1) ~ ("errors" -> f)))),
+          s => println(s.getSource)
+        )
       }
-    }*/ // TODO stdio
+    }
     case _ => throw new RuntimeException("Source must be set to 'stdin' or 'kinesis'")
   }
 
-  //val executor = new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue))
-
-/*  val t = new SnowplowElasticsearchTransformer(documentIndex, documentType)
-
-  val executor = new Runnable {
-    def run = for (ln <- scala.io.Source.stdin.getLines) {
-      println(t.fromClass(t.jsonifyGoodEvent(ln.split("\t"))).getSource())
-    }
-  }
-*/
   executor.run
 
   /**
@@ -109,10 +137,11 @@ object ElasticsearchSinkApp extends App {
     val clusterName = elasticsearch.getString("cluster-name")
 
     val kinesis = connector.getConfig("kinesis")
+    val kinesisIn = kinesis.getConfig("in")
     val streamRegion = kinesis.getString("region")
     val appName = kinesis.getString("app-name")
-    val initialPosition = kinesis.getString("initial-position")
-    val streamName = kinesis.getString("stream-name")
+    val initialPosition = kinesisIn.getString("initial-position")
+    val streamName = kinesisIn.getString("stream-name")
     val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
 
     val buffer = connector.getConfig("buffer")
