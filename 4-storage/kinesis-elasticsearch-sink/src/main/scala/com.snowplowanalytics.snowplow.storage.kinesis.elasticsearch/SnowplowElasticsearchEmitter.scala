@@ -209,7 +209,7 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration)
           val bulkResponse = bulkRequest.execute.actionGet
           val responses = bulkResponse.getItems
 
-          val allFailures = responses.toList.filter(_.isFailed).zip(validRecords).map(pair => {
+          val allFailures = responses.toList.zip(validRecords).filter(_._1.isFailed).map(pair => {
             val (response, record) = pair
             Log.error("Record failed with message: " + response.getFailureMessage)
             val failure = response.getFailure
