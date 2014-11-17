@@ -135,6 +135,7 @@ object ElasticsearchSinkApp extends App {
     props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_MILLISECONDS_LIMIT, timeLimit)
 
     props.setProperty(KinesisConnectorConfiguration.PROP_CONNECTOR_DESTINATION, "elasticsearch")
+    props.setProperty(KinesisConnectorConfiguration.DEFAULT_DYNAMODB_ENDPOINT, streamRegion)
 
     new KinesisConnectorConfiguration(props, new DefaultAWSCredentialsProviderChain())
   }
