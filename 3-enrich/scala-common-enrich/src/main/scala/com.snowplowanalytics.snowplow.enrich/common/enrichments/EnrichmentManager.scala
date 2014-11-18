@@ -189,6 +189,12 @@ object EnrichmentManager {
 
     val transform = event.transform(sourceMap, transformMap)
 
+    // A second TransformMap which can overwrite values set by the first
+    val secondPassTransformMap: TransformMap =
+      Map(("tnuid"   , (ME.toTsvSafe, "network_userid"))) // Overwrite collector-set nuid with tracker-set tnuid
+
+    val secondPassTransform = event.transform(sourceMap, secondPassTransformMap)
+
     // Parse the useragent
     val client = Option(event.useragent) match {
       case Some(ua) =>
@@ -324,8 +330,15 @@ object EnrichmentManager {
     event.se_label = CU.truncate(event.se_label, 255)
 
     // Collect our errors on Failure, or return our event on Success
-    (useragent.toValidationNel |@| client.toValidationNel |@| pageUri.toValidationNel |@| geoLocation.toValidationNel |@| refererUri.toValidationNel |@| transform |@| campaign) {
-      (_,_,_,_,_,_,_) => event
+    (useragent.toValidationNel    |@|
+      client.toValidationNel      |@|
+      pageUri.toValidationNel     |@|
+      geoLocation.toValidationNel |@|
+      refererUri.toValidationNel  |@|
+      transform                   |@|
+      secondPassTransform         |@|
+      campaign) {
+      (_,_,_,_,_,_,_,_) => event
     }
   }
 }
