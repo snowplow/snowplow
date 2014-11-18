@@ -57,7 +57,8 @@ object PingdomAdapter extends Adapter {
   // Tracker version for an Pingdom Tracking webhook
   private val TrackerVersion = "com.pingdom-v1"
 
-  // Regex for extracting data from querystring values
+  // Regex for extracting data from querystring values which we 
+  // believe are incorrectly handled Python unicode strings.
   private val PingdomValueRegex = """\(u'(.+)',\)""".r
 
   // Schemas for reverse-engineering a Snowplow unstructured event
@@ -85,7 +86,7 @@ object PingdomAdapter extends Adapter {
       case (qs)  => {
 
         reformatMapParams(qs) match {
-          case Failure(NonEmptyList(f)) => f.failNel
+          case Failure(f) => f.fail
           case Success(s) => {
 
             s.get("message") match {
@@ -117,9 +118,9 @@ object PingdomAdapter extends Adapter {
 
   /**
    * As Pingdom wraps each value in the querystring within: (u'[content]',)
-   * We need to remove these wrappers from every value before we can use them.
+   * we need to remove these wrappers from every value before we can use them.
    * example: p -> (u'app',) becomes p -> app
-   * The expected behaviour is that every value will be in this form, if 
+   * The expected behavior is that every value will be in this form, if 
    * Pingdom changes this we will not be able to process any events.
    *
    * @param params Is a list of name-value pairs from the querystring of 
@@ -150,8 +151,8 @@ object PingdomAdapter extends Adapter {
 
     (successes, failures) match {
       case (s :: ss,     Nil) => (s :: ss).toMap.successNel // No Failures collected.
-      case (s :: ss, f :: fs) => NonEmptyList(f, fs: _*).fail // Some Failures, return only those.
-      case (Nil,           _) => "Empty parameters list was passed - should never happen: empty querystring is not being caught".failNel
+      case (_,       f :: fs) => NonEmptyList(f, fs: _*).fail // Some Failures, return only those.
+      case (Nil,         Nil) => "Empty parameters list was passed - should never happen: empty querystring is not being caught".failNel
     }
   }
 
