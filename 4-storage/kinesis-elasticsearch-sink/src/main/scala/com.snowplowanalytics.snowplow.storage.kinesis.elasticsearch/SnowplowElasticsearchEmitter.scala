@@ -203,7 +203,7 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration,
    * All invalid requests and all requests which failed transformation get sent to Kinesis.
    *
    * @param records List of records to send to Elasticsearch
-   * @return list of inputs which Elasticsearch rejected
+   * @return List of inputs which Elasticsearch rejected
    */
   private def sendToElasticsearch(records: List[EmitterInput]): List[EmitterInput] = {
 
@@ -231,8 +231,12 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration,
       bulkRequest.add(indexRequestBuilder)
     })))
 
-    @tailrec
-    def attemptEmit(): List[EmitterInput] = {
+    /**
+     * Keep attempting to execute the buldRequest until it succeeds
+     *
+     * @return List of inputs which Elasticsearch rejected
+     */
+    @tailrec def attemptEmit(): List[EmitterInput] = {
       try {
         val bulkResponse = bulkRequest.execute.actionGet
         val responses = bulkResponse.getItems
