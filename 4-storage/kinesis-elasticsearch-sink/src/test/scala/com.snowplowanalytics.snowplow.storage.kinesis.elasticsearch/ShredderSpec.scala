@@ -91,7 +91,7 @@ class ShredderSpec extends Specification with ValidationMatchers {
           }
         ]
       }""")
-      val expected = ("contexts_com_acme_duplicated_20" -> List(("value" -> 1), ("value" -> 2))) ~
+      val expected = ("contexts_com_acme_duplicated_20" -> List(("value" -> 2), ("value" -> 1))) ~
         ("contexts_com_acme_unduplicated_1" -> List(("type" -> "test")))
 
       actual must beSuccessful(expected)

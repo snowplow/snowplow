@@ -29,6 +29,7 @@ import org.json4s.JsonDSL._
 
 // Scala
 import scala.util.matching.Regex
+import scala.annotation.tailrec
 
 object Shredder {
 
@@ -67,7 +68,7 @@ object Shredder {
    * For example, the JSON
    *
    *  {
-   *    "schema": "iglu:com.snowplowanalytics.snowplow\/contexts\/jsonschema\/1-0-0",
+   *    "schema": "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0",
    *    "data": [
    *      {
    *        "schema": "iglu:com.acme/unduplicated/jsonschema/1-0-0",
@@ -101,18 +102,73 @@ object Shredder {
    * @return Contexts JSON in an Elasticsearch-compatible format
    */
   def parseContexts(contexts: String): ValidationNel[String, JObject] = {
+
+    /**
+     * Validates and pairs up the schema and data fields without grouping the same schemas together
+     *
+     * For example, the JSON
+     *
+     *  {
+     *    "schema": "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0",
+     *    "data": [
+     *      {
+     *        "schema": "iglu:com.acme/duplicated/jsonschema/1-0-0",
+     *        "data": {
+     *          "value": 1
+     *        }
+     *      },
+     *      {
+     *        "schema": "iglu:com.acme/duplicated/jsonschema/1-0-0",
+     *        "data": {
+     *          "value": 2
+     *        }
+     *      }
+     *    ]
+     *  }
+     *
+     * would become
+     *
+     * [
+     *   {"context_com_acme_duplicated_1": {"value": 1}},
+     *   {"context_com_acme_duplicated_1": {"value": 2}}
+     * ]
+     *
+     * @param contextJsons List of inner custom context JSONs
+     * @param accumulator Custom contexts which have already been parsed
+     * @return List of validated tuples containing a fixed schema string and the original data JObject
+     */
+    @tailrec def innerParseContexts(contextJsons: List[JValue], accumulator: List[ValidationNel[String, (String, JValue)]]):
+      List[ValidationNel[String, (String, JValue)]] = {
+
+      contextJsons match {
+        case Nil => accumulator
+        case head :: tail => {
+          val context = head
+          val jSchema = context \ "schema"
+          val data = context \ "data"
+          val schema: ValidationNel[String, String] = jSchema match {
+            case JString(schema) => fixSchema("contexts", schema)
+            case _ => "Context JSON did not contain a stringly typed schema field".failNel
+          }
+          innerParseContexts(tail, schema.map(validSchema => (validSchema -> data)) :: accumulator)
+        }
+      }
+    }
+
     val json = parse(contexts)
     val data = json \ "data"
 
-    val innerContexts: ValidationNel[String, List[(String, JValue)]] =
-      data.children.map(context => (context \ "schema", context \ "data")).collect({
-      case (JString(schema), innerData) if innerData != JNothing => (fixSchema("contexts", schema), innerData)
-    }).map(kvp => kvp match {
-      case (Failure(f), innerData) => f.fail
-      case (Success(s), innerData) => ((s, innerData)).successNel      
-    }).sequenceU
+    data match {
+      case JArray(Nil) => "Custom contexts array is empty".failNel
+      case JArray(ls) => {
+        val innerContexts: ValidationNel[String, List[(String, JValue)]] = innerParseContexts(ls, Nil).sequenceU
 
-    innerContexts.map(_.groupBy(_._1).map(pair => (pair._1, pair._2.map(_._2))))
+        // Group contexts with the same schema together
+        innerContexts.map(_.groupBy(_._1).map(pair => (pair._1, pair._2.map(_._2))))
+      }
+      case _ => "Could not extract data field as an array".failNel
+    }
+
   }
 
   /**
