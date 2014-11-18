@@ -63,7 +63,6 @@ object PagerdutyAdapter extends Adapter {
 
   // Event-Schema Map for reverse-engineering a Snowplow unstructured event
   private val Incident = SchemaKey("com.pagerduty", "incident", "jsonschema", "1-0-0").toSchemaUri
-
   private val EventSchemaMap = Map(
     "incident.trigger"       -> Incident,
     "incident.acknowledge"   -> Incident,
@@ -99,24 +98,18 @@ object PagerdutyAdapter extends Adapter {
           case Success(list) => {
 
             // Create our list of Validated RawEvents
-            val rawEventsList: List[Validation[NonEmptyList[String],RawEvent]] = 
+            val rawEventsList: List[Validated[RawEvent]] = 
               for { 
                 (event, index) <- list.zipWithIndex
               } yield {
 
-                // Create an Option[String] to pass as an arg for lookupSchema
                 val eventOpt: Option[String] = (event \ "type").extractOpt[String]
-
-                // If schema lookup is a success we can make a RawEvent
                 for {
                   schema <- lookupSchema(eventOpt, VendorName, index, EventSchemaMap)
                 } yield {
 
-                  // Construct an unstructured event from the payload and the event json
                   val formattedEvent = reformatParameters(event)
                   val qsParams = toMap(payload.querystring)
-
-                  // Make a validated RawEvent
                   RawEvent(
                     api          = payload.api,
                     parameters   = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
@@ -171,5 +164,6 @@ object PagerdutyAdapter extends Adapter {
   private[registry] def reformatParameters(json: JValue): JValue =
     json transformField {
       case (key, JString("null")) => (key, JNull)
+      case ("type", JString(value)) if value.startsWith("incident.") => ("type", JString(value.replace("incident.", "")))
     }
 }
