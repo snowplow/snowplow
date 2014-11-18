@@ -179,13 +179,15 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration,
 
       val (validRecords, invalidRecords) = records.partition(_._2.isSuccess)
 
+      // Send all valid records to stdout / Elasticsearch and return those rejected by Elasticsearch
       val elasticsearchRejects = goodSink match {
         case Some(s) => {
-          validRecords.foreach(recordTuple => recordTuple.map(record => record.map(r => s.store(r.getSource, None, true))))
-          invalidRecords
+          validRecords.foreach(recordTuple =>
+            recordTuple.map(record => record.map(r => s.store(r.getSource, None, true))))
+          Nil
         }
         case None => if (validRecords.isEmpty) {
-          invalidRecords
+          Nil
         } else {
           sendToElasticsearch(validRecords)
         }
