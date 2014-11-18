@@ -51,7 +51,7 @@ object Shredder {
         val snakeCaseOrganization = organization.replaceAll("""\.""", "_").toLowerCase
 
         // Change the name from PascalCase to snake_case if necessary
-        val snakeCaseName = name.replaceAll("([^_])([A-Z])", "$1_$2").toLowerCase
+        val snakeCaseName = name.replaceAll("([^A-Z_])([A-Z])", "$1_$2").toLowerCase
 
         // Extract the schemaver version's model
         val model = schemaVer.split("-")(0)

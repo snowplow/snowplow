@@ -40,6 +40,11 @@ class ShredderSpec extends Specification with ValidationMatchers {
       val actual = Shredder.fixSchema("contexts", "iglu:com.acme/PascalCaseContext/jsonschema/1-0-0")
       actual must beSuccessful("contexts_com_acme_pascal_case_context_1")
     }
+
+    "fix up a schema with consecutive capital letters" in {
+      val actual = Shredder.fixSchema("contexts", "iglu:com.acme/ContextUK/jsonschema/1-0-0")
+      actual must beSuccessful("contexts_com_acme_context_uk_1")
+    }
   }
 
   "The parseUnstruct method" should {
