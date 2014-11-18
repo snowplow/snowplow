@@ -201,8 +201,8 @@ trait Adapter {
 
     (successes, failures) match {
       case (s :: ss,     Nil) =>  NonEmptyList(s, ss: _*).success // No Failures collected.
-      case (s :: ss, f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some Failures, return only those.
-      case (Nil,           _) => "List of events is empty (should never happen, not catching empty list properly)".failNel
+      case (_,       f :: fs) =>  NonEmptyList(f, fs: _*).fail    // Some or all are Failures, return these.
+      case (Nil,         Nil) => "List of events is empty (should never happen, not catching empty list properly)".failNel
     }
   }
 
