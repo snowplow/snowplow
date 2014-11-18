@@ -81,7 +81,7 @@ object PingdomAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = 
     (payload.querystring) match {
-      case (Nil) => s"Request querystring is empty: no Pingdom event to process".failNel
+      case (Nil) => s"Pingdom payload querystring is empty: nothing to process".failNel
       case (qs)  => {
 
         reformatMapParams(qs) match {
@@ -89,7 +89,7 @@ object PingdomAdapter extends Adapter {
           case Success(s) => {
 
             s.get("message") match {
-              case None => s"The querystring does not contain any event to process".failNel
+              case None => s"Pingdom payload querystring does not have 'message' as a key: no event to process".failNel
               case Some(event) => {
 
                 for {
@@ -133,7 +133,7 @@ object PingdomAdapter extends Adapter {
       value => {
         (value.getName, value.getValue) match {
           case (k, PingdomValueRegex(v)) => (k -> v).successNel
-          case (k, v) => s"Name value pair [$k -> $v]: did not match regex".failNel
+          case (k, v) => s"Pingdom name-value pair [$k -> $v]: did not pass regex".failNel
         }
       }
     }
@@ -151,7 +151,7 @@ object PingdomAdapter extends Adapter {
     (successes, failures) match {
       case (s :: ss,     Nil) => (s :: ss).toMap.successNel // No Failures collected.
       case (s :: ss, f :: fs) => NonEmptyList(f, fs: _*).fail // Some Failures, return only those.
-      case (Nil,           _) => "List of events is empty (should never happen, not catching empty list properly)".failNel
+      case (Nil,           _) => "Empty parameters list was passed - should never happen: empty querystring is not being caught".failNel
     }
   }
 
