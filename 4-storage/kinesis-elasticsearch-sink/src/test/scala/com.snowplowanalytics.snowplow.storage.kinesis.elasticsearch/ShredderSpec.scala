@@ -64,6 +64,19 @@ class ShredderSpec extends Specification with ValidationMatchers {
 
       actual must beSuccessful(expected)
     }
+
+    "fail a malformed unstructured event JSON" in {
+      val actual = Shredder.parseUnstruct("""{
+        "schema": "any",
+        "data": {}
+      }""")
+
+      val expected = NonEmptyList(
+        "Unstructured event JSON did not contain a stringly typed schema field",
+        "Could not extract inner data field from unstructured event")
+
+      actual must be failing(expected)
+    }
   }
 
   "The parseContexts method" should {
@@ -95,6 +108,35 @@ class ShredderSpec extends Specification with ValidationMatchers {
         ("contexts_com_acme_unduplicated_1" -> List(("type" -> "test")))
 
       actual must beSuccessful(expected)
+    }
+
+    "fail a malformed custom contexts JSON" in {
+      val actual = Shredder.parseContexts("""{
+        "schema": "any",
+        "data": [
+          {
+            "schema": "failing",
+            "data": {
+              "value": 1
+            }
+          },
+          {
+            "data": {
+              "value": 2
+            }
+          },
+          {
+            "schema": "iglu:com.acme/unduplicated/jsonschema/1-0-0"
+          }
+        ]
+      }""")
+
+      val expected = NonEmptyList(
+        "Could not extract inner data field from custom context",
+        "Context JSON did not contain a stringly typed schema field",
+        """Schema failing does not conform to regular expression .+:([a-zA-Z0-9_\.]+)/([a-zA-Z0-9_]+)/[^/]+/(.*)""")
+
+      actual must be failing(expected)
     }
   }
 
