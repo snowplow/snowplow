@@ -53,6 +53,9 @@ import SnowplowRecord._
  */
 class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ITransformer[ValidatedRecord, EmitterInput] {
 
+  private val LatitudeIndex = 22
+  private val LongitudeIndex = 23
+
   private val fields = Array(
     "app_id",
     "platform",
@@ -262,10 +265,19 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    */
   def jsonifyGoodEvent(event: Array[String]): ValidationNel[String, JsonRecord] = {
     if (event.size == fields.size) {
+      val geoLocation: JObject = {
+        val latitude = event(LatitudeIndex)
+        val longitude = event(LongitudeIndex)
+        if (latitude.size > 0 && longitude.size > 0) {
+          JObject("geo_location" -> JString(s"$longitude,$latitude"))
+        } else {
+          JObject()
+        }
+      }
       val validatedJObjects: Array[ValidationNel[String, JObject]] = fields.zip(event).map(converter)
       val switched: ValidationNel[String, List[JObject]] = validatedJObjects.toList.sequenceU
       switched.map( x => {
-        val j = x.fold(JObject())(_ ~ _)
+        val j = x.fold(geoLocation)(_ ~ _)
         JsonRecord(compact(render(j)), ScalazJson4sUtils.extract[String](j, "event_id").toOption)
       })
     } else {
