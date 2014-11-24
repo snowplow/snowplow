@@ -2,27 +2,49 @@
 
 connector {
 
+  # Sources currently supported are:
+  # 'kinesis' for reading records from a Kinesis stream
+  # 'stdin' for reading unencoded tab-separated events from stdin
+  # If set to "stdin", JSON documents will not be sent to Elasticsearch
+  # but will be written to stdout.
+  source = "kinesis"
+
+  # Sinks currently supported are:
+  # 'elasticsearch-kinesis' for writing good records to Elasticsearch and bad records to Kinesis
+  # 'stdouterr' for writing good records to stdout and bad records to stderr
+  sink = "elasticsearch-kinesis"
+
   aws {
     access-key: "env"
     secret-key: "env"
   }
 
   kinesis {
+
+    in {
+      stream-name: "goodfbtest" # Kinesis stream name
+
+      # "good" for a stream of successfully enriched events
+      # "bad" for a stream of bad events
+      stream-type: "good"
+
+      # LATEST: most recent data.
+      # TRIM_HORIZON: oldest available data.
+      # Note: This only affects the first run of this application
+      # on a stream.
+      initial-position: "TRIM_HORIZON"
+    }
+
+    out {
+      # Stream for enriched events which are rejected by Elasticsearch
+      stream-name: "ElasticsearchBad"
+      shards: 1
+    }
+
     region: "us-east-1"
-    stream-name: "SnowplowEnriched" # Kinesis stream name
-
-    # "good" for a stream of successfully enriched events
-    # "bad" for a stream of bad events
-    stream-type: "good"
-
-    # LATEST: most recent data.
-    # TRIM_HORIZON: oldest available data.
-    # Note: This only affects the first run of this application
-    # on a stream.
-    initial-position: "TRIM_HORIZON"
 
     # `app-name` is used for a DynamoDB table to maintain stream state.
-    app-name: SnowplowElasticsearchSink-${connector.kinesis.stream-name}
+    app-name: SnowplowElasticsearchSink-${connector.kinesis.in.stream-name}
   }
 
   elasticsearch {
