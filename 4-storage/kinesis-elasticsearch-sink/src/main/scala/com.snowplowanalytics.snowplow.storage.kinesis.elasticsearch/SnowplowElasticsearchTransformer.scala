@@ -202,6 +202,11 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     "br_cookies",
     "dvce_ismobile"
     )
+  private val tstampFields = Set(
+    "etl_tstamp",
+    "collector_tstamp",
+    "dvce_tstamp"
+    )
 
   /**
    * Convert the value of a field to a JValue based on the name of the field
@@ -225,6 +230,8 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
             case "0" => JObject(key -> JBool(false)).successNel
             case _   => "Value [%s] is not valid for field [%s]: expected 0 or 1".format(value, key).failNel
           }
+        } else if (tstampFields.contains(key)) {
+          JObject(key -> JString(reformatTstamp(value))).successNel
         } else if (key == "contexts") {
           Shredder.parseContexts(value)
         } else if (key == "unstruct_event") {
@@ -238,6 +245,14 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
       }
     }
   }
+
+  /**
+   * Converts a timestamp to ISO 8601 format
+   *
+   * @param tstamp Timestamp of the form YYYY-MM-DD hh:mm:ss
+   * @return ISO 8601 timestamp
+   */
+  private def reformatTstamp (tstamp: String): String = tstamp.replaceAll(" ", "T") + "Z"
 
   /**
    * Converts an aray of field values to a JSON whose keys are the field names

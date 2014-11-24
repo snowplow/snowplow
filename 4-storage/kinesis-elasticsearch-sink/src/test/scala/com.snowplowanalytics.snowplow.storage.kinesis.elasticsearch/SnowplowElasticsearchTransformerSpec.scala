@@ -223,6 +223,7 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       ScalazJson4sUtils.extract[Double](result, "geo_latitude") must beSuccessful(37.443604)
       ScalazJson4sUtils.extract[Boolean](result, "br_features_pdf") must beSuccessful(true)
       ScalazJson4sUtils.extract[Boolean](result, "br_features_flash") must beSuccessful(false)
+      ScalazJson4sUtils.extract[String](result, "collector_tstamp") must beSuccessful("2013-11-26T00:02:05Z")
       ScalazJson4sUtils.extract[String](result, "ti_sku") must beSuccessful(null)
 
       // unstructured event shredding
