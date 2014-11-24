@@ -13,9 +13,9 @@
 -- Copyright:     Copyright (c) 2014 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 -- 
--- Compatibility: iglu:com.pingdom/incident/jsonschema/1-0-0
+-- Compatibility: iglu:com.pingdom/incident_assign/jsonschema/1-0-0
 
-CREATE TABLE atomic.com_pingdom_incident_1 (
+CREATE TABLE atomic.com_pingdom_incident_assign_1 (
     -- Schema of this type
     schema_vendor  varchar(128)   encode runlength not null,
     schema_name    varchar(128)   encode runlength not null,
