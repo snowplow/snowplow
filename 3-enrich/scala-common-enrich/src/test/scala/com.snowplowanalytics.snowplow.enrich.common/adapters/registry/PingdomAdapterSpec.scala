@@ -46,13 +46,14 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidationMa
 
   "This is a specification to test the PingdomAdapter functionality"                                                ^
                                                                                                                    p^
-  "parseJson must return a Success Nel for a valid json string being passed"                                      ! e1^
-  "parseJson must return a Failure Nel containing the JsonParseException for invalid json strings"                ! e2^
-  "reformatMapParams must return a Success Nel for a valid List of name-value pairs"                              ! e3^
-  "reformatMapParams must return a Failure Nel if any of the name-value pairs were invalid"                       ! e4^
-  "toRawEvents must return a Success Nel for a valid querystring"                                                 ! e5^
-  "toRawEvents must return a Failure Nel for an empty querystring"                                                ! e6^
-  "toRawEvents must return a Failure Nel for a querystring which does not contain 'message' as a key"             ! e7^
+  "reformatParameters should return either an updated JSON without the 'action' field or the same JSON"           ! e1^
+  "parseJson must return a Success Nel for a valid json string being passed"                                      ! e2^
+  "parseJson must return a Failure Nel containing the JsonParseException for invalid json strings"                ! e3^
+  "reformatMapParams must return a Success Nel for a valid List of name-value pairs"                              ! e4^
+  "reformatMapParams must return a Failure Nel if any of the name-value pairs were invalid"                       ! e5^
+  "toRawEvents must return a Success Nel for a valid querystring"                                                 ! e6^
+  "toRawEvents must return a Failure Nel for an empty querystring"                                                ! e7^
+  "toRawEvents must return a Failure Nel for a querystring which does not contain 'message' as a key"             ! e8^
                                                                                                                    end
 
   implicit val resolver = SpecHelpers.IgluResolver
@@ -63,44 +64,51 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidationMa
     val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00"), "37.157.33.123".some, None, None, Nil, None)
   }
 
-  def e1 = {
+  def e1 = 
+    "SPEC NAME"           || "JSON"                                     | "EXPECTED OUTPUT"                          |
+    "Remove action field" !! """{"action":"assign","agent":"smith"}"""  ! """{"agent":"smith"}"""                    |
+    "Nothing removed"     !! """{"actions":"assign","agent":"smith"}""" ! """{"actions":"assign","agent":"smith"}""" |>{
+      (_, json, expected) => PingdomAdapter.reformatParameters(parse(json)) mustEqual parse(expected)
+  }
+
+  def e2 = {
     val jsonStr = """{"event":"incident_assign"}"""
     val expected = JObject(List(("event",JString("incident_assign"))))
     PingdomAdapter.parseJson(jsonStr) must beSuccessful(expected)
   }
 
-  def e2 = {
+  def e3 = {
     val jsonStr = """{"event":incident_assign"}"""
     val expected = "Pingdom event failed to parse into JSON: [com.fasterxml.jackson.core.JsonParseException: Unrecognized token 'incident_assign': was expecting ('true', 'false' or 'null') at [Source: java.io.StringReader@xxxxxx; line: 1, column: 25]]"
     PingdomAdapter.parseJson(jsonStr) must beFailing(NonEmptyList(expected))
   }
 
-  def e3 = {
+  def e4 = {
     val nvPairs = toNameValuePairs("p" -> "(u'apps',)")
     val expected = Map("p" -> "apps")
     PingdomAdapter.reformatMapParams(nvPairs) must beSuccessful(expected)
   }
 
-  def e4 = {
+  def e5 = {
     val nvPairs = toNameValuePairs("p" -> "(u'apps',)", "p" -> "(apps',)")
     val expected = "Pingdom name-value pair [p -> (apps',)]: did not pass regex"
     PingdomAdapter.reformatMapParams(nvPairs) must beFailing(NonEmptyList(expected))
   }
 
-  def e5 = {
+  def e6 = {
     val querystring = toNameValuePairs("p" -> "(u'apps',)", "message" -> """(u'{"check": "1421338", "checkname": "Webhooks_Test", "host": "7eef51c2.ngrok.com", "action": "assign", "incidentid": 3, "description": "down"}',)""")
     val payload = CollectorPayload(Shared.api, querystring, None, None, Shared.cljSource, Shared.context)
-    val expected = RawEvent(Shared.api,Map("tv" -> "com.pingdom-v1", "e" -> "ue", "p" -> "apps", "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.pingdom/incident_assign/jsonschema/1-0-0","data":{"check":"1421338","checkname":"Webhooks_Test","host":"7eef51c2.ngrok.com","action":"assign","incidentid":3,"description":"down"}}}"""),None,Shared.cljSource,Shared.context)
+    val expected = RawEvent(Shared.api,Map("tv" -> "com.pingdom-v1", "e" -> "ue", "p" -> "apps", "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.pingdom/incident_assign/jsonschema/1-0-0","data":{"check":"1421338","checkname":"Webhooks_Test","host":"7eef51c2.ngrok.com","incidentid":3,"description":"down"}}}"""),None,Shared.cljSource,Shared.context)
     PingdomAdapter.toRawEvents(payload) must beSuccessful(NonEmptyList(expected))
   }
 
-  def e6 = {
+  def e7 = {
     val payload = CollectorPayload(Shared.api, Nil, None, None, Shared.cljSource, Shared.context)
     val expected = "Pingdom payload querystring is empty: nothing to process"
     PingdomAdapter.toRawEvents(payload) must beFailing(NonEmptyList(expected))
   }
 
-  def e7 = {
+  def e8 = {
     val querystring = toNameValuePairs("p" -> "(u'apps',)")
     val payload = CollectorPayload(Shared.api, querystring, None, None, Shared.cljSource, Shared.context)
     val expected = "Pingdom payload querystring does not have 'message' as a key: no event to process"
