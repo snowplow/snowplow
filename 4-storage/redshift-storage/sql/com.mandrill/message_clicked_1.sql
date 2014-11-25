@@ -29,8 +29,8 @@ CREATE TABLE atomic.com_mandrill_message_clicked_1 (
     ref_parent     varchar(255)   encode runlength not null,
     -- Properties of this type
     _id                                varchar(255)   encode raw,
-    event                              varchar(255)   encode raw,
     ip                                 varchar(255)   encode raw,
+    ts                                 timestamp      encode raw,
     "location.city"                    varchar(255)   encode raw,
     "location.country_short"           varchar(255)   encode raw,
     "location.country"                 varchar(255)   encode raw,
@@ -41,16 +41,15 @@ CREATE TABLE atomic.com_mandrill_message_clicked_1 (
     "location.timezone"                varchar(255)   encode raw,
     "msg._id"                          varchar(255)   encode raw,
     "msg._version"                     varchar(255)   encode raw,
-    "msg.clicks"                       varchar(2048)  encode runlength,
+    "msg.clicks"                       varchar(2048)  encode runlength, -- Holds a JSON array
     "msg.email"                        varchar(255)   encode raw,
     "msg.metadata"                     varchar(255)   encode raw,
-    "msg.opens"                        varchar(2048)  encode runlength,
+    "msg.opens"                        varchar(2048)  encode runlength, -- Holds a JSON array
     "msg.sender"                       varchar(255)   encode raw,
     "msg.state"                        varchar(255)   encode raw,
     "msg.subject"                      varchar(255)   encode raw,
-    "msg.tags"                         varchar(2048)  encode runlength,
+    "msg.tags"                         varchar(2048)  encode runlength, -- Holds a JSON array
     "msg.ts"                           timestamp      encode raw,
-    ts                                 timestamp      encode raw,
     url                                varchar(255)   encode raw,
     "user_agent_parsed.mobile"         varchar(255)   encode raw,
     "user_agent_parsed.os_company_url" varchar(255)   encode raw,

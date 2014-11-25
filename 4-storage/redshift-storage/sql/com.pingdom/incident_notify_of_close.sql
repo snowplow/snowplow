@@ -31,7 +31,6 @@ CREATE TABLE atomic.com_pingdom_incident_notify_of_close_1 (
     "check"        varchar(255)   encode raw,
     checkname      varchar(255)   encode raw,
     host           varchar(255)   encode raw,
-    action         varchar(255)   encode raw,
     incidentid     varchar(255)   encode raw,
     description    varchar(255)   encode raw
 )
