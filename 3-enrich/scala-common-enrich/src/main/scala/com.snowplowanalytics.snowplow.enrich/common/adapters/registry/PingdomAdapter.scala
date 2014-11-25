@@ -100,10 +100,11 @@ object PingdomAdapter extends Adapter {
                     lookupSchema(eventOpt, VendorName, EventSchemaMap)
                   }
                 } yield {
+                  val formattedEvent = reformatParameters(parsedEvent)
                   val qsParams = s - "message"
                   NonEmptyList(RawEvent(
                     api          = payload.api,
-                    parameters   = toUnstructEventParams(TrackerVersion, qsParams, schema, parsedEvent, "srv"),
+                    parameters   = toUnstructEventParams(TrackerVersion, qsParams, schema, formattedEvent, "srv"),
                     contentType  = payload.contentType,
                     source       = payload.source,
                     context      = payload.context
@@ -173,5 +174,20 @@ object PingdomAdapter extends Adapter {
         val exception = JU.stripInstanceEtc(e.toString)
         s"${VendorName} event failed to parse into JSON: [$exception]".failNel
       } 
+    }
+
+  /**
+   * Returns an updated Pingdom Event JSON where 
+   * the "action" field has been removed
+   *
+   * @param json The event JSON which we need to
+   *        update values for
+   * @return the updated JSON without the "action"
+   *         field included
+   */
+  private[registry] def reformatParameters(json: JValue): JValue =
+    (json \ "action").extractOpt[String] match {
+      case Some(eventType) => json removeField { _ == JField("action", JString(eventType)) }
+      case None            => json
     }
 }
