@@ -227,10 +227,10 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       ScalazJson4sUtils.extract[String](result, "geo_location") must beSuccessful("-122.4124,37.443604")
       ScalazJson4sUtils.extract[String](result, "ti_sku") must beSuccessful(null)
 
-      // unstructured event shredding
+      // Unstructured event shredding
       result \ "unstruct_event_com_snowplowanalytics_snowplow_link_click_1" \ "elementId" must_== JString("exampleLink")
 
-      // contexts shredding
+      // Contexts shredding
       result \ "contexts_org_schema_web_page_1" \ "genre" must_== JString("blog")
     }
   }

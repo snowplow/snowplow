@@ -18,11 +18,6 @@
  */
 package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
 
-// json4s
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
-import org.json4s.JsonDSL._
-
 // Java
 import java.io.File
 import java.util.Properties
@@ -39,8 +34,24 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 // AWS Kinesis Connector libs
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
+// json4s
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.JsonDSL._
+
 // This project
 import sinks._
+
+// Whether the input stream contains enriched events or bad events
+object StreamType extends Enumeration {
+  type StreamType = Value
+  val Good, Bad = Value
+}
+
 
 /**
  * Main entry point for the Elasticsearch sink
@@ -75,7 +86,11 @@ object ElasticsearchSinkApp extends App {
   val configValue: Config = config.value.getOrElse(
     throw new RuntimeException("--config argument must be provided")).resolve.getConfig("connector")
 
-  val streamType = configValue.getConfig("kinesis").getConfig("in").getString("stream-type")
+  val streamType = configValue.getConfig("kinesis").getConfig("in").getString("stream-type") match {
+    case "good" => StreamType.Good
+    case "bad" => StreamType.Bad
+    case _ => throw new RuntimeException("\"stream-type\" must be set to \"good\" or \"bad\"")
+  }
   val location = configValue.getConfig("location")
   val documentIndex = location.getString("index")
   val documentType = location.getString("type")
@@ -99,7 +114,7 @@ object ElasticsearchSinkApp extends App {
         case _ => throw new RuntimeException("Sink type must be 'stdouterr' or 'kinesis'")
       }
 
-      new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue), goodSink, badSink)
+      new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue), goodSink, badSink).success
     }
 
     // Run locally, reading from stdin and sending events to stdout / stderr rather than Elasticsearch / Kinesis
@@ -114,11 +129,14 @@ object ElasticsearchSinkApp extends App {
           s => println(s.getSource)
         )
       }
-    }
-    case _ => throw new RuntimeException("Source must be set to 'stdin' or 'kinesis'")
+    }.success
+    case _ => "Source must be set to 'stdin' or 'kinesis'".fail
   }
 
-  executor.run
+  executor.fold(
+    err => throw new RuntimeException(err),
+    exec => exec.run()
+  )
 
   /**
    * Builds a KinesisConnectorConfiguration from the "connector" field of the configuration HOCON

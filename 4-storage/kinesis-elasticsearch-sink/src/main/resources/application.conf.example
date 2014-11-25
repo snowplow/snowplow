@@ -30,7 +30,7 @@ connector {
   kinesis {
 
     in {
-      stream-name: "goodfbtest" # Kinesis stream name
+      stream-name: "SnowplowEnriched" # Kinesis stream name
 
       # "good" for a stream of successfully enriched events
       # "bad" for a stream of bad events
@@ -45,7 +45,7 @@ connector {
 
     out {
       # Stream for enriched events which are rejected by Elasticsearch
-      stream-name: "ElasticsearchBad"
+      stream-name: "SnowplowElasticsearchBad"
       shards: 1
     }
 

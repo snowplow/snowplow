@@ -31,11 +31,12 @@ import SnowplowRecord._
 
 // This project
 import sinks._
+import StreamType._
 
 /**
 * Boilerplate class for Kinesis Conenector
 */
-class ElasticsearchSinkExecutor(streamType: String, documentIndex: String, documentType: String, config: KinesisConnectorConfiguration, goodSink: Option[ISink], badSink: ISink)
+class ElasticsearchSinkExecutor(streamType: StreamType, documentIndex: String, documentType: String, config: KinesisConnectorConfiguration, goodSink: Option[ISink], badSink: ISink)
   extends KinesisConnectorExecutorBase[ValidatedRecord, EmitterInput] {
 
   initialize(config)

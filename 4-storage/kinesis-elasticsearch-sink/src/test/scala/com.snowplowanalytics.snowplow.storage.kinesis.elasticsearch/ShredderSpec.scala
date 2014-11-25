@@ -31,17 +31,17 @@ import org.specs2.scalaz.ValidationMatchers
 class ShredderSpec extends Specification with ValidationMatchers {
 
   "The fixSchema method" should {
-    "fix up a snake_case schema" in {
+    "convert a snake_case schema to an Elasticsearch field name" in {
       val actual = Shredder.fixSchema("unstruct_event", "iglu:com.snowplowanalytics.snowplow/change_form/jsonschema/1-0-0")
       actual must beSuccessful("unstruct_event_com_snowplowanalytics_snowplow_change_form_1")
     }
 
-    "fix up a PascalCase schema" in {
+    "convert a PascalCase schema to an Elasticsearch field name" in {
       val actual = Shredder.fixSchema("contexts", "iglu:com.acme/PascalCaseContext/jsonschema/1-0-0")
       actual must beSuccessful("contexts_com_acme_pascal_case_context_1")
     }
 
-    "fix up a schema with consecutive capital letters" in {
+    "convert a schema with consecutive capital letters to an Elasticsearch field name" in {
       val actual = Shredder.fixSchema("contexts", "iglu:com.acme/ContextUK/jsonschema/1-0-0")
       actual must beSuccessful("contexts_com_acme_context_uk_1")
     }

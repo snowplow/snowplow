@@ -12,6 +12,9 @@
  */
 package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
 
+// Java
+import java.util.Properties
+
 // AWS libs
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 
@@ -22,9 +25,6 @@ import com.amazonaws.services.kinesis.connectors.{
 }
 import com.amazonaws.services.kinesis.connectors.elasticsearch.ElasticsearchObject
 import com.amazonaws.services.kinesis.connectors.impl.BasicMemoryBuffer
-
-// Java
-import java.util.Properties
 
 // Scala
 import scala.collection.JavaConversions._

@@ -29,26 +29,18 @@ object SnowplowKinesisEnrichBuild extends Build {
     .settings(
       libraryDependencies ++= Seq(
         Libraries.logging,
-        Libraries.httpCore,
-        Libraries.httpClient,
-        Libraries.jacksonCore,
         Libraries.argot,
         Libraries.config,
         Libraries.scalaUtil,
-        Libraries.snowplowRawEvent,
         Libraries.snowplowCommonEnrich,
         Libraries.scalazon,
         Libraries.scalaz7,
         Libraries.specs2,
         Libraries.scalazSpecs2,
         Libraries.commonsLang3,
-        Libraries.thrift,
         Libraries.slf4j,
-        Libraries.awsSdk,
         Libraries.kinesisClient,
-        Libraries.kinesisConnector,
-        Libraries.igluClient
-        // Add your additional libraries here (comma-separated)...
+        Libraries.kinesisConnector
       )
     )
 }

@@ -39,19 +39,19 @@ import SnowplowRecord._
 
 // This project
 import sinks._
+import StreamType._
 
 /**
 * ElasticsearchPipeline class sets up the Emitter/Buffer/Transformer/Filter
 */
-class ElasticsearchPipeline(streamType: String, documentIndex: String, documentType: String, goodSink: Option[ISink], badSink: ISink)
+class ElasticsearchPipeline(streamType: StreamType, documentIndex: String, documentType: String, goodSink: Option[ISink], badSink: ISink)
   extends IKinesisConnectorPipeline[ValidatedRecord, EmitterInput] {
 
   override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[EmitterInput] = new SnowplowElasticsearchEmitter(configuration, goodSink, badSink)
   override def getBuffer(configuration: KinesisConnectorConfiguration) = new BasicMemoryBuffer[ValidatedRecord](configuration)
   override def getTransformer(c: KinesisConnectorConfiguration) = streamType match {
-    case "good" => new SnowplowElasticsearchTransformer(documentIndex, documentType)
-    case "bad" => new BadEventTransformer(documentIndex, documentType)
-    case _ => throw new RuntimeException("\"stream-type\" must be set to \"good\" or \"bad\"")
+    case Good => new SnowplowElasticsearchTransformer(documentIndex, documentType)
+    case Bad => new BadEventTransformer(documentIndex, documentType)
   }
   override def getFilter(c: KinesisConnectorConfiguration) = new AllPassFilter[ValidatedRecord]()
 }

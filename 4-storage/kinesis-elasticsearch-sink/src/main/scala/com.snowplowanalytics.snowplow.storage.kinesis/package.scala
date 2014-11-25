@@ -18,7 +18,7 @@
  */
 // TODO make this a package object
 
-package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
+package com.snowplowanalytics.snowplow.storage.kinesis
 
 // Amazon
 import com.amazonaws.services.kinesis.connectors.elasticsearch.ElasticsearchObject
@@ -27,13 +27,14 @@ import com.amazonaws.services.kinesis.connectors.elasticsearch.ElasticsearchObje
 import scalaz._
 import Scalaz._
 
-object SnowplowRecord {
+package object elasticsearch {
 
-  // The original tab separated enriched event together with
-  // a validated ElasticsearchObject created from it (or list of errors
-  // if the creation process failed)
-  // Can't use NonEmptyList as it isn't serializable
-  // TODO consider replacing JsonRecord with a Tuple2
+  /**
+   * The original tab separated enriched event together with
+   * a validated ElasticsearchObject created from it (or list of errors
+   * if the creation process failed)
+   * Can't use NonEmptyList as it isn't serializable
+   */
   type ValidatedRecord = (String, Validation[List[String], JsonRecord])
 
   type EmitterInput = (String, Validation[List[String], ElasticsearchObject])

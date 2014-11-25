@@ -31,6 +31,10 @@ import org.json4s.JsonDSL._
 import scala.util.matching.Regex
 import scala.annotation.tailrec
 
+/**
+ * Converts unstructured events and custom contexts to a format which the Elasticsearch
+ * mapper can understand
+ */
 object Shredder {
 
   private val schemaPattern = """.+:([a-zA-Z0-9_\.]+)/([a-zA-Z0-9_]+)/[^/]+/(.*)""".r
@@ -44,6 +48,8 @@ object Shredder {
    * @param schema Schema field from an incoming JSON
    * @return Elasticsearch field name
    */
+   // TODO: move this to shared storage/shredding utils
+   // See https://github.com/snowplow/snowplow/issues/1189
   def fixSchema(prefix: String, schema: String): ValidationNel[String, String] = {
     schema match {
       case schemaPattern(organization, name, schemaVer) => {

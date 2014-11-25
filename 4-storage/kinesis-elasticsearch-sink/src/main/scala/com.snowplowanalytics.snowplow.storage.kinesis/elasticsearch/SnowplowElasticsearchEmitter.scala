@@ -78,8 +78,7 @@ import org.apache.commons.logging.{
   LogFactory
 }
 
-// TODO use a package object
-import SnowplowRecord._
+// This project
 import sinks._
 
 /**
@@ -186,11 +185,8 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration,
             recordTuple.map(record => record.map(r => s.store(r.getSource, None, true))))
           Nil
         }
-        case None => if (validRecords.isEmpty) {
-          Nil
-        } else {
-          sendToElasticsearch(validRecords)
-        }
+        case None if validRecords.isEmpty => Nil
+        case _ => sendToElasticsearch(validRecords)
       }
 
       invalidRecords ++ elasticsearchRejects

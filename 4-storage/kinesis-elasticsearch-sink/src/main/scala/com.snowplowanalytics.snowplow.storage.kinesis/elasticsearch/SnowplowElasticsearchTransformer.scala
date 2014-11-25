@@ -45,16 +45,15 @@ import com.fasterxml.jackson.core.JsonParseException
 // Snowplow
 import enrich.common.utils.ScalazJson4sUtils
 
-// TODO use a package object
-import SnowplowRecord._
-
 /**
  * Class to convert successfully enriched events to EmitterInputs
  */
 class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ITransformer[ValidatedRecord, EmitterInput] {
 
-  private val LatitudeIndex = 22
-  private val LongitudeIndex = 23
+  private object GeopointIndexes {
+    val latitude = 22
+    val longitude = 23
+  }
 
   private val fields = Array(
     "app_id",
@@ -228,11 +227,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
         } else if (doubleFields.contains(key)) {
           JObject(key -> JDouble(value.toDouble)).successNel
         } else if (boolFields.contains(key)) {
-          value match {
-            case "1" => JObject(key -> JBool(true)).successNel
-            case "0" => JObject(key -> JBool(false)).successNel
-            case _   => "Value [%s] is not valid for field [%s]: expected 0 or 1".format(value, key).failNel
-          }
+          handleBooleanField(key, value)
         } else if (tstampFields.contains(key)) {
           JObject(key -> JString(reformatTstamp(value))).successNel
         } else if (key == "contexts") {
@@ -258,6 +253,20 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
   private def reformatTstamp (tstamp: String): String = tstamp.replaceAll(" ", "T") + "Z"
 
   /**
+   * Converts "0" to false and "1" to true
+   *
+   * @param key The field name
+   * @param value The field value - should be "0" or "1"
+   * @return Validated JObject
+   */
+  private def handleBooleanField(key: String, value: String): ValidationNel[String, JObject] =
+    value match {
+      case "1" => JObject(key -> JBool(true)).successNel
+      case "0" => JObject(key -> JBool(false)).successNel
+      case _   => "Value [%s] is not valid for field [%s]: expected 0 or 1".format(value, key).failNel
+    }
+
+  /**
    * Converts an aray of field values to a JSON whose keys are the field names
    *
    * @param event Array of values for the event
@@ -266,8 +275,8 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
   def jsonifyGoodEvent(event: Array[String]): ValidationNel[String, JsonRecord] = {
     if (event.size == fields.size) {
       val geoLocation: JObject = {
-        val latitude = event(LatitudeIndex)
-        val longitude = event(LongitudeIndex)
+        val latitude = event(GeopointIndexes.latitude)
+        val longitude = event(GeopointIndexes.longitude)
         if (latitude.size > 0 && longitude.size > 0) {
           JObject("geo_location" -> JString(s"$longitude,$latitude"))
         } else {
@@ -310,5 +319,4 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
       case Some(id) => new ElasticsearchObject(documentIndex, documentType, id, r.json)
       case None => new ElasticsearchObject(documentIndex, documentType, r.json)
     }))
-
 }

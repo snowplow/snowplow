@@ -21,6 +21,9 @@ package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch.sinks
 // Java
 import java.nio.ByteBuffer
 
+// Scala
+import scala.util.Random
+
 // Amazon
 import com.amazonaws.services.kinesis.model.ResourceNotFoundException
 import com.amazonaws.auth.AWSCredentialsProvider
@@ -47,9 +50,6 @@ import scala.util.{Success, Failure}
 // Logging
 import org.slf4j.LoggerFactory
 
-// Scala
-import scala.util.Random
-
 /**
  * Kinesis Sink
  *
@@ -65,7 +65,7 @@ class KinesisSink(provider: AWSCredentialsProvider, endpoint: String, name: Stri
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
-  // explicitly create a client so we can configure the end point
+  // Explicitly create a client so we can configure the end point
   val client = new AmazonKinesisClient(provider)
   client.setEndpoint(endpoint)
 
@@ -83,6 +83,7 @@ class KinesisSink(provider: AWSCredentialsProvider, endpoint: String, name: Stri
    * @param timeout How long to wait for a description of the stream
    * @return Whether the stream both exists and is active
    */
+  // TODO move out into a kinesis helpers library
   def streamExists(name: String, timeout: Int = 60): Boolean = {
 
     val exists: Boolean = try {
@@ -112,6 +113,7 @@ class KinesisSink(provider: AWSCredentialsProvider, endpoint: String, name: Stri
    * @param How long to wait for the stream to be created
    * @return The new stream
    */
+  // TODO move out into a kinesis helpers library
   def createAndLoadStream(timeout: Int = 60): Stream = {
 
     if (streamExists(name)) {
@@ -147,7 +149,7 @@ class KinesisSink(provider: AWSCredentialsProvider, endpoint: String, name: Stri
    *            record is assigned. Defaults to a random string.
    * @param good Unused parameter which exists to extend ISink
    */
-	def store(output: String, key: Option[String], good: Boolean) {
+  def store(output: String, key: Option[String], good: Boolean) {
     val putData = for {
       p <- enrichedStream.put(
         ByteBuffer.wrap(output.getBytes),

@@ -27,54 +27,41 @@ object Dependencies {
   object V {
     // Java
     val logging              = "1.1.3"
-    val httpCore             = "4.3"
-    val httpClient           = "4.3.1"
-    val jacksonCore          = "2.3.0"
     val slf4j                = "1.7.5"
-    val awsSdk               = "1.6.11"
     val kinesisClient        = "1.0.0"
     val kinesisConnector     = "1.1.1"
     // Scala
     val argot                = "1.0.1"
     val config               = "1.0.2"
     val scalaUtil            = "0.1.0"
-    val snowplowRawEvent     = "0.1.0"
     val snowplowCommonEnrich = "0.7.0"
     val scalazon             = "0.5"
     val scalaz7              = "7.0.0"
-    val igluClient           = "0.1.0"
     // Scala (test only)
     val specs2               = "2.3.6"
     val scalazSpecs2         = "0.1.2"
     // Scala (compile only)
     val commonsLang3         = "3.1"
-    val thrift               = "0.9.0"
+    //val thrift               = "0.9.0"
   }
 
   object Libraries {
     // Java
     val logging              = "commons-logging"            %  "commons-logging"          % V.logging
-    val httpCore             = "org.apache.httpcomponents"  %  "httpcore"                 % V.httpCore
-    val httpClient           = "org.apache.httpcomponents"  %  "httpclient"               % V.httpClient
-    val jacksonCore          = "com.fasterxml.jackson.core" %  "jackson-core"             % V.jacksonCore
     val slf4j                = "org.slf4j"                  %  "slf4j-simple"             % V.slf4j
-    val awsSdk               = "com.amazonaws"              %  "aws-java-sdk"             % V.awsSdk
     val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"    % V.kinesisClient
     val kinesisConnector     = "com.amazonaws"              %  "amazon-kinesis-connector" % V.kinesisConnector
     // Scala
     val argot                = "org.clapper"                %% "argot"                    % V.argot
     val config               = "com.typesafe"               %  "config"                   % V.config
     val scalaUtil            = "com.snowplowanalytics"      %  "scala-util"               % V.scalaUtil
-    val snowplowRawEvent     = "com.snowplowanalytics"      % "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val snowplowCommonEnrich = "com.snowplowanalytics"      % "snowplow-common-enrich"    % V.snowplowCommonEnrich
     val scalazon             = "io.github.cloudify"         %% "scalazon"                 % V.scalazon
     val scalaz7              = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7
-    val igluClient           = "com.snowplowanalytics"      %% "iglu-scala-client"        % V.igluClient
     // Scala (test only)
     val specs2               = "org.specs2"                 %% "specs2"                   % V.specs2         % "test"
     val scalazSpecs2         = "org.typelevel"              %% "scalaz-specs2"            % V.scalazSpecs2   % "test"
     // Scala (compile only)
     val commonsLang3         = "org.apache.commons"         % "commons-lang3"             % V.commonsLang3   % "compile"
-    val thrift               = "org.apache.thrift"          % "libthrift"                 % V.thrift         % "compile"
   }
 }

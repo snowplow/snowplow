@@ -30,9 +30,7 @@ import com.amazonaws.services.kinesis.model.Record
 import scalaz._
 import Scalaz._
 
-// TODO use a package object
-// TODO give BadEventTransformer its own types
-import SnowplowRecord._
+// TODO consider giving BadEventTransformer its own types
 
 /**
  * Class to convert bad events to ElasticsearchObjects
