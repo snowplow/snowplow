@@ -15,7 +15,7 @@
 
 (ns snowplow.clojure-collector.core
   "Core app handler"
-  (:use [compojure.core              :only [defroutes GET POST]]
+  (:use [compojure.core              :only [defroutes GET POST HEAD]]
         [ring.middleware.cookies     :only [wrap-cookies]]
         [ring.middleware.reload      :only [wrap-reload]]
         [ring.middleware.stacktrace  :only [wrap-stacktrace]]
@@ -43,6 +43,7 @@
   (GET  "/ice.png"            {c :cookies} (send-cookie-pixel-or-200' c true))  ; legacy name for i
   (GET  "/:vendor/:version"   {c :cookies} (send-cookie-pixel-or-200' c true))  ; for tracker GET support
   (POST "/:vendor/:version"   {c :cookies} (send-cookie-pixel-or-200' c false)) ; for tracker POST support, no pixel
+  (HEAD "/:vendor/:version"   request responses/send-200)                       ; for webhooks' own checks e.g. Mandrill
   (GET  "/healthcheck"        request responses/send-200)
   ;GET "/status"              available from expose-metrics-as-json, only in development env
   ;HEAD "/"                   available from beanstalk.clj
