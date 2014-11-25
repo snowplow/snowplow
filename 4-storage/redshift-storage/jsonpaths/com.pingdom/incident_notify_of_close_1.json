@@ -15,7 +15,6 @@
     "$.data.check",
     "$.data.checkname",
     "$.data.host",
-    "$.data.action",
     "$.data.incidentid",
     "$.data.description"
     ]
