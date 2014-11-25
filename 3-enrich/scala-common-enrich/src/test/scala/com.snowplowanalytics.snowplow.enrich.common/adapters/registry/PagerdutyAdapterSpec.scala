@@ -48,8 +48,8 @@ class PagerdutyAdapterSpec extends Specification with DataTables with Validation
                                                                                                                    p^
   "reformatParameters must return an updated JSON whereby all null Strings have been replaced by null"            ! e1^
   "reformatParameters must return an updated JSON where 'incident.xxx' is replaced by xxx"                        ! e2^
-  "payloadBodyToEventList must return a Success list of event JSON's from a valid payload body"                   ! e3^
-  "payloadBodyToEventList must return a Failure Nel for an invalid payload body being passed"                     ! e4^
+  "payloadBodyToEvents must return a Success list of event JSON's from a valid payload body"                      ! e3^
+  "payloadBodyToEvents must return a Failure Nel for an invalid payload body being passed"                        ! e4^
   "toRawEvents must return a Success Nel if all events are successful"                                            ! e5^
   "toRawEvents must return a Failure Nel if any of the events where not successes"                                ! e6^
   "toRawEvents must return a Nel Failure if the request body is missing"                                          ! e7^
@@ -83,14 +83,14 @@ class PagerdutyAdapterSpec extends Specification with DataTables with Validation
   def e3 = {
     val bodyStr = """{"messages":[{"type":"incident.trigger","data":{"incident":{"id":"P9WY9U9"}}}]}"""
     val expected = List(JObject(List(("type",JString("incident.trigger")), ("data",JObject(List(("incident",JObject(List(("id",JString("P9WY9U9")))))))))))
-    PagerdutyAdapter.payloadBodyToEventList(bodyStr) must beSuccessful(expected)
+    PagerdutyAdapter.payloadBodyToEvents(bodyStr) must beSuccessful(expected)
   }
 
   def e4 = 
     "SPEC NAME"                     || "INPUT"                   | "EXPECTED OUTPUT"                                              |
     "Failure, parse exception"      !! """{"something:"some"}""" ! "PagerDuty payload failed to parse into JSON: [com.fasterxml.jackson.core.JsonParseException: Unexpected character ('s' (code 115)): was expecting a colon to separate field name and value at [Source: java.io.StringReader@xxxxxx; line: 1, column: 15]]"     |
     "Failure, missing messages key" !! """{"somekey":"key"}"""   ! "PagerDuty payload does not contain the needed 'messages' key" |> {
-      (_, input, expected) => PagerdutyAdapter.payloadBodyToEventList(input) must beFailing(expected) 
+      (_, input, expected) => PagerdutyAdapter.payloadBodyToEvents(input) must beFailing(expected) 
     }
 
   def e5 = {
