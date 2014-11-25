@@ -45,7 +45,6 @@ import org.specs2.scalaz.ValidationMatchers
 
 // This project
 import sinks._
-import SnowplowRecord._
 
 /**
  * Tests Shredder

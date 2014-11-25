@@ -26,9 +26,6 @@ import com.amazonaws.services.kinesis.connectors.{
   KinesisConnectorRecordProcessorFactory
 }
 
-// TODO use a package object
-import SnowplowRecord._
-
 // This project
 import sinks._
 import StreamType._

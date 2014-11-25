@@ -34,9 +34,6 @@ import com.amazonaws.services.kinesis.connectors.interfaces.{
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 import com.amazonaws.services.kinesis.connectors.impl.{BasicMemoryBuffer,AllPassFilter}
 
-// TODO use a package object
-import SnowplowRecord._
-
 // This project
 import sinks._
 import StreamType._

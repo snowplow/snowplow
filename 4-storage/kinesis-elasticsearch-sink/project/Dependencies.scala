@@ -34,15 +34,14 @@ object Dependencies {
     val argot                = "1.0.1"
     val config               = "1.0.2"
     val scalaUtil            = "0.1.0"
-    val snowplowCommonEnrich = "0.7.0"
+    val snowplowCommonEnrich = "0.9.0"
     val scalazon             = "0.5"
     val scalaz7              = "7.0.0"
     // Scala (test only)
-    val specs2               = "2.3.6"
+    val specs2               = "2.2"
     val scalazSpecs2         = "0.1.2"
     // Scala (compile only)
     val commonsLang3         = "3.1"
-    //val thrift               = "0.9.0"
   }
 
   object Libraries {
