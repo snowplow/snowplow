@@ -17,16 +17,13 @@ package common
 package adapters
 package registry
 
-// Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
-import iglu.client.validation.ValidatableJsonMethods._
-
 // Java
 import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
+
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
@@ -44,9 +41,12 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 
-// Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+// Iglu
+import iglu.client.{
+  SchemaKey,
+  Resolver
+}
+import iglu.client.validation.ValidatableJsonMethods._
 
 // This project
 import loaders.CollectorPayload
@@ -101,14 +101,14 @@ object MailchimpAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _)                          => s"Request body is empty: no MailChimp event to process".failNel
-      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for MailChimp".failNel
-      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for MailChimp".failNel
+      case (None, _)                          => s"Request body is empty: no ${VendorName} event to process".failNel
+      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
+      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
       case (Some(body), _)                    => {
 
         val params = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
         params.get("type") match {
-          case None => s"No MailChimp type parameter provided: cannot determine event type".failNel
+          case None => s"No ${VendorName} type parameter provided: cannot determine event type".failNel
           case Some(eventType) => {
 
             val allParams = toMap(payload.querystring) ++ reformatParameters(params)
