@@ -17,15 +17,13 @@ package common
 package adapters
 package registry
 
-// Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
-
 // Java
 import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
+
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 // Jackson
 import com.fasterxml.jackson.core.JsonParseException
@@ -43,9 +41,11 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 
-// Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+// Iglu
+import iglu.client.{
+  SchemaKey,
+  Resolver
+}
 
 // This project
 import loaders.CollectorPayload
@@ -102,12 +102,12 @@ object MandrillAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _)                          => s"Request body is empty: no Mandrill events to process".failNel
-      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for Mandrill".failNel
-      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for Mandrill".failNel
+      case (None, _)                          => s"Request body is empty: no ${VendorName} events to process".failNel
+      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
+      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
       case (Some(body),_)                     => {
 
-        payloadBodyToEventList(body) match {
+        payloadBodyToEvents(body) match {
           case Failure(str)  => str.failNel
           case Success(list) => {
 
@@ -122,7 +122,7 @@ object MandrillAdapter extends Adapter {
                   schema <- lookupSchema(eventOpt, VendorName, index, EventSchemaMap)
                 } yield {
                   
-                  val formattedEvent = reformatParameters(event)
+                  val formattedEvent = reformatParameters(event, eventOpt)
                   val qsParams = toMap(payload.querystring)
                   RawEvent(
                     api          = payload.api,
@@ -156,27 +156,27 @@ object MandrillAdapter extends Adapter {
    * @return a list of single events formatted as 
    *         json4s JValue JSONs or a Failure String
    */
-  private[registry] def payloadBodyToEventList(rawEventString: String): Validation[String,List[JValue]] = {
+  private[registry] def payloadBodyToEvents(rawEventString: String): Validation[String,List[JValue]] = {
 
     val bodyMap = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + rawEventString), "UTF-8").toList)
 
     bodyMap match {
-      case map if map.size != 1 => s"Mapped Mandrill body has invalid count of keys: ${map.size}".fail
+      case map if map.size != 1 => s"Mapped ${VendorName} body has invalid count of keys: ${map.size}".fail
       case map                  => {
         map.get("mandrill_events") match {
-          case None       => s"Mapped Mandrill body does not have 'mandrill_events' as a key".fail
-          case Some("")   => s"Mandrill events string is empty: nothing to process".fail
+          case None       => s"Mapped ${VendorName} body does not have 'mandrill_events' as a key".fail
+          case Some("")   => s"${VendorName} events string is empty: nothing to process".fail
           case Some(dStr) => {
             try {
               val parsed = parse(dStr)
               parsed match {
                 case JArray(list) => list.success
-                case _            => s"Could not resolve Mandrill payload into a JSON array of events".fail
+                case _            => s"Could not resolve ${VendorName} payload into a JSON array of events".fail
               }
             } catch {
               case e: JsonParseException => {
                 val exception = JU.stripInstanceEtc(e.toString)
-                s"Mandrill events string failed to parse into JSON: [$exception]".fail
+                s"${VendorName} events string failed to parse into JSON: [$exception]".fail
               }
             }
           }
@@ -189,14 +189,19 @@ object MandrillAdapter extends Adapter {
    * Returns an updated Mandrill Event JSON where 
    * all of the timestamp fields ("ts":_) have been 
    * changed to a valid JsonSchema date-time format
+   * and the "event":_type field has been removed
    *
    * @param json The event JSON which we need to
    *        update values for
+   * @param eventOpt The event type as an Option[String]
+   *        which we are now going to remove from
+   *        the event JSON
    * @return the updated JSON with valid date-time
    *         values in the 'ts' fields
    */
-  private[registry] def reformatParameters(json: JValue): JValue =
-    json transformField {
+  private[registry] def reformatParameters(json: JValue, eventOpt: Option[String]): JValue = {
+
+    val j1 = json transformField {
       case ("ts", JInt(x)) => {
         try {
           val dt: DateTime = new DateTime(x.longValue() * 1000)
@@ -206,4 +211,10 @@ object MandrillAdapter extends Adapter {
         }
       }
     }
+
+    eventOpt match {
+      case Some(eventType) => j1 removeField { _ == JField("event", eventType) }
+      case None            => j1
+    }
+  }
 }
