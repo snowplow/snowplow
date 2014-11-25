@@ -94,7 +94,7 @@ object PingdomAdapter extends Adapter {
               case Some(event) => {
 
                 for {
-                  parsedEvent <- parseJsonSafe(event)
+                  parsedEvent <- parseJson(event)
                   schema <- {
                     val eventOpt = (parsedEvent \ "action").extractOpt[String]
                     lookupSchema(eventOpt, VendorName, EventSchemaMap)
@@ -164,7 +164,7 @@ object PingdomAdapter extends Adapter {
    * @return a Validated JValue or a NonEmptyList Failure 
    *         containing a JsonParseException
    */
-  private[registry] def parseJsonSafe(jsonStr: String): Validated[JValue] =
+  private[registry] def parseJson(jsonStr: String): Validated[JValue] =
     try {
       parse(jsonStr).successNel
     } catch {

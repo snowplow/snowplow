@@ -154,7 +154,14 @@ object PagerdutyAdapter extends Adapter {
   /**
    * Returns an updated event JSON where 
    * all of the fields with a null string
-   * have been changed to a null value
+   * have been changed to a null value and
+   * all event types have been trimmed.
+   *
+   * e.g. "event" -> "null"
+   *      "event" -> null
+   *
+   * e.g. "type" -> "incident.trigger"
+   *      "type" -> "trigger"
    *
    * @param json The event JSON which we need to
    *        update values within
