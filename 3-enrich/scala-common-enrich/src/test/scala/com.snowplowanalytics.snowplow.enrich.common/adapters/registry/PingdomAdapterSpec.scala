@@ -46,8 +46,8 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidationMa
 
   "This is a specification to test the PingdomAdapter functionality"                                                ^
                                                                                                                    p^
-  "parseJsonSafe must return a Success Nel for a valid json string being passed"                                  ! e1^
-  "parseJsonSafe must return a Failure Nel containing the JsonParseException for invalid json strings"            ! e2^
+  "parseJson must return a Success Nel for a valid json string being passed"                                      ! e1^
+  "parseJson must return a Failure Nel containing the JsonParseException for invalid json strings"                ! e2^
   "reformatMapParams must return a Success Nel for a valid List of name-value pairs"                              ! e3^
   "reformatMapParams must return a Failure Nel if any of the name-value pairs were invalid"                       ! e4^
   "toRawEvents must return a Success Nel for a valid querystring"                                                 ! e5^
@@ -66,13 +66,13 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidationMa
   def e1 = {
     val jsonStr = """{"event":"incident_assign"}"""
     val expected = JObject(List(("event",JString("incident_assign"))))
-    PingdomAdapter.parseJsonSafe(jsonStr) must beSuccessful(expected)
+    PingdomAdapter.parseJson(jsonStr) must beSuccessful(expected)
   }
 
   def e2 = {
     val jsonStr = """{"event":incident_assign"}"""
     val expected = "Pingdom event failed to parse into JSON: [com.fasterxml.jackson.core.JsonParseException: Unrecognized token 'incident_assign': was expecting ('true', 'false' or 'null') at [Source: java.io.StringReader@xxxxxx; line: 1, column: 25]]"
-    PingdomAdapter.parseJsonSafe(jsonStr) must beFailing(NonEmptyList(expected))
+    PingdomAdapter.parseJson(jsonStr) must beFailing(NonEmptyList(expected))
   }
 
   def e3 = {
