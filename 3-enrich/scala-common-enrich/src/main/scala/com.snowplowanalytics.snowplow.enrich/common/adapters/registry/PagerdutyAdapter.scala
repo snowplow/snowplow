@@ -17,13 +17,6 @@ package common
 package adapters
 package registry
 
-// Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
-import iglu.client.validation.ValidatableJsonMethods._
-
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.core.JsonParseException
@@ -40,6 +33,13 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
+
+// Iglu
+import iglu.client.{
+  SchemaKey,
+  Resolver
+}
+import iglu.client.validation.ValidatableJsonMethods._
 
 // This project
 import loaders.CollectorPayload
@@ -88,12 +88,12 @@ object PagerdutyAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = 
     (payload.body, payload.contentType) match {
-      case (None, _)                          => s"Request body is empty: no PagerDuty events to process".failNel
-      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for PagerDuty".failNel
-      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for PagerDuty".failNel
+      case (None, _)                          => s"Request body is empty: no ${VendorName} events to process".failNel
+      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
+      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
       case (Some(body),_)                     => {
 
-        payloadBodyToEventList(body) match {
+        payloadBodyToEvents(body) match {
           case Failure(str)  => str.failNel
           case Success(list) => {
 
@@ -136,18 +136,18 @@ object PagerdutyAdapter extends Adapter {
    * @return either a Successful List of JValue JSONs
    *         or a Failure String 
    */
-  private[registry] def payloadBodyToEventList(body: String): Validation[String,List[JValue]] =
+  private[registry] def payloadBodyToEvents(body: String): Validation[String,List[JValue]] =
     try {
       val parsed = parse(body)
       (parsed \ "messages") match {
         case JArray(list) => list.success
-        case JNothing     => s"PagerDuty payload does not contain the needed 'messages' key".fail
-        case _            => s"Could not resolve PagerDuty payload into a JSON array of events".fail
+        case JNothing     => s"${VendorName} payload does not contain the needed 'messages' key".fail
+        case _            => s"Could not resolve ${VendorName} payload into a JSON array of events".fail
       }
     } catch {
       case e: JsonParseException => {
         val exception = JU.stripInstanceEtc(e.toString)
-        s"PagerDuty payload failed to parse into JSON: [$exception]".fail
+        s"${VendorName} payload failed to parse into JSON: [$exception]".fail
       }
     }
 
