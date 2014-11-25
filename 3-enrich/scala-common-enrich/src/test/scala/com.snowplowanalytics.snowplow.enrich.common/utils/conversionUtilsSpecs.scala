@@ -45,8 +45,6 @@ class StringToUriSpec extends Specification with DataTables {
     "Space in qs"                         !! "http://www.example.com/?a=b c" ! Some(URI.create("http://www.example.com/?a=b%20c")).success |
     "Forward slash in qs"                 !! "http://www.example.com/?a=b/c" ! Some(URI.create("http://www.example.com/?a=b/c")).success |
     "Plus in qs"                          !! "http://www.example.com/?a=b+c" ! Some(URI.create("http://www.example.com/?a=b+c")).success |
-
-    // If we have to fall back to NET-A-PORTER, plus signs will be percent encoded
     "Salvageable URI with plus in qs"     !! "http://www.example.com/|/?a=b+c" ! Some(URI.create("http://www.example.com/%7C/?a=b%2Bc")).success |> {
 
       (_, uri, expected) => {    
