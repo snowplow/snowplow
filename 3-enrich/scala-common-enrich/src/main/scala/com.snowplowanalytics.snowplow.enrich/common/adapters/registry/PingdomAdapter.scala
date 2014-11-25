@@ -17,12 +17,6 @@ package common
 package adapters
 package registry
 
-// Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
-
 // Java
 import org.apache.http.NameValuePair
 
@@ -39,6 +33,12 @@ import com.fasterxml.jackson.core.JsonParseException
 // json4s
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+
+// Iglu
+import iglu.client.{
+  SchemaKey,
+  Resolver
+}
 
 // This project
 import loaders.CollectorPayload
@@ -82,7 +82,7 @@ object PingdomAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = 
     (payload.querystring) match {
-      case (Nil) => s"Pingdom payload querystring is empty: nothing to process".failNel
+      case (Nil) => s"${VendorName} payload querystring is empty: nothing to process".failNel
       case (qs)  => {
 
         reformatMapParams(qs) match {
@@ -90,7 +90,7 @@ object PingdomAdapter extends Adapter {
           case Success(s) => {
 
             s.get("message") match {
-              case None => s"Pingdom payload querystring does not have 'message' as a key: no event to process".failNel
+              case None => s"${VendorName} payload querystring does not have 'message' as a key: no event to process".failNel
               case Some(event) => {
 
                 for {
@@ -120,10 +120,11 @@ object PingdomAdapter extends Adapter {
    * As Pingdom wraps each value in the querystring within: (u'[content]',)
    * we need to remove these wrappers from every value before we can use them.
    * example: p -> (u'app',) becomes p -> app
+   *
    * The expected behavior is that every value will be in this form, if 
    * Pingdom changes this we will not be able to process any events.
    *
-   * @param params Is a list of name-value pairs from the querystring of 
+   * @param params A list of name-value pairs from the querystring of 
    *        the Pingdom payload
    * @return a Map of name-value pairs which has been validated as all 
    *         passing the regex extraction or return a NonEmptyList of Failures 
@@ -134,7 +135,7 @@ object PingdomAdapter extends Adapter {
       value => {
         (value.getName, value.getValue) match {
           case (k, PingdomValueRegex(v)) => (k -> v).successNel
-          case (k, v) => s"Pingdom name-value pair [$k -> $v]: did not pass regex".failNel
+          case (k, v) => s"${VendorName} name-value pair [$k -> $v]: did not pass regex".failNel
         }
       }
     }
@@ -170,7 +171,7 @@ object PingdomAdapter extends Adapter {
     } catch {
       case e: JsonParseException => {
         val exception = JU.stripInstanceEtc(e.toString)
-        s"Pingdom event failed to parse into JSON: [$exception]".failNel
+        s"${VendorName} event failed to parse into JSON: [$exception]".failNel
       } 
     }
 }
