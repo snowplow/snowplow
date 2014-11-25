@@ -13,7 +13,7 @@
     "$.hierarchy.refParent",
 
     "$.data._id",
-    "$.data.event",
+    "$.data.ts",
     "$.data.ip",
     "$.data.location.city",
     "$.data.location.country_short",
@@ -34,7 +34,6 @@
     "$.data.msg.subject",
     "$.data.msg.tags",
     "$.data.msg.ts",
-    "$.data.ts",
     "$.data.user_agent_parsed.mobile",
     "$.data.user_agent_parsed.os_company_url",
     "$.data.user_agent_parsed.os_company",

@@ -13,7 +13,7 @@
     "$.hierarchy.refParent",
 
     "$.data._id",
-    "$.data.event",
+    "$.data.ts",
     "$.data.msg._id",
     "$.data.msg._version",
     "$.data.msg.clicks",
@@ -24,7 +24,6 @@
     "$.data.msg.state",
     "$.data.msg.subject",
     "$.data.msg.tags",
-    "$.data.msg.ts",
-    "$.data.ts" 
+    "$.data.msg.ts"
     ]
 }
