@@ -1,5 +1,5 @@
  /*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd.
+ * Copyright (c) 2014 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -293,7 +293,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    * @return ValidatedRecord for the event
    */
   override def toClass(record: Record): ValidatedRecord = {
-    val recordString = new String(record.getData.array) // TODO: just use the original record
+    val recordString = new String(record.getData.array)
 
     // The -1 is necessary to prevent trailing empty strings from being discarded
     (recordString, jsonifyGoodEvent(recordString.split("\t", -1)).leftMap(_.toList))
