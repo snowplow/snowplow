@@ -151,10 +151,10 @@ trait Adapter {
    *        we will nest into the unstructured event
    * @param schema The schema key which defines this
    *        unstructured event as a String
-   * @param eventJson The event which we want to nest
+   * @param eventJson The event which we will nest
    *        into the unstructured event
    * @param platform The default platform to assign
-   *         the event to
+   *        the event to
    * @return the raw-event parameters for a valid
    *         Snowplow unstructured event
    */
@@ -180,8 +180,10 @@ trait Adapter {
   /**
    * USAGE: Multiple event payloads
    *
-   * Processes a list of individual Validated RawEvents 
-   * into a ValidatedRawEvents object.
+   * Processes a list of Validated RawEvents 
+   * into a ValidatedRawEvents object. If there
+   * were any Failures in the list we will only
+   * return these.
    *
    * @param rawEventsList The list of RawEvents that needs
    *        to be processed
@@ -189,11 +191,12 @@ trait Adapter {
    *         of either Successful RawEvents or Failures
    */
   protected[registry] def rawEventsListProcessor(rawEventsList: List[Validated[RawEvent]]): ValidatedRawEvents = {
-    // Gather successes and failures into seperate lists.
+
     val successes: List[RawEvent] = 
       for {
         Success(s) <- rawEventsList 
       } yield s
+
     val failures: List[String] = 
       for {
         Failure(NonEmptyList(f)) <- rawEventsList 
@@ -216,8 +219,6 @@ trait Adapter {
    *        String or None
    * @param vendor The vendor we are doing a schema
    *        lookup for; i.e. MailChimp or PagerDuty
-   * @param eventType The string pertaining to the type 
-   *        of event schema we are looking for
    * @param eventSchemaMap A map of event types linked
    *        to their relevant schema URI's
    * @return the schema for the event or a Failure-boxed String
@@ -252,8 +253,6 @@ trait Adapter {
    *        lookup for; i.e. MailChimp or PagerDuty
    * @param index The index of the event we are trying to
    *        get a schema URI for
-   * @param eventType The string pertaining to the type 
-   *        of event schema we are looking for
    * @param eventSchemaMap A map of event types linked
    *        to their relevant schema URI's
    * @return the schema for the event or a Failure-boxed String
