@@ -278,7 +278,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
         val latitude = event(GeopointIndexes.latitude)
         val longitude = event(GeopointIndexes.longitude)
         if (latitude.size > 0 && longitude.size > 0) {
-          JObject("geo_location" -> JString(s"$longitude,$latitude"))
+          JObject("geo_location" -> JString(s"$latitude,$longitude"))
         } else {
           JObject()
         }
