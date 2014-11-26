@@ -33,12 +33,13 @@ object TransactionSpec {
   val expected = List(
     "CFe23a",
     "web",
+    TimestampRegex,
     "2014-02-02 22:05:16.143",
     "2014-02-02 22:05:16.271",
     "transaction",
-    "com.snowplowanalytics",
     Uuid4Regexp, // Regexp match
     "636239",
+    "",
     "js-0.13.1",
     "ssc-0.1.0-stdout",
     EnrichVersion,
@@ -47,18 +48,27 @@ object TransactionSpec {
     "1804954790",
     "3c1757544e39bca4",
     "26",
+    "75a13583-5c99-40e3-81fc-541084dfc784",
     "",
     "",
     "",
     "",
     "",
     "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "file://file:///Users/alex/Development/dev-environment/demo/1-tracker/events.html/overridden-url/",
     "",
     "",
     "file",
     "file",
     "80",
     "///Users/alex/Development/dev-environment/demo/1-tracker/events.html/overridden-url/",
+    "",
+    "",
     "",
     "",
     "",
@@ -140,7 +150,7 @@ class TransactionSpec extends Specification {
 
       val rawEvent = Base64.decodeBase64(TransactionSpec.raw)
       
-      val enrichedEvent = TestSource.enrichEvent(rawEvent)
+      val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
       enrichedEvent must beSome
 
       val fields = enrichedEvent.get.split("\t")

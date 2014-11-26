@@ -20,15 +20,17 @@ Assuming you already have [SBT 0.13.0] [sbt] installed:
 Scala Kinesis Enrich has the following command-line interface:
 
 ```
-snowplow-kinesis-enrich: Version 0.0.1. Copyright (c) 2013, Snowplow Analytics
+snowplow-kinesis-enrich: Version 0.2.0. Copyright (c) 2013, Snowplow Analytics
 Ltd.
 
 Usage: snowplow-kinesis-enrich [OPTIONS]
 
 OPTIONS
 --config filename
-                   Configuration file. Defaults to \"resources/default.conf\"
-                   (within .jar) if not set
+                   Configuration file.
+
+--enrichments filename
+                   Directory of enrichment configuration JSONs
 ```
 
 ## Running
@@ -46,16 +48,15 @@ aws {
 }
 ```
 
-Next, download the latest version of the [GeoLite database][geolite].
-
-```
-$ wget http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz -O /tmp/GeoLiteCity.dat.gz
-$ gunzip /tmp/GeoLiteCity.dat.gz
-```
+If you set the fields to "env", the access key and secret key will be taken from the environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.
 
 Next, start the enricher, making sure to specify your new config file:
 
     $ sbt "run --config my.conf"
+
+If you want to use customizable enrichments, create a directory of enrichment JSONs as described in the [Configuring Enrichments][configuring-enrichments] wiki page and pass its filepath using the --enrichments option:
+
+    $ sbt "run --config my.conf --enrichments path/to/enrichmentsdirectory"
 
 ## Copyright and license
 
@@ -75,6 +76,7 @@ limitations under the License.
 [common-enrich]: https://github.com/snowplow/snowplow/tree/master/3-enrich/scala-common-enrich
 [sbt]: http://typesafe.artifactoryonline.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.0/sbt-launch.jar
 
-[geolite]: http://dev.maxmind.com/geoip/legacy/geolite/
+[configuring-enrichments]: https://github.com/snowplow/snowplow/wiki/5-Configuring-enrichments
+[iglu-client-configuration]: https://github.com/snowplow/iglu/wiki/Iglu-client-configuration
 
 [license]: http://www.apache.org/licenses/LICENSE-2.0

@@ -20,12 +20,12 @@ object BuildSettings {
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
-    organization          :=  "Snowplow Analytics Ltd",
-    version               :=  "0.1.0",
+    organization          :=  "com.snowplowanalytics",
+    version               :=  "0.2.0",
     description           :=  "Scala Stream Collector for Snowplow raw events",
     scalaVersion          :=  "2.10.1",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
-                                  "-unchecked", "-feature"),
+                                  "-unchecked", "-feature", "-target:jvm-1.7"),
     scalacOptions in Test :=  Seq("-Yrangepos"),
     maxErrors             := 5,
     // http://www.scala-sbt.org/0.13.0/docs/Detailed-Topics/Forking.html
