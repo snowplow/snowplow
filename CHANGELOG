@@ -1,4 +1,4 @@
-Version 0.9.12 (2014-11-xx)
+Version 0.9.12 (2014-11-26)
 ---------------------------
 Scala Stream Collector: bumped to 0.2.0
 Scala Stream Collector: changed organization to "com.snowplowanalytics" (#1168)
