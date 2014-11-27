@@ -10,7 +10,7 @@
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 -- 
 -- Authors:     Joshua Beemster
--- Copyright:     Copyright (c) 2014 Snowplow Analytics Ltd
+-- Copyright:   Copyright (c) 2014 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 -- 
 -- Compatibility: iglu:com.pagerduty/incident/jsonschema/1-0-0
