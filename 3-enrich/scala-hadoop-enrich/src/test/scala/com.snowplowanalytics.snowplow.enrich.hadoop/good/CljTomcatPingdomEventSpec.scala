@@ -159,7 +159,7 @@ object CljTomcatPingdomEventSpec {
  */
 class CljTomcatPingdomEventSpec extends Specification {
 
-  "A job which processes a Clojure-Tomcat file containing a POST raw event representing 1 valid completed call" should {
+  "A job which processes a Clojure-Tomcat file containing a Pingdom GET raw event representing 1 valid completed call" should {
     EtlJobSpec("clj-tomcat", "2", true, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), CljTomcatPingdomEventSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
