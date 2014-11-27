@@ -33,12 +33,13 @@ object PageViewWithContextSpec {
   val expected = List(
     "CFe23a",
     "web",
+    TimestampRegex,
     "2014-02-02 20:19:39.427",
     "2014-02-02 20:19:39.318",
     "page_view",
-    "com.snowplowanalytics",
     Uuid4Regexp, // Regexp match
     "125546",
+    "",
     "js-0.13.1",
     "ssc-0.1.0-stdout",
     EnrichVersion,
@@ -47,6 +48,7 @@ object PageViewWithContextSpec {
     "1804954790",
     "3c1757544e39bca4",
     "25",
+    "75a13583-5c99-40e3-81fc-541084dfc784",
     "",
     "",
     "",
@@ -54,7 +56,13 @@ object PageViewWithContextSpec {
     "",
     "",
     "",
+    "",
+    "",
+    "",
+    "",
+    "file://file:///Users/alex/Development/dev-environment/demo/1-tracker/events.html/overridden-url/",
     "Asynchronous website/webapp examples for snowplow.js",
+    "",
     "file",
     "file",
     "80",
@@ -74,6 +82,8 @@ object PageViewWithContextSpec {
     "",
     "",
     "",
+    "",
+    """{"page":{"page_type":"test","last_updated$tms":1393372800000},"user":{"user_type":"tester"}}""",
     "",
     "",
     "",
@@ -140,7 +150,7 @@ class PageViewWithContextSpec extends Specification {
 
       val rawEvent = Base64.decodeBase64(PageViewWithContextSpec.raw)
       
-      val enrichedEvent = TestSource.enrichEvent(rawEvent)
+      val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
       enrichedEvent must beSome
 
       val fields = enrichedEvent.get.split("\t")

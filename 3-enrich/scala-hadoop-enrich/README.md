@@ -2,13 +2,13 @@
 
 ## Introduction
 
-This is the Snowplow ETL process implemented for Hadoop using [Scalding] [scalding]. The Hadoop ETL parses raw SnowPlow event logs, extracts the SnowPlow events, enriches them (e.g. with geo-location information) and then writes them out to SnowPlow-format event files.
+This is the Snowplow ETL process implemented for Hadoop using [Scalding] [scalding]. The Hadoop ETL parses raw Snowplow event logs, extracts the Snowplow events, enriches them (e.g. with geo-location information) and then writes them out to Snowplow-format event files.
 
-The SnowPlow Hadoop ETL process is an alternative to the SnowPlow [Hive ETL] [hive-etl] process.
+The Snowplow Hadoop ETL process is an alternative to the Snowplow [Hive ETL] [hive-etl] process.
 
 ## Technical overview
 
-The SnowPlow Hadoop ETL process is written in [Scalding] [scalding], the Scala library/DSL on top of [Cascading] [cascading], the Java data processing framework which in turn wraps Hadoop.
+The Snowplow Hadoop ETL process is written in [Scalding] [scalding], the Scala library/DSL on top of [Cascading] [cascading], the Java data processing framework which in turn wraps Hadoop.
 
 Like the Hive ETL, the Hadoop ETL can be run on [Amazon Elastic MapReduce] [emr] using the [EmrEtlRunner] [emr-etl-runner] Ruby app.
 
@@ -17,12 +17,12 @@ Like the Hive ETL, the Hadoop ETL can be run on [Amazon Elastic MapReduce] [emr]
 Assuming you already have SBT installed:
 
     $ git clone git://github.com/snowplow/snowplow.git
-    $ cd 3-enrich/hadoop-etl
+    $ cd 3-enrich/scala-hadoop-enrich
     $ sbt assembly
 
 The 'fat jar' is now available as:
 
-    target/snowplow-hadoop-etl-0.1.0.jar
+    target/snowplow-hadoop-etl-0.9.0.jar
 
 ## Testing
 

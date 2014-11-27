@@ -33,12 +33,13 @@ object StructEventSpec {
   val expected = List(
     "CFe23a",
     "web",
+    TimestampRegex,
     "2014-02-02 22:01:20.941",
     "2014-02-02 22:01:21.071",
     "struct",
-    "com.snowplowanalytics",
     Uuid4Regexp, // Regexp match
     "344214",
+    "",
     "js-0.13.1",
     "ssc-0.1.0-stdout",
     EnrichVersion,
@@ -47,12 +48,19 @@ object StructEventSpec {
     "1804954790",
     "3c1757544e39bca4",
     "26",
+    "75a13583-5c99-40e3-81fc-541084dfc784",
     "",
     "",
     "",
     "",
     "",
     "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "file://file:///Users/alex/Development/dev-environment/demo/1-tracker/events.html/overridden-url/",
     "",
     "",
     "file",
@@ -75,11 +83,13 @@ object StructEventSpec {
     "",
     "",
     "",
+    "",
     "Mixes",
     "Play",
     "MRC/fabric-0503-mix",
     "",
     "0.0",
+    "",
     "",
     "",
     "",
@@ -139,8 +149,8 @@ class StructEventSpec extends Specification {
     "enrich a valid structured event" in {
 
       val rawEvent = Base64.decodeBase64(StructEventSpec.raw)
-      
-      val enrichedEvent = TestSource.enrichEvent(rawEvent)
+
+      val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
       enrichedEvent must beSome
 
       val fields = enrichedEvent.get.split("\t")

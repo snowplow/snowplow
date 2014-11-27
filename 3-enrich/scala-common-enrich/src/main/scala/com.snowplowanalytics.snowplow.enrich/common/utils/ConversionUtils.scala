@@ -34,6 +34,9 @@ import org.apache.commons.codec.binary.Base64
 import scalaz._
 import Scalaz._
 
+// Scala URI
+import com.netaporter.uri.Uri
+
 /**
  * General-purpose utils to help the
  * ETL process along.
@@ -234,17 +237,22 @@ object ConversionUtils {
    *
    * @param uri The URI string to
    *        convert
+   * @param useNetaporter Whether to use the
+   *        com.netaporter.uri library
    * @return an Option-boxed URI object, or an
    *         error message, all
    *         wrapped in a Validation
-   */       
-  def stringToUri(uri: String): Validation[String, Option[URI]] =
+   */
+  def stringToUri(uri: String, useNetaporter: Boolean = false): Validation[String, Option[URI]] =
     try {
       val r = uri.replaceAll(" ", "%20") // Because so many raw URIs are bad, #346
       Some(URI.create(r)).success
     } catch {
       case npe: NullPointerException => None.success
-      case iae: IllegalArgumentException => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
+      case iae: IllegalArgumentException => useNetaporter match {
+        case false => stringToUri(Uri.parse(uri).toString, true)
+        case true => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
+      }
       case e => "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).fail
     }
 

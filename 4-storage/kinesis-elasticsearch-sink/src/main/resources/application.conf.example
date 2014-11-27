@@ -1,0 +1,78 @@
+# Default configuration for kinesis-elasticsearch-sink
+
+connector {
+
+  # Sources currently supported are:
+  # 'kinesis' for reading records from a Kinesis stream
+  # 'stdin' for reading unencoded tab-separated events from stdin
+  # If set to "stdin", JSON documents will not be sent to Elasticsearch
+  # but will be written to stdout.
+  source = "kinesis"
+
+  # Sinks currently supported are:
+  # 'elasticsearch-kinesis' for writing good records to Elasticsearch and bad records to Kinesis
+  # 'stdouterr' for writing good records to stdout and bad records to stderr
+  sink = "elasticsearch-kinesis"
+
+  # The following are used to authenticate for the Amazon Kinesis sink.
+  #
+  # If both are set to 'default', the default provider chain is used
+  # (see http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html)
+  #
+  # If both are set to 'iam', use AWS IAM Roles to provision credentials.
+  #
+  # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+  aws {
+    access-key: "default"
+    secret-key: "default"
+  }
+
+  kinesis {
+
+    in {
+      stream-name: "SnowplowEnriched" # Kinesis stream name
+
+      # "good" for a stream of successfully enriched events
+      # "bad" for a stream of bad events
+      stream-type: "good"
+
+      # LATEST: most recent data.
+      # TRIM_HORIZON: oldest available data.
+      # Note: This only affects the first run of this application
+      # on a stream.
+      initial-position: "TRIM_HORIZON"
+    }
+
+    out {
+      # Stream for enriched events which are rejected by Elasticsearch
+      stream-name: "SnowplowElasticsearchBad"
+      shards: 1
+    }
+
+    region: "us-east-1"
+
+    # `app-name` is used for a DynamoDB table to maintain stream state.
+    app-name: SnowplowElasticsearchSink-${connector.kinesis.in.stream-name}
+  }
+
+  elasticsearch {
+    cluster-name: "elasticsearch"
+    endpoint: "localhost"
+  }
+
+  location {
+    index: "snowplow" # Elasticsearch index name
+    type: "enriched" # Elasticsearch type name
+  }
+
+  # Events are accumulated in a buffer before being sent to Elasticsearch.
+  # The buffer is emptied whenever:
+  # - the combined size of the stored records exceeds byte-limit or
+  # - the number of stored records exceeds record-limit or
+  # - the time in milliseconds since it was last emptied exceeds time-limit
+  buffer {
+    byte-limit: 5242880 # 5MB
+    record-limit: 1000 # 1000 records
+    time-limit: 60000 # 1 minute
+  }
+}

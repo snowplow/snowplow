@@ -51,10 +51,9 @@ object ScalaCollector extends App {
     )
   )
 
-  // Optional config argument
+  // Mandatory config argument
   val config = parser.option[Config](List("config"), "filename",
-    "Configuration file. Defaults to \"resources/application.conf\" " +
-      "(within .jar) if not set") { (c, opt) =>
+    "Configuration file.") { (c, opt) =>
     val file = new File(c)
     if (file.exists) {
       ConfigFactory.parseFile(file)
@@ -65,7 +64,7 @@ object ScalaCollector extends App {
   }
   parser.parse(args)
 
-  val rawConf = config.value.getOrElse(ConfigFactory.load("application"))
+  val rawConf = config.value.getOrElse(throw new RuntimeException("--config option must be provided"))
   implicit val system = ActorSystem.create("scala-stream-collector", rawConf)
   val collectorConfig = new CollectorConfig(rawConf)
   val sink = collectorConfig.sinkEnabled match {
@@ -135,5 +134,12 @@ class CollectorConfig(config: Config) {
   private val stream = kinesis.getConfig("stream")
   val streamName = stream.getString("name")
   val streamSize = stream.getInt("size")
+  private val streamRegion = stream.getString("region")
+  val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
+
+  val threadpoolSize = kinesis.hasPath("thread-pool-size") match {
+    case true => kinesis.getInt("thread-pool-size")
+    case _ => 10
+  }
 }
 

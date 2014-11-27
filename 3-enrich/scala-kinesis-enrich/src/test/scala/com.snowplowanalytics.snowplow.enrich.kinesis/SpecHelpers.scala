@@ -19,6 +19,10 @@ package kinesis
 // Java
 import java.util.regex.Pattern
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 // Config
 import com.typesafe.config.{ConfigFactory,Config,ConfigException}
 
@@ -26,9 +30,17 @@ import com.typesafe.config.{ConfigFactory,Config,ConfigException}
 import org.specs2.matcher.{Matcher, Expectable}
 import org.specs2.matcher.Matchers._
 
+// json4s
+import org.json4s.jackson.JsonMethods._
+
+// Iglu
+import com.snowplowanalytics.iglu.client.Resolver
+
 // Snowplow
 import sources.TestSource
-import common.outputs.CanonicalOutput
+import common.outputs.EnrichedEvent
+import common.utils.JsonUtils
+import common.enrichments.EnrichmentRegistry
 
 /**
  * Defines some useful helpers for the specs.
@@ -38,7 +50,9 @@ object SpecHelpers {
   /**
    * The Kinesis Enrich being used
    */
-  val EnrichVersion = "kinesis-0.1.0-common-0.2.0"
+  val EnrichVersion = "kinesis-0.2.0-common-0.9.0"
+
+  val TimestampRegex = "[0-9]+"
 
   /**
    * The regexp pattern for a Type 4 UUID.
@@ -51,23 +65,17 @@ object SpecHelpers {
   val Uuid4Regexp = "[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"
 
   /**
-   * Fields in our CanonicalOutput which will be checked
+   * Fields in our EnrichedEvent which will be checked
    * against a regexp, not for equality.
    */
-  private val UseRegexpFields = List("event_id")
-
-  /**
-   * Fields in our CanonicalOutput which are discarded
-   */
-  private val DiscardedFields = List("page_url", "page_referrer")
+  private val UseRegexpFields = List("event_id", "etl_tstamp")
 
   /**
    * The names of the fields written out
    */
-  lazy val OutputFields = classOf[CanonicalOutput]
+  lazy val OutputFields = classOf[EnrichedEvent]
       .getDeclaredFields
       .map(_.getName)
-      .filter(f => !DiscardedFields.contains(f))
 
   /**
    * User-friendly wrapper to instantiate
@@ -76,7 +84,7 @@ object SpecHelpers {
   def beFieldEqualTo(expected: String, withIndex: Int) = new BeFieldEqualTo(expected, withIndex)
 
   /**
-   * A Specs2 matcher to check if a CanonicalOutput
+   * A Specs2 matcher to check if a EnrichedEvent
    * field is correctly set.
    *
    * A couple of neat tricks:
@@ -127,7 +135,7 @@ object SpecHelpers {
     }
 
     /**
-     * Whether a field in CanonicalOutput needs
+     * Whether a field in EnrichedEvent needs
      * a regexp-based comparison.
      *
      * @param field The name of the field
@@ -143,7 +151,67 @@ object SpecHelpers {
    * Built using an inline configuration file
    * with both source and sink set to test.
    */
-  val TestSource = {
+  lazy val TestSource = {
+
+    val enrichmentConfig = """|{
+      |"schema": "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0",
+      |"data": [
+        |{
+          |"schema": "iglu:com.snowplowanalytics.snowplow/anon_ip/jsonschema/1-0-0",
+          |"data": {
+            |"vendor": "com.snowplowanalytics.snowplow",
+            |"name": "anon_ip",
+            |"enabled": true,
+            |"parameters": {
+              |"anonOctets": 1
+            |}
+          |}
+        |},
+        |{
+          |"schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/1-0-0",
+          |"data": {
+            |"vendor": "com.snowplowanalytics.snowplow",
+            |"name": "ip_lookups",
+            |"enabled": true,
+            |"parameters": {
+              |"geo": {
+                |"database": "GeoIPCity.dat",
+                |"uri":  "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
+              |}
+            |}
+          |}  
+        |},
+        |{
+          |"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-0",
+          |"data": {
+            |"vendor": "com.snowplowanalytics.snowplow",
+            |"name": "campaign_attribution",
+            |"enabled": true,
+            |"parameters": {
+              |"mapping": "static",
+              |"fields": {
+                |"mktMedium": ["utm_medium", "medium"],
+                |"mktSource": ["utm_source", "source"],
+                |"mktTerm": ["utm_term", "legacy_term"],
+                |"mktContent": ["utm_content"],
+                |"mktCampaign": ["utm_campaign", "cid", "legacy_campaign"]
+              |}
+            |}
+          |}
+        |},
+        |{
+          |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
+          |"data": {
+            |"vendor": "com.snowplowanalytics.snowplow",
+            |"name": "referer_parser",
+            |"enabled": true,
+            |"parameters": {
+              |"internalDomains": ["www.subdomain1.snowplowanalytics.com"]
+            |}
+          |}  
+        |}              
+      |]
+    |}""".stripMargin.replaceAll("[\n\r]","").stripMargin.replaceAll("[\n\r]","")
 
     val config = """
 enrich {
@@ -167,7 +235,7 @@ enrich {
     }
     app-name: SnowplowKinesisEnrich-${enrich.streams.in.raw}
     initial-position = "TRIM_HORIZON"
-    endpoint: "https://kinesis.us-east-1.amazonaws.com"
+    region: "us-east-1"
   }
   enrichments {
     geo_ip: {
@@ -182,9 +250,46 @@ enrich {
 }
 """
 
+    val validatedResolver = for {
+      json <- JsonUtils.extractJson("", """{
+        "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
+        "data": {
+
+          "cacheSize": 500,
+          "repositories": [
+            {
+              "name": "Iglu Central",
+              "priority": 0,
+              "vendorPrefixes": [ "com.snowplowanalytics" ],
+              "connection": {
+                "http": {
+                  "uri": "http://iglucentral.com"
+                }
+              }
+            }
+          ]
+        }
+      }
+      """)
+      resolver <- Resolver.parse(json).leftMap(_.toString)
+    } yield resolver
+
+    implicit val resolver: Resolver = validatedResolver.fold(
+      e => throw new RuntimeException(e),
+      s => s
+    )
+
+    val enrichmentRegistry = (for {
+      registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
+      reg <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), true).leftMap(_.toString)
+    } yield reg) fold (
+      e => throw new RuntimeException(e),
+      s => s
+    )
+
     val conf = ConfigFactory.parseString(config)
     val kec = new KinesisEnrichConfig(conf)
 
-    new TestSource(kec)
+    new TestSource(kec, resolver, enrichmentRegistry)
   }
 }

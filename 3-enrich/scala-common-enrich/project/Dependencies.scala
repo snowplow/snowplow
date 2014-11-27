@@ -52,6 +52,7 @@ object Dependencies {
     val scalazSpecs2     = "0.1.2"
     val scalaCheck       = "1.10.0"
     val commonsCodec     = "1.5"
+    val scalaUri         = "0.4.3"
   }
 
   object Libraries {
@@ -74,6 +75,7 @@ object Dependencies {
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"            % V.json4s
     val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s    
     val igluClient       = "com.snowplowanalytics"      %  "iglu-scala-client"         % V.igluClient
+    val scalaUri         = "com.netaporter"             %% "scala-uri"                 % V.scalaUri
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"
