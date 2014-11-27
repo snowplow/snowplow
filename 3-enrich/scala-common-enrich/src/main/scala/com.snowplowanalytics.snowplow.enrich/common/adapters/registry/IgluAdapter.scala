@@ -76,7 +76,7 @@ object IgluAdapter extends Adapter {
           case Success(_)       =>
             NonEmptyList(RawEvent(
               api          = payload.api,
-              parameters   = toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, IgluFormatter),
+              parameters   = toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, IgluFormatter, "app"),
               contentType  = payload.contentType,
               source       = payload.source,
               context      = payload.context

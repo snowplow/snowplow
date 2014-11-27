@@ -29,7 +29,10 @@ import registry.{
   SnowplowAdapter,
   IgluAdapter,
   CallrailAdapter,
-  MailchimpAdapter
+  MailchimpAdapter,
+  MandrillAdapter,
+  PagerdutyAdapter,
+  PingdomAdapter
 }
 
 /**
@@ -39,10 +42,13 @@ import registry.{
 object AdapterRegistry {
 
   private object Vendor {
-    val Snowplow = "com.snowplowanalytics.snowplow"
-    val Iglu = "com.snowplowanalytics.iglu"
-    val Callrail = "com.callrail"
+    val Snowplow  = "com.snowplowanalytics.snowplow"
+    val Iglu      = "com.snowplowanalytics.iglu"
+    val Callrail  = "com.callrail"
     val Mailchimp = "com.mailchimp"
+    val Mandrill  = "com.mandrill"
+    val Pagerduty = "com.pagerduty"
+    val Pingdom   = "com.pingdom"
   }
 
   /**
@@ -64,6 +70,9 @@ object AdapterRegistry {
     case (Vendor.Iglu,        "v1")  => IgluAdapter.toRawEvents(payload)
     case (Vendor.Callrail,    "v1")  => CallrailAdapter.toRawEvents(payload)
     case (Vendor.Mailchimp,   "v1")  => MailchimpAdapter.toRawEvents(payload)
+    case (Vendor.Mandrill,    "v1")  => MandrillAdapter.toRawEvents(payload)
+    case (Vendor.Pagerduty,   "v1")  => PagerdutyAdapter.toRawEvents(payload)
+    case (Vendor.Pingdom,     "v1")  => PingdomAdapter.toRawEvents(payload)
     // TODO: add Sendgrid et al
     case _ => s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".failNel
   }
