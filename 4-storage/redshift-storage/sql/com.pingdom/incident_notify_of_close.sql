@@ -9,13 +9,13 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 -- 
--- Authors:     Alex Dean, Joshua Beemster
--- Copyright:     Copyright (c) 2014 Snowplow Analytics Ltd
+-- Authors:     Joshua Beemster
+-- Copyright:   Copyright (c) 2014 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 -- 
--- Compatibility: iglu:com.mailchimp/campaign_sending_status/jsonschema/1-0-0
+-- Compatibility: iglu:com.pingdom/incident_notify_of_close/jsonschema/1-0-0
 
-CREATE TABLE atomic.com_mailchimp_campaign_sending_status_1 (
+CREATE TABLE atomic.com_pingdom_incident_notify_of_close_1 (
     -- Schema of this type
     schema_vendor  varchar(128)   encode runlength not null,
     schema_name    varchar(128)   encode runlength not null,
@@ -28,13 +28,11 @@ CREATE TABLE atomic.com_mailchimp_campaign_sending_status_1 (
     ref_tree       varchar(1500)  encode runlength not null,
     ref_parent     varchar(255)   encode runlength not null,
     -- Properties of this type
-    type           varchar(255)   encode raw,
-    fired_at       timestamp      encode raw,
-    "data.id"      varchar(255)   encode raw,
-    "data.list_id" varchar(255)   encode raw,
-    "data.reason"  varchar(255)   encode raw,
-    "data.status"  varchar(255)   encode raw,
-    "data.subject" varchar(255)   encode raw
+    "check"        varchar(255)   encode raw,
+    checkname      varchar(255)   encode raw,
+    host           varchar(255)   encode raw,
+    incidentid     varchar(255)   encode raw,
+    description    varchar(255)   encode raw
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

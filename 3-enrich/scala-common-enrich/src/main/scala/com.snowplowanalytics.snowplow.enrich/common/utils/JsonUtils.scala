@@ -235,12 +235,11 @@ object JsonUtils {
    * @return the same exception message, but with
    *         instance information etc removed
    */
-  private[utils] def stripInstanceEtc(message: String): String = {
+  def stripInstanceEtc(message: String): String = {
     message
     .replaceAll("@[0-9a-z]+;", "@xxxxxx;")
     .replaceAll("\\t", "    ")
     .replaceAll("\\p{Cntrl}", "") // Any other control character
     .trim
   }
-
 }

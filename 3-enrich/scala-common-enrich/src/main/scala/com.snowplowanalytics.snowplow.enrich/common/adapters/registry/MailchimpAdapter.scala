@@ -17,16 +17,13 @@ package common
 package adapters
 package registry
 
-// Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
-import iglu.client.validation.ValidatableJsonMethods._
-
 // Java
 import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
+
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
@@ -44,9 +41,12 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.scalaz.JsonScalaz._
 
-// Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
+// Iglu
+import iglu.client.{
+  SchemaKey,
+  Resolver
+}
+import iglu.client.validation.ValidatableJsonMethods._
 
 // This project
 import loaders.CollectorPayload
@@ -59,6 +59,9 @@ import utils.{JsonUtils => JU}
  */
 object MailchimpAdapter extends Adapter {
 
+  // Vendor name for Failure Message
+  private val VendorName = "MailChimp"
+
   // Expected content type for a request body
   private val ContentType = "application/x-www-form-urlencoded"
 
@@ -66,15 +69,14 @@ object MailchimpAdapter extends Adapter {
   private val TrackerVersion = "com.mailchimp-v1"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private object SchemaUris {
-    val UnstructEvent         = SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", "1-0-0").toSchemaUri
-    val Subscribe             = SchemaKey("com.mailchimp", "subscribe", "jsonschema", "1-0-0").toSchemaUri
-    val Unsubscribe           = SchemaKey("com.mailchimp", "unsubscribe", "jsonschema", "1-0-0").toSchemaUri
-    val ProfileUpdate         = SchemaKey("com.mailchimp", "profile_update", "jsonschema", "1-0-0").toSchemaUri
-    val EmailAddressChange    = SchemaKey("com.mailchimp", "email_address_change", "jsonschema", "1-0-0").toSchemaUri
-    val CleanedEmail          = SchemaKey("com.mailchimp", "cleaned_email", "jsonschema", "1-0-0").toSchemaUri
-    val CampaignSendingStatus = SchemaKey("com.mailchimp", "campaign_sending_status", "jsonschema", "1-0-0").toSchemaUri
-  }
+  private val EventSchemaMap = Map (
+    "subscribe"   -> SchemaKey("com.mailchimp", "subscribe", "jsonschema", "1-0-0").toSchemaUri,
+    "unsubscribe" -> SchemaKey("com.mailchimp", "unsubscribe", "jsonschema", "1-0-0").toSchemaUri,
+    "campaign"    -> SchemaKey("com.mailchimp", "campaign_sending_status", "jsonschema", "1-0-0").toSchemaUri,
+    "cleaned"     -> SchemaKey("com.mailchimp", "cleaned_email", "jsonschema", "1-0-0").toSchemaUri,
+    "upemail"     -> SchemaKey("com.mailchimp", "email_address_change", "jsonschema", "1-0-0").toSchemaUri,
+    "profile"     -> SchemaKey("com.mailchimp", "profile_update", "jsonschema", "1-0-0").toSchemaUri
+  )
 
   // Datetime format used by MailChimp (as we will need to massage)
   private val MailchimpDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").withZone(DateTimeZone.UTC)
@@ -99,19 +101,19 @@ object MailchimpAdapter extends Adapter {
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _)                          => s"Request body is empty: no MailChimp event to process".failNel
-      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for MailChimp".failNel
-      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for MailChimp".failNel
+      case (None, _)                          => s"Request body is empty: no ${VendorName} event to process".failNel
+      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
+      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
       case (Some(body), _)                    => {
 
         val params = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
         params.get("type") match {
-          case None => s"No MailChimp type parameter provided: cannot determine event type".failNel
+          case None => s"No ${VendorName} type parameter provided: cannot determine event type".failNel
           case Some(eventType) => {
 
             val allParams = toMap(payload.querystring) ++ reformatParameters(params)
             for {
-              schema <- (lookupSchema(eventType).toValidationNel: Validated[String])
+              schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
             } yield {
               NonEmptyList(RawEvent(
                 api          = payload.api,
@@ -205,23 +207,4 @@ object MailchimpAdapter extends Adapter {
       case Some(firedAt) => parameters.updated("fired_at", JU.toJsonSchemaDateTime(firedAt, MailchimpDateTimeFormat))
       case None          => parameters
     }
-
-  /**
-   * Gets the correct Schema URI for the event passed from Mailchimp
-   *
-   * @param eventType The string pertaining to the type 
-   *        of event schema we are looking for
-   * @return the schema for the event or a Failure-boxed String
-   *         if we can't recognize the event type
-   */
-  private[registry] def lookupSchema(eventType: String): Validation[String, String] = eventType match {
-    case "subscribe"   => SchemaUris.Subscribe.success
-    case "unsubscribe" => SchemaUris.Unsubscribe.success
-    case "campaign"    => SchemaUris.CampaignSendingStatus.success
-    case "cleaned"     => SchemaUris.CleanedEmail.success
-    case "upemail"     => SchemaUris.EmailAddressChange.success
-    case "profile"     => SchemaUris.ProfileUpdate.success
-    case ""            => s"MailChimp type parameter is empty: cannot determine event type".fail
-    case et            => s"MailChimp type parameter [$et] not recognized".fail
-  }
 }

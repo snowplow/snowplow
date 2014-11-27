@@ -9,13 +9,13 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 -- 
--- Authors:     Alex Dean, Joshua Beemster
--- Copyright:     Copyright (c) 2014 Snowplow Analytics Ltd
+-- Authors:     Joshua Beemster
+-- Copyright:   Copyright (c) 2014 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 -- 
--- Compatibility: iglu:com.mailchimp/campaign_sending_status/jsonschema/1-0-0
+-- Compatibility: iglu:com.mandrill/message_marked_as_spam/jsonschema/1-0-0
 
-CREATE TABLE atomic.com_mailchimp_campaign_sending_status_1 (
+CREATE TABLE atomic.com_mandrill_message_marked_as_spam_1 (
     -- Schema of this type
     schema_vendor  varchar(128)   encode runlength not null,
     schema_name    varchar(128)   encode runlength not null,
@@ -28,13 +28,19 @@ CREATE TABLE atomic.com_mailchimp_campaign_sending_status_1 (
     ref_tree       varchar(1500)  encode runlength not null,
     ref_parent     varchar(255)   encode runlength not null,
     -- Properties of this type
-    type           varchar(255)   encode raw,
-    fired_at       timestamp      encode raw,
-    "data.id"      varchar(255)   encode raw,
-    "data.list_id" varchar(255)   encode raw,
-    "data.reason"  varchar(255)   encode raw,
-    "data.status"  varchar(255)   encode raw,
-    "data.subject" varchar(255)   encode raw
+    _id                    varchar(255)   encode raw,
+    ts                     timestamp      encode raw,
+    "msg._id"              varchar(255)   encode raw,
+    "msg._version"         varchar(255)   encode raw,
+    "msg.clicks"           varchar(2048)  encode runlength, -- Holds a JSON array
+    "msg.email"            varchar(255)   encode raw,
+    "msg.metadata.user_id" varchar(255)   encode raw,
+    "msg.opens"            varchar(2048)  encode runlength, -- Holds a JSON array
+    "msg.sender"           varchar(255)   encode raw,
+    "msg.state"            varchar(255)   encode raw,
+    "msg.subject"          varchar(255)   encode raw,
+    "msg.tags"             varchar(2048)  encode runlength, -- Holds a JSON array
+    "msg.ts"               timestamp      encode raw
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
