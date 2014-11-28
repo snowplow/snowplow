@@ -43,7 +43,8 @@ object Dependencies {
     val scalaz7              = "7.0.0"
     val igluClient           = "0.1.1"
     // Scala (test only)
-    val specs2               = "2.3.6"
+    // val specs2               = "2.3.6" Conflicts with com.chuusai:shapeless
+    val specs2               = "2.2.3"
     val scalazSpecs2         = "0.1.2"
     // Scala (compile only)
     val commonsLang3         = "3.1"
