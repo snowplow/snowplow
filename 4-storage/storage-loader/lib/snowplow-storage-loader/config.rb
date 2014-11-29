@@ -17,6 +17,7 @@ require 'optparse'
 require 'date'
 require 'yaml'
 require 'sluice'
+require 'erb'
 
 # Config module to hold functions related to CLI argument parsing
 # and config file reading to support storage loading.
@@ -34,7 +35,10 @@ module SnowPlow
       def get_config()
 
         options = Config.parse_args()
-        config = YAML.load_file(options[:config])
+
+        # Load template and evaluate environement variables
+        config_template = ERB.new File.new(options[:config]).read
+        config = YAML.load(config_template.result(binding))        
 
         # Add in our skip and include settings
         config[:skip] = options[:skip]
