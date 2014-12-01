@@ -64,7 +64,7 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
   // Kinisis sink and returns an invisible pixel with a cookie.
   def cookie(queryParams: String, requestCookie: Option[HttpCookie],
       userAgent: Option[String], hostname: String, ip: String,
-      request: HttpRequest, refererUri: Option[String]):
+      request: HttpRequest, refererUri: Option[String], payloadFormat: PayloadFormat = PayloadFormat.HttpGet):
       (HttpResponse, Array[Byte]) = {
     // Use the same UUID if the request cookie contains `sp`.
     val networkUserId: String =
@@ -76,7 +76,7 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
 
     val payload = new TrackerPayload(
       PayloadProtocol.Http,
-      PayloadFormat.HttpGet,
+      payloadFormat,
       queryParams
     )
 

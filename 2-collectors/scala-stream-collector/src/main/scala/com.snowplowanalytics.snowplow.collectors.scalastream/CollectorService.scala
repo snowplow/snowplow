@@ -12,7 +12,8 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.collectors.scalastream
+package com.snowplowanalytics.snowplow.collectors
+package scalastream
 
 // Akka
 import akka.actor.{Actor,ActorRefFactory}
@@ -28,6 +29,7 @@ import scala.concurrent.duration._
 
 // Snowplow
 import sinks._
+import thrift._
 
 // Actor accepting Http requests for the Scala collector.
 class CollectorServiceActor(collectorConfig: CollectorConfig,
@@ -57,6 +59,40 @@ class CollectorService(
     context: ActorRefFactory) extends HttpService {
   def actorRefFactory = context
   val collectorRoute = {
+    post {
+      path("com.snowplowanalytics.snowplow" / "tp2") {
+        optionalCookie("sp") { reqCookie =>
+          optionalHeaderValueByName("User-Agent") { userAgent =>
+            optionalHeaderValueByName("Referer") { refererURI =>
+              headerValueByName("Raw-Request-URI") { rawRequest =>
+                hostName { host =>
+                  clientIP { ip =>
+                    requestInstance{ request =>
+                      entity(as[String]) { body =>
+                        complete(
+                          responseHandler.cookie(
+                            Option(body).filter(
+                              _.trim.nonEmpty
+                            ).getOrElse(null),
+                            reqCookie,
+                            userAgent,
+                            host,
+                            ip.toString,
+                            request,
+                            refererURI,
+                            PayloadFormat.HttpPostUrlencodedForm
+                          )._1
+                        )
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } ~
     get {
       path("i") {
         optionalCookie("sp") { reqCookie =>
@@ -76,7 +112,8 @@ class CollectorService(
                           host,
                           ip.toString,
                           request,
-                          refererURI
+                          refererURI,
+                          PayloadFormat.HttpGet
                         )._1
                       )
                     }
@@ -87,7 +124,7 @@ class CollectorService(
           }
         }
       }
-    }~
+    } ~
     complete(responseHandler.notFound)
   }
 }
