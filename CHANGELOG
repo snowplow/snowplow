@@ -7,6 +7,7 @@ Scala Kinesis Enrich: bumped Scala Common Enrich to 0.9.1
 Scala Kinesis Enrich: fixed conflict with Specs2 version, thanks @knservis! (#1213)
 Scala Hadoop Enrich: bumped to 0.10.1
 Scala Hadoop Enrich: bumped Scala Common Enrich to 0.9.1
+Deleted test-file in repository root (#1219)
 
 Version 0.9.12 (2014-11-26)
 ---------------------------
