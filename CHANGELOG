@@ -1,3 +1,13 @@
+Version 0.9.13 (2014-12-01)
+---------------------------
+Scala Common Enrich: bumped to 0.9.1
+Scala Common Enrich: added error handling for Netaporter URI parsing (#1216)
+Scala Kinesis Enrich: bumped to 0.2.1
+Scala Kinesis Enrich: bumped Scala Common Enrich to 0.9.1
+Scala Kinesis Enrich: fixed conflict with Specs2 version (thanks @knservis!) (#1213)
+Scala Hadoop Enrich: bumped to 0.10.1
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.9.1
+
 Version 0.9.12 (2014-11-26)
 ---------------------------
 Scala Stream Collector: bumped to 0.2.0
