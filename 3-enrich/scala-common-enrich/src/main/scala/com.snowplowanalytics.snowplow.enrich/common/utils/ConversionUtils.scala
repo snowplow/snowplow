@@ -250,7 +250,17 @@ object ConversionUtils {
     } catch {
       case npe: NullPointerException => None.success
       case iae: IllegalArgumentException => useNetaporter match {
-        case false => stringToUri(Uri.parse(uri).toString, true)
+        case false => {
+          val netaporterUri = try {
+            Uri.parse(uri).success
+          } catch {
+            case e => "Provided URI string [%s] could not be parsed by Netaporter: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
+          }
+          for {
+            parsedUri <- netaporterUri
+            finalUri <- stringToUri(parsedUri.toString, true)
+          } yield finalUri
+        }
         case true => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
       }
       case e => "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).fail
