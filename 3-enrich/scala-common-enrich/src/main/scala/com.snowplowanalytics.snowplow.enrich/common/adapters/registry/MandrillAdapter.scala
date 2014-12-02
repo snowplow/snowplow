@@ -180,7 +180,6 @@ object MandrillAdapter extends Adapter {
               }
             }
           }
-          case Nil => s"This should never happen".failNel
         }
       }
     }
