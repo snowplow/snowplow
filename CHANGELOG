@@ -1,4 +1,4 @@
-Version 0.9.13 (2014-11-27)
+Version 0.9.14 (2014-12-02)
 ---------------------------
 Clojure Collector: updated access-valve to depend on Tomcat 8 classes (#1203) 
 Clojure Collector: updated .ebextensions to depend on Tomcat 8  (#1202)
