@@ -1,5 +1,6 @@
 Version 0.9.14 (2014-12-03)
 ---------------------------
+EmrEtlRunner: bumped to 0.10.0
 EmrEtlRunner: removed hyphen from the pattern match for Clojure Collector logs (#1194)
 EmrEtlRunner: on job failure, log overall jobflow and individual step statuses (#1153)
 Scala Common Enrich: bumped Scala Iglu Client to 0.2.0 (#1222)
