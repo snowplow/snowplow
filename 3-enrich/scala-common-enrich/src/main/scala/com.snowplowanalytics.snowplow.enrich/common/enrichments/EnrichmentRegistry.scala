@@ -28,7 +28,8 @@ import org.json4s.jackson.JsonMethods._
 
 // Iglu
 import iglu.client.{
-  SchemaKey, 
+  SchemaKey,
+  SchemaCriterion,
   Resolver
 }
 import iglu.client.validation.ValidatableJsonMethods._
@@ -51,7 +52,7 @@ import utils.ScalazJson4sUtils
  */
 object EnrichmentRegistry {
 
-  private val EnrichmentConfigSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "enrichments", "jsonschema", "1-0-0")
+  private val EnrichmentConfigSchemaCriterion = SchemaCriterion("com.snowplowanalytics.snowplow", "enrichments", "jsonschema", 1, 0, 0)
 
   /**
    * Constructs our EnrichmentRegistry
@@ -71,7 +72,7 @@ object EnrichmentRegistry {
 
     // Check schema, validate against schema, convert to List[JValue]
     val enrichments: ValidatedNelMessage[List[JValue]] = for {
-        d <- asJsonNode(node).verifySchemaAndValidate(EnrichmentConfigSchemaKey, true)
+        d <- asJsonNode(node).verifySchemaAndValidate(EnrichmentConfigSchemaCriterion, true)
       } yield (fromJsonNode(d) match {
         case JArray(x) => x
         case _ => throw new Exception("Enrichments JSON not an array - the enrichments JSON schema should prevent this happening")

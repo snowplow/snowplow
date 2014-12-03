@@ -28,7 +28,7 @@ import scala.collection.JavaConversions._
 
 // Iglu
 import iglu.client.{
-  SchemaKey,
+  SchemaCriterion,
   Resolver
 }
 import iglu.client.validation.ValidatableJsonMethods._
@@ -93,7 +93,7 @@ object SnowplowAdapter {
     private val ContentType = "application/json; charset=utf-8"
 
     // Request body expected to validate against this JSON Schema
-    private val PayloadDataSchema = SchemaKey("com.snowplowanalytics.snowplow", "payload_data", "jsonschema", "1-0-0")
+    private val PayloadDataSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "payload_data", "jsonschema", 1)
 
     /**
      * Converts a CollectorPayload instance into N raw events.
@@ -206,7 +206,7 @@ object SnowplowAdapter {
      *
      * @param field The name of the field
      *        containing the JSON instance
-     * @param schemaKey The schema that we
+     * @param schemaCriterion The schema that we
      *        expected this self-describing
      *        JSON to conform to
      * @param instance A JSON instance as String
@@ -218,10 +218,10 @@ object SnowplowAdapter {
      *         Failure, or a singular
      *         JsonNode on success
      */
-    private def extractAndValidateJson(field: String, schemaKey: SchemaKey, instance: String)(implicit resolver: Resolver): Validated[JsonNode] =
+    private def extractAndValidateJson(field: String, schemaCriterion: SchemaCriterion, instance: String)(implicit resolver: Resolver): Validated[JsonNode] =
       for {
         j <- (JsonUtils.extractJson(field, instance).toValidationNel: Validated[JsonNode])
-        v <- j.verifySchemaAndValidate(schemaKey, true).leftMap(_.map(_.toString))
+        v <- j.verifySchemaAndValidate(schemaCriterion, true).leftMap(_.map(_.toString))
       } yield v
 
   }
