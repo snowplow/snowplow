@@ -1,9 +1,5 @@
 Version 0.9.14 (2014-12-03)
 ---------------------------
-Clojure Collector: updated access-valve to depend on Tomcat 8 classes (#1203) 
-Clojure Collector: updated .ebextensions to depend on Tomcat 8  (#1202)
-Clojure Collector: added support for /:vendor/:version to HEAD (#1166)
-Clojure Collector: added CORS support (#1146)
 EmrEtlRunner: removed hyphen from the pattern match for Clojure Collector logs (#1194)
 EmrEtlRunner: on job failure, log overall jobflow and individual step statuses (#1153)
 Scala Common Enrich: bumped Scala Iglu Client to 0.2.0 (#1222)
