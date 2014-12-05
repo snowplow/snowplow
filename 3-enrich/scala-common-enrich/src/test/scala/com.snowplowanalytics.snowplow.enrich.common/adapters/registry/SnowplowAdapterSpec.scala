@@ -146,7 +146,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
     val body = toSelfDescJson("""{"longitude":20.1234}""", "geolocation_context")
     val payload = CollectorPayload(Snowplow.Tp2, Nil, ApplicationJson.some, body.some, Shared.source, Shared.context)
     val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
-    actual must beFailing(NonEmptyList("""error: Verifying schema as iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-x-x failed: found iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-0-0
+    actual must beFailing(NonEmptyList("""error: Verifying schema as iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-* failed: found iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-0-0
     level: "error"
 """))
   }

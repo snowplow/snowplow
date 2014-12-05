@@ -93,7 +93,7 @@ object SnowplowAdapter {
     private val ContentType = "application/json; charset=utf-8"
 
     // Request body expected to validate against this JSON Schema
-    private val PayloadDataSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "payload_data", "jsonschema", 1)
+    private val PayloadDataSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "payload_data", "jsonschema", 1, 0)
 
     /**
      * Converts a CollectorPayload instance into N raw events.
