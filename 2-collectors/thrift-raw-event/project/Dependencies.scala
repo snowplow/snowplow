@@ -27,7 +27,7 @@ object Dependencies {
   object V {
     // Scala - compile only for sbt-thrift
     val commonsLang3 = "3.1"
-    val thrift       = "0.9.0"
+    val thrift       = "0.9.1"
 
     // Scala - test only
     val specs2       = "2.3.6"
