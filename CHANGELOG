@@ -1,4 +1,4 @@
-Version 0.9.14 (2014-12-03)
+Version 0.9.14 (2014-12-XX)
 ---------------------------
 EmrEtlRunner: bumped to 0.10.0
 EmrEtlRunner: removed hyphen from the pattern match for Clojure Collector logs (#1194)
@@ -10,7 +10,7 @@ Scala Common Enrich: added Adapter to pre-process Pingdom events (#1164)
 Scala Common Enrich: added Adapter to pre-process PagerDuty events (#1158)
 Scala Common Enrich: added Adapter to pre-process Mandrill events (#1061)
 Scala Hadoop Enrich: bumped to 0.11.0
-Scala Hadoop Enrich: bumped Scala Common Enrich to 0.9.1 (#1223)
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.10.0 (#1223)
 Scala Hadoop Enrich: added test job for PingdomAdapter (#1176)
 Scala Hadoop Enrich: added test job for PagerdutyAdapter (#1175)
 Scala Hadoop Enrich: added test job for MandrillAdapter (#1171)
