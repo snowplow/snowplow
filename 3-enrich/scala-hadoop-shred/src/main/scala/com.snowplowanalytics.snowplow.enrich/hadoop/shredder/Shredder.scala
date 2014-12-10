@@ -34,6 +34,7 @@ import outputs.EnrichedEvent
 // Iglu Scala Client
 import iglu.client.{
   SchemaKey,
+  SchemaCriterion,
   JsonSchemaPair,
   Resolver
 }
@@ -56,10 +57,10 @@ object Shredder {
   private val TypeHierarchyRoot = "events"
 
   // Self-describing schema for a ue_properties
-  private val UePropertiesSchema = SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", "1-0-0")
+  private val UePropertiesSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", 1, 0)
 
   // Self-describing schema for a contexts
-  private val ContextsSchema = SchemaKey("com.snowplowanalytics.snowplow", "contexts", "jsonschema", "1-0-0")
+  private val ContextsSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "contexts", "jsonschema", 1, 0)
 
   /**
    * Shred the EnrichedEvent's two fields which
@@ -196,7 +197,7 @@ object Shredder {
    *
    * @param field The name of the field
    *        containing the JSON instance
-   * @param schemaKey The criterion we
+   * @param schemaCriterion The criterion we
    *        expected this self-describing
    *        JSON to conform to
    * @param instance An Option-boxed JSON
@@ -209,13 +210,13 @@ object Shredder {
    *         Failure, or a singular
    *         JsonNode on success
    */
-  private[shredder] def extractAndValidateJson(field: String, schemaKey: SchemaKey, instance: Option[String])(implicit resolver: Resolver):
+  private[shredder] def extractAndValidateJson(field: String, schemaCriterion: SchemaCriterion, instance: Option[String])(implicit resolver: Resolver):
     Option[ValidatedNel[JsonNode]] =
     for {
       i <- instance
     } yield for {
       j <- extractJson(field, i)
-      v <- j.verifySchemaAndValidate(schemaKey, true)
+      v <- j.verifySchemaAndValidate(schemaCriterion, true)
     } yield v
 
   /**
