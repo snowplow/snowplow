@@ -36,7 +36,7 @@ object Dependencies {
     val commonEnrich    = "0.10.0"
     val scalding        = "0.10.0"
     val scalaz7         = "7.0.0"
-    val igluClient      = "0.1.0"
+    val igluClient      = "0.2.0"
     // Scala (test only)
     val specs2          = "1.14" // Downgrade to prevent issues in job tests. WAS: "2.3.11"
     val scalazSpecs2    = "0.1.2"
@@ -57,7 +57,7 @@ object Dependencies {
     val scaldingArgs     = "com.twitter"                %% "scalding-args"           % V.scalding
     // val scaldingJson     = "com.twitter"                %% "scalding-json"           % V.scalding
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"             % V.scalaz7
-    val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"       % V.igluClient
+    val igluClient       = "com.snowplowanalytics"      %  "iglu-scala-client"       % V.igluClient
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                  % V.specs2          % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"           % V.scalazSpecs2    % "test"
