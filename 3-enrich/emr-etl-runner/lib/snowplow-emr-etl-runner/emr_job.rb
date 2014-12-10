@@ -57,67 +57,73 @@ module Snowplow
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
 
+        @existing_jobflow_id = config[:emr][:jobflow_id]
+
         # Create a job flow with your AWS credentials
-        @jobflow = Elasticity::JobFlow.new(config[:aws][:access_key_id], config[:aws][:secret_access_key])
+        if !@existing_jobflow_id.nil?
+          @jobflow = Elasticity::JobFlow.from_jobflow_id(config[:aws][:access_key_id], config[:aws][:secret_access_key], @existing_jobflow_id, config[:emr][:region])
+        else
+          @jobflow = Elasticity::JobFlow.new(config[:aws][:access_key_id], config[:aws][:secret_access_key])
 
-        # Configure
-        @jobflow.name                 = config[:etl][:job_name]
-        @jobflow.ami_version          = config[:emr][:ami_version]
-        @jobflow.ec2_key_name         = config[:emr][:ec2_key_name]
+          # Configure
+          @jobflow.name                 = config[:etl][:job_name]
+          @jobflow.ami_version          = config[:emr][:ami_version]
+          @jobflow.ec2_key_name         = config[:emr][:ec2_key_name]
 
-        @jobflow.instance_variable_set(:@region, config[:emr][:region]) # Workaround until https://github.com/snowplow/snowplow/issues/753
-        @jobflow.placement            = config[:emr][:placement]
-        unless config[:emr][:ec2_subnet_id].nil? # Nils placement so do last and conditionally
-          @jobflow.ec2_subnet_id      = config[:emr][:ec2_subnet_id]
-        end
+          @jobflow.instance_variable_set(:@region, config[:emr][:region]) # Workaround until https://github.com/snowplow/snowplow/issues/753
+          @jobflow.placement            = config[:emr][:placement]
+          unless config[:emr][:ec2_subnet_id].nil? # Nils placement so do last and conditionally
+            @jobflow.ec2_subnet_id      = config[:emr][:ec2_subnet_id]
+          end
 
-        @jobflow.log_uri              = config[:s3][:buckets][:log]
-        @jobflow.enable_debugging     = debug
-        @jobflow.visible_to_all_users = true
+          @jobflow.log_uri              = config[:s3][:buckets][:log]
+          @jobflow.enable_debugging     = debug
+          @jobflow.visible_to_all_users = true
 
-        @jobflow.instance_count       = config[:emr][:jobflow][:core_instance_count] + 1 # +1 for the master instance
-        @jobflow.master_instance_type = config[:emr][:jobflow][:master_instance_type]
-        @jobflow.slave_instance_type  = config[:emr][:jobflow][:core_instance_type]
+          @jobflow.instance_count       = config[:emr][:jobflow][:core_instance_count] + 1 # +1 for the master instance
+          @jobflow.master_instance_type = config[:emr][:jobflow][:master_instance_type]
+          @jobflow.slave_instance_type  = config[:emr][:jobflow][:core_instance_type]
 
-        # Install and launch HBase
-        hbase = config[:emr][:software][:hbase]
-        unless not hbase
-          install_hbase_action = Elasticity::BootstrapAction.new("s3://#{config[:emr][:region]}.elasticmapreduce/bootstrap-actions/setup-hbase")
-          @jobflow.add_bootstrap_action(install_hbase_action)
+          # Install and launch HBase
+          hbase = config[:emr][:software][:hbase]
+          unless not hbase
+            install_hbase_action = Elasticity::BootstrapAction.new("s3://#{config[:emr][:region]}.elasticmapreduce/bootstrap-actions/setup-hbase")
+            @jobflow.add_bootstrap_action(install_hbase_action)
 
-          start_hbase_step = Elasticity::CustomJarStep.new("/home/hadoop/lib/hbase-#{hbase}.jar")
-          start_hbase_step.name = "Start HBase #{hbase}"
-          start_hbase_step.arguments = [ 'emr.hbase.backup.Main', '--start-master' ]
-          @jobflow.add_step(start_hbase_step)
-        end
+            start_hbase_step = Elasticity::CustomJarStep.new("/home/hadoop/lib/hbase-#{hbase}.jar")
+            start_hbase_step.name = "Start HBase #{hbase}"
+            start_hbase_step.arguments = [ 'emr.hbase.backup.Main', '--start-master' ]
+            @jobflow.add_step(start_hbase_step)
+          end
 
-        # Install Lingual
-        lingual = config[:emr][:software][:lingual]
-        unless not lingual
-          install_lingual_action = Elasticity::BootstrapAction.new("s3://files.concurrentinc.com/lingual/#{lingual}/lingual-client/install-lingual-client.sh")
-          @jobflow.add_bootstrap_action(install_lingual_action)
-        end
+          # Install Lingual
+          lingual = config[:emr][:software][:lingual]
+          unless not lingual
+            install_lingual_action = Elasticity::BootstrapAction.new("s3://files.concurrentinc.com/lingual/#{lingual}/lingual-client/install-lingual-client.sh")
+            @jobflow.add_bootstrap_action(install_lingual_action)
+          end
 
-        # For serialization debugging. TODO doesn't work yet
-        # install_ser_debug_action = Elasticity::BootstrapAction.new("s3://snowplow-hosted-assets/common/emr/cascading-ser-debug.sh")
-        # @jobflow.add_bootstrap_action(install_ser_debug_action)
+          # For serialization debugging. TODO doesn't work yet
+          # install_ser_debug_action = Elasticity::BootstrapAction.new("s3://snowplow-hosted-assets/common/emr/cascading-ser-debug.sh")
+          # @jobflow.add_bootstrap_action(install_ser_debug_action)
 
-        # Now let's add our task group if required
-        tic = config[:emr][:jobflow][:task_instance_count]
-        if tic > 0
-          instance_group = Elasticity::InstanceGroup.new.tap { |ig|
-            ig.count = tic
-            ig.type  = config[:emr][:jobflow][:task_instance_type]
-            
-            tib = config[:emr][:jobflow][:task_instance_bid]
-            if tib.nil?
-              ig.set_on_demand_instances
-            else
-              ig.set_spot_instances(tib)
-            end
-          }
+          # Now let's add our task group if required
+          tic = config[:emr][:jobflow][:task_instance_count]
+          if tic > 0
+            instance_group = Elasticity::InstanceGroup.new.tap { |ig|
+              ig.count = tic
+              ig.type  = config[:emr][:jobflow][:task_instance_type]
 
-          @jobflow.set_task_instance_group(instance_group)
+              tib = config[:emr][:jobflow][:task_instance_bid]
+              if tib.nil?
+                ig.set_on_demand_instances
+              else
+                ig.set_spot_instances(tib)
+              end
+            }
+
+            @jobflow.set_task_instance_group(instance_group)
+          end
         end
 
         s3_endpoint = self.class.get_s3_endpoint(config[:s3][:region])
@@ -273,8 +279,11 @@ module Snowplow
       # Throws a RuntimeError if the jobflow does not succeed.
       Contract None => nil
       def run()
-
-        jobflow_id = @jobflow.run
+        if !@existing_jobflow_id.nil?
+          jobflow_id = @existing_jobflow_id
+        else
+          jobflow_id = @jobflow.run
+        end
         logger.debug "EMR jobflow #{jobflow_id} started, waiting for jobflow to complete..."
         status = wait_for()
 
