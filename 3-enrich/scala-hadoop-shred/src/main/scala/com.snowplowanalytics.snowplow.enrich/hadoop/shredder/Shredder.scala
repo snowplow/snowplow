@@ -29,7 +29,7 @@ import Scalaz._
 
 // Snowplow Common Enrich
 import common._
-import outputs.CanonicalOutput
+import outputs.EnrichedEvent
 
 // Iglu Scala Client
 import iglu.client.{
@@ -62,7 +62,7 @@ object Shredder {
   private val ContextsSchema = SchemaKey("com.snowplowanalytics.snowplow", "contexts", "jsonschema", "1-0-0")
 
   /**
-   * Shred the CanonicalOutput's two fields which
+   * Shred the EnrichedEvent's two fields which
    * contain JSONs: contexts and unstructured event
    * properties. By shredding we mean:
    *
@@ -82,7 +82,7 @@ object Shredder {
    *         and on Failure a NonEmptyList of
    *         JsonNodes containing error messages
    */
-  def shred(event: CanonicalOutput)(implicit resolver: Resolver): ValidatedNel[JsonSchemaPairs] = {
+  def shred(event: EnrichedEvent)(implicit resolver: Resolver): ValidatedNel[JsonSchemaPairs] = {
 
     // Define what we know so far of the type hierarchy.
     val partialHierarchy = makePartialHierarchy(
@@ -196,7 +196,7 @@ object Shredder {
    *
    * @param field The name of the field
    *        containing the JSON instance
-   * @param schemaKey The schema that we
+   * @param schemaKey The criterion we
    *        expected this self-describing
    *        JSON to conform to
    * @param instance An Option-boxed JSON

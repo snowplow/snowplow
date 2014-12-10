@@ -33,7 +33,7 @@ import com.snowplowanalytics.util.Tap._
 
 // Snowplow Common Enrich
 import common._
-import outputs.CanonicalOutput
+import outputs.EnrichedEvent
 
 /**
  * A loader for Snowplow enriched events - i.e. the
@@ -55,25 +55,25 @@ object EnrichedEventLoader {
 
   /**
    * Converts the source string into a 
-   * ValidatedCanonicalOutput. Note that
+   * ValidatedEnrichedEvent. Note that
    * this loads the bare minimum required
    * for shredding - basically four fields.
    *
    * @param line A line of data to convert
    * @return either a set of validation
-   *         Failures or a CanonicalOutput
+   *         Failures or a EnrichedEvent
    *         Success.
    */
   // TODO: potentially in the future this could be replaced by some
   // kind of Scalding pack()
-  def toEnrichedEvent(line: String): ValidatedCanonicalOutput = {
+  def toEnrichedEvent(line: String): ValidatedEnrichedEvent = {
 
     val fields = line.split("\t", -1).map(f => if (f == "") null else f)
     val len = fields.length
     if (len < FieldCount)
-      return s"Line does not match Snowplow enriched event (expected ${FieldCount}+ fields; found $len)".failNel[CanonicalOutput]
+      return s"Line does not match Snowplow enriched event (expected ${FieldCount}+ fields; found $len)".failNel[EnrichedEvent]
 
-    val event = new CanonicalOutput().tap { e =>
+    val event = new EnrichedEvent().tap { e =>
       e.contexts = fields(FieldIndexes.contexts)
       e.unstruct_event = fields(FieldIndexes.unstructEvent)
     }

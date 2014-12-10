@@ -20,7 +20,7 @@ package shredder
 import util.Tap._
 
 // Snowplow Common Enrich
-import common.outputs.CanonicalOutput
+import common.outputs.EnrichedEvent
 
 // Specs2
 import org.specs2.Specification
@@ -48,7 +48,7 @@ class ShredderSpec extends Specification /*with DataTables with ValidationMatche
         refParent =  "events")
 
   def e2 = {
-    val event = new CanonicalOutput().tap { e =>
+    val event = new EnrichedEvent().tap { e =>
         e.event_id = EventId
         e.collector_tstamp = CollectorTimestamp
         e.unstruct_event = """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow/link_click/jsonschema/1-0-0","data":{"targetUrl":"http://snowplowanalytics.com/blog/page2","elementClasses":["next"]}}}"""

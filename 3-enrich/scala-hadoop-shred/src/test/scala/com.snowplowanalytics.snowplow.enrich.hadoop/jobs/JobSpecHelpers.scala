@@ -32,9 +32,6 @@ import Scalaz._
 // Scalding
 import com.twitter.scalding._
 
-// Snowplow Common Enrich
-import common.outputs.CanonicalOutput
-
 // Specs2
 import org.specs2.matcher.{Matcher, Expectable}
 import org.specs2.matcher.Matchers._
