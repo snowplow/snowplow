@@ -32,6 +32,9 @@ import spray.http.HttpHeaders.{
 }
 import spray.http.MediaTypes.`image/gif`
 
+// Akka
+import akka.actor.ActorRefFactory
+
 // Typesafe config
 import com.typesafe.config.Config
 
@@ -51,7 +54,9 @@ object ResponseHandler {
 }
 
 // Receive requests and store data into an output sink.
-class ResponseHandler(config: CollectorConfig, sink: AbstractSink) {
+class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit context: ActorRefFactory) {
+
+  import context.dispatcher
   
   val Collector = s"${generated.Settings.shortName}-${generated.Settings.version}-" + config.sinkEnabled.toString.toLowerCase
 

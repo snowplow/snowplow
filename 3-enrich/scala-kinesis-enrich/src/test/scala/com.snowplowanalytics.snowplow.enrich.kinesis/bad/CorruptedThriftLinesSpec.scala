@@ -41,7 +41,7 @@ class CorruptedThriftLinesSpec extends Specification with ScalaCheck { def is =
   def e1 = check {
     (raw: String) => {
       val eventBytes = Base64.decodeBase64(raw)
-      TestSource.enrichEvent(eventBytes) must beNone
+      TestSource.enrichEvents(eventBytes)(0) must beNone
     }
   }
 

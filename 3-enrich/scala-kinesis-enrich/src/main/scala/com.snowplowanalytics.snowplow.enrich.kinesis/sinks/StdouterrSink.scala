@@ -25,17 +25,20 @@ import com.snowplowanalytics.snowplow.collectors.thrift._
 /**
  * Stdouterr Sink for Scala enrichment
  */
-class StdouterrSink extends ISink {
+class StdouterrSink(inputType: InputType.InputType) extends ISink {
 
   /**
-   * Side-effecting function to store the CanonicalOutput
+   * Side-effecting function to store the EnrichedEvent
    * to the given output stream.
    *
-   * CanonicalOutput takes the form of a tab-delimited
+   * EnrichedEvent takes the form of a tab-delimited
    * String until such time as https://github.com/snowplow/snowplow/issues/211
    * is implemented.
    */
-  def storeCanonicalOutput(output: String, key: String) {
-    println(output) // To stdout
+  def storeEnrichedEvent(output: String, key: String) {
+    inputType match {
+      case InputType.Good => println(output) // To stdout
+      case InputType.Bad => Console.err.println(output) // To stderr
+    }
   }
 }

@@ -38,20 +38,17 @@ object Dependencies {
     val config               = "1.0.2"
     val scalaUtil            = "0.1.0"
     val snowplowRawEvent     = "0.1.0"
-    val snowplowCommonEnrich = "0.2.0"
+    val snowplowCommonEnrich = "0.9.1"
     val scalazon             = "0.5"
     val scalaz7              = "7.0.0"
-    val maxmindGeoip         = "0.0.5"
+    val igluClient           = "0.1.1"
     // Scala (test only)
-    val specs2               = "2.3.6"
+    // val specs2               = "2.3.6" Conflicts with com.chuusai:shapeless
+    val specs2               = "2.2.3"
     val scalazSpecs2         = "0.1.2"
     // Scala (compile only)
     val commonsLang3         = "3.1"
     val thrift               = "0.9.0"
-  }
-
-  object Urls {
-    val maxmindData = "http://geolite.maxmind.com/download/geoip/database/GeoLiteCity.dat.gz"
   }
 
   object Libraries {
@@ -63,7 +60,6 @@ object Dependencies {
     val slf4j                = "org.slf4j"                  %  "slf4j-simple"             % V.slf4j
     val awsSdk               = "com.amazonaws"              %  "aws-java-sdk"             % V.awsSdk
     val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"    % V.kinesisClient
-    val maxmindGeoip         = "com.snowplowanalytics"      %% "scala-maxmind-geoip"      % V.maxmindGeoip
     // Scala
     val argot                = "org.clapper"                %% "argot"                    % V.argot
     val config               = "com.typesafe"               %  "config"                   % V.config
@@ -72,6 +68,7 @@ object Dependencies {
     val snowplowCommonEnrich = "com.snowplowanalytics"      % "snowplow-common-enrich"    % V.snowplowCommonEnrich
     val scalazon             = "io.github.cloudify"         %% "scalazon"                 % V.scalazon
     val scalaz7              = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7
+    val igluClient           = "com.snowplowanalytics"      %  "iglu-scala-client"        % V.igluClient
     // Scala (test only)
     val specs2               = "org.specs2"                 %% "specs2"                   % V.specs2         % "test"
     val scalazSpecs2         = "org.typelevel"              %% "scalaz-specs2"            % V.scalazSpecs2   % "test"

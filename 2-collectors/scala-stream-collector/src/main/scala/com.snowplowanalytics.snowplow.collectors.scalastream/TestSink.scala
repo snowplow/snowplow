@@ -39,6 +39,6 @@ import thrift.SnowplowRawEvent
 // Allow the testing framework to test collection events using the
 // same methods from AbstractSink as the other sinks.
 class TestSink extends AbstractSink {
-  def storeRawEvent(event: SnowplowRawEvent, key: String): Array[Byte] =
+  def storeRawEvent(event: SnowplowRawEvent, key: String) =
     serializeEvent(event)
 }

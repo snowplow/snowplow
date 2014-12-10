@@ -1,3 +1,47 @@
+Version 0.9.13 (2014-12-01)
+---------------------------
+Scala Common Enrich: bumped to 0.9.1
+Scala Common Enrich: added error handling for Netaporter URI parsing (#1216)
+Scala Kinesis Enrich: bumped to 0.2.1
+Scala Kinesis Enrich: bumped Scala Common Enrich to 0.9.1
+Scala Kinesis Enrich: fixed conflict with Specs2 version, thanks @knservis! (#1213)
+Scala Hadoop Enrich: bumped to 0.10.1
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.9.1
+Deleted test-file in repository root (#1219)
+
+Version 0.9.12 (2014-11-26)
+---------------------------
+Scala Stream Collector: bumped to 0.2.0
+Scala Stream Collector: changed organization to "com.snowplowanalytics" (#1168)
+Scala Stream Collector: made the --config option mandatory (#1128)
+Scala Stream Collector: added ability to set AWS credentials from environment variables (#1116)
+Scala Stream Collector: now enforcing Java 7 for compilation (#1068)
+Scala Stream Collector: increased request character limit to 32768 (#987)
+Scala Stream Collector: improved performance by using Future, thanks @pkallos! (#580)
+Scala Stream Collector, Scala Kinesis Enrich: made endpoint configurable, thanks @sambo1972! (#978)
+Scala Stream Collector, Scala Kinesis Enrich: added support for IAM roles, thanks @pkallos! (#534)
+Scala Stream Collector, Scala Kinesis Enrich: replaced stream list with describe to tighten permissions, thanks @pkallos! (#535)
+Scala Kinesis Enrich: bumped to 0.2.0
+Scala Kinesis Enrich: bumped Scala Common Enrich to 0.9.0
+Scala Kinesis Enrich: changed organization to "com.snowplowanalytics" (#1167)
+Scala Kinesis Enrich: made the --config option mandatory (#1126)
+Scala Kinesis Enrich: updated instructions in README (#1125)
+Scala Kinesis Enrich: added ability to set AWS credentials from environment variables (#1117)
+Scala Kinesis Enrich: now enforcing Java 7 for compilation (#1067)
+Scala Kinesis Enrich: replaced printlns with Java Logger (#521)
+Scala Kinesis Enrich: started sending bad records to a separate stream (#463)
+Scala Kinesis Enrich: added page_url and page_referrer back into enrichment output (#686)
+Scala Kinesis Enrich: stopped opening a new file for each enriched event, thanks @pkallos! (#714)
+Scala Common Enrich: bumped to 0.9.0
+Scala Common Enrich: added BadRow from Scala Hadoop Enrich (#1118)
+Scala Common Enrich: added ability to override collector-set nuid with tracker-set tnuid (#1095)
+Scala Common Enrich: made URI parsing more permissive using NetAPorter's URI library, thanks @rupeshmane! (#1172)
+Scala Hadoop Enrich: bumped to 0.10.0
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.9.0
+Scala Hadoop Enrich: moved BadRow into Scala Common Enrich (#1119)
+Scala Hadoop Enrich: updated README with new Snowplow capitalization (#1127)
+Kinesis Elasticsearch Sink: added. Version 0.1.0
+
 Version 0.9.11 (2014-11-10)
 ---------------------------
 Clojure Collector: bumped to 0.9.0
