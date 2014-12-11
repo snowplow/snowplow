@@ -50,6 +50,7 @@ CREATE TABLE atomic.com_pagerduty_incident_1 (
     "data.incident.assigned_to_user.html_url"        varchar(255)   encode raw,
     "data.incident.trigger_summary_data.description" varchar(255)   encode raw,
     "data.incident.trigger_summary_data.subject"     varchar(255)   encode raw,
+    "data.incident.trigger_summary_data.client"      varchar(255)   encode raw,
     "data.incident.trigger_details_html_url"         varchar(255)   encode raw,
     "data.incident.trigger_type"                     varchar(255)   encode raw,
     "data.incident.last_status_change_on"            timestamp      encode raw,

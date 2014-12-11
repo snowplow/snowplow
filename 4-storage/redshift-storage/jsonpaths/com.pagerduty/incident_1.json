@@ -34,6 +34,7 @@
     "$.data.data.incident.assigned_to_user.html_url",
     "$.data.data.incident.trigger_summary_data.description",
     "$.data.data.incident.trigger_summary_data.subject",
+    "$.data.data.incident.trigger_summary_data.client",
     "$.data.data.incident.trigger_details_html_url",
     "$.data.data.incident.trigger_type",
     "$.data.data.incident.last_status_change_on",
