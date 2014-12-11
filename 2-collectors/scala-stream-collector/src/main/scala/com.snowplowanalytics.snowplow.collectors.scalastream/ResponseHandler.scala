@@ -121,9 +121,11 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
       RawHeader("P3P", s"""policyref="${policyRef}", CP="${CP}""""),
       `Set-Cookie`(responseCookie)
     )
-    val httpResponse = HttpResponse(
-      entity = HttpEntity(`image/gif`, ResponseHandler.pixel)
-    ).withHeaders(headers)
+    val httpResponse = (path match {
+      case "/i" => HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
+      case "/com.snowplowanalytics.snowplow/tp2" => HttpResponse()
+      case e => throw new RuntimeException("Nonexistent protocol $e used - this should be impossible")
+    }).withHeaders(headers)
     (httpResponse, sinkResponse)
   }
 
