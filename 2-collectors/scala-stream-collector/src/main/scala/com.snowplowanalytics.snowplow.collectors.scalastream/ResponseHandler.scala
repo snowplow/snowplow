@@ -12,7 +12,8 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.collectors
+package com.snowplowanalytics.snowplow
+package collectors
 package scalastream
 
 // Java
@@ -28,6 +29,7 @@ import spray.http.HttpHeaders.{
   `Set-Cookie`,
   `Remote-Address`,
   `Raw-Request-URI`,
+  `Content-Type`,
   RawHeader
 }
 import spray.http.MediaTypes.`image/gif`
@@ -43,7 +45,7 @@ import scala.collection.JavaConversions._
 
 // Snowplow
 import generated._
-import thrift._
+import SnowplowRawEvent.thrift.v1.SnowplowRawEvent
 import sinks._
 
 // Contains an invisible pixel to return for `/i` requests.
@@ -62,40 +64,47 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
 
   // When `/i` is requested, this is called and stores an event in the
   // Kinisis sink and returns an invisible pixel with a cookie.
-  def cookie(queryParams: String, requestCookie: Option[HttpCookie],
+  def cookie(queryParams: String, body: String, requestCookie: Option[HttpCookie],
       userAgent: Option[String], hostname: String, ip: String,
-      request: HttpRequest, refererUri: Option[String], payloadFormat: PayloadFormat):
+      request: HttpRequest, refererUri: Option[String], path: String):
       (HttpResponse, Array[Byte]) = {
+
     // Use the same UUID if the request cookie contains `sp`.
-    val networkUserId: String =
-      if (requestCookie.isDefined) requestCookie.get.content
-      else UUID.randomUUID.toString()
+    val networkUserId: String = requestCookie match {
+      case Some(rc) => rc.content
+      case None => UUID.randomUUID.toString
+    }
 
     // Construct an event object from the request.
     val timestamp: Long = System.currentTimeMillis
 
-    val payload = new TrackerPayload(
-      PayloadProtocol.Http,
-      payloadFormat,
-      queryParams
-    )
-
     val event = new SnowplowRawEvent(
-      timestamp,
+      "1", // version TODO: decide what this will look like
       Collector,
       "UTF-8",
-      ip
+      timestamp,
+      ip,
+      path
     )
 
-    event.payload = payload
+    event.querystring = queryParams
+    event.body = body
     event.hostname = hostname
-    if (userAgent.isDefined) event.userAgent = userAgent.get
-    if (refererUri.isDefined) event.refererUri = refererUri.get
+    event.networkUserId = networkUserId
+
+    userAgent.foreach(event.userAgent = _)
+    refererUri.foreach(event.refererUri = _)
     event.headers = request.headers.flatMap {
       case _: `Remote-Address` | _: `Raw-Request-URI` => None
       case other => Some(other.toString)
     }
-    event.networkUserId = networkUserId
+
+    // Set the content type
+    request.headers.find(_ match {case `Content-Type`(ct) => true; case _ => false}) foreach {
+
+      // toLowerCase called because Spray seems to convert "utf" to "UTF"
+      ct => event.contentType = ct.value.toLowerCase
+    }
 
     // Only the test sink responds with the serialized object.
     val sinkResponse = sink.storeRawEvent(event, ip)

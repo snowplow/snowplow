@@ -29,7 +29,6 @@ import scala.concurrent.duration._
 
 // Snowplow
 import sinks._
-import thrift._
 
 // Actor accepting Http requests for the Scala collector.
 class CollectorServiceActor(collectorConfig: CollectorConfig,
@@ -71,16 +70,15 @@ class CollectorService(
                       entity(as[String]) { body =>
                         complete(
                           responseHandler.cookie(
-                            Option(body).filter(
-                              _.trim.nonEmpty
-                            ).getOrElse(null),
+                            null,
+                            body,
                             reqCookie,
                             userAgent,
                             host,
                             ip.toString,
                             request,
                             refererURI,
-                            PayloadFormat.HttpPostUrlencodedForm
+                            "/com.snowplowanalytics.snowplow/tp2"
                           )._1
                         )
                       }
@@ -107,13 +105,14 @@ class CollectorService(
                           Option(Uri(rawRequest).query.toString).filter(
                             _.trim.nonEmpty
                           ).getOrElse(null),
+                          null,
                           reqCookie,
                           userAgent,
                           host,
                           ip.toString,
                           request,
                           refererURI,
-                          PayloadFormat.HttpGet
+                          "/i"
                         )._1
                       )
                     }

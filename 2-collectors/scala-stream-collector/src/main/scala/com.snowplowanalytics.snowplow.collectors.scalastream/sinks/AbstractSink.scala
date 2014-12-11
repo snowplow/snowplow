@@ -16,18 +16,19 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.collectors
+package com.snowplowanalytics.snowplow
+package collectors
 package scalastream
 package sinks
-
-// Snowplow
-import thrift.SnowplowRawEvent
 
 // Java
 import java.nio.ByteBuffer
 
 // Thrift
 import org.apache.thrift.TSerializer
+
+// Snowplow
+import SnowplowRawEvent.thrift.v1.SnowplowRawEvent
 
 // Define an interface for all sinks to use to store events.
 trait AbstractSink {

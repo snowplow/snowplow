@@ -16,7 +16,8 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.collectors
+package com.snowplowanalytics.snowplow
+package collectors
 package scalastream
 package sinks
 
@@ -34,7 +35,7 @@ import com.typesafe.config.Config
 
 // Snowplow
 import scalastream._
-import thrift.SnowplowRawEvent
+import SnowplowRawEvent.thrift.v1.SnowplowRawEvent
 
 // Allow the testing framework to test collection events using the
 // same methods from AbstractSink as the other sinks.

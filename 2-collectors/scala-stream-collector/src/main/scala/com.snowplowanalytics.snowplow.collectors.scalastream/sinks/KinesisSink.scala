@@ -10,7 +10,8 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.collectors
+package com.snowplowanalytics.snowplow
+package collectors
 package scalastream
 package sinks
 
@@ -54,7 +55,7 @@ import scala.util.{Success, Failure}
 
 // Snowplow
 import scalastream._
-import thrift.SnowplowRawEvent
+import SnowplowRawEvent.thrift.v1.SnowplowRawEvent
 
 /**
  * Kinesis Sink for the Scala collector.
