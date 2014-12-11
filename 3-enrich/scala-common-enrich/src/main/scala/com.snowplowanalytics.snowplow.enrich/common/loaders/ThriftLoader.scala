@@ -33,12 +33,11 @@ import scalaz._
 import Scalaz._
 
 // Snowplow
-import com.snowplowanalytics.snowplow.collectors.thrift.{
-  SnowplowRawEvent,
-  TrackerPayload => ThriftTrackerPayload,
-  PayloadProtocol,
-  PayloadFormat
+import com.snowplowanalytics.snowplow.SnowplowRawEvent.thrift.v1.{
+  SnowplowRawEvent => SnowplowRawEvent1,
+  JustSchema
 }
+import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
 
 /**
  * Loader for Thrift SnowplowRawEvent objects.
@@ -49,6 +48,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
 
   /**
    * Converts the source string into a ValidatedMaybeCollectorPayload.
+   * Checks the version of the raw event and calls the appropriate method.
    *
    * @param line A serialized Thrift object Byte array mapped to a String.
    *   The method calling this should encode the serialized object
@@ -58,53 +58,144 @@ object ThriftLoader extends Loader[Array[Byte]] {
    *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
    */
   def toCollectorPayload(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
-    
-    var snowplowRawEvent = new SnowplowRawEvent()
+
+    var snowplowRawEvent = new SnowplowRawEvent1()
     try {
+
+      var schema = new JustSchema
+
       this.synchronized {
         thriftDeserializer.deserialize(
-          snowplowRawEvent,
+          schema,
           line
         )
       }
 
-      val querystring = parseQuerystring(
-        Option(snowplowRawEvent.payload.data),
-        snowplowRawEvent.encoding
-      )
-
-      val ip = snowplowRawEvent.ipAddress.some // Required
-      val hostname = Option(snowplowRawEvent.hostname)
-      val userAgent = Option(snowplowRawEvent.userAgent)
-      val refererUri = Option(snowplowRawEvent.refererUri)
-      val networkUserId = Option(snowplowRawEvent.networkUserId)
-
-      val headers = Option(snowplowRawEvent.headers)
-        .map(_.toList).getOrElse(Nil)
-
-      (querystring.toValidationNel) map { (q: List[NameValuePair]) =>
-        Some(
-          CollectorPayload(
-            q,
-            snowplowRawEvent.collector,
-            snowplowRawEvent.encoding,
-            hostname,
-            new DateTime(snowplowRawEvent.timestamp, DateTimeZone.UTC),
-            ip,
-            userAgent,
-            refererUri,
-            headers,
-            networkUserId,
-            CollectorApi.SnowplowTp1, // No way of storing API vendor/version in Thrift yet, assume Snowplow TP1
-            None, // No way of storing content type in Thrift yet
-            None  // No way of storing request body in Thrift yet
-          )
-        )
+      if (schema.isSetSchema) {
+        schema.getSchema match {
+          case "1" => convertSchema1(line) // TODO: decide what the schema should look like
+          case s => s"Record has schema field '$s', expected '1'".failNel
+        }
+      } else {
+        convertOldSchema(line)
       }
     } catch {
       // TODO: Check for deserialization errors.
-      case _: Throwable =>
+      case e: Throwable =>
         "Record does not match Thrift SnowplowRawEvent schema".failNel[Option[CollectorPayload]]
+    }
+  }
+
+  /**
+   * Converts the source string into a ValidatedMaybeCollectorPayload.
+   * Assumes that the byte array is a serialized SnowplowRawEvent, version 1.
+   *
+   * @param line A serialized Thrift object Byte array mapped to a String.
+   *   The method calling this should encode the serialized object
+   *   with `snowplowRawEventBytes.map(_.toChar)`.
+   *   Reference: http://stackoverflow.com/questions/5250324/
+   * @return either a set of validation errors or an Option-boxed
+   *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
+   */
+  private def convertSchema1(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
+
+    var snowplowRawEvent = new SnowplowRawEvent1
+    this.synchronized {
+      thriftDeserializer.deserialize(
+        snowplowRawEvent,
+        line
+      )
+    }
+
+    val querystring = parseQuerystring(
+      Option(snowplowRawEvent.querystring),
+      snowplowRawEvent.encoding
+    )
+
+    val ip = snowplowRawEvent.ipAddress.some // Required
+    val hostname = Option(snowplowRawEvent.hostname)
+    val userAgent = Option(snowplowRawEvent.userAgent)
+    val refererUri = Option(snowplowRawEvent.refererUri)
+    val networkUserId = Option(snowplowRawEvent.networkUserId)
+
+    val headers = Option(snowplowRawEvent.headers)
+      .map(_.toList).getOrElse(Nil)
+
+    val api = CollectorApi.parse(snowplowRawEvent.path)
+
+    (querystring.toValidationNel |@|
+      api.toValidationNel) { (q: List[NameValuePair], a: CollectorApi) => CollectorPayload(
+        q,
+        snowplowRawEvent.collector,
+        snowplowRawEvent.encoding,
+        hostname,
+        new DateTime(snowplowRawEvent.timestamp, DateTimeZone.UTC),
+        ip,
+        userAgent,
+        refererUri,
+        headers,
+        networkUserId,
+        a,
+        Option(snowplowRawEvent.contentType),
+        Option(snowplowRawEvent.body)
+        ).some
+    }
+  }
+
+  /**
+   * Converts the source string into a ValidatedMaybeCollectorPayload.
+   * Assumes that the byte array is an old serialized SnowplowRawEvent
+   * which is not self-describing.
+   *
+   * @param line A serialized Thrift object Byte array mapped to a String.
+   *   The method calling this should encode the serialized object
+   *   with `snowplowRawEventBytes.map(_.toChar)`.
+   *   Reference: http://stackoverflow.com/questions/5250324/
+   * @return either a set of validation errors or an Option-boxed
+   *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
+   */
+  private def convertOldSchema(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
+
+    var snowplowRawEvent = new SnowplowRawEvent
+    this.synchronized {
+      thriftDeserializer.deserialize(
+        snowplowRawEvent,
+        line
+      )
+    }
+
+    val querystring = parseQuerystring(
+      Option(snowplowRawEvent.payload.data),
+      snowplowRawEvent.encoding
+    )
+
+    val ip = snowplowRawEvent.ipAddress.some // Required
+    val hostname = Option(snowplowRawEvent.hostname)
+    val userAgent = Option(snowplowRawEvent.userAgent)
+    val refererUri = Option(snowplowRawEvent.refererUri)
+    val networkUserId = Option(snowplowRawEvent.networkUserId)
+
+    val headers = Option(snowplowRawEvent.headers)
+      .map(_.toList).getOrElse(Nil)
+
+    (querystring.toValidationNel) map { (q: List[NameValuePair]) =>
+      Some(
+        CollectorPayload(
+          q,
+          snowplowRawEvent.collector,
+          snowplowRawEvent.encoding,
+          hostname,
+          new DateTime(snowplowRawEvent.timestamp, DateTimeZone.UTC),
+          ip,
+          userAgent,
+          refererUri,
+          headers,
+          networkUserId,
+          CollectorApi.SnowplowTp1, // No way of storing API vendor/version in Thrift yet, assume Snowplow TP1
+          None, // No way of storing content type in Thrift yet
+          None  // No way of storing request body in Thrift yet
+        )
+      )
     }
   }
 }
