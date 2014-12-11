@@ -37,7 +37,7 @@ CREATE TABLE atomic.com_mandrill_message_delayed_1 (
     "msg.metadata.user_id" varchar(255)   encode raw,
     "msg.opens"            varchar(2048)  encode runlength, -- Holds a JSON array
     "msg.sender"           varchar(255)   encode raw,
-    "msg.smtp_events"      varchar(2048)  encode runlength, -- Holds a JSON array
+    "msg.smtp_events"      varchar(5000)  encode runlength, -- Holds a JSON array
     "msg.state"            varchar(255)   encode raw,
     "msg.subject"          varchar(255)   encode raw,
     "msg.tags"             varchar(2048)  encode runlength, -- Holds a JSON array
