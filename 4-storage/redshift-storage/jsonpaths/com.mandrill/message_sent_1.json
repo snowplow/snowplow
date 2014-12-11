@@ -18,7 +18,7 @@
     "$.data.msg._version",
     "$.data.msg.clicks",
     "$.data.msg.email",
-    "$.data.msg.metadata.user_id" 
+    "$.data.msg.metadata.user_id", 
     "$.data.msg.opens",
     "$.data.msg.sender",
     "$.data.msg.state",
