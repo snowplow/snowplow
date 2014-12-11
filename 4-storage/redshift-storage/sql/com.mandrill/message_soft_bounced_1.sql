@@ -40,8 +40,11 @@ CREATE TABLE atomic.com_mandrill_message_soft_bounced_1 (
     "msg.sender"             varchar(255)   encode raw,
     "msg.state"              varchar(255)   encode raw,
     "msg.subject"            varchar(255)   encode raw,
-    "msg.tags"               varchar(2048)  encode runlength, -- Holds a JSON array
-    "msg.ts"                 timestamp      encode raw
+    "msg.tags"               varchar(5000)  encode runlength, -- Holds a JSON array
+    "msg.ts"                 timestamp,
+    "msg.resends"            varchar(5000)  encode runlength, -- Holds a JSON array
+    "msg.smtp_events"        varchar(5000)  encode runlength, -- Holds a JSON array
+    "msg.template"           varchar(255)   encode text255
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

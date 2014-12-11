@@ -25,6 +25,9 @@
     "$.data.msg.state",
     "$.data.msg.subject",
     "$.data.msg.tags",
-    "$.data.msg.ts"
+    "$.data.msg.ts",
+    "$.data.msg.resends",
+    "$.data.msg.smtp_events",
+    "$.data.msg.template"
     ]
 }
