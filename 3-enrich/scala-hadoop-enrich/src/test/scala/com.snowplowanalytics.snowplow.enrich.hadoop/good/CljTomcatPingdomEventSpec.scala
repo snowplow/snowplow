@@ -36,7 +36,7 @@ import JobSpecHelpers._
 object CljTomcatPingdomEventSpec {
   
   val lines = Lines(
-    "2014-10-09  16:28:31    -   13  255.255.255.255   POST    255.255.255.255   /com.pingdom/v1   404 -  -   p=(u%27srv%27%2C)&message=(u%27%7B%22check%22%3A%20%221421338%22%2C%20%22checkname%22%3A%20%22Webhooks_Test%22%2C%20%22host%22%3A%20%227eef51c2.ngrok.com%22%2C%20%22action%22%3A%20%22assign%22%2C%20%22incidentid%22%3A%203%2C%20%22description%22%3A%20%22down%22%7D%27%2C)&aid=(u%27uptime%27%2C)&cv=(u%27clj-0.6.0-tom-0.0.4%27%2C)&nuid=(u%27-%27%2C)   -   -   -   -   -"
+    "2014-10-09  16:28:31    -   13  255.255.255.255   POST    255.255.255.255   /com.pingdom/v1   404 -  -   p=srv&message=%7B%22check%22%3A%20%221421338%22%2C%20%22checkname%22%3A%20%22Webhooks_Test%22%2C%20%22host%22%3A%20%227eef51c2.ngrok.com%22%2C%20%22action%22%3A%20%22assign%22%2C%20%22incidentid%22%3A%203%2C%20%22description%22%3A%20%22down%22%7D&aid=uptime&cv=clj-0.6.0-tom-0.0.4&nuid=-   -   -   -   -   -"
     )
 
   val expected = List(

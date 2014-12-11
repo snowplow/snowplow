@@ -119,11 +119,13 @@ object PingdomAdapter extends Adapter {
 
   /**
    * As Pingdom wraps each value in the querystring within: (u'[content]',)
-   * we need to remove these wrappers from every value before we can use them.
+   * we need to check that these wrappers have been removed by the Collector
+   * before we can use them.
    * example: p -> (u'app',) becomes p -> app
    *
-   * The expected behavior is that every value will be in this form, if 
-   * Pingdom changes this we will not be able to process any events.
+   * The expected behavior is that every value will have been cleaned by
+   * the Collector; however if this is not the case we will not be able
+   * to process values.
    *
    * @param params A list of name-value pairs from the querystring of 
    *        the Pingdom payload
@@ -135,8 +137,8 @@ object PingdomAdapter extends Adapter {
     val formatted = params.map { 
       value => {
         (value.getName, value.getValue) match {
-          case (k, PingdomValueRegex(v)) => (k -> v).successNel
-          case (k, v) => s"${VendorName} name-value pair [$k -> $v]: did not pass regex".failNel
+          case (k, PingdomValueRegex(v)) => s"${VendorName} name-value pair [$k -> $v]: Passed regex - Collector is not catching unicode wrappers anymore".failNel
+          case (k, v) => (k -> v).successNel
         }
       }
     }
