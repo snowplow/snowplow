@@ -32,15 +32,20 @@ CREATE TABLE atomic.com_mandrill_message_sent_1 (
     ts                     timestamp      encode raw,
     "msg._id"              varchar(255)   encode raw,
     "msg._version"         varchar(255)   encode raw,
-    "msg.clicks"           varchar(2048)  encode runlength, -- Holds a JSON array
+    "msg.clicks"           varchar(5000)  encode runlength, -- Holds a JSON array
     "msg.email"            varchar(255)   encode raw,
     "msg.metadata.user_id" varchar(255)   encode raw,
-    "msg.opens"            varchar(2048)  encode runlength, -- Holds a JSON array
+    "msg.opens"            varchar(5000)  encode runlength, -- Holds a JSON array
     "msg.sender"           varchar(255)   encode raw,
     "msg.state"            varchar(255)   encode raw,
     "msg.subject"          varchar(255)   encode raw,
     "msg.tags"             varchar(2048)  encode runlength, -- Holds a JSON array
-    "msg.ts"               timestamp      encode raw
+    "msg.ts"               timestamp      encode raw,
+    "msg.reject"           varchar(255)   encode raw,
+    "msg.resends"          varchar(5000)  encode runlength, --Holds a JSON array
+    "msg.smtp_events"      varchar(5000)  encode runlength, --Holds a JSON array
+    "msg.subaccount"       varchar(255)   encode text255,
+    "msg.template"         varchar(255)   encode text255
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
