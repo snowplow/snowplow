@@ -41,14 +41,14 @@ CREATE TABLE atomic.com_mandrill_message_opened_1 (
     "location.timezone"                varchar(255)   encode raw,
     "msg._id"                          varchar(255)   encode raw,
     "msg._version"                     varchar(255)   encode raw,
-    "msg.clicks"                       varchar(2048)  encode runlength, -- Holds a JSON array
+    "msg.clicks"                       varchar(5000)  encode runlength, -- Holds a JSON array
     "msg.email"                        varchar(255)   encode raw,
     "msg.metadata.user_id"             varchar(255)   encode raw,
-    "msg.opens"                        varchar(2048)  encode runlength, -- Holds a JSON array
+    "msg.opens"                        varchar(5000)  encode runlength, -- Holds a JSON array
     "msg.sender"                       varchar(255)   encode raw,
     "msg.state"                        varchar(255)   encode raw,
     "msg.subject"                      varchar(255)   encode raw,
-    "msg.tags"                         varchar(2048)  encode runlength, -- Holds a JSON array
+    "msg.tags"                         varchar(5000)  encode runlength, -- Holds a JSON array
     "msg.ts"                           timestamp      encode raw,
     "user_agent_parsed.mobile"         varchar(255)   encode raw,
     "user_agent_parsed.os_company_url" varchar(255)   encode raw,
