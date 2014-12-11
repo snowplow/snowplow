@@ -175,7 +175,7 @@ collector {
       storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 1000)
       storedEvent.encoding must beEqualTo("UTF-8")
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
-      storedEvent.collector must beEqualTo("ssc-0.2.0-test")
+      storedEvent.collector must beEqualTo("ssc-0.3.0-test")
       storedEvent.payload.protocol must beEqualTo(PayloadProtocol.Http)
       storedEvent.payload.format must beEqualTo(PayloadFormat.HttpGet)
       storedEvent.payload.data must beEqualTo(payloadData)
