@@ -12,7 +12,8 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.collectors
+package com.snowplowanalytics.snowplow
+package collectors
 package scalastream
 
 // Scala
@@ -44,11 +45,7 @@ import org.apache.thrift.TDeserializer
 
 // Snowplow
 import sinks._
-import thrift.{
-  PayloadProtocol,
-  PayloadFormat,
-  SnowplowRawEvent
-}
+import SnowplowRawEvent.thrift.v1.SnowplowRawEvent
 
 class CollectorServiceSpec extends Specification with Specs2RouteTest with
      AnyMatchers {
@@ -164,8 +161,8 @@ collector {
     }
     "store the expected event as a serialized Thrift object in the enabled sink" in {
       val payloadData = "param1=val1&param2=val2"
-      val storedRecordBytes = responseHandler.cookie(payloadData, None,
-        None, "localhost", "127.0.0.1", new HttpRequest(), None, PayloadFormat.HttpGet)._2
+      val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
+        None, "localhost", "127.0.0.1", new HttpRequest(), None, "/i")._2
 
       val storedEvent = new SnowplowRawEvent
       this.synchronized {
@@ -176,9 +173,8 @@ collector {
       storedEvent.encoding must beEqualTo("UTF-8")
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
       storedEvent.collector must beEqualTo("ssc-0.3.0-test")
-      storedEvent.payload.protocol must beEqualTo(PayloadProtocol.Http)
-      storedEvent.payload.format must beEqualTo(PayloadFormat.HttpGet)
-      storedEvent.payload.data must beEqualTo(payloadData)
+      storedEvent.path must beEqualTo("/i")
+      storedEvent.querystring must beEqualTo(payloadData)
     }
   }
 }
