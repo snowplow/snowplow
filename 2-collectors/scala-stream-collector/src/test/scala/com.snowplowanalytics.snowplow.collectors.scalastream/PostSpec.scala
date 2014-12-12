@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -47,7 +47,7 @@ import org.apache.thrift.TDeserializer
 import sinks._
 import SnowplowRawEvent.thrift.v1.SnowplowRawEvent
 
-class CollectorServiceSpec extends Specification with Specs2RouteTest with
+class PostSpec extends Specification with Specs2RouteTest with
      AnyMatchers {
    val testConf: Config = ConfigFactory.parseString("""
 collector {
@@ -93,22 +93,17 @@ collector {
   // when running with the `spray.can.server.remote-address-header`
   // option. However, the testing does not read this option and a
   // remote address always needs to be set.
-  def CollectorGet(uri: String, cookie: Option[`HttpCookie`] = None,
+  def CollectorPost(uri: String, cookie: Option[`HttpCookie`] = None,
       remoteAddr: String = "127.0.0.1") = {
     val headers: MutableList[HttpHeader] =
       MutableList(`Remote-Address`(remoteAddr),`Raw-Request-URI`(uri))
     cookie.foreach(headers += `Cookie`(_))
-    Get(uri).withHeaders(headers.toList)
+    Post(uri).withHeaders(headers.toList)
   }
 
   "Snowplow's Scala collector" should {
-    "return an invisible pixel" in {
-      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
-        responseAs[Array[Byte]] === ResponseHandler.pixel
-      }
-    }
     "return a cookie expiring at the correct time" in {
-      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2") ~> collectorService.collectorRoute ~> check {
         headers must not be empty
 
         val httpCookies: List[HttpCookie] = headers.collect {
@@ -132,7 +127,7 @@ collector {
       }
     }
     "return the same cookie as passed in" in {
-      CollectorGet("/i", Some(HttpCookie("sp", "UUID_Test"))) ~>
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2", Some(HttpCookie("sp", "UUID_Test"))) ~>
           collectorService.collectorRoute ~> check {
         val httpCookies: List[HttpCookie] = headers.collect {
           case `Set-Cookie`(hc) => hc
@@ -146,7 +141,7 @@ collector {
       }
     }
     "return a P3P header" in {
-      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2") ~> collectorService.collectorRoute ~> check {
         val p3pHeaders = headers.filter {
           h => h.name.equals("P3P")
         }
@@ -162,7 +157,7 @@ collector {
     "store the expected event as a serialized Thrift object in the enabled sink" in {
       val payloadData = "param1=val1&param2=val2"
       val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
-        None, "localhost", "127.0.0.1", new HttpRequest(), None, "/i")._2
+        None, "localhost", "127.0.0.1", new HttpRequest(), None, "/com.snowplowanalytics.snowplow/tp2")._2
 
       val storedEvent = new SnowplowRawEvent
       this.synchronized {
@@ -173,7 +168,7 @@ collector {
       storedEvent.encoding must beEqualTo("UTF-8")
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
       storedEvent.collector must beEqualTo("ssc-0.3.0-test")
-      storedEvent.path must beEqualTo("/i")
+      storedEvent.path must beEqualTo("/com.snowplowanalytics.snowplow/tp2")
       storedEvent.querystring must beEqualTo(payloadData)
     }
   }
