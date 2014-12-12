@@ -47,7 +47,6 @@ object Dependencies {
     val scaldingCore     = "com.twitter"                %% "scalding-core"             % V.scalding
     val scaldingArgs     = "com.twitter"                %% "scalding-args"             % V.scalding
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
-    val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val commonEnrich     = "com.snowplowanalytics"      %  "snowplow-common-enrich"    % V.commonEnrich
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2       % "test"
