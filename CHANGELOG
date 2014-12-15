@@ -3,6 +3,8 @@ Version 0.9.14 (2014-12-XX)
 EmrEtlRunner: bumped to 0.10.0
 EmrEtlRunner: removed hyphen from the pattern match for Clojure Collector logs (#1194)
 EmrEtlRunner: on job failure, log overall jobflow and individual step statuses (#1153)
+Clojure Collector: bumped to 0.9.1
+Clojure Collector: increased Tomcat's HTTP header tolerance to 64kB (#1249)
 Scala Common Enrich: bumped to 0.10.0
 Scala Common Enrich: bumped Scala Iglu Client to 0.2.0 (#1222)
 Scala Common Enrich: updated SnowplowAdapter to accept payload_data versions above 1-0-0 (#1220)
