@@ -154,8 +154,10 @@ object PagerdutyAdapter extends Adapter {
   /**
    * Returns an updated event JSON where 
    * all of the fields with a null string
-   * have been changed to a null value and
-   * all event types have been trimmed.
+   * have been changed to a null value, 
+   * all event types have been trimmed and
+   * all timestamps have been correctly 
+   * formatted.
    *
    * e.g. "event" -> "null"
    *      "event" -> null
@@ -165,12 +167,15 @@ object PagerdutyAdapter extends Adapter {
    *
    * @param json The event JSON which we need to
    *        update values within
-   * @return the updated JSON with valid date-time
-   *         values in the 'ts' fields
+   * @return the updated JSON with valid null values,
+   *         type values and correctly formatted
+   *         date-time strings
    */
   private[registry] def reformatParameters(json: JValue): JValue =
     json transformField {
       case (key, JString("null")) => (key, JNull)
       case ("type", JString(value)) if value.startsWith("incident.") => ("type", JString(value.replace("incident.", "")))
+      case ("created_on", JString(value)) if value.endsWith(" 00:00") => ("created_on", JString(value.replace(" 00:00", "+00:00")))
+      case ("last_status_change_on", JString(value)) if value.endsWith(" 00:00") => ("created_on", JString(value.replace(" 00:00", "+00:00")))
     }
 }
