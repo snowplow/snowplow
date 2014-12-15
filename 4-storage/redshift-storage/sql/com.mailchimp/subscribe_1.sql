@@ -40,7 +40,19 @@ CREATE TABLE atomic.com_mailchimp_subscribe_1 (
     "data.merges.EMAIL"     varchar(255)   encode raw,
     "data.merges.FNAME"     varchar(255)   encode raw,
     "data.merges.LNAME"     varchar(255)   encode raw,
-    "data.merges.INTERESTS" varchar(255)   encode raw
+    "data.merges.INTERESTS" varchar(255)   encode raw,
+    "data.merges.GROUPINGS.1.groups" varchar(255)   encode raw,
+    "data.merges.GROUPINGS.1.name"   varchar(255)   encode raw,
+    "data.merges.GROUPINGS.1.id"     varchar(255)   encode raw,
+    "data.merges.GROUPINGS.2.groups" varchar(255)   encode raw,
+    "data.merges.GROUPINGS.2.name"   varchar(255)   encode raw,
+    "data.merges.GROUPINGS.2.id"     varchar(255)   encode raw,
+    "data.merges.GROUPINGS.3.groups" varchar(255)   encode raw,
+    "data.merges.GROUPINGS.3.name"   varchar(255)   encode raw,
+    "data.merges.GROUPINGS.3.id"     varchar(255)   encode raw,
+    "data.merges.GROUPINGS.4.groups" varchar(255)   encode raw,
+    "data.merges.GROUPINGS.4.name"   varchar(255)   encode raw,
+    "data.merges.GROUPINGS.4.id"     varchar(255)   encode raw
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

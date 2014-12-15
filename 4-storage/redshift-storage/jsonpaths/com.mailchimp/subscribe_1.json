@@ -24,6 +24,18 @@
     "$.data.data.merges.EMAIL",
     "$.data.data.merges.FNAME",
     "$.data.data.merges.LNAME",
-    "$.data.data.merges.INTERESTS"
+    "$.data.data.merges.INTERESTS",
+    "$.data.data.merges.GROUPINGS.1.groups",
+    "$.data.data.merges.GROUPINGS.1.name",
+    "$.data.data.merges.GROUPINGS.1.id",
+    "$.data.data.merges.GROUPINGS.2.groups",
+    "$.data.data.merges.GROUPINGS.2.name",
+    "$.data.data.merges.GROUPINGS.2.id",
+    "$.data.data.merges.GROUPINGS.3.groups",
+    "$.data.data.merges.GROUPINGS.3.name",
+    "$.data.data.merges.GROUPINGS.3.id",
+    "$.data.data.merges.GROUPINGS.4.groups",
+    "$.data.data.merges.GROUPINGS.4.name",
+    "$.data.data.merges.GROUPINGS.4.id"
     ]
 }
