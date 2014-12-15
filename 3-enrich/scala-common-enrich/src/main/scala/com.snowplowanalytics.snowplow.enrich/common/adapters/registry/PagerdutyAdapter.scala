@@ -152,10 +152,28 @@ object PagerdutyAdapter extends Adapter {
     }
 
   /**
+   * Returns an updated date-time string for
+   * cases where PagerDuty does not pass a
+   * '+' or '-' with the date-time.
+   *
+   * e.g. "2014-11-12T18:53:47 00:00"
+   *      "2014-11-12T18:53:47+00:00"
+   *
+   * @param dt The date-time we need to 
+   *        potentially reformat
+   * @return the date-time which is now 
+   *         correctly formatted
+   */
+  private[registry] def formatDatetime(dt: String): String =
+    dt.replaceAll(" 00:00$", "+00:00")
+
+  /**
    * Returns an updated event JSON where 
    * all of the fields with a null string
-   * have been changed to a null value and
-   * all event types have been trimmed.
+   * have been changed to a null value, 
+   * all event types have been trimmed and
+   * all timestamps have been correctly 
+   * formatted.
    *
    * e.g. "event" -> "null"
    *      "event" -> null
@@ -165,12 +183,15 @@ object PagerdutyAdapter extends Adapter {
    *
    * @param json The event JSON which we need to
    *        update values within
-   * @return the updated JSON with valid date-time
-   *         values in the 'ts' fields
+   * @return the updated JSON with valid null values,
+   *         type values and correctly formatted
+   *         date-time strings
    */
   private[registry] def reformatParameters(json: JValue): JValue =
     json transformField {
       case (key, JString("null")) => (key, JNull)
       case ("type", JString(value)) if value.startsWith("incident.") => ("type", JString(value.replace("incident.", "")))
+      case ("created_on", JString(value)) => ("created_on", JString(formatDatetime(value)))
+      case ("last_status_change_on", JString(value)) => ("last_status_change_on", JString(formatDatetime(value)))
     }
 }
