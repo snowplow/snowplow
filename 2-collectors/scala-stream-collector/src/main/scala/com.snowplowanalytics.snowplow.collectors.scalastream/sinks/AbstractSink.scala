@@ -36,9 +36,13 @@ trait AbstractSink {
   // Serialize Thrift SnowplowRawEvent objects,
   // and synchronize because TSerializer doesn't support multi-threaded
   // serialization.
-  private val thriftSerializer = new TSerializer
-  def serializeEvent(event: SnowplowRawEvent): Array[Byte] =
-    this.synchronized {
-      thriftSerializer.serialize(event)
+  private val thriftSerializer = new ThreadLocal[TSerializer]
+  def serializeEvent(event: SnowplowRawEvent): Array[Byte] = {
+    var serializer = thriftSerializer.get()
+    if (serializer == null) {
+      serializer = new TSerializer()
+      thriftSerializer.set(serializer)
     }
+    serializer.serialize(event)
+  }
 }
