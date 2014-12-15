@@ -63,8 +63,9 @@ object PingdomAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map (
-    "assign"      -> SchemaKey("com.pingdom", "incident_assign", "jsonschema", "1-0-0").toSchemaUri,
-    "notify_user" -> SchemaKey("com.pingdom", "incident_notify_of_close", "jsonschema", "1-0-0").toSchemaUri
+    "assign"          -> SchemaKey("com.pingdom", "incident_assign", "jsonschema", "1-0-0").toSchemaUri,
+    "notify_user"     -> SchemaKey("com.pingdom", "incident_notify_user", "jsonschema", "1-0-0").toSchemaUri,
+    "notify_of_close" -> SchemaKey("com.pingdom", "incident_notify_of_close", "jsonschema", "1-0-0").toSchemaUri
   )
 
   /**
