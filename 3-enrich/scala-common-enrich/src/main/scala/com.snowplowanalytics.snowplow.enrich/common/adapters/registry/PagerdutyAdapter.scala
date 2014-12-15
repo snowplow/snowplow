@@ -176,6 +176,6 @@ object PagerdutyAdapter extends Adapter {
       case (key, JString("null")) => (key, JNull)
       case ("type", JString(value)) if value.startsWith("incident.") => ("type", JString(value.replace("incident.", "")))
       case ("created_on", JString(value)) if value.endsWith(" 00:00") => ("created_on", JString(value.replace(" 00:00", "+00:00")))
-      case ("last_status_change_on", JString(value)) if value.endsWith(" 00:00") => ("created_on", JString(value.replace(" 00:00", "+00:00")))
+      case ("last_status_change_on", JString(value)) if value.endsWith(" 00:00") => ("last_status_change_on", JString(value.replace(" 00:00", "+00:00")))
     }
 }
