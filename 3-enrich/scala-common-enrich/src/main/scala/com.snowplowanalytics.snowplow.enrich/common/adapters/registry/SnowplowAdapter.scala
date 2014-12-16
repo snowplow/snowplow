@@ -89,8 +89,11 @@ object SnowplowAdapter {
    */
   object Tp2 extends Adapter {
 
-    // Expected content type for a request body
-    private val ContentType = "application/json; charset=utf-8"
+    // Expected content types for a request body
+    private object ContentTypes {
+      val list = List("application/json", "application/json; charset=utf-8")
+      val str = list.mkString(", ")
+    }
 
     // Request body expected to validate against this JSON Schema
     private val PayloadDataSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "payload_data", "jsonschema", 1, 0)
@@ -113,8 +116,8 @@ object SnowplowAdapter {
       val validatedParamsNel: Validated[NonEmptyList[RawEventParameters]] =
         (payload.body, payload.contentType) match {
           case (None,      _)        if qsParams.isEmpty => s"Request body and querystring parameters empty, expected at least one populated".failNel
-          case (_,         Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType}".failNel
-          case (Some(_),   None)     => s"Request body provided but content type empty, expected ${ContentType}".failNel
+          case (_,         Some(ct)) if !ContentTypes.list.contains(ct) => s"Content type of ${ct} provided, expected one of: ${ContentTypes.str}".failNel
+          case (Some(_),   None)     => s"Request body provided but content type empty, expected one of: ${ContentTypes.str}".failNel
           case (None,      Some(ct)) => s"Content type of ${ct} provided but request body empty".failNel
           case (None,      None)     => NonEmptyList(qsParams).success
           case (Some(bdy), Some(_))  => // Build our NEL of parameters

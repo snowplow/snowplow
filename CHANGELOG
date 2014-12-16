@@ -8,6 +8,7 @@ EmrEtlRunner: on job failure, log overall jobflow and individual step statuses (
 Scala Common Enrich: bumped to 0.10.0
 Scala Common Enrich: bumped Scala Iglu Client to 0.2.0 (#1222)
 Scala Common Enrich: updated SnowplowAdapter to accept payload_data versions above 1-0-0 (#1220)
+Scala Common Enrich: updated SnowplowAdapter to make charset=utf-8 optional (#1257)
 Scala Common Enrich: added Adapter to pre-process Pingdom events (#1164)
 Scala Common Enrich: added Adapter to pre-process PagerDuty events (#1158)
 Scala Common Enrich: added Adapter to pre-process Mandrill events (#1061)
