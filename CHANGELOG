@@ -1,5 +1,6 @@
 Version 0.9.14 (2014-12-XX)
 ---------------------------
+CloudFront Collector: replaced 1x1 pixel with stable GIF (#1259)
 Clojure Collector: bumped to 0.9.1
 Clojure Collector: increased Tomcat's HTTP header tolerance to 64kB (#1249)
 EmrEtlRunner: bumped to 0.10.0
