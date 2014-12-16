@@ -51,7 +51,7 @@ import sinks._
 // Contains an invisible pixel to return for `/i` requests.
 object ResponseHandler {
   val pixel = Base64.decodeBase64(
-    "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+    "R0lGODlhAQABAPAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
   )
 }
 
