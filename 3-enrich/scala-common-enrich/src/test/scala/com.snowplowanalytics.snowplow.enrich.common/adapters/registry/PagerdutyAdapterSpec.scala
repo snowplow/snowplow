@@ -85,7 +85,7 @@ class PagerdutyAdapterSpec extends Specification with DataTables with Validation
     "SPEC NAME"                     || "INPUT"                                                                                              | "EXPECTED OUTPUT"                                                                                    |
     "Valid, update one value"       !! """{"created_on":"2014-11-12T18:53:47 00:00"}"""                                                     ! """{"created_on":"2014-11-12T18:53:47+00:00"}"""                                                     |
     "Valid, update multiple values" !! """{"created_on":"2014-11-12T18:53:47 00:00","last_status_change_on":"2014-11-12T18:53:47 00:00"}""" ! """{"created_on":"2014-11-12T18:53:47+00:00","last_status_change_on":"2014-11-12T18:53:47+00:00"}""" |
-    "Valid, update nested values"   !! """{"nested":{"created_on":"2014-11-12T18:53:47 00:00"}}"""                                          ! """{"type":{"created_on":"2014-11-12T18:53:47+00:00"}}"""                                            |> {
+    "Valid, update nested values"   !! """{"created_on":"2014-12-15T08:19:54Z","nested":{"created_on":"2014-11-12T18:53:47 00:00"}}"""      ! """{"created_on":"2014-12-15T08:19:54Z","nested":{"created_on":"2014-11-12T18:53:47+00:00"}}"""      |> {
       (_, input, expected) => PagerdutyAdapter.reformatParameters(parse(input)) mustEqual parse(expected)
   }
 
