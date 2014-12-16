@@ -21,7 +21,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 
 // Spray
-import spray.http.{Uri,Timedout,HttpRequest}
+import spray.http.{Timedout,HttpRequest}
 import spray.routing.HttpService
 
 // Scala
@@ -49,6 +49,13 @@ class CollectorServiceActor(collectorConfig: CollectorConfig,
   def handleTimeouts: Receive = {
     case Timedout(_) => sender ! responseHandler.timeout
   }
+}
+
+/**
+ * Companion object for the CollectorService class
+ */
+object CollectorService {
+  private val QuerystringExtractor = "^[^?]*\\?([^#]*)(?:#.*)?$".r
 }
 
 // Store the route in CollectorService to be accessed from
@@ -102,9 +109,10 @@ class CollectorService(
                     requestInstance{ request =>
                       complete(
                         responseHandler.cookie(
-                          Option(Uri(rawRequest).query.toString).filter(
-                            _.trim.nonEmpty
-                          ).getOrElse(null),
+                          rawRequest match {
+                            case CollectorService.QuerystringExtractor(qs) => qs
+                            case _ => ""
+                          },
                           null,
                           reqCookie,
                           userAgent,
