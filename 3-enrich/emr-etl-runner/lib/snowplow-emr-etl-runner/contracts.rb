@@ -123,7 +123,8 @@ module Snowplow
           :hadoop_shred => String
           }),
         :collector_format => String,
-        :continue_on_unexpected_error => Bool
+        :continue_on_unexpected_error => Bool,
+        :output_compression => String
         }),
       :iglu => IgluConfigHash
       })
