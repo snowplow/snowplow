@@ -42,7 +42,9 @@ CREATE TABLE atomic.com_mandrill_message_delayed_1 (
     "msg.state"            varchar(255)   encode raw,
     "msg.subject"          varchar(255)   encode raw,
     "msg.tags"             varchar(2048)  encode runlength, -- Holds a JSON array
-    "msg.ts"               timestamp      encode raw
+    "msg.ts"               timestamp      encode raw,
+    "msg.resends"          varchar(2048)  encode runlength, -- Holds a JSON array
+    "msg.template"         varchar(255)   encode text32k
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
