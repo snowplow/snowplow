@@ -50,6 +50,7 @@ module Snowplow
         run_tstamp = Time.new
         run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
+        output_codec = config[:etl][:output_compression]
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:s3][:region],
           config[:aws][:access_key_id],
@@ -226,7 +227,8 @@ module Snowplow
               "--src"        , enrich_step_output,
               "--dest"       , enrich_final_output,
               "--srcPattern" , PARTFILE_REGEXP,
-              "--s3Endpoint" , s3_endpoint
+              "--s3Endpoint" , s3_endpoint,
+              "--outputCodec", output_codec
             ]
             copy_to_s3_step.name << ": Enriched HDFS -> S3"
             @jobflow.add_step(copy_to_s3_step)
@@ -251,7 +253,8 @@ module Snowplow
               "--src"        , enrich_final_output, # Opposite way round to normal
               "--dest"       , enrich_step_output,
               "--srcPattern" , PARTFILE_REGEXP,
-              "--s3Endpoint" , s3_endpoint
+              "--s3Endpoint" , s3_endpoint,
+              "--outputCodec", output_codec
             ]
             copy_to_hdfs_step.name << ": Enriched S3 -> HDFS"
             @jobflow.add_step(copy_to_hdfs_step)
@@ -285,7 +288,8 @@ module Snowplow
               "--src"        , shred_step_output,
               "--dest"       , shred_final_output,
               "--srcPattern" , PARTFILE_REGEXP,
-              "--s3Endpoint" , s3_endpoint
+              "--s3Endpoint" , s3_endpoint,
+              "--outputCodec", output_codec
             ]
             copy_to_s3_step.name << ": Shredded HDFS -> S3"
             @jobflow.add_step(copy_to_s3_step)
