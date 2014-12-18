@@ -165,7 +165,7 @@ object PagerdutyAdapter extends Adapter {
    *         correctly formatted
    */
   private[registry] def formatDatetime(dt: String): String =
-    dt.replaceAll(" 00:00$", "+00:00")
+    dt.replaceAll(" 00:00$","\\+00:00")
 
   /**
    * Returns an updated event JSON where 
