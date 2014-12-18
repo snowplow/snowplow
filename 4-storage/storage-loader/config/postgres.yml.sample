@@ -11,6 +11,7 @@
     :shredded:
       :good: # Not required for Postgres
       :archive: # Not required for Postgres
+  :compression: NONE  # Compression format used in EMR. Postgres only allows NONE
 :download:
   :folder: ADD HERE # Postgres-only config option. Where to store the downloaded files
 :targets:

@@ -11,6 +11,7 @@
     :shredded:
       :good: ADD HERE # Must be s3:// not s3n:// for Redshift. This is the same as the :shredded:good: bucket specified for EmrEtlRunner
       :archive: ADD HERE # Where to archive shredded types to
+  :compression: NONE  # Compression format used in EMR. Allowed formats: NONE, GZIP, LZOP
 :download:
   :folder: # Not required for Redshift
 :targets:
