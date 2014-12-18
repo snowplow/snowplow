@@ -30,6 +30,7 @@ CREATE TABLE atomic.com_mandrill_message_delayed_1 (
     -- Properties of this type
     _id                    varchar(255)   encode raw,
     ts                     timestamp      encode raw,
+    diag                   varchar(1024)  encode raw,
     "msg._id"              varchar(255)   encode raw,
     "msg._version"         varchar(255)   encode raw,
     "msg.clicks"           varchar(2048)  encode runlength, -- Holds a JSON array

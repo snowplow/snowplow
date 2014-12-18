@@ -14,6 +14,7 @@
 
     "$.data._id",
     "$.data.ts",
+    "$.data.diag",
     "$.data.msg._id",
     "$.data.msg._version",
     "$.data.msg.clicks",
