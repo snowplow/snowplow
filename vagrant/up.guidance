@@ -1,0 +1,3 @@
+To get started:
+vagrant ssh
+cd /vagrant
