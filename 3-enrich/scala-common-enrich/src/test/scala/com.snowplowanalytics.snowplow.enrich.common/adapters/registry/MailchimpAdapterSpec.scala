@@ -208,9 +208,9 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
                   |"merges":{
                     |"LNAME":"Beemster",
                     |"FNAME":"Joshua",
-                    |"EMAIL":"josh@snowplowanalytics.com"
+                    |"EMAIL":"josh%40snowplowanalytics.com"
                   |},
-                  |"email":"josh@snowplowanalytics.com",
+                  |"email":"josh%40snowplowanalytics.com",
                   |"list_id":"f1243a3b12",
                   |"email_type":"html",
                   |"reason":"manual",
@@ -218,7 +218,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
                   |"action":"unsub",
                   |"web_id":"203740265"
                 |},
-                |"fired_at":"2014-10-22T13:10:40.000Z",
+                |"fired_at":"2014-10-22T13%3A10%3A40.000Z",
                 |"type":"unsubscribe"
               |}
             |}
