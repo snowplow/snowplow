@@ -124,7 +124,7 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidationM
                 |"landingpage":"http%3A%2F%2Facme.com%2F",
                 |"callerzip":"92307",
                 |"gclid":null,
-                |"callername":"SKYPE%20CALLER",
+                |"callername":"SKYPE+CALLER",
                 |"utmb":null,
                 |"id":"201235151",
                 |"callernum":"%2B12612230240",
