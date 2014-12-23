@@ -52,7 +52,6 @@ CREATE TABLE atomic.com_mandrill_message_opened_1 (
     "msg.ts"                           timestamp      encode raw,
     "msg.resends"                      varchar(5000)  encode runlength, -- Holds a JSON array
     "msg.smtp_events"                  varchar(5000)  encode runlength, -- Holds a JSON array
-    "msg.subaccount"                   varchar(255)   encode raw,
     "msg.template"                     varchar(255)   encode raw,
     "user_agent_parsed.mobile"         varchar(255)   encode raw,
     "user_agent_parsed.os_company_url" varchar(255)   encode raw,
