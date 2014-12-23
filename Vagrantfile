@@ -11,13 +11,13 @@ Vagrant.configure("2") do |config|
     vb.memory = 5120
   end
 
-  config.push.define "binary", strategy: "local-exec" do |push|
-    push.script = "vagrant/push.bash"
+  config.vm.provision :shell do |sh|
+    sh.path = "vagrant/up.bash"
   end
 
   # Requires Vagrant 1.7.0+
-  config.vm.provision :shell do |sh|
-    sh.path = "vagrant/up.bash"
+  config.push.define "binary", strategy: "local-exec" do |push|
+    push.script = "vagrant/push.bash"
   end
 
 end
