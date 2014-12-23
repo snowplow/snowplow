@@ -264,13 +264,6 @@ object JsonUtils {
    * @param str The string which needs to be URLEncoded
    * @return a URL encoded string
    */
-  def encodeString(str: String): String = {
+  def encodeString(str: String): String =
     URLEncoder.encode(str, "UTF-8")
-      .replaceAll("\\+", "%20")
-      .replaceAll("\\%21", "!")
-      .replaceAll("\\%27", "'")
-      .replaceAll("\\%28", "(")
-      .replaceAll("\\%29", ")")
-      .replaceAll("\\%7E", "~")
-  }
 }
