@@ -156,16 +156,17 @@ object PagerdutyAdapter extends Adapter {
    * cases where PagerDuty does not pass a
    * '+' or '-' with the date-time.
    *
-   * e.g. "2014-11-12T18:53:47 00:00"
-   *      "2014-11-12T18:53:47+00:00"
+   * e.g. "2014-11-12T18:53:47 00:00" ->
+   *      "2014-11-12T18:53:47%2B00:00"
    *
    * @param dt The date-time we need to 
    *        potentially reformat
    * @return the date-time which is now 
    *         correctly formatted
    */
+  // TODO: why do we need this extra layer of escaping?
   private[registry] def formatDatetime(dt: String): String =
-    dt.replaceAll(" 00:00$","\\+00:00")
+    dt.replaceAll(""" 00:00$""", "%2B00:00")
 
   /**
    * Returns an updated event JSON where 
