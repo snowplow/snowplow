@@ -15,6 +15,7 @@ package utils
 
 // Java
 import java.math.{BigInteger => JBigInteger}
+import java.net.URLEncoder
 
 // Jackson
 import com.fasterxml.jackson.databind.{
@@ -241,5 +242,35 @@ object JsonUtils {
     .replaceAll("\\t", "    ")
     .replaceAll("\\p{Cntrl}", "") // Any other control character
     .trim
+  }
+
+  /**
+   * Encodes every (key -> value) in the supplied
+   * JSON Object.  Will only attempt to encode values
+   * of type String.
+   *
+   * @param json The json which we will be encoding
+   * @return an updated json which has been correctly
+   *         encoded.
+   */
+  def encodeJsonObject(json: JValue): JValue =
+    json transformField {
+      case (key, JString(value)) => (encodeString(key), JString(encodeString(value)))
+    }
+
+  /**
+   * Encodes a string to UTF-8 encoding standards.
+   *
+   * @param str The string which needs to be URLEncoded
+   * @return a URL encoded string
+   */
+  def encodeString(str: String): String = {
+    URLEncoder.encode(str, "UTF-8")
+      .replaceAll("\\+", "%20")
+      .replaceAll("\\%21", "!")
+      .replaceAll("\\%27", "'")
+      .replaceAll("\\%28", "(")
+      .replaceAll("\\%29", ")")
+      .replaceAll("\\%7E", "~")
   }
 }
