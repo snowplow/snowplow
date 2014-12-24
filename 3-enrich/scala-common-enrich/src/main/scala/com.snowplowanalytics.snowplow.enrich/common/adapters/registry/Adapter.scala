@@ -50,6 +50,9 @@ trait Adapter {
   // Needed for json4s default extraction formats
   implicit val formats = DefaultFormats
 
+  // The encoding type to be used
+  val EventEncType = "UTF-8"
+
   /**
    * Converts a CollectorPayload instance into raw events.
    *
@@ -120,7 +123,7 @@ trait Adapter {
   protected[registry] def toUnstructEventParams(tracker: String, parameters: RawEventParameters, schema: String,
     formatter: FormatterFunc, platform: String): RawEventParameters = {
 
-    val params = JU.encodeJsonObject(formatter(parameters -("nuid", "aid", "cv", "p")))
+    val params = JU.encodeJsonObject(formatter(parameters - ("nuid", "aid", "cv", "p")), EventEncType)
 
     val json = compact {
       ("schema" -> UnstructEvent) ~
@@ -161,7 +164,7 @@ trait Adapter {
   protected[registry] def toUnstructEventParams(tracker: String, qsParams: RawEventParameters, schema: String,
     eventJson: JValue, platform: String): RawEventParameters = {
 
-    val encodedEventJson = JU.encodeJsonObject(eventJson)
+    val encodedEventJson = JU.encodeJsonObject(eventJson, EventEncType)
 
     val json = compact {
       ("schema" -> UnstructEvent) ~
