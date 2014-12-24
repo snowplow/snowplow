@@ -250,20 +250,12 @@ object JsonUtils {
    * of type String.
    *
    * @param json The json which we will be encoding
+   * @param enc The encoding to be used
    * @return an updated json which has been correctly
    *         encoded.
    */
-  def encodeJsonObject(json: JValue): JValue =
+  def encodeJsonObject(json: JValue, enc: String): JValue =
     json transformField {
-      case (key, JString(value)) => (encodeString(key), JString(encodeString(value)))
+      case (key, JString(value)) => (CU.encodeString(key, enc), JString(CU.encodeString(value, enc)))
     }
-
-  /**
-   * Encodes a string to UTF-8 encoding standards.
-   *
-   * @param str The string which needs to be URLEncoded
-   * @return a URL encoded string
-   */
-  def encodeString(str: String): String =
-    URLEncoder.encode(str, "UTF-8")
 }
