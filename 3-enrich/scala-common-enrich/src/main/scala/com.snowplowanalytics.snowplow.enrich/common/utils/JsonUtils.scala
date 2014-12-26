@@ -249,13 +249,13 @@ object JsonUtils {
    * JSON Object.  Will only attempt to encode values
    * of type String.
    *
-   * @param json The json which we will be encoding
    * @param enc The encoding to be used
+   * @param json The json which we will be encoding
    * @return an updated json which has been correctly
    *         encoded.
    */
-  def encodeJsonObject(json: JValue, enc: String): JValue =
+  def encodeJsonObject(enc: String, json: JValue): JValue =
     json transformField {
-      case (key, JString(value)) => (CU.encodeString(key, enc), JString(CU.encodeString(value, enc)))
+      case (key, JString(value)) => (CU.encodeString(enc, key), JString(CU.encodeString(enc, value)))
     }
 }

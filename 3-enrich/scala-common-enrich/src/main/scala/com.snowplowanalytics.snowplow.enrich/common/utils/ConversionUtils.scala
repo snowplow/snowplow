@@ -228,11 +228,11 @@ object ConversionUtils {
   /**
    * Encodes a string in the specified encoding
    *
-   * @param str The string which needs to be URLEncoded
    * @param enc The encoding to be used
+   * @param str The string which needs to be URLEncoded
    * @return a URL encoded string
    */
-  def encodeString(str: String, enc: String): String =
+  def encodeString(enc: String, str: String): String =
     URLEncoder.encode(str, enc)
 
   /**
