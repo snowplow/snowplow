@@ -27,6 +27,18 @@ To briefly explain these five sub-systems:
 
 **For more information on the current Snowplow architecture, please see the [Technical architecture] [architecture-doc]**.
 
+## Quickstart
+
+Assuming git, **[Vagrant] [vagrant-install]** and **[VirtualBox] [virtualbox-install]** installed:
+
+```bash
+ host$ git clone https://github.com/snowplow/snowplow.git
+ host$ cd snowplow
+ host$ vagrant up && vagrant ssh
+guest$ cd /vagrant/3-enrich/scala-common-enrich
+guest$ sbt test
+```
+
 ## Find out more
 
 | **[Technical Docs] [techdocs]**     | **[Setup Guide] [setup]**     | **[Roadmap] [roadmap]**           | **[Contributing] [contributing]**           |
@@ -69,6 +81,9 @@ limitations under the License.
 [collector-logs]: https://github.com/snowplow/snowplow/wiki/Collector-logging-formats
 [data-structure]: https://github.com/snowplow/snowplow/wiki/canonical-event-model
 [looker]: http://www.looker.com/
+
+[vagrant-install]: http://docs.vagrantup.com/v2/installation/index.html
+[virtualbox-install]: https://www.virtualbox.org/wiki/Downloads
 
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
