@@ -17,8 +17,8 @@ Vagrant.configure("2") do |config|
   end
 
   # Requires Vagrant 1.7.0+
-  config.push.define "binary", strategy: "local-exec" do |push|
-    push.script = "vagrant/push.bash"
+  config.push.define "assetsync", strategy: "local-exec" do |push|
+    push.script = "vagrant/push/sync-hosted-assets.bash"
   end
 
 end

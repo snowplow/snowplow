@@ -2,6 +2,7 @@ Version 0.9.14 (2014-12-XX)
 ---------------------------
 Common: added dedicated Vagrant setup (#1266)
 Common: added Quickstart section to README (#1268)
+Common: added script to sync region-specific Snowplow Hosted Assets buckets (#1269)
 CloudFront Collector: replaced 1x1 pixel with stable GIF (#1259)
 Clojure Collector: bumped to 0.9.1
 Clojure Collector: increased Tomcat's HTTP header tolerance to 64kB (#1249)

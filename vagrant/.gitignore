@@ -1,8 +1,3 @@
-*
-!.gitignore
-!peru.yaml
-!ansible.hosts
-!up.bash
-!up.playbooks
-!up.guidance
-!push.bash
+.peru
+oss-playbooks
+ansible
