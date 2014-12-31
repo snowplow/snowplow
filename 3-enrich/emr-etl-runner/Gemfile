@@ -23,6 +23,7 @@ gem "contracts", "~> 0.4"
 gem "elasticity", "~> 3.0.4"
 gem "sluice", "~> 0.2.1"
 gem "awrence", "~> 0.1.0"
+gem "time_diff", "~> 0.3.0"
 
 group :development do
   gem "rspec", "~> 2.14", ">= 2.14.1"

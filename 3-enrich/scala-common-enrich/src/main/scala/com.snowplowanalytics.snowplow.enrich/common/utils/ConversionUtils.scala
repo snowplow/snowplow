@@ -16,6 +16,7 @@ package utils
 // Java
 import java.net.URI
 import java.net.URLDecoder
+import java.net.URLEncoder
 import java.lang.{Integer => JInteger}
 import java.math.{BigDecimal => JBigDecimal}
 import java.lang.{Byte => JByte}
@@ -223,6 +224,16 @@ object ConversionUtils {
       case e =>
         "Field [%s]: Exception URL-decoding [%s] (encoding [%s]): [%s]".format(field, str, enc, e.getMessage).fail
     }
+
+  /**
+   * Encodes a string in the specified encoding
+   *
+   * @param enc The encoding to be used
+   * @param str The string which needs to be URLEncoded
+   * @return a URL encoded string
+   */
+  def encodeString(enc: String, str: String): String =
+    URLEncoder.encode(str, enc)
 
   /**
    * A wrapper around Java's

@@ -32,7 +32,6 @@ import org.json4s.jackson.JsonMethods._
 
 // Snowplow Common Enrich
 import common._
-import outputs.CanonicalOutput
 
 // This project
 import hadoop.utils.JsonUtils

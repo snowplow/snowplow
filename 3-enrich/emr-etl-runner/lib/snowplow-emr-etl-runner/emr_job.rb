@@ -279,7 +279,7 @@ module Snowplow
         status = wait_for()
 
         if !status
-          raise EmrExecutionError, "EMR jobflow #{jobflow_id} failed, check Amazon EMR console and Hadoop logs for details (help: https://github.com/snowplow/snowplow/wiki/Troubleshooting-jobs-on-Elastic-MapReduce). Data files not archived."
+          raise EmrExecutionError, get_failure_details()
         end
 
         logger.debug "EMR jobflow #{jobflow_id} completed successfully."
@@ -352,6 +352,52 @@ module Snowplow
         end
 
         success
+      end
+
+      # Prettified string containing failure details
+      # for this job flow.
+      Contract None => String
+      def get_failure_details()
+
+        js = @jobflow.status
+
+        [
+          "EMR jobflow #{js.jobflow_id} failed, check Amazon EMR console and Hadoop logs for details (help: https://github.com/snowplow/snowplow/wiki/Troubleshooting-jobs-on-Elastic-MapReduce). Data files not archived.",
+          "#{js.name}: #{js.state} [#{js.last_state_change_reason}] ~ #{self.class.get_elapsed_time(js.started_at, js.ended_at)} #{self.class.get_timespan(js.started_at, js.ended_at)}"
+        ].concat(js.steps
+            .sort { |a,b|
+              a.started_at <=> b.started_at
+            }
+            .each_with_index
+            .map { |s,i|
+              " - #{i + 1}. #{s.name}: #{s.state} ~ #{self.class.get_elapsed_time(s.started_at, s.ended_at)} #{self.class.get_timespan(s.started_at, s.ended_at)}"
+            })
+          .join("\n")
+      end
+
+      # Gets the time span.
+      #
+      # Parameters:
+      # +start+:: start time
+      # +_end+:: end time
+      Contract Maybe[Time], Maybe[Time] => String
+      def self.get_timespan(start, _end)
+        "[#{start} - #{_end}]"
+      end
+
+      # Gets the elapsed time in a
+      # human-readable format.
+      #
+      # Parameters:
+      # +start+:: start time
+      # +_end+:: end time
+      Contract Maybe[Time], Maybe[Time] => String
+      def self.get_elapsed_time(start, _end)
+        if start.nil? or _end.nil?
+          "elapsed time n/a"
+        else
+          Time.diff(start, _end, '%H %N %S')[:diff]
+        end
       end
 
       # We need to partition our output buckets by run ID

@@ -32,7 +32,6 @@ import com.twitter.scalding._
 // Snowplow Common Enrich
 import common._
 import common.FatalEtlError
-import common.outputs.CanonicalOutput
 
 // Iglu Scala Client
 import iglu.client.{

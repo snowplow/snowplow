@@ -59,7 +59,8 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
     val Tp2 = api("tp2")
   }
 
-  val ApplicationJson = "application/json; charset=utf-8"
+  val ApplicationJson = "application/json"
+  val ApplicationJsonWithCharset = "application/json; charset=utf-8"
 
   object Shared {
     val source = CollectorSource("clj-tomcat", "UTF-8", None)
@@ -86,9 +87,9 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
 
   def e4 = {
     val body = toSelfDescJson("""[{"tv":"ios-0.1.0","p":"mob","e":"se"}]""", "payload_data")
-    val payload = CollectorPayload(Snowplow.Tp2, Nil, ApplicationJson.some, body.some, Shared.source, Shared.context)
+    val payload = CollectorPayload(Snowplow.Tp2, Nil, ApplicationJsonWithCharset.some, body.some, Shared.source, Shared.context)
     val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
-    actual must beSuccessful(NonEmptyList(RawEvent(Snowplow.Tp2, Map("tv" -> "ios-0.1.0", "p" -> "mob", "e" -> "se"), ApplicationJson.some, Shared.source, Shared.context)))
+    actual must beSuccessful(NonEmptyList(RawEvent(Snowplow.Tp2, Map("tv" -> "ios-0.1.0", "p" -> "mob", "e" -> "se"), ApplicationJsonWithCharset.some, Shared.source, Shared.context)))
   }
 
   def e5 = {
@@ -105,11 +106,11 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
   }
 
   def e6 =
-    "SPEC NAME"                               || "IN QUERYSTRING"             | "IN CONTENT TYPE"    | "IN BODY"   | "EXP. FAILURE"                                                                           |
-    "Invalid content type"                    !! Nil                          ! "text/plain".some    ! "body".some ! "Content type of text/plain provided, expected application/json; charset=utf-8"          |
-    "Neither querystring nor body populated"  !! Nil                          ! None                 ! None        ! "Request body and querystring parameters empty, expected at least one populated"         |
-    "Body populated but content type missing" !! Nil                          ! None                 ! "body".some ! "Request body provided but content type empty, expected application/json; charset=utf-8" |
-    "Content type populated but body missing" !! toNameValuePairs("a" -> "b") ! ApplicationJson.some ! None        ! "Content type of application/json; charset=utf-8 provided but request body empty"        |
+    "SPEC NAME"                               || "IN QUERYSTRING"             | "IN CONTENT TYPE"    | "IN BODY"   | "EXP. FAILURE"                                                                                            |
+    "Invalid content type"                    !! Nil                          ! "text/plain".some    ! "body".some ! "Content type of text/plain provided, expected one of: application/json, application/json; charset=utf-8" |
+    "Neither querystring nor body populated"  !! Nil                          ! None                 ! None        ! "Request body and querystring parameters empty, expected at least one populated"                          |
+    "Body populated but content type missing" !! Nil                          ! None                 ! "body".some ! "Request body provided but content type empty, expected one of: application/json, application/json; charset=utf-8" |
+    "Content type populated but body missing" !! toNameValuePairs("a" -> "b") ! ApplicationJsonWithCharset.some ! None        ! "Content type of application/json; charset=utf-8 provided but request body empty"                         |
     "Body is not a JSON"                      !! toNameValuePairs("a" -> "b") ! ApplicationJson.some ! "body".some ! "Field [Body]: invalid JSON [body] with parsing error: Unrecognized token 'body': was expecting ('true', 'false' or 'null') at [Source: java.io.StringReader@xxxxxx; line: 1, column: 9]" |> {
 
       (_, querystring, contentType, body, expected) => {
@@ -146,7 +147,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
     val body = toSelfDescJson("""{"longitude":20.1234}""", "geolocation_context")
     val payload = CollectorPayload(Snowplow.Tp2, Nil, ApplicationJson.some, body.some, Shared.source, Shared.context)
     val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
-    actual must beFailing(NonEmptyList("""error: Verifying schema as iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-0 failed: found iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-0-0
+    actual must beFailing(NonEmptyList("""error: Verifying schema as iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-* failed: found iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-0-0
     level: "error"
 """))
   }

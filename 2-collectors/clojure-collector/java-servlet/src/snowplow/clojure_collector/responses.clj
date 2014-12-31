@@ -23,7 +23,7 @@
 (def ^:const cookie-name "sp")
 (def ^:const id-name "uid")
 
-(def pixel (Base64/decodeBase64 (.getBytes "R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="))) ; Can't define ^:const on this as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
+(def pixel (Base64/decodeBase64 (.getBytes "R0lGODlhAQABAPAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="))) ; Can't define ^:const on this as per http://stackoverflow.com/questions/13109958/why-cant-i-use-clojures-const-with-a-java-byte-array
 (def ^:const pixel-length (str (alength pixel)))
 
 (defn- uuid

@@ -28,7 +28,7 @@ import scala.collection.JavaConversions._
 
 // Iglu
 import iglu.client.{
-  SchemaKey,
+  SchemaCriterion,
   Resolver
 }
 import iglu.client.validation.ValidatableJsonMethods._
@@ -89,11 +89,14 @@ object SnowplowAdapter {
    */
   object Tp2 extends Adapter {
 
-    // Expected content type for a request body
-    private val ContentType = "application/json; charset=utf-8"
+    // Expected content types for a request body
+    private object ContentTypes {
+      val list = List("application/json", "application/json; charset=utf-8")
+      val str = list.mkString(", ")
+    }
 
     // Request body expected to validate against this JSON Schema
-    private val PayloadDataSchema = SchemaKey("com.snowplowanalytics.snowplow", "payload_data", "jsonschema", "1-0-0")
+    private val PayloadDataSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "payload_data", "jsonschema", 1, 0)
 
     /**
      * Converts a CollectorPayload instance into N raw events.
@@ -113,8 +116,8 @@ object SnowplowAdapter {
       val validatedParamsNel: Validated[NonEmptyList[RawEventParameters]] =
         (payload.body, payload.contentType) match {
           case (None,      _)        if qsParams.isEmpty => s"Request body and querystring parameters empty, expected at least one populated".failNel
-          case (_,         Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType}".failNel
-          case (Some(_),   None)     => s"Request body provided but content type empty, expected ${ContentType}".failNel
+          case (_,         Some(ct)) if !ContentTypes.list.contains(ct) => s"Content type of ${ct} provided, expected one of: ${ContentTypes.str}".failNel
+          case (Some(_),   None)     => s"Request body provided but content type empty, expected one of: ${ContentTypes.str}".failNel
           case (None,      Some(ct)) => s"Content type of ${ct} provided but request body empty".failNel
           case (None,      None)     => NonEmptyList(qsParams).success
           case (Some(bdy), Some(_))  => // Build our NEL of parameters
@@ -206,7 +209,7 @@ object SnowplowAdapter {
      *
      * @param field The name of the field
      *        containing the JSON instance
-     * @param schemaKey The schema that we
+     * @param schemaCriterion The schema that we
      *        expected this self-describing
      *        JSON to conform to
      * @param instance A JSON instance as String
@@ -218,10 +221,10 @@ object SnowplowAdapter {
      *         Failure, or a singular
      *         JsonNode on success
      */
-    private def extractAndValidateJson(field: String, schemaKey: SchemaKey, instance: String)(implicit resolver: Resolver): Validated[JsonNode] =
+    private def extractAndValidateJson(field: String, schemaCriterion: SchemaCriterion, instance: String)(implicit resolver: Resolver): Validated[JsonNode] =
       for {
         j <- (JsonUtils.extractJson(field, instance).toValidationNel: Validated[JsonNode])
-        v <- j.verifySchemaAndValidate(schemaKey, true).leftMap(_.map(_.toString))
+        v <- j.verifySchemaAndValidate(schemaCriterion, true).leftMap(_.map(_.toString))
       } yield v
 
   }
