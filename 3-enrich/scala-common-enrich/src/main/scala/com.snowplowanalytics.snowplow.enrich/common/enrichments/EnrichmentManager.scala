@@ -195,27 +195,6 @@ object EnrichmentManager {
 
     val secondPassTransform = event.transform(sourceMap, secondPassTransformMap)
 
-    // Parse the useragent
-    val client = Option(event.useragent) match {
-      case Some(ua) =>
-        val ca = CE.extractClientAttributes(ua)
-        ca.flatMap(c => {
-          event.br_name = c.browserName
-          event.br_family = c.browserFamily
-          c.browserVersion.map(bv => event.br_version = bv)
-          event.br_type = c.browserType
-          event.br_renderengine = c.browserRenderEngine
-          event.os_name = c.osName
-          event.os_family = c.osFamily
-          event.os_manufacturer = c.osManufacturer
-          event.dvce_type = c.deviceType
-          event.dvce_ismobile = CU.booleanToJByte(c.deviceIsMobile)
-          c.success
-          })
-        ca
-      case None => unitSuccess // No fields updated
-    }
-
     // Potentially update the page_url and set the page URL components
     val pageUri = WPE.extractPageUri(raw.context.refererUri, Option(event.page_url))
     for (uri <- pageUri; u <- uri) {
@@ -264,11 +243,39 @@ object EnrichmentManager {
       }
     }
 
-    // Finally anonymize the IP address
+    // Anonymize the IP address
     Option(event.user_ipaddress).map(ip => event.user_ipaddress = registry.getAnonIpEnrichment match {
       case Some(anon) => anon.anonymizeIp(ip)
       case None => ip
     })
+     
+    // Parse the useragent using user-agent-utils
+    val client = {
+      registry.getUserAgentUtilsEnrichment match {
+        case Some(uap) => {
+          Option(event.useragent) match {
+      	    case Some(ua) =>
+              val ca = uap.extractClientAttributes(ua)
+              ca.flatMap(c => {
+                event.br_name = c.browserName
+                event.br_family = c.browserFamily
+                c.browserVersion.map(bv => event.br_version = bv)
+                event.br_type = c.browserType
+                event.br_renderengine = c.browserRenderEngine
+                event.os_name = c.osName
+                event.os_family = c.osFamily
+                event.os_manufacturer = c.osManufacturer
+                event.dvce_type = c.deviceType
+                event.dvce_ismobile = CU.booleanToJByte(c.deviceIsMobile)
+                c.success
+                })
+              ca
+            case None => unitSuccess // No fields updated
+          }
+        }
+        case None => unitSuccess
+      }
+    }
 
     // Potentially set the referrer details and URL components
     val refererUri = CU.stringToUri(event.page_referrer)
@@ -342,3 +349,4 @@ object EnrichmentManager {
     }
   }
 }
+
