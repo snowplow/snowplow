@@ -42,9 +42,15 @@ import registry.{
   AnonIpEnrichment,
   IpLookupsEnrichment,
   RefererParserEnrichment,
-  CampaignAttributionEnrichment
+  CampaignAttributionEnrichment,
+  UserAgentUtilsEnrichment
 }
+
+// UserAgentUtilsEnrichmentConfig
+import registry.UserAgentUtilsEnrichmentConfig
+
 import utils.ScalazJson4sUtils
+
 
 /**
  * Companion which holds a constructor
@@ -125,6 +131,8 @@ object EnrichmentRegistry {
             RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)            
           } else if (nm == "campaign_attribution") {
             CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)            
+          } else if (nm == "user_agent_utils_config") {
+            UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else {
             None.success // Enrichment is not recognized yet
           }
@@ -184,6 +192,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getCampaignAttributionEnrichment: Option[CampaignAttributionEnrichment] = 
     getEnrichment[CampaignAttributionEnrichment]("campaign_attribution")
+  
+  /**
+   * Returns an Option boxing the UserAgentUtilsEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the UserAgentUtilsEnrichment instance
+   */
+  def getUserAgentUtilsEnrichment: Option[UserAgentUtilsEnrichment.type] = 
+    getEnrichment[UserAgentUtilsEnrichment.type]("user_agent_utils")
 
   /**
    * Returns an Option boxing an Enrichment
