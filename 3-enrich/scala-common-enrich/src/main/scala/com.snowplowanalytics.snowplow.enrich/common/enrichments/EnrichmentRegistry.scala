@@ -42,7 +42,8 @@ import registry.{
   AnonIpEnrichment,
   IpLookupsEnrichment,
   RefererParserEnrichment,
-  CampaignAttributionEnrichment
+  CampaignAttributionEnrichment,
+  UserAgentUtilsEnrichment
 }
 import utils.ScalazJson4sUtils
 
@@ -125,10 +126,11 @@ object EnrichmentRegistry {
             RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)            
           } else if (nm == "campaign_attribution") {
             CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)            
-          } else {
+          } else if (nm == "user_agent_utils_config"){
+	    UaParserUtilityConfigEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some) 
+          } else{
             None.success // Enrichment is not recognized yet
-          }
-        })
+	})
       }
     }
 
@@ -157,7 +159,16 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getAnonIpEnrichment: Option[AnonIpEnrichment] =
     getEnrichment[AnonIpEnrichment]("anon_ip")
-
+  
+  /**
+   * Returns an Option boxing the UaParserUtilityConfigEnrichment
+   * config value if present, or None if not
+   * 
+   * @return Option boxing the UaParserUtilityConfigEnrichment instance
+   */
+  def getUaParserUtilityConfigEnrichment: Option[UaParserUtilityConfigEnrichment] =
+    getEnrichment[UaParserUtilityConfigEnrichment]("user_agent_utils")
+  
   /**
    * Returns an Option boxing the IpLookupsEnrichment
    * config value if present, or None if not
@@ -208,3 +219,4 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
   private def cast[A <: AnyRef : Manifest](a : Any) : A =
     manifest.runtimeClass.cast(a).asInstanceOf[A]
 }
+
