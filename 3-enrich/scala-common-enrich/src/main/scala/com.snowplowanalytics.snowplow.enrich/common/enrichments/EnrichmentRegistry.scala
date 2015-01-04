@@ -43,7 +43,8 @@ import registry.{
   IpLookupsEnrichment,
   RefererParserEnrichment,
   CampaignAttributionEnrichment,
-  UserAgentUtilsEnrichment
+  UserAgentUtilsEnrichment,
+  UserAgentContextEnrichment
 }
 import utils.ScalazJson4sUtils
 
@@ -126,11 +127,13 @@ object EnrichmentRegistry {
             RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)            
           } else if (nm == "campaign_attribution") {
             CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)            
-          } else if (nm == "user_agent_utils_config"){
-	    UaParserUtilityConfigEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some) 
-          } else{
+          } else if (nm == "user_agent_utils_config") {
+	    UserAgentUtilsEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some) 
+          } else if (nm == "ua_parser_context") {
+	    UserAgentContextEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else {
             None.success // Enrichment is not recognized yet
-	})
+          }})
       }
     }
 
@@ -161,14 +164,23 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
     getEnrichment[AnonIpEnrichment]("anon_ip")
   
   /**
-   * Returns an Option boxing the UaParserUtilityConfigEnrichment
+   * Returns an Option boxing the UserAgentUtilsEnrichment
    * config value if present, or None if not
    * 
-   * @return Option boxing the UaParserUtilityConfigEnrichment instance
+   * @return Option boxing the UserAgentUtilsEnrichment instance
    */
-  def getUaParserUtilityConfigEnrichment: Option[UaParserUtilityConfigEnrichment] =
-    getEnrichment[UaParserUtilityConfigEnrichment]("user_agent_utils")
+  def getUserAgentUtilsEnrichment: Option[UserAgentUtilsEnrichment] =
+    getEnrichment[UserAgentUtilsEnrichment]("user_agent_utils_config")
   
+  /**
+   * Returns an Option boxing the UserAgentContextEnrichment
+   * config value if present, or None if not
+   * 
+   * @return Option boxing the UserAgentContextEnrichment instance
+   */
+  def getUserAgentContextEnrichment: Option[UserAgentContextEnrichment] =
+    getEnrichment[UserAgentContextEnrichment]("ua_parser_context")
+
   /**
    * Returns an Option boxing the IpLookupsEnrichment
    * config value if present, or None if not
@@ -219,4 +231,3 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
   private def cast[A <: AnyRef : Manifest](a : Any) : A =
     manifest.runtimeClass.cast(a).asInstanceOf[A]
 }
-
