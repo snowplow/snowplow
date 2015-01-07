@@ -113,6 +113,10 @@ email:
       - mail.yahoo.com
       - mail.yahoo.co.uk
       - mail.yahoo.co.jp
+      
+  Mynet Mail:
+    domains:
+      - mail.mynet.com
 
 
 # #######################################################################################################
@@ -402,6 +406,38 @@ social:
   Pocket:
     domains:
       - getpocket.com
+      
+    ITU Sozluk:
+    domains:
+      - itusozluk.com
+      
+  Instela:
+    domains:
+      - instela.com
+      
+  Eksi Sozluk:
+    domains:
+      - Sozluk.com
+      - sourtimes.org
+  
+  Uludag Sozluk:
+    domains:
+      - uludagsozluk.com
+      - ulusozluk.com
+  
+  Inci Sozluk:
+    domains:
+      - inci.sozlukspot.com
+      - incisozluk.com
+      - incisozluk.cc
+  
+  Hocam.com:
+    domains:
+      - hocam.com
+      
+  Donanimhaber:
+    domains:
+      - donanimhaber.com    
 
 # #######################################################################################################
 #

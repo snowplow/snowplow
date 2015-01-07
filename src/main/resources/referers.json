@@ -3662,6 +3662,11 @@
                 "mail.qq.com"
             ]
         }, 
+        "Mynet Mail": {
+            "domains": [
+                "mail.mynet.com"
+            ]
+        }, 
         "Gmail": {
             "domains": [
                 "mail.google.com"
@@ -3785,9 +3790,21 @@
                 "vimeo.com"
             ]
         }, 
+        "Eksi Sozluk": {
+            "domains": [
+                "Sozluk.com", 
+                "sourtimes.org"
+            ]
+        }, 
         "Geni": {
             "domains": [
                 "geni.com"
+            ]
+        }, 
+        "Uludag Sozluk": {
+            "domains": [
+                "uludagsozluk.com", 
+                "ulusozluk.com"
             ]
         }, 
         "SourceForge": {
@@ -3832,6 +3849,11 @@
                 "t.co"
             ]
         }, 
+        "Donanimhaber": {
+            "domains": [
+                "donanimhaber.com"
+            ]
+        }, 
         "WAYN": {
             "domains": [
                 "wayn.com"
@@ -3850,6 +3872,11 @@
         "Badoo": {
             "domains": [
                 "badoo.com"
+            ]
+        }, 
+        "Instela": {
+            "domains": [
+                "instela.com"
             ]
         }, 
         "Habbo": {
@@ -3894,8 +3921,9 @@
         }, 
         "Pocket": {
             "domains": [
-                "getpocket.com"
-            ]
+                "itusozluk.com"
+            ], 
+            "ITU Sozluk": null
         }, 
         "Skyrock": {
             "domains": [
@@ -3975,6 +4003,13 @@
                 "stumbleupon.com"
             ]
         }, 
+        "Inci Sozluk": {
+            "domains": [
+                "inci.sozlukspot.com", 
+                "incisozluk.com", 
+                "incisozluk.cc"
+            ]
+        }, 
         "Viadeo": {
             "domains": [
                 "viadeo.com"
@@ -3998,6 +4033,11 @@
         "Hacker News": {
             "domains": [
                 "news.ycombinator.com"
+            ]
+        }, 
+        "Hocam.com": {
+            "domains": [
+                "hocam.com"
             ]
         }, 
         "Delicious": {
