@@ -79,6 +79,15 @@ module Snowplow
         @jobflow.master_instance_type = config[:emr][:jobflow][:master_instance_type]
         @jobflow.slave_instance_type  = config[:emr][:jobflow][:core_instance_type]
 
+        if config[:etl][:collector_format] == 'thrift'
+          [
+            Elasticity::HadoopBootstrapAction.new('-s', 'io.file.buffer.size=65536'),
+            Elasticity::HadoopBootstrapAction.new('-m', 'mapreduce.user.classpath.first=true')
+          ].each do |action|
+            @jobflow.add_bootstrap_action(action)
+          end
+        end
+
         # Install and launch HBase
         hbase = config[:emr][:software][:hbase]
         unless not hbase
