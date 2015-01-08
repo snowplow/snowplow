@@ -60,6 +60,8 @@ import com.google.api.services.bigquery.model.{
   QueryRequest,
   QueryResponse,
   TableCell,
+  Dataset,
+  DatasetReference,
   TableRow
 }
 
@@ -72,6 +74,7 @@ object bigQueryAuth {
    * Obtained from the Google developers console.
    */
   val ProjectId = "742196692985"
+
   /**
    * Location of the client secrets. This file is obtained from
    * the Google developers console.
@@ -84,20 +87,67 @@ object bigQueryAuth {
    * Handles OAuth authorization and makes a single query to the public 
    * wikipedia sample database
    */
-  def main(args: Array[String]) {
+  //def main(args: Array[String]) {
    
+    //val credentials = {
+      //val fis = new FileInputStream(ClientSecretsLocation)
+      //val reader = new InputStreamReader(fis)
+      //val gcs = GoogleClientSecrets.load(new JacksonFactory, reader)
+      //getCredentials(gcs)
+    //}
+	 
+    //val bigquery = new Bigquery(HttpTransport, JsonFactory, credentials)
+    //val query = "SELECT TOP( title, 10) as title, COUNT(*) as revision_count " +
+      //"FROM [publicdata:samples.wikipedia] WHERE wp_namespace = 0;"
+    //runQueryRpcAndPrint(bigquery, ProjectId, query, System.out);
+  //}
+  
+  //TODO
+  //main should:  authenticate to bigquerytest project (project_id: ac-bigquery-tests, project_no: 742196692985) x
+  //              create dataset x
+  //              create table
+  //              populate table 
+  //              query table
+  //              add row to table
+  //              remove row from table 
+  //              delete table
+
+  def main(args: Array[String]){
+
     val credentials = {
       val fis = new FileInputStream(ClientSecretsLocation)
       val reader = new InputStreamReader(fis)
       val gcs = GoogleClientSecrets.load(new JacksonFactory, reader)
       getCredentials(gcs)
     }
-	 
+    
     val bigquery = new Bigquery(HttpTransport, JsonFactory, credentials)
-    val query = "SELECT TOP( title, 10) as title, COUNT(*) as revision_count " +
-      "FROM [publicdata:samples.wikipedia] WHERE wp_namespace = 0;"
-    runQueryRpcAndPrint(bigquery, ProjectId, query, System.out);
+    
+    createDataSet(ProjectId, bigquery)
   }
+
+  /**
+   * Creates a dataset with name testdataset.
+   */
+  def createDataSet (projectId: String, bigquery: Bigquery) = {
+    val dataSetId = "testdataset"
+    val dataSet = new Dataset
+    val dataSetReference = new DatasetReference
+    dataSetReference.setProjectId(projectId)
+    dataSetReference.setDatasetId(dataSetId)
+    dataSet.setDatasetReference(dataSetReference)
+    try{
+      bigquery.datasets.insert(projectId, dataSet).execute()
+      println("Dataset created")
+    }catch{
+      case ex: IOException =>
+        println("There's been an IOException: " + ex)
+    }
+  }
+    
+
+
+
 
   /**
    * Prompts the user to visit the google API authorization page. The user 
@@ -159,7 +209,42 @@ object bigQueryAuth {
       }
     }
   }
+
+  /**
+   * Store the refresh token in the file 
+   * snowplow_bigquery_refresh_token.properties
+   */
+  def storeRefreshToken(refreshToken: String){
+    val properties = new Properties
+    properties.setProperty("refreshtoken": refreshToken)
+    try {
+      properties.store(new FileOutputStream("snowplow_bigquery_refresh_token.properties"))
+      println("Refresh token saved.")
+    } catch {
+        case ex: FileNotFoundException => 
+          println("FileNotFoundException: " + ex)
+        case ex: IOException => 
+          println("IOException: " + ex)
+    }
+  }
   
+  /**
+   * Load the refresh token from the file 
+   * snowplow_bigquery_refresh_token.properties
+   */
+  def loadRefreshToken: String = {
+    val properties = new Properties
+    try {
+      properties.load(new FileInputStream("snowplow_bigquery_refresh_token.properties"))
+      properties.get("refreshtoken");
+    } catch {
+        case ex: FileNotFoundException => 
+          println("FileNotFoundException: " + ex)
+        case ex: IOException => 
+          println("IOException: " + ex)
+    }
+  }
+
   /**
    * Prints the query response to standars output.
    */
