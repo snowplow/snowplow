@@ -251,7 +251,7 @@ object EnrichmentManager {
                   event.geo_region_name = loc.regionName.orNull
                 }
                 event.ip_isp = res._2.orNull
-                event.ip_org = res._3.orNull
+                event.ip_organization = res._3.orNull
                 event.ip_domain = res._4.orNull
                 event.ip_netspeed = res._5.orNull
               }
