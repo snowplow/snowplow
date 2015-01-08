@@ -93,10 +93,9 @@ object bigQueryAuth {
       getCredentials(gcs)
     }
 	 
-    val bigquery = new Bigquery(HttpTransport, JsonFactory, credentials);
-    // TODO: indent below's last 2 lines
+    val bigquery = new Bigquery(HttpTransport, JsonFactory, credentials)
     val query = "SELECT TOP( title, 10) as title, COUNT(*) as revision_count " +
-		"FROM [publicdata:samples.wikipedia] WHERE wp_namespace = 0;"
+      "FROM [publicdata:samples.wikipedia] WHERE wp_namespace = 0;"
     runQueryRpcAndPrint(bigquery, ProjectId, query, System.out);
   }
 
@@ -131,8 +130,6 @@ object bigQueryAuth {
    * @param projectId
    * @param query [[https://cloud.google.com/bigquery/query-reference bigquery database query]]
    * @param out
-   *
-   * @return Unit
    */
   def runQueryRpcAndPrint(bigquery: Bigquery, projectId: String, query: String, out: PrintStream) {
     val queryRequest = new QueryRequest().setQuery(query)
