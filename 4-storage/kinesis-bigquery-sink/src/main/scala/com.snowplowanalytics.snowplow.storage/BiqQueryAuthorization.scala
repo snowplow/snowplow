@@ -1,5 +1,9 @@
-package com.google.cloud.helix.samples
+package com.google.cloud.helix.samples // TODO: change package and where this file lives on disk. see Fred's ES Sink for package naming conventions and folder layout
 
+// TODO: remove all ;s
+// TODO: group all imports, like java.io below. note that you can only group things at the same level
+// TODO: move these imports below the Scala group. We import in this order: Java, Scala, then Java libraries, then Scala libraries
+//
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
@@ -35,22 +39,31 @@ import java.util.Scanner;
 // Scala
 import collection.JavaConversions._
 
+// TODO: add a description. see other snowplow projects for examples
 object bigQueryAuth {
+
   val ProjectId = "742196692985"
   val ClientSecretsLocation = "client_secrets.json"
   val HttpTransport = new NetHttpTransport
   val JsonFactory = new JacksonFactory
+
   def main(args: Array[String]) {
-    val fileInputStream = new FileInputStream(ClientSecretsLocation)
-    val reader = new InputStreamReader(fileInputStream)
-    val clientSecrets = GoogleClientSecrets.load(new JacksonFactory, reader)
-    val credential = getCredentials(clientSecrets)
-	  val bigquery = new Bigquery(HttpTransport, JsonFactory, credential);
+   
+    val credentials = {
+      val fis = new FileInputStream(ClientSecretsLocation)
+      val reader = new InputStreamReader(fis)
+      val gcs = GoogleClientSecrets.load(new JacksonFactory, reader)
+      getCredentials(gcs)
+    }
+	 
+    val bigquery = new Bigquery(HttpTransport, JsonFactory, credentials);
+    // TODO: indent below's last 2 lines
     val query = "SELECT TOP( title, 10) as title, COUNT(*) as revision_count " +
 		"FROM [publicdata:samples.wikipedia] WHERE wp_namespace = 0;"
     runQueryRpcAndPrint(bigquery, ProjectId, query, System.out);
   }
 
+  // TODO: add description
   def getCredentials(clientSecrets: GoogleClientSecrets): Credential = {
 
     val scopes = Collections.singleton(BigqueryScopes.BIGQUERY)
@@ -59,30 +72,36 @@ object bigQueryAuth {
     println("... and paste the code you received here: ")
     val authorizationCode = readLine()
 
-    // Exchange the auth code for an access token.
+    // Exchange the auth code for an access token
     val flow = new GoogleAuthorizationCodeFlow.Builder(HttpTransport, JsonFactory, clientSecrets, Arrays.asList(BigqueryScopes.BIGQUERY)).build()
-    val response = flow.newTokenRequest(authorizationCode).setRedirectUri(clientSecrets.getInstalled().getRedirectUris().get(0)).execute();
+    val response = flow.newTokenRequest(authorizationCode).setRedirectUri(clientSecrets.getInstalled.getRedirectUris.get(0)).execute();
     flow.createAndStoreCredential(response,null)
   }
 
-  def runQueryRpcAndPrint(bigquery: Bigquery, projectId: String, query: String, out: PrintStream){
+  // TODO: add description
+  def runQueryRpcAndPrint(bigquery: Bigquery, projectId: String, query: String, out: PrintStream) {
     val queryRequest = new QueryRequest().setQuery(query)
-    val queryResponse = bigquery.jobs().query(projectId, queryRequest).execute()
-    var pageToken:String = null
-    if (queryResponse.getJobComplete()){
-      printRows(queryResponse.getRows(), out)
-      if (pageToken == null){
+    val queryResponse = bigquery.jobs.query(projectId, queryRequest).execute()
+    
+    if (queryResponse.getJobComplete) {
+      printRows(queryResponse.getRows, out)
+      if (Option(queryResponse.getPageToken).isDefined) {
         return
       }
     }
+
     while(true){
-      val queryResults = bigquery.jobs()
-        .getQueryResults(projectId, queryResponse.getJobReference().getJobId())
+      var pageToken: String = null
+
+      val queryResults = bigquery.jobs
+        .getQueryResults(projectId, queryResponse.getJobReference.getJobId)
         .setPageToken(pageToken).execute()
-      if (queryResults.getJobComplete()){
+
+        if (queryResults.getJobComplete) {
         printRows(queryResponse.getRows, out)
-        pageToken = queryResults.getPageToken()
-        if (pageToken == null){
+        pageToken = queryResults.getPageToken
+
+        if (Option(pageToken).isDefined) {
           return
         }
       }
@@ -92,19 +111,19 @@ object bigQueryAuth {
   def printRows(rows: List[TableRow], out: PrintStream){
 
     def outputCell(cell: TableCell){
-      val cell_data = if (Data.isNull(cell.getV())){
+      val cellData = if (Data.isNull(cell.getV)) {
         "Null"
-      }else{
-        cell.getV().toString()
+      } else {
+        cell.getV.toString
       }
-      out.printf("%s, ", cell_data)
+      out.printf("%s, ", cellData)
     }
-    if (rows != null){
-      for (row <- rows){
-        for (cell <- row.getF()){
+    if (rows != null) {
+      for (row <- rows) {
+        for (cell <- row.getF) {
           outputCell(cell)
         }
-        out.println()
+        out.println
       }
     }
   }
