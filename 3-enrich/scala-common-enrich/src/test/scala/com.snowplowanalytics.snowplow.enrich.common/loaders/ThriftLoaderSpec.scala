@@ -26,7 +26,6 @@ import scalaz._
 import Scalaz._
 
 // Snowplow
-import collectors.thrift.SnowplowRawEvent
 import SpecHelpers._
 
 // Specs2
@@ -42,8 +41,8 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
 
   "This is a specification to test the ThriftLoader functionality"                                                   ^
                                                                                                                     p^
-  "toCollectorPayload should return a CollectorPayload for a valid Thrift SnowplowRawEvent (even if parameterless)"  ! e1^
-  "toCollectorPayload should return a Validation Failure for an invalid or corrupted Thrift SnowplowRawEvent"        ! e2^
+  "toCollectorPayload should return a CollectorPayload for a valid Thrift CollectorPayload (even if parameterless)"  ! e1^
+  "toCollectorPayload should return a Validation Failure for an invalid or corrupted Thrift CollectorPayload"        ! e2^
                                                                                                                      end
 
   object Expected {
@@ -81,9 +80,9 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
       }
     }
 
-  // A bit of fun: the chances of generating a valid Thrift SnowplowRawEvent at random are
+  // A bit of fun: the chances of generating a valid Thrift CollectorPayload at random are
   // so low that we can just use ScalaCheck here
   def e2 =
-    check { (raw: String) => ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw)) must beFailing(NonEmptyList("Record does not match Thrift SnowplowRawEvent schema")) }
+    check { (raw: String) => ThriftLoader.toCollectorPayload(Base64.decodeBase64(raw)) must beFailing }
 
 }

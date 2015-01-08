@@ -33,10 +33,10 @@ import scalaz._
 import Scalaz._
 
 // Snowplow
-import com.snowplowanalytics.snowplow.SnowplowRawEvent.thrift.v1.{
-  SnowplowRawEvent => SnowplowRawEvent1,
-  JustSchema
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.v1.{
+  CollectorPayload => CollectorPayload1
 }
+import com.snowplowanalytics.snowplow.SchemaSniffer.thrift.v1.SchemaSniffer
 import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
 
 /**
@@ -45,6 +45,8 @@ import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
 object ThriftLoader extends Loader[Array[Byte]] {
   
   private val thriftDeserializer = new TDeserializer
+
+  private val ExpectedSchema = "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0"
 
   /**
    * Converts the source string into a ValidatedMaybeCollectorPayload.
@@ -59,10 +61,10 @@ object ThriftLoader extends Loader[Array[Byte]] {
    */
   def toCollectorPayload(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
 
-    var snowplowRawEvent = new SnowplowRawEvent1()
+    var snowplowRawEvent = new CollectorPayload1()
     try {
 
-      var schema = new JustSchema
+      var schema = new SchemaSniffer
 
       this.synchronized {
         thriftDeserializer.deserialize(
@@ -73,8 +75,8 @@ object ThriftLoader extends Loader[Array[Byte]] {
 
       if (schema.isSetSchema) {
         schema.getSchema match {
-          case "1" => convertSchema1(line) // TODO: decide what the schema should look like
-          case s => s"Record has schema field '$s', expected '1'".failNel
+          case ExpectedSchema => convertSchema1(line)
+          case s => s"Record has schema field '$s', expected '$ExpectedSchema'".failNel
         }
       } else {
         convertOldSchema(line)
@@ -82,13 +84,13 @@ object ThriftLoader extends Loader[Array[Byte]] {
     } catch {
       // TODO: Check for deserialization errors.
       case e: Throwable =>
-        "Record does not match Thrift SnowplowRawEvent schema".failNel[Option[CollectorPayload]]
+        s"Error deserializing raw event: ${e.getMessage}".failNel[Option[CollectorPayload]]
     }
   }
 
   /**
    * Converts the source string into a ValidatedMaybeCollectorPayload.
-   * Assumes that the byte array is a serialized SnowplowRawEvent, version 1.
+   * Assumes that the byte array is a serialized CollectorPayload, version 1.
    *
    * @param line A serialized Thrift object Byte array mapped to a String.
    *   The method calling this should encode the serialized object
@@ -99,45 +101,45 @@ object ThriftLoader extends Loader[Array[Byte]] {
    */
   private def convertSchema1(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
 
-    var snowplowRawEvent = new SnowplowRawEvent1
+    var collectorPayload = new CollectorPayload1
     this.synchronized {
       thriftDeserializer.deserialize(
-        snowplowRawEvent,
+        collectorPayload,
         line
       )
     }
 
     val querystring = parseQuerystring(
-      Option(snowplowRawEvent.querystring),
-      snowplowRawEvent.encoding
+      Option(collectorPayload.querystring),
+      collectorPayload.encoding
     )
 
-    val ip = snowplowRawEvent.ipAddress.some // Required
-    val hostname = Option(snowplowRawEvent.hostname)
-    val userAgent = Option(snowplowRawEvent.userAgent)
-    val refererUri = Option(snowplowRawEvent.refererUri)
-    val networkUserId = Option(snowplowRawEvent.networkUserId)
+    val ip = collectorPayload.ipAddress.some // Required
+    val hostname = Option(collectorPayload.hostname)
+    val userAgent = Option(collectorPayload.userAgent)
+    val refererUri = Option(collectorPayload.refererUri)
+    val networkUserId = Option(collectorPayload.networkUserId)
 
-    val headers = Option(snowplowRawEvent.headers)
+    val headers = Option(collectorPayload.headers)
       .map(_.toList).getOrElse(Nil)
 
-    val api = CollectorApi.parse(snowplowRawEvent.path)
+    val api = CollectorApi.parse(collectorPayload.path)
 
     (querystring.toValidationNel |@|
       api.toValidationNel) { (q: List[NameValuePair], a: CollectorApi) => CollectorPayload(
         q,
-        snowplowRawEvent.collector,
-        snowplowRawEvent.encoding,
+        collectorPayload.collector,
+        collectorPayload.encoding,
         hostname,
-        new DateTime(snowplowRawEvent.timestamp, DateTimeZone.UTC),
+        new DateTime(collectorPayload.timestamp, DateTimeZone.UTC),
         ip,
         userAgent,
         refererUri,
         headers,
         networkUserId,
         a,
-        Option(snowplowRawEvent.contentType),
-        Option(snowplowRawEvent.body)
+        Option(collectorPayload.contentType),
+        Option(collectorPayload.body)
         ).some
     }
   }
