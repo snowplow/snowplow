@@ -20,5 +20,8 @@ Vagrant.configure("2") do |config|
   config.push.define "assetsync", strategy: "local-exec" do |push|
     push.script = "vagrant/push/sync-hosted-assets.bash"
   end
+  config.push.define "kinesis", strategy: "local-exec" do |push|
+    push.script = "vagrant/push/publish-kinesis-release.bash"
+  end
 
 end
