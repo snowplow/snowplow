@@ -35,7 +35,7 @@ object Dependencies {
     val commonsIo        = "2.4"
     val yodaTime         = "2.1"
     val yodaConvert      = "1.2"
-    val useragent        = "1.13"
+    val useragent        = "1.14"
     val jacksonDatabind  = "2.2.3"
     val jsonValidator    = "2.2.3"
     val mavenArtifact    = "3.2.2" 
