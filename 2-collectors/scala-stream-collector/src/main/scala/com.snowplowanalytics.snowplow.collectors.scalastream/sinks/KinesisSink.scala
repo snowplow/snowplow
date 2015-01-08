@@ -55,7 +55,7 @@ import scala.util.{Success, Failure}
 
 // Snowplow
 import scalastream._
-import SnowplowRawEvent.thrift.v1.SnowplowRawEvent
+import CollectorPayload.thrift.v1.CollectorPayload
 
 /**
  * Kinesis Sink for the Scala collector.
@@ -160,7 +160,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     Client.fromClient(client)
   }
 
-  def storeRawEvent(event: SnowplowRawEvent, key: String) = {
+  def storeRawEvent(event: CollectorPayload, key: String) = {
     info(s"Writing Thrift record to Kinesis: ${event.toString}")
     val putData = for {
       p <- enrichedStream.put(

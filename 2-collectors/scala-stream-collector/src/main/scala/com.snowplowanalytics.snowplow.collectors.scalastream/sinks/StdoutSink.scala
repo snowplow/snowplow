@@ -35,11 +35,11 @@ import com.typesafe.config.Config
 
 // Snowplow
 import scalastream._
-import SnowplowRawEvent.thrift.v1.SnowplowRawEvent
+import CollectorPayload.thrift.v1.CollectorPayload
 
 class StdoutSink extends AbstractSink {
   // Print a Base64-encoded event.
-  def storeRawEvent(event: SnowplowRawEvent, key: String) = {
+  def storeRawEvent(event: CollectorPayload, key: String) = {
     println(Base64.encodeBase64String(serializeEvent(event)))
     null
   }

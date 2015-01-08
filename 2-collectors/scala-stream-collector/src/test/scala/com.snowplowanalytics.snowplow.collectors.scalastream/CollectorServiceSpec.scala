@@ -45,7 +45,7 @@ import org.apache.thrift.TDeserializer
 
 // Snowplow
 import sinks._
-import SnowplowRawEvent.thrift.v1.SnowplowRawEvent
+import CollectorPayload.thrift.v1.CollectorPayload
 
 class CollectorServiceSpec extends Specification with Specs2RouteTest with
      AnyMatchers {
@@ -164,7 +164,7 @@ collector {
       val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
         None, "localhost", "127.0.0.1", new HttpRequest(), None, "/i")._2
 
-      val storedEvent = new SnowplowRawEvent
+      val storedEvent = new CollectorPayload
       this.synchronized {
         thriftDeserializer.deserialize(storedEvent, storedRecordBytes)
       }

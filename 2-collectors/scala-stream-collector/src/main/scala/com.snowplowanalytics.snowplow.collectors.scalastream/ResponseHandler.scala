@@ -45,7 +45,7 @@ import scala.collection.JavaConversions._
 
 // Snowplow
 import generated._
-import SnowplowRawEvent.thrift.v1.SnowplowRawEvent
+import CollectorPayload.thrift.v1.CollectorPayload
 import sinks._
 
 // Contains an invisible pixel to return for `/i` requests.
@@ -78,7 +78,7 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
     // Construct an event object from the request.
     val timestamp: Long = System.currentTimeMillis
 
-    val event = new SnowplowRawEvent(
+    val event = new CollectorPayload(
       "1", // version TODO: decide what this will look like
       Collector,
       "UTF-8",

@@ -35,11 +35,11 @@ import com.typesafe.config.Config
 
 // Snowplow
 import scalastream._
-import SnowplowRawEvent.thrift.v1.SnowplowRawEvent
+import CollectorPayload.thrift.v1.CollectorPayload
 
 // Allow the testing framework to test collection events using the
 // same methods from AbstractSink as the other sinks.
 class TestSink extends AbstractSink {
-  def storeRawEvent(event: SnowplowRawEvent, key: String) =
+  def storeRawEvent(event: CollectorPayload, key: String) =
     serializeEvent(event)
 }

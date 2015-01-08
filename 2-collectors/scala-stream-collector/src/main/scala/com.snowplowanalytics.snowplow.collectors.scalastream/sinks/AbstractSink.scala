@@ -28,17 +28,17 @@ import java.nio.ByteBuffer
 import org.apache.thrift.TSerializer
 
 // Snowplow
-import SnowplowRawEvent.thrift.v1.SnowplowRawEvent
+import CollectorPayload.thrift.v1.CollectorPayload
 
 // Define an interface for all sinks to use to store events.
 trait AbstractSink {
-  def storeRawEvent(event: SnowplowRawEvent, key: String): Array[Byte]
+  def storeRawEvent(event: CollectorPayload, key: String): Array[Byte]
 
-  // Serialize Thrift SnowplowRawEvent objects,
+  // Serialize Thrift CollectorPayload objects,
   // and synchronize because TSerializer doesn't support multi-threaded
   // serialization.
   private val thriftSerializer = new TSerializer
-  def serializeEvent(event: SnowplowRawEvent): Array[Byte] =
+  def serializeEvent(event: CollectorPayload): Array[Byte] =
     this.synchronized {
       thriftSerializer.serialize(event)
     }
