@@ -157,7 +157,7 @@ collector {
     "store the expected event as a serialized Thrift object in the enabled sink" in {
       val payloadData = "param1=val1&param2=val2"
       val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
-        None, "localhost", "127.0.0.1", new HttpRequest(), None, "/com.snowplowanalytics.snowplow/tp2")._2
+        None, "localhost", "127.0.0.1", new HttpRequest(), None, "/com.snowplowanalytics.snowplow/tp2", false)._2
 
       val storedEvent = new CollectorPayload
       this.synchronized {

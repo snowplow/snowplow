@@ -66,7 +66,7 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
   // Kinisis sink and returns an invisible pixel with a cookie.
   def cookie(queryParams: String, body: String, requestCookie: Option[HttpCookie],
       userAgent: Option[String], hostname: String, ip: String,
-      request: HttpRequest, refererUri: Option[String], path: String):
+      request: HttpRequest, refererUri: Option[String], path: String, pixelExpected: Boolean):
       (HttpResponse, Array[Byte]) = {
 
     // Use the same UUID if the request cookie contains `sp`.
@@ -118,14 +118,16 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
     val policyRef = config.p3pPolicyRef
     val CP = config.p3pCP
     val headers = List(
-      RawHeader("P3P", s"""policyref="${policyRef}", CP="${CP}""""),
+      RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP)),
       `Set-Cookie`(responseCookie)
     )
-    val httpResponse = (path match {
-      case "/i" => HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
-      case "/com.snowplowanalytics.snowplow/tp2" => HttpResponse()
-      case e => throw new RuntimeException("Nonexistent protocol $e used - this should be impossible")
-    }).withHeaders(headers)
+
+    val httpResponse = (if (pixelExpected) {
+        HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
+      } else {
+        HttpResponse()
+      }).withHeaders(headers)
+
     (httpResponse, sinkResponse)
   }
 

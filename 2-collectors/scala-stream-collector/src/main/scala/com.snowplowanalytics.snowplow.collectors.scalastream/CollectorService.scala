@@ -64,9 +64,11 @@ class CollectorService(
     responseHandler: ResponseHandler,
     context: ActorRefFactory) extends HttpService {
   def actorRefFactory = context
+
+  // TODO: reduce code duplication here
   val collectorRoute = {
     post {
-      path("com.snowplowanalytics.snowplow" / "tp2") {
+      path(Segment / Segment) { (path1, path2) =>
         optionalCookie("sp") { reqCookie =>
           optionalHeaderValueByName("User-Agent") { userAgent =>
             optionalHeaderValueByName("Referer") { refererURI =>
@@ -85,7 +87,8 @@ class CollectorService(
                             ip.toString,
                             request,
                             refererURI,
-                            "/com.snowplowanalytics.snowplow/tp2"
+                            "/" + path1 + "/" + path2,
+                            false
                           )._1
                         )
                       }
@@ -99,7 +102,7 @@ class CollectorService(
       }
     } ~
     get {
-      path("i") {
+      path("""ice\.png""".r | "i".r) { path =>
         optionalCookie("sp") { reqCookie =>
           optionalHeaderValueByName("User-Agent") { userAgent =>
             optionalHeaderValueByName("Referer") { refererURI =>
@@ -120,7 +123,43 @@ class CollectorService(
                           ip.toString,
                           request,
                           refererURI,
-                          "/i"
+                          "/" + path,
+                          true
+                        )._1
+                      )
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } ~
+    get {
+      path(Segment / Segment) { (path1, path2) =>
+        optionalCookie("sp") { reqCookie =>
+          optionalHeaderValueByName("User-Agent") { userAgent =>
+            optionalHeaderValueByName("Referer") { refererURI =>
+              headerValueByName("Raw-Request-URI") { rawRequest =>
+                hostName { host =>
+                  clientIP { ip =>
+                    requestInstance{ request =>
+                      complete(
+                        responseHandler.cookie(
+                          rawRequest match {
+                            case CollectorService.QuerystringExtractor(qs) => qs
+                            case _ => ""
+                          },
+                          null,
+                          reqCookie,
+                          userAgent,
+                          host,
+                          ip.toString,
+                          request,
+                          refererURI,
+                          "/" + path1 + "/" + path2,
+                          true
                         )._1
                       )
                     }
