@@ -41,7 +41,7 @@ object Dependencies {
     val mavenArtifact    = "3.2.2" 
     // Scala
     val scalaz7          = "7.0.0"
-    val snowplowRawEvent = "0.1.0"
+    val snowplowRawEvent = "0.2.0"
     val scalaUtil        = "0.1.0"
     val refererParser    = "0.2.2"
     val maxmindIplookups = "0.2.0"
