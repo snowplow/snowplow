@@ -24,23 +24,33 @@ import java.io.{
   FileInputStream,
   IOException,
   InputStreamReader,
-  PrintStream
+  FileNotFoundException,
+  PrintStream,
+  FileOutputStream
 }
 import java.util.{
   Arrays,
+  ArrayList,
   Collections,
   List,
-  Scanner
+  Scanner,
+  Properties
 }
 
 // Scala
 import collection.JavaConversions._
-
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 //Java Libraries
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets
+import com.google.api.client.googleapis.auth.oauth2.{
+  GoogleClientSecrets,
+  GoogleCredential
+}
 import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.jackson2.JacksonFactory
-import com.google.api.client.auth.oauth2.Credential
+import com.google.api.client.auth.oauth2.{
+  Credential,
+  TokenResponse
+}
 import com.google.api.client.googleapis.auth.oauth2.{
   GoogleAuthorizationCodeFlow,
   GoogleAuthorizationCodeRequestUrl,
@@ -62,6 +72,10 @@ import com.google.api.services.bigquery.model.{
   TableCell,
   Dataset,
   DatasetReference,
+  Table,
+  TableSchema,
+  TableFieldSchema,
+  TableReference,
   TableRow
 }
 
@@ -111,25 +125,29 @@ object bigQueryAuth {
   //              add row to table
   //              remove row from table 
   //              delete table
+  //              delete dataset x
 
   def main(args: Array[String]){
 
-    val credentials = {
-      val fis = new FileInputStream(ClientSecretsLocation)
-      val reader = new InputStreamReader(fis)
-      val gcs = GoogleClientSecrets.load(new JacksonFactory, reader)
-      getCredentials(gcs)
+    val credentials = loadRefreshToken match {
+      case Some(s) => createCredentialWithRefreshToken(HttpTransport, JsonFactory, new TokenResponse().setRefreshToken(s))
+      case None => getCredentials
     }
     
+    storeRefreshToken(credentials.getRefreshToken())
+
     val bigquery = new Bigquery(HttpTransport, JsonFactory, credentials)
     
-    createDataSet(ProjectId, bigquery)
+    createDataset(ProjectId, bigquery)
+    createTable(ProjectId, bigquery)
+    deleteTable(ProjectId, bigquery)
+    deleteDataset(ProjectId, bigquery)
   }
 
   /**
    * Creates a dataset with name testdataset.
    */
-  def createDataSet (projectId: String, bigquery: Bigquery) = {
+  def createDataset (projectId: String, bigquery: Bigquery) = {
     val dataSetId = "testdataset"
     val dataSet = new Dataset
     val dataSetReference = new DatasetReference
@@ -141,12 +159,78 @@ object bigQueryAuth {
       println("Dataset created")
     }catch{
       case ex: IOException =>
-        println("There's been an IOException: " + ex)
+        println("IOException while creating " + dataSetId + ": " + ex)
+    }
+  }
+
+  /**
+   * Deletes the dataset with name testdatatable
+   */
+  def deleteDataset(projectId: String, bigquery: Bigquery) = {
+    val dataSetId = "testdataset"
+    try{
+      bigquery.datasets.delete(projectId, dataSetId).execute()
+      println("Dataset deleted")
+    }catch{
+      case ex: IOException =>
+        println("IOException while deleting" + dataSetId + ": " + ex)
+    }
+  }
+
+  /**
+   * Creates a table with fields firstname, lastname, age.
+   */
+  def createTable(projectId: String, bigquery: Bigquery) = {
+
+    val dataSetId = "testdataset"
+
+    val tableName = "testtable"
+    val table = new Table
+
+    val schema = new TableSchema
+    val tableFieldList = new ArrayList[TableFieldSchema]
+    val schemaEntry = new TableFieldSchema
+    schemaEntry.setName("firstName")
+    schemaEntry.setType("STRING")
+    tableFieldList.add(schemaEntry)
+    table.setSchema(schema)
+
+    val tableRef= new TableReference
+    tableRef.setProjectId(projectId)
+    tableRef.setDatasetId(dataSetId)
+    tableRef.setTableId(tableName)
+    table.setTableReference(tableRef)
+
+    try{
+      bigquery.tables.insert(projectId, dataSetId, table).execute()
+      println("Table created")
+    }catch{
+      case ex: IOException =>
+        println("IOException while creating table: " + ex)
+    }
+  }
+
+  /**
+   * Delete the testtable table
+   */
+  def deleteTable(projectId: String, bigquery: Bigquery) = {
+
+    val dataSetId = "testdataset"
+
+    val tableName = "testtable"
+
+    try{
+      bigquery.tables.delete(projectId, dataSetId, tableName).execute()
+      println("Table deleted")
+    }catch{
+      case ex: IOException =>
+        println("IOException while deleting table: " + ex)
     }
   }
     
 
 
+  //NOTE no Credential.loadCredential here
 
 
   /**
@@ -155,17 +239,20 @@ object bigQueryAuth {
    * user is prompted to paste this code in to the command line. The code grants
    * the applicatin access to the database.
    *
-   * @param clientSecrets
-   *
    * @return valid credentials
    */
-  def getCredentials(clientSecrets: GoogleClientSecrets): Credential = {
+  def getCredentials: Credential = {
+
+    val fis = new FileInputStream(ClientSecretsLocation)
+    val reader = new InputStreamReader(fis)
+    val clientSecrets = GoogleClientSecrets.load(new JacksonFactory, reader)
 
     val scopes = Collections.singleton(BigqueryScopes.BIGQUERY)
     val authorizeUrl = new GoogleAuthorizationCodeRequestUrl(clientSecrets, clientSecrets.getInstalled().getRedirectUris().get(0), scopes).build()
     println("Paste this URL into a web browser to authorize BigQuery Access:\n" + authorizeUrl)
     println("... and paste the code you received here: ")
     val authorizationCode = readLine()
+
 
     // Exchange the auth code for an access token
     val flow = new GoogleAuthorizationCodeFlow.Builder(HttpTransport, JsonFactory, clientSecrets, Arrays.asList(BigqueryScopes.BIGQUERY)).build()
@@ -216,9 +303,9 @@ object bigQueryAuth {
    */
   def storeRefreshToken(refreshToken: String){
     val properties = new Properties
-    properties.setProperty("refreshtoken": refreshToken)
+    properties.setProperty("refreshtoken", refreshToken)
     try {
-      properties.store(new FileOutputStream("snowplow_bigquery_refresh_token.properties"))
+      properties.store(new FileOutputStream("snowplow_bigquery_refresh_token.properties"), null)
       println("Refresh token saved.")
     } catch {
         case ex: FileNotFoundException => 
@@ -232,21 +319,41 @@ object bigQueryAuth {
    * Load the refresh token from the file 
    * snowplow_bigquery_refresh_token.properties
    */
-  def loadRefreshToken: String = {
+  def loadRefreshToken: Option[String] = {
     val properties = new Properties
     try {
       properties.load(new FileInputStream("snowplow_bigquery_refresh_token.properties"))
-      properties.get("refreshtoken");
+      Some(properties.getProperty("refreshtoken"))
     } catch {
-        case ex: FileNotFoundException => 
+        case ex: FileNotFoundException => {
           println("FileNotFoundException: " + ex)
-        case ex: IOException => 
+          None
+        }
+        case ex: IOException => {
           println("IOException: " + ex)
+          None
+        }
     }
   }
 
   /**
-   * Prints the query response to standars output.
+   * Get access token from refresh token.
+   */
+  def createCredentialWithRefreshToken(transport: HttpTransport, jsonFactory: JsonFactory, tokenResponse: TokenResponse): GoogleCredential = {
+
+    val fis = new FileInputStream(ClientSecretsLocation)
+    val reader = new InputStreamReader(fis)
+    val clientSecrets = GoogleClientSecrets.load(new JacksonFactory, reader)
+
+    new GoogleCredential.Builder().setTransport(transport)
+      .setJsonFactory(jsonFactory)
+      .setClientSecrets(clientSecrets)
+      .build()
+      .setFromTokenResponse(tokenResponse)
+  }
+
+  /**
+   * Prints the query response to standard output.
    */
   def printRows(rows: List[TableRow], out: PrintStream){
 
