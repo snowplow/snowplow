@@ -33,7 +33,8 @@ object Dependencies {
     val awsSdk           = "1.6.10"
 
     // Scala
-    val snowplowRawEvent = "0.2.0"
+    val snowplowRawEvent = "0.1.0"
+    val collectorPayload = "0.0.0"
     val spray            = "1.2.0"
     val akka             = "2.2.3"
     val logback          = "1.0.13"
@@ -54,6 +55,7 @@ object Dependencies {
 
     // Scala
     val snowplowRawEvent = "com.snowplowanalytics" %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
+    val collectorPayload = "com.snowplowanalytics" %  "collector-payload-1"       % V.collectorPayload
     val argot            = "org.clapper"           %% "argot"                     % V.argot
     val sprayCan         = "io.spray"              %  "spray-can"                 % V.spray
     val sprayRouting     = "io.spray"              %  "spray-routing"             % V.spray
