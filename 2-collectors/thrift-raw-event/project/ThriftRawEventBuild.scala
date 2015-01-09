@@ -25,16 +25,12 @@ object ThriftRawEventBuild extends Build {
     shellPrompt := { s => Project.extract(s).currentProject.id + " > " }
   }
 
-  // Define our project, with basic project information and library
-  // dependencies.
-  lazy val project = Project("snowplow-thrift-raw-event", file("."))
-    .settings(buildSettings: _*)
+  lazy val snowplowRawEventProject = Project("snowplow-raw-event", file("./snowplow-raw-event"))
     .settings(
       libraryDependencies ++= Seq(
-        Libraries.commonsLang3,
-        Libraries.thrift,
-        Libraries.specs2,
-        Libraries.scalaCheck
+        Libraries.specs2
       )
     )
+  lazy val collectorPayloadProject = Project("collector-payload", file("./collector-payload-1"))
+  lazy val schemaSnifferProject    = Project("schema-sniffer", file("./schema-sniffer-1"))
 }

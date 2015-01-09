@@ -36,21 +36,6 @@ object BuildSettings {
     resolvers             ++= Dependencies.resolutionRepos
   )
 
-  // Makes our SBT app settings available from within the app
-  lazy val scalifySettings = Seq(sourceGenerators in Compile <+=
-      (sourceManaged in Compile, version, name, organization) map
-      { (d, v, n, o) =>
-    val file = d / "settings.scala"
-    IO.write(file, s"""package com.snowplowanalytics.snowplow.collectors.thrift
-      |object Settings {
-      |  val organization = "$o"
-      |  val version = "$v"
-      |  val name = "$n"
-      |}
-      |""".stripMargin)
-    Seq(file)
-  })
-
   // Publish settings
   // TODO: update with ivy credentials etc when we start using Nexus
   lazy val publishSettings = Seq[Setting[_]](
@@ -65,6 +50,6 @@ object BuildSettings {
     }
   )
 
-  lazy val buildSettings = basicSettings ++ scalifySettings ++
+  lazy val buildSettings = basicSettings ++
     ThriftPlugin.thriftSettings ++ publishSettings
 }
