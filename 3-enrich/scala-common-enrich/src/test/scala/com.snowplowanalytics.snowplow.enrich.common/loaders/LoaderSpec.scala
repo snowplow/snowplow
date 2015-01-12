@@ -48,7 +48,7 @@ class LoaderSpec extends Specification with DataTables with ValidationMatchers {
     }
 
     "return the ThriftLoader" in {
-      Loader.getLoader("thrift-raw") must beSuccessful(ThriftLoader)
+      Loader.getLoader("thrift") must beSuccessful(ThriftLoader)
     }
   }
 
