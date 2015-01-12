@@ -40,7 +40,8 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.useragent,
         Libraries.jacksonDatabind,
         Libraries.jsonValidator,  
-        Libraries.mavenArtifact,      
+        Libraries.mavenArtifact,
+        Libraries.uaParser,      
         // Scala
         Libraries.scalaz7,
         Libraries.snowplowRawEvent,
