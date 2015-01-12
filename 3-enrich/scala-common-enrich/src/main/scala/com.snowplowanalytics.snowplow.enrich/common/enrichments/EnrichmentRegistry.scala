@@ -43,11 +43,15 @@ import registry.{
   IpLookupsEnrichment,
   RefererParserEnrichment,
   CampaignAttributionEnrichment,
-  UserAgentUtilsEnrichment
+  UserAgentUtilsEnrichment,
+  UaParserEnrichment
 }
 
 // UserAgentUtilsEnrichmentConfig
 import registry.UserAgentUtilsEnrichmentConfig
+
+// UaParserEnrichmentConfig
+import registry.UaParserEnrichmentConfig
 
 import utils.ScalazJson4sUtils
 
@@ -133,7 +137,9 @@ object EnrichmentRegistry {
             CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)            
           } else if (nm == "user_agent_utils_config") {
             UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          } else {
+          } else if (nm == "ua_parser_config") {
+            UaParserEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          }else {
             None.success // Enrichment is not recognized yet
           }
         })
@@ -200,7 +206,16 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    * @return Option boxing the UserAgentUtilsEnrichment instance
    */
   def getUserAgentUtilsEnrichment: Option[UserAgentUtilsEnrichment.type] = 
-    getEnrichment[UserAgentUtilsEnrichment.type]("user_agent_utils")
+    getEnrichment[UserAgentUtilsEnrichment.type]("user_agent_utils_config")
+  
+  /**
+   * Returns an Option boxing the UaParserEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the UaParserEnrichment instance
+   */
+  def getUaParserEnrichment: Option[UaParserEnrichment.type] = 
+    getEnrichment[UaParserEnrichment.type]("ua_parser_config")
 
   /**
    * Returns an Option boxing an Enrichment

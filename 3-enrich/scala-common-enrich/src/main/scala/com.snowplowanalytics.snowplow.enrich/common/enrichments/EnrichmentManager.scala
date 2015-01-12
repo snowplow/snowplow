@@ -254,7 +254,7 @@ object EnrichmentManager {
       registry.getUserAgentUtilsEnrichment match {
         case Some(uap) => {
           Option(event.useragent) match {
-      	    case Some(ua) =>
+            case Some(ua) =>
               val ca = uap.extractClientAttributes(ua)
               ca.flatMap(c => {
                 event.br_name = c.browserName
@@ -270,6 +270,19 @@ object EnrichmentManager {
                 c.success
                 })
               ca
+            case None => unitSuccess // No fields updated
+          }
+        }
+        case None => unitSuccess
+      }
+    }
+
+    val uaParser = {
+      registry.getUaParserEnrichment match {
+        case Some(uap) => {
+          Option(event.useragent) match {
+            case Some(ua) =>
+              var uaJsonPlaceholder = uap.extractUserAgent(ua)
             case None => unitSuccess // No fields updated
           }
         }
