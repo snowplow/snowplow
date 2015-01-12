@@ -119,7 +119,7 @@ object RefererParserCfLineSpec {
     "64", //
     "935", //
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36",
-    "Chrome",
+    "Chrome 34",
     "Chrome",
     "34.0.1847.131",
     "Browser",
