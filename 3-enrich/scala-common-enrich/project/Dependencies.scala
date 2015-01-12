@@ -25,7 +25,9 @@ object Dependencies {
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
     // For user-agent-utils
-    "user-agent-utils repo" at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/"
+    "user-agent-utils repo" at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/",
+    // For uaParser utils
+    "user-agent-parser repo" at "https://clojars.org/repo/"
   )
 
   object V {
@@ -38,7 +40,8 @@ object Dependencies {
     val useragent        = "1.14"
     val jacksonDatabind  = "2.2.3"
     val jsonValidator    = "2.2.3"
-    val mavenArtifact    = "3.2.2" 
+    val mavenArtifact    = "3.2.2"
+    val uaParser         = "1.3.0" 
     // Scala
     val scalaz7          = "7.0.0"
     val snowplowRawEvent = "0.1.0"
@@ -68,6 +71,7 @@ object Dependencies {
     val jacksonDatabind  = "com.fasterxml.jackson.core" %  "jackson-databind"          % V.jacksonDatabind
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"     % V.jsonValidator    
     val mavenArtifact    = "org.apache.maven"           %  "maven-artifact"            % V.mavenArtifact
+    val uaParser         = "org.clojars.timewarrior"    %  "ua-parser"                  % V.uaParser 
     // Scala
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
     val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event" % V.snowplowRawEvent

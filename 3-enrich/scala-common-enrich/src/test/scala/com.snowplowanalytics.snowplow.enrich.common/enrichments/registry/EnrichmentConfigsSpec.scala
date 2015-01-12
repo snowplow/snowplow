@@ -160,4 +160,21 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
     }      
   }
 
+    "Parsing a valid ua_parser_config enrichment JSON" should {
+    "successfully construct a UaParserEnrichment case object" in {
+
+      val  uaParserEnrichmentJson = parse("""{
+        "enabled": true,
+        "parameters": {
+        }
+      }""")
+
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", "1-0-0") 
+
+      val result = UaParserEnrichmentConfig.parse(uaParserEnrichmentJson, schemaKey)
+      result must beSuccessful(UaParserEnrichment)
+
+    }      
+  }
+
 }
