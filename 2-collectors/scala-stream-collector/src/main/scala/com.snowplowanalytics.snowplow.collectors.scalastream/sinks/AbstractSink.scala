@@ -34,12 +34,13 @@ import CollectorPayload.thrift.v1.CollectorPayload
 trait AbstractSink {
   def storeRawEvent(event: CollectorPayload, key: String): Array[Byte]
 
-  // Serialize Thrift CollectorPayload objects,
-  // and synchronize because TSerializer doesn't support multi-threaded
-  // serialization.
-  private val thriftSerializer = new TSerializer
-  def serializeEvent(event: CollectorPayload): Array[Byte] =
-    this.synchronized {
-      thriftSerializer.serialize(event)
-    }
+  // Serialize Thrift CollectorPayload objects
+  private val thriftSerializer = new ThreadLocal[TSerializer] {
+    override def initialValue = new TSerializer()
+  }
+
+  def serializeEvent(event: CollectorPayload): Array[Byte] = {
+    val serializer = thriftSerializer.get()
+    serializer.serialize(event)
+  }
 }
