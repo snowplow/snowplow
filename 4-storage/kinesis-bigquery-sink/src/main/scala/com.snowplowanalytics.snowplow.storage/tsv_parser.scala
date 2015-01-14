@@ -29,14 +29,13 @@ object TSVParser{
    */
   def main (args: Array[String]){
 
+    val fields_names = BasicSchema.fields.map(_._1)
+
     if (args.length > 0) {
-      val dataset = addFieldsToData(VeryBasicSchema.fields, args(0))
+      val dataset = addFieldsToData(fields_names, args(0))
     } else {
       Console.err.println("Please enter filename")
     }
-
-    println("first element of field: " + VeryBasicSchema.fields(0))
-    println("length of array: " + VeryBasicSchema.fields.length)
       
   } 
 
@@ -67,12 +66,12 @@ object TSVParser{
    * must be a field name, and the second must be the fields data type.
    * @returns a bigquery Job object ???is this right???
    */
-  def createBigQuerySchema(List[(String, String)]) 
+  //def createBigQuerySchema(List[(String, String)]) = ???
 
   /**
    * @param data a list of lists representing the rows to be added, as returned
    *    by addFieldsToData.
    */
-  def uploadToBigQuery(data: List[List[(String, String)]]): JObject = ???
+  //def uploadToBigQuery(data: List[List[(String, String)]]): JObject = ???
 
 }

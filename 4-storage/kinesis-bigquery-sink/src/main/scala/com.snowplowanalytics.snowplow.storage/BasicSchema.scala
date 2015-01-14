@@ -129,6 +129,10 @@ object BasicSchema{
     ("dvce_screenheight", "INTEGER"),
     ("doc_charset", "STRING"),
     ("doc_width", "INTEGER"),
-    ("doc_height" "INTEGER"),
+    ("doc_height", "INTEGER")
     )
+
+    def names: Array[String] = {
+      fields.map(_._1)
+    }
 }

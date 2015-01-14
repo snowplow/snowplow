@@ -95,7 +95,7 @@ object bigQueryAuth {
   /**
    * Obtained from the Google developers console.
    */
-  val ProjectId = 123 // Add projectId here
+  val ProjectId = "123" // Add projectId here
 
   /**
    * Location of the client secrets. This file is obtained from

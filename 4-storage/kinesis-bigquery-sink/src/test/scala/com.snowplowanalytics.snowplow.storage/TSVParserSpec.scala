@@ -22,7 +22,7 @@ import org.specs2.scalaz.ValidationMatchers
  */
 class SnowplowTSVParserSpec extends Specification with ValidationMatchers {
 
-  val fields = VeryBasicSchema.fields
+  val fields = BasicSchema.fields.map(_._1)
   val file = "example_row"
 
   "addFieldsToData result" should {
