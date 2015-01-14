@@ -28,21 +28,15 @@ object TSVParser{
    * list of lists.
    */
   def main (args: Array[String]){
-    if (args.length > 0) {
-        
-      val dataset: List[List[(String, String)]] = for {
-        line <- Source.fromFile(args(0)).getLines.toList
-        values = getValues(line)
-      } yield (VeryBasicSchema.fields, values).zipped.toList
-    } 
 
-    else {
+    if (args.length > 0) {
+      val dataset = addFieldsToData(VeryBasicSchema.fields, args(0))
+    } else {
       Console.err.println("Please enter filename")
     }
 
     println("first element of field: " + VeryBasicSchema.fields(0))
     println("length of array: " + VeryBasicSchema.fields.length)
-
       
   } 
 
