@@ -132,7 +132,7 @@ object BasicSchema{
     ("doc_height", "INTEGER")
     )
 
-    def names: Array[String] = {
+    def field_names: Array[String] = {
       fields.map(_._1)
     }
 }
