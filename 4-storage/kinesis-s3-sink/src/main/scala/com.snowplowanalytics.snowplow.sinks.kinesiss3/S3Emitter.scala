@@ -87,7 +87,7 @@ class S3Emitter(config: KinesisConnectorConfiguration) extends IEmitter[ Snowplo
     val lzoOutputStream = lzoCodec.createIndexedOutputStream(outputStream, new DataOutputStream(indexOutputStream))
 
     // This writes to the underlying lzo stream
-    val thriftBlockWriter = new ThriftBlockWriter[SnowplowRawEvent](lzoOutputStream, classOf[SnowplowRawEvent], buffer.getRecords().size)
+    val thriftBlockWriter = new ThriftBlockWriter[SnowplowRawEvent](lzoOutputStream, classOf[SnowplowRawEvent], 10000)
 
     // Popular the output stream with records
     records.foreach({ record =>
