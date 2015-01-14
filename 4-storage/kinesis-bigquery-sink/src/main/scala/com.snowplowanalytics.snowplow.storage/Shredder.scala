@@ -95,7 +95,7 @@ object bigQueryAuth {
   /**
    * Obtained from the Google developers console.
    */
-  val ProjectId = "742196692985"
+  val ProjectId = 123 // Add projectId here
 
   /**
    * Location of the client secrets. This file is obtained from
@@ -289,6 +289,7 @@ object bigQueryAuth {
   }
 
   /**
+   * -----NOT WORKING-----
    * Adds data from a local json file.
    * @see [[https://cloud.google.com/bigquery/docs/reference/v2/tabledata/insertAll the official google docs]]
    * for the specification of the request body.

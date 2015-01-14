@@ -61,4 +61,18 @@ object TSVParser{
     values
   }
 
+  /**
+   * Creates a bigquery job specifying the schema
+   * @param schemaList list of pairs of elements, the first element of each pair
+   * must be a field name, and the second must be the fields data type.
+   * @returns a bigquery Job object ???is this right???
+   */
+  def createBigQuerySchema(List[(String, String)]) 
+
+  /**
+   * @param data a list of lists representing the rows to be added, as returned
+   *    by addFieldsToData.
+   */
+  def uploadToBigQuery(data: List[List[(String, String)]]): JObject = ???
+
 }
