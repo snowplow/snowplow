@@ -20,12 +20,8 @@
 package com.snowplowanalytics.snowplow.storage.kinesis.bigquery
 
 import scala.io.Source
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
 
 object TSVParser{
-
-  val jsonSchema = "schema.json"
 
   /**
    * Takes command line argument a tsv file and parses in to a 
@@ -34,29 +30,41 @@ object TSVParser{
   def main (args: Array[String]){
     if (args.length > 0) {
         
-      for (line <- Source.fromFile(args(0)).getLines()){
-        var split_text = line.split("\t", -1).toList
-        if (split_text.length != 108){
-          throw new Error("There seems to have been a parsing error")
-        }
-      }
-
+      val dataset: List[List[(String, String)]] = for {
+        line <- Source.fromFile(args(0)).getLines.toList
+        values = getValues(line)
+      } yield (VeryBasicSchema.fields, values).zipped.toList
     } 
+
     else {
       Console.err.println("Please enter filename")
     }
 
     println("first element of field: " + VeryBasicSchema.fields(0))
     println("length of array: " + VeryBasicSchema.fields.length)
+
       
   } 
 
-
   /**
-   * Gets a json object form a file
+   * @param fields - an array of field names. The names must be in order.
+   * @param file - the location of a TSV list.
+   * @returns a
    */
-  def getJSON (file: String): JValue = {
-    val unparsed = Source.fromFile(file).getLines.mkString("\n")
-    parse(unparsed)
+  def addFieldsToData(fields: Array[String], file: String): List[List[(String, String)]] = {
+    for {
+        line <- Source.fromFile(file).getLines.toList
+        values = getValues(line)
+    } yield (fields, values).zipped.toList
   }
+
+  // TODO: switch from throwing error to using scalaz Validation, maybe.
+  def getValues(line: String): List[String] = {
+    val values = line.split("\t", -1).toList
+    if (values.length != 108){
+      throw new Error("There seems to have been a parsing error")
+    }
+    values
+  }
+
 }
