@@ -10,7 +10,7 @@ project/boot/
 project/plugins/project/
 
 # data files
-client_secrets.json
+client_secrets_*
 snowplow_bigquery_refresh_token.properties
 data.json
 example_row
