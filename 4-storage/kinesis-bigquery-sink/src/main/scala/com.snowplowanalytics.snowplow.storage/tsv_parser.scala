@@ -19,7 +19,20 @@
 
 package com.snowplowanalytics.snowplow.storage.kinesis.bigquery
 
+import java.util.{
+  ArrayList
+}
+
+// Scala
+import collection.JavaConversions._
 import scala.io.Source
+
+import com.google.api.services.bigquery.model.{
+  TableRow,
+  TableDataInsertAllRequest,
+  TableSchema,
+  TableFieldSchema
+}
 
 object TSVParser{
 
@@ -42,7 +55,7 @@ object TSVParser{
   /**
    * @param fields - an array of field names. The names must be in order.
    * @param file - the location of a TSV list.
-   * @returns a
+   * @return a
    */
   def addFieldsToData(fields: Array[String], file: String): List[List[(String, String)]] = {
     for {
@@ -61,17 +74,49 @@ object TSVParser{
   }
 
   /**
-   * Creates a bigquery job specifying the schema
-   * @param schemaList list of pairs of elements, the first element of each pair
-   * must be a field name, and the second must be the fields data type.
-   * @returns a bigquery Job object ???is this right???
+   * Creates a bigquery schema from an abstract representation.
+   *
+   * @param abstractSchema - array of pairs of elements, the first element of each pair
+   *    must be a field name, and the second must be the fields data type.
+   *
+   * @return a bigquery TableSchema object.
    */
-  //def createBigQuerySchema(List[(String, String)]) = ???
+  def createBigQuerySchema(abstractSchema: Array[(String, String)]): TableSchema = {
+    val schemaFieldList = abstractSchema.map(field => {
+      val schemaEntry = new TableFieldSchema
+      schemaEntry.setName(field._1)
+      schemaEntry.setType(field._2)
+      schemaEntry
+    })
+    val schema = new TableSchema
+    schema.setFields(schemaFieldList.toList)
+  }
 
   /**
+   * makes a bigquery job from a given data list.
+   *
    * @param data a list of lists representing the rows to be added, as returned
    *    by addFieldsToData.
+   *
+   * @return 
    */
-  //def uploadToBigQuery(data: List[List[(String, String)]]): JObject = ???
+  def createUploadData(data: List[List[(String, String)]]): TableDataInsertAllRequest = {
+
+    def createRowFromAbstractRow(abstractRow: List[(String, String)]): TableDataInsertAllRequest.Rows = {
+      val tableRow = new TableRow
+      abstractRow.foreach(field => 
+            tableRow.set(field._1, field._2)
+          )
+      val row = new TableDataInsertAllRequest.Rows
+      row.setJson(tableRow)
+    }
+
+    val rowList = data.map(field => 
+          createRowFromAbstractRow(field)
+        )
+
+    val tableData = new TableDataInsertAllRequest
+    tableData.setRows(rowList)
+  }
 
 }

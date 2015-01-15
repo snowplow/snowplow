@@ -13,9 +13,22 @@
 
 package com.snowplowanalytics.snowplow.storage.kinesis.bigquery
 
+import java.util.{
+  ArrayList
+}
+
+// Scala
+import collection.JavaConversions._
+
 // Specs2
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
+
+import com.google.api.services.bigquery.model.{
+  TableDataInsertAllRequest,
+  TableSchema,
+  TableFieldSchema
+}
 
 /**
  * Test the TSVParser.
@@ -48,5 +61,61 @@ class SnowplowTSVParserSpec extends Specification with ValidationMatchers {
     }
   }
 
+  "createBigQuerySchema" should {
+
+    val abstractSchema = Array(
+        ("abc", "STRING"),
+        ("def", "INTEGER"),
+        ("ghi", "BOOLEAN")
+      )
+
+    val bigQuerySchema = TSVParser.createBigQuerySchema(abstractSchema)
+
+    "return a bigquery TableSchema" in {
+      bigQuerySchema must haveClass[TableSchema]
+    }
+
+    val schemaFieldList = bigQuerySchema.getFields
+
+    "the same as in abstractSchema" in {
+      val schemaArray = schemaFieldList.map(x => (x.getName, x.getType))
+      schemaArray.toSet must beEqualTo(abstractSchema.toSet)
+    }
+
+  }
+
+  "creatUploadJob" should {
+
+    val data = List(
+        List(("abc", "word"), ("def", "123"), ("ghi", "true")), 
+        List(("abc", "phrase"), ("def", "456"), ("ghi", "false"))
+      )
+  
+    //"take a list of lists of pairs of strings - similar to that 
+    //returned by addFieldsToData"
+
+    val uploadData= TSVParser.createUploadData(data)
+
+    "return a bigquery TableDataInsertAllRequest" in {
+      uploadData must haveClass[TableDataInsertAllRequest]
+    }
+
+    val rows = uploadData.getRows
+
+    "with correct number of rows" in {
+      rows.length must beEqualTo(data.length)
+    }
+
+    "with each row containing the correct data" in {
+      val rowsZip  = rows zip data
+      rowsZip.foreach( rowZip => {
+            val jsonTemplate  = "{abc=%s, def=%s, ghi=%s}"
+            val jsonText = jsonTemplate.format(rowZip._2(0)._2, rowZip._2(1)._2, rowZip._2(2)._2 )
+            rowZip._1.getJson.toString must beEqualTo(jsonText)
+      })
+      1 must beEqualTo(1) // asserts only in foreach causes problems
+    }
+
+  }
 
 }

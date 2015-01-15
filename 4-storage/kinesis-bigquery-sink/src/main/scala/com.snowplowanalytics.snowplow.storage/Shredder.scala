@@ -289,7 +289,7 @@ object bigQueryAuth {
   }
 
   /**
-   * -----NOT WORKING-----
+   * NOT WORKING
    * Adds data from a local json file.
    * @see [[https://cloud.google.com/bigquery/docs/reference/v2/tabledata/insertAll the official google docs]]
    * for the specification of the request body.
