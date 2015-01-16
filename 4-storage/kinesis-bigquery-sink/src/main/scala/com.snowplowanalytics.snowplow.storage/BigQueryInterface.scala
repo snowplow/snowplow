@@ -306,6 +306,20 @@ case class BigqueryInterface(projectId: String) {
     }
   }
 
+  /**
+   * Insert rows in to the given database.
+   *
+   * @param datasetId
+   * @param tableName
+   * @param tableData - TableDataInsertAllRequest object as returned by
+   *    TSVPaser.createUploadData
+   */
+  def insertRows(datasetId: String, tableName: String, tableData: TableDataInsertAllRequest) {
+    val response = bigquery.tabledata.insertAll(projectId, datasetId, tableName, tableData).execute()
+    println(response)
+  }
+
+
 
 
   
