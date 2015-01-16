@@ -19,6 +19,8 @@
 
 package com.snowplowanalytics.snowplow.storage.kinesis.bigquery
 
+//TODO - Change "STRING", "INT", etc to algebraic data types
+
 object BasicSchema{
   val fields = Array(
     ("app_id", "STRING"),

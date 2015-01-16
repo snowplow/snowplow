@@ -95,7 +95,7 @@ object bigQueryAuth {
   /**
    * Obtained from the Google developers console.
    */
-  val ProjectId = "123" // Add projectId here
+  val ProjectId = "742196692985" // Add projectId here
 
   /**
    * Location of the client secrets. This file is obtained from
@@ -137,10 +137,7 @@ object bigQueryAuth {
 
   def main(args: Array[String]){
 
-    val credentials = loadRefreshToken match {
-      case Some(s) => createCredentialWithRefreshToken(HttpTransport, JsonFactory, new TokenResponse().setRefreshToken(s))
-      case None => getCredentials
-    }
+    val credentials = loadCredentials
     
     storeRefreshToken(credentials.getRefreshToken())
 
@@ -148,11 +145,28 @@ object bigQueryAuth {
     
     createDataset(ProjectId, bigquery)
     createTable(ProjectId, bigquery)
-    //addRow(ProjectId, bigquery)
-    addRowsFromFile(ProjectId, bigquery)
+    addRow(ProjectId, bigquery)
+    //addRowsFromFile(ProjectId, bigquery)
     deleteTable(ProjectId, bigquery)
     deleteDataset(ProjectId, bigquery)
   }
+
+  def loadCredentials: Credential = {
+
+    loadRefreshToken match {
+      case Some(s) => createCredentialWithRefreshToken(HttpTransport, JsonFactory, new TokenResponse().setRefreshToken(s))
+      case None => getCredentials
+    }
+    
+  }
+
+  /**
+   * Checks if given dataset already exists.
+   */
+  //def checkForDataset(projectId: String, bigquery: Bigquery, datasetId: String): Boolean = {
+    //val datasets = bigquery.datasets.list(projectId).execute()
+    
+  //}
 
   /**
    * Creates a dataset with name testdataset.

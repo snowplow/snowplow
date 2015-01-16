@@ -85,6 +85,35 @@ class SnowplowTSVParserSpec extends Specification with ValidationMatchers {
 
   }
 
+  "valueTypeConverter" should {
+    
+    val stringType = ("STRING", "word")
+    val integerType = ("INTEGER", "123")
+    val booleanType = ("BOOLEAN", "true")
+    val timestampType = ("TIMESTAMP", "2014-06-01 14:04:11.639")
+
+    "should return string for ('STRING', 'word')" in {
+      val returnType = TSVParser.valueTypeConverter(stringType._1, stringType._2).isInstanceOf[String]
+      returnType must beEqualTo(true)
+    }
+
+    "should return int for ('INTEGER', '123')" in {
+      val returnType = TSVParser.valueTypeConverter(integerType._1, integerType._2).isInstanceOf[Int]
+      returnType must beEqualTo(true)
+    }
+
+    "should return int for ('BOOLEAN', 'true')" in {
+      val returnType = TSVParser.valueTypeConverter(booleanType._1, booleanType._2).isInstanceOf[Boolean]
+      returnType must beEqualTo(true)
+    }
+
+    "should return string for ('TIMESTAMP', '2014-06-01 14:04:11.639')" in {
+      val returnType = TSVParser.valueTypeConverter(timestampType._1, timestampType._2).isInstanceOf[String]
+      returnType must beEqualTo(true)
+    }
+
+  }
+
   "creatUploadData" should {
 
     val data = List(

@@ -59,3 +59,44 @@ object SnowplowDataUploadSetup{
     bigQueryInterface.createTable(datasetId, schema, tableId)
   }
 }
+
+object SnowplowDataUpload{
+  
+  /**
+   * Upload TSV data file to the given database table.
+   *
+   * @param args - command line arguments consisting of:
+   *    - ProjectId (must already exist
+   *    - DatabaseId (must already exist)
+   *    - TableId (must already exist)
+   *    - TSV file location
+   */
+  def main (args: Array[String]) {
+    
+    require(args.length == 4, 
+      """Requires four arguments:
+      |  - ProjectId (must already exist)
+      |  - DatasetId (must already exist)
+      |  - TableId (must already exist)
+      |  - TSV File location"""
+      .stripMargin
+      )
+    val projectId = args(0)
+    val datasetId = args(1)
+    val tableId = args(2)
+    val tsvFileLocation = args(3)
+
+    //initializes, checks for authorization and if not authorized 
+    //starts authorization process
+    val bigQueryInterface = new BigqueryInterface(projectId)
+
+    //create bigquery TableDataInsertAllRequest
+    val fieldNames = BasicSchema.names
+    val fieldTypes = BasicSchema.types
+    val dataSet = TSVParser.addFieldsToData(fieldNames, fieldTypes, tsvFileLocation)
+    val tableData = TSVParser.createUploadData(dataSet)
+
+    //send the data
+    bigQueryInterface.insertRows(datasetId, tableId, tableData)
+  }
+}

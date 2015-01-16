@@ -60,6 +60,24 @@ object TSVParser{
   }
 
   /**
+   * Converts from strings to Any type (of required instance type)
+   *
+   * @param fieldType - string with one of the following values:
+   *    "STRING", "INTEGER", "BOOLEAN", "TIMESTAMP"
+   * @param value - string to be converted
+   *
+   * @return Any with isInstanceOf returning one of 'String', 'Int', or 'Boolean'
+   */
+  def valueTypeConverter(fieldType: String, value: String): Any = {
+    fieldType match {
+      case "STRING" => value
+      case "INTEGER" => value.toInt
+      case "BOOLEAN" => value.toBoolean
+      case "TIMESTAMP" => value
+    }
+  }
+
+  /**
    * Creates a bigquery schema from an abstract representation.
    *
    * @param abstractSchema - array of pairs of elements, the first element of each pair
@@ -91,7 +109,7 @@ object TSVParser{
     def createRowFromAbstractRow(abstractRow: List[(String, String, String)]): TableDataInsertAllRequest.Rows = {
       val tableRow = new TableRow
       abstractRow.foreach(field => 
-            tableRow.set(field._1, field._3)
+            tableRow.set(field._1, valueTypeConverter(field._2, field._3) )
           )
       val row = new TableDataInsertAllRequest.Rows
       row.setJson(tableRow)
