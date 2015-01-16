@@ -41,7 +41,10 @@ object SnowplowHadoopEnrichBuild extends Build {
         Libraries.specs2,
         Libraries.scalazSpecs2,
         Libraries.compress,
-        Libraries.commonsCodec
+        Libraries.commonsCodec,
+        // Thrift (test only)
+        Libraries.snowplowRawEvent,
+        Libraries.collectorPayload
       )
     )
 }

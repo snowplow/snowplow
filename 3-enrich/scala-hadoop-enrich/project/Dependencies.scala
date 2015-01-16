@@ -35,13 +35,15 @@ object Dependencies {
     // Scala
     val scalding         = "0.11.1"
     val scalaz7          = "7.0.0"
-    val snowplowRawEvent = "0.1.0"
     val commonEnrich     = "0.11.0"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
     val compress         = "0.4.19"
     val commonsCodec     = "1.5"
+    // Thrift (test only)
+    val snowplowRawEvent = "0.1.0"
+    val collectorPayload = "0.0.0"
   }
 
   object Libraries {
@@ -57,7 +59,10 @@ object Dependencies {
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2       % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2 % "test"
-    val compress         = "com.hadoop.gplcompression"  % "hadoop-lzo"                 % V.compress
+    val compress         = "com.hadoop.gplcompression"  %  "hadoop-lzo"                % V.compress
     val commonsCodec     = "commons-codec"              %  "commons-codec"             % V.commonsCodec % "test"
+    // Thrift (test only)
+    val snowplowRawEvent = "com.snowplowanalytics"      % "snowplow-thrift-raw-event"  % V.snowplowRawEvent
+    val collectorPayload = "com.snowplowanalytics"      % "collector-payload-1"        % V.collectorPayload
   }
 }
