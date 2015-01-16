@@ -10,9 +10,9 @@ scala_version=2.10
 guest_repo_path=/vagrant
 dist_path=dist
 # Next two arrays MUST match up: number of elements and order
-declare -a kinesis_app_paths=( "2-collectors/scala-stream-collector" "3-enrich/scala-kinesis-enrich" "4-storage/kinesis-elasticsearch-sink" )
+declare -a kinesis_app_paths=( "2-collectors/scala-stream-collector" "3-enrich/scala-kinesis-enrich" "4-storage/kinesis-elasticsearch-sink" "4-storage/kinesis-lzo-s3-sink" )
 # TODO: version numbers shouldn't be hard-coded
-declare -a kinesis_fatjars=( "snowplow-stream-collector-0.2.0" "snowplow-kinesis-enrich-0.2.1" "snowplow-elasticsearch-sink-0.1.0" )
+declare -a kinesis_fatjars=( "snowplow-stream-collector-0.3.0" "snowplow-kinesis-enrich-0.3.0" "snowplow-elasticsearch-sink-0.1.0" "snowplow-lzo-s3-sink-0.1.0" )
 
 # Similar to Perl die
 function die() {
