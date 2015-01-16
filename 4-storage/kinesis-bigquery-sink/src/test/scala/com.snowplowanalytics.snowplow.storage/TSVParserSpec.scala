@@ -89,7 +89,10 @@ class SnowplowTSVParserSpec extends Specification with ValidationMatchers {
     
     val stringType = ("STRING", "word")
     val integerType = ("INTEGER", "123")
+    val floatType = ("FLOAT", "12.34")
     val booleanType = ("BOOLEAN", "true")
+    val oneBooleanType = ("BOOLEAN", "1")
+    val zeroBooleanType = ("BOOLEAN", "0")
     val timestampType = ("TIMESTAMP", "2014-06-01 14:04:11.639")
 
     "should return string for ('STRING', 'word')" in {
@@ -102,8 +105,23 @@ class SnowplowTSVParserSpec extends Specification with ValidationMatchers {
       returnType must beEqualTo(true)
     }
 
-    "should return int for ('BOOLEAN', 'true')" in {
+    "should return float for ('FLOAT', '12.34')" in {
+      val returnType = TSVParser.valueTypeConverter(floatType._1, integerType._2).isInstanceOf[Float]
+      returnType must beEqualTo(true)
+    }
+
+    "should return boolean for ('BOOLEAN', 'true')" in {
       val returnType = TSVParser.valueTypeConverter(booleanType._1, booleanType._2).isInstanceOf[Boolean]
+      returnType must beEqualTo(true)
+    }
+
+    "should return boolean for ('BOOLEAN', '1')" in {
+      val returnType = TSVParser.valueTypeConverter(oneBooleanType._1, oneBooleanType._2).isInstanceOf[Boolean]
+      returnType must beEqualTo(true)
+    }
+
+    "should return boolean for ('BOOLEAN', '0')" in {
+      val returnType = TSVParser.valueTypeConverter(zeroBooleanType._1, zeroBooleanType._2).isInstanceOf[Boolean]
       returnType must beEqualTo(true)
     }
 

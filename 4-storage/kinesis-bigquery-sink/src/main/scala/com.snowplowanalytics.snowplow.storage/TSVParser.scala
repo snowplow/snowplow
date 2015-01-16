@@ -69,10 +69,24 @@ object TSVParser{
    * @return Any with isInstanceOf returning one of 'String', 'Int', or 'Boolean'
    */
   def valueTypeConverter(fieldType: String, value: String): Any = {
+
+    def booleanConverter( bool: String): Boolean = {
+      if (bool == "1"){
+        true
+      } 
+      else if (bool == "0") {
+        false
+      } 
+      else {
+        bool.toBoolean
+      }
+    }
+
     fieldType match {
       case "STRING" => value
       case "INTEGER" => value.toInt
-      case "BOOLEAN" => value.toBoolean
+      case "FLOAT" => value.toFloat
+      case "BOOLEAN" => booleanConverter(value)
       case "TIMESTAMP" => value
     }
   }
@@ -109,7 +123,10 @@ object TSVParser{
     def createRowFromAbstractRow(abstractRow: List[(String, String, String)]): TableDataInsertAllRequest.Rows = {
       val tableRow = new TableRow
       abstractRow.foreach(field => 
-            tableRow.set(field._1, valueTypeConverter(field._2, field._3) )
+            // empty string is a null value
+            if (!field._3.isEmpty)  {
+              tableRow.set(field._1, valueTypeConverter(field._2, field._3) )
+            }
           )
       val row = new TableDataInsertAllRequest.Rows
       row.setJson(tableRow)
