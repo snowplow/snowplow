@@ -37,15 +37,17 @@ import com.google.api.services.bigquery.model.{
 object TSVParser{
 
   /**
-   * @param fields - an array of field names. The names must be in order.
+   * @param names - an array of field names. The names must be in order.
+   * @param types - an array of field types. The names must be in order.
    * @param file - the location of a TSV list.
    * @return a
    */
-  def addFieldsToData(fields: Array[String], file: String): List[List[(String, String)]] = {
+  def addFieldsToData(names: Array[String], types: Array[String], file: String): 
+    List[List[(String, String, String)]] = {
     for {
         line <- Source.fromFile(file).getLines.toList
         values = getValues(line)
-    } yield (fields, values).zipped.toList
+    } yield (names, types, values).zipped.toList
   }
 
   // TODO: switch from throwing error to using scalaz Validation, maybe.
@@ -84,12 +86,12 @@ object TSVParser{
    *
    * @return 
    */
-  def createUploadData(data: List[List[(String, String)]]): TableDataInsertAllRequest = {
+  def createUploadData(data: List[List[(String, String, String)]]): TableDataInsertAllRequest = {
 
-    def createRowFromAbstractRow(abstractRow: List[(String, String)]): TableDataInsertAllRequest.Rows = {
+    def createRowFromAbstractRow(abstractRow: List[(String, String, String)]): TableDataInsertAllRequest.Rows = {
       val tableRow = new TableRow
       abstractRow.foreach(field => 
-            tableRow.set(field._1, field._2)
+            tableRow.set(field._1, field._3)
           )
       val row = new TableDataInsertAllRequest.Rows
       row.setJson(tableRow)

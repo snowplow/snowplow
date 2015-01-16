@@ -35,11 +35,12 @@ import com.google.api.services.bigquery.model.{
  */
 class SnowplowTSVParserSpec extends Specification with ValidationMatchers {
 
-  val fields = BasicSchema.fields.map(_._1)
+  val names = BasicSchema.names
+  val types = BasicSchema.types
   val file = "example_row"
 
   "addFieldsToData result" should {
-    val result = TSVParser.addFieldsToData(fields, file)
+    val result = TSVParser.addFieldsToData(names, types, file)
     "have two elements" in {
       result.length must beEqualTo(2)
     }
@@ -48,16 +49,16 @@ class SnowplowTSVParserSpec extends Specification with ValidationMatchers {
       result(1).length must beEqualTo(108)
     }
     "have 0,0 element ('app_id', 'snowplowweb')" in {
-      result(0)(0) must beEqualTo( ("app_id", "snowplowweb") )
+      result(0)(0) must beEqualTo( ("app_id", "STRING", "snowplowweb") )
     }
     "have 1,0 element ('app_id', 'snowplowweb')" in {
-      result(1)(0) must beEqualTo( ("app_id", "snowplowweb") )
+      result(1)(0) must beEqualTo( ("app_id", "STRING", "snowplowweb") )
     }
     "have 0,107 element ('doc_height', '')" in {
-      result(0)(107) must beEqualTo( ("doc_height", "") )
+      result(0)(107) must beEqualTo( ("doc_height", "INTEGER", "") )
     }
     "have 1,107 element ('doc_height', '6015')" in {
-      result(1)(107) must beEqualTo( ("doc_height", "6015") )
+      result(1)(107) must beEqualTo( ("doc_height", "INTEGER", "6015") )
     }
   }
 
@@ -84,11 +85,11 @@ class SnowplowTSVParserSpec extends Specification with ValidationMatchers {
 
   }
 
-  "creatUploadJob" should {
+  "creatUploadData" should {
 
     val data = List(
-        List(("abc", "word"), ("def", "123"), ("ghi", "true")), 
-        List(("abc", "phrase"), ("def", "456"), ("ghi", "false"))
+        List(("abc", "STRING", "word"), ("def", "INTEGER", "123"), ("ghi", "BOOLEAN", "true")), 
+        List(("abc", "STRING",  "phrase"), ("def", "INTEGER",  "456"), ("ghi", "BOOLEAN",  "false"))
       )
   
     //"take a list of lists of pairs of strings - similar to that 
@@ -110,7 +111,7 @@ class SnowplowTSVParserSpec extends Specification with ValidationMatchers {
       val rowsZip  = rows zip data
       rowsZip.foreach( rowZip => {
             val jsonTemplate  = "{abc=%s, def=%s, ghi=%s}"
-            val jsonText = jsonTemplate.format(rowZip._2(0)._2, rowZip._2(1)._2, rowZip._2(2)._2 )
+            val jsonText = jsonTemplate.format(rowZip._2(0)._3, rowZip._2(1)._3, rowZip._2(2)._3 )
             rowZip._1.getJson.toString must beEqualTo(jsonText)
       })
       1 must beEqualTo(1) // asserts only in foreach causes problems
