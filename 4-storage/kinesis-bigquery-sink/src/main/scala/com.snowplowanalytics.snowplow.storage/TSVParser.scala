@@ -37,22 +37,6 @@ import com.google.api.services.bigquery.model.{
 object TSVParser{
 
   /**
-   * Takes command line argument a tsv file and parses in to a 
-   * list of lists.
-   */
-  def main (args: Array[String]){
-
-    val fields_names = BasicSchema.fields.map(_._1)
-
-    if (args.length > 0) {
-      val dataset = addFieldsToData(fields_names, args(0))
-    } else {
-      Console.err.println("Please enter filename")
-    }
-      
-  } 
-
-  /**
    * @param fields - an array of field names. The names must be in order.
    * @param file - the location of a TSV list.
    * @return a
