@@ -13,12 +13,15 @@
 import sbt._
 
 object Dependencies {
-  
+
   val resolutionRepos = Seq(
     // Required for our json4s snapshot
     "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
-     // For some misc Scalding and Twitter libs
+    // For some misc Scalding and Twitter libs
     "Concurrent Maven Repo" at "http://conjars.org/repo",
+    "Clojars Maven Repo" at "http://clojars.org/repo",
+    // For twitter libs
+    "Twitter maven libs" at "http://maven.twttr.com/",
     // For Snowplow libs
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
@@ -37,6 +40,7 @@ object Dependencies {
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
+    val compress         = "0.4.19"
     val commonsCodec     = "1.5"
   }
 
@@ -46,11 +50,14 @@ object Dependencies {
     // Scala
     val scaldingCore     = "com.twitter"                %% "scalding-core"             % V.scalding
     val scaldingArgs     = "com.twitter"                %% "scalding-args"             % V.scalding
+    val scaldingCommons  = "com.twitter"                %% "scalding-commons"          % V.scalding
+    val scaldingJson     = "com.twitter"                %% "scalding-json"             % V.scalding
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
     val commonEnrich     = "com.snowplowanalytics"      %  "snowplow-common-enrich"    % V.commonEnrich
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2       % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2 % "test"
+    val compress         = "com.hadoop.gplcompression"  % "hadoop-lzo"                 % V.compress
     val commonsCodec     = "commons-codec"              %  "commons-codec"             % V.commonsCodec % "test"
   }
 }

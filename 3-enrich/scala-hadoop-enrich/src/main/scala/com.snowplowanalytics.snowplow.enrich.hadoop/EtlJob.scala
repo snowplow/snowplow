@@ -25,6 +25,12 @@ import Scalaz._
 
 // Scalding
 import com.twitter.scalding._
+import com.twitter.scalding.commons.source._
+
+// Cascading
+import cascading.tuple.Fields
+import cascading.tap.SinkMode
+import cascading.pipe.Pipe
 
 // Snowplow Common Enrich
 import common._
@@ -149,7 +155,7 @@ class EtlJob(args: Args) extends Job(args) {
   }
 
   // Aliases for our job
-  val input = MultipleTextLineFiles(etlConfig.inFolder).read
+  val input = getInputPipe(etlConfig.inFormat, etlConfig.inFolder)
   val goodOutput = Tsv(etlConfig.outFolder)
   val badOutput = Tsv(etlConfig.badFolder)
 
@@ -186,4 +192,19 @@ class EtlJob(args: Args) extends Job(args) {
     } // : List[EnrichedEvent]
     .unpackTo[EnrichedEvent]('events -> '*)
     .write(goodOutput) // N EnrichedEvents as tuples
+
+  /**
+   * Determine the Scalding Source to use based on the inFormat configuration
+   *
+   * @param format the inFormat configuration
+   * @param path
+   * @return FixedPathLzoRaw for LZO-compressed thrift, otherwise MultipleTextFiles
+   */
+  def getInputPipe(format: String, path: String): Pipe = {
+    import TDsl._
+    format match {
+      case "thrift" => FixedPathLzoRaw(path).toPipe('line)
+      case _ => MultipleTextLineFiles(path).read
+    }
+  }
 }
