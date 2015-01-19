@@ -80,6 +80,7 @@ limitations under the License.
 [snowplow]: http://snowplowanalytics.com
 [hadoop-lzo]: https://github.com/twitter/hadoop-lzo
 [protobufs]: https://github.com/google/protobuf/
+[elephant-bird]: https://github.com/twitter/elephant-bird/
 [s3]: http://aws.amazon.com/s3/
 [sbt]: http://typesafe.artifactoryonline.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.0/sbt-launch.jar
 
