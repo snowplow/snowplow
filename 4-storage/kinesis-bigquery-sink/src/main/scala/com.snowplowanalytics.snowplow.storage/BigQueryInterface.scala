@@ -231,6 +231,11 @@ case class BigqueryInterface(projectId: String) {
    /* Dataset and table creation/deletion methods.*/
 
   /**
+   * Checks whether a given dataset exists
+   */
+  def checkForDataset(datasetId: String): Boolean = ???
+
+  /**
    * Creates a new dataset.
    *
    * @param datasetId
@@ -264,6 +269,11 @@ case class BigqueryInterface(projectId: String) {
         println("IOException while deleting" + datasetId + ": " + ex)
     }
   }
+
+  /**
+   * Checks whether a given table exists in given dataset
+   */
+  def checkForTable(datasetId: String, tableId: String): Boolean = ???
 
   /**
    * Creates a table in the given dataset, with given schema.
