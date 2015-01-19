@@ -10,7 +10,8 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich.common
+package com.snowplowanalytics
+package snowplow.enrich.common
 package loaders
 
 // Apache Commons
@@ -32,6 +33,9 @@ import scala.collection.JavaConversions._
 import scalaz._
 import Scalaz._
 
+// Iglu
+import iglu.client.{SchemaKey, SchemaCriterion}
+
 // Snowplow
 import com.snowplowanalytics.snowplow.CollectorPayload.thrift.v1.{
   CollectorPayload => CollectorPayload1
@@ -46,7 +50,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
   
   private val thriftDeserializer = new TDeserializer
 
-  private val ExpectedSchema = "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0"
+  private val ExpectedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "CollectorPayload", "thrift", 1, 0)
 
   /**
    * Converts the source string into a ValidatedMaybeCollectorPayload.
@@ -74,10 +78,17 @@ object ThriftLoader extends Loader[Array[Byte]] {
       }
 
       if (schema.isSetSchema) {
-        schema.getSchema match {
-          case ExpectedSchema => convertSchema1(line)
-          case s => s"Record has schema field '$s', expected '$ExpectedSchema'".failNel
-        }
+        val actualSchema = SchemaKey.parse(schema.getSchema).leftMap(_.toString).toValidationNel
+
+        for {
+          as <- actualSchema
+          res <- if (ExpectedSchema.matches(as)) {
+              convertSchema1(line)
+            } else {
+              s"Verifying record as $ExpectedSchema failed: found $actualSchema".failNel
+            }
+        } yield res
+
       } else {
         convertOldSchema(line)
       }
