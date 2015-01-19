@@ -13,7 +13,7 @@
  * governing permissions and limitations there under.
  */
 
-namespace java com.snowplowanalytics.snowplow.CollectorPayload.thrift.v1
+namespace java com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1
 
 struct CollectorPayload {
   31337: string schema

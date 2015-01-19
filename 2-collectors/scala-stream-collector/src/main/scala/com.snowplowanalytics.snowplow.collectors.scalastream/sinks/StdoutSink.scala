@@ -35,7 +35,7 @@ import com.typesafe.config.Config
 
 // Snowplow
 import scalastream._
-import CollectorPayload.thrift.v1.CollectorPayload
+import CollectorPayload.thrift.model1.CollectorPayload
 
 class StdoutSink extends AbstractSink {
   // Print a Base64-encoded event.

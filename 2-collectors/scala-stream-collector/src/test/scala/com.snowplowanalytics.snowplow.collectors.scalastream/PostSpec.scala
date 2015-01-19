@@ -45,7 +45,7 @@ import org.apache.thrift.TDeserializer
 
 // Snowplow
 import sinks._
-import CollectorPayload.thrift.v1.CollectorPayload
+import CollectorPayload.thrift.model1.CollectorPayload
 
 class PostSpec extends Specification with Specs2RouteTest with
      AnyMatchers {

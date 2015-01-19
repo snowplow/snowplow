@@ -45,7 +45,7 @@ import scala.collection.JavaConversions._
 
 // Snowplow
 import generated._
-import CollectorPayload.thrift.v1.CollectorPayload
+import CollectorPayload.thrift.model1.CollectorPayload
 import sinks._
 
 // Contains an invisible pixel to return for `/i` requests.

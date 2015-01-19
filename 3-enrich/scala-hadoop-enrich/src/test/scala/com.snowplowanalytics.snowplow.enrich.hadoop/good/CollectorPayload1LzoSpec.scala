@@ -31,7 +31,7 @@ import org.apache.thrift.TSerializer
 
 import JobSpecHelpers._
 
-import com.snowplowanalytics.snowplow.CollectorPayload.thrift.v1.CollectorPayload
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.CollectorPayload
 
 /**
  * Holds the input and expected data

@@ -37,10 +37,10 @@ import Scalaz._
 import iglu.client.{SchemaKey, SchemaCriterion}
 
 // Snowplow
-import com.snowplowanalytics.snowplow.CollectorPayload.thrift.v1.{
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.{
   CollectorPayload => CollectorPayload1
 }
-import com.snowplowanalytics.snowplow.SchemaSniffer.thrift.v1.SchemaSniffer
+import com.snowplowanalytics.snowplow.SchemaSniffer.thrift.model1.SchemaSniffer
 import com.snowplowanalytics.snowplow.collectors.thrift.SnowplowRawEvent
 
 /**

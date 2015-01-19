@@ -28,7 +28,7 @@ import java.nio.ByteBuffer
 import org.apache.thrift.TSerializer
 
 // Snowplow
-import CollectorPayload.thrift.v1.CollectorPayload
+import CollectorPayload.thrift.model1.CollectorPayload
 
 // Define an interface for all sinks to use to store events.
 trait AbstractSink {

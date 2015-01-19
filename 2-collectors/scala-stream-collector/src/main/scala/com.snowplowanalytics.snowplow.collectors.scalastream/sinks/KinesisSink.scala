@@ -55,7 +55,7 @@ import scala.util.{Success, Failure}
 
 // Snowplow
 import scalastream._
-import CollectorPayload.thrift.v1.CollectorPayload
+import CollectorPayload.thrift.model1.CollectorPayload
 
 /**
  * Kinesis Sink for the Scala collector.

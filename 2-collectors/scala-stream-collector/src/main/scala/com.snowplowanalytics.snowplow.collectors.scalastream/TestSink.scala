@@ -35,7 +35,7 @@ import com.typesafe.config.Config
 
 // Snowplow
 import scalastream._
-import CollectorPayload.thrift.v1.CollectorPayload
+import CollectorPayload.thrift.model1.CollectorPayload
 
 // Allow the testing framework to test collection events using the
 // same methods from AbstractSink as the other sinks.

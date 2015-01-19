@@ -13,7 +13,7 @@
  * governing permissions and limitations there under.
  */
 
-namespace java com.snowplowanalytics.snowplow.SchemaSniffer.thrift.v1
+namespace java com.snowplowanalytics.snowplow.SchemaSniffer.thrift.model1
 
 struct SchemaSniffer {
   31337: string schema
