@@ -14,3 +14,4 @@ client_secrets_*
 snowplow_bigquery_refresh_token.properties
 data.json
 example_row
+snowplow_data/*
