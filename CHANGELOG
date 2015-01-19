@@ -2,6 +2,7 @@ Release 60 Bee Hummingbird (15-01-xx)
 -----------------------
 Common: added VERSION file in root to assist vagrant push (#1293)
 Common: added vagrant push scripting to publish Kinesis apps (#1288)
+Common: added lzo.yml to up.playbooks (#1325)
 Thrift Raw Event: bumped Thrift version to 0.9.1 (#1225)
 Thrift Raw Event: added collector-payload-1 and schema-sniffer-1 (#1322)
 Thrift Raw Event: created a subproject for each Thrift class (#1298)

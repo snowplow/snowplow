@@ -4,3 +4,4 @@ oss-playbooks/thrift.yml
 oss-playbooks/scala.yml
 oss-playbooks/sbt.yml
 oss-playbooks/leiningen.yml
+oss-playbooks/lzo.yml
