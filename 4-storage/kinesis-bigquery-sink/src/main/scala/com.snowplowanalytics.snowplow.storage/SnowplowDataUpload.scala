@@ -19,6 +19,8 @@
 
 package com.snowplowanalytics.snowplow.storage.kinesis.bigquery
 
+import java.io.File
+
 object SnowplowDataUploadSetup{
   
   /**
@@ -85,18 +87,34 @@ object SnowplowDataUpload{
     val datasetId = args(1)
     val tableId = args(2)
     val tsvFileLocation = args(3)
-
+    //
     //initializes, checks for authorization and if not authorized 
     //starts authorization process
     val bigQueryInterface = new BigqueryInterface(projectId)
 
-    //create bigquery TableDataInsertAllRequest
-    val fieldNames = BasicSchema.names
-    val fieldTypes = BasicSchema.types
-    val dataSet = TSVParser.addFieldsToData(fieldNames, fieldTypes, tsvFileLocation)
-    val tableData = TSVParser.createUploadData(dataSet)
 
-    //send the data
-    bigQueryInterface.insertRows(datasetId, tableId, tableData)
+    def sendBatch (fileName: String) {
+
+      //create bigquery TableDataInsertAllRequest
+      val fieldNames = BasicSchema.names
+      val fieldTypes = BasicSchema.types
+      val dataSet = TSVParser.addFieldsToData(fieldNames, fieldTypes, fileName)
+      val tableData = TSVParser.createUploadData(dataSet)
+
+      //send the data
+      bigQueryInterface.insertRows(datasetId, tableId, tableData)
+
+    }
+
+    //create array of files to be uploaded
+    val fileObj = new File(tsvFileLocation)
+    val files =
+      if (fileObj.isFile) 
+        Array(tsvFileLocation)
+      else
+        fileObj.list.map(file => tsvFileLocation+"/"+file)
+
+    //send the batches
+    for (file <- files) sendBatch(file)
   }
 }
