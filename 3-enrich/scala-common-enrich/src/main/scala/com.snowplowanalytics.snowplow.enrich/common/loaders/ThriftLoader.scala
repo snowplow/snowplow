@@ -85,7 +85,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
           res <- if (ExpectedSchema.matches(as)) {
               convertSchema1(line)
             } else {
-              s"Verifying record as $ExpectedSchema failed: found $actualSchema".failNel
+              s"Verifying record as $ExpectedSchema failed: found $as".failNel
             }
         } yield res
 
