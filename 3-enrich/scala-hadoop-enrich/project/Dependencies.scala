@@ -20,7 +20,7 @@ object Dependencies {
     // For some misc Scalding and Twitter libs
     "Concurrent Maven Repo" at "http://conjars.org/repo",
     "Clojars Maven Repo" at "http://clojars.org/repo",
-    // For twitter libs
+    // For Twitter libs
     "Twitter maven libs" at "http://maven.twttr.com/",
     // For Snowplow libs
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
