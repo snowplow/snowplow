@@ -205,4 +205,7 @@ class EnrichedEvent {
   @BeanProperty var ti_currency: String = _
   @BeanProperty var ti_price_base: String = _
   @BeanProperty var base_currency: String = _
+
+  // ETL tags
+  @BeanProperty var etl_tags: String = _
 }
