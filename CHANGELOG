@@ -1,5 +1,5 @@
 Release 60 Bee Hummingbird (15-01-xx)
------------------------
+-------------------------------------
 Common: added VERSION file in root to assist vagrant push (#1293)
 Common: added vagrant push scripting to publish Kinesis apps (#1288)
 Common: added lzo.yml to up.playbooks (#1325)
