@@ -249,6 +249,7 @@ object EnrichmentManager {
                   event.geo_latitude = loc.latitude
                   event.geo_longitude = loc.longitude
                   event.geo_region_name = loc.regionName.orNull
+                  event.geo_timezone = loc.timezone.orNull
                 }
                 event.ip_isp = res._2.orNull
                 event.ip_organization = res._3.orNull
