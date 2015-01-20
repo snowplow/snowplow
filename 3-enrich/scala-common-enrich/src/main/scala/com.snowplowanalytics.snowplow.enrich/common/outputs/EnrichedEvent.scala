@@ -196,4 +196,13 @@ class EnrichedEvent {
   @BeanProperty var doc_charset: String = _
   @BeanProperty var doc_width: JInteger = _
   @BeanProperty var doc_height: JInteger = _
+
+  // Currency
+  @BeanProperty var tr_currency: String = _
+  @BeanProperty var tr_total_base: String = _
+  @BeanProperty var tr_tax_base: String = _
+  @BeanProperty var tr_shipping_base: String = _
+  @BeanProperty var ti_currency: String = _
+  @BeanProperty var ti_price_base: String = _
+  @BeanProperty var base_currency: String = _
 }
