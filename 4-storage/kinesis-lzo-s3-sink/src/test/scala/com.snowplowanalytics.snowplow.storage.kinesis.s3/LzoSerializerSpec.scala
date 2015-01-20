@@ -51,7 +51,7 @@ import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 
 // Snowplow
-import com.snowplowanalytics.snowplow.CollectorPayload.thrift.v1.CollectorPayload
+import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.CollectorPayload
 
 // This project
 import sinks._
