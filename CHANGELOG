@@ -18,7 +18,6 @@ Scala Stream Collector: renamed default.conf to config.hocon.sample (#1243)
 Scala Stream Collector: started using ThreadLocal to handle Thrift serialization, thanks @denismo and @pkallos! (#1254)
 EmrEtlRunner: bumped to 0.11.0
 EmrEtlRunner: added "thrift" collector format (#1301)
-EmrEtlRunner: added missing require time_diff to emr_job.rb (#1310)
 Scala Common Enrich: bumped to 0.11.0
 Scala Common Enrich: added schema-sniffer-1 and collector-payload-1 dependencies (#1296)
 Scala Common Enrich: bumped user-agent-utils version to 1.14 (#1224)
