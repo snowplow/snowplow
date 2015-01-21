@@ -173,6 +173,9 @@ CREATE TABLE atomic.events (
 	-- ETL tags
 	etl_tags varchar(500) encode raw,
 
+	-- Derived contexts
+	derived_contexts varchar(10000) encode raw,
+
 	CONSTRAINT event_id_040_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
