@@ -77,7 +77,11 @@ object EnrichedEventLoader {
     val event = new EnrichedEvent().tap { e =>
       e.contexts = fields(FieldIndexes.contexts)
       e.unstruct_event = fields(FieldIndexes.unstructEvent)
-      e.derived_contexts = fields(FieldIndexes.derivedContexts)
+
+      // Backward compatibility with old TSVs without a derived_contexts field
+      if (fields.size > FieldIndexes.derivedContexts) {
+        e.derived_contexts = fields(FieldIndexes.derivedContexts)
+      }
     }
 
     // Get and validate the event ID
