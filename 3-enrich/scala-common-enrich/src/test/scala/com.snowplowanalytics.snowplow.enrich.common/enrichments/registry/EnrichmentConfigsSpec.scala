@@ -122,7 +122,11 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
             "mktSource": ["utm_source", "source"],
             "mktTerm": ["utm_term"],
             "mktContent": [],
-            "mktCampaign": ["utm _ campaign", "CID", "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|"]
+            "mktCampaign": ["utm _ campaign", "CID", "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|"],
+            "mktClickId": {
+              "customclid": "Custom",
+              "gclid": "Override"
+            }
           }
         }
       }""")
@@ -134,7 +138,13 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         List("utm_source", "source"),
         List("utm_term"),
         List(),
-        List("utm _ campaign", "CID", "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|")
+        List("utm _ campaign", "CID", "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|"),
+        List(
+          "gclid" -> "Override",
+          "msclkid" -> "Microsoft",
+          "dclid" -> "DoubleClick",
+          "customclid" -> "Custom"
+        )
       )
 
       val result = CampaignAttributionEnrichment.parse(campaignAttributionEnrichmentJson, schemaKey)
