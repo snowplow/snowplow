@@ -51,6 +51,7 @@ object EnrichedEventLoader {
     val eventId = 6
     val contexts = 52
     val unstructEvent = 58
+    val derivedContexts = 119
   }
 
   /**
@@ -76,6 +77,7 @@ object EnrichedEventLoader {
     val event = new EnrichedEvent().tap { e =>
       e.contexts = fields(FieldIndexes.contexts)
       e.unstruct_event = fields(FieldIndexes.unstructEvent)
+      e.derived_contexts = fields(FieldIndexes.derivedContexts)
     }
 
     // Get and validate the event ID
