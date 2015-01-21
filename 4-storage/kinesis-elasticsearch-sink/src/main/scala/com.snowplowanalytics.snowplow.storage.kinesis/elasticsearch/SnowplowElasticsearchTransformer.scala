@@ -168,7 +168,19 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     "dvce_screenheight",
     "doc_charset",
     "doc_width",
-    "doc_height"
+    "doc_height",
+    "tr_currency",
+    "tr_total_base",
+    "tr_tax_base",
+    "tr_shipping_base",
+    "ti_currency",
+    "ti_price_base",
+    "base_currency",
+    "geo_timezone",
+    "mkt_clickid",
+    "mkt_network",
+    "etl_tags",
+    "derived_contexts"
     )
 
   private val intFields = Set(
@@ -194,7 +206,11 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     "tr_total",
     "tr_tax",
     "tr_shipping",
-    "ti_price"
+    "ti_price",
+    "tr_total_base",
+    "tr_tax_base",
+    "tr_shipping_base",
+    "ti_price_base"
     )
   private val boolFields = Set(
     "br_features_pdf",
@@ -235,7 +251,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
           handleBooleanField(key, value)
         } else if (tstampFields.contains(key)) {
           JObject(key -> JString(reformatTstamp(value))).successNel
-        } else if (key == "contexts") {
+        } else if (key == "contexts" || key == "derived_contexts") {
           Shredder.parseContexts(value)
         } else if (key == "unstruct_event") {
           Shredder.parseUnstruct(value)
