@@ -21,11 +21,17 @@ object Dependencies {
     "Concurrent Maven Repo" at "http://conjars.org/repo",
      // For Twitter's util functions
     "Twitter Maven Repo" at "http://maven.twttr.com/",
+    // Resolvers
+    "SnowPlow Repo" at "http://maven.snplow.com/releases/",
+    "Twitter Maven Repo" at "http://maven.twttr.com/",
     // For Snowplow libs
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
+    "Sonatype" at "https://oss.sonatype.org/content/repositories/releases",
     // For user-agent-utils
-    "user-agent-utils repo" at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/"
+    "user-agent-utils repo" at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/",
+    // For uaParser utils           
+    "user-agent-parser repo" at "https://clojars.org/repo/"
   )
 
   object V {
@@ -38,7 +44,8 @@ object Dependencies {
     val useragent        = "1.13"
     val jacksonDatabind  = "2.2.3"
     val jsonValidator    = "2.2.3"
-    val mavenArtifact    = "3.2.2" 
+    val mavenArtifact    = "3.2.2"
+    val uaParser         = "1.3.0"  
     // Scala
     val scalaz7          = "7.0.0"
     val snowplowRawEvent = "0.1.0"
@@ -47,6 +54,7 @@ object Dependencies {
     val maxmindIplookups = "0.2.0"
     val json4s           = "3.2.11"
     val igluClient       = "0.2.0"
+    val scalaForex       = "0.2.0"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
@@ -66,7 +74,9 @@ object Dependencies {
     val jacksonDatabind  = "com.fasterxml.jackson.core" %  "jackson-databind"          % V.jacksonDatabind
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"     % V.jsonValidator    
     val mavenArtifact    = "org.apache.maven"           %  "maven-artifact"            % V.mavenArtifact
+    val uaParser         = "org.clojars.timewarrior"    %  "ua-parser"                 % V.uaParser 
     // Scala
+    val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"               % V.scalaForex
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
     val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val scalaUtil        = "com.snowplowanalytics"      %  "scala-util"                % V.scalaUtil
