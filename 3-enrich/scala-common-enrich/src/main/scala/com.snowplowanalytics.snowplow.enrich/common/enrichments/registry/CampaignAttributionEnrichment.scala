@@ -56,6 +56,12 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
 
   val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "campaign_attribution", "jsonschema", "1-0-0")
 
+  val DefaultNetworkMap = Map(
+    "gclid" -> "Google",
+    "msclkid" -> "Microsoft",
+    "dclid" -> "DoubleClick"
+  )
+
   /**
    * Creates a CampaignAttributionEnrichment instance from a JValue.
    * 
@@ -73,7 +79,12 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
         content   <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktContent")
         campaign  <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktCampaign")
 
-        enrich =  CampaignAttributionEnrichment(medium, source, term, content, campaign)
+        customClickMap = ScalazJson4sUtils.extract[Map[String, String]](config, "parameters", "fields", "mktClickId").fold(
+          e => Map(),
+          s => s
+        )
+
+        enrich =  CampaignAttributionEnrichment(medium, source, term, content, campaign, (DefaultNetworkMap ++ customClickMap).toList)
       } yield enrich).toValidationNel
     })
   }
@@ -88,14 +99,17 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
  * @param term Campaign term
  * @param content Campaign content
  * @param campaign Campaign name
- *
+ * @param clickId Click ID
+ * @param network Advertising network
  */
 case class MarketingCampaign(
   medium:   Option[String],
   source:   Option[String],
   term:     Option[String],
   content:  Option[String],
-  campaign: Option[String]  
+  campaign: Option[String],
+  clickId:  Option[String],
+  network : Option[String]
   )
 
 /**
@@ -106,13 +120,15 @@ case class MarketingCampaign(
  * @param mktTerm List of marketing term parameters
  * @param mktContent List of marketing content parameters
  * @param mktCampaign List of marketing campaign parameters
+ * @param mktClick: Map of click ID parameters to networks
  */
 case class CampaignAttributionEnrichment(
   mktMedium:   List[String],
   mktSource:   List[String],
   mktTerm:     List[String],
   mktContent:  List[String],
-  mktCampaign: List[String]
+  mktCampaign: List[String],
+  mktClickId:  List[(String, String)]
   ) extends Enrichment {
 
   val version = new DefaultArtifactVersion("0.2.0")
@@ -152,15 +168,15 @@ case class CampaignAttributionEnrichment(
     // Querystring map
     val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
 
-    val decodeString: TransformFunc = CU.decodeString(encoding, _, _)
-
     val medium = getFirstParameter(mktMedium, sourceMap)
     val source = getFirstParameter(mktSource, sourceMap)
     val term = getFirstParameter(mktTerm, sourceMap)
     val content = getFirstParameter(mktContent, sourceMap)
     val campaign = getFirstParameter(mktCampaign, sourceMap)
 
-    MarketingCampaign(medium, source, term, content, campaign).success.toValidationNel
-  }   
+    val (clickId, network) = Unzip[Option].unzip(mktClickId.find(pair => sourceMap.contains(pair._1)).map(pair => (sourceMap(pair._1), pair._2)))
+
+    MarketingCampaign(medium, source, term, content, campaign, clickId, network).success.toValidationNel
+  }
 
 }

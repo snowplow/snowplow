@@ -331,6 +331,8 @@ object EnrichmentManager {
                 event.mkt_term = cmp.term.orNull
                 event.mkt_content = cmp.content.orNull
                 event.mkt_campaign = cmp.campaign.orNull
+                event.mkt_clickid = cmp.clickId.orNull
+                event.mkt_network = cmp.network.orNull
                 cmp.success
                 })
             case None => unitSuccessNel
