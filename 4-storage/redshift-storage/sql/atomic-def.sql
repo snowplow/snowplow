@@ -39,7 +39,7 @@ CREATE TABLE atomic.events (
 	v_etl varchar(100) encode text255 not null,
 	-- User and visit
 	user_id varchar(255) encode runlength,
-	user_ipaddress varchar(19) encode runlength,
+	user_ipaddress varchar(45) encode runlength,       -- increased from 19 in 0.5.0 to support IPv6 addresses
 	user_fingerprint varchar(50) encode runlength,
 	domain_userid varchar(16),
 	domain_sessionidx smallint,
