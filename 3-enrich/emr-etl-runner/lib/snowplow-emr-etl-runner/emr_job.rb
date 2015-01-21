@@ -405,7 +405,18 @@ module Snowplow
         if start.nil? or _end.nil?
           "elapsed time n/a"
         else
-          Time.diff(start, _end, '%H %N %S')[:diff]
+          # Adapted from http://stackoverflow.com/a/19596579/255627
+          seconds_diff = (start - _end).to_i.abs
+
+          hours = seconds_diff / 3600
+          seconds_diff -= hours * 3600
+
+          minutes = seconds_diff / 60
+          seconds_diff -= minutes * 60
+
+          seconds = seconds_diff
+
+          "#{hours.to_s.rjust(2, '0')}:#{minutes.to_s.rjust(2, '0')}:#{seconds.to_s.rjust(2, '0')}"
         end
       end
 
