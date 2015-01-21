@@ -47,6 +47,7 @@ object Dependencies {
     val maxmindIplookups = "0.2.0"
     val json4s           = "3.2.11"
     val igluClient       = "0.2.0"
+    val scalaForex       = "0.2.0"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
@@ -67,6 +68,7 @@ object Dependencies {
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"     % V.jsonValidator    
     val mavenArtifact    = "org.apache.maven"           %  "maven-artifact"            % V.mavenArtifact
     // Scala
+    val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"               % V.scalaForex
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
     val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val scalaUtil        = "com.snowplowanalytics"      %  "scala-util"                % V.scalaUtil
