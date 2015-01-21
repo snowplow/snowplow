@@ -153,6 +153,26 @@ CREATE TABLE atomic.events (
 	doc_charset varchar(128) encode text255,
 	doc_width integer,
 	doc_height integer,
+
+	-- Currency
+	tr_currency varchar(16) encode text255,
+	tr_total_base dec(18, 2),
+	tr_tax_base dec(18, 2),
+	tr_shipping_base dec(18, 2),
+	ti_currency varchar(16) encode text255,
+	ti_price_base dec(18, 2),
+	base_currency varchar(16) encode text255,
+
+	-- Geolocation
+	geo_timezone varchar(64) encode text255,
+
+	-- Click ID
+	mkt_clickid varchar(64) encode raw,
+	mkt_network varchar(64) encode text255,
+
+	-- ETL tags
+	etl_tags varchar(500) encode raw,
+
 	CONSTRAINT event_id_040_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
