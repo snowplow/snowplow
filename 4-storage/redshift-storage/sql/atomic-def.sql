@@ -9,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.4.0
+-- Version:     0.5.0
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep
@@ -25,12 +25,11 @@ CREATE TABLE atomic.events (
 	app_id varchar(255) encode text255,
 	platform varchar(255) encode text255,
 	-- Date/time
-	etl_tstamp timestamp,                              -- Added in 0.4.0
+	etl_tstamp timestamp,
 	collector_tstamp timestamp not null,
 	dvce_tstamp timestamp,
 	-- Event
 	event varchar(128) encode text255,
-	                                                   -- Removed event_vendor in 0.4.0
 	event_id char(36) not null unique,
 	txn_id int,
 	-- Namespacing and versioning
@@ -52,12 +51,12 @@ CREATE TABLE atomic.events (
 	geo_zipcode varchar(15) encode runlength,
 	geo_latitude double precision encode runlength,
 	geo_longitude double precision encode runlength,
-	geo_region_name varchar(100) encode runlength,     -- Added in 0.4.0
+	geo_region_name varchar(100) encode runlength,
 	-- IP lookups
-	ip_isp varchar(100) encode runlength,              -- Added in 0.4.0
-	ip_organization varchar(100) encode runlength,     -- Added in 0.4.0
-	ip_domain varchar(100) encode runlength,           -- Added in 0.4.0
-	ip_netspeed varchar(100) encode runlength,         -- Added in 0.4.0
+	ip_isp varchar(100) encode runlength,
+	ip_organization varchar(100) encode runlength,
+	ip_domain varchar(100) encode runlength,
+	ip_netspeed varchar(100) encode runlength,
 	-- Page
 	page_url varchar(4096),
 	page_title varchar(2000),
@@ -95,8 +94,7 @@ CREATE TABLE atomic.events (
 	se_property varchar(255) encode text32k,
 	se_value double precision,
 	-- Custom unstructured event
-	                                                   -- Removed ue_name in 0.4.0
-	unstruct_event varchar(10000) encode raw,          -- Renamed ue_properties to unstruct_event in 0.4.0
+	unstruct_event varchar(10000) encode raw,
 	-- Ecommerce
 	tr_orderid varchar(255) encode raw,
 	tr_affiliation varchar(255) encode text255,
@@ -155,26 +153,26 @@ CREATE TABLE atomic.events (
 	doc_height integer,
 
 	-- Currency
-	tr_currency varchar(16) encode text255,
-	tr_total_base dec(18, 2),
-	tr_tax_base dec(18, 2),
-	tr_shipping_base dec(18, 2),
-	ti_currency varchar(16) encode text255,
-	ti_price_base dec(18, 2),
-	base_currency varchar(16) encode text255,
+	tr_currency varchar(16) encode text255,            -- Added in 0.5.0
+	tr_total_base dec(18, 2),                          -- Added in 0.5.0
+	tr_tax_base dec(18, 2),                            -- Added in 0.5.0
+	tr_shipping_base dec(18, 2),                       -- Added in 0.5.0
+	ti_currency varchar(16) encode text255,            -- Added in 0.5.0
+	ti_price_base dec(18, 2),                          -- Added in 0.5.0
+	base_currency varchar(16) encode text255,          -- Added in 0.5.0
 
 	-- Geolocation
-	geo_timezone varchar(64) encode text255,
+	geo_timezone varchar(64) encode text255,           -- Added in 0.5.0
 
 	-- Click ID
-	mkt_clickid varchar(64) encode raw,
-	mkt_network varchar(64) encode text255,
+	mkt_clickid varchar(64) encode raw,                -- Added in 0.5.0
+	mkt_network varchar(64) encode text255,            -- Added in 0.5.0
 
 	-- ETL tags
-	etl_tags varchar(500) encode raw,
+	etl_tags varchar(500) encode raw,                  -- Added in 0.5.0
 
 	-- Derived contexts
-	derived_contexts varchar(10000) encode raw,
+	derived_contexts varchar(10000) encode raw,        -- Added in 0.5.0
 
 	CONSTRAINT event_id_040_pk PRIMARY KEY(event_id)
 )
