@@ -115,7 +115,7 @@ case class CampaignAttributionEnrichment(
   mktCampaign: List[String]
   ) extends Enrichment {
 
-  val version = new DefaultArtifactVersion("0.1.0")
+  val version = new DefaultArtifactVersion("0.2.0")
 
   /**
    * Find the first string in parameterList which is a key of
