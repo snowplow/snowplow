@@ -209,6 +209,10 @@ class EnrichedEvent {
   // Geolocation
   @BeanProperty var geo_timezone: String = _
 
+  // Click ID
+  @BeanProperty var mkt_clickid: String = _
+  @BeanProperty var mkt_network: String = _
+
   // ETL tags
   @BeanProperty var etl_tags: String = _
 }
