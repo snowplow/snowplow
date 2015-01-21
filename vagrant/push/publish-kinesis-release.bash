@@ -129,7 +129,7 @@ function build_artifact() {
     local __out_artifact_path=$3
 
     artifact_root="${bintray_artifact_prefix}${__artifact_version}"
-    artifact_name="${artifact_root}.zip"
+    artifact_name=`echo ${artifact_root}.zip|tr '-' '_'`
 	echo "==========================================="
 	echo "BUILDING ARTIFACT ${artifact_name}"
 	echo "-------------------------------------------"
@@ -145,7 +145,7 @@ function build_artifact() {
 			cp ${fatjar_path} ${artifact_folder}
 		done
 
-	artifact_path=./${dist_path}/${artifact_root}.zip
+	artifact_path=./${dist_path}/${artifact_name}
 	zip -r ${artifact_path} ${artifact_folder}
 	eval ${__out_artifact_name}=${artifact_name}
 	eval ${__out_artifact_path}=${artifact_path}
