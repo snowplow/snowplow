@@ -215,4 +215,7 @@ class EnrichedEvent {
 
   // ETL tags
   @BeanProperty var etl_tags: String = _
+
+  // Derived contexts
+  @BeanProperty var derived_contexts: String = _
 }
