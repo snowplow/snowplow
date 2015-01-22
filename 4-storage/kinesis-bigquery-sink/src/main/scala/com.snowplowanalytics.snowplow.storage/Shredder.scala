@@ -135,21 +135,21 @@ object bigQueryAuth {
   //              delete table x
   //              delete dataset x
 
-  def main(args: Array[String]){
+  //def main(args: Array[String]){
 
-    val credentials = loadCredentials
+    //val credentials = loadCredentials
     
-    storeRefreshToken(credentials.getRefreshToken())
+    //storeRefreshToken(credentials.getRefreshToken())
 
-    val bigquery = new Bigquery(HttpTransport, JsonFactory, credentials)
+    //val bigquery = new Bigquery(HttpTransport, JsonFactory, credentials)
     
-    createDataset(ProjectId, bigquery)
-    createTable(ProjectId, bigquery)
-    addRow(ProjectId, bigquery)
-    //addRowsFromFile(ProjectId, bigquery)
-    deleteTable(ProjectId, bigquery)
-    deleteDataset(ProjectId, bigquery)
-  }
+    //createDataset(ProjectId, bigquery)
+    //createTable(ProjectId, bigquery)
+    //addRow(ProjectId, bigquery)
+    ////addRowsFromFile(ProjectId, bigquery)
+    //deleteTable(ProjectId, bigquery)
+    //deleteDataset(ProjectId, bigquery)
+  //}
 
   def loadCredentials: Credential = {
 

@@ -36,7 +36,9 @@ import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 import com.amazonaws.services.kinesis.AmazonKinesisClient
 import com.amazonaws.services.kinesis.model.{
   CreateStreamRequest,
-  DescribeStreamRequest
+  DeleteStreamRequest,
+  DescribeStreamRequest,
+  ResourceNotFoundException
 }
 
 // Scalaz
@@ -67,30 +69,79 @@ object KinesisUpDown {
 
     val myStreamName = "test_stream"
     val myStreamSize = 1
-    val createStreamRequest = new CreateStreamRequest
-    createStreamRequest.setStreamName(myStreamName)
-    createStreamRequest.setShardCount(myStreamSize)
 
-    client.createStream(createStreamRequest)
+    try {
+      val createStreamRequest = new CreateStreamRequest
+      createStreamRequest.setStreamName(myStreamName)
+      createStreamRequest.setShardCount(myStreamSize)
 
-    //val describeStreamRequest = new DescribeStreamRequest
-    //describeStreamRequest.setStreamName( myStreamName )
+      client.createStream(createStreamRequest)
 
-    val startTime = System.currentTimeMillis
-    //val endTime = startTime + 10*60*1000
-    val endTime = startTime + 5*1000
+      val describeStreamRequest = new DescribeStreamRequest
+      describeStreamRequest.setStreamName( myStreamName )
+      println("describeStreamRequest: ", describeStreamRequest.toString)
 
-    while (System.currentTimeMillis < endTime){
+      val startTime = System.currentTimeMillis
+      val endTime = startTime + 10*60*1000
 
-      try{
-        Thread.sleep(20*1000)
-      }
+      //while (System.currentTimeMillis < endTime){
 
-      try{
+        //try{
+          //Thread.sleep(20*1000)
+        //} catch {
+          //case ex : Exception => 
+            //println("Trouble sleeping")
+        //}
+
+        //try{
+          //val describeStreamResponse = client.describeStream( describeStreamRequest )
+          //val streamStatus = describeStreamResponse.getStreamDescription.getStreamStatus
+        //}
+
+      //}
+
+      def checkStatus(){
         
+        if (System.currentTimeMillis >= endTime){
+          throw new RuntimeException("Stream "+myStreamName+" never went active.")
+        } 
+        else {
+
+          try{
+            Thread.sleep(20*1000)
+          } catch {
+            case ex : Exception => 
+              println("Trouble sleeping")
+          }
+
+          try{
+            val describeStreamResponse = client.describeStream( describeStreamRequest )
+            val streamStatus = describeStreamResponse.getStreamDescription.getStreamStatus
+            if ( streamStatus.equals("ACTIVE") ) {
+              println("Stream is active")
+            }
+            else {
+              checkStatus()
+            }
+            try {
+              Thread.sleep( 1000 );
+            } catch {
+              case ex: Exception => {}
+            }           
+          } catch {
+            case ex: ResourceNotFoundException => {}
+          }
+          
+        }
+
       }
+      checkStatus()
 
     }
+
+    val deleteStreamRequest = new DeleteStreamRequest
+    deleteStreamRequest.setStreamName( myStreamName )
+    client.deleteStream( deleteStreamRequest )
 
   }
 
