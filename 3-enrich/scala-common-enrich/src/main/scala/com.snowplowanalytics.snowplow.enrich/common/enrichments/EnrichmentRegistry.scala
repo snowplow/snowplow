@@ -55,7 +55,6 @@ import registry.UaParserEnrichmentConfig
 
 import utils.ScalazJson4sUtils
 
-
 /**
  * Companion which holds a constructor
  * for the EnrichmentRegistry.
@@ -198,7 +197,7 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getCampaignAttributionEnrichment: Option[CampaignAttributionEnrichment] = 
     getEnrichment[CampaignAttributionEnrichment]("campaign_attribution")
-  
+
   /**
    * Returns an Option boxing the UserAgentUtilsEnrichment
    * config value if present, or None if not
@@ -207,7 +206,7 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getUserAgentUtilsEnrichment: Option[UserAgentUtilsEnrichment.type] = 
     getEnrichment[UserAgentUtilsEnrichment.type]("user_agent_utils_config")
-  
+
   /**
    * Returns an Option boxing the UaParserEnrichment
    * config value if present, or None if not
