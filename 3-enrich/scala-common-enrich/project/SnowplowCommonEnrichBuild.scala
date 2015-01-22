@@ -39,8 +39,9 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.commonsIo,
         Libraries.useragent,
         Libraries.jacksonDatabind,
-        Libraries.jsonValidator,  
-        Libraries.mavenArtifact,      
+        Libraries.jsonValidator,
+        Libraries.mavenArtifact,
+        Libraries.uaParser,
         // Scala
         Libraries.scalaz7,
         Libraries.snowplowRawEvent,
@@ -51,7 +52,7 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.maxmindIplookups,
         Libraries.json4sJackson,
         Libraries.json4sScalaz,
-        Libraries.igluClient,        
+        Libraries.igluClient,
         Libraries.scalaUri,
         // Scala (test only)
         Libraries.specs2,

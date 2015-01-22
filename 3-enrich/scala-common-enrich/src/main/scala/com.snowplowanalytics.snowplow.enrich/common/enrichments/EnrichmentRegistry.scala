@@ -42,8 +42,17 @@ import registry.{
   AnonIpEnrichment,
   IpLookupsEnrichment,
   RefererParserEnrichment,
-  CampaignAttributionEnrichment
+  CampaignAttributionEnrichment,
+  UserAgentUtilsEnrichment,
+  UaParserEnrichment
 }
+
+// UserAgentUtilsEnrichmentConfig
+import registry.UserAgentUtilsEnrichmentConfig
+
+// UaParserEnrichmentConfig
+import registry.UaParserEnrichmentConfig
+
 import utils.ScalazJson4sUtils
 
 /**
@@ -125,7 +134,11 @@ object EnrichmentRegistry {
             RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)            
           } else if (nm == "campaign_attribution") {
             CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)            
-          } else {
+          } else if (nm == "user_agent_utils_config") {
+            UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "ua_parser_config") {
+            UaParserEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          }else {
             None.success // Enrichment is not recognized yet
           }
         })
@@ -184,6 +197,24 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getCampaignAttributionEnrichment: Option[CampaignAttributionEnrichment] = 
     getEnrichment[CampaignAttributionEnrichment]("campaign_attribution")
+
+  /**
+   * Returns an Option boxing the UserAgentUtilsEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the UserAgentUtilsEnrichment instance
+   */
+  def getUserAgentUtilsEnrichment: Option[UserAgentUtilsEnrichment.type] = 
+    getEnrichment[UserAgentUtilsEnrichment.type]("user_agent_utils_config")
+
+  /**
+   * Returns an Option boxing the UaParserEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the UaParserEnrichment instance
+   */
+  def getUaParserEnrichment: Option[UaParserEnrichment.type] = 
+    getEnrichment[UaParserEnrichment.type]("ua_parser_config")
 
   /**
    * Returns an Option boxing an Enrichment
