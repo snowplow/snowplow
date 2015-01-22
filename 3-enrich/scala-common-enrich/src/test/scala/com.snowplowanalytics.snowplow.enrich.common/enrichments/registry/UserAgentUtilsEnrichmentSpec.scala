@@ -38,4 +38,3 @@ class UserAgentUtilsEnrichmentSpec extends org.specs2.mutable.Specification with
     }
   }
 }
-

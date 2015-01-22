@@ -36,7 +36,6 @@ import org.json4s.jackson.JsonMethods._
 
 // Iglu
 import iglu.client.SchemaKey
-import iglu.client.validation.ProcessingMessageMethods._
 import utils.ScalazJson4sUtils
 
 /**
@@ -65,21 +64,21 @@ case object UaParserEnrichment extends Enrichment {
   */
   def prependDot (versionElement: String) :String = {
     if (versionElement != null) {
-      "." + versionElement 
+      "." + versionElement
     } else {
       ""
     } 
   }
   
   /*
-  * Prepends space before the versionElement 
+  * Prepends space before the versionElement
   */
   def prependSpace (versionElement: String) :String = {
     if (versionElement != null) {
-      " " + versionElement 
+      " " + versionElement
     } else {
       ""
-    } 
+    }
   }
 
   /*
@@ -109,7 +108,7 @@ case object UaParserEnrichment extends Enrichment {
   def extractUserAgent(useragent: String): Validation[String, JsonAST.JObject] = {
 
             val uaParser = new Parser()
-            
+
             val c = try {
               uaParser.parse(useragent)
             } catch {
@@ -117,7 +116,7 @@ case object UaParserEnrichment extends Enrichment {
             }
             // To display useragent version
             val useragentVersion = checkNull(c.userAgent.family) + prependSpace(c.userAgent.major) + prependDot(c.userAgent.minor) + prependDot(c.userAgent.patch)
-            
+
             // To display operating system version
             val osVersion = checkNull(c.os.family) + prependSpace(c.os.major) + prependDot(c.os.minor) + prependDot(c.os.patch) + prependDot(c.os.patchMinor)
 
@@ -139,6 +138,6 @@ case object UaParserEnrichment extends Enrichment {
                         )
                       )
 
-            json.success                    
+            json.success
   }
 }

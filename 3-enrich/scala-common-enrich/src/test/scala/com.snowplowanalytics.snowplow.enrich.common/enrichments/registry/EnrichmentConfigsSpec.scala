@@ -162,12 +162,12 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "user_agent_utils_config", "jsonschema", "1-0-0") 
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "user_agent_utils_config", "jsonschema", "1-0-0")
 
       val result = UserAgentUtilsEnrichmentConfig.parse(userAgentUtilsEnrichmentJson, schemaKey)
       result must beSuccessful(UserAgentUtilsEnrichment)
 
-    }      
+    }
   }
 
     "Parsing a valid ua_parser_config enrichment JSON" should {
@@ -179,12 +179,12 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         }
       }""")
 
-      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", "1-0-0") 
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", "1-0-0")
 
       val result = UaParserEnrichmentConfig.parse(uaParserEnrichmentJson, schemaKey)
       result must beSuccessful(UaParserEnrichment)
 
-    }      
+    }
   }
 
 }

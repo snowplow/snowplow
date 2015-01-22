@@ -250,7 +250,7 @@ object EnrichmentManager {
       case Some(anon) => anon.anonymizeIp(ip)
       case None => ip
     })
-     
+
     // Parse the useragent using user-agent-utils
     val client = {
       registry.getUserAgentUtilsEnrichment match {
@@ -366,4 +366,3 @@ object EnrichmentManager {
     }
   }
 }
-

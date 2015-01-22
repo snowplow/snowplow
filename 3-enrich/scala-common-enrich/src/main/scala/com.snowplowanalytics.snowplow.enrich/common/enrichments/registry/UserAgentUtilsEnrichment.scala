@@ -31,7 +31,6 @@ import org.json4s.JValue
 
 // Iglu
 import iglu.client.SchemaKey
-import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
 import utils.ScalazJson4sUtils
@@ -92,7 +91,7 @@ case object UserAgentUtilsEnrichment extends Enrichment {
   *         Scalaz Validation
   */
   def extractClientAttributes(useragent: String): Validation[String, ClientAttributes] = {
-  
+
     try {
       val ua = UserAgent.parseUserAgentString(useragent)
       val b  = ua.getBrowser
