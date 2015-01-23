@@ -375,7 +375,7 @@ module Snowplow
           "#{js.name}: #{js.state} [#{js.last_state_change_reason}] ~ #{self.class.get_elapsed_time(js.started_at, js.ended_at)} #{self.class.get_timespan(js.started_at, js.ended_at)}"
         ].concat(js.steps
             .sort { |a,b|
-              a.started_at <=> b.started_at
+              self.class.nilable_spaceship(a.started_at, b.started_at)
             }
             .each_with_index
             .map { |s,i|
@@ -392,6 +392,25 @@ module Snowplow
       Contract Maybe[Time], Maybe[Time] => String
       def self.get_timespan(start, _end)
         "[#{start} - #{_end}]"
+      end
+
+      # Spaceship operator supporting nils
+      #
+      # Parameters:
+      # +a+:: First argument
+      # +b+:: Second argument
+      Contract Maybe[Time], Maybe[Time] => Num
+      def self.nilable_spaceship(a, b)
+        case
+        when (a.nil? and b.nil?)
+          0
+        when a.nil?
+          1
+        when b.nil?
+          -1
+        else
+          a <=> b
+        end
       end
 
       # Gets the elapsed time in a
