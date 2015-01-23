@@ -21,6 +21,10 @@ package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
 // Java
 import java.io.File
 import java.util.Properties
+import java.nio.ByteBuffer
+
+// Scala
+import collection.JavaConversions._
 
 // Config
 import com.typesafe.config.{Config,ConfigFactory}
@@ -36,8 +40,18 @@ import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 import com.amazonaws.services.kinesis.AmazonKinesisClient
 import com.amazonaws.services.kinesis.model.{
   CreateStreamRequest,
+  ListStreamsRequest,
   DeleteStreamRequest,
   DescribeStreamRequest,
+  Record,
+  PutRecordsRequest,
+  PutRecordsRequestEntry,
+  PutRecordRequest,
+  PutRecordResult,
+  Shard,
+  GetShardIteratorRequest,
+  GetRecordsRequest,
+  GetRecordsResult,
   ResourceNotFoundException
 }
 
@@ -70,12 +84,7 @@ object KinesisUpDown {
     val myStreamName = "test_stream"
     val myStreamSize = 1
 
-    try {
-      val createStreamRequest = new CreateStreamRequest
-      createStreamRequest.setStreamName(myStreamName)
-      createStreamRequest.setShardCount(myStreamSize)
-
-      client.createStream(createStreamRequest)
+    def checkStatus(){
 
       val describeStreamRequest = new DescribeStreamRequest
       describeStreamRequest.setStreamName( myStreamName )
@@ -83,25 +92,8 @@ object KinesisUpDown {
 
       val startTime = System.currentTimeMillis
       val endTime = startTime + 10*60*1000
-
-      //while (System.currentTimeMillis < endTime){
-
-        //try{
-          //Thread.sleep(20*1000)
-        //} catch {
-          //case ex : Exception => 
-            //println("Trouble sleeping")
-        //}
-
-        //try{
-          //val describeStreamResponse = client.describeStream( describeStreamRequest )
-          //val streamStatus = describeStreamResponse.getStreamDescription.getStreamStatus
-        //}
-
-      //}
-
-      def checkStatus(){
-        
+      
+      def checkStatusIterator(){
         if (System.currentTimeMillis >= endTime){
           throw new RuntimeException("Stream "+myStreamName+" never went active.")
         } 
@@ -120,8 +112,11 @@ object KinesisUpDown {
             if ( streamStatus.equals("ACTIVE") ) {
               println("Stream is active")
             }
+            else if ( streamStatus.equals("DELETING") ) {
+              println("Stream is deleting")
+            }
             else {
-              checkStatus()
+              checkStatusIterator()
             }
             try {
               Thread.sleep( 1000 );
@@ -133,159 +128,146 @@ object KinesisUpDown {
           }
           
         }
-
       }
+      checkStatusIterator()
+    }
+
+    def createAStream() {
+      try {
+        val createStreamRequest = new CreateStreamRequest
+        createStreamRequest.setStreamName(myStreamName)
+        createStreamRequest.setShardCount(myStreamSize)
+
+        client.createStream(createStreamRequest)
+
+        checkStatus()
+      }
+    }
+
+    def deleteAStream() {
+
+      val deleteStreamRequest = new DeleteStreamRequest
+      deleteStreamRequest.setStreamName( myStreamName )
+
+      client.deleteStream( deleteStreamRequest )
+
       checkStatus()
 
     }
 
-    val deleteStreamRequest = new DeleteStreamRequest
-    deleteStreamRequest.setStreamName( myStreamName )
-    client.deleteStream( deleteStreamRequest )
+    def listTheStreams() {
+      
+      val listStreamRequest = new ListStreamsRequest
+      listStreamRequest.setLimit(20)
+
+      val listStreamResult = client.listStreams( listStreamRequest )
+      val streamNames = listStreamResult.getStreamNames
+
+      streamNames.foreach(x => println("Stream name is: ", x) )
+
+    }
+
+    def getShardInfo( streamName: String ): List[Shard] = {
+      
+      val describeStreamRequest = new DescribeStreamRequest
+      describeStreamRequest.setStreamName ( streamName )
+      
+      def getShardId(shards: List[Shard], exclusiveStartShardId: String): List[Shard] = {
+
+        if (!exclusiveStartShardId.isEmpty) {
+          describeStreamRequest.setExclusiveStartShardId( exclusiveStartShardId )
+        }
+
+        val describeStreamResult = client.describeStream( describeStreamRequest )
+        val shardsNew = List.concat( shards, describeStreamResult.getStreamDescription.getShards)
+
+        if (describeStreamResult.getStreamDescription.getHasMoreShards && shardsNew.size > 0){
+          getShardId(shardsNew, shardsNew.get(shardsNew.size - 1).getShardId)
+        } else {
+          shardsNew
+        }
+
+      }
+      val emptyList = List[Shard]() 
+      getShardId(emptyList, "")
+    }
+
+    def putARecord() {
+      val results = 
+        for (i <- 0 to 99) yield {
+          val putRecordRequest = new PutRecordRequest
+          putRecordRequest.setStreamName( myStreamName )
+          val dataString = "Data entry no:" + i.toString
+          putRecordRequest.setData(ByteBuffer.wrap(dataString.getBytes))
+          putRecordRequest.setPartitionKey("Partion key:"+i.toString)
+          val putRecordResult = client.putRecord( putRecordRequest ) 
+          (putRecordRequest, putRecordResult)
+        }
+
+      //results.foreach( x => println(x._1.toString, x._2.toString))
+    }
+
+    def getAShard(): String = {
+      val getShardIteratorRequest = new GetShardIteratorRequest
+      val listOfShards: List[Shard] = getShardInfo( myStreamName )
+      val shard: Shard = listOfShards(0)
+      println("shard.getShardId: ", shard.getShardId)
+      getShardIteratorRequest.setStreamName(myStreamName)
+      getShardIteratorRequest.setShardId(shard.getShardId)
+      getShardIteratorRequest.setShardIteratorType("TRIM_HORIZON")
+      val result = client.getShardIterator(getShardIteratorRequest)
+      result.getShardIterator
+    }
+
+    def getSomeRecords(): GetRecordsResult = {
+      val getRecordsRequest = new GetRecordsRequest
+      getRecordsRequest.setShardIterator(getAShard())
+      getRecordsRequest.setLimit(25)
+
+      client.getRecords( getRecordsRequest )
+    }
+
+    def printTheRecords( records: GetRecordsResult ){
+      val recordList = records.getRecords
+      recordList.foreach{ record => 
+        val byteBuffer: ByteBuffer = record.getData
+        val recordBytes: Array[Byte] = byteBuffer.array
+        val recordString: String = new String(recordBytes)
+        println("recordString: ", recordString)
+        println("The record is: ", recordString)
+      }
+    }
+
+    //def putSomeRecords() {
+      
+      //val putRecordsRequest = new PutRecordsRequest
+      //putRecordsRequest.setStreamName( myStreamName )
+      //val putRecordsRequestEntryList = 
+        //for {i <- 0 to 99} yield {
+          //val putRecordsRequestEntry = new PutRecordsRequestEntry
+          //val dataString = "Data entry no:" + i.toString
+          //putRecordsRequestEntry.setData(ByteBuffer.wrap(dataString.getBytes))
+          //putRecordsRequestEntry.setPartitionKey("Partion key:"+i.toString)
+          //putRecordsRequestEntry
+        //}
+      //println("putRecordsRequestEntryList: ", putRecordsRequestEntryList)
+      //putRecordsRequest.setRecords(putRecordsRequestEntryList)
+      //val putRecordsResult = client.putRecords(putRecordsRequest)
+      //println( "putRecordsResult: ", putRecordsResult )
+
+    //}
+
+    createAStream()
+    listTheStreams()
+    getShardInfo( myStreamName )
+    putARecord()
+    Thread.sleep(5*1000)
+    println( getAShard() )
+    val records: GetRecordsResult = getSomeRecords()
+    printTheRecords( records )
+    deleteAStream()
 
   }
 
 }
 
-//// Whether the input stream contains enriched events or bad events
-//object StreamType extends Enumeration {
-  //type StreamType = Value
-  //val Good, Bad = Value
-//}
-
-
-/**
- * Main entry point for the Elasticsearch sink
- */
-//object ElasticsearchSinkApp extends App {
-  //val parser = new ArgotParser(
-    //programName = generated.Settings.name,
-    //compactUsage = true,
-    //preUsage = Some("%s: Version %s. Copyright (c) 2013, %s.".format(
-      //generated.Settings.name,
-      //generated.Settings.version,
-      //generated.Settings.organization)
-    //)
-  //)
-
-  //// Optional config argument
-  //val config = parser.option[Config](
-      //List("config"), "filename", """
-        //|Configuration file""".stripMargin) {
-    //(c, opt) =>
-      //val file = new File(c)
-      //if (file.exists) {
-        //ConfigFactory.parseFile(file)
-      //} else {
-        //parser.usage("Configuration file \"%s\" does not exist".format(c))
-        //ConfigFactory.empty()
-      //}
-  //}
-
-  //parser.parse(args)
-
-  //val configValue: Config = config.value.getOrElse(
-    //throw new RuntimeException("--config argument must be provided")).resolve.getConfig("connector")
-
-  //val streamType = configValue.getConfig("kinesis").getConfig("in").getString("stream-type") match {
-    //case "good" => StreamType.Good
-    //case "bad" => StreamType.Bad
-    //case _ => throw new RuntimeException("\"stream-type\" must be set to \"good\" or \"bad\"")
-  //}
-  //val location = configValue.getConfig("location")
-  //val documentIndex = location.getString("index")
-  //val documentType = location.getString("type")
-
-  //val executor = configValue.getString("source") match {
-
-    //// Read records from Kinesis
-    //case "kinesis" => {
-      //val (goodSink, badSink) = configValue.getString("sink") match {
-        //case "elasticsearch-kinesis" => {
-          //val kinesis = configValue.getConfig("kinesis")
-          //val kinesisSink = kinesis.getConfig("out")
-          //val kinesisSinkName = kinesisSink.getString("stream-name")
-          //val kinesisSinkShards = kinesisSink.getInt("shards")
-          //val kinesisSinkRegion = kinesis.getString("region")
-          //val kinesisSinkEndpoint = s"https://kinesis.${kinesisSinkRegion}.amazonaws.com"
-          //(None, new KinesisSink(new DefaultAWSCredentialsProviderChain,
-            //kinesisSinkEndpoint, kinesisSinkName, kinesisSinkShards))
-        //}
-        //case "stdouterr" => (Some(new StdouterrSink), new StdouterrSink)
-        //case _ => throw new RuntimeException("Sink type must be 'stdouterr' or 'kinesis'")
-      //}
-
-      //new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue), goodSink, badSink).success
-    //}
-
-    //// Run locally, reading from stdin and sending events to stdout / stderr rather than Elasticsearch / Kinesis
-    //// TODO reduce code duplication
-    //case "stdin" => new Runnable {
-      //val transformer = new SnowplowElasticsearchTransformer(documentIndex, documentType)
-      //def run = for (ln <- scala.io.Source.stdin.getLines) {
-        //val emitterInput = transformer.fromClass(ln -> transformer.jsonifyGoodEvent(ln.split("\t", -1))
-          //.leftMap(_.list))
-        //emitterInput._2.bimap(
-          //f => Console.err.println(compact(render(("line" -> emitterInput._1) ~ ("errors" -> f)))),
-          //s => println(s.getSource)
-        //)
-      //}
-    //}.success
-    //case _ => "Source must be set to 'stdin' or 'kinesis'".fail
-  //}
-
-  //executor.fold(
-    //err => throw new RuntimeException(err),
-    //exec => exec.run()
-  //)
-
-  /**
-   * Builds a KinesisConnectorConfiguration from the "connector" field of the configuration HOCON
-   *
-   * @param connector The "connector" field of the configuration HOCON
-   * @return A KinesisConnectorConfiguration
-   */
-  //def convertConfig(connector: Config): KinesisConnectorConfiguration = {
-
-    //val aws = connector.getConfig("aws")
-    //val accessKey = aws.getString("access-key")
-    //val secretKey = aws.getString("secret-key")
-
-    //val elasticsearch = connector.getConfig("elasticsearch")
-    //val elasticsearchEndpoint = elasticsearch.getString("endpoint")
-    //val clusterName = elasticsearch.getString("cluster-name")
-
-    //val kinesis = connector.getConfig("kinesis")
-    //val kinesisIn = kinesis.getConfig("in")
-    //val streamRegion = kinesis.getString("region")
-    //val appName = kinesis.getString("app-name")
-    //val initialPosition = kinesisIn.getString("initial-position")
-    //val streamName = kinesisIn.getString("stream-name")
-    //val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
-
-    //val buffer = connector.getConfig("buffer")
-    //val byteLimit = buffer.getString("byte-limit")
-    //val recordLimit = buffer.getString("record-limit")
-    //val timeLimit = buffer.getString("time-limit")
-
-    //val props = new Properties
-
-    //props.setProperty(KinesisConnectorConfiguration.PROP_KINESIS_INPUT_STREAM, streamName)
-    //props.setProperty(KinesisConnectorConfiguration.PROP_KINESIS_ENDPOINT, streamEndpoint)
-    //props.setProperty(KinesisConnectorConfiguration.PROP_APP_NAME, appName)
-    //props.setProperty(KinesisConnectorConfiguration.PROP_INITIAL_POSITION_IN_STREAM, initialPosition)
-
-    //props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_ENDPOINT, elasticsearchEndpoint)
-    //props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_CLUSTER_NAME, clusterName)
-
-    //props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_BYTE_SIZE_LIMIT, byteLimit)
-    //props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_RECORD_COUNT_LIMIT, recordLimit)
-    //props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_MILLISECONDS_LIMIT, timeLimit)
-
-    //props.setProperty(KinesisConnectorConfiguration.PROP_CONNECTOR_DESTINATION, "elasticsearch")
-    //props.setProperty(KinesisConnectorConfiguration.PROP_RETRY_LIMIT, "1")
-
-    //new KinesisConnectorConfiguration(props, CredentialsLookup.getCredentialsProvider(accessKey, secretKey))
-  //}
-
-//}
