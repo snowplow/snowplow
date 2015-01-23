@@ -30,14 +30,17 @@ import eu.bitwalker.useragentutils._
 import org.json4s.JValue
 
 // Iglu
-import iglu.client.SchemaKey
+import iglu.client.{
+  SchemaCriterion,
+  SchemaKey
+}
 
 // This project
 import utils.ScalazJson4sUtils
 
 object UserAgentUtilsEnrichmentConfig extends ParseableEnrichment {
 
-  val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "user_agent_utils_config", "jsonschema", "1-0-0")
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "user_agent_utils_config", "jsonschema", 1, 0)
 
   //Creates an UserAgentUtilsEnrichment instance from a JValue
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[UserAgentUtilsEnrichment.type] =

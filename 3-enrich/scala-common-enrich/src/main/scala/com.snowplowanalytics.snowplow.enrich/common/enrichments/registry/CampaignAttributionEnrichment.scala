@@ -37,8 +37,10 @@ import Scalaz._
 // json4s
 import org.json4s.JValue
 
-// Iglu
-import iglu.client.SchemaKey
+import iglu.client.{
+  SchemaCriterion,
+  SchemaKey
+}
 
 // This project
 import utils.{ConversionUtils => CU}
@@ -54,7 +56,7 @@ import utils.ScalazJson4sUtils
  */
 object CampaignAttributionEnrichment extends ParseableEnrichment {
 
-  val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "campaign_attribution", "jsonschema", "1-0-0")
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "campaign_attribution", "jsonschema", 1, 0)
 
   val DefaultNetworkMap = Map(
     "gclid" -> "Google",

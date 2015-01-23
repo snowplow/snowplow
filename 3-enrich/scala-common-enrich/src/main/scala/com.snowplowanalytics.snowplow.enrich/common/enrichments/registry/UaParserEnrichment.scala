@@ -35,7 +35,10 @@ import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 // Iglu
-import iglu.client.SchemaKey
+import iglu.client.{
+  SchemaCriterion,
+  SchemaKey
+}
 import utils.ScalazJson4sUtils
 
 /**
@@ -44,7 +47,7 @@ import utils.ScalazJson4sUtils
 */
 object UaParserEnrichmentConfig extends ParseableEnrichment {
 
-  val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", "1-0-0")
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", 1, 0)
 
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[UaParserEnrichment.type] =
     isParseable(config, schemaKey).map(_ => UaParserEnrichment)
