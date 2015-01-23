@@ -29,7 +29,10 @@ import Scalaz._
 import org.json4s.JValue
 
 // Iglu
-import iglu.client.SchemaKey
+import iglu.client.{
+  SchemaCriterion,
+  SchemaKey
+}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
@@ -41,7 +44,7 @@ import utils.ScalazJson4sUtils
 */
 object AnonIpEnrichment extends ParseableEnrichment {
 
-  val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", "1-0-0")
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "anon_ip", "jsonschema", 1, 0)
 
   /**
    * Creates an AnonIpEnrichment instance from a JValue.

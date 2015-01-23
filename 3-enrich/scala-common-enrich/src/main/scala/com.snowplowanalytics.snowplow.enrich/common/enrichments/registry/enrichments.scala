@@ -28,7 +28,10 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 import org.json4s.JValue
 
 // Iglu
-import iglu.client.SchemaKey
+import iglu.client.{
+  SchemaCriterion,
+  SchemaKey
+}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
@@ -46,7 +49,7 @@ trait Enrichment {
  */
 trait ParseableEnrichment {
 
-  val supportedSchemaKey: SchemaKey
+  val supportedSchema: SchemaCriterion
 
   /**
    * Tests whether a JSON is parseable by a
@@ -58,11 +61,11 @@ trait ParseableEnrichment {
    * @return The JSON or an error message, boxed
    */
   def isParseable(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[JValue] = {
-    if (schemaKey == supportedSchemaKey) {
+    if (supportedSchema matches schemaKey) {
       config.success
     } else {
       ("Schema key %s is not supported. '%s' enrichments must have schema %s.")
-        .format(schemaKey, supportedSchemaKey.name, supportedSchemaKey)
+        .format(schemaKey, supportedSchema.name, supportedSchema)
         .toProcessingMessage.fail.toValidationNel
     }
   }
