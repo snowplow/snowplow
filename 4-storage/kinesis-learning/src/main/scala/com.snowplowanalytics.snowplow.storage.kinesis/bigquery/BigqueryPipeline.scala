@@ -16,8 +16,24 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-
 package com.snowplowanalytics.snowplow.storage.kinesis.bigquery
+
+// AWS Kinesis Connector libs
+import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
+import com.amazonaws.services.kinesis.connectors.interfaces.{
+  IEmitter,
+  //IBuffer,
+  //ITransformer,
+  //IFilter,
+  IKinesisConnectorPipeline
+}
+import com.amazonaws.services.kinesis.connectors.impl.{
+  BasicMemoryBuffer,
+  AllPassFilter
+}
+
+// Google BigQuery
+import com.google.api.services.bigquery.model.TableRow
 
 /**
 * ElasticsearchPipeline class sets up the Emitter/Buffer/Transformer/Filter
@@ -27,9 +43,9 @@ class BigqueryPipeline(
   projectNumber: String,
   datasetName: String, 
   tableName: String
-) extends IKinesisConnectorPipeline[ValidatedRecord, EmitterInput] {
+) extends IKinesisConnectorPipeline[IntermediateRecord, TableRow] {
 
-  override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[EmitterInput] 
+  override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[TableRow] 
     = new SnowplowBigqueryEmitter(configuration)
 
   override def getBuffer(configuration: KinesisConnectorConfiguration) 

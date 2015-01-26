@@ -23,7 +23,7 @@ package com.snowplowanalytics.snowplow.storage.kinesis
 import scalaz._
 import Scalaz._
 
-package object elasticsearch {
+package object bigquery{
 
   /**
    * Scala object representaion of a single row, so called as it is typically

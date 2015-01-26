@@ -23,8 +23,35 @@ package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
  * Class to convert successfully enriched events to EmitterInputs
  */
 
-class SnowplowBigqueryTransformer(datasetName, tableName) extends ITransformer[ValidatedRecord, EmitterInput] {
+class SnowplowBigqueryTransformer(datasetName: String, tableName: String) extends ITransformer[ValidatedRecord, EmitterInput] {
 
-  override def toClass(record: Record): 
+  /**
+   * Coverts a kinesis Record into a string.
+   */
+  private def getRowAsString(record: Record): String = {
+        val byteBuffer = record.getData
+        val recordBytes = byteBuffer.array
+        new String(recordBytes)
+  }
+
+  /**
+   * @param rawRow a string representing a single row as a tab 
+   *    seperated list.
+   *
+   * @return and ItermediateRecord with each triple of the form
+   *    (name, type, value)
+   */
+  private def makeIntermediateRecord(
+    names: Array[String], 
+    types: Array[String], 
+    rawRow: String 
+  ): IntermediateRecord = {
+    val values = TsvParser.getValues(rawRow)
+    (names, types, values).zipped.toList
+  }
+
+  override def toClass(record: Record): IntermediateRecord = {
+    
+  }
 
 }

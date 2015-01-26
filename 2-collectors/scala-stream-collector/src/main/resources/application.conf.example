@@ -69,15 +69,15 @@ collector {
       #
       # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
       aws {
-        access-key: "cpf"
-        secret-key: "cpf"
+        access-key: "env"
+        secret-key: "env"
       }
 
       # Data will be stored in the following stream.
       # If the stream does not exist, one will be created with $size shards.
       stream {
-        region: "us-east-1"
-        name: "snowplow_collector_example"
+        region: "us-west-2"
+        name: "bigquery_testing"
         size: 1
       }
     }

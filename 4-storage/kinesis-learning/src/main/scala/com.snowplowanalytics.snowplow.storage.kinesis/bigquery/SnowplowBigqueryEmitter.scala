@@ -18,3 +18,18 @@
   */
 
 package com.snowplowanalytics.snowplow.storage.kinesis.bigquery
+
+// Amazon Kinesis
+import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
+import com.amazonaws.services.kinesis.connectors.interfaces.IEmitter
+
+// Google BigQuery
+import com.google.api.services.bigquery.model.TableRow
+
+/**
+ * Class to send records to BigQuery
+ */
+class SnowplowBigqueryEmitter(configuration: KinesisConnectorConfiguration)
+extends IEmitter[TableRow]{
+  
+}
