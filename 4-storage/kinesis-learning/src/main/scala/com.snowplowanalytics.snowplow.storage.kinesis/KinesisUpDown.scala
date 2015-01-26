@@ -234,7 +234,6 @@ object KinesisUpDown {
         val recordBytes: Array[Byte] = byteBuffer.array
         val recordString: String = new String(recordBytes)
         println("recordString: ", recordString)
-        println("The record is: ", recordString)
       }
     }
 
