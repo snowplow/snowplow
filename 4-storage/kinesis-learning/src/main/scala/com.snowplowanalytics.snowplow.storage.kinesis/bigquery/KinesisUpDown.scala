@@ -239,11 +239,6 @@ object KinesisUpDown {
       }
     }
 
-    def getUsingConnectors(){
-      val exec = new KinesisConnectorExecutorBase
-      println("Not implemented yet")
-    }
-
     //def putSomeRecords() {
       
       //val putRecordsRequest = new PutRecordsRequest
@@ -271,7 +266,6 @@ object KinesisUpDown {
     //println( getAShard() )
     //val records: GetRecordsResult = getSomeRecords()
     //printTheRecords( records )
-    getUsingConnectors()
     //deleteAStream()
 
   }

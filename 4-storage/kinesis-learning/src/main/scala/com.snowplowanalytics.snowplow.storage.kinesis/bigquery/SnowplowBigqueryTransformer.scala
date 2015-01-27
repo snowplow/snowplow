@@ -17,13 +17,24 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
+package com.snowplowanalytics.snowplow.storage.kinesis.bigquery
+
+// AWS
+import com.amazonaws.services.kinesis.connectors.interfaces.ITransformer
+import com.amazonaws.services.kinesis.model.Record
+
+// Google Bigquery
+import com.google.api.services.bigquery.model.TableRow
 
 /**
  * Class to convert successfully enriched events to EmitterInputs
  */
 
-class SnowplowBigqueryTransformer(datasetName: String, tableName: String) extends ITransformer[ValidatedRecord, EmitterInput] {
+class SnowplowBigqueryTransformer(
+  datasetName: String, 
+  tableName: String
+) extends 
+ITransformer[IntermediateRecord, IntermediateRecord] {
 
   /**
    * Coverts a kinesis Record into a string.
@@ -38,7 +49,7 @@ class SnowplowBigqueryTransformer(datasetName: String, tableName: String) extend
    * @param rawRow a string representing a single row as a tab 
    *    seperated list.
    *
-   * @return and ItermediateRecord with each triple of the form
+   * @return ItermediateRecord with each triple of the form
    *    (name, type, value)
    */
   private def makeIntermediateRecord(
@@ -51,7 +62,11 @@ class SnowplowBigqueryTransformer(datasetName: String, tableName: String) extend
   }
 
   override def toClass(record: Record): IntermediateRecord = {
-    
+    List(("a","b","c"))
+  }
+
+  override def fromClass(intermediateRecord: IntermediateRecord) = {
+    intermediateRecord
   }
 
 }

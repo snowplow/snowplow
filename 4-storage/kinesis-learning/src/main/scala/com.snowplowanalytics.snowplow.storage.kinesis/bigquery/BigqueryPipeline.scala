@@ -43,17 +43,17 @@ class BigqueryPipeline(
   projectNumber: String,
   datasetName: String, 
   tableName: String
-) extends IKinesisConnectorPipeline[IntermediateRecord, TableRow] {
+) extends IKinesisConnectorPipeline[IntermediateRecord, IntermediateRecord] {
 
-  override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[TableRow] 
+  override def getEmitter(configuration: KinesisConnectorConfiguration)
     = new SnowplowBigqueryEmitter(configuration)
 
   override def getBuffer(configuration: KinesisConnectorConfiguration) 
-    = new BasicMemoryBuffer[ValidatedRecord](configuration)
+    = new BasicMemoryBuffer[IntermediateRecord](configuration)
 
   override def getTransformer(c: KinesisConnectorConfiguration) 
     = new SnowplowBigqueryTransformer(datasetName, tableName)
 
   override def getFilter(c: KinesisConnectorConfiguration)
-    = new AllPassFilter[ValidateRecord]()
+    = new AllPassFilter[IntermediateRecord]()
 }
