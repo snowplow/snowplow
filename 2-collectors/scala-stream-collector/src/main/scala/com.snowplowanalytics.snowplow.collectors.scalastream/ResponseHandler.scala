@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -59,7 +59,7 @@ object ResponseHandler {
 class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit context: ActorRefFactory) {
 
   import context.dispatcher
-  
+
   val Collector = s"${generated.Settings.shortName}-${generated.Settings.version}-" + config.sinkEnabled.toString.toLowerCase
 
   // When `/i` is requested, this is called and stores an event in the
@@ -130,7 +130,8 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
 
     (httpResponse, sinkResponse)
   }
-
+  
+  def healthy = HttpResponse(status = 200, entity = s"OK")
   def notFound = HttpResponse(status = 404, entity = "404 Not found")
   def timeout = HttpResponse(status = 500, entity = s"Request timed out.")
 }
