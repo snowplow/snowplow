@@ -39,7 +39,7 @@ ITransformer[IntermediateRecord, IntermediateRecord] {
   /**
    * Coverts a kinesis Record into a string.
    */
-  private def getRowAsString(record: Record): String = {
+  private def makeRowAsString(record: Record): String = {
         val byteBuffer = record.getData
         val recordBytes = byteBuffer.array
         new String(recordBytes)
@@ -62,7 +62,8 @@ ITransformer[IntermediateRecord, IntermediateRecord] {
   }
 
   override def toClass(record: Record): IntermediateRecord = {
-    List(("a","b","c"))
+    val rowAsString = makeRowAsString(record)
+    makeIntermediateRecord(SnowplowEnrichedEventSchema.names, SnowplowEnrichedEventSchema.types, rowAsString)
   }
 
   override def fromClass(intermediateRecord: IntermediateRecord) = {
