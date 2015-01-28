@@ -11,3 +11,6 @@ project/plugins/project/
 
 #config file
 *application.conf
+
+#file for google OAuth
+client_secrets*
