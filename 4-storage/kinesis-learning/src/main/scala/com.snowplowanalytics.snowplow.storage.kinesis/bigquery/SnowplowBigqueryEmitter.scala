@@ -60,9 +60,25 @@ object SnowplowBigqueryEmitter {
  */
 class SnowplowBigqueryEmitter(configuration: KinesisConnectorConfiguration)
 extends IEmitter[IntermediateRecord]{
+  
+  val config = SnowplowBigqueryEmitter.getConfigFromFile("application.conf")
+  val projectNumber = config.getString("connector.bigquery.project-number")
+  val datasetName = config.getString("connector.bigquery.dataset-name")
+  val tableName = config.getString("connector.bigquery.table-name")
 
+  val bigqueryInterface = new BigqueryInterface( projectNumber )
 
-  def emit(x$1: com.amazonaws.services.kinesis.connectors.UnmodifiableBuffer[IntermediateRecord]): java.util.List[IntermediateRecord] = ???
+  def emit(buffer: com.amazonaws.services.kinesis.connectors.UnmodifiableBuffer[IntermediateRecord]): 
+  java.util.List[IntermediateRecord] = {
+      
+      // create bigquery TableDataInsertAllRequest
+      val records = buffer.getRecords.toList
+      val dataToUpload = TsvParser.createUploadData(records)
+
+      //send the data
+      bigqueryInterface.insertRows(datasetName, tableName, dataToUpload)
+      List()
+  }
 
   def fail(x$1: java.util.List[IntermediateRecord]): Unit = ???
 

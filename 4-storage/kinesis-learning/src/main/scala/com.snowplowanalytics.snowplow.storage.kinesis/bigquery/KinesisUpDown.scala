@@ -71,7 +71,7 @@ import sinks._
 
 object KinesisUpDown {
 
-  def main (args : Array[String]) {
+  def notmain (args : Array[String]) {
 
     val myStreamName = if (args.length == 1){
       args(0)
