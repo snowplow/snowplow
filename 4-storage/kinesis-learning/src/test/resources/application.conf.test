@@ -1,0 +1,32 @@
+#Default configuration for kinesis-bigquery-sink
+
+connector{
+
+	#The following are needed to connect to Bigquery. 
+	#
+	#project-number must be a pre-existing project number obtained from the google developers console.
+	#
+	#If dataset-name and table-name are not the names of pre-existing datasets/tables then 
+	#the datasets/tables will be created.
+	bigquery {
+		project-number: "projectNo"
+		dataset-name: "datasetName"
+		table-name: "tableName"
+	}
+	
+	# The following are used to authenticate for the Amazon Kinesis sink.
+	#
+	# If both are set to 'default', the default provider chain is used
+	# (see http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/DefaultAWSCredentialsProviderChain.html)
+	#
+	# If both are set to 'iam', use AWS IAM Roles to provision credentials.
+	#
+	# If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+	aws {
+		access-key: "default"
+		secret-key: "default"
+	}
+
+}
+
+

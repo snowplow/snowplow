@@ -39,7 +39,7 @@ class SnowplowBigqueryEmitterSpec extends Specification with ValidationMatchers 
     val badReturned = SnowplowBigqueryEmitter.getConfigFromFile( testConfigFileBad)
 
     """for a file with missing 'project-name' attribute:
-    |  -- throw a ConfigException.Missing exception""" in {
+      -- throw a ConfigException.Missing exception""" in {
       badReturned.getString("connector.bigquery.project-number") must throwA[ConfigException.Missing]
     }
 
@@ -49,7 +49,7 @@ class SnowplowBigqueryEmitterSpec extends Specification with ValidationMatchers 
       goodReturned must haveInterface[Config]
     }
     """for a good file: the object should have the following attributes
-    | -- project-number:""" in {
+      -- project-number:""" in {
       goodReturned.getString("connector.bigquery.project-number") must beEqualTo("projectNo")
     }
     " -- dataset-name:" in {
