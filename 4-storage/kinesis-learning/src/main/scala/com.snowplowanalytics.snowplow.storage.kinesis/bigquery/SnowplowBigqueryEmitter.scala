@@ -19,8 +19,14 @@
 
 package com.snowplowanalytics.snowplow.storage.kinesis.bigquery
 
+// Java
+import java.io.{File, FileNotFoundException}
+
 // Scala
 import collection.JavaConversions._
+
+// Config
+ import com.typesafe.config.{Config, ConfigFactory}
 
 // Amazon Kinesis
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
@@ -30,14 +36,35 @@ import com.amazonaws.services.kinesis.connectors.interfaces.IEmitter
 import com.google.api.services.bigquery.model.TableRow
 
 /**
+ * Helper methods for SnowplowBigqueryEmitter
+ */
+object SnowplowBigqueryEmitter {
+
+  /**
+   * @param fileName location of a HOCON file
+   *
+   * @return typesafe Config object
+   */
+  def getConfigFromFile(fileName: String):Config = {
+    val file = new File(fileName)
+    if (file.exists) {
+      ConfigFactory.parseFile(file)
+    }else{
+      throw new FileNotFoundException
+    }
+  } 
+
+}
+/**
  * Class to send records to BigQuery
  */
 class SnowplowBigqueryEmitter(configuration: KinesisConnectorConfiguration)
 extends IEmitter[IntermediateRecord]{
 
- def emit(x$1: com.amazonaws.services.kinesis.connectors.UnmodifiableBuffer[IntermediateRecord]): java.util.List[IntermediateRecord] = ???
 
- def fail(x$1: java.util.List[IntermediateRecord]): Unit = ???
+  def emit(x$1: com.amazonaws.services.kinesis.connectors.UnmodifiableBuffer[IntermediateRecord]): java.util.List[IntermediateRecord] = ???
+
+  def fail(x$1: java.util.List[IntermediateRecord]): Unit = ???
 
  def shutdown(): Unit = ???
 
