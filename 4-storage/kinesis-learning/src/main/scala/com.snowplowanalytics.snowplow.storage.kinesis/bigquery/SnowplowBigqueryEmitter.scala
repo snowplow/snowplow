@@ -65,19 +65,26 @@ extends IEmitter[IntermediateRecord]{
   val projectNumber = config.getString("connector.bigquery.project-number")
   val datasetName = config.getString("connector.bigquery.dataset-name")
   val tableName = config.getString("connector.bigquery.table-name")
+  val schema = TsvParser.createBigQuerySchema(SnowplowEnrichedEventSchema.fields)
 
   val bigqueryInterface = new BigqueryInterface( projectNumber )
 
   def emit(buffer: com.amazonaws.services.kinesis.connectors.UnmodifiableBuffer[IntermediateRecord]): 
   java.util.List[IntermediateRecord] = {
       
-      // create bigquery TableDataInsertAllRequest
-      val records = buffer.getRecords.toList
-      val dataToUpload = TsvParser.createUploadData(records)
+    // TODO - creating dataset and tables should only be called once.
+    // create the dataset
+    bigqueryInterface.createDataset(datasetName)
+    // create the table
+    bigqueryInterface.createTable(datasetName, schema, tableName)
 
-      //send the data
-      bigqueryInterface.insertRows(datasetName, tableName, dataToUpload)
-      List()
+    // create bigquery TableDataInsertAllRequest
+    val records = buffer.getRecords.toList
+    val dataToUpload = TsvParser.createUploadData(records)
+
+    //send the data
+    bigqueryInterface.insertRows(datasetName, tableName, dataToUpload)
+    List()
   }
 
   def fail(x$1: java.util.List[IntermediateRecord]): Unit = ???
