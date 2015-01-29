@@ -44,6 +44,8 @@
     :hadoop_shred: 0.3.0 # Version of the Hadoop Shredding process
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector
   :continue_on_unexpected_error: false # Set to 'true' (and set :out_errors: above) if you don't want any exceptions thrown from ETL
+  :tries: 1       # Number of times to run EMR in case of error
+  :timeout: 7200  # Timeout in seconds for the EMR job. After that, the cluster will be shut down and the process will fail
 :iglu:
   :schema: iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0
   :data:

@@ -52,6 +52,7 @@ module Snowplow
         run_tstamp = Time.new
         run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
+        @timeout = config[:etl][:timeout]
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:s3][:region],
           config[:aws][:access_key_id],
@@ -276,7 +277,7 @@ module Snowplow
 
         jobflow_id = @jobflow.run
         logger.debug "EMR jobflow #{jobflow_id} started, waiting for jobflow to complete..."
-        status = wait_for()
+        status = wait_for(@timeout)
 
         if !status
           raise EmrExecutionError, get_failure_details()
@@ -319,13 +320,18 @@ module Snowplow
       end
 
       # Wait for a jobflow.
-      # Check its status every 5 minutes till it completes.
+      # Check its status every 5 minutes till it completes or exceeds
+      # the timeout threshold.
+      #
+      # Parameters:
+      # +seconds+:: timeout in seconds
       #
       # Returns true if the jobflow completed without error,
       # false otherwise.
-      Contract None => Bool
-      def wait_for()
+      Contract Num => Bool
+      def wait_for(seconds)
 
+        timeout_threshold = Time.now + seconds
         success = false
 
         # Loop until we can quit...
@@ -339,6 +345,11 @@ module Snowplow
             # If no step is still running, then quit
             if statuses[0] == 0
               success = statuses[1] == 0 # True if no failures
+              break
+            elsif Time.now > timeout_threshold
+              logger.warn "The job has run for more than #{seconds}s, shutting down the cluster..."
+              @jobflow.shutdown
+              success = false
               break
             else
               # Sleep a while before we check again
