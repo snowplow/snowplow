@@ -279,6 +279,7 @@ case class BigqueryInterface(projectId: String) {
    *
    * @param datasetId
    * @param schema
+   * @param tableName
    */
   def createTable(datasetId: String, schema: TableSchema, tableName: String) = {
 
