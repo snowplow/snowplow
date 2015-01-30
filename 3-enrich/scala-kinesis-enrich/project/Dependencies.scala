@@ -58,6 +58,7 @@ object Dependencies {
     val httpClient           = "org.apache.httpcomponents"  %  "httpclient"               % V.httpClient
     val jacksonCore          = "com.fasterxml.jackson.core" %  "jackson-core"             % V.jacksonCore
     val slf4j                = "org.slf4j"                  %  "slf4j-simple"             % V.slf4j
+    val log4jOverSlf4j       = "org.slf4j"                  %  "log4j-over-slf4j"         % V.slf4j
     val awsSdk               = "com.amazonaws"              %  "aws-java-sdk"             % V.awsSdk
     val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"    % V.kinesisClient
     // Scala
