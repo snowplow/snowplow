@@ -36,6 +36,7 @@ import java.util.{
   Scanner,
   Properties
 }
+import java.security.PrivateKey
 
 // Scala
 import collection.JavaConversions._
@@ -92,12 +93,6 @@ import com.google.api.services.bigquery.model.{
 
 case class BigqueryInterface(projectId: String) {
 
-  /**
-   * Location of the client secrets. This file is obtained from
-   * the Google developers console.
-   */
-  val ClientSecretsLocation = s"client_secrets_${projectId}.json"
-
   //TODO - describe why next two values are needed - are they
   //used anywhere apart from creating bigquery object?
   val HttpTransport = new NetHttpTransport
@@ -107,8 +102,7 @@ case class BigqueryInterface(projectId: String) {
   /**
    * Needed for oauth2 authorization.
    */
-  val credentials = loadCredentials
-  storeRefreshToken(credentials.getRefreshToken())
+  val credentials = getCredentials
 
   val bigquery = new Bigquery(HttpTransport, JsonFactory, credentials)
 
@@ -118,113 +112,16 @@ case class BigqueryInterface(projectId: String) {
 
   /* Oauth methods */
 
-  /**
-   * Checks for saved token on file (???) and if not found starts the browser based 
-   * authorization process.
-   */
-  def loadCredentials: Credential = {
-
-    loadRefreshToken match {
-
-      case Some(s) => createCredentialWithRefreshToken(
-        HttpTransport, 
-        JsonFactory, 
-        new TokenResponse().setRefreshToken(s)
-      )
-
-      case None => getCredentials
-    }
-    
-  }
-
-  /**
-   * Prompts the user to visit the google API authorization page. The user 
-   * can then grant access to the API, and if so is given an access code. The 
-   * user is prompted to paste this code in to the command line. The code grants
-   * the applicatin access to the database.
-   *
-   * @return valid credentials
-   */
+  
   def getCredentials: Credential = {
-
-    val fis = new FileInputStream(ClientSecretsLocation)
-    val reader = new InputStreamReader(fis)
-    val clientSecrets = GoogleClientSecrets.load(new JacksonFactory, reader)
-
-    val scopes = Collections.singleton(BigqueryScopes.BIGQUERY)
-    val authorizeUrl = new GoogleAuthorizationCodeRequestUrl(clientSecrets, clientSecrets.getInstalled().getRedirectUris().get(0), scopes).build()
-    println("Paste this URL into a web browser to authorize BigQuery Access:\n" + authorizeUrl)
-    println("... and paste the code you received here: ")
-    val authorizationCode = readLine()
-
-
-    // Exchange the auth code for an access token
-    val flow = new GoogleAuthorizationCodeFlow.Builder(HttpTransport, JsonFactory, clientSecrets, Arrays.asList(BigqueryScopes.BIGQUERY)).build()
-    val response = flow.newTokenRequest(authorizationCode).setRedirectUri(clientSecrets.getInstalled.getRedirectUris.get(0)).execute();
-    flow.createAndStoreCredential(response,null)
-  }
-
-  /**
-   * Store the refresh token in the file 
-   * snowplow_bigquery_refresh_token.properties
-   */
-  def storeRefreshToken(refreshToken: String){
-    val properties = new Properties
-    properties.setProperty("refreshtoken", refreshToken)
-    try {
-      properties.store(new FileOutputStream("snowplow_bigquery_refresh_token.properties"), null)
-      println("Refresh token saved.")
-    } catch {
-        case ex: FileNotFoundException => 
-          println("FileNotFoundException: " + ex)
-        case ex: IOException => 
-          println("IOException: " + ex)
-    }
-  }
-
-  /**
-   * Load the refresh token from the file 
-   * snowplow_bigquery_refresh_token.properties
-   *
-   * @returns Option[String] containing the refresh token if it is 
-   *    stored on file, else None.
-   */
-  def loadRefreshToken: Option[String] = {
-    val properties = new Properties
-    try {
-      properties.load(new FileInputStream("snowplow_bigquery_refresh_token.properties"))
-      Some(properties.getProperty("refreshtoken"))
-    } catch {
-        case ex: FileNotFoundException => {
-          println("FileNotFoundException: " + ex)
-          None
-        }
-        case ex: IOException => {
-          println("IOException: " + ex)
-          None
-        }
-    }
-  }
-
-  /**
-   * Get access token from refresh token.
-   *
-   * @returns Credential
-   */
-  def createCredentialWithRefreshToken(transport: HttpTransport, jsonFactory: JsonFactory, tokenResponse: TokenResponse): GoogleCredential = {
-
-    val fis = new FileInputStream(ClientSecretsLocation)
-    val reader = new InputStreamReader(fis)
-    val clientSecrets = GoogleClientSecrets.load(new JacksonFactory, reader)
-
-    new GoogleCredential.Builder().setTransport(transport)
-      .setJsonFactory(jsonFactory)
-      .setClientSecrets(clientSecrets)
+    val scopes = Arrays.asList(BigqueryScopes.BIGQUERY)
+    new GoogleCredential.Builder().setTransport(HttpTransport)
+      .setJsonFactory(JsonFactory)
+      .setServiceAccountId("383394032150-h9mcc9fvuu0l9or0h2knlet5dsja321a@developer.gserviceaccount.com")
+      .setServiceAccountScopes(scopes)
+      .setServiceAccountPrivateKeyFromP12File(new File("BigQuery Kinesis-93e625da2d17.p12"))
       .build()
-      .setFromTokenResponse(tokenResponse)
   }
-
-
 
 
    /* Dataset and table creation/deletion methods.*/
