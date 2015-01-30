@@ -83,7 +83,9 @@
    transparent pixel or a 200"
   [cookies duration domain p3p-header pixel]
   (let [id      (generate-id cookies)
-        cookies {cookie-name (set-cookie id duration domain)}
+        cookies (if (= duration 0)
+                  {}
+                  {cookie-name (set-cookie id duration domain)})
         headers {"P3P" p3p-header}]
     (if pixel
       (send-cookie-pixel cookies headers)
