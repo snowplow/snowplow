@@ -42,7 +42,8 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_change_form_1 (
 DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
-SORTKEY (root_tstamp);
+SORTKEY (root_tstamp)
+FOREIGN KEY(root_id) REFERENCES events(event_id);
 
 -- Finally copy all the old data into the new format
 INSERT INTO atomic.com_snowplowanalytics_snowplow_change_form_1

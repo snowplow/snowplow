@@ -34,4 +34,5 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_screen_view_1 (
 DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
-SORTKEY (root_tstamp);
+SORTKEY (root_tstamp)
+FOREIGN KEY(root_id) REFERENCES events(event_id);

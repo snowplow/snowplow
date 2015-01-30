@@ -55,4 +55,5 @@ CREATE TABLE atomic.org_w3_performance_timing_1 (
 DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
-SORTKEY (root_tstamp);
+SORTKEY (root_tstamp)
+FOREIGN KEY(root_id) REFERENCES events(event_id);
