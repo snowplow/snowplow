@@ -87,11 +87,52 @@ import com.google.api.services.bigquery.model.{
   JobConfigurationLoad
 }
 
+// Config
+ import com.typesafe.config.Config
+
 /**
  * Class for uploading and querying Snowplow data on BigQuery
  */
 
-case class BigqueryInterface(projectId: String) {
+object BigqueryInterface{
+
+  val HttpTransport = new NetHttpTransport
+  val JsonFactory = new JacksonFactory
+  
+  /* Oauth methods */
+  
+  /**
+   * Creates the credential object needed for a service account.
+   * @see [[https://cloud.google.com/bigquery/authorization#service-accounts google docs]]
+   *
+   * @param config 
+   *
+   * @return GoogleCredential
+   */
+  def getCredentials(config: Config): GoogleCredential = {
+
+    val scopes = Arrays.asList( BigqueryScopes.BIGQUERY )
+    val accountId = config.getString( "connector.bigquery.service-account-id" )
+    val pkFileLocation = config.getString( "connector.bigquery.service-account-p12file" )
+    val pkFile = new File( pkFileLocation )
+    if (!pkFile.exists) throw new FileNotFoundException(
+      "Private key file not found at location specified at 'service-account-p12file:' in config file."
+    )
+
+    new GoogleCredential.Builder().setTransport( HttpTransport ) 
+      .setJsonFactory(JsonFactory)
+      .setServiceAccountId( accountId )
+      .setServiceAccountScopes(scopes)
+      .setServiceAccountPrivateKeyFromP12File( pkFile )
+      .build()
+
+  }
+
+}
+
+class BigqueryInterface(config: Config) {
+
+  val projectId = config.getString("connector.bigquery.project-number")
 
   //TODO - describe why next two values are needed - are they
   //used anywhere apart from creating bigquery object?
@@ -102,26 +143,11 @@ case class BigqueryInterface(projectId: String) {
   /**
    * Needed for oauth2 authorization.
    */
-  val credentials = getCredentials
+  val credentials = BigqueryInterface.getCredentials( config )
 
   val bigquery = new Bigquery(HttpTransport, JsonFactory, credentials)
 
 
-
-
-
-  /* Oauth methods */
-
-  
-  def getCredentials: Credential = {
-    val scopes = Arrays.asList(BigqueryScopes.BIGQUERY)
-    new GoogleCredential.Builder().setTransport(HttpTransport)
-      .setJsonFactory(JsonFactory)
-      .setServiceAccountId("383394032150-h9mcc9fvuu0l9or0h2knlet5dsja321a@developer.gserviceaccount.com")
-      .setServiceAccountScopes(scopes)
-      .setServiceAccountPrivateKeyFromP12File(new File("BigQuery Kinesis-93e625da2d17.p12"))
-      .build()
-  }
 
 
    /* Dataset and table creation/deletion methods.*/

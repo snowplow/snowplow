@@ -16,7 +16,7 @@ connector{
 		# service account id and location of p12 key as obtained fron 
 		# the google developers console
 		service-account-id: "XXXXXXXXXXXXXXXXX@developer.gserviceaccount.com" 
-		service-account-p12file: "src/test/resources/pk_test.p12"
+		service-account-p12file: "src/test/resources/missing.p12"
 		
 	}
 	
