@@ -67,7 +67,7 @@ extends IEmitter[IntermediateRecord]{
   val tableName = config.getString("connector.bigquery.table-name")
   val schema = TsvParser.createBigQuerySchema(SnowplowEnrichedEventSchema.fields)
 
-  val bigqueryInterface = new BigqueryInterface( projectNumber )
+  val bigqueryInterface = new BigqueryInterface( config )
 
   def emit(buffer: com.amazonaws.services.kinesis.connectors.UnmodifiableBuffer[IntermediateRecord]): 
   java.util.List[IntermediateRecord] = {

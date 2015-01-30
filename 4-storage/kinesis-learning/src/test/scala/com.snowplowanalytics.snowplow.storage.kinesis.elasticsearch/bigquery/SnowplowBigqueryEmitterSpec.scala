@@ -18,6 +18,7 @@ import java.io.FileNotFoundException
 // Config
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigException
+
 // Specs2
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
@@ -50,7 +51,7 @@ class SnowplowBigqueryEmitterSpec extends Specification with ValidationMatchers 
     }
     """for a good file: the object should have the following attributes
       -- project-number:""" in {
-      goodReturned.getString("connector.bigquery.project-number") must beEqualTo("projectNo")
+      goodReturned.getString("connector.bigquery.project-number") must beEqualTo("123456789")
     }
     " -- dataset-name:" in {
       goodReturned.getString("connector.bigquery.dataset-name") must beEqualTo("datasetName")
