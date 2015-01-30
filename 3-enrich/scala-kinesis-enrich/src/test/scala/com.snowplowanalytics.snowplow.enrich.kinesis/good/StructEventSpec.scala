@@ -138,7 +138,22 @@ object StructEventSpec {
     "1080",
     "UTF-8",
     "1680",
-    "415"
+    "415",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
     )
 }
 
@@ -153,7 +168,7 @@ class StructEventSpec extends Specification {
       val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
       enrichedEvent must beSome
 
-      val fields = enrichedEvent.get.split("\t")
+      val fields = enrichedEvent.get.split("\t", -1)
       fields.size must beEqualTo(StructEventSpec.expected.size)
 
       Result.unit(
