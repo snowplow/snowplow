@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -134,6 +134,11 @@ class CollectorService(
             }
           }
         }
+      }
+    } ~
+    get {
+      path("health".r) { path =>
+        complete(responseHandler.healthy)
       }
     } ~
     get {

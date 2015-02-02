@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -175,6 +175,11 @@ collector {
       storedEvent.collector must beEqualTo("ssc-0.3.0-test")
       storedEvent.path must beEqualTo("/i")
       storedEvent.querystring must beEqualTo(payloadData)
+    }
+    "report itself as healthy" in {
+      CollectorGet("/health") ~> collectorService.collectorRoute ~> check {
+        response.status must beEqualTo(spray.http.StatusCodes.OK)
+      }
     }
   }
 }
