@@ -36,7 +36,10 @@ class BigqueryInterfaceSpec extends Specification with ValidationMatchers {
       BigqueryInterface.getCredentials( config ) should haveClass[GoogleCredential] 
     }
     "throw an exception - with friendly message - if private key file not found" in {
-      BigqueryInterface.getCredentials( configWrongP12 ) should throwA[FileNotFoundException](message="Private key file not found at location specified at 'service-account-p12file:' in config file.")
+      BigqueryInterface.getCredentials( configWrongP12 ) should 
+        throwA[FileNotFoundException](message=
+          "Private key file not found at location specified at 'service-account-p12file:' in config file."
+        )
     }
   }
 }
