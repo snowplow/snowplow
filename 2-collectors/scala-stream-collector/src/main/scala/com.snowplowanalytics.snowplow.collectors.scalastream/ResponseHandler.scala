@@ -79,14 +79,14 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
     val timestamp: Long = System.currentTimeMillis
 
     val event = new CollectorPayload(
-      "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0", // version TODO: decide what this will look like
-      Collector,
-      "UTF-8",
-      timestamp,
+      "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
       ip,
-      path
+      timestamp,
+      "UTF-8",
+      Collector
     )
 
+    event.path = path
     event.querystring = queryParams
     event.body = body
     event.hostname = hostname
