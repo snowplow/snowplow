@@ -65,7 +65,6 @@ object ThriftLoader extends Loader[Array[Byte]] {
    */
   def toCollectorPayload(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
 
-    var snowplowRawEvent = new CollectorPayload1()
     try {
 
       var schema = new SchemaSniffer
@@ -134,7 +133,10 @@ object ThriftLoader extends Loader[Array[Byte]] {
     val headers = Option(collectorPayload.headers)
       .map(_.toList).getOrElse(Nil)
 
-    val api = CollectorApi.parse(collectorPayload.path)
+    val api = Option(collectorPayload.path) match {
+      case None => "Request does not contain a path".fail
+      case Some(p) => CollectorApi.parse(p)
+    }
 
     (querystring.toValidationNel |@|
       api.toValidationNel) { (q: List[NameValuePair], a: CollectorApi) => CollectorPayload(

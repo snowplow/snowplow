@@ -1,4 +1,4 @@
-# Default configuration for kinesis-elasticsearch-sink
+# Default configuration for kinesis-lzo-s3-sink
 
 connector {
 
@@ -38,7 +38,7 @@ connector {
     region: "us-east-1"
 
     # `app-name` is used for a DynamoDB table to maintain stream state.
-    app-name: SnowplowElasticsearchSink-${connector.kinesis.in.stream-name}
+    app-name: SnowplowLzoS3Sink-${connector.kinesis.in.stream-name}
   }
 
   s3 {

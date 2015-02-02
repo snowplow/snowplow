@@ -43,13 +43,13 @@ object CollectorPayload1LzoSpec {
 
   val collectorPayload = new CollectorPayload(
     "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
-    "collector",
-    "UTF-8",
-    1381175274000L,
     "255.255.255.255",
-    "/i"
+    1381175274000L,
+    "UTF-8",
+    "collector"
   )
   
+  collectorPayload.setPath("/i")
   collectorPayload.setHostname("localhost")
   collectorPayload.setQuerystring(payloadData)
   collectorPayload.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.8 Safari/537.36")
