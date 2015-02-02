@@ -16,6 +16,7 @@ Scala Stream Collector: stopped decoding URLs (#1217)
 Scala Stream Collector: changed 1x1 pixel response to use a stable GIF (#1260)
 Scala Stream Collector: renamed default.conf to config.hocon.sample (#1243)
 Scala Stream Collector: started using ThreadLocal to handle Thrift serialization, thanks @denismo and @pkallos! (#1254)
+Scala Stream Collector: added healthcheck for load balancers, thanks @duncan! (#1360)
 EmrEtlRunner: bumped to 0.11.0
 EmrEtlRunner: added "thrift" collector format (#1301)
 EmrEtlRunner: implemented time_diff manually (#1310)
