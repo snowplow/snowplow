@@ -37,7 +37,7 @@
   (-> (new DateTime) (.plusDays duration)))
 
 (defn- set-cookie
-  "Sets a SnowPlow cookie with visitor `id`,
+  "Sets a Snowplow cookie with visitor `id`,
    to last `duration` seconds for `domain`.
    If domain is nil, leave out so the FQDN
    of the host can be used instead"
@@ -102,3 +102,11 @@
   {:status  200
    :headers {"Content-Type" "text/plain"}
    :body    "OK"})
+
+
+(def send-flash-crossdomain
+  "Send the most permissive Flash security settings as per
+   http://www.adobe.com/devnet/articles/crossdomain_policy_file_spec.html"
+  {:status  200
+   :headers {"Content-Type" "text/xml"}
+   :body    "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n</cross-domain-policy>"})

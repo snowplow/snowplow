@@ -45,6 +45,7 @@
   (POST "/:vendor/:version"   {c :cookies} (send-cookie-pixel-or-200' c false)) ; for tracker POST support, no pixel
   (HEAD "/:vendor/:version"   request responses/send-200)                       ; for webhooks' own checks e.g. Mandrill
   (GET  "/healthcheck"        request responses/send-200)
+  (GET  "/crossdomain.xml"    request responses/send-flash-crossdomain)         ; for Flash cross-domain posting
   ;GET "/status"              available from expose-metrics-as-json, only in development env
   ;HEAD "/"                   available from beanstalk.clj
   (compojure.route/not-found  responses/send-404))
