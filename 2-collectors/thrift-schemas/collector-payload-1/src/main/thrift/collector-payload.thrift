@@ -17,17 +17,25 @@ namespace java com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1
 
 struct CollectorPayload {
   31337: string schema
-  10: optional string querystring
-  20: string collector
-  30: string encoding
-  40: optional string hostname
-  50: i64 timestamp
-  60: string ipAddress
-  70: optional string userAgent
-  80: optional string refererUri
-  90: optional list<string> headers
-  100: optional string networkUserId
-  110: string path
-  120: optional string contentType
-  130: optional string body
+
+  // Required fields which are intrinsic properties of HTTP
+  100: string ipAddress
+
+  // Required fields which are Snowplow-specific
+  200: i64 timestamp
+  210: string encoding
+  220: string collector
+
+  // Optional fields which are intrinsic properties of HTTP
+  300: optional string userAgent
+  310: optional string refererUri
+  320: optional string path
+  330: optional string querystring
+  340: optional string body
+  350: optional list<string> headers
+  360: optional string contentType
+
+  // Optional fields which are Snowplow-specific
+  400: optional string hostname
+  410: optional string networkUserId
 }
