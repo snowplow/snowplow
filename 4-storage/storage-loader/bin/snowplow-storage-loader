@@ -71,7 +71,7 @@ rescue loader::Error => e
   $stderr.puts(e.message)
   exit 1
 rescue SystemExit => e
-  exit 1
+  exit e.status
 rescue Exception => e
   $stderr.puts("Unexpected error: " + e.message)
   $stderr.puts(e.backtrace.join("\n"))
