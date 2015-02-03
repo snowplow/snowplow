@@ -74,6 +74,8 @@ import com.google.api.services.bigquery.model.{
   QueryRequest,
   TableDataInsertAllRequest,
   QueryResponse,
+  TableDataInsertAllResponse,
+  ErrorProto,
   TableCell,
   Dataset,
   DatasetReference,
@@ -90,6 +92,9 @@ import com.google.api.services.bigquery.model.{
 // Config
  import com.typesafe.config.Config
 
+// Json
+import org.json4s.jackson.JsonMethods.parse
+
 /**
  * Class for uploading and querying Snowplow data on BigQuery
  */
@@ -98,10 +103,25 @@ object BigqueryInterface{
 
   val HttpTransport = new NetHttpTransport
   val JsonFactory = new JacksonFactory
-  
-  /* Oauth methods */
-  
-  /**
+
+  /* Helper methods */ 
+
+   /**
+    * Period between retrying sending events to Elasticsearch
+    *
+    * @param sleepTime Length of time between tries
+    */
+   private def sleep(sleepTime: Long): Unit = {
+     try {
+       Thread.sleep(sleepTime)
+     } catch {
+       case e: InterruptedException => ()
+     }
+   }
+
+ /* Oauth methods */
+
+/**
    * Creates the credential object needed for a service account.
    * @see [[https://cloud.google.com/bigquery/authorization#service-accounts google docs]]
    *
@@ -126,6 +146,65 @@ object BigqueryInterface{
       .setServiceAccountPrivateKeyFromP12File( pkFile )
       .build()
 
+  }
+
+  /**
+   * Checks whether a valid (Http200) response reports errors inserting
+   * rows in to the table.
+   *
+   * @param reponse A TableDataInsertAllResponse object.
+   *
+   * @returns True if there are errors, else false.
+   */
+  def checkResponseHasErrors(response: TableDataInsertAllResponse): Boolean = {
+    response.getInsertErrors != null
+  }
+
+  /**
+   * Seperates the bad rows from the good.
+   *
+   * @param request
+   * @param response
+   *
+   * @return A pair (List[TableRow],List[TableRow]) with first element the failing rows
+   *    and second element the good rows,
+   */
+  def seperateRows(request: TableDataInsertAllRequest, response: TableDataInsertAllResponse): 
+  (scala.List[TableDataInsertAllRequest.Rows], scala.List[TableDataInsertAllRequest.Rows]) = {
+
+    def sortRecurse(
+      errorRows: scala.List[TableDataInsertAllRequest.Rows], 
+      goodRows: scala.List[TableDataInsertAllRequest.Rows],
+      rowsAndErrors: scala.List[(TableDataInsertAllRequest.Rows, ErrorProto)]
+    ): (scala.List[TableDataInsertAllRequest.Rows], scala.List[TableDataInsertAllRequest.Rows]) = {
+      if (rowsAndErrors.isEmpty){
+        (errorRows, goodRows)
+      } else {
+        if (rowsAndErrors.head._2.getReason == "invalid"){
+          sortRecurse(rowsAndErrors.head._1::errorRows, goodRows, rowsAndErrors.tail )
+        } else {
+          sortRecurse(errorRows, rowsAndErrors.head._1::goodRows, rowsAndErrors.tail )
+        }
+      }
+    }
+
+    if (!checkResponseHasErrors(response)){
+      (scala.List(), request.getRows.asList)
+    } else {
+      val requestRows: scala.List[TableDataInsertAllRequest.Rows] = request.getRows
+      val rE = response.getInsertErrors
+      val responseErrors: scala.List[ErrorProto] =rE.head.getErrors
+      //basic form of error checking
+      if (requestRows.length != responseErrors.length) {
+        throw new RuntimeException(
+          "List of rows in request is not of same length as list of errors in response. " +
+          "Perhaps the request and response are not related?"
+        )
+      } else {
+        val rowsAndErrors = (requestRows, responseErrors).zipped
+        sortRecurse(scala.List(), scala.List(), rowsAndErrors)
+      }
+    }
   }
 
 }
@@ -247,15 +326,24 @@ class BigqueryInterface(config: Config) {
    * @param tableData - TableDataInsertAllRequest object as returned by
    *    TSVPaser.createUploadData
    */
-  def insertRows(datasetId: String, tableName: String, tableData: TableDataInsertAllRequest) {
-    val response = bigquery.tabledata.insertAll(projectId, datasetId, tableName, tableData).execute()
-    println(response)
+  def insertRows(datasetId: String, tableName: String, tableData: TableDataInsertAllRequest): 
+  TableDataInsertAllResponse = {
+
+    // TODO add BackOffPeriod to config file?
+    val BackOffPeriod = 10000
+
+    try {
+      bigquery.tabledata.insertAll(projectId, datasetId, tableName, tableData).execute()
+    } catch {
+      case ex: IOException =>
+        println("IOException while inserting into table: " + ex)
+        BigqueryInterface.sleep(BackOffPeriod)
+        insertRows(datasetId, tableName, tableData)
+    }
   }
 
-
-
-
   
+
   /* Database query methods */
 
   /**

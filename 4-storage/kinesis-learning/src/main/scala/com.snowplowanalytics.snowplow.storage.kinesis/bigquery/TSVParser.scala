@@ -18,9 +18,11 @@
  */
 package com.snowplowanalytics.snowplow.storage.kinesis.bigquery
 
+// Java
 import java.util.{
   ArrayList
 }
+import java.lang.RuntimeException
 
 // Scala
 import collection.JavaConversions._
@@ -94,6 +96,9 @@ object TsvParser{
       case "FLOAT" => value.toFloat
       case "BOOLEAN" => booleanConverter(value)
       case "TIMESTAMP" => value
+      case string => throw new RuntimeException(
+        "The string '"+string+"' does not represent a valid datatype"
+      )
     }
   }
 

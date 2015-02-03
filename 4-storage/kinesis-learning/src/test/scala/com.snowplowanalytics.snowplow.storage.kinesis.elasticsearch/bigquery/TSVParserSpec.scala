@@ -12,9 +12,11 @@
  */
 package com.snowplowanalytics.snowplow.storage.kinesis.bigquery
 
+// Java
 import java.util.{
   ArrayList
 }
+import java.lang.RuntimeException
 
 // Scala
 import collection.JavaConversions._
@@ -93,6 +95,7 @@ class SnowplowTsvParserSpec extends Specification with ValidationMatchers {
     val oneBooleanType = ("BOOLEAN", "1")
     val zeroBooleanType = ("BOOLEAN", "0")
     val timestampType = ("TIMESTAMP", "2014-06-01 14:04:11.639")
+    val nonsenseType = ("FOO", "bar")
 
     "should return string for ('STRING', 'word')" in {
       val returnType = TsvParser.valueTypeConverter(stringType._1, stringType._2).isInstanceOf[String]
@@ -128,7 +131,12 @@ class SnowplowTsvParserSpec extends Specification with ValidationMatchers {
       val returnType = TsvParser.valueTypeConverter(timestampType._1, timestampType._2).isInstanceOf[String]
       returnType must beEqualTo(true)
     }
-
+    "should throw a RuntimeException for ('FOO', 'bar')" in {
+      TsvParser.valueTypeConverter(nonsenseType._1, nonsenseType._2) should 
+        throwA[RuntimeException](message=
+          "The string 'FOO' does not represent a valid datatype"
+        )
+    }
   }
 
   "creatUploadData" should {
