@@ -36,7 +36,7 @@ Scala Kinesis Enrich: bumped to 0.3.0
 Scala Kinesis Enrich: bumped Scala Common Enrich to 0.11.0 (#1295)
 Scala Kinesis Enrich: renamed default.conf to config.hocon.sample (#1242)
 Kinesis Elasticsearch Sink: added License-2.0.txt (#1329)
-Kinesis LZO S3 Sink: added. Version 0.1.0. Thanks @pkallos! (#1016)
+Kinesis LZO S3 Sink: added. Version 0.1.0, thanks @pkallos! (#1016)
 
 Version 0.9.14 (2014-12-31)
 ---------------------------
