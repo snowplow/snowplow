@@ -1,0 +1,18 @@
+*.class
+*.log
+
+# sbt specific
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+#config file
+*application.conf
+
+#files for google OAuth
+client_secrets*
+snowplow_bigquery_refresh_token.properties
+pk.p12
