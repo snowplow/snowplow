@@ -79,6 +79,15 @@ module Snowplow
         @jobflow.master_instance_type = config[:emr][:jobflow][:master_instance_type]
         @jobflow.slave_instance_type  = config[:emr][:jobflow][:core_instance_type]
 
+        if config[:etl][:collector_format] == 'thrift'
+          [
+            Elasticity::HadoopBootstrapAction.new('-s', 'io.file.buffer.size=65536'),
+            Elasticity::HadoopBootstrapAction.new('-m', 'mapreduce.user.classpath.first=true')
+          ].each do |action|
+            @jobflow.add_bootstrap_action(action)
+          end
+        end
+
         # Install and launch HBase
         hbase = config[:emr][:software][:hbase]
         unless not hbase
@@ -366,7 +375,7 @@ module Snowplow
           "#{js.name}: #{js.state} [#{js.last_state_change_reason}] ~ #{self.class.get_elapsed_time(js.started_at, js.ended_at)} #{self.class.get_timespan(js.started_at, js.ended_at)}"
         ].concat(js.steps
             .sort { |a,b|
-              a.started_at <=> b.started_at
+              self.class.nilable_spaceship(a.started_at, b.started_at)
             }
             .each_with_index
             .map { |s,i|
@@ -385,6 +394,25 @@ module Snowplow
         "[#{start} - #{_end}]"
       end
 
+      # Spaceship operator supporting nils
+      #
+      # Parameters:
+      # +a+:: First argument
+      # +b+:: Second argument
+      Contract Maybe[Time], Maybe[Time] => Num
+      def self.nilable_spaceship(a, b)
+        case
+        when (a.nil? and b.nil?)
+          0
+        when a.nil?
+          1
+        when b.nil?
+          -1
+        else
+          a <=> b
+        end
+      end
+
       # Gets the elapsed time in a
       # human-readable format.
       #
@@ -396,7 +424,18 @@ module Snowplow
         if start.nil? or _end.nil?
           "elapsed time n/a"
         else
-          Time.diff(start, _end, '%H %N %S')[:diff]
+          # Adapted from http://stackoverflow.com/a/19596579/255627
+          seconds_diff = (start - _end).to_i.abs
+
+          hours = seconds_diff / 3600
+          seconds_diff -= hours * 3600
+
+          minutes = seconds_diff / 60
+          seconds_diff -= minutes * 60
+
+          seconds = seconds_diff
+
+          "#{hours.to_s.rjust(2, '0')}:#{minutes.to_s.rjust(2, '0')}:#{seconds.to_s.rjust(2, '0')}"
         end
       end
 

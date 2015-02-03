@@ -37,6 +37,21 @@ class LoaderSpec extends Specification with DataTables with ValidationMatchers {
 
   import LoaderSpec._
 
+  "getLoader" should {
+
+    "return the CloudfrontLoader" in {
+      Loader.getLoader("cloudfront") must beSuccessful(CloudfrontLoader)
+    }
+
+    "return the CljTomcatLoader" in {
+      Loader.getLoader("clj-tomcat") must beSuccessful(CljTomcatLoader)
+    }
+
+    "return the ThriftLoader" in {
+      Loader.getLoader("thrift") must beSuccessful(ThriftLoader)
+    }
+  }
+
   "extractGetPayload" should {
 
     val Encoding = "UTF-8"

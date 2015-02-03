@@ -18,23 +18,27 @@ import Keys._
 object ThriftRawEventBuild extends Build {
 
   import Dependencies._
-  import BuildSettings._
 
   // Configure prompt to show current project.
   override lazy val settings = super.settings :+ {
     shellPrompt := { s => Project.extract(s).currentProject.id + " > " }
   }
 
-  // Define our project, with basic project information and library
-  // dependencies.
-  lazy val project = Project("snowplow-thrift-raw-event", file("."))
-    .settings(buildSettings: _*)
+  lazy val root = Project(id = "root",
+    base = file("."),
+    aggregate = Seq(snowplowRawEventProject, collectorPayloadProject, schemaSnifferProject),
+    settings = Project.defaultSettings ++ Seq(
+      publishLocal := {},
+      publish := {}
+    )
+  )
+
+  lazy val snowplowRawEventProject = Project("snowplow-raw-event", file("./snowplow-raw-event"))
     .settings(
       libraryDependencies ++= Seq(
-        Libraries.commonsLang3,
-        Libraries.thrift,
-        Libraries.specs2,
-        Libraries.scalaCheck
+        Libraries.specs2
       )
     )
+  lazy val collectorPayloadProject = Project("collector-payload", file("./collector-payload-1"))
+  lazy val schemaSnifferProject    = Project("schema-sniffer", file("./schema-sniffer-1"))
 }

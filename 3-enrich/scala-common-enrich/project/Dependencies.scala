@@ -35,13 +35,15 @@ object Dependencies {
     val commonsIo        = "2.4"
     val yodaTime         = "2.1"
     val yodaConvert      = "1.2"
-    val useragent        = "1.13"
+    val useragent        = "1.14"
     val jacksonDatabind  = "2.2.3"
     val jsonValidator    = "2.2.3"
     val mavenArtifact    = "3.2.2" 
     // Scala
     val scalaz7          = "7.0.0"
     val snowplowRawEvent = "0.1.0"
+    val collectorPayload = "0.0.0"
+    val schemaSniffer    = "0.0.0"
     val scalaUtil        = "0.1.0"
     val refererParser    = "0.2.2"
     val maxmindIplookups = "0.2.0"
@@ -69,6 +71,8 @@ object Dependencies {
     // Scala
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
     val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
+    val collectorPayload = "com.snowplowanalytics"      %  "collector-payload-1"       % V.collectorPayload
+    val schemaSniffer    = "com.snowplowanalytics"      %  "schema-sniffer-1"          % V.schemaSniffer
     val scalaUtil        = "com.snowplowanalytics"      %  "scala-util"                % V.scalaUtil
     val refererParser    = "com.snowplowanalytics"      %% "referer-parser"            % V.refererParser
     val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-iplookups"   % V.maxmindIplookups

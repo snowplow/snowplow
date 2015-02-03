@@ -33,13 +33,18 @@ object SnowplowHadoopEnrichBuild extends Build {
         // Scala
         Libraries.scaldingCore,
         Libraries.scaldingArgs,
+        Libraries.scaldingCommons,
+        Libraries.scaldingJson,
         Libraries.scalaz7,
-        Libraries.snowplowRawEvent,
         Libraries.commonEnrich,
         // Scala (test only)
         Libraries.specs2,
         Libraries.scalazSpecs2,
-        Libraries.commonsCodec
+        Libraries.compress,
+        Libraries.commonsCodec,
+        // Thrift (test only)
+        Libraries.snowplowRawEvent,
+        Libraries.collectorPayload
       )
     )
 }

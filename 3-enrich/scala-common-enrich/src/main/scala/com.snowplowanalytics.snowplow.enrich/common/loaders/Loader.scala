@@ -47,7 +47,7 @@ object Loader {
   def getLoader(collectorOrProtocol: String): Validation[String, Loader[_]] = collectorOrProtocol match {
     case "cloudfront" => CloudfrontLoader.success
     case "clj-tomcat" => CljTomcatLoader.success
-    case "thrift-raw" => ThriftLoader.success // Finally - a data protocol rather than a piece of software
+    case "thrift"     => ThriftLoader.success // Finally - a data protocol rather than a piece of software
     case  c           => "[%s] is not a recognised Snowplow event collector".format(c).fail
   }
 }

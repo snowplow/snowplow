@@ -16,7 +16,8 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.collectors
+package com.snowplowanalytics.snowplow
+package collectors
 package scalastream
 package sinks
 
@@ -34,11 +35,11 @@ import com.typesafe.config.Config
 
 // Snowplow
 import scalastream._
-import thrift.SnowplowRawEvent
+import CollectorPayload.thrift.model1.CollectorPayload
 
 class StdoutSink extends AbstractSink {
   // Print a Base64-encoded event.
-  def storeRawEvent(event: SnowplowRawEvent, key: String) = {
+  def storeRawEvent(event: CollectorPayload, key: String) = {
     println(Base64.encodeBase64String(serializeEvent(event)))
     null
   }

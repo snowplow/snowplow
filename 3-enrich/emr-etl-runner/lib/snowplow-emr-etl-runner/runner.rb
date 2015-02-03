@@ -21,7 +21,7 @@ module Snowplow
     class Runner
 
       # Supported options
-      @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
+      @@collector_formats = Set.new(%w(cloudfront clj-tomcat thrift))
       @@skip_options = Set.new(%w(staging s3distcp emr enrich shred archive))
 
       include Logging

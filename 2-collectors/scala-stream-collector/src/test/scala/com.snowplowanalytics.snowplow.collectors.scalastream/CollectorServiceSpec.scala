@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -12,7 +12,8 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.collectors
+package com.snowplowanalytics.snowplow
+package collectors
 package scalastream
 
 // Scala
@@ -44,11 +45,7 @@ import org.apache.thrift.TDeserializer
 
 // Snowplow
 import sinks._
-import thrift.{
-  PayloadProtocol,
-  PayloadFormat,
-  SnowplowRawEvent
-}
+import CollectorPayload.thrift.model1.CollectorPayload
 
 class CollectorServiceSpec extends Specification with Specs2RouteTest with
      AnyMatchers {
@@ -100,7 +97,7 @@ collector {
       remoteAddr: String = "127.0.0.1") = {
     val headers: MutableList[HttpHeader] =
       MutableList(`Remote-Address`(remoteAddr),`Raw-Request-URI`(uri))
-    if (cookie.isDefined) headers += `Cookie`(cookie.get)
+    cookie.foreach(headers += `Cookie`(_))
     Get(uri).withHeaders(headers.toList)
   }
 
@@ -159,15 +156,15 @@ collector {
         val policyRef = collectorConfig.p3pPolicyRef
         val CP = collectorConfig.p3pCP
         p3pHeader.value must beEqualTo(
-          s"""policyref="${policyRef}", CP="${CP}"""")
+          "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP))
       }
     }
     "store the expected event as a serialized Thrift object in the enabled sink" in {
       val payloadData = "param1=val1&param2=val2"
-      val storedRecordBytes = responseHandler.cookie(payloadData, None,
-        None, "localhost", "127.0.0.1", new HttpRequest(), None)._2
+      val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
+        None, "localhost", "127.0.0.1", new HttpRequest(), None, "/i", true)._2
 
-      val storedEvent = new SnowplowRawEvent
+      val storedEvent = new CollectorPayload
       this.synchronized {
         thriftDeserializer.deserialize(storedEvent, storedRecordBytes)
       }
@@ -175,10 +172,14 @@ collector {
       storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 1000)
       storedEvent.encoding must beEqualTo("UTF-8")
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
-      storedEvent.collector must beEqualTo("ssc-0.2.0-test")
-      storedEvent.payload.protocol must beEqualTo(PayloadProtocol.Http)
-      storedEvent.payload.format must beEqualTo(PayloadFormat.HttpGet)
-      storedEvent.payload.data must beEqualTo(payloadData)
+      storedEvent.collector must beEqualTo("ssc-0.3.0-test")
+      storedEvent.path must beEqualTo("/i")
+      storedEvent.querystring must beEqualTo(payloadData)
+    }
+    "report itself as healthy" in {
+      CollectorGet("/health") ~> collectorService.collectorRoute ~> check {
+        response.status must beEqualTo(spray.http.StatusCodes.OK)
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
@@ -12,7 +12,8 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.collectors.scalastream
+package com.snowplowanalytics.snowplow.collectors
+package scalastream
 
 // Akka
 import akka.actor.{Actor,ActorRefFactory}
@@ -20,7 +21,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 
 // Spray
-import spray.http.{Uri,Timedout,HttpRequest}
+import spray.http.{Timedout,HttpRequest}
 import spray.routing.HttpService
 
 // Scala
@@ -50,15 +51,58 @@ class CollectorServiceActor(collectorConfig: CollectorConfig,
   }
 }
 
+/**
+ * Companion object for the CollectorService class
+ */
+object CollectorService {
+  private val QuerystringExtractor = "^[^?]*\\?([^#]*)(?:#.*)?$".r
+}
+
 // Store the route in CollectorService to be accessed from
 // both CollectorServiceActor and from the testing framework.
 class CollectorService(
     responseHandler: ResponseHandler,
     context: ActorRefFactory) extends HttpService {
   def actorRefFactory = context
+
+  // TODO: reduce code duplication here
   val collectorRoute = {
+    post {
+      path(Segment / Segment) { (path1, path2) =>
+        optionalCookie("sp") { reqCookie =>
+          optionalHeaderValueByName("User-Agent") { userAgent =>
+            optionalHeaderValueByName("Referer") { refererURI =>
+              headerValueByName("Raw-Request-URI") { rawRequest =>
+                hostName { host =>
+                  clientIP { ip =>
+                    requestInstance{ request =>
+                      entity(as[String]) { body =>
+                        complete(
+                          responseHandler.cookie(
+                            null,
+                            body,
+                            reqCookie,
+                            userAgent,
+                            host,
+                            ip.toString,
+                            request,
+                            refererURI,
+                            "/" + path1 + "/" + path2,
+                            false
+                          )._1
+                        )
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } ~
     get {
-      path("i") {
+      path("""ice\.png""".r | "i".r) { path =>
         optionalCookie("sp") { reqCookie =>
           optionalHeaderValueByName("User-Agent") { userAgent =>
             optionalHeaderValueByName("Referer") { refererURI =>
@@ -68,15 +112,19 @@ class CollectorService(
                     requestInstance{ request =>
                       complete(
                         responseHandler.cookie(
-                          Option(Uri(rawRequest).query.toString).filter(
-                            _.trim.nonEmpty
-                          ).getOrElse(null),
+                          rawRequest match {
+                            case CollectorService.QuerystringExtractor(qs) => qs
+                            case _ => ""
+                          },
+                          null,
                           reqCookie,
                           userAgent,
                           host,
                           ip.toString,
                           request,
-                          refererURI
+                          refererURI,
+                          "/" + path,
+                          true
                         )._1
                       )
                     }
@@ -87,7 +135,47 @@ class CollectorService(
           }
         }
       }
-    }~
+    } ~
+    get {
+      path("health".r) { path =>
+        complete(responseHandler.healthy)
+      }
+    } ~
+    get {
+      path(Segment / Segment) { (path1, path2) =>
+        optionalCookie("sp") { reqCookie =>
+          optionalHeaderValueByName("User-Agent") { userAgent =>
+            optionalHeaderValueByName("Referer") { refererURI =>
+              headerValueByName("Raw-Request-URI") { rawRequest =>
+                hostName { host =>
+                  clientIP { ip =>
+                    requestInstance{ request =>
+                      complete(
+                        responseHandler.cookie(
+                          rawRequest match {
+                            case CollectorService.QuerystringExtractor(qs) => qs
+                            case _ => ""
+                          },
+                          null,
+                          reqCookie,
+                          userAgent,
+                          host,
+                          ip.toString,
+                          request,
+                          refererURI,
+                          "/" + path1 + "/" + path2,
+                          true
+                        )._1
+                      )
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } ~
     complete(responseHandler.notFound)
   }
 }

@@ -3,13 +3,12 @@
 enrich {
   # Sources currently supported are:
   # 'kinesis' for reading Thrift-serialized records from a Kinesis stream
-  # 'stdin' for writing Base64-encoded Thrift-serialized records to stdout
+  # 'stdin' for reading Base64-encoded Thrift-serialized records from stdin
   source = "kinesis"
 
   # Sinks currently supported are:
-  # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
-  # 'stdouterr' for writing Base64-encoded Thrift-serialized enriched
-  #    events to stdout and invalid events to stderr.
+  # 'kinesis' for writing enriched events to one Kinesis stream and invalid events to another.
+  # 'stdouterr' for writing enriched events to stdout and invalid events to stderr.
   #    Using `sbt assembly` and `java -jar` is recommended to disable sbt
   #    logging.
   sink = "kinesis"
@@ -23,8 +22,8 @@ enrich {
   #
   # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
   aws {
-    access-key: "cpf"
-    secret-key: "cpf"
+    access-key: "env"
+    secret-key: "env"
   }
 
   streams {

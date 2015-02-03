@@ -1,3 +1,43 @@
+Release 60 Bee Hummingbird (15-02-03)
+-------------------------------------
+Common: added VERSION file in root to assist vagrant push (#1293)
+Common: added vagrant push scripting to publish Kinesis apps (#1288)
+Common: added lzo.yml to up.playbooks (#1325)
+Thrift Raw Event: bumped Thrift version to 0.9.1 (#1225)
+Thrift Raw Event: added collector-payload-1 and schema-sniffer-1 (#1322)
+Thrift Raw Event: created a subproject for each Thrift class (#1298)
+Thrift Raw Event: updated README and project description to reflect new structure (#1300)
+Thrift Raw Event: renamed to thrift-schemas (#1299)
+Scala Stream Collector: bumped to 0.3.0
+Scala Stream Collector: started sending CollectorPayloads instead of SnowplowRawEvents (#1226)
+Scala Stream Collector: added support for POST requests (#187)
+Scala Stream Collector: added support for any {api-vendor}/{api-version} for GET and POST (#652)
+Scala Stream Collector: stopped decoding URLs (#1217)
+Scala Stream Collector: changed 1x1 pixel response to use a stable GIF (#1260)
+Scala Stream Collector: renamed default.conf to config.hocon.sample (#1243)
+Scala Stream Collector: started using ThreadLocal to handle Thrift serialization, thanks @denismo and @pkallos! (#1254)
+Scala Stream Collector: added healthcheck for load balancers, thanks @duncan! (#1360)
+EmrEtlRunner: bumped to 0.11.0
+EmrEtlRunner: added "thrift" collector format (#1301)
+EmrEtlRunner: implemented time_diff manually (#1310)
+EmrEtlRunner: fixed failure reporting when jobflow step(s) created_at is nil (#1351)
+Scala Common Enrich: bumped to 0.11.0
+Scala Common Enrich: added schema-sniffer-1 and collector-payload-1 dependencies (#1296)
+Scala Common Enrich: bumped user-agent-utils version to 1.14 (#1224)
+Scala Common Enrich: changed EnrichedEvent field name to ip_organization (#1145)
+Scala Common Enrich: changed "thrift" to "thrift-raw" in Loader object (#1302)
+Scala Common Enrich: added tests for getLoader function (#558)
+Scala Hadoop Enrich: bumped to 0.12.0
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.11.0 (#1294)
+Scala Hadoop Enrich: added collector-payload-1 and snowplow-thrift-raw-event as test dependencies (#1248)
+Scala Hadoop Enrich: added support for processing Thrift raw events, thanks @pkallos! (#538)
+Scala Hadoop Enrich: added tests to Hadoop Enrich for processing Thrift raw events (#559)
+Scala Kinesis Enrich: bumped to 0.3.0
+Scala Kinesis Enrich: bumped Scala Common Enrich to 0.11.0 (#1295)
+Scala Kinesis Enrich: renamed default.conf to config.hocon.sample (#1242)
+Kinesis Elasticsearch Sink: added LICENSE-2.0.txt (#1329)
+Kinesis LZO S3 Sink: added. Version 0.1.0, thanks @pkallos! (#1016)
+
 Version 0.9.14 (2014-12-31)
 ---------------------------
 Common: added dedicated Vagrant setup (#1266)

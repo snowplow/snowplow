@@ -16,12 +16,10 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.collectors
+package com.snowplowanalytics.snowplow
+package collectors
 package scalastream
 package sinks
-
-// Snowplow
-import thrift.SnowplowRawEvent
 
 // Java
 import java.nio.ByteBuffer
@@ -29,16 +27,20 @@ import java.nio.ByteBuffer
 // Thrift
 import org.apache.thrift.TSerializer
 
+// Snowplow
+import CollectorPayload.thrift.model1.CollectorPayload
+
 // Define an interface for all sinks to use to store events.
 trait AbstractSink {
-  def storeRawEvent(event: SnowplowRawEvent, key: String): Array[Byte]
+  def storeRawEvent(event: CollectorPayload, key: String): Array[Byte]
 
-  // Serialize Thrift SnowplowRawEvent objects,
-  // and synchronize because TSerializer doesn't support multi-threaded
-  // serialization.
-  private val thriftSerializer = new TSerializer
-  def serializeEvent(event: SnowplowRawEvent): Array[Byte] =
-    this.synchronized {
-      thriftSerializer.serialize(event)
-    }
+  // Serialize Thrift CollectorPayload objects
+  private val thriftSerializer = new ThreadLocal[TSerializer] {
+    override def initialValue = new TSerializer()
+  }
+
+  def serializeEvent(event: CollectorPayload): Array[Byte] = {
+    val serializer = thriftSerializer.get()
+    serializer.serialize(event)
+  }
 }
