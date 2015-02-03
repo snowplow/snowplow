@@ -1,4 +1,4 @@
-Release 60 Bee Hummingbird (15-01-xx)
+Release 60 Bee Hummingbird (15-02-03)
 -------------------------------------
 Common: added VERSION file in root to assist vagrant push (#1293)
 Common: added vagrant push scripting to publish Kinesis apps (#1288)
@@ -35,7 +35,7 @@ Scala Hadoop Enrich: added tests to Hadoop Enrich for processing Thrift raw even
 Scala Kinesis Enrich: bumped to 0.3.0
 Scala Kinesis Enrich: bumped Scala Common Enrich to 0.11.0 (#1295)
 Scala Kinesis Enrich: renamed default.conf to config.hocon.sample (#1242)
-Kinesis Elasticsearch Sink: added License-2.0.txt (#1329)
+Kinesis Elasticsearch Sink: added LICENSE-2.0.txt (#1329)
 Kinesis LZO S3 Sink: added. Version 0.1.0, thanks @pkallos! (#1016)
 
 Version 0.9.14 (2014-12-31)
