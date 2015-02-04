@@ -121,34 +121,50 @@ object TsvParser{
     schema.setFields(schemaFieldList.toList)
   }
 
+
+  /**
+   * @param abstractRow an IntermediateRecord
+   *
+   * @returns TableDataInsertAllRequest.Rows object
+   */
+  def createRowFromAbstractRow(abstractRow: List[(String, String, String)]): 
+  TableDataInsertAllRequest.Rows = {
+    val tableRow = new TableRow
+    abstractRow.foreach(field => 
+          // empty string is a null value
+          if (!field._3.isEmpty)  {
+            tableRow.set(field._1, valueTypeConverter(field._2, field._3) )
+          }
+        )
+    val row = new TableDataInsertAllRequest.Rows
+    row.setJson(tableRow)
+  }
+
+  /**
+   * @returns TableDataInsertAllRequest
+   */
+  def createTableDataInsertAllRequest( requestRows: List[TableDataInsertAllRequest.Rows] ): 
+  TableDataInsertAllRequest = {
+    val tableData = new TableDataInsertAllRequest
+    tableData.setRows(requestRows)
+  }
+
   /**
    * makes a bigquery job from a given data list.
    *
    * @param data a list of lists representing the rows to be added, as returned
    *    by addFieldsToData.
    *
-   * @return 
+   * @return TableDataInsertAllRequest
    */
-  def createUploadData(data: List[List[(String, String, String)]]): TableDataInsertAllRequest = {
-
-    def createRowFromAbstractRow(abstractRow: List[(String, String, String)]): TableDataInsertAllRequest.Rows = {
-      val tableRow = new TableRow
-      abstractRow.foreach(field => 
-            // empty string is a null value
-            if (!field._3.isEmpty)  {
-              tableRow.set(field._1, valueTypeConverter(field._2, field._3) )
-            }
-          )
-      val row = new TableDataInsertAllRequest.Rows
-      row.setJson(tableRow)
-    }
+  def createUploadData(data: List[List[(String, String, String)]]): 
+  TableDataInsertAllRequest = {
 
     val rowList = data.map(field => 
           createRowFromAbstractRow(field)
         )
 
-    val tableData = new TableDataInsertAllRequest
-    tableData.setRows(rowList)
+    createTableDataInsertAllRequest( rowList )
   }
 
 }

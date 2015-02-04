@@ -30,7 +30,7 @@ import com.amazonaws.services.kinesis.connectors.{
 * Boilerplate class for Kinesis Conenector
 */
 class BigquerySinkExecutor(config: KinesisConnectorConfiguration)
-  extends KinesisConnectorExecutorBase[IntermediateRecord, IntermediateRecord]{
+  extends KinesisConnectorExecutorBase[BigqueryTableRow, BigqueryTableRow]{
 
   val bigqueryConfig = SnowplowBigqueryEmitter.getConfigFromFile("application.conf")
   val projectNumber = bigqueryConfig.getString("connector.bigquery.project-number")
@@ -39,7 +39,7 @@ class BigquerySinkExecutor(config: KinesisConnectorConfiguration)
 
   initialize(config)
   override def getKinesisConnectorRecordProcessorFactory = {
-    new KinesisConnectorRecordProcessorFactory[IntermediateRecord, IntermediateRecord](
+    new KinesisConnectorRecordProcessorFactory[BigqueryTableRow, BigqueryTableRow](
       new BigqueryPipeline(projectNumber, datasetName, tableName), config)
   }
 }

@@ -24,7 +24,7 @@ import scalaz._
 import Scalaz._
 
 // BigQuery
-import com.google.api.services.bigquery.model.TableRow
+import com.google.api.services.bigquery.model.TableDataInsertAllRequest
 
 package object bigquery{
 
@@ -38,6 +38,6 @@ package object bigquery{
    * Alias for TableRow class from bigquery library. Objects of this type are the 
    * outputs and inputs of the transformer and transmitter respectively.
    */
-  type BigQueryTableRow = TableRow
+  type BigqueryTableRow = TableDataInsertAllRequest.Rows
 }
 

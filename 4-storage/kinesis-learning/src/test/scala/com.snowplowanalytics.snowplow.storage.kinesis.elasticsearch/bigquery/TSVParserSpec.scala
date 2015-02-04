@@ -139,6 +139,17 @@ class SnowplowTsvParserSpec extends Specification with ValidationMatchers {
     }
   }
 
+  "createRowFromAbstractRow" should {
+
+    val data = List(
+        List(("abc", "STRING", "word"), ("def", "INTEGER", "123"), ("ghi", "BOOLEAN", "true")), 
+        List(("abc", "STRING",  "phrase"), ("def", "INTEGER",  "456"), ("ghi", "BOOLEAN",  "false"))
+      )
+    
+    "return a bigquery TableDataInsertAllRequest.Rows" in {
+      TsvParser.createRowFromAbstractRow(data(0)) should haveClass[TableDataInsertAllRequest.Rows] 
+    }
+  }
   "creatUploadData" should {
 
     val data = List(

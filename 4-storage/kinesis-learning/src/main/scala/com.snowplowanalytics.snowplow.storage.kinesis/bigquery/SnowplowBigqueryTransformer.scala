@@ -34,7 +34,7 @@ class SnowplowBigqueryTransformer(
   datasetName: String, 
   tableName: String
 ) extends 
-ITransformer[IntermediateRecord, IntermediateRecord] {
+ITransformer[BigqueryTableRow, BigqueryTableRow] {
 
   /**
    * Coverts a kinesis Record into a string.
@@ -61,13 +61,14 @@ ITransformer[IntermediateRecord, IntermediateRecord] {
     (names, types, values).zipped.toList
   }
 
-  override def toClass(record: Record): IntermediateRecord = {
+  override def toClass(record: Record): BigqueryTableRow = {
     val rowAsString = makeRowAsString(record)
-    makeIntermediateRecord(SnowplowEnrichedEventSchema.names, SnowplowEnrichedEventSchema.types, rowAsString)
+    val intermediateRecord = makeIntermediateRecord(SnowplowEnrichedEventSchema.names, SnowplowEnrichedEventSchema.types, rowAsString)
+    TsvParser.createRowFromAbstractRow(intermediateRecord)
   }
 
-  override def fromClass(intermediateRecord: IntermediateRecord) = {
-    intermediateRecord
+  override def fromClass( bigqueryTableRow: BigqueryTableRow) = {
+    bigqueryTableRow
   }
 
 }

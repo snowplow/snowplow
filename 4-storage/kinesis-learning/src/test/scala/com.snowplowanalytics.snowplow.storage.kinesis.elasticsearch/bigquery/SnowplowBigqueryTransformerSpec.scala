@@ -63,8 +63,8 @@ class SnowplowBigqueryTranformerSpec extends Specification with ValidationMatche
     "return a list of IntermediateRecords" in {
       testRecords.foreach{
         record => {
-          val intermediateRecord = snowplowBigqueryTransformer.toClass(record)
-          intermediateRecord must haveSuperclass[List[IntermediateRecord]]
+          snowplowBigqueryTransformer.toClass(record) must 
+            haveClass[BigqueryTableRow]
         }
       }
       1 must beEqualTo(1)
