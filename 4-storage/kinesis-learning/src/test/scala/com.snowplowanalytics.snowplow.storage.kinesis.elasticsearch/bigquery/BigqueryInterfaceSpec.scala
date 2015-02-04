@@ -129,6 +129,17 @@ class BigqueryInterfaceSpec extends Specification with ValidationMatchers {
       seperated._2.length should beEqualTo(abstractRows.length-2)
     }
 
+    "throw a RuntimeException if errorList contains unexpected errors" in {
+      val request = BigqueryInterfaceSpec.makeTestRequest(abstractRows)
+      val errorResponse = BigqueryInterfaceSpec
+        .makeTestResponse(List("stopped", "invalid", "foo"))
+      BigqueryInterface.seperateRows(request, errorResponse) should 
+        throwA[RuntimeException](message=
+            "The error message: foo" + 
+            " is unexpected. This is a developer error - create an issue."
+          )
+    }
+
     "request and response with bad rows should throw RuntimeException if length of" +
     " lists of rows and errors are not equal" in {
       val request = BigqueryInterfaceSpec.makeTestRequest(abstractRows)

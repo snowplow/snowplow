@@ -40,6 +40,7 @@ import java.security.PrivateKey
 
 // Scala
 import collection.JavaConversions._
+import collection.JavaConverters._
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 //Java Libraries
 import com.google.api.client.googleapis.auth.oauth2.{
@@ -172,6 +173,9 @@ object BigqueryInterface{
   def seperateRows(request: TableDataInsertAllRequest, response: TableDataInsertAllResponse): 
   (scala.List[TableDataInsertAllRequest.Rows], scala.List[TableDataInsertAllRequest.Rows]) = {
 
+    // TODO sort out convoluted type coversions.
+    // TODO deal with duplicate row errors
+
     def sortRecurse(
       errorRows: scala.List[TableDataInsertAllRequest.Rows], 
       goodRows: scala.List[TableDataInsertAllRequest.Rows],
@@ -180,20 +184,26 @@ object BigqueryInterface{
       if (rowsAndErrors.isEmpty){
         (errorRows, goodRows)
       } else {
-        if (rowsAndErrors.head._2.getReason == "invalid"){
-          sortRecurse(rowsAndErrors.head._1::errorRows, goodRows, rowsAndErrors.tail )
-        } else {
-          sortRecurse(errorRows, rowsAndErrors.head._1::goodRows, rowsAndErrors.tail )
+        rowsAndErrors.head._2.getReason match {
+          case "invalid" => 
+            sortRecurse( rowsAndErrors.head._1::errorRows, goodRows, rowsAndErrors.tail )
+          case "stopped" => 
+            sortRecurse( errorRows, rowsAndErrors.head._1::goodRows, rowsAndErrors.tail )
+          case error  => throw new RuntimeException(
+              "The error message: "+ error + 
+              " is unexpected. This is a developer error - create an issue."
+            )
+
         }
       }
     }
 
     if (!checkResponseHasErrors(response)){
-      (scala.List(), request.getRows.asList)
+      (scala.List(), request.getRows.asScala.toList)
     } else {
-      val requestRows: scala.List[TableDataInsertAllRequest.Rows] = request.getRows
+      val requestRows: scala.List[TableDataInsertAllRequest.Rows] = request.getRows.asScala.toList
       val rE = response.getInsertErrors
-      val responseErrors: scala.List[ErrorProto] =rE.head.getErrors
+      val responseErrors: scala.List[ErrorProto] =rE.head.getErrors.asScala.toList
       //basic form of error checking
       if (requestRows.length != responseErrors.length) {
         throw new RuntimeException(
@@ -201,7 +211,7 @@ object BigqueryInterface{
           "Perhaps the request and response are not related?"
         )
       } else {
-        val rowsAndErrors = (requestRows, responseErrors).zipped
+        val rowsAndErrors = (requestRows, responseErrors).zipped.toList
         sortRecurse(scala.List(), scala.List(), rowsAndErrors)
       }
     }
