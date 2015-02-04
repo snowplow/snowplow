@@ -64,7 +64,6 @@ class CollectorService(
     responseHandler: ResponseHandler,
     context: ActorRefFactory) extends HttpService {
   def actorRefFactory = context
-
   // TODO: reduce code duplication here
   val collectorRoute = {
     post {

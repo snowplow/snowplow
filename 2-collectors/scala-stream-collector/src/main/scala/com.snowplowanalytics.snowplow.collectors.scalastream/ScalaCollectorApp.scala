@@ -15,6 +15,9 @@
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
 // Akka and Spray
+
+import java.util.concurrent.TimeUnit
+
 import akka.actor.{ActorSystem, Props}
 import akka.io.IO
 import spray.can.Http
@@ -115,7 +118,7 @@ class CollectorConfig(config: Config) {
   val p3pCP = p3p.getString("CP")
 
   private val cookie = collector.getConfig("cookie")
-  val cookieExpiration = cookie.getMilliseconds("expiration")
+  val cookieExpiration = cookie.getDuration("expiration", TimeUnit.MILLISECONDS)
   var cookieDomain = cookie.getOptionalString("domain")
 
   private val sink = collector.getConfig("sink")

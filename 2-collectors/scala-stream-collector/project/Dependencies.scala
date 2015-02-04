@@ -30,17 +30,17 @@ object Dependencies {
   object V {
     // Java
     val mimepull         = "1.9.4"
-    val awsSdk           = "1.6.10"
+    val awsSdk           = "1.9.17"
 
     // Scala
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
-    val spray            = "1.2.0"
-    val akka             = "2.2.3"
-    val logback          = "1.0.13"
-    val commonsCodec     = "1.5"
-    val scalazon         = "0.5"
-    val argot            = "1.0.1"
+    val spray            = "1.3.2"
+    val akka             = "2.3.9"
+    val logback          = "1.1.2"
+    val commonsCodec     = "1.10"
+    val scalazon         = "0.10"
+    val argot            = "1.0.2"
 
     // Scala (test only)
     // Using the newest version of spec (2.3.6) causes
@@ -50,15 +50,15 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val mimepull         = "org.jvnet.mimepull"    %  "mimepull"                  % V.mimepull
+    val mimepull         = "org.jvnet.mimepull"    % "mimepull"                   % V.mimepull
     val awsSdk           = "com.amazonaws"         % "aws-java-sdk"               % V.awsSdk
 
     // Scala
     val snowplowRawEvent = "com.snowplowanalytics" %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val collectorPayload = "com.snowplowanalytics" %  "collector-payload-1"       % V.collectorPayload
-    val argot            = "org.clapper"           %% "argot"                     % V.argot
-    val sprayCan         = "io.spray"              %  "spray-can"                 % V.spray
-    val sprayRouting     = "io.spray"              %  "spray-routing"             % V.spray
+    val argot            = "org.clapper"           %  "argot_2.10"                % V.argot
+    val sprayCan         = "io.spray"              %% "spray-can"                 % V.spray
+    val sprayRouting     = "io.spray"              %% "spray-routing"             % V.spray
     val akkaActor        = "com.typesafe.akka"     %% "akka-actor"                % V.akka
     val akkaSlf4j        = "com.typesafe.akka"     %% "akka-slf4j"                % V.akka
     val logback          = "ch.qos.logback"        %  "logback-classic"           % V.logback
@@ -67,6 +67,6 @@ object Dependencies {
 
     // Scala (test only)
     val specs2           = "org.specs2"            %% "specs2"                    % V.specs2   % "test"
-    val sprayTestkit     = "io.spray"              %  "spray-testkit"             % V.spray    % "test"
+    val sprayTestkit     = "io.spray"              %% "spray-testkit"             % V.spray    % "test"
   }
 }

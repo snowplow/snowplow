@@ -77,7 +77,7 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
 
     // Construct an event object from the request.
     val timestamp: Long = System.currentTimeMillis
-
+    
     val event = new CollectorPayload(
       "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
       ip,
