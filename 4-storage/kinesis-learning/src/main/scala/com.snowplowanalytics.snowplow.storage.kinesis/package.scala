@@ -23,6 +23,9 @@ package com.snowplowanalytics.snowplow.storage.kinesis
 import scalaz._
 import Scalaz._
 
+// BigQuery
+import com.google.api.services.bigquery.model.TableRow
+
 package object bigquery{
 
   /**
@@ -30,5 +33,11 @@ package object bigquery{
    * created from a Kinesis Record and used to create a Bigquery TableRow.
    */
   type IntermediateRecord = List[(String, String, String)]
+
+  /**
+   * Alias for TableRow class from bigquery library. Objects of this type are the 
+   * outputs and inputs of the transformer and transmitter respectively.
+   */
+  type BigQueryTableRow = TableRow
 }
 
