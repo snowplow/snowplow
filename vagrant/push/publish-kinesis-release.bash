@@ -146,7 +146,7 @@ function build_artifact() {
 		done
 
 	artifact_path=./${dist_path}/${artifact_name}
-	zip -r ${artifact_path} ${artifact_folder}
+	zip -rj ${artifact_path} ${artifact_folder}
 	eval ${__out_artifact_name}=${artifact_name}
 	eval ${__out_artifact_path}=${artifact_path}
 }
