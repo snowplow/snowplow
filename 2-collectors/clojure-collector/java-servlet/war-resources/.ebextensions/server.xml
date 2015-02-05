@@ -68,6 +68,7 @@
     <Connector port="8080" maxHttpHeaderSize="65536" protocol="HTTP/1.1"
                connectionTimeout="20000"
                redirectPort="8443"
+               URIEncoding="UTF-8"
                enableLookups="true" />
     <!-- A "Connector" using the shared thread pool-->
     <!--
@@ -133,6 +134,7 @@
              Note: The pattern used ensures that the access log format matches that produced by the Cloudfront Collector. (So that the same ETL process can be employed for both collectors.) -->
         <Valve className="com.snowplowanalytics.snowplow.collectors.clojure.SnowplowAccessLogValve" directory="logs"
                prefix="localhost_access_log" suffix=".txt" rotatable="false" requestAttributesEnabled="true"
+               encoding="UTF-8"
                pattern="%{yyyy-MM-dd}t&#9;%{HH:mm:ss}t&#9;-&#9;%b&#9;%a&#9;%m&#9;%h&#9;%U&#9;%s&#9;%{Referer}i&#9;%{User-Agent}I&#9;%q&amp;cv=clj-0.10.0-%v&amp;nuid=%{sp}C&#9;-&#9;-&#9;-&#9;%~&#9;%w" />
 
 

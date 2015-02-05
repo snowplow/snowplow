@@ -161,7 +161,7 @@ public class SnowplowAccessLogValve extends AbstractAccessLogValve {
      * system default character set will be used. An empty string will be
      * treated as <code>null</code> when this property is assigned.
      */
-    protected String encoding = null;
+    protected String encoding = ProjectSettings.DEFAULT_ENCODING;
 
     // ------------------------------------------------------------- Properties
 
@@ -340,8 +340,6 @@ public class SnowplowAccessLogValve extends AbstractAccessLogValve {
     public void setEncoding(String encoding) {
         if (encoding != null && encoding.length() > 0) {
             this.encoding = encoding;
-        } else {
-            this.encoding = null;
         }
     }
 
@@ -579,7 +577,7 @@ public class SnowplowAccessLogValve extends AbstractAccessLogValve {
             }
         }
         if (charset == null) {
-            charset = StandardCharsets.ISO_8859_1;
+            charset = StandardCharsets.UTF_8;
         }
 
         try {
