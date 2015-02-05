@@ -31,15 +31,15 @@ object Dependencies {
     val httpClient           = "4.3.1"
     val jacksonCore          = "2.3.0"
     val slf4j                = "1.7.5"
-    val awsSdk               = "1.6.11"
-    val kinesisClient        = "1.0.0"
+    val awsSdk               = "1.9.7"
+    val kinesisClient        = "1.2.0"
     // Scala
     val argot                = "1.0.1"
     val config               = "1.0.2"
     val scalaUtil            = "0.1.0"
     val snowplowRawEvent     = "0.1.0"
     val snowplowCommonEnrich = "0.11.0"
-    val scalazon             = "0.5"
+    val scalazon             = "0.10"
     val scalaz7              = "7.0.0"
     val igluClient           = "0.1.1"
     // Scala (test only)
