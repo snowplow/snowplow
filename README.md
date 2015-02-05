@@ -1,5 +1,7 @@
 # Snowplow
 
+[ ![Build Status] [travis-image] ] [travis]
+
 <img src="https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-logo-large.png"
  alt="Snowplow logo" title="Snowplow" align="right" />
 
@@ -94,3 +96,5 @@ limitations under the License.
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-SnowPlow
 [roadmap]: https://github.com/snowplow/snowplow/wiki/Product-roadmap
 [contributing]: https://github.com/snowplow/snowplow/wiki/Contributing
+[travis-image]: https://travis-ci.org/snowplow/snowplow.png?branch=master
+[travis]: http://travis-ci.org/snowplow/snowplow

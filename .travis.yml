@@ -1,0 +1,6 @@
+language: scala
+scala:
+  - 2.10.1
+script:
+  - cd 3-enrich/scala-common-enrich
+  - sbt test
