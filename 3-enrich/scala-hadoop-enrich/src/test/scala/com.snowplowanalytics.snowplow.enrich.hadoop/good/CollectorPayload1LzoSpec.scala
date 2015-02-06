@@ -16,6 +16,7 @@ package good
 
 // Scala
 import scala.collection.mutable.Buffer
+import scala.collection.JavaConversions._
 
 // Specs2
 import org.specs2.mutable.Specification
@@ -48,7 +49,7 @@ object CollectorPayload1LzoSpec {
     "UTF-8",
     "collector"
   )
-  
+  collectorPayload.setHeaders(List("X-Forwarded-For: 123.123.123.123, 345.345.345.345"))
   collectorPayload.setPath("/i")
   collectorPayload.setHostname("localhost")
   collectorPayload.setQuerystring(payloadData)
@@ -77,7 +78,7 @@ object CollectorPayload1LzoSpec {
     "collector",
     EtlVersion,
     null, // No user_id set
-    "255.255.255.x",
+    "123.123.123.x",
     "2071613637",
     "44082d3af0e30126",
     "2",
