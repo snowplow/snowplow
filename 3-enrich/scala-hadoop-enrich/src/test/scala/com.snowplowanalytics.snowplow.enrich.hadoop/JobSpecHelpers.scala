@@ -253,7 +253,7 @@ object JobSpecHelpers {
                 |}  
               |},
               |{
-                |"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-0",
+                |"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-1",
                 |"data": {
                   |"vendor": "com.snowplowanalytics.snowplow",
                   |"name": "campaign_attribution",
@@ -268,8 +268,18 @@ object JobSpecHelpers {
                       |"mktCampaign": ["utm_campaign", "cid", "legacy_campaign"]
                     |}
                   |}
-                |}  
-              |},              
+                |}
+              |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/user_agent_utils_config/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "user_agent_utils_config",
+                  |"enabled": true,
+                  |"parameters": {
+                  |}
+                |}
+              |},
               |{
                 |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
                 |"data": {
@@ -279,8 +289,8 @@ object JobSpecHelpers {
                   |"parameters": {
                     |"internalDomains": ["www.subdomain1.snowplowanalytics.com"]
                   |}
-                |}  
-              |}              
+                |}
+              |}
             |]
           |}""".format(anonOctetsEnabled, anonOctets, lookups.map(getLookupJson(_)).mkString(",\n")).stripMargin.replaceAll("[\n\r]","").getBytes
       ))
