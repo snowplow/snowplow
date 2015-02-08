@@ -53,11 +53,10 @@ object JsonUtils {
   private val JsonSchemaDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   /**
-   * Decodes a URL-encoded String then validates
-   * it as correct JSON.
+   * Validates a String as correct JSON.
    */
-  val extractUrlEncJson: (Int, String, String, String) => Validation[String, String] = (maxLength, enc, field, str) =>
-    CU.decodeString(enc, field, str).flatMap(json => validateAndReformatJson(maxLength, field, json))
+  val extractJson: (Int, String, String) => Validation[String, String] = (maxLength, field, str) =>
+    validateAndReformatJson(maxLength, field, str)
 
   /**
    * Decodes a Base64 (URL safe)-encoded String then
@@ -243,19 +242,4 @@ object JsonUtils {
     .replaceAll("\\p{Cntrl}", "") // Any other control character
     .trim
   }
-
-  /**
-   * Encodes every (key -> value) in the supplied
-   * JSON Object.  Will only attempt to encode values
-   * of type String.
-   *
-   * @param enc The encoding to be used
-   * @param json The json which we will be encoding
-   * @return an updated json which has been correctly
-   *         encoded.
-   */
-  def encodeJsonObject(enc: String, json: JValue): JValue =
-    json transformField {
-      case (key, JString(value)) => (CU.encodeString(enc, key), JString(CU.encodeString(enc, value)))
-    }
 }
