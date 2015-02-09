@@ -171,6 +171,9 @@ CREATE TABLE atomic.events (
 	-- ETL tags
 	etl_tags varchar(500) encode raw,                  -- Added in 0.5.0
 
+	-- Time event was sent
+	dvce_sent_tstamp timestamp,                        -- Added in 0.5.0
+
 	-- Derived contexts
 	derived_contexts varchar(10000) encode raw,        -- Added in 0.5.0
 

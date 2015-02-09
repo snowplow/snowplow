@@ -171,6 +171,9 @@ CREATE TABLE atomic.events (
 	-- ETL tags
 	etl_tags varchar(500) encode raw,                  -- Added in 0.5.0
 
+	-- Time event was sent
+	dvce_sent_tstamp timestamp,                        -- Added in 0.5.0
+
 	-- Derived contexts
 	derived_contexts varchar(10000) encode raw,        -- Added in 0.5.0
 
@@ -302,5 +305,6 @@ INSERT INTO atomic.events
 	NULL AS mkt_clickid,                  -- Added in 0.5.0
 	NULL AS mkt_network,                  -- Added in 0.5.0
 	NULL AS etl_tags,                     -- Added in 0.5.0
+	NULL AS dvce_sent_tstamp,             -- Added in 0.5.0
 	NULL AS derived_contexts              -- Added in 0.5.0
 	FROM atomic.events_040;
