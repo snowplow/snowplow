@@ -216,6 +216,9 @@ class EnrichedEvent {
   // ETL tags
   @BeanProperty var etl_tags: String = _
 
+  // Time event was sent
+  @BeanProperty var dvce_sent_tstamp: String = _
+
   // Derived contexts
   @BeanProperty var derived_contexts: String = _
 }
