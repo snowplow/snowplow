@@ -122,6 +122,7 @@ object EnrichmentManager {
           ("fp"      , (ME.toTsvSafe, "user_fingerprint")),
           ("vid"     , (CU.stringToJInteger, "domain_sessionidx")),
           ("dtm"     , (EE.extractTimestamp, "dvce_tstamp")),
+          ("stm"     , (EE.extractTimestamp, "dvce_sent_tstamp")),
           ("tna"     , (ME.toTsvSafe, "name_tracker")),
           ("tv"      , (ME.toTsvSafe, "v_tracker")),
           ("cv"      , (ME.toTsvSafe, "v_collector")),
