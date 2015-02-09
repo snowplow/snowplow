@@ -88,6 +88,12 @@ module Snowplow
           end
         end
 
+        # Add custom bootstrap actions
+        bootstrap_actions = config[:emr][:bootstrap]
+        bootstrap_actions.each do |bootstrap_action|
+          @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_action))
+        end
+
         # Install and launch HBase
         hbase = config[:emr][:software][:hbase]
         unless not hbase
