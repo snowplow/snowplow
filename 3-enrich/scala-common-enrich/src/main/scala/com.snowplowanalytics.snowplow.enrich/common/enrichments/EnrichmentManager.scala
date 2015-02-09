@@ -175,7 +175,8 @@ object EnrichmentManager {
           // Ecommerce transaction items
           ("ti_id"   , (ME.toTsvSafe, "ti_orderid")),
           ("ti_sk"   , (ME.toTsvSafe, "ti_sku")),
-          ("ti_na"   , (ME.toTsvSafe, "ti_name")),
+          ("ti_na"   , (ME.toTsvSafe, "ti_name")),       // ERROR in Tracker Protocol
+          ("ti_nm"   , (ME.toTsvSafe, "ti_name")),
           ("ti_ca"   , (ME.toTsvSafe, "ti_category")),
           ("ti_pr"   , (CU.stringToDoublelike, "ti_price")),
           ("ti_qu"   , (ME.toTsvSafe, "ti_quantity")),
