@@ -166,6 +166,8 @@ CREATE TABLE "atomic"."events" (
 	"mkt_network" varchar(64),              -- Added in 0.4.0
 	-- ETL tags
 	"etl_tags" varchar(500),                -- Added in 0.4.0
+	-- Time event was sent
+	"dvce_sent_tstamp" timestamp,           -- Added in 0.4.0
 	-- Derived contexts
 	"derived_contexts" json                 -- Added in 0.4.0
                                             -- Removed primary key constraint on event_id
@@ -295,6 +297,7 @@ INSERT INTO atomic.events
 	NULL AS "mkt_clickid",                  -- Added in 0.4.0
 	NULL AS "mkt_network",                  -- Added in 0.4.0
 	NULL AS "etl_tags",                     -- Added in 0.4.0
+	NULL AS "dvce_sent_tstamp",             -- Added in 0.4.0
 	NULL AS "derived_contexts"              -- Added in 0.4.0
 
     FROM atomic.events_030;

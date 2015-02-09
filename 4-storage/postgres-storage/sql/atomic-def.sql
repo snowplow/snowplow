@@ -164,6 +164,8 @@ CREATE TABLE "atomic"."events" (
 	"mkt_network" varchar(64),              -- Added in 0.4.0
 	-- ETL tags
 	"etl_tags" varchar(500),                -- Added in 0.4.0
+	-- Time event was sent
+	"dvce_sent_tstamp" timestamp,           -- Added in 0.4.0
 	-- Derived contexts
 	"derived_contexts" json                 -- Added in 0.4.0
                                             -- Removed primary key constraint on event_id
