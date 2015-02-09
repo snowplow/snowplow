@@ -1,5 +1,44 @@
-Release 60 Bee Hummingbird (15-02-03)
--------------------------------------
+Release 61 Pygmy Parrot (2015-02-XX)
+------------------------------------
+Common: added Gradle to up.playbooks (#1270)
+Clojure Collector: bumped to 0.10.0                                            - TODO, we should change to 1.0.0
+Clojure Collector: updated access log filenames to include timestamp (#1398)   - TODO
+Clojure Collector: updated access-valve to depend on Tomcat 8 classes (#1203)
+Clojure Collector: updated .ebextensions to depend on Tomcat 8 (#1202)
+Clojure Collector: added ability to disable third-party cookies (#1362)
+Clojure Collector: added CORS support (#1146)
+Clojure Collector: added CORS-style support for ActionScript3 Tracker (#1330)
+Clojure Collector: added support for /:vendor/:version to HEAD (#1166)
+Clojure Collector: now using UTF-8 for character encoding throughout (#1354)
+Scala Common Enrich: bumped to 0.12.0
+Scala Common Enrich: Base64 decoding does not specify UTF-8 charset (#1403)
+Scala Common Enrich: removed incorrect extra layer of URL decoding from non-Bas64-encoded JSONs (#1396)
+Scala Common Enrich: added support for ti_nm for transaction item name as well as ti_na (#1401)
+Scala Common Enrich: added CloudfrontAccessLogAdapter (#1282)                                          - TODO (fblundun)
+Scala Hadoop Enrich: bumped to 0.13.0
+Scala Hadoop Enrich: bump Scala Common Enrich to 0.12.0 (#1395)
+Scala Hadoop Enrich: added test for non-Base64-encoded JSON (#1394)
+Scala Hadoop Enrich: updated tests to include Unicode (#1390)
+EmrEtlRunner: bumped to 0.12.0
+EmrEtlRunner: appended region name to raw event files (#1379)                                          - TODO
+EmrEtlRunner: added support for moving and archiving timestamped Clojure Collector access logs (#1400) - TODO
+EmrEtlRunner: now appending rather than prepending instance names to raw event files (#1404)           - TODO
+EmrEtlRunner: added dedicated return code for no files to process (#1397)
+EmrEtlRunner: now allowing tsv/*/* and json/*/* as :etl:collector_format (#1284)                       - TODO (fblundun)
+StorageLoader: updated shell script to only run StorageLoader if EmrEtlRunner found files (#1399)
+StorageLoader: wrote JSON Path file for a com.snowplowanalytics.snowplow/flash_context (#1305)
+StorageLoader: wrote JSON Path file for a com.snowplowanalytics.snowplow/timing event (#1388)
+StorageLoader: wrote JSON Path file for a com.amazon.aws.cloudfront/wd_access_log event (#1285)        - TODO (fblundun)
+StorageLoader: wrote JSON Path file for a com.google.analytics/cookies context (#1409)
+StorageLoader: wrote JSON Path file for a com.snowplowanalytics.snowplow/desktop_context (#1421)
+Redshift: added Redshift DDL for a com.snowplowanalytics.snowplow/timing event (#1387)
+Redshift: added Redshift DDL for a com.snowplowanalytics.snowplow/flash_context (#1304)
+Redshift: added Redshift DDL for a com.amazon.aws.cloudfront/wd_access_log event (#1286)               - TODO (fblundun)
+Redshift: added Redshift DDL for a com.google.analytics/cookies context (#1408)
+Redshift: added Redshift DDL for a com.snowplowanalytics.snowplow/desktop_context (#1420)
+
+Release 60 Bee Hummingbird (2015-02-03)
+---------------------------------------
 Common: added VERSION file in root to assist vagrant push (#1293)
 Common: added vagrant push scripting to publish Kinesis apps (#1288)
 Common: added lzo.yml to up.playbooks (#1325)
