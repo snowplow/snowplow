@@ -26,7 +26,7 @@
   :placement: ADD HERE     # Set this if not running in VPC. Leave blank otherwise
   :ec2_subnet_id: ADD HERE # Set this if running in VPC. Leave blank otherwise
   :ec2_key_name: ADD HERE
-  :bootstrap: ADD HERE     # Set this to specify a custom boostrap action. Leave blank otherwise
+  :bootstrap: []           # Set this to specify custom boostrap actions. Leave empty otherwise
   :software:
     :hbase:                # To launch on cluster, provide version, "0.92.0", keep quotes
     :lingual:              # To launch on cluster, provide version, "1.1", keep quotes
