@@ -74,7 +74,7 @@ object EnrichmentManager {
     // Let's start populating the CanonicalOutput
     // with the fields which cannot error
     val event = new EnrichedEvent().tap { e =>
-      e.collector_tstamp = EE.toTimestamp(raw.context.timestamp)
+      e.collector_tstamp = raw.context.timestamp.map(EE.toTimestamp).getOrElse(null)
       e.event_id = EE.generateEventId      // May be updated later if we have an `eid` parameter
       e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
