@@ -44,7 +44,7 @@ object CollectorPayload {
     sourceName: String,
     sourceEncoding: String,
     sourceHostname: Option[String],
-    contextTimestamp: DateTime,
+    contextTimestamp: Option[DateTime],
     contextIpAddress: Option[String],
     contextUseragent: Option[String],
     contextRefererUri: Option[String],
@@ -117,7 +117,7 @@ final case class CollectorSource(
  * Context derived by the collector.
  */
 final case class CollectorContext(
-  timestamp:   DateTime,       // Must have a timestamp
+  timestamp:   Option[DateTime],       // Must have a timestamp
   ipAddress:   Option[String],
   useragent:   Option[String],
   refererUri:  Option[String],
