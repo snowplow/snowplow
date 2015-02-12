@@ -66,7 +66,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   object Shared {
     val api = CollectorApi("com.mailchimp", "v1")
     val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
-    val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00"), "37.157.33.123".some, None, None, Nil, None)
+    val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00").some, "37.157.33.123".some, None, None, Nil, None)
   }
 
   val ContentType = "application/x-www-form-urlencoded"
@@ -208,9 +208,9 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
                   |"merges":{
                     |"LNAME":"Beemster",
                     |"FNAME":"Joshua",
-                    |"EMAIL":"josh%40snowplowanalytics.com"
+                    |"EMAIL":"josh@snowplowanalytics.com"
                   |},
-                  |"email":"josh%40snowplowanalytics.com",
+                  |"email":"josh@snowplowanalytics.com",
                   |"list_id":"f1243a3b12",
                   |"email_type":"html",
                   |"reason":"manual",
@@ -218,7 +218,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
                   |"action":"unsub",
                   |"web_id":"203740265"
                 |},
-                |"fired_at":"2014-10-22T13%3A10%3A40.000Z",
+                |"fired_at":"2014-10-22T13:10:40.000Z",
                 |"type":"unsubscribe"
               |}
             |}

@@ -1,0 +1,26 @@
+{
+  "jsonpaths": [
+  
+    "$.schema.vendor",
+    "$.schema.name",
+    "$.schema.format",
+    "$.schema.version",
+
+    "$.hierarchy.rootId",
+    "$.hierarchy.rootTstamp",
+    "$.hierarchy.refRoot",
+    "$.hierarchy.refTree",
+    "$.hierarchy.refParent",
+
+    "$.data.playerType",
+    "$.data.version",
+    "$.data.stageSize.width",
+    "$.data.stageSize.height",
+    "$.data.isDebugger",
+    "$.data.hasLocalStorage",
+    "$.data.hasScriptAccess",
+    "$.data.domainSessionIndex",
+    "$.data.domainUserId",
+    "$.data.userFingerprint"
+    ]
+}

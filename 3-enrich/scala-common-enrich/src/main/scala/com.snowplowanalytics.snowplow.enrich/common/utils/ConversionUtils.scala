@@ -21,6 +21,7 @@ import java.lang.{Integer => JInteger}
 import java.math.{BigDecimal => JBigDecimal}
 import java.lang.{Byte => JByte}
 import java.util.UUID
+import java.nio.charset.StandardCharsets.UTF_8
 
 // Scala
 import scala.util.Try
@@ -145,7 +146,7 @@ object ConversionUtils {
     try {
       val decoder = new Base64(true) // true means "url safe"
       val decodedBytes = decoder.decode(str)
-      val result = new String(decodedBytes)
+      val result = new String(decodedBytes, UTF_8) // Must specify charset (EMR uses US_ASCII)
       result.success
     } catch {
       case e =>

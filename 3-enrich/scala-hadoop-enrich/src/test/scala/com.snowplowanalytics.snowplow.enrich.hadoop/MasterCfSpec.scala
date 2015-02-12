@@ -48,12 +48,13 @@ object MasterCfLinesSpec {
               good.CampaignAttributionCfLineSpec.lines ++ // 1 good
               good.StructEventCfLineSpec.lines ++         // 1 good
               good.UnstructEventCfLineSpec.lines ++       // 1 good
+              good.UnstructEventCfLineSpec.lines ++       // 1 good
               good.TransactionCfLineSpec.lines ++         // 1 good
-              good.TransactionItemCfLineSpec.lines ++     // 1 good = 14 GOOD
+              good.TransactionItemCfLineSpec.lines ++     // 1 good = 15 GOOD
               misc.DiscardableCfLinesSpec.lines           // 2 discarded
 
   object expected {
-    val goodCount = 14
+    val goodCount = 15
     val badCount = 8
   }
 }
@@ -66,11 +67,11 @@ object MasterCfLinesSpec {
  */
 class MasterCfLinesSpec extends Specification {
 
-  "A job which processes a CloudFront file containing 13 valid events, 6 bad lines and 3 discardable lines" should {
+  "A job which processes a CloudFront file containing 15 valid events, 6 bad lines and 3 discardable lines" should {
     EtlJobSpec("cloudfront", "1", false, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), MasterCfLinesSpec.lines).
       sink[String](Tsv("outputFolder")){ output =>
-        "write 14 events" in {
+        "write 15 events" in {
           output.size must_== MasterCfLinesSpec.expected.goodCount
         }
       }.
