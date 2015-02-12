@@ -115,7 +115,7 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
           body         = None,
           contentType  = None,
           source       = CollectorSource(Expected.collector, Expected.encoding, None),
-          context      = CollectorContext(timestamp, ipAddress, userAgent, refererUri, Nil, None)          
+          context      = CollectorContext(timestamp.some, ipAddress, userAgent, refererUri, Nil, None)
           )
     
         canonicalEvent must beSuccessful(expected.some)

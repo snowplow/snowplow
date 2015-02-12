@@ -76,7 +76,7 @@ class CljTomcatLoaderSpec extends Specification with DataTables with ValidationM
           contentType  = contentType,
           body         = body,
           source       = CollectorSource(Expected.collector, Expected.encoding, None),
-          context      = CollectorContext(timestamp, Expected.ipAddress, userAgent, refererUri, Nil, None)
+          context      = CollectorContext(timestamp.some, Expected.ipAddress, userAgent, refererUri, Nil, None)
           )
     
         canonicalEvent must beSuccessful(expected.some)

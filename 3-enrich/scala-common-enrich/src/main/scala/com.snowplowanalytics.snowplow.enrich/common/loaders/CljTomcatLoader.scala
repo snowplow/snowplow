@@ -93,7 +93,7 @@ object CljTomcatLoader extends Loader[String] {
           CollectorName,
           CollectorEncoding,
           None, // No hostname for CljTomcat
-          t,
+          Some(t),
           CloudfrontLoader.toOption(ip),
           CloudfrontLoader.toOption(ua),
           CloudfrontLoader.toOption(refr),
