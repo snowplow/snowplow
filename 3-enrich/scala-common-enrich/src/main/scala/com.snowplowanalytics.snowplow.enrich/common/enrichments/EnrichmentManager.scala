@@ -224,12 +224,12 @@ object EnrichmentManager {
 
       // Set the URL components
       val components = CU.explodeUri(u)
-      event.page_urlscheme = components.scheme
-      event.page_urlhost = components.host
-      event.page_urlport = components.port
-      event.page_urlpath = components.path.orNull
-      event.page_urlquery = components.query.orNull
-      event.page_urlfragment = components.fragment.orNull
+        event.page_urlscheme = components.scheme
+        event.page_urlhost = components.host
+        event.page_urlport = components.port
+        event.page_urlpath = components.path.orNull
+        event.page_urlquery = components.query.orNull
+        event.page_urlfragment = components.fragment.orNull
     }
 
     // If our IpToGeo enrichment is enabled,
@@ -264,11 +264,43 @@ object EnrichmentManager {
       }
     }
 
-    // Finally anonymize the IP address
+    // To anonymize the IP address
     Option(event.user_ipaddress).map(ip => event.user_ipaddress = registry.getAnonIpEnrichment match {
       case Some(anon) => anon.anonymizeIp(ip)
       case None => ip
     })
+
+    // For Currency Conversion Enrichment
+    val trTax      = CU.stringToMaybeDouble("tr_tx", event.tr_tax )
+    val tiPrice    = CU.stringToMaybeDouble("ti_pr", event.ti_price)
+    val trTotal    = CU.stringToMaybeDouble("tr_tt", event.tr_total )
+    val trShipping = CU.stringToMaybeDouble("tr_sh", event.tr_shipping)
+
+    // Finalize the currency conversion
+    val currency = {
+      registry.getCurrencyConversionEnrichment match {
+        case Some(currency) => {
+          event.currency_base = currency.baseCurrency
+          var convertedCu = (trTotal |@| trTax |@| trShipping |@| tiPrice) { 
+            currency.convertCurrencies(Option(event.tr_currency), _, _, _, Option(event.ti_currency), _, Option(raw.context.timestamp))
+          }  
+          convertedCu match {
+            // TODO: clean this pattern match up
+            case Success(len) =>  {
+              for(arr <- len){
+                val (total, tax, shipping, price) = arr
+                event.tr_total_base = total.orNull
+                event.tr_tax_base = tax.orNull
+                event.tr_shipping_base = shipping.orNull
+                event.ti_price_base = price.orNull
+              }                    
+            }    
+          }
+          convertedCu
+        } 
+        case None => unitSuccess                              
+      }
+    }
 
     // Potentially set the referrer details and URL components
     val refererUri = CU.stringToUri(event.page_referrer)
@@ -330,15 +362,16 @@ object EnrichmentManager {
     event.se_label = CU.truncate(event.se_label, 255)
 
     // Collect our errors on Failure, or return our event on Success
-    (useragent.toValidationNel    |@|
-      client.toValidationNel      |@|
-      pageUri.toValidationNel     |@|
-      geoLocation.toValidationNel |@|
-      refererUri.toValidationNel  |@|
-      transform                   |@|
-      secondPassTransform         |@|
+    (useragent.toValidationNel                |@|
+      client.toValidationNel                  |@|
+      pageUri.toValidationNel                 |@|
+      geoLocation.toValidationNel             |@|
+      refererUri.toValidationNel              |@|
+      transform                               |@|
+      currency.toValidationNel               |@|
+      secondPassTransform                     |@|
       campaign) {
-      (_,_,_,_,_,_,_,_) => event
+      (_,_,_,_,_,_,_,_,_) => event
     }
   }
 }

@@ -42,9 +42,15 @@ import registry.{
   AnonIpEnrichment,
   IpLookupsEnrichment,
   RefererParserEnrichment,
-  CampaignAttributionEnrichment
+  CampaignAttributionEnrichment,
+  CurrencyConversionEnrichment
 }
+
+// CurrencyConversionEnrichmentConfig
+import registry.CurrencyConversionEnrichmentConfig
+
 import utils.ScalazJson4sUtils
+
 
 /**
  * Companion which holds a constructor
@@ -125,7 +131,9 @@ object EnrichmentRegistry {
             RefererParserEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)            
           } else if (nm == "campaign_attribution") {
             CampaignAttributionEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)            
-          } else {
+          } else if (nm == "currency_conversion_config") {
+            CurrencyConversionEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          }else {
             None.success // Enrichment is not recognized yet
           }
         })
@@ -184,6 +192,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getCampaignAttributionEnrichment: Option[CampaignAttributionEnrichment] = 
     getEnrichment[CampaignAttributionEnrichment]("campaign_attribution")
+  
+  /**
+   * Returns an Option boxing the CurrencyConversionEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the CurrencyConversionEnrichment instance
+   */
+  def getCurrencyConversionEnrichment: Option[CurrencyConversionEnrichment] = 
+    getEnrichment[CurrencyConversionEnrichment]("currency_conversion")
 
   /**
    * Returns an Option boxing an Enrichment
