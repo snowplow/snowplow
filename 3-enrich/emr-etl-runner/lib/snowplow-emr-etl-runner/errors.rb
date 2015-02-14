@@ -32,5 +32,10 @@ module Snowplow
     # Raised if a directory is not empty
     class DirectoryNotEmptyError < Error
     end
+
+    # Raised if there is no data to process
+    # Not strictly an error, but used for control flow
+    class NoDataToProcessError < Error
+    end
   end
 end
