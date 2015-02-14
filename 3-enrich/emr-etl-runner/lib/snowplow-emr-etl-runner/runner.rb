@@ -47,8 +47,7 @@ module Snowplow
         # Now our core flow
         unless @args[:skip].include?('staging')
           unless S3Tasks.stage_logs_for_emr(@args, @config)
-            logger.info "No Snowplow logs to process since last run, exiting"
-            exit 0
+            raise NoDataToProcessError, "No Snowplow logs to process since last run"
           end
         end
 
