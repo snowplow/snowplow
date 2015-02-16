@@ -32,6 +32,8 @@ import Scalaz._
  */
 object Loader {
 
+  private val TsvRegex = "^tsv/(.*)$".r
+
   /**
    * Factory to return a CollectorLoader
    * based on the supplied collector
@@ -48,6 +50,7 @@ object Loader {
     case "cloudfront" => CloudfrontLoader.success
     case "clj-tomcat" => CljTomcatLoader.success
     case "thrift"     => ThriftLoader.success // Finally - a data protocol rather than a piece of software
+    case TsvRegex(f)  => TsvLoader(f).success
     case  c           => "[%s] is not a recognised Snowplow event collector".format(c).fail
   }
 }
