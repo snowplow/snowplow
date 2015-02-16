@@ -1,6 +1,7 @@
 # Snowplow
 
 [ ![Build Status] [travis-image] ] [travis]
+[ ![Release] [release-image] ] [releases]
 [ ![License] [license-image] ] [license]
 
 <img src="https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-logo-large.png"
@@ -73,6 +74,9 @@ limitations under the License.
 
 [travis-image]: https://travis-ci.org/snowplow/snowplow.png?branch=master
 [travis]: http://travis-ci.org/snowplow/snowplow
+
+[release-image]: http://img.shields.io/badge/release-61_Pygmy_Parrot-blue.svg?style=flat
+[releases]: https://github.com/snowplow/huskimo/releases
 
 [license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 [license]: http://www.apache.org/licenses/LICENSE-2.0
