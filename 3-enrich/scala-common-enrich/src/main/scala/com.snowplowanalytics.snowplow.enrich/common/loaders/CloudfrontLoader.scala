@@ -131,7 +131,7 @@ object CloudfrontLoader extends Loader[String] {
           CollectorName,
           CollectorEncoding,
           None, // No hostname for CloudFront
-          t,
+          Some(t),
           toOption(ip),
           toOption(userAgent),
           referer,
