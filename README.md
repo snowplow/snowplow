@@ -1,6 +1,7 @@
 # Snowplow
 
 [ ![Build Status] [travis-image] ] [travis]
+[ ![License] [license-image] ] [license]
 
 <img src="https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-logo-large.png"
  alt="Snowplow logo" title="Snowplow" align="right" />
@@ -70,13 +71,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+[travis-image]: https://travis-ci.org/snowplow/snowplow.png?branch=master
+[travis]: http://travis-ci.org/snowplow/snowplow
+
+[license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
+[license]: http://www.apache.org/licenses/LICENSE-2.0
+
 [website]: http://snowplowanalytics.com
 [wiki]: https://github.com/snowplow/snowplow/wiki
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/technical-architecture.png
 [architecture-doc]: https://github.com/snowplow/snowplow/wiki/Technical-architecture
 [talk-to-us]: https://github.com/snowplow/snowplow/wiki/Talk-to-us
 [contributing]: https://github.com/snowplow/snowplow/wiki/Contributing
-[license]: http://www.apache.org/licenses/LICENSE-2.0
+
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-SnowPlow
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/SnowPlow%20technical%20documentation
 [tracker-protocol]: https://github.com/snowplow/snowplow/wiki/snowplow-tracker-protocol
@@ -96,5 +103,4 @@ limitations under the License.
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-SnowPlow
 [roadmap]: https://github.com/snowplow/snowplow/wiki/Product-roadmap
 [contributing]: https://github.com/snowplow/snowplow/wiki/Contributing
-[travis-image]: https://travis-ci.org/snowplow/snowplow.png?branch=master
-[travis]: http://travis-ci.org/snowplow/snowplow
+
