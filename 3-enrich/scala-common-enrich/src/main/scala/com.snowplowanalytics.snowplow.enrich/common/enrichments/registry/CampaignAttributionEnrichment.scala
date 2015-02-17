@@ -25,6 +25,7 @@ import scala.collection.JavaConversions._
 import scala.reflect.BeanProperty
 
 // Utils
+import com.netaporter.uri.Uri
 import org.apache.http.client.utils.URLEncodedUtils
 
 // Maven Artifact
@@ -143,14 +144,19 @@ case class CampaignAttributionEnrichment(
    */
   def extractMarketingFields(uri: URI, encoding: String): ValidationNel[String, MarketingCampaign] = {
 
-    val parameters = try {
-      URLEncodedUtils.parse(uri, encoding)
+    val parameters: Seq[(String, String)] = try {
+      URLEncodedUtils.parse(uri, encoding).map(p => p.getName -> p.getValue)
     } catch {
-      case _ => return "Could not parse uri [%s]".format(uri).failNel[MarketingCampaign]
+        case _: Throwable =>
+          try {
+            Uri.parse(uri.toString).query.params
+          } catch {
+            case _ => return "Could not parse uri [%s]".format(uri).failNel[MarketingCampaign]
+          }
     }
 
     // Querystring map
-    val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
+    val sourceMap: SourceMap = parameters.toMap
 
     val decodeString: TransformFunc = CU.decodeString(encoding, _, _)
 
