@@ -96,6 +96,8 @@ object JobSpecHelpers {
     )
   }
 
+  private val oerApiKey = sys.env.get("OER_KEY").getOrElse("-")
+
   /**
    * User-friendly wrapper to instantiate
    * a BeFieldEqualTo Matcher.
@@ -224,7 +226,7 @@ object JobSpecHelpers {
       })
   }
 
-  def getEnrichments(collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String]): String = {
+  def getEnrichments(collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String], currencyConversionEnabled: Boolean): String = {
     val encoder = new Base64(true) // true means "url safe"
     new String(encoder.encode(
        """|{
@@ -281,6 +283,19 @@ object JobSpecHelpers {
                 |}
               |},
               |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/currency_conversion_config/jsonschema/1-0-0",
+                |"data": {
+                  |"enabled": %s,
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "currency_conversion_config",
+                  |"parameters": {
+                    |"apiKey": "%s",
+                    |"baseCurrency": "EUR",
+                    |"rateAt": "EOD_PRIOR"
+                  |}
+                |}
+              |},
+              |{
                 |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
                 |"data": {
                   |"vendor": "com.snowplowanalytics.snowplow",
@@ -292,12 +307,12 @@ object JobSpecHelpers {
                 |}
               |}
             |]
-          |}""".format(anonOctetsEnabled, anonOctets, lookups.map(getLookupJson(_)).mkString(",\n")).stripMargin.replaceAll("[\n\r]","").getBytes
+          |}""".format(anonOctetsEnabled, anonOctets, lookups.map(getLookupJson(_)).mkString(",\n"), currencyConversionEnabled, oerApiKey).stripMargin.replaceAll("[\n\r]","").getBytes
       ))
   }
 
   // Standard JobSpec definition used by all integration tests
-  val EtlJobSpec: (String, String, Boolean, List[String]) => JobTest = (collector, anonOctets, anonOctetsEnabled, lookups) =>
+  def EtlJobSpec(collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String], currencyConversion: Boolean = false): JobTest =
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob").
       arg("input_folder", "inputFolder").
       arg("input_format", collector).
@@ -305,7 +320,7 @@ object JobSpecHelpers {
       arg("bad_rows_folder", "badFolder").
       arg("etl_tstamp", "1000000000000").      
       arg("iglu_config", IgluConfig).
-      arg("enrichments", getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups))
+      arg("enrichments", getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversion))
 
   case class Sinks(
     val output:     File,
@@ -327,7 +342,7 @@ object JobSpecHelpers {
    *         objects for the output, bad rows
    *         and exceptions temporary directories.
    */
-  def runJobInTool(lines: Lines, collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String]): Sinks = {
+  def runJobInTool(lines: Lines, collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String], currencyConversionEnabled: Boolean = false): Sinks = {
 
     def mkTmpDir(tag: String, createParents: Boolean = false, containing: Option[Lines] = None): File = {
       val f = File.createTempFile(s"scala-hadoop-enrich-${tag}-", "")
@@ -349,7 +364,7 @@ object JobSpecHelpers {
       "--exceptions_folder", exceptions.getAbsolutePath,
       "--etl_tstamp",        "1000000000000",
       "--iglu_config",       IgluConfig,
-      "--enrichments",       getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups))
+      "--enrichments",       getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversionEnabled))
 
     // Execute
     Tool.main(args)
