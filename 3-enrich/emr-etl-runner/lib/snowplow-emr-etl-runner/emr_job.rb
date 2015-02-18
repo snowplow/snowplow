@@ -148,13 +148,15 @@ module Snowplow
 
           # 1. Compaction to HDFS (only for CloudFront currently)
           raw_input = csbr[:processing]
-          enrich_step_input = if config[:etl][:collector_format] == "cloudfront" and s3distcp
+          to_hdfs = (self.class.is_cloudfront_log(config[:etl][:collector_format]) and s3distcp)
+
+          enrich_step_input = if to_hdfs
             "hdfs:///local/snowplow/raw-events/"
           else
             raw_input
           end
 
-          if config[:etl][:collector_format] == "cloudfront" and s3distcp
+          if to_hdfs
             # Create the Hadoop MR step for the file crushing
             compact_to_hdfs_step = Elasticity::S3DistCpStep.new
             compact_to_hdfs_step.arguments = [
@@ -437,6 +439,13 @@ module Snowplow
 
           "#{hours.to_s.rjust(2, '0')}:#{minutes.to_s.rjust(2, '0')}:#{seconds.to_s.rjust(2, '0')}"
         end
+      end
+
+      # Does this collector format represent CloudFront
+      # access logs?
+      Contract String => Bool
+      def self.is_cloudfront_log(collector_format)
+        (collector_format == "cloudfront" or collector_format.start_with?("tsv/com.amazon.aws.cloudfront/"))
       end
 
       # We need to partition our output buckets by run ID
