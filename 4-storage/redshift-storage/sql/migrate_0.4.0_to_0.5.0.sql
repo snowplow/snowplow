@@ -86,7 +86,7 @@ CREATE TABLE atomic.events (
 	mkt_content varchar(500) encode raw,
 	mkt_campaign varchar(255) encode text32k,
 	-- Custom contexts
-	contexts varchar(10000) encode raw,
+	contexts varchar(10000) encode lzo,                -- Changed encoding from raw to lzo in 0.5.0
 	-- Custom structured event
 	se_category varchar(255) encode text255,
 	se_action varchar(255) encode text255,
@@ -94,7 +94,7 @@ CREATE TABLE atomic.events (
 	se_property varchar(255) encode text32k,
 	se_value double precision,
 	-- Custom unstructured event
-	unstruct_event varchar(10000) encode raw,
+	unstruct_event varchar(10000) encode lzo,          -- Changed encoding from raw to lzo in 0.5.0
 	-- Ecommerce
 	tr_orderid varchar(255) encode raw,
 	tr_affiliation varchar(255) encode text255,
@@ -175,7 +175,7 @@ CREATE TABLE atomic.events (
 	dvce_sent_tstamp timestamp,                        -- Added in 0.5.0
 
 	-- Derived contexts
-	derived_contexts varchar(10000) encode raw,        -- Added in 0.5.0
+	derived_contexts varchar(10000) encode lzo,        -- Added in 0.5.0
 
 	CONSTRAINT event_id_040_pk PRIMARY KEY(event_id)
 )
