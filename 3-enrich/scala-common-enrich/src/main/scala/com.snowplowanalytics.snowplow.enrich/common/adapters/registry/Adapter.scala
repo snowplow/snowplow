@@ -177,7 +177,7 @@ trait Adapter {
       "e"     -> "ue",
       "p"     -> qsParams.getOrElse("p", platform), // Required field
       "ue_pr" -> json) ++
-    qsParams.filterKeys(Set("nuid", "aid", "cv"))
+    qsParams.filterKeys(Set("nuid", "aid", "cv", "url"))
   }
 
   /**

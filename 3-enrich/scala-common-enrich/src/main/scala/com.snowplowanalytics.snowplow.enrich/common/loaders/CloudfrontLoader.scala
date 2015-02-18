@@ -24,6 +24,9 @@ import org.apache.commons.lang3.StringUtils
 import org.joda.time.DateTime
 import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
+// This project
+import utils.ConversionUtils.singleEncodePcts
+
 /**
  * The dedicated loader for events
  * collected by CloudFront.
@@ -193,42 +196,4 @@ object CloudfrontLoader extends Loader[String] {
    */
   private[loaders] def toCleanUri(uri: String): String = 
     StringUtils.removeEnd(uri, "%")
-
-  /**
-   * On 17th August 2013, Amazon made an
-   * unannounced change to their CloudFront
-   * log format - they went from always encoding
-   * % characters, to only encoding % characters
-   * which were not previously encoded. For a
-   * full discussion of this see:
-   *
-   * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
-   *
-   * On 14th September 2013, Amazon rolled out a further fix,
-   * from which point onwards all fields, including the
-   * referer and useragent, would have %s double-encoded.
-   *
-   * This causes issues, because the ETL process expects
-   * referers and useragents to be only single-encoded.
-   *
-   * This function turns a double-encoded percent (%) into
-   * a single-encoded one.
-   *
-   * Examples:
-   * 1. "page=Celestial%25Tarot"          -   no change (only single encoded)
-   * 2. "page=Dreaming%2520Way%2520Tarot" -> "page=Dreaming%20Way%20Tarot"
-   * 3. "loading 30%2525 complete"        -> "loading 30%25 complete"
-   *
-   * Limitation of this approach: %2588 is ambiguous. Is it a:
-   * a) A double-escaped caret "ˆ" (%2588 -> %88 -> ^), or:
-   * b) A single-escaped "%88" (%2588 -> %88)
-   *
-   * This code assumes it's a).
-   *
-   * @param str The String which potentially has double-encoded %s
-   * @return the String with %s now single-encoded
-   */
-  private[loaders] def singleEncodePcts(str: String): String =
-    str
-      .replaceAll("%25([0-9a-fA-F][0-9a-fA-F])", "%$1") // Decode %25XX to %XX
 }

@@ -119,7 +119,11 @@ object CloudfrontAccessLogAdapter {
                       } catch {
                         case e: NumberFormatException => buildJson("Field [%s]: cannot convert [%s] to Int".format(name, field) :: errors, tail, json)
                       }
-                    
+                  case (name, field) if name == "csReferer" || name == "csUserAgent" => ConversionUtils.doubleDecode(name, field).fold(
+                    e => buildJson(e :: errors, tail, json),
+                    s => buildJson(errors, tail, json ~ (name, s))
+                    )
+                  case ("csUriQuery", field) => buildJson(errors, tail, json ~ ("csUriQuery", ConversionUtils.singleEncodePcts(field)))
                   case (name, field) => buildJson(errors, tail, json ~ (name, field))
                 }
               }
@@ -140,9 +144,19 @@ object CloudfrontAccessLogAdapter {
                 case nonempty => nonempty.some
               }
 
+              val qsParams: Map[String, String] = schemaCompatibleFields(8) match {
+                case "" => Map()
+                case url => Map("url" -> url)
+              }
+
+              val userAgent = schemaCompatibleFields(9) match {
+                case "" => None
+                case nonempty => ConversionUtils.singleEncodePcts(nonempty).some
+              }
+
               val parameters = toUnstructEventParams(
                 TrackerVersion,
-                Map[String, String](),
+                qsParams,
                 s"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/$v",
                 ueJson,
                 "srv"
@@ -152,7 +166,7 @@ object CloudfrontAccessLogAdapter {
                 parameters   = parameters,
                 contentType  = payload.contentType,
                 source       = payload.source,
-                context      = CollectorContext(tstamp, ip, None, None, Nil, None)
+                context      = CollectorContext(tstamp, ip, userAgent, None, Nil, None)
               ))
             }
           })
@@ -176,6 +190,5 @@ object CloudfrontAccessLogAdapter {
       } catch {
         case e => "Unexpected exception converting Cloudfront web distribution access log date [%s] and time [%s] to timestamp: [%s]".format(date, time, e.getMessage).fail
       }
-
   }
 }

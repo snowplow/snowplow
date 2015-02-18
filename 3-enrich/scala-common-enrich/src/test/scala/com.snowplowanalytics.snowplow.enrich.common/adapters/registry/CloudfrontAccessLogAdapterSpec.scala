@@ -52,16 +52,32 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
   implicit val resolver = SpecHelpers.IgluResolver
   val loader = new TsvLoader("com.amazon.aws.cloudfront/wd_access_log")
 
+  val doubleEncodedUa = "Mozilla/5.0%2520(Macintosh;%2520Intel%2520Mac%2520OS%2520X%252010_9_2)%2520AppleWebKit/537.36%2520(KHTML,%2520like%2520Gecko)%2520Chrome/34.0.1847.131%2520Safari/537.36"
+  val singleEncodedUa = "Mozilla/5.0%20(Macintosh;%20Intel%20Mac%20OS%20X%2010_9_2)%20AppleWebKit/537.36%20(KHTML,%20like%20Gecko)%20Chrome/34.0.1847.131%20Safari/537.36"
+  val unEncodedUa =     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36"
+
+  val doubleEncodedQs = "a=b%2520c"
+  val singleEncodedQs = "a=b%20c"
+
+  val url = "http://snowplowanalytics.com/analytics/index.html"
+
   object Shared {
     val api = CollectorApi("com.amazon.aws.cloudfront", "wd_access_log")
     val source = CollectorSource("tsv", "UTF-8", None)
-    val context = CollectorContext(DateTime.parse("2013-10-07T23:35:30.000Z").some, "255.255.255.255".some, None, None, Nil, None)
+    val context = CollectorContext(
+      DateTime.parse("2013-10-07T23:35:30.000Z").some,
+      "255.255.255.255".some,
+      singleEncodedUa.some,
+      None,
+      Nil,
+      None)
   }
 
   object Expected {
     val staticNoPlatform = Map(
       "tv" -> "com.amazon.aws.cloudfront/wd_access_log",
-      "e"  -> "ue"
+      "e"  -> "ue",
+      "url" -> url
       )
     val static = staticNoPlatform ++ Map(
       "p"  -> "srv"
@@ -70,14 +86,14 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
 
   def e1 = {
 
-    val input = "2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\tj\tk\tl"
+    val input = s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs"
 
     val payload = loader.toCollectorPayload(input)
 
     val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
 
     val expectedJson =
-      """|{
+      s"""|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
             |"data":{
               |"schema":"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/1-0-0",
@@ -90,9 +106,9 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
                 |"csHost":"g",
                 |"csUriStem":"h",
                 |"scStatus":"i",
-                |"csReferer":"j",
-                |"csUserAgent":"k",
-                |"csUriQuery":"l"
+                |"csReferer":"$url",
+                |"csUserAgent":"$unEncodedUa",
+                |"csUriQuery":"$singleEncodedQs"
               |}
             |}
           |}""".stripMargin.replaceAll("[\n\r]","")
@@ -102,14 +118,14 @@ class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with 
 
 def e2 = {
 
-    val input = "2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\tj\tk\tl\tm\tn\to"
+    val input = s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to"
 
     val payload = loader.toCollectorPayload(input)
 
     val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
 
     val expectedJson =
-      """|{
+      s"""|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
             |"data":{
               |"schema":"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/1-0-1",
@@ -122,9 +138,9 @@ def e2 = {
                 |"csHost":"g",
                 |"csUriStem":"h",
                 |"scStatus":"i",
-                |"csReferer":"j",
-                |"csUserAgent":"k",
-                |"csUriQuery":"l",
+                |"csReferer":"$url",
+                |"csUserAgent":"$unEncodedUa",
+                |"csUriQuery":"$singleEncodedQs",
                 |"csCookie":"m",
                 |"xEdgeResultType":"n",
                 |"xEdgeRequestId":"o"
@@ -137,14 +153,14 @@ def e2 = {
 
 def e3 = {
 
-    val input = "2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\tj\tk\tl\tm\tn\to\tp\tq\t90"
+    val input = s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90"
 
     val payload = loader.toCollectorPayload(input)
 
     val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
 
     val expectedJson =
-      """|{
+      s"""|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
             |"data":{
               |"schema":"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/1-0-2",
@@ -157,9 +173,9 @@ def e3 = {
                 |"csHost":"g",
                 |"csUriStem":"h",
                 |"scStatus":"i",
-                |"csReferer":"j",
-                |"csUserAgent":"k",
-                |"csUriQuery":"l",
+                |"csReferer":"$url",
+                |"csUserAgent":"$unEncodedUa",
+                |"csUriQuery":"$singleEncodedQs",
                 |"csCookie":"m",
                 |"xEdgeResultType":"n",
                 |"xEdgeRequestId":"o",
@@ -175,14 +191,14 @@ def e3 = {
 
 def e4 = {
 
-    val input = "2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\tj\tk\tl\tm\tn\to\tp\tq\t90\t0.001"
+    val input = s"2013-10-07\t23:35:30\tc\t100\t255.255.255.255\tf\tg\th\ti\t$url\t$doubleEncodedUa\t$doubleEncodedQs\tm\tn\to\tp\tq\t90\t0.001"
 
     val payload = loader.toCollectorPayload(input)
 
     val actual = payload.map(_.map(CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(_)))
 
     val expectedJson =
-      """|{
+      s"""|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
             |"data":{
               |"schema":"iglu:com.amazon.aws.cloudfront/wd_access_log/jsonschema/1-0-3",
@@ -195,9 +211,9 @@ def e4 = {
                 |"csHost":"g",
                 |"csUriStem":"h",
                 |"scStatus":"i",
-                |"csReferer":"j",
-                |"csUserAgent":"k",
-                |"csUriQuery":"l",
+                |"csReferer":"$url",
+                |"csUserAgent":"$unEncodedUa",
+                |"csUriQuery":"$singleEncodedQs",
                 |"csCookie":"m",
                 |"xEdgeResultType":"n",
                 |"xEdgeRequestId":"o",
@@ -222,7 +238,7 @@ def e4 = {
 
   def e6 = {
     val params = toNameValuePairs()
-    val payload = CollectorPayload(Shared.api, params, None, "a\tb\tc\td\te\tf\tg\th\ti\tj\tk\tl".some, Shared.source, Shared.context)
+    val payload = CollectorPayload(Shared.api, params, None, "a\tb\tc\td\te\tf\tg\th\ti\t$url\tk\t$doubleEncodedQs".some, Shared.source, Shared.context)
     val actual = CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
 
     actual must beFailing(NonEmptyList("Unexpected exception converting Cloudfront web distribution access log date [a] and time [b] to timestamp: [Invalid format: \"aTb+00:00\"]", "Field [scBytes]: cannot convert [d] to Int"))
