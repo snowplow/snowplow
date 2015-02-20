@@ -119,7 +119,9 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
     val CP = config.p3pCP
     val headers = List(
       RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP)),
-      `Set-Cookie`(responseCookie)
+      `Set-Cookie`(responseCookie),
+      RawHeader("Access-Control-Allow-Origin", "http://localhost:8000"), // TODO: allow any origin
+      RawHeader("Access-Control-Allow-Credentials", "true")
     )
 
     val httpResponse = (if (pixelExpected) {
@@ -130,6 +132,11 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
 
     (httpResponse, sinkResponse)
   }
+
+  def preflightResponse() = HttpResponse().withHeaders(List(
+    RawHeader("Access-Control-Allow-Origin","http://localhost:8000"), // TODO: allow any origin
+    RawHeader("Access-Control-Allow-Credentials", "true"),
+    RawHeader("Access-Control-Allow-Headers", "Content-Type")))
 
   def healthy = HttpResponse(status = 200, entity = s"OK")
   def notFound = HttpResponse(status = 404, entity = "404 Not found")
