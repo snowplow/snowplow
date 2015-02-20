@@ -30,6 +30,9 @@ import spray.http.HttpHeaders.{
   `Remote-Address`,
   `Raw-Request-URI`,
   `Content-Type`,
+  `Access-Control-Allow-Origin`,
+  `Access-Control-Allow-Credentials`,
+  `Access-Control-Allow-Headers`,
   RawHeader
 }
 import spray.http.MediaTypes.`image/gif`
@@ -121,7 +124,7 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
       RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP)),
       `Set-Cookie`(responseCookie),
       RawHeader("Access-Control-Allow-Origin", "http://localhost:8000"), // TODO: allow any origin
-      RawHeader("Access-Control-Allow-Credentials", "true")
+      `Access-Control-Allow-Credentials`(true)
     )
 
     val httpResponse = (if (pixelExpected) {
@@ -134,9 +137,9 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
   }
 
   def preflightResponse() = HttpResponse().withHeaders(List(
-    RawHeader("Access-Control-Allow-Origin","http://localhost:8000"), // TODO: allow any origin
-    RawHeader("Access-Control-Allow-Credentials", "true"),
-    RawHeader("Access-Control-Allow-Headers", "Content-Type")))
+    RawHeader("Access-Control-Allow-Origin", "http://localhost:8000"), // TODO: allow any origin
+    `Access-Control-Allow-Credentials`(true),
+    `Access-Control-Allow-Headers`( "Content-Type")))
 
   def healthy = HttpResponse(status = 200, entity = s"OK")
   def notFound = HttpResponse(status = 404, entity = "404 Not found")
