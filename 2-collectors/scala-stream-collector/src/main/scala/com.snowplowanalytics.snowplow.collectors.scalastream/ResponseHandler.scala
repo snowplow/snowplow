@@ -24,12 +24,24 @@ import java.util.UUID
 import org.apache.commons.codec.binary.Base64
 
 // Spray
-import spray.http.{DateTime,HttpRequest,HttpResponse,HttpEntity,HttpCookie}
+import spray.http.{
+  DateTime,
+  HttpRequest,
+  HttpResponse,
+  HttpEntity,
+  HttpCookie,
+  SomeOrigins,
+  AllOrigins
+}
 import spray.http.HttpHeaders.{
   `Set-Cookie`,
   `Remote-Address`,
   `Raw-Request-URI`,
   `Content-Type`,
+  `Origin`,
+  `Access-Control-Allow-Origin`,
+  `Access-Control-Allow-Credentials`,
+  `Access-Control-Allow-Headers`,
   RawHeader
 }
 import spray.http.MediaTypes.`image/gif`
@@ -117,9 +129,12 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
     )
     val policyRef = config.p3pPolicyRef
     val CP = config.p3pCP
+
     val headers = List(
       RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP)),
-      `Set-Cookie`(responseCookie)
+      `Set-Cookie`(responseCookie),
+      getAccessControlAllowOriginHeader(request),
+      `Access-Control-Allow-Credentials`(true)
     )
 
     val httpResponse = (if (pixelExpected) {
@@ -131,7 +146,34 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
     (httpResponse, sinkResponse)
   }
 
+  /**
+   * Creates a response to the CORS preflight Options request
+   *
+   * @param request Incoming preflight Options request
+   * @return Response granting permissions to make the actual request
+   */
+  def preflightResponse(request: HttpRequest) = HttpResponse().withHeaders(List(
+    getAccessControlAllowOriginHeader(request),
+    `Access-Control-Allow-Credentials`(true),
+    `Access-Control-Allow-Headers`( "Content-Type")))
+
   def healthy = HttpResponse(status = 200, entity = s"OK")
   def notFound = HttpResponse(status = 404, entity = "404 Not found")
   def timeout = HttpResponse(status = 500, entity = s"Request timed out.")
+
+  /**
+   * Creates an Access-Control-Allow-Origin header which specifically
+   * allows the domain which made the request
+   *
+   * @param request Incoming request
+   * @return Header
+   */
+  private def getAccessControlAllowOriginHeader(request: HttpRequest) =
+    `Access-Control-Allow-Origin`(request.headers.find(_ match {
+      case `Origin`(origin) => true
+      case _ => false
+    }) match {
+      case Some(`Origin`(origin)) => SomeOrigins(origin)
+      case _ => AllOrigins
+    })
 }

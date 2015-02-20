@@ -21,7 +21,8 @@ import akka.pattern.ask
 import akka.util.Timeout
 
 // Spray
-import spray.http.{Timedout,HttpRequest}
+import spray.http.Timedout
+import spray.http.HttpHeaders.RawHeader
 import spray.routing.HttpService
 
 // Scala
@@ -174,6 +175,11 @@ class CollectorService(
             }
           }
         }
+      }
+    } ~
+    options {
+      requestInstance { request =>
+        complete(responseHandler.preflightResponse(request))
       }
     } ~
     complete(responseHandler.notFound)
