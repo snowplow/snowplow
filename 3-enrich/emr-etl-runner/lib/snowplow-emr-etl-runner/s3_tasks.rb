@@ -69,10 +69,14 @@ module Snowplow
         end
 
         fix_filenames = lambda { |basename, filepath|
+
+          extn = File.extname(basename)
+          name = File.basename(basename, extn)
+
           # Prepend sub-dir to prevent one set of files
           # from overwriting same-named in other sub-dir
           if m = filepath.match('([^/]+)/[^/]+$')
-            return m[1] + '-' + basename
+            return name + '-' + m[1] + extn
           else
             # Hive ignores files which begin with underscores
             if m = basename.match('^_+(.*\.gz)$')
