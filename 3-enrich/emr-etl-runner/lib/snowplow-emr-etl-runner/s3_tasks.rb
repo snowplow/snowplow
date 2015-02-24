@@ -52,6 +52,14 @@ module Snowplow
           raise DirectoryNotEmptyError, "The processing directory is not empty"
         end
 
+        # Early check whether our enrichment directory is empty. We do a late check too
+        unless args[:skip].include?('emr') or args[:skip].include?('enrich')
+          enriched_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:enriched][:good])
+          unless Sluice::Storage::S3::is_empty?(s3, enriched_location)
+            raise DirectoryNotEmptyError, "Should not stage files for enrichment, #{enriched_location} is not empty"
+          end
+        end
+
         # Move the files we need to move (within the date span)
         files_to_move = case
         when (args[:start].nil? and args[:end].nil?)

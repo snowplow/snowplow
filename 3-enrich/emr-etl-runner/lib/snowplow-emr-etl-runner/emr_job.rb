@@ -196,7 +196,7 @@ module Snowplow
             }
           )
 
-          # Late check whether our target directory is empty
+          # Late check whether our enrichment directory is empty. We do an early check too
           csbe_good_loc = Sluice::Storage::S3::Location.new(csbe[:good])
           unless Sluice::Storage::S3::is_empty?(s3, csbe_good_loc)
             raise DirectoryNotEmptyError, "Cannot safely add enrichment step to jobflow, #{csbe_good_loc} is not empty"
