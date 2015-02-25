@@ -13,6 +13,8 @@
 # Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
+require 'date'
+
 require 'sluice'
 
 require 'contracts'
@@ -78,16 +80,32 @@ module Snowplow
 
         fix_filenames = lambda { |basename, filepath|
 
-          extn = File.extname(basename)
-          name = File.basename(basename, extn)
-
           # Prepend sub-dir to prevent one set of files
           # from overwriting same-named in other sub-dir
-          if m = filepath.match('([^/]+)/[^/]+$')
-            # basename-region-instance.extn
-            return name + '-' + config[:s3][:region] + '-' + m[1] + extn
+          if filepath_match = filepath.match('([^/]+)/[^/]+$')
+            instance = filepath_match[1]
+
+            extn = File.extname(basename)
+            name = File.basename(basename, extn)
+
+            # This will convert Beanstalk epoch timestamps to our CloudFront-like yyyy-MM-dd-HH
+            final_name, final_extn =
+              if name_match = name.match(/^_*(.*)\.txt([[:digit:]]+)$/)
+                base, tstamp = name_match.captures
+                begin
+                  tstamp_ymdh = Time.at(tstamp.to_i).utc.to_datetime.strftime("%Y-%m-%d-%H")
+                  [ base + '.' + tstamp_ymdh, '.txt' + extn ]
+                rescue StandardError => e
+                  [ name, extn ]
+                end
+              else
+                [ name, extn ]
+              end
+
+            # Hopefully basename.yyyy-MM-dd-HH.region.instance.txt.gz
+            return final_name + '.' + config[:s3][:region] + '.' + instance + final_extn
           else
-            # Hive ignores files which begin with underscores
+            # Hadoop ignores files which begin with underscores
             if m = basename.match('^_+(.*\.gz)$')
               return m[1]
             else
