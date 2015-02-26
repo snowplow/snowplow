@@ -36,7 +36,9 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_mobile_context_1 (
 	open_idfa           varchar(128)  encode runlength,
 	apple_idfa          varchar(128)  encode runlength,
 	apple_idfv          varchar(128)  encode runlength,
-	android_idfa        varchar(128)  encode runlength
+	android_idfa        varchar(128)  encode runlength,
+	network_type        varchar(6)    encode text255,
+	network_technology  varchar(255)  encode text255
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
