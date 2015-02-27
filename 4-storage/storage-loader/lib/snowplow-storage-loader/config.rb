@@ -38,7 +38,7 @@ module Snowplow
 
         # Load template and evaluate environement variables
         config_template = ERB.new File.new(options[:config]).read
-        config = YAML.load(config_template.result(binding))        
+        config = YAML.load(config_template.result(binding))
 
         # Add in our skip and include settings
         config[:skip] = options[:skip]
