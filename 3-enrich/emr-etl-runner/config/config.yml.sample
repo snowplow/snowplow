@@ -1,5 +1,10 @@
-:logging:
-  :level: DEBUG # You can optionally switch to INFO for production
+:monitoring:
+  :logging:
+    :level: DEBUG             # You can optionally switch to INFO for production
+  :snowplow:
+    :method: POST             # Or GET if you prefer
+    :collector: ADD HERE      # e.g. d3rkrsqld9gmqf.cloudfront.net
+    :app_id: ADD HERE         # e.g. snowplow
 :aws:
   :access_key_id: ADD HERE
   :secret_access_key: ADD HERE
