@@ -15,6 +15,7 @@
 
 require 'optparse'
 require 'yaml'
+require 'erb'
 
 require 'contracts'
 include Contracts
@@ -131,7 +132,8 @@ module Snowplow
           raise ConfigError, "Configuration file '#{config_file}' does not exist, or is not a file\n#{optparse}"
         end
 
-        YAML.load_file(config_file)
+        config_template = ERB.new File.new(config_file).read
+        YAML.load_file(config_template.result(binding))
       end
 
     end
