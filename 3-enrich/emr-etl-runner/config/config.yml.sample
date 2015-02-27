@@ -1,4 +1,6 @@
 :monitoring:
+  :tags:                      # Array of tags to describe this job
+    - prod
   :logging:
     :level: DEBUG             # You can optionally switch to INFO for production
   :snowplow:
