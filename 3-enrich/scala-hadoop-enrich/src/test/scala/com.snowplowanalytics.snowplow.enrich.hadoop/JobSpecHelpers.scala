@@ -296,6 +296,16 @@ object JobSpecHelpers {
                 |}
               |},
               |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/ua_parser_config/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "ua_parser_config",
+                  |"enabled": true,
+                  |"parameters": {
+                  |}
+                |}
+              |},
+              |{
                 |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
                 |"data": {
                   |"vendor": "com.snowplowanalytics.snowplow",
