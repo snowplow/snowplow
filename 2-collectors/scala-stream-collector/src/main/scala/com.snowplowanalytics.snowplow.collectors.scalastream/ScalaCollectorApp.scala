@@ -116,7 +116,7 @@ class CollectorConfig(config: Config) {
 
   private val cookie = collector.getConfig("cookie")
   val cookieExpiration = cookie.getMilliseconds("expiration")
-  var cookieDomain = cookie.getOptionalString("domain")
+  val cookieDomain = cookie.getOptionalString("domain")
 
   private val sink = collector.getConfig("sink")
   // TODO: either change this to ADTs or switch to withName generation

@@ -174,6 +174,6 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
       case _ => false
     }) match {
       case Some(`Origin`(origin)) => SomeOrigins(origin)
-      case None => AllOrigins
+      case _ => AllOrigins
     })
 }
