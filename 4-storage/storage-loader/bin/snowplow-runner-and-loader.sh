@@ -29,7 +29,12 @@ bundle exec ${RUNNER_PATH}/bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG}
 
 # Check the damage
 ret_val=$?
-if [ $ret_val -ne 0 ]; then
+if [ $ret_val -eq 3 ]
+then
+	echo "No Snowplow logs to process since last run, exiting with return code 0. StorageLoader not run"
+	exit 0
+elif [ $ret_val -ne 0 ]
+then
     echo "Error running EmrEtlRunner, exiting with return code ${ret_val}. StorageLoader not run"
     exit $ret_val
 fi

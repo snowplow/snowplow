@@ -45,10 +45,11 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
   "Tp2.toRawEvents should return a NEL containing one RawEvent if only the querystring is populated"                        ! e3^
   "Tp2.toRawEvents should return a NEL containing one RawEvent if the querystring is empty but the body contains one event" ! e4^
   "Tp2.toRawEvents should return a NEL containing three RawEvents consolidating body's events and querystring's parameters" ! e5^
-  "Tp2.toRawEvents should return a Validation Failure if querystring, body and content type are mismatching"                ! e6^
-  "Tp2.toRawEvents should return a Validation Failure if the body is not a self-describing JSON"                            ! e7^
-  "Tp2.toRawEvents should return a Validation Failure if the body is in a JSON Schema other than payload_data"              ! e8^
-  "Tp2.toRawEvents should return a Validation Failure if the body fails payload_data JSON Schema validation"                ! e9^
+  "Tp1.toRawEvents should return a NEL containing one RawEvent if the Content-Type is application/json; charset=UTF-8"      ! e6^
+  "Tp2.toRawEvents should return a Validation Failure if querystring, body and content type are mismatching"                ! e8^
+  "Tp2.toRawEvents should return a Validation Failure if the body is not a self-describing JSON"                            ! e8^
+  "Tp2.toRawEvents should return a Validation Failure if the body is in a JSON Schema other than payload_data"              ! e9^
+  "Tp2.toRawEvents should return a Validation Failure if the body fails payload_data JSON Schema validation"                ! e10^
                                                                                                                             end
 
   implicit val resolver = SpecHelpers.IgluResolver
@@ -61,10 +62,11 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
 
   val ApplicationJson = "application/json"
   val ApplicationJsonWithCharset = "application/json; charset=utf-8"
+  val ApplicationJsonWithCapitalCharset = "application/json; charset=UTF-8"
 
   object Shared {
     val source = CollectorSource("clj-tomcat", "UTF-8", None)
-    val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00"), "37.157.33.123".some, None, None, Nil, None)
+    val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00").some, "37.157.33.123".some, None, None, Nil, None)
   }
 
   def e1 = {
@@ -94,10 +96,10 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
 
   def e5 = {
     val body = toSelfDescJson("""[{"tv":"1","p":"1","e":"1"},{"tv":"2","p":"2","e":"2"},{"tv":"3","p":"3","e":"3"}]""", "payload_data")
-    val payload = CollectorPayload(Snowplow.Tp2, toNameValuePairs("tv" -> "0", "nuid" -> "123"), ApplicationJson.some, body.some, Shared.source, Shared.context)
+    val payload = CollectorPayload(Snowplow.Tp2, toNameValuePairs("tv" -> "0", "nuid" -> "123"), ApplicationJsonWithCapitalCharset.some, body.some, Shared.source, Shared.context)
     val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
 
-    val rawEvent: RawEventParameters => RawEvent = params => RawEvent(Snowplow.Tp2, params, ApplicationJson.some, Shared.source, Shared.context)
+    val rawEvent: RawEventParameters => RawEvent = params => RawEvent(Snowplow.Tp2, params, ApplicationJsonWithCapitalCharset.some, Shared.source, Shared.context)
     actual must beSuccessful(NonEmptyList(
       rawEvent(Map("tv" -> "0", "p" -> "1", "e" -> "1", "nuid" -> "123")),
       rawEvent(Map("tv" -> "0", "p" -> "2", "e" -> "2", "nuid" -> "123")),
@@ -105,7 +107,14 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
     ))
   }
 
-  def e6 =
+  def e6 = {
+    val body = toSelfDescJson("""[{"tv":"ios-0.1.0","p":"mob","e":"se"}]""", "payload_data")
+    val payload = CollectorPayload(Snowplow.Tp2, Nil, ApplicationJsonWithCapitalCharset.some, body.some, Shared.source, Shared.context)
+    val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
+    actual must beSuccessful(NonEmptyList(RawEvent(Snowplow.Tp2, Map("tv" -> "ios-0.1.0", "p" -> "mob", "e" -> "se"), ApplicationJsonWithCapitalCharset.some, Shared.source, Shared.context)))
+  }
+
+  def e7 =
     "SPEC NAME"                               || "IN QUERYSTRING"             | "IN CONTENT TYPE"    | "IN BODY"   | "EXP. FAILURE"                                                                                            |
     "Invalid content type"                    !! Nil                          ! "text/plain".some    ! "body".some ! "Content type of text/plain provided, expected one of: application/json, application/json; charset=utf-8" |
     "Neither querystring nor body populated"  !! Nil                          ! None                 ! None        ! "Request body and querystring parameters empty, expected at least one populated"                          |
@@ -121,7 +130,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
       }
     }
 
-  def e7 = {
+  def e8 = {
     val payload = CollectorPayload(Snowplow.Tp2, toNameValuePairs("aid" -> "test"), ApplicationJson.some, """{"not":"self-desc"}""".some, Shared.source, Shared.context)
     val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
     actual must beFailing(NonEmptyList("""error: object instance has properties which are not allowed by the schema: ["not"]
@@ -143,7 +152,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
 """))
   }
 
-  def e8 = {
+  def e9 = {
     val body = toSelfDescJson("""{"longitude":20.1234}""", "geolocation_context")
     val payload = CollectorPayload(Snowplow.Tp2, Nil, ApplicationJson.some, body.some, Shared.source, Shared.context)
     val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
@@ -152,7 +161,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
 """))
   }
 
-  def e9 =
+  def e10 =
     "SPEC NAME"                    || "IN JSON DATA"                                              | "EXP. FAILURES" |
     "JSON object instead of array" !! "{}"                                                        ! NonEmptyList("""error: instance type (object) does not match any allowed primitive type (allowed: ["array"])
     level: "error"

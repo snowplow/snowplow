@@ -73,7 +73,7 @@ class ThriftLoaderSpec extends Specification with DataTables with ValidationMatc
           body         = None,
           contentType  = None,
           source       = CollectorSource(Expected.collector, Expected.encoding, hostname),
-          context      = CollectorContext(timestamp, ipAddress, userAgent, refererUri, headers, userId)          
+          context      = CollectorContext(timestamp.some, ipAddress, userAgent, refererUri, headers, userId)
           )
 
         canonicalEvent must beSuccessful(expected.some)

@@ -74,7 +74,7 @@ object EnrichmentManager {
     // Let's start populating the CanonicalOutput
     // with the fields which cannot error
     val event = new EnrichedEvent().tap { e =>
-      e.collector_tstamp = EE.toTimestamp(raw.context.timestamp)
+      e.collector_tstamp = raw.context.timestamp.map(EE.toTimestamp).getOrElse(null)
       e.event_id = EE.generateEventId      // May be updated later if we have an `eid` parameter
       e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
@@ -103,7 +103,7 @@ object EnrichmentManager {
 
     // Partially apply functions which need an encoding, to create a TransformFunc
     val MaxJsonLength = 10000
-    val extractUrlEncJson: TransformFunc = JU.extractUrlEncJson(MaxJsonLength, raw.source.encoding, _, _)
+    val extractJson: TransformFunc = JU.extractJson(MaxJsonLength, _, _)
     val extractBase64EncJson: TransformFunc = JU.extractBase64EncJson(MaxJsonLength, _, _)
 
     // We use a TransformMap which takes the format:
@@ -147,7 +147,7 @@ object EnrichmentManager {
           ("vp"      , (CE.extractViewDimensions, ("br_viewwidth", "br_viewheight"))),
           ("eid"     , (CU.validateUuid, "event_id")),
           // Custom contexts
-          ("co"   , (extractUrlEncJson, "contexts")),
+          ("co"   , (extractJson, "contexts")),
           ("cx"   , (extractBase64EncJson, "contexts")),
           // Custom structured events
           ("ev_ca"   , (ME.toTsvSafe, "se_category")),   // LEGACY tracker var. Leave for backwards compat
@@ -161,7 +161,7 @@ object EnrichmentManager {
           ("se_pr"   , (ME.toTsvSafe, "se_property")),
           ("se_va"   , (CU.stringToDoublelike, "se_value")),
           // Custom unstructured events
-          ("ue_pr"   , (extractUrlEncJson, "unstruct_event")),
+          ("ue_pr"   , (extractJson, "unstruct_event")),
           ("ue_px"   , (extractBase64EncJson, "unstruct_event")),
           // Ecommerce transactions
           ("tr_id"   , (ME.toTsvSafe, "tr_orderid")),
@@ -175,7 +175,8 @@ object EnrichmentManager {
           // Ecommerce transaction items
           ("ti_id"   , (ME.toTsvSafe, "ti_orderid")),
           ("ti_sk"   , (ME.toTsvSafe, "ti_sku")),
-          ("ti_na"   , (ME.toTsvSafe, "ti_name")),
+          ("ti_na"   , (ME.toTsvSafe, "ti_name")),       // ERROR in Tracker Protocol
+          ("ti_nm"   , (ME.toTsvSafe, "ti_name")),
           ("ti_ca"   , (ME.toTsvSafe, "ti_category")),
           ("ti_pr"   , (CU.stringToDoublelike, "ti_price")),
           ("ti_qu"   , (ME.toTsvSafe, "ti_quantity")),

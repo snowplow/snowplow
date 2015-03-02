@@ -123,7 +123,7 @@ trait Adapter {
   protected[registry] def toUnstructEventParams(tracker: String, parameters: RawEventParameters, schema: String,
     formatter: FormatterFunc, platform: String): RawEventParameters = {
 
-    val params = JU.encodeJsonObject(EventEncType, formatter(parameters - ("nuid", "aid", "cv", "p")))
+    val params = formatter(parameters - ("nuid", "aid", "cv", "p"))
 
     val json = compact {
       ("schema" -> UnstructEvent) ~
@@ -164,13 +164,11 @@ trait Adapter {
   protected[registry] def toUnstructEventParams(tracker: String, qsParams: RawEventParameters, schema: String,
     eventJson: JValue, platform: String): RawEventParameters = {
 
-    val encodedEventJson = JU.encodeJsonObject(EventEncType, eventJson)
-
     val json = compact {
       ("schema" -> UnstructEvent) ~
       ("data"   -> (
         ("schema" -> schema) ~
-        ("data"   -> encodedEventJson)
+        ("data"   -> eventJson)
       ))
     }
 
@@ -179,7 +177,7 @@ trait Adapter {
       "e"     -> "ue",
       "p"     -> qsParams.getOrElse("p", platform), // Required field
       "ue_pr" -> json) ++
-    qsParams.filterKeys(Set("nuid", "aid", "cv"))
+    qsParams.filterKeys(Set("nuid", "aid", "cv", "url"))
   }
 
   /**

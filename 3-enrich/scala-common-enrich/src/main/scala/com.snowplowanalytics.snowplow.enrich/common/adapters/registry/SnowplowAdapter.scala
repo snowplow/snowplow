@@ -91,7 +91,7 @@ object SnowplowAdapter {
 
     // Expected content types for a request body
     private object ContentTypes {
-      val list = List("application/json", "application/json; charset=utf-8")
+      val list = List("application/json", "application/json; charset=utf-8", "application/json; charset=UTF-8")
       val str = list.mkString(", ")
     }
 
