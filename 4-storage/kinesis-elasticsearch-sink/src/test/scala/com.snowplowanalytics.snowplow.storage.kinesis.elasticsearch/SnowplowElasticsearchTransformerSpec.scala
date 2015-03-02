@@ -95,6 +95,29 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
     ]
   }"""
 
+  val derivedContextsJson = """{
+    "schema": "iglu:com.snowplowanalytics.snowplow\/contexts\/jsonschema\/1-0-1",
+    "data": [
+      {
+        "schema": "iglu:com.snowplowanalytics.snowplow\/ua_parser_context\/jsonschema\/1-0-0",
+        "data": {
+          "useragentFamily": "IE",
+          "useragentMajor": "7",
+          "useragentMinor": "0",
+          "useragentPatch": null,
+          "useragentVersion": "IE 7.0",
+          "osFamily": "Windows XP",
+          "osMajor": null,
+          "osMinor": null,
+          "osPatch": null,
+          "osPatchMinor": null,
+          "osVersion": "Windows XP",
+          "deviceFamily": "Other"
+        }
+      }
+    ]
+  }"""
+
   "The 'fromClass' method" should {
     "successfully convert a tab-separated event string to JSON" in {
       val nvPairs = List(
@@ -205,7 +228,22 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       "dvce_screenheight" -> "",
       "doc_charset" -> "",
       "doc_width" -> "",
-      "doc_height" -> ""
+      "doc_height" -> "",
+      "tr_currency" -> "",
+      "tr_total_base" -> "",
+      "tr_tax_base" -> "",
+      "tr_shipping_base" -> "",
+      "ti_currency" -> "",
+      "ti_price_base" -> "",
+      "base_currency" -> "",
+      "geo_timezone" -> "",
+      "mkt_clickid" -> "",
+      "mkt_network" -> "",
+      "etl_tags" -> "",
+      "dvce_sent_tstamp" -> "",
+      "refr_domain_userid" -> "",
+      "refr_device_tstamp" -> "",
+      "derived_contexts" -> derivedContextsJson
       )
 
       val eventValues = nvPairs.unzip._2.toArray
@@ -216,8 +254,184 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
 
       val result = parse(jsonRecord.json)
 
+      //throw new RuntimeException(pretty(render(result)))
+
       jsonRecord.id must beSome("c6ef3124-b53a-4b13-a233-0088f79dcbcb")
 
+      val expected = parse("""{
+        "geo_location" : "37.443604,-122.4124",
+        "app_id" : "angry-birds",
+        "platform" : "web",
+        "etl_tstamp" : "2017-01-26T00:01:25.292Z",
+        "collector_tstamp" : "2013-11-26T00:02:05Z",
+        "dvce_tstamp" : "2013-11-26T00:03:57.885Z",
+        "event" : "page_view",
+        "event_id" : "c6ef3124-b53a-4b13-a233-0088f79dcbcb",
+        "txn_id" : 41828,
+        "name_tracker" : "cloudfront-1",
+        "v_tracker" : "js-2.1.0",
+        "v_collector" : "clj-tomcat-0.1.0",
+        "v_etl" : "serde-0.5.2",
+        "user_id" : "jon.doe@email.com",
+        "user_ipaddress" : "92.231.54.234",
+        "user_fingerprint" : "2161814971",
+        "domain_userid" : "bc2e92ec6c204a14",
+        "domain_sessionidx" : 3,
+        "network_userid" : "ecdff4d0-9175-40ac-a8bb-325c49733607",
+        "geo_country" : "US",
+        "geo_region" : "TX",
+        "geo_city" : "New York",
+        "geo_zipcode" : "94109",
+        "geo_latitude" : 37.443604,
+        "geo_longitude" : -122.4124,
+        "geo_region_name" : "Florida",
+        "ip_isp" : "FDN Communications",
+        "ip_organization" : "Bouygues Telecom",
+        "ip_domain" : "nuvox.net",
+        "ip_netspeed" : "Cable/DSL",
+        "page_url" : "http://www.snowplowanalytics.com",
+        "page_title" : "On Analytics",
+        "page_referrer" : null,
+        "page_urlscheme" : "http",
+        "page_urlhost" : "www.snowplowanalytics.com",
+        "page_urlport" : 80,
+        "page_urlpath" : "/product/index.html",
+        "page_urlquery" : "id=GTM-DLRG",
+        "page_urlfragment" : "4-conclusion",
+        "refr_urlscheme" : null,
+        "refr_urlhost" : null,
+        "refr_urlport" : null,
+        "refr_urlpath" : null,
+        "refr_urlquery" : null,
+        "refr_urlfragment" : null,
+        "refr_medium" : null,
+        "refr_source" : null,
+        "refr_term" : null,
+        "mkt_medium" : null,
+        "mkt_source" : null,
+        "mkt_term" : null,
+        "mkt_content" : null,
+        "mkt_campaign" : null,
+        "contexts_org_schema_web_page_1" : [ {
+          "genre" : "blog",
+          "inLanguage" : "en-US",
+          "datePublished" : "2014-11-06T00:00:00Z",
+          "author" : "Fred Blundun",
+          "breadcrumb" : [ "blog", "releases" ],
+          "keywords" : [ "snowplow", "javascript", "tracker", "event" ]
+        } ],
+        "contexts_org_w3_performance_timing_1" : [ {
+          "navigationStart" : 1415358089861,
+          "unloadEventStart" : 1415358090270,
+          "unloadEventEnd" : 1415358090287,
+          "redirectStart" : 0,
+          "redirectEnd" : 0,
+          "fetchStart" : 1415358089870,
+          "domainLookupStart" : 1415358090102,
+          "domainLookupEnd" : 1415358090102,
+          "connectStart" : 1415358090103,
+          "connectEnd" : 1415358090183,
+          "requestStart" : 1415358090183,
+          "responseStart" : 1415358090265,
+          "responseEnd" : 1415358090265,
+          "domLoading" : 1415358090270,
+          "domInteractive" : 1415358090886,
+          "domContentLoadedEventStart" : 1415358090968,
+          "domContentLoadedEventEnd" : 1415358091309,
+          "domComplete" : 0,
+          "loadEventStart" : 0,
+          "loadEventEnd" : 0
+        } ],
+        "se_category" : null,
+        "se_action" : null,
+        "se_label" : null,
+        "se_property" : null,
+        "se_value" : null,
+        "unstruct_event_com_snowplowanalytics_snowplow_link_click_1" : {
+          "targetUrl" : "http://www.example.com",
+          "elementClasses" : [ "foreground" ],
+          "elementId" : "exampleLink"
+        },
+        "tr_orderid" : null,
+        "tr_affiliation" : null,
+        "tr_total" : null,
+        "tr_tax" : null,
+        "tr_shipping" : null,
+        "tr_city" : null,
+        "tr_state" : null,
+        "tr_country" : null,
+        "ti_orderid" : null,
+        "ti_sku" : null,
+        "ti_name" : null,
+        "ti_category" : null,
+        "ti_price" : null,
+        "ti_quantity" : null,
+        "pp_xoffset_min" : null,
+        "pp_xoffset_max" : null,
+        "pp_yoffset_min" : null,
+        "pp_yoffset_max" : null,
+        "useragent" : null,
+        "br_name" : null,
+        "br_family" : null,
+        "br_version" : null,
+        "br_type" : null,
+        "br_renderengine" : null,
+        "br_lang" : null,
+        "br_features_pdf" : true,
+        "br_features_flash" : false,
+        "br_features_java" : null,
+        "br_features_director" : null,
+        "br_features_quicktime" : null,
+        "br_features_realplayer" : null,
+        "br_features_windowsmedia" : null,
+        "br_features_gears" : null,
+        "br_features_silverlight" : null,
+        "br_cookies" : null,
+        "br_colordepth" : null,
+        "br_viewwidth" : null,
+        "br_viewheight" : null,
+        "os_name" : null,
+        "os_family" : null,
+        "os_manufacturer" : null,
+        "os_timezone" : null,
+        "dvce_type" : null,
+        "dvce_ismobile" : null,
+        "dvce_screenwidth" : null,
+        "dvce_screenheight" : null,
+        "doc_charset" : null,
+        "doc_width" : null,
+        "doc_height" : null,
+        "tr_currency" : null,
+        "tr_total_base" : null,
+        "tr_tax_base" : null,
+        "tr_shipping_base" : null,
+        "ti_currency" : null,
+        "ti_price_base" : null,
+        "base_currency" : null,
+        "geo_timezone" : null,
+        "mkt_clickid" : null,
+        "mkt_network" : null,
+        "etl_tags" : null,
+        "dvce_sent_tstamp" : null,
+        "refr_domain_userid" : null,
+        "refr_device_tstamp" : null,
+        "contexts_com_snowplowanalytics_snowplow_ua_parser_context_1": [{
+          "useragentFamily": "IE",
+          "useragentMajor": "7",
+          "useragentMinor": "0",
+          "useragentPatch": null,
+          "useragentVersion": "IE 7.0",
+          "osFamily": "Windows XP",
+          "osMajor": null,
+          "osMinor": null,
+          "osPatch": null,
+          "osPatchMinor": null,
+          "osVersion": "Windows XP",
+          "deviceFamily": "Other"
+        }]
+      }""")
+
+      // Specific fields
       ScalazJson4sUtils.extract[String](result, "platform") must beSuccessful("web")
       ScalazJson4sUtils.extract[Int](result, "domain_sessionidx") must beSuccessful(3)
       ScalazJson4sUtils.extract[Double](result, "geo_latitude") must beSuccessful(37.443604)
@@ -232,6 +446,9 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
 
       // Contexts shredding
       result \ "contexts_org_schema_web_page_1" \ "genre" must_== JString("blog")
+
+      // The entire JSON
+      result diff expected mustEqual Diff(JNothing, JNothing, JNothing)
     }
   }
 

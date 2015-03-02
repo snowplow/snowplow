@@ -180,6 +180,9 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     "mkt_clickid",
     "mkt_network",
     "etl_tags",
+    "dvce_sent_tstamp",
+    "refr_domain_userid",
+    "refr_device_tstamp",
     "derived_contexts"
     )
 
@@ -228,7 +231,9 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
   private val tstampFields = Set(
     "etl_tstamp",
     "collector_tstamp",
-    "dvce_tstamp"
+    "dvce_tstamp",
+    "dvce_sent_tstamp",
+    "refr_device_tstamp"
     )
 
   /**
