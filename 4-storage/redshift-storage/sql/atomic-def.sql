@@ -12,7 +12,7 @@
 -- Version:     0.5.0
 -- URL:         -
 --
--- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep
+-- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep, Fred Blundun
 -- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
@@ -173,6 +173,10 @@ CREATE TABLE atomic.events (
 
 	-- Time event was sent
 	dvce_sent_tstamp timestamp,                        -- Added in 0.5.0
+
+	-- Referer
+	refr_domain_userid varchar(36),                    -- Added in 0.5.0
+	refr_dvce_tstamp timestamp,                        -- Added in 0.5.0
 
 	-- Derived contexts
 	derived_contexts varchar(10000) encode lzo,        -- Added in 0.5.0

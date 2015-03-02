@@ -306,5 +306,7 @@ INSERT INTO atomic.events
 	NULL AS mkt_network,                  -- Added in 0.5.0
 	NULL AS etl_tags,                     -- Added in 0.5.0
 	NULL AS dvce_sent_tstamp,             -- Added in 0.5.0
+	NULL AS refr_domain_userid,           -- Added in 0.5.0
+	NULL AS refr_dvce_tstamp,             -- Added in 0.5.0
 	NULL AS derived_contexts              -- Added in 0.5.0
 	FROM atomic.events_040;
