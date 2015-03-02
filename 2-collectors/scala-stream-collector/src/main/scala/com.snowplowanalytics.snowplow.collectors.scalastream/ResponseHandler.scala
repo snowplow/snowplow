@@ -121,21 +121,25 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
     // Only the test sink responds with the serialized object.
     val sinkResponse = sink.storeRawEvent(event, ip)
 
-    // Build the HTTP response.
-    val responseCookie = HttpCookie(
-      "sp", networkUserId,
-      expires=Some(DateTime.now+config.cookieExpiration),
-      domain=config.cookieDomain
-    )
     val policyRef = config.p3pPolicyRef
     val CP = config.p3pCP
 
-    val headers = List(
+    val headersWithoutCookie = List(
       RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP)),
-      `Set-Cookie`(responseCookie),
       getAccessControlAllowOriginHeader(request),
       `Access-Control-Allow-Credentials`(true)
     )
+
+    val headers = if (config.cookieEnabled) {
+      val responseCookie = HttpCookie(
+        "sp", networkUserId,
+        expires=Some(DateTime.now+config.cookieExpiration),
+        domain=config.cookieDomain
+      )
+      `Set-Cookie`(responseCookie) :: headersWithoutCookie
+    } else {
+      headersWithoutCookie
+    }
 
     val httpResponse = (if (pixelExpected) {
         HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
