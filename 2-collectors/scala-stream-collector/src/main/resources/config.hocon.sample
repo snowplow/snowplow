@@ -37,6 +37,7 @@ collector {
   # The collector returns a cookie to clients for user identification
   # with the following domain and expiration.
   cookie {
+    # Set to 0 to disable the cookie
     expiration = 365 days
     # The domain is optional and will make the cookie accessible to other
     # applications on the domain.
