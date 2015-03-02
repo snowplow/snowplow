@@ -1,12 +1,20 @@
-:logging:
-  :level: DEBUG # You can optionally switch to INFO for production
+:monitoring:
+  :tags:                      # Array of tags to describe this job
+    - prod
+  :logging:
+    :level: DEBUG             # You can optionally switch to INFO for production
+  :snowplow:
+    :method: POST             # Or GET if you prefer
+    :collector: ADD HERE      # e.g. d3rkrsqld9gmqf.cloudfront.net
+    :app_id: ADD HERE         # e.g. snowplow
 :aws:
-  :access_key_id: ADD HERE
-  :secret_access_key: ADD HERE
+  :access_key_id: <%= ENV['AWS_SNOWPLOW_ACCESS_KEY'] %>
+  :secret_access_key: <%= ENV['AWS_SNOWPLOW_SECRET_KEY'] %>
 :s3:
   :region: ADD HERE
   :buckets:
     :assets: s3://snowplow-hosted-assets # DO NOT CHANGE unless you are hosting the jarfiles etc yourself in your own bucket
+    :jsonpath_assets: # If you have defined your own JSON Schemas and will load into Redshift, add the s3:// path to your own JSON Path files in your own bucket here
     :log: ADD HERE
     :raw:
       :in: ADD HERE
@@ -16,16 +24,19 @@
       :good: ADD HERE       # e.g. s3://my-out-bucket/enriched/good
       :bad: ADD HERE        # e.g. s3://my-out-bucket/enriched/bad
       :errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
+      :archive: ADD HERE    # Where to archive enriched events to
     :shredded:
       :good: ADD HERE       # e.g. s3://my-out-bucket/shredded/good
       :bad: ADD HERE        # e.g. s3://my-out-bucket/shredded/bad
       :errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
+      :archive: ADD HERE    # Where to archive shredded types to
 :emr:
   :ami_version: 2.4.2      # Choose as per http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/emr-plan-ami.html
   :region: ADD HERE        # Always set this
   :placement: ADD HERE     # Set this if not running in VPC. Leave blank otherwise
   :ec2_subnet_id: ADD HERE # Set this if running in VPC. Leave blank otherwise
   :ec2_key_name: ADD HERE
+  :bootstrap: []           # Set this to specify custom boostrap actions. Leave empty otherwise
   :software:
     :hbase:                # To launch on cluster, provide version, "0.92.0", keep quotes
     :lingual:              # To launch on cluster, provide version, "1.1", keep quotes
@@ -44,6 +55,31 @@
     :hadoop_shred: 0.3.0 # Version of the Hadoop Shredding process
   :collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector, or 'thrift' for Thrift records, or 'tsv/com.amazon.aws.cloudfront/wd_access_log' for Cloudfront access logs
   :continue_on_unexpected_error: false # Set to 'true' (and set :out_errors: above) if you don't want any exceptions thrown from ETL
+:storage:
+  :download:
+    :folder: # Postgres-only config option. Where to store the downloaded files
+  :targets:
+    - :name: "My Redshift database"
+      :type: redshift
+      :host: ADD HERE # The endpoint as shown in the Redshift console
+      :database: ADD HERE # Name of database 
+      :port: 5439 # Default Redshift port
+      :table: atomic.events
+      :username: ADD HERE 
+      :password: ADD HERE 
+      :maxerror: 1 # Stop loading on first error, or increase to permit more load errors
+      :comprows: 200000 # Default for a 1 XL node cluster. Not used unless --include compupdate specified
+  :targets:
+    - :name: "My PostgreSQL database"
+      :type: postgres
+      :host: ADD HERE # Hostname of database server
+      :database: ADD HERE # Name of database 
+      :port: 5432 # Default Postgres port
+      :table: atomic.events
+      :username: ADD HERE 
+      :password: ADD HERE 
+      :maxerror: # Not required for Postgres
+      :comprows: # Not required for Postgres
 :iglu:
   :schema: iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0
   :data:
