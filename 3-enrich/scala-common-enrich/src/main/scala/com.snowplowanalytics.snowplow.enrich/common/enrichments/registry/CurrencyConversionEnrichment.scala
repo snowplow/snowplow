@@ -17,15 +17,8 @@ package common
 package enrichments
 package registry
 
-// This project
-import utils.MapTransformer._
-
 // Java
-import java.lang.{Integer => JInteger}
-import java.math.{BigDecimal => JBigDecimal}
-import java.lang.{Byte => JByte}
-import java.net.URI
-import java.net._
+import java.net.UnknownHostException
 
 // Maven Artifact
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
@@ -38,20 +31,24 @@ import Scalaz._
 import org.json4s.JValue
 
 // Iglu
-import iglu.client.SchemaKey
-import iglu.client.validation.ProcessingMessageMethods._
+import iglu.client.{
+  SchemaKey,
+  SchemaCriterion
+}
 
-// Joda-Money
-import org.joda.money.{Money}
-import org.joda.time.{DateTime, DateTimeZone}
+// Joda-Time
+import org.joda.time.DateTime
 
 // Scala-Forex
-import com.snowplowanalytics.forex._
-import com.snowplowanalytics.forex.oerclient.{OerClientConfig, DeveloperAccount, AccountType, OerResponseError}
-import com.snowplowanalytics.forex.oerclient.OerResponseError._
-import com.snowplowanalytics.forex.{Forex, ForexConfig}
-import com.snowplowanalytics.forex.ForexLookupWhen._
-import com.snowplowanalytics.forex.oerclient._
+import com.snowplowanalytics.forex.oerclient.{
+  OerClientConfig,
+  DeveloperAccount,
+  OerResponseError
+}
+import com.snowplowanalytics.forex.{
+  Forex,
+  ForexConfig
+}
 
 // This project
 import common.utils.ConversionUtils
@@ -63,9 +60,9 @@ import utils.ScalazJson4sUtils
  */
 object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
 
-  val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "currency_conversion_config", "jsonschema", "1-0-0")
-  
-  //Creates an CurrencyConversionEnrichment instance from a JValue
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "currency_conversion_config", "jsonschema", 1, 0)
+
+  // Creates a CurrencyConversionEnrichment instance from a JValue
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[CurrencyConversionEnrichment] = {
     isParseable(config, schemaKey).flatMap( conf => {
       (for {
@@ -78,78 +75,67 @@ object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
   }
 }
 
-// Object and a case object with the same name
+/**
+ * Configuration for a currency_conversion enrichment
+ *
+ * @param apiKey OER authentication
+ * @param baseCurrency Currency to which to convert
+ * @param rateAt Which exchange rate to use - "EOD_PRIOR" for "end of previous day".
+ */
 case class CurrencyConversionEnrichment(
   apiKey: String,
-  baseCurrency: String, 
+  baseCurrency: String,
   rateAt: String) extends Enrichment {
 
   val version = new DefaultArtifactVersion("0.1.0")
 
-  // To provide Validation for org.joda.money.Money variable
-  def eitherToValidation(input:Either[OerResponseError, Money]): Validation[String, Option[String]]= {
-    input match {
-      case Right(l) => (l.getAmount().toPlainString()).some.success
-      case Left(l) => (s"Open Exchange Rates error, message: ${l.errorMessage}").failure
-    }
-  }
-  
-  def getEitherValidation(fx: Forex, trCurrency: Option[String], trTotal: Option[Double], tstamp: DateTime): Validation[String, Option[String]] = {
-      trCurrency match {
-        case Some(trCurr) =>{ 
-          trTotal match{
-            case Some(trC) => {
-              eitherToValidation(fx.convert(trC, trCurr).to(baseCurrency).at(tstamp))
-            } 
-            case None => None.success                                            
-          }
-        }
-        case None => None.success
-      } 
-  }
+  val fx = Forex(ForexConfig(nowishCacheSize = 0, nowishSecs = 0, eodCacheSize = 0), OerClientConfig(apiKey, DeveloperAccount))
+
   /**
-  * Convert's currency for a given
-  * set of currency, using
-  * Scala-Forex.
-  *
-  * @param trCurrency The desired
-  *        currency for a given 
-  *        amount
-  * @param trAmounts Contains
-  *        total amount, tax, shipping
-  *        amount's
-  * @param tiCurrency Trasaction Item
-  *        Currency
-   * @param tiPrice Trasaction Item
-  *         Price
-  * @return the converted currency
-  *         in TransacrionAmounts
-  *         format and Ttansaction
-  *         Item Price 
-  */
-  def convertCurrencies(trCurrency: Option[String], trTotal: Option[Double], trAmountsTax: Option[Double], trAmountsShipping: Option[Double], tiCurrency: Option[String], tiPrice: Option[Double], collectorTstamp: Option[DateTime]): ValidationNel[String, (Option[String], Option[String], Option[String], Option[String])] = {
-    val check = Double.NaN
-    try{
-        val fx = Forex(ForexConfig( nowishCacheSize = 0, nowishSecs = 0, eodCacheSize= 0), OerClientConfig(apiKey, DeveloperAccount))  
-                collectorTstamp match {
-                  case Some(tstamp) =>{
-                    val newCurrencyTr  = getEitherValidation(fx, trCurrency, trTotal, tstamp)  
-                    val newCurrencyTi = getEitherValidation(fx, tiCurrency, tiPrice, tstamp)
-                    val newTrAmountsTax = getEitherValidation(fx, trCurrency, trAmountsTax, tstamp) 
-                    val newTrAmountsShipping = getEitherValidation(fx, trCurrency, trAmountsShipping, tstamp) 
-                    (newCurrencyTr.toValidationNel  |@| newTrAmountsTax.toValidationNel  |@| newTrAmountsShipping.toValidationNel |@| newCurrencyTi.toValidationNel) {
-                      (_, _, _, _)
-                    }       
-                    
-                  }
-                  case None => "DateTime Missing".failNel 
-                }
-    } catch {
-      case e : NoSuchElementException =>"Provided Currency not supported : %s".format(e).failNel
-      case f : UnknownHostException => "Could not extract Convert Currencies from OER Service :%s".format(f).failNel
-      case g => "Exception Converting Currency :%s".format(g).failNel
+   * Attempt to convert if the initial currency and value are both defined
+   *
+   * @param inputCurrency Option boxing the initial currency if it is present
+   * @param value Option boxing the amount to convert
+   * @return None.success if the inputs were not both defined,
+   *         otherwise Validation[Option[_]] boxing the result of the conversion
+   */
+  private def performConversion(initialCurrency: Option[String], value: Option[Double], tstamp: DateTime): Validation[String, Option[String]] =
+    (initialCurrency, value) match {
+      case (Some(ic), Some(v)) => fx.convert(v, ic).to(baseCurrency).at(tstamp) match {
+        case Left(l) => (s"Open Exchange Rates error, message: ${l.errorMessage}").failure
+        case Right(s) => (s.getAmount().toPlainString()).some.success
+      }
+      case _ => None.success
     }
 
+  /**
+   * Converts currency using Scala Forex
+   *
+   * @param trCurrency Initial transaction currency
+   * @param trTotal Total transaction value
+   * @param trTax Transaction tax
+   * @param trShipping Transaction shipping cost
+   * @param tiCurrency Initial transaction item currency
+   * @param tiPrice Initial transaction item price
+   * @param collectorTstamp Collector timestamp
+   * @return Validation[Tuple] containing all input amounts converted to the base currency
+   */
+  def convertCurrencies(trCurrency: Option[String], trTotal: Option[Double], trTax: Option[Double], trShipping: Option[Double], tiCurrency: Option[String], tiPrice: Option[Double], collectorTstamp: Option[DateTime]): ValidationNel[String, (Option[String], Option[String], Option[String], Option[String])] = {
+    collectorTstamp match {
+      case Some(tstamp) => try {
+          val newCurrencyTr = performConversion(trCurrency, trTotal, tstamp)
+          val newCurrencyTi = performConversion(tiCurrency, tiPrice, tstamp)
+          val newTrTax = performConversion(trCurrency, trTax, tstamp)
+          val newTrShipping = performConversion(trCurrency, trShipping, tstamp)
+          (newCurrencyTr.toValidationNel  |@| newTrTax.toValidationNel  |@| newTrShipping.toValidationNel |@| newCurrencyTi.toValidationNel) {
+            (_, _, _, _)
+          }
+        } catch {
+          case e : NoSuchElementException =>"Base currency [%s] not supported: %s".format(baseCurrency, e).failNel
+          case f : UnknownHostException => "Could not extract Convert Currencies from OER Service: %s".format(f).failNel
+          case g => "Unexpected exception converting Currency: %s".format(g).failNel
+        }
+      case None => "Collector timestamp missing".failNel // This should never happen
+    }
   }
 }
-

@@ -133,14 +133,9 @@ class EnrichedEvent {
   @BeanProperty var tr_total: String = _
   @BeanProperty var tr_tax: String = _
   @BeanProperty var tr_shipping: String = _
-  @BeanProperty var tr_currency: String = _
   @BeanProperty var tr_city: String = _
   @BeanProperty var tr_state: String = _
   @BeanProperty var tr_country: String = _
-  @BeanProperty var tr_total_base: String = _
-  @BeanProperty var tr_tax_base: String = _
-  @BeanProperty var tr_shipping_base: String = _
-  @BeanProperty var currency_base: String = _
 
   // Ecommerce transaction item (from querystring)
   @BeanProperty var ti_orderid: String = _
@@ -149,8 +144,6 @@ class EnrichedEvent {
   @BeanProperty var ti_category: String = _
   @BeanProperty var ti_price: String = _
   @BeanProperty var ti_quantity: String = _
-  @BeanProperty var ti_currency: String = _
-  @BeanProperty var ti_price_base: String = _
 
   // Page Pings
   @BeanProperty var pp_xoffset_min: JInteger = _

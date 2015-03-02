@@ -389,8 +389,7 @@ object ConversionUtils {
     }
 
   /**
-   * Convert a String to a String containing a
-   * Redshift-compatible Double.
+   * Convert a String to a Double
    *
    * @param str The String which we hope contains
    *        a Double
@@ -399,7 +398,7 @@ object ConversionUtils {
    * @return a Scalaz Validation, being either
    *         a Failure String or a Success Double
    */
-  def stringToMaybeDouble(field: String,str: String):Validation[String, Option[Double]] = {
+  def stringToMaybeDouble(field: String, str: String): Validation[String, Option[Double]] = {
     try {
       if (Option(str).isEmpty || str == "null") { // "null" String check is LEGACY to handle a bug in the JavaScript tracker
         None.success
@@ -410,7 +409,7 @@ object ConversionUtils {
     } catch {
      case nfe: NumberFormatException =>
         "Field [%s]: cannot convert [%s] to Double-like String".format(field, str).fail
-    }  
+    }
   }
 
   /**
@@ -500,4 +499,3 @@ object ConversionUtils {
     else
       "Cannot convert byte [%s] to boolean, only 1 or 0.".format(b).fail   
 }
-
