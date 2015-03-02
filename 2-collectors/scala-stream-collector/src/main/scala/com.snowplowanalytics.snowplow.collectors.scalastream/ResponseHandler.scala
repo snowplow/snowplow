@@ -24,7 +24,15 @@ import java.util.UUID
 import org.apache.commons.codec.binary.Base64
 
 // Spray
-import spray.http.{DateTime,HttpRequest,HttpResponse,HttpEntity,HttpCookie,SomeOrigins,AllOrigins}
+import spray.http.{
+  DateTime,
+  HttpRequest,
+  HttpResponse,
+  HttpEntity,
+  HttpCookie,
+  SomeOrigins,
+  AllOrigins
+}
 import spray.http.HttpHeaders.{
   `Set-Cookie`,
   `Remote-Address`,
