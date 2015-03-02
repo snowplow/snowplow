@@ -219,6 +219,10 @@ class EnrichedEvent {
   // Time event was sent
   @BeanProperty var dvce_sent_tstamp: String = _
 
+  // Referer
+  @BeanProperty var refr_domain_userid: String = _
+  @BeanProperty var refr_dvce_tstamp: String = _
+
   // Derived contexts
   @BeanProperty var derived_contexts: String = _
 }
