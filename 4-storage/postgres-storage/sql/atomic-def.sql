@@ -12,7 +12,7 @@
 -- Version:     0.4.0
 -- URL:         -
 --
--- Authors:     Yali Sassoon, Alex Dean
+-- Authors:     Yali Sassoon, Alex Dean, Fred Blundun
 -- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
@@ -166,6 +166,9 @@ CREATE TABLE "atomic"."events" (
 	"etl_tags" varchar(500),                -- Added in 0.4.0
 	-- Time event was sent
 	"dvce_sent_tstamp" timestamp,           -- Added in 0.4.0
+	-- Referer
+	"refr_domain_userid" varchar(36),       -- Added in 0.4.0
+	"refr_dvce_tstamp" timestamp,           -- Added in 0.4.0
 	-- Derived contexts
 	"derived_contexts" json                 -- Added in 0.4.0
                                             -- Removed primary key constraint on event_id
