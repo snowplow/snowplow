@@ -178,7 +178,9 @@ class CollectorService(
       }
     } ~
     options {
-      complete(responseHandler.preflightResponse())
+      requestInstance { request =>
+        complete(responseHandler.preflightResponse(request))
+      }
     } ~
     complete(responseHandler.notFound)
   }
