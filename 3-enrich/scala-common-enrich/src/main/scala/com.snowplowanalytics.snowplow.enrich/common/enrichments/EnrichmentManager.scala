@@ -16,8 +16,13 @@ package enrich
 package common
 package enrichments
 
+// Utils
+import org.apache.http.client.utils.URLEncodedUtils
+
 // Scala
 import scala.collection.mutable.ListBuffer
+import scala.collection.JavaConversions._
+import scala.util.control.NonFatal
 
 // Scalaz
 import scalaz._
@@ -378,6 +383,30 @@ object EnrichmentManager {
         case None => unitSuccessNel // No fields updated
         })
 
+    // Cross-domain tracking
+    val crossDomain = pageUri.fold(
+      e => unitSuccessNel, // No fields updated
+      uri => uri match {
+        case Some(u) => try {
+            val qs = URLEncodedUtils.parse(u, raw.source.encoding)
+            val qsMap = qs.map(p => (p.getName -> p.getValue)).toList.toMap
+
+            qsMap.get("sp_duid") foreach {spDuid => event.refr_domain_userid = CU.makeTsvSafe(spDuid)}
+
+            qsMap.get("sp_dtm") match {
+              case Some(spDtm) => {
+                val validatedTimestamp = EE.extractTimestamp("sp_dtm", spDtm)
+                validatedTimestamp.toValidationNel.map(event.refr_dvce_tstamp = _: String)
+              }
+              case None => unitSuccessNel
+            }
+          } catch {
+            case NonFatal(e) => "Could not parse uri [%s]".format(uri).failNel
+          }
+        case None => unitSuccessNel
+      }
+    )
+
     // Assemble array of derived contexts
     val derived_contexts = List(uaParser) collect {
       case Success(Some(context)) => context
@@ -413,8 +442,9 @@ object EnrichmentManager {
       transform                               |@|
       currency                                |@|
       secondPassTransform                     |@|
+      crossDomain                             |@|
       campaign) {
-      (_,_,_,_,_,_,_,_,_,_) => event
+      (_,_,_,_,_,_,_,_,_,_,_) => event
     }
   }
 }
