@@ -31,6 +31,9 @@ import org.json4s.jackson.JsonMethods.parse
 // Iglu
 import com.snowplowanalytics.iglu.client.SchemaKey
 
+// Scala-Forex
+import com.snowplowanalytics.forex.oerclient.DeveloperAccount
+
 // Specs2
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
@@ -193,6 +196,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
       val  currencyConversionEnrichmentJson = parse("""{
         "enabled": true,
         "parameters": {
+          "accountType": "developer",
           "apiKey": "---",
           "baseCurrency": "EUR",
           "rateAt": "EOD_PRIOR"
@@ -202,7 +206,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
       val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "currency_conversion_config", "jsonschema", "1-0-0")
 
       val result = CurrencyConversionEnrichmentConfig.parse(currencyConversionEnrichmentJson, schemaKey)
-      result must beSuccessful(CurrencyConversionEnrichment("---", "EUR", "EOD_PRIOR"))
+      result must beSuccessful(CurrencyConversionEnrichment(DeveloperAccount, "---", "EUR", "EOD_PRIOR"))
 
     }
   }

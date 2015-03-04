@@ -35,6 +35,7 @@ import iglu.client.{
   SchemaKey,
   SchemaCriterion
 }
+import iglu.client.validation.ProcessingMessageMethods._
 
 // Joda-Time
 import org.joda.time.DateTime
@@ -42,7 +43,10 @@ import org.joda.time.DateTime
 // Scala-Forex
 import com.snowplowanalytics.forex.oerclient.{
   OerClientConfig,
+  AccountType,
   DeveloperAccount,
+  EnterpriseAccount,
+  UnlimitedAccount,
   OerResponseError
 }
 import com.snowplowanalytics.forex.{
@@ -68,8 +72,17 @@ object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
       (for {
         apiKey        <- ScalazJson4sUtils.extract[String](config, "parameters", "apiKey")
         baseCurrency  <- ScalazJson4sUtils.extract[String](config, "parameters", "baseCurrency")
+        accountType   <- (ScalazJson4sUtils.extract[String](config, "parameters", "accountType") match {
+          case Success("developer")  => DeveloperAccount.success
+          case Success("enterprise") => EnterpriseAccount.success
+          case Success("unlimited")  => UnlimitedAccount.success
+
+          // These failures should be prevented by the schema
+          case Success(s) => "accountType [%s] is not one of developer, enterprise, and unlimited".format(s).toProcessingMessage.fail
+          case Failure(f) => Failure(f)
+        })
         rateAt        <- ScalazJson4sUtils.extract[String](config, "parameters", "rateAt")
-        enrich        =  CurrencyConversionEnrichment(apiKey, baseCurrency, rateAt)
+        enrich        =  CurrencyConversionEnrichment(accountType, apiKey, baseCurrency, rateAt)
       } yield enrich).toValidationNel
     })
   }
@@ -83,13 +96,14 @@ object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
  * @param rateAt Which exchange rate to use - "EOD_PRIOR" for "end of previous day".
  */
 case class CurrencyConversionEnrichment(
+  accountType: AccountType,
   apiKey: String,
   baseCurrency: String,
   rateAt: String) extends Enrichment {
 
   val version = new DefaultArtifactVersion("0.1.0")
 
-  val fx = Forex(ForexConfig(nowishCacheSize = 0, nowishSecs = 0, eodCacheSize = 0), OerClientConfig(apiKey, DeveloperAccount))
+  val fx = Forex(ForexConfig(nowishCacheSize = 0, nowishSecs = 0, eodCacheSize = 0), OerClientConfig(apiKey, accountType))
 
   /**
    * Attempt to convert if the initial currency and value are both defined

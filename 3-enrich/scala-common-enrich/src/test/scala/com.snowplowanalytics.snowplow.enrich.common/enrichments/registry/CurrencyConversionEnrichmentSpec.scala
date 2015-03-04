@@ -14,6 +14,9 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 package registry
 
+// Scala-Forex
+import com.snowplowanalytics.forex.oerclient.DeveloperAccount
+
 // Specs2
 import org.specs2.Specification
 import org.specs2.matcher.DataTables
@@ -56,7 +59,7 @@ class CurrencyConversionEnrichmentSpec extends Specification with DataTables { d
     "Invalid transaction item currency" !! None                           ! appId                                    ! Some(12.00)                        ! Some(0.7)                       ! Some(0.00)                          ! Some("HUL")                           ! Some(1.99)                            ! Some(coTstamp)          ! currencyInvalidHul                             |
     "Invalid OER API key"               !! None                           ! "8A8A8A8A8A8A8A8A8A8A8A8AA8A8A8A8"       ! Some(13.00)                        ! Some(3.67)                      ! Some(0.00)                          ! Some("GBP")                           ! Some(2.99)                            ! Some(coTstamp)          ! appIdInvalid                                   |> {
       (_, trCurrency, apiKey, trAmountTotal, trAmountTax, trAmountShipping, tiCurrency, tiPrice, dateTime, expected) =>
-        CurrencyConversionEnrichment(apiKey, "EUR", "EOD_PRIOR").convertCurrencies(trCurrency, trAmountTotal, trAmountTax, trAmountShipping, tiCurrency, tiPrice, dateTime) must_== expected
+        CurrencyConversionEnrichment(DeveloperAccount, apiKey, "EUR", "EOD_PRIOR").convertCurrencies(trCurrency, trAmountTotal, trAmountTax, trAmountShipping, tiCurrency, tiPrice, dateTime) must_== expected
     }
 
   def e2 =
@@ -71,7 +74,7 @@ class CurrencyConversionEnrichmentSpec extends Specification with DataTables { d
     "Both Currency Null"                         !! None                     ! appId                                 ! Some(11.00)      ! Some(2.67)  ! Some(0.00)  ! None                            ! Some(12.99)                    ! Some(coTstamp)     ! (None,None,None,None).success                              |
     "Valid APP ID and API key"                   !! Some("GBP")              ! appId                                 ! Some(16.00)      ! Some(2.67)  ! Some(0.00)  ! None                            ! Some(10.00)                    ! Some(coTstamp)     ! (Some("18.54"), Some("3.09"), Some("0.00"),None).success   |> {
       (_, trCurrency, apiKey, trAmountTotal, trAmountTax, trAmountShipping, tiCurrency, tiPrice, dateTime, expected) =>
-        CurrencyConversionEnrichment(apiKey, "EUR", "EOD_PRIOR").convertCurrencies(trCurrency, trAmountTotal, trAmountTax, trAmountShipping, tiCurrency, tiPrice, dateTime) must_== expected
+        CurrencyConversionEnrichment(DeveloperAccount, apiKey, "EUR", "EOD_PRIOR").convertCurrencies(trCurrency, trAmountTotal, trAmountTax, trAmountShipping, tiCurrency, tiPrice, dateTime) must_== expected
     }
 }
 
