@@ -14,9 +14,6 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 package registry
 
-// Java
-import java.net.URI
-
 // Specs2
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
@@ -39,10 +36,33 @@ class CampaignAttributionEnrichmentSpec extends Specification with ValidationMat
   "extractMarketingFields should create a MarketingCampaign with clickId and network fields"                ! e5^
                                                                                                             end
 
-  val google_uri = "http://www.example.com?utm_source=GoogleSearch&utm_medium=cpc&utm_term=native+american+tarot+deck&utm_content=39254295088&utm_campaign=uk-tarot--native-american"
-  val omniture_uri = "http://www.example.com?cid=uk-tarot--native-american"
-  val heterogeneous_uri = "http://www.example.com?utm_source=GoogleSearch&source=bad_source&utm_medium=cpc&legacy_term=bad_term&utm_term=native+american+tarot+deck&legacy_campaign=bad_campaign&cid=uk-tarot--native-american"
-  val clickid_uri = "http://www.example.com?utm_source=GoogleSearch&source=bad_source&utm_medium=cpc&legacy_term=bad_term&utm_term=native+american+tarot+deck&legacy_campaign=bad_campaign&cid=uk-tarot--native-american&msclkid=500"
+  val google_uri = Map(
+    "utm_source"   -> "GoogleSearch",
+    "utm_medium"   -> "cpc",
+    "utm_term"     -> "native american tarot deck",
+    "utm_content"  -> "39254295088",
+    "utm_campaign" -> "uk-tarot--native-american")
+
+  val omniture_uri = Map("cid" -> "uk-tarot--native-american")
+
+  val heterogeneous_uri = Map(
+    "utm_source"      -> "GoogleSearch",
+    "source"          -> "bad_source",
+    "utm_medium"      -> "cpc",
+    "legacy_term"     -> "bad_term"
+    ,"utm_term"       -> "native american tarot deck",
+    "legacy_campaign" -> "bad_campaign",
+    "cid"             -> "uk-tarot--native-american")
+
+  val clickid_uri = Map(
+    "utm_source"      -> "GoogleSearch",
+    "source"          -> "bad_source",
+    "utm_medium"      -> "cpc",
+    "legacy_term"     -> "bad_term",
+    "utm_term"        -> "native american tarot deck",
+    "legacy_campaign" -> "bad_campaign",
+    "cid"             -> "uk-tarot--native-american",
+    "msclkid"         -> "500")
 
   def e1 = {
     val config = CampaignAttributionEnrichment(
@@ -54,7 +74,7 @@ class CampaignAttributionEnrichmentSpec extends Specification with ValidationMat
       List()
     )
 
-    config.extractMarketingFields(new URI(google_uri), "UTF-8") must beSuccessful(MarketingCampaign(None,None,None,None,None,None,None))
+    config.extractMarketingFields(google_uri) must beSuccessful(MarketingCampaign(None,None,None,None,None,None,None))
   }
 
   def e2 = {
@@ -67,7 +87,7 @@ class CampaignAttributionEnrichmentSpec extends Specification with ValidationMat
       List()
     )
 
-    config.extractMarketingFields(new URI(google_uri), "UTF-8") must beSuccessful(MarketingCampaign(Some("cpc"),Some("GoogleSearch"),Some("native american tarot deck"),Some("39254295088"),Some("uk-tarot--native-american"),None,None))
+    config.extractMarketingFields(google_uri) must beSuccessful(MarketingCampaign(Some("cpc"),Some("GoogleSearch"),Some("native american tarot deck"),Some("39254295088"),Some("uk-tarot--native-american"),None,None))
   }
 
   def e3 = {
@@ -80,7 +100,7 @@ class CampaignAttributionEnrichmentSpec extends Specification with ValidationMat
       List()
     )
 
-    config.extractMarketingFields(new URI(omniture_uri), "UTF-8") must beSuccessful(MarketingCampaign(None,None,None,None,Some("uk-tarot--native-american"),None,None))
+    config.extractMarketingFields(omniture_uri) must beSuccessful(MarketingCampaign(None,None,None,None,Some("uk-tarot--native-american"),None,None))
   }
 
   def e4 = {
@@ -93,7 +113,7 @@ class CampaignAttributionEnrichmentSpec extends Specification with ValidationMat
       List()
     )
 
-    config.extractMarketingFields(new URI(heterogeneous_uri), "UTF-8") must beSuccessful(MarketingCampaign(Some("cpc"),Some("GoogleSearch"),Some("native american tarot deck"),None,Some("uk-tarot--native-american"),None,None))
+    config.extractMarketingFields(heterogeneous_uri) must beSuccessful(MarketingCampaign(Some("cpc"),Some("GoogleSearch"),Some("native american tarot deck"),None,Some("uk-tarot--native-american"),None,None))
   }
 
   def e5 = {
@@ -110,7 +130,7 @@ class CampaignAttributionEnrichmentSpec extends Specification with ValidationMat
       )
     )
 
-    config.extractMarketingFields(new URI(clickid_uri), "UTF-8") must beSuccessful(MarketingCampaign(Some("cpc"),Some("GoogleSearch"),Some("native american tarot deck"),None,Some("uk-tarot--native-american"),Some("500"),Some("Microsoft")))
+    config.extractMarketingFields(clickid_uri) must beSuccessful(MarketingCampaign(Some("cpc"),Some("GoogleSearch"),Some("native american tarot deck"),None,Some("uk-tarot--native-american"),Some("500"),Some("Microsoft")))
   }
 
 }

@@ -361,51 +361,49 @@ object EnrichmentManager {
       }
     }
 
+    // Parse the page URI's querystring
+    val pageQsMap = pageUri match {
+      case Success(Some(u)) => try {
+        URLEncodedUtils.parse(u, raw.source.encoding).map(p => (p.getName -> p.getValue)).toList.toMap.some.success
+        } catch {
+          case NonFatal(e) => "Could not parse uri [%s]".format(u).fail
+        }
+      case _ => Success(None)
+    }
+
     // Marketing attribution
-    val campaign = pageUri.fold(
-      e => unitSuccessNel, // No fields updated
-      uri => uri match {
-        case Some(u) =>
-          registry.getCampaignAttributionEnrichment match {
-            case Some(ce) =>
-              ce.extractMarketingFields(u, raw.source.encoding).flatMap(cmp => {
-                event.mkt_medium = cmp.medium.orNull
-                event.mkt_source = cmp.source.orNull
-                event.mkt_term = cmp.term.orNull
-                event.mkt_content = cmp.content.orNull
-                event.mkt_campaign = cmp.campaign.orNull
-                event.mkt_clickid = cmp.clickId.orNull
-                event.mkt_network = cmp.network.orNull
-                cmp.success
-                })
-            case None => unitSuccessNel
-          }
-        case None => unitSuccessNel // No fields updated
-        })
-
-    // Cross-domain tracking
-    val crossDomain = pageUri.fold(
-      e => unitSuccessNel, // No fields updated
-      uri => uri match {
-        case Some(u) => try {
-            val qs = URLEncodedUtils.parse(u, raw.source.encoding)
-            val qsMap = qs.map(p => (p.getName -> p.getValue)).toList.toMap
-
-            qsMap.get("sp_duid") foreach {spDuid => event.refr_domain_userid = CU.makeTsvSafe(spDuid)}
-
-            qsMap.get("sp_dtm") match {
-              case Some(spDtm) => {
-                val validatedTimestamp = EE.extractTimestamp("sp_dtm", spDtm)
-                validatedTimestamp.toValidationNel.map(event.refr_dvce_tstamp = _: String)
-              }
-              case None => unitSuccessNel
-            }
-          } catch {
-            case NonFatal(e) => "Could not parse uri [%s]".format(uri).failNel
-          }
+    val campaign = pageQsMap match {
+      case Success(Some(qsMap)) => registry.getCampaignAttributionEnrichment match {
+        case Some(ce) =>
+          ce.extractMarketingFields(qsMap).flatMap(cmp => {
+            event.mkt_medium = cmp.medium.orNull
+            event.mkt_source = cmp.source.orNull
+            event.mkt_term = cmp.term.orNull
+            event.mkt_content = cmp.content.orNull
+            event.mkt_campaign = cmp.campaign.orNull
+            event.mkt_clickid = cmp.clickId.orNull
+            event.mkt_network = cmp.network.orNull
+            cmp.success
+          })
         case None => unitSuccessNel
       }
-    )
+      case _ => unitSuccessNel
+    }
+
+    // Cross-domain tracking
+    val crossDomain = pageQsMap match {
+      case Success(Some(qsMap)) => {
+        qsMap.get("sp_duid") foreach {spDuid => event.refr_domain_userid = CU.makeTsvSafe(spDuid)}
+        qsMap.get("sp_dtm") match {
+          case Some(spDtm) => {
+            val validatedTimestamp = EE.extractTimestamp("sp_dtm", spDtm)
+            validatedTimestamp.map(event.refr_dvce_tstamp = _: String)
+          }
+          case None => unitSuccess
+        }
+      }
+      case _ => unitSuccess
+    }
 
     // Assemble array of derived contexts
     val derived_contexts = List(uaParser) collect {
@@ -442,9 +440,10 @@ object EnrichmentManager {
       transform                               |@|
       currency                                |@|
       secondPassTransform                     |@|
-      crossDomain                             |@|
+      pageQsMap.toValidationNel               |@|
+      crossDomain.toValidationNel             |@|
       campaign) {
-      (_,_,_,_,_,_,_,_,_,_,_) => event
+      (_,_,_,_,_,_,_,_,_,_,_,_) => event
     }
   }
 }

@@ -20,13 +20,6 @@ package registry
 // Java
 import java.net.URI
 
-// Scala
-import scala.collection.JavaConversions._
-import scala.reflect.BeanProperty
-
-// Utils
-import org.apache.http.client.utils.URLEncodedUtils
-
 // Maven Artifact
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
@@ -150,33 +143,21 @@ case class CampaignAttributionEnrichment(
   /**
    * Extract the marketing fields from a URL.
    *
-   * @param uri The URI to extract
+   * @param nvPairs The querystring to extract
    *        marketing fields from
-   * @param encoding The encoding of
-   *        the URI being parsed
    * @return the MarketingCampaign
    *         or an error message,
    *         boxed in a Scalaz
    *         Validation
    */
-  def extractMarketingFields(uri: URI, encoding: String): ValidationNel[String, MarketingCampaign] = {
+  def extractMarketingFields(nvPairs: SourceMap): ValidationNel[String, MarketingCampaign] = {
+    val medium = getFirstParameter(mktMedium, nvPairs)
+    val source = getFirstParameter(mktSource, nvPairs)
+    val term = getFirstParameter(mktTerm, nvPairs)
+    val content = getFirstParameter(mktContent, nvPairs)
+    val campaign = getFirstParameter(mktCampaign, nvPairs)
 
-    val parameters = try {
-      URLEncodedUtils.parse(uri, encoding)
-    } catch {
-      case _ => return "Could not parse uri [%s]".format(uri).failNel[MarketingCampaign]
-    }
-
-    // Querystring map
-    val sourceMap: SourceMap = parameters.map(p => (p.getName -> p.getValue)).toList.toMap
-
-    val medium = getFirstParameter(mktMedium, sourceMap)
-    val source = getFirstParameter(mktSource, sourceMap)
-    val term = getFirstParameter(mktTerm, sourceMap)
-    val content = getFirstParameter(mktContent, sourceMap)
-    val campaign = getFirstParameter(mktCampaign, sourceMap)
-
-    val (clickId, network) = Unzip[Option].unzip(mktClickId.find(pair => sourceMap.contains(pair._1)).map(pair => (sourceMap(pair._1), pair._2)))
+    val (clickId, network) = Unzip[Option].unzip(mktClickId.find(pair => nvPairs.contains(pair._1)).map(pair => (nvPairs(pair._1), pair._2)))
 
     MarketingCampaign(medium, source, term, content, campaign, clickId, network).success.toValidationNel
   }
