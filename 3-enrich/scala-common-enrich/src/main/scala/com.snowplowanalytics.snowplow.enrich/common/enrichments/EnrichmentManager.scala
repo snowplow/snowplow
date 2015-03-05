@@ -393,11 +393,19 @@ object EnrichmentManager {
     // Cross-domain tracking
     val crossDomain = pageQsMap match {
       case Success(Some(qsMap)) => {
-        qsMap.get("sp_duid") foreach {spDuid => event.refr_domain_userid = CU.makeTsvSafe(spDuid)}
-        qsMap.get("sp_dtm") match {
-          case Some(spDtm) => {
-            val validatedTimestamp = EE.extractTimestamp("sp_dtm", spDtm)
-            validatedTimestamp.map(event.refr_dvce_tstamp = _: String)
+        val crossDomainParameter = qsMap.get("_sp")
+        crossDomainParameter match {
+          case Some(sp) => {
+            val crossDomainElements = sp.split("\\.")
+
+            // The duid
+            event.refr_domain_userid = CU.makeTsvSafe(crossDomainElements(0))
+
+            // The timestamp
+            crossDomainElements.lift(1) match {
+              case Some(spDtm) => EE.extractTimestamp("sp_dtm", spDtm).map(event.refr_dvce_tstamp = _: String)
+              case None => unitSuccess
+            }
           }
           case None => unitSuccess
         }
