@@ -11,14 +11,14 @@ connector {
   #
   # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
   aws {
-    access-key: "default"
-    secret-key: "default"
+    access-key: "iam"
+    secret-key: "iam"
   }
 
   kinesis {
     in {
       # Kinesis input stream name
-      stream-name: ""
+      stream-name: "{{sinkKinesisInStreamName}}"
 
       # LATEST: most recent data.
       # TRIM_HORIZON: oldest available data.
@@ -29,21 +29,25 @@ connector {
 
     out {
       # Stream for events for which the storage process fails
-      stream-name: "s3-raw-sink-errors"
+      stream-name: "{{sinkKinesisOutStreamName}}"
 
       # Number of shards with which to create the stream if it doesn't already exist
       shards: 1
     }
 
-    region: "us-east-1"
+    region: "{{sinkKinesisRegion}}"
 
     # `app-name` is used for a DynamoDB table to maintain stream state.
-    app-name: SnowplowLzoS3Sink-${connector.kinesis.in.stream-name}
+    # You can set it automatically using: "SnowplowLzoS3Sink-${connector.kinesis.in.stream-name}"
+    app-name: "{{sinkKinesisAppName}}"
   }
 
   s3 {
-    endpoint: "http://s3.amazonaws.com"
-    bucket: "" # Put s3 Bucket here
+    # If using us-east-1, then endpoint should be "http://s3.amazonaws.com".
+    # Otherwise "http://s3-<<region>>.s3.amazonaws.com", e.g.
+    # http://s3-eu-west-1.amazonaws.com
+    endpoint: "http://s3-{{sinkKinesisS3Region}}.s3.amazonaws.com"
+    bucket: "{{sinkKinesisS3Bucket}}"
   }
 
   # Events are accumulated in a buffer before being sent to S3.
