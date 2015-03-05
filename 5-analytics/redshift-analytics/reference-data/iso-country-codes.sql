@@ -5,7 +5,7 @@ CREATE TABLE reference_data.country_codes (
 	two_letter_iso_code char(2),
 	three_letter_iso_code char(3)
 )	
-DISTKEY(two_letter_iso_code)	
+DISTSTYLE all	
 SORTKEY(two_letter_iso_code);	
 
 INSERT INTO reference_data.country_codes VALUES
