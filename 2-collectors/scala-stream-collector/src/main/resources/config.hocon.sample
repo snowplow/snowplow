@@ -21,7 +21,7 @@ collector {
   # The collector runs as a web service specified on the following
   # interface and port.
   interface = "0.0.0.0"
-  port = 8080
+  port = 80
 
   # Production mode disables additional services helpful for configuring and
   # initializing the collector, such as a path '/dump' to view all
@@ -40,8 +40,9 @@ collector {
     # Set to 0 to disable the cookie
     expiration = 365 days
     # The domain is optional and will make the cookie accessible to other
-    # applications on the domain.
-    # domain = "collector.snplow.com"
+    # applications on the domain. Comment out this line to tie cookies to
+    # the collector's full domain
+    domain = "{{collectorCookieDomain}}"
   }
 
   # The collector has a configurable sink for storing data in
@@ -70,15 +71,15 @@ collector {
       #
       # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
       aws {
-        access-key: "env"
-        secret-key: "env"
+        access-key: "iam"
+        secret-key: "iam"
       }
 
       # Data will be stored in the following stream.
       # If the stream does not exist, one will be created with $size shards.
       stream {
-        region: "us-east-1"
-        name: "snowplow_collector_example"
+        region: "{{collectorSinkKinesisStreamRegion}}"
+        name: "{{collectorSinkKinesisStreamName}}"
         size: 1
       }
 
