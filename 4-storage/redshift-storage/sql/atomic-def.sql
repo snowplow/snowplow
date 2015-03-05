@@ -169,7 +169,7 @@ CREATE TABLE atomic.events (
 	mkt_network varchar(64) encode text255,            -- Added in 0.5.0
 
 	-- ETL tags
-	etl_tags varchar(500) encode raw,                  -- Added in 0.5.0
+	etl_tags varchar(500) encode lzo,                  -- Added in 0.5.0
 
 	-- Time event was sent
 	dvce_sent_tstamp timestamp,                        -- Added in 0.5.0
