@@ -182,6 +182,11 @@ class CollectorService(
         complete(responseHandler.preflightResponse(request))
       }
     } ~
+    get {
+      path("""crossdomain\.xml""".r) { path =>
+        complete(responseHandler.flashCrossDomainPolicy)
+      }
+    } ~
     complete(responseHandler.notFound)
   }
 }
