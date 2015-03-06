@@ -51,7 +51,7 @@ object EnrichedEventLoader {
     val eventId = 6
     val contexts = 52
     val unstructEvent = 58
-    val derivedContexts = 119
+    val derivedContexts = 122
   }
 
   /**
