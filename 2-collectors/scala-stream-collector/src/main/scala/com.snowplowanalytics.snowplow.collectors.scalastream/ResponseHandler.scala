@@ -31,7 +31,10 @@ import spray.http.{
   HttpEntity,
   HttpCookie,
   SomeOrigins,
-  AllOrigins
+  AllOrigins,
+  ContentType,
+  MediaTypes,
+  HttpCharsets
 }
 import spray.http.HttpHeaders.{
   `Set-Cookie`,
@@ -160,6 +163,11 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
     getAccessControlAllowOriginHeader(request),
     `Access-Control-Allow-Credentials`(true),
     `Access-Control-Allow-Headers`( "Content-Type")))
+
+  def flashCrossDomainPolicy = HttpEntity(
+    contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
+    string = "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n</cross-domain-policy>"
+  )
 
   def healthy = HttpResponse(status = 200, entity = s"OK")
   def notFound = HttpResponse(status = 404, entity = "404 Not found")
