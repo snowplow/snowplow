@@ -16,14 +16,6 @@ package enrich
 package common
 package enrichments
 
-// Utils
-import org.apache.http.client.utils.URLEncodedUtils
-
-// Scala
-import scala.collection.mutable.ListBuffer
-import scala.collection.JavaConversions._
-import scala.util.control.NonFatal
-
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -363,11 +355,7 @@ object EnrichmentManager {
 
     // Parse the page URI's querystring
     val pageQsMap = pageUri match {
-      case Success(Some(u)) => try {
-        URLEncodedUtils.parse(u, raw.source.encoding).map(p => (p.getName -> p.getValue)).toList.toMap.some.success
-        } catch {
-          case NonFatal(e) => "Could not parse uri [%s]".format(u).fail
-        }
+      case Success(Some(u)) => CU.extractQuerystring(u, raw.source.encoding).map(_.some)
       case _ => Success(None)
     }
 

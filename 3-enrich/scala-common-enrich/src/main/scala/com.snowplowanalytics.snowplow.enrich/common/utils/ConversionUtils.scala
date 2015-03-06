@@ -25,6 +25,11 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 // Scala
 import scala.util.Try
+import scala.util.control.NonFatal
+import scala.collection.JavaConversions._
+
+// Apache HTTP
+import org.apache.http.client.utils.URLEncodedUtils
 
 // Apache Commons
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -325,6 +330,24 @@ object ConversionUtils {
         case true => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
       }
       case e => "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).fail
+    }
+
+  /**
+   * Attempt to extract the querystring from a URI as a map
+   *
+   * @param uri URI containing the querystring
+   * @param encoding Encoding of the URI
+   */
+  def extractQuerystring(uri: URI, encoding: String): Validation[String, Map[String, String]] =
+    try {
+      URLEncodedUtils.parse(uri, encoding).map(p => (p.getName -> p.getValue)).toMap.success
+    } catch {
+      case NonFatal(e1) => try {
+        Uri.parse(uri.toString).query.params.toMap.success
+      } catch {
+        case NonFatal(e2) =>
+          s"Could not parse uri [$uri]. Httpclient threw exception: [$e1]. Net-a-porter threw exception: [$e2]".fail
+      }
     }
 
   /**
