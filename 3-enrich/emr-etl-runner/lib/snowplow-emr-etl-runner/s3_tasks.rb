@@ -90,7 +90,7 @@ module Snowplow
 
             # This will convert Beanstalk epoch timestamps to our CloudFront-like yyyy-MM-dd-HH
             final_name, final_extn =
-              if name_match = name.match(/^_*(.*)\.txt([[:digit:]]+)$/)
+              if name_match = name.match(/^_*(.*)\.txt-?([[:digit:]]+)$/)
                 base, tstamp = name_match.captures
                 begin
                   tstamp_ymdh = Time.at(tstamp.to_i).utc.to_datetime.strftime("%Y-%m-%d-%H")
