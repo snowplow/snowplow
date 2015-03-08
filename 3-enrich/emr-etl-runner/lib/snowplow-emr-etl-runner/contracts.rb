@@ -65,7 +65,8 @@ module Snowplow
       :log => String,
       :raw => ({
         :in => String,
-        :processing => String
+        :processing => String,
+        :archive => String
         }),
       :enriched => ({
         :good => String,
