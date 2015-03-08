@@ -359,6 +359,12 @@ module Snowplow
           rescue SocketError => se
             logger.warn "Got socket error #{se}, waiting 5 minutes before checking jobflow again"
             sleep(300)
+          rescue Errno::ECONNREFUSED => ref
+            logger.warn "Got connection refused #{ref}, waiting 5 minutes before checking jobflow again"
+            sleep(300)
+          rescue Errno::ECONNRESET => res
+            logger.warn "Got connection reset #{res}, waiting 5 minutes before checking jobflow again"
+            sleep(300)
           end
         end
 
