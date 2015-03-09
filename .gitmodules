@@ -19,9 +19,9 @@
 [submodule "1-trackers/nodejs-tracker"]
 	path = 1-trackers/nodejs-tracker
 	url = https://github.com/snowplow/snowplow-nodejs-tracker.git
-[submodule "1-trackers/ios-tracker"]
-	path = 1-trackers/ios-tracker
-	url = https://github.com/snowplow/snowplow-ios-tracker
+[submodule "1-trackers/objc-tracker"]
+	path = 1-trackers/objc-tracker
+	url = https://github.com/snowplow/snowplow-objc-tracker
 [submodule "1-trackers/android-tracker"]
 	path = 1-trackers/android-tracker
 	url = https://github.com/snowplow/snowplow-android-tracker
