@@ -133,6 +133,9 @@ class KinesisSink(provider: AWSCredentialsProvider,
     }
   }
 
+
+  var stored = List[(ByteBuffer, String)]()
+
   /**
    * Side-effecting function to store the EnrichedEvent
    * to the given output stream.
@@ -140,25 +143,43 @@ class KinesisSink(provider: AWSCredentialsProvider,
    * EnrichedEvent takes the form of a tab-delimited
    * String until such time as https://github.com/snowplow/snowplow/issues/211
    * is implemented.
+   *
+   * This method blocks until the request has finished.
+   *
+   * @param events List of events together with their partition keys
+   * @return whether to send the stored events to Kinesis
    */
-  def storeEnrichedEvent(output: String, key: String) = {
-    val putData = for {
-      p <- enrichedStream.put(
-        ByteBuffer.wrap(output.getBytes),
-        key
-      )
-    } yield p
+  def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
+    stored = stored ++ events.map(e => ByteBuffer.wrap(e._1.getBytes) -> e._2)
+    stored.size >= 10 // TODO: decide on this value
+  }
 
-    putData onComplete {
-      case Success(result) => {
-        info(s"Writing successful")
-        info(s"  + ShardId: ${result.shardId}")
-        info(s"  + SequenceNumber: ${result.sequenceNumber}")
+  /**
+   * Blocking method to send all batched records to Kinesis
+   */
+  def flush() {
+    // TODO: make sure we don't put too many events in a single request
+    if (stored.size > 0) {
+      val putData = for {
+        p <- enrichedStream.multiPut(stored)
+      } yield p
+
+      putData onComplete {
+        case Success(result) => {
+          info(s"Writing successful")
+          info(s"  + ShardIds: ${result.shardIds}")
+          info(s"  + SequenceNumber: ${result.sequenceNumber}")
+        }
+        // TODO: better failure handling, e.g. multiple retries
+        case Failure(f) => {
+          error(s"Writing failed.")
+          error(s"  + " + f.getMessage)
+        }
       }
-      case Failure(f) => {
-        error(s"Writing failed.")
-        error(s"  + " + f.getMessage)
-      }
+
+      Await.result(putData, 10.seconds)
+
+      stored = List[(ByteBuffer, String)]()
     }
   }
 }
