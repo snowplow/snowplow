@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory
 // Scala
 import scala.util.control.Breaks._
 import scala.collection.JavaConversions._
+import scala.collection.mutable.Buffer
 
 // Thrift
 import org.apache.thrift.TDeserializer
@@ -121,7 +122,6 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     private val thriftDeserializer = new TDeserializer()
 
     private var kinesisShardId: String = _
-    private var nextCheckpointTimeInMillis: Long = _
 
     // Backoff and retry settings.
     private val BACKOFF_TIME_IN_MILLIS = 3000L
@@ -138,25 +138,23 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     def processRecords(records: List[Record],
         checkpointer: IRecordProcessorCheckpointer) = {
       info(s"Processing ${records.size} records from $kinesisShardId")
-      processRecordsWithRetries(records)
+      val shouldCheckpoint = processRecordsWithRetries(records).contains(Some(true))
 
-      if (System.currentTimeMillis() > nextCheckpointTimeInMillis) {
+      if (shouldCheckpoint) {
         checkpoint(checkpointer)
-        nextCheckpointTimeInMillis =
-          System.currentTimeMillis + CHECKPOINT_INTERVAL_MILLIS
       }
     }
 
-
-    private def processRecordsWithRetries(records: List[Record]) = {
-      for (record <- records) {
+    private def processRecordsWithRetries(records: List[Record]): Buffer[Option[Boolean]] = {
+      for (record <- records) yield {
         try {
           info(s"Sequence number: ${record.getSequenceNumber}")
           info(s"Partition key: ${record.getPartitionKey}")
-          enrichEvents(record.getData.array)
+          Some(enrichAndStoreEvents(record.getData.array))
         } catch {
           case t: Throwable =>
             error(s"Caught throwable while processing record $record", t)
+            None
         }
       }
     }
@@ -169,7 +167,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
         checkpoint(checkpointer)
       }
     }
-      
+
     private def checkpoint(checkpointer: IRecordProcessorCheckpointer) = {
       info(s"Checkpointing shard $kinesisShardId")
       breakable {

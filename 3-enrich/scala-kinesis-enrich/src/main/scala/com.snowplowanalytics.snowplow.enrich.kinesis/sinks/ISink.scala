@@ -32,5 +32,7 @@ trait ISink {
    * String until such time as https://github.com/snowplow/snowplow/issues/211
    * is implemented.
    */
-  def storeEnrichedEvent(output: String, key: String)
+  def storeEnrichedEvents(events: List[(String, String)]): Boolean
+
+  def flush()
 }
