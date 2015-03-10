@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory
 // Scala
 import scala.util.control.Breaks._
 import scala.collection.JavaConversions._
-import scala.collection.mutable.Buffer
+import scala.util.control.NonFatal
 
 // Thrift
 import org.apache.thrift.TDeserializer
@@ -138,24 +138,21 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     def processRecords(records: List[Record],
         checkpointer: IRecordProcessorCheckpointer) = {
       info(s"Processing ${records.size} records from $kinesisShardId")
-      val shouldCheckpoint = processRecordsWithRetries(records).contains(Some(true))
+      val shouldCheckpoint = processRecordsWithRetries(records)
 
       if (shouldCheckpoint) {
         checkpoint(checkpointer)
       }
     }
 
-    private def processRecordsWithRetries(records: List[Record]): Buffer[Option[Boolean]] = {
-      for (record <- records) yield {
-        try {
-          info(s"Sequence number: ${record.getSequenceNumber}")
-          info(s"Partition key: ${record.getPartitionKey}")
-          Some(enrichAndStoreEvents(record.getData.array))
-        } catch {
-          case t: Throwable =>
-            error(s"Caught throwable while processing record $record", t)
-            None
-        }
+    private def processRecordsWithRetries(records: List[Record]): Boolean = {
+      try {
+        enrichAndStoreEvents(records.map(_.getData.array).toList)
+      } catch {
+        case NonFatal(e) =>
+          // TODO: send an event when something goes wrong here
+          error(s"Caught throwable while processing records $records", e)
+          false
       }
     }
 
