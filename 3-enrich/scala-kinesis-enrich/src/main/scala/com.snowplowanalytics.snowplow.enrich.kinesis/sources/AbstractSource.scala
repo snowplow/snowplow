@@ -96,35 +96,55 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
     }.mkString("\t")
   }
 
-  // Helper method to enrich an event.
-  // TODO: this is a slightly odd design: it's a pure function if our
-  // our sink is Test, but it's an impure function (with
-  // storeEnrichedEvent side effect) for the other sinks. We should
-  // break this into a pure function with an impure wrapper.
-  def enrichEvents(binaryData: Array[Byte]): List[Option[String]] = {
+  /**
+   * Convert incoming binary Thrift records to lists of enriched events
+   *
+   * @param binaryData Thrift raw event
+   * @return List containing successful or failed events, each with a
+   *         partition key
+   */
+  def enrichEvents(binaryData: Array[Byte]): List[Validation[(String, String), (String, String)]] = {
     val canonicalInput: ValidatedMaybeCollectorPayload = ThriftLoader.toCollectorPayload(binaryData)
     val processedEvents: List[ValidationNel[String, EnrichedEvent]] = EtlPipeline.processEvents(
       enrichmentRegistry, s"kinesis-${generated.Settings.version}", System.currentTimeMillis.toString, canonicalInput)
     processedEvents.map(validatedMaybeEvent => {
       validatedMaybeEvent match {
-        case Success(co) => {
-          val ts = tabSeparateEnrichedEvent(co)
-          for (s <- sink) {
-            // TODO: pull this side effect into parent function
-            s.storeEnrichedEvent(ts, co.user_ipaddress)
-          }
-          Some(ts)
-        }
+        case Success(co) => (tabSeparateEnrichedEvent(co) -> co.user_ipaddress).success
         case Failure(errors) => {
-          for (s <- badSink) {
-            val line = new String(Base64.encodeBase64(binaryData))
-            s.storeEnrichedEvent(BadRow(line, errors).toCompactJson, "fail")
-          }
-          None
+          val line = new String(Base64.encodeBase64(binaryData))
+          (BadRow(line, errors).toCompactJson -> "fail").fail
         }
       }
     })
   }
+
+  /**
+   * Deserialize and enrich incoming Thrift records and store the results
+   * in the appropriate sinks. If doing so causes the number of events
+   * stored in a sink to become sufficiently large, all sinks are flushed
+   * and we return `true`, signalling that it is time to checkpoint
+   *
+   * @param binaryData Thrift raw event
+   * @return Whether to checkpoint
+   */
+  def enrichAndStoreEvents(binaryData: Array[Byte]): Boolean = {
+    val enrichedEvents = enrichEvents(binaryData)
+    val successes = enrichedEvents collect { case Success(s) => s }
+    val failures = enrichedEvents collect { case Failure(s) => s }
+    val successesTriggeredFlush = sink.map(_.storeEnrichedEvents(successes))
+    val failuresTriggeredFlush = badSink.map(_.storeEnrichedEvents(failures))
+    if (successesTriggeredFlush == Some(true) || failuresTriggeredFlush == Some(true)) {
+
+      // Block until the records have been sent to Kinesis
+      sink.foreach(_.flush)
+      badSink.foreach(_.flush)
+      true
+    } else {
+      false
+    }
+
+  }
+
 
   // Initialize a Kinesis provider with the given credentials.
   private def createKinesisProvider(): AWSCredentialsProvider =  {

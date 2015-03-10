@@ -35,10 +35,13 @@ class StdouterrSink(inputType: InputType.InputType) extends ISink {
    * String until such time as https://github.com/snowplow/snowplow/issues/211
    * is implemented.
    */
-  def storeEnrichedEvent(output: String, key: String) {
+  def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
     inputType match {
-      case InputType.Good => println(output) // To stdout
-      case InputType.Bad => Console.err.println(output) // To stderr
+      case InputType.Good => events.foreach(e => println(e._1)) // To stdout
+      case InputType.Bad => events.foreach(e => Console.err.println(e._1)) // To stderr
     }
+    true
   }
+
+  def flush() = ()
 }
