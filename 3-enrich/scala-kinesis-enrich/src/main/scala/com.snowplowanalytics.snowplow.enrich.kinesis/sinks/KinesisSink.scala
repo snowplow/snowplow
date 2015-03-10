@@ -170,7 +170,6 @@ class KinesisSink(provider: AWSCredentialsProvider,
           info(s"  + ShardIds: ${result.shardIds}")
           info(s"  + SequenceNumber: ${result.sequenceNumber}")
         }
-        // TODO: better failure handling, e.g. multiple retries
         case Failure(f) => {
           error(s"Writing failed.")
           error(s"  + " + f.getMessage)

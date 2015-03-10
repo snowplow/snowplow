@@ -127,8 +127,8 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
    * @param binaryData Thrift raw event
    * @return Whether to checkpoint
    */
-  def enrichAndStoreEvents(binaryData: Array[Byte]): Boolean = {
-    val enrichedEvents = enrichEvents(binaryData)
+  def enrichAndStoreEvents(binaryData: List[Array[Byte]]): Boolean = {
+    val enrichedEvents = binaryData.flatMap(enrichEvents(_))
     val successes = enrichedEvents collect { case Success(s) => s }
     val failures = enrichedEvents collect { case Failure(s) => s }
     val successesTriggeredFlush = sink.map(_.storeEnrichedEvents(successes))
