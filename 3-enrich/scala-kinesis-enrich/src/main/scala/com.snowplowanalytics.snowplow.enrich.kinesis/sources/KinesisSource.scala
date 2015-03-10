@@ -139,24 +139,22 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     def processRecords(records: List[Record],
         checkpointer: IRecordProcessorCheckpointer) = {
       info(s"Processing ${records.size} records from $kinesisShardId")
-      val shouldCheckpoint = processRecordsWithRetries(records).contains(Some(true))
+      val shouldCheckpoint = processRecordsWithRetries(records)
 
       if (shouldCheckpoint) {
         checkpoint(checkpointer)
       }
     }
 
-    private def processRecordsWithRetries(records: List[Record]): Buffer[Option[Boolean]] = {
-      for (record <- records) yield {
-        try {
-          info(s"Sequence number: ${record.getSequenceNumber}")
-          info(s"Partition key: ${record.getPartitionKey}")
-          Some(enrichAndStoreEvents(record.getData.array))
-        } catch {
-          case t: Throwable =>
-            error(s"Caught throwable while processing record $record", t)
-            None
-        }
+    private def processRecordsWithRetries(records: List[Record]): Boolean = {
+      try {
+        enrichAndStoreEvents(records.map(_.getData.array).toList)
+      } catch {
+        case NonFatal(e) =>
+          // TODO: decide what to do with this error - should we checkpoint?
+          // TODO: add back in logging for partition keys and sequence numbers
+          error(s"Caught throwable while processing record $record", e)
+          true
       }
     }
 
