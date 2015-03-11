@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory
 // Scala
 import scala.util.control.Breaks._
 import scala.collection.JavaConversions._
-import scala.collection.mutable.Buffer
+import scala.util.control.NonFatal
 
 // Thrift
 import org.apache.thrift.TDeserializer
@@ -153,7 +153,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
         case NonFatal(e) =>
           // TODO: decide what to do with this error - should we checkpoint?
           // TODO: add back in logging for partition keys and sequence numbers
-          error(s"Caught throwable while processing record $record", e)
+          error(s"Caught throwable while processing records $records", e)
           true
       }
     }
