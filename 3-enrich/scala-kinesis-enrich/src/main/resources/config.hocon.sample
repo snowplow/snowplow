@@ -29,7 +29,20 @@ enrich {
   streams {
     in: {
       raw: "SnowplowRaw"
+
+      # After enrichment, are accumulated in a buffer before being sent to Kinesis.
+      # The buffer is emptied whenever:
+      # - the number of stored records reaches record-limit or
+      # - the combined size of the stored records reaches byte-limit or
+      # - the time in milliseconds since it was last emptied exceeds time-limit when
+      #   a new event enters the buffer
+      buffer: {
+        byte-limit: 4500000 # 4.5MB
+        record-limit: 500 # 500 records
+        time-limit: 60000 # 1 minute
+      }
     }
+
     out: {
       enriched: "SnowplowEnriched"
       enriched_shards: 1 # Number of shards to use if created.
