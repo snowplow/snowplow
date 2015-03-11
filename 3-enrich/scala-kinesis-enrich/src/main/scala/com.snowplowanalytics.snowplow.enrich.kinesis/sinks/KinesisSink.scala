@@ -135,12 +135,13 @@ class KinesisSink(provider: AWSCredentialsProvider,
 
   // TODO: make these configurable
   // Note that it is possible to send
-  val ByteLimit = 4500000
-  val RecordLimit = 500
-  val TimeLimit = 60000 // 1 minute TODO implement
+  val ByteThreshold = 4500000
+  val RecordThreshold = 500
+  val TimeThreshold = 10000
+  var nextRequestTime = System.currentTimeMillis() + TimeThreshold
 
   /**
-   * Object to store events while waiting for the ByteLimit, RecordLimit, or TimeLimit to be reached
+   * Object to store events while waiting for the ByteThreshold, RecordThreshold, or TimeThreshold to be reached
    */
   object EventStorage {
     // Each complete batch is the contents of a single PutRecords API call
@@ -164,16 +165,16 @@ class KinesisSink(provider: AWSCredentialsProvider,
 
     /**
      * Add a new event to the current batch.
-     * If this would take the current batch above ByteLimit bytes,
+     * If this would take the current batch above ByteThreshold bytes,
      * first seal the current batch.
-     * If this takes the current batch up to RecordLimit records,
+     * If this takes the current batch up to RecordThreshold records,
      * seal the current batch and make a new batch.
      *
      * @param event New event
      */
     def addEvent(event: (ByteBuffer, String)) {
       val newBytes = event._1.capacity
-      if (byteCount + newBytes >= ByteLimit) {
+      if (byteCount + newBytes >= ByteThreshold) {
         sealBatch()
       }
 
@@ -182,7 +183,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
       eventCount += 1
       currentBatch = event :: currentBatch
 
-      if (eventCount == RecordLimit) {
+      if (eventCount == RecordThreshold) {
         sealBatch()
       }
     }
@@ -215,7 +216,12 @@ class KinesisSink(provider: AWSCredentialsProvider,
     val wrappedEvents = events.map(e => ByteBuffer.wrap(e._1.getBytes) -> e._2)
     wrappedEvents.foreach(EventStorage.addEvent(_))
 
-    !EventStorage.completeBatches.isEmpty
+    if (System.currentTimeMillis() > nextRequestTime) {
+      nextRequestTime = System.currentTimeMillis() + TimeThreshold
+      true
+    } else {
+      !EventStorage.completeBatches.isEmpty
+    }
   }
 
   /**
