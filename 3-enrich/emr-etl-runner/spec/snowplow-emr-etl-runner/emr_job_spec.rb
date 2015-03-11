@@ -28,10 +28,9 @@ describe EmrJob do
   end
 
   it 'returns the Hadoop assets' do
-    EmrJob.get_assets("s3://hadoop-assets/", "1.0.0").should == {
-      :maxmind  => "s3://hadoop-assets/third-party/maxmind/GeoLiteCity.dat",
-      :s3distcp => "/home/hadoop/lib/emr-s3distcp-1.0.jar",
-      :hadoop   => "s3://hadoop-assets/3-enrich/hadoop-etl/snowplow-hadoop-etl-1.0.0.jar"
+    EmrJob.get_assets("s3://hadoop-assets/", "1.0.0", "1.0.1").should == {
+      :enrich   => "s3://hadoop-assets/3-enrich/hadoop-etl/snowplow-hadoop-etl-1.0.0.jar",
+      :shred    => "s3://hadoop-assets/3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-1.0.1.jar",
     }
   end
 
