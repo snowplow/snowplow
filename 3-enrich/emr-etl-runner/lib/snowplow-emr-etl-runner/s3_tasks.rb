@@ -30,6 +30,52 @@ module Snowplow
       CF_DATE_FORMAT = '%Y-%m-%d'
       CF_FILE_EXT = '.gz'
 
+      # Cleans up our filenames, making archiving
+      # much cleaner. See the test suite for
+      # expected behaviors.
+      #
+      # Lambda factory required for unit tests.
+      #
+      # Parameters:
+      # +region+:: the region to add into the filenames
+      Contract String => Func[String, String => String]
+      def self.build_fix_filenames(region)
+        return lambda { |basename, filepath|
+          # Prepend sub-dir to prevent one set of files
+          # from overwriting same-named in other sub-dir
+          if filepath_match = filepath.match('([^/]+)/[^/]+$')
+            instance = filepath_match[1]
+
+            extn = File.extname(basename)
+            name = File.basename(basename, extn)
+
+            # This will convert Beanstalk epoch timestamps to our CloudFront-like yyyy-MM-dd-HH
+            final_name, final_extn =
+              if name_match = name.match(/^_*(.*)\.txt-?([[:digit:]]+)$/)
+                base, tstamp = name_match.captures
+                begin
+                  tstamp_ymdh = Time.at(tstamp.to_i).utc.to_datetime.strftime("%Y-%m-%d-%H")
+                  [ base + '.' + tstamp_ymdh, '.txt' + extn ]
+                rescue StandardError => e
+                  [ name, extn ]
+                end
+              else
+                [ name, extn ]
+              end
+
+            # Hopefully basename.yyyy-MM-dd-HH.region.instance.txt.gz
+            return final_name + '.' + region + '.' + instance + final_extn
+          else
+            # Hadoop ignores files which begin with underscores
+            if m = basename.match('^_+(.*\.gz)$')
+              return m[1]
+            else
+              return basename
+            end
+          end
+        }
+      end
+
       # Moves new CloudFront logs to a processing bucket.
       #
       # Parameters:
@@ -78,42 +124,7 @@ module Snowplow
           Sluice::Storage::files_between(args[:start], args[:end], CF_DATE_FORMAT, CF_FILE_EXT)
         end
 
-        fix_filenames = lambda { |basename, filepath|
-
-          # Prepend sub-dir to prevent one set of files
-          # from overwriting same-named in other sub-dir
-          if filepath_match = filepath.match('([^/]+)/[^/]+$')
-            instance = filepath_match[1]
-
-            extn = File.extname(basename)
-            name = File.basename(basename, extn)
-
-            # This will convert Beanstalk epoch timestamps to our CloudFront-like yyyy-MM-dd-HH
-            final_name, final_extn =
-              if name_match = name.match(/^_*(.*)\.txt-?([[:digit:]]+)$/)
-                base, tstamp = name_match.captures
-                begin
-                  tstamp_ymdh = Time.at(tstamp.to_i).utc.to_datetime.strftime("%Y-%m-%d-%H")
-                  [ base + '.' + tstamp_ymdh, '.txt' + extn ]
-                rescue StandardError => e
-                  [ name, extn ]
-                end
-              else
-                [ name, extn ]
-              end
-
-            # Hopefully basename.yyyy-MM-dd-HH.region.instance.txt.gz
-            return final_name + '.' + config[:s3][:region] + '.' + instance + final_extn
-          else
-            # Hadoop ignores files which begin with underscores
-            if m = basename.match('^_+(.*\.gz)$')
-              return m[1]
-            else
-              return basename
-            end
-          end
-        }
-
+        fix_filenames = build_fix_filenames(config[:s3][:region])
         files_moved = Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move, fix_filenames, true)
 
         if files_moved.length == 0
