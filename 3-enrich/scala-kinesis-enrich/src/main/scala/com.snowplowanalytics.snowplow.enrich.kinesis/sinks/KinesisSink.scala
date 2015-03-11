@@ -135,13 +135,68 @@ class KinesisSink(provider: AWSCredentialsProvider,
 
   // TODO: make these configurable
   // Note that it is possible to send
-  val ByteLimit = 4000000
+  val ByteLimit = 4500000
   val RecordLimit = 500
   val TimeLimit = 60000 // 1 minute TODO implement
 
-  // TODO create an object to hold these
-  var stored = List[(ByteBuffer, String)]()
-  var storedBytes = 0
+  /**
+   * Object to store events while waiting for the ByteLimit, RecordLimit, or TimeLimit to be reached
+   */
+  object EventStorage {
+    // Each complete batch is the contents of a single PutRecords API call
+    var completeBatches = List[List[(ByteBuffer, String)]]()
+    // The batch currently under constructon
+    var currentBatch = List[(ByteBuffer, String)]()
+    // Length of the current batch
+    var eventCount = 0
+    // Size in bytes of the current batch
+    var byteCount = 0
+
+    /**
+     * Finish work on the current batch and create a new one.
+     */
+    def sealBatch() {
+        completeBatches = currentBatch :: completeBatches
+        eventCount = 0
+        byteCount = 0
+        currentBatch = Nil
+    }
+
+    /**
+     * Add a new event to the current batch.
+     * If this would take the current batch above ByteLimit bytes,
+     * first seal the current batch.
+     * If this takes the current batch up to RecordLimit records,
+     * seal the current batch and make a new batch.
+     *
+     * @param event New event
+     */
+    def addEvent(event: (ByteBuffer, String)) {
+      val newBytes = event._1.capacity
+      if (byteCount + newBytes >= ByteLimit) {
+        sealBatch()
+      }
+
+      byteCount += newBytes
+
+      eventCount += 1
+      currentBatch = event :: currentBatch
+
+      if (eventCount == RecordLimit) {
+        sealBatch()
+      }
+    }
+
+    /**
+     * Reset everything.
+     */
+    def clear() {
+      completeBatches = Nil
+      currentBatch = Nil
+      eventCount = 0
+      byteCount = 0
+    }
+  }
 
   /**
    * Side-effecting function to store the EnrichedEvent
@@ -158,10 +213,9 @@ class KinesisSink(provider: AWSCredentialsProvider,
    */
   def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
     val wrappedEvents = events.map(e => ByteBuffer.wrap(e._1.getBytes) -> e._2)
-    val totalBytes = wrappedEvents.foldLeft(0)(_ + _._1.capacity)
-    stored = stored ++ wrappedEvents
-    storedBytes += totalBytes
-    stored.size >= RecordLimit || storedBytes >= ByteLimit // TODO: decide on this value
+    wrappedEvents.foreach(EventStorage.addEvent(_))
+
+    !EventStorage.completeBatches.isEmpty
   }
 
   /**
@@ -169,28 +223,10 @@ class KinesisSink(provider: AWSCredentialsProvider,
    * Splits the stored records into smaller batches (by byte size or record number) if necessary
    */
   def flush() {
-
-    import scala.annotation.tailrec
-    @tailrec
-    def batchAndSend(ls: List[(ByteBuffer, String)], currentLength: Int, currentBytes: Int, batch: List[(ByteBuffer, String)]): List[(ByteBuffer, String)] =
-      ls match {
-        case head :: tail => if (currentBytes + head._1.capacity > ByteLimit || currentLength == RecordLimit) {
-          sendBatch(batch)
-          batchAndSend(head :: tail, 0, 0, Nil)
-        } else {
-          // TODO This reverses the order of the events in the batch
-          batchAndSend(tail, currentLength + 1, currentBytes + head._1.capacity, head :: batch)
-        }
-        case Nil => {
-          sendBatch(batch)
-          Nil
-        }
-      }
-
-    batchAndSend(stored, 0, 0, Nil)
-
-    stored = List[(ByteBuffer, String)]()
-    storedBytes = 0
+    EventStorage.sealBatch()
+    // Send events in the order they were received
+    EventStorage.completeBatches.reverse.foreach(b => sendBatch(b.reverse))
+    EventStorage.clear()
   }
 
   /**
