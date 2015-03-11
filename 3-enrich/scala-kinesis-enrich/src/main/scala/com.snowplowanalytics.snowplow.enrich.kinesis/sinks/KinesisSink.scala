@@ -158,25 +158,30 @@ class KinesisSink(provider: AWSCredentialsProvider,
    * Blocking method to send all batched records to Kinesis
    */
   def flush() {
-    // TODO: make sure we don't put too many events in a single request
     if (stored.size > 0) {
-      val putData = for {
-        p <- enrichedStream.multiPut(stored)
-      } yield p
 
-      putData onComplete {
-        case Success(result) => {
-          info(s"Writing successful")
-          info(s"  + ShardIds: ${result.shardIds}")
-          info(s"  + SequenceNumber: ${result.sequenceNumber}")
+      // At most 500 records per request
+      stored.grouped(500) foreach { batch =>
+
+        val putData = for {
+          p <- enrichedStream.multiPut(batch)
+        } yield p
+
+        putData onComplete {
+          case Success(result) => {
+            info(s"Writing successful")
+            info(s"  + ShardIds: ${result.shardIds}")
+            info(s"  + SequenceNumber: ${result.sequenceNumber}")
+          }
+          case Failure(f) => {
+            error(s"Writing failed.")
+            error(s"  + " + f.getMessage)
+          }
         }
-        case Failure(f) => {
-          error(s"Writing failed.")
-          error(s"  + " + f.getMessage)
-        }
+
+        Await.result(putData, 10.seconds)
+
       }
-
-      Await.result(putData, 10.seconds)
 
       stored = List[(ByteBuffer, String)]()
     }
