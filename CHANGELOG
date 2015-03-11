@@ -1,3 +1,22 @@
+Release 62 Tropical Parula (2015-03-17)
+---------------------------------------
+Common: updated `vagrant up` to work with latest Peru version (#1475)
+Ruby Tracker: bumped git submodule to 0.4.1 (#1488)
+Python Tracker: bumped git submodule to 0.6.0 (#1487)
+PHP Tracker: bumped git submodule to 0.2.1 (#1486)
+JavaScript Tracker: bumped git submodule to 2.3.0 (#1485)
+Java Tracker: bumped git submodule to 0.7.0 (#1484)
+Objective-C Tracker: renamed from iOS Tracker and bump git submodule to 0.3.2 (#1483)
+EmrEtlRunner: bumped to 0.13.0
+EmrEtlRunner: fixed copy to staging for Tomcat7 logs with hyphen after .txt (#1480)
+EmrEtlRunner: added missing :archive: in BucketHash (#1475)
+EmrEtlRunner: added support for custom bootstrap actions, thanks @danisola! (#1405)
+EmrEtlRunner: removed time_diff as a dependency (#1352)
+EmrEtlRunner: fixed breaking get_assets spec (#1287)
+EmrEtlRunner: now tolerating more exception types in EmrJob's wait_for (#358)
+EmrEtlRunner: bumped Contracts to 0.7 (#1498)
+EmrEtlRunner: moved `include Contracts` into classes and modules (#1438)
+
 Release 61 Pygmy Parrot (2015-03-02)
 ------------------------------------
 Common: bumped VERSION file to r61-pygmy-parrot
