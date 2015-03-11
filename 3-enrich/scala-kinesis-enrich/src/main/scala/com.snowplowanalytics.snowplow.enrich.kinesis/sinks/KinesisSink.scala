@@ -133,8 +133,15 @@ class KinesisSink(provider: AWSCredentialsProvider,
     }
   }
 
+  // TODO: make these configurable
+  // Note that it is possible to send
+  val ByteLimit = 4000000
+  val RecordLimit = 500
+  val TimeLimit = 60000 // 1 minute TODO implement
 
+  // TODO create an object to hold these
   var stored = List[(ByteBuffer, String)]()
+  var storedBytes = 0
 
   /**
    * Side-effecting function to store the EnrichedEvent
@@ -150,40 +157,66 @@ class KinesisSink(provider: AWSCredentialsProvider,
    * @return whether to send the stored events to Kinesis
    */
   def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
-    stored = stored ++ events.map(e => ByteBuffer.wrap(e._1.getBytes) -> e._2)
-    stored.size >= 10 // TODO: decide on this value
+    val wrappedEvents = events.map(e => ByteBuffer.wrap(e._1.getBytes) -> e._2)
+    val totalBytes = wrappedEvents.foldLeft(0)(_ + _._1.capacity)
+    stored = stored ++ wrappedEvents
+    storedBytes += totalBytes
+    stored.size >= RecordLimit || storedBytes >= ByteLimit // TODO: decide on this value
   }
 
   /**
-   * Blocking method to send all batched records to Kinesis
+   * Blocking method to send all stored records to Kinesis
+   * Splits the stored records into smaller batches (by byte size or record number) if necessary
    */
   def flush() {
-    if (stored.size > 0) {
 
-      // At most 500 records per request
-      stored.grouped(500) foreach { batch =>
-
-        val putData = for {
-          p <- enrichedStream.multiPut(batch)
-        } yield p
-
-        putData onComplete {
-          case Success(result) => {
-            info(s"Writing successful")
-            info(s"  + ShardIds: ${result.shardIds}")
-            info(s"  + SequenceNumber: ${result.sequenceNumber}")
-          }
-          case Failure(f) => {
-            error(s"Writing failed.")
-            error(s"  + " + f.getMessage)
-          }
+    import scala.annotation.tailrec
+    @tailrec
+    def batchAndSend(ls: List[(ByteBuffer, String)], currentLength: Int, currentBytes: Int, batch: List[(ByteBuffer, String)]): List[(ByteBuffer, String)] =
+      ls match {
+        case head :: tail => if (currentBytes + head._1.capacity > ByteLimit || currentLength == RecordLimit) {
+          sendBatch(batch)
+          batchAndSend(head :: tail, 0, 0, Nil)
+        } else {
+          // TODO This reverses the order of the events in the batch
+          batchAndSend(tail, currentLength + 1, currentBytes + head._1.capacity, head :: batch)
         }
-
-        Await.result(putData, 10.seconds)
-
+        case Nil => {
+          sendBatch(batch)
+          Nil
+        }
       }
 
-      stored = List[(ByteBuffer, String)]()
+    batchAndSend(stored, 0, 0, Nil)
+
+    stored = List[(ByteBuffer, String)]()
+    storedBytes = 0
+  }
+
+  /**
+   * Send a single batch of events in one blocking PutRecords API call
+   *
+   * @param batch Events to send
+   */
+  def sendBatch(batch: List[(ByteBuffer, String)]) {
+    if (!batch.isEmpty) {
+      val putData = for {
+        p <- enrichedStream.multiPut(batch)
+      } yield p
+
+      putData onComplete {
+        case Success(result) => {
+          info(s"Writing successful")
+          info(s"  + ShardIds: ${result.shardIds}")
+          info(s"  + SequenceNumber: ${result.sequenceNumber}")
+        }
+        case Failure(f) => {
+          error(s"Writing failed.")
+          error(s"  + " + f.getMessage)
+        }
+      }
+
+      Await.result(putData, 10.seconds)
     }
   }
 }
