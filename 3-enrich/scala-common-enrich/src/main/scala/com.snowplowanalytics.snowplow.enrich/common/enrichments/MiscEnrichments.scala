@@ -17,6 +17,11 @@ package enrichments
 import scalaz._
 import Scalaz._
 
+// json4s
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+
 // This project
 import utils.{ConversionUtils => CU}
 
@@ -80,4 +85,15 @@ object MiscEnrichments {
   val toTsvSafe: (String, String) => ValidatedString = (field, value) =>
     CU.makeTsvSafe(value).success
 
+  /**
+   * Turn a list of custom contexts into a self-describing JSON
+   *
+   * @param derivedContexts
+   * @return Self-describing JSON of custom contexts
+   */
+  def formatDerivedContexts(derivedContexts: List[JObject]): String =
+    compact(render(
+      ("schema" -> "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1") ~
+      ("data"   -> JArray(derivedContexts))
+    ))
 }

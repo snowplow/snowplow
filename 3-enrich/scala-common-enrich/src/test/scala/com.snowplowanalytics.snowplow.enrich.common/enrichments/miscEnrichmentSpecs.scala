@@ -23,6 +23,12 @@ import org.scalacheck._
 import scalaz._
 import Scalaz._
 
+// json4s
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+
+
 /**
  * Tests the etlVersion variable.
  * Uses mutable.Specification.
@@ -77,4 +83,50 @@ class IdentitySpec extends Specification with ScalaCheck {
 
   def e1 =
     check { (field: String, value: String) => MiscEnrichments.identity(field, value) must_== value.success }
+}
+
+class FormatDerivedContextsSpec extends MutSpecification {
+
+  "extractDerivedContexts" should {
+    "convert a list of JObjects to a self-describing contexts JSON" in {
+
+      val derivedContextsList = List(
+          ( ("schema" -> "iglu:com.acme/user/jsonschema/1-0-0") ~
+            ("data" ->
+              ("type" -> "tester") ~
+              ("name" -> "bethany")
+            )
+          ),
+          ( ("schema" -> "iglu:com.acme/design/jsonschema/1-0-0") ~
+            ("data" ->
+              ("color" -> "red") ~
+              ("fontSize" -> 14)
+            )
+          )
+        )
+
+      val expected = """
+      |{
+        |"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1",
+        |"data":[
+        |{
+          |"schema":"iglu:com.acme/user/jsonschema/1-0-0",
+          |"data":{
+            |"type":"tester",
+            |"name":"bethany"
+          |}
+        |},
+        |{
+          |"schema":"iglu:com.acme/design/jsonschema/1-0-0",
+          |"data":{
+            |"color":"red",
+            |"fontSize":14
+            |}
+          |}
+        |]
+      |}""".stripMargin.replaceAll("[\n\r]","")
+
+      MiscEnrichments.formatDerivedContexts(derivedContextsList) must_== expected
+    }
+  }
 }

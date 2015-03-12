@@ -20,11 +20,6 @@ package enrichments
 import scalaz._
 import Scalaz._
 
-// json4s
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-
 // SnowPlow Utils
 import util.Tap._
 
@@ -407,10 +402,7 @@ object EnrichmentManager {
     }
 
     if (derived_contexts.size > 0) {
-      event.derived_contexts = compact(render(
-        ("schema" -> "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1") ~
-        ("data"   -> JArray(derived_contexts))
-      ))
+      event.derived_contexts = ME.formatDerivedContexts(derived_contexts)
     }
 
     // Some quick and dirty truncation to ensure the load into Redshift doesn't error. Yech this is pretty dirty
