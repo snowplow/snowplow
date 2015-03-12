@@ -133,8 +133,6 @@ class KinesisSink(provider: AWSCredentialsProvider,
     }
   }
 
-  // TODO: make these configurable
-  // Note that it is possible to send
   val ByteThreshold = config.byteLimit
   val RecordThreshold = config.recordLimit
   val TimeThreshold = config.timeLimit
