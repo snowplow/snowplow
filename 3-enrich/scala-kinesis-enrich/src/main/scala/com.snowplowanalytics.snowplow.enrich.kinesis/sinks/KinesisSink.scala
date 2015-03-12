@@ -31,6 +31,9 @@ import com.amazonaws.services.kinesis.AmazonKinesisClient
 import com.amazonaws.services.kinesis.AmazonKinesis
 import com.amazonaws.regions._
 
+// Scala
+import scala.util.control.NonFatal
+
 // Scalazon (for Kinesis interaction)
 import io.github.cloudify.scala.aws.kinesis.Client
 import io.github.cloudify.scala.aws.kinesis.Client.ImplicitExecution._
@@ -235,28 +238,34 @@ class KinesisSink(provider: AWSCredentialsProvider,
 
   /**
    * Send a single batch of events in one blocking PutRecords API call
+   * Loop until the request has been sent successfully
+   * Cannot be made tail recursive (http://stackoverflow.com/questions/8233089/why-wont-scala-optimize-tail-call-with-try-catch)
    *
    * @param batch Events to send
    */
   def sendBatch(batch: List[(ByteBuffer, String)]) {
     if (!batch.isEmpty) {
-      val putData = for {
-        p <- enrichedStream.multiPut(batch)
-      } yield p
+      var sentBatchSuccessfully = false
+      while (!sentBatchSuccessfully) {
+        val putData = for {
+          p <- enrichedStream.multiPut(batch)
+        } yield p
 
-      putData onComplete {
-        case Success(result) => {
+        try {
+          val result = Await.result(putData, 10.seconds)
+          sentBatchSuccessfully = true
           info(s"Writing successful")
           info(s"  + ShardIds: ${result.shardIds}")
           info(s"  + SequenceNumber: ${result.sequenceNumber}")
-        }
-        case Failure(f) => {
-          error(s"Writing failed.")
-          error(s"  + " + f.getMessage)
+        } catch {
+          case NonFatal(f) => {
+            error(s"Writing failed.")
+            error(s"  + " + f.getMessage)
+            error(s"  + Retrying...")
+            sendBatch(batch)
+          }
         }
       }
-
-      Await.result(putData, 10.seconds)
     }
   }
 }
