@@ -139,7 +139,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
   val ByteThreshold = config.byteLimit
   val RecordThreshold = config.recordLimit
   val TimeThreshold = config.timeLimit
-  var nextRequestTime = System.currentTimeMillis() + TimeThreshold
+  var nextRequestTime = 0L
 
   /**
    * Object to store events while waiting for the ByteThreshold, RecordThreshold, or TimeThreshold to be reached
