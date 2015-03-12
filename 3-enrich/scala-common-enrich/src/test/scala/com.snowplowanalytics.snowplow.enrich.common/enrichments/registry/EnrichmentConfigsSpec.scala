@@ -196,7 +196,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
       val  currencyConversionEnrichmentJson = parse("""{
         "enabled": true,
         "parameters": {
-          "accountType": "developer",
+          "accountType": "DEVELOPER",
           "apiKey": "---",
           "baseCurrency": "EUR",
           "rateAt": "EOD_PRIOR"

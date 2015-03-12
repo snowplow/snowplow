@@ -289,7 +289,7 @@ object JobSpecHelpers {
                   |"vendor": "com.snowplowanalytics.snowplow",
                   |"name": "currency_conversion_config",
                   |"parameters": {
-                    |"accountType": "developer",
+                    |"accountType": "DEVELOPER",
                     |"apiKey": "%s",
                     |"baseCurrency": "EUR",
                     |"rateAt": "EOD_PRIOR"

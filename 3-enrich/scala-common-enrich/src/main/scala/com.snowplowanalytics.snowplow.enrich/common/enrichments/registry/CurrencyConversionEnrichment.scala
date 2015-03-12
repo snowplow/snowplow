@@ -73,12 +73,12 @@ object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
         apiKey        <- ScalazJson4sUtils.extract[String](config, "parameters", "apiKey")
         baseCurrency  <- ScalazJson4sUtils.extract[String](config, "parameters", "baseCurrency")
         accountType   <- (ScalazJson4sUtils.extract[String](config, "parameters", "accountType") match {
-          case Success("developer")  => DeveloperAccount.success
-          case Success("enterprise") => EnterpriseAccount.success
-          case Success("unlimited")  => UnlimitedAccount.success
+          case Success("DEVELOPER")  => DeveloperAccount.success
+          case Success("ENTERPRISE") => EnterpriseAccount.success
+          case Success("UNLIMITED")  => UnlimitedAccount.success
 
           // These failures should be prevented by the schema
-          case Success(s) => "accountType [%s] is not one of developer, enterprise, and unlimited".format(s).toProcessingMessage.fail
+          case Success(s) => "accountType [%s] is not one of DEVELOPER, ENTERPRISE, and UNLIMITED".format(s).toProcessingMessage.fail
           case Failure(f) => Failure(f)
         })
         rateAt        <- ScalazJson4sUtils.extract[String](config, "parameters", "rateAt")
