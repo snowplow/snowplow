@@ -14,17 +14,16 @@
 # License::   Apache License Version 2.0
 
 require 'date'
-
 require 'sluice'
-
 require 'contracts'
-include Contracts
 
 # Ruby module to support the S3-related actions required by
 # the Hive-based ETL process.
 module Snowplow
   module EmrEtlRunner
     module S3Tasks
+
+      include Contracts
 
       # Constants for CloudFront log format
       CF_DATE_FORMAT = '%Y-%m-%d'

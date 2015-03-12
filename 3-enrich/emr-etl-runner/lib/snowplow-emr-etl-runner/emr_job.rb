@@ -15,21 +15,19 @@
 
 require 'set'
 require 'elasticity'
-
 require 'sluice'
-
 require 'awrence'
 require 'json'
 require 'base64'
-
 require 'contracts'
-include Contracts
 
 # Ruby class to execute Snowplow's Hive jobs against Amazon EMR
 # using Elasticity (https://github.com/rslifka/elasticity).
 module Snowplow
   module EmrEtlRunner
     class EmrJob
+
+      include Contracts
 
       # Constants
       JAVA_PACKAGE = "com.snowplowanalytics.snowplow"

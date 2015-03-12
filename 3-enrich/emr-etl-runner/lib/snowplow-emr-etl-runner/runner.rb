@@ -14,11 +14,12 @@
 # License::   Apache License Version 2.0
 
 require 'contracts'
-include Contracts
 
 module Snowplow
   module EmrEtlRunner
     class Runner
+
+      include Contracts
 
       # Supported options
       @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+))$/

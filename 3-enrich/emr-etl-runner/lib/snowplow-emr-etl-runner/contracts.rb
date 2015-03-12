@@ -14,10 +14,11 @@
 # License::   Apache License Version 2.0
 
 require 'contracts'
-include Contracts
 
 module Snowplow
   module EmrEtlRunner
+
+    include Contracts
 
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
