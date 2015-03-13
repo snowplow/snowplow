@@ -306,14 +306,11 @@ object EnrichmentManager {
             currency.convertCurrencies(Option(event.tr_currency), _, _, _, Option(event.ti_currency), _, raw.context.timestamp)
           }).flatMap(x => x)
 
-          convertedCu foreach {
-            arr => {
-              val (total, tax, shipping, price) = arr
-              event.tr_total_base = total.orNull
-              event.tr_tax_base = tax.orNull
-              event.tr_shipping_base = shipping.orNull
-              event.ti_price_base = price.orNull
-            }
+          for ((total, tax, shipping, price) <- convertedCu.toOption) {
+            event.tr_total_base = total.orNull
+            event.tr_tax_base = tax.orNull
+            event.tr_shipping_base = shipping.orNull
+            event.ti_price_base = price.orNull
           }
 
           convertedCu
