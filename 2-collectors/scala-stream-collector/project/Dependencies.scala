@@ -39,7 +39,7 @@ object Dependencies {
     val akka             = "2.2.3"
     val logback          = "1.0.13"
     val commonsCodec     = "1.5"
-    val scalazon         = "0.5"
+    val scalazon         = "0.11"
     val argot            = "1.0.1"
 
     // Scala (test only)
