@@ -29,10 +29,10 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_screen_view_1 (
 	ref_parent     varchar(255)  encode runlength not null,
 	-- Properties of this type
 	name           varchar(255)  encode text32k,
-	id             varchar(255)  encode text32k
+	id             varchar(255)  encode text32k,
+	FOREIGN KEY(root_id) REFERENCES events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
-SORTKEY (root_tstamp)
-FOREIGN KEY(root_id) REFERENCES events(event_id);
+SORTKEY (root_tstamp);

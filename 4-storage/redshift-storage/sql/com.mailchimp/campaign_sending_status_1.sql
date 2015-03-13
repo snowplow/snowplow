@@ -34,10 +34,10 @@ CREATE TABLE atomic.com_mailchimp_campaign_sending_status_1 (
     "data.list_id" varchar(255)   encode raw,
     "data.reason"  varchar(255)   encode raw,
     "data.status"  varchar(255)   encode raw,
-    "data.subject" varchar(255)   encode raw
+    "data.subject" varchar(255)   encode raw,
+    FOREIGN KEY(root_id) REFERENCES events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
-SORTKEY (root_tstamp)
-FOREIGN KEY(root_id) REFERENCES events(event_id);
+SORTKEY (root_tstamp);

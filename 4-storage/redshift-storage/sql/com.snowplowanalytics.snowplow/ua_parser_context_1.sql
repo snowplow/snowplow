@@ -39,10 +39,10 @@ CREATE TABLE atomic.com_snowplowanalytics_ua_parser_context_1 (
 	os_patch           varchar(64)  encode text255,
 	os_patch_minor     varchar(64)  encode text255,
 	os_version         varchar(255) encode text32k,
-	device_family      varchar(255) encode text255
+	device_family      varchar(255) encode text255,
+	FOREIGN KEY(root_id) REFERENCES events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
-SORTKEY (root_tstamp)
-FOREIGN KEY(root_id) REFERENCES events(event_id);
+SORTKEY (root_tstamp);

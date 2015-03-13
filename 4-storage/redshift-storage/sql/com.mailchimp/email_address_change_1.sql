@@ -33,10 +33,10 @@ CREATE TABLE atomic.com_mailchimp_email_address_change_1 (
     "data.list_id"          varchar(255)   encode raw,
     "data.new_email"        varchar(255)   encode raw,
     "data.new_id"           varchar(255)   encode raw,
-    "data.old_email"        varchar(255)   encode raw
+    "data.old_email"        varchar(255)   encode raw,
+    FOREIGN KEY(root_id) REFERENCES events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
-SORTKEY (root_tstamp)
-FOREIGN KEY(root_id) REFERENCES events(event_id);
+SORTKEY (root_tstamp);

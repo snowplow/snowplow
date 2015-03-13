@@ -32,10 +32,10 @@ CREATE TABLE atomic.com_pingdom_incident_notify_of_close_1 (
     checkname      varchar(255)   encode raw,
     host           varchar(255)   encode raw,
     incidentid     varchar(255)   encode raw,
-    description    varchar(255)   encode raw
+    description    varchar(255)   encode raw,
+    FOREIGN KEY(root_id) REFERENCES events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
-SORTKEY (root_tstamp)
-FOREIGN KEY(root_id) REFERENCES events(event_id);
+SORTKEY (root_tstamp);

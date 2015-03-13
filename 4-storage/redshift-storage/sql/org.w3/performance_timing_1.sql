@@ -50,10 +50,10 @@ CREATE TABLE atomic.org_w3_performance_timing_1 (
 	load_event_start               bigint encode raw,
 	load_event_end                 bigint encode raw,
 	ms_first_paint                 bigint encode raw,
-	chrome_first_paint             bigint encode raw
+	chrome_first_paint             bigint encode raw,
+	FOREIGN KEY(root_id) REFERENCES events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
-SORTKEY (root_tstamp)
-FOREIGN KEY(root_id) REFERENCES events(event_id);
+SORTKEY (root_tstamp);

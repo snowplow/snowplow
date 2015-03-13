@@ -42,10 +42,10 @@ CREATE TABLE atomic.com_mailchimp_unsubscribe_1 (
     "data.merges.EMAIL"     varchar(255)   encode raw,
     "data.merges.FNAME"     varchar(255)   encode raw,
     "data.merges.LNAME"     varchar(255)   encode raw,
-    "data.merges.INTERESTS" varchar(255)   encode raw
+    "data.merges.INTERESTS" varchar(255)   encode raw,
+    FOREIGN KEY(root_id) REFERENCES events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
-SORTKEY (root_tstamp)
-FOREIGN KEY(root_id) REFERENCES events(event_id);
+SORTKEY (root_tstamp);

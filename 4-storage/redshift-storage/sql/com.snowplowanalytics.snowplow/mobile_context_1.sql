@@ -36,10 +36,10 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_mobile_context_1 (
 	open_idfa           varchar(128)  encode runlength,
 	apple_idfa          varchar(128)  encode runlength,
 	apple_idfv          varchar(128)  encode runlength,
-	android_idfa        varchar(128)  encode runlength
+	android_idfa        varchar(128)  encode runlength,
+	FOREIGN KEY(root_id) REFERENCES events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
-SORTKEY (root_tstamp)
-FOREIGN KEY(root_id) REFERENCES events(event_id);
+SORTKEY (root_tstamp);

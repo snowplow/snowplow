@@ -36,10 +36,10 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_ad_click_1 (
 	advertiser_id  varchar(255)   encode runlength,
 	target_url     varchar(4096)  encode runlength,
 	cost_model     char(3)        encode runlength,
-	cost           decimal(15,2) encode runlength
+	cost           decimal(15,2) encode runlength,
+	FOREIGN KEY(root_id) REFERENCES events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
-SORTKEY (root_tstamp)
-FOREIGN KEY(root_id) REFERENCES events(event_id);
+SORTKEY (root_tstamp);

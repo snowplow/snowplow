@@ -44,10 +44,10 @@ CREATE TABLE atomic.com_mandrill_message_bounced_1 (
     "msg.ts"                 timestamp      encode raw,
     "msg.smtp_events"        varchar(5000)  encode runlength,  -- Holds a JSON array
     "msg.resends"            varchar(5000)  encode raw,
-    "msg.template"           varchar        encode text32k
+    "msg.template"           varchar        encode text32k,
+    FOREIGN KEY(root_id) REFERENCES events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
-SORTKEY (root_tstamp)
-FOREIGN KEY(root_id) REFERENCES events(event_id);
+SORTKEY (root_tstamp);

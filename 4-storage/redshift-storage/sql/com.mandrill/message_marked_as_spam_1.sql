@@ -40,10 +40,10 @@ CREATE TABLE atomic.com_mandrill_message_marked_as_spam_1 (
     "msg.state"            varchar(255)   encode raw,
     "msg.subject"          varchar(255)   encode raw,
     "msg.tags"             varchar(2048)  encode runlength, -- Holds a JSON array
-    "msg.ts"               timestamp      encode raw
+    "msg.ts"               timestamp      encode raw,
+    FOREIGN KEY(root_id) REFERENCES events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
-SORTKEY (root_tstamp)
-FOREIGN KEY(root_id) REFERENCES events(event_id);
+SORTKEY (root_tstamp);
