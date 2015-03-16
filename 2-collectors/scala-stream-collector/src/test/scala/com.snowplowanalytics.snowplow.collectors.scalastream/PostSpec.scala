@@ -79,6 +79,11 @@ collector {
         name: "snowplow_collector_example"
         size: 1
       }
+      buffer: {
+        byte-limit: 4000000 # 4MB
+        record-limit: 500 # 500 records
+        time-limit: 60000 # 1 minute
+      }
     }
   }
 }

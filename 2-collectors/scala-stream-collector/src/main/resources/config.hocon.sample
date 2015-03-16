@@ -81,6 +81,17 @@ collector {
         name: "snowplow_collector_example"
         size: 1
       }
+
+      # Incoming events are stored in a buffer before being sent to Kinesis.
+      # The buffer is emptied whenever:
+      # - the number of stored records reaches record-limit or
+      # - the combined size of the stored records reaches byte-limit or
+      # Additionally, the buffer is emptied every {{time-limit}} milliseconds.
+      buffer: {
+        byte-limit: 4000000 # 4MB
+        record-limit: 500 # 500 records
+        time-limit: 60000 # 1 minute
+      }
     }
   }
 }

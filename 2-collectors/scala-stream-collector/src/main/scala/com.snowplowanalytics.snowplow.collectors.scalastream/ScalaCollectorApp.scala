@@ -142,5 +142,9 @@ class CollectorConfig(config: Config) {
     case true => kinesis.getInt("thread-pool-size")
     case _ => 10
   }
-}
 
+  val buffer = kinesis.getConfig("buffer")
+  val byteLimit = buffer.getInt("byte-limit")
+  val recordLimit = buffer.getInt("record-limit")
+  val timeLimit = buffer.getInt("time-limit")
+}
