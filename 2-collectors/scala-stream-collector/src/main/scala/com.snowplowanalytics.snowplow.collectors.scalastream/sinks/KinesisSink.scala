@@ -65,18 +65,17 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
-  // TODO: make configurable
   val BackoffTime = 3000L
-  val RecordThreshold = 500
-  val ByteThreshold = 4000000L
-  val TimeThreshold = 3000L
+
+  val ByteThreshold = config.byteLimit
+  val RecordThreshold = config.recordLimit
+  val TimeThreshold = config.timeLimit
 
   info("Creating thread pool of size " + config.threadpoolSize)
 
   val executorService = new ScheduledThreadPoolExecutor(config.threadpoolSize)
   implicit lazy val ec = concurrent.ExecutionContext.fromExecutorService(executorService)
 
-  // TODO: customize the interval?
   executorService.scheduleWithFixedDelay(new Thread {
     override def run() {
       EventStorage.flush()
