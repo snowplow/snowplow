@@ -65,6 +65,8 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
+  val BackoffTime = 3000L
+
   info("Creating thread pool of size " + config.threadpoolSize)
 
   val executorService = new ScheduledThreadPoolExecutor(config.threadpoolSize)
@@ -186,20 +188,26 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     null
   }
 
-  // TODO: add retries
+  // TODO: limit max retries?
   def sendBatch(batch: List[(ByteBuffer, String)]) {
     if (batch.size > 0) {
       info(s"Writing ${batch.size} Thrift records to Kinesis")
       val putData = for {
         p <- enrichedStream.multiPut(batch)
       } yield p
-      //val result = Await.result(putData, 10.seconds)
+
       putData onComplete {
         case Success(result) => {
           info("Writing successful")
         }
         case Failure(f) => {
           error("Writing failed.", f)
+          error(s"Retrying in $BackoffTime milliseconds...")
+          executorService.schedule(new Thread {
+            override def run() {
+              sendBatch(batch)
+            }
+          }, BackoffTime, MILLISECONDS)
         }
       }
     }
