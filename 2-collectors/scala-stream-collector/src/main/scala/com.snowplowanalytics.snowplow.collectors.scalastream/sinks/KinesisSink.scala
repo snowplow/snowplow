@@ -17,6 +17,8 @@ package sinks
 
 // Java
 import java.nio.ByteBuffer
+import java.util.Timer
+import java.util.TimerTask
 
 // Amazon
 import com.amazonaws.services.kinesis.model.ResourceNotFoundException
@@ -63,6 +65,14 @@ import CollectorPayload.thrift.model1.CollectorPayload
 class KinesisSink(config: CollectorConfig) extends AbstractSink {
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
+
+  val t = new Timer
+
+  t.scheduleAtFixedRate(new TimerTask {
+    override def run() {
+      EventStorage.flush()
+    }
+  }, 5000, 5000)
 
   implicit lazy val ec = {
     info("Creating thread pool of size " + config.threadpoolSize)
@@ -160,28 +170,42 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     Client.fromClient(client)
   }
 
-  def storeRawEvent(event: CollectorPayload, key: String) = {
-    info(s"Writing Thrift record to Kinesis: ${event.toString}")
-    val putData = for {
-      p <- enrichedStream.put(
-        ByteBuffer.wrap(serializeEvent(event)),
-        key
-      )
-    } yield p
+  // TODO: don't send more than 4.5MB per request
+  object EventStorage {
+    private var storedEvents = List[(ByteBuffer, String)]()
 
-    putData onComplete {
-      case Success(result) => {
-        info(s"Writing successful.")
-        info(s"  + ShardId: ${result.shardId}")
-        info(s"  + SequenceNumber: ${result.sequenceNumber}")
-      }
-      case Failure(f) => {
-        error(s"Writing failed.")
-        error(s"  + " + f.getMessage)
-      }
+    def store(event: CollectorPayload, key: String) = synchronized {
+      storedEvents = (ByteBuffer.wrap(serializeEvent(event)), key) :: storedEvents
     }
 
+    def flush() = synchronized {
+      sendBatch(storedEvents)
+      storedEvents = Nil
+    }
+  }
+
+  def storeRawEvent(event: CollectorPayload, key: String) = {
+    EventStorage.store(event, key)
     null
+  }
+
+  // TODO: add retries
+  def sendBatch(batch: List[(ByteBuffer, String)]) {
+    if (batch.size > 0) {
+      info(s"Writing ${batch.size} Thrift records to Kinesis")
+      val putData = for {
+        p <- enrichedStream.multiPut(batch)
+      } yield p
+      //val result = Await.result(putData, 10.seconds)
+      putData onComplete {
+        case Success(result) => {
+          info("Writing successful")
+        }
+        case Failure(f) => {
+          error("Writing failed.", f)
+        }
+      }
+    }
   }
 
   /**
