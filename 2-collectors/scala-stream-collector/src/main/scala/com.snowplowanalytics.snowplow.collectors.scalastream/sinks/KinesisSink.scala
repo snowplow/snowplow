@@ -65,7 +65,11 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
+  // TODO: make configurable
   val BackoffTime = 3000L
+  val RecordThreshold = 500
+  val ByteThreshold = 4000000L
+  val TimeThreshold = 3000L
 
   info("Creating thread pool of size " + config.threadpoolSize)
 
@@ -77,7 +81,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     override def run() {
       EventStorage.flush()
     }
-  }, 0, 5000, MILLISECONDS)
+  }, 0, TimeThreshold, MILLISECONDS)
 
   // Create a Kinesis client for stream interactions.
   private implicit val kinesis = createKinesisClient
@@ -172,14 +176,21 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
   // TODO: don't send more than 4.5MB per request
   object EventStorage {
     private var storedEvents = List[(ByteBuffer, String)]()
+    private var byteCount = 0L
 
     def store(event: CollectorPayload, key: String) = synchronized {
-      storedEvents = (ByteBuffer.wrap(serializeEvent(event)), key) :: storedEvents
+      val eventBytes = ByteBuffer.wrap(serializeEvent(event))
+      storedEvents = (eventBytes, key) :: storedEvents
+      byteCount += eventBytes.capacity
+      if (storedEvents.size >= RecordThreshold || byteCount >= ByteThreshold) {
+        flush()
+      }
     }
 
     def flush() = synchronized {
       sendBatch(storedEvents)
       storedEvents = Nil
+      byteCount = 0
     }
   }
 
