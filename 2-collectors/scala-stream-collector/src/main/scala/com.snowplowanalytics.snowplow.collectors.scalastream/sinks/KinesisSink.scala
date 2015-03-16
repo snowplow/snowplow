@@ -17,8 +17,7 @@ package sinks
 
 // Java
 import java.nio.ByteBuffer
-import java.util.Timer
-import java.util.TimerTask
+import java.util.concurrent.ScheduledThreadPoolExecutor
 
 // Amazon
 import com.amazonaws.services.kinesis.model.ResourceNotFoundException
@@ -66,19 +65,17 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
-  val t = new Timer
+  info("Creating thread pool of size " + config.threadpoolSize)
 
-  t.scheduleAtFixedRate(new TimerTask {
+  val executorService = new ScheduledThreadPoolExecutor(config.threadpoolSize)
+  implicit lazy val ec = concurrent.ExecutionContext.fromExecutorService(executorService)
+
+  // TODO: customize the interval?
+  executorService.scheduleWithFixedDelay(new Thread {
     override def run() {
       EventStorage.flush()
     }
-  }, 5000, 5000)
-
-  implicit lazy val ec = {
-    info("Creating thread pool of size " + config.threadpoolSize)
-    val executorService = java.util.concurrent.Executors.newFixedThreadPool(config.threadpoolSize)
-    concurrent.ExecutionContext.fromExecutorService(executorService)
-  }
+  }, 0, 5000, MILLISECONDS)
 
   // Create a Kinesis client for stream interactions.
   private implicit val kinesis = createKinesisClient
