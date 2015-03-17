@@ -14,13 +14,13 @@
 # License::   Apache License Version 2.0
 
 require 'logger'
-
 require 'contracts'
-include Contracts
 
 module Snowplow
   module EmrEtlRunner
     module Logging
+
+      include Contracts
 
       $stdout.sync = true
 

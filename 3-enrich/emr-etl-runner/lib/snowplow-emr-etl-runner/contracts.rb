@@ -14,10 +14,11 @@
 # License::   Apache License Version 2.0
 
 require 'contracts'
-include Contracts
 
 module Snowplow
   module EmrEtlRunner
+
+    include Contracts
 
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
@@ -65,7 +66,8 @@ module Snowplow
       :log => String,
       :raw => ({
         :in => String,
-        :processing => String
+        :processing => String,
+        :archive => String
         }),
       :enriched => ({
         :good => String,
@@ -98,6 +100,7 @@ module Snowplow
         :placement => Maybe[String],
         :ec2_subnet_id => Maybe[String],
         :ec2_key_name => String,
+        :bootstrap => ArrayOf[String],
         :software => ({
           :hbase => Maybe[String],
           :lingual => Maybe[String]

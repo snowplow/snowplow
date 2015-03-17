@@ -15,13 +15,13 @@
 
 require 'optparse'
 require 'yaml'
-
 require 'contracts'
-include Contracts
 
 module Snowplow
   module EmrEtlRunner
     module Cli
+
+      include Contracts
 
       # Get our arguments and configuration.
       #

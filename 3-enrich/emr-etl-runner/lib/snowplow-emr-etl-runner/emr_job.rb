@@ -15,21 +15,19 @@
 
 require 'set'
 require 'elasticity'
-
 require 'sluice'
-
 require 'awrence'
 require 'json'
 require 'base64'
-
 require 'contracts'
-include Contracts
 
 # Ruby class to execute Snowplow's Hive jobs against Amazon EMR
 # using Elasticity (https://github.com/rslifka/elasticity).
 module Snowplow
   module EmrEtlRunner
     class EmrJob
+
+      include Contracts
 
       # Constants
       JAVA_PACKAGE = "com.snowplowanalytics.snowplow"
@@ -86,6 +84,12 @@ module Snowplow
           ].each do |action|
             @jobflow.add_bootstrap_action(action)
           end
+        end
+
+        # Add custom bootstrap actions
+        bootstrap_actions = config[:emr][:bootstrap]
+        bootstrap_actions.each do |bootstrap_action|
+          @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_action))
         end
 
         # Install and launch HBase
@@ -358,6 +362,12 @@ module Snowplow
 
           rescue SocketError => se
             logger.warn "Got socket error #{se}, waiting 5 minutes before checking jobflow again"
+            sleep(300)
+          rescue Errno::ECONNREFUSED => ref
+            logger.warn "Got connection refused #{ref}, waiting 5 minutes before checking jobflow again"
+            sleep(300)
+          rescue Errno::ECONNRESET => res
+            logger.warn "Got connection reset #{res}, waiting 5 minutes before checking jobflow again"
             sleep(300)
           end
         end
