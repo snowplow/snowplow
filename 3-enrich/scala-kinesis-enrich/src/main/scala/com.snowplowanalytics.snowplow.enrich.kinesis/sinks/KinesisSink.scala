@@ -33,6 +33,7 @@ import com.amazonaws.regions._
 
 // Scala
 import scala.util.control.NonFatal
+import scala.collection.JavaConverters._
 
 // Scalazon (for Kinesis interaction)
 import io.github.cloudify.scala.aws.kinesis.Client
@@ -240,32 +241,38 @@ class KinesisSink(provider: AWSCredentialsProvider,
 
   /**
    * Send a single batch of events in one blocking PutRecords API call
-   * Loop until the request has been sent successfully
+   * Loop until all records have been sent successfully
    * Cannot be made tail recursive (http://stackoverflow.com/questions/8233089/why-wont-scala-optimize-tail-call-with-try-catch)
    *
    * @param batch Events to send
    */
   def sendBatch(batch: List[(ByteBuffer, String)]) {
     if (!batch.isEmpty) {
+      var unsentRecords = batch
       var sentBatchSuccessfully = false
       while (!sentBatchSuccessfully) {
         val putData = for {
-          p <- enrichedStream.multiPut(batch)
+          p <- enrichedStream.multiPut(unsentRecords)
         } yield p
 
         try {
-          val result = Await.result(putData, 10.seconds)
-          sentBatchSuccessfully = true
-          info(s"Writing successful")
-          info(s"  + ShardIds: ${result.shardIds}")
-          info(s"  + SequenceNumber: ${result.sequenceNumber}")
+          val results = Await.result(putData, 10.seconds).result.getRecords.asScala.toList
+          val failurePairs = unsentRecords zip results filter { _._2.getErrorMessage != null }
+          info(s"Successfully wrote ${unsentRecords.size-failurePairs.size} out of ${unsentRecords.size} records")
+          if (failurePairs.size > 0) {
+            failurePairs foreach { f => error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]") }
+            error("Retrying all failed records in $BackoffTime milliseconds...")
+            unsentRecords = failurePairs.map(_._1)
+            Thread.sleep(BackoffTime)
+          } else {
+            sentBatchSuccessfully = true
+          }
         } catch {
           case NonFatal(f) => {
             error(s"Writing failed.")
             error(s"  + " + f.getMessage)
             error(s"  + Retrying in $BackoffTime milliseconds...")
             Thread.sleep(BackoffTime)
-            sendBatch(batch)
           }
         }
       }
