@@ -22,13 +22,13 @@ enrich {
   #
   # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
   aws {
-    access-key: "env"
-    secret-key: "env"
+    access-key: "iam"
+    secret-key: "iam"
   }
 
   streams {
     in: {
-      raw: "SnowplowRaw"
+      raw: "{{enrichStreamsInRaw}}"
 
       # After enrichment, are accumulated in a buffer before being sent to Kinesis.
       # The buffer is emptied whenever:
@@ -44,14 +44,15 @@ enrich {
     }
 
     out: {
-      enriched: "SnowplowEnriched"
+      enriched: "{{enrichStreamsOutEnriched}}"
       enriched_shards: 1 # Number of shards to use if created.
-      bad: "SnowplowBad" # Not used until #463
+      bad: "{{enrichStreamsOutBad}}"
       bad_shards: 1 # Number of shards to use if created.
     }
 
     # `app-name` is used for a DynamoDB table to maintain stream state.
-    app-name: SnowplowKinesisEnrich-${enrich.streams.in.raw}
+    # You can set it automatically using: "SnowplowKinesisEnrich-${enrich.streams.in.raw}"
+    app-name: "{{enrichStreamsAppName}}"
 
     # LATEST: most recent data.
     # TRIM_HORIZON: oldest available data.
@@ -59,7 +60,7 @@ enrich {
     # on a stream.
     initial-position = "TRIM_HORIZON"
 
-    region: "us-east-1"
+    region: "{{enrichStreamsRegion}}"
   }
 
   resolver {
