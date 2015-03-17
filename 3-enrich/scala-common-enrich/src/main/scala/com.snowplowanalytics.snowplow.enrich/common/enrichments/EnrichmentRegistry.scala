@@ -44,14 +44,12 @@ import registry.{
   RefererParserEnrichment,
   CampaignAttributionEnrichment,
   UserAgentUtilsEnrichment,
-  UaParserEnrichment
+  UaParserEnrichment,
+  CurrencyConversionEnrichment,
+  UserAgentUtilsEnrichmentConfig,
+  UaParserEnrichmentConfig,
+  CurrencyConversionEnrichmentConfig
 }
-
-// UserAgentUtilsEnrichmentConfig
-import registry.UserAgentUtilsEnrichmentConfig
-
-// UaParserEnrichmentConfig
-import registry.UaParserEnrichmentConfig
 
 import utils.ScalazJson4sUtils
 
@@ -138,6 +136,8 @@ object EnrichmentRegistry {
             UserAgentUtilsEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "ua_parser_config") {
             UaParserEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "currency_conversion_config") {
+            CurrencyConversionEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           }else {
             None.success // Enrichment is not recognized yet
           }
@@ -197,6 +197,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getCampaignAttributionEnrichment: Option[CampaignAttributionEnrichment] = 
     getEnrichment[CampaignAttributionEnrichment]("campaign_attribution")
+
+  /**
+   * Returns an Option boxing the CurrencyConversionEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the CurrencyConversionEnrichment instance
+   */
+  def getCurrencyConversionEnrichment: Option[CurrencyConversionEnrichment] =
+    getEnrichment[CurrencyConversionEnrichment]("currency_conversion_config")
 
   /**
    * Returns an Option boxing the UserAgentUtilsEnrichment

@@ -187,4 +187,23 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
     }
   }
 
+  "Converting Currency a valid currency_convert_config enrichment JSON" should {
+    "successfully construct a CurrencyConversionEnrichment case object" in {
+
+      val  currencyConversionEnrichmentJson = parse("""{
+        "enabled": true,
+        "parameters": {
+          "apiKey": "---",
+          "baseCurrency": "EUR",
+          "rateAt": "EOD_PRIOR"
+        }
+      }""")
+
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "currency_conversion_config", "jsonschema", "1-0-0")
+
+      val result = CurrencyConversionEnrichmentConfig.parse(currencyConversionEnrichmentJson, schemaKey)
+      result must beSuccessful(CurrencyConversionEnrichment("---", "EUR", "EOD_PRIOR"))
+
+    }
+  }
 }

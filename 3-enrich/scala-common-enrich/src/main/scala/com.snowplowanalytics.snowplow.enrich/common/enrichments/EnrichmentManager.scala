@@ -185,7 +185,10 @@ object EnrichmentManager {
           ("pp_mix"  , (CU.stringToJInteger, "pp_xoffset_min")),
           ("pp_max"  , (CU.stringToJInteger, "pp_xoffset_max")),
           ("pp_miy"  , (CU.stringToJInteger, "pp_yoffset_min")),
-          ("pp_may"  , (CU.stringToJInteger, "pp_yoffset_max")))
+          ("pp_may"  , (CU.stringToJInteger, "pp_yoffset_max")),
+          // Currency
+          ("tr_cu"  , (ME.toTsvSafe, "tr_currency")),
+          ("ti_cu"  , (ME.toTsvSafe, "ti_currency")))
 
     val sourceMap: SourceMap = raw.parameters
 
@@ -246,7 +249,7 @@ object EnrichmentManager {
       }
     }
 
-    // Anonymize the IP address
+    // To anonymize the IP address
     Option(event.user_ipaddress).map(ip => event.user_ipaddress = registry.getAnonIpEnrichment match {
       case Some(anon) => anon.anonymizeIp(ip)
       case None => ip
@@ -290,6 +293,35 @@ object EnrichmentManager {
           }
         }
         case None => unitSuccess
+      }
+    }
+
+    // Finalize the currency conversion
+    val currency = {
+      registry.getCurrencyConversionEnrichment match {
+        case Some(currency) => {
+          event.base_currency = currency.baseCurrency
+          val trTax      = CU.stringToMaybeDouble("tr_tx", event.tr_tax).toValidationNel
+          val tiPrice    = CU.stringToMaybeDouble("ti_pr", event.ti_price).toValidationNel
+          val trTotal    = CU.stringToMaybeDouble("tr_tt", event.tr_total).toValidationNel
+          val trShipping = CU.stringToMaybeDouble("tr_sh", event.tr_shipping).toValidationNel
+          val convertedCu = ((trTotal |@| trTax |@| trShipping |@| tiPrice) {
+            currency.convertCurrencies(Option(event.tr_currency), _, _, _, Option(event.ti_currency), _, raw.context.timestamp)
+          }).flatMap(x => x)
+
+          convertedCu foreach {
+            arr => {
+              val (total, tax, shipping, price) = arr
+              event.tr_total_base = total.orNull
+              event.tr_tax_base = tax.orNull
+              event.tr_shipping_base = shipping.orNull
+              event.ti_price_base = price.orNull
+            }
+          }
+
+          convertedCu
+        }
+        case None => unitSuccess.toValidationNel
       }
     }
 
@@ -355,15 +387,16 @@ object EnrichmentManager {
     event.se_label = CU.truncate(event.se_label, 255)
 
     // Collect our errors on Failure, or return our event on Success
-    (useragent.toValidationNel    |@|
-      client.toValidationNel      |@|
-      pageUri.toValidationNel     |@|
-      geoLocation.toValidationNel |@|
-      refererUri.toValidationNel  |@|
-      transform                   |@|
-      secondPassTransform         |@|
+    (useragent.toValidationNel                |@|
+      client.toValidationNel                  |@|
+      pageUri.toValidationNel                 |@|
+      geoLocation.toValidationNel             |@|
+      refererUri.toValidationNel              |@|
+      transform                               |@|
+      currency                                |@|
+      secondPassTransform                     |@|
       campaign) {
-      (_,_,_,_,_,_,_,_) => event
+      (_,_,_,_,_,_,_,_,_) => event
     }
   }
 }

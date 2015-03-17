@@ -389,6 +389,31 @@ object ConversionUtils {
     }
 
   /**
+   * Convert a String to a String containing a
+   * Redshift-compatible Double.
+   *
+   * @param str The String which we hope contains
+   *        a Double
+   * @param field The name of the field we are
+   *        validating. To use in our error message
+   * @return a Scalaz Validation, being either
+   *         a Failure String or a Success Double
+   */
+  def stringToMaybeDouble(field: String,str: String):Validation[String, Option[Double]] = {
+    try {
+      if (Option(str).isEmpty || str == "null") { // "null" String check is LEGACY to handle a bug in the JavaScript tracker
+        None.success
+      } else {
+        val jbigdec = new JBigDecimal(str)
+        jbigdec.doubleValue().some.success
+      }
+    } catch {
+     case nfe: NumberFormatException =>
+        "Field [%s]: cannot convert [%s] to Double-like String".format(field, str).fail
+    }  
+  }
+
+  /**
    * Extract a Java Byte representing
    * 1 or 0 only from a String, or error.
    *
@@ -475,3 +500,4 @@ object ConversionUtils {
     else
       "Cannot convert byte [%s] to boolean, only 1 or 0.".format(b).fail   
 }
+
