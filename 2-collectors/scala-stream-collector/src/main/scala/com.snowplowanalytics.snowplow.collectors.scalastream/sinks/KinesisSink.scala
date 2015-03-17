@@ -186,7 +186,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     }
 
     def flush() = synchronized {
-      sendBatch(storedEvents)
+      sendBatch(storedEvents.reverse)
       storedEvents = Nil
       byteCount = 0
     }
