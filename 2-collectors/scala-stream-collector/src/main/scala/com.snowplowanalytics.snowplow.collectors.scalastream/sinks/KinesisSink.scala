@@ -58,9 +58,28 @@ import scalastream._
 import CollectorPayload.thrift.model1.CollectorPayload
 
 /**
+ * KinesisSink companion object with factory method
+ */
+object KinesisSink {
+
+  /**
+   * Create a KinesisSink and schedule a task to flush its EventStorage
+   * Exists so that no threads can get a reference to the KinesisSink
+   * during its construction
+   *
+   * @param config
+   */
+  def createAndInitialize(config: CollectorConfig): KinesisSink = {
+    val ks = new KinesisSink(config)
+    ks.scheduleFlush()
+    ks
+  }
+}
+
+/**
  * Kinesis Sink for the Scala collector.
  */
-class KinesisSink(config: CollectorConfig) extends AbstractSink {
+class KinesisSink private (config: CollectorConfig) extends AbstractSink {
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
@@ -75,11 +94,13 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
   val executorService = new ScheduledThreadPoolExecutor(config.threadpoolSize)
   implicit lazy val ec = concurrent.ExecutionContext.fromExecutorService(executorService)
 
-  executorService.scheduleWithFixedDelay(new Thread {
-    override def run() {
-      EventStorage.flush()
-    }
-  }, 0, TimeThreshold, MILLISECONDS)
+  def scheduleFlush() {
+    executorService.scheduleWithFixedDelay(new Thread {
+      override def run() {
+        EventStorage.flush()
+      }
+    }, 0, TimeThreshold, MILLISECONDS)
+  }
 
   // Create a Kinesis client for stream interactions.
   private implicit val kinesis = createKinesisClient
