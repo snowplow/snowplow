@@ -68,7 +68,7 @@ object ScalaCollector extends App {
   implicit val system = ActorSystem.create("scala-stream-collector", rawConf)
   val collectorConfig = new CollectorConfig(rawConf)
   val sink = collectorConfig.sinkEnabled match {
-    case Sink.Kinesis => new KinesisSink(collectorConfig)
+    case Sink.Kinesis => KinesisSink.createAndInitialize(collectorConfig)
     case Sink.Stdout => new StdoutSink
   }
 
