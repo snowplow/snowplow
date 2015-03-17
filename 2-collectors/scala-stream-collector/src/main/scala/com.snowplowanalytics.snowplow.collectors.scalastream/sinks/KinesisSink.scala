@@ -49,10 +49,9 @@ import scala.concurrent.duration._
 // Logging
 import org.slf4j.LoggerFactory
 
-// Mutable data structures
-import scala.collection.mutable.StringBuilder
-import scala.collection.mutable.MutableList
+// Scala
 import scala.util.{Success, Failure}
+import scala.collection.JavaConverters._
 
 // Snowplow
 import scalastream._
@@ -198,6 +197,14 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     null
   }
 
+  def scheduleBatch(batch: List[(ByteBuffer, String)]) {
+    executorService.schedule(new Thread {
+      override def run() {
+        sendBatch(batch)
+      }
+    }, BackoffTime, MILLISECONDS)
+  }
+
   // TODO: limit max retries?
   def sendBatch(batch: List[(ByteBuffer, String)]) {
     if (batch.size > 0) {
@@ -207,17 +214,21 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
       } yield p
 
       putData onComplete {
-        case Success(result) => {
-          info("Writing successful")
+        case Success(s) => {
+          val results = s.result.getRecords.asScala.toList
+          val failurePairs = batch zip results filter { _._2.getErrorMessage != null }
+          info(s"Successfully wrote ${batch.size-failurePairs.size} out of ${batch.size} records")
+          if (failurePairs.size > 0) {
+            failurePairs foreach { f => error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]") }
+            error("Retrying all failed records in $BackoffTime milliseconds...")
+            val failures = failurePairs.map(_._1)
+            scheduleBatch(failures)
+          }
         }
         case Failure(f) => {
           error("Writing failed.", f)
           error(s"Retrying in $BackoffTime milliseconds...")
-          executorService.schedule(new Thread {
-            override def run() {
-              sendBatch(batch)
-            }
-          }, BackoffTime, MILLISECONDS)
+          scheduleBatch(batch)
         }
       }
     }
