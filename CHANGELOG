@@ -1,4 +1,4 @@
-Release 63 Red-Cheeked Cordon Bleu (2015-xx-xx)
+Release 63 Red-Cheeked Cordon-Bleu (2015-xx-xx)
 --------------------------------------
 Common: updated kinesis push to remove sub-folders from zipfile (#1378)
 Scala Common Enrich: bumped to 0.13.0
