@@ -23,6 +23,9 @@ import java.net.UnknownHostException
 // Maven Artifact
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
+// Scala
+import scala.util.control.NonFatal
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -77,7 +80,7 @@ object CurrencyConversionEnrichmentConfig extends ParseableEnrichment {
           case Success("ENTERPRISE") => EnterpriseAccount.success
           case Success("UNLIMITED")  => UnlimitedAccount.success
 
-          // These failures should be prevented by the schema
+          // Should never happen (prevented by schema validation)
           case Success(s) => "accountType [%s] is not one of DEVELOPER, ENTERPRISE, and UNLIMITED".format(s).toProcessingMessage.fail
           case Failure(f) => Failure(f)
         })
@@ -116,7 +119,10 @@ case class CurrencyConversionEnrichment(
   private def performConversion(initialCurrency: Option[String], value: Option[Double], tstamp: DateTime): Validation[String, Option[String]] =
     (initialCurrency, value) match {
       case (Some(ic), Some(v)) => fx.convert(v, ic).to(baseCurrency).at(tstamp) match {
-        case Left(l) => (s"Open Exchange Rates error, message: ${l.errorMessage}").failure
+        case Left(l) => {
+          val errorType = l.errorType.getClass.getSimpleName.replace("$", "")
+          s"Open Exchange Rates error, type: [$errorType], message: [${l.errorMessage}]".failure
+        }
         case Right(s) => (s.getAmount().toPlainString()).some.success
       }
       case _ => None.success
@@ -145,9 +151,9 @@ case class CurrencyConversionEnrichment(
             (_, _, _, _)
           }
         } catch {
-          case e : NoSuchElementException =>"Base currency [%s] not supported: %s".format(baseCurrency, e).failNel
-          case f : UnknownHostException => "Could not extract Convert Currencies from OER Service: %s".format(f).failNel
-          case g => "Unexpected exception converting Currency: %s".format(g).failNel
+          case e : NoSuchElementException =>"Base currency [%s] not supported: [%s]".format(baseCurrency, e).failNel
+          case f : UnknownHostException => "Could not connect to Open Exchange Rates: [%s]".format(f).failNel
+          case NonFatal(g) => "Unexpected exception converting currency: [%s]".format(g).failNel
         }
       case None => "Collector timestamp missing".failNel // This should never happen
     }

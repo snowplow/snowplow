@@ -346,7 +346,7 @@ object ConversionUtils {
         Uri.parse(uri.toString).query.params.toMap.success
       } catch {
         case NonFatal(e2) =>
-          s"Could not parse uri [$uri]. Httpclient threw exception: [$e1]. Net-a-porter threw exception: [$e2]".fail
+          s"Could not parse uri [$uri]. Apache Httpclient threw exception: [$e1]. Net-a-porter threw exception: [$e2]".fail
       }
     }
 

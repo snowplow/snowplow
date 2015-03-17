@@ -173,7 +173,7 @@ CREATE TABLE "atomic"."events" (
 	"refr_dvce_tstamp" timestamp,           -- Added in 0.4.0
 	-- Derived contexts
 	"derived_contexts" json                 -- Added in 0.4.0
-                                            -- Removed primary key constraint on event_id
+	                                        -- Removed primary key constraint on event_id in 0.4.0
 )
 WITH (OIDS=FALSE)
 ;

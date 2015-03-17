@@ -298,6 +298,8 @@ object EnrichmentManager {
       registry.getCurrencyConversionEnrichment match {
         case Some(currency) => {
           event.base_currency = currency.baseCurrency
+          // Note that stringToMaybeDouble is applied to either-valid-or-null event POJO
+          // properties, so we don't expect any of these four vals to be a Failure
           val trTax      = CU.stringToMaybeDouble("tr_tx", event.tr_tax).toValidationNel
           val tiPrice    = CU.stringToMaybeDouble("ti_pr", event.ti_price).toValidationNel
           val trTotal    = CU.stringToMaybeDouble("tr_tt", event.tr_total).toValidationNel

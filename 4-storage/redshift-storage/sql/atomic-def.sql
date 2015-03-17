@@ -86,7 +86,7 @@ CREATE TABLE atomic.events (
 	mkt_content varchar(500) encode raw,
 	mkt_campaign varchar(255) encode text32k,
 	-- Custom contexts
-	contexts varchar(15000) encode lzo,                -- Changed encoding from raw to lzo in 0.5.0
+	contexts varchar(15000) encode lzo,                -- Changed encoding from raw to lzo in 0.5.0 and increased size
 	-- Custom structured event
 	se_category varchar(255) encode text255,
 	se_action varchar(255) encode text255,

@@ -71,6 +71,7 @@ object PageEnrichments {
    */
   def parseCrossDomain(qsMap: Map[String, String]): Validation[String, (Option[String], Option[String])] = {
     qsMap.get("_sp") match {
+      case Some("") => (None, None).success
       case Some(sp) => {
         val crossDomainElements = sp.split("\\.")
 

@@ -42,7 +42,7 @@ object UserAgentUtilsEnrichmentConfig extends ParseableEnrichment {
 
   val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "user_agent_utils_config", "jsonschema", 1, 0)
 
-  //Creates an UserAgentUtilsEnrichment instance from a JValue
+  // Creates a UserAgentUtilsEnrichment instance from a JValue
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[UserAgentUtilsEnrichment.type] =
     isParseable(config, schemaKey).map(_ => UserAgentUtilsEnrichment)
 }

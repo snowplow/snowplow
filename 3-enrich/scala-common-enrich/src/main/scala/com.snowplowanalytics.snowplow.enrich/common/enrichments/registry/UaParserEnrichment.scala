@@ -63,9 +63,9 @@ case object UaParserEnrichment extends Enrichment {
   val version = new DefaultArtifactVersion("0.1.0")
 
   /*
-  * Check's for null for Option Version variable
+  * Adds a period in front of a not-null version element
   */
-  def prependDot (versionElement: String) :String = {
+  def prependDot(versionElement: String): String = {
     if (versionElement != null) {
       "." + versionElement
     } else {
@@ -76,7 +76,7 @@ case object UaParserEnrichment extends Enrichment {
   /*
   * Prepends space before the versionElement
   */
-  def prependSpace (versionElement: String) :String = {
+  def prependSpace(versionElement: String): String = {
     if (versionElement != null) {
       " " + versionElement
     } else {
@@ -85,10 +85,10 @@ case object UaParserEnrichment extends Enrichment {
   }
 
   /*
-  * Check's for null value in versionElement for family parameter
+  * Checks for null value in versionElement for family parameter
   */
-  def checkNull (versionElement:String) :String = {
-    if(versionElement == null) {
+  def checkNull(versionElement: String): String = {
+    if (versionElement == null) {
       ""
     } else {
       versionElement

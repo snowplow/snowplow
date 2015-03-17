@@ -168,6 +168,7 @@ class PagePingWithContextSpec extends Specification {
       val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
       enrichedEvent must beSome
 
+      // "-1" prevents empty strings from being discarded from the end of the array
       val fields = enrichedEvent.get.split("\t", -1)
       fields.size must beEqualTo(PagePingWithContextSpec.expected.size)
 

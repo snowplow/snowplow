@@ -75,6 +75,7 @@ object CampaignAttributionEnrichment extends ParseableEnrichment {
         campaign  <- ScalazJson4sUtils.extract[List[String]](config, "parameters", "fields", "mktCampaign")
 
         customClickMap = ScalazJson4sUtils.extract[Map[String, String]](config, "parameters", "fields", "mktClickId").fold(
+          // Assign empty Map on missing property for backwards compatibility with schema version 1-0-0
           e => Map(),
           s => s
         )
@@ -110,20 +111,20 @@ case class MarketingCampaign(
 /**
  * Config for a campaign_attribution enrichment
  *
- * @param mktMedium List of marketing medium parameters
- * @param mktSource List of marketing source parameters
- * @param mktTerm List of marketing term parameters
- * @param mktContent List of marketing content parameters
- * @param mktCampaign List of marketing campaign parameters
+ * @param mediumParameters List of marketing medium parameters
+ * @param sourceParameters List of marketing source parameters
+ * @param termParameters List of marketing term parameters
+ * @param contentParameters List of marketing content parameters
+ * @param campaignParameters List of marketing campaign parameters
  * @param mktClick: Map of click ID parameters to networks
  */
 case class CampaignAttributionEnrichment(
-  mktMedium:   List[String],
-  mktSource:   List[String],
-  mktTerm:     List[String],
-  mktContent:  List[String],
-  mktCampaign: List[String],
-  mktClickId:  List[(String, String)]
+  mediumParameters:   List[String],
+  sourceParameters:   List[String],
+  termParameters:     List[String],
+  contentParameters:  List[String],
+  campaignParameters: List[String],
+  clickIdParameters:  List[(String, String)]
   ) extends Enrichment {
 
   val version = new DefaultArtifactVersion("0.2.0")
@@ -151,13 +152,13 @@ case class CampaignAttributionEnrichment(
    *         Validation
    */
   def extractMarketingFields(nvPairs: SourceMap): ValidationNel[String, MarketingCampaign] = {
-    val medium = getFirstParameter(mktMedium, nvPairs)
-    val source = getFirstParameter(mktSource, nvPairs)
-    val term = getFirstParameter(mktTerm, nvPairs)
-    val content = getFirstParameter(mktContent, nvPairs)
-    val campaign = getFirstParameter(mktCampaign, nvPairs)
+    val medium = getFirstParameter(mediumParameters, nvPairs)
+    val source = getFirstParameter(sourceParameters, nvPairs)
+    val term = getFirstParameter(termParameters, nvPairs)
+    val content = getFirstParameter(contentParameters, nvPairs)
+    val campaign = getFirstParameter(campaignParameters, nvPairs)
 
-    val (clickId, network) = Unzip[Option].unzip(mktClickId.find(pair => nvPairs.contains(pair._1)).map(pair => (nvPairs(pair._1), pair._2)))
+    val (clickId, network) = Unzip[Option].unzip(clickIdParameters.find(pair => nvPairs.contains(pair._1)).map(pair => (nvPairs(pair._1), pair._2)))
 
     MarketingCampaign(medium, source, term, content, campaign, clickId, network).success.toValidationNel
   }

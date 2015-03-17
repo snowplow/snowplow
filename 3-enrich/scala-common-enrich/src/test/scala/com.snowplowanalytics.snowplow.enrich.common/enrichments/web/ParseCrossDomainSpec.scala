@@ -35,6 +35,7 @@ class ParseCrossDomainSpec extends Specification with DataTables with Validation
   "parseCrossDomain should return a failure when the _sp timestamp is unparseable"               ! e2^
   "parseCrossDomain should successfully extract the domain user ID when available"               ! e3^
   "parseCrossDomain should successfully extract the domain user ID and timestamp when available" ! e4^
+  "parseCrossDomain should extract neither field from an empty _sp parameter"                    ! e5^
                                                                                                  end
   def e1 =
     PageEnrichments.parseCrossDomain(Map()) must beSuccessful((None, None))
@@ -49,4 +50,7 @@ class ParseCrossDomainSpec extends Specification with DataTables with Validation
 
   def e4 =
     PageEnrichments.parseCrossDomain(Map("_sp" -> "abc.1426245561368")) must beSuccessful(("abc".some, "2015-03-13 11:19:21.368".some))
+
+  def e5 =
+    PageEnrichments.parseCrossDomain(Map("_sp" -> "")) must beSuccessful(None -> None)
 }
