@@ -30,9 +30,6 @@ sink {
     out {
       # Stream for events for which the storage process fails
       stream-name: "{{sinkKinesisOutStreamName}}"
-
-      # Number of shards with which to create the stream if it doesn't already exist
-      shards: 1
     }
 
     region: "{{sinkKinesisRegion}}"
