@@ -196,9 +196,7 @@ class KinesisEnrichConfig(config: Config) {
 
   private val outStreams = streams.getConfig("out")
   val enrichedOutStream = outStreams.getString("enriched")
-  val enrichedOutStreamShards = outStreams.getInt("enriched_shards")
   val badOutStream = outStreams.getString("bad")
-  val badOutStreamShards = outStreams.getInt("bad_shards")
 
   val appName = streams.getString("app-name")
 

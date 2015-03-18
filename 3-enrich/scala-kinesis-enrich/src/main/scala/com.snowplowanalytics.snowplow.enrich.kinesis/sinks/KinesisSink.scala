@@ -69,9 +69,9 @@ class KinesisSink(provider: AWSCredentialsProvider,
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
-  val (name, size) = inputType match {
-    case InputType.Good => (config.enrichedOutStream, config.enrichedOutStreamShards)
-    case InputType.Bad => (config.badOutStream, config.badOutStreamShards)
+  val name = inputType match {
+    case InputType.Good => config.enrichedOutStream
+    case InputType.Bad => config.badOutStream
   }
 
   // explicitly create a client so we can configure the end point
@@ -82,9 +82,15 @@ class KinesisSink(provider: AWSCredentialsProvider,
   private implicit val kinesis = Client.fromClient(client)
 
   // The output stream for enriched events.
-  private val enrichedStream = createAndLoadStream()
+  private val enrichedStream = loadStream()
 
-  // Checks if a stream exists.
+  /**
+   * Check whether a Kinesis stream exists
+   *
+   * @param name Name of the stream
+   * @param timeout How long to wait before timing out
+   * @return Whether the stream exists
+   */
   def streamExists(name: String, timeout: Int = 60): Boolean = {
 
     val exists: Boolean = try {
@@ -109,32 +115,15 @@ class KinesisSink(provider: AWSCredentialsProvider,
   }
 
   /**
-   * Creates a new stream if one doesn't exist
+   * Loads a Kinesis stream if it exists
+   *
+   * @return The stream
    */
-  def createAndLoadStream(timeout: Int = 60): Stream = {
-
+  def loadStream(): Stream = {
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
-      info(s"Creating stream $name of size $size")
-      val createStream = for {
-        s <- Kinesis.streams.create(name)
-      } yield s
-
-      try {
-        val stream = Await.result(createStream, Duration(timeout, SECONDS))
-
-        info(s"Successfully created stream $name. Waiting until it's active")
-        Await.result(stream.waitActive.retrying(timeout),
-          Duration(timeout, SECONDS))
-
-        info(s"Stream $name active")
-
-        stream
-      } catch {
-        case _: TimeoutException =>
-          throw new RuntimeException("Error: Timed out")
-      }
+      throw new RuntimeException(s"Cannot write because stream $name does not exist or is not active")
     }
   }
 
