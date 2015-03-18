@@ -77,7 +77,6 @@ collector {
       stream {
         region: "us-east-1"
         name: "snowplow_collector_example"
-        size: 1
       }
       buffer: {
         byte-limit: 4000000 # 4MB

@@ -76,11 +76,9 @@ collector {
       }
 
       # Data will be stored in the following stream.
-      # If the stream does not exist, one will be created with $size shards.
       stream {
         region: "{{collectorSinkKinesisStreamRegion}}"
         name: "{{collectorSinkKinesisStreamName}}"
-        size: 1
       }
 
       # Incoming events are stored in a buffer before being sent to Kinesis.
