@@ -45,9 +45,7 @@ enrich {
 
     out: {
       enriched: "{{enrichStreamsOutEnriched}}"
-      enriched_shards: 1 # Number of shards to use if created.
       bad: "{{enrichStreamsOutBad}}"
-      bad_shards: 1 # Number of shards to use if created.
     }
 
     # `app-name` is used for a DynamoDB table to maintain stream state.
