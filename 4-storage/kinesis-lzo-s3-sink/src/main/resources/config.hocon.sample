@@ -1,6 +1,6 @@
 # Default configuration for kinesis-lzo-s3-sink
 
-connector {
+sink {
 
   # The following are used to authenticate for the Amazon Kinesis sink.
   #
@@ -38,7 +38,7 @@ connector {
     region: "{{sinkKinesisRegion}}"
 
     # `app-name` is used for a DynamoDB table to maintain stream state.
-    # You can set it automatically using: "SnowplowLzoS3Sink-${connector.kinesis.in.stream-name}"
+    # You can set it automatically using: "SnowplowLzoS3Sink-${sink.kinesis.in.stream-name}"
     app-name: "{{sinkKinesisAppName}}"
   }
 
