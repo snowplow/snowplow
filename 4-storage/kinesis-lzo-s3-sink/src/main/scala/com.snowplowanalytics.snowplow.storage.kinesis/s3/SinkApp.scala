@@ -69,13 +69,13 @@ object SinkApp extends App {
   val conf = config.value.getOrElse(throw new RuntimeException("--config argument must be provided"))
 
   // TODO: make the conf file more like the Elasticsearch equivalent
-  val kinesisSinkRegion = conf.getConfig("connector").getConfig("kinesis").getString("region")
+  val kinesisSinkRegion = conf.getConfig("sink").getConfig("kinesis").getString("region")
   val kinesisSinkEndpoint = s"https://kinesis.${kinesisSinkRegion}.amazonaws.com"
-  val kinesisSink = conf.getConfig("connector").getConfig("kinesis").getConfig("out")
+  val kinesisSink = conf.getConfig("sink").getConfig("kinesis").getConfig("out")
   val kinesisSinkName = kinesisSink.getString("stream-name")
   val kinesisSinkShards = kinesisSink.getInt("shards")
 
-  val credentialConfig = conf.getConfig("connector").getConfig("aws")
+  val credentialConfig = conf.getConfig("sink").getConfig("aws")
 
   val credentials = CredentialsLookup.getCredentialsProvider(credentialConfig.getString("access-key"), credentialConfig.getString("secret-key"))
 
@@ -93,7 +93,7 @@ object SinkApp extends App {
    */
   def convertConfig(conf: Config, credentials: AWSCredentialsProvider): KinesisConnectorConfiguration = {
     val props = new Properties()
-    val connector = conf.resolve.getConfig("connector")
+    val connector = conf.resolve.getConfig("sink")
 
     val kinesis = connector.getConfig("kinesis")
     val kinesisIn = kinesis.getConfig("in")
