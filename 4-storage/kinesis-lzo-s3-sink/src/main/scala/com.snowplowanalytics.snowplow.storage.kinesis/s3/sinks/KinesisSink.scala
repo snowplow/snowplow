@@ -57,10 +57,9 @@ import org.slf4j.LoggerFactory
  * @param provider AWSCredentialsProvider
  * @param endpoint Kinesis stream endpoint
  * @param name Kinesis stream name
- * @param shards Number of shards with which to initialize the stream
  * @param config Configuration for the Kinesis stream
  */
-class KinesisSink(provider: AWSCredentialsProvider, endpoint: String, name: String, shards: Int)
+class KinesisSink(provider: AWSCredentialsProvider, endpoint: String, name: String)
   extends ISink {
 
   private lazy val log = LoggerFactory.getLogger(getClass())
@@ -120,25 +119,7 @@ class KinesisSink(provider: AWSCredentialsProvider, endpoint: String, name: Stri
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
-      info(s"Creating stream $name of size $shards")
-      val createStream = for {
-        s <- Kinesis.streams.create(name)
-      } yield s
-
-      try {
-        val stream = Await.result(createStream, Duration(timeout, SECONDS))
-
-        info(s"Successfully created stream $name. Waiting until it's active")
-        Await.result(stream.waitActive.retrying(timeout),
-          Duration(timeout, SECONDS))
-
-        info(s"Stream $name active")
-
-        stream
-      } catch {
-        case _: TimeoutException =>
-          throw new RuntimeException("Error: Timed out")
-      }
+      throw new RuntimeException(s"Cannot write because stream $name doesn't exist or is not active")
     }
   }
 

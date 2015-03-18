@@ -73,13 +73,12 @@ object SinkApp extends App {
   val kinesisSinkEndpoint = s"https://kinesis.${kinesisSinkRegion}.amazonaws.com"
   val kinesisSink = conf.getConfig("sink").getConfig("kinesis").getConfig("out")
   val kinesisSinkName = kinesisSink.getString("stream-name")
-  val kinesisSinkShards = kinesisSink.getInt("shards")
 
   val credentialConfig = conf.getConfig("sink").getConfig("aws")
 
   val credentials = CredentialsLookup.getCredentialsProvider(credentialConfig.getString("access-key"), credentialConfig.getString("secret-key"))
 
-  val badSink = new KinesisSink(credentials, kinesisSinkEndpoint, kinesisSinkName, kinesisSinkShards)
+  val badSink = new KinesisSink(credentials, kinesisSinkEndpoint, kinesisSinkName)
 
   val executor = new S3SinkExecutor(convertConfig(conf, credentials), badSink)
   executor.run()
