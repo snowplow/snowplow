@@ -62,7 +62,7 @@ Kinesis Elasticsearch Sink: bumped to 0.2.0
 Kinesis Elasticsearch Sink: added new EnrichedEvent fields (#1345)
 Kinesis Elasticsearch Sink: stopped verifying number of fields in enriched event (#1333)
 Kinesis Elasticsearch Sink: changed organization to com.snowplowanalytics in BuildSettings (#1279)
-Kinesis Elasticsearch Sink: renamed default.conf to config.hocon.sample (#1244)
+Kinesis Elasticsearch Sink: renamed application.conf.example to config.hocon.sample (#1244)
 
 Release 62 Tropical Parula (2015-03-17)
 ---------------------------------------
