@@ -134,7 +134,6 @@ class CollectorConfig(config: Config) {
   val awsSecretKey = aws.getString("secret-key")
   private val stream = kinesis.getConfig("stream")
   val streamName = stream.getString("name")
-  val streamSize = stream.getInt("size")
   private val streamRegion = stream.getString("region")
   val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
 

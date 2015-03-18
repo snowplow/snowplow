@@ -106,9 +106,15 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
   private implicit val kinesis = createKinesisClient
 
   // The output stream for enriched events.
-  private val enrichedStream = createAndLoadStream()
+  private val enrichedStream = loadStream()
 
-  // Checks if a stream exists.
+  /**
+   * Check whether a Kinesis stream exists
+   *
+   * @param name Name of the stream
+   * @param timeout How long to wait before timing out
+   * @return Whether the stream exists
+   */
   def streamExists(name: String, timeout: Int = 60): Boolean = {
 
     val exists: Boolean = try {
@@ -132,33 +138,18 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
     exists
   }
 
-  // Creates a new stream if one doesn't exist.
-  def createAndLoadStream(timeout: Int = 60): Stream = {
+  /**
+   * Loads a Kinesis stream if it exists
+   *
+   * @return The stream
+   */
+  def loadStream(): Stream = {
     val name = config.streamName
-    val size = config.streamSize
 
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
-      info(s"Creating stream $name of size $size")
-      val createStream = for {
-        s <- Kinesis.streams.create(name)
-      } yield s
-
-      try {
-        val stream = Await.result(createStream, Duration(timeout, SECONDS))
-
-        info(s"Successfully created stream $name. Waiting until it's active")
-        Await.result(stream.waitActive.retrying(timeout),
-          Duration(timeout, SECONDS))
-
-        info(s"Stream $name active")
-
-        stream
-      } catch {
-        case _: TimeoutException =>
-          throw new RuntimeException("Error: Timed out")
-      }
+      throw new RuntimeException(s"Cannot write because stream $name doesn't exist or is not active")
     }
   }
 
