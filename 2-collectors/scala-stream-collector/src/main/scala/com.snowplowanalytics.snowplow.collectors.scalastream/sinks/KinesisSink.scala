@@ -229,7 +229,7 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
   // TODO: limit max retries?
   def sendBatch(batch: List[(ByteBuffer, String)]) {
     if (batch.size > 0) {
-      info(s"Writing ${batch.size} Thrift records to Kinesis")
+      info(s"Writing ${batch.size} Thrift records to Kinesis stream ${config.streamName}")
       val putData = for {
         p <- enrichedStream.multiPut(batch)
       } yield p
