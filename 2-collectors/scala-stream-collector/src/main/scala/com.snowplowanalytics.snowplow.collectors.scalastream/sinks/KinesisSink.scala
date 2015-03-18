@@ -94,12 +94,27 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
   val executorService = new ScheduledThreadPoolExecutor(config.threadpoolSize)
   implicit lazy val ec = concurrent.ExecutionContext.fromExecutorService(executorService)
 
-  def scheduleFlush() {
-    executorService.scheduleWithFixedDelay(new Thread {
+  /**
+   * Recursively schedule a task to send everthing in EventStorage
+   * Even if the incoming event flow dries up, all stored events will eventually get sent
+   *
+   * Whenever TimeThreshold milliseconds have passed since the last call to flush, call flush.
+   *
+   * @param interval When to schedule the next flush
+   */
+  def scheduleFlush(interval: Long = TimeThreshold) {
+    executorService.schedule(new Thread {
       override def run() {
-        EventStorage.flush()
+        val lastFlushed = EventStorage.getLastFlushTime()
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastFlushed >= TimeThreshold) {
+          EventStorage.flush()
+          scheduleFlush(TimeThreshold)
+        } else {
+          scheduleFlush(TimeThreshold + lastFlushed - currentTime)
+        }
       }
-    }, 0, TimeThreshold, MILLISECONDS)
+    }, interval, MILLISECONDS)
   }
 
   // Create a Kinesis client for stream interactions.
@@ -187,6 +202,7 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
   object EventStorage {
     private var storedEvents = List[(ByteBuffer, String)]()
     private var byteCount = 0L
+    private var lastFlushedTime = 0L
 
     def store(event: CollectorPayload, key: String) = {
       val eventBytes = ByteBuffer.wrap(serializeEvent(event))
@@ -206,8 +222,11 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
         byteCount = 0
         evts
       }
+      lastFlushedTime = System.currentTimeMillis()
       sendBatch(eventsToSend)
     }
+
+    def getLastFlushTime() = lastFlushedTime
   }
 
   def storeRawEvent(event: CollectorPayload, key: String) = {

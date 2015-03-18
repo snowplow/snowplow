@@ -85,7 +85,7 @@ collector {
       # The buffer is emptied whenever:
       # - the number of stored records reaches record-limit or
       # - the combined size of the stored records reaches byte-limit or
-      # Additionally, the buffer is emptied every {{time-limit}} milliseconds.
+      # - the time in milliseconds since the buffer was last emptied reaches time-limit
       buffer: {
         byte-limit: 4000000 # 4MB
         record-limit: 500 # 500 records
