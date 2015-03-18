@@ -68,7 +68,12 @@ class KinesisSink(provider: AWSCredentialsProvider,
     config: KinesisEnrichConfig, inputType: InputType.InputType) extends ISink {
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
-  
+
+  val (name, size) = inputType match {
+    case InputType.Good => (config.enrichedOutStream, config.enrichedOutStreamShards)
+    case InputType.Bad => (config.badOutStream, config.badOutStreamShards)
+  }
+
   // explicitly create a client so we can configure the end point
   val client = new AmazonKinesisClient(provider)
   client.setEndpoint(config.streamEndpoint)
@@ -107,10 +112,6 @@ class KinesisSink(provider: AWSCredentialsProvider,
    * Creates a new stream if one doesn't exist
    */
   def createAndLoadStream(timeout: Int = 60): Stream = {
-    val (name, size) = inputType match {
-      case InputType.Good => (config.enrichedOutStream, config.enrichedOutStreamShards)
-      case InputType.Bad => (config.badOutStream, config.badOutStreamShards)
-    }
 
     if (streamExists(name)) {
       Kinesis.stream(name)
@@ -248,6 +249,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
    */
   def sendBatch(batch: List[(ByteBuffer, String)]) {
     if (!batch.isEmpty) {
+      info(s"Writing ${batch.size} Thrift records to Kinesis stream $name")
       var unsentRecords = batch
       var sentBatchSuccessfully = false
       while (!sentBatchSuccessfully) {
