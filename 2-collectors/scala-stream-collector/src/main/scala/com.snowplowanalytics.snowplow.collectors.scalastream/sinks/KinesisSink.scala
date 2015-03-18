@@ -188,19 +188,25 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
     private var storedEvents = List[(ByteBuffer, String)]()
     private var byteCount = 0L
 
-    def store(event: CollectorPayload, key: String) = synchronized {
+    def store(event: CollectorPayload, key: String) = {
       val eventBytes = ByteBuffer.wrap(serializeEvent(event))
-      storedEvents = (eventBytes, key) :: storedEvents
-      byteCount += eventBytes.capacity
-      if (storedEvents.size >= RecordThreshold || byteCount >= ByteThreshold) {
-        flush()
+      synchronized {
+        storedEvents = (eventBytes, key) :: storedEvents
+        byteCount += eventBytes.capacity
+        if (storedEvents.size >= RecordThreshold || byteCount >= ByteThreshold) {
+          flush()
+        }
       }
     }
 
-    def flush() = synchronized {
-      sendBatch(storedEvents.reverse)
-      storedEvents = Nil
-      byteCount = 0
+    def flush() = {
+      val eventsToSend = synchronized {
+        val evts = storedEvents.reverse
+        storedEvents = Nil
+        byteCount = 0
+        evts
+      }
+      sendBatch(eventsToSend)
     }
   }
 
