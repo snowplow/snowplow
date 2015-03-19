@@ -62,6 +62,8 @@ import CollectorPayload.thrift.model1.CollectorPayload
  */
 object KinesisSink {
 
+  @volatile var shuttingDown = false
+
   /**
    * Create a KinesisSink and schedule a task to flush its EventStorage
    * Exists so that no threads can get a reference to the KinesisSink
@@ -72,6 +74,17 @@ object KinesisSink {
   def createAndInitialize(config: CollectorConfig): KinesisSink = {
     val ks = new KinesisSink(config)
     ks.scheduleFlush()
+
+    // When the application is shut down, stop accepting incoming requests
+    // and send all stored events
+    Runtime.getRuntime.addShutdownHook(new Thread {
+      override def run() {
+        shuttingDown = true
+        ks.EventStorage.flush()
+        ks.executorService.shutdown()
+        ks.executorService.awaitTermination(10000, MILLISECONDS)
+      }
+    })
     ks
   }
 }
