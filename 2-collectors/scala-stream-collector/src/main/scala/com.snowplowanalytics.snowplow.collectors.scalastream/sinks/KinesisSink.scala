@@ -202,7 +202,7 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
   object EventStorage {
     private var storedEvents = List[(ByteBuffer, String)]()
     private var byteCount = 0L
-    private var lastFlushedTime = 0L
+    @volatile private var lastFlushedTime = 0L
 
     def store(event: CollectorPayload, key: String) = {
       val eventBytes = ByteBuffer.wrap(serializeEvent(event))
