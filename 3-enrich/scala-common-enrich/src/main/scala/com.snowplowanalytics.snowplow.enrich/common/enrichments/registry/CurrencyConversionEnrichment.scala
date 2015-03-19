@@ -106,7 +106,7 @@ case class CurrencyConversionEnrichment(
 
   val version = new DefaultArtifactVersion("0.1.0")
 
-  val fx = Forex(ForexConfig(nowishCacheSize = 0, nowishSecs = 0, eodCacheSize = 0), OerClientConfig(apiKey, accountType))
+  val fx = Forex(ForexConfig(), OerClientConfig(apiKey, accountType))
 
   /**
    * Attempt to convert if the initial currency and value are both defined
