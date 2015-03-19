@@ -65,6 +65,9 @@ object Sink extends Enumeration {
 
 // The main entry point of the Scala Kinesis Enricher.
 object KinesisEnrichApp extends App {
+
+  val ResolverFilepathRegex = "^file:(.+)$".r
+
   val parser = new ArgotParser(
     programName = generated.Settings.name,
     compactUsage = true,
@@ -89,6 +92,23 @@ object KinesisEnrichApp extends App {
       }
   }
 
+  // Mandatory resolver argument
+  val resolverOption = parser.option[String](
+      List("resolver"), "filename", """
+        |Iglu resolver file.""".stripMargin) {
+    (c, opt) => extractResolverFilepath(c) match {
+      case Success(filepath) => {
+        val file = new File(filepath)
+        if (file.exists) {
+          scala.io.Source.fromFile(file).mkString
+        } else {
+          parser.usage("Iglu resolver configuration file \"%s\" does not exist".format(filepath))
+        }
+      }
+      case Failure(e) => parser.usage(e)
+    }
+  }
+
   // Optional directory of enrichment configuration JSONs
   val enrichmentsDirectory = parser.option[String](
       List("enrichments"), "filename", """
@@ -108,7 +128,7 @@ object KinesisEnrichApp extends App {
 
   val kinesisEnrichConfig = new KinesisEnrichConfig(parsedConfig)
 
-  val resolverConfig = parsedConfig.resolve.getConfig("enrich").getConfig("resolver").root.render(ConfigRenderOptions.concise())
+  val parsedResolver = resolverOption.value.getOrElse(throw new RuntimeException("--resolver argument must be provided"))
 
   /**
    * Build the JSON string for the enrichment configuration from
@@ -131,7 +151,7 @@ object KinesisEnrichApp extends App {
   val enrichmentConfig = getEnrichmentConfig
 
   implicit val igluResolver: Resolver = (for {
-    json <- JsonUtils.extractJson("", resolverConfig)
+    json <- JsonUtils.extractJson("", parsedResolver)
     resolver <- Resolver.parse(json).leftMap(_.toString)
   } yield resolver) fold (
     e => throw new RuntimeException(e),
@@ -164,6 +184,11 @@ object KinesisEnrichApp extends App {
     case Source.Stdin => new StdinSource(kinesisEnrichConfig, igluResolver, registry)
   }
   source.run
+
+  def extractResolverFilepath(resolverArgument: String): Validation[String, String] = resolverArgument match {
+    case ResolverFilepathRegex(filepath) => filepath.success
+    case _ => s"Resolver filepath [$resolverArgument] must begin with 'file:'".fail
+  }
 }
 
 // Rigidly load the configuration file here to error when
