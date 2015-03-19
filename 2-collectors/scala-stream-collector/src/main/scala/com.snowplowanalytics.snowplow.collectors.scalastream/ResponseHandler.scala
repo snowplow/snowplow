@@ -84,73 +84,78 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
       request: HttpRequest, refererUri: Option[String], path: String, pixelExpected: Boolean):
       (HttpResponse, Array[Byte]) = {
 
-    // Use the same UUID if the request cookie contains `sp`.
-    val networkUserId: String = requestCookie match {
-      case Some(rc) => rc.content
-      case None => UUID.randomUUID.toString
-    }
-
-    // Construct an event object from the request.
-    val timestamp: Long = System.currentTimeMillis
-
-    val event = new CollectorPayload(
-      "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
-      ip,
-      timestamp,
-      "UTF-8",
-      Collector
-    )
-
-    event.path = path
-    event.querystring = queryParams
-    event.body = body
-    event.hostname = hostname
-    event.networkUserId = networkUserId
-
-    userAgent.foreach(event.userAgent = _)
-    refererUri.foreach(event.refererUri = _)
-    event.headers = request.headers.flatMap {
-      case _: `Remote-Address` | _: `Raw-Request-URI` => None
-      case other => Some(other.toString)
-    }
-
-    // Set the content type
-    request.headers.find(_ match {case `Content-Type`(ct) => true; case _ => false}) foreach {
-
-      // toLowerCase called because Spray seems to convert "utf" to "UTF"
-      ct => event.contentType = ct.value.toLowerCase
-    }
-
-    // Only the test sink responds with the serialized object.
-    val sinkResponse = sink.storeRawEvent(event, ip)
-
-    val policyRef = config.p3pPolicyRef
-    val CP = config.p3pCP
-
-    val headersWithoutCookie = List(
-      RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP)),
-      getAccessControlAllowOriginHeader(request),
-      `Access-Control-Allow-Credentials`(true)
-    )
-
-    val headers = if (config.cookieEnabled) {
-      val responseCookie = HttpCookie(
-        "sp", networkUserId,
-        expires=Some(DateTime.now+config.cookieExpiration),
-        domain=config.cookieDomain
-      )
-      `Set-Cookie`(responseCookie) :: headersWithoutCookie
+    if (KinesisSink.shuttingDown) {
+      (notFound, null)
     } else {
-      headersWithoutCookie
-    }
 
-    val httpResponse = (if (pixelExpected) {
-        HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
+      // Use the same UUID if the request cookie contains `sp`.
+      val networkUserId: String = requestCookie match {
+        case Some(rc) => rc.content
+        case None => UUID.randomUUID.toString
+      }
+
+      // Construct an event object from the request.
+      val timestamp: Long = System.currentTimeMillis
+
+      val event = new CollectorPayload(
+        "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
+        ip,
+        timestamp,
+        "UTF-8",
+        Collector
+      )
+
+      event.path = path
+      event.querystring = queryParams
+      event.body = body
+      event.hostname = hostname
+      event.networkUserId = networkUserId
+
+      userAgent.foreach(event.userAgent = _)
+      refererUri.foreach(event.refererUri = _)
+      event.headers = request.headers.flatMap {
+        case _: `Remote-Address` | _: `Raw-Request-URI` => None
+        case other => Some(other.toString)
+      }
+
+      // Set the content type
+      request.headers.find(_ match {case `Content-Type`(ct) => true; case _ => false}) foreach {
+
+        // toLowerCase called because Spray seems to convert "utf" to "UTF"
+        ct => event.contentType = ct.value.toLowerCase
+      }
+
+      // Only the test sink responds with the serialized object.
+      val sinkResponse = sink.storeRawEvent(event, ip)
+
+      val policyRef = config.p3pPolicyRef
+      val CP = config.p3pCP
+
+      val headersWithoutCookie = List(
+        RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP)),
+        getAccessControlAllowOriginHeader(request),
+        `Access-Control-Allow-Credentials`(true)
+      )
+
+      val headers = if (config.cookieEnabled) {
+        val responseCookie = HttpCookie(
+          "sp", networkUserId,
+          expires=Some(DateTime.now+config.cookieExpiration),
+          domain=config.cookieDomain
+        )
+        `Set-Cookie`(responseCookie) :: headersWithoutCookie
       } else {
-        HttpResponse()
-      }).withHeaders(headers)
+        headersWithoutCookie
+      }
 
-    (httpResponse, sinkResponse)
+      val httpResponse = (if (pixelExpected) {
+          HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
+        } else {
+          HttpResponse()
+        }).withHeaders(headers)
+
+      (httpResponse, sinkResponse)
+    }
   }
 
   /**
