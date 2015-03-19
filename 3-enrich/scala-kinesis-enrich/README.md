@@ -27,17 +27,18 @@ Usage: snowplow-kinesis-enrich [OPTIONS]
 
 OPTIONS
 --config filename
-                   Configuration file.
-
+                        Configuration file.
 --enrichments filename
-                   Directory of enrichment configuration JSONs
+                        Directory of enrichment configuration JSONs.
+--resolver filename
+                        Iglu resolver.
 ```
 
 ## Running
 
 Create your own config file:
 
-    $ cp src/main/resources/default.conf my.conf
+    $ cp src/main/resources/config.hocon.example my.conf
 
 Edit it and update the AWS credentials:
 
@@ -50,13 +51,18 @@ aws {
 
 If you set the fields to "env", the access key and secret key will be taken from the environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.
 
+
+Create your own Iglu resolver configuration file:
+
+    $ cp src/main/resources/resolver.json.sample my.resolver.json
+
 Next, start the enricher, making sure to specify your new config file:
 
-    $ sbt "run --config my.conf"
+    $ sbt "run --config my.conf --resolver file:my.resolver.json"
 
 If you want to use customizable enrichments, create a directory of enrichment JSONs as described in the [Configuring Enrichments][configuring-enrichments] wiki page and pass its filepath using the --enrichments option:
 
-    $ sbt "run --config my.conf --enrichments path/to/enrichmentsdirectory"
+    $ sbt "run --config my.conf --resolver file:my.resolver.json --enrichments path/to/enrichmentsdirectory"
 
 ## Copyright and license
 
