@@ -181,6 +181,9 @@ CREATE TABLE atomic.events (
 	-- Derived contexts
 	derived_contexts varchar(15000) encode lzo,        -- Added in 0.5.0
 
+	-- Session ID
+	session_id varchar(36) encode raw,                 -- Added in 0.5.0
+
 	CONSTRAINT event_id_040_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY

@@ -177,6 +177,9 @@ CREATE TABLE atomic.events (
 	-- Derived contexts
 	derived_contexts varchar(15000) encode lzo,        -- Added in 0.5.0
 
+	-- Session ID
+	session_id varchar(36) encode raw,                 -- Added in 0.5.0
+
 	CONSTRAINT event_id_040_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
@@ -308,5 +311,6 @@ INSERT INTO atomic.events
 	NULL AS dvce_sent_tstamp,             -- Added in 0.5.0
 	NULL AS refr_domain_userid,           -- Added in 0.5.0
 	NULL AS refr_dvce_tstamp,             -- Added in 0.5.0
-	NULL AS derived_contexts              -- Added in 0.5.0
+	NULL AS derived_contexts,             -- Added in 0.5.0
+	NULL AS session_id,                   -- Added in 0.5.0
 	FROM atomic.events_040;
