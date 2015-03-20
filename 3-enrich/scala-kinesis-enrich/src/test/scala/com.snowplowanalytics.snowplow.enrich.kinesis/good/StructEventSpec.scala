@@ -153,6 +153,7 @@ object StructEventSpec {
     "",
     "",
     "",
+    "",
     ""
     )
 }
