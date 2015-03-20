@@ -225,4 +225,7 @@ class EnrichedEvent {
 
   // Derived contexts
   @BeanProperty var derived_contexts: String = _
+
+  // Session ID
+  @BeanProperty var session_id: String = _
 }
