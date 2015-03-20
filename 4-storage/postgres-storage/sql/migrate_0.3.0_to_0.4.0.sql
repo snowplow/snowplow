@@ -172,7 +172,9 @@ CREATE TABLE "atomic"."events" (
 	"refr_domain_userid" varchar(36),       -- Added in 0.4.0
 	"refr_dvce_tstamp" timestamp,           -- Added in 0.4.0
 	-- Derived contexts
-	"derived_contexts" json                 -- Added in 0.4.0
+	"derived_contexts" json,                -- Added in 0.4.0
+	-- Session ID
+	"session_id" varchar(36)                -- Added in 0.4.0
 	                                        -- Removed primary key constraint on event_id in 0.4.0
 )
 WITH (OIDS=FALSE)
@@ -303,6 +305,7 @@ INSERT INTO atomic.events
 	NULL AS "dvce_sent_tstamp",             -- Added in 0.4.0
 	NULL AS "refr_domain_userid",           -- Added in 0.4.0
 	NULL AS "refr_dvce_tstamp",             -- Added in 0.4.0
-	NULL AS "derived_contexts"              -- Added in 0.4.0
+	NULL AS "derived_contexts",             -- Added in 0.4.0
+	NULL AS "session_id"                    -- Added in 0.4.0
 
     FROM atomic.events_030;

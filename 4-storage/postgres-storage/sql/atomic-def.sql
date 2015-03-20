@@ -170,7 +170,9 @@ CREATE TABLE "atomic"."events" (
 	"refr_domain_userid" varchar(36),       -- Added in 0.4.0
 	"refr_dvce_tstamp" timestamp,           -- Added in 0.4.0
 	-- Derived contexts
-	"derived_contexts" json                 -- Added in 0.4.0
+	"derived_contexts" json,                -- Added in 0.4.0
+	-- Session ID
+	"session_id" varchar(36)                -- Added in 0.4.0
 	                                        -- Removed primary key constraint on event_id in 0.4.0
 )
 WITH (OIDS=FALSE)
