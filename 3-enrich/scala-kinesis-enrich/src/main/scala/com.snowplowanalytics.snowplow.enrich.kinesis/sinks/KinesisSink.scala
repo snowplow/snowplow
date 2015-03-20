@@ -32,6 +32,7 @@ import com.amazonaws.services.kinesis.AmazonKinesis
 import com.amazonaws.regions._
 
 // Scala
+import scala.collection.parallel.immutable.ParSeq
 import scala.util.control.NonFatal
 import scala.collection.JavaConverters._
 
@@ -206,9 +207,11 @@ class KinesisSink(provider: AWSCredentialsProvider,
    * @param events List of events together with their partition keys
    * @return whether to send the stored events to Kinesis
    */
-  def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
+  def storeEnrichedEvents(events: ParSeq[(String, String)]): Boolean = {
     val wrappedEvents = events.map(e => ByteBuffer.wrap(e._1.getBytes) -> e._2)
-    wrappedEvents.foreach(EventStorage.addEvent(_))
+
+    // Convert back to seq so that events get stored in correct order
+    wrappedEvents.seq.foreach(EventStorage.addEvent(_))
 
     if (System.currentTimeMillis() > nextRequestTime) {
       nextRequestTime = System.currentTimeMillis() + TimeThreshold

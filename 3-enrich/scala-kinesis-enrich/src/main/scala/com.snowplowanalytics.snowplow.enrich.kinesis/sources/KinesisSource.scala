@@ -148,7 +148,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
 
     private def processRecordsWithRetries(records: List[Record]): Boolean = {
       try {
-        enrichAndStoreEvents(records.map(_.getData.array).toList)
+        enrichAndStoreEvents(records.map(_.getData.array).toVector)
       } catch {
         case NonFatal(e) =>
           // TODO: decide what to do with this error - should we checkpoint?

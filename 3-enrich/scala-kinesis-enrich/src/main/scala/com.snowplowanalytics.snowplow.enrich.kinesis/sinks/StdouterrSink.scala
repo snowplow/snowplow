@@ -19,6 +19,9 @@
 package com.snowplowanalytics.snowplow.enrich.kinesis
 package sinks
 
+// Scala
+import scala.collection.parallel.immutable.ParSeq
+
 // Snowplow
 import com.snowplowanalytics.snowplow.collectors.thrift._
 
@@ -35,10 +38,11 @@ class StdouterrSink(inputType: InputType.InputType) extends ISink {
    * String until such time as https://github.com/snowplow/snowplow/issues/211
    * is implemented.
    */
-  def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
+  def storeEnrichedEvents(events: ParSeq[(String, String)]): Boolean = {
     inputType match {
-      case InputType.Good => events.foreach(e => println(e._1)) // To stdout
-      case InputType.Bad => events.foreach(e => Console.err.println(e._1)) // To stderr
+      // Convert events to sequence so that they get printed in the correct order
+      case InputType.Good => events.seq.foreach(e => println(e._1)) // To stdout
+      case InputType.Bad => events.seq.foreach(e => Console.err.println(e._1)) // To stderr
     }
     true
   }

@@ -19,6 +19,9 @@
 package com.snowplowanalytics.snowplow.enrich
 package kinesis.sinks
 
+// Scala
+import scala.collection.parallel.immutable.ParSeq
+
 /**
  * An interface for all sinks to use to store events.
  */
@@ -32,7 +35,7 @@ trait ISink {
    * String until such time as https://github.com/snowplow/snowplow/issues/211
    * is implemented.
    */
-  def storeEnrichedEvents(events: List[(String, String)]): Boolean
+  def storeEnrichedEvents(events: ParSeq[(String, String)]): Boolean
 
   def flush()
 }
