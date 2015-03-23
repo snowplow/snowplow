@@ -1,6 +1,7 @@
 Release 63 Red-Cheeked Cordon-Bleu (2015-xx-xx)
 --------------------------------------
 Common: updated kinesis push to remove sub-folders from zipfile (#1378)
+EmrEtlRunner: added example configuration JSONs for new enrichments (#1545)
 Scala Common Enrich: bumped to 0.13.0
 Scala Common Enrich: bumped referer-parser to 0.2.3 (#670)
 Scala Common Enrich: converted transactions from given currency to base currency (#370)
