@@ -69,7 +69,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
   def run
 
   // Initialize a kinesis provider to use with a Kinesis source or sink.
-  protected val kinesisProvider = createKinesisProvider
+  protected val kinesisProvider = config.credentialsProvider
 
   // Initialize the sink to output enriched events to.
   protected val sink: Option[ISink] = config.sink match {
@@ -143,65 +143,5 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
       false
     }
 
-  }
-
-
-  // Initialize a Kinesis provider with the given credentials.
-  private def createKinesisProvider(): AWSCredentialsProvider =  {
-    val a = config.accessKey
-    val s = config.secretKey
-    if (isCpf(a) && isCpf(s)) {
-        new ClasspathPropertiesFileCredentialsProvider()
-    } else if (isCpf(a) || isCpf(s)) {
-      throw new RuntimeException(
-        "access-key and secret-key must both be set to 'cpf', or neither"
-      )
-    } else if (isIam(a) && isIam(s)) {
-      new InstanceProfileCredentialsProvider()
-    } else if (isIam(a) || isIam(s)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'iam', or neither")
-    } else if (isEnv(a) && isEnv(s)) {
-      new EnvironmentVariableCredentialsProvider()
-    } else if (isEnv(a) || isEnv(s)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'env', or neither")
-    } else {
-      new BasicAWSCredentialsProvider(
-        new BasicAWSCredentials(a, s)
-      )
-    }
-  }
-
-  /**
-   * Is the access/secret key set to the special value "cpf" i.e. use
-   * the classpath properties file for credentials.
-   *
-   * @param key The key to check
-   * @return true if key is cpf, false otherwise
-   */
-  private def isCpf(key: String): Boolean = (key == "cpf")
-
-  /**
-   * Is the access/secret key set to the special value "iam" i.e. use
-   * the IAM role to get credentials.
-   *
-   * @param key The key to check
-   * @return true if key is iam, false otherwise
-   */
-  private def isIam(key: String): Boolean = (key == "iam")
-
-  /**
-   * Is the access/secret key set to the special value "env" i.e. get
-   * the credentials from environment variables
-   *
-   * @param key The key to check
-   * @return true if key is iam, false otherwise
-   */
-  private def isEnv(key: String): Boolean = (key == "env")
-
-  // Wrap BasicAWSCredential objects.
-  class BasicAWSCredentialsProvider(basic: BasicAWSCredentials) extends
-      AWSCredentialsProvider{
-    @Override def getCredentials: AWSCredentials = basic
-    @Override def refresh = {}
   }
 }

@@ -22,6 +22,10 @@ package kinesis
 // Java
 import java.io.File
 
+// Amazon
+import com.amazonaws.services.dynamodbv2.document.DynamoDB
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
+
 // Scala
 import sys.process._
 
@@ -67,6 +71,7 @@ object Sink extends Enumeration {
 object KinesisEnrichApp extends App {
 
   val ResolverFilepathRegex = "^file:(.+)$".r
+  val ResolverDynamoDBRegex = "^dynamodb:([^/]+)/([^/]+)/([^/]+)$".r
 
   val parser = new ArgotParser(
     programName = generated.Settings.name,
@@ -96,17 +101,7 @@ object KinesisEnrichApp extends App {
   val resolverOption = parser.option[String](
       List("resolver"), "filename", """
         |Iglu resolver file.""".stripMargin) {
-    (c, opt) => extractResolverFilepath(c) match {
-      case Success(filepath) => {
-        val file = new File(filepath)
-        if (file.exists) {
-          scala.io.Source.fromFile(file).mkString
-        } else {
-          parser.usage("Iglu resolver configuration file \"%s\" does not exist".format(filepath))
-        }
-      }
-      case Failure(e) => parser.usage(e)
-    }
+    (c, opt) => c
   }
 
   // Optional directory of enrichment configuration JSONs
@@ -125,10 +120,10 @@ object KinesisEnrichApp extends App {
   parser.parse(args)
 
   val parsedConfig = config.value.getOrElse(throw new RuntimeException("--config argument must be provided"))
-
   val kinesisEnrichConfig = new KinesisEnrichConfig(parsedConfig)
 
-  val parsedResolver = resolverOption.value.getOrElse(throw new RuntimeException("--resolver argument must be provided"))
+  val nonOptionalResolver = resolverOption.value.getOrElse(throw new RuntimeException("--resolver argument must be provided"))
+  val parsedResolver = extractResolver(nonOptionalResolver)
 
   /**
    * Build the JSON string for the enrichment configuration from
@@ -185,9 +180,40 @@ object KinesisEnrichApp extends App {
   }
   source.run
 
-  def extractResolverFilepath(resolverArgument: String): Validation[String, String] = resolverArgument match {
-    case ResolverFilepathRegex(filepath) => filepath.success
-    case _ => s"Resolver filepath [$resolverArgument] must begin with 'file:'".fail
+  /**
+   * Return a JSON string based on the resolver argument
+   *
+   * @param resolverArgument
+   * @return JSON from a local file or stored in DynamoDB
+   */
+  def extractResolver(resolverArgument: String): String = resolverArgument match {
+    case ResolverFilepathRegex(filepath) => {
+      val file = new File(filepath)
+      if (file.exists) {
+        scala.io.Source.fromFile(file).mkString
+      } else {
+        parser.usage("Iglu resolver configuration file \"%s\" does not exist".format(filepath))
+      }
+    }
+    case ResolverDynamoDBRegex(region, table, key) => lookupDynamoDBConfig(region, table, key)
+    case _ => throw new RuntimeException(s"Resolver filepath [$resolverArgument] must begin with 'file:' or 'dynamodb:'")
+  }
+
+  /**
+   * Fetch configuration from DynamoDB
+   * Assumes the primary key is "id" and the configuration's key is "JSON"
+   *
+   * @param region DynamoDB region, e.g. "eu-west-1"
+   * @param table
+   * @param key The value of the primary key for the configuration
+   * @return The JSON stored in DynamoDB
+   */
+  def lookupDynamoDBConfig(region: String, table: String, key: String): String = {
+    val dynamoDBClient = new AmazonDynamoDBClient(kinesisEnrichConfig.credentialsProvider)
+    dynamoDBClient.setEndpoint(s"https://dynamodb.${region}.amazonaws.com")
+    val dynamoDB = new DynamoDB(dynamoDBClient)
+    val item = dynamoDB.getTable(table).getItem("id", key)
+    item.getString("JSON")
   }
 }
 
@@ -234,4 +260,6 @@ class KinesisEnrichConfig(config: Config) {
   val byteLimit = buffer.getInt("byte-limit")
   val recordLimit = buffer.getInt("record-limit")
   val timeLimit = buffer.getInt("time-limit")
+
+  val credentialsProvider = CredentialsLookup.getCredentialsProvider(accessKey, secretKey)
 }
