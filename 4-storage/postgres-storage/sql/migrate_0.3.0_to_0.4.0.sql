@@ -152,13 +152,13 @@ CREATE TABLE "atomic"."events" (
 	"doc_width" integer,
 	"doc_height" integer,
 	-- Currency
-	"tr_currency" varchar(16),              -- Added in 0.4.0
+	"tr_currency" char(3),                  -- Added in 0.4.0
 	"tr_total_base" decimal(18, 2),         -- Added in 0.4.0
 	"tr_tax_base" decimal(18, 2),           -- Added in 0.4.0
 	"tr_shipping_base" decimal(18, 2),      -- Added in 0.4.0
-	"ti_currency" varchar(16),              -- Added in 0.4.0
+	"ti_currency" char(3),                  -- Added in 0.4.0
 	"ti_price_base" decimal(18, 2),         -- Added in 0.4.0
-	"base_currency" varchar(16),            -- Added in 0.4.0
+	"base_currency" char(3),                -- Added in 0.4.0
 	-- Geolocation
 	"geo_timezone" varchar(64),             -- Added in 0.4.0
 	-- Click ID
