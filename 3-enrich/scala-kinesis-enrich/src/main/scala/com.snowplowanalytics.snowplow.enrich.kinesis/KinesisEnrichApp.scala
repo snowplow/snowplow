@@ -23,11 +23,15 @@ package kinesis
 import java.io.File
 
 // Amazon
+import com.amazonaws.services.dynamodbv2.model.ScanRequest
+import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
 
 // Scala
 import sys.process._
+import scala.collection.JavaConverters._
+import scala.annotation.tailrec
 
 // Config
 import com.typesafe.config.{
@@ -70,8 +74,8 @@ object Sink extends Enumeration {
 // The main entry point of the Scala Kinesis Enricher.
 object KinesisEnrichApp extends App {
 
-  val ResolverFilepathRegex = "^file:(.+)$".r
-  val ResolverDynamoDBRegex = "^dynamodb:([^/]+)/([^/]+)/([^/]+)$".r
+  val FilepathRegex = "^file:(.+)$".r
+  val DynamoDBRegex = "^dynamodb:([^/]*)/([^/]*)/([^/]*)$".r
 
   val parser = new ArgotParser(
     programName = generated.Settings.name,
@@ -105,45 +109,21 @@ object KinesisEnrichApp extends App {
   }
 
   // Optional directory of enrichment configuration JSONs
-  val enrichmentsDirectory = parser.option[String](
+  val enrichmentsOption = parser.option[String](
       List("enrichments"), "filename", """
         |Directory of enrichment configuration JSONs.""".stripMargin) {
-    (c, opt) =>
-      val file = new File(c)
-      if (file.exists) {
-        c
-      } else {
-        parser.usage("Enrichments directory \"%s\" does not exist".format(c))
-      }
+    (c, opt) => c
   }
 
   parser.parse(args)
 
-  val parsedConfig = config.value.getOrElse(throw new RuntimeException("--config argument must be provided"))
+  val parsedConfig = config.value.getOrElse(parser.usage("--config argument must be provided"))
   val kinesisEnrichConfig = new KinesisEnrichConfig(parsedConfig)
 
-  val nonOptionalResolver = resolverOption.value.getOrElse(throw new RuntimeException("--resolver argument must be provided"))
+  val nonOptionalResolver = resolverOption.value.getOrElse(parser.usage("--resolver argument must be provided"))
   val parsedResolver = extractResolver(nonOptionalResolver)
 
-  /**
-   * Build the JSON string for the enrichment configuration from
-   * the JSON files in the enrichments directory
-   *
-   * @return enrichments JSON string
-   */
-  def getEnrichmentConfig: String = {
-    val enrichmentJsonStrings: String = enrichmentsDirectory.value match {
-      case Some(dir) => {
-        val enrichmentJsonFiles = new java.io.File(dir).listFiles.filter(_.getName.endsWith(".json"))
-        enrichmentJsonFiles.map(scala.io.Source.fromFile(_).mkString).mkString(",")
-      }
-      case None => ""
-    }
-
-    """{"schema":"iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0","data":[%s]}""".format(enrichmentJsonStrings)
-  }
-
-  val enrichmentConfig = getEnrichmentConfig
+  val enrichmentConfig = extractEnrichmentConfig(enrichmentsOption.value)
 
   implicit val igluResolver: Resolver = (for {
     json <- JsonUtils.extractJson("", parsedResolver)
@@ -187,7 +167,7 @@ object KinesisEnrichApp extends App {
    * @return JSON from a local file or stored in DynamoDB
    */
   def extractResolver(resolverArgument: String): String = resolverArgument match {
-    case ResolverFilepathRegex(filepath) => {
+    case FilepathRegex(filepath) => {
       val file = new File(filepath)
       if (file.exists) {
         scala.io.Source.fromFile(file).mkString
@@ -195,8 +175,8 @@ object KinesisEnrichApp extends App {
         parser.usage("Iglu resolver configuration file \"%s\" does not exist".format(filepath))
       }
     }
-    case ResolverDynamoDBRegex(region, table, key) => lookupDynamoDBConfig(region, table, key)
-    case _ => throw new RuntimeException(s"Resolver filepath [$resolverArgument] must begin with 'file:' or 'dynamodb:'")
+    case DynamoDBRegex(region, table, key) => lookupDynamoDBConfig(region, table, key)
+    case _ => parser.usage(s"Resolver argument [$resolverArgument] must begin with 'file:' or 'dynamodb:'")
   }
 
   /**
@@ -214,6 +194,56 @@ object KinesisEnrichApp extends App {
     val dynamoDB = new DynamoDB(dynamoDBClient)
     val item = dynamoDB.getTable(table).getItem("id", key)
     item.getString("JSON")
+  }
+
+  /**
+   * Return an enrichment configuration JSON based on the enrichments argument
+   *
+   * @param enrichmentArgument
+   * @return JSON containing configuration for all enrichments
+   */
+  def extractEnrichmentConfig(enrichmentArgument: Option[String]): String = {
+    val jsons: Iterable[String] = enrichmentArgument match {
+      case None => Nil
+      case Some(FilepathRegex(dir)) => new java.io.File(dir).listFiles.filter(_.getName.endsWith(".json"))
+                                        .map(scala.io.Source.fromFile(_).mkString)
+      case Some(DynamoDBRegex(region, table, partialKey)) => lookupDynamoDBEnrichments(region, table, partialKey)
+      case Some(other) => parser.usage(s"Enrichments argument [$other] must begin with 'file:' or 'dynamodb:'")
+    }
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0","data":[%s]}""".format(jsons.mkString(","))
+  }
+
+  /**
+   * Get a list of enrichment JSONs from DynamoDB
+   *
+   * @param region DynamoDB region, e.g. "eu-west-1"
+   * @param table
+   * @param partialKey Primary key prefix, e.g. "enrichments-"
+   * @return List of JSONs
+   */
+  def lookupDynamoDBEnrichments(region: String, table: String, partialKey: String): List[String] = {
+    val dynamoDBClient = new AmazonDynamoDBClient(kinesisEnrichConfig.credentialsProvider)
+    dynamoDBClient.setEndpoint(s"https://dynamodb.${region}.amazonaws.com")
+
+    // Each scan can only return up to 1MB
+    // See http://techtraits.com/cloud/nosql/2012/06/27/Amazon-DynamoDB--Understanding-Query-and-Scan-operations/
+    @tailrec
+    def partialScan(sofar: List[Map[String, String]] = Nil, lastEvaluatedKey: java.util.Map[String, AttributeValue] = null): List[Map[String, String]] = {
+      val scanRequest = new ScanRequest().withTableName(table)
+      scanRequest.setExclusiveStartKey(lastEvaluatedKey)
+      val lastResult = dynamoDBClient.scan(scanRequest)
+      val combinedResults = sofar ++ lastResult.getItems.asScala.map(_.asScala.toMap.mapValues(_.getS))
+      lastResult.getLastEvaluatedKey match {
+        case null => combinedResults
+        case startKey => partialScan(combinedResults, startKey)
+      }
+    }
+    val allItems = partialScan(Nil)
+    allItems filter { item => item.get("id") match {
+        case Some(value) if value.startsWith(partialKey) => true
+        case _ => false
+      }
+    } flatMap(_.get("JSON"))
   }
 }
 
