@@ -180,7 +180,7 @@ CREATE TABLE atomic.events (
 	-- Session ID
 	session_id varchar(36) encode raw,                 -- Added in 0.5.0
 
-	CONSTRAINT event_id_040_pk PRIMARY KEY(event_id)
+	CONSTRAINT event_id_050_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
 DISTKEY (event_id)
