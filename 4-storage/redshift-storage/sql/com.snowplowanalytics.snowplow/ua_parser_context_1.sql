@@ -15,7 +15,7 @@
 --
 -- Compatibility: iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0
 
-CREATE TABLE atomic.com_snowplowanalytics_ua_parser_context_1 (
+CREATE TABLE atomic.com_snowplowanalytics_snowplow_ua_parser_context_1 (
 	-- Schema of this type
 	schema_vendor  varchar(128)   encode runlength not null,
 	schema_name    varchar(128)   encode runlength not null,
