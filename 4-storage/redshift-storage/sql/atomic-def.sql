@@ -94,7 +94,7 @@ CREATE TABLE atomic.events (
 	se_property varchar(255) encode text32k,
 	se_value double precision,
 	-- Custom unstructured event
-	unstruct_event varchar(10000) encode lzo,          -- Changed encoding from raw to lzo in 0.5.0
+	unstruct_event varchar(15000) encode lzo,          -- Changed encoding from raw to lzo in 0.5.0
 	-- Ecommerce
 	tr_orderid varchar(255) encode raw,
 	tr_affiliation varchar(255) encode text255,

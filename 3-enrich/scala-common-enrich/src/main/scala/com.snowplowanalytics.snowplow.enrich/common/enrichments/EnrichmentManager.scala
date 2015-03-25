@@ -99,7 +99,7 @@ object EnrichmentManager {
     // 2b. Failable enrichments using the payload
 
     // Partially apply functions which need an encoding, to create a TransformFunc
-    val MaxJsonLength = 10000
+    val MaxJsonLength = 15000
     val extractJson: TransformFunc = JU.extractJson(MaxJsonLength, _, _)
     val extractBase64EncJson: TransformFunc = JU.extractBase64EncJson(MaxJsonLength, _, _)
 
