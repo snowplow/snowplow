@@ -39,9 +39,9 @@ CREATE TABLE atomic.events (
 	v_etl varchar(100) encode text255 not null,
 	-- User and visit
 	user_id varchar(255) encode runlength,
-	user_ipaddress varchar(45) encode runlength,       -- increased from 19 in 0.5.0 to support IPv6 addresses
+	user_ipaddress varchar(45) encode runlength,       -- Increased from 19 in 0.5.0 to support IPv6 addresses
 	user_fingerprint varchar(50) encode runlength,
-	domain_userid varchar(36) encode runlength,        -- increased from 16 in 0.5.0 to support UUIDs
+	domain_userid varchar(36) encode runlength,        -- Increased from 16 in 0.5.0 to support UUIDs
 	domain_sessionidx smallint,
 	network_userid varchar(38),
 	-- Location
@@ -65,16 +65,16 @@ CREATE TABLE atomic.events (
 	page_urlscheme varchar(16) encode text255,
 	page_urlhost varchar(255) encode text255,
 	page_urlport int,
-	page_urlpath varchar(1000) encode text32k,
-	page_urlquery varchar(3000),
-	page_urlfragment varchar(255),
+	page_urlpath varchar(3000) encode text32k,         -- Increased from 1000 in 0.5.0
+	page_urlquery varchar(6000),                       -- Increased from 3000 in 0.5.0
+	page_urlfragment varchar(3000),                    -- Increased from 255 in 0.5.0
 	-- Referrer URL components
 	refr_urlscheme varchar(16) encode text255,
 	refr_urlhost varchar(255) encode text255,
 	refr_urlport int,
-	refr_urlpath varchar(1000) encode text32k,
-	refr_urlquery varchar(3000),
-	refr_urlfragment varchar(255),
+	refr_urlpath varchar(6000) encode text32k,         -- Increased from 3000 in 0.5.0
+	refr_urlquery varchar(6000),                       -- Increased from 3000 in 0.5.0
+	refr_urlfragment varchar(3000),                    -- Increased from 255 in 0.5.0
 	-- Referrer details
 	refr_medium varchar(25) encode text255,
 	refr_source varchar(50) encode text255,
@@ -88,10 +88,10 @@ CREATE TABLE atomic.events (
 	-- Custom contexts
 	contexts varchar(15000) encode lzo,                -- Changed encoding from raw to lzo in 0.5.0 and increased size
 	-- Custom structured event
-	se_category varchar(255) encode text255,
-	se_action varchar(255) encode text255,
-	se_label varchar(255) encode text32k,
-	se_property varchar(255) encode text32k,
+	se_category varchar(1000) encode text255,          -- Increased from 255 in 0.5.0
+	se_action varchar(1000) encode text255,            -- Increased from 255 in 0.5.0
+	se_label varchar(1000) encode text32k,             -- Increased from 255 in 0.5.0
+	se_property varchar(1000) encode text32k,          -- Increased from 255 in 0.5.0
 	se_value double precision,
 	-- Custom unstructured event
 	unstruct_event varchar(15000) encode lzo,          -- Changed encoding from raw to lzo in 0.5.0
