@@ -38,10 +38,9 @@ CREATE TABLE "atomic"."events" (
 	"v_collector" varchar(100) NOT NULL,
 	"v_etl" varchar(100) NOT NULL,
 	-- User and visit
-	"user_id" varchar(255),
-	"user_ipaddress" varchar(45),           -- increased from 19 in 0.4.0 to support IPv6 addresses
+	"user_ipaddress" varchar(45),           -- Increased from 19 in 0.4.0 to support IPv6 addresses
 	"user_fingerprint" varchar(50),
-	"domain_userid" varchar(36),            -- increased from 16 in 0.4.0 to support UUIDs
+	"domain_userid" varchar(36),            -- Increased from 16 in 0.4.0 to support UUIDs
 	"domain_sessionidx" smallint,
 	"network_userid" varchar(38),
 	-- Location
@@ -65,16 +64,16 @@ CREATE TABLE "atomic"."events" (
 	"page_urlscheme" varchar(16),
 	"page_urlhost" varchar(255),
 	"page_urlport" integer,
-	"page_urlpath" varchar(1000),
-	"page_urlquery" varchar(3000),
-	"page_urlfragment" varchar(255),
+	"page_urlpath" varchar(3000),           -- Increased from 1000 in 0.5.0
+	"page_urlquery" varchar(6000),          -- Increased from 3000 in 0.5.0
+	"page_urlfragment" varchar(3000),       -- Increased from 255 in 0.5.0
 	-- Referrer URL components
 	"refr_urlscheme" varchar(16),
 	"refr_urlhost" varchar(255),
 	"refr_urlport" integer,
-	"refr_urlpath" varchar(1000),
-	"refr_urlquery" varchar(3000),
-	"refr_urlfragment" varchar(255),
+	"refr_urlpath" varchar(6000),           -- Increased from 1000 in 0.5.0
+	"refr_urlquery" varchar(6000),          -- Increased from 3000 in 0.5.0
+	"refr_urlfragment" varchar(3000),       -- Increased from 255 in 0.5.0
 	-- Referrer details
 	"refr_medium" varchar(25),
 	"refr_source" varchar(50),
@@ -88,10 +87,10 @@ CREATE TABLE "atomic"."events" (
 	-- Custom contexts
 	"contexts" json,
 	-- Custom structured event
-	"se_category" varchar(255),
-	"se_action" varchar(255),
-	"se_label" varchar(255),
-	"se_property" varchar(255),
+	"se_category" varchar(1000),            -- Increased from 255 in 0.5.0
+	"se_action" varchar(1000),              -- Increased from 3000 in 0.5.0
+	"se_label" varchar(1000),               -- Increased from 3000 in 0.5.0
+	"se_property" varchar(1000),            -- Increased from 3000 in 0.5.0
 	"se_value" double precision,
 	-- Custom unstructured event
 	"unstruct_event" json,

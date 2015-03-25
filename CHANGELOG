@@ -62,6 +62,7 @@ Postgres: added new derived_contexts field (#785)
 Postgres: updated ip_address to support IPv6 addresses (#655)
 Postgres: added new currency fields (#365)
 Postgres: added session_id column (#1540)
+Postgres: widened structured event, URL, and referer fields (#1554)
 StorageLoader: wrote JSON Path file for ua_parser_context (#790)
 Kinesis Elasticsearch Sink: bumped to 0.2.0
 Kinesis Elasticsearch Sink: added new EnrichedEvent fields (#1345)
