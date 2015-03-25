@@ -103,14 +103,14 @@ object KinesisEnrichApp extends App {
 
   // Mandatory resolver argument
   val resolverOption = parser.option[String](
-      List("resolver"), "filename", """
+      List("resolver"), "'file:[filename]' or 'dynamodb:[region/table/key]'", """
         |Iglu resolver file.""".stripMargin) {
     (c, opt) => c
   }
 
   // Optional directory of enrichment configuration JSONs
   val enrichmentsOption = parser.option[String](
-      List("enrichments"), "filename", """
+      List("enrichments"), "'file:[filename]' or 'dynamodb:[region/table/partialKey]'", """
         |Directory of enrichment configuration JSONs.""".stripMargin) {
     (c, opt) => c
   }

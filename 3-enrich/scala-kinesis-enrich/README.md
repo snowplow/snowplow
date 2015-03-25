@@ -28,9 +28,9 @@ Usage: snowplow-kinesis-enrich [OPTIONS]
 OPTIONS
 --config filename
                         Configuration file.
---enrichments filename
+--enrichments 'file:[filename]' or 'dynamodb:[region/table/partialKey]'
                         Directory of enrichment configuration JSONs.
---resolver filename
+--resolver 'file:[filename]' or 'dynamodb:[region/table/partialKey]'
                         Iglu resolver.
 ```
 
@@ -62,7 +62,29 @@ Next, start the enricher, making sure to specify your new config file:
 
 If you want to use customizable enrichments, create a directory of enrichment JSONs as described in the [Configuring Enrichments][configuring-enrichments] wiki page and pass its filepath using the --enrichments option:
 
-    $ sbt "run --config my.conf --resolver file:my.resolver.json --enrichments path/to/enrichmentsdirectory"
+    $ sbt "run --config my.conf --resolver file:my.resolver.json --enrichments file:path/to/enrichmentsdirectory"
+
+You can also specify that your resolver and/or enrichments are stored in DynamoDB:
+
+    $ sbt "run --config my.conf --resolver dynamodb:eu-west-1/ConfigurationTable/resolver" --enrichments dynamodb:eu-west-1/EnrichmentsTable/enrichment-"
+
+This assumes a ConfigurationTable whose primary key is "id" containing an item of the form
+
+```json
+{
+    "id": "resolver",
+    "JSON": resolver JSON string
+}
+```
+
+and an EnrichmentsTable whose primary key is "id" from which items like the one below whose id begins with "enrichment-" will be taken.
+
+```json
+{
+    "id": "enrichment-ip-lookups",
+    "JSON": JSON string for an IP lookups configurable enrichment
+}
+```
 
 ## Copyright and license
 
