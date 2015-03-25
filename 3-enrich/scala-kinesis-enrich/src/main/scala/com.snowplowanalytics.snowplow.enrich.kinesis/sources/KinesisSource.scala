@@ -177,6 +177,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
           } catch {
             case se: ShutdownException =>
               error("Caught shutdown exception, skipping checkpoint.", se)
+              break
             case e: ThrottlingException =>
               if (i >= (NUM_RETRIES - 1)) {
                 error(s"Checkpoint failed after ${i+1} attempts.", e)
@@ -187,6 +188,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
             case e: InvalidStateException =>
               error("Cannot save checkpoint to the DynamoDB table used by " +
                 "the Amazon Kinesis Client Library.", e)
+              break
           }
           Thread.sleep(BACKOFF_TIME_IN_MILLIS)
         }
