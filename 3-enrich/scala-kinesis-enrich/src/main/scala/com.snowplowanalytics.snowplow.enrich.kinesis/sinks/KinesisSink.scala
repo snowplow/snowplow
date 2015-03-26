@@ -213,7 +213,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
     // Convert back to seq so that events get stored in correct order
     wrappedEvents.seq.foreach(EventStorage.addEvent(_))
 
-    if (System.currentTimeMillis() > nextRequestTime) {
+    if (!EventStorage.currentBatch.isEmpty && System.currentTimeMillis() > nextRequestTime) {
       nextRequestTime = System.currentTimeMillis() + TimeThreshold
       true
     } else {
