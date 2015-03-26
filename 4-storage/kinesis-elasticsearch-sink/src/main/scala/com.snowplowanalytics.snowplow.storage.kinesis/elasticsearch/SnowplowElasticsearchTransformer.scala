@@ -183,7 +183,9 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     "dvce_sent_tstamp",
     "refr_domain_userid",
     "refr_device_tstamp",
-    "derived_contexts"
+    "derived_contexts",
+    "session_id",
+    "derived_tstamp"
     )
 
   private val intFields = Set(
@@ -233,7 +235,8 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     "collector_tstamp",
     "dvce_tstamp",
     "dvce_sent_tstamp",
-    "refr_device_tstamp"
+    "refr_device_tstamp",
+    "derived_tstamp"
     )
 
   /**
