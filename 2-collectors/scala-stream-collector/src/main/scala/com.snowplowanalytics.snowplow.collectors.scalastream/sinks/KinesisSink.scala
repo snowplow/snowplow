@@ -219,11 +219,17 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
 
     def store(event: CollectorPayload, key: String) = {
       val eventBytes = ByteBuffer.wrap(serializeEvent(event))
-      synchronized {
-        storedEvents = (eventBytes, key) :: storedEvents
-        byteCount += eventBytes.capacity
-        if (storedEvents.size >= RecordThreshold || byteCount >= ByteThreshold) {
-          flush()
+      val eventSize = eventBytes.capacity
+      if (eventSize >= 51200) {
+        // TODO: split up large event arrays (see https://github.com/snowplow/snowplow/issues/941)
+        error(s"Record of size $eventSize bytes is too large - must be less than 51200 bytes")
+      } else {
+        synchronized {
+          storedEvents = (eventBytes, key) :: storedEvents
+          byteCount += eventSize
+          if (storedEvents.size >= RecordThreshold || byteCount >= ByteThreshold) {
+            flush()
+          }
         }
       }
     }
