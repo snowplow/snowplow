@@ -88,7 +88,9 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     ).withInitialPositionInStream(
       InitialPositionInStream.valueOf(config.initialPosition)
     ).withKinesisEndpoint(config.streamEndpoint)
-    
+    // If the record list is empty, we still check whether it is time to flush the buffer
+    .withCallProcessRecordsEvenForEmptyRecordList(true)
+
     info(s"Running: ${config.appName}.")
     info(s"Processing raw input stream: ${config.rawInStream}")
 
@@ -137,7 +139,10 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     @Override
     def processRecords(records: List[Record],
         checkpointer: IRecordProcessorCheckpointer) = {
-      info(s"Processing ${records.size} records from $kinesisShardId")
+
+      if (!records.isEmpty) {
+        info(s"Processing ${records.size} records from $kinesisShardId")
+      }
       val shouldCheckpoint = processRecordsWithRetries(records)
 
       if (shouldCheckpoint) {

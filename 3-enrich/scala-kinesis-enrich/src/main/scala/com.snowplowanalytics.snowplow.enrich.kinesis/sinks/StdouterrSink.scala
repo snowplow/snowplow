@@ -34,13 +34,16 @@ class StdouterrSink(inputType: InputType.InputType) extends ISink {
    * EnrichedEvent takes the form of a tab-delimited
    * String until such time as https://github.com/snowplow/snowplow/issues/211
    * is implemented.
+   *
+   * @param events Sequence of enriched events and (unused) partition keys
+   * @return Whether to checkpoint
    */
   def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
     inputType match {
       case InputType.Good => events.foreach(e => println(e._1)) // To stdout
       case InputType.Bad => events.foreach(e => Console.err.println(e._1)) // To stderr
     }
-    true
+    !events.isEmpty
   }
 
   def flush() = ()

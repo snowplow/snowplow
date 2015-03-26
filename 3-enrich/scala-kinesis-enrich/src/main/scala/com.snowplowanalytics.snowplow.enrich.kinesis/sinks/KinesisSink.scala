@@ -210,7 +210,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
     val wrappedEvents = events.map(e => ByteBuffer.wrap(e._1.getBytes) -> e._2)
     wrappedEvents.foreach(EventStorage.addEvent(_))
 
-    if (System.currentTimeMillis() > nextRequestTime) {
+    if (!EventStorage.currentBatch.isEmpty && System.currentTimeMillis() > nextRequestTime) {
       nextRequestTime = System.currentTimeMillis() + TimeThreshold
       true
     } else {
