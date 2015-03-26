@@ -184,6 +184,9 @@ CREATE TABLE atomic.events (
 	-- Session ID
 	session_id char(36) encode raw,                    -- Added in 0.5.0
 
+	-- Derived timestamp
+	derived_tstamp timestamp,                          -- Added in 0.5.0
+
 	CONSTRAINT event_id_050_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
