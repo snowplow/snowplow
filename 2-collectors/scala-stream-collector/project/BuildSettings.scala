@@ -23,7 +23,7 @@ object BuildSettings {
     organization          :=  "com.snowplowanalytics",
     version               :=  "0.3.0",
     description           :=  "Scala Stream Collector for Snowplow raw events",
-    scalaVersion          :=  "2.10.1",
+    scalaVersion          :=  "2.11.5",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
                                   "-unchecked", "-feature", "-target:jvm-1.7"),
     scalacOptions in Test :=  Seq("-Yrangepos"),
