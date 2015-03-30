@@ -224,7 +224,7 @@ INSERT INTO atomic.events
 	ip_isp,
 	ip_organization,
 	ip_domain,
-	p_netspeed,
+	ip_netspeed,
 	page_url,
 	page_title,
 	page_referrer,
