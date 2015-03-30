@@ -88,8 +88,8 @@ CREATE TABLE atomic.events (
 	-- Custom contexts
 	contexts varchar(15000) encode lzo,                -- Changed encoding from raw to lzo in 0.5.0 and increased size
 	-- Custom structured event
-	se_category varchar(1000) encode text255,          -- Increased from 255 in 0.5.0
-	se_action varchar(1000) encode text255,            -- Increased from 255 in 0.5.0
+	se_category varchar(1000) encode text32k,          -- Increased from 255 in 0.5.0
+	se_action varchar(1000) encode text32k,            -- Increased from 255 in 0.5.0
 	se_label varchar(1000) encode text32k,             -- Increased from 255 in 0.5.0
 	se_property varchar(1000) encode text32k,          -- Increased from 255 in 0.5.0
 	se_value double precision,
@@ -153,13 +153,13 @@ CREATE TABLE atomic.events (
 	doc_height integer,
 
 	-- Currency
-	tr_currency char(3) encode text255,                -- Added in 0.5.0
+	tr_currency char(3) encode bytedict,               -- Added in 0.5.0
 	tr_total_base dec(18, 2),                          -- Added in 0.5.0
 	tr_tax_base dec(18, 2),                            -- Added in 0.5.0
 	tr_shipping_base dec(18, 2),                       -- Added in 0.5.0
-	ti_currency char(3) encode text255,                -- Added in 0.5.0
+	ti_currency char(3) encode bytedict,               -- Added in 0.5.0
 	ti_price_base dec(18, 2),                          -- Added in 0.5.0
-	base_currency char(3) encode text255,              -- Added in 0.5.0
+	base_currency char(3) encode bytedict,             -- Added in 0.5.0
 
 	-- Geolocation
 	geo_timezone varchar(64) encode text255,           -- Added in 0.5.0
