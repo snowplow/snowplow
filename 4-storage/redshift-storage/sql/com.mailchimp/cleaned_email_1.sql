@@ -34,7 +34,7 @@ CREATE TABLE atomic.com_mailchimp_cleaned_email_1 (
     "data.email"            varchar(255)   encode raw,
     "data.list_id"          varchar(255)   encode raw,
     "data.reason"           varchar(255)   encode raw,
-    FOREIGN KEY(root_id) REFERENCES events(event_id)
+    FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

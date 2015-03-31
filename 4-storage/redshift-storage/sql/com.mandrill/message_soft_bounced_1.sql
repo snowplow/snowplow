@@ -45,7 +45,7 @@ CREATE TABLE atomic.com_mandrill_message_soft_bounced_1 (
     "msg.resends"            varchar(5000)  encode runlength, -- Holds a JSON array
     "msg.smtp_events"        varchar(5000)  encode runlength, -- Holds a JSON array
     "msg.template"           varchar(255)   encode text255,
-    FOREIGN KEY(root_id) REFERENCES events(event_id)
+    FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

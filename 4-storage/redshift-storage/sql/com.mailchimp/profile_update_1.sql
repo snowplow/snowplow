@@ -40,7 +40,7 @@ CREATE TABLE atomic.com_mailchimp_profile_update_1 (
     "data.merges.FNAME"     varchar(255)   encode raw,
     "data.merges.LNAME"     varchar(255)   encode raw,
     "data.merges.INTERESTS" varchar(255)   encode raw,
-    FOREIGN KEY(root_id) REFERENCES events(event_id)
+    FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

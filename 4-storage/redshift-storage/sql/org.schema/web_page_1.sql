@@ -36,7 +36,7 @@ CREATE TABLE atomic.org_schema_web_page_1 (
 	date_published timestamp     encode runlength,
 	in_language    varchar(255)  encode runlength,
 	keywords       varchar(2048) encode runlength,  -- Holds a JSON array. TODO: will replace with a ref_ following https://github.com/snowplow/snowplow/issues/647
-	FOREIGN KEY(root_id) REFERENCES events(event_id)
+	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

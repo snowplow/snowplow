@@ -35,7 +35,7 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_desktop_context_1 (
 	device_manufacturer    varchar(255)  encode text255,
 	device_model           varchar(255)  encode text32k,
 	device_processor_count integer       encode runlength,
-	FOREIGN KEY(root_id) REFERENCES events(event_id)
+	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

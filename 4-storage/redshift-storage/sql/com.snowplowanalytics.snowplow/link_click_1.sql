@@ -32,7 +32,7 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_link_click_1 (
 	element_classes varchar(2048) encode raw, -- Holds a JSON array. TODO: will replace with a ref_ following https://github.com/snowplow/snowplow/issues/647
 	element_target  varchar(255)  encode text255,
 	target_url      varchar(4096) encode text32k not null,
-	FOREIGN KEY(root_id) REFERENCES events(event_id)
+	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

@@ -64,7 +64,7 @@ CREATE TABLE atomic.com_pagerduty_incident_1 (
     "data.incident.resolved_by_user.name"            varchar(255)   encode raw,
     "data.incident.resolved_by_user.email"           varchar(255)   encode raw,
     "data.incident.resolved_by_user.html_url"        varchar(255)   encode raw,
-    FOREIGN KEY(root_id) REFERENCES events(event_id)
+    FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

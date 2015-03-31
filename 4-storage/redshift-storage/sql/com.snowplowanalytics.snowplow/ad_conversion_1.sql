@@ -37,7 +37,7 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_ad_conversion_1 (
 	cost_model     char(3)        encode runlength,
 	cost           decimal(15,2) encode runlength,
 	initial_value  decimal(15,2) encode runlength,
-	FOREIGN KEY(root_id) REFERENCES events(event_id)
+	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

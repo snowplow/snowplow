@@ -31,7 +31,7 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_social_interaction_1 (
 	action          varchar(255)  encode text32k not null,
 	network         varchar(255)  encode runlength not null,
 	target          varchar(255)  encode text32k,
-	FOREIGN KEY(root_id) REFERENCES events(event_id)
+	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

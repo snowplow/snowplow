@@ -32,7 +32,7 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_site_search_1 (
 	filters         varchar(2048) encode raw, -- Holds a JSON object. TODO: will replace with a ref_ following https://github.com/snowplow/snowplow/issues/647
 	total_results   int encode raw,
 	page_results    int encode runlength,
-	FOREIGN KEY(root_id) REFERENCES events(event_id)
+	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

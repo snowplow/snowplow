@@ -34,7 +34,7 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_remove_from_cart_1 (
 	unit_price      decimal(15,2) encode runlength,
 	quantity        int           encode runlength not null,
 	currency        varchar(31)   encode runlength,
-	FOREIGN KEY(root_id) REFERENCES events(event_id)
+	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

@@ -63,7 +63,7 @@ CREATE TABLE atomic.com_callrail_call_complete_1 (
 	utmv            varchar(255)   encode runlength,
 	utmx            varchar(255)   encode runlength,
 	utmz            varchar(255)   encode runlength,
-	FOREIGN KEY(root_id) REFERENCES events(event_id)
+	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
