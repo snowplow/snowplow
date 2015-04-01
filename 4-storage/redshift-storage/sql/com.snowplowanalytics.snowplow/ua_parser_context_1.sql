@@ -28,18 +28,18 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_ua_parser_context_1 (
 	ref_tree       varchar(1500)  encode runlength not null,
 	ref_parent     varchar(255)   encode runlength not null,
 	-- Properties of this type
-	useragent_family   varchar(255) encode text255,
+	useragent_family   varchar(255) encode text255 not null,
 	useragent_major    varchar(64)  encode text255,
 	useragent_minor    varchar(64)  encode text255,
 	useragent_patch    varchar(64)  encode text255,
-	useragent_version  varchar(255) encode text32k,
-	os_family          varchar(255) encode text255,
+	useragent_version  varchar(255) encode text32k not null,
+	os_family          varchar(255) encode text255 not null,
 	os_major           varchar(64)  encode text255,
 	os_minor           varchar(64)  encode text255,
 	os_patch           varchar(64)  encode text255,
 	os_patch_minor     varchar(64)  encode text255,
-	os_version         varchar(255) encode text32k,
-	device_family      varchar(255) encode text255,
+	os_version         varchar(255) encode text32k not null,
+	device_family      varchar(255) encode text255 not null,
 	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
