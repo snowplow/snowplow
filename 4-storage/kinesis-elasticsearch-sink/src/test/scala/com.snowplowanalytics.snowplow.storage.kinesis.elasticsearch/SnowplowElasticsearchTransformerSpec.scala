@@ -244,7 +244,7 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       "refr_domain_userid" -> "",
       "refr_device_tstamp" -> "",
       "derived_contexts" -> derivedContextsJson,
-      "session_id" -> "2b15e5c8-d3b1-11e4-b9d6-1681e6b88ec1",
+      "domain_sessionid" -> "2b15e5c8-d3b1-11e4-b9d6-1681e6b88ec1",
       "derived_tstamp" -> "2013-11-26 00:03:57.886"
       )
 
@@ -431,7 +431,7 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
           "osVersion": "Windows XP",
           "deviceFamily": "Other"
         }],
-        "session_id": "2b15e5c8-d3b1-11e4-b9d6-1681e6b88ec1",
+        "domain_sessionid": "2b15e5c8-d3b1-11e4-b9d6-1681e6b88ec1",
         "derived_tstamp": "2013-11-26T00:03:57.886Z"
       }""")
 

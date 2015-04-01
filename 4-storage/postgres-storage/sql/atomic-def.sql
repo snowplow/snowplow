@@ -172,7 +172,7 @@ CREATE TABLE "atomic"."events" (
 	-- Derived contexts
 	"derived_contexts" json,                -- Added in 0.4.0
 	-- Session ID
-	"session_id" char(36),                  -- Added in 0.4.0
+	"domain_sessionid" char(36),            -- Added in 0.4.0
 	-- Derived timestamp
 	"derived_tstamp" timestamp              -- Added in 0.4.0
 	                                        -- Removed primary key constraint on event_id in 0.4.0

@@ -184,7 +184,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     "refr_domain_userid",
     "refr_device_tstamp",
     "derived_contexts",
-    "session_id",
+    "domain_sessionid",
     "derived_tstamp"
     )
 

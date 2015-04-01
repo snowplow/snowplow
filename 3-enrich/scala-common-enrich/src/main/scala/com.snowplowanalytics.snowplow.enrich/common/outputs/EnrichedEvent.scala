@@ -227,7 +227,7 @@ class EnrichedEvent {
   @BeanProperty var derived_contexts: String = _
 
   // Session ID
-  @BeanProperty var session_id: String = _
+  @BeanProperty var domain_sessionid: String = _
 
   // Derived timestamp
   @BeanProperty var derived_tstamp: String = _
