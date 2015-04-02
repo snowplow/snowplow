@@ -1,5 +1,5 @@
-Release 63 Red-Cheeked Cordon-Bleu (2015-xx-xx)
---------------------------------------
+Release 63 Red-Cheeked Cordon-Bleu (2015-04-02)
+-----------------------------------------------
 Common: updated kinesis push to remove sub-folders from zipfile (#1378)
 EmrEtlRunner: added example configuration JSONs for new enrichments (#1545)
 Scala Common Enrich: bumped to 0.13.0
