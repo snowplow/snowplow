@@ -30,7 +30,8 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_submit_form_1 (
 	-- Properties of this type
 	form_id         varchar(255)  encode text32k not null,
 	form_classes    varchar(2048) encode raw, -- Holds a JSON array. TODO: will replace with a ref_ following https://github.com/snowplow/snowplow/issues/647
-	elements        varchar(4096) encode raw -- Holds a nested JSON array.
+	elements        varchar(4096) encode raw, -- Holds a nested JSON array.
+	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

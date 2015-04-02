@@ -25,6 +25,11 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 // Scala
 import scala.util.Try
+import scala.util.control.NonFatal
+import scala.collection.JavaConversions._
+
+// Apache HTTP
+import org.apache.http.client.utils.URLEncodedUtils
 
 // Apache Commons
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -328,6 +333,24 @@ object ConversionUtils {
     }
 
   /**
+   * Attempt to extract the querystring from a URI as a map
+   *
+   * @param uri URI containing the querystring
+   * @param encoding Encoding of the URI
+   */
+  def extractQuerystring(uri: URI, encoding: String): Validation[String, Map[String, String]] =
+    try {
+      URLEncodedUtils.parse(uri, encoding).map(p => (p.getName -> p.getValue)).toMap.success
+    } catch {
+      case NonFatal(e1) => try {
+        Uri.parse(uri.toString).query.params.toMap.success
+      } catch {
+        case NonFatal(e2) =>
+          s"Could not parse uri [$uri]. Apache Httpclient threw exception: [$e1]. Net-a-porter threw exception: [$e2]".fail
+      }
+    }
+
+  /**
    * Extract a Scala Int from
    * a String, or error.
    *
@@ -387,6 +410,30 @@ object ConversionUtils {
       case nfe: NumberFormatException =>
         "Field [%s]: cannot convert [%s] to Double-like String".format(field, str).fail
     }
+
+  /**
+   * Convert a String to a Double
+   *
+   * @param str The String which we hope contains
+   *        a Double
+   * @param field The name of the field we are
+   *        validating. To use in our error message
+   * @return a Scalaz Validation, being either
+   *         a Failure String or a Success Double
+   */
+  def stringToMaybeDouble(field: String, str: String): Validation[String, Option[Double]] = {
+    try {
+      if (Option(str).isEmpty || str == "null") { // "null" String check is LEGACY to handle a bug in the JavaScript tracker
+        None.success
+      } else {
+        val jbigdec = new JBigDecimal(str)
+        jbigdec.doubleValue().some.success
+      }
+    } catch {
+     case nfe: NumberFormatException =>
+        "Field [%s]: cannot convert [%s] to Double-like String".format(field, str).fail
+    }
+  }
 
   /**
    * Extract a Java Byte representing

@@ -138,7 +138,24 @@ object PageViewWithContextSpec {
     "1080",
     "UTF-8",
     "1680",
-    "415"
+    "415",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
     )
 }
 
@@ -153,7 +170,8 @@ class PageViewWithContextSpec extends Specification {
       val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
       enrichedEvent must beSome
 
-      val fields = enrichedEvent.get.split("\t")
+      // "-1" prevents empty strings from being discarded from the end of the array
+      val fields = enrichedEvent.get.split("\t", -1)
       fields.size must beEqualTo(PageViewWithContextSpec.expected.size)
 
       Result.unit(

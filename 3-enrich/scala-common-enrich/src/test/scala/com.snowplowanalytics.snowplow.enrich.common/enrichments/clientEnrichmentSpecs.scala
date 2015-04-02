@@ -49,19 +49,3 @@ class ExtractViewDimensionsSpec extends Specification with DataTables {
       (_, input, expected) => ClientEnrichments.extractViewDimensions(FieldName, input) must_== expected
     }
 }
-
-class UserAgentParseSpec extends org.specs2.mutable.Specification with ValidationMatchers with DataTables {
-  import ClientEnrichments._
-
-  "useragent parser" should {
-    "parse useragent" in {
-      "Input UserAgent" | "Parsed UserAgent" |
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.152 Safari/537.36" !! ClientAttributes(browserName = "Chrome 33", browserFamily="Chrome", browserVersion = Some("33.0.1750.152"), browserType = "Browser", browserRenderEngine = "WEBKIT", osName = "Mac OS X", osFamily = "Mac OS X", osManufacturer = "Apple Inc.", deviceType = "Computer", deviceIsMobile = false) |
-      "Mozilla/5.0 (Windows NT 6.1; WOW64; Trident/7.0; rv:11.0" !! ClientAttributes(browserName = "Internet Explorer 11", browserFamily="Internet Explorer", browserVersion = Some("11.0"), browserType = "Browser", browserRenderEngine = "TRIDENT", osName = "Windows 7", osFamily = "Windows", osManufacturer = "Microsoft Corporation", deviceType = "Computer", deviceIsMobile = false) |> {
-        (input, expected) => {
-          ClientEnrichments.extractClientAttributes(input) must beSuccessful.like { case a => a must_== expected }
-        }
-      }
-    }
-  }
-}

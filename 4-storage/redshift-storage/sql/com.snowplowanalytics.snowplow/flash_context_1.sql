@@ -38,7 +38,7 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_flash_context_1 (
 	domain_session_index integer       encode runlength,
 	domain_user_id       varchar(36)   encode runlength,
 	user_fingerprint     varchar(50)   encode runlength,
-	FOREIGN KEY(root_id) REFERENCES events(event_id)
+	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 
 DISTSTYLE KEY

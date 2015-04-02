@@ -32,7 +32,8 @@ CREATE TABLE atomic.com_pingdom_incident_assign_1 (
     checkname      varchar(255)   encode raw,
     host           varchar(255)   encode raw,
     incidentid     varchar(255)   encode raw,
-    description    varchar(255)   encode raw
+    description    varchar(255)   encode raw,
+    FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

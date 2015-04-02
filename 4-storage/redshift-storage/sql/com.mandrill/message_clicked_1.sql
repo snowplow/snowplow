@@ -69,7 +69,8 @@ CREATE TABLE atomic.com_mandrill_message_clicked_1 (
     "user_agent_parsed.ua_name"        varchar(255)   encode raw,
     "user_agent_parsed.ua_url"         varchar(255)   encode raw,
     "user_agent_parsed.ua_version"     varchar(255)   encode raw,
-    user_agent                         varchar(255)   encode raw
+    user_agent                         varchar(255)   encode raw,
+    FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

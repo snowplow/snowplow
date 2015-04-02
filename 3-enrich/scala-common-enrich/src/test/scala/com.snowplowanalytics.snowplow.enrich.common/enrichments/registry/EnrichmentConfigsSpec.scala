@@ -31,6 +31,9 @@ import org.json4s.jackson.JsonMethods.parse
 // Iglu
 import com.snowplowanalytics.iglu.client.SchemaKey
 
+// Scala-Forex
+import com.snowplowanalytics.forex.oerclient.DeveloperAccount
+
 // Specs2
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
@@ -122,7 +125,11 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
             "mktSource": ["utm_source", "source"],
             "mktTerm": ["utm_term"],
             "mktContent": [],
-            "mktCampaign": ["utm _ campaign", "CID", "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|"]
+            "mktCampaign": ["utm _ campaign", "CID", "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|"],
+            "mktClickId": {
+              "customclid": "Custom",
+              "gclid": "Override"
+            }
           }
         }
       }""")
@@ -134,7 +141,13 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
         List("utm_source", "source"),
         List("utm_term"),
         List(),
-        List("utm _ campaign", "CID", "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|")
+        List("utm _ campaign", "CID", "legacy-campaign!?-`@#$%^&*()=\\][}{/.,<>~|"),
+        List(
+          "gclid" -> "Override",
+          "msclkid" -> "Microsoft",
+          "dclid" -> "DoubleClick",
+          "customclid" -> "Custom"
+        )
       )
 
       val result = CampaignAttributionEnrichment.parse(campaignAttributionEnrichmentJson, schemaKey)
@@ -143,4 +156,58 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
     }      
   }
 
+  "Parsing a valid user_agent_utils_config enrichment JSON" should {
+    "successfully construct a UserAgentUtilsEnrichment case object" in {
+
+      val  userAgentUtilsEnrichmentJson = parse("""{
+        "enabled": true,
+        "parameters": {
+        }
+      }""")
+
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "user_agent_utils_config", "jsonschema", "1-0-0")
+
+      val result = UserAgentUtilsEnrichmentConfig.parse(userAgentUtilsEnrichmentJson, schemaKey)
+      result must beSuccessful(UserAgentUtilsEnrichment)
+
+    }
+  }
+
+    "Parsing a valid ua_parser_config enrichment JSON" should {
+    "successfully construct a UaParserEnrichment case object" in {
+
+      val  uaParserEnrichmentJson = parse("""{
+        "enabled": true,
+        "parameters": {
+        }
+      }""")
+
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "ua_parser_config", "jsonschema", "1-0-0")
+
+      val result = UaParserEnrichmentConfig.parse(uaParserEnrichmentJson, schemaKey)
+      result must beSuccessful(UaParserEnrichment)
+
+    }
+  }
+
+  "Converting Currency a valid currency_convert_config enrichment JSON" should {
+    "successfully construct a CurrencyConversionEnrichment case object" in {
+
+      val  currencyConversionEnrichmentJson = parse("""{
+        "enabled": true,
+        "parameters": {
+          "accountType": "DEVELOPER",
+          "apiKey": "---",
+          "baseCurrency": "EUR",
+          "rateAt": "EOD_PRIOR"
+        }
+      }""")
+
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "currency_conversion_config", "jsonschema", "1-0-0")
+
+      val result = CurrencyConversionEnrichmentConfig.parse(currencyConversionEnrichmentJson, schemaKey)
+      result must beSuccessful(CurrencyConversionEnrichment(DeveloperAccount, "---", "EUR", "EOD_PRIOR"))
+
+    }
+  }
 }

@@ -50,7 +50,7 @@ object SpecHelpers {
   /**
    * The Kinesis Enrich being used
    */
-  val EnrichVersion = "kinesis-0.3.0-common-0.11.0"
+  val EnrichVersion = "kinesis-0.4.0-common-0.13.0"
 
   val TimestampRegex = "[0-9]+"
 
@@ -196,6 +196,16 @@ object SpecHelpers {
                 |"mktContent": ["utm_content"],
                 |"mktCampaign": ["utm_campaign", "cid", "legacy_campaign"]
               |}
+            |}
+          |}
+        |},
+        |{
+          |"schema": "iglu:com.snowplowanalytics.snowplow/user_agent_utils_config/jsonschema/1-0-0",
+          |"data": {
+            |"vendor": "com.snowplowanalytics.snowplow",
+            |"name": "user_agent_utils_config",
+            |"enabled": true,
+            |"parameters": {
             |}
           |}
         |},

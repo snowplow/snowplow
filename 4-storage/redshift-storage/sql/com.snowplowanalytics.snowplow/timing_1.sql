@@ -32,7 +32,7 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_timing_1 (
 	variable       varchar(255)  encode text32k not null,
 	timing         integer       encode raw not null,
 	label          varchar(255)  encode text32k,
-	FOREIGN KEY(root_id) REFERENCES events(event_id)
+	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

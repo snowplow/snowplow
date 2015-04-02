@@ -40,7 +40,8 @@ CREATE TABLE atomic.com_mandrill_recipient_unsubscribed_1 (
     "msg.state"            varchar(255)   encode raw,
     "msg.subject"          varchar(255)   encode raw,
     "msg.tags"             varchar(2048)  encode runlength, -- Holds a JSON array
-    "msg.ts"               timestamp      encode raw
+    "msg.ts"               timestamp      encode raw,
+    FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

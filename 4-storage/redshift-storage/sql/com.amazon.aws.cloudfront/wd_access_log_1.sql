@@ -48,7 +48,8 @@ CREATE TABLE atomic.com_amazon_aws_cloudfront_wd_access_log_1 (
 	x_host_header       varchar(2000) encode text32k,
 	cs_protocol         varchar(5)    encode runlength,
 	cs_bytes            integer       encode raw,
-	time_taken          float         encode raw
+	time_taken          float         encode raw,
+	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

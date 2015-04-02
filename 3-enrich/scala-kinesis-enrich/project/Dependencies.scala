@@ -38,7 +38,7 @@ object Dependencies {
     val config               = "1.0.2"
     val scalaUtil            = "0.1.0"
     val snowplowRawEvent     = "0.1.0"
-    val snowplowCommonEnrich = "0.11.0"
+    val snowplowCommonEnrich = "0.13.0"
     val scalazon             = "0.5"
     val scalaz7              = "7.0.0"
     val igluClient           = "0.1.1"
@@ -58,6 +58,7 @@ object Dependencies {
     val httpClient           = "org.apache.httpcomponents"  %  "httpclient"               % V.httpClient
     val jacksonCore          = "com.fasterxml.jackson.core" %  "jackson-core"             % V.jacksonCore
     val slf4j                = "org.slf4j"                  %  "slf4j-simple"             % V.slf4j
+    val log4jOverSlf4j       = "org.slf4j"                  %  "log4j-over-slf4j"         % V.slf4j
     val awsSdk               = "com.amazonaws"              %  "aws-java-sdk"             % V.awsSdk
     val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"    % V.kinesisClient
     // Scala

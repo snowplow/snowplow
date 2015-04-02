@@ -16,9 +16,6 @@ package enrich
 package common
 package enrichments
 
-// Scala
-import scala.collection.mutable.ListBuffer
-
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -102,7 +99,7 @@ object EnrichmentManager {
     // 2b. Failable enrichments using the payload
 
     // Partially apply functions which need an encoding, to create a TransformFunc
-    val MaxJsonLength = 10000
+    val MaxJsonLength = 15000
     val extractJson: TransformFunc = JU.extractJson(MaxJsonLength, _, _)
     val extractBase64EncJson: TransformFunc = JU.extractBase64EncJson(MaxJsonLength, _, _)
 
@@ -121,7 +118,9 @@ object EnrichmentManager {
           ("ua"      , (ME.toTsvSafe, "useragent")),
           ("fp"      , (ME.toTsvSafe, "user_fingerprint")),
           ("vid"     , (CU.stringToJInteger, "domain_sessionidx")),
+          ("sid"     , (CU.validateUuid, "domain_sessionid")),
           ("dtm"     , (EE.extractTimestamp, "dvce_tstamp")),
+          ("stm"     , (EE.extractTimestamp, "dvce_sent_tstamp")),
           ("tna"     , (ME.toTsvSafe, "name_tracker")),
           ("tv"      , (ME.toTsvSafe, "v_tracker")),
           ("cv"      , (ME.toTsvSafe, "v_collector")),
@@ -184,7 +183,10 @@ object EnrichmentManager {
           ("pp_mix"  , (CU.stringToJInteger, "pp_xoffset_min")),
           ("pp_max"  , (CU.stringToJInteger, "pp_xoffset_max")),
           ("pp_miy"  , (CU.stringToJInteger, "pp_yoffset_min")),
-          ("pp_may"  , (CU.stringToJInteger, "pp_yoffset_max")))
+          ("pp_may"  , (CU.stringToJInteger, "pp_yoffset_max")),
+          // Currency
+          ("tr_cu"  , (ME.toTsvSafe, "tr_currency")),
+          ("ti_cu"  , (ME.toTsvSafe, "ti_currency")))
 
     val sourceMap: SourceMap = raw.parameters
 
@@ -195,27 +197,6 @@ object EnrichmentManager {
       Map(("tnuid"   , (ME.toTsvSafe, "network_userid"))) // Overwrite collector-set nuid with tracker-set tnuid
 
     val secondPassTransform = event.transform(sourceMap, secondPassTransformMap)
-
-    // Parse the useragent
-    val client = Option(event.useragent) match {
-      case Some(ua) =>
-        val ca = CE.extractClientAttributes(ua)
-        ca.flatMap(c => {
-          event.br_name = c.browserName
-          event.br_family = c.browserFamily
-          c.browserVersion.map(bv => event.br_version = bv)
-          event.br_type = c.browserType
-          event.br_renderengine = c.browserRenderEngine
-          event.os_name = c.osName
-          event.os_family = c.osFamily
-          event.os_manufacturer = c.osManufacturer
-          event.dvce_type = c.deviceType
-          event.dvce_ismobile = CU.booleanToJByte(c.deviceIsMobile)
-          c.success
-          })
-        ca
-      case None => unitSuccess // No fields updated
-    }
 
     // Potentially update the page_url and set the page URL components
     val pageUri = WPE.extractPageUri(raw.context.refererUri, Option(event.page_url))
@@ -250,6 +231,7 @@ object EnrichmentManager {
                   event.geo_latitude = loc.latitude
                   event.geo_longitude = loc.longitude
                   event.geo_region_name = loc.regionName.orNull
+                  event.geo_timezone = loc.timezone.orNull
                 }
                 event.ip_isp = res._2.orNull
                 event.ip_organization = res._3.orNull
@@ -265,11 +247,80 @@ object EnrichmentManager {
       }
     }
 
-    // Finally anonymize the IP address
+    // To anonymize the IP address
     Option(event.user_ipaddress).map(ip => event.user_ipaddress = registry.getAnonIpEnrichment match {
       case Some(anon) => anon.anonymizeIp(ip)
       case None => ip
     })
+
+    // Parse the useragent using user-agent-utils
+    val client = {
+      registry.getUserAgentUtilsEnrichment match {
+        case Some(uap) => {
+          Option(event.useragent) match {
+            case Some(ua) =>
+              val ca = uap.extractClientAttributes(ua)
+              ca.flatMap(c => {
+                event.br_name = c.browserName
+                event.br_family = c.browserFamily
+                c.browserVersion.map(bv => event.br_version = bv)
+                event.br_type = c.browserType
+                event.br_renderengine = c.browserRenderEngine
+                event.os_name = c.osName
+                event.os_family = c.osFamily
+                event.os_manufacturer = c.osManufacturer
+                event.dvce_type = c.deviceType
+                event.dvce_ismobile = CU.booleanToJByte(c.deviceIsMobile)
+                c.success
+                })
+              ca
+            case None => unitSuccess // No fields updated
+          }
+        }
+        case None => unitSuccess
+      }
+    }
+
+    // Create the ua_parser_context
+    val uaParser = {
+      registry.getUaParserEnrichment match {
+        case Some(uap) => {
+          Option(event.useragent) match {
+            case Some(ua) => uap.extractUserAgent(ua).map(_.some)
+            case None => None.success // No fields updated
+          }
+        }
+        case None => None.success
+      }
+    }
+
+    // Finalize the currency conversion
+    val currency = {
+      registry.getCurrencyConversionEnrichment match {
+        case Some(currency) => {
+          event.base_currency = currency.baseCurrency
+          // Note that stringToMaybeDouble is applied to either-valid-or-null event POJO
+          // properties, so we don't expect any of these four vals to be a Failure
+          val trTax      = CU.stringToMaybeDouble("tr_tx", event.tr_tax).toValidationNel
+          val tiPrice    = CU.stringToMaybeDouble("ti_pr", event.ti_price).toValidationNel
+          val trTotal    = CU.stringToMaybeDouble("tr_tt", event.tr_total).toValidationNel
+          val trShipping = CU.stringToMaybeDouble("tr_sh", event.tr_shipping).toValidationNel
+          val convertedCu = ((trTotal |@| trTax |@| trShipping |@| tiPrice) {
+            currency.convertCurrencies(Option(event.tr_currency), _, _, _, Option(event.ti_currency), _, raw.context.timestamp)
+          }).flatMap(x => x)
+
+          for ((total, tax, shipping, price) <- convertedCu.toOption) {
+            event.tr_total_base = total.orNull
+            event.tr_tax_base = tax.orNull
+            event.tr_shipping_base = shipping.orNull
+            event.ti_price_base = price.orNull
+          }
+
+          convertedCu
+        }
+        case None => unitSuccess.toValidationNel
+      }
+    }
 
     // Potentially set the referrer details and URL components
     val refererUri = CU.stringToUri(event.page_referrer)
@@ -297,25 +348,52 @@ object EnrichmentManager {
       }
     }
 
+    // Parse the page URI's querystring
+    val pageQsMap = pageUri match {
+      case Success(Some(u)) => CU.extractQuerystring(u, raw.source.encoding).map(_.some)
+      case _ => Success(None)
+    }
+
     // Marketing attribution
-    val campaign = pageUri.fold(
-      e => unitSuccessNel, // No fields updated
-      uri => uri match {
-        case Some(u) =>
-          registry.getCampaignAttributionEnrichment match {
-            case Some(ce) =>
-              ce.extractMarketingFields(u, raw.source.encoding).flatMap(cmp => {
-                event.mkt_medium = cmp.medium.orNull
-                event.mkt_source = cmp.source.orNull
-                event.mkt_term = cmp.term.orNull
-                event.mkt_content = cmp.content.orNull
-                event.mkt_campaign = cmp.campaign.orNull
-                cmp.success
-                })
-            case None => unitSuccessNel
-          }
-        case None => unitSuccessNel // No fields updated
-        })
+    val campaign = pageQsMap match {
+      case Success(Some(qsMap)) => registry.getCampaignAttributionEnrichment match {
+        case Some(ce) =>
+          ce.extractMarketingFields(qsMap).flatMap(cmp => {
+            event.mkt_medium = cmp.medium.orNull
+            event.mkt_source = cmp.source.orNull
+            event.mkt_term = cmp.term.orNull
+            event.mkt_content = cmp.content.orNull
+            event.mkt_campaign = cmp.campaign.orNull
+            event.mkt_clickid = cmp.clickId.orNull
+            event.mkt_network = cmp.network.orNull
+            cmp.success
+          })
+        case None => unitSuccessNel
+      }
+      case _ => unitSuccessNel
+    }
+
+    // Cross-domain tracking
+    val crossDomain = pageQsMap match {
+      case Success(Some(qsMap)) => {
+        val crossDomainParseResult = WPE.parseCrossDomain(qsMap)
+        for ((maybeRefrDomainUserid, maybeRefrDvceTstamp) <- crossDomainParseResult.toOption) {
+          maybeRefrDomainUserid.foreach(event.refr_domain_userid = _: String)
+          maybeRefrDvceTstamp.foreach(event.refr_dvce_tstamp = _: String)
+        }
+        crossDomainParseResult
+      }
+      case _ => unitSuccess
+    }
+
+    // Assemble array of derived contexts
+    val derived_contexts = List(uaParser) collect {
+      case Success(Some(context)) => context
+    }
+
+    if (derived_contexts.size > 0) {
+      event.derived_contexts = ME.formatDerivedContexts(derived_contexts)
+    }
 
     // Some quick and dirty truncation to ensure the load into Redshift doesn't error. Yech this is pretty dirty
     // TODO: move this into the db-specific ETL phase (when written) & _programmatically_ apply to all strings, not just these 6
@@ -331,15 +409,19 @@ object EnrichmentManager {
     event.se_label = CU.truncate(event.se_label, 255)
 
     // Collect our errors on Failure, or return our event on Success
-    (useragent.toValidationNel    |@|
-      client.toValidationNel      |@|
-      pageUri.toValidationNel     |@|
-      geoLocation.toValidationNel |@|
-      refererUri.toValidationNel  |@|
-      transform                   |@|
-      secondPassTransform         |@|
+    (useragent.toValidationNel                |@|
+      client.toValidationNel                  |@|
+      uaParser.toValidationNel                |@|
+      pageUri.toValidationNel                 |@|
+      geoLocation.toValidationNel             |@|
+      refererUri.toValidationNel              |@|
+      transform                               |@|
+      currency                                |@|
+      secondPassTransform                     |@|
+      pageQsMap.toValidationNel               |@|
+      crossDomain.toValidationNel             |@|
       campaign) {
-      (_,_,_,_,_,_,_,_) => event
+      (_,_,_,_,_,_,_,_,_,_,_,_) => event
     }
   }
 }

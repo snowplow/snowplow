@@ -124,7 +124,6 @@ object ThriftLoader extends Loader[Array[Byte]] {
       collectorPayload.encoding
     )
 
-    val ip = collectorPayload.ipAddress.some // Required
     val hostname = Option(collectorPayload.hostname)
     val userAgent = Option(collectorPayload.userAgent)
     val refererUri = Option(collectorPayload.refererUri)
@@ -132,6 +131,8 @@ object ThriftLoader extends Loader[Array[Byte]] {
 
     val headers = Option(collectorPayload.headers)
       .map(_.toList).getOrElse(Nil)
+
+    val ip = IpAddressExtractor.extractIpAddress(headers, collectorPayload.ipAddress).some // Required
 
     val api = Option(collectorPayload.path) match {
       case None => "Request does not contain a path".fail
@@ -184,7 +185,6 @@ object ThriftLoader extends Loader[Array[Byte]] {
       snowplowRawEvent.encoding
     )
 
-    val ip = snowplowRawEvent.ipAddress.some // Required
     val hostname = Option(snowplowRawEvent.hostname)
     val userAgent = Option(snowplowRawEvent.userAgent)
     val refererUri = Option(snowplowRawEvent.refererUri)
@@ -192,6 +192,8 @@ object ThriftLoader extends Loader[Array[Byte]] {
 
     val headers = Option(snowplowRawEvent.headers)
       .map(_.toList).getOrElse(Nil)
+
+    val ip = IpAddressExtractor.extractIpAddress(headers, snowplowRawEvent.ipAddress).some // Required
 
     (querystring.toValidationNel) map { (q: List[NameValuePair]) =>
       Some(

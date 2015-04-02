@@ -34,7 +34,8 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_geolocation_context_1 (
 	altitude                    float,
 	altitude_accuracy           float,
 	bearing                     float,
-	speed                       float
+	speed                       float,
+	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

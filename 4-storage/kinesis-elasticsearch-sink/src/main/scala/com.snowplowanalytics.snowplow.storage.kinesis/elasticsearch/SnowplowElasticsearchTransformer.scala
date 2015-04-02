@@ -45,10 +45,15 @@ import com.fasterxml.jackson.core.JsonParseException
 // Snowplow
 import enrich.common.utils.ScalazJson4sUtils
 
+// Logging
+import org.slf4j.LoggerFactory
+
 /**
  * Class to convert successfully enriched events to EmitterInputs
  */
 class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ITransformer[ValidatedRecord, EmitterInput] {
+
+  private lazy val log = LoggerFactory.getLogger(getClass())
 
   private object GeopointIndexes {
     val latitude = 22
@@ -163,7 +168,24 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     "dvce_screenheight",
     "doc_charset",
     "doc_width",
-    "doc_height"
+    "doc_height",
+    "tr_currency",
+    "tr_total_base",
+    "tr_tax_base",
+    "tr_shipping_base",
+    "ti_currency",
+    "ti_price_base",
+    "base_currency",
+    "geo_timezone",
+    "mkt_clickid",
+    "mkt_network",
+    "etl_tags",
+    "dvce_sent_tstamp",
+    "refr_domain_userid",
+    "refr_device_tstamp",
+    "derived_contexts",
+    "domain_sessionid",
+    "derived_tstamp"
     )
 
   private val intFields = Set(
@@ -189,7 +211,11 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
     "tr_total",
     "tr_tax",
     "tr_shipping",
-    "ti_price"
+    "ti_price",
+    "tr_total_base",
+    "tr_tax_base",
+    "tr_shipping_base",
+    "ti_price_base"
     )
   private val boolFields = Set(
     "br_features_pdf",
@@ -207,7 +233,10 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
   private val tstampFields = Set(
     "etl_tstamp",
     "collector_tstamp",
-    "dvce_tstamp"
+    "dvce_tstamp",
+    "dvce_sent_tstamp",
+    "refr_device_tstamp",
+    "derived_tstamp"
     )
 
   /**
@@ -230,7 +259,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
           handleBooleanField(key, value)
         } else if (tstampFields.contains(key)) {
           JObject(key -> JString(reformatTstamp(value))).successNel
-        } else if (key == "contexts") {
+        } else if (key == "contexts" || key == "derived_contexts") {
           Shredder.parseContexts(value)
         } else if (key == "unstruct_event") {
           Shredder.parseUnstruct(value)
@@ -273,26 +302,26 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    * @return ValidatedRecord containing JSON for the event and the event_id (if it exists)
    */
   def jsonifyGoodEvent(event: Array[String]): ValidationNel[String, JsonRecord] = {
-    if (event.size == fields.size) {
-      val geoLocation: JObject = {
-        val latitude = event(GeopointIndexes.latitude)
-        val longitude = event(GeopointIndexes.longitude)
-        if (latitude.size > 0 && longitude.size > 0) {
-          JObject("geo_location" -> JString(s"$latitude,$longitude"))
-        } else {
-          JObject()
-        }
-      }
-      val validatedJObjects: Array[ValidationNel[String, JObject]] = fields.zip(event).map(converter)
-      val switched: ValidationNel[String, List[JObject]] = validatedJObjects.toList.sequenceU
-      switched.map( x => {
-        val j = x.fold(geoLocation)(_ ~ _)
-        JsonRecord(compact(render(j)), ScalazJson4sUtils.extract[String](j, "event_id").toOption)
-      })
-    } else {
-      "Event does not have the correct number of fields: expected %s, found %s"
-        .format(fields.size, event.size).failNel
+
+    if (event.size != fields.size) {
+      log.warn(s"Expected ${fields.size} fields, received ${event.size} fields. This may be caused by using an outdated version of Snowplow Kinesis Enrich.")
     }
+
+    val geoLocation: JObject = {
+      val latitude = event(GeopointIndexes.latitude)
+      val longitude = event(GeopointIndexes.longitude)
+      if (latitude.size > 0 && longitude.size > 0) {
+        JObject("geo_location" -> JString(s"$latitude,$longitude"))
+      } else {
+        JObject()
+      }
+    }
+    val validatedJObjects: Array[ValidationNel[String, JObject]] = fields.zip(event).map(converter)
+    val switched: ValidationNel[String, List[JObject]] = validatedJObjects.toList.sequenceU
+    switched.map( x => {
+      val j = x.fold(geoLocation)(_ ~ _)
+      JsonRecord(compact(render(j)), ScalazJson4sUtils.extract[String](j, "event_id").toOption)
+    })
   }
 
   /**

@@ -89,7 +89,7 @@ object Shredder {
     val partialHierarchy = makePartialHierarchy(
       event.event_id, event.collector_tstamp)
 
-    // Get our unstructured event and List of contexts, both Option-boxed
+    // Get our unstructured event and Lists of contexts and derived_contexts, all Option-boxed
     val ue = for {
       v <- extractAndValidateJson("ue_properties", UePropertiesSchema, Option(event.unstruct_event))
     } yield for {
@@ -97,12 +97,17 @@ object Shredder {
       l = List(j)
     } yield l
 
-    val c  = for {
-      v <- extractAndValidateJson("context", ContextsSchema, Option(event.contexts))
-    } yield for {
-      j <- v
-      l = j.iterator.toList
-    } yield l
+    def extractContexts(json: String, field: String): Option[ValidatedNel[List[JsonNode]]] = {
+      for {
+        v <- extractAndValidateJson(field, ContextsSchema, Option(json))
+      } yield for {
+        j <- v
+        l = j.iterator.toList
+      } yield l
+    }
+
+    val c  = extractContexts(event.contexts, "context")
+    val dc = extractContexts(event.derived_contexts, "derived_contexts")
 
     def flatten(o: Option[ValidatedNel[JsonNodes]]): ValidatedNel[JsonNodes] = o match {
       case Some(vjl) => vjl
@@ -111,7 +116,7 @@ object Shredder {
 
     // Let's harmonize our Option[JsonNode] and Option[List[JsonNode]]
     // into a List[JsonNode], collecting Failures too
-    val all = (flatten(ue) |@| flatten(c)) { _ ++ _ }
+    val all = (flatten(ue) |@| flatten(c) |@| flatten(dc)) { _ ++ _  ++ _ }
 
     // Let's validate the instances against their schemas, and
     // then attach metadata to the nodes

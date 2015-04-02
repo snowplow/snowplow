@@ -31,7 +31,10 @@ import Scalaz._
 import org.json4s.JValue
 
 // Iglu
-import iglu.client.SchemaKey
+import iglu.client.{
+  SchemaCriterion,
+  SchemaKey
+}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // Snowplow referer-parser
@@ -50,7 +53,7 @@ import utils.ScalazJson4sUtils
  */
 object RefererParserEnrichment extends ParseableEnrichment {
 
-  val supportedSchemaKey = SchemaKey("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", "1-0-0")
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", 1, 0)
 
   /**
    * Creates a RefererParserEnrichment instance from a JValue.

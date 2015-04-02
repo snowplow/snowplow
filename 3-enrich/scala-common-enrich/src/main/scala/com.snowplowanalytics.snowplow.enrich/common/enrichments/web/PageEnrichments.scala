@@ -61,4 +61,29 @@ object PageEnrichments {
       case (None, None)       => None.success // No page URI available. Not a failable offence
     }
   }
+
+  /**
+   * Extract the referrer domain user ID and timestamp from the "_sp={{DUID}}.{{TSTAMP}}"
+   * portion of the querystring
+   *
+   * @param qsMap The querystring converted to a map
+   * @return Validation boxing a pair of optional strings corresponding to the two fields
+   */
+  def parseCrossDomain(qsMap: Map[String, String]): Validation[String, (Option[String], Option[String])] = {
+    qsMap.get("_sp") match {
+      case Some("") => (None, None).success
+      case Some(sp) => {
+        val crossDomainElements = sp.split("\\.")
+
+        val duid = CU.makeTsvSafe(crossDomainElements(0)).some
+        val tstamp = crossDomainElements.lift(1) match {
+          case Some(spDtm) => EventEnrichments.extractTimestamp("sp_dtm", spDtm).map(_.some)
+          case None => None.success
+        }
+
+        tstamp.map(duid -> _)
+      }
+      case None => (None -> None).success
+    }
+  }
 }

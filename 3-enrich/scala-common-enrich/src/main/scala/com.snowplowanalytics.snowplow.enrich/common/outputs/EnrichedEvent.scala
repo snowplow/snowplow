@@ -196,4 +196,39 @@ class EnrichedEvent {
   @BeanProperty var doc_charset: String = _
   @BeanProperty var doc_width: JInteger = _
   @BeanProperty var doc_height: JInteger = _
+
+  // Currency
+  @BeanProperty var tr_currency: String = _
+  @BeanProperty var tr_total_base: String = _
+  @BeanProperty var tr_tax_base: String = _
+  @BeanProperty var tr_shipping_base: String = _
+  @BeanProperty var ti_currency: String = _
+  @BeanProperty var ti_price_base: String = _
+  @BeanProperty var base_currency: String = _
+
+  // Geolocation
+  @BeanProperty var geo_timezone: String = _
+
+  // Click ID
+  @BeanProperty var mkt_clickid: String = _
+  @BeanProperty var mkt_network: String = _
+
+  // ETL tags
+  @BeanProperty var etl_tags: String = _
+
+  // Time event was sent
+  @BeanProperty var dvce_sent_tstamp: String = _
+
+  // Referer
+  @BeanProperty var refr_domain_userid: String = _
+  @BeanProperty var refr_dvce_tstamp: String = _
+
+  // Derived contexts
+  @BeanProperty var derived_contexts: String = _
+
+  // Session ID
+  @BeanProperty var domain_sessionid: String = _
+
+  // Derived timestamp
+  @BeanProperty var derived_tstamp: String = _
 }

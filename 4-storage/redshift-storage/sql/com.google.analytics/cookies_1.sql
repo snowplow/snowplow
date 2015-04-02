@@ -34,7 +34,7 @@ CREATE TABLE atomic.com_google_analytics_cookies_1 (
 	__utmv          varchar(255)  encode text32k,
 	__utmz          varchar(255)  encode text32k,
 	_ga             varchar(255)  encode text32k,
-	FOREIGN KEY(root_id) REFERENCES events(event_id)
+	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
