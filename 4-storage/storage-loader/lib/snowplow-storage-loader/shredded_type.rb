@@ -15,9 +15,7 @@
 
 require 'sluice'
 require 'plissken'
-
 require 'contracts'
-include Contracts
 
 # Ruby module to support the load of Snowplow events into Redshift
 module Snowplow
@@ -25,6 +23,8 @@ module Snowplow
 
     # Locates a shredded type in S3
     class ShreddedType
+
+      include Contracts
 
       attr_reader :s3_objectpath, :table
 
