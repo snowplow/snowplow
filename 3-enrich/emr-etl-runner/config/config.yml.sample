@@ -48,15 +48,3 @@ etl:
   collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector, or 'thrift' for Thrift records, or 'tsv/com.amazon.aws.cloudfront/wd_access_log' for Cloudfront access logs
   continue_on_unexpected_error: false # Set to 'true' (and set :out_errors: above) if you don't want any exceptions thrown from ETL
   output_compression: none # Compression only available for Redshift. Storage Loader config will have to be updated accordingly. Allowed formats: none, gzip, lzo
-iglu:
-  schema: iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0
-  data:
-    cache_size: 500
-    repositories:
-      - name: "Iglu Central"
-        priority: 0
-        vendor_prefixes:
-          - com.snowplowanalytics
-        connection:
-          http:
-            uri: http://iglucentral.com
