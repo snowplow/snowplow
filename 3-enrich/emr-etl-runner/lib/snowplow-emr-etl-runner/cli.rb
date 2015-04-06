@@ -94,33 +94,35 @@ module Snowplow
           :process_enrich_location => options[:process_enrich_location],
           :process_shred_location  => options[:process_shred_location]
         }
-        config = load_file(options[:config_file], optparse.to_s)
+        config = load_config(options[:config_file], optparse.to_s)
+        enrichments = load_enrichments([:enrichments_directory], optparse.to_s)
 
-        enrichments = options[:enrichments_directory]
-
-        # If no enrichments argument is passed, make the array of enrichments empty
-        if enrichments.nil?
-          return [args, config, []]
-        end
-
-        # Check the enrichments directory exists and is a directory
-        unless Dir.exists?(enrichments)
-          raise ConfigError, "Enrichments directory '#{enrichments}' does not exist, or is not a directory"
-        end
-
-        # Add a trailing slash if necessary to make globbing work
-        enrichments = Sluice::Storage::trail_slash(enrichments)
-
-        enrichments_array = Dir.glob(enrichments + '*.json').map {|f| File.read(f)}
-
-        [args, config, enrichments_array]
+        [args, config, enrichments]
       end
 
     private
 
+      # Convert all keys in arbitrary hash into symbols
+      # Taken from http://stackoverflow.com/a/10721936/255627
+      Contract Hash => Hash
+      def self.recursive_symbolize_keys(h)
+        case h
+        when Hash
+          Hash[
+            h.map do |k, v|
+              [ k.respond_to?(:to_sym) ? k.to_sym : k, recursive_symbolize_keys(v) ]
+            end
+          ]
+        when Enumerable
+          h.map { |v| recursive_symbolize_keys(v) }
+        else
+          h
+        end
+      end
+
       # Validate our args, load our config YAML, check config and args don't conflict
       Contract Maybe[String], String => ConfigHash
-      def self.load_file(config_file, optparse)
+      def self.load_config(config_file, optparse)
 
         # Check we have a config file argument and it exists
         if config_file.nil?
@@ -131,7 +133,25 @@ module Snowplow
           raise ConfigError, "Configuration file '#{config_file}' does not exist, or is not a file\n#{optparse}"
         end
 
-        YAML.load_file(config_file)
+        config = YAML.load_file(config_file)
+        recursive_symbolize_keys(config)
+      end
+
+      # Load the enrichments directory into an array
+      Contract Maybe[String], String => ArrayOf[String]
+      def self.load_enrichments(enrichments_dir, optparse)
+        return [] if enrichments_dir.nil?
+
+        # Check the enrichments directory exists and is a directory
+        unless Dir.exists?(enrichments_dir)
+          raise ConfigError, "Enrichments directory '#{enrichments_dir}' does not exist, or is not a directory\n#{optparse}"
+        end
+
+        json_glob = Sluice::Storage::trail_slash(enrichments_dir) + '*.json'
+
+        Dir.glob(json_glob).map { |f|
+          File.read(f)
+        }
       end
 
     end
