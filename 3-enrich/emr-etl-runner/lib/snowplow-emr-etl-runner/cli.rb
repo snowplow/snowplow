@@ -15,6 +15,7 @@
 
 require 'optparse'
 require 'yaml'
+require 'file'
 require 'contracts'
 
 module Snowplow
@@ -23,7 +24,8 @@ module Snowplow
 
       include Contracts
 
-      # Get our arguments and configuration.
+      # Get our arguments, configuration,
+      # enrichments and Iglu resolver.
       #
       # Source from parse_args (i.e. the CLI)
       # unless both are provided as arguments
@@ -35,8 +37,8 @@ module Snowplow
       #
       # Returns a Hash containing our runtime
       # arguments and our configuration.
-      Contract None => ArgsConfigEnrichmentsTuple
-      def self.get_args_config_enrichments
+      Contract None => ArgsConfigEnrichmentsResolverTuple
+      def self.get_args_config_enrichments_resolver
         
         # Defaults
         options = {
@@ -52,6 +54,7 @@ module Snowplow
 
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config_file] = config }
           opts.on('-n', '--enrichments ENRICHMENTS', 'enrichments directory') {|config| options[:enrichments_directory] = config}
+          opts.on('-r', '--resolver RESOLVER', 'Iglu resolver file') {|config| options[:resolver_file] = config}
           opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
@@ -94,10 +97,12 @@ module Snowplow
           :process_enrich_location => options[:process_enrich_location],
           :process_shred_location  => options[:process_shred_location]
         }
-        config = load_config(options[:config_file], optparse.to_s)
-        enrichments = load_enrichments([:enrichments_directory], optparse.to_s)
+        optp = optparse.to_s
+        config = load_config(options[:config_file], optp)
+        enrichments = load_enrichments([:enrichments_directory], optp)
+        resolver = load_resolver(options[:resolver_file], optp)
 
-        [args, config, enrichments]
+        [args, config, enrichments, resolver]
       end
 
     private
@@ -152,6 +157,22 @@ module Snowplow
         Dir.glob(json_glob).map { |f|
           File.read(f)
         }
+      end
+
+      # Validate our args, load our Iglu resolver
+      Contract Maybe[String], String => String
+      def self.load_resolver(resolver_file, optparse)
+
+        # Check we have a resolver file argument and it exists
+        if resolver_file.nil?
+          raise ConfigError, "Missing option: resolver\n#{optparse}"
+        end
+
+        unless File.file?(resolver_file)
+          raise ConfigError, "Iglu resolver file '#{resolver_file}' does not exist, or is not a file\n#{optparse}"
+        end
+
+        File.read(resolver_file)
       end
 
     end
