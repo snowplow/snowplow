@@ -14,14 +14,14 @@
 # License::   Apache License Version 2.0
 
 require 'sluice'
-
 require 'contracts'
-include Contracts
 
 # Ruby module to support the load of Snowplow events into Redshift
 module Snowplow
   module StorageLoader
     module RedshiftLoader
+
+      include Contracts
 
       # Constants for the load process
       EVENT_FIELD_SEPARATOR = "\\t"
