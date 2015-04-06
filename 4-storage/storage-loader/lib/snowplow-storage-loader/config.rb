@@ -36,10 +36,13 @@ module Snowplow
         options = Config.parse_args()
 
         if Config.indicates_read_from_stdin?(options[:config])
-          config = YAML.load($stdin.readlines.join)
+          unsymbolized_config = YAML.load($stdin.readlines.join)
         else
-          config = YAML.load_file(options[:config])
+          unsymbolized_config = YAML.load_file(options[:config])
         end
+
+        config = Config.recursive_symbolize_keys(unsymbolized_config)
+
 
         # Add in our skip and include settings
         config[:skip] = options[:skip]
@@ -174,6 +177,23 @@ module Snowplow
         config_option == '-'
       end
       module_function :indicates_read_from_stdin?
+
+      # Convert all keys in arbitrary hash into symbols
+      # Taken from http://stackoverflow.com/a/10721936/255627
+      def self.recursive_symbolize_keys(h)
+        case h
+        when Hash
+          Hash[
+            h.map do |k, v|
+              [ k.respond_to?(:to_sym) ? k.to_sym : k, recursive_symbolize_keys(v) ]
+            end
+          ]
+        when Enumerable
+          h.map { |v| recursive_symbolize_keys(v) }
+        else
+          h
+        end
+      end
 
     end
   end
