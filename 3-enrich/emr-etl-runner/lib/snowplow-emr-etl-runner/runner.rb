@@ -28,8 +28,8 @@ module Snowplow
       include Logging
 
       # Initialize the class.
-      Contract ArgsHash, ConfigHash, ArrayOf[String] => Runner
-      def initialize(args, config, enrichments_array)
+      Contract ArgsHash, ConfigHash, ArrayOf[String], String => Runner
+      def initialize(args, config, enrichments_array, resolver)
 
         # Let's set our logging level immediately
         Logging::set_level config[:logging][:level]
@@ -37,6 +37,7 @@ module Snowplow
         @args = args
         @config = validate_and_coalesce(args, config)
         @enrichments_array = enrichments_array
+        @resolver = resolver
         
         self
       end
@@ -56,7 +57,7 @@ module Snowplow
           enrich = not(@args[:skip].include?('enrich'))
           shred = not(@args[:skip].include?('shred'))
           s3distcp = not(@args[:skip].include?('s3distcp'))
-          job = EmrJob.new(@args[:debug], enrich, shred, s3distcp, @config, @enrichments_array)
+          job = EmrJob.new(@args[:debug], enrich, shred, s3distcp, @config, @enrichments_array, @resolver)
           job.run()
         end
 

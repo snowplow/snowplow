@@ -42,24 +42,6 @@ module Snowplow
       :anon_octets => Num
       })
 
-    # The Hash for the Iglu client config
-    IgluConfigHash = ({
-      :schema => String,
-      :data => ({
-        :cache_size => Num,
-        :repositories => ArrayOf[({
-          :name => String,
-          :priority => Num,
-          :vendor_prefixes => ArrayOf[String],          
-          :connection => ({
-            :http => ({
-              :uri => String
-              })
-            })
-          })]
-        })
-      })
-
     # The Hash containing the buckets field from the configuration YAML
     BucketHash = ({
       :assets => String,
@@ -125,12 +107,11 @@ module Snowplow
         :collector_format => String,
         :continue_on_unexpected_error => Bool,
         :output_compression => String
-        }),
-      :iglu => IgluConfigHash
+        })
       })
 
     # The Array (Tuple3) containing the CLI arguments, configuration YAML, and configuration JSONs
-    ArgsConfigEnrichmentsTuple = [ArgsHash, ConfigHash, ArrayOf[String]]
+    ArgsConfigEnrichmentsResolverTuple = [ArgsHash, ConfigHash, ArrayOf[String], String]
 
   end
 end
