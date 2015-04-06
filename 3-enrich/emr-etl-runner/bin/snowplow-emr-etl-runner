@@ -34,8 +34,8 @@ fatal = runner::Logging.method(:fatal_with)
 # Note that each step is only actioned if the previous step succeeded without error.
 begin
 
-  args, config, enrichments = runner::Cli.get_args_config_enrichments()
-  r = runner::Runner.new(args, config, enrichments)
+  args, config, enrichments, resolver = runner::Cli.get_args_config_enrichments_resolver()
+  r = runner::Runner.new(args, config, enrichments, resolver)
   r.run()
 
 # Special retval so rest of pipeline knows not to continue

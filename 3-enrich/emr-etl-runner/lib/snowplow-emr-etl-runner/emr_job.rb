@@ -40,8 +40,8 @@ module Snowplow
       include Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String] => EmrJob
-      def initialize(debug, enrich, shred, s3distcp, config, enrichments_array)
+      Contract Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String => EmrJob
+      def initialize(debug, enrich, shred, s3distcp, config, enrichments_array, resolver)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -208,7 +208,7 @@ module Snowplow
             },
             { :input_format     => config[:etl][:collector_format],
               :etl_tstamp       => etl_tstamp,
-              :iglu_config      => self.class.build_iglu_config_json(config[:iglu]),
+              :iglu_config      => self.class.build_iglu_config_json(resolver),
               :enrichments      => self.class.build_enrichments_json(enrichments_array)
             }
           )
@@ -270,7 +270,7 @@ module Snowplow
               :errors      => self.class.partition_by_run(csbs[:errors], run_id, config[:etl][:continue_on_unexpected_error])
             },
             {
-              :iglu_config => self.class.build_iglu_config_json(config[:iglu])
+              :iglu_config => self.class.build_iglu_config_json(resolver)
             }
           )
 
@@ -500,9 +500,9 @@ module Snowplow
         Base64.strict_encode64(enrichments_json.to_json)
       end
 
-      Contract IgluConfigHash => String
-      def self.build_iglu_config_json(iglu_hash)
-        Base64.strict_encode64(iglu_hash.to_camelback_keys.to_json)
+      Contract String => String
+      def self.build_iglu_config_json(resolver)
+        Base64.strict_encode64(resolver)
       end
 
       Contract String, String, String => AssetsHash
