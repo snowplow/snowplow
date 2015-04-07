@@ -53,7 +53,7 @@ begin
   end
 
   # Archive
-  unless config[:skip].include?('archive')
+  unless config[:skip].include?('archive_enriched')
     loader::S3Tasks.archive_files(config)
   end
 
