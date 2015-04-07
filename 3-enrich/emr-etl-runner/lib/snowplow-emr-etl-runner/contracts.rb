@@ -45,6 +45,7 @@ module Snowplow
     # The Hash containing the buckets field from the configuration YAML
     BucketHash = ({
       :assets => String,
+      :jsonpath_assets => String,
       :log => String,
       :raw => ({
         :in => String,
@@ -54,13 +55,29 @@ module Snowplow
       :enriched => ({
         :good => String,
         :bad => String,
-        :errors => Maybe[String]
+        :errors => Maybe[String],
+        :archive => Maybe[String]
         }),
       :shredded => ({
         :good => String,
         :bad => String,
-        :errors => Maybe[String]
+        :errors => Maybe[String],
+        :archive => Maybe[String]
         })
+      })
+
+    # The Hash containing the storage targets to load
+    TargetHash = ({
+      :name => String,
+      :type => String,
+      :host => String,
+      :database => String,
+      :port => Num,
+      :table => String,
+      :username => String,
+      :password => String,
+      :maxerror => Maybe[Num],
+      :comprows => Maybe[Num]
       })
 
     # The Hash containing effectively the configuration YAML.
@@ -100,7 +117,7 @@ module Snowplow
         }),
       :collectors => ({
         :format => String,
-        })
+        }),
       :enrich => ({
         :job_name => String,
         :versions => ({
@@ -109,6 +126,12 @@ module Snowplow
           }),
         :continue_on_unexpected_error => Bool,
         :output_compression => String
+        }),
+      :storage => ({
+        :download => {(
+          :folder => Maybe[String]
+          )},
+        :targets => ArrayOf[TargetHash]
         })
       })
 

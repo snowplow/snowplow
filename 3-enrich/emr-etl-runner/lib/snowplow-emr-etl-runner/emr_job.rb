@@ -50,7 +50,7 @@ module Snowplow
         run_tstamp = Time.new
         run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
-        output_codec = config[:enrich][:output_compression]
+        output_codec = config[:enrich][:output_compression].nil? "none" : config[:enrich][:output_compression].downcase
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:aws][:s3][:region],
           config[:aws][:access_key_id],

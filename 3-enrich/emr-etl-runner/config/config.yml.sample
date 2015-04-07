@@ -7,6 +7,7 @@ aws:
     region: ADD HERE
     buckets:
       assets: s3://snowplow-hosted-assets # DO NOT CHANGE unless you are hosting the jarfiles etc yourself in your own bucket
+      jsonpath_assets: # If you have defined your own JSON Schemas, add the s3:// path to your own JSON Path files in your own bucket here
       log: ADD HERE
       raw:
         in: ADD HERE
@@ -20,6 +21,7 @@ aws:
         good: ADD HERE       # e.g. s3://my-out-bucket/shredded/good
         bad: ADD HERE        # e.g. s3://my-out-bucket/shredded/bad
         errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
+        archive: ADD HERE    # Not required for Postgres currently
   emr:
     ami_version: 2.4.2      # Choose as per http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/emr-plan-ami.html
     region: ADD HERE        # Always set this
@@ -48,4 +50,28 @@ enrich:
     hadoop_enrich: 0.14.1 # Version of the Hadoop Enrichment process
     hadoop_shred: 0.4.0 # Version of the Hadoop Shredding process
   continue_on_unexpected_error: false # Set to 'true' (and set :out_errors: above) if you don't want any exceptions thrown from ETL
-  output_compression: none # Compression only available for Redshift. Storage Loader config will have to be updated accordingly. Allowed formats: none, gzip, lzo
+  output_compression: # Compression only supported with Redshift, DO NOT SET if you have Postgres targets. Leave blank or set to gzip, lzo
+storage:
+  download:
+    folder: # Postgres-only config option. Where to store the downloaded files. Leave blank for Redshift
+  targets:
+    - name: "My Redshift database"
+      type: redshift
+      host: ADD HERE # The endpoint as shown in the Redshift console
+      database: ADD HERE # Name of database
+      port: 5439 # Default Redshift port
+      table: atomic.events
+      username: ADD HERE
+      password: ADD HERE
+      maxerror: 1 # Stop loading on first error, or increase to permit more load errors
+      comprows: 200000 # Default for a 1 XL node cluster. Not used unless --include compupdate specified
+    - name: "My PostgreSQL database"
+      type: postgres
+      host: ADD HERE # Hostname of database server
+      database: ADD HERE # Name of database
+      port: 5432 # Default Postgres port
+      table: atomic.events
+      username: ADD HERE
+      password: ADD HERE
+      maxerror: # Not required for Postgres
+      comprows: # Not required for Postgres

@@ -42,7 +42,7 @@ begin
   unless config[:skip].include?('load')
 
     # Loop through all targets
-    config[:targets].each { |t|
+    config[:storage][:targets].each { |t|
       case t[:type]
         when 'redshift'
           loader::RedshiftLoader.load_events_and_shredded_types(config, t)
