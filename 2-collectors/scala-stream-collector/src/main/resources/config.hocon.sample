@@ -86,10 +86,10 @@ collector {
       # - the number of stored records reaches record-limit or
       # - the combined size of the stored records reaches byte-limit or
       # - the time in milliseconds since the buffer was last emptied reaches time-limit
-      buffer: {
-        byte-limit: 4000000 # 4MB
-        record-limit: 500 # 500 records
-        time-limit: 60000 # 1 minute
+      buffer {
+        byte-limit: {{collectorSinkBufferByteThreshold}}
+        record-limit: {{collectorSinkBufferRecordThreshold}}
+        time-limit: {{collectorSinkBufferTimeThreshold}}
       }
     }
   }

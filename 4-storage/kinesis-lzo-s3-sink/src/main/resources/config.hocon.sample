@@ -53,9 +53,9 @@ sink {
   # - the number of stored records exceeds record-limit or
   # - the time in milliseconds since it was last emptied exceeds time-limit
   buffer {
-    byte-limit: 5242880 # 5MB
-    record-limit: 1000  # 1K records
-    time-limit: 60000 # 1 minute
+    byte-limit: {{sinkLzoBufferByteThreshold}}
+    record-limit: {{sinkLzoBufferRecordThreshold}}
+    time-limit: {{sinkLzoBufferTimeThreshold}}
   }
 
 }
