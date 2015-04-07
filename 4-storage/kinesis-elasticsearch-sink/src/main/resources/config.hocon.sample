@@ -1,6 +1,6 @@
 # Default configuration for kinesis-elasticsearch-sink
 
-connector {
+sink {
 
   # Sources currently supported are:
   # 'kinesis' for reading records from a Kinesis stream
