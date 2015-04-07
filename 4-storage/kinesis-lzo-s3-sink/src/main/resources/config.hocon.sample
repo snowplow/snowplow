@@ -43,7 +43,7 @@ sink {
     # If using us-east-1, then endpoint should be "http://s3.amazonaws.com".
     # Otherwise "http://s3-<<region>>.s3.amazonaws.com", e.g.
     # http://s3-eu-west-1.amazonaws.com
-    endpoint: "http://s3-{{sinkKinesisS3Region}}.s3.amazonaws.com"
+    region: "{{sinkKinesisS3Region}}"
     bucket: "{{sinkKinesisS3Bucket}}"
   }
 
