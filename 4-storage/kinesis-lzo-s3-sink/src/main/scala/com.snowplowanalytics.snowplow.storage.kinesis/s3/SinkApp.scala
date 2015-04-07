@@ -126,6 +126,9 @@ object SinkApp extends App {
 
     props.setProperty(KinesisConnectorConfiguration.PROP_CONNECTOR_DESTINATION, "s3")
 
+    // So that the region of the DynamoDB table is correct
+    props.setProperty(KinesisConnectorConfiguration.PROP_REGION_NAME, kinesisRegion)
+
     // The emit method retries sending to S3 indefinitely, so it only needs to be called once
     props.setProperty(KinesisConnectorConfiguration.PROP_RETRY_LIMIT, "1")
 
