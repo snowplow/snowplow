@@ -103,7 +103,8 @@ object SinkApp extends App {
     val appName = kinesis.getString("app-name")
 
     val s3 = connector.getConfig("s3")
-    val s3Endpoint = s3.getString("endpoint")
+    val s3Region = s3.getString("region")
+    val s3Endpoint = s"https://s3-$s3Region.amazonaws.com"
     val bucket = s3.getString("bucket")
 
     val buffer = connector.getConfig("buffer")
