@@ -84,7 +84,7 @@ object ElasticsearchSinkApp extends App {
   parser.parse(args)
 
   val configValue: Config = config.value.getOrElse(
-    throw new RuntimeException("--config argument must be provided")).resolve.getConfig("connector")
+    throw new RuntimeException("--config argument must be provided")).resolve.getConfig("sink")
 
   val streamType = configValue.getConfig("kinesis").getConfig("in").getString("stream-type") match {
     case "good" => StreamType.Good
