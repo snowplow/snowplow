@@ -307,21 +307,26 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
       log.warn(s"Expected ${fields.size} fields, received ${event.size} fields. This may be caused by using an outdated version of Snowplow Kinesis Enrich.")
     }
 
-    val geoLocation: JObject = {
-      val latitude = event(GeopointIndexes.latitude)
-      val longitude = event(GeopointIndexes.longitude)
-      if (latitude.size > 0 && longitude.size > 0) {
-        JObject("geo_location" -> JString(s"$latitude,$longitude"))
-      } else {
-        JObject()
+    if (event.size <= GeopointIndexes.latitude.max(GeopointIndexes.longitude)) {
+      s"Event contained only ${event.size} tab-separated fields".failNel
+    } else {
+
+      val geoLocation: JObject = {
+        val latitude = event(GeopointIndexes.latitude)
+        val longitude = event(GeopointIndexes.longitude)
+        if (latitude.size > 0 && longitude.size > 0) {
+          JObject("geo_location" -> JString(s"$latitude,$longitude"))
+        } else {
+          JObject()
+        }
       }
+      val validatedJObjects: Array[ValidationNel[String, JObject]] = fields.zip(event).map(converter)
+      val switched: ValidationNel[String, List[JObject]] = validatedJObjects.toList.sequenceU
+      switched.map( x => {
+        val j = x.fold(geoLocation)(_ ~ _)
+        JsonRecord(compact(render(j)), ScalazJson4sUtils.extract[String](j, "event_id").toOption)
+      })
     }
-    val validatedJObjects: Array[ValidationNel[String, JObject]] = fields.zip(event).map(converter)
-    val switched: ValidationNel[String, List[JObject]] = validatedJObjects.toList.sequenceU
-    switched.map( x => {
-      val j = x.fold(geoLocation)(_ ~ _)
-      JsonRecord(compact(render(j)), ScalazJson4sUtils.extract[String](j, "event_id").toOption)
-    })
   }
 
   /**
