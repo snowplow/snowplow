@@ -283,7 +283,7 @@ class KinesisEnrichConfig(config: Config) {
 
   val initialPosition = streams.getString("initial-position")
 
-  private val streamRegion = streams.getString("region")
+  val streamRegion = streams.getString("region")
   val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
 
   val buffer = inStreams.getConfig("buffer")
