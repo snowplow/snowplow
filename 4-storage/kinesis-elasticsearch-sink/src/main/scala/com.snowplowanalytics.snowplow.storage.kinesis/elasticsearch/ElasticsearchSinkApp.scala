@@ -174,6 +174,9 @@ object ElasticsearchSinkApp extends App {
     props.setProperty(KinesisConnectorConfiguration.PROP_APP_NAME, appName)
     props.setProperty(KinesisConnectorConfiguration.PROP_INITIAL_POSITION_IN_STREAM, initialPosition)
 
+    // So that the region of the DynamoDB table is correct
+    props.setProperty(KinesisConnectorConfiguration.PROP_REGION_NAME, streamRegion)
+
     props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_ENDPOINT, elasticsearchEndpoint)
     props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_CLUSTER_NAME, clusterName)
 
