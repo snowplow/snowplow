@@ -236,6 +236,12 @@ enrich {
   streams {
     in: {
       raw: "SnowplowRaw"
+
+      buffer {
+        byte-limit: 4500000 # 4.5MB
+        record-limit: 500 # 500 records
+        time-limit: 60000 # 1 minute
+      }
     }
     out: {
       enriched: "SnowplowEnriched"
