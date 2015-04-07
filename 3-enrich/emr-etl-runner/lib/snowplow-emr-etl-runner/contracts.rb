@@ -84,7 +84,7 @@ module Snowplow
         :placement => Maybe[String],
         :ec2_subnet_id => Maybe[String],
         :ec2_key_name => String,
-        :bootstrap => ArrayOf[String],
+        :bootstrap => Maybe[ArrayOf[String]],
         :software => ({
           :hbase => Maybe[String],
           :lingual => Maybe[String]
