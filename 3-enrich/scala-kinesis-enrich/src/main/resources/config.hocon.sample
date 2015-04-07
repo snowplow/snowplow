@@ -37,9 +37,9 @@ enrich {
       # - the time in milliseconds since it was last emptied exceeds time-limit when
       #   a new event enters the buffer
       buffer: {
-        byte-limit: 4500000 # 4.5MB
-        record-limit: 500 # 500 records
-        time-limit: 60000 # 1 minute
+        byte-limit: {{enrichStreamsBufferByteThreshold}}
+        record-limit: {{enrichStreamsBufferRecordThreshold}}
+        time-limit: {{enrichStreamsBufferTimeThreshold}}
       }
     }
 
