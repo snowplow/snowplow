@@ -91,8 +91,10 @@ module Snowplow
 
         # Add custom bootstrap actions
         bootstrap_actions = config[:emr][:bootstrap]
-        bootstrap_actions.each do |bootstrap_action|
-          @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_action))
+        unless bootstrap_actions.nil?
+          bootstrap_actions.each do |bootstrap_action|
+            @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_action))
+          end
         end
 
         # Prepare a 3.x AMI for Snowplow
