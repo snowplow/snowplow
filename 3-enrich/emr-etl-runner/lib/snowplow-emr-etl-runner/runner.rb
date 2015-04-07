@@ -114,7 +114,7 @@ module Snowplow
           end
         end
 
-        input_collector_format = config[:etl][:collector_format]
+        input_collector_format = config[:collectors][:format]
 
         # Validate the collector format
         unless input_collector_format =~ @@collector_format_regex
@@ -122,7 +122,7 @@ module Snowplow
         end
 
         # Currently we only support start/end times for the CloudFront collector format. See #120 for details
-        unless config[:etl][:collector_format] == 'cloudfront' or (args[:start].nil? and args[:end].nil?)
+        unless config[:collectors][:format] == 'cloudfront' or (args[:start].nil? and args[:end].nil?)
           raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
         end
 
@@ -131,14 +131,14 @@ module Snowplow
           raise ConfigError, "Cannot process enrich and process shred, choose one"
         end
         unless args[:process_enrich_location].nil?
-          config[:s3][:buckets][:raw][:processing] = args[:process_enrich_location]
+          config[:aws][:s3][:buckets][:raw][:processing] = args[:process_enrich_location]
         end
         unless args[:process_shred_location].nil?
-          config[:s3][:buckets][:enriched][:good] = args[:process_shred_location]
+          config[:aws][:s3][:buckets][:enriched][:good] = args[:process_shred_location]
         end
 
         # Add trailing slashes if needed to the non-nil buckets
-        config[:s3][:buckets] = add_trailing_slashes(config[:s3][:buckets])
+        config[:aws][:s3][:buckets] = add_trailing_slashes(config[:aws][:s3][:buckets])
 
         config
       end
