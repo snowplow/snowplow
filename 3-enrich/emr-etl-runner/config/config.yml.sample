@@ -3,48 +3,49 @@ logging:
 aws:
   access_key_id: ADD HERE
   secret_access_key: ADD HERE
-s3:
-  region: ADD HERE
-  buckets:
-    assets: s3://snowplow-hosted-assets # DO NOT CHANGE unless you are hosting the jarfiles etc yourself in your own bucket
-    log: ADD HERE
-    raw:
-      in: ADD HERE
-      processing: ADD HERE
-      archive: ADD HERE    # e.g. s3://my-archive-bucket/raw
-    enriched:
-      good: ADD HERE       # e.g. s3://my-out-bucket/enriched/good
-      bad: ADD HERE        # e.g. s3://my-out-bucket/enriched/bad
-      errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
-    shredded:
-      good: ADD HERE       # e.g. s3://my-out-bucket/shredded/good
-      bad: ADD HERE        # e.g. s3://my-out-bucket/shredded/bad
-      errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
-emr:
-  ami_version: 3.6.0      # Don't change this
-  region: ADD HERE        # Always set this
-  jobflow_role: EMR_EC2_DefaultRole # Created using $ aws emr create-default-roles
-  service_role: EMR_DefaultRole     # Created using $ aws emr create-default-roles
-  placement: ADD HERE     # Set this if not running in VPC. Leave blank otherwise
-  ec2_subnet_id: ADD HERE # Set this if running in VPC. Leave blank otherwise
-  ec2_key_name: ADD HERE
-  bootstrap: []           # Set this to specify custom boostrap actions. Leave empty otherwise
-  software:
-    hbase:                # To launch on cluster, provide version, "0.92.0", keep quotes
-    lingual:              # To launch on cluster, provide version, "1.1", keep quotes
-  # Adjust your Hadoop cluster below
-  jobflow:
-    master_instance_type: m1.small
-    core_instance_count: 2
-    core_instance_type: m1.small
-    task_instance_count: 0 # Increase to use spot instances
-    task_instance_type: m1.small
-    task_instance_bid: 0.015 # In USD. Adjust bid, or leave blank for non-spot-priced (i.e. on-demand) task instances
-etl:
+  s3:
+    region: ADD HERE
+    buckets:
+      assets: s3://snowplow-hosted-assets # DO NOT CHANGE unless you are hosting the jarfiles etc yourself in your own bucket
+      log: ADD HERE
+      raw:
+        in: ADD HERE
+        processing: ADD HERE
+        archive: ADD HERE    # e.g. s3://my-archive-bucket/raw
+      enriched:
+        good: ADD HERE       # e.g. s3://my-out-bucket/enriched/good
+        bad: ADD HERE        # e.g. s3://my-out-bucket/enriched/bad
+        errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
+      shredded:
+        good: ADD HERE       # e.g. s3://my-out-bucket/shredded/good
+        bad: ADD HERE        # e.g. s3://my-out-bucket/shredded/bad
+        errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
+  emr:
+    ami_version: 3.6.0      # Don't change this
+    region: ADD HERE        # Always set this
+    jobflow_role: EMR_EC2_DefaultRole # Created using $ aws emr create-default-roles
+    service_role: EMR_DefaultRole     # Created using $ aws emr create-default-roles
+    placement: ADD HERE     # Set this if not running in VPC. Leave blank otherwise
+    ec2_subnet_id: ADD HERE # Set this if running in VPC. Leave blank otherwise
+    ec2_key_name: ADD HERE
+    bootstrap: []           # Set this to specify custom boostrap actions. Leave empty otherwise
+    software:
+      hbase:                # To launch on cluster, provide version, "0.92.0", keep quotes
+      lingual:              # To launch on cluster, provide version, "1.1", keep quotes
+    # Adjust your Hadoop cluster below
+    jobflow:
+      master_instance_type: m1.small
+      core_instance_count: 2
+      core_instance_type: m1.small
+      task_instance_count: 0 # Increase to use spot instances
+      task_instance_type: m1.small
+      task_instance_bid: 0.015 # In USD. Adjust bid, or leave blank for non-spot-priced (i.e. on-demand) task instances
+collectors:
+  format: cloudfront # Or 'clj-tomcat' for the Clojure Collector, or 'thrift' for Thrift records, or 'tsv/com.amazon.aws.cloudfront/wd_access_log' for Cloudfront access logs
+enrich:
   job_name: Snowplow ETL # Give your job a name
   versions:
     hadoop_enrich: 1.0.0 # Version of the Hadoop Enrichment process
     hadoop_shred: 0.4.0 # Version of the Hadoop Shredding process
-  collector_format: cloudfront # Or 'clj-tomcat' for the Clojure Collector, or 'thrift' for Thrift records, or 'tsv/com.amazon.aws.cloudfront/wd_access_log' for Cloudfront access logs
   continue_on_unexpected_error: false # Set to 'true' (and set :out_errors: above) if you don't want any exceptions thrown from ETL
   output_compression: none # Compression only available for Redshift. Storage Loader config will have to be updated accordingly. Allowed formats: none, gzip, lzo
