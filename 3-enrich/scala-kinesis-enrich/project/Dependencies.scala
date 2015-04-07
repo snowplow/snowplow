@@ -32,7 +32,7 @@ object Dependencies {
     val jacksonCore          = "2.3.0"
     val slf4j                = "1.7.5"
     val awsSdk               = "1.6.11"
-    val kinesisClient        = "1.0.0"
+    val kinesisClient        = "1.2.1"
     // Scala
     val argot                = "1.0.1"
     val config               = "1.0.2"
