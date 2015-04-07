@@ -151,8 +151,8 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     private def processRecordsWithRetries(records: List[Record]) = {
       for (record <- records) {
         try {
-          info(s"Sequence number: ${record.getSequenceNumber}")
-          info(s"Partition key: ${record.getPartitionKey}")
+          debug(s"Sequence number: ${record.getSequenceNumber}")
+          debug(s"Partition key: ${record.getPartitionKey}")
           enrichEvents(record.getData.array)
         } catch {
           case t: Throwable =>
@@ -171,7 +171,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     }
       
     private def checkpoint(checkpointer: IRecordProcessorCheckpointer) = {
-      info(s"Checkpointing shard $kinesisShardId")
+      debug(s"Checkpointing shard $kinesisShardId")
       breakable {
         for (i <- 0 to NUM_RETRIES-1) {
           try {
