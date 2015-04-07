@@ -70,41 +70,43 @@ module Snowplow
         }),
       :aws => ({
         :access_key_id => String,
-        :secret_access_key => String
-        }),
-      :s3 => ({
-        :region => String,
-        :buckets => BucketHash
-        }),
-      :emr => ({
-        :ami_version => String,
-        :region => String,
-        :jobflow_role => String,
-        :service_role => String,
-        :placement => Maybe[String],
-        :ec2_subnet_id => Maybe[String],
-        :ec2_key_name => String,
-        :bootstrap => Maybe[ArrayOf[String]],
-        :software => ({
-          :hbase => Maybe[String],
-          :lingual => Maybe[String]
+        :secret_access_key => String,
+        :s3 => ({
+          :region => String,
+          :buckets => BucketHash
           }),
-        :jobflow => ({
-          :master_instance_type => String,
-          :core_instance_count => Num,
-          :core_instance_type => String,
-          :task_instance_count => Num,
-          :task_instance_type => String,
-          :task_instance_bid => Maybe[Num]
-          })
+        :emr => ({
+          :ami_version => String,
+          :region => String,
+          :jobflow_role => String,
+          :service_role => String,
+          :placement => Maybe[String],
+          :ec2_subnet_id => Maybe[String],
+          :ec2_key_name => String,
+          :bootstrap => Maybe[ArrayOf[String]],
+          :software => ({
+            :hbase => Maybe[String],
+            :lingual => Maybe[String]
+            }),
+          :jobflow => ({
+            :master_instance_type => String,
+            :core_instance_count => Num,
+            :core_instance_type => String,
+            :task_instance_count => Num,
+            :task_instance_type => String,
+            :task_instance_bid => Maybe[Num]
+            })
+          }),
         }),
-      :etl => ({
+      :collectors => ({
+        :format => String,
+        }),
+      :enrich => ({
         :job_name => String,
         :versions => ({
           :hadoop_enrich => String,
           :hadoop_shred => String
           }),
-        :collector_format => String,
         :continue_on_unexpected_error => Bool,
         :output_compression => String
         })
