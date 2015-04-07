@@ -22,6 +22,7 @@ import org.apache.commons.codec.binary.Base64
 // Specs2
 import org.specs2.mutable.Specification
 import org.specs2.execute.Result
+import org.specs2.scalaz.ValidationMatchers
 
 // This project
 import SpecHelpers._
@@ -159,7 +160,7 @@ object StructEventWithContextSpec {
     )
 }
 
-class StructEventWithContextSpec extends Specification {
+class StructEventWithContextSpec extends Specification with ValidationMatchers {
 
   "Scala Kinesis Enrich" should {
 
@@ -168,10 +169,10 @@ class StructEventWithContextSpec extends Specification {
       val rawEvent = Base64.decodeBase64(StructEventWithContextSpec.raw)
 
       val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
-      enrichedEvent must beSome
+      enrichedEvent must beSuccessful
 
       // "-1" prevents empty strings from being discarded from the end of the array
-      val fields = enrichedEvent.get.split("\t", -1)
+      val fields = enrichedEvent.toOption.get._1.split("\t", -1)
       fields.size must beEqualTo(StructEventWithContextSpec.expected.size)
 
       Result.unit(

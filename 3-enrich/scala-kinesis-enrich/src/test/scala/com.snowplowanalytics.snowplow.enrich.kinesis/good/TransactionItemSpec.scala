@@ -22,6 +22,7 @@ import org.apache.commons.codec.binary.Base64
 // Specs2
 import org.specs2.mutable.Specification
 import org.specs2.execute.Result
+import org.specs2.scalaz.ValidationMatchers
 
 // This project
 import SpecHelpers._
@@ -159,7 +160,7 @@ object TransactionItemSpec {
     )
 }
 
-class TransactionItemSpec extends Specification {
+class TransactionItemSpec extends Specification with ValidationMatchers {
 
   "Scala Kinesis Enrich" should {
 
@@ -168,10 +169,10 @@ class TransactionItemSpec extends Specification {
       val rawEvent = Base64.decodeBase64(TransactionItemSpec.raw)
 
       val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
-      enrichedEvent must beSome
+      enrichedEvent must beSuccessful
 
       // "-1" prevents empty strings from being discarded from the end of the array
-      val fields = enrichedEvent.get.split("\t", -1)
+      val fields = enrichedEvent.toOption.get._1.split("\t", -1)
       fields.size must beEqualTo(TransactionItemSpec.expected.size)
 
       Result.unit(
