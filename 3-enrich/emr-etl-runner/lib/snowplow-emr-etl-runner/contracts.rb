@@ -97,6 +97,7 @@ module Snowplow
       :emr => ({
         :ami_version => String,
         :region => String,
+        :jobflow_role => String,
         :placement => Maybe[String],
         :ec2_subnet_id => Maybe[String],
         :ec2_key_name => String,

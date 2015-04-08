@@ -23,6 +23,7 @@
 :emr:
   :ami_version: 2.4.2      # Choose as per http://docs.aws.amazon.com/ElasticMapReduce/latest/DeveloperGuide/emr-plan-ami.html
   :region: ADD HERE        # Always set this
+  :jobflow_role: EMR_EC2_DefaultRole # Created using $ aws emr create-default-roles
   :placement: ADD HERE     # Set this if not running in VPC. Leave blank otherwise
   :ec2_subnet_id: ADD HERE # Set this if running in VPC. Leave blank otherwise
   :ec2_key_name: ADD HERE
