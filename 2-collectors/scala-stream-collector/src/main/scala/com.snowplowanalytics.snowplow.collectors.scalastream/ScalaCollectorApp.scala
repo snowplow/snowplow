@@ -146,4 +146,8 @@ class CollectorConfig(config: Config) {
   val byteLimit = buffer.getInt("byte-limit")
   val recordLimit = buffer.getInt("record-limit")
   val timeLimit = buffer.getInt("time-limit")
+
+  val backoffPolicy = kinesis.getConfig("backoffPolicy")
+  val minBackoff = backoffPolicy.getLong("minBackoff")
+  val maxBackoff = backoffPolicy.getLong("maxBackoff")
 }
