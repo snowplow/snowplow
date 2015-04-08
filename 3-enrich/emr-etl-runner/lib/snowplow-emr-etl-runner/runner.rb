@@ -79,7 +79,7 @@ module Snowplow
           elsif bucketsHash[k0].class == {}.class
             y = {}
             for k1 in bucketsHash[k0].keys
-              y[k1] = bucketsHash[k0][k1].nil? ? nil : Sluice::Storage::trail_slash(bucketsHash[k0][k1])
+              y[k1] = Sluice::Storage::trail_slash(bucketsHash[k0][k1])
             end
             with_slashes_added[k0] = y
           else
