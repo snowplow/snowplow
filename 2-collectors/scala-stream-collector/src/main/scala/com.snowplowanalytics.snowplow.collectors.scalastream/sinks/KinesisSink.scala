@@ -102,6 +102,10 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
   val RecordThreshold = config.recordLimit
   val TimeThreshold = config.timeLimit
 
+  private val maxBackoff = config.maxBackoff
+  private val minBackoff = config.minBackoff
+  private val randomGenerator = new java.util.Random()
+
   info("Creating thread pool of size " + config.threadpoolSize)
 
   val executorService = new ScheduledThreadPoolExecutor(config.threadpoolSize)
@@ -253,16 +257,17 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
     null
   }
 
-  def scheduleBatch(batch: List[(ByteBuffer, String)]) {
+  def scheduleBatch(batch: List[(ByteBuffer, String)], lastBackoff: Long = minBackoff) {
+    val nextBackoff = getNextBackoff(lastBackoff)
     executorService.schedule(new Thread {
       override def run() {
-        sendBatch(batch)
+        sendBatch(batch, nextBackoff)
       }
-    }, BackoffTime, MILLISECONDS)
+    }, lastBackoff, MILLISECONDS)
   }
 
   // TODO: limit max retries?
-  def sendBatch(batch: List[(ByteBuffer, String)]) {
+  def sendBatch(batch: List[(ByteBuffer, String)], nextBackoff: Long = minBackoff) {
     if (batch.size > 0) {
       info(s"Writing ${batch.size} Thrift records to Kinesis stream ${config.streamName}")
       val putData = for {
@@ -276,19 +281,27 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
           info(s"Successfully wrote ${batch.size-failurePairs.size} out of ${batch.size} records")
           if (failurePairs.size > 0) {
             failurePairs foreach { f => error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]") }
-            error("Retrying all failed records in $BackoffTime milliseconds...")
+            error("Retrying all failed records in $nextBackoff milliseconds...")
             val failures = failurePairs.map(_._1)
-            scheduleBatch(failures)
+            scheduleBatch(failures, nextBackoff)
           }
         }
         case Failure(f) => {
           error("Writing failed.", f)
-          error(s"Retrying in $BackoffTime milliseconds...")
-          scheduleBatch(batch)
+          error(s"Retrying in $nextBackoff milliseconds...")
+          scheduleBatch(batch, nextBackoff)
         }
       }
     }
   }
+
+  /**
+   * How long to wait before sending the next request
+   *
+   * @param lastBackoff The previous backoff time
+   * @return Minimum of maxBackoff and a random number between minBackoff and three times lastBackoff
+   */
+  private def getNextBackoff(lastBackoff: Long): Long = (minBackoff + randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong.min(maxBackoff)
 
   /**
    * Is the access/secret key set to the special value "cpf" i.e. use

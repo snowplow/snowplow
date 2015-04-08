@@ -83,6 +83,10 @@ collector {
         record-limit: 500 # 500 records
         time-limit: 60000 # 1 minute
       }
+      backoffPolicy: {
+        minBackoff: 3000 # 3 seconds
+        maxBackoff: 600000 # 5 minutes
+      }
     }
   }
 }
