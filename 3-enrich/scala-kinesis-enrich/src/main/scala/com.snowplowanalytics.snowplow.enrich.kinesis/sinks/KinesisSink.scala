@@ -74,6 +74,10 @@ class KinesisSink(provider: AWSCredentialsProvider,
     case InputType.Bad => config.badOutStream
   }
 
+  private val maxBackoff = config.maxBackoff
+  private val minBackoff = config.minBackoff
+  private val randomGenerator = new java.util.Random()
+
   // explicitly create a client so we can configure the end point
   val client = new AmazonKinesisClient(provider)
   client.setEndpoint(config.streamEndpoint)
@@ -126,8 +130,6 @@ class KinesisSink(provider: AWSCredentialsProvider,
       throw new RuntimeException(s"Cannot write because stream $name does not exist or is not active")
     }
   }
-
-  val BackoffTime = 3000L
 
   val ByteThreshold = config.byteLimit
   val RecordThreshold = config.recordLimit
@@ -240,6 +242,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
     if (!batch.isEmpty) {
       info(s"Writing ${batch.size} Thrift records to Kinesis stream $name")
       var unsentRecords = batch
+      var backoffTime = minBackoff
       var sentBatchSuccessfully = false
       while (!sentBatchSuccessfully) {
         val putData = for {
@@ -252,21 +255,30 @@ class KinesisSink(provider: AWSCredentialsProvider,
           info(s"Successfully wrote ${unsentRecords.size-failurePairs.size} out of ${unsentRecords.size} records")
           if (failurePairs.size > 0) {
             failurePairs foreach { f => error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]") }
-            error("Retrying all failed records in $BackoffTime milliseconds...")
+            backoffTime = getNextBackoff(backoffTime)
+            error("Retrying all failed records in $backoffTime milliseconds...")
             unsentRecords = failurePairs.map(_._1)
-            Thread.sleep(BackoffTime)
+            Thread.sleep(backoffTime)
           } else {
             sentBatchSuccessfully = true
           }
         } catch {
           case NonFatal(f) => {
-            error(s"Writing failed.")
-            error(s"  + " + f.getMessage)
-            error(s"  + Retrying in $BackoffTime milliseconds...")
-            Thread.sleep(BackoffTime)
+            backoffTime = getNextBackoff(backoffTime)
+            error(s"Writing failed.", f)
+            error(s"  + Retrying in $backoffTime milliseconds...")
+            Thread.sleep(backoffTime)
           }
         }
       }
     }
   }
+
+  /**
+   * How long to wait before sending the next request
+   *
+   * @param lastBackoff The previous backoff time
+   * @return Minimum of maxBackoff and a random number between minBackoff and three times lastBackoff
+   */
+  private def getNextBackoff(lastBackoff: Long): Long = (minBackoff + randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong.min(maxBackoff)
 }
