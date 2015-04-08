@@ -46,6 +46,12 @@ enrich {
     out: {
       enriched: "{{enrichStreamsOutEnriched}}"
       bad: "{{enrichStreamsOutBad}}"
+
+      # Minimum and maximum backoff periods
+      backoffPolicy: {
+        minBackoff: 3000 # 3 seconds
+        maxBackoff: 600000 # 5 minutes
+      }
     }
 
     # `app-name` is used for a DynamoDB table to maintain stream state.

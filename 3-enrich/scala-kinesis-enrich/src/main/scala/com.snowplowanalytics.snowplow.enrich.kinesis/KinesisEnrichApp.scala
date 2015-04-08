@@ -292,4 +292,9 @@ class KinesisEnrichConfig(config: Config) {
   val timeLimit = buffer.getInt("time-limit")
 
   val credentialsProvider = CredentialsLookup.getCredentialsProvider(accessKey, secretKey)
+
+  val backoffPolicy = outStreams.getConfig("backoffPolicy")
+  val minBackoff = backoffPolicy.getLong("minBackoff")
+  val maxBackoff = backoffPolicy.getLong("maxBackoff")
+
 }

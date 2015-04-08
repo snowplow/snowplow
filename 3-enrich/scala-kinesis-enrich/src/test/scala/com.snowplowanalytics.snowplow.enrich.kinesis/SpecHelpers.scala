@@ -246,6 +246,12 @@ enrich {
     out: {
       enriched: "SnowplowEnriched"
       bad: "SnowplowBad" # Not used until #463
+
+      # Minimum and maximum backoff periods
+      backoffPolicy: {
+        minBackoff: 3000 # 3 seconds
+        maxBackoff: 600000 # 5 minutes
+      }
     }
     app-name: SnowplowKinesisEnrich-${enrich.streams.in.raw}
     initial-position = "TRIM_HORIZON"
