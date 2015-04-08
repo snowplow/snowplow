@@ -161,7 +161,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
   }
 
   def storeRawEvent(event: CollectorPayload, key: String) = {
-    info(s"Writing Thrift record to Kinesis: ${event.toString}")
+    debug(s"Writing Thrift record to Kinesis: ${event.toString}")
     val putData = for {
       p <- enrichedStream.put(
         ByteBuffer.wrap(serializeEvent(event)),
@@ -171,9 +171,9 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
 
     putData onComplete {
       case Success(result) => {
-        info(s"Writing successful.")
-        info(s"  + ShardId: ${result.shardId}")
-        info(s"  + SequenceNumber: ${result.sequenceNumber}")
+        debug(s"Writing successful.")
+        debug(s"  + ShardId: ${result.shardId}")
+        debug(s"  + SequenceNumber: ${result.sequenceNumber}")
       }
       case Failure(f) => {
         error(s"Writing failed.")

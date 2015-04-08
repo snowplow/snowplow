@@ -151,9 +151,9 @@ class KinesisSink(provider: AWSCredentialsProvider,
 
     putData onComplete {
       case Success(result) => {
-        info(s"Writing successful")
-        info(s"  + ShardId: ${result.shardId}")
-        info(s"  + SequenceNumber: ${result.sequenceNumber}")
+        debug(s"Writing successful")
+        debug(s"  + ShardId: ${result.shardId}")
+        debug(s"  + SequenceNumber: ${result.sequenceNumber}")
       }
       case Failure(f) => {
         error(s"Writing failed.")
