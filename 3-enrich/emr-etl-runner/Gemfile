@@ -21,7 +21,7 @@ ruby "1.9.3"
 # RubyGems it requires here.
 gem "contracts", "= 0.7"
 gem "elasticity", "~> 6.0.2"
-gem "sluice", "~> 0.2.1"
+gem "sluice", "~> 0.2.2"
 gem "awrence", "~> 0.1.0"
 
 group :development do
