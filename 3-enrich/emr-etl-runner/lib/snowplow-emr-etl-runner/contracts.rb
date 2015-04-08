@@ -19,6 +19,7 @@ module Snowplow
   module EmrEtlRunner
 
     include Contracts
+    include Contracts::Modules
 
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
@@ -87,7 +88,7 @@ module Snowplow
         }),
       :aws => ({
         :access_key_id => String,
-        :secret_access_key => String
+        :secret_access_key => String,
         :s3 => ({
           :region => String,
           :buckets => BucketHash
@@ -128,9 +129,9 @@ module Snowplow
         :output_compression => String
         }),
       :storage => ({
-        :download => {(
+        :download => ({
           :folder => Maybe[String]
-          )},
+          }),
         :targets => ArrayOf[TargetHash]
         })
       })

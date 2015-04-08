@@ -24,6 +24,7 @@ module Snowplow
     module S3Tasks
 
       include Contracts
+      include Contracts::Modules
 
       # Constants for CloudFront log format
       CF_DATE_FORMAT = '%Y-%m-%d'

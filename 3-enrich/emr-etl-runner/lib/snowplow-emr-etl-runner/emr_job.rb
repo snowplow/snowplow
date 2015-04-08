@@ -37,7 +37,7 @@ module Snowplow
       @@running_states = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
       @@failed_states  = Set.new(%w(FAILED CANCELLED))
 
-      include Logging
+      include Monitoring::Logging
 
       # Initializes our wrapper for the Amazon EMR client.
       Contract Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String => EmrJob
@@ -50,7 +50,7 @@ module Snowplow
         run_tstamp = Time.new
         run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
-        output_codec = config[:enrich][:output_compression].nil? "none" : config[:enrich][:output_compression].downcase
+        output_codec = config[:enrich][:output_compression].nil? ? "none" : config[:enrich][:output_compression].downcase
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:aws][:s3][:region],
           config[:aws][:access_key_id],

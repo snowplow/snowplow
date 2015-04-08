@@ -20,7 +20,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'snowplo
 
 # Initialization
 runner = Snowplow::EmrEtlRunner
-fatal = runner::Logging.method(:fatal_with)
+fatal = runner::Monitoring::Logging.method(:fatal_with)
 
 # This Ruby script runs the ETL (extract, transform, load)
 # process which transforms the raw Snowplow event logs into

@@ -15,7 +15,6 @@
 
 require 'optparse'
 require 'yaml'
-require 'file'
 require 'contracts'
 
 module Snowplow
@@ -23,6 +22,7 @@ module Snowplow
     module Cli
 
       include Contracts
+      include Contracts::Modules
 
       # Get our arguments, configuration,
       # enrichments and Iglu resolver.
