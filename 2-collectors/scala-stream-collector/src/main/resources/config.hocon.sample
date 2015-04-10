@@ -21,7 +21,7 @@ collector {
   # The collector runs as a web service specified on the following
   # interface and port.
   interface = "0.0.0.0"
-  port = 80
+  port = {{collectorPort}}
 
   # Production mode disables additional services helpful for configuring and
   # initializing the collector, such as a path '/dump' to view all
