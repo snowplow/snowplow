@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd.
  * All rights reserved.
  *

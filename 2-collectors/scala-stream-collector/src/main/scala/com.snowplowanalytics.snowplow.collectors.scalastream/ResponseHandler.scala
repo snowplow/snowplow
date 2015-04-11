@@ -24,7 +24,7 @@ import java.util.UUID
 import org.apache.commons.codec.binary.Base64
 
 // Spray
-import spray.http.{DateTime,HttpRequest,HttpResponse,HttpEntity,HttpCookie}
+import spray.http.{ DateTime, HttpRequest, HttpResponse, HttpEntity, HttpCookie }
 import spray.http.HttpHeaders.{
   `Set-Cookie`,
   `Remote-Address`,
@@ -51,8 +51,7 @@ import sinks._
 // Contains an invisible pixel to return for `/i` requests.
 object ResponseHandler {
   val pixel = Base64.decodeBase64(
-    "R0lGODlhAQABAPAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
-  )
+    "R0lGODlhAQABAPAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==")
 }
 
 // Receive requests and store data into an output sink.
@@ -65,14 +64,13 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
   // When `/i` is requested, this is called and stores an event in the
   // Kinisis sink and returns an invisible pixel with a cookie.
   def cookie(queryParams: String, body: String, requestCookie: Option[HttpCookie],
-      userAgent: Option[String], hostname: String, ip: String,
-      request: HttpRequest, refererUri: Option[String], path: String, pixelExpected: Boolean):
-      (HttpResponse, Array[Byte]) = {
+             userAgent: Option[String], hostname: String, ip: String,
+             request: HttpRequest, refererUri: Option[String], path: String, pixelExpected: Boolean): (HttpResponse, Array[Byte]) = {
 
     // Use the same UUID if the request cookie contains `sp`.
     val networkUserId: String = requestCookie match {
       case Some(rc) => rc.content
-      case None => UUID.randomUUID.toString
+      case None     => UUID.randomUUID.toString
     }
 
     // Construct an event object from the request.
@@ -83,8 +81,7 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
       ip,
       timestamp,
       "UTF-8",
-      Collector
-    )
+      Collector)
 
     event.path = path
     event.querystring = queryParams
@@ -96,11 +93,11 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
     refererUri.foreach(event.refererUri = _)
     event.headers = request.headers.flatMap {
       case _: `Remote-Address` | _: `Raw-Request-URI` => None
-      case other => Some(other.toString)
+      case other                                      => Some(other.toString)
     }
 
     // Set the content type
-    request.headers.find(_ match {case `Content-Type`(ct) => true; case _ => false}) foreach {
+    request.headers.find(_ match { case `Content-Type`(ct) => true; case _ => false }) foreach {
 
       // toLowerCase called because Spray seems to convert "utf" to "UTF"
       ct => event.contentType = ct.value.toLowerCase
@@ -112,21 +109,19 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
     // Build the HTTP response.
     val responseCookie = HttpCookie(
       "sp", networkUserId,
-      expires=Some(DateTime.now+config.cookieExpiration),
-      domain=config.cookieDomain
-    )
+      expires = Some(DateTime.now + config.cookieExpiration),
+      domain = config.cookieDomain)
     val policyRef = config.p3pPolicyRef
     val CP = config.p3pCP
     val headers = List(
       RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP)),
-      `Set-Cookie`(responseCookie)
-    )
+      `Set-Cookie`(responseCookie))
 
     val httpResponse = (if (pixelExpected) {
-        HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
-      } else {
-        HttpResponse()
-      }).withHeaders(headers)
+      HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
+    } else {
+      HttpResponse()
+    }).withHeaders(headers)
 
     (httpResponse, sinkResponse)
   }

@@ -15,7 +15,7 @@
 import sbt._
 
 object Dependencies {
-
+  //format: OFF
   val resolutionRepos = Seq(
     "Snowplow Analytics Maven repo"          at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
@@ -35,8 +35,8 @@ object Dependencies {
     // Scala
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
-    val spray            = "1.2.0"
-    val akka             = "2.2.3"
+    val spray            = "1.2.3"
+    val akka             = "2.2.5"
     val logback          = "1.0.13"
     val commonsCodec     = "1.5"
     val scalazon         = "0.5"

@@ -16,13 +16,14 @@ package com.snowplowanalytics.snowplow.collectors
 package scalastream
 
 // Akka
-import akka.actor.{Actor,ActorRefFactory}
+import akka.actor.{ Actor, ActorRefFactory, Props }
 import akka.pattern.ask
 import akka.util.Timeout
 
 // Spray
-import spray.http.{Timedout,HttpRequest}
+import spray.http.{ Timedout, HttpRequest }
 import spray.routing.HttpService
+import spray.routing.Route
 
 // Scala
 import scala.concurrent.duration._
@@ -30,24 +31,26 @@ import scala.concurrent.duration._
 // Snowplow
 import sinks._
 
-// Actor accepting Http requests for the Scala collector.
-class CollectorServiceActor(collectorConfig: CollectorConfig,
-    sink: AbstractSink) extends Actor with HttpService {
-  implicit val timeout: Timeout = 1.second // For the actor 'asks'
+/**
+ * Handles request for the scala collector
+ */
+object CollectorHandler {
+  def props(config: CollectorConfig, sink: AbstractSink) = Props(classOf[CollectorHandler], config, sink)
+}
+
+class CollectorHandler(collectorConfig: CollectorConfig, sink: AbstractSink)
+    extends Actor with CollectorService {
+
+  implicit val timeout: Timeout = 1.second
+
   def actorRefFactory = context
 
-  // Deletage responses (content and storing) to the ResponseHandler.
-  private val responseHandler = new ResponseHandler(collectorConfig, sink)
+  override val responseHandler = new ResponseHandler(collectorConfig, sink)
 
-  // Use CollectorService so the same route can be accessed differently
-  // in the testing framework.
-  private val collectorService = new CollectorService(responseHandler, context)
-
-  // Message loop for the Spray service.
-  def receive = handleTimeouts orElse runRoute(collectorService.collectorRoute)
+  def receive = handleTimeouts orElse runRoute(collectorRoute)
 
   def handleTimeouts: Receive = {
-    case Timedout(_) => sender ! responseHandler.timeout
+    case Timeout(_) => sender ! responseHandler.timeout
   }
 }
 
@@ -55,127 +58,97 @@ class CollectorServiceActor(collectorConfig: CollectorConfig,
  * Companion object for the CollectorService class
  */
 object CollectorService {
-  private val QuerystringExtractor = "^[^?]*\\?([^#]*)(?:#.*)?$".r
+  protected[scalastream] val QuerystringExtractor = "^[^?]*\\?([^#]*)(?:#.*)?$".r
 }
 
-// Store the route in CollectorService to be accessed from
-// both CollectorServiceActor and from the testing framework.
-class CollectorService(
-    responseHandler: ResponseHandler,
-    context: ActorRefFactory) extends HttpService {
-  def actorRefFactory = context
+/**
+ * Stores the route in CollectorService to be accessed from
+ * both CollectorServiceActor and from the testing framework.
+ */
+trait CollectorService extends HttpService {
+  import spray.http.HttpMethods
 
-  // TODO: reduce code duplication here
-  val collectorRoute = {
-    post {
-      path(Segment / Segment) { (path1, path2) =>
-        optionalCookie("sp") { reqCookie =>
-          optionalHeaderValueByName("User-Agent") { userAgent =>
-            optionalHeaderValueByName("Referer") { refererURI =>
-              headerValueByName("Raw-Request-URI") { rawRequest =>
-                hostName { host =>
-                  clientIP { ip =>
-                    requestInstance{ request =>
-                      entity(as[String]) { body =>
-                        complete(
-                          responseHandler.cookie(
-                            null,
-                            body,
-                            reqCookie,
-                            userAgent,
-                            host,
-                            ip.toString,
-                            request,
-                            refererURI,
-                            "/" + path1 + "/" + path2,
-                            false
-                          )._1
-                        )
-                      }
-                    }
-                  }
-                }
-              }
+  val responseHandler: ResponseHandler
+
+  val theseParameters = optionalCookie("sp") &
+    optionalHeaderValueByName("User-Agent") &
+    optionalHeaderValueByName("Referer") &
+    headerValueByName("Raw-Request-URI") &
+    hostName &
+    clientIP &
+    requestInstance
+
+  val segmentPath = path(Segment / Segment) & (post | get)
+  val somePath = path("""ice\.png""".r | "i".r) & get
+
+  val requestMethod = extract(_.request.method)
+
+  def segmentCollectRoute: Route = {
+    segmentPath { (path1, path2) =>
+      theseParameters { (reqCookie, userAgent, refererURI, rawRequest, host, ip, request) =>
+        requestMethod { m =>
+          if (m == HttpMethods.GET) {
+            complete(
+              responseHandler.cookie(
+                rawRequest match {
+                  case CollectorService.QuerystringExtractor(qs) => qs
+                  case _                                         => ""
+                },
+                null,
+                reqCookie,
+                userAgent,
+                host,
+                ip.toString,
+                request,
+                refererURI,
+                "/" + path1 + "/" + path2,
+                true)._1)
+          } else {
+            entity(as[String]) { body =>
+              complete(
+                responseHandler.cookie(
+                  null,
+                  body,
+                  reqCookie,
+                  userAgent,
+                  host,
+                  ip.toString,
+                  request,
+                  refererURI,
+                  "/" + path1 + "/" + path2,
+                  false)._1)
             }
           }
         }
       }
+    }
+  }
+
+  def collectorRoute: Route = segmentCollectRoute ~ {
+    somePath { path =>
+      theseParameters { (reqCookie, userAgent, refererURI, rawRequest, host, ip, request) =>
+        complete(
+          responseHandler.cookie(
+            rawRequest match {
+              case CollectorService.QuerystringExtractor(qs) => qs
+              case _                                         => ""
+            },
+            null,
+            reqCookie,
+            userAgent,
+            host,
+            ip.toString,
+            request,
+            refererURI,
+            "/" + path,
+            true)._1)
+      }
     } ~
-    get {
-      path("""ice\.png""".r | "i".r) { path =>
-        optionalCookie("sp") { reqCookie =>
-          optionalHeaderValueByName("User-Agent") { userAgent =>
-            optionalHeaderValueByName("Referer") { refererURI =>
-              headerValueByName("Raw-Request-URI") { rawRequest =>
-                hostName { host =>
-                  clientIP { ip =>
-                    requestInstance{ request =>
-                      complete(
-                        responseHandler.cookie(
-                          rawRequest match {
-                            case CollectorService.QuerystringExtractor(qs) => qs
-                            case _ => ""
-                          },
-                          null,
-                          reqCookie,
-                          userAgent,
-                          host,
-                          ip.toString,
-                          request,
-                          refererURI,
-                          "/" + path,
-                          true
-                        )._1
-                      )
-                    }
-                  }
-                }
-              }
-            }
-          }
+      get {
+        path("health".r) { path =>
+          complete(responseHandler.healthy)
         }
-      }
-    } ~
-    get {
-      path("health".r) { path =>
-        complete(responseHandler.healthy)
-      }
-    } ~
-    get {
-      path(Segment / Segment) { (path1, path2) =>
-        optionalCookie("sp") { reqCookie =>
-          optionalHeaderValueByName("User-Agent") { userAgent =>
-            optionalHeaderValueByName("Referer") { refererURI =>
-              headerValueByName("Raw-Request-URI") { rawRequest =>
-                hostName { host =>
-                  clientIP { ip =>
-                    requestInstance{ request =>
-                      complete(
-                        responseHandler.cookie(
-                          rawRequest match {
-                            case CollectorService.QuerystringExtractor(qs) => qs
-                            case _ => ""
-                          },
-                          null,
-                          reqCookie,
-                          userAgent,
-                          host,
-                          ip.toString,
-                          request,
-                          refererURI,
-                          "/" + path1 + "/" + path2,
-                          true
-                        )._1
-                      )
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    } ~
-    complete(responseHandler.notFound)
+      } ~
+      complete(responseHandler.notFound)
   }
 }

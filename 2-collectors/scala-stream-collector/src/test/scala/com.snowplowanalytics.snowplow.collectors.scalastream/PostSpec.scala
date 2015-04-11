@@ -20,16 +20,16 @@ package scalastream
 import scala.collection.mutable.MutableList
 
 // Akka
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ ActorSystem, Props }
 
 // Specs2 and Spray testing
 import org.specs2.matcher.AnyMatchers
 import org.specs2.mutable.Specification
-import org.specs2.specification.{Scope,Fragments}
+import org.specs2.specification.{ Scope, Fragments }
 import spray.testkit.Specs2RouteTest
 
 // Spray
-import spray.http.{DateTime,HttpHeader,HttpRequest,HttpCookie}
+import spray.http.{ DateTime, HttpHeader, HttpRequest, HttpCookie }
 import spray.http.HttpHeaders.{
   Cookie,
   `Set-Cookie`,
@@ -38,7 +38,7 @@ import spray.http.HttpHeaders.{
 }
 
 // Config
-import com.typesafe.config.{ConfigFactory,Config,ConfigException}
+import com.typesafe.config.{ ConfigFactory, Config, ConfigException }
 
 // Thrift
 import org.apache.thrift.TDeserializer
@@ -47,9 +47,8 @@ import org.apache.thrift.TDeserializer
 import sinks._
 import CollectorPayload.thrift.model1.CollectorPayload
 
-class PostSpec extends Specification with Specs2RouteTest with
-     AnyMatchers {
-   val testConf: Config = ConfigFactory.parseString("""
+class PostSpec extends Specification with Specs2RouteTest with AnyMatchers with CollectorService {
+  val testConf: Config = ConfigFactory.parseString("""
 collector {
   interface = "0.0.0.0"
   port = 8080
@@ -85,8 +84,10 @@ collector {
 """)
   val collectorConfig = new CollectorConfig(testConf)
   val sink = new TestSink
-  val responseHandler = new ResponseHandler(collectorConfig, sink)
-  val collectorService = new CollectorService(responseHandler, system)
+  def actorRefFactory = system
+  override val responseHandler = new ResponseHandler(collectorConfig, sink)
+
+  // val collectorService = new CollectorService(responseHandler, system)
   val thriftDeserializer = new TDeserializer
 
   // By default, spray will always add Remote-Address to every request
@@ -94,16 +95,16 @@ collector {
   // option. However, the testing does not read this option and a
   // remote address always needs to be set.
   def CollectorPost(uri: String, cookie: Option[`HttpCookie`] = None,
-      remoteAddr: String = "127.0.0.1") = {
+                    remoteAddr: String = "127.0.0.1") = {
     val headers: MutableList[HttpHeader] =
-      MutableList(`Remote-Address`(remoteAddr),`Raw-Request-URI`(uri))
+      MutableList(`Remote-Address`(remoteAddr), `Raw-Request-URI`(uri))
     cookie.foreach(headers += `Cookie`(_))
     Post(uri).withHeaders(headers.toList)
   }
 
   "Snowplow's Scala collector" should {
     "return a cookie expiring at the correct time" in {
-      CollectorPost("/com.snowplowanalytics.snowplow/tp2") ~> collectorService.collectorRoute ~> check {
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2") ~> collectorRoute ~> check {
         headers must not be empty
 
         val httpCookies: List[HttpCookie] = headers.collect {
@@ -128,20 +129,20 @@ collector {
     }
     "return the same cookie as passed in" in {
       CollectorPost("/com.snowplowanalytics.snowplow/tp2", Some(HttpCookie("sp", "UUID_Test"))) ~>
-          collectorService.collectorRoute ~> check {
-        val httpCookies: List[HttpCookie] = headers.collect {
-          case `Set-Cookie`(hc) => hc
-        }
-        // Assume we only return a single cookie.
-        // If the collector is modified to return multiple cookies,
-        // this will need to be changed.
-        val httpCookie = httpCookies(0)
+        collectorRoute ~> check {
+          val httpCookies: List[HttpCookie] = headers.collect {
+            case `Set-Cookie`(hc) => hc
+          }
+          // Assume we only return a single cookie.
+          // If the collector is modified to return multiple cookies,
+          // this will need to be changed.
+          val httpCookie = httpCookies(0)
 
-        httpCookie.content must beEqualTo("UUID_Test")
-      }
+          httpCookie.content must beEqualTo("UUID_Test")
+        }
     }
     "return a P3P header" in {
-      CollectorPost("/com.snowplowanalytics.snowplow/tp2") ~> collectorService.collectorRoute ~> check {
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2") ~> collectorRoute ~> check {
         val p3pHeaders = headers.filter {
           h => h.name.equals("P3P")
         }

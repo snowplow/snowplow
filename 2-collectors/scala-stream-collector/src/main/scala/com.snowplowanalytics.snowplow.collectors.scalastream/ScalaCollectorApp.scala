@@ -15,7 +15,7 @@
 package com.snowplowanalytics.snowplow.collectors.scalastream
 
 // Akka and Spray
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ ActorSystem, Props }
 import akka.io.IO
 import spray.can.Http
 
@@ -26,7 +26,7 @@ import java.io.File
 import org.clapper.argot._
 
 // Config
-import com.typesafe.config.{ConfigFactory,Config,ConfigException}
+import com.typesafe.config.{ ConfigFactory, Config, ConfigException }
 
 // Logging
 import org.slf4j.LoggerFactory
@@ -37,7 +37,7 @@ import sinks._
 // Main entry point of the Scala collector.
 object ScalaCollector extends App {
   lazy val log = LoggerFactory.getLogger(getClass())
-  import log.{error, debug, info, trace}
+  import log.{ error, debug, info, trace }
 
   import ArgotConverters._ // Argument specifications
 
@@ -47,21 +47,19 @@ object ScalaCollector extends App {
     preUsage = Some("%s: Version %s. Copyright (c) 2013, %s.".format(
       generated.Settings.name,
       generated.Settings.version,
-      generated.Settings.organization)
-    )
-  )
+      generated.Settings.organization)))
 
   // Mandatory config argument
   val config = parser.option[Config](List("config"), "filename",
     "Configuration file.") { (c, opt) =>
-    val file = new File(c)
-    if (file.exists) {
-      ConfigFactory.parseFile(file)
-    } else {
-      parser.usage("Configuration file \"%s\" does not exist".format(c))
-      ConfigFactory.empty()
+      val file = new File(c)
+      if (file.exists) {
+        ConfigFactory.parseFile(file)
+      } else {
+        parser.usage("Configuration file \"%s\" does not exist".format(c))
+        ConfigFactory.empty()
+      }
     }
-  }
   parser.parse(args)
 
   val rawConf = config.value.getOrElse(throw new RuntimeException("--config option must be provided"))
@@ -69,17 +67,17 @@ object ScalaCollector extends App {
   val collectorConfig = new CollectorConfig(rawConf)
   val sink = collectorConfig.sinkEnabled match {
     case Sink.Kinesis => new KinesisSink(collectorConfig)
-    case Sink.Stdout => new StdoutSink
+    case Sink.Stdout  => new StdoutSink
   }
 
   // The handler actor replies to incoming HttpRequests.
-  val handler = system.actorOf(
-    Props(classOf[CollectorServiceActor], collectorConfig, sink),
-    name = "handler"
-  )
+  // val handler = system.actorOf(
+  // Props(classOf[CollectorServiceActor], collectorConfig, sink),
+  // name = "handler")
+  val handler = system.actorOf(CollectorHandler.props(collectorConfig, sink), name = "handler")
 
   IO(Http) ! Http.Bind(handler,
-    interface=collectorConfig.interface, port=collectorConfig.port)
+    interface = collectorConfig.interface, port = collectorConfig.port)
 }
 // Return Options from the configuration.
 object Helper {
@@ -122,9 +120,9 @@ class CollectorConfig(config: Config) {
   // TODO: either change this to ADTs or switch to withName generation
   val sinkEnabled = sink.getString("enabled") match {
     case "kinesis" => Sink.Kinesis
-    case "stdout" => Sink.Stdout
-    case "test" => Sink.Test
-    case _ => throw new RuntimeException("collector.sink.enabled unknown.")
+    case "stdout"  => Sink.Stdout
+    case "test"    => Sink.Test
+    case _         => throw new RuntimeException("collector.sink.enabled unknown.")
   }
 
   private val kinesis = sink.getConfig("kinesis")
@@ -139,7 +137,7 @@ class CollectorConfig(config: Config) {
 
   val threadpoolSize = kinesis.hasPath("thread-pool-size") match {
     case true => kinesis.getInt("thread-pool-size")
-    case _ => 10
+    case _    => 10
   }
 }
 

@@ -42,7 +42,7 @@ import io.github.cloudify.scala.aws.auth.CredentialsProvider.InstanceProfile
 import com.typesafe.config.Config
 
 // Concurrent libraries
-import scala.concurrent.{Future,Await,TimeoutException}
+import scala.concurrent.{ Future, Await, TimeoutException }
 import scala.concurrent.duration._
 
 // Logging
@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory
 // Mutable data structures
 import scala.collection.mutable.StringBuilder
 import scala.collection.mutable.MutableList
-import scala.util.{Success, Failure}
+import scala.util.{ Success, Failure }
 
 // Snowplow
 import scalastream._
@@ -62,7 +62,7 @@ import CollectorPayload.thrift.model1.CollectorPayload
  */
 class KinesisSink(config: CollectorConfig) extends AbstractSink {
   private lazy val log = LoggerFactory.getLogger(getClass())
-  import log.{error, debug, info, trace}
+  import log.{ error, debug, info, trace }
 
   implicit lazy val ec = {
     info("Creating thread pool of size " + config.threadpoolSize)
@@ -165,8 +165,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     val putData = for {
       p <- enrichedStream.put(
         ByteBuffer.wrap(serializeEvent(event)),
-        key
-      )
+        key)
     } yield p
 
     putData onComplete {

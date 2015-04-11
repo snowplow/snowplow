@@ -20,16 +20,16 @@ package scalastream
 import scala.collection.mutable.MutableList
 
 // Akka
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ ActorSystem, Props }
 
 // Specs2 and Spray testing
 import org.specs2.matcher.AnyMatchers
 import org.specs2.mutable.Specification
-import org.specs2.specification.{Scope,Fragments}
+import org.specs2.specification.{ Scope, Fragments }
 import spray.testkit.Specs2RouteTest
 
 // Spray
-import spray.http.{DateTime,HttpHeader,HttpRequest,HttpCookie}
+import spray.http.{ DateTime, HttpHeader, HttpRequest, HttpCookie }
 import spray.http.HttpHeaders.{
   Cookie,
   `Set-Cookie`,
@@ -38,7 +38,7 @@ import spray.http.HttpHeaders.{
 }
 
 // Config
-import com.typesafe.config.{ConfigFactory,Config,ConfigException}
+import com.typesafe.config.{ ConfigFactory, Config, ConfigException }
 
 // Thrift
 import org.apache.thrift.TDeserializer
@@ -47,9 +47,8 @@ import org.apache.thrift.TDeserializer
 import sinks._
 import CollectorPayload.thrift.model1.CollectorPayload
 
-class CollectorServiceSpec extends Specification with Specs2RouteTest with
-     AnyMatchers {
-   val testConf: Config = ConfigFactory.parseString("""
+class CollectorServiceSpec extends Specification with Specs2RouteTest with AnyMatchers with CollectorService {
+  val testConf: Config = ConfigFactory.parseString("""
 collector {
   interface = "0.0.0.0"
   port = 8080
@@ -85,8 +84,10 @@ collector {
 """)
   val collectorConfig = new CollectorConfig(testConf)
   val sink = new TestSink
-  val responseHandler = new ResponseHandler(collectorConfig, sink)
-  val collectorService = new CollectorService(responseHandler, system)
+  def actorRefFactory = system
+  override val responseHandler = new ResponseHandler(collectorConfig, sink)
+
+  // val collectorService = new CollectorService(responseHandler, system)
   val thriftDeserializer = new TDeserializer
 
   // By default, spray will always add Remote-Address to every request
@@ -94,21 +95,21 @@ collector {
   // option. However, the testing does not read this option and a
   // remote address always needs to be set.
   def CollectorGet(uri: String, cookie: Option[`HttpCookie`] = None,
-      remoteAddr: String = "127.0.0.1") = {
+                   remoteAddr: String = "127.0.0.1") = {
     val headers: MutableList[HttpHeader] =
-      MutableList(`Remote-Address`(remoteAddr),`Raw-Request-URI`(uri))
+      MutableList(`Remote-Address`(remoteAddr), `Raw-Request-URI`(uri))
     cookie.foreach(headers += `Cookie`(_))
     Get(uri).withHeaders(headers.toList)
   }
 
   "Snowplow's Scala collector" should {
     "return an invisible pixel" in {
-      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
+      CollectorGet("/i") ~> collectorRoute ~> check {
         responseAs[Array[Byte]] === ResponseHandler.pixel
       }
     }
     "return a cookie expiring at the correct time" in {
-      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
+      CollectorGet("/i") ~> collectorRoute ~> check {
         headers must not be empty
 
         val httpCookies: List[HttpCookie] = headers.collect {
@@ -132,8 +133,7 @@ collector {
       }
     }
     "return the same cookie as passed in" in {
-      CollectorGet("/i", Some(HttpCookie("sp", "UUID_Test"))) ~>
-          collectorService.collectorRoute ~> check {
+      CollectorGet("/i", Some(HttpCookie("sp", "UUID_Test"))) ~> collectorRoute ~> check {
         val httpCookies: List[HttpCookie] = headers.collect {
           case `Set-Cookie`(hc) => hc
         }
@@ -146,7 +146,7 @@ collector {
       }
     }
     "return a P3P header" in {
-      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
+      CollectorGet("/i") ~> collectorRoute ~> check {
         val p3pHeaders = headers.filter {
           h => h.name.equals("P3P")
         }
@@ -177,7 +177,7 @@ collector {
       storedEvent.querystring must beEqualTo(payloadData)
     }
     "report itself as healthy" in {
-      CollectorGet("/health") ~> collectorService.collectorRoute ~> check {
+      CollectorGet("/health") ~> collectorRoute ~> check {
         response.status must beEqualTo(spray.http.StatusCodes.OK)
       }
     }
