@@ -60,11 +60,8 @@ object BuildSettings {
     // Name it as an executable
     jarName in assembly := { s"${name.value}-${version.value}" })
 
-  lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings ++ formatSettings
-
   import com.typesafe.sbt.SbtScalariform
   import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-
   lazy val formatSettings = SbtScalariform.scalariformSettings ++ Seq(
     ScalariformKeys.preferences in Compile := formattingPreferences,
     ScalariformKeys.preferences in Test := formattingPreferences)
@@ -76,4 +73,6 @@ object BuildSettings {
       .setPreference(AlignParameters, true)
       .setPreference(AlignSingleLineCaseStatements, true)
       .setPreference(DoubleIndentClassDeclaration, true)
+
+  lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings ++ formatSettings
 }
