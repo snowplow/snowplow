@@ -63,9 +63,10 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
 
   // When `/i` is requested, this is called and stores an event in the
   // Kinisis sink and returns an invisible pixel with a cookie.
-  def cookie(queryParams: String, body: String, requestCookie: Option[HttpCookie],
+  def cookie(queryParams: Option[String], body: Option[String], requestCookie: Option[HttpCookie],
              userAgent: Option[String], hostname: String, ip: String,
-             request: HttpRequest, refererUri: Option[String], path: String, pixelExpected: Boolean): (HttpResponse, Array[Byte]) = {
+             request: HttpRequest, refererUri: Option[String],
+             path: String, pixelExpected: Boolean): (HttpResponse, Array[Byte]) = {
 
     // Use the same UUID if the request cookie contains `sp`.
     val networkUserId: String = requestCookie match {
@@ -84,8 +85,8 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
       Collector)
 
     event.path = path
-    event.querystring = queryParams
-    event.body = body
+    event.querystring = queryParams.getOrElse("") //queryParams.getOrElse(null)
+    event.body = body.getOrElse("") //body.getOrElse(null)
     event.hostname = hostname
     event.networkUserId = networkUserId
 
@@ -104,7 +105,7 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
     }
 
     // Only the test sink responds with the serialized object.
-    val sinkResponse = sink.storeRawEvent(event, ip)
+    val sinkResponse = sink.storeRawEvent(event, ip).get
 
     // Build the HTTP response.
     val responseCookie = HttpCookie(
@@ -126,7 +127,7 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
     (httpResponse, sinkResponse)
   }
 
-  def healthy = HttpResponse(status = 200, entity = s"OK")
-  def notFound = HttpResponse(status = 404, entity = "404 Not found")
-  def timeout = HttpResponse(status = 500, entity = s"Request timed out.")
+  def healthy: HttpResponse = HttpResponse(status = 200, entity = s"OK")
+  def notFound: HttpResponse = HttpResponse(status = 404, entity = "404 Not found")
+  def timeout: HttpResponse = HttpResponse(status = 500, entity = s"Request timed out.")
 }

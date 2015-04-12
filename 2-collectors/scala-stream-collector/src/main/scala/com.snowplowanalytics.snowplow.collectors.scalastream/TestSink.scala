@@ -40,6 +40,5 @@ import CollectorPayload.thrift.model1.CollectorPayload
 // Allow the testing framework to test collection events using the
 // same methods from AbstractSink as the other sinks.
 class TestSink extends AbstractSink {
-  def storeRawEvent(event: CollectorPayload, key: String) =
-    serializeEvent(event)
+  def storeRawEvent(event: CollectorPayload, key: String): Option[Array[Byte]] = Some(serializeEvent(event))
 }

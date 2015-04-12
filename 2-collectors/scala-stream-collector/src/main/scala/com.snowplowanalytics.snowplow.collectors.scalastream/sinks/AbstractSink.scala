@@ -32,11 +32,11 @@ import CollectorPayload.thrift.model1.CollectorPayload
 
 // Define an interface for all sinks to use to store events.
 trait AbstractSink {
-  def storeRawEvent(event: CollectorPayload, key: String): Array[Byte]
+  def storeRawEvent(event: CollectorPayload, key: String): Option[Array[Byte]]
 
   // Serialize Thrift CollectorPayload objects
   private val thriftSerializer = new ThreadLocal[TSerializer] {
-    override def initialValue = new TSerializer()
+    override def initialValue: TSerializer = new TSerializer()
   }
 
   def serializeEvent(event: CollectorPayload): Array[Byte] = {

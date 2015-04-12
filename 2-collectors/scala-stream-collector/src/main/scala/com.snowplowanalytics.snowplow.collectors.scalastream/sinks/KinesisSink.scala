@@ -60,9 +60,14 @@ import CollectorPayload.thrift.model1.CollectorPayload
 /**
  * Kinesis Sink for the Scala collector.
  */
+object KinesisSink {
+  val DEFAULT_TIMEOUT = 60
+}
+
 class KinesisSink(config: CollectorConfig) extends AbstractSink {
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{ error, debug, info, trace }
+  import KinesisSink._
 
   implicit lazy val ec = {
     info("Creating thread pool of size " + config.threadpoolSize)
@@ -77,7 +82,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
   private val enrichedStream = createAndLoadStream()
 
   // Checks if a stream exists.
-  def streamExists(name: String, timeout: Int = 60): Boolean = {
+  def streamExists(name: String, timeout: Int = DEFAULT_TIMEOUT): Boolean = {
 
     val exists: Boolean = try {
       val streamDescribeFuture = for {
@@ -101,7 +106,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
   }
 
   // Creates a new stream if one doesn't exist.
-  def createAndLoadStream(timeout: Int = 60): Stream = {
+  def createAndLoadStream(timeout: Int = DEFAULT_TIMEOUT): Stream = {
     val name = config.streamName
     val size = config.streamSize
 
@@ -160,7 +165,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     Client.fromClient(client)
   }
 
-  def storeRawEvent(event: CollectorPayload, key: String) = {
+  def storeRawEvent(event: CollectorPayload, key: String): Option[Array[Byte]] = {
     info(s"Writing Thrift record to Kinesis: ${event.toString}")
     val putData = for {
       p <- enrichedStream.put(
@@ -179,8 +184,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
         error(s"  + " + f.getMessage)
       }
     }
-
-    null
+    None
   }
 
   /**

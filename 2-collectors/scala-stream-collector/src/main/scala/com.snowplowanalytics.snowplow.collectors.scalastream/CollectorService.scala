@@ -35,7 +35,7 @@ import sinks._
  * Handles request for the scala collector
  */
 object CollectorHandler {
-  def props(config: CollectorConfig, sink: AbstractSink) = Props(classOf[CollectorHandler], config, sink)
+  def props(config: CollectorConfig, sink: AbstractSink): Props = Props(classOf[CollectorHandler], config, sink)
 }
 
 class CollectorHandler(collectorConfig: CollectorConfig, sink: AbstractSink)
@@ -43,11 +43,11 @@ class CollectorHandler(collectorConfig: CollectorConfig, sink: AbstractSink)
 
   implicit val timeout: Timeout = 1.second
 
-  def actorRefFactory = context
+  def actorRefFactory: ActorRefFactory = context
 
   override val responseHandler = new ResponseHandler(collectorConfig, sink)
 
-  def receive = handleTimeouts orElse runRoute(collectorRoute)
+  def receive: Receive = handleTimeouts orElse runRoute(collectorRoute)
 
   def handleTimeouts: Receive = {
     case Timeout(_) => sender ! responseHandler.timeout
@@ -91,10 +91,10 @@ trait CollectorService extends HttpService {
             complete(
               responseHandler.cookie(
                 rawRequest match {
-                  case CollectorService.QuerystringExtractor(qs) => qs
-                  case _                                         => ""
+                  case CollectorService.QuerystringExtractor(qs) => Some(qs)
+                  case _                                         => Some("")
                 },
-                null,
+                None,
                 reqCookie,
                 userAgent,
                 host,
@@ -107,8 +107,8 @@ trait CollectorService extends HttpService {
             entity(as[String]) { body =>
               complete(
                 responseHandler.cookie(
-                  null,
-                  body,
+                  None,
+                  Some(body),
                   reqCookie,
                   userAgent,
                   host,
@@ -130,10 +130,10 @@ trait CollectorService extends HttpService {
         complete(
           responseHandler.cookie(
             rawRequest match {
-              case CollectorService.QuerystringExtractor(qs) => qs
-              case _                                         => ""
+              case CollectorService.QuerystringExtractor(qs) => Some(qs)
+              case _                                         => Some("")
             },
-            null,
+            None,
             reqCookie,
             userAgent,
             host,

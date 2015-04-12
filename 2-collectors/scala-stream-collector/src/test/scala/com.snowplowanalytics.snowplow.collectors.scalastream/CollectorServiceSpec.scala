@@ -160,8 +160,8 @@ collector {
       }
     }
     "store the expected event as a serialized Thrift object in the enabled sink" in {
-      val payloadData = "param1=val1&param2=val2"
-      val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
+      val payloadData = Some("param1=val1&param2=val2")
+      val storedRecordBytes = responseHandler.cookie(payloadData, None, None,
         None, "localhost", "127.0.0.1", new HttpRequest(), None, "/i", true)._2
 
       val storedEvent = new CollectorPayload
@@ -174,7 +174,7 @@ collector {
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
       storedEvent.collector must beEqualTo("ssc-0.3.0-test")
       storedEvent.path must beEqualTo("/i")
-      storedEvent.querystring must beEqualTo(payloadData)
+      storedEvent.querystring must beEqualTo(payloadData.get)
     }
     "report itself as healthy" in {
       CollectorGet("/health") ~> collectorRoute ~> check {

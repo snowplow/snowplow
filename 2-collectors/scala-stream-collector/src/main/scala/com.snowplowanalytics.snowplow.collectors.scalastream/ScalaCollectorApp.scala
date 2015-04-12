@@ -71,9 +71,6 @@ object ScalaCollector extends App {
   }
 
   // The handler actor replies to incoming HttpRequests.
-  // val handler = system.actorOf(
-  // Props(classOf[CollectorServiceActor], collectorConfig, sink),
-  // name = "handler")
   val handler = system.actorOf(CollectorHandler.props(collectorConfig, sink), name = "handler")
 
   IO(Http) ! Http.Bind(handler,
@@ -98,10 +95,15 @@ object Sink extends Enumeration {
   val Kinesis, Stdout, Test = Value
 }
 
+object CollectorConfig {
+  val DEFAULT_THREAD_POOL_SIZE = 10
+}
+
 // Rigidly load the configuration file here to error when
 // the collector process starts rather than later.
 class CollectorConfig(config: Config) {
   import Helper.RichConfig
+  import CollectorConfig._
 
   private val collector = config.getConfig("collector")
   val interface = collector.getString("interface")
@@ -137,7 +139,6 @@ class CollectorConfig(config: Config) {
 
   val threadpoolSize = kinesis.hasPath("thread-pool-size") match {
     case true => kinesis.getInt("thread-pool-size")
-    case _    => 10
+    case _    => DEFAULT_THREAD_POOL_SIZE
   }
 }
-
