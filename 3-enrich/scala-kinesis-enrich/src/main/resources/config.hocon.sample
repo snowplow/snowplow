@@ -9,7 +9,7 @@ enrich {
   # Sinks currently supported are:
   # 'kinesis' for writing enriched events to one Kinesis stream and invalid events to another.
   # 'stdouterr' for writing enriched events to stdout and invalid events to stderr.
-  #    Using `sbt assembly` and `java -jar` is recommended to disable sbt
+  #    Using "sbt assembly" and "java -jar" is recommended to disable sbt
   #    logging.
   sink = "kinesis"
 
@@ -54,8 +54,8 @@ enrich {
       }
     }
 
-    # `app-name` is used for a DynamoDB table to maintain stream state.
-    # You can set it automatically using: "SnowplowKinesisEnrich-${enrich.streams.in.raw}"
+    # "app-name" is used for a DynamoDB table to maintain stream state.
+    # You can set it automatically using: "SnowplowKinesisEnrich-$\\{enrich.streams.in.raw\\}"
     app-name: "{{enrichStreamsAppName}}"
 
     # LATEST: most recent data.

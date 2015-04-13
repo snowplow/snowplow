@@ -34,8 +34,8 @@ sink {
 
     region: "{{sinkKinesisRegion}}"
 
-    # `app-name` is used for a DynamoDB table to maintain stream state.
-    # You can set it automatically using: "SnowplowLzoS3Sink-${sink.kinesis.in.stream-name}"
+    # "app-name" is used for a DynamoDB table to maintain stream state.
+    # You can set it automatically using: "SnowplowLzoS3Sink-$\\{sink.kinesis.in.stream-name\\}"
     app-name: "{{sinkKinesisAppName}}"
   }
 
