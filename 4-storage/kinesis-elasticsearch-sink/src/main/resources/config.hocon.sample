@@ -45,11 +45,11 @@ sink {
 
     out {
       # Stream for enriched events which are rejected by Elasticsearch
-      stream-name: "SnowplowElasticsearchBad"
+      stream-name: "{{sinkKinesisOutStreamName}}"
       shards: 1
     }
 
-    region: "us-east-1"
+    region: "{{sinkElasticsearchRegion}}"
 
     # "app-name" is used for a DynamoDB table to maintain stream state.
     # You can set it automatically using: "SnowplowElasticsearchSink-$\\{connector.kinesis.in.stream-name\\}"
@@ -57,7 +57,7 @@ sink {
   }
 
   elasticsearch {
-    cluster-name: "elasticsearch"
+    cluster-name: "{{sinkElasticsearchClusterName}}"
     endpoint: "{{sinkElasticsearchEndpoint}}"
   }
 
