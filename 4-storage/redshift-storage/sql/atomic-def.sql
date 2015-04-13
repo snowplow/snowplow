@@ -165,7 +165,7 @@ CREATE TABLE atomic.events (
 	geo_timezone varchar(64) encode text255,           -- Added in 0.5.0
 
 	-- Click ID
-	mkt_clickid varchar(64) encode raw,                -- Added in 0.5.0
+	mkt_clickid varchar(128) encode raw,               -- Added in 0.6.0
 	mkt_network varchar(64) encode text255,            -- Added in 0.5.0
 
 	-- ETL tags
