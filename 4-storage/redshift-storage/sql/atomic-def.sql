@@ -9,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.5.0
+-- Version:     0.6.0
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep, Fred Blundun
@@ -39,9 +39,9 @@ CREATE TABLE atomic.events (
 	v_etl varchar(100) encode text255 not null,
 	-- User and visit
 	user_id varchar(255) encode runlength,
-	user_ipaddress varchar(45) encode runlength,       -- Increased from 19 in 0.5.0 to support IPv6 addresses
+	user_ipaddress varchar(45) encode runlength,
 	user_fingerprint varchar(50) encode runlength,
-	domain_userid varchar(36) encode runlength,        -- Increased from 16 in 0.5.0 to support UUIDs
+	domain_userid varchar(36) encode runlength,
 	domain_sessionidx smallint,
 	network_userid varchar(38),
 	-- Location
@@ -65,16 +65,16 @@ CREATE TABLE atomic.events (
 	page_urlscheme varchar(16) encode text255,
 	page_urlhost varchar(255) encode text255,
 	page_urlport int,
-	page_urlpath varchar(3000) encode text32k,         -- Increased from 1000 in 0.5.0
-	page_urlquery varchar(6000),                       -- Increased from 3000 in 0.5.0
-	page_urlfragment varchar(3000),                    -- Increased from 255 in 0.5.0
+	page_urlpath varchar(3000) encode text32k,
+	page_urlquery varchar(6000),
+	page_urlfragment varchar(3000),
 	-- Referrer URL components
 	refr_urlscheme varchar(16) encode text255,
 	refr_urlhost varchar(255) encode text255,
 	refr_urlport int,
-	refr_urlpath varchar(6000) encode text32k,         -- Increased from 3000 in 0.5.0
-	refr_urlquery varchar(6000),                       -- Increased from 3000 in 0.5.0
-	refr_urlfragment varchar(3000),                    -- Increased from 255 in 0.5.0
+	refr_urlpath varchar(6000) encode text32k,
+	refr_urlquery varchar(6000),
+	refr_urlfragment varchar(3000),
 	-- Referrer details
 	refr_medium varchar(25) encode text255,
 	refr_source varchar(50) encode text255,
@@ -86,15 +86,15 @@ CREATE TABLE atomic.events (
 	mkt_content varchar(500) encode raw,
 	mkt_campaign varchar(255) encode text32k,
 	-- Custom contexts
-	contexts varchar(15000) encode lzo,                -- Changed encoding from raw to lzo in 0.5.0 and increased size
+	contexts varchar(15000) encode lzo,
 	-- Custom structured event
-	se_category varchar(1000) encode text32k,          -- Increased from 255 in 0.5.0
-	se_action varchar(1000) encode text32k,            -- Increased from 255 in 0.5.0
-	se_label varchar(1000) encode text32k,             -- Increased from 255 in 0.5.0
-	se_property varchar(1000) encode text32k,          -- Increased from 255 in 0.5.0
+	se_category varchar(1000) encode text32k,
+	se_action varchar(1000) encode text32k,
+	se_label varchar(1000) encode text32k,
+	se_property varchar(1000) encode text32k,
 	se_value double precision,
 	-- Custom unstructured event
-	unstruct_event varchar(15000) encode lzo,          -- Changed encoding from raw to lzo in 0.5.0
+	unstruct_event varchar(15000) encode lzo,
 	-- Ecommerce
 	tr_orderid varchar(255) encode raw,
 	tr_affiliation varchar(255) encode text255,
@@ -153,41 +153,41 @@ CREATE TABLE atomic.events (
 	doc_height integer,
 
 	-- Currency
-	tr_currency char(3) encode bytedict,               -- Added in 0.5.0
-	tr_total_base dec(18, 2),                          -- Added in 0.5.0
-	tr_tax_base dec(18, 2),                            -- Added in 0.5.0
-	tr_shipping_base dec(18, 2),                       -- Added in 0.5.0
-	ti_currency char(3) encode bytedict,               -- Added in 0.5.0
-	ti_price_base dec(18, 2),                          -- Added in 0.5.0
-	base_currency char(3) encode bytedict,             -- Added in 0.5.0
+	tr_currency char(3) encode bytedict,
+	tr_total_base dec(18, 2),
+	tr_tax_base dec(18, 2),
+	tr_shipping_base dec(18, 2),
+	ti_currency char(3) encode bytedict,
+	ti_price_base dec(18, 2),
+	base_currency char(3) encode bytedict,
 
 	-- Geolocation
-	geo_timezone varchar(64) encode text255,           -- Added in 0.5.0
+	geo_timezone varchar(64) encode text255,
 
 	-- Click ID
-	mkt_clickid varchar(128) encode raw,               -- Added in 0.6.0
-	mkt_network varchar(64) encode text255,            -- Added in 0.5.0
+	mkt_clickid varchar(128) encode raw,               -- Increased from 64 in 0.6.0
+	mkt_network varchar(64) encode text255,
 
 	-- ETL tags
-	etl_tags varchar(500) encode lzo,                  -- Added in 0.5.0
+	etl_tags varchar(500) encode lzo,
 
 	-- Time event was sent
-	dvce_sent_tstamp timestamp,                        -- Added in 0.5.0
+	dvce_sent_tstamp timestamp,
 
 	-- Referer
-	refr_domain_userid varchar(36),                    -- Added in 0.5.0
-	refr_dvce_tstamp timestamp,                        -- Added in 0.5.0
+	refr_domain_userid varchar(36),
+	refr_dvce_tstamp timestamp,
 
 	-- Derived contexts
-	derived_contexts varchar(15000) encode lzo,        -- Added in 0.5.0
+	derived_contexts varchar(15000) encode lzo,
 
 	-- Session ID
-	domain_sessionid char(36) encode raw,              -- Added in 0.5.0
+	domain_sessionid char(36) encode raw,
 
 	-- Derived timestamp
-	derived_tstamp timestamp,                          -- Added in 0.5.0
+	derived_tstamp timestamp,
 
-	CONSTRAINT event_id_050_pk PRIMARY KEY(event_id)
+	CONSTRAINT event_id_060_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
 DISTKEY (event_id)
