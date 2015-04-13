@@ -31,3 +31,6 @@
 [submodule "1-trackers/php-tracker"]
 	path = 1-trackers/php-tracker
 	url = https://github.com/snowplow/snowplow-php-tracker.git
+[submodule "1-trackers/actionscript3-tracker"]
+	path = 1-trackers/actionscript3-tracker
+	url = https://github.com/snowplow/snowplow-actionscript3-tracker.git

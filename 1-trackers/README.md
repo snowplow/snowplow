@@ -10,6 +10,7 @@
 
 | Tracker                           | Description                                                    | Status           |
 |-----------------------------------|----------------------------------------------------------------|------------------|
+| [actionscript3-tracker] [as3]     | An event tracker for ActionScript 3.0 games, apps and widgets  | Beta             |
 | [android-tracker] [android]       | An event tracker for Android apps and games                    | Beta             |
 | [arduino-tracker] [arduino]       | An event tracker for IP-connected Arduino boards               | Production-ready |
 | [dotnet-tracker] [dotnet]         | An event tracker for the .NET platform                         | Beta             |
@@ -34,6 +35,8 @@ For other trackers (e.g. PHP, Go) and their approximate timelines, please see th
 
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/1-trackers.png
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
+
+[as3]: https://github.com/snowplow/snowplow-actionscript3-tracker
 [android]: https://github.com/snowplow/snowplow-android-tracker
 [arduino]: https://github.com/snowplow/snowplow-arduino-tracker
 [dotnet]: https://github.com/snowplow/snowplow-dotnet-tracker
