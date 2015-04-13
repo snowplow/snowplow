@@ -13,7 +13,7 @@ GEM
       thor (~> 0.19.1)
     diff-lcs (1.2.5)
     docile (1.1.5)
-    elasticity (4.0.4)
+    elasticity (4.0.5)
       fog (~> 1.0)
       nokogiri (~> 1.0)
       rest-client (~> 1.0)
@@ -147,6 +147,6 @@ DEPENDENCIES
   awrence (~> 0.1.0)
   contracts (~> 0.7)
   coveralls
-  elasticity (~> 4.0.4)
+  elasticity (~> 4.0.5)
   rspec (~> 2.14, >= 2.14.1)
   sluice (~> 0.2.1)
