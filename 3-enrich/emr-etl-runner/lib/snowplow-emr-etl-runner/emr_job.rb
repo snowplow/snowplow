@@ -64,7 +64,8 @@ module Snowplow
         @jobflow.ec2_key_name         = config[:emr][:ec2_key_name]
 
         @jobflow.region               = config[:emr][:region]
-        @jobflow.job_flow_role        = config[:emr][:jobflow_role]
+        @jobflow.job_flow_role        = config[:emr][:jobflow_role] # Note job_flow vs jobflow
+        @jobflow.service_role         = config[:emr][:service_role]
         @jobflow.placement            = config[:emr][:placement]
         unless config[:emr][:ec2_subnet_id].nil? # Nils placement so do last and conditionally
           @jobflow.ec2_subnet_id      = config[:emr][:ec2_subnet_id]
