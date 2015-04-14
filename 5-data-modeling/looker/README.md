@@ -35,6 +35,10 @@ The contents of this folder are as follows:
 * Blog post on [why Looker works so well with Snowplow] [looker-intro-post]
 * Recipes for analytics using Looker *(coming soon)*
 
+## Notes
+
+Note that the data models assume that the [`reference_data.iso_country-codes`] [geo-data] has been loaded into the datawarehouse, and that the Looker user has permissions on them.
+
 ## Copyright and license
 
 Looker Metadata Model for Snowplow is copyright 2012-2013 Snowplow Analytics Ltd.
@@ -57,3 +61,5 @@ limitations under the License.
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
 [roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
+[geo-data]: https://github.com/snowplow/snowplow/tree/master/5-data-modeling/reference-data/redshift/iso-country-codes.sql
+

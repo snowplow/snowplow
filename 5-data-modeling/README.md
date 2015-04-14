@@ -21,7 +21,7 @@ Technically, there are four ways frameworks you can use to generate perform your
 
 | Data modeling framework   | Description                                                     | Status           |
 |---------------------------|-----------------------------------------------------------------|------------------|
-| [sql-runner] [sql-runner] | Express your aggregation logic in SQL, and apply this to the event-level data in your SQL-datawarehouseusing [sql-runner] [sql-runner-app]    | Production-ready |
+| [sql-runner] [sql-runner]  | Express your aggregation logic in SQL, and apply this to the event-level data in your SQL-datawarehouseusing [sql-runner] [sql-runner-app]    | Production-ready |
 | hadoop                    | Express your aggregation logic in Scalding or Cascalog, and apply this to the event-level data as part of the EMR enrichment process | To be developed |
 | spark-streaming           | Express and run your aggregation logic using Spark streaming on Kinesis, as part of the real-time pipeline | To be developed |
 | [looker] [looker]         | Aggregate your event-level data in LookML                       | Production-ready |
