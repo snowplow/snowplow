@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,10 +9,10 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 #
-# Version: 2-0-0
+# Version: 3-0-0
 #
-# Author(s): Yali Sassoon
-# Copyright: Copyright (c) 2013-2014 Snowplow Analytics Ltd
+# Authors: Yali Sassoon, Christophe Bogaert
+# Copyright: Copyright (c) 2013-2015 Snowplow Analytics Ltd
 # License: Apache License Version 2.0
 
 - dashboard: traffic_pulse
@@ -114,7 +114,7 @@
       landing_page: sessions.landing_page_path
       referer_host: sessions.referer_url_host
     sorts: [sessions.count desc]
-    limit: 500
+    limit: 50
     width: 3
     height: 2
     legend_align:
@@ -133,7 +133,7 @@
       landing_page: sessions.landing_page_path
       referer_host: sessions.referer_url_host
     sorts: [sessions.count desc]
-    limit: 500
+    limit: 50
     width: 3
     height: 2
     legend_align:
@@ -145,7 +145,7 @@
     map: world
     base_view: sessions
     dimensions: [sessions.geography_country_three_letter_iso_code]
-    measures: [sessions.count, sessions.events_per_session]
+    measures: [sessions.count]
     listen:
       date: sessions.start_date
       referer_medium: sessions.referer_medium
@@ -318,7 +318,7 @@
       landing_page: sessions.landing_page_path
       referer_host: sessions.referer_url_host
     sorts: [sessions.count desc]
-    inner_radius: 75%
+    inner_radius: 50
     limit: 500
     width:
     height:
@@ -339,9 +339,9 @@
       landing_page: sessions.landing_page_path
       referer_host: sessions.referer_url_host
     sorts: [sessions.count desc]
-    inner_radius: 75%
+    inner_radius: 50
     limit: 500
-    width:
+    width: 3
     height:
     legend_align:
     sorts: [sessions.events_during_session_tiered]

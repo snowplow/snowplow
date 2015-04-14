@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,56 +9,35 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 #
-# Version: 2-0-0
+# Version: 3-0-0
 #
-# Author(s): Yali Sassoon
-# Copyright: Copyright (c) 2013-2014 Snowplow Analytics Ltd
+# Authors: Yali Sassoon, Christophe Bogaert
+# Copyright: Copyright (c) 2013-2015 Snowplow Analytics Ltd
 # License: Apache License Version 2.0
 
-- connection: snowplow
+- connection: snowplow_production
 
 - scoping: true                  # for backward compatibility
 - include: "*.view.lookml"       # include all the views
 - include: "*.dashboard.lookml"  # include all the dashboards
 
-- base_view: events  
+- explore: events
   joins:
-  - join: web_page
-    foreign_key: events.event_id
-  - join: ad_clicks
-    foreign_key: events.event_id
-    join_type: one_to_one
-  - join: ad_conversions
-    foreign_key: events.event_id
-    join_type: events.event_id
-  - join: ad_impressions
-    foreign_key: event_id
-    join_type: one_to_one
-  - join: link_click
-    foreign_key: events.event_id
-    join_type: one_to_one
-  - join: screen_view
-    foreign_key: events.event_id
-    join_type: one_to_one
   - join: sessions
     sql_on: |
       events.domain_userid = sessions.domain_userid AND
       events.domain_sessionidx = sessions.domain_sessionidx
+    relationship: many_to_one
   - join: visitors
     sql_on: |
       events.domain_userid = visitors.domain_userid
+    relationship: many_to_one
 
-- base_view: sessions
+- explore: sessions
   joins: 
   - join: visitors
     sql_on: |
       sessions.domain_userid = visitors.domain_userid
+    relationship: many_to_one
 
-- base_view: visitors
-
-- base_view: transactions
-
-- base_view: transaction_items
-  joins:
-  - join: transactions
-    sql_foreign_key: transaction_items.ti_orderid
+- explore: visitors

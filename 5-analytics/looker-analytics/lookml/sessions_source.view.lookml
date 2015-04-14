@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,46 +9,52 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 #
-# Version: 2-0-0
+# Version: 3-0-0
 #
-# Author(s): Yali Sassoon
-# Copyright: Copyright (c) 2013-2014 Snowplow Analytics Ltd
+# Authors: Yali Sassoon, Christophe Bogaert
+# Copyright: Copyright (c) 2013-2015 Snowplow Analytics Ltd
 # License: Apache License Version 2.0
 
 - view: sessions_source
   derived_table:
     sql: |
-      SELECT *
+      SELECT
+        *
       FROM (
-        SELECT
-          domain_userid,
-          domain_sessionidx,
-          mkt_source,
-          mkt_medium,
-          mkt_campaign,
-          mkt_term,
-          refr_source,
-          refr_medium,
-          refr_term,
-          refr_urlhost,
-          refr_urlpath,
-          dvce_tstamp,
-          RANK() OVER (PARTITION BY domain_userid, domain_sessionidx 
-            ORDER BY dvce_tstamp, mkt_source, mkt_medium, mkt_campaign, mkt_term, refr_source, refr_medium, refr_term, refr_urlhost, refr_urlpath) AS "rank"
-        FROM
-          atomic.events
-        WHERE
-          refr_medium != 'internal' -- Not an internal referer
+        SELECT -- Select campaign and referer data from the earliest row (using dvce_tstamp)
+          a.domain_userid,
+          a.domain_sessionidx,
+          a.mkt_source,
+          a.mkt_medium,
+          a.mkt_term,
+          a.mkt_content,
+          a.mkt_campaign,
+          a.refr_source,
+          a.refr_medium,
+          a.refr_term,
+          a.refr_urlhost,
+          a.refr_urlpath,
+          RANK() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx
+            ORDER BY a.mkt_source, a.mkt_medium, a.mkt_term, a.mkt_content, a.mkt_campaign, a.refr_source, a.refr_medium,
+            a.refr_term, a.refr_urlhost, a.refr_urlpath) AS rank
+        FROM atomic.events AS a
+        INNER JOIN ${sessions_basic.SQL_TABLE_NAME} AS b
+          ON  a.domain_userid = b.domain_userid
+          AND a.domain_sessionidx = b.domain_sessionidx
+          AND a.dvce_tstamp = b.dvce_min_tstamp
+        WHERE a.refr_medium != 'internal' -- Not an internal referer
           AND (
-            NOT(refr_medium IS NULL OR refr_medium = '') OR
-            NOT ((mkt_campaign IS NULL AND mkt_content IS NULL AND mkt_medium IS NULL AND mkt_source IS NULL AND mkt_term IS NULL)
-                    OR (mkt_campaign = '' AND mkt_content = '' AND mkt_medium = '' AND mkt_source = '' AND mkt_term = '')
+            NOT(a.refr_medium IS NULL OR a.refr_medium = '') OR
+            NOT (
+              (a.mkt_campaign IS NULL AND a.mkt_content IS NULL AND a.mkt_medium IS NULL AND a.mkt_source IS NULL AND a.mkt_term IS NULL) OR
+              (a.mkt_campaign = '' AND a.mkt_content = '' AND a.mkt_medium = '' AND a.mkt_source = '' AND a.mkt_term = '')
             )
-          ) -- Either the refr or mkt fields are set (not blank)
-        GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12) AS t
-      WHERE "rank" = 1 -- Only pull the first referer for each visit
+          )
+        GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12 -- Aggregate identital rows (that happen to have the same dvce_tstamp)
+      )
+      WHERE rank = 1 -- If there are different rows with the same dvce_tstamp, rank and pick the first row
     
-    sql_trigger_value: SELECT COUNT(*) FROM ${sessions_last_page.SQL_TABLE_NAME}
+    sql_trigger_value: SELECT COUNT(*) FROM ${sessions_exit_page.SQL_TABLE_NAME} # Generate this table after sessions_exit_page
     distkey: domain_userid
     sortkeys: [domain_userid, domain_sessionidx]
 
@@ -101,44 +107,46 @@
   - dimension: campaign_name
     sql: ${TABLE}.mkt_campaign
 
+  - dimension: campaign_content
+    sql: ${TABLE}.mkt_content
+
   # MEASURES #
 
   - measure: campaign_medium_count
     type: count_distinct
     sql: ${campaign_medium}
-    detail: detail*
+    drill_fields: detail*
     
   - measure: campaign_source_count
     type: count_distinct
     sql: ${campaign_source}
-    detail: detail*
+    drill_fields: detail*
     
   - measure: campaign_term_count
     type: count_distinct
     sql: ${campaign_term}
-    detail: detail*
+    drill_fields: detail*
       
   - measure: campaign_count
     type: count_distinct
     sql: ${campaign_name}
-    detail: detail*
+    drill_fields: detail*
     
   - measure: referer_medium_count
     type: count_distinct
     sql: ${referer_medium}
-    detail: detail*
+    drill_fields: detail*
     
   - measure: referer_source_count
     type: count_distinct
     sql: ${referer_source}
-    detail: detail*
+    drill_fields: detail*
     
   - measure: referer_term_count
     type: count_distinct
     sql: ${referer_term}
-    detail: detail*
+    drill_fields: detail*
     
   - measure: count
     type: count
-      
-    
+  

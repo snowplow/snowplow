@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,67 +9,68 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 #
-# Version: 2-0-1
+# Version: 3-0-0
 #
-# Author(s): Yali Sassoon
-# Copyright: Copyright (c) 2013-2014 Snowplow Analytics Ltd
+# Authors: Yali Sassoon, Christophe Bogaert
+# Copyright: Copyright (c) 2013-2015 Snowplow Analytics Ltd
 # License: Apache License Version 2.0
-
 
 - view: events
   derived_table:
     sql: |
       SELECT
-      domain_userid, 
-      domain_sessionidx,
-      event_id,
-      event,
-      collector_tstamp,
-      dvce_tstamp,
-      page_title,
-      page_urlscheme,
-      page_urlhost,
-      page_urlpath,
-      page_urlport,
-      page_urlquery,
-      page_urlfragment,
-      refr_medium,
-      refr_source,
-      refr_term,
-      refr_urlhost,
-      refr_urlpath,
-      pp_xoffset_max,
-      pp_xoffset_min,
-      pp_yoffset_max,
-      pp_yoffset_min,
-      se_category,
-      se_action,
-      se_label,
-      se_property,
-      se_value,
-      doc_height,
-      doc_width,
-      tr_orderid,
-      tr_affiliation,
-      tr_total,
-      tr_tax,
-      tr_city,
-      tr_state,
-      tr_country,
-      ti_orderid,
-      ti_category,
-      ti_sku,
-      ti_name,
-      ti_price,
-      ti_quantity
+        domain_userid, 
+        domain_sessionidx,
+        event_id,
+        event,
+        collector_tstamp,
+        dvce_tstamp,
+        page_title,
+        page_urlscheme,
+        page_urlhost,
+        page_urlpath,
+        page_urlport,
+        page_urlquery,
+        page_urlfragment,
+        refr_medium,
+        refr_source,
+        refr_term,
+        refr_urlhost,
+        refr_urlpath,
+        pp_xoffset_max,
+        pp_xoffset_min,
+        pp_yoffset_max,
+        pp_yoffset_min,
+        se_category,
+        se_action,
+        se_label,
+        se_property,
+        se_value,
+        doc_height,
+        doc_width,
+        tr_orderid,
+        tr_affiliation,
+        tr_total,
+        tr_tax,
+        tr_city,
+        tr_state,
+        tr_country,
+        ti_orderid,
+        ti_category,
+        ti_sku,
+        ti_name,
+        ti_price,
+        ti_quantity
       FROM atomic.events
       WHERE domain_userid IS NOT NULL
+      -- if dev  -- AND collector_tstamp > DATEADD (day, -2, GETDATE())
     
     sql_trigger_value: SELECT MAX(collector_tstamp) FROM atomic.events
     distkey: domain_userid
     sortkeys: [domain_userid, domain_sessionidx, collector_tstamp]
-    
+  
   fields:
+
   # DIMENSIONS #
   
   - dimension: event_id
@@ -78,7 +79,7 @@
   
   - dimension: event_type
     sql: ${TABLE}.event
-    
+  
   - dimension: timestamp
     sql: ${TABLE}.collector_tstamp
 
@@ -196,94 +197,34 @@
   - dimension: page_width
     type: int
     sql: ${TABLE}.doc_width
-    
-  # Transaction fields #
   
-  - dimension: transaction_order_id
-    sql: ${TABLE}.tr_orderid
-    
-  - dimension: transaction_affiliation
-    sql: ${TABLE}.tr_affiliation
-    
-  - dimension: transaction_value
-    type: number
-    decimals: 2
-    sql: ${TABLE}.tr_total
-    
-  - dimension: transaction_tax
-    type: number
-    decimals: 2
-    sql: ${TABLE}.tr_tax
-    
-  - dimension: transaction_address_city
-    sql: ${TABLE}.tr_city
-    
-  - dimension: transaction_address_state
-    sql: ${TABLE}.tr_state
-    
-  - dimension: transaction_address_country
-    sql: ${TABLE}.tr_country
-  
-  - dimension: transaction_item_order_id
-    sql: ${TABLE}.ti_orderid
-    
-  - dimension: transaction_item_category
-    sql: ${TABLE}.ti_category
-    
-  - dimension: transaction_item_sku
-    sql: ${TABLE}.ti_sku
-    
-  - dimension: transaction_item_name
-    sql: ${TABLE}.ti_name
-    
-  - dimension: transaction_item_price
-    type: number
-    decimals: 2
-    sql: ${TABLE}.ti_price
-    
-  - dimension: transaction_item_quantity
-    type: int
-    sql: ${TABLE}.ti_quantity
-    
-  - dimension: transaction_items_list
-    sql: ${transaction_order_id}
-    html: |
-      <a href=events?fields=events.transaction_items_detail*&f[events.transaction_item_order_id]={{value}}>Transaction Items</a>
-
-# MEASURES #
+  # MEASURES #
 
   - measure: count
     type: count
-    detail: event_detail*
+    drill_fields: event_detail*
 
   - measure: page_pings_count
     type: count
-    detail: event_detail*
+    drill_fields: event_detail*
     filters:
       event_type: page_ping
       
   - measure: page_views_count
     type: count
-    detail: page_views_detail*
+    drill_fields: page_views_detail*
     filters:
       event_type: page_view
-      
-  - measure: transactions_count
-    type: count_distinct
-    sql: ${transaction_order_id}
-    filters:
-      event_type: transaction
-    detail: transaction_detail*
 
   - measure: distinct_pages_viewed_count
     type: count_distinct
-    detail: page_views_detail*
+    drill_fields: page_views_detail*
     sql: ${page_url_path}
     
   - measure: sessions_count
     type: count_distinct
     sql: ${session_id}
-    detail: detail*
+    drill_fields: detail*
     
   - measure: page_pings_per_session
     type: number
@@ -294,21 +235,11 @@
     type: number
     decimals: 2
     sql: NULLIF(${page_pings_count},0)/NULLIF(${visitors_count},0)::REAL
-      
-  - measure: transactions_per_session
-    type: number
-    decimals: 3
-    sql: NULLIF(${transactions_count},0)/NULLIF(${sessions_count},0)::REAL
-    
-  - measure: transactions_per_visitor
-    type: number
-    decimals: 2
-    sql: NULLIF(${transactions_count},0)/NULLIF(${visitors_count},0)::REAL
 
   - measure: visitors_count
     type: count_distinct
     sql: ${user_id}
-    detail: visitors_detail
+    drill_fields: visitors_detail
     hidden: true  # Not to be shown in the UI (in UI only show visitors count for visitors table)
     
   - measure: events_per_session
@@ -357,20 +288,13 @@
     type: number
     decimals: 2
     sql: ${approx_user_usage_in_minutes}/NULLIF(${sessions_count}, 0)::REAL
+  
+  # DRILL FIELDS#
 
-  - measure: transactions_value
-    type: sum
-    sql: ${transaction_value}
-    filters:
-      event_type: transaction
-  
-  
-  # ----- Detail ------
   sets:
     event_detail:
       - session_index
       - event_type
-      - timestamp_time
       - device_timestamp
       - page_url_host
       - page_url_path
@@ -378,52 +302,22 @@
     page_views_detail:
       - page_url_host
       - page_url_path
-      - timestamp_time
       - device_timestamp
     
-    visit_detail:
+    session_detail:
       - user_id
-      - domain_session_index
-      - sessions.timestamp_time
-      - source.refr_url_host
-      - source.refr_url_path
-      - landing_page.landing_page
-      - sessions.visit_duration_seconds
+      - session_index
+      - sessions.referer_url_host
+      - sessions.referer_url_path
+      - sessions.landing_page
+      - sessions.session_duration_seconds
       - count
-      - sessions.distinct_pages_viewed
-      - transactions_count
-      - sessions.history 
-      
-    visitors_detail:
-      - user_id
-      - visitors.first_touch_time
-      - source_first_visit.refr_url_host
-      - source_first_visit.refr_url_path
-      - landing_page_first_visit.page_url_path
-      - visitors.last_touch_time
-      - visitors.lifetime_sessions
-      - visitors.visit_history
-      - visitors.lifetime_distinct_pages_viewed
-      - visitors.lifetime_events
-      - visitors.event_history
-      - transactions_count
-      - visitors.history
-
-    transaction_detail:
-      - transaction_order_id
-      - timestamp_time
-      - user_id
-      - domain_session_index
-      - transaction_value
-      - transaction_address_city
-      - transaction_address_state
-      - transaction_address_country
-      - transaction_items_list
     
-    transaction_items_detail:
-      - transaction_item_order_id
-      - timestamp_time
-      - transaction_item_sku
-      - transaction_item_name
-      - transaction_item_price
-      - transaction_item_quantity
+    visitor_detail:
+      - user_id
+      - visitors.first_touch
+      - visitor.referer_url_host
+      - visitors.referer_url_path
+      - visitors.last_touch
+      - visitors.number_of_sessions
+      - visitors.event_stream
