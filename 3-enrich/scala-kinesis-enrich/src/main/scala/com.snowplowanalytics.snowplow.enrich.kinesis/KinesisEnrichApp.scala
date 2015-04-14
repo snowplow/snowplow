@@ -181,7 +181,7 @@ object KinesisEnrichApp extends App {
 
   /**
    * Fetch configuration from DynamoDB
-   * Assumes the primary key is "id" and the configuration's key is "JSON"
+   * Assumes the primary key is "id" and the configuration's key is "json"
    *
    * @param region DynamoDB region, e.g. "eu-west-1"
    * @param table
@@ -193,7 +193,7 @@ object KinesisEnrichApp extends App {
     dynamoDBClient.setEndpoint(s"https://dynamodb.${region}.amazonaws.com")
     val dynamoDB = new DynamoDB(dynamoDBClient)
     val item = dynamoDB.getTable(table).getItem("id", key)
-    item.getString("JSON")
+    item.getString("json")
   }
 
   /**
@@ -243,7 +243,7 @@ object KinesisEnrichApp extends App {
         case Some(value) if value.startsWith(partialKey) => true
         case _ => false
       }
-    } flatMap(_.get("JSON"))
+    } flatMap(_.get("json"))
   }
 }
 
