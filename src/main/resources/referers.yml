@@ -847,7 +847,7 @@ search:
       - dmoz.org
       - editors.dmoz.org
 
-  DuckDuckGoL:
+  DuckDuckGo:
     parameters:
       - q
     domains:

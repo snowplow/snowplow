@@ -1561,14 +1561,6 @@
                 "Keywords"
             ]
         }, 
-        "DuckDuckGoL": {
-            "domains": [
-                "duckduckgo.com"
-            ], 
-            "parameters": [
-                "q"
-            ]
-        }, 
         "Poisk.ru": {
             "domains": [
                 "www.plazoo.com"
@@ -2550,11 +2542,9 @@
                 "q"
             ]
         }, 
-        "T-Online": {
+        "DuckDuckGo": {
             "domains": [
-                "suche.t-online.de", 
-                "brisbane.t-online.de", 
-                "navigationshilfe.t-online.de"
+                "duckduckgo.com"
             ], 
             "parameters": [
                 "q"
@@ -3522,6 +3512,16 @@
         "Alice Adsl": {
             "domains": [
                 "rechercher.aliceadsl.fr"
+            ], 
+            "parameters": [
+                "q"
+            ]
+        }, 
+        "T-Online": {
+            "domains": [
+                "suche.t-online.de", 
+                "brisbane.t-online.de", 
+                "navigationshilfe.t-online.de"
             ], 
             "parameters": [
                 "q"
