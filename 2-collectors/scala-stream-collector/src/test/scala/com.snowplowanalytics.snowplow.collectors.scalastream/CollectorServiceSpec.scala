@@ -78,12 +78,12 @@ collector {
         region: "us-east-1"
         name: "snowplow_collector_example"
       }
-      buffer: {
+      buffer {
         byte-limit: 4000000 # 4MB
         record-limit: 500 # 500 records
         time-limit: 60000 # 1 minute
       }
-      backoffPolicy: {
+      backoffPolicy {
         minBackoff: 3000 # 3 seconds
         maxBackoff: 600000 # 5 minutes
       }
