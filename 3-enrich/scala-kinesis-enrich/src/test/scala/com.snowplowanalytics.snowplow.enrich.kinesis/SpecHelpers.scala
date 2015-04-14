@@ -226,7 +226,7 @@ object SpecHelpers {
     val config = """
 enrich {
   source = "test"
-  sink= "test"
+  sink = "test"
 
   aws {
     access-key: "cpf"
@@ -234,7 +234,7 @@ enrich {
   }
 
   streams {
-    in: {
+    in {
       raw: "SnowplowRaw"
 
       buffer {
@@ -243,12 +243,12 @@ enrich {
         time-limit: 60000 # 1 minute
       }
     }
-    out: {
+    out {
       enriched: "SnowplowEnriched"
       bad: "SnowplowBad" # Not used until #463
 
       # Minimum and maximum backoff periods
-      backoffPolicy: {
+      backoffPolicy {
         minBackoff: 3000 # 3 seconds
         maxBackoff: 600000 # 5 minutes
       }
@@ -258,11 +258,11 @@ enrich {
     region: "us-east-1"
   }
   enrichments {
-    geo_ip: {
+    geo_ip {
       enabled: true # false not yet suported
       maxmind_file: "/maxmind/GeoLiteCity.dat" # SBT auto-downloads into resource_managed/test
     }
-    anon_ip: {
+    anon_ip {
       enabled: true
       anon_octets: 1 # Or 2, 3 or 4. 0 is same as enabled: false
     }
