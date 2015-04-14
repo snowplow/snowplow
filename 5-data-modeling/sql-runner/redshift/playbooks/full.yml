@@ -1,3 +1,11 @@
+:targets:
+  - :name:     # Insert your own name to identify the database
+    :type:     redshift
+    :host:     # Insert Redshfit host
+    :database: # Insert database name
+    :port:     # Insert database port
+    :username: # Insert username with relevant credentials to run the below queries
+    :password: # Insert user password
 :steps:
   - :name: 02-events-enriched
     :queries:

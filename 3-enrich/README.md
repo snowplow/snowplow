@@ -24,7 +24,7 @@ The **Enrich** process takes raw Snowplow events logged by a [Collector] [collec
 | ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
 | [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
 
-[architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/3-enrich.png
+[architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-architecture-3-enrichment.png
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
 [storage]: https://github.com/snowplow/snowplow/tree/master/4-storage
 [e1]: ./scala-hadoop-enrich/

@@ -33,7 +33,7 @@ For other trackers (e.g. PHP, Go) and their approximate timelines, please see th
 | ![i1] [techdocs-image]       | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
 | [Technical Docs] [tech-docs] | [Setup Guide] [setup] | _coming soon_                        |
 
-[architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/1-trackers.png
+[architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-architecture-1a-trackers.png
 [collectors]: https://github.com/snowplow/snowplow/tree/master/2-collectors
 
 [as3]: https://github.com/snowplow/snowplow-actionscript3-tracker

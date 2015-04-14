@@ -4,17 +4,9 @@
 
 ## Overview
 
-**Analytics** are performed on the Snowplow events held in [Storage] [storage], to answer business questions.
+There is a wealth of analysis you can perform on Snowplow data, either once it's in [Storage] [storage], or even in-stream. (For users of the real-time pipeline.)
 
-## Available analytics
-
-| ETL                       | Description                                                     | Status           |
-|---------------------------|-----------------------------------------------------------------|------------------|
-| [looker-analytics] [e1]   | Snowplow meta model for analysis using [Looker] [looker]        | Production-ready |
-| [postgres-analytics] [e2] | Cubes and recipes for Snowplow events stored in Postgres        | Production-ready |
-| [redshift-analytics] [e3] | Cubes and recipes for Snowplow events stored in Amazon Redshift | Production-ready |
-
-**See also: the [Snowplow Analytics Cookbook] [cookbook] on the website.**
+This repository contains some example [recipes] [recipes]. For more information on analysing Snowplow data, please see the [Analytics Cookbook] [cookbook].
 
 ## Documentation
 
@@ -23,10 +15,11 @@
 | ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
 | [Analytics Cookbook] [cookbook] | [Setup Guide] [setup] | _coming soon_                        |
 
-[architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/5-analytics.png
+[architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-architecture-6-analytics.png
 [storage]: https://github.com/snowplow/snowplow/tree/master/4-storage
 [setup]: https://github.com/snowplow/snowplow/wiki/getting-started-analysing-SnowPlow-data
 [cookbook]: http://snowplowanalytics.com/analytics/index.html
+[recipes]: https://github.com/snowplow/snowplow/tree/master/6-analytics/recipes
 
 [looker]: http://looker.com/
 
