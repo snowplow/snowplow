@@ -104,7 +104,10 @@ object SinkApp extends App {
 
     val s3 = connector.getConfig("s3")
     val s3Region = s3.getString("region")
-    val s3Endpoint = s"https://s3-$s3Region.amazonaws.com"
+    val s3Endpoint = s3Region match {
+      case "us-east-1" => "https://s3.amazonaws.com"
+      case _ => s"https://s3-$s3Region.amazonaws.com"
+    }
     val bucket = s3.getString("bucket")
 
     val buffer = connector.getConfig("buffer")
