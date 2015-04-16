@@ -1,3 +1,27 @@
+Release 64 Palila (2015-04-16)
+------------------------------
+Common: added top-level data modeling folder (#1523)
+Common: updated root README to include data modeling (#1612)
+ActionScript 3.0 Tracker: added git submodule (#1546)
+EmrEtlRunner: bumped to 0.14.0
+EmrEtlRunner: bumped Elasticity to 4.0.5 (#758)
+EmrEtlRunner: added support for specifying EMR service role (#1595)
+EmrEtlRunner: added support for specifying EMR jobflow role (#1232)
+Scala Common Enrich: bumped to 0.13.1
+Scala Common Enrich: prevented UaParserEnrichment from creating a new Parser on every event (#1616)
+Scala Hadoop Enrich: bumped to 0.14.1
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.13.1 (#1617)
+Redshift: increased mkt_clickid to varchar(128) (#1605)
+Redshift: added migration script for 0.5.0 to 0.6.0 (#1606)
+Redshift: removed legacy cubes (#1613)
+Postgres: increased mkt_clickid to varchar(128) (#1603)
+Postgres: added migration script for 0.4.0 to 0.5.0 (#1604)
+Postgres: removed legacy cubes (#1614)
+Postgres: added user_id field to migration script for 0.3.0 to 0.4.0 (#1620)
+Data Modeling: updated reference data.iso_country_codes so DISTSTYLE is ALL (#1393)
+SQL Runner: added basic sessions / visits / page views model that can be pivoted on directly from any BI tool (#1273)
+Looker: simplified LookML model and made it consistent with Redshift data models (#1522)
+
 Release 63 Red-Cheeked Cordon-Bleu (2015-04-02)
 -----------------------------------------------
 Common: updated kinesis push to remove sub-folders from zipfile (#1378)
