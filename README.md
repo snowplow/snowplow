@@ -11,23 +11,24 @@ Snowplow is an enterprise-strength marketing and product analytics platform. It 
 
 1. Identifies your users, and tracks the way they engage with your website or application
 2. Stores your users' behavioural data in a scalable "event data warehouse" you control: in Amazon S3 and (optionally) Amazon Redshift or Postgres
-3. Lets you leverage the biggest range of tools to analyse that data incl. big data toolset (e.g. Hive, Pig, Mahout) via EMR or more traditional tools e.g. Tableau, R, Chartio to analyse that behavioural data
+3. Lets you leverage the biggest range of tools to analyze that data, including big data tools (e.g. Hive, Pig, Mahout) via EMR or more traditional tools e.g. Tableau, R, Looker, Chartio to analyze that behavioural data
 
 **To find out more, please check out the [Snowplow website] [website] and the [Snowplow wiki] [wiki].**
 
 ## Snowplow technology 101
 
-The repository structure follows the conceptual architecture of Snowplow, which consists of five loosely coupled stages:
+The repository structure follows the conceptual architecture of Snowplow, which consists of six loosely-coupled sub-systems connected by five standardized data protocols/formats:
 
 ![architecture] [architecture-image]
 
-To briefly explain these five sub-systems:
+To briefly explain these six sub-systems:
 
 * **Trackers** fire Snowplow events. Currently we have 12 trackers, covering web, mobile, desktop, server and IoT
 * **Collectors** receive Snowplow events from trackers. Currently we have three different event collectors, sinking events either to Amazon S3 or Amazon Kinesis
 * **Enrich** cleans up the raw Snowplow events, enriches them and puts them into storage. Currently we have a Hadoop-based enrichment process, and a Kinesis-based process
 * **Storage** is where the Snowplow events live. Currently we store the Snowplow events in a flatfile structure on S3, and in the Redshift and Postgres databases
-* **Analytics** are performed on the Snowplow events. Currently we have a set of recipes and cubes as SQL views for both Redshift and Postgres, and an online cookbook of ad hoc analyses that work with Redshift, Postgres and Hive. We also have data models for [Looker] [looker] in LookML
+* **Data modeling** is where event-level data is joined with other data sets and aggregated into smaller data sets, and business logic is applied. This produces a clean set of tables which make it easier to perform analysis on the data. We have data models for Redshift and [Looker] [looker]
+* **Analytics** are performed on the Snowplow events or on the aggregate tables. We currently have an online cookbook of ad hoc analyses that work with Redshift, Postgres and Hive. We also have data models for [Looker] [looker] in LookML
 
 **For more information on the current Snowplow architecture, please see the [Technical architecture] [architecture-doc]**.
 
@@ -51,7 +52,7 @@ guest$ sbt test
 
 ## Contributing
 
-We're committed to a loosely-coupled architecture for Snowplow and would love to get your contributions within each of the five sub-systems.
+We're committed to a loosely-coupled architecture for Snowplow and would love to get your contributions within each of the six sub-systems.
 
 If you would like help implementing a new tracker, adding an additional enrichment or loading Snowplow events into an alternative database, check out our **[Contributing] [contributing]** page on the wiki!
 
@@ -75,7 +76,7 @@ limitations under the License.
 [travis-image]: https://travis-ci.org/snowplow/snowplow.png?branch=master
 [travis]: http://travis-ci.org/snowplow/snowplow
 
-[release-image]: http://img.shields.io/badge/release-63_Red--Cheeked_Cordon--Bleu-blue.svg?style=flat
+[release-image]: http://img.shields.io/badge/release-64_Palila-blue.svg?style=flat
 [releases]: https://github.com/snowplow/snowplow/releases
 
 [license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
@@ -83,7 +84,7 @@ limitations under the License.
 
 [website]: http://snowplowanalytics.com
 [wiki]: https://github.com/snowplow/snowplow/wiki
-[architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/technical-architecture.png
+[architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-architecture.png
 [architecture-doc]: https://github.com/snowplow/snowplow/wiki/Technical-architecture
 [talk-to-us]: https://github.com/snowplow/snowplow/wiki/Talk-to-us
 [contributing]: https://github.com/snowplow/snowplow/wiki/Contributing

@@ -24,7 +24,7 @@ A Collector captures and logs these events in their raw form, ready to be proces
 | ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
 | [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
 
-[architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/2-collectors.png
+[architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-architecture-2-collectors.png
 [trackers]: https://github.com/snowplow/snowplow/tree/master/1-trackers
 [enrich]: https://github.com/snowplow/snowplow/tree/master/3-enrich
 [c1]: https://github.com/snowplow/snowplow/tree/master/2-collectors/cloudfront-collector

@@ -62,6 +62,8 @@ case object UaParserEnrichment extends Enrichment {
 
   val version = new DefaultArtifactVersion("0.1.0")
 
+  val uaParser = new Parser()
+
   /*
   * Adds a period in front of a not-null version element
   */
@@ -109,8 +111,6 @@ case object UaParserEnrichment extends Enrichment {
   *         Scalaz Validation
   */
   def extractUserAgent(useragent: String): Validation[String, JsonAST.JObject] = {
-
-            val uaParser = new Parser()
 
             val c = try {
               uaParser.parse(useragent)
