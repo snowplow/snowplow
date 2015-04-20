@@ -59,7 +59,17 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
 
   import context.dispatcher
 
-  val Collector = s"${generated.Settings.shortName}-${generated.Settings.version}-" + config.sinkEnabled.toString.toLowerCase
+  val Collector = s"${generated.Settings.shortName}-${generated.Settings.version}-" + config.sinkEnabled
+
+  private def createPayload(ip: String) = {
+    val timestamp: Long = System.currentTimeMillis
+    new CollectorPayload(
+      "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
+      ip,
+      timestamp,
+      "UTF-8",
+      Collector)
+  }
 
   // When `/i` is requested, this is called and stores an event in the
   // Kinisis sink and returns an invisible pixel with a cookie.
@@ -75,15 +85,7 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
     }
 
     // Construct an event object from the request.
-    val timestamp: Long = System.currentTimeMillis
-
-    val event = new CollectorPayload(
-      "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
-      ip,
-      timestamp,
-      "UTF-8",
-      Collector)
-
+    val event = createPayload(ip)
     event.path = path
     event.querystring = queryParams.getOrElse("") //queryParams.getOrElse(null)
     event.body = body.getOrElse("") //body.getOrElse(null)
@@ -99,10 +101,14 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
 
     // Set the content type
     request.headers.find(_ match { case `Content-Type`(ct) => true; case _ => false }) foreach {
-
       // toLowerCase called because Spray seems to convert "utf" to "UTF"
       ct => event.contentType = ct.value.toLowerCase
     }
+
+    // for (ct <- request.headers      .find(_ match { case `Content-Type`(ct) => true; case _ => false })
+    // yield ct.value.toLowerCase
+
+    // event.contentTypes = request.headers.filter(_ match { case `Content-Type`(ct) => true; case _ => false })
 
     // Only the test sink responds with the serialized object.
     val sinkResponse = sink.storeRawEvent(event, ip).get

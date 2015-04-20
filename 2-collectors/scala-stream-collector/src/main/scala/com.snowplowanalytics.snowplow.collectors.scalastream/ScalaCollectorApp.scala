@@ -35,10 +35,9 @@ import org.slf4j.LoggerFactory
 import sinks._
 
 // Main entry point of the Scala collector.
-object ScalaCollector extends App {
+object ScalaCollector extends App with CollectorConfig {
   lazy val log = LoggerFactory.getLogger(getClass())
   import log.{ error, debug, info, trace }
-
   import ArgotConverters._ // Argument specifications
 
   val parser = new ArgotParser(
@@ -50,7 +49,7 @@ object ScalaCollector extends App {
       generated.Settings.organization)))
 
   // Mandatory config argument
-  val config = parser.option[Config](List("config"), "filename",
+  val configArg = parser.option[Config](List("config"), "filename",
     "Configuration file.") { (c, opt) =>
       val file = new File(c)
       if (file.exists) {
@@ -62,21 +61,19 @@ object ScalaCollector extends App {
     }
   parser.parse(args)
 
-  val rawConf = config.value.getOrElse(throw new RuntimeException("--config option must be provided"))
+  val rawConf = configArg.value.getOrElse(throw new RuntimeException("--config option must be provided"))
   implicit val system = ActorSystem.create("scala-stream-collector", rawConf)
-  val collectorConfig = new CollectorConfig(rawConf)
-  val sink = collectorConfig.sinkEnabled match {
-    case Sink.Kinesis => new KinesisSink(collectorConfig)
-    case Sink.Stdout  => new StdoutSink
-  }
+  override val config = rawConf
 
   // The handler actor replies to incoming HttpRequests.
-  val handler = system.actorOf(CollectorHandler.props(collectorConfig, sink), name = "handler")
+  val handler = system.actorOf(CollectorHandler.props(this, sink), name = "handler")
 
-  IO(Http) ! Http.Bind(handler,
-    interface = collectorConfig.interface, port = collectorConfig.port)
+  IO(Http) ! Http.Bind(handler, interface, port)
 }
-// Return Options from the configuration.
+
+/*
+ Return Options from the configuration.
+ */
 object Helper {
   implicit class RichConfig(val underlying: Config) extends AnyVal {
     def getOptionalString(path: String): Option[String] = try {
@@ -87,56 +84,55 @@ object Helper {
   }
 }
 
-// Instead of comparing strings and validating every time
-// the sink is accessed, validate the string here and
-// store this enumeration.
-object Sink extends Enumeration {
-  type Sink = Value
-  val Kinesis, Stdout, Test = Value
-}
-
 object CollectorConfig {
   val DEFAULT_THREAD_POOL_SIZE = 10
+  def endpoint(region: String): String = s"https://kinesis.${region}.amazonaws.com"
 }
 
-// Rigidly load the configuration file here to error when
-// the collector process starts rather than later.
-class CollectorConfig(config: Config) {
+/*
+ Rigidly load the configuration file here to error when
+ the collector process starts rather than later.
+*/
+trait CollectorConfig {
   import Helper.RichConfig
   import CollectorConfig._
 
+  protected val config: Config
+
   private val collector = config.getConfig("collector")
-  val interface = collector.getString("interface")
-  val port = collector.getInt("port")
-  val production = collector.getBoolean("production")
+  protected[scalastream] val interface = collector.getString("interface")
+  protected[scalastream] val port = collector.getInt("port")
+  protected[scalastream] val production = collector.getBoolean("production")
 
   private val p3p = collector.getConfig("p3p")
-  val p3pPolicyRef = p3p.getString("policyref")
-  val p3pCP = p3p.getString("CP")
+  protected[scalastream] val p3pPolicyRef = p3p.getString("policyref")
+  protected[scalastream] val p3pCP = p3p.getString("CP")
 
   private val cookie = collector.getConfig("cookie")
-  val cookieExpiration = cookie.getMilliseconds("expiration")
-  var cookieDomain = cookie.getOptionalString("domain")
+  protected[scalastream] val cookieExpiration = cookie.getMilliseconds("expiration")
+  protected[scalastream] val cookieDomain = cookie.getOptionalString("domain")
 
-  private val sink = collector.getConfig("sink")
-  // TODO: either change this to ADTs or switch to withName generation
-  val sinkEnabled = sink.getString("enabled") match {
-    case "kinesis" => Sink.Kinesis
-    case "stdout"  => Sink.Stdout
-    case "test"    => Sink.Test
-    case _         => throw new RuntimeException("collector.sink.enabled unknown.")
+  private val sinkConfig = collector.getConfig("sink")
+  val sinkEnabled = sinkConfig.getString("enabled").toLowerCase
+
+  protected[scalastream] val sink = sinkEnabled match {
+    case "kinesis" => new KinesisSink(this)
+    case "stdout"  => new StdoutSink
+    case "test"    => new TestSink
+    case _         => throw new RuntimeException("collector.sink.enabled.unknown.")
   }
 
-  private val kinesis = sink.getConfig("kinesis")
+  private val kinesis = sinkConfig.getConfig("kinesis")
   private val aws = kinesis.getConfig("aws")
-  val awsAccessKey = aws.getString("access-key")
-  val awsSecretKey = aws.getString("secret-key")
   private val stream = kinesis.getConfig("stream")
+  private val streamRegion = stream.getString("region")
+
+  //public api
+  val awsAccessKey = aws.getString("access-key")
+  val awsSecretKey = aws.getString("secret-key") // public api
   val streamName = stream.getString("name")
   val streamSize = stream.getInt("size")
-  private val streamRegion = stream.getString("region")
-  val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
-
+  val streamEndpoint = endpoint(streamRegion)
   val threadpoolSize = kinesis.hasPath("thread-pool-size") match {
     case true => kinesis.getInt("thread-pool-size")
     case _    => DEFAULT_THREAD_POOL_SIZE

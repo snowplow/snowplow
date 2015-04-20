@@ -81,7 +81,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
   // private implicit val kinesis = createKinesisClient
   private implicit val kinesis = createKinesisClient match {
     case Success(client) => client
-    case Failure(err)    => throw new Exception(err) // do something with a failure
+    case Failure(err)    => throw new Exception(err) // do something with the failure
   }
 
   // The output stream for enriched events.
