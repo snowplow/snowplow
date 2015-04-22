@@ -86,7 +86,7 @@ object Helper {
 
 object CollectorConfig {
   val DEFAULT_THREAD_POOL_SIZE = 10
-  def endpoint(region: String) = s"https://kinesis.$region.amazonaws.com"
+  def endpoint(region: String): String = s"https://kinesis.$region.amazonaws.com"
 }
 
 /*
