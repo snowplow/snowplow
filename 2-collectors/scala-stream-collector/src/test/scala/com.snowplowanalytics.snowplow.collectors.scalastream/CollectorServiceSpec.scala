@@ -47,8 +47,14 @@ import org.apache.thrift.TDeserializer
 import sinks._
 import CollectorPayload.thrift.model1.CollectorPayload
 
-class CollectorServiceSpec extends Specification with Specs2RouteTest with AnyMatchers with CollectorService {
-  val testConf: Config = ConfigFactory.parseString("""
+class CollectorServiceSpec extends Specification
+    with Specs2RouteTest
+    with AnyMatchers
+    with CollectorConfig
+    with CollectorService {
+
+  val testConf: Config =
+    ConfigFactory.parseString("""
 collector {
   interface = "0.0.0.0"
   port = 8080
@@ -81,11 +87,14 @@ collector {
     }
   }
 }
-""")
-  val collectorConfig = new CollectorConfig(testConf)
-  val sink = new TestSink
-  def actorRefFactory = system
-  override val responseHandler = new ResponseHandler(collectorConfig, sink)
+""".stripMargin)
+
+  implicit def actorRefFactory = system
+
+  override val config = testConf
+  override val responseHandler = new ResponseHandler(this, new TestSink)
+
+  def before = println(s"Config: $config")
 
   // val collectorService = new CollectorService(responseHandler, system)
   val thriftDeserializer = new TDeserializer
@@ -124,10 +133,10 @@ collector {
 
         httpCookie.name must be("sp")
         httpCookie.domain must beSome
-        httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
+        httpCookie.domain.get must be(cookieDomain.get)
         httpCookie.expires must beSome
         val expiration = httpCookie.expires.get
-        val offset = expiration.clicks - collectorConfig.cookieExpiration -
+        val offset = expiration.clicks - cookieExpiration -
           DateTime.now.clicks
         offset.asInstanceOf[Int] must beCloseTo(0, 2000) // 1000 ms window.
       }
@@ -153,8 +162,8 @@ collector {
         p3pHeaders.size must beEqualTo(1)
         val p3pHeader = p3pHeaders(0)
 
-        val policyRef = collectorConfig.p3pPolicyRef
-        val CP = collectorConfig.p3pCP
+        val policyRef = p3pPolicyRef
+        val CP = p3pCP
         p3pHeader.value must beEqualTo(
           "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP))
       }

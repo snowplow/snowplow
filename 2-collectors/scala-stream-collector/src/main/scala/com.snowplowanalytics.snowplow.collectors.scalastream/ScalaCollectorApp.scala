@@ -86,7 +86,7 @@ object Helper {
 
 object CollectorConfig {
   val DEFAULT_THREAD_POOL_SIZE = 10
-  def endpoint(region: String): String = s"https://kinesis.${region}.amazonaws.com"
+  def endpoint(region: String) = s"https://kinesis.$region.amazonaws.com"
 }
 
 /*
@@ -96,44 +96,46 @@ object CollectorConfig {
 trait CollectorConfig {
   import Helper.RichConfig
   import CollectorConfig._
-
   protected val config: Config
 
-  private val collector = config.getConfig("collector")
-  protected[scalastream] val interface = collector.getString("interface")
-  protected[scalastream] val port = collector.getInt("port")
-  protected[scalastream] val production = collector.getBoolean("production")
+  private lazy val collector = config.getConfig("collector")
+  protected lazy val interface = collector.getString("interface")
+  protected lazy val port = collector.getInt("port")
+  protected lazy val production = collector.getBoolean("production")
 
-  private val p3p = collector.getConfig("p3p")
-  protected[scalastream] val p3pPolicyRef = p3p.getString("policyref")
-  protected[scalastream] val p3pCP = p3p.getString("CP")
+  private lazy val p3p = collector.getConfig("p3p")
+  lazy val p3pPolicyRef = p3p.getString("policyref")
+  lazy val p3pCP = p3p.getString("CP")
 
-  private val cookie = collector.getConfig("cookie")
-  protected[scalastream] val cookieExpiration = cookie.getMilliseconds("expiration")
-  protected[scalastream] val cookieDomain = cookie.getOptionalString("domain")
+  private lazy val cookie = collector.getConfig("cookie")
+  lazy val cookieExpiration = cookie.getMilliseconds("expiration")
+  lazy val cookieDomain = cookie.getOptionalString("domain")
 
-  private val sinkConfig = collector.getConfig("sink")
-  val sinkEnabled = sinkConfig.getString("enabled").toLowerCase
+  private lazy val sinkConfig = collector.getConfig("sink")
+  lazy val sinkEnabled = sinkConfig.getString("enabled")
 
-  protected[scalastream] val sink = sinkEnabled match {
-    case "kinesis" => new KinesisSink(this)
-    case "stdout"  => new StdoutSink
-    case "test"    => new TestSink
-    case _         => throw new RuntimeException("collector.sink.enabled.unknown.")
+  lazy val sink = sinkEnabled match {
+    case "kinesis" =>
+      // new KinesisSink(this)
+      new TestSink
+
+    case "stdout" => new StdoutSink
+    case "test"   => new TestSink
+    case _        => throw new RuntimeException("collector.sink.enabled.unknown.")
   }
 
-  private val kinesis = sinkConfig.getConfig("kinesis")
-  private val aws = kinesis.getConfig("aws")
-  private val stream = kinesis.getConfig("stream")
-  private val streamRegion = stream.getString("region")
+  private lazy val kinesis = sinkConfig.getConfig("kinesis")
+  private lazy val aws = kinesis.getConfig("aws")
+  private lazy val stream = kinesis.getConfig("stream")
+  private lazy val streamRegion = stream.getString("region")
 
   //public api
-  val awsAccessKey = aws.getString("access-key")
-  val awsSecretKey = aws.getString("secret-key") // public api
-  val streamName = stream.getString("name")
-  val streamSize = stream.getInt("size")
-  val streamEndpoint = endpoint(streamRegion)
-  val threadpoolSize = kinesis.hasPath("thread-pool-size") match {
+  lazy val awsAccessKey = aws.getString("access-key")
+  lazy val awsSecretKey = aws.getString("secret-key") // public api
+  lazy val streamName = stream.getString("name")
+  lazy val streamSize = stream.getInt("size")
+  lazy val streamEndpoint = endpoint(streamRegion)
+  lazy val threadpoolSize = kinesis.hasPath("thread-pool-size") match {
     case true => kinesis.getInt("thread-pool-size")
     case _    => DEFAULT_THREAD_POOL_SIZE
   }
