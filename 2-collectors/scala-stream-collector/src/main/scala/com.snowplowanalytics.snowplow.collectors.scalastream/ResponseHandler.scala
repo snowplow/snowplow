@@ -71,6 +71,21 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
       Collector)
   }
 
+  private def getNetworkUserId(reqCookie: Option[HttpCookie]) = reqCookie match {
+    case Some(rc) => rc.content
+    case None     => UUID.randomUUID.toString
+  }
+
+  private def createHttpResponseWith(pixelExpected: Boolean) = pixelExpected match {
+    case true  => HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
+    case false => HttpResponse()
+  }
+
+  private def createCookie(networkUserId: String) = HttpCookie("sp",
+    networkUserId,
+    expires = Some(DateTime.now + config.cookieExpiration),
+    domain = config.cookieDomain)
+
   // When `/i` is requested, this is called and stores an event in the
   // Kinisis sink and returns an invisible pixel with a cookie.
   def cookie(queryParams: Option[String], body: Option[String], requestCookie: Option[HttpCookie],
@@ -79,10 +94,7 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
              path: String, pixelExpected: Boolean): (HttpResponse, Array[Byte]) = {
 
     // Use the same UUID if the request cookie contains `sp`.
-    val networkUserId: String = requestCookie match {
-      case Some(rc) => rc.content
-      case None     => UUID.randomUUID.toString
-    }
+    val networkUserId = getNetworkUserId(requestCookie)
 
     // Construct an event object from the request.
     val event = createPayload(ip)
@@ -105,30 +117,17 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
       ct => event.contentType = ct.value.toLowerCase
     }
 
-    // for (ct <- request.headers      .find(_ match { case `Content-Type`(ct) => true; case _ => false })
-    // yield ct.value.toLowerCase
-
-    // event.contentTypes = request.headers.filter(_ match { case `Content-Type`(ct) => true; case _ => false })
-
     // Only the test sink responds with the serialized object.
     val sinkResponse = sink.storeRawEvent(event, ip).get
 
     // Build the HTTP response.
-    val responseCookie = HttpCookie(
-      "sp", networkUserId,
-      expires = Some(DateTime.now + config.cookieExpiration),
-      domain = config.cookieDomain)
-    val policyRef = config.p3pPolicyRef
-    val CP = config.p3pCP
+    val responseCookie = createCookie(networkUserId)
+
     val headers = List(
-      RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP)),
+      RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(config.p3pPolicyRef, config.p3pCP)),
       `Set-Cookie`(responseCookie))
 
-    val httpResponse = (if (pixelExpected) {
-      HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
-    } else {
-      HttpResponse()
-    }).withHeaders(headers)
+    val httpResponse = createHttpResponseWith(pixelExpected).withHeaders(headers)
 
     (httpResponse, sinkResponse)
   }

@@ -115,13 +115,10 @@ trait CollectorConfig {
   lazy val sinkEnabled = sinkConfig.getString("enabled")
 
   lazy val sink = sinkEnabled match {
-    case "kinesis" =>
-      // new KinesisSink(this)
-      new TestSink
-
-    case "stdout" => new StdoutSink
-    case "test"   => new TestSink
-    case _        => throw new RuntimeException("collector.sink.enabled.unknown.")
+    case "kinesis" => new KinesisSink(this)
+    case "stdout"  => new StdoutSink
+    case "test"    => new TestSink
+    case _         => throw new RuntimeException("collector.sink.enabled.unknown.")
   }
 
   private lazy val kinesis = sinkConfig.getConfig("kinesis")
