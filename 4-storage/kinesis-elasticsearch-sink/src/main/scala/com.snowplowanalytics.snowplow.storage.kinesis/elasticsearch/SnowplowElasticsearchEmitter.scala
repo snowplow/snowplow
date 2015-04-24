@@ -287,7 +287,7 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration,
     records foreach {
       record => {
         val output = compact(render(("line" -> record._1) ~ ("errors" -> record._2.swap.getOrElse(Nil))))
-        badSink.store(output, Some("key"), false)
+        badSink.store(output, None, false)
       }
     }
   }
