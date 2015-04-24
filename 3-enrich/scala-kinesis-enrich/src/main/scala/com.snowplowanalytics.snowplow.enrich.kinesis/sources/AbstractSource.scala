@@ -27,6 +27,9 @@ import com.amazonaws.auth._
 // Apache commons
 import org.apache.commons.codec.binary.Base64
 
+// Scala
+import scala.util.Random
+
 // Scalaz
 import scalaz.{Sink => _, _}
 import Scalaz._
@@ -112,7 +115,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
         case Success(co) => (tabSeparateEnrichedEvent(co) -> co.user_ipaddress).success
         case Failure(errors) => {
           val line = new String(Base64.encodeBase64(binaryData))
-          (BadRow(line, errors).toCompactJson -> "fail").fail
+          (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).fail
         }
       }
     })
