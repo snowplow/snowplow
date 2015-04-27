@@ -46,6 +46,7 @@ object Dependencies {
     // Using the newest version of spec (2.3.6) causes
     // conflicts with `spray` for `com.chuusai.shapeless`
     val specs2           = "2.2.3"
+    val check            = "1.12.2"
   }
 
   object Libraries {
@@ -68,5 +69,6 @@ object Dependencies {
     // Scala (test only)
     val specs2           = "org.specs2"            %% "specs2"                    % V.specs2   % "test"
     val sprayTestkit     = "io.spray"              %  "spray-testkit"             % V.spray    % "test"
+    val scalacheck       = "org.scalacheck"        %% "scalacheck"                % V.check    % "test"
   }
 }
