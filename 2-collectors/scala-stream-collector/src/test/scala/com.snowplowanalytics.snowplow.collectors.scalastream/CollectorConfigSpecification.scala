@@ -44,17 +44,6 @@ collector {
   }
 }
 """.stripMargin)
-
-  property("Config must not be empty") = forAll { config: Config =>
-    config.getConfig("collector").getBoolean("production") == true
-  }
-
-  property("Config sink should enable for test") = forAll { config: Config =>
-    val sink = config.getConfig("collector").getConfig("sink")
-    // sink.getString("enabled") == "production"
-    sink.getString("enabled") == "test"
-  }
-
   property("Testing public api of Collector Config trait") = forAll { conf: Config =>
     val isTestConf = conf.getConfig("collector").getConfig("sink").getString("enabled")
 
@@ -78,8 +67,7 @@ collector {
     val awsAccessKey = collectorConfig.awsAccessKey == sampleConf.awsAccessKey
     val awsSecretKey = collectorConfig.awsSecretKey == sampleConf.awsSecretKey
 
-    // sinkEnabled //&& awsAccessKey && awsSecretKey
-    true
+    sinkEnabled && awsAccessKey && awsSecretKey
   }
 
   private def withTestConf(collectorConfig: CollectorConfig): Boolean = {
@@ -101,7 +89,6 @@ collector {
       awsSecretKey && streamName && streamSize && streamEndpoint
   }
 
-  lazy val genConfig: Gen[Config] = oneOf(testConf, ConfigFactory.load("sample")) //frequency((9, testConf), (1, ConfigFactory.load("sample")))
+  lazy val genConfig: Gen[Config] = frequency((4, testConf), (1, ConfigFactory.load("sample")))
   implicit lazy val arbConfig: Arbitrary[Config] = Arbitrary(genConfig)
-
 }
