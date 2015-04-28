@@ -8,7 +8,7 @@ import org.scalacheck.Gen._
 import org.scalacheck.Prop._
 import com.typesafe.config.{ ConfigFactory, Config }
 
-object CollectorConfigSpecification extends Properties("Config") {
+object ConfigGenerator {
   val testConf: Config =
     ConfigFactory.parseString("""
 collector {
@@ -44,6 +44,22 @@ collector {
   }
 }
 """.stripMargin)
+
+  lazy val genConfig: Gen[Config] = frequency((4, testConf), (1, ConfigFactory.load("sample")))
+
+  lazy val genCollectorConfig: Gen[CollectorConfig] = for {
+    gen <- genConfig
+  } yield new CollectorConfig {
+    override val config = gen
+  }
+
+  implicit lazy val arbConfig: Arbitrary[Config] = Arbitrary(genConfig)
+
+}
+
+object CollectorConfigSpecification extends Properties("Config") {
+  import ConfigGenerator._
+
   property("Testing public api of Collector Config trait") = forAll { conf: Config =>
     val isTestConf = conf.getConfig("collector").getConfig("sink").getString("enabled")
 
@@ -88,7 +104,4 @@ collector {
       cookieExpiration && cookieDomain && awsAccessKey &&
       awsSecretKey && streamName && streamSize && streamEndpoint
   }
-
-  lazy val genConfig: Gen[Config] = frequency((4, testConf), (1, ConfigFactory.load("sample")))
-  implicit lazy val arbConfig: Arbitrary[Config] = Arbitrary(genConfig)
 }
