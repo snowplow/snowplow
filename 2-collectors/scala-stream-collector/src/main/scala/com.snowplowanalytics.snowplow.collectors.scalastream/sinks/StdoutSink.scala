@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2013-2014 Snowplow Analytics Ltd.
  * All rights reserved.
  *
@@ -39,8 +39,8 @@ import CollectorPayload.thrift.model1.CollectorPayload
 
 class StdoutSink extends AbstractSink {
   // Print a Base64-encoded event.
-  def storeRawEvent(event: CollectorPayload, key: String) = {
+  def storeRawEvent(event: CollectorPayload, key: String): Option[Array[Byte]] = {
     println(Base64.encodeBase64String(serializeEvent(event)))
-    null
+    None
   }
 }

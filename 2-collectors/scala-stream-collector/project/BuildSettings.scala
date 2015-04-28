@@ -20,6 +20,7 @@ object BuildSettings {
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
+    //format: OFF
     organization          :=  "com.snowplowanalytics",
     version               :=  "0.3.0",
     description           :=  "Scala Stream Collector for Snowplow raw events",
@@ -30,15 +31,16 @@ object BuildSettings {
     maxErrors             := 5,
     // http://www.scala-sbt.org/0.13.0/docs/Detailed-Topics/Forking.html
     fork in run           := true,
-    resolvers             ++= Dependencies.resolutionRepos
-  )
+    resolvers             ++= Dependencies.resolutionRepos 
+    )
+  //format: ON
 
   // Makes our SBT app settings available from within the app
   lazy val scalifySettings = Seq(sourceGenerators in Compile <+=
-      (sourceManaged in Compile, version, name, organization) map
-      { (d, v, n, o) =>
-    val file = d / "settings.scala"
-    IO.write(file, s"""package com.snowplowanalytics.snowplow.collectors.scalastream.generated
+    (sourceManaged in Compile, version, name, organization) map
+    { (d, v, n, o) =>
+      val file = d / "settings.scala"
+      IO.write(file, s"""package com.snowplowanalytics.snowplow.collectors.scalastream.generated
       |object Settings {
       |  val organization = "$o"
       |  val version = "$v"
@@ -46,8 +48,8 @@ object BuildSettings {
       |  val shortName = "ssc"
       |}
       |""".stripMargin)
-    Seq(file)
-  })
+      Seq(file)
+    })
 
   // sbt-assembly settings for building an executable
   import sbtassembly.Plugin._
@@ -56,8 +58,21 @@ object BuildSettings {
     // Executable jarfile
     assemblyOption in assembly ~= { _.copy(prependShellScript = Some(defaultShellScript)) },
     // Name it as an executable
-    jarName in assembly := { s"${name.value}-${version.value}" }
-  )
+    jarName in assembly := { s"${name.value}-${version.value}" })
 
-  lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings
+  import com.typesafe.sbt.SbtScalariform
+  import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+  lazy val formatSettings = SbtScalariform.scalariformSettings ++ Seq(
+    ScalariformKeys.preferences in Compile := formattingPreferences,
+    ScalariformKeys.preferences in Test := formattingPreferences)
+
+  import scalariform.formatter.preferences._
+  def formattingPreferences =
+    FormattingPreferences()
+      .setPreference(RewriteArrowSymbols, false)
+      .setPreference(AlignParameters, true)
+      .setPreference(AlignSingleLineCaseStatements, true)
+      .setPreference(DoubleIndentClassDeclaration, true)
+
+  lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings ++ formatSettings
 }

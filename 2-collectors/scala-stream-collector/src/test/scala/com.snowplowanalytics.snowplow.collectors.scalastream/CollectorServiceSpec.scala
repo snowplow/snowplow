@@ -20,16 +20,16 @@ package scalastream
 import scala.collection.mutable.MutableList
 
 // Akka
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ ActorSystem, Props }
 
 // Specs2 and Spray testing
 import org.specs2.matcher.AnyMatchers
 import org.specs2.mutable.Specification
-import org.specs2.specification.{Scope,Fragments}
+import org.specs2.specification.{ Scope, Fragments }
 import spray.testkit.Specs2RouteTest
 
 // Spray
-import spray.http.{DateTime,HttpHeader,HttpRequest,HttpCookie}
+import spray.http.{ DateTime, HttpHeader, HttpRequest, HttpCookie }
 import spray.http.HttpHeaders.{
   Cookie,
   `Set-Cookie`,
@@ -38,7 +38,7 @@ import spray.http.HttpHeaders.{
 }
 
 // Config
-import com.typesafe.config.{ConfigFactory,Config,ConfigException}
+import com.typesafe.config.{ ConfigFactory, Config, ConfigException }
 
 // Thrift
 import org.apache.thrift.TDeserializer
@@ -47,9 +47,14 @@ import org.apache.thrift.TDeserializer
 import sinks._
 import CollectorPayload.thrift.model1.CollectorPayload
 
-class CollectorServiceSpec extends Specification with Specs2RouteTest with
-     AnyMatchers {
-   val testConf: Config = ConfigFactory.parseString("""
+class CollectorServiceSpec extends Specification
+    with Specs2RouteTest
+    with AnyMatchers
+    with CollectorConfig
+    with CollectorService {
+
+  val testConf: Config =
+    ConfigFactory.parseString("""
 collector {
   interface = "0.0.0.0"
   port = 8080
@@ -82,11 +87,16 @@ collector {
     }
   }
 }
-""")
-  val collectorConfig = new CollectorConfig(testConf)
-  val sink = new TestSink
-  val responseHandler = new ResponseHandler(collectorConfig, sink)
-  val collectorService = new CollectorService(responseHandler, system)
+""".stripMargin)
+
+  implicit def actorRefFactory = system
+
+  override val config = testConf
+  override val responseHandler = new ResponseHandler(this, new TestSink)
+
+  def before = println(s"Config: $config")
+
+  // val collectorService = new CollectorService(responseHandler, system)
   val thriftDeserializer = new TDeserializer
 
   // By default, spray will always add Remote-Address to every request
@@ -94,21 +104,21 @@ collector {
   // option. However, the testing does not read this option and a
   // remote address always needs to be set.
   def CollectorGet(uri: String, cookie: Option[`HttpCookie`] = None,
-      remoteAddr: String = "127.0.0.1") = {
+                   remoteAddr: String = "127.0.0.1") = {
     val headers: MutableList[HttpHeader] =
-      MutableList(`Remote-Address`(remoteAddr),`Raw-Request-URI`(uri))
+      MutableList(`Remote-Address`(remoteAddr), `Raw-Request-URI`(uri))
     cookie.foreach(headers += `Cookie`(_))
     Get(uri).withHeaders(headers.toList)
   }
 
   "Snowplow's Scala collector" should {
     "return an invisible pixel" in {
-      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
+      CollectorGet("/i") ~> collectorRoute ~> check {
         responseAs[Array[Byte]] === ResponseHandler.pixel
       }
     }
     "return a cookie expiring at the correct time" in {
-      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
+      CollectorGet("/i") ~> collectorRoute ~> check {
         headers must not be empty
 
         val httpCookies: List[HttpCookie] = headers.collect {
@@ -123,17 +133,16 @@ collector {
 
         httpCookie.name must be("sp")
         httpCookie.domain must beSome
-        httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
+        httpCookie.domain.get must be(cookieDomain.get)
         httpCookie.expires must beSome
         val expiration = httpCookie.expires.get
-        val offset = expiration.clicks - collectorConfig.cookieExpiration -
+        val offset = expiration.clicks - cookieExpiration -
           DateTime.now.clicks
         offset.asInstanceOf[Int] must beCloseTo(0, 2000) // 1000 ms window.
       }
     }
     "return the same cookie as passed in" in {
-      CollectorGet("/i", Some(HttpCookie("sp", "UUID_Test"))) ~>
-          collectorService.collectorRoute ~> check {
+      CollectorGet("/i", Some(HttpCookie("sp", "UUID_Test"))) ~> collectorRoute ~> check {
         val httpCookies: List[HttpCookie] = headers.collect {
           case `Set-Cookie`(hc) => hc
         }
@@ -146,22 +155,22 @@ collector {
       }
     }
     "return a P3P header" in {
-      CollectorGet("/i") ~> collectorService.collectorRoute ~> check {
+      CollectorGet("/i") ~> collectorRoute ~> check {
         val p3pHeaders = headers.filter {
           h => h.name.equals("P3P")
         }
         p3pHeaders.size must beEqualTo(1)
         val p3pHeader = p3pHeaders(0)
 
-        val policyRef = collectorConfig.p3pPolicyRef
-        val CP = collectorConfig.p3pCP
+        val policyRef = p3pPolicyRef
+        val CP = p3pCP
         p3pHeader.value must beEqualTo(
           "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP))
       }
     }
     "store the expected event as a serialized Thrift object in the enabled sink" in {
-      val payloadData = "param1=val1&param2=val2"
-      val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
+      val payloadData = Some("param1=val1&param2=val2")
+      val storedRecordBytes = responseHandler.cookie(payloadData, None, None,
         None, "localhost", "127.0.0.1", new HttpRequest(), None, "/i", true)._2
 
       val storedEvent = new CollectorPayload
@@ -174,10 +183,10 @@ collector {
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
       storedEvent.collector must beEqualTo("ssc-0.3.0-test")
       storedEvent.path must beEqualTo("/i")
-      storedEvent.querystring must beEqualTo(payloadData)
+      storedEvent.querystring must beEqualTo(payloadData.get)
     }
     "report itself as healthy" in {
-      CollectorGet("/health") ~> collectorService.collectorRoute ~> check {
+      CollectorGet("/health") ~> collectorRoute ~> check {
         response.status must beEqualTo(spray.http.StatusCodes.OK)
       }
     }

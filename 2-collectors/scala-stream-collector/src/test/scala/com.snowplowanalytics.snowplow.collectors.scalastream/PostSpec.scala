@@ -20,16 +20,16 @@ package scalastream
 import scala.collection.mutable.MutableList
 
 // Akka
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ ActorSystem, Props }
 
 // Specs2 and Spray testing
 import org.specs2.matcher.AnyMatchers
 import org.specs2.mutable.Specification
-import org.specs2.specification.{Scope,Fragments}
+import org.specs2.specification.{ Scope, Fragments }
 import spray.testkit.Specs2RouteTest
 
 // Spray
-import spray.http.{DateTime,HttpHeader,HttpRequest,HttpCookie}
+import spray.http.{ DateTime, HttpHeader, HttpRequest, HttpCookie }
 import spray.http.HttpHeaders.{
   Cookie,
   `Set-Cookie`,
@@ -38,7 +38,7 @@ import spray.http.HttpHeaders.{
 }
 
 // Config
-import com.typesafe.config.{ConfigFactory,Config,ConfigException}
+import com.typesafe.config.{ ConfigFactory, Config, ConfigException }
 
 // Thrift
 import org.apache.thrift.TDeserializer
@@ -47,9 +47,12 @@ import org.apache.thrift.TDeserializer
 import sinks._
 import CollectorPayload.thrift.model1.CollectorPayload
 
-class PostSpec extends Specification with Specs2RouteTest with
-     AnyMatchers {
-   val testConf: Config = ConfigFactory.parseString("""
+class PostSpec extends Specification
+    with Specs2RouteTest
+    with AnyMatchers
+    with CollectorConfig
+    with CollectorService {
+  val testConf: Config = ConfigFactory.parseString("""
 collector {
   interface = "0.0.0.0"
   port = 8080
@@ -82,11 +85,12 @@ collector {
     }
   }
 }
-""")
-  val collectorConfig = new CollectorConfig(testConf)
-  val sink = new TestSink
-  val responseHandler = new ResponseHandler(collectorConfig, sink)
-  val collectorService = new CollectorService(responseHandler, system)
+""".stripMargin)
+  override val config = testConf
+  implicit def actorRefFactory = system
+  override val responseHandler = new ResponseHandler(this, sink)
+
+  // val collectorService = new CollectorService(responseHandler, system)
   val thriftDeserializer = new TDeserializer
 
   // By default, spray will always add Remote-Address to every request
@@ -94,16 +98,16 @@ collector {
   // option. However, the testing does not read this option and a
   // remote address always needs to be set.
   def CollectorPost(uri: String, cookie: Option[`HttpCookie`] = None,
-      remoteAddr: String = "127.0.0.1") = {
+                    remoteAddr: String = "127.0.0.1") = {
     val headers: MutableList[HttpHeader] =
-      MutableList(`Remote-Address`(remoteAddr),`Raw-Request-URI`(uri))
+      MutableList(`Remote-Address`(remoteAddr), `Raw-Request-URI`(uri))
     cookie.foreach(headers += `Cookie`(_))
     Post(uri).withHeaders(headers.toList)
   }
 
   "Snowplow's Scala collector" should {
     "return a cookie expiring at the correct time" in {
-      CollectorPost("/com.snowplowanalytics.snowplow/tp2") ~> collectorService.collectorRoute ~> check {
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2") ~> collectorRoute ~> check {
         headers must not be empty
 
         val httpCookies: List[HttpCookie] = headers.collect {
@@ -118,45 +122,45 @@ collector {
 
         httpCookie.name must be("sp")
         httpCookie.domain must beSome
-        httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
+        httpCookie.domain.get must be(cookieDomain.get)
         httpCookie.expires must beSome
         val expiration = httpCookie.expires.get
-        val offset = expiration.clicks - collectorConfig.cookieExpiration -
+        val offset = expiration.clicks - cookieExpiration -
           DateTime.now.clicks
         offset.asInstanceOf[Int] must beCloseTo(0, 2000) // 1000 ms window.
       }
     }
     "return the same cookie as passed in" in {
       CollectorPost("/com.snowplowanalytics.snowplow/tp2", Some(HttpCookie("sp", "UUID_Test"))) ~>
-          collectorService.collectorRoute ~> check {
-        val httpCookies: List[HttpCookie] = headers.collect {
-          case `Set-Cookie`(hc) => hc
-        }
-        // Assume we only return a single cookie.
-        // If the collector is modified to return multiple cookies,
-        // this will need to be changed.
-        val httpCookie = httpCookies(0)
+        collectorRoute ~> check {
+          val httpCookies: List[HttpCookie] = headers.collect {
+            case `Set-Cookie`(hc) => hc
+          }
+          // Assume we only return a single cookie.
+          // If the collector is modified to return multiple cookies,
+          // this will need to be changed.
+          val httpCookie = httpCookies(0)
 
-        httpCookie.content must beEqualTo("UUID_Test")
-      }
+          httpCookie.content must beEqualTo("UUID_Test")
+        }
     }
     "return a P3P header" in {
-      CollectorPost("/com.snowplowanalytics.snowplow/tp2") ~> collectorService.collectorRoute ~> check {
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2") ~> collectorRoute ~> check {
         val p3pHeaders = headers.filter {
           h => h.name.equals("P3P")
         }
         p3pHeaders.size must beEqualTo(1)
         val p3pHeader = p3pHeaders(0)
 
-        val policyRef = collectorConfig.p3pPolicyRef
-        val CP = collectorConfig.p3pCP
+        val policyRef = p3pPolicyRef
+        val CP = p3pCP
         p3pHeader.value must beEqualTo(
           "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP))
       }
     }
     "store the expected event as a serialized Thrift object in the enabled sink" in {
-      val payloadData = "param1=val1&param2=val2"
-      val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
+      val payloadData = Some("param1=val1&param2=val2")
+      val storedRecordBytes = responseHandler.cookie(payloadData, None, None,
         None, "localhost", "127.0.0.1", new HttpRequest(), None, "/com.snowplowanalytics.snowplow/tp2", false)._2
 
       val storedEvent = new CollectorPayload
@@ -169,7 +173,7 @@ collector {
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
       storedEvent.collector must beEqualTo("ssc-0.3.0-test")
       storedEvent.path must beEqualTo("/com.snowplowanalytics.snowplow/tp2")
-      storedEvent.querystring must beEqualTo(payloadData)
+      storedEvent.querystring must beEqualTo(payloadData.get)
     }
   }
 }

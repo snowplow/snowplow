@@ -42,7 +42,7 @@ import io.github.cloudify.scala.aws.auth.CredentialsProvider.InstanceProfile
 import com.typesafe.config.Config
 
 // Concurrent libraries
-import scala.concurrent.{Future,Await,TimeoutException}
+import scala.concurrent.{ Future, Await, TimeoutException }
 import scala.concurrent.duration._
 
 // Logging
@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory
 // Mutable data structures
 import scala.collection.mutable.StringBuilder
 import scala.collection.mutable.MutableList
-import scala.util.{Success, Failure}
+import scala.util.{ Success, Failure }
 
 // Snowplow
 import scalastream._
@@ -60,9 +60,14 @@ import CollectorPayload.thrift.model1.CollectorPayload
 /**
  * Kinesis Sink for the Scala collector.
  */
+object KinesisSink {
+  val DEFAULT_TIMEOUT = 60
+}
+
 class KinesisSink(config: CollectorConfig) extends AbstractSink {
   private lazy val log = LoggerFactory.getLogger(getClass())
-  import log.{error, debug, info, trace}
+  import log.{ error, debug, info, trace }
+  import KinesisSink._
 
   implicit lazy val ec = {
     info("Creating thread pool of size " + config.threadpoolSize)
@@ -70,14 +75,20 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     concurrent.ExecutionContext.fromExecutorService(executorService)
   }
 
+  import scala.util.{ Try, Success, Failure }
+
   // Create a Kinesis client for stream interactions.
-  private implicit val kinesis = createKinesisClient
+  // private implicit val kinesis = createKinesisClient
+  private implicit val kinesis = createKinesisClient match {
+    case Success(client) => client
+    case Failure(err)    => throw new Exception(err) // do something with the failure
+  }
 
   // The output stream for enriched events.
   private val enrichedStream = createAndLoadStream()
 
   // Checks if a stream exists.
-  def streamExists(name: String, timeout: Int = 60): Boolean = {
+  def streamExists(name: String, timeout: Int = DEFAULT_TIMEOUT): Boolean = {
 
     val exists: Boolean = try {
       val streamDescribeFuture = for {
@@ -101,7 +112,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
   }
 
   // Creates a new stream if one doesn't exist.
-  def createAndLoadStream(timeout: Int = 60): Stream = {
+  def createAndLoadStream(timeout: Int = DEFAULT_TIMEOUT): Stream = {
     val name = config.streamName
     val size = config.streamSize
 
@@ -129,7 +140,6 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
       }
     }
   }
-
   /**
    * Creates a new Kinesis client from provided AWS access key and secret
    * key. If both are set to "cpf", then authenticate using the classpath
@@ -137,36 +147,42 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
    *
    * @return the initialized AmazonKinesisClient
    */
-  private def createKinesisClient: Client = {
+  private def createKinesisClient: Try[Client] = {
     val accessKey = config.awsAccessKey
     val secretKey = config.awsSecretKey
-    val client = if (isCpf(accessKey) && isCpf(secretKey)) {
-      new AmazonKinesisClient(new ClasspathPropertiesFileCredentialsProvider())
-    } else if (isCpf(accessKey) || isCpf(secretKey)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'cpf', or neither of them")
-    } else if (isIam(accessKey) && isIam(secretKey)) {
-      new AmazonKinesisClient(InstanceProfile)
-    } else if (isIam(accessKey) || isIam(secretKey)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'iam', or neither of them")
-    } else if (isEnv(accessKey) && isEnv(secretKey)) {
-      new AmazonKinesisClient()
-    } else if (isEnv(accessKey) || isEnv(secretKey)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'env', or neither of them")
-    } else {
-      new AmazonKinesisClient(new BasicAWSCredentials(accessKey, secretKey))
-    }
 
+    def create(aKey: String, sKey: String): AmazonKinesisClient =
+      (createCpfClient orElse createIamClient orElse createEnvClient).lift(aKey, sKey).get
+
+    val client = if (accessKey == secretKey) {
+      create(accessKey, secretKey)
+    } else { new AmazonKinesisClient(new BasicAWSCredentials(accessKey, secretKey)) }
     client.setEndpoint(config.streamEndpoint)
-    Client.fromClient(client)
+
+    Try(Client.fromClient(client))
   }
 
-  def storeRawEvent(event: CollectorPayload, key: String) = {
+  def createCpfClient: PartialFunction[(String, String), AmazonKinesisClient] = {
+    case (aKey, sKey) if (isCpf(aKey) && isCpf(sKey)) =>
+      new AmazonKinesisClient(new ClasspathPropertiesFileCredentialsProvider())
+  }
+
+  def createIamClient: PartialFunction[(String, String), AmazonKinesisClient] = {
+    case (aKey, sKey) if (isIam(aKey) && isIam(sKey)) =>
+      new AmazonKinesisClient(InstanceProfile)
+  }
+
+  def createEnvClient: PartialFunction[(String, String), AmazonKinesisClient] = {
+    case (aKey, sKey) if (isEnv(aKey) && isEnv(sKey)) =>
+      new AmazonKinesisClient()
+  }
+
+  def storeRawEvent(event: CollectorPayload, key: String): Option[Array[Byte]] = {
     info(s"Writing Thrift record to Kinesis: ${event.toString}")
     val putData = for {
       p <- enrichedStream.put(
         ByteBuffer.wrap(serializeEvent(event)),
-        key
-      )
+        key)
     } yield p
 
     putData onComplete {
@@ -180,8 +196,7 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
         error(s"  + " + f.getMessage)
       }
     }
-
-    null
+    None
   }
 
   /**

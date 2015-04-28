@@ -15,7 +15,7 @@
 import sbt._
 
 object Dependencies {
-
+  //format: OFF
   val resolutionRepos = Seq(
     "Snowplow Analytics Maven repo"          at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
@@ -35,8 +35,8 @@ object Dependencies {
     // Scala
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
-    val spray            = "1.2.0"
-    val akka             = "2.2.3"
+    val spray            = "1.2.3"
+    val akka             = "2.2.5"
     val logback          = "1.0.13"
     val commonsCodec     = "1.5"
     val scalazon         = "0.5"
@@ -46,6 +46,7 @@ object Dependencies {
     // Using the newest version of spec (2.3.6) causes
     // conflicts with `spray` for `com.chuusai.shapeless`
     val specs2           = "2.2.3"
+    val check            = "1.12.2"
   }
 
   object Libraries {
@@ -68,5 +69,6 @@ object Dependencies {
     // Scala (test only)
     val specs2           = "org.specs2"            %% "specs2"                    % V.specs2   % "test"
     val sprayTestkit     = "io.spray"              %  "spray-testkit"             % V.spray    % "test"
+    val scalacheck       = "org.scalacheck"        %% "scalacheck"                % V.check    % "test"
   }
 }
