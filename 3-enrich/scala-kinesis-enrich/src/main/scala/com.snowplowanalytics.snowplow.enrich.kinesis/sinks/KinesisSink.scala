@@ -170,17 +170,24 @@ class KinesisSink(provider: AWSCredentialsProvider,
      */
     def addEvent(event: (ByteBuffer, String)) {
       val newBytes = event._1.capacity
-      if (byteCount + newBytes >= ByteThreshold) {
-        sealBatch()
-      }
 
-      byteCount += newBytes
+      if (newBytes >= 51200) {
+        val original = new String(event._1.array)
+        error(s"Dropping record with size $newBytes bytes: [$original]")
+      } else {
 
-      eventCount += 1
-      currentBatch = event :: currentBatch
+        if (byteCount + newBytes >= ByteThreshold) {
+          sealBatch()
+        }
 
-      if (eventCount == RecordThreshold) {
-        sealBatch()
+        byteCount += newBytes
+
+        eventCount += 1
+        currentBatch = event :: currentBatch
+
+        if (eventCount == RecordThreshold) {
+          sealBatch()
+        }
       }
     }
 
