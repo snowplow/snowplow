@@ -240,7 +240,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
    */
   def sendBatch(batch: List[(ByteBuffer, String)]) {
     if (!batch.isEmpty) {
-      info(s"Writing ${batch.size} Thrift records to Kinesis stream $name")
+      info(s"Writing ${batch.size} records to Kinesis stream $name")
       var unsentRecords = batch
       var backoffTime = minBackoff
       var sentBatchSuccessfully = false
