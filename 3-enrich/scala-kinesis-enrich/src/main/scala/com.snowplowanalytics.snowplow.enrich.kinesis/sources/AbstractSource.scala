@@ -21,6 +21,9 @@ package snowplow.enrich
 package kinesis
 package sources
 
+// Java
+import java.nio.ByteBuffer
+
 // Amazon
 import com.amazonaws.auth._
 
@@ -29,6 +32,7 @@ import org.apache.commons.codec.binary.Base64
 
 // Scala
 import scala.util.Random
+import scala.util.control.NonFatal
 
 // Scalaz
 import scalaz.{Sink => _, _}
@@ -66,6 +70,8 @@ import common.utils.JsonUtils
 abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolver,
                               enrichmentRegistry: EnrichmentRegistry) {
   
+  val MaxRecordSize = 51200
+
   /**
    * Never-ending processing loop over source stream.
    */
@@ -133,9 +139,36 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
   def enrichAndStoreEvents(binaryData: List[Array[Byte]]): Boolean = {
     val enrichedEvents = binaryData.flatMap(enrichEvents(_))
     val successes = enrichedEvents collect { case Success(s) => s }
-    val failures = enrichedEvents collect { case Failure(s) => s }
-    val successesTriggeredFlush = sink.map(_.storeEnrichedEvents(successes))
-    val failuresTriggeredFlush = badSink.map(_.storeEnrichedEvents(failures))
+    val sizeUnadjustedFailures = enrichedEvents collect { case Failure(s) => s }
+    val failures = sizeUnadjustedFailures map {
+      case (value, key) => if (! isTooLarge(value)) {
+        value -> key
+      } else {
+        val size = getSize(value)
+        compact(render(try {
+          val originalJson = parse(value)
+          val errors = originalJson \ "errors"
+          ("size" -> size) ~ ("errors" -> errors)
+        } catch {
+          case NonFatal(e) => ("size" -> size) ~
+            ("errors" -> List("Unable to extract errors field from original oversized bad row JSON"))
+        })) -> key
+      }
+    }
+
+    val (tooBigSuccesses, smallEnoughSuccesses) = successes partition { s => isTooLarge(s._1) }
+    val sizeBasedFailures = tooBigSuccesses map {
+      case (value, key) => {
+        val size = getSize(value)
+        val errorJson =
+          ("size" -> size) ~
+          ("errors" -> List(s"Enriched event size of $size bytes is greater than allowed maximum of $MaxRecordSize"))
+        compact(render(errorJson)) -> key
+      }
+    }
+
+    val successesTriggeredFlush = sink.map(_.storeEnrichedEvents(smallEnoughSuccesses))
+    val failuresTriggeredFlush = badSink.map(_.storeEnrichedEvents(failures ++ sizeBasedFailures))
     if (successesTriggeredFlush == Some(true) || failuresTriggeredFlush == Some(true)) {
 
       // Block until the records have been sent to Kinesis
@@ -147,4 +180,20 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
     }
 
   }
+
+  /**
+   * The size of a string in bytes
+   *
+   * @param evt
+   * @return size
+   */
+  private def getSize(evt: String): Long = ByteBuffer.wrap(evt.getBytes).capacity
+
+  /**
+   * Whether a record is too large to send to Kinesis
+   *
+   * @param evt
+   * @return boolean size decision
+   */
+  private def isTooLarge(evt: String): Boolean = getSize(evt) >= MaxRecordSize
 }
