@@ -154,7 +154,10 @@ module Snowplow
 
           # 1. Compaction to HDFS (only for CloudFront currently)
           raw_input = csbr[:processing]
-          to_hdfs = (self.class.is_cloudfront_log(config[:etl][:collector_format]) and s3distcp)
+          to_hdfs = ((self.class.is_cloudfront_log(config[:etl][:collector_format]) or config[:etl][:collector_format] == "thrift") and s3distcp)
+
+          # TODO: throw exception if processing thrift with --skip s3distcp
+          # https://github.com/snowplow/snowplow/issues/1648
 
           enrich_step_input = if to_hdfs
             "hdfs:///local/snowplow/raw-events/"
@@ -166,13 +169,16 @@ module Snowplow
             # Create the Hadoop MR step for the file crushing
             compact_to_hdfs_step = Elasticity::S3DistCpStep.new
             compact_to_hdfs_step.arguments = [
-              "--src"         , raw_input,
-              "--dest"        , enrich_step_input,
-              "--groupBy"     , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
-              "--targetSize"  , "128",
-              "--outputCodec" , "lzo",
-              "--s3Endpoint"  , s3_endpoint
-            ]
+                "--src"         , raw_input,
+                "--dest"        , enrich_step_input,
+                "--s3Endpoint"  , s3_endpoint
+              ] + [
+                "--groupBy"     , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
+                "--targetSize"  , "128",
+                "--outputCodec" , "lzo"
+              ].select { |el|
+                self.class.is_cloudfront_log(config[:etl][:collector_format])
+              }
             compact_to_hdfs_step.name << ": Raw S3 -> HDFS"
 
             # Add to our jobflow
