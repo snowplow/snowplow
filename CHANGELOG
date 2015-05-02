@@ -29,6 +29,7 @@ Scala Kinesis Enrich: updated test suite to accommodate changes (#1581)
 Scala Kinesis Enrich: added Clojars as a resolver (#1586)
 Scala Kinesis Enrich: added configurable exponential backoff with jitter (#1591)
 Scala Kinesis Enrich: randomize partition keys for bad events (#1631)
+Scala Kinesis Enrich: stopped sending records of over 50kB (#1649) 
 Kinesis Elasticsearch Sink: bumped to 0.2.0
 Kinesis Elasticsearch Sink: made DynamoDB region configurable (#1583)
 Kinesis Elasticsearch Sink: added macros to config.hocon.sample (#1515)
