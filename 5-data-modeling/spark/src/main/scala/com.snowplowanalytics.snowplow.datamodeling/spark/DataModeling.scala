@@ -12,6 +12,10 @@
  */
 package com.snowplowanalytics.snowplow.datamodeling.spark
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 // Spark
 import org.apache.spark.{
   SparkContext,
@@ -45,8 +49,9 @@ object DataModeling {
     // Enriched event TSV -> shredded JSON
     val jsons = file
       .map(line => EventTransformer.transform(line))
-      .filter(_.isSuccess)
-      .map(_.toOption.get)
+      .collect { case Success(event) =>
+        event
+      }
 
     // Analyze
     val sqlContext = new SQLContext(sc)
