@@ -16,7 +16,7 @@
 require 'pg'
 
 # Ruby module to support the load of Snowplow events into PostgreSQL.
-module SnowPlow
+module Snowplow
   module StorageLoader
     module PostgresLoader
 
@@ -27,7 +27,7 @@ module SnowPlow
       QUOTE_CHAR = "\\x01"
       ESCAPE_CHAR = "\\x02"
 
-      # Loads the SnowPlow event files into Postgres.
+      # Loads the Snowplow event files into Postgres.
       #
       # Parameters:
       # +events_dir+:: the directory holding the event files to load 

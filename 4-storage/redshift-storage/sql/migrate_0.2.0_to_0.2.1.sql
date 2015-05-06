@@ -149,4 +149,4 @@ SORTKEY (collector_tstamp);
 INSERT INTO events
 	SELECT
 	*
-    FROM events_020;
+	FROM events_020;

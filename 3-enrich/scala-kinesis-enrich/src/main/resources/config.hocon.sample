@@ -1,0 +1,70 @@
+# Default Configuration for Scala Kinesis Enrich.
+
+enrich {
+  # Sources currently supported are:
+  # 'kinesis' for reading Thrift-serialized records from a Kinesis stream
+  # 'stdin' for reading Base64-encoded Thrift-serialized records from stdin
+  source = "kinesis"
+
+  # Sinks currently supported are:
+  # 'kinesis' for writing enriched events to one Kinesis stream and invalid events to another.
+  # 'stdouterr' for writing enriched events to stdout and invalid events to stderr.
+  #    Using `sbt assembly` and `java -jar` is recommended to disable sbt
+  #    logging.
+  sink = "kinesis"
+
+  # AWS credentials
+  #
+  # If both are set to 'cpf', a properties file on the classpath is used.
+  # http://docs.aws.amazon.com/AWSJavaSDK/latest/javadoc/com/amazonaws/auth/ClasspathPropertiesFileCredentialsProvider.html
+  #
+  # If both are set to 'iam', use AWS IAM Roles to provision credentials.
+  #
+  # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+  aws {
+    access-key: "env"
+    secret-key: "env"
+  }
+
+  streams {
+    in: {
+      raw: "SnowplowRaw"
+    }
+    out: {
+      enriched: "SnowplowEnriched"
+      enriched_shards: 1 # Number of shards to use if created.
+      bad: "SnowplowBad" # Not used until #463
+      bad_shards: 1 # Number of shards to use if created.
+    }
+
+    # `app-name` is used for a DynamoDB table to maintain stream state.
+    app-name: SnowplowKinesisEnrich-${enrich.streams.in.raw}
+
+    # LATEST: most recent data.
+    # TRIM_HORIZON: oldest available data.
+    # Note: This only effects the first run of this application
+    # on a stream.
+    initial-position = "TRIM_HORIZON"
+
+    region: "us-east-1"
+  }
+
+  resolver {
+    schema: "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0"
+    data: {
+      cacheSize: 500
+      repositories: [
+        {
+          name: "Iglu Central"
+          priority: 0
+          vendorPrefixes: ["com.snowplowanalytics"]
+          connection: {
+            http: {
+              uri: "http://iglucentral.com"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

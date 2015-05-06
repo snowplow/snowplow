@@ -15,13 +15,13 @@
 
 require 'optparse'
 require 'yaml'
-
 require 'contracts'
-include Contracts
 
 module Snowplow
   module EmrEtlRunner
     module Cli
+
+      include Contracts
 
       # Get our arguments and configuration.
       #
@@ -35,8 +35,8 @@ module Snowplow
       #
       # Returns a Hash containing our runtime
       # arguments and our configuration.
-      Contract None => ArgsConfigTuple
-      def self.get_args_config
+      Contract None => ArgsConfigEnrichmentsTuple
+      def self.get_args_config_enrichments
         
         # Defaults
         options = {
@@ -51,13 +51,18 @@ module Snowplow
           opts.separator "Specific options:"
 
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config_file] = config }
+          opts.on('-n', '--enrichments ENRICHMENTS', 'enrichments directory') {|config| options[:enrichments_directory] = config}
           opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
-          opts.on('-s', '--skip staging,emr,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
-          opts.on('-b', '--process-bucket BUCKET', 'run emr only on specified bucket. Implies --skip staging,archive') { |config| 
-            options[:processbucket] = config
-            options[:skip] = %w(staging archive)
+          opts.on('-x', '--skip staging,s3distcp,emr{enrich,shred},archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-E', '--process-enrich LOCATION', 'run enrichment only on specified location. Implies --skip staging,shred,archive') { |config|
+            options[:process_enrich_location] = config
+            options[:skip] = %w(staging shred archive)
+          }
+          opts.on('-S', '--process-shred LOCATION', 'run shredding only on specified location. Implies --skip staging,enrich,archive') { |config|
+            options[:process_shred_location] = config
+            options[:skip] = %w(staging enrich archive)
           }
 
           opts.separator ""
@@ -82,15 +87,33 @@ module Snowplow
         end
 
         args = {
-          :debug          => options[:debug],
-          :start          => options[:start],
-          :end            => options[:end],
-          :skip           => options[:skip],
-          :process_bucket => options[:process_bucket]
+          :debug                   => options[:debug],
+          :start                   => options[:start],
+          :end                     => options[:end],
+          :skip                    => options[:skip],
+          :process_enrich_location => options[:process_enrich_location],
+          :process_shred_location  => options[:process_shred_location]
         }
         config = load_file(options[:config_file], optparse.to_s)
 
-        [args, config]
+        enrichments = options[:enrichments_directory]
+
+        # If no enrichments argument is passed, make the array of enrichments empty
+        if enrichments.nil?
+          return [args, config, []]
+        end
+
+        # Check the enrichments directory exists and is a directory
+        unless Dir.exists?(enrichments)
+          raise ConfigError, "Enrichments directory '#{enrichments}' does not exist, or is not a directory"
+        end
+
+        # Add a trailing slash if necessary to make globbing work
+        enrichments = Sluice::Storage::trail_slash(enrichments)
+
+        enrichments_array = Dir.glob(enrichments + '*.json').map {|f| File.read(f)}
+
+        [args, config, enrichments_array]
       end
 
     private

@@ -43,10 +43,10 @@ object FutureCfLineSpec {
   val expected = List(
     "snowplowweb",
     "web",
+    EtlTimestamp,
     "2015-04-29 09:00:54.000",
     "2015-04-29 08:00:54.889",
     "page_ping",
-    "com.snowplowanalytics",
     null, // We can't predict the event_id
     "612876",
     "cloudfront", // Tracker namespace
@@ -62,6 +62,11 @@ object FutureCfLineSpec {
     null, // No geo-location for this IP address
     null,
     null,
+    null,
+    null,
+    null,
+    null,
+    null, // No additional MaxMind databases used
     null,
     null,
     null,
@@ -94,8 +99,7 @@ object FutureCfLineSpec {
     null, //
     null, //
     null, //
-    null, // Unstructured event fields empty
-    null, //
+    null, // Unstructured event field empty
     null, // Transaction fields empty 
     null, //
     null, //
@@ -115,7 +119,7 @@ object FutureCfLineSpec {
     "64", //
     "935", //
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.131 Safari/537.36",
-    "Chrome",
+    "Chrome 34",
     "Chrome",
     "34.0.1847.131",
     "Browser",
@@ -134,8 +138,8 @@ object FutureCfLineSpec {
     "24",
     "1279",
     "610",
-    "Mac OS",
-    "Mac OS",
+    "Mac OS X",
+    "Mac OS X",
     "Apple Inc.",
     "Europe/Berlin",
     "Computer",
@@ -158,10 +162,10 @@ object FutureCfLineSpec {
  * For details:
  * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
  */
-class FutureCfLineSpec extends Specification with TupleConversions {
+class FutureCfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid page view" should {
-    EtlJobSpec("cloudfront", "0").
+    EtlJobSpec("cloudfront", "1", false, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), FutureCfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {
@@ -177,7 +181,7 @@ class FutureCfLineSpec extends Specification with TupleConversions {
           trap must beEmpty
         }
       }.
-      sink[String](JsonLine("badFolder")){ error =>
+      sink[String](Tsv("badFolder")){ error =>
         "not write any bad rows" in {
           error must beEmpty
         }

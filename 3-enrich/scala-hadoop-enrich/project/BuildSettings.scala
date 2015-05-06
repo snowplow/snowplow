@@ -20,10 +20,11 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    version       := "0.5.0",
+    version       := "0.14.1",
     description   := "The SnowPlow Hadoop ETL process, written in Scalding",
-    scalaVersion  := "2.10.3",
-    scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
+    scalaVersion  := "2.10.4",
+    scalacOptions := Seq("-deprecation", "-encoding", "utf8",
+                         "-target:jvm-1.7"),
     parallelExecution in Test := false, // Parallel tests cause havoc with MapReduce
     logBuffered   := false,             // For debugging Specs2 tests
     resolvers     ++= Dependencies.resolutionRepos
@@ -42,29 +43,6 @@ object BuildSettings {
       |""".stripMargin.format(v, n, o, sv))
     Seq(file)
   })
-
-  // For MaxMind support in the test suite
-  import Dependencies._
-  lazy val maxmindSettings = Seq(
-
-    // Download the GeoLite City and add it into our jar
-    resourceGenerators in Test <+= (resourceManaged in Test) map { out =>
-      val gzRemote = new URL(Urls.maxmindData)
-      val datLocal = out / "maxmind" / "GeoLiteCity.dat"
-      
-      // Only fetch if we don't already have it (because MaxMind 403s if you download GeoIP.dat.gz too frequently)
-      if (!datLocal.exists()) {
-        // TODO: replace this with simply IO.gunzipURL(gzRemote, out / "maxmind") when https://github.com/harrah/xsbt/issues/529 implemented
-        val gzLocal = out / "GeoLiteCity.dat.gz"        
-        IO.download(gzRemote, gzLocal)
-        IO.createDirectory(out / "maxmind")
-        IO.gunzip(gzLocal, datLocal)
-        IO.delete(gzLocal)
-        // gunzipURL(gzRemote, out / "maxmind")
-      }
-      datLocal.get
-    }
-  )
 
   // sbt-assembly settings for building a fat jar
   import sbtassembly.Plugin._
@@ -103,5 +81,5 @@ object BuildSettings {
     }
   )
 
-  lazy val buildSettings = basicSettings ++ scalifySettings ++ maxmindSettings ++ sbtAssemblySettings
+  lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings
 }

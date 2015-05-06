@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (c) 2012-2013 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -16,6 +16,7 @@ rvm_path=/path/to/.rvm # Typically in the $HOME of the user who installed RVM
 RUNNER_PATH=/path/to/snowplow/3-enrich/emr-etl-runner
 LOADER_PATH=/path/to/snowplow/4-storage/storage-loader
 RUNNER_CONFIG=/path/to/your-runner-config.yml
+RUNNER_ENRICHMENTS=/path/to/your/enrichment-jsons
 LOADER_CONFIG=/path/to/your-loader-config.yml
 
 # Load the RVM environment
@@ -24,11 +25,16 @@ source ${rvm_path}/scripts/rvm
 
 # Run the ETL job on EMR
 export BUNDLE_GEMFILE=${RUNNER_PATH}/Gemfile
-bundle exec ${RUNNER_PATH}/bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG}
+bundle exec ${RUNNER_PATH}/bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG} --enrichments ${RUNNER_ENRICHMENTS}
 
 # Check the damage
 ret_val=$?
-if [ $ret_val -ne 0 ]; then
+if [ $ret_val -eq 3 ]
+then
+	echo "No Snowplow logs to process since last run, exiting with return code 0. StorageLoader not run"
+	exit 0
+elif [ $ret_val -ne 0 ]
+then
     echo "Error running EmrEtlRunner, exiting with return code ${ret_val}. StorageLoader not run"
     exit $ret_val
 fi

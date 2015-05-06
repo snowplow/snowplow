@@ -13,6 +13,18 @@
 package com.snowplowanalytics.snowplow.enrich
 package hadoop
 
+// Java
+import java.io.File
+import java.io.BufferedWriter
+import java.io.FileWriter
+
+// Apache Commons Codec
+import org.apache.commons.codec.binary.Base64
+
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.DateTimeFormat
+
 // Scala
 import scala.collection.mutable.ListBuffer
 
@@ -24,7 +36,11 @@ import org.specs2.matcher.Matchers._
 import com.twitter.scalding._
 
 // Snowplow Common Enrich
-import common.outputs.CanonicalOutput
+import common.outputs.EnrichedEvent
+
+// Scalaz
+import scalaz._
+import Scalaz._
 
 /**
  * Holds helpers for running integration
@@ -35,7 +51,9 @@ object JobSpecHelpers {
   /**
    * The current version of our Hadoop ETL
    */
-  val EtlVersion = "hadoop-0.5.0-common-0.4.0"
+  val EtlVersion = "hadoop-0.14.1-common-0.13.1"
+
+  val EtlTimestamp = "2001-09-09 01:46:40.000"
 
   /**
    * Fields in our CanonicalOutput which are unmatchable
@@ -45,15 +63,53 @@ object JobSpecHelpers {
   /**
    * The names of the fields written out
    */
-  lazy val OutputFields = classOf[CanonicalOutput]
+  lazy val OutputFields = classOf[EnrichedEvent]
       .getDeclaredFields
       .map(_.getName)
+
+  /**
+   * Base64-urlsafe encoded version of this standard
+   * Iglu configuration.
+   */
+  private val IgluConfig = {
+    val encoder = new Base64(true) // true means "url safe"
+    new String(encoder.encode(
+       """|{
+            |"schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
+            |"data": {
+              |"cacheSize": 500,
+              |"repositories": [
+                |{
+                  |"name": "Iglu Central",
+                  |"priority": 0,
+                  |"vendorPrefixes": [ "com.snowplowanalytics" ],
+                  |"connection": {
+                    |"http": {
+                      |"uri": "http://iglucentral.com"
+                    |}
+                  |}
+                |}
+              |]
+            |}
+          |}""".stripMargin.replaceAll("[\n\r]","").getBytes
+      )
+    )
+  }
+
+  private val oerApiKey = sys.env.get("OER_KEY").getOrElse("-")
 
   /**
    * User-friendly wrapper to instantiate
    * a BeFieldEqualTo Matcher.
    */
   def beFieldEqualTo(expected: String, withIndex: Int) = new BeFieldEqualTo(expected, withIndex)
+
+  /**
+   * A Specs2 matcher to check if a directory
+   * on disk is empty or not.
+   */
+  val beEmptyDir: Matcher[File] =
+    ((f: File) => !f.isDirectory || f.list.length > 0, "is populated directory, or not a directory")
 
   /**
    * A Specs2 matcher to check if a CanonicalOutput
@@ -72,7 +128,7 @@ object JobSpecHelpers {
     private val unmatcheable = isUnmatchable(field)
 
     def apply[S <: String](actual: Expectable[S]) = {
-      result(unmatcheable || actual.value == expected,
+      result((unmatcheable && expected == null) || actual.value == expected,
              "%s: %s".format(field, if (unmatcheable) "is unmatcheable" else "%s equals %s".format(actual.description, expected)),
              "%s: %s does not equal %s".format(field, actual.description, expected),
              actual)
@@ -116,6 +172,18 @@ object JobSpecHelpers {
     val numberedLines = number(lines)
 
     /**
+     * Writes the lines to the given file
+     *
+     * @param file The file to write the
+     *        lines to
+     */
+    def writeTo(file: File) = {
+      val writer = new BufferedWriter(new FileWriter(file))
+      for (line <- lines) writer.write(line)
+      writer.close()
+    }
+
+    /**
      * Numbers the lines in the Scalding format.
      * Converts "My line" to ("0" -> "My line")
      *
@@ -137,14 +205,182 @@ object JobSpecHelpers {
    */
   implicit def Lines2ScaldingLines(lines : Lines): ScaldingLines = lines.numberedLines 
 
+  /**
+   * Creates the the part of the ip_lookups
+   * JSON corresponding to a single lookup
+   *
+   * @param lookup One of the lookup types
+   * @return JSON fragment containing the
+   *         lookup's database and URI
+   */
+  def getLookupJson(lookup: String): String = {
+     """|"%s": {
+          |"database": "%s",
+          |"uri": "http://snowplow-hosted-assets.s3.amazonaws.com/third-party/maxmind"
+        |}""".format(lookup, lookup match {
+      case "geo"          => "GeoIPCity.dat"
+      case "isp"          => "GeoIPISP.dat"
+      case "organization" => "GeoIPOrg.dat"
+      case "domain"       => "GeoIPDomain.dat"
+      case "netspeed"     => "GeoIPNetSpeedCell.dat"
+      })
+  }
+
+  def getEnrichments(collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String], currencyConversionEnabled: Boolean): String = {
+    val encoder = new Base64(true) // true means "url safe"
+    new String(encoder.encode(
+       """|{
+            |"schema": "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0",
+            |"data": [
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/anon_ip/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "anon_ip",
+                  |"enabled": %s,
+                  |"parameters": {
+                    |"anonOctets": %s
+                  |}
+                |}
+              |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/ip_lookups/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "ip_lookups",
+                  |"enabled": true,
+                  |"parameters": {
+                    %s
+                  |}
+                |}  
+              |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-1",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "campaign_attribution",
+                  |"enabled": true,
+                  |"parameters": {
+                    |"mapping": "static",
+                    |"fields": {
+                      |"mktMedium": ["utm_medium", "medium"],
+                      |"mktSource": ["utm_source", "source"],
+                      |"mktTerm": ["utm_term", "legacy_term"],
+                      |"mktContent": ["utm_content"],
+                      |"mktCampaign": ["utm_campaign", "cid", "legacy_campaign"]
+                    |}
+                  |}
+                |}
+              |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/user_agent_utils_config/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "user_agent_utils_config",
+                  |"enabled": true,
+                  |"parameters": {
+                  |}
+                |}
+              |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/currency_conversion_config/jsonschema/1-0-0",
+                |"data": {
+                  |"enabled": %s,
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "currency_conversion_config",
+                  |"parameters": {
+                    |"accountType": "DEVELOPER",
+                    |"apiKey": "%s",
+                    |"baseCurrency": "EUR",
+                    |"rateAt": "EOD_PRIOR"
+                  |}
+                |}
+              |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/ua_parser_config/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "ua_parser_config",
+                  |"enabled": true,
+                  |"parameters": {
+                  |}
+                |}
+              |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/referer_parser/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "referer_parser",
+                  |"enabled": true,
+                  |"parameters": {
+                    |"internalDomains": ["www.subdomain1.snowplowanalytics.com"]
+                  |}
+                |}
+              |}
+            |]
+          |}""".format(anonOctetsEnabled, anonOctets, lookups.map(getLookupJson(_)).mkString(",\n"), currencyConversionEnabled, oerApiKey).stripMargin.replaceAll("[\n\r]","").getBytes
+      ))
+  }
+
   // Standard JobSpec definition used by all integration tests
-  val EtlJobSpec: (String, String) => JobTest = (collector, anonQuartets) => 
+  def EtlJobSpec(collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String], currencyConversion: Boolean = false): JobTest =
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob").
       arg("input_folder", "inputFolder").
       arg("input_format", collector).
-      arg("maxmind_file", "-"). // Not needed when running locally, but error if not set
       arg("output_folder", "outputFolder").
       arg("bad_rows_folder", "badFolder").
-      arg("anon_ip_quartets", anonQuartets).
-      arg("exceptions_folder", "exceptionsFolder")
+      arg("etl_tstamp", "1000000000000").      
+      arg("iglu_config", IgluConfig).
+      arg("enrichments", getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversion))
+
+  case class Sinks(
+    val output:     File,
+    val badRows:    File,
+    val exceptions: File) {
+
+    def deleteAll() {
+      for (f <- List(exceptions, badRows, output)) {
+        f.delete()
+      }
+    }
+  }
+
+  /**
+   * Run the ShredJob using the Scalding Tool.
+   *
+   * @param lines The input lines to shred
+   * @return a Tuple3 containing open File
+   *         objects for the output, bad rows
+   *         and exceptions temporary directories.
+   */
+  def runJobInTool(lines: Lines, collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String], currencyConversionEnabled: Boolean = false): Sinks = {
+
+    def mkTmpDir(tag: String, createParents: Boolean = false, containing: Option[Lines] = None): File = {
+      val f = File.createTempFile(s"scala-hadoop-enrich-${tag}-", "")
+      if (createParents) f.mkdirs() else f.mkdir()
+      containing.map(_.writeTo(f))
+      f
+    }
+
+    val input      = mkTmpDir("input", createParents = true, containing = lines.some)
+    val output     = mkTmpDir("output")
+    val badRows    = mkTmpDir("bad-rows")
+    val exceptions = mkTmpDir("exceptions")
+
+    val args = Array[String]("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob", "--local",
+      "--input_folder",      input.getAbsolutePath,
+      "--input_format",      collector,
+      "--output_folder",     output.getAbsolutePath,
+      "--bad_rows_folder",   badRows.getAbsolutePath,
+      "--exceptions_folder", exceptions.getAbsolutePath,
+      "--etl_tstamp",        "1000000000000",
+      "--iglu_config",       IgluConfig,
+      "--enrichments",       getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversionEnabled))
+
+    // Execute
+    Tool.main(args)
+    input.delete()
+
+    Sinks(output, badRows, exceptions)
+  }
 }

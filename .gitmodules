@@ -10,3 +10,27 @@
 [submodule "1-trackers/python-tracker"]
 	path = 1-trackers/python-tracker
 	url = https://github.com/snowplow/snowplow-python-tracker
+[submodule "1-trackers/java-tracker"]
+	path = 1-trackers/java-tracker
+	url = https://github.com/snowplow/snowplow-java-tracker.git
+[submodule "1-trackers/ruby-tracker"]
+	path = 1-trackers/ruby-tracker
+	url = https://github.com/snowplow/snowplow-ruby-tracker.git
+[submodule "1-trackers/nodejs-tracker"]
+	path = 1-trackers/nodejs-tracker
+	url = https://github.com/snowplow/snowplow-nodejs-tracker.git
+[submodule "1-trackers/objc-tracker"]
+	path = 1-trackers/objc-tracker
+	url = https://github.com/snowplow/snowplow-objc-tracker
+[submodule "1-trackers/android-tracker"]
+	path = 1-trackers/android-tracker
+	url = https://github.com/snowplow/snowplow-android-tracker
+[submodule "1-trackers/dotnet-tracker"]
+	path = 1-trackers/dotnet-tracker
+	url = https://github.com/snowplow/snowplow-dotnet-tracker.git
+[submodule "1-trackers/php-tracker"]
+	path = 1-trackers/php-tracker
+	url = https://github.com/snowplow/snowplow-php-tracker.git
+[submodule "1-trackers/actionscript3-tracker"]
+	path = 1-trackers/actionscript3-tracker
+	url = https://github.com/snowplow/snowplow-actionscript3-tracker.git

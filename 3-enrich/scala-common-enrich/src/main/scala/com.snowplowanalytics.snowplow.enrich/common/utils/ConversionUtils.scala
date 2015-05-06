@@ -16,9 +16,20 @@ package utils
 // Java
 import java.net.URI
 import java.net.URLDecoder
+import java.net.URLEncoder
 import java.lang.{Integer => JInteger}
 import java.math.{BigDecimal => JBigDecimal}
 import java.lang.{Byte => JByte}
+import java.util.UUID
+import java.nio.charset.StandardCharsets.UTF_8
+
+// Scala
+import scala.util.Try
+import scala.util.control.NonFatal
+import scala.collection.JavaConversions._
+
+// Apache HTTP
+import org.apache.http.client.utils.URLEncodedUtils
 
 // Apache Commons
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -29,6 +40,9 @@ import org.apache.commons.codec.binary.Base64
 // Scalaz
 import scalaz._
 import Scalaz._
+
+// Scala URI
+import com.netaporter.uri.Uri
 
 /**
  * General-purpose utils to help the
@@ -137,11 +151,46 @@ object ConversionUtils {
     try {
       val decoder = new Base64(true) // true means "url safe"
       val decodedBytes = decoder.decode(str)
-      val result = new String(decodedBytes)
+      val result = new String(decodedBytes, UTF_8) // Must specify charset (EMR uses US_ASCII)
       result.success
     } catch {
       case e =>
       "Field [%s]: exception Base64-decoding [%s] (URL-safe encoding): [%s]".format(field, str, e.getMessage).fail
+    }
+  }
+
+  /**
+   * Validates that the given field contains a valid UUID.
+   *
+   * @param field The name of the field being validated
+   * @param str The String hopefully containing a UUID
+   * @return a Scalaz ValidatedString containing either
+   *         the original String on Success, or an error
+   *         String on Failure.
+   */
+  val validateUuid: (String, String) => ValidatedString = (field, str) => {
+
+    def check(s: String)(u: UUID): Boolean = (u != null && s.toLowerCase == u.toString)
+    val uuid = Try(UUID.fromString(str)).toOption.filter(check(str))
+    uuid match {
+      case Some(_) => str.toLowerCase.success
+      case None    => s"Field [$field]: [$str] is not a valid UUID".fail
+    }
+  } 
+
+  /**
+   * @param field The name of the field being validated
+   * @param str The String hopefully parseable as an integer
+   * @return a Scalaz ValidatedString containing either
+   *         the original String on Success, or an error
+   *         String on Failure.
+   */
+  val validateInteger: (String, String) => ValidatedString = (field, str) => {
+    try {
+      str.toInt
+      str.success
+    } catch {
+      case _ : java.lang.NumberFormatException => s"Field [$field]: [$str] is not a valid integer".fail
     }
   }
 
@@ -182,6 +231,65 @@ object ConversionUtils {
         "Field [%s]: Exception URL-decoding [%s] (encoding [%s]): [%s]".format(field, str, enc, e.getMessage).fail
     }
 
+    /**
+     * On 17th August 2013, Amazon made an
+     * unannounced change to their CloudFront
+     * log format - they went from always encoding
+     * % characters, to only encoding % characters
+     * which were not previously encoded. For a
+     * full discussion of this see:
+     *
+     * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
+     *
+     * On 14th September 2013, Amazon rolled out a further fix,
+     * from which point onwards all fields, including the
+     * referer and useragent, would have %s double-encoded.
+     *
+     * This causes issues, because the ETL process expects
+     * referers and useragents to be only single-encoded.
+     *
+     * This function turns a double-encoded percent (%) into
+     * a single-encoded one.
+     *
+     * Examples:
+     * 1. "page=Celestial%25Tarot"          -   no change (only single encoded)
+     * 2. "page=Dreaming%2520Way%2520Tarot" -> "page=Dreaming%20Way%20Tarot"
+     * 3. "loading 30%2525 complete"        -> "loading 30%25 complete"
+     *
+     * Limitation of this approach: %2588 is ambiguous. Is it a:
+     * a) A double-escaped caret "ˆ" (%2588 -> %88 -> ^), or:
+     * b) A single-escaped "%88" (%2588 -> %88)
+     *
+     * This code assumes it's a).
+     *
+     * @param str The String which potentially has double-encoded %s
+     * @return the String with %s now single-encoded
+     */
+    def singleEncodePcts(str: String): String =
+      str.replaceAll("%25([0-9a-fA-F][0-9a-fA-F])", "%$1") // Decode %25XX to %XX
+
+    /**
+     * Decode double-encoded percents, then percent decode
+     *
+     * @param field The name of the field 
+     * @param str The String to decode
+     *
+     * @return a Scalaz Validation, wrapping either
+     *         an error String or the decoded String
+     */
+    def doubleDecode(field: String, str: String): ValidatedString =
+      ConversionUtils.decodeString("UTF-8", field, singleEncodePcts(str))
+
+  /**
+   * Encodes a string in the specified encoding
+   *
+   * @param enc The encoding to be used
+   * @param str The string which needs to be URLEncoded
+   * @return a URL encoded string
+   */
+  def encodeString(enc: String, str: String): String =
+    URLEncoder.encode(str, enc)
+
   /**
    * A wrapper around Java's
    * URI.create().
@@ -195,18 +303,51 @@ object ConversionUtils {
    *
    * @param uri The URI string to
    *        convert
+   * @param useNetaporter Whether to use the
+   *        com.netaporter.uri library
    * @return an Option-boxed URI object, or an
    *         error message, all
    *         wrapped in a Validation
-   */       
-  def stringToUri(uri: String): Validation[String, Option[URI]] =
+   */
+  def stringToUri(uri: String, useNetaporter: Boolean = false): Validation[String, Option[URI]] =
     try {
       val r = uri.replaceAll(" ", "%20") // Because so many raw URIs are bad, #346
       Some(URI.create(r)).success
     } catch {
       case npe: NullPointerException => None.success
-      case iae: IllegalArgumentException => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
+      case iae: IllegalArgumentException => useNetaporter match {
+        case false => {
+          val netaporterUri = try {
+            Uri.parse(uri).success
+          } catch {
+            case e => "Provided URI string [%s] could not be parsed by Netaporter: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
+          }
+          for {
+            parsedUri <- netaporterUri
+            finalUri <- stringToUri(parsedUri.toString, true)
+          } yield finalUri
+        }
+        case true => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
+      }
       case e => "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).fail
+    }
+
+  /**
+   * Attempt to extract the querystring from a URI as a map
+   *
+   * @param uri URI containing the querystring
+   * @param encoding Encoding of the URI
+   */
+  def extractQuerystring(uri: URI, encoding: String): Validation[String, Map[String, String]] =
+    try {
+      URLEncodedUtils.parse(uri, encoding).map(p => (p.getName -> p.getValue)).toMap.success
+    } catch {
+      case NonFatal(e1) => try {
+        Uri.parse(uri.toString).query.params.toMap.success
+      } catch {
+        case NonFatal(e2) =>
+          s"Could not parse uri [$uri]. Apache Httpclient threw exception: [$e1]. Net-a-porter threw exception: [$e2]".fail
+      }
     }
 
   /**
@@ -226,12 +367,16 @@ object ConversionUtils {
    *         a Success JInt
    */
   val stringToJInteger: (String, String) => Validation[String, JInteger] = (field, str) =>
-    try {
-      val jint: JInteger = str.toInt
-      jint.success
-    } catch {
-      case nfe: NumberFormatException =>
-        "Field [%s]: cannot convert [%s] to Int".format(field, str).fail
+    if (Option(str).isEmpty) {
+      null.asInstanceOf[JInteger].success
+    } else {
+      try {
+        val jint: JInteger = str.toInt
+        jint.success
+      } catch {
+        case nfe: NumberFormatException =>
+          "Field [%s]: cannot convert [%s] to Int".format(field, str).fail
+      }
     }
 
   /**
@@ -255,7 +400,7 @@ object ConversionUtils {
    */
   val stringToDoublelike: (String, String) => ValidatedString = (field, str) =>
     try {
-      if (str == "null") { // LEGACY. Yech, to handle a bug in the JavaScript tracker
+      if (Option(str).isEmpty || str == "null") { // "null" String check is LEGACY to handle a bug in the JavaScript tracker
         null.asInstanceOf[String].success
       } else {
         val jbigdec = new JBigDecimal(str)
@@ -265,6 +410,30 @@ object ConversionUtils {
       case nfe: NumberFormatException =>
         "Field [%s]: cannot convert [%s] to Double-like String".format(field, str).fail
     }
+
+  /**
+   * Convert a String to a Double
+   *
+   * @param str The String which we hope contains
+   *        a Double
+   * @param field The name of the field we are
+   *        validating. To use in our error message
+   * @return a Scalaz Validation, being either
+   *         a Failure String or a Success Double
+   */
+  def stringToMaybeDouble(field: String, str: String): Validation[String, Option[Double]] = {
+    try {
+      if (Option(str).isEmpty || str == "null") { // "null" String check is LEGACY to handle a bug in the JavaScript tracker
+        None.success
+      } else {
+        val jbigdec = new JBigDecimal(str)
+        jbigdec.doubleValue().some.success
+      }
+    } catch {
+     case nfe: NumberFormatException =>
+        "Field [%s]: cannot convert [%s] to Double-like String".format(field, str).fail
+    }
+  }
 
   /**
    * Extract a Java Byte representing
@@ -351,5 +520,5 @@ object ConversionUtils {
     else if (b == 1)
       true.success
     else
-      "Cannot convert byte [%s] to boolean, only 1 or 0.".format(b).fail
+      "Cannot convert byte [%s] to boolean, only 1 or 0.".format(b).fail   
 }

@@ -14,16 +14,16 @@
 # License::   Apache License Version 2.0
 
 require 'contracts'
-include Contracts
 
 module Snowplow
   module EmrEtlRunner
 
+    include Contracts
+
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
-      :maxmind  => String,
-      :s3distcp => String,
-      :hadoop   => String
+      :enrich  => String,
+      :shred   => String
       })
 
     # The Hash of the CLI arguments.
@@ -32,13 +32,53 @@ module Snowplow
       :start => Maybe[String],
       :end => Maybe[String],
       :skip => Maybe[ArrayOf[String]],
-      :process_bucket => Maybe[String]
+      :process_enrich_location => Maybe[String],
+      :process_shred_location => Maybe[String]
       })
 
     # The Hash for the IP anonymization enrichment.
     AnonIpHash = ({
       :enabled => Bool,
       :anon_octets => Num
+      })
+
+    # The Hash for the Iglu client config
+    IgluConfigHash = ({
+      :schema => String,
+      :data => ({
+        :cache_size => Num,
+        :repositories => ArrayOf[({
+          :name => String,
+          :priority => Num,
+          :vendor_prefixes => ArrayOf[String],          
+          :connection => ({
+            :http => ({
+              :uri => String
+              })
+            })
+          })]
+        })
+      })
+
+    # The Hash containing the buckets field from the configuration YAML
+    BucketHash = ({
+      :assets => String,
+      :log => String,
+      :raw => ({
+        :in => String,
+        :processing => String,
+        :archive => String
+        }),
+      :enriched => ({
+        :good => String,
+        :bad => String,
+        :errors => Maybe[String]
+        }),
+      :shredded => ({
+        :good => String,
+        :bad => String,
+        :errors => Maybe[String]
+        })
       })
 
     # The Hash containing effectively the configuration YAML.
@@ -52,23 +92,21 @@ module Snowplow
         }),
       :s3 => ({
         :region => String,
-        :buckets => ({
-          :assets => String,
-          :log => String,
-          :in => String,
-          :processing => String,
-          :out => String,
-          :out_bad_rows => String,
-          :out_errors => Maybe[String],
-          :archive => String
-          })
+        :buckets => BucketHash
         }),
       :emr => ({
         :ami_version => String,
         :region => String,
+        :jobflow_role => String,
+        :service_role => String,
         :placement => Maybe[String],
         :ec2_subnet_id => Maybe[String],
         :ec2_key_name => String,
+        :bootstrap => ArrayOf[String],
+        :software => ({
+          :hbase => Maybe[String],
+          :lingual => Maybe[String]
+          }),
         :jobflow => ({
           :master_instance_type => String,
           :core_instance_count => Num,
@@ -80,17 +118,18 @@ module Snowplow
         }),
       :etl => ({
         :job_name => String,
-        :hadoop_etl_version => String,
+        :versions => ({
+          :hadoop_enrich => String,
+          :hadoop_shred => String
+          }),
         :collector_format => String,
         :continue_on_unexpected_error => Bool
         }),
-      :enrichments => ({
-        :anon_ip => AnonIpHash
-        })
+      :iglu => IgluConfigHash
       })
 
-    # The Array (Tuple2) containing the CLI arguments and configuration YAML.
-    ArgsConfigTuple = [ArgsHash, ConfigHash]
+    # The Array (Tuple3) containing the CLI arguments, configuration YAML, and configuration JSONs
+    ArgsConfigEnrichmentsTuple = [ArgsHash, ConfigHash, ArrayOf[String]]
 
   end
 end

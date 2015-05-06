@@ -1,0 +1,33 @@
+{
+  "jsonpaths": [
+  
+    "$.schema.vendor",
+    "$.schema.name",
+    "$.schema.format",
+    "$.schema.version",
+
+    "$.hierarchy.rootId",
+    "$.hierarchy.rootTstamp",
+    "$.hierarchy.refRoot",
+    "$.hierarchy.refTree",
+    "$.hierarchy.refParent",
+
+    "$.data._id",
+    "$.data.ts",
+    "$.data.msg._id",
+    "$.data.msg._version",
+    "$.data.msg.bgtools_code",
+    "$.data.msg.bounce_description",
+    "$.data.msg.diag",
+    "$.data.msg.email",
+    "$.data.msg.metadata.user_id",
+    "$.data.msg.sender",
+    "$.data.msg.state",
+    "$.data.msg.subject",
+    "$.data.msg.tags",
+    "$.data.msg.ts",
+    "$.data.msg.smpt_events",
+    "$.data.msg.resends",
+    "$.data.msg.template"
+    ]
+}

@@ -9,10 +9,10 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.3.0
+-- Version:     0.6.0
 -- URL:         -
 --
--- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep
+-- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep, Fred Blundun
 -- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
@@ -25,50 +25,56 @@ CREATE TABLE atomic.events (
 	app_id varchar(255) encode text255,
 	platform varchar(255) encode text255,
 	-- Date/time
+	etl_tstamp timestamp,
 	collector_tstamp timestamp not null,
 	dvce_tstamp timestamp,
 	-- Event
 	event varchar(128) encode text255,
-	event_vendor varchar(128) encode text32k,          -- Removed not null constraint in 0.3.0
-	event_id char(36) not null unique,                 -- Changed from varchar(38) in 0.3.0
+	event_id char(36) not null unique,
 	txn_id int,
 	-- Namespacing and versioning
-	name_tracker varchar(128) encode text255,          -- Added in 0.3.0
+	name_tracker varchar(128) encode text255,
 	v_tracker varchar(100) encode text255,
 	v_collector varchar(100) encode text255 not null,
 	v_etl varchar(100) encode text255 not null,
 	-- User and visit
 	user_id varchar(255) encode runlength,
-	user_ipaddress varchar(19) encode runlength,
+	user_ipaddress varchar(45) encode runlength,
 	user_fingerprint varchar(50) encode runlength,
-	domain_userid varchar(16),
+	domain_userid varchar(36) encode runlength,
 	domain_sessionidx smallint,
 	network_userid varchar(38),
 	-- Location
-	geo_country char(2),
-	geo_region char(2),
-	geo_city varchar(75),
-	geo_zipcode varchar(15),
-	geo_latitude double precision,
-	geo_longitude double precision,
+	geo_country char(2) encode runlength,
+	geo_region char(2) encode runlength,
+	geo_city varchar(75) encode runlength,
+	geo_zipcode varchar(15) encode runlength,
+	geo_latitude double precision encode runlength,
+	geo_longitude double precision encode runlength,
+	geo_region_name varchar(100) encode runlength,
+	-- IP lookups
+	ip_isp varchar(100) encode runlength,
+	ip_organization varchar(100) encode runlength,
+	ip_domain varchar(100) encode runlength,
+	ip_netspeed varchar(100) encode runlength,
 	-- Page
-	page_url varchar(4096),                            -- Added in 0.3.0
+	page_url varchar(4096),
 	page_title varchar(2000),
-	page_referrer varchar(4096),                       -- Added in 0.3.0
+	page_referrer varchar(4096),
 	-- Page URL components
 	page_urlscheme varchar(16) encode text255,
 	page_urlhost varchar(255) encode text255,
 	page_urlport int,
-	page_urlpath varchar(1000) encode text32k,
-	page_urlquery varchar(3000),
-	page_urlfragment varchar(255),
+	page_urlpath varchar(3000) encode text32k,
+	page_urlquery varchar(6000),
+	page_urlfragment varchar(3000),
 	-- Referrer URL components
 	refr_urlscheme varchar(16) encode text255,
 	refr_urlhost varchar(255) encode text255,
 	refr_urlport int,
-	refr_urlpath varchar(1000) encode text32k,
-	refr_urlquery varchar(3000),
-	refr_urlfragment varchar(255),
+	refr_urlpath varchar(6000) encode text32k,
+	refr_urlquery varchar(6000),
+	refr_urlfragment varchar(3000),
 	-- Referrer details
 	refr_medium varchar(25) encode text255,
 	refr_source varchar(50) encode text255,
@@ -80,16 +86,15 @@ CREATE TABLE atomic.events (
 	mkt_content varchar(500) encode raw,
 	mkt_campaign varchar(255) encode text32k,
 	-- Custom contexts
-	contexts varchar(10000) encode raw,                -- Added in 0.3.0
+	contexts varchar(15000) encode lzo,
 	-- Custom structured event
-	se_category varchar(255) encode text255,
-	se_action varchar(255) encode text255,
-	se_label varchar(255) encode text32k,
-	se_property varchar(255) encode text32k,
+	se_category varchar(1000) encode text32k,
+	se_action varchar(1000) encode text32k,
+	se_label varchar(1000) encode text32k,
+	se_property varchar(1000) encode text32k,
 	se_value double precision,
 	-- Custom unstructured event
-	ue_name varchar(255) encode text255,               -- Added in 0.3.0
-	ue_properties varchar(10000) encode raw,           -- Added in 0.3.0
+	unstruct_event varchar(15000) encode lzo,
 	-- Ecommerce
 	tr_orderid varchar(255) encode raw,
 	tr_affiliation varchar(255) encode text255,
@@ -146,8 +151,44 @@ CREATE TABLE atomic.events (
 	doc_charset varchar(128) encode text255,
 	doc_width integer,
 	doc_height integer,
-	CONSTRAINT event_id_030_pk PRIMARY KEY(event_id)   -- Made constraint version-specific in 0.3.0
+
+	-- Currency
+	tr_currency char(3) encode bytedict,
+	tr_total_base dec(18, 2),
+	tr_tax_base dec(18, 2),
+	tr_shipping_base dec(18, 2),
+	ti_currency char(3) encode bytedict,
+	ti_price_base dec(18, 2),
+	base_currency char(3) encode bytedict,
+
+	-- Geolocation
+	geo_timezone varchar(64) encode text255,
+
+	-- Click ID
+	mkt_clickid varchar(128) encode raw,               -- Increased from 64 in 0.6.0
+	mkt_network varchar(64) encode text255,
+
+	-- ETL tags
+	etl_tags varchar(500) encode lzo,
+
+	-- Time event was sent
+	dvce_sent_tstamp timestamp,
+
+	-- Referer
+	refr_domain_userid varchar(36),
+	refr_dvce_tstamp timestamp,
+
+	-- Derived contexts
+	derived_contexts varchar(15000) encode lzo,
+
+	-- Session ID
+	domain_sessionid char(36) encode raw,
+
+	-- Derived timestamp
+	derived_tstamp timestamp,
+
+	CONSTRAINT event_id_060_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
-DISTKEY (event_id)                                     -- Changed from domain_userid in 0.3.0
+DISTKEY (event_id)
 SORTKEY (collector_tstamp);

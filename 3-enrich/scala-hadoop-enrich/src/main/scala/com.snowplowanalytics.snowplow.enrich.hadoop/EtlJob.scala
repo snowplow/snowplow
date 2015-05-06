@@ -25,17 +25,27 @@ import Scalaz._
 
 // Scalding
 import com.twitter.scalding._
+import com.twitter.scalding.commons.source._
 
-// Scala MaxMind GeoIP
-import com.snowplowanalytics.maxmind.geoip.IpGeo
+// Cascading
+import cascading.tuple.Fields
+import cascading.tap.SinkMode
+import cascading.pipe.Pipe
 
 // Snowplow Common Enrich
 import common._
+import common.utils.ConversionUtils
 import common.FatalEtlError
-import common.inputs.CollectorLoader
-import common.enrichments.EnrichmentManager
-import common.outputs.CanonicalOutput
-import common.enrichments.PrivacyEnrichments.AnonOctets.AnonOctets
+import common.loaders.Loader
+import common.enrichments.{
+  EnrichmentRegistry,
+  EnrichmentManager
+}
+import enrichments.registry._
+import common.outputs.{
+  EnrichedEvent,
+  BadRow
+}
 
 // This project
 import utils.FileUtils
@@ -48,102 +58,106 @@ import generated.ProjectSettings
 object EtlJob {
 
   /**
-   * A helper method to take a ValidatedMaybeCanonicalInput
-   * and flatMap it into a ValidatedMaybeCanonicalOutput.
+   * A helper to install files in the distributed
+   * cache on HDFS.
    *
-   * We have to do some unboxing because enrichEvent
-   * expects a raw CanonicalInput as its argument, not
-   * a MaybeCanonicalInput.
-   *
-   * @param input The ValidatedMaybeCanonicalInput
-   * @return the ValidatedMaybeCanonicalOutput. Thanks to
-   *         flatMap, will include any validation errors
-   *         contained within the ValidatedMaybeCanonicalInput
+   * @param conf Our current job Configuration
+   * @param filesToCache The files to install in
+   *        the cache, a list of the URI to the
+   *        file plus where it should be installed.
    */
-  def toCanonicalOutput(geo: IpGeo, anonOctets: AnonOctets, input: ValidatedMaybeCanonicalInput): ValidatedMaybeCanonicalOutput = {
-    input.flatMap {
-      _.cata(EnrichmentManager.enrichEvent(geo, etlVersion, anonOctets, _).map(_.some),
-             none.success)
+  def installFilesInCache(conf: Configuration, filesToCache: List[(URI, String)]) {
+    for (file <- filesToCache) {
+      val hdfsPath = FileUtils.sourceFile(conf, file._1).valueOr(e => throw FatalEtlError(e.toString))
+      FileUtils.addToDistCache(conf, hdfsPath, file._2)
     }
   }
-
-  /**
-   * A helper to source the MaxMind data file we 
-   * use for IP location -> geo-location lookups
-   *
-   * How we source the MaxMind data file depends
-   * on whether we are running locally or on HDFS:
-   *
-   * 1. On HDFS - source the file at `hdfsPath`,
-   *    add it to Hadoop's distributed cache and
-   *    return the symlink
-   * 2. On local (test) - find the copy of the
-   *    file on our resource path (downloaded for
-   *    us by SBT) and return that path
-   *
-   * @param fileUri The URI to the Maxmind GeoLiteCity.dat file
-   * @return the path to the Maxmind GeoLiteCity.dat to use
-   */
-  def installIpGeoFile(fileUri: URI): String = {
-    jobConfOption match {
-      case Some(conf) => {   // We're on HDFS
-        val hdfsPath = FileUtils.sourceFile(conf, fileUri).valueOr(e => throw FatalEtlError(e))
-        FileUtils.addToDistCache(conf, hdfsPath, "geoip")
-      }
-      case None =>           // We're in local mode
-        getClass.getResource("/maxmind/GeoLiteCity.dat").toURI.getPath
-    }
-  }
-
-  /**
-   * A helper to create the new IpGeo object.
-   *
-   * @param ipGeoFile The path to the MaxMind GeoLiteCity.dat file
-   * @return an IpGeo object ready to perform IP->geo lookups
-   */
-  def createIpGeo(ipGeoFile: String): IpGeo =
-    IpGeo(ipGeoFile, memCache = true, lruCache = 20000)
 
   /** 
    * Generate our "host ETL" version string.
    * @return our version String
    */
-  val etlVersion = "hadoop-%s" format ProjectSettings.version
+  val etlVersion = s"hadoop-${ProjectSettings.version}"
 
   // This should really be in Scalding
-  private def jobConfOption(implicit mode: Mode): Option[Configuration] = {
+  def getJobConf(implicit mode: Mode): Option[Configuration] = {
     mode match {
       case Hdfs(_, conf) => Option(conf)
       case _ => None
     }
   }
+
+  // This should really be in Scalding
+  def isLocalMode(implicit mode: Mode) = !getJobConf.isDefined
+
+  /**
+   * Projects our Failures into a Some; Successes
+   * become a None will be silently dropped by
+   * Scalding in this pipeline.
+   *
+   * @param all A List of Validations each containing either
+   *        an EnrichedEvent on Success or Failure Strings
+   * @return a (possibly empty) List of failures, where
+   *         each failure is represented by a NEL of
+   *         Strings
+   */
+  def projectBads(all: List[ValidatedEnrichedEvent]): List[NonEmptyList[String]] = all
+    .map(_.swap.toOption)
+    .collect { case Some(errs) =>
+      errs
+    }
+
+  /**
+   * Projects our non-empty Successes into a
+   * Some; everything else will be silently
+   * dropped by Scalding in this pipeline.
+   *
+   * @param all A List of Validations each containing either
+   *        an EnrichedEvent on Success or Failure Strings
+   * @return a (possibly empty) List of EnrichedEvents
+   */
+  def projectGoods(all: List[ValidatedEnrichedEvent]): List[EnrichedEvent] = all
+    .map(_.toOption)
+    .collect { case Some(gd) =>
+      gd
+    }
 }
 
 /**
- * The SnowPlow ETL job, written in Scalding
+ * The Snowplow ETL job, written in Scalding
  * (the Scala DSL on top of Cascading).
+ *
+ * Note that EtlJob has to be serializable by
+ * Kyro - so be super careful what you add as
+ * fields.
  */ 
 class EtlJob(args: Args) extends Job(args) {
 
   // Job configuration. Scalaz recommends using fold()
   // for unpicking a Validation
-  val etlConfig = EtlJobConfig.loadConfigFrom(args).fold(
-    e => throw FatalEtlError(e),
-    c => c)
+  val (etlConfig, filesToCache) = EtlJobConfig.loadConfigAndFilesToCache(args, EtlJob.isLocalMode).fold(
+    e => throw FatalEtlError(e.toString),
+    c => (c._1, c._2))
 
   // Wait until we're on the nodes to instantiate with lazy
   // TODO: let's fix this Any typing
-  lazy val loader = CollectorLoader.getLoader(etlConfig.inFormat).fold(
+  lazy val loader = Loader.getLoader(etlConfig.inFormat).fold(
     e => throw FatalEtlError(e),
-    c => c).asInstanceOf[CollectorLoader[Any]]
+    c => c).asInstanceOf[Loader[Any]]
 
-  val ipGeoFile = EtlJob.installIpGeoFile(etlConfig.maxmindFile)
-  lazy val ipGeo = EtlJob.createIpGeo(ipGeoFile)
+  // Wait until we're on the nodes to instantiate with lazy
+  implicit lazy val igluResolver = EtlJobConfig.reloadResolverOnNode(etlConfig.igluConfig)
+  lazy val enrichmentRegistry = EtlJobConfig.reloadRegistryOnNode(etlConfig.enrichments, etlConfig.localMode)
+
+  // Install MaxMind file(s) if we have them
+  for (conf <- EtlJob.getJobConf) {
+    EtlJob.installFilesInCache(conf, filesToCache)
+  }
 
   // Aliases for our job
-  val input = MultipleTextLineFiles(etlConfig.inFolder).read
+  val input = getInputPipe(etlConfig.inFormat, etlConfig.inFolder)
   val goodOutput = Tsv(etlConfig.outFolder)
-  val badOutput = JsonLine(etlConfig.badFolder)
+  val badOutput = Tsv(etlConfig.badFolder)
 
   // Do we add a failure trap?
   val trappableInput = etlConfig.exceptionsFolder match {
@@ -154,27 +168,43 @@ class EtlJob(args: Args) extends Job(args) {
   // Scalding data pipeline
   // TODO: let's fix this Any typing
   val common = trappableInput
-    .map('line -> 'output) { l: Any =>
-      EtlJob.toCanonicalOutput(ipGeo, etlConfig.anonOctets, loader.toCanonicalInput(l))
+    .map('line -> 'all) { l: Any =>
+      EtlPipeline.processEvents(enrichmentRegistry, EtlJob.etlVersion, etlConfig.etlTstamp, loader.toCollectorPayload(l))
     }
 
   // Handle bad rows
   val bad = common
-    .flatMap('output -> 'errors) { o: ValidatedMaybeCanonicalOutput => o.fold(
-      e => Some(e.toList), // Nel -> Some(List)
-      c => None)
-    }
-    .project('line, 'errors)
-    .write(badOutput) // JSON containing line and error(s)
+    .map('all -> 'errors) { o: List[ValidatedEnrichedEvent] =>
+      EtlJob.projectBads(o)
+    } // : List[NonEmptyList[String]]
+    .flatMapTo(('line, 'errors) -> 'json) { both: (String, List[NonEmptyList[String]]) =>
+      for {
+        error <- both._2
+        bad    = BadRow(both._1, error).toCompactJson
+      } yield bad // : List[BadRow]
+    }   
+    .write(badOutput) // N JSONs containing line and error(s)
 
   // Handle good rows
   val good = common
-    .flatMapTo('output -> 'good) { o: ValidatedMaybeCanonicalOutput =>
-      o match {
-        case Success(Some(s)) => Some(s)
-        case _ => None // Drop errors *and* blank rows
-      }
+    .flatMapTo('all -> 'events) { o: List[ValidatedEnrichedEvent] =>
+      EtlJob.projectGoods(o)
+    } // : List[EnrichedEvent]
+    .unpackTo[EnrichedEvent]('events -> '*)
+    .write(goodOutput) // N EnrichedEvents as tuples
+
+  /**
+   * Determine the Scalding Source to use based on the inFormat configuration
+   *
+   * @param format the inFormat configuration
+   * @param path
+   * @return FixedPathLzoRaw for LZO-compressed thrift, otherwise MultipleTextFiles
+   */
+  def getInputPipe(format: String, path: String): Pipe = {
+    import TDsl._
+    format match {
+      case "thrift" => FixedPathLzoRaw(path).toPipe('line)
+      case _ => MultipleTextLineFiles(path).read
     }
-    .unpackTo[CanonicalOutput]('good -> '*)
-    .write(goodOutput)
+  }
 }

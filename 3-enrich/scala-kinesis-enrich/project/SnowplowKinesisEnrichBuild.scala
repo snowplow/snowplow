@@ -44,9 +44,10 @@ object SnowplowKinesisEnrichBuild extends Build {
         Libraries.commonsLang3,
         Libraries.thrift,
         Libraries.slf4j,
+        Libraries.log4jOverSlf4j,
         Libraries.awsSdk,
         Libraries.kinesisClient,
-        Libraries.maxmindGeoip
+        Libraries.igluClient
         // Add your additional libraries here (comma-separated)...
       )
     )

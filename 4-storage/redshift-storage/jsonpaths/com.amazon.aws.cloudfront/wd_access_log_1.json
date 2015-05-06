@@ -1,0 +1,34 @@
+{
+  "jsonpaths": [
+
+    "$.schema.vendor",
+    "$.schema.name",
+    "$.schema.format",
+    "$.schema.version",
+
+    "$.hierarchy.rootId",
+    "$.hierarchy.rootTstamp",
+    "$.hierarchy.refRoot",
+    "$.hierarchy.refTree",
+    "$.hierarchy.refParent",
+
+    "$.data.dateTime",
+    "$.data.xEdgeLocation",
+    "$.data.scBytes",
+    "$.data.cIp",
+    "$.data.csMethod",
+    "$.data.csHost",
+    "$.data.csUriStem",
+    "$.data.scStatus",
+    "$.data.csReferer",
+    "$.data.csUserAgent",
+    "$.data.csUriQuery",
+    "$.data.csCookie",
+    "$.data.xEdgeResultType",
+    "$.data.xEdgeRequestId",
+    "$.data.xHostHeader",
+    "$.data.csProtocol",
+    "$.data.csBytes",
+    "$.data.timeTaken"
+    ]
+}

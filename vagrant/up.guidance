@@ -1,0 +1,4 @@
+To get started:
+vagrant ssh
+cd /vagrant/3-enrich/scala-common-enrich
+sbt test

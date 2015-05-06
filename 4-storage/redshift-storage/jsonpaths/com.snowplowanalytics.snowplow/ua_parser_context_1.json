@@ -1,0 +1,28 @@
+{
+  "jsonpaths": [
+
+    "$.schema.vendor",
+    "$.schema.name",
+    "$.schema.format",
+    "$.schema.version",
+
+    "$.hierarchy.rootId",
+    "$.hierarchy.rootTstamp",
+    "$.hierarchy.refRoot",
+    "$.hierarchy.refTree",
+    "$.hierarchy.refParent",
+
+    "$.data.useragentFamily",
+    "$.data.useragentMajor",
+    "$.data.useragentMinor",
+    "$.data.useragentPatch",
+    "$.data.useragentVersion",
+    "$.data.osFamily",
+    "$.data.osMajor",
+    "$.data.osMinor",
+    "$.data.osPatch",
+    "$.data.osPatchMinor",
+    "$.data.osVersion",
+    "$.data.deviceFamily"
+    ]
+}

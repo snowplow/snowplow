@@ -14,27 +14,29 @@
 # License::   Apache License Version 2.0
 
 require 'contracts'
-include Contracts
 
 module Snowplow
   module EmrEtlRunner
     class Runner
 
+      include Contracts
+
       # Supported options
-      @@collector_formats = Set.new(%w(cloudfront clj-tomcat))
-      @@skip_options = Set.new(%w(staging emr archive))
+      @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+))$/
+      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred archive))
 
       include Logging
 
       # Initialize the class.
-      Contract ArgsHash, ConfigHash => Runner
-      def initialize(args, config)
+      Contract ArgsHash, ConfigHash, ArrayOf[String] => Runner
+      def initialize(args, config, enrichments_array)
 
         # Let's set our logging level immediately
         Logging::set_level config[:logging][:level]
 
         @args = args
         @config = validate_and_coalesce(args, config)
+        @enrichments_array = enrichments_array
         
         self
       end
@@ -46,13 +48,15 @@ module Snowplow
         # Now our core flow
         unless @args[:skip].include?('staging')
           unless S3Tasks.stage_logs_for_emr(@args, @config)
-            logger.info "No Snowplow logs to process since last run, exiting"
-            exit 0
+            raise NoDataToProcessError, "No Snowplow logs to process since last run"
           end
         end
 
         unless @args[:skip].include?('emr')
-          job = EmrJob.new(@args[:debug], @config)
+          enrich = not(@args[:skip].include?('enrich'))
+          shred = not(@args[:skip].include?('shred'))
+          s3distcp = not(@args[:skip].include?('s3distcp'))
+          job = EmrJob.new(@args[:debug], enrich, shred, s3distcp, @config, @enrichments_array)
           job.run()
         end
 
@@ -64,6 +68,27 @@ module Snowplow
         nil
       end
 
+      # Adds trailing slashes to all non-nil bucket names in the hash
+      Contract BucketHash => BucketHash
+      def add_trailing_slashes(bucketsHash)
+        with_slashes_added = {}
+        for k0 in bucketsHash.keys
+          if bucketsHash[k0].class == ''.class
+            with_slashes_added[k0] = Sluice::Storage::trail_slash(bucketsHash[k0])
+          elsif bucketsHash[k0].class == {}.class
+            y = {}
+            for k1 in bucketsHash[k0].keys
+              y[k1] = bucketsHash[k0][k1].nil? ? nil : Sluice::Storage::trail_slash(bucketsHash[k0][k1])
+            end
+            with_slashes_added[k0] = y
+          else
+            with_slashes_added[k0] = nil
+          end
+        end
+
+        with_slashes_added
+      end
+
       # Validate our arguments against the configuration Hash
       # Make updates to the configuration Hash based on the
       # arguments
@@ -73,9 +98,13 @@ module Snowplow
         # Check our skip argument
         args[:skip].each { |opt|
           unless @@skip_options.include?(opt)
-            raise ConfigError, "Invalid option: skip can be 'staging', 'emr' or 'archive', not '#{opt}'"
+            raise ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred' or 'archive', not '#{opt}'"
           end
         }
+
+        if args[:skip].include?('shred') and args[:skip].include?('enrich') and !args[:skip].include?('emr')
+          args[:skip] << 'emr'
+        end
 
         # Check that start is before end, if both set
         if !args[:start].nil? and !args[:end].nil?
@@ -84,9 +113,11 @@ module Snowplow
           end
         end
 
+        input_collector_format = config[:etl][:collector_format]
+
         # Validate the collector format
-        unless @@collector_formats.include?(config[:etl][:collector_format]) 
-          raise ConfigError, "collector_format '%s' not supported" % config[:etl][:collector_format]
+        unless input_collector_format =~ @@collector_format_regex
+          raise ConfigError, "collector_format '%s' not supported" % input_collector_format
         end
 
         # Currently we only support start/end times for the CloudFront collector format. See #120 for details
@@ -94,12 +125,19 @@ module Snowplow
           raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
         end
 
-        unless args[:process_bucket].nil?
-          config[:s3][:buckets][:processing] = args[:process_bucket]
+        # We can't process enrich and process shred
+        unless args[:process_enrich_location].nil? or args[:process_shred_location].nil?
+          raise ConfigError, "Cannot process enrich and process shred, choose one"
+        end
+        unless args[:process_enrich_location].nil?
+          config[:s3][:buckets][:raw][:processing] = args[:process_enrich_location]
+        end
+        unless args[:process_shred_location].nil?
+          config[:s3][:buckets][:enriched][:good] = args[:process_shred_location]
         end
 
         # Add trailing slashes if needed to the non-nil buckets
-        config[:s3][:buckets].reject{|k,v| v.nil?}.update(config[:s3][:buckets]){|k,v| Sluice::Storage::trail_slash(v)}
+        config[:s3][:buckets] = add_trailing_slashes(config[:s3][:buckets])
 
         config
       end

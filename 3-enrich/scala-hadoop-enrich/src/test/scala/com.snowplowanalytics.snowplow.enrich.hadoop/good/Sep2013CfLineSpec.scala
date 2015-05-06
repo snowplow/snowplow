@@ -43,10 +43,10 @@ object Sep2013CfLineSpec {
   val expected = List(
     "pbzsite",
     "web",
+    EtlTimestamp,
     "2013-10-07 21:32:22.000",
     "2013-10-07 21:30:37.923",
     "page_view",
-    null, // No event vendor set
     null, // We can't predict the event_id
     "390328",
     null, // No tracker namespace
@@ -62,6 +62,11 @@ object Sep2013CfLineSpec {
     null, // No geo-location for this IP address
     null,
     null,
+    null,
+    null,
+    null,
+    null,
+    null, // No additional MaxMind databases used
     null,
     null,
     null,
@@ -83,7 +88,7 @@ object Sep2013CfLineSpec {
     null,
     "search", // Search referer
     "Google",
-    null, // Note this should be "www.psychicbazaar.com 312-dreaming-way-tarot"
+    "www.psychicbazaar.com 312-dreaming-way-tarot",
     "cpc",
     "GoogleSearch",
     "rome choi tarot",
@@ -95,8 +100,7 @@ object Sep2013CfLineSpec {
     null, //
     null, //
     null, //
-    null, // Unstructured event fields empty
-    null, //
+    null, // Unstructured event field empty
     null, // Transaction fields empty 
     null, //
     null, //
@@ -116,9 +120,9 @@ object Sep2013CfLineSpec {
     null, //
     null, //
     "IE 7 - Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1; .NET CLR 1.1.4322; .NET CLR 2.0.50727; .NET CLR 3.0.04506.30)",
+    "Internet Explorer 7",
     "Internet Explorer",
-    "Internet Explorer",
-    null,
+    "7.0",
     "Browser",
     "TRIDENT",
     "en-us",
@@ -135,7 +139,7 @@ object Sep2013CfLineSpec {
     "24",
     "1003",
     "611",
-    "Windows",
+    "Windows XP",
     "Windows",
     "Microsoft Corporation",
     "America/Santa_Isabel",
@@ -159,10 +163,10 @@ object Sep2013CfLineSpec {
  * For details:
  * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
  */
-class Sep2013CfLineSpec extends Specification with TupleConversions {
+class Sep2013CfLineSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid page view" should {
-    EtlJobSpec("cloudfront", "0").
+    EtlJobSpec("cloudfront", "1", false, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), Sep2013CfLineSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {
@@ -178,7 +182,7 @@ class Sep2013CfLineSpec extends Specification with TupleConversions {
           trap must beEmpty
         }
       }.
-      sink[String](JsonLine("badFolder")){ error =>
+      sink[String](Tsv("badFolder")){ error =>
         "not write any bad rows" in {
           error must beEmpty
         }

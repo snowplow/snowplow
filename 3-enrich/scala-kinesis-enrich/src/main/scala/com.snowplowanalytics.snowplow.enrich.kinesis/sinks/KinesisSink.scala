@@ -24,8 +24,12 @@ package sinks
 import java.nio.ByteBuffer
 
 // Amazon
+import com.amazonaws.services.kinesis.model.ResourceNotFoundException
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.AWSCredentialsProvider
+import com.amazonaws.services.kinesis.AmazonKinesisClient
+import com.amazonaws.services.kinesis.AmazonKinesis
+import com.amazonaws.regions._
 
 // Scalazon (for Kinesis interaction)
 import io.github.cloudify.scala.aws.kinesis.Client
@@ -44,54 +48,66 @@ import com.typesafe.config.Config
 import scala.concurrent.{Future,Await,TimeoutException}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import scala.util.{Success, Failure}
 
 // Logging
 import org.slf4j.LoggerFactory
 
 // Snowplow
 import com.snowplowanalytics.snowplow.collectors.thrift._
-import common.outputs.CanonicalOutput
+import common.outputs.EnrichedEvent
 
 /**
  * Kinesis Sink for Scala enrichment
  */
 class KinesisSink(provider: AWSCredentialsProvider,
-    config: KinesisEnrichConfig) extends ISink {
+    config: KinesisEnrichConfig, inputType: InputType.InputType) extends ISink {
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
-
+  
+  // explicitly create a client so we can configure the end point
+  val client = new AmazonKinesisClient(provider)
+  client.setEndpoint(config.streamEndpoint)
+  
   // Create a Kinesis client for stream interactions.
-  private implicit val kinesis = Client.fromCredentials(provider)
+  private implicit val kinesis = Client.fromClient(client)
 
   // The output stream for enriched events.
   private val enrichedStream = createAndLoadStream()
 
-  /**
-   * Checks if a stream exists.
-   */
+  // Checks if a stream exists.
   def streamExists(name: String, timeout: Int = 60): Boolean = {
-    val streamListFuture = for {
-      s <- Kinesis.streams.list
-    } yield s
-    val streamList: Iterable[String] =
-      Await.result(streamListFuture, Duration(timeout, SECONDS))
-    for (streamStr <- streamList) {
-      if (streamStr == name) {
-        info(s"Stream $name exists")
-        return true
-      }
+
+    val exists: Boolean = try {
+      val streamDescribeFuture = for {
+        s <- Kinesis.stream(name).describe
+      } yield s
+
+      val description = Await.result(streamDescribeFuture, Duration(timeout, SECONDS))
+      description.isActive
+
+    } catch {
+      case rnfe: ResourceNotFoundException => false
     }
 
-    info(s"Stream $name doesn't exist")
-    false
+    if (exists) {
+      info(s"Stream $name exists and is active")
+    } else {
+      info(s"Stream $name doesn't exist or is not active")
+    }
+
+    exists
   }
 
   /**
    * Creates a new stream if one doesn't exist
    */
   def createAndLoadStream(timeout: Int = 60): Stream = {
-    val name = config.enrichedOutStream
-    val size = config.enrichedOutStreamShards
+    val (name, size) = inputType match {
+      case InputType.Good => (config.enrichedOutStream, config.enrichedOutStreamShards)
+      case InputType.Bad => (config.badOutStream, config.badOutStreamShards)
+    }
+
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
@@ -118,23 +134,31 @@ class KinesisSink(provider: AWSCredentialsProvider,
   }
 
   /**
-   * Side-effecting function to store the CanonicalOutput
+   * Side-effecting function to store the EnrichedEvent
    * to the given output stream.
    *
-   * CanonicalOutput takes the form of a tab-delimited
+   * EnrichedEvent takes the form of a tab-delimited
    * String until such time as https://github.com/snowplow/snowplow/issues/211
    * is implemented.
    */
-  def storeCanonicalOutput(output: String, key: String) = {
+  def storeEnrichedEvent(output: String, key: String) = {
     val putData = for {
       p <- enrichedStream.put(
         ByteBuffer.wrap(output.getBytes),
         key
       )
     } yield p
-    val result = Await.result(putData, Duration(60, SECONDS))
-    info(s"Writing successful")
-    info(s"  + ShardId: ${result.shardId}")
-    info(s"  + SequenceNumber: ${result.sequenceNumber}")
+
+    putData onComplete {
+      case Success(result) => {
+        info(s"Writing successful")
+        info(s"  + ShardId: ${result.shardId}")
+        info(s"  + SequenceNumber: ${result.sequenceNumber}")
+      }
+      case Failure(f) => {
+        error(s"Writing failed.")
+        error(s"  + " + f.getMessage)
+      }
+    }
   }
 }

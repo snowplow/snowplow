@@ -148,6 +148,6 @@ SORTKEY (collector_tstamp);
 INSERT INTO atomic.events
 	SELECT
 	*
-    FROM public.events;
+	FROM public.events;
 
 -- Leave the user to manually drop the old table
