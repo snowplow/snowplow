@@ -12,14 +12,14 @@ Scala Stream Collector: logged the name of the stream to which records are writt
 Scala Stream Collector: added shutdown hook to send stored events (#1535)
 Scala Stream Collector: added configurable exponential backoff with jitter (#1592)
 Scala Kinesis Enrich: bumped to 0.5.0
-Scala Kinesis Enrich: bumped Scala Common Enrich to 0.13.1
+Scala Kinesis Enrich: bumped Scala Common Enrich to 0.13.1 (#1618)
 Scala Kinesis Enrich: bumped Scalazon to 0.11 (#1492)
 Scala Kinesis Enrich: bumped Kinesis Client Library to 1.2.1 (#1580)
 Scala Kinesis Enrich: added ability to retrieve resolver and enrichments from DynamoDB (#1289)
 Scala Kinesis Enrich: added support for PutRecords API (#1418)
 Scala Kinesis Enrich: removed automatic creation of streams (#1465)
 Scala Kinesis Enrich: fixed checkpointing (#1467)
-Scala Kinesis Enrich: logged the name of the stream to which records are writen (#1493)
+Scala Kinesis Enrich: logged the name of the stream to which records are written (#1493)
 Scala Kinesis Enrich: added macros to config.hocon.sample (#1513)
 Scala Kinesis Enrich: moved Iglu resolver to dedicated CLI argument (#1534)
 Scala Kinesis Enrich: updated README examples with new configuration (#1549)
