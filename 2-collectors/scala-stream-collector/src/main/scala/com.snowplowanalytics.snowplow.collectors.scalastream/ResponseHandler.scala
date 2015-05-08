@@ -24,12 +24,27 @@ import java.util.UUID
 import org.apache.commons.codec.binary.Base64
 
 // Spray
-import spray.http.{DateTime,HttpRequest,HttpResponse,HttpEntity,HttpCookie}
+import spray.http.{
+  DateTime,
+  HttpRequest,
+  HttpResponse,
+  HttpEntity,
+  HttpCookie,
+  SomeOrigins,
+  AllOrigins,
+  ContentType,
+  MediaTypes,
+  HttpCharsets
+}
 import spray.http.HttpHeaders.{
   `Set-Cookie`,
   `Remote-Address`,
   `Raw-Request-URI`,
   `Content-Type`,
+  `Origin`,
+  `Access-Control-Allow-Origin`,
+  `Access-Control-Allow-Credentials`,
+  `Access-Control-Allow-Headers`,
   RawHeader
 }
 import spray.http.MediaTypes.`image/gif`
@@ -69,69 +84,113 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
       request: HttpRequest, refererUri: Option[String], path: String, pixelExpected: Boolean):
       (HttpResponse, Array[Byte]) = {
 
-    // Use the same UUID if the request cookie contains `sp`.
-    val networkUserId: String = requestCookie match {
-      case Some(rc) => rc.content
-      case None => UUID.randomUUID.toString
-    }
+    if (KinesisSink.shuttingDown) {
+      (notFound, null)
+    } else {
 
-    // Construct an event object from the request.
-    val timestamp: Long = System.currentTimeMillis
+      // Use the same UUID if the request cookie contains `sp`.
+      val networkUserId: String = requestCookie match {
+        case Some(rc) => rc.content
+        case None => UUID.randomUUID.toString
+      }
 
-    val event = new CollectorPayload(
-      "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
-      ip,
-      timestamp,
-      "UTF-8",
-      Collector
-    )
+      // Construct an event object from the request.
+      val timestamp: Long = System.currentTimeMillis
 
-    event.path = path
-    event.querystring = queryParams
-    event.body = body
-    event.hostname = hostname
-    event.networkUserId = networkUserId
+      val event = new CollectorPayload(
+        "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
+        ip,
+        timestamp,
+        "UTF-8",
+        Collector
+      )
 
-    userAgent.foreach(event.userAgent = _)
-    refererUri.foreach(event.refererUri = _)
-    event.headers = request.headers.flatMap {
-      case _: `Remote-Address` | _: `Raw-Request-URI` => None
-      case other => Some(other.toString)
-    }
+      event.path = path
+      event.querystring = queryParams
+      event.body = body
+      event.hostname = hostname
+      event.networkUserId = networkUserId
 
-    // Set the content type
-    request.headers.find(_ match {case `Content-Type`(ct) => true; case _ => false}) foreach {
+      userAgent.foreach(event.userAgent = _)
+      refererUri.foreach(event.refererUri = _)
+      event.headers = request.headers.flatMap {
+        case _: `Remote-Address` | _: `Raw-Request-URI` => None
+        case other => Some(other.toString)
+      }
 
-      // toLowerCase called because Spray seems to convert "utf" to "UTF"
-      ct => event.contentType = ct.value.toLowerCase
-    }
+      // Set the content type
+      request.headers.find(_ match {case `Content-Type`(ct) => true; case _ => false}) foreach {
 
-    // Only the test sink responds with the serialized object.
-    val sinkResponse = sink.storeRawEvent(event, ip)
+        // toLowerCase called because Spray seems to convert "utf" to "UTF"
+        ct => event.contentType = ct.value.toLowerCase
+      }
 
-    // Build the HTTP response.
-    val responseCookie = HttpCookie(
-      "sp", networkUserId,
-      expires=Some(DateTime.now+config.cookieExpiration),
-      domain=config.cookieDomain
-    )
-    val policyRef = config.p3pPolicyRef
-    val CP = config.p3pCP
-    val headers = List(
-      RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP)),
-      `Set-Cookie`(responseCookie)
-    )
+      // Only the test sink responds with the serialized object.
+      val sinkResponse = sink.storeRawEvent(event, ip)
 
-    val httpResponse = (if (pixelExpected) {
-        HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
+      val policyRef = config.p3pPolicyRef
+      val CP = config.p3pCP
+
+      val headersWithoutCookie = List(
+        RawHeader("P3P", "policyref=\"%s\", CP=\"%s\"".format(policyRef, CP)),
+        getAccessControlAllowOriginHeader(request),
+        `Access-Control-Allow-Credentials`(true)
+      )
+
+      val headers = if (config.cookieEnabled) {
+        val responseCookie = HttpCookie(
+          "sp", networkUserId,
+          expires=Some(DateTime.now+config.cookieExpiration),
+          domain=config.cookieDomain
+        )
+        `Set-Cookie`(responseCookie) :: headersWithoutCookie
       } else {
-        HttpResponse()
-      }).withHeaders(headers)
+        headersWithoutCookie
+      }
 
-    (httpResponse, sinkResponse)
+      val httpResponse = (if (pixelExpected) {
+          HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
+        } else {
+          HttpResponse()
+        }).withHeaders(headers)
+
+      (httpResponse, sinkResponse)
+    }
   }
+
+  /**
+   * Creates a response to the CORS preflight Options request
+   *
+   * @param request Incoming preflight Options request
+   * @return Response granting permissions to make the actual request
+   */
+  def preflightResponse(request: HttpRequest) = HttpResponse().withHeaders(List(
+    getAccessControlAllowOriginHeader(request),
+    `Access-Control-Allow-Credentials`(true),
+    `Access-Control-Allow-Headers`( "Content-Type")))
+
+  def flashCrossDomainPolicy = HttpEntity(
+    contentType = ContentType(MediaTypes.`text/xml`, HttpCharsets.`ISO-8859-1`),
+    string = "<?xml version=\"1.0\"?>\n<cross-domain-policy>\n  <allow-access-from domain=\"*\" secure=\"false\" />\n</cross-domain-policy>"
+  )
 
   def healthy = HttpResponse(status = 200, entity = s"OK")
   def notFound = HttpResponse(status = 404, entity = "404 Not found")
   def timeout = HttpResponse(status = 500, entity = s"Request timed out.")
+
+  /**
+   * Creates an Access-Control-Allow-Origin header which specifically
+   * allows the domain which made the request
+   *
+   * @param request Incoming request
+   * @return Header
+   */
+  private def getAccessControlAllowOriginHeader(request: HttpRequest) =
+    `Access-Control-Allow-Origin`(request.headers.find(_ match {
+      case `Origin`(origin) => true
+      case _ => false
+    }) match {
+      case Some(`Origin`(origin)) => SomeOrigins(origin)
+      case _ => AllOrigins
+    })
 }

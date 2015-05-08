@@ -68,7 +68,7 @@ object ScalaCollector extends App {
   implicit val system = ActorSystem.create("scala-stream-collector", rawConf)
   val collectorConfig = new CollectorConfig(rawConf)
   val sink = collectorConfig.sinkEnabled match {
-    case Sink.Kinesis => new KinesisSink(collectorConfig)
+    case Sink.Kinesis => KinesisSink.createAndInitialize(collectorConfig)
     case Sink.Stdout => new StdoutSink
   }
 
@@ -116,7 +116,8 @@ class CollectorConfig(config: Config) {
 
   private val cookie = collector.getConfig("cookie")
   val cookieExpiration = cookie.getMilliseconds("expiration")
-  var cookieDomain = cookie.getOptionalString("domain")
+  val cookieEnabled = cookieExpiration != 0
+  val cookieDomain = cookie.getOptionalString("domain")
 
   private val sink = collector.getConfig("sink")
   // TODO: either change this to ADTs or switch to withName generation
@@ -133,7 +134,6 @@ class CollectorConfig(config: Config) {
   val awsSecretKey = aws.getString("secret-key")
   private val stream = kinesis.getConfig("stream")
   val streamName = stream.getString("name")
-  val streamSize = stream.getInt("size")
   private val streamRegion = stream.getString("region")
   val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
 
@@ -141,5 +141,13 @@ class CollectorConfig(config: Config) {
     case true => kinesis.getInt("thread-pool-size")
     case _ => 10
   }
-}
 
+  val buffer = kinesis.getConfig("buffer")
+  val byteLimit = buffer.getInt("byte-limit")
+  val recordLimit = buffer.getInt("record-limit")
+  val timeLimit = buffer.getInt("time-limit")
+
+  val backoffPolicy = kinesis.getConfig("backoffPolicy")
+  val minBackoff = backoffPolicy.getLong("minBackoff")
+  val maxBackoff = backoffPolicy.getLong("maxBackoff")
+}

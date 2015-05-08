@@ -77,7 +77,15 @@ collector {
       stream {
         region: "us-east-1"
         name: "snowplow_collector_example"
-        size: 1
+      }
+      buffer {
+        byte-limit: 4000000 # 4MB
+        record-limit: 500 # 500 records
+        time-limit: 60000 # 1 minute
+      }
+      backoffPolicy {
+        minBackoff: 3000 # 3 seconds
+        maxBackoff: 600000 # 5 minutes
       }
     }
   }
@@ -172,7 +180,7 @@ collector {
       storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 1000)
       storedEvent.encoding must beEqualTo("UTF-8")
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
-      storedEvent.collector must beEqualTo("ssc-0.3.0-test")
+      storedEvent.collector must beEqualTo("ssc-0.4.0-test")
       storedEvent.path must beEqualTo("/i")
       storedEvent.querystring must beEqualTo(payloadData)
     }

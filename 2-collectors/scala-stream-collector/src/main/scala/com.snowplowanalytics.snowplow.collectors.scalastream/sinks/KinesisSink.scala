@@ -17,6 +17,7 @@ package sinks
 
 // Java
 import java.nio.ByteBuffer
+import java.util.concurrent.ScheduledThreadPoolExecutor
 
 // Amazon
 import com.amazonaws.services.kinesis.model.ResourceNotFoundException
@@ -48,35 +49,104 @@ import scala.concurrent.duration._
 // Logging
 import org.slf4j.LoggerFactory
 
-// Mutable data structures
-import scala.collection.mutable.StringBuilder
-import scala.collection.mutable.MutableList
+// Scala
 import scala.util.{Success, Failure}
+import scala.collection.JavaConverters._
 
 // Snowplow
 import scalastream._
 import CollectorPayload.thrift.model1.CollectorPayload
 
 /**
+ * KinesisSink companion object with factory method
+ */
+object KinesisSink {
+
+  @volatile var shuttingDown = false
+
+  /**
+   * Create a KinesisSink and schedule a task to flush its EventStorage
+   * Exists so that no threads can get a reference to the KinesisSink
+   * during its construction
+   *
+   * @param config
+   */
+  def createAndInitialize(config: CollectorConfig): KinesisSink = {
+    val ks = new KinesisSink(config)
+    ks.scheduleFlush()
+
+    // When the application is shut down, stop accepting incoming requests
+    // and send all stored events
+    Runtime.getRuntime.addShutdownHook(new Thread {
+      override def run() {
+        shuttingDown = true
+        ks.EventStorage.flush()
+        ks.executorService.shutdown()
+        ks.executorService.awaitTermination(10000, MILLISECONDS)
+      }
+    })
+    ks
+  }
+}
+
+/**
  * Kinesis Sink for the Scala collector.
  */
-class KinesisSink(config: CollectorConfig) extends AbstractSink {
+class KinesisSink private (config: CollectorConfig) extends AbstractSink {
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
-  implicit lazy val ec = {
-    info("Creating thread pool of size " + config.threadpoolSize)
-    val executorService = java.util.concurrent.Executors.newFixedThreadPool(config.threadpoolSize)
-    concurrent.ExecutionContext.fromExecutorService(executorService)
+  val BackoffTime = 3000L
+
+  val ByteThreshold = config.byteLimit
+  val RecordThreshold = config.recordLimit
+  val TimeThreshold = config.timeLimit
+
+  private val maxBackoff = config.maxBackoff
+  private val minBackoff = config.minBackoff
+  private val randomGenerator = new java.util.Random()
+
+  info("Creating thread pool of size " + config.threadpoolSize)
+
+  val executorService = new ScheduledThreadPoolExecutor(config.threadpoolSize)
+  implicit lazy val ec = concurrent.ExecutionContext.fromExecutorService(executorService)
+
+  /**
+   * Recursively schedule a task to send everthing in EventStorage
+   * Even if the incoming event flow dries up, all stored events will eventually get sent
+   *
+   * Whenever TimeThreshold milliseconds have passed since the last call to flush, call flush.
+   *
+   * @param interval When to schedule the next flush
+   */
+  def scheduleFlush(interval: Long = TimeThreshold) {
+    executorService.schedule(new Thread {
+      override def run() {
+        val lastFlushed = EventStorage.getLastFlushTime()
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastFlushed >= TimeThreshold) {
+          EventStorage.flush()
+          scheduleFlush(TimeThreshold)
+        } else {
+          scheduleFlush(TimeThreshold + lastFlushed - currentTime)
+        }
+      }
+    }, interval, MILLISECONDS)
   }
 
   // Create a Kinesis client for stream interactions.
   private implicit val kinesis = createKinesisClient
 
   // The output stream for enriched events.
-  private val enrichedStream = createAndLoadStream()
+  private val enrichedStream = loadStream()
 
-  // Checks if a stream exists.
+  /**
+   * Check whether a Kinesis stream exists
+   *
+   * @param name Name of the stream
+   * @param timeout How long to wait before timing out
+   * @return Whether the stream exists
+   */
   def streamExists(name: String, timeout: Int = 60): Boolean = {
 
     val exists: Boolean = try {
@@ -100,33 +170,18 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     exists
   }
 
-  // Creates a new stream if one doesn't exist.
-  def createAndLoadStream(timeout: Int = 60): Stream = {
+  /**
+   * Loads a Kinesis stream if it exists
+   *
+   * @return The stream
+   */
+  def loadStream(): Stream = {
     val name = config.streamName
-    val size = config.streamSize
 
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
-      info(s"Creating stream $name of size $size")
-      val createStream = for {
-        s <- Kinesis.streams.create(name)
-      } yield s
-
-      try {
-        val stream = Await.result(createStream, Duration(timeout, SECONDS))
-
-        info(s"Successfully created stream $name. Waiting until it's active")
-        Await.result(stream.waitActive.retrying(timeout),
-          Duration(timeout, SECONDS))
-
-        info(s"Stream $name active")
-
-        stream
-      } catch {
-        case _: TimeoutException =>
-          throw new RuntimeException("Error: Timed out")
-      }
+      throw new RuntimeException(s"Cannot write because stream $name doesn't exist or is not active")
     }
   }
 
@@ -160,29 +215,93 @@ class KinesisSink(config: CollectorConfig) extends AbstractSink {
     Client.fromClient(client)
   }
 
-  def storeRawEvent(event: CollectorPayload, key: String) = {
-    info(s"Writing Thrift record to Kinesis: ${event.toString}")
-    val putData = for {
-      p <- enrichedStream.put(
-        ByteBuffer.wrap(serializeEvent(event)),
-        key
-      )
-    } yield p
+  // TODO: don't send more than 4.5MB per request
+  object EventStorage {
+    private var storedEvents = List[(ByteBuffer, String)]()
+    private var byteCount = 0L
+    @volatile private var lastFlushedTime = 0L
 
-    putData onComplete {
-      case Success(result) => {
-        info(s"Writing successful.")
-        info(s"  + ShardId: ${result.shardId}")
-        info(s"  + SequenceNumber: ${result.sequenceNumber}")
-      }
-      case Failure(f) => {
-        error(s"Writing failed.")
-        error(s"  + " + f.getMessage)
+    def store(event: CollectorPayload, key: String) = {
+      val eventBytes = ByteBuffer.wrap(serializeEvent(event))
+      val eventSize = eventBytes.capacity
+      if (eventSize >= 51200) {
+        // TODO: split up large event arrays (see https://github.com/snowplow/snowplow/issues/941)
+        error(s"Record of size $eventSize bytes is too large - must be less than 51200 bytes")
+      } else {
+        synchronized {
+          storedEvents = (eventBytes, key) :: storedEvents
+          byteCount += eventSize
+          if (storedEvents.size >= RecordThreshold || byteCount >= ByteThreshold) {
+            flush()
+          }
+        }
       }
     }
 
+    def flush() = {
+      val eventsToSend = synchronized {
+        val evts = storedEvents.reverse
+        storedEvents = Nil
+        byteCount = 0
+        evts
+      }
+      lastFlushedTime = System.currentTimeMillis()
+      sendBatch(eventsToSend)
+    }
+
+    def getLastFlushTime() = lastFlushedTime
+  }
+
+  def storeRawEvent(event: CollectorPayload, key: String) = {
+    EventStorage.store(event, key)
     null
   }
+
+  def scheduleBatch(batch: List[(ByteBuffer, String)], lastBackoff: Long = minBackoff) {
+    val nextBackoff = getNextBackoff(lastBackoff)
+    executorService.schedule(new Thread {
+      override def run() {
+        sendBatch(batch, nextBackoff)
+      }
+    }, lastBackoff, MILLISECONDS)
+  }
+
+  // TODO: limit max retries?
+  def sendBatch(batch: List[(ByteBuffer, String)], nextBackoff: Long = minBackoff) {
+    if (batch.size > 0) {
+      info(s"Writing ${batch.size} Thrift records to Kinesis stream ${config.streamName}")
+      val putData = for {
+        p <- enrichedStream.multiPut(batch)
+      } yield p
+
+      putData onComplete {
+        case Success(s) => {
+          val results = s.result.getRecords.asScala.toList
+          val failurePairs = batch zip results filter { _._2.getErrorMessage != null }
+          info(s"Successfully wrote ${batch.size-failurePairs.size} out of ${batch.size} records")
+          if (failurePairs.size > 0) {
+            failurePairs foreach { f => error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]") }
+            error("Retrying all failed records in $nextBackoff milliseconds...")
+            val failures = failurePairs.map(_._1)
+            scheduleBatch(failures, nextBackoff)
+          }
+        }
+        case Failure(f) => {
+          error("Writing failed.", f)
+          error(s"Retrying in $nextBackoff milliseconds...")
+          scheduleBatch(batch, nextBackoff)
+        }
+      }
+    }
+  }
+
+  /**
+   * How long to wait before sending the next request
+   *
+   * @param lastBackoff The previous backoff time
+   * @return Minimum of maxBackoff and a random number between minBackoff and three times lastBackoff
+   */
+  private def getNextBackoff(lastBackoff: Long): Long = (minBackoff + randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong.min(maxBackoff)
 
   /**
    * Is the access/secret key set to the special value "cpf" i.e. use

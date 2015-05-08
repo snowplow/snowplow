@@ -48,7 +48,7 @@ class StdinSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmen
   def run = {
     for (ln <- io.Source.stdin.getLines) {
       val bytes = Base64.decodeBase64(ln)
-      enrichEvents(bytes)
+      enrichAndStoreEvents(List(bytes))
     }
   }
 }

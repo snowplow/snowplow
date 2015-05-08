@@ -21,11 +21,18 @@ package snowplow.enrich
 package kinesis
 package sources
 
+// Java
+import java.nio.ByteBuffer
+
 // Amazon
 import com.amazonaws.auth._
 
 // Apache commons
 import org.apache.commons.codec.binary.Base64
+
+// Scala
+import scala.util.Random
+import scala.util.control.NonFatal
 
 // Scalaz
 import scalaz.{Sink => _, _}
@@ -63,13 +70,15 @@ import common.utils.JsonUtils
 abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolver,
                               enrichmentRegistry: EnrichmentRegistry) {
   
+  val MaxRecordSize = 51200
+
   /**
    * Never-ending processing loop over source stream.
    */
   def run
 
   // Initialize a kinesis provider to use with a Kinesis source or sink.
-  protected val kinesisProvider = createKinesisProvider
+  protected val kinesisProvider = config.credentialsProvider
 
   // Initialize the sink to output enriched events to.
   protected val sink: Option[ISink] = config.sink match {
@@ -96,92 +105,95 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
     }.mkString("\t")
   }
 
-  // Helper method to enrich an event.
-  // TODO: this is a slightly odd design: it's a pure function if our
-  // our sink is Test, but it's an impure function (with
-  // storeEnrichedEvent side effect) for the other sinks. We should
-  // break this into a pure function with an impure wrapper.
-  def enrichEvents(binaryData: Array[Byte]): List[Option[String]] = {
+  /**
+   * Convert incoming binary Thrift records to lists of enriched events
+   *
+   * @param binaryData Thrift raw event
+   * @return List containing successful or failed events, each with a
+   *         partition key
+   */
+  def enrichEvents(binaryData: Array[Byte]): List[Validation[(String, String), (String, String)]] = {
     val canonicalInput: ValidatedMaybeCollectorPayload = ThriftLoader.toCollectorPayload(binaryData)
     val processedEvents: List[ValidationNel[String, EnrichedEvent]] = EtlPipeline.processEvents(
       enrichmentRegistry, s"kinesis-${generated.Settings.version}", System.currentTimeMillis.toString, canonicalInput)
     processedEvents.map(validatedMaybeEvent => {
       validatedMaybeEvent match {
-        case Success(co) => {
-          val ts = tabSeparateEnrichedEvent(co)
-          for (s <- sink) {
-            // TODO: pull this side effect into parent function
-            s.storeEnrichedEvent(ts, co.user_ipaddress)
-          }
-          Some(ts)
-        }
+        case Success(co) => (tabSeparateEnrichedEvent(co) -> co.user_ipaddress).success
         case Failure(errors) => {
-          for (s <- badSink) {
-            val line = new String(Base64.encodeBase64(binaryData))
-            s.storeEnrichedEvent(BadRow(line, errors).toCompactJson, "fail")
-          }
-          None
+          val line = new String(Base64.encodeBase64(binaryData))
+          (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).fail
         }
       }
     })
   }
 
-  // Initialize a Kinesis provider with the given credentials.
-  private def createKinesisProvider(): AWSCredentialsProvider =  {
-    val a = config.accessKey
-    val s = config.secretKey
-    if (isCpf(a) && isCpf(s)) {
-        new ClasspathPropertiesFileCredentialsProvider()
-    } else if (isCpf(a) || isCpf(s)) {
-      throw new RuntimeException(
-        "access-key and secret-key must both be set to 'cpf', or neither"
-      )
-    } else if (isIam(a) && isIam(s)) {
-      new InstanceProfileCredentialsProvider()
-    } else if (isIam(a) || isIam(s)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'iam', or neither")
-    } else if (isEnv(a) && isEnv(s)) {
-      new EnvironmentVariableCredentialsProvider()
-    } else if (isEnv(a) || isEnv(s)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'env', or neither")
-    } else {
-      new BasicAWSCredentialsProvider(
-        new BasicAWSCredentials(a, s)
-      )
+  /**
+   * Deserialize and enrich incoming Thrift records and store the results
+   * in the appropriate sinks. If doing so causes the number of events
+   * stored in a sink to become sufficiently large, all sinks are flushed
+   * and we return `true`, signalling that it is time to checkpoint
+   *
+   * @param binaryData Thrift raw event
+   * @return Whether to checkpoint
+   */
+  def enrichAndStoreEvents(binaryData: List[Array[Byte]]): Boolean = {
+    val enrichedEvents = binaryData.flatMap(enrichEvents(_))
+    val successes = enrichedEvents collect { case Success(s) => s }
+    val sizeUnadjustedFailures = enrichedEvents collect { case Failure(s) => s }
+    val failures = sizeUnadjustedFailures map {
+      case (value, key) => if (! isTooLarge(value)) {
+        value -> key
+      } else {
+        val size = getSize(value)
+        compact(render(try {
+          val originalJson = parse(value)
+          val errors = originalJson \ "errors"
+          ("size" -> size) ~ ("errors" -> errors)
+        } catch {
+          case NonFatal(e) => ("size" -> size) ~
+            ("errors" -> List("Unable to extract errors field from original oversized bad row JSON"))
+        })) -> key
+      }
     }
+
+    val (tooBigSuccesses, smallEnoughSuccesses) = successes partition { s => isTooLarge(s._1) }
+    val sizeBasedFailures = tooBigSuccesses map {
+      case (value, key) => {
+        val size = getSize(value)
+        val errorJson =
+          ("size" -> size) ~
+          ("errors" -> List(s"Enriched event size of $size bytes is greater than allowed maximum of $MaxRecordSize"))
+        compact(render(errorJson)) -> key
+      }
+    }
+
+    val successesTriggeredFlush = sink.map(_.storeEnrichedEvents(smallEnoughSuccesses))
+    val failuresTriggeredFlush = badSink.map(_.storeEnrichedEvents(failures ++ sizeBasedFailures))
+    if (successesTriggeredFlush == Some(true) || failuresTriggeredFlush == Some(true)) {
+
+      // Block until the records have been sent to Kinesis
+      sink.foreach(_.flush)
+      badSink.foreach(_.flush)
+      true
+    } else {
+      false
+    }
+
   }
 
   /**
-   * Is the access/secret key set to the special value "cpf" i.e. use
-   * the classpath properties file for credentials.
+   * The size of a string in bytes
    *
-   * @param key The key to check
-   * @return true if key is cpf, false otherwise
+   * @param evt
+   * @return size
    */
-  private def isCpf(key: String): Boolean = (key == "cpf")
+  private def getSize(evt: String): Long = ByteBuffer.wrap(evt.getBytes).capacity
 
   /**
-   * Is the access/secret key set to the special value "iam" i.e. use
-   * the IAM role to get credentials.
+   * Whether a record is too large to send to Kinesis
    *
-   * @param key The key to check
-   * @return true if key is iam, false otherwise
+   * @param evt
+   * @return boolean size decision
    */
-  private def isIam(key: String): Boolean = (key == "iam")
-
-  /**
-   * Is the access/secret key set to the special value "env" i.e. get
-   * the credentials from environment variables
-   *
-   * @param key The key to check
-   * @return true if key is iam, false otherwise
-   */
-  private def isEnv(key: String): Boolean = (key == "env")
-
-  // Wrap BasicAWSCredential objects.
-  class BasicAWSCredentialsProvider(basic: BasicAWSCredentials) extends
-      AWSCredentialsProvider{
-    @Override def getCredentials: AWSCredentials = basic
-    @Override def refresh = {}
-  }
+  private def isTooLarge(evt: String): Boolean = getSize(evt) >= MaxRecordSize
 }

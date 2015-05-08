@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory
 // Scala
 import scala.util.control.Breaks._
 import scala.collection.JavaConversions._
+import scala.util.control.NonFatal
 
 // Thrift
 import org.apache.thrift.TDeserializer
@@ -87,11 +88,13 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     ).withInitialPositionInStream(
       InitialPositionInStream.valueOf(config.initialPosition)
     ).withKinesisEndpoint(config.streamEndpoint)
-    
+    .withRegionName(config.streamRegion)
+    // If the record list is empty, we still check whether it is time to flush the buffer
+    .withCallProcessRecordsEvenForEmptyRecordList(true)
+
     info(s"Running: ${config.appName}.")
     info(s"Processing raw input stream: ${config.rawInStream}")
 
-    
     val rawEventProcessorFactory = new RawEventProcessorFactory(
       config,
       sink.get // TODO: yech
@@ -121,7 +124,6 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     private val thriftDeserializer = new TDeserializer()
 
     private var kinesisShardId: String = _
-    private var nextCheckpointTimeInMillis: Long = _
 
     // Backoff and retry settings.
     private val BACKOFF_TIME_IN_MILLIS = 3000L
@@ -137,27 +139,25 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     @Override
     def processRecords(records: List[Record],
         checkpointer: IRecordProcessorCheckpointer) = {
-      info(s"Processing ${records.size} records from $kinesisShardId")
-      processRecordsWithRetries(records)
 
-      if (System.currentTimeMillis() > nextCheckpointTimeInMillis) {
+      if (!records.isEmpty) {
+        info(s"Processing ${records.size} records from $kinesisShardId")
+      }
+      val shouldCheckpoint = processRecordsWithRetries(records)
+
+      if (shouldCheckpoint) {
         checkpoint(checkpointer)
-        nextCheckpointTimeInMillis =
-          System.currentTimeMillis + CHECKPOINT_INTERVAL_MILLIS
       }
     }
 
-
-    private def processRecordsWithRetries(records: List[Record]) = {
-      for (record <- records) {
-        try {
-          info(s"Sequence number: ${record.getSequenceNumber}")
-          info(s"Partition key: ${record.getPartitionKey}")
-          enrichEvents(record.getData.array)
-        } catch {
-          case t: Throwable =>
-            error(s"Caught throwable while processing record $record", t)
-        }
+    private def processRecordsWithRetries(records: List[Record]): Boolean = {
+      try {
+        enrichAndStoreEvents(records.map(_.getData.array).toList)
+      } catch {
+        case NonFatal(e) =>
+          // TODO: send an event when something goes wrong here
+          error(s"Caught throwable while processing records $records", e)
+          false
       }
     }
 
@@ -169,7 +169,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
         checkpoint(checkpointer)
       }
     }
-      
+
     private def checkpoint(checkpointer: IRecordProcessorCheckpointer) = {
       info(s"Checkpointing shard $kinesisShardId")
       breakable {
@@ -180,6 +180,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
           } catch {
             case se: ShutdownException =>
               error("Caught shutdown exception, skipping checkpoint.", se)
+              break
             case e: ThrottlingException =>
               if (i >= (NUM_RETRIES - 1)) {
                 error(s"Checkpoint failed after ${i+1} attempts.", e)
@@ -190,6 +191,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
             case e: InvalidStateException =>
               error("Cannot save checkpoint to the DynamoDB table used by " +
                 "the Amazon Kinesis Client Library.", e)
+              break
           }
           Thread.sleep(BACKOFF_TIME_IN_MILLIS)
         }

@@ -50,7 +50,7 @@ object SpecHelpers {
   /**
    * The Kinesis Enrich being used
    */
-  val EnrichVersion = "kinesis-0.4.0-common-0.13.0"
+  val EnrichVersion = "kinesis-0.5.0-common-0.13.1"
 
   val TimestampRegex = "[0-9]+"
 
@@ -226,7 +226,7 @@ object SpecHelpers {
     val config = """
 enrich {
   source = "test"
-  sink= "test"
+  sink = "test"
 
   aws {
     access-key: "cpf"
@@ -234,25 +234,35 @@ enrich {
   }
 
   streams {
-    in: {
+    in {
       raw: "SnowplowRaw"
+
+      buffer {
+        byte-limit: 4500000 # 4.5MB
+        record-limit: 500 # 500 records
+        time-limit: 60000 # 1 minute
+      }
     }
-    out: {
+    out {
       enriched: "SnowplowEnriched"
-      enriched_shards: 1 # Number of shards to use if created.
       bad: "SnowplowBad" # Not used until #463
-      bad_shards: 1 # Number of shards to use if created.
+
+      # Minimum and maximum backoff periods
+      backoffPolicy {
+        minBackoff: 3000 # 3 seconds
+        maxBackoff: 600000 # 5 minutes
+      }
     }
     app-name: SnowplowKinesisEnrich-${enrich.streams.in.raw}
     initial-position = "TRIM_HORIZON"
     region: "us-east-1"
   }
   enrichments {
-    geo_ip: {
+    geo_ip {
       enabled: true # false not yet suported
       maxmind_file: "/maxmind/GeoLiteCity.dat" # SBT auto-downloads into resource_managed/test
     }
-    anon_ip: {
+    anon_ip {
       enabled: true
       anon_octets: 1 # Or 2, 3 or 4. 0 is same as enabled: false
     }

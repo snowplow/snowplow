@@ -69,17 +69,16 @@ object SinkApp extends App {
   val conf = config.value.getOrElse(throw new RuntimeException("--config argument must be provided"))
 
   // TODO: make the conf file more like the Elasticsearch equivalent
-  val kinesisSinkRegion = conf.getConfig("connector").getConfig("kinesis").getString("region")
+  val kinesisSinkRegion = conf.getConfig("sink").getConfig("kinesis").getString("region")
   val kinesisSinkEndpoint = s"https://kinesis.${kinesisSinkRegion}.amazonaws.com"
-  val kinesisSink = conf.getConfig("connector").getConfig("kinesis").getConfig("out")
+  val kinesisSink = conf.getConfig("sink").getConfig("kinesis").getConfig("out")
   val kinesisSinkName = kinesisSink.getString("stream-name")
-  val kinesisSinkShards = kinesisSink.getInt("shards")
 
-  val credentialConfig = conf.getConfig("connector").getConfig("aws")
+  val credentialConfig = conf.getConfig("sink").getConfig("aws")
 
   val credentials = CredentialsLookup.getCredentialsProvider(credentialConfig.getString("access-key"), credentialConfig.getString("secret-key"))
 
-  val badSink = new KinesisSink(credentials, kinesisSinkEndpoint, kinesisSinkName, kinesisSinkShards)
+  val badSink = new KinesisSink(credentials, kinesisSinkEndpoint, kinesisSinkName)
 
   val executor = new S3SinkExecutor(convertConfig(conf, credentials), badSink)
   executor.run()
@@ -93,7 +92,7 @@ object SinkApp extends App {
    */
   def convertConfig(conf: Config, credentials: AWSCredentialsProvider): KinesisConnectorConfiguration = {
     val props = new Properties()
-    val connector = conf.resolve.getConfig("connector")
+    val connector = conf.resolve.getConfig("sink")
 
     val kinesis = connector.getConfig("kinesis")
     val kinesisIn = kinesis.getConfig("in")
@@ -104,7 +103,11 @@ object SinkApp extends App {
     val appName = kinesis.getString("app-name")
 
     val s3 = connector.getConfig("s3")
-    val s3Endpoint = s3.getString("endpoint")
+    val s3Region = s3.getString("region")
+    val s3Endpoint = s3Region match {
+      case "us-east-1" => "https://s3.amazonaws.com"
+      case _ => s"https://s3-$s3Region.amazonaws.com"
+    }
     val bucket = s3.getString("bucket")
 
     val buffer = connector.getConfig("buffer")
@@ -125,6 +128,9 @@ object SinkApp extends App {
     props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_MILLISECONDS_LIMIT, timeLimit)
 
     props.setProperty(KinesisConnectorConfiguration.PROP_CONNECTOR_DESTINATION, "s3")
+
+    // So that the region of the DynamoDB table is correct
+    props.setProperty(KinesisConnectorConfiguration.PROP_REGION_NAME, kinesisRegion)
 
     // The emit method retries sending to S3 indefinitely, so it only needs to be called once
     props.setProperty(KinesisConnectorConfiguration.PROP_RETRY_LIMIT, "1")
