@@ -174,7 +174,7 @@ collector {
 
       val storedEvent = new CollectorPayload
       this.synchronized {
-        thriftDeserializer.deserialize(storedEvent, storedRecordBytes)
+        thriftDeserializer.deserialize(storedEvent, storedRecordBytes.head)
       }
 
       storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 1000)

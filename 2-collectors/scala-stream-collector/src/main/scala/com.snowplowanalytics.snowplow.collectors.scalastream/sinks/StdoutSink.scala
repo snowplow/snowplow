@@ -38,9 +38,14 @@ import scalastream._
 import CollectorPayload.thrift.model1.CollectorPayload
 
 class StdoutSink extends AbstractSink {
+
+  val MaxBytes = Long.MaxValue
+
   // Print a Base64-encoded event.
   def storeRawEvent(event: CollectorPayload, key: String) = {
-    println(Base64.encodeBase64String(serializeEvent(event)))
+    splitAndSerializePayload(event) foreach {
+      e => println(Base64.encodeBase64String(e))
+    }
     null
   }
 }
