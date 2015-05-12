@@ -286,7 +286,11 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration,
   override def fail(records: JList[EmitterInput]) {
     records foreach {
       record => {
-        val output = compact(render(("line" -> record._1) ~ ("errors" -> record._2.swap.getOrElse(Nil))))
+        val output = compact(render(
+          ("line" -> record._1) ~ 
+          ("errors" -> record._2.swap.getOrElse(Nil)) ~
+          ("failure_tstamp" -> System.currentTimeMillis())
+        ))
         badSink.store(output, None, false)
       }
     }
