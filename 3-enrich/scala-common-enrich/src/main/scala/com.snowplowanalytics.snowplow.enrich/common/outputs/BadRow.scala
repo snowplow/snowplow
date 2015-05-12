@@ -33,10 +33,12 @@ import iglu.client.ProcessingMessageNel
  * 1. Our original input line (which was meant
  *    to be a Snowplow enriched event)
  * 2. A non-empty list of our Validation errors
+ * 3. A timestamp
  */
 case class BadRow(
   val line: String,
-  val errors: NonEmptyList[String]
+  val errors: NonEmptyList[String],
+  val tstamp: Long = System.currentTimeMillis()
   ) {
 
   /**
@@ -46,8 +48,9 @@ case class BadRow(
    * @return the TypeHierarchy as a json4s JValue
    */
   def toJValue: JValue =
-    ("line"     -> line) ~
-    ("errors"   -> errors.toList)
+    ("line"           -> line) ~
+    ("errors"         -> errors.toList) ~
+    ("failure_tstamp" -> tstamp)
 
   /**
    * Converts our BadRow into a single JSON encapsulating
