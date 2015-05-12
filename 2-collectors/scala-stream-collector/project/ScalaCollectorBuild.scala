@@ -44,7 +44,8 @@ object ScalaCollectorBuild extends Build {
         Libraries.awsSdk,
         Libraries.argot,
         Libraries.snowplowRawEvent,
-        Libraries.collectorPayload
+        Libraries.collectorPayload,
+        Libraries.json4sJackson
       )
     )
 }
