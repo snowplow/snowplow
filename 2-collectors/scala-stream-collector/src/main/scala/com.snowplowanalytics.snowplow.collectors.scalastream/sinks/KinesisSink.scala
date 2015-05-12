@@ -93,8 +93,11 @@ object KinesisSink {
  * Kinesis Sink for the Scala collector.
  */
 class KinesisSink private (config: CollectorConfig) extends AbstractSink {
-  private lazy val log = LoggerFactory.getLogger(getClass())
+
   import log.{error, debug, info, trace}
+
+  // Records must not exceed MaxBytes - 1MB
+  val MaxBytes = 1000000L
 
   val BackoffTime = 3000L
 
@@ -221,12 +224,12 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
     private var byteCount = 0L
     @volatile private var lastFlushedTime = 0L
 
-    def store(event: CollectorPayload, key: String) = {
-      val eventBytes = ByteBuffer.wrap(serializeEvent(event))
+    def store(event: Array[Byte], key: String) = {
+      val eventBytes = ByteBuffer.wrap(event)
       val eventSize = eventBytes.capacity
-      if (eventSize >= 51200) {
+      if (eventSize >= MaxBytes) {
         // TODO: split up large event arrays (see https://github.com/snowplow/snowplow/issues/941)
-        error(s"Record of size $eventSize bytes is too large - must be less than 51200 bytes")
+        error(s"Record of size $eventSize bytes is too large - must be less than $MaxBytes bytes")
       } else {
         synchronized {
           storedEvents = (eventBytes, key) :: storedEvents
@@ -253,7 +256,9 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
   }
 
   def storeRawEvent(event: CollectorPayload, key: String) = {
-    EventStorage.store(event, key)
+    splitAndSerializePayload(event) foreach {
+      e => EventStorage.store(e, key)
+    }
     null
   }
 

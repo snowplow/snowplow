@@ -40,6 +40,10 @@ import CollectorPayload.thrift.model1.CollectorPayload
 // Allow the testing framework to test collection events using the
 // same methods from AbstractSink as the other sinks.
 class TestSink extends AbstractSink {
+
+  // Effectively no limit to the record size
+  val MaxBytes = Long.MaxValue
+
   def storeRawEvent(event: CollectorPayload, key: String) =
-    serializeEvent(event)
+    splitAndSerializePayload(event)
 }
