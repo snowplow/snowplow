@@ -82,7 +82,7 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
   def cookie(queryParams: String, body: String, requestCookie: Option[HttpCookie],
       userAgent: Option[String], hostname: String, ip: String,
       request: HttpRequest, refererUri: Option[String], path: String, pixelExpected: Boolean):
-      (HttpResponse, Array[Byte]) = {
+      (HttpResponse, List[Array[Byte]]) = {
 
     if (KinesisSink.shuttingDown) {
       (notFound, null)
