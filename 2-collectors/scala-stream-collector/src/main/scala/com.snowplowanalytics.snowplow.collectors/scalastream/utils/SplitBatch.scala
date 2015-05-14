@@ -21,6 +21,10 @@ import java.nio.ByteBuffer
 // Thrift
 import org.apache.thrift.TSerializer
 
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.DateTimeFormat
+
 // Snowplow
 import CollectorPayload.thrift.model1.CollectorPayload
 
@@ -33,6 +37,9 @@ object SplitBatch {
   private val ThriftSerializer = new ThreadLocal[TSerializer] {
     override def initialValue = new TSerializer()
   }
+
+  // An ISO valid timestamp formatter
+  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   // json4s
   import org.json4s.JsonDSL._
@@ -187,7 +194,7 @@ object SplitBatch {
     compact(
       ("size" -> size) ~
       ("errors" -> errors) ~
-      ("failure_tstamp" -> System.currentTimeMillis())
+      ("failure_tstamp" -> getTimestamp(System.currentTimeMillis()))
     )
   }
 
@@ -202,5 +209,16 @@ object SplitBatch {
       ("schema" -> schema) ~
       ("data" -> data)
     )
+  }
+
+  /**
+   * Returns an ISO valid timestamp
+   *
+   * @param tstamp The Timestamp to convert
+   * @return the formatted Timestamp
+   */
+  def getTimestamp(tstamp: Long): String = {
+    val dt = new DateTime(tstamp)
+    TstampFormat.print(dt)
   }
 }
