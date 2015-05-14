@@ -33,6 +33,8 @@ object ScalaCollectorBuild extends Build {
       libraryDependencies ++= Seq(
         Libraries.akkaActor,
         Libraries.akkaSlf4j,
+        Libraries.yodaTime,
+        Libraries.yodaConvert,
         Libraries.logback,
         Libraries.mimepull,
         Libraries.sprayCan,
