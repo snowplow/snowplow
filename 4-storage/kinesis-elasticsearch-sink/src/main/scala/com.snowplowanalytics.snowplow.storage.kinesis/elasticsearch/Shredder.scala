@@ -135,8 +135,8 @@ object Shredder {
      * would become
      *
      * [
-     *   {"context_com_acme_duplicated_1": {"value": 1}},
-     *   {"context_com_acme_duplicated_1": {"value": 2}}
+     *   {"contexts_com_acme_duplicated_1": {"value": 1}},
+     *   {"contexts_com_acme_duplicated_1": {"value": 2}}
      * ]
      *
      * @param contextJsons List of inner custom context JSONs
@@ -199,7 +199,7 @@ object Shredder {
    * would become
    *
    *  {
-   *    "unstruct_com_snowplowanalytics_snowplow_link_click_1": {"key": "value"}
+   *    "unstruct_event_com_snowplowanalytics_snowplow_link_click_1": {"key": "value"}
    *  }
    *
    * @param unstruct Unstructured event JSON
