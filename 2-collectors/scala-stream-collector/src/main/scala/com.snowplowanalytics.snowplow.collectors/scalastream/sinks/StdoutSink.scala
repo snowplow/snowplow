@@ -34,16 +34,17 @@ import org.apache.thrift.TSerializer
 import com.typesafe.config.Config
 
 // Snowplow
-import scalastream._
 import CollectorPayload.thrift.model1.CollectorPayload
 
-// Allow the testing framework to test collection events using the
-// same methods from AbstractSink as the other sinks.
-class TestSink extends AbstractSink {
+class StdoutSink extends AbstractSink {
 
-  // Effectively no limit to the record size
   val MaxBytes = Long.MaxValue
 
-  def storeRawEvent(event: CollectorPayload, key: String) =
-    splitAndSerializePayload(event)
+  // Print a Base64-encoded event.
+  def storeRawEvents(events: List[Array[Byte]], key: String) = {
+    events foreach {
+      e => println(Base64.encodeBase64String(e))
+    }
+    Nil
+  }
 }

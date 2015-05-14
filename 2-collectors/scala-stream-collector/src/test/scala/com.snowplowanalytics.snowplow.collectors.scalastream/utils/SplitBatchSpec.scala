@@ -15,7 +15,7 @@
 package com.snowplowanalytics.snowplow
 package collectors
 package scalastream
-package sinks
+package utils
 
 // Specs2
 import org.specs2.mutable.Specification
@@ -28,7 +28,7 @@ class SplitBatchSpec extends Specification {
     "Batch a list of strings based on size" in {
 
       splitBatch.split(List("a", "b", "c"), 5, 1) must_==
-        SplitBatch(
+        SplitBatchResult(
           List(List("c"),List("b", "a")),
           Nil)
 
@@ -37,7 +37,7 @@ class SplitBatchSpec extends Specification {
     "Reject only those strings which are too big" in {
 
       splitBatch.split(List("123456", "1", "123"), 5, 0) must_==
-        SplitBatch(
+        SplitBatchResult(
           List(List("123", "1")),
           List("123456"))
     }
@@ -45,7 +45,7 @@ class SplitBatchSpec extends Specification {
     "Batch a long list of strings" in {
 
       splitBatch.split(List("12345677890", "123456789", "12345678", "1234567", "123456", "12345", "1234", "123", "12", "1"), 9, 0) must_==
-        SplitBatch(
+        SplitBatchResult(
           List(
             List("1", "12", "123"),
             List("1234", "12345"),
@@ -56,5 +56,4 @@ class SplitBatchSpec extends Specification {
           List("12345677890"))
     }
   }
-
 }
