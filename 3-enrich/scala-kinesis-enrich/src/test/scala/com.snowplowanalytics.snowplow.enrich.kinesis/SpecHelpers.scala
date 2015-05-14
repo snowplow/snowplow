@@ -50,7 +50,7 @@ object SpecHelpers {
   /**
    * The Kinesis Enrich being used
    */
-  val EnrichVersion = "kinesis-0.5.0-common-0.13.1"
+  val EnrichVersion = "kinesis-0.6.0-common-0.13.1"
 
   val TimestampRegex = "[0-9]+"
 
