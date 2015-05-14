@@ -17,6 +17,16 @@ package collectors
 package scalastream
 package utils
 
+import CollectorPayload.thrift.model1.CollectorPayload
+
+// Thrift
+import org.apache.thrift.TDeserializer
+
+// json4s
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+import org.json4s._
+
 // Specs2
 import org.specs2.mutable.Specification
 
@@ -56,4 +66,103 @@ class SplitBatchSpec extends Specification {
           List("12345677890"))
     }
   }
+
+  "SplitBatch.splitAndSerializePayload" should {
+
+    "Serialize an empty CollectorPayload" in {
+      
+      val actual = SplitBatch.splitAndSerializePayload(new CollectorPayload(), 100)
+
+      val target = new CollectorPayload
+
+      new TDeserializer().deserialize(target, actual.good.head)
+
+      target must_== new CollectorPayload
+    }
+
+    "Reject an oversized GET CollectorPayload" in {
+
+      val payload = new CollectorPayload()
+
+      payload.setQuerystring("x" * 1000)
+      
+      val actual = SplitBatch.splitAndSerializePayload(payload, 100)
+
+      val errorJson = parse(new String(actual.bad.head))
+
+      errorJson \ "size" must_== JInt(1019)
+
+      errorJson \ "errors" must_== JArray(List(JString("Cannot split record with null body")))
+
+      actual.good must_== Nil
+    }
+
+    "Reject an oversized POST CollectorPayload with an unparseable body" in {
+
+      val payload = new CollectorPayload()
+
+      payload.setBody("s" * 1000)
+      
+      val actual = SplitBatch.splitAndSerializePayload(payload, 100)
+
+      val errorJson = parse(new String(actual.bad.head))
+
+      errorJson \ "size" must_== JInt(1019)
+
+    }
+
+    "Reject an oversized POST CollectorPayload which would be oversized even without its body" in {
+
+      val payload = new CollectorPayload()
+
+      val data = compact(render(
+        ("schema" -> "s") ~
+        ("data" -> List(
+          ("e" -> "se") ~ ("tv" -> "js-2.4.3"),
+          ("e" -> "se") ~ ("tv" -> "js-2.4.3")
+        ))))
+
+      payload.setBody(data)
+
+      payload.setPath("p" * 1000)
+
+      val actual = SplitBatch.splitAndSerializePayload(payload, 1000)
+
+      actual.bad.size must_== 1
+
+      parse(new String(actual.bad.head)) \ "errors" must_==
+        JArray(List(JString("Even without the body, the serialized event is too large")))
+
+    }   
+
+    "Split a CollectorPayload with three large events and four very large events" in {
+
+      val payload = new CollectorPayload()
+
+      val data = compact(render(
+        ("schema" -> "s") ~
+        ("data" -> List(
+          ("e" -> "se") ~ ("tv" -> "x" * 600),
+          ("e" -> "se") ~ ("tv" -> "x" * 5),
+          ("e" -> "se") ~ ("tv" -> "x" * 600),
+          ("e" -> "se") ~ ("tv" -> "y" * 1000),
+          ("e" -> "se") ~ ("tv" -> "y" * 1000),
+          ("e" -> "se") ~ ("tv" -> "y" * 1000),
+          ("e" -> "se") ~ ("tv" -> "y" * 1000)
+
+          ))
+        ))
+
+      payload.setBody(data)
+      
+      val actual = SplitBatch.splitAndSerializePayload(payload, 1000)
+
+      actual.bad.size must_== 4
+
+      actual.good.size must_== 2
+
+    }    
+
+  }
+
 }
