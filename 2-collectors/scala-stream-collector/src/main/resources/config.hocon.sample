@@ -78,7 +78,8 @@ collector {
       # Data will be stored in the following stream.
       stream {
         region: "{{collectorSinkKinesisStreamRegion}}"
-        name: "{{collectorSinkKinesisStreamName}}"
+        good: "{{collectorKinesisStreamGoodName}}"
+        bad: "{{collectorKinesisStreamBadName}}"
       }
 
       # Minimum and maximum backoff periods

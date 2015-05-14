@@ -76,7 +76,8 @@ collector {
       }
       stream {
         region: "us-east-1"
-        name: "snowplow_collector_example"
+        good: "snowplow_collector_example"
+        bad: "snowplow_collector_example"
       }
       buffer {
         byte-limit: 4000000 # 4MB
@@ -93,7 +94,8 @@ collector {
 """)
   val collectorConfig = new CollectorConfig(testConf)
   val sink = new TestSink
-  val responseHandler = new ResponseHandler(collectorConfig, sink)
+  val sinks = CollectorSinks(sink, sink)
+  val responseHandler = new ResponseHandler(collectorConfig, sinks)
   val collectorService = new CollectorService(responseHandler, system)
   val thriftDeserializer = new TDeserializer
 

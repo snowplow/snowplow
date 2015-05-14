@@ -42,7 +42,6 @@ object Dependencies {
     val scalazon         = "0.11"
     val argot            = "1.0.1"
     val json4s           = "3.2.11"
-
     // Scala (test only)
     // Using the newest version of spec (2.3.6) causes
     // conflicts with `spray` for `com.chuusai.shapeless`
@@ -65,7 +64,7 @@ object Dependencies {
     val logback          = "ch.qos.logback"        %  "logback-classic"           % V.logback
     val commonsCodec     = "commons-codec"         %  "commons-codec"             % V.commonsCodec
     val scalazon         = "io.github.cloudify"    %% "scalazon"                  % V.scalazon
-    val json4sJackson    = "org.json4s"                 %% "json4s-jackson"            % V.json4s
+    val json4sJackson    = "org.json4s"            %% "json4s-jackson"            % V.json4s
 
     // Scala (test only)
     val specs2           = "org.specs2"            %% "specs2"                    % V.specs2   % "test"

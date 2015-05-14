@@ -54,7 +54,6 @@ import scala.util.{Success, Failure}
 import scala.collection.JavaConverters._
 
 // Snowplow
-import scalastream._
 import CollectorPayload.thrift.model1.CollectorPayload
 
 /**
@@ -70,9 +69,10 @@ object KinesisSink {
    * during its construction
    *
    * @param config
+   * @param streamName
    */
-  def createAndInitialize(config: CollectorConfig): KinesisSink = {
-    val ks = new KinesisSink(config)
+  def createAndInitialize(config: CollectorConfig, streamName: String): KinesisSink = {
+    val ks = new KinesisSink(config, streamName)
     ks.scheduleFlush()
 
     // When the application is shut down, stop accepting incoming requests
@@ -92,7 +92,7 @@ object KinesisSink {
 /**
  * Kinesis Sink for the Scala collector.
  */
-class KinesisSink private (config: CollectorConfig) extends AbstractSink {
+class KinesisSink private (config: CollectorConfig, streamName: String) extends AbstractSink {
 
   import log.{error, debug, info, trace}
 
@@ -140,8 +140,8 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
   // Create a Kinesis client for stream interactions.
   private implicit val kinesis = createKinesisClient
 
-  // The output stream for enriched events.
-  private val enrichedStream = loadStream()
+  // The output stream for this sink.
+  private val sinkStream = loadStream( streamName )
 
   /**
    * Check whether a Kinesis stream exists
@@ -178,9 +178,7 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
    *
    * @return The stream
    */
-  def loadStream(): Stream = {
-    val name = config.streamName
-
+  def loadStream(name: String): Stream = {
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
@@ -218,7 +216,6 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
     Client.fromClient(client)
   }
 
-  // TODO: don't send more than 4.5MB per request
   object EventStorage {
     private var storedEvents = List[(ByteBuffer, String)]()
     private var byteCount = 0L
@@ -228,7 +225,6 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
       val eventBytes = ByteBuffer.wrap(event)
       val eventSize = eventBytes.capacity
       if (eventSize >= MaxBytes) {
-        // TODO: split up large event arrays (see https://github.com/snowplow/snowplow/issues/941)
         error(s"Record of size $eventSize bytes is too large - must be less than $MaxBytes bytes")
       } else {
         synchronized {
@@ -255,11 +251,11 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
     def getLastFlushTime() = lastFlushedTime
   }
 
-  def storeRawEvent(event: CollectorPayload, key: String) = {
-    splitAndSerializePayload(event) foreach {
+  def storeRawEvents(events: List[Array[Byte]], key: String) = {
+    events foreach {
       e => EventStorage.store(e, key)
     }
-    null
+    Nil
   }
 
   def scheduleBatch(batch: List[(ByteBuffer, String)], lastBackoff: Long = minBackoff) {
@@ -274,9 +270,9 @@ class KinesisSink private (config: CollectorConfig) extends AbstractSink {
   // TODO: limit max retries?
   def sendBatch(batch: List[(ByteBuffer, String)], nextBackoff: Long = minBackoff) {
     if (batch.size > 0) {
-      info(s"Writing ${batch.size} Thrift records to Kinesis stream ${config.streamName}")
+      info(s"Writing ${batch.size} Thrift records to Kinesis stream ${streamName}")
       val putData = for {
-        p <- enrichedStream.multiPut(batch)
+        p <- sinkStream.multiPut(batch)
       } yield p
 
       putData onComplete {
