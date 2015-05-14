@@ -70,7 +70,11 @@ import common.utils.JsonUtils
 abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolver,
                               enrichmentRegistry: EnrichmentRegistry) {
   
-  val MaxRecordSize = 1000000L
+  val MaxRecordSize = if (config.sink == Sink.Kinesis) {
+    Some(1000000L)
+  } else {
+    None
+  }
 
   /**
    * Never-ending processing loop over source stream.
@@ -144,27 +148,13 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
       case (value, key) => if (! isTooLarge(value)) {
         value -> key
       } else {
-        val size = getSize(value)
-        compact(render(try {
-          val originalJson = parse(value)
-          val errors = originalJson \ "errors"
-          ("size" -> size) ~ ("errors" -> errors)
-        } catch {
-          case NonFatal(e) => ("size" -> size) ~
-            ("errors" -> List("Unable to extract errors field from original oversized bad row JSON"))
-        })) -> key
+        adjustOversizedFailureJson(value) -> key
       }
     }
 
     val (tooBigSuccesses, smallEnoughSuccesses) = successes partition { s => isTooLarge(s._1) }
     val sizeBasedFailures = tooBigSuccesses map {
-      case (value, key) => {
-        val size = getSize(value)
-        val errorJson =
-          ("size" -> size) ~
-          ("errors" -> List(s"Enriched event size of $size bytes is greater than allowed maximum of $MaxRecordSize"))
-        compact(render(errorJson)) -> key
-      }
+      case (value, key) => oversizedSuccessToFailure(value) -> key
     }
 
     val successesTriggeredFlush = sink.map(_.storeEnrichedEvents(smallEnoughSuccesses))
@@ -182,6 +172,38 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
   }
 
   /**
+   * Convert a too-large successful event to a failure
+   *
+   * @param value Event which passed enrichment but was too large
+   * @return Bad row JSON
+   */
+  private def oversizedSuccessToFailure(value: String): String = {
+    val size = getSize(value)
+    val errorJson =
+      ("size" -> size) ~
+      ("errors" -> List(s"Enriched event size of $size bytes is greater than allowed maximum of $MaxRecordSize"))
+    compact(render(errorJson))
+  }
+
+  /**
+   * If a bad row JSON is too big, reduce it's size
+   *
+   * @param value Bad row JSON which is too large
+   * @return Bad row JSON with `size` field instead of `line` field
+   */
+  private def adjustOversizedFailureJson(value: String): String = {
+    val size = getSize(value)
+    compact(render(try {
+      val originalJson = parse(value)
+      val errors = originalJson \ "errors"
+      ("size" -> size) ~ ("errors" -> errors)
+      } catch {
+        case NonFatal(e) => ("size" -> size) ~
+          ("errors" -> List("Unable to extract errors field from original oversized bad row JSON"))
+      }))
+  }
+
+  /**
    * The size of a string in bytes
    *
    * @param evt
@@ -195,5 +217,9 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
    * @param evt
    * @return boolean size decision
    */
-  private def isTooLarge(evt: String): Boolean = getSize(evt) >= MaxRecordSize
+  private def isTooLarge(evt: String): Boolean = MaxRecordSize match {
+    case None => false
+    case Some(m) => getSize(evt) >= m
+  }
+
 }
