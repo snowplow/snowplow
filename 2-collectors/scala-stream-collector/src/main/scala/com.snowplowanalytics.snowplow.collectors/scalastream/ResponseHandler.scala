@@ -62,6 +62,7 @@ import scala.collection.JavaConversions._
 import generated._
 import CollectorPayload.thrift.model1.CollectorPayload
 import sinks._
+import utils.SplitBatch
 
 // Contains an invisible pixel to return for `/i` requests.
 object ResponseHandler {
@@ -71,7 +72,7 @@ object ResponseHandler {
 }
 
 // Receive requests and store data into an output sink.
-class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit context: ActorRefFactory) {
+class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit context: ActorRefFactory) {
 
   import context.dispatcher
 
@@ -125,8 +126,15 @@ class ResponseHandler(config: CollectorConfig, sink: AbstractSink)(implicit cont
         ct => event.contentType = ct.value.toLowerCase
       }
 
-      // Only the test sink responds with the serialized object.
-      val sinkResponse = sink.storeRawEvent(event, ip)
+      // Split events into Good and Bad
+      val eventSplit = SplitBatch.splitAndSerializePayload(event, sinks.good.MaxBytes)
+
+      // Send events to respective sinks
+      val sinkResponseGood = sinks.good.storeRawEvents(eventSplit.good, ip)
+      val sinkResponseBad  = sinks.bad.storeRawEvents(eventSplit.bad, ip)
+
+      // Sink Responses for Test Sink
+      val sinkResponse = sinkResponseGood ++ sinkResponseBad
 
       val policyRef = config.p3pPolicyRef
       val CP = config.p3pCP

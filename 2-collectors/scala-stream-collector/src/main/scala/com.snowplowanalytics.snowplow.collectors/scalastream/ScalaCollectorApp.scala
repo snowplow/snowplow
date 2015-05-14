@@ -12,7 +12,9 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.collectors.scalastream
+package com.snowplowanalytics.snowplow
+package collectors
+package scalastream
 
 // Akka and Spray
 import akka.actor.{ActorSystem, Props}
@@ -21,6 +23,7 @@ import spray.can.Http
 
 // Java
 import java.io.File
+import java.nio.ByteBuffer
 
 // Argot
 import org.clapper.argot._
@@ -44,7 +47,7 @@ object ScalaCollector extends App {
   val parser = new ArgotParser(
     programName = generated.Settings.name,
     compactUsage = true,
-    preUsage = Some("%s: Version %s. Copyright (c) 2013, %s.".format(
+    preUsage = Some("%s: Version %s. Copyright (c) 2015, %s.".format(
       generated.Settings.name,
       generated.Settings.version,
       generated.Settings.organization)
@@ -62,25 +65,36 @@ object ScalaCollector extends App {
       ConfigFactory.empty()
     }
   }
+
   parser.parse(args)
 
   val rawConf = config.value.getOrElse(throw new RuntimeException("--config option must be provided"))
-  implicit val system = ActorSystem.create("scala-stream-collector", rawConf)
   val collectorConfig = new CollectorConfig(rawConf)
-  val sink = collectorConfig.sinkEnabled match {
-    case Sink.Kinesis => KinesisSink.createAndInitialize(collectorConfig)
-    case Sink.Stdout => new StdoutSink
+
+  implicit val system = ActorSystem.create("scala-stream-collector", rawConf)
+
+  val sinks = collectorConfig.sinkEnabled match {
+    case Sink.Kinesis => {
+      val good = KinesisSink.createAndInitialize(collectorConfig, collectorConfig.streamGoodName)
+      val bad  = KinesisSink.createAndInitialize(collectorConfig, collectorConfig.streamBadName)
+      CollectorSinks(good, bad) 
+    }
+    case Sink.Stdout  => {
+      val sink = new StdoutSink
+      CollectorSinks(sink, sink) 
+    }
   }
 
   // The handler actor replies to incoming HttpRequests.
   val handler = system.actorOf(
-    Props(classOf[CollectorServiceActor], collectorConfig, sink),
+    Props(classOf[CollectorServiceActor], collectorConfig, sinks),
     name = "handler"
   )
 
   IO(Http) ! Http.Bind(handler,
     interface=collectorConfig.interface, port=collectorConfig.port)
 }
+
 // Return Options from the configuration.
 object Helper {
   implicit class RichConfig(val underlying: Config) extends AnyVal {
@@ -120,6 +134,7 @@ class CollectorConfig(config: Config) {
   val cookieDomain = cookie.getOptionalString("domain")
 
   private val sink = collector.getConfig("sink")
+  
   // TODO: either change this to ADTs or switch to withName generation
   val sinkEnabled = sink.getString("enabled") match {
     case "kinesis" => Sink.Kinesis
@@ -133,7 +148,8 @@ class CollectorConfig(config: Config) {
   val awsAccessKey = aws.getString("access-key")
   val awsSecretKey = aws.getString("secret-key")
   private val stream = kinesis.getConfig("stream")
-  val streamName = stream.getString("name")
+  val streamGoodName = stream.getString("good")
+  val streamBadName = stream.getString("bad")
   private val streamRegion = stream.getString("region")
   val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
 

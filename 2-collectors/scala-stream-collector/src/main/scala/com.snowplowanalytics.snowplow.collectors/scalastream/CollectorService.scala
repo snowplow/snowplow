@@ -12,7 +12,8 @@
  * implied.  See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.collectors
+package com.snowplowanalytics.snowplow
+package collectors
 package scalastream
 
 // Akka
@@ -33,12 +34,12 @@ import sinks._
 
 // Actor accepting Http requests for the Scala collector.
 class CollectorServiceActor(collectorConfig: CollectorConfig,
-    sink: AbstractSink) extends Actor with HttpService {
+    sinks: CollectorSinks) extends Actor with HttpService {
   implicit val timeout: Timeout = 1.second // For the actor 'asks'
   def actorRefFactory = context
 
   // Deletage responses (content and storing) to the ResponseHandler.
-  private val responseHandler = new ResponseHandler(collectorConfig, sink)
+  private val responseHandler = new ResponseHandler(collectorConfig, sinks)
 
   // Use CollectorService so the same route can be accessed differently
   // in the testing framework.
