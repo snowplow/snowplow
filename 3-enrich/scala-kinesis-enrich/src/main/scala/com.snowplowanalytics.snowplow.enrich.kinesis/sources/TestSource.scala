@@ -32,7 +32,7 @@ import common.enrichments.EnrichmentRegistry
  * using the same methods from AbstractSource as the other
  * sources.
  */
-class TestSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry)
+class TestSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: ThreadLocal[EnrichmentRegistry])
     extends AbstractSource(config, igluResolver, enrichmentRegistry) {
 
   /**

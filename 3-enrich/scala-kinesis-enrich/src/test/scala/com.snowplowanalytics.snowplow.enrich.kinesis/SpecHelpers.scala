@@ -310,6 +310,8 @@ enrich {
     val conf = ConfigFactory.parseString(config)
     val kec = new KinesisEnrichConfig(conf)
 
-    new TestSource(kec, resolver, enrichmentRegistry)
+    new TestSource(kec, resolver, new ThreadLocal[EnrichmentRegistry] {
+      override def initialValue = enrichmentRegistry
+    })
   }
 }

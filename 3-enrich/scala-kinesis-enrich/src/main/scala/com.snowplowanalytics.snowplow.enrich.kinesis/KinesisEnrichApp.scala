@@ -133,15 +133,17 @@ object KinesisEnrichApp extends App {
     s => s
   )
 
-  val registry: EnrichmentRegistry = (for {
-    registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
-    reg <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), false).leftMap(_.toString)
-  } yield reg) fold (
-    e => throw new RuntimeException(e),
-    s => s
-  )
+  val registry = new ThreadLocal[EnrichmentRegistry] {
+    override def initialValue = (for {
+      registryConfig <- JsonUtils.extractJson("", enrichmentConfig)
+      reg <- EnrichmentRegistry.parse(fromJsonNode(registryConfig), false).leftMap(_.toString)
+    } yield reg) fold (
+      e => throw new RuntimeException(e),
+      s => s
+    )
+  }
 
-  val filesToCache = registry.getIpLookupsEnrichment match {
+  val filesToCache = registry.get.getIpLookupsEnrichment match {
     case Some(ipLookups) => ipLookups.dbsToCache
     case None => Nil
   }

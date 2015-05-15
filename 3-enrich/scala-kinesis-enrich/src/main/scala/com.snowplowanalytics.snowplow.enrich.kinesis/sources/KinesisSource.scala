@@ -66,7 +66,7 @@ import collectors.thrift.{
 /**
  * Source to read events from a Kinesis stream
  */
-class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry)
+class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: ThreadLocal[EnrichmentRegistry])
     extends AbstractSource(config, igluResolver, enrichmentRegistry) {
   
   lazy val log = LoggerFactory.getLogger(getClass())

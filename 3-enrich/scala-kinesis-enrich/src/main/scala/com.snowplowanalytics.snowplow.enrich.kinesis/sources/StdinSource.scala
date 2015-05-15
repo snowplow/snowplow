@@ -39,7 +39,7 @@ import common.enrichments.EnrichmentRegistry
  * Source to decode raw events (in base64)
  * from stdin.
  */
-class StdinSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry)
+class StdinSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: ThreadLocal[EnrichmentRegistry])
     extends AbstractSource(config, igluResolver, enrichmentRegistry) {
 
   /**
