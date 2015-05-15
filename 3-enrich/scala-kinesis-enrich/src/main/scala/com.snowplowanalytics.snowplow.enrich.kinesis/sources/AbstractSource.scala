@@ -194,9 +194,14 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
   private def adjustOversizedFailureJson(value: String): String = {
     val size = getSize(value)
     compact(render(try {
-      val originalJson = parse(value)
-      val errors = originalJson \ "errors"
-      ("size" -> size) ~ ("errors" -> errors)
+
+      val jsonWithoutLine = parse(value) removeField {
+        case ("line", _) => true
+        case _ => false
+      }
+
+      {("size" -> size): JValue} merge jsonWithoutLine
+
       } catch {
         case NonFatal(e) => ("size" -> size) ~
           ("errors" -> List("Unable to extract errors field from original oversized bad row JSON"))
