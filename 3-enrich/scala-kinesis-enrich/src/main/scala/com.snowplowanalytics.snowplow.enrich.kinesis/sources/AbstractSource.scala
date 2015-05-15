@@ -63,6 +63,56 @@ import common.ValidatedMaybeCollectorPayload
 import common.EtlPipeline
 import common.utils.JsonUtils
 
+
+object AbstractSource {
+
+  /**
+   * If a bad row JSON is too big, reduce it's size
+   *
+   * @param value Bad row JSON which is too large
+   * @return Bad row JSON with `size` field instead of `line` field
+   */
+  def adjustOversizedFailureJson(value: String): String = {
+    val size = getSize(value)
+    compact(render(try {
+
+      val jsonWithoutLine = parse(value) removeField {
+        case ("line", _) => true
+        case _ => false
+      }
+
+      {("size" -> size): JValue} merge jsonWithoutLine
+
+      } catch {
+        case NonFatal(e) => ("size" -> size) ~
+          ("errors" -> List("Unable to extract errors field from original oversized bad row JSON"))
+      }))
+  }
+
+  /**
+   * Convert a too-large successful event to a failure
+   *
+   * @param value Event which passed enrichment but was too large
+   * @param maximum Maximum allowable bytes
+   * @return Bad row JSON
+   */
+  def oversizedSuccessToFailure(value: String, maximum: Long): String = {
+    val size = AbstractSource.getSize(value)
+    val errorJson =
+      ("size" -> size) ~
+      ("errors" -> List(s"Enriched event size of $size bytes is greater than allowed maximum of $maximum"))
+    compact(render(errorJson))
+  }
+
+  /**
+   * The size of a string in bytes
+   *
+   * @param evt
+   * @return size
+   */
+  def getSize(evt: String): Long = ByteBuffer.wrap(evt.getBytes).capacity
+}
+
 /**
  * Abstract base for the different sources
  * we support.
@@ -148,14 +198,16 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
       case (value, key) => if (! isTooLarge(value)) {
         value -> key
       } else {
-        adjustOversizedFailureJson(value) -> key
+        AbstractSource.adjustOversizedFailureJson(value) -> key
       }
     }
 
     val (tooBigSuccesses, smallEnoughSuccesses) = successes partition { s => isTooLarge(s._1) }
-    val sizeBasedFailures = tooBigSuccesses map {
-      case (value, key) => oversizedSuccessToFailure(value) -> key
-    }
+
+    val sizeBasedFailures = for {
+      (value, key) <- tooBigSuccesses
+      m <- MaxRecordSize
+    } yield AbstractSource.oversizedSuccessToFailure(value, m) -> key
 
     val successesTriggeredFlush = sink.map(_.storeEnrichedEvents(smallEnoughSuccesses))
     val failuresTriggeredFlush = badSink.map(_.storeEnrichedEvents(failures ++ sizeBasedFailures))
@@ -172,51 +224,6 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
   }
 
   /**
-   * Convert a too-large successful event to a failure
-   *
-   * @param value Event which passed enrichment but was too large
-   * @return Bad row JSON
-   */
-  private def oversizedSuccessToFailure(value: String): String = {
-    val size = getSize(value)
-    val errorJson =
-      ("size" -> size) ~
-      ("errors" -> List(s"Enriched event size of $size bytes is greater than allowed maximum of $MaxRecordSize"))
-    compact(render(errorJson))
-  }
-
-  /**
-   * If a bad row JSON is too big, reduce it's size
-   *
-   * @param value Bad row JSON which is too large
-   * @return Bad row JSON with `size` field instead of `line` field
-   */
-  private def adjustOversizedFailureJson(value: String): String = {
-    val size = getSize(value)
-    compact(render(try {
-
-      val jsonWithoutLine = parse(value) removeField {
-        case ("line", _) => true
-        case _ => false
-      }
-
-      {("size" -> size): JValue} merge jsonWithoutLine
-
-      } catch {
-        case NonFatal(e) => ("size" -> size) ~
-          ("errors" -> List("Unable to extract errors field from original oversized bad row JSON"))
-      }))
-  }
-
-  /**
-   * The size of a string in bytes
-   *
-   * @param evt
-   * @return size
-   */
-  private def getSize(evt: String): Long = ByteBuffer.wrap(evt.getBytes).capacity
-
-  /**
    * Whether a record is too large to send to Kinesis
    *
    * @param evt
@@ -224,7 +231,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
    */
   private def isTooLarge(evt: String): Boolean = MaxRecordSize match {
     case None => false
-    case Some(m) => getSize(evt) >= m
+    case Some(m) => AbstractSource.getSize(evt) >= m
   }
 
 }
