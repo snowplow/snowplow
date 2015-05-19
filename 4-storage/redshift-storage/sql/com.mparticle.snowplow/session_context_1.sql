@@ -28,7 +28,8 @@ CREATE TABLE atomic.com_mparticle_session_context_1 (
   ref_tree varchar(1500) encode runlength not null,
   ref_parent varchar(255) encode runlength not null,
   -- Properties of this type
-  id varchar(64) encode lzo not null
+  id varchar(64) encode lzo not null,
+  FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events

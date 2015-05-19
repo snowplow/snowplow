@@ -38,7 +38,8 @@ CREATE TABLE atomic.com_mparticle_snowplow_transaction_event_1 (
   tax decimal(12,2),
   shipping decimal(12,2),
   currency varchar(6),
-  transaction_id varchar(256)
+  transaction_id varchar(256),
+  FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
