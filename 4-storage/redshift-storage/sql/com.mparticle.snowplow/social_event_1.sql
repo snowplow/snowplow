@@ -30,7 +30,8 @@ CREATE TABLE atomic.com_mparticle_snowplow_social_event_1 (
   -- Properties of this type
   network varchar(64) encode text255 not null,
   action varchar(64) encode text255  not null,
-  target varchar(1500) encode text32k
+  target varchar(1500) encode text32k,
+  FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
