@@ -29,7 +29,8 @@ CREATE TABLE atomic.com_mparticle_snowplow_app_event_1 (
   ref_parent varchar(255) encode runlength not null,
   -- Properties of this type
   name varchar(64) encode text32k not null,
-  attributes varchar(10000) encode raw
+  attributes varchar(10000) encode raw,
+  FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
 -- Optimized join to atomic.events
