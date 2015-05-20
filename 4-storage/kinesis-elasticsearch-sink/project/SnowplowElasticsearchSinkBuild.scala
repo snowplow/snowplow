@@ -40,7 +40,8 @@ object SnowplowKinesisEnrichBuild extends Build {
         Libraries.commonsLang3,
         Libraries.slf4j,
         Libraries.kinesisClient,
-        Libraries.kinesisConnector
+        Libraries.kinesisConnector,
+        Libraries.snowplowTracker
       )
     )
 }
