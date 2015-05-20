@@ -16,7 +16,8 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
+package com.snowplowanalytics.snowplow
+package storage.kinesis.elasticsearch
 
 // AWS Kinesis Connector libs
 import com.amazonaws.services.kinesis.connectors.elasticsearch.{
@@ -38,17 +39,29 @@ import com.amazonaws.services.kinesis.connectors.impl.{BasicMemoryBuffer,AllPass
 import sinks._
 import StreamType._
 
+// Tracker
+import scalatracker.Tracker
+
 /**
 * ElasticsearchPipeline class sets up the Emitter/Buffer/Transformer/Filter
 */
-class ElasticsearchPipeline(streamType: StreamType, documentIndex: String, documentType: String, goodSink: Option[ISink], badSink: ISink)
-  extends IKinesisConnectorPipeline[ValidatedRecord, EmitterInput] {
+class ElasticsearchPipeline(
+  streamType: StreamType,
+  documentIndex: String,
+  documentType: String,
+  goodSink: Option[ISink],
+  badSink: ISink,
+  tracker: Option[Tracker] = None) extends IKinesisConnectorPipeline[ValidatedRecord, EmitterInput] {
 
-  override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[EmitterInput] = new SnowplowElasticsearchEmitter(configuration, goodSink, badSink)
+  override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[EmitterInput] =
+    new SnowplowElasticsearchEmitter(configuration, goodSink, badSink, tracker)
+
   override def getBuffer(configuration: KinesisConnectorConfiguration) = new BasicMemoryBuffer[ValidatedRecord](configuration)
+
   override def getTransformer(c: KinesisConnectorConfiguration) = streamType match {
     case Good => new SnowplowElasticsearchTransformer(documentIndex, documentType)
     case Bad => new BadEventTransformer(documentIndex, documentType)
   }
+
   override def getFilter(c: KinesisConnectorConfiguration) = new AllPassFilter[ValidatedRecord]()
 }

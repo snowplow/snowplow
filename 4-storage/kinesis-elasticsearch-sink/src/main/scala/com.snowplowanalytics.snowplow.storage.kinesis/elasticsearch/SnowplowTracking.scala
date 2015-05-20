@@ -58,6 +58,32 @@ object SnowplowTracking {
     new Tracker(List(emitter), generated.Settings.name, appName)
   }
 
+  /**
+   * If a tracker has been configured, send a sink_write_failed event
+   *
+   * @param tracker
+   * @param failureCount the number of consecutive failed writes
+   * @param initialFailureTime Time of the first consecutive failed write
+   * @param message What went wrong
+   */
+  def sendFailureEvent(
+    tracker: Tracker,
+    lastRetryPeriod: Long,
+    failureCount: Long,
+    initialFailureTime: Long,
+    message: String) {
+
+    tracker.trackUnstructEvent(SelfDescribingJson(
+      "iglu:com.snowplowanalytics.snowplow/sink_write_failed/jsonschema/1-0-0",
+      ("lastRetryPeriod" -> lastRetryPeriod) ~
+      ("sink" -> "elasticsearch") ~
+      ("failureCount" -> failureCount) ~
+      ("initialFailureTime" -> initialFailureTime) ~
+      ("message" -> message)
+    ))
+  }
+
+
   def initializeSnowplowTracking(tracker: Tracker) {
     trackApplicationInitialization(tracker)
 
