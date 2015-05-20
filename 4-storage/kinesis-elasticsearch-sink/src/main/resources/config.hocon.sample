@@ -76,4 +76,14 @@ sink {
     record-limit: {{sinkElasticsearchBufferRecordThreshold}}
     time-limit: {{sinkElasticsearchBufferTimeThreshold}}
   }
+
+  # Optional section for tracking endpoints
+  monitoring {
+    snowplow {
+      collector-uri: "{{collectorUri}}"
+      collector-port: 80
+      app-id: "{{sinkKinesisAppName}}"
+      method: "GET"
+    }
+  }
 }
