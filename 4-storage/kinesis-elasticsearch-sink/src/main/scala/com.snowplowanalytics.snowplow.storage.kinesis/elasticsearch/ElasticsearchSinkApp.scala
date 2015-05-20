@@ -125,7 +125,7 @@ object ElasticsearchSinkApp extends App {
         case _ => throw new RuntimeException("Sink type must be 'stdouterr' or 'kinesis'")
       }
 
-      new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue), goodSink, badSink).success
+      new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue), goodSink, badSink, tracker).success
     }
 
     // Run locally, reading from stdin and sending events to stdout / stderr rather than Elasticsearch / Kinesis
