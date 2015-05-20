@@ -43,6 +43,11 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 
+// Tracker
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
+import com.snowplowanalytics.snowplow.scalatracker.SelfDescribingJson
+import com.snowplowanalytics.snowplow.scalatracker.emitters.AsyncEmitter
+
 // This project
 import sinks._
 
@@ -95,6 +100,12 @@ object ElasticsearchSinkApp extends App {
   val documentIndex = location.getString("index")
   val documentType = location.getString("type")
 
+  val tracker = if (configValue.hasPath("monitoring.snowplow")) {
+    SnowplowTracking.initializeTracker(configValue.getConfig("monitoring.snowplow")).some
+  } else {
+    None
+  }
+
   val executor = configValue.getString("source") match {
 
     // Read records from Kinesis
@@ -135,7 +146,12 @@ object ElasticsearchSinkApp extends App {
 
   executor.fold(
     err => throw new RuntimeException(err),
-    exec => exec.run()
+    exec => {
+      tracker foreach {
+        t => SnowplowTracking.initializeSnowplowTracking(t)
+      }
+      exec.run()
+    }
   )
 
   /**
