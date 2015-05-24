@@ -339,9 +339,9 @@ object EnrichmentManager {
       registry.getRefererParserEnrichment match {
         case Some(rp) => {
           for (refr <- rp.extractRefererDetails(u, event.page_urlhost)) {
-            event.refr_medium = refr.medium.toString
-            event.refr_source = refr.source.orNull
-            event.refr_term = refr.term.orNull
+            event.refr_medium = CU.makeTsvSafe(refr.medium.toString)
+            event.refr_source = CU.makeTsvSafe(refr.source.orNull)
+            event.refr_term = CU.makeTsvSafe(refr.term.orNull)
           }
         }
         case None => unitSuccess
@@ -359,13 +359,13 @@ object EnrichmentManager {
       case Success(Some(qsMap)) => registry.getCampaignAttributionEnrichment match {
         case Some(ce) =>
           ce.extractMarketingFields(qsMap).flatMap(cmp => {
-            event.mkt_medium = cmp.medium.orNull
-            event.mkt_source = cmp.source.orNull
-            event.mkt_term = cmp.term.orNull
-            event.mkt_content = cmp.content.orNull
-            event.mkt_campaign = cmp.campaign.orNull
-            event.mkt_clickid = cmp.clickId.orNull
-            event.mkt_network = cmp.network.orNull
+            event.mkt_medium = CU.makeTsvSafe(cmp.medium.orNull)
+            event.mkt_source = CU.makeTsvSafe(cmp.source.orNull)
+            event.mkt_term = CU.makeTsvSafe(cmp.term.orNull)
+            event.mkt_content = CU.makeTsvSafe(cmp.content.orNull)
+            event.mkt_campaign = CU.makeTsvSafe(cmp.campaign.orNull)
+            event.mkt_clickid = CU.makeTsvSafe(cmp.clickId.orNull)
+            event.mkt_network = CU.makeTsvSafe(cmp.network.orNull)
             cmp.success
           })
         case None => unitSuccessNel
