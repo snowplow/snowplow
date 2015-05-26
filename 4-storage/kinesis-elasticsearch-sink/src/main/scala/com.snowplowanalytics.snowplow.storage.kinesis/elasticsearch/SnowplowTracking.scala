@@ -60,6 +60,12 @@ object SnowplowTracking {
 
   def initializeSnowplowTracking(tracker: Tracker) {
     trackApplicationInitialization(tracker)
+
+    Runtime.getRuntime.addShutdownHook(new Thread() {
+      override def run() {
+        trackApplicationShutdown(tracker)
+      }
+    })
   }
 
   /**
@@ -70,6 +76,18 @@ object SnowplowTracking {
   private def trackApplicationInitialization(tracker: Tracker) {
     tracker.trackUnstructEvent(SelfDescribingJson(
       "iglu:com.snowplowanalytics.snowplow/application_initialized/jsonschema/1-0-0",
+      JObject(Nil)
+    ))
+  }
+
+  /**
+   * Send an application_shutdown unstructured event
+   *
+   * @param tracker
+   */
+  private def trackApplicationShutdown(tracker: Tracker) {
+    tracker.trackUnstructEvent(SelfDescribingJson(
+      "iglu:com.snowplowanalytics.snowplow/application_shutdown/jsonschema/1-0-0",
       JObject(Nil)
     ))
   }
