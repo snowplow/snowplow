@@ -36,6 +36,8 @@ import com.snowplowanalytics.snowplow.scalatracker.emitters.AsyncEmitter
  */
 object SnowplowTracking {
 
+  val HeartbeatInterval = 300000L
+
   /**
    * Configure a Tracker based on the configuration HOCON
    *
@@ -83,7 +85,11 @@ object SnowplowTracking {
     ))
   }
 
-
+  /**
+   * Send an initialization event and schedule heartbeat and shutdown events
+   *
+   * @param tracker
+   */
   def initializeSnowplowTracking(tracker: Tracker) {
     trackApplicationInitialization(tracker)
 
@@ -92,6 +98,17 @@ object SnowplowTracking {
         trackApplicationShutdown(tracker)
       }
     })
+
+    val heartbeatThread = new Thread {
+      override def run() {
+        while (true) {
+          trackApplicationHeartbeat(tracker, HeartbeatInterval)
+          Thread.sleep(HeartbeatInterval)
+        }
+      }
+    }
+
+    heartbeatThread.start()
   }
 
   /**
@@ -115,6 +132,19 @@ object SnowplowTracking {
     tracker.trackUnstructEvent(SelfDescribingJson(
       "iglu:com.snowplowanalytics.snowplow/application_shutdown/jsonschema/1-0-0",
       JObject(Nil)
+    ))
+  }
+
+  /**
+   * Send a heartbeat unstructured event
+   *
+   * @param tracker
+   * @param heartbeatInterval Time between heartbeats in milliseconds
+   */
+  private def trackApplicationHeartbeat(tracker: Tracker, heartbeatInterval: Long) {
+    tracker.trackUnstructEvent(SelfDescribingJson(
+      "iglu:com.snowplowanalytics.snowplow/heartbeat/jsonschema/1-0-0",
+      "interval" -> heartbeatInterval
     ))
   }
 
