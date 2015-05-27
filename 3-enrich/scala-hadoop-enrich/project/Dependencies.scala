@@ -31,12 +31,12 @@ object Dependencies {
 
   object V {
     // Java
-    val hadoop           = "2.4.0"
+    val hadoop           = "2.4.1"
     val cascading        = "2.6.0"
     // Scala
     val scalding         = "0.11.2"
     val scalaz7          = "7.0.0"
-    val commonEnrich     = "0.13.1"
+    val commonEnrich     = "0.13.2-M3"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
