@@ -81,7 +81,7 @@ module Snowplow
 
         if config[:etl][:collector_format] == 'thrift'
           [
-            Elasticity::HadoopBootstrapAction.new('-s', 'io.file.buffer.size=65536'),
+            Elasticity::HadoopBootstrapAction.new('-c', 'io.file.buffer.size=65536'),
             Elasticity::HadoopBootstrapAction.new('-m', 'mapreduce.user.classpath.first=true')
           ].each do |action|
             @jobflow.add_bootstrap_action(action)
