@@ -94,6 +94,10 @@ module Snowplow
           @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_action))
         end
 
+        # Prepare a 3.x AMI for Snowplow
+        prepare_ami3_action = Elasticity::BootstrapAction.new("s3://snowplow-hosted-assets/common/emr/snowplow-ami3-bootstrap-0.1.0.sh")
+        @jobflow.add_bootstrap_action(prepare_ami3_action)
+
         # Install and launch HBase
         hbase = config[:emr][:software][:hbase]
         unless not hbase
