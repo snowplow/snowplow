@@ -148,9 +148,15 @@ object KinesisEnrichApp extends App {
 
   for (uriFilePair <- filesToCache) {
     val targetFile = new File(uriFilePair._2)
-    if (! targetFile.exists) {
+
+    // Download the database file if it doesn't already exist or is empty
+    // See http://stackoverflow.com/questions/10281370/see-if-file-is-empty
+    if (targetFile.length == 0L) {
       val downloadProcessBuilder = uriFilePair._1.toURL #> targetFile // using sys.process
-      downloadProcessBuilder.run
+      val downloadResult: Int = downloadProcessBuilder.!
+      if (downloadResult != 0) {
+        throw new RuntimeException(s"Attempt to download ${uriFilePair._1} to $targetFile failed")
+      }
     }
   }
 
