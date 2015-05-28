@@ -65,8 +65,8 @@ object BuildSettings {
         "janino-2.5.16.jar", // Janino includes a broken signature, and is not needed anyway
         "commons-beanutils-core-1.8.0.jar", // Clash with each other and with commons-collections
         "commons-beanutils-1.7.0.jar",      // "
-        "hadoop-core-0.20.2.jar", // Provided by Amazon EMR. Delete this line if you're not on EMR
-        "hadoop-tools-0.20.2.jar" // "
+        "hadoop-core-1.0.3.jar", // Brought in via dfs-datastores-cascading-1.3.4
+        "protobuf-java-2.4.1.jar" // Hadoop needs 2.5.0
       ) 
       cp filter { jar => excludes(jar.data.getName) }
     },

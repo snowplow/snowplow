@@ -31,9 +31,10 @@ object Dependencies {
 
   object V {
     // Java
-    val hadoop           = "1.2.1"
+    val hadoop           = "2.4.1"
+    val cascading        = "2.6.0"
     // Scala
-    val scalding         = "0.11.1"
+    val scalding         = "0.11.2"
     val scalaz7          = "7.0.0"
     val commonEnrich     = "0.14.0"
     // Scala (test only)
@@ -48,21 +49,25 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val hadoopCore       = "org.apache.hadoop"          %  "hadoop-core"               % V.hadoop       % "provided"
+    val hadoopCommon     = "org.apache.hadoop"         %  "hadoop-common"                % V.hadoop       % "provided"
+    val hadoopClientCore = "org.apache.hadoop"         %  "hadoop-mapreduce-client-core" % V.hadoop       % "provided"
+    val cascadingCore    = "cascading"                 %  "cascading-core"               % V.cascading
+    val cascadingLocal   = "cascading"                 %  "cascading-local"              % V.cascading
+    val cascadingHadoop  = "cascading"                 %  "cascading-hadoop2-mr1"        % V.cascading
     // Scala
-    val scaldingCore     = "com.twitter"                %% "scalding-core"             % V.scalding
-    val scaldingArgs     = "com.twitter"                %% "scalding-args"             % V.scalding
-    val scaldingCommons  = "com.twitter"                %% "scalding-commons"          % V.scalding
-    val scaldingJson     = "com.twitter"                %% "scalding-json"             % V.scalding
-    val scalaz7          = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
-    val commonEnrich     = "com.snowplowanalytics"      %  "snowplow-common-enrich"    % V.commonEnrich
+    val scaldingCore     = "com.twitter"               %% "scalding-core"                % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" )
+    val scaldingArgs     = "com.twitter"               %% "scalding-args"                % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" )
+    val scaldingCommons  = "com.twitter"               %% "scalding-commons"             % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" )
+    val scaldingJson     = "com.twitter"               %% "scalding-json"                % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" )
+    val scalaz7          = "org.scalaz"                %% "scalaz-core"                  % V.scalaz7
+    val commonEnrich     = "com.snowplowanalytics"     %  "snowplow-common-enrich"       % V.commonEnrich
     // Scala (test only)
-    val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2       % "test"
-    val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2 % "test"
-    val compress         = "com.hadoop.gplcompression"  %  "hadoop-lzo"                % V.compress
-    val commonsCodec     = "commons-codec"              %  "commons-codec"             % V.commonsCodec % "test"
+    val specs2           = "org.specs2"                %% "specs2"                       % V.specs2       % "test"
+    val scalazSpecs2     = "org.typelevel"             %% "scalaz-specs2"                % V.scalazSpecs2 % "test"
+    val compress         = "com.hadoop.gplcompression" %  "hadoop-lzo"                   % V.compress
+    val commonsCodec     = "commons-codec"             %  "commons-codec"                % V.commonsCodec % "test"
     // Thrift (test only)
-    val snowplowRawEvent = "com.snowplowanalytics"      % "snowplow-thrift-raw-event"  % V.snowplowRawEvent
-    val collectorPayload = "com.snowplowanalytics"      % "collector-payload-1"        % V.collectorPayload
+    val snowplowRawEvent = "com.snowplowanalytics"     % "snowplow-thrift-raw-event"     % V.snowplowRawEvent
+    val collectorPayload = "com.snowplowanalytics"     % "collector-payload-1"           % V.collectorPayload
   }
 }
