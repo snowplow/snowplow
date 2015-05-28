@@ -23,6 +23,9 @@ import java.net.URI
 // Maven Artifact
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
+// Scala
+import scala.util.control.NonFatal
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -204,7 +207,7 @@ case class IpLookupsEnrichment(
     try {
       ipLookups.performLookups(ip).success
     } catch {
-      case _: Throwable => "Could not extract geo-location from IP address [%s]".format(ip).fail
+      case NonFatal(e) => "Could not extract geo-location from IP address [%s]: [%s]".format(ip, e).fail
     }
   }
 }
