@@ -29,7 +29,11 @@ object SnowplowHadoopEnrichBuild extends Build {
     .settings(
       libraryDependencies ++= Seq(
         // Java
-        Libraries.hadoopCore,
+        Libraries.hadoopCommon,
+        Libraries.hadoopClientCore,
+        Libraries.cascadingCore,
+        Libraries.cascadingLocal,
+        Libraries.cascadingHadoop,
         // Scala
         Libraries.scaldingCore,
         Libraries.scaldingArgs,
