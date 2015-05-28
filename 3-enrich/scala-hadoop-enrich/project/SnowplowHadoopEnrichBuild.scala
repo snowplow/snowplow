@@ -24,7 +24,7 @@ object SnowplowHadoopEnrichBuild extends Build {
   }
 
   // Define our project, with basic project information and library dependencies
-  lazy val project = Project("snowplow-hadoop-etl", file(".")) // TODO: rename to snowplow-hadoop-enrich (will break EmrEtlRunner)
+  lazy val project = Project("snowplow-hadoop-enrich", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
