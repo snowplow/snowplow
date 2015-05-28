@@ -33,8 +33,9 @@ object Dependencies {
   object V {
     // Java
     val http             = "4.3.3"
-    val commonsLang      = "3.1"
+    val commonsLang      = "3.4"
     val commonsIo        = "2.4"
+    val commonsCodec     = "1.5"
     val yodaTime         = "2.1"
     val yodaConvert      = "1.2"
     val useragent        = "1.14"
@@ -53,12 +54,11 @@ object Dependencies {
     val json4s           = "3.2.11"
     val igluClient       = "0.2.0"
     val scalaForex       = "0.2.0"
+    val scalaUri         = "0.4.3"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
     val scalaCheck       = "1.10.0"
-    val commonsCodec     = "1.5"
-    val scalaUri         = "0.4.3"
   }
 
   object Libraries {
@@ -66,6 +66,7 @@ object Dependencies {
     val httpClient       = "org.apache.httpcomponents"  %  "httpclient"                % V.http
     val commonsLang      = "org.apache.commons"         %  "commons-lang3"             % V.commonsLang
     val commonsIo        = "commons-io"                 %  "commons-io"                % V.commonsIo
+    val commonsCodec     = "commons-codec"              %  "commons-codec"             % V.commonsCodec
     val yodaTime         = "joda-time"                  %  "joda-time"                 % V.yodaTime
     val yodaConvert      = "org.joda"                   %  "joda-convert"              % V.yodaConvert
     val useragent        = "bitwalker"                  %  "UserAgentUtils"            % V.useragent
@@ -74,7 +75,6 @@ object Dependencies {
     val mavenArtifact    = "org.apache.maven"           %  "maven-artifact"            % V.mavenArtifact
     val uaParser         = "org.clojars.timewarrior"    %  "ua-parser"                 % V.uaParser
     // Scala
-    val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"               % V.scalaForex
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
     val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val collectorPayload = "com.snowplowanalytics"      %  "collector-payload-1"       % V.collectorPayload
@@ -85,11 +85,11 @@ object Dependencies {
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"            % V.json4s
     val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s    
     val igluClient       = "com.snowplowanalytics"      %  "iglu-scala-client"         % V.igluClient
+    val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"               % V.scalaForex
     val scalaUri         = "com.netaporter"             %% "scala-uri"                 % V.scalaUri
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"
     val scalaCheck       = "org.scalacheck"             %% "scalacheck"                % V.scalaCheck     % "test"
-    val commonsCodec     = "commons-codec"              %  "commons-codec"             % V.commonsCodec   % "test"
   }
 }
