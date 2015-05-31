@@ -386,10 +386,16 @@ object EnrichmentManager {
       case _ => unitSuccess
     }
 
-    // Assemble array of derived contexts
-    val derived_contexts = List(uaParser) collect {
-      case Success(Some(context)) => context
+    // Execute the JavaScript scripting enrichment
+    val jsScript = registry.getJavascriptScriptEnrichment match {
+      case Some(jse) => jse.process(event)
+      case None => Nil.success
     }
+
+    // Assemble array of derived contexts
+    val derived_contexts = List(uaParser).collect {
+      case Success(Some(context)) => context
+    } ++ jsScript.getOrElse(Nil)
 
     if (derived_contexts.size > 0) {
       event.derived_contexts = ME.formatDerivedContexts(derived_contexts)
@@ -409,19 +415,28 @@ object EnrichmentManager {
     event.se_label = CU.truncate(event.se_label, 255)
 
     // Collect our errors on Failure, or return our event on Success
-    (useragent.toValidationNel                |@|
+    // Broken into two parts due to 12 argument limit on |@|
+    val first =
+      (useragent.toValidationNel              |@|
       client.toValidationNel                  |@|
       uaParser.toValidationNel                |@|
       pageUri.toValidationNel                 |@|
       geoLocation.toValidationNel             |@|
-      refererUri.toValidationNel              |@|
-      transform                               |@|
+      refererUri.toValidationNel) {
+      (_,_,_,_,_,_) => ()
+    }
+    val second = 
+      (transform                              |@|
       currency                                |@|
       secondPassTransform                     |@|
       pageQsMap.toValidationNel               |@|
       crossDomain.toValidationNel             |@|
+      jsScript.toValidationNel                |@|
       campaign) {
-      (_,_,_,_,_,_,_,_,_,_,_,_) => event
+      (_,_,_,_,_,_,_) => ()
+    }
+    (first |@| second) {
+      (_,_) => event
     }
   }
 }
