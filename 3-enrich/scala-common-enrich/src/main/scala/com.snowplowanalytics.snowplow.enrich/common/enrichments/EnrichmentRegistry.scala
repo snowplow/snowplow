@@ -46,9 +46,11 @@ import registry.{
   UserAgentUtilsEnrichment,
   UaParserEnrichment,
   CurrencyConversionEnrichment,
+  JavascriptScriptEnrichment,
   UserAgentUtilsEnrichmentConfig,
   UaParserEnrichmentConfig,
-  CurrencyConversionEnrichmentConfig
+  CurrencyConversionEnrichmentConfig,
+  JavascriptScriptEnrichmentConfig
 }
 
 import utils.ScalazJson4sUtils
@@ -138,7 +140,9 @@ object EnrichmentRegistry {
             UaParserEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "currency_conversion_config") {
             CurrencyConversionEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
-          }else {
+          } else if (nm == "javascript_script_config") {
+            JavascriptScriptEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else {
             None.success // Enrichment is not recognized yet
           }
         })
@@ -224,6 +228,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getUaParserEnrichment: Option[UaParserEnrichment.type] = 
     getEnrichment[UaParserEnrichment.type]("ua_parser_config")
+
+  /**
+   * Returns an Option boxing the JavascriptScriptEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the JavascriptScriptEnrichment instance
+   */
+  def getJavascriptScriptEnrichment: Option[JavascriptScriptEnrichment] = 
+    getEnrichment[JavascriptScriptEnrichment]("javascript_script_config")
 
   /**
    * Returns an Option boxing an Enrichment
