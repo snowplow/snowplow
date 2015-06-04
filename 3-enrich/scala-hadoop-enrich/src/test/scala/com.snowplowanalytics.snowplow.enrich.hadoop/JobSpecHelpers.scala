@@ -226,10 +226,38 @@ object JobSpecHelpers {
       })
   }
 
-  def getEnrichments(collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String], currencyConversionEnabled: Boolean): String = {
+  /**
+   * Converts the JavaScript script to Base64.
+   */
+  def getJavascriptScript(): String = {
+
     val encoder = new Base64(true) // true means "url safe"
+
+    new String(encoder.encode("""|
+      |function process(event) {
+      |  var appId = event.getApp_id();
+      |
+      |  if (appId == null) {
+      |    return [];
+      |  }
+      |
+      |  var appIdUpper = new String(appId.toUpperCase());
+      |  return [ { schema: "iglu:com.acme/app_id/jsonschema/1-0-0",
+      |               data:  { appIdUpper: appIdUpper } } ];
+      |}
+      |""".stripMargin.replaceAll("[\n\r]","").getBytes
+    ))
+  }
+
+  def getEnrichments(collector: String, anonOctets: String, anonOctetsEnabled: Boolean,
+    lookups: List[String], currencyConversionEnabled: Boolean, javascriptScriptEnabled: Boolean): String = {
+
+    val encoder = new Base64(true) // true means "url safe"
+    val lookupsJson = lookups.map(getLookupJson(_)).mkString(",\n")
+    val jsScript = getJavascriptScript
+
     new String(encoder.encode(
-       """|{
+       s"""|{
             |"schema": "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0",
             |"data": [
               |{
@@ -237,9 +265,9 @@ object JobSpecHelpers {
                 |"data": {
                   |"vendor": "com.snowplowanalytics.snowplow",
                   |"name": "anon_ip",
-                  |"enabled": %s,
+                  |"enabled": ${anonOctetsEnabled},
                   |"parameters": {
-                    |"anonOctets": %s
+                    |"anonOctets": ${anonOctets}
                   |}
                 |}
               |},
@@ -250,7 +278,7 @@ object JobSpecHelpers {
                   |"name": "ip_lookups",
                   |"enabled": true,
                   |"parameters": {
-                    %s
+                    ${lookupsJson}
                   |}
                 |}  
               |},
@@ -285,12 +313,12 @@ object JobSpecHelpers {
               |{
                 |"schema": "iglu:com.snowplowanalytics.snowplow/currency_conversion_config/jsonschema/1-0-0",
                 |"data": {
-                  |"enabled": %s,
+                  |"enabled": ${currencyConversionEnabled},
                   |"vendor": "com.snowplowanalytics.snowplow",
                   |"name": "currency_conversion_config",
                   |"parameters": {
                     |"accountType": "DEVELOPER",
-                    |"apiKey": "%s",
+                    |"apiKey": "${oerApiKey}",
                     |"baseCurrency": "EUR",
                     |"rateAt": "EOD_PRIOR"
                   |}
@@ -316,14 +344,26 @@ object JobSpecHelpers {
                     |"internalDomains": ["www.subdomain1.snowplowanalytics.com"]
                   |}
                 |}
+              |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/javascript_script_config/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "javascript_script_config",
+                  |"enabled": ${javascriptScriptEnabled},
+                  |"parameters": {
+                    |"script": "${jsScript}"
+                  |}
+                |}
               |}
             |]
-          |}""".format(anonOctetsEnabled, anonOctets, lookups.map(getLookupJson(_)).mkString(",\n"), currencyConversionEnabled, oerApiKey).stripMargin.replaceAll("[\n\r]","").getBytes
+          |}""".stripMargin.replaceAll("[\n\r]","").getBytes
       ))
   }
 
   // Standard JobSpec definition used by all integration tests
-  def EtlJobSpec(collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String], currencyConversion: Boolean = false): JobTest =
+  def EtlJobSpec(collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String],
+    currencyConversion: Boolean = false, javascriptScript: Boolean = false): JobTest =
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob").
       arg("input_folder", "inputFolder").
       arg("input_format", collector).
@@ -331,7 +371,7 @@ object JobSpecHelpers {
       arg("bad_rows_folder", "badFolder").
       arg("etl_tstamp", "1000000000000").      
       arg("iglu_config", IgluConfig).
-      arg("enrichments", getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversion))
+      arg("enrichments", getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversion, javascriptScript))
 
   case class Sinks(
     val output:     File,
@@ -353,7 +393,8 @@ object JobSpecHelpers {
    *         objects for the output, bad rows
    *         and exceptions temporary directories.
    */
-  def runJobInTool(lines: Lines, collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String], currencyConversionEnabled: Boolean = false): Sinks = {
+  def runJobInTool(lines: Lines, collector: String, anonOctets: String, anonOctetsEnabled: Boolean,
+    lookups: List[String], currencyConversionEnabled: Boolean = false, javascriptScriptEnabled: Boolean = false): Sinks = {
 
     def mkTmpDir(tag: String, createParents: Boolean = false, containing: Option[Lines] = None): File = {
       val f = File.createTempFile(s"scala-hadoop-enrich-${tag}-", "")
@@ -375,7 +416,7 @@ object JobSpecHelpers {
       "--exceptions_folder", exceptions.getAbsolutePath,
       "--etl_tstamp",        "1000000000000",
       "--iglu_config",       IgluConfig,
-      "--enrichments",       getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversionEnabled))
+      "--enrichments",       getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversionEnabled, javascriptScriptEnabled))
 
     // Execute
     Tool.main(args)
