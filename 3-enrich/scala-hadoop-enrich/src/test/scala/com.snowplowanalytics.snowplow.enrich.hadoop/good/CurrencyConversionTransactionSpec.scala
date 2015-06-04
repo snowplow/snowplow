@@ -160,6 +160,9 @@ object CurrencyConversionTransactionSpec {
     null,
     null,
     null,
+    null,
+    null,
+    null,
     null
     )
 }
