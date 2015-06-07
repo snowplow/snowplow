@@ -204,7 +204,7 @@ object JsonUtils {
     try {
       Mapper.readTree(instance).success
     } catch {
-      case e: Throwable => s"Field [$field]: invalid JSON [$instance] with parsing error: ${stripInstanceEtc(e.getMessage)}".fail
+      case e: Throwable => s"Field [$field]: invalid JSON [$instance] with parsing error: ${stripInstanceEtc(e.getMessage).orNull}".fail
     }
 
   /**
@@ -233,13 +233,15 @@ object JsonUtils {
    * @param message The exception message which needs
    *        tidying up
    * @return the same exception message, but with
-   *         instance information etc removed
+   *         instance information etc removed. Option-boxed
+   *         because the message can be null
    */
-  def stripInstanceEtc(message: String): String = {
-    message
-    .replaceAll("@[0-9a-z]+;", "@xxxxxx;")
-    .replaceAll("\\t", "    ")
-    .replaceAll("\\p{Cntrl}", "") // Any other control character
-    .trim
+  def stripInstanceEtc(message: String): Option[String] = {
+    for (m <- Option(message)) yield {
+      m.replaceAll("@[0-9a-z]+;", "@xxxxxx;")
+       .replaceAll("\\t", "    ")
+       .replaceAll("\\p{Cntrl}", "") // Any other control character
+       .trim
+    }
   }
 }

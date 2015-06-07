@@ -146,8 +146,8 @@ object PagerdutyAdapter extends Adapter {
       }
     } catch {
       case e: JsonParseException => {
-        val exception = JU.stripInstanceEtc(e.toString)
-        s"${VendorName} payload failed to parse into JSON: [$exception]".fail
+        val exception = JU.stripInstanceEtc(e.toString).orNull
+        s"${VendorName} payload failed to parse into JSON: [${exception}]".fail
       }
     }
 
