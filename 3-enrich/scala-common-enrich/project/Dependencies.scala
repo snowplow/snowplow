@@ -36,7 +36,7 @@ object Dependencies {
     val commonsLang      = "3.4"
     val commonsIo        = "2.4"
     val commonsCodec     = "1.5"
-    val yodaTime         = "2.1"
+    val yodaTime         = "2.2"
     val yodaConvert      = "1.2"
     val useragent        = "1.14"
     val jacksonDatabind  = "2.2.3"
