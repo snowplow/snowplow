@@ -70,7 +70,7 @@ import common.utils.JsonUtils
 abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolver,
                               enrichmentRegistry: EnrichmentRegistry) {
   
-  val MaxRecordSize = 51200
+  val MaxRecordSize = 1000000L
 
   /**
    * Never-ending processing loop over source stream.
