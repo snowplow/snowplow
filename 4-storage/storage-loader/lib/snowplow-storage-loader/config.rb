@@ -34,23 +34,21 @@ module Snowplow
       def get_config()
 
         options = Config.parse_args()
-        config = YAML.load_file(options[:config])
+        config = Config.recursive_symbolize_keys(YAML.load_file(options[:config]))
 
         # Add in our skip and include settings
         config[:skip] = options[:skip]
         config[:include] = options[:include]
 
         # Add trailing slashes if needed to the non-nil buckets
-        config[:s3][:buckets] = add_trailing_slashes(config[:s3][:buckets])
+        config[:aws][:s3][:buckets] = add_trailing_slashes(config[:aws][:s3][:buckets])
 
         # Add in our comprows setting
         config[:comprows] = options[:comprows]
         
-        unless config[:download][:folder].nil? # TODO: remove when Sluice's trail_slash can handle nil
-          config[:download][:folder] = Sluice::Storage::trail_slash(config[:download][:folder])
-        end
+        config[:storage][:download][:folder] = Sluice::Storage::trail_slash(config[:storage][:download][:folder])
 
-        config[:targets].each { |t|
+        config[:storage][:targets].each { |t|
           # Check we recognise the storage target 
           unless @@storage_targets.include?(t[:type]) 
             raise ConfigError, "Storage type '#{t[:type]}' not supported"
@@ -58,19 +56,19 @@ module Snowplow
         }
             
         # Determine whether we need to download events
-        config[:download_required] = config[:targets].count { |t| t[:type] == "postgres" } > 0
+        config[:download_required] = config[:storage][:targets].count { |t| t[:type] == "postgres" } > 0
 
-        # If Infobright is the target, check that the download folder exists and is empty
+        # If Postgres is the target, check that the download folder exists and is empty
         if config[:download_required]
           # Check that the download folder exists...
-          unless File.directory?(config[:download][:folder])
-            raise ConfigError, "Download folder '#{config[:download][:folder]}' not found"
+          unless File.directory?(config[:storage][:download][:folder])
+            raise ConfigError, "Download folder '#{config[:storage][:download][:folder]}' not found"
           end
         
           # ...and it is empty
           unless config[:skip].include?("download")
-            if !(Dir.entries(config[:download][:folder]) - %w{ . .. }).empty?
-              raise ConfigError, "Download folder '#{config[:download][:folder]}' is not empty"
+            if !(Dir.entries(config[:storage][:download][:folder]) - %w{ . .. }).empty?
+              raise ConfigError, "Download folder '#{config[:storage][:download][:folder]}' is not empty"
             end
           end
         end
@@ -90,7 +88,7 @@ module Snowplow
           elsif bucketsHash[k0].class == {}.class
             y = {}
             for k1 in bucketsHash[k0].keys
-              y[k1] = bucketsHash[k0][k1].nil? ? nil : Sluice::Storage::trail_slash(bucketsHash[k0][k1])
+              y[k1] = Sluice::Storage::trail_slash(bucketsHash[k0][k1])
             end
             with_slashes_added[k0] = y
           else
@@ -117,7 +115,7 @@ module Snowplow
           opts.separator "Specific options:"
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
           opts.on('-i', '--include compupdate,vacuum', Array, 'include optional work step(s)') { |config| options[:include] = config }
-          opts.on('-s', '--skip download|delete,load,shred,analyze,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-s', '--skip download|delete,load,shred,analyze,archive_enriched', Array, 'skip work step(s)') { |config| options[:skip] = config }
 
           opts.separator ""
           opts.separator "Common options:"
@@ -138,8 +136,8 @@ module Snowplow
 
         # Check our skip argument
         options[:skip].each { |opt|
-          unless %w(download delete load shred analyze archive).include?(opt)
-            raise ConfigError, "Invalid option: skip can be 'download', 'delete', 'load', 'analyze' or 'archive', not '#{opt}'"
+          unless %w(download delete load shred analyze archive_enriched).include?(opt)
+            raise ConfigError, "Invalid option: skip can be 'download', 'delete', 'load', 'analyze' or 'archive_enriched', not '#{opt}'"
           end
         }
 
@@ -163,6 +161,23 @@ module Snowplow
         options
       end
       module_function :parse_args
+
+      # Convert all keys in arbitrary hash into symbols
+      # Taken from http://stackoverflow.com/a/10721936/255627
+      def self.recursive_symbolize_keys(h)
+        case h
+        when Hash
+          Hash[
+            h.map do |k, v|
+              [ k.respond_to?(:to_sym) ? k.to_sym : k, recursive_symbolize_keys(v) ]
+            end
+          ]
+        when Enumerable
+          h.map { |v| recursive_symbolize_keys(v) }
+        else
+          h
+        end
+      end
 
     end
   end
