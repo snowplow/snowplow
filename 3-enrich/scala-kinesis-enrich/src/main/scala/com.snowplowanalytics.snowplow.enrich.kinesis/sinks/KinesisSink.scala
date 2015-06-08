@@ -171,7 +171,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
     def addEvent(event: (ByteBuffer, String)) {
       val newBytes = event._1.capacity
 
-      if (newBytes >= 51200) {
+      if (newBytes >= 1000000L) {
         val original = new String(event._1.array)
         error(s"Dropping record with size $newBytes bytes: [$original]")
       } else {
