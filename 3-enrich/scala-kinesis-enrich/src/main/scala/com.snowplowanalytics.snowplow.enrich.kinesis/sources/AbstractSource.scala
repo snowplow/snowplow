@@ -40,7 +40,7 @@ import Scalaz._
 
 // json4s
 import org.json4s.scalaz.JsonScalaz._
-import org.json4s._
+import org.json4s.{ThreadLocal => _, _}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
@@ -135,16 +135,23 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
   protected val kinesisProvider = config.credentialsProvider
 
   // Initialize the sink to output enriched events to.
-  protected val sink: Option[ISink] = config.sink match {
-    case Sink.Kinesis => new KinesisSink(kinesisProvider, config, InputType.Good).some
-    case Sink.Stdouterr => new StdouterrSink(InputType.Good).some
-    case Sink.Test => None
-  }
+  protected val sink = getThreadLocalSink(InputType.Good)
 
-  protected val badSink: Option[ISink] = config.sink match {
-    case Sink.Kinesis => new KinesisSink(kinesisProvider, config, InputType.Bad).some
-    case Sink.Stdouterr => new StdouterrSink(InputType.Bad).some
-    case Sink.Test => None
+  protected val badSink = getThreadLocalSink(InputType.Bad)
+
+  /**
+   * We need the sink to be ThreadLocal as otherwise a single copy
+   * will be shared between threads for different shards
+   *
+   * @param inputType Whether the sink is for good events or bad events
+   * @return ThreadLocal sink
+   */
+  private def getThreadLocalSink(inputType: InputType.InputType) = new ThreadLocal[Option[ISink]] {
+    override def initialValue = config.sink match {
+      case Sink.Kinesis => new KinesisSink(kinesisProvider, config, inputType).some
+      case Sink.Stdouterr => new StdouterrSink(inputType).some
+      case Sink.Test => None
+    }
   }
 
   implicit val resolver: Resolver = igluResolver
@@ -209,13 +216,13 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
       m <- MaxRecordSize
     } yield AbstractSource.oversizedSuccessToFailure(value, m) -> key
 
-    val successesTriggeredFlush = sink.map(_.storeEnrichedEvents(smallEnoughSuccesses))
-    val failuresTriggeredFlush = badSink.map(_.storeEnrichedEvents(failures ++ sizeBasedFailures))
+    val successesTriggeredFlush = sink.get.map(_.storeEnrichedEvents(smallEnoughSuccesses))
+    val failuresTriggeredFlush = badSink.get.map(_.storeEnrichedEvents(failures ++ sizeBasedFailures))
     if (successesTriggeredFlush == Some(true) || failuresTriggeredFlush == Some(true)) {
 
       // Block until the records have been sent to Kinesis
-      sink.foreach(_.flush)
-      badSink.foreach(_.flush)
+      sink.get.foreach(_.flush)
+      badSink.get.foreach(_.flush)
       true
     } else {
       false
