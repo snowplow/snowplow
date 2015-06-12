@@ -13,7 +13,9 @@
 # Copyright:: Copyright (c) 2013 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'pg'
+require 'jdbc/postgres'
+
+Jdbc::Postgres.load_driver
 
 # Ruby module to support the load of Snowplow events into PostgreSQL.
 module Snowplow
@@ -101,24 +103,26 @@ module Snowplow
       # a list of the form [query, err_class, err_message]
       def execute_queries(target, queries)
 
-        conn = PG.connect({:host     => target[:host],
-                           :dbname   => target[:database],
-                           :port     => target[:port],
-                           :user     => target[:username],
-                           :password => target[:password]
-                          })
+        connection_url = "jdbc:postgresql://#{target[:host]}:#{target[:port]}/#{target[:database]}"
+
+        props = java.util.Properties.new
+        props.set_property :user, target[:username]
+        props.set_property :password, target[:password]
+
+        # Used instead of Java::JavaSql::DriverManager.getConnection to prevent "no suitable driver found" error
+        conn = org.postgresql.Driver.new.connect(connection_url, props)
 
         status = []
         queries.each do |q|
           begin
-            conn.exec("#{q}")
-          rescue PG::Error => err
+            conn.createStatement.executeUpdate(q)
+          rescue Java::JavaSql::SQLException, Java::JavaSql::SQLTimeoutException => err
             status = [q, err.class, err.message]
             break
           end
         end
 
-        conn.finish
+        conn.close()
         return status
       end
       module_function :execute_queries
