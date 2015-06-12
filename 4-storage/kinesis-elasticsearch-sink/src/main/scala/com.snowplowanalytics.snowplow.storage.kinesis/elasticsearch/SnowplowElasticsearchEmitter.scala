@@ -93,7 +93,8 @@ class SnowplowElasticsearchEmitter(
   configuration: KinesisConnectorConfiguration,
   goodSink: Option[ISink],
   badSink: ISink,
-  tracker: Option[Tracker] = None)
+  tracker: Option[Tracker] = None,
+  maxConnectionWaitTimeMs: Long = 60000)
 
   extends IEmitter[EmitterInput] {
 
@@ -237,7 +238,7 @@ class SnowplowElasticsearchEmitter(
       bulkRequest.add(indexRequestBuilder)
     })))
 
-    val initialFailureTime = System.currentTimeMillis()
+    val connectionAttemptStartTime = System.currentTimeMillis()
 
     /**
      * Keep attempting to execute the buldRequest until it succeeds
@@ -245,6 +246,11 @@ class SnowplowElasticsearchEmitter(
      * @return List of inputs which Elasticsearch rejected
      */
     @tailrec def attemptEmit(attemptNumber: Long = 1): List[EmitterInput] = {
+
+      if (attemptNumber > 1 && System.currentTimeMillis() - connectionAttemptStartTime > maxConnectionWaitTimeMs) {
+        forcibleShutdown()
+      }
+
       try {
         val bulkResponse = bulkRequest.execute.actionGet
         val responses = bulkResponse.getItems
@@ -278,7 +284,7 @@ class SnowplowElasticsearchEmitter(
             + BackoffPeriod + " milliseconds", nnae)
           sleep(BackoffPeriod)
           tracker foreach {
-            t => SnowplowTracking.sendFailureEvent(t, BackoffPeriod, initialFailureTime, attemptNumber, nnae.toString)
+            t => SnowplowTracking.sendFailureEvent(t, BackoffPeriod, connectionAttemptStartTime, attemptNumber, nnae.toString)
           }
           attemptEmit(attemptNumber + 1)
         }
@@ -286,7 +292,7 @@ class SnowplowElasticsearchEmitter(
           Log.error("ElasticsearchEmitter threw an unexpected exception ", e)
           sleep(BackoffPeriod)
           tracker foreach {
-            t => SnowplowTracking.sendFailureEvent(t, BackoffPeriod, initialFailureTime, attemptNumber, e.toString)
+            t => SnowplowTracking.sendFailureEvent(t, BackoffPeriod, connectionAttemptStartTime, attemptNumber, e.toString)
           }
           attemptEmit(attemptNumber + 1)
         }
@@ -336,6 +342,24 @@ class SnowplowElasticsearchEmitter(
     } catch {
       case e: InterruptedException => ()
     }
+  }
+
+  /**
+   * Terminate the application in a way the KCL cannot stop
+   *
+   * Prevents shutdown hooks from running
+   */
+  private def forcibleShutdown() {
+    Log.error(s"Shutting down application as unable to connect to Elasticsearch for over $maxConnectionWaitTimeMs ms")
+
+    tracker foreach {
+      t =>
+        // TODO: Instead of waiting a fixed time, use synchronous tracking or futures (when the tracker supports futures)
+        SnowplowTracking.trackApplicationShutdown(t)
+        sleep(5000)
+    }
+
+    Runtime.getRuntime.halt(1)
   }
 
   /**
