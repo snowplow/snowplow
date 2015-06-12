@@ -44,11 +44,12 @@ class ElasticsearchSinkExecutor(
   config: KinesisConnectorConfiguration,
   goodSink: Option[ISink],
   badSink: ISink,
-  tracker: Option[Tracker] = None) extends KinesisConnectorExecutorBase[ValidatedRecord, EmitterInput] {
+  tracker: Option[Tracker] = None,
+  maxConnectionTimeout: Long = 60000) extends KinesisConnectorExecutorBase[ValidatedRecord, EmitterInput] {
 
   initialize(config)
   override def getKinesisConnectorRecordProcessorFactory = {
     new KinesisConnectorRecordProcessorFactory[ValidatedRecord, EmitterInput](
-      new ElasticsearchPipeline(streamType, documentIndex, documentType, goodSink, badSink, tracker), config)
+      new ElasticsearchPipeline(streamType, documentIndex, documentType, goodSink, badSink, tracker, maxConnectionTimeout), config)
   }
 }
