@@ -20,6 +20,8 @@ ruby "1.9.3"
 # built with Bundler, so we add in the
 # RubyGems it requires here.
 gem "sluice", "~> 0.2.1"
-gem "pg", "~> 0.14.1"
+gem 'jdbc-postgres'
 gem "plissken", "~> 0.1.0"
 gem "contracts", "~> 0.4"
+
+gem "warbler" if RUBY_PLATFORM == 'java'
