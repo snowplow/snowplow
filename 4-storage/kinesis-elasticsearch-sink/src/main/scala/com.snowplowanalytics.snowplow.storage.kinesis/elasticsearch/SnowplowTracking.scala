@@ -128,7 +128,7 @@ object SnowplowTracking {
    *
    * @param tracker
    */
-  private def trackApplicationShutdown(tracker: Tracker) {
+  def trackApplicationShutdown(tracker: Tracker) {
     tracker.trackUnstructEvent(SelfDescribingJson(
       "iglu:com.snowplowanalytics.snowplow/application_shutdown/jsonschema/1-0-0",
       JObject(Nil)

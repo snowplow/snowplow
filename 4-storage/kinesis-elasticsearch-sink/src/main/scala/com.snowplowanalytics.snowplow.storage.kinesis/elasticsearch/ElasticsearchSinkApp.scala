@@ -106,6 +106,8 @@ object ElasticsearchSinkApp extends App {
     None
   }
 
+  val maxConnectionTime = configValue.getConfig("elasticsearch").getLong("max-timeout")
+
   val executor = configValue.getString("source") match {
 
     // Read records from Kinesis
@@ -125,7 +127,7 @@ object ElasticsearchSinkApp extends App {
         case _ => throw new RuntimeException("Sink type must be 'stdouterr' or 'kinesis'")
       }
 
-      new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue), goodSink, badSink, tracker).success
+      new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue), goodSink, badSink, tracker, maxConnectionTime).success
     }
 
     // Run locally, reading from stdin and sending events to stdout / stderr rather than Elasticsearch / Kinesis
