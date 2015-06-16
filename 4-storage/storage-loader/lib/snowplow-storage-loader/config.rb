@@ -34,7 +34,12 @@ module Snowplow
       def get_config()
 
         options = Config.parse_args()
-        config = YAML.load_file(options[:config])
+
+        if Config.indicates_read_from_stdin?(options[:config])
+          config = YAML.load($stdin.readlines.join)
+        else
+          config = YAML.load_file(options[:config])
+        end
 
         # Add in our skip and include settings
         config[:skip] = options[:skip]
@@ -116,6 +121,7 @@ module Snowplow
           opts.separator ""
           opts.separator "Specific options:"
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
+          opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
           opts.on('-i', '--include compupdate,vacuum', Array, 'include optional work step(s)') { |config| options[:include] = config }
           opts.on('-s', '--skip download|delete,load,shred,analyze,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
 
@@ -150,19 +156,24 @@ module Snowplow
           end
         }
 
-        # Check we have a config file argument
         if options[:config].nil?
           raise ConfigError, "Missing option: config\n#{optparse}"
         end
 
-        # Check the config file exists
-        unless File.file?(options[:config])
+        # Check the config file exists if config is not read from stdin
+        unless Config.indicates_read_from_stdin?(options[:config]) || File.file?(options[:config])
           raise ConfigError, "Configuration file '#{options[:config]}' does not exist, or is not a file."
         end
 
         options
       end
       module_function :parse_args
+
+      # A single hyphen indicates that the config should be read from stdin
+      def indicates_read_from_stdin?(config_option)
+        config_option == '-'
+      end
+      module_function :indicates_read_from_stdin?
 
     end
   end
