@@ -127,11 +127,14 @@ module Snowplow
           raise ConfigError, "Missing option: config\n#{optparse}"
         end
 
-        unless File.file?(config_file)
+        # A single hyphen indicates that the config should be read from stdin
+        if config_file == '-'
+          YAML.load($stdin.readlines.join)
+        elsif File.file?(config_file)
+          YAML.load_file(config_file)
+        else
           raise ConfigError, "Configuration file '#{config_file}' does not exist, or is not a file\n#{optparse}"
         end
-
-        YAML.load_file(config_file)
       end
 
     end
