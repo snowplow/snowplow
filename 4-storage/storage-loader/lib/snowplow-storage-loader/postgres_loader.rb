@@ -105,7 +105,12 @@ module Snowplow
 
         connection_url = "jdbc:postgresql://#{target[:host]}:#{target[:port]}/#{target[:database]}"
 
-        conn = Java::JavaSql::DriverManager.getConnection(connection_url, target[:username], target[:password])
+        props = java.util.Properties.new
+        props.set_property :user, target[:username]
+        props.set_property :password, target[:password]
+
+        # Used instead of Java::JavaSql::DriverManager.getConnection to prevent "no suitable driver found" error
+        conn = org.postgresql.Driver.new.connect(connection_url, props)
 
         status = []
         queries.each do |q|
