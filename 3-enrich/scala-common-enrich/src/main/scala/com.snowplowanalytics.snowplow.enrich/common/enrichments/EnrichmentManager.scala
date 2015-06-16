@@ -339,9 +339,9 @@ object EnrichmentManager {
       registry.getRefererParserEnrichment match {
         case Some(rp) => {
           for (refr <- rp.extractRefererDetails(u, event.page_urlhost)) {
-            event.refr_medium = refr.medium.toString
-            event.refr_source = refr.source.orNull
-            event.refr_term = refr.term.orNull
+            event.refr_medium = CU.makeTsvSafe(refr.medium.toString)
+            event.refr_source = CU.makeTsvSafe(refr.source.orNull)
+            event.refr_term = CU.makeTsvSafe(refr.term.orNull)
           }
         }
         case None => unitSuccess
@@ -359,13 +359,13 @@ object EnrichmentManager {
       case Success(Some(qsMap)) => registry.getCampaignAttributionEnrichment match {
         case Some(ce) =>
           ce.extractMarketingFields(qsMap).flatMap(cmp => {
-            event.mkt_medium = cmp.medium.orNull
-            event.mkt_source = cmp.source.orNull
-            event.mkt_term = cmp.term.orNull
-            event.mkt_content = cmp.content.orNull
-            event.mkt_campaign = cmp.campaign.orNull
-            event.mkt_clickid = cmp.clickId.orNull
-            event.mkt_network = cmp.network.orNull
+            event.mkt_medium = CU.makeTsvSafe(cmp.medium.orNull)
+            event.mkt_source = CU.makeTsvSafe(cmp.source.orNull)
+            event.mkt_term = CU.makeTsvSafe(cmp.term.orNull)
+            event.mkt_content = CU.makeTsvSafe(cmp.content.orNull)
+            event.mkt_campaign = CU.makeTsvSafe(cmp.campaign.orNull)
+            event.mkt_clickid = CU.makeTsvSafe(cmp.clickId.orNull)
+            event.mkt_network = CU.makeTsvSafe(cmp.network.orNull)
             cmp.success
           })
         case None => unitSuccessNel
@@ -386,10 +386,16 @@ object EnrichmentManager {
       case _ => unitSuccess
     }
 
-    // Assemble array of derived contexts
-    val derived_contexts = List(uaParser) collect {
-      case Success(Some(context)) => context
+    // Execute the JavaScript scripting enrichment
+    val jsScript = registry.getJavascriptScriptEnrichment match {
+      case Some(jse) => jse.process(event)
+      case None => Nil.success
     }
+
+    // Assemble array of derived contexts
+    val derived_contexts = List(uaParser).collect {
+      case Success(Some(context)) => context
+    } ++ jsScript.getOrElse(Nil)
 
     if (derived_contexts.size > 0) {
       event.derived_contexts = ME.formatDerivedContexts(derived_contexts)
@@ -409,19 +415,28 @@ object EnrichmentManager {
     event.se_label = CU.truncate(event.se_label, 255)
 
     // Collect our errors on Failure, or return our event on Success
-    (useragent.toValidationNel                |@|
+    // Broken into two parts due to 12 argument limit on |@|
+    val first =
+      (useragent.toValidationNel              |@|
       client.toValidationNel                  |@|
       uaParser.toValidationNel                |@|
       pageUri.toValidationNel                 |@|
       geoLocation.toValidationNel             |@|
-      refererUri.toValidationNel              |@|
-      transform                               |@|
+      refererUri.toValidationNel) {
+      (_,_,_,_,_,_) => ()
+    }
+    val second = 
+      (transform                              |@|
       currency                                |@|
       secondPassTransform                     |@|
       pageQsMap.toValidationNel               |@|
       crossDomain.toValidationNel             |@|
+      jsScript.toValidationNel                |@|
       campaign) {
-      (_,_,_,_,_,_,_,_,_,_,_,_) => event
+      (_,_,_,_,_,_,_) => ()
+    }
+    (first |@| second) {
+      (_,_) => event
     }
   }
 }

@@ -29,7 +29,7 @@ describe EmrJob do
 
   it 'returns the Hadoop assets' do
     EmrJob.get_assets("s3://hadoop-assets/", "1.0.0", "0.3.0").should == {
-      :enrich   => "s3://hadoop-assets/3-enrich/hadoop-etl/snowplow-hadoop-etl-1.0.0.jar",
+      :enrich   => "s3://hadoop-assets/3-enrich/scala-hadoop-enrich/snowplow-hadoop-enrich-1.0.0.jar",
       :shred    => "s3://hadoop-assets/3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-0.3.0.jar"
     }
   end

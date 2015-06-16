@@ -43,14 +43,6 @@ AS (
     INNER JOIN snowplow_intermediary.visitors_basic AS b
       ON  a.blended_user_id = b.blended_user_id
       AND a.dvce_tstamp = b.dvce_min_tstamp -- Replaces the FIRST VALUE window function in SQL
-    WHERE a.refr_medium != 'internal' -- Not an internal referer
-      AND (
-        NOT(a.refr_medium IS NULL OR a.refr_medium = '') OR
-        NOT (
-          (a.mkt_campaign IS NULL AND a.mkt_content IS NULL AND a.mkt_medium IS NULL AND a.mkt_source IS NULL AND a.mkt_term IS NULL) OR
-          (a.mkt_campaign = '' AND a.mkt_content = '' AND a.mkt_medium = '' AND a.mkt_source = '' AND a.mkt_term = '')
-        )
-      )
     GROUP BY 1,2,3,4,5,6,7,8,9,10,11 -- Aggregate identital rows (that happen to have the same dvce_tstamp)
   )
   WHERE rank = 1 -- If there are different rows with the same dvce_tstamp, rank and pick the first row

@@ -81,7 +81,7 @@ module Snowplow
 
         if config[:etl][:collector_format] == 'thrift'
           [
-            Elasticity::HadoopBootstrapAction.new('-s', 'io.file.buffer.size=65536'),
+            Elasticity::HadoopBootstrapAction.new('-c', 'io.file.buffer.size=65536'),
             Elasticity::HadoopBootstrapAction.new('-m', 'mapreduce.user.classpath.first=true')
           ].each do |action|
             @jobflow.add_bootstrap_action(action)
@@ -93,6 +93,10 @@ module Snowplow
         bootstrap_actions.each do |bootstrap_action|
           @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_action))
         end
+
+        # Prepare a 3.x AMI for Snowplow
+        prepare_ami3_action = Elasticity::BootstrapAction.new("s3://snowplow-hosted-assets/common/emr/snowplow-ami3-bootstrap-0.1.0.sh")
+        @jobflow.add_bootstrap_action(prepare_ami3_action)
 
         # Install and launch HBase
         hbase = config[:emr][:software][:hbase]
@@ -154,7 +158,10 @@ module Snowplow
 
           # 1. Compaction to HDFS (only for CloudFront currently)
           raw_input = csbr[:processing]
-          to_hdfs = (self.class.is_cloudfront_log(config[:etl][:collector_format]) and s3distcp)
+          to_hdfs = ((self.class.is_cloudfront_log(config[:etl][:collector_format]) or config[:etl][:collector_format] == "thrift") and s3distcp)
+
+          # TODO: throw exception if processing thrift with --skip s3distcp
+          # https://github.com/snowplow/snowplow/issues/1648
 
           enrich_step_input = if to_hdfs
             "hdfs:///local/snowplow/raw-events/"
@@ -166,13 +173,16 @@ module Snowplow
             # Create the Hadoop MR step for the file crushing
             compact_to_hdfs_step = Elasticity::S3DistCpStep.new
             compact_to_hdfs_step.arguments = [
-              "--src"         , raw_input,
-              "--dest"        , enrich_step_input,
-              "--groupBy"     , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
-              "--targetSize"  , "128",
-              "--outputCodec" , "lzo",
-              "--s3Endpoint"  , s3_endpoint
-            ]
+                "--src"         , raw_input,
+                "--dest"        , enrich_step_input,
+                "--s3Endpoint"  , s3_endpoint
+              ] + [
+                "--groupBy"     , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
+                "--targetSize"  , "128",
+                "--outputCodec" , "lzo"
+              ].select { |el|
+                self.class.is_cloudfront_log(config[:etl][:collector_format])
+              }
             compact_to_hdfs_step.name << ": Raw S3 -> HDFS"
 
             # Add to our jobflow
@@ -494,7 +504,7 @@ module Snowplow
       Contract String, String, String => AssetsHash
       def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version)
         {
-          :enrich   => "#{assets_bucket}3-enrich/hadoop-etl/snowplow-hadoop-etl-#{hadoop_enrich_version}.jar",
+          :enrich   => "#{assets_bucket}3-enrich/scala-hadoop-enrich/snowplow-hadoop-enrich-#{hadoop_enrich_version}.jar",
           :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
         }
       end

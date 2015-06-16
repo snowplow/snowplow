@@ -1,3 +1,38 @@
+Release 66 Oriental Skylark (2015-06-16)
+----------------------------------------
+Documentation: replaced Hive ETL references with Kinesis Enrich in Scala Hadoop Enrich's README (#1671)
+Documentation: fixed links in Scala Common Enrich's README.md, thanks @bigsnarfdude! (#1669)
+Scala Tracker: added git submodule (#1724)
+Scala Hadoop Enrich: bumped to 1.0.0
+Scala Hadoop Enrich: renamed build to snowplow-hadoop-enrich (#1718)
+Scala Hadoop Enrich: updated dependencies to Hadoop 2.4 (#1716)
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.14.0 (#1700)
+Scala Hadoop Enrich: updated Core2015RefreshSpec to include JavascriptScriptEnrichment (#1746)
+Scala Common Enrich: bumped to 0.14.0
+Scala Common Enrich: added JavaScript scripting enrichment (#378)
+Scala Common Enrich: made IpLookupsEnrichment error message more informative (#1426)
+Scala Common Enrich: commons-codec dependency is no longer test-only (#1712)
+Scala Common Enrich: bumped commons-lang3 to 3.4 (#1713)
+Scala Common Enrich: made mkt_ and refr_ fields TSV safe, thanks @jasonbosco! (#1643)
+Scala Common Enrich: updated JodaTime dependency to 2.2 (#1748)
+Scala Common Enrich: now handles null message in stripInstanceEtc (#1622)
+EmrEtlRunner: bumped to 0.15.0
+EmrEtlRunner: now using new scala-hadoop-enrich jar path in Hosted Assets (#1719)
+EmrEtlRunner: updated ami_version in config.yml to 3.6.0 (#1651)
+EmrEtlRunner: added bootstrap action to prepare AMI 3.x for Snowplow (#1714)
+EmrEtlRunner: now setting buffer for processing thrift in core-site.xml (#1715)
+EmrEtlRunner: added S3DistpCp step for thrift files in processing (#1647)
+EmrEtlRunner: added example javascript_script_config to enrichments folder (#1755)
+StorageLoader: wrote JSON Path file for com.mparticle.snowplow/app_event (#1688)
+StorageLoader: wrote JSON Path file for com.mparticle.snowplow/social_event (#1690)
+StorageLoader: wrote JSON Path file for com.mparticle.snowplow/transaction_event (#1692)
+StorageLoader: wrote JSON Path file for a com.mparticle.snowplow/session_context (#1694)
+Redshift: added Redshift DDL for a com.mparticle.snowplow/app_event (#1686)
+Redshift: added Redshift DDL for a com.mparticle.snowplow/social_event (#1689)
+Redshift: added Redshift DDL for a com.mparticle.snowplow/transaction_event (#1691)
+Redshift: added Redshift DDL for a com.mparticle.snowplow/session_context (#1693)
+Data Modeling: removed restrictions in sessions and visitors-source (#1725)
+
 Release 65 Scarlet Rosefinch (2015-05-08)
 -----------------------------------------
 Scala Stream Collector: bumped to 0.4.0
