@@ -1,4 +1,4 @@
-#!/usr/bin/env rake
+#!/bin/bash
 
 # Copyright (c) 2015 Snowplow Analytics Ltd. All rights reserved.
 #
@@ -15,17 +15,8 @@
 # Copyright:: Copyright (c) 2015 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'rake/clean'
-
-APP_NAME = 'snowplow-storage-loader'
-JAR_PATH = "deploy/#{APP_NAME}.jar"
-EXECUTABLE_PATH = "deploy/#{APP_NAME}"
-
-task :build_executable do
-  `bundle exec warble`
-  `cat bin/jarx-stub.sh #{JAR_PATH} > #{EXECUTABLE_PATH}`
-  `chmod +x #{EXECUTABLE_PATH}`
-  CLEAN.include(JAR_PATH)
-end
-
-task :default => [:build_executable, :clean]
+rvm install jruby
+bash -l -c 'rvm use jruby'
+gem install bundler
+bundle install
+rake
