@@ -47,7 +47,8 @@ object SnowplowKinesisEnrichBuild extends Build {
         Libraries.log4jOverSlf4j,
         Libraries.awsSdk,
         Libraries.kinesisClient,
-        Libraries.igluClient
+        Libraries.igluClient,
+        Libraries.snowplowTracker
         // Add your additional libraries here (comma-separated)...
       )
     )

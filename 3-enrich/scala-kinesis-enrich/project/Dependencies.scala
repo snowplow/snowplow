@@ -44,6 +44,7 @@ object Dependencies {
     val scalazon             = "0.11"
     val scalaz7              = "7.0.0"
     val igluClient           = "0.1.1"
+    val snowplowTracker      = "0.1.0"
     // Scala (test only)
     // val specs2               = "2.3.6" Conflicts with com.chuusai:shapeless
     val specs2               = "2.2.3"
@@ -72,6 +73,7 @@ object Dependencies {
     val scalazon             = "io.github.cloudify"         %% "scalazon"                 % V.scalazon
     val scalaz7              = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7
     val igluClient           = "com.snowplowanalytics"      %  "iglu-scala-client"        % V.igluClient
+    val snowplowTracker      = "com.snowplowanalytics"      %% "snowplow-scala-tracker"   % V.snowplowTracker
     // Scala (test only)
     val specs2               = "org.specs2"                 %% "specs2"                   % V.specs2         % "test"
     val scalazSpecs2         = "org.typelevel"              %% "scalaz-specs2"            % V.scalazSpecs2   % "test"

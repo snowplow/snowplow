@@ -63,6 +63,9 @@ import common.utils.JsonUtils
 import sources._
 import sinks._
 
+// Tracker
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
+
 // The enrichment process takes input SnowplowRawEvent objects from
 // an input source out outputs enriched objects to a sink,
 // as defined in the following enumerations.
@@ -124,6 +127,12 @@ object KinesisEnrichApp extends App {
   val parsedConfig = config.value.getOrElse(parser.usage("--config argument must be provided"))
   val kinesisEnrichConfig = new KinesisEnrichConfig(parsedConfig)
 
+  val tracker = if (parsedConfig.hasPath("enrich.monitoring.snowplow")) {
+    SnowplowTracking.initializeTracker(parsedConfig.getConfig("enrich.monitoring.snowplow")).some
+  } else { 
+    None 
+  }
+
   val nonOptionalResolver = resolverOption.value.getOrElse(parser.usage("--resolver argument must be provided"))
   val parsedResolver = extractResolver(nonOptionalResolver)
 
@@ -163,7 +172,7 @@ object KinesisEnrichApp extends App {
         case "s3"             => getSignedS3Url(uriFilePair._1) #> targetFile
         case s => throw new RuntimeException(s"Schema ${s} for file ${uriFilePair._1} not supported")
       }
-      
+
       val downloadResult: Int = downloadProcessBuilder.!
       if (downloadResult != 0) {
         throw new RuntimeException(s"Attempt to download ${uriFilePair._1} to $targetFile failed")
@@ -224,7 +233,15 @@ object KinesisEnrichApp extends App {
       case None => Nil
       case Some(FilepathRegex(dir)) => new java.io.File(dir).listFiles.filter(_.getName.endsWith(".json"))
                                         .map(scala.io.Source.fromFile(_).mkString)
-      case Some(DynamoDBRegex(region, table, partialKey)) => lookupDynamoDBEnrichments(region, table, partialKey)
+      case Some(DynamoDBRegex(region, table, partialKey)) => {
+        (lookupDynamoDBEnrichments(region, table, partialKey), tracker) match {
+          case (Nil, Some(t)) => {
+            SnowplowTracking.trackApplicationWarning(t, "No enrichments found with partial key ${partialKey}")
+            Nil
+          }
+          case (jsons, _) => jsons
+        }
+      }
       case Some(other) => parser.usage(s"Enrichments argument [$other] must begin with 'file:' or 'dynamodb:'")
     }
     """{"schema":"iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0","data":[%s]}""".format(jsons.mkString(","))
