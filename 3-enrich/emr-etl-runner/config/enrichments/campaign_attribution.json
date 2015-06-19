@@ -5,7 +5,7 @@
 
 		"name": "campaign_attribution",
 		"vendor": "com.snowplowanalytics.snowplow",
-		"enabled": false,
+		"enabled": true,
 		"parameters": {
 			"mapping": "static",
 			"fields": {
