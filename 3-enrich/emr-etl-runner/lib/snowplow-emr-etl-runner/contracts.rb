@@ -48,7 +48,7 @@ module Snowplow
       :jsonpath_assets => Maybe[String],
       :log => String,
       :raw => ({
-        :in => String,
+        :in => ArrayOf[String],
         :processing => String,
         :archive => String
         }),

@@ -10,7 +10,8 @@ aws:
       jsonpath_assets: # If you have defined your own JSON Schemas, add the s3:// path to your own JSON Path files in your own bucket here
       log: ADD HERE
       raw:
-        in: ADD HERE
+        in:
+        - ADD HERE           # Multiple in buckets are permitted
         processing: ADD HERE
         archive: ADD HERE    # e.g. s3://my-archive-bucket/raw
       enriched:
