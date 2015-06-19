@@ -30,6 +30,7 @@ object Dependencies {
     val slf4j                = "1.7.5"
     val kinesisClient        = "1.0.0"
     val kinesisConnector     = "1.1.1"
+    val elasticsearch        = "1.4.4"
     // Scala
     val argot                = "1.0.1"
     val config               = "1.0.2"
@@ -51,6 +52,7 @@ object Dependencies {
     val slf4j                = "org.slf4j"                  %  "slf4j-simple"             % V.slf4j
     val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"    % V.kinesisClient
     val kinesisConnector     = "com.amazonaws"              %  "amazon-kinesis-connector" % V.kinesisConnector
+    val elasticsearch        = "org.elasticsearch"          %  "elasticsearch"            % V.elasticsearch
     // Scala
     val argot                = "org.clapper"                %% "argot"                    % V.argot
     val config               = "com.typesafe"               %  "config"                   % V.config

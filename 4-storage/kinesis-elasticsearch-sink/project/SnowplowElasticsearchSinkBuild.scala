@@ -41,7 +41,8 @@ object SnowplowKinesisEnrichBuild extends Build {
         Libraries.slf4j,
         Libraries.kinesisClient,
         Libraries.kinesisConnector,
-        Libraries.snowplowTracker
+        Libraries.snowplowTracker,
+        Libraries.elasticsearch
       )
     )
 }
