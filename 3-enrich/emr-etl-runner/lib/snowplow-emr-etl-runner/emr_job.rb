@@ -56,6 +56,15 @@ module Snowplow
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
 
+        # Check whether there are an even number of .lzo and .lzo.index files
+        if config[:collectors][:format] == 'thrift'
+          processing_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:raw][:processing])
+          processing_file_count = Sluice::Storage::S3.list_files(s3, processing_location).size
+          unless processing_file_count % 2 == 0
+            raise UnmatchedLzoFilesError, "Processing bucket contains #{processing_file_count} .lzo and .lzo.index files, expected an even number"
+          end
+        end
+
         # Create a job flow with your AWS credentials
         @jobflow = Elasticity::JobFlow.new(config[:aws][:access_key_id], config[:aws][:secret_access_key])
 
