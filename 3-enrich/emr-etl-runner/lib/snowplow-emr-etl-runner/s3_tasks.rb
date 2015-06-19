@@ -107,6 +107,14 @@ module Snowplow
           end
         end
 
+        # Early check whether our shred directory is empty. We do a late check too
+        unless args[:skip].include?('emr') or args[:skip].include?('shred')
+          shred_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:shredded][:good])
+          unless Sluice::Storage::S3::is_empty?(s3, shred_location)
+            raise DirectoryNotEmptyError, "Should not stage files for shredding, #{shred_location} is not empty"
+          end
+        end
+
         # Move the files we need to move (within the date span)
         files_to_move = case
         when (args[:start].nil? and args[:end].nil?)
