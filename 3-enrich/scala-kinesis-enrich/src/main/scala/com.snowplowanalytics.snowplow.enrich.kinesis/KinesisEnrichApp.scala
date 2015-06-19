@@ -21,12 +21,16 @@ package kinesis
 
 // Java
 import java.io.File
+import java.net.URI
+import java.net.URL
+import java.util.Date
 
 // Amazon
 import com.amazonaws.services.dynamodbv2.model.ScanRequest
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
+import com.amazonaws.services.s3.AmazonS3Client
 
 // Scala
 import sys.process._
@@ -152,7 +156,14 @@ object KinesisEnrichApp extends App {
     // Download the database file if it doesn't already exist or is empty
     // See http://stackoverflow.com/questions/10281370/see-if-file-is-empty
     if (targetFile.length == 0L) {
-      val downloadProcessBuilder = uriFilePair._1.toURL #> targetFile // using sys.process
+
+      // Check URI Protocol
+      val downloadProcessBuilder = uriFilePair._1.getScheme match {
+        case "http" | "https" => uriFilePair._1.toURL #> targetFile // using sys.process
+        case "s3"             => getSignedS3Url(uriFilePair._1) #> targetFile
+        case s => throw new RuntimeException(s"Schema ${s} for file ${uriFilePair._1} not supported")
+      }
+      
       val downloadResult: Int = downloadProcessBuilder.!
       if (downloadResult != 0) {
         throw new RuntimeException(s"Attempt to download ${uriFilePair._1} to $targetFile failed")
@@ -250,6 +261,24 @@ object KinesisEnrichApp extends App {
         case _ => false
       }
     } flatMap(_.get("json"))
+  }
+
+  /**
+   * Return a signed S3 URL
+   *
+   * @param uri The URI to reconstruct into a signed
+   *            S3 URL
+   * @return a signed URL ready for use
+   */
+  def getSignedS3Url(uri: URI): URL = {
+    val s3Client = new AmazonS3Client(kinesisEnrichConfig.credentialsProvider)
+    val bucket = uri.getHost
+    val key = uri.getPath match { // Need to remove leading '/'
+      case s if s.charAt(0) == '/' => s.substring(1)
+      case s => s
+    }
+    val expiration = new Date(System.currentTimeMillis() + 60000)
+    s3Client.generatePresignedUrl(bucket, key, expiration)
   }
 }
 
