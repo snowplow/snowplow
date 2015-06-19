@@ -37,5 +37,9 @@ module Snowplow
     # Not strictly an error, but used for control flow
     class NoDataToProcessError < Error
     end
+
+    # Raised if the .lzo and .lzo.index files aren't matched
+    class UnmatchedLzoFilesError < Error
+    end
   end
 end
