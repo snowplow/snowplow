@@ -32,6 +32,9 @@ import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
 import com.amazonaws.services.s3.AmazonS3Client
 
+// Logging
+import org.slf4j.LoggerFactory
+
 // Scala
 import sys.process._
 import scala.collection.JavaConverters._
@@ -80,6 +83,9 @@ object Sink extends Enumeration {
 
 // The main entry point of the Scala Kinesis Enricher.
 object KinesisEnrichApp extends App {
+
+  lazy val log = LoggerFactory.getLogger(getClass())
+  import log.{error, debug, info, trace}
 
   val FilepathRegex = "^file:(.+)$".r
   val DynamoDBRegex = "^dynamodb:([^/]*)/([^/]*)/([^/]*)$".r
@@ -184,6 +190,12 @@ object KinesisEnrichApp extends App {
     case Source.Kinesis => new KinesisSource(kinesisEnrichConfig, igluResolver, registry)
     case Source.Stdin => new StdinSource(kinesisEnrichConfig, igluResolver, registry)
   }
+
+  tracker match {
+    case Some(t) => SnowplowTracking.initializeSnowplowTracking(t)
+    case None    => None
+  }
+
   source.run
 
   /**
@@ -236,10 +248,13 @@ object KinesisEnrichApp extends App {
       case Some(DynamoDBRegex(region, table, partialKey)) => {
         (lookupDynamoDBEnrichments(region, table, partialKey), tracker) match {
           case (Nil, Some(t)) => {
-            SnowplowTracking.trackApplicationWarning(t, "No enrichments found with partial key ${partialKey}")
+            SnowplowTracking.trackApplicationWarning(t, s"No enrichments found with partial key ${partialKey}")
             Nil
           }
-          case (jsons, _) => jsons
+          case (jsons, _) => {
+            info(s"No enrichments found with partial key ${partialKey}")
+            jsons
+          }
         }
       }
       case Some(other) => parser.usage(s"Enrichments argument [$other] must begin with 'file:' or 'dynamodb:'")
