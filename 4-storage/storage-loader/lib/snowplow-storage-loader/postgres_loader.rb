@@ -89,11 +89,16 @@ module Snowplow
             copy_manager = org.postgresql.copy.CopyManager.new(conn)
             file_reader = java.io.FileReader.new(file)
             copy_manager.copyIn(copy_statement, file_reader)
-            conn.commit()
           rescue Java::JavaSql::SQLException, Java::JavaSql::SQLTimeoutException => err
             status = [file, err.class, err.message]
             break
           end
+        end
+
+        if status == []
+          conn.commit()
+        else
+          conn.rollback()
         end
 
         conn.close()
