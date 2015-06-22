@@ -18,38 +18,41 @@ require 'contracts'
 
 module Snowplow
   module EmrEtlRunner
-    module Logging
+    module Monitoring
+      module Logging
 
-      include Contracts
+        include Contracts
+        include Contracts::Modules
 
-      $stdout.sync = true
+        $stdout.sync = true
 
-      # Get the Logger
-      Contract None => Logger
-      def logger
-        Logging.logger
-      end
+        # Get the Logger
+        Contract nil => Logger
+        def logger
+          Logging.logger
+        end
 
-      # Global, memoized, lazy initialized instance of a logger
-      Contract None => Logger 
-      def self.logger
-        @logger ||= Logger.new($stdout)
-      end
+        # Global, memoized, lazy initialized instance of a logger
+        Contract nil => Logger
+        def self.logger
+          @logger ||= Logger.new($stdout)
+        end
 
-      # Log a fatal Exception
-      Contract Exception => nil
-      def self.fatal_with(exception)
-        logger.fatal("\n\n#{exception.class} (#{exception.message}):\n    " +
-                     exception.backtrace.join("\n    ") +
-                     "\n\n")
-        nil
-      end
+        # Log a fatal Exception
+        Contract Exception => nil
+        def self.fatal_with(exception)
+          logger.fatal("\n\n#{exception.class} (#{exception.message}):\n    " +
+                       exception.backtrace.join("\n    ") +
+                       "\n\n")
+          nil
+        end
 
-      # Set the logging level
-      Contract String => nil
-      def self.set_level(level)
-        logger.level = Logger.const_get level.upcase
-        nil
+        # Set the logging level
+        Contract String => nil
+        def self.set_level(level)
+          logger.level = Logger.const_get level.upcase
+          nil
+        end
       end
     end
   end
