@@ -25,14 +25,14 @@ module Snowplow
       @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+))$/
       @@skip_options = Set.new(%w(staging s3distcp emr enrich shred archive_raw))
 
-      include Logging
+      include Monitoring::Logging
 
       # Initialize the class.
       Contract ArgsHash, ConfigHash, ArrayOf[String], String => Runner
       def initialize(args, config, enrichments_array, resolver)
 
         # Let's set our logging level immediately
-        Logging::set_level config[:logging][:level]
+        Monitoring::Logging::set_level config[:logging][:level]
 
         @args = args
         @config = validate_and_coalesce(args, config)

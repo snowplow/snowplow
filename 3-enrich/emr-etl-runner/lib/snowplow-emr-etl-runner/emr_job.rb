@@ -37,7 +37,7 @@ module Snowplow
       @@running_states = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
       @@failed_states  = Set.new(%w(FAILED CANCELLED))
 
-      include Logging
+      include Monitoring::Logging
 
       # Initializes our wrapper for the Amazon EMR client.
       Contract Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String => EmrJob
