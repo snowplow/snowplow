@@ -83,7 +83,7 @@ module Snowplow
       # Returns true if file(s) were staged
       Contract ArgsHash, ConfigHash => Bool
       def self.stage_logs_for_emr(args, config)
-        Logging::logger.debug 'Staging CloudFront logs...'
+        Monitoring::Logging::logger.debug 'Staging CloudFront logs...'
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:aws][:s3][:region],
@@ -140,7 +140,7 @@ module Snowplow
           false
         else
           # Wait for s3 to eventually become consistent
-          Logging::logger.debug "Waiting a minute to allow S3 to settle (eventual consistency)"
+          Monitoring::Logging::logger.debug "Waiting a minute to allow S3 to settle (eventual consistency)"
           sleep(60)
 
           true
@@ -154,7 +154,7 @@ module Snowplow
       # +config+:: the hash of configuration options
       Contract ConfigHash => nil
       def self.archive_logs(config)
-        Logging::logger.debug 'Archiving CloudFront logs...'
+        Monitoring::Logging::logger.debug 'Archiving CloudFront logs...'
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:aws][:s3][:region],
