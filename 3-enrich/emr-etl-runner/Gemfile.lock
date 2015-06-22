@@ -121,7 +121,7 @@ DEPENDENCIES
   coveralls
   elasticity (~> 4.0.5)
   rspec (~> 2.14, >= 2.14.1)
-  sluice (~> 0.2.1)
+  sluice (~> 0.2.2)
   warbler
 
 BUNDLED WITH
