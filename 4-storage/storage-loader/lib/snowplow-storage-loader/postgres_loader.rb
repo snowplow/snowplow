@@ -40,13 +40,9 @@ module Snowplow
         puts "Loading Snowplow events into #{target[:name]} (PostgreSQL database)..."
 
         event_files = get_event_files(events_dir)
-        queries = event_files.map { |f|
-            "COPY #{target[:table]} FROM '#{f}' WITH CSV ESCAPE E'#{ESCAPE_CHAR}' QUOTE E'#{QUOTE_CHAR}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}';"
-        }
-        
-        status = execute_transaction(target, queries)
+        status = copy_via_stdin(target, event_files)
         unless status == []
-          raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
+          raise DatabaseLoadError, "#{status[1]} error loading #{status[0]}: #{status[2]}"
         end
 
         post_processing = nil
@@ -65,6 +61,51 @@ module Snowplow
         end  
       end
       module_function :load_events
+
+      # Adapted from:  https://bitbucket.org/ged/ruby-pg/raw/9812218e0654caa58f8604838bc368434f7b3828/sample/copyfrom.rb
+      #
+      # Execute a series of copies from stdin by streaming the given files
+      # directly into the postgres copy statement.  Stops as soon as an error
+      # is encountered.  At that point, it returns a 'tuple' of the error class
+      # and message and the file that caused the error.
+      #
+      # Parameters:
+      # +target+:: the configuration options for this target
+      # +files+:: the data files to copy into the database
+      def copy_via_stdin(target, files)
+        puts "Opening database connection ..."
+
+        conn = get_connection(target)
+
+        conn.setAutoCommit(false)
+
+        copy_statement = "COPY #{target[:table]} FROM STDIN WITH CSV ESCAPE E'#{ESCAPE_CHAR}' QUOTE E'#{QUOTE_CHAR}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}'"
+
+        status = []
+
+        files.each do |file|
+          puts "Running COPY command with data from: #{file}"
+          begin
+            copy_manager = org.postgresql.copy.CopyManager.new(conn)
+            file_reader = java.io.FileReader.new(file)
+            copy_manager.copyIn(copy_statement, file_reader)
+          rescue Java::JavaSql::SQLException, Java::JavaSql::SQLTimeoutException => err
+            status = [file, err.class, err.message]
+            break
+          end
+        end
+
+        if status == []
+          conn.commit()
+        else
+          conn.rollback()
+        end
+
+        conn.close()
+
+        return status
+      end
+      module_function :copy_via_stdin
 
       # Converts a set of queries into a
       # single Redshift read-write
@@ -103,14 +144,7 @@ module Snowplow
       # a list of the form [query, err_class, err_message]
       def execute_queries(target, queries)
 
-        connection_url = "jdbc:postgresql://#{target[:host]}:#{target[:port]}/#{target[:database]}"
-
-        props = java.util.Properties.new
-        props.set_property :user, target[:username]
-        props.set_property :password, target[:password]
-
-        # Used instead of Java::JavaSql::DriverManager.getConnection to prevent "no suitable driver found" error
-        conn = org.postgresql.Driver.new.connect(connection_url, props)
+        conn = get_connection(target)
 
         status = []
         queries.each do |q|
@@ -126,6 +160,18 @@ module Snowplow
         return status
       end
       module_function :execute_queries
+
+      # Get a java.sql.Connection to a database
+      def self.get_connection(target)
+        connection_url = "jdbc:postgresql://#{target[:host]}:#{target[:port]}/#{target[:database]}"
+
+        props = java.util.Properties.new
+        props.set_property :user, target[:username]
+        props.set_property :password, target[:password]
+
+        # Used instead of Java::JavaSql::DriverManager.getConnection to prevent "no suitable driver found" error
+        org.postgresql.Driver.new.connect(connection_url, props)
+      end
 
       private
 
