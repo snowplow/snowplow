@@ -27,13 +27,16 @@ import iglu.client.Resolver
 // Snowplow
 import common.enrichments.EnrichmentRegistry
 
+// Tracker
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
+
 /**
  * Source to allow the testing framework to enrich events
  * using the same methods from AbstractSource as the other
  * sources.
  */
-class TestSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry)
-    extends AbstractSource(config, igluResolver, enrichmentRegistry) {
+class TestSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry, tracker: Option[Tracker])
+    extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
   /**
    * Never-ending processing loop over source stream.

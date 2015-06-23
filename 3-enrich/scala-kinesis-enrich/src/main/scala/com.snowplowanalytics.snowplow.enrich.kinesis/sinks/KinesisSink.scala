@@ -61,11 +61,14 @@ import org.slf4j.LoggerFactory
 import com.snowplowanalytics.snowplow.collectors.thrift._
 import common.outputs.EnrichedEvent
 
+// Tracker
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
+
 /**
  * Kinesis Sink for Scala enrichment
  */
 class KinesisSink(provider: AWSCredentialsProvider,
-    config: KinesisEnrichConfig, inputType: InputType.InputType) extends ISink {
+    config: KinesisEnrichConfig, inputType: InputType.InputType, tracker: Option[Tracker]) extends ISink {
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
@@ -85,8 +88,8 @@ class KinesisSink(provider: AWSCredentialsProvider,
   // Create a Kinesis client for stream interactions.
   private implicit val kinesis = Client.fromClient(client)
 
-  // The output stream for enriched events.
-  private val enrichedStream = loadStream()
+  // The output stream for enriched and bad events.
+  private val stream = loadStream()
 
   /**
    * Check whether a Kinesis stream exists
@@ -251,9 +254,12 @@ class KinesisSink(provider: AWSCredentialsProvider,
       var unsentRecords = batch
       var backoffTime = minBackoff
       var sentBatchSuccessfully = false
+      var attemptNumber = 0
       while (!sentBatchSuccessfully) {
+        attemptNumber += 1
+
         val putData = for {
-          p <- enrichedStream.multiPut(unsentRecords)
+          p <- stream.multiPut(unsentRecords)
         } yield p
 
         try {
@@ -264,6 +270,14 @@ class KinesisSink(provider: AWSCredentialsProvider,
             failurePairs foreach { f => error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]") }
             backoffTime = getNextBackoff(backoffTime)
             error(s"Retrying all failed records in $backoffTime milliseconds...")
+
+            val err = s"Failed to send ${failurePairs.size} events"
+            (tracker, inputType) match {
+              case (Some(t), InputType.Good) => SnowplowTracking.sendFailureEvent(t, "Enriched", backoffTime, attemptNumber, err)
+              case (Some(t), InputType.Bad) => SnowplowTracking.sendFailureEvent(t, "Bad", backoffTime, attemptNumber, err)
+              case (_, _) => None
+            }
+
             unsentRecords = failurePairs.map(_._1)
             Thread.sleep(backoffTime)
           } else {
@@ -274,6 +288,13 @@ class KinesisSink(provider: AWSCredentialsProvider,
             backoffTime = getNextBackoff(backoffTime)
             error(s"Writing failed.", f)
             error(s"  + Retrying in $backoffTime milliseconds...")
+
+            (tracker, inputType) match {
+              case (Some(t), InputType.Good) => SnowplowTracking.sendFailureEvent(t, "Enriched", backoffTime, attemptNumber, f.toString)
+              case (Some(t), InputType.Bad) => SnowplowTracking.sendFailureEvent(t, "Bad", backoffTime, attemptNumber, f.toString)
+              case (_, _) => None
+            }
+
             Thread.sleep(backoffTime)
           }
         }

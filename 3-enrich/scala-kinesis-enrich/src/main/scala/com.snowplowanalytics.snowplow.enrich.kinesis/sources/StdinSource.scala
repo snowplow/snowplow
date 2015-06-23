@@ -35,12 +35,15 @@ import iglu.client.Resolver
 // Snowplow
 import common.enrichments.EnrichmentRegistry
 
+// Tracker
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
+
 /**
  * Source to decode raw events (in base64)
  * from stdin.
  */
-class StdinSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry)
-    extends AbstractSource(config, igluResolver, enrichmentRegistry) {
+class StdinSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry, tracker: Option[Tracker])
+    extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
 
   /**
    * Never-ending processing loop over source stream.
