@@ -60,9 +60,6 @@ sink {
     cluster-name: "{{sinkElasticsearchClusterName}}"
     endpoint: "{{sinkElasticsearchEndpoint}}"
     max-timeout: "{{sinkElasticsearchMaxTimeout}}"
-  }
-
-  location {
     index: "{{sinkElasticsearchIndex}}" # Elasticsearch index name
     type: "{{sinkElasticsearchType}}" # Elasticsearch type name
   }
