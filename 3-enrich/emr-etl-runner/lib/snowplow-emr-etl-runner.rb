@@ -21,6 +21,7 @@ require_relative 'snowplow-emr-etl-runner/monitoring/snowplow'
 require_relative 'snowplow-emr-etl-runner/cli'
 require_relative 'snowplow-emr-etl-runner/s3_tasks'
 require_relative 'snowplow-emr-etl-runner/scalding_step'
+require_relative 'snowplow-emr-etl-runner/job_result'
 require_relative 'snowplow-emr-etl-runner/emr_job'
 require_relative 'snowplow-emr-etl-runner/runner'
 
