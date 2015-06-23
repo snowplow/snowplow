@@ -14,6 +14,10 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 package registry
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 // Json4s
 import org.json4s._
 import org.json4s.JValue
@@ -70,9 +74,10 @@ class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatche
 
   def e1 = {
     val actual = JavascriptScriptEnrichment.compile("[")
-    val expected = "Error compiling JavaScript script: [javax.script.ScriptException: sun.org.mozilla.javascript.internal.EvaluatorException: syntax error (<Unknown Source>#5)]"
+    val expectedOracleJdk = Failure("Error compiling JavaScript script: [javax.script.ScriptException: sun.org.mozilla.javascript.internal.EvaluatorException: syntax error (<Unknown Source>#5)]")
+    val expectedOpenJdk = Failure("Error compiling JavaScript script: [javax.script.ScriptException: sun.org.mozilla.javascript.EvaluatorException: syntax error (<Unknown Source>#5)]")
 
-    actual must beFailing(expected)
+    List(expectedOracleJdk, expectedOpenJdk) must contain(actual)
   }
 
   def e2 = {
