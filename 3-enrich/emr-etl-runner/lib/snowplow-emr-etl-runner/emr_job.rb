@@ -32,6 +32,7 @@ module Snowplow
       # Constants
       JAVA_PACKAGE = "com.snowplowanalytics.snowplow"
       PARTFILE_REGEXP = ".*part-.*"
+      BOOTSTRAP_FAILURE_INDICATOR = /bootstrap action|Master instance startup failed/
 
       # Need to understand the status of all our jobflow steps
       @@running_states = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
@@ -319,7 +320,8 @@ module Snowplow
 
       # Run (and wait for) the daily ETL job.
       #
-      # Throws a RuntimeError if the jobflow does not succeed.
+      # Throws a BootstrapFailureError if the job fails due to a bootstrap failure.
+      # Throws an EmrExecutionError if the jobflow fails for any other reason.
       Contract ConfigHash => nil
       def run(config)
 
@@ -335,17 +337,23 @@ module Snowplow
 
         status = wait_for()
 
-        if !status
+        if status.successful
+          logger.debug "EMR jobflow #{jobflow_id} completed successfully."
+          if snowplow_tracking_enabled
+            Monitoring::Snowplow.instance.track_job_succeeded()
+          end
+
+        elsif status.bootstrap_failure
+          if snowplow_tracking_enabled
+            Monitoring::Snowplow.instance.track_job_failed()
+          end
+          raise BootstrapFailureError, get_failure_details(jobflow_id)
+
+        else
           if snowplow_tracking_enabled
             Monitoring::Snowplow.instance.track_job_failed()
           end
           raise EmrExecutionError, get_failure_details(jobflow_id)
-        end
-
-        logger.debug "EMR jobflow #{jobflow_id} completed successfully."
-
-        if snowplow_tracking_enabled
-          Monitoring::Snowplow.instance.track_job_succeeded()
         end
 
         nil
@@ -388,10 +396,12 @@ module Snowplow
       #
       # Returns true if the jobflow completed without error,
       # false otherwise.
-      Contract None => Bool
+      Contract None => JobResult
       def wait_for()
 
         success = false
+
+        bootstrap_failure = false
 
         # Loop until we can quit...
         while true do
@@ -404,6 +414,7 @@ module Snowplow
             # If no step is still running, then quit
             if statuses[0] == 0
               success = statuses[1] == 0 # True if no failures
+              bootstrap_failure = EmrJob.bootstrap_failure?(@jobflow)
               break
             else
               # Sleep a while before we check again
@@ -425,7 +436,7 @@ module Snowplow
           end
         end
 
-        success
+        JobResult.new(success, bootstrap_failure)
       end
 
       # Prettified string containing failure details
@@ -561,6 +572,13 @@ module Snowplow
         else
           "s3-#{s3_region}.amazonaws.com"
         end
+      end
+
+      # Returns true if the jobflow seems to have failed due to a bootstrap failure
+      Contract Elasticity::JobFlow => Bool
+      def self.bootstrap_failure?(jobflow)
+        jobflow.cluster_step_status.all? {|s| s.state == 'CANCELLED'} &&
+        (! (jobflow.cluster_status.last_state_change_reason =~ BOOTSTRAP_FAILURE_INDICATOR).nil?)
       end
 
     end

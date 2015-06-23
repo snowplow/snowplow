@@ -109,7 +109,8 @@ module Snowplow
             :task_instance_count => Num,
             :task_instance_type => String,
             :task_instance_bid => Maybe[Num]
-            })
+            }),
+          :bootstrap_failure_tries => Num
           }),
         }),
       :collectors => ({
