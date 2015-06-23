@@ -336,7 +336,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    * @return ValidatedRecord for the event
    */
   override def toClass(record: Record): ValidatedRecord = {
-    val recordString = new String(record.getData.array)
+    val recordString = new String(record.getData.array, "UTF-8")
 
     // The -1 is necessary to prevent trailing empty strings from being discarded
     (recordString, jsonifyGoodEvent(recordString.split("\t", -1)).leftMap(_.toList))
