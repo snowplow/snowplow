@@ -35,7 +35,7 @@ module Snowplow
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
       Contract Hash, Hash => nil
-      def load_events_and_shredded_types(config, target)
+      def load_events_and_shredded_types(config, target, snowplow_tracking_enabled)
         puts "Loading Snowplow events and shredded types into #{target[:name]} (Redshift cluster)..."
 
         # First let's get our statements for shredding (if any)
@@ -55,7 +55,14 @@ module Snowplow
 
         status = PostgresLoader.execute_transaction(target, copy_analyze_statements)
         unless status == []
+          if snowplow_tracking_enabled
+            Monitoring::Snowplow.instance.track_load_failed()
+          end
           raise DatabaseLoadError, "#{status[1]} error executing COPY and ANALYZE statements: #{status[0]}: #{status[2]}"
+        end
+
+        if snowplow_tracking_enabled
+          Monitoring::Snowplow.instance.track_load_failed()
         end
 
         # If vacuum is requested, build a set of VACUUM statements
