@@ -50,7 +50,7 @@ object SpecHelpers {
   /**
    * The Kinesis Enrich being used
    */
-  val EnrichVersion = "kinesis-0.6.0-common-0.13.1"
+  val EnrichVersion = "kinesis-0.6.0-common-0.15.0"
 
   val TimestampRegex = "[0-9]+"
 
@@ -310,6 +310,6 @@ enrich {
     val conf = ConfigFactory.parseString(config)
     val kec = new KinesisEnrichConfig(conf)
 
-    new TestSource(kec, resolver, enrichmentRegistry)
+    new TestSource(kec, resolver, enrichmentRegistry, None)
   }
 }
