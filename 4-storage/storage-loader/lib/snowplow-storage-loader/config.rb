@@ -16,6 +16,7 @@
 require 'optparse'
 require 'date'
 require 'yaml'
+require 'erb'
 require 'sluice'
 
 # Config module to hold functions related to CLI argument parsing
@@ -36,12 +37,14 @@ module Snowplow
         options = Config.parse_args()
 
         if Config.indicates_read_from_stdin?(options[:config])
-          unsymbolized_config = YAML.load($stdin.readlines.join)
+          unsymbolized_config = $stdin.readlines.join
         else
-          unsymbolized_config = YAML.load_file(options[:config])
+          unsymbolized_config = File.new(options[:config]).read
         end
 
-        config = Config.recursive_symbolize_keys(unsymbolized_config)
+        erb_config = ERB.new(unsymbolized_config).result(binding)
+
+        config = Config.recursive_symbolize_keys(YAML.load(erb_config))
 
 
         # Add in our skip and include settings

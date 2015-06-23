@@ -1,6 +1,7 @@
 aws:
-  access_key_id: ADD HERE
-  secret_access_key: ADD HERE
+  # Credentials can be hardcoded or set in environment variables
+  access_key_id: <%= ENV['AWS_SNOWPLOW_ACCESS_KEY'] %>
+  secret_access_key: <%= ENV['AWS_SNOWPLOW_SECRET_KEY'] %>
   s3:
     region: ADD HERE
     buckets:
