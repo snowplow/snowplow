@@ -82,9 +82,6 @@ module Snowplow
 
     # The Hash containing effectively the configuration YAML.
     ConfigHash = ({
-      :logging => ({
-        :level => String
-        }),
       :aws => ({
         :access_key_id => String,
         :secret_access_key => String,
@@ -132,6 +129,17 @@ module Snowplow
           :folder => Maybe[String]
           }),
         :targets => ArrayOf[TargetHash]
+        }),
+      :monitoring => ({
+        :tags => HashOf[String, String],
+        :logging => ({
+          :level => String
+          }),
+        :snowplow => ({
+          :method => String,
+          :collector => String,
+          :app_id => String
+          })
         })
       })
 

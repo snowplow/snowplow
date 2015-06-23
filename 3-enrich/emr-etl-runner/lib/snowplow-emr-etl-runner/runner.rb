@@ -32,7 +32,7 @@ module Snowplow
       def initialize(args, config, enrichments_array, resolver)
 
         # Let's set our logging level immediately
-        Monitoring::Logging::set_level config[:logging][:level]
+        Monitoring::Logging::set_level config[:monitoring][:logging][:level]
 
         @args = args
         @config = validate_and_coalesce(args, config)
