@@ -323,21 +323,31 @@ module Snowplow
       Contract ConfigHash => nil
       def run(config)
 
+        snowplow_tracking_enabled = ! config[:monitoring][:snowplow].nil?
+
         jobflow_id = @jobflow.run
         logger.debug "EMR jobflow #{jobflow_id} started, waiting for jobflow to complete..."
 
-        Monitoring::Snowplow.parameterize(config)
-        Monitoring::Snowplow.instance.track_job_started()
+        if snowplow_tracking_enabled
+          Monitoring::Snowplow.parameterize(config)
+          Monitoring::Snowplow.instance.track_job_started()
+        end
 
         status = wait_for()
 
         if !status
-          Monitoring::Snowplow.instance.track_job_failed()
+          if snowplow_tracking_enabled
+            Monitoring::Snowplow.instance.track_job_failed()
+          end
           raise EmrExecutionError, get_failure_details(jobflow_id)
         end
 
         logger.debug "EMR jobflow #{jobflow_id} completed successfully."
-        Monitoring::Snowplow.instance.track_job_succeeded()
+
+        if snowplow_tracking_enabled
+          Monitoring::Snowplow.instance.track_job_succeeded()
+        end
+
         nil
       end
 
