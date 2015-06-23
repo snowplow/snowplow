@@ -63,6 +63,8 @@ import common.ValidatedMaybeCollectorPayload
 import common.EtlPipeline
 import common.utils.JsonUtils
 
+// Tracker
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
 
 object AbstractSource {
 
@@ -118,7 +120,8 @@ object AbstractSource {
  * we support.
  */
 abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolver,
-                              enrichmentRegistry: EnrichmentRegistry) {
+                              enrichmentRegistry: EnrichmentRegistry, 
+                              tracker: Option[Tracker]) {
   
   val MaxRecordSize = if (config.sink == Sink.Kinesis) {
     Some(1000000L)
@@ -148,7 +151,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
    */
   private def getThreadLocalSink(inputType: InputType.InputType) = new ThreadLocal[Option[ISink]] {
     override def initialValue = config.sink match {
-      case Sink.Kinesis => new KinesisSink(kinesisProvider, config, inputType).some
+      case Sink.Kinesis => new KinesisSink(kinesisProvider, config, inputType, tracker).some
       case Sink.Stdouterr => new StdouterrSink(inputType).some
       case Sink.Test => None
     }

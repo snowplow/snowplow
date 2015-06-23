@@ -63,11 +63,14 @@ import collectors.thrift.{
   PayloadFormat
 }
 
+// Tracker
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
+
 /**
  * Source to read events from a Kinesis stream
  */
-class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry)
-    extends AbstractSource(config, igluResolver, enrichmentRegistry) {
+class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry, tracker: Option[Tracker])
+    extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
   
   lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
