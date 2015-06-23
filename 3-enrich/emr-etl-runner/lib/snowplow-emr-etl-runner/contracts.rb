@@ -135,11 +135,11 @@ module Snowplow
         :logging => ({
           :level => String
           }),
-        :snowplow => ({
+        :snowplow => Maybe[{
           :method => String,
           :collector => String,
           :app_id => String
-          })
+          }]
         })
       })
 
