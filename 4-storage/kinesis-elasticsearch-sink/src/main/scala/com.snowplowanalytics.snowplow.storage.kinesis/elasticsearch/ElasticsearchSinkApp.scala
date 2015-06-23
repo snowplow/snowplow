@@ -96,9 +96,9 @@ object ElasticsearchSinkApp extends App {
     case "bad" => StreamType.Bad
     case _ => throw new RuntimeException("\"stream-type\" must be set to \"good\" or \"bad\"")
   }
-  val location = configValue.getConfig("location")
-  val documentIndex = location.getString("index")
-  val documentType = location.getString("type")
+  val elasticsearch = configValue.getConfig("elasticsearch")
+  val documentIndex = elasticsearch.getString("index")
+  val documentType = elasticsearch.getString("type")
 
   val tracker = if (configValue.hasPath("monitoring.snowplow")) {
     SnowplowTracking.initializeTracker(configValue.getConfig("monitoring.snowplow")).some
