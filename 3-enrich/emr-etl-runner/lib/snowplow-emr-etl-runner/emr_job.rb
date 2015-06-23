@@ -320,18 +320,24 @@ module Snowplow
       # Run (and wait for) the daily ETL job.
       #
       # Throws a RuntimeError if the jobflow does not succeed.
-      Contract None => nil
-      def run()
+      Contract ConfigHash => nil
+      def run(config)
 
         jobflow_id = @jobflow.run
         logger.debug "EMR jobflow #{jobflow_id} started, waiting for jobflow to complete..."
+
+        Monitoring::Snowplow.parameterize(config)
+        Monitoring::Snowplow.instance.track_job_started()
+
         status = wait_for()
 
         if !status
+          Monitoring::Snowplow.instance.track_job_failed()
           raise EmrExecutionError, get_failure_details(jobflow_id)
         end
 
         logger.debug "EMR jobflow #{jobflow_id} completed successfully."
+        Monitoring::Snowplow.instance.track_job_succeeded()
         nil
       end
 

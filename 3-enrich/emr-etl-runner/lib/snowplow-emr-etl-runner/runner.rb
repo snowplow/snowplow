@@ -58,7 +58,7 @@ module Snowplow
           shred = not(@args[:skip].include?('shred'))
           s3distcp = not(@args[:skip].include?('s3distcp'))
           job = EmrJob.new(@args[:debug], enrich, shred, s3distcp, @config, @enrichments_array, @resolver)
-          job.run()
+          job.run(@config)
         end
 
         unless @args[:skip].include?('archive_raw')
