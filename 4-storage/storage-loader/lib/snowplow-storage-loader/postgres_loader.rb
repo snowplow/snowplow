@@ -36,13 +36,23 @@ module Snowplow
       # +target+:: the configuration options for this target
       # +skip_steps+:: Array of steps to skip
       # +include_steps+:: Array of optional steps to include
-      def load_events(events_dir, target, skip_steps, include_steps)
+      def load_events(events_dir, target, skip_steps, include_steps, snowplow_tracking_enabled)
         puts "Loading Snowplow events into #{target[:name]} (PostgreSQL database)..."
 
         event_files = get_event_files(events_dir)
         status = copy_via_stdin(target, event_files)
+
         unless status == []
+
+          if snowplow_tracking_enabled
+            Monitoring::Snowplow.instance.track_load_failed()
+          end
+
           raise DatabaseLoadError, "#{status[1]} error loading #{status[0]}: #{status[2]}"
+        end
+
+        if snowplow_tracking_enabled
+          Monitoring::Snowplow.instance.track_load_succeeded()
         end
 
         post_processing = nil

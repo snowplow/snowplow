@@ -30,6 +30,12 @@ loader = Snowplow::StorageLoader
 begin
   config = loader::Config.get_config()
 
+  snowplow_tracking_enabled = ! config[:monitoring][:snowplow].nil?
+
+  if snowplow_tracking_enabled
+    loader::Monitoring::Snowplow.parameterize(config)
+  end
+
   # Download files if required
   unless config[:skip].include?('download')
     if config[:download_required]
@@ -45,9 +51,9 @@ begin
     config[:storage][:targets].each { |t|
       case t[:type]
         when 'redshift'
-          loader::RedshiftLoader.load_events_and_shredded_types(config, t)
+          loader::RedshiftLoader.load_events_and_shredded_types(config, t, snowplow_tracking_enabled)
         when 'postgres'
-          loader::PostgresLoader.load_events(config[:storage][:download][:folder], t, config[:skip], config[:include])
+          loader::PostgresLoader.load_events(config[:storage][:download][:folder], t, config[:skip], config[:include], snowplow_tracking_enabled)
       end
     }
   end
