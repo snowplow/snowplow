@@ -60,6 +60,10 @@ import com.amazonaws.services.kinesis.connectors.{
 import java.io.IOException
 import java.util.{List => JList}
 
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.DateTimeFormat
+
 // Scala
 import scala.collection.JavaConversions._
 import scala.annotation.tailrec
@@ -99,6 +103,9 @@ class SnowplowElasticsearchEmitter(
   extends IEmitter[EmitterInput] {
 
   private val Log = LogFactory.getLog(getClass)
+
+  // An ISO valid timestamp formatter
+  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   /**
    * The settings key for the cluster name.
@@ -313,7 +320,7 @@ class SnowplowElasticsearchEmitter(
         val output = compact(render(
           ("line" -> record._1) ~ 
           ("errors" -> record._2.swap.getOrElse(Nil)) ~
-          ("failure_tstamp" -> System.currentTimeMillis())
+          ("failure_tstamp" -> getTimestamp(System.currentTimeMillis()))
         ))
         badSink.store(output, None, false)
       }
@@ -377,4 +384,14 @@ class SnowplowElasticsearchEmitter(
     }
   }
 
+  /**
+   * Returns an ISO valid timestamp
+   *
+   * @param tstamp The Timestamp to convert
+   * @return the formatted Timestamp
+   */
+  private def getTimestamp(tstamp: Long): String = {
+    val dt = new DateTime(tstamp)
+    TstampFormat.print(dt)
+  }
 }
