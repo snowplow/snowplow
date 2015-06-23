@@ -34,7 +34,8 @@ import spray.http.{
   AllOrigins,
   ContentType,
   MediaTypes,
-  HttpCharsets
+  HttpCharsets,
+  RemoteAddress
 }
 import spray.http.HttpHeaders.{
   `Set-Cookie`,
@@ -81,13 +82,19 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
   // When `/i` is requested, this is called and stores an event in the
   // Kinisis sink and returns an invisible pixel with a cookie.
   def cookie(queryParams: String, body: String, requestCookie: Option[HttpCookie],
-      userAgent: Option[String], hostname: String, ip: String,
+      userAgent: Option[String], hostname: String, ip: RemoteAddress,
       request: HttpRequest, refererUri: Option[String], path: String, pixelExpected: Boolean):
       (HttpResponse, List[Array[Byte]]) = {
 
     if (KinesisSink.shuttingDown) {
       (notFound, null)
     } else {
+
+      // Make a Tuple2 with the ip address and the shard partition key
+      val ipKey = ip.toOption.map(_.getHostAddress) match {
+        case None     => ("unknown", UUID.randomUUID.toString)
+        case Some(ip) => (ip, ip)
+      }
 
       // Use the same UUID if the request cookie contains `sp`.
       val networkUserId: String = requestCookie match {
@@ -100,7 +107,7 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
 
       val event = new CollectorPayload(
         "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
-        ip,
+        ipKey._1,
         timestamp,
         "UTF-8",
         Collector
@@ -130,8 +137,8 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
       val eventSplit = SplitBatch.splitAndSerializePayload(event, sinks.good.MaxBytes)
 
       // Send events to respective sinks
-      val sinkResponseGood = sinks.good.storeRawEvents(eventSplit.good, ip)
-      val sinkResponseBad  = sinks.bad.storeRawEvents(eventSplit.bad, ip)
+      val sinkResponseGood = sinks.good.storeRawEvents(eventSplit.good, ipKey._2)
+      val sinkResponseBad  = sinks.bad.storeRawEvents(eventSplit.bad, ipKey._2)
 
       // Sink Responses for Test Sink
       val sinkResponse = sinkResponseGood ++ sinkResponseBad
