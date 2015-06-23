@@ -44,6 +44,7 @@ aws:
       task_instance_count: 0 # Increase to use spot instances
       task_instance_type: m1.small
       task_instance_bid: 0.015 # In USD. Adjust bid, or leave blank for non-spot-priced (i.e. on-demand) task instances
+    bootstrap_failure_tries: 3 # Number of times to attempt the job in the event of bootstrap failures
 collectors:
   format: cloudfront # Or 'clj-tomcat' for the Clojure Collector, or 'thrift' for Thrift records, or 'tsv/com.amazon.aws.cloudfront/wd_access_log' for Cloudfront access logs
 enrich:
