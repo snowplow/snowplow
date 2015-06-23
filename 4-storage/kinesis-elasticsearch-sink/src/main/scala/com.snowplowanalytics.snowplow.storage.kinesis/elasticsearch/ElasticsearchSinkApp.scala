@@ -112,6 +112,8 @@ object ElasticsearchSinkApp extends App {
 
     // Read records from Kinesis
     case "kinesis" => {
+      val finalConfig = convertConfig(configValue)
+
       val (goodSink, badSink) = configValue.getString("sink") match {
         case "elasticsearch-kinesis" => {
           val kinesis = configValue.getConfig("kinesis")
@@ -120,14 +122,13 @@ object ElasticsearchSinkApp extends App {
           val kinesisSinkShards = kinesisSink.getInt("shards")
           val kinesisSinkRegion = kinesis.getString("region")
           val kinesisSinkEndpoint = s"https://kinesis.${kinesisSinkRegion}.amazonaws.com"
-          (None, new KinesisSink(new DefaultAWSCredentialsProviderChain,
-            kinesisSinkEndpoint, kinesisSinkName, kinesisSinkShards))
+          (None, new KinesisSink(finalConfig.AWS_CREDENTIALS_PROVIDER, kinesisSinkEndpoint, kinesisSinkName, kinesisSinkShards))
         }
         case "stdouterr" => (Some(new StdouterrSink), new StdouterrSink)
         case _ => throw new RuntimeException("Sink type must be 'stdouterr' or 'kinesis'")
       }
 
-      new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, convertConfig(configValue), goodSink, badSink, tracker, maxConnectionTime).success
+      new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, finalConfig, goodSink, badSink, tracker, maxConnectionTime).success
     }
 
     // Run locally, reading from stdin and sending events to stdout / stderr rather than Elasticsearch / Kinesis
