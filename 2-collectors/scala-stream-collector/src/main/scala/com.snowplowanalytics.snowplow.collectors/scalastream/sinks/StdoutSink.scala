@@ -36,14 +36,15 @@ import com.typesafe.config.Config
 // Snowplow
 import CollectorPayload.thrift.model1.CollectorPayload
 
-class StdoutSink extends AbstractSink {
+class StdoutSink (inputType: InputType.InputType) extends AbstractSink {
 
   val MaxBytes = Long.MaxValue
 
   // Print a Base64-encoded event.
   def storeRawEvents(events: List[Array[Byte]], key: String) = {
-    events foreach {
-      e => println(Base64.encodeBase64String(e))
+    inputType match {
+      case InputType.Good => events foreach { e => println(Base64.encodeBase64String(e)) }
+      case InputType.Bad  => events foreach { e => Console.err.println(Base64.encodeBase64String(e)) }
     }
     Nil
   }
