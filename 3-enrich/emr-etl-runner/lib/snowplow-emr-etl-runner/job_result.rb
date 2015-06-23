@@ -13,37 +13,16 @@
 # Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-# All errors
 module Snowplow
   module EmrEtlRunner
+    class JobResult
 
-    # The base error class for all <tt>EmrEtlRunner</tt> error classes.
-    class Error < StandardError
-    end
+      attr_reader :successful, :bootstrap_failure
 
-    # Raised when there's a problem with the supplied configuration (either command line or in configuration file)
-    class ConfigError < Error
-    end
-
-    # Problem when running Amazon EMR (e.g. job failed) 
-    class EmrExecutionError < Error
-    end
-
-    # A bootstrap failure indicates the job can be safely retried
-    class BootstrapFailureError < EmrExecutionError
-    end
-
-    # Raised if a directory is not empty
-    class DirectoryNotEmptyError < Error
-    end
-
-    # Raised if there is no data to process
-    # Not strictly an error, but used for control flow
-    class NoDataToProcessError < Error
-    end
-
-    # Raised if the .lzo and .lzo.index files aren't matched
-    class UnmatchedLzoFilesError < Error
+      def initialize(successful, bootstrap_failure)
+        @successful = successful
+        @bootstrap_failure = bootstrap_failure
+      end
     end
   end
 end
