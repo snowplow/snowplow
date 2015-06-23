@@ -29,7 +29,7 @@ import org.specs2.specification.{Scope,Fragments}
 import spray.testkit.Specs2RouteTest
 
 // Spray
-import spray.http.{DateTime,HttpHeader,HttpRequest,HttpCookie}
+import spray.http.{DateTime,HttpHeader,HttpRequest,HttpCookie,RemoteAddress}
 import spray.http.HttpHeaders.{
   Cookie,
   `Set-Cookie`,
@@ -167,7 +167,7 @@ collector {
     "store the expected event as a serialized Thrift object in the enabled sink" in {
       val payloadData = "param1=val1&param2=val2"
       val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
-        None, "localhost", "127.0.0.1", new HttpRequest(), None, "/com.snowplowanalytics.snowplow/tp2", false)._2
+        None, "localhost", RemoteAddress("127.0.0.1"), new HttpRequest(), None, "/com.snowplowanalytics.snowplow/tp2", false)._2
 
       val storedEvent = new CollectorPayload
       this.synchronized {
