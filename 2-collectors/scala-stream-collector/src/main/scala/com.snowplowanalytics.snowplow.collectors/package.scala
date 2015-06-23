@@ -21,6 +21,14 @@ import scalastream.sinks._
 package object scalastream {
 
   /**
+   * Whether the sink is for good rows or bad rows
+   */
+  object InputType extends Enumeration {
+    type InputType = Value
+    val Good, Bad = Value
+  }
+
+  /**
    * Case Class for holding both good and
    * bad sinks for the Stream Collector.
    *

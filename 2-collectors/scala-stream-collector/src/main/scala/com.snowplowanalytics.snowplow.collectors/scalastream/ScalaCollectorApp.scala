@@ -75,13 +75,14 @@ object ScalaCollector extends App {
 
   val sinks = collectorConfig.sinkEnabled match {
     case Sink.Kinesis => {
-      val good = KinesisSink.createAndInitialize(collectorConfig, collectorConfig.streamGoodName)
-      val bad  = KinesisSink.createAndInitialize(collectorConfig, collectorConfig.streamBadName)
+      val good = KinesisSink.createAndInitialize(collectorConfig, InputType.Good)
+      val bad  = KinesisSink.createAndInitialize(collectorConfig, InputType.Bad)
       CollectorSinks(good, bad) 
     }
     case Sink.Stdout  => {
-      val sink = new StdoutSink
-      CollectorSinks(sink, sink) 
+      val good = new StdoutSink(InputType.Good)
+      val bad = new StdoutSink(InputType.Bad)
+      CollectorSinks(good, bad) 
     }
   }
 
