@@ -187,8 +187,8 @@ object KinesisEnrichApp extends App {
   }
 
   val source = kinesisEnrichConfig.source match {
-    case Source.Kinesis => new KinesisSource(kinesisEnrichConfig, igluResolver, registry)
-    case Source.Stdin => new StdinSource(kinesisEnrichConfig, igluResolver, registry)
+    case Source.Kinesis => new KinesisSource(kinesisEnrichConfig, igluResolver, registry, tracker)
+    case Source.Stdin => new StdinSource(kinesisEnrichConfig, igluResolver, registry, tracker)
   }
 
   tracker match {
@@ -251,10 +251,11 @@ object KinesisEnrichApp extends App {
             SnowplowTracking.trackApplicationWarning(t, s"No enrichments found with partial key ${partialKey}")
             Nil
           }
-          case (jsons, _) => {
+          case (Nil, None) => {
             info(s"No enrichments found with partial key ${partialKey}")
-            jsons
+            Nil
           }
+          case (jsons, _) => jsons
         }
       }
       case Some(other) => parser.usage(s"Enrichments argument [$other] must begin with 'file:' or 'dynamodb:'")
