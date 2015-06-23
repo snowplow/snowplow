@@ -16,6 +16,7 @@
 require 'optparse'
 require 'yaml'
 require 'contracts'
+require 'erb'
 
 module Snowplow
   module EmrEtlRunner
@@ -135,14 +136,16 @@ module Snowplow
 
         # A single hyphen indicates that the config should be read from stdin
         if config_file == '-'
-          config = YAML.load($stdin.readlines.join)
+          config = $stdin.readlines.join
         elsif File.file?(config_file)
-          config = YAML.load_file(config_file)
+          config = File.new(config_file).read
         else
           raise ConfigError, "Configuration file '#{config_file}' does not exist, or is not a file\n#{optparse}"
         end
 
-        recursive_symbolize_keys(config)
+        erb_config = ERB.new(config).result(binding)
+
+        recursive_symbolize_keys(YAML.load(erb_config))
       end
 
       # Load the enrichments directory into an array
