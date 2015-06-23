@@ -419,6 +419,9 @@ module Snowplow
           rescue Errno::ECONNRESET => res
             logger.warn "Got connection reset #{res}, waiting 5 minutes before checking jobflow again"
             sleep(300)
+          rescue Errno::ETIMEDOUT => to
+            logger.warn "Got connection timeout #{to}, waiting 5 minutes before checking jobflow again"
+            sleep(300)
           end
         end
 
