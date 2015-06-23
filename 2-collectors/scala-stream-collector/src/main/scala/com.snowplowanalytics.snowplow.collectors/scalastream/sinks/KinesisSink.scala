@@ -69,10 +69,10 @@ object KinesisSink {
    * during its construction
    *
    * @param config
-   * @param streamName
+   * @param inputType
    */
-  def createAndInitialize(config: CollectorConfig, streamName: String): KinesisSink = {
-    val ks = new KinesisSink(config, streamName)
+  def createAndInitialize(config: CollectorConfig, inputType: InputType.InputType): KinesisSink = {
+    val ks = new KinesisSink(config, inputType)
     ks.scheduleFlush()
 
     // When the application is shut down, stop accepting incoming requests
@@ -92,7 +92,7 @@ object KinesisSink {
 /**
  * Kinesis Sink for the Scala collector.
  */
-class KinesisSink private (config: CollectorConfig, streamName: String) extends AbstractSink {
+class KinesisSink private (config: CollectorConfig, inputType: InputType.InputType) extends AbstractSink {
 
   import log.{error, debug, info, trace}
 
@@ -141,6 +141,10 @@ class KinesisSink private (config: CollectorConfig, streamName: String) extends 
   private implicit val kinesis = createKinesisClient
 
   // The output stream for this sink.
+  private val streamName = inputType match {
+    case InputType.Good => config.streamGoodName
+    case InputType.Bad  => config.streamBadName
+  }
   private val sinkStream = loadStream( streamName )
 
   /**
