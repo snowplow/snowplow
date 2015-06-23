@@ -14,6 +14,7 @@
 # License::   Apache License Version 2.0
 
 # Ruby 1.9.2 onwards doesn't add . into $LOAD_PATH by default - use require_relative instead
+require_relative 'snowplow-storage-loader/snowplow'
 require_relative 'snowplow-storage-loader/errors'
 require_relative 'snowplow-storage-loader/contracts'
 require_relative 'snowplow-storage-loader/config'
