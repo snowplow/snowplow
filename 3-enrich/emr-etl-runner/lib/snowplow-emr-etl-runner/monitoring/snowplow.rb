@@ -54,7 +54,7 @@ module Snowplow
             :name => NAME,
             :version => VERSION,
             :tags => cm[:tags],
-            :logLevel => config[:logging][:level]
+            :logLevel => config[:monitoring][:logging][:level]
             })
 
           nil

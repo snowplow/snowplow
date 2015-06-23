@@ -1,5 +1,3 @@
-logging:
-  level: DEBUG # You can optionally switch to INFO for production
 aws:
   access_key_id: ADD HERE
   secret_access_key: ADD HERE
@@ -80,6 +78,8 @@ storage:
       comprows: # Not required for Postgres
 monitoring:
   tags: {} # Name-value pairs describing this job
+  logging:
+    level: DEBUG # You can optionally switch to INFO for production
   snowplow:
     method: get
     app_id: ADD HERE # e.g. snowplow
