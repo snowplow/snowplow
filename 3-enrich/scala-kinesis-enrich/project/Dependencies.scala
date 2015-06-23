@@ -40,7 +40,7 @@ object Dependencies {
     val config               = "1.0.2"
     val scalaUtil            = "0.1.0"
     val snowplowRawEvent     = "0.1.0"
-    val snowplowCommonEnrich = "0.13.1"
+    val snowplowCommonEnrich = "0.15.0"
     val scalazon             = "0.11"
     val scalaz7              = "7.0.0"
     val igluClient           = "0.1.1"
