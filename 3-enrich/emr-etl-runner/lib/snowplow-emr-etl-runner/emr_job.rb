@@ -251,7 +251,18 @@ module Snowplow
             ]
             copy_to_s3_step.name << ": Enriched HDFS -> S3"
             @jobflow.add_step(copy_to_s3_step)
+
+            copy_success_file_step = Elasticity::S3DistCpStep.new
+            copy_success_file_step.arguments = [
+              "--src"        , enrich_step_output,
+              "--dest"       , enrich_final_output,
+              "--srcPattern" , ".*_SUCCESS",
+              "--s3Endpoint" , s3_endpoint
+            ]
+            copy_success_file_step.name << ": Enriched HDFS _SUCCESS -> S3"
+            @jobflow.add_step(copy_success_file_step)
           end
+
         end
 
         if shred
