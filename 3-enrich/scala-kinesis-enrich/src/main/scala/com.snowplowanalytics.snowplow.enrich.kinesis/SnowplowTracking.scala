@@ -65,22 +65,22 @@ object SnowplowTracking {
    *
    * @param tracker
    * @param sinkName the type of sink that failed
-   * @param nextBackoff the time in milliseconds until retry
+   * @param lastRetryPeriod the time in milliseconds until retry
    * @param failureCount the number of consecutive failed writes
    * @param message What went wrong
    */
   def sendFailureEvent(
     tracker: Tracker,
     sinkName: String,
-    nextBackoff: Long,
+    lastRetryPeriod: Long,
     failureCount: Long,
     message: String) {
 
     tracker.trackUnstructEvent(SelfDescribingJson(
       "iglu:com.snowplowanalytics.snowplow/sink_write_failed/jsonschema/1-0-0",
-      ("nextBackoff" -> nextBackoff) ~
       ("sink" -> sinkName) ~
       ("failureCount" -> failureCount) ~
+      ("lastRetryPeriod" -> lastRetryPeriod) ~
       ("message" -> message)
     ))
   }
