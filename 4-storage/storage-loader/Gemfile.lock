@@ -2,7 +2,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     builder (3.2.2)
-    contracts (0.4)
+    contracts (0.7)
     excon (0.45.3)
     fog (1.24.0)
       fog-brightbox
@@ -76,7 +76,7 @@ PLATFORMS
   java
 
 DEPENDENCIES
-  contracts (~> 0.4)
+  contracts (= 0.7)
   jdbc-postgres
   plissken (~> 0.1.0)
   sluice (~> 0.2.2)
