@@ -23,6 +23,7 @@ module Snowplow
 
       # We ignore the Hadoop success files
       EMPTY_FILES = "_SUCCESS"
+      NON_EMPTY_FILES = Sluice::Storage::NegativeRegex.new(EMPTY_FILES)
 
       # Downloads the Snowplow event files from the In
       # Bucket to the local filesystem, ready to be loaded
@@ -42,11 +43,8 @@ module Snowplow
         in_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:enriched][:good])
         download_dir = config[:storage][:download][:folder]
 
-        # Exclude event files which match EMPTY_FILES
-        event_files = Sluice::Storage::NegativeRegex.new(EMPTY_FILES)
-
         # Download
-        Sluice::Storage::S3::download_files(s3, in_location, download_dir, event_files)
+        Sluice::Storage::S3::download_files(s3, in_location, download_dir, NON_EMPTY_FILES)
 
         nil
       end
@@ -93,7 +91,12 @@ module Snowplow
         archive_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][file_type][:archive])
 
         # Move all the files of this type
-        Sluice::Storage::S3::move_files(s3, good_location, archive_location, '.+')
+        # First move all data files
+        Sluice::Storage::S3::move_files(s3, good_location, archive_location, NON_EMPTY_FILES)
+        # Eventual consistency
+        sleep(60)
+        # Then move the _SUCCESS flag file
+        Sluice::Storage::S3::move_files(s3, good_location, archive_location, EMPTY_FILES)
 
         nil
       end
