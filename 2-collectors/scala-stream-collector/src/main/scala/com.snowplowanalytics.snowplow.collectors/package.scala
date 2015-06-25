@@ -29,7 +29,7 @@ package object scalastream {
   }
 
   /**
-   * Case Class for holding both good and
+   * Case class for holding both good and
    * bad sinks for the Stream Collector.
    *
    * @param good
@@ -38,7 +38,7 @@ package object scalastream {
   case class CollectorSinks(good: AbstractSink, bad: AbstractSink)
 
   /**
-   * Case Class for holding the results of
+   * Case class for holding the results of
    * splitAndSerializePayload.
    *
    * @param good All good results

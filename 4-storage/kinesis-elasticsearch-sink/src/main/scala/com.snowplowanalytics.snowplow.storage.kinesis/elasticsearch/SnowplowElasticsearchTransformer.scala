@@ -50,6 +50,9 @@ import org.slf4j.LoggerFactory
 
 /**
  * Class to convert successfully enriched events to EmitterInputs
+ *
+ * @param documentIndex the elasticsearch index name
+ * @param documentType the elasticsearch index type
  */
 class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ITransformer[ValidatedRecord, EmitterInput] {
 

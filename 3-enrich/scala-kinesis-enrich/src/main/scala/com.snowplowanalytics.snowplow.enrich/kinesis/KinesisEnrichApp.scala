@@ -69,19 +69,9 @@ import sinks._
 // Tracker
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
 
-// The enrichment process takes input SnowplowRawEvent objects from
-// an input source out outputs enriched objects to a sink,
-// as defined in the following enumerations.
-object Source extends Enumeration {
-  type Source = Value
-  val Kinesis, Stdin, Test = Value
-}
-object Sink extends Enumeration {
-  type Sink = Value
-  val Kinesis, Stdouterr, Test = Value
-}
-
-// The main entry point of the Scala Kinesis Enricher.
+/**
+ * The main entry point of the Scala Kinesis Enricher.
+ */
 object KinesisEnrichApp extends App {
 
   lazy val log = LoggerFactory.getLogger(getClass())
@@ -364,5 +354,4 @@ class KinesisEnrichConfig(config: Config) {
   val backoffPolicy = outStreams.getConfig("backoffPolicy")
   val minBackoff = backoffPolicy.getLong("minBackoff")
   val maxBackoff = backoffPolicy.getLong("maxBackoff")
-
 }

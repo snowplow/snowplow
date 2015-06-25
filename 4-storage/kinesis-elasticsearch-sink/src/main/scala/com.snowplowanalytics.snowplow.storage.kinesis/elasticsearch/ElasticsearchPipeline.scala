@@ -43,8 +43,17 @@ import StreamType._
 import scalatracker.Tracker
 
 /**
-* ElasticsearchPipeline class sets up the Emitter/Buffer/Transformer/Filter
-*/
+ * ElasticsearchPipeline class sets up the Emitter/Buffer/Transformer/Filter
+ *
+ * @param streamType the type of stream, good/bad
+ * @param documentIndex the elasticsearch index name
+ * @param documentType the elasticsearch index type
+ * @param goodSink the configured GoodSink
+ * @param badSink the configured BadSink
+ * @param tracker a Tracker instance
+ * @param maxConnectionTime the maximum amount of time
+ *        we can attempt to send to elasticsearch
+ */
 class ElasticsearchPipeline(
   streamType: StreamType,
   documentIndex: String,
