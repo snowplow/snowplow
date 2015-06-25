@@ -72,7 +72,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 
-  val name = inputType match {
+  private val name = inputType match {
     case InputType.Good => config.enrichedOutStream
     case InputType.Bad => config.badOutStream
   }
@@ -174,7 +174,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
     def addEvent(event: (ByteBuffer, String)) {
       val newBytes = event._1.capacity
 
-      if (newBytes >= 1000000L) {
+      if (newBytes >= MaxBytes) {
         val original = new String(event._1.array)
         error(s"Dropping record with size $newBytes bytes: [$original]")
       } else {
