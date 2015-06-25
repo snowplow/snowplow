@@ -29,7 +29,7 @@ import org.specs2.specification.{Scope,Fragments}
 import spray.testkit.Specs2RouteTest
 
 // Spray
-import spray.http.{DateTime,HttpHeader,HttpRequest,HttpCookie,RemoteAddress}
+import spray.http.{DateTime, HttpHeader, HttpRequest, HttpCookie, RemoteAddress}
 import spray.http.HttpHeaders.{
   Cookie,
   `Set-Cookie`,

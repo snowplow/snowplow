@@ -34,18 +34,14 @@ class SplitBatchSpec extends Specification {
   val splitBatch = SplitBatch
 
   "SplitBatch.split" should {
-
     "Batch a list of strings based on size" in {
-
       splitBatch.split(List("a", "b", "c"), 5, 1) must_==
         SplitBatchResult(
           List(List("c"),List("b", "a")),
           Nil)
-
     }
 
     "Reject only those strings which are too big" in {
-
       splitBatch.split(List("123456", "1", "123"), 5, 0) must_==
         SplitBatchResult(
           List(List("123", "1")),
@@ -53,7 +49,6 @@ class SplitBatchSpec extends Specification {
     }
 
     "Batch a long list of strings" in {
-
       splitBatch.split(List("12345677890", "123456789", "12345678", "1234567", "123456", "12345", "1234", "123", "12", "1"), 9, 0) must_==
         SplitBatchResult(
           List(
@@ -68,77 +63,49 @@ class SplitBatchSpec extends Specification {
   }
 
   "SplitBatch.splitAndSerializePayload" should {
-
     "Serialize an empty CollectorPayload" in {
-      
       val actual = SplitBatch.splitAndSerializePayload(new CollectorPayload(), 100)
-
       val target = new CollectorPayload
-
       new TDeserializer().deserialize(target, actual.good.head)
-
       target must_== new CollectorPayload
     }
 
     "Reject an oversized GET CollectorPayload" in {
-
       val payload = new CollectorPayload()
-
       payload.setQuerystring("x" * 1000)
-      
       val actual = SplitBatch.splitAndSerializePayload(payload, 100)
-
       val errorJson = parse(new String(actual.bad.head))
-
       errorJson \ "size" must_== JInt(1019)
-
       errorJson \ "errors" must_== JArray(List(JString("Cannot split record with null body")))
-
       actual.good must_== Nil
     }
 
     "Reject an oversized POST CollectorPayload with an unparseable body" in {
-
       val payload = new CollectorPayload()
-
       payload.setBody("s" * 1000)
-      
       val actual = SplitBatch.splitAndSerializePayload(payload, 100)
-
       val errorJson = parse(new String(actual.bad.head))
-
       errorJson \ "size" must_== JInt(1019)
-
     }
 
     "Reject an oversized POST CollectorPayload which would be oversized even without its body" in {
-
       val payload = new CollectorPayload()
-
       val data = compact(render(
         ("schema" -> "s") ~
         ("data" -> List(
           ("e" -> "se") ~ ("tv" -> "js-2.4.3"),
           ("e" -> "se") ~ ("tv" -> "js-2.4.3")
         ))))
-
       payload.setBody(data)
-
       payload.setPath("p" * 1000)
-
       val actual = SplitBatch.splitAndSerializePayload(payload, 1000)
-
       actual.bad.size must_== 1
-
       parse(new String(actual.bad.head)) \ "errors" must_==
         JArray(List(JString("Even without the body, the serialized event is too large")))
-
     }   
 
     "Split a CollectorPayload with three large events and four very large events" in {
-
       val payload = new CollectorPayload()
-
       val data = compact(render(
         ("schema" -> "s") ~
         ("data" -> List(
@@ -149,20 +116,12 @@ class SplitBatchSpec extends Specification {
           ("e" -> "se") ~ ("tv" -> "y" * 1000),
           ("e" -> "se") ~ ("tv" -> "y" * 1000),
           ("e" -> "se") ~ ("tv" -> "y" * 1000)
-
           ))
         ))
-
       payload.setBody(data)
-      
       val actual = SplitBatch.splitAndSerializePayload(payload, 1000)
-
       actual.bad.size must_== 4
-
       actual.good.size must_== 2
-
     }    
-
   }
-
 }

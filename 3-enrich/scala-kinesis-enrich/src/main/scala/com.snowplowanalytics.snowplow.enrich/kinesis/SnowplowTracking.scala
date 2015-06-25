@@ -36,34 +36,28 @@ import com.snowplowanalytics.snowplow.scalatracker.emitters.AsyncEmitter
  */
 object SnowplowTracking {
 
-  val HeartbeatInterval = 300000L
+  private val HeartbeatInterval = 300000L
 
   /**
    * Configure a Tracker based on the configuration HOCON
    *
    * @param config The "monitoring.snowplow" section of the HOCON
-   * @return Tracker instance
+   * @return a new tracker instance
    */
   def initializeTracker(config: Config): Tracker = {
-
     val endpoint = config.getString("collector-uri")
-
     val port = config.getInt("collector-port")
-
     val appName = config.getString("app-id")
-
     // Not yet used
     val method = config.getString("method")
-
     val emitter = AsyncEmitter.createAndStart(endpoint, port)
-
     new Tracker(List(emitter), generated.Settings.name, appName)
   }
 
   /**
    * If a tracker has been configured, send a sink_write_failed event
    *
-   * @param tracker
+   * @param tracker a Tracker instance
    * @param sinkName the type of sink that failed
    * @param lastRetryPeriod the time in milliseconds until retry
    * @param failureCount the number of consecutive failed writes
@@ -88,7 +82,7 @@ object SnowplowTracking {
   /**
    * Send an initialization event and schedule heartbeat and shutdown events
    *
-   * @param tracker
+   * @param tracker a Tracker instance
    */
   def initializeSnowplowTracking(tracker: Tracker) {
     trackApplicationInitialization(tracker)
@@ -114,7 +108,7 @@ object SnowplowTracking {
   /**
    * Send an application_initialized unstructured event
    *
-   * @param tracker
+   * @param tracker a Tracker instance
    */
   private def trackApplicationInitialization(tracker: Tracker) {
     tracker.trackUnstructEvent(SelfDescribingJson(
@@ -126,7 +120,7 @@ object SnowplowTracking {
   /**
    * Send an application_shutdown unstructured event
    *
-   * @param tracker
+   * @param tracker a Tracker instance
    */
   def trackApplicationShutdown(tracker: Tracker) {
     tracker.trackUnstructEvent(SelfDescribingJson(
@@ -138,7 +132,7 @@ object SnowplowTracking {
   /**
    * Send a warning unstructured event
    *
-   * @param tracker
+   * @param tracker a Tracker instance
    * @param message The warning message
    */
   def trackApplicationWarning(tracker: Tracker, message: String) {
@@ -151,7 +145,7 @@ object SnowplowTracking {
   /**
    * Send a heartbeat unstructured event
    *
-   * @param tracker
+   * @param tracker a Tracker instance
    * @param heartbeatInterval Time between heartbeats in milliseconds
    */
   private def trackApplicationHeartbeat(tracker: Tracker, heartbeatInterval: Long) {

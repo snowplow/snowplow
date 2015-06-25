@@ -92,6 +92,13 @@ import sinks._
 
 /**
  * Class to send valid records to Elasticsearch and invalid records to Kinesis
+ *
+ * @param configuration the KCL configuration
+ * @param goodSink the configured GoodSink
+ * @param badSink the configured BadSink
+ * @param tracker a Tracker instance
+ * @param maxConnectionWaitTimeMs the maximum amount of time
+ *        we can attempt to send to elasticsearch
  */
 class SnowplowElasticsearchEmitter(
   configuration: KinesisConnectorConfiguration,
@@ -255,7 +262,7 @@ class SnowplowElasticsearchEmitter(
     @tailrec def attemptEmit(attemptNumber: Long = 1): List[EmitterInput] = {
 
       if (attemptNumber > 1 && System.currentTimeMillis() - connectionAttemptStartTime > maxConnectionWaitTimeMs) {
-        forcibleShutdown()
+        forceShutdown()
       }
 
       try {
@@ -356,7 +363,7 @@ class SnowplowElasticsearchEmitter(
    *
    * Prevents shutdown hooks from running
    */
-  private def forcibleShutdown() {
+  private def forceShutdown() {
     Log.error(s"Shutting down application as unable to connect to Elasticsearch for over $maxConnectionWaitTimeMs ms")
 
     tracker foreach {

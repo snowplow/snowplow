@@ -190,7 +190,7 @@ object SplitBatch {
    * @param size The size of the failed event
    * @param errors A list of errors for this row
    */
-  def getBadRow(size: Int, errors: List[String]): String = {
+  private def getBadRow(size: Int, errors: List[String]): String = {
     compact(
       ("size" -> size) ~
       ("errors" -> errors) ~
@@ -204,7 +204,7 @@ object SplitBatch {
    * @param schema The schema for this event
    * @param data A List of JValues to embed for this event
    */
-  def getGoodRow(schema: JValue, data: List[JValue]): String = {
+  private def getGoodRow(schema: JValue, data: List[JValue]): String = {
     compact(
       ("schema" -> schema) ~
       ("data" -> data)
@@ -217,7 +217,7 @@ object SplitBatch {
    * @param tstamp The Timestamp to convert
    * @return the formatted Timestamp
    */
-  def getTimestamp(tstamp: Long): String = {
+  private def getTimestamp(tstamp: Long): String = {
     val dt = new DateTime(tstamp)
     TstampFormat.print(dt)
   }

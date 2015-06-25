@@ -124,7 +124,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
                               tracker: Option[Tracker]) {
   
   val MaxRecordSize = if (config.sink == Sink.Kinesis) {
-    Some(1000000L)
+    Some(MaxBytes)
   } else {
     None
   }

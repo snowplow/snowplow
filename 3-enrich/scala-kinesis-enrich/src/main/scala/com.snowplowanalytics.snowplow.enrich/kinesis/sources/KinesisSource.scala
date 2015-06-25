@@ -100,7 +100,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
 
     val rawEventProcessorFactory = new RawEventProcessorFactory(
       config,
-      sink.get.get // TODO: yech
+      sink.get.get // TODO: yech, yech
     )
     val worker = new Worker(
       rawEventProcessorFactory,

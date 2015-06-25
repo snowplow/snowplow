@@ -35,8 +35,18 @@ import sinks._
 import StreamType._
 
 /**
-* Boilerplate class for Kinesis Conenector
-*/
+ * Boilerplate class for Kinesis Conenector
+ *
+ * @param streamType the type of stream, good/bad
+ * @param documentIndex the elasticsearch index name
+ * @param documentType the elasticsearch index type
+ * @param config the KCL configuration
+ * @param goodSink the configured GoodSink
+ * @param badSink the configured BadSink
+ * @param tracker a Tracker instance
+ * @param maxConnectionTimeout the maximum amount of time
+ *        we can attempt to send to elasticsearch
+ */
 class ElasticsearchSinkExecutor(
   streamType: StreamType,
   documentIndex: String,
