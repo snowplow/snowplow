@@ -221,7 +221,11 @@ module Snowplow
       # Parameters:
       # +output_codec+:: the output code, possibly nil
       def get_compression_format(output_codec)
-        output_codec.nil? ? "" : output_codec.upcase
+        if output_codec == 'NONE'
+          ''
+        elsif output_codec == 'GZIP'
+          'GZIP'
+        end
       end
       module_function :get_compression_format
 
