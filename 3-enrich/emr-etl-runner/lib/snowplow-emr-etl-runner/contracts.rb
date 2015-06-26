@@ -20,6 +20,8 @@ module Snowplow
 
     include Contracts
 
+    CompressionFormat = lambda { |s| %w(NONE GZIP).include?(s) }
+
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
       :enrich  => String,
@@ -123,7 +125,7 @@ module Snowplow
           :hadoop_shred => String
           }),
         :continue_on_unexpected_error => Bool,
-        :output_compression => String
+        :output_compression => CompressionFormat
         }),
       :storage => ({
         :download => ({
