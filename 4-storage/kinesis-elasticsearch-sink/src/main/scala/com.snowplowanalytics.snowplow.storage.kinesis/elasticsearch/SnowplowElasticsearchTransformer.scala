@@ -42,9 +42,6 @@ import org.json4s.JsonDSL._
 // Jackson
 import com.fasterxml.jackson.core.JsonParseException
 
-// Snowplow
-import enrich.common.utils.ScalazJson4sUtils
-
 // Logging
 import org.slf4j.LoggerFactory
 
@@ -327,7 +324,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
       val switched: ValidationNel[String, List[JObject]] = validatedJObjects.toList.sequenceU
       switched.map( x => {
         val j = x.fold(geoLocation)(_ ~ _)
-        JsonRecord(compact(render(j)), ScalazJson4sUtils.extract[String](j, "event_id").toOption)
+        JsonRecord(compact(render(j)), extractEventId(j))
       })
     }
   }
@@ -356,4 +353,18 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
       case Some(id) => new ElasticsearchObject(documentIndex, documentType, id, r.json)
       case None => new ElasticsearchObject(documentIndex, documentType, r.json)
     }))
+
+  /**
+   * Extract the event_id field from an event JSON for use as a document ID
+   *
+   * @param json
+   * @return Option boxing event_id
+   */
+  private def extractEventId(json: JValue): Option[String] = {
+    json \ "event_id" match {
+      case JString(eid) => eid.some
+      case _ => None
+    }
+  }
+
 }
