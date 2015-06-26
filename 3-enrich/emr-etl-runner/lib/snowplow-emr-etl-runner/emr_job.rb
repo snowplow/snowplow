@@ -51,7 +51,7 @@ module Snowplow
         run_tstamp = Time.new
         run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
-        output_codec = config[:enrich][:output_compression].nil? ? "none" : config[:enrich][:output_compression].downcase
+        output_codec = self.class.output_codec_from_compression_format(config[:enrich][:output_compression])
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:aws][:s3][:region],
           config[:aws][:access_key_id],
@@ -590,6 +590,16 @@ module Snowplow
       def self.bootstrap_failure?(jobflow)
         jobflow.cluster_step_status.all? {|s| s.state == 'CANCELLED'} &&
         (! (jobflow.cluster_status.last_state_change_reason =~ BOOTSTRAP_FAILURE_INDICATOR).nil?)
+      end
+
+      # Converts the output_compression configuration field to
+      Contract Maybe[String] => String
+      def self.output_codec_from_compression_format(compression_format)
+        if compression_format.nil?
+          "none"
+        else
+          compression_format.downcase
+        end
       end
 
     end
