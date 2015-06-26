@@ -57,11 +57,11 @@ object Dependencies {
     val argot                = "org.clapper"                %% "argot"                     % V.argot
     val config               = "com.typesafe"               %  "config"                    % V.config
     val scalaUtil            = "com.snowplowanalytics"      %  "scala-util"                % V.scalaUtil
-    val snowplowCommonEnrich = "com.snowplowanalytics"      % "snowplow-common-enrich"     % V.snowplowCommonEnrich
     val scalazon             = "io.github.cloudify"         %% "scalazon"                  % V.scalazon
     val scalaz7              = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
     val snowplowTracker      = "com.snowplowanalytics"      %% "snowplow-scala-tracker"    % V.snowplowTracker
     // Scala (test only)
+    val snowplowCommonEnrich = "com.snowplowanalytics"      % "snowplow-common-enrich"     % V.snowplowCommonEnrich % "test"
     val specs2               = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"
     val scalazSpecs2         = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"
     // Scala (compile only)
