@@ -38,11 +38,11 @@ aws:
       lingual:              # To launch on cluster, provide version, "1.1", keep quotes
     # Adjust your Hadoop cluster below
     jobflow:
-      master_instance_type: m1.small
+      master_instance_type: m1.medium
       core_instance_count: 2
-      core_instance_type: m1.small
+      core_instance_type: m1.medium
       task_instance_count: 0 # Increase to use spot instances
-      task_instance_type: m1.small
+      task_instance_type: m1.medium
       task_instance_bid: 0.015 # In USD. Adjust bid, or leave blank for non-spot-priced (i.e. on-demand) task instances
     bootstrap_failure_tries: 3 # Number of times to attempt the job in the event of bootstrap failures
 collectors:
