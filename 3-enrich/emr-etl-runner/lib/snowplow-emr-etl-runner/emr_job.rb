@@ -444,6 +444,9 @@ module Snowplow
           rescue Errno::ETIMEDOUT => to
             logger.warn "Got connection timeout #{to}, waiting 5 minutes before checking jobflow again"
             sleep(300)
+          rescue RestClient::InternalServerError => ise
+            logger.warn "Got internal server error #{ise}, waiting 5 minutes before checking jobflow again"
+            sleep(300)
           end
         end
 
