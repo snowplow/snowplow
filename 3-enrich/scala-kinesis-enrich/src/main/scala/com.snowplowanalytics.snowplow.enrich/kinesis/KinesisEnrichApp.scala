@@ -31,6 +31,7 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
 import com.amazonaws.services.s3.AmazonS3Client
+import com.amazonaws.services.s3.model.GetObjectRequest
 
 // Logging
 import org.slf4j.LoggerFactory
@@ -162,14 +163,13 @@ object KinesisEnrichApp extends App {
     // See http://stackoverflow.com/questions/10281370/see-if-file-is-empty
     if (targetFile.length == 0L) {
 
-      // Check URI Protocol
-      val downloadProcessBuilder = uriFilePair._1.getScheme match {
-        case "http" | "https" => uriFilePair._1.toURL #> targetFile // using sys.process
-        case "s3"             => getSignedS3Url(uriFilePair._1) #> targetFile
+      // Check URI Protocol and download file
+      val downloadResult: Int = uriFilePair._1.getScheme match {
+        case "http" | "https" => (uriFilePair._1.toURL #> targetFile).! // using sys.process
+        case "s3"             => downloadFromS3(uriFilePair._1, targetFile)
         case s => throw new RuntimeException(s"Schema ${s} for file ${uriFilePair._1} not supported")
       }
 
-      val downloadResult: Int = downloadProcessBuilder.!
       if (downloadResult != 0) {
         throw new RuntimeException(s"Attempt to download ${uriFilePair._1} to $targetFile failed")
       }
@@ -287,21 +287,31 @@ object KinesisEnrichApp extends App {
   }
 
   /**
-   * Return a signed S3 URL
+   * Downloads an object from S3 and returns whether
+   * or not it was successful.
    *
    * @param uri The URI to reconstruct into a signed
    *            S3 URL
-   * @return a signed URL ready for use
+   * @param outputFile The file object to write to
+   * @return the download result
    */
-  def getSignedS3Url(uri: URI): URL = {
+  def downloadFromS3(uri: URI, outputFile: File): Int = {
     val s3Client = new AmazonS3Client(kinesisEnrichConfig.credentialsProvider)
     val bucket = uri.getHost
     val key = uri.getPath match { // Need to remove leading '/'
       case s if s.charAt(0) == '/' => s.substring(1)
       case s => s
     }
-    val expiration = new Date(System.currentTimeMillis() + 60000)
-    s3Client.generatePresignedUrl(bucket, key, expiration)
+
+    try {
+      s3Client.getObject(new GetObjectRequest(bucket, key), outputFile)
+      return 0
+    } catch {
+      case e: Exception => {
+        error(s"Error downloading ${uri}: ${e.toString}")
+        return 1
+      }
+    }
   }
 }
 
