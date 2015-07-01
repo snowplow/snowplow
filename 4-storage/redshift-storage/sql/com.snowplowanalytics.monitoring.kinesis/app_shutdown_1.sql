@@ -13,9 +13,9 @@
 -- Copyright:     Copyright (c) 2015 Snowplow Analytics Ltd
 -- License:       Apache License Version 2.0
 --
--- Compatibility: iglu:com.snowplowanalytics.monitoring/heartbeat/jsonschema/1-0-0
+-- Compatibility: iglu:com.snowplowanalytics.monitoring.kinesis/app_shutdown/jsonschema/1-0-0
 
-CREATE TABLE atomic.com_snowplowanalytics_monitoring_heartbeat_1 (
+CREATE TABLE atomic.com_snowplowanalytics_monitoring_kinesis_app_shutdown_1 (
 	-- Schema of this type
 	schema_vendor   varchar(128)  encode runlength not null,
 	schema_name     varchar(128)  encode runlength not null,
@@ -28,7 +28,7 @@ CREATE TABLE atomic.com_snowplowanalytics_monitoring_heartbeat_1 (
 	ref_tree        varchar(1500) encode runlength not null,
 	ref_parent      varchar(255)  encode runlength not null,
 	-- Properties of this type
-	interval        integer       encode runlength,
+	-- This type has no properties
 	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY

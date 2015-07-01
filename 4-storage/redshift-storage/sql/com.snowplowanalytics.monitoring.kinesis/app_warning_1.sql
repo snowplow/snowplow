@@ -9,13 +9,13 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Authors:       Fred Blundun
+-- Authors:       Joshua Beemster
 -- Copyright:     Copyright (c) 2015 Snowplow Analytics Ltd
 -- License:       Apache License Version 2.0
 --
--- Compatibility: iglu:com.snowplowanalytics.monitoring/sink_write_failed/jsonschema/1-0-0
+-- Compatibility: iglu:com.snowplowanalytics.monitoring.kinesis/app_warning/jsonschema/1-0-0
 
-CREATE TABLE atomic.com_snowplowanalytics_monitoring_sink_write_failed_1 (
+CREATE TABLE atomic.com_snowplowanalytics_monitoring_kinesis_app_warning_1 (
 	-- Schema of this type
 	schema_vendor   varchar(128)  encode runlength not null,
 	schema_name     varchar(128)  encode runlength not null,
@@ -28,11 +28,7 @@ CREATE TABLE atomic.com_snowplowanalytics_monitoring_sink_write_failed_1 (
 	ref_tree        varchar(1500) encode runlength not null,
 	ref_parent      varchar(255)  encode runlength not null,
 	-- Properties of this type
-	sink                varchar(255)  encode text255,
-	failureCount        integer       encode raw,
-	initialFailureTime  bigint        encode raw,
-	lastRetryPeriod     bigint        encode raw,
-	message             varchar(4096) encode raw,
+	warning         varchar(4096) encode raw,
 	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
