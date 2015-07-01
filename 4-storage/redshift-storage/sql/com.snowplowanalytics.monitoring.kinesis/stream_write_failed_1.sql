@@ -13,9 +13,9 @@
 -- Copyright:     Copyright (c) 2015 Snowplow Analytics Ltd
 -- License:       Apache License Version 2.0
 --
--- Compatibility: iglu:com.snowplowanalytics.monitoring/application_warning/jsonschema/1-0-0
+-- Compatibility: iglu:com.snowplowanalytics.monitoring.kinesis/stream_write_failed/jsonschema/1-0-0
 
-CREATE TABLE atomic.com_snowplowanalytics_monitoring_application_warning_1 (
+CREATE TABLE atomic.com_snowplowanalytics_monitoring_kinesis_stream_write_failed_1 (
 	-- Schema of this type
 	schema_vendor   varchar(128)  encode runlength not null,
 	schema_name     varchar(128)  encode runlength not null,
@@ -28,7 +28,12 @@ CREATE TABLE atomic.com_snowplowanalytics_monitoring_application_warning_1 (
 	ref_tree        varchar(1500) encode runlength not null,
 	ref_parent      varchar(255)  encode runlength not null,
 	-- Properties of this type
-	warning         varchar(4096) encode raw,
+	errorType       varchar(255)  encode raw,
+	errorMessage    varchar(4096) encode raw,
+	streamName      varchar(255)  encode raw,
+	appName         varchar(255)  encode raw,
+	retryCount      bigint        encode raw,
+	putSize         bigint        encode raw,
 	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
