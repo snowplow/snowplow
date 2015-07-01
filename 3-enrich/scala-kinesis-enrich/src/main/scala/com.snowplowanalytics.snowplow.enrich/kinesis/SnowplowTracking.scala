@@ -58,24 +58,32 @@ object SnowplowTracking {
    * If a tracker has been configured, send a sink_write_failed event
    *
    * @param tracker a Tracker instance
-   * @param sinkName the type of sink that failed
-   * @param lastRetryPeriod the time in milliseconds until retry
-   * @param failureCount the number of consecutive failed writes
-   * @param message What went wrong
+   * @param errorType the type of error encountered
+   * @param errorMessage the error message
+   * @param streamName the name of the stream in which 
+   *        the error occurred
+   * @param appName the name of the application
+   * @param retryCount the amount of times we have tried
+   *        to put to the stream
+   * @param putSize the size in bytes of the put request
    */
   def sendFailureEvent(
     tracker: Tracker,
-    sinkName: String,
-    lastRetryPeriod: Long,
-    failureCount: Long,
-    message: String) {
+    errorType: String,
+    errorMessage: String,
+    streamName: String,
+    appName: String,
+    retryCount: Long,
+    putSize: Long) {
 
     tracker.trackUnstructEvent(SelfDescribingJson(
-      "iglu:com.snowplowanalytics.snowplow/sink_write_failed/jsonschema/1-0-0",
-      ("sink" -> sinkName) ~
-      ("failureCount" -> failureCount) ~
-      ("lastRetryPeriod" -> lastRetryPeriod) ~
-      ("message" -> message)
+      "iglu:com.snowplowanalytics.monitoring.kinesis/stream_write_failed/jsonschema/1-0-0",
+      ("errorType" -> errorType) ~
+      ("errorMessage" -> errorMessage) ~
+      ("streamName" -> streamName) ~
+      ("appName" -> appName) ~
+      ("retryCount" -> retryCount) ~
+      ("putSize" -> putSize)
     ))
   }
 
@@ -112,7 +120,7 @@ object SnowplowTracking {
    */
   private def trackApplicationInitialization(tracker: Tracker) {
     tracker.trackUnstructEvent(SelfDescribingJson(
-      "iglu:com.snowplowanalytics.snowplow/application_initialized/jsonschema/1-0-0",
+      "iglu:com.snowplowanalytics.monitoring.kinesis/app_initialized/jsonschema/1-0-0",
       JObject(Nil)
     ))
   }
@@ -124,7 +132,7 @@ object SnowplowTracking {
    */
   def trackApplicationShutdown(tracker: Tracker) {
     tracker.trackUnstructEvent(SelfDescribingJson(
-      "iglu:com.snowplowanalytics.snowplow/application_shutdown/jsonschema/1-0-0",
+      "iglu:com.snowplowanalytics.monitoring.kinesis/app_shutdown/jsonschema/1-0-0",
       JObject(Nil)
     ))
   }
@@ -137,7 +145,7 @@ object SnowplowTracking {
    */
   def trackApplicationWarning(tracker: Tracker, message: String) {
     tracker.trackUnstructEvent(SelfDescribingJson(
-      "iglu:com.snowplowanalytics.snowplow/application_warning/jsonschema/1-0-0",
+      "iglu:com.snowplowanalytics.monitoring.kinesis/app_warning/jsonschema/1-0-0",
       ("warning" -> message)
     ))
   }
@@ -150,7 +158,7 @@ object SnowplowTracking {
    */
   private def trackApplicationHeartbeat(tracker: Tracker, heartbeatInterval: Long) {
     tracker.trackUnstructEvent(SelfDescribingJson(
-      "iglu:com.snowplowanalytics.snowplow/heartbeat/jsonschema/1-0-0",
+      "iglu:com.snowplowanalytics.monitoring.kinesis/app_heartbeat/jsonschema/1-0-0",
       "interval" -> heartbeatInterval
     ))
   }
