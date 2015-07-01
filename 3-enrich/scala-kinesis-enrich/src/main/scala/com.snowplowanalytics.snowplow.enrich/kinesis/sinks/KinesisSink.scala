@@ -278,13 +278,14 @@ class KinesisSink(provider: AWSCredentialsProvider,
             error(s"Retrying all failed records in $backoffTime milliseconds...")
 
             val err = s"Failed to send ${failurePairs.size} events"
-            (tracker, inputType) match {
-              case (Some(t), InputType.Good) => SnowplowTracking.sendFailureEvent(t, "Enriched", backoffTime, attemptNumber, err)
-              case (Some(t), InputType.Bad) => SnowplowTracking.sendFailureEvent(t, "Bad", backoffTime, attemptNumber, err)
-              case (_, _) => None
+            unsentRecords = failurePairs.map(_._1)
+            val putSize: Long = unsentRecords.foldLeft(0)((a,b) => a + b._1.capacity)
+
+            tracker match {
+              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", err, name, "snowplow-kinesis-enrich", attemptNumber, putSize)
+              case _       => None
             }
 
-            unsentRecords = failurePairs.map(_._1)
             Thread.sleep(backoffTime)
           } else {
             sentBatchSuccessfully = true
@@ -295,10 +296,11 @@ class KinesisSink(provider: AWSCredentialsProvider,
             error(s"Writing failed.", f)
             error(s"  + Retrying in $backoffTime milliseconds...")
 
-            (tracker, inputType) match {
-              case (Some(t), InputType.Good) => SnowplowTracking.sendFailureEvent(t, "Enriched", backoffTime, attemptNumber, f.toString)
-              case (Some(t), InputType.Bad) => SnowplowTracking.sendFailureEvent(t, "Bad", backoffTime, attemptNumber, f.toString)
-              case (_, _) => None
+            val putSize: Long = unsentRecords.foldLeft(0)((a,b) => a + b._1.capacity)
+
+            tracker match {
+              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", f.toString, name, "snowplow-kinesis-enrich", attemptNumber, putSize)
+              case _       => None
             }
 
             Thread.sleep(backoffTime)
