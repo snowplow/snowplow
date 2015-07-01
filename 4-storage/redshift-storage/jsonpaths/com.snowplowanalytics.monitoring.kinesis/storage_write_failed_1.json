@@ -12,7 +12,7 @@
     "$.hierarchy.refTree",
     "$.hierarchy.refParent",
 
-    "$.data.sink",
+    "$.data.storage",
     "$.data.failureCount",
     "$.data.initialFailureTime",
     "$.data.lastRetryPeriod",

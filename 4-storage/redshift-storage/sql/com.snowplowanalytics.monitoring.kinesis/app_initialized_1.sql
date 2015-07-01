@@ -13,9 +13,9 @@
 -- Copyright:     Copyright (c) 2015 Snowplow Analytics Ltd
 -- License:       Apache License Version 2.0
 --
--- Compatibility: iglu:com.snowplowanalytics.monitoring/appliation_initialized/jsonschema/1-0-0
+-- Compatibility: iglu:com.snowplowanalytics.monitoring.kinesis/app_initialized/jsonschema/1-0-0
 
-CREATE TABLE atomic.com_snowplowanalytics_monitoring_application_initialized_1 (
+CREATE TABLE atomic.com_snowplowanalytics_monitoring_kinesis_app_initialized_1 (
 	-- Schema of this type
 	schema_vendor   varchar(128)  encode runlength not null,
 	schema_name     varchar(128)  encode runlength not null,
