@@ -37,6 +37,7 @@ import com.snowplowanalytics.snowplow.scalatracker.emitters.AsyncEmitter
 object SnowplowTracking {
 
   private val HeartbeatInterval = 300000L
+  private val StorageType = "ELASTICSEARCH"
 
   /**
    * Configure a Tracker based on the configuration HOCON
@@ -58,6 +59,7 @@ object SnowplowTracking {
    * If a tracker has been configured, send a sink_write_failed event
    *
    * @param tracker a Tracker instance
+   * @param lastRetryPeriod the backoff period between attempts
    * @param failureCount the number of consecutive failed writes
    * @param initialFailureTime Time of the first consecutive failed write
    * @param message What went wrong
@@ -70,11 +72,11 @@ object SnowplowTracking {
     message: String) {
 
     tracker.trackUnstructEvent(SelfDescribingJson(
-      "iglu:com.snowplowanalytics.snowplow/sink_write_failed/jsonschema/1-0-0",
-      ("lastRetryPeriod" -> lastRetryPeriod) ~
-      ("sink" -> "elasticsearch") ~
+      "iglu:com.snowplowanalytics.monitoring.kinesis/storage_write_failed/jsonschema/1-0-0",
+      ("storage" -> StorageType) ~
       ("failureCount" -> failureCount) ~
       ("initialFailureTime" -> initialFailureTime) ~
+      ("lastRetryPeriod" -> lastRetryPeriod) ~
       ("message" -> message)
     ))
   }
@@ -112,7 +114,7 @@ object SnowplowTracking {
    */
   private def trackApplicationInitialization(tracker: Tracker) {
     tracker.trackUnstructEvent(SelfDescribingJson(
-      "iglu:com.snowplowanalytics.snowplow/application_initialized/jsonschema/1-0-0",
+      "iglu:com.snowplowanalytics.monitoring.kinesis/app_initialized/jsonschema/1-0-0",
       JObject(Nil)
     ))
   }
@@ -124,7 +126,7 @@ object SnowplowTracking {
    */
   def trackApplicationShutdown(tracker: Tracker) {
     tracker.trackUnstructEvent(SelfDescribingJson(
-      "iglu:com.snowplowanalytics.snowplow/application_shutdown/jsonschema/1-0-0",
+      "iglu:com.snowplowanalytics.monitoring.kinesis/app_shutdown/jsonschema/1-0-0",
       JObject(Nil)
     ))
   }
@@ -137,7 +139,7 @@ object SnowplowTracking {
    */
   private def trackApplicationHeartbeat(tracker: Tracker, heartbeatInterval: Long) {
     tracker.trackUnstructEvent(SelfDescribingJson(
-      "iglu:com.snowplowanalytics.snowplow/heartbeat/jsonschema/1-0-0",
+      "iglu:com.snowplowanalytics.monitoring.kinesis/app_heartbeat/jsonschema/1-0-0",
       "interval" -> heartbeatInterval
     ))
   }
