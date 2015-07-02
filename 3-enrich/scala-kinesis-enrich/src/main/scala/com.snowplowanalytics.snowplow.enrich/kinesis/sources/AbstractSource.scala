@@ -44,6 +44,9 @@ import org.json4s.{ThreadLocal => _, _}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
+// Joda-Time
+import org.joda.time.DateTime
+
 // Iglu
 import iglu.client.Resolver
 import iglu.client.validation.ProcessingMessageMethods._
@@ -57,6 +60,7 @@ import common.outputs.{
 import common.loaders.ThriftLoader
 import common.enrichments.EnrichmentRegistry
 import common.enrichments.EnrichmentManager
+import common.enrichments.EventEnrichments
 import common.adapters.AdapterRegistry
 
 import common.ValidatedMaybeCollectorPayload
@@ -179,7 +183,8 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
   def enrichEvents(binaryData: Array[Byte]): List[Validation[(String, String), (String, String)]] = {
     val canonicalInput: ValidatedMaybeCollectorPayload = ThriftLoader.toCollectorPayload(binaryData)
     val processedEvents: List[ValidationNel[String, EnrichedEvent]] = EtlPipeline.processEvents(
-      enrichmentRegistry, s"kinesis-${generated.Settings.version}", System.currentTimeMillis.toString, canonicalInput)
+      enrichmentRegistry, s"kinesis-${generated.Settings.version}", 
+      EventEnrichments.toTimestamp(new DateTime(System.currentTimeMillis)), canonicalInput)
     processedEvents.map(validatedMaybeEvent => {
       validatedMaybeEvent match {
         case Success(co) => (tabSeparateEnrichedEvent(co) -> co.user_ipaddress).success
