@@ -52,7 +52,7 @@ object SpecHelpers {
    */
   val EnrichVersion = "kinesis-0.6.0-common-0.15.0"
 
-  val TimestampRegex = "[0-9]+"
+  val TimestampRegex = "[0-9\\s-:.]+"
 
   /**
    * The regexp pattern for a Type 4 UUID.
