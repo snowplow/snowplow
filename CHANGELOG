@@ -27,6 +27,7 @@ Scala Kinesis Enrich: allowed records of over 1Mb when running in local mode (#1
 Scala Kinesis Enrich: fixed error when fetching MaxMind file from s3:// URI (#1645)
 Scala Kinesis Enrich: sending a warning via Snowplow if no enrichment JSONs are retrieved from DynamoDB (#1621)
 Scala Kinesis Enrich: sending failure to sink event to kinesis to Snowplow (#1798)
+Scala Kinesis Enrich: etl_tstamp should be Redshift Formatted not raw (#1842)
 Kinesis Elasticsearch Sink: bumped to 0.4.0
 Kinesis Elasticsearch Sink: removed Scala Common Enrich as an assembly dependency (#1819)
 Kinesis Elasticsearch Sink: bumped to Scala Common Enrich 0.15.0 (#1811)
