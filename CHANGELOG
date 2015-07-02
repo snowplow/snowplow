@@ -50,11 +50,13 @@ Redshift: added Redshift DDL for com.snowplowanalytics.monitoring/heartbeat (#17
 Redshift: added Redshift DDL for com.snowplowanalytics.monitoring/sink_write_failed (#1763)
 Redshift: added Redshift DDL for com.snowplowanalytics.monitoring/application_initialized (#1762)
 Redshift: added Redshift DDL for com.snowplowanalytics.monitoring/application_shutdown (#1761)
+Redshift: added Redshift DDL for com.snowplowanalytics.monitoring/stream_write_failed (#1844)
 StorageLoader: wrote JSON path file for com.snowplowanalytics.monitoring/application_warning (#1810)
 StorageLoader: wrote JSON path file for com.snowplowanalytics.monitoring/heartbeat (#1760)
 StorageLoader: wrote JSON path file for com.snowplowanalytics.monitoring/sink_write_failed (#1759)
 StorageLoader: wrote JSON path file for com.snowplowanalytics.monitoring/application_initialized (#1758)
 StorageLoader: wrote JSON path file for com.snowplowanalytics.monitoring/application_shutdown (#1757)
+StorageLoader: wrote JSON path file for com.snowplowanalytics.monitoring/stream_write_failed (#1843)
 Scala S3 Sink: removed project from repo (#1672)
 Vagrant: Added NFS and CORE configuration to Vagrantfile to enhance performance (#1831)
 
