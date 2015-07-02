@@ -17,7 +17,7 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.snowplow.storage.kinesis.s3.sinks
+package com.snowplowanalytics.snowplow.storage.kinesis.redshift.sinks
 
 // Java
 import java.nio.ByteBuffer

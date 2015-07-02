@@ -1,5 +1,5 @@
  /*
- * Copyright (c) 2015 Snowplow Analytics Ltd.
+ * Copyright (c) 2014 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -16,24 +16,11 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
+package com.snowplowanalytics.snowplow.storage.kinesis.redshift.sinks
 
-package com.snowplowanalytics.snowplow.storage.kinesis
-
-// Scalaz
-import scalaz._
-import Scalaz._
-
-package object redshift {
-
-  /**
-   * Tuple containing:
-   *  - the original Kinesis record, base 64 encoded
-   *  - a validated SnowplowRawEvent created from it
-   */
-  type ValidatedRecord = (String, Validation[List[String], Array[Byte]])
-
-  /**
-   * Currently the same as ValidatedRecord, but could change in the future
-   */
-  type EmitterInput = (String, Validation[List[String], Array[Byte]])
+/**
+ * Shared interface for all sinks
+ */
+trait ISink {
+  def store(output: String, key: Option[String], good: Boolean)
 }

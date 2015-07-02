@@ -10,7 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.storage.kinesis.s3
+package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 
 // Java
 import java.io.File
@@ -38,6 +38,7 @@ object SinkApp extends App {
 
   // Argument specifications
   import ArgotConverters._
+  Class.forName("org.postgresql.Driver").newInstance()
 
   // General bumf for our app
   val parser = new ArgotParser(
@@ -80,7 +81,8 @@ object SinkApp extends App {
 
   val badSink = new KinesisSink(credentials, kinesisSinkEndpoint, kinesisSinkName)
 
-  val executor = new S3SinkExecutor(convertConfig(conf, credentials), badSink)
+  private val tuple: (Properties, KinesisConnectorConfiguration) = convertConfig(conf, credentials)
+  val executor = new RedshiftSinkExecutor(tuple._2, badSink, tuple._1)
   executor.run()
 
   /**
@@ -90,7 +92,7 @@ object SinkApp extends App {
    * @param connector The configuration HOCON
    * @return A KinesisConnectorConfiguration
    */
-  def convertConfig(conf: Config, credentials: AWSCredentialsProvider): KinesisConnectorConfiguration = {
+  def convertConfig(conf: Config, credentials: AWSCredentialsProvider): (Properties, KinesisConnectorConfiguration) = {
     val props = new Properties()
     val connector = conf.resolve.getConfig("sink")
 
@@ -102,13 +104,14 @@ object SinkApp extends App {
     val initialPosition = kinesisIn.getString("initial-position")
     val appName = kinesis.getString("app-name")
 
-    val s3 = connector.getConfig("s3")
-    val s3Region = s3.getString("region")
-    val s3Endpoint = s3Region match {
-      case "us-east-1" => "https://s3.amazonaws.com"
-      case _ => s"https://s3-$s3Region.amazonaws.com"
-    }
-    val bucket = s3.getString("bucket")
+    val redshift_password = connector.getConfig("redshift").getString("password")
+    val redshift_table = connector.getConfig("redshift").getString("table")
+    val redshift_url = connector.getConfig("redshift").getString("url")
+    val redshift_username = connector.getConfig("redshift").getString("username")
+    props.setProperty("redshift_password", redshift_password)
+    props.setProperty("redshift_table", redshift_table)
+    props.setProperty("redshift_url", redshift_url)
+    props.setProperty("redshift_username", redshift_username)
 
     val buffer = connector.getConfig("buffer")
     val byteLimit = buffer.getString("byte-limit")
@@ -119,9 +122,6 @@ object SinkApp extends App {
     props.setProperty(KinesisConnectorConfiguration.PROP_KINESIS_ENDPOINT, kEndpoint)
     props.setProperty(KinesisConnectorConfiguration.PROP_APP_NAME, appName)
     props.setProperty(KinesisConnectorConfiguration.PROP_INITIAL_POSITION_IN_STREAM, initialPosition)
-
-    props.setProperty(KinesisConnectorConfiguration.PROP_S3_ENDPOINT, s3Endpoint)
-    props.setProperty(KinesisConnectorConfiguration.PROP_S3_BUCKET, bucket)
 
     props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_BYTE_SIZE_LIMIT, byteLimit)
     props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_RECORD_COUNT_LIMIT, recordLimit)
@@ -135,7 +135,7 @@ object SinkApp extends App {
     // The emit method retries sending to S3 indefinitely, so it only needs to be called once
     props.setProperty(KinesisConnectorConfiguration.PROP_RETRY_LIMIT, "1")
 
-    new KinesisConnectorConfiguration(props, credentials)
+    (props, new KinesisConnectorConfiguration(props, credentials))
   }
 
 }

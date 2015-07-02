@@ -10,14 +10,18 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.storage.kinesis.s3
+package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 
 // AWS Kinesis Connector libs
+
+import java.util.Properties
+
 import com.amazonaws.services.kinesis.connectors.{
   KinesisConnectorConfiguration,
   KinesisConnectorExecutorBase,
   KinesisConnectorRecordProcessorFactory
 }
+import com.snowplowanalytics.snowplow.storage.kinesis.Redshift.{EmitterInput, ValidatedRecord}
 
 // This project
 import sinks._
@@ -25,11 +29,11 @@ import sinks._
 /**
  * Boilerplate class for Kinessis Conenector
  */
-class S3SinkExecutor(config: KinesisConnectorConfiguration, badSink: ISink) extends KinesisConnectorExecutorBase[ ValidatedRecord, EmitterInput ] {
+class RedshiftSinkExecutor(config: KinesisConnectorConfiguration, badSink: ISink, props: Properties) extends KinesisConnectorExecutorBase[ ValidatedRecord, EmitterInput ] {
   super.initialize(config)
 
   override def getKinesisConnectorRecordProcessorFactory = {
-    new KinesisConnectorRecordProcessorFactory[ ValidatedRecord, EmitterInput ](new S3Pipeline(badSink), config)
+    new KinesisConnectorRecordProcessorFactory[ ValidatedRecord, EmitterInput ](new RedshiftPipeline(badSink, props), config)
   }
 
 }

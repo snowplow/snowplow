@@ -10,9 +10,12 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.storage.kinesis.s3
+package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 
 // AWS Kinesis Connector libs
+
+import java.util.Properties
+
 import com.amazonaws.services.kinesis.connectors.interfaces.{
   IEmitter,
   IBuffer,
@@ -22,6 +25,7 @@ import com.amazonaws.services.kinesis.connectors.interfaces.{
 }
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 import com.amazonaws.services.kinesis.connectors.impl.{BasicMemoryBuffer,AllPassFilter}
+import com.snowplowanalytics.snowplow.storage.kinesis.Redshift.{EmitterInput, ValidatedRecord}
 
 // This project
 import sinks._
@@ -29,9 +33,9 @@ import sinks._
 /**
  * S3Pipeline class sets up the Emitter/Buffer/Transformer/Filter
  */
-class S3Pipeline(badSink: ISink) extends IKinesisConnectorPipeline[ ValidatedRecord, EmitterInput ] {
+class RedshiftPipeline(badSink: ISink, props: Properties) extends IKinesisConnectorPipeline[ ValidatedRecord, EmitterInput ] {
 
-  override def getEmitter(configuration: KinesisConnectorConfiguration) = new S3Emitter(configuration, badSink)
+  override def getEmitter(configuration: KinesisConnectorConfiguration) = new RedshiftEmitter(configuration, props, badSink)
 
   override def getBuffer(configuration: KinesisConnectorConfiguration) = new BasicMemoryBuffer[ValidatedRecord](configuration)
 
