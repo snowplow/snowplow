@@ -43,11 +43,11 @@ class RawEventTransformer extends ITransformer[ ValidatedRecord, EmitterInput ] 
     while (fields.length < 116) {
       fields = fields ++ Array("")
     }
-    // Extract augur - 118, 119
+    // Extract augur - 117, 118
     fields = filterFields(fields)
     // Add sink timestamp
     fields = fields ++ Array(dateFormat.format(new Date()))
-    val values = "(" + fields.map(f => if (f == "" || f == null) "NULL" else "'" + f + "'").mkString(",") + ")"
+    val values = fields.map(f => if (f == "" || f == null) null else f)
     (values, recordByteArray.success)
   }
 

@@ -30,10 +30,10 @@ package object Redshift {
    *  - the original Kinesis record, base 64 encoded
    *  - a validated SnowplowRawEvent created from it
    */
-  type ValidatedRecord = (String, Validation[List[String], Array[Byte]])
+  type ValidatedRecord = (Array[String], Validation[List[String], Array[Byte]])
 
   /**
    * Currently the same as ValidatedRecord, but could change in the future
    */
-  type EmitterInput = (String, Validation[List[String], Array[Byte]])
+  type EmitterInput = (Array[String], Validation[List[String], Array[Byte]])
 }
