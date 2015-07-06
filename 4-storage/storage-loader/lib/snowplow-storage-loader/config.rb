@@ -49,16 +49,16 @@ module Snowplow
         config[:include] = options[:include]
 
         # Add trailing slashes if needed to the non-nil buckets
-        config[:s3][:buckets] = add_trailing_slashes(config[:s3][:buckets])
+        config[:aws][:s3][:buckets] = add_trailing_slashes(config[:aws][:s3][:buckets])
 
         # Add in our comprows setting
         config[:comprows] = options[:comprows]
         
-        unless config[:download][:folder].nil? # TODO: remove when Sluice's trail_slash can handle nil
-          config[:download][:folder] = Sluice::Storage::trail_slash(config[:download][:folder])
+        unless config[:storage][:download][:folder].nil? # TODO: remove when Sluice's trail_slash can handle nil
+          config[:storage][:download][:folder] = Sluice::Storage::trail_slash(config[:storage][:download][:folder])
         end
 
-        config[:targets].each { |t|
+        config[:storage][:targets].each { |t|
           # Check we recognise the storage target 
           unless @@storage_targets.include?(t[:type]) 
             raise ConfigError, "Storage type '#{t[:type]}' not supported"
@@ -66,19 +66,19 @@ module Snowplow
         }
             
         # Determine whether we need to download events
-        config[:download_required] = config[:targets].count { |t| t[:type] == "postgres" } > 0
+        config[:download_required] = config[:storage][:targets].count { |t| t[:type] == "postgres" } > 0
 
         # If Infobright is the target, check that the download folder exists and is empty
         if config[:download_required]
           # Check that the download folder exists...
-          unless File.directory?(config[:download][:folder])
-            raise ConfigError, "Download folder '#{config[:download][:folder]}' not found"
+          unless File.directory?(config[:storage][:download][:folder])
+            raise ConfigError, "Download folder '#{config[:storage][:download][:folder]}' not found"
           end
         
           # ...and it is empty
           unless config[:skip].include?("download")
-            if !(Dir.entries(config[:download][:folder]) - %w{ . .. }).empty?
-              raise ConfigError, "Download folder '#{config[:download][:folder]}' is not empty"
+            if !(Dir.entries(config[:storage][:download][:folder]) - %w{ . .. }).empty?
+              raise ConfigError, "Download folder '#{config[:storage][:download][:folder]}' is not empty"
             end
           end
         end
