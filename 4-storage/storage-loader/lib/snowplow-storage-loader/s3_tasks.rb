@@ -34,13 +34,13 @@ module Snowplow
         puts "Downloading Snowplow events..."
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
-          config[:s3][:region],
+          config[:aws][:s3][:region],
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
 
         # Get S3 location of In Bucket plus local directory
-        in_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:enriched][:good])
-        download_dir = config[:download][:folder]
+        in_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:enriched][:good])
+        download_dir = config[:storage][:download][:folder]
 
         # Exclude event files which match EMPTY_FILES
         event_files = Sluice::Storage::NegativeRegex.new(EMPTY_FILES)
@@ -61,7 +61,7 @@ module Snowplow
         puts 'Archiving Snowplow events...'
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
-          config[:s3][:region],
+          config[:aws][:s3][:region],
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
 
@@ -85,12 +85,12 @@ module Snowplow
       def archive_files_of_type(s3, config, file_type)
 
         # Check we have shredding configured
-        good_path = config[:s3][:buckets][file_type][:good]
+        good_path = config[:aws][:s3][:buckets][file_type][:good]
         return nil if file_type == :shredded and good_path.nil?
 
         # Get S3 locations
         good_location = Sluice::Storage::S3::Location.new(good_path)
-        archive_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][file_type][:archive])
+        archive_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][file_type][:archive])
 
         # Move all the files of this type
         Sluice::Storage::S3::move_files(s3, good_location, archive_location, '.+')
