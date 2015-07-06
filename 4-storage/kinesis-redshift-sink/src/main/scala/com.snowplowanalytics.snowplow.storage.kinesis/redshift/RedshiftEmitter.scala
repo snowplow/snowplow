@@ -12,16 +12,15 @@
  */
 package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 
-import java.io.{PushbackReader, StringReader}
-import java.sql.{Types, Timestamp, BatchUpdateException, DriverManager}
+import java.sql.{BatchUpdateException, Timestamp, Types}
 
 import com.snowplowanalytics.snowplow.storage.kinesis.Redshift.EmitterInput
+import org.postgresql.ds.PGPoolingDataSource
 
 import scala.collection.JavaConverters._
 
 // Java libs
 import java.util.Properties
-import org.postgresql._
 
 // Java lzo
 
@@ -47,6 +46,11 @@ import org.json4s.jackson.JsonMethods._
 
 // This project
 import com.snowplowanalytics.snowplow.storage.kinesis.redshift.sinks._
+import scala.language.implicitConversions
+
+object RedshiftEmitter {
+  var redshiftDataSource:PGPoolingDataSource = null
+}
 
 /**
  * Emitter for flushing Kinesis event data to S3.
@@ -57,7 +61,17 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, props: Properties, 
   val DEFAULT_BATCH_SIZE = 200
   val log = LogFactory.getLog(classOf[RedshiftEmitter])
 
-  val redshift = DriverManager.getConnection(props.getProperty("redshift_url"), props.getProperty("redshift_username"), props.getProperty("redshift_password"))
+  {
+    synchronized {
+      if (RedshiftEmitter.redshiftDataSource == null) {
+        val ds = new PGPoolingDataSource()
+        ds.setUrl(props.getProperty("redshift_url"))
+        ds.setUser(props.getProperty("redshift_username"))
+        ds.setPassword(props.getProperty("redshift_password"))
+        RedshiftEmitter.redshiftDataSource = ds
+      }
+    }
+  }
   val emptyList = List[EmitterInput]()
 
   class RedshiftOps(s: String) {
@@ -85,6 +99,7 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, props: Properties, 
     log.info(s"Flushing buffer with ${buffer.getRecords.size} records.")
 
     val table = props.getProperty("redshift_table")
+    val redshift = RedshiftEmitter.redshiftDataSource.getConnection
     try {
       val stat = redshift.prepareStatement(s"insert into $table " +
         "(app_id,platform,etl_tstamp,collector_tstamp,dvce_tstamp,event,event_id,txn_id,name_tracker,v_tracker,v_collector,v_etl,user_id," +
@@ -114,7 +129,7 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, props: Properties, 
           stat.setString(11, record._1(10))
           stat.setString(12, record._1(11))
           stat.setString(13, record._1(12))
-          stat.setString(14, record._1(12))
+          stat.setString(14, record._1(13))
           stat.setString(15, record._1(14))
           stat.setString(16, record._1(15))
           if (record._1(16) == null) stat.setNull(17, Types.INTEGER) else stat.setInt(17, record._1(16).toInt)
@@ -241,12 +256,21 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, props: Properties, 
     }
     catch {
       case s:BatchUpdateException =>
-        log.error("Exception updating batch", s)
-        log.error("Nested exception", s.getNextException)
+        log.error("Exception updating batch {}", s)
+        log.error("Nested exception {}", s.getNextException)
         throw s
       case e:Throwable =>
-        log.error("Exception updating batch", e)
+        log.error("Exception updating batch {}", e)
         throw e
+    }
+    finally {
+      try {
+        redshift.close()
+      } catch {
+        case e:Throwable =>
+          log.error("Unable to close redshift connection {}", e)
+          throw e
+      }
     }
 
     emptyList
@@ -256,7 +280,6 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, props: Properties, 
    * Closes the client when the KinesisConnectorRecordProcessor is shut down
    */
   override def shutdown() {
-    redshift.close()
   }
 
   /**

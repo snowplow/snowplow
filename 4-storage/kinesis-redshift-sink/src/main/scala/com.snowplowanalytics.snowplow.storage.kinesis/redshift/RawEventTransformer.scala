@@ -14,12 +14,11 @@ package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 
 // AWS libs
 
-import java.text.SimpleDateFormat
-import java.util.TimeZone
 
 import com.amazonaws.services.kinesis.model.Record
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.snowplowanalytics.snowplow.storage.kinesis.Redshift.{EmitterInput, ValidatedRecord}
+import org.joda.time.DateTimeZone
 
 // AWS Kinesis Connector libs
 import com.amazonaws.services.kinesis.connectors.interfaces.ITransformer
@@ -29,16 +28,13 @@ import scalaz.Scalaz._
 import scalaz._
 
 class RawEventTransformer extends ITransformer[ ValidatedRecord, EmitterInput ] {
-  val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
-  val timezone = TimeZone.getTimeZone("UTC")
-  dateFormat.setTimeZone(timezone)
   override def toClass(record: Record): ValidatedRecord = {
     val recordByteArray = record.getData.array
     var fields = new String(recordByteArray, "UTF-8").split("\t")
     // Fix etl_tstamp
-    import java.util.Date
-    val date = new Date(java.lang.Long.valueOf(fields(2)))
-    fields(2) = dateFormat.format(date)
+    import org.joda.time.DateTime
+    val date = new DateTime(java.lang.Long.valueOf(fields(2))).toDateTime(DateTimeZone.forID("UTC"))
+    fields(2) = date.toString("yyyy-MM-dd HH:mm:ss.SSS")
     // Fix fields length
     while (fields.length < 116) {
       fields = fields ++ Array("")
@@ -46,7 +42,7 @@ class RawEventTransformer extends ITransformer[ ValidatedRecord, EmitterInput ] 
     // Extract augur - 117, 118
     fields = filterFields(fields)
     // Add sink timestamp
-    fields = fields ++ Array(dateFormat.format(new Date()))
+    fields = fields ++ Array(DateTime.now(DateTimeZone.forID("UTC")).toString("yyyy-MM-dd HH:mm:ss.SSS"))
     val values = fields.map(f => if (f == "" || f == null) null else f)
     (values, recordByteArray.success)
   }
@@ -110,7 +106,8 @@ class RawEventTransformer extends ITransformer[ ValidatedRecord, EmitterInput ] 
       val newFields = fields.clone()
       newFields(FieldIndexes.contexts) = null
       newFields(FieldIndexes.unstructEvent) = null
-      newFields(FieldIndexes.network_userId) = null
+      // network_userid is used for authentication of realtime so we need to keep it
+//      newFields(FieldIndexes.network_userId) = null
       newFields(FieldIndexes.user_fingerprint) = null
       val deviceDetails = extractAugur(fields)
       if (deviceDetails.isDefined) {
