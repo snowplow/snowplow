@@ -7,122 +7,59 @@
     :username: # Insert username with relevant credentials to run the below queries
     :password: # Insert user password
 :steps:
-  - :name: 01-etl-tstamps
+  - :name: 00-preparation
     :queries:
-      - :name: 01-etl-tstamps
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/01-etl-tstamps/01-etl-tstamps.sql
-  - :name: 02-events-enriched
+      - :name: 00-preparation
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/incremental/00-preparation/00-preparation.sql
+  - :name: 01-id-stitching
     :queries:
-      - :name: 02-01-join-unstructured
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/02-events-enriched/02-01-join-unstructured.sql
-  - :name: 03-identity-stitching
+      - :name: 01-id-stitching
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/incremental/01-id-stitching/01-id-stitching.sql
+  - :name: 02-events
     :queries:
-      - :name: 03-XX-join-users
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/03-identity-stitching/03-XX-join-users.sql
-  - :name: 04-sessions
+      - :name: 02-events
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/incremental/02-events/02-events.sql
+  - :name: 03-new
     :queries:
-      - :name: 04-01-basic
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/04-sessions/04-01-basic.sql
-  - :name: 04-sessions
+      - :name: 03-01-sessions
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/incremental/03-new/03-01-sessions.sql
+  - :name: 03-new
     :queries:
-      - :name: 04-02-geo
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/04-sessions/04-02-geo.sql
-      - :name: 04-03-landing-page
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/04-sessions/04-03-landing-page.sql
-      - :name: 04-04-exit-page
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/04-sessions/04-04-exit-page.sql
-      - :name: 04-05-source
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/04-sessions/04-05-source.sql
-      - :name: 04-06-tech
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/04-sessions/04-06-tech.sql
-  - :name: 04-sessions
+      - :name: 03-02-visitors
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/incremental/03-new/03-02-visitors.sql
+  - :name: 03-new
     :queries:
-      - :name: 04-07-consolidate
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/04-sessions/04-07-consolidate.sql
-  - :name: 04-sessions
+      - :name: 03-03-page-views
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/incremental/03-new/03-03-page-views.sql
+  - :name: 04-move-to-new
     :queries:
-      - :name: 04-08-move-to-new
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/04-sessions/04-08-move-to-new.sql
-  - :name: 04-sessions
+      - :name: 04-01-sessions
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/incremental/04-move-to-new/04-01-sessions.sql
+  - :name: 04-move-to-new
     :queries:
-      - :name: 04-09-merge-part-1
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/04-sessions/04-09-merge-part-1.sql
-  - :name: 04-sessions
+      - :name: 04-02-visitors
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/incremental/04-move-to-new/04-02-visitors.sql
+  - :name: 04-move-to-new
     :queries:
-      - :name: 04-10-merge-part-2
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/04-sessions/04-10-merge-part-2.sql
-  - :name: 04-sessions
+      - :name: 04-03-page-views
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/incremental/04-move-to-new/04-03-page-views.sql
+  - :name: 05-move-to-derived
     :queries:
-      - :name: 04-11-merge-part-3
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/04-sessions/04-11-merge-part-3.sql
-  - :name: 04-sessions
+      - :name: 05-01-sessions
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/incremental/05-move-to-derived/05-01-sessions.sql
+  - :name: 05-move-to-derived
     :queries:
-      - :name: 04-12-backup
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/04-sessions/04-12-backup.sql
-  - :name: 05-visitors
+      - :name: 05-02-visitors
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/incremental/05-move-to-derived/05-02-visitors.sql
+  - :name: 05-move-to-derived
     :queries:
-      - :name: 05-01-basic
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/05-visitors/05-01-basic.sql
-  - :name: 05-visitors
+      - :name: 05-03-page-views
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/incremental/05-move-to-derived/05-03-page-views.sql
+  - :name: 06-move-to-atomic
     :queries:
-      - :name: 05-02-landing-page
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/05-visitors/05-02-landing-page.sql
-      - :name: 05-03-source
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/05-visitors/05-03-source.sql
-  - :name: 05-visitors
+      - :name: 06-move-to-atomic
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/incremental/06-move-to-atomic/06-move-to-atomic.sql
+  - :name: 07-vacuum
     :queries:
-      - :name: 05-04-consolidate
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/05-visitors/05-04-consolidate.sql
-  - :name: 05-visitors
-    :queries:
-      - :name: 05-05-move-to-new
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/05-visitors/05-05-move-to-new.sql
-  - :name: 05-visitors
-    :queries:
-      - :name: 05-06-merge-part-1
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/05-visitors/05-06-merge-part-1.sql
-  - :name: 05-visitors
-    :queries:
-      - :name: 05-07-merge-part-2
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/05-visitors/05-07-merge-part-2.sql
-  - :name: 05-visitors
-    :queries:
-      - :name: 05-08-backup
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/05-visitors/05-08-backup.sql
-  - :name: 06-page-views
-    :queries:
-      - :name: 06-01-new
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/06-page-views/06-01-new.sql
-  - :name: 06-page-views
-    :queries:
-      - :name: 06-02-move-to-new
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/06-page-views/06-02-move-to-new.sql
-  
-  - :name: 06-page-views
-    :queries:
-      - :name: 06-03-merge-part-1
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/06-page-views/06-03-merge-part-1.sql
-  - :name: 06-page-views
-    :queries:
-      - :name: 06-04-merge-part-3
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/06-page-views/06-04-merge-part-3.sql
-  - :name: 06-page-views
-    :queries:
-      - :name: 06-05-backup
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/06-page-views/06-05-backup.sql
-  - :name: 07-structured-events
-    :queries:
-      - :name: 07-01-structured-events
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/07-structured-events/07-01-structured-events.sql
-  - :name: 08-move-to-pivot
-    :queries:
-      - :name: 08-01-move-to-pivot
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/08-move-to-pivot/08-01-move-to-pivot.sql
-  - :name: 09-move-to-atomic
-    :queries:
-      - :name: 09-01-events
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/09-move-to-atomic/09-01-events.sql
-  - :name: 10-vacuum
-    :queries:
-      - :name: 10-vacuum
-        :file: snowplow/5-analytics/redshift-analytics/data-models/sql/incremental/10-vacuum/10-vacuum.sql
+      - :name: 07-vacuum
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/incremental/07-vacuum/07-vacuum.sql
