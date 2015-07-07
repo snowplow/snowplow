@@ -14,8 +14,10 @@
 # License::   Apache License Version 2.0
 
 require 'singleton'
+require 'elasticity'
 require 'snowplow-tracker'
 require 'contracts'
+require 'date'
 
 module Snowplow
   module EmrEtlRunner
@@ -29,10 +31,12 @@ module Snowplow
         PROTOCOL = "http"
         PORT = 80
         BUFFER_SIZE = 0
-        APPLICATION_CONTEXT_SCHEMA = "iglu:com.snowplowanalytics.snowplow/application_context/jsonschema/1-0-0"
-        JOB_STARTED_SCHEMA = "iglu:com.snowplowanalytics.snowplow/job_started/jsonschema/1-0-0"
-        JOB_FAILED_SCHEMA = "iglu:com.snowplowanalytics.snowplow/job_failed/jsonschema/1-0-0"
-        JOB_SUCCEEDED_SCHEMA = "iglu:com.snowplowanalytics.snowplow/job_succeeded/jsonschema/1-0-0"
+        APPLICATION_CONTEXT_SCHEMA = "iglu:com.snowplowanalytics.monitoring.batch/application_context/jsonschema/1-0-0"
+        JOB_STATUS_SCHEMA = "iglu:com.snowplowanalytics.monitoring.batch/emr_job_status/jsonschema/1-0-0"
+        STEP_STATUS_SCHEMA = "iglu:com.snowplowanalytics.monitoring.batch/jobflow_step_status/jsonschema/1-0-0"
+        JOB_STARTED_SCHEMA = "iglu:com.snowplowanalytics.monitoring.batch/emr_job_started/jsonschema/1-0-0"
+        JOB_FAILED_SCHEMA = "iglu:com.snowplowanalytics.monitoring.batch/emr_job_failed/jsonschema/1-0-0"
+        JOB_SUCCEEDED_SCHEMA = "iglu:com.snowplowanalytics.monitoring.batch/emr_job_succeeded/jsonschema/1-0-0"
 
         # Parameters
         @@method = "get"
@@ -88,42 +92,83 @@ module Snowplow
           }
         end
 
+        # Drop the "UTC" from the end of a timestamp returned by a job status query
+        Contract Maybe[Time] => Maybe[String]
+        def to_redshift_compatible_timestamp(time)
+          if time.nil?
+            nil
+          else
+            time.strftime('%Y-%m-%d %H:%M:%S')
+          end
+        end
+
+        # Context for the entire job
+        Contract Elasticity::JobFlow => {}
+        def get_job_context(jobflow)
+          status = jobflow.status
+          Snowplow.as_self_desc_hash(
+            JOB_STATUS_SCHEMA,
+            {
+              :name => status.name,
+              :jobflow_id => status.jobflow_id,
+              :state => status.state,
+              :created_at => to_redshift_compatible_timestamp(status.created_at),
+              :ended_at => to_redshift_compatible_timestamp(status.ended_at),
+              :last_state_change_reason => status.last_state_change_reason
+            }
+          )
+        end
+
+        # One context per job step
+        Contract Elasticity::JobFlow => ArrayOf[Hash]
+        def get_job_step_contexts(jobflow)
+          jobflow.status.steps.map { |step|
+            Snowplow.as_self_desc_hash(
+              STEP_STATUS_SCHEMA,
+              {
+                :name => step.name,
+                :state => step.state,
+                :created_at => to_redshift_compatible_timestamp(step.created_at),
+                :started_at => to_redshift_compatible_timestamp(step.started_at),
+                :ended_at => to_redshift_compatible_timestamp(step.ended_at)
+              }
+            )
+          }
+        end
+
         # Track a job started event
-        # TODO: decide on data field
-        Contract None => SnowplowTracker::Tracker
-        def track_job_started
+        Contract Elasticity::JobFlow => SnowplowTracker::Tracker
+        def track_job_started(jobflow)
           @tracker.track_unstruct_event(
             Snowplow.as_self_desc_hash(
               JOB_STARTED_SCHEMA,
               {}
             ),
-            [@@app_context]
+            [@@app_context, get_job_context(jobflow)] + get_job_step_contexts(jobflow)
           )
         end
 
         # Track a job succeeded event
-        # TODO: decide on data field
-        Contract None => SnowplowTracker::Tracker
-        def track_job_succeeded
+        Contract Elasticity::JobFlow => SnowplowTracker::Tracker
+        def track_job_succeeded(jobflow)
           @tracker.track_unstruct_event(
             Snowplow.as_self_desc_hash(
               JOB_SUCCEEDED_SCHEMA,
               {}
             ),
-            [@@app_context]
+            [@@app_context, get_job_context(jobflow)] + get_job_step_contexts(jobflow)
           )
         end
 
         # Track a job failed event
-        # TODO: decide on data field
-        Contract None => SnowplowTracker::Tracker
-        def track_job_failed
+        Contract Elasticity::JobFlow => SnowplowTracker::Tracker
+        def track_job_failed(jobflow)
           @tracker.track_unstruct_event(
             Snowplow.as_self_desc_hash(
               JOB_FAILED_SCHEMA,
               {}
             ),
-            [@@app_context]
+            [@@app_context, get_job_context(jobflow)] + get_job_step_contexts(jobflow)
           )
         end
 
