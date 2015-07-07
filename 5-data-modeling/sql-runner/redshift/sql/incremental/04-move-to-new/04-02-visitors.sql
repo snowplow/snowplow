@@ -12,25 +12,27 @@
 -- Authors: Yali Sassoon, Christophe Bogaert
 -- Copyright: Copyright (c) 2013-2015 Snowplow Analytics Ltd
 -- License: Apache License Version 2.0
+--
+-- Data Model: Example incremental model
+-- Version: 2.0
+--
+-- Add old entries that also appear in this new batch:
+-- (a) backup selected old visitors
+-- (b) move those visitors
+-- (c) delete them
 
--- A simple table that contains one row per structured event. To be merged with the other tables in
--- snowplow_pivots on domain_userid and domain_sessionidx.
+BEGIN;
 
-INSERT INTO snowplow_pivots.structured_events
-(
-  SELECT
-    blended_user_id,
-    inferred_user_id,
-    domain_userid,
-    domain_sessionidx,
-    etl_tstamp, -- For debugging
-    dvce_tstamp,
-    collector_tstamp,
-    se_category,
-    se_action,
-    se_label,
-    se_property,
-    se_value
-  FROM snowplow_intermediary.events_enriched_final
-  WHERE event = 'struct' -- Restrict to structured events
-);
+  -- (a) backup selected old visitors
+  CREATE TABLE snplw_temp.visitors_backup
+    DISTKEY (blended_user_id)
+    SORTKEY (blended_user_id)
+  AS (SELECT * FROM derived.visitors WHERE blended_user_id IN (SELECT blended_user_id FROM snplw_temp.visitors));
+
+  -- (b) move those visitors
+  INSERT INTO snplw_temp.visitors (SELECT * FROM derived.visitors WHERE blended_user_id IN (SELECT blended_user_id FROM snplw_temp.visitors));
+
+  -- (c) delete them
+  DELETE FROM derived.visitors WHERE blended_user_id IN (SELECT blended_user_id FROM snplw_temp.visitors);
+
+COMMIT;

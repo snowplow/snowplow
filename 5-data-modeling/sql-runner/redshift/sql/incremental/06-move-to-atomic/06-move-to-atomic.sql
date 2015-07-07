@@ -12,20 +12,26 @@
 -- Authors: Yali Sassoon, Christophe Bogaert
 -- Copyright: Copyright (c) 2013-2015 Snowplow Analytics Ltd
 -- License: Apache License Version 2.0
+--
+-- Data Model: Example incremental model
+-- Version: 2.0
 
--- Enrich events with unstructured events and inferred_user_id. Second, join with the cookie_id_user_id_map.
+DROP SCHEMA IF EXISTS snplw_temp CASCADE;
 
-DROP TABLE IF EXISTS snowplow_intermediary.events_enriched_final;
-CREATE TABLE snowplow_intermediary.events_enriched_final
-  DISTKEY (domain_userid)
-  SORTKEY (domain_userid, domain_sessionidx, dvce_tstamp) -- Sort on dvce_tstamp to speed up future queries
-AS (
-  SELECT
-    COALESCE(u.inferred_user_id, e.domain_userid) AS blended_user_id, -- Placeholder (domain_userid)
-    u.inferred_user_id, -- Placeholder (NULL)
-    e.*
-  FROM
-    snowplow_intermediary.events_enriched e
-  LEFT JOIN snowplow_intermediary.cookie_id_to_user_id_map u
-    ON u.domain_userid = e.domain_userid
-);
+BEGIN;
+  INSERT INTO atomic.events (SELECT * FROM landing.events);
+  DELETE FROM landing.events;
+COMMIT;
+
+-- add all tables in landing
+-- have each step in a separate transaction (begin/commit)
+
+BEGIN;
+  INSERT INTO atomic.com_example_context_1 (SELECT * FROM landing.com_example_context_1);
+  DELETE FROM landing.com_example_context_1;
+COMMIT;
+
+BEGIN;
+  INSERT INTO atomic.com_example_unstructured_event_1 (SELECT * FROM landing.com_example_unstructured_event_1);
+  DELETE FROM landing.com_example_unstructured_event_1;
+COMMIT;
