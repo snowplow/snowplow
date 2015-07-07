@@ -12,20 +12,27 @@
 -- Authors: Yali Sassoon, Christophe Bogaert
 -- Copyright: Copyright (c) 2013-2015 Snowplow Analytics Ltd
 -- License: Apache License Version 2.0
+--
+-- Data Model: Example incremental model
+-- Version: 2.0
+--
+-- Add old entries that also appear in this new batch:
+-- (a) backup selected old sessions
+-- (b) move those sessions
+-- (c) delete them
 
--- It could happen that new data arrives in snowplow_landing after the run has started, but before the existing
--- data has been moved to atomic. New data will have a different etl_tstamp. The etl_tstamps at the start of the
--- run are therefore stored to restrict future queries. Note: DISTINCT etl_tstamp doesn't include NULL.
+BEGIN;
 
-DROP TABLE IF EXISTS snowplow_intermediary.etl_tstamps;
-CREATE TABLE snowplow_intermediary.etl_tstamps
-  DISTKEY (etl_tstamp)
-  SORTKEY (etl_tstamp)
-AS (
-  SELECT
-    etl_tstamp,
-    count(*)
-  FROM snowplow_landing.events
-  GROUP BY 1
-  ORDER BY 1
-);
+  -- (a) backup selected old sessions
+  CREATE TABLE snplw_temp.sessions_backup
+    DISTKEY (domain_userid)
+    SORTKEY (domain_userid, domain_sessionidx, min_dvce_tstamp)
+  AS (SELECT * FROM derived.sessions WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.sessions));
+
+  -- (b) move those sessions
+  INSERT INTO snplw_temp.sessions (SELECT * FROM derived.sessions WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.sessions));
+
+  -- (c) delete them
+  DELETE FROM derived.sessions WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.sessions);
+
+COMMIT;

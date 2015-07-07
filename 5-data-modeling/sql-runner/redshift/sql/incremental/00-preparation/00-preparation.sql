@@ -12,17 +12,25 @@
 -- Authors: Yali Sassoon, Christophe Bogaert
 -- Copyright: Copyright (c) 2013-2015 Snowplow Analytics Ltd
 -- License: Apache License Version 2.0
+--
+-- Data Model: Example incremental model
+-- Version: 2.0
+--
+-- Preparation:
+-- (a) delete the snplw_temp schema
+-- (b) recreate the snplow_temp schema
+-- (c) back up the user ID map
 
--- The standard model identifies sessions using only first party cookies and session domain indexes,
--- but contains placeholders for identity stitching.
+DROP SCHEMA IF EXISTS snplw_temp CASCADE; -- (a) delete the snplw_temp schema
+CREATE SCHEMA snplw_temp; -- (b) recreate the snplow_temp schema
 
--- Events belonging to the same session can arrive at different times and could end up in different batches.
--- Rows in the sessions_new table therefore have to be merged with those in the pivot table.
+BEGIN; -- (c) back up the user ID map
 
--- First, insert all rows from the pivot table into sessions_new.
+  CREATE TABLE snplw_temp.id_map
+    DISTKEY (domain_userid)
+    SORTKEY (domain_userid)
+  AS (SELECT * FROM derived.id_map);
 
-INSERT INTO snowplow_intermediary.sessions_new (
-  SELECT
-    *
-  FROM snowplow_pivots.sessions
-);
+  DELETE FROM derived.id_map;
+
+COMMIT;

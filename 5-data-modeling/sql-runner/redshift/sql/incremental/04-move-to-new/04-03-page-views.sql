@@ -12,21 +12,27 @@
 -- Authors: Yali Sassoon, Christophe Bogaert
 -- Copyright: Copyright (c) 2013-2015 Snowplow Analytics Ltd
 -- License: Apache License Version 2.0
+--
+-- Data Model: Example incremental model
+-- Version: 2.0
+--
+-- Add old entries that also appear in this new batch:
+-- (a) backup selected old page views
+-- (b) move those page views
+-- (c) delete them
 
--- The standard model identifies sessions using only first party cookies and session domain indexes,
--- but contains placeholders for identity stitching.
+BEGIN;
 
--- Events belonging to the same session can arrive at different times and could end up in different batches.
--- Rows in the sessions_new table therefore have to be merged with those in the pivot table.
+  -- (a) backup selected old page views
+  CREATE TABLE snplw_temp.page_views_backup
+    DISTKEY (domain_userid)
+    SORTKEY (domain_userid, domain_sessionidx, first_touch_tstamp)
+  AS (SELECT * FROM derived.page_views WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.page_views));
 
--- Backup the current sessions pivot table.
+  -- (b) move those page views
+  INSERT INTO snplw_temp.page_views (SELECT * FROM derived.page_views WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.page_views));
 
-DROP TABLE IF EXISTS snowplow_intermediary.sessions_backup;
-CREATE TABLE snowplow_intermediary.sessions_backup
-  DISTKEY (domain_userid) -- Optimized to join on other snowplow_intermediary.session_X tables
-  SORTKEY (domain_userid, domain_sessionidx) -- Optimized to join on other snowplow_intermediary.session_X tables
-AS (
-  SELECT
-    *
-  FROM snowplow_pivots.sessions
-);
+  -- (c) delete them
+  DELETE FROM derived.page_views WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.page_views);
+
+COMMIT;

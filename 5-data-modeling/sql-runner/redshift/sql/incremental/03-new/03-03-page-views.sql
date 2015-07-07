@@ -12,33 +12,76 @@
 -- Authors: Yali Sassoon, Christophe Bogaert
 -- Copyright: Copyright (c) 2013-2015 Snowplow Analytics Ltd
 -- License: Apache License Version 2.0
+--
+-- Data Model: Example incremental model
+-- Version: 2.0
+--
+-- Page views:
+-- (a) aggregate events into page views
+-- (b) select all
 
--- The page_views_new table has one row per page view (in this batch) and contains basic information that
--- can be derived from a single table scan.
-
-DROP TABLE IF EXISTS snowplow_intermediary.page_views_new;
-CREATE TABLE snowplow_intermediary.page_views_new
-  DISTKEY (domain_userid) -- Optimized to join on other snowplow_intermediary.page_views_X tables
-  SORTKEY (domain_userid, domain_sessionidx, first_touch_tstamp) -- Optimized to join on other snowplow_intermediary.page_views_X tables
+CREATE TABLE snplw_temp.page_views
+  DISTKEY (domain_userid)
+  SORTKEY (domain_userid, domain_sessionidx, first_touch_tstamp)
 AS (
+
+WITH basic AS (
+
+  -- (a) aggregate events into page views
+
   SELECT
-    blended_user_id, -- Placeholder (the domain_userid, so cannot cause issues with GROUP BY)
-    inferred_user_id, -- Placeholder (NULL, so cannot cause issues with GROUP BY)
+
+    blended_user_id,
+    inferred_user_id,
     domain_userid,
     domain_sessionidx,
     page_urlhost,
     page_urlpath,
+
     MIN(collector_tstamp) AS first_touch_tstamp,
     MAX(collector_tstamp) AS last_touch_tstamp,
-    MIN(dvce_tstamp) AS dvce_min_tstamp, -- Used to replace SQL window functions
-    MAX(dvce_tstamp) AS dvce_max_tstamp, -- Used to replace SQL window functions
-    MAX(etl_tstamp) AS max_etl_tstamp, -- Used for debugging
+    MIN(dvce_tstamp) AS min_dvce_tstamp, -- used to replace SQL window functions
+    MAX(dvce_tstamp) AS max_dvce_tstamp, -- used to replace SQL window functions
+    MAX(etl_tstamp) AS max_etl_tstamp, -- for debugging
+
     COUNT(*) AS event_count,
     SUM(CASE WHEN event = 'page_view' THEN 1 ELSE 0 END) AS page_view_count,
     SUM(CASE WHEN event = 'page_ping' THEN 1 ELSE 0 END) AS page_ping_count,
     COUNT(DISTINCT(FLOOR(EXTRACT (EPOCH FROM dvce_tstamp)/30)))/2::FLOAT AS time_engaged_with_minutes
-  FROM snowplow_intermediary.events_enriched_final
-  WHERE page_urlhost IS NOT NULL -- Remove incorrect page views (and prevent issues in merge-part-3)
-    AND page_urlpath IS NOT NULL -- Remove incorrect page views (and prevent issues in merge-part-3)
+
+  FROM snplw_temp.enriched_events
+
+  WHERE event IN ('page_view','page_ping')
+    AND page_urlhost IS NOT NULL -- remove incorrect page views
+    AND page_urlpath IS NOT NULL -- remove incorrect page views
+
   GROUP BY 1,2,3,4,5,6
+  ORDER BY 1,2,3,4,7
+
+)
+
+-- (b) select all
+
+SELECT
+
+  b.blended_user_id,
+  b.inferred_user_id,
+  b.domain_userid,
+  b.domain_sessionidx,
+  b.page_urlhost,
+  b.page_urlpath,
+
+  b.first_touch_tstamp,
+  b.last_touch_tstamp,
+  b.min_dvce_tstamp,
+  b.max_dvce_tstamp,
+  b.max_etl_tstamp,
+
+  b.event_count,
+  b.page_view_count,
+  b.page_ping_count,
+  b.time_engaged_with_minutes
+
+  FROM basic AS b
+
 );
