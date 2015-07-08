@@ -71,9 +71,7 @@ WITH aggregate_frame AS (
       a.refr_urlhost,
       a.refr_urlpath,
 
-      RANK() OVER (PARTITION BY a.blended_user_id
-        ORDER BY a.landing_page_host, a.landing_page_path, a.mkt_source, a.mkt_medium, a.mkt_term, a.mkt_content,
-          a.mkt_campaign, a.refr_source, a.refr_medium, a.refr_term, a.refr_urlhost, a.refr_urlpath) AS rank
+      ROW_NUMBER() OVER (PARTITION BY a.blended_user_id) AS row_number
 
     FROM snplw_temp.visitors AS a
 
@@ -81,9 +79,8 @@ WITH aggregate_frame AS (
       ON  a.blended_user_id = b.blended_user_id
       AND a.min_dvce_tstamp = b.min_dvce_tstamp
 
-    GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13
   )
-  WHERE rank = 1
+  WHERE row_number = 1 -- deduplicate
 
 )
 

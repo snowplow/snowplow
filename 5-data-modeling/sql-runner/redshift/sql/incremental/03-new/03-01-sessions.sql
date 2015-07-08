@@ -85,7 +85,7 @@ WITH basic AS (
       a.geo_latitude,
       a.geo_longitude,
 
-      RANK() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx ORDER BY a.geo_country, a.geo_region, a.geo_city, a.geo_zipcode, a.geo_latitude, a.geo_longitude) AS rank
+      ROW_NUMBER() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx) AS row_number
 
     FROM snplw_temp.enriched_events AS a
 
@@ -94,15 +94,12 @@ WITH basic AS (
       AND a.domain_sessionidx = b.domain_sessionidx
       AND a.dvce_tstamp = b.min_dvce_tstamp -- replaces the FIRST VALUE window function in SQL
 
-    GROUP BY 1,2,3,4,5,6,7,8 -- aggregate identital rows that happen to have the same dvce_tstamp
-    ORDER BY 1,2
-
   ) AS c
 
   LEFT JOIN reference_data.country_codes AS d
     ON c.geo_country = d.two_letter_iso_code
 
-  WHERE c.rank = 1 -- if there are different rows with the same dvce_tstamp, rank and pick the first row
+  WHERE c.row_number = 1 -- deduplicate
 
 ), landing_page AS (
 
@@ -117,7 +114,7 @@ WITH basic AS (
       a.page_urlhost,
       a.page_urlpath,
 
-      RANK() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx ORDER BY a.page_urlhost, a.page_urlpath) AS rank
+      ROW_NUMBER() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx) AS row_number
 
     FROM snplw_temp.enriched_events AS a
 
@@ -126,10 +123,9 @@ WITH basic AS (
       AND a.domain_sessionidx = b.domain_sessionidx
       AND a.dvce_tstamp = b.min_dvce_tstamp
 
-    GROUP BY 1,2,3,4
     ORDER BY 1,2
   )
-  WHERE rank = 1
+  WHERE row_number = 1 -- deduplicate
 
 ), exit_page AS (
 
@@ -143,7 +139,7 @@ WITH basic AS (
       a.page_urlhost,
       a.page_urlpath,
 
-      RANK() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx ORDER BY a.page_urlhost, a.page_urlpath) AS rank
+      ROW_NUMBER() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx) AS row_number
 
     FROM snplw_temp.enriched_events AS a
 
@@ -152,10 +148,9 @@ WITH basic AS (
       AND a.domain_sessionidx = b.domain_sessionidx
       AND a.dvce_tstamp = b.max_dvce_tstamp
 
-    GROUP BY 1,2,3,4
     ORDER BY 1,2
   )
-  WHERE rank = 1
+  WHERE row_number = 1 -- deduplicate
 
 ), source AS (
 
@@ -178,7 +173,7 @@ WITH basic AS (
       a.refr_urlhost,
       a.refr_urlpath,
 
-      RANK() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx ORDER BY a.mkt_source, a.mkt_medium, a.mkt_term, a.mkt_content, a.mkt_campaign, a.refr_source, a.refr_medium, a.refr_term, a.refr_urlhost, a.refr_urlpath) AS rank
+      ROW_NUMBER() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx) AS row_number
 
     FROM snplw_temp.enriched_events AS a
 
@@ -187,10 +182,9 @@ WITH basic AS (
       AND a.domain_sessionidx = b.domain_sessionidx
       AND a.dvce_tstamp = b.min_dvce_tstamp
 
-    GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
     ORDER BY 1,2
   )
-  WHERE rank = 1
+  WHERE row_number = 1 -- deduplicate
 
 ), tech AS (
 
@@ -227,11 +221,7 @@ WITH basic AS (
       a.dvce_screenwidth,
       a.dvce_screenheight,
 
-      RANK() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx
-        ORDER BY a.br_name, a.br_family, a.br_version, a.br_type, a.br_renderengine, a.br_lang, a.br_features_director, a.br_features_flash,
-          a.br_features_gears, a.br_features_java, a.br_features_pdf, a.br_features_quicktime, a.br_features_realplayer, a.br_features_silverlight,
-          a.br_features_windowsmedia, a.br_cookies, a.os_name, a.os_family, a.os_manufacturer, a.os_timezone, a.dvce_type, a.dvce_ismobile, a.dvce_screenwidth,
-          a.dvce_screenheight) AS rank
+      ROW_NUMBER() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx) AS row_number
 
     FROM snplw_temp.enriched_events AS a
 
@@ -240,10 +230,9 @@ WITH basic AS (
       AND a.domain_sessionidx = b.domain_sessionidx
       AND a.dvce_tstamp = b.min_dvce_tstamp
 
-    GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26
     ORDER BY 1,2
   )
-  WHERE rank = 1
+  WHERE row_number = 1 -- deduplicate
 
 )
 

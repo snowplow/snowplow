@@ -18,10 +18,9 @@
 --
 -- Identity stitching:
 -- (a) select max device timestamp
--- (b) select the most recent user ID associated with each cookie
--- (c) deduplication
--- (d) select the updated rows
--- (e) select the rows that were not updated
+-- (b) select the most recent user ID associated with each cookie and deduplicate
+-- (c) select the updated rows
+-- (d) select the rows that were not updated
 
 INSERT INTO derived.id_map (
 
@@ -56,50 +55,45 @@ WITH stitching_1 AS (
 
 ), stitching_2 AS (
 
-  -- (b) select the most recent user ID associated with each cookie
+  -- (b) select the most recent user ID associated with each cookie and deduplicate
 
-  SELECT
+  SELECT * FROM (
+    SELECT
 
-    a.domain_userid,
-    a.user_id,
+      a.domain_userid,
+      a.user_id,
 
-    RANK() OVER (PARTITION BY a.domain_userid ORDER BY a.user_id) AS rank
+      ROW_NUMBER() OVER (PARTITION BY a.domain_userid) AS row_number
 
-  FROM landing.events AS a
+    FROM landing.events AS a
 
-  INNER JOIN stitching_1 AS b
-    ON  a.domain_userid = b.domain_userid
-    AND a.dvce_tstamp = b.max_dvce_tstamp -- replaces the LAST VALUE window function in SQL
+    INNER JOIN stitching_1 AS b
+      ON  a.domain_userid = b.domain_userid
+      AND a.dvce_tstamp = b.max_dvce_tstamp -- replaces the LAST VALUE window function in SQL
 
-  GROUP BY 1,2 -- aggregate identital rows that happen to have the same dvce_tstamp
+  ) WHERE row_number = 1 -- deduplicate
 
 ), stitching_3 AS (
 
-  -- (c) deduplication
+  -- (c) select the updated rows
 
-  SELECT * FROM stitching_2 WHERE rank = 1
+  SELECT domain_userid, user_id AS inferred_user_id FROM stitching_2
 
 ), stitching_4 AS (
 
-  -- (d) select the updated rows
-
-  SELECT domain_userid, user_id AS inferred_user_id FROM stitching_3
-
-), stitching_5 AS (
-
-  -- (e) select the rows that were not updated
+  -- (d) select the rows that were not updated
 
   SELECT
     o.*
   FROM snplw_temp.id_map AS o
-  LEFT JOIN stitching_4 AS n
+  LEFT JOIN stitching_3 AS n
     ON o.domain_userid = n.domain_userid
   WHERE n.domain_userid IS NULL -- filter out all records where there is a corresponding domain_userid in the new table
 
 )
 
-SELECT * FROM stitching_4
+SELECT * FROM stitching_3
   UNION
-SELECT * FROM stitching_5
+SELECT * FROM stitching_4
 
 );

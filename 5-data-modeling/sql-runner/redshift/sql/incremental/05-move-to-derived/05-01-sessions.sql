@@ -107,15 +107,7 @@ WITH aggregate_frame AS (
       a.dvce_screenwidth,
       a.dvce_screenheight
 
-      RANK() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx
-        ORDER BY a.geo_country, a.geo_country_code_2_characters, a.geo_country_code_3_characters, a.geo_region,
-          a.geo_city, a.geo_zipcode, a.geo_latitude, a.geo_longitude, a.landing_page_host, a.landing_page_path,
-          a.mkt_source, a.mkt_medium, a.mkt_term, a.mkt_content, a.mkt_campaign, a.refr_source, a.refr_medium,
-          a.refr_term, a.refr_urlhost, a.refr_urlpath, a.br_name, a.br_family, a.br_version, a.br_type,
-          a.br_renderengine, a.br_lang, a.br_features_director, a.br_features_flash, a.br_features_gears,
-          a.br_features_java, a.br_features_pdf, a.br_features_quicktime, a.br_features_realplayer,
-          a.br_features_silverlight, a.br_features_windowsmedia, a.br_cookies, a.os_name, a.os_family,
-          a.os_manufacturer, a.os_timezone, a.dvce_type, a.dvce_ismobile, a.dvce_screenwidth, a.dvce_screenheight) AS rank
+      ROW_NUMBER() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx) AS row_number
 
     FROM snplw_temp.sessions AS a
 
@@ -124,11 +116,10 @@ WITH aggregate_frame AS (
       AND a.domain_sessionidx = b.domain_sessionidx
       AND a.min_dvce_tstamp = b.min_dvce_tstamp
 
-    GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46
     ORDER BY 1,2
 
   )
-  WHERE rank = 1
+  WHERE row_number = 1 -- deduplicate
 
 ), final_frame AS (
 
@@ -146,8 +137,7 @@ WITH aggregate_frame AS (
       a.exit_page_host,
       a.exit_page_path,
 
-      RANK() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx
-        ORDER BY a.blended_user_id, a.inferred_user_id, a.exit_page_host, a.exit_page_path) AS rank
+      ROW_NUMBER() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx) AS row_number
 
     FROM snplw_temp.sessions AS a
 
@@ -156,11 +146,10 @@ WITH aggregate_frame AS (
       AND a.domain_sessionidx = b.domain_sessionidx
       AND a.max_dvce_tstamp = b.max_dvce_tstamp
 
-    GROUP BY 1,2,3,4,5,6
     ORDER BY 1,2
 
   )
-  WHERE rank = 1
+  WHERE row_number = 1 -- deduplicate
 
 )
 

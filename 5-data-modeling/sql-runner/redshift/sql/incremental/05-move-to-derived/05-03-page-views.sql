@@ -65,7 +65,7 @@ WITH aggregate_frame AS (
       a.blended_user_id, -- edge case: one page view with multiple logins and events in several batches
       a.inferred_user_id, -- edge case: one page view with multiple logins and events in several batches
 
-      RANK() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx, a.page_urlhost, a.page_urlpath ORDER BY a.blended_user_id, a.inferred_user_id) AS rank
+      ROW_NUMBER() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx, a.page_urlhost, a.page_urlpath) AS row_number
 
     FROM snplw_temp.page_views AS a
 
@@ -76,10 +76,9 @@ WITH aggregate_frame AS (
       AND a.page_urlpath = b.page_urlpath
       AND a.max_dvce_tstamp = b.max_dvce_tstamp
 
-    GROUP BY 1,2,3,4,5,6
     ORDER BY 1,2,3,4,5,6
   )
-  WHERE rank = 1
+  WHERE row_number = 1 -- deduplicate
 
 )
 
