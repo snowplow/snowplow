@@ -63,7 +63,7 @@ WITH basic AS (
       a.page_urlhost,
       a.page_urlpath,
 
-      RANK() OVER (PARTITION BY a.blended_user_id ORDER BY a.page_urlhost, a.page_urlpath) AS rank
+      ROW_NUMBER() OVER (PARTITION BY a.blended_user_id) AS row_number
 
     FROM snplw_temp.enriched_events AS a
 
@@ -71,10 +71,9 @@ WITH basic AS (
       ON  a.blended_user_id = b.blended_user_id
       AND a.dvce_tstamp = b.min_dvce_tstamp -- replaces the FIRST VALUE window function in SQL
 
-    GROUP BY 1,2,3 -- aggregate identital rows that happen to have the same dvce_tstamp
     ORDER BY 1
   )
-  WHERE rank = 1 -- if there are different rows with the same dvce_tstamp, rank and pick the first row
+  WHERE row_number = 1 -- deduplicate
 
 ), source AS (
 
@@ -97,8 +96,7 @@ WITH basic AS (
       a.refr_urlhost,
       a.refr_urlpath,
 
-      RANK() OVER (PARTITION BY a.blended_user_id
-        ORDER BY a.mkt_source, a.mkt_medium, a.mkt_term, a.mkt_content, a.mkt_campaign, a.refr_source, a.refr_medium, a.refr_term, a.refr_urlhost, a.refr_urlpath) AS rank
+      ROW_NUMBER() OVER (PARTITION BY a.blended_user_id) AS row_number
 
     FROM snplw_temp.enriched_events AS a
 
@@ -106,10 +104,9 @@ WITH basic AS (
       ON  a.blended_user_id = b.blended_user_id
       AND a.dvce_tstamp = b.min_dvce_tstamp
 
-    GROUP BY 1,2,3,4,5,6,7,8,9,10,11
     ORDER BY 1
   )
-  WHERE rank = 1
+  WHERE row_number = 1 -- deduplicate
 
 )
 
