@@ -43,8 +43,8 @@ WITH stitching_1 AS (
     AND collector_tstamp IS NOT NULL  -- not required
     AND dvce_tstamp IS NOT NULL       -- not required
 
-    AND dvce_tstamp < DATEADD(year, +1, e.collector_tstamp) -- remove outliers (can cause errors)
-    AND dvce_tstamp > DATEADD(year, -1, e.collector_tstamp) -- remove outliers (can cause errors)
+    AND dvce_tstamp < DATEADD(year, +1, collector_tstamp) -- remove outliers (can cause errors)
+    AND dvce_tstamp > DATEADD(year, -1, collector_tstamp) -- remove outliers (can cause errors)
 
   --AND app_id = 'production'
   --AND platform = ''

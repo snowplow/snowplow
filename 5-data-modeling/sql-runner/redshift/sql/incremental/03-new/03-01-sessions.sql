@@ -94,6 +94,8 @@ WITH basic AS (
       AND a.domain_sessionidx = b.domain_sessionidx
       AND a.dvce_tstamp = b.min_dvce_tstamp -- replaces the FIRST VALUE window function in SQL
 
+    ORDER BY 1,2
+
   ) AS c
 
   LEFT JOIN reference_data.country_codes AS d
