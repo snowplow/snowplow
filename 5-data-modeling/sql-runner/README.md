@@ -14,7 +14,7 @@ In this repo, we include a simple, examplar data model, with the following busin
 Two different versions of the data model are included:
 
 1. A [full version] [full-version]. This computes the aggregate tables based on the complete data set in the datawarehouse.
-2. An [incremental version] [incremental-version]. This assumes that the data is loading into a staging schema (called `snowplow_landing`). Then the aggregate tables are updated based only on the incremental data, before the event-level data is migrated out of the `snowplow_landing` schema into the `atomic` schema.
+2. An [incremental version] [incremental-version]. This assumes that the data is loading into a staging schema (called `landing`). Then the aggregate tables are updated based only on the incremental data, before the event-level data is migrated out of the `landing` schema into the `atomic` schema.
 
 ## A guide to the contents of this section of the repo
 
