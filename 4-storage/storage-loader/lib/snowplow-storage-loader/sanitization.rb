@@ -13,21 +13,24 @@
 # Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-# Ruby 1.9.2 onwards doesn't add . into $LOAD_PATH by default - use require_relative instead
-require_relative 'snowplow-storage-loader/snowplow'
-require_relative 'snowplow-storage-loader/errors'
-require_relative 'snowplow-storage-loader/contracts'
-require_relative 'snowplow-storage-loader/config'
-require_relative 'snowplow-storage-loader/file_tasks'
-require_relative 'snowplow-storage-loader/s3_tasks'
-require_relative 'snowplow-storage-loader/postgres_loader'
-require_relative 'snowplow-storage-loader/shredded_type'
-require_relative 'snowplow-storage-loader/redshift_loader'
-require_relative 'snowplow-storage-loader/sanitization'
-
 module Snowplow
   module StorageLoader
-  	NAME          = "snowplow-storage-loader"
-    VERSION       = "0.3.3"
+    module Sanitization
+
+      # Replaces any substring of length at least min_replaced_substring_length of an error message
+      # if it is also a substring of any credential string
+      def sanitize_message(message, credentials, min_replaced_substring_length=7)
+        credentials.each do |cred|
+          (0..(cred.length - min_replaced_substring_length)).each do |start|
+            (cred.length.downto(start + min_replaced_substring_length)).each do |finish|
+              message = message.gsub(cred[start...finish], 'x' * (finish - start))
+            end
+          end
+        end
+        message
+      end
+      module_function :sanitize_message
+
+    end
   end
 end

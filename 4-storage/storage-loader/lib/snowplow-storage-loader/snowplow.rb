@@ -91,7 +91,6 @@ module Snowplow
         end
 
         # Track a load succeeded event
-        # TODO: decide on data field
         Contract None => SnowplowTracker::Tracker
         def track_load_succeeded
           @tracker.track_unstruct_event(
@@ -104,13 +103,14 @@ module Snowplow
         end
 
         # Track a load failed event
-        # TODO: decide on data field
-        Contract None => SnowplowTracker::Tracker
-        def track_load_failed
+        Contract String => SnowplowTracker::Tracker
+        def track_load_failed(error_message)
           @tracker.track_unstruct_event(
             Snowplow.as_self_desc_hash(
               LOAD_FAILED_SCHEMA,
-              {}
+              {
+                :error => error_message
+              }
             ),
             [@@app_context]
           )
