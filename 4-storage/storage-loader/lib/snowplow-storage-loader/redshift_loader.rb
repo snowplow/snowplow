@@ -53,16 +53,20 @@ module Snowplow
           copy_analyze_statements.push(*shredded_statements.map(&:analyze).uniq)
         end
 
+        credentials = [config[:aws][:access_key_id], config[:aws][:secret_access_key]]
+
         status = PostgresLoader.execute_transaction(target, copy_analyze_statements)
         unless status == []
+          raw_error_message = "#{status[1]} error executing COPY and ANALYZE statements: #{status[0]}: #{status[2]}"
+          error_message = Sanitization.sanitize_message(raw_error_message, credentials)
           if snowplow_tracking_enabled
-            Monitoring::Snowplow.instance.track_load_failed()
+            Monitoring::Snowplow.instance.track_load_failed(error_message)
           end
-          raise DatabaseLoadError, "#{status[1]} error executing COPY and ANALYZE statements: #{status[0]}: #{status[2]}"
+          raise DatabaseLoadError, error_message
         end
 
         if snowplow_tracking_enabled
-          Monitoring::Snowplow.instance.track_load_failed()
+          Monitoring::Snowplow.instance.track_load_succeeded()
         end
 
         # If vacuum is requested, build a set of VACUUM statements
@@ -76,8 +80,8 @@ module Snowplow
 
           status = PostgresLoader.execute_queries(target, vacuum_statements)
           unless status == []
-            raise DatabaseLoadError, "#{status[1]} error executing VACUUM statements: #{status[0]}: #{status[2]}"
-          end      
+            raise DatabaseLoadError, Sanitization.sanitize_message("#{status[1]} error executing VACUUM statements: #{status[0]}: #{status[2]}", credentials)
+          end
         end
 
         nil
