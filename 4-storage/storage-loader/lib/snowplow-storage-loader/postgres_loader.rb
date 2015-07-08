@@ -43,12 +43,11 @@ module Snowplow
         status = copy_via_stdin(target, event_files)
 
         unless status == []
-
+          error_message = "#{status[1]} error loading #{status[0]}: #{status[2]}"
           if snowplow_tracking_enabled
-            Monitoring::Snowplow.instance.track_load_failed()
+            Monitoring::Snowplow.instance.track_load_failed(error_message)
           end
-
-          raise DatabaseLoadError, "#{status[1]} error loading #{status[0]}: #{status[2]}"
+          raise DatabaseLoadError, error_message
         end
 
         if snowplow_tracking_enabled
