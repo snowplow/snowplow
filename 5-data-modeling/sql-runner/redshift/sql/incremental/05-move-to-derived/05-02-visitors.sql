@@ -79,6 +79,8 @@ WITH aggregate_frame AS (
       ON  a.blended_user_id = b.blended_user_id
       AND a.min_dvce_tstamp = b.min_dvce_tstamp
 
+    ORDER BY 1
+
   )
   WHERE row_number = 1 -- deduplicate
 

@@ -105,7 +105,7 @@ WITH aggregate_frame AS (
       a.dvce_type,
       a.dvce_ismobile,
       a.dvce_screenwidth,
-      a.dvce_screenheight
+      a.dvce_screenheight,
 
       ROW_NUMBER() OVER (PARTITION BY a.domain_userid, a.domain_sessionidx) AS row_number
 
