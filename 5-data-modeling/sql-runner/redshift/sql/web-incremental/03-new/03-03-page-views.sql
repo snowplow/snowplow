@@ -85,3 +85,5 @@ SELECT
   FROM basic AS b
 
 );
+
+INSERT INTO snplw_temp.queries (SELECT 'page-views', 'new', GETDATE()); -- track time

@@ -115,3 +115,5 @@ LEFT JOIN final_frame AS f
 );
 
 COMMIT;
+
+INSERT INTO snplw_temp.queries (SELECT 'page-views', 'move-to-derived', GETDATE()); -- track time

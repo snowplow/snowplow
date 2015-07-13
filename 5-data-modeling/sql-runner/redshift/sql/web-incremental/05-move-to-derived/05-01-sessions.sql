@@ -235,3 +235,5 @@ LEFT JOIN final_frame AS f
 );
 
 COMMIT;
+
+INSERT INTO snplw_temp.queries (SELECT 'sessions', 'move-to-derived', GETDATE()); -- track time

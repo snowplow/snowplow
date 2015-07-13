@@ -36,3 +36,5 @@ BEGIN;
   DELETE FROM derived.visitors WHERE blended_user_id IN (SELECT blended_user_id FROM snplw_temp.visitors);
 
 COMMIT;
+
+INSERT INTO snplw_temp.queries (SELECT 'visitors', 'move-to-new', GETDATE()); -- track time

@@ -48,3 +48,5 @@ VACUUM atomic.com_example_unstructured_event_1; -- add all tables in atomic
 ANALYZE atomic.events;
 ANALYZE atomic.com_example_context_1; -- add all tables in atomic
 ANALYZE atomic.com_example_unstructured_event_1; -- add all tables in atomic
+
+INSERT INTO snplw_temp.queries (SELECT 'vacuum', 'vacuum', GETDATE()); -- track time

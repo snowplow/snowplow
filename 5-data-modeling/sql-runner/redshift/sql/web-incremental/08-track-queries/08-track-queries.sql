@@ -16,32 +16,42 @@
 -- Data Model: web-incremental
 -- Version: 2.0
 --
--- Table:
--- (a) create the page_views table
+-- Track queries:
+-- (a) calculate how long each step took to execute
 
-CREATE TABLE derived.page_views (
+INSERT INTO derived.queries (
 
-  blended_user_id varchar(255) encode runlength,
-  inferred_user_id varchar(255) encode runlength,
-  domain_userid varchar(36) encode runlength,
-  domain_sessionidx smallint,
+  SELECT
 
-  page_urlhost varchar(255) encode text255,
-	page_urlpath varchar(3000) encode text32k,
+    min_tstamp,
+    max_tstamp,
+    component,
+    step,
+    tstamp,
+    EXTRACT(EPOCH FROM (tstamp - previous_tstamp)) AS duration
 
-  first_touch_tstamp timestamp,
-  last_touch_tstamp timestamp,
-  min_dvce_tstamp timestamp,
-  max_dvce_tstamp timestamp,
-  max_etl_tstamp timestamp,
+  FROM (
 
-  event_count	bigint,
-  page_view_count	bigint,
-  page_ping_count	bigint,
+    SELECT
 
-  time_engaged_with_minutes	double precision
+      FIRST_VALUE(tstamp) OVER (ORDER BY tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS min_tstamp,
+      LAST_VALUE(tstamp) OVER (ORDER BY tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS max_tstamp,
 
-)
-DISTSTYLE KEY
-DISTKEY (domain_userid)
-SORTKEY (domain_userid, domain_sessionidx, first_touch_tstamp);
+      component,
+      step,
+      tstamp,
+
+      LAG(tstamp, 1) OVER (ORDER BY tstamp) AS previous_tstamp
+
+    FROM queries
+
+    ORDER BY tstamp
+
+  )
+
+  WHERE component != 'main'
+  ORDER BY tstamp
+
+);
+
+DROP SCHEMA IF EXISTS snplw_temp CASCADE;

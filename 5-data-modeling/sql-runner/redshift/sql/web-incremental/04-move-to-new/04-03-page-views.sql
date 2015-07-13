@@ -36,3 +36,5 @@ BEGIN;
   DELETE FROM derived.page_views WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.page_views);
 
 COMMIT;
+
+INSERT INTO snplw_temp.queries (SELECT 'page-views', 'move-to-new', GETDATE()); -- track time

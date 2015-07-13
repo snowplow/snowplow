@@ -146,3 +146,5 @@ LEFT JOIN landing_page AS l ON b.blended_user_id = l.blended_user_id
 LEFT JOIN source AS s ON b.blended_user_id = s.blended_user_id
 
 );
+
+INSERT INTO snplw_temp.queries (SELECT 'visitors', 'new', GETDATE()); -- track time

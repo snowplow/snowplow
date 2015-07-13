@@ -36,3 +36,5 @@ BEGIN;
   DELETE FROM derived.sessions WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.sessions);
 
 COMMIT;
+
+INSERT INTO snplw_temp.queries (SELECT 'sessions', 'move-to-new', GETDATE()); -- track time
