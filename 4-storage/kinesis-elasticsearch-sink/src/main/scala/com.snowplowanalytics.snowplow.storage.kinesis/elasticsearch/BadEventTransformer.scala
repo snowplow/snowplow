@@ -34,6 +34,9 @@ import Scalaz._
 
 /**
  * Class to convert bad events to ElasticsearchObjects
+ *
+ * @param the elasticsearch index name
+ * @param the elasticsearch index type
  */
 class BadEventTransformer(documentIndex: String, documentType: String)
   extends ITransformer[ValidatedRecord, EmitterInput] {

@@ -31,7 +31,8 @@ object Dependencies {
     // Java
     val mimepull         = "1.9.4"
     val awsSdk           = "1.6.10"
-
+    val yodaTime         = "2.1"
+    val yodaConvert      = "1.2"
     // Scala
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
@@ -41,7 +42,7 @@ object Dependencies {
     val commonsCodec     = "1.5"
     val scalazon         = "0.11"
     val argot            = "1.0.1"
-
+    val json4s           = "3.2.11"
     // Scala (test only)
     // Using the newest version of spec (2.3.6) causes
     // conflicts with `spray` for `com.chuusai.shapeless`
@@ -51,7 +52,9 @@ object Dependencies {
   object Libraries {
     // Java
     val mimepull         = "org.jvnet.mimepull"    %  "mimepull"                  % V.mimepull
-    val awsSdk           = "com.amazonaws"         % "aws-java-sdk"               % V.awsSdk
+    val awsSdk           = "com.amazonaws"         %  "aws-java-sdk"              % V.awsSdk
+    val yodaTime         = "joda-time"             %  "joda-time"                 % V.yodaTime
+    val yodaConvert      = "org.joda"              %  "joda-convert"              % V.yodaConvert
 
     // Scala
     val snowplowRawEvent = "com.snowplowanalytics" %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
@@ -64,6 +67,7 @@ object Dependencies {
     val logback          = "ch.qos.logback"        %  "logback-classic"           % V.logback
     val commonsCodec     = "commons-codec"         %  "commons-codec"             % V.commonsCodec
     val scalazon         = "io.github.cloudify"    %% "scalazon"                  % V.scalazon
+    val json4sJackson    = "org.json4s"            %% "json4s-jackson"            % V.json4s
 
     // Scala (test only)
     val specs2           = "org.specs2"            %% "specs2"                    % V.specs2   % "test"

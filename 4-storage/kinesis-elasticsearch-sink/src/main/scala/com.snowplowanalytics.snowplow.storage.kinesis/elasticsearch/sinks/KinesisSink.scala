@@ -72,9 +72,8 @@ class KinesisSink(provider: AWSCredentialsProvider, endpoint: String, name: Stri
   // Create a Kinesis client for stream interactions.
   private implicit val kinesis = Client.fromClient(client)
 
-  // The output stream for enriched events.
-  // Lazy so that it doesn't get created unless we need to write to it.
-  private lazy val enrichedStream = createAndLoadStream()
+  // The output stream for failed events.
+  private val enrichedStream = createAndLoadStream()
 
   /**
    * Checks if a stream exists.

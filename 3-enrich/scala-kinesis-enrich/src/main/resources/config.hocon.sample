@@ -48,9 +48,10 @@ enrich {
       bad: "{{enrichStreamsOutBad}}"
 
       # Minimum and maximum backoff periods
+      # - Units: Milliseconds
       backoffPolicy: {
-        minBackoff: 3000 # 3 seconds
-        maxBackoff: 600000 # 5 minutes
+        minBackoff: {{enrichStreamsOutMinBackoff}}
+        maxBackoff: {{enrichStreamsOutMaxBackoff}}
       }
     }
 
@@ -65,5 +66,15 @@ enrich {
     initial-position = "TRIM_HORIZON"
 
     region: "{{enrichStreamsRegion}}"
+  }
+
+  # Optional section for tracking endpoints
+  monitoring {
+    snowplow {
+      collector-uri: "{{collectorUri}}"
+      collector-port: 80
+      app-id: "{{enrichAppName}}"
+      method: "GET"
+    }
   }
 }

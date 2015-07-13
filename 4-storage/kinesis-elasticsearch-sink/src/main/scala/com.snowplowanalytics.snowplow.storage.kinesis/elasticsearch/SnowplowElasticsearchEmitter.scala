@@ -17,7 +17,8 @@
   * governing permissions and limitations there under.
   */
 
-package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
+package com.snowplowanalytics.snowplow
+package storage.kinesis.elasticsearch
 
 // Amazon
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
@@ -59,6 +60,10 @@ import com.amazonaws.services.kinesis.connectors.{
 import java.io.IOException
 import java.util.{List => JList}
 
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.DateTimeFormat
+
 // Scala
 import scala.collection.JavaConversions._
 import scala.annotation.tailrec
@@ -78,16 +83,36 @@ import org.apache.commons.logging.{
   LogFactory
 }
 
+// Tracker
+import scalatracker.Tracker
+import scalatracker.SelfDescribingJson
+
 // This project
 import sinks._
 
 /**
  * Class to send valid records to Elasticsearch and invalid records to Kinesis
+ *
+ * @param configuration the KCL configuration
+ * @param goodSink the configured GoodSink
+ * @param badSink the configured BadSink
+ * @param tracker a Tracker instance
+ * @param maxConnectionWaitTimeMs the maximum amount of time
+ *        we can attempt to send to elasticsearch
  */
-class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration, goodSink: Option[ISink], badSink: ISink)
+class SnowplowElasticsearchEmitter(
+  configuration: KinesisConnectorConfiguration,
+  goodSink: Option[ISink],
+  badSink: ISink,
+  tracker: Option[Tracker] = None,
+  maxConnectionWaitTimeMs: Long = 60000)
+
   extends IEmitter[EmitterInput] {
 
   private val Log = LogFactory.getLog(getClass)
+
+  // An ISO valid timestamp formatter
+  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   /**
    * The settings key for the cluster name.
@@ -227,12 +252,19 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration,
       bulkRequest.add(indexRequestBuilder)
     })))
 
+    val connectionAttemptStartTime = System.currentTimeMillis()
+
     /**
      * Keep attempting to execute the buldRequest until it succeeds
      *
      * @return List of inputs which Elasticsearch rejected
      */
-    @tailrec def attemptEmit(): List[EmitterInput] = {
+    @tailrec def attemptEmit(attemptNumber: Long = 1): List[EmitterInput] = {
+
+      if (attemptNumber > 1 && System.currentTimeMillis() - connectionAttemptStartTime > maxConnectionWaitTimeMs) {
+        forceShutdown()
+      }
+
       try {
         val bulkResponse = bulkRequest.execute.actionGet
         val responses = bulkResponse.getItems
@@ -265,12 +297,18 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration,
           Log.error("No nodes found at " + elasticsearchEndpoint + ":" + elasticsearchPort + ". Retrying in "
             + BackoffPeriod + " milliseconds", nnae)
           sleep(BackoffPeriod)
-          attemptEmit()
+          tracker foreach {
+            t => SnowplowTracking.sendFailureEvent(t, BackoffPeriod, connectionAttemptStartTime, attemptNumber, nnae.toString)
+          }
+          attemptEmit(attemptNumber + 1)
         }
         case e: Exception => {
           Log.error("ElasticsearchEmitter threw an unexpected exception ", e)
           sleep(BackoffPeriod)
-          attemptEmit()
+          tracker foreach {
+            t => SnowplowTracking.sendFailureEvent(t, BackoffPeriod, connectionAttemptStartTime, attemptNumber, e.toString)
+          }
+          attemptEmit(attemptNumber + 1)
         }
       }
     }
@@ -286,7 +324,11 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration,
   override def fail(records: JList[EmitterInput]) {
     records foreach {
       record => {
-        val output = compact(render(("line" -> record._1) ~ ("errors" -> record._2.swap.getOrElse(Nil))))
+        val output = compact(render(
+          ("line" -> record._1) ~ 
+          ("errors" -> record._2.swap.getOrElse(Nil)) ~
+          ("failure_tstamp" -> getTimestamp(System.currentTimeMillis()))
+        ))
         badSink.store(output, None, false)
       }
     }
@@ -317,6 +359,24 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration,
   }
 
   /**
+   * Terminate the application in a way the KCL cannot stop
+   *
+   * Prevents shutdown hooks from running
+   */
+  private def forceShutdown() {
+    Log.error(s"Shutting down application as unable to connect to Elasticsearch for over $maxConnectionWaitTimeMs ms")
+
+    tracker foreach {
+      t =>
+        // TODO: Instead of waiting a fixed time, use synchronous tracking or futures (when the tracker supports futures)
+        SnowplowTracking.trackApplicationShutdown(t)
+        sleep(5000)
+    }
+
+    Runtime.getRuntime.halt(1)
+  }
+
+  /**
    * Logs the Elasticsearch cluster's health
    */
   private def printClusterStatus {
@@ -331,4 +391,14 @@ class SnowplowElasticsearchEmitter(configuration: KinesisConnectorConfiguration,
     }
   }
 
+  /**
+   * Returns an ISO valid timestamp
+   *
+   * @param tstamp The Timestamp to convert
+   * @return the formatted Timestamp
+   */
+  private def getTimestamp(tstamp: Long): String = {
+    val dt = new DateTime(tstamp)
+    TstampFormat.print(dt)
+  }
 }
