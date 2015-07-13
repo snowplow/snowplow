@@ -16,7 +16,7 @@
 -- Data Model: web-incremental
 -- Version: 2.0
 --
--- ID map:
+-- Table:
 -- (a) create the id_map table
 
 CREATE TABLE derived.id_map (

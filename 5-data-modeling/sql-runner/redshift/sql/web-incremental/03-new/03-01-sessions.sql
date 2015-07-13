@@ -315,3 +315,5 @@ LEFT JOIN source AS s ON b.domain_userid = s.domain_userid AND b.domain_sessioni
 LEFT JOIN tech AS t ON b.domain_userid = t.domain_userid AND b.domain_sessionidx = t.domain_sessionidx
 
 );
+
+INSERT INTO snplw_temp.queries (SELECT 'sessions', 'new', GETDATE()); -- track time

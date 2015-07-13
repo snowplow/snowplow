@@ -16,8 +16,6 @@
 -- Data Model: web-incremental
 -- Version: 2.0
 
-DROP SCHEMA IF EXISTS snplw_temp CASCADE;
-
 BEGIN;
   INSERT INTO atomic.events (SELECT * FROM landing.events);
   DELETE FROM landing.events;
@@ -35,3 +33,5 @@ BEGIN;
   INSERT INTO atomic.com_example_unstructured_event_1 (SELECT * FROM landing.com_example_unstructured_event_1);
   DELETE FROM landing.com_example_unstructured_event_1;
 COMMIT;
+
+INSERT INTO snplw_temp.queries (SELECT 'move-to-atomic', 'move-to-atomic', GETDATE()); -- track time

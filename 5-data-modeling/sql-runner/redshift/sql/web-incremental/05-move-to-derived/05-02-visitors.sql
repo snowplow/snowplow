@@ -125,3 +125,5 @@ LEFT JOIN initial_frame AS i
 );
 
 COMMIT;
+
+INSERT INTO snplw_temp.queries (SELECT 'visitors', 'move-to-derived', GETDATE()); -- track time

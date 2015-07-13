@@ -63,3 +63,7 @@
     :queries:
       - :name: 07-vacuum
         :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/web-incremental/07-vacuum/07-vacuum.sql
+  - :name: 08-track-queries
+    :queries:
+      - :name: 08-track-queries
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/web-incremental/08-track-queries/08-track-queries.sql

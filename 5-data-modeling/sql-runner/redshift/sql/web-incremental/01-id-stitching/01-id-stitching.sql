@@ -97,3 +97,5 @@ SELECT * FROM stitching_3
 SELECT * FROM stitching_4
 
 );
+
+INSERT INTO snplw_temp.queries (SELECT 'id-stitching', 'id-stitching', GETDATE()); -- track time

@@ -163,3 +163,5 @@ LEFT JOIN example_unstructured_event AS b ON a.event_id = b.root_id
 LEFT JOIN example_context AS c ON a.event_id = c.root_id
 
 );
+
+INSERT INTO snplw_temp.queries (SELECT 'enriched-events', 'enriched-events', GETDATE()); -- track time

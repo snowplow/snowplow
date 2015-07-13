@@ -16,7 +16,7 @@
 -- Data Model: web-incremental
 -- Version: 2.0
 --
--- ID map:
+-- Table:
 -- (a) create the sessions table
 
 CREATE TABLE derived.sessions (
