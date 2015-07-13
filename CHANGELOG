@@ -1,5 +1,6 @@
-Release 67 Bohemian Waxwing (2015-06-25)
+Release 67 Bohemian Waxwing (2015-07-13)
 ----------------------------------------
+Common: added NFS and CORE configuration to Vagrantfile to enhance performance (#1831)
 Scala Stream Collector: bumped to 0.5.0
 Scala Stream Collector: stdout bad sink now prints to stderr (#1799)
 Scala Stream Collector: added splitter for large event arrays (#941)
@@ -15,6 +16,7 @@ Scala Common Enrich: fixed JavascriptScriptEnrichmentSpec test to pass openjdk7 
 Scala Common Enrich: bumped scala-maxmind-iplookups to 0.3.0 (#1771)
 Scala Common Enrich: bumped Scala Forex to 0.3.0 (#1770)
 Scala Common Enrich: updated bad rows to include timestamp (#1577)
+Scala S3 Sink: removed project from repo (#1672)
 Scala Kinesis Enrich: bumped to 0.6.0
 Scala Kinesis Enrich: bumped to Scala Common Enrich 0.15.0 (#1685)
 Scala Kinesis Enrich: tries to send 503 records (#1756)
@@ -61,8 +63,6 @@ StorageLoader: wrote JSON path file for com.snowplowanalytics.monitoring/applica
 StorageLoader: wrote JSON path file for com.snowplowanalytics.monitoring/application_shutdown (#1757)
 StorageLoader: wrote JSON path file for com.snowplowanalytics.monitoring/stream_write_failed (#1843)
 StorageLoader: wrote JSON path file for com.snowplowanalytics.snowplow/web_page (#1836)
-Scala S3 Sink: removed project from repo (#1672)
-Vagrant: Added NFS and CORE configuration to Vagrantfile to enhance performance (#1831)
 
 Release 66 Oriental Skylark (2015-06-16)
 ----------------------------------------
