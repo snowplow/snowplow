@@ -43,7 +43,7 @@ INSERT INTO derived.queries (
 
       LAG(tstamp, 1) OVER (ORDER BY tstamp) AS previous_tstamp
 
-    FROM queries
+    FROM snplw_temp.queries
 
     ORDER BY tstamp
 
