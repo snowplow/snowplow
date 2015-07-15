@@ -97,7 +97,7 @@ module Snowplow
 
         # Check whether our processing directory is empty
         unless Sluice::Storage::S3::is_empty?(s3, processing_location)
-          raise DirectoryNotEmptyError, "The processing directory is not empty"
+          raise DirectoryNotEmptyError, "Should not stage files for enrichment, processing bucket #{processing_location} is not empty"
         end
 
         # Early check whether our enrichment directory is empty. We do a late check too
