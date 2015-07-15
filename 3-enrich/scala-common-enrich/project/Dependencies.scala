@@ -24,8 +24,6 @@ object Dependencies {
     // For Snowplow libs
     "Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
-    // For user-agent-utils
-    "user-agent-utils repo" at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/",
     // For uaParser utils
     "user-agent-parser repo" at "https://clojars.org/repo/"
   )
@@ -38,7 +36,7 @@ object Dependencies {
     val commonsCodec     = "1.5"
     val yodaTime         = "2.2"
     val yodaConvert      = "1.2"
-    val useragent        = "1.14"
+    val useragent        = "1.16"
     val jacksonDatabind  = "2.2.3"
     val jsonValidator    = "2.2.3"
     val mavenArtifact    = "3.2.2"
@@ -69,7 +67,7 @@ object Dependencies {
     val commonsCodec     = "commons-codec"              %  "commons-codec"             % V.commonsCodec
     val yodaTime         = "joda-time"                  %  "joda-time"                 % V.yodaTime
     val yodaConvert      = "org.joda"                   %  "joda-convert"              % V.yodaConvert
-    val useragent        = "bitwalker"                  %  "UserAgentUtils"            % V.useragent
+    val useragent        = "eu.bitwalker"               %  "UserAgentUtils"            % V.useragent
     val jacksonDatabind  = "com.fasterxml.jackson.core" %  "jackson-databind"          % V.jacksonDatabind
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"     % V.jsonValidator    
     val mavenArtifact    = "org.apache.maven"           %  "maven-artifact"            % V.mavenArtifact
