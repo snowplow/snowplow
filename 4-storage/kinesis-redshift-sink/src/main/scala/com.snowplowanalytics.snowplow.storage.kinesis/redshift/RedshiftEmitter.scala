@@ -233,9 +233,9 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, props: Properties, 
           if (record._1(113) == null) stat.setNull(114, Types.DECIMAL) else stat.setBigDecimal(114, new BD(record._1(113))) // ti_price_base
           stat.setString(115, record._1(114)) //
           stat.setString(116, record._1(115)) // geo_timezone
-          stat.setString(117, record._1(116)) //
-          stat.setString(118, record._1(117)) //
-          stat.setTimestamp(119, if (record._1(118) == null) null else Timestamp.valueOf(record._1(118)))
+          stat.setString(117, record._1(116)) // device_id
+          stat.setString(118, record._1(117)) // user_id
+          stat.setTimestamp(119, if (record._1(118) == null) null else Timestamp.valueOf(record._1(118))) // sink timestamp
 
 
           //        stat.setString(117, record._1(116)) //

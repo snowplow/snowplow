@@ -33,8 +33,6 @@ class RawEventTransformer extends ITransformer[ ValidatedRecord, EmitterInput ] 
     var fields = new String(recordByteArray, "UTF-8").split("\t")
     // Fix etl_tstamp
     import org.joda.time.DateTime
-    val date = new DateTime(java.lang.Long.valueOf(fields(2))).toDateTime(DateTimeZone.forID("UTC"))
-    fields(2) = date.toString("yyyy-MM-dd HH:mm:ss.SSS")
     // Fix fields length
     while (fields.length < 116) {
       fields = fields ++ Array("")
