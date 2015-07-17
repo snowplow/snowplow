@@ -27,6 +27,18 @@ import com.amazonaws.services.kinesis.connectors.interfaces.ITransformer
 import scalaz.Scalaz._
 import scalaz._
 
+object FieldIndexes { // 0-indexed
+val collectorTstamp = 3
+  val eventId = 6
+  val contexts = 52
+  val unstructEvent = 58
+  val derived_contexts = 122
+  val network_userId = 17
+  val user_fingerprint = 14
+  val augur_did = 109
+  val augur_user_id = 110
+}
+
 class RawEventTransformer extends ITransformer[ ValidatedRecord, EmitterInput ] {
   override def toClass(record: Record): ValidatedRecord = {
     val recordByteArray = record.getData.array
@@ -49,16 +61,6 @@ class RawEventTransformer extends ITransformer[ ValidatedRecord, EmitterInput ] 
   private lazy val Mapper = new ObjectMapper
   private val FieldCount = 108
 
-  private object FieldIndexes { // 0-indexed
-  val collectorTstamp = 3
-    val eventId = 6
-    val contexts = 52
-    val unstructEvent = 58
-    val network_userId = 17
-    val user_fingerprint = 14
-    val augur_did = 109
-    val augur_user_id = 110
-  }
 
   def extractAugur(fields: Array[String]): Option[(String, String)] = {
     val contexts = fields(FieldIndexes.contexts)
@@ -104,6 +106,7 @@ class RawEventTransformer extends ITransformer[ ValidatedRecord, EmitterInput ] 
       val newFields = fields.clone()
       newFields(FieldIndexes.contexts) = null
       newFields(FieldIndexes.unstructEvent) = null
+      newFields(FieldIndexes.derived_contexts) = null
       // network_userid is used for authentication of realtime so we need to keep it
 //      newFields(FieldIndexes.network_userId) = null
       newFields(FieldIndexes.user_fingerprint) = null

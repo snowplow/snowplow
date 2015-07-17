@@ -58,7 +58,7 @@ object RedshiftEmitter {
  * Once the buffer is full, the emit function is called.
  */
 class RedshiftEmitter(config: KinesisConnectorConfiguration, props: Properties, badSink: ISink) extends IEmitter[ EmitterInput ] {
-  val DEFAULT_BATCH_SIZE = 200
+//  val DEFAULT_BATCH_SIZE = 200
   val log = LogFactory.getLog(classOf[RedshiftEmitter])
 
   {
@@ -74,6 +74,7 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, props: Properties, 
   }
   val emptyList = List[EmitterInput]()
 
+/*
   class RedshiftOps(s: String) {
     def rsBoolean: Boolean = {
       if (s == null) throw new IllegalArgumentException("string is null")
@@ -84,6 +85,9 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, props: Properties, 
     }
   }
   implicit def redshiftOps(s: String): RedshiftOps = new RedshiftOps(s)
+*/
+
+  var tableWriter: TableWriter = null
 
   /**
    * Reads items from a buffer and saves them to s3.
@@ -98,7 +102,21 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, props: Properties, 
   override def emit(buffer: UnmodifiableBuffer[ EmitterInput ]): java.util.List[ EmitterInput ] = {
     log.info(s"Flushing buffer with ${buffer.getRecords.size} records.")
 
-    val table = props.getProperty("redshift_table")
+    if (tableWriter == null) {
+      tableWriter = new TableWriter(RedshiftEmitter.redshiftDataSource, props.getProperty("redshift_table"))
+    }
+
+    try {
+      buffer.getRecords.foreach { record =>
+        tableWriter.write(record._1)
+      }
+    }
+    finally {
+      tableWriter.finished()
+    }
+
+        // [1, 2, 4, 5, 8, 93, -7, 12]
+/*    val table = props.getProperty("redshift_table")
     val redshift = RedshiftEmitter.redshiftDataSource.getConnection
     try {
       val stat = redshift.prepareStatement(s"insert into $table " +
@@ -244,7 +262,7 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, props: Properties, 
           //        stat.setTimestamp(120, if (record._1(119) == null) null else Timestamp.valueOf(record._1(119)))
           //        stat.setString(121, record._1(120)) //
           //        stat.setTimestamp(122, if (record._1(121) == null) null else Timestamp.valueOf(record._1(121))) // refr_dvce_tstamp
-          //        stat.setString(123, record._1(122)) //
+          //        stat.setString(123, record._1(122)) // derived_contexts
           //        stat.setString(124, record._1(123)) //
           //        stat.setTimestamp(125, if (record._1(124) == null) null else Timestamp.valueOf(record._1(124))) // derived_tstamp
 
@@ -271,7 +289,7 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, props: Properties, 
           log.error("Unable to close redshift connection {}", e)
           throw e
       }
-    }
+    }*/
 
     emptyList
   }
