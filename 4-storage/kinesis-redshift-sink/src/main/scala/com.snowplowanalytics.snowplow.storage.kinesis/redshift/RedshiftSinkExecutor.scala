@@ -21,6 +21,7 @@ import com.amazonaws.services.kinesis.connectors.{
   KinesisConnectorExecutorBase,
   KinesisConnectorRecordProcessorFactory
 }
+import com.snowplowanalytics.iglu.client.Resolver
 import com.snowplowanalytics.snowplow.storage.kinesis.Redshift.{EmitterInput, ValidatedRecord}
 
 // This project
@@ -29,11 +30,11 @@ import sinks._
 /**
  * Boilerplate class for Kinessis Conenector
  */
-class RedshiftSinkExecutor(config: KinesisConnectorConfiguration, badSink: ISink, props: Properties) extends KinesisConnectorExecutorBase[ ValidatedRecord, EmitterInput ] {
+class RedshiftSinkExecutor(config: KinesisConnectorConfiguration, badSink: ISink)(implicit resolver:Resolver, props: Properties) extends KinesisConnectorExecutorBase[ ValidatedRecord, EmitterInput ] {
   super.initialize(config)
 
   override def getKinesisConnectorRecordProcessorFactory = {
-    new KinesisConnectorRecordProcessorFactory[ ValidatedRecord, EmitterInput ](new RedshiftPipeline(badSink, props), config)
+    new KinesisConnectorRecordProcessorFactory[ ValidatedRecord, EmitterInput ](new RedshiftPipeline(badSink), config)
   }
 
 }

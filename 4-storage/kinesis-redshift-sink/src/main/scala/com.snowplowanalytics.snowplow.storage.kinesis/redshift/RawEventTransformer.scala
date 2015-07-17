@@ -42,11 +42,11 @@ val collectorTstamp = 3
 class RawEventTransformer extends ITransformer[ ValidatedRecord, EmitterInput ] {
   override def toClass(record: Record): ValidatedRecord = {
     val recordByteArray = record.getData.array
-    var fields = new String(recordByteArray, "UTF-8").split("\t")
+    var fields = new String(recordByteArray, "UTF-8").split("\t", -1)
     // Fix etl_tstamp
     import org.joda.time.DateTime
     // Fix fields length
-    while (fields.length < 116) {
+    while (fields.length < 125) {
       fields = fields ++ Array("")
     }
     // Extract augur - 117, 118
@@ -59,7 +59,7 @@ class RawEventTransformer extends ITransformer[ ValidatedRecord, EmitterInput ] 
 
   override def fromClass(record: EmitterInput) = record
   private lazy val Mapper = new ObjectMapper
-  private val FieldCount = 108
+  private val FieldCount = 128
 
 
   def extractAugur(fields: Array[String]): Option[(String, String)] = {

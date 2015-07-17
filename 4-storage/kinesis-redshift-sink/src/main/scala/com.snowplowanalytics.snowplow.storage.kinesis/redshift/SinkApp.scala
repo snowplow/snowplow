@@ -16,6 +16,12 @@ package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 import java.io.File
 import java.util.Properties
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.snowplowanalytics.iglu.client.Resolver
+import com.snowplowanalytics.snowplow.enrich.hadoop._
+
+import scalaz.{Success, Failure}
+
 // Argot
 import org.clapper.argot._
 
@@ -30,12 +36,16 @@ import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 
 // This project
 import sinks._
+import com.fasterxml.jackson.databind.ObjectMapper
+import scala.language.implicitConversions
+
 
 /**
  * The entrypoint class for the Kinesis-S3 Sink applciation.
  */
 object SinkApp extends App {
 
+  val Mapper = new ObjectMapper
   // Argument specifications
   import ArgotConverters._
   Class.forName("org.postgresql.Driver").newInstance()
@@ -69,20 +79,26 @@ object SinkApp extends App {
 
   val conf = config.value.getOrElse(throw new RuntimeException("--config argument must be provided"))
 
+  private val sink: Config = conf.getConfig("sink")
   // TODO: make the conf file more like the Elasticsearch equivalent
-  val kinesisSinkRegion = conf.getConfig("sink").getConfig("kinesis").getString("region")
+  val kinesisSinkRegion = sink.getConfig("kinesis").getString("region")
   val kinesisSinkEndpoint = s"https://kinesis.${kinesisSinkRegion}.amazonaws.com"
-  val kinesisSink = conf.getConfig("sink").getConfig("kinesis").getConfig("out")
+  val kinesisSink = sink.getConfig("kinesis").getConfig("out")
   val kinesisSinkName = kinesisSink.getString("stream-name")
+  implicit val igluResolver:Resolver = Resolver.parse(Mapper.readTree(sink.getString("iglu_config"))) match {
+    case Success(s) => s
+    case Failure(f) => throw new RuntimeException("Must provide iglu_config: " + f)
+  }
 
-  val credentialConfig = conf.getConfig("sink").getConfig("aws")
+  val credentialConfig = sink.getConfig("aws")
 
   val credentials = CredentialsLookup.getCredentialsProvider(credentialConfig.getString("access-key"), credentialConfig.getString("secret-key"))
 
   val badSink = new KinesisSink(credentials, kinesisSinkEndpoint, kinesisSinkName)
 
   private val tuple: (Properties, KinesisConnectorConfiguration) = convertConfig(conf, credentials)
-  val executor = new RedshiftSinkExecutor(tuple._2, badSink, tuple._1)
+  implicit val props = tuple._1
+  val executor = new RedshiftSinkExecutor(tuple._2, badSink)
   executor.run()
 
   /**

@@ -1,12 +1,15 @@
 package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 
 import java.sql.{Types, Timestamp, PreparedStatement, SQLException, BatchUpdateException}
+import java.util.Properties
 import javax.sql.DataSource
 
 import org.apache.commons.logging.LogFactory
 import org.postgresql.ds.PGPoolingDataSource
+import scala.language.implicitConversions
 
 object SQLConverters {
+  val log = LogFactory.getLog(classOf[TableWriter])
   class RedshiftOps(s: String) {
     def rsBoolean: Boolean = {
       if (s == null) throw new IllegalArgumentException("string is null")
@@ -30,7 +33,14 @@ object SQLConverters {
   def setDouble(value: String, stat: PreparedStatement, index: Int) =
     if (value == null) stat.setNull(index, Types.DOUBLE) else stat.setDouble(index, value.toDouble)
   def setDecimal(value: String, stat: PreparedStatement, index: Int) =
-    if (value == null) stat.setNull(index, Types.DECIMAL) else stat.setBigDecimal(index, new BD(value))
+    try {
+      if (value == null) stat.setNull(index, Types.DECIMAL) else stat.setBigDecimal(index, new BD(value))
+    }
+    catch {
+      case t:Throwable =>
+        log.error(s"Invalid decimal: <$value>")
+        throw t
+    }
 
 }
 
@@ -85,17 +95,20 @@ class TableWriter(dataSource:DataSource, table: String) {
       -7 -> SQLConverters.setBoolean,
       12 -> SQLConverters.setString
     )
+  readMetadata()
 
-  def readMetadata() = {
+  private def readMetadata() = {
     val conn = dataSource.getConnection
     try {
       val dbMetadata = conn.getMetaData
       val tableMetadata = dbMetadata.getColumns(null, table.substring(0, table.indexOf('.')), table.substring(table.indexOf('.') + 1), null)
       while (tableMetadata.next()) {
         names = names ++ Array(tableMetadata.getString(4))
-        types = types ++ Array(tableMetadata.getInt(17))
+        types = types ++ Array(tableMetadata.getInt(5))
       }
+      log.info(s"Table $table has ${names.length} names " + names.zip(types).map(pair => pair._1 + ":" + pair._2).mkString(","))
       placeholders = "?" + (",?" * (names.length - 1))
+      tableMetadata.close()
     }
     finally {
       conn.close()
@@ -103,34 +116,36 @@ class TableWriter(dataSource:DataSource, table: String) {
   }
 
   def write(values: Array[String]) = {
-    if (values.length != names.length) throw new SQLException("Number of values does not match number of fields")
+    if (values.length != names.length) throw new SQLException(s"Number of values does not match number of fields: ${values.length} != ${names.length}")
     if (stat == null) {
       val conn = dataSource.getConnection
       stat = conn.prepareStatement(s"insert into $table values ($placeholders)")
     }
     try {
       for (index <- values.indices) {
-        converters(types(index))(values(index), stat, index)
+        converters(types(index))(values(index), stat, index+1)
       }
       stat.addBatch()
       batchCount += 1
       if (batchCount > DEFAULT_BATCH_SIZE) {
         val count = stat.executeBatch().sum
         batchCount = 0
-        log.info(s"Inserted $count records into Redshift")
+        log.info(s"Inserted $count records into Redshift table $table")
       }
     }
     catch {
       case s:BatchUpdateException =>
+        log.info(values.zipWithIndex.map(pair => pair._1 + ":" + pair._2).mkString(","))
         batchCount = 0
         stat.clearBatch()
-        log.error("Exception updating batch {}", s)
-        log.error("Nested exception {}", s.getNextException)
+        log.error("Exception updating batch", s)
+        log.error("Nested exception", s.getNextException)
         throw s
       case e:Throwable =>
+        log.info(values.zipWithIndex.map(pair => pair._1 + ":" + pair._2).mkString(","))
         batchCount = 0
         stat.clearBatch()
-        log.error("Exception updating batch {}", e)
+        log.error("Exception updating batch", e)
         throw e
     }
   }
@@ -140,20 +155,21 @@ class TableWriter(dataSource:DataSource, table: String) {
       try {
         val count = stat.executeBatch().sum
         batchCount = 0
-        log.info(s"Inserted $count records into Redshift")
+        log.info(s"Inserted $count records into Redshift table $table")
       }
       catch {
         case s:BatchUpdateException =>
-          log.error("Exception updating batch {}", s)
-          log.error("Nested exception {}", s.getNextException)
+          log.error("Exception updating batch", s)
+          log.error("Nested exception", s.getNextException)
           throw s
         case e:Throwable =>
-          log.error("Exception updating batch {}", e)
+          log.error("Exception updating batch", e)
           throw e
       }
       finally {
+        val conn = stat.getConnection
         stat.close()
-        stat.getConnection.close()
+        conn.close()
         stat = null
         batchCount = 0
       }
