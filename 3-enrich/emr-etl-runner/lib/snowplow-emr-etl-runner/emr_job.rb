@@ -55,8 +55,14 @@ module Snowplow
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
 
-        # Create a job flow with your AWS credentials
-        @jobflow = Elasticity::JobFlow.new(config[:aws][:access_key_id], config[:aws][:secret_access_key])
+        # Configure Elasticity with your AWS credentials
+        Elasticity.configure do |c|
+          c.access_key = config[:aws][:access_key_id]
+          c.secret_key = config[:aws][:secret_access_key]
+        end
+
+        # Create a job flow
+        @jobflow = Elasticity::JobFlow.new
 
         # Configure
         @jobflow.name                 = config[:etl][:job_name]
@@ -306,7 +312,7 @@ module Snowplow
         status = wait_for()
 
         if !status
-          raise EmrExecutionError, get_failure_details()
+          raise EmrExecutionError, get_failure_details(jobflow_id)
         end
 
         logger.debug "EMR jobflow #{jobflow_id} completed successfully."
@@ -359,7 +365,7 @@ module Snowplow
         while true do
           begin
             # Count up running tasks and failures
-            statuses = @jobflow.status.steps.map(&:state).inject([0, 0]) do |sum, state|
+            statuses = @jobflow.cluster_step_status.map(&:state).inject([0, 0]) do |sum, state|
               [ sum[0] + (@@running_states.include?(state) ? 1 : 0), sum[1] + (@@failed_states.include?(state) ? 1 : 0) ]
             end
 
@@ -389,15 +395,16 @@ module Snowplow
 
       # Prettified string containing failure details
       # for this job flow.
-      Contract None => String
-      def get_failure_details()
+      Contract String => String
+      def get_failure_details(jobflow_id)
 
-        js = @jobflow.status
+        cluster_step_status = @jobflow.cluster_step_status
+        cluster_status = @jobflow.cluster_status
 
         [
-          "EMR jobflow #{js.jobflow_id} failed, check Amazon EMR console and Hadoop logs for details (help: https://github.com/snowplow/snowplow/wiki/Troubleshooting-jobs-on-Elastic-MapReduce). Data files not archived.",
-          "#{js.name}: #{js.state} [#{js.last_state_change_reason}] ~ #{self.class.get_elapsed_time(js.started_at, js.ended_at)} #{self.class.get_timespan(js.started_at, js.ended_at)}"
-        ].concat(js.steps
+          "EMR jobflow #{jobflow_id} failed, check Amazon EMR console and Hadoop logs for details (help: https://github.com/snowplow/snowplow/wiki/Troubleshooting-jobs-on-Elastic-MapReduce). Data files not archived.",
+          "#{@jobflow.name}: #{cluster_status.state} [#{cluster_status.last_state_change_reason}] ~ #{self.class.get_elapsed_time(cluster_status.ready_at, cluster_status.ended_at)} #{self.class.get_timespan(cluster_status.ready_at, cluster_status.ended_at)}"
+        ].concat(cluster_step_status
             .sort { |a,b|
               self.class.nilable_spaceship(a.started_at, b.started_at)
             }
