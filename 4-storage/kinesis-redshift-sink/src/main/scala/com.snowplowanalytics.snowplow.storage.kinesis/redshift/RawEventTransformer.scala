@@ -28,7 +28,8 @@ import scalaz.Scalaz._
 import scalaz._
 
 object FieldIndexes { // 0-indexed
-val collectorTstamp = 3
+  val collectorTstamp = 3
+  val appId = 1
   val eventId = 6
   val contexts = 52
   val unstructEvent = 58
@@ -60,7 +61,6 @@ class RawEventTransformer extends ITransformer[ ValidatedRecord, EmitterInput ] 
   override def fromClass(record: EmitterInput) = record
   private lazy val Mapper = new ObjectMapper
   private val FieldCount = 128
-
 
   def extractAugur(fields: Array[String]): Option[(String, String)] = {
     val contexts = fields(FieldIndexes.contexts)
@@ -104,9 +104,9 @@ class RawEventTransformer extends ITransformer[ ValidatedRecord, EmitterInput ] 
   def filterFields(fields: Array[String]): Array[String] = {
     try {
       val newFields = fields.clone()
-      newFields(FieldIndexes.contexts) = null
-      newFields(FieldIndexes.unstructEvent) = null
-      newFields(FieldIndexes.derived_contexts) = null
+//      newFields(FieldIndexes.contexts) = null
+//      newFields(FieldIndexes.unstructEvent) = null
+//      newFields(FieldIndexes.derived_contexts) = null
       // network_userid is used for authentication of realtime so we need to keep it
 //      newFields(FieldIndexes.network_userId) = null
       newFields(FieldIndexes.user_fingerprint) = null

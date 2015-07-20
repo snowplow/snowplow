@@ -74,7 +74,6 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, badSink: ISink)(imp
   }
   val emptyList = List[EmitterInput]()
 
-  var tableWriter: TableWriter = null
   var shreder: InstantShreder = null
 
   /**
@@ -91,21 +90,22 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, badSink: ISink)(imp
     log.info(s"Flushing buffer with ${buffer.getRecords.size} records.")
 
     try {
-      if (tableWriter == null) {
-        tableWriter = new TableWriter(RedshiftEmitter.redshiftDataSource, props.getProperty("redshift_table"))
-      }
       if (shreder == null) {
         shreder = new InstantShreder(RedshiftEmitter.redshiftDataSource)
       }
-
+      implicit val dataSource = RedshiftEmitter.redshiftDataSource
       try {
         buffer.getRecords.foreach { record =>
-          tableWriter.write(record._1)
           shreder.shred(record._1)
+          // Erase the fields after they've been extracted by shredding
+          record._1(FieldIndexes.contexts) = null
+          record._1(FieldIndexes.unstructEvent) = null
+          record._1(FieldIndexes.derived_contexts) = null
+          TableWriter.writerByName(props.getProperty("redshift_table"), None, None, record._1(FieldIndexes.appId))
+            .foreach(_.write(record._1))
         }
       }
       finally {
-        tableWriter.finished()
         shreder.finished()
       }
     }

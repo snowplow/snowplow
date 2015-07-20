@@ -21,6 +21,7 @@ import com.snowplowanalytics.iglu.client.Resolver
 import com.snowplowanalytics.snowplow.enrich.hadoop._
 
 import scalaz.{Success, Failure}
+import scala.collection.JavaConversions._
 
 // Argot
 import org.clapper.argot._
@@ -38,7 +39,6 @@ import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 import sinks._
 import com.fasterxml.jackson.databind.ObjectMapper
 import scala.language.implicitConversions
-
 
 /**
  * The entrypoint class for the Kinesis-S3 Sink applciation.
@@ -120,14 +120,25 @@ object SinkApp extends App {
     val initialPosition = kinesisIn.getString("initial-position")
     val appName = kinesis.getString("app-name")
 
-    val redshift_password = connector.getConfig("redshift").getString("password")
-    val redshift_table = connector.getConfig("redshift").getString("table")
-    val redshift_url = connector.getConfig("redshift").getString("url")
-    val redshift_username = connector.getConfig("redshift").getString("username")
+
+    val redshift: Config = connector.getConfig("redshift")
+    val redshift_password = redshift.getString("password")
+    val redshift_table = redshift.getString("table")
+    val redshift_url = redshift.getString("url")
+    val redshift_username = redshift.getString("username")
     props.setProperty("redshift_password", redshift_password)
     props.setProperty("redshift_table", redshift_table)
     props.setProperty("redshift_url", redshift_url)
     props.setProperty("redshift_username", redshift_username)
+    props.setProperty("defaultSchema", redshift.getString("defaultSchema"))
+    if (redshift.hasPath("logFile")) props.setProperty("logFile", redshift.getString("logFile"))
+    if (redshift.hasPath("appIdToSchema")) {
+      val appIds = redshift.getConfig("appIdToSchema")
+      for (entry <- appIds.entrySet()) {
+        props.setProperty(entry.getKey + "_schema", entry.getValue.toString)
+      }
+    }
+    props.setProperty("jsonpaths", connector.getString("jsonpaths"))
 
     val buffer = connector.getConfig("buffer")
     val byteLimit = buffer.getString("byte-limit")

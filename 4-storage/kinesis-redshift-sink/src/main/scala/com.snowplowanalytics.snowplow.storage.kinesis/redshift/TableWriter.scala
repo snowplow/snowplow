@@ -45,6 +45,13 @@ object SQLConverters {
 }
 
 object TableWriter {
+  def flush() = {
+    writers.values.foreach(_.foreach(_.finished()))
+  }
+
+  val log = LogFactory.getLog(classOf[TableWriter])
+  val writers = scala.collection.mutable.Map[String, Option[TableWriter]]()
+
   def tableExists(tableName: String)(implicit dataSource: DataSource) : Boolean = {
     val conn = dataSource.getConnection
     try {
@@ -58,6 +65,46 @@ object TableWriter {
     }
     finally {
       conn.close()
+    }
+  }
+
+  def tableForWriter(props:Properties, tableName: String): String = {
+    if (tableName.contains(".")) return tableName
+    props.getProperty("defaultSchema") + "." + tableName
+  }
+
+  def writerByName(schemaName: String, vendor: Option[String], version: Option[String], appId: String)
+                  (implicit props: Properties, dataSource:DataSource): Option[TableWriter] = {
+    val (dbSchema, dbTable) = if (schemaName.contains(".")) {
+      (schemaName.substring(0, schemaName.indexOf(".")), schemaName.substring(schemaName.indexOf(".") + 1))
+    } else {
+      if (props.containsKey(appId + "_schema")) {
+        (props.getProperty(appId + "_schema"), schemaName)
+      } else {
+        (props.getProperty("defaultSchema"), schemaName)
+      }
+    }
+    val tableName = (vendor, version) match {
+      case (Some(_vendor), Some(_version)) =>
+        s"$dbSchema." + s"${_vendor}_${dbTable}_${_version}".replaceAllLiterally(".", "_")
+      case (None, Some(_version)) =>
+        s"$dbSchema." + s"${dbTable}_${_version}".replaceAllLiterally(".", "_")
+      case (None, None) =>
+        s"$dbSchema." + s"$dbTable".replaceAllLiterally(".", "_")
+      case (Some(_vendor), None) =>
+        s"$dbSchema." + s"${vendor}_$dbTable".replaceAllLiterally(".", "_")
+    }
+    synchronized {
+      if (!writers.contains(tableName)) {
+        if (tableExists(tableName)) {
+          log.info(s"Creating writer for $tableName")
+          writers += tableName -> Some(new TableWriter(dataSource, tableName))
+        } else {
+          log.error(s"Table does not exist for $tableName")
+          writers += tableName -> None
+        }
+      }
+      writers(tableName)
     }
   }
 }

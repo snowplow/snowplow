@@ -1,5 +1,6 @@
 package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 
+import java.io.{FileWriter, FileOutputStream}
 import java.net.URL
 import java.util.Properties
 import javax.sql.DataSource
@@ -20,16 +21,20 @@ import scalaz.{Failure, Success}
  * Created by denismo on 17/07/15.
  */
 class InstantShreder(dataSource : DataSource)(implicit resolver: Resolver, props: Properties) {
-
-
-  val writers = scala.collection.mutable.Map[String, Option[TableWriter]]()
   val jsonPaths = scala.collection.mutable.Map[String, Option[Array[String]]]()
   implicit val _dataSource: DataSource = dataSource
   val log = LogFactory.getLog(classOf[InstantShreder])
 
+  var file = if (props.containsKey("logFile")) new FileWriter("/tmp/shreder.txt") else null
+
   def shred(fields: Array[String]) = {
-    val validatedEvents = ShredJob.loadAndShred(fields.mkString("\t"))
-    val events = for {
+    if (file != null) {
+      file.write(fields.map(f => if (f == null) "" else f).mkString("\t")+"\n")
+    }
+    log.info("Shreding " + fields.map(f => if (f == null) "" else f).mkString(","))
+    val appId = fields(FieldIndexes.appId)
+    val validatedEvents = ShredJob.loadAndShred(fields.map(f => if (f == null) "" else f).mkString("\t"))
+    for {
       validated <- validatedEvents match {
         case Success(nel @ _ :: _) =>
           Some(nel) // (Non-empty) List -> Some(List) of JsonSchemaPairs
@@ -39,35 +44,17 @@ class InstantShreder(dataSource : DataSource)(implicit resolver: Resolver, props
         case _ => None
       }
     } yield for {
-      pairs <- validated
-    } yield pairs
-    for (pairs <- events) {
-      for (pair <- pairs) {
-        store(pair._1, pair._2.toString)
-      }
-    }
+      pair <- validated
+      stored <- store(appId, pair._1, pair._2.toString)
+    } yield stored
   }
 
-  private def writerByKey(key: SchemaKey) : Option[TableWriter] = {
+  private def writerByKey(key: SchemaKey, appId: String) : Option[TableWriter] = {
     val version = key.getModelRevisionAddition match {
       case Some((x:Int, y:Int, z:Int)) => x
       case _ => 1
     }
-    val (dbSchema, dbTable) = if (key.name.contains(".")) {
-      (key.name.substring(0, key.name.indexOf(".")), key.name.substring(key.name.indexOf(".") + 1))
-    } else {
-      (props.getProperty("defaultSchema"), key.name)
-    }
-    val tableName = s"$dbSchema." + s"${key.vendor}_${dbTable}_$version".replaceAllLiterally(".","_")
-    if (!writers.contains(tableName)) {
-      if (TableWriter.tableExists(tableName)) {
-        writers += tableName -> Some(new TableWriter(dataSource, tableName))
-      } else {
-        log.error(s"Table does not exist for $tableName")
-        writers += tableName -> None
-      }
-    }
-    writers(tableName)
+    TableWriter.writerByName(key.name, Some(key.vendor), Some(version.toString), appId)
   }
 
   private def fieldsMapped(key: SchemaKey, json: String) : Option[Array[String]] = {
@@ -122,11 +109,7 @@ class InstantShreder(dataSource : DataSource)(implicit resolver: Resolver, props
     }
     val mapKey = s"${key.vendor}/${key.name}_$version"
     if (!jsonPaths.contains(mapKey)) {
-      val rootRepoURL = lookupRepoUrl(key, resolver.repos)
-      if (rootRepoURL == null) {
-        log.warn(s"Unable to determine repo URI for $key")
-        return None
-      }
+      val rootRepoURL = props.getProperty("jsonpaths")
       val jsonPath = s"$rootRepoURL/jsonpaths/${key.vendor}/${key.name}_$version.json"
       try {
         val arrayNode: ArrayNode = JsonLoader.fromURL(new URL(jsonPath)).get("jsonpaths").asInstanceOf[ArrayNode]
@@ -144,20 +127,23 @@ class InstantShreder(dataSource : DataSource)(implicit resolver: Resolver, props
     jsonPaths(mapKey)
   }
 
-  private def store(key: SchemaKey, json: String): Unit = {
+  private def store(appId: String, key: SchemaKey, json: String): String = {
     log.info(s"Store into $key")
-    val writer = writerByKey(key)
+    val writer = writerByKey(key, appId)
     val fields = fieldsMapped(key, json)
     if (writer.isDefined && fields.isDefined) {
       val fieldString: String = fields.get.mkString(",")
       log.info(s"Storing ($fieldString) in ${key.toPath}")
       writer.get.write(fields.get)
+      "1"
     } else {
       if (writer.isEmpty) log.warn(s"Writer is not defined for $key")
       if (fields.isEmpty) log.warn(s"Could not parse fields off $json")
+      "0"
     }
   }
   def finished() = {
-    writers.values.foreach(_.foreach(_.finished()))
+    if (file != null) file.flush()
+    TableWriter.flush()
   }
 }
