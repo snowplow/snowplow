@@ -11,6 +11,8 @@ import com.jayway.jsonpath.{Configuration, JsonPath}
 import com.snowplowanalytics.iglu.client.repositories.HttpRepositoryRef
 import com.snowplowanalytics.iglu.client.{RepositoryRefs, Resolver, SchemaKey}
 import com.snowplowanalytics.snowplow.enrich.hadoop._
+import com.snowplowanalytics.snowplow.enrich.hadoop.inputs.EnrichedEventLoader
+import com.snowplowanalytics.snowplow.enrich.hadoop.shredder.Shredder
 import net.minidev.json.JSONArray
 import org.apache.commons.logging.LogFactory
 
@@ -33,19 +35,12 @@ class InstantShreder(dataSource : DataSource)(implicit resolver: Resolver, props
     }
     log.info("Shreding " + fields.map(f => if (f == null) "" else f).mkString(","))
     val appId = fields(FieldIndexes.appId)
-    val validatedEvents = ShredJob.loadAndShred(fields.map(f => if (f == null) "" else f).mkString("\t"))
-    for {
-      validated <- validatedEvents match {
-        case Success(nel @ _ :: _) =>
-          Some(nel) // (Non-empty) List -> Some(List) of JsonSchemaPairs
-        case Failure(nel)          =>
-          log.error(nel.toString())
-          None      // Discard
-        case _ => None
-      }
-    } yield for {
-      pair <- validated
-      stored <- store(appId, pair._1, pair._2.toString)
+    val fieldArray = fields.map(f => if (f == null) "" else f).mkString("\t")
+    val validatedEvents = ShredJob.loadAndShred2(fields.map(f => if (f == null) "" else f).mkString("\t"))
+    val allStored = for {
+      shredded <- validatedEvents
+      pair <- shredded
+      stored = store(appId, pair._1, pair._2.toString)
     } yield stored
   }
 
@@ -71,8 +66,8 @@ class InstantShreder(dataSource : DataSource)(implicit resolver: Resolver, props
           case strValue1: String =>
             strValue = strValue1
           case array: JSONArray =>
-            strValue = array.get(0).asInstanceOf[String]
-          case _ =>
+            strValue = array.toString
+          case _ => ()
         }
 
         fields += (if (value == null) null else value.toString)

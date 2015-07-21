@@ -28,6 +28,7 @@ object TestShred {
     }
     implicit val props = new Properties()
     props.setProperty("defaultSchema", "test")
+    props.setProperty("jsonpaths", "http://digdeep-snowplow-hosted-assets.s3-website-ap-southeast-2.amazonaws.com")
 
     val shreder = new InstantShreder(source)
     import scala.io.Source
