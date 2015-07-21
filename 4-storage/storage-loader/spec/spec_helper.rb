@@ -13,21 +13,7 @@
 # Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-source "https://rubygems.org"
-ruby "1.9.3"
+require 'coveralls'
+Coveralls.wear!
 
-# StorageLoader is a Ruby app (not a RubyGem)
-# built with Bundler, so we add in the
-# RubyGems it requires here.
-gem "sluice", "~> 0.2.2"
-gem 'jdbc-postgres'
-gem "plissken", "~> 0.1.0"
-gem "contracts", "= 0.7"
-gem "snowplow-tracker", "~> 0.4.2"
-
-group :development do
-  gem "rspec", "~> 2.14", ">= 2.14.1"
-  gem "coveralls"
-
-  gem "warbler" if RUBY_PLATFORM == 'java'
-end
+require 'snowplow-storage-loader/sanitization'
