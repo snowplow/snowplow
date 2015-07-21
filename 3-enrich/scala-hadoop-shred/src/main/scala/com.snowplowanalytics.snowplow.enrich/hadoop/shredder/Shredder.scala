@@ -159,7 +159,7 @@ object Shredder {
 //          validated
 //          val validated: Validation[String, JsonSchemaPair] = attachMetadata(good, partialHierarchy).success
 //          val temp: ValidatedNel[JsonSchemaPair] = validated.toProcessingMessage
-          good.some
+          attachMetadata(good, partialHierarchy).some
         case Failure(bad) =>
           log.error(bad)
           None
@@ -271,8 +271,7 @@ object Shredder {
         if (data.isArray) {
           data.asInstanceOf[ArrayNode]
         } else {
-          log.warn("Data is not array in " + instance.get)
-          List()
+          List(data)
         }
       } catch {
         case e: Throwable =>

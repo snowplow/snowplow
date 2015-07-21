@@ -19,9 +19,6 @@ import org.apache.commons.logging.LogFactory
 import scala.annotation.tailrec
 import scalaz.{Failure, Success}
 
-/**
- * Created by denismo on 17/07/15.
- */
 class InstantShreder(dataSource : DataSource)(implicit resolver: Resolver, props: Properties) {
   val jsonPaths = scala.collection.mutable.Map[String, Option[Array[String]]]()
   implicit val _dataSource: DataSource = dataSource
