@@ -10,24 +10,23 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-source "https://rubygems.org"
-ruby "1.9.3"
+require 'spec_helper'
 
-# StorageLoader is a Ruby app (not a RubyGem)
-# built with Bundler, so we add in the
-# RubyGems it requires here.
-gem "sluice", "~> 0.2.2"
-gem 'jdbc-postgres'
-gem "plissken", "~> 0.1.0"
-gem "contracts", "= 0.7"
-gem "snowplow-tracker", "~> 0.4.2"
+Sanitization = Snowplow::StorageLoader::Sanitization
 
-group :development do
-  gem "rspec", "~> 2.14", ">= 2.14.1"
-  gem "coveralls"
+describe Sanitization do
 
-  gem "warbler" if RUBY_PLATFORM == 'java'
+  it 'removes all sufficiently long substrings of secret credentials from a message' do
+    Sanitization.sanitize_message(
+      "abcdefghijklmnopqrstuvwxyz bcdefgh",
+      [
+        "0abcdefg0",
+        "0pqrs0"
+      ],
+      5).should == "xxxxxxxhijklmnopqrstuvwxyz xxxxxxh"
+  end
+
 end
