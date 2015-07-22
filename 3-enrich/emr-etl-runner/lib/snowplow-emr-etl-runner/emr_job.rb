@@ -32,54 +32,65 @@ module Snowplow
       # Constants
       JAVA_PACKAGE = "com.snowplowanalytics.snowplow"
       PARTFILE_REGEXP = ".*part-.*"
+      BOOTSTRAP_FAILURE_INDICATOR = /bootstrap action|Master instance startup failed/
 
       # Need to understand the status of all our jobflow steps
       @@running_states = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
       @@failed_states  = Set.new(%w(FAILED CANCELLED))
 
-      include Logging
+      include Monitoring::Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String] => EmrJob
-      def initialize(debug, enrich, shred, s3distcp, config, enrichments_array)
+      Contract Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String => EmrJob
+      def initialize(debug, enrich, shred, s3distcp, config, enrichments_array, resolver)
 
         logger.debug "Initializing EMR jobflow"
 
         # Configuration
-        assets = self.class.get_assets(config[:s3][:buckets][:assets], config[:etl][:versions][:hadoop_enrich], config[:etl][:versions][:hadoop_shred])
+        assets = self.class.get_assets(config[:aws][:s3][:buckets][:assets], config[:enrich][:versions][:hadoop_enrich], config[:enrich][:versions][:hadoop_shred])
         run_tstamp = Time.new
         run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
+        output_codec = self.class.output_codec_from_compression_format(config[:enrich][:output_compression])
         s3 = Sluice::Storage::S3::new_fog_s3_from(
-          config[:s3][:region],
+          config[:aws][:s3][:region],
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
+
+        # Check whether there are an even number of .lzo and .lzo.index files
+        if config[:collectors][:format] == 'thrift'
+          processing_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:raw][:processing])
+          processing_file_count = Sluice::Storage::S3.list_files(s3, processing_location).size
+          unless processing_file_count % 2 == 0
+            raise UnmatchedLzoFilesError, "Processing bucket contains #{processing_file_count} .lzo and .lzo.index files, expected an even number"
+          end
+        end
 
         # Create a job flow with your AWS credentials
         @jobflow = Elasticity::JobFlow.new(config[:aws][:access_key_id], config[:aws][:secret_access_key])
 
         # Configure
-        @jobflow.name                 = config[:etl][:job_name]
-        @jobflow.ami_version          = config[:emr][:ami_version]
-        @jobflow.ec2_key_name         = config[:emr][:ec2_key_name]
+        @jobflow.name                 = config[:enrich][:job_name]
+        @jobflow.ami_version          = config[:aws][:emr][:ami_version]
+        @jobflow.ec2_key_name         = config[:aws][:emr][:ec2_key_name]
 
-        @jobflow.region               = config[:emr][:region]
-        @jobflow.job_flow_role        = config[:emr][:jobflow_role] # Note job_flow vs jobflow
-        @jobflow.service_role         = config[:emr][:service_role]
-        @jobflow.placement            = config[:emr][:placement]
-        unless config[:emr][:ec2_subnet_id].nil? # Nils placement so do last and conditionally
-          @jobflow.ec2_subnet_id      = config[:emr][:ec2_subnet_id]
+        @jobflow.region               = config[:aws][:emr][:region]
+        @jobflow.job_flow_role        = config[:aws][:emr][:jobflow_role] # Note job_flow vs jobflow
+        @jobflow.service_role         = config[:aws][:emr][:service_role]
+        @jobflow.placement            = config[:aws][:emr][:placement]
+        unless config[:aws][:emr][:ec2_subnet_id].nil? # Nils placement so do last and conditionally
+          @jobflow.ec2_subnet_id      = config[:aws][:emr][:ec2_subnet_id]
         end
 
-        @jobflow.log_uri              = config[:s3][:buckets][:log]
+        @jobflow.log_uri              = config[:aws][:s3][:buckets][:log]
         @jobflow.enable_debugging     = debug
         @jobflow.visible_to_all_users = true
 
-        @jobflow.instance_count       = config[:emr][:jobflow][:core_instance_count] + 1 # +1 for the master instance
-        @jobflow.master_instance_type = config[:emr][:jobflow][:master_instance_type]
-        @jobflow.slave_instance_type  = config[:emr][:jobflow][:core_instance_type]
+        @jobflow.instance_count       = config[:aws][:emr][:jobflow][:core_instance_count] + 1 # +1 for the master instance
+        @jobflow.master_instance_type = config[:aws][:emr][:jobflow][:master_instance_type]
+        @jobflow.slave_instance_type  = config[:aws][:emr][:jobflow][:core_instance_type]
 
-        if config[:etl][:collector_format] == 'thrift'
+        if config[:collectors][:format] == 'thrift'
           [
             Elasticity::HadoopBootstrapAction.new('-c', 'io.file.buffer.size=65536'),
             Elasticity::HadoopBootstrapAction.new('-m', 'mapreduce.user.classpath.first=true')
@@ -89,9 +100,11 @@ module Snowplow
         end
 
         # Add custom bootstrap actions
-        bootstrap_actions = config[:emr][:bootstrap]
-        bootstrap_actions.each do |bootstrap_action|
-          @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_action))
+        bootstrap_actions = config[:aws][:emr][:bootstrap]
+        unless bootstrap_actions.nil?
+          bootstrap_actions.each do |bootstrap_action|
+            @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_action))
+          end
         end
 
         # Prepare a 3.x AMI for Snowplow
@@ -99,9 +112,9 @@ module Snowplow
         @jobflow.add_bootstrap_action(prepare_ami3_action)
 
         # Install and launch HBase
-        hbase = config[:emr][:software][:hbase]
+        hbase = config[:aws][:emr][:software][:hbase]
         unless not hbase
-          install_hbase_action = Elasticity::BootstrapAction.new("s3://#{config[:emr][:region]}.elasticmapreduce/bootstrap-actions/setup-hbase")
+          install_hbase_action = Elasticity::BootstrapAction.new("s3://#{config[:aws][:emr][:region]}.elasticmapreduce/bootstrap-actions/setup-hbase")
           @jobflow.add_bootstrap_action(install_hbase_action)
 
           start_hbase_step = Elasticity::CustomJarStep.new("/home/hadoop/lib/hbase-#{hbase}.jar")
@@ -111,7 +124,7 @@ module Snowplow
         end
 
         # Install Lingual
-        lingual = config[:emr][:software][:lingual]
+        lingual = config[:aws][:emr][:software][:lingual]
         unless not lingual
           install_lingual_action = Elasticity::BootstrapAction.new("s3://files.concurrentinc.com/lingual/#{lingual}/lingual-client/install-lingual-client.sh")
           @jobflow.add_bootstrap_action(install_lingual_action)
@@ -122,13 +135,13 @@ module Snowplow
         # @jobflow.add_bootstrap_action(install_ser_debug_action)
 
         # Now let's add our task group if required
-        tic = config[:emr][:jobflow][:task_instance_count]
+        tic = config[:aws][:emr][:jobflow][:task_instance_count]
         if tic > 0
           instance_group = Elasticity::InstanceGroup.new.tap { |ig|
             ig.count = tic
-            ig.type  = config[:emr][:jobflow][:task_instance_type]
+            ig.type  = config[:aws][:emr][:jobflow][:task_instance_type]
             
-            tib = config[:emr][:jobflow][:task_instance_bid]
+            tib = config[:aws][:emr][:jobflow][:task_instance_bid]
             if tib.nil?
               ig.set_on_demand_instances
             else
@@ -139,9 +152,9 @@ module Snowplow
           @jobflow.set_task_instance_group(instance_group)
         end
 
-        s3_endpoint = self.class.get_s3_endpoint(config[:s3][:region])
-        csbr = config[:s3][:buckets][:raw]
-        csbe = config[:s3][:buckets][:enriched]
+        s3_endpoint = self.class.get_s3_endpoint(config[:aws][:s3][:region])
+        csbr = config[:aws][:s3][:buckets][:raw]
+        csbe = config[:aws][:s3][:buckets][:enriched]
 
         enrich_final_output = if enrich
           self.class.partition_by_run(csbe[:good], run_id)
@@ -158,7 +171,8 @@ module Snowplow
 
           # 1. Compaction to HDFS (only for CloudFront currently)
           raw_input = csbr[:processing]
-          to_hdfs = ((self.class.is_cloudfront_log(config[:etl][:collector_format]) or config[:etl][:collector_format] == "thrift") and s3distcp)
+
+          to_hdfs = ((self.class.is_cloudfront_log(config[:collectors][:format]) or config[:etl][:format] == "thrift") and s3distcp)
 
           # TODO: throw exception if processing thrift with --skip s3distcp
           # https://github.com/snowplow/snowplow/issues/1648
@@ -181,7 +195,7 @@ module Snowplow
                 "--targetSize"  , "128",
                 "--outputCodec" , "lzo"
               ].select { |el|
-                self.class.is_cloudfront_log(config[:etl][:collector_format])
+                self.class.is_cloudfront_log(config[:collectors][:format])
               }
             compact_to_hdfs_step.name << ": Raw S3 -> HDFS"
 
@@ -203,11 +217,11 @@ module Snowplow
             { :in     => enrich_step_input,
               :good   => enrich_step_output,
               :bad    => self.class.partition_by_run(csbe[:bad],    run_id),
-              :errors => self.class.partition_by_run(csbe[:errors], run_id, config[:etl][:continue_on_unexpected_error])
+              :errors => self.class.partition_by_run(csbe[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
             },
-            { :input_format     => config[:etl][:collector_format],
+            { :input_format     => config[:collectors][:format],
               :etl_tstamp       => etl_tstamp,
-              :iglu_config      => self.class.build_iglu_config_json(config[:iglu]),
+              :iglu_config      => self.class.build_iglu_config_json(resolver),
               :enrichments      => self.class.build_enrichments_json(enrichments_array)
             }
           )
@@ -226,17 +240,29 @@ module Snowplow
               "--src"        , enrich_step_output,
               "--dest"       , enrich_final_output,
               "--srcPattern" , PARTFILE_REGEXP,
-              "--s3Endpoint" , s3_endpoint
+              "--s3Endpoint" , s3_endpoint,
+              "--outputCodec", output_codec
             ]
             copy_to_s3_step.name << ": Enriched HDFS -> S3"
             @jobflow.add_step(copy_to_s3_step)
+
+            copy_success_file_step = Elasticity::S3DistCpStep.new
+            copy_success_file_step.arguments = [
+              "--src"        , enrich_step_output,
+              "--dest"       , enrich_final_output,
+              "--srcPattern" , ".*_SUCCESS",
+              "--s3Endpoint" , s3_endpoint
+            ]
+            copy_success_file_step.name << ": Enriched HDFS _SUCCESS -> S3"
+            @jobflow.add_step(copy_success_file_step)
           end
+
         end
 
         if shred
 
           # 3. Shredding
-          csbs = config[:s3][:buckets][:shredded]
+          csbs = config[:aws][:s3][:buckets][:shredded]
           shred_final_output = self.class.partition_by_run(csbs[:good], run_id)
           shred_step_output = if s3distcp
             "hdfs:///local/snowplow/shredded-events/"
@@ -251,7 +277,8 @@ module Snowplow
               "--src"        , enrich_final_output, # Opposite way round to normal
               "--dest"       , enrich_step_output,
               "--srcPattern" , PARTFILE_REGEXP,
-              "--s3Endpoint" , s3_endpoint
+              "--s3Endpoint" , s3_endpoint,
+              "--outputCodec", output_codec
             ]
             copy_to_hdfs_step.name << ": Enriched S3 -> HDFS"
             @jobflow.add_step(copy_to_hdfs_step)
@@ -264,10 +291,10 @@ module Snowplow
             { :in          => enrich_step_output,
               :good        => shred_step_output,
               :bad         => self.class.partition_by_run(csbs[:bad],    run_id),
-              :errors      => self.class.partition_by_run(csbs[:errors], run_id, config[:etl][:continue_on_unexpected_error])
+              :errors      => self.class.partition_by_run(csbs[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
             },
             {
-              :iglu_config => self.class.build_iglu_config_json(config[:iglu])
+              :iglu_config => self.class.build_iglu_config_json(resolver)
             }
           )
 
@@ -285,7 +312,8 @@ module Snowplow
               "--src"        , shred_step_output,
               "--dest"       , shred_final_output,
               "--srcPattern" , PARTFILE_REGEXP,
-              "--s3Endpoint" , s3_endpoint
+              "--s3Endpoint" , s3_endpoint,
+              "--outputCodec", output_codec
             ]
             copy_to_s3_step.name << ": Shredded HDFS -> S3"
             @jobflow.add_step(copy_to_s3_step)
@@ -297,19 +325,42 @@ module Snowplow
 
       # Run (and wait for) the daily ETL job.
       #
-      # Throws a RuntimeError if the jobflow does not succeed.
-      Contract None => nil
-      def run()
+      # Throws a BootstrapFailureError if the job fails due to a bootstrap failure.
+      # Throws an EmrExecutionError if the jobflow fails for any other reason.
+      Contract ConfigHash => nil
+      def run(config)
+
+        snowplow_tracking_enabled = ! config[:monitoring][:snowplow].nil?
 
         jobflow_id = @jobflow.run
         logger.debug "EMR jobflow #{jobflow_id} started, waiting for jobflow to complete..."
+
+        if snowplow_tracking_enabled
+          Monitoring::Snowplow.parameterize(config)
+          Monitoring::Snowplow.instance.track_job_started(@jobflow)
+        end
+
         status = wait_for()
 
-        if !status
+        if status.successful
+          logger.debug "EMR jobflow #{jobflow_id} completed successfully."
+          if snowplow_tracking_enabled
+            Monitoring::Snowplow.instance.track_job_succeeded(@jobflow)
+          end
+
+        elsif status.bootstrap_failure
+          if snowplow_tracking_enabled
+            Monitoring::Snowplow.instance.track_job_failed(@jobflow)
+          end
+          raise BootstrapFailureError, get_failure_details()
+
+        else
+          if snowplow_tracking_enabled
+            Monitoring::Snowplow.instance.track_job_failed(@jobflow)
+          end
           raise EmrExecutionError, get_failure_details()
         end
 
-        logger.debug "EMR jobflow #{jobflow_id} completed successfully."
         nil
       end
 
@@ -350,10 +401,12 @@ module Snowplow
       #
       # Returns true if the jobflow completed without error,
       # false otherwise.
-      Contract None => Bool
+      Contract None => JobResult
       def wait_for()
 
         success = false
+
+        bootstrap_failure = false
 
         # Loop until we can quit...
         while true do
@@ -366,6 +419,7 @@ module Snowplow
             # If no step is still running, then quit
             if statuses[0] == 0
               success = statuses[1] == 0 # True if no failures
+              bootstrap_failure = EmrJob.bootstrap_failure?(@jobflow)
               break
             else
               # Sleep a while before we check again
@@ -381,10 +435,19 @@ module Snowplow
           rescue Errno::ECONNRESET => res
             logger.warn "Got connection reset #{res}, waiting 5 minutes before checking jobflow again"
             sleep(300)
+          rescue Errno::ETIMEDOUT => to
+            logger.warn "Got connection timeout #{to}, waiting 5 minutes before checking jobflow again"
+            sleep(300)
+          rescue RestClient::InternalServerError => ise
+            logger.warn "Got internal server error #{ise}, waiting 5 minutes before checking jobflow again"
+            sleep(300)
+          rescue IOError => ioe
+            logger.warn "Got IOError #{ioe}, waiting 5 minutes before checking jobflow again"
+            sleep(300)
           end
         end
 
-        success
+        JobResult.new(success, bootstrap_failure)
       end
 
       # Prettified string containing failure details
@@ -496,15 +559,16 @@ module Snowplow
         Base64.strict_encode64(enrichments_json.to_json)
       end
 
-      Contract IgluConfigHash => String
-      def self.build_iglu_config_json(iglu_hash)
-        Base64.strict_encode64(iglu_hash.to_camelback_keys.to_json)
+      Contract String => String
+      def self.build_iglu_config_json(resolver)
+        Base64.strict_encode64(resolver)
       end
 
       Contract String, String, String => AssetsHash
       def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version)
+        enrich_path_middle = hadoop_enrich_version[0] == '0' ? 'hadoop-etl/snowplow-hadoop-etl' : 'scala-hadoop-enrich/snowplow-hadoop-enrich'
         {
-          :enrich   => "#{assets_bucket}3-enrich/scala-hadoop-enrich/snowplow-hadoop-enrich-#{hadoop_enrich_version}.jar",
+          :enrich   => "#{assets_bucket}3-enrich/#{enrich_path_middle}-#{hadoop_enrich_version}.jar",
           :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
         }
       end
@@ -517,6 +581,23 @@ module Snowplow
           "s3.amazonaws.com"
         else
           "s3-#{s3_region}.amazonaws.com"
+        end
+      end
+
+      # Returns true if the jobflow seems to have failed due to a bootstrap failure
+      Contract Elasticity::JobFlow => Bool
+      def self.bootstrap_failure?(jobflow)
+        jobflow.status.steps.all? {|s| s.state == 'CANCELLED'} &&
+        (! (jobflow.status.last_state_change_reason =~ BOOTSTRAP_FAILURE_INDICATOR).nil?)
+      end
+
+      # Converts the output_compression configuration field to
+      Contract Maybe[String] => String
+      def self.output_codec_from_compression_format(compression_format)
+        if compression_format.nil?
+          "none"
+        else
+          compression_format.downcase
         end
       end
 

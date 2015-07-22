@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
@@ -10,24 +12,14 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-source "https://rubygems.org"
-ruby "1.9.3"
-
-# ErmEtlRunner is a Ruby app (not a RubyGem)
-# built with Bundler, so we add in the
-# RubyGems it requires here.
-gem "contracts", "= 0.7"
-gem "elasticity", "~> 4.0.5"
-gem "sluice", "~> 0.2.2"
-gem "awrence", "~> 0.1.0"
-gem "snowplow-tracker", "~> 0.4.2"
-
-group :development do
-  gem "rspec", "~> 2.14", ">= 2.14.1"
-  gem "coveralls"
-  
-  gem "warbler" if RUBY_PLATFORM == 'java'
-end
+MYSELF=`which "$0" 2>/dev/null`
+[ $? -gt 0 -a -f "$0" ] && MYSELF="./$0"
+java=java
+if test -n "$JAVA_HOME"; then
+    java="$JAVA_HOME/bin/java"
+fi
+exec "$java" $java_args -jar $MYSELF "$@"
+exit 1

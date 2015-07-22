@@ -16,6 +16,7 @@
 require 'optparse'
 require 'yaml'
 require 'contracts'
+require 'erb'
 
 module Snowplow
   module EmrEtlRunner
@@ -23,7 +24,8 @@ module Snowplow
 
       include Contracts
 
-      # Get our arguments and configuration.
+      # Get our arguments, configuration,
+      # enrichments and Iglu resolver.
       #
       # Source from parse_args (i.e. the CLI)
       # unless both are provided as arguments
@@ -35,8 +37,8 @@ module Snowplow
       #
       # Returns a Hash containing our runtime
       # arguments and our configuration.
-      Contract None => ArgsConfigEnrichmentsTuple
-      def self.get_args_config_enrichments
+      Contract None => ArgsConfigEnrichmentsResolverTuple
+      def self.get_args_config_enrichments_resolver
         
         # Defaults
         options = {
@@ -52,17 +54,18 @@ module Snowplow
 
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config_file] = config }
           opts.on('-n', '--enrichments ENRICHMENTS', 'enrichments directory') {|config| options[:enrichments_directory] = config}
+          opts.on('-r', '--resolver RESOLVER', 'Iglu resolver file') {|config| options[:resolver_file] = config}
           opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
-          opts.on('-x', '--skip staging,s3distcp,emr{enrich,shred},archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
-          opts.on('-E', '--process-enrich LOCATION', 'run enrichment only on specified location. Implies --skip staging,shred,archive') { |config|
+          opts.on('-x', '--skip staging,s3distcp,emr{enrich,shred},archive_raw', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-E', '--process-enrich LOCATION', 'run enrichment only on specified location. Implies --skip staging,shred,archive_raw') { |config|
             options[:process_enrich_location] = config
-            options[:skip] = %w(staging shred archive)
+            options[:skip] = %w(staging shred archive_raw)
           }
-          opts.on('-S', '--process-shred LOCATION', 'run shredding only on specified location. Implies --skip staging,enrich,archive') { |config|
+          opts.on('-S', '--process-shred LOCATION', 'run shredding only on specified location. Implies --skip staging,enrich,archive_raw') { |config|
             options[:process_shred_location] = config
-            options[:skip] = %w(staging enrich archive)
+            options[:skip] = %w(staging enrich archive_raw)
           }
 
           opts.separator ""
@@ -94,44 +97,88 @@ module Snowplow
           :process_enrich_location => options[:process_enrich_location],
           :process_shred_location  => options[:process_shred_location]
         }
-        config = load_file(options[:config_file], optparse.to_s)
 
-        enrichments = options[:enrichments_directory]
+        optp = optparse.to_s
+        config = load_config(options[:config_file], optp)
+        enrichments = load_enrichments(options[:enrichments_directory], optp)
+        resolver = load_resolver(options[:resolver_file], optp)
 
-        # If no enrichments argument is passed, make the array of enrichments empty
-        if enrichments.nil?
-          return [args, config, []]
-        end
-
-        # Check the enrichments directory exists and is a directory
-        unless Dir.exists?(enrichments)
-          raise ConfigError, "Enrichments directory '#{enrichments}' does not exist, or is not a directory"
-        end
-
-        # Add a trailing slash if necessary to make globbing work
-        enrichments = Sluice::Storage::trail_slash(enrichments)
-
-        enrichments_array = Dir.glob(enrichments + '*.json').map {|f| File.read(f)}
-
-        [args, config, enrichments_array]
+        [args, config, enrichments, resolver]
       end
 
     private
 
+      # Convert all keys in arbitrary hash into symbols
+      # Taken from http://stackoverflow.com/a/10721936/255627
+      def self.recursive_symbolize_keys(h)
+        case h
+        when Hash
+          Hash[
+            h.map do |k, v|
+              [ k.respond_to?(:to_sym) ? k.to_sym : k, recursive_symbolize_keys(v) ]
+            end
+          ]
+        when Enumerable
+          h.map { |v| recursive_symbolize_keys(v) }
+        else
+          h
+        end
+      end
+
       # Validate our args, load our config YAML, check config and args don't conflict
       Contract Maybe[String], String => ConfigHash
-      def self.load_file(config_file, optparse)
+      def self.load_config(config_file, optparse)
 
         # Check we have a config file argument and it exists
         if config_file.nil?
           raise ConfigError, "Missing option: config\n#{optparse}"
         end
 
-        unless File.file?(config_file)
+        # A single hyphen indicates that the config should be read from stdin
+        if config_file == '-'
+          config = $stdin.readlines.join
+        elsif File.file?(config_file)
+          config = File.new(config_file).read
+        else
           raise ConfigError, "Configuration file '#{config_file}' does not exist, or is not a file\n#{optparse}"
         end
 
-        YAML.load_file(config_file)
+        erb_config = ERB.new(config).result(binding)
+
+        recursive_symbolize_keys(YAML.load(erb_config))
+      end
+
+      # Load the enrichments directory into an array
+      Contract Maybe[String], String => ArrayOf[String]
+      def self.load_enrichments(enrichments_dir, optparse)
+        return [] if enrichments_dir.nil?
+
+        # Check the enrichments directory exists and is a directory
+        unless Dir.exists?(enrichments_dir)
+          raise ConfigError, "Enrichments directory '#{enrichments_dir}' does not exist, or is not a directory\n#{optparse}"
+        end
+
+        json_glob = Sluice::Storage::trail_slash(enrichments_dir) + '*.json'
+
+        Dir.glob(json_glob).map { |f|
+          File.read(f)
+        }
+      end
+
+      # Validate our args, load our Iglu resolver
+      Contract Maybe[String], String => String
+      def self.load_resolver(resolver_file, optparse)
+
+        # Check we have a resolver file argument and it exists
+        if resolver_file.nil?
+          raise ConfigError, "Missing option: resolver\n#{optparse}"
+        end
+
+        unless File.file?(resolver_file)
+          raise ConfigError, "Iglu resolver file '#{resolver_file}' does not exist, or is not a file\n#{optparse}"
+        end
+
+        File.read(resolver_file)
       end
 
     end

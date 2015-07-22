@@ -34,4 +34,11 @@ describe EmrJob do
     }
   end
 
+  it 'returns the Hadoop assets for old versions of Hadoop Shred' do
+    EmrJob.get_assets("s3://hadoop-assets/", "0.14.2", "0.3.0").should == {
+      :enrich   => "s3://hadoop-assets/3-enrich/hadoop-etl/snowplow-hadoop-etl-0.14.2.jar",
+      :shred    => "s3://hadoop-assets/3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-0.3.0.jar"
+    }
+  end
+
 end
