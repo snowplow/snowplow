@@ -30,9 +30,8 @@ class InstantShreder(dataSource : DataSource)(implicit resolver: Resolver, props
     if (file != null) {
       file.write(fields.map(f => if (f == null) "" else f).mkString("\t")+"\n")
     }
-    log.info("Shreding " + fields.map(f => if (f == null) "" else f).mkString(","))
+    if (log.isDebugEnabled) log.debug("Shreding " + fields.map(f => if (f == null) "" else f).mkString(","))
     val appId = fields(FieldIndexes.appId)
-    val fieldArray = fields.map(f => if (f == null) "" else f).mkString("\t")
     val validatedEvents = ShredJob.loadAndShred2(fields.map(f => if (f == null) "" else f).mkString("\t"))
     val allStored = for {
       shredded <- validatedEvents
@@ -120,18 +119,25 @@ class InstantShreder(dataSource : DataSource)(implicit resolver: Resolver, props
   }
 
   private def store(appId: String, key: SchemaKey, json: String): String = {
-    log.info(s"Store into $key")
-    val writer = writerByKey(key, appId)
-    val fields = fieldsMapped(key, json)
-    if (writer.isDefined && fields.isDefined) {
-      val fieldString: String = fields.get.mkString(",")
-      log.info(s"Storing ($fieldString) in ${key.toPath}")
-      writer.get.write(fields.get)
-      "1"
-    } else {
-      if (writer.isEmpty) log.warn(s"Writer is not defined for $key")
-      if (fields.isEmpty) log.warn(s"Could not parse fields off $json")
-      "0"
+    try {
+      if (log.isDebugEnabled) log.debug(s"Store into $key")
+      val writer = writerByKey(key, appId)
+      val fields = fieldsMapped(key, json)
+      if (writer.isDefined && fields.isDefined) {
+        val fieldString: String = fields.get.mkString(",")
+        if (log.isDebugEnabled) log.debug(s"Storing ($fieldString) in ${key.toPath}")
+        writer.get.write(fields.get)
+        "1"
+      } else {
+        if (writer.isEmpty) log.warn(s"Writer is not defined for $key")
+        if (fields.isEmpty) log.warn(s"Could not parse fields off $json")
+        "0"
+      }
+    }
+    catch {
+      case t:Throwable =>
+        log.error(s"Problem storing data into $key: $json", t)
+        "0"
     }
   }
   def finished() = {

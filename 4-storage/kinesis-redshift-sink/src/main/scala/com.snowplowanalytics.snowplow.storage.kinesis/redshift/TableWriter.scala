@@ -12,7 +12,7 @@ object SQLConverters {
   val log = LogFactory.getLog(classOf[TableWriter])
   class RedshiftOps(s: String) {
     def rsBoolean: Boolean = {
-      if (s == null) throw new IllegalArgumentException("string is null")
+      if (s == null) throw new IllegalArgumentException("boolean string is null")
       s.toLowerCase match {
         case "1" | "true" | "yes" => true
         case _ => false
