@@ -9,24 +9,36 @@
 # "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
-# Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
+# Author::    Fred Blundun (mailto:support@snowplowanalytics.com)
+# Copyright:: Copyright (c) 2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-source "https://rubygems.org"
-ruby "1.9.3"
+require 'spec_helper'
 
-# ErmEtlRunner is a Ruby app (not a RubyGem)
-# built with Bundler, so we add in the
-# RubyGems it requires here.
-gem "contracts", "~> 0.7"
-gem "elasticity", "~> 6.0.2"
-gem "sluice", "~> 0.2.1"
-gem "awrence", "~> 0.1.0"
+Runner = Snowplow::EmrEtlRunner::Runner
 
-group :development do
-  gem "rspec", "~> 2.14", ">= 2.14.1"
-  gem "coveralls"
-  
-  gem "warbler" if RUBY_PLATFORM == 'java'
+describe Runner do
+
+  it 'adds trailing slashes to all buckets' do
+    Runner.add_trailing_slashes({
+      '1' => 'a',
+      '2' => {
+        '3' => 'b',
+        '4' => 'c'
+      },
+      '5' => ['d', [{
+        '6' => 'e'
+      }]]
+    }).should == {
+      '1' => 'a/',
+      '2' => {
+        '3' => 'b/',
+        '4' => 'c/'
+      },
+      '5' => ['d/', [{
+        '6' => 'e/'
+      }]]
+    }
+  end
+
 end

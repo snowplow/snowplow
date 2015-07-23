@@ -1,3 +1,12 @@
+Release 68 Turquoise Jay (2015-07-23)
+-------------------------------------
+EmrEtlRunner: bumped to 0.16.0
+EmrEtlRunner: bumped Elasticity to 6.0.2 (#1903)
+EmrEtlRunner: named the processing bucket in its associated "is not empty" error (#1911)
+EmrEtlRunner: made in bucket an array (#1750)
+EmrEtlRunner: determined path to Hadoop enrich based on its version (#1789)
+EmrEtlRunner: added unit test for add_trailing_slashes function (#1904)
+
 Release 67 Bohemian Waxwing (2015-07-13)
 ----------------------------------------
 Common: added NFS and CORE configuration to Vagrantfile to enhance performance (#1831)

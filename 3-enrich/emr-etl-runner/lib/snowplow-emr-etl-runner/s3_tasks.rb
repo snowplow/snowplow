@@ -91,12 +91,13 @@ module Snowplow
           config[:aws][:secret_access_key])
 
         # Get S3 locations
-        in_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:raw][:in])
+        in_bucket_array = [* config[:s3][:buckets][:raw][:in]]
+        in_locations = in_bucket_array.map {|name| Sluice::Storage::S3::Location.new(name)}
         processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:raw][:processing])
 
         # Check whether our processing directory is empty
         unless Sluice::Storage::S3::is_empty?(s3, processing_location)
-          raise DirectoryNotEmptyError, "The processing directory is not empty"
+          raise DirectoryNotEmptyError, "Should not stage files for enrichment, processing bucket #{processing_location} is not empty"
         end
 
         # Early check whether our enrichment directory is empty. We do a late check too
@@ -124,9 +125,11 @@ module Snowplow
         end
 
         fix_filenames = build_fix_filenames(config[:s3][:region])
-        files_moved = Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move, fix_filenames, true)
+        files_moved = in_locations.map { |in_location|
+          Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move, fix_filenames, true)
+        }
 
-        if files_moved.length == 0
+        if files_moved.flatten.length == 0
           false
         else
           # Wait for s3 to eventually become consistent
