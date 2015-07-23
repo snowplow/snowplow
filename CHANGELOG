@@ -1,3 +1,18 @@
+Release 69 Blue-Bellied Roller (2015-07-24)
+-------------------------------------------
+Incremental SQL Model: added the new incremental queries (#1857)
+Incremental SQL Model: changed how query performance is tracked (#1855)
+Incremental SQL Model: added new setup queries (#1853)
+Incremental SQL Model: added migration queries (#1852)
+Incremental SQL Model: updated the SQL runner playbook (#1851)
+Incremental SQL Model: updated diagram (#1850)
+Deduplication: added a step that deduplicates events (#1866)
+Incremental SQL Model: replaced RANK with ROW_NUMBER (#1867)
+Mobile SQL Model: added sessionization and DAU queries (#1891
+SQL Models: renamed full and incremental to allow for more models ) (#1892)
+StorageLoader: wrote JSON path file for com.snowplowanalytics.snowplow/client_session (#1922)
+Redshift: added Redshift DDL for com.snowplowanalytics.snowplow/client_session (#1921)
+
 Release 68 Turquoise Jay (2015-07-23)
 -------------------------------------
 EmrEtlRunner: bumped to 0.16.0
