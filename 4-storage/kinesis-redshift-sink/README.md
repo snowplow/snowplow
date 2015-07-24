@@ -106,6 +106,8 @@ It works roughly as follows:
 
 Bad records are discarded, with error logging, and exceptions are propagated to KCL for its own bad record handling.
 
+In our testing, we found that the smallest dc1.large instance can accept records with an average throughput of 40 records/second.
+
 ### Caution
 
 While developing this project, it was discovered that for contexts with multiple custom JSONs, if one of them fails validation, an overarching failure is 
