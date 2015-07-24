@@ -33,9 +33,10 @@ object Dependencies {
   object V {
     // Java
     val http             = "4.3.3"
-    val commonsLang      = "3.1"
+    val commonsLang      = "3.4"
     val commonsIo        = "2.4"
-    val yodaTime         = "2.1"
+    val commonsCodec     = "1.5"
+    val yodaTime         = "2.2"
     val yodaConvert      = "1.2"
     val useragent        = "1.14"
     val jacksonDatabind  = "2.2.3"
@@ -49,15 +50,14 @@ object Dependencies {
     val schemaSniffer    = "0.0.0"
     val scalaUtil        = "0.1.0"
     val refererParser    = "0.2.3"
-    val maxmindIplookups = "0.2.0"
+    val maxmindIplookups = "0.3.0"
     val json4s           = "3.2.11"
     val igluClient       = "0.2.0"
-    val scalaForex       = "0.2.0"
+    val scalaForex       = "0.3.0"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
     val scalaCheck       = "1.10.0"
-    val commonsCodec     = "1.5"
     val scalaUri         = "0.4.3"
   }
 
@@ -66,6 +66,7 @@ object Dependencies {
     val httpClient       = "org.apache.httpcomponents"  %  "httpclient"                % V.http
     val commonsLang      = "org.apache.commons"         %  "commons-lang3"             % V.commonsLang
     val commonsIo        = "commons-io"                 %  "commons-io"                % V.commonsIo
+    val commonsCodec     = "commons-codec"              %  "commons-codec"             % V.commonsCodec
     val yodaTime         = "joda-time"                  %  "joda-time"                 % V.yodaTime
     val yodaConvert      = "org.joda"                   %  "joda-convert"              % V.yodaConvert
     val useragent        = "bitwalker"                  %  "UserAgentUtils"            % V.useragent
@@ -90,6 +91,5 @@ object Dependencies {
     val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"
     val scalaCheck       = "org.scalacheck"             %% "scalacheck"                % V.scalaCheck     % "test"
-    val commonsCodec     = "commons-codec"              %  "commons-codec"             % V.commonsCodec   % "test"
   }
 }

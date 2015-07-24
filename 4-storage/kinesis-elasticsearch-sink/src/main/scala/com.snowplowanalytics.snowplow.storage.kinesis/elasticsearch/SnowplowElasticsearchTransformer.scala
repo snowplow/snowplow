@@ -42,14 +42,14 @@ import org.json4s.JsonDSL._
 // Jackson
 import com.fasterxml.jackson.core.JsonParseException
 
-// Snowplow
-import enrich.common.utils.ScalazJson4sUtils
-
 // Logging
 import org.slf4j.LoggerFactory
 
 /**
  * Class to convert successfully enriched events to EmitterInputs
+ *
+ * @param documentIndex the elasticsearch index name
+ * @param documentType the elasticsearch index type
  */
 class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ITransformer[ValidatedRecord, EmitterInput] {
 
@@ -307,21 +307,26 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
       log.warn(s"Expected ${fields.size} fields, received ${event.size} fields. This may be caused by using an outdated version of Snowplow Kinesis Enrich.")
     }
 
-    val geoLocation: JObject = {
-      val latitude = event(GeopointIndexes.latitude)
-      val longitude = event(GeopointIndexes.longitude)
-      if (latitude.size > 0 && longitude.size > 0) {
-        JObject("geo_location" -> JString(s"$latitude,$longitude"))
-      } else {
-        JObject()
+    if (event.size <= GeopointIndexes.latitude.max(GeopointIndexes.longitude)) {
+      s"Event contained only ${event.size} tab-separated fields".failNel
+    } else {
+
+      val geoLocation: JObject = {
+        val latitude = event(GeopointIndexes.latitude)
+        val longitude = event(GeopointIndexes.longitude)
+        if (latitude.size > 0 && longitude.size > 0) {
+          JObject("geo_location" -> JString(s"$latitude,$longitude"))
+        } else {
+          JObject()
+        }
       }
+      val validatedJObjects: Array[ValidationNel[String, JObject]] = fields.zip(event).map(converter)
+      val switched: ValidationNel[String, List[JObject]] = validatedJObjects.toList.sequenceU
+      switched.map( x => {
+        val j = x.fold(geoLocation)(_ ~ _)
+        JsonRecord(compact(render(j)), extractEventId(j))
+      })
     }
-    val validatedJObjects: Array[ValidationNel[String, JObject]] = fields.zip(event).map(converter)
-    val switched: ValidationNel[String, List[JObject]] = validatedJObjects.toList.sequenceU
-    switched.map( x => {
-      val j = x.fold(geoLocation)(_ ~ _)
-      JsonRecord(compact(render(j)), ScalazJson4sUtils.extract[String](j, "event_id").toOption)
-    })
   }
 
   /**
@@ -331,7 +336,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    * @return ValidatedRecord for the event
    */
   override def toClass(record: Record): ValidatedRecord = {
-    val recordString = new String(record.getData.array)
+    val recordString = new String(record.getData.array, "UTF-8")
 
     // The -1 is necessary to prevent trailing empty strings from being discarded
     (recordString, jsonifyGoodEvent(recordString.split("\t", -1)).leftMap(_.toList))
@@ -348,4 +353,18 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
       case Some(id) => new ElasticsearchObject(documentIndex, documentType, id, r.json)
       case None => new ElasticsearchObject(documentIndex, documentType, r.json)
     }))
+
+  /**
+   * Extract the event_id field from an event JSON for use as a document ID
+   *
+   * @param json
+   * @return Option boxing event_id
+   */
+  private def extractEventId(json: JValue): Option[String] = {
+    json \ "event_id" match {
+      case JString(eid) => eid.some
+      case _ => None
+    }
+  }
+
 }

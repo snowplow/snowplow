@@ -21,6 +21,9 @@ package registry
 import java.net.URI
 import java.lang.{Byte => JByte}
 
+// Apache Commons Codec
+import org.apache.commons.codec.binary.Base64
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -190,7 +193,7 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
     }
   }
 
-  "Converting Currency a valid currency_convert_config enrichment JSON" should {
+  "Parsing a valid currency_convert_config enrichment JSON" should {
     "successfully construct a CurrencyConversionEnrichment case object" in {
 
       val  currencyConversionEnrichmentJson = parse("""{
@@ -208,6 +211,35 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
       val result = CurrencyConversionEnrichmentConfig.parse(currencyConversionEnrichmentJson, schemaKey)
       result must beSuccessful(CurrencyConversionEnrichment(DeveloperAccount, "---", "EUR", "EOD_PRIOR"))
 
+    }
+  }
+
+  "Parsing a valid javascript_script_config enrichment JSON" should {
+    "successfully construct a JavascriptScriptEnrichment case class" in {
+
+      val script =
+        s"""|function process(event) {
+            |  return [];
+            |}
+            |""".stripMargin
+
+      val javascriptScriptEnrichmentJson = {
+        val encoder = new Base64(true)
+        val encoded = new String(encoder.encode(script.getBytes)).trim // Newline being appended by some Base64 versions
+        parse(s"""{
+          "enabled": true,
+          "parameters": {
+            "script": "${encoded}"
+          }
+        }""")
+      }
+
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "javascript_script_config", "jsonschema", "1-0-0")
+
+      // val expected = JavascriptScriptEnrichment(JavascriptScriptEnrichmentConfig.compile(script).toOption.get)
+
+      val result = JavascriptScriptEnrichmentConfig.parse(javascriptScriptEnrichmentJson, schemaKey)
+      result must beSuccessful // TODO: check the result's contents by evaluating some JavaScript
     }
   }
 }

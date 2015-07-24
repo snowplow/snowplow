@@ -9,7 +9,7 @@ enrich {
   # Sinks currently supported are:
   # 'kinesis' for writing enriched events to one Kinesis stream and invalid events to another.
   # 'stdouterr' for writing enriched events to stdout and invalid events to stderr.
-  #    Using `sbt assembly` and `java -jar` is recommended to disable sbt
+  #    Using "sbt assembly" and "java -jar" is recommended to disable sbt
   #    logging.
   sink = "kinesis"
 
@@ -22,23 +22,42 @@ enrich {
   #
   # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
   aws {
-    access-key: "env"
-    secret-key: "env"
+    access-key: "iam"
+    secret-key: "iam"
   }
 
   streams {
     in: {
-      raw: "SnowplowRaw"
-    }
-    out: {
-      enriched: "SnowplowEnriched"
-      enriched_shards: 1 # Number of shards to use if created.
-      bad: "SnowplowBad" # Not used until #463
-      bad_shards: 1 # Number of shards to use if created.
+      raw: "{{enrichStreamsInRaw}}"
+
+      # After enrichment, are accumulated in a buffer before being sent to Kinesis.
+      # The buffer is emptied whenever:
+      # - the number of stored records reaches record-limit or
+      # - the combined size of the stored records reaches byte-limit or
+      # - the time in milliseconds since it was last emptied exceeds time-limit when
+      #   a new event enters the buffer
+      buffer: {
+        byte-limit: {{enrichStreamsBufferByteThreshold}}
+        record-limit: {{enrichStreamsBufferRecordThreshold}}
+        time-limit: {{enrichStreamsBufferTimeThreshold}}
+      }
     }
 
-    # `app-name` is used for a DynamoDB table to maintain stream state.
-    app-name: SnowplowKinesisEnrich-${enrich.streams.in.raw}
+    out: {
+      enriched: "{{enrichStreamsOutEnriched}}"
+      bad: "{{enrichStreamsOutBad}}"
+
+      # Minimum and maximum backoff periods
+      # - Units: Milliseconds
+      backoffPolicy: {
+        minBackoff: {{enrichStreamsOutMinBackoff}}
+        maxBackoff: {{enrichStreamsOutMaxBackoff}}
+      }
+    }
+
+    # "app-name" is used for a DynamoDB table to maintain stream state.
+    # You can set it automatically using: "SnowplowKinesisEnrich-$\\{enrich.streams.in.raw\\}"
+    app-name: "{{enrichStreamsAppName}}"
 
     # LATEST: most recent data.
     # TRIM_HORIZON: oldest available data.
@@ -46,25 +65,16 @@ enrich {
     # on a stream.
     initial-position = "TRIM_HORIZON"
 
-    region: "us-east-1"
+    region: "{{enrichStreamsRegion}}"
   }
 
-  resolver {
-    schema: "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0"
-    data: {
-      cacheSize: 500
-      repositories: [
-        {
-          name: "Iglu Central"
-          priority: 0
-          vendorPrefixes: ["com.snowplowanalytics"]
-          connection: {
-            http: {
-              uri: "http://iglucentral.com"
-            }
-          }
-        }
-      ]
+  # Optional section for tracking endpoints
+  monitoring {
+    snowplow {
+      collector-uri: "{{collectorUri}}"
+      collector-port: 80
+      app-id: "{{enrichAppName}}"
+      method: "GET"
     }
   }
 }

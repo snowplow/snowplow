@@ -1,0 +1,13 @@
+{
+	"schema": "iglu:com.snowplowanalytics.snowplow/javascript_script_config/jsonschema/1-0-0",
+
+	"data": {
+
+		"vendor": "com.snowplowanalytics.snowplow",
+		"name": "javascript_script_config",
+		"enabled": false,
+		"parameters": {
+			"script": "ZnVuY3Rpb24gcHJvY2VzcyhldmVudCkgew0KDQogIHZhciBwbGF0Zm9ybSA9IGV2ZW50LmdldFBsYXRmb3JtKCksDQogICAgICBhcHBJZCAgICA9IGV2ZW50LmdldEFwcF9pZCgpOw0KDQogIGlmIChwbGF0Zm9ybSA9PSAic2VydmVyIiAmJiBhcHBJZCAhPSAic2VjcmV0Iikgew0KICAgIHRocm93ICJTZXJ2ZXItc2lkZSBldmVudCBoYXMgaW52YWxpZCBhcHBfaWQ6ICIgKyBhcHBJZDsNCiAgfQ0KICANCiAgaWYgKGFwcElkID09IG51bGwpIHsNCiAgICByZXR1cm4gW107DQogIH0NCg0KICAvLyBVc2UgbmV3IFN0cmluZygpIGJlY2F1c2UgaHR0cDovL25lbHNvbndlbGxzLm5ldC8yMDEyLzAyL2pzb24tc3RyaW5naWZ5LXdpdGgtbWFwcGVkLXZhcmlhYmxlcy8NCiAgdmFyIGFwcElkVXBwZXIgPSBuZXcgU3RyaW5nKGFwcElkLnRvVXBwZXJDYXNlKCkpOw0KDQogIHJldHVybiBbIHsgc2NoZW1hOiAiaWdsdTpjb20uYWNtZS9mb28vanNvbnNjaGVtYS8xLTAtMCIsDQogICAgICAgICAgICAgICBkYXRhOiB7IGFwcElkVXBwZXI6IGFwcElkVXBwZXIgfQ0KICAgICAgICAgICB9IF07DQp9"
+		}
+	}
+}

@@ -162,7 +162,7 @@ object Core2015RefreshSpec {
     "2013-10-07 23:35:27.571",
     "4da6ee6d6d69aa18",
     "2013-10-07 23:35:27.100",
-    """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1","data":[{"schema":"iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0","data":{"useragentFamily":"IE","useragentMajor":"7","useragentMinor":"0","useragentPatch":null,"useragentVersion":"IE 7.0","osFamily":"Windows XP","osMajor":null,"osMinor":null,"osPatch":null,"osPatchMinor":null,"osVersion":"Windows XP","deviceFamily":"Other"}}]}""",
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1","data":[{"schema":"iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0","data":{"useragentFamily":"IE","useragentMajor":"7","useragentMinor":"0","useragentPatch":null,"useragentVersion":"IE 7.0","osFamily":"Windows XP","osMajor":null,"osMinor":null,"osPatch":null,"osPatchMinor":null,"osVersion":"Windows XP","deviceFamily":"Other"}},{"schema":"iglu:com.acme/app_id/jsonschema/1-0-0","data":{"appIdUpper":"PBZSITE"}}]}""",
     "75d0fc90-cef4-11e4-8830-0800200c9a66"
     )
 }
@@ -178,7 +178,7 @@ object Core2015RefreshSpec {
 class Core2015RefreshSpec extends Specification {
 
   "A job which processes a CloudFront file containing 1 valid page ping with campaign attribution fields" should {
-    EtlJobSpec("cloudfront", "1", false, List("geo")).
+    EtlJobSpec("cloudfront", "1", false, List("geo"), false, true).
       source(MultipleTextLineFiles("inputFolder"), Core2015RefreshSpec.lines).
       sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
         "correctly output 1 page ping" in {

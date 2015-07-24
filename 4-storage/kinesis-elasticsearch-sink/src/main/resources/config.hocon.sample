@@ -1,6 +1,6 @@
 # Default configuration for kinesis-elasticsearch-sink
 
-connector {
+sink {
 
   # Sources currently supported are:
   # 'kinesis' for reading records from a Kinesis stream
@@ -23,18 +23,18 @@ connector {
   #
   # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
   aws {
-    access-key: "default"
-    secret-key: "default"
+    access-key: "iam"
+    secret-key: "iam"
   }
 
   kinesis {
 
     in {
-      stream-name: "SnowplowEnriched" # Kinesis stream name
+      stream-name: "{{sinkKinesisInStreamName}}" # Kinesis stream name
 
       # "good" for a stream of successfully enriched events
       # "bad" for a stream of bad events
-      stream-type: "good"
+      stream-type: "{{sinkKinesisInStreamType}}"
 
       # LATEST: most recent data.
       # TRIM_HORIZON: oldest available data.
@@ -45,24 +45,23 @@ connector {
 
     out {
       # Stream for enriched events which are rejected by Elasticsearch
-      stream-name: "SnowplowElasticsearchBad"
+      stream-name: "{{sinkKinesisOutStreamName}}"
       shards: 1
     }
 
-    region: "us-east-1"
+    region: "{{sinkElasticsearchRegion}}"
 
-    # `app-name` is used for a DynamoDB table to maintain stream state.
-    app-name: SnowplowElasticsearchSink-${connector.kinesis.in.stream-name}
+    # "app-name" is used for a DynamoDB table to maintain stream state.
+    # You can set it automatically using: "SnowplowElasticsearchSink-$\\{connector.kinesis.in.stream-name\\}"
+    app-name: "{{sinkKinesisAppName}}"
   }
 
   elasticsearch {
-    cluster-name: "elasticsearch"
-    endpoint: "localhost"
-  }
-
-  location {
-    index: "snowplow" # Elasticsearch index name
-    type: "enriched" # Elasticsearch type name
+    cluster-name: "{{sinkElasticsearchClusterName}}"
+    endpoint: "{{sinkElasticsearchEndpoint}}"
+    max-timeout: "{{sinkElasticsearchMaxTimeout}}"
+    index: "{{sinkElasticsearchIndex}}" # Elasticsearch index name
+    type: "{{sinkElasticsearchType}}" # Elasticsearch type name
   }
 
   # Events are accumulated in a buffer before being sent to Elasticsearch.
@@ -71,8 +70,18 @@ connector {
   # - the number of stored records exceeds record-limit or
   # - the time in milliseconds since it was last emptied exceeds time-limit
   buffer {
-    byte-limit: 5242880 # 5MB
-    record-limit: 1000 # 1000 records
-    time-limit: 60000 # 1 minute
+    byte-limit: {{sinkElasticsearchBufferByteThreshold}}
+    record-limit: {{sinkElasticsearchBufferRecordThreshold}}
+    time-limit: {{sinkElasticsearchBufferTimeThreshold}}
+  }
+
+  # Optional section for tracking endpoints
+  monitoring {
+    snowplow {
+      collector-uri: "{{collectorUri}}"
+      collector-port: 80
+      app-id: "{{sinkKinesisAppName}}"
+      method: "GET"
+    }
   }
 }

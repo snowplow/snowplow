@@ -34,3 +34,6 @@
 [submodule "1-trackers/actionscript3-tracker"]
 	path = 1-trackers/actionscript3-tracker
 	url = https://github.com/snowplow/snowplow-actionscript3-tracker.git
+[submodule "1-trackers/scala-tracker"]
+	path = 1-trackers/scala-tracker
+	url = https://github.com/snowplow/snowplow-scala-tracker.git

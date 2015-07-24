@@ -20,6 +20,8 @@ object Dependencies {
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/",
     // For Scalazon
     "BintrayJCenter"                         at "http://jcenter.bintray.com",
+    // For uaParser utils
+    "user-agent-parser repo"                 at "https://clojars.org/repo/",
     // For user-agent-utils
     "user-agent-utils repo"                  at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/"
   )
@@ -32,16 +34,17 @@ object Dependencies {
     val jacksonCore          = "2.3.0"
     val slf4j                = "1.7.5"
     val awsSdk               = "1.6.11"
-    val kinesisClient        = "1.0.0"
+    val kinesisClient        = "1.2.1"
     // Scala
     val argot                = "1.0.1"
     val config               = "1.0.2"
     val scalaUtil            = "0.1.0"
     val snowplowRawEvent     = "0.1.0"
-    val snowplowCommonEnrich = "0.13.0"
-    val scalazon             = "0.5"
+    val snowplowCommonEnrich = "0.15.0"
+    val scalazon             = "0.11"
     val scalaz7              = "7.0.0"
     val igluClient           = "0.1.1"
+    val snowplowTracker      = "0.1.0"
     // Scala (test only)
     // val specs2               = "2.3.6" Conflicts with com.chuusai:shapeless
     val specs2               = "2.2.3"
@@ -70,6 +73,7 @@ object Dependencies {
     val scalazon             = "io.github.cloudify"         %% "scalazon"                 % V.scalazon
     val scalaz7              = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7
     val igluClient           = "com.snowplowanalytics"      %  "iglu-scala-client"        % V.igluClient
+    val snowplowTracker      = "com.snowplowanalytics"      %% "snowplow-scala-tracker"   % V.snowplowTracker
     // Scala (test only)
     val specs2               = "org.specs2"                 %% "specs2"                   % V.specs2         % "test"
     val scalazSpecs2         = "org.typelevel"              %% "scalaz-specs2"            % V.scalazSpecs2   % "test"

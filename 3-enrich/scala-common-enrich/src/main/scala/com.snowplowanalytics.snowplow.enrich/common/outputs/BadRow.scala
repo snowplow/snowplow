@@ -25,6 +25,10 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.DateTimeFormat
+
 // Iglu Scala Client
 import iglu.client.ProcessingMessageNel
 
@@ -33,11 +37,16 @@ import iglu.client.ProcessingMessageNel
  * 1. Our original input line (which was meant
  *    to be a Snowplow enriched event)
  * 2. A non-empty list of our Validation errors
+ * 3. A timestamp
  */
 case class BadRow(
   val line: String,
-  val errors: NonEmptyList[String]
+  val errors: NonEmptyList[String],
+  val tstamp: Long = System.currentTimeMillis()
   ) {
+
+  // An ISO valid timestamp formatter
+  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   /**
    * Converts a TypeHierarchy into a JSON containing
@@ -46,8 +55,9 @@ case class BadRow(
    * @return the TypeHierarchy as a json4s JValue
    */
   def toJValue: JValue =
-    ("line"     -> line) ~
-    ("errors"   -> errors.toList)
+    ("line"           -> line) ~
+    ("errors"         -> errors.toList) ~
+    ("failure_tstamp" -> this.getTimestamp(tstamp))
 
   /**
    * Converts our BadRow into a single JSON encapsulating
@@ -57,4 +67,15 @@ case class BadRow(
    */
   def toCompactJson: String =
     compact(this.toJValue)
+
+  /**
+   * Returns an ISO valid timestamp
+   *
+   * @param tstamp The Timestamp to convert
+   * @return the formatted Timestamp
+   */
+  def getTimestamp(tstamp: Long): String = {
+    val dt = new DateTime(tstamp)
+    TstampFormat.print(dt)
+  }
 }

@@ -65,7 +65,7 @@ module Snowplow
       :assets => String,
       :log => String,
       :raw => ({
-        :in => String,
+        :in => Or[String, ArrayOf[String]],
         :processing => String,
         :archive => String
         }),

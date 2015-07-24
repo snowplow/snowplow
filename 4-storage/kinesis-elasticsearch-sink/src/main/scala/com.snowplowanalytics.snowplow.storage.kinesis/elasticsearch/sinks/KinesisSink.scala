@@ -72,9 +72,8 @@ class KinesisSink(provider: AWSCredentialsProvider, endpoint: String, name: Stri
   // Create a Kinesis client for stream interactions.
   private implicit val kinesis = Client.fromClient(client)
 
-  // The output stream for enriched events.
-  // Lazy so that it doesn't get created unless we need to write to it.
-  private lazy val enrichedStream = createAndLoadStream()
+  // The output stream for failed events.
+  private val enrichedStream = createAndLoadStream()
 
   /**
    * Checks if a stream exists.
@@ -119,25 +118,7 @@ class KinesisSink(provider: AWSCredentialsProvider, endpoint: String, name: Stri
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
-      info(s"Creating stream $name of size $shards")
-      val createStream = for {
-        s <- Kinesis.streams.create(name)
-      } yield s
-
-      try {
-        val stream = Await.result(createStream, Duration(timeout, SECONDS))
-
-        info(s"Successfully created stream $name. Waiting until it's active")
-        Await.result(stream.waitActive.retrying(timeout),
-          Duration(timeout, SECONDS))
-
-        info(s"Stream $name active")
-
-        stream
-      } catch {
-        case _: TimeoutException =>
-          throw new RuntimeException("Error: Timed out")
-      }
+      throw new RuntimeException(s"Cannot write because stream $name doesn't exist or is not active")
     }
   }
 

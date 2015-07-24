@@ -174,8 +174,8 @@ object PingdomAdapter extends Adapter {
       parse(jsonStr).successNel
     } catch {
       case e: JsonParseException => {
-        val exception = JU.stripInstanceEtc(e.toString)
-        s"${VendorName} event failed to parse into JSON: [$exception]".failNel
+        val exception = JU.stripInstanceEtc(e.toString).orNull
+        s"${VendorName} event failed to parse into JSON: [${exception}]".failNel
       } 
     }
 

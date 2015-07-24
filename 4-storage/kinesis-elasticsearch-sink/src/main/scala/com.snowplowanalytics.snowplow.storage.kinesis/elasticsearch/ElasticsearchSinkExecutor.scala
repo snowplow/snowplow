@@ -16,7 +16,8 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
+package com.snowplowanalytics.snowplow
+package storage.kinesis.elasticsearch
 
 // AWS Kinesis Connector libs
 import com.amazonaws.services.kinesis.connectors.elasticsearch.ElasticsearchObject
@@ -26,19 +27,39 @@ import com.amazonaws.services.kinesis.connectors.{
   KinesisConnectorRecordProcessorFactory
 }
 
+// Tracker
+import scalatracker.Tracker
+
 // This project
 import sinks._
 import StreamType._
 
 /**
-* Boilerplate class for Kinesis Conenector
-*/
-class ElasticsearchSinkExecutor(streamType: StreamType, documentIndex: String, documentType: String, config: KinesisConnectorConfiguration, goodSink: Option[ISink], badSink: ISink)
-  extends KinesisConnectorExecutorBase[ValidatedRecord, EmitterInput] {
+ * Boilerplate class for Kinesis Conenector
+ *
+ * @param streamType the type of stream, good/bad
+ * @param documentIndex the elasticsearch index name
+ * @param documentType the elasticsearch index type
+ * @param config the KCL configuration
+ * @param goodSink the configured GoodSink
+ * @param badSink the configured BadSink
+ * @param tracker a Tracker instance
+ * @param maxConnectionTimeout the maximum amount of time
+ *        we can attempt to send to elasticsearch
+ */
+class ElasticsearchSinkExecutor(
+  streamType: StreamType,
+  documentIndex: String,
+  documentType: String,
+  config: KinesisConnectorConfiguration,
+  goodSink: Option[ISink],
+  badSink: ISink,
+  tracker: Option[Tracker] = None,
+  maxConnectionTimeout: Long = 60000) extends KinesisConnectorExecutorBase[ValidatedRecord, EmitterInput] {
 
   initialize(config)
   override def getKinesisConnectorRecordProcessorFactory = {
     new KinesisConnectorRecordProcessorFactory[ValidatedRecord, EmitterInput](
-      new ElasticsearchPipeline(streamType, documentIndex, documentType, goodSink, badSink), config)
+      new ElasticsearchPipeline(streamType, documentIndex, documentType, goodSink, badSink, tracker, maxConnectionTimeout), config)
   }
 }
