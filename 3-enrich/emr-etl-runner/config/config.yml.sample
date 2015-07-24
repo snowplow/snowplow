@@ -9,7 +9,8 @@
     :assets: s3://snowplow-hosted-assets # DO NOT CHANGE unless you are hosting the jarfiles etc yourself in your own bucket
     :log: ADD HERE
     :raw:
-      :in: ADD HERE
+      :in:                  # Multiple in buckets are permitted
+        - ADD HERE          # e.g. s3://my-archive-bucket/raw
       :processing: ADD HERE
       :archive: ADD HERE    # e.g. s3://my-archive-bucket/raw
     :enriched:

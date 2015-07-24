@@ -29,7 +29,7 @@ import org.specs2.specification.{Scope,Fragments}
 import spray.testkit.Specs2RouteTest
 
 // Spray
-import spray.http.{DateTime,HttpHeader,HttpRequest,HttpCookie}
+import spray.http.{DateTime, HttpHeader, HttpRequest, HttpCookie, RemoteAddress}
 import spray.http.HttpHeaders.{
   Cookie,
   `Set-Cookie`,
@@ -76,7 +76,8 @@ collector {
       }
       stream {
         region: "us-east-1"
-        name: "snowplow_collector_example"
+        good: "snowplow_collector_example"
+        bad: "snowplow_collector_example"
       }
       buffer {
         byte-limit: 4000000 # 4MB
@@ -93,7 +94,8 @@ collector {
 """)
   val collectorConfig = new CollectorConfig(testConf)
   val sink = new TestSink
-  val responseHandler = new ResponseHandler(collectorConfig, sink)
+  val sinks = CollectorSinks(sink, sink)
+  val responseHandler = new ResponseHandler(collectorConfig, sinks)
   val collectorService = new CollectorService(responseHandler, system)
   val thriftDeserializer = new TDeserializer
 
@@ -165,17 +167,17 @@ collector {
     "store the expected event as a serialized Thrift object in the enabled sink" in {
       val payloadData = "param1=val1&param2=val2"
       val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
-        None, "localhost", "127.0.0.1", new HttpRequest(), None, "/com.snowplowanalytics.snowplow/tp2", false)._2
+        None, "localhost", RemoteAddress("127.0.0.1"), new HttpRequest(), None, "/com.snowplowanalytics.snowplow/tp2", false)._2
 
       val storedEvent = new CollectorPayload
       this.synchronized {
-        thriftDeserializer.deserialize(storedEvent, storedRecordBytes)
+        thriftDeserializer.deserialize(storedEvent, storedRecordBytes.head)
       }
 
       storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 1000)
       storedEvent.encoding must beEqualTo("UTF-8")
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
-      storedEvent.collector must beEqualTo("ssc-0.4.0-test")
+      storedEvent.collector must beEqualTo("ssc-0.5.0-test")
       storedEvent.path must beEqualTo("/com.snowplowanalytics.snowplow/tp2")
       storedEvent.querystring must beEqualTo(payloadData)
     }

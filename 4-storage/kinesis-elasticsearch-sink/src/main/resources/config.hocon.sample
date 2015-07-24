@@ -59,9 +59,7 @@ sink {
   elasticsearch {
     cluster-name: "{{sinkElasticsearchClusterName}}"
     endpoint: "{{sinkElasticsearchEndpoint}}"
-  }
-
-  location {
+    max-timeout: "{{sinkElasticsearchMaxTimeout}}"
     index: "{{sinkElasticsearchIndex}}" # Elasticsearch index name
     type: "{{sinkElasticsearchType}}" # Elasticsearch type name
   }
@@ -75,5 +73,15 @@ sink {
     byte-limit: {{sinkElasticsearchBufferByteThreshold}}
     record-limit: {{sinkElasticsearchBufferRecordThreshold}}
     time-limit: {{sinkElasticsearchBufferTimeThreshold}}
+  }
+
+  # Optional section for tracking endpoints
+  monitoring {
+    snowplow {
+      collector-uri: "{{collectorUri}}"
+      collector-port: 80
+      app-id: "{{sinkKinesisAppName}}"
+      method: "GET"
+    }
   }
 }
