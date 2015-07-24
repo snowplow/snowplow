@@ -40,9 +40,6 @@ import sinks._
 import com.fasterxml.jackson.databind.ObjectMapper
 import scala.language.implicitConversions
 
-/**
- * The entrypoint class for the Kinesis-S3 Sink applciation.
- */
 object SinkApp extends App {
 
   val Mapper = new ObjectMapper

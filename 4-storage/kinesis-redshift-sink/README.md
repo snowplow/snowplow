@@ -1,43 +1,38 @@
-# Kinesis LZO S3 Sink
+# Kinesis Redshift Sink
 
 ## Introduction
 
-The Kinesis LZO S3 Sink consumes records from an [Amazon Kinesis][kinesis] stream, compresses them using [splittable LZO][hadoop-lzo], and writes them to S3.
-
-The records are treated as raw byte arrays. [Elephant Bird's][elephant-bird] `BinaryBlockWriter` class is used to serialize them as a [Protocol Buffers][protobufs] array (so it is clear where one record ends and the next begins) before compressing them.
-
-The compression process generates both compressed .lzo files and small .lzo.index files. Each index file contain the byte offsets of the LZO blocks in the corresponding compressed file, meaning that the blocks can be processed in parallel.
+The Kinesis Redshift Sink consumes records from an [Amazon Kinesis][kinesis] stream, extracts all custom JSON schemas, and inserts them into corresponding DB tables.
+It does it on-the-fly, drip-feeding the database with new records in a near real-time fashion. It writes both into core events table, as well as custom schema tables.
 
 ## Prerequisites
 
-You must have `lzop` and `lzop-dev` installed. In Ubuntu, install them like this:
-
-    $ sudo apt-get install lzop liblzo2-dev
+- It is designed to work with Redshift though you could drip-feed into any database provided it can handle the amount of data and throughput
 
 ## Building
 
 Assuming you already have [SBT 0.13.0] [sbt] installed:
 
     $ git clone git://github.com/snowplow/snowplow.git
-    $ cd 4-storage/kinesis-lzo-s3-sink
+    $ cd 4-storage/kinesis-redshift-sink
     $ sbt compile
 
 ## Usage
 
-The Kinesis S3 LZO Sink has the following command-line interface:
+The Kinesis Redshift Sink has the following command-line interface:
 
 ```
-snowplow-lzo-s3-sink: Version 0.1.0. Copyright (c) 2014, Snowplow Analytics
-Ltd.
+kinesis-redsihft-sink: Version 0.1.0. Copyright (c) 2015, Digdeep Digital Pty Ltd
 
-Usage: snowplow-lzo-s3-sink [OPTIONS]
+
+Usage: kinesis-redsihft-sink [OPTIONS]
 
 OPTIONS
 --config filename
                    Configuration file.
 ```
 
-## Running
+## Configuration file
 
 Create your own config file:
 
@@ -52,9 +47,70 @@ aws {
 }
 ```
 
+### Redshift section
+
+There is a set of setting that you need to specify, the critical ones are the connection parameters for Redshift:
+
+```js
+  redshift {   
+    # Connection parameters
+    url: "jdbc:postgresql://...../snowplow"
+    username: ""
+    password: ""
+    table: ""
+
+    # Used when no specific DB schema is associated with json
+    defaultSchema: ""
+
+   # Allows to define the mapping between appId and DB schemas, so that the events get
+   # inserted into different tables depending on which application they belong to
+    appIdToSchema {
+      test: "test"
+    }
+  }
+```
+
+The ```url```, ```username```, ```password``` parameters are just the location and credentials for Redshift database.
+```table``` is the table into which the master events will go (typically ```events```).
+
+```defaultSchema``` is the name of the schema that is going to be used by default for all tables. The shredder has the ability to insert records into multiple schemas, 
+using the rules outlined below. Typically the default schema in Snowplow is ```atomic```.
+
+### Schema mappings
+
+The shredder has the ability to insert records into multiple schemas. 2 rules apply:
+
+- you can specify a mapping from appId in the event to a schema using the ```appIdToSchema``` section
+- you can use the schema name in the JSON schema URL
+
+```appIdToSchema``` section has the following format: it is a collection of key-value pairs. The key is the appId value, the value is the schema name. 
+For each event, appId is read from the event, and unless explicitly specified, all attached JSON schemas (custom contexts, unstruct etc.) will be stored in that schema
+ 
+In the JSON schema URL, traditionally you specify the schema name as a single word, e.g. "page". If you add schema to it, separated by "." 
+it will be taken into account when inserting JSON events with such schema.  
+
+### Running
+
 Next, start the sink, making sure to specify your new config file:
 
     $ sbt "run --config my.conf"
+    
+### Performance
+
+The shredder implements drip-feeding approach, where the small batches of records are continuously inserted into the database.
+It works roughly as follows:
+
+1. It reads a group of records from Kinesis (using KCL). KCL controls how many records are retrieved, and how frequently
+2. It stores the records in batches of 200 records without any time buffering (but using JDBC Batch mechanism)
+3. Repeat
+
+Bad records are discarded, with error logging, and exceptions are propagated to KCL for its own bad record handling.
+
+### Caution
+
+While developing this project, it was discovered that for contexts with multiple custom JSONs, if one of them fails validation, an overarching failure is 
+generated preventing valid JSONs to be processed. Due to lack of time, a quick workaround was applied which changes validation logic. As the result of that, 
+ events with such errors will not produce errors in the Kinesis Error stream but will only produce errors in the error log of the application.
 
 ## Find out more
 
@@ -64,6 +120,8 @@ Next, start the sink, making sure to specify your new config file:
 | [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
 
 ## Copyright and license
+
+Copyright 2015 Digdeep Digital Pty Ltd.
 
 Copyright 2014 Snowplow Analytics Ltd.
 

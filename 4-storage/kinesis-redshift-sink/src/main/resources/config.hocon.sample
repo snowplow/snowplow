@@ -40,10 +40,20 @@ sink {
   }
 
   redshift {
-    url: "jdbc:postgresql://***:5439/snowplow",
-    username: "",
-    password: "",
-    table: "",
+    # Connection parameters
+    url: "jdbc:postgresql://...../snowplow"
+    username: ""
+    password: ""
+    table: ""
+
+    # Used when no specific DB schema is associated with json
+    defaultSchema: ""
+
+   # Allows to define the mapping between appId and DB schemas, so that the events get
+   # inserted into different tables depending on which application they belong to
+    appIdToSchema {
+      test: "test"
+    }
   }
 
   # Events are accumulated in a buffer before being sent to S3.
@@ -56,5 +66,30 @@ sink {
     record-limit: 500
     time-limit: 60000
   }
+
+  # The S3 location of the jsonpaths, similar to what is typically given to the storage loader
+  jsonpaths: "http://digdeep-snowplow-hosted-assets.s3-website-ap-southeast-2.amazonaws.com"
+
+  # Iglu config, verbatim JSON, add your repository below
+  iglu_config: """{
+                   "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
+                   "data": {
+                     "cacheSize": 500,
+                     "repositories": [
+                       {
+                         "name": "Iglu Central",
+                         "priority": 0,
+                         "vendorPrefixes": [
+                           "com.snowplowanalytics"
+                         ],
+                         "connection": {
+                           "http": {
+                             "uri": "http://iglucentral.com"
+                           }
+                         }
+                       }
+                     ]
+                   }
+               }"""
 
 }
