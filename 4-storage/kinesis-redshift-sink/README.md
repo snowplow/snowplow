@@ -3,7 +3,7 @@
 ## Introduction
 
 The Kinesis Redshift Sink consumes records from an [Amazon Kinesis][kinesis] stream, extracts all custom JSON schemas, and inserts them into corresponding DB tables.
-It does it on-the-fly, drip-feeding the database with new records in a near real-time fashion. It writes both into core events table, as well as custom schema tables.
+It does it on-the-fly, drip-feeding the database with new records in a near real-time fashion. It writes both into the core events table, as well as into the custom schema tables.
 
 ## Prerequisites
 
