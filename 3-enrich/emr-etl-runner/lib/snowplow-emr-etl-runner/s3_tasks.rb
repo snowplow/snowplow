@@ -91,7 +91,7 @@ module Snowplow
           config[:aws][:secret_access_key])
 
         # Get S3 locations
-        in_bucket_array = [* config[:aws][:s3][:buckets][:raw][:in]]
+        in_bucket_array = config[:aws][:s3][:buckets][:raw][:in]
         in_locations = in_bucket_array.map {|name| Sluice::Storage::S3::Location.new(name)}
         processing_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:raw][:processing])
 
