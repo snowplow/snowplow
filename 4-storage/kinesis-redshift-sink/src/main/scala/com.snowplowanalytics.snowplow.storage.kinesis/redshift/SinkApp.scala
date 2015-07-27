@@ -136,6 +136,7 @@ object SinkApp extends App {
       }
     }
     props.setProperty("jsonpaths", connector.getString("jsonpaths"))
+    if (redshift.hasPath("filterFields")) props.setProperty("filterFields",  "true")
 
     val buffer = connector.getConfig("buffer")
     val byteLimit = buffer.getString("byte-limit")

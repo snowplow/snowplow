@@ -15,8 +15,11 @@ package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 // AWS libs
 
 
+import java.util.Properties
+
 import com.amazonaws.services.kinesis.model.Record
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.snowplowanalytics.iglu.client.Resolver
 import com.snowplowanalytics.snowplow.storage.kinesis.Redshift.{EmitterInput, ValidatedRecord}
 import org.joda.time.DateTimeZone
 
@@ -40,7 +43,7 @@ object FieldIndexes { // 0-indexed
   val augur_user_id = 110
 }
 
-class RawEventTransformer extends ITransformer[ ValidatedRecord, EmitterInput ] {
+class RawEventTransformer(implicit resolver:Resolver, props: Properties) extends ITransformer[ ValidatedRecord, EmitterInput ] {
   override def toClass(record: Record): ValidatedRecord = {
     val recordByteArray = record.getData.array
     var fields = new String(recordByteArray, "UTF-8").split("\t", -1)
@@ -50,10 +53,12 @@ class RawEventTransformer extends ITransformer[ ValidatedRecord, EmitterInput ] 
     while (fields.length < 125) {
       fields = fields ++ Array("")
     }
-    // Extract augur - 117, 118
-    fields = filterFields(fields)
-    // Add sink timestamp
-    fields = fields ++ Array(DateTime.now(DateTimeZone.forID("UTC")).toString("yyyy-MM-dd HH:mm:ss.SSS"))
+    if (props.containsKey("filterFields")) {
+      // Extract augur - 126, 127
+      fields = filterFields(fields)
+      // Add sink timestamp 128
+      fields = fields ++ Array(DateTime.now(DateTimeZone.forID("UTC")).toString("yyyy-MM-dd HH:mm:ss.SSS"))
+    }
     val values = fields.map(f => if (f == "" || f == null) null else f)
     (values, recordByteArray.success)
   }

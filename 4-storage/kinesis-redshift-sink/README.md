@@ -8,6 +8,7 @@ It does it on-the-fly, drip-feeding the database with new records in a near real
 ## Prerequisites
 
 - It is designed to work with Redshift though you could drip-feed into any database provided it can handle the amount of data and throughput
+- You are on 0.5.0 Of Kinesis Enrich (the events tables is expected to be 125 fields).
 
 ## Building
 
