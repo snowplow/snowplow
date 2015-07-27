@@ -206,6 +206,12 @@ object EnrichmentManager {
 
     val secondPassTransform = event.transform(sourceMap, secondPassTransformMap)
 
+    // The load fails if the collector version is not set
+    val collectorVersionSet = event.v_collector match {
+      case ("" | null) => "Collector version not set".fail
+      case _ => unitSuccess
+    }
+
     // Potentially update the page_url and set the page URL components
     val pageUri = WPE.extractPageUri(raw.context.refererUri, Option(event.page_url))
     for (uri <- pageUri; u <- uri) {
@@ -429,10 +435,11 @@ object EnrichmentManager {
       collectorTstamp.toValidationNel         |@|
       client.toValidationNel                  |@|
       uaParser.toValidationNel                |@|
+      collectorVersionSet.toValidationNel     |@|
       pageUri.toValidationNel                 |@|
       geoLocation.toValidationNel             |@|
       refererUri.toValidationNel) {
-      (_,_,_,_,_,_,_) => ()
+      (_,_,_,_,_,_,_,_) => ()
     }
     val second = 
       (transform                              |@|
