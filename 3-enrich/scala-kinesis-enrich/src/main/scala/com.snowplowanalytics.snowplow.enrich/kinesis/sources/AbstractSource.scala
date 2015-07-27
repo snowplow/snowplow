@@ -183,8 +183,10 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
   def enrichEvents(binaryData: Array[Byte]): List[Validation[(String, String), (String, String)]] = {
     val canonicalInput: ValidatedMaybeCollectorPayload = ThriftLoader.toCollectorPayload(binaryData)
     val processedEvents: List[ValidationNel[String, EnrichedEvent]] = EtlPipeline.processEvents(
-      enrichmentRegistry, s"kinesis-${generated.Settings.version}", 
-      EventEnrichments.toTimestamp(new DateTime(System.currentTimeMillis)), canonicalInput)
+      enrichmentRegistry,
+      s"kinesis-${generated.Settings.version}",
+      new DateTime(System.currentTimeMillis),
+      canonicalInput)
     processedEvents.map(validatedMaybeEvent => {
       validatedMaybeEvent match {
         case Success(co) => (tabSeparateEnrichedEvent(co) -> co.user_ipaddress).success
