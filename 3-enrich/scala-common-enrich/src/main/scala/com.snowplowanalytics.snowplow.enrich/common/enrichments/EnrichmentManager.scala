@@ -71,7 +71,6 @@ object EnrichmentManager {
     // Let's start populating the CanonicalOutput
     // with the fields which cannot error
     val event = new EnrichedEvent().tap { e =>
-      e.collector_tstamp = raw.context.timestamp.map(EE.toTimestamp).getOrElse(null)
       e.event_id = EE.generateEventId      // May be updated later if we have an `eid` parameter
       e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
@@ -83,6 +82,15 @@ object EnrichmentManager {
     // 2. Enrichments which can fail
 
     // 2a. Failable enrichments which don't need the payload
+
+    // Validate that the collectorTstamp exists and is Redshift-compatible
+    val collectorTstamp = EE.formatCollectorTstamp(raw.context.timestamp) match {
+      case Success(t) => {
+        event.collector_tstamp = t
+        unitSuccess
+      }
+      case f => f
+    }
 
     // Attempt to decode the useragent
     // May be updated later if we have a `ua` parameter
@@ -418,12 +426,13 @@ object EnrichmentManager {
     // Broken into two parts due to 12 argument limit on |@|
     val first =
       (useragent.toValidationNel              |@|
+      collectorTstamp.toValidationNel         |@|
       client.toValidationNel                  |@|
       uaParser.toValidationNel                |@|
       pageUri.toValidationNel                 |@|
       geoLocation.toValidationNel             |@|
       refererUri.toValidationNel) {
-      (_,_,_,_,_,_) => ()
+      (_,_,_,_,_,_,_) => ()
     }
     val second = 
       (transform                              |@|

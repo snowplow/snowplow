@@ -18,6 +18,9 @@ import org.specs2.Specification
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
+// Joda
+import org.joda.time.DateTime
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -28,6 +31,7 @@ class ExtractEventTypeSpec extends Specification with DataTables with Validation
                                                                                   p^
   "extractEventType should return the event name for any valid event code"         ! e1^
   "extractEventType should return a validation failure for any invalid event code" ! e2^
+  "formatCollectorTstamp should validate collector timestamps"                     ! e3^
                                                                                    end
 
   val FieldName = "e"
@@ -56,5 +60,18 @@ class ExtractEventTypeSpec extends Specification with DataTables with Validation
 
       (_, input, expected) => EventEnrichments.extractEventType(FieldName, input) must beFailing(expected)
     }
+
+  val BCTstamp = Some(new DateTime(-Long.MaxValue))
+  val SeventiesTstamp = Some(new DateTime(0))
+
+  def e3 =
+    "SPEC NAME"       || "INPUT VAL"     | "EXPECTED OUTPUT"                                                                                    |
+    "None"            !! None            ! "No collector_tstamp set".fail                                                                       |
+    "unrecognized #1" !! BCTstamp        ! "Collector timestamp -292275055-05-16 16:47:04.193 is negative and will fail the Redshift load".fail |
+    "unrecognized #2" !! SeventiesTstamp ! "1970-01-01 00:00:00.000".success                                                                    |> {
+
+      (_, input, expected) => EventEnrichments.formatCollectorTstamp(input) must_== (expected)
+    }
+
 
 }
