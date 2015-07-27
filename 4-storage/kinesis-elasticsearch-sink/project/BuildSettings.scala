@@ -20,12 +20,8 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "com.snowplowanalytics",
-    version               :=  "0.4.0",
+    version               :=  "0.4.1",
     description           :=  "Kinesis sink for Elasticsearch",
-    scalaVersion          :=  "2.10.1",
-    scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
-                                  "-feature", "-target:jvm-1.7"),
-    scalacOptions in Test :=  Seq("-Yrangepos"),
     resolvers             ++= Dependencies.resolutionRepos
   )
 
@@ -43,13 +39,14 @@ object BuildSettings {
   })
 
   // sbt-assembly settings for building a fat jar
-  import sbtassembly.Plugin._
-  import AssemblyKeys._
-  lazy val sbtAssemblySettings = assemblySettings ++ Seq(
+  import sbtassembly.AssemblyPlugin.autoImport._
+  import sbtassembly.AssemblyPlugin.defaultShellScript
+
+  lazy val sbtAssemblySettings = baseAssemblySettings ++ Seq(
     // Executable jarfile
     assemblyOption in assembly ~= { _.copy(prependShellScript = Some(defaultShellScript)) },
     // Name it as an executable
-    jarName in assembly := { s"${name.value}-${version.value}" }
+    assemblyJarName in assembly := { s"${name.value}-${version.value}" }
   )
 
   lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings

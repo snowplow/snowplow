@@ -65,7 +65,7 @@ object ElasticsearchSinkApp extends App {
   val parser = new ArgotParser(
     programName = generated.Settings.name,
     compactUsage = true,
-    preUsage = Some("%s: Version %s. Copyright (c) 2013, %s.".format(
+    preUsage = Some("%s: Version %s. Copyright (c) 2015, %s.".format(
       generated.Settings.name,
       generated.Settings.version,
       generated.Settings.organization)
@@ -171,6 +171,7 @@ object ElasticsearchSinkApp extends App {
 
     val elasticsearch = connector.getConfig("elasticsearch")
     val elasticsearchEndpoint = elasticsearch.getString("endpoint")
+    val elasticsearchPort = elasticsearch.getString("port")
     val clusterName = elasticsearch.getString("cluster-name")
 
     val kinesis = connector.getConfig("kinesis")
@@ -197,6 +198,7 @@ object ElasticsearchSinkApp extends App {
     props.setProperty(KinesisConnectorConfiguration.PROP_REGION_NAME, streamRegion)
 
     props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_ENDPOINT, elasticsearchEndpoint)
+    props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_PORT, elasticsearchPort)
     props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_CLUSTER_NAME, clusterName)
 
     props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_BYTE_SIZE_LIMIT, byteLimit)
