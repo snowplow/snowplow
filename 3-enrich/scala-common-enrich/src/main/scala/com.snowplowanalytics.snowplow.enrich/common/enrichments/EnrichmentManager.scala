@@ -16,6 +16,9 @@ package enrich
 package common
 package enrichments
 
+// Joda
+import org.joda.time.DateTime
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -59,7 +62,7 @@ object EnrichmentManager {
    *         NonHiveOutput.
    */
   // TODO: etlTstamp shouldn't be stringly typed really
-  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: String, raw: RawEvent): ValidatedEnrichedEvent = {
+  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: DateTime, raw: RawEvent): ValidatedEnrichedEvent = {
 
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
@@ -74,7 +77,7 @@ object EnrichmentManager {
       e.event_id = EE.generateEventId      // May be updated later if we have an `eid` parameter
       e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
-      e.etl_tstamp = etlTstamp
+      e.etl_tstamp = EE.toTimestamp(etlTstamp)
       e.network_userid = raw.context.userId.orNull    // May be updated later by 'nuid'
       e.user_ipaddress = raw.context.ipAddress.orNull // May be updated later by 'ip'
     }
