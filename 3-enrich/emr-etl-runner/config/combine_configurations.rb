@@ -40,13 +40,25 @@ def recursive_stringify_keys(h)
   end
 end
 
-eer_config = YAML.load_file(ARGV[0])
+# Make macros safe
+def escape_macros(f)
+  File
+    .read(f)
+    .gsub(/{{(.*) "(.*)"}}/, "\"{{\\1 \\2}}\"")
+end
 
-sl_config = YAML.load_file(ARGV[1])
+# Restore macros
+def unescape_macros(y)
+  y.gsub(/'{{(.*) (.*)}}'/, "{{\\1 \"\\2\"}}")
+end
 
-json_file = ARGV[2]
+eer_config = YAML.load(escape_macros(ARGV[0]))
 
-yml_file = ARGV[3]
+sl_config = YAML.load(escape_macros(ARGV[1]))
+
+yml_file = ARGV[2]
+
+json_file = ARGV[3]
 
 combined = clone(eer_config)
 
@@ -93,7 +105,7 @@ combined = recursive_stringify_keys(combined)
 
 resolver_json = JSON.pretty_generate(JSON.parse(resolver.to_json))
 
-combined_configuration_yaml = combined.to_yaml
+combined_configuration_yaml = unescape_macros(combined.to_yaml)
 
 File.open(json_file, 'w') {|f| f.write resolver_json }
-File.open(yml_file, 'w') {|f| f.write combined.to_yaml }
+File.open(yml_file, 'w') {|f| f.write combined_configuration_yaml }
