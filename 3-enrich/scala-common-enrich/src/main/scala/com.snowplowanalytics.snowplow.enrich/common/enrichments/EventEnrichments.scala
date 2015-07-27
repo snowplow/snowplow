@@ -58,6 +58,26 @@ object EventEnrichments {
   def fromTimestamp(timestamp: String): DateTime = TstampFormat.parseDateTime(timestamp)
 
   /**
+   * Make a collector_tstamp Redshift-compatible
+   *
+   * @param Optional collectorTstamp
+   * @return Validation boxing the result of making the timestamp Redshift-compatible
+   */
+  def formatCollectorTstamp(collectorTstamp: Option[DateTime]): Validation[String, String] = {
+    collectorTstamp match {
+      case None => "No collector_tstamp set".fail
+      case Some(tstamp) => {
+        val formattedTimestamp = toTimestamp(tstamp)
+        if (formattedTimestamp.startsWith("-")) {
+          s"Collector timestamp $formattedTimestamp is negative and will fail the Redshift load".fail
+        } else {
+          formattedTimestamp.success
+        }
+      }
+    }
+  }
+
+  /**
    * Extracts the timestamp from the
    * format as laid out in the Tracker
    * Protocol:
