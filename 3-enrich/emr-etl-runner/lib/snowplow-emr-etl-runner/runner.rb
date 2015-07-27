@@ -53,11 +53,7 @@ module Snowplow
         end
 
         unless @args[:skip].include?('emr')
-          enrich = not(@args[:skip].include?('enrich'))
-          shred = not(@args[:skip].include?('shred'))
-          s3distcp = not(@args[:skip].include?('s3distcp'))
-          job = EmrJob.new(@args[:debug], enrich, shred, s3distcp, @config, @enrichments_array)
-          job.run()
+          run_emr(@config[:etl][:tries])
         end
 
         unless @args[:skip].include?('archive')
@@ -66,6 +62,20 @@ module Snowplow
 
         logger.info "Completed successfully"
         nil
+      end
+
+      def run_emr(emr_tries)
+        enrich = not(@args[:skip].include?('enrich'))
+        shred = not(@args[:skip].include?('shred'))
+        s3distcp = not(@args[:skip].include?('s3distcp'))
+        job = EmrJob.new(@args[:debug], enrich, shred, s3distcp, @config, @enrichments_array)
+        job.run()
+      rescue EmrExecutionError
+        emr_tries -= 1
+        logger.info "Job failed. #{emr_tries} tries left..."
+        raise if emr_tries == 0
+        S3Tasks.delete_previous_execution_logs(@config)
+        retry
       end
 
       # Adds trailing slashes to all non-nil bucket names in the hash
