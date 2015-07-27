@@ -15,6 +15,9 @@ package snowplow
 package enrich
 package common
 
+// Joda
+import org.joda.time.DateTime
+
 // Iglu
 import iglu.client.Resolver
 
@@ -60,7 +63,7 @@ object EtlPipeline {
    *         flatMap, will include any validation errors
    *         contained within the ValidatedMaybeCanonicalInput
    */
-  def processEvents(registry: EnrichmentRegistry, etlVersion: String, etlTstamp: String, input: ValidatedMaybeCollectorPayload)(implicit resolver: Resolver): List[ValidatedEnrichedEvent] = {
+  def processEvents(registry: EnrichmentRegistry, etlVersion: String, etlTstamp: DateTime, input: ValidatedMaybeCollectorPayload)(implicit resolver: Resolver): List[ValidatedEnrichedEvent] = {
 
     def flattenToList[A](v: Validated[Option[Validated[NonEmptyList[Validated[A]]]]]): List[Validated[A]] = v match {
       case Success(Some(Success(nel))) => nel.toList
