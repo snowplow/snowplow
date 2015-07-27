@@ -11,7 +11,9 @@ Assuming you already have [SBT 0.13.0] [sbt] installed:
     $ git clone git://github.com/snowplow/snowplow.git
     $ cd 4-storage/kinesis-elasticsearch-sink
     $ sbt assembly
-    
+
+The application compiles to `target/scala-2.10/snowplow-elasticsearch-sink`.
+
 ## Usage
 
 The Kinesis Elasticsearch Sink has the following command-line interface:
@@ -24,22 +26,33 @@ OPTIONS
                    Configuration file
 ```
 
-## Running
+## Configuring
 
 Create your own config file:
 
     $ cp src/main/resources/config.hocon.sample my.conf
 
-Edit it and update the AWS credentials:
+Edit it and provide the necessary values.
 
-```js
-aws {
-  access-key: "default"
-  secret-key: "default"
-}
-```
+| Key Name                            | Description |
+|-------------------------------------|-------------|
+| `kinesis.app-name`                  | Used to maintain stream state |
+| `kinesis.in.stream-name`            | Kinesis stream name |
+| `kinesis.in.stream-type`            | "good" for successfully enriched events or "bad" for rejected events |
+| `kinesis.out.stream-name`           | Stream for enriched events which are rejected by Elasticsearch |
+| `elasticsearch.cluster-name`        | Elasticsearch cluster name |
+| `elasticsearch.endpoint`            | Elasticsearch endpoint URI |
+| `elasticsearch.port`                | Elasticsearch port |
+| `elasticsearch.max-timeout`         | Elasticsearch max timeout |
+| `elasticsearch.index`               | Elasticsearch index name |
+| `elasticsearch.type`                | Elasticsearch type name |
+| `buffer.byte-limit`                 | Threshold for bytes in buffer |
+| `buffer.record-limit`               | Threshold for records in buffer |
+| `buffer.time-limit`                 | Threshold for time in buffer |
+| `monitoring.snowplow.collector-uri` | Snowplow collector URI |
+| `monitoring.snowplow.app-id`        | Snowplow app id |
 
-Next, start the sink, making sure to specify your new config file:
+Then, start the sink, making sure to specify your new config file:
 
     $ snowplow-elasticsearch-sink --config my.conf
 
