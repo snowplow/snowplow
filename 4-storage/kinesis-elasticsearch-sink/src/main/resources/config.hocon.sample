@@ -59,6 +59,7 @@ sink {
   elasticsearch {
     cluster-name: "{{sinkElasticsearchClusterName}}"
     endpoint: "{{sinkElasticsearchEndpoint}}"
+    port: "{{sinkElasticsearchPort}}"
     max-timeout: "{{sinkElasticsearchMaxTimeout}}"
     index: "{{sinkElasticsearchIndex}}" # Elasticsearch index name
     type: "{{sinkElasticsearchType}}" # Elasticsearch type name
