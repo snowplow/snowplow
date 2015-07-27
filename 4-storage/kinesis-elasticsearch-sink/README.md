@@ -6,13 +6,13 @@ The Kinesis Elasticsearch Sink consumes Snowplow enriched events or failed event
 
 ## Building
 
-Assuming you already have [SBT 0.13.0] [sbt] installed:
+Assuming you already have [SBT 0.13.8] [sbt] installed:
 
     $ git clone git://github.com/snowplow/snowplow.git
     $ cd 4-storage/kinesis-elasticsearch-sink
     $ sbt assembly
 
-The application compiles to `target/scala-2.10/snowplow-elasticsearch-sink`.
+The application compiles to `target/scala-2.10/snowplow-elasticsearch-sink-0.4.1`.
 
 ## Usage
 
@@ -79,7 +79,7 @@ limitations under the License.
 [kinesis]: http://aws.amazon.com/kinesis/
 [snowplow]: http://snowplowanalytics.com
 [elasticsearch]: http://www.elasticsearch.org/
-[sbt]: http://typesafe.artifactoryonline.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.0/sbt-launch.jar
+[sbt]: http://typesafe.artifactoryonline.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.8/sbt-launch.jar
 
 [setup]: https://github.com/snowplow/snowplow/wiki/kinesis-elasticsearch-sink-setup
 [techdocs]: https://github.com/snowplow/snowplow/wiki/kinesis-elasticsearch-sink
