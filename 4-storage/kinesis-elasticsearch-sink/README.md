@@ -10,28 +10,25 @@ Assuming you already have [SBT 0.13.0] [sbt] installed:
 
     $ git clone git://github.com/snowplow/snowplow.git
     $ cd 4-storage/kinesis-elasticsearch-sink
-    $ sbt compile
+    $ sbt assembly
     
 ## Usage
 
 The Kinesis Elasticsearch Sink has the following command-line interface:
 
 ```
-snowplow-elasticsearch-sink: Version 0.1.0. Copyright (c) 2014, Snowplow Analytics
-Ltd.
-
 Usage: snowplow-elasticsearch-sink [OPTIONS]
 
 OPTIONS
 --config filename
-                   Configuration file.
+                   Configuration file
 ```
 
 ## Running
 
 Create your own config file:
 
-    $ cp src/main/resources/application.conf.example my.conf
+    $ cp src/main/resources/config.hocon.sample my.conf
 
 Edit it and update the AWS credentials:
 
@@ -44,7 +41,7 @@ aws {
 
 Next, start the sink, making sure to specify your new config file:
 
-    $ sbt "run --config my.conf"
+    $ snowplow-elasticsearch-sink --config my.conf
 
 ## Find out more
 
@@ -55,7 +52,7 @@ Next, start the sink, making sure to specify your new config file:
 
 ## Copyright and license
 
-Copyright 2014 Snowplow Analytics Ltd.
+Copyright 2015 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
