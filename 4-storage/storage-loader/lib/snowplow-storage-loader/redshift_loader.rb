@@ -137,6 +137,13 @@ module Snowplow
       end
       module_function :extract_schema
 
+      # Replaces an initial "s3n" with "s3" in an S3 path
+      Contract String => String
+      def fix_s3_path(path)
+        path.gsub(/^s3n/, 's3')
+      end
+      module_function :fix_s3_path
+
       # Constructs the COPY statement to load the enriched
       # event TSV files into Redshift.
       #
@@ -153,6 +160,7 @@ module Snowplow
         # Assemble the relevant parameters for the bulk load query
         credentials = get_credentials(config)
         compression_format = get_compression_format(config[:enrich][:output_compression])
+        fixed_objectpath = fix_s3_path(s3_objectpath)
         comprows =
           if config[:include].include?('compudate')
             "COMPUPDATE COMPROWS #{config[:comprows]}"
@@ -160,7 +168,7 @@ module Snowplow
             ""
           end
 
-        "COPY #{table} FROM '#{s3_objectpath}' CREDENTIALS '#{credentials}' REGION AS '#{config[:aws][:s3][:region]}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{maxerror} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS #{comprows} TIMEFORMAT 'auto' ACCEPTINVCHARS #{compression_format};"
+        "COPY #{table} FROM '#{fixed_objectpath}' CREDENTIALS '#{credentials}' REGION AS '#{config[:aws][:s3][:region]}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{maxerror} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS #{comprows} TIMEFORMAT 'auto' ACCEPTINVCHARS #{compression_format};"
       end
       module_function :build_copy_from_tsv_statement
 
@@ -181,8 +189,9 @@ module Snowplow
       def build_copy_from_json_statement(config, s3_objectpath, jsonpaths_file, table, maxerror)
         credentials = get_credentials(config)
         compression_format = get_compression_format(config[:enrich][:output_compression])
+        fixed_objectpath = fix_s3_path(s3_objectpath)
         # TODO: what about COMPUPDATE/ROWS?
-        "COPY #{table} FROM '#{s3_objectpath}' CREDENTIALS '#{credentials}' JSON AS '#{jsonpaths_file}' REGION AS '#{config[:aws][:s3][:region]}' MAXERROR #{maxerror} TRUNCATECOLUMNS TIMEFORMAT 'auto' ACCEPTINVCHARS #{compression_format};"
+        "COPY #{table} FROM '#{fixed_objectpath}' CREDENTIALS '#{credentials}' JSON AS '#{jsonpaths_file}' REGION AS '#{config[:aws][:s3][:region]}' MAXERROR #{maxerror} TRUNCATECOLUMNS TIMEFORMAT 'auto' ACCEPTINVCHARS #{compression_format};"
       end
       module_function :build_copy_from_json_statement
 
