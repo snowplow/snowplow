@@ -21,15 +21,11 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "com.snowplowanalytics",
-    version               :=  "0.5.0",
+    version               :=  "0.5.1",
     description           :=  "Scala Stream Collector for Snowplow raw events",
-    scalaVersion          :=  "2.10.1",
-    scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
-                                  "-unchecked", "-feature", "-target:jvm-1.7"),
-    scalacOptions in Test :=  Seq("-Yrangepos"),
-    maxErrors             := 5,
+    maxErrors             :=  5,
     // http://www.scala-sbt.org/0.13.0/docs/Detailed-Topics/Forking.html
-    fork in run           := true,
+    fork in run           :=  true,
     resolvers             ++= Dependencies.resolutionRepos
   )
 
@@ -49,14 +45,15 @@ object BuildSettings {
     Seq(file)
   })
 
-  // sbt-assembly settings for building an executable
-  import sbtassembly.Plugin._
-  import AssemblyKeys._
-  lazy val sbtAssemblySettings = assemblySettings ++ Seq(
+  // sbt-assembly settings for building a fat jar
+  import sbtassembly.AssemblyPlugin.autoImport._
+  import sbtassembly.AssemblyPlugin.defaultShellScript
+
+  lazy val sbtAssemblySettings = baseAssemblySettings ++ Seq(
     // Executable jarfile
     assemblyOption in assembly ~= { _.copy(prependShellScript = Some(defaultShellScript)) },
     // Name it as an executable
-    jarName in assembly := { s"${name.value}-${version.value}" }
+    assemblyJarName in assembly := { s"${name.value}-${version.value}" }
   )
 
   lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings
