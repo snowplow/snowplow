@@ -1,18 +1,18 @@
--- Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
--- 
+-- Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
+--
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
 -- You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
--- 
+--
 -- Unless required by applicable law or agreed to in writing,
 -- software distributed under the Apache License Version 2.0 is distributed on an
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
--- 
+--
 -- Authors:     Alex Dean, Joshua Beemster
--- Copyright:     Copyright (c) 2014 Snowplow Analytics Ltd
+-- Copyright:   Copyright (c) 2014-2015 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
--- 
+--
 -- Compatibility: iglu:com.mailchimp/cleaned_email/jsonschema/1-0-0
 
 CREATE TABLE atomic.com_mailchimp_cleaned_email_1 (
@@ -23,17 +23,17 @@ CREATE TABLE atomic.com_mailchimp_cleaned_email_1 (
     schema_version          varchar(128)   encode runlength not null,
     -- Parentage of this type
     root_id                 char(36)       encode raw not null,
-    root_tstamp             timestamp      encode raw not null,
+    root_tstamp             timestamp      encode lzo not null,
     ref_root                varchar(255)   encode runlength not null,
     ref_tree                varchar(1500)  encode runlength not null,
     ref_parent              varchar(255)   encode runlength not null,
     -- Properties of this type
-    type                    varchar(255)   encode raw,
-    fired_at                timestamp      encode raw,
-    "data.campaign_id"      varchar(255)   encode raw,
-    "data.email"            varchar(255)   encode raw,
-    "data.list_id"          varchar(255)   encode raw,
-    "data.reason"           varchar(255)   encode raw,
+    type                    varchar(255)   encode lzo,
+    fired_at                timestamp      encode lzo,
+    "data.campaign_id"      varchar(255)   encode lzo,
+    "data.email"            varchar(255)   encode lzo,
+    "data.list_id"          varchar(255)   encode lzo,
+    "data.reason"           varchar(255)   encode lzo,
     FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY

@@ -1,4 +1,4 @@
--- Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
 -- Authors:       Alex Dean
--- Copyright:     Copyright (c) 2014 Snowplow Analytics Ltd
+-- Copyright:     Copyright (c) 2014-2015 Snowplow Analytics Ltd
 -- License:       Apache License Version 2.0
 --
 -- Compatibility: iglu:com.snowplowanalytics.snowplow/timing/jsonschema/1-0-0
@@ -23,15 +23,15 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_timing_1 (
 	schema_version varchar(128)  encode runlength not null,
 	-- Parentage of this type
 	root_id        char(36)      encode raw not null,
-	root_tstamp    timestamp     encode raw not null,
+	root_tstamp    timestamp     encode lzo not null,
 	ref_root       varchar(255)  encode runlength not null,
 	ref_tree       varchar(1500) encode runlength not null,
 	ref_parent     varchar(255)  encode runlength not null,
 	-- Properties of this type
-	category       varchar(255)  encode text255 not null,
-	variable       varchar(255)  encode text32k not null,
-	timing         integer       encode raw not null,
-	label          varchar(255)  encode text32k,
+	category       varchar(255)  encode lzo not null,
+	variable       varchar(255)  encode lzo not null,
+	timing         integer       encode lzo not null,
+	label          varchar(255)  encode lzo,
 	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY

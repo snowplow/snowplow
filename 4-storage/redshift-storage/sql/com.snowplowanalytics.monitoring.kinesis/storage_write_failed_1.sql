@@ -23,16 +23,16 @@ CREATE TABLE atomic.com_snowplowanalytics_monitoring_kinesis_storage_write_faile
 	schema_version  varchar(128)  encode runlength not null,
 	-- Parentage of this type
 	root_id         char(36)      encode raw not null,
-	root_tstamp     timestamp     encode raw not null,
+	root_tstamp     timestamp     encode lzo not null,
 	ref_root        varchar(255)  encode runlength not null,
 	ref_tree        varchar(1500) encode runlength not null,
 	ref_parent      varchar(255)  encode runlength not null,
 	-- Properties of this type
-	storage             varchar(255)  encode text255,
-	failureCount        integer       encode raw,
-	initialFailureTime  bigint        encode raw,
-	lastRetryPeriod     bigint        encode raw,
-	message             varchar(4096) encode raw,
+	storage             varchar(255)  encode lzo,
+	failureCount        integer       encode lzo,
+	initialFailureTime  bigint        encode lzo,
+	lastRetryPeriod     bigint        encode lzo,
+	message             varchar(4096) encode lzo,
 	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY

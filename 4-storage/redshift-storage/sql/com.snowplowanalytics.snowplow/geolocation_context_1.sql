@@ -1,4 +1,4 @@
--- Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
 -- Authors:       Alex Dean
--- Copyright:     Copyright (c) 2014 Snowplow Analytics Ltd
+-- Copyright:     Copyright (c) 2014-2015 Snowplow Analytics Ltd
 -- License:       Apache License Version 2.0
 --
 -- Compatibility: iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-0-0
@@ -23,18 +23,18 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_geolocation_context_1 (
 	schema_version varchar(128)   encode runlength not null,
 	-- Parentage of this type
 	root_id        char(36)       encode raw not null,
-	root_tstamp    timestamp      encode raw not null,
+	root_tstamp    timestamp      encode lzo not null,
 	ref_root       varchar(255)   encode runlength not null,
 	ref_tree       varchar(1500)  encode runlength not null,
 	ref_parent     varchar(255)   encode runlength not null,
 	-- Properties of this type
-	latitude                    float not null,
-	longitude                   float not null,
-	latitude_longitude_accuracy float,
-	altitude                    float,
-	altitude_accuracy           float,
-	bearing                     float,
-	speed                       float,
+	latitude                    float encode lzo not null,
+	longitude                   float encode lzo not null,
+	latitude_longitude_accuracy float encode lzo,
+	altitude                    float encode lzo,
+	altitude_accuracy           float encode lzo,
+	bearing                     float encode lzo,
+	speed                       float encode lzo,
 	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY

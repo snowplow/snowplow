@@ -23,21 +23,21 @@ CREATE TABLE atomic.com_snowplowanalytics_snowplow_flash_context_1 (
 	schema_version       varchar(128)  encode runlength not null,
 	-- Parentage of this type
 	root_id              char(36)      encode raw not null,
-	root_tstamp          timestamp     encode raw not null,
+	root_tstamp          timestamp     encode lzo not null,
 	ref_root             varchar(255)  encode runlength not null,
 	ref_tree             varchar(1500) encode runlength not null,
 	ref_parent           varchar(255)  encode runlength not null,
 	-- Properties of this type
 	player_type          varchar(10)   encode bytedict not null,
-	version              varchar(255)  encode text32k not null,
-	stage_size_width     integer       encode runlength,
-	stage_size_height    integer       encode runlength,
+	version              varchar(255)  encode lzo not null,
+	stage_size_width     integer       encode lzo,
+	stage_size_height    integer       encode lzo,
 	is_debugger          boolean       encode runlength not null,
 	has_local_storage    boolean       encode runlength not null,
 	has_script_access    boolean       encode runlength not null,
-	domain_session_index integer       encode runlength,
-	domain_user_id       varchar(36)   encode runlength,
-	user_fingerprint     varchar(50)   encode runlength,
+	domain_session_index integer       encode lzo,
+	domain_user_id       varchar(36)   encode lzo,
+	user_fingerprint     varchar(50)   encode lzo,
 	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 

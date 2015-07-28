@@ -23,17 +23,17 @@ CREATE TABLE atomic.com_snowplowanalytics_monitoring_kinesis_stream_write_failed
 	schema_version  varchar(128)  encode runlength not null,
 	-- Parentage of this type
 	root_id         char(36)      encode raw not null,
-	root_tstamp     timestamp     encode raw not null,
+	root_tstamp     timestamp     encode lzo not null,
 	ref_root        varchar(255)  encode runlength not null,
 	ref_tree        varchar(1500) encode runlength not null,
 	ref_parent      varchar(255)  encode runlength not null,
 	-- Properties of this type
-	errorType       varchar(255)  encode raw,
-	errorMessage    varchar(4096) encode raw,
-	streamName      varchar(255)  encode raw,
-	appName         varchar(255)  encode raw,
-	retryCount      bigint        encode raw,
-	putSize         bigint        encode raw,
+	errorType       varchar(255)  encode lzo,
+	errorMessage    varchar(4096) encode lzo,
+	streamName      varchar(255)  encode lzo,
+	appName         varchar(255)  encode lzo,
+	retryCount      bigint        encode lzo,
+	putSize         bigint        encode lzo,
 	FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY

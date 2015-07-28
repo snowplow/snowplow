@@ -1,4 +1,4 @@
--- Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
 -- Authors:     Yali Sassoon
--- Copyright:   Copyright (c) 2014 Snowplow Analytics Ltd
+-- Copyright:   Copyright (c) 2014-2015 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 -- Compatibility: iglu:com.mparticle.snowplow/transaction_event/jsonschema/1-0-0
@@ -23,22 +23,22 @@ CREATE TABLE atomic.com_mparticle_snowplow_transaction_event_1 (
   schema_version varchar(128) encode runlength not null,
   -- Parentage of this type
   root_id char(36) encode raw not null,
-  root_tstamp timestamp encode raw not null,
+  root_tstamp timestamp encode lzo not null,
   ref_root varchar(255) encode runlength not null,
   ref_tree varchar(1500) encode runlength not null,
   ref_parent varchar(255) encode runlength not null,
   -- Properties of this type
-  name varchar(256) encode text32k not null,
-  sku varchar(256) encode text32k  not null,
-  category varchar(256) encode text32k,
-  affiliation varchar(256) encode text32k,
-  unit_price decimal(12,2),
-  quantity integer,
-  revenue decimal(12,2),
-  tax decimal(12,2),
-  shipping decimal(12,2),
-  currency varchar(6),
-  transaction_id varchar(256),
+  name varchar(256) encode lzo not null,
+  sku varchar(256) encode lzo  not null,
+  category varchar(256) encode lzo,
+  affiliation varchar(256) encode lzo,
+  unit_price decimal(12,2) encode lzo,
+  quantity integer encode lzo,
+  revenue decimal(12,2) encode lzo,
+  tax decimal(12,2) encode lzo,
+  shipping decimal(12,2) encode lzo,
+  currency varchar(6) encode lzo,
+  transaction_id varchar(256) encode lzo,
   FOREIGN KEY(root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
