@@ -21,3 +21,4 @@ publishTo <<= version { version =>
 seq(ThriftPlugin.thriftSettings: _*)
 
 libraryDependencies += "org.apache.thrift"  %  "libthrift"     % "0.9.1"       % "compile"
+libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.4" % "compile"
