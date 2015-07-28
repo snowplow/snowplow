@@ -178,7 +178,7 @@ module Snowplow
           # 1. Compaction to HDFS (only for CloudFront currently)
           raw_input = csbr[:processing]
 
-          to_hdfs = ((self.class.is_cloudfront_log(config[:collectors][:format]) or config[:etl][:format] == "thrift") and s3distcp)
+          to_hdfs = ((self.class.is_cloudfront_log(config[:collectors][:format]) or config[:collectors][:format] == "thrift") and s3distcp)
 
           # TODO: throw exception if processing thrift with --skip s3distcp
           # https://github.com/snowplow/snowplow/issues/1648
