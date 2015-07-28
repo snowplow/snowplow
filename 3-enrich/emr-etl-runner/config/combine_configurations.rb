@@ -104,6 +104,8 @@ combined.delete(:iglu)
 combined = recursive_stringify_keys(combined)
 
 resolver_json = JSON.pretty_generate(JSON.parse(resolver.to_json))
+  .gsub("cache_size","cacheSize")
+  .gsub("vendor_prefixes", "vendorPrefixes")
 
 combined_configuration_yaml = unescape_macros(combined.to_yaml)
 
