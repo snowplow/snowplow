@@ -95,7 +95,12 @@ object EventEnrichments {
   val extractTimestamp: (String, String) => ValidatedString = (field, tstamp) =>
     try {
       val dt = new DateTime(tstamp.toLong)
-      toTimestamp(dt).success
+      val timestampString = toTimestamp(dt)
+      if (timestampString.startsWith("-")) {
+        s"Field [$field]: [$tstamp] is formatted as [$timestampString] which isn't Redshift-compatible".fail
+      } else {
+        timestampString.success
+      }
     } catch {
       case nfe: NumberFormatException =>
         "Field [%s]: [%s] is not in the expected format (ms since epoch)".format(field, tstamp).fail
