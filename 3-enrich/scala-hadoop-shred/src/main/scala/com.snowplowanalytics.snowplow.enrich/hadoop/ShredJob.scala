@@ -44,8 +44,8 @@ import iglu.client.validation.ProcessingMessageMethods._
 // This project
 import inputs.EnrichedEventLoader
 import shredder.Shredder
+import common.outputs.BadRow
 import outputs.{
-  BadRow,
   ShreddedPartition => UrShreddedPartition
 }
 
