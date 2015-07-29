@@ -29,6 +29,10 @@
     "$.data.xHostHeader",
     "$.data.csProtocol",
     "$.data.csBytes",
-    "$.data.timeTaken"
+    "$.data.timeTaken",
+    "$.data.xForwardedFor",
+    "$.data.sslProtocol",
+    "$.data.sslCipher",
+    "$.data.xEdgeResponseResultType"
     ]
 }
