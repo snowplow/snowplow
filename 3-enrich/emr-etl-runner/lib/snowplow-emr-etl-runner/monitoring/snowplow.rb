@@ -105,12 +105,12 @@ module Snowplow
         # Context for the entire job
         Contract Elasticity::JobFlow => {}
         def get_job_context(jobflow)
-          status = jobflow.status
+          status = jobflow.cluster_status
           Snowplow.as_self_desc_hash(
             JOB_STATUS_SCHEMA,
             {
               :name => status.name,
-              :jobflow_id => status.jobflow_id,
+              :jobflow_id => jobflow.jobflow_id,
               :state => status.state,
               :created_at => to_jsonschema_compatible_timestamp(status.created_at),
               :ended_at => to_jsonschema_compatible_timestamp(status.ended_at),
@@ -122,7 +122,7 @@ module Snowplow
         # One context per job step
         Contract Elasticity::JobFlow => ArrayOf[Hash]
         def get_job_step_contexts(jobflow)
-          jobflow.status.steps.map { |step|
+          jobflow.cluster_step_status.map { |step|
             Snowplow.as_self_desc_hash(
               STEP_STATUS_SCHEMA,
               {
