@@ -92,13 +92,13 @@ module Snowplow
           }
         end
 
-        # Drop the "UTC" from the end of a timestamp returned by a job status query
+        # Make a timestamp returned by a job status query compatible with JSON schema
         Contract Maybe[Time] => Maybe[String]
-        def to_redshift_compatible_timestamp(time)
+        def to_jsonschema_compatible_timestamp(time)
           if time.nil?
             nil
           else
-            time.strftime('%Y-%m-%d %H:%M:%S')
+            time.strftime('%Y-%m-%dT%H:%M:%SZ')
           end
         end
 
@@ -112,8 +112,8 @@ module Snowplow
               :name => status.name,
               :jobflow_id => status.jobflow_id,
               :state => status.state,
-              :created_at => to_redshift_compatible_timestamp(status.created_at),
-              :ended_at => to_redshift_compatible_timestamp(status.ended_at),
+              :created_at => to_jsonschema_compatible_timestamp(status.created_at),
+              :ended_at => to_jsonschema_compatible_timestamp(status.ended_at),
               :last_state_change_reason => status.last_state_change_reason
             }
           )
@@ -128,9 +128,9 @@ module Snowplow
               {
                 :name => step.name,
                 :state => step.state,
-                :created_at => to_redshift_compatible_timestamp(step.created_at),
-                :started_at => to_redshift_compatible_timestamp(step.started_at),
-                :ended_at => to_redshift_compatible_timestamp(step.ended_at)
+                :created_at => to_jsonschema_compatible_timestamp(step.created_at),
+                :started_at => to_jsonschema_compatible_timestamp(step.started_at),
+                :ended_at => to_jsonschema_compatible_timestamp(step.ended_at)
               }
             )
           }
