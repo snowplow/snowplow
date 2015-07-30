@@ -42,6 +42,7 @@ object Dependencies {
     val commonsCodec     = "1.5"
     val scalazon         = "0.11"
     val argot            = "1.0.1"
+    val config           = "1.0.2"
     val json4s           = "3.2.11"
     // Scala (test only)
     // Using the newest version of spec (2.3.6) causes
@@ -60,6 +61,7 @@ object Dependencies {
     val snowplowRawEvent = "com.snowplowanalytics" %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val collectorPayload = "com.snowplowanalytics" %  "collector-payload-1"       % V.collectorPayload
     val argot            = "org.clapper"           %% "argot"                     % V.argot
+    val config           = "com.typesafe"          %  "config"                    % V.config
     val sprayCan         = "io.spray"              %  "spray-can"                 % V.spray
     val sprayRouting     = "io.spray"              %  "spray-routing"             % V.spray
     val akkaActor        = "com.typesafe.akka"     %% "akka-actor"                % V.akka
