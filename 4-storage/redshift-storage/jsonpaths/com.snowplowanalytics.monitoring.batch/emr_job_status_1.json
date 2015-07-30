@@ -1,22 +1,19 @@
 {
-  "jsonpaths": [
-
-    "$.schema.vendor",
-    "$.schema.name",
-    "$.schema.format",
-    "$.schema.version",
-
-    "$.hierarchy.rootId",
-    "$.hierarchy.rootTstamp",
-    "$.hierarchy.refRoot",
-    "$.hierarchy.refTree",
-    "$.hierarchy.refParent",
-
-    "$.data.name",
-    "$.data.jobflow_id",
-    "$.data.state",
-    "$.data.created_at",
-    "$.data.ended_at",
-    "$.data.last_state_change_reason"
+    "jsonpaths": [
+        "$.schema.vendor",
+        "$.schema.name",
+        "$.schema.format",
+        "$.schema.version",
+        "$.hierarchy.rootId",
+        "$.hierarchy.rootTstamp",
+        "$.hierarchy.refRoot",
+        "$.hierarchy.refTree",
+        "$.hierarchy.refParent",
+        "$.data.created_at",
+        "$.data.jobflow_id",
+        "$.data.name",
+        "$.data.state",
+        "$.data.ended_at",
+        "$.data.last_state_change_reason"
     ]
 }
