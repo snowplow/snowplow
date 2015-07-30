@@ -138,7 +138,7 @@ collector {
         val expiration = httpCookie.expires.get
         val offset = expiration.clicks - collectorConfig.cookieExpiration -
           DateTime.now.clicks
-        offset.asInstanceOf[Int] must beCloseTo(0, 4000) // 2000 ms window.
+        offset.asInstanceOf[Int] must beCloseTo(0, 2000) // 1000 ms window.
       }
     }
     "return the same cookie as passed in" in {
@@ -179,7 +179,7 @@ collector {
         thriftDeserializer.deserialize(storedEvent, storedRecordBytes.head)
       }
 
-      storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 2000)
+      storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 2000) // 1000 ms window.
       storedEvent.encoding must beEqualTo("UTF-8")
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
       storedEvent.collector must beEqualTo("ssc-0.5.1-test")
