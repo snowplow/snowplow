@@ -74,13 +74,13 @@ object ElasticsearchSinkApp extends App {
 
   // Mandatory config argument
   val config = parser.option[Config](List("config"), "filename", "Configuration file.") { (c, opt) =>
-      val file = new File(c)
-      if (file.exists) {
-        ConfigFactory.parseFile(file)
-      } else {
-        parser.usage("Configuration file \"%s\" does not exist".format(c))
-        ConfigFactory.empty()
-      }
+    val file = new File(c)
+    if (file.exists) {
+      ConfigFactory.parseFile(file)
+    } else {
+      parser.usage("Configuration file \"%s\" does not exist".format(c))
+      ConfigFactory.empty()
+    }
   }
 
   parser.parse(args)

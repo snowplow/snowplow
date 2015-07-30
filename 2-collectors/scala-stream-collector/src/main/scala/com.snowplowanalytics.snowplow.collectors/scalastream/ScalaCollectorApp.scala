@@ -55,8 +55,7 @@ object ScalaCollector extends App {
   )
 
   // Mandatory config argument
-  val config = parser.option[Config](List("config"), "filename",
-    "Configuration file.") { (c, opt) =>
+  val config = parser.option[Config](List("config"), "filename", "Configuration file.") { (c, opt) =>
     val file = new File(c)
     if (file.exists) {
       ConfigFactory.parseFile(file)
