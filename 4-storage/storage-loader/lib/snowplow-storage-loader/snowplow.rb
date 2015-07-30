@@ -30,12 +30,8 @@ module Snowplow
         PORT = 80
         BUFFER_SIZE = 0
         APPLICATION_CONTEXT_SCHEMA = "iglu:com.snowplowanalytics.snowplow/application_context/jsonschema/1-0-0"
-        JOB_STARTED_SCHEMA = "iglu:com.snowplowanalytics.snowplow/job_started/jsonschema/1-0-0"
-        JOB_FAILED_SCHEMA = "iglu:com.snowplowanalytics.snowplow/job_failed/jsonschema/1-0-0"
-        JOB_SUCCEEDED_SCHEMA = "iglu:com.snowplowanalytics.snowplow/job_succeeded/jsonschema/1-0-0"
-
-        LOAD_SUCCEEDED_SCHEMA = "iglu:com.snowplowanalytics.snowplow/load_succeeded/jsonschema/1-0-0"
-        LOAD_FAILED_SCHEMA = "iglu:com.snowplowanalytics.snowplow/load_failed/jsonschema/1-0-0"
+        LOAD_SUCCEEDED_SCHEMA = "iglu:com.snowplowanalytics.monitoring.batch/load_succeeded/jsonschema/1-0-0"
+        LOAD_FAILED_SCHEMA = "iglu:com.snowplowanalytics.monitoring.batch/load_failed/jsonschema/1-0-0"
 
         # Parameters
         @@method = "get"
