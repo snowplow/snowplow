@@ -9,7 +9,7 @@ Events are enriched using the [scala-common-enrich][common-enrich] library.
 
 ## Building
 
-Assuming you already have [SBT 0.13.0] [sbt] installed:
+Assuming you already have [SBT 0.13.8] [sbt] installed:
 
     $ git clone git://github.com/snowplow/snowplow.git
     $ cd 3-enrich/scala-kinesis-enrich
@@ -102,7 +102,7 @@ limitations under the License.
 [kinesis]: http://aws.amazon.com/kinesis/
 [snowplow]: http://snowplowanalytics.com
 [common-enrich]: https://github.com/snowplow/snowplow/tree/master/3-enrich/scala-common-enrich
-[sbt]: http://typesafe.artifactoryonline.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.0/sbt-launch.jar
+[sbt]: http://typesafe.artifactoryonline.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.8/sbt-launch.jar
 
 [configuring-enrichments]: https://github.com/snowplow/snowplow/wiki/5-Configuring-enrichments
 [iglu-client-configuration]: https://github.com/snowplow/iglu/wiki/Iglu-client-configuration
