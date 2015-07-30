@@ -55,8 +55,7 @@ object ScalaCollector extends App {
   )
 
   // Mandatory config argument
-  val config = parser.option[Config](List("config"), "filename",
-    "Configuration file.") { (c, opt) =>
+  val config = parser.option[Config](List("config"), "filename", "Configuration file.") { (c, opt) =>
     val file = new File(c)
     if (file.exists) {
       ConfigFactory.parseFile(file)
@@ -68,10 +67,10 @@ object ScalaCollector extends App {
 
   parser.parse(args)
 
-  val rawConf = config.value.getOrElse(throw new RuntimeException("--config option must be provided"))
-  val collectorConfig = new CollectorConfig(rawConf)
+  val resolvedConfig = config.value.getOrElse(throw new RuntimeException("--config option must be provided")).resolve
+  val collectorConfig = new CollectorConfig(resolvedConfig)
 
-  implicit val system = ActorSystem.create("scala-stream-collector", rawConf)
+  implicit val system = ActorSystem.create("scala-stream-collector", resolvedConfig)
 
   val sinks = collectorConfig.sinkEnabled match {
     case Sink.Kinesis => {
