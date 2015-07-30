@@ -31,7 +31,7 @@ object Dependencies {
     val slf4j                = "1.7.5"
     val kinesisClient        = "1.0.0"
     val kinesisConnector     = "1.1.2"
-    val elasticsearch        = "1.4.4"
+    val elasticsearch        = "1.7.0"
     // Scala
     val argot                = "1.0.1"
     val config               = "1.0.2"

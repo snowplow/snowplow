@@ -19,10 +19,10 @@ object BuildSettings {
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
-    organization          :=  "com.snowplowanalytics",
-    version               :=  "0.4.1",
-    description           :=  "Kinesis sink for Elasticsearch",
-    resolvers             ++= Dependencies.resolutionRepos
+    organization :=  "com.snowplowanalytics",
+    version      :=  "0.4.1",
+    description  :=  "Kinesis sink for Elasticsearch",
+    resolvers    ++= Dependencies.resolutionRepos
   )
 
   // Makes our SBT app settings available from within the app
@@ -46,7 +46,13 @@ object BuildSettings {
     // Executable jarfile
     assemblyOption in assembly ~= { _.copy(prependShellScript = Some(defaultShellScript)) },
     // Name it as an executable
-    assemblyJarName in assembly := { s"${name.value}-${version.value}" }
+    assemblyJarName in assembly := { s"${name.value}-${version.value}" },
+    // Patch for joda-convert merge issue with elasticsearch 1.7.0
+    // See: https://github.com/elastic/elasticsearch/pull/10294
+    assemblyExcludedJars in assembly := {
+      val cp = (fullClasspath in assembly).value
+      cp filter {_.data.getName == "joda-convert-1.2.jar"}
+    }
   )
 
   lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings

@@ -4,6 +4,8 @@
 
 The Kinesis Elasticsearch Sink consumes Snowplow enriched events or failed events from an [Amazon Kinesis][kinesis] stream, transforms them to JSON, and writes them to [Elasticsearch][elasticsearch]. Events which cannot be transformed or which are rejected by Elasticsearch are written to a separate Kinesis stream.
 
+Elasticsearch 1.7.0 is required.
+
 ## Building
 
 Assuming you already have [SBT 0.13.8] [sbt] installed:

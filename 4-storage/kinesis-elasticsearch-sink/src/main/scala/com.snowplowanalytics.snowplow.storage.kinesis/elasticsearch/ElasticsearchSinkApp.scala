@@ -72,11 +72,8 @@ object ElasticsearchSinkApp extends App {
     )
   )
 
-  // Optional config argument
-  val config = parser.option[Config](
-      List("config"), "filename", """
-        |Configuration file""".stripMargin) {
-    (c, opt) =>
+  // Mandatory config argument
+  val config = parser.option[Config](List("config"), "filename", "Configuration file.") { (c, opt) =>
       val file = new File(c)
       if (file.exists) {
         ConfigFactory.parseFile(file)
