@@ -93,9 +93,7 @@ object KinesisEnrichApp extends App {
 
   // Mandatory config argument
   val config = parser.option[Config](
-      List("config"), "filename", """
-        |Configuration file.""".stripMargin) {
-    (c, opt) =>
+      List("config"), "filename", "Configuration file.") { (c, opt) =>
       val file = new File(c)
       if (file.exists) {
         ConfigFactory.parseFile(file)
@@ -121,11 +119,11 @@ object KinesisEnrichApp extends App {
 
   parser.parse(args)
 
-  val parsedConfig = config.value.getOrElse(parser.usage("--config argument must be provided"))
-  val kinesisEnrichConfig = new KinesisEnrichConfig(parsedConfig)
+  val resolvedConfig = config.value.getOrElse(parser.usage("--config argument must be provided")).resolve
+  val kinesisEnrichConfig = new KinesisEnrichConfig(resolvedConfig)
 
-  val tracker = if (parsedConfig.hasPath("enrich.monitoring.snowplow")) {
-    SnowplowTracking.initializeTracker(parsedConfig.getConfig("enrich.monitoring.snowplow")).some
+  val tracker = if (resolvedConfig.hasPath("enrich.monitoring.snowplow")) {
+    SnowplowTracking.initializeTracker(resolvedConfig.getConfig("enrich.monitoring.snowplow")).some
   } else { 
     None 
   }
