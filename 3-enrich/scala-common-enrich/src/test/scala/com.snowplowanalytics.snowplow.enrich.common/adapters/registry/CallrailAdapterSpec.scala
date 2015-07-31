@@ -56,7 +56,7 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidationM
     val staticNoPlatform = Map(
       "tv" -> "com.callrail-v1",
       "e"  -> "ue",
-      "cv" -> "clj-0.6.0-tom-0.0.4"
+      "cv" -> "clj-0.6.1-tom-0.0.4"
       )
     val static = staticNoPlatform ++ Map(
       "p"  -> "srv"
@@ -100,7 +100,7 @@ class CallrailAdapterSpec extends Specification with DataTables with ValidationM
       "utmv"           -> "",
       "utmx"           -> "",
       "utmz"           -> "",
-      "cv"             -> "clj-0.6.0-tom-0.0.4",
+      "cv"             -> "clj-0.6.1-tom-0.0.4",
       "nuid"           -> "-"
       )
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.source, Shared.context)

@@ -21,7 +21,8 @@ object Dependencies {
     // For Scalazon
     "BintrayJCenter"                         at "http://jcenter.bintray.com",
     // For user-agent-utils
-    "user-agent-utils repo"                  at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/"
+    "user-agent-utils repo"                  at "https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/",
+    "clojars"                                at "http://clojars.org/repo"
   )
 
   object V {
@@ -30,7 +31,7 @@ object Dependencies {
     val slf4j                = "1.7.5"
     val kinesisClient        = "1.0.0"
     val kinesisConnector     = "1.1.2"
-    val elasticsearch        = "1.4.4"
+    val elasticsearch        = "1.7.0"
     // Scala
     val argot                = "1.0.1"
     val config               = "1.0.2"

@@ -65,58 +65,54 @@ object ElasticsearchSinkApp extends App {
   val parser = new ArgotParser(
     programName = generated.Settings.name,
     compactUsage = true,
-    preUsage = Some("%s: Version %s. Copyright (c) 2013, %s.".format(
+    preUsage = Some("%s: Version %s. Copyright (c) 2015, %s.".format(
       generated.Settings.name,
       generated.Settings.version,
       generated.Settings.organization)
     )
   )
 
-  // Optional config argument
-  val config = parser.option[Config](
-      List("config"), "filename", """
-        |Configuration file""".stripMargin) {
-    (c, opt) =>
-      val file = new File(c)
-      if (file.exists) {
-        ConfigFactory.parseFile(file)
-      } else {
-        parser.usage("Configuration file \"%s\" does not exist".format(c))
-        ConfigFactory.empty()
-      }
+  // Mandatory config argument
+  val config = parser.option[Config](List("config"), "filename", "Configuration file.") { (c, opt) =>
+    val file = new File(c)
+    if (file.exists) {
+      ConfigFactory.parseFile(file)
+    } else {
+      parser.usage("Configuration file \"%s\" does not exist".format(c))
+      ConfigFactory.empty()
+    }
   }
 
   parser.parse(args)
 
-  val configValue: Config = config.value.getOrElse(
-    throw new RuntimeException("--config argument must be provided")).resolve.getConfig("sink")
+  val resolvedConfig: Config = config.value.getOrElse(throw new RuntimeException("--config argument must be provided")).resolve
+  private val sink = resolvedConfig.getConfig("sink")
 
-  val streamType = configValue.getConfig("kinesis").getConfig("in").getString("stream-type") match {
+  val streamType = sink.getConfig("kinesis").getConfig("in").getString("stream-type") match {
     case "good" => StreamType.Good
     case "bad" => StreamType.Bad
     case _ => throw new RuntimeException("\"stream-type\" must be set to \"good\" or \"bad\"")
   }
-  val elasticsearch = configValue.getConfig("elasticsearch")
+  val elasticsearch = sink.getConfig("elasticsearch")
   val documentIndex = elasticsearch.getString("index")
   val documentType = elasticsearch.getString("type")
 
-  val tracker = if (configValue.hasPath("monitoring.snowplow")) {
-    SnowplowTracking.initializeTracker(configValue.getConfig("monitoring.snowplow")).some
+  val tracker = if (sink.hasPath("monitoring.snowplow")) {
+    SnowplowTracking.initializeTracker(sink.getConfig("monitoring.snowplow")).some
   } else {
     None
   }
 
-  val maxConnectionTime = configValue.getConfig("elasticsearch").getLong("max-timeout")
+  val maxConnectionTime = sink.getConfig("elasticsearch").getLong("max-timeout")
 
-  val executor = configValue.getString("source") match {
-
+  val executor = sink.getString("source") match {
     // Read records from Kinesis
     case "kinesis" => {
-      val finalConfig = convertConfig(configValue)
+      val finalConfig = convertConfig(sink)
 
-      val (goodSink, badSink) = configValue.getString("sink") match {
+      val (goodSink, badSink) = sink.getString("sink") match {
         case "elasticsearch-kinesis" => {
-          val kinesis = configValue.getConfig("kinesis")
+          val kinesis = sink.getConfig("kinesis")
           val kinesisSink = kinesis.getConfig("out")
           val kinesisSinkName = kinesisSink.getString("stream-name")
           val kinesisSinkShards = kinesisSink.getInt("shards")
@@ -171,6 +167,7 @@ object ElasticsearchSinkApp extends App {
 
     val elasticsearch = connector.getConfig("elasticsearch")
     val elasticsearchEndpoint = elasticsearch.getString("endpoint")
+    val elasticsearchPort = elasticsearch.getString("port")
     val clusterName = elasticsearch.getString("cluster-name")
 
     val kinesis = connector.getConfig("kinesis")
@@ -197,6 +194,7 @@ object ElasticsearchSinkApp extends App {
     props.setProperty(KinesisConnectorConfiguration.PROP_REGION_NAME, streamRegion)
 
     props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_ENDPOINT, elasticsearchEndpoint)
+    props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_PORT, elasticsearchPort)
     props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_CLUSTER_NAME, clusterName)
 
     props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_BYTE_SIZE_LIMIT, byteLimit)
