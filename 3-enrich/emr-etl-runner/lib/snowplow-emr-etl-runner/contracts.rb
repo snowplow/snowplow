@@ -134,7 +134,7 @@ module Snowplow
         :targets => ArrayOf[TargetHash]
         }),
       :monitoring => ({
-        :tags => HashOf[String, String],
+        :tags => HashOf[Symbol, String],
         :logging => ({
           :level => String
           }),
