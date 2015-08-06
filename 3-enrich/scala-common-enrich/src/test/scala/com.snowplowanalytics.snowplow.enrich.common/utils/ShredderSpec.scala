@@ -13,14 +13,14 @@
 package com.snowplowanalytics
 package snowplow
 package enrich
-package hadoop
-package shredder
+package common
+package utils
 
 // Snowplow Utils
 import util.Tap._
 
 // Snowplow Common Enrich
-import common.outputs.EnrichedEvent
+import outputs.EnrichedEvent
 
 // Specs2
 import org.specs2.Specification
