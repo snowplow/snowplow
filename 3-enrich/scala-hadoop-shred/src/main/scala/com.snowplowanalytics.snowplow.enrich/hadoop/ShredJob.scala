@@ -33,6 +33,7 @@ import com.twitter.scalding._
 import common._
 import common.FatalEtlError
 import common.outputs.BadRow
+import common.utils.Shredder
 
 // Iglu Scala Client
 import iglu.client.{
@@ -44,7 +45,6 @@ import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
 import inputs.EnrichedEventLoader
-import shredder.Shredder
 import outputs.{
   ShreddedPartition => UrShreddedPartition
 }

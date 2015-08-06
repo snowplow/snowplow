@@ -42,14 +42,4 @@ package object hadoop {
   type Validated[A] = Validation[ProcessingMessage, A]
   type ValidatedNel[A] = ValidationNel[ProcessingMessage, A]
 
-  /**
-   * A (possibly empty) list of JsonNodes
-   */
-  type JsonNodes = List[JsonNode]
-
-  /**
-   * A (possibly empty) list of JsonSchemaPairs
-   */
-  type JsonSchemaPairs = List[JsonSchemaPair]
-
 }

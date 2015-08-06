@@ -17,7 +17,10 @@ package common
 package enrichments
 
 // Joda
+
+import com.snowplowanalytics.iglu.client.Resolver
 import org.joda.time.DateTime
+import org.json4s.JObject
 
 // Scalaz
 import scalaz._
@@ -30,8 +33,7 @@ import util.Tap._
 import adapters.RawEvent
 import outputs.EnrichedEvent
 
-import utils.{ConversionUtils => CU}
-import utils.{JsonUtils => JU}
+import com.snowplowanalytics.snowplow.enrich.common.utils.{ConversionUtils => CU, JsonUtils => JU, Shredder}
 import utils.MapTransformer._
 
 import enrichments.{EventEnrichments => EE}
@@ -62,7 +64,7 @@ object EnrichmentManager {
    *         NonHiveOutput.
    */
   // TODO: etlTstamp shouldn't be stringly typed really
-  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: DateTime, raw: RawEvent): ValidatedEnrichedEvent = {
+  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: DateTime, raw: RawEvent)(implicit resolver: Resolver): ValidatedEnrichedEvent = {
 
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
@@ -409,6 +411,12 @@ object EnrichmentManager {
       case None => Nil.success
     }
 
+    // Validate contexts and unstructured events
+    val shred = Shredder.shred(event) match {
+      case Failure(msgs) => msgs.map(_.toString).fail
+      case Success(_) => unitSuccess.toValidationNel
+    }
+
     // Assemble array of derived contexts
     val derived_contexts = List(uaParser).collect {
       case Success(Some(context)) => context
@@ -451,8 +459,9 @@ object EnrichmentManager {
       pageQsMap.toValidationNel               |@|
       crossDomain.toValidationNel             |@|
       jsScript.toValidationNel                |@|
-      campaign) {
-      (_,_,_,_,_,_,_) => ()
+      campaign                                |@|
+      shred) {
+      (_,_,_,_,_,_,_,_) => ()
     }
     (first |@| second) {
       (_,_) => event

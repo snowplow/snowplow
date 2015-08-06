@@ -13,8 +13,8 @@
 package com.snowplowanalytics
 package snowplow
 package enrich
-package hadoop
-package shredder
+package common
+package utils
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
@@ -41,9 +41,6 @@ import iglu.client.{
 import iglu.client.validation.ProcessingMessageMethods._
 import iglu.client.validation.ValidatableJsonMethods._
 
-// This project
-import hadoop.utils.JsonUtils
-
 /**
  * The shredder takes the two fields containing JSONs
  * (contexts and unstructured event properties) and
@@ -52,6 +49,11 @@ import hadoop.utils.JsonUtils
  * database.
  */
 object Shredder {
+
+  /**
+   * A (possibly empty) list of JsonNodes
+   */
+  type JsonNodes = List[JsonNode]
 
   // All shredded JSONs have the events type (aka table) as their ultimate parent
   private val TypeHierarchyRoot = "events"
@@ -83,7 +85,7 @@ object Shredder {
    *         and on Failure a NonEmptyList of
    *         JsonNodes containing error messages
    */
-  def shred(event: EnrichedEvent)(implicit resolver: Resolver): ValidatedNel[JsonSchemaPairs] = {
+  def shred(event: EnrichedEvent)(implicit resolver: Resolver): ValidatedNelMessage[JsonSchemaPairs] = {
 
     // Define what we know so far of the type hierarchy.
     val partialHierarchy = makePartialHierarchy(
@@ -97,7 +99,7 @@ object Shredder {
       l = List(j)
     } yield l
 
-    def extractContexts(json: String, field: String): Option[ValidatedNel[List[JsonNode]]] = {
+    def extractContexts(json: String, field: String): Option[ValidatedNelMessage[List[JsonNode]]] = {
       for {
         v <- extractAndValidateJson(field, ContextsSchema, Option(json))
       } yield for {
@@ -109,7 +111,7 @@ object Shredder {
     val c  = extractContexts(event.contexts, "context")
     val dc = extractContexts(event.derived_contexts, "derived_contexts")
 
-    def flatten(o: Option[ValidatedNel[JsonNodes]]): ValidatedNel[JsonNodes] = o match {
+    def flatten(o: Option[ValidatedNelMessage[JsonNodes]]): ValidatedNelMessage[JsonNodes] = o match {
       case Some(vjl) => vjl
       case None => List[JsonNode]().success
     }
@@ -140,7 +142,7 @@ object Shredder {
    *        element
    * @return the partially complete TypeHierarchy
    */
-  private[shredder] def makePartialHierarchy(rootId: String, rootTstamp: String): TypeHierarchy =
+  private[utils] def makePartialHierarchy(rootId: String, rootTstamp: String): TypeHierarchy =
     TypeHierarchy(
       rootId     = rootId,
       rootTstamp = rootTstamp,
@@ -172,7 +174,7 @@ object Shredder {
    *         contain the full schema key, plus the
    *         now-finalized hierarchy
    */
-  private[shredder] def attachMetadata(
+  private def attachMetadata(
     instanceSchemaPair: JsonSchemaPair,
     partialHierarchy: TypeHierarchy): JsonSchemaPair = {
 
@@ -215,8 +217,8 @@ object Shredder {
    *         Failure, or a singular
    *         JsonNode on success
    */
-  private[shredder] def extractAndValidateJson(field: String, schemaCriterion: SchemaCriterion, instance: Option[String])(implicit resolver: Resolver):
-    Option[ValidatedNel[JsonNode]] =
+  private def extractAndValidateJson(field: String, schemaCriterion: SchemaCriterion, instance: Option[String])(implicit resolver: Resolver):
+    Option[ValidatedNelMessage[JsonNode]] =
     for {
       i <- instance
     } yield for {
@@ -235,6 +237,6 @@ object Shredder {
    * @param instance The JSON instance itself
    * @return the pimped ScalazArgs
    */
-  private[shredder] def extractJson(field: String, instance: String): ValidatedNel[JsonNode] =
+  private def extractJson(field: String, instance: String): ValidatedNelMessage[JsonNode] =
     JsonUtils.extractJson(field, instance).toProcessingMessageNel
 }
