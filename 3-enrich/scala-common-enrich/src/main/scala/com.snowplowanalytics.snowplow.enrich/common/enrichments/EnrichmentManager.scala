@@ -17,10 +17,10 @@ package common
 package enrichments
 
 // Joda
-
-import com.snowplowanalytics.iglu.client.Resolver
 import org.joda.time.DateTime
-import org.json4s.JObject
+
+// Iglu
+import iglu.client.Resolver
 
 // Scalaz
 import scalaz._
