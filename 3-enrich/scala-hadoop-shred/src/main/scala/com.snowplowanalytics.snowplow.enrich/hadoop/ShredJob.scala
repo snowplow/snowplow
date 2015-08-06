@@ -33,7 +33,7 @@ import com.twitter.scalding._
 import common._
 import common.FatalEtlError
 import common.outputs.BadRow
-import common.utils.Shredder
+import common.utils.shredder.Shredder
 
 // Iglu Scala Client
 import iglu.client.{

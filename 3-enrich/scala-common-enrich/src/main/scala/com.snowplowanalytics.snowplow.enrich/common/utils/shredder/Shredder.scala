@@ -15,6 +15,7 @@ package snowplow
 package enrich
 package common
 package utils
+package shredder
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
@@ -142,7 +143,7 @@ object Shredder {
    *        element
    * @return the partially complete TypeHierarchy
    */
-  private[utils] def makePartialHierarchy(rootId: String, rootTstamp: String): TypeHierarchy =
+  private[shredder] def makePartialHierarchy(rootId: String, rootTstamp: String): TypeHierarchy =
     TypeHierarchy(
       rootId     = rootId,
       rootTstamp = rootTstamp,

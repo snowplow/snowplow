@@ -13,6 +13,7 @@
 package com.snowplowanalytics.snowplow.enrich
 package common
 package utils
+package shredder
 
 // Jackson
 import com.github.fge.jackson.JacksonUtils
