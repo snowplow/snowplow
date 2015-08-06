@@ -69,7 +69,7 @@ object JsonUtils {
    * Converts a Joda DateTime into
    * a JSON Schema-compatible date-time string.
    *
-   * @param datetime The Joda DateTime
+   * @param dateTime The Joda DateTime
    *        to convert to a timestamp String
    * @return the timestamp String
    */
