@@ -13,6 +13,7 @@
 package com.snowplowanalytics.snowplow.enrich
 package common
 package utils
+package shredder
 
 // Specs2
 import org.specs2.Specification
