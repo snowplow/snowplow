@@ -15,6 +15,7 @@ package snowplow
 package enrich
 package common
 package utils
+package shredder
 
 // Snowplow Utils
 import util.Tap._

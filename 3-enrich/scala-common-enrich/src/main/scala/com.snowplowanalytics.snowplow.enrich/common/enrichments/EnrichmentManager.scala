@@ -33,8 +33,9 @@ import util.Tap._
 import adapters.RawEvent
 import outputs.EnrichedEvent
 
-import com.snowplowanalytics.snowplow.enrich.common.utils.{ConversionUtils => CU, JsonUtils => JU, Shredder}
+import utils.{ConversionUtils => CU, JsonUtils => JU}
 import utils.MapTransformer._
+import utils.shredder.Shredder
 
 import enrichments.{EventEnrichments => EE}
 import enrichments.{MiscEnrichments => ME}
