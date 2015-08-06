@@ -28,6 +28,9 @@ import com.snowplowanalytics.maxmind.iplookups.IpLocation
 // JSON Schema
 import com.github.fge.jsonschema.core.report.ProcessingMessage
 
+// Iglu
+import com.snowplowanalytics.iglu.client.JsonSchemaPair
+
 // This project
 import common.loaders.CollectorPayload
 import common.adapters.RawEvent
@@ -150,4 +153,9 @@ package object common {
    * Parameters inside of a raw event
    */
   type RawEventParameters = Map[String, String]
+
+  /**
+   * A (possibly empty) list of JsonSchemaPairs
+   */
+  type JsonSchemaPairs = List[JsonSchemaPair]
 }
