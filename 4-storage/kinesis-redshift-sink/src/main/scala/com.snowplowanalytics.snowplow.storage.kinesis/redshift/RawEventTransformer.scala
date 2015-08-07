@@ -32,7 +32,7 @@ import scalaz._
 
 object FieldIndexes { // 0-indexed
   val collectorTstamp = 3
-  val appId = 1
+  val appId = 0
   val eventId = 6
   val contexts = 52
   val unstructEvent = 58
