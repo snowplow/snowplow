@@ -22,17 +22,17 @@ object SQLConverters {
   implicit def redshiftOps(s: String): RedshiftOps = new RedshiftOps(s)
   import java.math.{BigDecimal => BD}
 
-  def setString(value: String, stat: PreparedStatement, index: Int) =
-    stat.setString(index, value)
-  def setTimestamp(value: String, stat: PreparedStatement, index: Int) =
+  def setString(value: String, stat: PreparedStatement, index: Int, size: Int) =
+    stat.setString(index, if (value == null || size > value.length) value else value.substring(0, size))
+  def setTimestamp(value: String, stat: PreparedStatement, index: Int, size: Int) =
     stat.setTimestamp(index, if (value == null) null else Timestamp.valueOf(value))
-  def setBoolean(value: String, stat: PreparedStatement, index: Int) =
+  def setBoolean(value: String, stat: PreparedStatement, index: Int, size: Int) =
     if (value == null) stat.setNull(index, Types.BOOLEAN) else stat.setBoolean(index, value.rsBoolean)
-  def setInteger(value: String, stat: PreparedStatement, index: Int) =
+  def setInteger(value: String, stat: PreparedStatement, index: Int, size: Int) =
     if (value == null) stat.setNull(index, Types.INTEGER) else stat.setInt(index, value.toInt)
-  def setDouble(value: String, stat: PreparedStatement, index: Int) =
+  def setDouble(value: String, stat: PreparedStatement, index: Int, size: Int) =
     if (value == null) stat.setNull(index, Types.DOUBLE) else stat.setDouble(index, value.toDouble)
-  def setDecimal(value: String, stat: PreparedStatement, index: Int) =
+  def setDecimal(value: String, stat: PreparedStatement, index: Int, size: Int) =
     try {
       if (value == null) stat.setNull(index, Types.DECIMAL) else stat.setBigDecimal(index, new BD(value))
     }
@@ -41,7 +41,6 @@ object SQLConverters {
         log.error(s"Invalid decimal: <$value>")
         throw t
     }
-
 }
 
 object TableWriter {
@@ -97,7 +96,7 @@ object TableWriter {
     synchronized {
       if (!writers.contains(tableName)) {
         if (tableExists(tableName)) {
-          log.info(s"Creating writer for $tableName")
+          log.info(s"Creating writer for $tableName, appId $appId")
           writers += tableName -> Some(new TableWriter(dataSource, tableName))
         } else {
           log.error(s"Table does not exist for $tableName")
@@ -116,10 +115,12 @@ class TableWriter(dataSource:DataSource, table: String) {
   val DEFAULT_BATCH_SIZE = 200
   val log = LogFactory.getLog(classOf[TableWriter])
 
-  type SQLApplier = (String, PreparedStatement, Int) => Unit
+  type SQLApplier = (String, PreparedStatement, Int, Int) => Unit
+
+  case class ColumnInfo(typ: Int, size: Int)
 
   var names = Array[String]()
-  var types = Array[Int]()
+  var types = Array[ColumnInfo]()
   var stat: PreparedStatement = null
   var placeholders: String = ""
   var batchCount: Int = 0
@@ -151,9 +152,9 @@ class TableWriter(dataSource:DataSource, table: String) {
       val tableMetadata = dbMetadata.getColumns(null, table.substring(0, table.indexOf('.')), table.substring(table.indexOf('.') + 1), null)
       while (tableMetadata.next()) {
         names = names ++ Array(tableMetadata.getString(4))
-        types = types ++ Array(tableMetadata.getInt(5))
+        types = types ++ Array(ColumnInfo(tableMetadata.getInt(5), tableMetadata.getInt(7)))
       }
-      log.info(s"Table $table has ${names.length} names " + names.zip(types).map(pair => pair._1 + ":" + pair._2).mkString(","))
+      log.info(s"Table $table has ${names.length} names " + names.zip(types).map(pair => pair._1 + ":" + pair._2.typ).mkString(","))
       placeholders = "?" + (",?" * (names.length - 1))
       tableMetadata.close()
     }
@@ -170,7 +171,7 @@ class TableWriter(dataSource:DataSource, table: String) {
     }
     try {
       for (index <- values.indices) {
-        converters(types(index))(values(index), stat, index+1)
+        converters(types(index).typ)(values(index), stat, index+1, types(index).size)
       }
       stat.addBatch()
       batchCount += 1

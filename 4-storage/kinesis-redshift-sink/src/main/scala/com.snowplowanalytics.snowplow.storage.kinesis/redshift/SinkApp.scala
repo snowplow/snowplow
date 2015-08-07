@@ -130,9 +130,12 @@ object SinkApp extends App {
     props.setProperty("defaultSchema", redshift.getString("defaultSchema"))
     if (redshift.hasPath("logFile")) props.setProperty("logFile", redshift.getString("logFile"))
     if (redshift.hasPath("appIdToSchema")) {
-      val appIds = redshift.getConfig("appIdToSchema")
-      for (entry <- appIds.entrySet()) {
-        props.setProperty(entry.getKey + "_schema", entry.getValue.toString)
+      val appIds = redshift.getString("appIdToSchema")
+      for (entry <- appIds.split(",")) {
+        if (entry.contains(":")) {
+          val pair = entry.split(":")
+          props.setProperty(pair(0) + "_schema", pair(1))
+        }
       }
     }
     props.setProperty("jsonpaths", connector.getString("jsonpaths"))
@@ -159,6 +162,8 @@ object SinkApp extends App {
 
     // The emit method retries sending to S3 indefinitely, so it only needs to be called once
     props.setProperty(KinesisConnectorConfiguration.PROP_RETRY_LIMIT, "1")
+
+    println(props)
 
     (props, new KinesisConnectorConfiguration(props, credentials))
   }
