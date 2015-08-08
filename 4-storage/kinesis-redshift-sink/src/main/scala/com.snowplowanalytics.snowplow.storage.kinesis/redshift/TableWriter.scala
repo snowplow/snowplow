@@ -25,16 +25,21 @@ object SQLConverters {
   def setString(value: String, stat: PreparedStatement, index: Int, size: Int) =
     stat.setString(index, if (value == null || size > value.length) value else value.substring(0, size))
   def setTimestamp(value: String, stat: PreparedStatement, index: Int, size: Int) =
-    stat.setTimestamp(index, if (value == null) null else Timestamp.valueOf(value))
+    stat.setTimestamp(index, if (isNull(value)) null else Timestamp.valueOf(value))
+
+  def isNull(value: String): Boolean = {
+    value == null || "".equals(value) || "undefined".equals(value) || "null".equals(value)
+  }
+
   def setBoolean(value: String, stat: PreparedStatement, index: Int, size: Int) =
-    if (value == null) stat.setNull(index, Types.BOOLEAN) else stat.setBoolean(index, value.rsBoolean)
+    if (isNull(value)) stat.setNull(index, Types.BOOLEAN) else stat.setBoolean(index, value.rsBoolean)
   def setInteger(value: String, stat: PreparedStatement, index: Int, size: Int) =
-    if (value == null) stat.setNull(index, Types.INTEGER) else stat.setInt(index, value.toInt)
+    if (isNull(value)) stat.setNull(index, Types.INTEGER) else stat.setInt(index, value.toInt)
   def setDouble(value: String, stat: PreparedStatement, index: Int, size: Int) =
-    if (value == null) stat.setNull(index, Types.DOUBLE) else stat.setDouble(index, value.toDouble)
+    if (isNull(value)) stat.setNull(index, Types.DOUBLE) else stat.setDouble(index, value.toDouble)
   def setDecimal(value: String, stat: PreparedStatement, index: Int, size: Int) =
     try {
-      if (value == null) stat.setNull(index, Types.DECIMAL) else stat.setBigDecimal(index, new BD(value))
+      if (isNull(value)) stat.setNull(index, Types.DECIMAL) else stat.setBigDecimal(index, new BD(value))
     }
     catch {
       case t:Throwable =>
@@ -171,11 +176,19 @@ class TableWriter(dataSource:DataSource, table: String) {
     }
     try {
       for (index <- values.indices) {
-        converters(types(index).typ)(values(index), stat, index+1, types(index).size)
+        converters(types(index).typ)(values(index), stat, index + 1, types(index).size)
       }
       stat.addBatch()
       batchCount += 1
-      if (batchCount > DEFAULT_BATCH_SIZE) {
+    }
+    catch {
+      case t:Throwable =>
+        log.error("Skipping due to conversion errors: " +
+          values.zipWithIndex.map(pair => pair._1 + ":" + pair._2).mkString(","))
+      // Don't clear batch - just skip this record
+    }
+    try {
+      if (batchCount >= DEFAULT_BATCH_SIZE) {
         val count = stat.executeBatch().sum
         batchCount = 0
         log.info(s"Inserted $count records into Redshift table $table")
@@ -183,14 +196,14 @@ class TableWriter(dataSource:DataSource, table: String) {
     }
     catch {
       case s:BatchUpdateException =>
-        log.info(values.zipWithIndex.map(pair => pair._1 + ":" + pair._2).mkString(","))
+        log.error(values.zipWithIndex.map(pair => pair._1 + ":" + pair._2).mkString(","))
         batchCount = 0
         stat.clearBatch()
         log.error("Exception updating batch", s)
         log.error("Nested exception", s.getNextException)
         throw s
       case e:Throwable =>
-        log.info(values.zipWithIndex.map(pair => pair._1 + ":" + pair._2).mkString(","))
+        log.error(values.zipWithIndex.map(pair => pair._1 + ":" + pair._2).mkString(","))
         batchCount = 0
         stat.clearBatch()
         log.error("Exception updating batch", e)
