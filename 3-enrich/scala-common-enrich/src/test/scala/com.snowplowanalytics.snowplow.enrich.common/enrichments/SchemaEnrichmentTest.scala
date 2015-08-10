@@ -44,6 +44,7 @@ class SchemaEnrichmentTest extends Specification with DataTables with Validation
   def e1 =
       "SPEC NAME"              || "EVENT"                            | "EXPECTED SCHEMA"          |
       "page view"              !! event("page_view")                 ! pageViewSchema             |
+      "ping ping"              !! event("page_ping")                 ! pagePingSchema             |
       "transaction"            !! event("transaction")               ! transactionSchema          |
       "transaction item"       !! event("transaction_item")          ! transactionItemSchema      |
       "struct event"           !! event("struct")                    ! structSchema               |
