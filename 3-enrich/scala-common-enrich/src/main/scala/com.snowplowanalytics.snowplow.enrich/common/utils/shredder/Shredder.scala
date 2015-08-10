@@ -93,12 +93,7 @@ object Shredder {
       event.event_id, event.collector_tstamp)
 
     // Get our unstructured event and Lists of contexts and derived_contexts, all Option-boxed
-    val ue = for {
-      v <- extractAndValidateJson("ue_properties", UePropertiesSchema, Option(event.unstruct_event))
-    } yield for {
-      j <- v
-      l = List(j)
-    } yield l
+    val ue = extractUnstructEvent(event)
 
     def extractContexts(json: String, field: String): Option[ValidatedNelMessage[List[JsonNode]]] = {
       for {
@@ -131,6 +126,15 @@ object Shredder {
       js   <- node.validateAndIdentifySchema(false)
       mj   =  attachMetadata(js, partialHierarchy)
     } yield mj).flatMap(_.sequenceU) // Swap nested List[scalaz.Validation[...]
+  }
+
+  def extractUnstructEvent(event: EnrichedEvent)(implicit resolver: Resolver): Option[ValidatedNelMessage[JsonNodes]] = {
+    for {
+      v <- extractAndValidateJson("ue_properties", UePropertiesSchema, Option(event.unstruct_event))
+    } yield for {
+      j <- v
+      l = List(j)
+    } yield l
   }
 
   /**

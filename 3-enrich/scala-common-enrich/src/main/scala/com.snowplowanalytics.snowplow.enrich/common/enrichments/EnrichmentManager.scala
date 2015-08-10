@@ -418,6 +418,15 @@ object EnrichmentManager {
       case Success(_) => unitSuccess.toValidationNel
     }
 
+    // Extract the event vendor/name/format/version
+    val extractSchema = SchemaEnrichment.extractSchema(event).map(schemaKey => {
+      event.event_vendor = schemaKey.vendor
+      event.event_name = schemaKey.name
+      event.event_format = schemaKey.format
+      event.event_version = schemaKey.version
+      unitSuccess
+    })
+
     // Assemble array of derived contexts
     val derived_contexts = List(uaParser).collect {
       case Success(Some(context)) => context
@@ -461,8 +470,9 @@ object EnrichmentManager {
       crossDomain.toValidationNel             |@|
       jsScript.toValidationNel                |@|
       campaign                                |@|
-      shred) {
-      (_,_,_,_,_,_,_,_) => ()
+      shred                                   |@|
+      extractSchema.toValidationNel) {
+      (_,_,_,_,_,_,_,_,_) => ()
     }
     (first |@| second) {
       (_,_) => event
