@@ -406,16 +406,25 @@ object EnrichmentManager {
       case _ => unitSuccess
     }
 
-    // Execute the JavaScript scripting enrichment
-    val jsScript = registry.getJavascriptScriptEnrichment match {
-      case Some(jse) => jse.process(event)
-      case None => Nil.success
-    }
-
     // Validate contexts and unstructured events
     val shred = Shredder.shred(event) match {
       case Failure(msgs) => msgs.map(_.toString).fail
       case Success(_) => unitSuccess.toValidationNel
+    }
+
+    // Extract the event vendor/name/format/version
+    val extractSchema = SchemaEnrichment.extractSchema(event).map(schemaKey => {
+      event.event_vendor = schemaKey.vendor
+      event.event_name = schemaKey.name
+      event.event_format = schemaKey.format
+      event.event_version = schemaKey.version
+      unitSuccess
+    })
+
+    // Execute the JavaScript scripting enrichment
+    val jsScript = registry.getJavascriptScriptEnrichment match {
+      case Some(jse) => jse.process(event)
+      case None => Nil.success
     }
 
     // Assemble array of derived contexts
@@ -461,8 +470,9 @@ object EnrichmentManager {
       crossDomain.toValidationNel             |@|
       jsScript.toValidationNel                |@|
       campaign                                |@|
-      shred) {
-      (_,_,_,_,_,_,_,_) => ()
+      shred                                   |@|
+      extractSchema.toValidationNel) {
+      (_,_,_,_,_,_,_,_,_) => ()
     }
     (first |@| second) {
       (_,_) => event
