@@ -35,12 +35,14 @@ import Scalaz._
 object SchemaEnrichment {
 
   val pageViewSchema        = SchemaKey("com.snowplowanalytics.snowplow", "page_view", "jsonschema", "1-0-0").success
+  val pagePingSchema        = SchemaKey("com.snowplowanalytics.snowplow", "ping", "jsonschema", "1-0-0").success
   val transactionSchema     = SchemaKey("com.snowplowanalytics.snowplow", "transaction", "jsonschema", "1-0-0").success
   val transactionItemSchema = SchemaKey("com.snowplowanalytics.snowplow", "transaction_item", "jsonschema", "1-0-0").success
   val structSchema          = SchemaKey("com.google.analytics", "event", "jsonschema", "1-0-0").success
 
   def extractSchema(event: EnrichedEvent)(implicit resolver: Resolver): Validation[String, SchemaKey] = event.event match {
     case "page_view"        => pageViewSchema
+    case "page_ping"        => pagePingSchema
     case "struct"           => structSchema
     case "transaction"      => transactionSchema
     case "transaction_item" => transactionItemSchema
