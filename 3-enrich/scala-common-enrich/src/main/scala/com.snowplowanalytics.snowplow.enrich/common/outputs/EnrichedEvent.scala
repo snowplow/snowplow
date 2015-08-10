@@ -49,6 +49,10 @@ class EnrichedEvent {
 
   // Transaction (i.e. this logging event)
   @BeanProperty var event: String = _
+  @BeanProperty var event_vendor: String = _
+  @BeanProperty var event_name: String = _
+  @BeanProperty var event_format: String = _
+  @BeanProperty var event_version: String = _
   @BeanProperty var event_id: String = _
   @BeanProperty var txn_id: String = _
 
