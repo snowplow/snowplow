@@ -21,8 +21,8 @@
 
 CREATE TABLE derived.id_map (
 
-  domain_userid varchar(36) encode runlength,
-  inferred_user_id varchar(255) encode runlength
+  domain_userid varchar(36) encode lzo,
+  inferred_user_id varchar(255) encode lzo
 
 )
 DISTSTYLE KEY

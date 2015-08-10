@@ -21,34 +21,34 @@
 
 CREATE TABLE derived.visitors (
 
-  blended_user_id varchar(255) encode runlength,
+  blended_user_id varchar(255) encode lzo,
 
-  first_touch_tstamp timestamp,
-  last_touch_tstamp timestamp,
-  min_dvce_tstamp timestamp,
-  max_dvce_tstamp timestamp,
-  max_etl_tstamp timestamp,
+  first_touch_tstamp timestamp encode lzo,
+  last_touch_tstamp timestamp encode lzo,
+  min_dvce_tstamp timestamp encode lzo,
+  max_dvce_tstamp timestamp encode lzo,
+  max_etl_tstamp timestamp encode lzo,
 
-  event_count	bigint,
-  session_count	bigint,
-  page_view_count	bigint,
+  event_count	bigint encode lzo,
+  session_count	bigint encode lzo,
+  page_view_count	bigint encode lzo,
 
-  time_engaged_with_minutes	double precision,
+  time_engaged_with_minutes	double precision encode raw,
 
-  landing_page_host varchar(255) encode text255,
-  landing_page_path varchar(3000) encode text32k,
+  landing_page_host varchar(255) encode lzo,
+  landing_page_path varchar(3000) encode lzo,
 
-  mkt_source varchar(255) encode text255,
-  mkt_medium varchar(255) encode text255,
-  mkt_term varchar(255) encode raw,
-  mkt_content varchar(500) encode raw,
-  mkt_campaign varchar(255) encode text32k,
+  mkt_source varchar(255) encode lzo,
+  mkt_medium varchar(255) encode lzo,
+  mkt_term varchar(255) encode lzo,
+  mkt_content varchar(500) encode lzo,
+  mkt_campaign varchar(255) encode lzo,
 
-  refr_source varchar(50) encode text255,
-  refr_medium varchar(25) encode text255,
-  refr_term varchar(255) encode raw,
-  refr_urlhost varchar(255) encode text255,
-  refr_urlpath varchar(6000) encode text32k
+  refr_source varchar(50) encode lzo,
+  refr_medium varchar(25) encode lzo,
+  refr_term varchar(255) encode lzo,
+  refr_urlhost varchar(255) encode lzo,
+  refr_urlpath varchar(6000) encode lzo
 
 )
 DISTSTYLE KEY

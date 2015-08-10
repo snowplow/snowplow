@@ -21,25 +21,25 @@
 
 CREATE TABLE derived.page_views (
 
-  blended_user_id varchar(255) encode runlength,
-  inferred_user_id varchar(255) encode runlength,
-  domain_userid varchar(36) encode runlength,
-  domain_sessionidx smallint,
+  blended_user_id varchar(255) encode lzo,
+  inferred_user_id varchar(255) encode lzo,
+  domain_userid varchar(36) encode lzo,
+  domain_sessionidx smallint encode lzo,
 
-  page_urlhost varchar(255) encode text255,
-	page_urlpath varchar(3000) encode text32k,
+  page_urlhost varchar(255) encode lzo,
+	page_urlpath varchar(3000) encode lzo,
 
-  first_touch_tstamp timestamp,
-  last_touch_tstamp timestamp,
-  min_dvce_tstamp timestamp,
-  max_dvce_tstamp timestamp,
-  max_etl_tstamp timestamp,
+  first_touch_tstamp timestamp encode lzo,
+  last_touch_tstamp timestamp encode lzo,
+  min_dvce_tstamp timestamp encode lzo,
+  max_dvce_tstamp timestamp encode lzo,
+  max_etl_tstamp timestamp encode lzo,
 
-  event_count	bigint,
-  page_view_count	bigint,
-  page_ping_count	bigint,
+  event_count	bigint encode lzo,
+  page_view_count	bigint encode lzo,
+  page_ping_count	bigint encode lzo,
 
-  time_engaged_with_minutes	double precision
+  time_engaged_with_minutes	double precision encode raw
 
 )
 DISTSTYLE KEY

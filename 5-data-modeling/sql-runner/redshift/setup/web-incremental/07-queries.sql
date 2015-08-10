@@ -21,12 +21,12 @@
 
 CREATE TABLE derived.queries (
 
-  min_tstamp timestamp,
-  max_tstamp timestamp,
-  component varchar(255) encode runlength,
-  step varchar(255) encode runlength,
-  tstamp timestamp,
-  duration int
+  min_tstamp timestamp encode lzo,
+  max_tstamp timestamp encode lzo,
+  component varchar(255) encode lzo,
+  step varchar(255) encode lzo,
+  tstamp timestamp encode lzo,
+  duration int encode lzo
 )
 DISTSTYLE KEY
 DISTKEY (min_tstamp)
