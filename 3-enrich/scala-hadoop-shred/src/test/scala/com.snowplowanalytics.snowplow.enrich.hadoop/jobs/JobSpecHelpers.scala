@@ -29,6 +29,11 @@ import scala.collection.mutable.ListBuffer
 import scalaz._
 import Scalaz._
 
+// Scala
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+
 // Scalding
 import com.twitter.scalding._
 
@@ -172,6 +177,18 @@ object JobSpecHelpers {
     input.delete()
 
     Sinks(output, badRows, exceptions)
+  }
+
+  /**
+   * Removes the timestamp from bad rows so that what remains is deterministic
+   *
+   * @param badRow
+   * @return The bad row without the timestamp
+   */
+  def removeTstamp(badRow: String): String = {
+    val badRowJson = parse(badRow)
+    val badRowWithoutTimestamp = ("line", (badRowJson \ "line")) ~ ("errors", (badRowJson \ "errors"))
+    compact(badRowWithoutTimestamp)
   }
 
 }

@@ -40,10 +40,8 @@ object InvalidEnrichedEventsSpec {
     )
 
   val expected = (line: String) =>
-     """|{"line":"%s","errors":[
-          |{"level":"error","message":"Field [event_id]: [not-a-uuid] is not a valid UUID"},
-          |{"level":"error","message":"Field [collector_tstamp]: [29th May 2013 18:04:12] is not in the expected Redshift/Postgres timestamp format"}
-        |]}""".stripMargin.format(line.replaceAll("\"", "\\\\\"")).replaceAll("[\n\r]","").replaceAll("[\t]","\\\\t")
+    """{"line":"%s","errors":["error: Field [event_id]: [not-a-uuid] is not a valid UUID\n    level: \"error\"\n","error: Field [collector_tstamp]: [29th May 2013 18:04:12] is not in the expected Redshift/Postgres timestamp format\n    level: \"error\"\n"]}"""
+      .format(line.replaceAll("\"", "\\\\\"")).replaceAll("[\n\r]","").replaceAll("[\t]","\\\\t")
 }
 
 /**
@@ -72,7 +70,7 @@ class InvalidEnrichedEventsSpec extends Specification {
       sink[String](Tsv("badFolder")){ json =>
         "write a bad row JSON with input line and error message for each input line" in {
           for (i <- json.indices) {
-            json(i) must_== InvalidEnrichedEventsSpec.expected(InvalidEnrichedEventsSpec.lines(i)._2)
+            removeTstamp(json(i)) must_== InvalidEnrichedEventsSpec.expected(InvalidEnrichedEventsSpec.lines(i)._2)
           }
         }
       }.
