@@ -42,6 +42,11 @@ import common.outputs.EnrichedEvent
 import scalaz._
 import Scalaz._
 
+// json4s
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+
 /**
  * Holds helpers for running integration
  * tests on SnowPlow EtlJobs.
@@ -423,5 +428,17 @@ object JobSpecHelpers {
     input.delete()
 
     Sinks(output, badRows, exceptions)
+  }
+
+  /**
+   * Removes the timestamp from bad rows so that what remains is deterministic
+   *
+   * @param badRow
+   * @return The bad row without the timestamp
+   */
+  def removeTstamp(badRow: String): String = {
+    val badRowJson = parse(badRow)
+    val badRowWithoutTimestamp = ("line", (badRowJson \ "line")) ~ ("errors", (badRowJson \ "errors"))
+    compact(badRowWithoutTimestamp)
   }
 }
