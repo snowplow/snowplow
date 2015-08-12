@@ -41,7 +41,8 @@ object NotEnrichedEventsSpec {
     "2012-05-21  07:14:47  FRA2  3343  83.4.209.35 GET d3t05xllj8hhgj.cloudfront.net"
     )
 
-  val expected = (line: String) => s"""{"line":"${line}","errors":[{"level":"error","message":"Line does not match Snowplow enriched event (expected 108+ fields; found 1)"}]}"""
+  val expected = (line: String) => """{"line":"%s","errors":["error: Line does not match Snowplow enriched event (expected 108+ fields; found 1)\n    level: \"error\"\n"]}"""
+    .format(line)
 }
 
 /**
@@ -70,7 +71,7 @@ class NotEnrichedEventsSpec extends Specification {
       sink[String](Tsv("badFolder")){ json =>
         "write a bad row JSON with input line and error message for each input line" in {
           for (i <- json.indices) {
-            json(i) must_== NotEnrichedEventsSpec.expected(NotEnrichedEventsSpec.lines(i)._2)
+            removeTstamp(json(i)) must_== NotEnrichedEventsSpec.expected(NotEnrichedEventsSpec.lines(i)._2)
           }
         }
       }.

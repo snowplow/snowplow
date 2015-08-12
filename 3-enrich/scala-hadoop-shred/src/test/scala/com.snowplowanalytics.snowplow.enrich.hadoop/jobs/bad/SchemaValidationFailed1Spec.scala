@@ -71,7 +71,7 @@ class SchemaValidationFailed1Spec extends Specification {
       sink[String](Tsv("badFolder")){ json =>
         "write a bad row JSON with input line and error message for each input line" in {
           for (i <- json.indices) {
-            json(i) must_== SchemaValidationFailed1Spec.expected(SchemaValidationFailed1Spec.lines(i)._2)
+            removeTstamp(json(i)) must_== SchemaValidationFailed1Spec.expected(SchemaValidationFailed1Spec.lines(i)._2)
           }
         }
       }.

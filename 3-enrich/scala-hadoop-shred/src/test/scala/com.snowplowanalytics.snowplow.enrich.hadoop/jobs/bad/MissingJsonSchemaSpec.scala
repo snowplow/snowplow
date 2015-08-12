@@ -39,7 +39,9 @@ object MissingJsonSchemaSpec {
     """snowplowweb	web	2014-06-01 14:04:11.639	2014-05-29 18:04:12.000	2014-05-29 18:04:11.639	page_view	a4583919-4df8-496a-917b-d40fa1c8ca7f	836413	clojure	js-2.0.0-M2	clj-0.6.0-tom-0.0.4	hadoop-0.5.0-common-0.4.0		216.207.42.134	3499345421	3b1d1a375044eede	3	2bad2a4e-aae4-4bea-8acd-399e7fe0366a	US	CA	South San Francisco		37.654694	-122.4077						http://snowplowanalytics.com/blog/2013/02/08/writing-hive-udfs-and-serdes/	Writing Hive UDFs - a tutorial		http	snowplowanalytics.com	80	/blog/2013/02/08/writing-hive-udfs-and-serdes/																	{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0","data":[{"schema":"iglu:com.snowplowanalytics.website/fake_context/jsonschema/1-0-0","data":{"author":"Alex Dean","topics":["hive","udf","serde","java","hadoop"],"subCategory":"inside the plow","category":"blog","whenPublished":"2013-02-08"}}]}																									Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit/537.75.14 (KHTML, like Gecko) Version/7.0.3 Safari/537.75.14	Safari	Safari		Browser	WEBKIT	en-us	0	0	0	0	0	0	0	0	0	1	24	1440	1845	Mac OS	Mac OS	Apple Inc.	America/Los_Angeles	Computer	0	1440	900	UTF-8	1440	6015"""
     )
 
-  val expected = (line: String) => """{"line":"%s","errors":[{"level":"error","message":"Could not find schema with key iglu:com.snowplowanalytics.website/fake_context/jsonschema/1-0-0 in any repository, tried:","repositories":["Iglu Client Embedded [embedded]","Iglu Central [HTTP]"]}]}""".format(line.replaceAll("\"", "\\\\\"")).replaceAll("[\t]","\\\\t")
+  val expected = (line: String) => """{"line":"%s","errors":["error: Could not find schema with key iglu:com.snowplowanalytics.website/fake_context/jsonschema/1-0-0 in any repository, tried:\n    level: \"error\"\n    repositories: [\"Iglu Client Embedded [embedded]\",\"Iglu Central [HTTP]\"]\n"]}"""
+    .format(line.replaceAll("\"", "\\\\\""))
+    .replaceAll("[\t]", "\\\\t")
 }
 
 /**
@@ -68,7 +70,7 @@ class MissingJsonSchemaSpec extends Specification {
       sink[String](Tsv("badFolder")){ json =>
         "write a bad row JSON with input line and error message for each missing schema" in {
           for (i <- json.indices) {
-            json(i) must_== MissingJsonSchemaSpec.expected(MissingJsonSchemaSpec.lines(i)._2)
+            removeTstamp(json(i)) must_== MissingJsonSchemaSpec.expected(MissingJsonSchemaSpec.lines(i)._2)
           }
         }
       }.
