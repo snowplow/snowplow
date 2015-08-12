@@ -38,7 +38,7 @@ object Dependencies {
     val commonEnrich    = "0.15.0"
     val scalding        = "0.10.0"
     val scalaz7         = "7.0.0"
-    val igluClient      = "0.2.0"
+    val igluClient      = "0.3.0"
     // Scala (test only)
     val specs2          = "1.14" // Downgrade to prevent issues in job tests. WAS: "2.3.11"
     val scalazSpecs2    = "0.1.2"
