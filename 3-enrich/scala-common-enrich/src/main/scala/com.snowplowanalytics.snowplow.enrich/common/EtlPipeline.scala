@@ -15,11 +15,20 @@ package snowplow
 package enrich
 package common
 
+// Java
+import java.io.{
+  PrintWriter,
+  StringWriter
+}
+
 // Joda
 import org.joda.time.DateTime
 
 // Iglu
 import iglu.client.Resolver
+
+// Scala
+import scala.util.control.NonFatal
 
 // Scalaz
 import scalaz._
@@ -72,18 +81,26 @@ object EtlPipeline {
       case Success(None)               => Nil
     }
 
-    val e: Validated[Option[Validated[NonEmptyList[ValidatedEnrichedEvent]]]] =
-      for {
-        maybePayload  <- input
-      } yield for {
-        payload       <- maybePayload
-      } yield for {
-        events        <- AdapterRegistry.toRawEvents(payload)
-      } yield for {
-        event         <- events
-        enriched       = EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, event)
-      } yield enriched
+    try {
+      val e: Validated[Option[Validated[NonEmptyList[ValidatedEnrichedEvent]]]] =
+        for {
+          maybePayload  <- input
+        } yield for {
+          payload       <- maybePayload
+        } yield for {
+          events        <- AdapterRegistry.toRawEvents(payload)
+        } yield for {
+          event         <- events
+          enriched       = EnrichmentManager.enrichEvent(registry, etlVersion, etlTstamp, event)
+        } yield enriched
 
-    flattenToList[EnrichedEvent](e)
+      flattenToList[EnrichedEvent](e)
+    } catch {
+      case NonFatal(nf) => {
+        val errorWriter = new StringWriter
+        nf.printStackTrace(new PrintWriter(errorWriter))
+        List(s"Unexpected error processing events: $errorWriter".failNel)
+      }
+    }
   }
 }
