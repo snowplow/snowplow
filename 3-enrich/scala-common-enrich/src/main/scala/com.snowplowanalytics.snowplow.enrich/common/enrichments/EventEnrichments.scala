@@ -16,12 +16,15 @@ package enrichments
 // Java
 import java.util.UUID
 
+// Scala
+import scala.util.control.NonFatal
+
 // Scalaz
 import scalaz._
 import Scalaz._
 
 // Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.{DateTime, DateTimeZone, Period}
 import org.joda.time.format.DateTimeFormat
 
 // This project
@@ -76,6 +79,42 @@ object EventEnrichments {
       }
     }
   }
+
+  /**
+   * Calculate the derived timestamp
+   *
+   * If dvce_sent_tstamp and dvce_created_tstamp are not null and the former is after the latter,
+   * add the difference between the two to the collector_tstamp.
+   * Otherwise just return the collector_tstamp.
+   *
+   * TODO: given missing collectorTstamp is invalid, consider updating this signature to
+   * `..., collectorTstamp: String): Validation[String, String]` and making the call to this
+   * function in the EnrichmentManager dependent on a Success(collectorTstamp).
+   *
+   * @param dvceSentTstamp
+   * @param dvceCreatedTstamp
+   * @param collectorTstamp
+   * @return derived timestamp
+   */
+  def getDerivedTimestamp(
+    dvceSentTstamp: Option[String],
+    dvceCreatedTstamp: Option[String],
+    collectorTstamp: Option[String]): Validation[String, Option[String]] = try {
+      ((dvceSentTstamp, dvceCreatedTstamp, collectorTstamp) match {
+        case (Some(dst), Some(dct), Some(ct)) => {
+          val startTstamp = fromTimestamp(dct)
+          val endTstamp = fromTimestamp(dst)
+          if (startTstamp.isBefore(endTstamp)) {
+            toTimestamp(fromTimestamp(ct).minus(new Period(startTstamp, endTstamp))).some
+          } else {
+            ct.some
+          }
+        }
+        case _ => collectorTstamp
+      }).success
+    } catch {
+      case NonFatal(e) => s"Exception calculating derived timestamp: [$e]".fail
+    }
 
   /**
    * Extracts the timestamp from the
