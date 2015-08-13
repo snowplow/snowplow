@@ -27,7 +27,8 @@ object Dependencies {
 
   object V {
     // Java
-    val hadoop          = "1.1.2"
+    val hadoop          = "2.4.1"
+    val cascading       = "2.7.0"
     // val commonsLang      = "3.1"
     val jacksonDatabind = "2.2.3"
     val jsonValidator   = "2.2.3"
@@ -36,7 +37,7 @@ object Dependencies {
     // Scala
     val json4sJackson   = "3.2.11"
     val commonEnrich    = "0.15.0"
-    val scalding        = "0.10.0"
+    val scalding        = "0.15.0"
     val scalaz7         = "7.0.0"
     val igluClient      = "0.3.0"
     // Scala (test only)
@@ -46,7 +47,11 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val hadoopCore       = "org.apache.hadoop"          %  "hadoop-core"             % V.hadoop          % "provided"
+    val hadoopCommon     = "org.apache.hadoop"          %  "hadoop-common"                % V.hadoop       % "provided"
+    val hadoopClientCore = "org.apache.hadoop"          %  "hadoop-mapreduce-client-core" % V.hadoop       % "provided"
+    val cascadingCore    = "cascading"                  %  "cascading-core"               % V.cascading
+    val cascadingLocal   = "cascading"                  %  "cascading-local"              % V.cascading
+    val cascadingHadoop  = "cascading"                  %  "cascading-hadoop2-mr1"        % V.cascading
     // val commonsLang      = "org.apache.commons"         %  "commons-lang3"           % V.commonsLang
     val jacksonDatabind  = "com.fasterxml.jackson.core" %  "jackson-databind"        % V.jacksonDatabind
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"   % V.jsonValidator
@@ -55,8 +60,8 @@ object Dependencies {
     // Scala
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"          % V.json4sJackson
     val commonEnrich     = "com.snowplowanalytics"      %  "snowplow-common-enrich"  % V.commonEnrich
-    val scaldingCore     = "com.twitter"                %% "scalding-core"           % V.scalding
-    val scaldingArgs     = "com.twitter"                %% "scalding-args"           % V.scalding
+    val scaldingCore     = "com.twitter"                %% "scalding-core"           % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" ) exclude( "cascading", "cascading-hadoop2-mr1" )
+    val scaldingArgs     = "com.twitter"                %% "scalding-args"           % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" ) exclude( "cascading", "cascading-hadoop2-mr1" )
     // val scaldingJson     = "com.twitter"                %% "scalding-json"           % V.scalding
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"             % V.scalaz7
     val igluClient       = "com.snowplowanalytics"      %  "iglu-scala-client"       % V.igluClient
