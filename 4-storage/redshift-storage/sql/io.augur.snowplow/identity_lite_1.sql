@@ -16,10 +16,10 @@ CREATE TABLE IF NOT EXISTS atomic.io_augur_snowplow_identity_lite_1 (
     "ref_root"           VARCHAR(255)  ENCODE RUNLENGTH NOT NULL,
     "ref_tree"           VARCHAR(1500) ENCODE RUNLENGTH NOT NULL,
     "ref_parent"         VARCHAR(255)  ENCODE RUNLENGTH NOT NULL,
-    "consumer.uuid"      VARCHAR(255),
-    "device.id"          VARCHAR(255),
-    "web_traffic.is_bot" BOOLEAN,
-    "web_traffic.is_tor" BOOLEAN,
+    "device.id"          VARCHAR(255)  ENCODE LZO NOT NULL,
+    "web_traffic.is_bot" BOOLEAN       ENCODE RAW NOT NULL,
+    "web_traffic.is_tor" BOOLEAN       ENCODE RAW NOT NULL,
+    "consumer.uuid"      VARCHAR(255)  ENCODE LZO,
     FOREIGN KEY (root_id) REFERENCES atomic.events(event_id)
 )
 DISTSTYLE KEY
