@@ -14,34 +14,35 @@
 -- License: Apache License Version 2.0
 --
 -- Data Model: deduplicate
--- Version: 0.1
+-- Version: 0.2
 --
 -- Deduplicate events:
--- (a) create a list of duplicated events
--- (b) insert those events into a separate table and deduplicate identical ones (i.e. natural duplicates)
+-- (a) list all event IDs that occur more than once in atomic.events
+-- (b) create a table with those events and deduplicate identical ones (i.e. natural duplicates)
 -- (c) create a list of events that were deduplicated
 -- (d) move those events back into atomic.events, insert the others into the duplicates table
 
-DROP TABLE IF EXISTS atomic.tmp_ids_1;
-DROP TABLE IF EXISTS atomic.tmp_ids_2;
-DROP TABLE IF EXISTS atomic.tmp_events;
+INSERT INTO duplicates.tmp_queries (SELECT 'main', 'start', GETDATE()); -- track time
 
--- (a) create a list of duplicated events
+-- (a) list all event IDs that occur more than once in atomic.events
 
-CREATE TABLE atomic.tmp_ids_1
+CREATE TABLE duplicates.tmp_ids_1
   DISTKEY (event_id)
   SORTKEY (event_id)
 AS (SELECT event_id FROM (SELECT event_id, COUNT(*) AS count FROM atomic.events GROUP BY 1) WHERE count > 1);
 
--- (b) insert those events into a separate table and deduplicate identical ones (i.e. natural duplicates)
+INSERT INTO duplicates.tmp_queries (SELECT 'events', 'id-list-1', GETDATE()); -- track time
 
-CREATE TABLE atomic.tmp_events
+-- (b) create a table with those events and deduplicate identical ones (i.e. natural duplicates)
+
+CREATE TABLE duplicates.tmp_events
   DISTKEY (event_id)
   SORTKEY (event_id)
 AS (
 
   SELECT * FROM atomic.events
-  WHERE event_id IN (SELECT event_id FROM atomic.tmp_ids_1)
+  WHERE event_id IN (SELECT event_id FROM duplicates.tmp_ids_1)
+     OR event_id IN (SELECT event_id FROM duplicates.events)
   GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9,
   10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
   20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
@@ -58,33 +59,37 @@ AS (
 
 );
 
+INSERT INTO duplicates.tmp_queries (SELECT 'events', 'dedup-events', GETDATE()); -- track time
+
 -- (c) create a list of events that were deduplicated
 
-CREATE TABLE atomic.tmp_ids_2
+CREATE TABLE duplicates.tmp_ids_2
   DISTKEY (event_id)
   SORTKEY (event_id)
-AS (SELECT event_id FROM (SELECT event_id, COUNT(*) AS count FROM atomic.tmp_events GROUP BY 1) WHERE count = 1);
+AS (SELECT event_id FROM (SELECT event_id, COUNT(*) AS count FROM duplicates.tmp_events GROUP BY 1) WHERE count = 1);
+
+INSERT INTO duplicates.tmp_queries (SELECT 'events', 'id-list-2', GETDATE()); -- track time
 
 -- (d) move those events back into atomic.events, insert the others into the duplicates table
 
 BEGIN;
 
-DELETE FROM atomic.events WHERE event_id IN (SELECT event_id FROM atomic.tmp_ids_1);
+DELETE FROM atomic.events
+WHERE event_id IN (SELECT event_id FROM duplicates.tmp_ids_1)
+   OR event_id IN (SELECT event_id FROM duplicates.events);
 
 INSERT INTO atomic.events (
-  SELECT * FROM atomic.tmp_events
-  WHERE event_id IN (SELECT event_id FROM atomic.tmp_ids_2)
-    AND event_id NOT IN (SELECT event_id FROM atomic.duplicated_events)
+  SELECT * FROM duplicates.tmp_events
+  WHERE event_id IN (SELECT event_id FROM duplicates.tmp_ids_2)
+    AND event_id NOT IN (SELECT event_id FROM duplicates.events)
 );
 
-INSERT INTO atomic.duplicated_events (
-  SELECT * FROM atomic.tmp_events
-  WHERE event_id NOT IN (SELECT event_id FROM atomic.tmp_ids_2)
-    OR event_id IN (SELECT event_id FROM atomic.duplicated_events)
+INSERT INTO duplicates.events (
+  SELECT * FROM duplicates.tmp_events
+  WHERE event_id NOT IN (SELECT event_id FROM duplicates.tmp_ids_2)
+    OR event_id IN (SELECT event_id FROM duplicates.events)
 );
 
 COMMIT;
 
-DROP TABLE IF EXISTS atomic.tmp_ids_1;
-DROP TABLE IF EXISTS atomic.tmp_ids_2;
-DROP TABLE IF EXISTS atomic.tmp_events;
+INSERT INTO duplicates.tmp_queries (SELECT 'events', 'move', GETDATE()); -- track time
