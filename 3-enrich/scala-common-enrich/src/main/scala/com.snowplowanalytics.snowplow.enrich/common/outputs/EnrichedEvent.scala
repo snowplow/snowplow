@@ -237,4 +237,7 @@ class EnrichedEvent {
   @BeanProperty var event_name: String = _
   @BeanProperty var event_format: String = _
   @BeanProperty var event_version: String = _
+
+  // Event fingerprint
+  @BeanProperty var event_fingerprint: String = _
 }
