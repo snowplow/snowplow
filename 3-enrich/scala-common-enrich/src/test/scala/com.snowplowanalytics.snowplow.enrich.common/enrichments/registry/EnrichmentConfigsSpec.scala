@@ -242,4 +242,30 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
       result must beSuccessful // TODO: check the result's contents by evaluating some JavaScript
     }
   }
+
+
+  "Parsing a valid referer_parser enrichment JSON" should {
+    "successfully construct a RefererParserEnrichment case class" in {
+
+      val refererParserJson = parse("""{
+        "enabled": true,
+        "parameters": {
+          "hashAlgorithm": "MD5",
+          "excludeParameters": ["stm"]
+        }
+      }""")
+
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "event_fingerprint_config", "jsonschema", "1-0-0")
+
+      val expectedExcludedParameters = List("stm")
+
+      val result = EventFingerprintEnrichmentConfig.parse(refererParserJson, schemaKey)
+      result must beSuccessful
+
+      result.foreach {
+        _.algorithm("sample") must_== "5e8ff9bf55ba3508199d22e984129be6"
+      }
+
+    }
+  }
 }
