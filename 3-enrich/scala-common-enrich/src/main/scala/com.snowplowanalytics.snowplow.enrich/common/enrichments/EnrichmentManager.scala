@@ -406,6 +406,12 @@ object EnrichmentManager {
       case _ => unitSuccess
     }
 
+    // This enrichment cannot fail
+    (registry.getEventFingerprintEnrichment match {
+      case Some(efe) => event.event_fingerprint = efe.getEventFingerprint(sourceMap)
+      case _ => ()
+    })
+
     // Validate contexts and unstructured events
     val shred = Shredder.shred(event) match {
       case Failure(msgs) => msgs.map(_.toString).fail
