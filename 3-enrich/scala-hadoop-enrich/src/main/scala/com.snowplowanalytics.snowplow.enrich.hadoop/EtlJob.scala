@@ -16,6 +16,9 @@ package hadoop
 // Java
 import java.net.URI
 
+// Apache commons
+import org.apache.commons.codec.binary.Base64
+
 // Hadoop
 import org.apache.hadoop.conf.Configuration
 
@@ -177,10 +180,14 @@ class EtlJob(args: Args) extends Job(args) {
     .map('all -> 'errors) { o: List[ValidatedEnrichedEvent] =>
       EtlJob.projectBads(o)
     } // : List[NonEmptyList[String]]
-    .flatMapTo(('line, 'errors) -> 'json) { both: (String, List[NonEmptyList[String]]) =>
+    .flatMapTo(('line, 'errors) -> 'json) { both: (Object, List[NonEmptyList[String]]) =>
+      val originalLine = both._1 match {
+        case bytes: Array[Byte] => new String(Base64.encodeBase64(bytes), "UTF-8") // LZO source
+        case other => other.toString
+      }
       for {
         error <- both._2
-        bad    = BadRow(both._1, error).toCompactJson
+        bad    = BadRow(originalLine, error).toCompactJson
       } yield bad // : List[BadRow]
     }   
     .write(badOutput) // N JSONs containing line and error(s)
