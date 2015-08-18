@@ -179,7 +179,9 @@ CREATE TABLE "atomic"."events" (
 	"event_vendor" varchar(128),
 	"event_name" varchar(128),
 	"event_format" varchar(128),
-	"event_version" varchar(128)
+	"event_version" varchar(128),
+	-- Event fingerprint
+	"event_fingerprint" varchar(128)
 )
 WITH (OIDS=FALSE)
 ;
