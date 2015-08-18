@@ -1,4 +1,4 @@
-Release 70 Bornean Green Magpie (2015-xx-xx)
+Release 70 Bornean Green Magpie (2015-08-19)
 --------------------------------------------
 Common: added Ruby script to generate unified config.yml and iglu-resolver.json from runner.yml and loader.yml (#1774)
 Common: aded postgres.yml to up.playbooks (#1767)
