@@ -9,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.6.0
+-- Version:     0.7.0
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep, Fred Blundun
@@ -165,7 +165,7 @@ CREATE TABLE atomic.events (
 	geo_timezone varchar(64) encode text255,
 
 	-- Click ID
-	mkt_clickid varchar(128) encode raw,               -- Increased from 64 in 0.6.0
+	mkt_clickid varchar(128) encode raw,
 	mkt_network varchar(64) encode text255,
 
 	-- ETL tags
@@ -187,7 +187,13 @@ CREATE TABLE atomic.events (
 	-- Derived timestamp
 	derived_tstamp timestamp,
 
-	CONSTRAINT event_id_060_pk PRIMARY KEY(event_id)
+	-- Event schema
+	event_vendor varchar(128) encode lzo,
+	event_name varchar(128) encode lzo,
+	event_format varchar(128) encode lzo,
+	event_version varchar(128) encode lzo,
+
+	CONSTRAINT event_id_070_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
 DISTKEY (event_id)
