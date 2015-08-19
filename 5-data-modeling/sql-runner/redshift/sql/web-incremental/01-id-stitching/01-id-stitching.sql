@@ -17,85 +17,101 @@
 -- Version: 2.0
 --
 -- Identity stitching:
--- (a) select max device timestamp
--- (b) select the most recent user ID associated with each cookie and deduplicate
--- (c) select the updated rows
--- (d) select the rows that were not updated
+-- (a) back up the user ID map
+-- (b) select max device timestamp
+-- (c) select the most recent user ID associated with each cookie and deduplicate
+-- (d) select the updated rows
+-- (e) select the rows that were not updated
 
-INSERT INTO derived.id_map (
+BEGIN;
 
-WITH stitching_1 AS (
+  -- (a) back up the user ID map
 
-  -- (a) select max device timestamp
+  CREATE TABLE snplw_temp.id_map
+    DISTKEY (domain_userid)
+    SORTKEY (domain_userid)
+  AS (SELECT * FROM derived.id_map);
 
-  SELECT
+  DELETE FROM derived.id_map;
 
-    domain_userid,
-    MAX(dvce_tstamp) AS max_dvce_tstamp -- the last event where user ID was not NULL
+  INSERT INTO snplw_temp.queries (SELECT 'id-stitching', 'backup', GETDATE()); -- (f) track time
 
-  FROM landing.events
+  INSERT INTO derived.id_map ( -- update the user ID map
 
-  WHERE user_id IS NOT NULL -- restrict to cookies with a user ID
+  WITH stitching_1 AS (
 
-    AND domain_userid != ''           -- do not aggregate missing values
-    AND domain_userid IS NOT NULL     -- do not aggregate NULL
-    AND domain_sessionidx IS NOT NULL -- do not aggregate NULL
-    AND collector_tstamp IS NOT NULL  -- not required
-    AND dvce_tstamp IS NOT NULL       -- not required
+    -- (b) select max device timestamp
 
-    AND dvce_tstamp < DATEADD(year, +1, collector_tstamp) -- remove outliers (can cause errors)
-    AND dvce_tstamp > DATEADD(year, -1, collector_tstamp) -- remove outliers (can cause errors)
-
-  --AND app_id = 'production'
-  --AND platform = ''
-  --AND page_urlhost = ''
-  --AND page_urlpath IS NOT NULL
-
-  GROUP BY 1
-
-), stitching_2 AS (
-
-  -- (b) select the most recent user ID associated with each cookie and deduplicate
-
-  SELECT * FROM (
     SELECT
 
-      a.domain_userid,
-      a.user_id,
+      domain_userid,
+      MAX(dvce_tstamp) AS max_dvce_tstamp -- the last event where user ID was not NULL
 
-      ROW_NUMBER() OVER (PARTITION BY a.domain_userid) AS row_number
+    FROM landing.events
 
-    FROM landing.events AS a
+    WHERE user_id IS NOT NULL -- restrict to cookies with a user ID
 
-    INNER JOIN stitching_1 AS b
-      ON  a.domain_userid = b.domain_userid
-      AND a.dvce_tstamp = b.max_dvce_tstamp -- replaces the LAST VALUE window function in SQL
+      AND domain_userid != ''           -- do not aggregate missing values
+      AND domain_userid IS NOT NULL     -- do not aggregate NULL
+      AND domain_sessionidx IS NOT NULL -- do not aggregate NULL
+      AND collector_tstamp IS NOT NULL  -- not required
+      AND dvce_tstamp IS NOT NULL       -- not required
 
-  ) WHERE row_number = 1 -- deduplicate
+      AND dvce_tstamp < DATEADD(year, +1, collector_tstamp) -- remove outliers (can cause errors)
+      AND dvce_tstamp > DATEADD(year, -1, collector_tstamp) -- remove outliers (can cause errors)
 
-), stitching_3 AS (
+    --AND app_id = 'production'
+    --AND platform = ''
+    --AND page_urlhost = ''
+    --AND page_urlpath IS NOT NULL
 
-  -- (c) select the updated rows
+    GROUP BY 1
 
-  SELECT domain_userid, user_id AS inferred_user_id FROM stitching_2
+  ), stitching_2 AS (
 
-), stitching_4 AS (
+    -- (c) select the most recent user ID associated with each cookie and deduplicate
 
-  -- (d) select the rows that were not updated
+    SELECT * FROM (
+      SELECT
 
-  SELECT
-    o.*
-  FROM snplw_temp.id_map AS o
-  LEFT JOIN stitching_3 AS n
-    ON o.domain_userid = n.domain_userid
-  WHERE n.domain_userid IS NULL -- filter out all records where there is a corresponding domain_userid in the new table
+        a.domain_userid,
+        a.user_id,
 
-)
+        ROW_NUMBER() OVER (PARTITION BY a.domain_userid) AS row_number
 
-SELECT * FROM stitching_3
-  UNION
-SELECT * FROM stitching_4
+      FROM landing.events AS a
 
-);
+      INNER JOIN stitching_1 AS b
+        ON  a.domain_userid = b.domain_userid
+        AND a.dvce_tstamp = b.max_dvce_tstamp -- replaces the LAST VALUE window function in SQL
 
-INSERT INTO snplw_temp.queries (SELECT 'id-stitching', 'id-stitching', GETDATE()); -- track time
+    ) WHERE row_number = 1 -- deduplicate
+
+  ), stitching_3 AS (
+
+    -- (d) select the updated rows
+
+    SELECT domain_userid, user_id AS inferred_user_id FROM stitching_2
+
+  ), stitching_4 AS (
+
+    -- (e) select the rows that were not updated
+
+    SELECT
+      o.*
+    FROM snplw_temp.id_map AS o
+    LEFT JOIN stitching_3 AS n
+      ON o.domain_userid = n.domain_userid
+    WHERE n.domain_userid IS NULL -- filter out all records where there is a corresponding domain_userid in the new table
+
+  )
+
+  SELECT * FROM stitching_3
+    UNION
+  SELECT * FROM stitching_4
+
+  );
+
+  INSERT INTO snplw_temp.queries (SELECT 'id-stitching', 'id-stitching', GETDATE()); -- track time
+
+COMMIT;
