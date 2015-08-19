@@ -21,8 +21,6 @@
 -- (b) recreate the snplow_temp schema
 -- (c) create table to track performance
 -- (d) track time
--- (e) back up the user ID map
--- (f) track time
 
 DROP SCHEMA IF EXISTS snplw_temp CASCADE; -- (a) delete the snplw_temp schema
 CREATE SCHEMA snplw_temp; -- (b) recreate the snplow_temp schema
@@ -37,16 +35,3 @@ DISTKEY (component)
 SORTKEY (tstamp);
 
 INSERT INTO snplw_temp.queries (SELECT 'main', 'start', GETDATE()); -- (d) track time
-
-BEGIN; -- (e) back up the user ID map
-
-  CREATE TABLE snplw_temp.id_map
-    DISTKEY (domain_userid)
-    SORTKEY (domain_userid)
-  AS (SELECT * FROM derived.id_map);
-
-  DELETE FROM derived.id_map;
-
-COMMIT;
-
-INSERT INTO snplw_temp.queries (SELECT 'id-stitching', 'backup', GETDATE()); -- (f) track time

@@ -17,21 +17,24 @@
 -- Version: 2.0
 
 BEGIN;
+
+  DELETE FROM derived.sessions WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.sessions);
+  DELETE FROM derived.visitors WHERE blended_user_id IN (SELECT blended_user_id FROM snplw_temp.visitors);
+  DELETE FROM derived.page_views WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.page_views);
+
+  INSERT INTO derived.sessions (SELECT * FROM snplw_temp.sessions_aggregated);
+  INSERT INTO derived.visitors (SELECT * FROM snplw_temp.visitors_aggregated);
+  INSERT INTO derived.page_views (SELECT * FROM snplw_temp.page_views_aggregated);
+
   INSERT INTO atomic.events (SELECT * FROM landing.events);
   DELETE FROM landing.events;
-COMMIT;
 
--- add all tables in landing
--- have each step in a separate transaction (begin/commit)
-
-BEGIN;
   INSERT INTO atomic.com_example_context_1 (SELECT * FROM landing.com_example_context_1);
   DELETE FROM landing.com_example_context_1;
-COMMIT;
 
-BEGIN;
   INSERT INTO atomic.com_example_unstructured_event_1 (SELECT * FROM landing.com_example_unstructured_event_1);
   DELETE FROM landing.com_example_unstructured_event_1;
+
 COMMIT;
 
-INSERT INTO snplw_temp.queries (SELECT 'move-to-atomic', 'move-to-atomic', GETDATE()); -- track time
+INSERT INTO snplw_temp.queries (SELECT 'commit', 'commit', GETDATE()); -- track time
