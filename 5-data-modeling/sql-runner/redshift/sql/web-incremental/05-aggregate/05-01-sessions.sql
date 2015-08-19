@@ -16,15 +16,16 @@
 -- Data Model: web-incremental
 -- Version: 2.0
 --
--- Move new sessions to derived:
+-- Aggregate new and old rows:
 -- (a) calculate aggregate frame (i.e. a GROUP BY)
 -- (b) calculate initial frame (i.e. first value)
 -- (c) calculate final frame (i.e. last value)
--- (d) combine and insert into derived
+-- (d) combine
 
-BEGIN;
-
-INSERT INTO derived.sessions (
+CREATE TABLE snplw_temp.sessions_aggregated
+  DISTKEY (domain_userid)
+  SORTKEY (domain_userid, domain_sessionidx, min_dvce_tstamp)
+AS (
 
 WITH aggregate_frame AS (
 
@@ -234,6 +235,4 @@ LEFT JOIN final_frame AS f
 
 );
 
-COMMIT;
-
-INSERT INTO snplw_temp.queries (SELECT 'sessions', 'move-to-derived', GETDATE()); -- track time
+INSERT INTO snplw_temp.queries (SELECT 'sessions', 'aggregate', GETDATE()); -- track time

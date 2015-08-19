@@ -43,22 +43,22 @@
     :queries:
       - :name: 04-03-page-views
         :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/web-incremental/04-move-to-new/04-03-page-views.sql
-  - :name: 05-move-to-derived
+  - :name: 05-aggregate
     :queries:
       - :name: 05-01-sessions
-        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/web-incremental/05-move-to-derived/05-01-sessions.sql
-  - :name: 05-move-to-derived
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/web-incremental/05-aggregate/05-01-sessions.sql
+  - :name: 05-aggregate
     :queries:
       - :name: 05-02-visitors
-        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/web-incremental/05-move-to-derived/05-02-visitors.sql
-  - :name: 05-move-to-derived
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/web-incremental/05-aggregate/05-02-visitors.sql
+  - :name: 05-aggregate
     :queries:
       - :name: 05-03-page-views
-        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/web-incremental/05-move-to-derived/05-03-page-views.sql
-  - :name: 06-move-to-atomic
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/web-incremental/05-aggregate/05-03-page-views.sql
+  - :name: 06-commit
     :queries:
-      - :name: 06-move-to-atomic
-        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/web-incremental/06-move-to-atomic/06-move-to-atomic.sql
+      - :name: 06-commit
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/web-incremental/06-commit/06-commit.sql
   - :name: 07-vacuum
     :queries:
       - :name: 07-vacuum
