@@ -240,4 +240,7 @@ class EnrichedEvent {
 
   // Event fingerprint
   @BeanProperty var event_fingerprint: String = _
+
+  // True timestamp
+  @BeanProperty var true_tstamp: String = _
 }

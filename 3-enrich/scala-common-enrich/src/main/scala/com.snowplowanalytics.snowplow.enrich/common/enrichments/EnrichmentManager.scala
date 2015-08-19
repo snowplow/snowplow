@@ -134,6 +134,7 @@ object EnrichmentManager {
           ("vid"     , (CU.stringToJInteger, "domain_sessionidx")),
           ("sid"     , (CU.validateUuid, "domain_sessionid")),
           ("dtm"     , (EE.extractTimestamp, "dvce_tstamp")),
+          ("ttm"     , (EE.extractTimestamp, "true_tstamp")),
           ("stm"     , (EE.extractTimestamp, "dvce_sent_tstamp")),
           ("tna"     , (ME.toTsvSafe, "name_tracker")),
           ("tv"      , (ME.toTsvSafe, "v_tracker")),
@@ -427,16 +428,22 @@ object EnrichmentManager {
       unitSuccess
     })
 
-    val derivedTstamp = EE.getDerivedTimestamp(
-      Option(event.dvce_sent_tstamp),
-      Option(event.dvce_tstamp),
-      Option(event.collector_tstamp)
-    ) match {
-      case Success(dt) => {
-        dt.foreach(event.derived_tstamp = _)
+    val derivedTstamp = event.true_tstamp match {
+      case null =>
+        EE.getDerivedTimestamp(
+          Option(event.dvce_sent_tstamp),
+          Option(event.dvce_tstamp),
+          Option(event.collector_tstamp)
+        ) match {
+          case Success(dt) => {
+            dt.foreach(event.derived_tstamp = _)
+            unitSuccess
+          }
+          case f => f
+        }
+      case trueTstamp =>
+        event.derived_tstamp = trueTstamp
         unitSuccess
-      }
-      case f => f
     }
 
     // Execute the JavaScript scripting enrichment
