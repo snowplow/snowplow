@@ -36,7 +36,7 @@ object Dependencies {
     val yodaConvert     = "1.2"
     // Scala
     val json4sJackson   = "3.2.11"
-    val commonEnrich    = "0.15.0"
+    val commonEnrich    = "0.16.0"
     val scalding        = "0.15.0"
     val scalaz7         = "7.0.0"
     val igluClient      = "0.3.0"
