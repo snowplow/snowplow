@@ -13,44 +13,24 @@
 # Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'logger'
-require 'contracts'
-
 module Snowplow
-  module EmrEtlRunner
-    module Logging
+  module StorageLoader
+    module Sanitization
 
-      include Contracts
-
-      $stdout.sync = true
-
-      # Get the Logger
-      Contract None => Logger
-      def logger
-        Logging.logger
+      # Replaces any substring of length at least min_replaced_substring_length of an error message
+      # if it is also a substring of any credential string
+      def sanitize_message(message, credentials, min_replaced_substring_length=7)
+        credentials.each do |cred|
+          (0..(cred.length - min_replaced_substring_length)).each do |start|
+            (cred.length.downto(start + min_replaced_substring_length)).each do |finish|
+              message = message.gsub(cred[start...finish], 'x' * (finish - start))
+            end
+          end
+        end
+        message
       end
+      module_function :sanitize_message
 
-      # Global, memoized, lazy initialized instance of a logger
-      Contract None => Logger 
-      def self.logger
-        @logger ||= Logger.new($stdout)
-      end
-
-      # Log a fatal Exception
-      Contract Exception => nil
-      def self.fatal_with(exception)
-        logger.fatal("\n\n#{exception.class} (#{exception.message}):\n    " +
-                     exception.backtrace.join("\n    ") +
-                     "\n\n")
-        nil
-      end
-
-      # Set the logging level
-      Contract String => nil
-      def self.set_level(level)
-        logger.level = Logger.const_get level.upcase
-        nil
-      end
     end
   end
 end

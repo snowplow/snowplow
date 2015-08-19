@@ -29,6 +29,10 @@ module Snowplow
     class EmrExecutionError < Error
     end
 
+    # A bootstrap failure indicates the job can be safely retried
+    class BootstrapFailureError < EmrExecutionError
+    end
+
     # Raised if a directory is not empty
     class DirectoryNotEmptyError < Error
     end
@@ -36,6 +40,10 @@ module Snowplow
     # Raised if there is no data to process
     # Not strictly an error, but used for control flow
     class NoDataToProcessError < Error
+    end
+
+    # Raised if the .lzo and .lzo.index files aren't matched
+    class UnmatchedLzoFilesError < Error
     end
   end
 end

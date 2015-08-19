@@ -23,20 +23,21 @@ module Snowplow
 
       # Supported options
       @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+))$/
-      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred archive))
+      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred archive_raw))
 
-      include Logging
+      include Monitoring::Logging
 
       # Initialize the class.
-      Contract ArgsHash, ConfigHash, ArrayOf[String] => Runner
-      def initialize(args, config, enrichments_array)
+      Contract ArgsHash, ConfigHash, ArrayOf[String], String => Runner
+      def initialize(args, config, enrichments_array, resolver)
 
         # Let's set our logging level immediately
-        Logging::set_level config[:logging][:level]
+        Monitoring::Logging::set_level config[:monitoring][:logging][:level]
 
         @args = args
         @config = validate_and_coalesce(args, config)
         @enrichments_array = enrichments_array
+        @resolver = resolver
         
         self
       end
@@ -56,11 +57,30 @@ module Snowplow
           enrich = not(@args[:skip].include?('enrich'))
           shred = not(@args[:skip].include?('shred'))
           s3distcp = not(@args[:skip].include?('s3distcp'))
-          job = EmrJob.new(@args[:debug], enrich, shred, s3distcp, @config, @enrichments_array)
-          job.run()
+
+          # Keep relaunching the job until it succeeds or fails for a reason other than a bootstrap failure
+          tries_left = @config[:aws][:emr][:bootstrap_failure_tries]
+          while true
+            begin
+              tries_left -= 1
+              job = EmrJob.new(@args[:debug], enrich, shred, s3distcp, @config, @enrichments_array, @resolver)
+              job.run(@config)
+              break
+            rescue BootstrapFailureError => bfe
+              logger.warn "Job failed. #{tries_left} tries left..."
+              if tries_left > 0
+                # Random timeout between 0 and 10 minutes
+                bootstrap_timeout = rand(1..600)
+                logger.warn("Bootstrap failure detected, retrying in #{bootstrap_timeout} seconds...")
+                sleep(bootstrap_timeout)
+              else
+                raise
+              end
+            end
+          end
         end
 
-        unless @args[:skip].include?('archive')
+        unless @args[:skip].include?('archive_raw')
           S3Tasks.archive_logs(@config)
         end
 
@@ -88,7 +108,7 @@ module Snowplow
         # Check our skip argument
         args[:skip].each { |opt|
           unless @@skip_options.include?(opt)
-            raise ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred' or 'archive', not '#{opt}'"
+            raise ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred' or 'archive_raw', not '#{opt}'"
           end
         }
 
@@ -103,7 +123,7 @@ module Snowplow
           end
         end
 
-        input_collector_format = config[:etl][:collector_format]
+        input_collector_format = config[:collectors][:format]
 
         # Validate the collector format
         unless input_collector_format =~ @@collector_format_regex
@@ -111,7 +131,7 @@ module Snowplow
         end
 
         # Currently we only support start/end times for the CloudFront collector format. See #120 for details
-        unless config[:etl][:collector_format] == 'cloudfront' or (args[:start].nil? and args[:end].nil?)
+        unless config[:collectors][:format] == 'cloudfront' or (args[:start].nil? and args[:end].nil?)
           raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
         end
 
@@ -120,14 +140,14 @@ module Snowplow
           raise ConfigError, "Cannot process enrich and process shred, choose one"
         end
         unless args[:process_enrich_location].nil?
-          config[:s3][:buckets][:raw][:processing] = args[:process_enrich_location]
+          config[:aws][:s3][:buckets][:raw][:processing] = args[:process_enrich_location]
         end
         unless args[:process_shred_location].nil?
-          config[:s3][:buckets][:enriched][:good] = args[:process_shred_location]
+          config[:aws][:s3][:buckets][:enriched][:good] = args[:process_shred_location]
         end
 
         # Add trailing slashes if needed to the non-nil buckets
-        config[:s3][:buckets] = Runner.add_trailing_slashes(config[:s3][:buckets])
+        config[:aws][:s3][:buckets] = Runner.add_trailing_slashes(config[:aws][:s3][:buckets])
 
         config
       end

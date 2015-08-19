@@ -23,20 +23,77 @@ describe Cli do
 
   it 'raises a ConfigError if the config file argument was nil' do
     expect {
-      Cli.load_file(nil, "<<usage message>>")
+      Cli.load_config(nil, "<<usage message>>")
     }.to raise_exception( ConfigError, "Missing option: config\n<<usage message>>" )
   end
 
   it 'raises a ConfigError if the config file argument could not be found' do
     expect {
-      Cli.load_file("/no/such/file", "<<usage message>>")
+      Cli.load_config("/no/such/file", "<<usage message>>")
     }.to raise_exception( ConfigError, "Configuration file '/no/such/file' does not exist, or is not a file\n<<usage message>>" )
   end
 
   it 'raises a ConfigError if the config file argument is not a file' do
     expect {
-      Cli.load_file("/tmp", "<<usage message>>")
+      Cli.load_config("/tmp", "<<usage message>>")
     }.to raise_exception( ConfigError, "Configuration file '/tmp' does not exist, or is not a file\n<<usage message>>" )
+  end
+
+  it 'can convert all keys in a hash to symbols' do
+
+    raw = {
+      "s3" => {
+        "buckets" => {
+          "raw" => {
+            "in" => "s3n://snowplow-ice-logs-snplow/",
+            "some_number" => 23
+          }
+        }
+      },
+      "emr" => {
+        "bootstrap" => [
+          "action1",
+          "action2"],
+        :already_symbol => "hello",
+        "no_value" => nil,
+        "empty_array" => []
+      },
+      "hash_of_arrays" => [
+        {
+          :name => "A database",
+          :already_symbol => "localhost",
+          :port => 1234
+        }
+      ]
+    }
+
+    Cli.recursive_symbolize_keys(raw).should == {
+      :s3 => {
+        :buckets => {
+          :raw => {
+            :in => "s3n://snowplow-ice-logs-snplow/",
+            :some_number => 23
+          }
+        }
+      },
+      :emr => {
+        :bootstrap => [
+          "action1",
+          "action2"
+        ],
+        :already_symbol => "hello",
+        :no_value => nil,
+        :empty_array => []
+      },
+      :hash_of_arrays => [
+        {
+          :name => "A database",
+          :already_symbol => "localhost",
+          :port => 1234
+        }
+      ]
+    }
+
   end
 
 end

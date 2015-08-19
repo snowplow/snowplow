@@ -83,17 +83,17 @@ module Snowplow
       # Returns true if file(s) were staged
       Contract ArgsHash, ConfigHash => Bool
       def self.stage_logs_for_emr(args, config)
-        Logging::logger.debug 'Staging CloudFront logs...'
+        Monitoring::Logging::logger.debug 'Staging CloudFront logs...'
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
-          config[:s3][:region],
+          config[:aws][:s3][:region],
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
 
         # Get S3 locations
-        in_bucket_array = [* config[:s3][:buckets][:raw][:in]]
+        in_bucket_array = config[:aws][:s3][:buckets][:raw][:in]
         in_locations = in_bucket_array.map {|name| Sluice::Storage::S3::Location.new(name)}
-        processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:raw][:processing])
+        processing_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:raw][:processing])
 
         # Check whether our processing directory is empty
         unless Sluice::Storage::S3::is_empty?(s3, processing_location)
@@ -102,16 +102,24 @@ module Snowplow
 
         # Early check whether our enrichment directory is empty. We do a late check too
         unless args[:skip].include?('emr') or args[:skip].include?('enrich')
-          enriched_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:enriched][:good])
+          enriched_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:enriched][:good])
           unless Sluice::Storage::S3::is_empty?(s3, enriched_location)
             raise DirectoryNotEmptyError, "Should not stage files for enrichment, #{enriched_location} is not empty"
+          end
+        end
+
+        # Early check whether our shred directory is empty. We do a late check too
+        unless args[:skip].include?('emr') or args[:skip].include?('shred')
+          shred_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:shredded][:good])
+          unless Sluice::Storage::S3::is_empty?(s3, shred_location)
+            raise DirectoryNotEmptyError, "Should not stage files for shredding, #{shred_location} is not empty"
           end
         end
 
         # Move the files we need to move (within the date span)
         files_to_move = case
         when (args[:start].nil? and args[:end].nil?)
-          if config[:etl][:collector_format] == 'clj-tomcat'
+          if config[:collectors][:format] == 'clj-tomcat'
             '.*localhost\_access\_log.*\.txt.*'
           else
             '.+'
@@ -124,7 +132,7 @@ module Snowplow
           Sluice::Storage::files_between(args[:start], args[:end], CF_DATE_FORMAT, CF_FILE_EXT)
         end
 
-        fix_filenames = build_fix_filenames(config[:s3][:region])
+        fix_filenames = build_fix_filenames(config[:aws][:s3][:region])
         files_moved = in_locations.map { |in_location|
           Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move, fix_filenames, true)
         }
@@ -133,7 +141,7 @@ module Snowplow
           false
         else
           # Wait for s3 to eventually become consistent
-          Logging::logger.debug "Waiting a minute to allow S3 to settle (eventual consistency)"
+          Monitoring::Logging::logger.debug "Waiting a minute to allow S3 to settle (eventual consistency)"
           sleep(60)
 
           true
@@ -147,16 +155,16 @@ module Snowplow
       # +config+:: the hash of configuration options
       Contract ConfigHash => nil
       def self.archive_logs(config)
-        Logging::logger.debug 'Archiving CloudFront logs...'
+        Monitoring::Logging::logger.debug 'Archiving CloudFront logs...'
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
-          config[:s3][:region],
+          config[:aws][:s3][:region],
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
 
         # Get S3 locations
-        processing_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:raw][:processing]);
-        archive_location = Sluice::Storage::S3::Location.new(config[:s3][:buckets][:raw][:archive]);
+        processing_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:raw][:processing]);
+        archive_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:raw][:archive]);
 
         # Attach date path if filenames include datestamp
         add_date_path = lambda { |filepath|
