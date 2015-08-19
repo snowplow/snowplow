@@ -25,7 +25,7 @@ aws:
         errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
         archive: ADD HERE    # Not required for Postgres currently
   emr:
-    ami_version: 3.6.0      # Don't change this
+    ami_version: 3.7.0      # Don't change this
     region: ADD HERE        # Always set this
     jobflow_role: EMR_EC2_DefaultRole # Created using $ aws emr create-default-roles
     service_role: EMR_DefaultRole     # Created using $ aws emr create-default-roles
