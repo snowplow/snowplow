@@ -36,7 +36,7 @@ object Dependencies {
     // Scala
     val scalding         = "0.11.2"
     val scalaz7          = "7.0.0"
-    val commonEnrich     = "0.15.0"
+    val commonEnrich     = "0.16.0"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
