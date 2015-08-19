@@ -16,14 +16,15 @@
 -- Data Model: web-incremental
 -- Version: 2.0
 --
--- Move new visitors to derived:
+-- Aggregate new and old rows:
 -- (a) calculate aggregate frame (i.e. a GROUP BY)
 -- (b) calculate initial frame (i.e. first value)
--- (c) combine and insert into derived
+-- (c) combine
 
-BEGIN;
-
-INSERT INTO derived.visitors (
+CREATE TABLE snplw_temp.visitors_aggregated
+  DISTKEY (blended_user_id)
+  SORTKEY (blended_user_id)
+AS (
 
 WITH aggregate_frame AS (
 
@@ -124,6 +125,4 @@ LEFT JOIN initial_frame AS i
 
 );
 
-COMMIT;
-
-INSERT INTO snplw_temp.queries (SELECT 'visitors', 'move-to-derived', GETDATE()); -- track time
+INSERT INTO snplw_temp.queries (SELECT 'visitors', 'aggregate', GETDATE()); -- track time

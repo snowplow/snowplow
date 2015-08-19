@@ -16,14 +16,15 @@
 -- Data Model: web-incremental
 -- Version: 2.0
 --
--- Move new page views to derived:
+-- Aggregate new and old rows:
 -- (a) calculate aggregate frame (i.e. a GROUP BY)
 -- (b) calculate final frame (i.e. last value)
--- (c) combine and insert into derived
+-- (c) combine
 
-BEGIN;
-
-INSERT INTO derived.page_views (
+CREATE TABLE snplw_temp.page_views_aggregated
+  DISTKEY (domain_userid)
+  SORTKEY (domain_userid, domain_sessionidx, first_touch_tstamp)
+AS (
 
 WITH aggregate_frame AS (
 
@@ -114,6 +115,4 @@ LEFT JOIN final_frame AS f
 
 );
 
-COMMIT;
-
-INSERT INTO snplw_temp.queries (SELECT 'page-views', 'move-to-derived', GETDATE()); -- track time
+INSERT INTO snplw_temp.queries (SELECT 'page-views', 'aggregate', GETDATE()); -- track time

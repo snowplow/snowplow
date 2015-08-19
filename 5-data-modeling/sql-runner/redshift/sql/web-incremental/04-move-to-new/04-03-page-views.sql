@@ -15,26 +15,7 @@
 --
 -- Data Model: web-incremental
 -- Version: 2.0
---
--- Add old entries that also appear in this new batch:
--- (a) backup selected old page views
--- (b) move those page views
--- (c) delete them
 
-BEGIN;
-
-  -- (a) backup selected old page views
-  CREATE TABLE snplw_temp.page_views_backup
-    DISTKEY (domain_userid)
-    SORTKEY (domain_userid, domain_sessionidx, first_touch_tstamp)
-  AS (SELECT * FROM derived.page_views WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.page_views));
-
-  -- (b) move those page views
-  INSERT INTO snplw_temp.page_views (SELECT * FROM derived.page_views WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.page_views));
-
-  -- (c) delete them
-  DELETE FROM derived.page_views WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.page_views);
-
-COMMIT;
+INSERT INTO snplw_temp.page_views (SELECT * FROM derived.page_views WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.page_views)); -- add old entries that also appear in this new batch
 
 INSERT INTO snplw_temp.queries (SELECT 'page-views', 'move-to-new', GETDATE()); -- track time
