@@ -177,6 +177,7 @@ module Snowplow
         props = java.util.Properties.new
         props.set_property :user, target[:username]
         props.set_property :password, target[:password]
+        props.set_property :sslmode, target.fetch(:sslmode, "disable")
 
         # Used instead of Java::JavaSql::DriverManager.getConnection to prevent "no suitable driver found" error
         org.postgresql.Driver.new.connect(connection_url, props)
