@@ -105,9 +105,8 @@ object EtlJob {
    *         Strings
    */
   def projectBads(all: List[ValidatedEnrichedEvent]): List[NonEmptyList[String]] = all
-    .map(_.swap.toOption)
-    .collect { case Some(errs) =>
-      errs
+    .collect {
+      case Failure(errs) => errs
     }
 
   /**
@@ -120,9 +119,8 @@ object EtlJob {
    * @return a (possibly empty) List of EnrichedEvents
    */
   def projectGoods(all: List[ValidatedEnrichedEvent]): List[EnrichedEvent] = all
-    .map(_.toOption)
-    .collect { case Some(gd) =>
-      gd
+    .collect {
+      case Success(gd) => gd
     }
 }
 
