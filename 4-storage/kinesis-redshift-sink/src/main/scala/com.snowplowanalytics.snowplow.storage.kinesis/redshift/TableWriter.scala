@@ -1,8 +1,10 @@
 package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 
+import java.lang.RuntimeException
 import java.sql.{Types, Timestamp, PreparedStatement, SQLException, BatchUpdateException}
 import java.util.Properties
 import javax.sql.DataSource
+import java.sql.Connection
 
 import org.apache.commons.logging.LogFactory
 import org.postgresql.ds.PGPoolingDataSource
@@ -116,8 +118,7 @@ object TableWriter {
 /**
  * Created by denismo on 16/07/15.
  */
-class TableWriter(dataSource:DataSource, table: String) {
-  val DEFAULT_BATCH_SIZE = 200
+class TableWriter(dataSource:DataSource, table: String)(implicit props:Properties) {
   val log = LogFactory.getLog(classOf[TableWriter])
 
   type SQLApplier = (String, PreparedStatement, Int, Int) => Unit
@@ -151,7 +152,7 @@ class TableWriter(dataSource:DataSource, table: String) {
   readMetadata()
 
   private def readMetadata() = {
-    val conn = dataSource.getConnection
+    val conn = getConnection
     try {
       val dbMetadata = conn.getMetaData
       val tableMetadata = dbMetadata.getColumns(null, table.substring(0, table.indexOf('.')), table.substring(table.indexOf('.') + 1), null)
@@ -171,7 +172,7 @@ class TableWriter(dataSource:DataSource, table: String) {
   def write(values: Array[String]) = {
     if (values.length != names.length) throw new SQLException(s"Number of values does not match number of fields: ${values.length} != ${names.length}")
     if (stat == null) {
-      val conn = dataSource.getConnection
+      val conn = getConnection
       stat = conn.prepareStatement(s"insert into $table values ($placeholders)")
     }
     try {
@@ -184,26 +185,27 @@ class TableWriter(dataSource:DataSource, table: String) {
     catch {
       case t:Throwable =>
         log.error("Skipping due to conversion errors: " +
-          values.zipWithIndex.map(pair => pair._1 + ":" + pair._2).mkString(","))
+          values.zipWithIndex.map(pair => names(pair._2) + ":" +  pair._1).mkString(","))
       // Don't clear batch - just skip this record
     }
     try {
-      if (batchCount >= DEFAULT_BATCH_SIZE) {
+      if (batchCount >= Integer.parseInt(props.getProperty("batchSize"))) {
         val count = stat.executeBatch().sum
+        stat.clearBatch()
         batchCount = 0
         log.info(s"Inserted $count records into Redshift table $table")
       }
     }
     catch {
       case s:BatchUpdateException =>
-        log.error(values.zipWithIndex.map(pair => pair._1 + ":" + pair._2).mkString(","))
+        log.error(values.zipWithIndex.map(pair => names(pair._2) + ":" +  pair._1).mkString(","))
         batchCount = 0
         stat.clearBatch()
         log.error("Exception updating batch", s)
         log.error("Nested exception", s.getNextException)
-        throw s
+//        throw s
       case e:Throwable =>
-        log.error(values.zipWithIndex.map(pair => pair._1 + ":" + pair._2).mkString(","))
+        log.error(values.zipWithIndex.map(pair => names(pair._2) + ":" +  pair._1).mkString(","))
         batchCount = 0
         stat.clearBatch()
         log.error("Exception updating batch", e)
@@ -211,10 +213,43 @@ class TableWriter(dataSource:DataSource, table: String) {
     }
   }
 
+  def getConnection: Connection = {
+    var progressiveDelay: Int = 5
+    var progressiveCount: Int = 0
+    var res: Connection = null
+    while (res == null) {
+      try {
+        res = dataSource.getConnection
+        progressiveCount = 0
+        progressiveDelay = 5
+      }
+      catch {
+        case e: SQLException =>
+          log.error("Exception getting connection", e)
+          if (e.getMessage().toLowerCase().contains("connection")) {
+            try {
+              log.error(s"Unable to get DB connection - sleeping for ${progressiveDelay}secs")
+              Thread.sleep(progressiveDelay * 1000)
+              if (progressiveCount < 10) {
+                progressiveDelay *= 2
+                progressiveCount += 1
+              }
+            }
+            catch {
+              case i: InterruptedException =>
+                throw new RuntimeException(i)
+            }
+          }
+      }
+    }
+    res
+  }
+
   def finished() = {
     if (stat != null) {
       try {
         val count = stat.executeBatch().sum
+        stat.clearBatch()
         batchCount = 0
         log.info(s"Inserted $count records into Redshift table $table")
       }

@@ -26,7 +26,7 @@ object Dependencies {
     // Java
     val logging              = "1.1.3"
     val slf4j                = "1.7.6"
-    val kinesisClient        = "1.0.0"
+    val kinesisClient        = "1.1.1"
     val kinesisConnector     = "1.1.1"
     val hadoop               = "1.2.1"
     val elephantbird         = "4.5"

@@ -140,6 +140,7 @@ object SinkApp extends App {
     }
     props.setProperty("jsonpaths", connector.getString("jsonpaths"))
     if (redshift.hasPath("filterFields")) props.setProperty("filterFields",  "true")
+    props.setProperty("batchSize", String.valueOf(redshift.getInt("batchSize")))
 
     val buffer = connector.getConfig("buffer")
     val byteLimit = buffer.getString("byte-limit")
