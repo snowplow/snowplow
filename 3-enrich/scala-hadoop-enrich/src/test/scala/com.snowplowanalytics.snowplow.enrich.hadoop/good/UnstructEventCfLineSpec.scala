@@ -168,7 +168,8 @@ object UnstructEventCfLineSpec {
     "com.snowplowanalytics.snowplow-website",
     "signup_form_submitted",
     "jsonschema",
-    "1-0-0"
+    "1-0-0",
+    "8a2731b6b5d6b69f6c9d70f9bf8b7bb4"
     )
 }
 
