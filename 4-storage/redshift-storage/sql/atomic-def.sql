@@ -196,6 +196,9 @@ CREATE TABLE atomic.events (
 	-- Event fingerprint
 	event_fingerprint varchar(128) encode lzo,
 
+	-- True timestamp
+	true_tstamp timestamp,
+
 	CONSTRAINT event_id_070_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
