@@ -360,6 +360,18 @@ object JobSpecHelpers {
                     |"script": "${jsScript}"
                   |}
                 |}
+              |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/event_fingerprint_config/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "event_fingerprint_config",
+                  |"enabled": true,
+                  |"parameters": {
+                    |"excludeParameters": ["eid", "stm"],
+                    |"hashAlgorithm": "MD5"
+                  |}
+                |}
               |}
             |]
           |}""".stripMargin.replaceAll("[\n\r]","").getBytes
