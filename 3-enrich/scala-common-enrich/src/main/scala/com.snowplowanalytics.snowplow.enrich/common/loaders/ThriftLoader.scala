@@ -26,6 +26,9 @@ import org.joda.time.{DateTime, DateTimeZone}
 // Thrift
 import org.apache.thrift.TDeserializer
 
+// Scala
+import scala.util.control.NonFatal
+
 // Java conversions
 import scala.collection.JavaConversions._
 
@@ -63,40 +66,54 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * @return either a set of validation errors or an Option-boxed
    *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
    */
-  def toCollectorPayload(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
+  def toCollectorPayload(line: Array[Byte]): ValidatedMaybeCollectorPayload = handleThrift(line, convertOldSchema, convertSchema1)
 
-    try {
+  def handleThrift[A](
+    line: Array[Byte],
+    sreConverter: SnowplowRawEvent => Validated[A],
+    cp1Converter: CollectorPayload1 => Validated[A]): Validated[A] = try {
 
       var schema = new SchemaSniffer
-
       this.synchronized {
         thriftDeserializer.deserialize(
           schema,
           line
         )
       }
-
       if (schema.isSetSchema) {
         val actualSchema = SchemaKey.parse(schema.getSchema).leftMap(_.toString).toValidationNel
-
         for {
           as <- actualSchema
           res <- if (ExpectedSchema.matches(as)) {
-              convertSchema1(line)
+              var collectorPayload = new CollectorPayload1
+              this.synchronized {
+                thriftDeserializer.deserialize(
+                  collectorPayload,
+                  line
+                )
+              }
+              cp1Converter(collectorPayload)
             } else {
               s"Verifying record as $ExpectedSchema failed: found $as".failNel
             }
         } yield res
-
       } else {
-        convertOldSchema(line)
+        var snowplowRawEvent = new SnowplowRawEvent
+        this.synchronized {
+          thriftDeserializer.deserialize(
+            snowplowRawEvent,
+            line
+          )
+        }
+        sreConverter(snowplowRawEvent)
       }
     } catch {
-      // TODO: Check for deserialization errors.
-      case e: Throwable =>
-        s"Error deserializing raw event: ${e.getMessage}".failNel[Option[CollectorPayload]]
+      case NonFatal(e) =>
+        s"Error deserializing raw event: {e.getMessage}".failNel
     }
-  }
+
+  def justPrint(line:Array[Byte]): Validated[String] =
+    handleThrift(line, _.toString.successNel, _.toString.successNel)
 
   /**
    * Converts the source string into a ValidatedMaybeCollectorPayload.
@@ -109,15 +126,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * @return either a set of validation errors or an Option-boxed
    *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
    */
-  private def convertSchema1(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
-
-    var collectorPayload = new CollectorPayload1
-    this.synchronized {
-      thriftDeserializer.deserialize(
-        collectorPayload,
-        line
-      )
-    }
+  private def convertSchema1(collectorPayload: CollectorPayload1): ValidatedMaybeCollectorPayload = {
 
     val querystring = parseQuerystring(
       Option(collectorPayload.querystring),
@@ -170,15 +179,7 @@ object ThriftLoader extends Loader[Array[Byte]] {
    * @return either a set of validation errors or an Option-boxed
    *         CanonicalInput object, wrapped in a Scalaz ValidatioNel.
    */
-  private def convertOldSchema(line: Array[Byte]): ValidatedMaybeCollectorPayload = {
-
-    var snowplowRawEvent = new SnowplowRawEvent
-    this.synchronized {
-      thriftDeserializer.deserialize(
-        snowplowRawEvent,
-        line
-      )
-    }
+  private def convertOldSchema(snowplowRawEvent: SnowplowRawEvent): ValidatedMaybeCollectorPayload = {
 
     val querystring = parseQuerystring(
       Option(snowplowRawEvent.payload.data),

@@ -22,7 +22,7 @@ object DecodeApp {
   def main(args: Array[String]) {
 
     Source.stdin.getLines foreach { line => try {
-        println(decode(line))
+        println(com.snowplowanalytics.snowplow.enrich.common.loaders.ThriftLoader.justPrint(Base64.decodeBase64(line)))
       } catch {
         case NonFatal(e) => Console.err.println(e)
       }
