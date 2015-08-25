@@ -133,7 +133,7 @@ object EnrichmentManager {
           ("fp"      , (ME.toTsvSafe, "user_fingerprint")),
           ("vid"     , (CU.stringToJInteger, "domain_sessionidx")),
           ("sid"     , (CU.validateUuid, "domain_sessionid")),
-          ("dtm"     , (EE.extractTimestamp, "dvce_tstamp")),
+          ("dtm"     , (EE.extractTimestamp, "dvce_created_tstamp")),
           ("ttm"     , (EE.extractTimestamp, "true_tstamp")),
           ("stm"     , (EE.extractTimestamp, "dvce_sent_tstamp")),
           ("tna"     , (ME.toTsvSafe, "name_tracker")),
@@ -432,7 +432,7 @@ object EnrichmentManager {
       case null =>
         EE.getDerivedTimestamp(
           Option(event.dvce_sent_tstamp),
-          Option(event.dvce_tstamp),
+          Option(event.dvce_created_tstamp),
           Option(event.collector_tstamp)
         ) match {
           case Success(dt) => {
