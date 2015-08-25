@@ -10,6 +10,8 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
+package com.snowplowanalytics.decode
+
 import org.apache.commons.codec.binary.Base64
 import org.apache.thrift.TDeserializer
 import com.snowplowanalytics.snowplow.CollectorPayload.thrift.model1.CollectorPayload
