@@ -25,7 +25,7 @@ CREATE TABLE "atomic"."events" (
 	-- Date/time
 	"etl_tstamp" timestamp,
 	"collector_tstamp" timestamp NOT NULL,
-	"dvce_tstamp" timestamp,
+	"dvce_created_tstamp" timestamp,
 	-- Date/time
 	"event" varchar(128),
 	"event_id" char(36) NOT NULL,
