@@ -89,6 +89,9 @@ combined[:aws][:s3][:buckets][:jsonpath_assets] = sl_config[:s3][:buckets][:json
 combined[:storage] = clone(sl_config)
 combined[:storage].delete(:aws)
 combined[:storage].delete(:s3)
+combined[:storage][:targets].each do |target|
+  target[:ssl_mode] = 'disable'
+end
 
 combined[:monitoring] = {
   tags: {},
