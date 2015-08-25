@@ -27,7 +27,7 @@ CREATE TABLE atomic.events (
 	-- Date/time
 	etl_tstamp timestamp,
 	collector_tstamp timestamp not null,
-	dvce_tstamp timestamp,
+	dvce_created_tstamp timestamp,
 	-- Event
 	event varchar(128) encode text255,
 	event_id char(36) not null unique,
