@@ -63,7 +63,7 @@ storage:
       host: ADD HERE # The endpoint as shown in the Redshift console
       database: ADD HERE # Name of database
       port: 5439 # Default Redshift port
-      sslmode: disable # One of disable (default), require, verify-ca or verify-full
+      ssl_mode: disable # One of disable (default), require, verify-ca or verify-full
       table: atomic.events
       username: ADD HERE
       password: ADD HERE
@@ -74,7 +74,7 @@ storage:
       host: ADD HERE # Hostname of database server
       database: ADD HERE # Name of database
       port: 5432 # Default Postgres port
-      sslmode: disable # One of disable (default), require, verify-ca or verify-full
+      ssl_mode: disable # One of disable (default), require, verify-ca or verify-full
       table: atomic.events
       username: ADD HERE
       password: ADD HERE
