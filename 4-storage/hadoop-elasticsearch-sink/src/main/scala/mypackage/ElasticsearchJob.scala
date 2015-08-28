@@ -61,10 +61,3 @@ class ElasticsearchJob(args : Args) extends Job(args) {
     .mapTo('line -> 'output) {l: String => l}
     .write(writeToES)
 }
-
-object App {
-  def main(args: Array[String]) {
-    val args = Array[String]("com.snowplowanalytics.snowplow.storage.hadoop.ElasticsearchJob", "--local")
-    Tool.main(args)
-  }
-}
