@@ -42,9 +42,7 @@ object SnowplowHadoopElasticsearchBuild extends Build {
         Libraries.scalaz7,
         Libraries.commonEnrich,
         Libraries.specs2,
-        Libraries.scalazSpecs2,
-        Libraries.compress,
-        Libraries.commonsCodec
+        Libraries.scalazSpecs2
       )
     )
 }
