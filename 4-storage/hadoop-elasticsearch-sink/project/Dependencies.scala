@@ -31,6 +31,7 @@ object Dependencies {
     // Java
     val hadoop              = "2.4.1"
     val cascading           = "2.6.0"
+    val elasticsearchHadoop = "2.1.0"
     // Scala
     val scalding            = "0.11.2"
     val scalaz7             = "7.0.0"
@@ -49,12 +50,13 @@ object Dependencies {
     val cascadingCore       = "cascading"                 %  "cascading-core"               % V.cascading
     val cascadingLocal      = "cascading"                 %  "cascading-local"              % V.cascading
     val cascadingHadoop     = "cascading"                 %  "cascading-hadoop2-mr1"        % V.cascading
+    val elasticsearchHadoop = "org.elasticsearch"         %  "elasticsearch-hadoop"         % V.elasticsearchHadoop intransitive()
     // Scala
     val scaldingCore        = "com.twitter"               %% "scalding-core"                % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" )
     val scaldingArgs        = "com.twitter"               %% "scalding-args"                % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" )
     val scaldingCommons     = "com.twitter"               %% "scalding-commons"             % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" )
     val scaldingJson        = "com.twitter"               %% "scalding-json"                % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" )
-    val scaldingEs          = "io.scalding"               %% "scalding-taps"                % "0.6_scalding0.10"
+    val scaldingEs          = "io.scalding"               %% "scalding-taps"                % "0.6_scalding0.10" intransitive()
     val scalaz7             = "org.scalaz"                %% "scalaz-core"                  % V.scalaz7
     val commonEnrich        = "com.snowplowanalytics"     %  "snowplow-common-enrich"       % V.commonEnrich
     // Scala (test only)

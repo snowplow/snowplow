@@ -33,6 +33,7 @@ object SnowplowHadoopElasticsearchBuild extends Build {
         Libraries.cascadingCore,
         Libraries.cascadingLocal,
         Libraries.cascadingHadoop,
+        Libraries.elasticsearchHadoop,
         Libraries.scaldingCore,
         Libraries.scaldingArgs,
         Libraries.scaldingCommons,
