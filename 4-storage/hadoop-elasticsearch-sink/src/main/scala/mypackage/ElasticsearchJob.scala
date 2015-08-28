@@ -42,14 +42,21 @@ object ElasticsearchJob {
  */
 class ElasticsearchJob(args : Args) extends Job(args) {
 
+  val host = args.list("host").head
+  val resource = args.list("resource").head
+  val input = args.list("input").head
+
   // TODO: use withJsonInput instead of this Properties object to indicate the data is already JSON
   val props = new java.util.Properties
   props.setProperty("es.input.json", "true")
 
-  val writeToES = EsSource("index1/type1").withSettings(props)
+  val writeToES = EsSource(
+    resource,
+    esHost = Some(host)
+    ).withSettings(props)
 
   val schema = ('name, 'age, 'address, 'useless)
-  val source = TextLine("/vagrant/inputs/trial")
+  val source = MultipleTextLineFiles(input)
     .read
     .mapTo('line -> 'output) {l: String => l}
     .write(writeToES)
