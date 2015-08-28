@@ -45,11 +45,39 @@ object BuildSettings {
   // sbt-assembly settings for building a fat jar
   import sbtassembly.Plugin._
   import AssemblyKeys._
+
   lazy val sbtAssemblySettings = assemblySettings ++ Seq(
-    // Executable jarfile
-    assemblyOption in assembly ~= { _.copy(prependShellScript = Some(defaultShellScript)) },
-    // Name it as an executable
-    jarName in assembly := { s"${name.value}-${version.value}" }
+
+    // Simpler jar name
+    jarName in assembly := {
+      name.value + "-" + version.value + ".jar"
+    },
+
+    // Drop these jars
+    excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
+      val excludes = Set(
+        "junit-4.5.jar", // We shouldn't need JUnit
+        "jsp-api-2.1-6.1.14.jar",
+        "jsp-2.1-6.1.14.jar",
+        "jasper-compiler-5.5.12.jar",
+        "minlog-1.2.jar", // Otherwise causes conflicts with Kyro (which bundles it)
+        "janino-2.5.16.jar", // Janino includes a broken signature, and is not needed anyway
+        "commons-beanutils-core-1.8.0.jar", // Clash with each other and with commons-collections
+        "commons-beanutils-1.7.0.jar",      // "
+        "hadoop-core-1.0.3.jar", // Brought in via dfs-datastores-cascading-1.3.4
+        "protobuf-java-2.4.1.jar" // Hadoop needs 2.5.0
+      )
+      cp filter { jar => excludes(jar.data.getName) }
+    },
+
+    mergeStrategy in assembly <<= (mergeStrategy in assembly) {
+      (old) => {
+        case x if x.endsWith("project.clj") => MergeStrategy.discard // Leiningen build files
+        case x if x.startsWith("META-INF") => MergeStrategy.discard // More bumf
+        case x if x.endsWith(".html") => MergeStrategy.discard
+        case x => old(x)
+      }
+    }
   )
 
   lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings
