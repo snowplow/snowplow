@@ -34,6 +34,7 @@ object Dependencies {
     val elasticsearchHadoop = "2.1.0"
     // Scala
     val scalding            = "0.11.2"
+    val scaldingEs          = "0.6_scalding0.10"
     val scalaz7             = "7.0.0"
     val commonEnrich        = "0.14.0"
     // Scala (test only)
@@ -41,6 +42,8 @@ object Dependencies {
     val scalazSpecs2        = "0.1.2"
   }
 
+  // The scalding-taps and elasticsearch-hadoop dependencies are marked intransitive to prevent dependency hell.
+  // Changing these dependencies could introduce an incompatibility that isn't noticed until runtime.
   object Libraries {
     // Java
     val hadoopCommon        = "org.apache.hadoop"         %  "hadoop-common"                % V.hadoop       % "provided"
@@ -54,7 +57,7 @@ object Dependencies {
     val scaldingArgs        = "com.twitter"               %% "scalding-args"                % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" )
     val scaldingCommons     = "com.twitter"               %% "scalding-commons"             % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" )
     val scaldingJson        = "com.twitter"               %% "scalding-json"                % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" )
-    val scaldingEs          = "io.scalding"               %% "scalding-taps"                % "0.6_scalding0.10" intransitive()
+    val scaldingEs          = "io.scalding"               %% "scalding-taps"                % V.scaldingEs intransitive()
     val scalaz7             = "org.scalaz"                %% "scalaz-core"                  % V.scalaz7
     val commonEnrich        = "com.snowplowanalytics"     %  "snowplow-common-enrich"       % V.commonEnrich
     // Scala (test only)
