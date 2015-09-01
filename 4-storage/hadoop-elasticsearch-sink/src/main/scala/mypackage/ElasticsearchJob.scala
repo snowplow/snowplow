@@ -25,9 +25,11 @@ import Scalaz._
 
 // Scalding
 import com.twitter.scalding._
-
-// import org.elasticsearch.hadoop.cascading._
 import io.scalding.taps.elasticsearch.EsSource
+
+// Common Enrich
+import enrich.common.utils.ScalazArgs._
+import enrich.common.FatalEtlError
 
 /**
  * Helpers for our data processing pipeline.
@@ -42,23 +44,31 @@ object ElasticsearchJob {
  */
 class ElasticsearchJob(args : Args) extends Job(args) {
 
-  val host = args.list("host").head
-  val resource = args.list("resource").head
-  val input = args.list("input").head
-
   // TODO: use withJsonInput instead of this Properties object to indicate the data is already JSON
   val props = new java.util.Properties
   props.setProperty("es.input.json", "true")
 
-  val writeToES = EsSource(
-    resource,
-    esHost = Some(host),
-    settings = Some(props)
-    )
+  val hostArg = args.requiredz("host").toValidationNel
+  val resourceArg = args.requiredz("resource").toValidationNel
+  val inputArg = args.requiredz("input").toValidationNel
 
-  val schema = ('name, 'age, 'address, 'useless)
-  val source = MultipleTextLineFiles(input)
-    .read
-    .mapTo('line -> 'output) {l: String => l}
-    .write(writeToES)
+  val result = (hostArg |@| resourceArg |@| inputArg) { (host, resource, input) =>
+    val writeToES = EsSource(
+      resource,
+      esHost = Some(host),
+      settings = Some(props)
+      )
+
+    val schema = ('name, 'age, 'address, 'useless)
+    val source = MultipleTextLineFiles(input)
+      .read
+      .mapTo('line -> 'output) {l: String => l}
+      .write(writeToES)
+  }
+
+  result match {
+    case Failure(e) => throw FatalEtlError(e.toString)
+    case _ =>
+  }
+
 }
