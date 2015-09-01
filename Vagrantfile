@@ -4,6 +4,9 @@ Vagrant.configure("2") do |config|
   config.vm.hostname = "snowplow"
   config.ssh.forward_agent = true
 
+  # Forward guest port 3000 to host port 3000 (for Clojure Collector)
+   config.vm.network "forwarded_port", guest: 3000, host: 3000
+
   # Required for NFS to work, pick any local IP
   # Use NFS for shared folders for better performance
   # config.vm.network :private_network, ip: '192.168.50.50' # Uncomment to use NFS

@@ -82,7 +82,7 @@
   "If our params map contains `u`, 302 redirect to that URI,
    else return a 400 for Bad Request (malformed syntax)"
   [cookies headers params]
-    (let [{url :u} params]
+    (let [{url "u"} params]
       (if (nil? url)
         {:status  400
          :headers headers
