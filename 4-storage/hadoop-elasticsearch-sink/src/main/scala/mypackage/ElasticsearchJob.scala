@@ -52,8 +52,9 @@ class ElasticsearchJob(args : Args) extends Job(args) {
 
   val writeToES = EsSource(
     resource,
-    esHost = Some(host)
-    ).withSettings(props)
+    esHost = Some(host),
+    settings = Some(props)
+    )
 
   val schema = ('name, 'age, 'address, 'useless)
   val source = MultipleTextLineFiles(input)
