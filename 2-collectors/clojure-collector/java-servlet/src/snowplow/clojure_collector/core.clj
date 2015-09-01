@@ -17,6 +17,7 @@
   "Core app handler"
   (:use [compojure.core              :only [defroutes GET POST HEAD]]
         [ring.middleware.cookies     :only [wrap-cookies]]
+        [ring.middleware.params      :only [wrap-params]]
         [ring.middleware.reload      :only [wrap-reload]]
         [ring.middleware.stacktrace  :only [wrap-stacktrace]]
         [metrics.ring.expose         :only [expose-metrics-as-json]]
@@ -49,7 +50,7 @@
   "Our routes"
   (GET  "/i"                  {c :cookies} (send-cookie-pixel-or-200' c true))
   (GET  "/ice.png"            {c :cookies} (send-cookie-pixel-or-200' c true))  ; legacy name for i
-  (GET  "/:vendor/:version"   {v :vendor, p :params, c :cookies} (send-cookie-pixel-or-200-or-redirect' c true v p))  ; for tracker GET support. Need params for potential redirect
+  (GET  "/:vendor/:version"   {{v :vendor} :params, p :params, c :cookies} (send-cookie-pixel-or-200-or-redirect' c true v p))  ; for tracker GET support. Need params for potential redirect
   (POST "/:vendor/:version"   {c :cookies} (send-cookie-pixel-or-200' c false)) ; for tracker POST support, no pixel
   (HEAD "/:vendor/:version"   request responses/send-200)                       ; for webhooks' own checks e.g. Mandrill
   (GET  "/healthcheck"        request responses/send-200)
@@ -63,6 +64,7 @@
    See middleware.clj for details"
  (-> #'routes
    (wrap-cookies)
+   (wrap-params)
    (mware/wrap-if config/development? wrap-reload '(snowplow.clojure-collector.core snowplow.clojure-collector.middleware responses))
    (mware/wrap-if config/development? wrap-stacktrace)
    (mware/wrap-if config/production?  mware/wrap-failsafe)
