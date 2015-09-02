@@ -35,14 +35,7 @@ import enrich.common.FatalEtlError
 import iglu.client.validation.ProcessingMessageMethods._
 
 /**
- * Helpers for our data processing pipeline.
- */
-object ElasticsearchJob {
-
-}
-
-/**
- * The Snowplow Shred job, written in Scalding
+ * The Snowplow Elasticsearch Sink job, written in Scalding
  * (the Scala DSL on top of Cascading).
  */
 class ElasticsearchJob(args : Args) extends Job(args) {
