@@ -52,7 +52,8 @@ class ElasticsearchJob(args : Args) extends Job(args) {
   props.setProperty("es.input.json", "true")
 
   val hostArg = args.requiredz("host").toValidationNel
-  val resourceArg = args.requiredz("resource").toValidationNel
+  val resourceArg =
+    (args.requiredz("index").toValidationNel |@| args.requiredz("type").toValidationNel)(_ + "/" + _)
   val portArg = (for {
     portString <- args.requiredz("port")
     portInt <- try {
