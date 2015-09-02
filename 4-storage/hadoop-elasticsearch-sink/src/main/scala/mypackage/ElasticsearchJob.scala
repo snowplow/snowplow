@@ -31,6 +31,9 @@ import io.scalding.taps.elasticsearch.EsSource
 import enrich.common.utils.ScalazArgs._
 import enrich.common.FatalEtlError
 
+// Iglu
+import iglu.client.validation.ProcessingMessageMethods._
+
 /**
  * Helpers for our data processing pipeline.
  */
@@ -50,12 +53,22 @@ class ElasticsearchJob(args : Args) extends Job(args) {
 
   val hostArg = args.requiredz("host").toValidationNel
   val resourceArg = args.requiredz("resource").toValidationNel
+  val portArg = (for {
+    portString <- args.requiredz("port")
+    portInt <- try {
+      portString.toInt.success
+    } catch {
+      case nfe: NumberFormatException =>
+        s"Couldn't parse port $portString as int: [$nfe]".toProcessingMessage.fail
+    }
+  } yield portInt).toValidationNel
   val inputArg = args.requiredz("input").toValidationNel
 
-  val result = (hostArg |@| resourceArg |@| inputArg) { (host, resource, input) =>
+  val result = (hostArg |@| resourceArg |@| portArg |@| inputArg) { (host, resource, port, input) =>
     val writeToES = EsSource(
       resource,
       esHost = Some(host),
+      esPort = Some(port),
       settings = Some(props)
       )
 
