@@ -1,3 +1,9 @@
+Version 0.3.0 (2015-09-02)
+--------------------------
+Added Taboola, Outbrain and other referers (#109)
+Updated vagrant up to work with latest Peru version (#110) 
+Removed duplicate google.com.kh/imgres entry (#111)
+
 Version 0.2.3 (2014-02-01)
 --------------------------
 Added dedicated Vagrant setup (#92)

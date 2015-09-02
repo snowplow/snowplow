@@ -61,7 +61,7 @@ Then add into your project's `pom.xml`:
 <dependency>
     <groupId>com.snowplowanalytics</groupId>
     <artifactId>referer-parser_2.11</artifactId>
-    <version>0.2.1</version>
+    <version>0.3.0</version>
 </dependency>
 ```
 
@@ -118,7 +118,7 @@ Add this to your SBT config:
 val snowplowRepo = "SnowPlow Repo" at "http://maven.snplow.com/releases/"
 
 // Dependency
-val refererParser = "com.snowplowanalytics" %% "referer-parser" % "0.2.1"
+val refererParser = "com.snowplowanalytics" %% "referer-parser" % "0.3.0"
 ```
 
 ## Contributing
@@ -131,7 +131,7 @@ val refererParser = "com.snowplowanalytics" %% "referer-parser" % "0.2.1"
 
 ## Copyright and license
 
-The referer-parser Java/Scala library is copyright 2012-2013 Snowplow Analytics Ltd.
+The referer-parser Java/Scala library is copyright 2012-2015 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0] [license] (the "License");
 you may not use this software except in compliance with the License.
