@@ -47,42 +47,12 @@ object ElasticsearchJob {
  */
 class ElasticsearchJob(args : Args) extends Job(args) {
 
-  // TODO: use withJsonInput instead of this Properties object to indicate the data is already JSON
-  val props = new java.util.Properties
-  props.setProperty("es.input.json", "true")
-
-  val hostArg = args.requiredz("host").toValidationNel
-  val resourceArg =
-    (args.requiredz("index").toValidationNel |@| args.requiredz("type").toValidationNel)(_ + "/" + _)
-  val portArg = (for {
-    portString <- args.requiredz("port")
-    portInt <- try {
-      portString.toInt.success
-    } catch {
-      case nfe: NumberFormatException =>
-        s"Couldn't parse port $portString as int: [$nfe]".toProcessingMessage.fail
-    }
-  } yield portInt).toValidationNel
-  val inputArg = args.requiredz("input").toValidationNel
-
-  val result = (hostArg |@| resourceArg |@| portArg |@| inputArg) { (host, resource, port, input) =>
-    val writeToES = EsSource(
-      resource,
-      esHost = Some(host),
-      esPort = Some(port),
-      settings = Some(props)
-      )
-
-    val schema = ('name, 'age, 'address, 'useless)
-    val source = MultipleTextLineFiles(input)
+  ElasticsearchJobConfig.fromScaldingArgs(args).fold(
+    err => throw FatalEtlError(err.toString),
+    configuration => MultipleTextLineFiles(configuration.input)
       .read
       .mapTo('line -> 'output) {l: String => l}
-      .write(writeToES)
-  }
-
-  result match {
-    case Failure(e) => throw FatalEtlError(e.toString)
-    case _ =>
-  }
+      .write(configuration.getEsSink)
+  )
 
 }
