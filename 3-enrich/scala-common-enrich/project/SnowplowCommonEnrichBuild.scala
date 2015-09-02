@@ -59,7 +59,8 @@ object SnowplowCommonEnrichBuild extends Build {
         // Scala (test only)
         Libraries.specs2,
         Libraries.scalazSpecs2,
-        Libraries.scalaCheck
+        Libraries.scalaCheck,
+        Libraries.scaldingArgs
       )
     )
 }
