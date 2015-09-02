@@ -51,6 +51,15 @@ unknown:
       - omg.yahoo.com
       - match.yahoo.net
 
+  Taboola:
+    domains:
+      - trc.taboola.com
+      - api.taboola.com
+
+  Outbrain:
+    domains:
+      - paid.outbrain.com
+
 
 # #######################################################################################################
 #
@@ -129,6 +138,9 @@ social:
     domains:
       - facebook.com
       - fb.me
+      - m.facebook.com
+      - l.facebook.com
+      - lm.facebook.com
 
   Qzone:
     domains:
@@ -167,6 +179,7 @@ social:
   LinkedIn:
     domains:
       - linkedin.com
+      - lnkd.in
 
   Bebo:
     domains:
@@ -437,7 +450,17 @@ social:
       
   Donanimhaber:
     domains:
-      - donanimhaber.com    
+      - donanimhaber.com 
+
+  Disqus:
+    domains:
+      - redirect.disqus.com
+      - disq.us
+      - disqus.com
+
+  Quora:
+    domains:
+      - quora.com
 
 # #######################################################################################################
 #
@@ -1770,7 +1793,6 @@ search:
       - google.com.gt/imgres
       - google.com.hk/imgres
       - google.com.jm/imgres
-      - google.com.kh/imgres
       - google.com.kh/imgres
       - google.com.kw/imgres
       - google.com.lb/imgres

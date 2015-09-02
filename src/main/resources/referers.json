@@ -1,5 +1,10 @@
 {
     "unknown": {
+        "Outbrain": {
+            "domains": [
+                "paid.outbrain.com"
+            ]
+        }, 
         "Google": {
             "domains": [
                 "support.google.com", 
@@ -11,6 +16,12 @@
                 "groups.google.com", 
                 "groups.google.co.uk", 
                 "news.google.co.uk"
+            ]
+        }, 
+        "Taboola": {
+            "domains": [
+                "trc.taboola.com", 
+                "api.taboola.com"
             ]
         }, 
         "Yahoo!": {
@@ -418,7 +429,6 @@
                 "google.com.gt/imgres", 
                 "google.com.hk/imgres", 
                 "google.com.jm/imgres", 
-                "google.com.kh/imgres", 
                 "google.com.kh/imgres", 
                 "google.com.kw/imgres", 
                 "google.com.lb/imgres", 
@@ -3745,9 +3755,9 @@
                 "renren.com"
             ]
         }, 
-        "vKruguDruzei.ru": {
+        "Quora": {
             "domains": [
-                "vkrugudruzei.ru"
+                "quora.com"
             ]
         }, 
         "Gaia Online": {
@@ -3849,6 +3859,11 @@
                 "t.co"
             ]
         }, 
+        "vKruguDruzei.ru": {
+            "domains": [
+                "vkrugudruzei.ru"
+            ]
+        }, 
         "Donanimhaber": {
             "domains": [
                 "donanimhaber.com"
@@ -3891,7 +3906,8 @@
         }, 
         "LinkedIn": {
             "domains": [
-                "linkedin.com"
+                "linkedin.com", 
+                "lnkd.in"
             ]
         }, 
         "Foursquare": {
@@ -3933,7 +3949,17 @@
         "Facebook": {
             "domains": [
                 "facebook.com", 
-                "fb.me"
+                "fb.me", 
+                "m.facebook.com", 
+                "l.facebook.com", 
+                "lm.facebook.com"
+            ]
+        }, 
+        "Disqus": {
+            "domains": [
+                "redirect.disqus.com", 
+                "disq.us", 
+                "disqus.com"
             ]
         }, 
         "StudiVZ": {
