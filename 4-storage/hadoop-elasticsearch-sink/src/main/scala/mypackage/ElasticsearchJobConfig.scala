@@ -18,10 +18,6 @@ package hadoop
 // Java
 import java.util.Properties
 
-// Cascading
-import cascading.tap.SinkMode
-import cascading.tuple.Fields
-
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -32,7 +28,6 @@ import io.scalding.taps.elasticsearch.EsSource
 
 // Common Enrich
 import enrich.common.utils.ScalazArgs._
-import enrich.common.FatalEtlError
 
 // Iglu
 import iglu.client.validation.ProcessingMessageMethods._
@@ -43,6 +38,12 @@ object ElasticsearchJobConfig {
   val esProperties = new Properties
   esProperties.setProperty("es.input.json", "true")
 
+  /**
+   * Validate and parse the Scalding arguments
+   *
+   * @param args
+   * @return Validated ElasticsearchJobConfig
+   */
   def fromScaldingArgs(args: Args) = {
     val hostArg = args.requiredz("host").toValidationNel
     val resourceArg =
@@ -62,6 +63,14 @@ object ElasticsearchJobConfig {
   }
 }
 
+/**
+ * Configuration for the Scalding job
+ *
+ * @param host Host for the Elasticsearch cluster
+ * @param resource Elasticsearch path of the form ${index}/${type}
+ * @param input Source directory
+ * @param settings Additional configuration for the EsSource
+ */
 case class ElasticsearchJobConfig(
   host: String,
   resource: String,
