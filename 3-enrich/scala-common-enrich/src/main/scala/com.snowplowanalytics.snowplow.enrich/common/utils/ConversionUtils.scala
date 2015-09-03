@@ -50,6 +50,8 @@ import com.netaporter.uri.Uri
  */
 object ConversionUtils {
 
+  private val UrlSafeBase64 = new Base64(true) // true means "url safe"
+
   /**
    * Simple case class wrapper around the
    * components of a URI.
@@ -149,14 +151,29 @@ object ConversionUtils {
    // 2. If passed in a non-empty string but result == "", then return a Failure, because we have failed to decode something meaningful
   def decodeBase64Url(field: String, str: String): Validation[String, String] = {
     try {
-      val decoder = new Base64(true) // true means "url safe"
-      val decodedBytes = decoder.decode(str)
+      val decodedBytes = UrlSafeBase64.decode(str)
       val result = new String(decodedBytes, UTF_8) // Must specify charset (EMR uses US_ASCII)
       result.success
     } catch {
       case e =>
       "Field [%s]: exception Base64-decoding [%s] (URL-safe encoding): [%s]".format(field, str, e.getMessage).fail
     }
+  }
+
+  /**
+   * Encodes a URL-safe Base64 string.
+   *
+   * For details on the Base 64 Encoding with URL
+   * and Filename Safe Alphabet see:
+   *
+   * http://tools.ietf.org/html/rfc4648#page-7
+   *
+   * @param str The string to be encoded
+   * @return the string encoded in URL-safe Base64
+   */
+  def encodeBase64Url(str: String): String = {
+    val bytes = UrlSafeBase64.encode(str.getBytes)
+    new String(bytes, UTF_8).trim // Newline being appended by some Base64 versions
   }
 
   /**

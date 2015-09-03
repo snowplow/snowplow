@@ -25,6 +25,7 @@ import Scalaz._
 
 // This project
 import loaders.CollectorPayload
+import registry.snowplow.{RedirectAdapter => SpRedirectAdapter}
 import registry.{
   SnowplowAdapter,
   CloudfrontAccessLogAdapter,
@@ -44,6 +45,7 @@ object AdapterRegistry {
 
   private object Vendor {
     val Snowplow   = "com.snowplowanalytics.snowplow"
+    val Redirect   = "r"
     val Iglu       = "com.snowplowanalytics.iglu"
     val Callrail   = "com.callrail"
     val Mailchimp  = "com.mailchimp"
@@ -69,6 +71,7 @@ object AdapterRegistry {
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = (payload.api.vendor, payload.api.version) match {
     case (Vendor.Snowplow,    "tp1") => SnowplowAdapter.Tp1.toRawEvents(payload)
     case (Vendor.Snowplow,    "tp2") => SnowplowAdapter.Tp2.toRawEvents(payload)
+    case (Vendor.Redirect,    "tp2") => SpRedirectAdapter.toRawEvents(payload)
     case (Vendor.Iglu,        "v1")  => IgluAdapter.toRawEvents(payload)
     case (Vendor.Callrail,    "v1")  => CallrailAdapter.toRawEvents(payload)
     case (Vendor.Mailchimp,   "v1")  => MailchimpAdapter.toRawEvents(payload)
