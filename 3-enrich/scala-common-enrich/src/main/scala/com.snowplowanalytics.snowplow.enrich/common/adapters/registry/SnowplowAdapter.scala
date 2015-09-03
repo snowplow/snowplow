@@ -39,7 +39,7 @@ import Scalaz._
 
 // This project
 import loaders.CollectorPayload
-import utils.JsonUtils
+import utils.{JsonUtils => JU}
 
 /**
  * Transforms a collector payload which conforms to
@@ -223,7 +223,7 @@ object SnowplowAdapter {
      */
     private def extractAndValidateJson(field: String, schemaCriterion: SchemaCriterion, instance: String)(implicit resolver: Resolver): Validated[JsonNode] =
       for {
-        j <- (JsonUtils.extractJson(field, instance).toValidationNel: Validated[JsonNode])
+        j <- (JU.extractJson(field, instance).toValidationNel: Validated[JsonNode])
         v <- j.verifySchemaAndValidate(schemaCriterion, true).leftMap(_.map(_.toString))
       } yield v
 
