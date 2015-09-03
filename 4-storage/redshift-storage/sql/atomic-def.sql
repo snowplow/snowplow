@@ -204,3 +204,5 @@ CREATE TABLE atomic.events (
 DISTSTYLE KEY
 DISTKEY (event_id)
 SORTKEY (collector_tstamp);
+
+COMMENT ON TABLE "atomic"."events" IS '0.7.0'
