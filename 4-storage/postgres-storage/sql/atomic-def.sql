@@ -187,3 +187,5 @@ CREATE TABLE "atomic"."events" (
 )
 WITH (OIDS=FALSE)
 ;
+
+COMMENT ON TABLE "atomic"."events" IS '0.6.0';
