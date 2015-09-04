@@ -19,7 +19,7 @@
 DROP TABLE IF EXISTS snowplow_intermediary.events_enriched;
 CREATE TABLE snowplow_intermediary.events_enriched
   DISTKEY (domain_userid) -- Optimized to join cookie_id_to_user_id_map
-  SORTKEY (domain_userid, domain_sessionidx, dvce_tstamp) -- Optimized to join cookie_id_to_user_id_map
+  SORTKEY (domain_userid, domain_sessionidx, dvce_created_tstamp) -- Optimized to join cookie_id_to_user_id_map
 AS (
   SELECT
     e.*
@@ -28,9 +28,9 @@ AS (
   WHERE e.domain_userid IS NOT NULL -- Do not aggregate NULL
     AND e.domain_sessionidx IS NOT NULL -- Do not aggregate NULL
     AND e.domain_userid != '' -- Do not aggregate missing domain_userids
-    AND e.dvce_tstamp IS NOT NULL -- Required, dvce_tstamp is used to sort events
+    AND e.dvce_created_tstamp IS NOT NULL -- Required, dvce_created_tstamp is used to sort events
     AND e.collector_tstamp > '2000-01-01' -- Remove incorrect collector_tstamps, can cause SQL errors
     AND e.collector_tstamp < '2030-01-01' -- Remove incorrect collector_tstamps, can cause SQL errors
-    AND e.dvce_tstamp > '2000-01-01' -- Remove incorrect dvce_tstamps, can cause SQL errors
-    AND e.dvce_tstamp < '2030-01-01' -- Remove incorrect dvce_tstamps, can cause SQL errors    
+    AND e.dvce_created_tstamp > '2000-01-01' -- Remove incorrect dvce_created_tstamps, can cause SQL errors
+    AND e.dvce_created_tstamp < '2030-01-01' -- Remove incorrect dvce_created_tstamps, can cause SQL errors
 );

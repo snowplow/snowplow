@@ -27,7 +27,7 @@
 
 CREATE TABLE snplw_temp.sessions
   DISTKEY (domain_userid)
-  SORTKEY (domain_userid, domain_sessionidx, min_dvce_tstamp)
+  SORTKEY (domain_userid, domain_sessionidx, min_dvce_created_tstamp)
 AS (
 
 WITH basic AS (
@@ -43,11 +43,11 @@ WITH basic AS (
 
     MIN(collector_tstamp) AS session_start_tstamp,
     MAX(collector_tstamp) AS session_end_tstamp,
-    MIN(dvce_tstamp) AS min_dvce_tstamp, -- used to replace SQL window functions
-    MAX(dvce_tstamp) AS max_dvce_tstamp, -- used to replace SQL window functions
+    MIN(dvce_created_tstamp) AS min_dvce_created_tstamp, -- used to replace SQL window functions
+    MAX(dvce_created_tstamp) AS max_dvce_created_tstamp, -- used to replace SQL window functions
     MAX(etl_tstamp) AS max_etl_tstamp, -- for debugging
     COUNT(*) AS event_count,
-    COUNT(DISTINCT(FLOOR(EXTRACT(EPOCH FROM dvce_tstamp)/30)))/2::FLOAT AS time_engaged_with_minutes
+    COUNT(DISTINCT(FLOOR(EXTRACT(EPOCH FROM dvce_created_tstamp)/30)))/2::FLOAT AS time_engaged_with_minutes
 
   FROM snplw_temp.enriched_events
 
@@ -92,7 +92,7 @@ WITH basic AS (
     INNER JOIN basic AS b
       ON  a.domain_userid = b.domain_userid
       AND a.domain_sessionidx = b.domain_sessionidx
-      AND a.dvce_tstamp = b.min_dvce_tstamp -- replaces the FIRST VALUE window function in SQL
+      AND a.dvce_created_tstamp = b.min_dvce_created_tstamp -- replaces the FIRST VALUE window function in SQL
 
     ORDER BY 1,2
 
@@ -123,7 +123,7 @@ WITH basic AS (
     INNER JOIN basic AS b
       ON  a.domain_userid = b.domain_userid
       AND a.domain_sessionidx = b.domain_sessionidx
-      AND a.dvce_tstamp = b.min_dvce_tstamp
+      AND a.dvce_created_tstamp = b.min_dvce_created_tstamp
 
     ORDER BY 1,2
   )
@@ -148,7 +148,7 @@ WITH basic AS (
     INNER JOIN basic AS b
       ON  a.domain_userid = b.domain_userid
       AND a.domain_sessionidx = b.domain_sessionidx
-      AND a.dvce_tstamp = b.max_dvce_tstamp
+      AND a.dvce_created_tstamp = b.max_dvce_created_tstamp
 
     ORDER BY 1,2
   )
@@ -182,7 +182,7 @@ WITH basic AS (
     INNER JOIN basic AS b
       ON  a.domain_userid = b.domain_userid
       AND a.domain_sessionidx = b.domain_sessionidx
-      AND a.dvce_tstamp = b.min_dvce_tstamp
+      AND a.dvce_created_tstamp = b.min_dvce_created_tstamp
 
     ORDER BY 1,2
   )
@@ -230,7 +230,7 @@ WITH basic AS (
     INNER JOIN basic AS b
       ON  a.domain_userid = b.domain_userid
       AND a.domain_sessionidx = b.domain_sessionidx
-      AND a.dvce_tstamp = b.min_dvce_tstamp
+      AND a.dvce_created_tstamp = b.min_dvce_created_tstamp
 
     ORDER BY 1,2
   )
@@ -249,8 +249,8 @@ SELECT
 
   b.session_start_tstamp,
   b.session_end_tstamp,
-  b.min_dvce_tstamp,
-  b.max_dvce_tstamp,
+  b.min_dvce_created_tstamp,
+  b.max_dvce_created_tstamp,
   b.max_etl_tstamp, -- for debugging
   b.event_count,
   b.time_engaged_with_minutes,

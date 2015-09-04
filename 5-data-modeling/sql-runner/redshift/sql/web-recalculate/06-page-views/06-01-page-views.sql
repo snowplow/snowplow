@@ -30,13 +30,13 @@ AS (
     page_urlpath,
     MIN(collector_tstamp) AS first_touch_tstamp,
     MAX(collector_tstamp) AS last_touch_tstamp,
-    MIN(dvce_tstamp) AS dvce_min_tstamp, -- Used to replace SQL window functions
-    MAX(dvce_tstamp) AS dvce_max_tstamp, -- Used to replace SQL window functions
+    MIN(dvce_created_tstamp) AS dvce_min_tstamp, -- Used to replace SQL window functions
+    MAX(dvce_created_tstamp) AS dvce_max_tstamp, -- Used to replace SQL window functions
     MAX(etl_tstamp) AS max_etl_tstamp, -- Used for debugging
     COUNT(*) AS event_count,
     SUM(CASE WHEN event = 'page_view' THEN 1 ELSE 0 END) AS page_view_count,
     SUM(CASE WHEN event = 'page_ping' THEN 1 ELSE 0 END) AS page_ping_count,
-    COUNT(DISTINCT(FLOOR(EXTRACT (EPOCH FROM dvce_tstamp)/30)))/2::FLOAT AS time_engaged_with_minutes
+    COUNT(DISTINCT(FLOOR(EXTRACT (EPOCH FROM dvce_created_tstamp)/30)))/2::FLOAT AS time_engaged_with_minutes
   FROM snowplow_intermediary.events_enriched_final
   WHERE page_urlhost IS NOT NULL -- Remove incorrect page views
     AND page_urlpath IS NOT NULL -- Remove incorrect page views
