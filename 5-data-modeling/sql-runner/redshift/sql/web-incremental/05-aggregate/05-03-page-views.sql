@@ -39,8 +39,8 @@ WITH aggregate_frame AS (
 
     MIN(first_touch_tstamp) AS first_touch_tstamp,
     MAX(last_touch_tstamp) AS last_touch_tstamp,
-    MIN(min_dvce_tstamp) AS min_dvce_tstamp, -- used to replace SQL window functions
-    MAX(max_dvce_tstamp) AS max_dvce_tstamp, -- used to replace SQL window functions
+    MIN(min_dvce_created_tstamp) AS min_dvce_created_tstamp, -- used to replace SQL window functions
+    MAX(max_dvce_created_tstamp) AS max_dvce_created_tstamp, -- used to replace SQL window functions
     MAX(max_etl_tstamp) AS max_etl_tstamp, -- for debugging
     SUM(event_count) AS event_count,
     SUM(page_view_count) AS page_view_count,
@@ -75,7 +75,7 @@ WITH aggregate_frame AS (
       AND a.domain_sessionidx = b.domain_sessionidx
       AND a.page_urlhost = b.page_urlhost
       AND a.page_urlpath = b.page_urlpath
-      AND a.max_dvce_tstamp = b.max_dvce_tstamp
+      AND a.max_dvce_created_tstamp = b.max_dvce_created_tstamp
 
     ORDER BY 1,2,3,4,5,6
   )
@@ -97,8 +97,8 @@ SELECT
 
   a.first_touch_tstamp,
   a.last_touch_tstamp,
-  a.min_dvce_tstamp,
-  a.max_dvce_tstamp,
+  a.min_dvce_created_tstamp,
+  a.max_dvce_created_tstamp,
   a.max_etl_tstamp,
   a.event_count,
   a.page_view_count,

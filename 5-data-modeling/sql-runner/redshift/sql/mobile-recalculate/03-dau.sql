@@ -35,11 +35,11 @@ WITH dau_1 AS (
     mobile_id,
     collector_tstamp::date AS date,
 
-    FIRST_VALUE(os_type IGNORE NULLS) OVER (PARTITION BY mobile_id, collector_tstamp::date ORDER BY dvce_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS os_type,
-    FIRST_VALUE(os_version IGNORE NULLS) OVER (PARTITION BY mobile_id, collector_tstamp::date ORDER BY dvce_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS os_version,
-    FIRST_VALUE(device_manufacturer IGNORE NULLS) OVER (PARTITION BY mobile_id, collector_tstamp::date ORDER BY dvce_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS device_manufacturer,
-    FIRST_VALUE(device_model IGNORE NULLS) OVER (PARTITION BY mobile_id, collector_tstamp::date ORDER BY dvce_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS device_model,
-    FIRST_VALUE(carrier IGNORE NULLS) OVER (PARTITION BY mobile_id, collector_tstamp::date ORDER BY dvce_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS carrier
+    FIRST_VALUE(os_type IGNORE NULLS) OVER (PARTITION BY mobile_id, collector_tstamp::date ORDER BY dvce_created_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS os_type,
+    FIRST_VALUE(os_version IGNORE NULLS) OVER (PARTITION BY mobile_id, collector_tstamp::date ORDER BY dvce_created_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS os_version,
+    FIRST_VALUE(device_manufacturer IGNORE NULLS) OVER (PARTITION BY mobile_id, collector_tstamp::date ORDER BY dvce_created_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS device_manufacturer,
+    FIRST_VALUE(device_model IGNORE NULLS) OVER (PARTITION BY mobile_id, collector_tstamp::date ORDER BY dvce_created_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS device_model,
+    FIRST_VALUE(carrier IGNORE NULLS) OVER (PARTITION BY mobile_id, collector_tstamp::date ORDER BY dvce_created_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS carrier
 
   FROM derived.mobile_events
 

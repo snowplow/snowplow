@@ -27,7 +27,7 @@ AS (
     domain_userid,
     domain_sessionidx,
     etl_tstamp, -- For debugging
-    dvce_tstamp,
+    dvce_created_tstamp,
     collector_tstamp,
     se_category,
     se_action,

@@ -25,7 +25,7 @@ CREATE TABLE snowplow_landing.events (
   -- Date/time
   etl_tstamp timestamp,
   collector_tstamp timestamp not null,
-  dvce_tstamp timestamp,
+  dvce_created_tstamp timestamp,
   -- Event
   event varchar(128) encode text255,
   event_id char(36) not null unique,
@@ -174,7 +174,7 @@ CREATE TABLE snowplow_landing.events (
 
   -- Referer
   refr_domain_userid varchar(36),                    -- Added in 0.5.0
-  refr_dvce_tstamp timestamp,                        -- Added in 0.5.0
+  refr_dvce_created_tstamp timestamp,                        -- Added in 0.5.0
 
   -- Derived contexts
   derived_contexts varchar(15000) encode lzo,        -- Added in 0.5.0
