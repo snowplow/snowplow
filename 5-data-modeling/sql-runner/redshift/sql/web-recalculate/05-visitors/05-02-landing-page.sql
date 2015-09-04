@@ -24,7 +24,7 @@ AS (
   SELECT
     *
   FROM (
-    SELECT -- Select the first page (using dvce_tstamp)
+    SELECT -- Select the first page (using dvce_created_tstamp)
       a.blended_user_id,
       a.page_urlhost,
       a.page_urlpath,
@@ -32,8 +32,8 @@ AS (
     FROM snowplow_intermediary.events_enriched_final AS a
     INNER JOIN snowplow_intermediary.visitors_basic AS b
       ON  a.blended_user_id = b.blended_user_id
-      AND a.dvce_tstamp = b.dvce_min_tstamp -- Replaces the FIRST VALUE window function in SQL
-    GROUP BY 1,2,3 -- Aggregate identital rows (that happen to have the same dvce_tstamp)
+      AND a.dvce_created_tstamp = b.dvce_min_tstamp -- Replaces the FIRST VALUE window function in SQL
+    GROUP BY 1,2,3 -- Aggregate identital rows (that happen to have the same dvce_created_tstamp)
   )
-  WHERE rank = 1 -- If there are different rows with the same dvce_tstamp, rank and pick the first row
+  WHERE rank = 1 -- If there are different rows with the same dvce_created_tstamp, rank and pick the first row
 );
