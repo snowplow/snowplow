@@ -45,7 +45,7 @@ BEGIN;
     SELECT
 
       domain_userid,
-      MAX(dvce_tstamp) AS max_dvce_tstamp -- the last event where user ID was not NULL
+      MAX(dvce_created_tstamp) AS max_dvce_created_tstamp -- the last event where user ID was not NULL
 
     FROM landing.events
 
@@ -55,10 +55,10 @@ BEGIN;
       AND domain_userid IS NOT NULL     -- do not aggregate NULL
       AND domain_sessionidx IS NOT NULL -- do not aggregate NULL
       AND collector_tstamp IS NOT NULL  -- not required
-      AND dvce_tstamp IS NOT NULL       -- not required
+      AND dvce_created_tstamp IS NOT NULL       -- not required
 
-      AND dvce_tstamp < DATEADD(year, +1, collector_tstamp) -- remove outliers (can cause errors)
-      AND dvce_tstamp > DATEADD(year, -1, collector_tstamp) -- remove outliers (can cause errors)
+      AND dvce_created_tstamp < DATEADD(year, +1, collector_tstamp) -- remove outliers (can cause errors)
+      AND dvce_created_tstamp > DATEADD(year, -1, collector_tstamp) -- remove outliers (can cause errors)
 
     --AND app_id = 'production'
     --AND platform = ''
@@ -83,7 +83,7 @@ BEGIN;
 
       INNER JOIN stitching_1 AS b
         ON  a.domain_userid = b.domain_userid
-        AND a.dvce_tstamp = b.max_dvce_tstamp -- replaces the LAST VALUE window function in SQL
+        AND a.dvce_created_tstamp = b.max_dvce_created_tstamp -- replaces the LAST VALUE window function in SQL
 
     ) WHERE row_number = 1 -- deduplicate
 
