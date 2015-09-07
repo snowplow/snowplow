@@ -42,10 +42,25 @@ class ElasticsearchJob(args : Args) extends Job(args) {
 
   ElasticsearchJobConfig.fromScaldingArgs(args).fold(
     err => throw FatalEtlError(err.toString),
-    configuration => MultipleTextLineFiles(configuration.input)
-      .read
-      .mapTo('line -> 'output) {l: String => l}
-      .write(configuration.getEsSink)
+    configuration => runJob(configuration)
   )
+
+  /**
+   * Create the required pipes and run the job
+   *
+   * @param configuration
+   */
+  def runJob(configuration: ElasticsearchJobConfig) {
+    val esSink = configuration.getEsSink
+    val inputPipe = MultipleTextLineFiles(configuration.input).read
+    val trappableInput = configuration.exceptionsFolder match {
+      case None => inputPipe
+      case Some(folder) => inputPipe.addTrap(Tsv(folder))
+    }
+
+    trappableInput
+      .mapTo('line -> 'output) {l: String => l}
+      .write(esSink)
+  }
 
 }
