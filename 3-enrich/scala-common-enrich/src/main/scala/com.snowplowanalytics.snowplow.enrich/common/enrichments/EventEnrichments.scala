@@ -69,8 +69,8 @@ object EventEnrichments {
   def formatCollectorTstamp(collectorTstamp: Option[DateTime]): Validation[String, String] = {
     collectorTstamp match {
       case None => "No collector_tstamp set".fail
-      case Some(tstamp) => {
-        val formattedTimestamp = toTimestamp(tstamp)
+      case Some(t) => {
+        val formattedTimestamp = toTimestamp(t)
         if (formattedTimestamp.startsWith("-")) {
           s"Collector timestamp $formattedTimestamp is negative and will fail the Redshift load".fail
         } else {
