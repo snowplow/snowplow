@@ -67,7 +67,7 @@ object Dependencies {
     val commonsCodec     = "commons-codec"              %  "commons-codec"             % V.commonsCodec
     val yodaTime         = "joda-time"                  %  "joda-time"                 % V.yodaTime
     val yodaConvert      = "org.joda"                   %  "joda-convert"              % V.yodaConvert
-    val useragent        = "eu.bitwalker"                  %  "UserAgentUtils"            % V.useragent
+    val useragent        = "eu.bitwalker"               %  "UserAgentUtils"            % V.useragent
     val jacksonDatabind  = "com.fasterxml.jackson.core" %  "jackson-databind"          % V.jacksonDatabind
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"     % V.jsonValidator    
     val mavenArtifact    = "org.apache.maven"           %  "maven-artifact"            % V.mavenArtifact
