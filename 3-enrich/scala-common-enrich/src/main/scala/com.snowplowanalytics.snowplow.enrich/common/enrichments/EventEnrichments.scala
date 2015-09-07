@@ -99,21 +99,26 @@ object EventEnrichments {
   def getDerivedTimestamp(
     dvceSentTstamp: Option[String],
     dvceCreatedTstamp: Option[String],
-    collectorTstamp: Option[String]): Validation[String, Option[String]] = try {
-      ((dvceSentTstamp, dvceCreatedTstamp, collectorTstamp) match {
-        case (Some(dst), Some(dct), Some(ct)) => {
-          val startTstamp = fromTimestamp(dct)
-          val endTstamp = fromTimestamp(dst)
-          if (startTstamp.isBefore(endTstamp)) {
-            toTimestamp(fromTimestamp(ct).minus(new Period(startTstamp, endTstamp))).some
-          } else {
-            ct.some
+    collectorTstamp: Option[String],
+    trueTstamp: Option[String]
+    ): Validation[String, Option[String]] = trueTstamp match {
+      case Some(ttm) => Some(ttm).success
+      case None => try {
+        ((dvceSentTstamp, dvceCreatedTstamp, collectorTstamp) match {
+          case (Some(dst), Some(dct), Some(ct)) => {
+            val startTstamp = fromTimestamp(dct)
+            val endTstamp = fromTimestamp(dst)
+            if (startTstamp.isBefore(endTstamp)) {
+              toTimestamp(fromTimestamp(ct).minus(new Period(startTstamp, endTstamp))).some
+            } else {
+              ct.some
+            }
           }
-        }
-        case _ => collectorTstamp
-      }).success
-    } catch {
-      case NonFatal(e) => s"Exception calculating derived timestamp: [$e]".fail
+          case _ => collectorTstamp
+        }).success
+      } catch {
+        case NonFatal(e) => s"Exception calculating derived timestamp: [$e]".fail
+      }
     }
 
   /**
