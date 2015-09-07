@@ -87,6 +87,10 @@ object EventEnrichments {
    * add the difference between the two to the collector_tstamp.
    * Otherwise just return the collector_tstamp.
    *
+   * TODO: given missing collectorTstamp is invalid, consider updating this signature to
+   * `..., collectorTstamp: String): Validation[String, String]` and making the call to this
+   * function in the EnrichmentManager dependent on a Success(collectorTstamp).
+   *
    * @aram dvceSentTstamp
    * @param dvceCreatedTstamp
    * @param collectorTstamp
