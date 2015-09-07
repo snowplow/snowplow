@@ -34,18 +34,20 @@ import Scalaz._
 
 object SchemaEnrichment {
 
-  val pageViewSchema        = SchemaKey("com.snowplowanalytics.snowplow", "page_view", "jsonschema", "1-0-0").success
-  val pagePingSchema        = SchemaKey("com.snowplowanalytics.snowplow", "page_ping", "jsonschema", "1-0-0").success
-  val transactionSchema     = SchemaKey("com.snowplowanalytics.snowplow", "transaction", "jsonschema", "1-0-0").success
-  val transactionItemSchema = SchemaKey("com.snowplowanalytics.snowplow", "transaction_item", "jsonschema", "1-0-0").success
-  val structSchema          = SchemaKey("com.google.analytics", "event", "jsonschema", "1-0-0").success
+  private object Schemas {
+    val pageViewSchema        = SchemaKey("com.snowplowanalytics.snowplow", "page_view", "jsonschema", "1-0-0").success
+    val pagePingSchema        = SchemaKey("com.snowplowanalytics.snowplow", "page_ping", "jsonschema", "1-0-0").success
+    val transactionSchema     = SchemaKey("com.snowplowanalytics.snowplow", "transaction", "jsonschema", "1-0-0").success
+    val transactionItemSchema = SchemaKey("com.snowplowanalytics.snowplow", "transaction_item", "jsonschema", "1-0-0").success
+    val structSchema          = SchemaKey("com.google.analytics", "event", "jsonschema", "1-0-0").success
+  }
 
   def extractSchema(event: EnrichedEvent)(implicit resolver: Resolver): Validation[String, SchemaKey] = event.event match {
-    case "page_view"        => pageViewSchema
-    case "page_ping"        => pagePingSchema
-    case "struct"           => structSchema
-    case "transaction"      => transactionSchema
-    case "transaction_item" => transactionItemSchema
+    case "page_view"        => Schemas.pageViewSchema
+    case "page_ping"        => Schemas.pagePingSchema
+    case "struct"           => Schemas.structSchema
+    case "transaction"      => Schemas.transactionSchema
+    case "transaction_item" => Schemas.transactionItemSchema
     case "unstruct"         => extractUnstructSchema(event)
     case eventType          => "Unrecognized event [%s]".format(eventType).fail
   }
