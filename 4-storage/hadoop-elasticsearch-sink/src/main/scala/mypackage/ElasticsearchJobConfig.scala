@@ -58,8 +58,9 @@ object ElasticsearchJobConfig {
       }
     } yield portInt).toValidationNel
     val inputArg = args.requiredz("input").toValidationNel
+    val exceptionsFolder = args.optionalz("exceptions_folder").toValidationNel
 
-    (hostArg |@| resourceArg |@| portArg |@| inputArg)(ElasticsearchJobConfig(_,_,_,_,esProperties))
+    (hostArg |@| resourceArg |@| portArg |@| inputArg |@| exceptionsFolder)(ElasticsearchJobConfig(_,_,_,_,esProperties, _))
   }
 }
 
@@ -70,13 +71,15 @@ object ElasticsearchJobConfig {
  * @param resource Elasticsearch path of the form ${index}/${type}
  * @param input Source directory
  * @param settings Additional configuration for the EsSource
+ * @param exceptionsFolder Folder where exceptions are stored
  */
 case class ElasticsearchJobConfig(
   host: String,
   resource: String,
   port: Int,
   input: String,
-  settings: Properties
+  settings: Properties,
+  exceptionsFolder: Option[String]
   ) {
 
   def getEsSink = EsSource(resource, esHost = host.some, esPort = port.some, settings = settings.some)
