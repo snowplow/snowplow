@@ -81,6 +81,13 @@ object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
 
 /**
  * Companion object
+ */
+object EventFingerprintEnrichment {
+  private val Separator = "\u0000"
+}
+
+/**
+ * Config for an event fingerprint enrichment
  *
  * @param algorithm Hashing algorithm
  * @param excludedParameters List of querystring parameters to exclude from the calculation
@@ -98,9 +105,12 @@ case class EventFingerprintEnrichment(algorithm: String => String, excludedParam
    */
   def getEventFingerprint(parameterMap: Map[String, String]): String = {
      val builder = new StringBuilder
-     parameterMap.foreach {
+     parameterMap.toList.sortWith(_._1 < _._1).foreach {
       case (key, value) => if (! excludedParameters.contains(key)) {
+        builder.append(key)
+        builder.append(EventFingerprintEnrichment.Separator)
         builder.append(value)
+        builder.append(EventFingerprintEnrichment.Separator)
       }
     }
     algorithm(builder.toString)
