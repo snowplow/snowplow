@@ -188,8 +188,8 @@ CREATE TABLE atomic.events (
 	derived_tstamp timestamp,
 
 	-- Event schema
-	event_vendor varchar(128) encode lzo,
-	event_name varchar(128) encode lzo,
+	event_vendor varchar(1000) encode lzo,
+	event_name varchar(1000) encode lzo,
 	event_format varchar(128) encode lzo,
 	event_version varchar(128) encode lzo,
 
