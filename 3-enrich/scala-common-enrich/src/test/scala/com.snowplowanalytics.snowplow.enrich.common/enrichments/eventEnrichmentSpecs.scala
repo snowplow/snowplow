@@ -81,13 +81,15 @@ class DerivedTimestampSpec extends Specification with DataTables with Validation
   "getDerivedTimestamp should correctly calculate the derived timestamp "             ! e1^
                                                                                       end
   def e1 =
-    "SPEC NAME"                                   || "DVCE_SENT_TSTAMP"        | "DVCE_CREATED_TSTAMP"     | "COLLECTOR_TSTAMP"         | "EXPECTED DERIVED_TSTAMP" |
-    "No dvce_sent_tstamp"                         !! null                      ! "2014-04-29 12:00:54.555" ! "2014-04-29 09:00:54.000"  ! "2014-04-29 09:00:54.000" |
-    "No dvce_created_tstamp"                      !! null                      ! null                      ! "2014-04-29 09:00:54.000"  ! "2014-04-29 09:00:54.000" |
-    "No collector_tstamp"                         !! null                      ! null                      ! null                       ! null                      |
-    "dvce_sent_tstamp before dvce_created_tstamp" !! "2014-04-29 09:00:54.000" ! "2014-04-29 09:00:54.001" ! "2014-04-29 09:00:54.000"  ! "2014-04-29 09:00:54.000" |
-    "dvce_sent_tstamp after dvce_created_tstamp"  !! "2014-04-29 09:00:54.001" ! "2014-04-29 09:00:54.000" ! "2014-04-29 09:00:54.000"  ! "2014-04-29 09:00:53.999" |> {
+    "SPEC NAME"                                   || "DVCE_CREATED_TSTAMP"     | "DVCE_SENT_TSTAMP"        | "COLLECTOR_TSTAMP"        | "TRUE_TSTAMP"             | "EXPECTED DERIVED_TSTAMP" |
+    "No dvce_sent_tstamp"                         !! "2014-04-29 12:00:54.555" ! null                      ! "2014-04-29 09:00:54.000" ! null                      ! "2014-04-29 09:00:54.000" |
+    "No dvce_created_tstamp"                      !! null                      ! null                      ! "2014-04-29 09:00:54.000" ! null                      ! "2014-04-29 09:00:54.000" |
+    "No collector_tstamp"                         !! null                      ! null                      ! null                      ! null                      ! null                      |
+    "dvce_sent_tstamp before dvce_created_tstamp" !! "2014-04-29 09:00:54.001" ! "2014-04-29 09:00:54.000" ! "2014-04-29 09:00:54.000" ! null                      ! "2014-04-29 09:00:54.000" |
+    "dvce_sent_tstamp after dvce_created_tstamp"  !! "2014-04-29 09:00:54.000" ! "2014-04-29 09:00:54.001" ! "2014-04-29 09:00:54.000" ! null                      ! "2014-04-29 09:00:53.999" |
+    "true_tstamp override"                        !! "2014-04-29 09:00:54.001" ! "2014-04-29 09:00:54.000" ! "2014-04-29 09:00:54.000" ! "2000-01-01 00:00:00.000" ! "2000-01-01 00:00:00.000" |> {
 
-      (_, sent, created, collected, expected) => EventEnrichments.getDerivedTimestamp(Option(sent), Option(created), Option(collected)) must beSuccessful(Option(expected))
+      (_, created, sent, collected, truth, expected) =>
+        EventEnrichments.getDerivedTimestamp(Option(sent), Option(created), Option(collected), Option(truth)) must beSuccessful(Option(expected))
     }
 }
