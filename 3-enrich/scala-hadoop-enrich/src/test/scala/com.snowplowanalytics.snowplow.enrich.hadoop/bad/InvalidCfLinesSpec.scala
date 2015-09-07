@@ -39,7 +39,7 @@ object InvalidCfLinesSpec {
     "2012-05-21  07:14:47  FRA2  3343  83.4.209.35 GET d3t05xllj8hhgj.cloudfront.net"
     )
 
-  val expected = (line: String) => """{"line":"%s","errors":["error: Line does not match CloudFront header or data row formats\n    level: \"error\"\n"]}""".format(line)
+  val expected = (line: String) => """{"line":"%s","errors":[{"level":"error","message":"Line does not match CloudFront header or data row formats"}]}""".format(line)
 }
 
 /**
