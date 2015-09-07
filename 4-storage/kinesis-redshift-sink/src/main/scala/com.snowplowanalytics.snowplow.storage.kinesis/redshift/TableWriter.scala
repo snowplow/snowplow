@@ -1,11 +1,18 @@
 package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 
+import java.io._
 import java.lang.RuntimeException
 import java.sql.{Types, Timestamp, PreparedStatement, SQLException, BatchUpdateException}
 import java.util.Properties
+import java.util.zip.GZIPOutputStream
 import javax.sql.DataSource
 import java.sql.Connection
 
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+import com.amazonaws.auth.profile.ProfileCredentialsProvider
+import com.amazonaws.services.s3.model.ObjectMetadata
+import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client}
+import com.amazonaws.util.StringInputStream
 import org.apache.commons.logging.LogFactory
 import org.postgresql.ds.PGPoolingDataSource
 import scala.language.implicitConversions
@@ -113,6 +120,106 @@ object TableWriter {
       writers(tableName)
     }
   }
+  def getConnection(dataSource:DataSource): Connection = {
+    var progressiveDelay: Int = 5
+    var progressiveCount: Int = 0
+    var res: Connection = null
+    while (res == null) {
+      try {
+        res = dataSource.getConnection
+        res.setAutoCommit(false)
+        progressiveCount = 0
+        progressiveDelay = 5
+      }
+      catch {
+        case e: SQLException =>
+          log.error("Exception getting connection", e)
+          if (e.getMessage().toLowerCase().contains("connection")) {
+            try {
+              log.error(s"Unable to get DB connection - sleeping for ${progressiveDelay}secs")
+              Thread.sleep(progressiveDelay * 1000)
+              if (progressiveCount < 10) {
+                progressiveDelay *= 2
+                progressiveCount += 1
+              }
+            }
+            catch {
+              case i: InterruptedException =>
+                throw new RuntimeException(i)
+            }
+          }
+      }
+    }
+    res
+  }
+
+}
+
+class CopyTableWriter(dataSource:DataSource, table: String)(implicit props:Properties) {
+  val log = LogFactory.getLog(classOf[CopyTableWriter])
+  var batchCount: Int = 0
+  lazy val s3Manifest: String = createManifest
+  lazy val bufferFile: File = File.createTempFile(table, ".tsv")
+  var bufferFileStream: PrintWriter = null
+  def write(values: Array[String]) = {
+    // 1. Write record to a file (create if necessary)
+    // 2. Check if flush is necessary
+    // 2.1 If yes, execute Redshift flush, truncate the file
+    val file = getBufferFile
+    file.println(values.map(f => if (f == null) "" else f).mkString("\t"))
+    batchCount += 1
+    if (isFlushRequired) {
+      flushToRedshift()
+    }
+  }
+
+  def isFlushRequired: Boolean = batchCount > 50000
+
+  def getBufferFile: PrintWriter = {
+    if (bufferFileStream == null) {
+      bufferFileStream = new PrintWriter(new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(bufferFile, false))))
+    }
+    bufferFileStream
+  }
+
+  def flushToRedshift() = {
+    bufferFileStream.close()
+    bufferFileStream = null
+    Runtime.getRuntime.exec(s"scp ${bufferFile.getAbsolutePath} Launcher:${bufferFile.getAbsolutePath}").waitFor()
+    val con = TableWriter.getConnection(dataSource)
+    val stat = con.createStatement()
+    try {
+      stat.execute(s"COPY $table FROM '$s3Manifest' " +
+        s"CREDENTIALS 'aws_access_key_id=AKIAICNFTTSEWEOJUGFQ;aws_secret_access_key=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' " +
+        s"DELIMITER '\\t' MAXERROR 1000 EMPTYASNULL FILLRECORD TRUNCATECOLUMNS  TIMEFORMAT 'auto' ACCEPTINVCHARS GZIP COMPUPDATE OFF SSH;")
+    }
+    finally {
+      stat.close()
+      con.close()
+    }
+  }
+
+  def createManifest: String = {
+    val s3client = new AmazonS3Client(new ProfileCredentialsProvider("digdeep-snowplow"))
+    val manifest = "{ \n\n    \"entries\": [ \n\t    {\"endpoint\":\"52.64.36.142\", \n           " +
+      "\"command\": \"cat " + bufferFile.getAbsolutePath + "\",\n           \"mandatory\":true, \n           \"username\": \"ubuntu\"} \n     ] \n}"
+    val stream: StringInputStream = new StringInputStream(manifest)
+    val metadata: ObjectMetadata = new ObjectMetadata()
+    metadata.setContentLength(stream.available())
+    s3client.putObject("digdeep-snowplow-etl", table, stream, metadata)
+    s"s3://digdeep-snowplow-etl/$table"
+  }
+  def flush() = {
+    if (bufferFileStream != null) {
+      flushToRedshift()
+    }
+    if (bufferFileStream != null) {
+      bufferFileStream.close()
+    }
+    if (bufferFile != null) {
+      bufferFile.delete()
+    }
+  }
 }
 
 /**
@@ -152,7 +259,7 @@ class TableWriter(dataSource:DataSource, table: String)(implicit props:Propertie
   readMetadata()
 
   private def readMetadata() = {
-    val conn = getConnection
+    val conn = TableWriter.getConnection(dataSource)
     try {
       val dbMetadata = conn.getMetaData
       val tableMetadata = dbMetadata.getColumns(null, table.substring(0, table.indexOf('.')), table.substring(table.indexOf('.') + 1), null)
@@ -169,10 +276,11 @@ class TableWriter(dataSource:DataSource, table: String)(implicit props:Propertie
     }
   }
 
+
   def write(values: Array[String]) = {
     if (values.length != names.length) throw new SQLException(s"Number of values does not match number of fields: ${values.length} != ${names.length}")
     if (stat == null) {
-      val conn = getConnection
+      val conn = TableWriter.getConnection(dataSource)
       stat = conn.prepareStatement(s"insert into $table values ($placeholders)")
     }
     try {
@@ -213,38 +321,6 @@ class TableWriter(dataSource:DataSource, table: String)(implicit props:Propertie
     }
   }
 
-  def getConnection: Connection = {
-    var progressiveDelay: Int = 5
-    var progressiveCount: Int = 0
-    var res: Connection = null
-    while (res == null) {
-      try {
-        res = dataSource.getConnection
-        progressiveCount = 0
-        progressiveDelay = 5
-      }
-      catch {
-        case e: SQLException =>
-          log.error("Exception getting connection", e)
-          if (e.getMessage().toLowerCase().contains("connection")) {
-            try {
-              log.error(s"Unable to get DB connection - sleeping for ${progressiveDelay}secs")
-              Thread.sleep(progressiveDelay * 1000)
-              if (progressiveCount < 10) {
-                progressiveDelay *= 2
-                progressiveCount += 1
-              }
-            }
-            catch {
-              case i: InterruptedException =>
-                throw new RuntimeException(i)
-            }
-          }
-      }
-    }
-    res
-  }
-
   def finished() = {
     if (stat != null) {
       try {
@@ -264,6 +340,7 @@ class TableWriter(dataSource:DataSource, table: String)(implicit props:Propertie
       }
       finally {
         val conn = stat.getConnection
+        conn.commit()
         stat.close()
         conn.close()
         stat = null
