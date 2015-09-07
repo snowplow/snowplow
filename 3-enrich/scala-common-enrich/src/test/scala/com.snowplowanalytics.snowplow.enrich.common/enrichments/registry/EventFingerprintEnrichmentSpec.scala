@@ -27,10 +27,11 @@ import Scalaz._
  */
 class EventFingerprintEnrichmentSpec extends Specification with ValidationMatchers { def is =
 
-  "This is a specification to test the EventFingerprintEnrichment"                                                 ^
-                                                                                                           p^
-  "getEventFingerprint should combine fields into a hash"     ! e1^
-                                                                                                            end
+  "This is a specification to test the EventFingerprintEnrichment"              ^
+                                                                               p^
+  "getEventFingerprint should combine fields into a hash"                       ! e1^
+  "getEventFingerprint should not depend on the order of fields"                ! e2^
+                                                                                end
 
   def e1 = {
     val config = EventFingerprintEnrichment(
@@ -42,7 +43,30 @@ class EventFingerprintEnrichmentSpec extends Specification with ValidationMatche
       "stm" -> "1000000000000",
       "e" -> "se",
       "se_ac" -> "buy"
-      )) must_== "5"
+      )) must_== "15"
+  }
+
+  def e2 = {
+    val config = EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("MD5").toOption.get, List("stm", "eid"))
+
+    val initialVersion = Map(
+      "stm" -> "1441630729922",
+      "eid" -> "123e4567-e89b-12d3-a456-426655440000",
+      "e" -> "se",
+      "se_ac" -> "action",
+      "se_ca" -> "category",
+      "se_pr" -> "property"
+      )
+
+    val permutedVersion = Map(
+      "stm" -> "1441630730000",
+      "se_ca" -> "category",
+      "se_ac" -> "action",
+      "se_pr" -> "property",
+      "e" -> "se"
+      )
+
+    config.getEventFingerprint(permutedVersion) must_== config.getEventFingerprint(initialVersion)
   }
 
 }

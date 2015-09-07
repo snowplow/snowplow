@@ -72,7 +72,7 @@ object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
    * @param algorithmName
    * @return A hashing algorithm
    */
-  private def getAlgorithm(algorithmName: String): ValidatedMessage[String => String] = algorithmName match {
+  private[registry] def getAlgorithm(algorithmName: String): ValidatedMessage[String => String] = algorithmName match {
     case "MD5" => ((s: String) => DigestUtils.md5Hex(s)).success
     case other => s"[$other] is not a supported event fingerprint generation algorithm".toProcessingMessage.fail
   }
