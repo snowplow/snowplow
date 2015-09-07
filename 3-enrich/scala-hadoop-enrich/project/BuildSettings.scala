@@ -54,6 +54,8 @@ object BuildSettings {
       name.value + "-" + version.value + ".jar"
     },
 
+    test in assembly := {},
+
     // Drop these jars
     excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
       val excludes = Set(
