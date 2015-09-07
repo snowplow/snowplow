@@ -169,7 +169,7 @@ object UnstructEventCfLineSpec {
     "signup_form_submitted",
     "jsonschema",
     "1-0-0",
-    "8a2731b6b5d6b69f6c9d70f9bf8b7bb4"
+    "ceb03c7671d007dff950ef9a19861b7d"
     )
 }
 
