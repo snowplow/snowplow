@@ -36,7 +36,7 @@ object CorruptedThriftLinesSpec {
     "bad".getBytes -> 1L
     )
 
-  val expected = """{"line":"YmFk","errors":["error: Error deserializing raw event: Cannot read. Remote side has closed. Tried to read 1 bytes, but only got 0 bytes. (This is often indicative of an internal error on the server side. Please check your server logs.)\n    level: \"error\"\n"]}"""
+  val expected = """{"line":"YmFk","errors":[{"level":"error","message":"Error deserializing raw event: Cannot read. Remote side has closed. Tried to read 1 bytes, but only got 0 bytes. (This is often indicative of an internal error on the server side. Please check your server logs.)"}]}"""
 }
 
 /**

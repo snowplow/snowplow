@@ -73,7 +73,7 @@ case class BadRow(
    */
   def toJValue: JValue =
     ("line"           -> line) ~
-    ("errors"         -> errors.toList.map(_.toString)) ~
+    ("errors"         -> errors.toList.map(e => fromJsonNode(e.asJson))) ~
     ("failure_tstamp" -> this.getTimestamp(tstamp))
 
   /**

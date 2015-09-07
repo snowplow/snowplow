@@ -40,7 +40,7 @@ object InvalidJsonsSpec {
     )
 
   val expected = (line: String) =>
-    """{"line":"%s","errors":["error: Field [ue_properties]: invalid JSON [|%%|] with parsing error: Unexpected character ('|' (code 124)): expected a valid value (number, String, array, object, 'true', 'false' or 'null') at [Source: java.io.StringReader@xxxxxx; line: 1, column: 2]\n    level: \"error\"\n","error: Field [context]: invalid JSON [&&&] with parsing error: Unexpected character ('&' (code 38)): expected a valid value (number, String, array, object, 'true', 'false' or 'null') at [Source: java.io.StringReader@xxxxxx; line: 1, column: 2]\n    level: \"error\"\n"]}"""
+    """{"line":"%s","errors":[{"level":"error","message":"Field [ue_properties]: invalid JSON [|%%|] with parsing error: Unexpected character ('|' (code 124)): expected a valid value (number, String, array, object, 'true', 'false' or 'null') at [Source: java.io.StringReader@xxxxxx; line: 1, column: 2]"},{"level":"error","message":"Field [context]: invalid JSON [&&&] with parsing error: Unexpected character ('&' (code 38)): expected a valid value (number, String, array, object, 'true', 'false' or 'null') at [Source: java.io.StringReader@xxxxxx; line: 1, column: 2]"}]}"""
       .format(line)
       .replaceAll("[\t]","\\\\t")
 }
