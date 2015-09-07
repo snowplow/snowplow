@@ -17,8 +17,8 @@
 -- License:     Apache License Version 2.0
 ALTER TABLE "atomic"."events"
 	RENAME COLUMN dvce_tstamp TO dvce_created_tstamp,
-	ADD COLUMN event_vendor varchar(128),
-	ADD COLUMN event_name varchar(128),
+	ADD COLUMN event_vendor varchar(1000),
+	ADD COLUMN event_name varchar(1000),
 	ADD COLUMN event_format varchar(128),
 	ADD COLUMN event_version varchar(128),
 	ADD COLUMN event_fingerprint varchar(128),

@@ -176,8 +176,8 @@ CREATE TABLE "atomic"."events" (
 	-- Derived timestamp
 	"derived_tstamp" timestamp,
 	-- Event schema
-	"event_vendor" varchar(128),
-	"event_name" varchar(128),
+	"event_vendor" varchar(1000),
+	"event_name" varchar(1000),
 	"event_format" varchar(128),
 	"event_version" varchar(128),
 	-- Event fingerprint
