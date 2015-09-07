@@ -427,22 +427,18 @@ object EnrichmentManager {
       unitSuccess
     })
 
-    val derivedTstamp = event.true_tstamp match {
-      case null =>
-        EE.getDerivedTimestamp(
-          Option(event.dvce_sent_tstamp),
-          Option(event.dvce_created_tstamp),
-          Option(event.collector_tstamp)
-        ) match {
-          case Success(dt) => {
-            dt.foreach(event.derived_tstamp = _)
-            unitSuccess
-          }
-          case f => f
-        }
-      case trueTstamp =>
-        event.derived_tstamp = trueTstamp
+    // Calculate the derived timestamp
+    val derivedTstamp = EE.getDerivedTimestamp(
+      Option(event.dvce_sent_tstamp),
+      Option(event.dvce_created_tstamp),
+      Option(event.collector_tstamp),
+      Option(event.true_tstamp)
+    ) match {
+      case Success(dt) => {
+        dt.foreach(event.derived_tstamp = _)
         unitSuccess
+      }
+      case f => f
     }
 
     // Execute the JavaScript scripting enrichment
