@@ -81,19 +81,6 @@ object EventEnrichments {
   }
 
   /**
-   * Validate that the collector timestamp is set and valid
-   *
-   * @param collectorTstamp
-   * @return Validated collector timestamp
-   */
-  def validateCollectorTstamp(collectorTstamp: Option[DateTime]): Validation[String, String] = {
-    collectorTstamp match {
-      case None => "No collector_tstamp set".fail
-      case Some(t) => extractTimestamp("collector_tstamp", t.getMillis.toString)
-    }
-  }
-
-  /**
    * Calculate the derived timestamp
    *
    * If dvce_sent_tstamp and dvce_created_tstamp are not null and the former is after the latter,
