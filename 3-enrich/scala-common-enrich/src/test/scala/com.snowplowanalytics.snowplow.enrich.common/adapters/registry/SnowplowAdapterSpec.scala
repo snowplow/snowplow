@@ -81,33 +81,33 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
 
   def e1 = {
     val payload = CollectorPayload(Snowplow.Tp1, toNameValuePairs("aid" -> "test"), None, None, Shared.source, Shared.context)
-    val actual = SnowplowAdapter.Tp1.toRawEvents(payload)
+    val actual = Tp1Adapter.toRawEvents(payload)
     actual must beSuccessful(NonEmptyList(RawEvent(Snowplow.Tp1, Map("aid" -> "test"), None, Shared.source, Shared.context)))
   }
 
   def e2 = {
     val payload = CollectorPayload(Snowplow.Tp1, Nil, None, None, Shared.source, Shared.context)
-    val actual = SnowplowAdapter.Tp1.toRawEvents(payload)
+    val actual = Tp1Adapter.toRawEvents(payload)
     actual must beFailing(NonEmptyList("Querystring is empty: no raw event to process"))
   }
 
   def e3 = {
     val payload = CollectorPayload(Snowplow.Tp2, toNameValuePairs("aid" -> "tp2", "e" -> "se"), None, None, Shared.source, Shared.context)
-    val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
+    val actual = Tp2Adapter.toRawEvents(payload)
     actual must beSuccessful(NonEmptyList(RawEvent(Snowplow.Tp2, Map("aid" -> "tp2", "e" -> "se"), None, Shared.source, Shared.context)))
   }
 
   def e4 = {
     val body = toSelfDescJson("""[{"tv":"ios-0.1.0","p":"mob","e":"se"}]""", "payload_data")
     val payload = CollectorPayload(Snowplow.Tp2, Nil, ApplicationJsonWithCharset.some, body.some, Shared.source, Shared.context)
-    val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
+    val actual = Tp2Adapter.toRawEvents(payload)
     actual must beSuccessful(NonEmptyList(RawEvent(Snowplow.Tp2, Map("tv" -> "ios-0.1.0", "p" -> "mob", "e" -> "se"), ApplicationJsonWithCharset.some, Shared.source, Shared.context)))
   }
 
   def e5 = {
     val body = toSelfDescJson("""[{"tv":"1","p":"1","e":"1"},{"tv":"2","p":"2","e":"2"},{"tv":"3","p":"3","e":"3"}]""", "payload_data")
     val payload = CollectorPayload(Snowplow.Tp2, toNameValuePairs("tv" -> "0", "nuid" -> "123"), ApplicationJsonWithCapitalCharset.some, body.some, Shared.source, Shared.context)
-    val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
+    val actual = Tp2Adapter.toRawEvents(payload)
 
     val rawEvent: RawEventParameters => RawEvent = params => RawEvent(Snowplow.Tp2, params, ApplicationJsonWithCapitalCharset.some, Shared.source, Shared.context)
     actual must beSuccessful(NonEmptyList(
@@ -120,7 +120,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
   def e6 = {
     val body = toSelfDescJson("""[{"tv":"ios-0.1.0","p":"mob","e":"se"}]""", "payload_data")
     val payload = CollectorPayload(Snowplow.Tp2, Nil, ApplicationJsonWithCapitalCharset.some, body.some, Shared.source, Shared.context)
-    val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
+    val actual = Tp2Adapter.toRawEvents(payload)
     actual must beSuccessful(NonEmptyList(RawEvent(Snowplow.Tp2, Map("tv" -> "ios-0.1.0", "p" -> "mob", "e" -> "se"), ApplicationJsonWithCapitalCharset.some, Shared.source, Shared.context)))
   }
 
@@ -135,14 +135,14 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
       (_, querystring, contentType, body, expected) => {
 
         val payload = CollectorPayload(Snowplow.Tp2, querystring, contentType, body, Shared.source, Shared.context)
-        val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
+        val actual = Tp2Adapter.toRawEvents(payload)
         actual must beFailing(NonEmptyList(expected))
       }
     }
 
   def e8 = {
     val payload = CollectorPayload(Snowplow.Tp2, toNameValuePairs("aid" -> "test"), ApplicationJson.some, """{"not":"self-desc"}""".some, Shared.source, Shared.context)
-    val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
+    val actual = Tp2Adapter.toRawEvents(payload)
     actual must beFailing(NonEmptyList("""error: object instance has properties which are not allowed by the schema: ["not"]
     level: "error"
     schema: {"loadingURI":"#","pointer":""}
@@ -165,7 +165,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
   def e9 = {
     val body = toSelfDescJson("""{"longitude":20.1234}""", "geolocation_context")
     val payload = CollectorPayload(Snowplow.Tp2, Nil, ApplicationJson.some, body.some, Shared.source, Shared.context)
-    val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
+    val actual = Tp2Adapter.toRawEvents(payload)
     actual must beFailing(NonEmptyList("""error: Verifying schema as iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-* failed: found iglu:com.snowplowanalytics.snowplow/geolocation_context/jsonschema/1-0-0
     level: "error"
 """))
@@ -214,7 +214,7 @@ class SnowplowAdapterSpec extends Specification with DataTables with ValidationM
         val body = toSelfDescJson(json, "payload_data")
         val payload = CollectorPayload(Snowplow.Tp2, Nil, ApplicationJson.some, body.some, Shared.source, Shared.context)
 
-        val actual = SnowplowAdapter.Tp2.toRawEvents(payload)
+        val actual = Tp2Adapter.toRawEvents(payload)
         actual must beFailing(expected)
       }
     }
