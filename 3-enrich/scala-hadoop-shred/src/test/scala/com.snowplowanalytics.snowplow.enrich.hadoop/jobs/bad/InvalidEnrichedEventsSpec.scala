@@ -40,7 +40,7 @@ object InvalidEnrichedEventsSpec {
     )
 
   val expected = (line: String) =>
-    """{"line":"%s","errors":["error: Field [event_id]: [not-a-uuid] is not a valid UUID\n    level: \"error\"\n","error: Field [collector_tstamp]: [29th May 2013 18:04:12] is not in the expected Redshift/Postgres timestamp format\n    level: \"error\"\n"]}"""
+    """{"line":"%s","errors":[{"level":"error","message":"Field [event_id]: [not-a-uuid] is not a valid UUID"},{"level":"error","message":"Field [collector_tstamp]: [29th May 2013 18:04:12] is not in the expected Redshift/Postgres timestamp format"}]}"""
       .format(line.replaceAll("\"", "\\\\\"")).replaceAll("[\n\r]","").replaceAll("[\t]","\\\\t")
 }
 
