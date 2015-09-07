@@ -34,7 +34,6 @@ class SchemaEnrichmentTest extends Specification with DataTables with Validation
 
   implicit val resolver = SpecHelpers.IgluResolver
   val signupFormSubmitted = """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow-website/signup_form_submitted/jsonschema/1-0-0","data":{"name":"Χαριτίνη NEW Unicode test","email":"alex+test@snowplowanalytics.com","company":"SP","eventsPerMonth":"< 1 million","serviceType":"unsure"}}}"""
-  val signupFormSubmittedSchema = SchemaKey("com.snowplowanalytics.snowplow-website", "signup_form_submitted", "jsonschema", "1-0-0").success
   val invalidPayload = """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow-website/signup_form_submitted/jsonschema/1-0-0","data":{"serviceType":"unsure"}}}"""
 
   def is =
@@ -43,16 +42,16 @@ class SchemaEnrichmentTest extends Specification with DataTables with Validation
 
   def e1 =
       "SPEC NAME"              || "EVENT"                            | "EXPECTED SCHEMA"          |
-      "page view"              !! event("page_view")                 ! pageViewSchema             |
-      "ping ping"              !! event("page_ping")                 ! pagePingSchema             |
-      "transaction"            !! event("transaction")               ! transactionSchema          |
-      "transaction item"       !! event("transaction_item")          ! transactionItemSchema      |
-      "struct event"           !! event("struct")                    ! structSchema               |
-      "invalid unstruct event" !! unstructEvent(invalidPayload)      ! signupFormSubmittedSchema  |
-      "unstruct event"         !! unstructEvent(signupFormSubmitted) ! signupFormSubmittedSchema  |> {
+      "page view"              !! event("page_view")                 ! SchemaKey("com.snowplowanalytics.snowplow", "page_view", "jsonschema", "1-0-0")             |
+      "ping ping"              !! event("page_ping")                 ! SchemaKey("com.snowplowanalytics.snowplow", "page_ping", "jsonschema", "1-0-0")             |
+      "transaction"            !! event("transaction")               ! SchemaKey("com.snowplowanalytics.snowplow", "transaction", "jsonschema", "1-0-0")          |
+      "transaction item"       !! event("transaction_item")          ! SchemaKey("com.snowplowanalytics.snowplow", "transaction_item", "jsonschema", "1-0-0")      |
+      "struct event"           !! event("struct")                    ! SchemaKey("com.google.analytics", "event", "jsonschema", "1-0-0")               |
+      "invalid unstruct event" !! unstructEvent(invalidPayload)      ! SchemaKey("com.snowplowanalytics.snowplow-website", "signup_form_submitted", "jsonschema", "1-0-0")  |
+      "unstruct event"         !! unstructEvent(signupFormSubmitted) ! SchemaKey("com.snowplowanalytics.snowplow-website", "signup_form_submitted", "jsonschema", "1-0-0")  |> {
       (_, event, expected) => {
         val schema = SchemaEnrichment.extractSchema(event)
-        schema must_== expected
+        schema must beSuccessful(expected)
       }
     }
 
