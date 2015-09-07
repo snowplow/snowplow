@@ -64,7 +64,6 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  // TODO: etlTstamp shouldn't be stringly typed really
   def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: DateTime, raw: RawEvent)(implicit resolver: Resolver): ValidatedEnrichedEvent = {
 
     // Placeholders for where the Success value doesn't matter.
