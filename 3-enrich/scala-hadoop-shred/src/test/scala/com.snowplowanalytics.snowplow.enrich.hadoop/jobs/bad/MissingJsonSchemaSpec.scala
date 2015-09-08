@@ -57,6 +57,7 @@ class MissingJsonSchemaSpec extends Specification {
   "A job which cannot find the specified JSON Schemas in Iglu" should {
     ShredJobSpec.
       source(MultipleTextLineFiles("inputFolder"), MissingJsonSchemaSpec.lines).
+      source(MultipleTextLineFiles("outputFolder/atomic-events"), InvalidJsonsSpec.lines).
       sink[String](PartitionedTsv("outputFolder", ShredJob.ShreddedPartition, false, ('json), SinkMode.REPLACE)){ output =>
         "not write any events" in {
           output must beEmpty

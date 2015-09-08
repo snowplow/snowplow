@@ -58,6 +58,7 @@ class SchemaValidationFailed1Spec extends Specification {
   "A job which processes input lines with invalid Snowplow enriched events" should {
     ShredJobSpec.
       source(MultipleTextLineFiles("inputFolder"), SchemaValidationFailed1Spec.lines).
+      source(MultipleTextLineFiles("outputFolder/atomic-events"), InvalidJsonsSpec.lines).
       sink[String](PartitionedTsv("outputFolder", ShredJob.ShreddedPartition, false, ('json), SinkMode.REPLACE)){ output =>
         "not write any events" in {
           output must beEmpty
