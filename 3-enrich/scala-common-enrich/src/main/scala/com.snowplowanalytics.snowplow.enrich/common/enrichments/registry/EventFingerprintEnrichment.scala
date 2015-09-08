@@ -83,7 +83,7 @@ object EventFingerprintEnrichmentConfig extends ParseableEnrichment {
  * Companion object
  */
 object EventFingerprintEnrichment {
-  private val Separator = "\u0000"
+  private val UnitSeparator = "\u001f"
 }
 
 /**
@@ -108,9 +108,9 @@ case class EventFingerprintEnrichment(algorithm: String => String, excludedParam
      parameterMap.toList.sortWith(_._1 < _._1).foreach {
       case (key, value) => if (! excludedParameters.contains(key)) {
         builder.append(key)
-        builder.append(EventFingerprintEnrichment.Separator)
+        builder.append(EventFingerprintEnrichment.UnitSeparator)
         builder.append(value)
-        builder.append(EventFingerprintEnrichment.Separator)
+        builder.append(EventFingerprintEnrichment.UnitSeparator)
       }
     }
     algorithm(builder.toString)
