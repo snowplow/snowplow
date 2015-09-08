@@ -110,7 +110,40 @@ object ShredJob {
   val ShreddedPartition = new UrShreddedPartition('schema)
 
   // Indexes for the contexts, unstruct_event, and derived_contexts fields
-  val IgnoredJsonFields = Set(52, 58, 122)
+  private val IgnoredJsonFields = Set(52, 58, 122)
+
+  private val alteredEnrichedEventSubdirectory = "atomic-events"
+
+  /**
+   * Ready the enriched event for database load by removing JSON fields
+   *
+   * @param enrichedEvent TSV
+   * @return the same TSV with the JSON fields removed
+   */
+  def alterEnrichedEvent(enrichedEvent: String): String = {
+    enrichedEvent
+      .split("\t")
+      .toList
+      .zipWithIndex
+      .filter(x => ! ShredJob.IgnoredJsonFields.contains(x._2))
+      .map(_._1)
+      .mkString("\t")
+  }
+
+  /**
+   * Get the S3 path on which to store altered enriched events
+   *
+   * @param outFolder shredded/good/run=xxx
+   * @return altered enriched event path
+   */
+  def getAlteredEnrichedOutputPath(outFolder: String): String = {
+    val separator = if (outFolder.endsWith("/")) {
+      ""
+    } else {
+      "/"
+    }
+    s"${outFolder}${separator}${alteredEnrichedEventSubdirectory}"
+  }
 }
 
 /**
@@ -130,7 +163,7 @@ class ShredJob(args : Args) extends Job(args) {
   val goodOutput = PartitionedTsv(shredConfig.outFolder, ShredJob.ShreddedPartition, false, ('json), SinkMode.REPLACE)
   val badOutput = Tsv(shredConfig.badFolder)  // Technically JSONs but use Tsv for custom JSON creation
   implicit val resolver = shredConfig.igluResolver
-  val alteredOutput = MultipleTextLineFiles(shredConfig.outFolder)
+  val alteredOutput = MultipleTextLineFiles(ShredJob.getAlteredEnrichedOutputPath(shredConfig.outFolder))
 
   // Do we add a failure trap?
   val trappableInput = shredConfig.exceptionsFolder match {
@@ -167,23 +200,7 @@ class ShredJob(args : Args) extends Job(args) {
     .write(goodOutput)
 
   val alteredEnriched = input.mapTo('line -> 'altered) { s: String =>
-      alterEnrichedEvent(s)
+      ShredJob.alterEnrichedEvent(s)
     }
     .write(alteredOutput)
-
-  /**
-   * Ready the enriched event for database load by removing JSON fields
-   *
-   * @param enrichedEvent TSV
-   * @return the same TSV with the JSON fields removed
-   */
-  def alterEnrichedEvent(enrichedEvent: String): String = {
-    enrichedEvent
-      .split("\t")
-      .toList
-      .zipWithIndex
-      .filter(x => ! ShredJob.IgnoredJsonFields.contains(x._2))
-      .map(_._1)
-      .mkString("\t")
-  }
 }
