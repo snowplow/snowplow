@@ -193,7 +193,7 @@ module Snowplow
       # Returns the array of cold files
       def get_event_files(events_dir)
 
-        Dir[File.join(events_dir, '**', EVENT_FILES)].select { |f|
+        Dir[File.join(events_dir, '**', 'atomic-events', EVENT_FILES)].select { |f|
           File.file?(f) # In case of a dir ending in .tsv
         }
       end
