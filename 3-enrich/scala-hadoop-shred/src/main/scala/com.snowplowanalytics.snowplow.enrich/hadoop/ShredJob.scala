@@ -114,6 +114,12 @@ object ShredJob {
 
   private val alteredEnrichedEventSubdirectory = "atomic-events"
 
+  private val PostgresMaxFieldLengths = List(
+    255,
+    255
+    // etc...
+    )
+
   /**
    * Ready the enriched event for database load by removing JSON fields
    *
@@ -121,9 +127,11 @@ object ShredJob {
    * @return the same TSV with the JSON fields removed
    */
   def alterEnrichedEvent(enrichedEvent: String): String = {
-    enrichedEvent
-      .split("\t")
-      .toList
+    import common.utils.ConversionUtils
+
+    (enrichedEvent.split("\t").toList, PostgresMaxFieldLengths)
+      .zipped
+      .map(ConversionUtils.truncate(_, _))
       .zipWithIndex
       .filter(x => ! ShredJob.IgnoredJsonFields.contains(x._2))
       .map(_._1)
