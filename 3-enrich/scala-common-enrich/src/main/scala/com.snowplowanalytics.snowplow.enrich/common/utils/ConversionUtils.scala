@@ -155,8 +155,8 @@ object ConversionUtils {
       val result = new String(decodedBytes, UTF_8) // Must specify charset (EMR uses US_ASCII)
       result.success
     } catch {
-      case e =>
-      "Field [%s]: exception Base64-decoding [%s] (URL-safe encoding): [%s]".format(field, str, e.getMessage).fail
+      case NonFatal(e) =>
+        "Field [%s]: exception Base64-decoding [%s] (URL-safe encoding): [%s]".format(field, str, e.getMessage).fail
     }
   }
 
@@ -244,7 +244,7 @@ object ConversionUtils {
                .replaceAll("\\t", "    ")
       r.success
     } catch {
-      case e =>
+      case NonFatal(e) =>
         "Field [%s]: Exception URL-decoding [%s] (encoding [%s]): [%s]".format(field, str, enc, e.getMessage).fail
     }
 
@@ -337,7 +337,7 @@ object ConversionUtils {
           val netaporterUri = try {
             Uri.parse(uri).success
           } catch {
-            case e => "Provided URI string [%s] could not be parsed by Netaporter: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
+            case NonFatal(e) => "Provided URI string [%s] could not be parsed by Netaporter: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
           }
           for {
             parsedUri <- netaporterUri
@@ -346,7 +346,7 @@ object ConversionUtils {
         }
         case true => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
       }
-      case e => "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).fail
+      case NonFatal(e) => "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).fail
     }
 
   /**
