@@ -98,11 +98,6 @@ object EnrichmentManager {
 
     // 2b. Failable enrichments using the payload
 
-    // Partially apply functions which need an encoding, to create a TransformFunc
-    val MaxJsonLength = 15000
-    val extractJson: TransformFunc = JU.extractJson(MaxJsonLength, _, _)
-    val extractBase64EncJson: TransformFunc = JU.extractBase64EncJson(MaxJsonLength, _, _)
-
     // We use a TransformMap which takes the format:
     // "source key" -> (transformFunction, field(s) to set)
     // Caution: by definition, a TransformMap loses type safety. Always unit test!
@@ -146,8 +141,8 @@ object EnrichmentManager {
           ("vp"      , (CE.extractViewDimensions, ("br_viewwidth", "br_viewheight"))),
           ("eid"     , (CU.validateUuid, "event_id")),
           // Custom contexts
-          ("co"   , (extractJson, "contexts")),
-          ("cx"   , (extractBase64EncJson, "contexts")),
+          ("co"   , (JU.extractUnencJson, "contexts")),
+          ("cx"   , (JU.extractBase64EncJson, "contexts")),
           // Custom structured events
           ("ev_ca"   , (ME.toTsvSafe, "se_category")),   // LEGACY tracker var. Leave for backwards compat
           ("ev_ac"   , (ME.toTsvSafe, "se_action")),     // LEGACY tracker var. Leave for backwards compat
@@ -160,8 +155,8 @@ object EnrichmentManager {
           ("se_pr"   , (ME.toTsvSafe, "se_property")),
           ("se_va"   , (CU.stringToDoublelike, "se_value")),
           // Custom unstructured events
-          ("ue_pr"   , (extractJson, "unstruct_event")),
-          ("ue_px"   , (extractBase64EncJson, "unstruct_event")),
+          ("ue_pr"   , (JU.extractUnencJson, "unstruct_event")),
+          ("ue_px"   , (JU.extractBase64EncJson, "unstruct_event")),
           // Ecommerce transactions
           ("tr_id"   , (ME.toTsvSafe, "tr_orderid")),
           ("tr_af"   , (ME.toTsvSafe, "tr_affiliation")),
