@@ -40,7 +40,7 @@ module Snowplow
           config[:aws][:secret_access_key])
 
         # Get S3 location of In Bucket plus local directory
-        in_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:enriched][:good])
+        in_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:shredded][:good])
         download_dir = config[:storage][:download][:folder]
 
         # Download
