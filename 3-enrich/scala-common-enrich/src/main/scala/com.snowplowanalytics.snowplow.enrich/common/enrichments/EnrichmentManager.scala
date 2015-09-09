@@ -401,19 +401,6 @@ object EnrichmentManager {
       event.derived_contexts = ME.formatDerivedContexts(derived_contexts)
     }
 
-    // Some quick and dirty truncation to ensure the load into Redshift doesn't error. Yech this is pretty dirty
-    // TODO: move this into the db-specific ETL phase (when written) & _programmatically_ apply to all strings, not just these 6
-    event.useragent = CU.truncate(event.useragent, 1000)
-    event.page_title = CU.truncate(event.page_title, 2000)
-    event.page_urlpath = CU.truncate(event.page_urlpath, 1000)
-    event.page_urlquery = CU.truncate(event.page_urlquery, 3000)
-    event.page_urlfragment = CU.truncate(event.page_urlfragment, 255)
-    event.refr_urlpath = CU.truncate(event.refr_urlpath, 1000)
-    event.refr_urlquery = CU.truncate(event.refr_urlquery, 3000)
-    event.refr_urlfragment = CU.truncate(event.refr_urlfragment, 255)
-    event.refr_term = CU.truncate(event.refr_term, 255)
-    event.se_label = CU.truncate(event.se_label, 255)
-
     // Collect our errors on Failure, or return our event on Success
     // Broken into two parts due to 12 argument limit on |@|
     val first =
