@@ -26,6 +26,12 @@ module Snowplow
       # Constants for the load process
       EVENT_FIELD_SEPARATOR = "\\t"
 
+      # Used to find the altered enriched events
+      ALTERED_ENRICHED_PATTERN = /(run=[0-9\-]+\/atomic-events)/
+
+      # Versions 0.5.0 and earlier of Hadoop Shred don't copy atomic.events into the shredded bucket
+      OLD_ENRICHED_PATTERN = /0\.[0-5]\.[0-9]/
+
       SqlStatements = Struct.new(:copy, :analyze, :vacuum)
 
       # Loads the Snowplow event files and shredded type
@@ -38,14 +44,38 @@ module Snowplow
       def load_events_and_shredded_types(config, target, snowplow_tracking_enabled)
         puts "Loading Snowplow events and shredded types into #{target[:name]} (Redshift cluster)..."
 
+        s3 = Sluice::Storage::S3::new_fog_s3_from(
+          config[:aws][:s3][:region],
+          config[:aws][:access_key_id],
+          config[:aws][:secret_access_key])
+
         # First let's get our statements for shredding (if any)
-        shredded_statements = get_shredded_statements(config, target)
+        shredded_statements = get_shredded_statements(config, target, s3)
 
         # Build our main transaction, consisting of COPY and COPY FROM JSON
         # statements, and potentially also a set of table ANALYZE statements.
-        copy_analyze_statements = [
-          build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:enriched][:good], target[:table], target[:maxerror])
-        ]
+
+        atomic_events_location = if OLD_ENRICHED_PATTERN.match(config[:enrich][:versions][:hadoop_shred])
+          :enriched
+        else
+          :shredded
+        end
+
+        copy_analyze_statements = if atomic_events_location == :shredded
+          loc = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:shredded][:good])
+          altered_enriched_filepath = Sluice::Storage::S3::list_files(s3, loc).find { |file|
+            ALTERED_ENRICHED_PATTERN.match(file.key)
+          }
+          if altered_enriched_filepath.nil?
+            raise DatabaseLoadError, 'Cannot find atomic-events directory in shredded/good'
+          end
+          # Of the form "run=xxx/atomic-events"
+          altered_enriched_subdirectory = ALTERED_ENRICHED_PATTERN.match(altered_enriched_filepath.key)[1]
+          [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:shredded][:good] + altered_enriched_subdirectory, target[:table], target[:maxerror])]
+        else
+          [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:enriched][:good], target[:table], target[:maxerror])]
+        end
+
         copy_analyze_statements.push(*shredded_statements.map(&:copy))
 
         unless config[:skip].include?('analyze')
@@ -96,16 +126,12 @@ module Snowplow
       # Parameters:
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
-      Contract Hash, Hash => ArrayOf[SqlStatements]
-      def get_shredded_statements(config, target)
+      Contract Hash, Hash, Sluice::Storage::S3 => ArrayOf[SqlStatements]
+      def get_shredded_statements(config, target, s3)
 
         if config[:skip].include?('shred') # No shredded types to load
           []
         else
-          s3 = Sluice::Storage::S3::new_fog_s3_from(
-            config[:aws][:s3][:region],
-            config[:aws][:access_key_id],
-            config[:aws][:secret_access_key])
           schema = extract_schema(target[:table])
 
           ShreddedType.discover_shredded_types(s3, config[:aws][:s3][:buckets][:shredded][:good], schema).map { |st|
