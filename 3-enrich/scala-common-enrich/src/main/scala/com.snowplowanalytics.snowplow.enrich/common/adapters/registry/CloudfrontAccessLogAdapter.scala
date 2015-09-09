@@ -23,6 +23,9 @@ import iglu.client.{
   Resolver
 }
 
+// Scala
+import scala.util.control.NonFatal
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -188,7 +191,8 @@ object CloudfrontAccessLogAdapter {
       try {
         DateTime.parse("%sT%s+00:00".format(date, time)).success // Construct a UTC ISO date from CloudFront date and time
       } catch {
-        case e => "Unexpected exception converting Cloudfront web distribution access log date [%s] and time [%s] to timestamp: [%s]".format(date, time, e.getMessage).fail
+        case NonFatal(e) =>
+          "Unexpected exception converting Cloudfront web distribution access log date [%s] and time [%s] to timestamp: [%s]".format(date, time, e.getMessage).fail
       }
   }
 }
