@@ -60,7 +60,24 @@ object ElasticsearchJobConfig {
     val inputArg = args.requiredz("input").toValidationNel
     val exceptionsFolder = args.optionalz("exceptions_folder").toValidationNel
 
-    (hostArg |@| resourceArg |@| portArg |@| inputArg |@| exceptionsFolder)(ElasticsearchJobConfig(_,_,_,_,esProperties, _))
+    val delaySeconds = (for {
+      delayString <- args.optionalz("delay")
+      delayInt <- try {
+        delayString.map(_.toLong).success
+      } catch  {
+        case nfe: NumberFormatException =>
+          s"Couldn't parse delay $delayString as int: [$nfe]".toProcessingMessage.fail
+      }
+    } yield delayInt).toValidationNel
+
+    (
+      hostArg |@|
+      resourceArg |@|
+      portArg |@|
+      inputArg |@|
+      exceptionsFolder |@|
+      delaySeconds
+    )(ElasticsearchJobConfig(_,_,_,_,esProperties, _,_))
   }
 }
 
@@ -72,6 +89,7 @@ object ElasticsearchJobConfig {
  * @param input Source directory
  * @param settings Additional configuration for the EsSource
  * @param exceptionsFolder Folder where exceptions are stored
+ * @param delaySeconds How long to wait for S3 consistency before starting the job
  */
 case class ElasticsearchJobConfig(
   host: String,
@@ -79,7 +97,8 @@ case class ElasticsearchJobConfig(
   port: Int,
   input: String,
   settings: Properties,
-  exceptionsFolder: Option[String]
+  exceptionsFolder: Option[String] = None,
+  delaySeconds: Option[Long] = None
   ) {
 
   def getEsSink = EsSource(resource, esHost = host.some, esPort = port.some, settings = settings.some)

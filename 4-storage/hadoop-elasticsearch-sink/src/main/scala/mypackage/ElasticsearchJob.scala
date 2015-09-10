@@ -51,6 +51,10 @@ class ElasticsearchJob(args : Args) extends Job(args) {
    * @param configuration
    */
   def runJob(configuration: ElasticsearchJobConfig) {
+
+    // Optional sleep to give S3 time to become consistent
+    configuration.delaySeconds.foreach(t => Thread.sleep(t * 1000))
+
     val esSink = configuration.getEsSink
     val inputPipe = MultipleTextLineFiles(configuration.input).read
     val trappableInput = configuration.exceptionsFolder match {
