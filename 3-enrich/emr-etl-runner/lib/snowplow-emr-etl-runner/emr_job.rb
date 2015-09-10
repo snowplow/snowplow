@@ -349,7 +349,7 @@ module Snowplow
         default_sources << self.class.partition_by_run(config[:aws][:s3][:buckets][:enriched][:bad], @run_id) if enrich
         default_sources << self.class.partition_by_run(config[:aws][:s3][:buckets][:shredded][:bad], @run_id) if shred
 
-        elasticsearch_targets.flat_map { |target|
+        steps = elasticsearch_targets.flat_map { |target|
 
           sources = target[:sources] || default_sources
 
@@ -370,6 +370,12 @@ module Snowplow
             step
           }
         }
+
+        # Wait 60 seconds before starting the first step so S3 can become consistent
+        if (enrich || shred) && steps.any?
+          steps[0].arguments << '--delay' << '60'
+        end
+        steps
       end
 
       # Run (and wait for) the daily ETL job.
