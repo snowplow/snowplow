@@ -41,8 +41,8 @@ module Snowplow
       include Monitoring::Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String => EmrJob
-      def initialize(debug, enrich, shred, s3distcp, config, enrichments_array, resolver)
+      Contract Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String => EmrJob
+      def initialize(debug, enrich, shred, elasticsearch, s3distcp, config, enrichments_array, resolver)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -327,7 +327,9 @@ module Snowplow
             copy_to_s3_step.name << ": Shredded HDFS -> S3"
             @jobflow.add_step(copy_to_s3_step)
           end
+        end
 
+        if elasticsearch
           get_elasticsearch_steps(config, assets).each do |step|
             @jobflow.add_step(step)
           end

@@ -57,13 +57,14 @@ module Snowplow
           enrich = not(@args[:skip].include?('enrich'))
           shred = not(@args[:skip].include?('shred'))
           s3distcp = not(@args[:skip].include?('s3distcp'))
+          elasticsearch = not(@args[:skip].include?('elasticsearch'))
 
           # Keep relaunching the job until it succeeds or fails for a reason other than a bootstrap failure
           tries_left = @config[:aws][:emr][:bootstrap_failure_tries]
           while true
             begin
               tries_left -= 1
-              job = EmrJob.new(@args[:debug], enrich, shred, s3distcp, @config, @enrichments_array, @resolver)
+              job = EmrJob.new(@args[:debug], enrich, shred, elasticsearch, s3distcp, @config, @enrichments_array, @resolver)
               job.run(@config)
               break
             rescue BootstrapFailureError => bfe
