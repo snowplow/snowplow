@@ -85,16 +85,12 @@ CREATE TABLE atomic.events (
 	mkt_term varchar(255) encode raw,
 	mkt_content varchar(500) encode raw,
 	mkt_campaign varchar(255) encode text32k,
-	-- Custom contexts
-	contexts varchar(15000) encode lzo,
 	-- Custom structured event
 	se_category varchar(1000) encode text32k,
 	se_action varchar(1000) encode text32k,
 	se_label varchar(1000) encode text32k,
 	se_property varchar(1000) encode text32k,
 	se_value double precision,
-	-- Custom unstructured event
-	unstruct_event varchar(15000) encode lzo,
 	-- Ecommerce
 	tr_orderid varchar(255) encode raw,
 	tr_affiliation varchar(255) encode text255,
@@ -177,9 +173,6 @@ CREATE TABLE atomic.events (
 	-- Referer
 	refr_domain_userid varchar(36),
 	refr_dvce_tstamp timestamp,
-
-	-- Derived contexts
-	derived_contexts varchar(15000) encode lzo,
 
 	-- Session ID
 	domain_sessionid char(36) encode raw,
