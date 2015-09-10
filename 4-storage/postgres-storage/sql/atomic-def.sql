@@ -83,16 +83,12 @@ CREATE TABLE "atomic"."events" (
 	"mkt_term" varchar(255),
 	"mkt_content" varchar(500),
 	"mkt_campaign" varchar(255),
-	-- Custom contexts
-	"contexts" json,
 	-- Custom structured event
 	"se_category" varchar(1000),
 	"se_action" varchar(1000),
 	"se_label" varchar(1000),
 	"se_property" varchar(1000),
 	"se_value" double precision,
-	-- Custom unstructured event
-	"unstruct_event" json,
 	-- Ecommerce
 	"tr_orderid" varchar(255),
 	"tr_affiliation" varchar(255),
@@ -169,8 +165,6 @@ CREATE TABLE "atomic"."events" (
 	-- Referer
 	"refr_domain_userid" varchar(36),
 	"refr_dvce_tstamp" timestamp,
-	-- Derived contexts
-	"derived_contexts" json,
 	-- Session ID
 	"domain_sessionid" char(36),
 	-- Derived timestamp
