@@ -39,7 +39,7 @@ import utils.JsonUtils
 /**
  * Transforms a collector payload which provides a set
  * of name-value pairs on a GET querystring, along
- * with a &schema=[[iglu schema uri]] parameter to
+ * with an iglu schema uri parameter to
  * attribute the name-value pairs to an
  * Iglu-compatible self-describing JSON.
  */
