@@ -330,7 +330,7 @@ module Snowplow
         end
 
         if elasticsearch
-          get_elasticsearch_steps(config, assets).each do |step|
+          get_elasticsearch_steps(config, assets, enrich, shred).each do |step|
             @jobflow.add_step(step)
           end
         end
@@ -340,16 +340,18 @@ module Snowplow
 
       # Create one step for each Elasticsearch target for each source for that target
       #
-      Contract ConfigHash, Hash => ArrayOf[ScaldingStep]
-      def get_elasticsearch_steps(config, assets)
+      Contract ConfigHash, Hash, Bool, Bool => ArrayOf[ScaldingStep]
+      def get_elasticsearch_steps(config, assets, enrich, shred)
         elasticsearch_targets = config[:storage][:targets].select {|t| t[:type] == 'elasticsearch'}
+
+        # The default sources are the enriched and shredded errors generated for this run
+        default_sources = []
+        default_sources << self.class.partition_by_run(config[:aws][:s3][:buckets][:enriched][:bad], @run_id) if enrich
+        default_sources << self.class.partition_by_run(config[:aws][:s3][:buckets][:shredded][:bad], @run_id) if shred
 
         elasticsearch_targets.flat_map { |target|
 
-          # The default sources are the enriched and shredded errors generated for this run
-          sources = target[:sources] || [:enriched, :shredded].map {|kind|
-            self.class.partition_by_run(config[:aws][:s3][:buckets][kind][:bad], @run_id)
-          }
+          sources = target[:sources] || default_sources
 
           sources.map { |source|
             step = ScaldingStep.new(
