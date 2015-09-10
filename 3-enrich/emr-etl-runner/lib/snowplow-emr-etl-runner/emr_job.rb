@@ -47,9 +47,14 @@ module Snowplow
         logger.debug "Initializing EMR jobflow"
 
         # Configuration
-        assets = self.class.get_assets(config[:aws][:s3][:buckets][:assets], config[:enrich][:versions][:hadoop_enrich], config[:enrich][:versions][:hadoop_shred])
+        assets = self.class.get_assets(
+          config[:aws][:s3][:buckets][:assets],
+          config[:enrich][:versions][:hadoop_enrich],
+          config[:enrich][:versions][:hadoop_shred],
+          config[:enrich][:versions][:hadoop_elasticsearch])
         run_tstamp = Time.new
         run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
+        @run_id = run_id
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
         output_codec = self.class.output_codec_from_compression_format(config[:enrich][:output_compression])
         output_codec_argument = output_codec == 'none' ? [] : ["--outputCodec" , output_codec]
@@ -322,9 +327,45 @@ module Snowplow
             copy_to_s3_step.name << ": Shredded HDFS -> S3"
             @jobflow.add_step(copy_to_s3_step)
           end
+
+          get_elasticsearch_steps(config, assets).each do |step|
+            @jobflow.add_step(step)
+          end
         end
 
         self
+      end
+
+      # Create one step for each Elasticsearch target for each source for that target
+      #
+      Contract ConfigHash, Hash => ArrayOf[ScaldingStep]
+      def get_elasticsearch_steps(config, assets)
+        elasticsearch_targets = config[:storage][:targets].select {|t| t[:type] == 'elasticsearch'}
+
+        elasticsearch_targets.flat_map { |target|
+
+          # The default sources are the enriched and shredded errors generated for this run
+          sources = target[:sources] || [:enriched, :shredded].map {|kind|
+            self.class.partition_by_run(config[:aws][:s3][:buckets][kind][:bad], @run_id)
+          }
+
+          sources.map { |source|
+            step = ScaldingStep.new(
+              assets[:elasticsearch],
+              "com.snowplowanalytics.snowplow.storage.hadoop.ElasticsearchJob",
+              ({
+                :input => source,
+                :host => target[:host],
+                :port => target[:port].to_s,
+                :index => target[:database],
+                :type => target[:table]
+              }).reject { |k, v| v.nil? }
+            )
+            step_name = "Shred errors to Elasticsearch: #{target[:name]}"
+            step.name << ": #{step_name}"
+            step
+          }
+        }
       end
 
       # Run (and wait for) the daily ETL job.
@@ -569,12 +610,13 @@ module Snowplow
         Base64.strict_encode64(resolver)
       end
 
-      Contract String, String, String => AssetsHash
-      def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version)
+      Contract String, String, String, String => AssetsHash
+      def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version, hadoop_elasticsearch_version)
         enrich_path_middle = hadoop_enrich_version[0] == '0' ? 'hadoop-etl/snowplow-hadoop-etl' : 'scala-hadoop-enrich/snowplow-hadoop-enrich'
         {
           :enrich   => "#{assets_bucket}3-enrich/#{enrich_path_middle}-#{hadoop_enrich_version}.jar",
-          :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar"
+          :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
+          :elasticsearch => "#{assets_bucket}4-storage/hadoop-elasticsearch-sink/hadoop-elasticsearch-sink-#{hadoop_elasticsearch_version}.jar",
         }
       end
 
