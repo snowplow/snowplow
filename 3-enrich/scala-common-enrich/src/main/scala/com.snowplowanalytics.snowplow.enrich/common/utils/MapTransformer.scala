@@ -16,6 +16,9 @@ package utils
 // Java
 import java.lang.reflect.Method
 
+// Scala
+import scala.language.implicitConversions
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -91,8 +94,8 @@ object MapTransformer {
    *         of error Strings, or the new object
    */
   def generate[T <: AnyRef](sourceMap: SourceMap, transformMap: TransformMap)(implicit m: Manifest[T]): Validated[T] = {
-    val newInst = m.erasure.newInstance()
-    val result = _transform(newInst, sourceMap, transformMap, getSetters(m.erasure))
+    val newInst = m.runtimeClass.newInstance()
+    val result = _transform(newInst, sourceMap, transformMap, getSetters(m.runtimeClass))
     result.flatMap(s => newInst.asInstanceOf[T].success) // On success, replace the field count with the new instance
   }
 
@@ -113,7 +116,7 @@ object MapTransformer {
 
     // Do all the reflection for the setters we need:
     // This needs to be lazy because Method is not serializable
-    private lazy val setters = getSetters(m.erasure)
+    private lazy val setters = getSetters(m.runtimeClass)
 
     /**
      * Update the object by applying the contents
