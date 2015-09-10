@@ -365,7 +365,7 @@ module Snowplow
                 :type => target[:table]
               }).reject { |k, v| v.nil? }
             )
-            step_name = "Shred errors to Elasticsearch: #{target[:name]}"
+            step_name = "Errors in #{source} -> Elasticsearch: #{target[:name]}"
             step.name << ": #{step_name}"
             step
           }
