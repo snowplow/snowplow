@@ -113,10 +113,6 @@ module Snowplow
           end
         }
 
-        if args[:skip].include?('shred') and args[:skip].include?('enrich') and !args[:skip].include?('emr')
-          args[:skip] << 'emr'
-        end
-
         # Check that start is before end, if both set
         if !args[:start].nil? and !args[:end].nil?
           if args[:start] > args[:end]
