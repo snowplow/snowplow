@@ -58,6 +58,7 @@ class InvalidJsonsSpec extends Specification {
   "A job which contains invalid JSONs" should {
     ShredJobSpec.
       source(MultipleTextLineFiles("inputFolder"), InvalidJsonsSpec.lines).
+      source(MultipleTextLineFiles("outputFolder/atomic-events"), InvalidJsonsSpec.lines).
       sink[String](PartitionedTsv("outputFolder", ShredJob.ShreddedPartition, false, ('json), SinkMode.REPLACE)){ output =>
         "not write any events" in {
           output must beEmpty
