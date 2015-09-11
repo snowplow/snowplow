@@ -16,6 +16,9 @@ package enrich
 package common
 package enrichments
 
+// Java
+import java.net.URI
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -187,6 +190,12 @@ object EnrichmentRegistry {
  *        corresponding enrichment objects
  */
 case class EnrichmentRegistry(private val configs: EnrichmentMap) {
+
+  def getFilesToCache: List[(URI, String)] =
+    getIpLookupsEnrichment match {
+      case None => Nil
+      case Some(ipe) => ipe.dbsToCache
+    }
 
   /**
    * Returns an Option boxing the AnonIpEnrichment

@@ -138,14 +138,7 @@ object EtlJobConfig {
       buildEnrichmentRegistry(_, localMode)(_)
     }.flatMap(s => s)
 
-    val filesToCache = registry match {
-      case Success(reg) =>
-        reg.getIpLookupsEnrichment match {
-          case Some(ipLookups) => ipLookups.dbsToCache
-          case None => Nil
-        }
-      case Failure(f) => Nil
-    }
+    val filesToCache = registry.fold(f => Nil, r => r.getFilesToCache)
 
     // Discard registry (and rebuild later) because it causes serialization problems
     (inFolder.toValidationNel          |@|
