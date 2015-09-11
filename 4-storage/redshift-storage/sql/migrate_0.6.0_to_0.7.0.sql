@@ -17,12 +17,24 @@
 -- License:     Apache License Version 2.0
 
 ALTER TABLE atomic.events
-	RENAME COLUMN dvce_tstamp TO dvce_created_tstamp,
-	ADD COLUMN event_vendor varchar(1000) encode lzo,
-	ADD COLUMN event_name varchar(1000) encode lzo,
-	ADD COLUMN event_format varchar(128) encode lzo,
-	ADD COLUMN event_version varchar(128) encode lzo,
-	ADD COLUMN event_fingerprint varchar(128) encode lzo,
+	RENAME COLUMN dvce_tstamp TO dvce_created_tstamp;
+
+ALTER TABLE atomic.events
+	ADD COLUMN event_vendor varchar(1000) encode lzo;
+
+ALTER TABLE atomic.events
+	ADD COLUMN event_name varchar(1000) encode lzo;
+
+ALTER TABLE atomic.events
+	ADD COLUMN event_format varchar(128) encode lzo;
+
+ALTER TABLE atomic.events
+	ADD COLUMN event_version varchar(128) encode lzo;
+
+ALTER TABLE atomic.events
+	ADD COLUMN event_fingerprint varchar(128) encode lzo;
+
+ALTER TABLE atomic.events
 	ADD COLUMN true_tstamp timestamp;
 
 COMMENT ON TABLE "atomic"."events" IS '0.7.0';
