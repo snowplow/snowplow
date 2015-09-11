@@ -30,6 +30,7 @@ object Dependencies {
     val kinesisConnector     = "1.1.1"
     val hadoop               = "1.2.1"
     val elephantbird         = "4.5"
+    val awssdk         = "1.7.13"
     // Thrift (test only)
     val collectorPayload     = "0.0.0"
     // Scala
@@ -53,6 +54,7 @@ object Dependencies {
 
   object Libraries {
     // Java
+    val awssdk = "com.amazonaws" % "aws-java-sdk" % V.awssdk
     val slf4j                = "org.slf4j"                  %  "slf4j-simple"             % V.slf4j
     val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"    % V.kinesisClient
     val kinesisConnector     = "com.amazonaws"              %  "amazon-kinesis-connector" % V.kinesisConnector

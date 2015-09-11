@@ -155,11 +155,65 @@ object TableWriter {
 
 }
 
+// TODO: While flushing is in progress, it should be possible to continue writing into files (it takes 10 seconds after all)
+// TODO: Manifest should contain entries for all tables, and flushToRefshift should flush all of them
+
+// TODO: Manifest generation - replace hard-coded values with properties
+// TODO: Location of temp file should be configurable
+// TODO: AWS access keys and secret key should be configurable
+// TODO: Credentials for AWS S3 client and other S3 properties should be configurable
+
+trait FlushLimiter {
+  def isFlushRequired: Boolean
+  def flushed(writeTime: Long)
+  def onRecord(values: Array[String])
+}
+
+class SizeFlushLimiter(batchSize: Int) extends FlushLimiter {
+  var batchCount: Int = 0
+  def isFlushRequired: Boolean = {
+    batchCount > batchSize
+  }
+  def flushed(writeTime: Long) = {
+    batchCount = 0
+  }
+
+  def onRecord(values: Array[String]) = {
+    batchCount += 1
+  }
+}
+
+class RatioFlushLimiter(numerator: Int, denominator: Int, minWriteTime: Long) extends FlushLimiter {
+  var writeTime: Long = 0
+  var lastFlushTime: Long = System.currentTimeMillis()
+  def isFlushRequired: Boolean = {
+    if (writeTime == 0) {
+      System.currentTimeMillis() - lastFlushTime > minWriteTime
+    } else {
+      (System.currentTimeMillis() - lastFlushTime) * denominator > numerator * writeTime
+    }
+  }
+  def flushed(writeTime: Long) = {
+    this.writeTime = writeTime
+  }
+
+  def onRecord(values: Array[String]) = None
+}
+
 class CopyTableWriter(dataSource:DataSource, table: String)(implicit props:Properties) {
   val log = LogFactory.getLog(classOf[CopyTableWriter])
-  var batchCount: Int = 0
   lazy val s3Manifest: String = createManifest
   lazy val bufferFile: File = File.createTempFile(table, ".tsv")
+  val limiter: FlushLimiter = {
+    if (props.containsKey("batchSize")) {
+      new SizeFlushLimiter(Integer.parseInt(props.getProperty("batchSize")))
+    } else if (props.containsKey("denominator") && props.containsKey("numerator") && props.containsKey("minWriteTime")) {
+      new RatioFlushLimiter(Integer.parseInt(props.getProperty("numerator")),
+        Integer.parseInt(props.getProperty("denominator")), java.lang.Long.parseLong(props.getProperty("minWriteTime")))
+    } else {
+      throw new scala.RuntimeException("Need to specify either batchSize or numerator/denominator/minWriteTime for flush limiter")
+    }
+  }
   var bufferFileStream: PrintWriter = null
   def write(values: Array[String]) = {
     // 1. Write record to a file (create if necessary)
@@ -167,13 +221,12 @@ class CopyTableWriter(dataSource:DataSource, table: String)(implicit props:Prope
     // 2.1 If yes, execute Redshift flush, truncate the file
     val file = getBufferFile
     file.println(values.map(f => if (f == null) "" else f).mkString("\t"))
-    batchCount += 1
     if (isFlushRequired) {
       flushToRedshift()
     }
   }
 
-  def isFlushRequired: Boolean = batchCount > 50000
+  def isFlushRequired: Boolean = limiter.isFlushRequired
 
   def getBufferFile: PrintWriter = {
     if (bufferFileStream == null) {
@@ -183,6 +236,7 @@ class CopyTableWriter(dataSource:DataSource, table: String)(implicit props:Prope
   }
 
   def flushToRedshift() = {
+    val start = System.currentTimeMillis()
     bufferFileStream.close()
     bufferFileStream = null
     Runtime.getRuntime.exec(s"scp ${bufferFile.getAbsolutePath} Launcher:${bufferFile.getAbsolutePath}").waitFor()
@@ -192,6 +246,7 @@ class CopyTableWriter(dataSource:DataSource, table: String)(implicit props:Prope
       stat.execute(s"COPY $table FROM '$s3Manifest' " +
         s"CREDENTIALS 'aws_access_key_id=AKIAICNFTTSEWEOJUGFQ;aws_secret_access_key=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' " +
         s"DELIMITER '\\t' MAXERROR 1000 EMPTYASNULL FILLRECORD TRUNCATECOLUMNS  TIMEFORMAT 'auto' ACCEPTINVCHARS GZIP COMPUPDATE OFF SSH;")
+      limiter.flushed(System.currentTimeMillis() - start)
     }
     finally {
       stat.close()
@@ -209,7 +264,7 @@ class CopyTableWriter(dataSource:DataSource, table: String)(implicit props:Prope
     s3client.putObject("digdeep-snowplow-etl", table, stream, metadata)
     s"s3://digdeep-snowplow-etl/$table"
   }
-  def flush() = {
+  def close() = {
     if (bufferFileStream != null) {
       flushToRedshift()
     }
