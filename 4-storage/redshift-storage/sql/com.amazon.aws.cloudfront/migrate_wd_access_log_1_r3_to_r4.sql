@@ -17,8 +17,16 @@
 -- License:     Apache License Version 2.0
 
 ALTER TABLE atomic.com_amazon_aws_cloudfront_wd_access_log_1
-	RENAME COLUMN x_edge_request_type TO x_edge_request_id,
-	ADD COLUMN x_forwarded_for varchar(45) encode lzo,
-	ADD COLUMN ssl_protocol varchar(32) encode lzo,
-	ADD COLUMN ssl_cipher varchar(64) encode lzo,
+	RENAME COLUMN x_edge_request_type TO x_edge_request_id;
+
+ALTER TABLE atomic.com_amazon_aws_cloudfront_wd_access_log_1	
+	ADD COLUMN x_forwarded_for varchar(45) encode lzo;
+
+ALTER TABLE atomic.com_amazon_aws_cloudfront_wd_access_log_1
+	ADD COLUMN ssl_protocol varchar(32) encode lzo;
+
+ALTER TABLE atomic.com_amazon_aws_cloudfront_wd_access_log_1
+	ADD COLUMN ssl_cipher varchar(64) encode lzo;
+
+ALTER TABLE atomic.com_amazon_aws_cloudfront_wd_access_log_1
 	ADD COLUMN x_edge_response_result_type varchar(32) encode lzo;
