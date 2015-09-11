@@ -244,8 +244,8 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
   }
 
 
-  "Parsing a valid referer_parser enrichment JSON" should {
-    "successfully construct a RefererParserEnrichment case class" in {
+  "Parsing a valid event_fingerprint_config enrichment JSON" should {
+    "successfully construct a EventFingerprintEnrichmentConfig case class" in {
 
       val refererParserJson = parse("""{
         "enabled": true,
