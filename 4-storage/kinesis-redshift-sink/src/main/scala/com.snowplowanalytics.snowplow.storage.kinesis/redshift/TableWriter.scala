@@ -10,11 +10,14 @@ import java.sql.Connection
 
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.auth.profile.ProfileCredentialsProvider
+import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client}
 import com.amazonaws.util.StringInputStream
+import com.snowplowanalytics.iglu.client.SchemaKey
 import org.apache.commons.logging.LogFactory
 import org.postgresql.ds.PGPoolingDataSource
+import scala.concurrent.Future
 import scala.language.implicitConversions
 
 object SQLConverters {
@@ -155,14 +158,6 @@ object TableWriter {
 
 }
 
-// TODO: While flushing is in progress, it should be possible to continue writing into files (it takes 10 seconds after all)
-// TODO: Manifest should contain entries for all tables, and flushToRefshift should flush all of them
-
-// TODO: Manifest generation - replace hard-coded values with properties
-// TODO: Location of temp file should be configurable
-// TODO: AWS access keys and secret key should be configurable
-// TODO: Credentials for AWS S3 client and other S3 properties should be configurable
-
 trait FlushLimiter {
   def isFlushRequired: Boolean
   def flushed(writeTime: Long)
@@ -171,14 +166,14 @@ trait FlushLimiter {
 
 class SizeFlushLimiter(batchSize: Int) extends FlushLimiter {
   var batchCount: Int = 0
-  def isFlushRequired: Boolean = {
+  override def isFlushRequired: Boolean = {
     batchCount > batchSize
   }
-  def flushed(writeTime: Long) = {
+  override def flushed(writeTime: Long) = {
     batchCount = 0
   }
 
-  def onRecord(values: Array[String]) = {
+  override def onRecord(values: Array[String]) = {
     batchCount += 1
   }
 }
@@ -186,24 +181,142 @@ class SizeFlushLimiter(batchSize: Int) extends FlushLimiter {
 class RatioFlushLimiter(numerator: Int, denominator: Int, minWriteTime: Long) extends FlushLimiter {
   var writeTime: Long = 0
   var lastFlushTime: Long = System.currentTimeMillis()
-  def isFlushRequired: Boolean = {
+  override def isFlushRequired: Boolean = {
     if (writeTime == 0) {
       System.currentTimeMillis() - lastFlushTime > minWriteTime
     } else {
       (System.currentTimeMillis() - lastFlushTime) * denominator > numerator * writeTime
     }
   }
-  def flushed(writeTime: Long) = {
+  override def flushed(writeTime: Long) = {
     this.writeTime = writeTime
   }
-
-  def onRecord(values: Array[String]) = None
+  override def onRecord(values: Array[String]) = {}
 }
 
-class CopyTableWriter(dataSource:DataSource, table: String)(implicit props:Properties) {
-  val log = LogFactory.getLog(classOf[CopyTableWriter])
+trait CopyTableWriter {
+  def flushToRedshift()
+}
+
+abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implicit config: KinesisConnectorConfiguration, props: Properties) extends CopyTableWriter {
+  private val log = LogFactory.getLog(classOf[BaseCopyTableWriter])
   lazy val s3Manifest: String = createManifest
-  lazy val bufferFile: File = File.createTempFile(table, ".tsv")
+  lazy val bufferFileInterm: File = File.createTempFile(table, ".tsv.gz")
+  lazy val bufferFile: File = File.createTempFile(table + "_interm", ".tsv.gz")
+  @volatile var pending: Future[Unit] = null
+
+  var bufferFileStream: PrintWriter = null
+  def write(values: Array[String]): Unit = {
+    write(values.map(f => if (f == null) "" else f).mkString("\t"))
+  }
+  def write(value: String): Unit = {
+    // 1. Write record to a file (create if necessary)
+    // 2. Check if flush is necessary
+    // 2.1 If yes, execute Redshift flush, truncate the file
+    val file = getBufferFile
+    file.println(value)
+    if (isFlushRequired && (pending == null || pending.isCompleted)) {
+      flushToRedshift()
+    }
+  }
+
+  def beforeFlushToRedshift() = {
+    bufferFileStream.close()
+    bufferFileStream = null
+    if (bufferFile.exists()) bufferFile.delete()
+    bufferFileInterm.renameTo(bufferFile)
+  }
+
+  def flushToRedshift() = {
+    beforeFlushToRedshift()
+    pending = Future {
+      onFlushToRedshift()
+    }
+    pending onComplete {
+      case _ =>
+        afterFlushToRedshift()
+        pending = null
+    }
+  }
+
+  def afterFlushToRedshift() = {
+
+  }
+  abstract def onFlushToRedshift()
+
+  def isFlushRequired: Boolean = false
+
+  def getBufferFile: PrintWriter = {
+    if (bufferFileStream == null) {
+      bufferFileStream = new PrintWriter(new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(bufferFileInterm, false))))
+    }
+    bufferFileStream
+  }
+  def close() = {
+    if (bufferFileStream != null) {
+      flushToRedshift()
+    }
+    if (bufferFileStream != null) {
+      bufferFileStream.close()
+    }
+    if (bufferFile != null && bufferFile.exists()) {
+      bufferFile.delete()
+    }
+    if (bufferFileInterm != null && bufferFileInterm.exists()) {
+      bufferFileInterm.delete()
+    }
+  }
+  def createManifest: String = {
+    val s3client = new AmazonS3Client(config.AWS_CREDENTIALS_PROVIDER)
+    val endPoint = props.getProperty("sshEndpoint")
+    val username = props.getProperty("sshUsername")
+    val s3Folder = props.getProperty("sshS3Folder")
+    val manifest = s"{ \n\n    \"entries\": [ \n\t    {\"endpoint\":\"$endPoint\", \n           " +
+      "\"command\": \"cat " + bufferFile.getAbsolutePath + "\",\n           \"mandatory\":true, \n           \"username\": \"$username\"} \n     ] \n}"
+    val stream: StringInputStream = new StringInputStream(manifest)
+    val metadata: ObjectMetadata = new ObjectMetadata()
+    metadata.setContentLength(stream.available())
+    s3client.putObject(s3Folder, table, stream, metadata)
+    s"s3://$s3Folder/$table"
+  }
+}
+
+class SchemaTableWriter(dataSource:DataSource, schema: SchemaKey, table: String)(implicit props:Properties) extends BaseCopyTableWriter(dataSource, table) {
+  val jsonPaths = {
+    val propJsonPaths = props.getProperty("jsonPaths")
+    val (major, _, _) = schema.getModelRevisionAddition.get
+    val newName = schema.name.replaceAllLiterally(".","_").replaceAllLiterally("-","_")
+    val vendor = schema.vendor.replaceAllLiterally(".","_").replaceAllLiterally("-", "_")
+    s"$propJsonPaths/$vendor/${newName}_$major.json"
+  }
+  override def onFlushToRedshift() = {
+    Runtime.getRuntime.exec(s"scp ${bufferFile.getAbsolutePath} Launcher:${bufferFile.getAbsolutePath}").waitFor()
+    val con = TableWriter.getConnection(dataSource)
+    val stat = con.createStatement()
+    try {
+      try {
+        val accessKey = props.getProperty("s3AccessKey")
+        val secretKey = props.getProperty("s3SecretKey")
+        stat.execute(s"COPY $table FROM '$s3Manifest' " +
+          s"CREDENTIALS 'aws_access_key_id=$accessKey;aws_secret_access_key=$secretKey' " +
+          s"json '$jsonPaths' " +
+          "DELIMITER '\\t' MAXERROR 1000 EMPTYASNULL FILLRECORD TRUNCATECOLUMNS  TIMEFORMAT 'auto' ACCEPTINVCHARS GZIP COMPUPDATE OFF SSH;")
+      }
+      finally {
+        stat.close()
+      }
+    }
+    finally {
+      con.close()
+    }
+  }
+}
+
+class EventsTableWriter(dataSource:DataSource, table: String)(implicit props:Properties) extends BaseCopyTableWriter(dataSource, table) {
+  private val log = LogFactory.getLog(classOf[EventsTableWriter])
+  var dependents: List[CopyTableWriter] = List()
+
+  // TODO Properties
   val limiter: FlushLimiter = {
     if (props.containsKey("batchSize")) {
       new SizeFlushLimiter(Integer.parseInt(props.getProperty("batchSize")))
@@ -214,72 +327,38 @@ class CopyTableWriter(dataSource:DataSource, table: String)(implicit props:Prope
       throw new scala.RuntimeException("Need to specify either batchSize or numerator/denominator/minWriteTime for flush limiter")
     }
   }
-  var bufferFileStream: PrintWriter = null
-  def write(values: Array[String]) = {
-    // 1. Write record to a file (create if necessary)
-    // 2. Check if flush is necessary
-    // 2.1 If yes, execute Redshift flush, truncate the file
-    val file = getBufferFile
-    file.println(values.map(f => if (f == null) "" else f).mkString("\t"))
-    if (isFlushRequired) {
-      flushToRedshift()
-    }
-  }
 
-  def isFlushRequired: Boolean = limiter.isFlushRequired
+  override def isFlushRequired: Boolean = limiter.isFlushRequired
 
-  def getBufferFile: PrintWriter = {
-    if (bufferFileStream == null) {
-      bufferFileStream = new PrintWriter(new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(bufferFile, false))))
-    }
-    bufferFileStream
-  }
-
-  def flushToRedshift() = {
+  override def onFlushToRedshift() = {
     val start = System.currentTimeMillis()
-    bufferFileStream.close()
-    bufferFileStream = null
     Runtime.getRuntime.exec(s"scp ${bufferFile.getAbsolutePath} Launcher:${bufferFile.getAbsolutePath}").waitFor()
     val con = TableWriter.getConnection(dataSource)
     val stat = con.createStatement()
     try {
-      stat.execute(s"COPY $table FROM '$s3Manifest' " +
-        s"CREDENTIALS 'aws_access_key_id=AKIAICNFTTSEWEOJUGFQ;aws_secret_access_key=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' " +
-        s"DELIMITER '\\t' MAXERROR 1000 EMPTYASNULL FILLRECORD TRUNCATECOLUMNS  TIMEFORMAT 'auto' ACCEPTINVCHARS GZIP COMPUPDATE OFF SSH;")
+      try {
+        val accessKey = props.getProperty("s3AccessKey")
+        val secretKey = props.getProperty("s3SecretKey")
+        stat.execute(s"COPY $table FROM '$s3Manifest' " +
+          s"CREDENTIALS 'aws_access_key_id=$accessKey;aws_secret_access_key=$secretKey' " +
+          "DELIMITER '\\t' MAXERROR 1000 EMPTYASNULL FILLRECORD TRUNCATECOLUMNS  TIMEFORMAT 'auto' ACCEPTINVCHARS GZIP COMPUPDATE OFF SSH;")
+      }
+      finally {
+        stat.close()
+      }
+      dependents.foreach(_.flushToRedshift())
       limiter.flushed(System.currentTimeMillis() - start)
     }
     finally {
-      stat.close()
       con.close()
     }
   }
 
-  def createManifest: String = {
-    val s3client = new AmazonS3Client(new ProfileCredentialsProvider("digdeep-snowplow"))
-    val manifest = "{ \n\n    \"entries\": [ \n\t    {\"endpoint\":\"52.64.36.142\", \n           " +
-      "\"command\": \"cat " + bufferFile.getAbsolutePath + "\",\n           \"mandatory\":true, \n           \"username\": \"ubuntu\"} \n     ] \n}"
-    val stream: StringInputStream = new StringInputStream(manifest)
-    val metadata: ObjectMetadata = new ObjectMetadata()
-    metadata.setContentLength(stream.available())
-    s3client.putObject("digdeep-snowplow-etl", table, stream, metadata)
-    s"s3://digdeep-snowplow-etl/$table"
-  }
-  def close() = {
-    if (bufferFileStream != null) {
-      flushToRedshift()
-    }
-    if (bufferFileStream != null) {
-      bufferFileStream.close()
-    }
-    if (bufferFile != null) {
-      bufferFile.delete()
-    }
+  def addDependent(dependent: CopyTableWriter) = {
+    dependents ::= dependent
   }
 }
 
-/**
- * Created by denismo on 16/07/15.
- */
 class TableWriter(dataSource:DataSource, table: String)(implicit props:Properties) {
   val log = LogFactory.getLog(classOf[TableWriter])
 
