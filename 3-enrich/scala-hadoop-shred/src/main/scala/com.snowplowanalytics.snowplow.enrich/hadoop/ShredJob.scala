@@ -187,6 +187,7 @@ class ShredJob(args : Args) extends Job(args) {
     .map('line -> 'output) { l: String =>
       ShredJob.loadAndShred(l)
     }
+    .forceToDisk
 
   // Handle bad rows
   val bad = common
