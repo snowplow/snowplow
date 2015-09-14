@@ -15,8 +15,10 @@
 -- Authors:     Fred Blundun
 -- Copyright:   Copyright (c) 2015 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
+
+BEGIN TRANSACTION;
+
 ALTER TABLE "atomic"."events"
-	RENAME COLUMN dvce_tstamp TO dvce_created_tstamp,
 	ADD COLUMN event_vendor varchar(1000),
 	ADD COLUMN event_name varchar(1000),
 	ADD COLUMN event_format varchar(128),
@@ -24,4 +26,9 @@ ALTER TABLE "atomic"."events"
 	ADD COLUMN event_fingerprint varchar(128),
 	ADD COLUMN true_tstamp timestamp;
 
+ALTER TABLE "atomic"."events"
+	RENAME COLUMN dvce_tstamp TO dvce_created_tstamp;
+
 COMMENT ON TABLE "atomic"."events" IS '0.6.0';
+
+END TRANSACTION;
