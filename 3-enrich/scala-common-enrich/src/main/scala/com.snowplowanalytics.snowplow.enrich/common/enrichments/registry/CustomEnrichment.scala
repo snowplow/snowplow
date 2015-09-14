@@ -67,9 +67,9 @@ object CustomEnrichment extends ParseableEnrichment {
       val setupObjects = for {
         JArray(cc) <- config \ "parameters" \ "classes"
         classConfiguration <- cc
-        JString(qualifiedClassname) <- classConfiguration
-        JString(classUrl) <- classConfiguration
-        JBool(classEnabled) <- classConfiguration
+        JString(qualifiedClassname) <- classConfiguration \ "class"
+        JString(classUrl) <- classConfiguration \ "url"
+        JBool(classEnabled) <- classConfiguration \ "enabled"
       } yield UserEnrichmentSetup(qualifiedClassname, classUrl, classEnabled)
 
       CustomEnrichment(setupObjects)
