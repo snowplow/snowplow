@@ -51,7 +51,7 @@ object JobSpecHelpers {
   /**
    * The current version of our Hadoop ETL
    */
-  val EtlVersion = "hadoop-1.0.0-common-0.14.0"
+  val EtlVersion = "hadoop-1.2.0-rc1-common-0.17.0-M2"
 
   val EtlTimestamp = "2001-09-09 01:46:40.000"
 

@@ -20,7 +20,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    version       := "1.0.0",
+    version       := "1.2.0-rc1",
     description   := "The Snowplow Hadoop Enrichment process, written in Scalding for Hadoop 2.4",
     scalaVersion  := "2.10.4",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8",
@@ -53,6 +53,8 @@ object BuildSettings {
     jarName in assembly := {
       name.value + "-" + version.value + ".jar"
     },
+
+    test in assembly := {},
 
     // Drop these jars
     excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
