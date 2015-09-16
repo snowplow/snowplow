@@ -19,6 +19,8 @@ package scalastream
 // Java
 import java.nio.ByteBuffer
 import java.util.UUID
+import java.net.URI
+import org.apache.http.client.utils.URLEncodedUtils
 
 // Apache Commons
 import org.apache.commons.codec.binary.Base64
@@ -38,6 +40,7 @@ import spray.http.{
   RemoteAddress
 }
 import spray.http.HttpHeaders.{
+  `Location`,
   `Set-Cookie`,
   `Remote-Address`,
   `Raw-Request-URI`,
@@ -86,6 +89,7 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
       request: HttpRequest, refererUri: Option[String], path: String, pixelExpected: Boolean):
       (HttpResponse, List[Array[Byte]]) = {
 
+    // TODO: don't give this response in the case of click redirects
     if (KinesisSink.shuttingDown) {
       (notFound, null)
     } else {
@@ -163,11 +167,20 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
         headersWithoutCookie
       }
 
-      val httpResponse = (if (pixelExpected) {
-          HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
-        } else {
-          HttpResponse()
-        }).withHeaders(headers)
+      val httpResponse = if (path == "/r") {
+        // TODO: handle error in parsing querystring and log errors to Kinesis
+        val target = URLEncodedUtils.parse(URI.create("?" + queryParams), "UTF-8")
+          .find(_.getName == "u")
+          .map(_.getValue)
+        target match {
+          case Some(t) => HttpResponse(302).withHeaders(`Location`(t) :: headers)
+          case None => badRequest
+        }
+      } else (if (pixelExpected) {
+        HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
+      } else {
+        HttpResponse()
+      }).withHeaders(headers)
 
       (httpResponse, sinkResponse)
     }
@@ -190,6 +203,7 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
   )
 
   def healthy = HttpResponse(status = 200, entity = s"OK")
+  def badRequest = HttpResponse(status = 400, entity = "400 Bad request")
   def notFound = HttpResponse(status = 404, entity = "404 Not found")
   def timeout = HttpResponse(status = 500, entity = s"Request timed out.")
 
