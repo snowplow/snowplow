@@ -18,10 +18,20 @@ package scalastream
 
 // Java
 import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
+import java.net.URI
+import org.apache.http.client.utils.URLEncodedUtils
 
 // Apache Commons
 import org.apache.commons.codec.binary.Base64
+
+// Scala
+import scala.util.control.NonFatal
+
+// Scalaz
+import scalaz._
+import Scalaz._
 
 // Spray
 import spray.http.{
@@ -38,6 +48,7 @@ import spray.http.{
   RemoteAddress
 }
 import spray.http.HttpHeaders.{
+  `Location`,
   `Set-Cookie`,
   `Remote-Address`,
   `Raw-Request-URI`,
@@ -65,6 +76,9 @@ import CollectorPayload.thrift.model1.CollectorPayload
 import sinks._
 import utils.SplitBatch
 
+// Common Enrich
+import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
+
 // Contains an invisible pixel to return for `/i` requests.
 object ResponseHandler {
   val pixel = Base64.decodeBase64(
@@ -85,10 +99,6 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
       userAgent: Option[String], hostname: String, ip: RemoteAddress,
       request: HttpRequest, refererUri: Option[String], path: String, pixelExpected: Boolean):
       (HttpResponse, List[Array[Byte]]) = {
-
-    if (KinesisSink.shuttingDown) {
-      (notFound, null)
-    } else {
 
       // Make a Tuple2 with the ip address and the shard partition key
       val ipKey = ip.toOption.map(_.getHostAddress) match {
@@ -133,15 +143,21 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
         ct => event.contentType = ct.value.toLowerCase
       }
 
-      // Split events into Good and Bad
-      val eventSplit = SplitBatch.splitAndSerializePayload(event, sinks.good.MaxBytes)
+      // Only send to Kinesis if we aren't shutting down
+      val sinkResponse = if (!KinesisSink.shuttingDown) {
 
-      // Send events to respective sinks
-      val sinkResponseGood = sinks.good.storeRawEvents(eventSplit.good, ipKey._2)
-      val sinkResponseBad  = sinks.bad.storeRawEvents(eventSplit.bad, ipKey._2)
+        // Split events into Good and Bad
+        val eventSplit = SplitBatch.splitAndSerializePayload(event, sinks.good.MaxBytes)
 
-      // Sink Responses for Test Sink
-      val sinkResponse = sinkResponseGood ++ sinkResponseBad
+        // Send events to respective sinks
+        val sinkResponseGood = sinks.good.storeRawEvents(eventSplit.good, ipKey._2)
+        val sinkResponseBad  = sinks.bad.storeRawEvents(eventSplit.bad, ipKey._2)
+
+        // Sink Responses for Test Sink
+        sinkResponseGood ++ sinkResponseBad
+      } else {
+        null
+      }
 
       val policyRef = config.p3pPolicyRef
       val CP = config.p3pCP
@@ -163,15 +179,38 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
         headersWithoutCookie
       }
 
-      val httpResponse = (if (pixelExpected) {
-          HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
-        } else {
-          HttpResponse()
-        }).withHeaders(headers)
+      val (httpResponse, badQsResponse) = if (path startsWith "/r/") {
+        // A click redirect
+        try {
+          // TODO: log errors to Kinesis as BadRows
+          val target = URLEncodedUtils.parse(URI.create("?" + queryParams), "UTF-8")
+            .find(_.getName == "u")
+            .map(_.getValue)
+          target match {
+            case Some(t) => HttpResponse(302).withHeaders(`Location`(t) :: headers) -> Nil
+            // case None => badRequest -> sinks.bad.storeRawEvents(List("TODO".getBytes), ipKey._2)
+            case None => {
+              val everythingSerialized = new String(SplitBatch.ThriftSerializer.get().serialize(event))
+              badRequest -> sinks.bad.storeRawEvents(List(createBadRow(event, s"Redirect failed due to lack of u parameter")), ipKey._2)
+            }
+          }
+        } catch {
+          case NonFatal(e) => {
+            val everythingSerialized = new String(SplitBatch.ThriftSerializer.get().serialize(event))
+            badRequest -> sinks.bad.storeRawEvents(List(createBadRow(event, s"Redirect failed due to error $e")), ipKey._2)
+          }
+        }
+      } else if (KinesisSink.shuttingDown) {
+        // So that the tracker knows the request failed and can try to resend later
+        notFound -> Nil
+      } else (if (pixelExpected) {
+        HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
+      } else {
+        HttpResponse()
+      }).withHeaders(headers) -> Nil
 
-      (httpResponse, sinkResponse)
+      (httpResponse, badQsResponse ++ sinkResponse)
     }
-  }
 
   /**
    * Creates a response to the CORS preflight Options request
@@ -190,6 +229,7 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
   )
 
   def healthy = HttpResponse(status = 200, entity = s"OK")
+  def badRequest = HttpResponse(status = 400, entity = "400 Bad request")
   def notFound = HttpResponse(status = 404, entity = "404 Not found")
   def timeout = HttpResponse(status = 500, entity = s"Request timed out.")
 
@@ -208,4 +248,15 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
       case Some(`Origin`(origin)) => SomeOrigins(origin)
       case _ => AllOrigins
     })
+
+  /**
+   * Put together a bad row ready for sinking to Kinesis
+   *
+   * @param event
+   * @param message
+   * @return Bad row
+   */
+  private def createBadRow(event: CollectorPayload, message: String): Array[Byte] = {
+    BadRow(new String(SplitBatch.ThriftSerializer.get().serialize(event)), NonEmptyList(message)).toCompactJson.getBytes(UTF_8)
+  }
 }
