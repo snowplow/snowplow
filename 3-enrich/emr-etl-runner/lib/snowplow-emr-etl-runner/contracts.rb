@@ -75,6 +75,7 @@ module Snowplow
       :host => String,
       :database => String,
       :port => Num,
+      :ssl_mode => String,
       :table => String,
       :username => String,
       :password => String,

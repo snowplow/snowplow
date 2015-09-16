@@ -16,15 +16,16 @@
 -- Data Model: web-incremental
 -- Version: 2.0
 --
--- Move new sessions to derived:
+-- Aggregate new and old rows:
 -- (a) calculate aggregate frame (i.e. a GROUP BY)
 -- (b) calculate initial frame (i.e. first value)
 -- (c) calculate final frame (i.e. last value)
--- (d) combine and insert into derived
+-- (d) combine
 
-BEGIN;
-
-INSERT INTO derived.sessions (
+CREATE TABLE snplw_temp.sessions_aggregated
+  DISTKEY (domain_userid)
+  SORTKEY (domain_userid, domain_sessionidx, min_dvce_created_tstamp)
+AS (
 
 WITH aggregate_frame AS (
 
@@ -37,8 +38,8 @@ WITH aggregate_frame AS (
 
     MIN(session_start_tstamp) AS session_start_tstamp,
     MAX(session_end_tstamp) AS session_end_tstamp,
-    MIN(min_dvce_tstamp) AS min_dvce_tstamp,
-    MAX(max_dvce_tstamp) AS max_dvce_tstamp,
+    MIN(min_dvce_created_tstamp) AS min_dvce_created_tstamp,
+    MAX(max_dvce_created_tstamp) AS max_dvce_created_tstamp,
     MAX(max_etl_tstamp) AS max_etl_tstamp,
     SUM(event_count) AS event_count,
     SUM(time_engaged_with_minutes) AS time_engaged_with_minutes
@@ -114,7 +115,7 @@ WITH aggregate_frame AS (
     INNER JOIN aggregate_frame AS b
       ON  a.domain_userid = b.domain_userid
       AND a.domain_sessionidx = b.domain_sessionidx
-      AND a.min_dvce_tstamp = b.min_dvce_tstamp
+      AND a.min_dvce_created_tstamp = b.min_dvce_created_tstamp
 
     ORDER BY 1,2
 
@@ -144,7 +145,7 @@ WITH aggregate_frame AS (
     INNER JOIN aggregate_frame AS b
       ON  a.domain_userid = b.domain_userid
       AND a.domain_sessionidx = b.domain_sessionidx
-      AND a.max_dvce_tstamp = b.max_dvce_tstamp
+      AND a.max_dvce_created_tstamp = b.max_dvce_created_tstamp
 
     ORDER BY 1,2
 
@@ -165,8 +166,8 @@ SELECT
 
   a.session_start_tstamp,
   a.session_end_tstamp,
-  a.min_dvce_tstamp,
-  a.max_dvce_tstamp,
+  a.min_dvce_created_tstamp,
+  a.max_dvce_created_tstamp,
   a.max_etl_tstamp,
   a.event_count,
   a.time_engaged_with_minutes,
@@ -234,6 +235,4 @@ LEFT JOIN final_frame AS f
 
 );
 
-COMMIT;
-
-INSERT INTO snplw_temp.queries (SELECT 'sessions', 'move-to-derived', GETDATE()); -- track time
+INSERT INTO snplw_temp.queries (SELECT 'sessions', 'aggregate', GETDATE()); -- track time

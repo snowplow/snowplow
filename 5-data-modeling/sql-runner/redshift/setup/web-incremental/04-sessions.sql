@@ -28,8 +28,8 @@ CREATE TABLE derived.sessions (
 
   session_start_tstamp timestamp,
   session_end_tstamp timestamp,
-  min_dvce_tstamp timestamp,
-  max_dvce_tstamp timestamp,
+  min_dvce_created_tstamp timestamp,
+  max_dvce_created_tstamp timestamp,
   max_etl_tstamp timestamp,
 
   event_count	bigint,
@@ -95,4 +95,4 @@ CREATE TABLE derived.sessions (
 )
 DISTSTYLE KEY
 DISTKEY (domain_userid)
-SORTKEY (domain_userid, domain_sessionidx, min_dvce_tstamp);
+SORTKEY (domain_userid, domain_sessionidx, min_dvce_created_tstamp);

@@ -35,7 +35,7 @@ AS (
     c.geo_latitude,
     c.geo_longitude
   FROM (
-    SELECT -- Select the geographical information associated with the earliest dvce_tstamp
+    SELECT -- Select the geographical information associated with the earliest dvce_created_tstamp
       a.domain_userid,
       a.domain_sessionidx,
       a.geo_country,
@@ -50,10 +50,10 @@ AS (
     INNER JOIN snowplow_intermediary.sessions_basic AS b
       ON  a.domain_userid = b.domain_userid
       AND a.domain_sessionidx = b.domain_sessionidx
-      AND a.dvce_tstamp = b.dvce_min_tstamp -- Replaces the FIRST VALUE window function in SQL
-    GROUP BY 1,2,3,4,5,6,7,8 -- Aggregate identital rows (that happen to have the same dvce_tstamp)
+      AND a.dvce_created_tstamp = b.dvce_min_tstamp -- Replaces the FIRST VALUE window function in SQL
+    GROUP BY 1,2,3,4,5,6,7,8 -- Aggregate identital rows (that happen to have the same dvce_created_tstamp)
   ) AS c
   LEFT JOIN reference_data.country_codes AS d
     ON c.geo_country = d.two_letter_iso_code
-  WHERE c.rank = 1 -- If there are different rows with the same dvce_tstamp, rank and pick the first row
+  WHERE c.rank = 1 -- If there are different rows with the same dvce_created_tstamp, rank and pick the first row
 );

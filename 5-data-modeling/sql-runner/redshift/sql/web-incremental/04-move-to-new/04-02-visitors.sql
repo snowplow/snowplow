@@ -15,26 +15,7 @@
 --
 -- Data Model: web-incremental
 -- Version: 2.0
---
--- Add old entries that also appear in this new batch:
--- (a) backup selected old visitors
--- (b) move those visitors
--- (c) delete them
 
-BEGIN;
-
-  -- (a) backup selected old visitors
-  CREATE TABLE snplw_temp.visitors_backup
-    DISTKEY (blended_user_id)
-    SORTKEY (blended_user_id)
-  AS (SELECT * FROM derived.visitors WHERE blended_user_id IN (SELECT blended_user_id FROM snplw_temp.visitors));
-
-  -- (b) move those visitors
-  INSERT INTO snplw_temp.visitors (SELECT * FROM derived.visitors WHERE blended_user_id IN (SELECT blended_user_id FROM snplw_temp.visitors));
-
-  -- (c) delete them
-  DELETE FROM derived.visitors WHERE blended_user_id IN (SELECT blended_user_id FROM snplw_temp.visitors);
-
-COMMIT;
+INSERT INTO snplw_temp.visitors (SELECT * FROM derived.visitors WHERE blended_user_id IN (SELECT blended_user_id FROM snplw_temp.visitors)); -- add old entries that also appear in this new batch
 
 INSERT INTO snplw_temp.queries (SELECT 'visitors', 'move-to-new', GETDATE()); -- track time

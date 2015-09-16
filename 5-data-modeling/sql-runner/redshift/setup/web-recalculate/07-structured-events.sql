@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS snowplow_pivots.structured_events (
   domain_userid varchar(36),
   domain_sessionidx smallint,
   etl_tstamp timestamp,
-  dvce_tstamp timestamp,
+  dvce_created_tstamp timestamp,
   collector_tstamp timestamp,
   se_category varchar(1000) encode text32k,
   se_action varchar(1000) encode text32k,

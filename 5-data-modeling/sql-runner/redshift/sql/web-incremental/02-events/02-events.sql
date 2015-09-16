@@ -24,7 +24,7 @@
 
 CREATE TABLE snplw_temp.enriched_events
   DISTKEY (domain_userid)
-  SORTKEY (domain_userid, domain_sessionidx, dvce_tstamp)
+  SORTKEY (domain_userid, domain_sessionidx, dvce_created_tstamp)
 AS (
 
 WITH events AS (
@@ -44,7 +44,7 @@ WITH events AS (
       e.event, -- for filtering
 
       e.collector_tstamp,
-      e.dvce_tstamp,
+      e.dvce_created_tstamp,
       e.etl_tstamp, -- for debugging
 
       e.geo_country,
@@ -103,10 +103,10 @@ WITH events AS (
       AND e.domain_userid IS NOT NULL     -- do not aggregate NULL
       AND e.domain_sessionidx IS NOT NULL -- do not aggregate NULL
       AND e.collector_tstamp IS NOT NULL  -- not required
-      AND e.dvce_tstamp IS NOT NULL       -- not required
+      AND e.dvce_created_tstamp IS NOT NULL       -- not required
 
-      AND e.dvce_tstamp < DATEADD(year, +1, e.collector_tstamp) -- remove outliers (can cause errors)
-      AND e.dvce_tstamp > DATEADD(year, -1, e.collector_tstamp) -- remove outliers (can cause errors)
+      AND e.dvce_created_tstamp < DATEADD(year, +1, e.collector_tstamp) -- remove outliers (can cause errors)
+      AND e.dvce_created_tstamp > DATEADD(year, -1, e.collector_tstamp) -- remove outliers (can cause errors)
 
     --AND e.app_id = 'production'
     --AND e.platform = ''

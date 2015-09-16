@@ -11,7 +11,8 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-package hadoop
+package common
+package utils
 package shredder
 
 // Jackson
@@ -29,12 +30,6 @@ import Scalaz._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-
-// Snowplow Common Enrich
-import common._
-
-// This project
-import hadoop.utils.JsonUtils
 
 /**
  * Companion object contains helpers.
@@ -112,7 +107,7 @@ case class TypeHierarchy(
    *        element from
    * @return the last-but-one element from this list
    */
-  private[shredder] def secondTail[A](ls: List[A]): A = ls match {
+  private def secondTail[A](ls: List[A]): A = ls match {
     case h :: _ :: Nil => h
     case _ :: tail     => secondTail(tail)
     case _             => throw new NoSuchElementException

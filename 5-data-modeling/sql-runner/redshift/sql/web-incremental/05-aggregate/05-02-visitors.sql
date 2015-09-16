@@ -16,14 +16,15 @@
 -- Data Model: web-incremental
 -- Version: 2.0
 --
--- Move new visitors to derived:
+-- Aggregate new and old rows:
 -- (a) calculate aggregate frame (i.e. a GROUP BY)
 -- (b) calculate initial frame (i.e. first value)
--- (c) combine and insert into derived
+-- (c) combine
 
-BEGIN;
-
-INSERT INTO derived.visitors (
+CREATE TABLE snplw_temp.visitors_aggregated
+  DISTKEY (blended_user_id)
+  SORTKEY (blended_user_id)
+AS (
 
 WITH aggregate_frame AS (
 
@@ -35,8 +36,8 @@ WITH aggregate_frame AS (
 
     MIN(first_touch_tstamp) AS first_touch_tstamp,
     MAX(last_touch_tstamp) AS last_touch_tstamp,
-    MIN(min_dvce_tstamp) AS min_dvce_tstamp,
-    MAX(max_dvce_tstamp) AS max_dvce_tstamp,
+    MIN(min_dvce_created_tstamp) AS min_dvce_created_tstamp,
+    MAX(max_dvce_created_tstamp) AS max_dvce_created_tstamp,
     MAX(max_etl_tstamp) AS max_etl_tstamp,
     SUM(event_count) AS event_count,
     MAX(session_count) AS session_count, -- MAX not SUM
@@ -77,7 +78,7 @@ WITH aggregate_frame AS (
 
     INNER JOIN aggregate_frame AS b
       ON  a.blended_user_id = b.blended_user_id
-      AND a.min_dvce_tstamp = b.min_dvce_tstamp
+      AND a.min_dvce_created_tstamp = b.min_dvce_created_tstamp
 
     ORDER BY 1
 
@@ -94,8 +95,8 @@ SELECT
 
   a.first_touch_tstamp,
   a.last_touch_tstamp,
-  a.min_dvce_tstamp,
-  a.max_dvce_tstamp,
+  a.min_dvce_created_tstamp,
+  a.max_dvce_created_tstamp,
   a.max_etl_tstamp,
   a.event_count,
   a.session_count,
@@ -124,6 +125,4 @@ LEFT JOIN initial_frame AS i
 
 );
 
-COMMIT;
-
-INSERT INTO snplw_temp.queries (SELECT 'visitors', 'move-to-derived', GETDATE()); -- track time
+INSERT INTO snplw_temp.queries (SELECT 'visitors', 'aggregate', GETDATE()); -- track time

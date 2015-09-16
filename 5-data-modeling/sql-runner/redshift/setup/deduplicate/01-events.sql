@@ -17,7 +17,7 @@
 -- Version: 0.2
 --
 -- Duplicated events:
--- (a) create the duplicated events table (identical to atomic.events)
+-- (a) create the duplicated events table (identical to atomic.events 0.6)
 
 CREATE TABLE IF NOT EXISTS duplicates.events (
 

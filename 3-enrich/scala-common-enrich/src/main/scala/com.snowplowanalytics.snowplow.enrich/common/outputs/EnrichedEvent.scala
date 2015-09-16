@@ -45,7 +45,7 @@ class EnrichedEvent {
   // Date/time
   @BeanProperty var etl_tstamp: String = _
   @BeanProperty var collector_tstamp: String = _
-  @BeanProperty var dvce_tstamp: String = _
+  @BeanProperty var dvce_created_tstamp: String = _
 
   // Transaction (i.e. this logging event)
   @BeanProperty var event: String = _
@@ -231,4 +231,16 @@ class EnrichedEvent {
 
   // Derived timestamp
   @BeanProperty var derived_tstamp: String = _
+
+  // Derived event vendor/name/format/version
+  @BeanProperty var event_vendor: String = _
+  @BeanProperty var event_name: String = _
+  @BeanProperty var event_format: String = _
+  @BeanProperty var event_version: String = _
+
+  // Event fingerprint
+  @BeanProperty var event_fingerprint: String = _
+
+  // True timestamp
+  @BeanProperty var true_tstamp: String = _
 }
