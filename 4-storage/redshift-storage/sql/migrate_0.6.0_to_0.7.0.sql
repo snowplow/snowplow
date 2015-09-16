@@ -16,6 +16,8 @@
 -- Copyright:   Copyright (c) 2015 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
+BEGIN TRANSACTION;
+
 ALTER TABLE atomic.events
 	RENAME COLUMN dvce_tstamp TO dvce_created_tstamp;
 
@@ -38,3 +40,5 @@ ALTER TABLE atomic.events
 	ADD COLUMN true_tstamp timestamp;
 
 COMMENT ON TABLE "atomic"."events" IS '0.7.0';
+
+END TRANSACTION;
