@@ -22,6 +22,7 @@ package sinks
 
 // Java
 import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets.UTF_8
 
 // Amazon
 import com.amazonaws.services.kinesis.model.ResourceNotFoundException
@@ -175,7 +176,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
       val newBytes = event._1.capacity
 
       if (newBytes >= MaxBytes) {
-        val original = new String(event._1.array)
+        val original = new String(event._1.array, UTF_8)
         error(s"Dropping record with size $newBytes bytes: [$original]")
       } else {
 
@@ -219,7 +220,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
    * @return whether to send the stored events to Kinesis
    */
   def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
-    val wrappedEvents = events.map(e => ByteBuffer.wrap(e._1.getBytes) -> e._2)
+    val wrappedEvents = events.map(e => ByteBuffer.wrap(e._1.getBytes(UTF_8)) -> e._2)
     wrappedEvents.foreach(EventStorage.addEvent(_))
 
     // Log BadRows
