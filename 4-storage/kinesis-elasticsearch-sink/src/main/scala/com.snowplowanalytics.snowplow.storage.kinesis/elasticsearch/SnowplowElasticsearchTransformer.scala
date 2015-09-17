@@ -323,7 +323,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
       val validatedJObjects: Array[ValidationNel[String, JObject]] = fields.zip(event).map(converter)
       val switched: ValidationNel[String, List[JObject]] = validatedJObjects.toList.sequenceU
       switched.map( x => {
-        val j = x.fold(geoLocation)(_ ~ _)
+        val j = x.fold(geoLocation)((x,y) => y ~ x)
         JsonRecord(compact(render(j)), extractEventId(j))
       })
     }
