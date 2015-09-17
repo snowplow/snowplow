@@ -8,17 +8,22 @@ import java.util.zip.GZIPOutputStream
 import javax.sql.DataSource
 import java.sql.Connection
 
+import com.amazonaws.ClientConfiguration
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.auth.profile.ProfileCredentialsProvider
+import com.amazonaws.regions.{Region, Regions}
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
-import com.amazonaws.services.s3.model.ObjectMetadata
+import com.amazonaws.services.s3.model.{ObjectMetadata}
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client}
 import com.amazonaws.util.StringInputStream
 import com.snowplowanalytics.iglu.client.SchemaKey
 import org.apache.commons.logging.LogFactory
 import org.postgresql.ds.PGPoolingDataSource
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.language.implicitConversions
+import scala.language.postfixOps
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 object SQLConverters {
   val log = LogFactory.getLog(classOf[TableWriter])
@@ -61,12 +66,22 @@ object SQLConverters {
 }
 
 object TableWriter {
+  def close() = {
+    writers.values.foreach {
+      case Some(ew: EventsTableWriter) => ew.close()
+      case _ => ()
+    }
+  }
+
   def flush() = {
-    writers.values.foreach(_.foreach(_.finished()))
+    writers.values.foreach {
+      case Some(ew: EventsTableWriter) => ew.flush()
+      case _ => ()
+    }
   }
 
   val log = LogFactory.getLog(classOf[TableWriter])
-  val writers = scala.collection.mutable.Map[String, Option[TableWriter]]()
+  val writers = scala.collection.mutable.Map[String, Option[CopyTableWriter]]()
 
   def tableExists(tableName: String)(implicit dataSource: DataSource) : Boolean = {
     val conn = dataSource.getConnection
@@ -89,8 +104,8 @@ object TableWriter {
     props.getProperty("defaultSchema") + "." + tableName
   }
 
-  def writerByName(schemaName: String, vendor: Option[String], version: Option[String], appId: String)
-                  (implicit props: Properties, dataSource:DataSource): Option[TableWriter] = {
+  def writerByName(schemaName: String, vendor: Option[String], version: Option[String], key: Option[SchemaKey], appId: String)
+                  (implicit config: KinesisConnectorConfiguration, props: Properties, dataSource:DataSource): Option[CopyTableWriter] = {
     val (dbSchema, dbTable) = if (schemaName.contains(".")) {
       (schemaName.substring(0, schemaName.indexOf(".")), schemaName.substring(schemaName.indexOf(".") + 1))
     } else {
@@ -114,7 +129,12 @@ object TableWriter {
       if (!writers.contains(tableName)) {
         if (tableExists(tableName)) {
           log.info(s"Creating writer for $tableName, appId $appId")
-          writers += tableName -> Some(new TableWriter(dataSource, tableName))
+
+          if (dbTable.startsWith("events")) {
+            writers += tableName -> Some(new EventsTableWriter(dataSource, tableName))
+          } else {
+            writers += tableName -> Some(new SchemaTableWriter(dataSource, key.get, tableName))
+          }
         } else {
           log.error(s"Table does not exist for $tableName")
           writers += tableName -> None
@@ -195,14 +215,18 @@ class RatioFlushLimiter(numerator: Int, denominator: Int, minWriteTime: Long) ex
 }
 
 trait CopyTableWriter {
-  def flushToRedshift()
+  def flush(): Unit
+  def close()
+  def write(values: Array[String])
+  def write(value: String)
+  def requiresJsonParsing: Boolean
 }
 
 abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implicit config: KinesisConnectorConfiguration, props: Properties) extends CopyTableWriter {
   private val log = LogFactory.getLog(classOf[BaseCopyTableWriter])
   lazy val s3Manifest: String = createManifest
-  lazy val bufferFileInterm: File = File.createTempFile(table, ".tsv.gz")
-  lazy val bufferFile: File = File.createTempFile(table + "_interm", ".tsv.gz")
+  lazy val bufferFileInterm: File = File.createTempFile(table + "_interm", ".tsv.gz")
+  lazy val bufferFile: File = File.createTempFile(table, ".tsv.gz")
   @volatile var pending: Future[Unit] = null
 
   var bufferFileStream: PrintWriter = null
@@ -216,25 +240,47 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
     val file = getBufferFile
     file.println(value)
     if (isFlushRequired && (pending == null || pending.isCompleted)) {
-      flushToRedshift()
+      flush()
     }
   }
+  def requiresJsonParsing: Boolean = false
 
   def beforeFlushToRedshift() = {
-    bufferFileStream.close()
-    bufferFileStream = null
-    if (bufferFile.exists()) bufferFile.delete()
-    bufferFileInterm.renameTo(bufferFile)
+    log.info(s"Before flush to redshift on $table")
+    if (bufferFileStream != null) {
+      bufferFileStream.flush()
+      bufferFileStream.close()
+      bufferFileStream = null
+    }
+    if (!props.containsKey("dontDeleteTempFiles"))
+      if (bufferFile != null && bufferFile.exists()) bufferFile.delete()
+    if (bufferFileInterm != null && bufferFile != null) bufferFileInterm.renameTo(bufferFile)
   }
 
-  def flushToRedshift() = {
+  def flush(): Unit = {
+    if (pending != null) {
+      log.warn(s"Ignoring flush on $table - there is a flush in progress")
+      return
+    }
     beforeFlushToRedshift()
     pending = Future {
-      onFlushToRedshift()
+      try {
+        onFlushToRedshift(None)
+      }
+      catch {
+        case e:Throwable =>
+          log.error(s"Exception flushing $table", e)
+      }
     }
     pending onComplete {
       case _ =>
-        afterFlushToRedshift()
+        try {
+          afterFlushToRedshift()
+        }
+        catch {
+          case e:Throwable =>
+            log.error(s"Exception after flush on $table", e)
+        }
         pending = null
     }
   }
@@ -242,7 +288,7 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
   def afterFlushToRedshift() = {
 
   }
-  abstract def onFlushToRedshift()
+  def onFlushToRedshift(con: Option[Connection])
 
   def isFlushRequired: Boolean = false
 
@@ -253,8 +299,14 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
     bufferFileStream
   }
   def close() = {
+    if (pending != null) {
+      log.info("Waiting for pending flush to complete")
+      Await.result(pending, 30 seconds)
+    }
+
+    log.info(s"Closing writer for $table")
     if (bufferFileStream != null) {
-      flushToRedshift()
+      flush()
     }
     if (bufferFileStream != null) {
       bufferFileStream.close()
@@ -268,11 +320,12 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
   }
   def createManifest: String = {
     val s3client = new AmazonS3Client(config.AWS_CREDENTIALS_PROVIDER)
+    s3client.setRegion(Region.getRegion(Regions.AP_SOUTHEAST_2))
     val endPoint = props.getProperty("sshEndpoint")
     val username = props.getProperty("sshUsername")
     val s3Folder = props.getProperty("sshS3Folder")
-    val manifest = s"{ \n\n    \"entries\": [ \n\t    {\"endpoint\":\"$endPoint\", \n           " +
-      "\"command\": \"cat " + bufferFile.getAbsolutePath + "\",\n           \"mandatory\":true, \n           \"username\": \"$username\"} \n     ] \n}"
+    val manifest = "{ \n\n    \"entries\": [ \n\t    {\"endpoint\":\"" + endPoint + "\", \n           " +
+      "\"command\": \"cat " + bufferFile.getAbsolutePath + "\",\n           \"mandatory\":true, \n           \"username\": \"" + username + "\"} \n     ] \n}"
     val stream: StringInputStream = new StringInputStream(manifest)
     val metadata: ObjectMetadata = new ObjectMetadata()
     metadata.setContentLength(stream.available())
@@ -281,17 +334,26 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
   }
 }
 
-class SchemaTableWriter(dataSource:DataSource, schema: SchemaKey, table: String)(implicit props:Properties) extends BaseCopyTableWriter(dataSource, table) {
+class SchemaTableWriter(dataSource:DataSource, schema: SchemaKey, table: String)(implicit config: KinesisConnectorConfiguration, props:Properties) extends BaseCopyTableWriter(dataSource, table) {
+  private val log = LogFactory.getLog(classOf[SchemaTableWriter])
   val jsonPaths = {
     val propJsonPaths = props.getProperty("jsonPaths")
     val (major, _, _) = schema.getModelRevisionAddition.get
     val newName = schema.name.replaceAllLiterally(".","_").replaceAllLiterally("-","_")
-    val vendor = schema.vendor.replaceAllLiterally(".","_").replaceAllLiterally("-", "_")
-    s"$propJsonPaths/$vendor/${newName}_$major.json"
+    val vendor = schema.vendor
+    val path = s"$propJsonPaths/jsonpaths/$vendor/${newName}_$major.json"
+    log.info(s"JsonPaths for $table is $path")
+    path
   }
-  override def onFlushToRedshift() = {
-    Runtime.getRuntime.exec(s"scp ${bufferFile.getAbsolutePath} Launcher:${bufferFile.getAbsolutePath}").waitFor()
-    val con = TableWriter.getConnection(dataSource)
+  log.info(s"Created schema table writer for $table")
+  override def onFlushToRedshift(providedCon: Option[Connection]) = {
+//    Runtime.getRuntime.exec(s"scp ${bufferFile.getAbsolutePath} Launcher:${bufferFile.getAbsolutePath}").waitFor()
+    log.info(s"Flushing $table to Redshift")
+    val con = providedCon match {
+      case Some(_con) => _con
+      case None =>
+        TableWriter.getConnection(dataSource)
+    }
     val stat = con.createStatement()
     try {
       try {
@@ -300,21 +362,32 @@ class SchemaTableWriter(dataSource:DataSource, schema: SchemaKey, table: String)
         stat.execute(s"COPY $table FROM '$s3Manifest' " +
           s"CREDENTIALS 'aws_access_key_id=$accessKey;aws_secret_access_key=$secretKey' " +
           s"json '$jsonPaths' " +
-          "DELIMITER '\\t' MAXERROR 1000 EMPTYASNULL FILLRECORD TRUNCATECOLUMNS  TIMEFORMAT 'auto' ACCEPTINVCHARS GZIP COMPUPDATE OFF SSH;")
+          "MAXERROR 1000 EMPTYASNULL TRUNCATECOLUMNS  TIMEFORMAT 'auto' ACCEPTINVCHARS GZIP COMPUPDATE OFF SSH;")
+        val eventCount = stat.getUpdateCount
+        log.info(s"Finished flushing $eventCount rows into $table in Redshift")
       }
       finally {
         stat.close()
       }
     }
     finally {
-      con.close()
+      providedCon match {
+        case Some(_con) => ()
+        case None => con.close()
+      }
     }
   }
+  def flush(con: Connection) = {
+    beforeFlushToRedshift()
+    onFlushToRedshift(Some(con))
+    afterFlushToRedshift()
+  }
+  override def flush(): Unit = {}
 }
 
-class EventsTableWriter(dataSource:DataSource, table: String)(implicit props:Properties) extends BaseCopyTableWriter(dataSource, table) {
+class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: KinesisConnectorConfiguration, props:Properties) extends BaseCopyTableWriter(dataSource, table) {
   private val log = LogFactory.getLog(classOf[EventsTableWriter])
-  var dependents: List[CopyTableWriter] = List()
+  var dependents: Set[SchemaTableWriter] = Set()
 
   // TODO Properties
   val limiter: FlushLimiter = {
@@ -327,12 +400,14 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit props:Pro
       throw new scala.RuntimeException("Need to specify either batchSize or numerator/denominator/minWriteTime for flush limiter")
     }
   }
+  log.info(s"Created events table writer for $table")
 
   override def isFlushRequired: Boolean = limiter.isFlushRequired
 
-  override def onFlushToRedshift() = {
+  override def onFlushToRedshift(providedCon: Option[Connection]) = {
+    log.info(s"Flushing events $table to Redshift")
     val start = System.currentTimeMillis()
-    Runtime.getRuntime.exec(s"scp ${bufferFile.getAbsolutePath} Launcher:${bufferFile.getAbsolutePath}").waitFor()
+//    Runtime.getRuntime.exec(s"scp ${bufferFile.getAbsolutePath} Launcher:${bufferFile.getAbsolutePath}").waitFor()
     val con = TableWriter.getConnection(dataSource)
     val stat = con.createStatement()
     try {
@@ -342,20 +417,41 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit props:Pro
         stat.execute(s"COPY $table FROM '$s3Manifest' " +
           s"CREDENTIALS 'aws_access_key_id=$accessKey;aws_secret_access_key=$secretKey' " +
           "DELIMITER '\\t' MAXERROR 1000 EMPTYASNULL FILLRECORD TRUNCATECOLUMNS  TIMEFORMAT 'auto' ACCEPTINVCHARS GZIP COMPUPDATE OFF SSH;")
+        val eventCount = stat.getUpdateCount
+        log.info(s"Finished flushing $eventCount events $table to Redshift")
       }
       finally {
         stat.close()
       }
-      dependents.foreach(_.flushToRedshift())
+      dependents.foreach(_.flush(con))
+      log.info("Committing events")
+      con.commit()
+      log.info("Committed events")
       limiter.flushed(System.currentTimeMillis() - start)
+    }
+    catch {
+      case e:Throwable =>
+        e.printStackTrace()
+        log.error("Exception flushing events to Redshift. Rolling back", e)
+        con.rollback()
+        throw e
     }
     finally {
       con.close()
     }
   }
 
-  def addDependent(dependent: CopyTableWriter) = {
-    dependents ::= dependent
+  def addDependent(dependent: SchemaTableWriter) = {
+    dependents += dependent
+  }
+
+  override def close() = {
+    if (pending != null) {
+      log.info(s"Waiting for pending flush to complete before closing writer for $table")
+      Await.result(pending, 30 seconds)
+    }
+    dependents.foreach(_.close())
+    super.close()
   }
 }
 

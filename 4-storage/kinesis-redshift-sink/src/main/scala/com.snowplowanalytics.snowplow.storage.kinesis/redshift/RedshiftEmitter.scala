@@ -19,6 +19,8 @@ import com.snowplowanalytics.snowplow.storage.kinesis.Redshift.EmitterInput
 import org.postgresql.ds.PGPoolingDataSource
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
+import scalaz.Validation
 
 // Java libs
 import java.util.Properties
@@ -88,25 +90,29 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, badSink: ISink)(imp
    */
   override def emit(buffer: UnmodifiableBuffer[ EmitterInput ]): java.util.List[ EmitterInput ] = {
     log.info(s"Flushing buffer with ${buffer.getRecords.size} records.")
-
+    val errors: mutable.MutableList[EmitterInput] = new mutable.MutableList[EmitterInput]
     try {
       if (shreder == null) {
+        implicit val kinesisConfig = config
         shreder = new InstantShreder(RedshiftEmitter.redshiftDataSource)
       }
       implicit val dataSource = RedshiftEmitter.redshiftDataSource
-      try {
-        buffer.getRecords.foreach { record =>
+      buffer.getRecords.foreach { record =>
+        try {
           shreder.shred(record._1)
-          // Erase the fields after they've been extracted by shredding
-          record._1(FieldIndexes.contexts) = null
-          record._1(FieldIndexes.unstructEvent) = null
-          record._1(FieldIndexes.derived_contexts) = null
-          TableWriter.writerByName(props.getProperty("redshift_table"), None, None, record._1(FieldIndexes.appId))
-            .foreach(_.write(record._1))
         }
-      }
-      finally {
-        shreder.finished()
+        catch {
+          case s:BatchUpdateException =>
+            s.printStackTrace()
+            if (s.getNextException != null) s.getNextException.printStackTrace()
+            log.error("Exception updating batch", s)
+            log.error("Nested exception", s.getNextException)
+            errors.add(record)
+          case t:Throwable =>
+            t.printStackTrace()
+            log.error("Exception shredding record", t)
+            errors.add(record)
+        }
       }
     }
     catch {
@@ -122,7 +128,7 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, badSink: ISink)(imp
         throw t
     }
 
-    emptyList
+    errors
   }
 
   /**
