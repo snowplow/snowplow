@@ -18,6 +18,9 @@
  */
 package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
 
+// Java
+import java.nio.charset.StandardCharsets.UTF_8
+
 // Amazon
 import com.amazonaws.services.kinesis.connectors.interfaces.ITransformer
 import com.amazonaws.services.kinesis.connectors.elasticsearch.{
@@ -48,7 +51,7 @@ class BadEventTransformer(documentIndex: String, documentType: String)
    * @return JsonRecord containing JSON string for the event and no event_id
    */
   override def toClass(record: Record): ValidatedRecord = {
-    val recordString = new String(record.getData.array)
+    val recordString = new String(record.getData.array, UTF_8)
     (recordString, JsonRecord(recordString, None).success)
   }
 
