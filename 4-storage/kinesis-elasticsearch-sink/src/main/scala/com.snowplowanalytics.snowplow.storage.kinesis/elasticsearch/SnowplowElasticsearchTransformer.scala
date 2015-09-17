@@ -19,6 +19,9 @@
 package com.snowplowanalytics.snowplow
 package storage.kinesis.elasticsearch
 
+// Java
+import java.nio.charset.StandardCharsets.UTF_8
+
 // Amazon
 import com.amazonaws.services.kinesis.connectors.interfaces.ITransformer
 import com.amazonaws.services.kinesis.connectors.elasticsearch.{
@@ -336,7 +339,7 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    * @return ValidatedRecord for the event
    */
   override def toClass(record: Record): ValidatedRecord = {
-    val recordString = new String(record.getData.array, "UTF-8")
+    val recordString = new String(record.getData.array, UTF_8)
 
     // The -1 is necessary to prevent trailing empty strings from being discarded
     (recordString, jsonifyGoodEvent(recordString.split("\t", -1)).leftMap(_.toList))
