@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object SnowplowKinesisEnrichBuild extends Build {
+object SnowplowElasticsearchSinkBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
