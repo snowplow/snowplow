@@ -298,7 +298,7 @@ class SnowplowElasticsearchEmitter(
             + BackoffPeriod + " milliseconds", nnae)
           sleep(BackoffPeriod)
           tracker foreach {
-            t => SnowplowTracking.sendFailureEvent(t, BackoffPeriod, connectionAttemptStartTime, attemptNumber, nnae.toString)
+            t => SnowplowTracking.sendFailureEvent(t, BackoffPeriod, attemptNumber, connectionAttemptStartTime, nnae.toString)
           }
           attemptEmit(attemptNumber + 1)
         }
@@ -306,7 +306,7 @@ class SnowplowElasticsearchEmitter(
           Log.error("ElasticsearchEmitter threw an unexpected exception ", e)
           sleep(BackoffPeriod)
           tracker foreach {
-            t => SnowplowTracking.sendFailureEvent(t, BackoffPeriod, connectionAttemptStartTime, attemptNumber, e.toString)
+            t => SnowplowTracking.sendFailureEvent(t, BackoffPeriod, attemptNumber, connectionAttemptStartTime, e.toString)
           }
           attemptEmit(attemptNumber + 1)
         }
