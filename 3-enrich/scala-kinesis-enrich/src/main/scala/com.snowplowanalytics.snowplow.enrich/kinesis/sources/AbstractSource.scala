@@ -23,6 +23,7 @@ package sources
 
 // Java
 import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets.UTF_8
 
 // Amazon
 import com.amazonaws.auth._
@@ -116,7 +117,7 @@ object AbstractSource {
    * @param evt
    * @return size
    */
-  def getSize(evt: String): Long = ByteBuffer.wrap(evt.getBytes).capacity
+  def getSize(evt: String): Long = ByteBuffer.wrap(evt.getBytes(UTF_8)).capacity
 }
 
 /**
@@ -189,7 +190,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
       validatedMaybeEvent match {
         case Success(co) => (tabSeparateEnrichedEvent(co) -> co.user_ipaddress).success
         case Failure(errors) => {
-          val line = new String(Base64.encodeBase64(binaryData))
+          val line = new String(Base64.encodeBase64(binaryData), UTF_8)
           (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).fail
         }
       }
