@@ -12,6 +12,7 @@ import com.jayway.jsonpath.{Configuration, JsonPath}
 import com.snowplowanalytics.iglu.client.repositories.HttpRepositoryRef
 import com.snowplowanalytics.iglu.client.{RepositoryRefs, Resolver, SchemaKey}
 import com.snowplowanalytics.snowplow.enrich.hadoop._
+import com.snowplowanalytics.snowplow.storage.kinesis.redshift.writer.{EventsTableWriter, SchemaTableWriter, CopyTableWriter}
 import net.minidev.json.JSONArray
 import org.apache.commons.logging.LogFactory
 

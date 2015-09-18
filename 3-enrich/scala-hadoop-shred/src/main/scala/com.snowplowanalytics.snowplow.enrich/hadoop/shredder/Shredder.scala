@@ -51,7 +51,7 @@ import hadoop.utils.JsonUtils
  */
 object Shredder {
 
-  val log = LogFactory.getLog("Shredder")
+  val log = LogFactory.getLog("com.snowplowanalytics.snowplow.enrich.hadoop.shredder.Shredder")
 
 
   // All shredded JSONs have the events type (aka table) as their ultimate parent
@@ -161,7 +161,7 @@ object Shredder {
 //          val temp: ValidatedNel[JsonSchemaPair] = validated.toProcessingMessage
           attachMetadata(good, partialHierarchy).some
         case Failure(bad) =>
-          log.error(bad)
+          log.debug(bad)
           None
       }
     } yield mj

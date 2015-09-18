@@ -45,7 +45,8 @@ object SnowplowRedshiftSinkBuild extends Build {
         Libraries.yodaTime,
         Libraries.yodaConvert,
         Libraries.shred,
-        Libraries.jsonPath
+        Libraries.jsonPath,
+      Libraries.scalaTest
       )
     )
 }

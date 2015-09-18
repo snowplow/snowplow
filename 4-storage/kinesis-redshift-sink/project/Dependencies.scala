@@ -76,5 +76,6 @@ object Dependencies {
     // Scala (test only)
     val specs2               = "org.specs2"                 %% "specs2"                   % V.specs2         % "test"
     val scalazSpecs2         = "org.typelevel"              %% "scalaz-specs2"            % V.scalazSpecs2   % "test"
+    val scalaTest = "org.scalatest" % "scalatest_2.10" % "3.0.0-M9" % "test"
   }
 }
