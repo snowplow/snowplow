@@ -2,3 +2,6 @@
 
 # Vagrant
 .vagrant/
+
+.idea/
+*.iml

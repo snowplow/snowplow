@@ -17,8 +17,11 @@ package hadoop
 package shredder
 
 // Jackson
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.{ObjectMapper, JsonNode}
+import com.fasterxml.jackson.databind.node.{ArrayNode, ObjectNode}
+import com.github.fge.jsonschema.core.report.ProcessingMessage
+import com.snowplowanalytics.iglu.client.utils.ValidationExceptions
+import org.apache.commons.logging.LogFactory
 
 // Scala
 import scala.collection.JavaConversions._
@@ -32,12 +35,7 @@ import common._
 import outputs.EnrichedEvent
 
 // Iglu Scala Client
-import iglu.client.{
-  SchemaKey,
-  SchemaCriterion,
-  JsonSchemaPair,
-  Resolver
-}
+import com.snowplowanalytics.iglu.client._
 import iglu.client.validation.ProcessingMessageMethods._
 import iglu.client.validation.ValidatableJsonMethods._
 
@@ -52,6 +50,9 @@ import hadoop.utils.JsonUtils
  * database.
  */
 object Shredder {
+
+  val log = LogFactory.getLog("com.snowplowanalytics.snowplow.enrich.hadoop.shredder.Shredder")
+
 
   // All shredded JSONs have the events type (aka table) as their ultimate parent
   private val TypeHierarchyRoot = "events"
@@ -128,6 +129,42 @@ object Shredder {
       js   <- node.validateAndIdentifySchema(false)
       mj   =  attachMetadata(js, partialHierarchy)
     } yield mj).flatMap(_.sequenceU) // Swap nested List[scalaz.Validation[...]
+  }
+
+  def shred2(event: EnrichedEvent)(implicit resolver: Resolver): Iterable[Option[(SchemaKey, JsonNode)]] = {
+    // Define what we know so far of the type hierarchy.
+    val partialHierarchy = makePartialHierarchy(
+      event.event_id, event.collector_tstamp)
+
+    // Get our unstructured event and Lists of contexts and derived_contexts, all Option-boxed
+    val ue = extractAndValidateJsonOneLevel("ue_properties", UePropertiesSchema, Option(event.unstruct_event))
+
+    def extractContexts(json: String, field: String): Iterable[JsonNode] = {
+      extractAndValidateJsonOneLevel(field, ContextsSchema, Option(json))
+    }
+
+    val c  = extractContexts(event.contexts, "context")
+    val dc = extractContexts(event.derived_contexts, "derived_contexts")
+
+    val all = ue ++ c ++ dc
+
+    // Let's validate the instances against their schemas, and
+    // then attach metadata to the nodes
+    for {
+      node <- all
+      js   = node.validateAndIdentifySchema(false)
+      mj = js match {
+        case Success(good) =>
+//          val validated: ValidatedNel[JsonSchemaPair] = attachMetadata(good, partialHierarchy).success
+//          validated
+//          val validated: Validation[String, JsonSchemaPair] = attachMetadata(good, partialHierarchy).success
+//          val temp: ValidatedNel[JsonSchemaPair] = validated.toProcessingMessage
+          attachMetadata(good, partialHierarchy).some
+        case Failure(bad) =>
+          log.debug(bad)
+          None
+      }
+    } yield mj
   }
 
   /**
@@ -224,6 +261,35 @@ object Shredder {
       v <- j.verifySchemaAndValidate(schemaCriterion, true)
     } yield v
 
+  private[shredder] def extractAndValidateJsonOneLevel(field: String, schemaCriterion: SchemaCriterion, instance: Option[String])(implicit resolver: Resolver):
+    Iterable[JsonNode] = {
+    if (instance.isEmpty) {
+      List()
+    } else {
+      try {
+        val data = Mapper.readTree(instance.get).get("data")
+        if (data.isArray) {
+          data.asInstanceOf[ArrayNode]
+        } else {
+          List(data)
+        }
+      } catch {
+        case e: Throwable =>
+          log.error("Exception parsing json", e)
+          null
+      }
+    }
+  }
+//    for {
+//      i <- instance
+//    } yield for {
+//      // Validate only one level down - don't validate child schemas
+////      j <- extractJsonOneLevel(field, i)
+////      v <- j.verifySchemaAndValidate(schemaCriterion, true)
+//      // Extract without validation (child validation is performed later)
+//      jc <- extractJsonDataOnly(field, i)
+//    } yield jc
+
   /**
    * Wrapper around JsonUtils' extractJson which
    * converts the failure to a JsonNode Nel, for
@@ -237,4 +303,29 @@ object Shredder {
    */
   private[shredder] def extractJson(field: String, instance: String): ValidatedNel[JsonNode] =
     JsonUtils.extractJson(field, instance).toProcessingMessageNel
+
+  private lazy val Mapper = new ObjectMapper
+
+  private[shredder] def extractJsonDataOnly(field: String, instance: String): JsonNode =
+    try {
+      Mapper.readTree(instance).get("data")
+    } catch {
+      case e: Throwable =>
+        log.error("Exception parsing json", e)
+        null
+    }
+
+  private[shredder] def extractJsonOneLevel(field: String, instance: String): ValidatedNel[JsonNode] = {
+    val extracted = JsonUtils.extractJson(field, instance)
+    extracted match {
+      case Success(j) if j.isInstanceOf[ObjectNode] =>
+        if (j.has("data")) {
+          val validated:Validation[String, JsonNode] = j.asInstanceOf[ObjectNode].remove("data").success
+          validated.toProcessingMessageNel
+        } else {
+          extracted.toProcessingMessageNel
+        }
+      case _ => extracted.toProcessingMessageNel
+    }
+  }
 }

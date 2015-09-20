@@ -18,6 +18,7 @@ package hadoop
 // Cascading
 import cascading.tap.SinkMode
 import cascading.tuple.Fields
+import com.fasterxml.jackson.databind.JsonNode
 
 // Scala
 import scala.collection.mutable.Buffer
@@ -34,11 +35,7 @@ import common._
 import common.FatalEtlError
 
 // Iglu Scala Client
-import iglu.client.{
-  ProcessingMessageNel,
-  JsonSchemaPair,
-  Resolver
-}
+import com.snowplowanalytics.iglu.client.{SchemaKey, ProcessingMessageNel, JsonSchemaPair, Resolver}
 import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
@@ -72,6 +69,15 @@ object ShredJob {
       event <- EnrichedEventLoader.toEnrichedEvent(line).toProcessingMessages
       shred <- Shredder.shred(event)
     } yield shred
+
+  def loadAndShred2(line: String)(implicit resolver: Resolver): Iterable[Option[(SchemaKey, JsonNode)]] = {
+    val enrichedEvent = EnrichedEventLoader.toEnrichedEvent(line)
+    enrichedEvent match {
+      case Success(nel@_) =>
+        Shredder.shred2(nel)
+      case _ => None
+    }
+  }
 
   /**
    * Projects our Failures into a Some; Successes
