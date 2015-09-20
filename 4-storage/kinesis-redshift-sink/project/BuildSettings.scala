@@ -20,7 +20,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "com.snowplowanalytics",
-    version               :=  "0.1.0",
+    version               :=  "0.1.1",
     description           :=  "Kinesis Redshift sink",
     scalaVersion          :=  "2.10.4",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
