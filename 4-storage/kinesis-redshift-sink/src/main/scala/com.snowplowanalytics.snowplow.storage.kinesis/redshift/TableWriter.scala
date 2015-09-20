@@ -204,7 +204,7 @@ class TableWriter(dataSource:DataSource, table: String)(implicit props:Propertie
   // 93 timestamp
   // -7 bit
   // 12 varchar
-  var converters: Map[Int, SQLApplier] =
+  val converters: Map[Int, SQLApplier] =
     Map(1 -> SQLConverters.setString,
       2 -> SQLConverters.setDecimal,
       4 -> SQLConverters.setInteger,
