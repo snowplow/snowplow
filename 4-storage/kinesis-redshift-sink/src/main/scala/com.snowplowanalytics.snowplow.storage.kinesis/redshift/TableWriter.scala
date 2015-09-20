@@ -162,7 +162,7 @@ object TableWriter {
       catch {
         case e: SQLException =>
           log.error("Exception getting connection", e)
-          if (e.getMessage().toLowerCase().contains("connection")) {
+          if (e.getMessage.toLowerCase.contains("connection")) {
             try {
               log.error(s"Unable to get DB connection - sleeping for ${progressiveDelay}secs")
               Thread.sleep(progressiveDelay * 1000)

@@ -52,11 +52,6 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: K
     res
   }
 
-  override def afterFlushToRedshift(): Unit = {
-    super.afterFlushToRedshift()
-    dependents.foreach(_.afterFlushToRedshift())
-  }
-
   override def write(value: Array[String]): Unit = {
     limiter.onRecord(value)
     super.write(value)
@@ -65,6 +60,7 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: K
   override def onFlushToRedshift(flushCount:Int, providedCon: Option[Connection]) = {
     val start = System.currentTimeMillis()
     log.info(s"Flushing $flushCount events $table to Redshift")
+    // TODO Extract into a mixin or use DI
     if (props.containsKey("simulateDB")) {
       Thread.sleep((1000 + Math.random() * 500 * Math.signum(Math.random()-0.5)).toLong)
       dependents.foreach(_.flush(null))

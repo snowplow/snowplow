@@ -49,7 +49,6 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
   def requiresJsonParsing: Boolean = false
 
   def beforeFlushToRedshift():Int = {
-//    log.info(s"Before flush to redshift on $table")
     if (bufferFileStream != null) {
       bufferFileStream.flush()
       bufferFileStream.close()
@@ -69,6 +68,7 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
     }
     val flushCount = beforeFlushToRedshift()
     pending = Future {
+      // TODO Transaction replay and continuous reconnection logic - pull the connection up to this level
       try {
         onFlushToRedshift(flushCount, None)
       }
@@ -79,20 +79,10 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
     }
     pending onComplete {
       case _ =>
-        try {
-          afterFlushToRedshift()
-        }
-        catch {
-          case e:Throwable =>
-            log.error(s"Exception after flush on $table", e)
-        }
         pending = null
     }
   }
 
-  def afterFlushToRedshift() = {
-
-  }
   def onFlushToRedshift(flushCount: Int, con: Option[Connection])
 
   def isFlushRequired: Boolean = false
