@@ -50,6 +50,8 @@ object SQLConverters {
     value == null || "".equals(value) || "undefined".equals(value) || "null".equals(value)
   }
 
+  def setBigint(value: String, stat: PreparedStatement, index: Int, size: Int) =
+     if (value == null) stat.setNull(index, Types.BIGINT) else stat.setLong(index, value.toLong)
   def setBoolean(value: String, stat: PreparedStatement, index: Int, size: Int) =
     if (isNull(value)) stat.setNull(index, Types.BOOLEAN) else stat.setBoolean(index, value.rsBoolean)
   def setInteger(value: String, stat: PreparedStatement, index: Int, size: Int) =
@@ -117,16 +119,17 @@ object TableWriter {
         (props.getProperty("defaultSchema"), schemaName)
       }
     }
-    val tableName = (vendor, version) match {
+    val tableName = s"$dbSchema." + ((vendor, version) match {
       case (Some(_vendor), Some(_version)) =>
-        s"$dbSchema." + s"${_vendor}_${dbTable}_${_version}".replaceAllLiterally(".", "_")
+        s"${_vendor}_${dbTable}_${_version}"
       case (None, Some(_version)) =>
-        s"$dbSchema." + s"${dbTable}_${_version}".replaceAllLiterally(".", "_")
+        s"${dbTable}_${_version}"
       case (None, None) =>
-        s"$dbSchema." + s"$dbTable".replaceAllLiterally(".", "_")
+        s"$dbTable"
       case (Some(_vendor), None) =>
-        s"$dbSchema." + s"${vendor}_$dbTable".replaceAllLiterally(".", "_")
-    }
+         s"${vendor}_$dbTable"
+    }).replaceAllLiterally(".", "_").replaceAll("([^A-Z_])([A-Z])", "$1_$2").toLowerCase
+
     synchronized {
       if (!writers.contains(tableName)) {
         if (tableExists(tableName)) {
@@ -209,7 +212,8 @@ class TableWriter(dataSource:DataSource, table: String)(implicit props:Propertie
       8 -> SQLConverters.setDouble,
       93 -> SQLConverters.setTimestamp,
       -7 -> SQLConverters.setBoolean,
-      12 -> SQLConverters.setString
+      12 -> SQLConverters.setString,
+      -5 -> SQLConverters.setBigint
     )
   readMetadata()
 

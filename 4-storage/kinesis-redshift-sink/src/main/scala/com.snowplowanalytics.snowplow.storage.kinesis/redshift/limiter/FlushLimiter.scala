@@ -5,6 +5,6 @@ package com.snowplowanalytics.snowplow.storage.kinesis.redshift.limiter
  */
 trait FlushLimiter {
   def isFlushRequired: Boolean
-  def flushed(writeTime: Long)
+  def flushed(writeStart: Long, writeEnd: Long, flushCount: Long)
   def onRecord(values: Array[String])
 }

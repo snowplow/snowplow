@@ -42,6 +42,7 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
     file.println(value)
     batchCount += 1
     if (isFlushRequired && pending == null) {
+      log.info("Flushing at " + System.currentTimeMillis())
       flush()
     }
   }
@@ -103,15 +104,15 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
     bufferFileStream
   }
   def close() = {
-    if (pending != null) {
-      log.info("Waiting for pending flush to complete")
-      Await.result(pending, 30 seconds)
-    }
+    waitForPending()
 
     log.info(s"Closing writer for $table")
     if (bufferFileStream != null) {
+      waitForPending()
       flush()
     }
+    waitForPending()
+
     if (bufferFileStream != null) {
       bufferFileStream.close()
     }
@@ -124,6 +125,14 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
       }
     }
   }
+
+  protected def waitForPending(): Unit = {
+    if (pending != null) {
+      log.info("Waiting for pending flush to complete")
+      Await.result(pending, 30 seconds)
+    }
+  }
+
   def createManifest: String = {
     val s3client = new AmazonS3Client(config.AWS_CREDENTIALS_PROVIDER)
     s3client.setRegion(Region.getRegion(Regions.AP_SOUTHEAST_2))

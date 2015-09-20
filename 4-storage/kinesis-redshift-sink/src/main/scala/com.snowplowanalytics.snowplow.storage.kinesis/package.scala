@@ -23,7 +23,7 @@ package com.snowplowanalytics.snowplow.storage.kinesis
 import scalaz._
 import Scalaz._
 
-package object Redshift {
+package object redshift {
 
   /**
    * Tuple containing:

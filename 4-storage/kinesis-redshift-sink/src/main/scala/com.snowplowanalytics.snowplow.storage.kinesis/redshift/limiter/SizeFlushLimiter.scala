@@ -8,7 +8,7 @@ class SizeFlushLimiter(batchSize: Int) extends FlushLimiter {
   override def isFlushRequired: Boolean = {
     batchCount > batchSize
   }
-  override def flushed(writeTime: Long) = {
+  override def flushed(writeStart: Long, writeEnd: Long, flushCount: Long) = {
     batchCount = 0
   }
 

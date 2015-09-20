@@ -22,7 +22,6 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: K
   private val log = LogFactory.getLog(classOf[EventsTableWriter])
   var dependents: Set[SchemaTableWriter] = Set()
 
-  // TODO Properties
   val limiter: FlushLimiter = {
     if (props.containsKey("denominator") && props.containsKey("numerator") && props.containsKey("minWriteTime")) {
       if (props.containsKey("batchSize")) {
@@ -58,38 +57,50 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: K
     dependents.foreach(_.afterFlushToRedshift())
   }
 
+  override def write(value: Array[String]): Unit = {
+    limiter.onRecord(value)
+    super.write(value)
+  }
+
   override def onFlushToRedshift(flushCount:Int, providedCon: Option[Connection]) = {
-    log.info(s"Flushing $flushCount events $table to Redshift")
     val start = System.currentTimeMillis()
-    val con = TableWriter.getConnection(dataSource)
-    val stat = con.createStatement()
-    try {
+    log.info(s"Flushing $flushCount events $table to Redshift")
+    if (props.containsKey("simulateDB")) {
+      Thread.sleep((1000 + Math.random() * 500 * Math.signum(Math.random()-0.5)).toLong)
+      dependents.foreach(_.flush(null))
+      limiter.flushed(start, System.currentTimeMillis(), flushCount)
+      log.info(s"Finished flushing events $table to Redshift")
+    } else {
+      val con = TableWriter.getConnection(dataSource)
+      val stat = con.createStatement()
       try {
-        val accessKey = props.getProperty("s3AccessKey")
-        val secretKey = props.getProperty("s3SecretKey")
-        stat.execute(s"COPY $table FROM '$s3Manifest' " +
-          s"CREDENTIALS 'aws_access_key_id=$accessKey;aws_secret_access_key=$secretKey' " +
-          "DELIMITER '\\t' MAXERROR 1000 EMPTYASNULL FILLRECORD TRUNCATECOLUMNS  TIMEFORMAT 'auto' ACCEPTINVCHARS GZIP  SSH;")
-        log.info(s"Finished flushing events $table to Redshift")
+        try {
+          val accessKey = props.getProperty("s3AccessKey")
+          val secretKey = props.getProperty("s3SecretKey")
+          stat.execute(s"COPY $table FROM '$s3Manifest' " +
+            s"CREDENTIALS 'aws_access_key_id=$accessKey;aws_secret_access_key=$secretKey' " +
+            "DELIMITER '\\t' MAXERROR 1000 EMPTYASNULL FILLRECORD TRUNCATECOLUMNS  TIMEFORMAT 'auto' ACCEPTINVCHARS GZIP  SSH;")
+          log.info(s"Finished flushing events $table to Redshift")
+        }
+        finally {
+          stat.close()
+        }
+        dependents.foreach(_.flush(con))
+        log.info("Committing events")
+        con.commit()
+        log.info("Committed events")
+        limiter.flushed(System.currentTimeMillis(), start, flushCount)
+      }
+      catch {
+        case e:Throwable =>
+          e.printStackTrace()
+          log.error("Exception flushing events to Redshift. Rolling back", e)
+          con.rollback()
+          throw e
       }
       finally {
-        stat.close()
+        con.close()
       }
-      dependents.foreach(_.flush(con))
-      log.info("Committing events")
-      con.commit()
-      log.info("Committed events")
-      limiter.flushed(System.currentTimeMillis() - start)
-    }
-    catch {
-      case e:Throwable =>
-        e.printStackTrace()
-        log.error("Exception flushing events to Redshift. Rolling back", e)
-        con.rollback()
-        throw e
-    }
-    finally {
-      con.close()
     }
   }
 
@@ -99,7 +110,12 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: K
 
   override def close() = {
     if (pending != null) {
-      log.info(s"Waiting for pending flush to complete before closing writer for $table")
+      log.info(s"Waiting for previous pending flush to complete before closing writer for $table")
+      Await.result(pending, 30 seconds)
+    }
+    flush()
+    if (pending != null) {
+      log.info(s"Waiting for last pending flush to complete before closing writer for $table")
       Await.result(pending, 30 seconds)
     }
     dependents.foreach(_.close())

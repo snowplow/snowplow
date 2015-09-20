@@ -19,41 +19,45 @@ import org.apache.commons.logging.LogFactory
 import scala.annotation.tailrec
 import scalaz.{Failure, Success}
 
-class InstantShreder(dataSource : DataSource)(implicit config: KinesisConnectorConfiguration, resolver: Resolver, props: Properties) {
+class InstantShredder(dataSource : DataSource)(implicit config: KinesisConnectorConfiguration, resolver: Resolver, props: Properties) {
   val jsonPaths = scala.collection.mutable.Map[String, Option[Array[String]]]()
   implicit val _dataSource: DataSource = dataSource
-  val log = LogFactory.getLog(classOf[InstantShreder])
+  val log = LogFactory.getLog(classOf[InstantShredder])
 
-  var file = if (props.containsKey("logFile")) new FileWriter("/tmp/shreder.txt") else null
+  var file = if (props.containsKey("logFile")) new FileWriter("/tmp/shredder.txt") else null
 
   def shred(fields: Array[String]) = {
-    if (file != null) {
-      file.write(fields.map(f => if (f == null) "" else f).mkString("\t")+"\n")
-    }
-    if (log.isDebugEnabled) log.debug("Shreding " + fields.map(f => if (f == null) "" else f).mkString(","))
-    val appId = fields(FieldIndexes.appId)
-    val validatedEvents = ShredJob.loadAndShred2(fields.map(f => if (f == null) "" else f).mkString("\t"))
-    val eventsWriter: Option[CopyTableWriter] = TableWriter.writerByName(props.getProperty("redshift_table"), None, None, None, appId)
-    eventsWriter.foreach { writer =>
-      val allStored = for {
-        shredded <- validatedEvents
-        pair <- shredded
-        stored = store(appId, pair._1, pair._2.toString, writer)
-      } yield stored
+    if (fields.length >= 108) {
+      if (file != null) {
+        file.write(fields.map(f => if (f == null) "" else f).mkString("\t")+"\n")
+      }
+      if (log.isDebugEnabled) log.debug("Shredding " + fields.map(f => if (f == null) "" else f).mkString(","))
+      val appId = fields(FieldIndexes.appId)
+      val validatedEvents = ShredJob.loadAndShred2(fields.map(f => if (f == null) "" else f).mkString("\t"))
+      val eventsWriter: Option[CopyTableWriter] = TableWriter.writerByName(props.getProperty("redshift_table"), None, None, None, appId)
+      eventsWriter.foreach { writer =>
+        val allStored = for {
+          shredded <- validatedEvents
+          pair <- shredded
+          stored = store(appId, pair._1, pair._2.toString, writer)
+        } yield stored
 
-      // Erase the fields after they've been extracted by shredding
-      fields(FieldIndexes.contexts) = null
-      fields(FieldIndexes.unstructEvent) = null
-      if (fields.length >= FieldIndexes.derived_contexts) {
-        fields(FieldIndexes.derived_contexts) = null
+        // Erase the fields after they've been extracted by shredding
+        fields(FieldIndexes.contexts) = null
+        fields(FieldIndexes.unstructEvent) = null
+        if (fields.length >= FieldIndexes.derived_contexts) {
+          fields(FieldIndexes.derived_contexts) = null
+        }
+        try {
+          writer.write(fields)
+        }
+        catch {
+          case e:Throwable =>
+            log.error("Excepting writing event", e)
+        }
       }
-      try {
-        writer.write(fields)
-      }
-      catch {
-        case e:Throwable =>
-          log.error("Excepting writing event", e)
-      }
+    } else {
+      log.warn("Broken line: " + fields.mkString(","))
     }
   }
 
