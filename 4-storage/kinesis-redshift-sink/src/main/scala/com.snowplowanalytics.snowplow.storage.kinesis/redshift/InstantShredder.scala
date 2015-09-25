@@ -6,24 +6,30 @@ import java.util.Properties
 import javax.sql.DataSource
 
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
-import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.{ObjectMapper, JsonNode}
+import com.fasterxml.jackson.databind.node.{ObjectNode, ArrayNode}
 import com.github.fge.jackson.JsonLoader
 import com.jayway.jsonpath.{Configuration, JsonPath}
 import com.snowplowanalytics.iglu.client.repositories.HttpRepositoryRef
 import com.snowplowanalytics.iglu.client.{RepositoryRefs, Resolver, SchemaKey}
 import com.snowplowanalytics.snowplow.enrich.hadoop._
+import com.snowplowanalytics.snowplow.enrich.hadoop.shredder.Shredder
 import com.snowplowanalytics.snowplow.storage.kinesis.redshift.writer.{EventsTableWriter, SchemaTableWriter, CopyTableWriter}
 import net.minidev.json.JSONArray
 import org.apache.commons.logging.LogFactory
+import org.json4s.JsonAST.JArray
+import org.json4s.jackson.JsonMethods._
+import scala.collection.JavaConverters._
 
 import scala.annotation.tailrec
+import scala.language.postfixOps
 import scalaz.{Failure, Success}
 
 class InstantShredder(dataSource : DataSource)(implicit config: KinesisConnectorConfiguration, resolver: Resolver, props: Properties) {
   val jsonPaths = scala.collection.mutable.Map[String, Option[Array[String]]]()
   implicit val _dataSource: DataSource = dataSource
   val log = LogFactory.getLog(classOf[InstantShredder])
-
+  private lazy val Mapper = new ObjectMapper
   var file = if (props.containsKey("logFile")) new FileWriter("/tmp/shredder.txt") else null
 
   def shred(fields: Array[String]) = {
@@ -37,13 +43,13 @@ class InstantShredder(dataSource : DataSource)(implicit config: KinesisConnector
       val eventsWriter: Option[CopyTableWriter] = TableWriter.writerByName(props.getProperty("redshift_table"), None, None, None, appId)
       eventsWriter.foreach { writer =>
         val allStored = for {
-          shredded <- validatedEvents
+          shredded <- validatedEvents._1
           pair <- shredded
           stored = store(appId, pair._1, pair._2.toString, writer)
         } yield stored
 
         // Erase the fields after they've been extracted by shredding
-        fields(FieldIndexes.contexts) = null
+        fields(FieldIndexes.contexts) = produceCombinedContext(validatedEvents._2)
         fields(FieldIndexes.unstructEvent) = null
         if (fields.length >= FieldIndexes.derived_contexts) {
           fields(FieldIndexes.derived_contexts) = null
@@ -58,6 +64,18 @@ class InstantShredder(dataSource : DataSource)(implicit config: KinesisConnector
       }
     } else {
       log.warn("Broken line: " + fields.mkString(","))
+    }
+  }
+
+  private def produceCombinedContext(nodes: scala.Iterable[Option[JsonNode]]) : String = {
+    val converted = (nodes flatten).toList
+    if (converted.nonEmpty) {
+      val res = Mapper.createObjectNode()
+      res.put("schema", "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1")
+      res.put("data", Mapper.createArrayNode().addAll(converted.asJavaCollection))
+      res.toString
+    } else {
+      null
     }
   }
 

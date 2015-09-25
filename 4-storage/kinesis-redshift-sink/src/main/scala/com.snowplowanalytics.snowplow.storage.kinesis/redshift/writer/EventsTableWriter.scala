@@ -67,7 +67,11 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: K
       limiter.flushed(start, System.currentTimeMillis(), flushCount)
       log.info(s"Finished flushing events $table to Redshift")
     } else {
-      val con = TableWriter.getConnection(dataSource)
+      val con = providedCon match {
+        case Some(_con) => _con
+        case None =>
+          TableWriter.getConnection(dataSource)
+      }
       val stat = con.createStatement()
       try {
         try {
@@ -95,7 +99,10 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: K
           throw e
       }
       finally {
-        con.close()
+        providedCon match {
+          case Some(_con) => ()
+          case None => con.close()
+        }
       }
     }
   }

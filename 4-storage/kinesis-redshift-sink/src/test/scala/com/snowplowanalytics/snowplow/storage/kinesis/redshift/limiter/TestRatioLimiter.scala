@@ -3,7 +3,7 @@ package com.snowplowanalytics.snowplow.storage.kinesis.redshift.limiter
 import org.scalatest._
 
 class TestRatioLimiter extends FunSuite {
-  test("Ratio limiter return false by default") {
+  test("Ratio limiter returns false by default") {
     val limiter = new RatioFlushLimiter(1, 10, 6000)
     assert(!limiter.isFlushRequired)
   }

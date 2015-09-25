@@ -131,7 +131,7 @@ object Shredder {
     } yield mj).flatMap(_.sequenceU) // Swap nested List[scalaz.Validation[...]
   }
 
-  def shred2(event: EnrichedEvent)(implicit resolver: Resolver): Iterable[Option[(SchemaKey, JsonNode)]] = {
+  def shred2(event: EnrichedEvent)(implicit resolver: Resolver): (Iterable[Option[(SchemaKey, JsonNode)]], Iterable[Option[JsonNode]]) = {
     // Define what we know so far of the type hierarchy.
     val partialHierarchy = makePartialHierarchy(
       event.event_id, event.collector_tstamp)
@@ -148,23 +148,31 @@ object Shredder {
 
     val all = ue ++ c ++ dc
 
-    // Let's validate the instances against their schemas, and
-    // then attach metadata to the nodes
-    for {
-      node <- all
-      js   = node.validateAndIdentifySchema(false)
-      mj = js match {
-        case Success(good) =>
-//          val validated: ValidatedNel[JsonSchemaPair] = attachMetadata(good, partialHierarchy).success
-//          validated
-//          val validated: Validation[String, JsonSchemaPair] = attachMetadata(good, partialHierarchy).success
-//          val temp: ValidatedNel[JsonSchemaPair] = validated.toProcessingMessage
-          attachMetadata(good, partialHierarchy).some
-        case Failure(bad) =>
-          log.debug(bad)
-          None
-      }
-    } yield mj
+    val allValidated = all.map(node => {
+      (node, node.validateAndIdentifySchema(false))
+    })
+    val allGoods = allValidated.map {
+      case (node, Success(good)) => attachMetadata(convertGeneric(good), partialHierarchy).some
+      case (node, Failure(_)) => None
+    }
+    val allBads = allValidated.map {
+      case (node, Success(_)) => None
+      case (node, Failure(bad)) => node.some
+    }
+    (allGoods, allBads)
+  }
+
+  private[shredder] def convertGeneric(pair: JsonSchemaPair) : JsonSchemaPair = {
+    val node = pair._2
+    if (node.has("schema") && node.get("schema").asText() == "iglu:com.au.digdeep/json_data/jsonschema/1-0-0") {
+      val updated = node.asInstanceOf[ObjectNode]
+      val schema = node.get("data").get("app_id").asText()
+      val table = node.get("data").get("event_type").asText()
+      // this schema value will determine which table the data are shredded into
+      (SchemaKey.parse(s"iglu:$schema/${table}_jd/jsonschema/1-0-0").toOption.get, node)
+    } else {
+      pair
+    }
   }
 
   /**

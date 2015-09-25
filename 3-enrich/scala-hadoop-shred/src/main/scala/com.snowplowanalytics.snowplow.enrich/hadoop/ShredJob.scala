@@ -70,12 +70,12 @@ object ShredJob {
       shred <- Shredder.shred(event)
     } yield shred
 
-  def loadAndShred2(line: String)(implicit resolver: Resolver): Iterable[Option[(SchemaKey, JsonNode)]] = {
+  def loadAndShred2(line: String)(implicit resolver: Resolver): (Iterable[Option[(SchemaKey, JsonNode)]], Iterable[Option[JsonNode]]) = {
     val enrichedEvent = EnrichedEventLoader.toEnrichedEvent(line)
     enrichedEvent match {
       case Success(nel@_) =>
         Shredder.shred2(nel)
-      case _ => None
+      case _ => (None, None)
     }
   }
 

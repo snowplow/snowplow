@@ -1,7 +1,7 @@
 package com.snowplowanalytics.snowplow.storage.kinesis.redshift.writer
 
 import java.io.{BufferedOutputStream, File, FileOutputStream, PrintWriter}
-import java.sql.Connection
+import java.sql.{SQLException, Connection}
 import java.util.Properties
 import java.util.zip.GZIPOutputStream
 import javax.sql.DataSource
@@ -11,6 +11,7 @@ import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.util.StringInputStream
+import com.snowplowanalytics.snowplow.storage.kinesis.redshift.TableWriter
 import org.apache.commons.logging.LogFactory
 
 import scala.concurrent.{Await, Future}
@@ -68,13 +69,29 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
     }
     val flushCount = beforeFlushToRedshift()
     pending = Future {
-      // TODO Transaction replay and continuous reconnection logic - pull the connection up to this level
-      try {
-        onFlushToRedshift(flushCount, None)
-      }
-      catch {
-        case e:Throwable =>
-          log.error(s"Exception flushing $table", e)
+      var retryCount = 0
+      var connection: Connection = null
+      while (retryCount < 5) {
+        try {
+          connection = TableWriter.getConnection(dataSource)
+          onFlushToRedshift(flushCount, Some(connection))
+        }
+        catch {
+          case se: SQLException =>
+            log.error(s"SQLException flushing $table - retry $retryCount", se)
+            retryCount += 1
+            Thread.sleep(Math.round(1000 * Math.pow(4, retryCount)))
+          case e:Throwable =>
+            log.error(s"Non-database exception flushing $table", e)
+            retryCount = 5 // break
+        } finally {
+          try {
+            if (connection != null) connection.close()
+          } catch {
+            case t: Throwable =>
+              log.error("Exception closing connection", t)
+          }
+        }
       }
     }
     pending onComplete {
