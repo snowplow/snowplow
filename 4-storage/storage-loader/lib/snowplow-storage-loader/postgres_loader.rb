@@ -55,11 +55,11 @@ module Snowplow
         end
 
         post_processing = nil
-        unless skip_steps.include?('analyze')
-          post_processing = "ANALYZE "
+        unless skip_steps.include?('vacuum')
+          post_processing = "VACUUM "
         end
-        if include_steps.include?('vacuum')
-          post_processing = "VACUUM " + (post_processing || "")
+        if include_steps.include?('analyze')
+          post_processing = "ANALYZE " + (post_processing || "")
         end
 
         unless post_processing.nil?
