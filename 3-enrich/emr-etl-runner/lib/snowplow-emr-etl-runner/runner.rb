@@ -127,6 +127,15 @@ module Snowplow
           raise ConfigError, "collector_format '%s' not supported" % input_collector_format
         end
 
+        if input_collector_format == 'thrift'
+          if args[:skip].include?('s3distcp')
+            raise ConfigError, "Cannot process Thrift events with --skip s3distcp"
+          end
+          if config[:emr][:ami_version].start_with?('2')
+            raise ConfigError, "Cannot process Thrift events with AMI version 2.x.x"
+          end
+        end
+
         # Currently we only support start/end times for the CloudFront collector format. See #120 for details
         unless config[:collectors][:format] == 'cloudfront' or (args[:start].nil? and args[:end].nil?)
           raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
