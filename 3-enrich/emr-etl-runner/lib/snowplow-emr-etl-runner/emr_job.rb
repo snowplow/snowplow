@@ -78,6 +78,7 @@ module Snowplow
 
         # Configure
         @jobflow.name                 = config[:enrich][:job_name]
+        @jobflow.tags                 = config[:monitoring][:tags]
         @jobflow.ami_version          = config[:aws][:emr][:ami_version]
         @jobflow.ec2_key_name         = config[:aws][:emr][:ec2_key_name]
 
