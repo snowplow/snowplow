@@ -93,6 +93,7 @@ module Snowplow
           @jobflow.release_label = "emr-#{config[:aws][:emr][:ami_version]}"
         end
 
+        @jobflow.tags                 = config[:monitoring][:tags]
         @jobflow.ec2_key_name         = config[:aws][:emr][:ec2_key_name]
 
         @jobflow.region               = config[:aws][:emr][:region]
