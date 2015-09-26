@@ -48,11 +48,13 @@ import registry.{
   CurrencyConversionEnrichment,
   JavascriptScriptEnrichment,
   EventFingerprintEnrichment,
+  CookieExtractorEnrichment,
   UserAgentUtilsEnrichmentConfig,
   UaParserEnrichmentConfig,
   CurrencyConversionEnrichmentConfig,
   JavascriptScriptEnrichmentConfig,
-  EventFingerprintEnrichmentConfig
+  EventFingerprintEnrichmentConfig,
+  CookieExtractorEnrichmentConfig
 }
 
 import utils.ScalazJson4sUtils
@@ -146,6 +148,8 @@ object EnrichmentRegistry {
             JavascriptScriptEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "event_fingerprint_config") {
             EventFingerprintEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "cookie_extractor_config") {
+            CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else {
             None.success // Enrichment is not recognized yet
           }
@@ -250,6 +254,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getEventFingerprintEnrichment: Option[EventFingerprintEnrichment] =
     getEnrichment[EventFingerprintEnrichment]("event_fingerprint_config")
+
+  /*
+   * Returns an Option boxing the CookieExtractorEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the CookieExtractorEnrichment instance
+   */
+  def getCookieExtractorEnrichment: Option[CookieExtractorEnrichment] =
+    getEnrichment[CookieExtractorEnrichment]("cookie_extractor_config")
 
   /**
    * Returns an Option boxing an Enrichment

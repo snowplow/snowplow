@@ -268,4 +268,22 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
 
     }
   }
+
+
+  "Parsing a valid cookie_extractor_config enrichment JSON" should {
+    "successfully construct a CookieExtractorEnrichment case object" in {
+
+      val  cookieExtractorEnrichmentJson = parse("""{
+        "enabled": true,
+        "parameters": {
+          "cookies": ["foo", "bar"]
+        }
+      }""")
+
+      val schemaKey = SchemaKey("com.snowplowanalytics.snowplow", "cookie_extractor_config", "jsonschema", "1-0-0")
+
+      val result = CookieExtractorEnrichmentConfig.parse(cookieExtractorEnrichmentJson, schemaKey)
+      result must beSuccessful(CookieExtractorEnrichment(List("foo", "bar")))
+    }
+  }
 }
