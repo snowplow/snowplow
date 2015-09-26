@@ -447,10 +447,19 @@ object EnrichmentManager {
       case None => Nil.success
     }
 
+    // Execute cookie extractor enrichment
+    val cookieExtractorContext = registry.getCookieExtractorEnrichment match {
+      case Some(cee) =>
+        val headers = raw.context.headers
+
+        cee.extract(headers)
+      case None => Nil
+    }
+
     // Assemble array of derived contexts
     val derived_contexts = List(uaParser).collect {
       case Success(Some(context)) => context
-    } ++ jsScript.getOrElse(Nil)
+    } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContext
 
     if (derived_contexts.size > 0) {
       event.derived_contexts = ME.formatDerivedContexts(derived_contexts)
