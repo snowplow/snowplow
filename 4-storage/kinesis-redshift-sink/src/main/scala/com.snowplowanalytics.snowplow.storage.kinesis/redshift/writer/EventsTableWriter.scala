@@ -65,7 +65,7 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: K
       Thread.sleep((1000 + Math.random() * 500 * Math.signum(Math.random()-0.5)).toLong)
       dependents.foreach(_.flush(null))
       limiter.flushed(start, System.currentTimeMillis(), flushCount)
-      log.info(s"Finished flushing events $table to Redshift")
+      log.info(s"Finished simulated flushing events $table to Redshift")
     } else {
       val con = providedCon match {
         case Some(_con) => _con
@@ -89,7 +89,7 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: K
         log.info("Committing events")
         con.commit()
         log.info("Committed events")
-        limiter.flushed(System.currentTimeMillis(), start, flushCount)
+        limiter.flushed(start, System.currentTimeMillis(), flushCount)
       }
       catch {
         case e:Throwable =>
@@ -112,16 +112,28 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: K
   }
 
   override def close() = {
-    if (pending != null) {
-      log.info(s"Waiting for previous pending flush to complete before closing writer for $table")
-      Await.result(pending, 30 seconds)
+    try {
+      if (pending != null) {
+        log.info(s"Waiting for previous pending flush to complete before closing writer for $table")
+        Await.result(pending, 60 seconds)
+      }
+      flush()
+      if (pending != null) {
+        log.info(s"Waiting for last pending flush to complete before closing writer for $table")
+        Await.result(pending, 60 seconds)
+      }
     }
-    flush()
-    if (pending != null) {
-      log.info(s"Waiting for last pending flush to complete before closing writer for $table")
-      Await.result(pending, 30 seconds)
+    catch {
+      case e:Throwable =>
+        log.error("Exception performing final flush - ignoring", e)
     }
-    dependents.foreach(_.close())
-    super.close()
+    try {
+      dependents.foreach(_.close())
+      super.close()
+    }
+    catch {
+      case e:Throwable =>
+        log.error("Exception closing writers - ignoring")
+    }
   }
 }

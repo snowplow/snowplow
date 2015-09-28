@@ -75,6 +75,7 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
         try {
           connection = TableWriter.getConnection(dataSource)
           onFlushToRedshift(flushCount, Some(connection))
+          retryCount = 5
         }
         catch {
           case se: SQLException =>

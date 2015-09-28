@@ -15,10 +15,14 @@ package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 // Java
 import java.io.File
 import java.util.Properties
+import javax.sql.DataSource
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.snowplowanalytics.iglu.client.Resolver
 import com.snowplowanalytics.snowplow.enrich.hadoop._
+import com.snowplowanalytics.snowplow.storage.kinesis.redshift.writer.{DefaultTableWriterFactory, TableWriterFactory}
+import org.postgresql.ds.PGPoolingDataSource
+import scaldi.Module
 
 import scalaz.{Success, Failure}
 import scala.collection.JavaConversions._
@@ -95,6 +99,19 @@ object SinkApp extends App {
 
   private val tuple: (Properties, KinesisConnectorConfiguration) = convertConfig(conf, credentials)
   implicit val props = tuple._1
+  implicit val kconfig = tuple._2
+  val ds = new PGPoolingDataSource()
+  ds.setUrl(props.getProperty("redshift_url"))
+  ds.setUser(props.getProperty("redshift_username"))
+  ds.setPassword(props.getProperty("redshift_password"))
+  implicit val module = new Module {
+    bind [TableWriterFactory] to new DefaultTableWriterFactory
+    bind [Resolver] to igluResolver
+    bind [Properties] to props
+    bind [KinesisConnectorConfiguration] to kconfig
+    bind [DataSource] to ds
+  }
+
   val executor = new RedshiftSinkExecutor(tuple._2, badSink)
   executor.run()
 

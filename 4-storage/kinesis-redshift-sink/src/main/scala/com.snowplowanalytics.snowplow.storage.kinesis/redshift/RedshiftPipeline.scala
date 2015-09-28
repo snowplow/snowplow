@@ -26,7 +26,7 @@ import com.amazonaws.services.kinesis.connectors.interfaces.{
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 import com.amazonaws.services.kinesis.connectors.impl.{BasicMemoryBuffer,AllPassFilter}
 import com.snowplowanalytics.iglu.client.Resolver
-import com.snowplowanalytics.snowplow.storage.kinesis.redshift.{EmitterInput, ValidatedRecord}
+import scaldi.Injector
 
 // This project
 import sinks._
@@ -34,7 +34,7 @@ import sinks._
 /**
  * S3Pipeline class sets up the Emitter/Buffer/Transformer/Filter
  */
-class RedshiftPipeline(badSink: ISink)(implicit resolver:Resolver, props: Properties) extends IKinesisConnectorPipeline[ ValidatedRecord, EmitterInput ] {
+class RedshiftPipeline(badSink: ISink)(implicit resolver:Resolver, props: Properties, injector: Injector) extends IKinesisConnectorPipeline[ ValidatedRecord, EmitterInput ] {
 
   override def getEmitter(configuration: KinesisConnectorConfiguration) = new RedshiftEmitter(configuration, badSink)
 

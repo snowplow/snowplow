@@ -18,14 +18,16 @@ import com.amazonaws.services.s3.{AmazonS3, AmazonS3Client}
 import com.amazonaws.util.StringInputStream
 import com.snowplowanalytics.iglu.client.SchemaKey
 import com.snowplowanalytics.snowplow.storage.kinesis.redshift.limiter.{RatioFlushLimiter, SizeFlushLimiter, FlushLimiter}
-import com.snowplowanalytics.snowplow.storage.kinesis.redshift.writer.{EventsTableWriter, SchemaTableWriter, BaseCopyTableWriter, CopyTableWriter}
+import com.snowplowanalytics.snowplow.storage.kinesis.redshift.writer._
 import org.apache.commons.logging.LogFactory
 import org.postgresql.ds.PGPoolingDataSource
+import scaldi.{Injector, Injectable}
 import scala.concurrent.{Await, Future}
 import scala.language.implicitConversions
 import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
+import Injectable._
 
 object SQLConverters {
   val log = LogFactory.getLog(classOf[TableWriter])
@@ -87,8 +89,8 @@ object TableWriter {
   val log = LogFactory.getLog(classOf[TableWriter])
   val writers = scala.collection.mutable.Map[String, Option[CopyTableWriter]]()
 
-  def tableExists(tableName: String)(implicit dataSource: DataSource) : Boolean = {
-    val conn = dataSource.getConnection
+  def tableExists(tableName: String)(implicit injector: Injector) : Boolean = {
+    val conn = inject[DataSource].getConnection
     try {
       val res = conn.getMetaData.getTables(null, tableName.substring(0, tableName.indexOf('.')), tableName.substring(tableName.indexOf('.') + 1), Array("TABLE"))
       try {
@@ -109,7 +111,9 @@ object TableWriter {
   }
 
   def writerByName(schemaName: String, vendor: Option[String], version: Option[String], key: Option[SchemaKey], appId: String)
-                  (implicit config: KinesisConnectorConfiguration, props: Properties, dataSource:DataSource): Option[CopyTableWriter] = {
+                  (implicit injector: Injector): Option[CopyTableWriter] = {
+    val props = inject[Properties]
+    val dataSource = inject[DataSource]
     val (dbSchema, dbTable) = if (schemaName.contains(".")) {
       (schemaName.substring(0, schemaName.indexOf(".")), schemaName.substring(schemaName.indexOf(".") + 1))
     } else {
@@ -135,10 +139,11 @@ object TableWriter {
         if (tableExists(tableName)) {
           log.info(s"Creating writer for $tableName, appId $appId")
 
+          val writerFactory = inject[TableWriterFactory]
           if (dbTable.startsWith("events")) {
-            writers += tableName -> Some(new EventsTableWriter(dataSource, tableName))
+            writers += tableName -> Some(writerFactory.newEventsWriter(dataSource, tableName))
           } else {
-            writers += tableName -> Some(new SchemaTableWriter(dataSource, key.get, tableName))
+            writers += tableName -> Some(writerFactory.newWriter(dataSource, key.get, tableName))
           }
         } else {
           log.error(s"Table does not exist for $tableName")
@@ -180,7 +185,6 @@ object TableWriter {
     }
     res
   }
-
 }
 
 class TableWriter(dataSource:DataSource, table: String)(implicit props:Properties) {

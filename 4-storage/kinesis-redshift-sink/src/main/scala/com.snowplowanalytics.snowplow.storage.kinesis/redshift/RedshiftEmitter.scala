@@ -15,8 +15,8 @@ package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 import java.sql.{BatchUpdateException, Timestamp, Types}
 
 import com.snowplowanalytics.iglu.client.Resolver
-import com.snowplowanalytics.snowplow.storage.kinesis.redshift.EmitterInput
 import org.postgresql.ds.PGPoolingDataSource
+import scaldi.Injector
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
@@ -51,29 +51,14 @@ import org.json4s.jackson.JsonMethods._
 import com.snowplowanalytics.snowplow.storage.kinesis.redshift.sinks._
 import scala.language.implicitConversions
 
-object RedshiftEmitter {
-  var redshiftDataSource:PGPoolingDataSource = null
-}
-
 /**
  * Emitter for flushing Kinesis event data to S3.
  *
  * Once the buffer is full, the emit function is called.
  */
-class RedshiftEmitter(config: KinesisConnectorConfiguration, badSink: ISink)(implicit resolver:Resolver, props: Properties) extends IEmitter[ EmitterInput ] {
+class RedshiftEmitter(config: KinesisConnectorConfiguration, badSink: ISink)(implicit resolver:Resolver, props: Properties, injector: Injector) extends IEmitter[ EmitterInput ] {
   val log = LogFactory.getLog(classOf[RedshiftEmitter])
 
-  {
-    synchronized {
-      if (RedshiftEmitter.redshiftDataSource == null) {
-        val ds = new PGPoolingDataSource()
-        ds.setUrl(props.getProperty("redshift_url"))
-        ds.setUser(props.getProperty("redshift_username"))
-        ds.setPassword(props.getProperty("redshift_password"))
-        RedshiftEmitter.redshiftDataSource = ds
-      }
-    }
-  }
   val emptyList = List[EmitterInput]()
 
   var shredder: InstantShredder = null
@@ -94,9 +79,8 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, badSink: ISink)(imp
     try {
       if (shredder == null) {
         implicit val kinesisConfig = config
-        shredder = new InstantShredder(RedshiftEmitter.redshiftDataSource)
+        shredder = new InstantShredder()
       }
-      implicit val dataSource = RedshiftEmitter.redshiftDataSource
       buffer.getRecords.foreach { record =>
         try {
           shredder.shred(record._1)

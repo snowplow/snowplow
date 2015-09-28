@@ -19,17 +19,19 @@ import net.minidev.json.JSONArray
 import org.apache.commons.logging.LogFactory
 import org.json4s.JsonAST.JArray
 import org.json4s.jackson.JsonMethods._
+import scaldi.{Injector, Injectable}
 import scala.collection.JavaConverters._
 
 import scala.annotation.tailrec
 import scala.language.postfixOps
 import scalaz.{Failure, Success}
+import Injectable._
 
-class InstantShredder(dataSource : DataSource)(implicit config: KinesisConnectorConfiguration, resolver: Resolver, props: Properties) {
+class InstantShredder(implicit injector: Injector) {
   val jsonPaths = scala.collection.mutable.Map[String, Option[Array[String]]]()
-  implicit val _dataSource: DataSource = dataSource
   val log = LogFactory.getLog(classOf[InstantShredder])
   private lazy val Mapper = new ObjectMapper
+  private val props = inject[Properties]
   var file = if (props.containsKey("logFile")) new FileWriter("/tmp/shredder.txt") else null
 
   def shred(fields: Array[String]) = {
@@ -39,7 +41,7 @@ class InstantShredder(dataSource : DataSource)(implicit config: KinesisConnector
       }
       if (log.isDebugEnabled) log.debug("Shredding " + fields.map(f => if (f == null) "" else f).mkString(","))
       val appId = fields(FieldIndexes.appId)
-      val validatedEvents = ShredJob.loadAndShred2(fields.map(f => if (f == null) "" else f).mkString("\t"))
+      val validatedEvents = ShredJob.loadAndShred2(fields.map(f => if (f == null) "" else f).mkString("\t"))(inject[Resolver])
       val eventsWriter: Option[CopyTableWriter] = TableWriter.writerByName(props.getProperty("redshift_table"), None, None, None, appId)
       eventsWriter.foreach { writer =>
         val allStored = for {
