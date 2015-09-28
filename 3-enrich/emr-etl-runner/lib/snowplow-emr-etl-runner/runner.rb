@@ -23,7 +23,7 @@ module Snowplow
 
       # Supported options
       @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+))$/
-      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred archive_raw))
+      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred elasticsearch archive_raw))
 
       include Monitoring::Logging
 
@@ -109,7 +109,7 @@ module Snowplow
         # Check our skip argument
         args[:skip].each { |opt|
           unless @@skip_options.include?(opt)
-            raise ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred' or 'archive_raw', not '#{opt}'"
+            raise ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred', 'elasticsearch', or 'archive_raw', not '#{opt}'"
           end
         }
 
