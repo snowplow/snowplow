@@ -89,7 +89,7 @@ case class CookieExtractorEnrichment(
     }.flatten
 
     cookies.map { cookie =>
-      ( ("schema" -> "iglu:com.snowplowanalytics.snowplow/cookie_extractor_context/jsonschema/1-0-0") ~
+      ( ("schema" -> "iglu:org.ietf/http_cookie/jsonschema/1-0-0") ~
         ("data" ->
           ("name" -> cookie.getName) ~
           ("value" -> cookie.getValue)

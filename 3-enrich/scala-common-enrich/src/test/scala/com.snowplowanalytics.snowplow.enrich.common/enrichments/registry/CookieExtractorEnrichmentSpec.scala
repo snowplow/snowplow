@@ -37,8 +37,8 @@ class CookieExtractorEnrichmentSpec extends Specification with ValidationMatcher
   "returns contexts for found cookies"                            ! e3^
                                                                   end
 
-  val simpleCookieJson1 = """{"schema":"iglu:com.snowplowanalytics.snowplow/cookie_extractor_context/jsonschema/1-0-0","data":{"name":"cookieKey1","value":"cookieValue1"}}"""
-  val simpleCookieJson2 = """{"schema":"iglu:com.snowplowanalytics.snowplow/cookie_extractor_context/jsonschema/1-0-0","data":{"name":"cookieKey2","value":"cookieValue2"}}"""
+  val simpleCookieJson1 = """{"schema":"iglu:org.ietf/http_cookie/jsonschema/1-0-0","data":{"name":"cookieKey1","value":"cookieValue1"}}"""
+  val simpleCookieJson2 = """{"schema":"iglu:org.ietf/http_cookie/jsonschema/1-0-0","data":{"name":"cookieKey2","value":"cookieValue2"}}"""
 
 	def e1 = {
     val actual = CookieExtractorEnrichment(List("cookieKey1")).extract(List("Content-Length: 348"))
