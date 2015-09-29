@@ -47,10 +47,12 @@ import registry.{
   UaParserEnrichment,
   CurrencyConversionEnrichment,
   JavascriptScriptEnrichment,
+  CookieExtractorEnrichment,
   UserAgentUtilsEnrichmentConfig,
   UaParserEnrichmentConfig,
   CurrencyConversionEnrichmentConfig,
-  JavascriptScriptEnrichmentConfig
+  JavascriptScriptEnrichmentConfig,
+  CookieExtractorEnrichmentConfig
 }
 
 import utils.ScalazJson4sUtils
@@ -142,6 +144,8 @@ object EnrichmentRegistry {
             CurrencyConversionEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "javascript_script_config") {
             JavascriptScriptEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "cookie_extractor_config") {
+            CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else {
             None.success // Enrichment is not recognized yet
           }
@@ -237,6 +241,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getJavascriptScriptEnrichment: Option[JavascriptScriptEnrichment] = 
     getEnrichment[JavascriptScriptEnrichment]("javascript_script_config")
+
+  /**
+   * Returns an Option boxing the CookieExtractorEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the CookieExtractorEnrichment instance
+   */
+  def getCookieExtractorEnrichment: Option[CookieExtractorEnrichment] =
+    getEnrichment[CookieExtractorEnrichment]("cookie_extractor_config")
 
   /**
    * Returns an Option boxing an Enrichment
