@@ -24,6 +24,7 @@ import java.util.concurrent.ScheduledExecutorService
 import com.amazonaws.services.kinesis.model.ResourceNotFoundException
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.{
+  EnvironmentVariableCredentialsProvider,
   BasicAWSCredentials,
   ClasspathPropertiesFileCredentialsProvider
 }
@@ -200,10 +201,10 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
   private def createKinesisClient: Client = {
     val accessKey = config.awsAccessKey
     val secretKey = config.awsSecretKey
-    val client = if (isCpf(accessKey) && isCpf(secretKey)) {
-      new AmazonKinesisClient(new ClasspathPropertiesFileCredentialsProvider())
-    } else if (isCpf(accessKey) || isCpf(secretKey)) {
-      throw new RuntimeException("access-key and secret-key must both be set to 'cpf', or neither of them")
+    val client = if (isDefault(accessKey) && isDefault(secretKey)) {
+      new AmazonKinesisClient(new EnvironmentVariableCredentialsProvider())
+    } else if (isDefault(accessKey) || isDefault(secretKey)) {
+      throw new RuntimeException("access-key and secret-key must both be set to 'env', or neither")
     } else if (isIam(accessKey) && isIam(secretKey)) {
       new AmazonKinesisClient(InstanceProfile)
     } else if (isIam(accessKey) || isIam(secretKey)) {
@@ -309,13 +310,13 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
   private def getNextBackoff(lastBackoff: Long): Long = (minBackoff + randomGenerator.nextDouble() * (lastBackoff * 3 - minBackoff)).toLong.min(maxBackoff)
 
   /**
-   * Is the access/secret key set to the special value "cpf" i.e. use
-   * the classpath properties file for credentials.
+   * Is the access/secret key set to the special value "default" i.e. use
+   * the standard provider chain for credentials.
    *
    * @param key The key to check
-   * @return true if key is cpf, false otherwise
+   * @return true if key is default, false otherwise
    */
-  private def isCpf(key: String): Boolean = (key == "cpf")
+  private def isDefault(key: String): Boolean = (key == "default")
 
   /**
    * Is the access/secret key set to the special value "iam" i.e. use
