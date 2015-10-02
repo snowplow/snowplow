@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -47,10 +47,12 @@ import registry.{
   UaParserEnrichment,
   CurrencyConversionEnrichment,
   JavascriptScriptEnrichment,
+  EventFingerprintEnrichment,
   UserAgentUtilsEnrichmentConfig,
   UaParserEnrichmentConfig,
   CurrencyConversionEnrichmentConfig,
-  JavascriptScriptEnrichmentConfig
+  JavascriptScriptEnrichmentConfig,
+  EventFingerprintEnrichmentConfig
 }
 
 import utils.ScalazJson4sUtils
@@ -142,6 +144,8 @@ object EnrichmentRegistry {
             CurrencyConversionEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "javascript_script_config") {
             JavascriptScriptEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "event_fingerprint_config") {
+            EventFingerprintEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else {
             None.success // Enrichment is not recognized yet
           }
@@ -237,6 +241,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getJavascriptScriptEnrichment: Option[JavascriptScriptEnrichment] = 
     getEnrichment[JavascriptScriptEnrichment]("javascript_script_config")
+
+  /**
+   * Returns an Option boxing the getEventFingerprintEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the getEventFingerprintEnrichment instance
+   */
+  def getEventFingerprintEnrichment: Option[EventFingerprintEnrichment] =
+    getEnrichment[EventFingerprintEnrichment]("event_fingerprint_config")
 
   /**
    * Returns an Option boxing an Enrichment

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -36,7 +36,7 @@ object Dependencies {
     // Scala
     val scalding         = "0.11.2"
     val scalaz7          = "7.0.0"
-    val commonEnrich     = "0.14.0"
+    val commonEnrich     = "0.16.0"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"

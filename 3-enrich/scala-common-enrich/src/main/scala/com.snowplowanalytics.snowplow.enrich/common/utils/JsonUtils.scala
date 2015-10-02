@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+* Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
 *
 * This program is licensed to you under the Apache License Version 2.0,
 * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -69,7 +69,7 @@ object JsonUtils {
    * Converts a Joda DateTime into
    * a JSON Schema-compatible date-time string.
    *
-   * @param datetime The Joda DateTime
+   * @param dateTime The Joda DateTime
    *        to convert to a timestamp String
    * @return the timestamp String
    */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Twitter, Inc.
+ * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -32,6 +32,8 @@ import com.twitter.scalding._
 // Snowplow Common Enrich
 import common._
 import common.FatalEtlError
+import common.outputs.BadRow
+import common.utils.shredder.Shredder
 
 // Iglu Scala Client
 import iglu.client.{
@@ -43,9 +45,7 @@ import iglu.client.validation.ProcessingMessageMethods._
 
 // This project
 import inputs.EnrichedEventLoader
-import shredder.Shredder
 import outputs.{
-  BadRow,
   ShreddedPartition => UrShreddedPartition
 }
 
@@ -146,7 +146,7 @@ class ShredJob(args : Args) extends Job(args) {
       ShredJob.projectBads(o)
     }
     .mapTo(('line, 'errors) -> 'json) { both: (String, ProcessingMessageNel) =>
-      BadRow(both._1, both._2).toCompactJson
+      new BadRow(both._1, both._2).toCompactJson
     }
     .write(badOutput)        // JSON containing line and error(s)
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -71,7 +71,7 @@ class SchemaValidationFailed1Spec extends Specification {
       sink[String](Tsv("badFolder")){ json =>
         "write a bad row JSON with input line and error message for each input line" in {
           for (i <- json.indices) {
-            json(i) must_== SchemaValidationFailed1Spec.expected(SchemaValidationFailed1Spec.lines(i)._2)
+            removeTstamp(json(i)) must_== SchemaValidationFailed1Spec.expected(SchemaValidationFailed1Spec.lines(i)._2)
           }
         }
       }.

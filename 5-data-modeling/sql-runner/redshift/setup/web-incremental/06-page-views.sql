@@ -31,8 +31,8 @@ CREATE TABLE derived.page_views (
 
   first_touch_tstamp timestamp,
   last_touch_tstamp timestamp,
-  min_dvce_tstamp timestamp,
-  max_dvce_tstamp timestamp,
+  min_dvce_created_tstamp timestamp,
+  max_dvce_created_tstamp timestamp,
   max_etl_tstamp timestamp,
 
   event_count	bigint,

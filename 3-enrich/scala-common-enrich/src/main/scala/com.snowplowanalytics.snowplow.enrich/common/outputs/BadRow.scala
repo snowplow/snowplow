@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -31,6 +31,23 @@ import org.joda.time.format.DateTimeFormat
 
 // Iglu Scala Client
 import iglu.client.ProcessingMessageNel
+import iglu.client.validation.ProcessingMessageMethods._
+
+/**
+ * Alternate BadRow constructors
+ */
+object BadRow {
+
+  /**
+   * Constructor using Strings instead of ProcessingMessages
+   *
+   * @param line
+   * @param errors
+   * @return a BadRow
+   */
+  def apply(line: String, errors: NonEmptyList[String]): BadRow =
+    BadRow(line, errors.map(_.toProcessingMessage), System.currentTimeMillis())
+}
 
 /**
  * Models our report on a bad row. Consists of:
@@ -41,7 +58,7 @@ import iglu.client.ProcessingMessageNel
  */
 case class BadRow(
   val line: String,
-  val errors: NonEmptyList[String],
+  val errors: ProcessingMessageNel,
   val tstamp: Long = System.currentTimeMillis()
   ) {
 
@@ -56,7 +73,7 @@ case class BadRow(
    */
   def toJValue: JValue =
     ("line"           -> line) ~
-    ("errors"         -> errors.toList) ~
+    ("errors"         -> errors.toList.map(e => fromJsonNode(e.asJson))) ~
     ("failure_tstamp" -> this.getTimestamp(tstamp))
 
   /**

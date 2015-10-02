@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 SnowPlow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -147,7 +147,29 @@ object UnstructEventCfLineSpec {
     "1440",
     "UTF-8",
     "2543",
-    "1420"
+    "1420",
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    "America/New_York",
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1","data":[{"schema":"iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0","data":{"useragentFamily":"Firefox","useragentMajor":"12","useragentMinor":"0","useragentPatch":null,"useragentVersion":"Firefox 12.0","osFamily":"Windows 7","osMajor":null,"osMinor":null,"osPatch":null,"osPatchMinor":null,"osVersion":"Windows 7","deviceFamily":"Other"}}]}""",
+    null,
+    "2012-05-27 11:35:53.000",
+    "com.snowplowanalytics.snowplow-website",
+    "signup_form_submitted",
+    "jsonschema",
+    "1-0-0",
+    "11a92821345586fe3947380e106a371f"
     )
 }
 

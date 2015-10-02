@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -18,6 +18,9 @@ package hadoop
 // Java
 import java.net.URI
 import java.util.NoSuchElementException
+
+// Joda
+import org.joda.time.DateTime
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
@@ -72,7 +75,7 @@ case class EtlJobConfig(
   inFormat: String,
   outFolder: String,
   badFolder: String,
-  etlTstamp: String,
+  etlTstamp: DateTime,
   igluConfig: String,
   enrichments: String,
   localMode: Boolean,
@@ -113,7 +116,7 @@ object EtlJobConfig {
     val inFormat = args.requiredz("input_format") // TODO: check it's a valid format
     val outFolder = args.requiredz("output_folder")
     val badFolder = args.requiredz("bad_rows_folder")
-    val etlTstamp = args.requiredz("etl_tstamp").flatMap(t => EventEnrichments.extractTimestamp("etl_tstamp", t).leftMap(_.toProcessingMessage))
+    val etlTstamp = args.requiredz("etl_tstamp").flatMap(timestampStringToDateTime(_))
     val exceptionsFolder = args.optionalz("exceptions_folder")
     
     val igluConfig = args.requiredz("iglu_config")
@@ -221,4 +224,17 @@ object EtlJobConfig {
       raw  <- ConversionUtils.decodeBase64Url("enrichments", str)
       node <- JsonUtils.extractJson("enrichments", raw)
     } yield node).leftMap(_.toProcessingMessage).toValidationNel
+
+  /**
+   * Converts a timestamp Unix timestamp string to a Joda DateTime
+   *
+   * @param tstampString e.g. "1438015263788"
+   * @return Validation-boxed DateTime
+   */
+  private def timestampStringToDateTime(tstampString: String): ValidatedMessage[DateTime] = try {
+    new DateTime(tstampString.toLong).success
+  } catch {
+    case nfe: NumberFormatException =>
+      s"NumberFormatException parsing etl_tstamp [$tstampString]: $nfe".toProcessingMessage.fail
+  }
 }

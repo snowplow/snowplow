@@ -1,4 +1,4 @@
--- Copyright (c) 2013 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,11 +9,11 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.5.0
+-- Version:     0.6.0
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean, Fred Blundun
--- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
+-- Copyright:   Copyright (c) 2013-2015 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 CREATE SCHEMA "atomic";
@@ -25,7 +25,7 @@ CREATE TABLE "atomic"."events" (
 	-- Date/time
 	"etl_tstamp" timestamp,
 	"collector_tstamp" timestamp NOT NULL,
-	"dvce_tstamp" timestamp,
+	"dvce_created_tstamp" timestamp,
 	-- Date/time
 	"event" varchar(128),
 	"event_id" char(36) NOT NULL,
@@ -160,7 +160,7 @@ CREATE TABLE "atomic"."events" (
 	-- Geolocation
 	"geo_timezone" varchar(64),
 	-- Click ID
-	"mkt_clickid" varchar(128),             -- Increased from 64 in 0.5.0
+	"mkt_clickid" varchar(128),
 	"mkt_network" varchar(64),
 	-- ETL tags
 	"etl_tags" varchar(500),
@@ -174,7 +174,18 @@ CREATE TABLE "atomic"."events" (
 	-- Session ID
 	"domain_sessionid" char(36),
 	-- Derived timestamp
-	"derived_tstamp" timestamp
+	"derived_tstamp" timestamp,
+	-- Event schema
+	"event_vendor" varchar(1000),
+	"event_name" varchar(1000),
+	"event_format" varchar(128),
+	"event_version" varchar(128),
+	-- Event fingerprint
+	"event_fingerprint" varchar(128),
+	-- True timestamp
+	"true_tstamp" timestamp
 )
 WITH (OIDS=FALSE)
 ;
+
+COMMENT ON TABLE "atomic"."events" IS '0.6.0';

@@ -36,17 +36,17 @@ WITH sessions_1 AS (
     mobile_session_idx,
 
     collector_tstamp,
-    dvce_tstamp,
+    dvce_created_tstamp,
 
-    FIRST_VALUE(os_type IGNORE NULLS) OVER (PARTITION BY mobile_id, mobile_session_idx ORDER BY dvce_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS os_type,
-    FIRST_VALUE(os_version IGNORE NULLS) OVER (PARTITION BY mobile_id, mobile_session_idx ORDER BY dvce_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS os_version,
-    FIRST_VALUE(device_manufacturer IGNORE NULLS) OVER (PARTITION BY mobile_id, mobile_session_idx ORDER BY dvce_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS device_manufacturer,
-    FIRST_VALUE(device_model IGNORE NULLS) OVER (PARTITION BY mobile_id, mobile_session_idx ORDER BY dvce_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS device_model,
-    FIRST_VALUE(carrier IGNORE NULLS) OVER (PARTITION BY mobile_id, mobile_session_idx ORDER BY dvce_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS carrier
+    FIRST_VALUE(os_type IGNORE NULLS) OVER (PARTITION BY mobile_id, mobile_session_idx ORDER BY dvce_created_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS os_type,
+    FIRST_VALUE(os_version IGNORE NULLS) OVER (PARTITION BY mobile_id, mobile_session_idx ORDER BY dvce_created_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS os_version,
+    FIRST_VALUE(device_manufacturer IGNORE NULLS) OVER (PARTITION BY mobile_id, mobile_session_idx ORDER BY dvce_created_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS device_manufacturer,
+    FIRST_VALUE(device_model IGNORE NULLS) OVER (PARTITION BY mobile_id, mobile_session_idx ORDER BY dvce_created_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS device_model,
+    FIRST_VALUE(carrier IGNORE NULLS) OVER (PARTITION BY mobile_id, mobile_session_idx ORDER BY dvce_created_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS carrier
 
   FROM derived.mobile_events
 
-  ORDER BY mobile_id, mobile_session_idx, dvce_tstamp
+  ORDER BY mobile_id, mobile_session_idx, dvce_created_tstamp
 
 ), sessions_2 AS (
 
@@ -59,8 +59,8 @@ WITH sessions_1 AS (
 
     MIN(collector_tstamp) AS session_start_tstamp,
     MAX(collector_tstamp) AS session_end_tstamp,
-    MIN(dvce_tstamp) AS min_dvce_tstamp,
-    MAX(dvce_tstamp) AS max_dvce_tstamp,
+    MIN(dvce_created_tstamp) AS min_dvce_created_tstamp,
+    MAX(dvce_created_tstamp) AS max_dvce_created_tstamp,
 
     os_type,
     os_version,

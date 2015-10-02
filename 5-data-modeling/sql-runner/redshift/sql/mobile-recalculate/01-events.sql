@@ -29,7 +29,7 @@ CREATE SCHEMA IF NOT EXISTS derived; -- (a) create a new schema
 DROP TABLE IF EXISTS derived.mobile_events;
 CREATE TABLE derived.mobile_events
   DISTKEY (mobile_id)
-  SORTKEY (mobile_id, mobile_session_idx, dvce_tstamp)
+  SORTKEY (mobile_id, mobile_session_idx, dvce_created_tstamp)
 AS (
 
 WITH events_1 AS (
@@ -45,7 +45,7 @@ WITH events_1 AS (
     END AS mobile_id, -- alternatives: open_idfa and apple_idfa
 
     b.collector_tstamp, -- used to compare different users
-    b.dvce_tstamp, -- used to compare events belong to the same user
+    b.dvce_created_tstamp, -- used to compare events belong to the same user
 
     a.os_type,
     a.os_version,
@@ -60,7 +60,7 @@ WITH events_1 AS (
 
   WHERE (a.apple_idfv IS NOT NULL OR a.android_idfa IS NOT NULL) -- optional: add additional restrictions
 
-  ORDER BY mobile_id, dvce_tstamp
+  ORDER BY mobile_id, dvce_created_tstamp
 
 ), events_2 AS (
 
@@ -68,10 +68,10 @@ WITH events_1 AS (
 
   SELECT
 
-    *, LAG(dvce_tstamp, 1) OVER (PARTITION BY mobile_id ORDER BY dvce_tstamp) AS previous_dvce_tstamp
+    *, LAG(dvce_created_tstamp, 1) OVER (PARTITION BY mobile_id ORDER BY dvce_created_tstamp) AS previous_dvce_created_tstamp
 
   FROM events_1
-  ORDER BY mobile_id, dvce_tstamp
+  ORDER BY mobile_id, dvce_created_tstamp
 
 ), events_3 AS (
 
@@ -79,10 +79,10 @@ WITH events_1 AS (
 
   SELECT
 
-    *, CASE WHEN EXTRACT(EPOCH FROM (dvce_tstamp - previous_dvce_tstamp)) < 60*30 THEN 0 ELSE 1 END AS new_session
+    *, CASE WHEN EXTRACT(EPOCH FROM (dvce_created_tstamp - previous_dvce_created_tstamp)) < 60*30 THEN 0 ELSE 1 END AS new_session
 
   FROM events_2
-  ORDER BY mobile_id, dvce_tstamp
+  ORDER BY mobile_id, dvce_created_tstamp
 
 ), events_4 AS (
 
@@ -90,10 +90,10 @@ WITH events_1 AS (
 
   SELECT
 
-    *, SUM(new_session) OVER (PARTITION BY mobile_id ORDER BY dvce_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS mobile_session_idx
+    *, SUM(new_session) OVER (PARTITION BY mobile_id ORDER BY dvce_created_tstamp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS mobile_session_idx
 
   FROM events_3
-  ORDER BY mobile_id, mobile_session_idx, dvce_tstamp
+  ORDER BY mobile_id, mobile_session_idx, dvce_created_tstamp
 
 
 )
@@ -106,7 +106,7 @@ SELECT
   mobile_session_idx,
 
   collector_tstamp,
-  dvce_tstamp,
+  dvce_created_tstamp,
 
   os_type,
   os_version,
@@ -115,6 +115,6 @@ SELECT
   carrier
 
 FROM events_4
-ORDER BY mobile_id, mobile_session_idx, dvce_tstamp
+ORDER BY mobile_id, mobile_session_idx, dvce_created_tstamp
 
 );

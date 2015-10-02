@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -42,6 +42,11 @@ import common.outputs.EnrichedEvent
 import scalaz._
 import Scalaz._
 
+// json4s
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+
 /**
  * Holds helpers for running integration
  * tests on SnowPlow EtlJobs.
@@ -51,7 +56,7 @@ object JobSpecHelpers {
   /**
    * The current version of our Hadoop ETL
    */
-  val EtlVersion = "hadoop-1.0.0-common-0.14.0"
+  val EtlVersion = "hadoop-1.1.0-common-0.16.0"
 
   val EtlTimestamp = "2001-09-09 01:46:40.000"
 
@@ -355,6 +360,18 @@ object JobSpecHelpers {
                     |"script": "${jsScript}"
                   |}
                 |}
+              |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/event_fingerprint_config/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "event_fingerprint_config",
+                  |"enabled": true,
+                  |"parameters": {
+                    |"excludeParameters": ["eid", "stm"],
+                    |"hashAlgorithm": "MD5"
+                  |}
+                |}
               |}
             |]
           |}""".stripMargin.replaceAll("[\n\r]","").getBytes
@@ -423,5 +440,17 @@ object JobSpecHelpers {
     input.delete()
 
     Sinks(output, badRows, exceptions)
+  }
+
+  /**
+   * Removes the timestamp from bad rows so that what remains is deterministic
+   *
+   * @param badRow
+   * @return The bad row without the timestamp
+   */
+  def removeTstamp(badRow: String): String = {
+    val badRowJson = parse(badRow)
+    val badRowWithoutTimestamp = ("line", (badRowJson \ "line")) ~ ("errors", (badRowJson \ "errors"))
+    compact(badRowWithoutTimestamp)
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -15,6 +15,9 @@ package hadoop
 
 // Java
 import java.net.URI
+
+// Apache commons
+import org.apache.commons.codec.binary.Base64
 
 // Hadoop
 import org.apache.hadoop.conf.Configuration
@@ -102,9 +105,8 @@ object EtlJob {
    *         Strings
    */
   def projectBads(all: List[ValidatedEnrichedEvent]): List[NonEmptyList[String]] = all
-    .map(_.swap.toOption)
-    .collect { case Some(errs) =>
-      errs
+    .collect {
+      case Failure(errs) => errs
     }
 
   /**
@@ -117,9 +119,8 @@ object EtlJob {
    * @return a (possibly empty) List of EnrichedEvents
    */
   def projectGoods(all: List[ValidatedEnrichedEvent]): List[EnrichedEvent] = all
-    .map(_.toOption)
-    .collect { case Some(gd) =>
-      gd
+    .collect {
+      case Success(gd) => gd
     }
 }
 
@@ -177,10 +178,14 @@ class EtlJob(args: Args) extends Job(args) {
     .map('all -> 'errors) { o: List[ValidatedEnrichedEvent] =>
       EtlJob.projectBads(o)
     } // : List[NonEmptyList[String]]
-    .flatMapTo(('line, 'errors) -> 'json) { both: (String, List[NonEmptyList[String]]) =>
+    .flatMapTo(('line, 'errors) -> 'json) { both: (Object, List[NonEmptyList[String]]) =>
+      val originalLine = both._1 match {
+        case bytes: Array[Byte] => new String(Base64.encodeBase64(bytes), "UTF-8") // LZO source
+        case other => other.toString
+      }
       for {
         error <- both._2
-        bad    = BadRow(both._1, error).toCompactJson
+        bad    = BadRow(originalLine, error).toCompactJson
       } yield bad // : List[BadRow]
     }   
     .write(badOutput) // N JSONs containing line and error(s)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -40,13 +40,9 @@ object InvalidJsonsSpec {
     )
 
   val expected = (line: String) =>
-    s"""|{
-          |"line":"${line}",
-          |"errors":[
-            |{"level":"error","message":"Field [ue_properties]: invalid JSON [|%|] with parsing error: Unexpected character ('|' (code 124)): expected a valid value (number, String, array, object, 'true', 'false' or 'null') at [Source: java.io.StringReader@xxxxxx; line: 1, column: 2]"},
-            |{"level":"error","message":"Field [context]: invalid JSON [&&&] with parsing error: Unexpected character ('&' (code 38)): expected a valid value (number, String, array, object, 'true', 'false' or 'null') at [Source: java.io.StringReader@xxxxxx; line: 1, column: 2]"}
-          |]
-        |}""".stripMargin.replaceAll("[\n\r]","").replaceAll("[\t]","\\\\t")
+    """{"line":"%s","errors":[{"level":"error","message":"Field [ue_properties]: invalid JSON [|%%|] with parsing error: Unexpected character ('|' (code 124)): expected a valid value (number, String, array, object, 'true', 'false' or 'null') at [Source: java.io.StringReader@xxxxxx; line: 1, column: 2]"},{"level":"error","message":"Field [context]: invalid JSON [&&&] with parsing error: Unexpected character ('&' (code 38)): expected a valid value (number, String, array, object, 'true', 'false' or 'null') at [Source: java.io.StringReader@xxxxxx; line: 1, column: 2]"}]}"""
+      .format(line)
+      .replaceAll("[\t]","\\\\t")
 }
 
 /**
@@ -75,7 +71,7 @@ class InvalidJsonsSpec extends Specification {
       sink[String](Tsv("badFolder")){ json =>
         "write a bad row JSON with input line and error message for each bad JSON" in {
           for (i <- json.indices) {
-            json(i) must_== InvalidJsonsSpec.expected(InvalidJsonsSpec.lines(i)._2)
+            removeTstamp(json(i)) must_== InvalidJsonsSpec.expected(InvalidJsonsSpec.lines(i)._2)
           }
         }
       }.

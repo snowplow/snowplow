@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2013 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2013-2015 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'jdbc/postgres'
@@ -177,6 +177,7 @@ module Snowplow
         props = java.util.Properties.new
         props.set_property :user, target[:username]
         props.set_property :password, target[:password]
+        props.set_property :sslmode, target.fetch(:ssl_mode, "disable")
 
         # Used instead of Java::JavaSql::DriverManager.getConnection to prevent "no suitable driver found" error
         org.postgresql.Driver.new.connect(connection_url, props)

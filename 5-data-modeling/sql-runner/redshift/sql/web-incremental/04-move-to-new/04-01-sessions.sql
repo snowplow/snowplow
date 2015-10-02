@@ -15,26 +15,7 @@
 --
 -- Data Model: web-incremental
 -- Version: 2.0
---
--- Add old entries that also appear in this new batch:
--- (a) backup selected old sessions
--- (b) move those sessions
--- (c) delete them
 
-BEGIN;
-
-  -- (a) backup selected old sessions
-  CREATE TABLE snplw_temp.sessions_backup
-    DISTKEY (domain_userid)
-    SORTKEY (domain_userid, domain_sessionidx, min_dvce_tstamp)
-  AS (SELECT * FROM derived.sessions WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.sessions));
-
-  -- (b) move those sessions
-  INSERT INTO snplw_temp.sessions (SELECT * FROM derived.sessions WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.sessions));
-
-  -- (c) delete them
-  DELETE FROM derived.sessions WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.sessions);
-
-COMMIT;
+INSERT INTO snplw_temp.sessions (SELECT * FROM derived.sessions WHERE domain_userid IN (SELECT domain_userid FROM snplw_temp.sessions)); -- add old entries that also appear in this new batch
 
 INSERT INTO snplw_temp.queries (SELECT 'sessions', 'move-to-new', GETDATE()); -- track time
