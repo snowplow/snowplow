@@ -1,4 +1,4 @@
-Release 71 Stork-Billed Kingfisher (2015-xx-xx)
+Release 71 Stork-Billed Kingfisher (2015-10-02)
 -----------------------------------------------
 Enrich: added example event fingerprint enrichment configuration JSON (#1990)
 EmrEtlRunner: bumped to 0.18.0
