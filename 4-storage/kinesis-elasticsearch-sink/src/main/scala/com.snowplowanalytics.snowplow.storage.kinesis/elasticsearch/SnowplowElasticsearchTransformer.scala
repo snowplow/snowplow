@@ -48,232 +48,147 @@ import com.fasterxml.jackson.core.JsonParseException
 // Logging
 import org.slf4j.LoggerFactory
 
-/**
- * Class to convert successfully enriched events to EmitterInputs
- *
- * @param documentIndex the elasticsearch index name
- * @param documentType the elasticsearch index type
- */
-class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ITransformer[ValidatedRecord, EmitterInput] {
+object SnowplowElasticsearchTransformer {
 
-  private lazy val log = LoggerFactory.getLogger(getClass())
+  private val StringField: TsvToJsonConverter = (key, value) => JObject(key -> JString(value)).successNel
+  private val IntField: TsvToJsonConverter = (key, value) => JObject(key -> JInt(value.toInt)).successNel
+  private val BoolField: TsvToJsonConverter = handleBooleanField
+  private val DoubleField: TsvToJsonConverter = (key, value) => JObject(key -> JDouble(value.toDouble)).successNel
+  private val TstampField: TsvToJsonConverter = (key, value) => JObject(key -> JString(reformatTstamp(value))).successNel
+  private val ContextsField: TsvToJsonConverter = (key, value) => Shredder.parseContexts(value)
+  private val UnstructField: TsvToJsonConverter = (key, value) => Shredder.parseUnstruct(value)
+
+  private val fields = List(
+    "app_id" -> StringField,
+    "platform" -> StringField,
+    "etl_tstamp" -> TstampField,
+    "collector_tstamp" -> TstampField,
+    "dvce_tstamp" -> TstampField,
+    "event" -> StringField,
+    "event_id" -> StringField,
+    "txn_id" -> IntField,
+    "name_tracker" -> StringField,
+    "v_tracker" -> StringField,
+    "v_collector" -> StringField,
+    "v_etl" -> StringField,
+    "user_id" -> StringField,
+    "user_ipaddress" -> StringField,
+    "user_fingerprint" -> StringField,
+    "domain_userid" -> StringField,
+    "domain_sessionidx" -> IntField,
+    "network_userid" -> StringField,
+    "geo_country" -> StringField,
+    "geo_region" -> StringField,
+    "geo_city" -> StringField,
+    "geo_zipcode" -> StringField,
+    "geo_latitude" -> DoubleField,
+    "geo_longitude" -> DoubleField,
+    "geo_region_name" -> StringField,
+    "ip_isp" -> StringField,
+    "ip_organization" -> StringField,
+    "ip_domain" -> StringField,
+    "ip_netspeed" -> StringField,
+    "page_url" -> StringField,
+    "page_title" -> StringField,
+    "page_referrer" -> StringField,
+    "page_urlscheme" -> StringField,
+    "page_urlhost" -> StringField,
+    "page_urlport" -> IntField,
+    "page_urlpath" -> StringField,
+    "page_urlquery" -> StringField,
+    "page_urlfragment" -> StringField,
+    "refr_urlscheme" -> StringField,
+    "refr_urlhost" -> StringField,
+    "refr_urlport" -> IntField,
+    "refr_urlpath" -> StringField,
+    "refr_urlquery" -> StringField,
+    "refr_urlfragment" -> StringField,
+    "refr_medium" -> StringField,
+    "refr_source" -> StringField,
+    "refr_term" -> StringField,
+    "mkt_medium" -> StringField,
+    "mkt_source" -> StringField,
+    "mkt_term" -> StringField,
+    "mkt_content" -> StringField,
+    "mkt_campaign" -> StringField,
+    "contexts" -> ContextsField,
+    "se_category" -> StringField,
+    "se_action" -> StringField,
+    "se_label" -> StringField,
+    "se_property" -> StringField,
+    "se_value" -> StringField,
+    "unstruct_event" -> UnstructField,
+    "tr_orderid" -> StringField,
+    "tr_affiliation" -> StringField,
+    "tr_total" -> DoubleField,
+    "tr_tax" -> DoubleField,
+    "tr_shipping" -> DoubleField,
+    "tr_city" -> StringField,
+    "tr_state" -> StringField,
+    "tr_country" -> StringField,
+    "ti_orderid" -> StringField,
+    "ti_sku" -> StringField,
+    "ti_name" -> StringField,
+    "ti_category" -> StringField,
+    "ti_price" -> DoubleField,
+    "ti_quantity" -> IntField,
+    "pp_xoffset_min" -> IntField,
+    "pp_xoffset_max" -> IntField,
+    "pp_yoffset_min" -> IntField,
+    "pp_yoffset_max" -> IntField,
+    "useragent" -> StringField,
+    "br_name" -> StringField,
+    "br_family" -> StringField,
+    "br_version" -> StringField,
+    "br_type" -> StringField,
+    "br_renderengine" -> StringField,
+    "br_lang" -> StringField,
+    "br_features_pdf" -> BoolField,
+    "br_features_flash" -> BoolField,
+    "br_features_java" -> BoolField,
+    "br_features_director" -> BoolField,
+    "br_features_quicktime" -> BoolField,
+    "br_features_realplayer" -> BoolField,
+    "br_features_windowsmedia" -> BoolField,
+    "br_features_gears" -> BoolField,
+    "br_features_silverlight" -> BoolField,
+    "br_cookies" -> BoolField,
+    "br_colordepth" -> StringField,
+    "br_viewwidth" -> IntField,
+    "br_viewheight" -> IntField,
+    "os_name" -> StringField,
+    "os_family" -> StringField,
+    "os_manufacturer" -> StringField,
+    "os_timezone" -> StringField,
+    "dvce_type" -> StringField,
+    "dvce_ismobile" -> BoolField,
+    "dvce_screenwidth" -> IntField,
+    "dvce_screenheight" -> IntField,
+    "doc_charset" -> StringField,
+    "doc_width" -> IntField,
+    "doc_height" -> IntField,
+    "tr_currency" -> StringField,
+    "tr_total_base" -> DoubleField,
+    "tr_tax_base" -> DoubleField,
+    "tr_shipping_base" -> DoubleField,
+    "ti_currency" -> StringField,
+    "ti_price_base" -> DoubleField,
+    "base_currency" -> StringField,
+    "geo_timezone" -> StringField,
+    "mkt_clickid" -> StringField,
+    "mkt_network" -> StringField,
+    "etl_tags" -> StringField,
+    "dvce_sent_tstamp" -> TstampField,
+    "refr_domain_userid" -> StringField,
+    "refr_device_tstamp" -> TstampField,
+    "derived_contexts" -> ContextsField,
+    "domain_sessionid" -> StringField,
+    "derived_tstamp" -> TstampField
+  )
 
   private object GeopointIndexes {
     val latitude = 22
     val longitude = 23
-  }
-
-  private val fields = Array(
-    "app_id",
-    "platform",
-    "etl_tstamp",
-    "collector_tstamp",
-    "dvce_tstamp",
-    "event",
-    "event_id",
-    "txn_id",
-    "name_tracker",
-    "v_tracker",
-    "v_collector",
-    "v_etl",
-    "user_id",
-    "user_ipaddress",
-    "user_fingerprint",
-    "domain_userid",
-    "domain_sessionidx",
-    "network_userid",
-    "geo_country",
-    "geo_region",
-    "geo_city",
-    "geo_zipcode",
-    "geo_latitude",
-    "geo_longitude",
-    "geo_region_name",
-    "ip_isp",
-    "ip_organization",
-    "ip_domain",
-    "ip_netspeed",
-    "page_url",
-    "page_title",
-    "page_referrer",
-    "page_urlscheme",
-    "page_urlhost",
-    "page_urlport",
-    "page_urlpath",
-    "page_urlquery",
-    "page_urlfragment",
-    "refr_urlscheme",
-    "refr_urlhost",
-    "refr_urlport",
-    "refr_urlpath",
-    "refr_urlquery",
-    "refr_urlfragment",
-    "refr_medium",
-    "refr_source",
-    "refr_term",
-    "mkt_medium",
-    "mkt_source",
-    "mkt_term",
-    "mkt_content",
-    "mkt_campaign",
-    "contexts",
-    "se_category",
-    "se_action",
-    "se_label",
-    "se_property",
-    "se_value",
-    "unstruct_event",
-    "tr_orderid",
-    "tr_affiliation",
-    "tr_total",
-    "tr_tax",
-    "tr_shipping",
-    "tr_city",
-    "tr_state",
-    "tr_country",
-    "ti_orderid",
-    "ti_sku",
-    "ti_name",
-    "ti_category",
-    "ti_price",
-    "ti_quantity",
-    "pp_xoffset_min",
-    "pp_xoffset_max",
-    "pp_yoffset_min",
-    "pp_yoffset_max",
-    "useragent",
-    "br_name",
-    "br_family",
-    "br_version",
-    "br_type",
-    "br_renderengine",
-    "br_lang",
-    "br_features_pdf",
-    "br_features_flash",
-    "br_features_java",
-    "br_features_director",
-    "br_features_quicktime",
-    "br_features_realplayer",
-    "br_features_windowsmedia",
-    "br_features_gears",
-    "br_features_silverlight",
-    "br_cookies",
-    "br_colordepth",
-    "br_viewwidth",
-    "br_viewheight",
-    "os_name",
-    "os_family",
-    "os_manufacturer",
-    "os_timezone",
-    "dvce_type",
-    "dvce_ismobile",
-    "dvce_screenwidth",
-    "dvce_screenheight",
-    "doc_charset",
-    "doc_width",
-    "doc_height",
-    "tr_currency",
-    "tr_total_base",
-    "tr_tax_base",
-    "tr_shipping_base",
-    "ti_currency",
-    "ti_price_base",
-    "base_currency",
-    "geo_timezone",
-    "mkt_clickid",
-    "mkt_network",
-    "etl_tags",
-    "dvce_sent_tstamp",
-    "refr_domain_userid",
-    "refr_device_tstamp",
-    "derived_contexts",
-    "domain_sessionid",
-    "derived_tstamp"
-    )
-
-  private val intFields = Set(
-    "txn_id",
-    "domain_sessionidx",
-    "page_urlport",
-    "refr_urlport",
-    "ti_quantity",
-    "pp_xoffset_min",
-    "pp_xoffset_max",
-    "pp_yoffset_min",
-    "pp_yoffset_max",
-    "br_viewwidth",
-    "br_viewheight",
-    "dvce_screenwidth",
-    "dvce_screenheight",
-    "doc_width",
-    "doc_height"
-    )
-  private val doubleFields = Set(
-    "geo_latitude",
-    "geo_longitude",
-    "tr_total",
-    "tr_tax",
-    "tr_shipping",
-    "ti_price",
-    "tr_total_base",
-    "tr_tax_base",
-    "tr_shipping_base",
-    "ti_price_base"
-    )
-  private val boolFields = Set(
-    "br_features_pdf",
-    "br_features_flash",
-    "br_features_java",
-    "br_features_director",
-    "br_features_quicktime",
-    "br_features_realplayer",
-    "br_features_windowsmedia",
-    "br_features_gears",
-    "br_features_silverlight",
-    "br_cookies",
-    "dvce_ismobile"
-    )
-  private val tstampFields = Set(
-    "etl_tstamp",
-    "collector_tstamp",
-    "dvce_tstamp",
-    "dvce_sent_tstamp",
-    "refr_device_tstamp",
-    "derived_tstamp"
-    )
-
-  /**
-   * Convert the value of a field to a JValue based on the name of the field
-   *
-   * @param kvPair Tuple2 of the name and value of the field
-   * @return JObject representing a single field in the JSON
-   */
-  private def converter(kvPair: (String, String)): ValidationNel[String, JObject] = {
-    val (key, value) = kvPair
-    if (value.isEmpty) {
-      JObject(key -> JNull).successNel
-    } else {
-      try {
-        if (intFields.contains(key)) {
-          JObject(key -> JInt(value.toInt)).successNel
-        } else if (doubleFields.contains(key)) {
-          JObject(key -> JDouble(value.toDouble)).successNel
-        } else if (boolFields.contains(key)) {
-          handleBooleanField(key, value)
-        } else if (tstampFields.contains(key)) {
-          JObject(key -> JString(reformatTstamp(value))).successNel
-        } else if (key == "contexts" || key == "derived_contexts") {
-          Shredder.parseContexts(value)
-        } else if (key == "unstruct_event") {
-          Shredder.parseUnstruct(value)
-        } else {
-          JObject(key -> JString(value)).successNel
-        }
-      } catch {
-        case e @ (_ : IllegalArgumentException | _: JsonParseException) =>
-          "Value [%s] is not valid for field [%s]: %s".format(value, key, e.getMessage).failNel
-      }
-    }
   }
 
   /**
@@ -298,6 +213,39 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
       case _   => "Value [%s] is not valid for field [%s]: expected 0 or 1".format(value, key).failNel
     }
 
+}
+
+/**
+ * Class to convert successfully enriched events to EmitterInputs
+ *
+ * @param documentIndex the elasticsearch index name
+ * @param documentType the elasticsearch index type
+ */
+class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ITransformer[ValidatedRecord, EmitterInput] {
+
+  private lazy val log = LoggerFactory.getLogger(getClass())
+
+  /**
+   * Convert the value of a field to a JValue based on the name of the field
+   *
+   * @param fieldInformation ((field name, field-to-JObject conversion function), field value)
+   * @return JObject representing a single field in the JSON
+   */
+  private def converter(fieldInformation: ((String, TsvToJsonConverter), String)): ValidationNel[String, JObject] = {
+    val ((fieldName, fieldConversionFunction), fieldValue) = fieldInformation
+    if (fieldValue.isEmpty) {
+      JObject(fieldName -> JNull).successNel
+    } else {
+      try {
+        fieldConversionFunction(fieldName, fieldValue)
+      } catch {
+        case e @ (_ : IllegalArgumentException | _: JsonParseException) =>
+          "Value [%s] is not valid for field [%s]: %s".format(fieldValue, fieldName, e.getMessage).failNel
+      }
+
+    }
+  }
+
   /**
    * Converts an aray of field values to a JSON whose keys are the field names
    *
@@ -305,26 +253,27 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    * @return ValidatedRecord containing JSON for the event and the event_id (if it exists)
    */
   def jsonifyGoodEvent(event: Array[String]): ValidationNel[String, JsonRecord] = {
+    val fields = SnowplowElasticsearchTransformer.fields
 
     if (event.size != fields.size) {
       log.warn(s"Expected ${fields.size} fields, received ${event.size} fields. This may be caused by using an outdated version of Snowplow Kinesis Enrich.")
     }
 
-    if (event.size <= GeopointIndexes.latitude.max(GeopointIndexes.longitude)) {
+    if (event.size <= SnowplowElasticsearchTransformer.GeopointIndexes.latitude.max(SnowplowElasticsearchTransformer.GeopointIndexes.longitude)) {
       s"Event contained only ${event.size} tab-separated fields".failNel
     } else {
 
       val geoLocation: JObject = {
-        val latitude = event(GeopointIndexes.latitude)
-        val longitude = event(GeopointIndexes.longitude)
+        val latitude = event(SnowplowElasticsearchTransformer.GeopointIndexes.latitude)
+        val longitude = event(SnowplowElasticsearchTransformer.GeopointIndexes.longitude)
         if (latitude.size > 0 && longitude.size > 0) {
           JObject("geo_location" -> JString(s"$latitude,$longitude"))
         } else {
           JObject()
         }
       }
-      val validatedJObjects: Array[ValidationNel[String, JObject]] = fields.zip(event).map(converter)
-      val switched: ValidationNel[String, List[JObject]] = validatedJObjects.toList.sequenceU
+      val validatedJObjects: List[ValidationNel[String, JObject]] = fields.zip(event.toList).map(converter)
+      val switched: ValidationNel[String, List[JObject]] = validatedJObjects.sequenceU
       switched.map( x => {
         val j = x.fold(geoLocation)((x,y) => y ~ x)
         JsonRecord(compact(render(j)), extractEventId(j))
