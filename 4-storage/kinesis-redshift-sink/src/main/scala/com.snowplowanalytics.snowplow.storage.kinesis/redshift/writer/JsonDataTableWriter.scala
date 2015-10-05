@@ -8,11 +8,14 @@ import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 import com.snowplowanalytics.iglu.client.SchemaKey
 import com.snowplowanalytics.snowplow.storage.kinesis.redshift.TableWriter
 import org.apache.commons.logging.LogFactory
+import scaldi.Injector
+import scaldi.{Injector, Injectable}
+import Injectable._
 
 /**
  * Created by denismo on 21/09/15.
  */
-class JsonDataTableWriter(dataSource:DataSource, schema: SchemaKey, table: String)(implicit config: KinesisConnectorConfiguration, props:Properties)
+class JsonDataTableWriter(dataSource:DataSource, schema: SchemaKey, table: String)(implicit injector: Injector)
   extends SchemaTableWriter(dataSource, schema, table)
 {
   private val log = LogFactory.getLog(classOf[JsonDataTableWriter])

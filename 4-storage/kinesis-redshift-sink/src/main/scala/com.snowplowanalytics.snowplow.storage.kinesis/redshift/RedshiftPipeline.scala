@@ -30,11 +30,13 @@ import scaldi.Injector
 
 // This project
 import sinks._
+import scaldi.{Injector, Injectable}
+import Injectable._
 
 /**
  * S3Pipeline class sets up the Emitter/Buffer/Transformer/Filter
  */
-class RedshiftPipeline(badSink: ISink)(implicit resolver:Resolver, props: Properties, injector: Injector) extends IKinesisConnectorPipeline[ ValidatedRecord, EmitterInput ] {
+class RedshiftPipeline(badSink: ISink)(implicit injector: Injector) extends IKinesisConnectorPipeline[ ValidatedRecord, EmitterInput ] {
 
   override def getEmitter(configuration: KinesisConnectorConfiguration) = new RedshiftEmitter(configuration, badSink)
 

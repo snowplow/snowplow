@@ -19,12 +19,12 @@ import net.minidev.json.JSONArray
 import org.apache.commons.logging.LogFactory
 import org.json4s.JsonAST.JArray
 import org.json4s.jackson.JsonMethods._
-import scaldi.{Injector, Injectable}
 import scala.collection.JavaConverters._
 
 import scala.annotation.tailrec
 import scala.language.postfixOps
 import scalaz.{Failure, Success}
+import scaldi.{Injector, Injectable}
 import Injectable._
 
 class InstantShredder(implicit injector: Injector) {

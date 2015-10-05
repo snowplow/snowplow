@@ -20,7 +20,6 @@ import java.util.Properties
 import com.amazonaws.services.kinesis.model.Record
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.snowplowanalytics.iglu.client.Resolver
-import com.snowplowanalytics.snowplow.storage.kinesis.redshift.{EmitterInput, ValidatedRecord}
 import org.joda.time.DateTimeZone
 
 // AWS Kinesis Connector libs
@@ -29,6 +28,8 @@ import com.amazonaws.services.kinesis.connectors.interfaces.ITransformer
 // Scalaz
 import scalaz.Scalaz._
 import scalaz._
+import scaldi.{Injector, Injectable}
+import Injectable._
 
 object FieldIndexes { // 0-indexed
   val collectorTstamp = 3
@@ -43,7 +44,8 @@ object FieldIndexes { // 0-indexed
   val augur_user_id = 110
 }
 
-class RawEventTransformer(implicit resolver:Resolver, props: Properties) extends ITransformer[ ValidatedRecord, EmitterInput ] {
+class RawEventTransformer(implicit injector: Injector) extends ITransformer[ ValidatedRecord, EmitterInput ] {
+  private val props = inject[Properties]
   override def toClass(record: Record): ValidatedRecord = {
     val recordByteArray = record.getData.array
     var fields = new String(recordByteArray, "UTF-8").split("\t", -1)

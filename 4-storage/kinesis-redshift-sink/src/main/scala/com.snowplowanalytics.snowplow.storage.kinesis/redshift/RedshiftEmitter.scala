@@ -50,13 +50,15 @@ import org.json4s.jackson.JsonMethods._
 // This project
 import com.snowplowanalytics.snowplow.storage.kinesis.redshift.sinks._
 import scala.language.implicitConversions
+import scaldi.{Injector, Injectable}
+import Injectable._
 
 /**
  * Emitter for flushing Kinesis event data to S3.
  *
  * Once the buffer is full, the emit function is called.
  */
-class RedshiftEmitter(config: KinesisConnectorConfiguration, badSink: ISink)(implicit resolver:Resolver, props: Properties, injector: Injector) extends IEmitter[ EmitterInput ] {
+class RedshiftEmitter(config: KinesisConnectorConfiguration, badSink: ISink)(implicit injector: Injector) extends IEmitter[ EmitterInput ] {
   val log = LogFactory.getLog(classOf[RedshiftEmitter])
 
   val emptyList = List[EmitterInput]()

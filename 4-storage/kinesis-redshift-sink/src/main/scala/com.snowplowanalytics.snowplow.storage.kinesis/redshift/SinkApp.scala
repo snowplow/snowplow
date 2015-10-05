@@ -15,8 +15,11 @@ package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 // Java
 import java.io.File
 import java.util.Properties
+import java.util.logging.Logger
 import javax.sql.DataSource
 
+import com.digdeep.util.iglu.client.ErrorCachingResolver
+import com.digdeep.util.logging.S3Handler
 import com.fasterxml.jackson.databind.JsonNode
 import com.snowplowanalytics.iglu.client.Resolver
 import com.snowplowanalytics.snowplow.enrich.hadoop._
@@ -97,29 +100,28 @@ object SinkApp extends App {
 
   val badSink = new KinesisSink(credentials, kinesisSinkEndpoint, kinesisSinkName)
 
-  private val tuple: (Properties, KinesisConnectorConfiguration) = convertConfig(conf, credentials)
-  implicit val props = tuple._1
-  implicit val kconfig = tuple._2
+  private val (props, kconfig): (Properties, KinesisConnectorConfiguration) = convertConfig(conf, credentials)
+  Logger.getLogger("").addHandler(new S3Handler(credentials, 10000000, props.getProperty("s3LoggingBucket"), props.getProperty("s3LoggingPath")))
   val ds = new PGPoolingDataSource()
   ds.setUrl(props.getProperty("redshift_url"))
   ds.setUser(props.getProperty("redshift_username"))
   ds.setPassword(props.getProperty("redshift_password"))
   implicit val module = new Module {
     bind [TableWriterFactory] to new DefaultTableWriterFactory
-    bind [Resolver] to igluResolver
+    bind [Resolver] to new ErrorCachingResolver(500, igluResolver.repos, igluResolver)
     bind [Properties] to props
     bind [KinesisConnectorConfiguration] to kconfig
     bind [DataSource] to ds
+    bind [AWSCredentialsProvider] to credentials
   }
 
-  val executor = new RedshiftSinkExecutor(tuple._2, badSink)
+  val executor = new RedshiftSinkExecutor(kconfig, badSink)
   executor.run()
 
   /**
    * This function converts the config file into the format
    * expected by the Kinesis connector interfaces.
    *
-   * @param connector The configuration HOCON
    * @return A KinesisConnectorConfiguration
    */
   def convertConfig(conf: Config, credentials: AWSCredentialsProvider): (Properties, KinesisConnectorConfiguration) = {
@@ -157,7 +159,10 @@ object SinkApp extends App {
     }
     props.setProperty("jsonpaths", connector.getString("jsonpaths"))
     if (redshift.hasPath("filterFields")) props.setProperty("filterFields",  "true")
-    props.setProperty("batchSize", String.valueOf(redshift.getInt("batchSize")))
+    if (redshift.hasPath("batchSize")) props.setProperty("batchSize", String.valueOf(redshift.getInt("batchSize")))
+    props.setProperty("denominator", "10")
+    props.setProperty("numerator", "1")
+    props.setProperty("minWriteTime", "6000")
 
     val buffer = connector.getConfig("buffer")
     val byteLimit = buffer.getString("byte-limit")

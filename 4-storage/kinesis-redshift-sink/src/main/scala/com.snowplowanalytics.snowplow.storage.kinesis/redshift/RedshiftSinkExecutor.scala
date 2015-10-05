@@ -26,11 +26,13 @@ import scaldi.Injector
 
 // This project
 import sinks._
+import scaldi.{Injector, Injectable}
+import Injectable._
 
 /**
  * Boilerplate class for Kinessis Conenector
  */
-class RedshiftSinkExecutor(config: KinesisConnectorConfiguration, badSink: ISink)(implicit resolver:Resolver, props: Properties, injector: Injector) extends KinesisConnectorExecutorBase[ ValidatedRecord, EmitterInput ] {
+class RedshiftSinkExecutor(config: KinesisConnectorConfiguration, badSink: ISink)(implicit injector: Injector) extends KinesisConnectorExecutorBase[ ValidatedRecord, EmitterInput ] {
   super.initialize(config)
 
   override def getKinesisConnectorRecordProcessorFactory = {

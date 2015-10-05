@@ -3,33 +3,58 @@ package com.snowplowanalytics.snowplow.storage.kinesis.redshift.writer
 import java.io.{BufferedOutputStream, File, FileOutputStream, PrintWriter}
 import java.sql.{SQLException, Connection}
 import java.util.Properties
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantLock
 import java.util.zip.GZIPOutputStream
 import javax.sql.DataSource
 
+import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.regions.{Region, Regions}
+import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient
+import com.amazonaws.services.cloudwatch.model.{StandardUnit, MetricDatum, PutMetricDataRequest}
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.util.StringInputStream
 import com.snowplowanalytics.snowplow.storage.kinesis.redshift.TableWriter
 import org.apache.commons.logging.LogFactory
+import scaldi.Injector
 
+import scala.collection.mutable
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 import scala.language.postfixOps
+import scala.util.Try
+import scaldi.{Injector, Injectable}
+import Injectable._
 
 /**
  * Created by denismo on 18/09/15.
  */
-abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implicit config: KinesisConnectorConfiguration, props: Properties) extends CopyTableWriter {
+class ThreadOnce {
+  private val called = new ThreadLocal[AtomicBoolean]() {
+    override def initialValue(): AtomicBoolean = new AtomicBoolean()
+  }
+  def callOnce(callable:  => Unit): Unit = {
+    if (called.get().compareAndSet(false, true)) {
+      callable
+    }
+  }
+  def reset() = called.get().set(false)
+}
+
+abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implicit injector: Injector) extends CopyTableWriter {
   private val log = LogFactory.getLog(classOf[BaseCopyTableWriter])
   lazy val s3Manifest: String = createManifest
   lazy val bufferFileInterm: File = File.createTempFile(table + "_interm", ".tsv.gz")
   lazy val bufferFile: File = File.createTempFile(table, ".tsv.gz")
+  private val props = inject[Properties]
   var batchCount: Int = 0
-  @volatile var pending: Future[Unit] = null
+  var pending: Future[Unit] = null
+  val updateInProgress = new AtomicBoolean()
+  val threadOnce = new ThreadOnce()
 
   var bufferFileStream: PrintWriter = null
   def write(values: Array[String]): Unit = {
@@ -42,8 +67,7 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
     val file = getBufferFile
     file.println(value)
     batchCount += 1
-    if (isFlushRequired && pending == null) {
-      log.info("Flushing at " + System.currentTimeMillis())
+    if (isFlushRequired) {
       flush()
     }
   }
@@ -56,17 +80,25 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
       bufferFileStream = null
     }
     if (bufferFile != null && bufferFile.exists()) bufferFile.delete()
-    if (bufferFileInterm != null && bufferFile != null) bufferFileInterm.renameTo(bufferFile)
+    if (bufferFileInterm != null && bufferFileInterm.exists() && bufferFile != null) bufferFileInterm.renameTo(bufferFile)
     val res = batchCount
     batchCount = 0
-    res
+    if (bufferFile.exists()) {
+      res
+    } else {
+      0
+    }
   }
 
+  def isUpdateInProgress(takeLock: Boolean = false): Boolean = !updateInProgress.compareAndSet(false, takeLock)
+
   def flush(): Unit = {
-    if (pending != null) {
-      log.warn(s"Ignoring flush on $table - there is a flush in progress")
+    if (isUpdateInProgress(true)) { // Note: this sets the flag to true essentially taking a lock
+      threadOnce.callOnce(log.warn(s"Ignoring flush on $table - there is a flush in progress"))
       return
     }
+    threadOnce.reset()
+    log.info("Flushing events")
     val flushCount = beforeFlushToRedshift()
     pending = Future {
       var retryCount = 0
@@ -98,6 +130,10 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
     pending onComplete {
       case _ =>
         pending = null
+        updateInProgress.set(false)
+        updateInProgress.synchronized {
+          updateInProgress.notifyAll()
+        }
     }
   }
 
@@ -134,15 +170,17 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
     }
   }
 
-  protected def waitForPending(): Unit = {
-    if (pending != null) {
-      log.info("Waiting for pending flush to complete")
-      Await.result(pending, 30 seconds)
+  protected def waitForPending(msg: Option[String] = None): Unit = {
+    updateInProgress.synchronized {
+      while (isUpdateInProgress()) {
+        log.info(msg.getOrElse("Waiting for pending flush to complete"))
+        updateInProgress.wait(60000)
+      }
     }
   }
 
   def createManifest: String = {
-    val s3client = new AmazonS3Client(config.AWS_CREDENTIALS_PROVIDER)
+    val s3client = new AmazonS3Client(inject[AWSCredentialsProvider])
     s3client.setRegion(Region.getRegion(Regions.AP_SOUTHEAST_2))
     val endPoint = props.getProperty("sshEndpoint")
     val username = props.getProperty("sshUsername")
@@ -155,4 +193,5 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
     s3client.putObject(s3Folder, table, stream, metadata)
     s"s3://$s3Folder/$table"
   }
+
 }

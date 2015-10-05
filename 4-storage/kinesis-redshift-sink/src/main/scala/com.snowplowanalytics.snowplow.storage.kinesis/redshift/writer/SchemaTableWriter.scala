@@ -8,12 +8,15 @@ import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 import com.snowplowanalytics.iglu.client.SchemaKey
 import com.snowplowanalytics.snowplow.storage.kinesis.redshift.TableWriter
 import org.apache.commons.logging.LogFactory
+import scaldi.{Injector, Injectable}
+import Injectable._
 
 /**
  * Created by denismo on 18/09/15.
  */
-class SchemaTableWriter(dataSource:DataSource, schema: SchemaKey, table: String)(implicit config: KinesisConnectorConfiguration, props:Properties) extends BaseCopyTableWriter(dataSource, table) {
-  private val log = LogFactory.getLog(classOf[SchemaTableWriter])
+class SchemaTableWriter(dataSource:DataSource, schema: SchemaKey, table: String)(implicit injector: Injector) extends BaseCopyTableWriter(dataSource, table) {
+  val log = LogFactory.getLog(classOf[SchemaTableWriter])
+  val props = inject[Properties]
   val jsonPaths = {
     val propJsonPaths = props.getProperty("jsonPaths")
     val (major, _, _) = schema.getModelRevisionAddition.get
@@ -26,9 +29,7 @@ class SchemaTableWriter(dataSource:DataSource, schema: SchemaKey, table: String)
   log.info(s"Created schema table writer for $table")
   override def onFlushToRedshift(flushCount: Int, providedCon: Option[Connection]) = {
     log.info(s"Flushing $table in Redshift")
-    if (props.containsKey("simulateDB")) {
-      Thread.sleep(20)
-    } else {
+    if (bufferFile != null && bufferFile.exists()) {
       val con = providedCon match {
         case Some(_con) => _con
         case None =>
@@ -55,7 +56,7 @@ class SchemaTableWriter(dataSource:DataSource, schema: SchemaKey, table: String)
           case None => con.close()
         }
       }
-    }
+  }
   }
   def flush(con: Connection) = {
 //    val flushCount = beforeFlushToRedshift()

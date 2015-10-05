@@ -6,33 +6,35 @@ import javax.sql.DataSource
 
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 import com.snowplowanalytics.snowplow.storage.kinesis.redshift.TableWriter
-import com.snowplowanalytics.snowplow.storage.kinesis.redshift.limiter.{OrLimiter, FlushLimiter, RatioFlushLimiter, SizeFlushLimiter}
+import com.snowplowanalytics.snowplow.storage.kinesis.redshift.limiter._
 import org.apache.commons.logging.LogFactory
+import scaldi.Injector
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 import scala.language.postfixOps
+import scaldi.{Injector, Injectable}
+import Injectable._
 
 /**
  * Created by denismo on 18/09/15.
  */
-class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: KinesisConnectorConfiguration, props:Properties) extends BaseCopyTableWriter(dataSource, table) {
-  private val log = LogFactory.getLog(classOf[EventsTableWriter])
+class EventsTableWriter(dataSource:DataSource, table: String)(implicit injector: Injector) extends BaseCopyTableWriter(dataSource, table) {
+  val log = LogFactory.getLog(classOf[EventsTableWriter])
   var dependents: Set[SchemaTableWriter] = Set()
 
+  val props = inject[Properties]
   val limiter: FlushLimiter = {
-    if (props.containsKey("denominator") && props.containsKey("numerator") && props.containsKey("minWriteTime")) {
+    if (props.containsKey("flushRatio") && props.containsKey("defaultCollectionTime")) {
       if (props.containsKey("batchSize")) {
         new OrLimiter(
-          new RatioFlushLimiter(Integer.parseInt(props.getProperty("numerator")),
-            Integer.parseInt(props.getProperty("denominator")), java.lang.Long.parseLong(props.getProperty("minWriteTime"))),
+          new RatioFlushLimiter(props.getProperty("flushRatio"), java.lang.Long.parseLong(props.getProperty("defaultCollectionTime"))),
           new SizeFlushLimiter(Integer.parseInt(props.getProperty("batchSize")))
         )
       } else {
-        new RatioFlushLimiter(Integer.parseInt(props.getProperty("numerator")),
-          Integer.parseInt(props.getProperty("denominator")), java.lang.Long.parseLong(props.getProperty("minWriteTime")))
+        new RatioFlushLimiter(props.getProperty("flushRatio"), java.lang.Long.parseLong(props.getProperty("defaultCollectionTime")))
       }
     } else if (props.containsKey("batchSize")) {
       new SizeFlushLimiter(Integer.parseInt(props.getProperty("batchSize")))
@@ -60,20 +62,14 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: K
   override def onFlushToRedshift(flushCount:Int, providedCon: Option[Connection]) = {
     val start = System.currentTimeMillis()
     log.info(s"Flushing $flushCount events $table to Redshift")
-    // TODO Extract into a mixin or use DI
-    if (props.containsKey("simulateDB")) {
-      Thread.sleep((1000 + Math.random() * 500 * Math.signum(Math.random()-0.5)).toLong)
-      dependents.foreach(_.flush(null))
-      limiter.flushed(start, System.currentTimeMillis(), flushCount)
-      log.info(s"Finished simulated flushing events $table to Redshift")
-    } else {
-      val con = providedCon match {
-        case Some(_con) => _con
-        case None =>
-          TableWriter.getConnection(dataSource)
-      }
-      val stat = con.createStatement()
-      try {
+    val con = providedCon match {
+      case Some(_con) => _con
+      case None =>
+        TableWriter.getConnection(dataSource)
+    }
+    val stat = con.createStatement()
+    try {
+      if (bufferFile != null && bufferFile.exists()) {
         try {
           val accessKey = props.getProperty("s3AccessKey")
           val secretKey = props.getProperty("s3SecretKey")
@@ -85,24 +81,24 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: K
         finally {
           stat.close()
         }
-        dependents.foreach(_.flush(con))
-        log.info("Committing events")
-        con.commit()
-        log.info("Committed events")
-        limiter.flushed(start, System.currentTimeMillis(), flushCount)
       }
-      catch {
-        case e:Throwable =>
-          e.printStackTrace()
-          log.error("Exception flushing events to Redshift. Rolling back", e)
-          con.rollback()
-          throw e
-      }
-      finally {
-        providedCon match {
-          case Some(_con) => ()
-          case None => con.close()
-        }
+      dependents.foreach(_.flush(con))
+      log.info("Committing events")
+      con.commit()
+      log.info("Committed events")
+      limiter.flushed(start, System.currentTimeMillis(), flushCount)
+    }
+    catch {
+      case e:Throwable =>
+        e.printStackTrace()
+        log.error("Exception flushing events to Redshift. Rolling back", e)
+        con.rollback()
+        throw e
+    }
+    finally {
+      providedCon match {
+        case Some(_con) => ()
+        case None => con.close()
       }
     }
   }
@@ -113,18 +109,13 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: K
 
   override def close() = {
     try {
-      if (pending != null) {
-        log.info(s"Waiting for previous pending flush to complete before closing writer for $table")
-        Await.result(pending, 60 seconds)
-      }
+      waitForPending(Some(s"Waiting for previous pending flush to complete before closing writer for $table"))
       flush()
-      if (pending != null) {
-        log.info(s"Waiting for last pending flush to complete before closing writer for $table")
-        Await.result(pending, 60 seconds)
-      }
+      waitForPending(Some(s"Waiting for last pending flush to complete before closing writer for $table"))
     }
     catch {
       case e:Throwable =>
+        e.printStackTrace()
         log.error("Exception performing final flush - ignoring", e)
     }
     try {
@@ -133,7 +124,8 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit config: K
     }
     catch {
       case e:Throwable =>
-        log.error("Exception closing writers - ignoring")
+        e.printStackTrace()
+        log.error("Exception closing writers - ignoring", e)
     }
   }
 }
