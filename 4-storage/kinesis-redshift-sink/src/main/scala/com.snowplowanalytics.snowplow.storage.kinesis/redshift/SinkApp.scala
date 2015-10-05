@@ -158,11 +158,20 @@ object SinkApp extends App {
       }
     }
     props.setProperty("jsonpaths", connector.getString("jsonpaths"))
+    props.setProperty("jsonPaths", connector.getString("jsonPaths"))
     if (redshift.hasPath("filterFields")) props.setProperty("filterFields",  "true")
     if (redshift.hasPath("batchSize")) props.setProperty("batchSize", String.valueOf(redshift.getInt("batchSize")))
-    props.setProperty("denominator", "10")
-    props.setProperty("numerator", "1")
-    props.setProperty("minWriteTime", "6000")
+    props.setProperty("flushRatio", redshift.getString("flushRatio"))
+    props.setProperty("defaultCollectionTime", String.valueOf(redshift.getInt("defaultCollectionTime")))
+    props.setProperty("sshEndpoint", redshift.getString("sshEndpoint"))
+    props.setProperty("sshUsername", redshift.getString("sshUsername"))
+    props.setProperty("sshS3Folder", redshift.getString("sshS3Folder"))
+    props.setProperty("s3AccessKey", redshift.getString("s3AccessKey"))
+    props.setProperty("s3SecretKey", redshift.getString("s3SecretKey"))
+    props.setProperty("s3LoggingBucket", redshift.getString("s3LoggingBucket"))
+    props.setProperty("s3LoggingPath", redshift.getString("s3LoggingPath"))
+    props.setProperty("cloudWatchNamespace", redshift.getString("cloudWatchNamespace"))
+    props.setProperty("sshEndpoint", redshift.getString("sshEndpoint"))
 
     val buffer = connector.getConfig("buffer")
     val byteLimit = buffer.getString("byte-limit")
