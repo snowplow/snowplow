@@ -14,82 +14,96 @@
 -- License: Apache License Version 2.0
 --
 -- Data Model: deduplicate
--- Version: 0.2
---
--- Deduplicate events:
--- (a) list all event IDs that occur more than once in atomic.events
--- (b) create a table with those events and deduplicate identical ones (i.e. natural duplicates)
--- (c) create a list of events that were deduplicated
--- (d) move those events back into atomic.events, insert the others into the duplicates table
+-- Version: 0.3
 
-INSERT INTO duplicates.tmp_queries (SELECT 'main', 'start', GETDATE()); -- track time
+DROP TABLE IF EXISTS duplicates.tmp_events;
+DROP TABLE IF EXISTS duplicates.tmp_events_id;
 
--- (a) list all event IDs that occur more than once in atomic.events
+-- (a) list all event_id & event_fingerprint combinations that occur more than once
 
-CREATE TABLE duplicates.tmp_ids_1
+CREATE TABLE duplicates.tmp_events_id
   DISTKEY (event_id)
   SORTKEY (event_id)
-AS (SELECT event_id FROM (SELECT event_id, COUNT(*) AS count FROM atomic.events GROUP BY 1) WHERE count > 1);
+AS (SELECT event_id, event_fingerprint FROM (SELECT event_id, event_fingerprint, COUNT(*) AS count FROM atomic.events WHERE event_fingerprint IS NOT NULL GROUP BY 1,2) WHERE count > 1);
 
-INSERT INTO duplicates.tmp_queries (SELECT 'events', 'id-list-1', GETDATE()); -- track time
-
--- (b) create a table with those events and deduplicate identical ones (i.e. natural duplicates)
+-- (b) create a new table with events that match these critera
 
 CREATE TABLE duplicates.tmp_events
   DISTKEY (event_id)
   SORTKEY (event_id)
 AS (
 
-  SELECT * FROM atomic.events
-  WHERE event_id IN (SELECT event_id FROM duplicates.tmp_ids_1)
-     OR event_id IN (SELECT event_id FROM duplicates.events)
-  GROUP BY 1, 2, 3, 4, 5, 6, 7, 8, 9,
-  10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-  20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
-  30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
-  40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
-  50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
-  60, 61, 62, 63, 64, 65, 66, 67, 68, 69,
-  70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
-  80, 81, 82, 83, 84, 85, 86, 87, 88, 89,
-  90, 91, 92, 93, 94, 95, 96, 97, 98, 99,
-  100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
-  110, 111, 112, 113, 114, 115, 116, 117, 118, 119,
-  120, 121, 122, 123, 124, 125
+  SELECT *, ROW_NUMBER() OVER (PARTITION BY event_id, event_fingerprint ORDER BY dvce_created_tstamp) as event_number
+  FROM atomic.events
+  WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id)
+    AND event_fingerprint IN (SELECT event_fingerprint FROM duplicates.tmp_events_id)
 
 );
 
-INSERT INTO duplicates.tmp_queries (SELECT 'events', 'dedup-events', GETDATE()); -- track time
-
--- (c) create a list of events that were deduplicated
-
-CREATE TABLE duplicates.tmp_ids_2
-  DISTKEY (event_id)
-  SORTKEY (event_id)
-AS (SELECT event_id FROM (SELECT event_id, COUNT(*) AS count FROM duplicates.tmp_events GROUP BY 1) WHERE count = 1);
-
-INSERT INTO duplicates.tmp_queries (SELECT 'events', 'id-list-2', GETDATE()); -- track time
-
--- (d) move those events back into atomic.events, insert the others into the duplicates table
+-- (c) delete the duplicates from the original table and insert the deduplicated rows with event_number = 1 and move the remaining to another table
 
 BEGIN;
 
-DELETE FROM atomic.events
-WHERE event_id IN (SELECT event_id FROM duplicates.tmp_ids_1)
-   OR event_id IN (SELECT event_id FROM duplicates.events);
+  DELETE FROM atomic.events
+  WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id)
+    AND event_fingerprint IN (SELECT event_fingerprint FROM duplicates.tmp_events_id);
 
-INSERT INTO atomic.events (
-  SELECT * FROM duplicates.tmp_events
-  WHERE event_id IN (SELECT event_id FROM duplicates.tmp_ids_2)
-    AND event_id NOT IN (SELECT event_id FROM duplicates.events)
-);
+  INSERT INTO atomic.events (
 
-INSERT INTO duplicates.events (
-  SELECT * FROM duplicates.tmp_events
-  WHERE event_id NOT IN (SELECT event_id FROM duplicates.tmp_ids_2)
-    OR event_id IN (SELECT event_id FROM duplicates.events)
-);
+    SELECT
+
+      app_id, platform, etl_tstamp, collector_tstamp, dvce_created_tstamp, event, event_id, txn_id,
+    	name_tracker, v_tracker, v_collector, v_etl,
+    	user_id, user_ipaddress, user_fingerprint, domain_userid, domain_sessionidx, network_userid,
+    	geo_country, geo_region, geo_city, geo_zipcode, geo_latitude, geo_longitude, geo_region_name,
+    	ip_isp, ip_organization, ip_domain, ip_netspeed, page_url, page_title, page_referrer,
+    	page_urlscheme, page_urlhost, page_urlport, page_urlpath, page_urlquery, page_urlfragment,
+    	refr_urlscheme, refr_urlhost, refr_urlport, refr_urlpath, refr_urlquery, refr_urlfragment,
+    	refr_medium, refr_source, refr_term, mkt_medium, mkt_source, mkt_term, mkt_content, mkt_campaign,
+    	contexts, se_category, se_action, se_label, se_property, se_value, unstruct_event,
+    	tr_orderid, tr_affiliation, tr_total, tr_tax, tr_shipping, tr_city, tr_state, tr_country,
+    	ti_orderid, ti_sku, ti_name, ti_category, ti_price, ti_quantity,
+    	pp_xoffset_min, pp_xoffset_max, pp_yoffset_min, pp_yoffset_max,
+    	useragent, br_name, br_family, br_version, br_type, br_renderengine, br_lang, br_features_pdf, br_features_flash,
+      br_features_java, br_features_director, br_features_quicktime, br_features_realplayer, br_features_windowsmedia,
+    	br_features_gears, br_features_silverlight, br_cookies, br_colordepth, br_viewwidth, br_viewheight,
+    	os_name, os_family, os_manufacturer, os_timezone, dvce_type, dvce_ismobile, dvce_screenwidth, dvce_screenheight,
+    	doc_charset, doc_width, doc_height, tr_currency, tr_total_base, tr_tax_base, tr_shipping_base,
+    	ti_currency, ti_price_base, base_currency, geo_timezone, mkt_clickid, mkt_network, etl_tags,
+    	dvce_sent_tstamp, refr_domain_userid, refr_dvce_tstamp, derived_contexts, domain_sessionid,
+    	derived_tstamp, event_vendor, event_name, event_format, event_version, event_fingerprint, true_tstamp
+
+    FROM duplicates.tmp_events WHERE event_number = 1
+
+  );
+
+  INSERT INTO duplicates.events (
+
+    SELECT
+
+      app_id, platform, etl_tstamp, collector_tstamp, dvce_created_tstamp, event, event_id, txn_id,
+    	name_tracker, v_tracker, v_collector, v_etl,
+    	user_id, user_ipaddress, user_fingerprint, domain_userid, domain_sessionidx, network_userid,
+    	geo_country, geo_region, geo_city, geo_zipcode, geo_latitude, geo_longitude, geo_region_name,
+    	ip_isp, ip_organization, ip_domain, ip_netspeed, page_url, page_title, page_referrer,
+    	page_urlscheme, page_urlhost, page_urlport, page_urlpath, page_urlquery, page_urlfragment,
+    	refr_urlscheme, refr_urlhost, refr_urlport, refr_urlpath, refr_urlquery, refr_urlfragment,
+    	refr_medium, refr_source, refr_term, mkt_medium, mkt_source, mkt_term, mkt_content, mkt_campaign,
+    	contexts, se_category, se_action, se_label, se_property, se_value, unstruct_event,
+    	tr_orderid, tr_affiliation, tr_total, tr_tax, tr_shipping, tr_city, tr_state, tr_country,
+    	ti_orderid, ti_sku, ti_name, ti_category, ti_price, ti_quantity,
+    	pp_xoffset_min, pp_xoffset_max, pp_yoffset_min, pp_yoffset_max,
+    	useragent, br_name, br_family, br_version, br_type, br_renderengine, br_lang, br_features_pdf, br_features_flash,
+      br_features_java, br_features_director, br_features_quicktime, br_features_realplayer, br_features_windowsmedia,
+    	br_features_gears, br_features_silverlight, br_cookies, br_colordepth, br_viewwidth, br_viewheight,
+    	os_name, os_family, os_manufacturer, os_timezone, dvce_type, dvce_ismobile, dvce_screenwidth, dvce_screenheight,
+    	doc_charset, doc_width, doc_height, tr_currency, tr_total_base, tr_tax_base, tr_shipping_base,
+    	ti_currency, ti_price_base, base_currency, geo_timezone, mkt_clickid, mkt_network, etl_tags,
+    	dvce_sent_tstamp, refr_domain_userid, refr_dvce_tstamp, derived_contexts, domain_sessionid,
+    	derived_tstamp, event_vendor, event_name, event_format, event_version, event_fingerprint, true_tstamp
+
+    FROM duplicates.tmp_events WHERE event_number > 1
+
+  );
 
 COMMIT;
-
-INSERT INTO duplicates.tmp_queries (SELECT 'events', 'move', GETDATE()); -- track time
