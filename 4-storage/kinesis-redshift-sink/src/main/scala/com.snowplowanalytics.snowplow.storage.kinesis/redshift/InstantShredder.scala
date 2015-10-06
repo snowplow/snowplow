@@ -34,21 +34,29 @@ class InstantShredder(implicit injector: Injector) {
   private val props = inject[Properties]
   var file = if (props.containsKey("logFile")) new FileWriter("/tmp/shredder.txt") else null
 
+  def isToBeDiscarded(fields: Array[String]): Boolean = {
+    if (fields.length < 108) return true
+    val appId = fields(FieldIndexes.appId)
+    props.containsKey(appId + "_schema") && props.getProperty(appId + "_schema") == "discard"
+  }
+
   def shred(fields: Array[String]) = {
-    if (fields.length >= 108) {
+    if (!isToBeDiscarded(fields)) {
       if (file != null) {
         file.write(fields.map(f => if (f == null) "" else f).mkString("\t")+"\n")
       }
       if (log.isDebugEnabled) log.debug("Shredding " + fields.map(f => if (f == null) "" else f).mkString(","))
       val appId = fields(FieldIndexes.appId)
+
+
       val validatedEvents = ShredJob.loadAndShred2(fields.map(f => if (f == null) "" else f).mkString("\t"))(inject[Resolver])
       val eventsWriter: Option[CopyTableWriter] = TableWriter.writerByName(props.getProperty("redshift_table"), None, None, None, appId)
       eventsWriter.foreach { writer =>
-        val allStored = for {
-          shredded <- validatedEvents._1
-          pair <- shredded
-          stored = store(appId, pair._1, pair._2.toString, writer)
-        } yield stored
+        for (shredded <- validatedEvents._1) {
+          for ((key, node) <- shredded) {
+            store(appId, key, node.toString, writer)
+          }
+        }
 
         // Erase the fields after they've been extracted by shredding
         fields(FieldIndexes.contexts) = produceCombinedContext(validatedEvents._2)
@@ -64,8 +72,6 @@ class InstantShredder(implicit injector: Injector) {
             log.error("Excepting writing event", e)
         }
       }
-    } else {
-      log.warn("Broken line: " + fields.mkString(","))
     }
   }
 

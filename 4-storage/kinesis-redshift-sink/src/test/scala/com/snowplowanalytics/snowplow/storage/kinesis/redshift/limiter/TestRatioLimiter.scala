@@ -15,7 +15,8 @@ trait TestTimeMeasurer extends TimeMeasurer {
   override def getCurrentTime: Long = setTime
 }
 
-class RatioFlushLimiterUnderTest(ratio: String, defaultCollectionTime: Long)(implicit injector: Injector) extends RatioFlushLimiter(ratio, defaultCollectionTime) with TestTimeMeasurer {}
+class RatioFlushLimiterUnderTest(ratio: String, defaultCollectionTime: Long, maxCollectionTime: Long = 100000)(implicit injector: Injector)
+  extends RatioFlushLimiter(ratio, defaultCollectionTime, maxCollectionTime) with TestTimeMeasurer {}
 
 class TestRatioLimiter extends FunSuite {
   implicit val module: Module = new Module {

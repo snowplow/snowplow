@@ -9,7 +9,6 @@ import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient
 import com.amazonaws.services.cloudwatch.model.{StandardUnit, MetricDatum, PutMetricDataRequest}
 import com.digdeep.util.aws.EmptyAWSCredentialsProvider
 import org.apache.commons.lang3.math.Fraction
-import org.apache.commons.logging.LogFactory
 import scaldi.{Injector, Injectable}
 import Injectable._
 
@@ -26,7 +25,7 @@ trait TimeMeasurer  {
   def getCurrentTime: Long = System.currentTimeMillis()
 }
 
-class RatioFlushLimiter(flushRatio: String, defaultCollectionTime: Long)(implicit injector: Injector) extends FlushLimiter with TimeMeasurer {
+class RatioFlushLimiter(flushRatio: String, defaultCollectionTime: Long, maxCollectionTime: Long)(implicit injector: Injector) extends FlushLimiter with TimeMeasurer {
 
   private val log = Logger.getLogger(classOf[RatioFlushLimiter].getName)
 
@@ -37,13 +36,13 @@ class RatioFlushLimiter(flushRatio: String, defaultCollectionTime: Long)(implici
       null
     } else {
       val client = new AmazonCloudWatchClient(credentials)
+      // TODO Configurable region? Or use the same as Kinesis
       client.setRegion(Region.getRegion(Regions.AP_SOUTHEAST_2))
       client
     }
   }
 
   val cloudWatch = getCloudWatchClient(credentials)
-  val cloudWatchNamespace = inject[Properties].getProperty("cloudWatchNamespace")
   val numerator = Fraction.getFraction(flushRatio).getNumerator
   val denominator = Fraction.getFraction(flushRatio).getDenominator
   var lastFlushTime: Long = getCurrentTime
@@ -74,18 +73,29 @@ class RatioFlushLimiter(flushRatio: String, defaultCollectionTime: Long)(implici
 
     val currentWriteTime = writeEnd - writeStart
     val currentCollectionTime: Long = writeStart - lastFlushTime
-    val multipliedCollectionTime: Long = currentCollectionTime * numerator
-    val multipliedWriteTime: Long = currentWriteTime * denominator
-    if (log.isLoggable(Level.FINE)) log.fine("Timings: currentWriteTime=" + currentWriteTime + ", current collection time: " + currentCollectionTime)
-    if ((multipliedWriteTime - multipliedCollectionTime)*10 > multipliedCollectionTime ) {
-      adjustWithTry(1, currentCollectionTime * 5 / 4)
-      // If write time multiplied is more than within 10% of expected ratio then write is too slow - increase the collection time
-    } else if (Math.abs(multipliedWriteTime - multipliedCollectionTime)*10 < multipliedCollectionTime) {
+
+    if (currentCollectionTime > maxCollectionTime) {
       adjustmentTry = 0
-      // The write is within 10% - keep the time
+      if (collectionTime == 0) {
+        collectionTime = defaultCollectionTime
+      } else {
+        collectionTime = Math.min(collectionTime, maxCollectionTime)
+      }
     } else {
-      adjustWithTry(-1, currentCollectionTime * 4 / 5)
+      val multipliedCollectionTime: Long = currentCollectionTime * numerator
+      val multipliedWriteTime: Long = currentWriteTime * denominator
+      if (log.isLoggable(Level.FINE)) log.fine("Timings: currentWriteTime=" + currentWriteTime + ", current collection time: " + currentCollectionTime)
+      if ((multipliedWriteTime - multipliedCollectionTime)*10 > multipliedCollectionTime ) {
+        adjustWithTry(1, currentCollectionTime * 5 / 4)
+        // If write time multiplied is more than within 10% of expected ratio then write is too slow - increase the collection time
+      } else if (Math.abs(multipliedWriteTime - multipliedCollectionTime)*10 < multipliedCollectionTime) {
+        adjustmentTry = 0
+        // The write is within 10% - keep the time
+      } else {
+        adjustWithTry(-1, currentCollectionTime * 4 / 5)
+      }
     }
+
     lastFlushTime = writeStart
     if (log.isLoggable(Level.FINE)) log.fine("New collection time: " + collectionTime + ", try count: " + adjustmentTry)
     if (RatioFlushLimiter.stats.length < 100) {
@@ -95,13 +105,15 @@ class RatioFlushLimiter(flushRatio: String, defaultCollectionTime: Long)(implici
     }
     RatioFlushLimiter.totalFlushedRecords += flushCount
     publishToCloudWatch(currentWriteTime, currentCollectionTime, flushCount)
-
   }
   override def onRecord(values: Array[String]) = {
     RatioFlushLimiter.totalRecords += 1
   }
+
+  // TODO: Extract this out of this class because it is a different concern
   def publishToCloudWatch(writeTime: Long, collectionTime: Long, count: Long): Unit = {
     if (cloudWatch == null) return
+    val cloudWatchNamespace = inject[Properties].getProperty("cloudWatchNamespace")
     try {
       val tstamp = new Date()
       val request = new PutMetricDataRequest().withNamespace(cloudWatchNamespace)

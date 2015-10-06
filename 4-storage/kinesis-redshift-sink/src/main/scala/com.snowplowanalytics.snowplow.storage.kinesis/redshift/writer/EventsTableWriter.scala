@@ -22,7 +22,7 @@ import Injectable._
  * Created by denismo on 18/09/15.
  */
 class EventsTableWriter(dataSource:DataSource, table: String)(implicit injector: Injector) extends BaseCopyTableWriter(dataSource, table) {
-  val log = LogFactory.getLog(classOf[EventsTableWriter])
+  private val log = LogFactory.getLog(classOf[EventsTableWriter])
   var dependents: Set[SchemaTableWriter] = Set()
 
   val props = inject[Properties]
@@ -30,11 +30,13 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit injector:
     if (props.containsKey("flushRatio") && props.containsKey("defaultCollectionTime")) {
       if (props.containsKey("batchSize")) {
         new OrLimiter(
-          new RatioFlushLimiter(props.getProperty("flushRatio"), java.lang.Long.parseLong(props.getProperty("defaultCollectionTime"))),
+          new RatioFlushLimiter(props.getProperty("flushRatio"), java.lang.Long.parseLong(props.getProperty("defaultCollectionTime")),
+            java.lang.Long.parseLong(props.getProperty("maxCollectionTime"))),
           new SizeFlushLimiter(Integer.parseInt(props.getProperty("batchSize")))
         )
       } else {
-        new RatioFlushLimiter(props.getProperty("flushRatio"), java.lang.Long.parseLong(props.getProperty("defaultCollectionTime")))
+        new RatioFlushLimiter(props.getProperty("flushRatio"), java.lang.Long.parseLong(props.getProperty("defaultCollectionTime")),
+          java.lang.Long.parseLong(props.getProperty("maxCollectionTime")))
       }
     } else if (props.containsKey("batchSize")) {
       new SizeFlushLimiter(Integer.parseInt(props.getProperty("batchSize")))

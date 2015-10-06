@@ -157,8 +157,8 @@ object SinkApp extends App {
         }
       }
     }
-    props.setProperty("jsonpaths", connector.getString("jsonpaths"))
-    props.setProperty("jsonPaths", connector.getString("jsonPaths"))
+    props.setProperty("jsonpaths", redshift.getString("jsonpaths"))
+    props.setProperty("jsonPaths", redshift.getString("jsonPaths"))
     if (redshift.hasPath("filterFields")) props.setProperty("filterFields",  "true")
     if (redshift.hasPath("batchSize")) props.setProperty("batchSize", String.valueOf(redshift.getInt("batchSize")))
     props.setProperty("flushRatio", redshift.getString("flushRatio"))
@@ -172,6 +172,7 @@ object SinkApp extends App {
     props.setProperty("s3LoggingPath", redshift.getString("s3LoggingPath"))
     props.setProperty("cloudWatchNamespace", redshift.getString("cloudWatchNamespace"))
     props.setProperty("sshEndpoint", redshift.getString("sshEndpoint"))
+    props.setProperty("maxCollectionTime", String.valueOf(redshift.getInt("maxCollectionTime")))
 
     val buffer = connector.getConfig("buffer")
     val byteLimit = buffer.getString("byte-limit")

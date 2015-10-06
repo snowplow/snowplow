@@ -14,6 +14,11 @@ import Injectable._
 
 /**
  * Created by denismo on 21/09/15.
+ * This class is meant to write the JSON events verbatim (without splitting into DB columns) as JSON, automatically creating the
+ * required tables. The rationalle behind this is that it can simplify the introduction of custom schemas during the initial deployment
+ * of Snowplow to a new website. Later such evens can be "shredded", or they can be directly queried using Redshift/Postgre JSON functions.
+ * TODO: Complete the development, however easier approach was found - don't shred such events into a separate table, leave them in atomic.events
+ *  as custom contexts
  */
 class JsonDataTableWriter(dataSource:DataSource, schema: SchemaKey, table: String)(implicit injector: Injector)
   extends SchemaTableWriter(dataSource, schema, table)

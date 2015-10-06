@@ -15,7 +15,7 @@ import Injectable._
  * Created by denismo on 18/09/15.
  */
 class SchemaTableWriter(dataSource:DataSource, schema: SchemaKey, table: String)(implicit injector: Injector) extends BaseCopyTableWriter(dataSource, table) {
-  val log = LogFactory.getLog(classOf[SchemaTableWriter])
+  private val log = LogFactory.getLog(classOf[SchemaTableWriter])
   val props = inject[Properties]
   val jsonPaths = {
     val propJsonPaths = props.getProperty("jsonPaths")
