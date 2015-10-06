@@ -101,7 +101,9 @@ object SinkApp extends App {
   val badSink = new KinesisSink(credentials, kinesisSinkEndpoint, kinesisSinkName)
 
   private val (props, kconfig): (Properties, KinesisConnectorConfiguration) = convertConfig(conf, credentials)
-  Logger.getLogger("").addHandler(new S3Handler(credentials, 10000000, props.getProperty("s3LoggingBucket"), props.getProperty("s3LoggingPath")))
+  if (props.containsKey("s3LoggingBucket")) {
+    Logger.getLogger("").addHandler(new S3Handler(credentials, 10000000, props.getProperty("s3LoggingBucket"), props.getProperty("s3LoggingPath")))
+  }
   val ds = new PGPoolingDataSource()
   ds.setUrl(props.getProperty("redshift_url"))
   ds.setUser(props.getProperty("redshift_username"))
@@ -168,8 +170,10 @@ object SinkApp extends App {
     props.setProperty("sshS3Folder", redshift.getString("sshS3Folder"))
     props.setProperty("s3AccessKey", redshift.getString("s3AccessKey"))
     props.setProperty("s3SecretKey", redshift.getString("s3SecretKey"))
-    props.setProperty("s3LoggingBucket", redshift.getString("s3LoggingBucket"))
-    props.setProperty("s3LoggingPath", redshift.getString("s3LoggingPath"))
+    if (redshift.hasPath("s3LoggingBucket") && redshift.hasPath("s3LoggingPath")) {
+      props.setProperty("s3LoggingBucket", redshift.getString("s3LoggingBucket"))
+      props.setProperty("s3LoggingPath", redshift.getString("s3LoggingPath"))
+    }
     props.setProperty("cloudWatchNamespace", redshift.getString("cloudWatchNamespace"))
     props.setProperty("sshEndpoint", redshift.getString("sshEndpoint"))
     props.setProperty("maxCollectionTime", String.valueOf(redshift.getInt("maxCollectionTime")))
