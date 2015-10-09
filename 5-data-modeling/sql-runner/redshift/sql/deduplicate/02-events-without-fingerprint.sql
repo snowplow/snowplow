@@ -18,10 +18,14 @@
 --
 -- Requires atomic.events 0.7.0
 --
--- Steps (a) to (c) deduplicate rows that have the same event_id and event_fingerprint. Because these are
--- identical events, the queries keep the earliest event in atomic while all others are moved to duplicates.
+-- This script is OPTIONAL. It should be run after 01-events and deduplicates rows with the same event_id
+-- where at least one row has no event_fingerprint (older events).
 --
--- Step (d) is an optional step that moves all remaining duplicates (same event_id but different event_fingerprint)
+-- Steps (a) to (c) deduplicate rows that have the same event_id. The approach is similar to the one in
+-- 01-events but an event fingerprint is generated in SQL. When 2 or more events have the same event_id
+-- and custom_fingerprint, the earliest event is kept in atomic while all others are moved to duplicates.
+
+-- Step (d) is an optional step that moves all remaining duplicates (same event_id but different fingerprint)
 -- to duplicates. Note that this might delete legitimate events from atomic.
 --
 -- These SQL queries can be run without modifications.
@@ -30,34 +34,110 @@ DROP TABLE IF EXISTS duplicates.tmp_events;
 DROP TABLE IF EXISTS duplicates.tmp_events_id;
 DROP TABLE IF EXISTS duplicates.tmp_events_id_remaining;
 
--- (a) list all event_id & event_fingerprint combinations that occur more than once
+-- (a) list all event_id that occur more than once
 
 CREATE TABLE duplicates.tmp_events_id
   DISTKEY (event_id)
   SORTKEY (event_id)
-AS (SELECT event_id, event_fingerprint FROM (SELECT event_id, event_fingerprint, COUNT(*) AS count FROM atomic.events WHERE event_fingerprint IS NOT NULL GROUP BY 1,2) WHERE count > 1);
+AS (SELECT event_id FROM (SELECT event_id, COUNT(*) AS count FROM atomic.events GROUP BY 1) WHERE count > 1);
 
--- (b) create a new table with events that match these critera
+-- (b) create a new table with these events and replicate the event fingerprint
 
 CREATE TABLE duplicates.tmp_events
   DISTKEY (event_id)
   SORTKEY (event_id)
 AS (
 
-  SELECT *, ROW_NUMBER() OVER (PARTITION BY event_id, event_fingerprint ORDER BY dvce_created_tstamp) as event_number
-  FROM atomic.events
-  WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id)
-    AND event_fingerprint IN (SELECT event_fingerprint FROM duplicates.tmp_events_id)
+  SELECT *, ROW_NUMBER() OVER (PARTITION BY event_id, custom_fingerprint ORDER BY dvce_created_tstamp) as event_number
+  FROM (
+    SELECT *,
+      MD5(
+        NVL(CAST(app_id AS VARCHAR),'') ||
+        NVL(CAST(platform AS VARCHAR),'') ||
+        NVL(TO_CHAR(dvce_created_tstamp, 'YYYY-MM-DD HH24:MI:SS:US'),'') ||
+        NVL(CAST(event AS VARCHAR),'') ||
+        NVL(CAST(user_id AS VARCHAR),'') ||
+        NVL(CAST(domain_sessionidx AS VARCHAR),'') ||
+        NVL(CAST(domain_userid AS VARCHAR),'') ||
+        NVL(CAST(user_fingerprint AS VARCHAR),'') ||
+        NVL(CAST(user_ipaddress AS VARCHAR),'') ||
+        NVL(CAST(page_url AS VARCHAR),'') ||
+        NVL(CAST(page_title AS VARCHAR),'') ||
+        NVL(CAST(page_referrer AS VARCHAR),'') ||
+        NVL(CAST(name_tracker AS VARCHAR),'') ||
+        NVL(CAST(v_tracker AS VARCHAR),'') ||
+        NVL(CAST(os_timezone AS VARCHAR),'') ||
+        NVL(TO_CHAR(true_tstamp, 'YYYY-MM-DD HH24:MI:SS:US'),'') ||
+        NVL(CAST(contexts AS VARCHAR),'') ||
+        NVL(CAST(unstruct_event AS VARCHAR),'') ||
+        NVL(CAST(se_value AS VARCHAR),'') ||
+        NVL(CAST(se_property AS VARCHAR),'') ||
+        NVL(CAST(se_label AS VARCHAR),'') ||
+        NVL(CAST(se_action AS VARCHAR),'') ||
+        NVL(CAST(se_category AS VARCHAR),'') ||
+        NVL(CAST(tr_orderid AS VARCHAR),'') ||
+        NVL(CAST(tr_country AS VARCHAR),'') ||
+        NVL(CAST(tr_state AS VARCHAR),'') ||
+        NVL(CAST(tr_city AS VARCHAR),'') ||
+        NVL(CAST(tr_shipping AS VARCHAR),'') ||
+        NVL(CAST(tr_tax AS VARCHAR),'') ||
+        NVL(CAST(tr_total AS VARCHAR),'') ||
+        NVL(CAST(tr_affiliation AS VARCHAR),'') ||
+        NVL(CAST(tr_currency AS VARCHAR),'') ||
+        NVL(CAST(ti_orderid AS VARCHAR),'') ||
+        NVL(CAST(ti_quantity AS VARCHAR),'') ||
+        NVL(CAST(ti_price AS VARCHAR),'') ||
+        NVL(CAST(ti_category AS VARCHAR),'') ||
+        NVL(CAST(ti_name AS VARCHAR),'') ||
+        NVL(CAST(ti_sku AS VARCHAR),'') ||
+        NVL(CAST(ti_currency AS VARCHAR),'') ||
+        NVL(CAST(ti_price_base AS VARCHAR),'') ||
+        NVL(CAST(tr_total_base AS VARCHAR),'') ||
+        NVL(CAST(tr_shipping_base AS VARCHAR),'') ||
+        NVL(CAST(tr_tax_base AS VARCHAR),'') ||
+        NVL(CAST(pp_xoffset_min AS VARCHAR),'') ||
+        NVL(CAST(pp_yoffset_max AS VARCHAR),'') ||
+        NVL(CAST(pp_yoffset_min AS VARCHAR),'') ||
+        NVL(CAST(pp_xoffset_max AS VARCHAR),'') ||
+        NVL(CAST(useragent AS VARCHAR),'') ||
+        NVL(CAST(dvce_screenwidth AS VARCHAR),'') ||
+        NVL(CAST(dvce_screenheight AS VARCHAR),'') ||
+        NVL(CAST(CAST(br_cookies AS INT) AS VARCHAR), '') ||
+        NVL(CAST(br_lang AS VARCHAR),'') ||
+        NVL(CAST(CAST(br_features_java AS INT) AS VARCHAR), '') ||
+        NVL(CAST(CAST(br_features_windowsmedia AS INT) AS VARCHAR), '') ||
+        NVL(CAST(CAST(br_features_realplayer AS INT) AS VARCHAR), '') ||
+        NVL(CAST(CAST(br_features_quicktime AS INT) AS VARCHAR), '') ||
+        NVL(CAST(CAST(br_features_director AS INT) AS VARCHAR), '') ||
+        NVL(CAST(CAST(br_features_pdf AS INT) AS VARCHAR), '') ||
+        NVL(CAST(CAST(br_features_flash AS INT) AS VARCHAR), '') ||
+        NVL(CAST(CAST(br_features_gears AS INT) AS VARCHAR), '') ||
+        NVL(CAST(CAST(br_features_silverlight AS INT) AS VARCHAR), '') ||
+        NVL(CAST(br_viewwidth AS VARCHAR),'') ||
+        NVL(CAST(br_viewheight AS VARCHAR),'') ||
+        NVL(CAST(br_colordepth AS VARCHAR),'') ||
+        NVL(CAST(doc_charset AS VARCHAR),'') ||
+        NVL(CAST(doc_height AS VARCHAR),'') ||
+        NVL(CAST(doc_width AS VARCHAR),'') ||
+        NVL(CAST(base_currency AS VARCHAR),'') ||
+        NVL(CAST(mkt_network AS VARCHAR),'') ||
+        NVL(CAST(mkt_clickid AS VARCHAR),'') ||
+        NVL(CAST(refr_domain_userid AS VARCHAR),'') ||
+        NVL(CAST(domain_sessionid AS VARCHAR),'') ||
+        NVL(TO_CHAR(refr_dvce_tstamp, 'YYYY-MM-DD HH24:MI:SS:US'),'')
+      ) AS custom_fingerprint
+    FROM atomic.events
+    WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id)
+  )
 
 );
 
--- (c) delete the relevant rows from atomic, then re-insert rows with event_number = 1 and move all other rows to duplicates
+-- (c) delete the duplicates from the original table and insert the deduplicated rows with event_number = 1 and move the remaining to another table
 
 BEGIN;
 
   DELETE FROM atomic.events
-  WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id)
-    AND event_fingerprint IN (SELECT event_fingerprint FROM duplicates.tmp_events_id);
+  WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id);
 
   INSERT INTO atomic.events (
 
@@ -124,12 +204,12 @@ COMMIT;
 --CREATE TABLE duplicates.tmp_events_id_remaining
   --DISTKEY (event_id)
   --SORTKEY (event_id)
---AS (SELECT event_id FROM (SELECT event_id, COUNT(*) AS count FROM atomic.events WHERE event_fingerprint IS NOT NULL GROUP BY 1) WHERE count > 1);
+--AS (SELECT event_id FROM (SELECT event_id, COUNT(*) AS count FROM atomic.events GROUP BY 1) WHERE count > 1);
 
 --BEGIN;
 
-  --INSERT INTO duplicates.events (SELECT * FROM atomic.events WHERE event_fingerprint IS NOT NULL AND event_id IN (SELECT event_id FROM duplicates.tmp_events_id_remaining));
-  --DELETE FROM atomic.events WHERE event_fingerprint IS NOT NULL AND event_id IN (SELECT event_id FROM duplicates.tmp_events_id_remaining);
+  --INSERT INTO duplicates.events (SELECT * FROM atomic.events WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id_remaining));
+  --DELETE FROM atomic.events WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id_remaining);
 
 --COMMIT;
 

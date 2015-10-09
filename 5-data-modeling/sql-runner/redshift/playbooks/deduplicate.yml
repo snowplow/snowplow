@@ -11,7 +11,11 @@
     :queries:
       - :name: 01-events
         :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/deduplicate/01-events.sql
-  - :name: 02-example-unstruct
+  - :name: 02-events-without-fingerprint
     :queries:
-      - :name: 02-example-unstruct
-        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/deduplicate/02-example-unstruct.sql
+      - :name: 02-events-without-fingerprint
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/deduplicate/02-events-without-fingerprint.sql
+  - :name: 03-example-unstruct
+    :queries:
+      - :name: 03-example-unstruct
+        :file: /snowplow/5-data-modeling/sql-runner/redshift/sql/deduplicate/03-example-unstruct.sql
