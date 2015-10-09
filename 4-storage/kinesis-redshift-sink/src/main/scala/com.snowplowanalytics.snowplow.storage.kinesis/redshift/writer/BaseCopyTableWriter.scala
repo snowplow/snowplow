@@ -16,6 +16,7 @@ import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.amazonaws.util.StringInputStream
+import com.digdeep.util.concurrent.ThreadOnce
 import com.snowplowanalytics.snowplow.storage.kinesis.redshift.TableWriter
 import org.apache.commons.logging.LogFactory
 import scaldi.Injector
@@ -30,20 +31,7 @@ import scala.util.Try
 import scaldi.{Injector, Injectable}
 import Injectable._
 
-/**
- * Created by denismo on 18/09/15.
- */
-class ThreadOnce {
-  private val called = new ThreadLocal[AtomicBoolean]() {
-    override def initialValue(): AtomicBoolean = new AtomicBoolean()
-  }
-  def callOnce(callable:  => Unit): Unit = {
-    if (called.get().compareAndSet(false, true)) {
-      callable
-    }
-  }
-  def reset() = called.get().set(false)
-}
+
 
 abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implicit injector: Injector) extends CopyTableWriter {
   private val log = LogFactory.getLog(classOf[BaseCopyTableWriter])
@@ -100,13 +88,14 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
     threadOnce.reset()
     log.info("Flushing events")
     val flushCount = beforeFlushToRedshift()
+    val start = System.currentTimeMillis()
     pending = Future {
       var retryCount = 0
       var connection: Connection = null
       while (retryCount < 5) {
         try {
           connection = TableWriter.getConnection(dataSource)
-          onFlushToRedshift(flushCount, Some(connection))
+          onFlushToRedshift(flushCount, start, Some(connection))
           retryCount = 5
         }
         catch {
@@ -137,7 +126,7 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
     }
   }
 
-  def onFlushToRedshift(flushCount: Int, con: Option[Connection])
+  def onFlushToRedshift(flushCount: Int, start:Long, con: Option[Connection])
 
   def isFlushRequired: Boolean = false
 

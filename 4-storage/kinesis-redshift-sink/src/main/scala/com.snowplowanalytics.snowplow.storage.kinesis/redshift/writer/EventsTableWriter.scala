@@ -30,12 +30,12 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit injector:
     if (props.containsKey("flushRatio") && props.containsKey("defaultCollectionTime")) {
       if (props.containsKey("batchSize")) {
         new OrLimiter(
-          new RatioFlushLimiter(props.getProperty("flushRatio"), java.lang.Long.parseLong(props.getProperty("defaultCollectionTime")),
+          new RatioFlushLimiter(table, props.getProperty("flushRatio"), java.lang.Long.parseLong(props.getProperty("defaultCollectionTime")),
             java.lang.Long.parseLong(props.getProperty("maxCollectionTime"))),
           new SizeFlushLimiter(Integer.parseInt(props.getProperty("batchSize")))
         )
       } else {
-        new RatioFlushLimiter(props.getProperty("flushRatio"), java.lang.Long.parseLong(props.getProperty("defaultCollectionTime")),
+        new RatioFlushLimiter(table, props.getProperty("flushRatio"), java.lang.Long.parseLong(props.getProperty("defaultCollectionTime")),
           java.lang.Long.parseLong(props.getProperty("maxCollectionTime")))
       }
     } else if (props.containsKey("batchSize")) {
@@ -61,14 +61,9 @@ class EventsTableWriter(dataSource:DataSource, table: String)(implicit injector:
     super.write(value)
   }
 
-  override def onFlushToRedshift(flushCount:Int, providedCon: Option[Connection]) = {
-    val start = System.currentTimeMillis()
+  override def onFlushToRedshift(flushCount:Int, start:Long, providedCon: Option[Connection]) = {
     log.info(s"Flushing $flushCount events $table to Redshift")
-    val con = providedCon match {
-      case Some(_con) => _con
-      case None =>
-        TableWriter.getConnection(dataSource)
-    }
+    val con = providedCon.getOrElse(TableWriter.getConnection(dataSource))
     val stat = con.createStatement()
     try {
       if (bufferFile != null && bufferFile.exists()) {

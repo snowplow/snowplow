@@ -16,7 +16,7 @@ trait TestTimeMeasurer extends TimeMeasurer {
 }
 
 class RatioFlushLimiterUnderTest(ratio: String, defaultCollectionTime: Long, maxCollectionTime: Long = 100000)(implicit injector: Injector)
-  extends RatioFlushLimiter(ratio, defaultCollectionTime, maxCollectionTime) with TestTimeMeasurer {}
+  extends RatioFlushLimiter("test", ratio, defaultCollectionTime, maxCollectionTime) with TestTimeMeasurer {}
 
 class TestRatioLimiter extends FunSuite {
   implicit val module: Module = new Module {
@@ -55,7 +55,7 @@ class TestRatioLimiter extends FunSuite {
     limiter.setTime += 8000
     assert(limiter.isFlushRequired)
   }
-  test("Progressive increase after delayed write") {
+  test("No progressive increase after delayed write") {
     val limiter = new RatioFlushLimiterUnderTest("1/10", 6000)
     limiter.setTime = 6005
     assert(limiter.isFlushRequired)
@@ -63,7 +63,7 @@ class TestRatioLimiter extends FunSuite {
     limiter.setTime += 2000
     limiter.flushed(start, limiter.setTime, 0)
     assert(!limiter.isFlushRequired)
-    limiter.setTime += 5000
+    limiter.setTime += 4000
     assert(!limiter.isFlushRequired)
     limiter.setTime += 1000
     assert(limiter.isFlushRequired)
@@ -76,7 +76,7 @@ class TestRatioLimiter extends FunSuite {
     limiter.setTime += 2000
     limiter.flushed(start, limiter.setTime, 0)
     assert(!limiter.isFlushRequired)
-    limiter.setTime += 5000
+    limiter.setTime += 4000
     assert(!limiter.isFlushRequired)
     limiter.setTime += 1000
     assert(limiter.isFlushRequired)
@@ -84,9 +84,40 @@ class TestRatioLimiter extends FunSuite {
     limiter.setTime += 2000
     limiter.flushed(start, limiter.setTime, 0)
     assert(!limiter.isFlushRequired)
-    limiter.setTime += 5000
+    limiter.setTime += 4000
     assert(!limiter.isFlushRequired)
     limiter.setTime += 1000
+    assert(limiter.isFlushRequired)
+  }
+  test("Progressive increase after 3 delayed writes") {
+    val limiter = new RatioFlushLimiterUnderTest("1/10", 6000)
+    limiter.setTime = 6005
+    assert(limiter.isFlushRequired)
+    var start = limiter.setTime
+    limiter.setTime += 2000
+    limiter.flushed(start, limiter.setTime, 0)
+    assert(!limiter.isFlushRequired)
+    limiter.setTime += 4000
+    assert(!limiter.isFlushRequired)
+    limiter.setTime += 1000
+    assert(limiter.isFlushRequired)
+    start = limiter.setTime
+    limiter.setTime += 2000
+    limiter.flushed(start, limiter.setTime, 0)
+    assert(!limiter.isFlushRequired)
+    limiter.setTime += 4000
+    assert(!limiter.isFlushRequired)
+    limiter.setTime += 1000
+    assert(limiter.isFlushRequired)
+    start = limiter.setTime
+    limiter.setTime += 2000
+    limiter.flushed(start, limiter.setTime, 0)
+    assert(!limiter.isFlushRequired)
+    limiter.setTime += 4000
+    assert(!limiter.isFlushRequired)
+    limiter.setTime += 1000
+    assert(!limiter.isFlushRequired)
+    limiter.setTime += 3000
     assert(limiter.isFlushRequired)
   }
 }

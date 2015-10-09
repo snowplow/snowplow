@@ -6,6 +6,7 @@ import java.util.Properties
 import javax.sql.DataSource
 
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
+import com.digdeep.util.concurrent.ThreadOnce
 import com.fasterxml.jackson.databind.{ObjectMapper, JsonNode}
 import com.fasterxml.jackson.databind.node.{ObjectNode, ArrayNode}
 import com.github.fge.jackson.JsonLoader
@@ -19,9 +20,11 @@ import net.minidev.json.JSONArray
 import org.apache.commons.logging.LogFactory
 import org.json4s.JsonAST.JArray
 import org.json4s.jackson.JsonMethods._
+import scala.collection
 import scala.collection.JavaConverters._
 
 import scala.annotation.tailrec
+import scala.collection.parallel.mutable
 import scala.language.postfixOps
 import scalaz.{Failure, Success}
 import scaldi.{Injector, Injectable}
@@ -52,14 +55,15 @@ class InstantShredder(implicit injector: Injector) {
       val validatedEvents = ShredJob.loadAndShred2(fields.map(f => if (f == null) "" else f).mkString("\t"))(inject[Resolver])
       val eventsWriter: Option[CopyTableWriter] = TableWriter.writerByName(props.getProperty("redshift_table"), None, None, None, appId)
       eventsWriter.foreach { writer =>
+        val unstored = collection.mutable.MutableList[Option[String]]()
         for (shredded <- validatedEvents._1) {
           for ((key, node) <- shredded) {
-            store(appId, key, node.toString, writer)
+            unstored += store(appId, key, node.toString, writer)
           }
         }
 
         // Erase the fields after they've been extracted by shredding
-        fields(FieldIndexes.contexts) = produceCombinedContext(validatedEvents._2)
+        fields(FieldIndexes.contexts) = produceCombinedContext(validatedEvents._2, unstored)
         fields(FieldIndexes.unstructEvent) = null
         if (fields.length >= FieldIndexes.derived_contexts) {
           fields(FieldIndexes.derived_contexts) = null
@@ -75,8 +79,8 @@ class InstantShredder(implicit injector: Injector) {
     }
   }
 
-  private def produceCombinedContext(nodes: scala.Iterable[Option[JsonNode]]) : String = {
-    val converted = (nodes flatten).toList
+  private def produceCombinedContext(nodes: scala.Iterable[Option[JsonNode]], unstored: collection.mutable.MutableList[Option[String]]) : String = {
+    val converted = (nodes flatten) ++ (unstored flatten).map(Mapper.readTree).toList
     if (converted.nonEmpty) {
       val res = Mapper.createObjectNode()
       res.put("schema", "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1")
@@ -165,9 +169,9 @@ class InstantShredder(implicit injector: Injector) {
     jsonPaths(mapKey)
   }
 
-  private def store(appId: String, key: SchemaKey, json: String, eventsWriter: CopyTableWriter): String = {
+  val threadOnce = new ThreadOnce()
+  private def store(appId: String, key: SchemaKey, json: String, eventsWriter: CopyTableWriter): Option[String] = {
     try {
-      if (log.isDebugEnabled) log.debug(s"Store into $key")
       val writer = writerByKey(key, appId)
       if (writer.isDefined) {
         if (writer.get.requiresJsonParsing) {
@@ -177,25 +181,25 @@ class InstantShredder(implicit injector: Injector) {
             val fieldString: String = fields.get.mkString(",")
             if (log.isDebugEnabled) log.debug(s"Storing ($fieldString) in ${key.toPath}")
             writer.get.write(fields.get)
-            "1"
+            None
           } else {
             if (fields.isEmpty) log.warn(s"Could not parse fields off $json")
-            "0"
+            None
           }
         } else {
           eventsWriter.asInstanceOf[EventsTableWriter].addDependent(writer.get.asInstanceOf[SchemaTableWriter])
           writer.get.write(json)
-          "1"
+          None
         }
       } else {
-        log.warn(s"Writer is not defined for $key")
-        "0"
+         threadOnce.callOnce(log.warn(s"Writer is not defined for $key"))
+        Some(json)
       }
     }
     catch {
       case t:Throwable =>
         log.error(s"Problem storing data into $key: $json", t)
-        "0"
+        Some(json)
     }
   }
   def flush() = {

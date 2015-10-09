@@ -27,7 +27,7 @@ class SchemaTableWriter(dataSource:DataSource, schema: SchemaKey, table: String)
     path
   }
   log.info(s"Created schema table writer for $table")
-  override def onFlushToRedshift(flushCount: Int, providedCon: Option[Connection]) = {
+  override def onFlushToRedshift(flushCount: Int, start:Long, providedCon: Option[Connection]) = {
     log.info(s"Flushing $table in Redshift")
     if (bufferFile != null && bufferFile.exists()) {
       val con = providedCon match {
@@ -60,7 +60,7 @@ class SchemaTableWriter(dataSource:DataSource, schema: SchemaKey, table: String)
   }
   def flush(con: Connection) = {
 //    val flushCount = beforeFlushToRedshift()
-    onFlushToRedshift(-1, Some(con))
+    onFlushToRedshift(-1, 0, Some(con))
   }
   override def flush(): Unit = {}
 }

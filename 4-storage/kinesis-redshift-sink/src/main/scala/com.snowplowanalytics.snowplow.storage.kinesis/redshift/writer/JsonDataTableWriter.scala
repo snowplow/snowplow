@@ -49,7 +49,7 @@ class JsonDataTableWriter(dataSource:DataSource, schema: SchemaKey, table: Strin
       |  SORTKEY (root_tstamp);
     """.stripMargin
 
-  override def onFlushToRedshift(flushCount: Int, providedCon: Option[Connection]) = {
+  override def onFlushToRedshift(flushCount: Int, start: Long, providedCon: Option[Connection]) = {
     log.info(s"Flushing $table in Redshift")
     if (props.containsKey("simulateDB")) {
       Thread.sleep(20)
