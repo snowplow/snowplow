@@ -37,3 +37,6 @@
 [submodule "1-trackers/scala-tracker"]
 	path = 1-trackers/scala-tracker
 	url = https://github.com/snowplow/snowplow-scala-tracker.git
+[submodule "1-trackers/unity-tracker"]
+	path = 1-trackers/unity-tracker
+	url = https://github.com/snowplow/snowplow-unity-tracker.git
