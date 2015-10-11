@@ -23,6 +23,7 @@
 | [php-tracker] [php]               | An event tracker for PHP apps and scripts                      | Beta             |
 | [python-tracker] [python]         | An event tracker for Python and Django webapps, apps and games | Production-ready |
 | [ruby-tracker] [ruby]             | An event tracker for Ruby and Rails apps and gems              | Beta             |
+| [unity-tracker] [unity]           | An event tracker for Unity games and apps                      | Beta             |
 
 For other trackers (e.g. PHP, Go) and their approximate timelines, please see the [Product Roadmap][roadmap].
 
@@ -49,6 +50,7 @@ For other trackers (e.g. PHP, Go) and their approximate timelines, please see th
 [php]: https://github.com/snowplow/snowplow-php-tracker
 [python]: https://github.com/snowplow/snowplow-python-tracker
 [ruby]: https://github.com/snowplow/snowplow-ruby-tracker
+[unity]: https://github.com/snowplow/snowplow-unity-tracker
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-a-Tracker
 [tech-docs]: https://github.com/snowplow/snowplow/wiki/trackers
 [wiki]: https://github.com/snowplow/snowplow/wiki
