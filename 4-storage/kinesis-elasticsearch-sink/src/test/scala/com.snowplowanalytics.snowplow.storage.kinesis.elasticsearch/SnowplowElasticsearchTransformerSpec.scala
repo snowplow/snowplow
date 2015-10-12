@@ -245,7 +245,12 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       "refr_device_tstamp" -> "",
       "derived_contexts" -> derivedContextsJson,
       "domain_sessionid" -> "2b15e5c8-d3b1-11e4-b9d6-1681e6b88ec1",
-      "derived_tstamp" -> "2013-11-26 00:03:57.886"
+      "derived_tstamp" -> "2013-11-26 00:03:57.886",
+      "event_vendor" -> "com.snowplowanalytics.snowplow",
+      "event_name" -> "link_click",
+      "event_format" -> "jsonschema",
+      "event_version" -> "1-0-0",
+      "true_tstamp" -> "2013-11-26 00:03:57.886"
       )
 
       val eventValues = nvPairs.unzip._2.toArray
@@ -432,7 +437,12 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
           "deviceFamily": "Other"
         }],
         "domain_sessionid": "2b15e5c8-d3b1-11e4-b9d6-1681e6b88ec1",
-        "derived_tstamp": "2013-11-26T00:03:57.886Z"
+        "derived_tstamp": "2013-11-26T00:03:57.886Z",
+        "event_vendor": "com.snowplowanalytics.snowplow",
+        "event_name": "link_click",
+        "event_format": "jsonschema",
+        "event_version": "1-0-0",
+        "true_tstamp": "2013-11-26T00:03:57.886Z"
       }""")
 
       // Specific fields
