@@ -183,7 +183,12 @@ object SnowplowElasticsearchTransformer {
     "refr_device_tstamp" -> TstampField,
     "derived_contexts" -> ContextsField,
     "domain_sessionid" -> StringField,
-    "derived_tstamp" -> TstampField
+    "derived_tstamp" -> TstampField,
+    "event_vendor" -> StringField,
+    "event_name" -> StringField,
+    "event_format" -> StringField,
+    "event_version" -> StringField,
+    "true_tstamp" -> TstampField
   )
 
   private object GeopointIndexes {
