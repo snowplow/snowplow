@@ -1,3 +1,26 @@
+Release 72 Great Spotted Kiwi (2015-10-xx)
+------------------------------------------
+Documentation: added Scala Tracker to 1-trackers/README.md (#2114)
+Common: added forwarding of port 3000 to Vagrantfile for Clojure Collector (#2011)
+Unity Tracker: added git submodule (#2113)
+Clojure Collector: bumped to 1.1.0
+Clojure Collector: added URI redirect ability (#1102)
+Clojure Collector: added basic README for the java-servlet (#2012)
+Scala Common Enrich: bumped to 0.17.0
+Scala Common Enrich: added cookie extractor enrichment, thanks @kazjote! (#2072)
+Scala Common Enrich: converted SnowplowAdapter from object to package (#2040)
+Scala Common Enrich: added Adapter to pre-process URI redirect events (#1103)
+Scala Hadoop Enrich: bumped to 1.2.0
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.17.0 (#2027)
+Redshift: added Redshift DDL for a com.snowplowanalytics.snowplow/uri_redirect event (#1104)
+Redshift: added Redshift DDL for com.amazon.aws.ec2/instance_identity_document (#2086)
+Redshift: added Redshift DDL for org.ietf/http_cookie (#2096)
+StorageLoader: wrote JSON Path file for com.snowplowanalytics.snowplow/uri_redirect event (#1105)
+StorageLoader: wrote JSON path file for org.ietf/http_cookie (#2097)
+StorageLoader: wrote JSON path file for com.amazon.aws.ec2/instance_identity_document (#2085)
+Deduplication: added SQL queries to deduplicate without event fingerprint (#2110)
+Deduplication: updated SQL queries to use event fingerprint (#2091)
+
 Release 71 Stork-Billed Kingfisher (2015-10-02)
 -----------------------------------------------
 Enrich: added example event fingerprint enrichment configuration JSON (#1990)
