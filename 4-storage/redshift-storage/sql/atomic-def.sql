@@ -9,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.7.0
+-- Version:     0.8.0
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep, Fred Blundun
@@ -192,10 +192,10 @@ CREATE TABLE atomic.events (
 	-- True timestamp
 	true_tstamp timestamp,
 
-	CONSTRAINT event_id_070_pk PRIMARY KEY(event_id)
+	CONSTRAINT event_id_080_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
 DISTKEY (event_id)
 SORTKEY (collector_tstamp);
 
-COMMENT ON TABLE "atomic"."events" IS '0.7.0'
+COMMENT ON TABLE "atomic"."events" IS '0.8.0'
