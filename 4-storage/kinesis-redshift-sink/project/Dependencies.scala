@@ -80,5 +80,6 @@ object Dependencies {
     val scalazSpecs2         = "org.typelevel"              %% "scalaz-specs2"            % V.scalazSpecs2   % "test"
     val scalaTest = "org.scalatest" % "scalatest_2.10" % "3.0.0-M9" % "test"
     val scaldi = "org.scaldi" % "scaldi_2.10" % "0.3.2"
+    val jetty = "org.eclipse.jetty" % "jetty-server" % "9.2.13.v20150730"
   }
 }

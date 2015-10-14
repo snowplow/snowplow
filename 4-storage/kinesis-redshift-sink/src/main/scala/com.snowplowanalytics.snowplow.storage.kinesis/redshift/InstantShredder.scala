@@ -3,6 +3,7 @@ package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 import java.io.{FileWriter, FileOutputStream}
 import java.net.URL
 import java.util.Properties
+import java.util.concurrent.ConcurrentHashMap
 import javax.sql.DataSource
 
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
@@ -10,6 +11,7 @@ import com.digdeep.util.concurrent.ThreadOnce
 import com.fasterxml.jackson.databind.{ObjectMapper, JsonNode}
 import com.fasterxml.jackson.databind.node.{ObjectNode, ArrayNode}
 import com.github.fge.jackson.JsonLoader
+import com.google.common.util.concurrent.RateLimiter
 import com.jayway.jsonpath.{Configuration, JsonPath}
 import com.snowplowanalytics.iglu.client.repositories.HttpRepositoryRef
 import com.snowplowanalytics.iglu.client.{RepositoryRefs, Resolver, SchemaKey}
@@ -37,10 +39,25 @@ class InstantShredder(implicit injector: Injector) {
   private val props = inject[Properties]
   var file = if (props.containsKey("logFile")) new FileWriter("/tmp/shredder.txt") else null
 
+  val rateLimiters = new ConcurrentHashMap[String, RateLimiter]()
+  props.keys().asScala.asInstanceOf[Seq[String]].find(p => p.endsWith("_throttle_rate"))
+  .foreach { p =>
+    rateLimiters.put(p.substring(0, p.length-"_throttle_rate".length), RateLimiter.create(props.getProperty(p).toInt))
+  }
+
   def isToBeDiscarded(fields: Array[String]): Boolean = {
     if (fields.length < 108) return true
     val appId = fields(FieldIndexes.appId)
-    props.containsKey(appId + "_schema") && props.getProperty(appId + "_schema") == "discard"
+    if (props.containsKey(appId + "_schema") && props.getProperty(appId + "_schema") == "discard") {
+      true
+    } else {
+      if (!props.contains(appId + "_throttle_rate")) {
+        false
+      } else {
+        // Discard if cannot acquire the limiter
+        !rateLimiters.get(appId).tryAcquire(1)
+      }
+    }
   }
 
   def shred(fields: Array[String]) = {
@@ -50,7 +67,6 @@ class InstantShredder(implicit injector: Injector) {
       }
       if (log.isDebugEnabled) log.debug("Shredding " + fields.map(f => if (f == null) "" else f).mkString(","))
       val appId = fields(FieldIndexes.appId)
-
 
       val validatedEvents = ShredJob.loadAndShred2(fields.map(f => if (f == null) "" else f).mkString("\t"))(inject[Resolver])
       val eventsWriter: Option[CopyTableWriter] = TableWriter.writerByName(props.getProperty("redshift_table"), None, None, None, appId)

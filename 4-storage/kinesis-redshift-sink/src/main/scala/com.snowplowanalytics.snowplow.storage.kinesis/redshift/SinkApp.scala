@@ -23,7 +23,9 @@ import com.digdeep.util.logging.S3Handler
 import com.fasterxml.jackson.databind.JsonNode
 import com.snowplowanalytics.iglu.client.Resolver
 import com.snowplowanalytics.snowplow.enrich.hadoop._
+import com.snowplowanalytics.snowplow.storage.kinesis.redshift.handler.{DripfeedConfig, BasicConfigVariable, JettyConfigHandler}
 import com.snowplowanalytics.snowplow.storage.kinesis.redshift.writer.{DefaultTableWriterFactory, TableWriterFactory}
+import org.eclipse.jetty.server.Server
 import org.postgresql.ds.PGPoolingDataSource
 import scaldi.Module
 
@@ -70,7 +72,6 @@ object SinkApp extends App {
                                      "filename",
                                      "Configuration file.") {
     (c, opt) =>
-
       val file = new File(c)
       if (file.exists) {
         ConfigFactory.parseFile(file)
@@ -81,17 +82,16 @@ object SinkApp extends App {
   }
   parser.parse(args)
 
-  val conf = config.value.getOrElse(throw new RuntimeException("--config argument must be provided"))
+  val conf = config.value.getOrElse(throw new scala.RuntimeException("--config argument must be provided"))
 
   private val sink: Config = conf.getConfig("sink")
-  // TODO: make the conf file more like the Elasticsearch equivalent
   val kinesisSinkRegion = sink.getConfig("kinesis").getString("region")
   val kinesisSinkEndpoint = s"https://kinesis.${kinesisSinkRegion}.amazonaws.com"
   val kinesisSink = sink.getConfig("kinesis").getConfig("out")
   val kinesisSinkName = kinesisSink.getString("stream-name")
   implicit val igluResolver:Resolver = Resolver.parse(Mapper.readTree(sink.getString("iglu_config"))) match {
     case Success(s) => s
-    case Failure(f) => throw new RuntimeException("Must provide iglu_config: " + f)
+    case Failure(f) => throw new scala.RuntimeException("Must provide iglu_config: " + f)
   }
 
   val credentialConfig = sink.getConfig("aws")
@@ -101,13 +101,16 @@ object SinkApp extends App {
   val badSink = new KinesisSink(credentials, kinesisSinkEndpoint, kinesisSinkName)
 
   private val (props, kconfig): (Properties, KinesisConnectorConfiguration) = convertConfig(conf, credentials)
+  // Initialize logging
   if (props.containsKey("s3LoggingBucket")) {
     Logger.getLogger("").addHandler(new S3Handler(credentials, 10000000, props.getProperty("s3LoggingBucket"), props.getProperty("s3LoggingPath")))
   }
+  // Initialize the data source
   val ds = new PGPoolingDataSource()
   ds.setUrl(props.getProperty("redshift_url"))
   ds.setUser(props.getProperty("redshift_username"))
   ds.setPassword(props.getProperty("redshift_password"))
+
   implicit val module = new Module {
     bind [TableWriterFactory] to new DefaultTableWriterFactory
     bind [Resolver] to new ErrorCachingResolver(500, igluResolver.repos, igluResolver)
@@ -115,11 +118,25 @@ object SinkApp extends App {
     bind [KinesisConnectorConfiguration] to kconfig
     bind [DataSource] to ds
     bind [AWSCredentialsProvider] to credentials
+    bind [DripfeedConfig] to JettyConfigHandler
   }
+  initializeConfigEndpoint(props)
 
   val executor = new RedshiftSinkExecutor(kconfig, badSink)
   executor.run()
 
+  def initializeConfigEndpoint(props: Properties): Unit = {
+    JettyConfigHandler.addVariable (new BasicConfigVariable ("maxCollectionTime", props.getProperty ("maxCollectionTime") ) )
+    JettyConfigHandler.addVariable (new BasicConfigVariable ("collectionTime", props.getProperty ("defaultCollectionTime") ) )
+    JettyConfigHandler.addVariable (new BasicConfigVariable ("flushRatio", props.getProperty ("flushRatio") ) )
+    // TODO Implement appId watcher
+    JettyConfigHandler.addVariable (new BasicConfigVariable ("appIdToSchema", props.getProperty ("appIdToSchema") ) )
+    if (props.containsKey ("configPort") ) {
+      val server = new Server (props.getProperty ("configPort").toInt)
+      server.setHandler (JettyConfigHandler)
+      server.start ()
+    }
+  }
   /**
    * This function converts the config file into the format
    * expected by the Kinesis connector interfaces.
@@ -144,6 +161,7 @@ object SinkApp extends App {
     val redshift_table = redshift.getString("table")
     val redshift_url = redshift.getString("url")
     val redshift_username = redshift.getString("username")
+    if (redshift.hasPath("configPort")) props.setProperty("configPort", redshift.getInt("configPort").toString)
     props.setProperty("redshift_password", redshift_password)
     props.setProperty("redshift_table", redshift_table)
     props.setProperty("redshift_url", redshift_url)
@@ -151,6 +169,7 @@ object SinkApp extends App {
     props.setProperty("defaultSchema", redshift.getString("defaultSchema"))
     if (redshift.hasPath("logFile")) props.setProperty("logFile", redshift.getString("logFile"))
     if (redshift.hasPath("appIdToSchema")) {
+      props.setProperty("appIdToSchema", redshift.getString("appIdToSchema"))
       val appIds = redshift.getString("appIdToSchema")
       for (entry <- appIds.split(",")) {
         if (entry.contains(":")) {
@@ -159,6 +178,16 @@ object SinkApp extends App {
         }
       }
     }
+    if (redshift.hasPath("appIdToThrottle")) {
+      props.setProperty("appIdToThrottle", redshift.getString("appIdToThrottle"))
+      for (entry <- redshift.getString("appIdToThrottle").split(",")) {
+        if (entry.contains(":")) {
+          val (appId, limit) = entry.split(":")
+          props.setProperty(appId + "_throttle_rate", limit)
+        }
+      }
+    }
+
     props.setProperty("jsonpaths", redshift.getString("jsonpaths"))
     props.setProperty("jsonPaths", redshift.getString("jsonPaths"))
     if (redshift.hasPath("filterFields")) props.setProperty("filterFields",  "true")

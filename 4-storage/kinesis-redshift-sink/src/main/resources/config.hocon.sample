@@ -88,6 +88,12 @@ sink {
 
     # Where to publish the shredding metrics. Uses the same credentials as Kinesis Client Library
     cloudWatchNamespace: RealtimeShred
+
+    # The port for the config interface which allows modification of the redshift parameters on the fly
+    configPort: 8080
+
+    # Throttling configuration (requests/per second), per appId. Missing appIds are not throttled.
+#   appIdToThrottle: "DOSAttack:100"
   }
 
   # Events are accumulated in a buffer before being sent to S3.
