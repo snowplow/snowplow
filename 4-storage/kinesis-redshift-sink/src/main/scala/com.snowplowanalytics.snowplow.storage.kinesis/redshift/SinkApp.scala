@@ -131,6 +131,7 @@ object SinkApp extends App {
     JettyConfigHandler.addVariable (new BasicConfigVariable ("flushRatio", props.getProperty ("flushRatio") ) )
     // TODO Implement appId watcher
     JettyConfigHandler.addVariable (new BasicConfigVariable ("appIdToSchema", props.getProperty ("appIdToSchema") ) )
+    JettyConfigHandler.addVariable (new BasicConfigVariable ("appIdToThrottle", props.getProperty ("appIdToThrottle") ) )
     if (props.containsKey ("configPort") ) {
       val server = new Server (props.getProperty ("configPort").toInt)
       server.setHandler (JettyConfigHandler)
@@ -182,8 +183,8 @@ object SinkApp extends App {
       props.setProperty("appIdToThrottle", redshift.getString("appIdToThrottle"))
       for (entry <- redshift.getString("appIdToThrottle").split(",")) {
         if (entry.contains(":")) {
-          val (appId, limit) = entry.split(":")
-          props.setProperty(appId + "_throttle_rate", limit)
+          val parts = entry.split(":")
+          props.setProperty(parts(0) + "_throttle_rate", parts(1))
         }
       }
     }
