@@ -51,9 +51,8 @@ sink {
     # Default schema (typically atomic)
     defaultSchema: test
 
-    # Advanced - Use this to customize where events will go depending on app_id
+    # Advanced - Use this to customize where events will go depending on app_id. Otherwise, they'll all got into the default DB schema
 #    appIdToSchema: "digdeep:test"
-    filterFields: true
 
     # hostname or IP or the host which will produce event files - Redshift should be allowed to access it via SSH (for COPY SSH)
     sshEndpoint:
@@ -73,13 +72,13 @@ sink {
     # Write time to collection time ratio, as string e.g. "1/10" - Redshift will spend only 10% of time on writes, regardless of throughput
     flushRatio: "1/10"
 
-    # Number of events - how much the algorithm will wait until flushing accumulated events
+    # Number of events - how much the algorithm will wait until flushing accumulated events (either this or maxCollectionTime)
     batchSize: 100000
 
     # in ms, how long the algorithm will wait until flushing accumulated events for the first time, until it starts adapting
     defaultCollectionTime: 100000
 
-    # in ms, maximum of how long the algorithm will wait until flushing accumulated events
+    # in ms, maximum of how long the algorithm will wait until flushing accumulated events (either this or batchSize)
     maxCollectionTime: 300000
 
     # Where the logs are stored - all logs are automatically shipped to S3 to this location
@@ -90,7 +89,7 @@ sink {
     cloudWatchNamespace: RealtimeShred
 
     # The port for the config interface which allows modification of the redshift parameters on the fly
-    configPort: 8080
+#    configPort: 8080
 
     # Throttling configuration (requests/per second), per appId. Missing appIds are not throttled.
 #   appIdToThrottle: "DOSAttack:100"
