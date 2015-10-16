@@ -42,6 +42,9 @@ object FieldIndexes { // 0-indexed
   val user_fingerprint = 14
   val augur_did = 109
   val augur_user_id = 110
+  val event = 5
+  val platform = 1
+  val dvce_tstamp = 4
 }
 
 class RawEventTransformer(implicit injector: Injector) extends ITransformer[ ValidatedRecord, EmitterInput ] {

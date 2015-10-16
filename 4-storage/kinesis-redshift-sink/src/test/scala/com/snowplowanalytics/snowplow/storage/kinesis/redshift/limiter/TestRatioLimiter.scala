@@ -5,6 +5,7 @@ import java.util.Properties
 import com.amazonaws.auth.{DefaultAWSCredentialsProviderChain, AWSCredentialsProvider}
 import com.amazonaws.internal.StaticCredentialsProvider
 import com.digdeep.util.aws.EmptyAWSCredentialsProvider
+import com.snowplowanalytics.snowplow.storage.kinesis.redshift.handler.{JettyConfigHandler, DripfeedConfig}
 import org.scalatest._
 import scaldi.Module
 import scaldi.{Injector, Injectable}
@@ -22,6 +23,7 @@ class TestRatioLimiter extends FunSuite {
   implicit val module: Module = new Module {
     bind [AWSCredentialsProvider] to new EmptyAWSCredentialsProvider()
     bind [Properties] to new Properties()
+    bind [DripfeedConfig] to JettyConfigHandler
   }
   test("Ratio limiter returns false by default") {
     val limiter = new RatioFlushLimiterUnderTest("1/10", 60000)

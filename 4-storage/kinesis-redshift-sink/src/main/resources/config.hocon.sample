@@ -94,6 +94,9 @@ sink {
 
     # Throttling configuration (requests/per second), per appId. Missing appIds are not throttled.
 #   appIdToThrottle: "DOSAttack:100"
+
+    # Whether to deduplicate the records (optional, boolean)
+    deduplicate: true
   }
 
   # Events are accumulated in a buffer before being sent to S3.
@@ -103,8 +106,8 @@ sink {
   # - the time in milliseconds since it was last emptied exceeds time-limit
   buffer {
     byte-limit: 4000000
-    record-limit: 500
-    time-limit: 60000
+    record-limit: 5000
+    time-limit: 300000
   }
 
   # The S3 location of the jsonpaths, similar to what is typically given to the storage loader

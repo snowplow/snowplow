@@ -12,22 +12,13 @@
  */
 package com.snowplowanalytics.snowplow.storage.kinesis.redshift
 
-import java.sql.{BatchUpdateException, Timestamp, Types}
+import java.sql.BatchUpdateException
+import java.util.Properties
 
-import com.snowplowanalytics.iglu.client.Resolver
-import org.postgresql.ds.PGPoolingDataSource
-import scaldi.Injector
+import com.snowplowanalytics.snowplow.storage.kinesis.redshift.limiter.RatioFlushLimiter
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
-import scalaz.Validation
-
-// Java libs
-import java.util.Properties
-
-// Java lzo
-
-// Elephant bird
 
 // Logging
 import org.apache.commons.logging.LogFactory
@@ -41,14 +32,14 @@ import com.amazonaws.services.kinesis.connectors.{KinesisConnectorConfiguration,
 // Scala
 import scala.collection.JavaConversions._
 
-// Scalaz
-
 // json4s
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
 // This project
 import com.snowplowanalytics.snowplow.storage.kinesis.redshift.sinks._
+import scaldi.Injector
+
 import scala.language.implicitConversions
 import scaldi.{Injector, Injectable}
 import Injectable._
@@ -63,7 +54,8 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, badSink: ISink)(imp
 
   val emptyList = List[EmitterInput]()
 
-  var shredder: InstantShredder = null
+  val shredder = new InstantShredder()
+  val deduplicate = inject[Properties].containsKey("deduplicate") && inject[Properties].getProperty("deduplicate") == "true"
 
   /**
    * Reads items from a buffer and saves them to s3.
@@ -77,13 +69,14 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, badSink: ISink)(imp
    */
   override def emit(buffer: UnmodifiableBuffer[ EmitterInput ]): java.util.List[ EmitterInput ] = {
     log.info(s"Flushing buffer with ${buffer.getRecords.size} records.")
+    RatioFlushLimiter.totalKinesisRecords.addAndGet(buffer.getRecords.size)
     val errors: mutable.MutableList[EmitterInput] = new mutable.MutableList[EmitterInput]
     try {
-      if (shredder == null) {
-        implicit val kinesisConfig = config
-        shredder = new InstantShredder()
-      }
-      buffer.getRecords.foreach { record =>
+      if (deduplicate) {
+        Deduplicator.deduplicate(buffer.getRecords)
+      } else {
+        buffer.getRecords
+      }.foreach { record =>
         try {
           shredder.shred(record._1)
         }
@@ -134,7 +127,7 @@ class RedshiftEmitter(config: KinesisConnectorConfiguration, badSink: ISink)(imp
       log.warn(s"Record failed: $record")
       log.info("Sending failed record to Kinesis")
       val output = compact(render(("line" -> record._1.mkString("\t")) ~ ("errors" -> record._2.swap.getOrElse(Nil))))
-      badSink.store(output, Some("key"), false)
+      badSink.store(output, Some("key"), good = false)
     }
   }
 }

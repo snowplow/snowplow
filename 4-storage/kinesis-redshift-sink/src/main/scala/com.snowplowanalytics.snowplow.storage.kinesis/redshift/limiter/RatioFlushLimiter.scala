@@ -1,5 +1,6 @@
 package com.snowplowanalytics.snowplow.storage.kinesis.redshift.limiter
 
+import java.util.concurrent.atomic.AtomicLong
 import java.util.{Date, Properties}
 import java.util.logging.{Level, Logger}
 
@@ -18,8 +19,9 @@ import Injectable._
  */
 object RatioFlushLimiter {
   var stats = List[(Long, Long, Long)]()
-  var totalRecords: Long = 0
-  var totalFlushedRecords: Long = 0
+  val totalRecords = new AtomicLong()
+  val totalKinesisRecords = new AtomicLong()
+  val totalFlushedRecords = new AtomicLong()
 }
 
 trait TimeMeasurer  {
@@ -114,11 +116,11 @@ class RatioFlushLimiter(table: String, flushRatio: String, defaultCollectionTime
     } else {
       RatioFlushLimiter.stats = List[(Long, Long, Long)]((writeStart, writeEnd, flushCount))
     }
-    RatioFlushLimiter.totalFlushedRecords += flushCount
+    RatioFlushLimiter.totalFlushedRecords.addAndGet(flushCount)
     publishToCloudWatch(currentWriteTime, collectionTime, currentCollectionTime, flushCount)
   }
   override def onRecord(values: Array[String]) = {
-    RatioFlushLimiter.totalRecords += 1
+    RatioFlushLimiter.totalRecords.incrementAndGet()
   }
 
   // TODO: Extract this out of this class because it is a different concern

@@ -40,10 +40,10 @@ class InstantShredder(implicit injector: Injector) {
   var file = if (props.containsKey("logFile")) new FileWriter("/tmp/shredder.txt") else null
 
   val rateLimiters = new ConcurrentHashMap[String, RateLimiter]()
-  props.keys().asScala.asInstanceOf[Seq[String]].find(p => p.endsWith("_throttle_rate"))
-  .foreach { p =>
-    rateLimiters.put(p.substring(0, p.length-"_throttle_rate".length), RateLimiter.create(props.getProperty(p).toInt))
-  }
+  props.keys().asScala.toList.asInstanceOf[Seq[String]].find(p => p.endsWith("_throttle_rate"))
+    .foreach { p =>
+      rateLimiters.put(p.substring(0, p.length-"_throttle_rate".length), RateLimiter.create(props.getProperty(p).toInt))
+    }
 
   def isToBeDiscarded(fields: Array[String]): Boolean = {
     if (fields.length < 108) return true

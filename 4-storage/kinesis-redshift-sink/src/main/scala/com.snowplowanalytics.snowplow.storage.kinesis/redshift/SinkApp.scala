@@ -207,6 +207,7 @@ object SinkApp extends App {
     props.setProperty("cloudWatchNamespace", redshift.getString("cloudWatchNamespace"))
     props.setProperty("sshEndpoint", redshift.getString("sshEndpoint"))
     props.setProperty("maxCollectionTime", String.valueOf(redshift.getInt("maxCollectionTime")))
+    if (redshift.hasPath("deduplicate")) props.setProperty("deduplicate", redshift.getBoolean("deduplicate").toString)
 
     val buffer = connector.getConfig("buffer")
     val byteLimit = buffer.getString("byte-limit")
