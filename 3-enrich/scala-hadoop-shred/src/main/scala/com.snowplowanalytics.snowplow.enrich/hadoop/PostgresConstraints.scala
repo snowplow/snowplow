@@ -142,6 +142,12 @@ object PostgresConstraints {
     null,
     null,
     36,
+    null,
+    1000,
+    1000,
+    128,
+    128,
+    128,
     null
   ) map {
     case i: Int => Some(i)
