@@ -167,8 +167,14 @@ module Snowplow
           else
             ""
           end
+        truncate_columns =
+          if config.fetch(:truncate_columns, true)
+            "TRUNCATECOLUMNS"
+          else
+            ""
+          end
 
-        "COPY #{table} FROM '#{fixed_objectpath}' CREDENTIALS '#{credentials}' REGION AS '#{config[:aws][:s3][:region]}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{maxerror} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS #{comprows} TIMEFORMAT 'auto' ACCEPTINVCHARS #{compression_format};"
+        "COPY #{table} FROM '#{fixed_objectpath}' CREDENTIALS '#{credentials}' REGION AS '#{config[:aws][:s3][:region]}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{maxerror} EMPTYASNULL FILLRECORD #{truncate_columns} #{comprows} TIMEFORMAT 'auto' ACCEPTINVCHARS #{compression_format};"
       end
       module_function :build_copy_from_tsv_statement
 

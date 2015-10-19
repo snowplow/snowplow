@@ -80,6 +80,7 @@ module Snowplow
       :username => String,
       :password => String,
       :maxerror => Maybe[Num],
+      :truncate_columns => MayBe[Bool],
       :comprows => Maybe[Num]
       })
 
