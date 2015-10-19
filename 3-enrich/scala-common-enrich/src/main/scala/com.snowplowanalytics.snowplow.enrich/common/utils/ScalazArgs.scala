@@ -32,6 +32,10 @@ import iglu.client.validation.ProcessingMessageMethods._
  */
 object ScalazArgs {
 
+  /**
+   * To avoid having Scalding as a dependency of Common Enrich,
+   * we use this structural type in place of com.twitter.scalding.Args
+   */
   type ListableArg = {
     def list(key: String): List[String]
   }

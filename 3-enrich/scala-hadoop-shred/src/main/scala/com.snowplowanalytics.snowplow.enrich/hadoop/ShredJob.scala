@@ -116,6 +116,7 @@ object ShredJob {
 
   /**
    * Ready the enriched event for database load by removing JSON fields
+   * and truncating field lengths based on Postgres' column types
    *
    * @param enrichedEvent TSV
    * @return the same TSV with the JSON fields removed
@@ -123,6 +124,10 @@ object ShredJob {
   def alterEnrichedEvent(enrichedEvent: String): String = {
     import common.utils.ConversionUtils
 
+    // TODO: move PostgresConstraints code out into Postgres-specific shredder when ready.
+    // It's okay to apply Postgres constraints to events being loaded into Redshift as the PG
+    // constraints are typically more permissive, but Redshift will be protected by the
+    // COPY ... TRUNCATECOLUMNS.
     (enrichedEvent.split("\t", -1).toList, PostgresConstraints.maxFieldLengths)
       .zipped
       .map { (field: String, maxLength: Option[Int]) =>
