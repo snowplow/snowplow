@@ -123,7 +123,7 @@ object ShredJob {
   def alterEnrichedEvent(enrichedEvent: String): String = {
     import common.utils.ConversionUtils
 
-    (enrichedEvent.split("\t").toList, PostgresConstraints.maxFieldLengths)
+    (enrichedEvent.split("\t", -1).toList, PostgresConstraints.maxFieldLengths)
       .zipped
       .map { (field: String, maxLength: Option[Int]) =>
         maxLength match {
