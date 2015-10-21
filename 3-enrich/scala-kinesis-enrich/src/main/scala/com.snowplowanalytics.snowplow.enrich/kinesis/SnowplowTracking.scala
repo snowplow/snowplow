@@ -51,7 +51,9 @@ object SnowplowTracking {
     // Not yet used
     val method = config.getString("method")
     val emitter = AsyncEmitter.createAndStart(endpoint, port)
-    new Tracker(List(emitter), generated.Settings.name, appName)
+    val tracker = new Tracker(List(emitter), generated.Settings.name, appName)
+    tracker.enableEc2Context()
+    tracker
   }
 
   /**
