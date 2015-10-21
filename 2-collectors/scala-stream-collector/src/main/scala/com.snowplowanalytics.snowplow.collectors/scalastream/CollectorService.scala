@@ -104,7 +104,7 @@ class CollectorService(
       }
     } ~
     get {
-      path("""ice\.png""".r | "i".r | "r".r) { path =>
+      path("""ice\.png""".r | "i".r) { path =>
         optionalCookie("sp") { reqCookie =>
           optionalHeaderValueByName("User-Agent") { userAgent =>
             optionalHeaderValueByName("Referer") { refererURI =>
