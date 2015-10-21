@@ -43,7 +43,7 @@ object Dependencies {
     val snowplowCommonEnrich = "0.15.0"
     val scalazon             = "0.11"
     val scalaz7              = "7.0.0"
-    val igluClient           = "0.1.1"
+    val igluClient           = "0.3.1"
     val snowplowTracker      = "0.1.0"
     // Scala (test only)
     // val specs2               = "2.3.6" Conflicts with com.chuusai:shapeless
