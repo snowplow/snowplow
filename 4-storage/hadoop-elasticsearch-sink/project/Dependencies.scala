@@ -16,6 +16,7 @@ object Dependencies {
 
   val resolutionRepos = Seq(
     // For some misc Scalding and Twitter libs
+    "elasticsearch-hadoop snapshots at Sonatype" at "https://oss.sonatype.org/content/repositories/snapshots/",
     "Concurrent Maven Repo" at "http://conjars.org/repo",
     "Clojars Maven Repo" at "http://clojars.org/repo",
     // For Twitter libs
@@ -31,7 +32,7 @@ object Dependencies {
     // Java
     val hadoop              = "2.4.1"
     val cascading           = "2.6.0"
-    val elasticsearchHadoop = "2.1.0"
+    val elasticsearchHadoop = "2.2.0.BUILD-SNAPSHOT"
     // Scala
     val scalding            = "0.11.2"
     val scaldingEs          = "0.6_scalding0.10"

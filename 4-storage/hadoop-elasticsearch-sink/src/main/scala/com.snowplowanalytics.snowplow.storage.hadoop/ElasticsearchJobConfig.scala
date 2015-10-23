@@ -37,6 +37,7 @@ object ElasticsearchJobConfig {
   // TODO: use withJsonInput instead of this Properties object to indicate the data is already JSON
   val esProperties = new Properties
   esProperties.setProperty("es.input.json", "true")
+  esProperties.setProperty("es.nodes.wan.only", "true")
 
   /**
    * Validate and parse the Scalding arguments

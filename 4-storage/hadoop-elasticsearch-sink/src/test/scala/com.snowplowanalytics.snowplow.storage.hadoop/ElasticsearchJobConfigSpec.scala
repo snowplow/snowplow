@@ -48,6 +48,7 @@ class ElasticsearchJobConfSpec extends MutSpecification with ValidationMatchers 
 
       val expectedSettings = new Properties
       expectedSettings.setProperty("es.input.json", "true")
+      expectedSettings.setProperty("es.nodes.wan.only", "true")
 
       val expected = ElasticsearchJobConfig(
         "localhost",
