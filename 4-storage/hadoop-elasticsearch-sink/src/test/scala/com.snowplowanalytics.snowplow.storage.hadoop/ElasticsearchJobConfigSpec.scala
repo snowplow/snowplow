@@ -44,7 +44,8 @@ class ElasticsearchJobConfSpec extends MutSpecification with ValidationMatchers 
         "--host", "localhost",
         "--index", "myindex",
         "--type", "mytype",
-        "--input", "/inputdir").mkString(" "))
+        "--input", "/inputdir",
+        "--es_nodes_wan_only", "true").mkString(" "))
 
       val expectedSettings = new Properties
       expectedSettings.setProperty("es.input.json", "true")

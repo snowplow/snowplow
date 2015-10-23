@@ -34,11 +34,6 @@ import iglu.client.validation.ProcessingMessageMethods._
 
 object ElasticsearchJobConfig {
 
-  // TODO: use withJsonInput instead of this Properties object to indicate the data is already JSON
-  val esProperties = new Properties
-  esProperties.setProperty("es.input.json", "true")
-  esProperties.setProperty("es.nodes.wan.only", "true")
-
   /**
    * Validate and parse the Scalding arguments
    *
@@ -46,6 +41,11 @@ object ElasticsearchJobConfig {
    * @return Validated ElasticsearchJobConfig
    */
   def fromScaldingArgs(args: Args) = {
+
+    // TODO: use withJsonInput instead of this Properties object to indicate the data is already JSON
+    val esProperties = new Properties
+    esProperties.setProperty("es.input.json", "true")
+
     val hostArg = args.requiredz("host").toValidationNel
     val resourceArg =
       (args.requiredz("index").toValidationNel |@| args.requiredz("type").toValidationNel)(_ + "/" + _)
@@ -71,14 +71,24 @@ object ElasticsearchJobConfig {
       }
     } yield delayInt).toValidationNel
 
+    val validatedEsProperties = (args.optionalz("es_nodes_wan_only") flatMap {
+      case Some("true") =>
+        esProperties.setProperty("es.nodes.wan.only", "true")
+        esProperties.success
+      case None | Some("false") =>
+        esProperties.success
+      case Some(other) => s"es_nodes_wan_only must be true or false, not $other".toProcessingMessage.fail
+    }).toValidationNel
+
     (
       hostArg |@|
       resourceArg |@|
       portArg |@|
       inputArg |@|
+      validatedEsProperties |@|
       exceptionsFolder |@|
       delaySeconds
-    )(ElasticsearchJobConfig(_,_,_,_,esProperties, _,_))
+    )(ElasticsearchJobConfig(_,_,_,_,_,_,_))
   }
 }
 

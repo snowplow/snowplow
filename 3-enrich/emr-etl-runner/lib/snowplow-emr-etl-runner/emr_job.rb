@@ -362,7 +362,8 @@ module Snowplow
                 :host => target[:host],
                 :port => target[:port].to_s,
                 :index => target[:database],
-                :type => target[:table]
+                :type => target[:table],
+                :es_nodes_wan_only => target[:es_nodes_wan_only] ? "true" : "false"
               }).reject { |k, v| v.nil? }
             )
             step_name = "Errors in #{source} -> Elasticsearch: #{target[:name]}"
