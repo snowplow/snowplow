@@ -32,6 +32,7 @@ module Snowplow
       @@jsonpaths_path = "/4-storage/redshift-storage/jsonpaths/"
 
       @@jsonpaths_files = Hash.new # Our cache
+      @@custom_jsonpaths_files_list = Hash.new
 
       # Searches S3 for all the files we can find
       # containing shredded types.
@@ -97,7 +98,7 @@ module Snowplow
         unless assets.nil?
           custom_dir = "#{assets}#{@vendor}/"
 
-          if file_exists?(s3, custom_dir, file)
+          if custom_json_file_exist?(s3, custom_dir, file)
             f = "#{custom_dir}#{file}"
             @@jsonpaths_files[cache_key] = f
             return f
@@ -155,6 +156,26 @@ module Snowplow
         loc = Sluice::Storage::S3::Location.new(directory)
         dir = s3.directories.get(loc.bucket, prefix: loc.dir_as_path)
         (not dir.files.head(loc.dir_as_path + file).nil?)
+      end
+
+      # Check if a jsonpath file exists in a given directory, using cache
+      def custom_json_file_exist?(s3, directory, file)
+        file_name = "#{directory}#{file}"
+        
+        if @@custom_jsonpaths_files_list[directory] == nil
+          @@custom_jsonpaths_files_list[directory] = Hash.new
+          loc = Sluice::Storage::S3::Location.new(directory)
+          Sluice::Storage::S3::list_files(s3, loc).each { |f|
+            name = "#{directory}#{f.key.split('/').last}"
+            @@custom_jsonpaths_files_list[directory][name] = f
+          }
+        end	
+        
+        if (@@custom_jsonpaths_files_list[directory][file_name])
+          file_name
+        else
+          nil
+        end 
       end
 
       # Replace any periods in vendor or name with underscore
