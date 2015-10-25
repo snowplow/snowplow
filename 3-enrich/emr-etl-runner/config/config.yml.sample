@@ -55,6 +55,7 @@ enrich:
   continue_on_unexpected_error: false # Set to 'true' (and set :out_errors: above) if you don't want any exceptions thrown from ETL
   output_compression: NONE # Compression only supported with Redshift, set to NONE if you have Postgres targets. Allowed formats: NONE, GZIP
 storage:
+  skip_missing_jsonpaths: false # Set true to prevent to ignore importing an existing shredded event when no jsonpath is defined
   download:
     folder: # Postgres-only config option. Where to store the downloaded files. Leave blank for Redshift
   targets:
