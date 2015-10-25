@@ -33,6 +33,7 @@ module Snowplow
 
       @@jsonpaths_files = Hash.new # Our cache
       @@custom_jsonpaths_files_list = Hash.new
+      @@snowplow_jsonpaths_files_list = Hash.new
 
       # Searches S3 for all the files we can find
       # containing shredded types.
@@ -98,7 +99,7 @@ module Snowplow
         unless assets.nil?
           custom_dir = "#{assets}#{@vendor}/"
 
-          if custom_json_file_exist?(s3, custom_dir, file)
+          if file_exist_with_cache?(s3, custom_dir, file, @@custom_jsonpaths_files_list)
             f = "#{custom_dir}#{file}"
             @@jsonpaths_files[cache_key] = f
             return f
@@ -109,7 +110,7 @@ module Snowplow
         # will definitely exist
         hosted_assets_bucket = get_hosted_assets_bucket(s3.region)
         snowplow_dir = "#{hosted_assets_bucket}#{@@jsonpaths_path}#{@vendor}/"
-        if file_exists?(s3, snowplow_dir, file)
+        if file_exist_with_cache?(s3, snowplow_dir, file, @@snowplow_jsonpaths_files_list)
           f = "#{snowplow_dir}#{file}"
           @@jsonpaths_files[cache_key] = f
           return f
@@ -159,19 +160,19 @@ module Snowplow
       end
 
       # Check if a jsonpath file exists in a given directory, using cache
-      def custom_json_file_exist?(s3, directory, file)
+      def file_exist_with_cache?(s3, directory, file, cache)
         file_name = "#{directory}#{file}"
         
-        if @@custom_jsonpaths_files_list[directory] == nil
-          @@custom_jsonpaths_files_list[directory] = Hash.new
+        if cache[directory] == nil
+          cache[directory] = Hash.new
           loc = Sluice::Storage::S3::Location.new(directory)
           Sluice::Storage::S3::list_files(s3, loc).each { |f|
             name = "#{directory}#{f.key.split('/').last}"
-            @@custom_jsonpaths_files_list[directory][name] = f
+            cache[directory][name] = f
           }
-        end	
+        end 
         
-        if (@@custom_jsonpaths_files_list[directory][file_name])
+        if (cache[directory][file_name])
           file_name
         else
           nil
