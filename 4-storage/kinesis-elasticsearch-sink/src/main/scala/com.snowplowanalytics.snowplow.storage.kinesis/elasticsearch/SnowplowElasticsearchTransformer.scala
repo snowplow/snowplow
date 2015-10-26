@@ -63,7 +63,7 @@ object SnowplowElasticsearchTransformer {
     "platform" -> StringField,
     "etl_tstamp" -> TstampField,
     "collector_tstamp" -> TstampField,
-    "dvce_tstamp" -> TstampField,
+    "dvce_created_tstamp" -> TstampField,
     "event" -> StringField,
     "event_id" -> StringField,
     "txn_id" -> IntField,
@@ -188,6 +188,7 @@ object SnowplowElasticsearchTransformer {
     "event_name" -> StringField,
     "event_format" -> StringField,
     "event_version" -> StringField,
+    "event_fingerprint" -> StringField,
     "true_tstamp" -> TstampField
   )
 
