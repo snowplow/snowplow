@@ -125,7 +125,7 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       "platform" -> "web",
       "etl_tstamp" -> "2017-01-26 00:01:25.292",
       "collector_tstamp" -> "2013-11-26 00:02:05",
-      "dvce_tstamp" -> "2013-11-26 00:03:57.885",
+      "dvce_created_tstamp" -> "2013-11-26 00:03:57.885",
       "event" -> "page_view",
       "event_id" -> "c6ef3124-b53a-4b13-a233-0088f79dcbcb",
       "txn_id" -> "41828",
@@ -250,6 +250,7 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       "event_name" -> "link_click",
       "event_format" -> "jsonschema",
       "event_version" -> "1-0-0",
+      "event_fingerprint" -> "e3dbfa9cca0412c3d4052863cefb547f",
       "true_tstamp" -> "2013-11-26 00:03:57.886"
       )
 
@@ -271,7 +272,7 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
         "platform" : "web",
         "etl_tstamp" : "2017-01-26T00:01:25.292Z",
         "collector_tstamp" : "2013-11-26T00:02:05Z",
-        "dvce_tstamp" : "2013-11-26T00:03:57.885Z",
+        "dvce_created_tstamp" : "2013-11-26T00:03:57.885Z",
         "event" : "page_view",
         "event_id" : "c6ef3124-b53a-4b13-a233-0088f79dcbcb",
         "txn_id" : 41828,
@@ -442,6 +443,7 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
         "event_name": "link_click",
         "event_format": "jsonschema",
         "event_version": "1-0-0",
+        "event_fingerprint": "e3dbfa9cca0412c3d4052863cefb547f",
         "true_tstamp": "2013-11-26T00:03:57.886Z"
       }""")
 
