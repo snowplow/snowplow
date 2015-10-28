@@ -9,7 +9,7 @@ import java.util.zip.GZIPOutputStream
 import javax.sql.DataSource
 
 import com.amazonaws.auth.AWSCredentialsProvider
-import com.amazonaws.regions.{Region, Regions}
+import com.amazonaws.regions.{RegionUtils, Region, Regions}
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient
 import com.amazonaws.services.cloudwatch.model.{StandardUnit, MetricDatum, PutMetricDataRequest}
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
@@ -170,7 +170,7 @@ abstract class BaseCopyTableWriter(dataSource:DataSource, table: String)(implici
 
   def createManifest: String = {
     val s3client = new AmazonS3Client(inject[AWSCredentialsProvider])
-    s3client.setRegion(Region.getRegion(Regions.AP_SOUTHEAST_2))
+    s3client.setRegion(RegionUtils.getRegion(inject[Properties].getProperty(KinesisConnectorConfiguration.PROP_REGION_NAME)))
     val endPoint = props.getProperty("sshEndpoint")
     val username = props.getProperty("sshUsername")
     val s3Folder = props.getProperty("sshS3Folder")

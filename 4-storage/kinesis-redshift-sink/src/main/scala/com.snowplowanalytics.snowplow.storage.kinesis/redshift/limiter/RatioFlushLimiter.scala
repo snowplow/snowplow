@@ -5,14 +5,15 @@ import java.util.{Date, Properties}
 import java.util.logging.{Level, Logger}
 
 import com.amazonaws.auth.AWSCredentialsProvider
-import com.amazonaws.regions.{Regions, Region}
+import com.amazonaws.regions.{RegionUtils, Regions, Region}
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient
 import com.amazonaws.services.cloudwatch.model.{Dimension, StandardUnit, MetricDatum, PutMetricDataRequest}
+import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
 import com.digdeep.util.aws.EmptyAWSCredentialsProvider
 import com.snowplowanalytics.snowplow.storage.kinesis.redshift.handler.{DripfeedConfig, JettyConfigHandler, BasicConfigVariable}
 import org.apache.commons.lang3.math.Fraction
 import scaldi.{Injector, Injectable}
-import Injectable._
+import scaldi.Injectable._
 
 /**
  * Created by denismo on 18/09/15.
@@ -39,8 +40,7 @@ class RatioFlushLimiter(table: String, flushRatio: String, defaultCollectionTime
       None
     } else {
       val client = new AmazonCloudWatchClient(credentials)
-      // TODO Configurable region? Or use the same as Kinesis
-      client.setRegion(Region.getRegion(Regions.AP_SOUTHEAST_2))
+      client.setRegion(RegionUtils.getRegion(inject[Properties].getProperty(KinesisConnectorConfiguration.PROP_REGION_NAME)))
       Some(client)
     }
   }
