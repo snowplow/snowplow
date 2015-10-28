@@ -178,6 +178,7 @@ module Snowplow
         props.set_property :user, target[:username]
         props.set_property :password, target[:password]
         props.set_property :sslmode, target.fetch(:ssl_mode, "disable")
+        props.set_property :tcpKeepAlive, "true" # TODO: make this configurable if any adverse effects
 
         # Used instead of Java::JavaSql::DriverManager.getConnection to prevent "no suitable driver found" error
         org.postgresql.Driver.new.connect(connection_url, props)
