@@ -171,7 +171,7 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
         headersWithoutCookie
       }
 
-      val (httpResponse, badQsResponse) = if (path == "/r") {
+      val (httpResponse, badQsResponse) = if (path startsWith "/r/") {
         // A click redirect
         try {
           // TODO: log errors to Kinesis as BadRows
