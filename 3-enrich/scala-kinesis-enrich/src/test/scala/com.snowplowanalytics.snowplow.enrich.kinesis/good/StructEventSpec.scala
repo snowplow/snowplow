@@ -156,6 +156,12 @@ object StructEventSpec {
     "",
     "",
     "",
+    "2014-02-02 22:01:20.941",
+    "com.google.analytics",
+    "event",
+    "jsonschema",
+    "1-0-0",
+    "",
     ""
     )
 }

@@ -156,6 +156,12 @@ object TransactionSpec {
     "",
     "",
     "",
+    "2014-02-02 22:05:16.143",
+    "com.snowplowanalytics.snowplow",
+    "transaction",
+    "jsonschema",
+    "1-0-0",
+    "",
     ""
     )
 }
