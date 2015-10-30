@@ -35,7 +35,7 @@ object Dependencies {
     val argot                = "1.0.1"
     val config               = "1.0.2"
     val scalaUtil            = "0.1.0"
-    val snowplowCommonEnrich = "0.15.0"
+    val snowplowCommonEnrich = "0.18.0"
     val scalazon             = "0.5"
     val scalaz7              = "7.0.0"
     val snowplowTracker      = "0.1.0"
@@ -61,7 +61,7 @@ object Dependencies {
     val scalaz7              = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
     val snowplowTracker      = "com.snowplowanalytics"      %% "snowplow-scala-tracker"    % V.snowplowTracker
     // Scala (test only)
-    val snowplowCommonEnrich = "com.snowplowanalytics"      % "snowplow-common-enrich"     % V.snowplowCommonEnrich % "test"
+    val snowplowCommonEnrich = "com.snowplowanalytics"      % "snowplow-common-enrich"     % V.snowplowCommonEnrich
     val specs2               = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"
     val scalazSpecs2         = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"
     // Scala (compile only)
