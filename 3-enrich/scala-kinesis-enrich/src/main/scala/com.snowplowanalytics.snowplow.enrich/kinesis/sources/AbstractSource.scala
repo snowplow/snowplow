@@ -81,19 +81,19 @@ object AbstractSource {
    */
   def adjustOversizedFailureJson(value: String): String = {
     val size = getSize(value)
-    compact(render(try {
+    try {
 
       val jsonWithoutLine = parse(value) removeField {
         case ("line", _) => true
         case _ => false
       }
 
-      {("size" -> size): JValue} merge jsonWithoutLine
+      compact(render({("size" -> size): JValue} merge jsonWithoutLine))
 
-      } catch {
-        case NonFatal(e) => ("size" -> size) ~
-          ("errors" -> List("Unable to extract errors field from original oversized bad row JSON"))
-      }))
+    } catch {
+      case NonFatal(e) =>
+        BadRow.oversizedRow(size, NonEmptyList("Unable to extract errors field from original oversized bad row JSON"))
+    }
   }
 
   /**
@@ -105,10 +105,7 @@ object AbstractSource {
    */
   def oversizedSuccessToFailure(value: String, maximum: Long): String = {
     val size = AbstractSource.getSize(value)
-    val errorJson =
-      ("size" -> size) ~
-      ("errors" -> List(s"Enriched event size of $size bytes is greater than allowed maximum of $maximum"))
-    compact(render(errorJson))
+    BadRow.oversizedRow(size, NonEmptyList(s"Enriched event size of $size bytes is greater than allowed maximum of $maximum"))
   }
 
   /**
