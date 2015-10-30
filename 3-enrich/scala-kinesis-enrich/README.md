@@ -34,58 +34,6 @@ OPTIONS
                         Iglu resolver.
 ```
 
-## Running
-
-Create your own config file:
-
-    $ cp src/main/resources/config.hocon.example my.conf
-
-Edit it and update the AWS credentials:
-
-```js
-aws {
-  access-key: "cpf"
-  secret-key: "cpf"
-}
-```
-
-If you set the fields to "env", the access key and secret key will be taken from the environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY.
-
-
-Create your own Iglu resolver configuration file:
-
-    $ cp src/main/resources/resolver.json.sample my.resolver.json
-
-Next, start the enricher, making sure to specify your new config file:
-
-    $ sbt "run --config my.conf --resolver file:my.resolver.json"
-
-If you want to use customizable enrichments, create a directory of enrichment JSONs as described in the [Configuring Enrichments][configuring-enrichments] wiki page and pass its filepath using the --enrichments option:
-
-    $ sbt "run --config my.conf --resolver file:my.resolver.json --enrichments file:path/to/enrichmentsdirectory"
-
-You can also specify that your resolver and/or enrichments are stored in DynamoDB:
-
-    $ sbt "run --config my.conf --resolver dynamodb:eu-west-1/ConfigurationTable/resolver" --enrichments dynamodb:eu-west-1/EnrichmentsTable/enrichment-"
-
-This assumes a ConfigurationTable whose primary key is "id" containing an item of the form
-
-```json
-{
-    "id": "resolver",
-    "JSON": resolver JSON string
-}
-```
-
-and an EnrichmentsTable whose primary key is "id" from which items like the one below whose id begins with "enrichment-" will be taken.
-
-```json
-{
-    "id": "enrichment-ip-lookups",
-    "JSON": JSON string for an IP lookups configurable enrichment
-}
-```
-
 ## Copyright and license
 
 Copyright 2014 Snowplow Analytics Ltd.
