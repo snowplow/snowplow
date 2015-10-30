@@ -34,6 +34,9 @@ object Dependencies {
     val yodaTime         = "2.1"
     val yodaConvert      = "1.2"
     // Scala
+    val snowplowCommonEnrich = "0.22.0"
+    val igluClient       = "0.3.2"
+    val scalaz7          = "7.0.0"
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
     val spray            = "1.2.0"
@@ -57,6 +60,10 @@ object Dependencies {
     val yodaConvert      = "org.joda"              %  "joda-convert"              % V.yodaConvert
 
     // Scala
+    // Exclude netaporter to prevent conflicting cross-version suffixes for shapeless
+    val snowplowCommonEnrich = "com.snowplowanalytics" % "snowplow-common-enrich" % V.snowplowCommonEnrich intransitive
+    val igluClient       = "com.snowplowanalytics" %  "iglu-scala-client"         % V.igluClient
+    val scalaz7          = "org.scalaz"            %% "scalaz-core"               % V.scalaz7
     val snowplowRawEvent = "com.snowplowanalytics" %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val collectorPayload = "com.snowplowanalytics" %  "collector-payload-1"       % V.collectorPayload
     val argot            = "org.clapper"           %% "argot"                     % V.argot
