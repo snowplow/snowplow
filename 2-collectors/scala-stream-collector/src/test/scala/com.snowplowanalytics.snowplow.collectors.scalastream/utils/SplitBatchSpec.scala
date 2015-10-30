@@ -76,7 +76,8 @@ class SplitBatchSpec extends Specification {
       val actual = SplitBatch.splitAndSerializePayload(payload, 100)
       val errorJson = parse(new String(actual.bad.head))
       errorJson \ "size" must_== JInt(1019)
-      errorJson \ "errors" must_== JArray(List(JString("Cannot split record with null body")))
+      errorJson \ "errors" must_==
+        JArray(List(JObject(List(("level", JString("error")), ("message", JString("Cannot split record with null body"))))))
       actual.good must_== Nil
     }
 
@@ -101,7 +102,7 @@ class SplitBatchSpec extends Specification {
       val actual = SplitBatch.splitAndSerializePayload(payload, 1000)
       actual.bad.size must_== 1
       parse(new String(actual.bad.head)) \ "errors" must_==
-        JArray(List(JString("Even without the body, the serialized event is too large")))
+        JArray(List(JObject(List(("level" ,JString("error")), ("message", JString("Even without the body, the serialized event is too large"))))))
     }   
 
     "Split a CollectorPayload with three large events and four very large events" in {
