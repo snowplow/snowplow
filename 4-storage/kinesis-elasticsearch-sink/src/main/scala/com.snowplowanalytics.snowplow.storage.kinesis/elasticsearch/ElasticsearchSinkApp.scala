@@ -48,6 +48,9 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import com.snowplowanalytics.snowplow.scalatracker.SelfDescribingJson
 import com.snowplowanalytics.snowplow.scalatracker.emitters.AsyncEmitter
 
+// Common Enrich
+import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
+
 // This project
 import sinks._
 
@@ -139,7 +142,7 @@ object ElasticsearchSinkApp extends App {
         val emitterInput = transformer.fromClass(ln -> transformer.jsonifyGoodEvent(ln.split("\t", -1))
           .leftMap(_.list))
         emitterInput._2.bimap(
-          f => Console.err.println(compact(render(("line" -> emitterInput._1) ~ ("errors" -> f)))),
+          f => Console.err.println(FailureUtils.getBadRow(emitterInput._1, f)),
           s => println(s.getSource)
         )
       }
