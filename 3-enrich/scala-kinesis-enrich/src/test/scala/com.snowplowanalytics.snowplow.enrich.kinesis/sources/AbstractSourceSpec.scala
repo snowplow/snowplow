@@ -53,8 +53,9 @@ class AbstractSourceSpec extends Specification {
 
   "oversizedSuccessToFailure" should {
     "create a bad row JSON from an oversized success" in {
-      AbstractSource.oversizedSuccessToFailure("abc", 100) must_==
-         """{"size":3,"errors":["Enriched event size of 3 bytes is greater than allowed maximum of 100"]}"""
+      val actual = parse(AbstractSource.oversizedSuccessToFailure("abc", 2))
+      actual \ "size" must_== JInt(3)
+      actual \ "errors" must_== JArray(List(JObject(List(("level",JString("error")), ("message",JString("Enriched event size of 3 bytes is greater than allowed maximum of 2"))))))
     }
   }
 }
