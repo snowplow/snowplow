@@ -142,7 +142,7 @@ object ElasticsearchSinkApp extends App {
         val emitterInput = transformer.fromClass(ln -> transformer.jsonifyGoodEvent(ln.split("\t", -1))
           .leftMap(_.list))
         emitterInput._2.bimap(
-          f => Console.err.println(BadRow(emitterInput._1, NonEmptyList(f.head, f.tail: _*)).toCompactJson),
+          f => Console.err.println(FailureUtils.getBadRow(emitterInput._1, f)),
           s => println(s.getSource)
         )
       }

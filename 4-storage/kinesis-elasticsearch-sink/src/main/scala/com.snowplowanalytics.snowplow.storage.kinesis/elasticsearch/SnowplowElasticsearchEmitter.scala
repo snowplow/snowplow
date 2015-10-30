@@ -87,6 +87,9 @@ import org.apache.commons.logging.{
 import scalatracker.Tracker
 import scalatracker.SelfDescribingJson
 
+// Common Enrich
+import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
+
 // This project
 import sinks._
 
@@ -324,11 +327,7 @@ class SnowplowElasticsearchEmitter(
   override def fail(records: JList[EmitterInput]) {
     records foreach {
       record => {
-        val output = compact(render(
-          ("line" -> record._1) ~ 
-          ("errors" -> record._2.swap.getOrElse(Nil)) ~
-          ("failure_tstamp" -> getTimestamp(System.currentTimeMillis()))
-        ))
+        val output = FailureUtils.getBadRow(record._1, record._2.swap.getOrElse(Nil))
         badSink.store(output, None, false)
       }
     }
@@ -339,10 +338,6 @@ class SnowplowElasticsearchEmitter(
    */
   override def shutdown {
     elasticsearchClient.close
-  }
-
-  def formatFailure(record: EmitterInput): String = {
-    compact(render(("line" -> record._1) ~ ("errors" -> record._2.swap.getOrElse(Nil))))
   }
 
   /**
