@@ -66,7 +66,7 @@ object SendgridAdapter extends Adapter {
   private val ContentType = "application/x-www-form-urlencoded"
 
   // Tracker version for an Sendgrid Tracking webhook
-  private val TrackerVersion = "com.sendgrid-v1"
+  private val TrackerVersion = "com.sendgrid-v3"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map (

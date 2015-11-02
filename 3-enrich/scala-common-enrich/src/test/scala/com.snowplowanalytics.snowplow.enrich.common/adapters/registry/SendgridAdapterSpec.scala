@@ -51,7 +51,7 @@ class SendgridAdapterSpec extends Specification with DataTables with ValidationM
   implicit val resolver = SpecHelpers.IgluResolver
 
   object Shared {
-    val api = CollectorApi("com.sendgrid", "v1")
+    val api = CollectorApi("com.sendgrid", "v3")
     val cljSource = CollectorSource("clj-tomcat", "UTF-8", None)
     val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00").some, "37.157.33.123".some, None, None, Nil, None)
   }
@@ -76,8 +76,7 @@ class SendgridAdapterSpec extends Specification with DataTables with ValidationM
               |}
             |}
           |}""".stripMargin.replaceAll("[\n\r]","")
-
     val actual = SendgridAdapter.toRawEvents(payload)
-    actual must beSuccessful(NonEmptyList(RawEvent(Shared.api, Map("tv" -> "com.sendgrid-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson), ContentType.some, Shared.cljSource, Shared.context)))
+    actual must beSuccessful(NonEmptyList(RawEvent(Shared.api, Map("tv" -> "com.sendgrid-v3", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson), ContentType.some, Shared.cljSource, Shared.context)))
   }
 }
