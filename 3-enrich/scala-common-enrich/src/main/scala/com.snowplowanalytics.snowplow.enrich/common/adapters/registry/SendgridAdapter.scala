@@ -27,6 +27,7 @@ import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
 
 // Jackson
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.core.JsonParseException
 
 // Scala
 import scala.collection.JavaConversions._
@@ -84,10 +85,21 @@ object SendgridAdapter extends Adapter {
   )
 
 
-  /*def payloadBodyToEvents(body: String) = {
-    val parsed = parse(body)
-  }*/
+  def payloadBodyToEvents(body: String): List[Validated[RawEvent]] = {
 
+       parse(body).children.map(itm => {
+          Success(
+            RawEvent(
+                     api          = null,
+                     parameters   = null,
+                     contentType  = null,
+                     source       = null,
+                     context      = null
+                    )
+        )
+      })
+
+  }
 
   /**
    * Converts a CollectorPayload instance into raw events.
@@ -110,17 +122,8 @@ object SendgridAdapter extends Adapter {
       case (Some(body), _)                    => {
 
         println(body)
-        return rawEventsListProcessor(List(
-                                        Success(
-                                          RawEvent(
-                                            api          = null,
-                                            parameters   = null,
-                                            contentType  = null,
-                                            source       = null,
-                                            context      = null
-                                          )
-                                        )
-                                      ))
+        val events = payloadBodyToEvents(body)
+        return rawEventsListProcessor(events)
 
         /**
         val params = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)

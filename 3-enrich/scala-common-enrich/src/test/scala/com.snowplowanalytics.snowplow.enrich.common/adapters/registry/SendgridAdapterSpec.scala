@@ -41,6 +41,10 @@ import SpecHelpers._
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
 
+// Jackson
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.core.JsonParseException
+
 class SendgridAdapterSpec extends Specification with ValidationMatchers {
 
   implicit val resolver = SpecHelpers.IgluResolver
@@ -54,129 +58,130 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
   val ContentType = "application/x-www-form-urlencoded"
 
   // this could do with going somewhere else
-  val samplePostPayload =   """
-                            [
-                             {
-                                "email":"example@test.com",
-                                "timestamp":1446549615,
-                                "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
-                                "event":"processed",
-                                "category":"cat facts",
-                                "sg_event_id":"sZROwMGMagFgnOEmSdvhig==",
-                                "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
-                             },
-                             {
-                                "email":"example@test.com",
-                                "timestamp":1446549615,
-                                "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
-                                "event":"deferred",
-                                "category":"cat facts",
-                                "sg_event_id":"jWmZXTZbtHTV2-S47asrww==",
-                                "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
-                                "response":"400 try again later",
-                                "attempt":"5"
-                             },
-                             {
-                                "email":"example@test.com",
-                                "timestamp":1446549615,
-                                "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
-                                "event":"delivered",
-                                "category":"cat facts",
-                                "sg_event_id":"cikAODhD-ffTphZ7xixsRw==",
-                                "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
-                                "response":"250 OK"
-                             },
-                             {
-                                "email":"example@test.com",
-                                "timestamp":1446549615,
-                                "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
-                                "event":"open",
-                                "category":"cat facts",CollectorPay
-                                "sg_event_id":"VGRrZCh-qMkOaAmuxcFujA==",
-                                "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
-                                "useragent":"Mozilla/4.0 (compatible; MSIE 6.1; Windows XP; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
-                                "ip":"255.255.255.255"
-                             },
-                             {
-                                "email":"example@test.com",
-                                "timestamp":1446549615,
-                                "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
-                                "event":"click",
-                                "category":"cat facts",
-                                "sg_event_id":"QjGWYpcksoD31aVQAONfAg==",
-                                "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
-                                "useragent":"Mozilla/4.0 (compatible; MSIE 6.1; Windows XP; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
-                                "ip":"255.255.255.255",
-                                "url":"http://www.sendgrid.com/"
-                             },
-                             {
-                                "email":"example@test.com",
-                                "timestamp":1446549615,
-                                "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
-                                "event":"bounce",
-                                "category":"cat facts",
-                                "sg_event_id":"PQmsSRnaTMVde4mu4TUgTQ==",
-                                "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
-                                "reason":"500 unknown recipient",
-                                "status":"5.0.0"CollectorPay
-                             },
-                             {
-                                "email":"example@test.com",
-                                "timestamp":1446549615,
-                                "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
-                                "event":"dropped",
-                                "category":"cat facts",
-                                "sg_event_id":"BP0-vnv2BjDPzwaldo-XVg==",
-                                "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
-                                "reason":"Bounced Address",
-                                "status":"5.0.0"
-                             },
-                             {
-                                "email":"example@test.com",
-                                "timestamp":1446549615,
-                                "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
-                                "event":"spamreport",
-                                "category":"cat facts",
-                                "sg_event_id":"ApWZolLiPe04wm5jAhFifA==",
-                                "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
-                             },
-                             {
-                                "email":"example@test.com",
-                                "timestamp":1446549615,
-                                "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
-                                "event":"unsubscribe",
-                                "category":"cat facts",
-                                "sg_event_id":"HoBsy5C1Tcoc1dJNsy5SfA==",
-                                "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
-                             },
-                             {
-                                "email":"example@test.com",
-                                "timestamp":1446549615,
-                                "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
-                                "event":"group_unsubscribe",
-                                "category":"cat facts",
-                                "sg_event_id":"hew55AFBIgLbd33pcviQTQ==",
-                                "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
-                                "useragent":"Mozilla/4.0 (compatible; MSIE 6.1; Windows XP; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
-                                "ip":"255.255.255.255",
-                                "url":"http://www.sendgrid.com/",
-                                "asm_group_id":10
-                             },
-                             {
-                                "email":"example@test.com",
-                                "timestamp":1446549615,
-                                "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
-                                "event":"group_resubscribe",
-                                "category":"cat facts",
-                                "sg_event_id":"TDlqEy7cUfKLVMY3EAVCag==",
-                                "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
-                                "useragent":"Mozilla/4.0 (compatible; MSIE 6.1; Windows XP; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
-                                "ip":"255.255.255.255",
-                                "url":"http://www.sendgrid.com/",
-                                "asm_group_id":10
-                             }
-                          ]
-                          """
+  val samplePostPayload =
+"""
+[
+   {
+      "email":"example@test.com",
+      "timestamp":1446549615,
+      "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
+      "event":"processed",
+      "category":"cat facts",
+      "sg_event_id":"sZROwMGMagFgnOEmSdvhig==",
+      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
+   },
+   {
+      "email":"example@test.com",
+      "timestamp":1446549615,
+      "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
+      "event":"deferred",
+      "category":"cat facts",
+      "sg_event_id":"jWmZXTZbtHTV2-S47asrww==",
+      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "response":"400 try again later",
+      "attempt":"5"
+   },
+   {
+      "email":"example@test.com",
+      "timestamp":1446549615,
+      "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
+      "event":"delivered",
+      "category":"cat facts",
+      "sg_event_id":"cikAODhD-ffTphZ7xixsRw==",
+      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "response":"250 OK"
+   },
+   {
+      "email":"example@test.com",
+      "timestamp":1446549615,
+      "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
+      "event":"open",
+      "category":"cat facts",
+      "sg_event_id":"VGRrZCh-qMkOaAmuxcFujA==",
+      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "useragent":"Mozilla/4.0 (compatible; MSIE 6.1; Windows XP; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
+      "ip":"255.255.255.255"
+   },
+   {
+      "email":"example@test.com",
+      "timestamp":1446549615,
+      "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
+      "event":"click",
+      "category":"cat facts",
+      "sg_event_id":"QjGWYpcksoD31aVQAONfAg==",
+      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "useragent":"Mozilla/4.0 (compatible; MSIE 6.1; Windows XP; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
+      "ip":"255.255.255.255",
+      "url":"http://www.sendgrid.com/"
+   },
+   {
+      "email":"example@test.com",
+      "timestamp":1446549615,
+      "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
+      "event":"bounce",
+      "category":"cat facts",
+      "sg_event_id":"PQmsSRnaTMVde4mu4TUgTQ==",
+      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "reason":"500 unknown recipient",
+      "status":"5.0.0"
+   },
+   {
+      "email":"example@test.com",
+      "timestamp":1446549615,
+      "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
+      "event":"dropped",
+      "category":"cat facts",
+      "sg_event_id":"BP0-vnv2BjDPzwaldo-XVg==",
+      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "reason":"Bounced Address",
+      "status":"5.0.0"
+   },
+   {
+      "email":"example@test.com",
+      "timestamp":1446549615,
+      "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
+      "event":"spamreport",
+      "category":"cat facts",
+      "sg_event_id":"ApWZolLiPe04wm5jAhFifA==",
+      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
+   },
+   {
+      "email":"example@test.com",
+      "timestamp":1446549615,
+      "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
+      "event":"unsubscribe",
+      "category":"cat facts",
+      "sg_event_id":"HoBsy5C1Tcoc1dJNsy5SfA==",
+      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
+   },
+   {
+      "email":"example@test.com",
+      "timestamp":1446549615,
+      "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
+      "event":"group_unsubscribe",
+      "category":"cat facts",
+      "sg_event_id":"hew55AFBIgLbd33pcviQTQ==",
+      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "useragent":"Mozilla/4.0 (compatible; MSIE 6.1; Windows XP; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
+      "ip":"255.255.255.255",
+      "url":"http://www.sendgrid.com/",
+      "asm_group_id":10
+   },
+   {
+      "email":"example@test.com",
+      "timestamp":1446549615,
+      "smtp-id":"\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
+      "event":"group_resubscribe",
+      "category":"cat facts",
+      "sg_event_id":"TDlqEy7cUfKLVMY3EAVCag==",
+      "sg_message_id":"14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0",
+      "useragent":"Mozilla/4.0 (compatible; MSIE 6.1; Windows XP; .NET CLR 1.1.4322; .NET CLR 2.0.50727)",
+      "ip":"255.255.255.255",
+      "url":"http://www.sendgrid.com/",
+      "asm_group_id":10
+   }
+]
+"""
 
   "toRawEvents" should {
 
@@ -185,14 +190,15 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       val actual = SendgridAdapter.toRawEvents(payload)
 
       actual must beSuccessful
-      actual.toList must have size 11
+      val items = actual.toList(0).toList
+      items must have size 11
     }
 
     /**"do something sensible" in {
       val body = ""
       val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
 
-      val expectedJson =
+      val expectedJson =val parsed = parse(body)
         """|{
               |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
               |"data":{
