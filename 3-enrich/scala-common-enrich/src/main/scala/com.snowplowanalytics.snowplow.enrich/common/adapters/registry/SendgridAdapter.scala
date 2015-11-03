@@ -83,6 +83,12 @@ object SendgridAdapter extends Adapter {
     "groupresubscribe" -> SchemaKey("com.sendgrid", "groupreunsubscribe", "jsonschema", "1-0-0").toSchemaUri
   )
 
+
+  /*def payloadBodyToEvents(body: String) = {
+    val parsed = parse(body)
+  }*/
+
+
   /**
    * Converts a CollectorPayload instance into raw events.
    * A Sendgrid Tracking payload only contains a single event.
@@ -91,7 +97,7 @@ object SendgridAdapter extends Adapter {
    *
    * @param payload The CollectorPayload containing one or more
    *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
+   * @param resolver (implicit) The Iglu resolver used forValidatedRawEvents
    *        schema lookup and validation. Not used
    * @return a Validation boxing either a NEL of RawEvents on
    *         Success, or a NEL of Failure Strings
@@ -104,7 +110,7 @@ object SendgridAdapter extends Adapter {
       case (Some(body), _)                    => {
 
         println(body)
-        return s"FAIL".failNel
+        return rawEventsListProcessor(Nil)
 
         /**
         val params = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
