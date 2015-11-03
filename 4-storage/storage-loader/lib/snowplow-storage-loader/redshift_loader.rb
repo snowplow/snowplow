@@ -29,6 +29,9 @@ module Snowplow
       # Used to find the altered enriched events
       ALTERED_ENRICHED_PATTERN = /(run=[0-9\-]+\/atomic-events)/
 
+      # Versions 0.5.0 and earlier of Hadoop Shred don't copy atomic.events into the shredded bucket
+      OLD_ENRICHED_PATTERN = /0\.[0-5]\.0/
+
       SqlStatements = Struct.new(:copy, :analyze, :vacuum)
 
       # Loads the Snowplow event files and shredded type
@@ -52,19 +55,27 @@ module Snowplow
         # Build our main transaction, consisting of COPY and COPY FROM JSON
         # statements, and potentially also a set of table ANALYZE statements.
 
-        loc = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:shredded][:good])
-        altered_enriched_filepath = Sluice::Storage::S3::list_files(s3, loc).find { |file|
-          ALTERED_ENRICHED_PATTERN.match(file.key)
-        }
-        if altered_enriched_filepath.nil?
-          raise DatabaseLoadError, 'Cannot find atomic-events directory in shredded/good'
+        atomic_events_location = if OLD_ENRICHED_PATTERN.match(config[:enrich][:versions][:hadoop_shred])
+          :enriched
+        else
+          :shredded
         end
-        # Of the form "run=xxx/atomic-events"
-        altered_enriched_subdirectory = ALTERED_ENRICHED_PATTERN.match(altered_enriched_filepath.key)[1]
 
-        copy_analyze_statements = [
-          build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:shredded][:good] + altered_enriched_subdirectory, target[:table], target[:maxerror])
-        ]
+        copy_analyze_statements = if atomic_events_location == :shredded
+          loc = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:shredded][:good])
+          altered_enriched_filepath = Sluice::Storage::S3::list_files(s3, loc).find { |file|
+            ALTERED_ENRICHED_PATTERN.match(file.key)
+          }
+          if altered_enriched_filepath.nil?
+            raise DatabaseLoadError, 'Cannot find atomic-events directory in shredded/good'
+          end
+          # Of the form "run=xxx/atomic-events"
+          altered_enriched_subdirectory = ALTERED_ENRICHED_PATTERN.match(altered_enriched_filepath.key)[1]
+          [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:shredded][:good] + altered_enriched_subdirectory, target[:table], target[:maxerror])]
+        else
+          [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:enriched][:good], target[:table], target[:maxerror])]
+        end
+
         copy_analyze_statements.push(*shredded_statements.map(&:copy))
 
         unless config[:skip].include?('analyze')
