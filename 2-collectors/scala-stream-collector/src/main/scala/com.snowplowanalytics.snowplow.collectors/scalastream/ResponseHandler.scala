@@ -18,6 +18,7 @@ package scalastream
 
 // Java
 import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
@@ -27,6 +28,10 @@ import org.apache.commons.codec.binary.Base64
 
 // Scala
 import scala.util.control.NonFatal
+
+// Scalaz
+import scalaz._
+import Scalaz._
 
 // Spray
 import spray.http.{
@@ -70,6 +75,9 @@ import generated._
 import CollectorPayload.thrift.model1.CollectorPayload
 import sinks._
 import utils.SplitBatch
+
+// Common Enrich
+import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
 
 // Contains an invisible pixel to return for `/i` requests.
 object ResponseHandler {
@@ -180,10 +188,17 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
             .map(_.getValue)
           target match {
             case Some(t) => HttpResponse(302).withHeaders(`Location`(t) :: headers) -> Nil
-            case None => badRequest -> sinks.bad.storeRawEvents(List("TODO".getBytes), ipKey._2)
+            // case None => badRequest -> sinks.bad.storeRawEvents(List("TODO".getBytes), ipKey._2)
+            case None => {
+              val everythingSerialized = new String(SplitBatch.ThriftSerializer.get().serialize(event))
+              badRequest -> sinks.bad.storeRawEvents(List(createBadRow(event, s"Redirect failed due to lack of u parameter")), ipKey._2)
+            }
           }
         } catch {
-          case NonFatal(e) => badRequest -> sinks.bad.storeRawEvents(List("TODO".getBytes), ipKey._2)
+          case NonFatal(e) => {
+            val everythingSerialized = new String(SplitBatch.ThriftSerializer.get().serialize(event))
+            badRequest -> sinks.bad.storeRawEvents(List(createBadRow(event, s"Redirect failed due to error $e")), ipKey._2)
+          }
         }
       } else if (KinesisSink.shuttingDown) {
         // So that the tracker knows the request failed and can try to resend later
@@ -233,4 +248,15 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
       case Some(`Origin`(origin)) => SomeOrigins(origin)
       case _ => AllOrigins
     })
+
+  /**
+   * Put together a bad row ready for sinking to Kinesis
+   *
+   * @param event
+   * @param message
+   * @return Bad row
+   */
+  private def createBadRow(event: CollectorPayload, message: String): Array[Byte] = {
+    BadRow(new String(SplitBatch.ThriftSerializer.get().serialize(event)), NonEmptyList(message)).toCompactJson.getBytes(UTF_8)
+  }
 }

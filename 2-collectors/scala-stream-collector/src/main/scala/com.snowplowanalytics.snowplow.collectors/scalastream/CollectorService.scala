@@ -31,6 +31,7 @@ import scala.concurrent.duration._
 
 // Snowplow
 import sinks._
+import utils.SplitBatch
 
 // Actor accepting Http requests for the Scala collector.
 class CollectorServiceActor(collectorConfig: CollectorConfig,

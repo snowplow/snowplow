@@ -42,7 +42,7 @@ import Scalaz._
 object SplitBatch {
 
   // Serialize Thrift CollectorPayload objects
-  private val ThriftSerializer = new ThreadLocal[TSerializer] {
+  val ThriftSerializer = new ThreadLocal[TSerializer] {
     override def initialValue = new TSerializer()
   }
 
