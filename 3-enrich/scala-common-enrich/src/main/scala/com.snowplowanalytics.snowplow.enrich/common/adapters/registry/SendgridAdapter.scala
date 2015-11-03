@@ -110,7 +110,17 @@ object SendgridAdapter extends Adapter {
       case (Some(body), _)                    => {
 
         println(body)
-        return rawEventsListProcessor(Nil)
+        return rawEventsListProcessor(List(
+                                        Success(
+                                          RawEvent(
+                                            api          = null,
+                                            parameters   = null,
+                                            contentType  = null,
+                                            source       = null,
+                                            context      = null
+                                          )
+                                        )
+                                      ))
 
         /**
         val params = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)

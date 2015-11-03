@@ -185,6 +185,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       val actual = SendgridAdapter.toRawEvents(payload)
 
       actual must beSuccessful
+      actual.toList must have size 11
     }
 
     /**"do something sensible" in {
