@@ -70,7 +70,17 @@ object SendgridAdapter extends Adapter {
 
   // Schemas for reverse-engineering a Snowplow unstructured event
   private val EventSchemaMap = Map (
-    "subscribe" -> SchemaKey("com.sendgrid", "new", "jsonschema", "1-0-0").toSchemaUri
+    "processed" -> SchemaKey("com.sendgrid", "processed", "jsonschema", "1-0-0").toSchemaUri,
+    "dropped" -> SchemaKey("com.sendgrid", "dropped", "jsonschema", "1-0-0").toSchemaUri,
+    "delivered" -> SchemaKey("com.sendgrid", "delivered", "jsonschema", "1-0-0").toSchemaUri,
+    "deferred" -> SchemaKey("com.sendgrid", "deferred", "jsonschema", "1-0-0").toSchemaUri,
+    "bounce" -> SchemaKey("com.sendgrid", "bounce", "jsonschema", "1-0-0").toSchemaUri,
+    "open" ->  SchemaKey("com.sendgrid", "open", "jsonschema", "1-0-0").toSchemaUri,
+    "click" -> SchemaKey("com.sendgrid", "click", "jsonschema", "1-0-0").toSchemaUri,
+    "spamreport" -> SchemaKey("com.sendgrid", "spamreport", "jsonschema", "1-0-0").toSchemaUri,
+    "unsubscribe" -> SchemaKey("com.sendgrid", "unsubscribe", "jsonschema", "1-0-0").toSchemaUri,
+    "groupunsubscribe" -> SchemaKey("com.sendgrid", "groupunsubscribe", "jsonschema", "1-0-0").toSchemaUri,
+    "groupresubscribe" -> SchemaKey("com.sendgrid", "groupreunsubscribe", "jsonschema", "1-0-0").toSchemaUri
   )
 
   /**
