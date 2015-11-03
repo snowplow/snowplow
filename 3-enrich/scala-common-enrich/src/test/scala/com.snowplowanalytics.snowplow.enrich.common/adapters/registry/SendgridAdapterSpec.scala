@@ -38,16 +38,11 @@ import utils.ConversionUtils
 import SpecHelpers._
 
 // Specs2
-import org.specs2.{Specification, ScalaCheck}
-import org.specs2.matcher.DataTables
+import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
 
-class SendgridAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
+class SendgridAdapterSpec extends Specification with ValidationMatchers {
 
-  "This is a specification to test the SendgridAdapter functionality"                                               ^
-                                                                                                                   p^
-  "toRawEvents must do something"                                                                                 ! e1^
-                                                                                                                   end
   implicit val resolver = SpecHelpers.IgluResolver
 
   object Shared {
@@ -58,25 +53,31 @@ class SendgridAdapterSpec extends Specification with DataTables with ValidationM
 
   val ContentType = "application/x-www-form-urlencoded"
 
-  def e1 = {
-    val body = "type=subscribe&data%5Bmerges%5D%5BLNAME%5D=Beemster"
-    val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
-    val expectedJson = 
-      """|{
-            |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
-            |"data":{
-              |"schema":"iglu:com.sendgrid/subscribe/jsonschema/1-0-0",
+  "toRawEvents" should {
+
+    "do something sensible" in {
+      val body = ""
+      val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
+
+      val expectedJson =
+        """|{
+              |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
               |"data":{
-                |"type":"subscribe",
+                |"schema":"iglu:com.sendgrid/subscribe/jsonschema/1-0-0",
                 |"data":{
-                  |"merges":{
-                    |"LNAME":"Beemster"
+                  |"type":"subscribe",
+                  |"data":{
+                    |"merges":{
+                      |"LNAME":"Beemster"
+                    |}
                   |}
                 |}
               |}
-            |}
-          |}""".stripMargin.replaceAll("[\n\r]","")
-    val actual = SendgridAdapter.toRawEvents(payload)
-    actual must beSuccessful(NonEmptyList(RawEvent(Shared.api, Map("tv" -> "com.sendgrid-v3", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson), ContentType.some, Shared.cljSource, Shared.context)))
+            |}""".stripMargin.replaceAll("[\n\r]","")
+
+      val actual = SendgridAdapter.toRawEvents(payload)
+      actual must beSuccessful(NonEmptyList(RawEvent(Shared.api, Map("tv" -> "com.sendgrid-v3", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson), ContentType.some, Shared.cljSource, Shared.context)))
+    }
+
   }
 }
