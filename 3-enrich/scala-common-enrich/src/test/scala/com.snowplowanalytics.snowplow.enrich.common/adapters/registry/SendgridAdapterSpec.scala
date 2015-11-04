@@ -181,7 +181,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
     "have the correct api endpoint for each element" in {
       actual must beSuccessful
       val items = actual.toList.head.toList
-      val siz = items.filter( itm => itm.api == Shared.api ).size
+      val siz = items.count(itm => itm.api == Shared.api)
 
       siz must beEqualTo( items.size )
     }
@@ -189,7 +189,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
     "have the correct content type for each element" in {
       actual must beSuccessful
       val items = actual.toList.head.toList
-      val siz = items.filter( itm => itm.contentType.get == ContentType).size
+      val siz = items.count(itm => itm.contentType.get == ContentType)
 
       siz must beEqualTo( items.toList.size )
     }
@@ -197,7 +197,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
     "have the correct source for each element" in {
       actual must beSuccessful
       val items = actual.toList.head.toList
-      val siz = items.filter( itm => itm.source == Shared.cljSource ).size
+      val siz = items.count(itm => itm.source == Shared.cljSource)
 
       siz must beEqualTo( items.toList.size )
     }
@@ -205,7 +205,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
     "have the correct context for each element" in {
       actual must beSuccessful
       val items = actual.toList.head.toList
-      val siz = items.filter( itm => itm.context == Shared.context ).size
+      val siz = items.count(itm => itm.context == Shared.context)
 
       siz must beEqualTo( items.toList.size )
     }
