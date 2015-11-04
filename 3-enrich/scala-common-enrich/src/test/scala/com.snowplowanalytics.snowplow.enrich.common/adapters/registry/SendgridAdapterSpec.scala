@@ -224,6 +224,11 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       toBeRejected must beFailing
     }
 
+    "reject unexpected content type" in {
+      val invalidpayload = CollectorPayload(Shared.api, Nil, "invalidtype/invalid".some, samplePostPayload.some, Shared.cljSource, Shared.context)
+      SendgridAdapter.toRawEvents(invalidpayload) must beFailing
+    }
+
 
     /** "do something sensible" in {
       val body = ""
