@@ -73,29 +73,25 @@ object SendgridAdapter extends Adapter {
       val eventType = (itm \\ "event").extract[String]
       val queryString = toMap(payload.querystring)
 
-      val schema = lookupSchema(eventType.some, VendorName, EventSchemaMap) match {
-        // this should be folded into below
-        case Success(str) => str
-        case Failure(str) => ""
+      lookupSchema(eventType.some, VendorName, EventSchemaMap) match {
+        case Success(schema) => {
+          Success(
+            RawEvent(
+              api = payload.api,
+              parameters = toUnstructEventParams(TrackerVersion,
+                queryString,
+                schema,
+                itm,
+                "srv"),
+              contentType = payload.contentType,
+              source = payload.source,
+              context = payload.context
+            )
+          )
+        }
+        case _ =>  s"Unsupported event type of $eventType provided".failNel
       }
 
-      if (EventSchemaMap.keySet.contains(eventType)) {
-        Success(
-          RawEvent(
-            api = payload.api,
-            parameters = toUnstructEventParams(TrackerVersion,
-              queryString,
-              schema,
-              itm,
-              "srv"),
-            contentType = payload.contentType,
-            source = payload.source,
-            context = payload.context
-          )
-        )
-      } else {
-        s"Unsupported event type of ${eventType} provided".failNel
-      }
     })
 
   }
