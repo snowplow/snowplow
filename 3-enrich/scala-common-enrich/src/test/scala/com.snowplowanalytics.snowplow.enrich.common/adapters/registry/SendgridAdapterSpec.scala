@@ -18,32 +18,16 @@ package registry
 import org.joda.time.DateTime
 
 // Scalaz
+import scalaz.Scalaz._
 import scalaz._
-import Scalaz._
-
-// json4s
-import org.json4s._
-import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods._
-import org.json4s.scalaz.JsonScalaz._
 
 // Snowplow
-import loaders.{
-  CollectorApi,
-  CollectorSource,
-  CollectorContext,
-  CollectorPayload
-}
-import utils.ConversionUtils
-import SpecHelpers._
+import com.snowplowanalytics.snowplow.enrich.common.loaders.{CollectorApi, CollectorContext, CollectorPayload, CollectorSource}
 
 // Specs2
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
 
-// Jackson
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.core.JsonParseException
 
 class SendgridAdapterSpec extends Specification with ValidationMatchers {
 
@@ -59,7 +43,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
 
   // this could do with going somewhere else
   val samplePostPayload =
-"""
+    """
 [
    {
       "email":"example@test.com",
@@ -181,7 +165,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       "asm_group_id":10
    }
 ]
-"""
+    """
 
   "toRawEvents" should {
 
@@ -194,7 +178,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       items must have size 11
     }
 
-    /**"do something sensible" in {
+    /** "do something sensible" in {
       val body = ""
       val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
 
@@ -216,7 +200,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
 
       val actual = SendgridAdapter.toRawEvents(payload)
       actual must beSuccessful(NonEmptyList(RawEvent(Shared.api, Map("tv" -> "com.sendgrid-v3", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson), ContentType.some, Shared.cljSource, Shared.context)))
-    }*/
+    } */
 
   }
 }
