@@ -18,6 +18,8 @@ package adapters
 package registry
 
 // Scalaz
+import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.SendgridAdapter._
+
 import scalaz.Scalaz._
 import scalaz._
 
@@ -69,12 +71,22 @@ object SendgridAdapter extends Adapter {
     parse(body).children.map(itm => {
 
       val eventType = (itm \\ "event").extract[String]
+      val queryString = toMap(payload.querystring)
+
+      val schema = lookupSchema(eventType.some, VendorName, EventSchemaMap) match { // this should be folded into below
+        case Success(str) => str
+        case Failure(str) => ""
+      }
 
       if (EventSchemaMap.keySet.contains(eventType)) {
         Success(
           RawEvent(
             api = payload.api,
-            parameters = null,
+            parameters = toUnstructEventParams(TrackerVersion,
+                                              queryString,
+                                              schema,
+                                              itm,
+                                              "srv"),
             contentType = payload.contentType,
             source = payload.source,
             context = payload.context
