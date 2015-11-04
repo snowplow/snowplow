@@ -64,12 +64,12 @@ object SendgridAdapter extends Adapter {
   )
 
 
-  def payloadBodyToEvents(body: String): List[Validated[RawEvent]] = {
+  def payloadBodyToEvents(body: String, payload: CollectorPayload): List[Validated[RawEvent]] = {
 
     parse(body).children.map(itm => {
       Success(
         RawEvent(
-          api = null,
+          api = payload.api,
           parameters = null,
           contentType = null,
           source = null,
@@ -101,7 +101,7 @@ object SendgridAdapter extends Adapter {
       case (Some(body), _) => {
 
         println(body)
-        val events = payloadBodyToEvents(body)
+        val events = payloadBodyToEvents(body, payload)
         return rawEventsListProcessor(events)
 
         /**

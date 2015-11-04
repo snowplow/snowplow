@@ -174,9 +174,22 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       val actual = SendgridAdapter.toRawEvents(payload)
 
       actual must beSuccessful
-      val items = actual.toList(0).toList
+      val items = actual.toList.head.toList
       items must have size 11
     }
+
+    "have the correct api endpoint for each element" in {
+      val payload = CollectorPayload(Shared.api, Nil, ContentType.some, samplePostPayload.some, Shared.cljSource, Shared.context)
+      val actual = SendgridAdapter.toRawEvents(payload)
+
+      actual must beSuccessful
+      val items = actual.toList.head.toList
+
+      val siz = items.filter( itm => itm.api == Shared.api ).size
+
+      siz must beEqualTo( items.size )
+    }
+
 
     /** "do something sensible" in {
       val body = ""
