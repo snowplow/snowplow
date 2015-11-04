@@ -233,74 +233,95 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       SendgridAdapter.toRawEvents(invalidpayload) must beFailing
     }
 
+    "unsupported event types are rejected" in {
 
-    "processed events return sensible json" in {
-
-      val inputJson =
+      val invalidEventTypeJson =
         """
-      [
-         {
-           "email": "example@test.com",
-           "timestamp": 1446549615,
-           "smtp-id": "\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
-           "event": "processed",
-           "category": "cat facts",
-           "sg_event_id": "sZROwMGMagFgnOEmSdvhig==",
-           "sg_message_id": "14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
-          }
-      ]"""
-
-      val payload = CollectorPayload(Shared.api, Nil, ContentType.some, inputJson.some, Shared.cljSource, Shared.context)
-
-      val expectedJson =
-        """{
-              "schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
-              "data":{
-                "schema":"iglu:com.sendgrid/processed/jsonschema/1-0-0",
-                "data":{
-                  "type":"processed",
-                  "data":{
-                    |"merges":{
-                      |"LNAME":"Beemster"
-                    |}
-                  }
+            [
+               {
+                 "email": "example@test.com",
+                 "timestamp": 1446549615,
+                 "smtp-id": "\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
+                 "event": "moon landing",
+                 "category": "cat facts",
+                 "sg_event_id": "sZROwMGMagFgnOEmSdvhig==",
+                 "sg_message_id": "14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
                 }
-              }
-            }""".stripMargin.replaceAll("[\n\r]","")
+            ]"""
 
-//      val parsed = parse(samplePostPayload)
+      val invalidpayload = CollectorPayload(Shared.api, Nil, ContentType.some, invalidEventTypeJson.some, Shared.cljSource, Shared.context)
 
-      /**
-        * the Map inside this raw event should contain
-        *
-        * tv -> com.sendgrid-v3
-        * e -> "ue",
-        * p -> "srv",
-        * ue_pr -> our expected json above
-        *
-        * the expected json is a wrapper around a single event, compact
-        *
-        */
-
-      val actual = SendgridAdapter.toRawEvents(payload)
-      actual must beSuccessful(
-        NonEmptyList(
-          RawEvent(Shared.api,
-            Map("email" -> "example@test.com", // this is incorrect see above
-                "timestamp" -> """1446549615""",
-                "smtp-id" -> """\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e"""",
-                "category" -> "cat facts",
-                "sg_event_id" -> "sZROwMGMagFgnOEmSdvhig==",
-                "sg_message_id" -> """14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"""
-            ),
-            ContentType.some,
-            Shared.cljSource,
-            Shared.context)
-        )
-      )
-
-
+      SendgridAdapter.toRawEvents(invalidpayload) must beFailing
     }
+
+
+//    "processed events return sensible json" in {
+//
+//      val inputJson =
+//        """
+//      [
+//         {
+//           "email": "example@test.com",
+//           "timestamp": 1446549615,
+//           "smtp-id": "\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
+//           "event": "processed",
+//           "category": "cat facts",
+//           "sg_event_id": "sZROwMGMagFgnOEmSdvhig==",
+//           "sg_message_id": "14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
+//          }
+//      ]"""
+//
+//      val payload = CollectorPayload(Shared.api, Nil, ContentType.some, inputJson.some, Shared.cljSource, Shared.context)
+//
+//      val expectedJson =
+//        """{
+//              "schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
+//              "data":{
+//                "schema":"iglu:com.sendgrid/processed/jsonschema/1-0-0",
+//                "data":{
+//                  "type":"processed",
+//                  "data":{
+//                    |"merges":{
+//                      |"LNAME":"Beemster"
+//                    |}
+//                  }
+//                }
+//              }
+//            }""".stripMargin.replaceAll("[\n\r]","")
+//
+////      val parsed = parse(samplePostPayload)
+//
+//      /**
+//        * the Map inside this raw event should contain
+//        *
+//        * tv -> com.sendgrid-v3
+//        * e -> "ue",
+//        * p -> "srv",
+//        * ue_pr -> our expected json above
+//        *
+//        * the expected json is a wrapper around a single event, compact
+//        *
+//        */
+//
+//      val actual = SendgridAdapter.toRawEvents(payload)
+//      actual must beSuccessful(
+//        NonEmptyList(
+//          RawEvent(Shared.api,
+//            Map("email" -> "example@test.com", // this is incorrect see above
+//                "timestamp" -> """1446549615""",
+//                "smtp-id" -> """\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e"""",
+//                "category" -> "cat facts",
+//                "sg_event_id" -> "sZROwMGMagFgnOEmSdvhig==",
+//                "sg_message_id" -> """14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"""
+//            ),
+//            ContentType.some,
+//            Shared.cljSource,
+//            Shared.context)
+//        )
+//      )
+//
+//
+//    }
 
   }
 }

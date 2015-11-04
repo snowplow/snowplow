@@ -67,15 +67,22 @@ object SendgridAdapter extends Adapter {
   def payloadBodyToEvents(body: String, payload: CollectorPayload): List[Validated[RawEvent]] = {
 
     parse(body).children.map(itm => {
-      Success(
-        RawEvent(
-          api = payload.api,
-          parameters = null,
-          contentType = payload.contentType,
-          source = payload.source,
-          context = payload.context
+
+      val eventType = (itm \\ "event").extract[String]
+
+      if (EventSchemaMap.keySet.contains(eventType)) {
+        Success(
+          RawEvent(
+            api = payload.api,
+            parameters = null,
+            contentType = payload.contentType,
+            source = payload.source,
+            context = payload.context
+          )
         )
-      )
+      } else {
+        s"Unsupported event type of ${eventType} provided".failNel
+      }
     })
 
   }
