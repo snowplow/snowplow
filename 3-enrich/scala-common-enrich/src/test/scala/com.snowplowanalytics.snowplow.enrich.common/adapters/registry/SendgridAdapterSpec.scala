@@ -187,7 +187,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       val items = actual.toList.head.toList
       val siz = items.count(itm => itm.api == Shared.api)
 
-      siz must beEqualTo( items.size )
+      siz must beEqualTo(items.size)
     }
 
     "have the correct content type for each element" in {
@@ -195,7 +195,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       val items = actual.toList.head.toList
       val siz = items.count(itm => itm.contentType.get == ContentType)
 
-      siz must beEqualTo( items.toList.size )
+      siz must beEqualTo(items.toList.size)
     }
 
     "have the correct source for each element" in {
@@ -203,7 +203,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       val items = actual.toList.head.toList
       val siz = items.count(itm => itm.source == Shared.cljSource)
 
-      siz must beEqualTo( items.toList.size )
+      siz must beEqualTo(items.toList.size)
     }
 
     "have the correct context for each element" in {
@@ -211,7 +211,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       val items = actual.toList.head.toList
       val siz = items.count(itm => itm.context == Shared.context)
 
-      siz must beEqualTo( items.toList.size )
+      siz must beEqualTo(items.toList.size)
     }
 
     "reject empty bodies" in {
@@ -274,7 +274,9 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       val payload = CollectorPayload(Shared.api, Nil, ContentType.some, inputJson.some, Shared.cljSource, Shared.context)
 
       val expectedJson =
-        compact( parse("""{
+        compact(
+          parse(
+            """{
               "schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
               "data":{
                 "schema":"iglu:com.sendgrid/processed/jsonschema/1-0-0",
@@ -289,9 +291,10 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
                   }
                 }
               }
-            }""") )
+            }""")
+        )
 
-//      val parsed = parse(samplePostPayload)
+      //      val parsed = parse(samplePostPayload)
 
       /**
         * the Map inside this raw event should contain

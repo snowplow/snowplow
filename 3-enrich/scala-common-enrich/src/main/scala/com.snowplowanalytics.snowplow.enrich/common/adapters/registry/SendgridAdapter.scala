@@ -73,7 +73,8 @@ object SendgridAdapter extends Adapter {
       val eventType = (itm \\ "event").extract[String]
       val queryString = toMap(payload.querystring)
 
-      val schema = lookupSchema(eventType.some, VendorName, EventSchemaMap) match { // this should be folded into below
+      val schema = lookupSchema(eventType.some, VendorName, EventSchemaMap) match {
+        // this should be folded into below
         case Success(str) => str
         case Failure(str) => ""
       }
@@ -83,10 +84,10 @@ object SendgridAdapter extends Adapter {
           RawEvent(
             api = payload.api,
             parameters = toUnstructEventParams(TrackerVersion,
-                                              queryString,
-                                              schema,
-                                              itm,
-                                              "srv"),
+              queryString,
+              schema,
+              itm,
+              "srv"),
             contentType = payload.contentType,
             source = payload.source,
             context = payload.context
