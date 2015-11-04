@@ -28,7 +28,6 @@ import com.snowplowanalytics.snowplow.enrich.common.loaders.{CollectorApi, Colle
 import org.specs2.mutable.Specification
 import org.specs2.scalaz.ValidationMatchers
 
-
 class SendgridAdapterSpec extends Specification with ValidationMatchers {
 
   implicit val resolver = SpecHelpers.IgluResolver
@@ -193,6 +192,36 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       val siz = items.filter( itm => itm.contentType.get == ContentType).size
 
       siz must beEqualTo( items.toList.size )
+    }
+
+    "have the correct source for each element" in {
+      actual must beSuccessful
+      val items = actual.toList.head.toList
+      val siz = items.filter( itm => itm.source == Shared.cljSource ).size
+
+      siz must beEqualTo( items.toList.size )
+    }
+
+    "have the correct context for each element" in {
+      actual must beSuccessful
+      val items = actual.toList.head.toList
+      val siz = items.filter( itm => itm.context == Shared.context ).size
+
+      siz must beEqualTo( items.toList.size )
+    }
+
+    "reject empty bodies" in {
+      val invalidpayload = CollectorPayload(Shared.api, Nil, ContentType.some, None, Shared.cljSource, Shared.context)
+      val toBeRejected = SendgridAdapter.toRawEvents(invalidpayload)
+
+      toBeRejected must beFailing
+    }
+
+    "reject empty content type" in {
+      val invalidpayload = CollectorPayload(Shared.api, Nil, None, samplePostPayload.some, Shared.cljSource, Shared.context)
+      val toBeRejected = SendgridAdapter.toRawEvents(invalidpayload)
+
+      toBeRejected must beFailing
     }
 
 
