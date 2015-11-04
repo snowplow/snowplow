@@ -71,7 +71,7 @@ object SendgridAdapter extends Adapter {
         RawEvent(
           api = payload.api,
           parameters = null,
-          contentType = null,
+          contentType = payload.contentType,
           source = null,
           context = null
         )
@@ -100,7 +100,7 @@ object SendgridAdapter extends Adapter {
       case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
       case (Some(body), _) => {
 
-        println(body)
+//        println(body)
         val events = payloadBodyToEvents(body, payload)
         return rawEventsListProcessor(events)
 
