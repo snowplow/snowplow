@@ -72,7 +72,7 @@ object SendgridAdapter extends Adapter {
     * Converts a payload into a list of validated events
     * Expects a valid json - returns a single failure if one is not present
     *
-    * @param body json payload as POST['d by sendgrid
+    * @param body json payload as POST'd by sendgrid
     * @param payload the rest of the payload details
     * @return a list of validated events, successes will be the corresponding raw events
     *         failures will contain a non empty list of the reason(s) for the particular event failing
