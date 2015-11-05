@@ -48,7 +48,7 @@ module Snowplow
           @@collector_uri = cms[:collector] # Could be nil
           @@app_id = cms[:app_id] # Could be nil
           
-          @@app_context = Snowplow.as_self_desc_hash(APPLICATION_CONTEXT_SCHEMA, {
+          @@app_context = SnowplowTracker::SelfDescribingJson.new(APPLICATION_CONTEXT_SCHEMA, {
             :name => NAME,
             :version => VERSION,
             :tags => cm[:tags],
@@ -78,19 +78,11 @@ module Snowplow
           nil
         end
 
-        # Helper to make a self-describing hash
-        Contract String, {} => { :schema => String, :data => {} }
-        def self.as_self_desc_hash(schema, data)
-          { :schema => schema,
-            :data => data
-          }
-        end
-
         # Track a load succeeded event
         Contract None => SnowplowTracker::Tracker
         def track_load_succeeded
           @tracker.track_unstruct_event(
-            Snowplow.as_self_desc_hash(
+            SnowplowTracker::SelfDescribingJson.new(
               LOAD_SUCCEEDED_SCHEMA,
               {}
             ),
@@ -102,7 +94,7 @@ module Snowplow
         Contract String => SnowplowTracker::Tracker
         def track_load_failed(error_message)
           @tracker.track_unstruct_event(
-            Snowplow.as_self_desc_hash(
+            SnowplowTracker::SelfDescribingJson.new(
               LOAD_FAILED_SCHEMA,
               {
                 :error => error_message
