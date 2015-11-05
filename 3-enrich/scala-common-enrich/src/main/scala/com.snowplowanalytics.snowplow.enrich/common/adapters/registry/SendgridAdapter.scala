@@ -36,10 +36,10 @@ import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 import com.snowplowanalytics.snowplow.enrich.common.utils.{JsonUtils => JU}
 
 /**
-  * Transforms a collector payload which conforms to
-  * a known version of the Sendgrid Tracking webhook
-  * into raw events.
-  */
+ * Transforms a collector payload which conforms to
+ * a known version of the Sendgrid Tracking webhook
+ * into raw events.
+ */
 object SendgridAdapter extends Adapter {
 
   // Vendor name for Failure Message
@@ -68,17 +68,18 @@ object SendgridAdapter extends Adapter {
 
 
   /**
-    *
-    * Converts a payload into a list of validated events
-    * Expects a valid json - returns a single failure if one is not present
-    *
-    * @param body json payload as POST'd by sendgrid
-    * @param payload the rest of the payload details
-    * @return a list of validated events, successes will be the corresponding raw events
-    *         failures will contain a non empty list of the reason(s) for the particular event failing
-    */
+   *
+   * Converts a payload into a list of validated events
+   * Expects a valid json - returns a single failure if one is not present
+   *
+   * @param body json payload as POST'd by sendgrid
+   * @param payload the rest of the payload details
+   * @return a list of validated events, successes will be the corresponding raw events
+   *         failures will contain a non empty list of the reason(s) for the particular event failing
+   */
   private def payloadBodyToEvents(body: String, payload: CollectorPayload): List[Validated[RawEvent]] = {
     try {
+
       val parsed = parse(body)
 
       if (parsed.children.isEmpty) {
@@ -90,23 +91,20 @@ object SendgridAdapter extends Adapter {
           val eventType = (itm \\ "event").extractOpt[String]
           val queryString = toMap(payload.querystring)
 
-          lookupSchema(eventType, VendorName, index, EventSchemaMap) match {
-            case Success(schema) => {
-              Success(
-                RawEvent(
-                  api = payload.api,
-                  parameters = toUnstructEventParams(TrackerVersion,
-                    queryString,
-                    schema,
-                    itm,
-                    "srv"),
-                  contentType = payload.contentType,
-                  source = payload.source,
-                  context = payload.context
-                )
+          lookupSchema(eventType, VendorName, index, EventSchemaMap) map {
+            schema => {
+              RawEvent(
+                api = payload.api,
+                parameters = toUnstructEventParams(TrackerVersion,
+                  queryString,
+                  schema,
+                  itm,
+                  "srv"),
+                contentType = payload.contentType,
+                source = payload.source,
+                context = payload.context
               )
             }
-            case Failure(err) => Failure(err)
           }
         }
 
@@ -119,18 +117,18 @@ object SendgridAdapter extends Adapter {
   }
 
   /**
-    * Converts a CollectorPayload instance into raw events.
-    * A Sendgrid Tracking payload only contains a single event.
-    * We expect the name parameter to be 1 of 6 options otherwise
-    * we have an unsupported event type.
-    *
-    * @param payload The CollectorPayload containing one or more
-    *                raw events as collected by a Snowplow collector
-    * @param resolver (implicit) The Iglu resolver used forValidatedRawEvents
-    *                 schema lookup and validation. Not used
-    * @return a Validation boxing either a NEL of RawEvents on
-    *         Success, or a NEL of Failure Strings
-    */
+   * Converts a CollectorPayload instance into raw events.
+   * A Sendgrid Tracking payload only contains a single event.
+   * We expect the name parameter to be 1 of 6 options otherwise
+   * we have an unsupported event type.
+   *
+   * @param payload The CollectorPayload containing one or more
+   *                raw events as collected by a Snowplow collector
+   * @param resolver (implicit) The Iglu resolver used forValidatedRawEvents
+   *                 schema lookup and validation. Not used
+   * @return a Validation boxing either a NEL of RawEvents on
+   *         Success, or a NEL of Failure Strings
+   */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
       case (None, _) => s"Request body is empty: no ${VendorName} event to process".failNel
