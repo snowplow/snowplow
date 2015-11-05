@@ -289,7 +289,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
 
       val payload = CollectorPayload(Shared.api, Nil, ContentType.some, missingEventType.some, Shared.cljSource, Shared.context)
       val actual = SendgridAdapter.toRawEvents(payload)
-      actual must beFailing(NonEmptyList("Sendgrid event failed: type parameter not provided - cannot determine event type"))
+      actual must beFailing(NonEmptyList("Sendgrid event at index [1] failed: type parameter not provided - cannot determine event type"))
     }
 
 

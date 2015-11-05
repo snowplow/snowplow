@@ -85,30 +85,31 @@ object SendgridAdapter extends Adapter {
         return List(s"$VendorName event failed json sanity check: has no events".failNel)
       }
 
-      parsed.children.map(itm => {
-        val eventType = (itm \\ "event").extractOpt[String]
-        val queryString = toMap(payload.querystring)
+      for ((itm, index) <- parsed.children.zipWithIndex)
+        yield {
+          val eventType = (itm \\ "event").extractOpt[String]
+          val queryString = toMap(payload.querystring)
 
-        lookupSchema(eventType, VendorName, EventSchemaMap) match {
-          case Success(schema) => {
-            Success(
-              RawEvent(
-                api = payload.api,
-                parameters = toUnstructEventParams(TrackerVersion,
-                  queryString,
-                  schema,
-                  itm,
-                  "srv"),
-                contentType = payload.contentType,
-                source = payload.source,
-                context = payload.context
+          lookupSchema(eventType, VendorName, index, EventSchemaMap) match {
+            case Success(schema) => {
+              Success(
+                RawEvent(
+                  api = payload.api,
+                  parameters = toUnstructEventParams(TrackerVersion,
+                    queryString,
+                    schema,
+                    itm,
+                    "srv"),
+                  contentType = payload.contentType,
+                  source = payload.source,
+                  context = payload.context
+                )
               )
-            )
+            }
+            case Failure(err) => Failure(err)
           }
-          case Failure(err) => Failure(err)
         }
-      }
-      )
+
     } catch {
       case e: JsonParseException => {
         val exception = JU.stripInstanceEtc(e.toString).orNull
