@@ -67,17 +67,25 @@ object SendgridAdapter extends Adapter {
   )
 
 
-  def payloadBodyToEvents(body: String, payload: CollectorPayload): List[Validated[RawEvent]] = {
+  /**
+    *
+    * Converts a payload into a list of validated events
+    * Expects a valid json - returns a single failure if one is not present
+    *
+    * @param body json payload as POST['d by sendgrid
+    * @param payload the rest of the payload details
+    * @return a list of validated events, successes will be the corresponding raw events
+    *         failures will contain a non empty list of the reason(s) for the particular event failing
+    */
+  private def payloadBodyToEvents(body: String, payload: CollectorPayload): List[Validated[RawEvent]] = {
     try {
-
       val parsed = parse(body)
 
       if (parsed.children.isEmpty) {
-        return List(s"Invalid json format - no events".failNel)
+        return List(s"$VendorName event failed json sanity check: has no events".failNel)
       }
 
       parsed.children.map(itm => {
-
         val eventType = (itm \\ "event").extractOpt[String]
         val queryString = toMap(payload.querystring)
 
@@ -97,18 +105,15 @@ object SendgridAdapter extends Adapter {
               )
             )
           }
-          case Failure(err) => err.head.failNel // I need to come back to this - err.failNel changes the return type of this function
+          case Failure(err) => Failure(err)
         }
-
-      })
-
+      }
+      )
     } catch {
-
       case e: JsonParseException => {
         val exception = JU.stripInstanceEtc(e.toString).orNull
         List(s"$VendorName event failed to parse into JSON: [$exception]".failNel)
       }
-
     }
   }
 
