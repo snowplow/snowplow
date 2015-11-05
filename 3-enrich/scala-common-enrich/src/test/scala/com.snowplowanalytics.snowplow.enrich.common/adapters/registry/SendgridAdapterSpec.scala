@@ -264,7 +264,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       SendgridAdapter.toRawEvents(CollectorPayload(Shared.api, Nil, ContentType.some, incorrectlyFormattedJson.some, Shared.cljSource, Shared.context)) must beFailing
     }
 
-    "reject a single broken event correctly" in {
+    "reject a payload with a some valid, some invalid events" in {
       val missingEventType =
         """
       [
@@ -287,47 +287,9 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
           }
       ]"""
 
-      val expectedJson =
-        compact(
-          parse(
-            """{
-              "schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
-              "data":{
-                "schema":"iglu:com.sendgrid/processed/jsonschema/1-0-0",
-                "data":{
-                     "email": "example@test.com",
-                     "timestamp": 1446549615,
-                     "smtp-id": "\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
-                     "event": "processed",
-                     "category": "cat facts",
-                     "sg_event_id": "sZROwMGMagFgnOEmSdvhig==",
-                     "sg_message_id": "14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
-                  }
-                }
-              }
-            }""")
-        )
-
       val payload = CollectorPayload(Shared.api, Nil, ContentType.some, missingEventType.some, Shared.cljSource, Shared.context)
-      val expected = NonEmptyList(
-        Success(
-          RawEvent(Shared.api,
-            Map(
-              "tv" -> "com.sendgrid-v3",
-              "e" -> "ue",
-              "p" -> "srv",
-              "ue_pr" -> expectedJson
-            ),
-            ContentType.some,
-            Shared.cljSource,
-            Shared.context
-          )
-        ),
-        Failure()
-      )
-
       val actual = SendgridAdapter.toRawEvents(payload)
-      actual must beFailing(expected)
+      actual must beFailing(NonEmptyList("Sendgrid event failed: type parameter not provided - cannot determine event type"))
     }
 
 
