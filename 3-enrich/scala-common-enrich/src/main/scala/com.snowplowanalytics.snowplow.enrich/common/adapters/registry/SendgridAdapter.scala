@@ -46,7 +46,7 @@ object SendgridAdapter extends Adapter {
   private val VendorName = "Sendgrid"
 
   // Expected content type for a request body
-  private val ContentType = "application/x-www-form-urlencoded"
+  private val ContentType = "application/json"
 
   // Tracker version for an Sendgrid Tracking webhook
   private val TrackerVersion = "com.sendgrid-v3"

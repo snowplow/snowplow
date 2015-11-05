@@ -42,7 +42,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
     val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00").some, "37.157.33.123".some, None, None, Nil, None)
   }
 
-  val ContentType = "application/x-www-form-urlencoded"
+  val ContentType = "application/json"
 
   // this could do with going somewhere else
   val samplePostPayload =
