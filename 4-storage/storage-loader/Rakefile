@@ -22,6 +22,7 @@ JAR_PATH = "deploy/#{APP_NAME}.jar"
 EXECUTABLE_PATH = "deploy/#{APP_NAME}"
 
 task :build_executable do
+	`rm -f #{EXECUTABLE_PATH}`
   `bundle exec warble`
   `cat bin/jarx-stub.sh #{JAR_PATH} > #{EXECUTABLE_PATH}`
   `chmod +x #{EXECUTABLE_PATH}`
