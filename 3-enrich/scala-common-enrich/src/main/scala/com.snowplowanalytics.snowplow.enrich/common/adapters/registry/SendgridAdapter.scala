@@ -18,6 +18,7 @@ package adapters
 package registry
 
 // Scalaz
+import com.fasterxml.jackson.core.JsonParseException
 import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.SendgridAdapter._
 
 import scalaz.Scalaz._
@@ -67,33 +68,48 @@ object SendgridAdapter extends Adapter {
 
 
   def payloadBodyToEvents(body: String, payload: CollectorPayload): List[Validated[RawEvent]] = {
+    try {
 
-    parse(body).children.map(itm => {
+      val parsed = parse(body)
 
-      val eventType = (itm \\ "event").extract[String]
-      val queryString = toMap(payload.querystring)
-
-      lookupSchema(eventType.some, VendorName, EventSchemaMap) match {
-        case Success(schema) => {
-          Success(
-            RawEvent(
-              api = payload.api,
-              parameters = toUnstructEventParams(TrackerVersion,
-                queryString,
-                schema,
-                itm,
-                "srv"),
-              contentType = payload.contentType,
-              source = payload.source,
-              context = payload.context
-            )
-          )
-        }
-        case _ =>  s"Unsupported event type of $eventType provided".failNel
+      if (parsed.children.isEmpty) {
+        return List(s"Invalid json format - no events".failNel)
       }
 
-    })
+      parsed.children.map(itm => {
 
+        val eventType = (itm \\ "event").extractOpt[String]
+        val queryString = toMap(payload.querystring)
+
+        lookupSchema(eventType, VendorName, EventSchemaMap) match {
+          case Success(schema) => {
+            Success(
+              RawEvent(
+                api = payload.api,
+                parameters = toUnstructEventParams(TrackerVersion,
+                  queryString,
+                  schema,
+                  itm,
+                  "srv"),
+                contentType = payload.contentType,
+                source = payload.source,
+                context = payload.context
+              )
+            )
+          }
+          case Failure(err) => err.head.failNel // I need to come back to this - err.failNel changes the return type of this function
+        }
+
+      })
+
+    } catch {
+
+      case e: JsonParseException => {
+        val exception = JU.stripInstanceEtc(e.toString).orNull
+        List(s"$VendorName event failed to parse into JSON: [$exception]".failNel)
+      }
+
+    }
   }
 
   /**

@@ -254,6 +254,16 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       SendgridAdapter.toRawEvents(invalidpayload) must beFailing
     }
 
+    "reject invalid/unparsable json" in {
+      val unparsableJson = """[ """
+      SendgridAdapter.toRawEvents(CollectorPayload(Shared.api, Nil, ContentType.some, unparsableJson.some, Shared.cljSource, Shared.context)) must beFailing
+    }
+
+    "reject valid json in incorrect format" in {
+      val incorrectlyFormattedJson = """[ ]"""
+      SendgridAdapter.toRawEvents(CollectorPayload(Shared.api, Nil, ContentType.some, incorrectlyFormattedJson.some, Shared.cljSource, Shared.context)) must beFailing
+    }
+
 
     "return sensible json for sample event" in {
 
