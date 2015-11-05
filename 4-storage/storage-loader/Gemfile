@@ -23,7 +23,7 @@ gem "sluice", "~> 0.2.2"
 gem 'jdbc-postgres'
 gem "plissken", "~> 0.1.0"
 gem "contracts", "= 0.7"
-gem "snowplow-tracker", "~> 0.4.2"
+gem "snowplow-tracker", "~> 0.5.2"
 
 group :development do
   gem "rspec", "~> 2.14", ">= 2.14.1"
