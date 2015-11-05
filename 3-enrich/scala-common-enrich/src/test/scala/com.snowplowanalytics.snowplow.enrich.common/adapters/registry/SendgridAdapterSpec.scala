@@ -294,20 +294,6 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
             }""")
         )
 
-      //      val parsed = parse(samplePostPayload)
-
-      /**
-        * the Map inside this raw event should contain
-        *
-        * tv -> com.sendgrid-v3
-        * e -> "ue",
-        * p -> "srv",
-        * ue_pr -> our expected json above
-        *
-        * the expected json is a wrapper around a single event, compact
-        *
-        */
-
       val actual = SendgridAdapter.toRawEvents(payload)
       actual must beSuccessful(
         NonEmptyList(

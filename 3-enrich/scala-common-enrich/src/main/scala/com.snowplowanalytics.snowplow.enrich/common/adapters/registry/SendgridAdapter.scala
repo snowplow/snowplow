@@ -115,30 +115,8 @@ object SendgridAdapter extends Adapter {
       case (_, None) => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
       case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
       case (Some(body), _) => {
-
         val events = payloadBodyToEvents(body, payload)
-        return rawEventsListProcessor(events)
-
-        /**
-        val params = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
-        params.get("type") match {
-          case None => s"No ${VendorName} type parameter provided: cannot determine event type".failNel
-          case Some(eventType) => {
-
-            val allParams = toMap(payload.querystring) ++ reformatParameters(params)
-            for {
-              schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
-            } yield {
-              NonEmptyList(RawEvent(
-                api          = payload.api,
-                parameters   = toUnstructEventParams(TrackerVersion, allParams, schema, null, "srv"),
-                contentType  = payload.contentType,
-                source       = payload.source,
-                context      = payload.context
-              ))
-            }
-          }
-        } */
+        rawEventsListProcessor(events)
       }
     }
 }
