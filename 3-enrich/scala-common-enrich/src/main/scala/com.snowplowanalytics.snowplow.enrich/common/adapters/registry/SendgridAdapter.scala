@@ -20,6 +20,8 @@ package registry
 // Scalaz
 import com.fasterxml.jackson.core.JsonParseException
 import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.SendgridAdapter._
+import org.joda.time.{DateTimeZone, DateTime}
+import org.joda.time.format.DateTimeFormat
 
 import scalaz.Scalaz._
 import scalaz._
@@ -66,7 +68,6 @@ object SendgridAdapter extends Adapter {
     "group_resubscribe" -> SchemaKey("com.sendgrid", "group_resubscribe", "jsonschema", "1-0-0").toSchemaUri
   )
 
-
   /**
    *
    * Converts a payload into a list of validated events
@@ -93,12 +94,14 @@ object SendgridAdapter extends Adapter {
 
           lookupSchema(eventType, VendorName, index, EventSchemaMap) map {
             schema => {
+
+              val formatted = reformatParameters(itm, eventType, "timestamp")
               RawEvent(
                 api = payload.api,
                 parameters = toUnstructEventParams(TrackerVersion,
                   queryString,
                   schema,
-                  itm,
+                  formatted,
                   "srv"),
                 contentType = payload.contentType,
                 source = payload.source,

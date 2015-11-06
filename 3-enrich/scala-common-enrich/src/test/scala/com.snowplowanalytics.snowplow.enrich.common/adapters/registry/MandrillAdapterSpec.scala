@@ -72,7 +72,7 @@ class MandrillAdapterSpec extends Specification with DataTables with ValidationM
     "Change multiple values"         !! """{"ts":1415709559,"ts":1415700000}"""            ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("ts",JString("2014-11-11T10:00:00.000Z"))))                           |
     "Change nested values"           !! """{"ts":1415709559,"nested":{"ts":1415700000}}""" ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("nested",JObject(List(("ts",JString("2014-11-11T10:00:00.000Z"))))))) |
     "No change, ts param not an int" !! """{"ts":"1415709559"}"""                          ! JObject(List(("ts",JString("1415709559"))))                                                                                    |> {
-      (_, json, expected) => MandrillAdapter.reformatParameters(parse(json), None) mustEqual expected
+      (_, json, expected) => MandrillAdapter.reformatParameters(parse(json), None, "ts") mustEqual expected
   }
 
   def e2 = {

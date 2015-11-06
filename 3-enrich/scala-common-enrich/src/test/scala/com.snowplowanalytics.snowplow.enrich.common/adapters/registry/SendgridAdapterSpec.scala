@@ -293,7 +293,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
     }
 
 
-    "return sensible json for sample event" in {
+    "return correct json for sample event, including stripping out event keypair and fixing timestamp" in {
 
       val inputJson =
         """
@@ -320,9 +320,8 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
                 "schema":"iglu:com.sendgrid/processed/jsonschema/1-0-0",
                 "data":{
                      "email": "example@test.com",
-                     "timestamp": 1446549615,
+                     "timestamp": "2015-11-03T11:20:15.000Z",
                      "smtp-id": "\u003c14c5d75ce93.dfd.64b469@ismtpd-555\u003e",
-                     "event": "processed",
                      "category": "cat facts",
                      "sg_event_id": "sZROwMGMagFgnOEmSdvhig==",
                      "sg_message_id": "14c5d75ce93.dfd.64b469.filter0001.16648.5515E0B88.0"
@@ -340,7 +339,7 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
               "tv" -> "com.sendgrid-v3",
               "e" -> "ue",
               "p" -> "srv",
-              "ue_pr" -> expectedJson
+              "ue_pr" -> expectedJson // NB this includes removing the "event" keypair as redundant
             ),
             ContentType.some,
             Shared.cljSource,
@@ -351,5 +350,8 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
 
     }
 
+
+
   }
+
 }

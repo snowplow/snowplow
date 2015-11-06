@@ -18,7 +18,10 @@ package adapters
 package registry
 
 // Apache URLEncodedUtils
+import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.MandrillAdapter._
 import org.apache.http.NameValuePair
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.DateTimeFormat
 
 // Iglu
 import iglu.client.{
@@ -55,6 +58,48 @@ trait Adapter {
 
   // The encoding type to be used
   val EventEncType = "UTF-8"
+
+  // Datetime format we need to convert timestamps to
+  val JsonSchemaDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
+
+  /**
+   * Returns an updated event JSON where
+   * all of the timestamp fields (tsFieldKey:_) have been
+   * changed to a valid JsonSchema date-time format
+   * and the "event":_type field has been removed
+   *
+   * @param json The event JSON which we need to
+   *        update values for
+   * @param eventOpt The event type as an Option[String]
+   *        which we are now going to remove from
+   *        the event JSON
+   * @param tsFieldKey the key name of the timestamp field
+   *                   which will be transformed
+   * @return the updated JSON with valid date-time
+   *         values in the tsFieldKey fields
+   */
+  private[registry] def reformatParameters(json: JValue, eventOpt: Option[String], tsFieldKey: String): JValue = {
+
+    val j1 = json transformField {
+      case (k, JInt(x)) => {
+        if (k == tsFieldKey) {
+          try {
+            val dt: DateTime = new DateTime(x.longValue() * 1000)
+            (tsFieldKey, JString(JsonSchemaDateTimeFormat.print(dt))) 
+          } catch {
+            case _: Throwable => (tsFieldKey, JInt(x))
+          }
+        } else {
+          (k, JInt(x))
+        }
+      }
+    }
+
+    eventOpt match {
+      case Some(eventType) => j1 removeField { _ == JField("event", eventType) }
+      case None            => j1
+    }
+  }
 
   /**
    * Converts a CollectorPayload instance into raw events.
