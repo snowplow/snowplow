@@ -292,7 +292,6 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
       actual must beFailing(NonEmptyList("Sendgrid event at index [1] failed: type parameter not provided - cannot determine event type"))
     }
 
-
     "return correct json for sample event, including stripping out event keypair and fixing timestamp" in {
 
       val inputJson =
@@ -346,12 +345,6 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
             Shared.context)
         )
       )
-
-
     }
-
-
-
   }
-
 }
