@@ -42,6 +42,9 @@ import org.json4s.jackson.JsonMethods._
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
+// errors
+import scala.util.control.NonFatal
+
 trait Adapter {
 
   // The Iglu schema URI for a Snowplow unstructured event
@@ -75,13 +78,16 @@ trait Adapter {
    *        the event JSON
    * @param tsFieldKey the key name of the timestamp field
    *                   which will be transformed
+   * @param toSeconds function which converts the numeric
+   *                  value of the key into a seconds past
+   *                  epoch format (e.g. x * 1000 for ms)
    * @return the updated JSON with valid date-time
    *         values in the tsFieldKey fields
    */
-  private[registry] def cleanupJsonEventValues(json: JValue, eventOpt: Option[(String,String)], tsFieldKey: String): JValue = {
+  private[registry] def cleanupJsonEventValues(json: JValue, eventOpt: Option[(String,String)], tsFieldKey: String, toSeconds: Long => Long): JValue = {
 
     def toStringField(value: Long): JString = {
-      val dt: DateTime = new DateTime(value * 1000)
+      val dt: DateTime = new DateTime(toSeconds(value))
       JString(JsonSchemaDateTimeFormat.print(dt))
     }
 
@@ -93,26 +99,24 @@ trait Adapter {
               try {
                 (k, toStringField(x.longValue()))
               } catch {
-                case _: Throwable => (k, JInt(x))
+                case NonFatal(_) => (k, JInt(x))
               }
             }
             case JString(x) => {
               try {
                 (k, toStringField(x.toLong))
               } catch {
-                case _: Throwable => (k, JString(x))
+                case NonFatal(_) => (k, JString(x))
               }
             }
           }
-        } else {
-          (k, v)
-        }
+        } else (k, v)
       }
     }
 
     eventOpt match {
       case Some((keyName, eventType)) => j1 removeField { _ == JField(keyName, eventType) }
-      case None            => j1
+      case None                       => j1
     }
   }
 

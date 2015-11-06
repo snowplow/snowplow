@@ -99,7 +99,7 @@ object SendgridAdapter extends Adapter {
                 parameters = toUnstructEventParams(TrackerVersion,
                   queryString,
                   schema,
-                  cleanupJsonEventValues(itm, ("event", eventType.get).some, "timestamp"),
+                  cleanupJsonEventValues(itm, ("event", eventType.get).some, "timestamp", _ * 1000),
                   "srv"),
                 contentType = payload.contentType,
                 source = payload.source,
@@ -140,4 +140,5 @@ object SendgridAdapter extends Adapter {
         rawEventsListProcessor(events)
       }
     }
+
 }
