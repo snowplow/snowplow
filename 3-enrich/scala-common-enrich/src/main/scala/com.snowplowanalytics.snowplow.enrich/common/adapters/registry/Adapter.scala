@@ -78,16 +78,16 @@ trait Adapter {
    * @return the updated JSON with valid date-time
    *         values in the tsFieldKey fields
    */
-  private[registry] def reformatParameters(json: JValue, eventOpt: Option[String], tsFieldKey: String): JValue = {
+  private[registry] def cleanupJsonEventValues(json: JValue, eventOpt: Option[String], tsFieldKey: String): JValue = {
 
     val j1 = json transformField {
       case (k, JInt(x)) => {
         if (k == tsFieldKey) {
           try {
             val dt: DateTime = new DateTime(x.longValue() * 1000)
-            (tsFieldKey, JString(JsonSchemaDateTimeFormat.print(dt))) 
+            (k, JString(JsonSchemaDateTimeFormat.print(dt)))
           } catch {
-            case _: Throwable => (tsFieldKey, JInt(x))
+            case _: Throwable => (k, JInt(x))
           }
         } else {
           (k, JInt(x))

@@ -94,14 +94,12 @@ object SendgridAdapter extends Adapter {
 
           lookupSchema(eventType, VendorName, index, EventSchemaMap) map {
             schema => {
-
-              val formatted = reformatParameters(itm, eventType, "timestamp")
               RawEvent(
                 api = payload.api,
                 parameters = toUnstructEventParams(TrackerVersion,
                   queryString,
                   schema,
-                  formatted,
+                  cleanupJsonEventValues(itm, eventType, "timestamp"),
                   "srv"),
                 contentType = payload.contentType,
                 source = payload.source,
