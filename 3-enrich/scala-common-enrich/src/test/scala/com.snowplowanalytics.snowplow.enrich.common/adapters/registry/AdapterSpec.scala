@@ -147,9 +147,11 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
     }
 
   def e10 =
-    "SPEC NAME"                         || "JSON"                                             | "EXPECTED OUTPUT"                                                                                                              |
-    "remove 'event'->'type'"            !! """{"event":"type"}"""                             ! JObject(List())                                                                                                                                    |> {
-    (_, json, expected) => BaseAdapter.cleanupJsonEventValues(parse(json), ("event", "type").some, "ts") mustEqual expected
+      "SPEC NAME"                         || "JSON"                                                   | "EXPECTED OUTPUT"                                                                                                        |
+      "Remove 'event'->'type'"            !! """{"event":"type"}"""                                   ! JObject(List())                                                                                                          |
+      "Not remove existing values"        !! """{"abc":1415709559, "event":"type", "cba":"type"}"""   ! JObject(List(("abc",JInt(1415709559)),("cba",JString("type"))))                                                          |
+      "Works with ts value subs"          !! """{"ts":1415709559, "event":"type", "abc":"type"}"""    ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("abc",JString("type"))))                                                      |> {
+      (_, json, expected) => BaseAdapter.cleanupJsonEventValues(parse(json), ("event", "type").some, "ts") mustEqual expected
   }
 
 }
