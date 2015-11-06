@@ -57,7 +57,8 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
   "lookupSchema must return a Failure Nel for an invalid key being passed against an event-schema map"                 ! e5^
   "lookupSchema must return a Failure Nel with an index if one is passed to it"                                        ! e6^
   "rawEventsListProcessor must return a Failure Nel if there are any Failures in the list"                             ! e7^
-  "rawEventsListProcessor must return a Success Nel of RawEvents if the list is full of success"                       ! e8^                           
+  "rawEventsListProcessor must return a Success Nel of RawEvents if the list is full of success"                       ! e8^
+    "reformatParameters should return a JSON with all 'ts':JInt fields changed to a valid JsonSchema date-time format" ! e9^
                                                                                                                        end
   // TODO: add test for buildFormatter()
 
@@ -134,4 +135,13 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
     val expected = NonEmptyList(RawEvent(Shared.api, Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"), Shared.contentType.some, Shared.cljSource, Shared.context),RawEvent(Shared.api, Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"), Shared.contentType.some, Shared.cljSource, Shared.context),RawEvent(Shared.api, Map("tv" -> "com.adapter-v1", "e" -> "ue", "p" -> "srv"), Shared.contentType.some, Shared.cljSource, Shared.context))
     BaseAdapter.rawEventsListProcessor(validatedRawEventsList) must beSuccessful(expected)
   }
+
+  def e9 =
+      "SPEC NAME"                      || "JSON"                                             | "EXPECTED OUTPUT"                                                                                                              |
+      "Change one value"               !! """{"ts":1415709559}"""                            ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z"))))                                                                      |
+      "Change multiple values"         !! """{"ts":1415709559,"ts":1415700000}"""            ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("ts",JString("2014-11-11T10:00:00.000Z"))))                           |
+      "Change nested values"           !! """{"ts":1415709559,"nested":{"ts":1415700000}}""" ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("nested",JObject(List(("ts",JString("2014-11-11T10:00:00.000Z"))))))) |
+      "No change, ts param not an int" !! """{"ts":"1415709559"}"""                          ! JObject(List(("ts",JString("1415709559"))))                                                                                    |> {
+      (_, json, expected) => MandrillAdapter.cleanupJsonEventValues(parse(json), None, "ts") mustEqual expected
+    }
 }
