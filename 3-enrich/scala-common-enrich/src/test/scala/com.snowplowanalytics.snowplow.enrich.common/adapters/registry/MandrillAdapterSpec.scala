@@ -74,7 +74,7 @@ class MandrillAdapterSpec extends Specification with DataTables with ValidationM
   def e2 =
     "SPEC NAME"                         || "STRING TO PROCESS"                        | "EXPECTED OUTPUT"                                               |
     "Failure, empty events string"      !! "mandrill_events="                         ! "Mandrill events string is empty: nothing to process"           |
-    "Failure, too many key-value pairs" !! "mandrill_events=some&mandrill_extra=some" ! "Mapped Mandrill body has invalid count of keys: 2"                |
+    "Failure, too many key-value pairs" !! "mandrill_events=some&mandrill_extra=some" ! "Mapped Mandrill body has invalid count of keys: 2"             |
     "Failure, incorrect key"            !! "events_mandrill=something"                ! "Mapped Mandrill body does not have 'mandrill_events' as a key" |> {
       (_, str, expected) => MandrillAdapter.payloadBodyToEvents(str) must beFailing(expected)
   }

@@ -111,7 +111,7 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
   }
 
   def e5 = 
-    "SPEC NAME"                 || "SCHEMA TYPE"      | "EXPECTED OUTPUT"                                                                   |
+    "SPEC NAME"                 || "SCHEMA TYPE"      | "EXPECTED OUTPUT"                                                                 |
     "Failing, nothing passed"   !! None               ! "Adapter event failed: type parameter not provided - cannot determine event type" |
     "Failing, empty type"       !! Some("")           ! "Adapter event failed: type parameter is empty - cannot determine event type"     |
     "Failing, bad type passed"  !! Some("bad")        ! "Adapter event failed: type parameter [bad] not recognized"                       |> {

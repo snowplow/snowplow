@@ -76,8 +76,8 @@ trait Adapter {
    * @param tsFieldKey the key name of the timestamp field
    *                   which will be transformed
    * @param toSeconds function which converts the numeric
-    *                 value of the key into a seconds past
-    *                 epoch format (e.g. x * 1000 for ms)
+   *                  value of the key into a seconds past
+   *                  epoch format (e.g. x * 1000 for ms)
    * @return the updated JSON with valid date-time
    *         values in the tsFieldKey fields
    */
@@ -107,15 +107,13 @@ trait Adapter {
               }
             }
           }
-        } else {
-          (k, v)
-        }
+        } else (k, v)
       }
     }
 
     eventOpt match {
       case Some((keyName, eventType)) => j1 removeField { _ == JField(keyName, eventType) }
-      case None            => j1
+      case None                       => j1
     }
   }
 
