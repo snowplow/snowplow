@@ -42,6 +42,9 @@ import org.json4s.jackson.JsonMethods._
 import loaders.CollectorPayload
 import utils.{JsonUtils => JU}
 
+// errors
+import scala.util.control.NonFatal
+
 trait Adapter {
 
   // The Iglu schema URI for a Snowplow unstructured event
@@ -96,14 +99,14 @@ trait Adapter {
               try {
                 (k, toStringField(x.longValue()))
               } catch {
-                case _: Throwable => (k, JInt(x))
+                case NonFatal(_) => (k, JInt(x))
               }
             }
             case JString(x) => {
               try {
                 (k, toStringField(x.toLong))
               } catch {
-                case _: Throwable => (k, JString(x))
+                case NonFatal(_) => (k, JString(x))
               }
             }
           }
