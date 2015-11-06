@@ -80,7 +80,6 @@ object MandrillAdapter extends Adapter {
     "unsub"       -> SchemaKey("com.mandrill", "recipient_unsubscribed", "jsonschema", "1-0-0").toSchemaUri
   )
 
-
   /**
    * Converts a CollectorPayload instance into raw events.
    *

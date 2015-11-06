@@ -140,4 +140,5 @@ object SendgridAdapter extends Adapter {
         rawEventsListProcessor(events)
       }
     }
+
 }
