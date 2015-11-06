@@ -138,11 +138,12 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
   }
 
   def e9 =
-      "SPEC NAME"                       || "JSON"                                             | "EXPECTED OUTPUT"                                                                                                              |
-      "Change one value"                !! """{"ts":1415709559}"""                            ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z"))))                                                                      |
-      "Change multiple values"          !! """{"ts":1415709559,"ts":1415700000}"""            ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("ts",JString("2014-11-11T10:00:00.000Z"))))                           |
-      "Change nested values"            !! """{"ts":1415709559,"nested":{"ts":1415700000}}""" ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("nested",JObject(List(("ts",JString("2014-11-11T10:00:00.000Z"))))))) |
-      "JStrings should also be changed" !! """{"ts":"1415709559"}"""                          ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z"))))                                                                                    |> {
+      "SPEC NAME"                       || "JSON"                                               | "EXPECTED OUTPUT"                                                                                                              |
+      "Change one value"                !! """{"ts":1415709559}"""                              ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z"))))                                                                      |
+      "Change multiple values"          !! """{"ts":1415709559,"ts":1415700000}"""              ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("ts",JString("2014-11-11T10:00:00.000Z"))))                           |
+      "Change nested values"            !! """{"ts":1415709559,"nested":{"ts":1415700000}}"""   ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("nested",JObject(List(("ts",JString("2014-11-11T10:00:00.000Z"))))))) |
+      "Change nested string values"     !! """{"ts":1415709559,"nested":{"ts":"1415700000"}}""" ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("nested",JObject(List(("ts",JString("2014-11-11T10:00:00.000Z"))))))) |
+      "JStrings should also be changed" !! """{"ts":"1415709559"}"""                            ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z"))))                                                                                    |> {
       (_, json, expected) => BaseAdapter.cleanupJsonEventValues(parse(json), None, "ts", _ * 1000) mustEqual expected
     }
 
