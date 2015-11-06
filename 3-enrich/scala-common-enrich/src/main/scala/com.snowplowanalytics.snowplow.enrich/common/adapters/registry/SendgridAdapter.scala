@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -17,40 +17,25 @@ package common
 package adapters
 package registry
 
-// Java
-import java.net.URI
-import org.apache.http.client.utils.URLEncodedUtils
-
-// Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
-import org.joda.time.format.{DateTimeFormat, DateTimeFormatter}
-
-// Jackson
-import com.fasterxml.jackson.databind.JsonNode
-
-// Scala
-import scala.collection.JavaConversions._
-
 // Scalaz
+import com.fasterxml.jackson.core.JsonParseException
+import com.snowplowanalytics.snowplow.enrich.common.adapters.registry.SendgridAdapter._
+import org.joda.time.{DateTimeZone, DateTime}
+import org.joda.time.format.DateTimeFormat
+
+import scalaz.Scalaz._
 import scalaz._
-import Scalaz._
 
 // json4s
 import org.json4s._
-import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import org.json4s.scalaz.JsonScalaz._
 
 // Iglu
-import iglu.client.{
-  SchemaKey,
-  Resolver
-}
-import iglu.client.validation.ValidatableJsonMethods._
+import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 
 // This project
-import loaders.CollectorPayload
-import utils.{JsonUtils => JU}
+import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
+import com.snowplowanalytics.snowplow.enrich.common.utils.{JsonUtils => JU}
 
 /**
  * Transforms a collector payload which conforms to
@@ -63,15 +48,74 @@ object SendgridAdapter extends Adapter {
   private val VendorName = "Sendgrid"
 
   // Expected content type for a request body
-  private val ContentType = "application/x-www-form-urlencoded"
+  private val ContentType = "application/json"
 
   // Tracker version for an Sendgrid Tracking webhook
   private val TrackerVersion = "com.sendgrid-v3"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchemaMap = Map (
-    "subscribe" -> SchemaKey("com.sendgrid", "new", "jsonschema", "1-0-0").toSchemaUri
+  private val EventSchemaMap = Map(
+    "processed" -> SchemaKey("com.sendgrid", "processed", "jsonschema", "1-0-0").toSchemaUri,
+    "dropped" -> SchemaKey("com.sendgrid", "dropped", "jsonschema", "1-0-0").toSchemaUri,
+    "delivered" -> SchemaKey("com.sendgrid", "delivered", "jsonschema", "1-0-0").toSchemaUri,
+    "deferred" -> SchemaKey("com.sendgrid", "deferred", "jsonschema", "1-0-0").toSchemaUri,
+    "bounce" -> SchemaKey("com.sendgrid", "bounce", "jsonschema", "1-0-0").toSchemaUri,
+    "open" -> SchemaKey("com.sendgrid", "open", "jsonschema", "1-0-0").toSchemaUri,
+    "click" -> SchemaKey("com.sendgrid", "click", "jsonschema", "1-0-0").toSchemaUri,
+    "spamreport" -> SchemaKey("com.sendgrid", "spamreport", "jsonschema", "1-0-0").toSchemaUri,
+    "unsubscribe" -> SchemaKey("com.sendgrid", "unsubscribe", "jsonschema", "1-0-0").toSchemaUri,
+    "group_unsubscribe" -> SchemaKey("com.sendgrid", "group_unsubscribe", "jsonschema", "1-0-0").toSchemaUri,
+    "group_resubscribe" -> SchemaKey("com.sendgrid", "group_resubscribe", "jsonschema", "1-0-0").toSchemaUri
   )
+
+  /**
+   *
+   * Converts a payload into a list of validated events
+   * Expects a valid json - returns a single failure if one is not present
+   *
+   * @param body json payload as POST'd by sendgrid
+   * @param payload the rest of the payload details
+   * @return a list of validated events, successes will be the corresponding raw events
+   *         failures will contain a non empty list of the reason(s) for the particular event failing
+   */
+  private def payloadBodyToEvents(body: String, payload: CollectorPayload): List[Validated[RawEvent]] = {
+    try {
+
+      val parsed = parse(body)
+
+      if (parsed.children.isEmpty) {
+        return List(s"$VendorName event failed json sanity check: has no events".failNel)
+      }
+
+      for ((itm, index) <- parsed.children.zipWithIndex)
+        yield {
+          val eventType = (itm \\ "event").extractOpt[String]
+          val queryString = toMap(payload.querystring)
+
+          lookupSchema(eventType, VendorName, index, EventSchemaMap) map {
+            schema => {
+              RawEvent(
+                api = payload.api,
+                parameters = toUnstructEventParams(TrackerVersion,
+                  queryString,
+                  schema,
+                  cleanupJsonEventValues(itm, ("event", eventType.get).some, "timestamp", _ * 1000),
+                  "srv"),
+                contentType = payload.contentType,
+                source = payload.source,
+                context = payload.context
+              )
+            }
+          }
+        }
+
+    } catch {
+      case e: JsonParseException => {
+        val exception = JU.stripInstanceEtc(e.toString).orNull
+        List(s"$VendorName event failed to parse into JSON: [$exception]".failNel)
+      }
+    }
+  }
 
   /**
    * Converts a CollectorPayload instance into raw events.
@@ -80,42 +124,21 @@ object SendgridAdapter extends Adapter {
    * we have an unsupported event type.
    *
    * @param payload The CollectorPayload containing one or more
-   *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation. Not used
+   *                raw events as collected by a Snowplow collector
+   * @param resolver (implicit) The Iglu resolver used forValidatedRawEvents
+   *                 schema lookup and validation. Not used
    * @return a Validation boxing either a NEL of RawEvents on
    *         Success, or a NEL of Failure Strings
    */
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents =
     (payload.body, payload.contentType) match {
-      case (None, _)                          => s"Request body is empty: no ${VendorName} event to process".failNel
-      case (_, None)                          => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
+      case (None, _) => s"Request body is empty: no ${VendorName} event to process".failNel
+      case (_, None) => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
       case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
-      case (Some(body), _)                    => {
-
-        println(body)
-        return s"FAIL".failNel
-
-        /**
-        val params = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
-        params.get("type") match {
-          case None => s"No ${VendorName} type parameter provided: cannot determine event type".failNel
-          case Some(eventType) => {
-
-            val allParams = toMap(payload.querystring) ++ reformatParameters(params)
-            for {
-              schema <- lookupSchema(eventType.some, VendorName, EventSchemaMap)
-            } yield {
-              NonEmptyList(RawEvent(
-                api          = payload.api,
-                parameters   = toUnstructEventParams(TrackerVersion, allParams, schema, null, "srv"),
-                contentType  = payload.contentType,
-                source       = payload.source,
-                context      = payload.context
-              ))
-            }
-          }
-        }*/
+      case (Some(body), _) => {
+        val events = payloadBodyToEvents(body, payload)
+        rawEventsListProcessor(events)
       }
     }
+
 }
