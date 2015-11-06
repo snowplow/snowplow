@@ -80,17 +80,32 @@ trait Adapter {
    */
   private[registry] def cleanupJsonEventValues(json: JValue, eventOpt: Option[String], tsFieldKey: String): JValue = {
 
+    def toStringField(value: Long): JString = {
+      val dt: DateTime = new DateTime(value * 1000)
+      JString(JsonSchemaDateTimeFormat.print(dt))
+    }
+
     val j1 = json transformField {
-      case (k, JInt(x)) => {
+      case (k, v) => {
         if (k == tsFieldKey) {
-          try {
-            val dt: DateTime = new DateTime(x.longValue() * 1000)
-            (k, JString(JsonSchemaDateTimeFormat.print(dt)))
-          } catch {
-            case _: Throwable => (k, JInt(x))
+          v match {
+            case JInt(x) => {
+              try {
+                (k, toStringField(x.longValue()))
+              } catch {
+                case _: Throwable => (k, JInt(x))
+              }
+            }
+            case JString(x) => {
+              try {
+                (k, toStringField(x.toLong))
+              } catch {
+                case _: Throwable => (k, JString(x))
+              }
+            }
           }
         } else {
-          (k, JInt(x))
+          (k, v)
         }
       }
     }
