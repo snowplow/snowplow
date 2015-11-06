@@ -128,9 +128,8 @@ object ShredJob {
     // It's okay to apply Postgres constraints to events being loaded into Redshift as the PG
     // constraints are typically more permissive, but Redshift will be protected by the
     // COPY ... TRUNCATECOLUMNS.
-    (enrichedEvent.split("\t", -1).toList, PostgresConstraints.maxFieldLengths)
-      .zipped
-      .map { (field: String, maxLength: Option[Int]) =>
+    (enrichedEvent.split("\t", -1).toList.zipAll(PostgresConstraints.maxFieldLengths, "", None))
+      .map { case (field, maxLength) =>
         maxLength match {
           case Some(ml) => ConversionUtils.truncate(field, ml)
           case None => field
