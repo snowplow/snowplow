@@ -78,7 +78,7 @@ trait Adapter {
    * @return the updated JSON with valid date-time
    *         values in the tsFieldKey fields
    */
-  private[registry] def cleanupJsonEventValues(json: JValue, eventOpt: Option[String], tsFieldKey: String): JValue = {
+  private[registry] def cleanupJsonEventValues(json: JValue, eventOpt: Option[(String,String)], tsFieldKey: String): JValue = {
 
     def toStringField(value: Long): JString = {
       val dt: DateTime = new DateTime(value * 1000)
@@ -111,7 +111,7 @@ trait Adapter {
     }
 
     eventOpt match {
-      case Some(eventType) => j1 removeField { _ == JField("event", eventType) }
+      case Some((keyName, eventType)) => j1 removeField { _ == JField(keyName, eventType) }
       case None            => j1
     }
   }

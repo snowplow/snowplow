@@ -120,7 +120,9 @@ object MandrillAdapter extends Adapter {
                   schema <- lookupSchema(eventOpt, VendorName, index, EventSchemaMap)
                 } yield {
                   
-                  val formattedEvent = cleanupJsonEventValues(event, eventOpt, "ts")
+                  val formattedEvent = cleanupJsonEventValues(event,
+                                                             eventOpt match { case Some(x) => ("event", x).some case None => None },
+                                                             "ts")
                   val qsParams = toMap(payload.querystring)
                   RawEvent(
                     api          = payload.api,

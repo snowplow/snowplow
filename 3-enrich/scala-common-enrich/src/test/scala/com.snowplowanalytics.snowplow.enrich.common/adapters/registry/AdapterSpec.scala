@@ -58,7 +58,8 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
   "lookupSchema must return a Failure Nel with an index if one is passed to it"                                        ! e6^
   "rawEventsListProcessor must return a Failure Nel if there are any Failures in the list"                             ! e7^
   "rawEventsListProcessor must return a Success Nel of RawEvents if the list is full of success"                       ! e8^
-    "reformatParameters should return a JSON with all 'ts':JInt fields changed to a valid JsonSchema date-time format" ! e9^
+  "cleanupJsonEventValues must clean 'ts':[JInt, JString] fields into to a valid JsonSchema date-time format"          ! e9^
+  "cleanupJsonEventValues must remove key-pairs if specified"                                                          ! e10^
                                                                                                                        end
   // TODO: add test for buildFormatter()
 
@@ -142,6 +143,13 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
       "Change multiple values"          !! """{"ts":1415709559,"ts":1415700000}"""            ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("ts",JString("2014-11-11T10:00:00.000Z"))))                           |
       "Change nested values"            !! """{"ts":1415709559,"nested":{"ts":1415700000}}""" ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z")),("nested",JObject(List(("ts",JString("2014-11-11T10:00:00.000Z"))))))) |
       "JStrings should also be changed" !! """{"ts":"1415709559"}"""                          ! JObject(List(("ts",JString("2014-11-11T12:39:19.000Z"))))                                                                                    |> {
-      (_, json, expected) => MandrillAdapter.cleanupJsonEventValues(parse(json), None, "ts") mustEqual expected
+      (_, json, expected) => BaseAdapter.cleanupJsonEventValues(parse(json), None, "ts") mustEqual expected
     }
+
+  def e10 =
+    "SPEC NAME"                         || "JSON"                                             | "EXPECTED OUTPUT"                                                                                                              |
+    "remove 'event'->'type'"            !! """{"event":"type"}"""                             ! JObject(List())                                                                                                                                    |> {
+    (_, json, expected) => BaseAdapter.cleanupJsonEventValues(parse(json), ("event", "type").some, "ts") mustEqual expected
+  }
+
 }
