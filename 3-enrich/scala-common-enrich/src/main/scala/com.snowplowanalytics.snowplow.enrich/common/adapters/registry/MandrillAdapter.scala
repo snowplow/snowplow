@@ -80,7 +80,6 @@ object MandrillAdapter extends Adapter {
     "unsub"       -> SchemaKey("com.mandrill", "recipient_unsubscribed", "jsonschema", "1-0-0").toSchemaUri
   )
 
-
   /**
    * Converts a CollectorPayload instance into raw events.
    *
@@ -122,7 +121,9 @@ object MandrillAdapter extends Adapter {
                   
                   val formattedEvent = cleanupJsonEventValues(event,
                                                              eventOpt match { case Some(x) => ("event", x).some case None => None },
-                                                             "ts")
+                                                             "ts",
+                                                             _ * 1000
+                                                             )
                   val qsParams = toMap(payload.querystring)
                   RawEvent(
                     api          = payload.api,
