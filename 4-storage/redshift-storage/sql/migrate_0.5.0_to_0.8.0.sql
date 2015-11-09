@@ -226,4 +226,6 @@ ALTER TABLE atomic.events
 ALTER TABLE atomic.events
 	ADD COLUMN true_tstamp timestamp;
 
+COMMENT ON TABLE "atomic"."events" IS '0.8.0';
+
 END TRANSACTION;
