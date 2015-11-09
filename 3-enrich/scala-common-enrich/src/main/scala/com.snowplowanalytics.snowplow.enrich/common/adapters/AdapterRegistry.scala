@@ -35,7 +35,8 @@ import registry.{
   MailchimpAdapter,
   MandrillAdapter,
   PagerdutyAdapter,
-  PingdomAdapter
+  PingdomAdapter,
+  SendgridAdapter
 }
 
 /**
@@ -54,6 +55,7 @@ object AdapterRegistry {
     val Pagerduty  = "com.pagerduty"
     val Pingdom    = "com.pingdom"
     val Cloudfront = "com.amazon.aws.cloudfront"
+    val Sendgrid   = "com.sendgrid"
   }
 
   /**
@@ -80,7 +82,8 @@ object AdapterRegistry {
     case (Vendor.Pagerduty,   "v1")  => PagerdutyAdapter.toRawEvents(payload)
     case (Vendor.Pingdom,     "v1")  => PingdomAdapter.toRawEvents(payload)
     case (Vendor.Cloudfront,  "wd_access_log") => CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
-    // TODO: add Sendgrid et al
+    case (Vendor.Sendgrid,    "v3")  => SendgridAdapter.toRawEvents(payload)
+
     case _ => s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".failNel
   }
 
