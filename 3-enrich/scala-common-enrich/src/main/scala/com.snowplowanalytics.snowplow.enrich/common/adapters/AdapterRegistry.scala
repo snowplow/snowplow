@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -36,7 +36,8 @@ import registry.{
   MandrillAdapter,
   PagerdutyAdapter,
   PingdomAdapter,
-  UrbanAirshipAdapter
+  UrbanAirshipAdapter,
+  SendgridAdapter
 }
 
 /**
@@ -46,16 +47,17 @@ import registry.{
 object AdapterRegistry {
 
   private object Vendor {
-    val Snowplow     = "com.snowplowanalytics.snowplow"
-    val Redirect     = "r"
-    val Iglu         = "com.snowplowanalytics.iglu"
-    val Callrail     = "com.callrail"
-    val Mailchimp    = "com.mailchimp"
-    val Mandrill     = "com.mandrill"
-    val Pagerduty    = "com.pagerduty"
-    val Pingdom      = "com.pingdom"
-    val Cloudfront   = "com.amazon.aws.cloudfront"
+    val Snowplow   = "com.snowplowanalytics.snowplow"
+    val Redirect   = "r"
+    val Iglu       = "com.snowplowanalytics.iglu"
+    val Callrail   = "com.callrail"
+    val Mailchimp  = "com.mailchimp"
+    val Mandrill   = "com.mandrill"
+    val Pagerduty  = "com.pagerduty"
+    val Pingdom    = "com.pingdom"
+    val Cloudfront = "com.amazon.aws.cloudfront"
     val UrbanAirship = "com.urbanairship.connect"
+    val Sendgrid   = "com.sendgrid"
   }
 
   /**
@@ -83,6 +85,7 @@ object AdapterRegistry {
     case (Vendor.Pingdom,      "v1")  => PingdomAdapter.toRawEvents(payload)
     case (Vendor.Cloudfront,   "wd_access_log") => CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
     case (Vendor.UrbanAirship, "v1")  => UrbanAirshipAdapter.toRawEvents(payload)
+    case (Vendor.Sendgrid,     "v3")  => SendgridAdapter.toRawEvents(payload)
     case _ => s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".failNel
   }
 
