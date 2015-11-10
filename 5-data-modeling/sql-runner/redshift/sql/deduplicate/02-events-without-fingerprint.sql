@@ -52,76 +52,76 @@ AS (
   FROM (
     SELECT *,
       MD5(
-        NVL(CAST(app_id AS VARCHAR),'') ||
-        NVL(CAST(platform AS VARCHAR),'') ||
-        NVL(TO_CHAR(dvce_created_tstamp, 'YYYY-MM-DD HH24:MI:SS:US'),'') ||
-        NVL(CAST(event AS VARCHAR),'') ||
-        NVL(CAST(user_id AS VARCHAR),'') ||
-        NVL(CAST(domain_sessionidx AS VARCHAR),'') ||
-        NVL(CAST(domain_userid AS VARCHAR),'') ||
-        NVL(CAST(user_fingerprint AS VARCHAR),'') ||
-        NVL(CAST(user_ipaddress AS VARCHAR),'') ||
-        NVL(CAST(page_url AS VARCHAR),'') ||
-        NVL(CAST(page_title AS VARCHAR),'') ||
-        NVL(CAST(page_referrer AS VARCHAR),'') ||
-        NVL(CAST(name_tracker AS VARCHAR),'') ||
-        NVL(CAST(v_tracker AS VARCHAR),'') ||
-        NVL(CAST(os_timezone AS VARCHAR),'') ||
-        NVL(TO_CHAR(true_tstamp, 'YYYY-MM-DD HH24:MI:SS:US'),'') ||
-        NVL(CAST(se_value AS VARCHAR),'') ||
-        NVL(CAST(se_property AS VARCHAR),'') ||
-        NVL(CAST(se_label AS VARCHAR),'') ||
-        NVL(CAST(se_action AS VARCHAR),'') ||
-        NVL(CAST(se_category AS VARCHAR),'') ||
-        NVL(CAST(tr_orderid AS VARCHAR),'') ||
-        NVL(CAST(tr_country AS VARCHAR),'') ||
-        NVL(CAST(tr_state AS VARCHAR),'') ||
-        NVL(CAST(tr_city AS VARCHAR),'') ||
-        NVL(CAST(tr_shipping AS VARCHAR),'') ||
-        NVL(CAST(tr_tax AS VARCHAR),'') ||
-        NVL(CAST(tr_total AS VARCHAR),'') ||
-        NVL(CAST(tr_affiliation AS VARCHAR),'') ||
-        NVL(CAST(tr_currency AS VARCHAR),'') ||
-        NVL(CAST(ti_orderid AS VARCHAR),'') ||
-        NVL(CAST(ti_quantity AS VARCHAR),'') ||
-        NVL(CAST(ti_price AS VARCHAR),'') ||
-        NVL(CAST(ti_category AS VARCHAR),'') ||
-        NVL(CAST(ti_name AS VARCHAR),'') ||
-        NVL(CAST(ti_sku AS VARCHAR),'') ||
-        NVL(CAST(ti_currency AS VARCHAR),'') ||
-        NVL(CAST(ti_price_base AS VARCHAR),'') ||
-        NVL(CAST(tr_total_base AS VARCHAR),'') ||
-        NVL(CAST(tr_shipping_base AS VARCHAR),'') ||
-        NVL(CAST(tr_tax_base AS VARCHAR),'') ||
-        NVL(CAST(pp_xoffset_min AS VARCHAR),'') ||
-        NVL(CAST(pp_yoffset_max AS VARCHAR),'') ||
-        NVL(CAST(pp_yoffset_min AS VARCHAR),'') ||
-        NVL(CAST(pp_xoffset_max AS VARCHAR),'') ||
-        NVL(CAST(useragent AS VARCHAR),'') ||
-        NVL(CAST(dvce_screenwidth AS VARCHAR),'') ||
-        NVL(CAST(dvce_screenheight AS VARCHAR),'') ||
-        NVL(CAST(CAST(br_cookies AS INT) AS VARCHAR), '') ||
-        NVL(CAST(br_lang AS VARCHAR),'') ||
-        NVL(CAST(CAST(br_features_java AS INT) AS VARCHAR), '') ||
-        NVL(CAST(CAST(br_features_windowsmedia AS INT) AS VARCHAR), '') ||
-        NVL(CAST(CAST(br_features_realplayer AS INT) AS VARCHAR), '') ||
-        NVL(CAST(CAST(br_features_quicktime AS INT) AS VARCHAR), '') ||
-        NVL(CAST(CAST(br_features_director AS INT) AS VARCHAR), '') ||
-        NVL(CAST(CAST(br_features_pdf AS INT) AS VARCHAR), '') ||
-        NVL(CAST(CAST(br_features_flash AS INT) AS VARCHAR), '') ||
-        NVL(CAST(CAST(br_features_gears AS INT) AS VARCHAR), '') ||
-        NVL(CAST(CAST(br_features_silverlight AS INT) AS VARCHAR), '') ||
-        NVL(CAST(br_viewwidth AS VARCHAR),'') ||
-        NVL(CAST(br_viewheight AS VARCHAR),'') ||
-        NVL(CAST(br_colordepth AS VARCHAR),'') ||
-        NVL(CAST(doc_charset AS VARCHAR),'') ||
-        NVL(CAST(doc_height AS VARCHAR),'') ||
-        NVL(CAST(doc_width AS VARCHAR),'') ||
-        NVL(CAST(base_currency AS VARCHAR),'') ||
-        NVL(CAST(mkt_network AS VARCHAR),'') ||
-        NVL(CAST(mkt_clickid AS VARCHAR),'') ||
-        NVL(CAST(refr_domain_userid AS VARCHAR),'') ||
-        NVL(CAST(domain_sessionid AS VARCHAR),'') ||
+        NVL(CAST(app_id AS VARCHAR),'') || '-' ||
+        NVL(CAST(platform AS VARCHAR),'') || '-' ||
+        NVL(TO_CHAR(dvce_created_tstamp, 'YYYY-MM-DD HH24:MI:SS:US'),'') || '-' ||
+        NVL(CAST(event AS VARCHAR),'') || '-' ||
+        NVL(CAST(user_id AS VARCHAR),'') || '-' ||
+        NVL(CAST(domain_sessionidx AS VARCHAR),'') || '-' ||
+        NVL(CAST(domain_userid AS VARCHAR),'') || '-' ||
+        NVL(CAST(user_fingerprint AS VARCHAR),'') || '-' ||
+        NVL(CAST(user_ipaddress AS VARCHAR),'') || '-' ||
+        NVL(CAST(page_url AS VARCHAR),'') || '-' ||
+        NVL(CAST(page_title AS VARCHAR),'') || '-' ||
+        NVL(CAST(page_referrer AS VARCHAR),'') || '-' ||
+        NVL(CAST(name_tracker AS VARCHAR),'') || '-' ||
+        NVL(CAST(v_tracker AS VARCHAR),'') || '-' ||
+        NVL(CAST(os_timezone AS VARCHAR),'') || '-' ||
+        NVL(TO_CHAR(true_tstamp, 'YYYY-MM-DD HH24:MI:SS:US'),'') || '-' ||
+        NVL(CAST(se_value AS VARCHAR),'') || '-' ||
+        NVL(CAST(se_property AS VARCHAR),'') || '-' ||
+        NVL(CAST(se_label AS VARCHAR),'') || '-' ||
+        NVL(CAST(se_action AS VARCHAR),'') || '-' ||
+        NVL(CAST(se_category AS VARCHAR),'') || '-' ||
+        NVL(CAST(tr_orderid AS VARCHAR),'') || '-' ||
+        NVL(CAST(tr_country AS VARCHAR),'') || '-' ||
+        NVL(CAST(tr_state AS VARCHAR),'') || '-' ||
+        NVL(CAST(tr_city AS VARCHAR),'') || '-' ||
+        NVL(CAST(tr_shipping AS VARCHAR),'') || '-' ||
+        NVL(CAST(tr_tax AS VARCHAR),'') || '-' ||
+        NVL(CAST(tr_total AS VARCHAR),'') || '-' ||
+        NVL(CAST(tr_affiliation AS VARCHAR),'') || '-' ||
+        NVL(CAST(tr_currency AS VARCHAR),'') || '-' ||
+        NVL(CAST(ti_orderid AS VARCHAR),'') || '-' ||
+        NVL(CAST(ti_quantity AS VARCHAR),'') || '-' ||
+        NVL(CAST(ti_price AS VARCHAR),'') || '-' ||
+        NVL(CAST(ti_category AS VARCHAR),'') || '-' ||
+        NVL(CAST(ti_name AS VARCHAR),'') || '-' ||
+        NVL(CAST(ti_sku AS VARCHAR),'') || '-' ||
+        NVL(CAST(ti_currency AS VARCHAR),'') || '-' ||
+        NVL(CAST(ti_price_base AS VARCHAR),'') || '-' ||
+        NVL(CAST(tr_total_base AS VARCHAR),'') || '-' ||
+        NVL(CAST(tr_shipping_base AS VARCHAR),'') || '-' ||
+        NVL(CAST(tr_tax_base AS VARCHAR),'') || '-' ||
+        NVL(CAST(pp_xoffset_min AS VARCHAR),'') || '-' ||
+        NVL(CAST(pp_yoffset_max AS VARCHAR),'') || '-' ||
+        NVL(CAST(pp_yoffset_min AS VARCHAR),'') || '-' ||
+        NVL(CAST(pp_xoffset_max AS VARCHAR),'') || '-' ||
+        NVL(CAST(useragent AS VARCHAR),'') || '-' ||
+        NVL(CAST(dvce_screenwidth AS VARCHAR),'') || '-' ||
+        NVL(CAST(dvce_screenheight AS VARCHAR),'') || '-' ||
+        NVL(CAST(CAST(br_cookies AS INT) AS VARCHAR), '') || '-' ||
+        NVL(CAST(br_lang AS VARCHAR),'') || '-' ||
+        NVL(CAST(CAST(br_features_java AS INT) AS VARCHAR), '') || '-' ||
+        NVL(CAST(CAST(br_features_windowsmedia AS INT) AS VARCHAR), '') || '-' ||
+        NVL(CAST(CAST(br_features_realplayer AS INT) AS VARCHAR), '') || '-' ||
+        NVL(CAST(CAST(br_features_quicktime AS INT) AS VARCHAR), '') || '-' ||
+        NVL(CAST(CAST(br_features_director AS INT) AS VARCHAR), '') || '-' ||
+        NVL(CAST(CAST(br_features_pdf AS INT) AS VARCHAR), '') || '-' ||
+        NVL(CAST(CAST(br_features_flash AS INT) AS VARCHAR), '') || '-' ||
+        NVL(CAST(CAST(br_features_gears AS INT) AS VARCHAR), '') || '-' ||
+        NVL(CAST(CAST(br_features_silverlight AS INT) AS VARCHAR), '') || '-' ||
+        NVL(CAST(br_viewwidth AS VARCHAR),'') || '-' ||
+        NVL(CAST(br_viewheight AS VARCHAR),'') || '-' ||
+        NVL(CAST(br_colordepth AS VARCHAR),'') || '-' ||
+        NVL(CAST(doc_charset AS VARCHAR),'') || '-' ||
+        NVL(CAST(doc_height AS VARCHAR),'') || '-' ||
+        NVL(CAST(doc_width AS VARCHAR),'') || '-' ||
+        NVL(CAST(base_currency AS VARCHAR),'') || '-' ||
+        NVL(CAST(mkt_network AS VARCHAR),'') || '-' ||
+        NVL(CAST(mkt_clickid AS VARCHAR),'') || '-' ||
+        NVL(CAST(refr_domain_userid AS VARCHAR),'') || '-' ||
+        NVL(CAST(domain_sessionid AS VARCHAR),'') || '-' ||
         NVL(TO_CHAR(refr_dvce_tstamp, 'YYYY-MM-DD HH24:MI:SS:US'),'')
       ) AS custom_fingerprint
     FROM atomic.events
