@@ -71,7 +71,7 @@ BEGIN;
       page_urlscheme, page_urlhost, page_urlport, page_urlpath, page_urlquery, page_urlfragment,
       refr_urlscheme, refr_urlhost, refr_urlport, refr_urlpath, refr_urlquery, refr_urlfragment,
       refr_medium, refr_source, refr_term, mkt_medium, mkt_source, mkt_term, mkt_content, mkt_campaign,
-      contexts, se_category, se_action, se_label, se_property, se_value, unstruct_event,
+      se_category, se_action, se_label, se_property, se_value,
       tr_orderid, tr_affiliation, tr_total, tr_tax, tr_shipping, tr_city, tr_state, tr_country,
       ti_orderid, ti_sku, ti_name, ti_category, ti_price, ti_quantity,
       pp_xoffset_min, pp_xoffset_max, pp_yoffset_min, pp_yoffset_max,
@@ -81,7 +81,7 @@ BEGIN;
       os_name, os_family, os_manufacturer, os_timezone, dvce_type, dvce_ismobile, dvce_screenwidth, dvce_screenheight,
       doc_charset, doc_width, doc_height, tr_currency, tr_total_base, tr_tax_base, tr_shipping_base,
       ti_currency, ti_price_base, base_currency, geo_timezone, mkt_clickid, mkt_network, etl_tags,
-      dvce_sent_tstamp, refr_domain_userid, refr_dvce_tstamp, derived_contexts, domain_sessionid,
+      dvce_sent_tstamp, refr_domain_userid, refr_dvce_tstamp, domain_sessionid,
       derived_tstamp, event_vendor, event_name, event_format, event_version, event_fingerprint, true_tstamp
 
     FROM duplicates.tmp_events WHERE event_number = 1
@@ -100,7 +100,7 @@ BEGIN;
       page_urlscheme, page_urlhost, page_urlport, page_urlpath, page_urlquery, page_urlfragment,
       refr_urlscheme, refr_urlhost, refr_urlport, refr_urlpath, refr_urlquery, refr_urlfragment,
       refr_medium, refr_source, refr_term, mkt_medium, mkt_source, mkt_term, mkt_content, mkt_campaign,
-      contexts, se_category, se_action, se_label, se_property, se_value, unstruct_event,
+      se_category, se_action, se_label, se_property, se_value,
       tr_orderid, tr_affiliation, tr_total, tr_tax, tr_shipping, tr_city, tr_state, tr_country,
       ti_orderid, ti_sku, ti_name, ti_category, ti_price, ti_quantity,
       pp_xoffset_min, pp_xoffset_max, pp_yoffset_min, pp_yoffset_max,
@@ -110,7 +110,7 @@ BEGIN;
       os_name, os_family, os_manufacturer, os_timezone, dvce_type, dvce_ismobile, dvce_screenwidth, dvce_screenheight,
       doc_charset, doc_width, doc_height, tr_currency, tr_total_base, tr_tax_base, tr_shipping_base,
       ti_currency, ti_price_base, base_currency, geo_timezone, mkt_clickid, mkt_network, etl_tags,
-      dvce_sent_tstamp, refr_domain_userid, refr_dvce_tstamp, derived_contexts, domain_sessionid,
+      dvce_sent_tstamp, refr_domain_userid, refr_dvce_tstamp, domain_sessionid,
       derived_tstamp, event_vendor, event_name, event_format, event_version, event_fingerprint, true_tstamp
 
     FROM duplicates.tmp_events WHERE event_number > 1
