@@ -30,7 +30,7 @@ module Snowplow
       ALTERED_ENRICHED_PATTERN = /(run=[0-9\-]+\/atomic-events)/
 
       # Versions 0.5.0 and earlier of Hadoop Shred don't copy atomic.events into the shredded bucket
-      OLD_ENRICHED_PATTERN = /0\.[0-5]\.0/
+      OLD_ENRICHED_PATTERN = /0\.[0-5]\.[0-9]/
 
       SqlStatements = Struct.new(:copy, :analyze, :vacuum)
 
