@@ -19,7 +19,7 @@
 BEGIN TRANSACTION;
 
 ALTER TABLE atomic.events
-	DROP COLUMN unstruct_event;
+	DROP COLUMN unstruct_event CASCADE;
 
 ALTER TABLE atomic.events
 	DROP COLUMN contexts;
