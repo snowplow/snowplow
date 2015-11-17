@@ -52,7 +52,7 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
                                                                                                                       p^
   "toMap should convert a list of name-value pairs into a map"                                                         ! e1^
   "toUnstructEventParams should generate a boilerplate set of parameters for an empty unstructured event"              ! e2^
-  "toUnstructEventParams should preserve nuid, aid, cv and p outside of the unstructured event"                        ! e3^
+  "toUnstructEventParams should preserve nuid, aid, cv, url, eid, ttm and p outside of the unstructured event"         ! e3^
   "lookupSchema must return a Success Nel for a valid key being passed against an event-schema map"                    ! e4^
   "lookupSchema must return a Failure Nel for an invalid key being passed against an event-schema map"                 ! e5^
   "lookupSchema must return a Failure Nel with an index if one is passed to it"                                        ! e6^
@@ -94,11 +94,14 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
   }
 
   def e3 = {
-    val shared = Map("nuid" -> "123", "aid" -> "42", "cv" -> "clj-tomcat", "p" -> "srv")
+    val shared = Map("nuid" -> "123", "aid" -> "42", "cv" -> "clj-tomcat", "p" -> "srv", "eid" -> "321", "ttm" -> "2015-11-13T16:31:52.393Z", "url" -> "http://localhost")
     val params = BaseAdapter.toUnstructEventParams("tv", shared, "iglu:foo", _ => List[JField](), "app")
     params must_== shared ++ Map(
       "tv"    -> "tv",
       "e"     -> "ue",
+      "eid"   -> "321",
+      "ttm"   -> "2015-11-13T16:31:52.393Z",
+      "url"   -> "http://localhost",
       "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:foo","data":{}}}"""
     )
   }
