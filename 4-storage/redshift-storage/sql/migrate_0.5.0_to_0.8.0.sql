@@ -20,7 +20,7 @@ BEGIN TRANSACTION;
 
 -- Begin by dropping raw JSON columns so they aren't needlessly copied
 ALTER TABLE atomic.events
-	DROP COLUMN unstruct_event;
+	DROP COLUMN unstruct_event CASCADE;
 
 ALTER TABLE atomic.events
 	DROP COLUMN contexts;
@@ -29,7 +29,7 @@ ALTER TABLE atomic.events
 	DROP COLUMN derived_contexts;
 
 ALTER TABLE atomic.events
-	RENAME TO atomic.events_old;
+	RENAME TO atomic.events_050;
 
 CREATE TABLE atomic.events (
 	-- App
@@ -201,9 +201,7 @@ SORTKEY (collector_tstamp);
 INSERT INTO atomic.events
 	SELECT
 	*
-	FROM atomic.events_old;
-
-DROP TABLE atomic.events_old;
+	FROM atomic.events_050;
 
 ALTER TABLE atomic.events
 	RENAME COLUMN dvce_tstamp TO dvce_created_tstamp;
