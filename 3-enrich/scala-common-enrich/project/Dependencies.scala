@@ -50,13 +50,14 @@ object Dependencies {
     val refererParser    = "0.3.0"
     val maxmindIplookups = "0.3.0"
     val json4s           = "3.2.11"
-    val igluClient       = "0.3.0"
+    val igluClient       = "0.3.1"
     val scalaForex       = "0.3.0"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
     val scalaCheck       = "1.10.0"
     val scalaUri         = "0.4.3"
+    val scaldingArgs     = "0.11.2"
   }
 
   object Libraries {
@@ -89,5 +90,6 @@ object Dependencies {
     val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"
     val scalaCheck       = "org.scalacheck"             %% "scalacheck"                % V.scalaCheck     % "test"
+    val scaldingArgs     = "com.twitter"                %% "scalding-args"             % V.scaldingArgs   % "test"
   }
 }

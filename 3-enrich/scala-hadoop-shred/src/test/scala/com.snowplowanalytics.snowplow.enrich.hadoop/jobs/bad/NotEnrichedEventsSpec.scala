@@ -58,6 +58,7 @@ class NotEnrichedEventsSpec extends Specification {
   "A job which processes input lines not containing Snowplow enriched events" should {
     ShredJobSpec.
       source(MultipleTextLineFiles("inputFolder"), NotEnrichedEventsSpec.lines).
+      source(MultipleTextLineFiles("outputFolder/atomic-events"), InvalidJsonsSpec.lines).
       sink[String](PartitionedTsv("outputFolder", ShredJob.ShreddedPartition, false, ('json), SinkMode.REPLACE)){ output =>
         "not write any events" in {
           output must beEmpty

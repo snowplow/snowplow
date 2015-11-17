@@ -47,7 +47,10 @@ module Snowplow
           []
         else
           loc = Sluice::Storage::S3::Location.new(s3_path)
-          Sluice::Storage::S3::list_files(s3, loc).map { |file|
+          Sluice::Storage::S3::list_files(s3, loc).select { |file|
+            # Ignore the altered enriched events in atomic-events - they are TSVs, not JSONs
+            ! file.key.split('/').include? 'atomic-events'
+          }.map { |file|
             # Strip off the final sub-folder's SchemaVer REVISION and ADDITION components
             "s3://" + loc.bucket + "/" + /^(?<s3_path>.*-)[^-]+-[^-]+\/[^\/]+$/.match(file.key)[:s3_path]
           }.uniq.map { |s3_objectpath|
