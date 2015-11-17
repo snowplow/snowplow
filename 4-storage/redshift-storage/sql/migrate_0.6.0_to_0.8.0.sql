@@ -40,7 +40,7 @@ ALTER TABLE atomic.events
 	ADD COLUMN true_tstamp timestamp;
 
 ALTER TABLE atomic.events
-	DROP COLUMN unstruct_event;
+	DROP COLUMN unstruct_event CASCADE;
 
 ALTER TABLE atomic.events
 	DROP COLUMN contexts;
