@@ -50,6 +50,11 @@ class LoaderSpec extends Specification with DataTables with ValidationMatchers {
     "return the ThriftLoader" in {
       Loader.getLoader("thrift") must beSuccessful(ThriftLoader)
     }
+
+    "return the NDJSON loader" in {
+      Loader.getLoader("ndjson/example.test/v1") must beSuccessful(NdjsonLoader("example.test/v1"))
+    }
+
   }
 
   "extractGetPayload" should {
