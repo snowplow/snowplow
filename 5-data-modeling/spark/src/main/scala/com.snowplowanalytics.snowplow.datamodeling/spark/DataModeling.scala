@@ -30,12 +30,12 @@ import org.apache.spark.sql.SQLContext
 import events.EventTransformer
 
 object DataModeling {
-  
+
   private val AppName = "DataModelingJob"
 
   // Run the data modeling. Agnostic to Spark's current mode of operation: can be run from tests as well as from main
   def execute(master: Option[String], args: List[String], jars: Seq[String] = Nil) {
-  
+
     val sc = {
       val conf = new SparkConf().setAppName(AppName).setJars(jars)
       for (m <- master) {
@@ -43,7 +43,7 @@ object DataModeling {
       }
       new SparkContext(conf)
     }
-   
+
     val file = sc.textFile(args(0))
 
     // Enriched event TSV -> shredded JSON
@@ -55,7 +55,7 @@ object DataModeling {
 
     // Analyze
     val sqlContext = new SQLContext(sc)
-    val events = sqlContext.jsonRDD(jsons)
+    val events = sqlContext.read.json(jsons) // was sqlContext.jsonRDD(jsons)
     val cityCounts = events.groupBy("geo_city").count().rdd
 
     // TODO: reduce number of output files
