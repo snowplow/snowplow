@@ -1,0 +1,24 @@
+{
+    "jsonpaths": [
+        "$.schema.vendor",
+        "$.schema.name",
+        "$.schema.format",
+        "$.schema.version",
+        "$.hierarchy.rootId",
+        "$.hierarchy.rootTstamp",
+        "$.hierarchy.refRoot",
+        "$.hierarchy.refTree",
+        "$.hierarchy.refParent",
+        "$.data.body.add.device",
+        "$.data.body.current.device",
+        "$.data.device.amazon_channel",
+        "$.data.device.android_channel",
+        "$.data.device.ios_channel",
+        "$.data.device.named_user_id",
+        "$.data.id",
+        "$.data.occurred",
+        "$.data.offset",
+        "$.data.processed",
+        "$.data.type"
+    ]
+}

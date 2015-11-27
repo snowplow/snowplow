@@ -56,6 +56,8 @@ trait Adapter {
   // The encoding type to be used
   val EventEncType = "UTF-8"
 
+  private val AcceptedQueryParameters = Set("nuid", "aid", "cv", "eid", "ttm", "url")
+
   /**
    * Converts a CollectorPayload instance into raw events.
    *
@@ -141,7 +143,7 @@ trait Adapter {
       "e"     -> "ue",
       "p"     -> parameters.getOrElse("p", platform), // Required field
       "ue_pr" -> json) ++
-    parameters.filterKeys(Set("nuid", "aid", "cv"))
+    parameters.filterKeys(AcceptedQueryParameters)
   }
 
   /**
@@ -205,7 +207,7 @@ trait Adapter {
       "e"     -> "ue",
       "p"     -> qsParams.getOrElse("p", platform), // Required field
       "ue_pr" -> json) ++
-    qsParams.filterKeys(Set("nuid", "aid", "cv", "url"))
+    qsParams.filterKeys(AcceptedQueryParameters)
   }
 
   /**
