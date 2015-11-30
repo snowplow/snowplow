@@ -24,7 +24,7 @@ object SnowplowHadoopElasticsearchBuild extends Build {
   }
 
   // Define our project, with basic project information and library dependencies
-  lazy val project = Project("snowplow-hadoop-elasticsearch-sink", file("."))
+  lazy val project = Project("hadoop-elasticsearch-sink", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
