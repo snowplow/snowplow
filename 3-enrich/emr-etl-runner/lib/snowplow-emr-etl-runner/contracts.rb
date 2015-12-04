@@ -75,10 +75,11 @@ module Snowplow
       :host => String,
       :database => String,
       :port => Num,
-      :ssl_mode => String,
+      :ssl_mode => Maybe[String],
       :table => String,
-      :username => String,
-      :password => String,
+      :username => Maybe[String],
+      :password => Maybe[String],
+      :es_nodes_wan_only => Maybe[Bool],
       :maxerror => Maybe[Num],
       :comprows => Maybe[Num]
       })
