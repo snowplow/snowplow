@@ -1,5 +1,5 @@
-Release 72 Great Spotted Kiwi (2015-xx-xx)
-------------------------------------------
+Release 73 Cuban Macaw (2015-12-04)
+-----------------------------------
 EmrEtlRunner: bumped to 0.19.0
 EmrEtlRunner: added hadoop_elasticsearch to config.yml.sample (#2124)
 EmrEtlRunner: added support for Elasticsearch in targets section of config (#826)
