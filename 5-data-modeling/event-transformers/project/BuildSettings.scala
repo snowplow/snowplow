@@ -52,12 +52,6 @@ object BuildSettings {
       name.value + "-" + version.value + ".jar"
     },
 
-    // Drop these jars
-    excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
-      val excludes = Set()
-      cp filter { jar => excludes(jar.data.getName) }
-    },
-
     mergeStrategy in assembly <<= (mergeStrategy in assembly) {
       (old) => {
         // case "project.clj" => MergeStrategy.discard // Leiningen build files

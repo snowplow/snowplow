@@ -17,6 +17,8 @@ object Dependencies {
   val resolutionRepos = Seq()
 
   object V {
+    // Java
+    val slf4j                = "1.7.13"
     // Scala
     val json4s               = "3.2.10" // See https://github.com/json4s/json4s/issues/212
     val scalaz7              = "7.0.0"
@@ -24,6 +26,8 @@ object Dependencies {
   }
 
   object Libraries {
+    // Java
+    val slf4j                = "org.slf4j"                  %  "slf4j-log4j12"            % V.slf4j          % "provided"
     // Scala
     val json4sJackson        = "org.json4s"                 %% "json4s-jackson"           % V.json4s         % "provided"
     val scalaz7              = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7

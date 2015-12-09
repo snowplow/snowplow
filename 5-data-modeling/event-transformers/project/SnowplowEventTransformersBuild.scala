@@ -28,8 +28,9 @@ object SnowplowEventTransformersBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
+        Libraries.slf4j,
         Libraries.json4sJackson,
-        Libraries.scalaz
+        Libraries.scalaz7
       )
     )
 }
