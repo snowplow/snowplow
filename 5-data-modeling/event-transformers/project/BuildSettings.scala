@@ -52,6 +52,9 @@ object BuildSettings {
       name.value + "-" + version.value + ".jar"
     },
 
+    // No need for Scala
+    assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false),
+
     mergeStrategy in assembly <<= (mergeStrategy in assembly) {
       (old) => {
         // case "project.clj" => MergeStrategy.discard // Leiningen build files
