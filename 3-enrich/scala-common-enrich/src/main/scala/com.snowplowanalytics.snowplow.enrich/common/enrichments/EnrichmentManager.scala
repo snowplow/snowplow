@@ -451,9 +451,22 @@ object EnrichmentManager {
       case None => Nil
     }
 
+    // Fetch weather context
+    val weatherContext = registry.getWeatherEnrichment match {
+      case Some(we) => {
+        we.getWeatherContext(
+          Option(event.geo_latitude),
+          Option(event.geo_longitude),
+          Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp)).map(_.some)
+      }
+      case None => None.success
+    }
+
     // Assemble array of derived contexts
     val derived_contexts = List(uaParser).collect {
       case Success(Some(context)) => context
+    } ++ List(weatherContext).collect {
+     case Success(Some(context)) => context
     } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContext
 
     if (derived_contexts.size > 0) {
@@ -483,8 +496,9 @@ object EnrichmentManager {
       jsScript.toValidationNel                |@|
       campaign                                |@|
       shred                                   |@|
-      extractSchema.toValidationNel) {
-      (_,_,_,_,_,_,_,_,_) => ()
+      extractSchema.toValidationNel           |@|
+      weatherContext.toValidationNel) {
+      (_,_,_,_,_,_,_,_,_,_) => ()
     }
     (first |@| second) {
       (_,_) => event
