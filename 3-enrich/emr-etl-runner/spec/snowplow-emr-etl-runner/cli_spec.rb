@@ -39,6 +39,15 @@ describe Cli do
     }.to raise_exception( ConfigError, "Configuration file '/tmp' does not exist, or is not a file\n<<usage message>>" )
   end
 
+  it 'accepts nil in process opts (for tests)' do
+    def resource(name)
+      filename = File.expand_path(File.dirname(__FILE__)+"/resources/").to_s
+      filename += "/"+name
+    end
+
+    Cli.process_options({:config_file => resource("sparse_config.yml"), :enrichments_directory => nil, :resolver_file => resource("iglu_resolver.json")}, nil)
+  end
+
   it 'can convert all keys in a hash to symbols' do
 
     raw = {
