@@ -49,12 +49,14 @@ import registry.{
   JavascriptScriptEnrichment,
   EventFingerprintEnrichment,
   CookieExtractorEnrichment,
+  WeatherEnrichment,
   UserAgentUtilsEnrichmentConfig,
   UaParserEnrichmentConfig,
   CurrencyConversionEnrichmentConfig,
   JavascriptScriptEnrichmentConfig,
   EventFingerprintEnrichmentConfig,
-  CookieExtractorEnrichmentConfig
+  CookieExtractorEnrichmentConfig,
+  WeatherEnrichmentConfig
 }
 
 import utils.ScalazJson4sUtils
@@ -150,6 +152,8 @@ object EnrichmentRegistry {
             EventFingerprintEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "cookie_extractor_config") {
             CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "weather_enrichment_config") {
+            WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else {
             None.success // Enrichment is not recognized yet
           }
@@ -263,6 +267,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getCookieExtractorEnrichment: Option[CookieExtractorEnrichment] =
     getEnrichment[CookieExtractorEnrichment]("cookie_extractor_config")
+
+  /**
+   * Returns an Option boxing the WeatherEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the WeatherEnrichment instance
+   */
+  def getWeatherEnrichment: Option[WeatherEnrichment] =
+    getEnrichment[WeatherEnrichment]("weather_enrichment_config")
 
   /**
    * Returns an Option boxing an Enrichment
