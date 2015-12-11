@@ -14,7 +14,6 @@
 # License::   Apache License Version 2.0
 
 require 'spec_helper'
-require 'pp'
 
 Runner = Snowplow::EmrEtlRunner::Runner
 Cli = Snowplow::EmrEtlRunner::Cli
@@ -152,6 +151,18 @@ describe Runner do
     config[:collectors][:format] = "json/something/"
     expect {Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "collector_format 'json/something/' not supported")
     config[:collectors][:format] = "json/something/something"
+    Runner.new args, config, enrichments, resolver
+  end
+
+  it 'should accept the ndjson collector format' do
+    args, config, enrichments, resolver = get_mock_config
+    config[:collectors][:format] = "ndjson"
+    expect {Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "collector_format 'ndjson' not supported")
+    config[:collectors][:format] = "ndjson/something"
+    expect {Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "collector_format 'ndjson/something' not supported")
+    config[:collectors][:format] = "ndjson/something/"
+    expect {Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "collector_format 'ndjson/something/' not supported")
+    config[:collectors][:format] = "ndjson/something/something"
     Runner.new args, config, enrichments, resolver
   end
 
