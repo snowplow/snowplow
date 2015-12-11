@@ -22,7 +22,7 @@ module Snowplow
       include Contracts
 
       # Supported options
-      @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+))$/
+      @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+)|(?:ndjson\/.+\/.+))$/
       @@skip_options = Set.new(%w(staging s3distcp emr enrich shred elasticsearch archive_raw))
 
       include Monitoring::Logging
