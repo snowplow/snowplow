@@ -205,7 +205,6 @@ object JobSpecHelpers {
    * @param relativePath The relative path to the file from
    *        the root
    * @return the file contents
-   *
    */
   def readFile(root: File, relativePath: String): List[String] =
     Source
