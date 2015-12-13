@@ -52,6 +52,7 @@ object EnrichedEventLoader {
     val contexts = 52
     val unstructEvent = 58
     val derivedContexts = 122
+    val eventFingerprint = 129
   }
 
   /**
@@ -79,8 +80,13 @@ object EnrichedEventLoader {
       e.unstruct_event = fields(FieldIndexes.unstructEvent)
 
       // Backward compatibility with old TSVs without a derived_contexts field
-      if (fields.size > FieldIndexes.derivedContexts) {
+      if (fields.size >= FieldIndexes.derivedContexts + 1) {
         e.derived_contexts = fields(FieldIndexes.derivedContexts)
+      }
+
+      // Backward compatibility with old TSVs without a event_fingerprint field
+      if (fields.size >= FieldIndexes.eventFingerprint + 1) {
+        e.event_fingerprint = fields(FieldIndexes.eventFingerprint)
       }
     }
 
