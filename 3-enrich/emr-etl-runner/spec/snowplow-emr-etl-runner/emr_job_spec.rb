@@ -43,4 +43,11 @@ describe EmrJob do
     }
   end
 
+  it 'knows what the ndjson/urbanairship collector format looks like' do
+    EmrJob.is_ua_ndjson("ndjson/com.urbanairship.connect/v1").should eql true
+    EmrJob.is_ua_ndjson("thrift").should eql false
+    EmrJob.is_ua_ndjson("ndjson/com.somethingelse/v1").should eql false
+    EmrJob.is_ua_ndjson("ndjson/com.urbanairship.connect/").should eql false # invalid without version
+  end
+
 end
