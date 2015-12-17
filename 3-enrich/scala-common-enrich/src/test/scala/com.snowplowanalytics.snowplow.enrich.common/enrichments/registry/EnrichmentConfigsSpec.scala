@@ -260,12 +260,9 @@ class EnrichmentConfigsSpec extends Specification with ValidationMatchers {
       val expectedExcludedParameters = List("stm")
 
       val result = EventFingerprintEnrichmentConfig.parse(refererParserJson, schemaKey)
-      result must beSuccessful
-
-      result.foreach {
-        _.algorithm("sample") must_== "5e8ff9bf55ba3508199d22e984129be6"
+      result must beSuccessful.like {
+        case enr => enr.algorithm("sample") must beEqualTo("5e8ff9bf55ba3508199d22e984129be6")
       }
-
     }
   }
 
