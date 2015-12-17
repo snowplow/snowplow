@@ -43,6 +43,8 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.jsonValidator,
         Libraries.mavenArtifact,
         Libraries.uaParser,
+        Libraries.postgresDriver,
+        Libraries.mysqlConnector,
         // Scala
         Libraries.scalaz7,
         Libraries.snowplowRawEvent,
