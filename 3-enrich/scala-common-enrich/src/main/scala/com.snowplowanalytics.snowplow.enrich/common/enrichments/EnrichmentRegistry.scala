@@ -60,6 +60,10 @@ import registry.{
   HttpHeaderExtractorEnrichmentConfig,
   WeatherEnrichmentConfig
 }
+import registry.apirequest.{
+  ApiRequestEnrichment,
+  ApiRequestEnrichmentConfig
+}
 
 import utils.ScalazJson4sUtils
 
@@ -158,6 +162,8 @@ object EnrichmentRegistry {
             HttpHeaderExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "weather_enrichment_config") {
             WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "api_request_enrichment_config") {
+            ApiRequestEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else {
             None.success // Enrichment is not recognized yet
           }
@@ -289,6 +295,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getWeatherEnrichment: Option[WeatherEnrichment] =
     getEnrichment[WeatherEnrichment]("weather_enrichment_config")
+
+  /**
+    * Returns an Option boxing the ApiRequestEnrichment
+    * config value if present, or None if not
+    *
+    * @return Option boxing the ApiRequestEnrichment instance
+    */
+  def getApiRequestEnrichment: Option[ApiRequestEnrichment] =
+    getEnrichment[ApiRequestEnrichment]("api_request_enrichment_config")
 
   /**
    * Returns an Option boxing an Enrichment
