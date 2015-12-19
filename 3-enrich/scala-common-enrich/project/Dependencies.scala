@@ -52,6 +52,7 @@ object Dependencies {
     val json4s           = "3.2.11"
     val igluClient       = "0.3.1"
     val scalaForex       = "0.3.0"
+    val scalaWeather     = "0.1.0"
     // Scala (test only)
     val specs2           = "1.14"
     val scalazSpecs2     = "0.1.2"
@@ -86,6 +87,7 @@ object Dependencies {
     val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s    
     val igluClient       = "com.snowplowanalytics"      %  "iglu-scala-client"         % V.igluClient
     val scalaUri         = "com.netaporter"             %% "scala-uri"                 % V.scalaUri
+    val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"             % V.scalaWeather
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"
