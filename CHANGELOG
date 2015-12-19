@@ -1,3 +1,15 @@
+Release 74 European Honey Buzzard (2015-12-XX)
+----------------------------------------------
+Common: added encrypted OWM API key to .travis.yml (#2243)
+Scala Hadoop Enrich: bumped to 1.4.0
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.19.0 (#2255)
+Scala Common Enrich: bumped to 0.19.0
+Scala Common Enrich: added weather enrichment (#456)
+Scala Common Enrich: fixed issue with BC timestamp in ExtractEventTypeSpec (#2257)
+Scala Common Enrich: fixed currency conversion enrichment's test for invalid API key (#2258)
+StorageLoader: wrote JSON path file for org.openweathermap/weather (#2240)
+Redshift: added Redshift DDL for org.openweathermap/weather (#2241)
+
 Release 73 Cuban Macaw (2015-12-04)
 -----------------------------------
 EmrEtlRunner: bumped to 0.19.0
