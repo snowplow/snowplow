@@ -1,4 +1,4 @@
-Release 74 European Honey Buzzard (2015-12-XX)
+Release 74 European Honey Buzzard (2015-12-22)
 ----------------------------------------------
 Common: added encrypted OWM API key to .travis.yml (#2243)
 Scala Hadoop Enrich: bumped to 1.4.0
