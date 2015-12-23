@@ -22,7 +22,7 @@ module Snowplow
       include Contracts
 
       # Supported options
-      @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+))$/
+      @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+)|(?:ndjson\/.+\/.+))$/
       @@skip_options = Set.new(%w(staging s3distcp emr enrich shred elasticsearch archive_raw))
 
       include Monitoring::Logging
@@ -38,7 +38,7 @@ module Snowplow
         @config = validate_and_coalesce(args, config)
         @enrichments_array = enrichments_array
         @resolver = resolver
-        
+
         self
       end
 
@@ -116,7 +116,7 @@ module Snowplow
         # Check that start is before end, if both set
         if !args[:start].nil? and !args[:end].nil?
           if args[:start] > args[:end]
-            raise ConfigError, "Invalid options: end date '#{_end}' is before start date '#{start}'"
+            raise ConfigError, "Invalid options: end date '#{args[:end]}' is before start date '#{args[:start]}'"
           end
         end
 

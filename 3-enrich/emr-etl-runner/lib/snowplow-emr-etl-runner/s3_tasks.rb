@@ -29,6 +29,20 @@ module Snowplow
       CF_DATE_FORMAT = '%Y-%m-%d'
       CF_FILE_EXT = '.gz'
 
+      # Generate a short UrbanAirship filename
+      #
+      # Parameters:
+      # +nested_file_path+:: The full path name as provided by UrbanAirship in their S3 bucket
+      Contract String => String
+      def self.generate_short_ua_filename(nested_file_path)
+        if matches = nested_file_path.match(/([^\.\/.]+)\/(.+)\/S3_JSON\/.+\/([^\..]+)/)
+          ua_appkey, integration_id, filename = matches.captures
+          return "urbanairship.#{filename}.#{ua_appkey}.#{integration_id}.ndjson"
+        else
+          raise "short filename could not be generated - wrong format detected (source:#{nested_file_path})"
+        end
+      end
+
       # Cleans up our filenames, making archiving
       # much cleaner. See the test suite for
       # expected behaviors.
@@ -37,9 +51,17 @@ module Snowplow
       #
       # Parameters:
       # +region+:: the region to add into the filenames
-      Contract String => Func[String, String => String]
-      def self.build_fix_filenames(region)
+      Contract String, String => Func[String, String => String]
+      def self.build_fix_filenames(region, collector_format)
         return lambda { |basename, filepath|
+
+          if matches = collector_format.match(/^.+?\/(.+?)\//)
+            adapter = matches.captures[0]
+            if adapter == "com.urbanairship.connect"
+              return generate_short_ua_filename(filepath)
+            end
+          end
+
           # Prepend sub-dir to prevent one set of files
           # from overwriting same-named in other sub-dir
           if filepath_match = filepath.match('([^/]+)/[^/]+$')
@@ -83,7 +105,7 @@ module Snowplow
       # Returns true if file(s) were staged
       Contract ArgsHash, ConfigHash => Bool
       def self.stage_logs_for_emr(args, config)
-        Monitoring::Logging::logger.debug 'Staging CloudFront logs...'
+        Monitoring::Logging::logger.debug 'Staging...'
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:aws][:s3][:region],
@@ -122,7 +144,7 @@ module Snowplow
           if config[:collectors][:format] == 'clj-tomcat'
             '.*localhost\_access\_log.*\.txt.*'
           else
-            '.+'
+            '.+' # this will include those for ndjson/UrbanAirship
           end
         when args[:start].nil?
           Sluice::Storage::files_up_to(args[:end], CF_DATE_FORMAT, CF_FILE_EXT)
@@ -132,7 +154,7 @@ module Snowplow
           Sluice::Storage::files_between(args[:start], args[:end], CF_DATE_FORMAT, CF_FILE_EXT)
         end
 
-        fix_filenames = build_fix_filenames(config[:aws][:s3][:region])
+        fix_filenames = build_fix_filenames(config[:aws][:s3][:region], config[:collectors][:format])
         files_moved = in_locations.map { |in_location|
           Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move, fix_filenames, true)
         }
