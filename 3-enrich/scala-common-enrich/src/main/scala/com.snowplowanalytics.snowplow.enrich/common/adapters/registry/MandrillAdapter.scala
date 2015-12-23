@@ -80,9 +80,6 @@ object MandrillAdapter extends Adapter {
     "unsub"       -> SchemaKey("com.mandrill", "recipient_unsubscribed", "jsonschema", "1-0-0").toSchemaUri
   )
 
-  // Datetime format we need for all 'ts' fields within a Mandrill Event
-  private val JsonSchemaDateTimeFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
-
   /**
    * Converts a CollectorPayload instance into raw events.
    *
@@ -122,7 +119,11 @@ object MandrillAdapter extends Adapter {
                   schema <- lookupSchema(eventOpt, VendorName, index, EventSchemaMap)
                 } yield {
                   
-                  val formattedEvent = reformatParameters(event, eventOpt)
+                  val formattedEvent = cleanupJsonEventValues(event,
+                                                             eventOpt match { case Some(x) => ("event", x).some case None => None },
+                                                             "ts",
+                                                             _ * 1000
+                                                             )
                   val qsParams = toMap(payload.querystring)
                   RawEvent(
                     api          = payload.api,
@@ -185,36 +186,4 @@ object MandrillAdapter extends Adapter {
     }
   }
 
-  /**
-   * Returns an updated Mandrill Event JSON where 
-   * all of the timestamp fields ("ts":_) have been 
-   * changed to a valid JsonSchema date-time format
-   * and the "event":_type field has been removed
-   *
-   * @param json The event JSON which we need to
-   *        update values for
-   * @param eventOpt The event type as an Option[String]
-   *        which we are now going to remove from
-   *        the event JSON
-   * @return the updated JSON with valid date-time
-   *         values in the 'ts' fields
-   */
-  private[registry] def reformatParameters(json: JValue, eventOpt: Option[String]): JValue = {
-
-    val j1 = json transformField {
-      case ("ts", JInt(x)) => {
-        try {
-          val dt: DateTime = new DateTime(x.longValue() * 1000)
-          ("ts", JString(JsonSchemaDateTimeFormat.print(dt)))
-        } catch {
-          case _ : Throwable => ("ts", JInt(x))
-        }
-      }
-    }
-
-    eventOpt match {
-      case Some(eventType) => j1 removeField { _ == JField("event", eventType) }
-      case None            => j1
-    }
-  }
 }
