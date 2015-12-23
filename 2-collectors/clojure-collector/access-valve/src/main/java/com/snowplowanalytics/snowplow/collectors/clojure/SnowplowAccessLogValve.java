@@ -648,10 +648,10 @@ public class SnowplowAccessLogValve extends AbstractAccessLogValve {
             // A safer header element returns a hyphen never a null/empty string
             case 'i':
                 return new SaferHeaderElement(header);
-            // Added EscapedHeaderElement        
+            // Added EscapedSaferHeaderElement
             case 'I':
-                return new EscapedHeaderElement(header);
-            // Added EscapedHeaderElement        
+                return new EscapedSaferHeaderElement(header);
+            // Added ResponseCookieElement
             case 'C':
                 return new ResponseCookieElement(header);
             // Back to AccessLogValve's handler
@@ -741,10 +741,10 @@ public class SnowplowAccessLogValve extends AbstractAccessLogValve {
      * Write incoming headers, but escaped - %{xxx}I
      * Based on HeaderElement.
      */
-    protected static class EscapedHeaderElement implements AccessLogElement {
+    protected static class EscapedSaferHeaderElement implements AccessLogElement {
         private final String header;
 
-        public EscapedHeaderElement(String header) {
+        public EscapedSaferHeaderElement(String header) {
             this.header = header;
         }
 
@@ -753,9 +753,9 @@ public class SnowplowAccessLogValve extends AbstractAccessLogValve {
                 Response response, long time) {
             Enumeration<String> iter = request.getHeaders(header);
             if (iter.hasMoreElements()) {
-                buf.append(uriEncodeSafely(iter.nextElement()));
+                buf.append(handleBlankSafely(uriEncodeSafely(iter.nextElement())));
                 while (iter.hasMoreElements()) {
-                    buf.append(',').append(uriEncodeSafely(iter.nextElement()));
+                    buf.append(',').append(handleBlankSafely(uriEncodeSafely(iter.nextElement())));
                 }
                 return;
             }
