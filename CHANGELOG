@@ -1,3 +1,15 @@
+Release 75 Long-Legged Buzzard (2015-12-xx)
+-------------------------------------------
+EmrEtlRunner: bumped to 0.20.0
+Scala Common Enrich: bumped to 0.20.0-M1
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.20.0-M1 (#2200)
+Scala Common Enrich: added UrbanAirship Connect support (#2167)
+Scala Common Enrich: added SendGrid support (#1161)
+Scala Common Enrich: added ndjson loader (#2210)
+EmrEtlRunner: added ndjson loader support (#2251)
+EmrEtlRunner: increased test coverage (#2250)
+
+
 Release 74 European Honey Buzzard (2015-12-22)
 ----------------------------------------------
 Common: added encrypted OWM API key to .travis.yml (#2243)
@@ -105,7 +117,7 @@ Scala Hadoop Enrich: updated tests to expect bad row JSONs with timestamps and p
 Scala Hadoop Enrich: updated to use new EtlPipeline (#1931)
 Scala Hadoop Enrich: bad rows for Thrift payloads now contain the original Thrift record (#1950)
 Scala Hadoop Enrich: simplified validation projection code (#1986)
-Scala Hadoop Shred: bumped to 0.5.0 
+Scala Hadoop Shred: bumped to 0.5.0
 Scala Hadoop Shred: updated tests to expect bad row JSONs with timestamps and processing messages (#1953)
 Scala Hadoop Shred: added clojars.org as a resolver (#1952)
 Scala Hadoop Shred: bumped Scala Common Enrich to 0.16.0 (#1935)
@@ -360,7 +372,7 @@ Scala Kinesis Enrich: updated test suite to accommodate changes (#1581)
 Scala Kinesis Enrich: added Clojars as a resolver (#1586)
 Scala Kinesis Enrich: added configurable exponential backoff with jitter (#1591)
 Scala Kinesis Enrich: randomize partition keys for bad events (#1631)
-Scala Kinesis Enrich: stopped sending records of over 50kB (#1649) 
+Scala Kinesis Enrich: stopped sending records of over 50kB (#1649)
 Kinesis Elasticsearch Sink: bumped to 0.3.0
 Kinesis Elasticsearch Sink: made DynamoDB region configurable (#1583)
 Kinesis Elasticsearch Sink: added macros to config.hocon.sample (#1515)
@@ -844,7 +856,7 @@ Scala Hadoop Enrich: bumped Hadoop to 1.2.1 (#913)
 Scala Hadoop Enrich: bumped to Scala Common Enrich 0.5.0 (#788)
 Scala Hadoop Enrich: passed etl_tstamp into Scala Common Enrich (#817)
 Scala Hadoop Enrich: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#835)
-Scala Hadoop Enrich: removed %3D handling for compatibility with old Scalding Args (#850) 
+Scala Hadoop Enrich: removed %3D handling for compatibility with old Scalding Args (#850)
 Scala Hadoop Enrich: added ability to download additional MaxMind databases (#885)
 Scala Hadoop Enrich: added runHadoop and Tool.main tests (#914)
 Scala Common Enrich: bumped to 0.5.0
@@ -903,7 +915,7 @@ EmrEtlRunner: added :iglu: section to config.yml for Scala Hadoop Shred (#814)
 EmrEtlRunner: updated to run Scala Hadoop Shred following Hadoop Enrich (#815)
 EmrEtlRunner: added --skip shred option (#659)
 StorageLoader: bumped to 0.3.0
-StorageLoader: bumped Sluice to 0.2.1 (#881) 
+StorageLoader: bumped Sluice to 0.2.1 (#881)
 StorageLoader: added initial Ruby.contracts support (#391)
 StorageLoader: updated config.yml to support shredding (#897)
 StorageLoader: added ACCEPTINVCHARS to StorageLoader (#411)
@@ -928,7 +940,7 @@ Looker Analytics: updated LookML to use liquid templating (#851)
 Version 0.9.4 (2014-05-30)
 ---------------------------
 Redshift: added reference_data.country_codes (#779)
-Postgres: added reference_data.country_codes (#781) 
+Postgres: added reference_data.country_codes (#781)
 Looker Analytics: New 'traffic_pulse' dashboard with globally configurable drill-down variables (#765)
 Looker Analytics: Snowplow website specific dimensions and metrics removed: base model is now company-generic (#764)
 Looker Analytics: cleaner joining of data sets in Looker model (#763)
@@ -952,7 +964,7 @@ EmrEtlRunner: renamed Clojure Collector log files in processing bucket to suppor
 EmrEtlRunner: added initial Ruby.contracts support into EmrEtlRunner (#392)
 EmrEtlRunner: updated to use the Ruby Logger (#194)
 EmrEtlRunner: updated so it's embeddable in other applications (#128)
-EmrEtlRunner: added ability to bundle as a JRuby fat jar (#674) 
+EmrEtlRunner: added ability to bundle as a JRuby fat jar (#674)
 EmrEtlRunner: added initial unit tests (#672)
 Clojure Collector: bumped to 0.6.0
 Clojure Collector: load balancer IP address getting stored in logs (#719)
@@ -982,7 +994,7 @@ Scala Hadoop Enrich: renamed AnonQuartets to AnonOctets (#498)
 Scala Hadoop Enrich: renamed all Snowplow Hadoop Tests to Specs (#515)
 Scala Hadoop Enrich: added page_url and page_referrer back into ETL's output (#483)
 Scala Common Enrich: bumped to 0.3.0
-Scala Common Enrich: bumped Argonaut to 6.0.3 (#620) 
+Scala Common Enrich: bumped Argonaut to 6.0.3 (#620)
 Scala Common Enrich: added app and mob as valid platform codes, thanks @kinabalu! (#524)
 Scala Common Enrich: added support for remaining platform codes (#516)
 Scala Common Enrich: updated POJO in Scalding ETL to include new unstructured fields (#362)
@@ -991,7 +1003,7 @@ Scala Common Enrich: extract evn from Tracker Protocol (#604)
 Scala Common Enrich: extract tna from Tracker Protocol (#616)
 Scala Common Enrich: extract and validate unstructured events (#142)
 Scala Common Enrich: extract and validate custom contexts (#426)
-Scala Common Enrich: reformat incoming event and context JSONs (#589) 
+Scala Common Enrich: reformat incoming event and context JSONs (#589)
 Scala Common Enrich: make sure to error a JSON if > length (#567)
 EmrEtlRunner: bumped to 0.6.0
 EmrEtlRunner: bumped Elasticity to 3.0.2 (#587)
@@ -1474,7 +1486,7 @@ Serde: changed all Booleans to Bytes for non-Hive output
 HiveQL: bumped non-hive-rolling-etl.q to 0.0.2
 HiveQL: changed non-hive-rolling-etl.q to use the two _bt Byte fields
 Infobright: bumped setup_infobright.sql to 0.0.2
-Infobright: changed booleans to tinyint(1)s (non-breaking change) 
+Infobright: changed booleans to tinyint(1)s (non-breaking change)
 
 Version 0.5.2 (2012-11-05)
 --------------------------
@@ -1529,7 +1541,7 @@ Version 0.4.8 (2012-09-14)
 --------------------------
 Serde: added support for /i as well as /ice.png (issue #35)
 Serde: added support for new (2012-09-12) CloudFront format
-Serde: handles Cf bucket with Forward Query String = yes (issue #39) 
+Serde: handles Cf bucket with Forward Query String = yes (issue #39)
 Serde: made marketing attribution parsing more robust
 
 Version 0.4.7 (2012-09-05)
