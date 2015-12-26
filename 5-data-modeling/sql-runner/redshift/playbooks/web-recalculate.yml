@@ -25,7 +25,7 @@
         :file: snowplow/5-analytics/redshift-analytics/data-models/sql/web-recalculate/02-sessions/02-02-geo.sql
       - :name: 02-03-landing-page
         :file: snowplow/5-analytics/redshift-analytics/data-models/sql/web-recalculate/02-sessions/02-03-landing-page.sql
-      - :name: 02-02-exit-page
+      - :name: 02-04-exit-page
         :file: snowplow/5-analytics/redshift-analytics/data-models/sql/web-recalculate/02-sessions/02-04-exit-page.sql
       - :name: 02-05-source
         :file: snowplow/5-analytics/redshift-analytics/data-models/sql/web-recalculate/02-sessions/02-05-source.sql
