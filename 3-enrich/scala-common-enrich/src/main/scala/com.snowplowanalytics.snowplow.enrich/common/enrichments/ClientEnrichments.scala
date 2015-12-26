@@ -16,9 +16,6 @@ package enrichments
 // Java
 import java.lang.{Integer => JInteger}
 
-// Scala
-import scala.util.control.NonFatal
-
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -63,7 +60,7 @@ object ClientEnrichments {
         try {
           (width.toInt: JInteger, height.toInt: JInteger).success
         } catch {
-          case NonFatal(e) => "Field [%s]: view dimensions [%s] exceed Integer's max range".format(field, res).fail
+          case _ => "Field [%s]: view dimensions [%s] exceed Integer's max range".format(field, res).fail
         }
       case _ => "Field [%s]: [%s] does not contain valid view dimensions".format(field, res).fail
     }

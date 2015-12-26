@@ -14,11 +14,6 @@
 -- License: Apache License Version 2.0
 --
 -- Data Model: deduplicate
--- Version: 0.3
-
--- Step 1:
+-- Version: 0.2
 
 CREATE SCHEMA IF NOT EXISTS duplicates;
-
--- Step 2: create or upgrade duplicates.events using the same definition as atomic.events
--- https://github.com/snowplow/snowplow/blob/master/4-storage/redshift-storage/sql/atomic-def.sql

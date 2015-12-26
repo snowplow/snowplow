@@ -13,7 +13,7 @@
 package com.snowplowanalytics
 package snowplow
 package enrich
-package common
+package hadoop
 package utils
 
 // Scalding

@@ -52,7 +52,7 @@ import common.enrichments.{
 }
 
 // This project
-import enrich.common.utils.ScalazArgs
+import utils.ScalazArgs
 
 /**
  * The configuration for the SnowPlowEtlJob.

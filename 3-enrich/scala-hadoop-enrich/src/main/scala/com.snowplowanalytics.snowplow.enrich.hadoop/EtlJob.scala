@@ -172,7 +172,6 @@ class EtlJob(args: Args) extends Job(args) {
     .map('line -> 'all) { l: Any =>
       EtlPipeline.processEvents(enrichmentRegistry, EtlJob.etlVersion, etlConfig.etlTstamp, loader.toCollectorPayload(l))
     }
-    .forceToDisk
 
   // Handle bad rows
   val bad = common

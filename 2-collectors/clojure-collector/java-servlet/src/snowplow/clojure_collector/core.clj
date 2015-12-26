@@ -17,7 +17,6 @@
   "Core app handler"
   (:use [compojure.core              :only [defroutes GET POST HEAD]]
         [ring.middleware.cookies     :only [wrap-cookies]]
-        [ring.middleware.params      :only [wrap-params]]
         [ring.middleware.reload      :only [wrap-reload]]
         [ring.middleware.stacktrace  :only [wrap-stacktrace]]
         [metrics.ring.expose         :only [expose-metrics-as-json]]
@@ -27,30 +26,22 @@
             [snowplow.clojure-collector.config     :as config]
             [snowplow.clojure-collector.middleware :as mware]))
 
-(defn- send-cookie-pixel-or-200-or-redirect'
-  "Wrapper for send-cookie-pixel-or-200-or-redirect,
+(defn- send-cookie-pixel-or-200'
+  "Wrapper for send-cookie-pixel-or-200,
    pulling in the configuration settings"
-  [cookies pixel vendor params]
-  (responses/send-cookie-pixel-or-200-or-redirect
+  [cookies pixel]
+  (responses/send-cookie-pixel-or-200
     cookies
     config/duration
     config/domain
     config/p3p-header
-    pixel
-    vendor
-    params))
-
-(defn- send-cookie-pixel-or-200'
-  "Wrapper for send-cookie-pixel-or-200-or-redirect,
-   with nil vendor and empty params map"
-  [cookies pixel]
-  (send-cookie-pixel-or-200-or-redirect' cookies pixel nil {}))
+    pixel))
 
 (defroutes routes
   "Our routes"
   (GET  "/i"                  {c :cookies} (send-cookie-pixel-or-200' c true))
   (GET  "/ice.png"            {c :cookies} (send-cookie-pixel-or-200' c true))  ; legacy name for i
-  (GET  "/:vendor/:version"   {{v :vendor} :params, p :params, c :cookies} (send-cookie-pixel-or-200-or-redirect' c true v p))  ; for tracker GET support. Need params for potential redirect
+  (GET  "/:vendor/:version"   {c :cookies} (send-cookie-pixel-or-200' c true))  ; for tracker GET support
   (POST "/:vendor/:version"   {c :cookies} (send-cookie-pixel-or-200' c false)) ; for tracker POST support, no pixel
   (HEAD "/:vendor/:version"   request responses/send-200)                       ; for webhooks' own checks e.g. Mandrill
   (GET  "/healthcheck"        request responses/send-200)
@@ -64,7 +55,6 @@
    See middleware.clj for details"
  (-> #'routes
    (wrap-cookies)
-   (wrap-params)
    (mware/wrap-if config/development? wrap-reload '(snowplow.clojure-collector.core snowplow.clojure-collector.middleware responses))
    (mware/wrap-if config/development? wrap-stacktrace)
    (mware/wrap-if config/production?  mware/wrap-failsafe)

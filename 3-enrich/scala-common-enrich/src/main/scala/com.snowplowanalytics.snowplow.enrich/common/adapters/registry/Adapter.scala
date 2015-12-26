@@ -44,9 +44,6 @@ trait Adapter {
   // The Iglu schema URI for a Snowplow unstructured event
   private val UnstructEvent = SchemaKey("com.snowplowanalytics.snowplow", "unstruct_event", "jsonschema", "1-0-0").toSchemaUri
 
-  // The Iglu schema URI for a Snowplow custom contexts
-  private val Contexts = SchemaKey("com.snowplowanalytics.snowplow", "contexts", "jsonschema", "1-0-1").toSchemaUri
-
   // Signature for a Formatter function
   type FormatterFunc = (RawEventParameters) => JObject
 
@@ -145,32 +142,6 @@ trait Adapter {
   }
 
   /**
-   * Creates a Snowplow unstructured event by nesting
-   * the provided JValue in a self-describing envelope
-   * for the unstructured event.
-   *
-   * @param eventJson The event which we will nest
-   *        into the unstructured event
-   * @return the self-describing unstructured event
-   */
-  protected[registry] def toUnstructEvent(eventJson: JValue): JValue =
-    ("schema" -> UnstructEvent) ~
-    ("data"   -> eventJson)
-
-  /**
-   * Creates a Snowplow custom contexts entity by
-   * nesting the provided JValue in a self-describing
-   * envelope for the custom contexts.
-   *
-   * @param eventJson The event which we will nest
-   *        into the unstructured event
-   * @return the self-describing unstructured event
-   */
-  protected[registry] def toContexts(contextJson: JValue): JValue =
-    ("schema" -> Contexts) ~
-    ("data"   -> List(contextJson))
-
-  /**
    * Fabricates a Snowplow unstructured event from
    * the supplied parameters. Note that to be a
    * valid Snowplow unstructured event, the event
@@ -194,10 +165,11 @@ trait Adapter {
     eventJson: JValue, platform: String): RawEventParameters = {
 
     val json = compact {
-      toUnstructEvent(
+      ("schema" -> UnstructEvent) ~
+      ("data"   -> (
         ("schema" -> schema) ~
         ("data"   -> eventJson)
-      )
+      ))
     }
 
     Map(

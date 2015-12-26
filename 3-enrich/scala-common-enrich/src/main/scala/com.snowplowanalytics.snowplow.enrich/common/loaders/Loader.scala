@@ -20,7 +20,6 @@ import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
 
 // Scala
-import scala.util.control.NonFatal
 import scala.collection.JavaConversions._
 
 // Scalaz
@@ -102,8 +101,7 @@ abstract class Loader[T] {
       try {
         URLEncodedUtils.parse(URI.create("http://localhost/?" + q), enc).toList.success
       } catch {
-        case NonFatal(e) =>
-          "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]".format(q, enc, e.getMessage).fail
+        case e => "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]".format(q, enc, e.getMessage).fail
       }
     }
     case None => Nil.success

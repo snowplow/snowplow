@@ -19,9 +19,6 @@ package registry
 // Maven Artifact
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
-// Scala
-import scala.util.control.NonFatal
-
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -118,7 +115,7 @@ case object UaParserEnrichment extends Enrichment {
             val c = try {
               uaParser.parse(useragent)
             } catch {
-              case NonFatal(e) => return "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).fail
+                 case e => return "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).fail
             }
             // To display useragent version
             val useragentVersion = checkNull(c.userAgent.family) + prependSpace(c.userAgent.major) + prependDot(c.userAgent.minor) + prependDot(c.userAgent.patch)

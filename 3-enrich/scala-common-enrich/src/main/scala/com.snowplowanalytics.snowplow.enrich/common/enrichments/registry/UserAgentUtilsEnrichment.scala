@@ -19,9 +19,6 @@ package registry
 // Maven Artifact
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
-// Scala
-import scala.util.control.NonFatal
-
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -115,7 +112,7 @@ case object UserAgentUtilsEnrichment extends Enrichment {
         deviceType = os.getDeviceType.getName,
         deviceIsMobile = os.isMobileDevice).success
       } catch {
-          case NonFatal(e) => "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).fail
+          case e => "Exception parsing useragent [%s]: [%s]".format(useragent, e.getMessage).fail
       }
   }
 }
