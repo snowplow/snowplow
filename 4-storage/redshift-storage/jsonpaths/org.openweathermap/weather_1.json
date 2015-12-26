@@ -1,0 +1,32 @@
+{
+    "jsonpaths": [
+        "$.schema.vendor",
+        "$.schema.name",
+        "$.schema.format",
+        "$.schema.version",
+        "$.hierarchy.rootId",
+        "$.hierarchy.rootTstamp",
+        "$.hierarchy.refRoot",
+        "$.hierarchy.refTree",
+        "$.hierarchy.refParent",
+        "$.data.clouds.all",
+        "$.data.dt",
+        "$.data.main.humidity",
+        "$.data.main.pressure",
+        "$.data.main.temp",
+        "$.data.main.temp_max",
+        "$.data.main.temp_min",
+        "$.data.main.grnd_level",
+        "$.data.main.sea_level",
+        "$.data.rain.1h",
+        "$.data.rain.3h",
+        "$.data.snow.1h",
+        "$.data.snow.3h",
+        "$.data.weather",
+        "$.data.wind.deg",
+        "$.data.wind.gust",
+        "$.data.wind.speed",
+        "$.data.wind.var_beg",
+        "$.data.wind.var_end"
+    ]
+}

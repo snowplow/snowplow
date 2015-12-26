@@ -57,4 +57,3 @@
     :queries:
       - :name: 05-01-structured-events
         :file: snowplow/5-analytics/redshift-analytics/data-models/sql/web-recalculate/05-structured-events/05-01-structured-events.sql
-

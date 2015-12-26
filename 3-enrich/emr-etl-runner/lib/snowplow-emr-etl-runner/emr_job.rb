@@ -41,15 +41,20 @@ module Snowplow
       include Monitoring::Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String => EmrJob
-      def initialize(debug, enrich, shred, s3distcp, config, enrichments_array, resolver)
+      Contract Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String => EmrJob
+      def initialize(debug, enrich, shred, elasticsearch, s3distcp, config, enrichments_array, resolver)
 
         logger.debug "Initializing EMR jobflow"
 
         # Configuration
-        assets = self.class.get_assets(config[:aws][:s3][:buckets][:assets], config[:enrich][:versions][:hadoop_enrich], config[:enrich][:versions][:hadoop_shred])
+        assets = self.class.get_assets(
+          config[:aws][:s3][:buckets][:assets],
+          config[:enrich][:versions][:hadoop_enrich],
+          config[:enrich][:versions][:hadoop_shred],
+          config[:enrich][:versions][:hadoop_elasticsearch])
         run_tstamp = Time.new
         run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
+        @run_id = run_id
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
         output_codec = self.class.output_codec_from_compression_format(config[:enrich][:output_compression])
         output_codec_argument = output_codec == 'none' ? [] : ["--outputCodec" , output_codec]
@@ -324,7 +329,54 @@ module Snowplow
           end
         end
 
+        if elasticsearch
+          get_elasticsearch_steps(config, assets, enrich, shred).each do |step|
+            @jobflow.add_step(step)
+          end
+        end
+
         self
+      end
+
+      # Create one step for each Elasticsearch target for each source for that target
+      #
+      Contract ConfigHash, Hash, Bool, Bool => ArrayOf[ScaldingStep]
+      def get_elasticsearch_steps(config, assets, enrich, shred)
+        elasticsearch_targets = config[:storage][:targets].select {|t| t[:type] == 'elasticsearch'}
+
+        # The default sources are the enriched and shredded errors generated for this run
+        default_sources = []
+        default_sources << self.class.partition_by_run(config[:aws][:s3][:buckets][:enriched][:bad], @run_id) if enrich
+        default_sources << self.class.partition_by_run(config[:aws][:s3][:buckets][:shredded][:bad], @run_id) if shred
+
+        steps = elasticsearch_targets.flat_map { |target|
+
+          sources = target[:sources] || default_sources
+
+          sources.map { |source|
+            step = ScaldingStep.new(
+              assets[:elasticsearch],
+              "com.snowplowanalytics.snowplow.storage.hadoop.ElasticsearchJob",
+              ({
+                :input => source,
+                :host => target[:host],
+                :port => target[:port].to_s,
+                :index => target[:database],
+                :type => target[:table],
+                :es_nodes_wan_only => target[:es_nodes_wan_only] ? "true" : "false"
+              }).reject { |k, v| v.nil? }
+            )
+            step_name = "Errors in #{source} -> Elasticsearch: #{target[:name]}"
+            step.name << ": #{step_name}"
+            step
+          }
+        }
+
+        # Wait 60 seconds before starting the first step so S3 can become consistent
+        if (enrich || shred) && steps.any?
+          steps[0].arguments << '--delay' << '60'
+        end
+        steps
       end
 
       # Run (and wait for) the daily ETL job.
@@ -569,12 +621,13 @@ module Snowplow
         Base64.strict_encode64(resolver)
       end
 
-      Contract String, String, String => AssetsHash
-      def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version)
+      Contract String, String, String, String => AssetsHash
+      def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version, hadoop_elasticsearch_version)
         enrich_path_middle = hadoop_enrich_version[0] == '0' ? 'hadoop-etl/snowplow-hadoop-etl' : 'scala-hadoop-enrich/snowplow-hadoop-enrich'
         {
           :enrich   => "#{assets_bucket}3-enrich/#{enrich_path_middle}-#{hadoop_enrich_version}.jar",
-          :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar"
+          :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
+          :elasticsearch => "#{assets_bucket}4-storage/hadoop-elasticsearch-sink/hadoop-elasticsearch-sink-#{hadoop_elasticsearch_version}.jar",
         }
       end
 

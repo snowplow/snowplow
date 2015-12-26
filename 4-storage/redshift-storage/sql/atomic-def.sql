@@ -9,7 +9,7 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.7.0
+-- Version:     0.8.0
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep, Fred Blundun
@@ -85,16 +85,12 @@ CREATE TABLE atomic.events (
 	mkt_term varchar(255) encode raw,
 	mkt_content varchar(500) encode raw,
 	mkt_campaign varchar(255) encode text32k,
-	-- Custom contexts
-	contexts varchar(15000) encode lzo,
 	-- Custom structured event
 	se_category varchar(1000) encode text32k,
 	se_action varchar(1000) encode text32k,
 	se_label varchar(1000) encode text32k,
 	se_property varchar(1000) encode text32k,
 	se_value double precision,
-	-- Custom unstructured event
-	unstruct_event varchar(15000) encode lzo,
 	-- Ecommerce
 	tr_orderid varchar(255) encode raw,
 	tr_affiliation varchar(255) encode text255,
@@ -178,9 +174,6 @@ CREATE TABLE atomic.events (
 	refr_domain_userid varchar(36),
 	refr_dvce_tstamp timestamp,
 
-	-- Derived contexts
-	derived_contexts varchar(15000) encode lzo,
-
 	-- Session ID
 	domain_sessionid char(36) encode raw,
 
@@ -199,10 +192,10 @@ CREATE TABLE atomic.events (
 	-- True timestamp
 	true_tstamp timestamp,
 
-	CONSTRAINT event_id_070_pk PRIMARY KEY(event_id)
+	CONSTRAINT event_id_080_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
 DISTKEY (event_id)
 SORTKEY (collector_tstamp);
 
-COMMENT ON TABLE "atomic"."events" IS '0.7.0'
+COMMENT ON TABLE "atomic"."events" IS '0.8.0'

@@ -78,19 +78,34 @@
      :headers headers
      :cookies cookies})   
 
-(defn send-cookie-pixel-or-200
+(defn- send-redirect
+  "If our params map contains `u`, 302 redirect to that URI,
+   else return a 400 for Bad Request (malformed syntax)"
+  [cookies headers params]
+    (let [{url "u"} params]
+      (if (nil? url)
+        {:status  400
+         :headers headers
+         :cookies cookies}
+        {:status  302
+         :headers (merge headers {"Location" url})
+         :cookies cookies
+         :body    ""})))
+
+(defn send-cookie-pixel-or-200-or-redirect
   "Respond with the cookie and either a
-   transparent pixel or a 200"
-  [cookies duration domain p3p-header pixel]
+   transparent pixel, a 200 or a redirect"
+  [cookies duration domain p3p-header pixel vendor params]
   (let [id      (generate-id cookies)
         cookies (if (= duration 0)
                   {}
                   {cookie-name (set-cookie id duration domain)})
         headers {"P3P" p3p-header}]
-    (if pixel
-      (send-cookie-pixel cookies headers)
-      (send-cookie-200 cookies headers))))
-
+    (if (= vendor "r")
+      (send-redirect cookies headers params)
+      (if pixel
+        (send-cookie-pixel cookies headers)
+        (send-cookie-200 cookies headers)))))
 
 (def send-404
   "Respond with a 404"
