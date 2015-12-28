@@ -95,7 +95,10 @@ object JobSpecHelpers {
      */
     def writeTo(file: File) = {
       val writer = new BufferedWriter(new FileWriter(file))
-      for (line <- lines) writer.write(line)
+      for (line <- lines) {
+        writer.write(line)
+        writer.newLine()
+      }
       writer.close()
     }
 
