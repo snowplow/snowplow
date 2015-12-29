@@ -24,6 +24,7 @@ import org.apache.commons.codec.binary.Base64
 
 // Scala
 import scala.collection.mutable.ListBuffer
+import scala.io.Source
 
 // Scalaz
 import scalaz._
@@ -124,7 +125,10 @@ object JobSpecHelpers {
    */
   implicit def Lines2ScaldingLines(lines : Lines): ScaldingLines = lines.numberedLines 
 
-  // Standard JobSpec definition used by all integration tests
+  /**
+   * A standard JobSpec definition used by all of our
+   * integration tests.
+   */
   val ShredJobSpec = 
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.ShredJob").
       arg("input_folder", "inputFolder").
@@ -193,5 +197,20 @@ object JobSpecHelpers {
     val badRowWithoutTimestamp = ("line", (badRowJson \ "line")) ~ ("errors", (badRowJson \ "errors"))
     compact(badRowWithoutTimestamp)
   }
+
+  /**
+   * Reads a file at the given path into a List of Strings
+   *
+   * @param root A root filepath
+   * @param relativePath The relative path to the file from
+   *        the root
+   * @return the file contents
+   *
+   */
+  def readFile(root: File, relativePath: String): List[String] =
+    Source
+      .fromFile(new File(root, relativePath))
+      .getLines
+      .toList
 
 }
