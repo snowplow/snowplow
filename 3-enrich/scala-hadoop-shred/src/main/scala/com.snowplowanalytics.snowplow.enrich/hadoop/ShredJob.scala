@@ -171,10 +171,10 @@ class ShredJob(args : Args) extends Job(args) {
 
   // Aliases for our job
   val input = MultipleTextLineFiles(shredConfig.inFolder).read
-  val goodOutput = PartitionedTsv(shredConfig.outFolder, ShredJob.ShreddedPartition, false, ('json), SinkMode.REPLACE)
+  val goodJsonsOutput = PartitionedTsv(shredConfig.outFolder, ShredJob.ShreddedPartition, false, ('json), SinkMode.REPLACE)
   val badOutput = Tsv(shredConfig.badFolder)  // Technically JSONs but use Tsv for custom JSON creation
   implicit val resolver = shredConfig.igluResolver
-  val alteredOutput = MultipleTextLineFiles(ShredJob.getAlteredEnrichedOutputPath(shredConfig.outFolder))
+  val goodEventsOutput = MultipleTextLineFiles(ShredJob.getAlteredEnrichedOutputPath(shredConfig.outFolder))
 
   // Do we add a failure trap?
   val trappableInput = shredConfig.exceptionsFolder match {
@@ -201,18 +201,23 @@ class ShredJob(args : Args) extends Job(args) {
 
   // Handle good rows
   val good = common
-    .flatMapTo('output -> 'good) { o: ValidatedNel[JsonSchemaPairs] =>
+    .flatMap('output -> 'good) { o: ValidatedNel[JsonSchemaPairs] =>
       ShredJob.projectGoods(o)
     }
+
+  // Write atomic-events
+  val events = good
+    .mapTo('line -> 'altered) { s: String =>
+      ShredJob.alterEnrichedEvent(s)
+    }
+    .write(goodEventsOutput)
+
+  // Write JSONs
+  val jsons = good
     .flatMapTo('good -> ('schema, 'json)) { pairs: List[JsonSchemaPair] =>
       pairs.map { pair =>
         (pair._1.toSchemaUri, pair._2.toString)
       }
     }
-    .write(goodOutput)
-
-  val alteredEnriched = input.mapTo('line -> 'altered) { s: String =>
-      ShredJob.alterEnrichedEvent(s)
-    }
-    .write(alteredOutput)
+    .write(goodJsonsOutput)
 }
