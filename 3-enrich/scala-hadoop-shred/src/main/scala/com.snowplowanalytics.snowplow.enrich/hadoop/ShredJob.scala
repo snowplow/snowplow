@@ -32,7 +32,10 @@ import com.twitter.scalding._
 // Snowplow Common Enrich
 import common._
 import common.FatalEtlError
-import common.outputs.BadRow
+import common.outputs.{
+  EnrichedEvent,
+  BadRow
+}
 import common.utils.shredder.Shredder
 
 // Iglu Scala Client
@@ -67,11 +70,12 @@ object ShredJob {
    *         (possibly empty) List of JSON instances
    *         + schemas on Success
    */
-  def loadAndShred(line: String)(implicit resolver: Resolver): ValidatedNel[JsonSchemaPairs] =
+  def loadAndShred(line: String)(implicit resolver: Resolver): ValidatedNel[EventComponents] =
     for {
       event <- EnrichedEventLoader.toEnrichedEvent(line).toProcessingMessages
+      fp     = getEventFingerprint(event)
       shred <- Shredder.shred(event)
-    } yield shred
+    } yield (event.event_id, fp, shred)
 
   /**
    * Projects our Failures into a Some; Successes
@@ -84,7 +88,7 @@ object ShredJob {
    *         Processing Messages on Failure, or
    *         None on Success
    */
-  def projectBads(all: ValidatedNel[JsonSchemaPairs]): Option[ProcessingMessageNel] =
+  def projectBads(all: ValidatedNel[EventComponents]): Option[ProcessingMessageNel] =
     all.fold(
       e => Some(e), // Nel -> Some(List) of ProcessingMessages
       c => None)    // Discard
@@ -100,9 +104,9 @@ object ShredJob {
    *         Processing Messages on Failure, or
    *         None on Success
    */
-  def projectGoods(all: ValidatedNel[JsonSchemaPairs]): Option[List[JsonSchemaPair]] = all match {
-    case Success(nel @ _ :: _) => Some(nel) // (Non-empty) List -> Some(List) of JsonSchemaPairs
-    case _                     => None      // Discard
+  def projectGoods(all: ValidatedNel[EventComponents]): Option[EventComponents] = all match {
+    case Success((eid, efp, nel @ _ :: _)) => Some((eid, efp, nel)) // Success with a (Non-empty) List -> Some with a List of JsonSchemaPairs
+    case _                                 => None                  // Discard
   }
 
   // Have to define here so can be shared with tests
@@ -155,6 +159,18 @@ object ShredJob {
     }
     s"${outFolder}${separator}${alteredEnrichedEventSubdirectory}"
   }
+
+  /**
+   * Retrieves the event fingerprint. IF the field is null then we
+   * assign a UUID at random for the fingerprint instead. This
+   * is to respect any deduplication which requires both event ID and
+   * event fingerprint to match.
+   *
+   * @param event The event to extract a fingerprint from
+   * @return the event fingerprint
+   */
+  private def getEventFingerprint(event: EnrichedEvent): String =
+    Option(event.event_fingerprint).getOrElse("TODO")
 }
 
 /**
@@ -191,7 +207,7 @@ class ShredJob(args : Args) extends Job(args) {
 
   // Handle bad rows
   val bad = common
-    .flatMap('output -> 'errors) { o: ValidatedNel[JsonSchemaPairs] =>
+    .flatMap('output -> 'errors) { o: ValidatedNel[EventComponents] =>
       ShredJob.projectBads(o)
     }
     .mapTo(('line, 'errors) -> 'json) { both: (String, ProcessingMessageNel) =>
@@ -201,8 +217,11 @@ class ShredJob(args : Args) extends Job(args) {
 
   // Handle good rows
   val good = common
-    .flatMapTo('output -> 'good) { o: ValidatedNel[JsonSchemaPairs] =>
+    .flatMapTo('output -> ('eventId, 'eventFingerprint, 'good)) { o: ValidatedNel[EventComponents] =>
       ShredJob.projectGoods(o)
+    }
+    .groupBy('eventId, 'eventFingerprint) {
+      _.take(1)
     }
     .flatMapTo('good -> ('schema, 'json)) { pairs: List[JsonSchemaPair] =>
       pairs.map { pair =>
