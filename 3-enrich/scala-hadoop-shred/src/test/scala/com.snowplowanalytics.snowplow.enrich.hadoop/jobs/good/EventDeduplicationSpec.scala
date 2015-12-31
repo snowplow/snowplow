@@ -102,18 +102,17 @@ class EventDeduplicationSpec extends Specification {
     }
 
     "not shred any unexpected JSONs" in {
-      1 must_== 1 // TODO
+      val expectedFiles = List("atomic-events", EventDeduplicationSpec.expected.path)
+      JobSpecHelpers.listFilesWithExclusions(Sinks.output, expectedFiles) must be empty
     }
     "not trap any exceptions" in {
-      // TODO: not working
-      Sinks.exceptions must beEmptyDir
+      Sinks.exceptions must beEmptyFile
     }
     "not write any bad row JSONs" in {
-      // TODO: not working
-      Sinks.badRows must beEmptyDir
+      Sinks.badRows must beEmptyFile
     }
 
-    // Sinks.deleteAll()
+    Sinks.deleteAll()
     ()
   }
 }
