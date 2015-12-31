@@ -19,12 +19,17 @@ import java.io.File
 import java.io.BufferedWriter
 import java.io.FileWriter
 
+// Apache Commons IO
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.TrueFileFilter
+
 // Apache Commons Codec
 import org.apache.commons.codec.binary.Base64
 
 // Scala
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
+import scala.collection.JavaConverters._
 
 // Scalaz
 import scalaz._
@@ -58,8 +63,11 @@ object JobSpecHelpers {
    * A Specs2 matcher to check if a directory
    * on disk is empty or not.
    */
-  val beEmptyDir: Matcher[File] =
-    ((f: File) => !f.isDirectory || f.list.length > 0, "is populated directory, or not a directory")
+  val beEmptyFile: Matcher[File] =
+    ((f: File) =>
+      !f.exists || (f.isFile && f.length == 0),
+      "is populated file"
+    )
 
   /**
    * How Scalding represents input lines
@@ -211,5 +219,26 @@ object JobSpecHelpers {
       .fromFile(new File(root, relativePath))
       .getLines
       .toList
+
+  /**
+   * Recursively lists files in a given path, excluding the
+   * supplied paths.
+   *
+   * @param root A root filepath
+   * @param exclusions A list of paths to exclude from the listing
+   * @return the list of files contained in the root, minus the
+   *         exclusions
+   */
+  def listFilesWithExclusions(root: File, exclusions: List[String]): List[String] = {
+    val excl = for {
+      e <- exclusions
+    } yield (new File(root, e)).getCanonicalPath
+
+    FileUtils.listFiles(root, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
+      .asScala
+      .toList
+      .map(_.getCanonicalPath)
+      .filter(p => !excl.contains(p))
+  }
 
 }
