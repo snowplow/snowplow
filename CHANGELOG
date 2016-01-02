@@ -66,7 +66,7 @@ StorageLoader: added JSON Path file for com.urbanairship.connect/LOCATION event 
 StorageLoader: added JSON Path file for com.urbanairship.connect/IN_APP_MESSAGE_RESOLUTION event (#2309)
 StorageLoader: added JSON Path file for com.urbanairship.connect/IN_APP_MESSAGE_EXPIRATION event (#2310)
 StorageLoader: added JSON Path file for com.urbanairship.connect/IN_APP_MESSAGE_DISPLAY event (#2311)
-StorageLoader: added JSON Path file for com.urbanairship.connect/FIRST_OPEN event (#2311)
+StorageLoader: added JSON Path file for com.urbanairship.connect/FIRST_OPEN event (#2312)
 StorageLoader: added JSON Path file for com.urbanairship.connect/CUSTOM event (#2313)
 StorageLoader: added JSON Path file for com.urbanairship.connect/CLOSE event (#2314)
 Data modeling: removed events enriched from web-recalculate (#2275)
