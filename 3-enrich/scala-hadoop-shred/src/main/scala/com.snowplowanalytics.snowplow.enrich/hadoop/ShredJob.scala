@@ -21,6 +21,7 @@ import java.util.UUID
 // Cascading
 import cascading.tap.SinkMode
 import cascading.tuple.Fields
+import cascading.pipe.joiner.LeftJoin
 
 // Scala
 import scala.collection.mutable.Buffer
@@ -119,6 +120,9 @@ object ShredJob {
   // Indexes for the contexts, unstruct_event, and derived_contexts fields
   private val IgnoredJsonFields = Set(52, 58, 122)
 
+  // Index for the event id
+  private val EventIdIndex = 6
+
   private val alteredEnrichedEventSubdirectory = "atomic-events"
 
   /**
@@ -126,9 +130,10 @@ object ShredJob {
    * and truncating field lengths based on Postgres' column types
    *
    * @param enrichedEvent TSV
+   * @param newEventId A new event ID if required for a synthetic dupe
    * @return the same TSV with the JSON fields removed
    */
-  def alterEnrichedEvent(enrichedEvent: String): String = {
+  def alterEnrichedEvent(enrichedEvent: String, newEventId: Option[String]): String = {
     import common.utils.ConversionUtils
 
     // TODO: move PostgresConstraints code out into Postgres-specific shredder when ready.
@@ -144,7 +149,12 @@ object ShredJob {
       }
       .zipWithIndex
       .filter(x => ! ShredJob.IgnoredJsonFields.contains(x._2))
-      .map(_._1)
+      .map { case (value, index) =>
+        newEventId match {
+          case Some(eid) if index == EventIdIndex => eid
+          case _                                  => value
+        }
+      }
       .mkString("\t")
   }
 
@@ -174,6 +184,18 @@ object ShredJob {
    */
   private def getEventFingerprint(event: EnrichedEvent): String =
     Option(event.event_fingerprint).getOrElse(UUID.randomUUID().toString)
+
+  /**
+   * Creates a new event ID if the count of synthetic duplicates is greater
+   * than 1.
+   *
+   * @param duplicateCount The count of synthetic duplicates
+   * @return a possible new event ID, Option-boxed
+   */
+  private def generateNewEventId(duplicateCount: Long) = Option(duplicateCount) match {
+    case Some(dc) if dc > 1 => Some(UUID.randomUUID().toString)
+    case _                  => None
+  }
 }
 
 /**
@@ -223,20 +245,41 @@ class ShredJob(args : Args) extends Job(args) {
     .flatMap('output -> ('eventId, 'eventFingerprint, 'good)) { o: ValidatedNel[EventComponents] =>
       ShredJob.projectGoods(o)
     }
+    // Remove natural dupes (where id and fingerprint match)
     .groupBy('eventId, 'eventFingerprint) {
       _.take(1)
     }
 
+  // Now count synthetic dupes (same id, different fingerprint)
+  // This should be pretty tiny
+  val syntheticDupes = good
+    .groupBy('eventId) { _.size('dupeCount) }
+    .filter('dupeCount) { count : Long => count > 1 }
+    .rename('eventId, 'dupeEventId)
+
+  // Now join onto the dupes
+  val goodWithSyntheticDupes = good
+    .joinWithSmaller('eventId -> 'dupeEventId, syntheticDupes, joiner = new LeftJoin)
+    .map('dupeCount -> 'newEventId) { count : Long =>
+      ShredJob.generateNewEventId(count)
+    }
+
   // Write atomic-events
-  val events = good
-    .mapTo('line -> 'altered) { s: String =>
-      ShredJob.alterEnrichedEvent(s)
+  val events = goodWithSyntheticDupes
+    .mapTo(('line, 'newEventId) -> 'altered) { both: (String, Option[String]) =>
+      ShredJob.alterEnrichedEvent(both._1, both._2)
     }
     .write(goodEventsOutput)
 
   // Write JSONs
-  val jsons = good
-    .flatMapTo('good -> ('schema, 'json)) { pairs: List[JsonSchemaPair] =>
+  val jsons = goodWithSyntheticDupes
+    .flatMapTo(('good, 'newEventId) -> ('schema, 'json)) { both: (List[JsonSchemaPair], Option[String]) =>
+      val pairs = both._2 match {
+        case Some(eventId) => {
+          both._1 :+ Tuple2(com.snowplowanalytics.iglu.client.SchemaKey("com.acme.icarus", "wing", "jsonschema", "1-0-0"), new com.fasterxml.jackson.databind.node.ObjectNode(com.fasterxml.jackson.databind.node.JsonNodeFactory.instance))
+        }
+        case None    => both._1
+      }
       pairs.map { pair =>
         (pair._1.toSchemaUri, pair._2.toString)
       }
