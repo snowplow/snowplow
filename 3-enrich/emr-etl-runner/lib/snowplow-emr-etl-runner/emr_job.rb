@@ -84,7 +84,15 @@ module Snowplow
 
         # Configure
         @jobflow.name                 = config[:enrich][:job_name]
-        @jobflow.ami_version          = config[:aws][:emr][:ami_version]
+
+        if config[:aws][:emr][:ami_version] =~ /^[1-3].*/
+          @legacy = true
+          @jobflow.ami_version = config[:aws][:emr][:ami_version]
+        else
+          @legacy = false
+          @jobflow.release_label = "emr-#{config[:aws][:emr][:ami_version]}"
+        end
+
         @jobflow.ec2_key_name         = config[:aws][:emr][:ec2_key_name]
 
         @jobflow.region               = config[:aws][:emr][:region]
@@ -120,9 +128,13 @@ module Snowplow
           end
         end
 
-        # Prepare a 3.x AMI for Snowplow
-        prepare_ami3_action = Elasticity::BootstrapAction.new("s3://snowplow-hosted-assets/common/emr/snowplow-ami3-bootstrap-0.1.0.sh")
-        @jobflow.add_bootstrap_action(prepare_ami3_action)
+        # Prepare a bootstrap action based on the AMI version
+        bootstrap_jar_location = if @legacy
+          "s3://snowplow-hosted-assets/common/emr/snowplow-ami3-bootstrap-0.1.0.sh"
+        else
+          "s3://snowplow-hosted-assets/common/emr/snowplow-ami4-bootstrap-0.1.0.sh"
+        end
+        @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_jar_location))
 
         # Install and launch HBase
         hbase = config[:aws][:emr][:software][:hbase]
@@ -206,7 +218,7 @@ module Snowplow
             group_by = self.class.is_ua_ndjson(config[:collectors][:format]) ? ".*(urbanairship).*" : ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*"
 
             # Create the Hadoop MR step for the file crushing
-            compact_to_hdfs_step = Elasticity::S3DistCpStep.new
+            compact_to_hdfs_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             compact_to_hdfs_step.arguments = [
                 "--src"         , raw_input,
                 "--dest"        , enrich_step_input,
@@ -256,7 +268,7 @@ module Snowplow
 
           if s3distcp
             # We need to copy our enriched events from HDFS back to S3
-            copy_to_s3_step = Elasticity::S3DistCpStep.new
+            copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             copy_to_s3_step.arguments = [
               "--src"        , enrich_step_output,
               "--dest"       , enrich_final_output,
@@ -266,7 +278,7 @@ module Snowplow
             copy_to_s3_step.name << ": Enriched HDFS -> S3"
             @jobflow.add_step(copy_to_s3_step)
 
-            copy_success_file_step = Elasticity::S3DistCpStep.new
+            copy_success_file_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             copy_success_file_step.arguments = [
               "--src"        , enrich_step_output,
               "--dest"       , enrich_final_output,
@@ -292,7 +304,7 @@ module Snowplow
 
           # If we didn't enrich already, we need to copy to HDFS
           if s3distcp and !enrich
-            copy_to_hdfs_step = Elasticity::S3DistCpStep.new
+            copy_to_hdfs_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             copy_to_hdfs_step.arguments = [
               "--src"        , enrich_final_output, # Opposite way round to normal
               "--dest"       , enrich_step_output,
@@ -326,7 +338,7 @@ module Snowplow
 
           if s3distcp
             # We need to copy our shredded types from HDFS back to S3
-            copy_to_s3_step = Elasticity::S3DistCpStep.new
+            copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             copy_to_s3_step.arguments = [
               "--src"        , shred_step_output,
               "--dest"       , shred_final_output,
