@@ -16,6 +16,7 @@ rvm_path=/path/to/.rvm # Typically in the $HOME of the user who installed RVM
 RUNNER_PATH=/path/to/snowplow/3-enrich/emr-etl-runner
 LOADER_PATH=/path/to/snowplow/4-storage/storage-loader
 RUNNER_CONFIG=/path/to/your-runner-config.yml
+RESOLVER=/path/to/your-resolver.json
 RUNNER_ENRICHMENTS=/path/to/your/enrichment-jsons
 LOADER_CONFIG=/path/to/your-loader-config.yml
 
@@ -25,7 +26,7 @@ source ${rvm_path}/scripts/rvm
 
 # Run the ETL job on EMR
 export BUNDLE_GEMFILE=${RUNNER_PATH}/Gemfile
-bundle exec ${RUNNER_PATH}/bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG} --enrichments ${RUNNER_ENRICHMENTS}
+bundle exec ${RUNNER_PATH}/bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG} --resolver ${RESOLVER} --enrichments ${RUNNER_ENRICHMENTS}
 
 # Check the damage
 ret_val=$?
