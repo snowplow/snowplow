@@ -12,21 +12,15 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Update these for your environment
-rvm_path=/path/to/.rvm # Typically in the $HOME of the user who installed RVM
-RUNNER_PATH=/path/to/snowplow/3-enrich/emr-etl-runner
-LOADER_PATH=/path/to/snowplow/4-storage/storage-loader
+RUNNER_PATH=/path/to/snowplow-emr-etl-runner
+LOADER_PATH=/path/to/snowplow-storage-loader
 RUNNER_CONFIG=/path/to/your-runner-config.yml
 RESOLVER=/path/to/your-resolver.json
 RUNNER_ENRICHMENTS=/path/to/your/enrichment-jsons
 LOADER_CONFIG=/path/to/your-loader-config.yml
 
-# Load the RVM environment
-export PATH=$PATH:${rvm_path}/bin
-source ${rvm_path}/scripts/rvm
-
 # Run the ETL job on EMR
-export BUNDLE_GEMFILE=${RUNNER_PATH}/Gemfile
-bundle exec ${RUNNER_PATH}/bin/snowplow-emr-etl-runner --config ${RUNNER_CONFIG} --resolver ${RESOLVER} --enrichments ${RUNNER_ENRICHMENTS}
+./${RUNNER_PATH} --config ${RUNNER_CONFIG} --resolver ${RESOLVER} --enrichments ${RUNNER_ENRICHMENTS}
 
 # Check the damage
 ret_val=$?
@@ -41,5 +35,4 @@ then
 fi
 
 # If all okay, run the storage load too
-export BUNDLE_GEMFILE=${LOADER_PATH}/Gemfile
-bundle exec ${LOADER_PATH}/bin/snowplow-storage-loader --config ${LOADER_CONFIG}
+./${LOADER_PATH} --config ${LOADER_CONFIG}
