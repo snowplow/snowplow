@@ -36,6 +36,7 @@ object Dependencies {
     val sparkCore            = "org.apache.spark"           %% "spark-core"               % V.spark          % "provided"
     val sparkMllib           = "org.apache.spark"           %% "spark-mllib"              % V.spark          % "provided"
     val sparkSql             = "org.apache.spark"           %% "spark-sql"                % V.spark          % "provided"
+    val sparkHive            = "org.apache.spark"           %% "spark-hive"               % V.spark          % "provided"
     val json4sJackson        = "org.json4s"                 %% "json4s-jackson"           % V.json4s         % "provided"
     val scalaz7              = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7
     // Scala (test only)
