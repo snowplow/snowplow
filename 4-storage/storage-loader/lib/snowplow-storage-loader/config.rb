@@ -18,6 +18,7 @@ require 'date'
 require 'base64'
 require 'yaml'
 require 'erb'
+require 'aws-sdk'
 require 'sluice'
 
 # Config module to hold functions related to CLI argument parsing
@@ -58,6 +59,13 @@ module Snowplow
 
         # Add trailing slashes if needed to the non-nil buckets
         config[:aws][:s3][:buckets] = add_trailing_slashes(config[:aws][:s3][:buckets])
+
+        # Retrieve AWS credentials from EC2 role if necessary
+        if config[:aws][:access_key_id] == 'iam' and config[:aws][:secret_access_key] == 'iam'
+          credentials_from_role = Aws::InstanceProfileCredentials.new.credentials
+          config[:aws][:access_key_id] = credentials_from_role.access_key_id
+          config[:aws][:secret_access_key] = credentials_from_role.secret_access_key
+        end
 
         # Add in our comprows setting
         config[:comprows] = options[:comprows]
