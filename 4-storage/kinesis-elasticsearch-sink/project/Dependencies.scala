@@ -28,7 +28,7 @@ object Dependencies {
     // Java
     val logging              = "1.1.3"
     val slf4j                = "1.7.5"
-    val kinesisClient        = "1.0.0"
+    val kinesisClient        = "1.6.1"
     val kinesisConnector     = "1.1.2"
     val elasticsearch        = "1.4.4"
     // Scala
@@ -37,7 +37,7 @@ object Dependencies {
     val scalaUtil            = "0.1.0"
     val snowplowCommonEnrich = "0.22.0"
     val igluClient           = "0.3.2"
-    val scalazon             = "0.5"
+    val scalazon             = "0.11"
     val scalaz7              = "7.0.0"
     val snowplowTracker      = "0.1.0"
     // Scala (test only)
