@@ -1,4 +1,29 @@
-Release 75 Long-Legged Buzzard (2016-02-01)
+Release 76 Changeable Hawk-Eagle (2016-01-XX)
+---------------------------------------------
+Scala Hadoop Enrich: bumped to 1.5.1
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.20.1 (closes #2338)
+Scala Common Enrich: bumped to 0.20.0
+Scala Common Enrich: now using only base MIME type in content-type check for SendGrid Adapter (fixes #2328)
+Scala Hadoop Shred: bumped to 0.7.0
+Scala Hadoop Shred: fixed good tests' checks for empty paths (fixes #2278)
+Scala Hadoop Shred: now deduplicating event_id and event_fingerprint pairs (closes #2246)
+Scala Hadoop Shred: updated tests to check atomic-events output (closes #2264)
+Scala Hadoop Shred: now only writes atomic-events if JSONs shred successfully (fixes #2245)
+Scala Hadoop Shred: removed empty SchemaValidationFailed2Spec (closes #2271)
+Scala Hadoop Shred: fixed test suite issue with multiple input lines (fixes #2270)
+EmrEtlRunner: updated hadoop_enrich version in config.yml.sample to 1.5.1 (closes #2339)
+StorageLoader: wrote JSON Paths file for com.google.analytics.enhanced-ecommerce/action (closes #2136)
+StorageLoader: wrote JSON Paths file for com.google.analytics.enhanced-ecommerce/actionFieldObject (closes #2135)
+StorageLoader: wrote JSON Paths file for com.google.analytics.enhanced-ecommerce/impressionFieldObject (closes #2134)
+StorageLoader: wrote JSON Paths file for com.google.analytics.enhanced-ecommerce/productFieldObject (closes #2133)
+StorageLoader: wrote JSON Paths file for com.google.analytics.enhanced-ecommerce/promotionFieldObject (closes #2132)
+Redshift: added Redshift DDL for com.google.analytics.enhanced-ecommerce/promotionFieldObject (closes #2131)
+Redshift: added Redshift DDL for com.google.analytics.enhanced-ecommerce/productFieldObject (closes #2130)
+Redshift: added Redshift DDL for com.google.analytics.enhanced-ecommerce/impressionFieldObject (closes #2129)
+Redshift: added Redshift DDL for com.google.analytics.enhanced-ecommerce/actionFieldObject (closes #2128)
+Redshift: added Redshift DDL for com.google.analytics.enhanced-ecommerce/action (closes #2127)
+
+Release 75 Long-Legged Buzzard (2016-01-02)
 -------------------------------------------
 Scala Hadoop Enrich: bumped to 1.5.0
 Scala Hadoop Enrich: bumped Scala Common Enrich to 0.20.0 (#2200)
