@@ -52,8 +52,13 @@ class NoShreddingRequiredSpec extends Specification {
   "A job which processes enriched events containing no unstructured events or custom contexts" should {
     ShredJobSpec.
       source(MultipleTextLineFiles("inputFolder"), NoShreddingRequiredSpec.lines).
+      sink[String](MultipleTextLineFiles("outputFolder/atomic-events")){ output =>
+        "not write any atomic-events" in {
+          output must beEmpty
+        }
+      }.
       sink[String](PartitionedTsv("outputFolder", ShredJob.ShreddedPartition, false, ('json), SinkMode.REPLACE)){ output =>
-        "not write any events" in {
+        "not write any JSONs" in {
           output must beEmpty
         }
       }.
