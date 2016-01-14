@@ -27,6 +27,9 @@ import Scalaz._
 // Iglu Scala Client
 import iglu.client.JsonSchemaPair
 
+// Snowplow Common Enrich
+import common.outputs.EnrichedEvent
+
 /**
  * Scala package object to hold types,
  * helper methods etc.
@@ -42,4 +45,8 @@ package object hadoop {
   type Validated[A] = Validation[ProcessingMessage, A]
   type ValidatedNel[A] = ValidationNel[ProcessingMessage, A]
 
+  /**
+   * Convenient for passing around the parts of an event
+   */
+  type EventComponents = Tuple3[String, String, List[JsonSchemaPair]]
 }
