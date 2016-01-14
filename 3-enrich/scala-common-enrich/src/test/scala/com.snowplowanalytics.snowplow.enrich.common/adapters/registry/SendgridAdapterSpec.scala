@@ -224,13 +224,18 @@ class SendgridAdapterSpec extends Specification with ValidationMatchers {
     "reject empty content type" in {
       val invalidpayload = CollectorPayload(Shared.api, Nil, None, samplePostPayload.some, Shared.cljSource, Shared.context)
       val toBeRejected = SendgridAdapter.toRawEvents(invalidpayload)
-
       toBeRejected must beFailing
     }
 
     "reject unexpected content type" in {
       val invalidpayload = CollectorPayload(Shared.api, Nil, "invalidtype/invalid".some, samplePostPayload.some, Shared.cljSource, Shared.context)
       SendgridAdapter.toRawEvents(invalidpayload) must beFailing
+    }
+
+    "accept content types with explicit charsets" in {
+      val payload = CollectorPayload(Shared.api, Nil, "application/json; charset=utf-8".some, samplePostPayload.some, Shared.cljSource, Shared.context)
+      val res = SendgridAdapter.toRawEvents(payload)
+      res must beSuccessful
     }
 
     "reject unsupported event types" in {
