@@ -13,7 +13,7 @@
 -- Copyright:     Copyright (c) 2014 Snowplow Analytics Ltd
 -- License:       Apache License Version 2.0
 --
--- Compatibility: iglu:com.callrail/call_complete/jsonschema/1-0-0
+-- Compatibility: iglu:com.callrail/call_complete/jsonschema/1-0-1
 
 CREATE TABLE atomic.com_callrail_call_complete_1 (
     -- Schema of this type
@@ -40,6 +40,7 @@ CREATE TABLE atomic.com_callrail_call_complete_1 (
 	destinationnum  varchar(255)   encode raw,
 	duration        integer        encode raw,
 	first_call      boolean        encode runlength,
+	device_type     varchar(255)   encode runlenght,
 	ga              varchar(255)   encode runlength,
 	gclid           varchar(255)   encode runlength, 
 	id              varchar(255)   encode raw not null,
