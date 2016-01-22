@@ -24,6 +24,7 @@
     "$.data.destinationnum",
     "$.data.duration",
     "$.data.first_call",
+    "$.data.device_type",
     "$.data.ga",
     "$.data.gclid",
     "$.data.id",
