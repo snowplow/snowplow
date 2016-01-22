@@ -10,7 +10,7 @@ aws:
       log: ADD HERE
       raw:
         in:                  # Multiple in buckets are permitted
-          - ADD HERE          # e.g. s3://my-archive-bucket/raw
+          - ADD HERE          # e.g. s3://my-in-bucket
           - ADD HERE
         processing: ADD HERE
         archive: ADD HERE    # e.g. s3://my-archive-bucket/raw
