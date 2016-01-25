@@ -18,12 +18,12 @@ aws:
         good: ADD HERE       # e.g. s3://my-out-bucket/enriched/good
         bad: ADD HERE        # e.g. s3://my-out-bucket/enriched/bad
         errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
-        archive: ADD HERE    # Where to archive enriched events to, e.g. s3://my-out-bucket/enriched/archive
+        archive: ADD HERE    # Where to archive enriched events to, e.g. s3://my-archive-bucket/enriched
       shredded:
         good: ADD HERE       # e.g. s3://my-out-bucket/shredded/good
         bad: ADD HERE        # e.g. s3://my-out-bucket/shredded/bad
         errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
-        archive: ADD HERE    # Not required for Postgres currently
+        archive: ADD HERE    # Where to archive shredded events to, e.g. s3://my-archive-bucket/shredded
   emr:
     ami_version: 3.7.0      # Don't change this
     region: ADD HERE        # Always set this
