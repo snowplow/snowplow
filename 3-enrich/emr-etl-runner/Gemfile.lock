@@ -1,5 +1,7 @@
-PATH
-  remote: /vagrant/myelasticity
+GIT
+  remote: https://github.com/snowplow/elasticity.git
+  revision: 58892819ba456cd83cb8f4ecbdbb1a759389c1b6
+  ref: 588928
   specs:
     elasticity (6.0.5)
       fog (~> 1.0)

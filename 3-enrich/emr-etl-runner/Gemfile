@@ -20,7 +20,7 @@ ruby "1.9.3"
 # built with Bundler, so we add in the
 # RubyGems it requires here.
 gem "contracts", "= 0.7"
-gem "elasticity",  :path => "/vagrant/myelasticity"
+gem "elasticity",  :git => 'https://github.com/snowplow/elasticity.git', :ref => '588928'
 gem "sluice", "~> 0.2.2"
 gem "awrence", "~> 0.1.0"
 gem "snowplow-tracker", "~> 0.5.2"
