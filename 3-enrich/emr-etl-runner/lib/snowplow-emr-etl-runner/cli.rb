@@ -39,7 +39,7 @@ module Snowplow
       # arguments and our configuration.
       Contract None => ArgsConfigEnrichmentsResolverTuple
       def self.get_args_config_enrichments_resolver
-        
+
         # Defaults
         options = {
           :skip => [],
@@ -89,6 +89,10 @@ module Snowplow
           raise ConfigError, "#{$!.to_s}\n#{optparse}"
         end
 
+        process_options(options, optparse)
+      end
+
+      def self.process_options(options, optparse)
         args = {
           :debug                   => options[:debug],
           :start                   => options[:start],

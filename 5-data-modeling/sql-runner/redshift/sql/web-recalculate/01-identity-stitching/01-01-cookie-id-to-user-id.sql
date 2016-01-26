@@ -9,23 +9,26 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Authors: Yali Sassoon, Christophe Bogaert
 -- Copyright: Copyright (c) 2013-2015 Snowplow Analytics Ltd
 -- License: Apache License Version 2.0
 
--- Enrich events with unstructured events and inferred_user_id. Second, join with the cookie_id_user_id_map.
+-- Maps domain_userid to user_id. In case a domain_userid has multiple user_ids, we use the last record
 
-DROP TABLE IF EXISTS snowplow_intermediary.events_enriched_final;
-CREATE TABLE snowplow_intermediary.events_enriched_final
-  DISTKEY (domain_userid)
-  SORTKEY (domain_userid, domain_sessionidx, dvce_created_tstamp) -- Sort on dvce_created_tstamp to speed up future queries
+DROP TABLE IF EXISTS snowplow_intermediary.cookie_id_to_user_id_map;
+
+CREATE TABLE snowplow_intermediary.cookie_id_to_user_id_map 
+DISTKEY (domain_userid)
+SORTKEY (domain_userid)
 AS (
-  SELECT
-    COALESCE(u.inferred_user_id, e.domain_userid) AS blended_user_id, -- Placeholder (domain_userid)
-    u.inferred_user_id, -- Placeholder (NULL)
-    e.*
-  FROM
-    snowplow_intermediary.events_enriched e
-  LEFT JOIN snowplow_intermediary.cookie_id_to_user_id_map u
-    ON u.domain_userid = e.domain_userid
+  SELECT domain_userid, user_id as inferred_user_id FROM
+    (SELECT
+      collector_tstamp,
+      domain_userid,
+      user_id,
+      RANK() OVER (PARTITION BY domain_userid ORDER BY collector_tstamp DESC) AS login_sequence
+    FROM atomic.events
+    WHERE domain_userid IS NOT NULL
+    GROUP BY 1,2,3)
+  WHERE login_sequence = 1
+  GROUP BY 1,2
 );

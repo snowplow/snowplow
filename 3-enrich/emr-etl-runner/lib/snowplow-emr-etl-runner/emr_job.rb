@@ -52,6 +52,7 @@ module Snowplow
           config[:enrich][:versions][:hadoop_enrich],
           config[:enrich][:versions][:hadoop_shred],
           config[:enrich][:versions][:hadoop_elasticsearch])
+
         run_tstamp = Time.new
         run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
         @run_id = run_id
@@ -152,7 +153,7 @@ module Snowplow
           instance_group = Elasticity::InstanceGroup.new.tap { |ig|
             ig.count = tic
             ig.type  = config[:aws][:emr][:jobflow][:task_instance_type]
-            
+
             tib = config[:aws][:emr][:jobflow][:task_instance_bid]
             if tib.nil?
               ig.set_on_demand_instances
@@ -181,10 +182,14 @@ module Snowplow
 
         if enrich
 
-          # 1. Compaction to HDFS (only for CloudFront currently)
+          # 1. Compaction to HDFS (if applicable)
           raw_input = csbr[:processing]
 
-          to_hdfs = ((self.class.is_cloudfront_log(config[:collectors][:format]) or config[:collectors][:format] == "thrift") and s3distcp)
+          is_supported_collector_format = self.class.is_cloudfront_log(config[:collectors][:format]) ||
+                                          config[:collectors][:format] == "thrift" ||
+                                          self.class.is_ua_ndjson(config[:collectors][:format])
+
+          to_hdfs = is_supported_collector_format && s3distcp
 
           # TODO: throw exception if processing thrift with --skip s3distcp
           # https://github.com/snowplow/snowplow/issues/1648
@@ -196,6 +201,10 @@ module Snowplow
           end
 
           if to_hdfs
+
+            # for ndjson/urbanairship we can group by everything, just aim for the target size
+            group_by = self.class.is_ua_ndjson(config[:collectors][:format]) ? ".*(urbanairship).*" : ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*"
+
             # Create the Hadoop MR step for the file crushing
             compact_to_hdfs_step = Elasticity::S3DistCpStep.new
             compact_to_hdfs_step.arguments = [
@@ -203,11 +212,11 @@ module Snowplow
                 "--dest"        , enrich_step_input,
                 "--s3Endpoint"  , s3_endpoint
               ] + [
-                "--groupBy"     , ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*",
+                "--groupBy"     , group_by,
                 "--targetSize"  , "128",
                 "--outputCodec" , "lzo"
               ].select { |el|
-                self.class.is_cloudfront_log(config[:collectors][:format])
+                self.class.is_cloudfront_log(config[:collectors][:format]) || self.class.is_ua_ndjson(config[:collectors][:format])
               }
             compact_to_hdfs_step.name << ": Raw S3 -> HDFS"
 
@@ -479,7 +488,7 @@ module Snowplow
               break
             else
               # Sleep a while before we check again
-              sleep(120)              
+              sleep(120)
             end
 
           rescue SocketError => se
@@ -588,6 +597,12 @@ module Snowplow
       Contract String => Bool
       def self.is_cloudfront_log(collector_format)
         (collector_format == "cloudfront" or collector_format.start_with?("tsv/com.amazon.aws.cloudfront/"))
+      end
+
+      # Does this collector format represent ndjson/urbanairship ?
+      Contract String => Bool
+      def self.is_ua_ndjson(collector_format)
+        /^ndjson\/com\.urbanairship\.connect\/.+$/ === collector_format
       end
 
       # We need to partition our output buckets by run ID
