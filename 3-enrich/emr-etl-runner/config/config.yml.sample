@@ -45,6 +45,7 @@ aws:
       task_instance_type: m1.medium
       task_instance_bid: 0.015 # In USD. Adjust bid, or leave blank for non-spot-priced (i.e. on-demand) task instances
     bootstrap_failure_tries: 3 # Number of times to attempt the job in the event of bootstrap failures
+    additional_info:        # Optional JSON string for selecting additional features
 collectors:
   format: cloudfront # For example: 'clj-tomcat' for the Clojure Collector, 'thrift' for Thrift records, 'tsv/com.amazon.aws.cloudfront/wd_access_log' for Cloudfront access logs or 'ndjson/urbanairship.connect/v1' for UrbanAirship Connect events
 enrich:

@@ -100,6 +100,7 @@ module Snowplow
         @jobflow.job_flow_role        = config[:aws][:emr][:jobflow_role] # Note job_flow vs jobflow
         @jobflow.service_role         = config[:aws][:emr][:service_role]
         @jobflow.placement            = config[:aws][:emr][:placement]
+        @jobflow.additional_info      = config[:aws][:emr][:additional_info]
         unless config[:aws][:emr][:ec2_subnet_id].nil? # Nils placement so do last and conditionally
           @jobflow.ec2_subnet_id      = config[:aws][:emr][:ec2_subnet_id]
         end
