@@ -407,10 +407,16 @@ object EnrichmentManager {
       case _ => ()
     })
 
-    // Validate contexts and unstructured events
-    val shred = Shredder.shred(event) match {
+    // Validate custom contexts
+    val customContexts = Shredder.extractAndValidateCustomContexts(event) match {
       case Failure(msgs) => msgs.map(_.toString).fail
-      case Success(_) => unitSuccess.toValidationNel
+      case Success(cctx) => cctx.success
+    }
+
+    // Validate unstructured event
+    val unstructEvent = Shredder.extractAndValidateUnstructEvent(event) match {
+      case Failure(msgs) => msgs.map(_.toString).fail
+      case Success(ue) => ue.success
     }
 
     // Extract the event vendor/name/format/version
@@ -462,12 +468,25 @@ object EnrichmentManager {
       case None => None.success
     }
 
-    // Assemble array of derived contexts
-    val derived_contexts = List(uaParser).collect {
+    // Assemble array of contexts prepared by built-in enrichments
+    val preparedDerivedContexts = List(uaParser).collect {
       case Success(Some(context)) => context
     } ++ List(weatherContext).collect {
      case Success(Some(context)) => context
     } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContext
+
+    // Derive some contexts with custom API Request enrichment
+    val apiRequestContexts = registry.getApiRequestEnrichment match {
+      case Some(enrichment) => (customContexts, unstructEvent) match {
+        case (Success(cctx), Success(ue)) =>
+          enrichment.lookup(event, preparedDerivedContexts, cctx, ue)
+        case _ => Nil.success // Skip. Unstruct event or custom context corrupted (event enrichment will fail anyway)
+      }
+      case None => Nil.success
+    }
+
+    // Assemble prepared derived contexts with fetched via API Request
+    val derived_contexts = apiRequestContexts.getOrElse(Nil) ++ preparedDerivedContexts
 
     if (derived_contexts.size > 0) {
       event.derived_contexts = ME.formatDerivedContexts(derived_contexts)
@@ -495,10 +514,12 @@ object EnrichmentManager {
       crossDomain.toValidationNel             |@|
       jsScript.toValidationNel                |@|
       campaign                                |@|
-      shred                                   |@|
+      customContexts                          |@|
+      unstructEvent                           |@|
+      apiRequestContexts                      |@|
       extractSchema.toValidationNel           |@|
       weatherContext.toValidationNel) {
-      (_,_,_,_,_,_,_,_,_,_) => ()
+      (_,_,_,_,_,_,_,_,_,_,_,_) => ()
     }
     (first |@| second) {
       (_,_) => event
