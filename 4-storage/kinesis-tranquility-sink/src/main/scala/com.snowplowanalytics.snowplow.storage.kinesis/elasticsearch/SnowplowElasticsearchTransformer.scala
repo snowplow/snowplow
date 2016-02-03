@@ -260,9 +260,9 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
         } else if (tstampFields.contains(key)) {
           JObject(key -> JString(reformatTstamp(value))).successNel
         } else if (key == "contexts" || key == "derived_contexts") {
-          Shredder.parseContexts(value)
+          JObject().successNel
         } else if (key == "unstruct_event") {
-          Shredder.parseUnstruct(value)
+          JObject().successNel
         } else {
           JObject(key -> JString(value)).successNel
         }
