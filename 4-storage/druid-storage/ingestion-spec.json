@@ -6,7 +6,7 @@
       "parseSpec" : {
         "format" : "json",
         "timestampSpec" : {
-          "column" : "derived_tstamp",
+          "column" : "collector_tstamp",
           "format" : "iso"
         },
         "dimensionsSpec" : {
