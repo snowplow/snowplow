@@ -1,0 +1,16 @@
+{
+  "queryType": "topN",
+  "dataSource": "sample_datasource",
+  "dimension": "refr_medium",
+  "threshold": 5,
+  "metric": "count",
+  "granularity": "all",
+  "filter": {
+    "type": "and",
+    "fields": [{ "type": "selector", "dimension": "event", "value": "page_view" }]
+  },
+  "aggregations": [
+    {"type": "longSum", "name": "total_count", "fieldName": "count"}
+  ],
+  "intervals": [ "2016-01-01T00:00:00.000/2016-03-01T00:00:00.000" ]
+}

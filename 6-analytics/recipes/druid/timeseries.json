@@ -1,0 +1,13 @@
+{
+  "queryType": "timeseries",
+  "dataSource": "sample_datasource",
+  "granularity": "day",
+  "filter": {
+    "type": "and",
+    "fields": [{ "type": "selector", "dimension": "event", "value": "page_view" }]
+  },
+  "aggregations": [
+    { "type": "longSum", "name": "page_view_count", "fieldName": "count" }
+  ],
+  "intervals": [ "2016-01-01T00:00:00.000/2016-03-01T00:00:00.000" ]
+}
