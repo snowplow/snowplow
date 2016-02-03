@@ -86,10 +86,18 @@ object ElasticsearchSinkApp extends App {
       }
   }
 
+  val endpoint = parser.option[String](
+    List("endpoint"), "URL", "HTTP endpoint") {
+    (c, opt) => c
+  }
+
   parser.parse(args)
 
   val configValue: Config = config.value.getOrElse(
     throw new RuntimeException("--config argument must be provided")).resolve.getConfig("sink")
+
+  val endpointValue = endpoint.value.getOrElse(
+    throw new RuntimeException("--endpoint argument must be provided"))
 
   val streamType = configValue.getConfig("kinesis").getConfig("in").getString("stream-type") match {
     case "good" => StreamType.Good
@@ -128,7 +136,7 @@ object ElasticsearchSinkApp extends App {
         case _ => throw new RuntimeException("Sink type must be 'stdouterr' or 'kinesis'")
       }
 
-      new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, finalConfig, goodSink, badSink, tracker, maxConnectionTime).success
+      new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, finalConfig, goodSink, badSink, endpointValue, tracker, maxConnectionTime).success
     }
 
     // Run locally, reading from stdin and sending events to stdout / stderr rather than Elasticsearch / Kinesis

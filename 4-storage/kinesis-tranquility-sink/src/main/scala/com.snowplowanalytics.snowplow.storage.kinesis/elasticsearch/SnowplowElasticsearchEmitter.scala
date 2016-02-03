@@ -104,6 +104,7 @@ class SnowplowElasticsearchEmitter(
   configuration: KinesisConnectorConfiguration,
   goodSink: Option[ISink],
   badSink: ISink,
+  endpoint: String,
   tracker: Option[Tracker] = None,
   maxConnectionWaitTimeMs: Long = 60000)
 
@@ -231,12 +232,12 @@ class SnowplowElasticsearchEmitter(
       println("SOURCE:")
       println(jsonString)
       val httpClient = HttpClientBuilder.create().build()
-      val request = new HttpPost("http://requestb.in/ptyftbpt")
+      val request = new HttpPost(endpoint)
       val body = new StringEntity(jsonString)
       request.setEntity(body)
       request.addHeader("content-type", "application/json");
       val result = httpClient.execute(request)
-      println("RESULT")
+      println("RESULT:")
       println(result)
     }
 
