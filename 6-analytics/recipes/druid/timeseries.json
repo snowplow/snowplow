@@ -1,6 +1,6 @@
 {
   "queryType": "timeseries",
-  "dataSource": "sample_datasource",
+  "dataSource": "snowplowEvents",
   "granularity": "day",
   "filter": {
     "type": "and",

@@ -1,6 +1,6 @@
 {
   "queryType": "groupBy",
-  "dataSource": "sample_datasource",
+  "dataSource": "snowplowEvents",
   "granularity": "day",
   "dimensions": ["domain_userid"],
   "limitSpec": { "type": "default", "limit": 5000, "columns": ["domain_userid"] },

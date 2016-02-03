@@ -1,6 +1,6 @@
 {
   "queryType": "topN",
-  "dataSource": "sample_datasource",
+  "dataSource": "snowplowEvents",
   "dimension": "refr_medium",
   "threshold": 5,
   "metric": "count",
