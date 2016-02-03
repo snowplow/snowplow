@@ -7,7 +7,7 @@
     "fields": [{ "type": "selector", "dimension": "event", "value": "page_view" }]
   },
   "aggregations": [
-    { "type": "longSum", "name": "count", "fieldName": "page_view_count" }
+    { "type": "longSum", "name": "page_view_count", "fieldName": "count" }
   ],
   "intervals": [ "2016-01-01T00:00:00.000/2016-03-01T00:00:00.000" ]
 }
@@ -24,7 +24,7 @@
     "fields": [{ "type": "selector", "dimension": "event", "value": "page_view" }]
   },
   "aggregations": [
-    {"type": "longSum", "name": "count", "fieldName": "count"}
+    {"type": "longSum", "name": "total_count", "fieldName": "count"}
   ],
   "intervals": [ "2016-01-01T00:00:00.000/2016-03-01T00:00:00.000" ]
 }
@@ -40,7 +40,7 @@
     "fields": [{ "type": "selector", "dimension": "page_urlhost", "value": "snowplowanalytics.com" }]
   },
   "aggregations": [
-    { "type": "longSum", "name": "count", "fieldName": "total_count" },
+    { "type": "longSum", "name": "total_count", "fieldName": "count" },
   ],
   "intervals": [ "2016-01-01T00:00:00.000/2016-03-01T00:00:00.000" ],
   "having": {
