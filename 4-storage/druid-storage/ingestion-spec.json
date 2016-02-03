@@ -7,19 +7,42 @@
         "format" : "json",
         "timestampSpec" : {
           "column" : "derived_tstamp",
-          "format" : "auto"
+          "format" : "iso"
         },
         "dimensionsSpec" : {
-          "dimensions": [
-            "app_id",
-            "event","event_name","event_id","event_fingerprint"
-            "domain_userid","domain_sessionidx","domain_sessionid",
-            "geo_country","geo_city",
-            "page_urlhost","page_urlpath",
-            "refr_urlhost","refr_urlpath","refr_medium","refr_source",
-            "pp_xoffset_min","pp_xoffset_max","pp_yoffset_min","pp_yoffset_max",
-            "doc_width","doc_height"],
-          "dimensionExclusions" : [],
+          "dimensions": [],
+          "dimensionExclusions" : [
+              "tr_orderid",
+            	"tr_affiliation",
+            	"tr_total",
+            	"tr_tax",
+            	"tr_shipping",
+            	"tr_city",
+            	"tr_state",
+            	"tr_country",
+            	"ti_orderid",
+            	"ti_sku",
+            	"ti_name",
+            	"ti_category",
+            	"ti_price",
+            	"ti_quantity",
+              "br_family",
+              "br_version",
+              "br_type",
+              "br_renderengine",
+              "br_lang",
+              "br_features_pdf",
+              "br_features_flash",
+              "br_features_java",
+              "br_features_director",
+              "br_features_quicktime",
+              "br_features_realplayer",
+              "br_features_windowsmedia",
+              "br_features_gears",
+              "br_features_silverlight",
+              "br_cookies",
+              "br_colordepth"
+          ],
           "spatialDimensions" : ["geo_latitude","geo_longitude"]
         }
       }
