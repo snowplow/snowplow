@@ -40,7 +40,7 @@
     "fields": [{ "type": "selector", "dimension": "page_urlhost", "value": "snowplowanalytics.com" }]
   },
   "aggregations": [
-    { "type": "longSum", "name": "total_count", "fieldName": "count" },
+    { "type": "longSum", "name": "total_count", "fieldName": "count" }
   ],
   "intervals": [ "2016-01-01T00:00:00.000/2016-03-01T00:00:00.000" ],
   "having": {
