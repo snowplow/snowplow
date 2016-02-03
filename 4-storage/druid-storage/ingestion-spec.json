@@ -1,0 +1,76 @@
+{
+  "dataSchema" : {
+    "dataSource" : "TBD",
+    "parser" : {
+      "type" : "string",
+      "parseSpec" : {
+        "format" : "json",
+        "timestampSpec" : {
+          "column" : "derived_tstamp",
+          "format" : "auto"
+        },
+        "dimensionsSpec" : {
+          "dimensions": [
+            "app_id",
+            "event","event_name","event_id","event_fingerprint"
+            "domain_userid","domain_sessionidx","domain_sessionid",
+            "geo_country","geo_city",
+            "page_urlhost","page_urlpath",
+            "refr_urlhost","refr_urlpath","refr_medium","refr_source",
+            "pp_xoffset_min","pp_xoffset_max","pp_yoffset_min","pp_yoffset_max",
+            "doc_width","doc_height"],
+          "dimensionExclusions" : [],
+          "spatialDimensions" : ["geo_latitude","geo_longitude"]
+        }
+      }
+    },
+    "metricsSpec" : [{
+      "type" : "count",
+      "name" : "count"
+    }],
+    "granularitySpec" : {
+      "segmentGranularity" : "DAY",
+      "queryGranularity" : "NONE",
+      "intervals" : [ "2015-10-31/2016-09-01" ]
+    }
+  },
+  "ioConfig" : {
+    "type" : "hadoop",
+    "inputSpec" : {
+      "type" : "static",
+      "paths" : "/MyDirectory/examples/indexing/wikipedia_data.json"
+    },
+    "metadataUpdateSpec" : {
+      "type":"mysql",
+      "connectURI" : "jdbc:mysql://localhost:3306/druid",
+      "password" : "diurd",
+      "segmentTable" : "druid_segments",
+      "user" : "druid"
+    },
+    "segmentOutputPath" : "/MyDirectory/data/index/output"
+  },
+  "tuningConfig" : {
+    "type" : "hadoop",
+    "workingPath": "/tmp",
+    "partitionsSpec" : {
+      "type" : "dimension",
+      "partitionDimension" : null,
+      "targetPartitionSize" : 5000000,
+      "maxPartitionSize" : 7500000,
+      "assumeGrouped" : false,
+      "numShards" : -1
+    },
+    "shardSpecs" : { },
+    "leaveIntermediate" : false,
+    "cleanupOnFailure" : true,
+    "overwriteFiles" : false,
+    "ignoreInvalidRows" : false,
+    "jobProperties" : { },
+    "combineText" : false,
+    "persistInHeap" : false,
+    "ingestOffheap" : false,
+    "bufferSize" : 134217728,
+    "aggregationBufferRatio" : 0.5,
+    "rowFlushBoundary" : 300000
+  }
+}
