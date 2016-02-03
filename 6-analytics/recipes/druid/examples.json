@@ -28,3 +28,24 @@
   ],
   "intervals": [ "2016-01-01T00:00:00.000/2016-03-01T00:00:00.000" ]
 }
+
+{
+  "queryType": "groupBy",
+  "dataSource": "sample_datasource",
+  "granularity": "day",
+  "dimensions": ["domain_userid"],
+  "limitSpec": { "type": "default", "limit": 5000, "columns": ["domain_userid"] },
+  "filter": {
+    "type": "and",
+    "fields": [{ "type": "selector", "dimension": "page_urlhost", "value": "snowplowanalytics.com" }]
+  },
+  "aggregations": [
+    { "type": "longSum", "name": "count", "fieldName": "total_count" },
+  ],
+  "intervals": [ "2016-01-01T00:00:00.000/2016-03-01T00:00:00.000" ],
+  "having": {
+    "type": "greaterThan",
+    "aggregation": "total_count",
+    "value": 2
+  }
+}
