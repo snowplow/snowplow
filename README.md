@@ -76,7 +76,7 @@ limitations under the License.
 [travis-image]: https://travis-ci.org/snowplow/snowplow.png?branch=master
 [travis]: http://travis-ci.org/snowplow/snowplow
 
-[release-image]: http://img.shields.io/badge/release-75_Long-Legged_Buzzard.svg?style=flat
+[release-image]: https://img.shields.io/badge/release-76_Changeable_Hawk--Eagle-orange.svg?style=flat
 [releases]: https://github.com/snowplow/snowplow/releases
 
 [license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
