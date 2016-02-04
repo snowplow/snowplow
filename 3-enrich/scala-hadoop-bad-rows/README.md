@@ -6,7 +6,19 @@ Use this Scalding job to extract raw Snowplow events from your Snowplow bad rows
 
 ## Usage
 
-Run this job using the [Amazon Ruby EMR client] [emr-client]:
+The job could be run via [AWS CLI](https://aws.amazon.com/cli/):
+
+```sh
+$ aws emr create-cluster --name "Extract raw events from Snowplow bad row JSONs" --ami-version 3.11 \
+    --use-default-roles --ec2-attributes KeyName={{EC2_KEY_NAME}} \
+    --instance-type m3.xlarge --instance-count 3 \
+    --log-uri s3://{{PATH_TO_LOGGING_BUCKET}} \
+    --steps Type=CUSTOM_JAR,Name="Extract Bad Rows",ActionOnFailure=TERMINATE_CLUSTER,Jar=s3://snowplow-hosted-assets/3-enrich/scala-bad-rows/snowplow-bad-rows-0.1.0.jar,Args=["com.snowplowanalytics.hadoop.scalding.SnowplowBadRowsJob","--hdfs","--input","s3n://{{PATH_TO_YOUR_FIXABLE_BAD_ROWS}}","--output","s3n://{{PATH_WILL_BE_STAGING_FOR_EMRETLRUNNER}}"] \
+    --auto-terminate
+```
+
+
+Alternative *(depricated)* way is to run the job using the [Amazon Ruby EMR client] [emr-client]:
 
     $ elastic-mapreduce --create --name "Extract raw events from Snowplow bad row JSONs" \
       --instance-type m1.xlarge --instance-count 3 \
@@ -44,3 +56,4 @@ limitations under the License.
 [lemur]: https://github.com/TheClimateCorporation/lemur
 [boto]: http://boto.readthedocs.org/en/latest/ref/emr.html
 [license]: http://www.apache.org/licenses/LICENSE-2.0
+[aws-cli]: https://aws.amazon.com/cli/
