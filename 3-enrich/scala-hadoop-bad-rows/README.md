@@ -20,13 +20,15 @@ $ aws emr create-cluster --name "Extract raw events from Snowplow bad row JSONs"
 
 Alternative *(depricated)* way is to run the job using the [Amazon Ruby EMR client] [emr-client]:
 
-    $ elastic-mapreduce --create --name "Extract raw events from Snowplow bad row JSONs" \
-      --instance-type m1.xlarge --instance-count 3 \
-      --jar s3://snowplow-hosted-assets/3-enrich/scala-bad-rows/snowplow-bad-rows-0.1.0.jar \
-      --arg com.snowplowanalytics.hadoop.scalding.SnowplowBadRowsJob \
-      --arg --hdfs \
-      --arg --input --arg s3n://{{PATH_TO_YOUR_FIXABLE_BAD_ROWS}} \
-      --arg --output --arg s3n://{{PATH_WILL_BE_STAGING_FOR_EMRETLRUNNER}}
+```sh
+$ elastic-mapreduce --create --name "Extract raw events from Snowplow bad row JSONs" \
+    --instance-type m1.xlarge --instance-count 3 \
+    --jar s3://snowplow-hosted-assets/3-enrich/scala-bad-rows/snowplow-bad-rows-0.1.0.jar \
+    --arg com.snowplowanalytics.hadoop.scalding.SnowplowBadRowsJob \
+    --arg --hdfs \
+    --arg --input --arg s3n://{{PATH_TO_YOUR_FIXABLE_BAD_ROWS}} \
+    --arg --output --arg s3n://{{PATH_WILL_BE_STAGING_FOR_EMRETLRUNNER}}
+```
 
 Replace the `{{...}}` placeholders above with the appropriate bucket paths.
 
