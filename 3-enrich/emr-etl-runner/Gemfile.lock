@@ -1,13 +1,3 @@
-GIT
-  remote: https://github.com/snowplow/elasticity.git
-  revision: 58892819ba456cd83cb8f4ecbdbb1a759389c1b6
-  ref: 588928
-  specs:
-    elasticity (6.0.5)
-      fog (~> 1.0)
-      rest-client (~> 1.0)
-      unf (~> 0.1)
-
 GEM
   remote: https://rubygems.org/
   specs:
@@ -24,6 +14,10 @@ GEM
     docile (1.1.5)
     domain_name (0.5.24)
       unf (>= 0.0.5, < 1.0.0)
+    elasticity (6.0.7)
+      fog (~> 1.0)
+      rest-client (~> 1.0)
+      unf (~> 0.1)
     excon (0.45.3)
     fog (1.24.0)
       fog-brightbox
@@ -126,11 +120,11 @@ DEPENDENCIES
   awrence (~> 0.1.0)
   contracts (= 0.7)
   coveralls
-  elasticity!
+  elasticity (~> 6.0.7)
   rspec (~> 2.14, >= 2.14.1)
   sluice (~> 0.2.2)
   snowplow-tracker (~> 0.5.2)
   warbler
 
 BUNDLED WITH
-   1.10.6
+   1.11.2
