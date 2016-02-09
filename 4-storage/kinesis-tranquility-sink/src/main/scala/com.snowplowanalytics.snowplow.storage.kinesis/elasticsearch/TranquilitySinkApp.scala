@@ -61,7 +61,7 @@ object StreamType extends Enumeration {
 /**
  * Main entry point for the Elasticsearch sink
  */
-object ElasticsearchSinkApp extends App {
+object TranquilitySinkApp extends App {
   val parser = new ArgotParser(
     programName = generated.Settings.name,
     compactUsage = true,

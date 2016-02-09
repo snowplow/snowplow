@@ -22,34 +22,7 @@ package storage.kinesis.elasticsearch
 
 // Amazon
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
-import com.amazonaws.services.kinesis.connectors.elasticsearch.{
-  ElasticsearchEmitter,
-  ElasticsearchObject
-}
 import com.amazonaws.services.kinesis.connectors.interfaces.IEmitter
-
-// Elasticsearch
-import org.elasticsearch.action.admin.cluster.health.{
-  ClusterHealthRequestBuilder,
-  ClusterHealthResponse,
-  ClusterHealthStatus
-}
-import org.elasticsearch.action.bulk.{
-  BulkItemResponse,
-  BulkRequestBuilder,
-  BulkResponse
-}
-import org.elasticsearch.action.bulk.BulkItemResponse.Failure
-import org.elasticsearch.action.index.IndexRequestBuilder
-import org.elasticsearch.client.transport.{
-  NoNodeAvailableException,
-  TransportClient
-}
-import org.elasticsearch.common.settings.{
-  ImmutableSettings,
-  Settings
-}
-import org.elasticsearch.common.transport.InetSocketTransportAddress
 
 import com.amazonaws.services.kinesis.connectors.{
   KinesisConnectorConfiguration,
@@ -100,7 +73,7 @@ import sinks._
  * @param maxConnectionWaitTimeMs the maximum amount of time
  *        we can attempt to send to elasticsearch
  */
-class SnowplowElasticsearchEmitter(
+class SnowplowTranquilityEmitter(
   configuration: KinesisConnectorConfiguration,
   goodSink: Option[ISink],
   badSink: ISink,
@@ -116,74 +89,10 @@ class SnowplowElasticsearchEmitter(
   private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   /**
-   * The settings key for the cluster name.
-   * 
-   * Defaults to elasticsearch.
-   */
-  private val ElasticsearchClusterNameKey = "cluster.name"
-
-  /**
-   * The settings key for transport client sniffing. If set to true, this instructs the TransportClient to
-   * find all nodes in the cluster, providing robustness if the original node were to become unavailable.
-   * 
-   * Defaults to false.
-   */
-  private val ElasticsearchClientTransportSniffKey = "client.transport.sniff"
-
-  /**
-   * The settings key for ignoring the cluster name. Set to true to ignore cluster name validation
-   * of connected nodes.
-   * 
-   * Defaults to false.
-   */
-  private val ElasticsearchClientTransportIgnoreClusterNameKey = "client.transport.ignore_cluster_name"
-
-  /**
-   * The settings key for ping timeout. The time to wait for a ping response from a node.
-   * 
-   * Default to 5s.
-   */
-  private val ElasticsearchClientTransportPingTimeoutKey = "client.transport.ping_timeout"
-
-  /**
-   * The settings key for node sampler interval. How often to sample / ping the nodes listed and connected.
-   * 
-   * Defaults to 5s
-   */
-  private val ElasticsearchClientTransportNodesSamplerIntervalKey = "client.transport.nodes_sampler_interval"
-
-  private val settings = ImmutableSettings.settingsBuilder
-    .put(ElasticsearchClusterNameKey,                         configuration.ELASTICSEARCH_CLUSTER_NAME)
-    .put(ElasticsearchClientTransportSniffKey,                configuration.ELASTICSEARCH_TRANSPORT_SNIFF)
-    .put(ElasticsearchClientTransportIgnoreClusterNameKey,    configuration.ELASTICSEARCH_IGNORE_CLUSTER_NAME)
-    .put(ElasticsearchClientTransportPingTimeoutKey,          configuration.ELASTICSEARCH_PING_TIMEOUT)
-    .put(ElasticsearchClientTransportNodesSamplerIntervalKey, configuration.ELASTICSEARCH_NODE_SAMPLER_INTERVAL)
-    .build
-
-  /**
-   * The Elasticsearch client.
-   */
-  private val elasticsearchClient = new TransportClient(settings)
-
-  /**
-   * The Elasticsearch endpoint.
-   */
-  private val elasticsearchEndpoint = configuration.ELASTICSEARCH_ENDPOINT
-
-  /**
-   * The Elasticsearch port.
-   */
-  private val elasticsearchPort = configuration.ELASTICSEARCH_PORT
-
-  /**
    * The amount of time to wait in between unsuccessful index requests (in milliseconds).
    * 10 seconds = 10 * 1000 = 10000
    */
   private val BackoffPeriod = 10000
-
-  elasticsearchClient.addTransportAddress(new InetSocketTransportAddress(elasticsearchEndpoint, elasticsearchPort))
-       
-  Log.info("ElasticsearchEmitter using elasticsearch endpoint " + elasticsearchEndpoint + ":" + elasticsearchPort)
 
   /**
    * Emits good records to stdout or Elasticsearch.
@@ -226,120 +135,23 @@ class SnowplowElasticsearchEmitter(
     import org.apache.http.message
     import org.apache.http.client.methods.HttpPost
     import org.apache.http.impl.client.HttpClientBuilder
-
+    import sys.process._
 
     for (jsonString <- sources) {
       println("SOURCE:")
       println(jsonString)
-      val httpClient = HttpClientBuilder.create().build()
-      val request = new HttpPost(endpoint)
-      val body = new StringEntity(jsonString)
-      request.setEntity(body)
-      request.addHeader("content-type", "application/json");
-      val result = httpClient.execute(request)
+      // val httpClient = HttpClientBuilder.create().build()
+      // val request = new HttpPost(endpoint)
+      // val body = new StringEntity(jsonString)
+      // request.setEntity(body)
+      // request.addHeader("content-type", "application/json");
+      // val result = httpClient.execute(request)
+      "curl -H "Content-Type: application/json" -XPOST %s".format(endpoint).!
       println("RESULT:")
       println(result)
     }
 
     Nil
-  }
-
-  /**
-   * Emits good records to Elasticsearch and bad records to Kinesis.
-   * All valid records in the buffer get sent to Elasticsearch in a bulk request.
-   * All invalid requests and all requests which failed transformation get sent to Kinesis.
-   *
-   * @param records List of records to send to Elasticsearch
-   * @return List of inputs which Elasticsearch rejected
-   */
-  private def sendToElasticsearch(records: List[EmitterInput]): List[EmitterInput] = {
-
-    val bulkRequest: BulkRequestBuilder = elasticsearchClient.prepareBulk()
-
-    records.foreach(recordTuple => recordTuple.map(record => record.map(validRecord => {
-      val indexRequestBuilder = {
-        val irb =
-          elasticsearchClient.prepareIndex(validRecord.getIndex, validRecord.getType, validRecord.getId)
-        irb.setSource(validRecord.getSource)
-        val version = validRecord.getVersion
-        if (version != null) {
-          irb.setVersion(version)
-        }
-        val ttl = validRecord.getTtl
-        if (ttl != null) {
-          irb.setTTL(ttl)
-        }
-        val create = validRecord.getCreate
-        if (create != null) {
-          irb.setCreate(create)
-        }
-        irb
-      }
-      bulkRequest.add(indexRequestBuilder)
-    })))
-
-    val connectionAttemptStartTime = System.currentTimeMillis()
-
-    /**
-     * Keep attempting to execute the buldRequest until it succeeds
-     *
-     * @return List of inputs which Elasticsearch rejected
-     */
-    @tailrec def attemptEmit(attemptNumber: Long = 1): List[EmitterInput] = {
-
-      if (attemptNumber > 1 && System.currentTimeMillis() - connectionAttemptStartTime > maxConnectionWaitTimeMs) {
-        forceShutdown()
-      }
-
-      try {
-        val bulkResponse = bulkRequest.execute.actionGet
-        val responses = bulkResponse.getItems
-
-        val allFailures = responses.toList.zip(records).filter(_._1.isFailed).map(pair => {
-          val (response, record) = pair
-          Log.error("Record failed with message: " + response.getFailureMessage)
-          val failure = response.getFailure
-          if (failure.getMessage.contains("DocumentAlreadyExistsException")
-              || failure.getMessage.contains("VersionConflictEngineException")) {
-            None
-          } else {
-            Some(record._1 -> List("Elasticsearch rejected record with message: %s"
-              .format(failure.getMessage)).fail)
-          }
-        })
-
-        val numberOfSkippedRecords = allFailures.count(_.isEmpty)
-        val failures = allFailures.flatten
-
-        Log.info("Emitted " + (records.size - failures.size - numberOfSkippedRecords)
-          + " records to Elasticsearch")
-        if (!failures.isEmpty) {
-          printClusterStatus
-          Log.warn("Returning " + failures.size + " records as failed")
-        }
-        failures
-      } catch {
-        case nnae: NoNodeAvailableException => {
-          Log.error("No nodes found at " + elasticsearchEndpoint + ":" + elasticsearchPort + ". Retrying in "
-            + BackoffPeriod + " milliseconds", nnae)
-          sleep(BackoffPeriod)
-          tracker foreach {
-            t => SnowplowTracking.sendFailureEvent(t, BackoffPeriod, connectionAttemptStartTime, attemptNumber, nnae.toString)
-          }
-          attemptEmit(attemptNumber + 1)
-        }
-        case e: Exception => {
-          Log.error("ElasticsearchEmitter threw an unexpected exception ", e)
-          sleep(BackoffPeriod)
-          tracker foreach {
-            t => SnowplowTracking.sendFailureEvent(t, BackoffPeriod, connectionAttemptStartTime, attemptNumber, e.toString)
-          }
-          attemptEmit(attemptNumber + 1)
-        }
-      }
-    }
-
-    attemptEmit()
   }
 
   /**
@@ -361,10 +173,9 @@ class SnowplowElasticsearchEmitter(
   }
 
   /**
-   * Closes the Elasticsearch client when the KinesisConnectorRecordProcessor is shut down
+   * Required to implement IEmitter
    */
   override def shutdown {
-    elasticsearchClient.close
   }
 
   def formatFailure(record: EmitterInput): String = {
@@ -388,6 +199,7 @@ class SnowplowElasticsearchEmitter(
    * Terminate the application in a way the KCL cannot stop
    *
    * Prevents shutdown hooks from running
+   * TODO: call this if we continually fail to POST
    */
   private def forceShutdown() {
     Log.error(s"Shutting down application as unable to connect to Elasticsearch for over $maxConnectionWaitTimeMs ms")
@@ -400,21 +212,6 @@ class SnowplowElasticsearchEmitter(
     }
 
     Runtime.getRuntime.halt(1)
-  }
-
-  /**
-   * Logs the Elasticsearch cluster's health
-   */
-  private def printClusterStatus {
-    val healthRequestBuilder = elasticsearchClient.admin.cluster.prepareHealth()
-    val response = healthRequestBuilder.execute.actionGet
-    if (response.getStatus.equals(ClusterHealthStatus.RED)) {
-      Log.error("Cluster health is RED. Indexing ability will be limited")
-    } else if (response.getStatus.equals(ClusterHealthStatus.YELLOW)) {
-      Log.warn("Cluster health is YELLOW.")
-    } else if (response.getStatus.equals(ClusterHealthStatus.GREEN)) {
-      Log.info("Cluster health is GREEN.")
-    }
   }
 
   /**
