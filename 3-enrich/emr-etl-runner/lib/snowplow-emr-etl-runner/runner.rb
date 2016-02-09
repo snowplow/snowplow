@@ -131,7 +131,7 @@ module Snowplow
           if args[:skip].include?('s3distcp')
             raise ConfigError, "Cannot process Thrift events with --skip s3distcp"
           end
-          if config[:emr][:ami_version].start_with?('2')
+          if config[:aws][:emr][:ami_version].start_with?('2')
             raise ConfigError, "Cannot process Thrift events with AMI version 2.x.x"
           end
         end
