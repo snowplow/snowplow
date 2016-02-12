@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -451,6 +451,15 @@ object EnrichmentManager {
       case None => Nil
     }
 
+    // Execute header extractor enrichment
+    val httpHeaderExtractorContext = registry.getHttpHeaderExtractorEnrichment match {
+      case Some(hee) =>
+        val headers = raw.context.headers
+
+        hee.extract(headers)
+      case None => Nil
+    }
+
     // Fetch weather context
     val weatherContext = registry.getWeatherEnrichment match {
       case Some(we) => {
@@ -467,7 +476,7 @@ object EnrichmentManager {
       case Success(Some(context)) => context
     } ++ List(weatherContext).collect {
      case Success(Some(context)) => context
-    } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContext
+    } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContext ++ httpHeaderExtractorContext
 
     if (derived_contexts.size > 0) {
       event.derived_contexts = ME.formatDerivedContexts(derived_contexts)

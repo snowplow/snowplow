@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -49,6 +49,7 @@ import registry.{
   JavascriptScriptEnrichment,
   EventFingerprintEnrichment,
   CookieExtractorEnrichment,
+  HttpHeaderExtractorEnrichment,
   WeatherEnrichment,
   UserAgentUtilsEnrichmentConfig,
   UaParserEnrichmentConfig,
@@ -56,6 +57,7 @@ import registry.{
   JavascriptScriptEnrichmentConfig,
   EventFingerprintEnrichmentConfig,
   CookieExtractorEnrichmentConfig,
+  HttpHeaderExtractorEnrichmentConfig,
   WeatherEnrichmentConfig
 }
 
@@ -152,6 +154,8 @@ object EnrichmentRegistry {
             EventFingerprintEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "cookie_extractor_config") {
             CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "http_header_extractor_config") {
+            HttpHeaderExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "weather_enrichment_config") {
             WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else {
@@ -267,6 +271,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getCookieExtractorEnrichment: Option[CookieExtractorEnrichment] =
     getEnrichment[CookieExtractorEnrichment]("cookie_extractor_config")
+
+  /*
+   * Returns an Option boxing the HttpHeaderExtractorEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the HttpHeaderExtractorEnrichment instance
+   */
+  def getHttpHeaderExtractorEnrichment: Option[HttpHeaderExtractorEnrichment] =
+    getEnrichment[HttpHeaderExtractorEnrichment]("http_header_extractor_config")
 
   /**
    * Returns an Option boxing the WeatherEnrichment
