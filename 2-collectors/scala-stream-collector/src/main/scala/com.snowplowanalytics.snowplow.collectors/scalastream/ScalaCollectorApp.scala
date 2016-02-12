@@ -24,6 +24,7 @@ import spray.can.Http
 // Java
 import java.io.File
 import java.nio.ByteBuffer
+import java.util.concurrent.ScheduledThreadPoolExecutor
 
 // Argot
 import org.clapper.argot._
@@ -73,10 +74,12 @@ object ScalaCollector extends App {
 
   implicit val system = ActorSystem.create("scala-stream-collector", rawConf)
 
+  lazy val executorService = new ScheduledThreadPoolExecutor(collectorConfig.threadpoolSize)
+
   val sinks = collectorConfig.sinkEnabled match {
     case Sink.Kinesis => {
-      val good = KinesisSink.createAndInitialize(collectorConfig, InputType.Good)
-      val bad  = KinesisSink.createAndInitialize(collectorConfig, InputType.Bad)
+      val good = KinesisSink.createAndInitialize(collectorConfig, InputType.Good, executorService)
+      val bad  = KinesisSink.createAndInitialize(collectorConfig, InputType.Bad, executorService)
       CollectorSinks(good, bad) 
     }
     case Sink.Stdout  => {
