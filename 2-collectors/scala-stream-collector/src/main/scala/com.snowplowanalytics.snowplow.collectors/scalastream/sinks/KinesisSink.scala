@@ -18,6 +18,7 @@ package sinks
 // Java
 import java.nio.ByteBuffer
 import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.ScheduledExecutorService
 
 // Amazon
 import com.amazonaws.services.kinesis.model.ResourceNotFoundException
@@ -71,8 +72,8 @@ object KinesisSink {
    * @param config
    * @param inputType
    */
-  def createAndInitialize(config: CollectorConfig, inputType: InputType.InputType): KinesisSink = {
-    val ks = new KinesisSink(config, inputType)
+  def createAndInitialize(config: CollectorConfig, inputType: InputType.InputType, executorService: ScheduledExecutorService): KinesisSink = {
+    val ks = new KinesisSink(config, inputType, executorService)
     ks.scheduleFlush()
 
     // When the application is shut down, stop accepting incoming requests
@@ -92,7 +93,7 @@ object KinesisSink {
 /**
  * Kinesis Sink for the Scala collector.
  */
-class KinesisSink private (config: CollectorConfig, inputType: InputType.InputType) extends AbstractSink {
+class KinesisSink private (config: CollectorConfig, inputType: InputType.InputType, val executorService: ScheduledExecutorService) extends AbstractSink {
 
   import log.{error, debug, info, trace}
 
@@ -111,7 +112,6 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
 
   info("Creating thread pool of size " + config.threadpoolSize)
 
-  val executorService = new ScheduledThreadPoolExecutor(config.threadpoolSize)
   implicit lazy val ec = concurrent.ExecutionContext.fromExecutorService(executorService)
 
   /**
