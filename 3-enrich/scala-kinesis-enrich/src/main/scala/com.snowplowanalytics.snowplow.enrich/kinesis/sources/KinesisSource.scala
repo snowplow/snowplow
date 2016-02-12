@@ -36,7 +36,6 @@ import com.amazonaws.services.kinesis.clientlibrary.interfaces._
 import com.amazonaws.services.kinesis.clientlibrary.exceptions._
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker._
 import com.amazonaws.services.kinesis.clientlibrary.types.ShutdownReason
-import com.amazonaws.services.kinesis.metrics.impl.NullMetricsFactory
 import com.amazonaws.services.kinesis.model.Record
 
 // Logging
@@ -104,8 +103,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     )
     val worker = new Worker(
       rawEventProcessorFactory,
-      kinesisClientLibConfiguration,
-      new NullMetricsFactory()
+      kinesisClientLibConfiguration
     )
 
     worker.run()
