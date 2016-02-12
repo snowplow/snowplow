@@ -1,0 +1,19 @@
+{
+    "jsonpaths": [
+        "$.schema.vendor",
+        "$.schema.name",
+        "$.schema.format",
+        "$.schema.version",
+        "$.hierarchy.rootId",
+        "$.hierarchy.rootTstamp",
+        "$.hierarchy.refRoot",
+        "$.hierarchy.refTree",
+        "$.hierarchy.refParent",
+        "$.data.consumer.UUID",
+        "$.data.device.ID",
+        "$.data.device.isBot",
+        "$.data.device.isIncognito",
+        "$.data.device.isProxied",
+        "$.data.device.isTor"
+    ]
+}
