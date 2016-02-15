@@ -188,17 +188,19 @@ class ApiRequestEnrichmentIntegrationTest extends Specification with ValidationM
         |
       """.stripMargin)
 
+    // NOTE: akka-http 1.0 was sending "2014-11-10T08:38:30.000Z" as is with ':', this behavior was changed in 2.0
+
     val correctResultContext2 = parseJson("""
      |{
      |  "schema": "iglu:com.acme/user/jsonschema/1-0-0",
-     |  "data": {"path": "/api/lookup+test/snowplower/j-ZKIY4CKQRX72/32.1?date=2014-11-10T08:38:30.000Z","method": "POST", "auth_header": "snowplower:supersecret", "request": 1}
+     |  "data": {"path": "/api/lookup+test/snowplower/j-ZKIY4CKQRX72/32.1?date=2014-11-10T08%3A38%3A30.000Z","method": "POST", "auth_header": "snowplower:supersecret", "request": 1}
      |}
     """.stripMargin)
 
     val correctResultContext3 = parseJson("""
      |{
      |  "schema": "iglu:com.acme/onlypath/jsonschema/1-0-0",
-     |  "data": {"path": "/api/lookup+test/snowplower/j-ZKIY4CKQRX72/32.1?date=2014-11-10T08:38:30.000Z", "request": 1}
+     |  "data": {"path": "/api/lookup+test/snowplower/j-ZKIY4CKQRX72/32.1?date=2014-11-10T08%3A38%3A30.000Z", "request": 1}
      |}
      """.stripMargin)
 

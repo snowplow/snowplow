@@ -52,9 +52,9 @@ object Dependencies {
     val json4s           = "3.2.11"
     val igluClient       = "0.4.0"
     val scalaForex       = "0.4.0"
-    val scalaWeather     = "0.1.0"
+    val scalaWeather     = "0.2.0"
     val akka             = "2.3.14"
-    val akkaStreams      = "1.0"    // Can be upgraded only along with scala-weather
+    val akkaStreams      = "2.0.2"
     val gatlingJsonpath  = "0.6.4"
     // Scala (test only)
     val specs2           = "2.2.3"
