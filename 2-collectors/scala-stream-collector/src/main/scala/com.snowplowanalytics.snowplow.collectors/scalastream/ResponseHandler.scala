@@ -101,9 +101,9 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
       (HttpResponse, List[Array[Byte]]) = {
 
       // Make a Tuple2 with the ip address and the shard partition key
-      val ipKey = ip.toOption.map(_.getHostAddress) match {
+      val (ipAddress, partitionKey) = ip.toOption.map(_.getHostAddress) match {
         case None     => ("unknown", UUID.randomUUID.toString)
-        case Some(ip) => (ip, ip)
+        case Some(ip) => (ip, if (config.useIpAddressAsPartitionKey) ip else UUID.randomUUID.toString)
       }
 
       // Use the same UUID if the request cookie contains `sp`.
@@ -117,7 +117,7 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
 
       val event = new CollectorPayload(
         "iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
-        ipKey._1,
+        ipAddress,
         timestamp,
         "UTF-8",
         Collector
@@ -150,8 +150,8 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
         val eventSplit = SplitBatch.splitAndSerializePayload(event, sinks.good.MaxBytes)
 
         // Send events to respective sinks
-        val sinkResponseGood = sinks.good.storeRawEvents(eventSplit.good, ipKey._2)
-        val sinkResponseBad  = sinks.bad.storeRawEvents(eventSplit.bad, ipKey._2)
+        val sinkResponseGood = sinks.good.storeRawEvents(eventSplit.good, partitionKey)
+        val sinkResponseBad  = sinks.bad.storeRawEvents(eventSplit.bad, partitionKey)
 
         // Sink Responses for Test Sink
         sinkResponseGood ++ sinkResponseBad
@@ -188,16 +188,16 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
             .map(_.getValue)
           target match {
             case Some(t) => HttpResponse(302).withHeaders(`Location`(t) :: headers) -> Nil
-            // case None => badRequest -> sinks.bad.storeRawEvents(List("TODO".getBytes), ipKey._2)
+            // case None => badRequest -> sinks.bad.storeRawEvents(List("TODO".getBytes), partitionKey)
             case None => {
               val everythingSerialized = new String(SplitBatch.ThriftSerializer.get().serialize(event))
-              badRequest -> sinks.bad.storeRawEvents(List(createBadRow(event, s"Redirect failed due to lack of u parameter")), ipKey._2)
+              badRequest -> sinks.bad.storeRawEvents(List(createBadRow(event, s"Redirect failed due to lack of u parameter")), partitionKey)
             }
           }
         } catch {
           case NonFatal(e) => {
             val everythingSerialized = new String(SplitBatch.ThriftSerializer.get().serialize(event))
-            badRequest -> sinks.bad.storeRawEvents(List(createBadRow(event, s"Redirect failed due to error $e")), ipKey._2)
+            badRequest -> sinks.bad.storeRawEvents(List(createBadRow(event, s"Redirect failed due to error $e")), partitionKey)
           }
         }
       } else if (KinesisSink.shuttingDown) {

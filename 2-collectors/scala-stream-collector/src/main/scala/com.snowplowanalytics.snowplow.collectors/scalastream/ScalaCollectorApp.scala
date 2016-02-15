@@ -170,4 +170,6 @@ class CollectorConfig(config: Config) {
   val backoffPolicy = kinesis.getConfig("backoffPolicy")
   val minBackoff = backoffPolicy.getLong("minBackoff")
   val maxBackoff = backoffPolicy.getLong("maxBackoff")
+
+  val useIpAddressAsPartitionKey = kinesis.hasPath("useIpAddressAsPartitionKey") && kinesis.getBoolean("useIpAddressAsPartitionKey")
 }
