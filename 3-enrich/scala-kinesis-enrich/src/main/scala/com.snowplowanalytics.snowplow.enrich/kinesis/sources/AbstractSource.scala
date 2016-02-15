@@ -24,6 +24,7 @@ package sources
 // Java
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
+import java.util.UUID
 
 // Amazon
 import com.amazonaws.auth._
@@ -187,7 +188,11 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
       canonicalInput)
     processedEvents.map(validatedMaybeEvent => {
       validatedMaybeEvent match {
-        case Success(co) => (tabSeparateEnrichedEvent(co) -> co.user_ipaddress).success
+        case Success(co) => (tabSeparateEnrichedEvent(co), if (config.useIpAddressAsPartitionKey) {
+            co.user_ipaddress
+          } else {
+            UUID.randomUUID.toString
+          }).success
         case Failure(errors) => {
           val line = new String(Base64.encodeBase64(binaryData), UTF_8)
           (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).fail
