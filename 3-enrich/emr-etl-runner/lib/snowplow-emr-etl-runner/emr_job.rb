@@ -21,6 +21,33 @@ require 'json'
 require 'base64'
 require 'contracts'
 
+# Global variable used to decide whether to patch Elasticity's AwsRequestV4 payload with Configurations
+# This is only necessary if we are loading Thrift with AMI >= 4.0.0
+$patch_thrift_configuration = false
+
+# Monkey patched to support Configurations
+module Elasticity
+  class AwsRequestV4
+    def payload
+      if $patch_thrift_configuration
+        @ruby_service_hash["Configurations"] = [{
+          "Classification" => "core-site",
+          "Properties" => {
+            "io.file.buffer.size" => "65536"
+          }
+        },
+        {
+          "Classification" => "mapred-site",
+          "Properties" => {
+            "mapreduce.user.classpath.first" => "true"
+          }
+        }]
+      end
+      AwsUtils.convert_ruby_to_aws_v4(@ruby_service_hash).to_json
+    end
+  end
+end
+
 # Ruby class to execute Snowplow's Hive jobs against Amazon EMR
 # using Elasticity (https://github.com/rslifka/elasticity).
 module Snowplow
@@ -114,11 +141,15 @@ module Snowplow
         @jobflow.slave_instance_type  = config[:aws][:emr][:jobflow][:core_instance_type]
 
         if config[:collectors][:format] == 'thrift'
-          [
-            Elasticity::HadoopBootstrapAction.new('-c', 'io.file.buffer.size=65536'),
-            Elasticity::HadoopBootstrapAction.new('-m', 'mapreduce.user.classpath.first=true')
-          ].each do |action|
-            @jobflow.add_bootstrap_action(action)
+          if @legacy
+            [
+              Elasticity::HadoopBootstrapAction.new('-c', 'io.file.buffer.size=65536'),
+              Elasticity::HadoopBootstrapAction.new('-m', 'mapreduce.user.classpath.first=true')
+            ].each do |action|
+              @jobflow.add_bootstrap_action(action)
+            end
+          else
+            $patch_thrift_configuration = true
           end
         end
 
