@@ -1,0 +1,27 @@
+{
+    "jsonpaths": [
+        "$.schema.vendor",
+        "$.schema.name",
+        "$.schema.format",
+        "$.schema.version",
+        "$.hierarchy.rootId",
+        "$.hierarchy.rootTstamp",
+        "$.hierarchy.refRoot",
+        "$.hierarchy.refTree",
+        "$.hierarchy.refParent",
+        "$.data.browser",
+        "$.data.browserVersion",
+        "$.data.device",
+        "$.data.deviceType",
+        "$.data.ip",
+        "$.data.locationCity",
+        "$.data.locationCountry",
+        "$.data.locationRegion",
+        "$.data.mobile",
+        "$.data.mobileId",
+        "$.data.os",
+        "$.data.platformId",
+        "$.data.platformVersion",
+        "$.data.referrer"
+    ]
+}
