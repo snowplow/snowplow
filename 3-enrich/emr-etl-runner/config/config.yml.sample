@@ -59,6 +59,16 @@ storage:
   download:
     folder: # Postgres-only config option. Where to store the downloaded files. Leave blank for Redshift
   targets:
+    - name: "My DashDB database"
+      type: dashdb
+      host:
+      username:
+      password:
+      database:
+      schema:
+      table: 
+      dataworks_proxy: # Must be published on Bluemix (at the moment), must be over HTTPS 
+      api_key: 
     - name: "My Redshift database"
       type: redshift
       host: ADD HERE # The endpoint as shown in the Redshift console
