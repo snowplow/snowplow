@@ -33,7 +33,8 @@ module Snowplow
     # Parameters:
     # +config+:: the configuration options
     # +target+:: the configuration for this specific target
-    Contract Hash, Hash => nil
+    # +snowplow_tracking_enabled+:: boolean indicating whether a monitor is present (from config[:monitoring][:snowplow])
+    Contract Hash, Hash, Boolean => nil
     def load_atomic_events_into_dashdb(config, target, snowplow_tracking_enabled)
       puts "Loading Snowplow events #{target[:name]} (DashDB instance)..."
 
@@ -65,7 +66,7 @@ module Snowplow
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
       # +run_folder+:: the retrieved run folder from shredded/good
-      Contract Hash, Hash => Num
+      Contract Hash, Hash, String => Num
       def create_run_dataworks_transfer(config, target, run_folder)
         url = URI.parse(target[dataworks_proxy])
         req = Net::HTTP::Post.new(url)
@@ -94,7 +95,8 @@ module Snowplow
       #
       # Parameters:
       # +config+:: the configuration options
-      Contract Hash => String
+      # +snowplow_tracking_enabled+:: boolean indicating whether a monitor is present (from config[:monitoring][:snowplow])
+      Contract Hash, Boolean => String
       def retrieve_run_folder(config, snowplow_tracking_enabled)
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:aws][:s3][:region],
@@ -113,7 +115,7 @@ module Snowplow
           raise DatabaseLoadError, 'Cannot find atomic-events directory in shredded/good'
         end
 
-        altered_enriched_subdirectory = RUN_PATTERN.match(altered_enriched_filepath.key)[1]
+        RUN_PATTERN.match(altered_enriched_filepath.key)[1]
       end
       module_function :retrieve_run_folder
 
