@@ -16,11 +16,16 @@
 -- Copyright:   Copyright (c) 2016 Ironside Group, Inc.
 -- License:     Apache License Version 2.0
 
+-- ** IMPORTANT FOR DASHDB ENTRY PLAN USERS **
+-- The DashDB SQL in this file is intended for DashDB Enterprise Tiers. If using an Entry Plan,
+-- please comment out CREATE SCHEMA atomic, and change the schema to the DashDB username (in upper-case)
+-- in the CREATE TABLE statement and also in the COMMENT ON TABLE statement.
+
 -- Create the schema
 CREATE SCHEMA atomic;
 
 -- Create events table
-CREATE TABLE atomic.eventstest (
+CREATE TABLE atomic.events (
 	app_id VARCHAR(255),
 	platform VARCHAR(255),
 	etl_tstamp TIMESTAMP,
