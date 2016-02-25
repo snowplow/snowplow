@@ -44,7 +44,7 @@ class CollectorServiceActor(collectorConfig: CollectorConfig,
 
   // Use CollectorService so the same route can be accessed differently
   // in the testing framework.
-  private val collectorService = new CollectorService(responseHandler, context)
+  private val collectorService = new CollectorService(collectorConfig, responseHandler, context)
 
   // Message loop for the Spray service.
   def receive = handleTimeouts orElse runRoute(collectorService.collectorRoute)
@@ -64,6 +64,7 @@ object CollectorService {
 // Store the route in CollectorService to be accessed from
 // both CollectorServiceActor and from the testing framework.
 class CollectorService(
+    collectorConfig: CollectorConfig,
     responseHandler: ResponseHandler,
     context: ActorRefFactory) extends HttpService {
   def actorRefFactory = context
@@ -72,7 +73,7 @@ class CollectorService(
   val collectorRoute = {
     post {
       path(Segment / Segment) { (path1, path2) =>
-        optionalCookie("sp") { reqCookie =>
+        optionalCookie(collectorConfig.cookieName) { reqCookie =>
           optionalHeaderValueByName("User-Agent") { userAgent =>
             optionalHeaderValueByName("Referer") { refererURI =>
               headerValueByName("Raw-Request-URI") { rawRequest =>
@@ -106,7 +107,7 @@ class CollectorService(
     } ~
     get {
       path("""ice\.png""".r | "i".r) { path =>
-        optionalCookie("sp") { reqCookie =>
+        optionalCookie(collectorConfig.cookieName) { reqCookie =>
           optionalHeaderValueByName("User-Agent") { userAgent =>
             optionalHeaderValueByName("Referer") { refererURI =>
               headerValueByName("Raw-Request-URI") { rawRequest =>
@@ -146,7 +147,7 @@ class CollectorService(
     } ~
     get {
       path(Segment / Segment) { (path1, path2) =>
-        optionalCookie("sp") { reqCookie =>
+        optionalCookie(collectorConfig.cookieName) { reqCookie =>
           optionalHeaderValueByName("User-Agent") { userAgent =>
             optionalHeaderValueByName("Referer") { refererURI =>
               headerValueByName("Raw-Request-URI") { rawRequest =>

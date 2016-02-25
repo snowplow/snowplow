@@ -135,6 +135,7 @@ class CollectorConfig(config: Config) {
   private val cookie = collector.getConfig("cookie")
   val cookieExpiration = cookie.getMilliseconds("expiration")
   val cookieEnabled = cookieExpiration != 0
+  val cookieName = cookie.getString("name")
   val cookieDomain = cookie.getOptionalString("domain")
 
   private val sink = collector.getConfig("sink")
