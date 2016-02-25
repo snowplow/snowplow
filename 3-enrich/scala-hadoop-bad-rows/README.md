@@ -6,15 +6,18 @@ Use this Scalding job to extract raw Snowplow events from your Snowplow bad rows
 
 ## Usage
 
-Run this job using the [Amazon Ruby EMR client] [emr-client]:
+Run this job using the [AWS Command Line Interface] [aws-cli]:
 
-    $ elastic-mapreduce --create --name "Extract raw events from Snowplow bad row JSONs" \
-      --instance-type m1.xlarge --instance-count 3 \
-      --jar s3://snowplow-hosted-assets/3-enrich/scala-bad-rows/snowplow-bad-rows-0.1.0.jar \
-      --arg com.snowplowanalytics.hadoop.scalding.SnowplowBadRowsJob \
-      --arg --hdfs \
-      --arg --input --arg s3n://{{PATH_TO_YOUR_FIXABLE_BAD_ROWS}} \
-      --arg --output --arg s3n://{{PATH_WILL_BE_STAGING_FOR_EMRETLRUNNER}}
+    $ aws emr create-cluster --name "Extract raw events from Snowplow bad row JSONs" \
+      --use-default-roles --steps \
+      Type=CUSTOM_JAR,Name=BadRows0,ActionOnFailure=CONTINUE,\
+      Jar=s3://snowplow-hosted-assets/3-enrich/scala-bad-rows/snowplow-bad-rows-0.1.0.jar,\
+      Args=[com.snowplowanalytics.hadoop.scalding.SnowplowBadRowsJob,\
+      --hdfs,\
+      --input,s3n://{{PATH_TO_YOUR_FIXABLE_BAD_ROWS}},\
+      --output,s3n://{{PATH_WILL_BE_STAGING_FOR_EMRETLRUNNER}}] \
+      --release-label emr-4.0.0 --instance-groups InstanceGroupType=MASTER,InstanceCount=1,InstanceType=m3.xlarge \
+      InstanceGroupType=CORE,InstanceCount=2,InstanceType=m3.xlarge --auto-terminate
 
 Replace the `{{...}}` placeholders above with the appropriate bucket paths.
 
@@ -38,7 +41,7 @@ limitations under the License.
 [spark-example-project]: https://github.com/snowplow/spark-example-project
 [emr]: http://aws.amazon.com/elasticmapreduce/
 [hello-txt]: https://github.com/snowplow/scalding-example-project/raw/master/data/hello.txt
-[emr-client]: http://aws.amazon.com/developertools/2264
+[aws-cli]: http://aws.amazon.com/cli/
 [elasticity]: https://github.com/rslifka/elasticity
 [spark-plug]: https://github.com/ogrodnek/spark-plug
 [lemur]: https://github.com/TheClimateCorporation/lemur
