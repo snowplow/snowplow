@@ -154,7 +154,7 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
 
       val headers = if (config.cookieEnabled) {
         val responseCookie = HttpCookie(
-          "sp", networkUserId,
+          config.cookieName, networkUserId,
           expires=Some(DateTime.now+config.cookieExpiration),
           domain=config.cookieDomain
         )
