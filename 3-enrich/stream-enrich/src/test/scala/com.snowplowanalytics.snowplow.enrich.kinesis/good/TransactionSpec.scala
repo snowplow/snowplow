@@ -27,19 +27,19 @@ import org.specs2.scalaz.ValidationMatchers
 // This project
 import SpecHelpers._
 
-object StructEventSpec {
+object TransactionSpec {
 
-  val raw = "CgABAAABQ/Sevy0LABQAAAAQc3NjLTAuMS4wLXN0ZG91dAsAHgAAAAVVVEYtOAsAKAAAAAgxMC4wLjIuMgwAKQgAAQAAAAEIAAIAAAABCwADAAABvGU9c2Umc2VfY2E9TWl4ZXMmc2VfYWM9UGxheSZzZV9sYT1NUkMvZmFicmljLTA1MDMtbWl4JnNlX3ZhPTAuMCZkdG09MTM5MTM3ODQ4MTA3MSZ0aWQ9MzQ0MjE0JnZwPTE2ODB4NDE1JmRzPTE2ODB4NDE1JnZpZD0yNiZkdWlkPTNjMTc1NzU0NGUzOWJjYTQmcD13ZWImdHY9anMtMC4xMy4xJmZwPTE4MDQ5NTQ3OTAmYWlkPUNGZTIzYSZsYW5nPWVuLVVTJmNzPVVURi04JnR6PUV1cm9wZS9Mb25kb24mdWlkPWFsZXgrMTIzJmZfcGRmPTAmZl9xdD0xJmZfcmVhbHA9MCZmX3dtYT0wJmZfZGlyPTAmZl9mbGE9MSZmX2phdmE9MCZmX2dlYXJzPTAmZl9hZz0wJnJlcz0xOTIweDEwODAmY2Q9MjQmY29va2llPTEmdXJsPWZpbGU6Ly9maWxlOi8vL1VzZXJzL2FsZXgvRGV2ZWxvcG1lbnQvZGV2LWVudmlyb25tZW50L2RlbW8vMS10cmFja2VyL2V2ZW50cy5odG1sL292ZXJyaWRkZW4tdXJsLwALAC0AAAAJbG9jYWxob3N0CwAyAAAAUU1vemlsbGEvNS4wIChNYWNpbnRvc2g7IEludGVsIE1hYyBPUyBYIDEwLjk7IHJ2OjI2LjApIEdlY2tvLzIwMTAwMTAxIEZpcmVmb3gvMjYuMA8ARgsAAAAHAAAAFkNvbm5lY3Rpb246IGtlZXAtYWxpdmUAAAJwQ29va2llOiBfX3V0bWE9MTExODcyMjgxLjg3ODA4NDQ4Ny4xMzkwMjM3MTA3LjEzOTA5MzE1MjEuMTM5MTExMDU4Mi43OyBfX3V0bXo9MTExODcyMjgxLjEzOTAyMzcxMDcuMS4xLnV0bWNzcj0oZGlyZWN0KXx1dG1jY249KGRpcmVjdCl8dXRtY21kPShub25lKTsgX3NwX2lkLjFmZmY9Yjg5YTZmYTYzMWVlZmFjMi4xMzkwMjM3MTA3LjcuMTM5MTExMTgxOS4xMzkwOTMxNTQ1OyBoYmxpZD1DUGpqdWh2RjA1emt0UDdKN001Vm8zTklHUExKeTFTRjsgb2xmc2s9b2xmc2s1NjI5MjM2MzU2MTc1NTQ7IHNwPTc1YTEzNTgzLTVjOTktNDBlMy04MWZjLTU0MTA4NGRmYzc4NDsgd2NzaWQ9S1JoaGs0SEVMcDJBaXBxTDdNNVZvbkNQT1B5QW5GMUo7IF9va2x2PTEzOTExMTE3NzkzMjglMkNLUmhoazRIRUxwMkFpcHFMN001Vm9uQ1BPUHlBbkYxSjsgX191dG1jPTExMTg3MjI4MTsgX29rYms9Y2Q0JTNEdHJ1ZSUyQ3ZpNSUzRDAlMkN2aTQlM0QxMzkxMTEwNTg1NDkwJTJDdmkzJTNEYWN0aXZlJTJDdmkyJTNEZmFsc2UlMkN2aTElM0RmYWxzZSUyQ2NkOCUzRGNoYXQlMkNjZDYlM0QwJTJDY2Q1JTNEYXdheSUyQ2NkMyUzRGZhbHNlJTJDY2QyJTNEMCUyQ2NkMSUzRDAlMkM7IF9vaz05NzUyLTUwMy0xMC01MjI3AAAAHkFjY2VwdC1FbmNvZGluZzogZ3ppcCwgZGVmbGF0ZQAAABpBY2NlcHQtTGFuZ3VhZ2U6IGVuLVVTLCBlbgAAACtBY2NlcHQ6IGltYWdlL3BuZywgaW1hZ2UvKjtxPTAuOCwgKi8qO3E9MC41AAAAXVVzZXItQWdlbnQ6IE1vemlsbGEvNS4wIChNYWNpbnRvc2g7IEludGVsIE1hYyBPUyBYIDEwLjk7IHJ2OjI2LjApIEdlY2tvLzIwMTAwMTAxIEZpcmVmb3gvMjYuMAAAABRIb3N0OiBsb2NhbGhvc3Q6NDAwMQsAUAAAACQ3NWExMzU4My01Yzk5LTQwZTMtODFmYy01NDEwODRkZmM3ODQA"
+  val raw = "CgABAAABQ/SiVe8LABQAAAAQc3NjLTAuMS4wLXN0ZG91dAsAHgAAAAVVVEYtOAsAKAAAAAgxMC4wLjIuMgwAKQgAAQAAAAEIAAIAAAABCwADAAABpmU9dHImdHJfaWQ9b3JkZXItMTIzJnRyX3R0PTgwMDAmdHJfY3U9SlBZJmR0bT0xMzkxMzc4NzE2MjcxJnRpZD02MzYyMzkmdnA9MTY4MHg0MTUmZHM9MTY4MHg0MTUmdmlkPTI2JmR1aWQ9M2MxNzU3NTQ0ZTM5YmNhNCZwPXdlYiZ0dj1qcy0wLjEzLjEmZnA9MTgwNDk1NDc5MCZhaWQ9Q0ZlMjNhJmxhbmc9ZW4tVVMmY3M9VVRGLTgmdHo9RXVyb3BlL0xvbmRvbiZ1aWQ9YWxleCsxMjMmZl9wZGY9MCZmX3F0PTEmZl9yZWFscD0wJmZfd21hPTAmZl9kaXI9MCZmX2ZsYT0xJmZfamF2YT0wJmZfZ2VhcnM9MCZmX2FnPTAmcmVzPTE5MjB4MTA4MCZjZD0yNCZjb29raWU9MSZ1cmw9ZmlsZTovL2ZpbGU6Ly8vVXNlcnMvYWxleC9EZXZlbG9wbWVudC9kZXYtZW52aXJvbm1lbnQvZGVtby8xLXRyYWNrZXIvZXZlbnRzLmh0bWwvb3ZlcnJpZGRlbi11cmwvAAsALQAAAAlsb2NhbGhvc3QLADIAAABRTW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTAuOTsgcnY6MjYuMCkgR2Vja28vMjAxMDAxMDEgRmlyZWZveC8yNi4wDwBGCwAAAAcAAAAWQ29ubmVjdGlvbjoga2VlcC1hbGl2ZQAAAnBDb29raWU6IF9fdXRtYT0xMTE4NzIyODEuODc4MDg0NDg3LjEzOTAyMzcxMDcuMTM5MDkzMTUyMS4xMzkxMTEwNTgyLjc7IF9fdXRtej0xMTE4NzIyODEuMTM5MDIzNzEwNy4xLjEudXRtY3NyPShkaXJlY3QpfHV0bWNjbj0oZGlyZWN0KXx1dG1jbWQ9KG5vbmUpOyBfc3BfaWQuMWZmZj1iODlhNmZhNjMxZWVmYWMyLjEzOTAyMzcxMDcuNy4xMzkxMTExODE5LjEzOTA5MzE1NDU7IGhibGlkPUNQamp1aHZGMDV6a3RQN0o3TTVWbzNOSUdQTEp5MVNGOyBvbGZzaz1vbGZzazU2MjkyMzYzNTYxNzU1NDsgc3A9NzVhMTM1ODMtNWM5OS00MGUzLTgxZmMtNTQxMDg0ZGZjNzg0OyB3Y3NpZD1LUmhoazRIRUxwMkFpcHFMN001Vm9uQ1BPUHlBbkYxSjsgX29rbHY9MTM5MTExMTc3OTMyOCUyQ0tSaGhrNEhFTHAyQWlwcUw3TTVWb25DUE9QeUFuRjFKOyBfX3V0bWM9MTExODcyMjgxOyBfb2tiaz1jZDQlM0R0cnVlJTJDdmk1JTNEMCUyQ3ZpNCUzRDEzOTExMTA1ODU0OTAlMkN2aTMlM0RhY3RpdmUlMkN2aTIlM0RmYWxzZSUyQ3ZpMSUzRGZhbHNlJTJDY2Q4JTNEY2hhdCUyQ2NkNiUzRDAlMkNjZDUlM0Rhd2F5JTJDY2QzJTNEZmFsc2UlMkNjZDIlM0QwJTJDY2QxJTNEMCUyQzsgX29rPTk3NTItNTAzLTEwLTUyMjcAAAAeQWNjZXB0LUVuY29kaW5nOiBnemlwLCBkZWZsYXRlAAAAGkFjY2VwdC1MYW5ndWFnZTogZW4tVVMsIGVuAAAAK0FjY2VwdDogaW1hZ2UvcG5nLCBpbWFnZS8qO3E9MC44LCAqLyo7cT0wLjUAAABdVXNlci1BZ2VudDogTW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTAuOTsgcnY6MjYuMCkgR2Vja28vMjAxMDAxMDEgRmlyZWZveC8yNi4wAAAAFEhvc3Q6IGxvY2FsaG9zdDo0MDAxCwBQAAAAJDc1YTEzNTgzLTVjOTktNDBlMy04MWZjLTU0MTA4NGRmYzc4NAA="
 
   val expected = List(
     "CFe23a",
     "web",
     TimestampRegex,
-    "2014-02-02 22:01:20.941",
-    "2014-02-02 22:01:21.071",
-    "struct",
+    "2014-02-02 22:05:16.143",
+    "2014-02-02 22:05:16.271",
+    "transaction",
     Uuid4Regexp, // Regexp match
-    "344214",
+    "636239",
     "",
     "js-0.13.1",
     "ssc-0.1.0-stdout",
@@ -85,15 +85,15 @@ object StructEventSpec {
     "",
     "",
     "",
-    "Mixes",
-    "Play",
-    "MRC/fabric-0503-mix",
-    "",
-    "0.0",
     "",
     "",
     "",
     "",
+    "",
+    "",
+    "order-123",
+    "",
+    "8000",
     "",
     "",
     "",
@@ -140,6 +140,7 @@ object StructEventSpec {
     "UTF-8",
     "1680",
     "415",
+    "JPY",
     "",
     "",
     "",
@@ -155,10 +156,9 @@ object StructEventSpec {
     "",
     "",
     "",
-    "",
-    "2014-02-02 22:01:20.941",
-    "com.google.analytics",
-    "event",
+    "2014-02-02 22:05:16.143",
+    "com.snowplowanalytics.snowplow",
+    "transaction",
     "jsonschema",
     "1-0-0",
     "",
@@ -166,24 +166,24 @@ object StructEventSpec {
     )
 }
 
-class StructEventSpec extends Specification with ValidationMatchers {
+class TransactionSpec extends Specification with ValidationMatchers {
 
-  "Scala Kinesis Enrich" should {
+  "Stream Enrich" should {
 
-    "enrich a valid structured event" in {
+    "enrich a valid transaction" in {
 
-      val rawEvent = Base64.decodeBase64(StructEventSpec.raw)
-
+      val rawEvent = Base64.decodeBase64(TransactionSpec.raw)
+      
       val enrichedEvent = TestSource.enrichEvents(rawEvent)(0)
       enrichedEvent must beSuccessful
 
       // "-1" prevents empty strings from being discarded from the end of the array
       val fields = enrichedEvent.toOption.get._1.split("\t", -1)
-      fields.size must beEqualTo(StructEventSpec.expected.size)
+      fields.size must beEqualTo(TransactionSpec.expected.size)
 
       Result.unit(
-        for (idx <- StructEventSpec.expected.indices) {
-          fields(idx) must beFieldEqualTo(StructEventSpec.expected(idx), withIndex = idx)
+        for (idx <- TransactionSpec.expected.indices) {
+          fields(idx) must beFieldEqualTo(TransactionSpec.expected(idx), withIndex = idx)
         }
       )
     }

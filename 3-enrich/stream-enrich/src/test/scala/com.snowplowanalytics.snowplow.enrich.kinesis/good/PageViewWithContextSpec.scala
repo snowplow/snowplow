@@ -168,7 +168,7 @@ object PageViewWithContextSpec {
 
 class PageViewWithContextSpec extends Specification with ValidationMatchers {
 
-  "Scala Kinesis Enrich" should {
+  "Stream Enrich" should {
 
     "enrich a valid page view with context" in {
 

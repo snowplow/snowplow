@@ -34,7 +34,7 @@ object InvalidEnrichedEventSpec {
 class InvalidEnrichedEventSpec extends Specification with ValidationMatchers {
 
   // TODO: update this after https://github.com/snowplow/snowplow/issues/463
-  "Scala Kinesis Enrich" should {
+  "Stream Enrich" should {
 
     "return None for a valid SnowplowRawEvent which fails enrichment" in {
 

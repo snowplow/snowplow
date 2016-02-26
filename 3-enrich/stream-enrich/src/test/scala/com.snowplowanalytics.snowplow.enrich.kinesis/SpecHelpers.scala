@@ -48,7 +48,7 @@ import common.enrichments.EnrichmentRegistry
 object SpecHelpers {
 
   /**
-   * The Kinesis Enrich being used
+   * The Stream Enrich being used
    */
   val EnrichVersion = "kinesis-0.7.0-common-0.22.0"
 

@@ -168,7 +168,7 @@ object PagePingWithContextSpec {
 
 class PagePingWithContextSpec extends Specification with ValidationMatchers {
 
-  "Scala Kinesis Enrich" should {
+  "Stream Enrich" should {
 
     "enrich a valid page ping with context" in {
 

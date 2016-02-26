@@ -283,7 +283,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
             val putSize: Long = unsentRecords.foldLeft(0)((a,b) => a + b._1.capacity)
 
             tracker match {
-              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", err, name, "snowplow-kinesis-enrich", attemptNumber, putSize)
+              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", err, name, "snowplow-stream-enrich", attemptNumber, putSize)
               case _       => None
             }
 
@@ -300,7 +300,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
             val putSize: Long = unsentRecords.foldLeft(0)((a,b) => a + b._1.capacity)
 
             tracker match {
-              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", f.toString, name, "snowplow-kinesis-enrich", attemptNumber, putSize)
+              case Some(t) => SnowplowTracking.sendFailureEvent(t, "PUT Failure", f.toString, name, "snowplow-stream-enrich", attemptNumber, putSize)
               case _       => None
             }
 

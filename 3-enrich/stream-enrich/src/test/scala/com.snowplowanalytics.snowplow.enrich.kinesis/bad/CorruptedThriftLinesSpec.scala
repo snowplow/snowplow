@@ -34,7 +34,7 @@ class CorruptedThriftLinesSpec extends Specification with ScalaCheck with Valida
 
   "This is a specification to test handling of corrupted Thrift payloads"                                   ^
                                                                                                            p^
-  "Scala Kinesis Enrich should return None for any corrupted Thrift raw events"                             ! e1^
+  "Stream Enrich should return None for any corrupted Thrift raw events"                             ! e1^
                                                                                                             end
 
   // A bit of fun: the chances of generating a valid Thrift SnowplowRawEvent at random are
