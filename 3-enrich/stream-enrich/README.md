@@ -1,8 +1,8 @@
-# Scala Kinesis Enrich
+# Stream Enrich
 
 ## Introduction
 
-Scala Kinesis Enrich processes raw [Snowplow][snowplow] events from an input
+Stream Enrich processes raw [Snowplow][snowplow] events from an input
 [Amazon Kinesis][kinesis] stream and stores enriched events
 into output Kinesis streams.
 Events are enriched using the [scala-common-enrich][common-enrich] library.
@@ -12,18 +12,18 @@ Events are enriched using the [scala-common-enrich][common-enrich] library.
 Assuming you already have [SBT 0.13.0] [sbt] installed:
 
     $ git clone git://github.com/snowplow/snowplow.git
-    $ cd 3-enrich/scala-kinesis-enrich
+    $ cd 3-enrich/stream-enrich
     $ sbt compile
     
 ## Usage
 
-Scala Kinesis Enrich has the following command-line interface:
+Stream Enrich has the following command-line interface:
 
 ```
-snowplow-kinesis-enrich: Version 0.2.0. Copyright (c) 2013, Snowplow Analytics
+snowplow-stream-enrich: Version 0.2.0. Copyright (c) 2013, Snowplow Analytics
 Ltd.
 
-Usage: snowplow-kinesis-enrich [OPTIONS]
+Usage: snowplow-stream-enrich [OPTIONS]
 
 OPTIONS
 --config filename

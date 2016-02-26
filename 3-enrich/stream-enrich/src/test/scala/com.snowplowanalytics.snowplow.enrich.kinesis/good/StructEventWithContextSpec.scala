@@ -168,7 +168,7 @@ object StructEventWithContextSpec {
 
 class StructEventWithContextSpec extends Specification with ValidationMatchers {
 
-  "Scala Kinesis Enrich" should {
+  "Stream Enrich" should {
 
     "enrich a valid structured event with context" in {
 

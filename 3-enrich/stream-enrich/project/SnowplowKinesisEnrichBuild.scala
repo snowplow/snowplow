@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object SnowplowKinesisEnrichBuild extends Build {
+object SnowplowStreamEnrichBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -24,7 +24,7 @@ object SnowplowKinesisEnrichBuild extends Build {
   }
 
   // Define our project, with basic project information and library dependencies
-  lazy val project = Project("snowplow-kinesis-enrich", file("."))
+  lazy val project = Project("snowplow-stream-enrich", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(

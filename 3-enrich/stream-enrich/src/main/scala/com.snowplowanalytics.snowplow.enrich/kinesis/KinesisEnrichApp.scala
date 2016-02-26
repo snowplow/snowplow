@@ -71,7 +71,7 @@ import sinks._
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
 
 /**
- * The main entry point of the Scala Kinesis Enricher.
+ * The main entry point for Stream Enrich.
  */
 object KinesisEnrichApp extends App {
 

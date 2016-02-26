@@ -1,4 +1,4 @@
-# Default Configuration for Scala Kinesis Enrich.
+# Default Configuration for Stream Enrich.
 
 enrich {
   # Sources currently supported are:
