@@ -49,6 +49,7 @@ import registry.{
   JavascriptScriptEnrichment,
   EventFingerprintEnrichment,
   CookieExtractorEnrichment,
+  HeaderExtractorEnrichment,
   WeatherEnrichment,
   UserAgentUtilsEnrichmentConfig,
   UaParserEnrichmentConfig,
@@ -56,6 +57,7 @@ import registry.{
   JavascriptScriptEnrichmentConfig,
   EventFingerprintEnrichmentConfig,
   CookieExtractorEnrichmentConfig,
+  HeaderExtractorEnrichmentConfig,
   WeatherEnrichmentConfig
 }
 
@@ -152,6 +154,8 @@ object EnrichmentRegistry {
             EventFingerprintEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "cookie_extractor_config") {
             CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "header_extractor_config") {
+            HeaderExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "weather_enrichment_config") {
             WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else {
@@ -267,6 +271,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getCookieExtractorEnrichment: Option[CookieExtractorEnrichment] =
     getEnrichment[CookieExtractorEnrichment]("cookie_extractor_config")
+
+  /*
+   * Returns an Option boxing the HeaderExtractorEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the HeaderExtractorEnrichment instance
+   */
+  def getHeaderExtractorEnrichment: Option[HeaderExtractorEnrichment] =
+    getEnrichment[HeaderExtractorEnrichment]("header_extractor_config")
 
   /**
    * Returns an Option boxing the WeatherEnrichment
