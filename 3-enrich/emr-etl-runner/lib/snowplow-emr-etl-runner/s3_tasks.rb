@@ -97,7 +97,7 @@ module Snowplow
         }
       end
 
-      # Moves new CloudFront logs to a processing bucket.
+      # Moves new raw logs to a processing bucket.
       #
       # Parameters:
       # +config+:: the hash of configuration options
@@ -105,7 +105,7 @@ module Snowplow
       # Returns true if file(s) were staged
       Contract ArgsHash, ConfigHash => Bool
       def self.stage_logs_for_emr(args, config)
-        Monitoring::Logging::logger.debug 'Staging...'
+        Monitoring::Logging::logger.debug 'Staging raw logs...'
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:aws][:s3][:region],
