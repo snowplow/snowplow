@@ -63,6 +63,7 @@ collector {
 
   cookie {
     expiration = 365 days
+    name = sp
     domain = "test-domain.com"
   }
 
@@ -96,7 +97,7 @@ collector {
   val sink = new TestSink
   val sinks = CollectorSinks(sink, sink)
   val responseHandler = new ResponseHandler(collectorConfig, sinks)
-  val collectorService = new CollectorService(responseHandler, system)
+  val collectorService = new CollectorService(collectorConfig, responseHandler, system)
   val thriftDeserializer = new TDeserializer
 
   // By default, spray will always add Remote-Address to every request
@@ -126,7 +127,7 @@ collector {
         // this will need to be changed.
         val httpCookie = httpCookies(0)
 
-        httpCookie.name must be("sp")
+        httpCookie.name must beEqualTo(collectorConfig.cookieName)
         httpCookie.domain must beSome
         httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
         httpCookie.expires must beSome
@@ -137,7 +138,7 @@ collector {
       }
     }
     "return the same cookie as passed in" in {
-      CollectorPost("/com.snowplowanalytics.snowplow/tp2", Some(HttpCookie("sp", "UUID_Test"))) ~>
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2", Some(HttpCookie(collectorConfig.cookieName, "UUID_Test"))) ~>
           collectorService.collectorRoute ~> check {
         val httpCookies: List[HttpCookie] = headers.collect {
           case `Set-Cookie`(hc) => hc
