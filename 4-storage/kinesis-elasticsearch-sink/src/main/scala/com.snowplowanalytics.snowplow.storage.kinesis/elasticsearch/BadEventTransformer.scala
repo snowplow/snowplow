@@ -42,7 +42,7 @@ import Scalaz._
  * @param the elasticsearch index type
  */
 class BadEventTransformer(documentIndex: String, documentType: String)
-  extends ITransformer[ValidatedRecord, EmitterInput] {
+  extends ITransformer[ValidatedRecord, EmitterInput] with StdinTransformer {
 
   /**
    * Convert an Amazon Kinesis record to a JSON string
@@ -64,4 +64,11 @@ class BadEventTransformer(documentIndex: String, documentType: String)
   override def fromClass(record: ValidatedRecord): EmitterInput =
     (record._1, record._2.map(j => new ElasticsearchObject(documentIndex, documentType, j.json)))
 
+  /**
+   * Consume data from stdin rather than Kinesis
+   *
+   * @param line Line from stdin
+   * @return Line as an EmitterInput
+   */
+  def consumeLine(line: String): EmitterInput = fromClass(line -> JsonRecord(line, None).success)
 }

@@ -17,18 +17,10 @@
  * governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
-package sinks
 
 /**
- * Shared interface for all sinks
+ * Like the connector library's ITransformer, but for consuming from stdin
  */
-trait ISink {
-  def store(output: String, key: Option[String], good: Boolean)
-}
-
-/**
- * Sink which ignores all input
- */
-class NullSink extends ISink {
-  def store(output: String, key: Option[String], good: Boolean): Unit = {}
+trait StdinTransformer {
+  def consumeLine(line: String): EmitterInput
 }

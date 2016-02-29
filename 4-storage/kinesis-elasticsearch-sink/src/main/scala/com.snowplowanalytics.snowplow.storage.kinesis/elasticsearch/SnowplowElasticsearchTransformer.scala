@@ -227,7 +227,8 @@ object SnowplowElasticsearchTransformer {
  * @param documentIndex the elasticsearch index name
  * @param documentType the elasticsearch index type
  */
-class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String) extends ITransformer[ValidatedRecord, EmitterInput] {
+class SnowplowElasticsearchTransformer(documentIndex: String, documentType: String)
+  extends ITransformer[ValidatedRecord, EmitterInput] with StdinTransformer {
 
   private lazy val log = LoggerFactory.getLogger(getClass())
 
@@ -324,5 +325,15 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
       case _ => None
     }
   }
+
+
+  /**
+   * Consume data from stdin rather than Kinesis
+   *
+   * @param line Line from stdin
+   * @return Line as an EmitterInput
+   */
+  def consumeLine(line: String): EmitterInput =
+    fromClass(line -> jsonifyGoodEvent(line.split("\t", -1)).leftMap(_.list))
 
 }
