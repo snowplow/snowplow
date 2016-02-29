@@ -110,27 +110,29 @@ object ElasticsearchSinkApp extends App {
   }
 
   val maxConnectionTime = configValue.getConfig("elasticsearch").getLong("max-timeout")
+  val finalConfig = convertConfig(configValue)
+  val goodSink = configValue.getString("sink.good") match {
+    case "stdout" => Some(new StdouterrSink)
+    case "elasticsearch" => None
+  }
+  val badSink = configValue.getString("sink.bad") match {
+    case "stderr" => new StdouterrSink
+    case "none" => new NullSink
+    case "kinesis" => {
+      val kinesis = configValue.getConfig("kinesis")
+      val kinesisSink = kinesis.getConfig("out")
+      val kinesisSinkName = kinesisSink.getString("stream-name")
+      val kinesisSinkShards = kinesisSink.getInt("shards")
+      val kinesisSinkRegion = kinesis.getString("region")
+      val kinesisSinkEndpoint = s"https://kinesis.${kinesisSinkRegion}.amazonaws.com"
+      new KinesisSink(finalConfig.AWS_CREDENTIALS_PROVIDER, kinesisSinkEndpoint, kinesisSinkName, kinesisSinkShards)
+    }
+  }
 
   val executor = configValue.getString("source") match {
 
     // Read records from Kinesis
     case "kinesis" => {
-      val finalConfig = convertConfig(configValue)
-
-      val (goodSink, badSink) = configValue.getString("sink") match {
-        case "elasticsearch-kinesis" => {
-          val kinesis = configValue.getConfig("kinesis")
-          val kinesisSink = kinesis.getConfig("out")
-          val kinesisSinkName = kinesisSink.getString("stream-name")
-          val kinesisSinkShards = kinesisSink.getInt("shards")
-          val kinesisSinkRegion = kinesis.getString("region")
-          val kinesisSinkEndpoint = s"https://kinesis.${kinesisSinkRegion}.amazonaws.com"
-          (None, new KinesisSink(finalConfig.AWS_CREDENTIALS_PROVIDER, kinesisSinkEndpoint, kinesisSinkName, kinesisSinkShards))
-        }
-        case "stdouterr" => (Some(new StdouterrSink), new StdouterrSink)
-        case _ => throw new RuntimeException("Sink type must be 'stdouterr' or 'kinesis'")
-      }
-
       new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, finalConfig, goodSink, badSink, tracker, maxConnectionTime).success
     }
 
@@ -138,12 +140,16 @@ object ElasticsearchSinkApp extends App {
     // TODO reduce code duplication
     case "stdin" => new Runnable {
       val transformer = new SnowplowElasticsearchTransformer(documentIndex, documentType)
+      lazy val elasticsearchSender = new ElasticsearchSender(finalConfig, None, maxConnectionTime)
       def run = for (ln <- scala.io.Source.stdin.getLines) {
         val emitterInput = transformer.fromClass(ln -> transformer.jsonifyGoodEvent(ln.split("\t", -1))
           .leftMap(_.list))
         emitterInput._2.bimap(
-          f => Console.err.println(FailureUtils.getBadRow(emitterInput._1, f)),
-          s => println(s.getSource)
+          f => badSink.store(FailureUtils.getBadRow(emitterInput._1, f), None, false),
+          s => goodSink match {
+            case Some(gs) => gs.store(s.getSource, None, true)
+            case None => elasticsearchSender.sendToElasticsearch(List(ln -> s.success))
+          }
         )
       }
     }.success
