@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object SnowplowKinesisEnrichBuild extends Build {
+object SnowplowElasticsearchSinkBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -33,6 +33,7 @@ object SnowplowKinesisEnrichBuild extends Build {
         Libraries.config,
         Libraries.scalaUtil,
         Libraries.snowplowCommonEnrich,
+        Libraries.igluClient,
         Libraries.scalazon,
         Libraries.scalaz7,
         Libraries.specs2,
