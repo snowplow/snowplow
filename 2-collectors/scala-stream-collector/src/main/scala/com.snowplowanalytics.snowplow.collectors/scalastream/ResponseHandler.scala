@@ -168,15 +168,15 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
         `Access-Control-Allow-Credentials`(true)
       )
 
-      val headers = if (config.cookieEnabled) {
-        val responseCookie = HttpCookie(
-          config.cookieName, networkUserId,
-          expires=Some(DateTime.now+config.cookieExpiration),
-          domain=config.cookieDomain
-        )
-        `Set-Cookie`(responseCookie) :: headersWithoutCookie
-      } else {
-        headersWithoutCookie
+      val headers = config.cookieConfig match {
+        case Some(cookieConfig) =>
+          val responseCookie = HttpCookie(
+            cookieConfig.name, networkUserId,
+            expires=Some(DateTime.now + cookieConfig.expiration),
+            domain=cookieConfig.domain
+          )
+          `Set-Cookie`(responseCookie) :: headersWithoutCookie
+        case None => headersWithoutCookie
       }
 
       val (httpResponse, badQsResponse) = if (path startsWith "/r/") {
