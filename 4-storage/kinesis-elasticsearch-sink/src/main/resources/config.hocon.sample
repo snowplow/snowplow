@@ -7,20 +7,20 @@ sink {
   # 'stdin' for reading unencoded tab-separated events from stdin
   # If set to "stdin", JSON documents will not be sent to Elasticsearch
   # but will be written to stdout.
-  source = "kinesis"
+  source = {{sinkElasticsearchInputType}}
 
   # Where to write good and bad records
   sink {
     # Sinks currently supported are:
     # 'elasticsearch' for writing good records to Elasticsearch
     # 'stdout' for writing good records to stdout
-    "good": "elasticsearch"
+    "good": {{sinkElasticsearchGoodOutputDestination}}
 
     # Sinks currently supported are:
     # 'kinesis' for writing bad records to Kinesis
     # 'stderr' for writing bad records to stderr
     # 'none' for ignoring bad records
-    "bad": "stderr"
+    "bad": {{sinkElasticsearchBadOutputDestination}}
   }
 
   # The following are used to authenticate for the Amazon Kinesis sink.
