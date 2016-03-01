@@ -139,11 +139,13 @@ object ElasticsearchSinkApp extends App {
     // Run locally, reading from stdin and sending events to stdout / stderr rather than Elasticsearch / Kinesis
     // TODO reduce code duplication
     case "stdin" => new Runnable {
-      val transformer = new SnowplowElasticsearchTransformer(documentIndex, documentType)
+      val transformer = streamType match {
+        case StreamType.Good => new SnowplowElasticsearchTransformer(documentIndex, documentType)
+        case StreamType.Bad => new BadEventTransformer(documentIndex, documentType)
+      }
       lazy val elasticsearchSender = new ElasticsearchSender(finalConfig, None, maxConnectionTime)
       def run = for (ln <- scala.io.Source.stdin.getLines) {
-        val emitterInput = transformer.fromClass(ln -> transformer.jsonifyGoodEvent(ln.split("\t", -1))
-          .leftMap(_.list))
+        val emitterInput = transformer.consumeLine(ln)
         emitterInput._2.bimap(
           f => badSink.store(FailureUtils.getBadRow(emitterInput._1, f), None, false),
           s => goodSink match {
