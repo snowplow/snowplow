@@ -62,6 +62,7 @@ collector {
   }
 
   cookie {
+    enabled = true
     expiration = 365 days
     name = sp
     domain = "test-domain.com"
@@ -127,18 +128,18 @@ collector {
         // this will need to be changed.
         val httpCookie = httpCookies(0)
 
-        httpCookie.name must beEqualTo(collectorConfig.cookieName)
+        httpCookie.name must beEqualTo(collectorConfig.cookieName.get)
         httpCookie.domain must beSome
         httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
         httpCookie.expires must beSome
         val expiration = httpCookie.expires.get
-        val offset = expiration.clicks - collectorConfig.cookieExpiration -
+        val offset = expiration.clicks - collectorConfig.cookieExpiration.get -
           DateTime.now.clicks
         offset.asInstanceOf[Int] must beCloseTo(0, 2000) // 1000 ms window.
       }
     }
     "return the same cookie as passed in" in {
-      CollectorPost("/com.snowplowanalytics.snowplow/tp2", Some(HttpCookie(collectorConfig.cookieName, "UUID_Test"))) ~>
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2", Some(HttpCookie(collectorConfig.cookieName.get, "UUID_Test"))) ~>
           collectorService.collectorRoute ~> check {
         val httpCookies: List[HttpCookie] = headers.collect {
           case `Set-Cookie`(hc) => hc

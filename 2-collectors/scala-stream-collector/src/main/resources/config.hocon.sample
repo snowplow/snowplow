@@ -37,7 +37,7 @@ collector {
   # The collector returns a cookie to clients for user identification
   # with the following domain and expiration.
   cookie {
-    # Set to 0 to disable the cookie
+    enabled = true
     expiration = {{collectorCookieExpiration}} # e.g. "365 days"
     # Network cookie name
     name = {{collectorCookieName}}

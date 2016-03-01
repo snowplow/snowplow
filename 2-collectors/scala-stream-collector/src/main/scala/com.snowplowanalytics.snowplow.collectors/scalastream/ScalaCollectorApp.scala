@@ -118,6 +118,9 @@ object Sink extends Enumeration {
   val Kinesis, Stdout, Test = Value
 }
 
+// How a collector should set cookies
+case class CookieConfig(name: String, expiration: Long, domain: Option[String])
+
 // Rigidly load the configuration file here to error when
 // the collector process starts rather than later.
 class CollectorConfig(config: Config) {
@@ -133,10 +136,13 @@ class CollectorConfig(config: Config) {
   val p3pCP = p3p.getString("CP")
 
   private val cookie = collector.getConfig("cookie")
-  val cookieExpiration = cookie.getMilliseconds("expiration")
-  val cookieEnabled = cookieExpiration != 0
-  val cookieName = cookie.getString("name")
-  val cookieDomain = cookie.getOptionalString("domain")
+
+  val cookieConfig = if (cookie.getBoolean("enabled")) {
+    Some(CookieConfig(
+      cookie.getString("name"),
+      cookie.getMilliseconds("expiration"),
+      cookie.getOptionalString("domain")))
+  } else None
 
   private val sink = collector.getConfig("sink")
   
@@ -173,4 +179,8 @@ class CollectorConfig(config: Config) {
   val maxBackoff = backoffPolicy.getLong("maxBackoff")
 
   val useIpAddressAsPartitionKey = kinesis.hasPath("useIpAddressAsPartitionKey") && kinesis.getBoolean("useIpAddressAsPartitionKey")
+
+  def cookieName = cookieConfig.map(_.name)
+  def cookieDomain = cookieConfig.flatMap(_.domain)
+  def cookieExpiration = cookieConfig.map(_.expiration)
 }

@@ -23,8 +23,10 @@ import akka.util.Timeout
 
 // Spray
 import spray.http.Timedout
+import spray.http.HttpCookie
 import spray.http.HttpHeaders.RawHeader
 import spray.routing.HttpService
+import spray.routing.Directive1
 
 // Scala
 import scala.concurrent.duration._
@@ -69,11 +71,13 @@ class CollectorService(
     context: ActorRefFactory) extends HttpService {
   def actorRefFactory = context
 
+  val cookieName = collectorConfig.cookieName
+
   // TODO: reduce code duplication here
   val collectorRoute = {
     post {
       path(Segment / Segment) { (path1, path2) =>
-        optionalCookie(collectorConfig.cookieName) { reqCookie =>
+        cookieIfWanted(cookieName) { reqCookie =>
           optionalHeaderValueByName("User-Agent") { userAgent =>
             optionalHeaderValueByName("Referer") { refererURI =>
               headerValueByName("Raw-Request-URI") { rawRequest =>
@@ -107,7 +111,7 @@ class CollectorService(
     } ~
     get {
       path("""ice\.png""".r | "i".r) { path =>
-        optionalCookie(collectorConfig.cookieName) { reqCookie =>
+        cookieIfWanted(cookieName) { reqCookie =>
           optionalHeaderValueByName("User-Agent") { userAgent =>
             optionalHeaderValueByName("Referer") { refererURI =>
               headerValueByName("Raw-Request-URI") { rawRequest =>
@@ -147,7 +151,7 @@ class CollectorService(
     } ~
     get {
       path(Segment / Segment) { (path1, path2) =>
-        optionalCookie(collectorConfig.cookieName) { reqCookie =>
+        cookieIfWanted(cookieName) { reqCookie =>
           optionalHeaderValueByName("User-Agent") { userAgent =>
             optionalHeaderValueByName("Referer") { refererURI =>
               headerValueByName("Raw-Request-URI") { rawRequest =>
@@ -191,5 +195,16 @@ class CollectorService(
       }
     } ~
     complete(responseHandler.notFound)
+  }
+
+  /**
+   * Directive to extract a cookie if a cookie name is specified and if such a cookie exists
+   * 
+   * @param name Optionally configured cookie name
+   * @return Directive1[Option[HttpCookie]]
+   */
+  def cookieIfWanted(name: Option[String]): Directive1[Option[HttpCookie]] = name match {
+    case Some(n) => optionalCookie(n)
+    case None => optionalHeaderValue(x => None)
   }
 }
