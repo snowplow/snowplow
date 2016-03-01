@@ -40,7 +40,7 @@ collector {
     # Set to 0 to disable the cookie
     expiration = 365 days
     # Network cookie name
-    name = sp
+    name = {{collectorCookieName}}
     # The domain is optional and will make the cookie accessible to other
     # applications on the domain. Comment out this line to tie cookies to
     # the collector's full domain
@@ -86,8 +86,8 @@ collector {
 
       # Minimum and maximum backoff periods
       backoffPolicy: {
-        minBackoff: 3000 # 3 seconds
-        maxBackoff: 600000 # 5 minutes
+        minBackoff: {{collectorSinkKinesisMinBackoffMillis}}
+        maxBackoff: {{collectorSinkKinesisMaxBackoffMillis}}
       }
 
       # Incoming events are stored in a buffer before being sent to Kinesis.
