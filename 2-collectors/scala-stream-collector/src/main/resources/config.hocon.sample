@@ -38,7 +38,7 @@ collector {
   # with the following domain and expiration.
   cookie {
     # Set to 0 to disable the cookie
-    expiration = 365 days
+    expiration = {{collectorCookieExpiration}} # e.g. "365 days"
     # Network cookie name
     name = {{collectorCookieName}}
     # The domain is optional and will make the cookie accessible to other
