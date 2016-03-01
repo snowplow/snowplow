@@ -9,8 +9,8 @@ Vagrant.configure("2") do |config|
 
   # Required for NFS to work, pick any local IP
   # Use NFS for shared folders for better performance
-  # config.vm.network :private_network, ip: '192.168.50.50' # Uncomment to use NFS
-  # config.vm.synced_folder '.', '/vagrant', nfs: true # Uncomment to use NFS
+  config.vm.network :private_network, ip: '192.168.50.50' # Can be commented to use with SMB
+  config.vm.synced_folder '.', '/vagrant', nfs: true      # Can be commented to use with SMB
 
   config.vm.provider :virtualbox do |vb|
     vb.name = Dir.pwd().split("/")[-1] + "-" + Time.now.to_f.to_i.to_s
@@ -18,7 +18,8 @@ Vagrant.configure("2") do |config|
     vb.customize [ "guestproperty", "set", :id, "--timesync-threshold", 10000 ]
     # Scala is memory-hungry
     vb.memory = 5120
-    # vb.cpus = 4 # Uncomment to use more cores
+    # Make sure your host has enough CPUs, decrease otherwise
+    vb.cpus = 4
   end
 
   config.vm.provision :shell do |sh|
