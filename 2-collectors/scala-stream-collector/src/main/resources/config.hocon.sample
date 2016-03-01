@@ -86,8 +86,8 @@ collector {
 
       # Minimum and maximum backoff periods
       backoffPolicy: {
-        minBackoff: 3000 # 3 seconds
-        maxBackoff: 600000 # 5 minutes
+        minBackoff: {{collectorSinkKinesisMinBackoffMillis}}
+        maxBackoff: {{collectorSinkKinesisMaxBackoffMillis}}
       }
 
       # Incoming events are stored in a buffer before being sent to Kinesis.
