@@ -46,7 +46,7 @@ CREATE TABLE atomic.com_callrail_call_complete_1 (
 	destinationnum        varchar(255)   encode raw,
 	duration              integer        encode raw,
 	first_call            boolean        encode runlength,
-	device_type           varchar(255)   encode runlenght,
+	device_type           varchar(255)   encode runlength,
 	ga                    varchar(255)   encode runlength,
 	gclid                 varchar(255)   encode runlength, 
 	id                    varchar(255)   encode raw not null,
@@ -80,7 +80,7 @@ SORTKEY (root_tstamp);
 -- Now copy into new from atomic.com_callrail_call_complete_1_old setting device_type to NULL
 INSERT INTO atomic.com_callrail_call_complete_1 
 	SELECT schema_vendor, schema_name, schema_format, schema_version, root_id, root_tstamp, ref_root, ref_tree, ref_parent, answered, callercity
-       , callercountry, callername, callernum, callerstate, callerzip, callsource, datetime, destinationnum, duration, first_call, device_type, ga, gclid
+       , callercountry, callername, callernum, callerstate, callerzip, callsource, "datetime", destinationnum, duration, first_call, device_type, ga, gclid
        , id, ip, keywords, kissmetrics_id, landingpage, recording, referrer, referrermedium, trackingnum, transcription, utm_campaign, utm_content
        , utm_medium, utm_source, utm_term, utma, utmb, utmc, utmv, utmx, utmz
 FROM atomic.com_callrail_call_complete_1_old;
