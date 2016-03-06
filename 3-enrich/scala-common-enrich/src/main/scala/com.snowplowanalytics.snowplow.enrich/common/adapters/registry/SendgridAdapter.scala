@@ -37,6 +37,11 @@ import com.snowplowanalytics.iglu.client.{Resolver, SchemaKey}
 import com.snowplowanalytics.snowplow.enrich.common.loaders.CollectorPayload
 import com.snowplowanalytics.snowplow.enrich.common.utils.{JsonUtils => JU}
 
+import javax.mail.internet.ContentType
+
+import scala.util.Try
+
+
 /**
  * Transforms a collector payload which conforms to
  * a known version of the Sendgrid Tracking webhook
@@ -134,7 +139,7 @@ object SendgridAdapter extends Adapter {
     (payload.body, payload.contentType) match {
       case (None, _) => s"Request body is empty: no ${VendorName} event to process".failNel
       case (_, None) => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
-      case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
+      case (_, Some(ct)) if Try(new ContentType(ct).getBaseType).getOrElse(ct) != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
       case (Some(body), _) => {
         val events = payloadBodyToEvents(body, payload)
         rawEventsListProcessor(events)

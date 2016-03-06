@@ -1,4 +1,88 @@
-Release 75 Long-Legged Buzzard (2016-02-01)
+Release 77 Great Auk (2016-02-28)
+---------------------------------
+Documentation: updated tracker status table (#1999)
+Documentation: fixed incorrect entries in CHANGELOG (#2443)
+Common: made optionality of Lingual and HBase in config.yml clearer (#2206)
+Common: fixed OpenJDK build in Travis CI (#2447)
+Scala Hadoop Enrich: bumped to 1.6.0
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.21.0 (#2442)
+Scala Common Enrich: bumped to 0.21.0
+Scala Common Enrich: fixed exception for invalid API key in currency conversion (#2441)
+Scala Common Enrich: fixed exception on same currency conversion (#2437)
+Scala Common Enrich: switched from javax.script to org.mozilla.javascript for JavaScriptEnrichment (#2453)
+Scala Hadoop Shred: bumped to 0.8.0
+Scala Hadoop Shred: bumped Iglu Scala Client to 0.3.2 (#2319)
+EmrEtlRunner: bumped to 0.21.0
+EmrEtlRunner: attached monitoring tags to jobflow (#425)
+EmrEtlRunner: now throwing exception if processing thrift with --skip s3distcp or AMI 2.x.x (#1648)
+EmrEtlRunner: added bootstrap action to prepare AMI >= 3.8.0 (#2320)
+EmrEtlRunner: bumped Elasticity to 6.0.7 (#2400)
+EmrEtlRunner: added support for Amazon EMR 4.x.x series (#1926)
+EmrEtlRunner: prevented bad CLI options from throwing stack trace (#1930)
+EmrEtlRunner: made error for nonempty processing bucket collector-agnostic (#1961)
+EmrEtlRunner: bumped Ruby Tracker to 0.5.2 (#2143)
+EmrEtlRunner: improved retry logic for EMR bootstrap timeouts (#2150)
+EmrEtlRunner: excluded previously-built executables from the build (#2163)
+EmrEtlRunner: added support for additional_info in EMR section of configuration (#2211)
+EmrEtlRunner: added Elasticsearch stage to help message (#2323)
+EmrEtlRunner: updated hadoop_enrich version in config.yml.sample to 1.6.0 (#2459)
+EmrEtlRunner: updated hadoop_shred version in config.yml.sample to 0.8.0 (#2370)
+EmrEtlRunner: removed snowplow-emr-etl-runner.sh (#2445)
+StorageLoader: bumped to 0.7.0
+StorageLoader: added support for supplying config file as Base64-encoded string (#2227)
+StorageLoader: added ability to retrieve AWS credentials from EC2 role (#2226)
+StorageLoader: excluded previously-built executables from the build (#2164)
+StorageLoader: started printing stack trace for failures not caused by bad configuration (#2160)
+StorageLoader: bumped Ruby Tracker to 0.5.2 (#2144)
+StorageLoader: moved ANALYZE statements after VACUUM statements (#1361)
+StorageLoader: added resolver config option to snowplow-runner-and-loader.sh (#2170)
+StorageLoader: updated snowplow-runner-and-loader.sh to use JRuby binaries (#2233)
+StorageLoader: removed snowplow-storage-loader.sh (#2444)
+StorageLoader: wrote JSON Path file for com.optimizely/visitor_dimension event (#2436)
+StorageLoader: wrote JSON Path file for com.optimizely/visitor_audience event (#2435)
+StorageLoader: wrote JSON Path file for com.optimizely/visitor event (#2434)
+StorageLoader: wrote JSON Path file for com.optimizely/variation event (#2433)
+StorageLoader: wrote JSON Path file for com.optimizely/state event (#2432)
+StorageLoader: wrote JSON Path file for com.optimizely/experiment event (#2431)
+StorageLoader: wrote JSON Path file for io.augur.snowplow/identity_lite (#1958)
+Redshift: wrote Redshift DDL for com.optimizely/visitor_dimension event (#2430)
+Redshift: wrote Redshift DDL for com.optimizely/visitor_audience event (#2429)
+Redshift: wrote Redshift DDL for com.optimizely/visitor event (#2428)
+Redshift: wrote Redshift DDL for com.optimizely/variation event (#2427)
+Redshift: wrote Redshift DDL for com.optimizely/state event (#2426)
+Redshift: wrote Redshift DDL for com.optimizely/experiment event (#2425)
+Redshift: added Redshift DDL for io.augur.snowplow/identity_lite (#1957)
+
+Release 76 Changeable Hawk-Eagle (2016-01-26)
+---------------------------------------------
+Scala Hadoop Enrich: bumped to 1.5.1
+Scala Hadoop Enrich: bumped Scala Common Enrich to 0.20.1 (#2338)
+Scala Common Enrich: bumped to 0.20.1
+Scala Common Enrich: now using only base MIME type in content-type check for SendGrid Adapter (#2328)
+Scala Hadoop Shred: bumped to 0.7.0
+Scala Hadoop Shred: fixed good tests' checks for empty paths (#2278)
+Scala Hadoop Shred: now deduplicating event_id and event_fingerprint pairs (#2246)
+Scala Hadoop Shred: fixed incorrect event in SchemaValidationFailed1Spec (#2355)
+Scala Hadoop Shred: updated tests to check atomic-events output (#2264)
+Scala Hadoop Shred: now only writes atomic-events if JSONs shred successfully (#2245)
+Scala Hadoop Shred: removed empty SchemaValidationFailed2Spec (#2271)
+Scala Hadoop Shred: fixed test suite issue with multiple input lines (#2270)
+EmrEtlRunner: updated hadoop_enrich version in config.yml.sample to 1.5.1 (#2339)
+EmrEtlRunner: changed in bucket example in config.yml.sample to s3://my-in-bucket (#2358)
+EmrEtlRunner: updated archive bucket examples in config.yml (#2368)
+EmrEtlRunner: updated hadoop_shred version in config.yml.sample to 0.7.0 (#2360)
+StorageLoader: wrote JSON Paths file for com.google.analytics.enhanced-ecommerce/action (#2136)
+StorageLoader: wrote JSON Paths file for com.google.analytics.enhanced-ecommerce/actionFieldObject (#2135)
+StorageLoader: wrote JSON Paths file for com.google.analytics.enhanced-ecommerce/impressionFieldObject (#2134)
+StorageLoader: wrote JSON Paths file for com.google.analytics.enhanced-ecommerce/productFieldObject (#2133)
+StorageLoader: wrote JSON Paths file for com.google.analytics.enhanced-ecommerce/promotionFieldObject (#2132)
+Redshift: added Redshift DDL for com.google.analytics.enhanced-ecommerce/promotionFieldObject (#2131)
+Redshift: added Redshift DDL for com.google.analytics.enhanced-ecommerce/productFieldObject (#2130)
+Redshift: added Redshift DDL for com.google.analytics.enhanced-ecommerce/impressionFieldObject (#2129)
+Redshift: added Redshift DDL for com.google.analytics.enhanced-ecommerce/actionFieldObject (#2128)
+Redshift: added Redshift DDL for com.google.analytics.enhanced-ecommerce/action (#2127)
+
+Release 75 Long-Legged Buzzard (2016-01-02)
 -------------------------------------------
 Scala Hadoop Enrich: bumped to 1.5.0
 Scala Hadoop Enrich: bumped Scala Common Enrich to 0.20.0 (#2200)
@@ -116,8 +200,10 @@ StorageLoader: bumped to 0.6.0
 StorageLoader: added tcpKeepAlive=true to JDBC for long-running COPYs via NAT (#2145)
 StorageLoader: fixed setup guide link in README, thanks @diamondo25! (#2025)
 StorageLoader: loaded atomic.events from shredded folder (#1795)
+Postgres: bumped atomic.events to 0.7.0
 Postgres: added migration script for 0.6.0 to 0.7.0 (#2047)
 Postgres: removed JSON fields from atomic.events (#1949)
+Redshift: bumped atomic.events to 0.8.0
 Redshift: added migration script for 0.4.0 to 0.8.0 (#2155)
 Redshift: added migration script for 0.5.0 to 0.8.0 (#2119)
 Redshift: added migration script for 0.6.0 to 0.8.0 (#2120)
@@ -186,19 +272,21 @@ Scala Hadoop Shred: bumped Scala Common Enrich to 0.16.0 (#1935)
 Scala Hadoop Shred: started using BadRow case class from Scala Common Enrich (#1914)
 Scala Hadoop Shred: upgraded to Hadoop 2.4 (#1720)
 Scala Hadoop Shred: bumped Iglu Scala Client to 0.3.0 (#1221)
+Redshift: bumped atomic.events to 0.7.0
+Redshift: added migration script for 0.6.0 to 0.7.0 (#1988)
+Redshift: added migration script for 0.5.0 to 0.7.0 (#2058)
 Redshift: added event_vendor/name/format/version to atomic.events (#1801)
 Redshift: updated wd_access_log_1.sql with 4 new fields and renamed "x_edge_request_type" to "x_edge_request_id" (#1940)
 Redshift: added event_fingerprint to atomic.events (#1971)
 Redshift: added true_tstamp to atomic.events (#1984)
-Redshift: added migration script for 0.6.0 to 0.7.0 (#1988)
-Redshift: added migration script for 0.5.0 to 0.7.0 (#2058)
 Redshift: renamed dvce_tstamp to dvce_created_tstamp (#1993)
 Redshift: added comment containing table version to atomic.events (#2020)
 Redshift: added migration script for wd_access_log_1.sql 1-0-3 to 1-0-4 (#2029)
+Postgres: bumped atomic.events to 0.6.0
+Postgres: added migration script for 0.5.0 to 0.6.0 (#1987)
 Postgres: added event_vendor/name/format/version to atomic.events (#1802)
 Postgres: added event_fingerprint to atomic.events (#1970)
 Postgres: added true_tstamp to atomic.events (#1985)
-Postgres: added migration script for 0.5.0 to 0.6.0 (#1987)
 Postgres: renamed dvce_tstamp to dvce_created_tstamp (#1994)
 Postgres: added comment containing table version to atomic.events (#2021)
 StorageLoader: bumped to 0.5.0
@@ -463,11 +551,13 @@ Scala Common Enrich: bumped to 0.13.1
 Scala Common Enrich: prevented UaParserEnrichment from creating a new Parser on every event (#1616)
 Scala Hadoop Enrich: bumped to 0.14.1
 Scala Hadoop Enrich: bumped Scala Common Enrich to 0.13.1 (#1617)
-Redshift: increased mkt_clickid to varchar(128) (#1605)
+Redshift: bumped atomic.events to 0.6.0
 Redshift: added migration script for 0.5.0 to 0.6.0 (#1606)
+Redshift: increased mkt_clickid to varchar(128) (#1605)
 Redshift: removed legacy cubes (#1613)
-Postgres: increased mkt_clickid to varchar(128) (#1603)
+Postgres: bumped atomic.events to 0.5.0
 Postgres: added migration script for 0.4.0 to 0.5.0 (#1604)
+Postgres: increased mkt_clickid to varchar(128) (#1603)
 Postgres: removed legacy cubes (#1614)
 Postgres: added user_id field to migration script for 0.3.0 to 0.4.0 (#1620)
 Data Modeling: updated reference data.iso_country_codes so DISTSTYLE is ALL (#1393)
@@ -513,11 +603,12 @@ Scala Kinesis Enrich: bumped to 0.4.0
 Scala Kinesis Enrich: bumped Scala Common Enrich to 0.13.0 (#1369)
 Scala Kinesis Enrich: emitted updated EnrichedEvent (#1368)
 Scala Kinesis Enrich: unified logger configuration, thanks @kazjote! (#1367)
+Redshift: bumped atomic.events to 0.5.0
+Redshift: added migration script for 0.4.0 to 0.5.0 (#1335)
 Redshift: added refr_domain_userid and refr_dvce_tstamp to atomic.events (#1450)
 Redshift: added dvce_sent_tstamp column (#1385)
 Redshift: added foreign key constraint to all Redshift shredded tables (#1365)
 Redshift: changed JSON field encodings to lzo (#1350)
-Redshift: added migration script for 0.4.0 to 0.5.0 (#1335)
 Redshift: added etl_tags column (#1245)
 Redshift: added column for mkt_clickid and mkt_network (#1093)
 Redshift: widened domain_userid column to hold UUID (#1090)
@@ -528,9 +619,10 @@ Redshift: added new currency fields (#366)
 Redshift: added domain_sessionid column (#1539)
 Redshift: widened structured event, URL, and referer fields (#1553)
 Redshift: added derived_tstamp column (#1558)
+Postgres: bumped atomic.events to 0.4.0
+Postgres: added migration script for 0.3.0 to 0.4.0 (#1347)
 Postgres: added refr_domain_userid and refr_dvce_tstamp to atomic.events (#1451)
 Postgres: added dvce_sent_tstamp column (#1386)
-Postgres: added migration script for 0.3.0 to 0.4.0 (#1347)
 Postgres: added column for geo_timezone (#1336)
 Postgres: added etl_tags column (#1246)
 Postgres: removed primary key constraint on event_id (#1187)
@@ -945,15 +1037,15 @@ Scala Hadoop Shred: bumped to 0.2.0
 Scala Hadoop Shred: bumped to Scala Common Enrich 0.5.0 (#918)
 Scala Hadoop Shred: trailing empty fields no longer cause shredding for that row to fail (#921)
 Scala Hadoop Shred: updated column offsets for enriched events TSV (#915)
-Redshift: bumped table-def to 0.4.0
-Redshift: migration script added for 0.3.0 to 0.4.0
+Redshift: bumped atomic.events to 0.4.0
+Redshift: added migration script for 0.3.0 to 0.4.0
 Redshift: added etl_tstamp to atomic.events (#819)
 Redshift: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#834)
 Redshift: added new MaxMind fields (#871)
 Redshift: applied runlength encoding to all fields keyed off IP address (#883)
 Redshift: migration script added for 0.3.0 to 0.4.0 (#838)
-Postgres: bumped table-def to 0.3.0
-Postgres: migration script added for 0.2.0 to 0.3.0
+Postgres: bumped atomic.events to 0.3.0
+Postgres: added migration script for 0.2.0 to 0.3.0
 Postgres: added etl_tstamp to atomic.events (#820)
 Postgres: removed event_vendor and ue_name and renamed ue_properties to unstruct_event (#833)
 Postgres: added new MaxMind fields (#871)
@@ -1174,14 +1266,14 @@ Postgres: fixed error in `recipes_basic.technology_mobile` recipe (#397)
 
 Version 0.8.10 (2013-10-18)
 ---------------------------
-Redshift: bumped table-def to 0.2.2
-Redshift: moved events table to a new atomic schema in atomic-def.sql (#301)
+Redshift: bumped atomic.events to 0.2.2
 Redshift: added migration script for 0.2.1 to 0.2.2
+Redshift: moved events table to a new atomic schema in atomic-def.sql (#301)
 Redshift: added SQL DDL to define Redshift recipes (#297)
 Redshift: added SQL DDL to define Redshift cubes (#298)
-Postgres: bumped table-def to 0.1.1
-Postgres: renamed table-def file to atomic-def.sql
+Postgres: bumped atomic.events to 0.1.1
 Postgres: added migration script for 0.1.0 to 0.1.1
+Postgres: renamed table-def file to atomic-def.sql
 Postgres: moved NOT NULL constraint on event field to event_vendor field (#318)
 Postgres: added SQL DDL to define Postgres recipes (#303)
 Postgres: added SQL DDL to define Postgres cubes (#302)

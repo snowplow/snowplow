@@ -114,6 +114,7 @@ module Snowplow
             :task_instance_type => String,
             :task_instance_bid => Maybe[Num]
             }),
+          :additional_info => Maybe[String],
           :bootstrap_failure_tries => Num
           }),
         }),

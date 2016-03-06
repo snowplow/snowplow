@@ -61,7 +61,7 @@ module Snowplow
           :shredded
         end
 
-        copy_analyze_statements = if atomic_events_location == :shredded
+        copy_statements = if atomic_events_location == :shredded
           loc = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:shredded][:good])
           altered_enriched_filepath = Sluice::Storage::S3::list_files(s3, loc).find { |file|
             ALTERED_ENRICHED_PATTERN.match(file.key)
@@ -74,20 +74,13 @@ module Snowplow
           [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:shredded][:good] + altered_enriched_subdirectory, target[:table], target[:maxerror])]
         else
           [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:enriched][:good], target[:table], target[:maxerror])]
-        end
-
-        copy_analyze_statements.push(*shredded_statements.map(&:copy))
-
-        unless config[:skip].include?('analyze')
-          copy_analyze_statements << build_analyze_statement(target[:table])
-          copy_analyze_statements.push(*shredded_statements.map(&:analyze).uniq)
-        end
+        end + shredded_statements.map(&:copy)
 
         credentials = [config[:aws][:access_key_id], config[:aws][:secret_access_key]]
 
-        status = PostgresLoader.execute_transaction(target, copy_analyze_statements)
+        status = PostgresLoader.execute_transaction(target, copy_statements)
         unless status == []
-          raw_error_message = "#{status[1]} error executing COPY and ANALYZE statements: #{status[0]}: #{status[2]}"
+          raw_error_message = "#{status[1]} error executing COPY statements: #{status[0]}: #{status[2]}"
           error_message = Sanitization.sanitize_message(raw_error_message, credentials)
           if snowplow_tracking_enabled
             Monitoring::Snowplow.instance.track_load_failed(error_message)
@@ -103,14 +96,19 @@ module Snowplow
         # and execute them in series. VACUUMs cannot be performed
         # inside of a transaction
         if config[:include].include?('vacuum')
-          vacuum_statements = [
-            build_vacuum_statement(target[:table])
-          ]
-          vacuum_statements.push(*shredded_statements.map(&:vacuum).uniq)
+          vacuum_statements = [build_vacuum_statement(target[:table])] + shredded_statements.map(&:vacuum).uniq
+          vacuum_status = PostgresLoader.execute_queries(target, vacuum_statements)
+          unless vacuum_status == []
+            raise DatabaseLoadError, Sanitization.sanitize_message("#{vacuum_status[1]} error executing VACUUM statements: #{vacuum_status[0]}: #{vacuum_status[2]}", credentials)
+          end
+        end
 
-          status = PostgresLoader.execute_queries(target, vacuum_statements)
-          unless status == []
-            raise DatabaseLoadError, Sanitization.sanitize_message("#{status[1]} error executing VACUUM statements: #{status[0]}: #{status[2]}", credentials)
+        # ANALYZE statements should be executed after VACUUM statements.
+        unless config[:skip].include?('analyze')
+          analyze_statements = [build_analyze_statement(target[:table])] + shredded_statements.map(&:analyze).uniq
+          analyze_status = PostgresLoader.execute_transaction(target, analyze_statements)
+          unless analyze_status == []
+            raise DatabaseLoadError, Sanitization.sanitize_message("#{analyze_status[1]} error executing ANALYZE statements: #{analyze_status[0]}: #{analyze_status[2]}", credentials)
           end
         end
 

@@ -51,7 +51,7 @@ object Dependencies {
     val maxmindIplookups = "0.3.0"
     val json4s           = "3.2.11"
     val igluClient       = "0.3.1"
-    val scalaForex       = "0.3.0"
+    val scalaForex       = "0.4.0"
     val scalaWeather     = "0.1.0"
     // Scala (test only)
     val specs2           = "1.14"
