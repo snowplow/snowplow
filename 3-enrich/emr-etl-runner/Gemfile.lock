@@ -2,6 +2,12 @@ GEM
   remote: https://rubygems.org/
   specs:
     awrence (0.1.0)
+    aws-sdk (2.2.9)
+      aws-sdk-resources (= 2.2.9)
+    aws-sdk-core (2.2.9)
+      jmespath (~> 1.0)
+    aws-sdk-resources (2.2.9)
+      aws-sdk-core (= 2.2.9)
     builder (3.2.2)
     contracts (0.7)
     coveralls (0.8.1)
@@ -60,6 +66,7 @@ GEM
       domain_name (~> 0.5)
     inflecto (0.0.2)
     ipaddress (0.8.0)
+    jmespath (1.1.3)
     jruby-jars (1.7.20.1)
     jruby-rack (1.1.18)
     json (1.8.3)
@@ -118,6 +125,7 @@ PLATFORMS
 
 DEPENDENCIES
   awrence (~> 0.1.0)
+  aws-sdk (~> 2)
   contracts (= 0.7)
   coveralls
   elasticity (~> 6.0.7)
