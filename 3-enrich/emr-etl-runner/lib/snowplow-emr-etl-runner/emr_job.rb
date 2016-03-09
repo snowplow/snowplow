@@ -103,13 +103,12 @@ module Snowplow
         # Configure Elasticity with your AWS credentials
         Elasticity.configure do |c|
           aws_session_token = nil
-
- +        if access_key_id == 'iam' and secret_access_key == 'iam'
+ +        if config[:aws][:access_key_id] == 'iam' and config[:aws][:secret_access_key] == 'iam'
             #federated Identity Management
  +          credentials_from_role = Aws::InstanceProfileCredentials.new.credentials
- +          access_key_id = credentials_from_role.access_key_id
- +          secret_access_key = credentials_from_role.secret_access_key
- +          aws_session_token = credentials_from_role.aws_session_token
+ +          c.access_key = credentials_from_role.access_key_id
+ +          c.secret_key = credentials_from_role.secret_access_key
+ +          c.security_token = credentials_from_role.aws_session_token
  +        else
             #values in config
             c.access_key = config[:aws][:access_key_id]
