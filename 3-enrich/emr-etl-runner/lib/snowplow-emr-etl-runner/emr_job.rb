@@ -20,6 +20,7 @@ require 'awrence'
 require 'json'
 require 'base64'
 require 'contracts'
+require 'aws-sdk'
 
 # Global variable used to decide whether to patch Elasticity's AwsRequestV4 payload with Configurations
 # This is only necessary if we are loading Thrift with AMI >= 4.0.0
@@ -102,7 +103,6 @@ module Snowplow
 
         # Configure Elasticity with your AWS credentials
         Elasticity.configure do |c|
-          aws_session_token = nil
  +        if config[:aws][:access_key_id] == 'iam' and config[:aws][:secret_access_key] == 'iam'
             #federated Identity Management
  +          credentials_from_role = Aws::InstanceProfileCredentials.new.credentials

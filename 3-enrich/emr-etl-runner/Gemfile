@@ -24,10 +24,11 @@ gem "elasticity", "~> 6.0.7"
 gem "sluice", "~> 0.2.2"
 gem "awrence", "~> 0.1.0"
 gem "snowplow-tracker", "~> 0.5.2"
+gem "aws-sdk", "~> 2"
 
 group :development do
   gem "rspec", "~> 2.14", ">= 2.14.1"
   gem "coveralls"
-  
+
   gem "warbler" if RUBY_PLATFORM == 'java'
 end
