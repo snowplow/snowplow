@@ -107,7 +107,7 @@ module Snowplow
             credentials_from_role = Aws::InstanceProfileCredentials.new.credentials
             c.access_key = credentials_from_role.access_key_id
             c.secret_key = credentials_from_role.secret_access_key
-            c.session_token = credentials_from_role.session_token
+            c.security_token = credentials_from_role.session_token
           else
             c.access_key = config[:aws][:access_key_id]
             c.secret_key = config[:aws][:secret_access_key]
