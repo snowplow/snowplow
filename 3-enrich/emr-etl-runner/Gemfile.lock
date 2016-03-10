@@ -100,7 +100,7 @@ GEM
       json (~> 1.8)
       simplecov-html (~> 0.10.0)
     simplecov-html (0.10.0)
-    sluice (0.2.2)
+    sluice (0.2.3)
       contracts (~> 0.4)
       fog (= 1.24)
     snowplow-tracker (0.5.2)
@@ -130,7 +130,7 @@ DEPENDENCIES
   coveralls
   elasticity (~> 6.0.7)
   rspec (~> 2.14, >= 2.14.1)
-  sluice (~> 0.2.2)
+  sluice (~> 0.2.3)
   snowplow-tracker (~> 0.5.2)
   warbler
 
