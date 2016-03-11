@@ -38,12 +38,6 @@ module Snowplow
       :process_shred_location => Maybe[String]
       })
 
-    # The Hash for the IP anonymization enrichment.
-    AnonIpHash = ({
-      :enabled => Bool,
-      :anon_octets => Num
-      })
-
     # The Hash containing the buckets field from the configuration YAML
     BucketHash = ({
       :assets => String,
