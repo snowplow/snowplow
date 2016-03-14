@@ -96,10 +96,16 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
         case Some(ip) => (ip, ip)
       }
 
-      // Use the same UUID if the request cookie contains `sp`.
-      val networkUserId: String = requestCookie match {
-        case Some(rc) => rc.content
-        case None => UUID.randomUUID.toString
+      // check if nuid param is present?
+      val networkUserIdParam = request.uri.query.get("nuid")
+      val networkUserId: String = networkUserIdParam match {
+        // use nuid as networkUserId if present
+        case Some(nuid) => nuid
+        // else use the same UUID if the request cookie contains `sp`.
+        case None =>  requestCookie match {
+          case Some(rc) => rc.content
+          case None => UUID.randomUUID.toString
+        }
       }
 
       // Construct an event object from the request.
