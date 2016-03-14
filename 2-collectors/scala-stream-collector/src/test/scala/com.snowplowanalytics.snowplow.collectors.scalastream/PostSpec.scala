@@ -130,6 +130,32 @@ collector {
         httpCookie.domain must beSome
         httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
         httpCookie.expires must beSome
+        httpCookie.content.matches("""[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}""")
+        val expiration = httpCookie.expires.get
+        val offset = expiration.clicks - collectorConfig.cookieExpiration -
+          DateTime.now.clicks
+        offset.asInstanceOf[Int] must beCloseTo(0, 2000) // 1000 ms window.
+      }
+    }
+    "return a cookie containing nuid query parameter" in {
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2?nuid=UUID_Test_New") ~> collectorService.collectorRoute ~> check {
+        headers must not be empty
+
+        val httpCookies: List[HttpCookie] = headers.collect {
+          case `Set-Cookie`(hc) => hc
+        }
+        httpCookies must not be empty
+
+        // Assume we only return a single cookie.
+        // If the collector is modified to return multiple cookies,
+        // this will need to be changed.
+        val httpCookie = httpCookies(0)
+
+        httpCookie.name must be("sp")
+        httpCookie.domain must beSome
+        httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
+        httpCookie.expires must beSome
+        httpCookie.content must beEqualTo("UUID_Test_New")
         val expiration = httpCookie.expires.get
         val offset = expiration.clicks - collectorConfig.cookieExpiration -
           DateTime.now.clicks
@@ -148,6 +174,20 @@ collector {
         val httpCookie = httpCookies(0)
 
         httpCookie.content must beEqualTo("UUID_Test")
+      }
+    }
+    "override cookie with nuid parameter" in {
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2?nuid=UUID_Test_New", Some(HttpCookie("sp", "UUID_Test"))) ~>
+          collectorService.collectorRoute ~> check {
+        val httpCookies: List[HttpCookie] = headers.collect {
+          case `Set-Cookie`(hc) => hc
+        }
+        // Assume we only return a single cookie.
+        // If the collector is modified to return multiple cookies,
+        // this will need to be changed.
+        val httpCookie = httpCookies(0)
+
+        httpCookie.content must beEqualTo("UUID_Test_New")
       }
     }
     "return a P3P header" in {
