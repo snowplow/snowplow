@@ -49,6 +49,7 @@ module Snowplow
 
         # Add in our skip and include settings
         config[:skip] = options[:skip]
+        config[:skipshred] = options[:skipshred]
         config[:include] = options[:include]
 
         # Add trailing slashes if needed to the non-nil buckets
@@ -119,6 +120,7 @@ module Snowplow
         options = {}
         options[:skip] = []
         options[:include] = []
+        options[:skipshred] = []
         optparse = OptionParser.new do |opts|
 
           opts.banner = "Usage: %s [options]" % NAME
@@ -128,6 +130,7 @@ module Snowplow
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
           opts.on('-i', '--include compupdate,vacuum', Array, 'include optional work step(s)') { |config| options[:include] = config }
           opts.on('-s', '--skip download|delete,load,shred,analyze,archive_enriched', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-x', '--skip-shred EVENT_TYPE', Array, 'skip shred event type') { |config| options[:skipshred] = config }
 
           opts.separator ""
           opts.separator "Common options:"
