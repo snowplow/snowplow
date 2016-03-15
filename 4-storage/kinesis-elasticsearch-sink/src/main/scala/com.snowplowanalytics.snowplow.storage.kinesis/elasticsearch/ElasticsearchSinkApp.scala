@@ -48,6 +48,9 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
 import com.snowplowanalytics.snowplow.scalatracker.SelfDescribingJson
 import com.snowplowanalytics.snowplow.scalatracker.emitters.AsyncEmitter
 
+// Common Enrich
+import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
+
 // This project
 import sinks._
 
@@ -91,7 +94,7 @@ object ElasticsearchSinkApp extends App {
   val configValue: Config = config.value.getOrElse(
     throw new RuntimeException("--config argument must be provided")).resolve.getConfig("sink")
 
-  val streamType = configValue.getConfig("kinesis").getConfig("in").getString("stream-type") match {
+  val streamType = configValue.getString("stream-type") match {
     case "good" => StreamType.Good
     case "bad" => StreamType.Bad
     case _ => throw new RuntimeException("\"stream-type\" must be set to \"good\" or \"bad\"")
@@ -107,40 +110,48 @@ object ElasticsearchSinkApp extends App {
   }
 
   val maxConnectionTime = configValue.getConfig("elasticsearch").getLong("max-timeout")
+  val finalConfig = convertConfig(configValue)
+  val goodSink = configValue.getString("sink.good") match {
+    case "stdout" => Some(new StdouterrSink)
+    case "elasticsearch" => None
+  }
+  val badSink = configValue.getString("sink.bad") match {
+    case "stderr" => new StdouterrSink
+    case "none" => new NullSink
+    case "kinesis" => {
+      val kinesis = configValue.getConfig("kinesis")
+      val kinesisSink = kinesis.getConfig("out")
+      val kinesisSinkName = kinesisSink.getString("stream-name")
+      val kinesisSinkShards = kinesisSink.getInt("shards")
+      val kinesisSinkRegion = kinesis.getString("region")
+      val kinesisSinkEndpoint = s"https://kinesis.${kinesisSinkRegion}.amazonaws.com"
+      new KinesisSink(finalConfig.AWS_CREDENTIALS_PROVIDER, kinesisSinkEndpoint, kinesisSinkName, kinesisSinkShards)
+    }
+  }
 
   val executor = configValue.getString("source") match {
 
     // Read records from Kinesis
     case "kinesis" => {
-      val finalConfig = convertConfig(configValue)
-
-      val (goodSink, badSink) = configValue.getString("sink") match {
-        case "elasticsearch-kinesis" => {
-          val kinesis = configValue.getConfig("kinesis")
-          val kinesisSink = kinesis.getConfig("out")
-          val kinesisSinkName = kinesisSink.getString("stream-name")
-          val kinesisSinkShards = kinesisSink.getInt("shards")
-          val kinesisSinkRegion = kinesis.getString("region")
-          val kinesisSinkEndpoint = s"https://kinesis.${kinesisSinkRegion}.amazonaws.com"
-          (None, new KinesisSink(finalConfig.AWS_CREDENTIALS_PROVIDER, kinesisSinkEndpoint, kinesisSinkName, kinesisSinkShards))
-        }
-        case "stdouterr" => (Some(new StdouterrSink), new StdouterrSink)
-        case _ => throw new RuntimeException("Sink type must be 'stdouterr' or 'kinesis'")
-      }
-
       new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, finalConfig, goodSink, badSink, tracker, maxConnectionTime).success
     }
 
     // Run locally, reading from stdin and sending events to stdout / stderr rather than Elasticsearch / Kinesis
     // TODO reduce code duplication
     case "stdin" => new Runnable {
-      val transformer = new SnowplowElasticsearchTransformer(documentIndex, documentType)
+      val transformer = streamType match {
+        case StreamType.Good => new SnowplowElasticsearchTransformer(documentIndex, documentType)
+        case StreamType.Bad => new BadEventTransformer(documentIndex, documentType)
+      }
+      lazy val elasticsearchSender = new ElasticsearchSender(finalConfig, None, maxConnectionTime)
       def run = for (ln <- scala.io.Source.stdin.getLines) {
-        val emitterInput = transformer.fromClass(ln -> transformer.jsonifyGoodEvent(ln.split("\t", -1))
-          .leftMap(_.list))
+        val emitterInput = transformer.consumeLine(ln)
         emitterInput._2.bimap(
-          f => Console.err.println(compact(render(("line" -> emitterInput._1) ~ ("errors" -> f)))),
-          s => println(s.getSource)
+          f => badSink.store(FailureUtils.getBadRow(emitterInput._1, f), None, false),
+          s => goodSink match {
+            case Some(gs) => gs.store(s.getSource, None, true)
+            case None => elasticsearchSender.sendToElasticsearch(List(ln -> s.success))
+          }
         )
       }
     }.success

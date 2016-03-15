@@ -24,6 +24,7 @@ import spray.can.Http
 // Java
 import java.io.File
 import java.nio.ByteBuffer
+import java.util.concurrent.ScheduledThreadPoolExecutor
 
 // Argot
 import org.clapper.argot._
@@ -73,10 +74,12 @@ object ScalaCollector extends App {
 
   implicit val system = ActorSystem.create("scala-stream-collector", rawConf)
 
+  lazy val executorService = new ScheduledThreadPoolExecutor(collectorConfig.threadpoolSize)
+
   val sinks = collectorConfig.sinkEnabled match {
     case Sink.Kinesis => {
-      val good = KinesisSink.createAndInitialize(collectorConfig, InputType.Good)
-      val bad  = KinesisSink.createAndInitialize(collectorConfig, InputType.Bad)
+      val good = KinesisSink.createAndInitialize(collectorConfig, InputType.Good, executorService)
+      val bad  = KinesisSink.createAndInitialize(collectorConfig, InputType.Bad, executorService)
       CollectorSinks(good, bad) 
     }
     case Sink.Stdout  => {
@@ -115,6 +118,9 @@ object Sink extends Enumeration {
   val Kinesis, Stdout, Test = Value
 }
 
+// How a collector should set cookies
+case class CookieConfig(name: String, expiration: Long, domain: Option[String])
+
 // Rigidly load the configuration file here to error when
 // the collector process starts rather than later.
 class CollectorConfig(config: Config) {
@@ -130,9 +136,13 @@ class CollectorConfig(config: Config) {
   val p3pCP = p3p.getString("CP")
 
   private val cookie = collector.getConfig("cookie")
-  val cookieExpiration = cookie.getMilliseconds("expiration")
-  val cookieEnabled = cookieExpiration != 0
-  val cookieDomain = cookie.getOptionalString("domain")
+
+  val cookieConfig = if (cookie.getBoolean("enabled")) {
+    Some(CookieConfig(
+      cookie.getString("name"),
+      cookie.getMilliseconds("expiration"),
+      cookie.getOptionalString("domain")))
+  } else None
 
   private val sink = collector.getConfig("sink")
   
@@ -167,4 +177,10 @@ class CollectorConfig(config: Config) {
   val backoffPolicy = kinesis.getConfig("backoffPolicy")
   val minBackoff = backoffPolicy.getLong("minBackoff")
   val maxBackoff = backoffPolicy.getLong("maxBackoff")
+
+  val useIpAddressAsPartitionKey = kinesis.hasPath("useIpAddressAsPartitionKey") && kinesis.getBoolean("useIpAddressAsPartitionKey")
+
+  def cookieName = cookieConfig.map(_.name)
+  def cookieDomain = cookieConfig.flatMap(_.domain)
+  def cookieExpiration = cookieConfig.map(_.expiration)
 }

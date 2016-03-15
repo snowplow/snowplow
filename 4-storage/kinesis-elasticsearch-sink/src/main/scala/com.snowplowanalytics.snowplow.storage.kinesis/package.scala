@@ -27,6 +27,9 @@ import com.amazonaws.services.kinesis.connectors.elasticsearch.ElasticsearchObje
 import scalaz._
 import Scalaz._
 
+// json4s
+import org.json4s._
+
 package object elasticsearch {
 
   /**
@@ -38,4 +41,9 @@ package object elasticsearch {
   type ValidatedRecord = (String, Validation[List[String], JsonRecord])
 
   type EmitterInput = (String, Validation[List[String], ElasticsearchObject])
+
+  /**
+   * Functions used to change a TSV pair to a JObject
+   */
+  type TsvToJsonConverter = (String, String) => ValidationNel[String, JObject]
 }

@@ -62,7 +62,9 @@ collector {
   }
 
   cookie {
+    enabled = true
     expiration = 365 days
+    name = sp
     domain = "test-domain.com"
   }
 
@@ -96,7 +98,7 @@ collector {
   val sink = new TestSink
   val sinks = CollectorSinks(sink, sink)
   val responseHandler = new ResponseHandler(collectorConfig, sinks)
-  val collectorService = new CollectorService(responseHandler, system)
+  val collectorService = new CollectorService(collectorConfig, responseHandler, system)
   val thriftDeserializer = new TDeserializer
 
   // By default, spray will always add Remote-Address to every request
@@ -131,18 +133,18 @@ collector {
         // this will need to be changed.
         val httpCookie = httpCookies(0)
 
-        httpCookie.name must be("sp")
+        httpCookie.name must beEqualTo(collectorConfig.cookieName.get)
         httpCookie.domain must beSome
         httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
         httpCookie.expires must beSome
         val expiration = httpCookie.expires.get
-        val offset = expiration.clicks - collectorConfig.cookieExpiration -
+        val offset = expiration.clicks - collectorConfig.cookieExpiration.get -
           DateTime.now.clicks
         offset.asInstanceOf[Int] must beCloseTo(0, 2000) // 1000 ms window.
       }
     }
     "return the same cookie as passed in" in {
-      CollectorGet("/i", Some(HttpCookie("sp", "UUID_Test"))) ~>
+      CollectorGet("/i", Some(HttpCookie(collectorConfig.cookieName.get, "UUID_Test"))) ~>
           collectorService.collectorRoute ~> check {
         val httpCookies: List[HttpCookie] = headers.collect {
           case `Set-Cookie`(hc) => hc
@@ -182,7 +184,7 @@ collector {
       storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 1000)
       storedEvent.encoding must beEqualTo("UTF-8")
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
-      storedEvent.collector must beEqualTo("ssc-0.5.0-test")
+      storedEvent.collector must beEqualTo("ssc-0.6.0-test")
       storedEvent.path must beEqualTo("/i")
       storedEvent.querystring must beEqualTo(payloadData)
     }
