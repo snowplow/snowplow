@@ -15,8 +15,10 @@
 
 require 'optparse'
 require 'date'
+require 'base64'
 require 'yaml'
 require 'erb'
+require 'aws-sdk'
 require 'sluice'
 
 # Config module to hold functions related to CLI argument parsing
@@ -36,10 +38,14 @@ module Snowplow
 
         options = Config.parse_args()
 
-        if Config.indicates_read_from_stdin?(options[:config])
-          unsymbolized_config = $stdin.readlines.join
+        if options[:b64config].nil?
+          if Config.indicates_read_from_stdin?(options[:config])
+            unsymbolized_config = $stdin.readlines.join
+          else
+            unsymbolized_config = File.new(options[:config]).read
+          end
         else
-          unsymbolized_config = File.new(options[:config]).read
+          unsymbolized_config = Base64.decode64(options[:b64config])
         end
 
         erb_config = ERB.new(unsymbolized_config).result(binding)
@@ -54,6 +60,13 @@ module Snowplow
 
         # Add trailing slashes if needed to the non-nil buckets
         config[:aws][:s3][:buckets] = add_trailing_slashes(config[:aws][:s3][:buckets])
+
+        # Retrieve AWS credentials from EC2 role if necessary
+        if config[:aws][:access_key_id] == 'iam' and config[:aws][:secret_access_key] == 'iam'
+          credentials_from_role = Aws::InstanceProfileCredentials.new.credentials
+          config[:aws][:access_key_id] = credentials_from_role.access_key_id
+          config[:aws][:secret_access_key] = credentials_from_role.secret_access_key
+        end
 
         # Add in our comprows setting
         config[:comprows] = options[:comprows]
@@ -127,7 +140,7 @@ module Snowplow
           opts.separator ""
           opts.separator "Specific options:"
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
-          opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
+          opts.on('-b', '--base64-config-string CONFIG', 'base64-encoded configuration string') { |config| options[:b64config] = config }
           opts.on('-i', '--include compupdate,vacuum', Array, 'include optional work step(s)') { |config| options[:include] = config }
           opts.on('-s', '--skip download|delete,load,shred,analyze,archive_enriched', Array, 'skip work step(s)') { |config| options[:skip] = config }
           opts.on('-x', '--skip-shred EVENT_TYPE', Array, 'skip shred event type') { |config| options[:skipshred] = config }
@@ -163,13 +176,15 @@ module Snowplow
           end
         }
 
-        if options[:config].nil?
-          raise ConfigError, "Missing option: config\n#{optparse}"
+        if options[:config].nil? and options[:b64config].nil?
+          raise ConfigError, "Missing option: config or base64-config-string\n#{optparse}"
         end
 
         # Check the config file exists if config is not read from stdin
-        unless Config.indicates_read_from_stdin?(options[:config]) || File.file?(options[:config])
-          raise ConfigError, "Configuration file '#{options[:config]}' does not exist, or is not a file."
+        if options[:b64config].nil?
+          unless Config.indicates_read_from_stdin?(options[:config]) || File.file?(options[:config])
+            raise ConfigError, "Configuration file '#{options[:config]}' does not exist, or is not a file."
+          end
         end
 
         options

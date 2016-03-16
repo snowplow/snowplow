@@ -73,7 +73,7 @@ begin
   puts "Completed successfully"
 
 # Catch any Snowplow error
-rescue loader::Error => e
+rescue loader::ConfigError => e
   $stderr.puts(e.message)
   exit 1
 rescue SystemExit => e

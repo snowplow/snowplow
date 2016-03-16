@@ -36,6 +36,11 @@ class ShredderSpec extends Specification with ValidationMatchers {
       actual must beSuccessful("unstruct_event_com_snowplowanalytics_snowplow_change_form_1")
     }
 
+    "convert a schema with a hyphen to an Elasticsearch field name" in {
+      val actual = Shredder.fixSchema("unstruct_event", "iglu:com.hy-phen/evt/jsonschema/1-0-0")
+      actual must beSuccessful("unstruct_event_com_hy_phen_evt_1")
+    }
+
     "convert a PascalCase schema to an Elasticsearch field name" in {
       val actual = Shredder.fixSchema("contexts", "iglu:com.acme/PascalCaseContext/jsonschema/1-0-0")
       actual must beSuccessful("contexts_com_acme_pascal_case_context_1")
@@ -134,7 +139,7 @@ class ShredderSpec extends Specification with ValidationMatchers {
       val expected = NonEmptyList(
         "Could not extract inner data field from custom context",
         "Context JSON did not contain a stringly typed schema field",
-        """Schema failing does not conform to regular expression .+:([a-zA-Z0-9_\.]+)/([a-zA-Z0-9_]+)/[^/]+/(.*)""")
+        """Schema failing does not conform to regular expression %s""".format(Shredder.schemaPattern))
 
       actual must be failing(expected)
     }

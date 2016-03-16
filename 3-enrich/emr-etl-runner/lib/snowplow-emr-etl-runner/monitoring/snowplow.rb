@@ -54,7 +54,7 @@ module Snowplow
           @@collector_uri = cms[:collector] # Could be nil
           @@app_id = cms[:app_id] # Could be nil
           
-          @@app_context = Snowplow.as_self_desc_hash(APPLICATION_CONTEXT_SCHEMA, {
+          @@app_context = SnowplowTracker::SelfDescribingJson.new(APPLICATION_CONTEXT_SCHEMA, {
             :name => NAME,
             :version => VERSION,
             :tags => cm[:tags],
@@ -84,14 +84,6 @@ module Snowplow
           nil
         end
 
-        # Helper to make a self-describing hash
-        Contract String, {} => { :schema => String, :data => {} }
-        def self.as_self_desc_hash(schema, data)
-          { :schema => schema,
-            :data => data
-          }
-        end
-
         # Make a timestamp returned by a job status query compatible with JSON schema
         Contract Maybe[Time] => Maybe[String]
         def to_jsonschema_compatible_timestamp(time)
@@ -103,10 +95,10 @@ module Snowplow
         end
 
         # Context for the entire job
-        Contract Elasticity::JobFlow => {}
+        Contract Elasticity::JobFlow => SnowplowTracker::SelfDescribingJson
         def get_job_context(jobflow)
           status = jobflow.cluster_status
-          Snowplow.as_self_desc_hash(
+          SnowplowTracker::SelfDescribingJson.new(
             JOB_STATUS_SCHEMA,
             {
               :name => status.name,
@@ -120,10 +112,10 @@ module Snowplow
         end
 
         # One context per job step
-        Contract Elasticity::JobFlow => ArrayOf[Hash]
+        Contract Elasticity::JobFlow => ArrayOf[SnowplowTracker::SelfDescribingJson]
         def get_job_step_contexts(jobflow)
           jobflow.cluster_step_status.map { |step|
-            Snowplow.as_self_desc_hash(
+            SnowplowTracker::SelfDescribingJson.new(
               STEP_STATUS_SCHEMA,
               {
                 :name => step.name,
@@ -140,7 +132,7 @@ module Snowplow
         Contract Elasticity::JobFlow => SnowplowTracker::Tracker
         def track_job_started(jobflow)
           @tracker.track_unstruct_event(
-            Snowplow.as_self_desc_hash(
+            SnowplowTracker::SelfDescribingJson.new(
               JOB_STARTED_SCHEMA,
               {}
             ),
@@ -152,7 +144,7 @@ module Snowplow
         Contract Elasticity::JobFlow => SnowplowTracker::Tracker
         def track_job_succeeded(jobflow)
           @tracker.track_unstruct_event(
-            Snowplow.as_self_desc_hash(
+            SnowplowTracker::SelfDescribingJson.new(
               JOB_SUCCEEDED_SCHEMA,
               {}
             ),
@@ -164,7 +156,7 @@ module Snowplow
         Contract Elasticity::JobFlow => SnowplowTracker::Tracker
         def track_job_failed(jobflow)
           @tracker.track_unstruct_event(
-            Snowplow.as_self_desc_hash(
+            SnowplowTracker::SelfDescribingJson.new(
               JOB_FAILED_SCHEMA,
               {}
             ),
