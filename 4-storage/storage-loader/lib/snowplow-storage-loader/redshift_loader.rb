@@ -134,8 +134,7 @@ module Snowplow
 
           ShreddedType.discover_shredded_types(s3, config[:aws][:s3][:buckets][:shredded][:good], schema).map { |st|
             if config[:skipshred].include?(st.table)
-              #actions to trigger while escaping the table shreding
-		          SqlStatements.new("ANALYZE atomic.events")
+		          nil
             else
               jsonpaths_file = st.discover_jsonpaths_file(s3, config[:aws][:s3][:buckets][:jsonpath_assets])
               if jsonpaths_file.nil?
@@ -148,7 +147,7 @@ module Snowplow
                 )
               end
             end
-          }
+          }.compact
         end
       end
       module_function :get_shredded_statements
