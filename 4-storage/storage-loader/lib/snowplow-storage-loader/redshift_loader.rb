@@ -134,7 +134,7 @@ module Snowplow
 
           ShreddedType.discover_shredded_types(s3, config[:aws][:s3][:buckets][:shredded][:good], schema).map { |st|
             if target[:shredded_types][:exclude].include?(st.table)
-		          nil
+		      nil
             else
               jsonpaths_file = st.discover_jsonpaths_file(s3, config[:aws][:s3][:buckets][:jsonpath_assets])
               if jsonpaths_file.nil?
