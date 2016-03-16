@@ -133,7 +133,13 @@ module Snowplow
           schema = extract_schema(target[:table])
 
           ShreddedType.discover_shredded_types(s3, config[:aws][:s3][:buckets][:shredded][:good], schema).map { |st|
-            if target[:shredded_types][:exclude].include?(st.table)
+
+            # inherited from storage-loader/lib/snowplow-storage-loader/shredded_type.rb @initialize
+            s3_objectpath_parts = /^.*\/(?<vendor>[^\/]+)\/(?<name>[^\/]+)\/(?<format>[^\/]+)\/(?<version_model>[^\/]+)-$/.match(st.s3_objectpath)
+
+            iglu_schema_path = File.join(s3_objectpath_parts[:vendor], "/",  s3_objectpath_parts[:name], "/", s3_objectpath_parts[:format], "/", s3_objectpath_parts[:version_model])
+
+            if target[:shredded_types][:exclude].include?(iglu_schema_path)
 		      nil
             else
               jsonpaths_file = st.discover_jsonpaths_file(s3, config[:aws][:s3][:buckets][:jsonpath_assets])
