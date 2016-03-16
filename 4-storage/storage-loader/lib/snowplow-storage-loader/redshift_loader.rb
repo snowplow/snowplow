@@ -134,7 +134,7 @@ module Snowplow
             schema = extract_schema(target[:table])
             ShreddedType.discover_shredded_types(s3, config[:aws][:s3][:buckets][:shredded][:good], schema).map { |st|
                 if config[:skipshred].include?(st.table)
-                    []
+                    SqlStatements.new("")
                     #statement while escaping the table shreding
                 else
                     jsonpaths_file = st.discover_jsonpaths_file(s3, config[:aws][:s3][:buckets][:jsonpath_assets])
