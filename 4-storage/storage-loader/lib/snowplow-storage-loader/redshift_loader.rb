@@ -126,27 +126,29 @@ module Snowplow
       # +target+:: the configuration for this specific target
       Contract Hash, Hash, Sluice::Storage::S3 => ArrayOf[SqlStatements]
       def get_shredded_statements(config, target, s3)
+
         if config[:skip].include?('shred') # No shredded types to load
           []
         else
-            schema = extract_schema(target[:table])
-            ShreddedType.discover_shredded_types(s3, config[:aws][:s3][:buckets][:shredded][:good], schema).map { |st|
+          schema = extract_schema(target[:table])
+
+          ShreddedType.discover_shredded_types(s3, config[:aws][:s3][:buckets][:shredded][:good], schema).map { |st|
                 if config[:skipshred].include?(st.table)
-                    SqlStatements.new("")
-                    #statement while escaping the table shreding
+                    #actions to trigger while escaping the table shreding
+		    SqlStatements.new("")
                 else
-                    jsonpaths_file = st.discover_jsonpaths_file(s3, config[:aws][:s3][:buckets][:jsonpath_assets])
-                    if jsonpaths_file.nil?
-                      raise DatabaseLoadError, "Cannot find JSON Paths file to load #{st.s3_objectpath} into #{st.table}"
-                    else
-                        SqlStatements.new(
-                          build_copy_from_json_statement(config, st.s3_objectpath, jsonpaths_file, st.table, target[:maxerror]),
-                          build_analyze_statement(st.table),
-                          build_vacuum_statement(st.table)
-                        )
-                    end
-                end
-            }
+
+            jsonpaths_file = st.discover_jsonpaths_file(s3, config[:aws][:s3][:buckets][:jsonpath_assets])
+            if jsonpaths_file.nil?
+              raise DatabaseLoadError, "Cannot find JSON Paths file to load #{st.s3_objectpath} into #{st.table}"
+            else
+            SqlStatements.new(
+              build_copy_from_json_statement(config, st.s3_objectpath, jsonpaths_file, st.table, target[:maxerror]),
+              build_analyze_statement(st.table),
+              build_vacuum_statement(st.table)
+            )
+            end
+          }
         end
       end
       module_function :get_shredded_statements
