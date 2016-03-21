@@ -186,7 +186,7 @@ object EnrichmentManager {
           ("ti_nm"   , (ME.toTsvSafe, "ti_name")),
           ("ti_ca"   , (ME.toTsvSafe, "ti_category")),
           ("ti_pr"   , (CU.stringToDoublelike, "ti_price")),
-          ("ti_qu"   , (ME.toTsvSafe, "ti_quantity")),
+          ("ti_qu"   , (CU.stringToJInteger, "ti_quantity")),
           // Page pings
           ("pp_mix"  , (CU.stringToJInteger, "pp_xoffset_min")),
           ("pp_max"  , (CU.stringToJInteger, "pp_xoffset_max")),
