@@ -139,7 +139,7 @@ module Snowplow
 
             iglu_schema_path = File.join(s3_objectpath_parts[:vendor], "/",  s3_objectpath_parts[:name], "/", s3_objectpath_parts[:format], "/", s3_objectpath_parts[:version_model])
 
-            if target[:shredded_types][:exclude].include?(iglu_schema_path)
+            if defined? target[:shredded_types][:exclude] and target[:shredded_types][:exclude].include?(iglu_schema_path)
               nil
             else
               jsonpaths_file = st.discover_jsonpaths_file(s3, config[:aws][:s3][:buckets][:jsonpath_assets])
