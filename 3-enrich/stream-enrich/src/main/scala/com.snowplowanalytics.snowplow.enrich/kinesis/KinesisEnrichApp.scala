@@ -22,8 +22,6 @@ package kinesis
 // Java
 import java.io.File
 import java.net.URI
-import java.net.URL
-import java.util.Date
 
 // Amazon
 import com.amazonaws.services.dynamodbv2.model.ScanRequest
@@ -44,8 +42,7 @@ import scala.annotation.tailrec
 // Config
 import com.typesafe.config.{
   Config,
-  ConfigFactory,
-  ConfigRenderOptions
+  ConfigFactory
 }
 
 // Argot
@@ -57,6 +54,7 @@ import Scalaz._
 
 // json4s
 import org.json4s.jackson.JsonMethods._
+import org.json4s.JsonDSL._
 
 // Iglu
 import com.snowplowanalytics.iglu.client.Resolver
@@ -66,9 +64,6 @@ import common.enrichments.EnrichmentRegistry
 import common.utils.JsonUtils
 import sources._
 import sinks._
-
-// Tracker
-import com.snowplowanalytics.snowplow.scalatracker.Tracker
 
 /**
  * The main entry point for Stream Enrich.
@@ -250,7 +245,9 @@ object KinesisEnrichApp extends App {
       }
       case Some(other) => parser.usage(s"Enrichments argument [$other] must begin with 'file:' or 'dynamodb:'")
     }
-    """{"schema":"iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0","data":[%s]}""".format(jsons.mkString(","))
+    val combinedJson = ("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
+    ("data" -> jsons.toList.map(parse(_)))
+    compact(combinedJson)
   }
 
   /**
