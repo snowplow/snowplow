@@ -287,7 +287,7 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
           info(s"Successfully wrote ${batch.size-failurePairs.size} out of ${batch.size} records")
           if (failurePairs.size > 0) {
             failurePairs foreach { f => error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]") }
-            error("Retrying all failed records in $nextBackoff milliseconds...")
+            error(s"Retrying all failed records in $nextBackoff milliseconds...")
             val failures = failurePairs.map(_._1)
             scheduleBatch(failures, nextBackoff)
           }
