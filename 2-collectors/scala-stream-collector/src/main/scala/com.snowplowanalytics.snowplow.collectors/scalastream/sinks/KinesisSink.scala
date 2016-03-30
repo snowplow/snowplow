@@ -172,7 +172,7 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
     if (exists) {
       info(s"Stream $name exists and is active")
     } else {
-      info(s"Stream $name doesn't exist or is not active")
+      error(s"Stream $name doesn't exist or is not active")
     }
 
     exists
