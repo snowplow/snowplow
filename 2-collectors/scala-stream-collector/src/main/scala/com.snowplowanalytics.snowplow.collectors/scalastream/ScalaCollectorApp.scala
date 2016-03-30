@@ -18,8 +18,15 @@ package scalastream
 
 // Akka and Spray
 import akka.actor.{ActorSystem, Props}
+import akka.pattern.ask
 import akka.io.IO
 import spray.can.Http
+
+// Scala Futures
+import scala.concurrent.duration._
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Success, Failure}
 
 // Java
 import java.io.File
@@ -95,8 +102,23 @@ object ScalaCollector extends App {
     name = "handler"
   )
 
-  IO(Http) ! Http.Bind(handler,
-    interface=collectorConfig.interface, port=collectorConfig.port)
+  val bind = Http.Bind(
+    handler,
+    interface=collectorConfig.interface,
+    port=collectorConfig.port)
+
+  val bindResult = IO(Http).ask(bind)(5.seconds) flatMap {
+    case b: Http.Bound => Future.successful(())
+    case failed: Http.CommandFailed => Future.failed(new RuntimeException(failed.toString))
+  }
+
+  bindResult onComplete {
+    case Success(_) =>
+    case Failure(f) => {
+      system.shutdown()
+      throw f
+    }
+  }
 }
 
 // Return Options from the configuration.
