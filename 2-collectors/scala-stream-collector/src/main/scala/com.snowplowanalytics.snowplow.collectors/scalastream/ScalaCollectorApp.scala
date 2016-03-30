@@ -32,6 +32,7 @@ import scala.util.{Success, Failure}
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 // Argot
 import org.clapper.argot._
@@ -162,7 +163,7 @@ class CollectorConfig(config: Config) {
   val cookieConfig = if (cookie.getBoolean("enabled")) {
     Some(CookieConfig(
       cookie.getString("name"),
-      cookie.getMilliseconds("expiration"),
+      cookie.getDuration("expiration", TimeUnit.MILLISECONDS),
       cookie.getOptionalString("domain")))
   } else None
 
