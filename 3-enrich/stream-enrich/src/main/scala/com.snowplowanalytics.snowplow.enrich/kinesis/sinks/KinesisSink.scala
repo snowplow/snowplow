@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 // Amazon
 import com.amazonaws.services.kinesis.model.ResourceNotFoundException
+import com.amazonaws.services.kinesis.model.PutRecordsResultEntry
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.kinesis.AmazonKinesisClient
@@ -274,12 +275,13 @@ class KinesisSink(provider: AWSCredentialsProvider,
           val failurePairs = unsentRecords zip results filter { _._2.getErrorMessage != null }
           info(s"Successfully wrote ${unsentRecords.size-failurePairs.size} out of ${unsentRecords.size} records")
           if (failurePairs.size > 0) {
-            failurePairs foreach { f => error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]") }
+            val (failedRecords, failedResults) = failurePairs.unzip
+            unsentRecords = failedRecords
+            logErrorsSummary(getErrorsSummary(failedResults))
             backoffTime = getNextBackoff(backoffTime)
             error(s"Retrying all failed records in $backoffTime milliseconds...")
 
             val err = s"Failed to send ${failurePairs.size} events"
-            unsentRecords = failurePairs.map(_._1)
             val putSize: Long = unsentRecords.foldLeft(0)((a,b) => a + b._1.capacity)
 
             tracker match {
@@ -308,6 +310,20 @@ class KinesisSink(provider: AWSCredentialsProvider,
           }
         }
       }
+    }
+  }
+
+  private[sinks] def getErrorsSummary(badResponses: List[PutRecordsResultEntry]): Map[String, (Long, String)] = {
+    badResponses.foldLeft(Map[String, (Long, String)]())((counts, r) => if (counts.contains(r.getErrorCode)) {
+      counts + (r.getErrorCode -> (counts(r.getErrorCode)._1 + 1 -> r.getErrorMessage))
+    } else {
+      counts + (r.getErrorCode -> (1, r.getErrorMessage))
+    })
+  }
+
+  private[sinks] def logErrorsSummary(errorsSummary: Map[String, (Long, String)]): Unit = {
+    for ((errorCode, (count, sampleMessage)) <- errorsSummary) {
+      error(s"$count records failed with error code ${errorCode}. Example error message: ${sampleMessage}")
     }
   }
 
