@@ -116,8 +116,8 @@ object ScalaCollector extends App {
   bindResult onComplete {
     case Success(_) =>
     case Failure(f) => {
-      system.shutdown()
-      throw f
+      error("Failure binding to port", f)
+      System.exit(1)
     }
   }
 }

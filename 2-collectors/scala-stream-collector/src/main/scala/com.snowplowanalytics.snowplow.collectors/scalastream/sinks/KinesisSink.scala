@@ -187,7 +187,9 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
-      throw new RuntimeException(s"Cannot write because stream $name doesn't exist or is not active")
+      error(s"Cannot write because stream $name doesn't exist or is not active")
+      System.exit(1)
+      throw new RuntimeException("System.exit should never fail")
     }
   }
 
