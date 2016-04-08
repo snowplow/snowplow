@@ -132,7 +132,9 @@ class KinesisSink(provider: AWSCredentialsProvider,
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
-      throw new RuntimeException(s"Cannot write because stream $name does not exist or is not active")
+      error(s"Cannot write because stream $name does not exist or is not active")
+      System.exit(1)
+      throw new RuntimeException("System.exit should never fail")
     }
   }
 
