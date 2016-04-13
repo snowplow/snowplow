@@ -1,0 +1,31 @@
+{
+    "jsonpaths": [
+        "$.schema.vendor",
+        "$.schema.name",
+        "$.schema.format",
+        "$.schema.version",
+        "$.hierarchy.rootId",
+        "$.hierarchy.rootTstamp",
+        "$.hierarchy.refRoot",
+        "$.hierarchy.refTree",
+        "$.hierarchy.refParent",
+        "$.data.awsRegion",
+        "$.data.eventName",
+        "$.data.eventSource",
+        "$.data.eventTime",
+        "$.data.eventVersion",
+        "$.data.requestParameters.sourceIPAddress",
+        "$.data.responseElements.x-amz-id-2",
+        "$.data.responseElements.x-amz-request-id",
+        "$.data.s3.bucket.arn",
+        "$.data.s3.bucket.name",
+        "$.data.s3.bucket.ownerIdentity.principalId",
+        "$.data.s3.configurationId",
+        "$.data.s3.object.eTag",
+        "$.data.s3.object.key",
+        "$.data.s3.object.size",
+        "$.data.s3.object.versionId",
+        "$.data.s3.s3SchemaVersion",
+        "$.data.userIdentity.principalId"
+    ]
+}
