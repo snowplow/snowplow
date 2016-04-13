@@ -36,7 +36,8 @@ object SparkDataModelingBuild extends Build {
         Libraries.scalaz7,
         Libraries.json4sJackson,
         Libraries.specs2,
-        Libraries.scalazSpecs2
+        Libraries.scalazSpecs2,
+        Libraries.analyticsSdk
       )
     )
 }

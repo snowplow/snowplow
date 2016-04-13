@@ -15,6 +15,7 @@ import sbt._
 object Dependencies {
 
   val resolutionRepos = Seq(
+    "Snowplow Analytics" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven releases repo" at "http://maven.snplow.com/releases/",
     "Snowplow Analytics Maven snapshot repo" at "http://maven.snplow.com/snapshots/"
   )
@@ -22,9 +23,10 @@ object Dependencies {
   object V {
     // Scala
     val argot                = "1.0.1"
-    val spark                = "1.5.2"
+    val spark                = "1.6.1"
     val json4s               = "3.2.10" // See https://github.com/json4s/json4s/issues/212
     val scalaz7              = "7.0.0"
+    val snowplow             = "0.1.0"
     // Scala (test only)
     val specs2               = "2.2"
     val scalazSpecs2         = "0.1.2"
@@ -32,13 +34,14 @@ object Dependencies {
 
   object Libraries {
     // Scala
-    val argot                = "org.clapper"                %% "argot"                    % V.argot
-    val sparkCore            = "org.apache.spark"           %% "spark-core"               % V.spark          % "provided"
-    val sparkMllib           = "org.apache.spark"           %% "spark-mllib"              % V.spark          % "provided"
-    val sparkSql             = "org.apache.spark"           %% "spark-sql"                % V.spark          % "provided"
-    val sparkHive            = "org.apache.spark"           %% "spark-hive"               % V.spark          % "provided"
-    val json4sJackson        = "org.json4s"                 %% "json4s-jackson"           % V.json4s         % "provided"
-    val scalaz7              = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7
+    val argot                = "org.clapper"                %% "argot"                        % V.argot
+    val sparkCore            = "org.apache.spark"           %% "spark-core"                   % V.spark          % "provided"
+    val sparkMllib           = "org.apache.spark"           %% "spark-mllib"                  % V.spark          % "provided"
+    val sparkSql             = "org.apache.spark"           %% "spark-sql"                    % V.spark          % "provided"
+    val sparkHive            = "org.apache.spark"           %% "spark-hive"                   % V.spark          % "provided"
+    val json4sJackson        = "org.json4s"                 %% "json4s-jackson"               % V.json4s         % "provided"
+    val scalaz7              = "org.scalaz"                 %% "scalaz-core"                  % V.scalaz7
+    val analyticsSdk        = "com.snowplowanalytics"       %% "snowplow-scala-analytics-sdk" % V.snowplow
     // Scala (test only)
     val specs2               = "org.specs2"                 %% "specs2"                   % V.specs2         % "test"
     val scalazSpecs2         = "org.typelevel"              %% "scalaz-specs2"            % V.scalazSpecs2   % "test"
