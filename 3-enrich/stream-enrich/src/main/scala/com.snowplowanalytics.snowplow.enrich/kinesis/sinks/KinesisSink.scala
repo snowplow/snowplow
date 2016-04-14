@@ -117,7 +117,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
     if (exists) {
       info(s"Stream $name exists and is active")
     } else {
-      info(s"Stream $name doesn't exist or is not active")
+      error(s"Stream $name doesn't exist or is not active")
     }
 
     exists
