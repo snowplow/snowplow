@@ -165,6 +165,10 @@ object ElasticsearchSinkApp extends App {
         t => SnowplowTracking.initializeSnowplowTracking(t)
       }
       exec.run()
+
+      // If the stream cannot be found, the KCL's "cw-metrics-publisher" thread will prevent the
+      // application from exiting naturally so we explicitly call System.exit.
+      System.exit(1)
     }
   )
 
