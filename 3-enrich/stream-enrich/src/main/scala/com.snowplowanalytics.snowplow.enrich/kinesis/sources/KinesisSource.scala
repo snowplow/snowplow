@@ -115,7 +115,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
       extends IRecordProcessorFactory {
     @Override
     def createProcessor: IRecordProcessor = {
-      return new RawEventProcessor(config, sink);
+      new RawEventProcessor(config, sink);
     }
   }
 

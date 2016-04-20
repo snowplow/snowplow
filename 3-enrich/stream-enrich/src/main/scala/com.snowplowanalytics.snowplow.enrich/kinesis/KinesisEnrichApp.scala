@@ -302,11 +302,11 @@ object KinesisEnrichApp extends App {
 
     try {
       s3Client.getObject(new GetObjectRequest(bucket, key), outputFile)
-      return 0
+      0
     } catch {
       case e: Exception => {
         error(s"Error downloading ${uri}: ${e.toString}")
-        return 1
+        1
       }
     }
   }
