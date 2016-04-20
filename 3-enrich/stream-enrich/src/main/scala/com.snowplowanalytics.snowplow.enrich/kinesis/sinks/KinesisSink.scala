@@ -276,7 +276,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
           val results = Await.result(putData, 10.seconds).result.getRecords.asScala.toList
           val failurePairs = unsentRecords zip results filter { _._2.getErrorMessage != null }
           info(s"Successfully wrote ${unsentRecords.size-failurePairs.size} out of ${unsentRecords.size} records")
-          if (failurePairs.size > 0) {
+          if (failurePairs.nonEmpty) {
             val (failedRecords, failedResults) = failurePairs.unzip
             unsentRecords = failedRecords
             logErrorsSummary(getErrorsSummary(failedResults))
