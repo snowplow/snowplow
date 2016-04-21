@@ -90,6 +90,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     ).withInitialPositionInStream(
       InitialPositionInStream.valueOf(config.initialPosition)
     ).withKinesisEndpoint(config.streamEndpoint)
+    .withMaxRecords(config.maxRecords)
     .withRegionName(config.streamRegion)
     // If the record list is empty, we still check whether it is time to flush the buffer
     .withCallProcessRecordsEvenForEmptyRecordList(true)

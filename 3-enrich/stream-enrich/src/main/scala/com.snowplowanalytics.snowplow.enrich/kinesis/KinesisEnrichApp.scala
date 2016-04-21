@@ -351,6 +351,12 @@ class KinesisEnrichConfig(config: Config) {
   val streamRegion = streams.getString("region")
   val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
 
+  val maxRecords = if (inStreams.hasPath("maxRecords")) {
+    inStreams.getInt("maxRecords")
+  } else {
+    10000
+  }
+
   val buffer = inStreams.getConfig("buffer")
   val byteLimit = buffer.getInt("byte-limit")
   val recordLimit = buffer.getInt("record-limit")
