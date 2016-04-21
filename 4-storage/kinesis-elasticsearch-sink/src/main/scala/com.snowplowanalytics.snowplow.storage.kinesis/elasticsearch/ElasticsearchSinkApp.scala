@@ -193,6 +193,11 @@ object ElasticsearchSinkApp extends App {
     val streamRegion = kinesis.getString("region")
     val appName = kinesis.getString("app-name")
     val initialPosition = kinesisIn.getString("initial-position")
+    val maxRecords = if (kinesisIn.hasPath("maxRecords")) {
+      kinesisIn.getInt("maxRecords")
+    } else {
+      10000
+    }
     val streamName = kinesisIn.getString("stream-name")
     val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
 
@@ -207,6 +212,7 @@ object ElasticsearchSinkApp extends App {
     props.setProperty(KinesisConnectorConfiguration.PROP_KINESIS_ENDPOINT, streamEndpoint)
     props.setProperty(KinesisConnectorConfiguration.PROP_APP_NAME, appName)
     props.setProperty(KinesisConnectorConfiguration.PROP_INITIAL_POSITION_IN_STREAM, initialPosition)
+    props.setProperty(KinesisConnectorConfiguration.PROP_MAX_RECORDS, maxRecords.toString)
 
     // So that the region of the DynamoDB table is correct
     props.setProperty(KinesisConnectorConfiguration.PROP_REGION_NAME, streamRegion)
