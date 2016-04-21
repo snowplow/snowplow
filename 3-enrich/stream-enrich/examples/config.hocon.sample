@@ -43,6 +43,9 @@ enrich {
     in: {
       raw: "{{enrichStreamsInRaw}}"
 
+      # Maximum number of records to get from Kinesis per call to GetRecords
+      maxRecords: 10000
+
       # After enrichment, are accumulated in a buffer before being sent to Kinesis.
       # The buffer is emptied whenever:
       # - the number of stored records reaches record-limit or
