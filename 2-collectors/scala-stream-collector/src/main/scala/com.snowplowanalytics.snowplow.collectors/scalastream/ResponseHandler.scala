@@ -206,7 +206,8 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
       } else (if (pixelExpected) {
         HttpResponse(entity = HttpEntity(`image/gif`, ResponseHandler.pixel))
       } else {
-        HttpResponse()
+        // See https://github.com/snowplow/snowplow-javascript-tracker/issues/482
+        HttpResponse(entity = "ok")
       }).withHeaders(headers) -> Nil
 
       (httpResponse, badQsResponse ++ sinkResponse)
