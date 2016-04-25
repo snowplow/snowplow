@@ -1,15 +1,18 @@
 language: scala
 scala:
-  - 2.10.1
+- 2.10.1
 jdk:
-  - oraclejdk7
+- oraclejdk7
 script:
-  - cd 3-enrich/scala-common-enrich
-  - sbt test
+- cd 3-enrich/scala-common-enrich
+- sbt test
 env:
   global:
-    - secure: j6RcEPeT5DCmThYA+KSvn5zoFdwhO9Tyk9xXVrW+L8oTTAehDvEWQ1nkJM7m+KYwUtWH1bvRd9IOZgKkWxJeYSDvn8V0zd0dJKSc7R4kykfI/S3V67uM1LCj24B1dF62uiTMOFd9inwB3SLhVFwRk+tcgrZMLs9ljqND77pGR4Y=
-    - secure: ZF2b692hBH1J8stmoeAcFnhRZkKxnzABLNIkdObHKLijJFMLMIaVn5mRWhmI8+lVbHIkx6BsUATdE3BPQnWI2iL5jfr2rxNfbX5NqFWV5RkN5wrKCCec4qljTpSGKApQXQT/KMFzBoxIk/c35yXjf/vN0JApztbaA/dygmpDRFo=
+  - secure: j6RcEPeT5DCmThYA+KSvn5zoFdwhO9Tyk9xXVrW+L8oTTAehDvEWQ1nkJM7m+KYwUtWH1bvRd9IOZgKkWxJeYSDvn8V0zd0dJKSc7R4kykfI/S3V67uM1LCj24B1dF62uiTMOFd9inwB3SLhVFwRk+tcgrZMLs9ljqND77pGR4Y=
+  - secure: ZF2b692hBH1J8stmoeAcFnhRZkKxnzABLNIkdObHKLijJFMLMIaVn5mRWhmI8+lVbHIkx6BsUATdE3BPQnWI2iL5jfr2rxNfbX5NqFWV5RkN5wrKCCec4qljTpSGKApQXQT/KMFzBoxIk/c35yXjf/vN0JApztbaA/dygmpDRFo=
+  - secure: Z+qXgY0/qNksd2Z+aOQGhBmG9Gsw7sURIGc23YKWMMlGIHXAZQCZlQG+atvolkkfFHBl5hDHyuVLDxqjLAhxHZArWkFEruFOvio9kTdzLvhYGeS9pcAbEc9632XsdXqhFcKWUTREzndfxoVeVUpUGB6GfpJBk0dOLreK4xjH52w=
+  - secure: YH9mXPva5vKcKxvkUnUOAiJDSk2tMXgr/li6zuV0pyjoH3mfns+EDM1UEiKVuCpMJKDKyasrvMisDOejswH5uoGogDqjNamh4NkBoiVyhbyA2NJiawjoVNX/nv9n7GjvabuzetvRrCX6jFBErTcaraXy7nDLHb4DOewreime8OQ=
+  - secure: kPX56utFobFT5NDfdBhF58nW8TQb6HKPmaZBhhZLLqJV/vfG1KpChzlaWGgJpUCF61RckpPEKROqfHTtpc3YHSprfCd1z5kKSo6UV+Jb4j188MKxaN7pXhGA7OM2okYqiiaHVywoq0+B9Z51Ygom5rVlZG/mjHEdbeaN1wCJDI0=
+  - secure: YwhLm1v0EKBQQfUvNzrdyp8MGHDmnAhM51JijlApiPAfgYRJnogoNbmzMAqhbPNubnGFxaD5xgoavHXypaDAMGQoKY7q9WjHnBy1hxHWw8C0Q5vbVtxLroQWYYDi7YuEeY5D7/i3RkqD8bVIvPoHdFCQGuMYpHDke0OHcjrNz0Y=
 addons:
   hostname: short-hostname
-
