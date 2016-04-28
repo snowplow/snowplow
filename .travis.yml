@@ -17,3 +17,9 @@ env:
   - secure: YwhLm1v0EKBQQfUvNzrdyp8MGHDmnAhM51JijlApiPAfgYRJnogoNbmzMAqhbPNubnGFxaD5xgoavHXypaDAMGQoKY7q9WjHnBy1hxHWw8C0Q5vbVtxLroQWYYDi7YuEeY5D7/i3RkqD8bVIvPoHdFCQGuMYpHDke0OHcjrNz0Y=
 addons:
   hostname: short-hostname
+deploy:
+  skip_cleanup: true
+  provider: script
+  script: ./.travis/deploy.sh
+  on:
+    tags: true
