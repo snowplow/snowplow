@@ -4,7 +4,7 @@ set -e
 # Constants
 bintray_package=snowplow
 bintray_artifact_prefix=snowplow_kinesis_
-bintray_user=snowplowbot
+bintray_user=$BINTRAY_SNOWPLOW_GENERIC_USER
 bintray_repository=snowplow/snowplow-generic
 scala_version=2.10
 guest_repo_path=/vagrant
