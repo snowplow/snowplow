@@ -16,26 +16,26 @@ declare -a kinesis_fatjars=( "snowplow-stream-collector-0.7.0-rc2" "snowplow-str
 
 # Similar to Perl die
 function die() {
-	echo "$@" 1>&2 ; exit 1;
+    echo "$@" 1>&2 ; exit 1;
 }
 
 # Go to parent-parent dir of this script
 function cd_root() {
-	cd $root
+    cd $root
 }
 
 # Assemble our fat jars
 function assemble_fatjars() {
-	for kinesis_app_path in "${kinesis_app_paths[@]}"
-		do
-			:
-			app="${kinesis_app_path##*/}"
-			echo "================================================"
-			echo "ASSEMBLING FATJAR FOR ${app}"
-			echo "------------------------------------------------"
-			cd ${kinesis_app_path} && sbt assembly
-			cd_root
-		done
+    for kinesis_app_path in "${kinesis_app_paths[@]}"
+        do
+            :
+            app="${kinesis_app_path##*/}"
+            echo "================================================"
+            echo "ASSEMBLING FATJAR FOR ${app}"
+            echo "------------------------------------------------"
+            cd ${kinesis_app_path} && sbt assembly
+            cd_root
+        done
 }
 
 # Create our version in BinTray. Does nothing
@@ -49,25 +49,25 @@ function create_bintray_package() {
     local __package_version=$1
     local __out_error=$2
 
-	echo "========================================"
-	echo "CREATING BINTRAY VERSION ${__package_version}*"
-	echo "* if it doesn't already exist"
-	echo "----------------------------------------"
+    echo "========================================"
+    echo "CREATING BINTRAY VERSION ${__package_version}*"
+    echo "* if it doesn't already exist"
+    echo "----------------------------------------"
 
-	http_status=`echo '{"name":"'${__package_version}'","desc":"Release of '${bintray_package}'"}' | curl -d @- \
-		"https://api.bintray.com/packages/${bintray_repository}/${bintray_package}/versions" \
-		--write-out "%{http_code}\n" --silent --output /dev/null \
-		--header "Content-Type:application/json" \
-		-u${bintray_user}:${bintray_api_key}`
+    http_status=`echo '{"name":"'${__package_version}'","desc":"Release of '${bintray_package}'"}' | curl -d @- \
+        "https://api.bintray.com/packages/${bintray_repository}/${bintray_package}/versions" \
+        --write-out "%{http_code}\n" --silent --output /dev/null \
+        --header "Content-Type:application/json" \
+        -u${bintray_user}:${bintray_api_key}`
 
-	http_status_class=${http_status:0:1}
-	ok_classes=("2" "3")
+    http_status_class=${http_status:0:1}
+    ok_classes=("2" "3")
 
-	if [ ${http_status} == "409" ] ; then
-		echo "... version ${__package_version} already exists, skipping."
-	elif [[ ! ${ok_classes[*]} =~ ${http_status_class} ]] ; then
-		eval ${__out_error}="'BinTray API response ${http_status} is not 409 (package already exists) nor in 2xx or 3xx range'"
-	fi
+    if [ ${http_status} == "409" ] ; then
+        echo "... version ${__package_version} already exists, skipping."
+    elif [[ ! ${ok_classes[*]} =~ ${http_status_class} ]] ; then
+        eval ${__out_error}="'BinTray API response ${http_status} is not 409 (package already exists) nor in 2xx or 3xx range'"
+    fi
 }
 
 # Zips all of our applications
@@ -84,25 +84,25 @@ function build_artifact() {
 
     artifact_root="${bintray_artifact_prefix}${__artifact_version}"
     artifact_name=`echo ${artifact_root}.zip|tr '-' '_'`
-	echo "==========================================="
-	echo "BUILDING ARTIFACT ${artifact_name}"
-	echo "-------------------------------------------"
+    echo "==========================================="
+    echo "BUILDING ARTIFACT ${artifact_name}"
+    echo "-------------------------------------------"
 
-	artifact_folder=./${dist_path}/${artifact_root}
-	mkdir -p ${artifact_folder}
+    artifact_folder=./${dist_path}/${artifact_root}
+    mkdir -p ${artifact_folder}
 
-	for i in "${!kinesis_app_paths[@]}"
-		do 
-			:
-			fatjar_path="./${kinesis_app_paths[$i]}/target/scala-${scala_version}/${kinesis_fatjars[$i]}"
-			[ -f "${fatjar_path}" ] || die "Cannot find required fatjar: ${fatjar_path}. Did you forget to update fatjar versions?"
-			cp ${fatjar_path} ${artifact_folder}
-		done
+    for i in "${!kinesis_app_paths[@]}"
+        do 
+            :
+            fatjar_path="./${kinesis_app_paths[$i]}/target/scala-${scala_version}/${kinesis_fatjars[$i]}"
+            [ -f "${fatjar_path}" ] || die "Cannot find required fatjar: ${fatjar_path}. Did you forget to update fatjar versions?"
+            cp ${fatjar_path} ${artifact_folder}
+        done
 
-	artifact_path=./${dist_path}/${artifact_name}
-	zip -rj ${artifact_path} ${artifact_folder}
-	eval ${__out_artifact_name}=${artifact_name}
-	eval ${__out_artifact_path}=${artifact_path}
+    artifact_path=./${dist_path}/${artifact_name}
+    zip -rj ${artifact_path} ${artifact_folder}
+    eval ${__out_artifact_name}=${artifact_name}
+    eval ${__out_artifact_path}=${artifact_path}
 }
 
 # Uploads our artifact to BinTray
@@ -117,23 +117,23 @@ function upload_artifact_to_bintray() {
     local __artifact_path=$2
     local __out_error=$3
 
-	echo "==============================="
-	echo "UPLOADING ARTIFACT TO BINTRAY*"
-	echo "* 5-10 minutes"
-	echo "-------------------------------"
+    echo "==============================="
+    echo "UPLOADING ARTIFACT TO BINTRAY*"
+    echo "* 5-10 minutes"
+    echo "-------------------------------"
 
-	http_status=`curl -T ${__artifact_path} \
-		"https://api.bintray.com/content/${bintray_repository}/${bintray_package}/${version}/${__artifact_name}?publish=1&override=1" \
-		-H "Transfer-Encoding: chunked" \
-		--write-out "%{http_code}\n" --silent --output /dev/null \
-		-u${bintray_user}:${bintray_api_key}`
+    http_status=`curl -T ${__artifact_path} \
+        "https://api.bintray.com/content/${bintray_repository}/${bintray_package}/${version}/${__artifact_name}?publish=1&override=1" \
+        -H "Transfer-Encoding: chunked" \
+        --write-out "%{http_code}\n" --silent --output /dev/null \
+        -u${bintray_user}:${bintray_api_key}`
 
-	http_status_class=${http_status:0:1}
-	ok_classes=("2" "3")
+    http_status_class=${http_status:0:1}
+    ok_classes=("2" "3")
 
-	if [[ ! ${ok_classes[*]} =~ ${http_status_class} ]] ; then
-		eval ${__out_error}="'BinTray API response ${http_status} is not in 2xx or 3xx range'"
-	fi
+    if [[ ! ${ok_classes[*]} =~ ${http_status_class} ]] ; then
+        eval ${__out_error}="'BinTray API response ${http_status} is not in 2xx or 3xx range'"
+    fi
 }
 
 
