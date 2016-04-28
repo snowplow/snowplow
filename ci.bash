@@ -20,18 +20,6 @@ function die() {
 	echo "$@" 1>&2 ; exit 1;
 }
 
-# Get version, checking we are on the latest
-#
-# Parameters:
-# 1. out_version (out parameter)
-# 2. out_error (out parameter)
-function get_version {
-	[ "$#" -eq 1 ] || die "1 argument required, $# provided"
-	local __out_version=$1
-	file_version=`cat VERSION`
-	eval ${__out_version}=${file_version}
-}
-
 # Go to parent-parent dir of this script
 function cd_root() {
 	cd $root
@@ -153,7 +141,7 @@ function upload_artifact_to_bintray() {
 cd_root
 
 # Precondition
-version="" && get_version "version"
+version=$1
 
 bintray_api_key=$BINTRAY_SNOWPLOW_GENERIC_API_KEY
 
