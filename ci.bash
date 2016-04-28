@@ -7,7 +7,6 @@ bintray_artifact_prefix=snowplow_kinesis_
 bintray_user=$BINTRAY_SNOWPLOW_GENERIC_USER
 bintray_repository=snowplow/snowplow-generic
 scala_version=2.10
-guest_repo_path=/vagrant
 dist_path=dist
 root=$(pwd)
 # Next two arrays MUST match up: number of elements and order
@@ -140,7 +139,6 @@ function upload_artifact_to_bintray() {
 
 cd_root
 
-# Precondition
 version=$1
 
 bintray_api_key=$BINTRAY_SNOWPLOW_GENERIC_API_KEY
