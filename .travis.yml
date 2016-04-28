@@ -21,3 +21,4 @@ deploy:
   script: ./.travis/deploy.sh $TRAVIS_TAG
   on:
     tags: true
+    condition: "$(.travis/is_kinesis_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0
