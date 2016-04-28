@@ -153,4 +153,6 @@ create_bintray_package "${version}" "error"
 artifact_name="" && artifact_path="" && build_artifact "${version}" "artifact_name" "artifact_path"
 
 upload_artifact_to_bintray "${artifact_name}" "${artifact_path}" "error"
-[ "${error}" ] && die "Error uploading package: ${error}"
+if [ "${error}" != "" ]; then
+    die "Error uploading package: ${error}"
+fi
