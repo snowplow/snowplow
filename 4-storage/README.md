@@ -14,7 +14,7 @@
 | [redshift-storage] [s3] (1)   | Snowplow events stored in a table in [Amazon Redshift] [redshift]         | Production-ready |
 | [postgres-storage] [s2] (2)   | Snowplow events stored in a table in [PostgreSQL] [postgres]              | Production-ready |
 | [storage-loader] [s4]         | A Ruby application for loading Snowplow events into (1) and (2)           | Production-ready |
-| [kinesis-elasticsearch-sink] [s5] | Snowplow events stored in [Elasticsearch] [elasticsearch]              | Beta |
+| [kinesis-elasticsearch-sink] [s5] | Snowplow events stored in [Elasticsearch] [elasticsearch]             | Production-ready |
 
 ## Find out more
 
