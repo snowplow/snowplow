@@ -20,7 +20,8 @@ object JsProcessor {
 
   object Variables {
     private val prefix = "$snowplow31337" // To avoid collisions
-    val In  = s"${prefix}In"
+    val InTsv  = s"${prefix}InTsv"
+    val InErrors  = s"${prefix}InErrors"
     val Out = s"${prefix}Out"
   }
 
@@ -30,7 +31,7 @@ object JsProcessor {
           |${sourceCode}
           |
           |// Immediately invoke using reserved args
-          |var ${Variables.Out} = process(${Variables.In});
+          |var ${Variables.Out} = process(${Variables.InTsv}, ${Variables.InErrors});
           |
           |// Don't return anything
           |null;
@@ -49,11 +50,12 @@ class JsProcessor(sourceCode: String) extends TsvProcessor {
 
   val compiledScript: Script = JsProcessor.compile(sourceCode)
 
-  def applyToTsv(script: Script, event: String): Option[String] = {
+  def applyToTsv(script: Script, event: String, errors: Seq[String]): Option[String] = {
     val cx = Context.enter()
     val scope = cx.initStandardObjects
     try {
-      scope.put(JsProcessor.Variables.In, scope, Context.javaToJS(event, scope))
+      scope.put(JsProcessor.Variables.InTsv, scope, Context.javaToJS(event, scope))
+      scope.put(JsProcessor.Variables.InErrors, scope, Context.javaToJS(errors.toArray, scope))
       val retVal = script.exec(cx, scope)
     } catch {
       case NonFatal(nf) => {
@@ -78,9 +80,9 @@ class JsProcessor(sourceCode: String) extends TsvProcessor {
     }
   }
 
-  def process(inputTsv: String): Option[String] = applyToTsv(compiledScript, inputTsv)
+  def process(inputTsv: String, errors: Seq[String]): Option[String] = applyToTsv(compiledScript, inputTsv, errors)
 }
 
 trait TsvProcessor {
-  def process(inputTsv: String): Option[String]
+  def process(inputTsv: String, errors: Seq[String]): Option[String]
 }
