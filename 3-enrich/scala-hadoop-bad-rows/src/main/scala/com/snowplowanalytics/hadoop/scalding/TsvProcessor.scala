@@ -32,7 +32,7 @@ object JsProcessor {
           |  return event.split('\t', -1);
           |}
           |function arrayToTsv(tsv) {
-          |  return tsv.join('\t')
+          |  return tsv.join('\t');
           |}
           |
           |// User-supplied script
