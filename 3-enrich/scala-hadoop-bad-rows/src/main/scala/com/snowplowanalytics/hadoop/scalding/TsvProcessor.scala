@@ -27,7 +27,15 @@ object JsProcessor {
 
   def compile(sourceCode: String): Script = {
     val wholeScript =
-      s"""|// User-supplied script
+      s"""|// Helper functions
+          |function tsvToArray(event) {
+          |  return event.split('\t', -1);
+          |}
+          |function arrayToTsv(tsv) {
+          |  return tsv.join('\t')
+          |}
+          |
+          |// User-supplied script
           |${sourceCode}
           |
           |// Immediately invoke using reserved args
