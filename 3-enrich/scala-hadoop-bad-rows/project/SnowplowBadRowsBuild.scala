@@ -28,11 +28,15 @@ object SnowplowBadRowsBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
+        Libraries.hadoopCommon,
+        Libraries.hadoopClientCore,
+        Libraries.cascadingCore,
+        Libraries.cascadingLocal,
+        Libraries.cascadingHadoop,
         Libraries.scaldingCore,
+        Libraries.scaldingArgs,
         Libraries.scaldingJson,
-        Libraries.hadoopCore,
         Libraries.specs2
-        // Add your additional libraries here (comma-separated)...
       )
     )
 }

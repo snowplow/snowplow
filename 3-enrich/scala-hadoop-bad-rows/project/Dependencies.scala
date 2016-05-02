@@ -19,19 +19,28 @@ object Dependencies {
   )
 
   object V {
-    val scalding  = "0.9.1"
-    val hadoop    = "1.1.2"
+    // Java
+    val hadoop          = "2.4.1"
+    val cascading       = "2.7.0"
+    // Scala
+    val scalding        = "0.15.0"
+    val igluClient      = "0.3.2"
     val specs2    = "2.3.11"
     // Add versions for your additional libraries here...
   }
 
   object Libraries {
-    val scaldingCore = "com.twitter"                %%  "scalding-core"       % V.scalding
+    // Java
+    val hadoopCommon     = "org.apache.hadoop"          %  "hadoop-common"                % V.hadoop       % "provided"
+    val hadoopClientCore = "org.apache.hadoop"          %  "hadoop-mapreduce-client-core" % V.hadoop       % "provided"
+    val cascadingCore    = "cascading"                  %  "cascading-core"               % V.cascading
+    val cascadingLocal   = "cascading"                  %  "cascading-local"              % V.cascading
+    val cascadingHadoop  = "cascading"                  %  "cascading-hadoop2-mr1"        % V.cascading
+    // Scala
+    val scaldingCore     = "com.twitter"                %% "scalding-core"           % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" ) exclude( "cascading", "cascading-hadoop2-mr1" )
+    val scaldingArgs     = "com.twitter"                %% "scalding-args"           % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" ) exclude( "cascading", "cascading-hadoop2-mr1" )
     val scaldingJson = "com.twitter"                %%  "scalding-json"       % V.scalding
-    val hadoopCore   = "org.apache.hadoop"          %   "hadoop-core"         % V.hadoop       % "provided"
-    // Add additional libraries from mvnrepository.com (SBT syntax) here...
-
-    // Scala (test only)
+     // Scala (test only)
     val specs2       = "org.specs2"                 %% "specs2"               % V.specs2       % "test"
   }
 }
