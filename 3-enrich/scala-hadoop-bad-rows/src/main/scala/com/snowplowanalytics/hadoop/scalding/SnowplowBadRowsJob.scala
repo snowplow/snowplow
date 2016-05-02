@@ -30,16 +30,19 @@ class JsonLine(p: String, fields: Fields) extends StandardJsonLine(p, fields, Si
 class SnowplowBadRowsJob(args : Args) extends Job(args) {
 
   val processor = new JsProcessor("""
-    function process(event) {
+    function process(event, errors) {
+      for (var i=0;i<errors.length;i++) java.lang.System.out.println(errors[i]);
       var ans = event.split('\t', -1);
       return ans.join("\t");
     }
   """)
 
   JsonLine(args("input"), ('line, 'errors)).read
-    .project('line)
-    .flatMapTo('line -> 'altered) { inputTsv: String =>
-      processor.process(inputTsv)
+    .flatMapTo(('line, 'errors) -> 'altered) { both: (String, Seq[String]) =>
+      val inputTsv = both._1
+      val errors = both._2
+      // TODO: handle one of these being null
+      processor.process(inputTsv, errors)
     }
     .write(Tsv(args("output")))
 }
