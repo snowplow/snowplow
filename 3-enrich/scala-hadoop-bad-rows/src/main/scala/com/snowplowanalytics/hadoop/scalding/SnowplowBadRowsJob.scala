@@ -28,7 +28,18 @@ class JsonLine(p: String, fields: Fields) extends StandardJsonLine(p, fields, Si
 }
 
 class SnowplowBadRowsJob(args : Args) extends Job(args) {
+
+  val processor = new JsProcessor("""
+    function process(event) {
+      var ans = event.split('\t', -1);
+      return ans.join("\t");
+    }
+  """)
+
   JsonLine(args("input"), ('line, 'errors)).read
     .project('line)
+    .flatMapTo('line -> 'altered) { inputTsv: String =>
+      processor.process(inputTsv)
+    }
     .write(Tsv(args("output")))
 }

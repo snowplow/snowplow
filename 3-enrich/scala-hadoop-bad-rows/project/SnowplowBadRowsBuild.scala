@@ -36,6 +36,7 @@ object SnowplowBadRowsBuild extends Build {
         Libraries.scaldingCore,
         Libraries.scaldingArgs,
         Libraries.scaldingJson,
+        "org.mozilla" % "rhino" % "1.7R4",
         Libraries.specs2
       )
     )
