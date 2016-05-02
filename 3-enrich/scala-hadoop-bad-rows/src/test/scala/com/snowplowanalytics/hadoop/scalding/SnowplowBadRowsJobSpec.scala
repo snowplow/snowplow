@@ -22,14 +22,6 @@ import com.twitter.scalding.{JsonLine => StandardJsonLine, _}
 import cascading.tuple.Fields
 import cascading.tap.SinkMode
 
-object JsonLine {
-  def apply(p: String, fields: Fields = Fields.ALL) = new JsonLine(p, fields)
-}
-class JsonLine(p: String, fields: Fields) extends StandardJsonLine(p, fields, SinkMode.REPLACE) {
-  // We want to test the actual tranformation here.
-  override val transformInTest = true
-}
-
 class SnowplowBadRowsJobSpec extends Specification {
   import Dsl._
 
