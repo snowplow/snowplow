@@ -29,6 +29,6 @@ class JsonLine(p: String, fields: Fields) extends StandardJsonLine(p, fields, Si
 
 class SnowplowBadRowsJob(args : Args) extends Job(args) {
   JsonLine(args("input"), ('line, 'errors)).read
-  	.project('line)
-  	.write(Tsv(args("output")))
+    .project('line)
+    .write(Tsv(args("output")))
 }
