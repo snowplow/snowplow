@@ -33,7 +33,7 @@ class JsonLine(p: String, fields: Fields) extends StandardJsonLine(p, fields, Si
 
 class SnowplowBadRowsJob(args : Args) extends Job(args) {
 
-  val processor = new JsProcessor(new String(Base64.decodeBase64(args("script")), UTF_8))
+  lazy val processor = new JsProcessor(new String(Base64.decodeBase64(args("script")), UTF_8))
 
   JsonLine(args("input"), ('line, 'errors)).read
     .flatMapTo(('line, 'errors) -> 'altered) { both: (String, Seq[String]) =>
