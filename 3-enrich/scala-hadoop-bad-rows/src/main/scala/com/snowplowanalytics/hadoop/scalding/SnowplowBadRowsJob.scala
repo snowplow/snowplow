@@ -36,9 +36,10 @@ class SnowplowBadRowsJob(args : Args) extends Job(args) {
   lazy val processor = new JsProcessor(new String(Base64.decodeBase64(args("script")), UTF_8))
 
   JsonLine(args("input"), ('line, 'errors)).read
-    .flatMapTo(('line, 'errors) -> 'altered) { both: (String, Seq[String]) =>
+    .flatMapTo(('line, 'errors) -> 'altered) { both: (String, Object) =>
       val inputTsv = both._1
-      val errors = both._2
+      val processingMessages = both._2.asInstanceOf[Seq[Map[String, Object]]]
+      val errors = processingMessages.map(_("message").toString)
       // TODO: handle one of these being null
       processor.process(inputTsv, errors)
     }
