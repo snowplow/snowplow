@@ -19,6 +19,10 @@ import com.twitter.scalding.{JsonLine => StandardJsonLine, _}
 import cascading.tuple.Fields
 import cascading.tap.SinkMode
 
+// Commons
+import org.apache.commons.codec.binary.Base64
+import java.nio.charset.StandardCharsets.UTF_8
+
 object JsonLine {
   def apply(p: String, fields: Fields = Fields.ALL) = new JsonLine(p, fields)
 }
@@ -29,13 +33,7 @@ class JsonLine(p: String, fields: Fields) extends StandardJsonLine(p, fields, Si
 
 class SnowplowBadRowsJob(args : Args) extends Job(args) {
 
-  val processor = new JsProcessor("""
-    function process(event, errors) {
-      for (var i=0;i<errors.length;i++) java.lang.System.out.println(errors[i]);
-      var ans = event.split('\t', -1);
-      return ans.join("\t");
-    }
-  """)
+  val processor = new JsProcessor(new String(Base64.decodeBase64(args("script")), UTF_8))
 
   JsonLine(args("input"), ('line, 'errors)).read
     .flatMapTo(('line, 'errors) -> 'altered) { both: (String, Seq[String]) =>
