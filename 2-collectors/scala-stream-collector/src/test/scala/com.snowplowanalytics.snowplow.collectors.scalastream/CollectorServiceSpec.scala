@@ -34,7 +34,8 @@ import spray.http.HttpHeaders.{
   Cookie,
   `Set-Cookie`,
   `Remote-Address`,
-  `Raw-Request-URI`
+  `Raw-Request-URI`,
+  `X-Forwarded-For`
 }
 
 // Config
@@ -184,6 +185,31 @@ collector {
       storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 1000)
       storedEvent.encoding must beEqualTo("UTF-8")
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
+      storedEvent.collector must beEqualTo("ssc-0.6.0-test")
+      storedEvent.path must beEqualTo("/i")
+      storedEvent.querystring must beEqualTo(payloadData)
+    }
+    "report itself as healthy" in {
+      CollectorGet("/health") ~> collectorService.collectorRoute ~> check {
+        response.status must beEqualTo(spray.http.StatusCodes.OK)
+      }
+    }
+    "ipAddress is equal to X-Forwarded-For" in {
+      val payloadData = "param1=val1&param2=val2"
+      val headers: List[HttpHeader] =
+        List(`X-Forwarded-For`("1.2.3.4"))
+      val request = new HttpRequest().withHeaders(headers)
+      val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
+        None, "localhost", RemoteAddress("127.0.0.1"), request, None, "/i", true)._2
+
+      val storedEvent = new CollectorPayload
+      this.synchronized {
+        thriftDeserializer.deserialize(storedEvent, storedRecordBytes.head)
+      }
+
+      storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 1000)
+      storedEvent.encoding must beEqualTo("UTF-8")
+      storedEvent.ipAddress must beEqualTo("1.2.3.4")
       storedEvent.collector must beEqualTo("ssc-0.6.0-test")
       storedEvent.path must beEqualTo("/i")
       storedEvent.querystring must beEqualTo(payloadData)
