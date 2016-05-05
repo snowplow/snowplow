@@ -462,6 +462,12 @@ object EnrichmentManager {
       case None => None.success
     }
 
+    // Execute browser language enrichment
+    Option(event.br_lang).map(browser_language => event.br_lang = registry.getBrowserLanguageEnrichment match {
+      case Some(ble) => ble.convertBrowserLanguage(browser_language)
+      case None => browser_language
+    })
+
     // Assemble array of derived contexts
     val derived_contexts = List(uaParser).collect {
       case Success(Some(context)) => context
