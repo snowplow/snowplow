@@ -50,13 +50,15 @@ import registry.{
   EventFingerprintEnrichment,
   CookieExtractorEnrichment,
   WeatherEnrichment,
+  BrowserLanguageEnrichment,
   UserAgentUtilsEnrichmentConfig,
   UaParserEnrichmentConfig,
   CurrencyConversionEnrichmentConfig,
   JavascriptScriptEnrichmentConfig,
   EventFingerprintEnrichmentConfig,
   CookieExtractorEnrichmentConfig,
-  WeatherEnrichmentConfig
+  WeatherEnrichmentConfig,
+  BrowserLanguageEnrichmentConfig
 }
 
 import utils.ScalazJson4sUtils
@@ -154,6 +156,8 @@ object EnrichmentRegistry {
             CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "weather_enrichment_config") {
             WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "browser_language_config") {
+            BrowserLanguageEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else {
             None.success // Enrichment is not recognized yet
           }
@@ -276,6 +280,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getWeatherEnrichment: Option[WeatherEnrichment] =
     getEnrichment[WeatherEnrichment]("weather_enrichment_config")
+
+  /*
+   * Returns an Option boxing the BrowserLanguageEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the BrowserLanguageEnrichment instance
+   */
+  def getBrowserLanguageEnrichment: Option[BrowserLanguageEnrichment.type] =
+    getEnrichment[BrowserLanguageEnrichment.type]("browser_language_config")
 
   /**
    * Returns an Option boxing an Enrichment
