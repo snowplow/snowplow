@@ -37,7 +37,9 @@ class SnowplowBadRowsJob(args : Args) extends Job(args) {
 
   lazy val processor = new JsProcessor(new String(Base64.decodeBase64(args("script")), UTF_8))
 
-  MultipleTextLineFiles(args("input")).read
+  val inputPatterns = args("input").split(",")
+
+  MultipleTextLineFiles(inputPatterns: _*).read
     .flatMapTo('line -> 'altered) { line: String =>
       val parsedJson = JSON.parseFull(line).get.asInstanceOf[Map[String, Object]]
       val inputTsv = parsedJson("line").asInstanceOf[String]
