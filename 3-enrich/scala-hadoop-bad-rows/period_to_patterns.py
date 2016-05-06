@@ -1,3 +1,5 @@
+#/usr/bin/python
+
 """
     Copyright (c) 2016 Snowplow Analytics Ltd. All rights reserved.
     This program is licensed to you under the Apache License Version 2.0,
@@ -14,7 +16,8 @@
     License: Apache License Version 2.0
 """
 
-from datetime import date
+from datetime import datetime, date
+import sys
 
 def add_leading_zero(n):
 	if n < 10:
@@ -86,3 +89,12 @@ def doit(start_date, end_date):
 			output.append(str(year))
 
 	return output
+
+def main():
+	start_date = datetime.strptime(sys.argv[1], '%Y-%m-%d').date()
+	end_date = datetime.strptime(sys.argv[2], '%Y-%m-%d').date()
+	for pattern in doit(start_date, end_date):
+		print(pattern)
+
+if __name__ == '__main__':
+	main()
