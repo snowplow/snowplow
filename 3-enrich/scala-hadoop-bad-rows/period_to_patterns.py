@@ -58,7 +58,8 @@ def doit(start_date, end_date):
 
 			output.append(prefix + m1s + '-' + d1s[0] + '[' + d1s[1] + '-9]' )
 			output.append(prefix + m1s + '-[' + str(int(d1s[0])+1) + '-9]')
-			output.append(prefix + m2s + '-[0-' + str(int(d2s[0])-1) + ']')
+			if d2s[0] != '0':
+				output.append(prefix + m2s + '-[0-' + str(int(d2s[0])-1) + ']')
 			output.append(prefix + m2s + '-' + d2s[0] + '[0-' + d2s[1] + ']')
 
 			if m1 < m2 - 1:
@@ -75,9 +76,11 @@ def doit(start_date, end_date):
 		output.append(y1s + '-[' + str(int(m1s[0])+1) + '-9]')
 
 		output.append(y2s + '-' + m2s + '-' + d2s[0] + '[0-' + d2s[1] + ']')
-		output.append(y2s + '-' + m2s + '-[0-' + str(int(d2s[0])-1) + ']')
-		output.append(y2s + '-' + m2s[0] + '[0-' + str(int(m2s[1])) + ']')
-		output.append(y2s + '-[0-' + str(int(m2s[0])-1) + ']')
+		if d2s[0] != '0':
+			output.append(y2s + '-' + m2s + '-[0-' + str(int(d2s[0])-1) + ']')
+		output.append(y2s + '-' + m2s[0] + '[0-' + m2s[1] + ']')
+		if m2s[0] != '0':
+			output.append(y2s + '-[0-' + str(int(m2s[0])-1) + ']')
 
 		for year in range(y1 + 1, y2):
 			output.append(str(year))
