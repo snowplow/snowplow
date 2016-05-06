@@ -19,7 +19,7 @@
 from datetime import datetime, date
 import sys
 
-def add_leading_zero(n):
+def to_double_digit_string(n):
 	if n < 10:
 		return '0' + str(n)
 	else:
@@ -33,12 +33,12 @@ def doit(start_date, end_date):
 	d1 = start_date.day
 	d2 = end_date.day
 
-	y1s = add_leading_zero(y1)
-	y2s = add_leading_zero(y2)
-	m1s = add_leading_zero(m1)
-	m2s = add_leading_zero(m2)
-	d1s = add_leading_zero(d1)
-	d2s = add_leading_zero(d2)
+	y1s = str(y1)
+	y2s = str(y2)
+	m1s = to_double_digit_string(m1)
+	m2s = to_double_digit_string(m2)
+	d1s = to_double_digit_string(d1)
+	d2s = to_double_digit_string(d2)
 
 	output = []
 
