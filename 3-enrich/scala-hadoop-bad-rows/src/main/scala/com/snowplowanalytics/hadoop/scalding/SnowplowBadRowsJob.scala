@@ -23,6 +23,8 @@ import cascading.tap.SinkMode
 import org.apache.commons.codec.binary.Base64
 import java.nio.charset.StandardCharsets.UTF_8
 
+import scala.util.parsing.json._
+
 object JsonLine {
   def apply(p: String, fields: Fields = Fields.ALL) = new JsonLine(p, fields)
 }
@@ -35,10 +37,11 @@ class SnowplowBadRowsJob(args : Args) extends Job(args) {
 
   lazy val processor = new JsProcessor(new String(Base64.decodeBase64(args("script")), UTF_8))
 
-  JsonLine(args("input"), ('line, 'errors)).read
-    .flatMapTo(('line, 'errors) -> 'altered) { both: (String, Object) =>
-      val inputTsv = both._1
-      val processingMessages = both._2.asInstanceOf[Seq[Map[String, Object]]]
+  MultipleTextLineFiles(args("input")).read
+    .flatMapTo('line -> 'altered) { line: String =>
+      val parsedJson = JSON.parseFull(line).get.asInstanceOf[Map[String, Object]]
+      val inputTsv = parsedJson("line").asInstanceOf[String]
+      val processingMessages = parsedJson("errors").asInstanceOf[Seq[Map[String, Object]]]
       val errors = processingMessages.map(_("message").toString)
       // TODO: handle one of these being null
       processor.process(inputTsv, errors)
