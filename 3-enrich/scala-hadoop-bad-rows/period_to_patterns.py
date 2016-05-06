@@ -75,7 +75,7 @@ def doit(start_date, end_date):
 	elif y1 < y2:
 		output.append(y1s + '-' + m1s + '-' + d1s[0] + '[' + d1s[1] + '-' + '9]')
 		output.append(y1s + '-' + m1s + '-[' + str(int(d1s[0])+1) + '-9]')
-		output.append(y1s + '-' + m1s[0] + '[' + m1s[1] + '-9]')
+		output.append(y1s + '-' + m1s[0] + '[' + str(int(m1s[1])+1) + '-9]')
 		output.append(y1s + '-[' + str(int(m1s[0])+1) + '-9]')
 
 		output.append(y2s + '-' + m2s + '-' + d2s[0] + '[0-' + d2s[1] + ']')
