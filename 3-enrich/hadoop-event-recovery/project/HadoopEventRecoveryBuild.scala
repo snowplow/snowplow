@@ -36,7 +36,7 @@ object HadoopEventRecoveryBuild extends Build {
         Libraries.scaldingCore,
         Libraries.scaldingArgs,
         Libraries.scaldingJson,
-        "org.mozilla" % "rhino" % "1.7R4",
+        Libraries.rhino,
         Libraries.specs2
       )
     )
