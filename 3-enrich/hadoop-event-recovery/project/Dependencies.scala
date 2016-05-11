@@ -22,10 +22,11 @@ object Dependencies {
     // Java
     val hadoop          = "2.4.1"
     val cascading       = "2.7.0"
+    val rhino           = "1.7R4"
     // Scala
     val scalding        = "0.15.0"
     val igluClient      = "0.3.2"
-    val specs2    = "2.3.11"
+    val specs2          = "2.3.11"
     // Add versions for your additional libraries here...
   }
 
@@ -36,6 +37,7 @@ object Dependencies {
     val cascadingCore    = "cascading"                  %  "cascading-core"               % V.cascading
     val cascadingLocal   = "cascading"                  %  "cascading-local"              % V.cascading
     val cascadingHadoop  = "cascading"                  %  "cascading-hadoop2-mr1"        % V.cascading
+    val rhino            = "org.mozilla"                % "rhino"                         % V.rhino
     // Scala
     val scaldingCore     = "com.twitter"                %% "scalding-core"           % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" ) exclude( "cascading", "cascading-hadoop2-mr1" )
     val scaldingArgs     = "com.twitter"                %% "scalding-args"           % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" ) exclude( "cascading", "cascading-hadoop2-mr1" )
