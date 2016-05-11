@@ -1,20 +1,49 @@
-# Snowplow Hadoop Bad Rows
+# Snowplow Hadoop Event Recovery
 
 ## Introduction
 
-Use this Scalding job to extract raw Snowplow events from your Snowplow bad rows JSONs, ready for reprocessing.
+Use this Scalding job to extract raw Snowplow events from your Snowplow bad rows JSONs and fix any problems with them, making them ready for reprocessing.
 
 ## Usage
 
 Run this job using the [Amazon Ruby EMR client] [emr-client]:
 
-    $ elastic-mapreduce --create --name "Extract raw events from Snowplow bad row JSONs" \
-      --instance-type m1.xlarge --instance-count 3 \
-      --jar s3://snowplow-hosted-assets/3-enrich/scala-bad-rows/snowplow-bad-rows-0.1.0.jar \
-      --arg com.snowplowanalytics.hadoop.scalding.SnowplowBadRowsJob \
-      --arg --hdfs \
-      --arg --input --arg s3n://{{PATH_TO_YOUR_FIXABLE_BAD_ROWS}} \
-      --arg --output --arg s3n://{{PATH_WILL_BE_STAGING_FOR_EMRETLRUNNER}}
+```
+aws emr create-cluster --applications Name=Hadoop --ec2-attributes '{
+    "InstanceProfile":"EMR_EC2_DefaultRole",
+    "AvailabilityZone":"us-east-1d",
+    "EmrManagedSlaveSecurityGroup":"sg-2f9aba4b",
+    "EmrManagedMasterSecurityGroup":"sg-2e9aba4a"
+}' --service-role EMR_DefaultRole --enable-debugging --release-label emr-4.3.0 --log-uri 's3n://{{path to logs}}' --steps '[
+{
+    "Args":[
+        "com.snowplowanalytics.hadoop.scalding.SnowplowBadRowsJob",
+        "--input",
+        "s3://{{path to enriched}}/bad/run=2015-12-*,s3://{{path to enriched}}/bad/run=2016-01-*",
+        "--output",
+        "s3://{{path to output bucket}}",
+        "--script",
+        "ZnVuY3Rpb24gcHJvY2VzcyhldmVudCwgZXJyb3JzKSB7CgkvLyBPbmx5IHJlcHJvY2VzcyBpZjoKCS8vIDEuIHRoZXJlIGlzIG9ubHkgb25lIHZhbGlkYXRpb24gZXJyb3IgYW5kCgkvLyAyLiB0aGUgZXJyb3IgcmVmZXJlbmNlcyBSRkMgMjM5Niwgd2hpY2ggc3BlY2lmaWVzIHdoYXQgbWFrZXMgYSBVUkwgdmFsaWQuCglpZiAobGVuKGVycm9ycykgPCAyICYmIC9SRkMgMjM5Ni8udGVzdChlcnJvcnNbMF0pKSB7CgkJdmFyIGZpZWxkcyA9IHRzdlRvQXJyYXkoZXZlbnQpOwoJCWZpZWxkc1s5XSA9ICdodHRwOi8vd3d3LnBsYWNlaG9sZGVyLmNvbSdcOwoJCXJldHVybiBhcnJheVRvVHN2KGZpZWxkcyk7Cgl9IGVsc2UgewoJCXJldHVybiBudWxsOwoJfQp9Cg=="
+    ],
+    "Type":"CUSTOM_JAR",
+    "ActionOnFailure":"CONTINUE",
+    "Jar":"s3://snowplow-hosted-assets/3-enrich/hadoop-event-recovery/snowplow-hadoop-event-recovery-0.1.0.jar",
+    "Name":"Fix up bad rows"
+}]' --name 'MyCluster' --instance-groups '[
+    {
+        "InstanceCount":1,
+        "InstanceGroupType":"MASTER",
+        "InstanceType":"m1.medium",
+        "Name":"MASTER"
+    },
+    {
+        "InstanceCount":2,
+        "InstanceGroupType":"CORE",
+        "InstanceType":"m1.medium",
+        "Name":"CORE"
+    }
+]'
+```
 
 Replace the `{{...}}` placeholders above with the appropriate bucket paths.
 
