@@ -38,7 +38,7 @@ class JsonLine(p: String, fields: Fields) extends StandardJsonLine(p, fields, Si
  *
  * @param args Arguments to the job
  */
-class SnowplowBadRowsJob(args : Args) extends Job(args) {
+class SnowplowEventRecoveryJob(args : Args) extends Job(args) {
 
   lazy val processor = new JsProcessor(new String(Base64.decodeBase64(args("script")), UTF_8))
 

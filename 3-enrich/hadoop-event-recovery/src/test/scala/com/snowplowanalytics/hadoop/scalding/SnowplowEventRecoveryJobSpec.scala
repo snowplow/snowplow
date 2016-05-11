@@ -26,10 +26,10 @@ import cascading.tap.SinkMode
 import org.apache.commons.codec.binary.Base64
 import java.nio.charset.StandardCharsets.UTF_8
 
-class SnowplowBadRowsJobSpec extends Specification {
+class SnowplowEventRecoveryJobSpec extends Specification {
   import Dsl._
 
-  "A SnowplowBadRows job" should {
+  "A SnowplowEventRecovery job" should {
 
     val sourceCode = """
       function process(event, errors) {
@@ -37,7 +37,7 @@ class SnowplowBadRowsJobSpec extends Specification {
       }
     """
 
-    JobTest("com.snowplowanalytics.hadoop.scalding.SnowplowBadRowsJob")
+    JobTest("com.snowplowanalytics.hadoop.scalding.SnowplowEventRecoveryJob")
       .arg("input", "inputFile")
       .arg("output", "outputFile")
       .arg("script", new String(Base64.encodeBase64(sourceCode.getBytes()), UTF_8))

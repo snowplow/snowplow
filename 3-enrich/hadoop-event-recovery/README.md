@@ -17,7 +17,7 @@ aws emr create-cluster --applications Name=Hadoop --ec2-attributes '{
 }' --service-role EMR_DefaultRole --enable-debugging --release-label emr-4.3.0 --log-uri 's3n://{{path to logs}}' --steps '[
 {
     "Args":[
-        "com.snowplowanalytics.hadoop.scalding.SnowplowBadRowsJob",
+        "com.snowplowanalytics.hadoop.scalding.SnowplowEventRecoveryJob",
         "--input",
         "s3://{{path to enriched}}/bad/run=2015-12-*,s3://{{path to enriched}}/bad/run=2016-01-*",
         "--output",
