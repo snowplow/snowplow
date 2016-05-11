@@ -12,85 +12,17 @@
  */
 package com.snowplowanalytics.hadoop.scalding
 
-import org.mozilla.javascript._
-
-import scala.util.control.NonFatal
-
-object JsProcessor {
-
-  object Variables {
-    private val prefix = "$snowplow31337" // To avoid collisions
-    val InTsv  = s"${prefix}InTsv"
-    val InErrors  = s"${prefix}InErrors"
-    val Out = s"${prefix}Out"
-  }
-
-  def compile(sourceCode: String): Script = {
-    val wholeScript =
-      s"""|// Helper functions
-          |function tsvToArray(event) {
-          |  return event.split('\t', -1);
-          |}
-          |function arrayToTsv(tsv) {
-          |  return tsv.join('\t');
-          |}
-          |
-          |// User-supplied script
-          |${sourceCode}
-          |
-          |// Immediately invoke using reserved args
-          |var ${Variables.Out} = process(${Variables.InTsv}, ${Variables.InErrors});
-          |
-          |// Don't return anything
-          |null;
-          |""".stripMargin
-
-    val cx = Context.enter()
-    try {
-      cx.compileString(wholeScript, "user-defined-script", 0, null)
-    } finally {
-      Context.exit()
-    }    
-  }
-}
-
-class JsProcessor(sourceCode: String) extends TsvProcessor {
-
-  val compiledScript: Script = JsProcessor.compile(sourceCode)
-
-  def applyToTsv(script: Script, event: String, errors: Seq[String]): Option[String] = {
-    val cx = Context.enter()
-    val scope = cx.initStandardObjects
-    try {
-      scope.put(JsProcessor.Variables.InTsv, scope, Context.javaToJS(event, scope))
-      scope.put(JsProcessor.Variables.InErrors, scope, Context.javaToJS(errors.toArray, scope))
-      val retVal = script.exec(cx, scope)
-    } catch {
-      case NonFatal(nf) => {
-        nf.printStackTrace()
-      } // TODO
-    } finally {
-      Context.exit()
-    }
-
-    Option(scope.get(JsProcessor.Variables.Out)) match {
-      case None => None
-      case Some(obj) => {
-        try {
-          Some(obj.asInstanceOf[String])
-        } catch {
-          case NonFatal(nf) => {
-            nf.printStackTrace()
-            None
-          } // TODO
-        }
-      }
-    }
-  }
-
-  def process(inputTsv: String, errors: Seq[String]): Option[String] = applyToTsv(compiledScript, inputTsv, errors)
-}
-
+/**
+ * Object to either discard or mutate a bad row containing a TSV raw event
+ */
 trait TsvProcessor {
+  
+  /**
+   * Decide whether to try to fix up a given bad row, then act accordingly
+   *
+   * @param inputTsv The tab-separated raw event in the Cloudfront Access Log format
+   * @param errors An array of errors describing why the inputTsv is invalid
+   * @return Some(mutatedInputTsv), or None if this bad row should be ignored
+   */
   def process(inputTsv: String, errors: Seq[String]): Option[String]
 }

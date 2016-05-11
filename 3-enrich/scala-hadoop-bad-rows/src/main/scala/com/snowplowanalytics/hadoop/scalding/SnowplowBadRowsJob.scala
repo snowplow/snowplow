@@ -33,6 +33,11 @@ class JsonLine(p: String, fields: Fields) extends StandardJsonLine(p, fields, Si
   override val transformInTest = true
 }
 
+/**
+ * Scalding job to make bad rows ready for reprocessing
+ *
+ * @param args Arguments to the job
+ */
 class SnowplowBadRowsJob(args : Args) extends Job(args) {
 
   lazy val processor = new JsProcessor(new String(Base64.decodeBase64(args("script")), UTF_8))
