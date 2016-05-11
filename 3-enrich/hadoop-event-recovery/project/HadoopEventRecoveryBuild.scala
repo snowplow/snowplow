@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object SnowplowBadRowsBuild extends Build {
+object HadoopEventRecoveryBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -24,7 +24,7 @@ object SnowplowBadRowsBuild extends Build {
   }
 
   // Define our project, with basic project information and library dependencies
-  lazy val project = Project("snowplow-bad-rows", file("."))
+  lazy val project = Project("snowplow-hadoop-event-recovery", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
