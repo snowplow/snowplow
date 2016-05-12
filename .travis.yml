@@ -15,12 +15,12 @@ env:
     - secure: qsJvE2KHX6zfTbUD20Sq3d+b+ucuA/Bipiia5TEm/JKw0EoyIoiA4Fe1PTiYIvkIGuAcQWb4s5GrXCsztCAqZApn5+x8JgjPsmp0kLVXtZTQ3lv0AyTewxvIABoXfpblMuBmCIWjKwidGYQC+k8BgnWZ0JW6cnmfFq4i0bp4FM8=
 addons:
   hostname: short-hostname
+before_deploy: ./.travis/deploy.sh $TRAVIS_TAG
 deploy:
   - provider: s3
     bucket: "s3://snowplow-hosted-assets/"
     upload-dir: "3-enrich/hadoop-event-recovery/"
     local_dir: "3-enrich/hadoop-event-recovery/target/scala-2.10/"
-    script: ./.travis/deploy.sh $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
