@@ -34,8 +34,8 @@ cd_root
 
 version=$1
 
-# TODO: get AWS credentials
-
 assemble_fatjar
 
-aws s3 cp 
+mkdir build
+
+mv 3-enrich/hadoop-event-recovery/target/scala-2.10/* build

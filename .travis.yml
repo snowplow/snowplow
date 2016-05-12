@@ -16,9 +16,12 @@ env:
 addons:
   hostname: short-hostname
 deploy:
-  skip_cleanup: true
-  provider: script
-  script: ./.travis/deploy.sh $TRAVIS_TAG
-  on:
-    tags: true
-    condition: '"$(.travis/is_hadoop_event_recovery_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+  - provider: s3
+    bucket: "s3://snowplow-hosted-assets/"
+    upload-dir: "3-enrich/hadoop-event-recovery/"
+    local_dir: "3-enrich/hadoop-event-recovery/target/scala-2.10/"
+    script: ./.travis/deploy.sh $TRAVIS_TAG
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: '"$(.travis/is_hadoop_event_recovery_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
