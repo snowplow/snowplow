@@ -85,27 +85,11 @@ class JsProcessor(sourceCode: String) extends TsvProcessor {
       scope.put(JsProcessor.Variables.InTsv, scope, Context.javaToJS(event, scope))
       scope.put(JsProcessor.Variables.InErrors, scope, Context.javaToJS(errors.toArray, scope))
       val retVal = script.exec(cx, scope)
-    } catch {
-      case NonFatal(nf) => {
-        nf.printStackTrace()
-      } // TODO
     } finally {
       Context.exit()
     }
 
-    Option(scope.get(JsProcessor.Variables.Out)) match {
-      case None => None
-      case Some(obj) => {
-        try {
-          Some(obj.asInstanceOf[String])
-        } catch {
-          case NonFatal(nf) => {
-            nf.printStackTrace()
-            None
-          } // TODO
-        }
-      }
-    }
+    Option(scope.get(JsProcessor.Variables.Out)).map(_.asInstanceOf[String])
   }
   
   /**
