@@ -23,7 +23,7 @@ aws emr create-cluster --applications Name=Hadoop --ec2-attributes '{
         "--output",
         "s3://{{path to output bucket}}",
         "--script",
-        "ZnVuY3Rpb24gcHJvY2VzcyhldmVudCwgZXJyb3JzKSB7CgkvLyBPbmx5IHJlcHJvY2VzcyBpZjoKCS8vIDEuIHRoZXJlIGlzIG9ubHkgb25lIHZhbGlkYXRpb24gZXJyb3IgYW5kCgkvLyAyLiB0aGUgZXJyb3IgcmVmZXJlbmNlcyBSRkMgMjM5Niwgd2hpY2ggc3BlY2lmaWVzIHdoYXQgbWFrZXMgYSBVUkwgdmFsaWQuCglpZiAobGVuKGVycm9ycykgPCAyICYmIC9SRkMgMjM5Ni8udGVzdChlcnJvcnNbMF0pKSB7CgkJdmFyIGZpZWxkcyA9IHRzdlRvQXJyYXkoZXZlbnQpOwoJCWZpZWxkc1s5XSA9ICdodHRwOi8vd3d3LnBsYWNlaG9sZGVyLmNvbSdcOwoJCXJldHVybiBhcnJheVRvVHN2KGZpZWxkcyk7Cgl9IGVsc2UgewoJCXJldHVybiBudWxsOwoJfQp9Cg=="
+        "ZnVuY3Rpb24gcHJvY2VzcyhldmVudCwgZXJyb3JzKSB7CiAgICAvLyBPbmx5IHJlcHJvY2VzcyBpZjoKICAgIC8vIDEuIHRoZXJlIGlzIG9ubHkgb25lIHZhbGlkYXRpb24gZXJyb3IgYW5kCiAgICAvLyAyLiB0aGUgZXJyb3IgcmVmZXJlbmNlcyBSRkMgMjM5Niwgd2hpY2ggc3BlY2lmaWVzIHdoYXQgbWFrZXMgYSBVUkwgdmFsaWQuCiAgICBpZiAoZXJyb3JzLmxlbmd0aCA8IDIgJiYgL1JGQyAyMzk2Ly50ZXN0KGVycm9yc1swXSkpIHsKICAgICAgICB2YXIgZmllbGRzID0gdHN2VG9BcnJheShldmVudCk7CiAgICAgICAgZmllbGRzWzldID0gJ2h0dHA6Ly93d3cucGxhY2Vob2xkZXIuY29tJ1w7CiAgICAgICAgcmV0dXJuIGFycmF5VG9Uc3YoZmllbGRzKTsKICAgIH0gZWxzZSB7CiAgICAgICAgcmV0dXJuIG51bGw7CiAgICB9Cn0K"
     ],
     "Type":"CUSTOM_JAR",
     "ActionOnFailure":"CONTINUE",
