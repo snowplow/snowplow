@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "--- beginning deployment ---"
+
 tag=$1
 
 cicd=${tag:0:8}
