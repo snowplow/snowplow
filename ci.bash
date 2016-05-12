@@ -12,7 +12,7 @@ root=$(pwd)
 # Next two arrays MUST match up: number of elements and order
 declare -a kinesis_app_paths=( "2-collectors/scala-stream-collector" "3-enrich/stream-enrich" "4-storage/kinesis-elasticsearch-sink" )
 # TODO: version numbers shouldn't be hard-coded
-declare -a kinesis_fatjars=( "snowplow-stream-collector-0.7.0-rc3" "snowplow-stream-enrich-0.8.0-rc2" "snowplow-elasticsearch-sink-0.6.0-rc2" )
+declare -a kinesis_fatjars=( "snowplow-stream-collector-0.7.0-rc2" "snowplow-stream-enrich-0.8.0-rc3" "snowplow-elasticsearch-sink-0.6.0-rc2" )
 
 # Similar to Perl die
 function die() {
