@@ -34,23 +34,42 @@ object JsProcessor {
    */
   def compile(sourceCode: String): Script = {
     val wholeScript =
-      s"""|// Helper functions
-          |function tsvToArray(event) {
-          |  return event.split('\t', -1);
-          |}
-          |function arrayToTsv(tsv) {
-          |  return tsv.join('\t');
-          |}
-          |
-          |// User-supplied script
-          |${sourceCode}
-          |
-          |// Immediately invoke using reserved args
-          |var ${Variables.Out} = process(${Variables.InTsv}, ${Variables.InErrors});
-          |
-          |// Don't return anything
-          |null;
-          |""".stripMargin
+      s"""
+// Helper functions
+function tsvToArray(event) {
+  return event.split('\t', -1);
+}
+function arrayToTsv(tsv) {
+  return tsv.join('\t');
+}
+function parseQuerystring(qstr) {
+  var query = {};
+  var a = qstr.split('&');
+  for (var i = 0; i < a.length; i++) {
+    var b = a[i].split('=');
+    query[decodeURIComponent(b[0])] = decodeURIComponent(b[1] || '');
+  }
+  return query;
+}
+function buildQuerystring(dict) {
+  var parts = [];
+  for (var i in dict) {
+    if (dict.hasOwnProperty(i)) {
+      parts.push(encodeURIComponent(i) + '=' + encodeURIComponent(dict[i]));
+    }
+  }
+  return parts.join('&');
+}
+
+// User-supplied script
+${sourceCode}
+
+// Immediately invoke using reserved args
+var ${Variables.Out} = process(${Variables.InTsv}, ${Variables.InErrors});
+
+// Don't return anything
+null;
+          """.stripMargin
 
     val cx = Context.enter()
     try {
