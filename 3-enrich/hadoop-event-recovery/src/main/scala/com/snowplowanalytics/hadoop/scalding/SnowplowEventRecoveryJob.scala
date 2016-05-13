@@ -48,10 +48,20 @@ class SnowplowEventRecoveryJob(args : Args) extends Job(args) {
     .flatMapTo('line -> 'altered) { line: String =>
       val parsedJson = JSON.parseFull(line).get.asInstanceOf[Map[String, Object]]
       val inputTsv = parsedJson("line").asInstanceOf[String]
-      val processingMessages = parsedJson("errors").asInstanceOf[Seq[Map[String, Object]]]
-      val errors = processingMessages.map(_("message").toString)
-      // TODO: handle one of these being null
-      processor.process(inputTsv, errors)
+      val errs = parsedJson("errors").asInstanceOf[Seq[Object]]
+
+      // We need to determine whether these are old-style errors of the form ["errorString1", ...]
+      // or new-style ones of the form [{"level": "..", "message": "errorString1"}]
+      val recoveredEvent = if (errs.isEmpty) {
+        None
+      } else {
+        val errorStrings: Seq[String] = errs(0) match {
+          case s: String => errs.asInstanceOf[Seq[String]]
+          case _ => errs.asInstanceOf[Seq[Map[String, Object]]].map(_("message").asInstanceOf[String])
+        }
+        processor.process(inputTsv, errorStrings)
+      }
+      recoveredEvent
     }
     .write(Tsv(args("output")))
 }
