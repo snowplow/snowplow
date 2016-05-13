@@ -1,10 +1,10 @@
 #!/bin/bash
-echo 'checking tag...'
+echo 'checking tag...' >&2
 tag=$1
 cicd=${tag:0:22}
 release=${tag:22}
-echo $tag
-echo cicd
+echo $tag >&2
+echo cicd >&2
 if [ "${cicd}" == "hadoop_event_recovery/" ]; then
     if [ "${release}" == "" ]; then 
         echo "Warning! No release specified! Ignoring."
