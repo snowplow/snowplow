@@ -3,4 +3,4 @@
 echo "--- beginning deployment ---"
 
 cd $TRAVIS_BUILD_DIR
-./ci.bash
+./evet-recovery-ci.bash
