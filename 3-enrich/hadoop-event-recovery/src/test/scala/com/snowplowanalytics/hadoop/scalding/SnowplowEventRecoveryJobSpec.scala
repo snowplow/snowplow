@@ -76,57 +76,56 @@ class SnowplowEventRecoveryJobSpec extends Specification {
     """
 
     val fixMissingSchemasAndUrls = """
-function process(event, errors) {
+      function process(event, errors) {
 
-    var failedUrl = false;
+          var failedUrl = false;
 
-    for (var i=0; i<errors.length; i++) {
-        var err = errors[i];
-        if (isBadUrlError(err)) {
-            failedUrl = true;
-        } else if (!isMissingSchemaError(err)) {
-            return null;
-        }
-    }
-
-    if (failedUrl) {
-        var fields = tsvToArray(event);
-
-        if (fields[5] == 'GET') {
-
-          fields[9] = 'http://www.placeholder.com';
-          var querystring = parseQuerystring(fields[11]);
-          querystring['url'] = 'http://www.placeholder.com';
-          querystring['refr'] = 'http://www.placeholder.com';
-          fields[11] = buildQuerystring(querystring);
-          return arrayToTsv(fields);
-        } else if (fields[5] == 'POST') {
-
-          var postPosition = fields.length - 1;
-          var urlSafeb64 = new org.apache.commons.codec.binary.Base64(true);
-          var decodedPost = new java.lang.String(urlSafeb64.decodeBase64(fields[postPosition]));
-          var postJson = JSON.parse(decodedPost);
-          for (var i=0;i<postJson.data.length;i++) {
-            postJson.data[i].url = 'http://www.placeholder.com';
-            postJson.data[i].refr = 'http://www.placeholder.com';
+          for (var i=0; i<errors.length; i++) {
+              var err = errors[i];
+              if (isBadUrlError(err)) {
+                  failedUrl = true;
+              } else if (!isMissingSchemaError(err)) {
+                  return null;
+              }
           }
-          fields[postPosition] = new java.lang.String(urlSafeb64.encodeBase64(new java.lang.String(JSON.stringify(postJson)).getBytes()));
-          return arrayToTsv(fields);
-        } else {
-          return null;
-        }
-    } else {
-        return event;
-    }
-}
 
-function isBadUrlError(err) {
-    return /RFC 2396|could not be parsed by Netaporter|Unexpected error creating URI from string/.test(err);
-}
+          if (failedUrl) {
+              var fields = tsvToArray(event);
 
-function isMissingSchemaError(err) {
-    return /Could not find schema with key/.test(err);
-}
+              if (fields[5] == 'GET') {
+
+                fields[9] = 'http://www.placeholder.com';
+                var querystring = parseQuerystring(fields[11]);
+                querystring['url'] = 'http://www.placeholder.com';
+                querystring['refr'] = 'http://www.placeholder.com';
+                fields[11] = buildQuerystring(querystring);
+                return arrayToTsv(fields);
+              } else if (fields[5] == 'POST') {
+
+                var postPosition = fields.length - 1;
+                var decodedPost = decodeBase64(fields[postPosition]);
+                var postJson = parseJson(decodedPost);
+                for (var i=0;i<postJson.data.length;i++) {
+                  postJson.data[i].url = 'http://www.placeholder.com';
+                  postJson.data[i].refr = 'http://www.placeholder.com';
+                }
+                fields[postPosition] = encodeBase64(stringifyJson(postJson));
+                return arrayToTsv(fields);
+              } else {
+                return null;
+              }
+          } else {
+              return event;
+          }
+      }
+
+      function isBadUrlError(err) {
+          return /RFC 2396|could not be parsed by Netaporter|Unexpected error creating URI from string/.test(err);
+      }
+
+      function isMissingSchemaError(err) {
+          return /Could not find schema with key/.test(err);
+      }
     """
 
     JobTest("com.snowplowanalytics.hadoop.scalding.SnowplowEventRecoveryJob")

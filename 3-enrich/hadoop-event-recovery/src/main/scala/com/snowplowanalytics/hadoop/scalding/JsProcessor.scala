@@ -39,9 +39,11 @@ object JsProcessor {
 function tsvToArray(event) {
   return event.split('\t', -1);
 }
+
 function arrayToTsv(tsv) {
   return tsv.join('\t');
 }
+
 function parseQuerystring(qstr) {
   var query = {};
   var a = qstr.split('&');
@@ -51,6 +53,7 @@ function parseQuerystring(qstr) {
   }
   return query;
 }
+
 function buildQuerystring(dict) {
   var parts = [];
   for (var i in dict) {
@@ -59,6 +62,25 @@ function buildQuerystring(dict) {
     }
   }
   return parts.join('&');
+}
+
+
+function parseJson(jsonString) {
+  return JSON.parse(jsonString);
+}
+
+function stringifyJson(jsonObject) {
+  return new java.lang.String(JSON.stringify(jsonObject));
+}
+
+function decodeBase64(encodedString) {
+  var urlSafeb64 = new org.apache.commons.codec.binary.Base64(true);
+  return new java.lang.String(urlSafeb64.decodeBase64(encodedString));
+}
+
+function encodeBase64(unencodedString) {
+  var urlSafeb64 = new org.apache.commons.codec.binary.Base64(true);
+  return new java.lang.String(urlSafeb64.encodeBase64(unencodedString.getBytes()));
 }
 
 // User-supplied script
