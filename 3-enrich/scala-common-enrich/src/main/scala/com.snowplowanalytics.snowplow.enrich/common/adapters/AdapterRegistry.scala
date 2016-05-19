@@ -39,7 +39,9 @@ import registry.{
   PagerdutyAdapter,
   PingdomAdapter,
   UrbanAirshipAdapter,
-  SendgridAdapter
+  SendgridAdapter,
+  StatusGatorAdapter,
+  StatusGatorAdapter
 }
 
 /**
@@ -62,6 +64,7 @@ object AdapterRegistry {
     val Cloudfront = "com.amazon.aws.cloudfront"
     val UrbanAirship = "com.urbanairship.connect"
     val Sendgrid   = "com.sendgrid"
+    val StatusGator = "com.statusgator"
   }
 
   /**
@@ -92,6 +95,7 @@ object AdapterRegistry {
     case (Vendor.Cloudfront,   "wd_access_log") => CloudfrontAccessLogAdapter.WebDistribution.toRawEvents(payload)
     case (Vendor.UrbanAirship, "v1")  => UrbanAirshipAdapter.toRawEvents(payload)
     case (Vendor.Sendgrid,     "v3")  => SendgridAdapter.toRawEvents(payload)
+    case (Vendor.StatusGator,  "v1")  => StatusGatorAdapter.toRawEvents(payload)
     case _ => s"Payload with vendor ${payload.api.vendor} and version ${payload.api.version} not supported by this version of Scala Common Enrich".failNel
   }
 
