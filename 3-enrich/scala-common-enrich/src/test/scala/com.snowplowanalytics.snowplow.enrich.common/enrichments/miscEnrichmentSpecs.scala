@@ -35,8 +35,9 @@ import org.json4s.jackson.JsonMethods._
 class EtlVersionSpec extends MutSpecification {
 
   "The ETL version" should {
-    "be successfully returned" in {
-      MiscEnrichments.etlVersion("spark-x.x.x") must_== "spark-x.x.x-common-0.27.0"
+    "be successfully returned using an x.y.z format" in {
+      val anyString = "spark-x.x.x"
+      MiscEnrichments.etlVersion(anyString) must beMatching(s"${anyString}-common-\\d+\\.\\d+\\.\\d+(-\\w+)?".r)
     }
   }
 }
