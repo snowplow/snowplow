@@ -23,8 +23,6 @@ import cascading.tap.SinkMode
 import org.apache.commons.codec.binary.Base64
 import java.nio.charset.StandardCharsets.UTF_8
 
-import scala.util.parsing.json._
-
 object JsonLine {
   def apply(p: String, fields: Fields = Fields.ALL) = new JsonLine(p, fields)
 }
@@ -40,28 +38,19 @@ class JsonLine(p: String, fields: Fields) extends StandardJsonLine(p, fields, Si
  */
 class SnowplowEventRecoveryJob(args : Args) extends Job(args) {
 
+  lazy val preprocessor = args("inputFormat") match {
+    case "bad" => BadRowReprocessor
+    case "raw" => RawLinePreprocessor
+  }
+
   lazy val processor = new JsProcessor(new String(Base64.decodeBase64(args("script")), UTF_8))
 
   val inputPatterns = args("input").split(",")
 
   MultipleTextLineFiles(inputPatterns: _*).read
     .flatMapTo('line -> 'altered) { line: String =>
-      val parsedJson = JSON.parseFull(line).get.asInstanceOf[Map[String, Object]]
-      val inputTsv = parsedJson("line").asInstanceOf[String]
-      val errs = parsedJson("errors").asInstanceOf[Seq[Object]]
-
-      // We need to determine whether these are old-style errors of the form ["errorString1", ...]
-      // or new-style ones of the form [{"level": "..", "message": "errorString1"}]
-      val recoveredEvent = if (errs.isEmpty) {
-        None
-      } else {
-        val errorStrings: Seq[String] = errs(0) match {
-          case s: String => errs.asInstanceOf[Seq[String]]
-          case _ => errs.asInstanceOf[Seq[Map[String, Object]]].map(_("message").asInstanceOf[String])
-        }
-        processor.process(inputTsv, errorStrings)
-      }
-      recoveredEvent
+      val (inputTsv, errorStrings) = preprocessor.preprocess(line)
+      processor.process(inputTsv, errorStrings)
     }
     .write(Tsv(args("output")))
 }
