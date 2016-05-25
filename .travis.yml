@@ -7,6 +7,7 @@ script:
   - python integration-tests/api-lookup-test.py &
   - cd 3-enrich/scala-common-enrich
   - sbt test
+  - cd ../..
 env:
   global:
   - secure: j6RcEPeT5DCmThYA+KSvn5zoFdwhO9Tyk9xXVrW+L8oTTAehDvEWQ1nkJM7m+KYwUtWH1bvRd9IOZgKkWxJeYSDvn8V0zd0dJKSc7R4kykfI/S3V67uM1LCj24B1dF62uiTMOFd9inwB3SLhVFwRk+tcgrZMLs9ljqND77pGR4Y=
@@ -17,3 +18,10 @@ env:
   - secure: YwhLm1v0EKBQQfUvNzrdyp8MGHDmnAhM51JijlApiPAfgYRJnogoNbmzMAqhbPNubnGFxaD5xgoavHXypaDAMGQoKY7q9WjHnBy1hxHWw8C0Q5vbVtxLroQWYYDi7YuEeY5D7/i3RkqD8bVIvPoHdFCQGuMYpHDke0OHcjrNz0Y=
 addons:
   hostname: short-hostname
+deploy:
+  skip_cleanup: true
+  provider: script
+  script: ./.travis/deploy.sh $TRAVIS_TAG
+  on:
+    tags: true
+    condition: '"$(.travis/is_kinesis_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
