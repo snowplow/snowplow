@@ -38,6 +38,6 @@ assemble_fatjar
 
 mkdir build
 
-aws s3 cp 3-enrich/hadoop-event-recovery/target/scala-2.10/* s3://snowplow-hosted-assets/3-enrich/hadoop-event-recovery/ --grants "read=uri=http://acs.amazonaws.com/groups/global/AllUsers"
+aws s3 cp 3-enrich/hadoop-event-recovery/target/scala-2.10/*.jar s3://snowplow-hosted-assets/3-enrich/hadoop-event-recovery/ --grants "read=uri=http://acs.amazonaws.com/groups/global/AllUsers"
 
 # mv 3-enrich/hadoop-event-recovery/target/scala-2.10/* build
