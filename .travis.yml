@@ -18,7 +18,7 @@ deploy:
       secure: LLm+yg5Wz0MjLCOLqk12mHxx4kvej+2TmU00pSwtA/nYOQWc+/GZu8y7cAbrxRYLkA1/nSkUWYe/gmufO8gMAizmVOYOK3iOGlcLHFssffsLELaLAwSunUVlOUobhJFfzeJ+hUbvClCR9BcvrhwpITFWFB1Srf3VoZmT7oNSfmk=
     access_key_id:
       secure: C9CfBMHMKsi9N3CqTq/+mzR+xYUymzt16Nyt+wJTAGgUsCAgI5wCszZ4B2nMqAgjLJHcOrFaXvIL9OBHC9tkpOI1pjYayYY7WQBLkfXuU/o7vKPGDnf4PDnwXjq/tju/pRwnU+ll5JT9Yyrd/VztAOe6EMm+vbnvprkryAoI550=
-    bucket: "s3://snowplow-hosted-assets/"
+    bucket: "snowplow-hosted-assets/"
     upload-dir: "3-enrich/hadoop-event-recovery/"
     local_dir: "3-enrich/hadoop-event-recovery/target/scala-2.10/"
     skip_cleanup: true
