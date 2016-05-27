@@ -18,7 +18,7 @@ addons:
 before_deploy: ./.travis/deploy.sh $TRAVIS_TAG
 deploy:
   - provider: s3
-    bucket: "s3://mynonexistentbucket/"
+    bucket: "s3://snowplow-hosted-assets/"
     upload-dir: "3-enrich/alternative/"
     local_dir: "3-enrich/hadoop-event-recovery/target/scala-2.10/"
     skip_cleanup: true
