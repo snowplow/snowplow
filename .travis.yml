@@ -9,19 +9,11 @@ env:
   global:
     - secure: j6RcEPeT5DCmThYA+KSvn5zoFdwhO9Tyk9xXVrW+L8oTTAehDvEWQ1nkJM7m+KYwUtWH1bvRd9IOZgKkWxJeYSDvn8V0zd0dJKSc7R4kykfI/S3V67uM1LCj24B1dF62uiTMOFd9inwB3SLhVFwRk+tcgrZMLs9ljqND77pGR4Y=
     - secure: ZF2b692hBH1J8stmoeAcFnhRZkKxnzABLNIkdObHKLijJFMLMIaVn5mRWhmI8+lVbHIkx6BsUATdE3BPQnWI2iL5jfr2rxNfbX5NqFWV5RkN5wrKCCec4qljTpSGKApQXQT/KMFzBoxIk/c35yXjf/vN0JApztbaA/dygmpDRFo=
-    # AWS_ACCESS_KEY_ID
-    - secure: H3n8c93jkUu9qMiYM7QY6SnZENv/9gds+MlegXFUjVZPVufX3HqtF1+zlC0AkIiQjrWHQo0HxLDN0djvMlDqCHu8l5Sh6HH9ct6PYbiXEC4zOzaY9nLFfVfh0kpCxek/3my9uxpwFlEGC33aY8a1UGSZ6ZkJJLmlKeGQHD3bjLs=
-    # AWS_SECRET_ACCESS_KEY
-    - secure: qsJvE2KHX6zfTbUD20Sq3d+b+ucuA/Bipiia5TEm/JKw0EoyIoiA4Fe1PTiYIvkIGuAcQWb4s5GrXCsztCAqZApn5+x8JgjPsmp0kLVXtZTQ3lv0AyTewxvIABoXfpblMuBmCIWjKwidGYQC+k8BgnWZ0JW6cnmfFq4i0bp4FM8=
 addons:
   hostname: short-hostname
 before_deploy: ./.travis/deploy.sh $TRAVIS_TAG
 deploy:
   - provider: s3
-    secret_access_key:
-      secure: LLm+yg5Wz0MjLCOLqk12mHxx4kvej+2TmU00pSwtA/nYOQWc+/GZu8y7cAbrxRYLkA1/nSkUWYe/gmufO8gMAizmVOYOK3iOGlcLHFssffsLELaLAwSunUVlOUobhJFfzeJ+hUbvClCR9BcvrhwpITFWFB1Srf3VoZmT7oNSfmk=
-    access_key_id:
-      secure: C9CfBMHMKsi9N3CqTq/+mzR+xYUymzt16Nyt+wJTAGgUsCAgI5wCszZ4B2nMqAgjLJHcOrFaXvIL9OBHC9tkpOI1pjYayYY7WQBLkfXuU/o7vKPGDnf4PDnwXjq/tju/pRwnU+ll5JT9Yyrd/VztAOe6EMm+vbnvprkryAoI550=
     bucket: "s3://snowplow-hosted-assets/"
     upload-dir: "3-enrich/hadoop-event-recovery/"
     local_dir: "3-enrich/hadoop-event-recovery/target/scala-2.10/"
