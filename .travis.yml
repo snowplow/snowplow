@@ -14,6 +14,9 @@ env:
     # AWS_SECRET_ACCESS_KEY
     - secure: qsJvE2KHX6zfTbUD20Sq3d+b+ucuA/Bipiia5TEm/JKw0EoyIoiA4Fe1PTiYIvkIGuAcQWb4s5GrXCsztCAqZApn5+x8JgjPsmp0kLVXtZTQ3lv0AyTewxvIABoXfpblMuBmCIWjKwidGYQC+k8BgnWZ0JW6cnmfFq4i0bp4FM8=
 
+before_install:
+  - pip install --user awscli
+  - export PATH=$PATH:$HOME/.local/bin
 addons:
   hostname: short-hostname
 before_deploy: ./.travis/deploy.sh $TRAVIS_TAG

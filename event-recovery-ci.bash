@@ -38,4 +38,6 @@ assemble_fatjar
 
 mkdir build
 
+aws s3 ls s3://snowplow-hosted-assets
+
 # mv 3-enrich/hadoop-event-recovery/target/scala-2.10/* build
