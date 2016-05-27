@@ -24,4 +24,4 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_hadoop_event_recovery_release_tag.sh $TRAVIS_TAG)" == "" && $? == 100'
+      condition: '"$(.travis/is_hadoop_event_recovery_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
