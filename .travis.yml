@@ -12,7 +12,7 @@ env:
     # AWS_ACCESS_KEY_ID
     - secure: H3n8c93jkUu9qMiYM7QY6SnZENv/9gds+MlegXFUjVZPVufX3HqtF1+zlC0AkIiQjrWHQo0HxLDN0djvMlDqCHu8l5Sh6HH9ct6PYbiXEC4zOzaY9nLFfVfh0kpCxek/3my9uxpwFlEGC33aY8a1UGSZ6ZkJJLmlKeGQHD3bjLs=
     # AWS_SECRET_ACCESS_KEY
-    - secure: qsJvE2KHX6zfTbUD20Sq3d+b+ucuA/Bipiia5TEm/JKw0EoyIoiA4Fe1PTiYIvkIGuAcQWb4s5GrXCsztCAqZApn5+x8JgjPsmp0kLVXtZTQ3lv0AyTewxvIABoXfpblMuBmCIWjKwidGYQC+k8BgnWZ0JW6cnmfFq4i0bp4FM9=
+    - secure: qsJvE2KHX6zfTbUD20Sq3d+b+ucuA/Bipiia5TEm/JKw0EoyIoiA4Fe1PTiYIvkIGuAcQWb4s5GrXCsztCAqZApn5+x8JgjPsmp0kLVXtZTQ3lv0AyTewxvIABoXfpblMuBmCIWjKwidGYQC+k8BgnWZ0JW6cnmfFq4i0bp4FM8=
 
 addons:
   hostname: short-hostname
