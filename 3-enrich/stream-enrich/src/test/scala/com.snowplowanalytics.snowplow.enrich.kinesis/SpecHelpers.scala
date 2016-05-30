@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -50,7 +50,7 @@ object SpecHelpers {
   /**
    * The Stream Enrich being used
    */
-  val EnrichVersion = "kinesis-0.7.0-common-0.22.0"
+  val EnrichVersion = "kinesis-0.8.0-common-0.23.0"
 
   val TimestampRegex = "[0-9\\s-:.]+"
 

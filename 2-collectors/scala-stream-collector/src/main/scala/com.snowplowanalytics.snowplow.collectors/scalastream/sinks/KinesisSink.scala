@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -172,7 +172,7 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
     if (exists) {
       info(s"Stream $name exists and is active")
     } else {
-      info(s"Stream $name doesn't exist or is not active")
+      error(s"Stream $name doesn't exist or is not active")
     }
 
     exists
@@ -187,7 +187,9 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
-      throw new RuntimeException(s"Cannot write because stream $name doesn't exist or is not active")
+      error(s"Cannot write because stream $name doesn't exist or is not active")
+      System.exit(1)
+      throw new RuntimeException("System.exit should never fail")
     }
   }
 
@@ -287,7 +289,7 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
           info(s"Successfully wrote ${batch.size-failurePairs.size} out of ${batch.size} records")
           if (failurePairs.size > 0) {
             failurePairs foreach { f => error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]") }
-            error("Retrying all failed records in $nextBackoff milliseconds...")
+            error(s"Retrying all failed records in $nextBackoff milliseconds...")
             val failures = failurePairs.map(_._1)
             scheduleBatch(failures, nextBackoff)
           }

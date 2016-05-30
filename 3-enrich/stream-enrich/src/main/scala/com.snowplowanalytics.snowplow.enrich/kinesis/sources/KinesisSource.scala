@@ -1,5 +1,5 @@
  /*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd.
+ * Copyright (c) 2013-2016 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -90,6 +90,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
     ).withInitialPositionInStream(
       InitialPositionInStream.valueOf(config.initialPosition)
     ).withKinesisEndpoint(config.streamEndpoint)
+    .withMaxRecords(config.maxRecords)
     .withRegionName(config.streamRegion)
     // If the record list is empty, we still check whether it is time to flush the buffer
     .withCallProcessRecordsEvenForEmptyRecordList(true)
@@ -115,7 +116,7 @@ class KinesisSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichm
       extends IRecordProcessorFactory {
     @Override
     def createProcessor: IRecordProcessor = {
-      return new RawEventProcessor(config, sink);
+      new RawEventProcessor(config, sink);
     }
   }
 

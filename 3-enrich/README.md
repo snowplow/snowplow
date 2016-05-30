@@ -13,7 +13,7 @@ The **Enrich** process takes raw Snowplow events logged by a [Collector] [collec
 | [scala-hadoop-enrich] [e1] (1)  | The Snowplow Enrichment process built using Scalding for Apache Hadoop   | Production-ready |
 | [scala-hadoop-shred] [e2] (2)   | The Snowplow Shred process for shredding JSONs for loading into Redshift | Beta             |
 | [scala-hadoop-bad-rows] [e3]    | A Hadoop job for retrieving raw Snowplow events from "bad bucket" errors | Production-ready |
-| [scala-kinesis-enrich] [e4] (3) | The Snowplow Enrichment process built as an Amazon Kinesis application   | Beta             |
+| [stream-enrich] [e4] (3)        | The Snowplow Enrichment process built as an Amazon Kinesis application   | Production-ready |
 | [scala-common-enrich] [e5]      | A shared library for processing raw Snowplow events, used in (1) and (3) | Production-ready |
 | [emr-etl-runner] [e6]           | A Ruby app for running (1) and (2) on Amazon Elastic MapReduce           | Production-ready |
 
@@ -30,7 +30,7 @@ The **Enrich** process takes raw Snowplow events logged by a [Collector] [collec
 [e1]: ./scala-hadoop-enrich/
 [e2]: ./scala-hadoop-shred/
 [e3]: ./scala-hadoop-bad-rows/
-[e4]: ./scala-kinesis-enrich/
+[e4]: ./stream-enrich/
 [e5]: ./scala-common-enrich/
 [e6]: ./emr-etl-runner/
 [setup]: https://github.com/snowplow/snowplow/wiki/setting-up-EmrEtlRunner

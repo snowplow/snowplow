@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -140,7 +140,7 @@ collector {
         val expiration = httpCookie.expires.get
         val offset = expiration.clicks - collectorConfig.cookieExpiration.get -
           DateTime.now.clicks
-        offset.asInstanceOf[Int] must beCloseTo(0, 2000) // 1000 ms window.
+        offset.asInstanceOf[Int] must beCloseTo(0, 3600000) // 1 hour window.
       }
     }
     "return the same cookie as passed in" in {
@@ -181,10 +181,10 @@ collector {
         thriftDeserializer.deserialize(storedEvent, storedRecordBytes.head)
       }
 
-      storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 1000)
+      storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 60000)
       storedEvent.encoding must beEqualTo("UTF-8")
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
-      storedEvent.collector must beEqualTo("ssc-0.6.0-test")
+      storedEvent.collector must beEqualTo("ssc-0.7.0-test")
       storedEvent.path must beEqualTo("/i")
       storedEvent.querystring must beEqualTo(payloadData)
     }

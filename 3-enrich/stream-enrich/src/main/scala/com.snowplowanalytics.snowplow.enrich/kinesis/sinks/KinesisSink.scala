@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd.
+ * Copyright (c) 2013-2016 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 // Amazon
 import com.amazonaws.services.kinesis.model.ResourceNotFoundException
+import com.amazonaws.services.kinesis.model.PutRecordsResultEntry
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.kinesis.AmazonKinesisClient
@@ -116,7 +117,7 @@ class KinesisSink(provider: AWSCredentialsProvider,
     if (exists) {
       info(s"Stream $name exists and is active")
     } else {
-      info(s"Stream $name doesn't exist or is not active")
+      error(s"Stream $name doesn't exist or is not active")
     }
 
     exists
@@ -131,7 +132,9 @@ class KinesisSink(provider: AWSCredentialsProvider,
     if (streamExists(name)) {
       Kinesis.stream(name)
     } else {
-      throw new RuntimeException(s"Cannot write because stream $name does not exist or is not active")
+      error(s"Cannot write because stream $name does not exist or is not active")
+      System.exit(1)
+      throw new RuntimeException("System.exit should never fail")
     }
   }
 
@@ -273,13 +276,14 @@ class KinesisSink(provider: AWSCredentialsProvider,
           val results = Await.result(putData, 10.seconds).result.getRecords.asScala.toList
           val failurePairs = unsentRecords zip results filter { _._2.getErrorMessage != null }
           info(s"Successfully wrote ${unsentRecords.size-failurePairs.size} out of ${unsentRecords.size} records")
-          if (failurePairs.size > 0) {
-            failurePairs foreach { f => error(s"Record failed with error code [${f._2.getErrorCode}] and message [${f._2.getErrorMessage}]") }
+          if (failurePairs.nonEmpty) {
+            val (failedRecords, failedResults) = failurePairs.unzip
+            unsentRecords = failedRecords
+            logErrorsSummary(getErrorsSummary(failedResults))
             backoffTime = getNextBackoff(backoffTime)
             error(s"Retrying all failed records in $backoffTime milliseconds...")
 
             val err = s"Failed to send ${failurePairs.size} events"
-            unsentRecords = failurePairs.map(_._1)
             val putSize: Long = unsentRecords.foldLeft(0)((a,b) => a + b._1.capacity)
 
             tracker match {
@@ -308,6 +312,20 @@ class KinesisSink(provider: AWSCredentialsProvider,
           }
         }
       }
+    }
+  }
+
+  private[sinks] def getErrorsSummary(badResponses: List[PutRecordsResultEntry]): Map[String, (Long, String)] = {
+    badResponses.foldLeft(Map[String, (Long, String)]())((counts, r) => if (counts.contains(r.getErrorCode)) {
+      counts + (r.getErrorCode -> (counts(r.getErrorCode)._1 + 1 -> r.getErrorMessage))
+    } else {
+      counts + (r.getErrorCode -> (1, r.getErrorMessage))
+    })
+  }
+
+  private[sinks] def logErrorsSummary(errorsSummary: Map[String, (Long, String)]): Unit = {
+    for ((errorCode, (count, sampleMessage)) <- errorsSummary) {
+      error(s"$count records failed with error code ${errorCode}. Example error message: ${sampleMessage}")
     }
   }
 

@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -18,13 +18,21 @@ package scalastream
 
 // Akka and Spray
 import akka.actor.{ActorSystem, Props}
+import akka.pattern.ask
 import akka.io.IO
 import spray.can.Http
+
+// Scala Futures
+import scala.concurrent.duration._
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Success, Failure}
 
 // Java
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 // Argot
 import org.clapper.argot._
@@ -95,8 +103,23 @@ object ScalaCollector extends App {
     name = "handler"
   )
 
-  IO(Http) ! Http.Bind(handler,
-    interface=collectorConfig.interface, port=collectorConfig.port)
+  val bind = Http.Bind(
+    handler,
+    interface=collectorConfig.interface,
+    port=collectorConfig.port)
+
+  val bindResult = IO(Http).ask(bind)(5.seconds) flatMap {
+    case b: Http.Bound => Future.successful(())
+    case failed: Http.CommandFailed => Future.failed(new RuntimeException(failed.toString))
+  }
+
+  bindResult onComplete {
+    case Success(_) =>
+    case Failure(f) => {
+      error("Failure binding to port", f)
+      System.exit(1)
+    }
+  }
 }
 
 // Return Options from the configuration.
@@ -140,7 +163,7 @@ class CollectorConfig(config: Config) {
   val cookieConfig = if (cookie.getBoolean("enabled")) {
     Some(CookieConfig(
       cookie.getString("name"),
-      cookie.getMilliseconds("expiration"),
+      cookie.getDuration("expiration", TimeUnit.MILLISECONDS),
       cookie.getOptionalString("domain")))
   } else None
 
