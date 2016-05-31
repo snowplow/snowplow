@@ -17,11 +17,29 @@ aws emr create-cluster --applications Name=Hadoop --ec2-attributes '{
 }' --service-role EMR_DefaultRole --enable-debugging --release-label emr-4.3.0 --log-uri 's3n://{{path to logs}}' --steps '[
 {
     "Args":[
+        "--src",
+        "s3n://{{my-output-bucket/enriched/bad}}/",
+        "--dest",
+        "hdfs:///local/monthly/",
+        "--groupBy",
+        ".*201(5-1[12]|6-[0-9][0-9]).*",
+        "--targetSize",
+        "128",
+        "--outputCodec",
+        "lzo"
+    ],
+    "Type":"CUSTOM_JAR",
+    "ActionOnFailure":"TERMINATE_CLUSTER",
+    "Jar":"/usr/share/aws/emr/s3-dist-cp/lib/s3-dist-cp.jar",
+    "Name":"Combine Months"
+},
+{
+    "Args":[
         "com.snowplowanalytics.hadoop.scalding.SnowplowEventRecoveryJob",
         "--input",
-        "s3://{{path to enriched}}/bad/run=2015-12-*,s3://{{path to enriched}}/bad/run=2016-01-*",
+        "hdfs:///local/monthly/*",
         "--output",
-        "s3://{{path to output bucket}}",
+        "hdfs:///local/recovery/",
         "--script",
         "ZnVuY3Rpb24gcHJvY2VzcyhldmVudCwgZXJyb3JzKSB7CiAgICAvLyBPbmx5IHJlcHJvY2VzcyBpZjoKICAgIC8vIDEuIHRoZXJlIGlzIG9ubHkgb25lIHZhbGlkYXRpb24gZXJyb3IgYW5kCiAgICAvLyAyLiB0aGUgZXJyb3IgcmVmZXJlbmNlcyBSRkMgMjM5Niwgd2hpY2ggc3BlY2lmaWVzIHdoYXQgbWFrZXMgYSBVUkwgdmFsaWQuCiAgICBpZiAoZXJyb3JzLmxlbmd0aCA8IDIgJiYgL1JGQyAyMzk2Ly50ZXN0KGVycm9yc1swXSkpIHsKICAgICAgICB2YXIgZmllbGRzID0gdHN2VG9BcnJheShldmVudCk7CiAgICAgICAgZmllbGRzWzldID0gJ2h0dHA6Ly93d3cucGxhY2Vob2xkZXIuY29tJ1w7CiAgICAgICAgcmV0dXJuIGFycmF5VG9Uc3YoZmllbGRzKTsKICAgIH0gZWxzZSB7CiAgICAgICAgcmV0dXJuIG51bGw7CiAgICB9Cn0K"
     ],
@@ -29,7 +47,20 @@ aws emr create-cluster --applications Name=Hadoop --ec2-attributes '{
     "ActionOnFailure":"CONTINUE",
     "Jar":"s3://snowplow-hosted-assets/3-enrich/hadoop-event-recovery/snowplow-hadoop-event-recovery-0.1.0.jar",
     "Name":"Fix up bad rows"
-}]' --name 'MyCluster' --instance-groups '[
+},
+{
+    "Args":[
+        "--src",
+        "hdfs:///local/recovery/",
+        "--dest",
+        "s3n://{{my-recovery-bucket/recovered}}"
+    ],
+    "Type":"CUSTOM_JAR",
+    "ActionOnFailure":"TERMINATE_CLUSTER",
+    "Jar":"/usr/share/aws/emr/s3-dist-cp/lib/s3-dist-cp.jar",
+    "Name":"Back to S3"
+}
+]' --name 'MyCluster' --instance-groups '[
     {
         "InstanceCount":1,
         "InstanceGroupType":"MASTER",
