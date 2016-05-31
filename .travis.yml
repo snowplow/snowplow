@@ -20,6 +20,9 @@ env:
   - secure: H3n8c93jkUu9qMiYM7QY6SnZENv/9gds+MlegXFUjVZPVufX3HqtF1+zlC0AkIiQjrWHQo0HxLDN0djvMlDqCHu8l5Sh6HH9ct6PYbiXEC4zOzaY9nLFfVfh0kpCxek/3my9uxpwFlEGC33aY8a1UGSZ6ZkJJLmlKeGQHD3bjLs=
   # AWS_SECRET_ACCESS_KEY
   - secure: qsJvE2KHX6zfTbUD20Sq3d+b+ucuA/Bipiia5TEm/JKw0EoyIoiA4Fe1PTiYIvkIGuAcQWb4s5GrXCsztCAqZApn5+x8JgjPsmp0kLVXtZTQ3lv0AyTewxvIABoXfpblMuBmCIWjKwidGYQC+k8BgnWZ0JW6cnmfFq4i0bp4FM8=
+before_install:
+  - pip install --user awscli
+  - export PATH=$PATH:$HOME/.local/bin
 addons:
   hostname: short-hostname
 deploy:
@@ -29,3 +32,16 @@ deploy:
   on:
     tags: true
     condition: '"$(.travis/is_kinesis_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+deploy:
+  - provider: script
+    script: ./.travis/deploy.sh $TRAVIS_TAG
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: '"$(.travis/is_kinesis_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+  - provider: script
+    script: ./.travis/deploy_hadoop_event_recovery.sh $TRAVIS_TAG
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: '"$(.travis/is_hadoop_event_recovery_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
