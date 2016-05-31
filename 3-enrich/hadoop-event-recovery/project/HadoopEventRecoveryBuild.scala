@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object SnowplowBadRowsBuild extends Build {
+object HadoopEventRecoveryBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -24,15 +24,20 @@ object SnowplowBadRowsBuild extends Build {
   }
 
   // Define our project, with basic project information and library dependencies
-  lazy val project = Project("snowplow-bad-rows", file("."))
+  lazy val project = Project("snowplow-hadoop-event-recovery", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
+        Libraries.hadoopCommon,
+        Libraries.hadoopClientCore,
+        Libraries.cascadingCore,
+        Libraries.cascadingLocal,
+        Libraries.cascadingHadoop,
         Libraries.scaldingCore,
+        Libraries.scaldingArgs,
         Libraries.scaldingJson,
-        Libraries.hadoopCore,
+        Libraries.rhino,
         Libraries.specs2
-        // Add your additional libraries here (comma-separated)...
       )
     )
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 SnowPlow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,19 +12,17 @@
  */
 package com.snowplowanalytics.hadoop.scalding
 
-// Hadoop
-import org.apache.hadoop
-
-// Scalding
-import com.twitter.scalding.Tool
-
 /**
- * Entrypoint for Hadoop to kick off the job.
- *
- * Borrowed from com.twitter.scalding.Tool
+ * Object to either discard or mutate a bad row containing a TSV raw event
  */
-object JobRunner {
-  def main(args : Array[String]) {
-    hadoop.util.ToolRunner.run(new hadoop.conf.Configuration, new Tool, args);
-  }
+trait TsvProcessor {
+  
+  /**
+   * Decide whether to try to fix up a given bad row, then act accordingly
+   *
+   * @param inputTsv The tab-separated raw event in the Cloudfront Access Log format
+   * @param errors An array of errors describing why the inputTsv is invalid
+   * @return Some(mutatedInputTsv), or None if this bad row should be ignored
+   */
+  def process(inputTsv: String, errors: Seq[String]): Option[String]
 }
