@@ -18,8 +18,8 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    version       := "0.1.0",
-    description   := "Extracts original Snowplow raw events from bad rows JSONs",
+    version       := "0.2.0",
+    description   := "Recovers Snowplow raw events from bad rows JSONs",
     scalaVersion  := "2.10.4",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
     resolvers     ++= Dependencies.resolutionRepos
