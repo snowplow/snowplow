@@ -1,51 +1,23 @@
-# Snowplow Hadoop Event Recovery
+# Hadoop Event Recovery
 
 ## Introduction
 
 Use this Scalding job to extract raw Snowplow events from your Snowplow bad rows JSONs and fix any problems with them, making them ready for reprocessing.
 
-## Usage
+## Testing
 
-Run this job using the [Amazon Ruby EMR client] [emr-client]:
+Just run:
 
 ```
-aws emr create-cluster --applications Name=Hadoop --ec2-attributes '{
-    "InstanceProfile":"EMR_EC2_DefaultRole",
-    "AvailabilityZone":"us-east-1d",
-    "EmrManagedSlaveSecurityGroup":"sg-2f9aba4b",
-    "EmrManagedMasterSecurityGroup":"sg-2e9aba4a"
-}' --service-role EMR_DefaultRole --enable-debugging --release-label emr-4.3.0 --log-uri 's3n://{{path to logs}}' --steps '[
-{
-    "Args":[
-        "com.snowplowanalytics.hadoop.scalding.SnowplowEventRecoveryJob",
-        "--input",
-        "s3://{{path to enriched}}/bad/run=2015-12-*,s3://{{path to enriched}}/bad/run=2016-01-*",
-        "--output",
-        "s3://{{path to output bucket}}",
-        "--script",
-        "ZnVuY3Rpb24gcHJvY2VzcyhldmVudCwgZXJyb3JzKSB7CiAgICAvLyBPbmx5IHJlcHJvY2VzcyBpZjoKICAgIC8vIDEuIHRoZXJlIGlzIG9ubHkgb25lIHZhbGlkYXRpb24gZXJyb3IgYW5kCiAgICAvLyAyLiB0aGUgZXJyb3IgcmVmZXJlbmNlcyBSRkMgMjM5Niwgd2hpY2ggc3BlY2lmaWVzIHdoYXQgbWFrZXMgYSBVUkwgdmFsaWQuCiAgICBpZiAoZXJyb3JzLmxlbmd0aCA8IDIgJiYgL1JGQyAyMzk2Ly50ZXN0KGVycm9yc1swXSkpIHsKICAgICAgICB2YXIgZmllbGRzID0gdHN2VG9BcnJheShldmVudCk7CiAgICAgICAgZmllbGRzWzldID0gJ2h0dHA6Ly93d3cucGxhY2Vob2xkZXIuY29tJ1w7CiAgICAgICAgcmV0dXJuIGFycmF5VG9Uc3YoZmllbGRzKTsKICAgIH0gZWxzZSB7CiAgICAgICAgcmV0dXJuIG51bGw7CiAgICB9Cn0K"
-    ],
-    "Type":"CUSTOM_JAR",
-    "ActionOnFailure":"CONTINUE",
-    "Jar":"s3://snowplow-hosted-assets/3-enrich/hadoop-event-recovery/snowplow-hadoop-event-recovery-0.1.0.jar",
-    "Name":"Fix up bad rows"
-}]' --name 'MyCluster' --instance-groups '[
-    {
-        "InstanceCount":1,
-        "InstanceGroupType":"MASTER",
-        "InstanceType":"m1.medium",
-        "Name":"MASTER"
-    },
-    {
-        "InstanceCount":2,
-        "InstanceGroupType":"CORE",
-        "InstanceType":"m1.medium",
-        "Name":"CORE"
-    }
-]'
+sbt test
 ```
 
-Replace the `{{...}}` placeholders above with the appropriate bucket paths.
+## Find out more
+
+| Technical Docs                  |
+|---------------------------------|
+| ![i1] [techdocs-image]          |
+| **[Technical Docs] [techdocs]** |
 
 ## Copyright and license
 
@@ -67,9 +39,16 @@ limitations under the License.
 [spark-example-project]: https://github.com/snowplow/spark-example-project
 [emr]: http://aws.amazon.com/elasticmapreduce/
 [hello-txt]: https://github.com/snowplow/scalding-example-project/raw/master/data/hello.txt
-[emr-client]: http://aws.amazon.com/developertools/2264
+[awscli]: https://aws.amazon.com/cli/
 [elasticity]: https://github.com/rslifka/elasticity
 [spark-plug]: https://github.com/ogrodnek/spark-plug
 [lemur]: https://github.com/TheClimateCorporation/lemur
 [boto]: http://boto.readthedocs.org/en/latest/ref/emr.html
 [license]: http://www.apache.org/licenses/LICENSE-2.0
+
+[techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
+[setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
+[roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
+[contributing-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/contributing.png
+
+[techdocs]: https://github.com/snowplow/snowplow/wiki/https://github.com/snowplow/snowplow/wiki/Hadoop-Event-Recovery
