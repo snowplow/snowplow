@@ -37,6 +37,7 @@ import Scalaz._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import com.fasterxml.jackson.core.JsonParseException
 
 // This project
 import loaders.CollectorPayload
@@ -371,4 +372,23 @@ trait Adapter {
         }
       }
     }
+
+  /**
+   * Attempts to parse a json string into a JValue
+   * example: {"p":"app"} becomes JObject(List((p,JString(app))))
+   *
+   * @param jsonStr The string we want to parse into a JValue
+   * @return a Validated JValue or a NonEmptyList Failure
+   *         containing a JsonParseException
+   */
+  private[registry] def parseJsonSafe(jsonStr: String): Validated[JValue] =
+    try {
+      parse(jsonStr).successNel
+    } catch {
+      case e: JsonParseException => {
+        val exception = JU.stripInstanceEtc(e.toString).orNull
+        s"Event failed to parse into JSON: [${exception}]".failNel
+      }
+    }
+
 }
