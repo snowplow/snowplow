@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -31,10 +31,11 @@ import Scalaz._
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
+import com.fasterxml.jackson.core.JsonParseException
 
 // This project
 import loaders.CollectorPayload
-import utils.JsonUtils
+import utils.{JsonUtils => JU}
 
 /**
  * Transforms a collector payload which provides a set
@@ -47,9 +48,71 @@ object IgluAdapter extends Adapter {
 
   // Tracker version for an Iglu-compatible webhook
   private val TrackerVersion = "com.snowplowanalytics.iglu-v1"
+  private val VendorName = "Iglu"
 
   // Create a simple formatter function
   private val IgluFormatter: FormatterFunc = buildFormatter() // For defaults
+
+  /**
+   * Attempts to parse a json string into a JValue
+   * example: {"p":"app"} becomes JObject(List((p,JString(app))))
+   *
+   * @param jsonStr The string we want to parse into a JValue
+   * @return a Validated JValue or a NonEmptyList Failure
+   *         containing a JsonParseException
+   */
+  private[registry] def parseJson(jsonStr: String): Validated[JValue] =
+    try {
+      parse(jsonStr).successNel
+    } catch {
+      case e: JsonParseException => {
+        val exception = JU.stripInstanceEtc(e.toString).orNull
+        s"${VendorName} event failed to parse into JSON: [${exception}]".failNel
+      }
+    }
+
+    /**
+     *
+     * Converts a payload into a list of validated events
+     * Expects a valid json - returns a single failure if one is not present
+     *
+     * @param body json payload as POST'd by sendgrid
+     * @param payload the rest of the payload details
+     * @return a list of validated events, successes will be the corresponding raw events
+     *         failures will contain a non empty list of the reason(s) for the particular event failing
+     */
+    private def payloadBodyToEvents(body: String, payload: CollectorPayload): List[Validated[RawEvent]] = {
+      try {
+
+        val parsed = parse(body)
+        val queryString = toMap(payload.querystring)
+        val schema = queryString.get("schema") match {
+          case Some(schemaUri) => schemaUri
+        }
+
+        if (parsed.children.isEmpty) {
+          return List(s"$VendorName event failed json sanity check: has no events".failNel)
+        }
+
+        List(RawEvent(
+          api          = payload.api,
+          parameters   = toUnstructEventParams(TrackerVersion,
+                          queryString,
+                          schema,
+                           cleanupJsonEventValues(parsed, None, "timestamp", _ * 1000),
+                           "srv"),
+          contentType  = payload.contentType,
+          source       = payload.source,
+          context      = payload.context
+        ).success)
+      } catch {
+        case e: JsonParseException => {
+          val exception = JU.stripInstanceEtc(e.toString).orNull
+          List(s"$VendorName event failed to parse into JSON: [$exception]".failNel)
+        }
+      }
+    }
+
 
   /**
    * Converts a CollectorPayload instance into raw events.
@@ -66,6 +129,8 @@ object IgluAdapter extends Adapter {
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
 
     val params = toMap(payload.querystring)
+
+    // check if params are empty
     if (params.isEmpty) {
       "Querystring is empty: no Iglu-compatible event to process".failNel
     } else {
@@ -73,14 +138,23 @@ object IgluAdapter extends Adapter {
         case None => "Querystring does not contain schema parameter: not an Iglu-compatible self-describing event".failNel
         case Some(schemaUri) => SchemaKey.parse(schemaUri) match {
           case Failure(procMsg) => procMsg.getMessage.failNel
-          case Success(_)       =>
-            NonEmptyList(RawEvent(
-              api          = payload.api,
-              parameters   = toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, IgluFormatter, "app"),
-              contentType  = payload.contentType,
-              source       = payload.source,
-              context      = payload.context
-              )).success
+          case Success(_)       => (payload.body, payload.contentType) match {
+            case(None, _) => // if it's a GET request
+                  NonEmptyList(RawEvent(
+                    api          = payload.api,
+                    parameters   = toUnstructEventParams(TrackerVersion, (params - "schema"), schemaUri, IgluFormatter, "app"),
+                    contentType  = payload.contentType,
+                    source       = payload.source,
+                    context      = payload.context
+                    )).success
+            case(_, None) => "Content type has not been specified".failNel // POST request with no content type
+            case (Some(body), Some(contentType)) => payload.contentType match { // POST request with body and content type
+              case Some("application/json") =>
+                  val events = payloadBodyToEvents(body, payload)
+                  rawEventsListProcessor(events)
+              case _ => "Content type not supported".failNel
+            }
+          }
         }
       }
     }
