@@ -9,15 +9,15 @@ Use this Scalding job to extract raw Snowplow events from your Snowplow bad rows
 Run this job using the [AWS Command Line Interface] [aws-cli]:
 
     $ aws emr create-cluster --name "Extract raw events from Snowplow bad row JSONs" \
-      --use-default-roles --steps \
-      Type=CUSTOM_JAR,Name=BadRows0,ActionOnFailure=CONTINUE,\
-      Jar=s3://snowplow-hosted-assets/3-enrich/scala-bad-rows/snowplow-bad-rows-0.1.0.jar,\
-      Args=[com.snowplowanalytics.hadoop.scalding.SnowplowBadRowsJob,\
-      --hdfs,\
-      --input,s3n://{{PATH_TO_YOUR_FIXABLE_BAD_ROWS}},\
-      --output,s3n://{{PATH_WILL_BE_STAGING_FOR_EMRETLRUNNER}}] \
-      --release-label emr-4.0.0 --instance-groups InstanceGroupType=MASTER,InstanceCount=1,InstanceType=m3.xlarge \
-      InstanceGroupType=CORE,InstanceCount=2,InstanceType=m3.xlarge --auto-terminate
+    --use-default-roles --steps \
+    Type=CUSTOM_JAR,Name=BadRows0,ActionOnFailure=CONTINUE,\
+    Jar=s3://snowplow-hosted-assets/3-enrich/scala-bad-rows/snowplow-bad-rows-0.1.0.jar,\
+    Args=[com.snowplowanalytics.hadoop.scalding.SnowplowBadRowsJob,\
+    --hdfs,\
+    --input,s3n://{{PATH_TO_YOUR_FIXABLE_BAD_ROWS}},\
+    --output,s3n://{{PATH_WILL_BE_STAGING_FOR_EMRETLRUNNER}}] \
+    --release-label emr-4.0.0 --instance-groups InstanceGroupType=MASTER,InstanceCount=1,InstanceType=m3.xlarge \
+    InstanceGroupType=CORE,InstanceCount=2,InstanceType=m3.xlarge --auto-terminate
 
 Replace the `{{...}}` placeholders above with the appropriate bucket paths.
 
