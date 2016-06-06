@@ -55,40 +55,35 @@ object IgluAdapter extends Adapter {
 
     /**
      *
-     * Converts a payload into a list of validated events
+     * Converts a payload into a single validated event
      * Expects a valid json - returns a single failure if one is not present
      *
      * @param body json payload as POST'd by a webhook
      * @param payload the rest of the payload details
-     * @return a list of validated events, successes will be the corresponding raw events
-     *         failures will contain a non empty list of the reason(s) for the particular event failing
+     * @param schemaUri the schemaUri for the event
+     * @param params The query string parameters
+     * @return a single validated event
      */
-    private def payloadBodyToEvents(body: String, payload: CollectorPayload): List[Validated[RawEvent]] = {
-
+    private def payloadBodyToEvent(body: String, payload: CollectorPayload, schemaUri: String, params: Map[String, String]): Validated[RawEvent] = {
       val parsed = parseJsonSafe(body) match {
         case Success(jsonBody) => jsonBody
       }
 
-      val queryString = toMap(payload.querystring)
-      val schema = queryString.get("schema") match {
-        case Some(schemaUri) => schemaUri
-      }
-
       if (parsed.children.isEmpty) {
-        return List(s"$VendorName event failed json sanity check: has no events".failNel)
+        return s"$VendorName event failed json sanity check: has no events".failNel
       }
 
-      List(RawEvent(
+      RawEvent(
         api          = payload.api,
         parameters   = toUnstructEventParams(TrackerVersion,
-                        queryString,
-                        schema,
+                        params,
+                        schemaUri,
                          parsed,
                          "srv"),
         contentType  = payload.contentType,
         source       = payload.source,
         context      = payload.context
-      ).success)
+      ).success
     }
 
 
@@ -128,8 +123,11 @@ object IgluAdapter extends Adapter {
             case(_, None) => "Content type has not been specified".failNel // POST request with no content type
             case (Some(body), Some(contentType)) => payload.contentType match { // POST request with body and content type
               case Some("application/json") =>
-                  val events = payloadBodyToEvents(body, payload)
-                  rawEventsListProcessor(events)
+                  val event = payloadBodyToEvent(body, payload, schemaUri, params)
+                  event match {
+                    case Success(s) => NonEmptyList(s).success
+                    case Failure(f) => f.fail
+                  }
               case _ => "Content type not supported".failNel
             }
           }
