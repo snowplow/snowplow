@@ -50,12 +50,10 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
   "toRawEvents should return a Validation Failure if there are no parameters on the CloudFront querystring"                  ! e5^
   "toRawEvents should return a Validation Failure if there is no schema parameter on the CloudFront querystring"             ! e6^
   "toRawEvents should return a Validation Failure if the schema parameter is not in an Iglu-compatible format"               ! e7^
-  "parseJSON should return validated JSON object when parsing a valid JSON payload"                                          ! e8^
-  "parseJSON should return a Validation Failure on an invalid JSON payload"                                                  ! e9^
-  "toRawEvents should return a NEL containing one RawEvent if the schema parameter is populated with a valid content type"   ! e10^
-  "toRawEvents should return a Validation Failure if an unsupported content type is specified"                               ! e11^
-  "toRawEvents should return a Validation Failure if there are no events in the JSON payload"                                ! e12^
-  "toRawEvents should return a Validation Failure if body is specified but a content type is not provided"                   ! e13^
+  "toRawEvents should return a NEL containing one RawEvent if the schema parameter is populated with a valid content type"   ! e8^
+  "toRawEvents should return a Validation Failure if an unsupported content type is specified"                               ! e9^
+  "toRawEvents should return a Validation Failure if there are no events in the JSON payload"                                ! e10^
+  "toRawEvents should return a Validation Failure if body is specified but a content type is not provided"                   ! e11^
   end
 
   implicit val resolver = SpecHelpers.IgluResolver
@@ -118,10 +116,10 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
       "tracking_id"    -> "3353af9c-e298-2cf3-9f1c-b377a9c84dad",
       "ad_unit"        -> "UN-11-b",
       "aid"            -> "webhooks"
-      )    
+      )
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.cfSource, Shared.context)
     val actual = IgluAdapter.toRawEvents(payload)
-    
+
     val expectedMap = {
       val json =
         """|{
@@ -160,7 +158,7 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
       )
     val payload = CollectorPayload(Shared.api, params, None, None, Shared.cljSource, Shared.context)
     val actual = IgluAdapter.toRawEvents(payload)
-    
+
     val expectedMap = {
       val json =
         """|{
@@ -242,18 +240,6 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
   }
 
   def e8 = {
-    val jsonStr = """{"key":"value"}"""
-    val expected = JObject(List(("key",JString("value"))))
-    IgluAdapter.parseJson(jsonStr) must beSuccessful(expected)
-  }
-
-  def e9 = {
-    val jsonStr = """{"key":value"}"""
-    val expected = "Iglu event failed to parse into JSON: [com.fasterxml.jackson.core.JsonParseException: Unrecognized token 'value': was expecting ('true', 'false' or 'null') at [Source: java.io.StringReader@xxxxxx; line: 1, column: 13]]"
-    IgluAdapter.parseJson(jsonStr) must beFailing(NonEmptyList(expected))
-  }
-
-  def e10 = {
     val params = toNameValuePairs(
       "schema"         -> "iglu:com.acme/campaign/jsonschema/1-0-1",
       "some_param"     -> "foo",
@@ -270,7 +256,7 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
     actual must beSuccessful(NonEmptyList(expected))
   }
 
-  def e11 = {
+  def e9 = {
     val params = toNameValuePairs(
       "schema"         -> "iglu:com.acme/campaign/jsonschema/1-0-1",
       "some_param"     -> "foo",
@@ -283,7 +269,7 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
     actual must beFailing(NonEmptyList("Content type not supported"))
   }
 
-  def e12 = {
+  def e10 = {
     val params = toNameValuePairs(
       "schema"         -> "iglu:com.acme/campaign/jsonschema/1-0-1",
       "some_param"     -> "foo",
@@ -296,7 +282,7 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
     actual must beFailing(NonEmptyList("Iglu event failed json sanity check: has no events"))
   }
 
-  def e13 = {
+  def e11 = {
     val params = toNameValuePairs(
       "schema"         -> "iglu:com.acme/campaign/jsonschema/1-0-1",
       "some_param"     -> "foo",

@@ -53,64 +53,42 @@ object IgluAdapter extends Adapter {
   // Create a simple formatter function
   private val IgluFormatter: FormatterFunc = buildFormatter() // For defaults
 
-  /**
-   * Attempts to parse a json string into a JValue
-   * example: {"p":"app"} becomes JObject(List((p,JString(app))))
-   *
-   * @param jsonStr The string we want to parse into a JValue
-   * @return a Validated JValue or a NonEmptyList Failure
-   *         containing a JsonParseException
-   */
-  private[registry] def parseJson(jsonStr: String): Validated[JValue] =
-    try {
-      parse(jsonStr).successNel
-    } catch {
-      case e: JsonParseException => {
-        val exception = JU.stripInstanceEtc(e.toString).orNull
-        s"${VendorName} event failed to parse into JSON: [${exception}]".failNel
-      }
-    }
-
     /**
      *
      * Converts a payload into a list of validated events
      * Expects a valid json - returns a single failure if one is not present
      *
-     * @param body json payload as POST'd by sendgrid
+     * @param body json payload as POST'd by a webhook
      * @param payload the rest of the payload details
      * @return a list of validated events, successes will be the corresponding raw events
      *         failures will contain a non empty list of the reason(s) for the particular event failing
      */
     private def payloadBodyToEvents(body: String, payload: CollectorPayload): List[Validated[RawEvent]] = {
-      try {
 
-        val parsed = parse(body)
-        val queryString = toMap(payload.querystring)
-        val schema = queryString.get("schema") match {
-          case Some(schemaUri) => schemaUri
-        }
-
-        if (parsed.children.isEmpty) {
-          return List(s"$VendorName event failed json sanity check: has no events".failNel)
-        }
-
-        List(RawEvent(
-          api          = payload.api,
-          parameters   = toUnstructEventParams(TrackerVersion,
-                          queryString,
-                          schema,
-                           cleanupJsonEventValues(parsed, None, "timestamp", _ * 1000),
-                           "srv"),
-          contentType  = payload.contentType,
-          source       = payload.source,
-          context      = payload.context
-        ).success)
-      } catch {
-        case e: JsonParseException => {
-          val exception = JU.stripInstanceEtc(e.toString).orNull
-          List(s"$VendorName event failed to parse into JSON: [$exception]".failNel)
-        }
+      val parsed = parseJsonSafe(body) match {
+        case Success(jsonBody) => jsonBody
       }
+
+      val queryString = toMap(payload.querystring)
+      val schema = queryString.get("schema") match {
+        case Some(schemaUri) => schemaUri
+      }
+
+      if (parsed.children.isEmpty) {
+        return List(s"$VendorName event failed json sanity check: has no events".failNel)
+      }
+
+      List(RawEvent(
+        api          = payload.api,
+        parameters   = toUnstructEventParams(TrackerVersion,
+                        queryString,
+                        schema,
+                         parsed,
+                         "srv"),
+        contentType  = payload.contentType,
+        source       = payload.source,
+        context      = payload.context
+      ).success)
     }
 
 
