@@ -40,3 +40,6 @@
 [submodule "1-trackers/unity-tracker"]
 	path = 1-trackers/unity-tracker
 	url = https://github.com/snowplow/snowplow-unity-tracker.git
+[submodule "1-trackers/golang-tracker"]
+	path = 1-trackers/golang-tracker
+	url = https://github.com/snowplow/snowplow-golang-tracker.git
