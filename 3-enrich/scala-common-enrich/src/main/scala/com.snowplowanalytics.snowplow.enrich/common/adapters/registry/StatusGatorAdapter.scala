@@ -20,11 +20,10 @@ package registry
 // Java
 import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
-import org.apache.http.NameValuePair
 
 // Scala
-import scala.util.matching.Regex
 import scala.collection.JavaConversions._
+import scala.util.control.NonFatal
 import scala.util.{Try, Success => TS, Failure => TF}
 
 // Scalaz
@@ -38,7 +37,6 @@ import com.fasterxml.jackson.core.JsonParseException
 import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import org.json4s.scalaz.JsonScalaz._
 
 // Iglu
 import iglu.client.{
@@ -67,9 +65,7 @@ object StatusGatorAdapter extends Adapter {
   private val ContentType = "application/x-www-form-urlencoded"
 
   // Schemas for reverse-engineering a Snowplow unstructured event
-  private val EventSchemaMap = Map (
-    "status_change" -> SchemaKey("com.statusgator", "status_change", "jsonschema", "1-0-0").toSchemaUri
-  )
+  private val EventSchema = SchemaKey("com.statusgator", "status_change", "jsonschema", "1-0-0").toSchemaUri
 
   /**
    * Converts a CollectorPayload instance into raw events.
@@ -78,10 +74,10 @@ object StatusGatorAdapter extends Adapter {
    * in the body of the payload, stored within a HTTP encoded
    * string.
    *
-   * @param payload The CollectorPayload containing one or more
-   *        raw events as collected by a Snowplow collector
+   * @param payload  The CollectorPayload containing one or more
+   *                 raw events as collected by a Snowplow collector
    * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation. Not used
+   *                 schema lookup and validation. Not used
    * @return a Validation boxing either a NEL of RawEvents on
    *         Success, or a NEL of Failure Strings
    */
