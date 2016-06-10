@@ -65,7 +65,7 @@ object EnrichJobSpec {
     def deleteAll(): Unit = List(badRows, output).foreach(deleteRecursively)
   }
 
-  val etlVersion = "spark-1.10.0-common-0.27.0"
+  val etlVersion = s"spark-${generated.ProjectSettings.version}-common-${generated.ProjectSettings.commonEnrichVersion}"
 
   val etlTimestamp = "2001-09-09 01:46:40.000"
 
