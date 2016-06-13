@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -26,9 +26,15 @@ import java.net.URLClassLoader
 // Maven Artifact
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
+// Scala
+import scala.collection.JavaConversions._
+
 // Scalaz
 import scalaz._
 import Scalaz._
+
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 
 // json4s
 import org.json4s._
@@ -59,7 +65,7 @@ import outputs.EnrichedEvent
  */
 object CustomEnrichment extends ParseableEnrichment {
 
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "referer_parser", "jsonschema", 1, 0)
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "custom_enrichment", "jsonschema", 1, 0)
 
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[CustomEnrichment] = {
     isParseable(config, schemaKey).map( conf => {
@@ -100,9 +106,14 @@ case class CustomEnrichment(
 
   val version = new DefaultArtifactVersion("0.1.0")
 
-  def performCustomEnrichments(input: EnrichedEvent) = instances.foreach(_.act(input))
-}
+  def getDerivedContexts(input: EnrichedEvent): List[JsonNode] = {
+    val unstructEventJson = new ObjectMapper().readTree(input.unstruct_event)
+    val existingDerivedContexts = new java.util.ArrayList[JsonNode]
+    new ObjectMapper().readTree(input.derived_contexts).toList foreach {
+      existingDerivedContexts.add(_)
+    }
 
-trait IUserEnrichment {
-  def act(input: EnrichedEvent)
+    val allNewDerivedContexts = instances.flatMap(_.createDerivedContexts(input, unstructEventJson, existingDerivedContexts))
+    allNewDerivedContexts
+  }
 }
