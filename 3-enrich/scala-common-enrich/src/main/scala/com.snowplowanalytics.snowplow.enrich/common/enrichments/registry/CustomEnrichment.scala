@@ -65,7 +65,7 @@ import outputs.EnrichedEvent
  */
 object CustomEnrichment extends ParseableEnrichment {
 
-  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow", "custom_enrichment", "jsonschema", 1, 0)
+  val supportedSchema = SchemaCriterion("com.snowplowanalytics.snowplow.enrichments", "custom_enrichment", "jsonschema", 1, 0)
 
   def parse(config: JValue, schemaKey: SchemaKey): ValidatedNelMessage[CustomEnrichment] = {
     isParseable(config, schemaKey).map( conf => {
@@ -73,7 +73,7 @@ object CustomEnrichment extends ParseableEnrichment {
       val setupObjects = for {
         JArray(cc) <- config \ "parameters" \ "classes"
         classConfiguration <- cc
-        JString(qualifiedClassname) <- classConfiguration \ "class"
+        JString(qualifiedClassname) <- classConfiguration \ "qualifiedClassname"
         JString(classUrl) <- classConfiguration \ "url"
         JBool(classEnabled) <- classConfiguration \ "enabled"
       } yield UserEnrichmentSetup(qualifiedClassname, classUrl, classEnabled)
