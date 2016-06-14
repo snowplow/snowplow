@@ -447,6 +447,12 @@ object EnrichmentManager {
       case None => Nil.success
     }
 
+    // TODO: actually do something with these contexts other than just printing them
+    registry.getCustomEnrichment match {
+      case Some(ce) => Console println ce.getDerivedContexts(event)
+      case None => Nil.success
+    }
+
     // Execute cookie extractor enrichment
     val cookieExtractorContext = registry.getCookieExtractorEnrichment match {
       case Some(cee) =>

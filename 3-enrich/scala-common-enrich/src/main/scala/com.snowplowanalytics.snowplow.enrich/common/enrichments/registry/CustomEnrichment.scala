@@ -97,8 +97,10 @@ case class CustomEnrichment(
     setup <- setups if setup.classEnabled
   } yield (new URI(setup.classUrl), setup.qualifiedClassname)
 
-  lazy val instances: List[IUserEnrichment] = setups filter {_.classEnabled} map { setup =>
-    val classFile = new File(setup.qualifiedClassname).toURI.toURL
+  val instances: List[IUserEnrichment] = setups filter {_.classEnabled} map { setup =>
+    // TODO: decide where exactly to load the class from here.
+    // One possibility: base the path to the class on the qualified name of the class to avoid collisions.
+    val classFile = new File(".").toURI.toURL
     val classLoader = new URLClassLoader(Array(classFile))
     val klazz = classLoader.loadClass(setup.qualifiedClassname)
     klazz.newInstance.asInstanceOf[IUserEnrichment]
