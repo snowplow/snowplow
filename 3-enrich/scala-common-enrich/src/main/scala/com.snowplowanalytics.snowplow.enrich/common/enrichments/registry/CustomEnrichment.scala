@@ -107,10 +107,16 @@ case class CustomEnrichment(
   val version = new DefaultArtifactVersion("0.1.0")
 
   def getDerivedContexts(input: EnrichedEvent): List[JsonNode] = {
-    val unstructEventJson = new ObjectMapper().readTree(input.unstruct_event)
+    val unstructEventJson = input.unstruct_event match {
+      case null => null
+      case something => new ObjectMapper().readTree(something)
+    }
     val existingDerivedContexts = new java.util.ArrayList[JsonNode]
-    new ObjectMapper().readTree(input.derived_contexts).toList foreach {
-      existingDerivedContexts.add(_)
+    input.derived_contexts match {
+      case null =>
+      case contextsString => new ObjectMapper().readTree(input.derived_contexts).toList foreach {
+          existingDerivedContexts.add(_)
+        }
     }
 
     val allNewDerivedContexts = instances.flatMap(_.createDerivedContexts(input, unstructEventJson, existingDerivedContexts))

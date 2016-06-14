@@ -168,6 +168,8 @@ object EnrichmentRegistry {
             WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "api_request_enrichment_config") {
             ApiRequestEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "custom_enrichment") {
+            CustomEnrichment.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else {
             None.success // Enrichment is not recognized yet
           }
