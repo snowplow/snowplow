@@ -15,21 +15,25 @@
 # Copyright::     Copyright (c) 2016 Snowplow Analytics Ltd
 # License::       Apache License Version 2.0
 
-# Version::       0.1.0
+# Version::       0.2.0
 # Compatibility:: AMI 4.1.0
 
 # Fast fail
 set -e
 
+# Get commons-codec version as optional first argument
+if [ -z $1 ]; then CC_VERSION="1.5"; else CC_VERSION=$1; fi
+
 # Because AMI 4.1.0 has commons-codecs which are binary
-# incompatible with 1.5, we download 1.5 to the classpath.
+# incompatible with shipped with Scala Hadoop Enrich,
+# we download appropriate version to the classpath.
 # See https://forums.aws.amazon.com/thread.jspa?threadID=173258
 function fix_commons_codec() {
-    wget 'http://central.maven.org/maven2/commons-codec/commons-codec/1.5/commons-codec-1.5.jar'
+    wget "http://central.maven.org/maven2/commons-codec/commons-codec/$CC_VERSION/commons-codec-$CC_VERSION.jar"
     sudo mkdir -p /usr/lib/hadoop/lib
-    sudo cp commons-codec-1.5.jar /usr/lib/hadoop/lib/remedial-commons-codec-1.5.jar
-    rm commons-codec-1.5.jar
-    echo "Fixed commons-codec-1.5.jar"
+    sudo cp "commons-codec-$CC_VERSION.jar" "/usr/lib/hadoop/lib/remedial-commons-codec-$CC_VERSION.jar"
+    rm "commons-codec-$CC_VERSION.jar"
+    echo "Fixed commons-codec-$CC_VERSION.jar"
 }
 
 # Because the AMIs have Scala 2.11 installed, and this
