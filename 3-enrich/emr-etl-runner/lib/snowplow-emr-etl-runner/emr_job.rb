@@ -165,9 +165,10 @@ module Snowplow
         bootstrap_jar_location = if @legacy
           "s3://snowplow-hosted-assets/common/emr/snowplow-ami3-bootstrap-0.1.0.sh"
         else
-          "s3://snowplow-hosted-assets/common/emr/snowplow-ami4-bootstrap-0.1.0.sh"
+          "s3://snowplow-hosted-assets/common/emr/snowplow-ami4-bootstrap-0.2.0.sh"
         end
-        @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_jar_location))
+        cc_version = get_cc_version(config[:enrich][:versions][:hadoop_enrich])
+        @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_jar_location, cc_version))
 
         # Install and launch HBase
         hbase = config[:aws][:emr][:software][:hbase]
@@ -504,6 +505,19 @@ module Snowplow
         scalding_step.name << ": #{step_name}"
 
         scalding_step
+      end
+
+      # Get commons-codec version required by Scala Hadoop Enrich
+      # for further replace
+      # See: https://github.com/snowplow/snowplow/issues/2735
+      Contract String => String
+      def get_cc_version(she_version)
+        she_version_normalized = Gem::Version.new(she_version)
+        if she_version_normalized > Gem::Version.new("1.8.0")
+          "1.10"
+        else
+          "1.5"
+        end
       end
 
       # Wait for a jobflow.
