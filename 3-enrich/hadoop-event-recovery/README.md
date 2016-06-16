@@ -1,22 +1,23 @@
-# Snowplow Hadoop Bad Rows
+# Hadoop Event Recovery
 
 ## Introduction
 
-Use this Scalding job to extract raw Snowplow events from your Snowplow bad rows JSONs, ready for reprocessing.
+Use this Scalding job to extract raw Snowplow events from your Snowplow bad rows JSONs and fix any problems with them, making them ready for reprocessing.
 
-## Usage
+## Testing
 
-Run this job using the [Amazon Ruby EMR client] [emr-client]:
+Just run:
 
-    $ elastic-mapreduce --create --name "Extract raw events from Snowplow bad row JSONs" \
-      --instance-type m1.xlarge --instance-count 3 \
-      --jar s3://snowplow-hosted-assets/3-enrich/scala-bad-rows/snowplow-bad-rows-0.1.0.jar \
-      --arg com.snowplowanalytics.hadoop.scalding.SnowplowBadRowsJob \
-      --arg --hdfs \
-      --arg --input --arg s3n://{{PATH_TO_YOUR_FIXABLE_BAD_ROWS}} \
-      --arg --output --arg s3n://{{PATH_WILL_BE_STAGING_FOR_EMRETLRUNNER}}
+```
+sbt test
+```
 
-Replace the `{{...}}` placeholders above with the appropriate bucket paths.
+## Find out more
+
+| Technical Docs                  |
+|---------------------------------|
+| ![i1] [techdocs-image]          |
+| **[Technical Docs] [techdocs]** |
 
 ## Copyright and license
 
@@ -38,9 +39,16 @@ limitations under the License.
 [spark-example-project]: https://github.com/snowplow/spark-example-project
 [emr]: http://aws.amazon.com/elasticmapreduce/
 [hello-txt]: https://github.com/snowplow/scalding-example-project/raw/master/data/hello.txt
-[emr-client]: http://aws.amazon.com/developertools/2264
+[awscli]: https://aws.amazon.com/cli/
 [elasticity]: https://github.com/rslifka/elasticity
 [spark-plug]: https://github.com/ogrodnek/spark-plug
 [lemur]: https://github.com/TheClimateCorporation/lemur
 [boto]: http://boto.readthedocs.org/en/latest/ref/emr.html
 [license]: http://www.apache.org/licenses/LICENSE-2.0
+
+[techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
+[setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
+[roadmap-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/roadmap.png
+[contributing-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/contributing.png
+
+[techdocs]: https://github.com/snowplow/snowplow/wiki/https://github.com/snowplow/snowplow/wiki/Hadoop-Event-Recovery

@@ -10,10 +10,10 @@ if [ "${cicd}" == "kinesis/" ]; then
         echo "Warning! No release specified! Ignoring."
         exit 2
     fi
- else
+else
     echo "This can't be deployed - there's no kinesis tag! (is the travis condition set?)"
     exit 1
- fi
+fi
  
- cd $TRAVIS_BUILD_DIR
- ./ci.bash "${release}"
+cd $TRAVIS_BUILD_DIR
+./ci.bash "${release}"
