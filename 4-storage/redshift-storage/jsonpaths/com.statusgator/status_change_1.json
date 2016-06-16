@@ -1,0 +1,20 @@
+{
+    "jsonpaths": [
+        "$.schema.vendor",
+        "$.schema.name",
+        "$.schema.format",
+        "$.schema.version",
+        "$.hierarchy.rootId",
+        "$.hierarchy.rootTstamp",
+        "$.hierarchy.refRoot",
+        "$.hierarchy.refTree",
+        "$.hierarchy.refParent",
+        "$.data.current_status",
+        "$.data.favicon_url",
+        "$.data.home_page_url",
+        "$.data.last_status",
+        "$.data.occurred_at",
+        "$.data.service_name",
+        "$.data.status_page_url"
+    ]
+}
