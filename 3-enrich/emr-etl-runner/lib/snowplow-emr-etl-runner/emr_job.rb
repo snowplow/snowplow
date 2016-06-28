@@ -729,7 +729,8 @@ module Snowplow
         if compression_format.nil?
           "none"
         else
-          compression_format.downcase
+          codec = compression_format.downcase
+          codec == "gzip" ? "gz" : codec
         end
       end
 
