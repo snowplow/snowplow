@@ -125,11 +125,11 @@ object ScalaCollector extends App {
 // Return Options from the configuration.
 object Helper {
   implicit class RichConfig(val underlying: Config) extends AnyVal {
-    def getOptionalString(path: String): Option[String] = try {
-      Some(underlying.getString(path))
-    } catch {
-      case e: ConfigException.Missing => None
-    }
+    def catchMissing = util.control.Exception.catching(classOf[ConfigException.Missing])
+
+    def getOptionalString(path: String): Option[String] = catchMissing opt underlying.getString(path)
+
+    def getOptionalBoolean(path: String): Option[Boolean] = catchMissing opt underlying.getBoolean(path)
   }
 }
 
@@ -153,6 +153,11 @@ class CollectorConfig(config: Config) {
   val interface = collector.getString("interface")
   val port = collector.getInt("port")
   val production = collector.getBoolean("production")
+
+  //Third party cookie config params.
+  val n3pcRedirectEnabled = collector.getOptionalBoolean("third-party-redirect-enabled").getOrElse(false)
+  val thirdPartyCookiesParameter = collector.getOptionalString("third-party-cookie-param").getOrElse("n3pc")
+  val fallbackNetworkUserId = collector.getOptionalString("fallback-network-id").getOrElse("00000000-0000-4000-A000-000000000000")
 
   private val p3p = collector.getConfig("p3p")
   val p3pPolicyRef = p3p.getString("policyref")

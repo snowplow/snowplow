@@ -50,6 +50,7 @@ object Dependencies {
     // Using the newest version of spec (2.3.6) causes
     // conflicts with `spray` for `com.chuusai.shapeless`
     val specs2           = "2.2.3"
+    val mockito          = "1.9.5"
   }
 
   object Libraries {
@@ -77,6 +78,7 @@ object Dependencies {
     val json4sJackson    = "org.json4s"            %% "json4s-jackson"            % V.json4s
 
     // Scala (test only)
+    val mockito          = "org.mockito"           %  "mockito-all"               % V.mockito  % "test"
     val specs2           = "org.specs2"            %% "specs2"                    % V.specs2   % "test"
     val sprayTestkit     = "io.spray"              %% "spray-testkit"             % V.spray    % "test"
   }
