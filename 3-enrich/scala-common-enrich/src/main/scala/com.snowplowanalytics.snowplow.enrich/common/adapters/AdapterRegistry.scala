@@ -33,6 +33,7 @@ import registry.{
   IgluAdapter,
   CallrailAdapter,
   MailchimpAdapter,
+  MailgunAdapter,
   MandrillAdapter,
   PagerdutyAdapter,
   PingdomAdapter,
@@ -52,6 +53,7 @@ object AdapterRegistry {
     val Iglu       = "com.snowplowanalytics.iglu"
     val Callrail   = "com.callrail"
     val Mailchimp  = "com.mailchimp"
+    val Mailgun    = "com.mailgun"
     val Mandrill   = "com.mandrill"
     val Pagerduty  = "com.pagerduty"
     val Pingdom    = "com.pingdom"
@@ -80,6 +82,7 @@ object AdapterRegistry {
     case (Vendor.Iglu,         "v1")  => IgluAdapter.toRawEvents(payload)
     case (Vendor.Callrail,     "v1")  => CallrailAdapter.toRawEvents(payload)
     case (Vendor.Mailchimp,    "v1")  => MailchimpAdapter.toRawEvents(payload)
+    case (Vendor.Mailgun,      "v1")  => MailgunAdapter.toRawEvents(payload)
     case (Vendor.Mandrill,     "v1")  => MandrillAdapter.toRawEvents(payload)
     case (Vendor.Pagerduty,    "v1")  => PagerdutyAdapter.toRawEvents(payload)
     case (Vendor.Pingdom,      "v1")  => PingdomAdapter.toRawEvents(payload)
