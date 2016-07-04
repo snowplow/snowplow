@@ -1,0 +1,29 @@
+{
+    "jsonpaths": [
+        "$.schema.vendor",
+        "$.schema.name",
+        "$.schema.format",
+        "$.schema.version",
+        "$.hierarchy.rootId",
+        "$.hierarchy.rootTstamp",
+        "$.hierarchy.refRoot",
+        "$.hierarchy.refTree",
+        "$.hierarchy.refParent",
+        "$.data.MessageId",
+        "$.data.X-Mailgun-Sid",
+        "$.data.attachment-count",
+        "$.data.body-plain",
+        "$.data.code",
+        "$.data.description",
+        "$.data.domain",
+        "$.data.event",
+        "$.data.message-headers",
+        "$.data.my-var-2",
+        "$.data.my_var_1",
+        "$.data.reason",
+        "$.data.recipient",
+        "$.data.signature",
+        "$.data.timestamp",
+        "$.data.token"
+    ]
+}
