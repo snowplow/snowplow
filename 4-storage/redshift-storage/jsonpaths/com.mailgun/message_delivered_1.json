@@ -1,0 +1,23 @@
+{
+    "jsonpaths": [
+        "$.schema.vendor",
+        "$.schema.name",
+        "$.schema.format",
+        "$.schema.version",
+        "$.hierarchy.rootId",
+        "$.hierarchy.rootTstamp",
+        "$.hierarchy.refRoot",
+        "$.hierarchy.refTree",
+        "$.hierarchy.refParent",
+        "$.data.Message-Id",
+        "$.data.X-Mailgun-Sid",
+        "$.data.body-plain",
+        "$.data.domain",
+        "$.data.event",
+        "$.data.message-headers",
+        "$.data.recipient",
+        "$.data.signature",
+        "$.data.timestamp",
+        "$.data.token"
+    ]
+}
