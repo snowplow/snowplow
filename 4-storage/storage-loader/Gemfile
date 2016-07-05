@@ -19,7 +19,7 @@ ruby "2.2.3"
 # StorageLoader is a Ruby app (not a RubyGem)
 # built with Bundler, so we add in the
 # RubyGems it requires here.
-gem "sluice", "~> 0.2.2"
+gem "sluice", "~> 0.4.0"
 gem 'jdbc-postgres'
 gem "plissken", "~> 0.1.0"
 gem "contracts", "= 0.7"
