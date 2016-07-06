@@ -22,7 +22,7 @@ ruby "2.2.3"
 gem "sluice", "~> 0.4.0"
 gem 'jdbc-postgres'
 gem "plissken", "~> 0.1.0"
-gem "contracts", "= 0.7"
+gem "contracts", "~> 0.9", "<= 0.11"
 gem "snowplow-tracker", "~> 0.5.2"
 gem "aws-sdk", "~> 2"
 
