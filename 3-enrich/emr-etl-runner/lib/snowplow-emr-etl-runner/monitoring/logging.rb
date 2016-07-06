@@ -22,7 +22,6 @@ module Snowplow
       module Logging
 
         include Contracts
-        include Contracts::Modules
 
         $stdout.sync = true
 
