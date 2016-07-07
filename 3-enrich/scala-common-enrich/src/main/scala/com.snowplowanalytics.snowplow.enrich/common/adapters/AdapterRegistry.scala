@@ -34,6 +34,7 @@ import registry.{
   CallrailAdapter,
   MailchimpAdapter,
   MandrillAdapter,
+  OlarkAdapter,
   PagerdutyAdapter,
   PingdomAdapter,
   UrbanAirshipAdapter,
@@ -53,6 +54,7 @@ object AdapterRegistry {
     val Callrail   = "com.callrail"
     val Mailchimp  = "com.mailchimp"
     val Mandrill   = "com.mandrill"
+    val Olark      = "com.olark"
     val Pagerduty  = "com.pagerduty"
     val Pingdom    = "com.pingdom"
     val Cloudfront = "com.amazon.aws.cloudfront"
@@ -80,6 +82,7 @@ object AdapterRegistry {
     case (Vendor.Iglu,         "v1")  => IgluAdapter.toRawEvents(payload)
     case (Vendor.Callrail,     "v1")  => CallrailAdapter.toRawEvents(payload)
     case (Vendor.Mailchimp,    "v1")  => MailchimpAdapter.toRawEvents(payload)
+    case (Vendor.Olark,        "v1")  => OlarkAdapter.toRawEvents(payload)
     case (Vendor.Mandrill,     "v1")  => MandrillAdapter.toRawEvents(payload)
     case (Vendor.Pagerduty,    "v1")  => PagerdutyAdapter.toRawEvents(payload)
     case (Vendor.Pingdom,      "v1")  => PingdomAdapter.toRawEvents(payload)
