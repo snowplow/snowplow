@@ -24,6 +24,7 @@ import org.apache.http.NameValuePair
 
 // Scala
 import scala.util.matching.Regex
+import scala.util.control.NonFatal
 import scala.collection.JavaConversions._
 
 // Scalaz
@@ -121,7 +122,7 @@ object OlarkAdapter extends Adapter {
               }
             }
           } catch { 
-            case e: Exception => {
+            case NonFatal(e) => {
               val exception = JU.stripInstanceEtc(e.toString).orNull
               s"${VendorName} could not parse body: [${exception}]".failNel
             }
@@ -148,11 +149,11 @@ object OlarkAdapter extends Adapter {
           }
         } catch {
           case e: JsonParseException => {
-              val exception = JU.stripInstanceEtc(e.toString).orNull
+              val exception = JU.stripInstanceEtc(e.getMessage).orNull
               s"${VendorName} event string failed to parse into JSON: [${exception}]".fail
           }
-          case e: Exception => {
-            val exception = JU.stripInstanceEtc(e.toString).orNull
+          case NonFatal(e) => {
+            val exception = JU.stripInstanceEtc(e.getMessage).orNull
             s"${VendorName} incorrect event string : [${exception}]".fail
           }
         } 
