@@ -25,6 +25,7 @@ import org.apache.http.client.utils.URLEncodedUtils
 import org.joda.time.DateTime
 
 // Scala
+import scala.util.matching.Regex
 import scala.util.control.NonFatal
 import scala.collection.JavaConversions._
 import scala.util.{Try, Success => TS, Failure => TF}
