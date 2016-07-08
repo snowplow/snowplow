@@ -158,7 +158,7 @@ module Snowplow
         return [] if enrichments_dir.nil?
 
         # Check the enrichments directory exists and is a directory
-        unless Dir.exists?(enrichments_dir)
+        unless Dir.exist?(enrichments_dir)
           raise ConfigError, "Enrichments directory '#{enrichments_dir}' does not exist, or is not a directory\n#{optparse}"
         end
 
