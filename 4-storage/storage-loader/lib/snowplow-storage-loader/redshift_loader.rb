@@ -40,7 +40,8 @@ module Snowplow
       # Parameters:
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
-      Contract Hash, Hash => nil
+      # +snowplow_tracking_enabled+:: whether we should emit Snowplow events for this
+      Contract Hash, Hash, Bool => nil
       def load_events_and_shredded_types(config, target, snowplow_tracking_enabled)
         puts "Loading Snowplow events and shredded types into #{target[:name]} (Redshift cluster)..."
 
