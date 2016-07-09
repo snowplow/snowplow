@@ -41,7 +41,7 @@ module Snowplow
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
       Contract Hash, Hash => nil
-      def load_events_and_shredded_types(config, target, snowplow_tracking_enabled)
+      def self.load_events_and_shredded_types(config, target, snowplow_tracking_enabled)
         puts "Loading Snowplow events and shredded types into #{target[:name]} (Redshift cluster)..."
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
@@ -114,7 +114,6 @@ module Snowplow
 
         nil
       end
-      module_function :load_events_and_shredded_types
 
     private
 
@@ -125,7 +124,7 @@ module Snowplow
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
       Contract Hash, Hash, Sluice::Storage::S3 => ArrayOf[SqlStatements]
-      def get_shredded_statements(config, target, s3)
+      def self.get_shredded_statements(config, target, s3)
 
         if config[:skip].include?('shred') # No shredded types to load
           []
@@ -147,7 +146,6 @@ module Snowplow
           }
         end
       end
-      module_function :get_shredded_statements
 
       # Looks at the events table to determine if there's
       # a schema we should use for the shredded type tables.
@@ -155,18 +153,16 @@ module Snowplow
       # Parameters:
       # +events_table+:: the events table to load into
       Contract String => Maybe[String]
-      def extract_schema(events_table)
+      def self.extract_schema(events_table)
         parts = events_table.split(/\./)
         if parts.size > 1 then parts[0] else nil end
       end
-      module_function :extract_schema
 
       # Replaces an initial "s3n" with "s3" in an S3 path
       Contract String => String
-      def fix_s3_path(path)
+      def self.fix_s3_path(path)
         path.gsub(/^s3n/, 's3')
       end
-      module_function :fix_s3_path
 
       # Constructs the COPY statement to load the enriched
       # event TSV files into Redshift.
@@ -179,7 +175,7 @@ module Snowplow
       #           optional schema
       # +maxerror+:: how many errors to allow for this COPY
       Contract Hash, String, String, Num => String
-      def build_copy_from_tsv_statement(config, s3_objectpath, table, maxerror)
+      def self.build_copy_from_tsv_statement(config, s3_objectpath, table, maxerror)
 
         # Assemble the relevant parameters for the bulk load query
         credentials = get_credentials(config)
@@ -194,7 +190,6 @@ module Snowplow
 
         "COPY #{table} FROM '#{fixed_objectpath}' CREDENTIALS '#{credentials}' REGION AS '#{config[:aws][:s3][:region]}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{maxerror} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS #{comprows} TIMEFORMAT 'auto' ACCEPTINVCHARS #{compression_format};"
       end
-      module_function :build_copy_from_tsv_statement
 
       # Constructs the COPY FROM JSON statement required for
       # loading a shredded JSON into a dedicated table; also
@@ -210,14 +205,13 @@ module Snowplow
       #           optional schema
       # +maxerror+:: how many errors to allow for this COPY
       Contract Hash, String, String, String, Num => String
-      def build_copy_from_json_statement(config, s3_objectpath, jsonpaths_file, table, maxerror)
+      def self.build_copy_from_json_statement(config, s3_objectpath, jsonpaths_file, table, maxerror)
         credentials = get_credentials(config)
         compression_format = get_compression_format(config[:enrich][:output_compression])
         fixed_objectpath = fix_s3_path(s3_objectpath)
         # TODO: what about COMPUPDATE/ROWS?
         "COPY #{table} FROM '#{fixed_objectpath}' CREDENTIALS '#{credentials}' JSON AS '#{jsonpaths_file}' REGION AS '#{config[:aws][:s3][:region]}' MAXERROR #{maxerror} TRUNCATECOLUMNS TIMEFORMAT 'auto' ACCEPTINVCHARS #{compression_format};"
       end
-      module_function :build_copy_from_json_statement
 
       # Builds an ANALYZE statement for the
       # given table.
@@ -225,10 +219,9 @@ module Snowplow
       # Parameters:
       # +table+:: the name of the table to analyze
       Contract Hash => String
-      def build_analyze_statement(table)
+      def self.build_analyze_statement(table)
         "ANALYZE #{table};"
       end
-      module_function :build_analyze_statement
 
       # Builds a VACUUM statement for the
       # given table.
@@ -236,10 +229,9 @@ module Snowplow
       # Parameters:
       # +table+:: the name of the table to analyze
       Contract Hash => String
-      def build_vacuum_statement(table)
+      def self.build_vacuum_statement(table)
         "VACUUM SORT ONLY #{table};"
       end
-      module_function :build_vacuum_statement
 
       # Constructs the credentials expression for a
       # Redshift COPY statement.
@@ -247,24 +239,22 @@ module Snowplow
       # Parameters:
       # +config+:: the configuration options
       Contract Hash => String
-      def get_credentials(config)
+      def self.get_credentials(config)
         "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
       end
-      module_function :get_credentials
 
       # Returns the compression format for a
       # Redshift COPY statement.
       #
       # Parameters:
       # +output_codec+:: the output code, possibly nil
-      def get_compression_format(output_codec)
+      def self.get_compression_format(output_codec)
         if output_codec == 'NONE'
           ''
         elsif output_codec == 'GZIP'
           'GZIP'
         end
       end
-      module_function :get_compression_format
 
     end
   end
