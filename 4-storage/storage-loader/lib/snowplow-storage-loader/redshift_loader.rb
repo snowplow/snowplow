@@ -124,7 +124,8 @@ module Snowplow
       # Parameters:
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
-      Contract Hash, Hash, Sluice::Storage::S3 => ArrayOf[SqlStatements]
+      # +s3+::     the Fog object for accessing S3
+      Contract Hash, Hash, FogStorage => ArrayOf[SqlStatements]
       def self.get_shredded_statements(config, target, s3)
 
         if config[:skip].include?('shred') # No shredded types to load
