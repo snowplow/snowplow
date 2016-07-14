@@ -40,7 +40,8 @@ module Snowplow
       # Parameters:
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
-      Contract Hash, Hash => nil
+      # +snowplow_tracking_enabled+:: whether we should emit Snowplow events for this
+      Contract Hash, Hash, Bool => nil
       def self.load_events_and_shredded_types(config, target, snowplow_tracking_enabled)
         puts "Loading Snowplow events and shredded types into #{target[:name]} (Redshift cluster)..."
 
@@ -123,7 +124,8 @@ module Snowplow
       # Parameters:
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
-      Contract Hash, Hash, Sluice::Storage::S3 => ArrayOf[SqlStatements]
+      # +s3+::     the Fog object for accessing S3
+      Contract Hash, Hash, FogStorage => ArrayOf[SqlStatements]
       def self.get_shredded_statements(config, target, s3)
 
         if config[:skip].include?('shred') # No shredded types to load
@@ -218,7 +220,7 @@ module Snowplow
       #
       # Parameters:
       # +table+:: the name of the table to analyze
-      Contract Hash => String
+      Contract String => String
       def self.build_analyze_statement(table)
         "ANALYZE #{table};"
       end
@@ -228,7 +230,7 @@ module Snowplow
       #
       # Parameters:
       # +table+:: the name of the table to analyze
-      Contract Hash => String
+      Contract String => String
       def self.build_vacuum_statement(table)
         "VACUUM SORT ONLY #{table};"
       end
@@ -247,13 +249,15 @@ module Snowplow
       # Redshift COPY statement.
       #
       # Parameters:
-      # +output_codec+:: the output code, possibly nil
+      # +output_codec+:: the output code
+      Contract String => String
       def self.get_compression_format(output_codec)
         if output_codec == 'NONE'
           ''
         elsif output_codec == 'GZIP'
           'GZIP'
         end
+        # TODO: fix non-exhaustive match above
       end
 
     end
