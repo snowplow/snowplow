@@ -220,7 +220,7 @@ module Snowplow
       #
       # Parameters:
       # +table+:: the name of the table to analyze
-      Contract Hash => String
+      Contract String => String
       def self.build_analyze_statement(table)
         "ANALYZE #{table};"
       end
@@ -230,7 +230,7 @@ module Snowplow
       #
       # Parameters:
       # +table+:: the name of the table to analyze
-      Contract Hash => String
+      Contract String => String
       def self.build_vacuum_statement(table)
         "VACUUM SORT ONLY #{table};"
       end
@@ -249,13 +249,15 @@ module Snowplow
       # Redshift COPY statement.
       #
       # Parameters:
-      # +output_codec+:: the output code, possibly nil
+      # +output_codec+:: the output code
+      Contract String => String
       def self.get_compression_format(output_codec)
         if output_codec == 'NONE'
           ''
         elsif output_codec == 'GZIP'
           'GZIP'
         end
+        # TODO: fix non-exhaustive match above
       end
 
     end
