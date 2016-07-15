@@ -38,7 +38,7 @@ module Snowplow
         end
 
         # Log a fatal Exception
-        Contract Exception => nil
+        Contract StandardError => nil
         def self.fatal_with(exception)
           logger.fatal("\n\n#{exception.class} (#{exception.message}):\n    " +
                        exception.backtrace.join("\n    ") +
