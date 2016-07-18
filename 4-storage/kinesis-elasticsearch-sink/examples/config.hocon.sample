@@ -88,6 +88,7 @@ sink {
     max-timeout: "{{sinkElasticsearchMaxTimeout}}"
     index: "{{sinkElasticsearchIndex}}" # Elasticsearch index name
     type: "{{sinkElasticsearchType}}" # Elasticsearch type name
+    transport-port: {{sinkElasticsearchTransportPort}} # Elasticsearch transport port
   }
 
   # Events are accumulated in a buffer before being sent to Elasticsearch.
