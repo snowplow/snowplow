@@ -47,6 +47,7 @@ import StreamType._
  * @param tracker a Tracker instance
  * @param maxConnectionTimeout the maximum amount of time
  *        we can attempt to send to elasticsearch
+ * @param elasticsearchClientType The type of ES Client to use
  */
 class ElasticsearchSinkExecutor(
   streamType: StreamType,
@@ -56,11 +57,13 @@ class ElasticsearchSinkExecutor(
   goodSink: Option[ISink],
   badSink: ISink,
   tracker: Option[Tracker] = None,
-  maxConnectionTimeout: Long = 60000) extends KinesisConnectorExecutorBase[ValidatedRecord, EmitterInput] {
+  maxConnectionTimeout: Long = 60000,
+  elasticsearchClientType: String
+) extends KinesisConnectorExecutorBase[ValidatedRecord, EmitterInput] {
 
   initialize(config)
   override def getKinesisConnectorRecordProcessorFactory = {
     new KinesisConnectorRecordProcessorFactory[ValidatedRecord, EmitterInput](
-      new ElasticsearchPipeline(streamType, documentIndex, documentType, goodSink, badSink, tracker, maxConnectionTimeout), config)
+      new ElasticsearchPipeline(streamType, documentIndex, documentType, goodSink, badSink, tracker, maxConnectionTimeout, elasticsearchClientType), config)
   }
 }

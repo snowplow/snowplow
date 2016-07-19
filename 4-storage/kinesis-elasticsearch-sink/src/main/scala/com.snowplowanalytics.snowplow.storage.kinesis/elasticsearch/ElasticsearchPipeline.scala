@@ -54,6 +54,7 @@ import scalatracker.Tracker
  * @param tracker a Tracker instance
  * @param maxConnectionTime the maximum amount of time
  *        we can attempt to send to elasticsearch
+ * @param elasticsearchClientType The type of ES Client to use
  */
 class ElasticsearchPipeline(
   streamType: StreamType,
@@ -62,10 +63,12 @@ class ElasticsearchPipeline(
   goodSink: Option[ISink],
   badSink: ISink,
   tracker: Option[Tracker] = None,
-  maxConnectionTime: Long) extends IKinesisConnectorPipeline[ValidatedRecord, EmitterInput] {
+  maxConnectionTime: Long,
+  elasticsearchClientType: String
+) extends IKinesisConnectorPipeline[ValidatedRecord, EmitterInput] {
 
   override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[EmitterInput] =
-    new SnowplowElasticsearchEmitter(configuration, goodSink, badSink, tracker, maxConnectionTime)
+    new SnowplowElasticsearchEmitter(configuration, goodSink, badSink, tracker, maxConnectionTime, elasticsearchClientType)
 
   override def getBuffer(configuration: KinesisConnectorConfiguration) = new BasicMemoryBuffer[ValidatedRecord](configuration)
 
