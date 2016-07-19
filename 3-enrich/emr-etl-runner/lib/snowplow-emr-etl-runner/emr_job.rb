@@ -707,7 +707,7 @@ module Snowplow
       # +region+:: the AWS region to source hosted assets from
       Contract String, String => String
       def self.get_hosted_assets_bucket(bucket, region)
-        suffix = if !bucket.eql? STANDARD_HOSTED_ASSETS || region.eql? "eu-west-1" then "" else "-#{region}" end
+        suffix = if !bucket.eql? STANDARD_HOSTED_ASSETS or region.eql? "eu-west-1" then "" else "-#{region}" end
         "#{bucket}#{suffix}"
       end
 
