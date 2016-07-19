@@ -75,7 +75,7 @@ module Snowplow
         logger.debug "Initializing EMR jobflow"
 
         # Configuration
-        custom_assets_bucket = self.class.get_hosted_assets_bucket(config[:aws][:s3][:buckets][:assets], config[:aws][:emr][:region])
+        custom_assets_bucket = self.class.get_hosted_assets_bucket(config[:aws][:s3][:buckets][:assets][0...-1], config[:aws][:emr][:region])
         assets = self.class.get_assets(
           custom_assets_bucket,
           config[:enrich][:versions][:hadoop_enrich],
