@@ -1,24 +1,24 @@
- /*
-  * Copyright (c) 2016 Snowplow Analytics Ltd.
-  * All rights reserved.
-  *
-  * This program is licensed to you under the Apache License Version 2.0,
-  * and you may not use this file except in compliance with the Apache
-  * License Version 2.0.
-  * You may obtain a copy of the Apache License Version 2.0 at
-  * http://www.apache.org/licenses/LICENSE-2.0.
-  *
-  * Unless required by applicable law or agreed to in writing,
-  * software distributed under the Apache License Version 2.0 is distributed
-  * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-  * either express or implied.
-  *
-  * See the Apache License Version 2.0 for the specific language
-  * governing permissions and limitations there under.
-  */
-package com.snowplowanalytics.snowplow
-package storage.kinesis.elasticsearch
+/**
+ * Copyright (c) 2014-2016 Snowplow Analytics Ltd.
+ * All rights reserved.
+ *
+ * This program is licensed to you under the Apache License Version 2.0,
+ * and you may not use this file except in compliance with the Apache
+ * License Version 2.0.
+ * You may obtain a copy of the Apache License Version 2.0 at
+ * http://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the Apache License Version 2.0 is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied.
+ *
+ * See the Apache License Version 2.0 for the specific language
+ * governing permissions and limitations there under.
+ */
 
+package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
+package clients
 
 // Amazon
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
@@ -56,10 +56,6 @@ import com.amazonaws.services.kinesis.connectors.{
   UnmodifiableBuffer
 }
 
-// Java
-import java.io.IOException
-import java.util.{List => JList}
-
 // Joda-Time
 import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
@@ -84,20 +80,17 @@ import org.apache.commons.logging.{
 }
 
 // Tracker
-import scalatracker.Tracker
-import scalatracker.SelfDescribingJson
-
-// Common Enrich
-import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
+import com.snowplowanalytics.snowplow.scalatracker.Tracker
 
 // This project
 import sinks._
 
-class ElasticsearchSender(
+class ElasticsearchSenderTransport(
   configuration: KinesisConnectorConfiguration,
   tracker: Option[Tracker] = None,
   maxConnectionWaitTimeMs: Long = 60000
-) {
+) extends ElasticsearchSender {
+
   private val Log = LogFactory.getLog(getClass)
 
   // An ISO valid timestamp formatter
@@ -226,26 +219,27 @@ class ElasticsearchSender(
 
         val allFailures = responses.toList.zip(records).filter(_._1.isFailed).map(pair => {
           val (response, record) = pair
-          Log.error("Record failed with message: " + response.getFailureMessage)
           val failure = response.getFailure
-          if (failure.getMessage.contains("DocumentAlreadyExistsException")
-              || failure.getMessage.contains("VersionConflictEngineException")) {
+
+          Log.error("Record failed with message: " + response.getFailureMessage)
+          
+          if (failure.getMessage.contains("DocumentAlreadyExistsException") || failure.getMessage.contains("VersionConflictEngineException")) {
             None
           } else {
-            Some(record._1 -> List("Elasticsearch rejected record with message: %s"
-              .format(failure.getMessage)).fail)
+            Some(record._1 -> List("Elasticsearch rejected record with message: %s".format(failure.getMessage)).fail)
           }
         })
 
         val numberOfSkippedRecords = allFailures.count(_.isEmpty)
         val failures = allFailures.flatten
 
-        Log.info("Emitted " + (records.size - failures.size - numberOfSkippedRecords)
-          + " records to Elasticsearch")
+        Log.info("Emitted " + (records.size - failures.size - numberOfSkippedRecords) + " records to Elasticsearch")
+
         if (!failures.isEmpty) {
           printClusterStatus
           Log.warn("Returning " + failures.size + " records as failed")
         }
+
         failures
       } catch {
         case nnae: NoNodeAvailableException => {
@@ -272,6 +266,28 @@ class ElasticsearchSender(
   }
 
   /**
+   * Shuts the client down
+   */
+  def close(): Unit = {
+    elasticsearchClient.close
+  }
+
+  /**
+   * Logs the Elasticsearch cluster's health
+   */
+  private def printClusterStatus: Unit = {
+    val healthRequestBuilder = elasticsearchClient.admin.cluster.prepareHealth()
+    val response = healthRequestBuilder.execute.actionGet
+    if (response.getStatus.equals(ClusterHealthStatus.RED)) {
+      Log.error("Cluster health is RED. Indexing ability will be limited")
+    } else if (response.getStatus.equals(ClusterHealthStatus.YELLOW)) {
+      Log.warn("Cluster health is YELLOW.")
+    } else if (response.getStatus.equals(ClusterHealthStatus.GREEN)) {
+      Log.info("Cluster health is GREEN.")
+    }
+  }
+
+  /**
    * Terminate the application in a way the KCL cannot stop
    *
    * Prevents shutdown hooks from running
@@ -287,37 +303,5 @@ class ElasticsearchSender(
     }
 
     Runtime.getRuntime.halt(1)
-  }
-
-  /**
-   * Logs the Elasticsearch cluster's health
-   */
-  private def printClusterStatus {
-    val healthRequestBuilder = elasticsearchClient.admin.cluster.prepareHealth()
-    val response = healthRequestBuilder.execute.actionGet
-    if (response.getStatus.equals(ClusterHealthStatus.RED)) {
-      Log.error("Cluster health is RED. Indexing ability will be limited")
-    } else if (response.getStatus.equals(ClusterHealthStatus.YELLOW)) {
-      Log.warn("Cluster health is YELLOW.")
-    } else if (response.getStatus.equals(ClusterHealthStatus.GREEN)) {
-      Log.info("Cluster health is GREEN.")
-    }
-  }
-
-  /**
-   * Period between retrying sending events to Elasticsearch
-   *
-   * @param sleepTime Length of time between tries
-   */
-  private def sleep(sleepTime: Long): Unit = {
-    try {
-      Thread.sleep(sleepTime)
-    } catch {
-      case e: InterruptedException => ()
-    }
-  }
-
-  def close(): Unit = {
-    elasticsearchClient.close
   }
 }

@@ -83,12 +83,26 @@ sink {
   }
 
   elasticsearch {
-    cluster-name: "{{sinkElasticsearchClusterName}}"
-    endpoint: "{{sinkElasticsearchEndpoint}}"
-    max-timeout: "{{sinkElasticsearchMaxTimeout}}"
-    index: "{{sinkElasticsearchIndex}}" # Elasticsearch index name
-    type: "{{sinkElasticsearchType}}" # Elasticsearch type name
-    transport-port: {{sinkElasticsearchTransportPort}} # Elasticsearch transport port
+
+    # Events are indexed using an Elasticsearch Client
+    # - type: http or transport (will default to transport)
+    # - endpoint: the cluster endpoint
+    # - port: the port the cluster can be accessed on
+    #   - for http this is usually 9200
+    #   - for transport this is usually 9300
+    # - max-timeout: the maximum attempt time before a client restart
+    client {
+      type: "{{sinkElasticseachClient}}"
+      endpoint: "{{sinkElasticsearchEndpoint}}"
+      port: {{sinkElasticsearchTransportPort}}
+      max-timeout: "{{sinkElasticsearchMaxTimeout}}"
+    }
+
+    cluster {
+      name: "{{sinkElasticsearchClusterName}}"
+      index: "{{sinkElasticsearchIndex}}"
+      type: "{{sinkElasticsearchType}}"
+    }
   }
 
   # Events are accumulated in a buffer before being sent to Elasticsearch.

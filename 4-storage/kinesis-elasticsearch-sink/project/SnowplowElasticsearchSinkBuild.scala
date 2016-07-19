@@ -44,7 +44,8 @@ object SnowplowElasticsearchSinkBuild extends Build {
         Libraries.kinesisClient,
         Libraries.kinesisConnector,
         Libraries.snowplowTracker,
-        Libraries.elasticsearch
+        Libraries.elasticsearch,
+        Libraries.jest
       )
     )
 }

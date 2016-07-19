@@ -39,6 +39,9 @@ package object elasticsearch {
    */
   type ValidatedRecord = (String, Validation[List[String], JsonRecord])
 
+  /**
+   * The input type for the ElasticsearchSender objects
+   */
   type EmitterInput = (String, Validation[List[String], ElasticsearchObject])
 
   /**
