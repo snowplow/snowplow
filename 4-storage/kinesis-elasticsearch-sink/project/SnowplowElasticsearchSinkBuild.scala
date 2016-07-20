@@ -41,6 +41,7 @@ object SnowplowElasticsearchSinkBuild extends Build {
         Libraries.scalazSpecs2,
         Libraries.commonsLang3,
         Libraries.slf4j,
+        Libraries.log4jOverSlf4j,
         Libraries.kinesisClient,
         Libraries.kinesisConnector,
         Libraries.snowplowTracker,
