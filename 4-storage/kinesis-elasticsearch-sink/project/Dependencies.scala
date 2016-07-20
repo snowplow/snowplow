@@ -53,6 +53,7 @@ object Dependencies {
     // Java
     val logging              = "commons-logging"            %  "commons-logging"           % V.logging
     val slf4j                = "org.slf4j"                  %  "slf4j-simple"              % V.slf4j
+    val log4jOverSlf4j       = "org.slf4j"                  %  "log4j-over-slf4j"          % V.slf4j
     val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"     % V.kinesisClient
     val kinesisConnector     = "com.amazonaws"              %  "amazon-kinesis-connectors" % V.kinesisConnector
     val elasticsearch        = "org.elasticsearch"          %  "elasticsearch"             % V.elasticsearch
