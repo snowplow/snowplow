@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2016 Snowplow Analytics Ltd.
+ * Copyright (c) 2016 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -17,24 +17,13 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch.sinks
+package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
+package clients
 
 /**
- * Stdout/err sink
+ * Common interface for Elasticsearch clients
  */
-class StdouterrSink extends ISink {
-
-  /**
-   * Writes a string to stdout or stderr
-   *
-   * @param output The string to write
-   * @param key Unused parameter which exists to implement ISink
-   * @param good Whether to write to stdout or stderr
-   */
-  def store(output: String, key: Option[String], good: Boolean) =
-    if (good) {
-      println(output) // To stdout
-    } else {
-      Console.err.println(output) // To stderr
-    }
+trait IElasticsearchSender {
+  def sendToElasticsearch(records: List[EmitterInput]): List[EmitterInput]
+  def close(): Unit
 }

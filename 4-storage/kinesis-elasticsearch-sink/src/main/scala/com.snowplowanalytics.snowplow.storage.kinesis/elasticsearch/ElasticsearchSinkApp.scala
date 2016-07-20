@@ -1,4 +1,4 @@
- /*
+/**
  * Copyright (c) 2014-2016 Snowplow Analytics Ltd.
  * All rights reserved.
  *
@@ -16,6 +16,7 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
+
 package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
 
 // Java
@@ -53,13 +54,13 @@ import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
 
 // This project
 import sinks._
+import clients._
 
 // Whether the input stream contains enriched events or bad events
 object StreamType extends Enumeration {
   type StreamType = Value
   val Good, Bad = Value
 }
-
 
 /**
  * Main entry point for the Elasticsearch sink
@@ -99,9 +100,13 @@ object ElasticsearchSinkApp extends App {
     case "bad" => StreamType.Bad
     case _ => throw new RuntimeException("\"stream-type\" must be set to \"good\" or \"bad\"")
   }
+
   val elasticsearch = configValue.getConfig("elasticsearch")
-  val documentIndex = elasticsearch.getString("index")
-  val documentType = elasticsearch.getString("type")
+  val esClient = elasticsearch.getConfig("client")
+  val esCluster = elasticsearch.getConfig("cluster")
+  val clientType = esClient.getString("type")
+  val documentIndex = esCluster.getString("index")
+  val documentType = esCluster.getString("type")
 
   val tracker = if (configValue.hasPath("monitoring.snowplow")) {
     SnowplowTracking.initializeTracker(configValue.getConfig("monitoring.snowplow")).some
@@ -109,12 +114,14 @@ object ElasticsearchSinkApp extends App {
     None
   }
 
-  val maxConnectionTime = configValue.getConfig("elasticsearch").getLong("max-timeout")
+  val maxConnectionTime = configValue.getConfig("elasticsearch.client").getLong("max-timeout")
   val finalConfig = convertConfig(configValue)
+
   val goodSink = configValue.getString("sink.good") match {
     case "stdout" => Some(new StdouterrSink)
     case "elasticsearch" => None
   }
+
   val badSink = configValue.getString("sink.bad") match {
     case "stderr" => new StdouterrSink
     case "none" => new NullSink
@@ -133,7 +140,7 @@ object ElasticsearchSinkApp extends App {
 
     // Read records from Kinesis
     case "kinesis" => {
-      new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, finalConfig, goodSink, badSink, tracker, maxConnectionTime).success
+      new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, finalConfig, goodSink, badSink, tracker, maxConnectionTime, clientType).success
     }
 
     // Run locally, reading from stdin and sending events to stdout / stderr rather than Elasticsearch / Kinesis
@@ -143,7 +150,15 @@ object ElasticsearchSinkApp extends App {
         case StreamType.Good => new SnowplowElasticsearchTransformer(documentIndex, documentType)
         case StreamType.Bad => new BadEventTransformer(documentIndex, documentType)
       }
-      lazy val elasticsearchSender = new ElasticsearchSender(finalConfig, None, maxConnectionTime)
+
+      lazy val elasticsearchSender: ElasticsearchSender = (
+        if (clientType == "http") {
+          new ElasticsearchSenderHTTP(finalConfig, None, maxConnectionTime)
+        } else {
+          new ElasticsearchSenderTransport(finalConfig, None, maxConnectionTime)
+        }
+      )
+
       def run = for (ln <- scala.io.Source.stdin.getLines) {
         val emitterInput = transformer.consumeLine(ln)
         emitterInput._2.bimap(
@@ -155,6 +170,7 @@ object ElasticsearchSinkApp extends App {
         )
       }
     }.success
+
     case _ => "Source must be set to 'stdin' or 'kinesis'".fail
   }
 
@@ -185,8 +201,11 @@ object ElasticsearchSinkApp extends App {
     val secretKey = aws.getString("secret-key")
 
     val elasticsearch = connector.getConfig("elasticsearch")
-    val elasticsearchEndpoint = elasticsearch.getString("endpoint")
-    val clusterName = elasticsearch.getString("cluster-name")
+    val esClient = elasticsearch.getConfig("client")
+    val esCluster = elasticsearch.getConfig("cluster")
+    val elasticsearchEndpoint = esClient.getString("endpoint")
+    val elasticsearchPort = esClient.getString("port")
+    val clusterName = esCluster.getString("name")
 
     val kinesis = connector.getConfig("kinesis")
     val kinesisIn = kinesis.getConfig("in")
@@ -219,6 +238,7 @@ object ElasticsearchSinkApp extends App {
 
     props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_ENDPOINT, elasticsearchEndpoint)
     props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_CLUSTER_NAME, clusterName)
+    props.setProperty(KinesisConnectorConfiguration.PROP_ELASTICSEARCH_PORT, elasticsearchPort)
 
     props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_BYTE_SIZE_LIMIT, byteLimit)
     props.setProperty(KinesisConnectorConfiguration.PROP_BUFFER_RECORD_COUNT_LIMIT, recordLimit)
@@ -229,5 +249,4 @@ object ElasticsearchSinkApp extends App {
 
     new KinesisConnectorConfiguration(props, CredentialsLookup.getCredentialsProvider(accessKey, secretKey))
   }
-
 }
