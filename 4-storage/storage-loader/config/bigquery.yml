@@ -1,6 +1,6 @@
 aws:
-  access_key_id: AKIAIGQKZ4AJZBM7PHBQ
-  secret_access_key: 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
+  access_key_id: 
+  secret_access_key: 
 s3:
   region: us-west-2 # S3 bucket region
   buckets:
