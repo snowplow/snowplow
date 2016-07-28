@@ -73,10 +73,10 @@ object JobSpecHelpers {
       .map(_.getName)
 
   /**
-   * Base64-urlsafe encoded version of this standard
-   * Iglu configuration.
+   * Base64-encoded urlsafe resolver config used by default
+   * if `HADOOP_ENRICH_RESOLVER_CONFIG` env var is not set
    */
-  private val IgluConfig = {
+  private val IgluCentralConfig = {
     val encoder = new Base64(true) // true means "url safe"
     new String(encoder.encode(
        """|{
@@ -99,6 +99,20 @@ object JobSpecHelpers {
           |}""".stripMargin.replaceAll("[\n\r]","").getBytes
       )
     )
+  }
+
+  /**
+   * Try to take resolver configuration from environment variable
+   * `HADOOP_ENRICH_RESOLVER_CONFIG` (must be base64-encoded).
+   * If not available - use default config with only Iglu Central
+   */
+  private val IgluConfig = {
+    val resolverEnvVar = for {
+      config <- sys.env.get("HADOOP_ENRICH_RESOLVER_CONFIG")
+      if config.nonEmpty
+    } yield config
+
+    resolverEnvVar.getOrElse(IgluCentralConfig)
   }
 
   private val oerApiKey = sys.env.get("OER_KEY").getOrElse("-")
