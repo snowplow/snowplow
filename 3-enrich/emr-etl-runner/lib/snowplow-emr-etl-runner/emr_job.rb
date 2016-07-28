@@ -166,9 +166,9 @@ module Snowplow
         # Prepare a bootstrap action based on the AMI version
         standard_assets_bucket = self.class.get_hosted_assets_bucket(STANDARD_HOSTED_ASSETS, config[:aws][:emr][:region])
         bootstrap_jar_location = if @legacy
-          "#{standard_assets_bucket}/common/emr/snowplow-ami3-bootstrap-0.1.0.sh"
+          "#{standard_assets_bucket}common/emr/snowplow-ami3-bootstrap-0.1.0.sh"
         else
-          "#{standard_assets_bucket}/common/emr/snowplow-ami4-bootstrap-0.2.0.sh"
+          "#{standard_assets_bucket}common/emr/snowplow-ami4-bootstrap-0.2.0.sh"
         end
         cc_version = get_cc_version(config[:enrich][:versions][:hadoop_enrich])
         @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_jar_location, cc_version))
