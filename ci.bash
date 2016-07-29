@@ -12,7 +12,7 @@ root=$(pwd)
 # Next two arrays MUST match up: number of elements and order
 declare -a kinesis_app_paths=( "2-collectors/scala-stream-collector" "3-enrich/stream-enrich" "4-storage/kinesis-elasticsearch-sink" )
 # TODO: version numbers shouldn't be hard-coded
-declare -a kinesis_fatjars=( "snowplow-stream-collector-0.7.0" "snowplow-stream-enrich-0.8.1" "snowplow-elasticsearch-sink-0.6.0" )
+declare -a kinesis_fatjars=( "snowplow-stream-collector-0.7.0" "snowplow-stream-enrich-0.8.1" "snowplow-elasticsearch-sink-0.7.0-rc1" )
 
 # Similar to Perl die
 function die() {
@@ -74,66 +74,84 @@ function create_bintray_package() {
 #
 # Parameters:
 # 1. artifact_version
-# 2. out_artifact_name (out parameter)
-# 3. out_artifact_[atj] (out parameter)
+# 2. out_artifact_names (out parameter)
+# 3. out_artifact_paths (out parameter)
 function build_artifact() {
     [ "$#" -eq 3 ] || die "3 arguments required, $# provided"
     local __artifact_version=$1
-    local __out_artifact_name=$2
-    local __out_artifact_path=$3
+    local __out_artifact_names=$2
+    local __out_artifact_paths=$3
 
-    artifact_root="${bintray_artifact_prefix}${__artifact_version}"
-    artifact_name=`echo ${artifact_root}.zip|tr '-' '_'`
     echo "==========================================="
-    echo "BUILDING ARTIFACT ${artifact_name}"
+    echo "BUILDING ARTIFACTS"
     echo "-------------------------------------------"
 
-    artifact_folder=./${dist_path}/${artifact_root}
-    mkdir -p ${artifact_folder}
+    artifact_names=()
+    artifact_paths=()
 
     for i in "${!kinesis_app_paths[@]}"
         do 
             :
+            # Create artifact folder
+            artifact_root="${kinesis_fatjars[$i]}"
+            artifact_name=`echo ${kinesis_fatjars[$i]}.zip|tr '-' '_'`
+            artifact_folder=./${dist_path}/${artifact_root}
+            mkdir -p ${artifact_folder}
+
+            # Copy artifact to folder
             fatjar_path="./${kinesis_app_paths[$i]}/target/scala-${scala_version}/${kinesis_fatjars[$i]}"
             [ -f "${fatjar_path}" ] || die "Cannot find required fatjar: ${fatjar_path}. Did you forget to update fatjar versions?"
             cp ${fatjar_path} ${artifact_folder}
+
+            # Zip artifact
+            artifact_path=./${dist_path}/${artifact_name}
+            zip -rj ${artifact_path} ${artifact_folder}
+
+            artifact_names+=($artifact_name)
+            artifact_paths+=($artifact_path)
         done
 
-    artifact_path=./${dist_path}/${artifact_name}
-    zip -rj ${artifact_path} ${artifact_folder}
-    eval ${__out_artifact_name}=${artifact_name}
-    eval ${__out_artifact_path}=${artifact_path}
+    eval ${__out_artifact_names}=${artifact_names}
+    eval ${__out_artifact_paths}=${artifact_paths}
 }
 
 # Uploads our artifact to BinTray
 #
 # Parameters:
-# 1. artifact_name
-# 2. artifact_path
+# 1. artifact_names
+# 2. artifact_paths
 # 3. out_error (out parameter)
-function upload_artifact_to_bintray() {
+function upload_artifacts_to_bintray() {
     [ "$#" -eq 3 ] || die "3 arguments required, $# provided"
-    local __artifact_name=$1
-    local __artifact_path=$2
+    local __artifact_names=$1[@]
+    local __artifact_paths=$2[@]
     local __out_error=$3
 
+    artifact_names=("${!__artifact_names}")
+    artifact_paths=("${!__artifact_paths}")
+
     echo "==============================="
-    echo "UPLOADING ARTIFACT TO BINTRAY*"
+    echo "UPLOADING ARTIFACTS TO BINTRAY*"
     echo "* 5-10 minutes"
     echo "-------------------------------"
 
-    http_status=`curl -T ${__artifact_path} \
-        "https://api.bintray.com/content/${bintray_repository}/${bintray_package}/${version}/${__artifact_name}?publish=1&override=1" \
-        -H "Transfer-Encoding: chunked" \
-        --write-out "%{http_code}\n" --silent --output /dev/null \
-        -u${bintray_user}:${bintray_api_key}`
+    for i in "${!artifact_names[@]}"
+        do
+            :
+            http_status=`curl -T ${artifact_paths[$i]} \
+                "https://api.bintray.com/content/${bintray_repository}/${bintray_package}/${version}/${artifact_names[$i]}?publish=1&override=1" \
+                -H "Transfer-Encoding: chunked" \
+                --write-out "%{http_code}\n" --silent --output /dev/null \
+                -u${bintray_user}:${bintray_api_key}`
 
-    http_status_class=${http_status:0:1}
-    ok_classes=("2" "3")
+            http_status_class=${http_status:0:1}
+            ok_classes=("2" "3")
 
-    if [[ ! ${ok_classes[*]} =~ ${http_status_class} ]] ; then
-        eval ${__out_error}="'BinTray API response ${http_status} is not in 2xx or 3xx range'"
-    fi
+            if [[ ! ${ok_classes[*]} =~ ${http_status_class} ]] ; then
+                eval ${__out_error}="'BinTray API response ${http_status} is not in 2xx or 3xx range'"
+                break
+            fi
+        done
 }
 
 
@@ -148,9 +166,9 @@ assemble_fatjars
 create_bintray_package "${version}" "error"
 [ "${error}" ] && die "Error creating package: ${error}"
 
-artifact_name="" && artifact_path="" && build_artifact "${version}" "artifact_name" "artifact_path"
+artifact_names=() && artifact_paths=() && build_artifact "${version}" "artifact_names" "artifact_paths"
 
-upload_artifact_to_bintray "${artifact_name}" "${artifact_path}" "error"
+upload_artifacts_to_bintray "artifact_names" "artifact_paths" "error"
 if [ "${error}" != "" ]; then
     die "Error uploading package: ${error}"
 fi
