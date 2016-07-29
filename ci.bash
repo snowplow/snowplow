@@ -123,20 +123,23 @@ function build_artifact() {
 # 3. out_error (out parameter)
 function upload_artifacts_to_bintray() {
     [ "$#" -eq 3 ] || die "3 arguments required, $# provided"
-    local __artifact_names=$1
-    local __artifact_paths=$2
+    local __artifact_names=$1[@]
+    local __artifact_paths=$2[@]
     local __out_error=$3
+
+    artifact_names=("${!__artifact_names}")
+    artifact_paths=("${!__artifact_paths}")
 
     echo "==============================="
     echo "UPLOADING ARTIFACTS TO BINTRAY*"
     echo "* 5-10 minutes"
     echo "-------------------------------"
 
-    for i in "${!__artifact_names[@]}"
+    for i in "${!artifact_names[@]}"
         do
             :
-            http_status=`curl -T ${__artifact_paths[$i]} \
-                "https://api.bintray.com/content/${bintray_repository}/${bintray_package}/${version}/${__artifact_names[$i]}?publish=1&override=1" \
+            http_status=`curl -T ${artifact_paths[$i]} \
+                "https://api.bintray.com/content/${bintray_repository}/${bintray_package}/${version}/${artifact_names[$i]}?publish=1&override=1" \
                 -H "Transfer-Encoding: chunked" \
                 --write-out "%{http_code}\n" --silent --output /dev/null \
                 -u${bintray_user}:${bintray_api_key}`
@@ -165,7 +168,7 @@ create_bintray_package "${version}" "error"
 
 artifact_names=() && artifact_paths=() && build_artifact "${version}" "artifact_names" "artifact_paths"
 
-upload_artifacts_to_bintray "${artifact_names}" "${artifact_paths}" "error"
+upload_artifacts_to_bintray "artifact_names" "artifact_paths" "error"
 if [ "${error}" != "" ]; then
     die "Error uploading package: ${error}"
 fi
