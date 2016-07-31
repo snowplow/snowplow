@@ -75,7 +75,7 @@ module Snowplow
         logger.debug "Initializing EMR jobflow"
 
         # Configuration
-        custom_assets_bucket = self.class.get_hosted_assets_bucket(config[:aws][:s3][:buckets][:assets][0...-1], config[:aws][:emr][:region])
+        custom_assets_bucket = self.class.get_hosted_assets_bucket(config[:aws][:s3][:buckets][:assets], config[:aws][:emr][:region])
         assets = self.class.get_assets(
           custom_assets_bucket,
           config[:enrich][:versions][:hadoop_enrich],
@@ -166,9 +166,9 @@ module Snowplow
         # Prepare a bootstrap action based on the AMI version
         standard_assets_bucket = self.class.get_hosted_assets_bucket(STANDARD_HOSTED_ASSETS, config[:aws][:emr][:region])
         bootstrap_jar_location = if @legacy
-          "#{standard_assets_bucket}/common/emr/snowplow-ami3-bootstrap-0.1.0.sh"
+          "#{standard_assets_bucket}common/emr/snowplow-ami3-bootstrap-0.1.0.sh"
         else
-          "#{standard_assets_bucket}/common/emr/snowplow-ami4-bootstrap-0.2.0.sh"
+          "#{standard_assets_bucket}common/emr/snowplow-ami4-bootstrap-0.2.0.sh"
         end
         cc_version = get_cc_version(config[:enrich][:versions][:hadoop_enrich])
         @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_jar_location, cc_version))
@@ -707,17 +707,18 @@ module Snowplow
       # +region+:: the AWS region to source hosted assets from
       Contract String, String => String
       def self.get_hosted_assets_bucket(bucket, region)
+        bucket = bucket.chomp('/')
         suffix = if !bucket.eql? STANDARD_HOSTED_ASSETS or region.eql? "eu-west-1" then "" else "-#{region}" end
-        "#{bucket}#{suffix}"
+        "#{bucket}#{suffix}/"
       end
 
       Contract String, String, String, String => AssetsHash
       def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version, hadoop_elasticsearch_version)
         enrich_path_middle = hadoop_enrich_version[0] == '0' ? 'hadoop-etl/snowplow-hadoop-etl' : 'scala-hadoop-enrich/snowplow-hadoop-enrich'
         {
-          :enrich   => "#{assets_bucket}/3-enrich/#{enrich_path_middle}-#{hadoop_enrich_version}.jar",
-          :shred    => "#{assets_bucket}/3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
-          :elasticsearch => "#{assets_bucket}/4-storage/hadoop-elasticsearch-sink/hadoop-elasticsearch-sink-#{hadoop_elasticsearch_version}.jar",
+          :enrich   => "#{assets_bucket}3-enrich/#{enrich_path_middle}-#{hadoop_enrich_version}.jar",
+          :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
+          :elasticsearch => "#{assets_bucket}4-storage/hadoop-elasticsearch-sink/hadoop-elasticsearch-sink-#{hadoop_elasticsearch_version}.jar",
         }
       end
 
