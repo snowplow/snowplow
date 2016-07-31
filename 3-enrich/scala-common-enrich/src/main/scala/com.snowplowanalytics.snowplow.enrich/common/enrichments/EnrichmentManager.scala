@@ -483,8 +483,8 @@ object EnrichmentManager {
      case Success(Some(context)) => context
     } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContext ++ httpHeaderExtractorContext
 
-    // Derive some contexts with custom API Request enrichment
-    val apiRequestContexts = registry.getApiRequestEnrichment match {
+    // Derive some contexts with custom SQL Query enrichment
+    val sqlQueryContexts = registry.getSqlQueryEnrichment match {
       case Some(enrichment) => (customContexts, unstructEvent) match {
         case (Success(cctx), Success(ue)) =>
           enrichment.lookup(event, preparedDerivedContexts, cctx, ue)
@@ -493,10 +493,23 @@ object EnrichmentManager {
       case None => Nil.success
     }
 
-    // Assemble prepared derived contexts with fetched via API Request
-    val derived_contexts = apiRequestContexts.getOrElse(Nil) ++ preparedDerivedContexts
+    // Derive some contexts with custom API Request enrichment
+    val apiRequestContexts = registry.getApiRequestEnrichment match {
+      case Some(enrichment) => (customContexts, unstructEvent, sqlQueryContexts) match {
+        case (Success(cctx), Success(ue), Success(sctx)) =>
+          enrichment.lookup(event, preparedDerivedContexts ++ sctx, cctx, ue)
+        case _ => Nil.success // Skip. Unstruct event or custom context corrupted (event enrichment will fail anyway)
+      }
+      case None => Nil.success
+    }
 
-    if (derived_contexts.size > 0) {
+    // Assemble prepared derived contexts with fetched via API Request
+    val derived_contexts =
+      apiRequestContexts.getOrElse(Nil) ++
+      sqlQueryContexts.getOrElse(Nil) ++
+      preparedDerivedContexts
+
+    if (derived_contexts.nonEmpty) {
       event.derived_contexts = ME.formatDerivedContexts(derived_contexts)
     }
 
@@ -510,21 +523,22 @@ object EnrichmentManager {
       uaParser.toValidationNel                |@|
       collectorVersionSet.toValidationNel     |@|
       pageUri.toValidationNel                 |@|
+      crossDomain.toValidationNel             |@|
       geoLocation.toValidationNel             |@|
       refererUri.toValidationNel) {
-      (_,_,_,_,_,_,_,_,_) => ()
+      (_,_,_,_,_,_,_,_,_,_) => ()
     }
     val second = 
       (transform                              |@|
       currency                                |@|
       secondPassTransform                     |@|
       pageQsMap.toValidationNel               |@|
-      crossDomain.toValidationNel             |@|
       jsScript.toValidationNel                |@|
       campaign                                |@|
       customContexts                          |@|
       unstructEvent                           |@|
       apiRequestContexts                      |@|
+      sqlQueryContexts                        |@|
       extractSchema.toValidationNel           |@|
       weatherContext.toValidationNel) {
       (_,_,_,_,_,_,_,_,_,_,_,_) => ()

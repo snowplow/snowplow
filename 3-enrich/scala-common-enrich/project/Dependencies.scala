@@ -41,6 +41,8 @@ object Dependencies {
     val jsonValidator    = "2.2.3"
     val mavenArtifact    = "3.2.2"
     val uaParser         = "1.3.0"
+    val postgresDriver   = "9.4.1208.jre7"
+    val mysqlConnector   = "5.1.39"
     // Scala
     val scalaz7          = "7.0.0"
     val snowplowRawEvent = "0.1.0"
@@ -78,6 +80,8 @@ object Dependencies {
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"     % V.jsonValidator    
     val mavenArtifact    = "org.apache.maven"           %  "maven-artifact"            % V.mavenArtifact
     val uaParser         = "org.clojars.timewarrior"    %  "ua-parser"                 % V.uaParser
+    val postgresDriver   = "org.postgresql"             %  "postgresql"                % V.postgresDriver
+    val mysqlConnector   = "mysql"                      %  "mysql-connector-java"      % V.mysqlConnector
 
     // Scala
     val scalaForex       = "com.snowplowanalytics"      %% "scala-forex"               % V.scalaForex
@@ -104,6 +108,6 @@ object Dependencies {
     val scalaCheck       = "org.scalacheck"             %% "scalacheck"                % V.scalaCheck     % "test"
     val scaldingArgs     = "com.twitter"                %% "scalding-args"             % V.scaldingArgs   % "test"
     val mockito          = "org.mockito"                % "mockito-core"               % V.mockito        % "test"
-
   }
+
 }
