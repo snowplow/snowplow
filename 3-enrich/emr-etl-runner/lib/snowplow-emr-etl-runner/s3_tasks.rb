@@ -170,14 +170,14 @@ module Snowplow
         end
       end
 
-      # Moves (archives) the processed CloudFront logs to an archive bucket.
+      # Moves (archives) the processed logs to an archive bucket.
       # Prevents the same log files from being processed again.
       #
       # Parameters:
       # +config+:: the hash of configuration options
       Contract ConfigHash => nil
       def self.archive_logs(config)
-        Monitoring::Logging::logger.debug 'Archiving CloudFront logs...'
+        Monitoring::Logging::logger.debug 'Archiving logs...'
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:aws][:s3][:region],
