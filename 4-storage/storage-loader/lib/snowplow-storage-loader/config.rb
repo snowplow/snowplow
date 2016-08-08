@@ -63,14 +63,14 @@ module Snowplow
           end
 
           if @@processing_required_targets.include?(t[:type])
-            unless File.directory?(t[:directory][:processing])
-              puts "Download folder '#{t[:directory][:processing]}' not found"
-              puts "Creating '#{t[:directory][:processing]}' directory"
-              Dir.mkdir(t[:directory][:processing])
+            unless File.directory?(t[:processing_dir])
+              puts "Download folder '#{t[:processing_dir]}' not found"
+              puts "Creating '#{t[:processing_dir]}' directory"
+              Dir.mkdir(t[:processing_dir])
             end
         
-            if !(Dir.entries(t[:directory][:processing]) - %w{ . .. }).empty?
-              # raise ConfigError, "Processing folder '#{t[:directory][:processing]}' is not empty"
+            if !(Dir.entries(t[:processing_dir]) - %w{ . .. }).empty?
+              raise ConfigError, "Processing folder '#{t[:processing_dir]}' is not empty"
             end
           end
         end
@@ -87,7 +87,7 @@ module Snowplow
           # ...and it is empty
           unless config[:skip].include?("download")
             if !(Dir.entries(config[:download][:folder]) - %w{ . .. }).empty?
-              # raise ConfigError, "Download folder '#{config[:download][:folder]}' is not empty"
+              raise ConfigError, "Download folder '#{config[:download][:folder]}' is not empty"
             end
           end
         end
