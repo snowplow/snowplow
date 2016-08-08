@@ -17,24 +17,24 @@
  * governing permissions and limitations there under.
  */
 
-package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch.sinks
+package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
+package clients
 
 /**
- * Stdout/err sink
+ * Abstract class for Elasticsearch clients
  */
-class StdouterrSink extends ISink {
+abstract class ElasticsearchSender extends IElasticsearchSender {
 
   /**
-   * Writes a string to stdout or stderr
+   * Period between retrying sending events to Elasticsearch
    *
-   * @param output The string to write
-   * @param key Unused parameter which exists to implement ISink
-   * @param good Whether to write to stdout or stderr
+   * @param sleepTime Length of time between tries
    */
-  def store(output: String, key: Option[String], good: Boolean) =
-    if (good) {
-      println(output) // To stdout
-    } else {
-      Console.err.println(output) // To stderr
+  protected def sleep(sleepTime: Long): Unit = {
+    try {
+      Thread.sleep(sleepTime)
+    } catch {
+      case e: InterruptedException => ()
     }
+  }
 }
