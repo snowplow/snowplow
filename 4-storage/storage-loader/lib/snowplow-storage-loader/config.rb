@@ -70,7 +70,7 @@ module Snowplow
             end
         
             if !(Dir.entries(t[:directory][:processing]) - %w{ . .. }).empty?
-              raise ConfigError, "Processing folder '#{t[:directory][:processing]}' is not empty"
+              # raise ConfigError, "Processing folder '#{t[:directory][:processing]}' is not empty"
             end
           end
         end

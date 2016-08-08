@@ -1,18 +1,3 @@
-# Copyright (c) 2013 Snowplow Analytics Ltd. All rights reserved.
-#
-# This program is licensed to you under the Apache License Version 2.0,
-# and you may not use this file except in compliance with the Apache License Version 2.0.
-# You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
-#
-# Unless required by applicable law or agreed to in writing,
-# software distributed under the Apache License Version 2.0 is distributed on an
-# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
-
-# Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2013 Snowplow Analytics Ltd
-# License::   Apache License Version 2.0
-
 require 'pg'
 require 'zlib'
 require 'csv'
@@ -20,7 +5,7 @@ require 'tzinfo'
 require 'date'
 require 'json'
 
-# Ruby module to support the load of Snowplow events into PostgreSQL.
+# Ruby module to support the load of Snowplow events into BigQuery.
 module Snowplow
   module StorageLoader
     module BigQueryLoader
@@ -28,16 +13,16 @@ module Snowplow
       # Constants for the load process
       EVENT_FILES = "part-*"
       EVENT_FIELD_SEPARATOR = "\t"
-      NULL_STRING = ""
       FIELD_NAMES = %w(app_id platform etl_tstamp collector_tstamp dvce_tstamp event event_id txn_id name_tracker v_tracker v_collector v_etl user_id user_ipaddress user_fingerprint domain_userid domain_sessionidx network_userid geo_country geo_region geo_city geo_zipcode geo_latitude geo_longitude geo_region_name ip_isp ip_organization ip_domain ip_netspeed page_url page_title page_referrer page_urlscheme page_urlhost page_urlport page_urlpath page_urlquery page_urlfragment refr_urlscheme refr_urlhost refr_urlport refr_urlpath refr_urlquery refr_urlfragment refr_medium refr_source refr_term mkt_medium mkt_source mkt_term mkt_content mkt_campaign contexts se_category se_action se_label se_property se_value unstruct_event tr_orderid tr_affiliation tr_total tr_tax tr_shipping tr_city tr_state tr_country ti_orderid ti_sku ti_name ti_category ti_price ti_quantity pp_xoffset_min pp_xoffset_max pp_yoffset_min pp_yoffset_max useragent br_name br_family br_version br_type br_renderengine br_lang br_features_pdf br_features_flash br_features_java br_features_director br_features_quicktime br_features_realplayer br_features_windowsmedia br_features_gears br_features_silverlight br_cookies br_colordepth br_viewwidth br_viewheight os_name os_family os_manufacturer os_timezone dvce_type dvce_ismobile dvce_screenwidth dvce_screenheight doc_charset doc_width doc_height tr_currency tr_total_base tr_tax_base tr_shipping_base ti_currency ti_price_base base_currency geo_timezone mkt_clickid mkt_network etl_tags dvce_sent_tstamp refr_domain_useri refr_dvce_tstamp derived_contexts domain_sessionid derived_tstamp event_vendor event_name event_format event_version event_fingerprint true_tstamp)
+      BQ_CMD = 'bq load --ignore_unknown_values --max_bad_records=%d %s --source_format=NEWLINE_DELIMITED_JSON --schema=%s %s.%s %s'
 
-      # Loads the Snowplow event files into Postgres.
+      # Process Snowplow enriched files into daily partition file.
       #
       # Parameters:
       # +events_dir+:: the directory holding the event files to load 
       # +target+:: the configuration options for this target
-      def load_events(events_dir, target)
-        puts "Loading Snowplow events into #{target[:name]} (BigQuery)..."
+      def process_events(events_dir, target)
+        puts "Processing Snowplow events into daily tables"
         event_files = get_event_files(events_dir)
 
         line_count = 0
@@ -74,19 +59,15 @@ module Snowplow
             out = {}
             out["_unstruct_event"] = {}
 
-            # if row["unstruct_event"].to_s.include?("iglu:com.snowplowanalytics.snowplow")
-            #   next
-            # end
-
             row.each do |column, value|
-              if not value
-                 out[column] = "{}"
-                 next
-              end
-
               if column != "unstruct_event"
                 out[column] = value
                 next
+              end
+
+              if not value
+                 out[column] = "{}"
+                 next
               end
 
               val_obj = JSON.load(value)
@@ -104,79 +85,51 @@ module Snowplow
             end
 
             if not out_files.key?(local_date)
-              out_file = "%s/%s.gzip" % [target[:directory][:processing], local_date]
+              out_file = File.join(target[:directory][:processing], "#{local_date}.gzip")
               out_files[local_date] = Zlib::GzipWriter.new(File.open(out_file, 'a+'))
             end
 
-            out_files[local_date].write(JSON.dump(out) + '\n')
+            out_files[local_date].puts(JSON.dump(out))
           end
           csv.close()
         end
 
         out_files.each do |key, out_file|
           out_file.close()
-        end 
-      end
-      module_function :load_events
-
-      # Converts a set of queries into a
-      # single Redshift read-write
-      # transaction.
-      #
-      # Parameters:
-      # +target+:: the configuration options for this target
-      # +queries+:: the Redshift queries to execute sequentially
-      #
-      # Returns either an empty list on success, or on failure
-      # a list of the form [query, err_class, err_message]      
-      def execute_transaction(target, queries)
-
-        transaction = (
-          [ "BEGIN;" ] +
-          
-          queries +
-          
-          [ "COMMIT;" ]
-        ).join("\n")
-
-        execute_queries(target, [ transaction ])
-      end
-      module_function :execute_transaction
-
-      # Execute a chain of SQL commands, stopping as soon as
-      # an error is encountered. At that point, it returns a
-      # 'tuple' of the error class and message and the command
-      # that caused the error
-      #
-      # Parameters:
-      # +target+:: the configuration options for this target
-      # +queries+:: the Redshift queries to execute sequentially
-      #
-      # Returns either an empty list on success, or on failure
-      # a list of the form [query, err_class, err_message]
-      def execute_queries(target, queries)
-
-        conn = PG.connect({:host     => target[:host],
-                           :dbname   => target[:database],
-                           :port     => target[:port],
-                           :user     => target[:username],
-                           :password => target[:password]
-                          })
-
-        status = []
-        queries.each do |q|
-          begin
-            conn.exec("#{q}")
-          rescue PG::Error => err
-            status = [q, err.class, err.message]
-            break
-          end
         end
 
-        conn.finish
-        return status
+        puts "Line count #{line_count}"
+        puts "Day stats #{day_stats}"
+
       end
-      module_function :execute_queries
+      module_function :process_events
+
+      # Loads the Snowplow event files into BigQuery.
+      #
+      # Parameters:
+      # +target+:: the configuration options for this target
+      def load_events(target)
+        puts "Loading Snowplow events into #{target[:name]} (BigQuery)..."
+
+        table_files = Dir[File.join(target[:directory][:processing], '*.gzip')].select { |f| File.file?(f) }
+
+        replace = ''
+        if target[:replace]
+          replace = '--replace'
+        end
+
+        table_files.each do |file|
+          table = target[:table_prefix] + File.basename(file, ".gzip").gsub('-', '')
+
+          cmd = BQ_CMD % [target[:maxerror], replace, target[:schema], target[:dataset], table, file]
+          puts cmd
+
+          fd = IO.popen(cmd)
+          puts(fd.readlines)
+          
+        end
+      end
+      module_function :load_events
 
       private
 
