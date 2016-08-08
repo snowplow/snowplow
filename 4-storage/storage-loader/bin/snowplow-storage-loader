@@ -33,7 +33,7 @@ begin
   # Download files if required
   unless config[:skip].include?('download')
     if config[:download_required]
-      # loader::S3Tasks.download_events(config)
+      loader::S3Tasks.download_events(config)
     end
   end
 
