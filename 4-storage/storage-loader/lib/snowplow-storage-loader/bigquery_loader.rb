@@ -43,7 +43,7 @@ module Snowplow
           csv.each do |row|
             line_count += 1
             collector_tstamp = row["collector_tstamp"]
-            tz = TZInfo::Timezone.get('Asia/Kolkata')
+            tz = TZInfo::Timezone.get(target[:timezone])
 
             utc = DateTime.strptime(collector_tstamp, '%Y-%m-%d %H:%M:%S')
             local_time = tz.utc_to_local(utc)
