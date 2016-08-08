@@ -24,3 +24,11 @@
     :password: ADD HERE 
     :maxerror: 1 # Stop loading on first error, or increase to permit more load errors
     :comprows: 200000 # Default for a 1 XL node cluster. Not used unless --include compupdate specified
+
+  - :name: "Moonshot"
+    :type: bigquery
+    :dataset: bd_sp_click_stream # Name of dataset
+    :table_prefix: bd_sp_click_web_events_
+    :maxerror: 1000 # Stop loading on first error, or increase to permit more load errors
+    :replace: false
+    

@@ -27,7 +27,9 @@ module Snowplow
       # TODO: would be nice to move this to using Kwalify
       # TODO: would be nice to support JSON as well as YAML
 
-      @@storage_targets = Set.new(%w(redshift postgres))
+      @@storage_targets = Set.new(%w(redshift postgres bigquery))
+      @@download_required_targets = Set.new(%w(postgres bigquery))
+      @@processing_required_targets = Set.new(%w(bigquery))
 
       # Return the configuration loaded from the supplied YAML file, plus
       # the additional constants above.
@@ -50,27 +52,42 @@ module Snowplow
           config[:download][:folder] = Sluice::Storage::trail_slash(config[:download][:folder])
         end
 
-        config[:targets].each { |t|
+        config[:targets].each do |t|
           # Check we recognise the storage target 
           unless @@storage_targets.include?(t[:type]) 
             raise ConfigError, "Storage type '#{t[:type]}' not supported"
           end
-        }
-            
-        # Determine whether we need to download events
-        config[:download_required] = config[:targets].count { |t| t[:type] == "postgres" } > 0
+
+          if @@download_required_targets.include?(t[:type])
+            config[:download_required] = true
+          end
+
+          if @@processing_required_targets.include?(t[:type])
+            unless File.directory?(t[:directory][:processing])
+              puts "Download folder '#{t[:directory][:processing]}' not found"
+              puts "Creating '#{t[:directory][:processing]}' directory"
+              Dir.mkdir(t[:directory][:processing])
+            end
+        
+            if !(Dir.entries(t[:directory][:processing]) - %w{ . .. }).empty?
+              raise ConfigError, "Processing folder '#{t[:directory][:processing]}' is not empty"
+            end
+          end
+        end
 
         # If Infobright is the target, check that the download folder exists and is empty
         if config[:download_required]
           # Check that the download folder exists...
           unless File.directory?(config[:download][:folder])
-            raise ConfigError, "Download folder '#{config[:download][:folder]}' not found"
+            puts "Download folder '#{config[:download][:folder]}' not found"
+            puts "Creating '#{config[:download][:folder]}' directory"
+            Dir.mkdir(config[:download][:folder])
           end
         
           # ...and it is empty
           unless config[:skip].include?("download")
             if !(Dir.entries(config[:download][:folder]) - %w{ . .. }).empty?
-              raise ConfigError, "Download folder '#{config[:download][:folder]}' is not empty"
+              # raise ConfigError, "Download folder '#{config[:download][:folder]}' is not empty"
             end
           end
         end

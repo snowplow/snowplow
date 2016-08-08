@@ -12,9 +12,9 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Update these for your environment
-rvm_path=/path/to/.rvm # Typically in the $HOME of the user who installed RVM
-LOADER_PATH=/path/to/snowplow/4-storage/snowplow-storage-loader
-LOADER_CONFIG=/path/to/your-loader-config.yml
+rvm_path=/home/vagrant/.rvm # Typically in the $HOME of the user who installed RVM
+LOADER_PATH=/vagrant/4-storage/storage-loader
+LOADER_CONFIG=/vagrant/config/config.yml
 
 # Load the RVM environment
 export PATH=$PATH:${rvm_path}/bin

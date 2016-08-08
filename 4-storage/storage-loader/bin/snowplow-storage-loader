@@ -33,12 +33,12 @@ begin
   # Download files if required
   unless config[:skip].include?('download')
     if config[:download_required]
-      loader::S3Tasks.download_events(config)
+      # loader::S3Tasks.download_events(config)
     end
   end
 
   # If we are not skipping the load, use the appropriate
-  # loader for Redshift or Postgres
+  # loader for Redshift or Postgres or BigQuery
   unless config[:skip].include?('load')
 
     # Loop through all targets
@@ -48,6 +48,9 @@ begin
           loader::RedshiftLoader.load_events_and_shredded_types(config, t)
         when 'postgres'
           loader::PostgresLoader.load_events(config[:download][:folder], t, config[:skip], config[:include])
+        when 'bigquery'
+          loader::BigQueryLoader.load_events(config[:download][:folder], t)
+          exit()
       end
     }
   end

@@ -39,6 +39,9 @@ GEM
     sluice (0.2.1)
       contracts (~> 0.4)
       fog (~> 1.22)
+    thread_safe (0.3.5)
+    tzinfo (1.2.2)
+      thread_safe (~> 0.1)
 
 PLATFORMS
   ruby
@@ -48,3 +51,4 @@ DEPENDENCIES
   pg (~> 0.14.1)
   plissken (~> 0.1.0)
   sluice (~> 0.2.1)
+  tzinfo (~> 1.2.2)
