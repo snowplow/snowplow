@@ -1,3 +1,11 @@
+Release 82 Tawny Eagle (2016-08-08)
+-----------------------------------
+Common: publish each Kinesis app individually to Bintray (#2492)
+Kinesis Elasticsearch Sink: bump to 0.7.0 (#2816)
+Kinesis Elasticsearch Sink: configure transport port (#2102)
+Kinesis Elasticsearch Sink: add support for HTTP protocol (#2092)
+Kinesis Elasticsearch Sink: unify logger configuration (#1699)
+
 Release 81 Kangaroo Island Emu (2016-06-16)
 -------------------------------------------
 Documentation: fix broken link in Thrift Schemas' README.md (#2498)
