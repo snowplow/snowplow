@@ -80,7 +80,7 @@ module Snowplow
             raise ConfigError, "Storage type '#{t[:type]}' not supported"
           end
 
-		      if @@download_required_targets.include?(t[:type])
+          if @@download_required_targets.include?(t[:type])
             config[:download_required] = true
           end
 
