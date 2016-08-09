@@ -51,12 +51,12 @@ begin
     config[:storage][:targets].each { |t|
       case t[:type]
         when 'redshift'
-          loader::RedshiftLoader.load_events_and_shredded_types(config, t)
+          loader::RedshiftLoader.load_events_and_shredded_types(config, t, snowplow_tracking_enabled)
         when 'postgres'
-          loader::PostgresLoader.load_events(config[:storage][:download][:folder], t, config[:skip], config[:include])
+          loader::PostgresLoader.load_events(config[:storage][:download][:folder], t, config[:skip], config[:include], snowplow_tracking_enabled)
         when 'bigquery'
           loader::BigQueryLoader.process_events(config[:storage][:download][:folder], t)
-          loader::BigQueryLoader.load_events(t)
+          loader::BigQueryLoader.load_events(t, snowplow_tracking_enabled)
           loader::FileTasks.delete_events(t[:processing_dir])
       end
     }
