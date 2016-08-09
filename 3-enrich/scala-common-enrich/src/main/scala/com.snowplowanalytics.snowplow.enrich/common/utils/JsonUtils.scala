@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+* Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
 *
 * This program is licensed to you under the Apache License Version 2.0,
 * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -55,21 +55,20 @@ object JsonUtils {
   /**
    * Validates a String as correct JSON.
    */
-  val extractJson: (Int, String, String) => Validation[String, String] = (maxLength, field, str) =>
-    validateAndReformatJson(maxLength, field, str)
+  val extractUnencJson: (String, String) => Validation[String, String] = validateAndReformatJson
 
   /**
    * Decodes a Base64 (URL safe)-encoded String then
    * validates it as correct JSON.
    */
-  val extractBase64EncJson: (Int, String, String) => Validation[String, String] = (maxLength, field, str) =>
-    CU.decodeBase64Url(field, str).flatMap(json => validateAndReformatJson(maxLength, field, json))
+  val extractBase64EncJson: (String, String) => Validation[String, String] = (field, str) =>
+    CU.decodeBase64Url(field, str).flatMap(json => validateAndReformatJson(field, json))
 
   /**
    * Converts a Joda DateTime into
    * a JSON Schema-compatible date-time string.
    *
-   * @param datetime The Joda DateTime
+   * @param dateTime The Joda DateTime
    *        to convert to a timestamp String
    * @return the timestamp String
    */
@@ -175,22 +174,15 @@ object JsonUtils {
    * Validates and reformats a JSON:
    * 1. Checks the JSON is valid
    * 2. Reformats, including removing unnecessary whitespace
-   * 3. Checks if reformatted JSON is <= maxLength, because
-   *    a truncated JSON causes chaos in Redshift et al
    *
    * @param field the name of the field containing the JSON
    * @param str the String hopefully containing JSON
-   * @param maxLength the maximum allowed length for this
-   *        JSON when reformatted
    * @return a Scalaz Validation, wrapping either an error
    *         String or the reformatted JSON String
    */
-  private[utils] def validateAndReformatJson(maxLength: Int, field: String, str: String): Validation[String, String] =
+  private[utils] def validateAndReformatJson(field: String, str: String): Validation[String, String] =
     extractJson(field, str)
       .map(j => compact(fromJsonNode(j)))
-      .flatMap(j => if (j.length > maxLength) {
-        "Field [%s]: reformatted JSON length [%s] exceeds maximum allowed length [%s]".format(field, j.length, maxLength).fail
-        } else j.success)
 
   /**
    * Converts a JSON string into a Validation[String, JsonNode]

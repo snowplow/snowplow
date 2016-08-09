@@ -20,7 +20,7 @@ We will be adding the technical documentation for StorageLoader on the Wiki soon
 
 ## Deployment and configuration
 
-For detailed instructions on installing, running and scheduling StorageLoader on your server, please see the [StorageLoader Setup Guide] [storage-loader-setup-guide] on the Wiki.
+For detailed instructions on installing, running and scheduling StorageLoader on your server, please see the [StorageLoader Setup Guide] [setup] on the Wiki.
 
 ## Contributing
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -27,6 +27,9 @@ import Scalaz._
 // Iglu Scala Client
 import iglu.client.JsonSchemaPair
 
+// Snowplow Common Enrich
+import common.outputs.EnrichedEvent
+
 /**
  * Scala package object to hold types,
  * helper methods etc.
@@ -43,13 +46,7 @@ package object hadoop {
   type ValidatedNel[A] = ValidationNel[ProcessingMessage, A]
 
   /**
-   * A (possibly empty) list of JsonNodes
+   * Convenient for passing around the parts of an event
    */
-  type JsonNodes = List[JsonNode]
-
-  /**
-   * A (possibly empty) list of JsonSchemaPairs
-   */
-  type JsonSchemaPairs = List[JsonSchemaPair]
-
+  type EventComponents = Tuple3[String, String, List[JsonSchemaPair]]
 }

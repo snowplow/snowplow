@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -47,10 +47,22 @@ import registry.{
   UaParserEnrichment,
   CurrencyConversionEnrichment,
   JavascriptScriptEnrichment,
+  EventFingerprintEnrichment,
+  CookieExtractorEnrichment,
+  HttpHeaderExtractorEnrichment,
+  WeatherEnrichment,
   UserAgentUtilsEnrichmentConfig,
   UaParserEnrichmentConfig,
   CurrencyConversionEnrichmentConfig,
-  JavascriptScriptEnrichmentConfig
+  JavascriptScriptEnrichmentConfig,
+  EventFingerprintEnrichmentConfig,
+  CookieExtractorEnrichmentConfig,
+  HttpHeaderExtractorEnrichmentConfig,
+  WeatherEnrichmentConfig
+}
+import registry.apirequest.{
+  ApiRequestEnrichment,
+  ApiRequestEnrichmentConfig
 }
 
 import utils.ScalazJson4sUtils
@@ -142,6 +154,16 @@ object EnrichmentRegistry {
             CurrencyConversionEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "javascript_script_config") {
             JavascriptScriptEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "event_fingerprint_config") {
+            EventFingerprintEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "cookie_extractor_config") {
+            CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "http_header_extractor_config") {
+            HttpHeaderExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "weather_enrichment_config") {
+            WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "api_request_enrichment_config") {
+            ApiRequestEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else {
             None.success // Enrichment is not recognized yet
           }
@@ -237,6 +259,51 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getJavascriptScriptEnrichment: Option[JavascriptScriptEnrichment] = 
     getEnrichment[JavascriptScriptEnrichment]("javascript_script_config")
+
+  /**
+   * Returns an Option boxing the getEventFingerprintEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the getEventFingerprintEnrichment instance
+   */
+  def getEventFingerprintEnrichment: Option[EventFingerprintEnrichment] =
+    getEnrichment[EventFingerprintEnrichment]("event_fingerprint_config")
+
+  /*
+   * Returns an Option boxing the CookieExtractorEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the CookieExtractorEnrichment instance
+   */
+  def getCookieExtractorEnrichment: Option[CookieExtractorEnrichment] =
+    getEnrichment[CookieExtractorEnrichment]("cookie_extractor_config")
+
+  /*
+   * Returns an Option boxing the HttpHeaderExtractorEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the HttpHeaderExtractorEnrichment instance
+   */
+  def getHttpHeaderExtractorEnrichment: Option[HttpHeaderExtractorEnrichment] =
+    getEnrichment[HttpHeaderExtractorEnrichment]("http_header_extractor_config")
+
+  /**
+   * Returns an Option boxing the WeatherEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the WeatherEnrichment instance
+   */
+  def getWeatherEnrichment: Option[WeatherEnrichment] =
+    getEnrichment[WeatherEnrichment]("weather_enrichment_config")
+
+  /**
+    * Returns an Option boxing the ApiRequestEnrichment
+    * config value if present, or None if not
+    *
+    * @return Option boxing the ApiRequestEnrichment instance
+    */
+  def getApiRequestEnrichment: Option[ApiRequestEnrichment] =
+    getEnrichment[ApiRequestEnrichment]("api_request_enrichment_config")
 
   /**
    * Returns an Option boxing an Enrichment

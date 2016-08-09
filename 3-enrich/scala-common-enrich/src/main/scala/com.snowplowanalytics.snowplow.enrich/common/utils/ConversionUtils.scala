@@ -50,6 +50,8 @@ import com.netaporter.uri.Uri
  */
 object ConversionUtils {
 
+  private val UrlSafeBase64 = new Base64(true) // true means "url safe"
+
   /**
    * Simple case class wrapper around the
    * components of a URI.
@@ -149,14 +151,29 @@ object ConversionUtils {
    // 2. If passed in a non-empty string but result == "", then return a Failure, because we have failed to decode something meaningful
   def decodeBase64Url(field: String, str: String): Validation[String, String] = {
     try {
-      val decoder = new Base64(true) // true means "url safe"
-      val decodedBytes = decoder.decode(str)
+      val decodedBytes = UrlSafeBase64.decode(str)
       val result = new String(decodedBytes, UTF_8) // Must specify charset (EMR uses US_ASCII)
       result.success
     } catch {
-      case e =>
-      "Field [%s]: exception Base64-decoding [%s] (URL-safe encoding): [%s]".format(field, str, e.getMessage).fail
+      case NonFatal(e) =>
+        "Field [%s]: exception Base64-decoding [%s] (URL-safe encoding): [%s]".format(field, str, e.getMessage).fail
     }
+  }
+
+  /**
+   * Encodes a URL-safe Base64 string.
+   *
+   * For details on the Base 64 Encoding with URL
+   * and Filename Safe Alphabet see:
+   *
+   * http://tools.ietf.org/html/rfc4648#page-7
+   *
+   * @param str The string to be encoded
+   * @return the string encoded in URL-safe Base64
+   */
+  def encodeBase64Url(str: String): String = {
+    val bytes = UrlSafeBase64.encode(str.getBytes)
+    new String(bytes, UTF_8).trim // Newline being appended by some Base64 versions
   }
 
   /**
@@ -227,7 +244,7 @@ object ConversionUtils {
                .replaceAll("\\t", "    ")
       r.success
     } catch {
-      case e =>
+      case NonFatal(e) =>
         "Field [%s]: Exception URL-decoding [%s] (encoding [%s]): [%s]".format(field, str, enc, e.getMessage).fail
     }
 
@@ -320,7 +337,7 @@ object ConversionUtils {
           val netaporterUri = try {
             Uri.parse(uri).success
           } catch {
-            case e => "Provided URI string [%s] could not be parsed by Netaporter: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
+            case NonFatal(e) => "Provided URI string [%s] could not be parsed by Netaporter: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
           }
           for {
             parsedUri <- netaporterUri
@@ -329,7 +346,7 @@ object ConversionUtils {
         }
         case true => "Provided URI string [%s] violates RFC 2396: [%s]".format(uri, ExceptionUtils.getRootCause(iae).getMessage).fail
       }
-      case e => "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).fail
+      case NonFatal(e) => "Unexpected error creating URI from string [%s]: [%s]".format(uri, e.getMessage).fail
     }
 
   /**

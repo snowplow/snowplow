@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,10 +10,12 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2013 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2013-2015 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-require 'pg'
+require 'jdbc/postgres'
+
+Jdbc::Postgres.load_driver
 
 # Ruby module to support the load of Snowplow events into PostgreSQL.
 module Snowplow
@@ -34,25 +36,30 @@ module Snowplow
       # +target+:: the configuration options for this target
       # +skip_steps+:: Array of steps to skip
       # +include_steps+:: Array of optional steps to include
-      def load_events(events_dir, target, skip_steps, include_steps)
+      def load_events(events_dir, target, skip_steps, include_steps, snowplow_tracking_enabled)
         puts "Loading Snowplow events into #{target[:name]} (PostgreSQL database)..."
 
         event_files = get_event_files(events_dir)
-        queries = event_files.map { |f|
-            "COPY #{target[:table]} FROM '#{f}' WITH CSV ESCAPE E'#{ESCAPE_CHAR}' QUOTE E'#{QUOTE_CHAR}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}';"
-        }
-        
-        status = execute_transaction(target, queries)
+        status = copy_via_stdin(target, event_files)
+
         unless status == []
-          raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
+          error_message = "#{status[1]} error loading #{status[0]}: #{status[2]}"
+          if snowplow_tracking_enabled
+            Monitoring::Snowplow.instance.track_load_failed(error_message)
+          end
+          raise DatabaseLoadError, error_message
+        end
+
+        if snowplow_tracking_enabled
+          Monitoring::Snowplow.instance.track_load_succeeded()
         end
 
         post_processing = nil
-        unless skip_steps.include?('analyze')
-          post_processing = "ANALYZE "
+        unless skip_steps.include?('vacuum')
+          post_processing = "VACUUM "
         end
-        if include_steps.include?('vacuum')
-          post_processing = "VACUUM " + (post_processing || "")
+        if include_steps.include?('analyze')
+          post_processing = "ANALYZE " + (post_processing || "")
         end
 
         unless post_processing.nil?
@@ -63,6 +70,51 @@ module Snowplow
         end  
       end
       module_function :load_events
+
+      # Adapted from:  https://bitbucket.org/ged/ruby-pg/raw/9812218e0654caa58f8604838bc368434f7b3828/sample/copyfrom.rb
+      #
+      # Execute a series of copies from stdin by streaming the given files
+      # directly into the postgres copy statement.  Stops as soon as an error
+      # is encountered.  At that point, it returns a 'tuple' of the error class
+      # and message and the file that caused the error.
+      #
+      # Parameters:
+      # +target+:: the configuration options for this target
+      # +files+:: the data files to copy into the database
+      def copy_via_stdin(target, files)
+        puts "Opening database connection ..."
+
+        conn = get_connection(target)
+
+        conn.setAutoCommit(false)
+
+        copy_statement = "COPY #{target[:table]} FROM STDIN WITH CSV ESCAPE E'#{ESCAPE_CHAR}' QUOTE E'#{QUOTE_CHAR}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}'"
+
+        status = []
+
+        files.each do |file|
+          puts "Running COPY command with data from: #{file}"
+          begin
+            copy_manager = org.postgresql.copy.CopyManager.new(conn)
+            file_reader = java.io.FileReader.new(file)
+            copy_manager.copyIn(copy_statement, file_reader)
+          rescue Java::JavaSql::SQLException, Java::JavaSql::SQLTimeoutException => err
+            status = [file, err.class, err.message]
+            break
+          end
+        end
+
+        if status == []
+          conn.commit()
+        else
+          conn.rollback()
+        end
+
+        conn.close()
+
+        return status
+      end
+      module_function :copy_via_stdin
 
       # Converts a set of queries into a
       # single Redshift read-write
@@ -101,27 +153,36 @@ module Snowplow
       # a list of the form [query, err_class, err_message]
       def execute_queries(target, queries)
 
-        conn = PG.connect({:host     => target[:host],
-                           :dbname   => target[:database],
-                           :port     => target[:port],
-                           :user     => target[:username],
-                           :password => target[:password]
-                          })
+        conn = get_connection(target)
 
         status = []
         queries.each do |q|
           begin
-            conn.exec("#{q}")
-          rescue PG::Error => err
+            conn.createStatement.executeUpdate(q)
+          rescue Java::JavaSql::SQLException, Java::JavaSql::SQLTimeoutException => err
             status = [q, err.class, err.message]
             break
           end
         end
 
-        conn.finish
+        conn.close()
         return status
       end
       module_function :execute_queries
+
+      # Get a java.sql.Connection to a database
+      def self.get_connection(target)
+        connection_url = "jdbc:postgresql://#{target[:host]}:#{target[:port]}/#{target[:database]}"
+
+        props = java.util.Properties.new
+        props.set_property :user, target[:username]
+        props.set_property :password, target[:password]
+        props.set_property :sslmode, target.fetch(:ssl_mode, "disable")
+        props.set_property :tcpKeepAlive, "true" # TODO: make this configurable if any adverse effects
+
+        # Used instead of Java::JavaSql::DriverManager.getConnection to prevent "no suitable driver found" error
+        org.postgresql.Driver.new.connect(connection_url, props)
+      end
 
       private
 
@@ -133,7 +194,7 @@ module Snowplow
       # Returns the array of cold files
       def get_event_files(events_dir)
 
-        Dir[File.join(events_dir, '**', EVENT_FILES)].select { |f|
+        Dir[File.join(events_dir, '**', 'atomic-events', EVENT_FILES)].select { |f|
           File.file?(f) # In case of a dir ending in .tsv
         }
       end

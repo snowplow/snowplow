@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -42,6 +42,11 @@ import common.outputs.EnrichedEvent
 import scalaz._
 import Scalaz._
 
+// json4s
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
+
 /**
  * Holds helpers for running integration
  * tests on SnowPlow EtlJobs.
@@ -51,7 +56,7 @@ object JobSpecHelpers {
   /**
    * The current version of our Hadoop ETL
    */
-  val EtlVersion = "hadoop-1.0.0-common-0.14.0"
+  val EtlVersion = "hadoop-1.7.0-common-0.23.0"
 
   val EtlTimestamp = "2001-09-09 01:46:40.000"
 
@@ -249,8 +254,14 @@ object JobSpecHelpers {
     ))
   }
 
-  def getEnrichments(collector: String, anonOctets: String, anonOctetsEnabled: Boolean,
-    lookups: List[String], currencyConversionEnabled: Boolean, javascriptScriptEnabled: Boolean): String = {
+  def getEnrichments(
+    collector: String,
+    anonOctets: String,
+    anonOctetsEnabled: Boolean,
+    lookups: List[String],
+    currencyConversionEnabled: Boolean,
+    javascriptScriptEnabled: Boolean,
+    apiRequest: Boolean): String = {
 
     val encoder = new Base64(true) // true means "url safe"
     val lookupsJson = lookups.map(getLookupJson(_)).mkString(",\n")
@@ -355,15 +366,95 @@ object JobSpecHelpers {
                     |"script": "${jsScript}"
                   |}
                 |}
+              |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow/event_fingerprint_config/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow",
+                  |"name": "event_fingerprint_config",
+                  |"enabled": true,
+                  |"parameters": {
+                    |"excludeParameters": ["eid", "stm"],
+                    |"hashAlgorithm": "MD5"
+                  |}
+                |}
+              |},
+              |{
+                |"schema": "iglu:com.snowplowanalytics.snowplow.enrichments/api_request_enrichment_config/jsonschema/1-0-0",
+                |"data": {
+                  |"vendor": "com.snowplowanalytics.snowplow.enrichments",
+                  |"name": "api_request_enrichment_config",
+                  |"enabled": ${apiRequest},
+                  |"parameters": ${apiRequestParameters}
+                |}
               |}
             |]
           |}""".stripMargin.replaceAll("[\n\r]","").getBytes
       ))
   }
 
+  // Added separately because dollar sign in JSONPath breaks interpolation
+  private val apiRequestParameters =
+    """
+      |{
+           |"inputs": [
+              |{
+                |"key": "uhost",
+                |"pojo": {
+                  |"field": "page_urlhost"
+                |}
+              |},
+              |{
+                |"key": "os",
+                |"json": {
+                  |"field": "derived_contexts",
+                  |"schemaCriterion": "iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-*",
+                  |"jsonPath": "$.osFamily"
+                |}
+              |},
+              |{
+                |"key": "device",
+                |"json": {
+                  |"field": "contexts",
+                  |"schemaCriterion": "iglu:com.snowplowanalytics.snowplow/mobile_context/jsonschema/1-*-*",
+                  |"jsonPath": "$.deviceModel"
+                |}
+              |},
+              |{
+                |"key": "service",
+                |"json": {
+                  |"field": "unstruct_event",
+                  |"schemaCriterion": "iglu:com.snowplowanalytics.snowplow-website/signup_form_submitted/jsonschema/1-0-*",
+                  |"jsonPath": "$.serviceType"
+                |}
+              |}
+            |],
+          |"api": {
+            |"http": {
+              |"method": "GET",
+              |"uri": "http://localhost:8000/guest/users/{{device}}/{{os}}/{{uhost}}/{{service}}?format=json",
+                |"timeout": 2000,
+                |"authentication": { }
+              |}
+            |},
+          |"outputs": [
+            |{
+              |"schema": "iglu:com.acme/user/jsonschema/1-0-0" ,
+              |"json": {
+                |"jsonPath": "$"
+              |}
+            |}
+          |],
+          |"cache": {
+            |"size": 2,
+            |"ttl": 60
+          |}
+      |}
+    """.stripMargin
+
   // Standard JobSpec definition used by all integration tests
   def EtlJobSpec(collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String],
-    currencyConversion: Boolean = false, javascriptScript: Boolean = false): JobTest =
+    currencyConversion: Boolean = false, javascriptScript: Boolean = false, apiRequest: Boolean = false): JobTest =
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob").
       arg("input_folder", "inputFolder").
       arg("input_format", collector).
@@ -371,7 +462,7 @@ object JobSpecHelpers {
       arg("bad_rows_folder", "badFolder").
       arg("etl_tstamp", "1000000000000").      
       arg("iglu_config", IgluConfig).
-      arg("enrichments", getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversion, javascriptScript))
+      arg("enrichments", getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversion, javascriptScript, apiRequest))
 
   case class Sinks(
     val output:     File,
@@ -394,7 +485,8 @@ object JobSpecHelpers {
    *         and exceptions temporary directories.
    */
   def runJobInTool(lines: Lines, collector: String, anonOctets: String, anonOctetsEnabled: Boolean,
-    lookups: List[String], currencyConversionEnabled: Boolean = false, javascriptScriptEnabled: Boolean = false): Sinks = {
+    lookups: List[String], currencyConversionEnabled: Boolean = false, javascriptScriptEnabled: Boolean = false,
+    apiRequestEnabled: Boolean = false): Sinks = {
 
     def mkTmpDir(tag: String, createParents: Boolean = false, containing: Option[Lines] = None): File = {
       val f = File.createTempFile(s"scala-hadoop-enrich-${tag}-", "")
@@ -416,12 +508,24 @@ object JobSpecHelpers {
       "--exceptions_folder", exceptions.getAbsolutePath,
       "--etl_tstamp",        "1000000000000",
       "--iglu_config",       IgluConfig,
-      "--enrichments",       getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversionEnabled, javascriptScriptEnabled))
+      "--enrichments",       getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversionEnabled, javascriptScriptEnabled, apiRequestEnabled))
 
     // Execute
     Tool.main(args)
     input.delete()
 
     Sinks(output, badRows, exceptions)
+  }
+
+  /**
+   * Removes the timestamp from bad rows so that what remains is deterministic
+   *
+   * @param badRow
+   * @return The bad row without the timestamp
+   */
+  def removeTstamp(badRow: String): String = {
+    val badRowJson = parse(badRow)
+    val badRowWithoutTimestamp = ("line", (badRowJson \ "line")) ~ ("errors", (badRowJson \ "errors"))
+    compact(badRowWithoutTimestamp)
   }
 }

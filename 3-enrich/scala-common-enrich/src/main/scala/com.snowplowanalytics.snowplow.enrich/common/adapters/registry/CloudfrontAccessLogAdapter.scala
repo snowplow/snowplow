@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -22,6 +22,9 @@ import iglu.client.{
   SchemaKey,
   Resolver
 }
+
+// Scala
+import scala.util.control.NonFatal
 
 // Scalaz
 import scalaz._
@@ -70,7 +73,11 @@ object CloudfrontAccessLogAdapter {
       "xHostHeader",
       "csProtocol",
       "csBytes",
-      "timeTaken"
+      "timeTaken",
+      "xForwardedFor",
+      "sslProtocol",
+      "sslCipher",
+      "xEdgeResponseResultType"
     )
 
     // Tracker version for Cloudfront access log
@@ -95,7 +102,8 @@ object CloudfrontAccessLogAdapter {
             case 15 => "1-0-1".successNel  // 12 Sep 2012
             case 18 => "1-0-2".successNel  // 21 Oct 2013
             case 19 => "1-0-3".successNel  // 29 Apr 2014
-            case n => s"Access log TSV line contained $n fields, expected 12, 15, 18, or 19".failNel
+            case 23 => "1-0-4".successNel  // 01 Jul 2015
+            case n => s"Access log TSV line contained $n fields, expected 12, 15, 18, 19, or 23".failNel
           }
           schemaVersion.flatMap(v => {
 
@@ -188,7 +196,8 @@ object CloudfrontAccessLogAdapter {
       try {
         DateTime.parse("%sT%s+00:00".format(date, time)).success // Construct a UTC ISO date from CloudFront date and time
       } catch {
-        case e => "Unexpected exception converting Cloudfront web distribution access log date [%s] and time [%s] to timestamp: [%s]".format(date, time, e.getMessage).fail
+        case NonFatal(e) =>
+          "Unexpected exception converting Cloudfront web distribution access log date [%s] and time [%s] to timestamp: [%s]".format(date, time, e.getMessage).fail
       }
   }
 }

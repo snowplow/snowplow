@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -19,15 +19,26 @@ import java.io.File
 import java.io.BufferedWriter
 import java.io.FileWriter
 
+// Apache Commons IO
+import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.TrueFileFilter
+
 // Apache Commons Codec
 import org.apache.commons.codec.binary.Base64
 
 // Scala
 import scala.collection.mutable.ListBuffer
+import scala.io.Source
+import scala.collection.JavaConverters._
 
 // Scalaz
 import scalaz._
 import Scalaz._
+
+// Scala
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
 
 // Scalding
 import com.twitter.scalding._
@@ -52,8 +63,11 @@ object JobSpecHelpers {
    * A Specs2 matcher to check if a directory
    * on disk is empty or not.
    */
-  val beEmptyDir: Matcher[File] =
-    ((f: File) => !f.isDirectory || f.list.length > 0, "is populated directory, or not a directory")
+  val beEmptyFile: Matcher[File] =
+    ((f: File) =>
+      !f.exists || (f.isFile && f.length == 0),
+      "is populated file"
+    )
 
   /**
    * How Scalding represents input lines
@@ -90,7 +104,10 @@ object JobSpecHelpers {
      */
     def writeTo(file: File) = {
       val writer = new BufferedWriter(new FileWriter(file))
-      for (line <- lines) writer.write(line)
+      for (line <- lines) {
+        writer.write(line)
+        writer.newLine()
+      }
       writer.close()
     }
 
@@ -116,7 +133,10 @@ object JobSpecHelpers {
    */
   implicit def Lines2ScaldingLines(lines : Lines): ScaldingLines = lines.numberedLines 
 
-  // Standard JobSpec definition used by all integration tests
+  /**
+   * A standard JobSpec definition used by all of our
+   * integration tests.
+   */
   val ShredJobSpec = 
     JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.ShredJob").
       arg("input_folder", "inputFolder").
@@ -172,6 +192,53 @@ object JobSpecHelpers {
     input.delete()
 
     Sinks(output, badRows, exceptions)
+  }
+
+  /**
+   * Removes the timestamp from bad rows so that what remains is deterministic
+   *
+   * @param badRow
+   * @return The bad row without the timestamp
+   */
+  def removeTstamp(badRow: String): String = {
+    val badRowJson = parse(badRow)
+    val badRowWithoutTimestamp = ("line", (badRowJson \ "line")) ~ ("errors", (badRowJson \ "errors"))
+    compact(badRowWithoutTimestamp)
+  }
+
+  /**
+   * Reads a file at the given path into a List of Strings
+   *
+   * @param root A root filepath
+   * @param relativePath The relative path to the file from
+   *        the root
+   * @return the file contents
+   */
+  def readFile(root: File, relativePath: String): List[String] =
+    Source
+      .fromFile(new File(root, relativePath))
+      .getLines
+      .toList
+
+  /**
+   * Recursively lists files in a given path, excluding the
+   * supplied paths.
+   *
+   * @param root A root filepath
+   * @param exclusions A list of paths to exclude from the listing
+   * @return the list of files contained in the root, minus the
+   *         exclusions
+   */
+  def listFilesWithExclusions(root: File, exclusions: List[String]): List[String] = {
+    val excl = for {
+      e <- exclusions
+    } yield (new File(root, e)).getCanonicalPath
+
+    FileUtils.listFiles(root, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
+      .asScala
+      .toList
+      .map(_.getCanonicalPath)
+      .filter(p => !excl.contains(p))
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -25,19 +25,60 @@ import org.json4s._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
+// Joda-Time
+import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.format.DateTimeFormat
+
 // Iglu Scala Client
 import iglu.client.ProcessingMessageNel
+import iglu.client.validation.ProcessingMessageMethods._
+
+/**
+ * Alternate BadRow constructors
+ */
+object BadRow {
+
+  /**
+   * Constructor using Strings instead of ProcessingMessages
+   *
+   * @param line
+   * @param errors
+   * @return a BadRow
+   */
+  def apply(line: String, errors: NonEmptyList[String]): BadRow =
+    BadRow(line, errors.map(_.toProcessingMessage), System.currentTimeMillis())
+
+  /**
+   * For rows which are so too long to send to Kinesis and so cannot contain their own original line
+   *
+   * @param line
+   * @param errors
+   * @param tstamp
+   * @return a BadRow
+   */
+  def oversizedRow(size: Long, errors: NonEmptyList[String], tstamp: Long = System.currentTimeMillis()): String =
+    compact(
+      ("size" -> size) ~
+      ("errors" -> errors.toList.map(e => fromJsonNode(e.toProcessingMessage.asJson))) ~
+      ("failure_tstamp" -> tstamp)
+    )
+}
 
 /**
  * Models our report on a bad row. Consists of:
  * 1. Our original input line (which was meant
  *    to be a Snowplow enriched event)
  * 2. A non-empty list of our Validation errors
+ * 3. A timestamp
  */
 case class BadRow(
   val line: String,
-  val errors: NonEmptyList[String]
+  val errors: ProcessingMessageNel,
+  val tstamp: Long = System.currentTimeMillis()
   ) {
+
+  // An ISO valid timestamp formatter
+  private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
 
   /**
    * Converts a TypeHierarchy into a JSON containing
@@ -46,8 +87,9 @@ case class BadRow(
    * @return the TypeHierarchy as a json4s JValue
    */
   def toJValue: JValue =
-    ("line"     -> line) ~
-    ("errors"   -> errors.toList)
+    ("line"           -> line) ~
+    ("errors"         -> errors.toList.map(e => fromJsonNode(e.asJson))) ~
+    ("failure_tstamp" -> this.getTimestamp(tstamp))
 
   /**
    * Converts our BadRow into a single JSON encapsulating
@@ -57,4 +99,15 @@ case class BadRow(
    */
   def toCompactJson: String =
     compact(this.toJValue)
+
+  /**
+   * Returns an ISO valid timestamp
+   *
+   * @param tstamp The Timestamp to convert
+   * @return the formatted Timestamp
+   */
+  def getTimestamp(tstamp: Long): String = {
+    val dt = new DateTime(tstamp)
+    TstampFormat.print(dt)
+  }
 }

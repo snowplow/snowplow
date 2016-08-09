@@ -29,12 +29,12 @@ describe S3Tasks do
     [ 'tomcat7_rotated log'              , 'i-615f3c85/_var_log_tomcat7_rotated_localhost_access_log.txt1426089661.gz' , '_var_log_tomcat7_rotated_localhost_access_log.txt1426089661.gz' , 'var_log_tomcat7_rotated_localhost_access_log.2015-03-11-16.us-west-1.i-615f3c85.txt.gz' ] ,
     [ 'tomcat8_rotated log'              , 'i-615f3c85/_var_log_tomcat8_rotated_localhost_access_log.txt1426089661.gz' , '_var_log_tomcat8_rotated_localhost_access_log.txt1426089661.gz' , 'var_log_tomcat8_rotated_localhost_access_log.2015-03-11-16.us-west-1.i-615f3c85.txt.gz' ] ,
     [ 'unknown .gz in root'              , 'unknown.gz'                                                                , 'unknown.gz'                                                     , 'unknown.gz'                                                                             ] ,
-    [ 'unknown .gz in sub-folder'        , 'foo/bar/unknown.gz'                                                        , 'unknown.gz'                                                     , "unknown.#{region}.bar.gz"                                                               ] , 
-    [ 'unknown .gz with _ in root'       , ''                                                                          , '_unknown.gz'                                                    , 'unknown.gz'                                                                             ] ,  
-    [ 'unknown .gz with _ in sub-folder' , 'foo/bar/_unknown.gz'                                                       , '_unknown.gz'                                                    , "_unknown.#{region}.bar.gz"                                                              ] ,        
+    [ 'unknown .gz in sub-folder'        , 'foo/bar/unknown.gz'                                                        , 'unknown.gz'                                                     , "unknown.#{region}.bar.gz"                                                               ] ,
+    [ 'unknown .gz with _ in root'       , ''                                                                          , '_unknown.gz'                                                    , 'unknown.gz'                                                                             ] ,
+    [ 'unknown .gz with _ in sub-folder' , 'foo/bar/_unknown.gz'                                                       , '_unknown.gz'                                                    , "_unknown.#{region}.bar.gz"                                                              ]
   ]
 
-  fix_filenames = S3Tasks.build_fix_filenames(region)
+  fix_filenames = S3Tasks.build_fix_filenames(region, "other")
 
   examples.each do |eg|
     spec = eg[0]
@@ -46,5 +46,20 @@ describe S3Tasks do
       fix_filenames.call(basename, filepath).should eql expected
     end
   end
+
+  ua_examples = [
+    [ 'UrbanAirship event'               , 'foo/bar/S3_JSON/2015_11_14/2015_11_14_5.json'                              , '2015_11_14_5.json'                                              , "urbanairship.2015_11_14_5.foo.bar.ndjson"                                                 ],
+  ]
+
+  fix_ua_filenames = S3Tasks.build_fix_filenames(region, "ndjson/com.urbanairship.connect/v1")
+
+  ua_examples.each do |eg|
+    spec, filepath, basename, expected = eg
+
+    it "should return #{expected} when filepath == #{filepath} and basename == #{basename} for a #{spec}" do
+      fix_ua_filenames.call(basename, filepath).should eql expected
+    end
+  end
+
 
 end

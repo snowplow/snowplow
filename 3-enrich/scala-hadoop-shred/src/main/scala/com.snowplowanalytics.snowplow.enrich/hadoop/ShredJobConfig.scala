@@ -31,12 +31,10 @@ import iglu.client.validation.ProcessingMessageMethods._
 
 // Snowplow Common Enrich
 import common.utils.ConversionUtils
+import common.utils.ScalazArgs
 
 // This project
-import utils.{
-  ScalazArgs,
-  JsonUtils
-}
+import utils.JsonUtils
 
 /**
  * The configuration for the SnowPlowEtlJob.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -39,7 +39,7 @@ object InvalidCfLinesSpec {
     "2012-05-21  07:14:47  FRA2  3343  83.4.209.35 GET d3t05xllj8hhgj.cloudfront.net"
     )
 
-  val expected = (line: String) => """{"line":"%s","errors":["Line does not match CloudFront header or data row formats"]}""".format(line)
+  val expected = (line: String) => """{"line":"%s","errors":[{"level":"error","message":"Line does not match CloudFront header or data row formats"}]}""".format(line)
 }
 
 /**
@@ -66,7 +66,7 @@ class InvalidCfLinesSpec extends Specification {
       sink[String](Tsv("badFolder")){ json =>
         "write a bad row JSON with input line and error message for each input line" in {
           for (i <- json.indices) {
-            json(i) must_== InvalidCfLinesSpec.expected(InvalidCfLinesSpec.lines(i)._2)
+            removeTstamp(json(i)) must_== InvalidCfLinesSpec.expected(InvalidCfLinesSpec.lines(i)._2)
           }
         }
       }.

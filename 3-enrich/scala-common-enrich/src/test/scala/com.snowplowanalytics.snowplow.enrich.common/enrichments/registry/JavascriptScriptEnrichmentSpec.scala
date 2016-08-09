@@ -14,6 +14,10 @@ package com.snowplowanalytics.snowplow.enrich.common
 package enrichments
 package registry
 
+// Scalaz
+import scalaz._
+import Scalaz._
+
 // Json4s
 import org.json4s._
 import org.json4s.JValue
@@ -70,18 +74,14 @@ class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatche
 
   def e1 = {
     val actual = JavascriptScriptEnrichment.compile("[")
-    val expected = "Error compiling JavaScript script: [javax.script.ScriptException: sun.org.mozilla.javascript.internal.EvaluatorException: syntax error (<Unknown Source>#5)]"
-
-    actual must beFailing(expected)
+    actual must beFailing
   }
 
   def e2 = {
     val event = buildEvent("guess")
 
     val actual = PreparedEnrichment.process(event)
-    val expected = "Evaluating JavaScript script threw an exception: [javax.script.ScriptException: Server-side event has invalid app_id: guess in <Unknown Source> at line number 7]"
-
-    actual must beFailing(expected)
+    actual must beFailing
   }
 
   def e3 = {

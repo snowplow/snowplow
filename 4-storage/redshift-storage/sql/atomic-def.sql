@@ -1,4 +1,4 @@
--- Copyright (c) 2013 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,11 +9,11 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Version:     0.6.0
+-- Version:     0.8.0
 -- URL:         -
 --
 -- Authors:     Yali Sassoon, Alex Dean, Peter van Wesep, Fred Blundun
--- Copyright:   Copyright (c) 2013 Snowplow Analytics Ltd
+-- Copyright:   Copyright (c) 2013-2015 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
 -- Create the schema
@@ -27,7 +27,7 @@ CREATE TABLE atomic.events (
 	-- Date/time
 	etl_tstamp timestamp,
 	collector_tstamp timestamp not null,
-	dvce_tstamp timestamp,
+	dvce_created_tstamp timestamp,
 	-- Event
 	event varchar(128) encode text255,
 	event_id char(36) not null unique,
@@ -85,16 +85,12 @@ CREATE TABLE atomic.events (
 	mkt_term varchar(255) encode raw,
 	mkt_content varchar(500) encode raw,
 	mkt_campaign varchar(255) encode text32k,
-	-- Custom contexts
-	contexts varchar(15000) encode lzo,
 	-- Custom structured event
 	se_category varchar(1000) encode text32k,
 	se_action varchar(1000) encode text32k,
 	se_label varchar(1000) encode text32k,
 	se_property varchar(1000) encode text32k,
 	se_value double precision,
-	-- Custom unstructured event
-	unstruct_event varchar(15000) encode lzo,
 	-- Ecommerce
 	tr_orderid varchar(255) encode raw,
 	tr_affiliation varchar(255) encode text255,
@@ -165,7 +161,7 @@ CREATE TABLE atomic.events (
 	geo_timezone varchar(64) encode text255,
 
 	-- Click ID
-	mkt_clickid varchar(128) encode raw,               -- Increased from 64 in 0.6.0
+	mkt_clickid varchar(128) encode raw,
 	mkt_network varchar(64) encode text255,
 
 	-- ETL tags
@@ -178,17 +174,28 @@ CREATE TABLE atomic.events (
 	refr_domain_userid varchar(36),
 	refr_dvce_tstamp timestamp,
 
-	-- Derived contexts
-	derived_contexts varchar(15000) encode lzo,
-
 	-- Session ID
 	domain_sessionid char(36) encode raw,
 
 	-- Derived timestamp
 	derived_tstamp timestamp,
 
-	CONSTRAINT event_id_060_pk PRIMARY KEY(event_id)
+	-- Event schema
+	event_vendor varchar(1000) encode lzo,
+	event_name varchar(1000) encode lzo,
+	event_format varchar(128) encode lzo,
+	event_version varchar(128) encode lzo,
+
+	-- Event fingerprint
+	event_fingerprint varchar(128) encode lzo,
+
+	-- True timestamp
+	true_tstamp timestamp,
+
+	CONSTRAINT event_id_080_pk PRIMARY KEY(event_id)
 )
 DISTSTYLE KEY
 DISTKEY (event_id)
 SORTKEY (collector_tstamp);
+
+COMMENT ON TABLE "atomic"."events" IS '0.8.0'

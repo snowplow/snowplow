@@ -30,6 +30,12 @@ loader = Snowplow::StorageLoader
 begin
   config = loader::Config.get_config()
 
+  snowplow_tracking_enabled = ! config[:monitoring][:snowplow].nil?
+
+  if snowplow_tracking_enabled
+    loader::Monitoring::Snowplow.parameterize(config)
+  end
+
   # Download files if required
   unless config[:skip].include?('download')
     if config[:download_required]
@@ -42,7 +48,7 @@ begin
   unless config[:skip].include?('load')
 
     # Loop through all targets
-    config[:targets].each { |t|
+    config[:storage][:targets].each { |t|
       case t[:type]
         when 'redshift'
           loader::RedshiftLoader.load_events_and_shredded_types(config, t)
@@ -57,21 +63,21 @@ begin
   end
 
   # Archive
-  unless config[:skip].include?('archive')
+  unless config[:skip].include?('archive_enriched')
     loader::S3Tasks.archive_files(config)
   end
 
   # Delete local files if required
   unless config[:skip].include?('delete')
     if config[:download_required]
-      loader::FileTasks.delete_events(config[:download][:folder])
+      loader::FileTasks.delete_events(config[:storage][:download][:folder])
     end
   end
 
   puts "Completed successfully"
 
 # Catch any Snowplow error
-rescue loader::Error => e
+rescue loader::ConfigError => e
   $stderr.puts(e.message)
   exit 1
 rescue SystemExit => e

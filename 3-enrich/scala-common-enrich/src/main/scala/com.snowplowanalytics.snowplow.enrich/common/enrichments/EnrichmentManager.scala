@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -16,6 +16,12 @@ package enrich
 package common
 package enrichments
 
+// Joda
+import org.joda.time.DateTime
+
+// Iglu
+import iglu.client.Resolver
+
 // Scalaz
 import scalaz._
 import Scalaz._
@@ -27,9 +33,9 @@ import util.Tap._
 import adapters.RawEvent
 import outputs.EnrichedEvent
 
-import utils.{ConversionUtils => CU}
-import utils.{JsonUtils => JU}
+import utils.{ConversionUtils => CU, JsonUtils => JU}
 import utils.MapTransformer._
+import utils.shredder.Shredder
 
 import enrichments.{EventEnrichments => EE}
 import enrichments.{MiscEnrichments => ME}
@@ -58,9 +64,7 @@ object EnrichmentManager {
    *         either failure Strings or a
    *         NonHiveOutput.
    */
-  // TODO: etlTstamp shouldn't be stringly typed really
-  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: String, raw: RawEvent): ValidatedEnrichedEvent = {
-
+  def enrichEvent(registry: EnrichmentRegistry, hostEtlVersion: String, etlTstamp: DateTime, raw: RawEvent)(implicit resolver: Resolver): ValidatedEnrichedEvent = {
     // Placeholders for where the Success value doesn't matter.
     // Useful when you're updating large (>22 field) POSOs.
     val unitSuccess = ().success[String]
@@ -71,11 +75,10 @@ object EnrichmentManager {
     // Let's start populating the CanonicalOutput
     // with the fields which cannot error
     val event = new EnrichedEvent().tap { e =>
-      e.collector_tstamp = raw.context.timestamp.map(EE.toTimestamp).getOrElse(null)
       e.event_id = EE.generateEventId      // May be updated later if we have an `eid` parameter
       e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
-      e.etl_tstamp = etlTstamp
+      e.etl_tstamp = EE.toTimestamp(etlTstamp)
       e.network_userid = raw.context.userId.orNull    // May be updated later by 'nuid'
       e.user_ipaddress = raw.context.ipAddress.orNull // May be updated later by 'ip'
     }
@@ -83,6 +86,15 @@ object EnrichmentManager {
     // 2. Enrichments which can fail
 
     // 2a. Failable enrichments which don't need the payload
+
+    // Validate that the collectorTstamp exists and is Redshift-compatible
+    val collectorTstamp = EE.formatCollectorTstamp(raw.context.timestamp) match {
+      case Success(t) => {
+        event.collector_tstamp = t
+        unitSuccess
+      }
+      case f => f
+    }
 
     // Attempt to decode the useragent
     // May be updated later if we have a `ua` parameter
@@ -97,11 +109,6 @@ object EnrichmentManager {
     }
 
     // 2b. Failable enrichments using the payload
-
-    // Partially apply functions which need an encoding, to create a TransformFunc
-    val MaxJsonLength = 15000
-    val extractJson: TransformFunc = JU.extractJson(MaxJsonLength, _, _)
-    val extractBase64EncJson: TransformFunc = JU.extractBase64EncJson(MaxJsonLength, _, _)
 
     // We use a TransformMap which takes the format:
     // "source key" -> (transformFunction, field(s) to set)
@@ -119,7 +126,8 @@ object EnrichmentManager {
           ("fp"      , (ME.toTsvSafe, "user_fingerprint")),
           ("vid"     , (CU.stringToJInteger, "domain_sessionidx")),
           ("sid"     , (CU.validateUuid, "domain_sessionid")),
-          ("dtm"     , (EE.extractTimestamp, "dvce_tstamp")),
+          ("dtm"     , (EE.extractTimestamp, "dvce_created_tstamp")),
+          ("ttm"     , (EE.extractTimestamp, "true_tstamp")),
           ("stm"     , (EE.extractTimestamp, "dvce_sent_tstamp")),
           ("tna"     , (ME.toTsvSafe, "name_tracker")),
           ("tv"      , (ME.toTsvSafe, "v_tracker")),
@@ -146,8 +154,8 @@ object EnrichmentManager {
           ("vp"      , (CE.extractViewDimensions, ("br_viewwidth", "br_viewheight"))),
           ("eid"     , (CU.validateUuid, "event_id")),
           // Custom contexts
-          ("co"   , (extractJson, "contexts")),
-          ("cx"   , (extractBase64EncJson, "contexts")),
+          ("co"   , (JU.extractUnencJson, "contexts")),
+          ("cx"   , (JU.extractBase64EncJson, "contexts")),
           // Custom structured events
           ("ev_ca"   , (ME.toTsvSafe, "se_category")),   // LEGACY tracker var. Leave for backwards compat
           ("ev_ac"   , (ME.toTsvSafe, "se_action")),     // LEGACY tracker var. Leave for backwards compat
@@ -160,8 +168,8 @@ object EnrichmentManager {
           ("se_pr"   , (ME.toTsvSafe, "se_property")),
           ("se_va"   , (CU.stringToDoublelike, "se_value")),
           // Custom unstructured events
-          ("ue_pr"   , (extractJson, "unstruct_event")),
-          ("ue_px"   , (extractBase64EncJson, "unstruct_event")),
+          ("ue_pr"   , (JU.extractUnencJson, "unstruct_event")),
+          ("ue_px"   , (JU.extractBase64EncJson, "unstruct_event")),
           // Ecommerce transactions
           ("tr_id"   , (ME.toTsvSafe, "tr_orderid")),
           ("tr_af"   , (ME.toTsvSafe, "tr_affiliation")),
@@ -178,7 +186,7 @@ object EnrichmentManager {
           ("ti_nm"   , (ME.toTsvSafe, "ti_name")),
           ("ti_ca"   , (ME.toTsvSafe, "ti_category")),
           ("ti_pr"   , (CU.stringToDoublelike, "ti_price")),
-          ("ti_qu"   , (ME.toTsvSafe, "ti_quantity")),
+          ("ti_qu"   , (CU.stringToJInteger, "ti_quantity")),
           // Page pings
           ("pp_mix"  , (CU.stringToJInteger, "pp_xoffset_min")),
           ("pp_max"  , (CU.stringToJInteger, "pp_xoffset_max")),
@@ -197,6 +205,12 @@ object EnrichmentManager {
       Map(("tnuid"   , (ME.toTsvSafe, "network_userid"))) // Overwrite collector-set nuid with tracker-set tnuid
 
     val secondPassTransform = event.transform(sourceMap, secondPassTransformMap)
+
+    // The load fails if the collector version is not set
+    val collectorVersionSet = event.v_collector match {
+      case ("" | null) => "Collector version not set".fail
+      case _ => unitSuccess
+    }
 
     // Potentially update the page_url and set the page URL components
     val pageUri = WPE.extractPageUri(raw.context.refererUri, Option(event.page_url))
@@ -386,44 +400,119 @@ object EnrichmentManager {
       case _ => unitSuccess
     }
 
+    // This enrichment cannot fail
+    (registry.getEventFingerprintEnrichment match {
+      case Some(efe) => event.event_fingerprint = efe.getEventFingerprint(sourceMap)
+      case _ => ()
+    })
+
+    // Validate custom contexts
+    val customContexts = Shredder.extractAndValidateCustomContexts(event) match {
+      case Failure(msgs) => msgs.map(_.toString).fail
+      case Success(cctx) => cctx.success
+    }
+
+    // Validate unstructured event
+    val unstructEvent = Shredder.extractAndValidateUnstructEvent(event) match {
+      case Failure(msgs) => msgs.map(_.toString).fail
+      case Success(ue) => ue.success
+    }
+
+    // Extract the event vendor/name/format/version
+    val extractSchema = SchemaEnrichment.extractSchema(event).map(schemaKey => {
+      event.event_vendor = schemaKey.vendor
+      event.event_name = schemaKey.name
+      event.event_format = schemaKey.format
+      event.event_version = schemaKey.version
+      unitSuccess
+    })
+
+    // Calculate the derived timestamp
+    val derivedTstamp = EE.getDerivedTimestamp(
+      Option(event.dvce_sent_tstamp),
+      Option(event.dvce_created_tstamp),
+      Option(event.collector_tstamp),
+      Option(event.true_tstamp)
+    ) match {
+      case Success(dt) => {
+        dt.foreach(event.derived_tstamp = _)
+        unitSuccess
+      }
+      case f => f
+    }
+
     // Execute the JavaScript scripting enrichment
     val jsScript = registry.getJavascriptScriptEnrichment match {
       case Some(jse) => jse.process(event)
       case None => Nil.success
     }
 
-    // Assemble array of derived contexts
-    val derived_contexts = List(uaParser).collect {
+    // Execute cookie extractor enrichment
+    val cookieExtractorContext = registry.getCookieExtractorEnrichment match {
+      case Some(cee) =>
+        val headers = raw.context.headers
+
+        cee.extract(headers)
+      case None => Nil
+    }
+
+    // Execute header extractor enrichment
+    val httpHeaderExtractorContext = registry.getHttpHeaderExtractorEnrichment match {
+      case Some(hee) =>
+        val headers = raw.context.headers
+
+        hee.extract(headers)
+      case None => Nil
+    }
+
+    // Fetch weather context
+    val weatherContext = registry.getWeatherEnrichment match {
+      case Some(we) => {
+        we.getWeatherContext(
+          Option(event.geo_latitude),
+          Option(event.geo_longitude),
+          Option(event.derived_tstamp).map(EventEnrichments.fromTimestamp)).map(_.some)
+      }
+      case None => None.success
+    }
+
+    // Assemble array of contexts prepared by built-in enrichments
+    val preparedDerivedContexts = List(uaParser).collect {
       case Success(Some(context)) => context
-    } ++ jsScript.getOrElse(Nil)
+    } ++ List(weatherContext).collect {
+     case Success(Some(context)) => context
+    } ++ jsScript.getOrElse(Nil) ++ cookieExtractorContext ++ httpHeaderExtractorContext
+
+    // Derive some contexts with custom API Request enrichment
+    val apiRequestContexts = registry.getApiRequestEnrichment match {
+      case Some(enrichment) => (customContexts, unstructEvent) match {
+        case (Success(cctx), Success(ue)) =>
+          enrichment.lookup(event, preparedDerivedContexts, cctx, ue)
+        case _ => Nil.success // Skip. Unstruct event or custom context corrupted (event enrichment will fail anyway)
+      }
+      case None => Nil.success
+    }
+
+    // Assemble prepared derived contexts with fetched via API Request
+    val derived_contexts = apiRequestContexts.getOrElse(Nil) ++ preparedDerivedContexts
 
     if (derived_contexts.size > 0) {
       event.derived_contexts = ME.formatDerivedContexts(derived_contexts)
     }
 
-    // Some quick and dirty truncation to ensure the load into Redshift doesn't error. Yech this is pretty dirty
-    // TODO: move this into the db-specific ETL phase (when written) & _programmatically_ apply to all strings, not just these 6
-    event.useragent = CU.truncate(event.useragent, 1000)
-    event.page_title = CU.truncate(event.page_title, 2000)
-    event.page_urlpath = CU.truncate(event.page_urlpath, 1000)
-    event.page_urlquery = CU.truncate(event.page_urlquery, 3000)
-    event.page_urlfragment = CU.truncate(event.page_urlfragment, 255)
-    event.refr_urlpath = CU.truncate(event.refr_urlpath, 1000)
-    event.refr_urlquery = CU.truncate(event.refr_urlquery, 3000)
-    event.refr_urlfragment = CU.truncate(event.refr_urlfragment, 255)
-    event.refr_term = CU.truncate(event.refr_term, 255)
-    event.se_label = CU.truncate(event.se_label, 255)
-
     // Collect our errors on Failure, or return our event on Success
     // Broken into two parts due to 12 argument limit on |@|
     val first =
       (useragent.toValidationNel              |@|
+      collectorTstamp.toValidationNel         |@|
+      derivedTstamp.toValidationNel           |@|
       client.toValidationNel                  |@|
       uaParser.toValidationNel                |@|
+      collectorVersionSet.toValidationNel     |@|
       pageUri.toValidationNel                 |@|
       geoLocation.toValidationNel             |@|
       refererUri.toValidationNel) {
-      (_,_,_,_,_,_) => ()
+      (_,_,_,_,_,_,_,_,_) => ()
     }
     val second = 
       (transform                              |@|
@@ -432,8 +521,13 @@ object EnrichmentManager {
       pageQsMap.toValidationNel               |@|
       crossDomain.toValidationNel             |@|
       jsScript.toValidationNel                |@|
-      campaign) {
-      (_,_,_,_,_,_,_) => ()
+      campaign                                |@|
+      customContexts                          |@|
+      unstructEvent                           |@|
+      apiRequestContexts                      |@|
+      extractSchema.toValidationNel           |@|
+      weatherContext.toValidationNel) {
+      (_,_,_,_,_,_,_,_,_,_,_,_) => ()
     }
     (first |@| second) {
       (_,_) => event
