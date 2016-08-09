@@ -105,12 +105,11 @@ module Snowplow
 
         if config[:processing_required]
           unless File.directory?(t[:processing_dir])
-              raise ConfigError, "Processing folder '#{t[:processing_dir]}' not found"
-            end
+            raise ConfigError, "Processing folder '#{t[:processing_dir]}' not found"
+          end
         
-            if !(Dir.entries(t[:processing_dir]) - %w{ . .. }).empty?
-              raise ConfigError, "Processing folder '#{t[:processing_dir]}' is not empty"
-            end
+          if !(Dir.entries(t[:processing_dir]) - %w{ . .. }).empty?
+            raise ConfigError, "Processing folder '#{t[:processing_dir]}' is not empty"
           end
         end
 
