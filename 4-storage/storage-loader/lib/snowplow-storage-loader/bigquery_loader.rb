@@ -20,7 +20,7 @@ module Snowplow
       # Parameters:
       # +events_dir+:: the directory holding the event files to load 
       # +target+:: the configuration options for this target
-      def process_events(events_dir, target)
+      def process_events(events_dir, target, snowplow_tracking_enabled)
         puts "Processing Snowplow events into daily tables"
         event_files = get_event_files(events_dir)
 
@@ -107,7 +107,7 @@ module Snowplow
       #
       # Parameters:
       # +target+:: the configuration options for this target
-      def load_events(target)
+      def load_events(target, snowplow_tracking_enabled)
         puts "Loading Snowplow events into #{target[:name]} (BigQuery)..."
 
         table_files = Dir[File.join(target[:processing_dir], '*.gzip')].select { |f| File.file?(f) }
@@ -126,6 +126,10 @@ module Snowplow
           fd = IO.popen(cmd)
           puts(fd.readlines)
           
+        end
+
+        if snowplow_tracking_enabled
+          Monitoring::Snowplow.instance.track_load_succeeded()
         end
       end
       module_function :load_events
