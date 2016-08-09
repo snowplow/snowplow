@@ -58,7 +58,7 @@ enrich:
   output_compression: NONE # Compression only supported with Redshift, set to NONE if you have Postgres targets. Allowed formats: NONE, GZIP
 storage:
   download:
-    folder: # Postgres and BogQuery config option. Where to store the downloaded files. Leave blank for Redshift
+    folder: # Postgres and BigQuery config option. Where to store the downloaded files. Leave blank for Redshift
   targets:
     - name: "My Redshift database"
       type: redshift
