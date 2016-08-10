@@ -60,6 +60,8 @@ GEM
       domain_name (~> 0.5)
     inflecto (0.0.2)
     ipaddress (0.8.0)
+    jruby-jars (1.7.20.1)
+    jruby-rack (1.1.18)
     json (1.8.3)
     json (1.8.3-java)
     mime-types (2.6.1)
@@ -72,6 +74,7 @@ GEM
     nokogiri (1.6.6.2)
       mini_portile (~> 0.6.0)
     nokogiri (1.6.6.2-java)
+    rake (10.4.2)
     rest-client (1.8.0)
       http-cookie (>= 1.0.2, < 2.0)
       mime-types (>= 1.16, < 3.0)
@@ -84,6 +87,7 @@ GEM
     rspec-expectations (2.99.2)
       diff-lcs (>= 1.1.3, < 2.0)
     rspec-mocks (2.99.3)
+    rubyzip (1.1.7)
     simplecov (0.10.0)
       docile (~> 1.1.0)
       json (~> 1.8)
@@ -102,6 +106,11 @@ GEM
       unf_ext
     unf (0.1.4-java)
     unf_ext (0.0.7.1)
+    warbler (1.4.8)
+      jruby-jars (>= 1.5.6, < 2.0)
+      jruby-rack (>= 1.1.1, < 1.3)
+      rake (>= 0.9.6)
+      rubyzip (>= 0.9, < 1.2)
 
 PLATFORMS
   java
@@ -115,3 +124,7 @@ DEPENDENCIES
   rspec (~> 2.14, >= 2.14.1)
   sluice (~> 0.2.2)
   snowplow-tracker (~> 0.5.2)
+  warbler
+
+BUNDLED WITH
+   1.11.2
