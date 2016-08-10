@@ -1,21 +1,21 @@
- /*
-  * Copyright (c) 2014 Snowplow Analytics Ltd.
-  * All rights reserved.
-  *
-  * This program is licensed to you under the Apache License Version 2.0,
-  * and you may not use this file except in compliance with the Apache
-  * License Version 2.0.
-  * You may obtain a copy of the Apache License Version 2.0 at
-  * http://www.apache.org/licenses/LICENSE-2.0.
-  *
-  * Unless required by applicable law or agreed to in writing,
-  * software distributed under the Apache License Version 2.0 is distributed
-  * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-  * either express or implied.
-  *
-  * See the Apache License Version 2.0 for the specific language
-  * governing permissions and limitations there under.
-  */
+/**
+ * Copyright (c) 2014-2016 Snowplow Analytics Ltd.
+ * All rights reserved.
+ *
+ * This program is licensed to you under the Apache License Version 2.0,
+ * and you may not use this file except in compliance with the Apache
+ * License Version 2.0.
+ * You may obtain a copy of the Apache License Version 2.0 at
+ * http://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the Apache License Version 2.0 is distributed
+ * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied.
+ *
+ * See the Apache License Version 2.0 for the specific language
+ * governing permissions and limitations there under.
+ */
 
 package com.snowplowanalytics.snowplow
 package storage.kinesis.elasticsearch
@@ -92,6 +92,7 @@ import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
 
 // This project
 import sinks._
+import clients._
 
 /**
  * Class to send valid records to Elasticsearch and invalid records to Kinesis
@@ -102,19 +103,26 @@ import sinks._
  * @param tracker a Tracker instance
  * @param maxConnectionWaitTimeMs the maximum amount of time
  *        we can attempt to send to elasticsearch
+ * @param elasticsearchClientType The type of ES Client to use
  */
 class SnowplowElasticsearchEmitter(
   configuration: KinesisConnectorConfiguration,
   goodSink: Option[ISink],
   badSink: ISink,
   tracker: Option[Tracker] = None,
-  maxConnectionWaitTimeMs: Long = 60000)
-
-  extends IEmitter[EmitterInput] {
+  maxConnectionWaitTimeMs: Long = 60000,
+  elasticsearchClientType: String = "transport"
+) extends IEmitter[EmitterInput] {
 
   private val Log = LogFactory.getLog(getClass)
 
-  private val newInstance = new ElasticsearchSender(configuration, tracker, maxConnectionWaitTimeMs)
+  private val newInstance: ElasticsearchSender = (
+    if (elasticsearchClientType == "http") {
+      new ElasticsearchSenderHTTP(configuration, tracker, maxConnectionWaitTimeMs)
+    } else {
+      new ElasticsearchSenderTransport(configuration, tracker, maxConnectionWaitTimeMs)
+    }
+  )
 
   // An ISO valid timestamp formatter
   private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)

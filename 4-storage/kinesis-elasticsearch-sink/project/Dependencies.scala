@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+/**
+ * Copyright (c) 2014-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,6 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
+
 import sbt._
 
 object Dependencies {
@@ -31,6 +32,7 @@ object Dependencies {
     val kinesisClient        = "1.6.1"
     val kinesisConnector     = "1.1.2"
     val elasticsearch        = "1.4.4"
+    val jest                 = "1.0.3"
     // Scala
     val argot                = "1.0.1"
     val config               = "1.0.2"
@@ -51,9 +53,11 @@ object Dependencies {
     // Java
     val logging              = "commons-logging"            %  "commons-logging"           % V.logging
     val slf4j                = "org.slf4j"                  %  "slf4j-simple"              % V.slf4j
+    val log4jOverSlf4j       = "org.slf4j"                  %  "log4j-over-slf4j"          % V.slf4j
     val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"     % V.kinesisClient
     val kinesisConnector     = "com.amazonaws"              %  "amazon-kinesis-connectors" % V.kinesisConnector
     val elasticsearch        = "org.elasticsearch"          %  "elasticsearch"             % V.elasticsearch
+    val jest                 = "io.searchbox"               %  "jest"                      % V.jest
     // Scala
     val argot                = "org.clapper"                %% "argot"                     % V.argot
     val config               = "com.typesafe"               %  "config"                    % V.config
