@@ -1,4 +1,3 @@
-require 'pg'
 require 'zlib'
 require 'csv'
 require 'tzinfo'
