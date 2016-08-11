@@ -36,13 +36,6 @@ begin
     loader::Monitoring::Snowplow.parameterize(config)
   end
 
-  # Download files if required
-  unless config[:skip].include?('download')
-    if config[:download_required]
-      loader::S3Tasks.download_events(config)
-    end
-  end
-
   # If we are not skipping the load, use the appropriate
   # loader for Redshift or Postgres or BigQuery
   unless config[:skip].include?('load')
@@ -53,8 +46,18 @@ begin
         when 'redshift'
           loader::RedshiftLoader.load_events_and_shredded_types(config, t, snowplow_tracking_enabled)
         when 'postgres'
+          unless config[:skip].include?('download')
+            if config[:download_required]
+              loader::S3Tasks.download_events(config, config[:aws][:s3][:buckets][:shredded][:good])
+            end
+          end
           loader::PostgresLoader.load_events(config[:storage][:download][:folder], t, config[:skip], config[:include], snowplow_tracking_enabled)
         when 'bigquery'
+          unless config[:skip].include?('download')
+            if config[:download_required]
+              loader::S3Tasks.download_events(config, config[:aws][:s3][:buckets][:enriched][:good])
+            end
+          end
           loader::BigQueryLoader.process_events(config[:storage][:download][:folder], t, snowplow_tracking_enabled)
           loader::BigQueryLoader.load_events(t, snowplow_tracking_enabled)
           loader::FileTasks.delete_events(t[:processing_dir])

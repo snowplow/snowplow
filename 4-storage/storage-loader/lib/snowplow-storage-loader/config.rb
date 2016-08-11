@@ -85,7 +85,13 @@ module Snowplow
           end
 
           if @@processing_required_targets.include?(t[:type])
-            config[:processing_required] = true
+            unless File.directory?(t[:processing_dir])
+              raise ConfigError, "Processing folder '#{t[:processing_dir]}' not found"
+            end
+          
+            if !(Dir.entries(t[:processing_dir]) - %w{ . .. }).empty?
+              raise ConfigError, "Processing folder '#{t[:processing_dir]}' is not empty"
+            end
           end
         end
 
@@ -100,16 +106,6 @@ module Snowplow
             if !(Dir.entries(config[:storage][:download][:folder]) - %w{ . .. }).empty?
               raise ConfigError, "Download folder '#{config[:storage][:download][:folder]}' is not empty"
             end
-          end
-        end
-
-        if config[:processing_required]
-          unless File.directory?(t[:processing_dir])
-            raise ConfigError, "Processing folder '#{t[:processing_dir]}' not found"
-          end
-        
-          if !(Dir.entries(t[:processing_dir]) - %w{ . .. }).empty?
-            raise ConfigError, "Processing folder '#{t[:processing_dir]}' is not empty"
           end
         end
 
