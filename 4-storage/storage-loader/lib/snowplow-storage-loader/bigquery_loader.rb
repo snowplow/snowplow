@@ -117,9 +117,9 @@ module Snowplow
         end
 
         table_files.each do |file|
-          table = target[:table_prefix] + File.basename(file, ".gzip").gsub('-', '')
+          table = target[:table] + File.basename(file, ".gzip").gsub('-', '')
 
-          cmd = BQ_CMD % [target[:maxerror], replace, target[:schema], target[:dataset], table, file]
+          cmd = BQ_CMD % [target[:maxerror], replace, target[:schema], target[:database], table, file]
           puts cmd
 
           fd = IO.popen(cmd)

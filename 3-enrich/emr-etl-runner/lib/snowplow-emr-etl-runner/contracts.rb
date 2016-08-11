@@ -72,16 +72,20 @@ module Snowplow
     TargetHash = ({
       :name => String,
       :type => String,
-      :host => String,
+      :host => Maybe[String],
       :database => String,
-      :port => Num,
+      :port => Maybe[Num],
       :ssl_mode => Maybe[String],
       :table => String,
       :username => Maybe[String],
       :password => Maybe[String],
       :es_nodes_wan_only => Maybe[Bool],
       :maxerror => Maybe[Num],
-      :comprows => Maybe[Num]
+      :comprows => Maybe[Num],
+      :schema => Maybe[String],
+      :replace => Maybe[Bool],
+      :timezone => Maybe[String],
+      :processing_dir =>Maybe[String]
       })
 
     # The Hash containing effectively the configuration YAML.
