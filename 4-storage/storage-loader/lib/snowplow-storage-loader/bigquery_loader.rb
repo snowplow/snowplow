@@ -28,6 +28,8 @@ module Snowplow
         out_files = {}
 
         event_files.each do |path|
+          puts "Processing #{path}..."
+
           options = {
             :col_sep => EVENT_FIELD_SEPARATOR,
             :headers => FIELD_NAMES,
