@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -29,7 +29,7 @@ import org.specs2.specification.{Scope,Fragments}
 import spray.testkit.Specs2RouteTest
 
 // Spray
-import spray.http.{DateTime,HttpHeader,HttpRequest,HttpCookie}
+import spray.http.{DateTime,HttpHeader,HttpRequest,HttpCookie,RemoteAddress}
 import spray.http.HttpHeaders.{
   Cookie,
   `Set-Cookie`,
@@ -62,7 +62,9 @@ collector {
   }
 
   cookie {
+    enabled = true
     expiration = 365 days
+    name = sp
     domain = "test-domain.com"
   }
 
@@ -76,7 +78,8 @@ collector {
       }
       stream {
         region: "us-east-1"
-        name: "snowplow_collector_example"
+        good: "snowplow_collector_example"
+        bad: "snowplow_collector_example"
       }
       buffer {
         byte-limit: 4000000 # 4MB
@@ -93,8 +96,9 @@ collector {
 """)
   val collectorConfig = new CollectorConfig(testConf)
   val sink = new TestSink
-  val responseHandler = new ResponseHandler(collectorConfig, sink)
-  val collectorService = new CollectorService(responseHandler, system)
+  val sinks = CollectorSinks(sink, sink)
+  val responseHandler = new ResponseHandler(collectorConfig, sinks)
+  val collectorService = new CollectorService(collectorConfig, responseHandler, system)
   val thriftDeserializer = new TDeserializer
 
   // By default, spray will always add Remote-Address to every request
@@ -129,18 +133,18 @@ collector {
         // this will need to be changed.
         val httpCookie = httpCookies(0)
 
-        httpCookie.name must be("sp")
+        httpCookie.name must beEqualTo(collectorConfig.cookieName.get)
         httpCookie.domain must beSome
         httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
         httpCookie.expires must beSome
         val expiration = httpCookie.expires.get
-        val offset = expiration.clicks - collectorConfig.cookieExpiration -
+        val offset = expiration.clicks - collectorConfig.cookieExpiration.get -
           DateTime.now.clicks
-        offset.asInstanceOf[Int] must beCloseTo(0, 2000) // 1000 ms window.
+        offset.asInstanceOf[Int] must beCloseTo(0, 3600000) // 1 hour window.
       }
     }
     "return the same cookie as passed in" in {
-      CollectorGet("/i", Some(HttpCookie("sp", "UUID_Test"))) ~>
+      CollectorGet("/i", Some(HttpCookie(collectorConfig.cookieName.get, "UUID_Test"))) ~>
           collectorService.collectorRoute ~> check {
         val httpCookies: List[HttpCookie] = headers.collect {
           case `Set-Cookie`(hc) => hc
@@ -170,17 +174,17 @@ collector {
     "store the expected event as a serialized Thrift object in the enabled sink" in {
       val payloadData = "param1=val1&param2=val2"
       val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
-        None, "localhost", "127.0.0.1", new HttpRequest(), None, "/i", true)._2
+        None, "localhost", RemoteAddress("127.0.0.1"), new HttpRequest(), None, "/i", true)._2
 
       val storedEvent = new CollectorPayload
       this.synchronized {
-        thriftDeserializer.deserialize(storedEvent, storedRecordBytes)
+        thriftDeserializer.deserialize(storedEvent, storedRecordBytes.head)
       }
 
-      storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 1000)
+      storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 60000)
       storedEvent.encoding must beEqualTo("UTF-8")
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
-      storedEvent.collector must beEqualTo("ssc-0.4.0-test")
+      storedEvent.collector must beEqualTo("ssc-0.7.0-test")
       storedEvent.path must beEqualTo("/i")
       storedEvent.querystring must beEqualTo(payloadData)
     }

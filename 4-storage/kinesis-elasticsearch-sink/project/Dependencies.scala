@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+/**
+ * Copyright (c) 2014-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,6 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
+
 import sbt._
 
 object Dependencies {
@@ -28,15 +29,19 @@ object Dependencies {
     // Java
     val logging              = "1.1.3"
     val slf4j                = "1.7.5"
-    val kinesisClient        = "1.0.0"
-    val kinesisConnector     = "1.1.1"
+    val kinesisClient        = "1.6.1"
+    val kinesisConnector     = "1.1.2"
+    val elasticsearch        = "1.4.4"
+    val jest                 = "1.0.3"
     // Scala
     val argot                = "1.0.1"
     val config               = "1.0.2"
     val scalaUtil            = "0.1.0"
-    val snowplowCommonEnrich = "0.9.0"
-    val scalazon             = "0.5"
+    val snowplowCommonEnrich = "0.22.0"
+    val igluClient           = "0.3.2"
+    val scalazon             = "0.11"
     val scalaz7              = "7.0.0"
+    val snowplowTracker      = "0.1.0"
     // Scala (test only)
     val specs2               = "2.2"
     val scalazSpecs2         = "0.1.2"
@@ -46,21 +51,28 @@ object Dependencies {
 
   object Libraries {
     // Java
-    val logging              = "commons-logging"            %  "commons-logging"          % V.logging
-    val slf4j                = "org.slf4j"                  %  "slf4j-simple"             % V.slf4j
-    val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"    % V.kinesisClient
-    val kinesisConnector     = "com.amazonaws"              %  "amazon-kinesis-connector" % V.kinesisConnector
+    val logging              = "commons-logging"            %  "commons-logging"           % V.logging
+    val slf4j                = "org.slf4j"                  %  "slf4j-simple"              % V.slf4j
+    val log4jOverSlf4j       = "org.slf4j"                  %  "log4j-over-slf4j"          % V.slf4j
+    val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"     % V.kinesisClient
+    val kinesisConnector     = "com.amazonaws"              %  "amazon-kinesis-connectors" % V.kinesisConnector
+    val elasticsearch        = "org.elasticsearch"          %  "elasticsearch"             % V.elasticsearch
+    val jest                 = "io.searchbox"               %  "jest"                      % V.jest
     // Scala
-    val argot                = "org.clapper"                %% "argot"                    % V.argot
-    val config               = "com.typesafe"               %  "config"                   % V.config
-    val scalaUtil            = "com.snowplowanalytics"      %  "scala-util"               % V.scalaUtil
-    val snowplowCommonEnrich = "com.snowplowanalytics"      % "snowplow-common-enrich"    % V.snowplowCommonEnrich
-    val scalazon             = "io.github.cloudify"         %% "scalazon"                 % V.scalazon
-    val scalaz7              = "org.scalaz"                 %% "scalaz-core"              % V.scalaz7
+    val argot                = "org.clapper"                %% "argot"                     % V.argot
+    val config               = "com.typesafe"               %  "config"                    % V.config
+    val scalaUtil            = "com.snowplowanalytics"      %  "scala-util"                % V.scalaUtil
+    val scalazon             = "io.github.cloudify"         %% "scalazon"                  % V.scalazon
+    val scalaz7              = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
+    val snowplowTracker      = "com.snowplowanalytics"      %% "snowplow-scala-tracker"    % V.snowplowTracker
+    // Intransitive to prevent the jar containing more than 2^16 files
+    val snowplowCommonEnrich = "com.snowplowanalytics"      % "snowplow-common-enrich"     % V.snowplowCommonEnrich intransitive
+    // Since Common Enrich is intransitive, we explicitly add Iglu Scala Client as a dependency
+    val igluClient           = "com.snowplowanalytics"      %  "iglu-scala-client"         % V.igluClient
     // Scala (test only)
-    val specs2               = "org.specs2"                 %% "specs2"                   % V.specs2         % "test"
-    val scalazSpecs2         = "org.typelevel"              %% "scalaz-specs2"            % V.scalazSpecs2   % "test"
+    val specs2               = "org.specs2"                 %% "specs2"                    % V.specs2         % "test"
+    val scalazSpecs2         = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"
     // Scala (compile only)
-    val commonsLang3         = "org.apache.commons"         % "commons-lang3"             % V.commonsLang3   % "compile"
+    val commonsLang3         = "org.apache.commons"         % "commons-lang3"              % V.commonsLang3   % "compile"
   }
 }

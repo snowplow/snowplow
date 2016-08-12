@@ -14,17 +14,23 @@
 # License::   Apache License Version 2.0
 
 require 'sluice'
-
 require 'contracts'
-include Contracts
 
 # Ruby module to support the load of Snowplow events into Redshift
 module Snowplow
   module StorageLoader
     module RedshiftLoader
 
+      include Contracts
+
       # Constants for the load process
       EVENT_FIELD_SEPARATOR = "\\t"
+
+      # Used to find the altered enriched events
+      ALTERED_ENRICHED_PATTERN = /(run=[0-9\-]+\/atomic-events)/
+
+      # Versions 0.5.0 and earlier of Hadoop Shred don't copy atomic.events into the shredded bucket
+      OLD_ENRICHED_PATTERN = /0\.[0-5]\.[0-9]/
 
       SqlStatements = Struct.new(:copy, :analyze, :vacuum)
 
@@ -35,42 +41,75 @@ module Snowplow
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
       Contract Hash, Hash => nil
-      def load_events_and_shredded_types(config, target)
+      def load_events_and_shredded_types(config, target, snowplow_tracking_enabled)
         puts "Loading Snowplow events and shredded types into #{target[:name]} (Redshift cluster)..."
 
+        s3 = Sluice::Storage::S3::new_fog_s3_from(
+          config[:aws][:s3][:region],
+          config[:aws][:access_key_id],
+          config[:aws][:secret_access_key])
+
         # First let's get our statements for shredding (if any)
-        shredded_statements = get_shredded_statements(config, target)
+        shredded_statements = get_shredded_statements(config, target, s3)
 
         # Build our main transaction, consisting of COPY and COPY FROM JSON
         # statements, and potentially also a set of table ANALYZE statements.
-        copy_analyze_statements = [
-          build_copy_from_tsv_statement(config, config[:s3][:buckets][:enriched][:good], target[:table], target[:maxerror])
-        ]
-        copy_analyze_statements.push(*shredded_statements.map(&:copy))
 
-        unless config[:skip].include?('analyze')
-          copy_analyze_statements << build_analyze_statement(target[:table])
-          copy_analyze_statements.push(*shredded_statements.map(&:analyze).uniq)
+        atomic_events_location = if OLD_ENRICHED_PATTERN.match(config[:enrich][:versions][:hadoop_shred])
+          :enriched
+        else
+          :shredded
         end
 
-        status = PostgresLoader.execute_transaction(target, copy_analyze_statements)
+        copy_statements = if atomic_events_location == :shredded
+          loc = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:shredded][:good])
+          altered_enriched_filepath = Sluice::Storage::S3::list_files(s3, loc).find { |file|
+            ALTERED_ENRICHED_PATTERN.match(file.key)
+          }
+          if altered_enriched_filepath.nil?
+            raise DatabaseLoadError, 'Cannot find atomic-events directory in shredded/good'
+          end
+          # Of the form "run=xxx/atomic-events"
+          altered_enriched_subdirectory = ALTERED_ENRICHED_PATTERN.match(altered_enriched_filepath.key)[1]
+          [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:shredded][:good] + altered_enriched_subdirectory, target[:table], target[:maxerror])]
+        else
+          [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:enriched][:good], target[:table], target[:maxerror])]
+        end + shredded_statements.map(&:copy)
+
+        credentials = [config[:aws][:access_key_id], config[:aws][:secret_access_key]]
+
+        status = PostgresLoader.execute_transaction(target, copy_statements)
         unless status == []
-          raise DatabaseLoadError, "#{status[1]} error executing COPY and ANALYZE statements: #{status[0]}: #{status[2]}"
+          raw_error_message = "#{status[1]} error executing COPY statements: #{status[0]}: #{status[2]}"
+          error_message = Sanitization.sanitize_message(raw_error_message, credentials)
+          if snowplow_tracking_enabled
+            Monitoring::Snowplow.instance.track_load_failed(error_message)
+          end
+          raise DatabaseLoadError, error_message
+        end
+
+        if snowplow_tracking_enabled
+          Monitoring::Snowplow.instance.track_load_succeeded()
         end
 
         # If vacuum is requested, build a set of VACUUM statements
         # and execute them in series. VACUUMs cannot be performed
         # inside of a transaction
         if config[:include].include?('vacuum')
-          vacuum_statements = [
-            build_vacuum_statement(target[:table])
-          ]
-          vacuum_statements.push(*shredded_statements.map(&:vacuum).uniq)
+          vacuum_statements = [build_vacuum_statement(target[:table])] + shredded_statements.map(&:vacuum).uniq
+          vacuum_status = PostgresLoader.execute_queries(target, vacuum_statements)
+          unless vacuum_status == []
+            raise DatabaseLoadError, Sanitization.sanitize_message("#{vacuum_status[1]} error executing VACUUM statements: #{vacuum_status[0]}: #{vacuum_status[2]}", credentials)
+          end
+        end
 
-          status = PostgresLoader.execute_queries(target, vacuum_statements)
-          unless status == []
-            raise DatabaseLoadError, "#{status[1]} error executing VACUUM statements: #{status[0]}: #{status[2]}"
-          end      
+        # ANALYZE statements should be executed after VACUUM statements.
+        unless config[:skip].include?('analyze')
+          analyze_statements = [build_analyze_statement(target[:table])] + shredded_statements.map(&:analyze).uniq
+          analyze_status = PostgresLoader.execute_transaction(target, analyze_statements)
+          unless analyze_status == []
+            raise DatabaseLoadError, Sanitization.sanitize_message("#{analyze_status[1]} error executing ANALYZE statements: #{analyze_status[0]}: #{analyze_status[2]}", credentials)
+          end
         end
 
         nil
@@ -85,21 +124,17 @@ module Snowplow
       # Parameters:
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
-      Contract Hash, Hash => ArrayOf[SqlStatements]
-      def get_shredded_statements(config, target)
+      Contract Hash, Hash, Sluice::Storage::S3 => ArrayOf[SqlStatements]
+      def get_shredded_statements(config, target, s3)
 
         if config[:skip].include?('shred') # No shredded types to load
           []
         else
-          s3 = Sluice::Storage::S3::new_fog_s3_from(
-            config[:s3][:region],
-            config[:aws][:access_key_id],
-            config[:aws][:secret_access_key])
           schema = extract_schema(target[:table])
 
-          ShreddedType.discover_shredded_types(s3, config[:s3][:buckets][:shredded][:good], schema).map { |st|
+          ShreddedType.discover_shredded_types(s3, config[:aws][:s3][:buckets][:shredded][:good], schema).map { |st|
 
-            jsonpaths_file = st.discover_jsonpaths_file(s3, config[:s3][:buckets][:jsonpath_assets])
+            jsonpaths_file = st.discover_jsonpaths_file(s3, config[:aws][:s3][:buckets][:jsonpath_assets])
             if jsonpaths_file.nil?
               raise DatabaseLoadError, "Cannot find JSON Paths file to load #{st.s3_objectpath} into #{st.table}"
             end
@@ -126,6 +161,13 @@ module Snowplow
       end
       module_function :extract_schema
 
+      # Replaces an initial "s3n" with "s3" in an S3 path
+      Contract String => String
+      def fix_s3_path(path)
+        path.gsub(/^s3n/, 's3')
+      end
+      module_function :fix_s3_path
+
       # Constructs the COPY statement to load the enriched
       # event TSV files into Redshift.
       #
@@ -141,6 +183,8 @@ module Snowplow
 
         # Assemble the relevant parameters for the bulk load query
         credentials = get_credentials(config)
+        compression_format = get_compression_format(config[:enrich][:output_compression])
+        fixed_objectpath = fix_s3_path(s3_objectpath)
         comprows =
           if config[:include].include?('compudate')
             "COMPUPDATE COMPROWS #{config[:comprows]}"
@@ -148,7 +192,7 @@ module Snowplow
             ""
           end
 
-        "COPY #{table} FROM '#{s3_objectpath}' CREDENTIALS '#{credentials}' REGION AS '#{config[:s3][:region]}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{maxerror} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS #{comprows} TIMEFORMAT 'auto' ACCEPTINVCHARS;"
+        "COPY #{table} FROM '#{fixed_objectpath}' CREDENTIALS '#{credentials}' REGION AS '#{config[:aws][:s3][:region]}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{maxerror} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS #{comprows} TIMEFORMAT 'auto' ACCEPTINVCHARS #{compression_format};"
       end
       module_function :build_copy_from_tsv_statement
 
@@ -168,8 +212,10 @@ module Snowplow
       Contract Hash, String, String, String, Num => String
       def build_copy_from_json_statement(config, s3_objectpath, jsonpaths_file, table, maxerror)
         credentials = get_credentials(config)
+        compression_format = get_compression_format(config[:enrich][:output_compression])
+        fixed_objectpath = fix_s3_path(s3_objectpath)
         # TODO: what about COMPUPDATE/ROWS?
-        "COPY #{table} FROM '#{s3_objectpath}' CREDENTIALS '#{credentials}' JSON AS '#{jsonpaths_file}' REGION AS '#{config[:s3][:region]}' MAXERROR #{maxerror} TRUNCATECOLUMNS TIMEFORMAT 'auto' ACCEPTINVCHARS;"
+        "COPY #{table} FROM '#{fixed_objectpath}' CREDENTIALS '#{credentials}' JSON AS '#{jsonpaths_file}' REGION AS '#{config[:aws][:s3][:region]}' MAXERROR #{maxerror} TRUNCATECOLUMNS TIMEFORMAT 'auto' ACCEPTINVCHARS #{compression_format};"
       end
       module_function :build_copy_from_json_statement
 
@@ -205,6 +251,20 @@ module Snowplow
         "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
       end
       module_function :get_credentials
+
+      # Returns the compression format for a
+      # Redshift COPY statement.
+      #
+      # Parameters:
+      # +output_codec+:: the output code, possibly nil
+      def get_compression_format(output_codec)
+        if output_codec == 'NONE'
+          ''
+        elsif output_codec == 'GZIP'
+          'GZIP'
+        end
+      end
+      module_function :get_compression_format
 
     end
   end

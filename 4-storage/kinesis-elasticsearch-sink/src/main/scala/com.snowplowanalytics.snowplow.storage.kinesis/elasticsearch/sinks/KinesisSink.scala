@@ -1,5 +1,5 @@
- /*
- * Copyright (c) 2014 Snowplow Analytics Ltd.
+/**
+ * Copyright (c) 2014-2016 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -16,10 +16,12 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
+
 package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch.sinks
 
 // Java
 import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets.UTF_8
 
 // Scala
 import scala.util.Random
@@ -72,9 +74,8 @@ class KinesisSink(provider: AWSCredentialsProvider, endpoint: String, name: Stri
   // Create a Kinesis client for stream interactions.
   private implicit val kinesis = Client.fromClient(client)
 
-  // The output stream for enriched events.
-  // Lazy so that it doesn't get created unless we need to write to it.
-  private lazy val enrichedStream = createAndLoadStream()
+  // The output stream for failed events.
+  private val enrichedStream = createAndLoadStream()
 
   /**
    * Checks if a stream exists.
@@ -134,7 +135,7 @@ class KinesisSink(provider: AWSCredentialsProvider, endpoint: String, name: Stri
   def store(output: String, key: Option[String], good: Boolean) {
     val putData = for {
       p <- enrichedStream.put(
-        ByteBuffer.wrap(output.getBytes),
+        ByteBuffer.wrap(output.getBytes(UTF_8)),
         key.getOrElse(Random.nextInt.toString)
       )
     } yield p

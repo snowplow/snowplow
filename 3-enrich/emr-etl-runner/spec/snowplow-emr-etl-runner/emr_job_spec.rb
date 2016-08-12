@@ -28,10 +28,26 @@ describe EmrJob do
   end
 
   it 'returns the Hadoop assets' do
-    EmrJob.get_assets("s3://hadoop-assets/", "1.0.0", "0.3.0").should == {
+    EmrJob.get_assets("s3://hadoop-assets/", "1.0.0", "0.3.0", "0.1.0").should == {
       :enrich   => "s3://hadoop-assets/3-enrich/scala-hadoop-enrich/snowplow-hadoop-enrich-1.0.0.jar",
-      :shred    => "s3://hadoop-assets/3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-0.3.0.jar"
+      :shred    => "s3://hadoop-assets/3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-0.3.0.jar",
+      :elasticsearch => "s3://hadoop-assets/4-storage/hadoop-elasticsearch-sink/hadoop-elasticsearch-sink-0.1.0.jar"
     }
+  end
+
+  it 'returns the Hadoop assets for old versions of Hadoop Shred' do
+    EmrJob.get_assets("s3://hadoop-assets/", "0.14.2", "0.3.0", "0.1.0").should == {
+      :enrich   => "s3://hadoop-assets/3-enrich/hadoop-etl/snowplow-hadoop-etl-0.14.2.jar",
+      :shred    => "s3://hadoop-assets/3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-0.3.0.jar",
+      :elasticsearch => "s3://hadoop-assets/4-storage/hadoop-elasticsearch-sink/hadoop-elasticsearch-sink-0.1.0.jar"
+    }
+  end
+
+  it 'knows what the ndjson/urbanairship collector format looks like' do
+    EmrJob.is_ua_ndjson("ndjson/com.urbanairship.connect/v1").should eql true
+    EmrJob.is_ua_ndjson("thrift").should eql false
+    EmrJob.is_ua_ndjson("ndjson/com.somethingelse/v1").should eql false
+    EmrJob.is_ua_ndjson("ndjson/com.urbanairship.connect/").should eql false # invalid without version
   end
 
 end

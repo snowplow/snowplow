@@ -18,13 +18,7 @@ package enrichments
 package registry
 
 // Scripting
-import javax.script.{
-  ScriptEngineManager,
-  ScriptException,
-  Bindings,
-  Compilable,
-  CompiledScript
-}
+import org.mozilla.javascript._
 
 // Maven Artifact
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
@@ -97,17 +91,6 @@ object JavascriptScriptEnrichment {
     val Out = s"${prefix}Out"
   }
 
-  object Engines {
-    private val factory = new ScriptEngineManager(null) // http://stackoverflow.com/a/20176667/255627
-    // TODO: decide if we want to use .ensuring in the code base
-    val Raw = factory
-      .getEngineByName("JavaScript")
-      .ensuring(_ != null, "JavaScript engine unavailable")
-    val Compiling = Raw
-      .asInstanceOf[Compilable]
-      .ensuring(_ != null, "JavaScript Compilable engine unavailable")
-  }
-
   /**
    * Appends an invocation to the script and
    * then attempts to compile it.
@@ -115,7 +98,7 @@ object JavascriptScriptEnrichment {
    * @param script the JavaScript process()
    *        function as a String
    */
-  private[registry] def compile(script: String): Validation[String, CompiledScript] = {
+  private[registry] def compile(script: String): Validation[String, Script] = {
 
     // Script mustn't be null
     if (Option(script).isEmpty) {
@@ -133,10 +116,11 @@ object JavascriptScriptEnrichment {
           |null;
           |""".stripMargin
 
+    val cx = Context.enter()
     try {
-      Engines.Compiling.compile(invoke).success
+      cx.compileString(invoke, "user-defined-script", 0, null).success
     } catch {
-      case se: ScriptException => s"Error compiling JavaScript script: [${se}]".fail
+      case NonFatal(se) => s"Error compiling JavaScript script: [${se}]".fail
     }
   }
 
@@ -153,26 +137,25 @@ object JavascriptScriptEnrichment {
    *         or an error String on Failure
    */
   implicit val formats = DefaultFormats
-  private[registry] def process(script: CompiledScript, event: EnrichedEvent): Validation[String, List[JObject]] = {
+  private[registry] def process(script: Script, event: EnrichedEvent): Validation[String, List[JObject]] = {
 
-    val bindings = Engines.Raw.createBindings
-    bindings.put(Variables.In, event)
+    val cx = Context.enter()
+    val scope = cx.initStandardObjects
 
-    // Fail fast
     try {
-      val retVal = script.eval(bindings)
+      scope.put(Variables.In, scope, Context.javaToJS(event, scope))
+      val retVal = script.exec(cx, scope)
       if (Option(retVal).isDefined) {
         return s"Evaluated JavaScript script should not return a value; returned: [${retVal}]".fail
       }
     } catch {
       case NonFatal(nf) =>
         return s"Evaluating JavaScript script threw an exception: [${nf}]".fail
-    }
-    if (!bindings.containsKey(Variables.Out)) {
-      return s"Evaluated JavaScript script is missing out-variable ${Variables.Out}; should never happen".fail
+    } finally {
+      Context.exit()
     }
 
-    Option(bindings.get(Variables.Out)) match {
+    Option(scope.get(Variables.Out)) match {
       case None => Nil.success
       case Some(obj) => {
         try {
@@ -210,7 +193,7 @@ object JavascriptScriptEnrichment {
  * @param script The compiled script ready for
  */
 case class JavascriptScriptEnrichment(
-  script: CompiledScript
+  script: Script
   ) extends Enrichment {
 
   val version = new DefaultArtifactVersion("0.1.0")

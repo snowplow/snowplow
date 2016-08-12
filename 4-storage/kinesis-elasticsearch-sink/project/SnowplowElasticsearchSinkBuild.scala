@@ -1,5 +1,5 @@
-/* 
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+/**
+ * Copyright (c) 2014-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,10 +10,11 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
+
 import sbt._
 import Keys._
 
-object SnowplowKinesisEnrichBuild extends Build {
+object SnowplowElasticsearchSinkBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -33,14 +34,19 @@ object SnowplowKinesisEnrichBuild extends Build {
         Libraries.config,
         Libraries.scalaUtil,
         Libraries.snowplowCommonEnrich,
+        Libraries.igluClient,
         Libraries.scalazon,
         Libraries.scalaz7,
         Libraries.specs2,
         Libraries.scalazSpecs2,
         Libraries.commonsLang3,
         Libraries.slf4j,
+        Libraries.log4jOverSlf4j,
         Libraries.kinesisClient,
-        Libraries.kinesisConnector
+        Libraries.kinesisConnector,
+        Libraries.snowplowTracker,
+        Libraries.elasticsearch,
+        Libraries.jest
       )
     )
 }

@@ -1,0 +1,24 @@
+{
+    "jsonpaths": [
+        "$.schema.vendor",
+        "$.schema.name",
+        "$.schema.format",
+        "$.schema.version",
+        "$.hierarchy.rootId",
+        "$.hierarchy.rootTstamp",
+        "$.hierarchy.refRoot",
+        "$.hierarchy.refTree",
+        "$.hierarchy.refParent",
+        "$.data.asm_group_id",
+        "$.data.category",
+        "$.data.email",
+        "$.data.newsletter.newsletter_id",
+        "$.data.newsletter.newsletter_send_id",
+        "$.data.newsletter.newsletter_user_list_id",
+        "$.data.send_at",
+        "$.data.sg_event_id",
+        "$.data.sg_message_id",
+        "$.data.smtp-id",
+        "$.data.timestamp"
+    ]
+}

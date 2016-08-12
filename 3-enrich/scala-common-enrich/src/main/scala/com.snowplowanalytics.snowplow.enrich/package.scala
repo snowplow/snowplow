@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -27,6 +27,9 @@ import com.snowplowanalytics.maxmind.iplookups.IpLocation
 
 // JSON Schema
 import com.github.fge.jsonschema.core.report.ProcessingMessage
+
+// Iglu
+import com.snowplowanalytics.iglu.client.JsonSchemaPair
 
 // This project
 import common.loaders.CollectorPayload
@@ -150,4 +153,9 @@ package object common {
    * Parameters inside of a raw event
    */
   type RawEventParameters = Map[String, String]
+
+  /**
+   * A (possibly empty) list of JsonSchemaPairs
+   */
+  type JsonSchemaPairs = List[JsonSchemaPair]
 }

@@ -35,7 +35,7 @@ CREATE VIEW recipes_basic.uniques_and_visits_by_day AS
 
 -- Pageviews by day
 CREATE VIEW recipes_basic.pageviews_by_day AS
-	SELECT 
+	SELECT
 		DATE_TRUNC('day', collector_tstamp) AS "Date",
 		COUNT(*) AS "page_views"
 		FROM "atomic".events
@@ -68,7 +68,7 @@ CREATE VIEW recipes_basic.pages_per_visit AS
 		COUNT(*) as "pages_visited"
 		FROM "atomic".events
 		WHERE event = 'page_view'
-		AND collector_tstamp > current_date - integer '31' 
+		AND collector_tstamp > current_date - integer '31'
 		GROUP BY session
 	) AS page_view_per_visit
 	GROUP BY 1
@@ -76,7 +76,7 @@ CREATE VIEW recipes_basic.pages_per_visit AS
 
 
 -- Bounce rate by day
-CREATE VIEW recipes_basic.bounce_rate_by_day AS 
+CREATE VIEW recipes_basic.bounce_rate_by_day AS
 	SELECT
 		DATE_TRUNC('day', time_first_touch) AS "Date",
 		SUM(bounces)::REAL/COUNT(*) as "Bounce rate"
@@ -103,7 +103,7 @@ CREATE VIEW recipes_basic.fraction_new_visits_by_day AS
 	FROM (
 		SELECT
 			MIN(collector_tstamp) AS "time_first_touch",
-			domain_userid, 
+			domain_userid,
 			domain_sessionidx,
 			CASE WHEN domain_sessionidx = 1 THEN 1 ELSE 0 END AS "first_visit"
 		FROM "atomic".events
@@ -114,7 +114,7 @@ CREATE VIEW recipes_basic.fraction_new_visits_by_day AS
 
 
 -- Average visit duration
-CREATE VIEW recipes_basic.avg_visit_duration_by_day AS 
+CREATE VIEW recipes_basic.avg_visit_duration_by_day AS
 	SELECT
 		DATE_TRUNC('day', start_time) AS "Date",
 		EXTRACT(EPOCH FROM AVG(duration)) AS "average_visit_duration_seconds"
@@ -145,7 +145,7 @@ CREATE VIEW recipes_basic.visitors_by_language AS
 
 
 -- Demographics: location
-CREATE VIEW recipes_basic.visits_by_country AS 
+CREATE VIEW recipes_basic.visits_by_country AS
 	SELECT
 		geo_country AS "Country",
 		COUNT(DISTINCT(domain_userid)) as "Visitors"
@@ -163,7 +163,7 @@ CREATE VIEW recipes_basic.new_vs_returning AS
 	FROM (
 		SELECT
 			MIN(collector_tstamp) AS "time_first_touch",
-			domain_userid, 
+			domain_userid,
 			domain_sessionidx,
 			CASE WHEN domain_sessionidx = 1 THEN 1 ELSE 0 END AS "first_visit"
 		FROM "atomic".events
@@ -235,13 +235,13 @@ CREATE VIEW recipes_basic.engagement_visit_duration AS
 		SELECT
 			domain_userid,
 			domain_sessionidx,
-			CASE 
-				WHEN extract(EPOCH FROM (MAX(dvce_tstamp)-MIN(dvce_tstamp))) > 1800 THEN 'g. 1801+ seconds' 
-				WHEN extract(EPOCH FROM (MAX(dvce_tstamp)-MIN(dvce_tstamp))) > 600 THEN 'f. 601-1800 seconds' 
-				WHEN extract(EPOCH FROM (MAX(dvce_tstamp)-MIN(dvce_tstamp))) > 180 THEN 'e. 181-600 seconds' 
-				WHEN extract(EPOCH FROM (MAX(dvce_tstamp)-MIN(dvce_tstamp))) > 60 THEN 'd. 61 - 180 seconds' 
-				WHEN extract(EPOCH FROM (MAX(dvce_tstamp)-MIN(dvce_tstamp))) > 30 THEN 'c. 31-60 seconds' 
-				WHEN extract(EPOCH FROM (MAX(dvce_tstamp)-MIN(dvce_tstamp))) > 10 THEN 'b. 11-30 seconds' 
+			CASE
+				WHEN extract(EPOCH FROM (MAX(dvce_created_tstamp)-MIN(dvce_created_tstamp))) > 1800 THEN 'g. 1801+ seconds'
+				WHEN extract(EPOCH FROM (MAX(dvce_created_tstamp)-MIN(dvce_created_tstamp))) > 600 THEN 'f. 601-1800 seconds'
+				WHEN extract(EPOCH FROM (MAX(dvce_created_tstamp)-MIN(dvce_created_tstamp))) > 180 THEN 'e. 181-600 seconds'
+				WHEN extract(EPOCH FROM (MAX(dvce_created_tstamp)-MIN(dvce_created_tstamp))) > 60 THEN 'd. 61 - 180 seconds'
+				WHEN extract(EPOCH FROM (MAX(dvce_created_tstamp)-MIN(dvce_created_tstamp))) > 30 THEN 'c. 31-60 seconds'
+				WHEN extract(EPOCH FROM (MAX(dvce_created_tstamp)-MIN(dvce_created_tstamp))) > 10 THEN 'b. 11-30 seconds'
 				ELSE 'a. 0-10 seconds' END AS "Visit duration"
 		FROM "atomic".events
 		WHERE collector_tstamp > current_date - integer '31'
@@ -288,13 +288,13 @@ CREATE VIEW recipes_basic.technology_os AS
 		COUNT(DISTINCT(domain_userid || domain_sessionidx)) as "Visits"
 	FROM "atomic".events
 	WHERE collector_tstamp > current_date - integer '31'
-	GROUP BY 1 
-	ORDER BY 2 DESC; 
+	GROUP BY 1
+	ORDER BY 2 DESC;
 
 
 -- Technology: mobile
 CREATE VIEW recipes_basic.technology_mobile AS
-SELECT 
+SELECT
 	CASE WHEN dvce_ismobile=TRUE THEN 'mobile' ELSE 'desktop' END AS "Device type",
 	COUNT(DISTINCT(domain_userid || domain_sessionidx)) as "Visits"
 FROM "atomic".events

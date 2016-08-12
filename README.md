@@ -27,8 +27,8 @@ To briefly explain these six sub-systems:
 * **Collectors** receive Snowplow events from trackers. Currently we have three different event collectors, sinking events either to Amazon S3 or Amazon Kinesis
 * **Enrich** cleans up the raw Snowplow events, enriches them and puts them into storage. Currently we have a Hadoop-based enrichment process, and a Kinesis-based process
 * **Storage** is where the Snowplow events live. Currently we store the Snowplow events in a flatfile structure on S3, and in the Redshift and Postgres databases
-* **Data modeling** is where event-level data is joined with other data sets and aggregated into smaller data sets, and business logic is applied. This produces a clean set of tables which make it easier to perform analysis on the data. We have data models for Redshift and [Looker] [looker]
-* **Analytics** are performed on the Snowplow events or on the aggregate tables. We currently have an online cookbook of ad hoc analyses that work with Redshift, Postgres and Hive. We also have data models for [Looker] [looker] in LookML
+* **Data modeling** is where event-level data is joined with other data sets and aggregated into smaller data sets, and business logic is applied. This produces a clean set of tables which make it easier to perform analysis on the data. We have data models for Redshift and **[Looker] [looker]**
+* **Analytics** are performed on the Snowplow events or on the aggregate tables. We currently have an online cookbook of ad hoc analyses that work with Redshift, Postgres and Hive. We also have data models for **[Looker] [looker]** in LookML
 
 **For more information on the current Snowplow architecture, please see the [Technical architecture] [architecture-doc]**.
 
@@ -76,7 +76,7 @@ limitations under the License.
 [travis-image]: https://travis-ci.org/snowplow/snowplow.png?branch=master
 [travis]: http://travis-ci.org/snowplow/snowplow
 
-[release-image]: http://img.shields.io/badge/release-66_Oriental_Skylark-blue.svg?style=flat
+[release-image]: https://img.shields.io/badge/release-82_Tawny_Eagle-orange.svg?style=flat
 [releases]: https://github.com/snowplow/snowplow/releases
 
 [license-image]: http://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
@@ -108,4 +108,3 @@ limitations under the License.
 [setup]: https://github.com/snowplow/snowplow/wiki/Setting-up-SnowPlow
 [roadmap]: https://github.com/snowplow/snowplow/wiki/Product-roadmap
 [contributing]: https://github.com/snowplow/snowplow/wiki/Contributing
-

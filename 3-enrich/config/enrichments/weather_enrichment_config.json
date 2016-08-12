@@ -1,0 +1,16 @@
+{
+    "schema": "iglu:com.snowplowanalytics.snowplow.enrichments/weather_enrichment_config/jsonschema/1-0-0",
+
+    "data": {
+        "enabled": false,
+        "vendor": "com.snowplowanalytics.snowplow.enrichments",
+        "name": "weather_enrichment_config",
+        "parameters": {
+            "apiKey": "{{KEY}}",
+            "cacheSize": 5100,
+            "geoPrecision": 1,
+            "apiHost": "history.openweathermap.org",
+            "timeout": 5
+        }
+    }
+}

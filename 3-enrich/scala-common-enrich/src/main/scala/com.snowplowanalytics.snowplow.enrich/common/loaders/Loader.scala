@@ -20,6 +20,7 @@ import java.net.URI
 import org.apache.http.client.utils.URLEncodedUtils
 
 // Scala
+import scala.util.control.NonFatal
 import scala.collection.JavaConversions._
 
 // Scalaz
@@ -33,6 +34,7 @@ import Scalaz._
 object Loader {
 
   private val TsvRegex = "^tsv/(.*)$".r
+  private val NdjsonRegex = "^ndjson/(.*)$".r
 
   /**
    * Factory to return a CollectorLoader
@@ -47,11 +49,12 @@ object Loader {
    *         in a Scalaz Validation
    */
   def getLoader(collectorOrProtocol: String): Validation[String, Loader[_]] = collectorOrProtocol match {
-    case "cloudfront" => CloudfrontLoader.success
-    case "clj-tomcat" => CljTomcatLoader.success
-    case "thrift"     => ThriftLoader.success // Finally - a data protocol rather than a piece of software
-    case TsvRegex(f)  => TsvLoader(f).success
-    case  c           => "[%s] is not a recognised Snowplow event collector".format(c).fail
+    case "cloudfront"   => CloudfrontLoader.success
+    case "clj-tomcat"   => CljTomcatLoader.success
+    case "thrift"       => ThriftLoader.success // Finally - a data protocol rather than a piece of software
+    case TsvRegex(f)    => TsvLoader(f).success
+    case NdjsonRegex(f) => NdjsonLoader(f).success
+    case c              => "[%s] is not a recognised Snowplow event collector".format(c).fail
   }
 }
 
@@ -101,7 +104,8 @@ abstract class Loader[T] {
       try {
         URLEncodedUtils.parse(URI.create("http://localhost/?" + q), enc).toList.success
       } catch {
-        case e => "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]".format(q, enc, e.getMessage).fail
+        case NonFatal(e) =>
+          "Exception extracting name-value pairs from querystring [%s] with encoding [%s]: [%s]".format(q, enc, e.getMessage).fail
       }
     }
     case None => Nil.success

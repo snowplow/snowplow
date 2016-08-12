@@ -15,7 +15,10 @@
 
 require 'optparse'
 require 'date'
+require 'base64'
 require 'yaml'
+require 'erb'
+require 'aws-sdk'
 require 'sluice'
 
 # Config module to hold functions related to CLI argument parsing
@@ -27,30 +30,49 @@ module Snowplow
       # TODO: would be nice to move this to using Kwalify
       # TODO: would be nice to support JSON as well as YAML
 
-      @@storage_targets = Set.new(%w(redshift postgres))
+      @@storage_targets = Set.new(%w(redshift postgres elasticsearch))
 
       # Return the configuration loaded from the supplied YAML file, plus
       # the additional constants above.
       def get_config()
 
         options = Config.parse_args()
-        config = YAML.load_file(options[:config])
+
+        if options[:b64config].nil?
+          if Config.indicates_read_from_stdin?(options[:config])
+            unsymbolized_config = $stdin.readlines.join
+          else
+            unsymbolized_config = File.new(options[:config]).read
+          end
+        else
+          unsymbolized_config = Base64.decode64(options[:b64config])
+        end
+
+        erb_config = ERB.new(unsymbolized_config).result(binding)
+
+        config = Config.recursive_symbolize_keys(YAML.load(erb_config))
+
 
         # Add in our skip and include settings
         config[:skip] = options[:skip]
         config[:include] = options[:include]
 
         # Add trailing slashes if needed to the non-nil buckets
-        config[:s3][:buckets] = add_trailing_slashes(config[:s3][:buckets])
+        config[:aws][:s3][:buckets] = add_trailing_slashes(config[:aws][:s3][:buckets])
+
+        # Retrieve AWS credentials from EC2 role if necessary
+        if config[:aws][:access_key_id] == 'iam' and config[:aws][:secret_access_key] == 'iam'
+          credentials_from_role = Aws::InstanceProfileCredentials.new.credentials
+          config[:aws][:access_key_id] = credentials_from_role.access_key_id
+          config[:aws][:secret_access_key] = credentials_from_role.secret_access_key
+        end
 
         # Add in our comprows setting
         config[:comprows] = options[:comprows]
         
-        unless config[:download][:folder].nil? # TODO: remove when Sluice's trail_slash can handle nil
-          config[:download][:folder] = Sluice::Storage::trail_slash(config[:download][:folder])
-        end
+        config[:storage][:download][:folder] = Sluice::Storage::trail_slash(config[:storage][:download][:folder])
 
-        config[:targets].each { |t|
+        config[:storage][:targets].each { |t|
           # Check we recognise the storage target 
           unless @@storage_targets.include?(t[:type]) 
             raise ConfigError, "Storage type '#{t[:type]}' not supported"
@@ -58,19 +80,19 @@ module Snowplow
         }
             
         # Determine whether we need to download events
-        config[:download_required] = config[:targets].count { |t| t[:type] == "postgres" } > 0
+        config[:download_required] = config[:storage][:targets].count { |t| t[:type] == "postgres" } > 0
 
-        # If Infobright is the target, check that the download folder exists and is empty
+        # If Postgres is the target, check that the download folder exists and is empty
         if config[:download_required]
           # Check that the download folder exists...
-          unless File.directory?(config[:download][:folder])
-            raise ConfigError, "Download folder '#{config[:download][:folder]}' not found"
+          unless File.directory?(config[:storage][:download][:folder])
+            raise ConfigError, "Download folder '#{config[:storage][:download][:folder]}' not found"
           end
         
           # ...and it is empty
           unless config[:skip].include?("download")
-            if !(Dir.entries(config[:download][:folder]) - %w{ . .. }).empty?
-              raise ConfigError, "Download folder '#{config[:download][:folder]}' is not empty"
+            if !(Dir.entries(config[:storage][:download][:folder]) - %w{ . .. }).empty?
+              raise ConfigError, "Download folder '#{config[:storage][:download][:folder]}' is not empty"
             end
           end
         end
@@ -90,7 +112,7 @@ module Snowplow
           elsif bucketsHash[k0].class == {}.class
             y = {}
             for k1 in bucketsHash[k0].keys
-              y[k1] = bucketsHash[k0][k1].nil? ? nil : Sluice::Storage::trail_slash(bucketsHash[k0][k1])
+              y[k1] = Sluice::Storage::trail_slash(bucketsHash[k0][k1])
             end
             with_slashes_added[k0] = y
           else
@@ -116,8 +138,9 @@ module Snowplow
           opts.separator ""
           opts.separator "Specific options:"
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config] = config }
+          opts.on('-b', '--base64-config-string CONFIG', 'base64-encoded configuration string') { |config| options[:b64config] = config }
           opts.on('-i', '--include compupdate,vacuum', Array, 'include optional work step(s)') { |config| options[:include] = config }
-          opts.on('-s', '--skip download|delete,load,shred,analyze,archive', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-s', '--skip download|delete,load,shred,analyze,archive_enriched', Array, 'skip work step(s)') { |config| options[:skip] = config }
 
           opts.separator ""
           opts.separator "Common options:"
@@ -138,8 +161,8 @@ module Snowplow
 
         # Check our skip argument
         options[:skip].each { |opt|
-          unless %w(download delete load shred analyze archive).include?(opt)
-            raise ConfigError, "Invalid option: skip can be 'download', 'delete', 'load', 'analyze' or 'archive', not '#{opt}'"
+          unless %w(download delete load shred analyze archive_enriched).include?(opt)
+            raise ConfigError, "Invalid option: skip can be 'download', 'delete', 'load', 'analyze' or 'archive_enriched', not '#{opt}'"
           end
         }
 
@@ -150,19 +173,43 @@ module Snowplow
           end
         }
 
-        # Check we have a config file argument
-        if options[:config].nil?
-          raise ConfigError, "Missing option: config\n#{optparse}"
+        if options[:config].nil? and options[:b64config].nil?
+          raise ConfigError, "Missing option: config or base64-config-string\n#{optparse}"
         end
 
-        # Check the config file exists
-        unless File.file?(options[:config])
-          raise ConfigError, "Configuration file '#{options[:config]}' does not exist, or is not a file."
+        # Check the config file exists if config is not read from stdin
+        if options[:b64config].nil?
+          unless Config.indicates_read_from_stdin?(options[:config]) || File.file?(options[:config])
+            raise ConfigError, "Configuration file '#{options[:config]}' does not exist, or is not a file."
+          end
         end
 
         options
       end
       module_function :parse_args
+
+      # A single hyphen indicates that the config should be read from stdin
+      def indicates_read_from_stdin?(config_option)
+        config_option == '-'
+      end
+      module_function :indicates_read_from_stdin?
+
+      # Convert all keys in arbitrary hash into symbols
+      # Taken from http://stackoverflow.com/a/10721936/255627
+      def self.recursive_symbolize_keys(h)
+        case h
+        when Hash
+          Hash[
+            h.map do |k, v|
+              [ k.respond_to?(:to_sym) ? k.to_sym : k, recursive_symbolize_keys(v) ]
+            end
+          ]
+        when Enumerable
+          h.map { |v| recursive_symbolize_keys(v) }
+        else
+          h
+        end
+      end
 
     end
   end

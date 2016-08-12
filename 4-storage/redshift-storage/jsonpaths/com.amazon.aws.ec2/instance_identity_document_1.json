@@ -1,0 +1,27 @@
+{
+    "jsonpaths": [
+        "$.schema.vendor",
+        "$.schema.name",
+        "$.schema.format",
+        "$.schema.version",
+        "$.hierarchy.rootId",
+        "$.hierarchy.rootTstamp",
+        "$.hierarchy.refRoot",
+        "$.hierarchy.refTree",
+        "$.hierarchy.refParent",
+        "$.data.accountId",
+        "$.data.architecture",
+        "$.data.availabilityZone",
+        "$.data.billingProducts",
+        "$.data.devpayProductCodes",
+        "$.data.imageId",
+        "$.data.instanceId",
+        "$.data.instanceType",
+        "$.data.kernelId",
+        "$.data.pendingTime",
+        "$.data.privateIp",
+        "$.data.ramdiskId",
+        "$.data.region",
+        "$.data.version"
+    ]
+}

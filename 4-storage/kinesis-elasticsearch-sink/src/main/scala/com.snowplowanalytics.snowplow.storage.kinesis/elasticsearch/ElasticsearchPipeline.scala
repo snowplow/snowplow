@@ -1,5 +1,5 @@
- /*
- * Copyright (c) 2014 Snowplow Analytics Ltd.
+/**
+ * Copyright (c) 2014-2016 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -16,7 +16,9 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
-package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
+
+package com.snowplowanalytics.snowplow
+package storage.kinesis.elasticsearch
 
 // AWS Kinesis Connector libs
 import com.amazonaws.services.kinesis.connectors.elasticsearch.{
@@ -38,17 +40,42 @@ import com.amazonaws.services.kinesis.connectors.impl.{BasicMemoryBuffer,AllPass
 import sinks._
 import StreamType._
 
-/**
-* ElasticsearchPipeline class sets up the Emitter/Buffer/Transformer/Filter
-*/
-class ElasticsearchPipeline(streamType: StreamType, documentIndex: String, documentType: String, goodSink: Option[ISink], badSink: ISink)
-  extends IKinesisConnectorPipeline[ValidatedRecord, EmitterInput] {
+// Tracker
+import scalatracker.Tracker
 
-  override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[EmitterInput] = new SnowplowElasticsearchEmitter(configuration, goodSink, badSink)
+/**
+ * ElasticsearchPipeline class sets up the Emitter/Buffer/Transformer/Filter
+ *
+ * @param streamType the type of stream, good/bad
+ * @param documentIndex the elasticsearch index name
+ * @param documentType the elasticsearch index type
+ * @param goodSink the configured GoodSink
+ * @param badSink the configured BadSink
+ * @param tracker a Tracker instance
+ * @param maxConnectionTime the maximum amount of time
+ *        we can attempt to send to elasticsearch
+ * @param elasticsearchClientType The type of ES Client to use
+ */
+class ElasticsearchPipeline(
+  streamType: StreamType,
+  documentIndex: String,
+  documentType: String,
+  goodSink: Option[ISink],
+  badSink: ISink,
+  tracker: Option[Tracker] = None,
+  maxConnectionTime: Long,
+  elasticsearchClientType: String
+) extends IKinesisConnectorPipeline[ValidatedRecord, EmitterInput] {
+
+  override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[EmitterInput] =
+    new SnowplowElasticsearchEmitter(configuration, goodSink, badSink, tracker, maxConnectionTime, elasticsearchClientType)
+
   override def getBuffer(configuration: KinesisConnectorConfiguration) = new BasicMemoryBuffer[ValidatedRecord](configuration)
+
   override def getTransformer(c: KinesisConnectorConfiguration) = streamType match {
     case Good => new SnowplowElasticsearchTransformer(documentIndex, documentType)
     case Bad => new BadEventTransformer(documentIndex, documentType)
   }
+
   override def getFilter(c: KinesisConnectorConfiguration) = new AllPassFilter[ValidatedRecord]()
 }

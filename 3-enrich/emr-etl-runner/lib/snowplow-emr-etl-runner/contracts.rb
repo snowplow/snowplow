@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2015 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'contracts'
@@ -19,6 +19,8 @@ module Snowplow
   module EmrEtlRunner
 
     include Contracts
+
+    CompressionFormat = lambda { |s| %w(NONE GZIP).include?(s) }
 
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
@@ -42,94 +44,113 @@ module Snowplow
       :anon_octets => Num
       })
 
-    # The Hash for the Iglu client config
-    IgluConfigHash = ({
-      :schema => String,
-      :data => ({
-        :cache_size => Num,
-        :repositories => ArrayOf[({
-          :name => String,
-          :priority => Num,
-          :vendor_prefixes => ArrayOf[String],          
-          :connection => ({
-            :http => ({
-              :uri => String
-              })
-            })
-          })]
-        })
-      })
-
     # The Hash containing the buckets field from the configuration YAML
     BucketHash = ({
       :assets => String,
+      :jsonpath_assets => Maybe[String],
       :log => String,
       :raw => ({
-        :in => String,
+        :in => ArrayOf[String],
         :processing => String,
         :archive => String
         }),
       :enriched => ({
         :good => String,
         :bad => String,
-        :errors => Maybe[String]
+        :errors => Maybe[String],
+        :archive => Maybe[String]
         }),
       :shredded => ({
         :good => String,
         :bad => String,
-        :errors => Maybe[String]
+        :errors => Maybe[String],
+        :archive => Maybe[String]
         })
+      })
+
+    # The Hash containing the storage targets to load
+    TargetHash = ({
+      :name => String,
+      :type => String,
+      :host => String,
+      :database => String,
+      :port => Num,
+      :ssl_mode => Maybe[String],
+      :table => String,
+      :username => Maybe[String],
+      :password => Maybe[String],
+      :es_nodes_wan_only => Maybe[Bool],
+      :maxerror => Maybe[Num],
+      :comprows => Maybe[Num]
       })
 
     # The Hash containing effectively the configuration YAML.
     ConfigHash = ({
-      :logging => ({
-        :level => String
-        }),
       :aws => ({
         :access_key_id => String,
-        :secret_access_key => String
-        }),
-      :s3 => ({
-        :region => String,
-        :buckets => BucketHash
-        }),
-      :emr => ({
-        :ami_version => String,
-        :region => String,
-        :jobflow_role => String,
-        :service_role => String,
-        :placement => Maybe[String],
-        :ec2_subnet_id => Maybe[String],
-        :ec2_key_name => String,
-        :bootstrap => ArrayOf[String],
-        :software => ({
-          :hbase => Maybe[String],
-          :lingual => Maybe[String]
+        :secret_access_key => String,
+        :s3 => ({
+          :region => String,
+          :buckets => BucketHash
           }),
-        :jobflow => ({
-          :master_instance_type => String,
-          :core_instance_count => Num,
-          :core_instance_type => String,
-          :task_instance_count => Num,
-          :task_instance_type => String,
-          :task_instance_bid => Maybe[Num]
-          })
+        :emr => ({
+          :ami_version => String,
+          :region => String,
+          :jobflow_role => String,
+          :service_role => String,
+          :placement => Maybe[String],
+          :ec2_subnet_id => Maybe[String],
+          :ec2_key_name => String,
+          :bootstrap => Maybe[ArrayOf[String]],
+          :software => ({
+            :hbase => Maybe[String],
+            :lingual => Maybe[String]
+            }),
+          :jobflow => ({
+            :master_instance_type => String,
+            :core_instance_count => Num,
+            :core_instance_type => String,
+            :task_instance_count => Num,
+            :task_instance_type => String,
+            :task_instance_bid => Maybe[Num]
+            }),
+          :additional_info => Maybe[String],
+          :bootstrap_failure_tries => Num
+          }),
         }),
-      :etl => ({
+      :collectors => ({
+        :format => String,
+        }),
+      :enrich => ({
         :job_name => String,
         :versions => ({
           :hadoop_enrich => String,
           :hadoop_shred => String
           }),
-        :collector_format => String,
-        :continue_on_unexpected_error => Bool
+        :continue_on_unexpected_error => Bool,
+        :output_compression => CompressionFormat
         }),
-      :iglu => IgluConfigHash
+      :storage => ({
+        :download => ({
+          :folder => Maybe[String]
+          }),
+        :targets => ArrayOf[TargetHash]
+        }),
+      :monitoring => ({
+        :tags => HashOf[Symbol, String],
+        :logging => ({
+          :level => String
+          }),
+        :snowplow => Maybe[{
+          :method => String,
+          :collector => String,
+          :app_id => String
+          }]
+        })
       })
 
     # The Array (Tuple3) containing the CLI arguments, configuration YAML, and configuration JSONs
-    ArgsConfigEnrichmentsTuple = [ArgsHash, ConfigHash, ArrayOf[String]]
+    ArgsConfigEnrichmentsResolverTuple = [ArgsHash, ConfigHash, ArrayOf[String], String]
 
   end
 end

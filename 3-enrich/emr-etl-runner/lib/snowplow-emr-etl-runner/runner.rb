@@ -22,22 +22,23 @@ module Snowplow
       include Contracts
 
       # Supported options
-      @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+))$/
-      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred archive))
+      @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+)|(?:ndjson\/.+\/.+))$/
+      @@skip_options = Set.new(%w(staging s3distcp emr enrich shred elasticsearch archive_raw))
 
-      include Logging
+      include Monitoring::Logging
 
       # Initialize the class.
-      Contract ArgsHash, ConfigHash, ArrayOf[String] => Runner
-      def initialize(args, config, enrichments_array)
+      Contract ArgsHash, ConfigHash, ArrayOf[String], String => Runner
+      def initialize(args, config, enrichments_array, resolver)
 
         # Let's set our logging level immediately
-        Logging::set_level config[:logging][:level]
+        Monitoring::Logging::set_level config[:monitoring][:logging][:level]
 
         @args = args
         @config = validate_and_coalesce(args, config)
         @enrichments_array = enrichments_array
-        
+        @resolver = resolver
+
         self
       end
 
@@ -56,11 +57,31 @@ module Snowplow
           enrich = not(@args[:skip].include?('enrich'))
           shred = not(@args[:skip].include?('shred'))
           s3distcp = not(@args[:skip].include?('s3distcp'))
-          job = EmrJob.new(@args[:debug], enrich, shred, s3distcp, @config, @enrichments_array)
-          job.run()
+          elasticsearch = not(@args[:skip].include?('elasticsearch'))
+
+          # Keep relaunching the job until it succeeds or fails for a reason other than a bootstrap failure
+          tries_left = @config[:aws][:emr][:bootstrap_failure_tries]
+          while true
+            begin
+              tries_left -= 1
+              job = EmrJob.new(@args[:debug], enrich, shred, elasticsearch, s3distcp, @config, @enrichments_array, @resolver)
+              job.run(@config)
+              break
+            rescue BootstrapFailureError => bfe
+              logger.warn "Job failed. #{tries_left} tries left..."
+              if tries_left > 0
+                # Random timeout between 0 and 10 minutes
+                bootstrap_timeout = rand(1..600)
+                logger.warn("Bootstrap failure detected, retrying in #{bootstrap_timeout} seconds...")
+                sleep(bootstrap_timeout)
+              else
+                raise
+              end
+            end
+          end
         end
 
-        unless @args[:skip].include?('archive')
+        unless @args[:skip].include?('archive_raw')
           S3Tasks.archive_logs(@config)
         end
 
@@ -69,24 +90,14 @@ module Snowplow
       end
 
       # Adds trailing slashes to all non-nil bucket names in the hash
-      Contract BucketHash => BucketHash
-      def add_trailing_slashes(bucketsHash)
-        with_slashes_added = {}
-        for k0 in bucketsHash.keys
-          if bucketsHash[k0].class == ''.class
-            with_slashes_added[k0] = Sluice::Storage::trail_slash(bucketsHash[k0])
-          elsif bucketsHash[k0].class == {}.class
-            y = {}
-            for k1 in bucketsHash[k0].keys
-              y[k1] = bucketsHash[k0][k1].nil? ? nil : Sluice::Storage::trail_slash(bucketsHash[k0][k1])
-            end
-            with_slashes_added[k0] = y
-          else
-            with_slashes_added[k0] = nil
-          end
+      def self.add_trailing_slashes(bucketData)
+        if bucketData.class == ''.class
+          Sluice::Storage::trail_slash(bucketData)
+        elsif bucketData.class == {}.class
+          bucketData.each {|k,v| add_trailing_slashes(v)}
+        elsif bucketData.class == [].class
+          bucketData.each {|b| add_trailing_slashes(b)}
         end
-
-        with_slashes_added
       end
 
       # Validate our arguments against the configuration Hash
@@ -98,30 +109,35 @@ module Snowplow
         # Check our skip argument
         args[:skip].each { |opt|
           unless @@skip_options.include?(opt)
-            raise ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred' or 'archive', not '#{opt}'"
+            raise ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred', 'elasticsearch', or 'archive_raw', not '#{opt}'"
           end
         }
-
-        if args[:skip].include?('shred') and args[:skip].include?('enrich') and !args[:skip].include?('emr')
-          args[:skip] << 'emr'
-        end
 
         # Check that start is before end, if both set
         if !args[:start].nil? and !args[:end].nil?
           if args[:start] > args[:end]
-            raise ConfigError, "Invalid options: end date '#{_end}' is before start date '#{start}'"
+            raise ConfigError, "Invalid options: end date '#{args[:end]}' is before start date '#{args[:start]}'"
           end
         end
 
-        input_collector_format = config[:etl][:collector_format]
+        input_collector_format = config[:collectors][:format]
 
         # Validate the collector format
         unless input_collector_format =~ @@collector_format_regex
           raise ConfigError, "collector_format '%s' not supported" % input_collector_format
         end
 
+        if input_collector_format == 'thrift'
+          if args[:skip].include?('s3distcp')
+            raise ConfigError, "Cannot process Thrift events with --skip s3distcp"
+          end
+          if config[:aws][:emr][:ami_version].start_with?('2')
+            raise ConfigError, "Cannot process Thrift events with AMI version 2.x.x"
+          end
+        end
+
         # Currently we only support start/end times for the CloudFront collector format. See #120 for details
-        unless config[:etl][:collector_format] == 'cloudfront' or (args[:start].nil? and args[:end].nil?)
+        unless config[:collectors][:format] == 'cloudfront' or (args[:start].nil? and args[:end].nil?)
           raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
         end
 
@@ -130,14 +146,14 @@ module Snowplow
           raise ConfigError, "Cannot process enrich and process shred, choose one"
         end
         unless args[:process_enrich_location].nil?
-          config[:s3][:buckets][:raw][:processing] = args[:process_enrich_location]
+          config[:aws][:s3][:buckets][:raw][:processing] = args[:process_enrich_location]
         end
         unless args[:process_shred_location].nil?
-          config[:s3][:buckets][:enriched][:good] = args[:process_shred_location]
+          config[:aws][:s3][:buckets][:enriched][:good] = args[:process_shred_location]
         end
 
         # Add trailing slashes if needed to the non-nil buckets
-        config[:s3][:buckets] = add_trailing_slashes(config[:s3][:buckets])
+        config[:aws][:s3][:buckets] = Runner.add_trailing_slashes(config[:aws][:s3][:buckets])
 
         config
       end

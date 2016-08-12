@@ -33,6 +33,8 @@ object ScalaCollectorBuild extends Build {
       libraryDependencies ++= Seq(
         Libraries.akkaActor,
         Libraries.akkaSlf4j,
+        Libraries.yodaTime,
+        Libraries.yodaConvert,
         Libraries.logback,
         Libraries.mimepull,
         Libraries.sprayCan,
@@ -43,8 +45,12 @@ object ScalaCollectorBuild extends Build {
         Libraries.scalazon,
         Libraries.awsSdk,
         Libraries.argot,
+        Libraries.snowplowCommonEnrich,
+        Libraries.igluClient,
+        Libraries.scalaz7,
         Libraries.snowplowRawEvent,
-        Libraries.collectorPayload
+        Libraries.collectorPayload,
+        Libraries.json4sJackson
       )
     )
 }

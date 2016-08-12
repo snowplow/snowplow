@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the
@@ -21,9 +21,9 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "com.snowplowanalytics",
-    version               :=  "0.4.0",
+    version               :=  "0.7.0",
     description           :=  "Scala Stream Collector for Snowplow raw events",
-    scalaVersion          :=  "2.10.1",
+    scalaVersion          :=  "2.10.5",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
                                   "-unchecked", "-feature", "-target:jvm-1.7"),
     scalacOptions in Test :=  Seq("-Yrangepos"),
