@@ -374,6 +374,25 @@ module Snowplow
           @jobflow.add_step(shred_step)
 
           if s3distcp
+
+            dashdb_targets = config[:storage][:targets].select {|t| t[:type] == 'dashdb'}
+            if dashdb_targets.length == 1
+              hdfs_to_dashdb = Elasticity::CustomJarStep.new('s3://snowplow-dashdb-connector/sp_dashdb_connector.jar')
+              hdfs_to_dashdb.arguments = [
+                "--dbhost",
+                dashdb_targets[0][:host],
+                "--dbtable",
+                dashdb_targets[0][:table],
+                "--dbuser",
+                dashdb_targets[0][:username],
+                "--dbpassword",
+                dashdb_targets[0][:password],
+                "--hdfspath",
+                shred_step_output + "atomic-events"
+              ]
+              @jobflow.add_step(hdfs_to_dashdb)
+            end
+
             # We need to copy our shredded types from HDFS back to S3
             copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             copy_to_s3_step.arguments = [
