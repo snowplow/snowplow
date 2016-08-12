@@ -21,24 +21,39 @@ import scala.annotation.tailrec
  */
 object IpAddressExtractor {
 
-  private val IpExtractionRegex = """^x-forwarded-for: ((?:[0-9]|\.)+).*""".r
+  private val ipRegex = """((?:[0-9]|\.)+)"""
+  private val HttpHeaderIpRegex = s"""^x-forwarded-for: $ipRegex.*""".r
+  private val CloudfrontIpRegex = s"""^$ipRegex.*""".r
 
   /**
    * If a request has been forwarded, extract the original client IP address;
    * otherwise return the standard IP address
    *
    * @param headers List of headers potentially containing X-FORWARDED-FOR
-   * @param lastIp Fallback IP address if no XI-FORWARDED-FOR header exists
+   * @param lastIp Fallback IP address if no X-FORWARDED-FOR header exists
    * @return True client IP address
    */
   @tailrec
   def extractIpAddress(headers: List[String], lastIp: String): String = {
     headers match {
       case h :: t => h.toLowerCase match {
-        case IpExtractionRegex(originalIpAddress) => originalIpAddress
+        case HttpHeaderIpRegex(originalIpAddress) => originalIpAddress
         case _ => extractIpAddress(t, lastIp)
       }
       case Nil => lastIp
     }
+  }
+
+  /**
+    * If a request has been forwarded, extract the original client IP address;
+    * otherwise return the standard IP address
+    *
+    * @param xForwardedFor x-forwarded-for field from the Cloudfront log
+    * @param lastIp Fallback IP address if no X-FORWARDED-FOR header exists
+    * @return True client IP address
+    */
+  def extractIpAddress(xForwardedFor: String, lastIp: String): String = xForwardedFor match {
+    case CloudfrontIpRegex(originalIpAddress) => originalIpAddress
+    case _ => lastIp
   }
 }

@@ -81,12 +81,19 @@ object CloudfrontLoader extends Loader[String] {
   private val fields29Apr2014 = fields21Oct2013 ++ List(
     "[\\S]+"         // TimeTaken     / time-taken         added 29 Apr 2014
   )
+  private val fields01Jul2014 = fields29Apr2014 ++ List(
+    "([\\S]+)",      // ForwardedFor  / x-forwarded-for             added 01 Jul 2014
+    "[\\S]+",        // SslProtocol   / ssl-protocol                added 01 Jul 2014
+    "[\\S]+",        // SslCipher     / ssl-cipher                  added 01 Jul 2014
+    "[\\S]+"         // EdgeResResult / x-edge-response-result-type added 01 Jul 2014
+  )
 
   private val CfOriginalPlusAdditionalRegex  = toRegex(originalFields, additionalFields = true)
   private val CfOriginalRegex  = toRegex(originalFields)
   private val Cf12Sep2012Regex = toRegex(fields12Sep2012)
   private val Cf21Oct2013Regex = toRegex(fields21Oct2013)
   private val Cf29Apr2014Regex = toRegex(fields29Apr2014)
+  private val Cf01Jul2014Regex = toRegex(fields01Jul2014, additionalFields = true)
 
   /**
    * Converts the source string into a 
@@ -120,6 +127,9 @@ object CloudfrontLoader extends Loader[String] {
 
     case Cf29Apr2014Regex(date, time, _, _, ip, _, _, objct, _, rfr, ua, qs) =>
       CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs).toValidatedMaybeCollectorPayload
+
+    case Cf01Jul2014Regex(date, time, _, _, ip, _, _, objct, _, rfr, ua, qs, forwardedFor) =>
+      CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs, forwardedFor).toValidatedMaybeCollectorPayload
 
     // 4. Row not recognised
     case _ => "Line does not match CloudFront header or data row formats".failNel[Option[CollectorPayload]]
@@ -180,7 +190,14 @@ object CloudfrontLoader extends Loader[String] {
       fields.mkString(whitespaceRegex).r
   }
 
-  private case class CloudfrontLogLine(date: String, time: String, ip: String, objct: String, rfr: String, ua: String, qs: String) {
+  private case class CloudfrontLogLine(date: String,
+                                       time: String,
+                                       lastIp: String,
+                                       objct: String,
+                                       rfr: String,
+                                       ua: String,
+                                       qs: String,
+                                       forwardedFor: String = "-") {
 
     def toValidatedMaybeCollectorPayload: ValidatedMaybeCollectorPayload = {
       // Validations, and let's strip double-encodings
@@ -191,6 +208,7 @@ object CloudfrontLoader extends Loader[String] {
       }
 
       // No validation (yet) on the below
+      val ip = IpAddressExtractor.extractIpAddress(forwardedFor, lastIp)
       val userAgent  = singleEncodePcts(ua)
       val refr = singleEncodePcts(rfr)
       val referer = toOption(refr) map toCleanUri
