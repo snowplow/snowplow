@@ -187,13 +187,46 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
         "res"     -> "975x571",
         "cookie"  -> "1",
         "url"     -> "http://www.psychicbazaar.com/oracles/107-magdalene-oracle.html"
+      )                                 !
+        "67.71.16.237".some             ! "Mozilla/5.0%20(Windows%20NT%206.1;%20Trident/7.0;%20rv:11.0)%20like%20Gecko".some ! "http://www.psychicbazaar.com/oracles/107-magdalene-oracle.html".some |
+      "CloudFront with x-forwarded-for" !! "2016-07-01  13:17:26  AMS50  480  255.255.255.255  GET  d1f6ajd7ltcrsx.cloudfront.net  /i  200  http://www.simplybusiness.co.uk/knowledge/articles/2016/06/guide-to-facebook-professional-services-for-small-business/  Mozilla/5.0%20(Windows%20NT%206.1;%20Trident/7.0;%20rv:11.0)%20like%20Gecko  e=pv&url=http%253A%252F%252Fwww.simplybusiness.co.uk%252Fknowledge%252Farticles%252F2016%252F06%252Fguide-to-facebook-professional-services-for-small-business%252F&page=Guide%2520to%2520Facebook%2520Professional%2520Services%2520for%2520small%2520business&tv=js-2.4.0&tna=sb-cf-pv&p=web&tz=Europe%252FLondon&lang=en-US&cs=UTF-8&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=0&f_gears=0&f_ag=0&res=1600x900&cd=24&cookie=1&eid=e3793bd1-fcf5-4fbb-bf4c-f0315a5821c3&dtm=1467379046723&vp=1600x799&ds=1583x4043&vid=1&duid=685e511b67c86d5c&fp=2811351631  -  Hit  LLzvdlIbJ0d6siOm-EY3-2nBYTiM6b5RZLWRyPbyTCE-RIE9bC7_eQ==  d1f6ajd7ltcrsx.cloudfront.net  http  1627  0.003  67.71.16.237,%20202.134.75.113  -  -  Hit" !
+        DateTime.parse("2016-07-01T13:17:26.000+00:00") ! toNameValuePairs(
+        "e"       -> "pv",
+        "url"     -> "http://www.simplybusiness.co.uk/knowledge/articles/2016/06/guide-to-facebook-professional-services-for-small-business/",
+        "page"    -> "Guide to Facebook Professional Services for small business",
+        "tv"      -> "js-2.4.0",
+        "tna"     -> "sb-cf-pv",
+        "p"       -> "web",
+        "tz"      -> "Europe/London",
+        "lang"    -> "en-US",
+        "cs"      -> "UTF-8",
+        "f_pdf"   -> "1",
+        "f_qt"    -> "0",
+        "f_realp" -> "0",
+        "f_wma"   -> "0",
+        "f_dir"   -> "0",
+        "f_fla"   -> "1",
+        "f_java"  -> "0",
+        "f_gears" -> "0",
+        "f_ag"    -> "0",
+        "res"     -> "1600x900",
+        "cd"      -> "24",
+        "cookie"  -> "1",
+        "eid"     -> "e3793bd1-fcf5-4fbb-bf4c-f0315a5821c3",
+        "dtm"     -> "1467379046723",
+        "vp"      -> "1600x799",
+        "ds"      -> "1583x4043",
+        "vid"     -> "1",
+        "duid"    -> "685e511b67c86d5c",
+        "fp"      -> "2811351631"
       )                     !
-        "67.71.16.237".some ! "Mozilla/5.0%20(Windows%20NT%206.1;%20Trident/7.0;%20rv:11.0)%20like%20Gecko".some ! "http://www.psychicbazaar.com/oracles/107-magdalene-oracle.html".some |> {
+        "67.71.16.237".some ! "Mozilla/5.0%20(Windows%20NT%206.1;%20Trident/7.0;%20rv:11.0)%20like%20Gecko".some ! "http://www.simplybusiness.co.uk/knowledge/articles/2016/06/guide-to-facebook-professional-services-for-small-business/".some |> {
 
       (_, raw, timestamp, payload, ipAddress, userAgent, refererUri) =>
         {
 
-          val canonicalEvent = CloudfrontLoader.toCollectorPayload(raw)
+          val canonicalEvent = CloudfrontLoader
+            .toCollectorPayload(raw)
 
           val expected = CollectorPayload(
             api         = Expected.api,
