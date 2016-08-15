@@ -34,7 +34,7 @@ module Snowplow
 
       # Return the configuration loaded from the supplied YAML file, plus
       # the additional constants above.
-      def get_config()
+      def self.get_config()
 
         options = Config.parse_args()
 
@@ -99,12 +99,11 @@ module Snowplow
 
         config
       end  
-      module_function :get_config
 
     private
 
       # Add trailing slashes
-      def add_trailing_slashes(bucketsHash)
+      def self.add_trailing_slashes(bucketsHash)
         with_slashes_added = {}
         for k0 in bucketsHash.keys
           if bucketsHash[k0].class == ''.class
@@ -122,11 +121,10 @@ module Snowplow
 
         with_slashes_added
       end
-      module_function :add_trailing_slashes
 
       # Parse the command-line arguments
       # Returns: the hash of parsed options
-      def parse_args()
+      def self.parse_args()
 
         # Handle command-line arguments
         options = {}
@@ -186,13 +184,11 @@ module Snowplow
 
         options
       end
-      module_function :parse_args
 
       # A single hyphen indicates that the config should be read from stdin
-      def indicates_read_from_stdin?(config_option)
+      def self.indicates_read_from_stdin?(config_option)
         config_option == '-'
       end
-      module_function :indicates_read_from_stdin?
 
       # Convert all keys in arbitrary hash into symbols
       # Taken from http://stackoverflow.com/a/10721936/255627

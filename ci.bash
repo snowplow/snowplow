@@ -16,7 +16,7 @@ declare -a kinesis_app_packages=( "snowplow-scala-stream-collector" "snowplow-st
 declare -a kinesis_app_paths=( "2-collectors/scala-stream-collector" "3-enrich/stream-enrich" "4-storage/kinesis-elasticsearch-sink" )
 declare -a kinesis_fatjars=( "snowplow-stream-collector" "snowplow-stream-enrich" "snowplow-elasticsearch-sink" )
 # TODO: version numbers shouldn't be hard-coded
-declare -a kinesis_app_versions=( "0.7.0" "0.8.1" "0.7.0")
+declare -a kinesis_app_versions=( "0.7.0" "0.9.0" "0.7.0")
 
 # Similar to Perl die
 function die() {

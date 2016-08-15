@@ -36,7 +36,7 @@ module Snowplow
       # +target+:: the configuration options for this target
       # +skip_steps+:: Array of steps to skip
       # +include_steps+:: Array of optional steps to include
-      def load_events(events_dir, target, skip_steps, include_steps, snowplow_tracking_enabled)
+      def self.load_events(events_dir, target, skip_steps, include_steps, snowplow_tracking_enabled)
         puts "Loading Snowplow events into #{target[:name]} (PostgreSQL database)..."
 
         event_files = get_event_files(events_dir)
@@ -69,7 +69,6 @@ module Snowplow
           end
         end  
       end
-      module_function :load_events
 
       # Adapted from:  https://bitbucket.org/ged/ruby-pg/raw/9812218e0654caa58f8604838bc368434f7b3828/sample/copyfrom.rb
       #
@@ -81,7 +80,7 @@ module Snowplow
       # Parameters:
       # +target+:: the configuration options for this target
       # +files+:: the data files to copy into the database
-      def copy_via_stdin(target, files)
+      def self.copy_via_stdin(target, files)
         puts "Opening database connection ..."
 
         conn = get_connection(target)
@@ -114,7 +113,6 @@ module Snowplow
 
         return status
       end
-      module_function :copy_via_stdin
 
       # Converts a set of queries into a
       # single Redshift read-write
@@ -126,7 +124,7 @@ module Snowplow
       #
       # Returns either an empty list on success, or on failure
       # a list of the form [query, err_class, err_message]      
-      def execute_transaction(target, queries)
+      def self.execute_transaction(target, queries)
 
         transaction = (
           [ "BEGIN;" ] +
@@ -138,7 +136,6 @@ module Snowplow
 
         execute_queries(target, [ transaction ])
       end
-      module_function :execute_transaction
 
       # Execute a chain of SQL commands, stopping as soon as
       # an error is encountered. At that point, it returns a
@@ -151,7 +148,7 @@ module Snowplow
       #
       # Returns either an empty list on success, or on failure
       # a list of the form [query, err_class, err_message]
-      def execute_queries(target, queries)
+      def self.execute_queries(target, queries)
 
         conn = get_connection(target)
 
@@ -168,7 +165,6 @@ module Snowplow
         conn.close()
         return status
       end
-      module_function :execute_queries
 
       # Get a java.sql.Connection to a database
       def self.get_connection(target)
@@ -192,13 +188,12 @@ module Snowplow
       # +events_dir+:: the directory holding the event files to load 
       #
       # Returns the array of cold files
-      def get_event_files(events_dir)
+      def self.get_event_files(events_dir)
 
         Dir[File.join(events_dir, '**', 'atomic-events', EVENT_FILES)].select { |f|
           File.file?(f) # In case of a dir ending in .tsv
         }
       end
-      module_function :get_event_files
 
     end
   end
