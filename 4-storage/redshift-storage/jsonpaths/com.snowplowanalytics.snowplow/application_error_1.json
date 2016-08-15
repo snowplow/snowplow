@@ -1,0 +1,22 @@
+{
+    "jsonpaths": [
+        "$.schema.vendor",
+        "$.schema.name",
+        "$.schema.format",
+        "$.schema.version",
+        "$.hierarchy.rootId",
+        "$.hierarchy.rootTstamp",
+        "$.hierarchy.refRoot",
+        "$.hierarchy.refTree",
+        "$.hierarchy.refParent",
+        "$.data.message",
+        "$.data.programmingLanguage",
+        "$.data.className",
+        "$.data.exceptionName",
+        "$.data.isFatal",
+        "$.data.lineNumber",
+        "$.data.stackTrace",
+        "$.data.threadId",
+        "$.data.threadName"
+    ]
+}
