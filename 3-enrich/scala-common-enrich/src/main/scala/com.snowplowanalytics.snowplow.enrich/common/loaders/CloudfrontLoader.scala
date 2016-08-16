@@ -117,37 +117,7 @@ object CloudfrontLoader extends Loader[String] {
                  ua,
                  qs) => {
 
-      // Validations, and let's strip double-encodings
-      val timestamp = toTimestamp(date, time)
-      val querystring = {
-        val q = toOption(singleEncodePcts(qs))
-        parseQuerystring(q, CollectorEncoding)
-      }
-
-      // No validation (yet) on the below
-      val userAgent  = singleEncodePcts(ua)
-      val refr = singleEncodePcts(rfr)
-      val referer = toOption(refr) map toCleanUri
-
-      val api = CollectorApi.parse(objct)
-
-      (timestamp.toValidationNel |@| querystring.toValidationNel |@| api.toValidationNel) { (t, q, a) =>
-        CollectorPayload(
-          q,
-          CollectorName,
-          CollectorEncoding,
-          None, // No hostname for CloudFront
-          Some(t),
-          toOption(ip),
-          toOption(userAgent),
-          referer,
-          Nil,  // No headers for CloudFront
-          None, // No collector-set user ID for CloudFront
-          a,    // API vendor/version
-          None, // No content type
-          None  // No request body
-        ).some
-      }
+      CloudfrontLogLine(date, time, ip, objct, rfr, ua, qs).toValidatedMaybeCollectorPayload()
     }
 
     // 3. Row not recognised
@@ -200,4 +170,41 @@ object CloudfrontLoader extends Loader[String] {
    */
   private[loaders] def toCleanUri(uri: String): String = 
     StringUtils.removeEnd(uri, "%")
+
+  private case class CloudfrontLogLine(date: String, time: String, ip: String, objct: String, rfr: String, ua: String, qs: String) {
+
+    def toValidatedMaybeCollectorPayload(): ValidatedMaybeCollectorPayload = {
+      // Validations, and let's strip double-encodings
+      val timestamp = toTimestamp(date, time)
+      val querystring = {
+        val q = toOption(singleEncodePcts(qs))
+        parseQuerystring(q, CollectorEncoding)
+      }
+
+      // No validation (yet) on the below
+      val userAgent  = singleEncodePcts(ua)
+      val refr = singleEncodePcts(rfr)
+      val referer = toOption(refr) map toCleanUri
+
+      val api = CollectorApi.parse(objct)
+
+      (timestamp.toValidationNel |@| querystring.toValidationNel |@| api.toValidationNel) { (t, q, a) =>
+        CollectorPayload(
+          q,
+          CollectorName,
+          CollectorEncoding,
+          None, // No hostname for CloudFront
+          Some(t),
+          toOption(ip),
+          toOption(userAgent),
+          referer,
+          Nil,  // No headers for CloudFront
+          None, // No collector-set user ID for CloudFront
+          a,    // API vendor/version
+          None, // No content type
+          None  // No request body
+        ).some
+      }
+    }
+  }
 }
