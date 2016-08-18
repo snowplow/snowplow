@@ -133,10 +133,9 @@ collector {
 
         httpCookie.name must be("sp")
         httpCookie.path must beSome("/")
-        httpCookie.domain must beSome
-        httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
+        httpCookie.domain must beSome(collectorConfig.cookieDomain.get)
         httpCookie.expires must beSome
-        httpCookie.content.matches("""[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}""")
+        httpCookie.content.matches("""[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}""") must beTrue
         val expiration = httpCookie.expires.get
         val offset = expiration.clicks - collectorConfig.cookieExpiration -
           DateTime.now.clicks
@@ -158,8 +157,7 @@ collector {
         val httpCookie = httpCookies(0)
 
         httpCookie.name must be("sp")
-        httpCookie.domain must beSome
-        httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
+        httpCookie.domain must beSome(collectorConfig.cookieDomain.get)
         httpCookie.expires must beSome
         httpCookie.content must beEqualTo("UUID_Test_New")
         val expiration = httpCookie.expires.get
