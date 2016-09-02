@@ -36,7 +36,9 @@ import io.searchbox.cluster.Health
 import java.util.concurrent.TimeUnit
 
 // Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
+import org.elasticsearch.common.joda.FormatDateTimeFormatter;
+import org.elasticsearch.common.joda.Joda;
+import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat
 
 // Scala

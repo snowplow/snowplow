@@ -31,9 +31,14 @@ import com.amazonaws.services.kinesis.connectors.interfaces.IEmitter
 // Elasticsearch
 import org.elasticsearch.action.admin.cluster.health.{
   ClusterHealthRequestBuilder,
-  ClusterHealthResponse,
+  ClusterHealthResponse
+
+}
+
+import org.elasticsearch.cluster.health.{
   ClusterHealthStatus
 }
+
 import org.elasticsearch.action.bulk.{
   BulkItemResponse,
   BulkRequestBuilder,
@@ -46,7 +51,6 @@ import org.elasticsearch.client.transport.{
   TransportClient
 }
 import org.elasticsearch.common.settings.{
-  ImmutableSettings,
   Settings
 }
 import org.elasticsearch.common.transport.InetSocketTransportAddress
@@ -56,8 +60,12 @@ import com.amazonaws.services.kinesis.connectors.{
   UnmodifiableBuffer
 }
 
+import java.net.InetAddress;
+
 // Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
+import org.elasticsearch.common.joda.FormatDateTimeFormatter;
+import org.elasticsearch.common.joda.Joda;
+import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat
 
 // Scala
@@ -133,7 +141,7 @@ class ElasticsearchSenderTransport(
    */
   private val ElasticsearchClientTransportNodesSamplerIntervalKey = "client.transport.nodes_sampler_interval"
 
-  private val settings = ImmutableSettings.settingsBuilder
+  private val settings = Settings.settingsBuilder()
     .put(ElasticsearchClusterNameKey,                         configuration.ELASTICSEARCH_CLUSTER_NAME)
     .put(ElasticsearchClientTransportSniffKey,                configuration.ELASTICSEARCH_TRANSPORT_SNIFF)
     .put(ElasticsearchClientTransportIgnoreClusterNameKey,    configuration.ELASTICSEARCH_IGNORE_CLUSTER_NAME)
@@ -144,7 +152,7 @@ class ElasticsearchSenderTransport(
   /**
    * The Elasticsearch client.
    */
-  private val elasticsearchClient = new TransportClient(settings)
+  private val elasticsearchClient = TransportClient.builder().settings(settings).build()
 
   /**
    * The Elasticsearch endpoint.
@@ -162,7 +170,7 @@ class ElasticsearchSenderTransport(
    */
   private val BackoffPeriod = 10000
 
-  elasticsearchClient.addTransportAddress(new InetSocketTransportAddress(elasticsearchEndpoint, elasticsearchPort))
+  elasticsearchClient.addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(elasticsearchEndpoint), elasticsearchPort))
        
   Log.info("ElasticsearchSender using elasticsearch endpoint " + elasticsearchEndpoint + ":" + elasticsearchPort)
 

@@ -31,8 +31,8 @@ import com.amazonaws.services.kinesis.connectors.interfaces.IEmitter
 // Elasticsearch
 import org.elasticsearch.action.admin.cluster.health.{
   ClusterHealthRequestBuilder,
-  ClusterHealthResponse,
-  ClusterHealthStatus
+  ClusterHealthResponse//,
+  //ClusterHealthStatus
 }
 import org.elasticsearch.action.bulk.{
   BulkItemResponse,
@@ -46,7 +46,7 @@ import org.elasticsearch.client.transport.{
   TransportClient
 }
 import org.elasticsearch.common.settings.{
-  ImmutableSettings,
+  //ImmutableSettings,
   Settings
 }
 import org.elasticsearch.common.transport.InetSocketTransportAddress
