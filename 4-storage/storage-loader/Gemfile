@@ -20,6 +20,7 @@ ruby "2.2.3"
 # built with Bundler, so we add in the
 # RubyGems it requires here.
 gem "sluice", "~> 0.4.0"
+gem 'mime-types' # Really this should be in Sluice. Somehow doesn't break EmrEtlRunner
 gem 'jdbc-postgres'
 gem "plissken", "~> 0.1.0"
 gem "contracts", "~> 0.9", "<= 0.11"
