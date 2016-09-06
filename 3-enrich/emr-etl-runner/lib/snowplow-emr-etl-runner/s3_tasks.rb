@@ -51,7 +51,9 @@ module Snowplow
       #
       # Parameters:
       # +region+:: the region to add into the filenames
-      Contract String, String => Func[String, String => String]
+      # +collector_format+:: the format of the collector log files
+      # Contract String, String => Func[String, String => String] disabled contract because of:
+      # https://github.com/egonSchiele/contracts.ruby/issues/238
       def self.build_fix_filenames(region, collector_format)
         return lambda { |basename, filepath|
 

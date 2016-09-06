@@ -14,15 +14,16 @@
 # License::   Apache License Version 2.0
 
 source "https://rubygems.org"
-ruby "1.9.3"
+ruby "2.2.3"
 
 # StorageLoader is a Ruby app (not a RubyGem)
 # built with Bundler, so we add in the
 # RubyGems it requires here.
-gem "sluice", "~> 0.2.2"
+gem "sluice", "~> 0.4.0"
+gem 'mime-types' # Really this should be in Sluice. Somehow doesn't break EmrEtlRunner
 gem 'jdbc-postgres'
 gem "plissken", "~> 0.1.0"
-gem "contracts", "= 0.7"
+gem "contracts", "~> 0.9", "<= 0.11"
 gem "snowplow-tracker", "~> 0.5.2"
 gem "aws-sdk", "~> 2"
 
