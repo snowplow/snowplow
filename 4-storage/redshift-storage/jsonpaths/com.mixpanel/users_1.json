@@ -1,0 +1,25 @@
+{
+    "jsonpaths": [
+        "$.schema.vendor",
+        "$.schema.name",
+        "$.schema.format",
+        "$.schema.version",
+        "$.hierarchy.rootId",
+        "$.hierarchy.rootTstamp",
+        "$.hierarchy.refRoot",
+        "$.hierarchy.refTree",
+        "$.hierarchy.refParent",
+        "$.data.$distinct_id",
+        "$.data.$properties.$city",
+        "$.data.$properties.$country_code",
+        "$.data.$properties.$created",
+        "$.data.$properties.$email",
+        "$.data.$properties.$first_name",
+        "$.data.$properties.$last_name",
+        "$.data.$properties.$last_seen",
+        "$.data.$properties.$region",
+        "$.data.$properties.Last Seen",
+        "$.data.$properties.Referring Domain",
+        "$.data.$properties.Referring URL"
+    ]
+}
