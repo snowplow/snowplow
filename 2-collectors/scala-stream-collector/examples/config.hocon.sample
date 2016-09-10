@@ -28,6 +28,19 @@ collector {
   # records stored in the current stream.
   production = true
 
+  # Defines whether the "No-third party cookie check" should be perfomed.
+  # If this parameter is not specified, it defaults to false.
+  # This  will create an auto-redirect to itself  with `third-party-cookie-param`
+  # if set to true.
+  third-party-redirect-enabled = false
+
+  # The name of the request parameter which will be used on redirect if 'third-party-redirect-enabled'
+  # is set to true.
+  third-party-cookie-param = "n3pc"
+
+  #The network id which will be set in case the 3rd party cookie was not set.
+  fallback-network-id = "00000000-0000-4000-A000-000000000000"
+
   # Configure the P3P policy header.
   p3p {
     policyref = "/w3c/p3p.xml"

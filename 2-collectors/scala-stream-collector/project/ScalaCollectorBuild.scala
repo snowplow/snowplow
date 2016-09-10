@@ -50,7 +50,8 @@ object ScalaCollectorBuild extends Build {
         Libraries.scalaz7,
         Libraries.snowplowRawEvent,
         Libraries.collectorPayload,
-        Libraries.json4sJackson
+        Libraries.json4sJackson,
+        Libraries.mockito
       )
     )
 }
