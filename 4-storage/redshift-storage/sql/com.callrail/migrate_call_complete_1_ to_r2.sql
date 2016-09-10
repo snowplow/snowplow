@@ -1,4 +1,4 @@
--- Copyright (c) 2016 Snowplow Analytics Ltd. All rights reserved.
+-- Copyright (c) 2015 Snowplow Analytics Ltd. All rights reserved.
 --
 -- This program is licensed to you under the Apache License Version 2.0,
 -- and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -9,24 +9,30 @@
 -- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 --
--- Authors:       Alex Dean
--- Copyright:     Copyright (c) 2016 Snowplow Analytics Ltd
--- License:       Apache License Version 2.0
+-- Version:     Ports 1-0-1 to 1-0-2
+-- URL:         -
 --
--- Compatibility: iglu:com.callrail/call_complete/jsonschema/1-0-1
+-- Authors:     @digitaltouch, Alex Dean
+-- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
+-- License:     Apache License Version 2.0
 
+BEGIN TRANSACTION;
+
+ALTER TABLE atomic.com_callrail_call_complete_1 RENAME TO com_callrail_call_complete_1_old;
+
+--Create new table with support for schema 1-0-2
 CREATE TABLE atomic.com_callrail_call_complete_1 (
     -- Schema of this type
-    schema_vendor         varchar(128)   encode runlength not null,
-    schema_name           varchar(128)   encode runlength not null,
-    schema_format         varchar(128)   encode runlength not null,
-    schema_version        varchar(128)   encode runlength not null,
+    schema_vendor   varchar(128)   encode runlength not null,
+    schema_name     varchar(128)   encode runlength not null,
+    schema_format   varchar(128)   encode runlength not null,
+    schema_version  varchar(128)   encode runlength not null,
 	-- Parentage of this type
-	root_id               char(36)       encode raw not null,
-	root_tstamp           timestamp      encode raw not null,
-	ref_root              varchar(255)   encode runlength not null,
-	ref_tree              varchar(1500)  encode runlength not null,
-	ref_parent            varchar(255)   encode runlength not null,
+	root_id         char(36)       encode raw not null,
+	root_tstamp     timestamp      encode raw not null,
+	ref_root        varchar(255)   encode runlength not null,
+	ref_tree        varchar(1500)  encode runlength not null,
+	ref_parent      varchar(255)   encode runlength not null,
 	-- Properties of this type
 	answered              boolean        encode runlength,
     customer_city         varchar(255)   encode text32k,
@@ -40,7 +46,7 @@ CREATE TABLE atomic.com_callrail_call_complete_1 (
 	destinationnum        varchar(255)   encode raw,
 	duration              integer        encode raw,
 	first_call            boolean        encode runlength,
-	device_type           varchar(255)   encode runlenght,
+	device_type           varchar(255)   encode runlength,
 	ga                    varchar(255)   encode runlength,
 	gclid                 varchar(255)   encode runlength, 
 	id                    varchar(255)   encode raw not null,
@@ -70,3 +76,16 @@ DISTSTYLE KEY
 -- Optimized join to atomic.events
 DISTKEY (root_id)
 SORTKEY (root_tstamp);
+
+-- Now copy into new from atomic.com_callrail_call_complete_1_old setting device_type to NULL
+INSERT INTO atomic.com_callrail_call_complete_1 
+	SELECT schema_vendor, schema_name, schema_format, schema_version, root_id, root_tstamp, ref_root, ref_tree, ref_parent, answered, callercity
+       , callercountry, callername, callernum, callerstate, callerzip, callsource, "datetime", destinationnum, duration, first_call, device_type, ga, gclid
+       , id, ip, keywords, kissmetrics_id, landingpage, recording, referrer, referrermedium, trackingnum, transcription, utm_campaign, utm_content
+       , utm_medium, utm_source, utm_term, utma, utmb, utmc, utmv, utmx, utmz
+FROM atomic.com_callrail_call_complete_1_old;
+
+-- OPTIONAL: Delete atomic.com_callrail_call_complete_1_old
+--DROP TABLE atomic.com_callrail_call_complete_1_old;
+
+END TRANSACTION;
