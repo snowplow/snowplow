@@ -44,7 +44,7 @@ import org.specs2.scalaz.ValidationMatchers
 
 class MixpanelAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck {
   def is =
-    "This is a specification to test the MixpanelAdapter functionality"                                            ^
+    "This is a specification to test the MixpanelAdapter functionality"                                        ^
                                                                                                               p^
       "toRawEvents must return a Success Nel if every 'users' in the payload is successful"                   ! e1^
       "toRawEvents must return a Nel Failure if the request body is missing"                                  ! e2^
@@ -65,12 +65,12 @@ class MixpanelAdapterSpec extends Specification with DataTables with ValidationM
   val ContentType = Some("application/x-www-form-urlencoded")
 
   def e1 = {
-    val body = """users=%5B%7B%22%24distinct_id%22%3A%20%22smith%40jane.com%22%2C%20%22%24properties%22%3A%20%7B%22%24name%22%3A%20%22Smith%20Jane%22%2C%20%22%24email%22%3A%20%22smith%40jane.com%22%7D%7D%2C%7B%22%24distinct_id%22%3A%20%22Asmith%40jane.com%22%2C%20%22%24properties%22%3A%20%7B%22%24name%22%3A%20%22ASmith%20Jane%22%2C%20%22%24email%22%3A%20%22Asmith%40jane.com%22%7D%7D%5D%0A"""
+    val body = """users=%5B%7B%22%24distinct_id%22%3A%20%22smith%40jane.com%22%2C%20%22%24properties%22%3A%20%7B%22%24name%22%3A%20%22Smith%20Jane%22%2C%20%22%24email%22%3A%20%22smith%40jane.com%22%2C%20%22Referring%20URL%22%3A%20%22http%3A%2F%2Fwww.google.com%22%7D%7D%2C%7B%22%24distinct_id%22%3A%20%22Asmith%40jane.com%22%2C%20%22%24properties%22%3A%20%7B%22%24name%22%3A%20%22ASmith%20Jane%22%2C%20%22%24email%22%3A%20%22Asmith%40jane.com%22%7D%7D%5D%0A"""
     val payload = CollectorPayload(Shared.api, Nil, ContentType, body.some, Shared.cljSource, Shared.context)
     val expected = NonEmptyList(
       RawEvent(
         Shared.api,
-        Map("tv" -> "com.mixpanel-v1", "e"-> "ue", "p" -> "srv", "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.mixpanel/users/jsonschema/1-0-0","data":{"$distinct_id":"smith@jane.com","$properties":{"$name":"Smith Jane","$email":"smith@jane.com"}}}}"""),
+        Map("tv" -> "com.mixpanel-v1", "e"-> "ue", "p" -> "srv", "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.mixpanel/users/jsonschema/1-0-0","data":{"$distinct_id":"smith@jane.com","$properties":{"$name":"Smith Jane","$email":"smith@jane.com","ReferringURL":"http://www.google.com"}}}}"""),
         ContentType,
         Shared.cljSource,
         Shared.context

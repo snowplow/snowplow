@@ -67,7 +67,7 @@ object MixpanelAdapter extends Adapter {
   private val EventSchemaMap = Map(
     "users" -> SchemaKey("com.mixpanel", "users", "jsonschema", "1-0-0").toSchemaUri
   )
-
+  
   /**
     * Returns a list of events from the request
     * body of a Mixpanel Event. Each event will
@@ -95,12 +95,15 @@ object MixpanelAdapter extends Adapter {
               schema <- lookupSchema(Some("users"), VendorName, index, EventSchemaMap)
             } yield {
               val qsParams = toMap(payload.querystring)
+              val formattedEvent = event map {
+                j =>  j transformField { case (key, value) => (key.replaceAll(" ", ""), value) }
+             }
               RawEvent(
                 api = payload.api,
                 parameters = toUnstructEventParams(TrackerVersion,
                   qsParams,
                   schema,
-                  event,
+                  formattedEvent,
                   "srv"),
                 contentType = payload.contentType,
                 source = payload.source,
@@ -118,15 +121,16 @@ object MixpanelAdapter extends Adapter {
     }
   }
 
-  /* Converts a CollectorPayload instance into raw events.
-   *
-   * @param payload The CollectorPaylod containing one or mcore
-   *        raw events as collected by a Snowplow collector
-   * @param resolver (implicit) The Iglu resolver used for
-   *        schema lookup and validation
-   * @return a Validation boxing either a NEL of RawEvents on
-   *         Success, or a NEL of Failure Strings
-   */
+
+/* Converts a CollectorPayload instance into raw events.
+ *
+ * @param payload The CollectorPaylod containing one or mcore
+ *        raw events as collected by a Snowplow collector
+ * @param resolver (implicit) The Iglu resolver used for
+ *        schema lookup and validation
+ * @return a Validation boxing either a NEL of RawEvents on
+ *         Success, or a NEL of Failure Strings
+ */
 
   def toRawEvents(payload: CollectorPayload)(implicit resolver: Resolver): ValidatedRawEvents = {
     (payload.body, payload.contentType) match {
