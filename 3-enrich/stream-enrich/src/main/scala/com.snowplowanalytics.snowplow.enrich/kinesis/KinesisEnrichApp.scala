@@ -154,19 +154,22 @@ object KinesisEnrichApp extends App {
   for (uriFilePair <- filesToCache) {
     val targetFile = new File(uriFilePair._2)
 
+    // Ensure uri does not have doubled slashes
+    val cleanUri = new java.net.URI(uriFilePair._1.toString.replaceAll("(?<!(http:|https:))//", "/"))
+
     // Download the database file if it doesn't already exist or is empty
     // See http://stackoverflow.com/questions/10281370/see-if-file-is-empty
     if (targetFile.length == 0L) {
 
       // Check URI Protocol and download file
-      val downloadResult: Int = uriFilePair._1.getScheme match {
-        case "http" | "https" => (uriFilePair._1.toURL #> targetFile).! // using sys.process
-        case "s3"             => downloadFromS3(uriFilePair._1, targetFile)
-        case s => throw new RuntimeException(s"Schema ${s} for file ${uriFilePair._1} not supported")
+      val downloadResult: Int = cleanUri.getScheme match {
+        case "http" | "https" => (cleanUri.toURL #> targetFile).! // using sys.process
+        case "s3"             => downloadFromS3(cleanUri, targetFile)
+        case s => throw new RuntimeException(s"Schema ${s} for file ${cleanUri} not supported")
       }
 
       if (downloadResult != 0) {
-        throw new RuntimeException(s"Attempt to download ${uriFilePair._1} to $targetFile failed")
+        throw new RuntimeException(s"Attempt to download ${cleanUri} to $targetFile failed")
       }
     }
   }
