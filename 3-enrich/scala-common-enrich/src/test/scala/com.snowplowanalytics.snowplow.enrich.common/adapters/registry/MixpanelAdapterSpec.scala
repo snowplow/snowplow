@@ -23,7 +23,6 @@ import org.joda.time.DateTime
 import scalaz._
 import Scalaz._
 
-
 // Snowplow
 import loaders.{
   CollectorApi,
@@ -52,6 +51,7 @@ class MixpanelAdapterSpec extends Specification with DataTables with ValidationM
       "toRawEvents must return a Nel Failure if the content type is incorrect"                                ! e4^
       "toRawEvents must return a Failure if the request body could not be parsed"                             ! e5^
       "toRawEvents must return a Failure if the request body does not contain an users parameter"             ! e6^
+      "toRawEvents must return a Nel Failure if the event type is missing in querystring"                     ! e7^
                                                                                                               end
 
   implicit val resolver = SpecHelpers.IgluResolver
@@ -66,7 +66,8 @@ class MixpanelAdapterSpec extends Specification with DataTables with ValidationM
 
   def e1 = {
     val body = """users=%5B%7B%22%24distinct_id%22%3A%20%22smith%40jane.com%22%2C%20%22%24properties%22%3A%20%7B%22%24name%22%3A%20%22Smith%20Jane%22%2C%20%22%24email%22%3A%20%22smith%40jane.com%22%2C%20%22Referring%20URL%22%3A%20%22http%3A%2F%2Fwww.google.com%22%7D%7D%2C%7B%22%24distinct_id%22%3A%20%22Asmith%40jane.com%22%2C%20%22%24properties%22%3A%20%7B%22%24name%22%3A%20%22ASmith%20Jane%22%2C%20%22%24email%22%3A%20%22Asmith%40jane.com%22%7D%7D%5D%0A"""
-    val payload = CollectorPayload(Shared.api, Nil, ContentType, body.some, Shared.cljSource, Shared.context)
+    val querystring = SpecHelpers.toNameValuePairs(("schema", "users"))
+    val payload = CollectorPayload(Shared.api, querystring, ContentType, body.some, Shared.cljSource, Shared.context)
     val expected = NonEmptyList(
       RawEvent(
         Shared.api,
@@ -87,7 +88,8 @@ class MixpanelAdapterSpec extends Specification with DataTables with ValidationM
   }
 
   def e2 = {
-    val payload = CollectorPayload(Shared.api, Nil, ContentType, None, Shared.cljSource, Shared.context)
+    val querystring = SpecHelpers.toNameValuePairs(("schema", "users"))
+    val payload = CollectorPayload(Shared.api, querystring, ContentType, None, Shared.cljSource, Shared.context)
     val expected = """Request body is empty: no Mixpanel events to process"""
     val actual = MixpanelAdapter.toRawEvents(payload)
     actual must beFailing(NonEmptyList(expected))
@@ -96,7 +98,8 @@ class MixpanelAdapterSpec extends Specification with DataTables with ValidationM
   def e3 = {
     val contentType = None
     val body = """users=%5B%7B%22%24distinct_id%22%3A%20%22smith%40jane.com%22%2C%20%22%24properties%22%3A%20%7B%22%24name%22%3A%20%22Smith%20Jane%22%2C%20%22%24email%22%3A%20%22smith%40jane.com%22%7D%7D%2C%7B%22%24distinct_id%22%3A%20%22Asmith%40jane.com%22%2C%20%22%24properties%22%3A%20%7B%22%24name%22%3A%20%22ASmith%20Jane%22%2C%20%22%24email%22%3A%20%22Asmith%40jane.com%22%7D%7D%5D%0A"""
-    val payload = CollectorPayload(Shared.api, Nil, contentType, body.some, Shared.cljSource, Shared.context)
+    val querystring = SpecHelpers.toNameValuePairs(("schema", "users"))
+    val payload = CollectorPayload(Shared.api, querystring, contentType, body.some, Shared.cljSource, Shared.context)
     val expected = """Request body provided but content type empty, expected application/x-www-form-urlencoded for Mixpanel"""
     val actual = MixpanelAdapter.toRawEvents(payload)
     actual must beFailing(NonEmptyList(expected))
@@ -105,7 +108,8 @@ class MixpanelAdapterSpec extends Specification with DataTables with ValidationM
   def e4 = {
     val contentType = Some("application/json")
     val body = """users=%5B%7B%22%24distinct_id%22%3A%20%22smith%40jane.com%22%2C%20%22%24properties%22%3A%20%7B%22%24name%22%3A%20%22Smith%20Jane%22%2C%20%22%24email%22%3A%20%22smith%40jane.com%22%7D%7D%2C%7B%22%24distinct_id%22%3A%20%22Asmith%40jane.com%22%2C%20%22%24properties%22%3A%20%7B%22%24name%22%3A%20%22ASmith%20Jane%22%2C%20%22%24email%22%3A%20%22Asmith%40jane.com%22%7D%7D%5D%0A"""
-    val payload = CollectorPayload(Shared.api, Nil, contentType, body.some, Shared.cljSource, Shared.context)
+    val querystring = SpecHelpers.toNameValuePairs(("schema", "users"))
+    val payload = CollectorPayload(Shared.api, querystring, contentType, body.some, Shared.cljSource, Shared.context)
     val expected = """Content type of application/json provided, expected application/x-www-form-urlencoded for Mixpanel"""
     val actual = MixpanelAdapter.toRawEvents(payload)
     actual must beFailing(NonEmptyList(expected))
@@ -113,16 +117,26 @@ class MixpanelAdapterSpec extends Specification with DataTables with ValidationM
 
   def e5 = {
     val body = ""
-    val payload = CollectorPayload(Shared.api, Nil, ContentType, body.some, Shared.cljSource, Shared.context)
-    val expectedJson = """Mixpanel request body does not have 'users' as a key: no event to process"""
+    val querystring = SpecHelpers.toNameValuePairs(("schema", "userss"))
+    val payload = CollectorPayload(Shared.api, querystring, ContentType, body.some, Shared.cljSource, Shared.context)
+    val expectedJson = """Mixpanel request body does not have 'users' as a key: invalid event to process"""
     val actual = MixpanelAdapter.toRawEvents(payload)
     actual must beFailing(NonEmptyList(expectedJson))
   }
 
   def e6 = {
     val body = """users=%5B%7B%22%24distinct_id%22%3A%20%22smith%40jane.com%22%2C%20%22%24properties%22%3A%20%7B%22%24name%22%3A%20%22Smith%20Jane%22%2C%20%22%24email%22%3A%20%22smith%40jane.com%22%7D%7D%2C%7B%22%24distinct_id%22%3A%20%22Asmith%40jane.com%22%2C%20%22%24properties%22%20%7B%22%24name%22%3A%20%22ASmith%20Jane%22%2C%20%22%24email%22%3A%20%22Asmith%40jane.com%22%7D%7D%5D%0A%0A"""
-    val payload = CollectorPayload(Shared.api, Nil, ContentType, body.some, Shared.cljSource, Shared.context)
+    val querystring = SpecHelpers.toNameValuePairs(("schema", "users"))
+    val payload = CollectorPayload(Shared.api, querystring, ContentType, body.some, Shared.cljSource, Shared.context)
     val expected = """Mixpanel event failed to parse into JSON: [com.fasterxml.jackson.core.JsonParseException: Unexpected character ('{' (code 123)): was expecting a colon to separate field name and value at [Source: java.io.StringReader@xxxxxx; line: 1, column: 156]]"""
+    val actual = MixpanelAdapter.toRawEvents(payload)
+    actual must beFailing(NonEmptyList(expected))
+  }
+
+  def e7 = {
+    val body = """users=%5B%7B%22%24distinct_id%22%3A%20%22smith%40jane.com%22%2C%20%22%24properties%22%3A%20%7B%22%24name%22%3A%20%22Smith%20Jane%22%2C%20%22%24email%22%3A%20%22smith%40jane.com%22%7D%7D%2C%7B%22%24distinct_id%22%3A%20%22Asmith%40jane.com%22%2C%20%22%24properties%22%20%7B%22%24name%22%3A%20%22ASmith%20Jane%22%2C%20%22%24email%22%3A%20%22Asmith%40jane.com%22%7D%7D%5D%0A%0A"""
+    val payload = CollectorPayload(Shared.api, Nil, ContentType, body.some, Shared.cljSource, Shared.context)
+    val expected = """No Mixpanel schema type provided in querystring: cannot determine event type"""
     val actual = MixpanelAdapter.toRawEvents(payload)
     actual must beFailing(NonEmptyList(expected))
   }

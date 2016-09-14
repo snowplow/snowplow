@@ -74,14 +74,13 @@ object MixpanelAdapter extends Adapter {
     * be formatted as an individual JSON of type
     * JValue.
     *
-    *
     * @param body The urlencoded string
     *        from the Mixpanel POST request
     * @return a list of validated raw events
     */
 
 
-  private def payloadBodyToEvents(body: String, payload: CollectorPayload): List[Validated[RawEvent]] = {
+  private def payloadBodyToEvents(body: String, eventOpt: String, payload: CollectorPayload): List[Validated[RawEvent]] = {
     try {
       val parsed = toMap(URLEncodedUtils.parse(URI.create("http://localhost/?" + body), "UTF-8").toList)
       val users = parsed.get("users")
@@ -91,13 +90,13 @@ object MixpanelAdapter extends Adapter {
             for {
               (event, index) <- events.children.zipWithIndex
             } yield {
-            for {
-              schema <- lookupSchema(Some("users"), VendorName, index, EventSchemaMap)
-            } yield {
-              val qsParams = toMap(payload.querystring)
-              val formattedEvent = event map {
-                j =>  j transformField { case (key, value) => (key.replaceAll(" ", ""), value) }
-             }
+              for {
+                schema <- lookupSchema(Some(eventOpt), VendorName, index, EventSchemaMap)
+              } yield {
+                val qsParams = toMap(payload.querystring)
+                val formattedEvent = event map {
+                  j =>  j transformField { case (key, value) => (key.replaceAll(" ", ""), value) }
+              }
               RawEvent(
                 api = payload.api,
                 parameters = toUnstructEventParams(TrackerVersion,
@@ -111,7 +110,7 @@ object MixpanelAdapter extends Adapter {
               )
             }
           }
-        case _ =>  List(s"${VendorName} request body does not have 'users' as a key: no event to process".failNel)
+        case _ =>  List(s"${VendorName} request body does not have 'users' as a key: invalid event to process".failNel)
       }
     } catch {
       case e: JsonParseException => {
@@ -124,7 +123,7 @@ object MixpanelAdapter extends Adapter {
 
 /* Converts a CollectorPayload instance into raw events.
  *
- * @param payload The CollectorPaylod containing one or mcore
+ * @param payload The CollectorPayload containing one or more
  *        raw events as collected by a Snowplow collector
  * @param resolver (implicit) The Iglu resolver used for
  *        schema lookup and validation
@@ -138,7 +137,11 @@ object MixpanelAdapter extends Adapter {
       case (_, None) => s"Request body provided but content type empty, expected ${ContentType} for ${VendorName}".failNel
       case (_, Some(ct)) if ct != ContentType => s"Content type of ${ct} provided, expected ${ContentType} for ${VendorName}".failNel
       case (Some(body), _) => {
-        val events = payloadBodyToEvents(body, payload)
+        val querystring = toMap(payload.querystring)
+        val events = querystring.get("schema") match {
+          case None => List(s"No ${VendorName} schema type provided in querystring: cannot determine event type".failNel)
+          case Some(schema) => payloadBodyToEvents(body, schema, payload)
+        }
         rawEventsListProcessor(events)
       }
     }
