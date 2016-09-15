@@ -55,6 +55,7 @@ import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
 // This project
 import sinks._
 import clients._
+import generated._
 
 // Whether the input stream contains enriched events or bad events
 object StreamType extends Enumeration {

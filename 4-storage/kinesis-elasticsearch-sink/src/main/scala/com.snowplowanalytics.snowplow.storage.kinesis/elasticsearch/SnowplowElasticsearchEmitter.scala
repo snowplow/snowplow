@@ -27,30 +27,6 @@ import com.amazonaws.services.kinesis.connectors.elasticsearch.{
   ElasticsearchObject
 }
 import com.amazonaws.services.kinesis.connectors.interfaces.IEmitter
-
-// Elasticsearch
-import org.elasticsearch.action.admin.cluster.health.{
-  ClusterHealthRequestBuilder,
-  ClusterHealthResponse,
-  ClusterHealthStatus
-}
-import org.elasticsearch.action.bulk.{
-  BulkItemResponse,
-  BulkRequestBuilder,
-  BulkResponse
-}
-import org.elasticsearch.action.bulk.BulkItemResponse.Failure
-import org.elasticsearch.action.index.IndexRequestBuilder
-import org.elasticsearch.client.transport.{
-  NoNodeAvailableException,
-  TransportClient
-}
-import org.elasticsearch.common.settings.{
-  ImmutableSettings,
-  Settings
-}
-import org.elasticsearch.common.transport.InetSocketTransportAddress
-
 import com.amazonaws.services.kinesis.connectors.{
   KinesisConnectorConfiguration,
   UnmodifiableBuffer
@@ -93,6 +69,7 @@ import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
 // This project
 import sinks._
 import clients._
+import generated._
 
 /**
  * Class to send valid records to Elasticsearch and invalid records to Kinesis

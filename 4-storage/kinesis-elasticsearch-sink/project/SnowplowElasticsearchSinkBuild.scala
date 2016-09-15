@@ -28,25 +28,33 @@ object SnowplowElasticsearchSinkBuild extends Build {
   lazy val project = Project("snowplow-elasticsearch-sink", file("."))
     .settings(buildSettings: _*)
     .settings(
-      libraryDependencies ++= Seq(
-        Libraries.logging,
-        Libraries.argot,
-        Libraries.config,
-        Libraries.scalaUtil,
-        Libraries.snowplowCommonEnrich,
-        Libraries.igluClient,
-        Libraries.scalazon,
-        Libraries.scalaz7,
-        Libraries.specs2,
-        Libraries.scalazSpecs2,
-        Libraries.commonsLang3,
-        Libraries.slf4j,
-        Libraries.log4jOverSlf4j,
-        Libraries.kinesisClient,
-        Libraries.kinesisConnector,
-        Libraries.snowplowTracker,
-        Libraries.elasticsearch,
-        Libraries.jest
+      libraryDependencies ++= Dependencies.onVersion(
+        all = Seq(
+          Libraries.logging,
+          Libraries.argot,
+          Libraries.config,
+          Libraries.scalaUtil,
+          Libraries.snowplowCommonEnrich,
+          Libraries.igluClient,
+          Libraries.scalazon,
+          Libraries.scalaz7,
+          Libraries.specs2,
+          Libraries.scalazSpecs2,
+          Libraries.commonsLang3,
+          Libraries.slf4j,
+          Libraries.log4jOverSlf4j,
+          Libraries.kinesisClient,
+          Libraries.kinesisConnector,
+          Libraries.snowplowTracker
+        ),
+        on1x = Seq(
+          Libraries.jest._1x,
+          Libraries.elasticsearch._1x
+        ),
+        on2x = Seq(
+          Libraries.jest._2x,
+          Libraries.elasticsearch._2x
+        )
       )
     )
 }

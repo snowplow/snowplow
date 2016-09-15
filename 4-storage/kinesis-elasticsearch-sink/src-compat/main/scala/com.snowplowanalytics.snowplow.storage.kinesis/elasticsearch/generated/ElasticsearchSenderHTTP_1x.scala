@@ -18,7 +18,7 @@
  */
 
 package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
-package clients
+package generated
 
 // Amazon
 import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
@@ -63,6 +63,7 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
 
 // This project
 import sinks._
+import clients._
 
 /**
  * Sends Elasticsearch documents via the HTTP Jest Client.
