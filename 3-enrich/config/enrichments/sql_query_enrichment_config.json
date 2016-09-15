@@ -1,0 +1,59 @@
+{
+	"schema": "iglu:com.snowplowanalytics.snowplow.enrichments/sql_query_enrichment_config/jsonschema/1-0-0",
+
+	"data": {
+
+		"vendor": "com.snowplowanalytics.snowplow.enrichments",
+		"name": "sql_query_enrichment_config",
+		"enabled": false,
+		"parameters": {
+			"inputs": [
+				{
+					"placeholder": 1,
+					"pojo": {
+						"field": "user_id"
+					}
+				},
+				{
+					"placeholder": 1,
+					"json": {
+						"field": "contexts",
+						"schemaCriterion": "iglu:com.snowplowanalytics.snowplow/client_session/jsonschema/1-*-*",
+						"jsonPath": "$.userId"
+					}
+				},
+				{
+					"placeholder": 2,
+					"pojo": {
+						"field": "app_id"
+					}
+				}
+			],
+			"database": {
+				"postgresql": {
+					"host": "cluster01.redshift.acme.com",
+					"port": 5439,
+					"sslMode": true,
+					"username": "snowplow_enrich_ro",
+					"password": "1asIkJed",
+					"database": "crm"
+				}
+			},
+			"query": {
+				"sql": "SELECT username, email_address, date_of_birth FROM tbl_users WHERE user = ? AND client = ? LIMIT 1"
+			},
+			"output": {
+				"expectedRows": "AT_MOST_ONE",
+				"json": {
+					"schema": "iglu:com.acme/user/jsonschema/1-0-0",
+					"describes": "ALL_ROWS",
+					"propertyNames": "CAMEL_CASE"
+				}
+			},
+			"cache": {
+				"size": 3000,
+				"ttl": 60
+			}
+		}
+    }
+}
