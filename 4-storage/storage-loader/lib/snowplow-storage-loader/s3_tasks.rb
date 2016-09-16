@@ -39,7 +39,6 @@ module Snowplow
           config[:aws][:s3][:region],
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
-        s3.host = region_to_safe_host(config[:aws][:s3][:region])
         
         # Get S3 location of In Bucket plus local directory
         in_location = Sluice::Storage::S3::Location.new(in_bucket)
