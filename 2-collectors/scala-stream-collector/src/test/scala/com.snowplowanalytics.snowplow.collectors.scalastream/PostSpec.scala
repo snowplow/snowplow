@@ -221,7 +221,7 @@ collector {
       storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 60000)
       storedEvent.encoding must beEqualTo("UTF-8")
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
-      storedEvent.collector must beEqualTo("ssc-0.8.0-test")
+      storedEvent.collector must beEqualTo("ssc-0.8.0-rc1-test")
       storedEvent.path must beEqualTo("/com.snowplowanalytics.snowplow/tp2")
       storedEvent.querystring must beEqualTo(payloadData)
     }
