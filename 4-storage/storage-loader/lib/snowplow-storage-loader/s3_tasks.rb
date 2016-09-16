@@ -32,7 +32,7 @@ module Snowplow
       # Parameters:
       # +config+:: the hash of configuration options
       # +in_location+:: S3 location of In Bucket
-      def download_events(config, in_bucket)
+      def self.download_events(config, in_bucket)
         puts "Downloading Snowplow events..."
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
