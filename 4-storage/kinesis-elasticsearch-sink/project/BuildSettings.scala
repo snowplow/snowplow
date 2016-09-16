@@ -25,7 +25,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "com.snowplowanalytics",
-    version               :=  "0.8.0",
+    version               :=  "0.8.0-rc1",
     description           :=  "Kinesis sink for Elasticsearch",
     scalaVersion          :=  "2.10.1",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
