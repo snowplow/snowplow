@@ -173,7 +173,8 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
           val responseCookie = HttpCookie(
             cookieConfig.name, networkUserId,
             expires=Some(DateTime.now + cookieConfig.expiration),
-            domain=cookieConfig.domain
+            domain=cookieConfig.domain,
+            path=Some("/")
           )
           `Set-Cookie`(responseCookie) :: headersWithoutCookie
         case None => headersWithoutCookie

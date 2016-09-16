@@ -129,6 +129,8 @@ collector {
         val httpCookie = httpCookies(0)
 
         httpCookie.name must beEqualTo(collectorConfig.cookieName.get)
+        httpCookie.name must beEqualTo("sp")
+        httpCookie.path must beSome("/")
         httpCookie.domain must beSome
         httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
         httpCookie.expires must beSome
