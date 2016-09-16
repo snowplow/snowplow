@@ -19,7 +19,7 @@ module Snowplow
       # Parameters:
       # +events_dir+:: the directory holding the event files to load 
       # +target+:: the configuration options for this target
-      def process_events(events_dir, target, snowplow_tracking_enabled)
+      def self.process_events(events_dir, target, snowplow_tracking_enabled)
         puts "Processing Snowplow events into daily tables"
         event_files = get_event_files(events_dir)
 
@@ -102,13 +102,12 @@ module Snowplow
         puts "Day stats #{day_stats}"
 
       end
-      module_function :process_events
 
       # Loads the Snowplow event files into BigQuery.
       #
       # Parameters:
       # +target+:: the configuration options for this target
-      def load_events(target, snowplow_tracking_enabled)
+      def self.load_events(target, snowplow_tracking_enabled)
         puts "Loading Snowplow events into #{target[:name]} (BigQuery)..."
 
         table_files = Dir[File.join(target[:processing_dir], '*.gzip')].select { |f| File.file?(f) }
@@ -133,7 +132,6 @@ module Snowplow
           Monitoring::Snowplow.instance.track_load_succeeded()
         end
       end
-      module_function :load_events
 
       private
 
@@ -143,13 +141,13 @@ module Snowplow
       # +events_dir+:: the directory holding the event files to load 
       #
       # Returns the array of cold files
-      def get_event_files(events_dir)
+      def self.get_event_files(events_dir)
 
-        Dir[File.join(events_dir, '**', EVENT_FILES)].select { |f|
+        Dir[File.join(events_dir, '**', 'atomic-events', EVENT_FILES)].select { |f|
           File.file?(f) # In case of a dir ending in .tsv
         }
       end
-      module_function :get_event_files
+
     end
   end
 end
