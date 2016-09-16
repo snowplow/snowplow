@@ -59,7 +59,7 @@ packages:
     version  : "{{ versions.scala_stream_collector }}"
     build_version : <%= CMD['cd 2-collectors/scala-stream-collector && {{ sbt_version_cmd }}'] %>
     artifacts:
-      - prefix : "snowplow_stream_collector_"
+      - prefix : "snowplow_scala_stream_collector_"
         suffix : ""
         type   : "zip"
         binary_paths:
