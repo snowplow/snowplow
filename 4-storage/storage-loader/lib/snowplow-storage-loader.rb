@@ -29,6 +29,6 @@ require_relative 'snowplow-storage-loader/bigquery_loader'
 module Snowplow
   module StorageLoader
   	NAME          = "snowplow-storage-loader"
-    VERSION       = "0.7.0"
+    VERSION       = "0.8.0"
   end
 end

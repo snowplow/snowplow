@@ -3,6 +3,11 @@ scala:
 - 2.10.1
 jdk:
 - oraclejdk7
+before_script:
+  - psql -U postgres -c "CREATE USER enricher WITH password 'supersecret1';"
+  - psql -U postgres -c "CREATE DATABASE sql_enrichment_test WITH OWNER = enricher;"
+  - psql -U postgres -d sql_enrichment_test < integration-tests/sql-enrichment-test.sql
+  - psql -U postgres -d sql_enrichment_test -c "GRANT ALL ON enrichment_test TO enricher;"
 script:
   - python integration-tests/api-lookup-test.py &
   - cd 3-enrich/scala-common-enrich
@@ -25,6 +30,9 @@ before_install:
   - export PATH=$PATH:$HOME/.local/bin
 addons:
   hostname: short-hostname
+  postgresql: "9.3"
+services:
+  - postgresql
 deploy:
   skip_cleanup: true
   provider: script
