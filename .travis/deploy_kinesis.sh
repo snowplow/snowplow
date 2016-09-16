@@ -16,4 +16,6 @@ else
 fi
  
 cd $TRAVIS_BUILD_DIR
-./ci.bash "${release}"
+
+export TRAVIS_BUILD_RELEASE_TAG=${release}
+release-manager --config ./.travis/release_kinesis.yml --check-version --make-version --make-artifact --upload-artifact
