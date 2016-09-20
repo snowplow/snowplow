@@ -79,6 +79,8 @@ module Snowplow
                   raise "Error regex failed!"
                 end
                 
+                schema_name = schema_name[0]
+                
                 out["_unstruct_event"][schema_name] = val_obj["data"]["data"]
                 out["_unstruct_event"][schema_name]["_schema"] = val_obj["data"]["schema"]
               end
