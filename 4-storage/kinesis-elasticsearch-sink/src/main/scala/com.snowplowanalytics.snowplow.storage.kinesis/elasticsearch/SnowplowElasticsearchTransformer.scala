@@ -241,14 +241,16 @@ class SnowplowElasticsearchTransformer(documentIndex: String, documentType: Stri
    */
   private def converter(fieldInformation: ((String, TsvToJsonConverter), String)): ValidationNel[String, JObject] = {
     val ((fieldName, fieldConversionFunction), fieldValue) = fieldInformation
+    val safeFieldName: String = fieldName.replace(".", "_")
+
     if (fieldValue.isEmpty) {
-      JObject(fieldName -> JNull).successNel
+      JObject(safeFieldName -> JNull).successNel
     } else {
       try {
-        fieldConversionFunction(fieldName, fieldValue)
+        fieldConversionFunction(safeFieldName, fieldValue)
       } catch {
         case e @ (_ : IllegalArgumentException | _: JsonParseException) =>
-          "Value [%s] is not valid for field [%s]: %s".format(fieldValue, fieldName, e.getMessage).failNel
+          "Value [%s] is not valid for field [%s]: %s".format(fieldValue, safeFieldName, e.getMessage).failNel
       }
 
     }
