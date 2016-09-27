@@ -57,7 +57,7 @@ packages:
     override : false
     continue_on_conflict: true
     version  : "{{ versions.scala_stream_collector }}"
-    build_version : <%= CMD['cd 2-collectors/scala-stream-collector && {{ sbt_version_cmd }}'] %>
+    build_version : "{{ versions.scala_stream_collector }}"
     artifacts:
       - prefix : "snowplow_scala_stream_collector_"
         suffix : ""
@@ -72,7 +72,7 @@ packages:
     override : false
     continue_on_conflict: true
     version  : "{{ versions.stream_enrich }}"
-    build_version : <%= CMD['cd 3-enrich/stream-enrich && {{ sbt_version_cmd }}'] %>
+    build_version : "{{ versions.stream_enrich }}"
     artifacts:
       - prefix : "snowplow_stream_enrich_"
         suffix : ""
@@ -87,7 +87,7 @@ packages:
     override : false
     continue_on_conflict: true
     version  : "{{ versions.kinesis_elasticsearch_sink }}"
-    build_version : <%= CMD['cd 4-storage/kinesis-elasticsearch-sink && export ELASTICSEARCH_VERSION=1x && {{ sbt_version_cmd }}'] %>
+    build_version : "{{ versions.kinesis_elasticsearch_sink }}"
     artifacts:
       - prefix : "snowplow_kinesis_elasticsearch_sink_"
         suffix : "_1x"
