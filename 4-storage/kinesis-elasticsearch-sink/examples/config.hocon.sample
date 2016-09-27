@@ -96,6 +96,12 @@ sink {
       endpoint: "{{sinkElasticsearchEndpoint}}"
       port: {{sinkElasticsearchTransportPort}}
       max-timeout: "{{sinkElasticsearchMaxTimeout}}"
+
+      # Section for configuring the HTTP client
+      http {
+        conn-timeout: "{{sinkElasticsearchClientHttpConnTimeout}}"
+        read-timeout: "{{sinkElasticsearchClientHttpReadTimeout}}"
+      }
     }
 
     cluster {

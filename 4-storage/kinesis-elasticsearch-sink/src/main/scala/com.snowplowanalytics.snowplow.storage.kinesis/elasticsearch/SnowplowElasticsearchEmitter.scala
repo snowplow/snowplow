@@ -88,14 +88,16 @@ class SnowplowElasticsearchEmitter(
   badSink: ISink,
   tracker: Option[Tracker] = None,
   maxConnectionWaitTimeMs: Long = 60000,
-  elasticsearchClientType: String = "transport"
+  elasticsearchClientType: String = "transport",
+  connTimeout: Int = 300000,
+  readTimeout: Int = 300000
 ) extends IEmitter[EmitterInput] {
 
   private val Log = LogFactory.getLog(getClass)
 
   private val newInstance: ElasticsearchSender = (
     if (elasticsearchClientType == "http") {
-      new ElasticsearchSenderHTTP(configuration, tracker, maxConnectionWaitTimeMs)
+      new ElasticsearchSenderHTTP(configuration, tracker, maxConnectionWaitTimeMs, connTimeout, readTimeout)
     } else {
       new ElasticsearchSenderTransport(configuration, tracker, maxConnectionWaitTimeMs)
     }
