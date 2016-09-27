@@ -37,7 +37,7 @@ before_deploy:
   - pip install --user release-manager==0.1.0
 deploy:
   - provider: script
-    script: travis_wait 30 ./.travis/deploy_kinesis.sh $TRAVIS_TAG
+    script: ./.travis/deploy_kinesis.sh $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
