@@ -11,8 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-import sbtassembly.AssemblyPlugin.autoImport._
-import sbtassembly.AssemblyPlugin.defaultShellScript
+// SBT
 import sbt._
 import Keys._
 import scala.io.Source._
@@ -72,19 +71,14 @@ object BuildSettings {
     )
   })
 
-  // Assembly settings
-  lazy val sbtAssemblySettings: Seq[Setting[_]] = Seq(
-
+  // sbt-assembly settings for building an executable
+  import sbtassembly.Plugin._
+  import AssemblyKeys._
+  lazy val sbtAssemblySettings = assemblySettings ++ Seq(
     // Executable jarfile
-    assemblyOption in assembly ~= { 
-      _.copy(prependShellScript = Some(defaultShellScript)) 
-    },
-
+    assemblyOption in assembly ~= { _.copy(prependShellScript = Some(defaultShellScript)) },
     // Name it as an executable
-    assemblyJarName in assembly := { 
-      s"${name.value}-${version.value}-${ElasticsearchVersion}" 
-    },
-
+    jarName in assembly := { s"${name.value}-${version.value}-${ElasticsearchVersion}" },
     // Merge duplicate class in JodaTime and Elasticsearch 2.4
     mergeStrategy in assembly := {
       case PathList("org", "joda", "time", "base", "BaseDateTime.class") => MergeStrategy.first
