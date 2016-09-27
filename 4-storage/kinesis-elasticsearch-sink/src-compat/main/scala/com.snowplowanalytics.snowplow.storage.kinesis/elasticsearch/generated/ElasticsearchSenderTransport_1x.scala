@@ -253,6 +253,8 @@ class ElasticsearchSenderTransport(
         }
         case e: Exception => {
           Log.error("ElasticsearchEmitter threw an unexpected exception ", e)
+          e.printStackTrace()
+          
           sleep(BackoffPeriod)
           tracker foreach {
             t => SnowplowTracking.sendFailureEvent(t, BackoffPeriod, attemptNumber, connectionAttemptStartTime, e.toString)
