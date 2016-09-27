@@ -147,8 +147,78 @@ class SnowplowElasticsearchEmitter(
    * @return List of inputs which Elasticsearch rejected
    */
   private def sendToElasticsearch(records: List[EmitterInput]): List[EmitterInput] = {
-    newInstance.sendToElasticsearch(records)
+    val failures = for {
+      recordSlice <- splitBuffer(configuration, records)
+    } yield {
+      newInstance.sendToElasticsearch(recordSlice)
+    }
+    failures.flatten
   }
+
+  /**
+   * Splits the buffer into emittable chunks based on the 
+   * buffer settings defined in the config
+   *
+   * @param records The records to split
+   * @returns a list of buffers
+   */
+  protected def splitBuffer(
+    configuration: KinesisConnectorConfiguration, 
+    records: List[EmitterInput]): List[List[EmitterInput]] = {
+
+    val byteLimit: Long   = configuration.BUFFER_BYTE_SIZE_LIMIT
+    val recordLimit: Long = configuration.BUFFER_RECORD_COUNT_LIMIT
+
+    /**
+     * Add to the accumulator while conditions are met,
+     * Once conditions exceeded close buffer and increment the index.
+     *
+     * @param records The window of records to be split
+     * @param index The index of the buffer to add to
+     * @param accumulator The recursive accumulator of buffers
+     * @return the List of buffers to send
+     */
+    @scala.annotation.tailrec
+    def splitBufferRec(
+      records: List[EmitterInput],
+      totalByteCount: Long = 0,
+      index: Int = 0,
+      accumulator: List[List[EmitterInput]] = Nil): List[List[EmitterInput]] = {
+
+      if (records.length <= 0) {
+        accumulator
+      } else {
+        val currentBuffer: List[EmitterInput] = accumulator match {
+          case Nil   => List()
+          case accum => accum(index)
+        }
+
+        val record: EmitterInput = records(0)
+        val byteCount: Long = record match {
+          case (_, Success(obj)) => obj.toString.getBytes("UTF-8").length
+          case (_, Failure(_))   => 0 // This record will be ignored in the sender
+        }
+        val updatedRecords: List[EmitterInput] = records.drop(1)
+
+        if ((currentBuffer.length + 1) <= recordLimit && (totalByteCount + byteCount) <= byteLimit) {
+          val finalBuffer: List[EmitterInput] = currentBuffer ++ List(record)
+          val finalAccumulator = (
+            if (accumulator == Nil) {
+              List(finalBuffer)
+            } else {
+              accumulator.patch(index, List(finalBuffer), 1)
+            }
+          )
+          splitBufferRec(updatedRecords, (totalByteCount + byteCount), index, finalAccumulator)
+        } else {
+          splitBufferRec(updatedRecords, byteCount, index + 1, accumulator ++ List(List(record)))
+        }
+      }
+    }
+
+    splitBufferRec(records)
+  }
+
   /**
    * Handles records rejected by the SnowplowElasticsearchTransformer or by Elasticsearch
    *
