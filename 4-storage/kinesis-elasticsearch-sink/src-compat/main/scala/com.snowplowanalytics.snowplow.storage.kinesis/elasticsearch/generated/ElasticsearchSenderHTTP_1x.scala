@@ -72,7 +72,9 @@ import clients._
 class ElasticsearchSenderHTTP(
   configuration: KinesisConnectorConfiguration,
   tracker: Option[Tracker] = None,
-  maxConnectionWaitTimeMs: Long = 60000
+  maxConnectionWaitTimeMs: Long = 60000,
+  connTimeout: Int,
+  readTimeout: Int
 ) extends ElasticsearchSender {
 
   private val Log = LogFactory.getLog(getClass)
@@ -89,8 +91,8 @@ class ElasticsearchSenderHTTP(
     .multiThreaded(true)
     .discoveryEnabled(false)
     .maxConnectionIdleTime(30L, TimeUnit.SECONDS)
-    .connTimeout(5000)
-    .readTimeout(5000)
+    .connTimeout(connTimeout)
+    .readTimeout(readTimeout)
     .build()
   )
   private val elasticsearchClient: JestClient = factory.getObject()
