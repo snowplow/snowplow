@@ -51,7 +51,9 @@ module Snowplow
       #
       # Parameters:
       # +region+:: the region to add into the filenames
-      Contract String, String => Func[String, String => String]
+      # +collector_format+:: the format of the collector log files
+      # Contract String, String => Func[String, String => String] disabled contract because of:
+      # https://github.com/egonSchiele/contracts.ruby/issues/238
       def self.build_fix_filenames(region, collector_format)
         return lambda { |basename, filepath|
 
@@ -97,7 +99,7 @@ module Snowplow
         }
       end
 
-      # Moves new CloudFront logs to a processing bucket.
+      # Moves new raw logs to a processing bucket.
       #
       # Parameters:
       # +config+:: the hash of configuration options
@@ -105,7 +107,7 @@ module Snowplow
       # Returns true if file(s) were staged
       Contract ArgsHash, ConfigHash => Bool
       def self.stage_logs_for_emr(args, config)
-        Monitoring::Logging::logger.debug 'Staging...'
+        Monitoring::Logging::logger.debug 'Staging raw logs...'
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:aws][:s3][:region],

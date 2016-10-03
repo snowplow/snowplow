@@ -40,8 +40,9 @@ module Snowplow
       # Parameters:
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
-      Contract Hash, Hash => nil
-      def load_events_and_shredded_types(config, target, snowplow_tracking_enabled)
+      # +snowplow_tracking_enabled+:: whether we should emit Snowplow events for this
+      Contract Hash, Hash, Bool => nil
+      def self.load_events_and_shredded_types(config, target, snowplow_tracking_enabled)
         puts "Loading Snowplow events and shredded types into #{target[:name]} (Redshift cluster)..."
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
@@ -61,7 +62,7 @@ module Snowplow
           :shredded
         end
 
-        copy_analyze_statements = if atomic_events_location == :shredded
+        copy_statements = if atomic_events_location == :shredded
           loc = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:shredded][:good])
           altered_enriched_filepath = Sluice::Storage::S3::list_files(s3, loc).find { |file|
             ALTERED_ENRICHED_PATTERN.match(file.key)
@@ -74,20 +75,13 @@ module Snowplow
           [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:shredded][:good] + altered_enriched_subdirectory, target[:table], target[:maxerror])]
         else
           [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:enriched][:good], target[:table], target[:maxerror])]
-        end
-
-        copy_analyze_statements.push(*shredded_statements.map(&:copy))
-
-        unless config[:skip].include?('analyze')
-          copy_analyze_statements << build_analyze_statement(target[:table])
-          copy_analyze_statements.push(*shredded_statements.map(&:analyze).uniq)
-        end
+        end + shredded_statements.map(&:copy)
 
         credentials = [config[:aws][:access_key_id], config[:aws][:secret_access_key]]
 
-        status = PostgresLoader.execute_transaction(target, copy_analyze_statements)
+        status = PostgresLoader.execute_transaction(target, copy_statements)
         unless status == []
-          raw_error_message = "#{status[1]} error executing COPY and ANALYZE statements: #{status[0]}: #{status[2]}"
+          raw_error_message = "#{status[1]} error executing COPY statements: #{status[0]}: #{status[2]}"
           error_message = Sanitization.sanitize_message(raw_error_message, credentials)
           if snowplow_tracking_enabled
             Monitoring::Snowplow.instance.track_load_failed(error_message)
@@ -103,20 +97,24 @@ module Snowplow
         # and execute them in series. VACUUMs cannot be performed
         # inside of a transaction
         if config[:include].include?('vacuum')
-          vacuum_statements = [
-            build_vacuum_statement(target[:table])
-          ]
-          vacuum_statements.push(*shredded_statements.map(&:vacuum).uniq)
+          vacuum_statements = [build_vacuum_statement(target[:table])] + shredded_statements.map(&:vacuum).uniq
+          vacuum_status = PostgresLoader.execute_queries(target, vacuum_statements)
+          unless vacuum_status == []
+            raise DatabaseLoadError, Sanitization.sanitize_message("#{vacuum_status[1]} error executing VACUUM statements: #{vacuum_status[0]}: #{vacuum_status[2]}", credentials)
+          end
+        end
 
-          status = PostgresLoader.execute_queries(target, vacuum_statements)
-          unless status == []
-            raise DatabaseLoadError, Sanitization.sanitize_message("#{status[1]} error executing VACUUM statements: #{status[0]}: #{status[2]}", credentials)
+        # ANALYZE statements should be executed after VACUUM statements.
+        unless config[:skip].include?('analyze')
+          analyze_statements = [build_analyze_statement(target[:table])] + shredded_statements.map(&:analyze).uniq
+          analyze_status = PostgresLoader.execute_transaction(target, analyze_statements)
+          unless analyze_status == []
+            raise DatabaseLoadError, Sanitization.sanitize_message("#{analyze_status[1]} error executing ANALYZE statements: #{analyze_status[0]}: #{analyze_status[2]}", credentials)
           end
         end
 
         nil
       end
-      module_function :load_events_and_shredded_types
 
     private
 
@@ -126,8 +124,9 @@ module Snowplow
       # Parameters:
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
-      Contract Hash, Hash, Sluice::Storage::S3 => ArrayOf[SqlStatements]
-      def get_shredded_statements(config, target, s3)
+      # +s3+::     the Fog object for accessing S3
+      Contract Hash, Hash, FogStorage => ArrayOf[SqlStatements]
+      def self.get_shredded_statements(config, target, s3)
 
         if config[:skip].include?('shred') # No shredded types to load
           []
@@ -149,7 +148,6 @@ module Snowplow
           }
         end
       end
-      module_function :get_shredded_statements
 
       # Looks at the events table to determine if there's
       # a schema we should use for the shredded type tables.
@@ -157,18 +155,16 @@ module Snowplow
       # Parameters:
       # +events_table+:: the events table to load into
       Contract String => Maybe[String]
-      def extract_schema(events_table)
+      def self.extract_schema(events_table)
         parts = events_table.split(/\./)
         if parts.size > 1 then parts[0] else nil end
       end
-      module_function :extract_schema
 
       # Replaces an initial "s3n" with "s3" in an S3 path
       Contract String => String
-      def fix_s3_path(path)
+      def self.fix_s3_path(path)
         path.gsub(/^s3n/, 's3')
       end
-      module_function :fix_s3_path
 
       # Constructs the COPY statement to load the enriched
       # event TSV files into Redshift.
@@ -181,7 +177,7 @@ module Snowplow
       #           optional schema
       # +maxerror+:: how many errors to allow for this COPY
       Contract Hash, String, String, Num => String
-      def build_copy_from_tsv_statement(config, s3_objectpath, table, maxerror)
+      def self.build_copy_from_tsv_statement(config, s3_objectpath, table, maxerror)
 
         # Assemble the relevant parameters for the bulk load query
         credentials = get_credentials(config)
@@ -196,7 +192,6 @@ module Snowplow
 
         "COPY #{table} FROM '#{fixed_objectpath}' CREDENTIALS '#{credentials}' REGION AS '#{config[:aws][:s3][:region]}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' MAXERROR #{maxerror} EMPTYASNULL FILLRECORD TRUNCATECOLUMNS #{comprows} TIMEFORMAT 'auto' ACCEPTINVCHARS #{compression_format};"
       end
-      module_function :build_copy_from_tsv_statement
 
       # Constructs the COPY FROM JSON statement required for
       # loading a shredded JSON into a dedicated table; also
@@ -212,36 +207,33 @@ module Snowplow
       #           optional schema
       # +maxerror+:: how many errors to allow for this COPY
       Contract Hash, String, String, String, Num => String
-      def build_copy_from_json_statement(config, s3_objectpath, jsonpaths_file, table, maxerror)
+      def self.build_copy_from_json_statement(config, s3_objectpath, jsonpaths_file, table, maxerror)
         credentials = get_credentials(config)
         compression_format = get_compression_format(config[:enrich][:output_compression])
         fixed_objectpath = fix_s3_path(s3_objectpath)
         # TODO: what about COMPUPDATE/ROWS?
         "COPY #{table} FROM '#{fixed_objectpath}' CREDENTIALS '#{credentials}' JSON AS '#{jsonpaths_file}' REGION AS '#{config[:aws][:s3][:region]}' MAXERROR #{maxerror} TRUNCATECOLUMNS TIMEFORMAT 'auto' ACCEPTINVCHARS #{compression_format};"
       end
-      module_function :build_copy_from_json_statement
 
       # Builds an ANALYZE statement for the
       # given table.
       #
       # Parameters:
       # +table+:: the name of the table to analyze
-      Contract Hash => String
-      def build_analyze_statement(table)
+      Contract String => String
+      def self.build_analyze_statement(table)
         "ANALYZE #{table};"
       end
-      module_function :build_analyze_statement
 
       # Builds a VACUUM statement for the
       # given table.
       #
       # Parameters:
       # +table+:: the name of the table to analyze
-      Contract Hash => String
-      def build_vacuum_statement(table)
+      Contract String => String
+      def self.build_vacuum_statement(table)
         "VACUUM SORT ONLY #{table};"
       end
-      module_function :build_vacuum_statement
 
       # Constructs the credentials expression for a
       # Redshift COPY statement.
@@ -249,24 +241,24 @@ module Snowplow
       # Parameters:
       # +config+:: the configuration options
       Contract Hash => String
-      def get_credentials(config)
+      def self.get_credentials(config)
         "aws_access_key_id=#{config[:aws][:access_key_id]};aws_secret_access_key=#{config[:aws][:secret_access_key]}"
       end
-      module_function :get_credentials
 
       # Returns the compression format for a
       # Redshift COPY statement.
       #
       # Parameters:
-      # +output_codec+:: the output code, possibly nil
-      def get_compression_format(output_codec)
+      # +output_codec+:: the output code
+      Contract String => String
+      def self.get_compression_format(output_codec)
         if output_codec == 'NONE'
           ''
         elsif output_codec == 'GZIP'
           'GZIP'
         end
+        # TODO: fix non-exhaustive match above
       end
-      module_function :get_compression_format
 
     end
   end

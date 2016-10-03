@@ -58,7 +58,7 @@ module Snowplow
           opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
-          opts.on('-x', '--skip staging,s3distcp,emr{enrich,shred},archive_raw', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          opts.on('-x', '--skip staging,s3distcp,emr{enrich,shred,elasticsearch},archive_raw', Array, 'skip work step(s)') { |config| options[:skip] = config }
           opts.on('-E', '--process-enrich LOCATION', 'run enrichment only on specified location. Implies --skip staging,shred,archive_raw') { |config|
             options[:process_enrich_location] = config
             options[:skip] = %w(staging shred archive_raw)
@@ -158,7 +158,7 @@ module Snowplow
         return [] if enrichments_dir.nil?
 
         # Check the enrichments directory exists and is a directory
-        unless Dir.exists?(enrichments_dir)
+        unless Dir.exist?(enrichments_dir)
           raise ConfigError, "Enrichments directory '#{enrichments_dir}' does not exist, or is not a directory\n#{optparse}"
         end
 

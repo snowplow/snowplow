@@ -43,6 +43,8 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.jsonValidator,
         Libraries.mavenArtifact,
         Libraries.uaParser,
+        Libraries.postgresDriver,
+        Libraries.mysqlConnector,
         // Scala
         Libraries.scalaz7,
         Libraries.snowplowRawEvent,
@@ -57,11 +59,16 @@ object SnowplowCommonEnrichBuild extends Build {
         Libraries.scalaUri,
         Libraries.scalaForex,
         Libraries.scalaWeather,
+        Libraries.akka,
+        Libraries.akkaHttp,
+        Libraries.akkaHttpCore,
+        Libraries.gatlingJsonpath,
         // Scala (test only)
         Libraries.specs2,
         Libraries.scalazSpecs2,
         Libraries.scalaCheck,
-        Libraries.scaldingArgs
+        Libraries.scaldingArgs,
+        Libraries.mockito
       )
     )
 }

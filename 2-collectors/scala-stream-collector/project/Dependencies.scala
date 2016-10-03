@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -34,10 +34,13 @@ object Dependencies {
     val yodaTime         = "2.1"
     val yodaConvert      = "1.2"
     // Scala
+    val snowplowCommonEnrich = "0.22.0"
+    val igluClient       = "0.3.2"
+    val scalaz7          = "7.0.0"
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
-    val spray            = "1.2.0"
-    val akka             = "2.2.3"
+    val spray            = "1.3.3"
+    val akka             = "2.3.9"
     val logback          = "1.0.13"
     val commonsCodec     = "1.5"
     val scalazon         = "0.11"
@@ -57,11 +60,15 @@ object Dependencies {
     val yodaConvert      = "org.joda"              %  "joda-convert"              % V.yodaConvert
 
     // Scala
+    // Exclude netaporter to prevent conflicting cross-version suffixes for shapeless
+    val snowplowCommonEnrich = "com.snowplowanalytics" % "snowplow-common-enrich" % V.snowplowCommonEnrich intransitive
+    val igluClient       = "com.snowplowanalytics" %  "iglu-scala-client"         % V.igluClient
+    val scalaz7          = "org.scalaz"            %% "scalaz-core"               % V.scalaz7
     val snowplowRawEvent = "com.snowplowanalytics" %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val collectorPayload = "com.snowplowanalytics" %  "collector-payload-1"       % V.collectorPayload
     val argot            = "org.clapper"           %% "argot"                     % V.argot
-    val sprayCan         = "io.spray"              %  "spray-can"                 % V.spray
-    val sprayRouting     = "io.spray"              %  "spray-routing"             % V.spray
+    val sprayCan         = "io.spray"              %% "spray-can"                 % V.spray
+    val sprayRouting     = "io.spray"              %% "spray-routing"             % V.spray
     val akkaActor        = "com.typesafe.akka"     %% "akka-actor"                % V.akka
     val akkaSlf4j        = "com.typesafe.akka"     %% "akka-slf4j"                % V.akka
     val logback          = "ch.qos.logback"        %  "logback-classic"           % V.logback
@@ -71,6 +78,6 @@ object Dependencies {
 
     // Scala (test only)
     val specs2           = "org.specs2"            %% "specs2"                    % V.specs2   % "test"
-    val sprayTestkit     = "io.spray"              %  "spray-testkit"             % V.spray    % "test"
+    val sprayTestkit     = "io.spray"              %% "spray-testkit"             % V.spray    % "test"
   }
 }

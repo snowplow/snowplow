@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2013-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -18,12 +18,21 @@ package scalastream
 
 // Akka and Spray
 import akka.actor.{ActorSystem, Props}
+import akka.pattern.ask
 import akka.io.IO
 import spray.can.Http
+
+// Scala Futures
+import scala.concurrent.duration._
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Success, Failure}
 
 // Java
 import java.io.File
 import java.nio.ByteBuffer
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 
 // Argot
 import org.clapper.argot._
@@ -73,10 +82,12 @@ object ScalaCollector extends App {
 
   implicit val system = ActorSystem.create("scala-stream-collector", rawConf)
 
+  lazy val executorService = new ScheduledThreadPoolExecutor(collectorConfig.threadpoolSize)
+
   val sinks = collectorConfig.sinkEnabled match {
     case Sink.Kinesis => {
-      val good = KinesisSink.createAndInitialize(collectorConfig, InputType.Good)
-      val bad  = KinesisSink.createAndInitialize(collectorConfig, InputType.Bad)
+      val good = KinesisSink.createAndInitialize(collectorConfig, InputType.Good, executorService)
+      val bad  = KinesisSink.createAndInitialize(collectorConfig, InputType.Bad, executorService)
       CollectorSinks(good, bad) 
     }
     case Sink.Stdout  => {
@@ -92,8 +103,23 @@ object ScalaCollector extends App {
     name = "handler"
   )
 
-  IO(Http) ! Http.Bind(handler,
-    interface=collectorConfig.interface, port=collectorConfig.port)
+  val bind = Http.Bind(
+    handler,
+    interface=collectorConfig.interface,
+    port=collectorConfig.port)
+
+  val bindResult = IO(Http).ask(bind)(5.seconds) flatMap {
+    case b: Http.Bound => Future.successful(())
+    case failed: Http.CommandFailed => Future.failed(new RuntimeException(failed.toString))
+  }
+
+  bindResult onComplete {
+    case Success(_) =>
+    case Failure(f) => {
+      error("Failure binding to port", f)
+      System.exit(1)
+    }
+  }
 }
 
 // Return Options from the configuration.
@@ -115,6 +141,9 @@ object Sink extends Enumeration {
   val Kinesis, Stdout, Test = Value
 }
 
+// How a collector should set cookies
+case class CookieConfig(name: String, expiration: Long, domain: Option[String])
+
 // Rigidly load the configuration file here to error when
 // the collector process starts rather than later.
 class CollectorConfig(config: Config) {
@@ -130,9 +159,13 @@ class CollectorConfig(config: Config) {
   val p3pCP = p3p.getString("CP")
 
   private val cookie = collector.getConfig("cookie")
-  val cookieExpiration = cookie.getMilliseconds("expiration")
-  val cookieEnabled = cookieExpiration != 0
-  val cookieDomain = cookie.getOptionalString("domain")
+
+  val cookieConfig = if (cookie.getBoolean("enabled")) {
+    Some(CookieConfig(
+      cookie.getString("name"),
+      cookie.getDuration("expiration", TimeUnit.MILLISECONDS),
+      cookie.getOptionalString("domain")))
+  } else None
 
   private val sink = collector.getConfig("sink")
   
@@ -167,4 +200,10 @@ class CollectorConfig(config: Config) {
   val backoffPolicy = kinesis.getConfig("backoffPolicy")
   val minBackoff = backoffPolicy.getLong("minBackoff")
   val maxBackoff = backoffPolicy.getLong("maxBackoff")
+
+  val useIpAddressAsPartitionKey = kinesis.hasPath("useIpAddressAsPartitionKey") && kinesis.getBoolean("useIpAddressAsPartitionKey")
+
+  def cookieName = cookieConfig.map(_.name)
+  def cookieDomain = cookieConfig.flatMap(_.domain)
+  def cookieExpiration = cookieConfig.map(_.expiration)
 }

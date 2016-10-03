@@ -143,7 +143,7 @@ class EnrichedEvent {
   @BeanProperty var ti_name: String = _
   @BeanProperty var ti_category: String = _
   @BeanProperty var ti_price: String = _
-  @BeanProperty var ti_quantity: String = _
+  @BeanProperty var ti_quantity: JInteger = _
 
   // Page Pings
   @BeanProperty var pp_xoffset_min: JInteger = _

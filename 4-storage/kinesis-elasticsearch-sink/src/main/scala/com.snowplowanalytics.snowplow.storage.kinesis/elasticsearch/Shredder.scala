@@ -1,5 +1,5 @@
- /*
- * Copyright (c) 2014 Snowplow Analytics Ltd.
+/**
+ * Copyright (c) 2014-2016 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -16,6 +16,7 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
+
 package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
 
 // Scalaz
@@ -37,7 +38,8 @@ import scala.annotation.tailrec
  */
 object Shredder {
 
-  private val schemaPattern = """.+:([a-zA-Z0-9_\.]+)/([a-zA-Z0-9_]+)/[^/]+/(.*)""".r
+  private[elasticsearch] val schemaPattern =
+    """^iglu:([a-zA-Z0-9-_.]+)/([a-zA-Z0-9-_]+)/[a-zA-Z0-9-_]+/([0-9]+-[0-9]+-[0-9]+)$""".r
 
   /**
    * Create an Elasticsearch field name from a schema
@@ -55,9 +57,9 @@ object Shredder {
       case schemaPattern(organization, name, schemaVer) => {
 
         // Split the vendor's reversed domain name using underscores rather than dots
-        val snakeCaseOrganization = organization.replaceAll("""\.""", "_").toLowerCase
+        val snakeCaseOrganization = organization.replaceAll("""[-.]""", "_").toLowerCase
 
-        // Change the name from PascalCase to snake_case if necessary
+        // Change the name from PascalCase to snake_case if necessary and replace hyphens with underscores
         val snakeCaseName = name.replaceAll("([^A-Z_])([A-Z])", "$1_$2").toLowerCase
 
         // Extract the schemaver version's model

@@ -2,7 +2,7 @@
     "schema": "iglu:com.snowplowanalytics.snowplow.enrichments/weather_enrichment_config/jsonschema/1-0-0",
 
     "data": {
-        "enabled": true,
+        "enabled": false,
         "vendor": "com.snowplowanalytics.snowplow.enrichments",
         "name": "weather_enrichment_config",
         "parameters": {

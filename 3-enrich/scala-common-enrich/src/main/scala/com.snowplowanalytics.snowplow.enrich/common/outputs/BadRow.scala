@@ -47,6 +47,21 @@ object BadRow {
    */
   def apply(line: String, errors: NonEmptyList[String]): BadRow =
     BadRow(line, errors.map(_.toProcessingMessage), System.currentTimeMillis())
+
+  /**
+   * For rows which are so too long to send to Kinesis and so cannot contain their own original line
+   *
+   * @param line
+   * @param errors
+   * @param tstamp
+   * @return a BadRow
+   */
+  def oversizedRow(size: Long, errors: NonEmptyList[String], tstamp: Long = System.currentTimeMillis()): String =
+    compact(
+      ("size" -> size) ~
+      ("errors" -> errors.toList.map(e => fromJsonNode(e.toProcessingMessage.asJson))) ~
+      ("failure_tstamp" -> tstamp)
+    )
 }
 
 /**

@@ -21,6 +21,33 @@ require 'json'
 require 'base64'
 require 'contracts'
 
+# Global variable used to decide whether to patch Elasticity's AwsRequestV4 payload with Configurations
+# This is only necessary if we are loading Thrift with AMI >= 4.0.0
+$patch_thrift_configuration = false
+
+# Monkey patched to support Configurations
+module Elasticity
+  class AwsRequestV4
+    def payload
+      if $patch_thrift_configuration
+        @ruby_service_hash["Configurations"] = [{
+          "Classification" => "core-site",
+          "Properties" => {
+            "io.file.buffer.size" => "65536"
+          }
+        },
+        {
+          "Classification" => "mapred-site",
+          "Properties" => {
+            "mapreduce.user.classpath.first" => "true"
+          }
+        }]
+      end
+      AwsUtils.convert_ruby_to_aws_v4(@ruby_service_hash).to_json
+    end
+  end
+end
+
 # Ruby class to execute Snowplow's Hive jobs against Amazon EMR
 # using Elasticity (https://github.com/rslifka/elasticity).
 module Snowplow
@@ -32,7 +59,8 @@ module Snowplow
       # Constants
       JAVA_PACKAGE = "com.snowplowanalytics.snowplow"
       PARTFILE_REGEXP = ".*part-.*"
-      BOOTSTRAP_FAILURE_INDICATOR = /bootstrap action|Master instance startup failed/
+      BOOTSTRAP_FAILURE_INDICATOR = /BOOTSTRAP_FAILURE|bootstrap action|Master instance startup failed/
+      STANDARD_HOSTED_ASSETS = "s3://snowplow-hosted-assets"
 
       # Need to understand the status of all our jobflow steps
       @@running_states = Set.new(%w(WAITING RUNNING PENDING SHUTTING_DOWN))
@@ -47,8 +75,9 @@ module Snowplow
         logger.debug "Initializing EMR jobflow"
 
         # Configuration
+        custom_assets_bucket = self.class.get_hosted_assets_bucket(config[:aws][:s3][:buckets][:assets], config[:aws][:emr][:region])
         assets = self.class.get_assets(
-          config[:aws][:s3][:buckets][:assets],
+          custom_assets_bucket,
           config[:enrich][:versions][:hadoop_enrich],
           config[:enrich][:versions][:hadoop_shred],
           config[:enrich][:versions][:hadoop_elasticsearch])
@@ -84,13 +113,23 @@ module Snowplow
 
         # Configure
         @jobflow.name                 = config[:enrich][:job_name]
-        @jobflow.ami_version          = config[:aws][:emr][:ami_version]
+
+        if config[:aws][:emr][:ami_version] =~ /^[1-3].*/
+          @legacy = true
+          @jobflow.ami_version = config[:aws][:emr][:ami_version]
+        else
+          @legacy = false
+          @jobflow.release_label = "emr-#{config[:aws][:emr][:ami_version]}"
+        end
+
+        @jobflow.tags                 = config[:monitoring][:tags]
         @jobflow.ec2_key_name         = config[:aws][:emr][:ec2_key_name]
 
         @jobflow.region               = config[:aws][:emr][:region]
         @jobflow.job_flow_role        = config[:aws][:emr][:jobflow_role] # Note job_flow vs jobflow
         @jobflow.service_role         = config[:aws][:emr][:service_role]
         @jobflow.placement            = config[:aws][:emr][:placement]
+        @jobflow.additional_info      = config[:aws][:emr][:additional_info]
         unless config[:aws][:emr][:ec2_subnet_id].nil? # Nils placement so do last and conditionally
           @jobflow.ec2_subnet_id      = config[:aws][:emr][:ec2_subnet_id]
         end
@@ -104,11 +143,15 @@ module Snowplow
         @jobflow.slave_instance_type  = config[:aws][:emr][:jobflow][:core_instance_type]
 
         if config[:collectors][:format] == 'thrift'
-          [
-            Elasticity::HadoopBootstrapAction.new('-c', 'io.file.buffer.size=65536'),
-            Elasticity::HadoopBootstrapAction.new('-m', 'mapreduce.user.classpath.first=true')
-          ].each do |action|
-            @jobflow.add_bootstrap_action(action)
+          if @legacy
+            [
+              Elasticity::HadoopBootstrapAction.new('-c', 'io.file.buffer.size=65536'),
+              Elasticity::HadoopBootstrapAction.new('-m', 'mapreduce.user.classpath.first=true')
+            ].each do |action|
+              @jobflow.add_bootstrap_action(action)
+            end
+          else
+            $patch_thrift_configuration = true
           end
         end
 
@@ -120,9 +163,15 @@ module Snowplow
           end
         end
 
-        # Prepare a 3.x AMI for Snowplow
-        prepare_ami3_action = Elasticity::BootstrapAction.new("s3://snowplow-hosted-assets/common/emr/snowplow-ami3-bootstrap-0.1.0.sh")
-        @jobflow.add_bootstrap_action(prepare_ami3_action)
+        # Prepare a bootstrap action based on the AMI version
+        standard_assets_bucket = self.class.get_hosted_assets_bucket(STANDARD_HOSTED_ASSETS, config[:aws][:emr][:region])
+        bootstrap_jar_location = if @legacy
+          "#{standard_assets_bucket}common/emr/snowplow-ami3-bootstrap-0.1.0.sh"
+        else
+          "#{standard_assets_bucket}common/emr/snowplow-ami4-bootstrap-0.2.0.sh"
+        end
+        cc_version = get_cc_version(config[:enrich][:versions][:hadoop_enrich])
+        @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_jar_location, cc_version))
 
         # Install and launch HBase
         hbase = config[:aws][:emr][:software][:hbase]
@@ -144,7 +193,7 @@ module Snowplow
         end
 
         # For serialization debugging. TODO doesn't work yet
-        # install_ser_debug_action = Elasticity::BootstrapAction.new("s3://snowplow-hosted-assets/common/emr/cascading-ser-debug.sh")
+        # install_ser_debug_action = Elasticity::BootstrapAction.new("#{STANDARD_HOSTED_ASSETS}/common/emr/cascading-ser-debug.sh")
         # @jobflow.add_bootstrap_action(install_ser_debug_action)
 
         # Now let's add our task group if required
@@ -206,7 +255,7 @@ module Snowplow
             group_by = self.class.is_ua_ndjson(config[:collectors][:format]) ? ".*(urbanairship).*" : ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*"
 
             # Create the Hadoop MR step for the file crushing
-            compact_to_hdfs_step = Elasticity::S3DistCpStep.new
+            compact_to_hdfs_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             compact_to_hdfs_step.arguments = [
                 "--src"         , raw_input,
                 "--dest"        , enrich_step_input,
@@ -256,7 +305,7 @@ module Snowplow
 
           if s3distcp
             # We need to copy our enriched events from HDFS back to S3
-            copy_to_s3_step = Elasticity::S3DistCpStep.new
+            copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             copy_to_s3_step.arguments = [
               "--src"        , enrich_step_output,
               "--dest"       , enrich_final_output,
@@ -266,7 +315,7 @@ module Snowplow
             copy_to_s3_step.name << ": Enriched HDFS -> S3"
             @jobflow.add_step(copy_to_s3_step)
 
-            copy_success_file_step = Elasticity::S3DistCpStep.new
+            copy_success_file_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             copy_success_file_step.arguments = [
               "--src"        , enrich_step_output,
               "--dest"       , enrich_final_output,
@@ -292,13 +341,13 @@ module Snowplow
 
           # If we didn't enrich already, we need to copy to HDFS
           if s3distcp and !enrich
-            copy_to_hdfs_step = Elasticity::S3DistCpStep.new
+            copy_to_hdfs_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             copy_to_hdfs_step.arguments = [
               "--src"        , enrich_final_output, # Opposite way round to normal
               "--dest"       , enrich_step_output,
               "--srcPattern" , PARTFILE_REGEXP,
               "--s3Endpoint" , s3_endpoint
-            ] + output_codec_argument
+            ] # Either user doesn't want compression, or files are already compressed
             copy_to_hdfs_step.name << ": Enriched S3 -> HDFS"
             @jobflow.add_step(copy_to_hdfs_step)
           end
@@ -326,7 +375,7 @@ module Snowplow
 
           if s3distcp
             # We need to copy our shredded types from HDFS back to S3
-            copy_to_s3_step = Elasticity::S3DistCpStep.new
+            copy_to_s3_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
             copy_to_s3_step.arguments = [
               "--src"        , shred_step_output,
               "--dest"       , shred_final_output,
@@ -459,6 +508,19 @@ module Snowplow
         scalding_step.name << ": #{step_name}"
 
         scalding_step
+      end
+
+      # Get commons-codec version required by Scala Hadoop Enrich
+      # for further replace
+      # See: https://github.com/snowplow/snowplow/issues/2735
+      Contract String => String
+      def get_cc_version(she_version)
+        she_version_normalized = Gem::Version.new(she_version)
+        if she_version_normalized > Gem::Version.new("1.8.0")
+          "1.10"
+        else
+          "1.5"
+        end
       end
 
       # Wait for a jobflow.
@@ -636,6 +698,20 @@ module Snowplow
         Base64.strict_encode64(resolver)
       end
 
+      # Builds the region-appropriate bucket name for Snowplow's
+      # hosted assets. Has to be region-specific because of
+      # https://github.com/boto/botocore/issues/424
+      #
+      # Parameters:
+      # +bucket+:: the specified hosted assets bucket
+      # +region+:: the AWS region to source hosted assets from
+      Contract String, String => String
+      def self.get_hosted_assets_bucket(bucket, region)
+        bucket = bucket.chomp('/')
+        suffix = if !bucket.eql? STANDARD_HOSTED_ASSETS or region.eql? "eu-west-1" then "" else "-#{region}" end
+        "#{bucket}#{suffix}/"
+      end
+
       Contract String, String, String, String => AssetsHash
       def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version, hadoop_elasticsearch_version)
         enrich_path_middle = hadoop_enrich_version[0] == '0' ? 'hadoop-etl/snowplow-hadoop-etl' : 'scala-hadoop-enrich/snowplow-hadoop-enrich'
@@ -670,7 +746,8 @@ module Snowplow
         if compression_format.nil?
           "none"
         else
-          compression_format.downcase
+          codec = compression_format.downcase
+          codec == "gzip" ? "gz" : codec
         end
       end
 

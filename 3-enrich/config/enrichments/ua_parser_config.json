@@ -3,7 +3,6 @@
 
 	"data": {
 
-		"enabled": true,
 		"vendor": "com.snowplowanalytics.snowplow",
 		"name": "ua_parser_config",
 		"enabled": true,

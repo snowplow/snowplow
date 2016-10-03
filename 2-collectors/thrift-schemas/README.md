@@ -16,9 +16,8 @@ The Thrift IDL is defined within a Scala/SBT project to produce Java sources and
 
 1. Add the Snowplow maven repository as a [resolver][dependencies]:
    `"Snowplow Analytics Maven repo" at "http://maven.snplow.com/releases/"`
-2. Check for the [newest version][versions]
-3. Add this the relevant version of the schema you want as a [dependency][dependencies]:
-   `"com.snowplowanalytics" % "collector-payload1" % "0.2.0"`
+2. Add the following as a [dependency][dependencies]:
+   `"com.snowplowanalytics" % "collector-payload1" % "0.0.0"`
 
 ## Copyright and license
 
