@@ -129,12 +129,40 @@ collector {
         val httpCookie = httpCookies(0)
 
         httpCookie.name must beEqualTo(collectorConfig.cookieName.get)
+        httpCookie.name must beEqualTo("sp")
+        httpCookie.path must beSome("/")
         httpCookie.domain must beSome
         httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
         httpCookie.expires must beSome
+        httpCookie.content.matches("""[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}""")
         val expiration = httpCookie.expires.get
-        val offset = expiration.clicks - collectorConfig.cookieExpiration.get -
-          DateTime.now.clicks
+        val offset = expiration.clicks - collectorConfig.cookieExpiration.get - DateTime.now.clicks
+        offset.asInstanceOf[Int] must beCloseTo(0, 2000) // 1000 ms window.
+      }
+    }
+    "return a cookie containing nuid query parameter" in {
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2?nuid=UUID_Test_New") ~> collectorService.collectorRoute ~> check {
+        headers must not be empty
+
+        val httpCookies: List[HttpCookie] = headers.collect {
+          case `Set-Cookie`(hc) => hc
+        }
+        httpCookies must not be empty
+
+        // Assume we only return a single cookie.
+        // If the collector is modified to return multiple cookies,
+        // this will need to be changed.
+        val httpCookie = httpCookies(0)
+
+        httpCookie.name must beEqualTo(collectorConfig.cookieName.get)
+        httpCookie.name must beEqualTo("sp")
+        httpCookie.path must beSome("/")
+        httpCookie.domain must beSome
+        httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
+        httpCookie.expires must beSome
+        httpCookie.content must beEqualTo("UUID_Test_New")
+        val expiration = httpCookie.expires.get
+        val offset = expiration.clicks - collectorConfig.cookieExpiration.get - DateTime.now.clicks
         offset.asInstanceOf[Int] must beCloseTo(0, 3600000) // 1 hour window.
       }
     }
@@ -150,6 +178,20 @@ collector {
         val httpCookie = httpCookies(0)
 
         httpCookie.content must beEqualTo("UUID_Test")
+      }
+    }
+    "override cookie with nuid parameter" in {
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2?nuid=UUID_Test_New", Some(HttpCookie("sp", "UUID_Test"))) ~>
+          collectorService.collectorRoute ~> check {
+        val httpCookies: List[HttpCookie] = headers.collect {
+          case `Set-Cookie`(hc) => hc
+        }
+        // Assume we only return a single cookie.
+        // If the collector is modified to return multiple cookies,
+        // this will need to be changed.
+        val httpCookie = httpCookies(0)
+
+        httpCookie.content must beEqualTo("UUID_Test_New")
       }
     }
     "return a P3P header" in {
@@ -179,7 +221,7 @@ collector {
       storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 60000)
       storedEvent.encoding must beEqualTo("UTF-8")
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
-      storedEvent.collector must beEqualTo("ssc-0.7.0-test")
+      storedEvent.collector must beEqualTo("ssc-0.8.0-test")
       storedEvent.path must beEqualTo("/com.snowplowanalytics.snowplow/tp2")
       storedEvent.querystring must beEqualTo(payloadData)
     }

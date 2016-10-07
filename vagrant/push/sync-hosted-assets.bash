@@ -12,7 +12,7 @@ set -e
 master="snowplow-hosted-assets"
 master_region="eu-west-1"
 slave_stem="${master}-"
-declare -a regions=( "us-east-1" "us-west-1" "us-west-2" "sa-east-1" "eu-central-1" "ap-southeast-1" "ap-southeast-2" "ap-northeast-1" )
+declare -a regions=( "us-east-1" "us-west-1" "us-west-2" "sa-east-1" "eu-central-1" "ap-southeast-1" "ap-southeast-2" "ap-northeast-1" "ap-south-1" )
 
 for region in "${regions[@]}"
 do

@@ -13,6 +13,8 @@
  * express or implied.  See the Apache License Version 2.0 for the specific
  * language governing permissions and limitations there under.
  */
+
+// SBT
 import sbt._
 import Keys._
 
@@ -21,7 +23,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "com.snowplowanalytics",
-    version               :=  "0.7.0",
+    version               :=  "0.8.0",
     description           :=  "Scala Stream Collector for Snowplow raw events",
     scalaVersion          :=  "2.10.5",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",

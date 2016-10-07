@@ -64,11 +64,13 @@ class ElasticsearchPipeline(
   badSink: ISink,
   tracker: Option[Tracker] = None,
   maxConnectionTime: Long,
-  elasticsearchClientType: String
+  elasticsearchClientType: String,
+  connTimeout: Int,
+  readTimeout: Int
 ) extends IKinesisConnectorPipeline[ValidatedRecord, EmitterInput] {
 
   override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[EmitterInput] =
-    new SnowplowElasticsearchEmitter(configuration, goodSink, badSink, tracker, maxConnectionTime, elasticsearchClientType)
+    new SnowplowElasticsearchEmitter(configuration, goodSink, badSink, tracker, maxConnectionTime, elasticsearchClientType, connTimeout, readTimeout)
 
   override def getBuffer(configuration: KinesisConnectorConfiguration) = new BasicMemoryBuffer[ValidatedRecord](configuration)
 

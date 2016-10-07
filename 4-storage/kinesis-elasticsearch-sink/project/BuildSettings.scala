@@ -11,16 +11,20 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
- // SBT
+// SBT
 import sbt._
 import Keys._
+import scala.io.Source._
 
 object BuildSettings {
+
+  // Defines the ES Version to build for
+  val ElasticsearchVersion = sys.env("ELASTICSEARCH_VERSION")
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "com.snowplowanalytics",
-    version               :=  "0.7.0",
+    version               :=  "0.8.0",
     description           :=  "Kinesis sink for Elasticsearch",
     scalaVersion          :=  "2.10.1",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
@@ -31,25 +35,55 @@ object BuildSettings {
 
   // Makes our SBT app settings available from within the app
   lazy val scalifySettings = Seq(sourceGenerators in Compile <+= (sourceManaged in Compile, version, name, organization) map { (d, v, n, o) =>
-    val file = d / "settings.scala"
-    IO.write(file, """package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch.generated
+    val settingsFile = d / "settings.scala"
+    IO.write(settingsFile, """package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch.generated
       |object Settings {
       |  val organization = "%s"
       |  val version = "%s"
       |  val name = "%s"
       |}
-      |""".stripMargin.format(o, v, n))
-    Seq(file)
+      |""".stripMargin.format(o, v, n)
+    )
+
+    // Dynamically load ElasticsearchClients
+    val genDir = new java.io.File("").getAbsolutePath + "/src-compat/main/scala/com.snowplowanalytics.snowplow.storage.kinesis/elasticsearch/generated/"
+
+    val esHttpClientFile = d / "ElasticsearchSenderHTTP.scala"
+    val esHttpClientLines = (if (ElasticsearchVersion.equals("1x")) {
+      fromFile(genDir + "ElasticsearchSenderHTTP_1x.scala")
+    } else {
+      fromFile(genDir + "ElasticsearchSenderHTTP_2x.scala")
+    })
+    IO.write(esHttpClientFile, esHttpClientLines.mkString)
+
+    val esTransportClientFile = d / "ElasticsearchSenderTransport.scala"
+    val esTransportClientLines = (if (ElasticsearchVersion.equals("1x")) {
+      fromFile(genDir + "ElasticsearchSenderTransport_1x.scala")
+    } else {
+      fromFile(genDir + "ElasticsearchSenderTransport_2x.scala")
+    })
+    IO.write(esTransportClientFile, esTransportClientLines.mkString)
+
+    Seq(
+      settingsFile,
+      esHttpClientFile,
+      esTransportClientFile
+    )
   })
 
-  // sbt-assembly settings for building a fat jar
+  // sbt-assembly settings for building an executable
   import sbtassembly.Plugin._
   import AssemblyKeys._
   lazy val sbtAssemblySettings = assemblySettings ++ Seq(
     // Executable jarfile
     assemblyOption in assembly ~= { _.copy(prependShellScript = Some(defaultShellScript)) },
     // Name it as an executable
-    jarName in assembly := { s"${name.value}-${version.value}" }
+    jarName in assembly := { s"${name.value}-${version.value}-${ElasticsearchVersion}" },
+    // Merge duplicate class in JodaTime and Elasticsearch 2.4
+    mergeStrategy in assembly := {
+      case PathList("org", "joda", "time", "base", "BaseDateTime.class") => MergeStrategy.first
+      case x => (mergeStrategy in assembly).value(x)
+    }
   )
 
   lazy val buildSettings = basicSettings ++ scalifySettings ++ sbtAssemblySettings

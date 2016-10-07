@@ -55,6 +55,7 @@ import com.snowplowanalytics.snowplow.enrich.common.outputs.BadRow
 // This project
 import sinks._
 import clients._
+import generated._
 
 // Whether the input stream contains enriched events or bad events
 object StreamType extends Enumeration {
@@ -83,7 +84,7 @@ object ElasticsearchSinkApp extends App {
     (c, opt) =>
       val file = new File(c)
       if (file.exists) {
-        ConfigFactory.parseFile(file)
+        ConfigFactory.parseFile(file).resolve()
       } else {
         parser.usage("Configuration file \"%s\" does not exist".format(c))
         ConfigFactory.empty()
@@ -105,6 +106,8 @@ object ElasticsearchSinkApp extends App {
   val esClient = elasticsearch.getConfig("client")
   val esCluster = elasticsearch.getConfig("cluster")
   val clientType = esClient.getString("type")
+  val connTimeout: Int = configGetOrElse(esClient, "http.conn-timeout", "300000").toInt
+  val readTimeout: Int = configGetOrElse(esClient, "http.read-timeout", "300000").toInt
   val documentIndex = esCluster.getString("index")
   val documentType = esCluster.getString("type")
 
@@ -140,7 +143,7 @@ object ElasticsearchSinkApp extends App {
 
     // Read records from Kinesis
     case "kinesis" => {
-      new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, finalConfig, goodSink, badSink, tracker, maxConnectionTime, clientType).success
+      new ElasticsearchSinkExecutor(streamType, documentIndex, documentType, finalConfig, goodSink, badSink, tracker, maxConnectionTime, clientType, connTimeout, readTimeout).success
     }
 
     // Run locally, reading from stdin and sending events to stdout / stderr rather than Elasticsearch / Kinesis
@@ -153,7 +156,7 @@ object ElasticsearchSinkApp extends App {
 
       lazy val elasticsearchSender: ElasticsearchSender = (
         if (clientType == "http") {
-          new ElasticsearchSenderHTTP(finalConfig, None, maxConnectionTime)
+          new ElasticsearchSenderHTTP(finalConfig, None, maxConnectionTime, connTimeout, readTimeout)
         } else {
           new ElasticsearchSenderTransport(finalConfig, None, maxConnectionTime)
         }
@@ -248,5 +251,16 @@ object ElasticsearchSinkApp extends App {
     props.setProperty(KinesisConnectorConfiguration.PROP_RETRY_LIMIT, "1")
 
     new KinesisConnectorConfiguration(props, CredentialsLookup.getCredentialsProvider(accessKey, secretKey))
+  }
+
+  /**
+   * Simple getOrElse wrapper for config getString calls.
+   */
+  def configGetOrElse(config: Config, key: String, elseValue: String): String = {
+    try {
+      config.getString(key)
+    } catch {
+      case e: Exception => elseValue
+    }
   }
 }
