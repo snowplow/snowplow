@@ -60,8 +60,8 @@ module Snowplow
             out["_unstruct_event"] = {}
 
             row.each do |column, value|
+              out[column] = value
               if column != "unstruct_event"
-                out[column] = value
                 next
               end
 
