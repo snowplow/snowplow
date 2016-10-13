@@ -154,7 +154,7 @@ object Shredder {
           val context = head
           val innerData = context \ "data" match {
             case JNothing => "Could not extract inner data field from custom context".failNel // TODO: decide whether to enforce object type of data
-            case d => d.successNel
+            case d => (fixInnerData(d)).successNel
           }
           val fixedSchema: ValidationNel[String, String] = context \ "schema" match {
             case JString(schema) => fixSchema("contexts", schema)
@@ -213,7 +213,7 @@ object Shredder {
     val schema = data \ "schema"
     val innerData = data \ "data" match {
       case JNothing => "Could not extract inner data field from unstructured event".failNel // TODO: decide whether to enforce object type of data
-      case d => d.successNel
+      case d => (fixInnerData(d)).successNel
     }
     val fixedSchema = schema match {
       case JString(s) => fixSchema("unstruct_event", s)
@@ -221,5 +221,18 @@ object Shredder {
     }
 
     (fixedSchema |@| innerData) {_ -> _}
+  }
+
+  /**
+   * Ensures that all field names within nested JSONs do not contain dots.
+   * For example, the JSON
+   *
+   * @param innerData the innerData JSON to process
+   * @return the fixed JSON
+   */
+  def fixInnerData(innerData: JValue): JValue = {
+    innerData transformField {
+      case (key, value) => (key.replace(".", "_"), value)
+    }
   }
 }

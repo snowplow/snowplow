@@ -97,6 +97,7 @@ class KinesisSink(provider: AWSCredentialsProvider, endpoint: String, name: Stri
 
     } catch {
       case rnfe: ResourceNotFoundException => false
+      case e: Exception => e.printStackTrace(); false
     }
 
     if (exists) {

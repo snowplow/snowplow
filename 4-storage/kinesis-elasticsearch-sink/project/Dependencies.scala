@@ -31,8 +31,17 @@ object Dependencies {
     val slf4j                = "1.7.5"
     val kinesisClient        = "1.6.1"
     val kinesisConnector     = "1.1.2"
-    val elasticsearch        = "1.4.4"
-    val jest                 = "1.0.3"
+
+    object jest {
+      val _1x                = "1.0.3"
+      val _2x                = "2.0.3"
+    }
+
+    object elasticsearch {
+      val _1x                = "1.7.5"
+      val _2x                = "2.4.0"
+    }
+
     // Scala
     val argot                = "1.0.1"
     val config               = "1.0.2"
@@ -41,7 +50,7 @@ object Dependencies {
     val igluClient           = "0.3.2"
     val scalazon             = "0.11"
     val scalaz7              = "7.0.0"
-    val snowplowTracker      = "0.1.0"
+    val snowplowTracker      = "0.3.0"
     // Scala (test only)
     val specs2               = "2.2"
     val scalazSpecs2         = "0.1.2"
@@ -56,8 +65,17 @@ object Dependencies {
     val log4jOverSlf4j       = "org.slf4j"                  %  "log4j-over-slf4j"          % V.slf4j
     val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"     % V.kinesisClient
     val kinesisConnector     = "com.amazonaws"              %  "amazon-kinesis-connectors" % V.kinesisConnector
-    val elasticsearch        = "org.elasticsearch"          %  "elasticsearch"             % V.elasticsearch
-    val jest                 = "io.searchbox"               %  "jest"                      % V.jest
+
+    object jest {
+      val _1x                = "io.searchbox"               %  "jest"                      % V.jest._1x
+      val _2x                = "io.searchbox"               %  "jest"                      % V.jest._2x
+    }
+
+    object elasticsearch {
+      val _1x                = "org.elasticsearch"          %  "elasticsearch"             % V.elasticsearch._1x
+      val _2x                = "org.elasticsearch"          %  "elasticsearch"             % V.elasticsearch._2x
+    }
+
     // Scala
     val argot                = "org.clapper"                %% "argot"                     % V.argot
     val config               = "com.typesafe"               %  "config"                    % V.config
@@ -74,5 +92,13 @@ object Dependencies {
     val scalazSpecs2         = "org.typelevel"              %% "scalaz-specs2"             % V.scalazSpecs2   % "test"
     // Scala (compile only)
     val commonsLang3         = "org.apache.commons"         % "commons-lang3"              % V.commonsLang3   % "compile"
+  }
+
+  def onVersion[A](all: Seq[A] = Seq(), on1x: => Seq[A] = Seq(), on2x: => Seq[A] = Seq()) = {
+    if (BuildSettings.ElasticsearchVersion.equals("1x")) {
+      all ++ on1x
+    } else {
+      all ++ on2x
+    }
   }
 }
