@@ -39,7 +39,21 @@ DROP TABLE IF EXISTS duplicates.tmp_example_unstruct_id_remaining; -- todo: repl
 CREATE TABLE duplicates.tmp_example_unstruct_id -- todo: replace placeholder name
   DISTKEY (root_id)
   SORTKEY (root_id)
-AS (SELECT root_id FROM (SELECT root_id, COUNT(*) AS count FROM atomic.example_unstruct WHERE root_tstamp > DATEADD(week, -4, CURRENT_DATE) GROUP BY 1) WHERE count > 1); -- todo: replace placeholder name
+AS (
+
+  SELECT root_id
+  FROM (
+
+    SELECT root_id, COUNT(*) AS count
+    FROM atomic.example_unstruct
+    WHERE root_tstamp > DATEADD(week, -4, CURRENT_DATE)
+    GROUP BY 1
+
+  )
+
+  WHERE count > 1
+
+); -- todo: replace placeholder name
 
 -- (b) create a new table with these events and deduplicate as much as possible using GROUP BY
 
