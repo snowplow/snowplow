@@ -35,7 +35,7 @@ DROP TABLE IF EXISTS duplicates.tmp_events_id_remaining;
 CREATE TABLE duplicates.tmp_events_id
   DISTKEY (event_id)
   SORTKEY (event_id)
-AS (SELECT event_id, event_fingerprint FROM (SELECT event_id, event_fingerprint, COUNT(*) AS count FROM atomic.events WHERE event_fingerprint IS NOT NULL GROUP BY 1,2) WHERE count > 1);
+AS (SELECT event_id, event_fingerprint FROM (SELECT event_id, event_fingerprint, COUNT(*) AS count FROM atomic.events WHERE event_fingerprint IS NOT NULL AND collector_tstamp > DATEADD(week, -4, CURRENT_DATE) GROUP BY 1,2) WHERE count > 1);
 
 -- (b) create a new table with events that match these critera
 
@@ -48,6 +48,7 @@ AS (
   FROM atomic.events
   WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id)
     AND event_fingerprint IN (SELECT event_fingerprint FROM duplicates.tmp_events_id)
+    AND collector_tstamp > DATEADD(week, -4, CURRENT_DATE)
 
 );
 
@@ -57,7 +58,8 @@ BEGIN;
 
   DELETE FROM atomic.events
   WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id)
-    AND event_fingerprint IN (SELECT event_fingerprint FROM duplicates.tmp_events_id);
+    AND event_fingerprint IN (SELECT event_fingerprint FROM duplicates.tmp_events_id)
+    AND collector_tstamp > DATEADD(week, -4, CURRENT_DATE);
 
   INSERT INTO atomic.events (
 
