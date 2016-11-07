@@ -39,7 +39,21 @@ DROP TABLE IF EXISTS duplicates.tmp_events_id_remaining;
 CREATE TABLE duplicates.tmp_events_id
   DISTKEY (event_id)
   SORTKEY (event_id)
-AS (SELECT event_id FROM (SELECT event_id, COUNT(*) AS count FROM atomic.events GROUP BY 1) WHERE count > 1);
+AS (
+
+  SELECT event_id
+  FROM (
+
+    SELECT event_id, COUNT(*) AS count
+    FROM atomic.events
+    --WHERE collector_tstamp > DATEADD(week, -4, CURRENT_DATE) -- restricts table scan for the previous 4 weeks to make queries more efficient; uncomment after running the first time
+    GROUP BY 1
+
+  )
+
+  WHERE count > 1
+
+);
 
 -- (b) create a new table with these events and replicate the event fingerprint
 
@@ -126,6 +140,7 @@ AS (
       ) AS custom_fingerprint
     FROM atomic.events
     WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id)
+      AND collector_tstamp > DATEADD(week, -4, CURRENT_DATE) -- restricts table scan for the previous 4 weeks to make queries more efficient; uncomment after running the first time
   )
 
 );
@@ -135,7 +150,9 @@ AS (
 BEGIN;
 
   DELETE FROM atomic.events
-  WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id);
+  WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id)
+    --AND collector_tstamp > DATEADD(week, -4, CURRENT_DATE) -- restricts table scan for the previous 4 weeks to make queries more efficient; uncomment after running the first time
+  ;
 
   INSERT INTO atomic.events (
 
@@ -202,12 +219,36 @@ COMMIT;
 --CREATE TABLE duplicates.tmp_events_id_remaining
   --DISTKEY (event_id)
   --SORTKEY (event_id)
---AS (SELECT event_id FROM (SELECT event_id, COUNT(*) AS count FROM atomic.events GROUP BY 1) WHERE count > 1);
+--AS (
+
+  --SELECT event_id
+  --FROM (
+
+    --SELECT event_id, COUNT(*) AS count
+    --FROM atomic.events
+    --WHERE collector_tstamp > DATEADD(week, -4, CURRENT_DATE) -- restricts table scan for the previous 4 weeks to make queries more efficient; uncomment after running the first time
+    --GROUP BY 1
+
+  --)
+
+  --WHERE count > 1
+
+--);
 
 --BEGIN;
 
-  --INSERT INTO duplicates.events (SELECT * FROM atomic.events WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id_remaining));
-  --DELETE FROM atomic.events WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id_remaining);
+  --INSERT INTO duplicates.events (
+
+    --SELECT * FROM atomic.events
+    --WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id_remaining)
+    --AND collector_tstamp > DATEADD(week, -4, CURRENT_DATE) -- restricts table scan for the previous 4 weeks to make queries more efficient; uncomment after running the first time
+
+  );
+  
+  --DELETE FROM atomic.events
+  --WHERE event_id IN (SELECT event_id FROM duplicates.tmp_events_id_remaining)
+    --AND collector_tstamp > DATEADD(week, -4, CURRENT_DATE) -- restricts table scan for the previous 4 weeks to make queries more efficient; uncomment after running the first time
+  --;
 
 --COMMIT;
 
