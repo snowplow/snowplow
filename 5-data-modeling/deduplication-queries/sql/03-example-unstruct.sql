@@ -39,7 +39,21 @@ DROP TABLE IF EXISTS duplicates.tmp_example_unstruct_id_remaining; -- todo: repl
 CREATE TABLE duplicates.tmp_example_unstruct_id -- todo: replace placeholder name
   DISTKEY (root_id)
   SORTKEY (root_id)
-AS (SELECT root_id FROM (SELECT root_id, COUNT(*) AS count FROM atomic.example_unstruct GROUP BY 1) WHERE count > 1); -- todo: replace placeholder name
+AS (
+
+  SELECT root_id
+  FROM (
+
+    SELECT root_id, COUNT(*) AS count
+    FROM atomic.example_unstruct
+    --WHERE root_tstamp > DATEADD(week, -4, CURRENT_DATE) -- restricts table scan for the previous 4 weeks to make queries more efficient; uncomment after running the first time
+    GROUP BY 1
+
+  )
+
+  WHERE count > 1
+
+); -- todo: replace placeholder name
 
 -- (b) create a new table with these events and deduplicate as much as possible using GROUP BY
 
@@ -65,6 +79,7 @@ AS (
 
   FROM atomic.example_unstruct -- todo: replace placeholder name
   WHERE root_id IN (SELECT root_id FROM duplicates.tmp_example_unstruct_id) -- todo: replace placeholder name
+    --AND root_tstamp > DATEADD(week, -4, CURRENT_DATE) -- restricts table scan for the previous 4 weeks to make queries more efficient; uncomment after running the first time
   GROUP BY 1,2,3,4,5,7,8,9 -- todo: add all remaining columns (except root_tstamp)
 
 );
@@ -73,7 +88,11 @@ AS (
 
 BEGIN;
 
-  DELETE FROM atomic.example_unstruct WHERE root_id IN (SELECT root_id FROM duplicates.tmp_example_unstruct_id); -- todo: replace placeholder name
+  DELETE FROM atomic.example_unstruct
+  WHERE root_id IN (SELECT root_id FROM duplicates.tmp_example_unstruct_id) -- todo: replace placeholder name
+    --AND root_tstamp > DATEADD(week, -4, CURRENT_DATE) -- restricts table scan for the previous 4 weeks to make queries more efficient; uncomment after running the first time
+  ;
+
   INSERT INTO atomic.example_unstruct (SELECT * FROM duplicates.tmp_example_unstruct); -- todo: replace placeholder name
 
 COMMIT;
@@ -83,12 +102,37 @@ COMMIT;
 --CREATE TABLE duplicates.tmp_example_unstruct_id_remaining -- todo: replace placeholder name
   --DISTKEY (root_id)
   --SORTKEY (root_id)
---AS (SELECT root_id FROM (SELECT root_id, COUNT(*) AS count FROM atomic.example_unstruct GROUP BY 1) WHERE count > 1); -- todo: replace placeholder name
+  --AS (
+
+    --SELECT root_id
+    --FROM (
+
+      --SELECT root_id, COUNT(*) AS count
+      --FROM atomic.example_unstruct -- todo: replace placeholder name
+      --WHERE root_tstamp > DATEADD(week, -4, CURRENT_DATE) -- restricts table scan for the previous 4 weeks to make queries more efficient; uncomment after running the first time
+      --GROUP BY 1
+
+    --)
+
+    --WHERE count > 1
+
+  --);
 
 --BEGIN;
 
-  --INSERT INTO duplicates.example_unstruct (SELECT * FROM atomic.example_unstruct WHERE root_id IN (SELECT root_id FROM duplicates.tmp_example_unstruct_id_remaining)); -- todo: replace placeholder name
-  --DELETE FROM atomic.example_unstruct WHERE root_id IN (SELECT root_id FROM duplicates.tmp_example_unstruct_id_remaining); -- todo: replace placeholder name
+  --INSERT INTO duplicates.example_unstruct
+  --(
+
+    --SELECT * FROM atomic.example_unstruct
+    --WHERE root_id IN (SELECT root_id FROM duplicates.tmp_example_unstruct_id_remaining)
+    --AND root_tstamp > DATEADD(week, -4, CURRENT_DATE) -- restricts table scan for the previous 4 weeks to make queries more efficient; uncomment after running the first time
+
+  --); -- todo: replace placeholder name
+
+  --DELETE FROM atomic.example_unstruct
+  --WHERE root_id IN (SELECT root_id FROM duplicates.tmp_example_unstruct_id_remaining)
+    --AND root_tstamp > DATEADD(week, -4, CURRENT_DATE) -- restricts table scan for the previous 4 weeks to make queries more efficient; uncomment after running the first time
+  --; -- todo: replace placeholder name
 
 --COMMIT;
 
