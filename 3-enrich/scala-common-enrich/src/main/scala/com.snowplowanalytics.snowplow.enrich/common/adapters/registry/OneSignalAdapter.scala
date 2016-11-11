@@ -56,7 +56,7 @@ import utils.{JsonUtils => JU}
  * a known version of the OneSignal Tracking webhook
  * into raw events.
  */
-object MailgunAdapter extends Adapter {
+object OneSignalAdapter extends Adapter {
 
   // Vendor name for Failure Message
   private val VendorName = "OneSignal"
