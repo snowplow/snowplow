@@ -233,6 +233,10 @@ enrich {
     secret-key: "cpf"
   }
 
+  kafka {
+    brokers: "localhost:9092"
+  }
+
   streams {
     in {
       raw: "SnowplowRaw"
