@@ -155,7 +155,7 @@ object KinesisEnrichApp extends App {
     val targetFile = new File(uriFilePair._2)
 
     // Ensure uri does not have doubled slashes
-    val cleanUri = new java.net.URI(uriFilePair._1.toString.replaceAll("(?<!(http:|https:))//", "/"))
+    val cleanUri = new java.net.URI(uriFilePair._1.toString.replaceAll("(?<!(http:|https:|s3:))//", "/"))
 
     // Download the database file if it doesn't already exist or is empty
     // See http://stackoverflow.com/questions/10281370/see-if-file-is-empty
@@ -175,6 +175,7 @@ object KinesisEnrichApp extends App {
   }
 
   val source = kinesisEnrichConfig.source match {
+    case Source.Kafka => new KafkaSource(kinesisEnrichConfig, igluResolver, registry, tracker)
     case Source.Kinesis => new KinesisSource(kinesisEnrichConfig, igluResolver, registry, tracker)
     case Source.Stdin => new StdinSource(kinesisEnrichConfig, igluResolver, registry, tracker)
   }
@@ -321,6 +322,7 @@ class KinesisEnrichConfig(config: Config) {
   private val enrich = config.resolve.getConfig("enrich")
 
   val source = enrich.getString("source") match {
+    case "kafka" => Source.Kafka
     case "kinesis" => Source.Kinesis
     case "stdin" => Source.Stdin
     case "test" => Source.Test
@@ -328,6 +330,7 @@ class KinesisEnrichConfig(config: Config) {
   }
 
   val sink = enrich.getString("sink") match {
+    case "kafka" => Sink.Kafka
     case "kinesis" => Sink.Kinesis
     case "stdouterr" => Sink.Stdouterr
     case "test" => Sink.Test
@@ -337,6 +340,9 @@ class KinesisEnrichConfig(config: Config) {
   private val aws = enrich.getConfig("aws")
   val accessKey = aws.getString("access-key")
   val secretKey = aws.getString("secret-key")
+
+  private val kafka = enrich.getConfig("kafka")
+  val kafkaBrokers = kafka.getString("brokers")
 
   private val streams = enrich.getConfig("streams")
 

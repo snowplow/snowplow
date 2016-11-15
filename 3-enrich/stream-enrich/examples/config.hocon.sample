@@ -17,11 +17,13 @@
 enrich {
   # Sources currently supported are:
   # 'kinesis' for reading Thrift-serialized records from a Kinesis stream
+  # 'kafka' for reading Thrift-serialized records from a Kafka topic
   # 'stdin' for reading Base64-encoded Thrift-serialized records from stdin
   source = "kinesis"
 
   # Sinks currently supported are:
   # 'kinesis' for writing enriched events to one Kinesis stream and invalid events to another.
+  # 'kafka' for writing enriched events to one Kafka topic and invalid events to another.
   # 'stdouterr' for writing enriched events to stdout and invalid events to stderr.
   #    Using "sbt assembly" and "java -jar" is recommended to disable sbt
   #    logging.
@@ -39,6 +41,11 @@ enrich {
     secret-key: "iam"
   }
 
+  # Kafka configuration
+  kafka {
+    brokers: "{{enrichKafkaBrokers}}"
+  }
+
   streams {
     in: {
       raw: "{{enrichStreamsInRaw}}"
@@ -54,7 +61,7 @@ enrich {
       #   a new event enters the buffer
       buffer: {
         byte-limit: {{enrichStreamsBufferByteThreshold}}
-        record-limit: {{enrichStreamsBufferRecordThreshold}}
+        record-limit: {{enrichStreamsBufferRecordThreshold}} # Not supported by Kafka; will be ignored
         time-limit: {{enrichStreamsBufferTimeThreshold}}
       }
     }
@@ -72,6 +79,7 @@ enrich {
     }
 
     # "app-name" is used for a DynamoDB table to maintain stream state.
+    # "app-name" is used as the Kafka consumer group ID.
     # You can set it automatically using: "SnowplowKinesisEnrich-$\\{enrich.streams.in.raw\\}"
     app-name: "{{enrichStreamsAppName}}"
 

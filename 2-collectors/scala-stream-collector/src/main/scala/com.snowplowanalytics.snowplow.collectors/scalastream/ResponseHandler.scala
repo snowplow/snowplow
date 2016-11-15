@@ -150,19 +150,19 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
       }
 
       // Only send to Kinesis if we aren't shutting down
-      val sinkResponse = if (!KinesisSink.shuttingDown) {
+      val sinkResponse = sinks.good.getType match {
+        case Sink.Kinesis if KinesisSink.shuttingDown => null
+        case _ => {
+          // Split events into Good and Bad
+          val eventSplit = SplitBatch.splitAndSerializePayload(event, sinks.good.MaxBytes)
 
-        // Split events into Good and Bad
-        val eventSplit = SplitBatch.splitAndSerializePayload(event, sinks.good.MaxBytes)
+          // Send events to respective sinks
+          val sinkResponseGood = sinks.good.storeRawEvents(eventSplit.good, partitionKey)
+          val sinkResponseBad  = sinks.bad.storeRawEvents(eventSplit.bad, partitionKey)
 
-        // Send events to respective sinks
-        val sinkResponseGood = sinks.good.storeRawEvents(eventSplit.good, partitionKey)
-        val sinkResponseBad  = sinks.bad.storeRawEvents(eventSplit.bad, partitionKey)
-
-        // Sink Responses for Test Sink
-        sinkResponseGood ++ sinkResponseBad
-      } else {
-        null
+          // Sink Responses for Test Sink
+          sinkResponseGood ++ sinkResponseBad
+        }
       }
 
       val policyRef = config.p3pPolicyRef
@@ -189,13 +189,11 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
       val (httpResponse, badQsResponse) = if (path startsWith "/r/") {
         // A click redirect
         try {
-          // TODO: log errors to Kinesis as BadRows
           val target = URLEncodedUtils.parse(URI.create("?" + queryParams), "UTF-8")
             .find(_.getName == "u")
             .map(_.getValue)
           target match {
             case Some(t) => HttpResponse(302).withHeaders(`Location`(t) :: headers) -> Nil
-            // case None => badRequest -> sinks.bad.storeRawEvents(List("TODO".getBytes), partitionKey)
             case None => {
               val everythingSerialized = new String(SplitBatch.ThriftSerializer.get().serialize(event))
               badRequest -> sinks.bad.storeRawEvents(List(createBadRow(event, s"Redirect failed due to lack of u parameter")), partitionKey)
@@ -207,7 +205,7 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
             badRequest -> sinks.bad.storeRawEvents(List(createBadRow(event, s"Redirect failed due to error $e")), partitionKey)
           }
         }
-      } else if (KinesisSink.shuttingDown) {
+      } else if (sinks.good.getType == Sink.Kinesis && KinesisSink.shuttingDown) {
         // So that the tracker knows the request failed and can try to resend later
         notFound -> Nil
       } else (if (pixelExpected) {
@@ -258,7 +256,7 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
     })
 
   /**
-   * Put together a bad row ready for sinking to Kinesis
+   * Put together a bad row ready for sinking
    *
    * @param event
    * @param message

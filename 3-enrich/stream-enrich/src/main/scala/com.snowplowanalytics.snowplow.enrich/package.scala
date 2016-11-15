@@ -33,11 +33,11 @@ package object kinesis {
    */
   object Source extends Enumeration {
     type Source = Value
-    val Kinesis, Stdin, Test = Value
+    val Kafka, Kinesis, Stdin, Test = Value
   }
 
   object Sink extends Enumeration {
     type Sink = Value
-    val Kinesis, Stdouterr, Test = Value
+    val Kafka, Kinesis, Stdouterr, Test = Value
   }
 }

@@ -48,7 +48,8 @@ object SnowplowStreamEnrichBuild extends Build {
         Libraries.awsSdk,
         Libraries.kinesisClient,
         Libraries.igluClient,
-        Libraries.snowplowTracker
+        Libraries.snowplowTracker,
+        Libraries.kafkaClients
         // Add your additional libraries here (comma-separated)...
       )
     )

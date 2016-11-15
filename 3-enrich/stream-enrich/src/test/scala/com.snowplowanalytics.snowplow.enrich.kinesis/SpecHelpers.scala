@@ -50,7 +50,7 @@ object SpecHelpers {
   /**
    * The Stream Enrich being used
    */
-  val EnrichVersion = "kinesis-0.9.0-common-0.24.0"
+  val EnrichVersion = "kinesis-0.10.0-common-0.24.0"
 
   val TimestampRegex = "[0-9\\s-:.]+"
 
@@ -231,6 +231,10 @@ enrich {
   aws {
     access-key: "cpf"
     secret-key: "cpf"
+  }
+
+  kafka {
+    brokers: "localhost:9092"
   }
 
   streams {
