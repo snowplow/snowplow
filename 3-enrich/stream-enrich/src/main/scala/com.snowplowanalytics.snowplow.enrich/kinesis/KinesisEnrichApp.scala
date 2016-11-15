@@ -175,6 +175,7 @@ object KinesisEnrichApp extends App {
   }
 
   val source = kinesisEnrichConfig.source match {
+    case Source.Kafka => new KafkaSource(kinesisEnrichConfig, igluResolver, registry, tracker)
     case Source.Kinesis => new KinesisSource(kinesisEnrichConfig, igluResolver, registry, tracker)
     case Source.Stdin => new StdinSource(kinesisEnrichConfig, igluResolver, registry, tracker)
   }
@@ -321,6 +322,7 @@ class KinesisEnrichConfig(config: Config) {
   private val enrich = config.resolve.getConfig("enrich")
 
   val source = enrich.getString("source") match {
+    case "kafka" => Source.Kafka
     case "kinesis" => Source.Kinesis
     case "stdin" => Source.Stdin
     case "test" => Source.Test
@@ -337,6 +339,9 @@ class KinesisEnrichConfig(config: Config) {
   private val aws = enrich.getConfig("aws")
   val accessKey = aws.getString("access-key")
   val secretKey = aws.getString("secret-key")
+
+  private val kafka = enrich.getConfig("kafka")
+  val kafkaBrokers = kafka.getString("brokers")
 
   private val streams = enrich.getConfig("streams")
 

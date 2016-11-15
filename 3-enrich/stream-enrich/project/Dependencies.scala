@@ -35,6 +35,7 @@ object Dependencies {
     val slf4j                = "1.7.5"
     val awsSdk               = "1.6.11"
     val kinesisClient        = "1.6.1"
+    val kafkaClients         = "0.10.1.0"
     // Scala
     val argot                = "1.0.1"
     val config               = "1.0.2"
@@ -64,6 +65,7 @@ object Dependencies {
     val log4jOverSlf4j       = "org.slf4j"                  %  "log4j-over-slf4j"         % V.slf4j
     val awsSdk               = "com.amazonaws"              %  "aws-java-sdk"             % V.awsSdk
     val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"    % V.kinesisClient
+    val kafkaClients         = "org.apache.kafka"           %  "kafka-clients"            % V.kafkaClients
     // Scala
     val argot                = "org.clapper"                %% "argot"                    % V.argot
     val config               = "com.typesafe"               %  "config"                   % V.config
