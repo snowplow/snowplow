@@ -155,7 +155,7 @@ object KinesisEnrichApp extends App {
     val targetFile = new File(uriFilePair._2)
 
     // Ensure uri does not have doubled slashes
-    val cleanUri = new java.net.URI(uriFilePair._1.toString.replaceAll("(?<!(http:|https:))//", "/"))
+    val cleanUri = new java.net.URI(uriFilePair._1.toString.replaceAll("(?<!(http:|https:|s3:))//", "/"))
 
     // Download the database file if it doesn't already exist or is empty
     // See http://stackoverflow.com/questions/10281370/see-if-file-is-empty
