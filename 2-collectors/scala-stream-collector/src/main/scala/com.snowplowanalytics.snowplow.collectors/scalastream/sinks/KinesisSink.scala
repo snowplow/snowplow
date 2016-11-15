@@ -337,4 +337,6 @@ class KinesisSink private (config: CollectorConfig, inputType: InputType.InputTy
    * @return true if key is iam, false otherwise
    */
   private def isEnv(key: String): Boolean = (key == "env")
+  
+  override def getType = Sink.Kinesis
 }

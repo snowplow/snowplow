@@ -90,6 +90,11 @@ object ScalaCollector extends App {
       val bad  = KinesisSink.createAndInitialize(collectorConfig, InputType.Bad, executorService)
       CollectorSinks(good, bad) 
     }
+    case Sink.Kafka => {
+      val good = new KafkaSink(collectorConfig, InputType.Good)
+      val bad  = new KafkaSink(collectorConfig, InputType.Bad)
+      CollectorSinks(good, bad)
+    }
     case Sink.Stdout  => {
       val good = new StdoutSink(InputType.Good)
       val bad = new StdoutSink(InputType.Bad)
@@ -138,7 +143,7 @@ object Helper {
 // store this enumeration.
 object Sink extends Enumeration {
   type Sink = Value
-  val Kinesis, Stdout, Test = Value
+  val Kinesis, Kafka, Stdout, Test = Value
 }
 
 // How a collector should set cookies
@@ -172,6 +177,7 @@ class CollectorConfig(config: Config) {
   // TODO: either change this to ADTs or switch to withName generation
   val sinkEnabled = sink.getString("enabled") match {
     case "kinesis" => Sink.Kinesis
+    case "kafka" => Sink.Kafka
     case "stdout" => Sink.Stdout
     case "test" => Sink.Test
     case _ => throw new RuntimeException("collector.sink.enabled unknown.")
@@ -186,20 +192,24 @@ class CollectorConfig(config: Config) {
   val streamBadName = stream.getString("bad")
   private val streamRegion = stream.getString("region")
   val streamEndpoint = s"https://kinesis.${streamRegion}.amazonaws.com"
-
   val threadpoolSize = kinesis.hasPath("thread-pool-size") match {
     case true => kinesis.getInt("thread-pool-size")
     case _ => 10
   }
+  private val backoffPolicy = kinesis.getConfig("backoffPolicy")
+  val minBackoff = backoffPolicy.getLong("minBackoff")
+  val maxBackoff = backoffPolicy.getLong("maxBackoff")
+
+  private val kafka = sink.getConfig("kafka")
+  val kafkaBrokers = kafka.getString("brokers")
+  private val kafkaTopic = kafka.getConfig("topic")
+  val kafkaTopicGoodName = kafkaTopic.getString("good")
+  val kafkaTopicBadName = kafkaTopic.getString("bad")
 
   private val buffer = sink.getConfig("buffer")
   val byteLimit = buffer.getInt("byte-limit")
   val recordLimit = buffer.getInt("record-limit")
   val timeLimit = buffer.getInt("time-limit")
-
-  val backoffPolicy = kinesis.getConfig("backoffPolicy")
-  val minBackoff = backoffPolicy.getLong("minBackoff")
-  val maxBackoff = backoffPolicy.getLong("maxBackoff")
 
   val useIpAddressAsPartitionKey = kinesis.hasPath("useIpAddressAsPartitionKey") && kinesis.getBoolean("useIpAddressAsPartitionKey")
 

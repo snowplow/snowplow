@@ -48,4 +48,6 @@ class StdoutSink (inputType: InputType.InputType) extends AbstractSink {
     }
     Nil
   }
+
+  override def getType = Sink.Stdout
 }
