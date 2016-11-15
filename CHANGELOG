@@ -1,3 +1,15 @@
+Release 85 Metamorphosis (2016-11-15)
+-------------------------------------
+Scala Stream Collector: bump to 0.9.0 (#2936)
+Scala Stream Collector: add Kafka sink (#2937)
+Scala Stream Collector: update config.hocon.sample to support Kafka (#2943)
+Scala Stream Collector: move sink.kinesis.buffer to sink.buffer in config.hocon.sample (#2938)
+Stream Enrich: bump to 0.10.0 (#2942)
+Stream Enrich: add Kafka sink (#2939)
+Stream Enrich: add Kafka source (#2941)
+Stream Enrich: update config.hocon.sample to support Kafka (#2940)
+Stream Enrich: fix incorrect parsing of S3 urls (#2921)
+
 Release 84 Steller's Sea Eagle (2016-10-07)
 -------------------------------------------
 Common: standardise sbt-assembly settings (#2900)
