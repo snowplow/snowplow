@@ -154,6 +154,7 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
    */
   private def getThreadLocalSink(inputType: InputType.InputType) = new ThreadLocal[Option[ISink]] {
     override def initialValue = config.sink match {
+      case Sink.Kafka => new KafkaSink(config, inputType, tracker).some
       case Sink.Kinesis => new KinesisSink(kinesisProvider, config, inputType, tracker).some
       case Sink.Stdouterr => new StdouterrSink(inputType).some
       case Sink.Test => None

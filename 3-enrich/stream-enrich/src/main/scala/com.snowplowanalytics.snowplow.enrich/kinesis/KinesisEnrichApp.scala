@@ -330,6 +330,7 @@ class KinesisEnrichConfig(config: Config) {
   }
 
   val sink = enrich.getString("sink") match {
+    case "kafka" => Sink.Kafka
     case "kinesis" => Sink.Kinesis
     case "stdouterr" => Sink.Stdouterr
     case "test" => Sink.Test

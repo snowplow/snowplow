@@ -38,6 +38,6 @@ package object kinesis {
 
   object Sink extends Enumeration {
     type Sink = Value
-    val Kinesis, Stdouterr, Test = Value
+    val Kafka, Kinesis, Stdouterr, Test = Value
   }
 }
