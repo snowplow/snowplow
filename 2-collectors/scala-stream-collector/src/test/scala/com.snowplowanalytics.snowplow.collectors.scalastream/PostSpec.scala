@@ -87,6 +87,15 @@ collector {
       }
     }
 
+    kafka {
+      brokers: "localhost:9092"
+
+      topic {
+        good: "good-topic"
+        bad: "bad-topic"
+      }
+    }
+
     buffer {
       byte-limit: 4000000 # 4MB
       record-limit: 500 # 500 records

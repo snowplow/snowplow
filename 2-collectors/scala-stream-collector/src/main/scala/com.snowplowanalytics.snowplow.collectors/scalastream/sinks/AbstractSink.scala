@@ -42,4 +42,6 @@ trait AbstractSink {
   lazy val log = LoggerFactory.getLogger(getClass())
 
   def storeRawEvents(events: List[Array[Byte]], key: String): List[Array[Byte]]
+
+  def getType: Sink.Value
 }
