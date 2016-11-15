@@ -192,7 +192,7 @@ class CollectorConfig(config: Config) {
     case _ => 10
   }
 
-  val buffer = kinesis.getConfig("buffer")
+  private val buffer = sink.getConfig("buffer")
   val byteLimit = buffer.getInt("byte-limit")
   val recordLimit = buffer.getInt("record-limit")
   val timeLimit = buffer.getInt("time-limit")
