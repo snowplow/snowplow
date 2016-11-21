@@ -210,7 +210,7 @@
         ON a.page_view_id = e.page_view_id
 
       WHERE a.br_family != 'Robot/Spider'
-        AND a.useragent NOT LIKE '%(bot|crawl|slurp|spider|archiv|spinn|sniff|seo|audit|survey|pingdom|worm|capture|(browser|screen)shots|analyz|index|thumb|check|facebook|PingdomBot|PhantomJS|YandexBot|Twitterbot|a_archiver|facebookexternalhit|Bingbot|BingPreview|Googlebot|Baiduspider|360(Spider|User-agent)|semalt)%'
+        AND a.useragent NOT SIMILAR TO '%(bot|crawl|slurp|spider|archiv|spinn|sniff|seo|audit|survey|pingdom|worm|capture|(browser|screen)shots|analyz|index|thumb|check|facebook|PingdomBot|PhantomJS|YandexBot|Twitterbot|a_archiver|facebookexternalhit|Bingbot|BingPreview|Googlebot|Baiduspider|360(Spider|User-agent)|semalt)%'
         AND a.domain_userid IS NOT NULL -- rare edge case
         AND a.domain_sessionidx > 0 -- rare edge case
         -- AND a.app_id IN ('demo-app')
