@@ -34,13 +34,13 @@
 
           -- NVL replaces NULL with 0 (because the page view event does send an offset)
           -- GREATEST prevents outliers (negative offsets)
-          -- LEAST also prevents outliers (offsets greater than the viewwidth or viewheight)
+          -- LEAST also prevents outliers (offsets greater than the docwidth or docheight)
 
-          LEAST(GREATEST(MIN(NVL(ev.pp_xoffset_min, 0)), 0), MAX(ev.br_viewwidth)) AS hmin, -- should be zero
-          LEAST(GREATEST(MAX(NVL(ev.pp_xoffset_max, 0)), 0), MAX(ev.br_viewwidth)) AS hmax,
+          LEAST(GREATEST(MIN(NVL(ev.pp_xoffset_min, 0)), 0), MAX(ev.doc_width))::BIGINT AS hmin, -- should be zero
+          LEAST(GREATEST(MAX(NVL(ev.pp_xoffset_max, 0)), 0), MAX(ev.doc_width))::BIGINT AS hmax,
 
-          LEAST(GREATEST(MIN(NVL(ev.pp_yoffset_min, 0)), 0), MAX(ev.br_viewheight)) AS vmin, -- should be zero (edge case: not zero because the pv event is missing - but these are not in scratch.dev_pv_01 so not an issue)
-          LEAST(GREATEST(MAX(NVL(ev.pp_yoffset_max, 0)), 0), MAX(ev.br_viewheight)) AS vmax
+          LEAST(GREATEST(MIN(NVL(ev.pp_yoffset_min, 0)), 0), MAX(ev.doc_height))::BIGINT AS vmin, -- should be zero (edge case: not zero because the pv event is missing - but these are not in scratch.dev_pv_01 so not an issue)
+          LEAST(GREATEST(MAX(NVL(ev.pp_yoffset_max, 0)), 0), MAX(ev.doc_height))::BIGINT AS vmax
 
         FROM atomic.events AS ev
 
