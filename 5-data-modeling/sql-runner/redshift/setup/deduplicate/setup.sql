@@ -21,4 +21,11 @@
 CREATE SCHEMA IF NOT EXISTS duplicates;
 
 -- Step 2: create or upgrade duplicates.events using the same definition as atomic.events
+
+-- Automatically re-create the duplicates.events table from the atomic.events schema:
+CREATE TABLE duplicates.events AS (
+  SELECT * FROM atomic.events WHERE 1 = 2
+);
+
+-- Conversely, you can manually create the schema from the atomic.events definition:
 -- https://github.com/snowplow/snowplow/blob/master/4-storage/redshift-storage/sql/atomic-def.sql
