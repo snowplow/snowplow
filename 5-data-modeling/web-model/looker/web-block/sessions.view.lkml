@@ -731,12 +731,20 @@ view: sessions {
     type: count_distinct
     sql: ${session_id} ;;
     group_label: "Counts"
+    drill_fields: [session_count]
+  }
+  set: session_count{
+    fields: [session_id, session_start_date, first_page_url, referer_medium, page_view_count, total_time_engaged]
   }
 
   measure: user_count {
     type: count_distinct
     sql: ${user_snowplow_domain_id} ;;
     group_label: "Counts"
+    drill_fields: [user_count]
+  }
+  set: user_count{
+    fields: [user_snowplow_domain_id, users.first_page_url, session_count, average_time_engaged, total_time_engaged]
   }
 
   measure: new_user_count {
@@ -749,6 +757,10 @@ view: sessions {
     }
 
     group_label: "Counts"
+    drill_fields: [new_user_count]
+    }
+  set: new_user_count{
+    fields: [user_snowplow_domain_id, users.first_page_url, session_count, average_time_engaged, total_time_engaged]
   }
 
   measure: bounced_user_count {
