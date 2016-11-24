@@ -26,6 +26,8 @@
       height: 450
     - elements: [sessions_per_referer_medium, page_performance_per_browser]
       height: 450
+    - elements: [devices_per_hour]
+      height: 450
 
   elements:
 
@@ -163,3 +165,22 @@
     sorts: page_views.browser_name
     stacking: normal
     hide_legend: true
+
+    # Row 4
+
+  - name: devices_per_hour
+    title: Hourly page views per device
+    type: looker_column
+    model: snowplow_web_block
+    explore: page_views
+    dimensions: [page_views.page_view_start_local_hour_of_day, page_views.device_type]
+    pivots: [page_views.device_type]
+    measures: [page_views.page_view_count]
+    filters:
+      page_views.device_type: -Game console,-Unknown
+      page_views.page_view_start_local_hour_of_day: NOT NULL
+      sessions.session_start_time: 28 days
+    sorts: [page_views.page_view_start_local_hour_of_day, page_views.device_type]
+    limit: '500'
+    column_limit: '50'
+    stacking: normal
