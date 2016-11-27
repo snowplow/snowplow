@@ -69,8 +69,8 @@ module Snowplow
       include Monitoring::Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String => EmrJob
-      def initialize(debug, enrich, shred, elasticsearch, s3distcp, config, enrichments_array, resolver)
+      Contract Bool, Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String => EmrJob
+      def initialize(debug, enrich, shred, elasticsearch, s3distcp, archive_raw, config, enrichments_array, resolver)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -382,6 +382,19 @@ module Snowplow
           get_elasticsearch_steps(config, assets, enrich, shred).each do |step|
             @jobflow.add_step(step)
           end
+        end
+
+        if archive_raw
+          # We need to copy our enriched events from HDFS back to S3
+          archive_raw_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+          archive_raw_step.arguments = [
+            "--src"        , csbr[:processing],
+            "--dest"       , self.class.partition_by_run(csbr[:archive], run_id),
+            "--s3Endpoint" , s3_endpoint,
+            "--deleteOnSuccess"
+          ]
+          archive_raw_step.name << ": Raw S3 Staging -> S3 Archive"
+          @jobflow.add_step(archive_raw_step)
         end
 
         self
