@@ -45,6 +45,9 @@ rescue runner::ConfigError => e
 # Special retval so rest of pipeline knows not to continue
 rescue runner::NoDataToProcessError => e
   exit 3
+# Special retval to flag previous pipeline is unfinished
+rescue runner::DirectoryNotEmptyError => e
+  exit 4
 # Catch any Snowplow error
 rescue runner::Error => e
   fatal.call(e)
