@@ -17,8 +17,12 @@ package hadoop
 
 // Java
 import java.util.UUID
+import java.io.{ StringWriter, PrintWriter }
 
-import org.json4s.JObject
+import scalaz.Validation
+
+// Scala
+import scala.util.control.NonFatal
 
 // Cascading
 import cascading.pipe.joiner.LeftJoin
@@ -47,6 +51,7 @@ import iglu.client.validation.ProcessingMessageMethods._
 import com.fasterxml.jackson.databind.JsonNode
 
 // json4s
+import org.json4s.JObject
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods.{fromJsonNode, asJsonNode}
 
@@ -74,12 +79,20 @@ object ShredJob {
    *         (possibly empty) List of JSON instances
    *         + schemas on Success
    */
-  def loadAndShred(line: String)(implicit resolver: Resolver): ValidatedNel[EventComponents] =
-    for {
-      event <- EnrichedEventLoader.toEnrichedEvent(line).toProcessingMessages
-      fp     = getEventFingerprint(event)
-      shred <- Shredder.shred(event)
-    } yield (event.event_id, fp, shred)
+  def loadAndShred(line: String)(implicit resolver: Resolver): ValidatedNel[EventComponents] = {
+    try {
+      for {
+        event <- EnrichedEventLoader.toEnrichedEvent(line).toProcessingMessages
+        fp     = getEventFingerprint(event)
+        shred <- Shredder.shred(event)
+      } yield (event.event_id, fp, shred)
+    } catch {
+      case NonFatal(nf) =>
+        val errorWriter = new StringWriter
+        nf.printStackTrace(new PrintWriter(errorWriter))
+        Validation.failure[String, EventComponents](s"Unexpected error processing events: $errorWriter").toProcessingMessageNel
+    }
+  }
 
   /**
    * Projects our Failures into a Some; Successes
