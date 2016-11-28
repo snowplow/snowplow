@@ -34,7 +34,7 @@ addons:
 services:
   - postgresql
 before_deploy:
-  - pip install --user release-manager==0.1.0
+  - pip install --user release-manager==0.2.0rc2
 deploy:
   - provider: script
     script: ./.travis/deploy_kinesis.sh $TRAVIS_TAG
@@ -48,3 +48,9 @@ deploy:
     on:
       tags: true
       condition: '"$(.travis/is_hadoop_event_recovery_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+  - provider: script
+    script: ./.travis/deploy_hadoop_shred.sh $TRAVIS_TAG
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: '"$(.travis/is_hadoop_shred_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
