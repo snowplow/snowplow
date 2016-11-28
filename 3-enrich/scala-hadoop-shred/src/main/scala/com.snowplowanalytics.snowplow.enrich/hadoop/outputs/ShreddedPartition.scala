@@ -15,8 +15,7 @@ package hadoop
 package outputs
 
 // Cascading
-import cascading.tuple.Fields
-import cascading.tuple.TupleEntry
+import cascading.tuple.{ Fields, TupleEntry }
 import cascading.tap.partition.Partition
 
 // Scala
@@ -24,18 +23,19 @@ import scala.collection.JavaConversions._
 
 // Scalaz
 import scalaz._
-import Scalaz._
 
 // Iglu
 import com.snowplowanalytics.iglu.client.SchemaKey
+
 /**
  * Custom Partition to write out our JSONs into
  * schema-delimited paths.
  */
 class ShreddedPartition(val partitionFields: Fields) extends Partition {
 
-  def getPartitionFields(): Fields = partitionFields
-  def getPathDepth(): Int = 4 // vendor/name/format/version
+  def getPartitionFields: Fields = partitionFields
+
+  def getPathDepth: Int = 4 // vendor/name/format/version
   
   def toPartition(tupleEntry: TupleEntry): String = {
 
@@ -49,7 +49,7 @@ class ShreddedPartition(val partitionFields: Fields) extends Partition {
     // Round-tripping through a SchemaKey ensures we have a valid path
     SchemaKey.parse(schemaUri) match {
       case Failure(err) =>
-        throw new IllegalArgumentException("ShreddedPartition expects a valid Iglu-format URI as its path; got: ${err}")
+        throw new IllegalArgumentException(s"ShreddedPartition expects a valid Iglu-format URI as its path; got: $err")
       case Success(key) => key.toPath
     }
   }
