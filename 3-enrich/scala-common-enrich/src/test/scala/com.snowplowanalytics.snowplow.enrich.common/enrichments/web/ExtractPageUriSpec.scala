@@ -49,7 +49,7 @@ class ExtractPageUriSpec extends Specification with DataTables with ValidationMa
     "tracker didn't send URI (e.g. No-JS Tracker)"    !! originalUri.some                     ! None                  ! originalURI.some |
     "collector didn't record the referer (rare)"      !! None                                 ! originalUri.some      ! originalURI.some |
     "collector and tracker URIs differ - use tracker" !! originalUri.some                     ! customUri.some        ! customURI.some   |> {
-      
+
       (_, fromReferer, fromTracker, expected) =>
         PageEnrichments.extractPageUri(fromReferer, fromTracker) must beSuccessful(expected)
     }

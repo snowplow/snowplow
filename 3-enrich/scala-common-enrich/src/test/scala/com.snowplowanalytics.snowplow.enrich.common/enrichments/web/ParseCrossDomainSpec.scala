@@ -32,7 +32,6 @@ class ParseCrossDomainSpec extends Specification with DataTables with Validation
   parseCrossDomain should successfully extract the domain user ID and timestamp when available $e4
   parseCrossDomain should extract neither field from an empty _sp parameter                    $e5
   """
-  
   def e1 =
     PageEnrichments.parseCrossDomain(Map()) must beSuccessful((None, None))
 

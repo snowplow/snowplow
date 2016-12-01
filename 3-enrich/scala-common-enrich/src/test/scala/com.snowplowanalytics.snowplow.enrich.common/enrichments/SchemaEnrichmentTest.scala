@@ -36,9 +36,10 @@ class SchemaEnrichmentTest extends Specification with DataTables with Validation
   val signupFormSubmitted = """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow-website/signup_form_submitted/jsonschema/1-0-0","data":{"name":"Χαριτίνη NEW Unicode test","email":"alex+test@snowplowanalytics.com","company":"SP","eventsPerMonth":"< 1 million","serviceType":"unsure"}}}"""
   val invalidPayload = """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.snowplowanalytics.snowplow-website/signup_form_submitted/jsonschema/1-0-0","data":{"serviceType":"unsure"}}}"""
 
-  def is =
-    "Extracting SchemaKeys from valid events should work"   ! e1^
-    "Invalid events should fail when extracting SchemaKeys" ! e2
+  def is = s2"""
+    Extracting SchemaKeys from valid events should work $e1
+    Invalid events should fail when extracting SchemaKeys $e2
+  """
 
   def e1 =
       "SPEC NAME"              || "EVENT"                            | "EXPECTED SCHEMA"          |

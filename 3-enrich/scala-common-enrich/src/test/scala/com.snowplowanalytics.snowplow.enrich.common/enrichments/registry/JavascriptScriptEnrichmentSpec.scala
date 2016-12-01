@@ -34,14 +34,12 @@ import org.specs2.scalaz.ValidationMatchers
 /**
  * Tests the anonymzeIp function
  */
-class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatchers { def is =
-
-  "This is a specification to test the JavascriptScriptEnrichment"     ^
-                                                                      p^
-    "Compiling an invalid JavaScript script should fail"               ! e1^
-    "A JavaScript script should be able to throw an exception safely"  ! e2^
-    "A JavaScript script should successfully generate a new context"   ! e3^
-                                                                       end
+class JavascriptScriptEnrichmentSpec extends Specification with ValidationMatchers { def is = s2"""
+  This is a specification to test the JavascriptScriptEnrichment
+  Compiling an invalid JavaScript script should fail              $e1
+  A JavaScript script should be able to throw an exception safely $e2
+  A JavaScript script should successfully generate a new context  $e3
+  """
 
   val PreparedEnrichment = {
     val script =

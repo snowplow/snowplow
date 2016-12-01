@@ -34,16 +34,15 @@ import com.snowplowanalytics.maxmind.iplookups.{
   IpLocation
 }
 
-class IpLookupsEnrichmentSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
+class IpLookupsEnrichmentSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+  This is a specification to test the IpLookupsEnrichment
+  extractIpInformation should not return failure for any valid or invalid IP address                $e1
+  extractIpInformation should correctly extract location data from IP addresses where possible      $e2
+  extractIpInformation should correctly extract ISP data from IP addresses where possible           $e3
+  an IpLookupsEnrichment instance should expose no database files to cache in local mode            $e4
+  an IpLookupsEnrichment instance should expose a list of database files to cache in non-local mode $e5
+  """
 
-  "This is a specification to test the IpLookupsEnrichment"                                           ^
-                                                                                                     p^
-  "extractIpInformation should not return failure for any valid or invalid IP address"                ! e1^
-  "extractIpInformation should correctly extract location data from IP addresses where possible"      ! e2^
-  "extractIpInformation should correctly extract ISP data from IP addresses where possible"           ! e3^
-  "an IpLookupsEnrichment instance should expose no database files to cache in local mode"            ! e4^
-  "an IpLookupsEnrichment instance should expose a list of database files to cache in non-local mode" ! e5^
-                                                                                                      end
   // When testing, localMode is set to true, so the URIs are ignored and the databases are loaded from test/resources
   val config = IpLookupsEnrichment(Some(("geo", new URI("/ignored-in-local-mode/"), "GeoIPCity.dat")), Some(("isp", new URI("/ignored-in-local-mode/"), "GeoIPISP.dat")), None, None, None, true)
 

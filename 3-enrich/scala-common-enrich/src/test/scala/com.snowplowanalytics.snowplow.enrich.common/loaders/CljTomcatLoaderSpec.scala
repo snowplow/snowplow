@@ -32,15 +32,13 @@ import org.specs2.scalaz.ValidationMatchers
 import org.scalacheck._
 import org.scalacheck.Arbitrary._
 
-class CljTomcatLoaderSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
-
-  "This is a specification to test the CljTomcatLoader functionality"                                                   ^
-                                                                                                                       p^
-  "toCollectorPayload should return a CanonicalInput for a valid raw event"                                             ! e1^
-  "toCollectorPayload should return a Validation Failure for a log record with body but with operation other than POST" ! e2^
-  "toCollectorPayload should return a Validation Failure for a POST log record with corrupted API vendor/version"       ! e3^
-  "toCollectorPayload should return a Validation Failure for an unparseable Clj-Tomcat log record"                      ! e4^
-                                                                                                                        end
+class CljTomcatLoaderSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+  This is a specification to test the CljTomcatLoader functionality
+  toCollectorPayload should return a CanonicalInput for a valid raw event                                             $e1
+  toCollectorPayload should return a Validation Failure for a log record with body but with operation other than POST $e2
+  toCollectorPayload should return a Validation Failure for a POST log record with corrupted API vendor/version       $e3
+  toCollectorPayload should return a Validation Failure for an unparseable Clj-Tomcat log record                      $e4
+  """
 
   object Expected {
     val collector = "clj-tomcat"
@@ -78,7 +76,7 @@ class CljTomcatLoaderSpec extends Specification with DataTables with ValidationM
           source       = CollectorSource(Expected.collector, Expected.encoding, None),
           context      = CollectorContext(timestamp.some, Expected.ipAddress, userAgent, refererUri, Nil, None)
           )
-    
+
         canonicalEvent must beSuccessful(expected.some)
       }
     }
