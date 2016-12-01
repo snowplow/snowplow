@@ -36,21 +36,20 @@ import outputs.EnrichedEvent
 import Input._
 
 
-class InputSpec extends Specification with ValidationMatchers { def is =
-  "This is a specification to test the Inputs and placeholder-map building of SQL Query Enrichment" ^
-                                                                      p^
-    "Create template context from POJO inputs"                        ! e1^
-    "Create template context from JSON inputs"                        ! e8^
-    "Encountered null in JSON means absent value"                     ! e2^
-    "Colliding inputs from JSON and POJO didn't get merged"           ! e3^
-    "Collect failures"                                                ! e4^
-    "POJO null value return successful None"                          ! e5^
-    "POJO invalid key return failure"                                 ! e6^
-    "Extract correct path-dependent values from JSON"                 ! e7^
-    "Create Some empty IntMap for empty list of Inputs"               ! e9^
-    "Check all EnrichedEvent properties can be handled"               ! e10^
-    "Extract correct path-dependent values from EnrichedEvent"        ! e11^
-                                                                      end
+class InputSpec extends Specification with ValidationMatchers { def is = s2"""
+  This is a specification to test the Inputs and placeholder-map building of SQL Query Enrichment
+  Create template context from POJO inputs                 $e1
+  Create template context from JSON inputs                 $e8
+  Encountered null in JSON means absent value              $e2
+  Colliding inputs from JSON and POJO didn't get merged    $e3
+  Collect failures                                         $e4
+  POJO null value return successful None                   $e5
+  POJO invalid key return failure                          $e6
+  Extract correct path-dependent values from JSON          $e7
+  Create Some empty IntMap for empty list of Inputs        $e9
+  Check all EnrichedEvent properties can be handled        $e10
+  Extract correct path-dependent values from EnrichedEvent $e11
+  """
 
   object ContextCase {
     val ccInput = Input(1, pojo = None, json = JsonInput("contexts", "iglu:org.ietf/http_cookie/jsonschema/1-*-*", "$.value").some)
@@ -124,7 +123,7 @@ class InputSpec extends Specification with ValidationMatchers { def is =
     val event = new EnrichedEvent
     event.setUser_id("chuwy")
     event.setTrue_tstamp("20")
-    
+
     val placeholderMap = Input.buildPlaceholderMap(List(input1, input2), event, Nil, Nil, None)
     placeholderMap must beSuccessful(Some(IntMap(1 -> StringPlaceholder.Value("chuwy"), 2 -> StringPlaceholder.Value("20"))))
   }

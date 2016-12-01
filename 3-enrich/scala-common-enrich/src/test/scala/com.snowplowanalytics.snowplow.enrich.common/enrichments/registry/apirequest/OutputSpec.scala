@@ -22,13 +22,12 @@ import org.specs2.scalaz.ValidationMatchers
 import org.json4s.JObject
 import org.json4s.JsonDSL._
 
-class OutputSpec extends Specification with ValidationMatchers  { def is =
-  "This is a specification to test the HTTP API of API Request Enrichment" ^
-                                                                          p^
-    "Not found value result in Failure"                                ! e1^
-    "Successfully generate context"                                    ! e2^
-    "Successfully generate context out of complex object"              ! e3^
-                                                                       end
+class OutputSpec extends Specification with ValidationMatchers  { def is = s2"""
+  This is a specification to test the HTTP API of API Request Enrichment
+  Not found value result in Failure                   $e1
+  Successfully generate context                       $e2
+  Successfully generate context out of complex object $e3
+  """
 
   def e1 = {
     val output = Output("iglu:com.snowplowanalytics/some_schema/jsonschema/1-0-0", Some(JsonOutput("$.value")))

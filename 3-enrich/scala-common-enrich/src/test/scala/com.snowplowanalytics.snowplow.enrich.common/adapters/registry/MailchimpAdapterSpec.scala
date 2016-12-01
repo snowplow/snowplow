@@ -42,25 +42,24 @@ import org.specs2.{Specification, ScalaCheck}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class MailchimpAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
+class MailchimpAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+  This is a specification to test the MailchimpAdapter functionality
+  toKeys should return a valid List of Keys from a string containing braces (or not)                 $e1
+  toNestedJField should return a valid JField nested to contain all keys and then the supplied value $e2
+  toJFields should return a valid list of JFields based on the Map supplied                          $e3
+  mergeJFields should return a correctly merged JSON which matches the expectation                   $e4
+  reformatParameters should return a parameter Map with correctly formatted values                   $e5
+  toRawEvents must return a Nel Success with a correctly formatted ue_pr json                        $e6
+  toRawEvents must return a Nel Success with a correctly merged and formatted ue_pr json             $e7
+  toRawEvents must return a Nel Success for a supported event type                                   $e8
+  toRawEvents must return a Nel Failure error for an unsupported event type                          $e9
+  toRawEvents must return a Nel Success containing an unsubscribe event and query string parameters  $e10
+  toRawEvents must return a Nel Failure if the request body is missing                               $e11
+  toRawEvents must return a Nel Failure if the content type is missing                               $e12
+  toRawEvents must return a Nel Failure if the content type is incorrect                             $e13
+  toRawEvents must return a Nel Failure if the request body does not contain a type parameter        $e14
+  """
 
-  "This is a specification to test the MailchimpAdapter functionality"                                              ^
-                                                                                                                   p^
-  "toKeys should return a valid List of Keys from a string containing braces (or not)"                              ! e1^
-  "toNestedJField should return a valid JField nested to contain all keys and then the supplied value"              ! e2^
-  "toJFields should return a valid list of JFields based on the Map supplied"                                       ! e3^
-  "mergeJFields should return a correctly merged JSON which matches the expectation"                                ! e4^
-  "reformatParameters should return a parameter Map with correctly formatted values"                                ! e5^
-  "toRawEvents must return a Nel Success with a correctly formatted ue_pr json"                                     ! e6^
-  "toRawEvents must return a Nel Success with a correctly merged and formatted ue_pr json"                          ! e7^
-  "toRawEvents must return a Nel Success for a supported event type"                                                ! e8^
-  "toRawEvents must return a Nel Failure error for an unsupported event type"                                       ! e9^
-  "toRawEvents must return a Nel Success containing an unsubscribe event and query string parameters"               ! e10^
-  "toRawEvents must return a Nel Failure if the request body is missing"                                            ! e11^
-  "toRawEvents must return a Nel Failure if the content type is missing"                                            ! e12^
-  "toRawEvents must return a Nel Failure if the content type is incorrect"                                          ! e13^
-  "toRawEvents must return a Nel Failure if the request body does not contain a type parameter"                     ! e14^
-                                                                                                                    end
   implicit val resolver = SpecHelpers.IgluResolver
 
   object Shared {
@@ -114,7 +113,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
     "SPEC NAME"             || "PARAMS"                                                        | "EXPECTED OUTPUT"                                                    |
     "Return Updated Params" !! Map("type" -> "subscribe", "fired_at" -> "2014-10-22 13:50:00") ! Map("type" -> "subscribe", "fired_at" -> "2014-10-22T13:50:00.000Z") |
     "Return Same Params"    !! Map("type" -> "subscribe", "id" -> "some_id")                   ! Map("type" -> "subscribe", "id" -> "some_id")                        |> {
-      (_, params, expected) => 
+      (_, params, expected) =>
       val actual = MailchimpAdapter.reformatParameters(params)
       actual mustEqual expected
   }
@@ -122,7 +121,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   def e6 = {
     val body = "type=subscribe&data%5Bmerges%5D%5BLNAME%5D=Beemster"
     val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
-    val expectedJson = 
+    val expectedJson =
       """|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
             |"data":{
@@ -145,7 +144,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
   def e7 = {
     val body = "type=subscribe&data%5Bmerges%5D%5BFNAME%5D=Agent&data%5Bmerges%5D%5BLNAME%5D=Smith"
     val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
-    val expectedJson = 
+    val expectedJson =
       """|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
             |"data":{
@@ -166,7 +165,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
     actual must beSuccessful(NonEmptyList(RawEvent(Shared.api, Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson), ContentType.some, Shared.cljSource, Shared.context)))
   }
 
-  def e8 = 
+  def e8 =
     "SPEC NAME"               || "SCHEMA TYPE"  | "EXPECTED SCHEMA"                                               |
     "Valid, type subscribe"   !! "subscribe"    ! "iglu:com.mailchimp/subscribe/jsonschema/1-0-0"                 |
     "Valid, type unsubscribe" !! "unsubscribe"  ! "iglu:com.mailchimp/unsubscribe/jsonschema/1-0-0"               |
@@ -174,7 +173,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
     "Valid, type email"       !! "upemail"      ! "iglu:com.mailchimp/email_address_change/jsonschema/1-0-0"      |
     "Valid, type cleaned"     !! "cleaned"      ! "iglu:com.mailchimp/cleaned_email/jsonschema/1-0-0"             |
     "Valid, type campaign"    !! "campaign"     ! "iglu:com.mailchimp/campaign_sending_status/jsonschema/1-0-0"   |> {
-      (_, schema, expected) => 
+      (_, schema, expected) =>
         val body = "type="+schema
         val payload = CollectorPayload(Shared.api, Nil, ContentType.some, body.some, Shared.cljSource, Shared.context)
         val expectedJson = "{\"schema\":\"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0\",\"data\":{\"schema\":\""+expected+"\",\"data\":{\"type\":\""+schema+"\"}}}"
@@ -182,7 +181,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
         actual must beSuccessful(NonEmptyList(RawEvent(Shared.api, Map("tv" -> "com.mailchimp-v1", "e" -> "ue", "p" -> "srv", "ue_pr" -> expectedJson), ContentType.some, Shared.cljSource, Shared.context)))
   }
 
-  def e9 = 
+  def e9 =
     "SPEC NAME"               || "SCHEMA TYPE"  | "EXPECTED OUTPUT"                                                               |
     "Invalid, bad type"       !! "bad"          ! "MailChimp event failed: type parameter [bad] not recognized"                   |
     "Invalid, no type"        !! ""             ! "MailChimp event failed: type parameter is empty - cannot determine event type" |> {
@@ -197,7 +196,7 @@ class MailchimpAdapterSpec extends Specification with DataTables with Validation
     val body = "type=unsubscribe&fired_at=2014-10-22+13%3A10%3A40&data%5Baction%5D=unsub&data%5Breason%5D=manual&data%5Bid%5D=94826aa750&data%5Bemail%5D=josh%40snowplowanalytics.com&data%5Bemail_type%5D=html&data%5Bip_opt%5D=82.225.169.220&data%5Bweb_id%5D=203740265&data%5Bmerges%5D%5BEMAIL%5D=josh%40snowplowanalytics.com&data%5Bmerges%5D%5BFNAME%5D=Joshua&data%5Bmerges%5D%5BLNAME%5D=Beemster&data%5Blist_id%5D=f1243a3b12"
     val qs = toNameValuePairs("nuid" -> "123")
     val payload = CollectorPayload(Shared.api, qs, ContentType.some, body.some, Shared.cljSource, Shared.context)
-    val expectedJson = 
+    val expectedJson =
       """|{
             |"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0",
             |"data":{

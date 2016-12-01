@@ -37,18 +37,16 @@ import org.specs2.{Specification, ScalaCheck}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
-
-  "This is a specification to test the CloudfrontAccessLogAdapter functionality"                                             ^
-                                                                                                                 p^
-  "toRawEvents should return a NEL containing one RawEvent if the line contains 12 fields"                        ! e1^
-  "toRawEvents should return a NEL containing one RawEvent if the line contains 15 fields"                        ! e2^
-  "toRawEvents should return a NEL containing one RawEvent if the line contains 18 fields"                        ! e3^
-  "toRawEvents should return a NEL containing one RawEvent if the line contains 19 fields"                        ! e4^
-  "toRawEvents should return a NEL containing one RawEvent if the line contains 23 fields"                        ! e5^
-  "toRawEvents should return a Validation Failure if the line is the wrong length"                                ! e6^
-  "toRawEvents should return a Validation Failure if the line contains an unparseable field"                      ! e7^
-                                                                                                                  end
+class CloudfrontAccessLogAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+  This is a specification to test the CloudfrontAccessLogAdapter functionality
+  toRawEvents should return a NEL containing one RawEvent if the line contains 12 fields   $e1
+  toRawEvents should return a NEL containing one RawEvent if the line contains 15 fields   $e2
+  toRawEvents should return a NEL containing one RawEvent if the line contains 18 fields   $e3
+  toRawEvents should return a NEL containing one RawEvent if the line contains 19 fields   $e4
+  toRawEvents should return a NEL containing one RawEvent if the line contains 23 fields   $e5
+  toRawEvents should return a Validation Failure if the line is the wrong length           $e6
+  toRawEvents should return a Validation Failure if the line contains an unparseable field $e7
+  """
 
   implicit val resolver = SpecHelpers.IgluResolver
   val loader = new TsvLoader("com.amazon.aws.cloudfront/wd_access_log")

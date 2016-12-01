@@ -22,14 +22,13 @@ import java.sql.Date
 import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 
-class OutputSpec extends Specification with ValidationMatchers { def is =
-  "This is a specification to test the Output of SQL Query Enrichment" ^
-                                                                      p^
-    "Parse Inetger without type hint"                       ! e1^
-    "Parse Double without type hint"                        ! e2^
-    "Handle null"                                           ! e3^
-    "Handle java.sql.Date as ISO8601 string"                ! e4^
-    end
+class OutputSpec extends Specification with ValidationMatchers { def is = s2"""
+  This is a specification to test the Output of SQL Query Enrichment
+  Parse Integer without type hint        $e1
+  Parse Double without type hint         $e2
+  Handle null                            $e3
+  Handle java.sql.Date as ISO8601 string $e4
+  """
 
   def e1 =
     JsonOutput.getValue(1: Integer, "") must beEqualTo(JInt(1))

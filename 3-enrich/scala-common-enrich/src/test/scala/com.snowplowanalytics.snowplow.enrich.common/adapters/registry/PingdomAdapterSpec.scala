@@ -42,18 +42,16 @@ import org.specs2.{Specification, ScalaCheck}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class PingdomAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
-
-  "This is a specification to test the PingdomAdapter functionality"                                                ^
-                                                                                                                   p^
-  "reformatParameters should return either an updated JSON without the 'action' field or the same JSON"           ! e1^
-  "parseJson must return a Success Nel for a valid json string being passed"                                      ! e2^
-  "parseJson must return a Failure Nel containing the JsonParseException for invalid json strings"                ! e3^
-  "reformatMapParams must return a Failure Nel for any Python Unicode wrapped values"                             ! e4^
-  "toRawEvents must return a Success Nel for a valid querystring"                                                 ! e5^
-  "toRawEvents must return a Failure Nel for an empty querystring"                                                ! e6^
-  "toRawEvents must return a Failure Nel for a querystring which does not contain 'message' as a key"             ! e7^
-                                                                                                                   end
+class PingdomAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+  This is a specification to test the PingdomAdapter functionality
+  reformatParameters should return either an updated JSON without the 'action' field or the same JSON $e1
+  parseJson must return a Success Nel for a valid json string being passed                            $e2
+  parseJson must return a Failure Nel containing the JsonParseException for invalid json strings      $e3
+  reformatMapParams must return a Failure Nel for any Python Unicode wrapped values                   $e4
+  toRawEvents must return a Success Nel for a valid querystring                                       $e5
+  toRawEvents must return a Failure Nel for an empty querystring                                      $e6
+  toRawEvents must return a Failure Nel for a querystring which does not contain 'message' as a key   $e7
+  """
 
   implicit val resolver = SpecHelpers.IgluResolver
 
@@ -63,7 +61,7 @@ class PingdomAdapterSpec extends Specification with DataTables with ValidationMa
     val context = CollectorContext(DateTime.parse("2013-08-29T00:18:48.000+00:00").some, "37.157.33.123".some, None, None, Nil, None)
   }
 
-  def e1 = 
+  def e1 =
     "SPEC NAME"           || "JSON"                                     | "EXPECTED OUTPUT"                          |
     "Remove action field" !! """{"action":"assign","agent":"smith"}"""  ! """{"agent":"smith"}"""                    |
     "Nothing removed"     !! """{"actions":"assign","agent":"smith"}""" ! """{"actions":"assign","agent":"smith"}""" |>{

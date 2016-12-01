@@ -39,26 +39,24 @@ import org.specs2.{Specification, ScalaCheck}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class IgluAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
-
-  "This is a specification to test the IgluAdapter functionality"                                                            ^
-                                                                                                                             p^
-  "toRawEvents should return a NEL containing one RawEvent if the CloudFront querystring is minimally populated"             ! e1^
-  "toRawEvents should return a NEL containing one RawEvent if the CloudFront querystring is maximally populated"             ! e2^
-  "toRawEvents should return a NEL containing one RawEvent if the Clojure-Tomcat querystring is populated"                   ! e3^
-  "toRawEvents should return a NEL containing one RawEvent with a non-app platform if specified"                             ! e4^
-  "toRawEvents should return a Validation Failure if there are no parameters on the CloudFront querystring"                  ! e5^
-  "toRawEvents should return a Validation Failure if there is no schema parameter on the CloudFront querystring"             ! e6^
-  "toRawEvents should return a Validation Failure if the schema parameter is not in an Iglu-compatible format"               ! e7^
-  "toRawEvents should return a NEL containing one RawEvent if the schema parameter is populated with a valid content type"   ! e8^
-  "toRawEvents should return a Validation Failure if an unsupported content type is specified"                               ! e9^
-  "toRawEvents should return a Validation Failure if there are no events in the JSON payload"                                ! e10^
-  "toRawEvents should return a Validation Failure if body is specified but a content type is not provided"                   ! e11^
-  "toRawEvents should return a NEL containing one RawEvent if a sd-json is found"                                            ! e12^
-  "toRawEvents should return a Validation Failure if sd-json is found but content type is not supported"                     ! e13^
-  "toRawEvents should return a Validation Failure if body is found but content type is not supported"                        ! e14^
-  "toRawEvents should return a NEL containing one RawEvent if a querystring is found in the POST body"                       ! e15^
-  end
+class IgluAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+  This is a specification to test the IgluAdapter functionality
+  toRawEvents should return a NEL containing one RawEvent if the CloudFront querystring is minimally populated           $e1
+  toRawEvents should return a NEL containing one RawEvent if the CloudFront querystring is maximally populated           $e2
+  toRawEvents should return a NEL containing one RawEvent if the Clojure-Tomcat querystring is populated                 $e3
+  toRawEvents should return a NEL containing one RawEvent with a non-app platform if specified                           $e4
+  toRawEvents should return a Validation Failure if there are no parameters on the CloudFront querystring                $e5
+  toRawEvents should return a Validation Failure if there is no schema parameter on the CloudFront querystring           $e6
+  toRawEvents should return a Validation Failure if the schema parameter is not in an Iglu-compatible format             $e7
+  toRawEvents should return a NEL containing one RawEvent if the schema parameter is populated with a valid content type $e8
+  toRawEvents should return a Validation Failure if an unsupported content type is specified                             $e9
+  toRawEvents should return a Validation Failure if there are no events in the JSON payload                              $e10
+  toRawEvents should return a Validation Failure if body is specified but a content type is not provided                 $e11
+  toRawEvents should return a NEL containing one RawEvent if a sd-json is found                                          $e12
+  toRawEvents should return a Validation Failure if sd-json is found but content type is not supported                   $e13
+  toRawEvents should return a Validation Failure if body is found but content type is not supported                      $e14
+  toRawEvents should return a NEL containing one RawEvent if a querystring is found in the POST body                     $e15
+  """
 
   implicit val resolver = SpecHelpers.IgluResolver
 
@@ -306,8 +304,8 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
     val actual = IgluAdapter.toRawEvents(payload)
 
     val expected = RawEvent(Shared.api,Map(
-      "tv" -> "com.snowplowanalytics.iglu-v1", 
-      "e" -> "ue", 
+      "tv" -> "com.snowplowanalytics.iglu-v1",
+      "e" -> "ue",
       "p" -> "mob",
       "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.acme/campaign/jsonschema/1-0-1","data":{"some_param":"foo"}}}"""),
       "application/json".some,Shared.cljSource,Shared.context)
@@ -340,8 +338,8 @@ class IgluAdapterSpec extends Specification with DataTables with ValidationMatch
     val actual = IgluAdapter.toRawEvents(payload)
 
     val expected = RawEvent(Shared.api,Map(
-      "tv" -> "com.snowplowanalytics.iglu-v1", 
-      "e" -> "ue", 
+      "tv" -> "com.snowplowanalytics.iglu-v1",
+      "e" -> "ue",
       "p" -> "srv",
       "ue_pr" -> """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.acme/campaign/jsonschema/1-0-1","data":{"some_param":"foo","hello":"world"}}}"""),
       "application/x-www-form-urlencoded".some, Shared.cljSource, Shared.context)

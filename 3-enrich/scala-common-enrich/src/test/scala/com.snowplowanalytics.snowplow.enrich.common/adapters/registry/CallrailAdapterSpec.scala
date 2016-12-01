@@ -36,13 +36,11 @@ import org.specs2.{Specification, ScalaCheck}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class CallrailAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
-
-  "This is a specification to test the CallrailAdapter functionality"                                             ^
-                                                                                                                 p^
-  "toRawEvents should return a NEL containing one RawEvent if the querystring is correctly populated"             ! e1^
-  "toRawEvents should return a Validation Failure if there are no parameters on the querystring"                  ! e2^
-                                                                                                                  end
+class CallrailAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+  This is a specification to test the CallrailAdapter functionality
+  toRawEvents should return a NEL containing one RawEvent if the querystring is correctly populated $e1
+  toRawEvents should return a Validation Failure if there are no parameters on the querystring      $e2
+  """
 
   implicit val resolver = SpecHelpers.IgluResolver
 
