@@ -44,7 +44,7 @@ object Dependencies {
     val postgresDriver   = "9.4.1208.jre7"
     val mysqlConnector   = "5.1.39"
     // Scala
-    val scalaz7          = "7.0.0"
+    val scalaz7          = "7.0.9"
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
     val schemaSniffer    = "0.0.0"
