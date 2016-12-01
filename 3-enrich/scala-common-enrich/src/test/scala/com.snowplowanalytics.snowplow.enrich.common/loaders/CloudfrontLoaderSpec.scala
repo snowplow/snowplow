@@ -33,18 +33,16 @@ import org.specs2.scalaz.ValidationMatchers
 import org.scalacheck._
 import org.scalacheck.Arbitrary._
 
-class CloudfrontLoaderSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
-
-  "This is a specification to test the CloudfrontLoader functionality"                                        ^
-                                                                                                             p^
-  "toTimestamp should create a DateTime from valid date and time Strings"                                     ! e1^
-  "toOption should return a None if the querystring is empty"                                                 ! e2^
-  "toCleanUri should remove a trailing % from a URI correctly"                                                ! e3^
-  "singleEncodePcts should correctly single-encoding double-encoded % signs"                                  ! e4^
-  "toCollectorPayload should return a CanonicalInput for a valid CloudFront log record"                       ! e5^
-  "toCollectorPayload should return a Validation Failure for a non-GET request to /i"                         ! e6^
-  "toCollectorPayload should return a Validation Failure for an invalid or corrupted CloudFront log record"   ! e7^
-                                                                                                            end
+class CloudfrontLoaderSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+  This is a specification to test the CloudfrontLoader functionality
+  toTimestamp should create a DateTime from valid date and time Strings                                   $e1
+  toOption should return a None if the querystring is empty                                               $e2
+  toCleanUri should remove a trailing % from a URI correctly                                              $e3
+  singleEncodePcts should correctly single-encoding double-encoded % signs                                $e4
+  toCollectorPayload should return a CanonicalInput for a valid CloudFront log record                     $e5
+  toCollectorPayload should return a Validation Failure for a non-GET request to /i                       $e6
+  toCollectorPayload should return a Validation Failure for an invalid or corrupted CloudFront log record $e7
+  """
 
   object Expected {
     val collector = "cloudfront"
@@ -52,14 +50,14 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
     val api       = CollectorApi("com.snowplowanalytics.snowplow", "tp1")
   }
 
-  def e1 = 
+  def e1 =
     "SPEC NAME"           || "DATE"       | "TIME"         | "EXP. DATETIME"                                 |
     "Valid with ms #1"    !! "2003-12-04" ! "00:18:48.234" ! DateTime.parse("2003-12-04T00:18:48.234+00:00") |
     "Valid with ms #2"    !! "2011-08-29" ! "23:56:01.003" ! DateTime.parse("2011-08-29T23:56:01.003+00:00") |
     "Valid without ms #1" !! "2013-05-12" ! "17:34:10"     ! DateTime.parse("2013-05-12T17:34:10+00:00")     |
     "Valid without ms #2" !! "1980-04-01" ! "21:20:04"     ! DateTime.parse("1980-04-01T21:20:04+00:00")     |> {
       (_, date, time, expected) => {
-        val actual = CloudfrontLoader.toTimestamp(date, time)     
+        val actual = CloudfrontLoader.toTimestamp(date, time)
         actual must beSuccessful(expected)
       }
     }
@@ -76,7 +74,7 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
     "URI without trailing % #1" !! "https://github.com/snowplow/snowplow/issues/494"  ! "https://github.com/snowplow/snowplow/issues/494" |
     "URI without trailing % #2" !! "http://bbc.co.uk"                                 ! "http://bbc.co.uk"                                |> {
       (_, uri, expected) => {
-        val actual = CloudfrontLoader.toCleanUri(uri)     
+        val actual = CloudfrontLoader.toCleanUri(uri)
         actual  must_== expected
       }
     }
@@ -118,7 +116,7 @@ class CloudfrontLoaderSpec extends Specification with DataTables with Validation
           source       = CollectorSource(Expected.collector, Expected.encoding, None),
           context      = CollectorContext(timestamp.some, ipAddress, userAgent, refererUri, Nil, None)
           )
-    
+
         canonicalEvent must beSuccessful(expected.some)
       }
     }

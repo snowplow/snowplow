@@ -27,16 +27,15 @@ import Scalaz._
 // SnowPlow Utils
 import com.snowplowanalytics.util.Tap._
 
-class ParseCrossDomainSpec extends Specification with DataTables with ValidationMatchers { def is =
+class ParseCrossDomainSpec extends Specification with DataTables with ValidationMatchers { def is = s2"""
+  This is a specification to test the parseCrossDomain function
+  parseCrossDomain should return None when the querystring contains no _sp parameter           $e1
+  parseCrossDomain should return a failure when the _sp timestamp is unparseable               $e2
+  parseCrossDomain should successfully extract the domain user ID when available               $e3
+  parseCrossDomain should successfully extract the domain user ID and timestamp when available $e4
+  parseCrossDomain should extract neither field from an empty _sp parameter                    $e5
+  """
 
-  "This is a specification to test the parseCrossDomain function"                                ^
-                                                                                                p^
-  "parseCrossDomain should return None when the querystring contains no _sp parameter"           ! e1^
-  "parseCrossDomain should return a failure when the _sp timestamp is unparseable"               ! e2^
-  "parseCrossDomain should successfully extract the domain user ID when available"               ! e3^
-  "parseCrossDomain should successfully extract the domain user ID and timestamp when available" ! e4^
-  "parseCrossDomain should extract neither field from an empty _sp parameter"                    ! e5^
-                                                                                                 end
   def e1 =
     PageEnrichments.parseCrossDomain(Map()) must beSuccessful((None, None))
 

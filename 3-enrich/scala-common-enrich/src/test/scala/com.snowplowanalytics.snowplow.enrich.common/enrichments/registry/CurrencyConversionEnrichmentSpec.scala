@@ -38,13 +38,12 @@ object CurrencyConversionEnrichmentSpec {
  */
 import CurrencyConversionEnrichmentSpec._
 class CurrencyConversionEnrichmentSpec extends Specification with DataTables { def is =
-
-  "This is a specification to test convertCurrencies"                       ^
-                                                                           p^
-        skipAllIf(sys.env.get(OerApiKey).isEmpty)                           ^
-        "Failure test for Currency Conversion"                              ! e1^
-        "Success test for Currency Conversion"                              ! e2^
-                                                                            end
+  skipAllIf(sys.env.get(OerApiKey).isEmpty) ^
+  s2"""
+  This is a specification to test convertCurrencies
+  Failure test for Currency Conversion $e1
+  Success test for Currency Conversion $e2
+  """
 
   lazy val validAppKey = sys.env.get(OerApiKey).getOrElse(throw new IllegalStateException(s"No ${OerApiKey} environment variable found, test should have been skipped"))
   val trCurrencyMissing = Failure(NonEmptyList("Open Exchange Rates error, message: Currency [] is not supported by Joda money Currency not found in the API, invalid currency ", "Open Exchange Rates error, message: Currency [] is not supported by Joda money Currency not found in the API, invalid currency ", "Open Exchange Rates error, message: Currency [] is not supported by Joda money Currency not found in the API, invalid currency "))
@@ -78,4 +77,3 @@ class CurrencyConversionEnrichmentSpec extends Specification with DataTables { d
         CurrencyConversionEnrichment(DeveloperAccount, apiKey, "EUR", "EOD_PRIOR").convertCurrencies(trCurrency, trAmountTotal, trAmountTax, trAmountShipping, tiCurrency, tiPrice, dateTime) must_== expected
     }
 }
-

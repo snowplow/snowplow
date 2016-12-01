@@ -25,16 +25,14 @@ import Scalaz._
 /**
  * Tests CampaignAttributionEnrichment
  */
-class CampaignAttributionEnrichmentSpec extends Specification with ValidationMatchers { def is =
-
-  "This is a specification to test the CampaignAttributionEnrichment"                                                 ^
-                                                                                                           p^
-  "extractMarketingFields should create an empty MarketingCampaign if no campaign fields are specified"     ! e1^
-  "extractMarketingFields should create a MarketingCampaign using the standard Google-style settings"       ! e2^
-  "extractMarketingFields should create a MarketingCampaign using the standard Omniture settings"           ! e3^
-  "extractMarketingFields should create a MarketingCampaign using the correct order of precedence"          ! e4^
-  "extractMarketingFields should create a MarketingCampaign with clickId and network fields"                ! e5^
-                                                                                                            end
+class CampaignAttributionEnrichmentSpec extends Specification with ValidationMatchers { def is = s2"""
+  This is a specification to test the CampaignAttributionEnrichment
+  extractMarketingFields should create an empty MarketingCampaign if no campaign fields are specified $e1
+  extractMarketingFields should create a MarketingCampaign using the standard Google-style settings   $e2
+  extractMarketingFields should create a MarketingCampaign using the standard Omniture settings       $e3
+  extractMarketingFields should create a MarketingCampaign using the correct order of precedence      $e4
+  extractMarketingFields should create a MarketingCampaign with clickId and network fields            $e5
+  """
 
   val google_uri = Map(
     "utm_source"   -> "GoogleSearch",

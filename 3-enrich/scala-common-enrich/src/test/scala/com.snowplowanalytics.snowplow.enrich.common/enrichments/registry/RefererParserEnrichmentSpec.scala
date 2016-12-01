@@ -40,13 +40,11 @@ import com.snowplowanalytics.refererparser.scala.{Medium, Referer}
  *
  * https://github.com/snowplow/referer-parser/tree/master/java-scala/src/test/scala/com/snowplowanalytics/refererparser/scala
  */
-class ExtractRefererDetailsSpec extends Specification with DataTables { def is =
-
-  "This is a specification to test extractRefererDetails"              ^
-                                                                      p^
-    "Parsing referer URIs should work"                                 ! e1^
-    "Tabs and newlines in search terms should be replaced"             ! e2^
-                                                                       end
+class ExtractRefererDetailsSpec extends Specification with DataTables { def is = s2"""
+  This is a specification to test extractRefererDetails
+  Parsing referer URIs should work                     $e1
+  Tabs and newlines in search terms should be replaced $e2
+  """
 
   val PageHost = "www.snowplowanalytics.com"
 

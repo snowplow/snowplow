@@ -26,13 +26,11 @@ import outputs.EnrichedEvent
 // Specs2
 import org.specs2.Specification
 
-class ShredderSpec extends Specification /*with DataTables with ValidationMatchers*/ { def is =
-
-  "This is a specification to test the Shredder functionality"                       ^
-                                                                                    p^
-  "makePartialHierarchy should initialize a partial TypeHierarchy"                   ! e1^
-  "shred should extract the JSONs from an unstructured event with multiple contexts" ! e2^
-                                                                                     end
+class ShredderSpec extends Specification /*with DataTables with ValidationMatchers*/ { def is = s2"""
+  This is a specification to test the Shredder functionality
+  makePartialHierarchy should initialize a partial TypeHierarchy                   $e1
+  shred should extract the JSONs from an unstructured event with multiple contexts $e2
+  """
 
   val EventId = "f81d4fae-7dec-11d0-a765-00a0c91e6bf6"
   val CollectorTimestamp = "2014-04-29 09:00:54.000"

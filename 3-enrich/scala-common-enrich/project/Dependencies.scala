@@ -59,7 +59,7 @@ object Dependencies {
     val akkaStreams      = "2.0.2"
     val gatlingJsonpath  = "0.6.4"
     // Scala (test only)
-    val specs2           = "2.2.3"
+    val specs2           = "2.3.13"
     val scalazSpecs2     = "0.1.2"
     val scalaCheck       = "1.10.0"
     val scalaUri         = "0.4.3"

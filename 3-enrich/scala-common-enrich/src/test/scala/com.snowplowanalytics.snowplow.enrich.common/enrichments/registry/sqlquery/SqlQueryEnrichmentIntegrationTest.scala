@@ -54,11 +54,12 @@ object SqlQueryEnrichmentIntegrationTest {
 
 import SqlQueryEnrichmentIntegrationTest._
 class SqlQueryEnrichmentIntegrationTest extends Specification with ValidationMatchers { def is =
-  "This is an integration test for the SqlQueryEnrichment" ^
-    skipAllUnless(continuousIntegration) ^
-    "Basic case" ! e1 ^
-    "All-features test" ! e2 ^
-                 end
+  skipAllUnless(continuousIntegration) ^
+  s2"""
+  This is an integration test for the SqlQueryEnrichment
+  Basic case        $e1
+  All-features test $e2
+  """
 
   val SCHEMA_KEY = SchemaKey("com.snowplowanalytics.snowplow.enrichments", "sql_query_enrichment_config", "jsonschema", "1-0-0")
 

@@ -52,11 +52,12 @@ object ApiRequestEnrichmentIntegrationTest {
 
 import ApiRequestEnrichmentIntegrationTest._
 class ApiRequestEnrichmentIntegrationTest extends Specification with ValidationMatchers { def is =
-  "This is a integration test for the ApiRequestEnrichment" ^
-    skipAllUnless(continuousIntegration) ^
-    "Basic Case"                                       ! e1 ^
-    "POST, Auth, JSON inputs, cache, several outputs"  ! e2 ^
-                                                       end
+  skipAllUnless(continuousIntegration) ^
+  s2"""
+  This is a integration test for the ApiRequestEnrichment
+  Basic Case                                      $e1
+  POST, Auth, JSON inputs, cache, several outputs $e2
+  """
 
   object IntegrationTests {
     val configuration = parseJson("""

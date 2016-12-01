@@ -28,14 +28,12 @@ import org.json4s.JValue
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
 
-class CookieExtractorEnrichmentSpec extends Specification with ValidationMatchers { def is =
-
-  "This is a specification to test the CookieExtractorEnrichment" ^
-                                                                 p^
-  "returns an empty list when no cookie header"                   ! e1^
-  "returns an empty list when no cookie matches configuration"    ! e2^
-  "returns contexts for found cookies"                            ! e3^
-                                                                  end
+class CookieExtractorEnrichmentSpec extends Specification with ValidationMatchers { def is = s2"""
+  This is a specification to test the CookieExtractorEnrichment
+  returns an empty list when no cookie header                $e1
+  returns an empty list when no cookie matches configuration $e2
+  returns contexts for found cookies                         $e3
+  """
 
   def e1 = {
     val actual = CookieExtractorEnrichment(List("cookieKey1")).extract(List("Content-Length: 348"))

@@ -51,8 +51,7 @@ class ExtractPlatformSpec extends Specification with DataTables {
   val FieldName = "p"
   def err: (String) => String = input => "Field [%s]: [%s] is not a supported tracking platform".format(FieldName, input)
 
-  def is =
-    "Extracting platforms with extractPlatform should work" ! e1
+  def is = s2"Extracting platforms with extractPlatform should work $e1"
 
   def e1 =
     "SPEC NAME"                      || "INPUT VAL" | "EXPECTED OUTPUT" |

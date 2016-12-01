@@ -42,21 +42,20 @@ import org.specs2.{Specification, ScalaCheck}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class PagerdutyAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
+class PagerdutyAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+  This is a specification to test the PagerdutyAdapter functionality
+  reformatParameters must return an updated JSON whereby all null Strings have been replaced by null $e1
+  reformatParameters must return an updated JSON where 'incident.xxx' is replaced by xxx             $e2
+  reformatParameters must return an updated JSON whereby all invalid datetime strings are corrected  $e3
+  payloadBodyToEvents must return a Success list of event JSON's from a valid payload body           $e4
+  payloadBodyToEvents must return a Failure Nel for an invalid payload body being passed             $e5
+  toRawEvents must return a Success Nel if all events are successful                                 $e6
+  toRawEvents must return a Failure Nel if any of the events where not successes                     $e7
+  toRawEvents must return a Nel Failure if the request body is missing                               $e8
+  toRawEvents must return a Nel Failure if the content type is missing                               $e9
+  toRawEvents must return a Nel Failure if the content type is incorrect                             $e10
+  """
 
-  "This is a specification to test the PagerdutyAdapter functionality"                                              ^
-                                                                                                                   p^
-  "reformatParameters must return an updated JSON whereby all null Strings have been replaced by null"            ! e1^
-  "reformatParameters must return an updated JSON where 'incident.xxx' is replaced by xxx"                        ! e2^
-  "reformatParameters must return an updated JSON whereby all invalid datetime strings are corrected"             ! e3^
-  "payloadBodyToEvents must return a Success list of event JSON's from a valid payload body"                      ! e4^
-  "payloadBodyToEvents must return a Failure Nel for an invalid payload body being passed"                        ! e5^
-  "toRawEvents must return a Success Nel if all events are successful"                                            ! e6^
-  "toRawEvents must return a Failure Nel if any of the events where not successes"                                ! e7^
-  "toRawEvents must return a Nel Failure if the request body is missing"                                          ! e8^
-  "toRawEvents must return a Nel Failure if the content type is missing"                                          ! e9^
-  "toRawEvents must return a Nel Failure if the content type is incorrect"                                        ! e10^
-                                                                                                                   end
   implicit val resolver = SpecHelpers.IgluResolver
 
   object Shared {
@@ -67,7 +66,7 @@ class PagerdutyAdapterSpec extends Specification with DataTables with Validation
 
   val ContentType = "application/json"
 
-  def e1 = 
+  def e1 =
     "SPEC NAME"                     || "INPUT"                             | "EXPECTED OUTPUT"               |
     "Valid, update one value"       !! """{"type":"null"}"""               ! """{"type":null}"""             |
     "Valid, update multiple values" !! """{"type":"null","some":"null"}""" ! """{"type":null,"some":null}""" |
@@ -81,7 +80,7 @@ class PagerdutyAdapterSpec extends Specification with DataTables with Validation
     PagerdutyAdapter.reformatParameters(json) mustEqual expected
   }
 
-  def e3 = 
+  def e3 =
     "SPEC NAME"                     || "INPUT"                                                                                              | "EXPECTED OUTPUT"                                                                                    |
     "Valid, update one value"       !! """{"created_on":"2014-11-12T18:53:47 00:00"}"""                                                     ! """{"created_on":"2014-11-12T18:53:47+00:00"}"""                                                     |
     "Valid, update multiple values" !! """{"created_on":"2014-11-12T18:53:47 00:00","last_status_change_on":"2014-11-12T18:53:47 00:00"}""" ! """{"created_on":"2014-11-12T18:53:47+00:00","last_status_change_on":"2014-11-12T18:53:47+00:00"}""" |
@@ -95,11 +94,11 @@ class PagerdutyAdapterSpec extends Specification with DataTables with Validation
     PagerdutyAdapter.payloadBodyToEvents(bodyStr) must beSuccessful(expected)
   }
 
-  def e5 = 
+  def e5 =
     "SPEC NAME"                     || "INPUT"                   | "EXPECTED OUTPUT"                                              |
     "Failure, parse exception"      !! """{"something:"some"}""" ! "PagerDuty payload failed to parse into JSON: [com.fasterxml.jackson.core.JsonParseException: Unexpected character ('s' (code 115)): was expecting a colon to separate field name and value at [Source: java.io.StringReader@xxxxxx; line: 1, column: 15]]"     |
     "Failure, missing messages key" !! """{"somekey":"key"}"""   ! "PagerDuty payload does not contain the needed 'messages' key" |> {
-      (_, input, expected) => PagerdutyAdapter.payloadBodyToEvents(input) must beFailing(expected) 
+      (_, input, expected) => PagerdutyAdapter.payloadBodyToEvents(input) must beFailing(expected)
     }
 
   def e6 = {
