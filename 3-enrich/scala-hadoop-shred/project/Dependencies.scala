@@ -68,5 +68,7 @@ object Dependencies {
     // Scala (test only)
     val specs2           = "org.specs2"                 %% "specs2"                  % V.specs2          % "test"
     val scalazSpecs2     = "org.typelevel"              %% "scalaz-specs2"           % V.scalazSpecs2    % "test"
+    // Hadoop (test only)
+    val hadoopClientCommon = "org.apache.hadoop"        % "hadoop-mapreduce-client-common" % V.hadoop    % "test"
   }
 }
