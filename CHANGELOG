@@ -1,3 +1,13 @@
+Release 8X TBC (2016-12-XX)
+---------------------------
+Common: add AWS credentials to .travis.yml (#2963)
+Scala Hadoop Shred: bump to 0.10.0 (#2979)
+Scala Hadoop Shred: add general top-level exception handling (#2071)
+Scala Hadoop Shred: get the CustomPartitionSourceTest working with Hadoop 2.4 (#1960)
+Scala Hadoop Shred: fix omitted string interpolation (#2562)
+Scala Hadoop Shred: deduplicate event_ids with different event_fingerprints (synthetic duplicates) (#24)
+Scala Hadoop Shred: stop catching fatal errors (#1456)
+
 Release 85 Metamorphosis (2016-11-15)
 -------------------------------------
 Scala Stream Collector: bump to 0.9.0 (#2936)
