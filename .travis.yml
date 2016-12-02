@@ -31,7 +31,6 @@ before_install:
 - pip install --user awscli
 - export PATH=$PATH:$HOME/.local/bin
 addons:
-  hostname: short-hostname
   postgresql: '9.3'
 services:
 - postgresql
