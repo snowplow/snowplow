@@ -77,7 +77,8 @@ object CloudfrontAccessLogAdapter {
       "xForwardedFor",
       "sslProtocol",
       "sslCipher",
-      "xEdgeResponseResultType"
+      "xEdgeResponseResultType",
+      "csProtocolVersion"
     )
 
     // Tracker version for Cloudfront access log
@@ -103,7 +104,8 @@ object CloudfrontAccessLogAdapter {
             case 18 => "1-0-2".successNel  // 21 Oct 2013
             case 19 => "1-0-3".successNel  // 29 Apr 2014
             case 23 => "1-0-4".successNel  // 01 Jul 2015
-            case n => s"Access log TSV line contained $n fields, expected 12, 15, 18, 19, or 23".failNel
+            case 24 => "1-0-5".successNel  // 29 Sep 2016
+            case n => s"Access log TSV line contained $n fields, expected 12, 15, 18, 19, 23 or 24".failNel
           }
           schemaVersion.flatMap(v => {
 
