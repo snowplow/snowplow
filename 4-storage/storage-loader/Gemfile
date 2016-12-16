@@ -26,6 +26,8 @@ gem "plissken", "~> 0.1.0"
 gem "contracts", "~> 0.9", "<= 0.11"
 gem "snowplow-tracker", "~> 0.5.2"
 gem "aws-sdk", "~> 2"
+gem "iglu-ruby-client", ">= 0.1.0"
+gem "warbler"
 
 group :development do
   gem "rspec", "~> 2.14", ">= 2.14.1"
