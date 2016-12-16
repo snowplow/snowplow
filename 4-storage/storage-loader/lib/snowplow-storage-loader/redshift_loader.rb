@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2016 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -65,6 +65,9 @@ module Snowplow
           :shredded
         end
 
+        schema = target[:schema] || "atomic"
+        events_table = schema + ".events"
+
         copy_statements = if atomic_events_location == :shredded
           loc = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:shredded][:good])
           altered_enriched_filepath = Sluice::Storage::S3::list_files(s3, loc).find { |file|
@@ -75,9 +78,9 @@ module Snowplow
           end
           # Of the form "run=xxx/atomic-events"
           altered_enriched_subdirectory = ALTERED_ENRICHED_PATTERN.match(altered_enriched_filepath.key)[1]
-          [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:shredded][:good] + altered_enriched_subdirectory, target[:table], target[:maxerror])]
+          [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:shredded][:good] + altered_enriched_subdirectory, events_table, target[:maxerror])]
         else
-          [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:enriched][:good], target[:table], target[:maxerror])]
+          [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:enriched][:good], events_table, target[:maxerror])]
         end + shredded_statements.map(&:copy) + [manifest_statement]
 
         credentials = [config[:aws][:access_key_id], config[:aws][:secret_access_key]]
@@ -100,7 +103,7 @@ module Snowplow
         # and execute them in series. VACUUMs cannot be performed
         # inside of a transaction
         if config[:include].include?('vacuum')
-          vacuum_statements = [build_vacuum_statement(target[:table])] + shredded_statements.map(&:vacuum).uniq
+          vacuum_statements = [build_vacuum_statement(events_table)] + shredded_statements.map(&:vacuum).uniq
           vacuum_status = PostgresLoader.execute_queries(target, vacuum_statements)
           unless vacuum_status == []
             raise DatabaseLoadError, Sanitization.sanitize_message("#{vacuum_status[1]} error executing VACUUM statements: #{vacuum_status[0]}: #{vacuum_status[2]}", credentials)
@@ -109,7 +112,7 @@ module Snowplow
 
         # ANALYZE statements should be executed after VACUUM statements.
         unless config[:skip].include?('analyze')
-          analyze_statements = [build_analyze_statement(target[:table])] + shredded_statements.map(&:analyze).uniq
+          analyze_statements = [build_analyze_statement(events_table)] + shredded_statements.map(&:analyze).uniq
           analyze_status = PostgresLoader.execute_transaction(target, analyze_statements)
           unless analyze_status == []
             raise DatabaseLoadError, Sanitization.sanitize_message("#{analyze_status[1]} error executing ANALYZE statements: #{analyze_status[0]}: #{analyze_status[2]}", credentials)
@@ -134,7 +137,7 @@ module Snowplow
         if config[:skip].include?('shred') # No shredded types to load
           []
         else
-          schema = extract_schema(target[:table])
+          schema = target[:schema] || "atomic"
 
           ShreddedType.discover_shredded_types(s3, config[:aws][:s3][:buckets][:shredded][:good], schema).map { |st|
 
