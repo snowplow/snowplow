@@ -2,6 +2,8 @@ GEM
   remote: https://rubygems.org/
   specs:
     CFPropertyList (2.3.2)
+    addressable (2.5.0)
+      public_suffix (~> 2.0, >= 2.0.2)
     aws-sdk (2.5.8)
       aws-sdk-resources (= 2.5.8)
     aws-sdk-core (2.5.8)
@@ -74,17 +76,25 @@ GEM
       fog-core
       nokogiri (~> 1.5, >= 1.5.11)
     formatador (0.2.5)
+    httparty (0.14.0)
+      multi_xml (>= 0.5.2)
+    iglu-ruby-client (0.1.0)
+      httparty (<= 0.14.0)
+      json-schema (~> 2.7.0, >= 2.7.0)
     inflecto (0.0.2)
     ipaddress (0.8.3)
     jdbc-postgres (9.4.1206)
     jmespath (1.3.1)
-    jruby-jars (9.1.4.0)
+    jruby-jars (9.1.6.0)
     jruby-rack (1.1.20)
     json (2.0.2-java)
+    json-schema (2.7.0)
+      addressable (>= 2.4)
     mime-types (3.1)
       mime-types-data (~> 3.2015)
     mime-types-data (3.2016.0521)
     multi_json (1.12.1)
+    multi_xml (0.6.0)
     net-ssh (2.9.4)
     nokogiri (1.6.8-java)
     opennebula (5.0.2)
@@ -92,7 +102,8 @@ GEM
       nokogiri
       rbvmomi
     plissken (0.1.0)
-    rake (11.2.2)
+    public_suffix (2.0.5)
+    rake (10.4.2)
     rbvmomi (1.9.2)
       builder (~> 3.2)
       json (>= 1.8)
@@ -123,7 +134,7 @@ GEM
     thor (0.19.1)
     tins (1.12.0)
     trollop (2.1.2)
-    warbler (2.0.3)
+    warbler (2.0.4)
       jruby-jars (>= 9.0.0.0)
       jruby-rack (>= 1.1.1, < 1.3)
       rake (>= 10.1.0)
@@ -136,6 +147,7 @@ DEPENDENCIES
   aws-sdk (~> 2)
   contracts (~> 0.9, <= 0.11)
   coveralls
+  iglu-ruby-client (>= 0.1.0)
   jdbc-postgres
   mime-types
   plissken (~> 0.1.0)
