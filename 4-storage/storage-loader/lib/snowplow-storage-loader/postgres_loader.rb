@@ -1,4 +1,4 @@
-# Copyright (c) 2013-2015 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2013-2017 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -14,6 +14,7 @@
 # License::   Apache License Version 2.0
 
 require 'jdbc/postgres'
+require 'contracts'
 
 Jdbc::Postgres.load_driver
 
@@ -21,6 +22,8 @@ Jdbc::Postgres.load_driver
 module Snowplow
   module StorageLoader
     module PostgresLoader
+
+      include Contracts
 
       # Constants for the load process
       EVENT_FILES = "part-*"
@@ -62,7 +65,7 @@ module Snowplow
           post_processing = "ANALYZE " + (post_processing || "")
         end
 
-        schema = target[:schema] || "atomic"
+        schema = target[:schema]
         events_table = schema + ".events"
 
         unless post_processing.nil?
@@ -86,7 +89,7 @@ module Snowplow
       def self.copy_via_stdin(target, files)
         puts "Opening database connection ..."
 
-        schema = target[:schema] || "atomic"
+        schema = target[:schema]
         events_table = schema + ".events"
 
         conn = get_connection(target)
@@ -178,7 +181,7 @@ module Snowplow
         props = java.util.Properties.new
         props.set_property :user, target[:username]
         props.set_property :password, target[:password]
-        props.set_property :sslmode, target.fetch(:ssl_mode, "disable")
+        props.set_property :sslmode, fix_sslmode(target[:sslMode])
         props.set_property :tcpKeepAlive, "true" # TODO: make this configurable if any adverse effects
 
         # Used instead of Java::JavaSql::DriverManager.getConnection to prevent "no suitable driver found" error
@@ -198,6 +201,11 @@ module Snowplow
         Dir[File.join(events_dir, '**', 'atomic-events', EVENT_FILES)].select { |f|
           File.file?(f) # In case of a dir ending in .tsv
         }
+      end
+
+      Contract String => String
+      def self.fix_sslmode(ssl_mode)
+        ssl_mode.downcase.tr('_', '-')
       end
 
     end

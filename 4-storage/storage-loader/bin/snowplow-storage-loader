@@ -38,7 +38,7 @@ begin
 
   # Download files if required
   unless config[:skip].include?('download')
-    if config[:download_required]
+    if config[:storage][:download_required]
       loader::S3Tasks.download_events(config)
     end
   end
@@ -49,11 +49,11 @@ begin
 
     # Loop through all targets
     config[:storage][:targets].each { |t|
-      case t[:type]
-        when 'redshift'
-          loader::RedshiftLoader.load_events_and_shredded_types(config, t, snowplow_tracking_enabled)
-        when 'postgres'
-          loader::PostgresLoader.load_events(config[:storage][:download][:folder], t, config[:skip], config[:include], snowplow_tracking_enabled)
+      case t.schema.name
+        when 'redshift_config'
+          loader::RedshiftLoader.load_events_and_shredded_types(config, t.data, snowplow_tracking_enabled)
+        when 'postgresql_config'
+          loader::PostgresLoader.load_events(config[:storage][:download][:folder], t.data, config[:skip], config[:include], snowplow_tracking_enabled)
       end
     }
   end
