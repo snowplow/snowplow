@@ -62,8 +62,11 @@ module Snowplow
           post_processing = "ANALYZE " + (post_processing || "")
         end
 
+        schema = target[:schema] || "atomic"
+        events_table = schema + ".events"
+
         unless post_processing.nil?
-          status = execute_queries(target, [ "#{post_processing}#{target[:table]};" ] )
+          status = execute_queries(target, [ "#{post_processing}#{events_table};" ] )
           unless status == []
             raise DatabaseLoadError, "#{status[1]} error executing #{status[0]}: #{status[2]}"
           end
@@ -83,11 +86,13 @@ module Snowplow
       def self.copy_via_stdin(target, files)
         puts "Opening database connection ..."
 
-        conn = get_connection(target)
+        schema = target[:schema] || "atomic"
+        events_table = schema + ".events"
 
+        conn = get_connection(target)
         conn.setAutoCommit(false)
 
-        copy_statement = "COPY #{target[:table]} FROM STDIN WITH CSV ESCAPE E'#{ESCAPE_CHAR}' QUOTE E'#{QUOTE_CHAR}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}'"
+        copy_statement = "COPY #{events_table} FROM STDIN WITH CSV ESCAPE E'#{ESCAPE_CHAR}' QUOTE E'#{QUOTE_CHAR}' DELIMITER '#{EVENT_FIELD_SEPARATOR}' NULL '#{NULL_STRING}'"
 
         status = []
 
