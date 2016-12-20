@@ -24,6 +24,7 @@ require_relative 'snowplow-storage-loader/postgres_loader'
 require_relative 'snowplow-storage-loader/shredded_type'
 require_relative 'snowplow-storage-loader/redshift_loader'
 require_relative 'snowplow-storage-loader/sanitization'
+require_relative 'snowplow-storage-loader/bigquery_loader'
 
 module Snowplow
   module StorageLoader

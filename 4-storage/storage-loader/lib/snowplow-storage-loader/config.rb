@@ -30,7 +30,9 @@ module Snowplow
       # TODO: would be nice to move this to using Kwalify
       # TODO: would be nice to support JSON as well as YAML
 
-      @@storage_targets = Set.new(%w(redshift postgres elasticsearch))
+      @@storage_targets = Set.new(%w(redshift postgres bigquery))
+      @@download_required_targets = Set.new(%w(postgres bigquery))
+      @@processing_required_targets = Set.new(%w(bigquery))
 
       # Return the configuration loaded from the supplied YAML file, plus
       # the additional constants above.
@@ -72,17 +74,27 @@ module Snowplow
         
         config[:storage][:download][:folder] = Sluice::Storage::trail_slash(config[:storage][:download][:folder])
 
-        config[:storage][:targets].each { |t|
+        config[:storage][:targets].each do |t|
           # Check we recognise the storage target 
           unless @@storage_targets.include?(t[:type]) 
             raise ConfigError, "Storage type '#{t[:type]}' not supported"
           end
-        }
-            
-        # Determine whether we need to download events
-        config[:download_required] = config[:storage][:targets].count { |t| t[:type] == "postgres" } > 0
 
-        # If Postgres is the target, check that the download folder exists and is empty
+          if @@download_required_targets.include?(t[:type])
+            config[:download_required] = true
+          end
+
+          if @@processing_required_targets.include?(t[:type])
+            unless File.directory?(t[:processing_dir])
+              raise ConfigError, "Processing folder '#{t[:processing_dir]}' not found"
+            end
+          
+            if !(Dir.entries(t[:processing_dir]) - %w{ . .. }).empty?
+              raise ConfigError, "Processing folder '#{t[:processing_dir]}' is not empty"
+            end
+          end
+        end
+
         if config[:download_required]
           # Check that the download folder exists...
           unless File.directory?(config[:storage][:download][:folder])

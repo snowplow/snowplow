@@ -58,7 +58,7 @@ enrich:
   output_compression: NONE # Compression only supported with Redshift, set to NONE if you have Postgres targets. Allowed formats: NONE, GZIP
 storage:
   download:
-    folder: # Postgres-only config option. Where to store the downloaded files. Leave blank for Redshift
+    folder: # Postgres and BigQuery config option. Where to store the downloaded files. Leave blank for Redshift
   targets:
     - name: "My Redshift database"
       type: redshift
@@ -71,6 +71,10 @@ storage:
       password: ADD HERE
       maxerror: 1 # Stop loading on first error, or increase to permit more load errors
       comprows: 200000 # Default for a 1 XL node cluster. Not used unless --include compupdate specified
+      schema: # Not required for Redshift
+      replace: # Not required for Redshift
+      timezone: # Not required for Redshift
+      processing_dir: # Not required for Redshift
     - name: "My PostgreSQL database"
       type: postgres
       host: ADD HERE # Hostname of database server
@@ -82,6 +86,10 @@ storage:
       password: ADD HERE
       maxerror: # Not required for Postgres
       comprows: # Not required for Postgres
+      schema: Not required for Postgres
+      replace: Not required for Postgres
+      timezone: Not required for Postgres
+      processing_dir: Not required for Postgres
     - name: "My Elasticsearch database"
       type: elasticsearch
       host: ADD HERE # The Elasticsearch endpoint
@@ -95,6 +103,28 @@ storage:
       es_nodes_wan_only: false # Set to true if using Amazon Elasticsearch Service
       maxerror: # Not required for Elasticsearch
       comprows: # Not required for Elasticsearch
+      schema: Not required for Elasticsearch
+      replace: Not required for Elasticsearch
+      timezone: Not required for Elasticsearch
+      processing_dir: Not required for Elasticsearch
+    - name: "My BigQuery dataset"
+      type: bigquery
+      host: # Not required for BigQuery
+      database: ADD HERE # Name of dataset
+      port: #  Not required for BigQuery
+      sources: #  Not required for BigQuery
+      ssl_mode: #  Not required for BigQuery
+      table: ADD HERE # Prefix for date partitioned tables
+      username: # Not required for BigQuery
+      password: # Not required for BigQuery
+      es_nodes_wan_only: false # Not required for BigQuery
+      maxerror: ADD HERE # Stop loading on first error, or increase to permit more load errors
+      comprows: # Not required for BigQuery
+      schema: ADD HERE # Local path to json schema
+      replace: false # True if table date need to be replaced
+      timezone: ADD HERE # Timezone to partition the table by date
+      processing_dir: ADD HERE # Local directory to process the events
+
 monitoring:
   tags: {} # Name-value pairs describing this job
   logging:

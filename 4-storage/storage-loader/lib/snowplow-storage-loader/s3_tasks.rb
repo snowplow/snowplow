@@ -31,17 +31,17 @@ module Snowplow
       #
       # Parameters:
       # +config+:: the hash of configuration options
-      def self.download_events(config)
+      # +in_location+:: S3 location of In Bucket
+      def self.download_events(config, in_bucket)
         puts "Downloading Snowplow events..."
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:aws][:s3][:region],
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
-        s3.host = region_to_safe_host([:aws][:s3][:region])
-
+        
         # Get S3 location of In Bucket plus local directory
-        in_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:shredded][:good])
+        in_location = Sluice::Storage::S3::Location.new(in_bucket)
         download_dir = config[:storage][:download][:folder]
 
         # Download
