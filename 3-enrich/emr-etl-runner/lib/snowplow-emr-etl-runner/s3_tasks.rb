@@ -121,14 +121,14 @@ module Snowplow
 
         # Check whether our processing directory is empty
         unless Sluice::Storage::S3::is_empty?(s3, processing_location)
-          raise DirectoryNotEmptyError, "Should not stage files for enrichment, processing bucket #{processing_location} is not empty"
+          raise DirectoryNotEmptyError, "Should not stage files for enrichment, processing bucket #{processing_location} is not empty. Try running with --skip staging"
         end
 
         # Early check whether our enrichment directory is empty. We do a late check too
         unless args[:skip].include?('emr') or args[:skip].include?('enrich')
           enriched_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:enriched][:good])
           unless Sluice::Storage::S3::is_empty?(s3, enriched_location)
-            raise DirectoryNotEmptyError, "Should not stage files for enrichment, #{enriched_location} is not empty"
+            raise DirectoryNotEmptyError, "Should not stage files for enrichment, #{enriched_location} is not empty. Try running with --skip staging,enrich"
           end
         end
 
@@ -136,7 +136,7 @@ module Snowplow
         unless args[:skip].include?('emr') or args[:skip].include?('shred')
           shred_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:shredded][:good])
           unless Sluice::Storage::S3::is_empty?(s3, shred_location)
-            raise DirectoryNotEmptyError, "Should not stage files for shredding, #{shred_location} is not empty"
+            raise DirectoryNotEmptyError, "Should not stage files for shredding, #{shred_location} is not empty. Try running with --skip staging,emr"
           end
         end
 
@@ -172,14 +172,14 @@ module Snowplow
         end
       end
 
-      # Moves (archives) the processed CloudFront logs to an archive bucket.
+      # Moves (archives) the processed collector logs to an archive bucket.
       # Prevents the same log files from being processed again.
       #
       # Parameters:
       # +config+:: the hash of configuration options
       Contract ConfigHash => nil
       def self.archive_logs(config)
-        Monitoring::Logging::logger.debug 'Archiving CloudFront logs...'
+        Monitoring::Logging::logger.debug 'Archiving collector logs...'
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:aws][:s3][:region],
