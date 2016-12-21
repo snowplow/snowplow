@@ -430,13 +430,11 @@ module Snowplow
       def get_elasticsearch_steps(config, assets, enrich, shred, failure_storages)
 
         # The default sources are the enriched and shredded errors generated for this run
-        default_sources = []
-        default_sources << self.class.partition_by_run(config[:aws][:s3][:buckets][:enriched][:bad], @run_id) if enrich
-        default_sources << self.class.partition_by_run(config[:aws][:s3][:buckets][:shredded][:bad], @run_id) if shred
+        sources = []
+        sources << self.class.partition_by_run(config[:aws][:s3][:buckets][:enriched][:bad], @run_id) if enrich
+        sources << self.class.partition_by_run(config[:aws][:s3][:buckets][:shredded][:bad], @run_id) if shred
 
         steps = failure_storages.flat_map { |target|
-
-          sources = target[:sources] || default_sources
 
           sources.map { |source|
             step = ScaldingStep.new(
@@ -515,6 +513,7 @@ module Snowplow
       # +main_class+:: Java main class to run
       # +folders+:: hash of in, good, bad, errors S3/HDFS folders
       # +extra_step_args+:: additional arguments to pass to the step
+      # +targets+:: list of targets parsed from self-describing JSONs
       #
       # Returns a step ready for adding to the jobflow.
       Contract String, String, String, Hash, Hash => ScaldingStep
