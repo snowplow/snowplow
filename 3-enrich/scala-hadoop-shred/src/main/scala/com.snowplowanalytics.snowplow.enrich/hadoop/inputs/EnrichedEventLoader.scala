@@ -48,6 +48,7 @@ object EnrichedEventLoader {
   private val FieldCount = 108
 
   private object FieldIndexes { // 0-indexed
+    val etlTstamp = 2
     val collectorTstamp = 3
     val eventId = 6
     val contexts = 52
@@ -99,8 +100,12 @@ object EnrichedEventLoader {
     val collectorTstamp = validateTimestamp("collector_tstamp", fields(FieldIndexes.collectorTstamp))
     for (tstamp <- collectorTstamp) { event.collector_tstamp = tstamp }
 
-    (eventId.toValidationNel |@| collectorTstamp.toValidationNel) {
-      (_,_) => event
+    // Get and validate the etl timestamp
+    val etlTstamp = validateTimestamp("etl_tstamp", fields(FieldIndexes.etlTstamp))
+    for (tstamp <- etlTstamp) { event.etl_tstamp = tstamp }
+
+    (eventId.toValidationNel |@| collectorTstamp.toValidationNel |@| etlTstamp.toValidationNel) {
+      (_,_,_) => event
     }
   }
 

@@ -85,6 +85,15 @@ object JobSpecHelpers {
   }
 
   /**
+    * Base64-urlsafe encoded version of local (test-only) DynamoDB duplicates storage
+    */
+  private val DuplicateStorageConfig = {
+    val encoder = new Base64(true) // true means "url safe"
+    new String(encoder.encode(SpecHelpers.DuplicateStorageConfig.getBytes)
+    )
+  }
+
+  /**
    * A case class to make it easy to write out input
    * lines for Scalding jobs without manually appending
    * line numbers.
@@ -161,7 +170,7 @@ object JobSpecHelpers {
    *         objects for the output, bad rows
    *         and exceptions temporary directories.
    */
-  def runJobInTool(lines: Lines): Sinks = {
+  def runJobInTool(lines: Lines, enableCrossbatchDedupe: Boolean = false): Sinks = {
 
     def mkTmpDir(tag: String, createParents: Boolean = false, containing: Option[Lines] = None): File = {
       val f = File.createTempFile(s"snowplow-shred-job-${tag}-", "")
@@ -175,13 +184,16 @@ object JobSpecHelpers {
     val badRows    = mkTmpDir("bad-rows")
     val exceptions = mkTmpDir("exceptions")  
 
-    val args = Array[String]("com.snowplowanalytics.snowplow.enrich.hadoop.ShredJob", "--local",
-      "--input_folder",      input.getAbsolutePath,
-      "--output_folder",     output.getAbsolutePath,
-      "--bad_rows_folder",   badRows.getAbsolutePath,
-      "--exceptions_folder", exceptions.getAbsolutePath,
-      "--iglu_config",       IgluConfig)
+    val duplicateStorageArgs = if (enableCrossbatchDedupe && SpecHelpers.CI) List("--duplicate_storage_config", DuplicateStorageConfig) else Nil
 
+    val args: Array[String] = (List[String]("com.snowplowanalytics.snowplow.enrich.hadoop.ShredJob", "--local",
+      "--input_folder",             input.getAbsolutePath,
+      "--output_folder",            output.getAbsolutePath,
+      "--bad_rows_folder",          badRows.getAbsolutePath,
+      "--exceptions_folder",        exceptions.getAbsolutePath,
+      "--iglu_config",              IgluConfig) ++
+      duplicateStorageArgs
+      ).toArray
 
     // Execute
     Tool.main(args)
