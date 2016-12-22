@@ -14,21 +14,14 @@ package com.snowplowanalytics
 package snowplow
 package enrich
 
-// Jackson
-import com.fasterxml.jackson.databind.JsonNode
-
 // JSON Schema Validator
 import com.github.fge.jsonschema.core.report.ProcessingMessage
 
 // Scalaz
 import scalaz._
-import Scalaz._
 
 // Iglu Scala Client
 import iglu.client.JsonSchemaPair
-
-// Snowplow Common Enrich
-import common.outputs.EnrichedEvent
 
 /**
  * Scala package object to hold types,
@@ -47,6 +40,7 @@ package object hadoop {
 
   /**
    * Convenient for passing around the parts of an event
+   * event_id, fingerprint, list of self-describing JSONs, etl_tstamp
    */
-  type EventComponents = Tuple3[String, String, List[JsonSchemaPair]]
+  type EventComponents = Tuple4[String, String, List[JsonSchemaPair], String]
 }

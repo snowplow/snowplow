@@ -39,6 +39,7 @@ object SnowplowHadoopShredBuild extends Build {
         Libraries.jsonValidator,
         Libraries.yodaTime,
         Libraries.yodaConvert,
+        Libraries.dynamodb,
         // Scala
         Libraries.json4sJackson,
         Libraries.commonEnrich,
