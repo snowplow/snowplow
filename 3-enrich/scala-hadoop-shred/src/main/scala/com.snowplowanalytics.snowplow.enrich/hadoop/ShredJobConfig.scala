@@ -35,6 +35,7 @@ import common.utils.ScalazArgs
 
 // This project
 import utils.JsonUtils
+import DuplicateStorage.DynamoDbConfig
 
 /**
  * The configuration for the SnowPlowEtlJob.
@@ -44,7 +45,9 @@ case class ShredJobConfig(
     outFolder: String,
     badFolder: String,
     exceptionsFolder: Option[String],
-    igluResolver: Resolver)
+    igluResolver: Resolver,
+    duplicatesStorage: Option[DynamoDbConfig]
+)
 
 /**
  * Module to handle configuration for
@@ -52,7 +55,8 @@ case class ShredJobConfig(
  */
 object ShredJobConfig {
 
-  private val IgluConfigArg = "iglu_config"
+  private[hadoop] val IgluConfigArg = "iglu_config"
+  private[hadoop] val DuplicateStorageConfigArg = "duplicate_storage_config"
 
   /**
    * Loads the Config from the Scalding
@@ -72,14 +76,23 @@ object ShredJobConfig {
     val exceptionsFolder = args.optionalz("exceptions_folder")
 
     val igluResolver = args.requiredz(IgluConfigArg) match {
-      case Failure(e) => e.failNel
+      case Failure(e) => e.failureNel
       case Success(s) => for {
-        node <- (base64ToJsonNode(s).toValidationNel: ValidatedNel[JsonNode])
+        node <- (base64ToJsonNode(s, IgluConfigArg).toValidationNel: ValidatedNel[JsonNode])
         reso <- Resolver.parse(node)
       } yield reso
     }
 
-    (inFolder.toValidationNel |@| outFolder.toValidationNel |@| badFolder.toValidationNel |@| exceptionsFolder.toValidationNel |@| igluResolver) { ShredJobConfig(_,_,_,_,_) }
+    val duplicateStorage = DynamoDbConfig.extract(args.optionalz(DuplicateStorageConfigArg), igluResolver)
+
+    (inFolder.toValidationNel |@|
+    outFolder.toValidationNel |@|
+    badFolder.toValidationNel |@|
+    exceptionsFolder.toValidationNel |@|
+    igluResolver |@|
+    duplicateStorage) {
+      ShredJobConfig(_,_,_,_,_,_)
+    }
   }
 
   /**
@@ -92,10 +105,10 @@ object ShredJobConfig {
    *         ProcessingMessages on
    *         Failure 
    */
-  private[hadoop] def base64ToJsonNode(str: String): Validated[JsonNode] =
+  private[hadoop] def base64ToJsonNode(str: String, option: String): Validated[JsonNode] =
     (for {
-      raw  <- ConversionUtils.decodeBase64Url(IgluConfigArg, str)
-      node <- JsonUtils.extractJson(IgluConfigArg, raw)
+      raw  <- ConversionUtils.decodeBase64Url(option, str)
+      node <- JsonUtils.extractJson(option, raw)
     } yield node).toProcessingMessage
 
 }

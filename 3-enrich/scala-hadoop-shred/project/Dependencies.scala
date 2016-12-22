@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -34,12 +34,14 @@ object Dependencies {
     val jsonValidator   = "2.2.3"
     val yodaTime        = "2.1"
     val yodaConvert     = "1.2"
+    val dynamodb = "1.10.75"
     // Scala
     val json4sJackson   = "3.2.11"
     val commonEnrich    = "0.23.0"
     val scalding        = "0.15.0"
     val scalaz7         = "7.0.0"
     val igluClient      = "0.4.0"
+
     // Scala (test only)
     val specs2          = "1.14" // Downgrade to prevent issues in job tests. WAS: "2.3.11"
     val scalazSpecs2    = "0.1.2"
@@ -57,6 +59,7 @@ object Dependencies {
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"   % V.jsonValidator
     val yodaTime         = "joda-time"                  %  "joda-time"               % V.yodaTime
     val yodaConvert      = "org.joda"                   %  "joda-convert"            % V.yodaConvert
+    val dynamodb         = "com.amazonaws"              %  "aws-java-sdk-dynamodb"    % V.dynamodb
     // Scala
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"          % V.json4sJackson
     val commonEnrich     = "com.snowplowanalytics"      %  "snowplow-common-enrich"  % V.commonEnrich
