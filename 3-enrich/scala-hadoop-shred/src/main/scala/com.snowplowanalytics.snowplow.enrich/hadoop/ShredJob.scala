@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -17,9 +17,10 @@ package hadoop
 
 // Java
 import java.util.UUID
-import java.io.{ StringWriter, PrintWriter }
+import java.io.{PrintWriter, StringWriter}
 
-import scalaz.Validation
+// Scalaz
+import scalaz.{ Validation, Success, Failure }
 
 // Scala
 import scala.util.control.NonFatal
@@ -32,7 +33,7 @@ import cascading.tap.SinkMode
 import com.twitter.scalding._
 
 // Snowplow Common Enrich
-import common.FatalEtlError
+import common.{ FatalEtlError, UnexpectedEtlException }
 import common.outputs.{
   EnrichedEvent,
   BadRow
@@ -49,6 +50,9 @@ import iglu.client.validation.ProcessingMessageMethods._
 
 // jackson
 import com.fasterxml.jackson.databind.JsonNode
+
+// AWS SDK
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughputExceededException
 
 // json4s
 import org.json4s.JObject
@@ -85,7 +89,7 @@ object ShredJob {
         event <- EnrichedEventLoader.toEnrichedEvent(line).toProcessingMessages
         fp     = getEventFingerprint(event)
         shred <- Shredder.shred(event)
-      } yield (event.event_id, fp, shred)
+      } yield (event.event_id, fp, shred, event.etl_tstamp)
     } catch {
       case NonFatal(nf) =>
         val errorWriter = new StringWriter
@@ -108,7 +112,7 @@ object ShredJob {
   def projectBads(all: ValidatedNel[EventComponents]): Option[ProcessingMessageNel] =
     all.fold(
       e => Some(e), // Nel -> Some(List) of ProcessingMessages
-      c => None)    // Discard
+      _ => None)    // Discard
 
   /**
    * Projects our Successes into a
@@ -263,11 +267,23 @@ class ShredJob(args: Args) extends Job(args) {
     e => throw FatalEtlError(e.map(_.toString)),
     c => c)
 
+  // Unpack duplicate storage. It can throw exception that can happen on initialization
+  // Configuration parsing exception will be thrown on `shredConfig` unpack
+  // Values are lazy to prevent serialization crash
+  lazy val duplicateStorage: Option[DuplicateStorage] =
+    shredConfig.duplicatesStorage.map(DuplicateStorage.initStorage) match {
+      case Some(validation) => validation.fold(e => throw new FatalEtlError(e.toString), c => Some(c))
+      case None => None       // Duplicate storage is optional
+    }
+
+  // Resolver is cloned because original one was initialized for one-time `DuplicateStorage` validation
+  // and cannot be serialized anymore
+  lazy val resolver = shredConfig.igluResolver.copy()
+
   // Aliases for our job
   val input = MultipleTextLineFiles(shredConfig.inFolder).read
   val goodJsonsOutput = PartitionedTsv(shredConfig.outFolder, ShredJob.ShreddedPartition, false, ('json), SinkMode.REPLACE)
   val badOutput = Tsv(shredConfig.badFolder)  // Technically JSONs but use Tsv for custom JSON creation
-  implicit val resolver = shredConfig.igluResolver
   val goodEventsOutput = MultipleTextLineFiles(ShredJob.getAlteredEnrichedOutputPath(shredConfig.outFolder))
 
   // Do we add a failure trap?
@@ -276,10 +292,38 @@ class ShredJob(args: Args) extends Job(args) {
     case None => input
   }
 
+  /**
+   * Try to store event components in duplicate storage and check if it was stored before
+   * If event is unique in storage - true will be returned,
+   * If event is already in storage, with different etlTstamp - false will be returned,
+   * If event is already in storage, but with same etlTstamp - true will be returned (previous shredding was interrupted),
+   * If storage is not configured - true will be returned.
+   * If provisioned throughput exception happened - interrupt whole job
+   * If other runtime exception happened - failure is returned to be used as bad row
+   *
+   * @param components triple of event_id, event_fingerprint, etl_timestamp
+   * @return boolean inside validation, denoting presence or absence of event in storage
+   */
+  @throws[UnexpectedEtlException]
+  def dedupeCrossBatch(components: (String, String, String)): ValidatedNel[Boolean] = {
+    (components, duplicateStorage) match {
+      case ((eventId, eventFingerprint, etlTstamp), Some(storage)) =>
+        try {
+          Success(storage.put(eventId, eventFingerprint, etlTstamp))
+        } catch {
+          case e: ProvisionedThroughputExceededException =>
+            throw UnexpectedEtlException(e.toString)
+          case NonFatal(e) =>
+            Failure(s"Cross-batch deduplication unexpected failure: ${e.toString}").toProcessingMessageNel
+        }
+      case _ => Success(true)
+    }
+  }
+
   // Scalding data pipeline
   val common = trappableInput
     .map('line -> 'output) { l: String =>
-      ShredJob.loadAndShred(l)
+      ShredJob.loadAndShred(l)(resolver)
     }
     .forceToDisk
 
@@ -291,16 +335,25 @@ class ShredJob(args: Args) extends Job(args) {
     .mapTo(('line, 'errors) -> 'json) { both: (String, ProcessingMessageNel) =>
       new BadRow(both._1, both._2).toCompactJson
     }
-    .write(badOutput)        // JSON containing line and error(s)
 
   // Handle good rows
   val good = common
-    .flatMap('output -> ('eventId, 'eventFingerprint, 'good)) { o: ValidatedNel[EventComponents] =>
+    .flatMap('output -> ('eventId, 'eventFingerprint, 'good, 'etlTstamp)) { o: ValidatedNel[EventComponents] =>
       ShredJob.projectGoods(o)
     }
     .groupBy('eventId, 'eventFingerprint) {
       _.take(1)               // Take only one event from group with identical eids and fingerprints
     }
+    .map(('eventId, 'eventFingerprint, 'etlTstamp) -> 'dedupeResult) { o: (String, String, String) =>
+      dedupeCrossBatch(o)
+    }
+    .filter('dedupeResult) { result: ValidatedNel[Boolean] =>
+      result match {
+        case Success(r) => r
+        case Failure(_) => false
+      }
+    }
+
 
   // Now count synthetic dupes (same id, different fingerprint)
   // This should be pretty tiny
@@ -316,6 +369,17 @@ class ShredJob(args: Args) extends Job(args) {
     .map('dupeCount -> 'newEventId) { count: Long =>
       ShredJob.generateNewEventId(count)
     }
+
+  // Write errors unioned with errors occurred during cross-batch deduplication
+  val badDupes = bad ++ good
+    .flatMap(('line, 'dedupeResult) -> 'json) { both: (String, ValidatedNel[Boolean]) =>
+      both._2 match {
+        case Failure(m) => Some(new BadRow(both._1, m).toCompactJson)
+        case _ => None
+      }
+    }
+    .write(badOutput)        // JSON containing line and error(s)
+
 
   // Create `duplicate` JSON contexts for good events having dupes
   // This creates not canonical contexts (with schema and data), but shredded hierarchies

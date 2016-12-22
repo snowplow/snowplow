@@ -194,7 +194,5 @@ class EventDeduplicationSpec extends Specification {
     "not write any bad row JSONs" in {
       Sinks.badRows must beEmptyFile
     }
-
-    Sinks.deleteAll()
   }
 }

@@ -35,6 +35,15 @@ object BuildSettings {
     // Slightly cleaner jar name
     assemblyJarName in assembly := { name.value + "-" + version.value + ".jar" },
 
+    // For AMI 4.5.0, could be removed in future versions
+    assemblyShadeRules in assembly := Seq(
+      ShadeRule.rename(
+        "com.amazonaws.**" -> "shadeaws.@1",
+        "com.fasterxml.**" -> "shadejackson.@1",
+        "org.apache.http.**" -> "shadehttp.@1"
+      ).inAll
+    ),
+
     // Drop these jars
     assemblyExcludedJars in assembly := {
       val cp = (fullClasspath in assembly).value
