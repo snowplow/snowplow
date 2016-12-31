@@ -15,7 +15,7 @@ GEM
     docile (1.1.5)
     domain_name (0.5.20160826)
       unf (>= 0.0.5, < 1.0.0)
-    elasticity (6.0.8)
+    elasticity (6.0.10)
       fog (~> 1.0)
       rest-client (~> 1.0)
       unf (~> 0.1)
@@ -140,7 +140,7 @@ DEPENDENCIES
   awrence (~> 0.1.0)
   contracts (~> 0.9, <= 0.11)
   coveralls
-  elasticity (~> 6.0.7)
+  elasticity (~> 6.0.10)
   rspec (~> 2.14, >= 2.14.1)
   sluice (~> 0.4.0)
   snowplow-tracker (~> 0.5.2)
