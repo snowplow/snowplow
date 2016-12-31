@@ -21,11 +21,6 @@ package com.snowplowanalytics.snowplow
 package storage.kinesis.elasticsearch
 
 // Amazon
-import com.amazonaws.services.kinesis.connectors.KinesisConnectorConfiguration
-import com.amazonaws.services.kinesis.connectors.elasticsearch.{
-  ElasticsearchEmitter,
-  ElasticsearchObject
-}
 import com.amazonaws.services.kinesis.connectors.interfaces.IEmitter
 import com.amazonaws.services.kinesis.connectors.{
   KinesisConnectorConfiguration,
@@ -80,7 +75,7 @@ import generated._
  * @param tracker a Tracker instance
  * @param maxConnectionWaitTimeMs the maximum amount of time
  *        we can attempt to send to elasticsearch
- * @param elasticsearchClientType The type of ES Client to use
+ * @param elasticsearchSender an ElasticsearchSender instance to use
  */
 class SnowplowElasticsearchEmitter(
   configuration: KinesisConnectorConfiguration,
@@ -88,20 +83,17 @@ class SnowplowElasticsearchEmitter(
   badSink: ISink,
   tracker: Option[Tracker] = None,
   maxConnectionWaitTimeMs: Long = 60000,
-  elasticsearchClientType: String = "transport",
+  elasticsearchSender: Option[ElasticsearchSender] = None,
   connTimeout: Int = 300000,
   readTimeout: Int = 300000
 ) extends IEmitter[EmitterInput] {
 
   private val Log = LogFactory.getLog(getClass)
 
-  private val newInstance: ElasticsearchSender = (
-    if (elasticsearchClientType == "http") {
-      new ElasticsearchSenderHTTP(configuration, tracker, maxConnectionWaitTimeMs, connTimeout, readTimeout)
-    } else {
-      new ElasticsearchSenderTransport(configuration, tracker, maxConnectionWaitTimeMs)
-    }
-  )
+  private val newInstance: ElasticsearchSender = elasticsearchSender match {
+    case None => new ElasticsearchSenderTransport(configuration, tracker, maxConnectionWaitTimeMs)
+    case Some(s) => s
+  }
 
   // An ISO valid timestamp formatter
   private val TstampFormat = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(DateTimeZone.UTC)
