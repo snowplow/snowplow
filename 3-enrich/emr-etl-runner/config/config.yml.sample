@@ -41,6 +41,11 @@ aws:
       master_instance_type: m1.medium
       core_instance_count: 2
       core_instance_type: m1.medium
+      core_instance_ebs:    # Optional. Attach an EBS volume to each core instance.
+        volume_size: 100    # Gigabytes
+        volume_type: "gp2"
+        volume_iops: 400    # Optional. Will only be used if volume_type is "io1"
+        ebs_optimized: false # Optional. Will default to true
       task_instance_count: 0 # Increase to use spot instances
       task_instance_type: m1.medium
       task_instance_bid: 0.015 # In USD. Adjust bid, or leave blank for non-spot-priced (i.e. on-demand) task instances
