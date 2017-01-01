@@ -133,6 +133,27 @@ module Snowplow
         @jobflow.master_instance_type = config[:aws][:emr][:jobflow][:master_instance_type]
         @jobflow.slave_instance_type  = config[:aws][:emr][:jobflow][:core_instance_type]
 
+        unless config[:aws][:emr][:jobflow][:core_instance_ebs].nil?
+          ebs_bdc = Elasticity::EbsBlockDeviceConfig.new
+
+          ebs_bdc.volume_type          = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_type]
+          ebs_bdc.size_in_gb           = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_size]
+          ebs_bdc.volumes_per_instance = 1
+          if config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_type] == "io1"
+            ebs_bdc.iops = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_iops]
+          end
+
+          ebs_c = Elasticity::EbsConfiguration.new
+          ebs_c.add_ebs_block_device_config(ebs_bdc)
+          ebs_c.ebs_optimized = true
+
+          unless config[:aws][:emr][:jobflow][:core_instance_ebs][:ebs_optimized].nil?
+            ebs_c.ebs_optimized = config[:aws][:emr][:jobflow][:core_instance_ebs][:ebs_optimized]
+          end
+
+          @jobflow.set_core_ebs_configuration(ebs_c)
+        end
+
         if config[:collectors][:format] == 'thrift'
           if @legacy
             [

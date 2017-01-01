@@ -21,6 +21,8 @@ module Snowplow
     include Contracts
 
     CompressionFormat = lambda { |s| %w(NONE GZIP).include?(s) }
+    VolumeTypes = lambda { |s| %w(standard gp2 io1).include?(s) }
+    PositiveInt = lambda { |i| i.is_a?(Integer) && i > 0 }
 
     # The Hash containing assets for Hadoop.
     AssetsHash = ({
@@ -78,6 +80,14 @@ module Snowplow
       :comprows => Maybe[Num]
       })
 
+    # The Hash containing the configuration for a core instance using EBS.
+    CoreInstanceEbsHash = ({
+      :volume_size => PositiveInt,
+      :volume_type => VolumeTypes,
+      :volume_iops => Maybe[PositiveInt],
+      :ebs_optimized => Maybe[Bool]
+      })
+
     # The Hash containing effectively the configuration YAML.
     ConfigHash = ({
       :aws => ({
@@ -104,6 +114,7 @@ module Snowplow
             :master_instance_type => String,
             :core_instance_count => Num,
             :core_instance_type => String,
+            :core_instance_ebs => Maybe[CoreInstanceEbsHash],
             :task_instance_count => Num,
             :task_instance_type => String,
             :task_instance_bid => Maybe[Num]
