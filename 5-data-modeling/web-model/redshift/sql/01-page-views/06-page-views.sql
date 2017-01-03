@@ -25,7 +25,7 @@ AS (
 
     -- user
 
-    um.user_id AS user_custom_id,
+    a.user_id AS user_custom_id,
     a.domain_userid AS user_snowplow_domain_id,
     a.network_userid AS user_snowplow_crossdomain_id,
 
@@ -226,9 +226,6 @@ AS (
 
   INNER JOIN scratch_user_identity_stitching.web_timing_context AS e
     ON a.page_view_id = e.page_view_id
-
-  LEFT JOIN web_user_identity_stitching.user_mapping as um
-    ON a.domain_userid = um.domain_userid
 
   WHERE a.br_family != 'Robot/Spider'
     AND a.useragent NOT SIMILAR TO '%(bot|crawl|slurp|spider|archiv|spinn|sniff|seo|audit|survey|pingdom|worm|capture|(browser|screen)shots|analyz|index|thumb|check|facebook|PingdomBot|PhantomJS|YandexBot|Twitterbot|a_archiver|facebookexternalhit|Bingbot|BingPreview|Googlebot|Baiduspider|360(Spider|User-agent)|semalt)%'

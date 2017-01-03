@@ -42,3 +42,5 @@ DROP TABLE IF EXISTS scratch_user_identity_stitching.web_events_time;
 DROP TABLE IF EXISTS scratch_user_identity_stitching.web_events_scroll_depth;
 DROP TABLE IF EXISTS scratch_user_identity_stitching.web_ua_parser_context;
 DROP TABLE IF EXISTS scratch_user_identity_stitching.web_timing_context;
+DROP TABLE IF EXISTS scratch_user_identity_stitching.user_mapping_cnt;
+DROP TABLE IF EXISTS scratch_user_identity_stitching.user_mapping;

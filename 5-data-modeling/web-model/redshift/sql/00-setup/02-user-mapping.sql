@@ -15,22 +15,30 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-DROP TABLE IF EXISTS web_user_identity_stitching.user_mapping;
-CREATE TABLE web_user_identity_stitching.user_mapping
+DROP TABLE IF EXISTS scratch_user_identity_stitching.user_mapping;
+CREATE TABLE scratch_user_identity_stitching.user_mapping
 
 AS (
 
 	SELECT
-	domain_userid,
 
-	user_id
+  	a.domain_userid,
 
-	FROM atomic.events
+	  a.user_id,
 
-	WHERE domain_userid IS NOT NULL
+    b.cnt
 
-	AND user_id IS NOT NULL
+	FROM atomic.events as a
 
-	group by 1,2
+  LEFT JOIN scratch_user_identity_stitching.user_mapping_cnt as b
+    ON a.domain_userid = b.domain_userid
+
+	WHERE a.domain_userid IS NOT NULL
+
+	AND a.user_id IS NOT NULL
+
+  AND b.cnt <= 1
+
+	GROUP BY 1,2,3
 
 );

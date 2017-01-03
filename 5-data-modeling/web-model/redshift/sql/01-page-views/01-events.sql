@@ -105,7 +105,7 @@ AS (
     INNER JOIN scratch_user_identity_stitching.web_page_context AS wp -- an INNER JOIN guarantees that all rows have a page view ID
       ON ev.event_id = wp.root_id
 
-    LEFT JOIN web_user_identity_stitching.user_mapping as um
+    LEFT JOIN scratch_user_identity_stitching.user_mapping as um
       ON ev.domain_userid = um.domain_userid
 
     WHERE ev.platform = 'web' AND ev.event_name = 'page_view' -- filtering on page view events removes the need for a FIRST_VALUE function
