@@ -15,27 +15,22 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-DROP TABLE IF EXISTS scratch_user_identity_stitching.web_page_context;
-CREATE TABLE scratch_user_identity_stitching.web_page_context
-  DISTKEY(page_view_id)
-  SORTKEY(page_view_id)
+DROP TABLE IF EXISTS web_user_identity_stitching.user_mapping;
+CREATE TABLE web_user_identity_stitching.user_mapping
+
 AS (
 
-  -- deduplicate the web page context in 2 steps
+	SELECT
+	domain_userid,
 
-  WITH prep AS (
+	user_id
 
-    SELECT
+	FROM atomic.events
 
-      root_id,
-      id AS page_view_id
+	WHERE domain_userid IS NOT NULL
 
-    FROM atomic.com_snowplowanalytics_snowplow_web_page_1
+	AND user_id IS NOT NULL
 
-    GROUP BY 1,2
-
-  )
-
-  SELECT * FROM prep WHERE root_id NOT IN (SELECT root_id FROM prep GROUP BY 1 HAVING COUNT(*) > 1) -- exclude all root ID with more than one page view ID
+	group by 1,2
 
 );

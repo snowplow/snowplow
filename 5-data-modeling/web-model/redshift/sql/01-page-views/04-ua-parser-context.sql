@@ -15,8 +15,8 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-DROP TABLE IF EXISTS scratch.web_ua_parser_context;
-CREATE TABLE scratch.web_ua_parser_context
+DROP TABLE IF EXISTS scratch_user_identity_stitching.web_ua_parser_context;
+CREATE TABLE scratch_user_identity_stitching.web_ua_parser_context
   DISTKEY(page_view_id)
   SORTKEY(page_view_id)
 AS (
@@ -44,7 +44,7 @@ AS (
 
     FROM atomic.com_snowplowanalytics_snowplow_ua_parser_context_1 AS ua
 
-    INNER JOIN scratch.web_page_context AS wp
+    INNER JOIN scratch_user_identity_stitching.web_page_context AS wp
       ON ua.root_id = wp.root_id
 
     GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12,13

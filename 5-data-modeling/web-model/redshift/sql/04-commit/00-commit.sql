@@ -17,28 +17,28 @@
 
 BEGIN;
 
-  DROP TABLE IF EXISTS web.page_views;
-  ALTER TABLE web.page_views_tmp RENAME TO page_views;
+  DROP TABLE IF EXISTS web_user_identity_stitching.page_views;
+  ALTER TABLE web_user_identity_stitching.page_views_tmp RENAME TO page_views;
 
 COMMIT;
 
 BEGIN;
 
-  DROP TABLE IF EXISTS web.sessions;
-  ALTER TABLE web.sessions_tmp RENAME TO sessions;
+  DROP TABLE IF EXISTS web_user_identity_stitching.sessions;
+  ALTER TABLE web_user_identity_stitching.sessions_tmp RENAME TO sessions;
 
 COMMIT;
 
 BEGIN;
 
-  DROP TABLE IF EXISTS web.users;
-  ALTER TABLE web.users_tmp RENAME TO users;
+  DROP TABLE IF EXISTS web_user_identity_stitching.users;
+  ALTER TABLE web_user_identity_stitching.users_tmp RENAME TO users;
 
 COMMIT;
 
-DROP TABLE IF EXISTS scratch.web_page_context;
-DROP TABLE IF EXISTS scratch.web_events;
-DROP TABLE IF EXISTS scratch.web_events_time;
-DROP TABLE IF EXISTS scratch.web_events_scroll_depth;
-DROP TABLE IF EXISTS scratch.web_ua_parser_context;
-DROP TABLE IF EXISTS scratch.web_timing_context;
+DROP TABLE IF EXISTS scratch_user_identity_stitching.web_page_context;
+DROP TABLE IF EXISTS scratch_user_identity_stitching.web_events;
+DROP TABLE IF EXISTS scratch_user_identity_stitching.web_events_time;
+DROP TABLE IF EXISTS scratch_user_identity_stitching.web_events_scroll_depth;
+DROP TABLE IF EXISTS scratch_user_identity_stitching.web_ua_parser_context;
+DROP TABLE IF EXISTS scratch_user_identity_stitching.web_timing_context;

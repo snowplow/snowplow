@@ -15,5 +15,5 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-CREATE SCHEMA IF NOT EXISTS scratch;
-CREATE SCHEMA IF NOT EXISTS web;
+CREATE SCHEMA IF NOT EXISTS scratch_user_identity_stitching;
+CREATE SCHEMA IF NOT EXISTS web_user_identity_stitching;
