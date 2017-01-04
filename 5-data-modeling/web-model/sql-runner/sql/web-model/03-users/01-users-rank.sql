@@ -15,7 +15,6 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-
 DROP TABLE IF EXISTS {{.scratch_schema}}.users_rank;
 CREATE TABLE {{.scratch_schema}}.users_rank
   DISTKEY(user_snowplow_domain_id)
