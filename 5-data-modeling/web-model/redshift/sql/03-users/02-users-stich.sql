@@ -20,7 +20,7 @@ CREATE TABLE web_user_identity_stitching.users_stich_tmp
   DISTKEY(user_id_combined)
   SORTKEY(first_session_start)
 
-  With Prep as (
+  WITH Prep AS (
 
       SELECT
 

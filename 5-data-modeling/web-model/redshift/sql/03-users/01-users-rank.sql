@@ -21,9 +21,13 @@ CREATE TABLE scratch_user_identity_stitching.users_rank
   DISTKEY(user_snowplow_domain_id)
   SORTKEY(first_session_start)
 AS (
+
 WITH prep AS (
+
 SELECT
+
   *,
+
   RANK (
 )
 OVER (PARTITION BY user_custom_id
@@ -31,8 +35,11 @@ ORDER BY first_session_start
 ) AS rank
 
 FROM web_user_identity_stitching.users_tmp
+
 )
 SELECT *
+
 FROM prep
+
 WHERE rank =1
 );
