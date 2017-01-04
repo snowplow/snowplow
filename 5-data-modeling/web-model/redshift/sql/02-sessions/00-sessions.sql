@@ -15,8 +15,8 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-DROP TABLE IF EXISTS web_user_identity_stitching.sessions_tmp;
-CREATE TABLE web_user_identity_stitching.sessions_tmp
+DROP TABLE IF EXISTS web.sessions_tmp;
+CREATE TABLE web.sessions_tmp
   DISTKEY(user_snowplow_domain_id)
   SORTKEY(session_start)
 AS (
@@ -44,7 +44,7 @@ AS (
 
       SUM(time_engaged_in_s) AS time_engaged_in_s
 
-    FROM web_user_identity_stitching.page_views_tmp
+    FROM web.page_views_tmp
 
     GROUP BY 1
     ORDER BY 1
@@ -204,7 +204,7 @@ AS (
     a.device_type,
     a.device_is_mobile
 
-  FROM web_user_identity_stitching.page_views_tmp AS a
+  FROM web.page_views_tmp AS a
 
   INNER JOIN prep AS b
     ON a.session_id = b.session_id

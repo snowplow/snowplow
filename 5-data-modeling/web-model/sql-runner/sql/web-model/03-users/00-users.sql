@@ -55,6 +55,7 @@ AS (
     a.user_custom_id,
     a.user_snowplow_domain_id,
     a.user_snowplow_crossdomain_id,
+    COALESCE(a.user_custom_id, a.user_snowplow_domain_id) AS user_id_combined,
 
     -- first sesssion: time
 

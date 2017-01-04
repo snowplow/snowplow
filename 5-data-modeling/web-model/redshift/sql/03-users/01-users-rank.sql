@@ -16,8 +16,8 @@
 -- License:     Apache License Version 2.0
 
 
-DROP TABLE IF EXISTS scratch_user_identity_stitching.users_rank;
-CREATE TABLE scratch_user_identity_stitching.users_rank
+DROP TABLE IF EXISTS scratch.users_rank;
+CREATE TABLE scratch.users_rank
   DISTKEY(user_snowplow_domain_id)
   SORTKEY(first_session_start)
 AS (
@@ -34,7 +34,7 @@ OVER (PARTITION BY user_custom_id
 ORDER BY first_session_start
 ) AS rank
 
-FROM web_user_identity_stitching.users_tmp
+FROM web.users_tmp
 
 )
 SELECT *

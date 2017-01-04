@@ -27,7 +27,7 @@ AS (
 
     SELECT
 
-      ev.user_id,
+      um.user_id,
       ev.domain_userid,
       ev.network_userid,
 
@@ -104,6 +104,9 @@ AS (
 
     INNER JOIN {{.scratch_schema}}.web_page_context AS wp -- an INNER JOIN guarantees that all rows have a page view ID
       ON ev.event_id = wp.root_id
+
+    LEFT JOIN {{.scratch_schema}}.user_mapping as um
+      ON ev.domain_userid = um.domain_userid
 
     WHERE ev.platform = 'web' AND ev.event_name = 'page_view' -- filtering on page view events removes the need for a FIRST_VALUE function
 

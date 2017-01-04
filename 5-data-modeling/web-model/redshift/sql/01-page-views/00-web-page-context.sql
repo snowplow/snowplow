@@ -15,8 +15,8 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-DROP TABLE IF EXISTS scratch_user_identity_stitching.web_page_context;
-CREATE TABLE scratch_user_identity_stitching.web_page_context
+DROP TABLE IF EXISTS scratch.web_page_context;
+CREATE TABLE scratch.web_page_context
   DISTKEY(page_view_id)
   SORTKEY(page_view_id)
 AS (

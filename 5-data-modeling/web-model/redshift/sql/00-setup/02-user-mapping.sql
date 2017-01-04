@@ -15,8 +15,8 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-DROP TABLE IF EXISTS scratch_user_identity_stitching.user_mapping;
-CREATE TABLE scratch_user_identity_stitching.user_mapping
+DROP TABLE IF EXISTS scratch.user_mapping;
+CREATE TABLE scratch.user_mapping
 
 AS (
 
@@ -30,7 +30,7 @@ AS (
 
 	FROM atomic.events as a
 
-  LEFT JOIN scratch_user_identity_stitching.user_mapping_cnt as b
+  LEFT JOIN scratch.user_mapping_cnt as b
     ON a.domain_userid = b.domain_userid
 
 	WHERE a.domain_userid IS NOT NULL

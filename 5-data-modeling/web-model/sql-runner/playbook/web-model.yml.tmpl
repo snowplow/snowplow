@@ -12,6 +12,16 @@
     :output_schema: web
     :timezone: Europe/London
 :steps:
+  - :name: 01-user-mapping_count
+    :queries:
+      - :name: 01-user-mapping_count
+        :file: web-model/00-setup/02-user-mapping.sql
+        :template: true
+  - :name: 02-user-mapping
+    :queries:
+      - :name: 02-user-mapping
+        :file: web-model/00-setup/02-user-mapping.sql
+        :template: true
   - :name: 00-web-page-context
     :queries:
       - :name: 00-web-page-context
@@ -56,6 +66,16 @@
     :queries:
       - :name: 00-users
         :file: web-model/03-users/00-users.sql
+        :template: true
+  - :name: 01-users-rank
+    :queries:
+      - :name: 01-users-rank
+        :file: web-model/03-users/01-users-rank.sql
+        :template: true
+  - :name: 02-users-stich.sql
+    :queries:
+      - :name: 02-users-stich.sql
+        :file: web-model/03-users/02-users-stich.sql.sql
         :template: true
   - :name: 00-commit
     :queries:

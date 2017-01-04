@@ -15,8 +15,8 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-DROP TABLE IF EXISTS scratch_user_identity_stitching.web_timing_context;
-CREATE TABLE scratch_user_identity_stitching.web_timing_context
+DROP TABLE IF EXISTS scratch.web_timing_context;
+CREATE TABLE scratch.web_timing_context
   DISTKEY(page_view_id)
   SORTKEY(page_view_id)
 AS (
@@ -51,7 +51,7 @@ AS (
 
     FROM atomic.org_w3_performance_timing_1 AS pt
 
-    INNER JOIN scratch_user_identity_stitching.web_page_context AS wp
+    INNER JOIN scratch.web_page_context AS wp
       ON pt.root_id = wp.root_id
 
     -- all values should be set and some have to be greater than 0 (not the case in about 1% of events)

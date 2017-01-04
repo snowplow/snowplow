@@ -15,8 +15,8 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-DROP TABLE IF EXISTS scratch_user_identity_stitching.user_mapping_cnt;
-CREATE TABLE scratch_user_identity_stitching.user_mapping_cnt
+DROP TABLE IF EXISTS scratch.user_mapping_cnt;
+CREATE TABLE scratch.user_mapping_cnt
 
 AS (
 
@@ -24,7 +24,7 @@ AS (
 
   	domain_userid,
 
-  	count(DISTINCT(user_id)) as cnt
+  	COUNT(DISTINCT(user_id)) as cnt
 
   	FROM atomic.events
 

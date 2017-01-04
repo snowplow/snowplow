@@ -15,34 +15,31 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-BEGIN;
 
-  DROP TABLE IF EXISTS web.page_views;
-  ALTER TABLE web.page_views_tmp RENAME TO page_views;
+DROP TABLE IF EXISTS {{.scratch_schema}}.users_rank;
+CREATE TABLE {{.scratch_schema}}.users_rank
+  DISTKEY(user_snowplow_domain_id)
+  SORTKEY(first_session_start)
+AS (
 
-COMMIT;
+WITH prep AS (
 
-BEGIN;
+SELECT
 
-  DROP TABLE IF EXISTS web.sessions;
-  ALTER TABLE web.sessions_tmp RENAME TO sessions;
+  *,
 
-COMMIT;
+  RANK (
+)
+OVER (PARTITION BY user_custom_id
+ORDER BY first_session_start
+) AS rank
 
-BEGIN;
+FROM {{.output_schema}}.users_tmp
 
-  DROP TABLE IF EXISTS web.users;
-  ALTER TABLE web.users_tmp RENAME TO users;
-  ALTER TABLE web.users_stich_tmp RENAME TO users_stich;
+)
+SELECT *
 
-COMMIT;
+FROM prep
 
-DROP TABLE IF EXISTS scratch.web_page_context;
-DROP TABLE IF EXISTS scratch.web_events;
-DROP TABLE IF EXISTS scratch.web_events_time;
-DROP TABLE IF EXISTS scratch.web_events_scroll_depth;
-DROP TABLE IF EXISTS scratch.web_ua_parser_context;
-DROP TABLE IF EXISTS scratch.web_timing_context;
-DROP TABLE IF EXISTS scratch.user_mapping_cnt;
-DROP TABLE IF EXISTS scratch.user_mapping;
-DROP TABLE IF EXISTS scratch.users_rank;
+WHERE rank =1
+);

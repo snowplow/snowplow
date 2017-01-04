@@ -15,8 +15,8 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-DROP TABLE IF EXISTS scratch_user_identity_stitching.web_events;
-CREATE TABLE scratch_user_identity_stitching.web_events
+DROP TABLE IF EXISTS scratch.web_events;
+CREATE TABLE scratch.web_events
   DISTKEY(page_view_id)
   SORTKEY(page_view_id)
 AS (
@@ -102,10 +102,10 @@ AS (
 
     FROM atomic.events AS ev
 
-    INNER JOIN scratch_user_identity_stitching.web_page_context AS wp -- an INNER JOIN guarantees that all rows have a page view ID
+    INNER JOIN scratch.web_page_context AS wp -- an INNER JOIN guarantees that all rows have a page view ID
       ON ev.event_id = wp.root_id
 
-    LEFT JOIN scratch_user_identity_stitching.user_mapping as um
+    LEFT JOIN scratch.user_mapping as um
       ON ev.domain_userid = um.domain_userid
 
     WHERE ev.platform = 'web' AND ev.event_name = 'page_view' -- filtering on page view events removes the need for a FIRST_VALUE function

@@ -15,8 +15,8 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-DROP TABLE IF EXISTS web_user_identity_stitching.users_tmp;
-CREATE TABLE web_user_identity_stitching.users_tmp
+DROP TABLE IF EXISTS web.users_tmp;
+CREATE TABLE web.users_tmp
   DISTKEY(user_snowplow_domain_id)
   SORTKEY(first_session_start)
 AS (
@@ -41,7 +41,7 @@ AS (
 
       SUM(time_engaged_in_s) AS time_engaged_in_s
 
-    FROM web_user_identity_stitching.sessions_tmp
+    FROM web.sessions_tmp
 
     GROUP BY 1
     ORDER BY 1
@@ -138,7 +138,7 @@ AS (
 
     a.app_id
 
-  FROM web_user_identity_stitching.sessions_tmp AS a
+  FROM web.sessions_tmp AS a
 
   INNER JOIN prep AS b
     ON a.user_snowplow_domain_id = b.user_snowplow_domain_id

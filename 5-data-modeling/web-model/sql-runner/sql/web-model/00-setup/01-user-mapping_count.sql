@@ -15,34 +15,22 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-BEGIN;
+DROP TABLE IF EXISTS {{.scratch_schema}}.user_mapping_cnt;
+CREATE TABLE {{.scratch_schema}}.user_mapping_cnt
 
-  DROP TABLE IF EXISTS web.page_views;
-  ALTER TABLE web.page_views_tmp RENAME TO page_views;
+AS (
 
-COMMIT;
+  SELECT
 
-BEGIN;
+  	domain_userid,
 
-  DROP TABLE IF EXISTS web.sessions;
-  ALTER TABLE web.sessions_tmp RENAME TO sessions;
+  	COUNT(DISTINCT(user_id)) as cnt
 
-COMMIT;
+  	FROM {{.input_schema}}.events
 
-BEGIN;
+  	WHERE domain_userid IS NOT NULL
 
-  DROP TABLE IF EXISTS web.users;
-  ALTER TABLE web.users_tmp RENAME TO users;
-  ALTER TABLE web.users_stich_tmp RENAME TO users_stich;
+  	AND user_id IS NOT NULL
 
-COMMIT;
-
-DROP TABLE IF EXISTS scratch.web_page_context;
-DROP TABLE IF EXISTS scratch.web_events;
-DROP TABLE IF EXISTS scratch.web_events_time;
-DROP TABLE IF EXISTS scratch.web_events_scroll_depth;
-DROP TABLE IF EXISTS scratch.web_ua_parser_context;
-DROP TABLE IF EXISTS scratch.web_timing_context;
-DROP TABLE IF EXISTS scratch.user_mapping_cnt;
-DROP TABLE IF EXISTS scratch.user_mapping;
-DROP TABLE IF EXISTS scratch.users_rank;
+  	GROUP BY 1
+);

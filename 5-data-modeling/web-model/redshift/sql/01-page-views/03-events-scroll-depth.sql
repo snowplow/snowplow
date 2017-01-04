@@ -15,8 +15,8 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-DROP TABLE IF EXISTS scratch_user_identity_stitching.web_events_scroll_depth;
-CREATE TABLE scratch_user_identity_stitching.web_events_scroll_depth
+DROP TABLE IF EXISTS scratch.web_events_scroll_depth;
+CREATE TABLE scratch.web_events_scroll_depth
   DISTKEY(page_view_id)
   SORTKEY(page_view_id)
 AS (
@@ -47,7 +47,7 @@ AS (
 
     FROM atomic.events AS ev
 
-    INNER JOIN scratch_user_identity_stitching.web_page_context AS wp
+    INNER JOIN scratch.web_page_context AS wp
       ON  ev.event_id = wp.root_id
 
     WHERE ev.event_name IN ('page_view', 'page_ping')

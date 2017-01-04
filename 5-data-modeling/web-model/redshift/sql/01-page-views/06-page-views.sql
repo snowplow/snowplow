@@ -15,8 +15,8 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-DROP TABLE IF EXISTS web_user_identity_stitching.page_views_tmp;
-CREATE TABLE web_user_identity_stitching.page_views_tmp
+DROP TABLE IF EXISTS web.page_views_tmp;
+CREATE TABLE web.page_views_tmp
   DISTKEY(user_snowplow_domain_id)
   SORTKEY(page_view_start)
 AS (
@@ -213,18 +213,18 @@ AS (
     e.onload_time_in_ms,
     e.total_time_in_ms
 
-  FROM scratch_user_identity_stitching.web_events AS a -- the INNER JOIN requires that all contexts are set
+  FROM scratch.web_events AS a -- the INNER JOIN requires that all contexts are set
 
-  INNER JOIN scratch_user_identity_stitching.web_events_time AS b
+  INNER JOIN scratch.web_events_time AS b
     ON a.page_view_id = b.page_view_id
 
-  INNER JOIN scratch_user_identity_stitching.web_events_scroll_depth AS c
+  INNER JOIN scratch.web_events_scroll_depth AS c
     ON a.page_view_id = c.page_view_id
 
-  INNER JOIN scratch_user_identity_stitching.web_ua_parser_context AS d
+  INNER JOIN scratch.web_ua_parser_context AS d
     ON a.page_view_id = d.page_view_id
 
-  INNER JOIN scratch_user_identity_stitching.web_timing_context AS e
+  INNER JOIN scratch.web_timing_context AS e
     ON a.page_view_id = e.page_view_id
 
   WHERE a.br_family != 'Robot/Spider'

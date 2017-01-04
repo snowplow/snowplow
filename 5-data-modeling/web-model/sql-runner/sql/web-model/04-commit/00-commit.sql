@@ -33,6 +33,7 @@ BEGIN;
 
   DROP TABLE IF EXISTS {{.output_schema}}.users;
   ALTER TABLE {{.output_schema}}.users_tmp RENAME TO users;
+  ALTER TABLE {{.output_schema}}.users_stich_tmp RENAME TO users_stich;
 
 COMMIT;
 
@@ -42,3 +43,6 @@ DROP TABLE IF EXISTS {{.scratch_schema}}.web_events_time;
 DROP TABLE IF EXISTS {{.scratch_schema}}.web_events_scroll_depth;
 DROP TABLE IF EXISTS {{.scratch_schema}}.web_ua_parser_context;
 DROP TABLE IF EXISTS {{.scratch_schema}}.web_timing_context;
+DROP TABLE IF EXISTS {{.scratch_schema}}.user_mapping_cnt;
+DROP TABLE IF EXISTS {{.scratch_schema}}.user_mapping;
+DROP TABLE IF EXISTS {{.scratch_schema}}.users_rank;
