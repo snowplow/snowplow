@@ -15,12 +15,14 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-DROP TABLE IF EXISTS {{.output_schema}}.users_stich_tmp;
-CREATE TABLE {{.output_schema}}.users_stich_tmp
+DROP TABLE IF EXISTS {{.output_schema}}.users_stitch_tmp;
+CREATE TABLE {{.output_schema}}.users_stitch_tmp
   DISTKEY(user_id_combined)
   SORTKEY(first_session_start)
 
-  WITH Prep AS (
+AS (
+
+WITH Prep AS (
 
       SELECT
 
@@ -142,4 +144,5 @@ CREATE TABLE {{.output_schema}}.users_stich_tmp
   FROM prep AS a
 
   LEFT JOIN {{.scratch_schema}}.users_rank AS b
-  ON a.user_id_combined = b.user_id_combined;
+  ON a.user_id_combined = b.user_id_combined
+  );

@@ -15,8 +15,8 @@
 -- Copyright:   Copyright (c) 2016 Snowplow Analytics Ltd
 -- License:     Apache License Version 2.0
 
-DROP TABLE IF EXISTS web.users_stich_tmp;
-CREATE TABLE web.users_stich_tmp
+DROP TABLE IF EXISTS web.users_stitch_tmp;
+CREATE TABLE web.users_stitch_tmp
   DISTKEY(user_id_combined)
   SORTKEY(first_session_start)
 
