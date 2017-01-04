@@ -33,6 +33,7 @@ BEGIN;
 
   DROP TABLE IF EXISTS web_user_identity_stitching.users;
   ALTER TABLE web_user_identity_stitching.users_tmp RENAME TO users;
+  ALTER TABLE web_user_identity_stitching.users_stich_tmp RENAME TO users_stich;
 
 COMMIT;
 
@@ -44,3 +45,4 @@ DROP TABLE IF EXISTS scratch_user_identity_stitching.web_ua_parser_context;
 DROP TABLE IF EXISTS scratch_user_identity_stitching.web_timing_context;
 DROP TABLE IF EXISTS scratch_user_identity_stitching.user_mapping_cnt;
 DROP TABLE IF EXISTS scratch_user_identity_stitching.user_mapping;
+DROP TABLE IF EXISTS scratch_user_identity_stitching.users_rank;
