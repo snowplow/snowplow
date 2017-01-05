@@ -1,4 +1,4 @@
-# Scala Hadoop Shred
+# Relational Database Shredder
 
 ## Introduction
 
