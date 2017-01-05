@@ -33,6 +33,12 @@ BEGIN;
 
   DROP TABLE IF EXISTS web.users;
   ALTER TABLE web.users_tmp RENAME TO users;
+
+COMMIT;
+
+BEGIN;
+
+  DROP TABLE IF EXISTS web.users_stitch;
   ALTER TABLE web.users_stitch_tmp RENAME TO users_stitch;
 
 COMMIT;

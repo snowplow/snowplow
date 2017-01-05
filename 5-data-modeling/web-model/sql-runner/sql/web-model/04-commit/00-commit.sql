@@ -33,6 +33,12 @@ BEGIN;
 
   DROP TABLE IF EXISTS {{.output_schema}}.users;
   ALTER TABLE {{.output_schema}}.users_tmp RENAME TO users;
+
+COMMIT;
+
+BEGIN;
+
+  DROP TABLE IF EXISTS {{.output_schema}}.users_stitch;
   ALTER TABLE {{.output_schema}}.users_stitch_tmp RENAME TO users_stitch;
 
 COMMIT;
