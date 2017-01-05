@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object SnowplowHadoopShredBuild extends Build {
+object SnowplowRelationalDatabaseShredderBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -24,7 +24,7 @@ object SnowplowHadoopShredBuild extends Build {
   }
 
   // Define our project, with basic project information and library dependencies
-  lazy val project = Project("snowplow-hadoop-shred", file("."))
+  lazy val project = Project("snowplow-relational-database-shredder", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
