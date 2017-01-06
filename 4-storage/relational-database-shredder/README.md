@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This is a [Scalding][scalding] job which:
+This is a [Spark][spark] job which:
 
 1. Reads Snowplow enriched events from S3
 2. Extracts any unstructured event JSONs and context JSONs found
@@ -10,7 +10,7 @@ This is a [Scalding][scalding] job which:
 4. Adds metadata to these JSONs to track their origins
 5. Writes these JSONs out to nested folders dependent on their schema
 
-It is designed to be run by the [EmrEtlRunner][emr-etl-runner] immediately after the [Scala Hadoop Enrich][scala-hadoop-enrich] job.
+It is designed to be run by the [EmrEtlRunner][emr-etl-runner] immediately after the [Spark Enrich][spark-enrich] job.
 
 ## Find out more
 
@@ -21,7 +21,7 @@ It is designed to be run by the [EmrEtlRunner][emr-etl-runner] immediately after
 
 ## Copyright and license
 
-Copyright 2014 Snowplow Analytics Ltd.
+Copyright 2014-2017 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
@@ -32,9 +32,9 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[scalding]: https://github.com/twitter/scalding/
+[spark]: http://spark.apache.org/
 [emr-etl-runner]: https://github.com/snowplow/snowplow/tree/master/3-enrich/emr-etl-runner
-[scala-hadoop-enrich]: https://github.com/snowplow/snowplow/tree/master/3-enrich/scala-hadoop-enrich
+[spark-enrich]: https://github.com/snowplow/snowplow/tree/master/3-enrich/spark-enrich
 
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
