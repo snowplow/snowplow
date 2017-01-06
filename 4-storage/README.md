@@ -8,13 +8,14 @@
 
 ## Available storage
 
-| Storage                       | Description                                                               | Status           |
-|-------------------------------|---------------------------------------------------------------------------|------------------|
-| [s3 / hive-storage][s1]      | Snowplow events stored in a Hive-compatible flatfile format on Amazon S3  | Production-ready |
-| [redshift-storage][s3] (1)   | Snowplow events stored in a table in [Amazon Redshift][redshift]         | Production-ready |
-| [postgres-storage][s2] (2)   | Snowplow events stored in a table in [PostgreSQL][postgres]              | Production-ready |
-| [storage-loader][s4]         | A Ruby application for loading Snowplow events into (1) and (2)           | Production-ready |
-| [kinesis-elasticsearch-sink][s5] | Snowplow events stored in [Elasticsearch][elasticsearch]             | Production-ready |
+| Storage                          | Description                                                               | Status           |
+|----------------------------------|-------------------------------------------------------------------------- |------------------|
+| [s3 / hive-storage][s1]          | Snowplow events stored in a Hive-compatible flatfile format on Amazon S3  | Production-ready |
+| [redshift-storage][s3] (1)       | Snowplow events stored in a table in [Amazon Redshift][redshift]          | Production-ready |
+| [postgres-storage][s2] (2)       | Snowplow events stored in a table in [PostgreSQL][postgres]               | Production-ready |
+| [storage-loader][s4]             | A Ruby application for loading Snowplow events into (1) and (2)           | Production-ready |
+| [kinesis-elasticsearch-sink][s5] | Snowplow events stored in [Elasticsearch][elasticsearch]                  | Production-ready |
+| [rdb-shredder][s6]               | The Snowplow Shred process for shredding JSONs for loading into Redshift  | Production-ready |
 
 ## Find out more
 
@@ -39,6 +40,7 @@
 [s3]: https://github.com/snowplow/snowplow/tree/master/4-storage/redshift-storage
 [s4]: https://github.com/snowplow/snowplow/tree/master/4-storage/storage-loader
 [s5]: https://github.com/snowplow/snowplow/tree/master/4-storage/kinesis-elasticsearch-sink
+[s6]: https://github.com/snowplow/snowplow/tree/master/4-storage/rdb-shredder
 
 [techdocs-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/techdocs.png
 [setup-image]: https://d3i6fms1cm1j0i.cloudfront.net/github/images/setup.png
