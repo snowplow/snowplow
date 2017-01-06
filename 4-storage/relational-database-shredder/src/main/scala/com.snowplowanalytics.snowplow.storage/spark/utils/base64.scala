@@ -14,16 +14,28 @@
  */
 package com.snowplowanalytics
 package snowplow
-package storage
+package storage.spark.utils
 
-// Iglu Scala Client
-import iglu.client.JsonSchemaPair
+// Jackson
+import com.fasterxml.jackson.databind.JsonNode
 
-/**
- * Scala package object to hold types, helper methods etc.
- * See: http://www.artima.com/scalazine/articles/package_objects.html
- */
-package object spark {
-  /** Convenient for passing around the parts of an event. */
-  type EventComponents = Tuple4[String, String, List[JsonSchemaPair], String]
+// Snowplow
+import enrich.common.ValidatedMessage
+import enrich.common.utils.{ConversionUtils, JsonUtils}
+import iglu.client.validation.ProcessingMessageMethods._
+
+object base64 {
+
+  /**
+   * Convert a base64-encoded JSON String into a JsonNode.
+   * @param str base64-encoded JSON
+   * @param field name of the field to be decoded
+   * @return a JsonNode on Success, a NonEmptyList of ProcessingMessages on Failure
+   */
+  def base64ToJsonNode(str: String, field: String): ValidatedMessage[JsonNode] =
+    (for {
+      raw  <- ConversionUtils.decodeBase64Url(field, str)
+      node <- JsonUtils.extractJson(field, raw)
+    } yield node).toProcessingMessage
+
 }
