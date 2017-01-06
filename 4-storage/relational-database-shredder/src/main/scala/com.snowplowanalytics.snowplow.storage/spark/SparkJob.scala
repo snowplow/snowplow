@@ -12,19 +12,24 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and
  * limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package storage
+package com.snowplowanalytics.snowplow.storage.spark
 
-// Snowplow
-import iglu.client.JsonSchemaPair
-import enrich.common.outputs.EnrichedEvent
+// Spark
+import org.apache.spark.SparkConf
+import org.apache.spark.sql.SparkSession
 
-/**
- * Scala package object to hold types, helper methods etc.
- * See: http://www.artima.com/scalazine/articles/package_objects.html
- */
-package object spark {
-  /** Convenient for passing around the parts of an event. */
-  type EventComponents = Tuple3[String, String, List[JsonSchemaPair]]
+/** Utility trait to mix in when writing a Spark job. */
+trait SparkJob {
+  def run(spark: SparkSession, args: Array[String]): Unit
+
+  def sparkConfig(): SparkConf
+
+  def main(args: Array[String]): Unit = {
+    val config = sparkConfig()
+    val spark = SparkSession.builder()
+      .config(config)
+      .getOrCreate()
+    run(spark, args)
+    spark.stop()
+  }
 }

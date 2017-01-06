@@ -12,19 +12,21 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and
  * limitations there under.
  */
-package com.snowplowanalytics
-package snowplow
-package storage
+package com.snowplowanalytics.snowplow.storage.spark
 
-// Snowplow
-import iglu.client.JsonSchemaPair
-import enrich.common.outputs.EnrichedEvent
+import org.specs2.mutable.SpecificationLike
+import org.specs2.specification.Fragments
+import org.specs2.specification.Step
 
 /**
- * Scala package object to hold types, helper methods etc.
- * See: http://www.artima.com/scalazine/articles/package_objects.html
+ * The content of `beforeAll` is executed before a spec and the content of `afterAll` is executed
+ * once the spec is done.
+ * TODO: To remove once specs2 has been updated.
  */
-package object spark {
-  /** Convenient for passing around the parts of an event. */
-  type EventComponents = Tuple3[String, String, List[JsonSchemaPair]]
+trait BeforeAfterAll extends SpecificationLike {
+  override def map(fragments: =>Fragments) =
+    Step(beforeAll) ^ fragments ^ Step(afterAll)
+
+  def beforeAll(): Unit
+  def afterAll(): Unit
 }
