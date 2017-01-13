@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -14,6 +14,7 @@
 # License::   Apache License Version 2.0
 
 require 'contracts'
+require 'iglu-client'
 
 module Snowplow
   module EmrEtlRunner
@@ -138,8 +139,7 @@ module Snowplow
       :storage => ({
         :download => ({
           :folder => Maybe[String]
-          }),
-        :targets => ArrayOf[TargetHash]
+          })
         }),
       :monitoring => ({
         :tags => HashOf[Symbol, String],
@@ -154,8 +154,21 @@ module Snowplow
         })
       })
 
+    # Path and content of JSON file
+    JsonFileHash = ({
+        :file => String,
+        :json => Hash[Symbol, nil]
+    })
+
     # The Array (Tuple3) containing the CLI arguments, configuration YAML, and configuration JSONs
-    ArgsConfigEnrichmentsResolverTuple = [ArgsHash, ConfigHash, ArrayOf[String], String]
+    ArgsConfigEnrichmentsResolverTuple = [ArgsHash, ConfigHash, ArrayOf[String], String, ArrayOf[JsonFileHash]]
+
+    # Storage targets grouped by purpose
+    TargetsHash = ({
+        :DUPLICATE_TRACKING => Maybe[Iglu::SelfDescribingJson],
+        :FAILED_EVENTS => ArrayOf[Iglu::SelfDescribingJson],
+        :ENRICHED_EVENTS => ArrayOf[Iglu::SelfDescribingJson]
+    })
 
   end
 end
