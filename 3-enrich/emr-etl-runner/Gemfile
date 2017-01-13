@@ -24,6 +24,7 @@ gem "elasticity", "~> 6.0.10"
 gem "sluice", "~> 0.4.0"
 gem "awrence", "~> 0.1.0"
 gem "snowplow-tracker", "~> 0.5.2"
+gem "iglu-ruby-client", ">= 0.1.0"
 
 group :development do
   gem "rspec", "~> 2.14", ">= 2.14.1"

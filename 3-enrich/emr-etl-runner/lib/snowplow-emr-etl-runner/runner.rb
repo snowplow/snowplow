@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,10 +10,12 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Alex Dean (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2017 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'contracts'
+require 'iglu-client'
+require 'json-schema'
 
 module Snowplow
   module EmrEtlRunner
@@ -24,12 +26,13 @@ module Snowplow
       # Supported options
       @@collector_format_regex = /^(?:cloudfront|clj-tomcat|thrift|(?:json\/.+\/.+)|(?:tsv\/.+\/.+)|(?:ndjson\/.+\/.+))$/
       @@skip_options = Set.new(%w(staging s3distcp emr enrich shred elasticsearch archive_raw))
+      @@storage_targets = Set.new(%w(redshift_config postgresql_config elastic_config amazon_dynamodb_config))
 
       include Monitoring::Logging
 
       # Initialize the class.
-      Contract ArgsHash, ConfigHash, ArrayOf[String], String => Runner
-      def initialize(args, config, enrichments_array, resolver)
+      Contract ArgsHash, ConfigHash, ArrayOf[String], String, ArrayOf[JsonFileHash] => Runner
+      def initialize(args, config, enrichments_array, resolver, targets_array)
 
         # Let's set our logging level immediately
         Monitoring::Logging::set_level config[:monitoring][:logging][:level]
@@ -37,8 +40,10 @@ module Snowplow
         @args = args
         @config = validate_and_coalesce(args, config)
         @enrichments_array = enrichments_array
-        @resolver = resolver
-
+        @resolver_config = resolver
+        resolver_config_json = JSON.parse(@resolver_config, {:symbolize_names => true})
+        @resolver = Iglu::Resolver.parse(resolver_config_json)
+        @targets = group_targets(validate_targets(targets_array))
         self
       end
 
@@ -65,7 +70,7 @@ module Snowplow
           while true
             begin
               tries_left -= 1
-              job = EmrJob.new(@args[:debug], enrich, shred, elasticsearch, s3distcp, archive_raw, @config, @enrichments_array, @resolver)
+              job = EmrJob.new(@args[:debug], enrich, shred, elasticsearch, s3distcp, archive_raw, @config, @enrichments_array, @resolver_config, @targets)
               job.run(@config)
               break
             rescue BootstrapFailureError => bfe
@@ -155,6 +160,53 @@ module Snowplow
         config
       end
 
+      # Validate array of self-describing JSONs
+      Contract ArrayOf[JsonFileHash] => ArrayOf[Iglu::SelfDescribingJson]
+      def validate_targets(targets)
+        targets.map do |j|
+          begin
+            self_describing_json = Iglu::SelfDescribingJson.parse_json(j[:json])
+            self_describing_json.validate(@resolver)
+            j[:json] = self_describing_json
+            j
+          rescue JSON::ParserError, JSON::Schema::ValidationError => e
+            print "Error in [#{j[:file]}] "
+            puts e.message
+            throw e
+            abort("Shutting down")
+          end
+        end.map do |j|
+          target_schema = j[:json].schema
+          target = target_schema.name
+          unless @@storage_targets.include?(target)
+            print "Error in [#{j[:file]}] "
+            puts "EmrEtlRunner doesn't support storage target configuration [#{target}] (schema [#{target_schema.as_uri}])"
+            puts "Possible options are: #{@@storage_targets.to_a.join(', ')}"
+            abort("Shutting down")
+          end
+          j[:json]
+        end
+      end
+
+      # Build Hash with some storage target for each purpose
+      Contract ArrayOf[Iglu::SelfDescribingJson] => TargetsHash
+      def group_targets(targets)
+        empty_targets = { :DUPLICATE_TRACKING => nil, :FAILED_EVENTS => [], :ENRICHED_EVENTS => [] }
+
+        loaded_targets = targets.group_by { |t| t.data[:purpose] }.map { |purpose, targets|
+          if targets.length == 0 && purpose.to_sym == :DUPLICATE_TRACKING
+            [purpose.to_sym, nil]
+          elsif targets.length == 0
+            [purpose.to_sym, []]
+          elsif purpose.to_sym == :DUPLICATE_TRACKING
+            [purpose.to_sym, targets[0]]
+          else
+            [purpose.to_sym, targets]
+          end
+        }.to_h
+
+        empty_targets.merge(loaded_targets)
+      end
     end
   end
 end

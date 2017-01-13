@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -15,6 +15,7 @@
 
 require 'optparse'
 require 'yaml'
+require 'json'
 require 'contracts'
 require 'erb'
 
@@ -53,8 +54,9 @@ module Snowplow
           opts.separator "Specific options:"
 
           opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config_file] = config }
-          opts.on('-n', '--enrichments ENRICHMENTS', 'enrichments directory') {|config| options[:enrichments_directory] = config}
+          opts.on('-n', '--enrichments ENRICHMENTS', 'enrichments directory') { |config| options[:enrichments_directory] = config }
           opts.on('-r', '--resolver RESOLVER', 'Iglu resolver file') {|config| options[:resolver_file] = config}
+          opts.on('-t', '--targets TARGETS', 'targets directory') { |config| options[:targets_directory] = config }
           opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
           opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
           opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
@@ -106,8 +108,9 @@ module Snowplow
         config = load_config(options[:config_file], optp)
         enrichments = load_enrichments(options[:enrichments_directory], optp)
         resolver = load_resolver(options[:resolver_file], optp)
+        targets = load_targets(options[:targets_directory])
 
-        [args, config, enrichments, resolver]
+        [args, config, enrichments, resolver, targets]
       end
 
     private
@@ -183,6 +186,20 @@ module Snowplow
         end
 
         File.read(resolver_file)
+      end
+
+      # Load configuration from JSONs
+      Contract Maybe[String] => ArrayOf[JsonFileHash]
+      def self.load_targets(targets_path)
+        if targets_path.nil?
+          []
+        else
+          Dir.entries(targets_path).select do |f|
+            not f.start_with?('.')
+          end.map do |f|
+            {:file => f, :json => JSON.parse(File.read(targets_path + '/' + f), {:symbolize_names => true}) }
+          end
+        end
       end
 
     end

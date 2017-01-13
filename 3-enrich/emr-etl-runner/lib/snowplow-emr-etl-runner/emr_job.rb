@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -20,6 +20,7 @@ require 'awrence'
 require 'json'
 require 'base64'
 require 'contracts'
+require 'iglu-client'
 
 # Global variable used to decide whether to patch Elasticity's AwsRequestV4 payload with Configurations
 # This is only necessary if we are loading Thrift with AMI >= 4.0.0
@@ -69,8 +70,8 @@ module Snowplow
       include Monitoring::Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String => EmrJob
-      def initialize(debug, enrich, shred, elasticsearch, s3distcp, archive_raw, config, enrichments_array, resolver)
+      Contract Bool, Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String, TargetsHash => EmrJob
+      def initialize(debug, enrich, shred, elasticsearch, s3distcp, archive_raw, config, enrichments_array, resolver, targets)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -364,18 +365,20 @@ module Snowplow
             @jobflow.add_step(copy_to_hdfs_step)
           end
 
+          duplicate_storage_config = self.class.build_duplicate_storage_json(targets[:DUPLICATE_TRACKING])
+
           shred_step = build_scalding_step(
             "Shred Enriched Events",
             assets[:shred],
             "enrich.hadoop.ShredJob",
-            { :in          => enrich_step_output,
-              :good        => shred_step_output,
-              :bad         => self.class.partition_by_run(csbs[:bad],    run_id),
-              :errors      => self.class.partition_by_run(csbs[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
+            { :in                 => enrich_step_output,
+              :good               => shred_step_output,
+              :bad                => self.class.partition_by_run(csbs[:bad],    run_id),
+              :errors             => self.class.partition_by_run(csbs[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
             },
             {
-              :iglu_config => self.class.build_iglu_config_json(resolver)
-            }
+              :iglu_config        => self.class.build_iglu_config_json(resolver)
+            }.merge(duplicate_storage_config)
           )
 
           # Late check whether our target directory is empty
@@ -400,7 +403,7 @@ module Snowplow
         end
 
         if elasticsearch
-          get_elasticsearch_steps(config, assets, enrich, shred).each do |step|
+          get_elasticsearch_steps(config, assets, enrich, shred, targets[:FAILED_EVENTS]).each do |step|
             @jobflow.add_step(step)
           end
         end
@@ -423,16 +426,15 @@ module Snowplow
 
       # Create one step for each Elasticsearch target for each source for that target
       #
-      Contract ConfigHash, Hash, Bool, Bool => ArrayOf[ScaldingStep]
-      def get_elasticsearch_steps(config, assets, enrich, shred)
-        elasticsearch_targets = config[:storage][:targets].select {|t| t[:type] == 'elasticsearch'}
+      Contract ConfigHash, Hash, Bool, Bool, ArrayOf[Iglu::SelfDescribingJson] => ArrayOf[ScaldingStep]
+      def get_elasticsearch_steps(config, assets, enrich, shred, failure_storages)
 
         # The default sources are the enriched and shredded errors generated for this run
         default_sources = []
         default_sources << self.class.partition_by_run(config[:aws][:s3][:buckets][:enriched][:bad], @run_id) if enrich
         default_sources << self.class.partition_by_run(config[:aws][:s3][:buckets][:shredded][:bad], @run_id) if shred
 
-        steps = elasticsearch_targets.flat_map { |target|
+        steps = failure_storages.flat_map { |target|
 
           sources = target[:sources] || default_sources
 
@@ -442,14 +444,14 @@ module Snowplow
               "com.snowplowanalytics.snowplow.storage.hadoop.ElasticsearchJob",
               ({
                 :input => source,
-                :host => target[:host],
-                :port => target[:port].to_s,
-                :index => target[:database],
-                :type => target[:table],
-                :es_nodes_wan_only => target[:es_nodes_wan_only] ? "true" : "false"
+                :host => target.data[:host],
+                :port => target.data[:port].to_s,
+                :index => target.data[:index],
+                :type => target.data[:type],
+                :es_nodes_wan_only => target.data[:nodesWanOnly] ? "true" : "false"
               }).reject { |k, v| v.nil? }
             )
-            step_name = "Errors in #{source} -> Elasticsearch: #{target[:name]}"
+            step_name = "Errors in #{source} -> Elasticsearch: #{target.data[:name]}"
             step.name << ": #{step_name}"
             step
           }
@@ -729,6 +731,16 @@ module Snowplow
         Base64.strict_encode64(resolver)
       end
 
+      Contract Maybe[Iglu::SelfDescribingJson] => Hash
+      def self.build_duplicate_storage_json(target)
+        if target.nil?
+          {}
+        else
+          { :duplicate_storage_config => Base64.strict_encode64(target.to_json.to_json) }
+        end
+
+      end
+
       # Builds the region-appropriate bucket name for Snowplow's
       # hosted assets. Has to be region-specific because of
       # https://github.com/boto/botocore/issues/424
@@ -781,7 +793,6 @@ module Snowplow
           codec == "gzip" ? "gz" : codec
         end
       end
-
     end
   end
 end

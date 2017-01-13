@@ -38,16 +38,17 @@ describe Runner do
       :end => nil,
       :skip => [],
       :process_enrich_location => nil,
-      :process_shred_location => nil
+      :process_shred_location => nil,
+      :targets_directory => nil
     }
 
-    args, config, enrichments, resolver = Cli.process_options(options, nil)
+    args, config, enrichments, resolver, targets = Cli.process_options(options, nil)
 
-    [args,config,enrichments,resolver]
+    [args, config, enrichments, resolver, targets]
   end
 
   it 'should be able to get some mock config' do
-    rgs, config, enrichments, resolver = get_mock_config
+    rgs, config, enrichments, resolver, tartgets = get_mock_config
     config[:collectors].should_not == nil
     config[:collectors][:format].should eq "cloudfront" # the sample is set to cloudfront
   end
@@ -75,95 +76,96 @@ describe Runner do
   end
 
   it 'should reject bogus skip stages' do
-    args, config, enrichments, resolver = get_mock_config
+    args, config, enrichments, resolver, targets = get_mock_config
     args[:skip] = ["lunch"]
-    expect {Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred', 'elasticsearch', or 'archive_raw', not 'lunch'")
+    expect {Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "Invalid option: skip can be 'staging', 'emr', 'enrich', 'shred', 'elasticsearch', or 'archive_raw', not 'lunch'")
+    puts targets.empty?
 
     %w(staging emr enrich shred elasticsearch archive_raw).each do |skip_arg|
       args[:skip] = [skip_arg]
-      Runner.new args, config, enrichments, resolver
+      Runner.new args, config, enrichments, resolver, targets
     end
   end
 
   it 'should reject an end date before a start date' do
-    args, config, enrichments, resolver = get_mock_config
+    args, config, enrichments, resolver, targets = get_mock_config
     args[:start] = "2015-12-11"
     args[:end] = "2015-11-11"
-    expect{Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "Invalid options: end date '#{args[:end]}' is before start date '#{args[:start]}'")
+    expect{Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "Invalid options: end date '#{args[:end]}' is before start date '#{args[:start]}'")
   end
 
   it 'should reject start and end date if not using cloudfront' do
-    args, config, enrichments, resolver = get_mock_config
+    args, config, enrichments, resolver, targets = get_mock_config
     args[:start] = "2015-12-11"
     args[:end] = "2015-12-12"
     config[:collectors][:format] = "clj-tomcat"
-    expect{Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'")
+    expect{Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'")
   end
 
   it 'should refuse to process shred and enrich together' do
-    args, config, enrichments, resolver = get_mock_config
+    args, config, enrichments, resolver, targets = get_mock_config
     args[:process_shred_location] = "something"
     args[:process_enrich_location] = "something"
-    expect{Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "Cannot process enrich and process shred, choose one")
+    expect{Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "Cannot process enrich and process shred, choose one")
   end
 
   it 'should reject the collector format "invalid"' do
-    args, config, enrichments, resolver = get_mock_config
+    args, config, enrichments, resolver, targets = get_mock_config
     config[:collectors][:format] = "invalid"
-    expect {Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "collector_format 'invalid' not supported")
+    expect {Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "collector_format 'invalid' not supported")
   end
 
   it 'should accept a valid tsv format in the form "tsv/something/something"' do
-    args, config, enrichments, resolver = get_mock_config
+    args, config, enrichments, resolver, targets = get_mock_config
     config[:collectors][:format] = "tsv"
-    expect {Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "collector_format 'tsv' not supported")
+    expect {Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "collector_format 'tsv' not supported")
     config[:collectors][:format] = "tsv/something"
-    expect {Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "collector_format 'tsv/something' not supported")
+    expect {Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "collector_format 'tsv/something' not supported")
     config[:collectors][:format] = "tsv/something/"
-    expect {Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "collector_format 'tsv/something/' not supported")
+    expect {Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "collector_format 'tsv/something/' not supported")
     config[:collectors][:format] = "tsv/something/something"
-    Runner.new args, config, enrichments, resolver
+    Runner.new args, config, enrichments, resolver, targets
   end
 
   it 'should accept the thrift collector format' do
-    args, config, enrichments, resolver = get_mock_config
+    args, config, enrichments, resolver, targets = get_mock_config
     config[:collectors][:format] = "thrift"
-    Runner.new args, config, enrichments, resolver
+    Runner.new args, config, enrichments, resolver, targets
   end
 
   it 'should acept the clj-tomcat collector format' do
-    args, config, enrichments, resolver = get_mock_config
+    args, config, enrichments, resolver, targets = get_mock_config
     config[:collectors][:format] = "clj-tomcat"
-    Runner.new args, config, enrichments, resolver
+    Runner.new args, config, enrichments, resolver, targets
   end
 
   it 'should accept the cloudfront collector format' do
-    args, config, enrichments, resolver = get_mock_config #defaults to cloudfront
-    Runner.new args, config, enrichments, resolver # this should work, args are legit
+    args, config, enrichments, resolver, targets = get_mock_config #defaults to cloudfront
+    Runner.new args, config, enrichments, resolver, targets # this should work, args are legit
   end
 
   it 'should accept the json collector format' do
-    args, config, enrichments, resolver = get_mock_config
+    args, config, enrichments, resolver, targets = get_mock_config
     config[:collectors][:format] = "json"
-    expect {Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "collector_format 'json' not supported")
+    expect {Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "collector_format 'json' not supported")
     config[:collectors][:format] = "json/something"
-    expect {Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "collector_format 'json/something' not supported")
+    expect {Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "collector_format 'json/something' not supported")
     config[:collectors][:format] = "json/something/"
-    expect {Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "collector_format 'json/something/' not supported")
+    expect {Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "collector_format 'json/something/' not supported")
     config[:collectors][:format] = "json/something/something"
-    Runner.new args, config, enrichments, resolver
+    Runner.new args, config, enrichments, resolver, targets
   end
 
   it 'should accept the ndjson collector format' do
-    args, config, enrichments, resolver = get_mock_config
+    args, config, enrichments, resolver, targets = get_mock_config
     config[:collectors][:format] = "ndjson"
-    expect {Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "collector_format 'ndjson' not supported")
+    expect {Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "collector_format 'ndjson' not supported")
     config[:collectors][:format] = "ndjson/something"
-    expect {Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "collector_format 'ndjson/something' not supported")
+    expect {Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "collector_format 'ndjson/something' not supported")
     config[:collectors][:format] = "ndjson/something/"
-    expect {Runner.new args, config, enrichments, resolver}.to raise_exception(ConfigError, "collector_format 'ndjson/something/' not supported")
+    expect {Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "collector_format 'ndjson/something/' not supported")
     config[:collectors][:format] = "ndjson/something/something"
-    Runner.new args, config, enrichments, resolver
+    Runner.new args, config, enrichments, resolver, targets
   end
 
 end
