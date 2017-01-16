@@ -111,10 +111,16 @@ object CljTomcatLoader extends Loader[String] {
       case CljTomcatRegex(date, time, _, _, ip, _, _, objct, _, refr, ua, qs, null, null) =>
         build(qs, date, time, ip, ua, refr, objct, None, None) // API, content type and request body all unavailable
 
-      // B. For a request without body or content type, to CljTomcat collector >= v0.7.0
+      // B: For a request without body and potentially a content type, to CljTomcat collector >= v0.7.0
+
+      // B.1 No body or content type
       // TODO: really we ought to be matching on "-", not-"-" and not-"-", "-" as well
       case CljTomcatRegex(date, time, _, _, ip, _, _, objct, _, refr, ua, qs, "-", "-") =>
-        build(qs, date, time, ip, ua, refr, objct, None, None) // API, content type and request body all unavailable      
+        build(qs, date, time, ip, ua, refr, objct, None, None) // API, content type and request body all unavailable   
+
+      // B.2 No body but has content type
+      case CljTomcatRegex(date, time, _, _, ip, _, _, objct, _, refr, ua, qs, ct, "-") =>
+        build(qs, date, time, ip, ua, refr, objct, ct.some, None) // API and request body unavailable       
 
       // C: For a request with content type and/or body, to CljTomcat collector >= v0.7.0
 
