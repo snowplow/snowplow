@@ -62,7 +62,7 @@ object Dependencies {
     val specs2           = "2.2.3"
     val scalazSpecs2     = "0.1.2"
     val scalaCheck       = "1.10.0"
-    val scalaUri         = "0.4.3"
+    val scalaUri         = "0.4.16"
     val scaldingArgs     = "0.11.2"
     val mockito          = "1.10.19"
   }

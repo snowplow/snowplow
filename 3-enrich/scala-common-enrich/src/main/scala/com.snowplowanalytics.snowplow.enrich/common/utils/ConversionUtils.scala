@@ -360,7 +360,7 @@ object ConversionUtils {
       URLEncodedUtils.parse(uri, encoding).map(p => (p.getName -> p.getValue)).toMap.success
     } catch {
       case NonFatal(e1) => try {
-        Uri.parse(uri.toString).query.params.toMap.success
+        Uri.parse(uri.toString).query.params.map(t => (t._1 -> t._2.getOrElse(""))).toMap.success
       } catch {
         case NonFatal(e2) =>
           s"Could not parse uri [$uri]. Apache Httpclient threw exception: [$e1]. Net-a-porter threw exception: [$e2]".fail
