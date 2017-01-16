@@ -36,7 +36,7 @@ object Dependencies {
     val commonsCodec     = "1.10"
     val yodaTime         = "2.2"
     val yodaConvert      = "1.2"
-    val useragent        = "1.19"
+    val useragent        = "1.20"
     val jacksonDatabind  = "2.2.3"
     val jsonValidator    = "2.2.3"
     val mavenArtifact    = "3.2.2"
