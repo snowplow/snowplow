@@ -596,6 +596,9 @@ module Snowplow
           rescue Elasticity::ThrottlingException => te
             logger.warn "Got Elasticity throttling exception #{te}, waiting 5 minutes before checking jobflow again"
             sleep(300)
+          rescue ArgumentError => ae
+            logger.warn "Got Elasticity argument error #{ae}, waiting 5 minutes before checking jobflow again"
+            sleep(300)
           rescue IOError => ioe
             logger.warn "Got IOError #{ioe}, waiting 5 minutes before checking jobflow again"
             sleep(300)
