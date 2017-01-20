@@ -116,23 +116,23 @@ object CloudfrontAccessLogAdapter {
                 case Nil => (errors, json)
                 case head :: tail => head match {
 
-                  case (name, "") => buildJson(errors, tail, json ~ (name, null))
+                  case (name, "") => buildJson(errors, tail, json ~ ((name, null)))
                   case ("timeTaken", field) => try {
-                        buildJson(errors, tail, json ~ ("timeTaken", field.toDouble))
+                        buildJson(errors, tail, json ~ (("timeTaken", field.toDouble)))
                       } catch {
                         case e: NumberFormatException => buildJson("Field [timeTaken]: cannot convert [%s] to Double".format(field) :: errors, tail, json)
                     }
                   case (name, field) if name == "csBytes" || name == "scBytes" => try {
-                        buildJson(errors, tail, json ~ (name, field.toInt))
+                        buildJson(errors, tail, json ~ ((name, field.toInt)))
                       } catch {
                         case e: NumberFormatException => buildJson("Field [%s]: cannot convert [%s] to Int".format(name, field) :: errors, tail, json)
                       }
                   case (name, field) if name == "csReferer" || name == "csUserAgent" => ConversionUtils.doubleDecode(name, field).fold(
                     e => buildJson(e :: errors, tail, json),
-                    s => buildJson(errors, tail, json ~ (name, s))
+                    s => buildJson(errors, tail, json ~ ((name, s)))
                     )
-                  case ("csUriQuery", field) => buildJson(errors, tail, json ~ ("csUriQuery", ConversionUtils.singleEncodePcts(field)))
-                  case (name, field) => buildJson(errors, tail, json ~ (name, field))
+                  case ("csUriQuery", field) => buildJson(errors, tail, json ~ (("csUriQuery", ConversionUtils.singleEncodePcts(field))))
+                  case (name, field) => buildJson(errors, tail, json ~ ((name, field)))
                 }
               }
             }
@@ -143,7 +143,7 @@ object CloudfrontAccessLogAdapter {
               case Nil => None.successNel
               case h :: t => (NonEmptyList(h) :::> t).fail // list to nonemptylist
             }
-            
+
             val validatedTstamp = toTimestamp(fields(0), fields(1)).map(Some(_)).toValidationNel
 
             (validatedTstamp |@| failures) {(tstamp, e) =>

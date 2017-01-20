@@ -130,7 +130,7 @@ object MailchimpAdapter extends Adapter {
 
   /**
    * Generates a List of JFields from the raw event parameters.
-   * 
+   *
    * @param parameters The Map of all the parameters
    *        for this raw event
    * @return a (possibly-empty) List of JFields, where each
@@ -145,7 +145,7 @@ object MailchimpAdapter extends Adapter {
   /**
    * Returns a NonEmptyList of nested keys from a String representing
    * a field from a URI-encoded POST body.
-   * 
+   *
    * @param formKey The key String that (may) need to be split based on
    *        the supplied regexp
    * @return the key or keys as a NonEmptyList of Strings
