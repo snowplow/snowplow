@@ -21,8 +21,6 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization          :=  "com.snowplowanalytics",
-    version               :=  "0.24.0",
-    description           :=  "Common functionality for enriching raw Snowplow events",
     scalaVersion          :=  "2.10.1",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
                                   "-unchecked", "-feature",
@@ -32,31 +30,30 @@ object BuildSettings {
   )
 
   // Makes our SBT app settings available from within the ETL
-  lazy val scalifySettings = Seq(sourceGenerators in Compile <+= (sourceManaged in Compile, version, name, organization, scalaVersion) map { (d, v, n, o, sv) =>
-    val file = d / "settings.scala"
-    IO.write(file, """package com.snowplowanalytics.snowplow.enrich.common.generated
-      |object ProjectSettings {
-      |  val version = "%s"
-      |  val name = "%s"
-      |  val organization = "%s"
-      |  val scalaVersion = "%s"
-      |}
-      |""".stripMargin.format(v, n, o, sv))
-    Seq(file)
-  })
+  lazy val scalifySettings = Seq(
+    sourceGenerators in Compile += Def.task {
+      val file = (sourceManaged in Compile).value / "settings.scala"
+      IO.write(file, """package com.snowplowanalytics.snowplow.enrich.common.generated
+        |object ProjectSettings {
+        |  val version = "%s"
+        |  val name = "%s"
+        |  val organization = "%s"
+        |  val scalaVersion = "%s"
+        |}
+        |""".stripMargin.format(version.value, name.value, organization.value, scalaVersion.value))
+      Seq(file)
+    }.taskValue
+  )
 
   // For MaxMind support in the test suite
   import Dependencies._
 
   // Publish settings
   // TODO: update with ivy credentials etc when we start using Nexus
-  lazy val publishSettings = Seq[Setting[_]](
-   
+  lazy val publishSettings = Seq(
     crossPaths := false,
-    publishTo <<= version { version =>
-      val basePath = "target/repo/%s".format {
-        if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
-      }
+    publishTo := {
+      val basePath = s"target/repo/${if (isSnapshot.value) "snapshots/" else "releases/"}"
       Some(Resolver.file("Local Maven repository", file(basePath)) transactional())
     }
   )
