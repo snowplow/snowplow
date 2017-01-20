@@ -45,18 +45,20 @@ object BuildSettings {
   )
 
   // Makes our SBT app settings available from within the ETL
-  lazy val scalifySettings = Seq(sourceGenerators in Compile <+= (sourceManaged in Compile, version, name, organization, scalaVersion) map { (d, v, n, o, sv) =>
-    val file = d / "settings.scala"
-    IO.write(file, """package com.snowplowanalytics.snowplow.enrich.common.generated
-      |object ProjectSettings {
-      |  val version = "%s"
-      |  val name = "%s"
-      |  val organization = "%s"
-      |  val scalaVersion = "%s"
-      |}
-      |""".stripMargin.format(v, n, o, sv))
-    Seq(file)
-  })
+  lazy val scalifySettings = Seq(
+    sourceGenerators in Compile += Def.task {
+      val file = (sourceManaged in Compile).value / "settings.scala"
+      IO.write(file, """package com.snowplowanalytics.snowplow.enrich.common.generated
+        |object ProjectSettings {
+        |  val version = "%s"
+        |  val name = "%s"
+        |  val organization = "%s"
+        |  val scalaVersion = "%s"
+        |}
+        |""".stripMargin.format(version.value, name.value, organization.value, scalaVersion.value))
+      Seq(file)
+    }.taskValue
+  )
 
   lazy val buildSettings = basicSettings ++ scalifySettings
 }
