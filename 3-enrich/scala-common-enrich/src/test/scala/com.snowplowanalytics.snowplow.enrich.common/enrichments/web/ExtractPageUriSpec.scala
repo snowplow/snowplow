@@ -26,9 +26,6 @@ import org.specs2.scalaz.ValidationMatchers
 import scalaz._
 import Scalaz._
 
-// SnowPlow Utils
-import com.snowplowanalytics.util.Tap._
-
 class ExtractPageUriSpec extends Specification with DataTables with ValidationMatchers { def is = s2"""
   This is a specification to test the extractPageUri function
   extractPageUri should return a None when no page URI provided                             $e1

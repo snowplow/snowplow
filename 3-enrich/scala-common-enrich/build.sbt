@@ -41,7 +41,6 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.snowplowRawEvent,
       Dependencies.Libraries.collectorPayload,
       Dependencies.Libraries.schemaSniffer,
-      Dependencies.Libraries.scalaUtil,
       Dependencies.Libraries.refererParser,
       Dependencies.Libraries.maxmindIplookups,
       Dependencies.Libraries.json4sJackson,
