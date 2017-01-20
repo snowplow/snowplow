@@ -48,7 +48,6 @@ object Dependencies {
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
     val schemaSniffer    = "0.0.0"
-    val scalaUtil        = "0.1.0"
     val refererParser    = "0.3.0"
     val maxmindIplookups = "0.3.0"
     val json4s           = "3.2.11"
@@ -77,7 +76,7 @@ object Dependencies {
     val yodaConvert      = "org.joda"                   %  "joda-convert"              % V.yodaConvert
     val useragent        = "eu.bitwalker"               %  "UserAgentUtils"            % V.useragent
     val jacksonDatabind  = "com.fasterxml.jackson.core" %  "jackson-databind"          % V.jacksonDatabind
-    val jsonValidator    = "com.github.fge"             %  "json-schema-validator"     % V.jsonValidator    
+    val jsonValidator    = "com.github.fge"             %  "json-schema-validator"     % V.jsonValidator
     val mavenArtifact    = "org.apache.maven"           %  "maven-artifact"            % V.mavenArtifact
     val uaParser         = "org.clojars.timewarrior"    %  "ua-parser"                 % V.uaParser
     val postgresDriver   = "org.postgresql"             %  "postgresql"                % V.postgresDriver
@@ -89,11 +88,10 @@ object Dependencies {
     val snowplowRawEvent = "com.snowplowanalytics"      %  "snowplow-thrift-raw-event" % V.snowplowRawEvent
     val collectorPayload = "com.snowplowanalytics"      %  "collector-payload-1"       % V.collectorPayload
     val schemaSniffer    = "com.snowplowanalytics"      %  "schema-sniffer-1"          % V.schemaSniffer
-    val scalaUtil        = "com.snowplowanalytics"      %  "scala-util"                % V.scalaUtil
     val refererParser    = "com.snowplowanalytics"      %% "referer-parser"            % V.refererParser
     val maxmindIplookups = "com.snowplowanalytics"      %% "scala-maxmind-iplookups"   % V.maxmindIplookups
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"            % V.json4s
-    val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s    
+    val json4sScalaz     = "org.json4s"                 %% "json4s-scalaz"             % V.json4s
     val igluClient       = "com.snowplowanalytics"      %%  "iglu-scala-client"        % V.igluClient
     val scalaUri         = "com.netaporter"             %% "scala-uri"                 % V.scalaUri
     val scalaWeather     = "com.snowplowanalytics"      %% "scala-weather"             % V.scalaWeather
