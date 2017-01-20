@@ -14,7 +14,7 @@ package com.snowplowanalytics.snowplow.enrich.common
 package utils
 
 // Scala
-import scala.reflect.BeanProperty
+import scala.beans.BeanProperty
 
 // Scalaz
 import scalaz._

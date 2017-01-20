@@ -19,7 +19,7 @@ import java.lang.{Float => JFloat}
 import java.lang.{Byte => JByte}
 
 // Scala
-import scala.reflect.BeanProperty
+import scala.beans.BeanProperty
 
 /**
  * The canonical output format for enriched events.

@@ -19,16 +19,29 @@ import Keys._
 object BuildSettings {
 
   // Basic settings for our app
-  lazy val basicSettings = Seq[Setting[_]](
+  lazy val basicSettings = Seq(
     organization          :=  "com.snowplowanalytics",
-    version               :=  "0.24.1",
-    description           :=  "Common functionality for enriching raw Snowplow events",
-    scalaVersion          :=  "2.10.1",
-    scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
-                                  "-unchecked", "-feature",
-                                  "-target:jvm-1.7"),
+    scalaVersion          :=  "2.11.11",
+    crossScalaVersions    :=  Seq("2.10.6", "2.11.11"),
+    scalacOptions         :=  compilerOptions,
     scalacOptions in Test :=  Seq("-Yrangepos"),
     resolvers             ++= Dependencies.resolutionRepos
+  )
+
+  lazy val compilerOptions = Seq(
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature",
+    "-language:existentials",
+    "-language:higherKinds",
+    "-language:implicitConversions",
+    "-unchecked",
+    "-Yno-adapted-args",
+    "-Ywarn-dead-code",
+    "-Ywarn-numeric-widen",
+    "-Xfuture",
+    "-Xlint",
+    "-target:jvm-1.7"
   )
 
   // Makes our SBT app settings available from within the ETL
@@ -45,21 +58,5 @@ object BuildSettings {
     Seq(file)
   })
 
-  // For MaxMind support in the test suite
-  import Dependencies._
-
-  // Publish settings
-  // TODO: update with ivy credentials etc when we start using Nexus
-  lazy val publishSettings = Seq[Setting[_]](
-   
-    crossPaths := false,
-    publishTo <<= version { version =>
-      val basePath = "target/repo/%s".format {
-        if (version.trim.endsWith("SNAPSHOT")) "snapshots/" else "releases/"
-      }
-      Some(Resolver.file("Local Maven repository", file(basePath)) transactional())
-    }
-  )
-
-  lazy val buildSettings = basicSettings ++ scalifySettings ++ publishSettings
+  lazy val buildSettings = basicSettings ++ scalifySettings
 }

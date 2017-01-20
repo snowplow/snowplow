@@ -151,7 +151,7 @@ case class WeatherEnrichment(apiKey: String, cacheSize: Int, geoPrecision: Int, 
    * @return JSON Object wrapped as Self-describing JSON
    */
   private def addSchema(context: JObject): JObject =
-    ("schema", schemaUri) ~ ("data", context)
+    ("schema", schemaUri) ~ (("data", context))
 
   /**
    * Apply all necessary transformations (currently only dt(epoch -> db timestamp)
@@ -179,4 +179,3 @@ private[enrichments] case class TransformedWeather(
     snow: Option[Snow],
     weather: List[WeatherCondition],
     dt: String)
-
