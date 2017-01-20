@@ -110,7 +110,7 @@ case class Output(json: JsonOutput, expectedRows: String) {
    * @return Self-describing JSON object
    */
   def describe(data: JValue): JObject =
-    ("schema" -> json.schema) ~ ("data", data)
+    ("schema" -> json.schema) ~ (("data", data))
 }
 
 object Output {
@@ -307,7 +307,7 @@ object JsonOutput {
     "java.lang.Long" -> ((obj: Object) => JInt(obj.asInstanceOf[Long])),
     "java.lang.Boolean" -> ((obj: Object) => JBool(obj.asInstanceOf[Boolean])),
     "java.lang.Double" -> ((obj: Object) => JDouble(obj.asInstanceOf[Double])),
-    "java.lang.Float" -> ((obj: Object) => JDouble(obj.asInstanceOf[Float])),
+    "java.lang.Float" -> ((obj: Object) => JDouble(obj.asInstanceOf[Float].toDouble)),
     "java.lang.String" -> ((obj: Object) => JString(obj.asInstanceOf[String])),
     "java.sql.Date" -> ((obj: Object) => JString(new DateTime(obj.asInstanceOf[java.sql.Date]).toString))
   )

@@ -65,7 +65,7 @@ object CallrailAdapter extends Adapter {
   private val CallrailFormatter: FormatterFunc = {
     val bools = List("first_call", "answered")
     val ints = List("duration")
-    val dateTimes: JU.DateTimeFields = Some(NonEmptyList("datetime"), CallrailDateTimeFormat)
+    val dateTimes: JU.DateTimeFields = Some((NonEmptyList("datetime"), CallrailDateTimeFormat))
     buildFormatter(bools, ints, dateTimes)
   }
 
