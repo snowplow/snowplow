@@ -58,7 +58,7 @@ module Snowplow
         events_table = schema + '.events'
 
         # First let's get our statements for shredding (if any)
-        shredded_statements = if OLD_SHRED_PATTERN.match(config[:storage][:versions][:relational_database_shredder])
+        shredded_statements = if OLD_SHRED_PATTERN.match(config[:storage][:versions][:rdb_shredder])
           get_shredded_statements(config, target, s3, true)
         else
           get_shredded_statements(config, target, s3)
@@ -70,7 +70,7 @@ module Snowplow
         # Build our main transaction, consisting of COPY and COPY FROM JSON
         # statements, and potentially also a set of table ANALYZE statements.
 
-        atomic_events_location = if OLD_ENRICHED_PATTERN.match(config[:enrich][:versions][:hadoop_shred])
+        atomic_events_location = if OLD_ENRICHED_PATTERN.match(config[:storage][:versions][:rdb_shredder])
           :enriched
         else
           :shredded
