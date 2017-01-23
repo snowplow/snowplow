@@ -154,6 +154,7 @@ module Snowplow
 
           @jobflow.set_core_ebs_configuration(ebs_c)
         end
+        @jobflow.add_application("Hadoop")
 
         if config[:collectors][:format] == 'thrift'
           if @legacy
@@ -440,7 +441,11 @@ module Snowplow
         end
 
         if elasticsearch
-          get_elasticsearch_steps(config, assets, enrich, shred, targets[:FAILED_EVENTS]).each do |step|
+          badEnrichEmpty = Sluice::Storage::S3::is_empty?(s3, Sluice::Storage::S3::Location.new(
+            self.class.partition_by_run(config[:aws][:s3][:buckets][:enriched][:bad], @run_id)))
+          badShredEmpty = Sluice::Storage::S3::is_empty?(s3, Sluice::Storage::S3::Location.new(
+            self.class.partition_by_run(config[:aws][:s3][:buckets][:shredded][:bad], @run_id)))
+          get_elasticsearch_steps(config, assets, enrich && !badEnrichEmpty, shred && !badShredEmpty).each do |step|
             @jobflow.add_step(step)
           end
         end
@@ -542,8 +547,7 @@ module Snowplow
 
     private
 
-      # Defines a Scalding data processing job as an Elasticity
-      # jobflow step.
+      # Defines an Elasticity Scalding step.
       #
       # Parameters:
       # +step_name+:: name of step
@@ -552,7 +556,7 @@ module Snowplow
       # +extra_step_args+:: additional arguments to pass to the step
       # +targets+:: list of targets parsed from self-describing JSONs
       #
-      # Returns a step ready for adding to the jobflow.
+      # Returns a step ready for adding to the Elasticity Jobflow.
       Contract String, String, String, Hash, Hash => Elasticity::ScaldingStep
       def build_scalding_step(step_name, jar, main_class, folders, extra_step_args={})
 
@@ -571,6 +575,33 @@ module Snowplow
         scalding_step.name << ": #{step_name}"
 
         scalding_step
+      end
+
+      # Defines an Elasticity Spark step.
+      #
+      # Parameters:
+      # +step_name+:: name of the step
+      # +main_class+:: class to run
+      # +folders+:: hash of input, output, bad S3/HDFS folders
+      # +extra_step_args+:: additional command line arguments to pass to the step
+      #
+      # Returns a step read to be added to the Elasticity Jobflow.
+      Contract String, String, String, Hash, Hash => Elasticity::SparkStep
+      def build_spark_step(step_name, jar, main_class, folders, extra_step_args={})
+        arguments = extra_step_args
+          .merge({
+            'input-folder'  => folders[:in],
+            'output-folder' => folders[:good],
+            'bad-folder'    => folders[:bad],
+          })
+        spark_step = Elasticity::SparkStep.new(jar, "#{JAVA_PACKAGE}.#{main_class}")
+        spark_step.app_arguments = arguments
+        spark_step.spark_arguments = {
+          'master' => 'yarn',
+          'deploy-mode' => 'cluster'
+        }
+        spark_step.name << ": #{step_name}"
+        spark_step
       end
 
       # Get commons-codec version required by Scala Hadoop Enrich
