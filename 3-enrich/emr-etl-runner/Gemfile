@@ -20,7 +20,7 @@ ruby "2.3.1"
 # built with Bundler, so we add in the
 # RubyGems it requires here.
 gem "contracts", "~> 0.9", "<= 0.11"
-gem "elasticity", "~> 6.0.10"
+gem "elasticity", "~> 6.0.11"
 gem "sluice", "~> 0.4.0"
 gem "awrence", "~> 0.1.0"
 gem "snowplow-tracker", "~> 0.5.2"
@@ -29,6 +29,6 @@ gem "iglu-ruby-client", ">= 0.1.0"
 group :development do
   gem "rspec", "~> 2.14", ">= 2.14.1"
   gem "coveralls"
-  
+
   gem "warbler" if RUBY_PLATFORM == 'java'
 end
