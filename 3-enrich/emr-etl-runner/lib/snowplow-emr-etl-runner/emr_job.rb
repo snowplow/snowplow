@@ -398,7 +398,7 @@ module Snowplow
 
       # Create one step for each Elasticsearch target for each source for that target
       #
-      Contract ConfigHash, Hash, Bool, Bool => ArrayOf[ScaldingStep]
+      Contract ConfigHash, Hash, Bool, Bool => ArrayOf[Elasticity::ScaldingStep]
       def get_elasticsearch_steps(config, assets, enrich, shred)
         elasticsearch_targets = config[:storage][:targets].select {|t| t[:type] == 'elasticsearch'}
 
@@ -412,7 +412,7 @@ module Snowplow
           sources = target[:sources] || default_sources
 
           sources.map { |source|
-            step = ScaldingStep.new(
+            step = Elasticity::ScaldingStep.new(
               assets[:elasticsearch],
               "com.snowplowanalytics.snowplow.storage.hadoop.ElasticsearchJob",
               ({
@@ -490,7 +490,7 @@ module Snowplow
       # +extra_step_args+:: additional arguments to pass to the step
       #
       # Returns a step ready for adding to the jobflow.
-      Contract String, String, String, Hash, Hash => ScaldingStep
+      Contract String, String, String, Hash, Hash => Elasticity::ScaldingStep
       def build_scalding_step(step_name, jar, main_class, folders, extra_step_args={})
 
         # Build our argument hash
@@ -504,7 +504,7 @@ module Snowplow
           .reject { |k, v| v.nil? } # Because folders[:errors] may be empty
 
         # Now create the Hadoop MR step for the jobflow
-        scalding_step = ScaldingStep.new(jar, "#{JAVA_PACKAGE}.#{main_class}", arguments)
+        scalding_step = Elasticity::ScaldingStep.new(jar, "#{JAVA_PACKAGE}.#{main_class}", arguments)
         scalding_step.name << ": #{step_name}"
 
         scalding_step
