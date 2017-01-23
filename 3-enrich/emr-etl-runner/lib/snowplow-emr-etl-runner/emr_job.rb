@@ -142,6 +142,8 @@ module Snowplow
         @jobflow.master_instance_type = config[:aws][:emr][:jobflow][:master_instance_type]
         @jobflow.slave_instance_type  = config[:aws][:emr][:jobflow][:core_instance_type]
 
+        @jobflow.add_application("Hadoop")
+
         if config[:collectors][:format] == 'thrift'
           if @legacy
             [
@@ -352,19 +354,34 @@ module Snowplow
             @jobflow.add_step(copy_to_hdfs_step)
           end
 
-          shred_step = build_scalding_step(
-            "Shred Enriched Events",
-            assets[:shred],
-            "enrich.hadoop.ShredJob",
-            { :in          => enrich_step_output,
-              :good        => shred_step_output,
-              :bad         => self.class.partition_by_run(csbs[:bad],    run_id),
-              :errors      => self.class.partition_by_run(csbs[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
-            },
-            {
-              :iglu_config => self.class.build_iglu_config_json(resolver)
-            }
-          )
+          shred_step =
+            if self.class.is_relational_database_shredder(config[:enrich][:versions][:hadoop_shred]) then
+              @jobflow.add_application("Spark")
+              build_spark_step(
+                "Shred Enriched Events",
+                assets[:shred],
+                "storage.spark.ShredJob",
+                { :in   => enrich_step_output,
+                  :good => shred_step_output,
+                  :bad  => self.class.partition_by_run(csbs[:bad], run_id)
+                },
+                { 'iglu-config' => self.class.build_iglu_config_json(resolver) }
+              )
+            else
+              build_scalding_step(
+                "Shred Enriched Events",
+                assets[:shred],
+                "enrich.hadoop.ShredJob",
+                { :in          => enrich_step_output,
+                  :good        => shred_step_output,
+                  :bad         => self.class.partition_by_run(csbs[:bad],    run_id),
+                  :errors      => self.class.partition_by_run(csbs[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
+                },
+                {
+                  :iglu_config => self.class.build_iglu_config_json(resolver)
+                }
+              )
+            end
 
           # Late check whether our target directory is empty
           csbs_good_loc = Sluice::Storage::S3::Location.new(csbs[:good])
@@ -388,7 +405,11 @@ module Snowplow
         end
 
         if elasticsearch
-          get_elasticsearch_steps(config, assets, enrich, shred).each do |step|
+          badEnrichEmpty = Sluice::Storage::S3::is_empty?(s3, Sluice::Storage::S3::Location.new(
+            self.class.partition_by_run(config[:aws][:s3][:buckets][:enriched][:bad], @run_id)))
+          badShredEmpty = Sluice::Storage::S3::is_empty?(s3, Sluice::Storage::S3::Location.new(
+            self.class.partition_by_run(config[:aws][:s3][:buckets][:shredded][:bad], @run_id)))
+          get_elasticsearch_steps(config, assets, enrich && !badEnrichEmpty, shred && !badShredEmpty).each do |step|
             @jobflow.add_step(step)
           end
         end
@@ -480,8 +501,7 @@ module Snowplow
 
     private
 
-      # Defines a Scalding data processing job as an Elasticity
-      # jobflow step.
+      # Defines an Elasticity Scalding step.
       #
       # Parameters:
       # +step_name+:: name of step
@@ -489,7 +509,7 @@ module Snowplow
       # +folders+:: hash of in, good, bad, errors S3/HDFS folders
       # +extra_step_args+:: additional arguments to pass to the step
       #
-      # Returns a step ready for adding to the jobflow.
+      # Returns a step ready for adding to the Elasticity Jobflow.
       Contract String, String, String, Hash, Hash => Elasticity::ScaldingStep
       def build_scalding_step(step_name, jar, main_class, folders, extra_step_args={})
 
@@ -508,6 +528,33 @@ module Snowplow
         scalding_step.name << ": #{step_name}"
 
         scalding_step
+      end
+
+      # Defines an Elasticity Spark step.
+      #
+      # Parameters:
+      # +step_name+:: name of the step
+      # +main_class+:: class to run
+      # +folders+:: hash of input, output, bad S3/HDFS folders
+      # +extra_step_args+:: additional command line arguments to pass to the step
+      #
+      # Returns a step read to be added to the Elasticity Jobflow.
+      Contract String, String, String, Hash, Hash => Elasticity::SparkStep
+      def build_spark_step(step_name, jar, main_class, folders, extra_step_args={})
+        arguments = extra_step_args
+          .merge({
+            'input-folder'  => folders[:in],
+            'output-folder' => folders[:good],
+            'bad-folder'    => folders[:bad],
+          })
+        spark_step = Elasticity::SparkStep.new(jar, "#{JAVA_PACKAGE}.#{main_class}")
+        spark_step.app_arguments = arguments
+        spark_step.spark_arguments = {
+          'master' => 'yarn',
+          'deploy-mode' => 'cluster'
+        }
+        spark_step.name << ": #{step_name}"
+        spark_step
       end
 
       # Get commons-codec version required by Scala Hadoop Enrich
@@ -712,12 +759,39 @@ module Snowplow
         "#{bucket}#{suffix}/"
       end
 
+      # Check if the supplied shred version relates to the relational-database-shredder or the
+      # legacy scala-hadoop-shred.
+      #
+      # Parameters:
+      # +shred_version+:: the specified shred version
+      Contract String => Bool
+      def self.is_relational_database_shredder(shred_version)
+        version = shred_version.split('.').map { |v| v.to_i }
+        unless version.length == 3
+          raise ArgumentError, 'The Hadoop shred version could not be parsed'
+        end
+        version[1] >= 12
+      end
+
+      # Retrieve the s3 paths of the needed assets: Hadoop enrich, Hadoop shred and the Hadoop
+      # Elasticsearch sink.
+      #
+      # Parameters:
+      # +assets_bucket+:: the s3 bucket where the assets are supposed to be located
+      # +hadoop_enrich_version+:: version of the Hadoop enrich job to use
+      # +hadoop_shred_version+:: version of the Hadoop shred job to use
+      # +hadoop_elasticsearch_version+:: version of the Hadoop Elasticsearch sink to use
       Contract String, String, String, String => AssetsHash
       def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version, hadoop_elasticsearch_version)
         enrich_path_middle = hadoop_enrich_version[0] == '0' ? 'hadoop-etl/snowplow-hadoop-etl' : 'scala-hadoop-enrich/snowplow-hadoop-enrich'
+        shred_path = if is_relational_database_shredder(hadoop_shred_version) then
+          '4-storage/relational-database-shredder/snowplow-relational-database-shredder-'
+        else
+          '3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-'
+        end
         {
           :enrich   => "#{assets_bucket}3-enrich/#{enrich_path_middle}-#{hadoop_enrich_version}.jar",
-          :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
+          :shred    => "#{assets_bucket}#{shred_path}#{hadoop_shred_version}.jar",
           :elasticsearch => "#{assets_bucket}4-storage/hadoop-elasticsearch-sink/hadoop-elasticsearch-sink-#{hadoop_elasticsearch_version}.jar",
         }
       end
