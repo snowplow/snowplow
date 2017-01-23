@@ -80,7 +80,7 @@ module Snowplow
         assets = self.class.get_assets(
           custom_assets_bucket,
           config[:enrich][:versions][:spark_enrich],
-          config[:storage][:versions][:relational_database_shredder],
+          config[:storage][:versions][:rdb_shredder],
           config[:storage][:versions][:hadoop_elasticsearch])
 
         run_tstamp = Time.new
@@ -104,7 +104,7 @@ module Snowplow
         @jobflow = Elasticity::JobFlow.new
 
         # Configure
-        @jobflow.name                 = config[:enrich][:job_name]
+        @jobflow.name                 = config[:aws][:emr][:jobflow][:job_name]
 
         if config[:aws][:emr][:ami_version] =~ /^[1-3].*/
           @legacy = true
@@ -384,21 +384,39 @@ module Snowplow
             @jobflow.add_step(copy_to_hdfs_step)
           end
 
-          duplicate_storage_config = self.class.build_duplicate_storage_json(targets[:DUPLICATE_TRACKING])
 
-          shred_step = build_scalding_step(
-            "Shred Enriched Events",
-            assets[:shred],
-            "enrich.hadoop.ShredJob",
-            { :in                 => enrich_step_output,
-              :good               => shred_step_output,
-              :bad                => self.class.partition_by_run(csbs[:bad],    run_id),
-              :errors             => self.class.partition_by_run(csbs[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
-            },
-            {
-              :iglu_config        => self.class.build_iglu_config_json(resolver)
-            }.merge(duplicate_storage_config)
-          )
+          shred_step =
+            if self.class.is_rdb_shredder(config[:storage][:versions][:rdb_shredder]) then
+              duplicate_storage_config = self.class.build_duplicate_storage_json(targets[:DUPLICATE_TRACKING], false)
+              @jobflow.add_application("Spark")
+              build_spark_step(
+                "Shred Enriched Events",
+                assets[:shred],
+                "storage.spark.ShredJob",
+                { :in   => enrich_step_output,
+                  :good => shred_step_output,
+                  :bad  => self.class.partition_by_run(csbs[:bad], run_id)
+                },
+                { 
+                  'iglu-config' => self.class.build_iglu_config_json(resolver) 
+                }.merge(duplicate_storage_config)
+              )
+            else
+              duplicate_storage_config = self.class.build_duplicate_storage_json(targets[:DUPLICATE_TRACKING])
+              build_scalding_step(
+                "Shred Enriched Events",
+                assets[:shred],
+                "enrich.hadoop.ShredJob",
+                { :in          => enrich_step_output,
+                  :good        => shred_step_output,
+                  :bad         => self.class.partition_by_run(csbs[:bad],    run_id),
+                  :errors      => self.class.partition_by_run(csbs[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
+                },
+                {
+                  :iglu_config => self.class.build_iglu_config_json(resolver)
+                }.merge(duplicate_storage_config)
+              )
+            end
 
           # Late check whether our target directory is empty
           csbs_good_loc = Sluice::Storage::S3::Location.new(csbs[:good])
@@ -749,12 +767,17 @@ module Snowplow
         Base64.strict_encode64(resolver)
       end
 
-      Contract Maybe[Iglu::SelfDescribingJson] => Hash
-      def self.build_duplicate_storage_json(target)
+      Contract Maybe[Iglu::SelfDescribingJson], Bool => Hash
+      def self.build_duplicate_storage_json(target, snake_case=true)
         if target.nil?
           {}
         else
-          { :duplicate_storage_config => Base64.strict_encode64(target.to_json.to_json) }
+          encoded = Base64.strict_encode64(target.to_json.to_json)
+          if snake_case
+            { :duplicate_storage_config => encoded }
+          else
+            { 'duplicate-storage-config' => encoded }
+          end
         end
 
       end
@@ -773,13 +796,13 @@ module Snowplow
         "#{bucket}#{suffix}/"
       end
 
-      # Check if the supplied shred version relates to the relational-database-shredder or the
+      # Check if the supplied shred version relates to the rdb-shredder or the
       # legacy scala-hadoop-shred.
       #
       # Parameters:
       # +shred_version+:: the specified shred version
       Contract String => Bool
-      def self.is_relational_database_shredder(shred_version)
+      def self.is_rdb_shredder(shred_version)
         version = shred_version.split('.').map { |v| v.to_i }
         unless version.length == 3
           raise ArgumentError, 'The shred job version could not be parsed'
@@ -801,13 +824,13 @@ module Snowplow
         version[0] >= 1 && version[1] >= 9
       end
 
-      # Retrieve the s3 paths of the needed assets: Spark enrich, Relational Database Shredder and
+      # Retrieve the s3 paths of the needed assets: Spark enrich, RDB Shredder and
       # the Hadoop Elasticsearch sink.
       #
       # Parameters:
       # +assets_bucket+:: the s3 bucket where the assets are supposed to be located
       # +spark_enrich_version+:: version of the Spark enrich job to use
-      # +rds_version+:: version of the relational database shredder job to use
+      # +rds_version+:: version of the rdb shredder job to use
       # +hadoop_elasticsearch_version+:: version of the Hadoop Elasticsearch sink to use
       Contract String, String, String, String => AssetsHash
       def self.get_assets(assets_bucket, spark_enrich_version, rds_version, hadoop_elasticsearch_version)
@@ -816,7 +839,7 @@ module Snowplow
         else
           spark_enrich_version[0] == '0' ? 'hadoop-etl/snowplow-hadoop-etl' : 'scala-hadoop-enrich/snowplow-hadoop-enrich'
         end
-        shred_path = if is_relational_database_shredder(rds_version) then
+        shred_path = if is_rdb_shredder(rds_version) then
           '4-storage/rdb-shredder/snowplow-rdb-shredder-'
         else
           '3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-'
