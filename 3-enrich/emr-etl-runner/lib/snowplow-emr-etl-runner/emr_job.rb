@@ -104,7 +104,7 @@ module Snowplow
         @jobflow = Elasticity::JobFlow.new
 
         # Configure
-        @jobflow.name                 = config[:enrich][:job_name]
+        @jobflow.name                 = config[:aws][:emr][:jobflow][:job_name]
 
         if config[:aws][:emr][:ami_version] =~ /^[1-3].*/
           @legacy = true
@@ -384,21 +384,39 @@ module Snowplow
             @jobflow.add_step(copy_to_hdfs_step)
           end
 
-          duplicate_storage_config = self.class.build_duplicate_storage_json(targets[:DUPLICATE_TRACKING])
 
-          shred_step = build_scalding_step(
-            "Shred Enriched Events",
-            assets[:shred],
-            "enrich.hadoop.ShredJob",
-            { :in                 => enrich_step_output,
-              :good               => shred_step_output,
-              :bad                => self.class.partition_by_run(csbs[:bad],    run_id),
-              :errors             => self.class.partition_by_run(csbs[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
-            },
-            {
-              :iglu_config        => self.class.build_iglu_config_json(resolver)
-            }.merge(duplicate_storage_config)
-          )
+          shred_step =
+            if self.class.is_relational_database_shredder(config[:storage][:versions][:relational_database_shredder]) then
+              duplicate_storage_config = self.class.build_duplicate_storage_json(targets[:DUPLICATE_TRACKING], false)
+              @jobflow.add_application("Spark")
+              build_spark_step(
+                "Shred Enriched Events",
+                assets[:shred],
+                "storage.spark.ShredJob",
+                { :in   => enrich_step_output,
+                  :good => shred_step_output,
+                  :bad  => self.class.partition_by_run(csbs[:bad], run_id)
+                },
+                { 
+                  'iglu-config' => self.class.build_iglu_config_json(resolver) 
+                }.merge(duplicate_storage_config)
+              )
+            else
+              duplicate_storage_config = self.class.build_duplicate_storage_json(targets[:DUPLICATE_TRACKING])
+              build_scalding_step(
+                "Shred Enriched Events",
+                assets[:shred],
+                "enrich.hadoop.ShredJob",
+                { :in          => enrich_step_output,
+                  :good        => shred_step_output,
+                  :bad         => self.class.partition_by_run(csbs[:bad],    run_id),
+                  :errors      => self.class.partition_by_run(csbs[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
+                },
+                {
+                  :iglu_config => self.class.build_iglu_config_json(resolver)
+                }.merge(duplicate_storage_config)
+              )
+            end
 
           # Late check whether our target directory is empty
           csbs_good_loc = Sluice::Storage::S3::Location.new(csbs[:good])
@@ -749,12 +767,17 @@ module Snowplow
         Base64.strict_encode64(resolver)
       end
 
-      Contract Maybe[Iglu::SelfDescribingJson] => Hash
-      def self.build_duplicate_storage_json(target)
+      Contract Maybe[Iglu::SelfDescribingJson], Bool => Hash
+      def self.build_duplicate_storage_json(target, snake_case=true)
         if target.nil?
           {}
         else
-          { :duplicate_storage_config => Base64.strict_encode64(target.to_json.to_json) }
+          encoded = Base64.strict_encode64(target.to_json.to_json)
+          if snake_case
+            { :duplicate_storage_config => encoded }
+          else
+            { 'duplicate-storage-config' => encoded }
+          end
         end
 
       end
