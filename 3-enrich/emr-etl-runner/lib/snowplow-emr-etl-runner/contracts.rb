@@ -139,7 +139,7 @@ module Snowplow
         :versions => ({
           :relational_database_shredder => String,
           :hadoop_elasticsearch => String
-        })
+          }),
         :download => ({
           :folder => Maybe[String]
           })

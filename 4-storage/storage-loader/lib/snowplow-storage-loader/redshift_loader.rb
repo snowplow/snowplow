@@ -70,7 +70,7 @@ module Snowplow
         # Build our main transaction, consisting of COPY and COPY FROM JSON
         # statements, and potentially also a set of table ANALYZE statements.
 
-        atomic_events_location = if OLD_ENRICHED_PATTERN.match(config[:enrich][:versions][:hadoop_shred])
+        atomic_events_location = if OLD_ENRICHED_PATTERN.match(config[:storage][:versions][:relational_database_shredder])
           :enriched
         else
           :shredded
