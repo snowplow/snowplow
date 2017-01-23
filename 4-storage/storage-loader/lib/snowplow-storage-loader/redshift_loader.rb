@@ -32,7 +32,7 @@ module Snowplow
       # Versions 0.5.0 and earlier of Hadoop Shred don't copy atomic.events into the shredded bucket
       OLD_ENRICHED_PATTERN = /0\.[0-5]\.[0-9](-rc[0-9]+|)/
 
-      # Versions 1.8.0 and earlier of the relational database shredder didn't use the field name
+      # Versions 1.8.0 and earlier of the rdb shredder didn't use the field name
       # when writing partitioned datasets
       OLD_SHRED_PATTERN = /[0-1]\.[0-8]\.[0-9](-rc[0-9]+|)/
 
@@ -58,7 +58,7 @@ module Snowplow
         events_table = schema + '.events'
 
         # First let's get our statements for shredding (if any)
-        shredded_statements = if OLD_SHRED_PATTERN.match(config[:storage][:versions][:relational_database_shredder])
+        shredded_statements = if OLD_SHRED_PATTERN.match(config[:storage][:versions][:rdb_shredder])
           get_shredded_statements(config, target, s3, true)
         else
           get_shredded_statements(config, target, s3)
@@ -70,7 +70,7 @@ module Snowplow
         # Build our main transaction, consisting of COPY and COPY FROM JSON
         # statements, and potentially also a set of table ANALYZE statements.
 
-        atomic_events_location = if OLD_ENRICHED_PATTERN.match(config[:enrich][:versions][:hadoop_shred])
+        atomic_events_location = if OLD_ENRICHED_PATTERN.match(config[:storage][:versions][:rdb_shredder])
           :enriched
         else
           :shredded
