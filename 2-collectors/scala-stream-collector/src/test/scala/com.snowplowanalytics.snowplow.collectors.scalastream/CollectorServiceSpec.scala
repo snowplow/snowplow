@@ -96,6 +96,16 @@ collector {
       }
     }
 
+    pubsub {
+      google-auth-path: "/path/to/credentials/file.json"
+      google-project-id: "projectid-123456"
+
+      topic {
+        good: "good-topic"
+        bad: "bad-topic"
+      }
+    }
+
     buffer {
       byte-limit: 4000000 # 4MB
       record-limit: 500 # 500 records
