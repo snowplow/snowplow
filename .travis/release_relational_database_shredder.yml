@@ -15,26 +15,26 @@ targets:
 # Required: packages to be deployed
 packages:
   # AWS S3 plain upload example
-  - name     : "hadoop-shred-hosted-asset"        # Just for convenience
+  - name     : "relational-database-shredder-hosted-asset" # Just for convenience
     bucket   : "snowplow-hosted-assets"
-    path     : "3-enrich/scala-hadoop-shred"
+    path     : "4-storage/relational-database-shredder"
     region   : "us-west-1"
     publish  : true
     override : false
     continue_on_conflict : false
-    version  : <%= FUNC['sbt_version(3-enrich/scala-hadoop-shred/)'] %>
+    version  : <%= FUNC['sbt_version(4-storage/relational-database-shredder/)'] %>
 
     # Required IF '--check-version' is passed: will assert that both versions are the same
     build_version : <%= ENV['TRAVIS_BUILD_RELEASE_TAG'] %>
 
     # Optional: Build commands
     build_commands:
-      - cd 3-enrich/scala-hadoop-shred && sbt assembly && cd ../..
+      - cd 4-storage/relational-database-shredder && sbt assembly && cd ../..
 
     # Required: Artifact. Version will be inserted between prefix and suffix
     artifacts:
       - type   : "asis"
-        prefix : "snowplow-hadoop-shred-"
+        prefix : "snowplow-relational-database-shredder-"
         suffix : ".jar"
         binary_paths:
-          - "3-enrich/scala-hadoop-shred/target/scala-2.10/snowplow-hadoop-shred-{{ packages.0.build_version }}.jar"
+          - "4-storage/relational-database-shredder/target/scala-2.10/snowplow-relational-database-shredder-{{ packages.0.build_version }}.jar"
