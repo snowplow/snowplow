@@ -1,66 +1,51 @@
 /*
- * Copyright (c) 2015 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
- * You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+ * You may obtain a copy of the Apache License Version 2.0 at
+ * http://www.apache.org/licenses/LICENSE-2.0.
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the Apache License Version 2.0 is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+ * See the Apache License Version 2.0 for the specific language governing permissions and
+ * limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package spark
+package com.snowplowanalytics.snowplow.enrich.spark
 package good
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, Buffer}
 
-// Specs2
 import org.specs2.mutable.Specification
 
-// Scalding
-import com.twitter.scalding._
-
-// Cascading
-import cascading.tuple.TupleEntry
-
-// This project
-import JobSpecHelpers._
-
-// json4s
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
-/**
- * Holds the input and expected data
- * for the test.
- */
 object NdjsonUrbanAirshipSingleEvent {
-
+  import EnrichJobSpec._
   val lines = Lines(compact(
-                      parse("""
-                               |{
-                               |  "id": "e3314efb-9058-dbaf-c4bb-b754fca73613",
-                               |  "offset": "1",
-                               |  "occurred": "2015-11-13T16:31:52.393Z",
-                               |  "processed": "2015-11-13T16:31:52.393Z",
-                               |  "device": {
-                               |    "amazon_channel": "cd97c95c-ed77-f15a-3a67-5c2e26799d35"
-                               |  },
-                               |  "body": {
-                               |    "session_id": "27c75cab-a0b8-9da2-bc07-6d7253e0e13f"
-                               |  },
-                               |  "type": "CLOSE"
-                               |}
-                               |""".stripMargin)
-                  )
+    parse("""
+      |{
+      |  "id": "e3314efb-9058-dbaf-c4bb-b754fca73613",
+      |  "offset": "1",
+      |  "occurred": "2015-11-13T16:31:52.393Z",
+      |  "processed": "2015-11-13T16:31:52.393Z",
+      |  "device": {
+      |    "amazon_channel": "cd97c95c-ed77-f15a-3a67-5c2e26799d35"
+      |  },
+      |  "body": {
+      |    "session_id": "27c75cab-a0b8-9da2-bc07-6d7253e0e13f"
+      |  },
+      |  "type": "CLOSE"
+      |}
+      |""".stripMargin)
+    )
   )
-
   val expected = List(
     null,
     "srv",
-    EtlTimestamp,
+    etlTimestamp,
     "2015-11-13 16:31:52.393",
     null,
     "unstruct",
@@ -69,7 +54,7 @@ object NdjsonUrbanAirshipSingleEvent {
     null, // No tracker namespace
     "com.urbanairship.connect-v1",
     "ndjson",
-    EtlVersion,
+    etlVersion,
     null, // No user_id set
     null, // ip address not available
     null, // no fingerprint
@@ -188,11 +173,9 @@ object NdjsonUrbanAirshipSingleEvent {
   )
 }
 
-/**
- * Multiple events and expected data
- */
+/** Multiple events and expected data */
 object NdjsonUrbanAirshipMultiEvent {
-
+  import EnrichJobSpec._
   val sampleLine = compact(
     parse(
       """
@@ -212,7 +195,6 @@ object NdjsonUrbanAirshipMultiEvent {
         | """.stripMargin
     )
   )
-
   val sampleLineResponse = compact(
     parse(
       """|{
@@ -237,9 +219,7 @@ object NdjsonUrbanAirshipMultiEvent {
       """.stripMargin
     )
   )
-
   val sampleBlank = "\r\n"
-
   val sampleInAppResolutionEvent = compact(
     parse(
       """{
@@ -260,7 +240,6 @@ object NdjsonUrbanAirshipMultiEvent {
         |}""".stripMargin
     )
   )
-
   val sampleInAppResolutionEventResponse =  compact(
     parse(
       """{
@@ -287,98 +266,81 @@ object NdjsonUrbanAirshipMultiEvent {
         |}""".stripMargin
     )
   )
-
   val eventSource = "srv"
   val collectorTstamp = "2015-11-13 16:31:52.393"
   val eventType = "unstruct"
   val adapter = "com.urbanairship.connect-v1"
   val loaderType = "ndjson"
-
   val expectedBase = {
     val r = ArrayBuffer.fill(NdjsonUrbanAirshipSingleEvent.expected.size)(null:String)
     r(1)  = eventSource
-    r(2)  = EtlTimestamp
+    r(2)  = etlTimestamp
     r(3)  = collectorTstamp
     r(5)  = eventType
     r(9)  = adapter
     r(10) = loaderType
-    r(11) = EtlVersion
+    r(11) = etlVersion
     r.toList
   }
 
   val lines = Lines(sampleLine,
-                    sampleBlank,
-                    sampleInAppResolutionEvent,
-                    sampleBlank,
-                    sampleBlank) // the blanks should be ignored
+    sampleBlank,
+    sampleInAppResolutionEvent,
+    sampleBlank,
+    sampleBlank) // the blanks should be ignored
 
   val expectedJsonOutputIdx = 58 // position of unstruct event json in list
   val expected = List(expectedBase.updated(expectedJsonOutputIdx, sampleLineResponse),
-                      expectedBase.updated(expectedJsonOutputIdx, sampleInAppResolutionEventResponse))
+    expectedBase.updated(expectedJsonOutputIdx, sampleInAppResolutionEventResponse))
 }
 
-/**
- * Integration test for the EtlJob:
- *
- * Check that all NDJSON lines are loaded and run through with the urbanairship adapter
- */
-class NdjsonUrbanAirshipSpec extends Specification {
-
+/** Check that all NDJSON lines are loaded and run through with the urbanairship adapter */
+class NdjsonUrbanAirshipSingleSpec extends Specification with EnrichJobSpec {
+  import EnrichJobSpec._
+  override def appName = "ndjson-urban-airship-single"
+  sequential
   "A job which processes a NDJSON file with one event" should {
-    EtlJobSpec("ndjson/com.urbanairship.connect/v1", "2", true, List("geo")).
-      source(MultipleTextLineFiles("inputFolder"), NdjsonUrbanAirshipSingleEvent.lines).
-      sink[TupleEntry](Tsv("outputFolder")) { buf: Buffer[TupleEntry] =>
-      "correctly output 1 event" in {
-        buf.size must_== 1
-        val actual = buf.head
-        for (idx <- NdjsonUrbanAirshipSingleEvent.expected.indices) {
-          actual.getString(idx) must beFieldEqualTo(NdjsonUrbanAirshipSingleEvent.expected(idx), withIndex = idx)
-        }
+    runEnrichJob(NdjsonUrbanAirshipSingleEvent.lines, "ndjson/com.urbanairship.connect/v1",
+      "2", true, List("geo"))
+
+    "correctly output 1 event" in {
+      val Some(goods) = readPartFile(dirs.output)
+      goods.size must_== 1
+      val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
+      for (idx <- NdjsonUrbanAirshipSingleEvent.expected.indices) {
+        actual(idx) must beFieldEqualTo(NdjsonUrbanAirshipSingleEvent.expected(idx), idx)
       }
-    }.
-      sink[TupleEntry](Tsv("exceptionsFolder")) { trap =>
-      "not trap any exceptions" in {
-        trap must beEmpty
-      }
-    }.
-      sink[String](Tsv("badFolder")) { error =>
-      "not write any bad rows" in {
-        error must beEmpty
-      }
-    }.
-      run.
-      finish
+    }
+
+    "not write any bad rows" in {
+      dirs.badRows must beEmptyDir
+    }
   }
+}
 
+class NdjsonUrbanAirshipMultiSpec extends Specification with EnrichJobSpec {
+  import EnrichJobSpec._
+  override def appName = "ndjson-urban-airship-multi"
+  sequential
   "A job which processes a NDJSON file with more than one event (but two valid ones)" should {
-    EtlJobSpec("ndjson/com.urbanairship.connect/v1", "2", true, List("geo")).
-      source(MultipleTextLineFiles("inputFolder"), NdjsonUrbanAirshipMultiEvent.lines).
-      sink[TupleEntry](Tsv("outputFolder")) { buf: Buffer[TupleEntry] =>
-      "correctly output 2 events" in {
-        buf.size must_== 2
+    runEnrichJob(NdjsonUrbanAirshipMultiEvent.lines, "ndjson/com.urbanairship.connect/v1",
+      "2", true, List("geo"))
 
-        buf.zipWithIndex foreach {
-          case (actual, bufIdx) => {
-            for (idx <- NdjsonUrbanAirshipMultiEvent.expected(bufIdx).indices) {
-              actual.getString(idx) must beFieldEqualTo(NdjsonUrbanAirshipMultiEvent.expected(bufIdx)(idx), withIndex = idx)
-            }
+    "correctly output 2 events" in {
+      val Some(goods) = readPartFile(dirs.output)
+      goods.size must_== 2
+      goods.zipWithIndex foreach {
+        case (actual, bufIdx) => {
+          for (idx <- NdjsonUrbanAirshipMultiEvent.expected(bufIdx).indices) {
+            actual.split("\t").map(s => if (s.isEmpty()) null else s).apply(idx) must
+              beFieldEqualTo(NdjsonUrbanAirshipMultiEvent.expected(bufIdx)(idx), idx)
           }
         }
+      }
+    }
 
-      }
-    }.
-      sink[TupleEntry](Tsv("exceptionsFolder")) { trap =>
-      "not trap any exceptions" in {
-        trap must beEmpty
-      }
-    }.
-      sink[String](Tsv("badFolder")) { error =>
-      "not write any bad rows" in {
-        error must beEmpty
-      }
-    }.
-      run.
-      finish
+    "not write any bad rows" in {
+      dirs.badRows must beEmptyDir
+    }
   }
-
 }
