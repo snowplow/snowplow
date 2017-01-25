@@ -1,48 +1,29 @@
 /*
- * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
- * You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+ * You may obtain a copy of the Apache License Version 2.0 at
+ * http://www.apache.org/licenses/LICENSE-2.0.
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the Apache License Version 2.0 is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+ * See the Apache License Version 2.0 for the specific language governing permissions and
+ * limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package spark
+package com.snowplowanalytics.snowplow
+package enrich.spark
 package good
 
-// Scala
-import scala.collection.mutable.Buffer
+import java.io.File
 
-// Specs2
 import org.specs2.mutable.Specification
 
-// Scalding
-import com.twitter.scalding._
+import collectors.thrift.{SnowplowRawEvent, TrackerPayload, PayloadProtocol, PayloadFormat}
 
-// Cascading
-import cascading.tuple.TupleEntry
-
-// Apache Thrift
-import org.apache.thrift.TSerializer
-
-import JobSpecHelpers._
-
-import com.snowplowanalytics.snowplow.collectors.thrift.{
-  SnowplowRawEvent,
-  TrackerPayload ,
-  PayloadProtocol,
-  PayloadFormat
-}
-
-/**
- * Holds the input and expected data
- * for the test.
- */
 object SnowplowRawEventLzoSpec {
+  import EnrichJobSpec._
 
   val payloadData = "e=pp&page=Loading%20JSON%20data%20into%20Redshift%20-%20the%20challenges%20of%20quering%20JSON%20data%2C%20and%20how%20Snowplow%20can%20be%20used%20to%20meet%20those%20challenges&pp_mix=0&pp_max=1&pp_miy=64&pp_may=935&cx=eyJkYXRhIjpbeyJzY2hlbWEiOiJpZ2x1OmNvbS5zbm93cGxvd2FuYWx5dGljcy5zbm93cGxvdy91cmlfcmVkaXJlY3QvanNvbnNjaGVtYS8xLTAtMCIsImRhdGEiOnsidXJpIjoiaHR0cDovL3Nub3dwbG93YW5hbHl0aWNzLmNvbS8ifX1dLCJzY2hlbWEiOiJpZ2x1OmNvbS5zbm93cGxvd2FuYWx5dGljcy5zbm93cGxvdy9jb250ZXh0cy9qc29uc2NoZW1hLzEtMC0wIn0=&dtm=1398762054889&tid=612876&vp=1279x610&ds=1279x5614&vid=2&duid=44082d3af0e30126&p=web&tv=js-2.0.0&fp=2071613637&aid=snowplowweb&lang=fr&cs=UTF-8&tz=Europe%2FBerlin&tna=cloudfront&evn=com.snowplowanalytics&refr=http%3A%2F%2Fsnowplowanalytics.com%2Fservices%2Fpipelines.html&f_pdf=1&f_qt=1&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1280x800&cd=24&cookie=1&url=http%3A%2F%2Fsnowplowanalytics.com%2Fblog%2F2013%2F11%2F20%2Floading-json-data-into-redshift%2F%23weaknesses"
   val payload = new TrackerPayload(
@@ -53,18 +34,10 @@ object SnowplowRawEventLzoSpec {
   snowplowRawEvent.setNetworkUserId("8712a379-4bcb-46ee-815d-85f26540577f")
   snowplowRawEvent.setUserAgent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.8 Safari/537.36");
 
-  val serializer = new TSerializer
-
-  val binaryThrift = serializer.serialize(snowplowRawEvent)
-
-  val lines = List(
-    (binaryThrift, 1L)
-  )
-
   val expected = List(
     "snowplowweb",
     "web",
-    EtlTimestamp,
+    etlTimestamp,
     "2013-10-07 19:47:54.000",
     "2014-04-29 09:00:54.889",
     "page_ping",
@@ -73,7 +46,7 @@ object SnowplowRawEventLzoSpec {
     "cloudfront", // Tracker namespace
     "js-2.0.0",
     "collector",
-    EtlVersion,
+    etlVersion,
     null, // No user_id set
     "255.255.255.x",
     "2071613637",
@@ -170,41 +143,58 @@ object SnowplowRawEventLzoSpec {
     "UTF-8",
     "1279",
     "5614"
-    )
+  )
 }
 
 /**
- * Integration test for the EtlJob:
- *
  * Test that a raw Thrift event is processed correctly.
  * See https://github.com/snowplow/snowplow/issues/538
  * Based on Apr2014CfLineSpec.
  */
-class SnowplowRawEventLzoSpec extends Specification {
-
+class SnowplowRawEventLzoSpec extends Specification with EnrichJobSpec {
+  import EnrichJobSpec._
+  override def appName = "snowplow-raw-event-lzo"
+  sequential
   "A job which processes a RawThrift file containing 1 valid page view" should {
-    EtlJobSpec("thrift", "1", true, List("geo")).
-      source(FixedPathLzoRaw("inputFolder"), SnowplowRawEventLzoSpec.lines).
-      sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
-        "correctly output 1 page view" in {
-          buf.size must_== 1
-          val actual = buf.head
-          for (idx <- SnowplowRawEventLzoSpec.expected.indices) {
-            actual.getString(idx) must beFieldEqualTo(SnowplowRawEventLzoSpec.expected(idx), withIndex = idx)
-          }
-        }
-      }.
-      sink[TupleEntry](Tsv("exceptionsFolder")){ trap =>
-        "not trap any exceptions" in {
-          trap must beEmpty
-        }
-      }.
-      sink[String](Tsv("badFolder")){ error =>
-        "not write any bad rows" in {
-          error must beEmpty
-        }
-      }.
-      run.
-      finish
+    val f = write("input", SnowplowRawEventLzoSpec.snowplowRawEvent)
+    runEnrichJob(f.toString(), "thrift", "1", true, List("geo"), false, false, false, false)
+
+    "correctly output 1 page view" in {
+      val Some(goods) = readPartFile(dirs.output)
+      goods.size must_== 1
+      val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
+      for (idx <- SnowplowRawEventLzoSpec.expected.indices) {
+        actual(idx) must beFieldEqualTo(SnowplowRawEventLzoSpec.expected(idx), idx)
+      }
+    }
+
+    "not write any bad rows" in {
+      dirs.badRows must beEmptyDir
+    }
+
+    deleteRecursively(f)
+  }
+
+  def write(tag: String, event: SnowplowRawEvent): File = {
+    import com.twitter.elephantbird.mapreduce.io.ThriftWritable
+    import com.twitter.elephantbird.mapreduce.output.LzoThriftBlockOutputFormat
+    import org.apache.hadoop.io.LongWritable
+    val f = new File(System.getProperty("java.io.tmpdir"),
+      s"snowplow-enrich-job-${tag}-${scala.util.Random.nextInt(Int.MaxValue)}")
+    val rdd = spark.sparkContext.parallelize(Seq(event))
+      .map { e =>
+        val writable = ThriftWritable.newInstance(classOf[SnowplowRawEvent])
+        writable.set(e)
+        (new LongWritable(1L), writable)
+      }
+    LzoThriftBlockOutputFormat.setClassConf(classOf[SnowplowRawEvent], hadoopConfig)
+    rdd.saveAsNewAPIHadoopFile(
+      f.toString(),
+      classOf[org.apache.hadoop.io.LongWritable],
+      classOf[ThriftWritable[SnowplowRawEvent]],
+      classOf[LzoThriftBlockOutputFormat[ThriftWritable[SnowplowRawEvent]]],
+      hadoopConfig
+    )
+    f
   }
 }
