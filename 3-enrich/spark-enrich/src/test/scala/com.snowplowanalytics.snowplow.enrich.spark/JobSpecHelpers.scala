@@ -559,7 +559,7 @@ object JobSpecHelpers {
     apiRequestEnabled: Boolean = false, sqlQueryEnabled: Boolean = false): Sinks = {
 
     def mkTmpDir(tag: String, createParents: Boolean = false, containing: Option[Lines] = None): File = {
-      val f = File.createTempFile(s"scala-hadoop-enrich-${tag}-", "")
+      val f = File.createTempFile(s"spark-enrich-${tag}-", "")
       if (createParents) f.mkdirs() else f.mkdir()
       containing.map(_.writeTo(f))
       f
