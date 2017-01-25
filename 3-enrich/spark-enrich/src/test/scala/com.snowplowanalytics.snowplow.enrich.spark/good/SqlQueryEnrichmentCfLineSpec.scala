@@ -1,48 +1,32 @@
 /*
- * Copyright (c) 2012-2016 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
- * You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+ * You may obtain a copy of the Apache License Version 2.0 at
+ * http://www.apache.org/licenses/LICENSE-2.0.
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the Apache License Version 2.0 is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+ * See the Apache License Version 2.0 for the specific language governing permissions and
+ * limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package spark
+package com.snowplowanalytics.snowplow.enrich.spark
 package good
 
-// Scala
-import scala.collection.mutable.Buffer
-
-// Specs2
 import org.specs2.mutable.Specification
 
-// Scalding
-import com.twitter.scalding._
-
-// Cascading
-import cascading.tuple.TupleEntry
-
-// This project
-import JobSpecHelpers._
-
-/**
- * Holds the input and expected data for the test
- */
 object SqlQueryEnrichmentCfLineSpec {
+  import EnrichJobSpec._
   val contexts = """eyJkYXRhIjpbeyJkYXRhIjp7Im9zVHlwZSI6Ik9TWCIsImFwcGxlSWRmdiI6InNvbWVfYXBwbGVJZGZ2Iiwib3BlbklkZmEiOiJzb21lX0lkZmEiLCJjYXJyaWVyIjoiYm9yaXMiLCJkZXZpY2VNb2RlbCI6ImxhcmdlIiwib3NWZXJzaW9uIjoiMy4wLjAiLCJhcHBsZUlkZmEiOiJzb21lX2FwcGxlSWRmYSIsImFuZHJvaWRJZGZhIjoic29tZV9hbmRyb2lkSWRmYSIsImRldmljZU1hbnVmYWN0dXJlciI6IkFtc3RyYWQifSwic2NoZW1hIjoiaWdsdTpjb20uc25vd3Bsb3dhbmFseXRpY3Muc25vd3Bsb3cvbW9iaWxlX2NvbnRleHQvanNvbnNjaGVtYS8xLTAtMCJ9LHsiZGF0YSI6eyJsb25naXR1ZGUiOjEwLCJiZWFyaW5nIjo1MCwic3BlZWQiOjI1LjAsImFsdGl0dWRlIjoyMCwiYWx0aXR1ZGVBY2N1cmFjeSI6MC4zLCJsYXRpdHVkZUxvbmdpdHVkZUFjY3VyYWN5IjowLjUsImxhdGl0dWRlIjo3fSwic2NoZW1hIjoiaWdsdTpjb20uc25vd3Bsb3dhbmFseXRpY3Muc25vd3Bsb3cvZ2VvbG9jYXRpb25fY29udGV4dC9qc29uc2NoZW1hLzEtMC0wIn1dLCJzY2hlbWEiOiJpZ2x1OmNvbS5zbm93cGxvd2FuYWx5dGljcy5zbm93cGxvdy9jb250ZXh0cy9qc29uc2NoZW1hLzEtMC0wIn0="""
-
   val lines = Lines(
     s"2012-05-27  11:35:53  DFW3  3343  70.46.123.145 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 http://www.psychicbazaar.com/oracles/119-psycards-book-and-deck-starter-pack.html?view=print#detail Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=ue&cx=$contexts&ue_pr=%7B%22schema%22%3A%22iglu%3Acom.snowplowanalytics.snowplow%2Funstruct_event%2Fjsonschema%2F1-0-0%22%2C%22data%22%3A%7B%22schema%22%3A%22iglu%3Acom.snowplowanalytics.snowplow-website%2Fsignup_form_submitted%2Fjsonschema%2F1-0-0%22%2C%22data%22%3A%7B%22name%22%3A%22Bob%C2%AE%22%2C%22email%22%3A%22alex%2Btest%40snowplowanalytics.com%22%2C%22company%22%3A%22SP%22%2C%22eventsPerMonth%22%3A%22%3C%201%20million%22%2C%22serviceType%22%3A%22unsure%22%7D%7D%7D&dtm=1364230969450&evn=com.acme&tid=598951&vp=2560x934&ds=2543x1420&vid=43&duid=9795bd0203804cd1&p=web&tv=js-0.11.1&fp=2876815413&aid=pbzsite&lang=en-GB&cs=UTF-8&tz=Europe%2FLondon&refr=http%3A%2F%2Fwww.psychicbazaar.com%2F&f_pdf=1&f_qt=0&f_realp=0&f_wma=0&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=1&res=2560x1440&cd=32&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2F2-tarot-cards"
   )
-
   val expected = List(
     "pbzsite",
     "web",
-    EtlTimestamp,
+    etlTimestamp,
     "2012-05-27 11:35:53.000",
     "2013-03-25 17:02:49.450",
     "unstruct",
@@ -51,7 +35,7 @@ object SqlQueryEnrichmentCfLineSpec {
     null, // No tracker namespace
     "js-0.11.1",
     "cloudfront",
-    EtlVersion,
+    etlVersion,
     null, // No user_id set
     "70.46.123.145",
     "2876815413",
@@ -172,51 +156,38 @@ object SqlQueryEnrichmentCfLineSpec {
     "72dea73c7e0eef2a3b066b18593d57e4"
   )
 
-  /**
-   * Check if test running in CI environment
-   */
+  /** Check if test running in CI environment */
   def continuousIntegration: Boolean = sys.env.get("CI") match {
     case Some("true") => true
     case _ => false
   }
 }
 
-/**
- * Integration test for the EtlJob:
- *
- * Check SQL Query Enrichment makes query and attaches context to event
- */
-class SqlQueryEnrichmentCfLineSpec extends Specification {
-
+/** Check SQL Query Enrichment makes query and attaches context to event */
+class SqlQueryEnrichmentCfLineSpec extends Specification with EnrichJobSpec {
+  import EnrichJobSpec._
+  override def appName = "sql-query-enrichment-cf-lines"
+  sequential
   // Only run SQL Query Enrichment test if the its started on CI and test Postgres DB has been deployed
   if (SqlQueryEnrichmentCfLineSpec.continuousIntegration) {
+    "A job which processes a CloudFront file containing 1 valid custom unstructured event, " +
+    "derived context and custom contexts" should {
+      runEnrichJob(SqlQueryEnrichmentCfLineSpec.lines, "cloudfront", "1", false,
+        List("geo", "domain"), apiRequestEnabled = false, sqlQueryEnabled = true)
 
-    "A job which processes a CloudFront file containing 1 valid custom unstructured event, derived context and custom contexts" should {
-      EtlJobSpec("cloudfront", "1", false, List("geo", "domain"), apiRequest = false, sqlQuery = true).
-        source(MultipleTextLineFiles("inputFolder"), SqlQueryEnrichmentCfLineSpec.lines).
-        sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
-          "correctly attach derived context fetched from SQL DataBase" in {
-            buf.size must_== 1
-            val actual = buf.head
-            for (idx <- SqlQueryEnrichmentCfLineSpec.expected.indices) {
-              actual.getString(idx) must beFieldEqualTo(SqlQueryEnrichmentCfLineSpec.expected(idx), withIndex = idx)
-            }
-          }
-        }.
-        sink[TupleEntry](Tsv("exceptionsFolder")){ trap =>
-        "not trap any exceptions" in {
-          trap must beEmpty
+      "correctly attach derived context fetched from SQL DataBase" in {
+        val Some(goods) = readPartFile(dirs.output)
+        goods.size must_== 1
+        val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
+        for (idx <- SqlQueryEnrichmentCfLineSpec.expected.indices) {
+          actual(idx) must beFieldEqualTo(SqlQueryEnrichmentCfLineSpec.expected(idx), idx)
         }
-        }.
-        sink[String](Tsv("badFolder")){ error =>
-          "not write any bad rows" in {
-            error must beEmpty
-          }
-        }.
-        run.
-        finish
-    }
+      }
 
+      "not write any bad rows" in {
+        dirs.badRows must beEmptyDir
+      }
+    }
   } else {
     println("WARNING: Skipping SqlQueryEnrichmentCfLineSpec as no CI=true environment variable was found")
   }
