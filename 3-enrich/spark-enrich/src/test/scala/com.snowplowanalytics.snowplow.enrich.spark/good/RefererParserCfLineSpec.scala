@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-package hadoop
+package spark
 package good
 
 // Scala
@@ -100,7 +100,7 @@ object RefererParserCfLineSpec {
     null, //
     null, //
     null, // Unstructured event field empty
-    null, // Transaction fields empty 
+    null, // Transaction fields empty
     null, //
     null, //
     null, //
@@ -155,9 +155,9 @@ object RefererParserCfLineSpec {
 /**
  * Integration test for the EtlJob:
  *
- * Check that a referer with one of the 
+ * Check that a referer with one of the
  * user-specified internal domain names
- * is counted as internal 
+ * is counted as internal
  *
  */
 class RefererParserCfLineSpec extends Specification {

@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-package hadoop
+package spark
 package good
 
 // Scala
@@ -120,7 +120,7 @@ object CljTomcatTp2MultiEventsSpec {
         null, //
         null, //
         null, // Unstructured event field empty
-        null, // Transaction fields empty 
+        null, // Transaction fields empty
         null, //
         null, //
         null, //
@@ -231,7 +231,7 @@ object CljTomcatTp2MultiEventsSpec {
         null,
         null,
         null, // Unstructured event field empty
-        null, // Transaction fields empty 
+        null, // Transaction fields empty
         null, //
         null, //
         null, //
@@ -342,7 +342,7 @@ object CljTomcatTp2MultiEventsSpec {
         null, //
         null, //
         null, // Unstructured event field empty
-        null, // Transaction fields empty 
+        null, // Transaction fields empty
         null, //
         null, //
         null, //

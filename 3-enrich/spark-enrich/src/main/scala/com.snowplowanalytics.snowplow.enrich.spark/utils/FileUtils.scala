@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-package hadoop
+package spark 
 package utils
 
 // Java
@@ -69,7 +69,7 @@ object FileUtils {
     val filename = extractFilenameFromUri(assetUri)
     val localFile = "/tmp/%s".format(filename)
     FU.copyURLToFile(assetUri.toURL, new File(localFile), 60000, 300000) // Sensible conn, read timeouts
-    
+
     val fs = FileSystem.get(conf)
     val hdfsPath = new Path("hdfs:///cache/%s".format(filename))
     fs.copyFromLocalFile(true, true, new Path(localFile), hdfsPath) // Delete local file, overwrite target if exists
