@@ -20,7 +20,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    version       := "1.8.0",
+    version       := "1.9.0",
     description   := "The Snowplow Spark Enrichment process",
     scalaVersion  := "2.10.4",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8",
