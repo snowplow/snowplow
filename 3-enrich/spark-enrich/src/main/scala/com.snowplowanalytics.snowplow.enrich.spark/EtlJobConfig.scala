@@ -59,7 +59,7 @@ import enrich.common.utils.ScalazArgs
  *
  * @param inFolder The processing folder
  * @param inFormat The format in which the
- *        collector is saving data 
+ *        collector is saving data
  * @param outFolder Folder where good rows
  *        are stored
  * @param badFolder Folder where bad rows
@@ -101,7 +101,7 @@ object EtlJobConfig {
    *
    * @param args The arguments to parse
    * @param localMode Whether to use the
-   *        local MaxMind data file. 
+   *        local MaxMind data file.
    *        Enabled for tests.
    * @return a Tuple2 containg the EtLJobConfig
    *         and the EnrichmentRegistry, or one
@@ -118,7 +118,7 @@ object EtlJobConfig {
     val badFolder = args.requiredz("bad_rows_folder")
     val etlTstamp = args.requiredz("etl_tstamp").flatMap(timestampStringToDateTime(_))
     val exceptionsFolder = args.optionalz("exceptions_folder")
-    
+
     val igluConfig = args.requiredz("iglu_config")
     val igluResolver: ValidatedNelMessage[Resolver] = igluConfig match {
       case Failure(e) => e.toString.toProcessingMessage.failNel[Resolver]
