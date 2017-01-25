@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-package hadoop
+package spark
 package bad
 
 // Specs2
@@ -51,7 +51,7 @@ class UnsupportedPayloadCfLinesSpec extends Specification {
   "A job which processes an input line with an unknown payload format" should {
     EtlJobSpec("cloudfront", "1", false, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), UnsupportedPayloadCfLinesSpec.lines).
-      sink[String](Tsv("outputFolder")){ output => 
+      sink[String](Tsv("outputFolder")){ output =>
         "not write any events" in {
           output must beEmpty
         }
