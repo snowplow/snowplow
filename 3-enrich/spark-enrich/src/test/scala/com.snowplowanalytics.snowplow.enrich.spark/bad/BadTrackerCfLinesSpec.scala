@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-package hadoop
+package spark
 package bad
 
 // Specs2
@@ -56,7 +56,7 @@ class BadTrackerCfLinesSpec extends Specification {
   "A job which processes input lines containing corrupted data from the tracker" should {
     EtlJobSpec("cloudfront", "1", false, List("geo")).
       source(MultipleTextLineFiles("inputFolder"), BadTrackerCfLinesSpec.lines).
-      sink[String](Tsv("outputFolder")){ output => 
+      sink[String](Tsv("outputFolder")){ output =>
         "not write any events" in {
           output must beEmpty
         }

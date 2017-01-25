@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-package hadoop
+package spark
 package misc
 
 // Specs2
@@ -34,7 +34,7 @@ object DiscardableCfLinesSpec {
   val lines = Lines(
     "#Version: 1.0",
     "#Fields: date time x-edge-location sc-bytes c-ip cs-method cs(Host) cs-uri-stem sc-status cs(Referer) cs(User-Agent) cs-uri-query"
-    )  
+    )
 }
 
 /**
