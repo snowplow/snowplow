@@ -10,10 +10,9 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
+package com.snowplowanalytics.snowplow.enrich
+package spark
 package good
-
-// Scala
-import com.snowplowanalytics.snowplow.enrich.hadoop.JobSpecHelpers
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, Buffer}
 
@@ -381,5 +380,5 @@ class NdjsonUrbanAirshipSpec extends Specification {
       run.
       finish
   }
-  
+
 }

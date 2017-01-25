@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-package hadoop
+package spark
 package good
 
 // Scala
@@ -99,7 +99,7 @@ object TransactionCfLineSpec {
     null, //
     null, //
     null, // Unstructured event field empty
-    "order-123",     // Transaction fields are set 
+    "order-123",     // Transaction fields are set
     "psychicbazaar", //
     "8000",          //
     "200",           //
