@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-package hadoop
+package spark
 
 // Java
 import java.net.URI
@@ -57,7 +57,7 @@ import generated.ProjectSettings
 /**
  * Holds constructs to help build the ETL job's data
  * flow (see below).
- */ 
+ */
 object EtlJob {
 
   /**
@@ -76,7 +76,7 @@ object EtlJob {
     }
   }
 
-  /** 
+  /**
    * Generate our "host ETL" version string.
    * @return our version String
    */
@@ -131,7 +131,7 @@ object EtlJob {
  * Note that EtlJob has to be serializable by
  * Kyro - so be super careful what you add as
  * fields.
- */ 
+ */
 class EtlJob(args: Args) extends Job(args) {
 
   // Job configuration. Scalaz recommends using fold()
@@ -188,7 +188,7 @@ class EtlJob(args: Args) extends Job(args) {
         error <- both._2
         bad    = BadRow(originalLine, error).toCompactJson
       } yield bad // : List[BadRow]
-    }   
+    }
     .write(badOutput) // N JSONs containing line and error(s)
 
   // Handle good rows
