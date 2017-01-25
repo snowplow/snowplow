@@ -1,48 +1,32 @@
 /*
- * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
- * You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
+ * You may obtain a copy of the Apache License Version 2.0 at
+ * http://www.apache.org/licenses/LICENSE-2.0.
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the Apache License Version 2.0 is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
+ * See the Apache License Version 2.0 for the specific language governing permissions and
+ * limitations there under.
  */
-package com.snowplowanalytics.snowplow.enrich
-package spark
+package com.snowplowanalytics.snowplow.enrich.spark
 package good
 
-// Scala
-import scala.collection.mutable.Buffer
-
-// Specs2
 import org.specs2.mutable.Specification
 
-// Scalding
-import com.twitter.scalding._
-
-// Cascading
-import cascading.tuple.TupleEntry
-
-// This project
-import JobSpecHelpers._
-
-/**
- * Holds the input and expected data
- * for the test.
- */
 object CljTomcatCallrailEventSpec {
-
+  import EnrichJobSpec._
   val lines = Lines(
     "2014-10-09  16:28:31    -   13  255.255.255.255   POST    255.255.255.255   /com.callrail/v1    404 -   -   aid=bnb&answered=true&callercity=BAKERSFIELD&callercountry=US&callername=SKYPE+CALLER&callernum=%2B16617240240&callerstate=CA&callerzip=93307&callsource=keyword&datetime=2014-10-09+16%3A23%3A45&destinationnum=2015014231&duration=247&first_call=true&ga=&gclid=&id=305895151&ip=86.178.183.7&keywords=&kissmetrics_id=&landingpage=http%3A%2F%2Flndpage.com%2F&recording=http%3A%2F%2Fapp.callrail.com%2Fcalls%2F305895151%2Frecording%2F9f59ad59ba1cfa964372&referrer=direct&referrermedium=Direct&trackingnum=%2B12015911668&transcription=&utm_campaign=&utm_content=&utm_medium=&utm_source=&utm_term=&utma=&utmb=&utmc=&utmv=&utmx=&utmz=&cv=clj-0.6.0-tom-0.0.4&nuid=-   -   -   -"
-    )
+  )
 
   val expected = List(
     "bnb",
     "srv",
-    EtlTimestamp,
+    etlTimestamp,
     "2014-10-09 16:28:31.000",
     null,
     "unstruct",
@@ -51,7 +35,7 @@ object CljTomcatCallrailEventSpec {
     null, // No tracker namespace
     "com.callrail-v1",
     "clj-0.6.0-tom-0.0.4",
-    EtlVersion,
+    etlVersion,
     null, // No user_id set
     "255.255.x.x",
     null,
@@ -148,44 +132,33 @@ object CljTomcatCallrailEventSpec {
     null,
     null,
     null
-    )
+  )
 }
 
 /**
- * Integration test for the EtlJob:
- *
- * Check that all tuples in a CallRail completed call
- * event in the Clojure-Tomcat format are successfully
- * extracted.
- *
- * For details:
- * https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
+ * Check that all tuples in a CallRail completed call event in the Clojure-Tomcat format are
+ * successfully extracted.
+ * For details: https://forums.aws.amazon.com/thread.jspa?threadID=134017&tstart=0#
  */
-class CljTomcatCallrailEventSpec extends Specification {
+class CljTomcatCallrailEventSpec extends Specification with EnrichJobSpec {
+  import EnrichJobSpec._
+  override def appName = "clj-tomcat-callrail-event"
+  sequential
+  "A job which processes a Clojure-Tomcat file containing a GET raw event representing 1 valid " +
+  "completed call" should {
+    runEnrichJob(CljTomcatCallrailEventSpec.lines, "clj-tomcat", "2", true, List("geo"))
 
-  "A job which processes a Clojure-Tomcat file containing a GET raw event representing 1 valid completed call" should {
-    EtlJobSpec("clj-tomcat", "2", true, List("geo")).
-      source(MultipleTextLineFiles("inputFolder"), CljTomcatCallrailEventSpec.lines).
-      sink[TupleEntry](Tsv("outputFolder")){ buf : Buffer[TupleEntry] =>
-        "correctly output 1 completed call" in {
-          buf.size must_== 1
-          val actual = buf.head
-          for (idx <- CljTomcatCallrailEventSpec.expected.indices) {
-            actual.getString(idx) must beFieldEqualTo(CljTomcatCallrailEventSpec.expected(idx), withIndex = idx)
-          }
-        }
-      }.
-      sink[TupleEntry](Tsv("exceptionsFolder")){ trap =>
-        "not trap any exceptions" in {
-          trap must beEmpty
-        }
-      }.
-      sink[String](Tsv("badFolder")){ error =>
-        "not write any bad rows" in {
-          error must beEmpty
-        }
-      }.
-      run.
-      finish
+    "correctly output 1 completed call" in {
+      val Some(goods) = readPartFile(dirs.output)
+      goods.size must_== 1
+      val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
+      for (idx <- CljTomcatCallrailEventSpec.expected.indices) {
+        actual(idx) must beFieldEqualTo(CljTomcatCallrailEventSpec.expected(idx), idx)
+      }
+    }
+
+    "not write any bad rows" in {
+      dirs.badRows must beEmptyDir
+    }
   }
 }
