@@ -21,7 +21,7 @@ object BuildSettings {
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
     version       := "1.8.0",
-    description   := "The Snowplow Hadoop Enrichment process, written in Scalding for Hadoop 2.4",
+    description   := "The Snowplow Spark Enrichment process",
     scalaVersion  := "2.10.4",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8",
                          "-target:jvm-1.7"),
@@ -67,10 +67,10 @@ object BuildSettings {
         "commons-beanutils-1.7.0.jar",      // "
         "hadoop-core-1.0.3.jar", // Brought in via dfs-datastores-cascading-1.3.4
         "protobuf-java-2.4.1.jar" // Hadoop needs 2.5.0
-      ) 
+      )
       cp filter { jar => excludes(jar.data.getName) }
     },
-    
+
     mergeStrategy in assembly <<= (mergeStrategy in assembly) {
       (old) => {
         case x if x.endsWith("project.clj") => MergeStrategy.discard // Leiningen build files

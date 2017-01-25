@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -13,7 +13,7 @@
 import sbt._
 import Keys._
 
-object SnowplowHadoopEnrichBuild extends Build {
+object SnowplowSparkEnrichBuild extends Build {
 
   import Dependencies._
   import BuildSettings._
@@ -24,7 +24,7 @@ object SnowplowHadoopEnrichBuild extends Build {
   }
 
   // Define our project, with basic project information and library dependencies
-  lazy val project = Project("snowplow-hadoop-enrich", file("."))
+  lazy val project = Project("snowplow-spark-enrich", file("."))
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(

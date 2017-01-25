@@ -1,14 +1,14 @@
-# Scala Hadoop Enrich
+# Spark Enrich
 
 ## Introduction
 
-This is the Snowplow Enrichment process implemented for Hadoop using [Scalding][scalding]. The Hadoop Enrichment parses raw Snowplow event logs, extracts the Snowplow events, enriches them (e.g. with geo-location information) and then writes them out to Snowplow-format event files.
+This is the Snowplow Enrichment process implemented using [Spark] [spark]. The Hadoop Enrichment parses raw Snowplow event logs, extracts the Snowplow events, enriches them (e.g. with geo-location information) and then writes them out to Snowplow-format event files.
 
 The Snowplow Hadoop Enrichment process is an alternative to the Snowplow [Kinesis Enrichment][kinesis-enrich] process.
 
 ## Technical overview
 
-Scala Hadoop Enrich is written in [Scalding][scalding], the Scala library/DSL on top of [Cascading][cascading], the Java data processing framework which in turn wraps Hadoop.
+Spark Enrich is written in [Spark] [spark].
 
 The process can be run on [Amazon Elastic MapReduce][emr] using the [EmrEtlRunner][emr-etl-runner] Ruby app.
 
@@ -17,20 +17,20 @@ The process can be run on [Amazon Elastic MapReduce][emr] using the [EmrEtlRunne
 Assuming you already have SBT installed:
 
     $ git clone git://github.com/snowplow/snowplow.git
-    $ cd 3-enrich/scala-hadoop-enrich
+    $ cd 3-enrich/spark-enrich
     $ sbt assembly
 
 The 'fat jar' is now available as:
 
-    target/snowplow-hadoop-etl-x.x.x.jar
+    target/snowplow-spark-etl-x.x.x.jar
 
 ## Testing
 
-The `assembly` command above does not (currently) run the test suite - but you can run this manually with:
+The `assembly` command above does not (currently) run the test suite - but you can run it manually with:
 
     $ sbt test
 
-If you get errors reported in some tests, run those tests individually with `test-only com.snowplowanalytics...TestName` and they should pass fine.
+If you get errors reported in some tests, run those tests individually with `testOnly *TestName` and they should pass fine.
 
 ## Find out more
 
@@ -41,7 +41,7 @@ If you get errors reported in some tests, run those tests individually with `tes
 
 ## Copyright and license
 
-Copyright 2012-2015 Snowplow Analytics Ltd.
+Copyright 2012-2017 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
@@ -52,8 +52,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-[scalding]: https://github.com/twitter/scalding/
-[cascading]: http://www.cascading.org/
+[spark]: http://spark.apache.org/
 [snowplow]: http://snowplowanalytics.com
 [kinesis-enrich]: https://github.com/snowplow/snowplow/tree/master/3-enrich/scala-kinesis-enrich
 [emr]: http://aws.amazon.com/elasticmapreduce/
