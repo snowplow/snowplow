@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-package hadoop
+package spark
 package good
 
 // Scala
@@ -99,7 +99,7 @@ object CljTomcatCallrailEventSpec {
     null, //
     null, //
     """{"schema":"iglu:com.snowplowanalytics.snowplow/unstruct_event/jsonschema/1-0-0","data":{"schema":"iglu:com.callrail/call_complete/jsonschema/1-0-0","data":{"duration":247,"utm_source":null,"utmv":null,"ip":"86.178.183.7","utmx":null,"ga":null,"destinationnum":"2015014231","datetime":"2014-10-09T16:23:45.000Z","kissmetrics_id":null,"landingpage":"http://lndpage.com/","callerzip":"93307","gclid":null,"callername":"SKYPE CALLER","utmb":null,"id":"305895151","callernum":"+16617240240","utm_content":null,"trackingnum":"+12015911668","referrermedium":"Direct","utm_campaign":null,"keywords":null,"transcription":null,"utmz":null,"utma":null,"referrer":"direct","callerstate":"CA","recording":"http://app.callrail.com/calls/305895151/recording/9f59ad59ba1cfa964372","first_call":true,"utmc":null,"callercountry":"US","utm_medium":null,"callercity":"BAKERSFIELD","utm_term":null,"answered":true,"callsource":"keyword"}}}""", // Unstructured event field empty
-    null, // Transaction fields empty 
+    null, // Transaction fields empty
     null, //
     null, //
     null, //
