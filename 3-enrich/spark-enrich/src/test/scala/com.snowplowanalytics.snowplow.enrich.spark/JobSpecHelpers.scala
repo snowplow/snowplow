@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-package hadoop
+package spark
 
 // Java
 import java.io.File
@@ -222,7 +222,7 @@ object JobSpecHelpers {
    * @param lines The Lines object
    * @return the ScaldingLines ready for Scalding
    */
-  implicit def Lines2ScaldingLines(lines : Lines): ScaldingLines = lines.numberedLines 
+  implicit def Lines2ScaldingLines(lines : Lines): ScaldingLines = lines.numberedLines
 
   /**
    * Creates the the part of the ip_lookups
@@ -306,7 +306,7 @@ object JobSpecHelpers {
                   |"parameters": {
                     ${lookupsJson}
                   |}
-                |}  
+                |}
               |},
               |{
                 |"schema": "iglu:com.snowplowanalytics.snowplow/campaign_attribution/jsonschema/1-0-1",
@@ -525,12 +525,12 @@ object JobSpecHelpers {
   def EtlJobSpec(collector: String, anonOctets: String, anonOctetsEnabled: Boolean, lookups: List[String],
     currencyConversion: Boolean = false, javascriptScript: Boolean = false, apiRequest: Boolean = false,
     sqlQuery: Boolean = false): JobTest =
-    JobTest("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob").
+    JobTest("com.snowplowanalytics.snowplow.enrich.spark.EtlJob").
       arg("input_folder", "inputFolder").
       arg("input_format", collector).
       arg("output_folder", "outputFolder").
       arg("bad_rows_folder", "badFolder").
-      arg("etl_tstamp", "1000000000000").      
+      arg("etl_tstamp", "1000000000000").
       arg("iglu_config", IgluConfig).
       arg("enrichments", getEnrichments(collector, anonOctets, anonOctetsEnabled, lookups, currencyConversion, javascriptScript, apiRequest, sqlQuery))
 
@@ -570,7 +570,7 @@ object JobSpecHelpers {
     val badRows    = mkTmpDir("bad-rows")
     val exceptions = mkTmpDir("exceptions")
 
-    val args = Array[String]("com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob", "--local",
+    val args = Array[String]("com.snowplowanalytics.snowplow.enrich.spark.EtlJob", "--local",
       "--input_folder",      input.getAbsolutePath,
       "--input_format",      collector,
       "--output_folder",     output.getAbsolutePath,
