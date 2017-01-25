@@ -22,7 +22,7 @@ Assuming you already have SBT installed:
 
 The 'fat jar' is now available as:
 
-    target/snowplow-spark-etl-x.x.x.jar
+    target/snowplow-spark-enrich-x.x.x.jar
 
 ## Testing
 
