@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 package com.snowplowanalytics.snowplow.enrich
-package hadoop
+package spark
 package good
 
 // Scala
@@ -34,7 +34,7 @@ import JobSpecHelpers._
  * for the test.
  */
 object CljTomcatPingdomEventSpec {
-  
+
   val lines = Lines(
     "2014-10-09  16:28:31    -   13  255.255.255.255   POST    255.255.255.255   /com.pingdom/v1   404 -  -   p=srv&message=%7B%22check%22%3A%20%221421338%22%2C%20%22checkname%22%3A%20%22Webhooks_Test%22%2C%20%22host%22%3A%20%227eef51c2.ngrok.com%22%2C%20%22action%22%3A%20%22assign%22%2C%20%22incidentid%22%3A%203%2C%20%22description%22%3A%20%22down%22%7D&aid=uptime&cv=clj-0.6.0-tom-0.0.4&nuid=-   -   -   -   -   -"
     )
