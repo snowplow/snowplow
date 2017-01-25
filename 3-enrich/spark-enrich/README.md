@@ -2,13 +2,13 @@
 
 ## Introduction
 
-This is the Snowplow Enrichment process implemented using [Spark] [spark]. The Hadoop Enrichment parses raw Snowplow event logs, extracts the Snowplow events, enriches them (e.g. with geo-location information) and then writes them out to Snowplow-format event files.
+This is the Snowplow Enrichment process implemented using [Spark][spark]. The Hadoop Enrichment parses raw Snowplow event logs, extracts the Snowplow events, enriches them (e.g. with geo-location information) and then writes them out to Snowplow-format event files.
 
 The Snowplow Hadoop Enrichment process is an alternative to the Snowplow [Kinesis Enrichment][kinesis-enrich] process.
 
 ## Technical overview
 
-Spark Enrich is written in [Spark] [spark].
+Spark Enrich is written in [Spark][spark].
 
 The process can be run on [Amazon Elastic MapReduce][emr] using the [EmrEtlRunner][emr-etl-runner] Ruby app.
 
@@ -22,7 +22,7 @@ Assuming you already have SBT installed:
 
 The 'fat jar' is now available as:
 
-    target/snowplow-spark-etl-x.x.x.jar
+    target/snowplow-spark-enrich-x.x.x.jar
 
 ## Testing
 
