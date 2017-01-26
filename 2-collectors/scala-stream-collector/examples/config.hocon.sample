@@ -53,6 +53,7 @@ collector {
     # Sinks currently supported are:
     # 'kinesis' for writing Thrift-serialized records to a Kinesis stream
     # 'kafka' for writing Thrift-serialized records to kafka
+    # 'gcpubsub' for writing Thrift-serialized records to Google Cloud Pub/Sub
     # 'stdout' for writing Base64-encoded Thrift-serialized records to stdout
     #    Recommended settings for 'stdout' so each line printed to stdout
     #    is a serialized record are:
@@ -99,6 +100,22 @@ collector {
       topic {
         good: "{{collectorKafkaTopicGoodName}}"
         bad: "{{collectorKafkaTopicBadName}}"
+      }
+    }
+
+    gcpubsub {
+
+      # if set to 'env' it will use the GOOGLE_APPLICATION_CREDENTIALS environment variable,
+      # else, it assumes an absolute path, to the json credentials file
+      google-auth-path: "{{collectorPubSubAuthPath}}"
+
+      # this is the project ID inside of which your collector will be running
+      google-project-id: "{{collectorPubSubProjectId}}"
+
+      # Data will be stored in the following topics (they must have been created ahead-of-time)
+      topic {
+        good: "{{collectorPubSubTopicGoodName}}"
+        bad: "{{collectorPubSubTopicBadName}}"
       }
     }
 
