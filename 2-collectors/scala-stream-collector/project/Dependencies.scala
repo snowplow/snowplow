@@ -30,7 +30,7 @@ object Dependencies {
   object V {
     // Java
     val mimepull         = "1.9.4"
-    val awsSdk           = "1.6.10"
+    val awsSdk           = "1.11.86"
     val yodaTime         = "2.1"
     val yodaConvert      = "1.2"
     val kafka            = "0.10.1.0"
@@ -44,7 +44,7 @@ object Dependencies {
     val akka             = "2.3.9"
     val logback          = "1.0.13"
     val commonsCodec     = "1.5"
-    val scalazon         = "0.11"
+    val scalazon         = "0.12-SNAPSHOT"
     val argot            = "1.0.1"
     val json4s           = "3.2.11"
     // Scala (test only)
@@ -56,7 +56,7 @@ object Dependencies {
   object Libraries {
     // Java
     val mimepull         = "org.jvnet.mimepull"    %  "mimepull"                  % V.mimepull
-    val awsSdk           = "com.amazonaws"         %  "aws-java-sdk"              % V.awsSdk
+    val awsSdk           = "com.amazonaws"         %  "aws-java-sdk-kinesis"              % V.awsSdk
     val yodaTime         = "joda-time"             %  "joda-time"                 % V.yodaTime
     val yodaConvert      = "org.joda"              %  "joda-convert"              % V.yodaConvert
     val kafkaClients     = "org.apache.kafka"      %  "kafka-clients"             % V.kafka
