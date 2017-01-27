@@ -29,8 +29,8 @@ object Dependencies {
     // Java
     val logging              = "1.1.3"
     val slf4j                = "1.7.5"
-    val kinesisClient        = "1.6.1"
-    val kinesisConnector     = "1.1.2"
+    val kinesisClient        = "1.7.3"
+    val kinesisConnector     = "1.3.1-SNAPSHOT"
 
     object jest {
       val _1x                = "1.0.3"
