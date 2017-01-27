@@ -31,6 +31,7 @@ object ScalaCollectorBuild extends Build {
     .settings(buildSettings: _*)
     .settings(
       libraryDependencies ++= Seq(
+        Libraries.awsSdk,
         Libraries.akkaActor,
         Libraries.akkaSlf4j,
         Libraries.yodaTime,
@@ -43,7 +44,6 @@ object ScalaCollectorBuild extends Build {
         Libraries.sprayTestkit,
         Libraries.specs2,
         Libraries.scalazon,
-        Libraries.awsSdk,
         Libraries.argot,
         Libraries.snowplowCommonEnrich,
         Libraries.igluClient,
