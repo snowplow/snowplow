@@ -36,7 +36,7 @@ import scala.beans.BeanProperty
  * switch remaining Bytes to Booleans).
  */
 // TODO: make the EnrichedEvent Avro-format, not Redshift-specific
-class EnrichedEvent {
+class EnrichedEvent extends Serializable {
 
   // The application (site, game, app etc) this event belongs to, and the tracker platform
   @BeanProperty var app_id: String = _
