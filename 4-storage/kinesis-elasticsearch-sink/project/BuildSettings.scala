@@ -19,7 +19,7 @@ import scala.io.Source._
 object BuildSettings {
 
   // Defines the ES Version to build for
-  val ElasticsearchVersion = sys.env("ELASTICSEARCH_VERSION")
+  val ElasticsearchVersion: String = sys.env.getOrElse("ELASTICSEARCH_VERSION", "2x")
 
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
