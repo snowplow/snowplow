@@ -29,6 +29,8 @@ module Snowplow
       CF_DATE_FORMAT = '%Y-%m-%d'
       CF_FILE_EXT = '.gz'
 
+      RETRY_EXT = 'retry'
+
       # Generate a short UrbanAirship filename
       #
       # Parameters:
@@ -73,21 +75,13 @@ module Snowplow
             name = File.basename(basename, extn)
 
             # This will convert Beanstalk epoch timestamps to our CloudFront-like yyyy-MM-dd-HH
-            final_name, final_extn =
-              if name_match = name.match(/^_*(.*)\.txt-?([[:digit:]]+)$/)
-                base, tstamp = name_match.captures
-                begin
-                  tstamp_ymdh = Time.at(tstamp.to_i).utc.to_datetime.strftime("%Y-%m-%d-%H")
-                  [ base + '.' + tstamp_ymdh, '.txt' + extn ]
-                rescue StandardError => e
-                  [ name, extn ]
-                end
-              else
-                [ name, extn ]
-              end
+            final_name, final_extn =get_final_name_and_extension( filepath, basename, instance)
 
-            # Hopefully basename.yyyy-MM-dd-HH.region.instance.txt.gz
-            return final_name + '.' + region + '.' + instance + final_extn
+            Monitoring::Logging::logger.debug "final_name:'#{final_name}', final_extn:'#{final_extn}'"
+
+            return (final_extn.eql? RETRY_EXT) ?
+                (RETRY_EXT + '/' + final_name ) :
+                ( final_name + '.' + region + '.' + instance + final_extn ) # Hopefully basename.yyyy-MM-dd-HH.region.instance.txt.gz
           else
             # Hadoop ignores files which begin with underscores
             if m = basename.match('^_+(.*\.gz)$')
@@ -97,6 +91,67 @@ module Snowplow
             end
           end
         }
+      end
+
+      # convert Beanstalk epoch timestamps to our CloudFront-like yyyy-MM-dd-HH
+      # It will also do the validation of the converted timestamp doing a reverse conversion.
+      # dst is taken into account
+      #
+      # Parameters:
+      # +filepath+:: instance + filename string format
+      # +instance+:: instance id
+      # +basename+:: full filename
+      def self.get_final_name_and_extension(filepath, basename, instance)
+
+        extn = File.extname(basename)
+        name = File.basename(basename, extn)
+
+        if name_match = name.match(/^_*(.*)\.txt-?([[:digit:]]+)$/)
+          base, tstamp = name_match.captures
+          begin
+            allowed_tstamp_delta = 2700 # 45 minutes. Sometimes AWS EB sets late timestamps
+            max_retries = 5
+            rebuilt_timestamp = 0
+            tstamp_ymdh=String.new
+            retries = 0
+            tstamp_delta = 0
+            both_tstamps_match = false
+
+            loop do
+              tstamp_ymdh = Time.at(tstamp.to_i).utc.to_datetime.strftime("%Y-%m-%d-%H")
+              # Reverse timestamp conversion. We validate the converted tstamp_ymdh is equals to tstamp
+              # This takes into account the "Day light saving time"
+              rebuilt_timestamp = (Time.parse(tstamp_ymdh.reverse.sub(/-/, ' ').reverse).to_i + Time.zone_offset(Time.at(tstamp.to_i).zone).to_i).to_i
+              tstamp_delta = Time.at(rebuilt_timestamp).dst? ? (tstamp.to_i - rebuilt_timestamp.to_i - 3600) : (tstamp.to_i - rebuilt_timestamp.to_i) # Day light saving time hack
+              both_tstamps_match = tstamp_delta < allowed_tstamp_delta
+
+              Monitoring::Logging::logger.debug "Instance = #{instance}, Timestamp = #{tstamp} => CloudFront-like = #{tstamp_ymdh}" if retries == 0
+
+              if (!both_tstamps_match)
+                retries += 1
+                Monitoring::Logging::logger.debug "Instance = #{instance}, Timestamp = #{tstamp} => CloudFront-like = #{tstamp_ymdh}, File basename = #{name}. Retrying(#{retries})"
+              end
+
+              break if (both_tstamps_match || retries == max_retries)
+            end
+
+            if (!both_tstamps_match)
+              Monitoring::Logging::logger.debug "Not equal timestamps CloudFront-like = #{tstamp_ymdh}, Instance = #{instance}, original_tstamp = #{tstamp}, rebuilt_timestamp = #{rebuilt_timestamp}. Delta = #{tstamp_delta}"
+              # filepath : i-615f3c85/_var_log_tomcat7_rotated_localhost_access_log.txt1426089661.gz alike
+              return [ filepath, RETRY_EXT ]
+            elsif (retries > 0)
+              Monitoring::Logging::logger.debug "Timestamps matched on a retried conversion for CloudFront-like = #{tstamp_ymdh}, Instance = #{instance}, original_tstamp = #{tstamp}, rebuilt_timestamp = #{rebuilt_timestamp}. Delta = #{tstamp_delta}"
+            end
+
+            [base + '.' + tstamp_ymdh, '.txt' + extn]
+          rescue StandardError => e
+            Monitoring::Logging::logger.debug "Error on timestamp conversion for Instance = #{instance}, Timestamp = #{tstamp}, File basename = #{name}"
+            puts e.inspect
+            [name, extn]
+          end
+        else
+          [name, extn]
+        end
       end
 
       # Moves new raw logs to a processing bucket.
@@ -118,6 +173,7 @@ module Snowplow
         in_bucket_array = config[:aws][:s3][:buckets][:raw][:in]
         in_locations = in_bucket_array.map {|name| Sluice::Storage::S3::Location.new(name)}
         processing_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:raw][:processing])
+        retry_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:raw][:retry])
 
         # Check whether our processing directory is empty
         unless Sluice::Storage::S3::is_empty?(s3, processing_location)
@@ -159,6 +215,7 @@ module Snowplow
         fix_filenames = build_fix_filenames(config[:aws][:s3][:region], config[:collectors][:format])
         files_moved = in_locations.map { |in_location|
           Sluice::Storage::S3::move_files(s3, in_location, processing_location, files_to_move, fix_filenames, true)
+          Sluice::Storage::S3::move_files(s3, retry_location,  in_location)
         }
 
         if files_moved.flatten.length == 0

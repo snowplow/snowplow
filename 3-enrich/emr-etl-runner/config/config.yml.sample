@@ -13,6 +13,7 @@ aws:
           - ADD HERE          # e.g. s3://my-in-bucket
           - ADD HERE
         processing: ADD HERE
+        retry: ADD HERE
         archive: ADD HERE    # e.g. s3://my-archive-bucket/raw
       enriched:
         good: ADD HERE       # e.g. s3://my-out-bucket/enriched/good
