@@ -77,7 +77,7 @@ module Snowplow
             # This will convert Beanstalk epoch timestamps to our CloudFront-like yyyy-MM-dd-HH
             final_name, final_extn =get_final_name_and_extension( filepath, basename, instance)
 
-            Monitoring::Logging::logger.debug "final_name:'#{final_name}', final_extn:'#{final_extn}'"
+            Monitoring::Logging::logger.debug "Instance = #{instance}, final_name:'#{final_name}', final_extn:'#{final_extn}'"
 
             return (final_extn.eql? RETRY_EXT) ?
                 (RETRY_EXT + '/' + final_name ) :
