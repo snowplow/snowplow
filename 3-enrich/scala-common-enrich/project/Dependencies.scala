@@ -51,7 +51,7 @@ object Dependencies {
     val refererParser    = "0.3.0"
     val maxmindIplookups = "0.3.0"
     val json4s           = "3.2.11"
-    val igluClient       = "0.4.0"
+    val igluClient       = "0.5.0"
     val scalaForex       = "0.5.0"
     val scalaWeather     = "0.2.0"
     val akka             = "2.3.14"
