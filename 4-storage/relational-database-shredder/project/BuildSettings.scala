@@ -19,7 +19,7 @@ object BuildSettings {
 
   lazy val buildSettings = Seq(
     organization  := "com.snowplowanalytics",
-    scalaVersion  := "2.10.4",
+    scalaVersion  := "2.11.11",
     scalacOptions := compilerOptions,
     parallelExecution in Test := false, // Parallel tests cause havoc with Spark
     oneJvmPerTestSetting // ensures that only CrossBatchDeduplicationSpec has a DuplicateStorage
