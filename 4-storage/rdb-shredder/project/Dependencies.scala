@@ -27,7 +27,7 @@ object Dependencies {
     val commonEnrich    = "0.25.0"
     val igluClient      = "0.5.0"
     // Scala (test only)
-    val specs2          = "2.3.11"
+    val specs2          = "2.3.13"
   }
 
   object Libraries {
