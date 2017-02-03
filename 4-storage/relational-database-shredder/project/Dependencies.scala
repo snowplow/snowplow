@@ -24,7 +24,7 @@ object Dependencies {
     val json4sJackson   = "3.2.11"
     val scalaz7         = "7.0.9"
     val scopt           = "3.5.0"
-    val commonEnrich    = "0.23.0"
+    val commonEnrich    = "0.25.0"
     val igluClient      = "0.4.0"
     // Scala (test only)
     val specs2          = "2.3.11"
@@ -40,7 +40,7 @@ object Dependencies {
     val json4sJackson   = "org.json4s"                 %% "json4s-jackson"          % V.json4sJackson
     val scalaz7         = "org.scalaz"                 %% "scalaz-core"             % V.scalaz7
     val scopt           = "com.github.scopt"           %% "scopt"                   % V.scopt
-    val commonEnrich    = "com.snowplowanalytics"      %  "snowplow-common-enrich"  % V.commonEnrich
+    val commonEnrich    = "com.snowplowanalytics"      %% "snowplow-common-enrich"  % V.commonEnrich
     val igluClient      = "com.snowplowanalytics"      %% "iglu-scala-client"       % V.igluClient
     // Scala (test only)
     val specs2          = "org.specs2"                 %% "specs2-core"             % V.specs2          % "test"
