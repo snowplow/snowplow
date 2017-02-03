@@ -37,4 +37,4 @@ packages:
         prefix : "snowplow-relational-database-shredder-"
         suffix : ".jar"
         binary_paths:
-          - "4-storage/relational-database-shredder/target/scala-2.10/snowplow-relational-database-shredder-{{ packages.0.build_version }}.jar"
+          - "4-storage/relational-database-shredder/target/scala-2.11/snowplow-relational-database-shredder-{{ packages.0.build_version }}.jar"

@@ -19,7 +19,7 @@ object BuildSettings {
 
   lazy val buildSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    scalaVersion  := "2.10.4",
+    scalaVersion  := "2.11.8",
     scalacOptions := compilerOptions,
     parallelExecution in Test := false // Parallel tests cause havoc with Spark
   )
