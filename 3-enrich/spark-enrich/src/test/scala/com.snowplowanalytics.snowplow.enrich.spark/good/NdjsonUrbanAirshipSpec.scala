@@ -308,7 +308,7 @@ class NdjsonUrbanAirshipSingleSpec extends Specification with EnrichJobSpec {
       goods.size must_== 1
       val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
       for (idx <- NdjsonUrbanAirshipSingleEvent.expected.indices) {
-        actual(idx) must beFieldEqualTo(NdjsonUrbanAirshipSingleEvent.expected(idx), idx)
+        actual(idx) must BeFieldEqualTo(NdjsonUrbanAirshipSingleEvent.expected(idx), idx)
       }
     }
 
@@ -333,7 +333,7 @@ class NdjsonUrbanAirshipMultiSpec extends Specification with EnrichJobSpec {
         case (actual, bufIdx) => {
           for (idx <- NdjsonUrbanAirshipMultiEvent.expected(bufIdx).indices) {
             actual.split("\t").map(s => if (s.isEmpty()) null else s).apply(idx) must
-              beFieldEqualTo(NdjsonUrbanAirshipMultiEvent.expected(bufIdx)(idx), idx)
+              BeFieldEqualTo(NdjsonUrbanAirshipMultiEvent.expected(bufIdx)(idx), idx)
           }
         }
       }

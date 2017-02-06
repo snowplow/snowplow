@@ -152,7 +152,7 @@ class Apr2014CfLineSpec extends Specification with EnrichJobSpec {
       goods.size must_== 1
       val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
       for (idx <- Apr2014CfLineSpec.expected.indices) {
-        actual(idx) must beFieldEqualTo(Apr2014CfLineSpec.expected(idx), idx)
+        actual(idx) must BeFieldEqualTo(Apr2014CfLineSpec.expected(idx), idx)
       }
     }
 

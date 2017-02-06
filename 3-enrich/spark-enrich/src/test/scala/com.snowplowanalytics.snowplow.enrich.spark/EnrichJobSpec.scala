@@ -37,6 +37,7 @@ import scalaz._
 import Scalaz._
 
 // Specs2
+import org.specs2.execute.{AsResult, ResultExecution}
 import org.specs2.matcher.{Expectable, Matcher}
 import org.specs2.matcher.Matchers._
 
@@ -79,7 +80,7 @@ object EnrichJobSpec {
    * 1. Skips the comparison if this is the event_id field, because it has unpredictable values
    * 2. On failure, print out the field's name as well as the mismatch, to help with debugging
    */
-  class BeFieldEqualTo(expected: String, index: Int) extends Matcher[String] {
+  case class BeFieldEqualTo(expected: String, index: Int) extends Matcher[String] {
 
     private val field = outputFields(index)
     private val unmatcheable = isUnmatchable(field)
@@ -99,8 +100,6 @@ object EnrichJobSpec {
     private def isUnmatchable(field: String): Boolean = unmatchableFields.contains(field)
   }
 
-  def beFieldEqualTo(expected: String, withIndex: Int) = new BeFieldEqualTo(expected, withIndex)
-
   /** A Specs2 matcher to check if a directory on disk is empty or not. */
   val beEmptyDir: Matcher[File] =
     ((f: File) =>
@@ -108,6 +107,14 @@ object EnrichJobSpec {
         f.list().length == 0 ||
         f.listFiles().filter(f => f.getName != "_SUCCESS" && !f.getName.endsWith(".crc")).map(_.length).sum == 0,
       "is populated dir")
+
+  /**
+   * Needed for the different specs using fors since it results in AsResult[Unit] which isn't one
+   * of the supported AsResult typeclasses.
+   */
+  implicit def unitAsResult: AsResult[Unit] = new AsResult[Unit] {
+    def asResult(r: =>Unit) = ResultExecution.execute(r)(_ => org.specs2.execute.Success())
+  }
 
   /**
    * Read a part file at the given path into a List of Strings
