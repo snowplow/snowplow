@@ -148,7 +148,7 @@ class CljTomcatTp1TnuidSpec extends Specification with EnrichJobSpec {
       goods.size must_== 1
       val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
       for (idx <- CljTomcatTp1TnuidSpec.expected.indices) {
-        actual(idx) must beFieldEqualTo(CljTomcatTp1TnuidSpec.expected(idx), idx)
+        actual(idx) must BeFieldEqualTo(CljTomcatTp1TnuidSpec.expected(idx), idx)
       }
     }
 

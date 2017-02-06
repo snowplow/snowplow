@@ -152,7 +152,7 @@ class FutureCfLineSpec extends Specification with EnrichJobSpec {
       goods.size must_== 1
       val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
       for (idx <- FutureCfLineSpec.expected.indices) {
-        actual(idx) must beFieldEqualTo(FutureCfLineSpec.expected(idx), idx)
+        actual(idx) must BeFieldEqualTo(FutureCfLineSpec.expected(idx), idx)
       }
     }
 

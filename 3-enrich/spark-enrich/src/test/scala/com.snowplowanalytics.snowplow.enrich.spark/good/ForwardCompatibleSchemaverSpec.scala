@@ -400,7 +400,7 @@ class ForwardCompatibleSchemaverSpec extends Specification with EnrichJobSpec {
         fi <- ForwardCompatibleSchemaverSpec.expected(ei).indices
       } {
         goods(ei).split("\t").map(s => if (s.isEmpty()) null else s).apply(fi) must
-          beFieldEqualTo(ForwardCompatibleSchemaverSpec.expected(ei)(fi), fi)
+          BeFieldEqualTo(ForwardCompatibleSchemaverSpec.expected(ei)(fi), fi)
       }
     }
 

@@ -172,7 +172,7 @@ class CollectorPayload1LzoSpec extends Specification with EnrichJobSpec {
       goods.size must_== 1
       val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
       for (idx <- CollectorPayload1LzoSpec.expected.indices) {
-        actual(idx) must beFieldEqualTo(CollectorPayload1LzoSpec.expected(idx), idx)
+        actual(idx) must BeFieldEqualTo(CollectorPayload1LzoSpec.expected(idx), idx)
       }
     }
 
