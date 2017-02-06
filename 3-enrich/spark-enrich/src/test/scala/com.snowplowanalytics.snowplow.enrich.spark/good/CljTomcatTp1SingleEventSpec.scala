@@ -147,7 +147,7 @@ class CljTomcatTp1SingleEventSpec extends Specification with EnrichJobSpec {
       goods.size must_== 1
       val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
       for (idx <- CljTomcatTp1SingleEventSpec.expected.indices) {
-        actual(idx) must beFieldEqualTo(CljTomcatTp1SingleEventSpec.expected(idx), idx)
+        actual(idx) must BeFieldEqualTo(CljTomcatTp1SingleEventSpec.expected(idx), idx)
       }
     }
     "not write any bad rows" in {
