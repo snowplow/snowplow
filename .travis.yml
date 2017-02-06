@@ -48,11 +48,11 @@ deploy:
       tags: true
       condition: '"$(.travis/is_kinesis_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
-    script: ./.travis/deploy_hadoop_enrich.sh $TRAVIS_TAG
+    script: ./.travis/deploy_spark_enrich.sh $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_hadoop_enrich_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+      condition: '"$(.travis/is_spark_enrich_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
     script: ./.travis/deploy_hadoop_shred.sh $TRAVIS_TAG
     skip_cleanup: true
@@ -60,7 +60,7 @@ deploy:
       tags: true
       condition: '"$(.travis/is_hadoop_shred_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
-    script: ./.travis/deploy_hadoop_enrich.sh $TRAVIS_TAG
+    script: ./.travis/deploy_spark_enrich.sh $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
