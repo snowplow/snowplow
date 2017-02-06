@@ -181,7 +181,7 @@ class ApiRequestEnrichmentCfLineSpec extends Specification with EnrichJobSpec {
         val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
         for (idx <- ApiRequestEnrichmentCfLineSpec.expected.indices) {
           actual(idx) must
-            beFieldEqualTo(ApiRequestEnrichmentCfLineSpec.expected(idx), idx)
+            BeFieldEqualTo(ApiRequestEnrichmentCfLineSpec.expected(idx), idx)
         }
       }
 

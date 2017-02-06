@@ -151,7 +151,7 @@ class RefererParserCfLineSpec extends Specification with EnrichJobSpec {
       goods.size must_== 1
       val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
       for (idx <- RefererParserCfLineSpec.expected.indices) {
-        actual(idx) must beFieldEqualTo(RefererParserCfLineSpec.expected(idx), idx)
+        actual(idx) must BeFieldEqualTo(RefererParserCfLineSpec.expected(idx), idx)
       }
     }
 
