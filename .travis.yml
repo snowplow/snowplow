@@ -42,37 +42,37 @@ before_deploy:
   - pip install --user release-manager==0.2.0
 deploy:
   - provider: script
-    script: ./.travis/deploy_kinesis.sh $TRAVIS_TAG
+    script: ./.travis/deploy.sh kinesis $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
       condition: '"$(.travis/is_kinesis_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
-    script: ./.travis/deploy_spark_enrich.sh $TRAVIS_TAG
+    script: ./.travis/deploy.sh spark_enrich $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
       condition: '"$(.travis/is_spark_enrich_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
-    script: ./.travis/deploy_hadoop_shred.sh $TRAVIS_TAG
+    script: ./.travis/deploy.sh hadoop_shred $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
       condition: '"$(.travis/is_hadoop_shred_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
-    script: ./.travis/deploy_spark_enrich.sh $TRAVIS_TAG
+    script: ./.travis/deploy.sh spark_enrich $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
       condition: '"$(.travis/is_hadoop_event_recovery_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
-    script: ./.travis/deploy_emr.sh $TRAVIS_TAG
+    script: ./.travis/deploy.sh emr $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
       condition: '"$(.travis/is_emr_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
-    script: ./.travis/deploy_event_manifest_populator.sh $TRAVIS_TAG
+    script: ./.travis/deploy.sh event_manifest_populator $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
