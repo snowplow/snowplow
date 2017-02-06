@@ -168,7 +168,7 @@ class Core2015RefreshSpec extends Specification with EnrichJobSpec {
       goods.size must_== 1
       val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
       for (idx <- Core2015RefreshSpec.expected.indices) {
-        actual(idx) must beFieldEqualTo(Core2015RefreshSpec.expected(idx), withIndex = idx)
+        actual(idx) must BeFieldEqualTo(Core2015RefreshSpec.expected(idx), idx)
       }
     }
 

@@ -153,7 +153,7 @@ class CljTomcatCallrailEventSpec extends Specification with EnrichJobSpec {
       goods.size must_== 1
       val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
       for (idx <- CljTomcatCallrailEventSpec.expected.indices) {
-        actual(idx) must beFieldEqualTo(CljTomcatCallrailEventSpec.expected(idx), idx)
+        actual(idx) must BeFieldEqualTo(CljTomcatCallrailEventSpec.expected(idx), idx)
       }
     }
 

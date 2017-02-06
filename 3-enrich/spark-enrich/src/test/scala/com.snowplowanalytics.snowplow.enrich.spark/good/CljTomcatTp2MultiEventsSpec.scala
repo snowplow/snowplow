@@ -396,7 +396,7 @@ class CljTomcatTp2MultiEventsSpec extends Specification with EnrichJobSpec {
         fi <- CljTomcatTp2MultiEventsSpec.expected(ei).indices
       } {
         goods(ei).split("\t").map(s => if (s.isEmpty()) null else s).apply(fi) must
-          beFieldEqualTo(CljTomcatTp2MultiEventsSpec.expected(ei)(fi), fi)
+          BeFieldEqualTo(CljTomcatTp2MultiEventsSpec.expected(ei)(fi), fi)
       }
     }
 

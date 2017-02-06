@@ -164,7 +164,7 @@ class SnowplowRawEventLzoSpec extends Specification with EnrichJobSpec {
       goods.size must_== 1
       val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
       for (idx <- SnowplowRawEventLzoSpec.expected.indices) {
-        actual(idx) must beFieldEqualTo(SnowplowRawEventLzoSpec.expected(idx), idx)
+        actual(idx) must BeFieldEqualTo(SnowplowRawEventLzoSpec.expected(idx), idx)
       }
     }
 
