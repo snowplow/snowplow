@@ -46,35 +46,34 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_kinesis_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+      condition: '"$(.travis/is_release_tag.sh kinesis $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
     script: ./.travis/deploy.sh spark_enrich $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_spark_enrich_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+      condition: '"$(.travis/is_release_tag.sh spark_enrich $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
     script: ./.travis/deploy.sh hadoop_shred $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_hadoop_shred_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+      condition: '"$(.travis/is_release_tag.sh hadoop_shred $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
-    script: ./.travis/deploy.sh spark_enrich $TRAVIS_TAG
+    script: ./.travis/deploy.sh hadoop_event_recovery $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_hadoop_event_recovery_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+      condition: '"$(.travis/is_release_tag.sh hadoop_event_recovery $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
     script: ./.travis/deploy.sh emr $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_emr_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+      condition: '"$(.travis/is_release_tag.sh emr $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
     script: ./.travis/deploy.sh event_manifest_populator $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_event_manifest_populator_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
-
+      condition: '"$(.travis/is_release_tag.sh event_manifest_populator $TRAVIS_TAG)" == "" && $? == 0'
