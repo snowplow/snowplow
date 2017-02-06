@@ -37,7 +37,7 @@ object Dependencies {
     val commonEnrich     = "0.25.0"
     val igluClient       = "0.5.0"
     // Scala (test only)
-    val specs2           = "1.14"
+    val specs2           = "2.3.13"
     // Thrift (test only)
     val snowplowRawEvent = "0.1.0"
     val collectorPayload = "0.0.0"
@@ -58,6 +58,6 @@ object Dependencies {
     val snowplowRawEvent = "com.snowplowanalytics"     % "snowplow-thrift-raw-event"     % V.snowplowRawEvent
     val collectorPayload = "com.snowplowanalytics"     % "collector-payload-1"           % V.collectorPayload
     // Scala (test only)
-    val specs2           = "org.specs2"                %% "specs2"                       % V.specs2           % "test"
+    val specs2           = "org.specs2"                %% "specs2-core"                  % V.specs2           % "test"
   }
 }
