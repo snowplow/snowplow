@@ -180,7 +180,7 @@ class SqlQueryEnrichmentCfLineSpec extends Specification with EnrichJobSpec {
         goods.size must_== 1
         val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
         for (idx <- SqlQueryEnrichmentCfLineSpec.expected.indices) {
-          actual(idx) must beFieldEqualTo(SqlQueryEnrichmentCfLineSpec.expected(idx), idx)
+          actual(idx) must BeFieldEqualTo(SqlQueryEnrichmentCfLineSpec.expected(idx), idx)
         }
       }
 
