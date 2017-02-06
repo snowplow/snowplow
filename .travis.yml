@@ -32,6 +32,8 @@ env:
   # AWS_STAGING_SECRET_ACCESS_KEY
   - secure: tTXtm8oxwHDpHPGByCbSao7Kauq8SFpeyBYpBoN4e9uUYbgzmwMNLts/tWAZpHGmmnKhrEFVZp/tfqgA1fMgPGFvMmJTFrvceBkPzbc7T3Ck8bxpAGoL8TmSvET9lC+NxP8A0s1Uvdo1Y9ue6lkNh8l74oDDZSSfdGqnNOc2rJ4=
 before_install:
+- sudo apt-get -qq update
+- sudo apt-get install -y lzop
 - pip install --user awscli
 - export PATH=$PATH:$HOME/.local/bin
 addons:
@@ -48,11 +50,11 @@ deploy:
       tags: true
       condition: '"$(.travis/is_kinesis_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
-    script: ./.travis/deploy_hadoop_enrich.sh $TRAVIS_TAG
+    script: ./.travis/deploy_spark_enrich.sh $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_hadoop_enrich_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+      condition: '"$(.travis/is_spark_enrich_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
     script: ./.travis/deploy_hadoop_shred.sh $TRAVIS_TAG
     skip_cleanup: true
@@ -60,7 +62,7 @@ deploy:
       tags: true
       condition: '"$(.travis/is_hadoop_shred_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
-    script: ./.travis/deploy_hadoop_enrich.sh $TRAVIS_TAG
+    script: ./.travis/deploy_spark_enrich.sh $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
