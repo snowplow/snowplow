@@ -78,7 +78,7 @@ module Snowplow
         custom_assets_bucket = self.class.get_hosted_assets_bucket(config[:aws][:s3][:buckets][:assets], config[:aws][:emr][:region])
         assets = self.class.get_assets(
           custom_assets_bucket,
-          config[:enrich][:versions][:hadoop_enrich],
+          config[:enrich][:versions][:spark_enrich],
           config[:storage][:versions][:relational_database_shredder],
           config[:storage][:versions][:hadoop_elasticsearch])
 
@@ -172,7 +172,7 @@ module Snowplow
         else
           "#{standard_assets_bucket}common/emr/snowplow-ami4-bootstrap-0.2.0.sh"
         end
-        cc_version = get_cc_version(config[:enrich][:versions][:hadoop_enrich])
+        cc_version = get_cc_version(config[:enrich][:versions][:spark_enrich])
         @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_jar_location, cc_version))
 
         # Install and launch HBase
@@ -778,19 +778,19 @@ module Snowplow
       #
       # Parameters:
       # +assets_bucket+:: the s3 bucket where the assets are supposed to be located
-      # +hadoop_enrich_version+:: version of the Hadoop enrich job to use
+      # +spark_enrich_version+:: version of the Hadoop enrich job to use
       # +rds_version+:: version of the relational database shredder job to use
       # +hadoop_elasticsearch_version+:: version of the Hadoop Elasticsearch sink to use
       Contract String, String, String, String => AssetsHash
-      def self.get_assets(assets_bucket, hadoop_enrich_version, rds_version, hadoop_elasticsearch_version)
-        enrich_path_middle = hadoop_enrich_version[0] == '0' ? 'hadoop-etl/snowplow-hadoop-etl' : 'scala-hadoop-enrich/snowplow-hadoop-enrich'
+      def self.get_assets(assets_bucket, spark_enrich_version, rds_version, hadoop_elasticsearch_version)
+        enrich_path_middle = spark_enrich_version[0] == '0' ? 'hadoop-etl/snowplow-hadoop-etl' : 'scala-hadoop-enrich/snowplow-hadoop-enrich'
         shred_path = if is_relational_database_shredder(rds_version) then
           '4-storage/relational-database-shredder/snowplow-relational-database-shredder-'
         else
           '3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-'
         end
         {
-          :enrich   => "#{assets_bucket}3-enrich/#{enrich_path_middle}-#{hadoop_enrich_version}.jar",
+          :enrich   => "#{assets_bucket}3-enrich/#{enrich_path_middle}-#{spark_enrich_version}.jar",
           :shred    => "#{assets_bucket}#{shred_path}#{rds_version}.jar",
           :elasticsearch => "#{assets_bucket}4-storage/hadoop-elasticsearch-sink/hadoop-elasticsearch-sink-#{hadoop_elasticsearch_version}.jar",
         }

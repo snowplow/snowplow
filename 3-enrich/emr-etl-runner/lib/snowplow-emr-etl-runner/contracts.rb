@@ -124,7 +124,7 @@ module Snowplow
         }),
       :enrich => ({
         :versions => ({
-          :hadoop_enrich => String
+          :spark_enrich => String
           }),
         :continue_on_unexpected_error => Bool,
         :output_compression => CompressionFormat
