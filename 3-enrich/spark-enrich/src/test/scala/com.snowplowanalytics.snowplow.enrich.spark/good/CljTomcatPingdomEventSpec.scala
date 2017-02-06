@@ -147,7 +147,7 @@ class CljTomcatPingdomEventSpec extends Specification with EnrichJobSpec {
       goods.size must_== 1
       val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
       for (idx <- CljTomcatPingdomEventSpec.expected.indices) {
-        actual(idx) must beFieldEqualTo(CljTomcatPingdomEventSpec.expected(idx), idx)
+        actual(idx) must BeFieldEqualTo(CljTomcatPingdomEventSpec.expected(idx), idx)
       }
 
       "not write any bad rows" in {

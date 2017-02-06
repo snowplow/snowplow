@@ -147,7 +147,7 @@ class CljTomcatPagerdutyEventSpec extends Specification with EnrichJobSpec {
       goods.size must_== 1
       val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
       for (idx <- CljTomcatPagerdutyEventSpec.expected.indices) {
-        actual(idx) must beFieldEqualTo(CljTomcatPagerdutyEventSpec.expected(idx), idx)
+        actual(idx) must BeFieldEqualTo(CljTomcatPagerdutyEventSpec.expected(idx), idx)
       }
 
       "not write any bad rows" in {

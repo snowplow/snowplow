@@ -147,7 +147,7 @@ class CljTomcatSendgridEventSpec extends Specification with EnrichJobSpec {
       goods.size must_== 1
       val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
       for (idx <- CljTomcatSendgridEventSpec.expected.indices) {
-        actual(idx) must beFieldEqualTo(CljTomcatSendgridEventSpec.expected(idx), idx)
+        actual(idx) must BeFieldEqualTo(CljTomcatSendgridEventSpec.expected(idx), idx)
       }
     }
 

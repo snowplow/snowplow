@@ -163,7 +163,7 @@ class CurrencyConversionTransactionItemSpec extends Specification with EnrichJob
         goods.size must_== 1
         val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
         for (idx <- CurrencyConversionTransactionItemSpec.expected.indices) {
-          actual(idx) must beFieldEqualTo(CurrencyConversionTransactionItemSpec.expected(idx), idx)
+          actual(idx) must BeFieldEqualTo(CurrencyConversionTransactionItemSpec.expected(idx), idx)
         }
       }
 
