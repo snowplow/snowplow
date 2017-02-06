@@ -151,7 +151,7 @@ class UnstructEventBase64CfLineSpec extends Specification with EnrichJobSpec {
       goods.size must_== 1
       val actual = goods.head.split("\t").map(s => if (s.isEmpty()) null else s)
       for (idx <- UnstructEventBase64CfLineSpec.expected.indices) {
-        actual(idx) must beFieldEqualTo(UnstructEventBase64CfLineSpec.expected(idx), idx)
+        actual(idx) must BeFieldEqualTo(UnstructEventBase64CfLineSpec.expected(idx), idx)
       }
     }
 
