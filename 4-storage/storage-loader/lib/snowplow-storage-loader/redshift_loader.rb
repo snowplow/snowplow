@@ -30,7 +30,11 @@ module Snowplow
       ALTERED_ENRICHED_PATTERN = /(run=[0-9\-]+\/atomic-events)/
 
       # Versions 0.5.0 and earlier of Hadoop Shred don't copy atomic.events into the shredded bucket
-      OLD_ENRICHED_PATTERN = /0\.[0-5]\.[0-9]/
+      OLD_ENRICHED_PATTERN = /0\.[0-5]\.[0-9](-rc[0-9]+|)/
+
+      # Versions 0.11.0 and earlier of the rdb shredder didn't use the field names when writing
+      # shredded types
+      OLD_SHRED_PATTERN = /0\.([0-9]|1[0-1])\.[0-9](-rc[0-9]+|)/
 
       SqlStatements = Struct.new(:copy, :analyze, :vacuum)
 
@@ -54,7 +58,11 @@ module Snowplow
         events_table = schema + '.events'
 
         # First let's get our statements for shredding (if any)
-        shredded_statements = get_shredded_statements(config, target, s3)
+        shredded_statements = if OLD_SHRED_PATTERN.match(config[:storage][:versions][:relational_database_shredder])
+          get_shredded_statements(config, target, s3, true)
+        else
+          get_shredded_statements(config, target, s3)
+        end
 
         # Now let's get the manifest statement
         manifest_statement = get_manifest_statement(schema, shredded_statements.length)
@@ -131,15 +139,16 @@ module Snowplow
       # +config+:: the configuration options
       # +target+:: the configuration for this specific target
       # +s3+::     the Fog object for accessing S3
-      Contract Hash, Hash, FogStorage => ArrayOf[SqlStatements]
-      def self.get_shredded_statements(config, target, s3)
+      # +legacy+:: Whether we're using the old hadoop shred
+      Contract Hash, Hash, FogStorage, Bool => ArrayOf[SqlStatements]
+      def self.get_shredded_statements(config, target, s3, legacy=false)
 
         if config[:skip].include?('shred') # No shredded types to load
           []
         else
           schema = target[:schema]
 
-          ShreddedType.discover_shredded_types(s3, config[:aws][:s3][:buckets][:shredded][:good], schema).map { |st|
+          ShreddedType.discover_shredded_types(s3, config[:aws][:s3][:buckets][:shredded][:good], schema, legacy).map { |st|
 
             jsonpaths_file = st.discover_jsonpaths_file(s3, config[:aws][:s3][:buckets][:jsonpath_assets])
             if jsonpaths_file.nil?
