@@ -40,8 +40,9 @@ module Snowplow
       # +s3+:: the Fog object for accessing S3
       # +s3_path+:: the S3 path to the shredded type files
       # +schema+:: the schema that tables should live in
-      Contract FogStorage, Maybe[String], Maybe[String] => ArrayOf[ShreddedType]
-      def self.discover_shredded_types(s3, s3_path, schema)
+      # +legacy+:: Whether we're using the old hadoop shred
+      Contract FogStorage, Maybe[String], Maybe[String], Bool => ArrayOf[ShreddedType]
+      def self.discover_shredded_types(s3, s3_path, schema, legacy)
 
         if s3_path.nil?
           []
@@ -54,7 +55,7 @@ module Snowplow
             # Strip off the final sub-folder's SchemaVer REVISION and ADDITION components
             "s3://" + loc.bucket + "/" + /^(?<s3_path>.*-)[^-]+-[^-]+\/[^\/]+$/.match(file.key)[:s3_path]
           }.uniq.map { |s3_objectpath|
-            ShreddedType.new(s3_objectpath, schema)
+            ShreddedType.new(s3_objectpath, schema, legacy)
           }
         end
       end
@@ -64,11 +65,16 @@ module Snowplow
       # Parameters:
       # +s3_path+:: the S3 path to the shredded type files
       # +schema+:: the schema that tables should live in
-      Contract String, Maybe[String] => ShreddedType
-      def initialize(s3_objectpath, schema)
+      # +legacy+:: Whether we're using the old hadoop shred
+      Contract String, Maybe[String], Bool => ShreddedType
+      def initialize(s3_objectpath, schema, legacy)
         @s3_objectpath = s3_objectpath
 
-        parts = /^.*\/(?<vendor>[^\/]+)\/(?<name>[^\/]+)\/(?<format>[^\/]+)\/(?<version_model>[^\/]+)-$/.match(s3_objectpath)
+        parts = if legacy
+          /^.*\/(?<vendor>[^\/]+)\/(?<name>[^\/]+)\/(?<format>[^\/]+)\/(?<version_model>[^\/]+)-$/.match(s3_objectpath)
+        else
+          /^.*\/vendor=(?<vendor>[^\/]+)\/name=(?<name>[^\/]+)\/format=(?<format>[^\/]+)\/version=(?<version_model>[^\/]+)-$/.match(s3_objectpath)
+        end
         @vendor = parts[:vendor]
         @name = parts[:name]
         @version_model = parts[:version_model]

@@ -15,8 +15,8 @@
 # Copyright:: Copyright (c) 2015 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
-rvm install jruby
-bash -l -c 'rvm use jruby'
+rvm install jruby-9.1.6.0
+bash -l -c 'rvm use jruby-9.1.6.0'
 gem install bundler
 bundle install
 rake
