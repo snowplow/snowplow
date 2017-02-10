@@ -64,42 +64,6 @@ enrich:
 storage:
   download:
     folder: # Postgres-only config option. Where to store the downloaded files. Leave blank for Redshift
-  targets:
-    - name: "My Redshift database"
-      type: redshift
-      host: ADD HERE # The endpoint as shown in the Redshift console
-      database: ADD HERE # Name of database
-      port: 5439 # Default Redshift port
-      ssl_mode: disable # One of disable (default), require, verify-ca or verify-full
-      table: atomic.events
-      username: ADD HERE
-      password: ADD HERE
-      maxerror: 1 # Stop loading on first error, or increase to permit more load errors
-      comprows: 200000 # Default for a 1 XL node cluster. Not used unless --include compupdate specified
-    - name: "My PostgreSQL database"
-      type: postgres
-      host: ADD HERE # Hostname of database server
-      database: ADD HERE # Name of database
-      port: 5432 # Default Postgres port
-      ssl_mode: disable # One of disable (default), require, verify-ca or verify-full
-      table: atomic.events
-      username: ADD HERE
-      password: ADD HERE
-      maxerror: # Not required for Postgres
-      comprows: # Not required for Postgres
-    - name: "My Elasticsearch database"
-      type: elasticsearch
-      host: ADD HERE # The Elasticsearch endpoint
-      database: ADD HERE # Name of index
-      port: 9200 # Default Elasticsearch port - change to 80 if using Amazon Elasticsearch Service
-      sources: # Leave blank to write the bad rows created in this run to Elasticsearch, or explicitly provide an array of bad row buckets like ["s3://my-enriched-bucket/bad/run=2015-10-06-15-25-53"]
-      ssl_mode: # Not required for Elasticsearch
-      table: ADD HERE # Name of type
-      username: # Not required for Elasticsearch
-      password: # Not required for Elasticsearch
-      es_nodes_wan_only: false # Set to true if using Amazon Elasticsearch Service
-      maxerror: # Not required for Elasticsearch
-      comprows: # Not required for Elasticsearch
 monitoring:
   tags: {} # Name-value pairs describing this job
   logging:
