@@ -385,7 +385,6 @@ module Snowplow
             @jobflow.add_step(copy_to_hdfs_step)
           end
 
-
           shred_step =
             if self.class.is_rdb_shredder(config[:storage][:versions][:rdb_shredder]) then
               @jobflow.add_application("Spark")
@@ -394,7 +393,7 @@ module Snowplow
                 "Shred Enriched Events",
                 assets[:shred],
                 "storage.spark.ShredJob",
-                { :in   => enrich_step_output,
+                { :in   => self.class.glob_path(enrich_step_output),
                   :good => shred_step_output,
                   :bad  => self.class.partition_by_run(csbs[:bad], run_id)
                 },
@@ -408,7 +407,7 @@ module Snowplow
                 "Shred Enriched Events",
                 assets[:shred],
                 "enrich.hadoop.ShredJob",
-                { :in          => enrich_step_output,
+                { :in          => self.class.glob_path(enrich_step_output),
                   :good        => shred_step_output,
                   :bad         => self.class.partition_by_run(csbs[:bad],    run_id),
                   :errors      => self.class.partition_by_run(csbs[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
@@ -1082,6 +1081,17 @@ module Snowplow
           codec == "gzip" ? "gz" : codec
         end
       end
+
+      # Adds a match all glob to the end of the path
+      Contract String => String
+      def self.glob_path(path)
+        if path.end_with?("/*")
+          path
+        else
+          "#{path}/*"
+        end
+      end
+
     end
   end
 end
