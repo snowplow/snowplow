@@ -55,8 +55,8 @@ module Snowplow
 
         commands = {
           'run' => OptionParser.new do |opts|
-            opts.banner = "Usage: run [options]"
-            opts.description = "Run the Snowplow pipeline on EMR"
+            opts.banner = 'Usage: run [options]'
+            opts.description = 'Run the Snowplow pipeline on EMR'
             opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config_file] = config }
             opts.on('-n', '--enrichments ENRICHMENTS', 'enrichments directory') {|config| options[:enrichments_directory] = config }
             opts.on('-r', '--resolver RESOLVER', 'Iglu resolver file') {|config| options[:resolver_file] = config }
@@ -73,21 +73,49 @@ module Snowplow
               options[:process_shred_location] = config
               options[:skip] = %w(staging enrich archive_raw archive_enriched analyze)
             }
+          end,
+          'generate emr-config' => OptionParser.new do |opts|
+            opts.banner = 'Usage: generate emr-config [options]'
+            opts.description = 'Generate a Dataflow Runner EMR config which can be used with dataflow-runner up'
+            opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config_file] = config }
+            opts.on('-r', '--resolver RESOLVER', 'Iglu resolver file') { |config| options[:resolver_file] = config }
+            opts.on('-f', '--filename FILENAME', 'the name of the file to generate') { |config| options[:filename] = config }
+            opts.on('-s', '--schemaver VERSION', 'the version of the Avro schema to use') { |config| options[:schemaver] = config }
+          end,
+          'generate emr-playbook' => OptionParser.new do |opts|
+            opts.banner = 'Usage: generate emr-playbook [options]'
+            opts.description = 'Generate a Dataflow Runner Playbook config which can be used with dataflow-runner run'
+            opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config_file] = config }
+            opts.on('-n', '--enrichments ENRICHMENTS', 'enrichments directory') {|config| options[:enrichments_directory] = config}
+            opts.on('-r', '--resolver RESOLVER', 'Iglu resolver file') {|config| options[:resolver_file] = config}
+            opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
+            opts.on('-x', '--skip staging,s3distcp,emr{enrich,shred,elasticsearch,archive_raw}', Array, 'skip work step(s)') { |config| options[:skip] = config }
+            opts.on('-f', '--filename FILENAME', 'the name of the file to generate') { |config| options[:filename] = config }
+            opts.on('-s', '--schemaver VERSION', 'the version of the Avro schema to use') { |config| options[:schemaver] = config }
+          end,
+          'generate all' => OptionParser.new do |opts|
+            opts.banner = 'Usage: generate all [options]'
+            opts.description = 'Generate both a Dataflow Runner EMR (as emr-config.json) and Playbook (as emr-playbook.json) configs'
+            opts.on('-c', '--config CONFIG', 'configuration file') { |config| options[:config_file] = config }
+            opts.on('-n', '--enrichments ENRICHMENTS', 'enrichments directory') {|config| options[:enrichments_directory] = config}
+            opts.on('-r', '--resolver RESOLVER', 'Iglu resolver file') {|config| options[:resolver_file] = config}
+            opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
+            opts.on('-x', '--skip staging,s3distcp,emr{enrich,shred,elasticsearch},archive_raw', Array, 'skip work step(s)') { |config| options[:skip] = config }
           end
         }
 
         global = OptionParser.new do |opts|
-          opts.banner = "Usage %s [options] [command [options]]" % NAME
-          opts.separator ""
-          opts.separator "Available commands are:"
+          opts.banner = 'Usage %s [options] [command [options]]' % NAME
+          opts.separator ''
+          opts.separator 'Available commands are:'
           commands.each_pair do |c, opt|
             desc = opt.description
             opts.separator "#{c}: #{desc}"
           end
-          opts.separator ""
-          opts.separator "Global options are:"
-          opts.on("-v", "--version", "Show version") do
-            puts "%s %s" % [NAME, VERSION]
+          opts.separator ''
+          opts.separator 'Global options are:'
+          opts.on('-v', '--version', 'Show version') do
+            puts '%s %s' % [NAME, VERSION]
             exit
           end
         end
@@ -101,22 +129,35 @@ module Snowplow
             if cmd
               cmd.order!
             else
-              puts "Invalid command: #{cmd_name}"
-              puts global
-              exit 1
+              sub_cmd_name = ARGV.shift
+              if sub_cmd_name
+                cmd_name += " #{sub_cmd_name}"
+                cmd = commands[cmd_name]
+                if cmd
+                  cmd.order!
+                else
+                  exit1("Invalid command: #{cmd_name}", global)
+                end
+              else
+                exit1("Invalid command: #{cmd_name}", global)
+              end
             end
           else
-            puts "Empty command!"
-            puts global
-            exit 1
+            exit1('Empty command!', global)
           end
-          process_options(options, cmd)
+          [cmd_name] + process_options(options, cmd, cmd_name)
         rescue OptionParser::InvalidOption, OptionParser::MissingArgument
           raise ConfigError, "#{$!.to_s}\n#{cmd}"
         end
       end
 
-      def self.process_options(options, optparse)
+      def self.exit1(msg, help)
+        puts msg
+        puts help
+        exit 1
+      end
+
+      def self.process_options(options, optparse, cmd_name)
         args = {
           :debug                   => options[:debug],
           :start                   => options[:start],
@@ -134,25 +175,6 @@ module Snowplow
         targets = load_targets(options[:targets_directory])
 
         [args, config, enrichments, resolver, targets]
-      end
-
-    private
-
-      # Convert all keys in arbitrary hash into symbols
-      # Taken from http://stackoverflow.com/a/10721936/255627
-      def self.recursive_symbolize_keys(h)
-        case h
-        when Hash
-          Hash[
-            h.map do |k, v|
-              [ k.respond_to?(:to_sym) ? k.to_sym : k, recursive_symbolize_keys(v) ]
-            end
-          ]
-        when Enumerable
-          h.map { |v| recursive_symbolize_keys(v) }
-        else
-          h
-        end
       end
 
       # Validate our args, load our config YAML, check config and args don't conflict
@@ -196,9 +218,8 @@ module Snowplow
       end
 
       # Validate our args, load our Iglu resolver
-      Contract Maybe[String], String => String
+      Contract Maybe[String], String, Bool => String
       def self.load_resolver(resolver_file, summary)
-
         # Check we have a resolver file argument and it exists
         if resolver_file.nil?
           raise ConfigError, "Missing option: resolver\n#{summary}"
@@ -222,6 +243,23 @@ module Snowplow
           end.map do |f|
             {:file => f, :json => JSON.parse(File.read(targets_path + '/' + f), {:symbolize_names => true}) }
           end
+
+    private
+
+      # Convert all keys in arbitrary hash into symbols
+      # Taken from http://stackoverflow.com/a/10721936/255627
+      def self.recursive_symbolize_keys(h)
+        case h
+        when Hash
+          Hash[
+            h.map do |k, v|
+              [ k.respond_to?(:to_sym) ? k.to_sym : k, recursive_symbolize_keys(v) ]
+            end
+          ]
+        when Enumerable
+          h.map { |v| recursive_symbolize_keys(v) }
+        else
+          h
         end
       end
 
