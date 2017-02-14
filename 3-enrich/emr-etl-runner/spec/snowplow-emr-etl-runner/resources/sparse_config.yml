@@ -6,26 +6,26 @@ aws:
   s3:
     region: eu-west-1
     buckets:
-      assets: s3://snowplow-hosted-assets # DO NOT CHANGE unless you are hosting the jarfiles etc yourself in your own bucket
+      assets: spha # DO NOT CHANGE unless you are hosting the jarfiles etc yourself in your own bucket
       jsonpath_assets: # If you have defined your own JSON Schemas, add the s3:// path to your own JSON Path files in your own bucket here
       log: s3://not-a-bucket
       raw:
         in:                  # Multiple in buckets are permitted
-          - s3://not-a-bucket         # e.g. s3://my-archive-bucket/raw
-        processing: s3://not-a-bucket
-        archive: s3://not-a-bucket    # e.g. s3://my-archive-bucket/raw
+          - ri         # e.g. s3://my-archive-bucket/raw
+        processing: rp
+        archive: ra    # e.g. s3://my-archive-bucket/raw
       enriched:
-        good: s3://not-a-bucket       # e.g. s3://my-out-bucket/enriched/good
-        bad: s3://not-a-bucket        # e.g. s3://my-out-bucket/enriched/bad
+        good: eg       # e.g. s3://my-out-bucket/enriched/good
+        bad: eb        # e.g. s3://my-out-bucket/enriched/bad
         errors:      # Leave blank unless :continue_on_unexpected_error: set to true below
-        archive: s3://not-a-bucket    # Where to archive enriched events to, e.g. s3://my-out-bucket/enriched/archive
+        archive: ea    # Where to archive enriched events to, e.g. s3://my-out-bucket/enriched/archive
       shredded:
-        good: s3://not-a-bucket       # e.g. s3://my-out-bucket/shredded/good
-        bad: s3://not-a-bucket       # e.g. s3://my-out-bucket/shredded/bad
+        good: sg       # e.g. s3://my-out-bucket/shredded/good
+        bad: sb       # e.g. s3://my-out-bucket/shredded/bad
         errors:      # Leave blank unless :continue_on_unexpected_error: set to true below
-        archive: s3://not-a-bucket    # Not required for Postgres currently
+        archive: sa    # Not required for Postgres currently
   emr:
-    ami_version: 3.7.0      # Don't change this
+    ami_version: 4.7.0      # Don't change this
     region: eu-west-1        # Always set this
     jobflow_role: EMR_EC2_DefaultRole # Created using $ aws emr create-default-roles
     service_role: EMR_DefaultRole     # Created using $ aws emr create-default-roles
@@ -65,7 +65,13 @@ storage:
     hadoop_elasticsearch: 0.1.0 # Version of the Hadoop to Elasticsearch copying process
   download:
     folder: # Postgres-only config option. Where to store the downloaded files. Leave blank for Redshift
-  targets: []
+  targets:
+    - name: es
+      type: elasticsearch
+      database: d
+      host: h
+      port: 9
+      table: t
 monitoring:
   tags: {} # Name-value pairs describing this job
   logging:

@@ -168,7 +168,7 @@ module Snowplow
     })
 
     # The Array (Tuple3) containing the CLI arguments, configuration YAML, and configuration JSONs
-    ArgsConfigEnrichmentsResolverTuple = [ArgsHash, ConfigHash, ArrayOf[String], String, ArrayOf[JsonFileHash]]
+    ArgsConfigEnrichmentsResolverTuple = [String, ArgsHash, ConfigHash, ArrayOf[String], String, ArrayOf[JsonFileHash]]
 
     # Storage targets grouped by purpose
     TargetsHash = ({

@@ -34,9 +34,36 @@ fatal = runner::Monitoring::Logging.method(:fatal_with)
 # Note that each step is only actioned if the previous step succeeded without error.
 begin
 
-  args, config, enrichments, resolver, targets = runner::Cli.get_args_config_enrichments_resolver()
-  r = runner::Runner.new(args, config, enrichments, resolver, targets)
-  r.run()
+  cmd, args, config, enrichments, resolver, targets = runner::Cli.get_args_config_enrichments_resolver()
+
+  if cmd == 'run'
+    r = runner::Runner.new(args, config, enrichments, resolver, targets)
+    r.run()
+  else
+    puts "The generate command is not supported yet"
+    #emr_config_filename = 'emr-config.json'
+    #emr_playbook_filename = 'emr-playbook.json'
+    #if cmd == 'generate emr-config'
+    #  version = args[:schemaver].nil? ? '1-1-0' : args[:schemaver]
+    #  filename = args[:filename].nil? ? emr_config_filename : args[:filename]
+    #  runner::EmrConfigGenerator.new.generate(config, resolver, version, filename)
+    #  puts "Generated #{filename}"
+    #else
+    #  debug = args[:debug]
+    #  skip = args[:skip]
+    #  if cmd == 'generate emr-playbook'
+    #    version = args[:schemaver].nil? ? '1-0-0' : args[:schemaver]
+    #    filename = args[:filename].nil? ? emr_playbook_filename : args[:filename]
+    #    runner::EmrPlaybookGenerator.new
+    #      .generate(config, resolver, version, filename, debug, skip, enrichments)
+    #    puts "Generated #{filename}"
+    #  else
+    #    runner::EmrConfigGenerator.new.generate(config, resolver, '1-1-0', emr_config_filename)
+    #    puts "Generated #{emr_config_filename}"
+    #    runner::EmrPlaybookGenerator.new
+    #      .generate(config, resolver, '1-0-0', emr_playbook_filename, debug, skip, enrichments)
+    #    puts "Generated #{emr_playbook_filename}"
+  end
 
 # Don't print stack trace for configuration errors
 rescue runner::ConfigError => e

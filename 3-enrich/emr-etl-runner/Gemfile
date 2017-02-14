@@ -21,6 +21,7 @@ ruby "2.3.1"
 # RubyGems it requires here.
 gem "contracts", "~> 0.9", "<= 0.11"
 gem "elasticity", "~> 6.0.12"
+gem "avro", "~> 1.8.1"
 gem "sluice", "~> 0.4.0"
 gem "awrence", "~> 0.1.0"
 gem "snowplow-tracker", "~> 0.5.2"
