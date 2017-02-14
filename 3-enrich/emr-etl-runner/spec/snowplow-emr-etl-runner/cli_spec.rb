@@ -45,7 +45,11 @@ describe Cli do
       filename += "/"+name
     end
 
-    Cli.process_options({:config_file => resource("sparse_config.yml"), :enrichments_directory => nil, :resolver_file => resource("iglu_resolver.json")}, nil)
+    Cli.process_options({
+      :config_file => resource("sparse_config.yml"),
+      :enrichments_directory => nil,
+      :resolver_file => resource("iglu_resolver.json")
+    }, nil, 'cmd')
   end
 
   it 'can convert all keys in a hash to symbols' do

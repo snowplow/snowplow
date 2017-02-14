@@ -16,12 +16,11 @@
 require 'spec_helper'
 require 'time'
 
-Snowplow = Snowplow::EmrEtlRunner::Monitoring::Snowplow
-
-describe Snowplow do
+describe Snowplow::EmrEtlRunner::Monitoring::Snowplow do
 
   it "should make a timestamp from the Elasticity API compatible with JSON schema" do
-    actual = Snowplow.instance.to_jsonschema_compatible_timestamp(Time.parse('2015-07-29 08:34:40'))
+    actual = Snowplow::EmrEtlRunner::Monitoring::Snowplow
+      .instance.to_jsonschema_compatible_timestamp(Time.parse('2015-07-29 08:34:40'))
     actual.should eql '2015-07-29T08:34:40Z'
   end
 

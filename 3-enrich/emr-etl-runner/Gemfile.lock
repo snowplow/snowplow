@@ -2,8 +2,8 @@ GEM
   remote: https://rubygems.org/
   specs:
     CFPropertyList (2.3.2)
-    addressable (2.5.1)
-      public_suffix (~> 2.0, >= 2.0.2)
+    avro (1.8.1)
+      multi_json
     awrence (0.1.0)
     builder (3.2.2)
     contracts (0.11.0)
@@ -153,6 +153,7 @@ PLATFORMS
   java
 
 DEPENDENCIES
+  avro (~> 1.8.1)
   awrence (~> 0.1.0)
   contracts (~> 0.9, <= 0.11)
   coveralls
