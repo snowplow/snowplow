@@ -28,7 +28,7 @@ gem "snowplow-tracker", "~> 0.5.2"
 gem "iglu-ruby-client", ">= 0.1.0"
 
 group :development do
-  gem "rspec", "~> 2.14", ">= 2.14.1"
+  gem "rspec", "~> 3.5.0"
   gem "coveralls"
 
   gem "warbler" if RUBY_PLATFORM == 'java'
