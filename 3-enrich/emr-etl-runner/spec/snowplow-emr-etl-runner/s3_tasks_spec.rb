@@ -43,7 +43,7 @@ describe S3Tasks do
     expected = eg[3]
 
     it "should return #{expected} when filepath == #{filepath} and basename == #{basename} for a #{spec}" do
-      fix_filenames.call(basename, filepath).should eql expected
+      expect(fix_filenames.call(basename, filepath)).to eq(expected)
     end
   end
 
@@ -57,7 +57,7 @@ describe S3Tasks do
     spec, filepath, basename, expected = eg
 
     it "should return #{expected} when filepath == #{filepath} and basename == #{basename} for a #{spec}" do
-      fix_ua_filenames.call(basename, filepath).should eql expected
+      expect(fix_ua_filenames.call(basename, filepath)).to eq(expected)
     end
   end
 
