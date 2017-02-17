@@ -47,13 +47,13 @@ describe Runner do
   end
 
   it 'should be able to get some mock config' do
-    rgs, config, enrichments, resolver, tartgets = get_mock_config
-    config[:collectors].should_not == nil
-    config[:collectors][:format].should eq "cloudfront" # the sample is set to cloudfront
+    rgs, config, enrichments, resolver, targets = get_mock_config
+    expect(config[:collectors]).not_to be_nil
+    expect(config[:collectors][:format]).to eq("cloudfront") # the sample is set to cloudfront
   end
 
   it 'adds trailing slashes to all buckets' do
-    Runner.add_trailing_slashes({
+    expect(Runner.add_trailing_slashes({
       '1' => 'a',
       '2' => {
         '3' => 'b',
@@ -62,7 +62,7 @@ describe Runner do
       '5' => ['d', [{
         '6' => 'e'
       }]]
-    }).should == {
+    })).to eq({
       '1' => 'a/',
       '2' => {
         '3' => 'b/',
@@ -71,7 +71,7 @@ describe Runner do
       '5' => ['d/', [{
         '6' => 'e/'
       }]]
-    }
+    })
   end
 
   it 'should reject bogus skip stages' do
