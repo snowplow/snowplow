@@ -27,6 +27,10 @@ env:
   - secure: ZKl3jaGIpXUeSHEXwsbbGAfSwL1oU2DlOhUBz+JZIe52W2rK7qMIy89oykO2CiWf+3PwHMqUiK2DL3RqxaqIIcYl7HfuMIWad3Jxj3vHbDQj0pkFpEbVJ4caRXHaqVbOSwCQDNypEuNoOsC4qi125NnEEniMrHaJ5JaV3ZZOKJ8=
   # AWS_SECRET_KEY
   - secure: bfRy/ulcQNKTGB0KYQviCypBI8LbnWkwrt+WyPuoFlLBz+kqhjc5XuOOsfC2OQplkcsbyb/2QzPoM59btXp6SC+uv0AdE5F6aJ+7hEechpwRmq4oR4v5TRebUY7XrNiwZvhvw85VbLGLQPdTcRkii3hcs9QHQx6prMvw5o++vA8=
+  # AWS_STAGING_ACCESS_KEY_ID
+  - secure: stEnjuXCyIoTh0wluBNwgwflc9j+QNq5QbzeEOv8KZQ6KAVjwikX1gzMGNBaD5a0JFgUuE8Wd55l5RMfb+P5Wt8Th7WpyJ55SaOlTz6nDWGFxpOo1XJy4UI7Qr9CPEmqWwsS7Kxl7+jVEJPIYbItr0a+oGsajAtNsly9C88S5w0=
+  # AWS_STAGING_SECRET_ACCESS_KEY
+  - secure: tTXtm8oxwHDpHPGByCbSao7Kauq8SFpeyBYpBoN4e9uUYbgzmwMNLts/tWAZpHGmmnKhrEFVZp/tfqgA1fMgPGFvMmJTFrvceBkPzbc7T3Ck8bxpAGoL8TmSvET9lC+NxP8A0s1Uvdo1Y9ue6lkNh8l74oDDZSSfdGqnNOc2rJ4=
 before_install:
 - pip install --user awscli
 - export PATH=$PATH:$HOME/.local/bin
