@@ -1,0 +1,11 @@
+{
+		"schema": "iglu:com.snowplowanalytics.snowplow/cookie_extractor_config/jsonschema/1-0-0",
+		"data": {
+				"name": "cookie_extractor_config",
+				"vendor": "com.snowplowanalytics.snowplow",
+				"enabled": true,
+				"parameters": {
+						"cookies": ["sp"]
+				}
+		}
+}
