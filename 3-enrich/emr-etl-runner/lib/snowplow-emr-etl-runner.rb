@@ -27,6 +27,7 @@ require_relative 'snowplow-emr-etl-runner/runner'
 require_relative 'snowplow-emr-etl-runner/generator'
 require_relative 'snowplow-emr-etl-runner/emr_config_generator'
 require_relative 'snowplow-emr-etl-runner/emr_playbook_generator'
+require_relative 'snowplow-emr-etl-runner/linter'
 
 
 module Snowplow

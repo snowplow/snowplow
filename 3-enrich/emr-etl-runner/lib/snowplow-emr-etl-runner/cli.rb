@@ -100,7 +100,24 @@ module Snowplow
             opts.on('-n', '--enrichments ENRICHMENTS', 'enrichments directory') {|config| options[:enrichments_directory] = config}
             opts.on('-r', '--resolver RESOLVER', 'Iglu resolver file') {|config| options[:resolver_file] = config}
             opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
-            opts.on('-x', '--skip staging,s3distcp,emr{enrich,shred,elasticsearch},archive_raw', Array, 'skip work step(s)') { |config| options[:skip] = config }
+            opts.on('-x', '--skip staging,s3distcp,emr{enrich,shred,elasticsearch,archive_raw}', Array, 'skip work step(s)') { |config| options[:skip] = config }
+          end,
+          'lint resolver' => OptionParser.new do |opts|
+            opts.banner = 'Usage: lint resolver [options]'
+            opts.description = 'Lint an Iglu resolver config to check if it is valid with respect to its schema'
+            opts.on('-r', '--resolver RESOLVER', 'Iglu resolver file') { |config| options[:resolver_file] = config }
+          end,
+          'lint enrichments' => OptionParser.new do |opts|
+            opts.banner = 'Usage: lint enrichments [options]'
+            opts.description = 'Lint enrichments to check if they are valid with respect to their schemas'
+            opts.on('-r', '--resolver RESOLVER', 'Iglu resolver file') { |config| options[:resolver_file] = config }
+            opts.on('-n', '--enrichments ENRICHMENTS', 'enrichments directory') { |config| options[:enrichments_directory] = config }
+          end,
+          'lint all' => OptionParser.new do |opts|
+            opts.banner = 'Usage: lint all [options]'
+            opts.description = 'Lint both Iglu resolver config and enrichments to check if they are valid with respect to their schemas'
+            opts.on('-r', '--resolver RESOLVER', 'Iglu resolver file') { |config| options[:resolver_file] = config }
+            opts.on('-n', '--enrichments ENRICHMENTS', 'enrichments directory') { |config| options[:enrichments_directory] = config }
           end
         }
 
@@ -169,8 +186,10 @@ module Snowplow
         }
 
         summary = optparse.to_s
-        config = load_config(options[:config_file], summary)
-        enrichments = load_enrichments(options[:enrichments_directory], summary)
+        config = load_config(options[:config_file], summary,
+          (not cmd_name.include?('lint')))
+        enrichments = load_enrichments(options[:enrichments_directory], summary,
+          [ 'lint all', 'lint enrichments' ].include?(cmd_name))
         resolver = load_resolver(options[:resolver_file], summary)
         targets = load_targets(options[:targets_directory])
 
@@ -178,8 +197,9 @@ module Snowplow
       end
 
       # Validate our args, load our config YAML, check config and args don't conflict
-      Contract Maybe[String], String => ConfigHash
-      def self.load_config(config_file, summary)
+      Contract Maybe[String], String, Bool => Maybe[ConfigHash]
+      def self.load_config(config_file, summary, is_required=true)
+        return nil if not is_required
 
         # Check we have a config file argument and it exists
         if config_file.nil?
@@ -201,9 +221,12 @@ module Snowplow
       end
 
       # Load the enrichments directory into an array
-      Contract Maybe[String], String => ArrayOf[String]
-      def self.load_enrichments(enrichments_dir, summary)
-        return [] if enrichments_dir.nil?
+      Contract Maybe[String], String, Bool => ArrayOf[String]
+      def self.load_enrichments(enrichments_dir, summary, is_required=true)
+        return [] if enrichments_dir.nil? and not is_required
+        if enrichments_dir.nil? and is_required
+          raise ConfigError, "Missing option: enrichments\n#{summary}"
+        end
 
         # Check the enrichments directory exists and is a directory
         unless Dir.exist?(enrichments_dir)
