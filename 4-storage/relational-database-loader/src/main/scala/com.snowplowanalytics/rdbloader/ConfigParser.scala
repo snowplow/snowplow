@@ -69,6 +69,14 @@ object ConfigParser {
   private[rdbloader] implicit val emrDecoder: Decoder[SnowplowEmr] =
     ConfiguredDecoder.decodeCaseClass
 
+  private [rdbloader] implicit val s3Decoder: Decoder[SnowplowS3] =
+    ConfiguredDecoder.decodeCaseClass
+
+  private [rdbloader] implicit val awsDecoder: Decoder[SnowplowAws] =
+    ConfiguredDecoder.decodeCaseClass
+
+  private [rdbloader] implicit val configDecoder: Decoder[Config] =
+    ConfiguredDecoder.decodeCaseClass
 
   private def parseCollectors(hCursor: HCursor): Either[DecodingFailure, Collectors] = {
     for {

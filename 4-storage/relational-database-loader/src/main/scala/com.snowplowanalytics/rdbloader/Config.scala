@@ -43,7 +43,7 @@ object Config {
 
   case class SnowplowBuckets(
     assets: String,
-    jsonpathAssets: String,
+    jsonpathAssets: Option[String],
     log: String,
     enriched: EnrichedBucket,
     shredded: ShreddedBucket)
@@ -96,6 +96,7 @@ object Config {
   // collectors section
 
   sealed trait CollectorFormat { val asString: String }
+  case object CloudfrontFormat extends CollectorFormat { val asString = "cloudfront" }
   case object ClojureTomcaseFormat extends CollectorFormat { val asString = "clj-tomcat" }
   case object ThriftFormat extends CollectorFormat { val asString = "thrift" }
   case object CfAccessLogFormat extends CollectorFormat { val asString = "tsv/com.amazon.aws.cloudfront/wd_access_log" }
@@ -153,6 +154,7 @@ object Config {
 
   object CollectorFormat {
     def fromString(string: String): Either[String, CollectorFormat] = string match {
+      case CloudfrontFormat.asString            => CloudfrontFormat.asRight
       case ClojureTomcaseFormat.asString        => ClojureTomcaseFormat.asRight
       case ThriftFormat.asString                => ThriftFormat.asRight
       case CfAccessLogFormat.asString           => CfAccessLogFormat.asRight
