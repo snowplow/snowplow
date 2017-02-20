@@ -1,8 +1,7 @@
 /*
  * Copyright (c) 2017 Snowplow Analytics Ltd. All rights reserved.
  *
- * This program is licensed to you under the Apache License Version 2.0,
- * and you may not use this file except in compliance with the Apache License Version 2.0.
+ * This program is licensed to you under the Apache License Version 2.0, * and you may not use this file except in compliance with the Apache License Version 2.0.
  * You may obtain a copy of the Apache License Version 2.0 at http://www.apache.org/licenses/LICENSE-2.0.
  *
  * Unless required by applicable law or agreed to in writing,
@@ -30,6 +29,7 @@ class ConfigSpec extends Specification { def is = s2"""
     Parse monitoring with custom decoder $e3
     Parse enrich with custom decoder $e4
     Parse collectors with Cloudfront access format $e5
+    Parse emr with custom decoder $e6
   """
 
   def e1 = {
@@ -122,6 +122,40 @@ class ConfigSpec extends Specification { def is = s2"""
     val expected = Config.Collectors(Config.CfAccessLogFormat)
 
     storage must beRight(expected)
+  }
+
+  def e6 = {
+    import ConfigParser._
+
+    val emrYaml =
+      """
+        |ami_version: 4.5.0
+        |region: ADD HERE        # Always set this
+        |jobflow_role: EMR_EC2_DefaultRole # Created using $ aws emr create-default-roles
+        |service_role: EMR_DefaultRole     # Created using $ aws emr create-default-roles
+        |placement: ADD HERE     # Set this if not running in VPC. Leave blank otherwise
+        |ec2_subnet_id: ADD HERE # Set this if running in VPC. Leave blank otherwise
+        |ec2_key_name: ADD HERE
+        |bootstrap: []           # Set this to specify custom boostrap actions. Leave empty otherwise
+        |software:
+        |  hbase:                # Optional. To launch on cluster, provide version, "0.92.0", keep quotes. Leave empty otherwise.
+        |  lingual:              # Optional. To launch on cluster, provide version, "1.1", keep quotes. Leave empty otherwise.
+        |# Adjust your Hadoop cluster below
+        |jobflow:
+        |  master_instance_type: m1.medium
+        |  core_instance_count: 2
+        |  core_instance_type: m1.medium
+        |  task_instance_count: 0 # Increase to use spot instances
+        |  task_instance_type: m1.medium
+        |  task_instance_bid: 0.015 # In USD. Adjust bid, or leave blank for non-spot-priced (i.e. on-demand) task instances
+        |bootstrap_failure_tries: 3 # Number of times to attempt the job in the event of bootstrap failures
+        |additional_info: # Optional JSON string for selecting additional features
+      """.stripMargin
+
+    val ast: Either[Error, Json] = parser.parse(emrYaml)
+    val emr = ast.flatMap(_.as[Config.SnowplowEmr])
+
+    emr must beRight
   }
 
 

@@ -60,6 +60,15 @@ object ConfigParser {
   private[rdbloader] implicit val enrichDecoder: Decoder[Enrich] =
     ConfiguredDecoder.decodeCaseClass
 
+  private[rdbloader] implicit val emrSoftwareDecoder: Decoder[EmrSoftware] =
+    ConfiguredDecoder.decodeCaseClass
+
+  private[rdbloader] implicit val emrJobflowDecoder: Decoder[EmrJobflow] =
+    ConfiguredDecoder.decodeCaseClass
+
+  private[rdbloader] implicit val emrDecoder: Decoder[SnowplowEmr] =
+    ConfiguredDecoder.decodeCaseClass
+
 
   private def parseCollectors(hCursor: HCursor): Either[DecodingFailure, Collectors] = {
     for {

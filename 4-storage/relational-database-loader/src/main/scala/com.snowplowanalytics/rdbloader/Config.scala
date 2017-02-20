@@ -79,7 +79,7 @@ object Config {
     software: EmrSoftware,
     jobflow: EmrJobflow,
     bootstrapFailureTries: Int,
-    additionalInfo: String)   // TODO: JSON
+    additionalInfo: Option[String])   // TODO: JSON
 
   case class EmrSoftware(
     hbase: Option[String],
@@ -89,9 +89,9 @@ object Config {
     masterInstanceType: String,
     coreInstanceCount: Int,
     coreInstanceType: String,
-    taskInstanceCount: String,
+    taskInstanceCount: Int,
     taskInstanceType: String,
-    task_instance_bid: BigDecimal)
+    taskInstanceBid: BigDecimal)
 
   // collectors section
 
