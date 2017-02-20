@@ -39,6 +39,10 @@ describe Cli do
     }.to raise_exception( ConfigError, "Configuration file '/tmp' does not exist, or is not a file\n<<usage message>>" )
   end
 
+  it 'sends back nil if the config is not required' do
+    expect(Cli.load_config('/tmp', '', false)).to be_nil
+  end
+
   it 'accepts nil in process opts (for tests)' do
     def resource(name)
       filename = File.expand_path(File.dirname(__FILE__)+"/resources/").to_s

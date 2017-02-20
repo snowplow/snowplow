@@ -39,7 +39,7 @@ begin
   if cmd == 'run'
     r = runner::Runner.new(args, config, enrichments, resolver, targets)
     r.run()
-  else
+  elsif cmd.start_with?('generate')
     puts "The generate command is not supported yet"
     #emr_config_filename = 'emr-config.json'
     #emr_playbook_filename = 'emr-playbook.json'
@@ -63,10 +63,31 @@ begin
     #    runner::EmrPlaybookGenerator.new
     #      .generate(config, resolver, '1-0-0', emr_playbook_filename, debug, skip, enrichments)
     #    puts "Generated #{emr_playbook_filename}"
+    #  end
+    #end
+  else
+    res = runner::Linter.lint(resolver)
+    if res.is_a?(runner::LinterError)
+      raise res
+    else
+      puts "Valid Iglu resolver config"
+    end
+    if cmd == 'lint enrichments' or cmd == 'lint all'
+      errors = res.lint_enrichments(enrichments)
+      if errors.empty?
+        puts "Valid enrichments"
+      else
+        raise runner::LinterError.new(
+          "Invalid enrichments:\n #{errors.map { |e| e.message }.join("\n")}")
+      end
+    end
   end
 
 # Don't print stack trace for configuration errors
 rescue runner::ConfigError => e
+  $stderr.puts(e.message)
+  exit 1
+rescue runner::LinterError => e
   $stderr.puts(e.message)
   exit 1
 # Special retval so rest of pipeline knows not to continue
