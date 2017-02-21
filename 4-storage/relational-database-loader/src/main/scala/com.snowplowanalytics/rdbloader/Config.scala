@@ -12,8 +12,14 @@
  */
 package com.snowplowanalytics.rdbloader
 
-import cats.syntax.option._
 import cats.syntax.either._
+
+import io.circe._
+import io.circe.Decoder._
+import io.circe.generic.extras.Configuration
+import io.circe.generic.extras.decoding.ConfiguredDecoder
+
+import ConfigParser.{ ParseError, JsonHash }
 
 /**
  * Full Snowplow `config.yml` runtime representation
@@ -94,15 +100,40 @@ object Config {
     taskInstanceBid: BigDecimal)
 
   // collectors section
+  import scala.reflect.runtime.universe._
+  import scala.reflect.runtime.{ universe => ru }
+
+  val m = ru.runtimeMirror(getClass.getClassLoader)
 
   sealed trait CollectorFormat { val asString: String }
   case object CloudfrontFormat extends CollectorFormat { val asString = "cloudfront" }
-  case object ClojureTomcaseFormat extends CollectorFormat { val asString = "clj-tomcat" }
+  case object ClojureTomcatFormat extends CollectorFormat { val asString = "clj-tomcat" }
   case object ThriftFormat extends CollectorFormat { val asString = "thrift" }
   case object CfAccessLogFormat extends CollectorFormat { val asString = "tsv/com.amazon.aws.cloudfront/wd_access_log" }
   case object UrbanAirshipConnectorFormat extends CollectorFormat { val asString = "ndjson/urbanairship.connect/v1" }
 
   case class Collectors(format: CollectorFormat)
+
+
+  def sealedDescendants[Root: TypeTag]: Option[Set[Symbol]] = {
+    val symbol = typeOf[Root].typeSymbol
+    val internal = symbol.asInstanceOf[scala.reflect.internal.Symbols#Symbol]
+    if (internal.isSealed)
+      Some(internal.sealedDescendants.map(_.asInstanceOf[Symbol]) - symbol)
+    else None
+  }
+
+  def getCaseObject(desc: Symbol): Any = {
+    val mod = m.staticModule(desc.asClass.fullName)
+    m.reflectModule(mod).instance
+  }
+
+  def fee[A: TypeTag]: Set[A] = {
+
+    sealedDescendants[A].getOrElse(Set.empty).map(x => getCaseObject(x).asInstanceOf[A])
+  }
+
+
 
   // enrich section
 
@@ -149,13 +180,27 @@ object Config {
   case object GetMethod extends TrackerMethod { val asString = "get" }
   case object PostMethod extends TrackerMethod { val asString = "post" }
 
+  private implicit val decoderConfiguration =
+    Configuration.default.withSnakeCaseKeys
+
+  private def parse[A](read: String => Either[String, A])(hCursor: HCursor): Either[DecodingFailure, A] = {
+    for {
+      string <- hCursor.as[String]
+      method  = read(string)
+      result <- method.asDecodeResult(hCursor)
+    } yield result
+  }
 
   // Instances and helper methods
 
   object CollectorFormat {
+
+    implicit val decodeCollectorFormat: Decoder[CollectorFormat] =
+      Decoder.instance(parse(fromString))
+
     def fromString(string: String): Either[String, CollectorFormat] = string match {
       case CloudfrontFormat.asString            => CloudfrontFormat.asRight
-      case ClojureTomcaseFormat.asString        => ClojureTomcaseFormat.asRight
+      case ClojureTomcatFormat.asString         => ClojureTomcatFormat.asRight
       case ThriftFormat.asString                => ThriftFormat.asRight
       case CfAccessLogFormat.asString           => CfAccessLogFormat.asRight
       case UrbanAirshipConnectorFormat.asString => UrbanAirshipConnectorFormat.asRight
@@ -164,6 +209,9 @@ object Config {
   }
 
   object LoggingLevel {
+    implicit val decodeLoggingLevel: Decoder[LoggingLevel] =
+      Decoder.instance(parse(fromString))
+
     def fromString(string: String): Either[String, LoggingLevel] = string match {
       case DebugLevel.asString  => DebugLevel.asRight
       case InfoLevel.asString => InfoLevel.asRight
@@ -172,6 +220,9 @@ object Config {
   }
 
   object TrackerMethod {
+    implicit val decodeTrackerMethod: Decoder[TrackerMethod] =
+      Decoder.instance(parse(fromString))
+
     def fromString(string: String): Either[String, TrackerMethod] = string match {
       case GetMethod.asString  => GetMethod.asRight
       case PostMethod.asString => PostMethod.asRight
@@ -179,7 +230,23 @@ object Config {
     }
   }
 
+  object Collectors {
+    implicit val decodeCollectors: Decoder[Collectors] =
+      Decoder.instance(parseCollectors)
+
+    private def parseCollectors(hCursor: HCursor): Either[DecodingFailure, Collectors] = {
+      for {
+        jsonObject      <- hCursor.as[Map[String, Json]]
+        format          <- jsonObject.getJson("format", hCursor)
+        collectorFormat <- format.as[CollectorFormat]
+      } yield Collectors(collectorFormat)
+    }
+  }
+
   object OutputCompression {
+    implicit val decodeOutputCompression: Decoder[OutputCompression] =
+      Decoder.instance(parse(fromString))
+
     def fromString(string: String): Either[String, OutputCompression] = string match {
       case NoneCompression.asString => NoneCompression.asRight
       case GzipCompression.asString => GzipCompression.asRight
@@ -187,4 +254,10 @@ object Config {
     }
   }
 
+  object SnowplowMonitoring {
+    import TrackerMethod._
+
+    private[rdbloader] implicit val snowplowMonitoringDecoder: Decoder[SnowplowMonitoring] =
+      ConfiguredDecoder.decodeCaseClass
+  }
 }
