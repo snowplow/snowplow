@@ -1,0 +1,23 @@
+*.class
+*.log
+.idea
+.DS_Store
+*.pyc
+
+# Scala worksheets
+src/test/scala/*.sc
+
+# Secret data
+src/test/resources/sandbox
+
+# sbt specific
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# Vagrant
+.vagrant
+VERSION
