@@ -14,7 +14,7 @@
 # License::   Apache License Version 2.0
 
 source "https://rubygems.org"
-ruby "2.2.3"
+ruby "2.3.1"
 
 # StorageLoader is a Ruby app (not a RubyGem)
 # built with Bundler, so we add in the

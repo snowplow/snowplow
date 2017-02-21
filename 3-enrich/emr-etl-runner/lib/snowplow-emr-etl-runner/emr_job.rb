@@ -69,8 +69,8 @@ module Snowplow
       include Monitoring::Logging
 
       # Initializes our wrapper for the Amazon EMR client.
-      Contract Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String => EmrJob
-      def initialize(debug, enrich, shred, elasticsearch, s3distcp, config, enrichments_array, resolver)
+      Contract Bool, Bool, Bool, Bool, Bool, Bool, ConfigHash, ArrayOf[String], String => EmrJob
+      def initialize(debug, enrich, shred, elasticsearch, s3distcp, archive_raw, config, enrichments_array, resolver)
 
         logger.debug "Initializing EMR jobflow"
 
@@ -92,15 +92,6 @@ module Snowplow
           config[:aws][:s3][:region],
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
-
-        # Check whether there are an even number of .lzo and .lzo.index files
-        if config[:collectors][:format] == 'thrift'
-          processing_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:raw][:processing])
-          processing_file_count = Sluice::Storage::S3.list_files(s3, processing_location).size
-          unless processing_file_count % 2 == 0
-            raise UnmatchedLzoFilesError, "Processing bucket contains #{processing_file_count} .lzo and .lzo.index files, expected an even number"
-          end
-        end
 
         # Configure Elasticity with your AWS credentials
         Elasticity.configure do |c|
@@ -141,6 +132,27 @@ module Snowplow
         @jobflow.instance_count       = config[:aws][:emr][:jobflow][:core_instance_count] + 1 # +1 for the master instance
         @jobflow.master_instance_type = config[:aws][:emr][:jobflow][:master_instance_type]
         @jobflow.slave_instance_type  = config[:aws][:emr][:jobflow][:core_instance_type]
+
+        unless config[:aws][:emr][:jobflow][:core_instance_ebs].nil?
+          ebs_bdc = Elasticity::EbsBlockDeviceConfig.new
+
+          ebs_bdc.volume_type          = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_type]
+          ebs_bdc.size_in_gb           = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_size]
+          ebs_bdc.volumes_per_instance = 1
+          if config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_type] == "io1"
+            ebs_bdc.iops = config[:aws][:emr][:jobflow][:core_instance_ebs][:volume_iops]
+          end
+
+          ebs_c = Elasticity::EbsConfiguration.new
+          ebs_c.add_ebs_block_device_config(ebs_bdc)
+          ebs_c.ebs_optimized = true
+
+          unless config[:aws][:emr][:jobflow][:core_instance_ebs][:ebs_optimized].nil?
+            ebs_c.ebs_optimized = config[:aws][:emr][:jobflow][:core_instance_ebs][:ebs_optimized]
+          end
+
+          @jobflow.set_core_ebs_configuration(ebs_c)
+        end
 
         if config[:collectors][:format] == 'thrift'
           if @legacy
@@ -393,6 +405,19 @@ module Snowplow
           end
         end
 
+        if archive_raw
+          # We need to copy our enriched events from HDFS back to S3
+          archive_raw_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+          archive_raw_step.arguments = [
+            "--src"        , csbr[:processing],
+            "--dest"       , self.class.partition_by_run(csbr[:archive], run_id),
+            "--s3Endpoint" , s3_endpoint,
+            "--deleteOnSuccess"
+          ]
+          archive_raw_step.name << ": Raw S3 Staging -> S3 Archive"
+          @jobflow.add_step(archive_raw_step)
+        end
+
         self
       end
 
@@ -567,6 +592,12 @@ module Snowplow
             sleep(300)
           rescue RestClient::InternalServerError => ise
             logger.warn "Got internal server error #{ise}, waiting 5 minutes before checking jobflow again"
+            sleep(300)
+          rescue Elasticity::ThrottlingException => te
+            logger.warn "Got Elasticity throttling exception #{te}, waiting 5 minutes before checking jobflow again"
+            sleep(300)
+          rescue ArgumentError => ae
+            logger.warn "Got Elasticity argument error #{ae}, waiting 5 minutes before checking jobflow again"
             sleep(300)
           rescue IOError => ioe
             logger.warn "Got IOError #{ioe}, waiting 5 minutes before checking jobflow again"
