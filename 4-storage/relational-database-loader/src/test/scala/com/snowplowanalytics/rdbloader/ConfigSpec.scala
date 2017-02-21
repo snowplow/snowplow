@@ -21,17 +21,21 @@ import io.circe.yaml.parser
 // specs2
 import org.specs2.Specification
 
+// This project
+import Config.Codecs._
+
 class ConfigSpec extends Specification { def is = s2"""
   Configuration parse specification
 
-    Parse storage without folder, but with comment $e1
+    Parse storage without folder, but with comment, using auto decoder $e1
     Parse monitoring.snowplow with custom decoder $e2
     Parse monitoring with custom decoder $e3
     Parse enrich with custom decoder $e4
-    Parse collectors with Cloudfront access format $e5
+    Parse collectors with Cloudfront access format, using auto decoder $e5
     Parse emr with custom decoder $e6
     Parse s3 with custom decoder $e7
-    Parse whole configuration $e8
+    Parse whole configuration using parse method $e8
+    Get correct path in decoding failure $e9
   """
 
   def e1 = {
@@ -49,8 +53,6 @@ class ConfigSpec extends Specification { def is = s2"""
   }
 
   def e2 = {
-    import ConfigParser._
-
     val monitoringYaml =
       """
         |method: get
@@ -64,11 +66,9 @@ class ConfigSpec extends Specification { def is = s2"""
   }
 
   def e3 = {
-    import ConfigParser._
-
     val monitoringYaml =
       """
-        |tags: {foo: bar} # Name-value pairs describing this job
+        |tags: {fromString: bar} # Name-value pairs describing this job
         |logging:
         |  level: DEBUG # You can optionally switch to INFO for production
         |snowplow:
@@ -82,14 +82,12 @@ class ConfigSpec extends Specification { def is = s2"""
 
     val snowplow = Config.SnowplowMonitoring(Config.GetMethod, "ADD HERE", "ADD HERE")
     val logging = Config.Logging(Config.DebugLevel)
-    val expected = Config.Monitoring(Map("foo" -> "bar"), logging, snowplow)
+    val expected = Config.Monitoring(Map("fromString" -> "bar"), logging, snowplow)
 
     storage must beRight(expected)
   }
 
   def e4 = {
-    import ConfigParser._
-
     val enrichYaml =
       """
         |job_name: Snowplow ETL # Give your job a name
@@ -111,7 +109,7 @@ class ConfigSpec extends Specification { def is = s2"""
   }
 
   def e5 = {
-    import ConfigParser._
+    import io.circe.generic.auto._
 
     val collectorsYaml =
       """
@@ -127,8 +125,6 @@ class ConfigSpec extends Specification { def is = s2"""
   }
 
   def e6 = {
-    import ConfigParser._
-
     val emrYaml =
       """
         |ami_version: 4.5.0
@@ -161,8 +157,6 @@ class ConfigSpec extends Specification { def is = s2"""
   }
 
   def e7 = {
-    import ConfigParser._
-
     val s3Yaml =
       """
         |region: ADD HERE
@@ -195,8 +189,6 @@ class ConfigSpec extends Specification { def is = s2"""
   }
 
   def e8 = {
-    import ConfigParser._
-
     val configYaml =
       """
         |aws:
@@ -260,42 +252,6 @@ class ConfigSpec extends Specification { def is = s2"""
         |storage:
         |  download:
         |    folder: # Postgres-only config option. Where to store the downloaded files. Leave blank for Redshift
-        |  targets:
-        |    - name: "My Redshift database"
-        |      type: redshift
-        |      host: ADD HERE # The endpoint as shown in the Redshift console
-        |      database: ADD HERE # Name of database
-        |      port: 5439 # Default Redshift port
-        |      ssl_mode: disable # One of disable (default), require, verify-ca or verify-full
-        |      table: atomic.events
-        |      username: ADD HERE
-        |      password: ADD HERE
-        |      maxerror: 1 # Stop loading on first error, or increase to permit more load errors
-        |      comprows: 200000 # Default for a 1 XL node cluster. Not used unless --include compupdate specified
-        |    - name: "My PostgreSQL database"
-        |      type: postgres
-        |      host: ADD HERE # Hostname of database server
-        |      database: ADD HERE # Name of database
-        |      port: 5432 # Default Postgres port
-        |      ssl_mode: disable # One of disable (default), require, verify-ca or verify-full
-        |      table: atomic.events
-        |      username: ADD HERE
-        |      password: ADD HERE
-        |      maxerror: # Not required for Postgres
-        |      comprows: # Not required for Postgres
-        |    - name: "My Elasticsearch database"
-        |      type: elasticsearch
-        |      host: ADD HERE # The Elasticsearch endpoint
-        |      database: ADD HERE # Name of index
-        |      port: 9200 # Default Elasticsearch port - change to 80 if using Amazon Elasticsearch Service
-        |      sources: # Leave blank to write the bad rows created in this run to Elasticsearch, or explicitly provide an array of bad row buckets like ["s3://my-enriched-bucket/bad/run=2015-10-06-15-25-53"]
-        |      ssl_mode: # Not required for Elasticsearch
-        |      table: ADD HERE # Name of type
-        |      username: # Not required for Elasticsearch
-        |      password: # Not required for Elasticsearch
-        |      es_nodes_wan_only: false # Set to true if using Amazon Elasticsearch Service
-        |      maxerror: # Not required for Elasticsearch
-        |      comprows: # Not required for Elasticsearch
         |monitoring:
         |  tags: {} # Name-value pairs describing this job
         |  logging:
@@ -303,12 +259,44 @@ class ConfigSpec extends Specification { def is = s2"""
         |  snowplow:
         |    method: get
         |    app_id: ADD HERE # e.g. snowplow
-        |collector: ADD HERE # e.g. d3rkrsqld9gmqf.cloudfront.net
+        |    collector: ADD HERE # e.g. d3rkrsqld9gmqf.cloudfront.net
       """.stripMargin
 
-    val ast: Either[Error, Json] = parser.parse(configYaml)
-    val s3 = ast.flatMap(_.as[Config])
+    val result = Config.parse(configYaml)
+    result must beRight
+  }
 
-    s3 must beRight
+  def e9 = {
+    // buckets.enriched.good cannot be integer
+    val s3Yaml =
+      """
+        |region: ADD HERE
+        |buckets:
+        |  assets: s3://snowplow-hosted-assets # DO NOT CHANGE unless you are hosting the jarfiles etc yourself in your own bucket
+        |  jsonpath_assets: # If you have defined your own JSON Schemas, add the s3:// path to your own JSON Path files in your own bucket here
+        |  log: ADD HERE
+        |  raw:
+        |    in:                  # Multiple in buckets are permitted
+        |      - ADD HERE          # e.g. s3://my-in-bucket
+        |      - ADD HERE
+        |    processing: ADD HERE
+        |    archive: ADD HERE    # e.g. s3://my-archive-bucket/raw
+        |  enriched:
+        |    good: 0       # e.g. s3://my-out-bucket/enriched/good
+        |    bad: ADD HERE        # e.g. s3://my-out-bucket/enriched/bad
+        |    errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
+        |    archive: ADD HERE    # Where to archive enriched events to, e.g. s3://my-archive-bucket/enriched
+        |  shredded:
+        |    good: ADD HERE       # e.g. s3://my-out-bucket/shredded/good
+        |    bad: ADD HERE        # e.g. s3://my-out-bucket/shredded/bad
+        |    errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
+        |    archive: ADD HERE # Where to archive shredded events to, e.g. s3://my-archive-bucket/shredded
+      """.stripMargin
+
+    val ast: Either[Error, Json] = parser.parse(s3Yaml)
+    val s3 = ast.flatMap(_.as[Config.SnowplowS3])
+
+    val path = List(CursorOp.DownField("good"), CursorOp.DownField("enriched"), CursorOp.DownField("buckets"))
+    s3.leftMap(_.asInstanceOf[DecodingFailure].history) must beLeft(path)
   }
 }

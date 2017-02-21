@@ -14,12 +14,15 @@ package com.snowplowanalytics.rdbloader
 
 import cats.syntax.either._
 
-import io.circe._
+import io.circe.{ Decoder, Json => Yaml, HCursor, Error }
+import io.circe.generic.auto._
 import io.circe.Decoder._
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.decoding.ConfiguredDecoder
 
-import ConfigParser.{ ParseError, JsonHash }
+import io.circe.yaml.parser
+
+import Utils._
 
 /**
  * Full Snowplow `config.yml` runtime representation
@@ -29,9 +32,15 @@ case class Config(
   collectors: Config.Collectors,
   enrich: Config.Enrich,
   storage: Config.Storage,
-  monitoring: Config.Storage)
+  monitoring: Config.Monitoring)
 
 object Config {
+  import Codecs._
+
+  def parse(configYml: String): Either[String, Config] = {
+    val yaml: Either[Error, Yaml] = parser.parse(configYml)
+    yaml.flatMap(_.as[Config]).leftMap(_.toString)
+  }
 
   // aws section
 
@@ -100,12 +109,8 @@ object Config {
     taskInstanceBid: BigDecimal)
 
   // collectors section
-  import scala.reflect.runtime.universe._
-  import scala.reflect.runtime.{ universe => ru }
 
-  val m = ru.runtimeMirror(getClass.getClassLoader)
-
-  sealed trait CollectorFormat { val asString: String }
+  sealed trait CollectorFormat extends StringEnum
   case object CloudfrontFormat extends CollectorFormat { val asString = "cloudfront" }
   case object ClojureTomcatFormat extends CollectorFormat { val asString = "clj-tomcat" }
   case object ThriftFormat extends CollectorFormat { val asString = "thrift" }
@@ -113,27 +118,6 @@ object Config {
   case object UrbanAirshipConnectorFormat extends CollectorFormat { val asString = "ndjson/urbanairship.connect/v1" }
 
   case class Collectors(format: CollectorFormat)
-
-
-  def sealedDescendants[Root: TypeTag]: Option[Set[Symbol]] = {
-    val symbol = typeOf[Root].typeSymbol
-    val internal = symbol.asInstanceOf[scala.reflect.internal.Symbols#Symbol]
-    if (internal.isSealed)
-      Some(internal.sealedDescendants.map(_.asInstanceOf[Symbol]) - symbol)
-    else None
-  }
-
-  def getCaseObject(desc: Symbol): Any = {
-    val mod = m.staticModule(desc.asClass.fullName)
-    m.reflectModule(mod).instance
-  }
-
-  def fee[A: TypeTag]: Set[A] = {
-
-    sealedDescendants[A].getOrElse(Set.empty).map(x => getCaseObject(x).asInstanceOf[A])
-  }
-
-
 
   // enrich section
 
@@ -148,7 +132,7 @@ object Config {
     hadoopShred: String,
     hadoopElasticsearch: String)
 
-  sealed trait OutputCompression { def asString: String }
+  sealed trait OutputCompression extends StringEnum
   case object NoneCompression extends OutputCompression { val asString = "NONE" }
   case object GzipCompression extends OutputCompression { val asString = "GZIP" }
 
@@ -167,7 +151,7 @@ object Config {
 
   case class Logging(level: LoggingLevel)
 
-  sealed trait LoggingLevel { def asString: String }
+  sealed trait LoggingLevel extends StringEnum
   case object DebugLevel extends LoggingLevel { val asString = "DEBUG" }
   case object InfoLevel extends LoggingLevel { val asString = "INFO" }
 
@@ -176,88 +160,65 @@ object Config {
     appId: String,
     collector: String)  // Host/port pair
 
-  sealed trait TrackerMethod extends Product with Serializable { def asString: String }
+  sealed trait TrackerMethod extends StringEnum
   case object GetMethod extends TrackerMethod { val asString = "get" }
   case object PostMethod extends TrackerMethod { val asString = "post" }
 
-  private implicit val decoderConfiguration =
-    Configuration.default.withSnakeCaseKeys
 
-  private def parse[A](read: String => Either[String, A])(hCursor: HCursor): Either[DecodingFailure, A] = {
-    for {
-      string <- hCursor.as[String]
-      method  = read(string)
-      result <- method.asDecodeResult(hCursor)
-    } yield result
-  }
+  /**
+   * Instances of circe `Decoder` type class for all `config.yml` structures
+   */
+  object Codecs {
 
-  // Instances and helper methods
+    /**
+     * Allow circe codecs decode snake case YAML keys into camel case
+     * Used by codecs with `ConfiguredDecoder`
+     * Codecs should be declared in exact same order (reverse of their appearence in class)
+     */
+    private implicit val decoderConfiguration =
+      Configuration.default.withSnakeCaseKeys
 
-  object CollectorFormat {
+    implicit val decodeTrackerMethod: Decoder[TrackerMethod] =
+      decodeStringEnum[TrackerMethod]
+
+    implicit val decodeLoggingLevel: Decoder[LoggingLevel] =
+      decodeStringEnum[LoggingLevel]
+
+    implicit val snowplowMonitoringDecoder: Decoder[SnowplowMonitoring] =
+      ConfiguredDecoder.decodeCaseClass
+
+    implicit val monitoringDecoder: Decoder[Monitoring] =
+      ConfiguredDecoder.decodeCaseClass
+
+    implicit val decodeOutputCompression: Decoder[OutputCompression] =
+      decodeStringEnum[OutputCompression]
+
+    implicit val enrichVersionsDecoder: Decoder[EnrichVersions] =
+      ConfiguredDecoder.decodeCaseClass
+
+    implicit val enrichDecoder: Decoder[Enrich] =
+      ConfiguredDecoder.decodeCaseClass
 
     implicit val decodeCollectorFormat: Decoder[CollectorFormat] =
-      Decoder.instance(parse(fromString))
+      decodeStringEnum[CollectorFormat]
 
-    def fromString(string: String): Either[String, CollectorFormat] = string match {
-      case CloudfrontFormat.asString            => CloudfrontFormat.asRight
-      case ClojureTomcatFormat.asString         => ClojureTomcatFormat.asRight
-      case ThriftFormat.asString                => ThriftFormat.asRight
-      case CfAccessLogFormat.asString           => CfAccessLogFormat.asRight
-      case UrbanAirshipConnectorFormat.asString => UrbanAirshipConnectorFormat.asRight
-      case _                                    => s"Unknown collector format [$string]".asLeft
-    }
-  }
-
-  object LoggingLevel {
-    implicit val decodeLoggingLevel: Decoder[LoggingLevel] =
-      Decoder.instance(parse(fromString))
-
-    def fromString(string: String): Either[String, LoggingLevel] = string match {
-      case DebugLevel.asString  => DebugLevel.asRight
-      case InfoLevel.asString => InfoLevel.asRight
-      case _                   => s"Unknown debug level [$string]".asLeft
-    }
-  }
-
-  object TrackerMethod {
-    implicit val decodeTrackerMethod: Decoder[TrackerMethod] =
-      Decoder.instance(parse(fromString))
-
-    def fromString(string: String): Either[String, TrackerMethod] = string match {
-      case GetMethod.asString  => GetMethod.asRight
-      case PostMethod.asString => PostMethod.asRight
-      case _                   => s"Unknown tracking method [$string]".asLeft
-    }
-  }
-
-  object Collectors {
-    implicit val decodeCollectors: Decoder[Collectors] =
-      Decoder.instance(parseCollectors)
-
-    private def parseCollectors(hCursor: HCursor): Either[DecodingFailure, Collectors] = {
-      for {
-        jsonObject      <- hCursor.as[Map[String, Json]]
-        format          <- jsonObject.getJson("format", hCursor)
-        collectorFormat <- format.as[CollectorFormat]
-      } yield Collectors(collectorFormat)
-    }
-  }
-
-  object OutputCompression {
-    implicit val decodeOutputCompression: Decoder[OutputCompression] =
-      Decoder.instance(parse(fromString))
-
-    def fromString(string: String): Either[String, OutputCompression] = string match {
-      case NoneCompression.asString => NoneCompression.asRight
-      case GzipCompression.asString => GzipCompression.asRight
-      case _                        => s"Unknown output compression [$string]".asLeft
-    }
-  }
-
-  object SnowplowMonitoring {
-    import TrackerMethod._
-
-    private[rdbloader] implicit val snowplowMonitoringDecoder: Decoder[SnowplowMonitoring] =
+    implicit val emrJobflowDecoder: Decoder[EmrJobflow] =
       ConfiguredDecoder.decodeCaseClass
+
+    implicit val emrSoftwareDecoder: Decoder[EmrSoftware] =
+      ConfiguredDecoder.decodeCaseClass
+
+    implicit val emrDecoder: Decoder[SnowplowEmr] =
+      ConfiguredDecoder.decodeCaseClass
+
+    implicit val s3Decoder: Decoder[SnowplowS3] =
+      ConfiguredDecoder.decodeCaseClass
+
+    implicit val awsDecoder: Decoder[SnowplowAws] =
+      ConfiguredDecoder.decodeCaseClass
+
+    implicit val configDecoder: Decoder[Config] =
+      ConfiguredDecoder.decodeCaseClass
+
   }
 }
