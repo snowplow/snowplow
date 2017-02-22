@@ -1,3 +1,19 @@
+Release 88 Angkor Wat (2017-03-XX)
+------------------------------------
+Documentation: fix incorrect release date for R87 (#3126)
+Common: add CI/CD for EmrEtlRunner and StorageLoader (#3102)
+Common: add AWS staging credentials to .travis.yml (#3114)
+Scala Hadoop Shred: bump to 0.11.0 (#3041)
+Scala Hadoop Shred: add cross-batch natural deduplication (#2999)
+Storage: add example storage target configuration JSONs (#2990)
+StorageLoader: bump to 0.10.0 (#3109)
+StorageLoader: use storage target JSONs instead of targets section in config.yml (#2992)
+StorageLoader: replace table configuration property with schema (#2458)
+EmrEtlRunner: bump to 0.24.0 (#3040)
+EmrEtlRunner: remove targets section from config.yml.sample (#2989)
+EmrEtlRunner: no longer use sources property when loading Elasticsearch (#2993)
+EmrEtlRunner: use storage target JSONs instead of targets section in config.yml (#2991)
+
 Release 87 Chichen Itza (2017-02-21)
 ------------------------------------
 EmrEtlRunner: bump to 0.23.0 (#2960)
