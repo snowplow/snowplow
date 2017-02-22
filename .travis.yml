@@ -1,39 +1,39 @@
 language: scala
 scala:
-- 2.10.1
+  - 2.10.1
 jdk:
-- oraclejdk7
+  - oraclejdk7
 before_script:
-- psql -U postgres -c "CREATE USER enricher WITH password 'supersecret1';"
-- psql -U postgres -c "CREATE DATABASE sql_enrichment_test WITH OWNER = enricher;"
-- psql -U postgres -d sql_enrichment_test < integration-tests/sql-enrichment-test.sql
-- psql -U postgres -d sql_enrichment_test -c "GRANT ALL ON enrichment_test TO enricher;"
+  - psql -U postgres -c "CREATE USER enricher WITH password 'supersecret1';"
+  - psql -U postgres -c "CREATE DATABASE sql_enrichment_test WITH OWNER = enricher;"
+  - psql -U postgres -d sql_enrichment_test < integration-tests/sql-enrichment-test.sql
+  - psql -U postgres -d sql_enrichment_test -c "GRANT ALL ON enrichment_test TO enricher;"
 script:
-- python integration-tests/api-lookup-test.py &
-- cd 3-enrich/scala-common-enrich
-- sbt test
-- cd ../..
+  - python integration-tests/api-lookup-test.py &
+  - cd 3-enrich/scala-common-enrich
+  - sbt test
+  - cd ../..
 env:
   global:
-  - secure: j6RcEPeT5DCmThYA+KSvn5zoFdwhO9Tyk9xXVrW+L8oTTAehDvEWQ1nkJM7m+KYwUtWH1bvRd9IOZgKkWxJeYSDvn8V0zd0dJKSc7R4kykfI/S3V67uM1LCj24B1dF62uiTMOFd9inwB3SLhVFwRk+tcgrZMLs9ljqND77pGR4Y=
-  - secure: ZF2b692hBH1J8stmoeAcFnhRZkKxnzABLNIkdObHKLijJFMLMIaVn5mRWhmI8+lVbHIkx6BsUATdE3BPQnWI2iL5jfr2rxNfbX5NqFWV5RkN5wrKCCec4qljTpSGKApQXQT/KMFzBoxIk/c35yXjf/vN0JApztbaA/dygmpDRFo=
-  - secure: Z+qXgY0/qNksd2Z+aOQGhBmG9Gsw7sURIGc23YKWMMlGIHXAZQCZlQG+atvolkkfFHBl5hDHyuVLDxqjLAhxHZArWkFEruFOvio9kTdzLvhYGeS9pcAbEc9632XsdXqhFcKWUTREzndfxoVeVUpUGB6GfpJBk0dOLreK4xjH52w=
-  - secure: YH9mXPva5vKcKxvkUnUOAiJDSk2tMXgr/li6zuV0pyjoH3mfns+EDM1UEiKVuCpMJKDKyasrvMisDOejswH5uoGogDqjNamh4NkBoiVyhbyA2NJiawjoVNX/nv9n7GjvabuzetvRrCX6jFBErTcaraXy7nDLHb4DOewreime8OQ=
-  - secure: kPX56utFobFT5NDfdBhF58nW8TQb6HKPmaZBhhZLLqJV/vfG1KpChzlaWGgJpUCF61RckpPEKROqfHTtpc3YHSprfCd1z5kKSo6UV+Jb4j188MKxaN7pXhGA7OM2okYqiiaHVywoq0+B9Z51Ygom5rVlZG/mjHEdbeaN1wCJDI0=
-  - secure: YwhLm1v0EKBQQfUvNzrdyp8MGHDmnAhM51JijlApiPAfgYRJnogoNbmzMAqhbPNubnGFxaD5xgoavHXypaDAMGQoKY7q9WjHnBy1hxHWw8C0Q5vbVtxLroQWYYDi7YuEeY5D7/i3RkqD8bVIvPoHdFCQGuMYpHDke0OHcjrNz0Y=
-  - secure: H3n8c93jkUu9qMiYM7QY6SnZENv/9gds+MlegXFUjVZPVufX3HqtF1+zlC0AkIiQjrWHQo0HxLDN0djvMlDqCHu8l5Sh6HH9ct6PYbiXEC4zOzaY9nLFfVfh0kpCxek/3my9uxpwFlEGC33aY8a1UGSZ6ZkJJLmlKeGQHD3bjLs=
-  - secure: qsJvE2KHX6zfTbUD20Sq3d+b+ucuA/Bipiia5TEm/JKw0EoyIoiA4Fe1PTiYIvkIGuAcQWb4s5GrXCsztCAqZApn5+x8JgjPsmp0kLVXtZTQ3lv0AyTewxvIABoXfpblMuBmCIWjKwidGYQC+k8BgnWZ0JW6cnmfFq4i0bp4FM8=
-  # AWS_ACCESS_KEY
-  - secure: ZKl3jaGIpXUeSHEXwsbbGAfSwL1oU2DlOhUBz+JZIe52W2rK7qMIy89oykO2CiWf+3PwHMqUiK2DL3RqxaqIIcYl7HfuMIWad3Jxj3vHbDQj0pkFpEbVJ4caRXHaqVbOSwCQDNypEuNoOsC4qi125NnEEniMrHaJ5JaV3ZZOKJ8=
-  # AWS_SECRET_KEY
-  - secure: bfRy/ulcQNKTGB0KYQviCypBI8LbnWkwrt+WyPuoFlLBz+kqhjc5XuOOsfC2OQplkcsbyb/2QzPoM59btXp6SC+uv0AdE5F6aJ+7hEechpwRmq4oR4v5TRebUY7XrNiwZvhvw85VbLGLQPdTcRkii3hcs9QHQx6prMvw5o++vA8=
+    - secure: j6RcEPeT5DCmThYA+KSvn5zoFdwhO9Tyk9xXVrW+L8oTTAehDvEWQ1nkJM7m+KYwUtWH1bvRd9IOZgKkWxJeYSDvn8V0zd0dJKSc7R4kykfI/S3V67uM1LCj24B1dF62uiTMOFd9inwB3SLhVFwRk+tcgrZMLs9ljqND77pGR4Y=
+    - secure: ZF2b692hBH1J8stmoeAcFnhRZkKxnzABLNIkdObHKLijJFMLMIaVn5mRWhmI8+lVbHIkx6BsUATdE3BPQnWI2iL5jfr2rxNfbX5NqFWV5RkN5wrKCCec4qljTpSGKApQXQT/KMFzBoxIk/c35yXjf/vN0JApztbaA/dygmpDRFo=
+    - secure: Z+qXgY0/qNksd2Z+aOQGhBmG9Gsw7sURIGc23YKWMMlGIHXAZQCZlQG+atvolkkfFHBl5hDHyuVLDxqjLAhxHZArWkFEruFOvio9kTdzLvhYGeS9pcAbEc9632XsdXqhFcKWUTREzndfxoVeVUpUGB6GfpJBk0dOLreK4xjH52w=
+    - secure: YH9mXPva5vKcKxvkUnUOAiJDSk2tMXgr/li6zuV0pyjoH3mfns+EDM1UEiKVuCpMJKDKyasrvMisDOejswH5uoGogDqjNamh4NkBoiVyhbyA2NJiawjoVNX/nv9n7GjvabuzetvRrCX6jFBErTcaraXy7nDLHb4DOewreime8OQ=
+    - secure: kPX56utFobFT5NDfdBhF58nW8TQb6HKPmaZBhhZLLqJV/vfG1KpChzlaWGgJpUCF61RckpPEKROqfHTtpc3YHSprfCd1z5kKSo6UV+Jb4j188MKxaN7pXhGA7OM2okYqiiaHVywoq0+B9Z51Ygom5rVlZG/mjHEdbeaN1wCJDI0=
+    - secure: YwhLm1v0EKBQQfUvNzrdyp8MGHDmnAhM51JijlApiPAfgYRJnogoNbmzMAqhbPNubnGFxaD5xgoavHXypaDAMGQoKY7q9WjHnBy1hxHWw8C0Q5vbVtxLroQWYYDi7YuEeY5D7/i3RkqD8bVIvPoHdFCQGuMYpHDke0OHcjrNz0Y=
+    - secure: H3n8c93jkUu9qMiYM7QY6SnZENv/9gds+MlegXFUjVZPVufX3HqtF1+zlC0AkIiQjrWHQo0HxLDN0djvMlDqCHu8l5Sh6HH9ct6PYbiXEC4zOzaY9nLFfVfh0kpCxek/3my9uxpwFlEGC33aY8a1UGSZ6ZkJJLmlKeGQHD3bjLs=
+    - secure: qsJvE2KHX6zfTbUD20Sq3d+b+ucuA/Bipiia5TEm/JKw0EoyIoiA4Fe1PTiYIvkIGuAcQWb4s5GrXCsztCAqZApn5+x8JgjPsmp0kLVXtZTQ3lv0AyTewxvIABoXfpblMuBmCIWjKwidGYQC+k8BgnWZ0JW6cnmfFq4i0bp4FM8=
+    # AWS_ACCESS_KEY
+    - secure: ZKl3jaGIpXUeSHEXwsbbGAfSwL1oU2DlOhUBz+JZIe52W2rK7qMIy89oykO2CiWf+3PwHMqUiK2DL3RqxaqIIcYl7HfuMIWad3Jxj3vHbDQj0pkFpEbVJ4caRXHaqVbOSwCQDNypEuNoOsC4qi125NnEEniMrHaJ5JaV3ZZOKJ8=
+    # AWS_SECRET_KEY
+    - secure: bfRy/ulcQNKTGB0KYQviCypBI8LbnWkwrt+WyPuoFlLBz+kqhjc5XuOOsfC2OQplkcsbyb/2QzPoM59btXp6SC+uv0AdE5F6aJ+7hEechpwRmq4oR4v5TRebUY7XrNiwZvhvw85VbLGLQPdTcRkii3hcs9QHQx6prMvw5o++vA8=
 before_install:
-- pip install --user awscli
-- export PATH=$PATH:$HOME/.local/bin
+  - pip install --user awscli
+  - export PATH=$PATH:$HOME/.local/bin
 addons:
   postgresql: '9.3'
 services:
-- postgresql
+  - postgresql
 before_deploy:
   - pip install --user release-manager==0.2.0
 deploy:
@@ -50,11 +50,11 @@ deploy:
       tags: true
       condition: '"$(.travis/is_hadoop_enrich_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
-    script: ./.travis/deploy_hadoop_shred.sh $TRAVIS_TAG
+    script: ./.travis/deploy_relational_database_shredder.sh $TRAVIS_TAG
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_hadoop_shred_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+      condition: '"$(.travis/is_relational_database_shredder_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
   - provider: script
     script: ./.travis/deploy_hadoop_enrich.sh $TRAVIS_TAG
     skip_cleanup: true
