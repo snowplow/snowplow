@@ -26,9 +26,6 @@ import iglu.client.Resolver
 import scalaz._
 import Scalaz._
 
-// SnowPlow Utils
-import util.Tap._
-
 // This project
 import adapters.RawEvent
 import outputs.EnrichedEvent
@@ -74,13 +71,15 @@ object EnrichmentManager {
 
     // Let's start populating the CanonicalOutput
     // with the fields which cannot error
-    val event = new EnrichedEvent().tap { e =>
+    val event = {
+      val e = new EnrichedEvent()
       e.event_id = EE.generateEventId      // May be updated later if we have an `eid` parameter
       e.v_collector = raw.source.name // May be updated later if we have a `cv` parameter
       e.v_etl = ME.etlVersion(hostEtlVersion)
       e.etl_tstamp = EE.toTimestamp(etlTstamp)
       e.network_userid = raw.context.userId.orNull    // May be updated later by 'nuid'
       e.user_ipaddress = raw.context.ipAddress.orNull // May be updated later by 'ip'
+      e
     }
 
     // 2. Enrichments which can fail
@@ -528,7 +527,7 @@ object EnrichmentManager {
       refererUri.toValidationNel) {
       (_,_,_,_,_,_,_,_,_,_) => ()
     }
-    val second = 
+    val second =
       (transform                              |@|
       currency                                |@|
       secondPassTransform                     |@|

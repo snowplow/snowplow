@@ -21,13 +21,13 @@ import org.specs2.Specification
 import org.specs2.scalaz.ValidationMatchers
 import org.specs2.mock.Mockito
 
-class HttpApiSpec extends Specification with ValidationMatchers with Mockito { def is =
-    "This is a specification to test the HTTP API of API Request Enrichment" ^
-                                                                          p^
-      "Fail to build request string without all keys"                   ! e1^
-      "Build request string from template context"                      ! e2^
-      "Failure on failed HTTP connection"                               ! e3^
-                                                                        end
+class HttpApiSpec extends Specification with ValidationMatchers with Mockito { def is = s2"""
+  This is a specification to test the HTTP API of API Request Enrichment
+  Fail to build request string without all keys $e1
+  Build request string from template context    $e2
+  Failure on failed HTTP connection             $e3
+  """
+
   def e1 = {
     val httpApi = HttpApi("GET", "http://api.acme.com/{{user}}/{{ time}}/", anyInt, Authentication(None))
     val templateContext = Map("user" -> "admin")

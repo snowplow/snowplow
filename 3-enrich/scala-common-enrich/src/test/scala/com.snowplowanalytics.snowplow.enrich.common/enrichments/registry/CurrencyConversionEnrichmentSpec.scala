@@ -38,25 +38,24 @@ object CurrencyConversionEnrichmentSpec {
  */
 import CurrencyConversionEnrichmentSpec._
 class CurrencyConversionEnrichmentSpec extends Specification with DataTables { def is =
-
-  "This is a specification to test convertCurrencies"                       ^
-                                                                           p^
-        skipAllIf(sys.env.get(OerApiKey).isEmpty)                           ^
-        "Failure test for Currency Conversion"                              ! e1^
-        "Success test for Currency Conversion"                              ! e2^
-                                                                            end
+  skipAllIf(sys.env.get(OerApiKey).isEmpty) ^
+  s2"""
+  This is a specification to test convertCurrencies
+  Failure test for Currency Conversion $e1
+  Success test for Currency Conversion $e2
+  """
 
   lazy val validAppKey = sys.env.get(OerApiKey).getOrElse(throw new IllegalStateException(s"No ${OerApiKey} environment variable found, test should have been skipped"))
   val trCurrencyMissing = Failure(NonEmptyList("Open Exchange Rates error, message: Currency [] is not supported by Joda money Currency not found in the API, invalid currency ", "Open Exchange Rates error, message: Currency [] is not supported by Joda money Currency not found in the API, invalid currency ", "Open Exchange Rates error, message: Currency [] is not supported by Joda money Currency not found in the API, invalid currency "))
   val currencyInvalidRup = Failure(NonEmptyList("Open Exchange Rates error, type: [IllegalCurrency], message: [Currency [RUP] is not supported by Joda money Currency not found in the API, invalid currency ]", "Open Exchange Rates error, type: [IllegalCurrency], message: [Currency [RUP] is not supported by Joda money Currency not found in the API, invalid currency ]", "Open Exchange Rates error, type: [IllegalCurrency], message: [Currency [RUP] is not supported by Joda money Currency not found in the API, invalid currency ]"))
   val currencyInvalidHul = Failure(NonEmptyList("Open Exchange Rates error, type: [IllegalCurrency], message: [Currency [HUL] is not supported by Joda money Currency not found in the API, invalid currency ]"))
-  val invalidAppKeyFailure = Failure(NonEmptyList("Open Exchange Rates error, type: [InvalidAppId], message: [Invalid App ID provided. Please sign up at https://openexchangerates.org/signup, or contact support@openexchangerates.org.]"))
+  val invalidAppKeyFailure = Failure(NonEmptyList("Open Exchange Rates error, type: [OtherErrors], message: [Invalid App ID provided. Please sign up at https://openexchangerates.org/signup, or contact support@openexchangerates.org.]"))
   val coTstamp: DateTime = new DateTime(2011, 3, 13, 0, 0)
 
   def e1 =
     "SPEC NAME"                         || "TRANSACTION CURRENCY"         | "API KEY"                                | "TOTAL AMOUNT"                     |"TOTAL TAX"                      |"SHIPPING"                           | "TRANSACTION ITEM CURRENCY"           | "TRANSACTION ITEM PRICE"              | "DATETIME"              |"CONVERTED TUPLE"                               |
-    "Invalid transaction currency"      !! Some("RUP")                    ! validAppKey                                    ! Some(11.00)                        ! Some(1.17)                      ! Some(0.00)                          ! None                                  ! Some(17.99)                           ! Some(coTstamp)          ! currencyInvalidRup                             |
-    "Invalid transaction item currency" !! None                           ! validAppKey                                    ! Some(12.00)                        ! Some(0.7)                       ! Some(0.00)                          ! Some("HUL")                           ! Some(1.99)                            ! Some(coTstamp)          ! currencyInvalidHul                             |
+    "Invalid transaction currency"      !! Some("RUP")                    ! validAppKey                              ! Some(11.00)                        ! Some(1.17)                      ! Some(0.00)                          ! None                                  ! Some(17.99)                           ! Some(coTstamp)          ! currencyInvalidRup                             |
+    "Invalid transaction item currency" !! None                           ! validAppKey                              ! Some(12.00)                        ! Some(0.7)                       ! Some(0.00)                          ! Some("HUL")                           ! Some(1.99)                            ! Some(coTstamp)          ! currencyInvalidHul                             |
     "Invalid OER API key"               !! None                           ! "8A8A8A8A8A8A8A8A8A8A8A8AA8A8A8A8"       ! Some(13.00)                        ! Some(3.67)                      ! Some(0.00)                          ! Some("GBP")                           ! Some(2.99)                            ! Some(coTstamp)          ! invalidAppKeyFailure                                   |> {
       (_, trCurrency, apiKey, trAmountTotal, trAmountTax, trAmountShipping, tiCurrency, tiPrice, dateTime, expected) =>
         CurrencyConversionEnrichment(DeveloperAccount, apiKey, "EUR", "EOD_PRIOR").convertCurrencies(trCurrency, trAmountTotal, trAmountTax, trAmountShipping, tiCurrency, tiPrice, dateTime) must_== expected
@@ -78,4 +77,3 @@ class CurrencyConversionEnrichmentSpec extends Specification with DataTables { d
         CurrencyConversionEnrichment(DeveloperAccount, apiKey, "EUR", "EOD_PRIOR").convertCurrencies(trCurrency, trAmountTotal, trAmountTax, trAmountShipping, tiCurrency, tiPrice, dateTime) must_== expected
     }
 }
-

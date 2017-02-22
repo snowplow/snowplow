@@ -37,30 +37,28 @@ import org.specs2.{Specification, ScalaCheck}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class SnowplowAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
-
-  "This is a specification to test the SnowplowAdapter functionality"                                                       ^
-                                                                                                                           p^
-  "Tp1.toRawEvents should return a NEL containing one RawEvent if the querystring is populated"                             ! e1^
-  "Tp1.toRawEvents should return a Validation Failure if the querystring is empty"                                          ! e2^
-  "Tp2.toRawEvents should return a NEL containing one RawEvent if only the querystring is populated"                        ! e3^
-  "Tp2.toRawEvents should return a NEL containing one RawEvent if the querystring is empty but the body contains one event" ! e4^
-  "Tp2.toRawEvents should return a NEL containing three RawEvents consolidating body's events and querystring's parameters" ! e5^
-  "Tp1.toRawEvents should return a NEL containing one RawEvent if the Content-Type is application/json; charset=UTF-8"      ! e6^
-  "Tp2.toRawEvents should return a Validation Failure if querystring, body and content type are mismatching"                ! e8^
-  "Tp2.toRawEvents should return a Validation Failure if the body is not a self-describing JSON"                            ! e8^
-  "Tp2.toRawEvents should return a Validation Failure if the body is in a JSON Schema other than payload_data"              ! e9^
-  "Tp2.toRawEvents should return a Validation Failure if the body fails payload_data JSON Schema validation"                ! e10^
-  "Redirect.toRawEvents should return a NEL of 1 RawEvent for a redirect with no event type specified"                      ! e11^
-  "Redirect.toRawEvents should return a NEL of 1 RawEvent for a redirect with an event type but no contexts"                ! e12^
-  "Redirect.toRawEvents should return a NEL of 1 RawEvent for a redirect with an event type and empty contexts"             ! e13^
-  "Redirect.toRawEvents should return a NEL of 1 RawEvent for a redirect with an event type and unencoded contexts"         ! e14^
-  "Redirect.toRawEvents should return a NEL of 1 RawEvent for a redirect with an event type and Base64-encoded contexts"    ! e15^
-  "Redirect.toRawEvents should return a Validation Failure if the querystring is empty"                                     ! e16^
-  "Redirect.toRawEvents should return a Validation Failure if the querystring does not contain a u parameter"               ! e17^
-  "Redirect.toRawEvents should return a Validation Failure if the event type is specified and the co JSON is corrupted"     ! e18^
-  "Redirect.toRawEvents should return a Validation Failure if the event type is specified and the cx Base64 is corrupted"   ! e19^
-                                                                                                                            end
+class SnowplowAdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+  This is a specification to test the SnowplowAdapter functionality
+  Tp1.toRawEvents should return a NEL containing one RawEvent if the querystring is populated                             $e1
+  Tp1.toRawEvents should return a Validation Failure if the querystring is empty                                          $e2
+  Tp2.toRawEvents should return a NEL containing one RawEvent if only the querystring is populated                        $e3
+  Tp2.toRawEvents should return a NEL containing one RawEvent if the querystring is empty but the body contains one event $e4
+  Tp2.toRawEvents should return a NEL containing three RawEvents consolidating body's events and querystring's parameters $e5
+  Tp1.toRawEvents should return a NEL containing one RawEvent if the Content-Type is application/json; charset=UTF-8      $e6
+  Tp2.toRawEvents should return a Validation Failure if querystring, body and content type are mismatching                $e8
+  Tp2.toRawEvents should return a Validation Failure if the body is not a self-describing JSON                            $e8
+  Tp2.toRawEvents should return a Validation Failure if the body is in a JSON Schema other than payload_data              $e9
+  Tp2.toRawEvents should return a Validation Failure if the body fails payload_data JSON Schema validation                $e10
+  Redirect.toRawEvents should return a NEL of 1 RawEvent for a redirect with no event type specified                      $e11
+  Redirect.toRawEvents should return a NEL of 1 RawEvent for a redirect with an event type but no contexts                $e12
+  Redirect.toRawEvents should return a NEL of 1 RawEvent for a redirect with an event type and empty contexts             $e13
+  Redirect.toRawEvents should return a NEL of 1 RawEvent for a redirect with an event type and unencoded contexts         $e14
+  Redirect.toRawEvents should return a NEL of 1 RawEvent for a redirect with an event type and Base64-encoded contexts    $e15
+  Redirect.toRawEvents should return a Validation Failure if the querystring is empty                                     $e16
+  Redirect.toRawEvents should return a Validation Failure if the querystring does not contain a u parameter               $e17
+  Redirect.toRawEvents should return a Validation Failure if the event type is specified and the co JSON is corrupted     $e18
+  Redirect.toRawEvents should return a Validation Failure if the event type is specified and the cx Base64 is corrupted   $e19
+  """
 
   implicit val resolver = SpecHelpers.IgluResolver
 

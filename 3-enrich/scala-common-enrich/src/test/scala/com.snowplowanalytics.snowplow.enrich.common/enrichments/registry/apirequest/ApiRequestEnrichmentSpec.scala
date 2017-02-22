@@ -23,13 +23,12 @@ import org.specs2.scalaz.ValidationMatchers
 // Iglu
 import com.snowplowanalytics.iglu.client.SchemaKey
 
-class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers { def is =
-  "This is a specification to test the ApiRequestEnrichment configuration" ^
-                                                                         p ^
-    "Extract correct configuration"                                   ! e1 ^
-    "Skip incorrect input (none of json or pojo) in configuration"    ! e2 ^
-    "Skip incorrect input (both json and pojo) in configuration"      ! e3 ^
-                                                                      end
+class ApiRequestEnrichmentSpec extends Specification with ValidationMatchers { def is = s2"""
+  This is a specification to test the ApiRequestEnrichment configuration
+  Extract correct configuration                                $e1
+  Skip incorrect input (none of json or pojo) in configuration $e2
+  Skip incorrect input (both json and pojo) in configuration   $e3
+  """"
 
   val SCHEMA_KEY = SchemaKey("com.snowplowanalytics.snowplow.enrichments", "api_request_enrichment_config", "jsonschema", "1-0-0")
 

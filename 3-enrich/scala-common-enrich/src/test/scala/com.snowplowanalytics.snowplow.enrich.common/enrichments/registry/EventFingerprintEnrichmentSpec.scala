@@ -25,15 +25,13 @@ import Scalaz._
 /**
  * Tests EventFingerprintEnrichment
  */
-class EventFingerprintEnrichmentSpec extends Specification with ValidationMatchers { def is =
-
-  "This is a specification to test the EventFingerprintEnrichment"              ^
-                                                                               p^
-  "getEventFingerprint should combine fields into a hash"                       ! e1^
-  "getEventFingerprint should not depend on the order of fields"                ! e2^
-  "getEventFingerprint should not depend on excluded fields"                    ! e3^
-  "getEventFingerprint should return different values even when fields overlap" ! e4^
-                                                                                end
+class EventFingerprintEnrichmentSpec extends Specification with ValidationMatchers { def is = s2"""
+  This is a specification to test the EventFingerprintEnrichment
+  getEventFingerprint should combine fields into a hash                       $e1
+  getEventFingerprint should not depend on the order of fields                $e2
+  getEventFingerprint should not depend on excluded fields                    $e3
+  getEventFingerprint should return different values even when fields overlap $e4
+  """
 
   val standardConfig = EventFingerprintEnrichment(EventFingerprintEnrichmentConfig.getAlgorithm("MD5").toOption.get, List("stm", "eid"))
 

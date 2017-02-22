@@ -29,8 +29,7 @@ import org.scalacheck.Arbitrary._
 
 class StringToUriSpec extends Specification with DataTables {
 
-  def is =
-    "Parsing Strings into URIs should work" ! e1
+  def is = s2"Parsing Strings into URIs should work $e1"
 
   def e1 =
     "SPEC NAME"                           || "URI"                | "EXPECTED"                               |
@@ -47,7 +46,7 @@ class StringToUriSpec extends Specification with DataTables {
     "Plus in qs"                          !! "http://www.example.com/?a=b+c" ! Some(URI.create("http://www.example.com/?a=b+c")).success |
     "Salvageable URI with plus in qs"     !! "http://www.example.com/|/?a=b+c" ! Some(URI.create("http://www.example.com/%7C/?a=b%2Bc")).success |> {
 
-      (_, uri, expected) => {    
+      (_, uri, expected) => {
         ConversionUtils.stringToUri(uri)  must_== expected
       }
     }
@@ -55,8 +54,7 @@ class StringToUriSpec extends Specification with DataTables {
 
 class ExplodeUriSpec extends Specification with DataTables {
 
-  def is =
-    "Exploding URIs into their component pieces with explodeUri should work" ! e1
+  def is = s2"Exploding URIs into their component pieces with explodeUri should work $e1"
 
   def e1 =
     "SPEC NAME"               || "URI"                                                                           | "EXP. SCHEME" | "EXP. HOST"             | "EXP. PORT" | "EXP. PATH"                             | "EXP. QUERY"       | "EXP. FRAGMENT" |
@@ -72,7 +70,7 @@ class ExplodeUriSpec extends Specification with DataTables {
 
       (_, uri, scheme, host, port, path, query, fragment) => {
         val actual = ConversionUtils.explodeUri(new URI(uri))
-        val expected = ConversionUtils.UriComponents(scheme, host, port, path, query, fragment)       
+        val expected = ConversionUtils.UriComponents(scheme, host, port, path, query, fragment)
         actual  must_== expected
       }
     }
@@ -82,8 +80,7 @@ class FixTabsNewlinesSpec extends Specification with DataTables {
 
   val SafeTab = "    "
 
-  def is =
-    "Replacing tabs, newlines and control characters with fixTabsNewlines should work" ! e1
+  def is = s2"Replacing tabs, newlines and control characters with fixTabsNewlines should work $e1"
 
   def e1 =
     "SPEC NAME"                 || "INPUT STR"                     | "EXPECTED"                                 |
@@ -104,14 +101,12 @@ class FixTabsNewlinesSpec extends Specification with DataTables {
 
 // TODO: note that we have some functionality tweaks planned.
 // See comments on ConversionUtils.decodeBase64Url for details.
-class DecodeBase64UrlSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
-
-  "This is a specification to test the decodeBase64Url function" ^
-                                                                                        p^
-  "decodeBase64Url should return failure if passed a null" ! e1^
-  "decodeBase64Url should not return failure on any other string" ! e2^
-  "decodeBase64Url should correctly decode valid Base64 (URL-safe) encoded strings" ! e3^
-                                                                                         end
+class DecodeBase64UrlSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+  This is a specification to test the decodeBase64Url function
+  decodeBase64Url should return failure if passed a null                          $e1
+  decodeBase64Url should not return failure on any other string                   $e2
+  decodeBase64Url should correctly decode valid Base64 (URL-safe) encoded strings $e3
+  """
 
   val FieldName = "e"
 
@@ -146,13 +141,11 @@ class DecodeBase64UrlSpec extends Specification with DataTables with ValidationM
   }
 }
 
-class ValidateUuidSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
-
-  "This is a specification to test the validateUuid function"                             ^
-                                                                                         p^
-  "validateUuid should return a lowercased UUID for a valid lower/upper-case UUID"        ! e1^
-  "validateUuid should fail if the supplied String is not a valid lower/upper-case UUID"  ! e2^
-                                                                                          end
+class ValidateUuidSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+  This is a specification to test the validateUuid function
+  validateUuid should return a lowercased UUID for a valid lower/upper-case UUID       $e1
+  validateUuid should fail if the supplied String is not a valid lower/upper-case UUID $e2
+  """
 
   val FieldName = "uuid"
 
@@ -176,14 +169,12 @@ class ValidateUuidSpec extends Specification with DataTables with ValidationMatc
     check { (str: String) => ConversionUtils.validateUuid(FieldName, str) must beFailing(s"Field [$FieldName]: [$str] is not a valid UUID") }
 }
 
-class StringToDoublelikeSpec extends Specification with DataTables with ValidationMatchers { def is =
-
-  "This is a specification to test the stringToDoublelike function"                                       ^
-                                                                                                         p^
-  "stringToDoublelike should fail if the supplied String is not parseable as a number"                    ! e1^
-  "stringToDoublelike should convert numeric Strings to 'Double-like' Strings loadable by Redshift"       ! e2^
-  "stringToDoublelike will alas *not* fail numbers having more significant digits than Redshift supports" ! e3^
-                                                                                                          end
+class StringToDoublelikeSpec extends Specification with DataTables with ValidationMatchers { def is = s2"""
+  This is a specification to test the stringToDoublelike function
+  stringToDoublelike should fail if the supplied String is not parseable as a number                    $e1
+  stringToDoublelike should convert numeric Strings to 'Double-like' Strings loadable by Redshift       $e2
+  stringToDoublelike will alas *not* fail numbers having more significant digits than Redshift supports $e3
+  """
 
   val FieldName = "val"
   def err: (String) => String = input => "Field [%s]: cannot convert [%s] to Double-like String".format(FieldName, input)
@@ -226,13 +217,11 @@ class StringToDoublelikeSpec extends Specification with DataTables with Validati
 
 }
 
-class StringToJIntegerSpec extends Specification with DataTables with ValidationMatchers { def is =
-
-  "This is a specification to test the stringToJInteger function"                                         ^
-                                                                                                         p^
-  "stringToJInteger should fail if the supplied String is not parseable as an Integer"                    ! e1^
-  "stringToJInteger should convert valid Strings to Java Integers"                                        ! e2^
-                                                                                                          end
+class StringToJIntegerSpec extends Specification with DataTables with ValidationMatchers { def is = s2"""
+  This is a specification to test the stringToJInteger function
+  stringToJInteger should fail if the supplied String is not parseable as an Integer $e1
+  stringToJInteger should convert valid Strings to Java Integers                     $e2
+  """
 
   val FieldName = "val"
   def err: (String) => String = input => "Field [%s]: cannot convert [%s] to Int".format(FieldName, input)
@@ -261,13 +250,11 @@ class StringToJIntegerSpec extends Specification with DataTables with Validation
     }
 }
 
-class StringToBooleanlikeJByteSpec extends Specification with DataTables with ValidationMatchers { def is =
-
-  "This is a specification to test the stringToBooleanlikeJByte function"                                    ^
-                                                                                                            p^
-  "stringToBooleanlikeJByte should fail if the supplied String is not parseable as a 1 or 0 JByte"           ! e1^
-  "stringToBooleanlikeJByte should convert '1' or '0' Strings to 'Boolean-like' JBytes loadable by Redshift" ! e2^
-                                                                                                             end
+class StringToBooleanlikeJByteSpec extends Specification with DataTables with ValidationMatchers { def is = s2"""
+  This is a specification to test the stringToBooleanlikeJByte function
+  stringToBooleanlikeJByte should fail if the supplied String is not parseable as a 1 or 0 JByte           $e1
+  stringToBooleanlikeJByte should convert '1' or '0' Strings to 'Boolean-like' JBytes loadable by Redshift $e2
+  """
 
   val FieldName = "val"
   def err: (String) => String = input => "Field [%s]: cannot convert [%s] to Boolean-like JByte".format(FieldName, input)

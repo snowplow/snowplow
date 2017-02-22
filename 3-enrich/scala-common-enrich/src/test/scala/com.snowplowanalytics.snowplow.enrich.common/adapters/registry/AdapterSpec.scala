@@ -46,21 +46,20 @@ import org.specs2.{Specification, ScalaCheck}
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class AdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
+class AdapterSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+  This is a specification to test the Adapter trait's functionality
+  toMap should convert a list of name-value pairs into a map                                                 $e1
+  toUnstructEventParams should generate a boilerplate set of parameters for an empty unstructured event      $e2
+  toUnstructEventParams should preserve nuid, aid, cv, url, eid, ttm and p outside of the unstructured event $e3
+  lookupSchema must return a Success Nel for a valid key being passed against an event-schema map            $e4
+  lookupSchema must return a Failure Nel for an invalid key being passed against an event-schema map         $e5
+  lookupSchema must return a Failure Nel with an index if one is passed to it                                $e6
+  rawEventsListProcessor must return a Failure Nel if there are any Failures in the list                     $e7
+  rawEventsListProcessor must return a Success Nel of RawEvents if the list is full of success               $e8
+  cleanupJsonEventValues must clean 'ts':[JInt, JString] fields into to a valid JsonSchema date-time format  $e9
+  cleanupJsonEventValues must remove key-pairs if specified                                                  $e10
+  """
 
-  "This is a specification to test the Adapter trait's functionality"                                                  ^
-                                                                                                                      p^
-  "toMap should convert a list of name-value pairs into a map"                                                         ! e1^
-  "toUnstructEventParams should generate a boilerplate set of parameters for an empty unstructured event"              ! e2^
-  "toUnstructEventParams should preserve nuid, aid, cv, url, eid, ttm and p outside of the unstructured event"         ! e3^
-  "lookupSchema must return a Success Nel for a valid key being passed against an event-schema map"                    ! e4^
-  "lookupSchema must return a Failure Nel for an invalid key being passed against an event-schema map"                 ! e5^
-  "lookupSchema must return a Failure Nel with an index if one is passed to it"                                        ! e6^
-  "rawEventsListProcessor must return a Failure Nel if there are any Failures in the list"                             ! e7^
-  "rawEventsListProcessor must return a Success Nel of RawEvents if the list is full of success"                       ! e8^
-  "cleanupJsonEventValues must clean 'ts':[JInt, JString] fields into to a valid JsonSchema date-time format"          ! e9^
-  "cleanupJsonEventValues must remove key-pairs if specified"                                                          ! e10^
-                                                                                                                       end
   // TODO: add test for buildFormatter()
 
   implicit val resolver = SpecHelpers.IgluResolver
@@ -113,7 +112,7 @@ class AdapterSpec extends Specification with DataTables with ValidationMatchers 
     BaseAdapter.lookupSchema("adapterTest".some, "Adapter", SchemaMap) must beSuccessful(expected)
   }
 
-  def e5 = 
+  def e5 =
     "SPEC NAME"                 || "SCHEMA TYPE"      | "EXPECTED OUTPUT"                                                                 |
     "Failing, nothing passed"   !! None               ! "Adapter event failed: type parameter not provided - cannot determine event type" |
     "Failing, empty type"       !! Some("")           ! "Adapter event failed: type parameter is empty - cannot determine event type"     |

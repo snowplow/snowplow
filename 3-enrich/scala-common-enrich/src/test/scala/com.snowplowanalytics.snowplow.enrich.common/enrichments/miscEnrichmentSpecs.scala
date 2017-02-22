@@ -37,7 +37,7 @@ class EtlVersionSpec extends MutSpecification {
 
   "The ETL version" should {
     "be successfully returned" in {
-      MiscEnrichments.etlVersion("hadoop-x.x.x") must_== "hadoop-x.x.x-common-0.24.0"
+      MiscEnrichments.etlVersion("hadoop-x.x.x") must_== "hadoop-x.x.x-common-0.25.0"
     }
   }
 }
@@ -51,8 +51,7 @@ class ExtractPlatformSpec extends Specification with DataTables {
   val FieldName = "p"
   def err: (String) => String = input => "Field [%s]: [%s] is not a supported tracking platform".format(FieldName, input)
 
-  def is =
-    "Extracting platforms with extractPlatform should work" ! e1
+  def is = s2"Extracting platforms with extractPlatform should work $e1"
 
   def e1 =
     "SPEC NAME"                      || "INPUT VAL" | "EXPECTED OUTPUT" |

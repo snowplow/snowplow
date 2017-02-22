@@ -25,13 +25,11 @@ import org.specs2.Specification
 import org.specs2.matcher.DataTables
 import org.specs2.scalaz.ValidationMatchers
 
-class ValidateAndReformatJsonSpec extends Specification with DataTables with ValidationMatchers { def is =
-
-  "This is a specification to test the validateAndReformatJson function"    ^
-                                                                           p^
-  "extracting and reformatting (where necessary) valid JSONs with work"     ! e1^
-  "extracting invalid JSONs should fail"                                    ! e2^
-                                                                            end
+class ValidateAndReformatJsonSpec extends Specification with DataTables with ValidationMatchers { def is = s2"""
+  This is a specification to test the validateAndReformatJson function
+  extracting and reformatting (where necessary) valid JSONs with work $e1
+  extracting invalid JSONs should fail $e2
+  """
 
   val FieldName = "json"
 
@@ -42,7 +40,7 @@ class ValidateAndReformatJsonSpec extends Specification with DataTables with Val
     "Simple JSON #2"      !! """[1,2,3]"""                        ! """[1,2,3]"""           |
     "Tolerated JSON #1"   !! """{"a":9}}}"""                      ! """{"a":9}"""           |
     "Tolerated JSON #2"   !! """[];[]"""                          ! """[]"""                |
-    "Tolerated JSON #3"   !! """"a":[]"""                         ! "\"a\""                 |       
+    "Tolerated JSON #3"   !! """"a":[]"""                         ! "\"a\""                 |
     "Reformatted JSON #1" !! """{ "key" : 23 }"""                 ! """{"key":23}"""        |
     "Reformatted JSON #2" !! """[1.00, 2.00, 3.00, 4.00]"""       ! """[1.0,2.0,3.0,4.0]""" |
     "Reformatted JSON #3" !! """

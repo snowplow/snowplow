@@ -34,16 +34,14 @@ import org.specs2.scalaz.ValidationMatchers
 /**
  * Specs the explodeUri function
  */
-class ScalazArgsSpec extends Specification with DataTables with ValidationMatchers { def is =
-
-  "This is a specification to test the ScalazArgs functionality"  ^
-                                                                 p^
-  "a Scalding Args should be pimped to a ScalazArgs as needed"    ! e1^
-  "required keys should be successfully validated by ScalazArgs"  ! e2^
-  "optional keys should be successfully validated by ScalazArgs"  ! e3^
-  "for a required key, = should be decoded to ="                  ! e4^
-  "for an optional key, = should be decoded to ="                 ! e5^
-                                                                  end
+class ScalazArgsSpec extends Specification with DataTables with ValidationMatchers { def is = s2"""
+  This is a specification to test the ScalazArgs functionality
+  a Scalding Args should be pimped to a ScalazArgs as needed $e1
+  required keys should be successfully validated by ScalazArgs $e2
+  optional keys should be successfully validated by ScalazArgs $e3
+  for a required key, = should be decoded to = $e4
+  for an optional key, = should be decoded to = $e5
+  """
 
   val scaldingArgs = Args(Array("--alpha", "123", "--beta", "456", "--delta", "789", "abc", "--hive", "run=2013-07-07"))
 

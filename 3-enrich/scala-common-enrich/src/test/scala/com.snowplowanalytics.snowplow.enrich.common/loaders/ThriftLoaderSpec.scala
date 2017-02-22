@@ -37,13 +37,11 @@ import org.specs2.scalaz.ValidationMatchers
 import org.scalacheck._
 import org.scalacheck.Arbitrary._
 
-class ThriftLoaderSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is =
-
-  "This is a specification to test the ThriftLoader functionality"                                                   ^
-                                                                                                                    p^
-  "toCollectorPayload should return a CollectorPayload for a valid Thrift CollectorPayload (even if parameterless)"  ! e1^
-  "toCollectorPayload should return a Validation Failure for an invalid or corrupted Thrift CollectorPayload"        ! e2^
-                                                                                                                     end
+class ThriftLoaderSpec extends Specification with DataTables with ValidationMatchers with ScalaCheck { def is = s2"""
+  This is a specification to test the ThriftLoader functionality
+  toCollectorPayload should return a CollectorPayload for a valid Thrift CollectorPayload (even if parameterless) $e1
+  toCollectorPayload should return a Validation Failure for an invalid or corrupted Thrift CollectorPayload       $e2
+  """
 
   object Expected {
     val encoding  = "UTF-8"
