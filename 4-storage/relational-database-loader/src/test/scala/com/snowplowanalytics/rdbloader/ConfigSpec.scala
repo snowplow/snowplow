@@ -162,24 +162,23 @@ class ConfigSpec extends Specification { def is = s2"""
         |region: ADD HERE
         |buckets:
         |  assets: s3://snowplow-hosted-assets # DO NOT CHANGE unless you are hosting the jarfiles etc yourself in your own bucket
-        |  jsonpath_assets: # If you have defined your own JSON Schemas, add the s3:// path to your own JSON Path files in your own bucket here
-        |  log: ADD HERE
+        |  jsonpath_assets: s3://my-own-assets # If you have defined your own JSON Schemas, add the s3:// path to your own JSON Path files in your own bucket here
+        |  log: s3://logs
         |  raw:
         |    in:                  # Multiple in buckets are permitted
-        |      - ADD HERE          # e.g. s3://my-in-bucket
-        |      - ADD HERE
-        |    processing: ADD HERE
-        |    archive: ADD HERE    # e.g. s3://my-archive-bucket/raw
+        |      - s3://my-in-bucket
+        |    processing: s3://processing
+        |    archive: s3://archive          # e.g. s3://my-archive-bucket/raw
         |  enriched:
-        |    good: ADD HERE       # e.g. s3://my-out-bucket/enriched/good
-        |    bad: ADD HERE        # e.g. s3://my-out-bucket/enriched/bad
-        |    errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
-        |    archive: ADD HERE    # Where to archive enriched events to, e.g. s3://my-archive-bucket/enriched
+        |    good: s3://enriched-good       # e.g. s3://my-out-bucket/enriched/good
+        |    bad: s3://enriched-bad         # e.g. s3://my-out-bucket/enriched/bad
+        |    errors: s3://errors            # Leave blank unless :continue_on_unexpected_error: set to true below
+        |    archive: s3://path/to/arhcive  # Where to archive enriched events to, e.g. s3://my-archive-bucket/enriched
         |  shredded:
-        |    good: ADD HERE       # e.g. s3://my-out-bucket/shredded/good
-        |    bad: ADD HERE        # e.g. s3://my-out-bucket/shredded/bad
-        |    errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
-        |    archive: ADD HERE # Where to archive shredded events to, e.g. s3://my-archive-bucket/shredded
+        |    good: s3://shredded       # e.g. s3://my-out-bucket/shredded/good
+        |    bad: s3://shredded/bad    # e.g. s3://my-out-bucket/shredded/bad
+        |    errors: s3://errors     # Leave blank unless :continue_on_unexpected_error: set to true below
+        |    archive: s3://archive   # Where to archive shredded events to, e.g. s3://my-archive-bucket/shredded
       """.stripMargin
 
     val ast: Either[Error, Json] = parser.parse(s3Yaml)
@@ -203,20 +202,20 @@ class ConfigSpec extends Specification { def is = s2"""
         |      log: ADD HERE
         |      raw:
         |        in:                  # Multiple in buckets are permitted
-        |          - ADD HERE          # e.g. s3://my-in-bucket
-        |          - ADD HERE
-        |        processing: ADD HERE
-        |        archive: ADD HERE    # e.g. s3://my-archive-bucket/raw
+        |          - s3://in-first/          # e.g. s3://my-in-bucket
+        |          - s3://in-second/path/to/logs
+        |        processing: s3://processing-logs/
+        |        archive: s3://my-archive/    # e.g. s3://my-archive-bucket/raw
         |      enriched:
-        |        good: ADD HERE       # e.g. s3://my-out-bucket/enriched/good
-        |        bad: ADD HERE        # e.g. s3://my-out-bucket/enriched/bad
-        |        errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
-        |        archive: ADD HERE    # Where to archive enriched events to, e.g. s3://my-archive-bucket/enriched
+        |        good: s3://enriched-good/path/to/1       # e.g. s3://my-out-bucket/enriched/good
+        |        bad: s3://snowplow-bad/PATH/to/1         # e.g. s3://my-out-bucket/enriched/bad
+        |        errors:                    # Leave blank unless :continue_on_unexpected_error: set to true below
+        |        archive: s3://enriched/    # Where to archive enriched events to, e.g. s3://my-archive-bucket/enriched
         |      shredded:
-        |        good: ADD HERE       # e.g. s3://my-out-bucket/shredded/good
-        |        bad: ADD HERE        # e.g. s3://my-out-bucket/shredded/bad
-        |        errors: ADD HERE     # Leave blank unless :continue_on_unexpected_error: set to true below
-        |        archive: ADD HERE    # Where to archive shredded events to, e.g. s3://my-archive-bucket/shredded
+        |        good: s3://my-shredded-events/path/to/some/destination    # e.g. s3://my-out-bucket/shredded/good
+        |        bad: s3://my_not_shredded-events/                         # e.g. s3://my-out-bucket/shredded/bad
+        |        errors: s3://bucket/with/errors     # Leave blank unless :continue_on_unexpected_error: set to true below
+        |        archive: s3://path                  # Where to archive shredded events to, e.g. s3://my-archive-bucket/shredded
         |  emr:
         |    ami_version: 4.5.0
         |    region: ADD HERE        # Always set this
@@ -277,10 +276,10 @@ class ConfigSpec extends Specification { def is = s2"""
         |  log: ADD HERE
         |  raw:
         |    in:                  # Multiple in buckets are permitted
-        |      - ADD HERE          # e.g. s3://my-in-bucket
-        |      - ADD HERE
-        |    processing: ADD HERE
-        |    archive: ADD HERE    # e.g. s3://my-archive-bucket/raw
+        |      - s3://in-first/          # e.g. s3://my-in-bucket
+        |      - s3://in-second/path/to/logs
+        |    processing: s3://processing-logs/
+        |    archive: s3://my-archive/    # e.g. s3://my-archive-bucket/raw
         |  enriched:
         |    good: 0       # e.g. s3://my-out-bucket/enriched/good
         |    bad: ADD HERE        # e.g. s3://my-out-bucket/enriched/bad

@@ -43,7 +43,7 @@ object Utils {
    * @return circe decoder for ADT `A`
    */
   def decodeStringEnum[A <: StringEnum: TypeTag]: Decoder[A] =
-    Decoder.instance(parse[A])
+    Decoder.instance(parseEnum[A])
 
   /**
    * Syntax extension to transform `Either` with string as failure
@@ -73,7 +73,7 @@ object Utils {
    * @tparam A sealed hierarchy
    * @return either successful circe AST or decoding failure
    */
-  private def parse[A <: StringEnum: TypeTag](hCursor: HCursor): Decoder.Result[A] = {
+  private def parseEnum[A <: StringEnum: TypeTag](hCursor: HCursor): Decoder.Result[A] = {
     for {
       string <- hCursor.as[String]
       method  = fromString[A](string)

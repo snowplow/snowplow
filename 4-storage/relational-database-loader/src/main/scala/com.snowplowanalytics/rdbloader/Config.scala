@@ -14,9 +14,8 @@ package com.snowplowanalytics.rdbloader
 
 import cats.syntax.either._
 
-import io.circe.{ Decoder, Json => Yaml, HCursor, Error }
+import io.circe.{ Decoder, Json => Yaml, Error }
 import io.circe.generic.auto._
-import io.circe.Decoder._
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.decoding.ConfiguredDecoder
 
@@ -34,12 +33,20 @@ case class Config(
   storage: Config.Storage,
   monitoring: Config.Monitoring)
 
+
 object Config {
+  import RefinedTypes._
   import Codecs._
 
+  /**
+    * Parse YAML string as `Config` object
+    *
+    * @param configYml content of `config.yaml`
+    * @return either failure with human-readable error or success with `Config`
+    */
   def parse(configYml: String): Either[String, Config] = {
     val yaml: Either[Error, Yaml] = parser.parse(configYml)
-    yaml.flatMap(_.as[Config]).leftMap(_.toString)
+    yaml.flatMap(_.as[Config]).leftMap(_.toString)  // TODO: make human-readable
   }
 
   // aws section
@@ -57,28 +64,28 @@ object Config {
     buckets: SnowplowBuckets)
 
   case class SnowplowBuckets(
-    assets: String,
+    assets: S3Bucket,
     jsonpathAssets: Option[String],
     log: String,
     enriched: EnrichedBucket,
     shredded: ShreddedBucket)
 
   case class RawBucket(
-    in: List[String],
-    processing: String,
-    archive: String)
+    in: List[S3Bucket],
+    processing: S3Bucket,
+    archive: S3Bucket)
 
   case class EnrichedBucket(
-    good: String,
-    bad: String,
-    errors: String,
-    archive: String)
+    good: S3Bucket,
+    bad: S3Bucket,
+    errors: Option[S3Bucket],
+    archive: S3Bucket)
 
   case class ShreddedBucket(
-    good: String,
-    bad: String,
-    errors: String,
-    archive: String)
+    good: S3Bucket,
+    bad: S3Bucket,
+    errors: Option[S3Bucket],
+    archive: S3Bucket)
 
   // aws.emr section
 
