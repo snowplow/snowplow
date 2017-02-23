@@ -50,5 +50,5 @@ object Main extends App {
 
   }
 
-  println("Hello com.snowplowanalytics.Relational Database Loader!")
+  println("Hello Relational Database Loader!")
 }

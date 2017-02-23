@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,7 +12,7 @@
  */
 package com.snowplowanalytics.rdbloader
 
-// Scaala
+// Scala
 import scala.reflect.runtime.universe._
 import scala.reflect.runtime.{ universe => ru }
 
@@ -27,10 +27,9 @@ object Utils {
   private val m = ru.runtimeMirror(getClass.getClassLoader)
 
   /**
-   * Common trait for all ADTs that have string representations
-   * Must be extended by sealed hierarchy that has only singletons
-   * Used by `decodeStringEnum` to get get runtime string representation
-   * of whole ADT
+   * Common trait for all ADTs that have single-possible string representations
+   * Must be extended by sealed hierarchy including only singletons
+   * Used by `decodeStringEnum` to get runtime representation of whole ADT
    */
   trait StringEnum {
     def asString: String
@@ -49,7 +48,7 @@ object Utils {
    * Syntax extension to transform `Either` with string as failure
    * into circe-appropriate decoder result
    */
-  implicit class ParseError[A](error: Either[String, A]) {
+  implicit class ParseErrorOps[A](val error: Either[String, A]) extends AnyVal {
     def asDecodeResult(hCursor: HCursor): Decoder.Result[A] = error match {
       case Right(success) => Right(success)
       case Left(message) => Left(DecodingFailure(message, hCursor.history))
@@ -59,7 +58,7 @@ object Utils {
   /**
    * Syntax extension to parse JSON objects with known keys
    */
-  implicit class JsonHash(obj: Map[String, Json]) {
+  implicit class JsonHashOps(val obj: Map[String, Json]) extends AnyVal {
     def getKey(key: String, hCursor: HCursor): Decoder.Result[Json] = obj.get(key) match {
       case Some(success) => Right(success)
       case None => Left(DecodingFailure(s"Key [$key] is missing", hCursor.history))

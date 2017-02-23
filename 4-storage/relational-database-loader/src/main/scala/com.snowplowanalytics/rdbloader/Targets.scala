@@ -4,11 +4,10 @@ import scala.util.control.NonFatal
 
 import cats.syntax.either._
 
-import io.circe.{DecodingFailure, Json, ParsingFailure}
+import io.circe.{Json, ParsingFailure}
 import io.circe.Decoder._
 import io.circe.generic.auto._
 
-import com.github.fge.jsonschema.core.report.ProcessingMessage
 import org.json4s.JValue
 import org.json4s.jackson.{parseJson => parseJson4s}
 
@@ -43,24 +42,11 @@ object Targets {
     def purpose: Purpose
   }
 
-  sealed trait ConfigError
-  case class ParseError(error: ParsingFailure) extends ConfigError
-  case class DecodingError(decodingFailure: Option[DecodingFailure], message: Option[String]) extends ConfigError
-  case class ValidationError(processingMessages: List[ProcessingMessage]) extends ConfigError
-
-  object DecodingError {
-    def apply(decodingFailure: DecodingFailure): DecodingError =
-      DecodingError(Some(decodingFailure), None)
-
-    def apply(message: String): DecodingError =
-      DecodingError(None, Some(message))
-  }
-
   def safeParse(target: String): Either[ConfigError, JValue] =
     try {
       parseJson4s(target).asRight
     } catch {
-      case NonFatal(e) => ParseError(ParsingFailure("", e)).asLeft
+      case NonFatal(e) => ParseError(ParsingFailure("Invalid storage target JSON", e)).asLeft
     }
 
   def validate(resolver: Resolver, json: JValue): Either[ValidationError, Json] = {
@@ -87,13 +73,12 @@ object Targets {
     nameDataPair match {
       case Some(("elastic_config", data)) => data.as[ElasticConfig].leftMap(DecodingError.apply)
       case Some(("amazon_dynamodb_config", data)) => data.as[AmazonDynamodbConfig].leftMap(DecodingError.apply)
-      case Some(("postgres_config", data)) => data.as[PostgresqlConfig].leftMap(DecodingError.apply)
+      case Some(("postgresql_config", data)) => data.as[PostgresqlConfig].leftMap(DecodingError.apply)
       case Some(("redshift_config", data)) => data.as[RedshiftConfig].leftMap(DecodingError.apply)
       case Some((name, _)) => DecodingError(s"Unknown storage target [$name]").asLeft
       case None => DecodingError("Not a self-describing JSON was used as storage target configuration").asLeft
     }
   }
-
 
   case class ElasticConfig(
       name: String,
@@ -110,7 +95,7 @@ object Targets {
       name: String,
       accessKeyId: String,
       secretAccessKey: String,
-      awsRegions: String,
+      awsRegion: String,
       dynamodbTable: String)
     extends StorageTarget {
     val purpose = DuplicateTracking
