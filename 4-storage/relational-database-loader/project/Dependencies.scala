@@ -18,8 +18,9 @@ object Dependencies {
     // Scala
     val scopt            = "3.5.0"
     val scalaz7          = "7.0.9"
-    val json4s           = "3.2.11"
+    val json4s           = "3.2.11" // evicted by iglu-core with 3.3.0
     val igluClient       = "0.5.0"
+    val igluCore         = "0.1.0"
     val circeYaml        = "0.4.0"
     val circe            = "0.7.0"
     val cats             = "0.9.0"
@@ -34,6 +35,7 @@ object Dependencies {
   val scalaz7           = "org.scalaz"                 %% "scalaz-core"               % V.scalaz7
   val json4s            = "org.json4s"                 %% "json4s-jackson"            % V.json4s
   val igluClient        = "com.snowplowanalytics"      %% "iglu-scala-client"         % V.igluClient
+  val igluCore          = "com.snowplowanalytics"      %% "iglu-core"                 % V.igluCore      intransitive()
   val cats              = "org.typelevel"              %% "cats"                      % V.cats
   val circeCore         = "io.circe"                   %% "circe-core"                % V.circe
   val circeYaml         = "io.circe"                   %% "circe-yaml"                % V.circeYaml

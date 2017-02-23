@@ -1,13 +1,19 @@
 package com.snowplowanalytics.rdbloader
 
+import scala.util.control.NonFatal
+
 import cats.syntax.either._
-import io.circe.ParsingFailure
+
+import io.circe.{DecodingFailure, Json, ParsingFailure}
+import io.circe.Decoder._
+import io.circe.generic.auto._
+
+import com.github.fge.jsonschema.core.report.ProcessingMessage
 import org.json4s.JValue
 import org.json4s.jackson.{parseJson => parseJson4s}
 
-import scala.util.control.NonFatal
-
 // Iglu client
+import com.snowplowanalytics.iglu.core.SchemaKey
 import com.snowplowanalytics.iglu.client.Resolver
 import com.snowplowanalytics.iglu.client.validation.ValidatableJValue._
 
@@ -32,22 +38,62 @@ object Targets {
   implicit val purposeDecoder =
     decodeStringEnum[Purpose]
 
-  sealed trait StorageTarget {
+  sealed trait StorageTarget extends Product with Serializable {
     def name: String
     def purpose: Purpose
   }
 
-  def fooo(resolver: Resolver, target: String) = {
-    val json = try {
+  sealed trait ConfigError
+  case class ParseError(error: ParsingFailure) extends ConfigError
+  case class DecodingError(decodingFailure: Option[DecodingFailure], message: Option[String]) extends ConfigError
+  case class ValidationError(processingMessages: List[ProcessingMessage]) extends ConfigError
+
+  object DecodingError {
+    def apply(decodingFailure: DecodingFailure): DecodingError =
+      DecodingError(Some(decodingFailure), None)
+
+    def apply(message: String): DecodingError =
+      DecodingError(None, Some(message))
+  }
+
+  def safeParse(target: String): Either[ConfigError, JValue] =
+    try {
       parseJson4s(target).asRight
     } catch {
-      case NonFatal(e) => ParsingFailure("", e).asLeft
+      case NonFatal(e) => ParseError(ParsingFailure("", e)).asLeft
     }
 
-    val data = json.toOption.get.validate(true)(resolver)
-    data
-
+  def validate(resolver: Resolver, json: JValue): Either[ValidationError, Json] = {
+    json.validate(dataOnly = false)(resolver).leftMap(l => ValidationError(l.list)).toEither.map(Compat.jvalueToCirce)
   }
+
+  def fooo(resolver: Resolver, target: String): Either[ConfigError, StorageTarget] = {
+    for {
+      j <- safeParse(target)
+      p <- validate(resolver, j)
+      s <- decodeStorageTarget(p)
+    } yield s
+  }
+
+  def decodeStorageTarget(validJson: Json): Either[DecodingError, StorageTarget] = {
+    val nameDataPair = for {
+      jsonObject <- validJson.asObject
+      schema <- jsonObject.toMap.get("schema")
+      data <- jsonObject.toMap.get("data")
+      schemaKey <- schema.asString
+      key <- SchemaKey.fromUri(schemaKey)
+    } yield (key.name, data)
+
+    nameDataPair match {
+      case Some(("elastic_config", data)) => data.as[ElasticConfig].leftMap(DecodingError.apply)
+      case Some(("amazon_dynamodb_config", data)) => data.as[AmazonDynamodbConfig].leftMap(DecodingError.apply)
+      case Some(("postgres_config", data)) => data.as[PostgresqlConfig].leftMap(DecodingError.apply)
+      case Some(("redshift_config", data)) => data.as[RedshiftConfig].leftMap(DecodingError.apply)
+      case Some((name, _)) => DecodingError(s"Unknown storage target [$name]").asLeft
+      case None => DecodingError("Not a self-describing JSON was used as storage target configuration").asLeft
+    }
+  }
+
 
   case class ElasticConfig(
       name: String,

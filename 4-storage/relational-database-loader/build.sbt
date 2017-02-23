@@ -17,6 +17,7 @@ libraryDependencies ++= Seq(
   Dependencies.scalaz7,
   Dependencies.json4s,
   Dependencies.igluClient,
+  Dependencies.igluCore,
   Dependencies.circeYaml,
   Dependencies.circeGeneric,
   Dependencies.circeGenericExtra,
