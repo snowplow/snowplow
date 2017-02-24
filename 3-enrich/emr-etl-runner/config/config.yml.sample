@@ -76,6 +76,8 @@ storage:
       password: ADD HERE
       maxerror: 1 # Stop loading on first error, or increase to permit more load errors
       comprows: 200000 # Default for a 1 XL node cluster. Not used unless --include compupdate specified
+      shredded_types:
+        exclude: []
     - name: "My PostgreSQL database"
       type: postgres
       host: ADD HERE # Hostname of database server
@@ -87,6 +89,8 @@ storage:
       password: ADD HERE
       maxerror: # Not required for Postgres
       comprows: # Not required for Postgres
+      shredded_types:
+        exclude: []
     - name: "My Elasticsearch database"
       type: elasticsearch
       host: ADD HERE # The Elasticsearch endpoint
@@ -100,6 +104,8 @@ storage:
       es_nodes_wan_only: false # Set to true if using Amazon Elasticsearch Service
       maxerror: # Not required for Elasticsearch
       comprows: # Not required for Elasticsearch
+      shredded_types:
+        exclude: []
 monitoring:
   tags: {} # Name-value pairs describing this job
   logging:

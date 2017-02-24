@@ -138,17 +138,26 @@ module Snowplow
 
           ShreddedType.discover_shredded_types(s3, config[:aws][:s3][:buckets][:shredded][:good], schema).map { |st|
 
-            jsonpaths_file = st.discover_jsonpaths_file(s3, config[:aws][:s3][:buckets][:jsonpath_assets])
-            if jsonpaths_file.nil?
-              raise DatabaseLoadError, "Cannot find JSON Paths file to load #{st.s3_objectpath} into #{st.table}"
-            end
+            # inherited from storage-loader/lib/snowplow-storage-loader/shredded_type.rb @initialize
+            s3_objectpath_parts = /^.*\/(?<vendor>[^\/]+)\/(?<name>[^\/]+)\/(?<format>[^\/]+)\/(?<version_model>[^\/]+)-$/.match(st.s3_objectpath)
 
-            SqlStatements.new(
-              build_copy_from_json_statement(config, st.s3_objectpath, jsonpaths_file, st.table, target[:maxerror]),
-              build_analyze_statement(st.table),
-              build_vacuum_statement(st.table)
-            )
-          }
+            iglu_schema_path = File.join(s3_objectpath_parts[:vendor], "/",  s3_objectpath_parts[:name], "/", s3_objectpath_parts[:format], "/", s3_objectpath_parts[:version_model])
+
+            if defined? target[:shredded_types][:exclude] and target[:shredded_types][:exclude].include?(iglu_schema_path)
+              nil
+            else
+              jsonpaths_file = st.discover_jsonpaths_file(s3, config[:aws][:s3][:buckets][:jsonpath_assets])
+              if jsonpaths_file.nil?
+                raise DatabaseLoadError, "Cannot find JSON Paths file to load #{st.s3_objectpath} into #{st.table}"
+              else
+                SqlStatements.new(
+                  build_copy_from_json_statement(config, st.s3_objectpath, jsonpaths_file, st.table, target[:maxerror]),
+                  build_analyze_statement(st.table),
+                  build_vacuum_statement(st.table)
+                )
+              end
+            end
+          }.compact
         end
       end
 
