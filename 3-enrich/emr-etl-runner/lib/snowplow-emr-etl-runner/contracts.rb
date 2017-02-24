@@ -77,6 +77,7 @@ module Snowplow
       :password => Maybe[String],
       :es_nodes_wan_only => Maybe[Bool],
       :maxerror => Maybe[Num],
+      :truncate_columns => MayBe[Bool],
       :comprows => Maybe[Num]
       })
 
