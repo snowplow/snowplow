@@ -37,33 +37,34 @@ begin
   cmd, args, config, enrichments, resolver, targets = runner::Cli.get_args_config_enrichments_resolver()
 
   if cmd == 'run'
-    r = runner::Runner.new(args, config, enrichments, resolver)
+    r = runner::Runner.new(args, config, enrichments, resolver, targets)
     r.run()
   elsif cmd.start_with?('generate')
-    emr_config_filename = 'emr-config.json'
-    emr_playbook_filename = 'emr-playbook.json'
-    if cmd == 'generate emr-config'
-      version = args[:schemaver].nil? ? '1-1-0' : args[:schemaver]
-      filename = args[:filename].nil? ? emr_config_filename : args[:filename]
-      runner::EmrConfigGenerator.new.generate(config, resolver, version, filename)
-      puts "Generated #{filename}"
-    else
-      debug = args[:debug]
-      skip = args[:skip]
-      if cmd == 'generate emr-playbook'
-        version = args[:schemaver].nil? ? '1-0-0' : args[:schemaver]
-        filename = args[:filename].nil? ? emr_playbook_filename : args[:filename]
-        runner::EmrPlaybookGenerator.new
-          .generate(config, resolver, version, filename, debug, skip, enrichments)
-        puts "Generated #{filename}"
-      else
-        runner::EmrConfigGenerator.new.generate(config, resolver, '1-1-0', emr_config_filename)
-        puts "Generated #{emr_config_filename}"
-        runner::EmrPlaybookGenerator.new
-          .generate(config, resolver, '1-0-0', emr_playbook_filename, debug, skip, enrichments)
-        puts "Generated #{emr_playbook_filename}"
-      end
-    end
+    puts "The generate command is not supported yet"
+    #emr_config_filename = 'emr-config.json'
+    #emr_playbook_filename = 'emr-playbook.json'
+    #if cmd == 'generate emr-config'
+    #  version = args[:schemaver].nil? ? '1-1-0' : args[:schemaver]
+    #  filename = args[:filename].nil? ? emr_config_filename : args[:filename]
+    #  runner::EmrConfigGenerator.new.generate(config, resolver, version, filename)
+    #  puts "Generated #{filename}"
+    #else
+    #  debug = args[:debug]
+    #  skip = args[:skip]
+    #  if cmd == 'generate emr-playbook'
+    #    version = args[:schemaver].nil? ? '1-0-0' : args[:schemaver]
+    #    filename = args[:filename].nil? ? emr_playbook_filename : args[:filename]
+    #    runner::EmrPlaybookGenerator.new
+    #      .generate(config, resolver, version, filename, debug, skip, enrichments)
+    #    puts "Generated #{filename}"
+    #  else
+    #    runner::EmrConfigGenerator.new.generate(config, resolver, '1-1-0', emr_config_filename)
+    #    puts "Generated #{emr_config_filename}"
+    #    runner::EmrPlaybookGenerator.new
+    #      .generate(config, resolver, '1-0-0', emr_playbook_filename, debug, skip, enrichments)
+    #    puts "Generated #{emr_playbook_filename}"
+    #  end
+    #end
   else
     res = runner::Linter.lint(resolver)
     if res.is_a?(runner::LinterError)
@@ -81,7 +82,6 @@ begin
       end
     end
   end
->>>>>>> EmrEtlRunner: add a `generate` command (closes #3105)
 
 # Don't print stack trace for configuration errors
 rescue runner::ConfigError => e
@@ -96,6 +96,7 @@ rescue runner::NoDataToProcessError => e
   exit 3
 # Special retval to flag previous pipeline is unfinished
 rescue runner::DirectoryNotEmptyError => e
+  puts "There seems to be an ongoing run of EmrEtlRunner: #{e.message}"
   exit 4
 # Catch any Snowplow error
 rescue runner::Error => e
