@@ -53,7 +53,7 @@ object Targets {
     json.validate(dataOnly = false)(resolver).leftMap(l => ValidationError(l.list)).toEither.map(Compat.jvalueToCirce)
   }
 
-  def fooo(resolver: Resolver, target: String): Either[ConfigError, StorageTarget] = {
+  def fooo(resolver: Resolver)(target: String): Either[ConfigError, StorageTarget] = {
     for {
       j <- safeParse(target)
       p <- validate(resolver, j)

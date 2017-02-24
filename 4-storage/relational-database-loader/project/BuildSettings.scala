@@ -35,7 +35,7 @@ object BuildSettings {
       "-Xfatal-warnings",
       "-Xlint",
       "-Yinline-warnings",
-      "-Ywarn-dead-code",
+//      "-Ywarn-dead-code",
       "-Xfuture")
   )
 

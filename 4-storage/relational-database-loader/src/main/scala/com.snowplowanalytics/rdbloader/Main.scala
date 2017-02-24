@@ -13,37 +13,106 @@
 
 package com.snowplowanalytics.rdbloader
 
+import scala.collection.immutable.SortedSet
+import scala.io.Source
+import scala.util.control.NonFatal
+
 import java.io.File
 
+import cats.data.ValidatedNel
+import cats.instances.list._
+import cats.data.Validated._
+import cats.syntax.traverse._
+import cats.syntax.validated._
+import cats.syntax.either._
 
+import com.snowplowanalytics.iglu.client.Resolver
 
-import Utils.StringEnum
 import generated.ProjectMetadata
+import Utils.StringEnum
 
 object Main extends App {
 
   import scopt.Read
 
-  implicit val p = Read.reads { (Utils.fromString[OptionalWorkStep](_)).andThen(_.right.get) }
+  implicit val optionalStepRead =
+    Read.reads { (Utils.fromString[OptionalWorkStep](_)).andThen(_.right.get) }
+
+  implicit val skippableStepRead =
+    Read.reads { (Utils.fromString[SkippableStep](_)).andThen(_.right.get) }
 
   sealed trait OptionalWorkStep extends StringEnum
   case object Compupdate extends OptionalWorkStep { def asString = "compupdate" }
   case object Vacuum extends OptionalWorkStep { def asString = "vacuum" }
 
-  sealed trait SkippableStep extends Product with Serializable // Other kind of step
-  case object ArchiveEnriched extends SkippableStep
-  case object Download extends SkippableStep
-  case object Analyze extends SkippableStep
-  case object Delete extends SkippableStep
-  case object Shred extends SkippableStep
-  case object Load extends SkippableStep
+  sealed trait SkippableStep extends StringEnum
+  case object ArchiveEnriched extends SkippableStep { def asString = "archive_enriched" }
+  case object Download extends SkippableStep { def asString = "download" }
+  case object Analyze extends SkippableStep { def asString = "analyze" }
+  case object Delete extends SkippableStep { def asString = "delete" }
+  case object Shred extends SkippableStep { def asString = "shred" }
+  case object Load extends SkippableStep { def asString = "load" }
 
-  case class CliConfig(config: File, b64config: Boolean, include: Seq[OptionalWorkStep], skip: List[String])
+  // TODO: this probably should not contain `File`s
+  case class CliConfig(
+    config: File,
+    targetsDir: File,
+    resolver: File,
+    include: Seq[OptionalWorkStep],
+    skip: Seq[SkippableStep],
+    b64config: Boolean)
 
-  case class Config() // Contains parsed configs
+  case class AppConfig(
+    configYaml: Config,
+    b64config: Boolean,
+    targets: Set[Targets.StorageTarget],
+    include: SortedSet[OptionalWorkStep],
+    skip: SortedSet[SkippableStep]) // Contains parsed configs
 
-  object Config {
-    
+  def readFile(file: File): Either[ConfigError, String] =
+    try {
+      Source.fromFile(file).getLines.mkString("\n").asRight
+    } catch {
+      case NonFatal(e) => ParseError(s"Configuration file [${file.getAbsolutePath}] cannot be parsed").asLeft
+    }
+
+  def loadTargetsFromDir(directory: File, resolver: Resolver): ValidatedNel[ConfigError, List[Targets.StorageTarget]] = {
+    if (!directory.isDirectory) ParseError(s"[${directory.getAbsolutePath}] is not a directory").invalidNel
+    else if (!directory.canRead) ParseError(s"Targets directory [${directory.getAbsolutePath} is not readable").invalidNel
+    else {
+      val loadTarget = Targets.fooo(resolver) _
+      val fileList = directory.listFiles.toList
+      val targetsList = fileList.map(f => readFile(f).flatMap(loadTarget))
+      targetsList.map(_.toValidatedNel).sequenceU
+    }
+  }
+
+  def loadResolver(resolverConfig: File): ValidatedNel[ConfigError, Resolver] = {
+    if (!resolverConfig.isFile) ParseError(s"[${resolverConfig.getAbsolutePath}] is not a file")
+    else if (!resolverConfig.canRead) ParseError(s"Resolver config [${resolverConfig.getAbsolutePath} is not readable").invalidNel
+    else {
+      import Compat._
+      val f = readFile(resolverConfig).flatMap(Targets.safeParse).toValidatedNel
+      val z: ValidatedNel[ValidationError, Resolver] = f.andThen(json => Resolver.parse(json))
+    }
+
+    ???
+  }
+
+  def transform(cliConfig: CliConfig): Either[String, AppConfig] = {
+    val resolver = loadResolver(cliConfig.resolver)
+    val targets = loadTargetsFromDir(cliConfig.targetsDir, ???)
+
+    // validatednel config
+    // with
+    // validatednel resolver or targets
+
+//    for {
+//      config <- readFile(cliConfig.config)
+//
+//    } ???
+//    ???
+    "".asLeft
   }
 
   val parser = new scopt.OptionParser[CliConfig]("scopt") {
@@ -53,11 +122,18 @@ object Main extends App {
       action((x, c) ⇒ c.copy(config = x)).
       text("configuration file")
 
+    opt[File]('t', "targets").required().valueName("<dir>").
+      action((x, c) => c.copy(targetsDir = x)).
+      text("directory with storage targets configuration JSONs")
+
     opt[Unit]('b', "base64-config-string").action((_, c) ⇒
       c.copy(b64config = true)).text("base64-encoded configuration string")
 
     opt[Seq[OptionalWorkStep]]('i', "include").action((x, c) ⇒
       c.copy(include = x)).text("include optional work steps")
+
+    opt[Seq[SkippableStep]]('s', "skip").action((x, c) =>
+      c.copy(skip = x)).text("skip steps")
 
     help("help").text("prints this usage text")
 
