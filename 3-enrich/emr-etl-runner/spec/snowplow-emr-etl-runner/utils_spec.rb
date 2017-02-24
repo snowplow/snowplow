@@ -190,6 +190,7 @@ describe Utils do
 
     it 'should add /* if not already present' do
       expect(subject.glob_path('p')).to eq('p/*')
+      expect(subject.glob_path('p/')).to eq('p/*')
     end
 
     it 'should do nothing if the path already ends with /*' do

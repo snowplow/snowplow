@@ -93,8 +93,9 @@ module Snowplow
 
         if enrich
           etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
-          steps += get_enrich_steps(config, legacy, s3_endpoint, s3distcp, assets[:enrich],
-            enrich_step_output, enrich_final_output, run_id, etl_tstamp, resolver, enrichments)
+          steps += get_enrich_steps(config, legacy, s3_endpoint, collector_format, s3distcp,
+            assets[:enrich], enrich_step_output, enrich_final_output, run_id, etl_tstamp, resolver,
+            enrichments)
         end
 
         if shred
@@ -113,6 +114,24 @@ module Snowplow
           [ '--deleteOnSuccess' ]
         )
 
+        steps
+      end
+
+      Contract Bool, Bool, Bool, String, String, String,
+        ArrayOf[String], String, String, String, String => ArrayOf[Hash]
+      def get_staging_steps(enrich, shred, legacy, region, s3_endpoint, collector_format,
+          csbr_in, csbr_processing, csbe_good, csbs_good, bucket)
+        steps = []
+
+        src_pattern = collector_format == 'clj-tomcat' ? '.*localhost\_access\_log.*\.txt.*' : '.+'
+        csbr_in.map { |l|
+          steps << get_s3distcp_step(legacy, "S3DistCp: staging of #{l}",
+            l,
+            csbr_processing,
+            s3_endpoint,
+            [ '--srcPattern', src_pattern, '--deleteOnSuccess' ]
+          )
+        }
         steps
       end
 
@@ -197,13 +216,11 @@ module Snowplow
         steps
       end
 
-      Contract ConfigHash, Bool, String, Bool, String,
+      Contract ConfigHash, Bool, String, String, Bool, String,
         String, String, String, String, String, ArrayOf[String] => ArrayOf[Hash]
-      def get_enrich_steps(config, legacy, s3_endpoint, s3distcp, jar,
+      def get_enrich_steps(config, legacy, s3_endpoint, collector_format, s3distcp, jar,
           enrich_step_output, enrich_final_output, run_id, etl_tstamp, resolver, enrichments)
         steps = []
-
-        collector_format = config[:collectors][:format]
 
         to_hdfs = is_supported_collector_format(collector_format) && s3distcp
         raw_input = config[:aws][:s3][:buckets][:raw][:processing]
@@ -212,7 +229,7 @@ module Snowplow
         if to_hdfs
           added_args = if is_cloudfront_log(collector_format) || is_ua_ndjson(collector_format)
             [
-              '--groupBy', is_ua_ndjson(collector_format) ? '.*(urbanairship).*' : '.*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*',
+              '--groupBy', is_ua_ndjson(collector_format) ? ".*\/(\w+)\/.*" : ".*([0-9]+-[0-9]+-[0-9]+).*",
               '--targetSize', '128',
               '--outputCodec', 'lzo'
             ]
@@ -230,7 +247,7 @@ module Snowplow
         steps << get_scalding_step('Enrich raw events', jar,
           'com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob',
           {
-            :in     => enrich_step_input,
+            :in     => glob_path(enrich_step_input),
             :good   => enrich_step_output,
             :bad    => partition_by_run(config[:aws][:s3][:buckets][:enriched][:bad], run_id),
             :errors => partition_by_run(config[:aws][:s3][:buckets][:enriched][:errors], run_id, config[:enrich][:continue_on_unexpected_error])

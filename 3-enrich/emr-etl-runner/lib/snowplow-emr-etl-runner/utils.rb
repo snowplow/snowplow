@@ -183,6 +183,7 @@ module Snowplow
       # Adds a match all glob to the end of the path
       Contract String => String
       def glob_path(path)
+        path = path.chomp('/')
         path.end_with?('/*') ? path : "#{path}/*"
       end
 
