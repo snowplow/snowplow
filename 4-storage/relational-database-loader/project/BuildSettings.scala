@@ -21,6 +21,22 @@ import Keys._
  */
 object BuildSettings {
 
+  lazy val buildSettings = Seq(
+    scalacOptions ++= Seq(
+      "-deprecation",
+      "-encoding", "UTF-8",
+      "-feature",
+      "-language:higherKinds",
+      "-unchecked",
+      "-Ywarn-unused-import",
+      "-Ywarn-nullary-unit",
+      "-Xfatal-warnings",
+      "-Xlint",
+      "-Yinline-warnings",
+      "-Ywarn-dead-code",
+      "-Xfuture")
+  )
+
   // Makes package (build) metadata available withing source code
   lazy val scalifySettings = Seq(sourceGenerators in Compile <+= (sourceManaged in Compile, version, name, organization, scalaVersion) map { (d, v, n, o, sv) =>
     val file = d / "settings.scala"

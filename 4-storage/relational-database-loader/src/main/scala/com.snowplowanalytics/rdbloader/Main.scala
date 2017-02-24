@@ -15,6 +15,8 @@ package com.snowplowanalytics.rdbloader
 
 import java.io.File
 
+import generated.ProjectMetadata
+
 object Main extends App {
 
   sealed trait WorkStep extends Product with Serializable
@@ -34,7 +36,7 @@ object Main extends App {
   case class Config() // Contains parsed configs
 
   val parser = new scopt.OptionParser[CliConfig]("scopt") {
-    head("Relational Database Loader", "0.1.0") // TODO: from generated
+    head("Relational Database Loader", ProjectMetadata.version)
 
     opt[File]('c', "config").required().valueName("<file>").
       action((x, c) ⇒ c.copy(config = x)).

@@ -1,6 +1,12 @@
 package com.snowplowanalytics.rdbloader
 
+// Scala
+import scala.language.implicitConversions
+
+// Circe
 import io.circe.Json
+
+// Json4s
 import org.json4s.JsonAST._
 
 object Compat {
