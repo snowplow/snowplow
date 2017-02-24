@@ -140,15 +140,17 @@ module Snowplow
 
             jsonpaths_file = st.discover_jsonpaths_file(s3, config[:aws][:s3][:buckets][:jsonpath_assets])
             if jsonpaths_file.nil?
-              raise DatabaseLoadError, "Cannot find JSON Paths file to load #{st.s3_objectpath} into #{st.table}"
-            end
-
-            SqlStatements.new(
-              build_copy_from_json_statement(config, st.s3_objectpath, jsonpaths_file, st.table, target[:maxerror]),
-              build_analyze_statement(st.table),
-              build_vacuum_statement(st.table)
-            )
-          }
+              raise DatabaseLoadError, "Cannot find JSON Paths file to load #{st.s3_objectpath} into #{st.table}" unless config[:storage][:skip_missing_jsonpaths]
+              puts "INFO:  Skip loading #{st.table} because no jsonpath found on declared iglu repositories."
+              nil
+            else
+               SqlStatements.new(
+              	  build_copy_from_json_statement(config, st.s3_objectpath, jsonpaths_file, st.table, target[:maxerror]),
+              	  build_analyze_statement(st.table),
+              	  build_vacuum_statement(st.table)
+               )
+	    end
+          }.compact
         end
       end
 

@@ -32,6 +32,8 @@ module Snowplow
       @@jsonpaths_path = "/4-storage/redshift-storage/jsonpaths/"
 
       @@jsonpaths_files = Hash.new # Our cache
+      @@custom_jsonpaths_files_list = Hash.new
+      @@snowplow_jsonpaths_files_list = Hash.new
 
       # Searches S3 for all the files we can find
       # containing shredded types.
@@ -100,7 +102,7 @@ module Snowplow
         unless assets.nil?
           custom_dir = "#{assets}#{@vendor}/"
 
-          if file_exists?(s3, custom_dir, file)
+          if file_exist_with_cache?(s3, custom_dir, file, @@custom_jsonpaths_files_list)
             f = "#{custom_dir}#{file}"
             @@jsonpaths_files[cache_key] = f
             return f
@@ -111,7 +113,7 @@ module Snowplow
         # will definitely exist
         hosted_assets_bucket = get_hosted_assets_bucket(s3.region)
         snowplow_dir = "#{hosted_assets_bucket}#{@@jsonpaths_path}#{@vendor}/"
-        if file_exists?(s3, snowplow_dir, file)
+        if file_exist_with_cache?(s3, snowplow_dir, file, @@snowplow_jsonpaths_files_list)
           f = "#{snowplow_dir}#{file}"
           @@jsonpaths_files[cache_key] = f
           return f
@@ -161,6 +163,26 @@ module Snowplow
         loc = Sluice::Storage::S3::Location.new(directory)
         dir = s3.directories.get(loc.bucket, prefix: loc.dir_as_path)
         (not dir.files.head(loc.dir_as_path + file).nil?)
+      end
+
+      # Check if a jsonpath file exists in a given directory, using cache
+      def file_exist_with_cache?(s3, directory, file, cache)
+        file_name = "#{directory}#{file}"
+        
+        if cache[directory] == nil
+          cache[directory] = Hash.new
+          loc = Sluice::Storage::S3::Location.new(directory)
+          Sluice::Storage::S3::list_files(s3, loc).each { |f|
+            name = "#{directory}#{f.key.split('/').last}"
+            cache[directory][name] = f
+          }
+        end 
+        
+        if (cache[directory][file_name])
+          file_name
+        else
+          nil
+        end 
       end
 
       # Replace any periods in vendor or name with underscore
