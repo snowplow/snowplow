@@ -233,7 +233,8 @@ module Snowplow
           raise ConfigError, "Enrichments directory '#{enrichments_dir}' does not exist, or is not a directory\n#{summary}"
         end
 
-        json_glob = Sluice::Storage::trail_slash(enrichments_dir) + '*.json'
+        json_glob =
+          (enrichments_dir[-1].chr != '/' ? enrichments_dir << '/' : enrichments_dir) + '*.json'
 
         Dir.glob(json_glob).map { |f|
           File.read(f)
