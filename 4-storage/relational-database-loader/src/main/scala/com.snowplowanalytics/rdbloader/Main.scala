@@ -15,25 +15,36 @@ package com.snowplowanalytics.rdbloader
 
 import java.io.File
 
+
+
+import Utils.StringEnum
 import generated.ProjectMetadata
 
 object Main extends App {
 
-  sealed trait WorkStep extends Product with Serializable
-  case object Compupdate extends WorkStep
-  case object Vacuum extends WorkStep
+  import scopt.Read
 
-  sealed trait Step extends Product with Serializable // Other kind of step
-  case object ArchiveEnriched extends Step
-  case object Download extends Step
-  case object Analyze extends Step
-  case object Delete extends Step
-  case object Shred extends Step
-  case object Load extends Step
+  implicit val p = Read.reads { (Utils.fromString[OptionalWorkStep](_)).andThen(_.right.get) }
 
-  case class CliConfig(config: File, b64config: Boolean, include: List[String], skip: List[String])
+  sealed trait OptionalWorkStep extends StringEnum
+  case object Compupdate extends OptionalWorkStep { def asString = "compupdate" }
+  case object Vacuum extends OptionalWorkStep { def asString = "vacuum" }
+
+  sealed trait SkippableStep extends Product with Serializable // Other kind of step
+  case object ArchiveEnriched extends SkippableStep
+  case object Download extends SkippableStep
+  case object Analyze extends SkippableStep
+  case object Delete extends SkippableStep
+  case object Shred extends SkippableStep
+  case object Load extends SkippableStep
+
+  case class CliConfig(config: File, b64config: Boolean, include: Seq[OptionalWorkStep], skip: List[String])
 
   case class Config() // Contains parsed configs
+
+  object Config {
+    
+  }
 
   val parser = new scopt.OptionParser[CliConfig]("scopt") {
     head("Relational Database Loader", ProjectMetadata.version)
@@ -45,8 +56,8 @@ object Main extends App {
     opt[Unit]('b', "base64-config-string").action((_, c) ⇒
       c.copy(b64config = true)).text("base64-encoded configuration string")
 
-    opt[Seq[String]]('i', "include").action((x, c) ⇒
-      c.copy(include = x.toList)).text("include optional work steps")
+    opt[Seq[OptionalWorkStep]]('i', "include").action((x, c) ⇒
+      c.copy(include = x)).text("include optional work steps")
 
     help("help").text("prints this usage text")
 

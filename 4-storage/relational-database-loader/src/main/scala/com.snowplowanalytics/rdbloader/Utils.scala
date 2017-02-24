@@ -87,7 +87,7 @@ object Utils {
    * @tparam A sealed hierarchy
    * @return either successful circe AST or decoding failure
    */
-  private def fromString[A <: StringEnum: TypeTag](string: String): Either[String, A] = {
+  def fromString[A <: StringEnum: TypeTag](string: String): Either[String, A] = {
     val map = sealedDescendants[A].map { o => (o.asString, o) }.toMap
     map.get(string) match {
       case Some(a) => Right(a)
