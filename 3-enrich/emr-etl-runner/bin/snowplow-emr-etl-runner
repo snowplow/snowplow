@@ -92,6 +92,7 @@ rescue runner::LinterError => e
   exit 1
 # Special retval so rest of pipeline knows not to continue
 rescue runner::NoDataToProcessError => e
+  puts "No logs to process: #{e.message}"
   exit 3
 # Special retval to flag previous pipeline is unfinished
 rescue runner::DirectoryNotEmptyError => e
