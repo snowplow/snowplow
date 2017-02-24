@@ -15,7 +15,6 @@
 
 require 'set'
 require 'elasticity'
-require 'sluice'
 require 'awrence'
 require 'json'
 require 'base64'
@@ -70,10 +69,6 @@ module Snowplow
         @rdb_loader_logs = []   # pairs of target name and associated log
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
         output_codec = output_codec_from_compression_format(config[:enrich][:output_compression])
-        s3 = Sluice::Storage::S3::new_fog_s3_from(
-          config[:aws][:s3][:region],
-          config[:aws][:access_key_id],
-          config[:aws][:secret_access_key])
 
         # Configure Elasticity with your AWS credentials
         Elasticity.configure do |c|
@@ -115,6 +110,44 @@ module Snowplow
         @jobflow.master_instance_type = config[:aws][:emr][:jobflow][:master_instance_type]
         @jobflow.slave_instance_type  = config[:aws][:emr][:jobflow][:core_instance_type]
 
+        s3_endpoint = get_s3_endpoint(config[:aws][:s3][:region])
+        csbr = config[:aws][:s3][:buckets][:raw]
+        csbe = config[:aws][:s3][:buckets][:enriched]
+        csbs = config[:aws][:s3][:buckets][:shredded]
+
+        # staging
+        if staging
+          src_pattern = config[:collectors][:format] == 'clj-tomcat' ? '.*localhost\_access\_log.*\.txt.*' : '.+'
+          src_pattern_regex = Regexp.new src_pattern
+          non_empty_locs = csbr[:in].select { |l|
+            loc = Sluice::Storage::S3::Location.new(l)
+            files = Sluice::Storage::S3::list_files(s3, loc)
+              .select { |f| !(f.key =~ src_pattern_regex).nil? }
+            files.length > 0
+          }
+
+          if non_empty_locs.empty?
+            raise NoDataToProcessError, "No Snowplow logs to process since last run"
+          else
+            non_empty_locs.each { |l|
+              staging_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+              staging_step.arguments = [
+                "--src", l,
+                "--dest", csbr[:processing],
+                "--s3Endpoint", s3_endpoint,
+                "--srcPattern", src_pattern,
+                "--deleteOnSuccess"
+              ]
+              if collector_format == 'clj-tomcat'
+                staging_step.arguments = staging_step.arguments + [ '--groupBy', '.*/_*(.+)' ]
+              end
+              staging_step.name << ": Raw #{l} -> Raw Staging S3"
+              @jobflow.add_step(staging_step)
+            }
+          end
+        end
+
+        # EBS
         unless config[:aws][:emr][:jobflow][:core_instance_ebs].nil?
           ebs_bdc = Elasticity::EbsBlockDeviceConfig.new
 
@@ -262,7 +295,7 @@ module Snowplow
           if to_hdfs
 
             # for ndjson/urbanairship we can group by everything, just aim for the target size
-            group_by = is_ua_ndjson(collector_format) ? ".*(urbanairship).*" : ".*\\.([0-9]+-[0-9]+-[0-9]+)-[0-9]+\\..*"
+            group_by = is_ua_ndjson(collector_format) ? ".*\/(\w+)\/.*" : ".*([0-9]+-[0-9]+-[0-9]+)-[0-9]+.*"
 
             # Create the Hadoop MR step for the file crushing
             compact_to_hdfs_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
@@ -297,7 +330,7 @@ module Snowplow
                 "Enrich Raw Events",
                 assets[:enrich],
                 "enrich.spark.EnrichJob",
-                { :in     => enrich_step_input,
+                { :in     => glob_path(enrich_step_input),
                   :good   => enrich_step_output,
                   :bad    => partition_by_run(csbe[:bad],    run_id)
                 },
@@ -312,7 +345,7 @@ module Snowplow
                 "Enrich Raw Events",
                 assets[:enrich],
                 "enrich.hadoop.EtlJob",
-                { :in     => enrich_step_input,
+                { :in     => glob_path(enrich_step_input),
                   :good   => enrich_step_output,
                   :bad    => partition_by_run(csbe[:bad],    run_id),
                   :errors => partition_by_run(csbe[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
@@ -718,6 +751,8 @@ module Snowplow
             :exceptions_folder => folders[:errors]
           })
           .reject { |k, v| v.nil? } # Because folders[:errors] may be empty
+
+        arguments['tool.partialok'] = ''
 
         # Now create the Hadoop MR step for the jobflow
         scalding_step = Elasticity::ScaldingStep.new(jar, "#{JAVA_PACKAGE}.#{main_class}", arguments)
