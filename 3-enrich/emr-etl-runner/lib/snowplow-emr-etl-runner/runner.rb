@@ -52,13 +52,6 @@ module Snowplow
       Contract None => nil
       def run
 
-        # Now our core flow
-        unless @args[:skip].include?('staging')
-          unless S3Tasks.stage_logs_for_emr(@args, @config)
-            raise NoDataToProcessError, "No Snowplow logs to process since last run"
-          end
-        end
-
         unless @args[:skip].include?('emr')
           enrich = not(@args[:skip].include?('enrich'))
           shred = not(@args[:skip].include?('shred'))
@@ -105,7 +98,7 @@ module Snowplow
       # Adds trailing slashes to all non-nil bucket names in the hash
       def self.add_trailing_slashes(bucketData)
         if bucketData.class == ''.class
-          Sluice::Storage::trail_slash(bucketData)
+          bucketData[-1].chr != '/' ? bucketData << '/' : bucketData
         elsif bucketData.class == {}.class
           bucketData.each {|k,v| add_trailing_slashes(v)}
         elsif bucketData.class == [].class
