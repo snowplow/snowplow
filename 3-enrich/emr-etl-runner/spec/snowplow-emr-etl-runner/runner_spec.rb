@@ -32,8 +32,7 @@ describe Runner do
       :config_file => resource("sparse_config.yml"),
       :enrichments_directory => nil,
       :resolver_file => resource("iglu_resolver.json"),
-      :start => nil,
-      :end => nil,
+      :skip => [],
       :process_enrich_location => nil,
       :process_shred_location => nil,
       :targets_directory => nil,
@@ -84,21 +83,6 @@ describe Runner do
       args[:skip] = [skip_arg]
       Runner.new args, config, enrichments, resolver, targets
     end
-  end
-
-  it 'should reject an end date before a start date' do
-    args, config, enrichments, resolver, targets = get_mock_config
-    args[:start] = "2015-12-11"
-    args[:end] = "2015-11-11"
-    expect{Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "Invalid options: end date '#{args[:end]}' is before start date '#{args[:start]}'")
-  end
-
-  it 'should reject start and end date if not using cloudfront' do
-    args, config, enrichments, resolver, targets = get_mock_config
-    args[:start] = "2015-12-11"
-    args[:end] = "2015-12-12"
-    config[:collectors][:format] = "clj-tomcat"
-    expect{Runner.new args, config, enrichments, resolver, targets}.to raise_exception(ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'")
   end
 
   it 'should refuse to process shred and enrich together' do
