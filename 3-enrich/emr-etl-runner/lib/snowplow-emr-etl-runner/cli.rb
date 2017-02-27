@@ -62,8 +62,6 @@ module Snowplow
             opts.on('-r', '--resolver RESOLVER', 'Iglu resolver file') {|config| options[:resolver_file] = config }
             opts.on('-t', '--targets TARGETS', 'targets directory') { |config| options[:targets_directory] = config }
             opts.on('-d', '--debug', 'enable EMR Job Flow debugging') { |config| options[:debug] = true }
-            opts.on('-s', '--start YYYY-MM-DD', 'optional start date *') { |config| options[:start] = config }
-            opts.on('-e', '--end YYYY-MM-DD', 'optional end date *') { |config| options[:end] = config }
             opts.on('-x', '--skip staging,s3distcp,emr{enrich,shred,elasticsearch,archive_raw,analyze,archive_enriched}', Array, 'skip work step(s)') { |config| options[:skip] = config }
             opts.on('-E', '--process-enrich LOCATION', 'run enrichment only on specified location. Implies --skip staging,shred,archive_raw,archive_enriched,analyze,rdb_load') { |config|
               options[:process_enrich_location] = config
@@ -177,8 +175,6 @@ module Snowplow
       def self.process_options(options, optparse, cmd_name)
         args = {
           :debug                   => options[:debug],
-          :start                   => options[:start],
-          :end                     => options[:end],
           :skip                    => options[:skip],
           :include                 => options[:include],
           :process_enrich_location => options[:process_enrich_location],
