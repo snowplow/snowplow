@@ -148,13 +148,6 @@ module Snowplow
           end
         }
 
-        # Check that start is before end, if both set
-        if !args[:start].nil? and !args[:end].nil?
-          if args[:start] > args[:end]
-            raise ConfigError, "Invalid options: end date '#{args[:end]}' is before start date '#{args[:start]}'"
-          end
-        end
-
         input_collector_format = config[:collectors][:format]
 
         # Validate the collector format
@@ -169,11 +162,6 @@ module Snowplow
           if config[:aws][:emr][:ami_version].start_with?('2')
             raise ConfigError, "Cannot process Thrift events with AMI version 2.x.x"
           end
-        end
-
-        # Currently we only support start/end times for the CloudFront collector format. See #120 for details
-        unless config[:collectors][:format] == 'cloudfront' or (args[:start].nil? and args[:end].nil?)
-          raise ConfigError, "--start and --end date arguments are only supported if collector_format is 'cloudfront'"
         end
 
         # We can't process enrich and process shred
