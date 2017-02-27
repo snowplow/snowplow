@@ -38,8 +38,6 @@ module Snowplow
     # The Hash of the CLI arguments.
     ArgsHash = ({
       :debug => Bool,
-      :start => Maybe[String],
-      :end => Maybe[String],
       :skip => Maybe[ArrayOf[String]],
       :include => Maybe[ArrayOf[String]],
       :process_enrich_location => Maybe[String],
