@@ -30,12 +30,16 @@ import java.util.{Properties,UUID}
 import org.slf4j.LoggerFactory
 
 // Pubsub
-import com.google.cloud.pubsub.spi.v1.Subscriber
-import com.google.pubsub.v1.TopicName
-import com.google.pubsub.v1.PubsubMessage
+import com.google.cloud.pubsub.spi.v1.{SubscriberClient,SubscriberSettings}
+import com.google.pubsub.v1.{
+  TopicName,
+  PubsubMessage,
+  SubscriptionName,
+  PullRequest}
 
 // Scala
 import scala.collection.JavaConverters._
+import org.joda.time.Duration
 
 // Iglu
 import iglu.client.Resolver
@@ -63,13 +67,13 @@ class PubsubSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichme
       ":" + UUID.randomUUID()
     info("Using workerId: " + workerId)
 
-    val subscriber = getTopicSubscription(config)
+    val subscriber = getTopicSubscriber(config)
     val pullRequest = getPullRequest(config, subscriber)
 
     info(s"Processing raw input Pubsub topic: ${config.rawInStream}")
 
     while (true) {
-      val recordValues = pull(pullRequest)
+      val recordValues = subscriber.pull(pullRequest)
         .getReceivedMessagesList
         .asScala
         .toList
@@ -79,12 +83,12 @@ class PubsubSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichme
     }
   }
 
-  private def getTopicSubscriber(config: KinesisEnrichConfig): SubscriptionClient = {
+  private def getTopicSubscriber(config: KinesisEnrichConfig): SubscriberClient = {
     val settings = createSettings(config)
     SubscriberClient.create(settings) 
   }
 
-  private def createSettings(config: KinesisEnrichConfig): Properties = {
+  private def createSettings(config: KinesisEnrichConfig): SubscriberSettings = {
     val subSettingsBuilder = SubscriberSettings.newBuilder()
     subSettingsBuilder
       .createSubscriptionSettings()
@@ -94,7 +98,7 @@ class PubsubSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichme
     subSettingsBuilder.build
   }
   
-  private def getPullRequest(config: KinesisEnrichConfig, subscriberClient: SubscriptionClient) : PullRequest = {
+  private def getPullRequest(config: KinesisEnrichConfig, subscriberClient: SubscriberClient) : PullRequest = {
     val name = SubscriptionName.create(s"${config.projectId}", s"${config.rawInStream}")
     PullRequest.newBuilder()
       .setSubscriptionWithSubscriptionName(name)

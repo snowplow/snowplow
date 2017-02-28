@@ -89,7 +89,7 @@ class PubsubSink(config: KinesisEnrichConfig,
 
   private def createPublisher(config: KinesisEnrichConfig): Publisher =
     Publisher.newBuilder(
-        TopicName.create(s"${config.projectId}",  s"$topicName");
+        TopicName.create(s"${config.projectId}",  s"$topicName")
     ).build
 
 }

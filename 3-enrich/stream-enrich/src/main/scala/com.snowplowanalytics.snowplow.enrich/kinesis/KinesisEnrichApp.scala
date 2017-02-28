@@ -324,6 +324,7 @@ class KinesisEnrichConfig(config: Config) {
   val source = enrich.getString("source") match {
     case "kafka" => Source.Kafka
     case "kinesis" => Source.Kinesis
+    case "pubsub" => Source.Pubsub
     case "stdin" => Source.Stdin
     case "test" => Source.Test
     case _ => throw new RuntimeException("enrich.source unknown.")
@@ -346,7 +347,7 @@ class KinesisEnrichConfig(config: Config) {
   val kafkaBrokers = kafka.getString("brokers")
 
   private val pubsub = enrich.getConfig("pubsub")
-  val topicName = pubsub.getString("topicName")
+  val projectId = pubsub.getString("projectId")
 
   private val streams = enrich.getConfig("streams")
 
