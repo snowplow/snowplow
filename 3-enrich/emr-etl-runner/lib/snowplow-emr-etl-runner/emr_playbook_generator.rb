@@ -126,11 +126,7 @@ module Snowplow
         src_pattern = collector_format == 'clj-tomcat' ? '.*localhost\_access\_log.*\.txt.*' : '.+'
         csbr_in.map { |l|
           steps << get_s3distcp_step(legacy, "S3DistCp: staging of #{l}",
-            l,
-            csbr_processing,
-            s3_endpoint,
-            [ '--srcPattern', src_pattern, '--deleteOnSuccess' ]
-          )
+            l, csbr_processing, s3_endpoint, [ '--srcPattern', src_pattern, '--deleteOnSuccess' ])
         }
         steps
       end
@@ -186,11 +182,7 @@ module Snowplow
 
         if s3distcp and !enrich
           steps << get_s3distcp_step(legacy, 'S3DistCp: enriched S3 -> HDFS',
-            enrich_final_output,
-            enrich_step_output,
-            s3_endpoint,
-            [ '--srcPattern', part_regex ]
-          )
+            enrich_final_output, enrich_step_output, s3_endpoint, [ '--srcPattern', part_regex ])
         end
 
         steps << get_scalding_step('Shred enriched events', jar,
@@ -206,12 +198,8 @@ module Snowplow
 
         if s3distcp
           output_codec = output_codec_from_compression_format(config[:enrich][:output_compression])
-          steps << get_s3distcp_step(legacy, 'S3DistCp: shredded HDFS -> S3',
-            shred_step_output,
-            shred_final_output,
-            s3_endpoint,
-            [ '--srcPattern', part_regex ] + output_codec
-          )
+          steps << get_s3distcp_step(legacy, 'S3DistCp: shredded HDFS -> S3', shred_step_output,
+            shred_final_output, s3_endpoint, [ '--srcPattern', part_regex ] + output_codec)
         end
         steps
       end
@@ -222,27 +210,21 @@ module Snowplow
           enrich_step_output, enrich_final_output, run_id, etl_tstamp, resolver, enrichments)
         steps = []
 
-        to_hdfs = is_supported_collector_format(collector_format) && s3distcp
         raw_input = config[:aws][:s3][:buckets][:raw][:processing]
-        enrich_step_input = to_hdfs ? 'hdfs:///local/snowplow/raw-events/' : raw_input
+        enrich_step_input = 'hdfs:///local/snowplow/raw-events/'
+        csbe = config[:aws][:s3][:buckets][:enriched]
 
-        if to_hdfs
-          added_args = if is_cloudfront_log(collector_format) || is_ua_ndjson(collector_format)
-            [
-              '--groupBy', is_ua_ndjson(collector_format) ? ".*\/(\w+)\/.*" : ".*([0-9]+-[0-9]+-[0-9]+).*",
-              '--targetSize', '128',
-              '--outputCodec', 'lzo'
-            ]
-          else
-            []
-          end
-          steps << get_s3distcp_step(legacy, 'S3DistCp: raw S3 -> HDFS',
-            raw_input,
-            enrich_step_input,
-            s3_endpoint,
-            added_args
-          )
+        added_args = if is_cloudfront_log(collector_format) || is_ua_ndjson(collector_format)
+          [
+            '--groupBy', is_ua_ndjson(collector_format) ? ".*\/(\w+)\/.*" : ".*([0-9]+-[0-9]+-[0-9]+).*",
+            '--targetSize', '128',
+            '--outputCodec', 'lzo'
+          ]
+        else
+          []
         end
+        steps << get_s3distcp_step(legacy, 'S3DistCp: raw S3 -> HDFS',
+          raw_input, enrich_step_input, s3_endpoint, added_args)
 
         steps << get_scalding_step('Enrich raw events', jar,
           'com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob',
@@ -262,18 +244,10 @@ module Snowplow
 
         if s3distcp
           output_codec = output_codec_from_compression_format(config[:enrich][:output_compression])
-          steps << get_s3distcp_step(legacy, 'S3DistCp: enriched HDFS -> S3',
-            enrich_step_output,
-            enrich_final_output,
-            s3_endpoint,
-            [ '--srcPattern', '.*part-.*' ] + output_codec
-          )
+          steps << get_s3distcp_step(legacy, 'S3DistCp: enriched HDFS -> S3', enrich_step_output,
+            enrich_final_output, s3_endpoint, [ '--srcPattern', '.*part-.*' ] + output_codec)
           steps << get_s3distcp_step(legacy, 'S3DistCp: enriched HDFS _SUCCESS -> S3',
-            enrich_step_output,
-            enrich_final_output,
-            s3_endpoint,
-            [ '--srcPattern', '.*_SUCCESS' ]
-          )
+            enrich_step_output, enrich_final_output, s3_endpoint, [ '--srcPattern', '.*_SUCCESS' ])
         end
 
         steps
