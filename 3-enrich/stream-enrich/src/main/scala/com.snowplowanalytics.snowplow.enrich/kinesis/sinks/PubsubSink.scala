@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
 
 /**
- * Kafka Sink for Scala enrichment
+ * Pubsub Sink for Scala enrichment
  */
 class PubsubSink(config: KinesisEnrichConfig,
     inputType: InputType.InputType, tracker: Option[Tracker]) extends ISink {
@@ -62,7 +62,7 @@ class PubsubSink(config: KinesisEnrichConfig,
    * This method blocks until the request has finished.
    *
    * @param events List of events together with their partition keys
-   * @return whether to send the stored events to Kafka
+   * @return whether to send the stored events to Pubsub
    */
   def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
 
@@ -80,7 +80,7 @@ class PubsubSink(config: KinesisEnrichConfig,
   }
 
   /**
-   * Blocking method to send all stored records to Kafka
+   * Blocking method to send all stored records to Pubsub
    * For Pubsub this method doesn't do anything (we have
    * handed this off to the PubsubPublisher).
    */
@@ -88,6 +88,8 @@ class PubsubSink(config: KinesisEnrichConfig,
   }
 
   private def createPublisher(config: KinesisEnrichConfig): Publisher =
-    Publisher.newBuilder(TopicName.parse(config.topicName)).build
+    Publisher.newBuilder(
+        TopicName.create(s"${config.projectId}",  s"$topicName");
+    ).build
 
 }

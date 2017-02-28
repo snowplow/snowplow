@@ -24,6 +24,7 @@ enrich {
   # Sinks currently supported are:
   # 'kinesis' for writing enriched events to one Kinesis stream and invalid events to another.
   # 'kafka' for writing enriched events to one Kafka topic and invalid events to another.
+  # 'pubsub' for writing enriched events to one Cloud Pubsub topic and invalid events to another.
   # 'stdouterr' for writing enriched events to stdout and invalid events to stderr.
   #    Using "sbt assembly" and "java -jar" is recommended to disable sbt
   #    logging.
@@ -44,6 +45,10 @@ enrich {
   # Kafka configuration
   kafka {
     brokers: "{{enrichKafkaBrokers}}"
+  }
+
+  pubsub {
+    projecId: "{{gcpProjectId}}"
   }
 
   streams {
