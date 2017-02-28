@@ -36,6 +36,7 @@ object Dependencies {
     val awsSdk               = "1.6.11"
     val kinesisClient        = "1.6.1"
     val kafkaClients         = "0.10.1.0"
+    val gcpPubsub            = "0.9.3-alpha"
     // Scala
     val argot                = "1.0.1"
     val config               = "1.0.2"
@@ -66,6 +67,7 @@ object Dependencies {
     val awsSdk               = "com.amazonaws"              %  "aws-java-sdk"             % V.awsSdk
     val kinesisClient        = "com.amazonaws"              %  "amazon-kinesis-client"    % V.kinesisClient
     val kafkaClients         = "org.apache.kafka"           %  "kafka-clients"            % V.kafkaClients
+    val gcpPubsub            = "com.google.cloud"           %  "google-cloud-pubsub"      % V.gcpPubsub
     // Scala
     val argot                = "org.clapper"                %% "argot"                    % V.argot
     val config               = "com.typesafe"               %  "config"                   % V.config

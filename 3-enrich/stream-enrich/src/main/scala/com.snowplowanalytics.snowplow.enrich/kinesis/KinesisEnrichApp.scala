@@ -332,6 +332,7 @@ class KinesisEnrichConfig(config: Config) {
   val sink = enrich.getString("sink") match {
     case "kafka" => Sink.Kafka
     case "kinesis" => Sink.Kinesis
+    case "pubsub" => Sink.Pubsub
     case "stdouterr" => Sink.Stdouterr
     case "test" => Sink.Test
     case _ => throw new RuntimeException("enrich.sink unknown.")
@@ -343,6 +344,9 @@ class KinesisEnrichConfig(config: Config) {
 
   private val kafka = enrich.getConfig("kafka")
   val kafkaBrokers = kafka.getString("brokers")
+
+  private val pubsub = enrich.getConfig("pubsub")
+  val topicName = pubsub.getString("topicName")
 
   private val streams = enrich.getConfig("streams")
 
