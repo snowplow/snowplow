@@ -54,6 +54,8 @@ module Snowplow
         # Configuration
         custom_assets_bucket =
           get_hosted_assets_bucket(STANDARD_HOSTED_ASSETS, config[:aws][:s3][:buckets][:assets], config[:aws][:emr][:region])
+        standard_assets_bucket =
+          get_hosted_assets_bucket(STANDARD_HOSTED_ASSETS, config[:aws][:s3][:buckets][:assets], config[:aws][:emr][:region])
         assets = get_assets(
           custom_assets_bucket,
           config[:enrich][:versions][:spark_enrich],
@@ -117,7 +119,7 @@ module Snowplow
 
         # staging
         if staging
-          src_pattern = config[:collectors][:format] == 'clj-tomcat' ? '.*localhost\_access\_log.*\.txt.*' : '.+'
+          src_pattern = collector_format == 'clj-tomcat' ? '.*localhost\_access\_log.*\.txt.*' : '.+'
           src_pattern_regex = Regexp.new src_pattern
           non_empty_locs = csbr[:in].select { |l|
             loc = Sluice::Storage::S3::Location.new(l)
@@ -281,40 +283,31 @@ module Snowplow
           # 1. Compaction to HDFS (if applicable)
           raw_input = csbr[:processing]
 
-          to_hdfs = is_supported_collector_format(collector_format) && s3distcp
-
           # TODO: throw exception if processing thrift with --skip s3distcp
           # https://github.com/snowplow/snowplow/issues/1648
 
-          enrich_step_input = if to_hdfs
-            "hdfs:///local/snowplow/raw-events/"
-          else
-            raw_input
-          end
+          enrich_step_input = "hdfs:///local/snowplow/raw-events/"
 
-          if to_hdfs
+          # for ndjson/urbanairship we can group by everything, just aim for the target size
+          group_by = is_ua_ndjson(collector_format) ? ".*\/(\w+)\/.*" : ".*([0-9]+-[0-9]+-[0-9]+)-[0-9]+.*"
 
-            # for ndjson/urbanairship we can group by everything, just aim for the target size
-            group_by = is_ua_ndjson(collector_format) ? ".*\/(\w+)\/.*" : ".*([0-9]+-[0-9]+-[0-9]+)-[0-9]+.*"
-
-            # Create the Hadoop MR step for the file crushing
-            compact_to_hdfs_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
-            compact_to_hdfs_step.arguments = [
-                "--src"         , raw_input,
-                "--dest"        , enrich_step_input,
-                "--s3Endpoint"  , s3_endpoint
-              ] + [
-                "--groupBy"     , group_by,
-                "--targetSize"  , "128",
-                "--outputCodec" , "lzo"
-              ].select { |el|
-                is_cloudfront_log(collector_format) || is_ua_ndjson(collector_format)
-              }
+          # Create the Hadoop MR step for the file crushing
+          compact_to_hdfs_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+          compact_to_hdfs_step.arguments = [
+            "--src"         , raw_input,
+            "--dest"        , enrich_step_input,
+            "--s3Endpoint"  , s3_endpoint
+            ] + [
+              "--groupBy"     , group_by,
+              "--targetSize"  , "128",
+              "--outputCodec" , "lzo"
+            ].select { |el|
+              is_cloudfront_log(collector_format) || is_ua_ndjson(collector_format)
+            }
             compact_to_hdfs_step.name << ": Raw S3 -> HDFS"
 
             # Add to our jobflow
             @jobflow.add_step(compact_to_hdfs_step)
-          end
 
           # 2. Enrichment
           enrich_step_output = if s3distcp
@@ -940,8 +933,6 @@ module Snowplow
         Marshal.load(Marshal.dump(o))
       end
 
-=======
->>>>>>> EmrEtlRunner: add a `generate` command (closes #3105)
       # Returns true if the jobflow seems to have failed due to a bootstrap failure
       Contract Elasticity::JobFlow => Bool
       def self.bootstrap_failure?(jobflow)
