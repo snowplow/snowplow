@@ -155,15 +155,15 @@ describe Utils do
   describe '#output_codec_from_compression_format' do
     it { should respond_to(:output_codec_from_compression_format).with(1).argument }
 
-    it 'should give back nil if the compression format is nil' do
+    it 'should give back an empty array if the compression format is nil' do
       expect(subject.output_codec_from_compression_format(nil)).to eq([])
     end
 
-    it 'should convert gzip to gz' do
-      expect(subject.output_codec_from_compression_format('gzip')).to eq([ '--outputCodec', 'gz' ])
+    it 'should give back an empty array if the compression format is NONE' do
+      expect(subject.output_codec_from_compression_format('NONE')).to eq([])
     end
 
-    it 'should keep the compression (to lowercase) format otherwise' do
+    it 'should return the proper output codec if the provided one is supported' do
       expect(subject.output_codec_from_compression_format('LZO')).to eq([ '--outputCodec', 'lzo' ])
     end
   end
