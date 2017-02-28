@@ -48,12 +48,6 @@ module Snowplow
         end
       end
 
-      # Is this collector format supported?
-      Contract String => Bool
-      def is_supported_collector_format(fmt)
-        is_cloudfront_log(fmt) || fmt == "thrift" || is_ua_ndjson(fmt)
-      end
-
       # Does this collector format represent CloudFront access logs?
       Contract String => Bool
       def is_cloudfront_log(collector_format)

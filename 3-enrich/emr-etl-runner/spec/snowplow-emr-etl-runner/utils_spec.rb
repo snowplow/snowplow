@@ -106,23 +106,6 @@ describe Utils do
     end
   end
 
-  describe '#is_supported_collector_format' do
-    it { should respond_to(:is_supported_collector_format).with(1).argument }
-
-    it 'should give back for all supported collector fmts' do
-      expect(subject.is_supported_collector_format('cloudfront')).to be(true)
-      expect(subject.is_supported_collector_format('tsv/com.amazon.aws.cloudfront/blabla'))
-        .to be(true)
-      expect(subject.is_supported_collector_format('ndjson/com.urbanairship.connect/blabla'))
-        .to be(true)
-      expect(subject.is_supported_collector_format('thrift')).to be(true)
-    end
-
-    it 'should give back false for another fmt' do
-      expect(subject.is_supported_collector_format('another fmt')).to be(false)
-    end
-  end
-
   describe '#get_s3_endpoint' do
     it { should respond_to(:get_s3_endpoint).with(1).argument }
 
