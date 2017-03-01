@@ -15,6 +15,7 @@
 
 require 'set'
 require 'elasticity'
+require 'sluice'
 require 'awrence'
 require 'json'
 require 'base64'
@@ -35,6 +36,7 @@ module Snowplow
       # Constants
       JAVA_PACKAGE = "com.snowplowanalytics.snowplow"
       PARTFILE_REGEXP = ".*part-.*"
+      SUCCESS_REGEXP = ".*_SUCCESS"
       BOOTSTRAP_FAILURE_INDICATOR = /BOOTSTRAP_FAILURE|bootstrap action|Master instance startup failed/
       STANDARD_HOSTED_ASSETS = "s3://snowplow-hosted-assets"
       ENRICH_STEP_INPUT = 'hdfs:///local/snowplow/raw-events/'
@@ -74,6 +76,11 @@ module Snowplow
         @rdb_loader_logs = []   # pairs of target name and associated log
         etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
         output_codec = output_codec_from_compression_format(config[:enrich][:output_compression])
+
+        s3 = Sluice::Storage::S3::new_fog_s3_from(
+          config[:aws][:s3][:region],
+          config[:aws][:access_key_id],
+          config[:aws][:secret_access_key])
 
         # Configure Elasticity with your AWS credentials
         Elasticity.configure do |c|
@@ -195,8 +202,6 @@ module Snowplow
         end
 
         # Prepare a bootstrap action based on the AMI version
-        standard_assets_bucket =
-          get_hosted_assets_bucket(STANDARD_HOSTED_ASSETS, STANDARD_HOSTED_ASSETS, config[:aws][:emr][:region])
         bootstrap_script_location = if @legacy
           "#{standard_assets_bucket}common/emr/snowplow-ami3-bootstrap-0.1.0.sh"
         else
@@ -339,7 +344,7 @@ module Snowplow
           copy_success_file_step.arguments = [
             "--src"        , ENRICH_STEP_OUTPUT,
             "--dest"       , enrich_final_output,
-            "--srcPattern" , ".*_SUCCESS",
+            "--srcPattern" , SUCCESS_REGEXP,
             "--s3Endpoint" , s3_endpoint
           ]
           copy_success_file_step.name << ": Enriched HDFS _SUCCESS -> S3"
@@ -417,6 +422,16 @@ module Snowplow
           ] + output_codec
           copy_to_s3_step.name << ": Shredded HDFS -> S3"
           @jobflow.add_step(copy_to_s3_step)
+
+          copy_success_file_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
+          copy_success_file_step.arguments = [
+            "--src"        , SHRED_STEP_OUTPUT,
+            "--dest"       , shred_final_output,
+            "--srcPattern" , SUCCESS_REGEXP,
+            "--s3Endpoint" , s3_endpoint
+          ]
+          copy_success_file_step.name << ": Shredded HDFS _SUCCESS -> S3"
+          @jobflow.add_step(copy_success_file_step)
         end
 
         if es
@@ -430,7 +445,7 @@ module Snowplow
           archive_raw_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
           archive_raw_step.arguments = [
             "--src"        , csbr[:processing],
-            "--dest"       , self.class.partition_by_run(csbr[:archive], run_id),
+            "--dest"       , partition_by_run(csbr[:archive], run_id),
             "--s3Endpoint" , s3_endpoint,
             "--deleteOnSuccess"
           ]
@@ -671,8 +686,8 @@ module Snowplow
       def get_archive_enriched_step(good_path, archive_path, run_id_folder, s3_endpoint, name)
         archive_enriched_step = Elasticity::S3DistCpStep.new(legacy = @legacy)
         archive_enriched_step.arguments = [
-          "--src"        , self.class.partition_by_run(good_path, run_id_folder),
-          "--dest"       , self.class.partition_by_run(archive_path, run_id_folder),
+          "--src"        , partition_by_run(good_path, run_id_folder),
+          "--dest"       , partition_by_run(archive_path, run_id_folder),
           "--s3Endpoint" , s3_endpoint,
           "--deleteOnSuccess"
         ]
