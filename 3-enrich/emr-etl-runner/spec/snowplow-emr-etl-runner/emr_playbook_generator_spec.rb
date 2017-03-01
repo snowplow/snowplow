@@ -156,7 +156,7 @@ describe EmrPlaybookGenerator do
       ])
     end
 
-    it 'should only give back the shred step (plus the check empty step) if only shred is true' do
+    it 'should only give back the shred step if only shred is true' do
       res = subject.send(:get_steps, c, false, false, false, true, false, '', [])
       expect(res.length).to eq(5)
       expect(res).to include(*[
@@ -187,6 +187,14 @@ describe EmrPlaybookGenerator do
           "arguments" => [ "--src", "hdfs:///local/snowplow/shredded-events/",
             "--dest", be_a(String), "--s3Endpoint", "s3-eu-west-1.amazonaws.com", "--srcPattern",
             ".*part-.*" ]
+        },
+        {
+          "type" => "CUSTOM_JAR",
+          "name" => 'S3DistCp: shredded HDFS _SUCCESS -> S3',
+          "actionOnFailure" => "CANCEL_AND_WAIT",
+          "jar" => "/usr/share/aws/emr/s3-dist-cp/lib/s3-dist-cp.jar",
+          "arguments" => [ "--src", be_a(String), "--dest", be_a(String),
+            "--s3Endpoint", "s3-eu-west-1.amazonaws.com", "--srcPattern", ".*_SUCCESS" ]
         },
         {
           "type" => "CUSTOM_JAR",
@@ -266,6 +274,14 @@ describe EmrPlaybookGenerator do
           "jar" => "/usr/share/aws/emr/s3-dist-cp/lib/s3-dist-cp.jar",
           "arguments" => [ "--src", "hdfs:///local/snowplow/shredded-events/", "--dest", "sgrun=i/",
             "--s3Endpoint", "s3e", "--srcPattern", ".*part-.*" ]
+        },
+        {
+          "type" => "CUSTOM_JAR",
+          "name" => "S3DistCp: shredded HDFS _SUCCESS -> S3",
+          "actionOnFailure" => "CANCEL_AND_WAIT",
+          "jar" => "/usr/share/aws/emr/s3-dist-cp/lib/s3-dist-cp.jar",
+          "arguments" => [ "--src", "hdfs:///local/snowplow/shredded-events/", "--dest", "sgrun=i/",
+            "--s3Endpoint", "s3e", "--srcPattern", ".*_SUCCESS" ]
         }
       ])
     end
