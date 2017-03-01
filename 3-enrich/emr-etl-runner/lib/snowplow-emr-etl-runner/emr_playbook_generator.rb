@@ -31,6 +31,7 @@ module Snowplow
       ENRICH_STEP_OUTPUT = 'hdfs:///local/snowplow/enriched-events/'
       SHRED_STEP_OUTPUT = 'hdfs:///local/snowplow/shredded-events/'
       PART_REGEX = '.*part-.*'
+      SUCCESS_REGEX = '.*_SUCCESS'
 
       Contract String => Iglu::SchemaKey
       def get_schema_key(version)
@@ -197,6 +198,9 @@ module Snowplow
         output_codec = output_codec_from_compression_format(config[:enrich][:output_compression])
         steps << get_s3distcp_step(legacy, 'S3DistCp: shredded HDFS -> S3', SHRED_STEP_OUTPUT,
           shred_final_output, s3_endpoint, [ '--srcPattern', PART_REGEX ] + output_codec)
+        steps << get_s3distcp_step(legacy, 'S3DistCp: shredded HDFS _SUCCESS -> S3',
+          SHRED_STEP_OUTPUT, shred_final_output, s3_endpoint, [ '--srcPattern', SUCCESS_REGEX ])
+
         steps
       end
 
@@ -241,7 +245,7 @@ module Snowplow
         steps << get_s3distcp_step(legacy, 'S3DistCp: enriched HDFS -> S3', ENRICH_STEP_OUTPUT,
           enrich_final_output, s3_endpoint, [ '--srcPattern', PART_REGEX ] + output_codec)
         steps << get_s3distcp_step(legacy, 'S3DistCp: enriched HDFS _SUCCESS -> S3',
-          ENRICH_STEP_OUTPUT, enrich_final_output, s3_endpoint, [ '--srcPattern', '.*_SUCCESS' ])
+          ENRICH_STEP_OUTPUT, enrich_final_output, s3_endpoint, [ '--srcPattern', SUCCESS_REGEX ])
 
         steps
       end
