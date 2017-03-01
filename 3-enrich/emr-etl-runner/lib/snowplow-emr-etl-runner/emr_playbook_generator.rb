@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Ben Fradet (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2017 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'contracts'
@@ -27,6 +27,10 @@ module Snowplow
       include Contracts
 
       STANDARD_HOSTED_ASSETS = "s3://snowplow-hosted-assets"
+      ENRICH_STEP_INPUT = 'hdfs:///local/snowplow/raw-events/'
+      ENRICH_STEP_OUTPUT = 'hdfs:///local/snowplow/enriched-events/'
+      SHRED_STEP_OUTPUT = 'hdfs:///local/snowplow/shredded-events/'
+      PART_REGEX = '.*part-.*'
 
       Contract String => Iglu::SchemaKey
       def get_schema_key(version)
@@ -83,20 +87,28 @@ module Snowplow
 
         csbe = config[:aws][:s3][:buckets][:enriched]
         enrich_final_output = enrich ? partition_by_run(csbe[:good], run_id) : csbe[:good]
-        enrich_step_output = 'hdfs:///local/snowplow/enriched-events/'
 
         collector_format = config[:collectors][:format]
 
         if enrich
           etl_tstamp = (run_tstamp.to_f * 1000).to_i.to_s
           steps += get_enrich_steps(config, legacy, s3_endpoint, collector_format,
-            assets[:enrich], enrich_step_output, enrich_final_output, run_id, etl_tstamp, resolver,
+            assets[:enrich], enrich_final_output, run_id, etl_tstamp, resolver,
             enrichments)
         end
 
         if shred
-          steps += get_shred_steps(config, legacy, s3_endpoint, s3distcp, enrich, assets[:shred],
-            enrich_step_output, enrich_final_output, run_id, resolver)
+          # If we enriched, we free some space on HDFS by deleting the raw events
+          # otherwise we need to copy the enriched events back to HDFS
+          if enrich
+            steps << get_rmr_step(region, ENRICH_STEP_INPUT, standard_assets_bucket)
+          else
+            steps << get_s3distcp_step(legacy, 'S3DistCp: enriched S3 -> HDFS',
+              enrich_final_output, ENRICH_STEP_OUTPUT, s3_endpoint, [ '--srcPattern', PART_REGEX ])
+          end
+          # Late check whether our target directory is empty
+          steps +=
+            get_shred_steps(config, legacy, s3_endpoint, assets[:shred], run_id, resolver)
         end
 
         if es
@@ -164,28 +176,18 @@ module Snowplow
         steps
       end
 
-      Contract ConfigHash, Bool, String, Bool, String,
-        String, String, String, String => ArrayOf[Hash]
-      def get_shred_steps(config, legacy, s3_endpoint, enrich, jar,
-          enrich_step_output, enrich_final_output, run_id, resolver)
+      Contract ConfigHash, Bool, String, String, String, String => ArrayOf[Hash]
+      def get_shred_steps(config, legacy, s3_endpoint, jar, run_id, resolver)
         steps = []
-
-        part_regex = '.*part-.*'
 
         csbs = config[:aws][:s3][:buckets][:shredded]
         shred_final_output = partition_by_run(csbs[:good], run_id)
-        shred_step_output = 'hdfs:///local/snowplow/shredded-events/'
-
-        if !enrich
-          steps << get_s3distcp_step(legacy, 'S3DistCp: enriched S3 -> HDFS',
-            enrich_final_output, enrich_step_output, s3_endpoint, [ '--srcPattern', part_regex ])
-        end
 
         steps << get_scalding_step('Shred enriched events', jar,
           'com.snowplowanalytics.snowplow.enrich.hadoop.ShredJob',
           {
-            :in     => glob_path(enrich_step_output),
-            :good   => shred_step_output,
+            :in     => glob_path(ENRICH_STEP_OUTPUT),
+            :good   => SHRED_STEP_OUTPUT,
             :bad    => partition_by_run(csbs[:bad], run_id),
             :errors => partition_by_run(csbs[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
           },
@@ -193,19 +195,18 @@ module Snowplow
         )
 
         output_codec = output_codec_from_compression_format(config[:enrich][:output_compression])
-        steps << get_s3distcp_step(legacy, 'S3DistCp: shredded HDFS -> S3', shred_step_output,
-          shred_final_output, s3_endpoint, [ '--srcPattern', part_regex ] + output_codec)
+        steps << get_s3distcp_step(legacy, 'S3DistCp: shredded HDFS -> S3', SHRED_STEP_OUTPUT,
+          shred_final_output, s3_endpoint, [ '--srcPattern', PART_REGEX ] + output_codec)
         steps
       end
 
       Contract ConfigHash, Bool, String, String, String,
-        String, String, String, String, String, ArrayOf[String] => ArrayOf[Hash]
+        String, String, String, String, ArrayOf[String] => ArrayOf[Hash]
       def get_enrich_steps(config, legacy, s3_endpoint, collector_format, jar,
-          enrich_step_output, enrich_final_output, run_id, etl_tstamp, resolver, enrichments)
+          enrich_final_output, run_id, etl_tstamp, resolver, enrichments)
         steps = []
 
         raw_input = config[:aws][:s3][:buckets][:raw][:processing]
-        enrich_step_input = 'hdfs:///local/snowplow/raw-events/'
         csbe = config[:aws][:s3][:buckets][:enriched]
 
         added_args = if is_cloudfront_log(collector_format) || is_ua_ndjson(collector_format)
@@ -218,15 +219,15 @@ module Snowplow
           []
         end
         steps << get_s3distcp_step(legacy, 'S3DistCp: raw S3 -> HDFS',
-          raw_input, enrich_step_input, s3_endpoint, added_args)
+          raw_input, ENRICH_STEP_INPUT, s3_endpoint, added_args)
 
         steps << get_scalding_step('Enrich raw events', jar,
           'com.snowplowanalytics.snowplow.enrich.hadoop.EtlJob',
           {
-            :in     => glob_path(enrich_step_input),
-            :good   => enrich_step_output,
-            :bad    => partition_by_run(config[:aws][:s3][:buckets][:enriched][:bad], run_id),
-            :errors => partition_by_run(config[:aws][:s3][:buckets][:enriched][:errors], run_id, config[:enrich][:continue_on_unexpected_error])
+            :in     => glob_path(ENRICH_STEP_INPUT),
+            :good   => ENRICH_STEP_OUTPUT,
+            :bad    => partition_by_run(csbe[:bad], run_id),
+            :errors => partition_by_run(csbe[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
           },
           [
             '--input_format', collector_format,
@@ -237,10 +238,10 @@ module Snowplow
         )
 
         output_codec = output_codec_from_compression_format(config[:enrich][:output_compression])
-        steps << get_s3distcp_step(legacy, 'S3DistCp: enriched HDFS -> S3', enrich_step_output,
-          enrich_final_output, s3_endpoint, [ '--srcPattern', '.*part-.*' ] + output_codec)
+        steps << get_s3distcp_step(legacy, 'S3DistCp: enriched HDFS -> S3', ENRICH_STEP_OUTPUT,
+          enrich_final_output, s3_endpoint, [ '--srcPattern', PART_REGEX ] + output_codec)
         steps << get_s3distcp_step(legacy, 'S3DistCp: enriched HDFS _SUCCESS -> S3',
-          enrich_step_output, enrich_final_output, s3_endpoint, [ '--srcPattern', '.*_SUCCESS' ])
+          ENRICH_STEP_OUTPUT, enrich_final_output, s3_endpoint, [ '--srcPattern', '.*_SUCCESS' ])
 
         steps
       end
@@ -290,6 +291,18 @@ module Snowplow
           "/home/hadoop/lib/hbase-#{hbase_version}.jar",
           [ "emr.hbase.backup.Main", "--start-master" ]
         )
+      end
+
+      Contract String, String, String => Hash
+      def get_rmr_step(region, location, bucket)
+        get_script_step(region, "Recursively removing content from #{location}",
+          "#{bucket}common/emr/snowplow-hadoop-fs-rmr.sh", [ location ])
+      end
+
+      Contract String, String, String, ArrayOf[String] => Hash
+      def get_script_step(region, name, script, args=[])
+        get_custom_jar_step(name,
+          "s3://#{region}.elasticmapreduce/libs/script-runner/script-runner.jar", [script] + args)
       end
 
       Contract String, String, ArrayOf[String] => Hash

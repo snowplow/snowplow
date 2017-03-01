@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,7 +10,7 @@
 # See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 # Author::    Ben Fradet (mailto:support@snowplowanalytics.com)
-# Copyright:: Copyright (c) 2012-2014 Snowplow Analytics Ltd
+# Copyright:: Copyright (c) 2012-2017 Snowplow Analytics Ltd
 # License::   Apache License Version 2.0
 
 require 'spec_helper'
@@ -247,7 +247,7 @@ describe EmrPlaybookGenerator do
 
   describe '#get_shred_steps' do
     it 'should build a shred and s3distcp steps' do
-      expect(subject.send(:get_shred_steps, c, false, 's3e', true, 'j', 's', 'f', 'i', 'r'))
+      expect(subject.send(:get_shred_steps, c, false, 's3e', 'j', 'i', 'r'))
         .to eq([
         {
           "type" => "CUSTOM_JAR",
@@ -255,41 +255,9 @@ describe EmrPlaybookGenerator do
           "actionOnFailure" => "CANCEL_AND_WAIT",
           "jar" => "j",
           "arguments" => [ "com.snowplowanalytics.snowplow.enrich.hadoop.ShredJob",
-            "--hdfs", "--iglu_config", "cg==", "--input_folder", "s/*",
-            "--output_folder", "hdfs:///local/snowplow/shredded-events/",
-            "--bad_rows_folder", "sbrun=i/" ]
-        },
-        {
-          "type" => "CUSTOM_JAR",
-          "name" => "S3DistCp: shredded HDFS -> S3",
-          "actionOnFailure" => "CANCEL_AND_WAIT",
-          "jar" => "/usr/share/aws/emr/s3-dist-cp/lib/s3-dist-cp.jar",
-          "arguments" => [ "--src", "hdfs:///local/snowplow/shredded-events/", "--dest", "sgrun=i/",
-            "--s3Endpoint", "s3e", "--srcPattern", ".*part-.*" ]
-        }
-      ])
-    end
-
-    it 'should prefix another s3distcp step if enrich is false true' do
-      expect(subject.send(:get_shred_steps, c, false, 's3e', false, 'j', 's', 'f', 'i', 'r'))
-        .to eq([
-        {
-          "type" => "CUSTOM_JAR",
-          "name" => "S3DistCp: enriched S3 -> HDFS",
-          "actionOnFailure" => "CANCEL_AND_WAIT",
-          "jar" => "/usr/share/aws/emr/s3-dist-cp/lib/s3-dist-cp.jar",
-          "arguments" => [ "--src", "f", "--dest", "s",
-            "--s3Endpoint", "s3e", "--srcPattern", ".*part-.*" ]
-        },
-        {
-          "type" => "CUSTOM_JAR",
-          "name" => "Shred enriched events",
-          "actionOnFailure" => "CANCEL_AND_WAIT",
-          "jar" => "j",
-          "arguments" => [ "com.snowplowanalytics.snowplow.enrich.hadoop.ShredJob",
-            "--hdfs", "--iglu_config", "cg==", "--input_folder", "s/*",
-            "--output_folder", "hdfs:///local/snowplow/shredded-events/",
-            "--bad_rows_folder", "sbrun=i/" ]
+            "--hdfs", "--iglu_config", "cg==", "--input_folder",
+            "hdfs:///local/snowplow/enriched-events/*", "--output_folder",
+            "hdfs:///local/snowplow/shredded-events/", "--bad_rows_folder", "sbrun=i/" ]
         },
         {
           "type" => "CUSTOM_JAR",
@@ -305,7 +273,7 @@ describe EmrPlaybookGenerator do
 
   describe '#get_enrich_steps' do
     it 'should build all necessary steps' do
-      expect(subject.send(:get_enrich_steps, c, false, 's3e', 'cloudfront', 'j', 's', 'f',
+      expect(subject.send(:get_enrich_steps, c, false, 's3e', 'cloudfront', 'j', 'f',
           'i', '1', 'r', [])).to eq([
         {
           "type" => "CUSTOM_JAR",
@@ -325,23 +293,23 @@ describe EmrPlaybookGenerator do
             "--hdfs", "--input_format", "cloudfront", "--etl_tstamp", "1",
             "--iglu_config", "cg==", "--enrichments",
             "eyJzY2hlbWEiOiJpZ2x1OmNvbS5zbm93cGxvd2FuYWx5dGljcy5zbm93cGxvdy9lbnJpY2htZW50cy9qc29uc2NoZW1hLzEtMC0wIiwiZGF0YSI6W119",
-            "--input_folder", "hdfs:///local/snowplow/raw-events/*", "--output_folder", "s",
-            "--bad_rows_folder", "ebrun=i/" ]
+            "--input_folder", "hdfs:///local/snowplow/raw-events/*", "--output_folder",
+            "hdfs:///local/snowplow/enriched-events/", "--bad_rows_folder", "ebrun=i/" ]
         },
         {
           "type" => "CUSTOM_JAR",
           "name" => "S3DistCp: enriched HDFS -> S3",
           "actionOnFailure" => "CANCEL_AND_WAIT",
           "jar" => "/usr/share/aws/emr/s3-dist-cp/lib/s3-dist-cp.jar",
-          "arguments" => [ "--src", "s", "--dest", "f", "--s3Endpoint", "s3e",
-            "--srcPattern", ".*part-.*" ]
+          "arguments" => [ "--src", "hdfs:///local/snowplow/enriched-events/", "--dest", "f",
+            "--s3Endpoint", "s3e", "--srcPattern", ".*part-.*" ]
         },
         {
           "type" => "CUSTOM_JAR",
           "name" => "S3DistCp: enriched HDFS _SUCCESS -> S3",
           "actionOnFailure" => "CANCEL_AND_WAIT",
           "jar" => "/usr/share/aws/emr/s3-dist-cp/lib/s3-dist-cp.jar",
-          "arguments" => [ "--src", "s", "--dest", "f",
+          "arguments" => [ "--src", "hdfs:///local/snowplow/enriched-events/", "--dest", "f",
             "--s3Endpoint", "s3e", "--srcPattern", ".*_SUCCESS" ]
         }
       ])
@@ -436,6 +404,40 @@ describe EmrPlaybookGenerator do
         "actionOnFailure" => "CANCEL_AND_WAIT",
         "jar" => "/home/hadoop/lib/hbase-1.8.0.jar",
         "arguments" => [ "emr.hbase.backup.Main", "--start-master" ]
+      })
+    end
+  end
+
+  describe '#get_rmr_step' do
+    it 'should create a script step with the proper script' do
+      expect(subject.send(:get_rmr_step, 'r', 'l', 'b/')).to eq({
+        "type" => "CUSTOM_JAR",
+        "name" => "Recursively removing content from l",
+        "actionOnFailure" => "CANCEL_AND_WAIT",
+        "jar" => "s3://r.elasticmapreduce/libs/script-runner/script-runner.jar",
+        "arguments" => [ "b/common/emr/snowplow-hadoop-fs-rmr.sh", "l" ]
+      })
+    end
+  end
+
+  describe '#get_script_step' do
+    it 'should create a proper script step without args' do
+      expect(subject.send(:get_script_step, 'r', 'n', 's', [])).to eq({
+        "type" => "CUSTOM_JAR",
+        "name" => "n",
+        "actionOnFailure" => "CANCEL_AND_WAIT",
+        "jar" => "s3://r.elasticmapreduce/libs/script-runner/script-runner.jar",
+        "arguments" => [ "s" ]
+      })
+    end
+
+    it 'should create a proper script step with args' do
+      expect(subject.send(:get_script_step, 'r', 'n', 's', [ 'a' ])).to eq({
+        "type" => "CUSTOM_JAR",
+        "name" => "n",
+        "actionOnFailure" => "CANCEL_AND_WAIT",
+        "jar" => "s3://r.elasticmapreduce/libs/script-runner/script-runner.jar",
+        "arguments" => [ "s", "a" ]
       })
     end
   end
