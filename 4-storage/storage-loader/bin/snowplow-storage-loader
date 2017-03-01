@@ -54,6 +54,8 @@ begin
           loader::RedshiftLoader.load_events_and_shredded_types(config, t, snowplow_tracking_enabled)
         when 'postgres'
           loader::PostgresLoader.load_events(config[:storage][:download][:folder], t, config[:skip], config[:include], snowplow_tracking_enabled)
+        when 'dashdb'
+          loader::DashDBLoader.load_atomic_events_into_dashdb(config, t, snowplow_tracking_enabled)
       end
     }
   end
