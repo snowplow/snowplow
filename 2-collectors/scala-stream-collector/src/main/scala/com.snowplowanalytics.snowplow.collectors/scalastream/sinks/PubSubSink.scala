@@ -78,15 +78,17 @@ class PubSubSink(config: CollectorConfig, inputType: InputType.InputType) extend
   override def storeRawEvents(events: List[Array[Byte]], key: String) = {
     debug(s"Writing ${events.size} Thrift records to PubSub topic ${topicName}")
     val messages = events.map(event => Message.of(ByteArray.copyFrom(event)))
-    try {
-        pubSubTopic.publish(messages)
-    } catch {
-      case e: Exception => {
-        error(s"Unable to send events: ${e.getMessage}")
-        e.printStackTrace()
+    if (messages.size != 0) {
+      try {
+          pubSubTopic.publish(messages)
+      } catch {
+        case e: Exception => {
+          error(s"Unable to send events: ${e.getMessage}")
+          e.printStackTrace()
+        }
       }
-    }
-    Nil
+      Nil
+    } else Nil
   }
 
   override def getType = Sink.PubSub
