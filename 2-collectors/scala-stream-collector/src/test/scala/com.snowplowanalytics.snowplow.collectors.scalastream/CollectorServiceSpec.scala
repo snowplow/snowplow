@@ -96,7 +96,7 @@ collector {
       }
     }
 
-    pubsub {
+    gcpubsub {
       google-auth-path: "/path/to/credentials/file.json"
       google-project-id: "projectid-123456"
 

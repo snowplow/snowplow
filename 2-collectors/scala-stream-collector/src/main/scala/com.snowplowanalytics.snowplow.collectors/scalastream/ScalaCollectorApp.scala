@@ -215,7 +215,7 @@ class CollectorConfig(config: Config) {
   private val gcpubsub = sink.getConfig("gcpubsub")
   val googleAuthPath = gcpubsub.getString("google-auth-path")
   val googleProjectId = gcpubsub.getString("google-project-id")
-  private val pubsubTopic = gcpubsub.getConfig("topic")
+  private val gcpubsubTopic = gcpubsub.getConfig("topic")
   val pubsubTopicGoodName = gcpubsubTopic.getString("good")
   val pubsubTopicBadName = gcpubsubTopic.getString("bad")
 
