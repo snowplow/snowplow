@@ -48,7 +48,7 @@ enrich {
   }
 
   pubsub {
-    projecId: "{{gcpProjectId}}"
+    projectId: "{{gcpProjectId}}"
   }
 
   streams {
