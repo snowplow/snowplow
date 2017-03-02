@@ -177,6 +177,7 @@ object KinesisEnrichApp extends App {
   val source = kinesisEnrichConfig.source match {
     case Source.Kafka => new KafkaSource(kinesisEnrichConfig, igluResolver, registry, tracker)
     case Source.Kinesis => new KinesisSource(kinesisEnrichConfig, igluResolver, registry, tracker)
+    case Source.Pubsub => new PubsubSource(kinesisEnrichConfig, igluResolver, registry, tracker)
     case Source.Stdin => new StdinSource(kinesisEnrichConfig, igluResolver, registry, tracker)
   }
 
