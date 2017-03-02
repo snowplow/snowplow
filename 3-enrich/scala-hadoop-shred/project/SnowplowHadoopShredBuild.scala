@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -34,8 +34,6 @@ object SnowplowHadoopShredBuild extends Build {
         Libraries.cascadingCore,
         Libraries.cascadingLocal,
         Libraries.cascadingHadoop,
-        // Libraries.commonsLang,
-        Libraries.jacksonDatabind,
         Libraries.jsonValidator,
         Libraries.yodaTime,
         Libraries.yodaConvert,
@@ -45,7 +43,6 @@ object SnowplowHadoopShredBuild extends Build {
         Libraries.commonEnrich,
         Libraries.scaldingCore,
         Libraries.scaldingArgs,
-        // Libraries.scaldingJson,
         Libraries.scalaz7,
         Libraries.igluClient,
         // Scala (test only)
