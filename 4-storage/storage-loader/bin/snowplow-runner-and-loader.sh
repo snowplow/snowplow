@@ -29,6 +29,10 @@ if [ $ret_val -eq 3 ]
 then
 	echo "No Snowplow logs to process since last run, exiting with return code 0. StorageLoader not run"
 	exit 0
+elif [ $ret_val -eq 4 ]
+then
+    echo "EmrEtlRunner returned 4, directory is not empty. StorageLoader not run"
+    exit 0
 elif [ $ret_val -ne 0 ]
 then
     echo "Error running EmrEtlRunner, exiting with return code ${ret_val}. StorageLoader not run"
