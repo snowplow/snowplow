@@ -27,13 +27,14 @@ object BuildSettings {
   )
 
   // sbt-assembly settings for building a fat jar
-  import sbtassembly.Plugin._
-  import AssemblyKeys._
+  import sbtassembly._
+  import sbtassembly.AssemblyPlugin._
+  import sbtassembly.AssemblyKeys._
   lazy val sbtAssemblySettings = assemblySettings ++ Seq(
 
     // Slightly cleaner jar name
-    jarName in assembly := { name.value + "-" + version.value + ".jar" },
-    
+    assemblyJarName in assembly := { name.value + "-" + version.value + ".jar" },
+
     // Drop these jars
     assemblyExcludedJars in assembly := {
       val cp = (fullClasspath in assembly).value
@@ -50,12 +51,12 @@ object BuildSettings {
       ) 
       cp.filter { jar => excludes(jar.data.getName) }
     },
-    
+
     assemblyMergeStrategy in assembly := {
-        case "project.clj" => MergeStrategy.discard // Leiningen build files
-        case x =>
-          val oldStrategy = (assemblyMergeStrategy in assembly).value
-          oldStrategy(x)
+      case "project.clj" => MergeStrategy.discard // Leiningen build files
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
     }
   )
 
