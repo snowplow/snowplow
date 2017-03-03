@@ -35,7 +35,8 @@ object BuildSettings {
     jarName in assembly := { name.value + "-" + version.value + ".jar" },
     
     // Drop these jars
-    excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
+    assemblyExcludedJars in assembly := {
+      val cp = (fullClasspath in assembly).value
       val excludes = Set(
         "jsp-api-2.1-6.1.14.jar",
         "jsp-2.1-6.1.14.jar",
@@ -47,14 +48,14 @@ object BuildSettings {
         "hadoop-core-1.1.2.jar", // Provided by Amazon EMR. Delete this line if you're not on EMR
         "hadoop-tools-1.1.2.jar" // "
       ) 
-      cp filter { jar => excludes(jar.data.getName) }
+      cp.filter { jar => excludes(jar.data.getName) }
     },
     
-    mergeStrategy in assembly <<= (mergeStrategy in assembly) {
-      (old) => {
+    assemblyMergeStrategy in assembly := {
         case "project.clj" => MergeStrategy.discard // Leiningen build files
-        case x => old(x)
-      }
+        case x =>
+          val oldStrategy = (assemblyMergeStrategy in assembly).value
+          oldStrategy(x)
     }
   )
 
