@@ -27,6 +27,7 @@ import java.util.Properties
 import com.google.cloud.pubsub.spi.v1.Publisher
 import com.google.pubsub.v1.TopicName
 import com.google.pubsub.v1.PubsubMessage
+import com.google.protobuf.ByteString
 
 
 // Logging
@@ -73,7 +74,11 @@ class PubsubSink(config: KinesisEnrichConfig,
     }
 
     for ((value, _) <- events) {
-      pubsubPublisher.publish(PubsubMessage.parseFrom(value.getBytes))
+      pubsubPublisher.publish(
+        PubsubMessage.newBuilder
+          .setData(ByteString.copyFrom(value.getBytes))
+          .build
+      )
     }
 
     true // Always return true as our flush does nothing
@@ -87,6 +92,11 @@ class PubsubSink(config: KinesisEnrichConfig,
   def flush() {
   }
 
+  /**
+   * Create a topic publisher instance, based on the config file settings
+   * @param config The config file settings
+   * @return A Publisher instance
+   */
   private def createPublisher(config: KinesisEnrichConfig): Publisher =
     Publisher.newBuilder(
         TopicName.create(s"${config.projectId}",  s"$topicName")

@@ -51,7 +51,7 @@ import common.enrichments.EnrichmentRegistry
 import com.snowplowanalytics.snowplow.scalatracker.Tracker
 
 /**
- * Source to read events from a Kafka topic
+ * Source to read events from a GCP Pub/Sub topic
  */
 class PubsubSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichmentRegistry: EnrichmentRegistry, tracker: Option[Tracker])
     extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
@@ -83,13 +83,23 @@ class PubsubSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichme
     }
   }
 
+  /**
+   * Get the a subscriber to the Pub/Sub topic, based on the config file
+   * @param config The config file settings
+   * @return A topic subscriber instance
+   */
   private def getTopicSubscriber(config: KinesisEnrichConfig): SubscriberClient = {
     val settings = createSettings(config)
     SubscriberClient.create(settings) 
   }
 
+  /**
+   * Create settings to instantiate the topic subscriber, based on the config file
+   * @param config The config file settings
+   * @return The topic subscriber settings
+   */
   private def createSettings(config: KinesisEnrichConfig): SubscriberSettings = {
-    val subSettingsBuilder = SubscriberSettings.newBuilder()
+    val subSettingsBuilder = SubscriberSettings.defaultBuilder()
     subSettingsBuilder
       .createSubscriptionSettings()
       .getRetrySettingsBuilder()
@@ -98,11 +108,20 @@ class PubsubSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichme
     subSettingsBuilder.build
   }
   
-  private def getPullRequest(config: KinesisEnrichConfig, subscriberClient: SubscriberClient) : PullRequest = {
+  /**
+   * Create the pull request object, needed to pull messages from the topic
+   * @param config The config file settings
+   * @param subscriberClient The topic subscriber instance
+   * @return A Pull Request instance
+   */
+  private def getPullRequest(config: KinesisEnrichConfig, subscriberClient: SubscriberClient): PullRequest = {
     val name = SubscriptionName.create(s"${config.projectId}", s"${config.rawInStream}")
     PullRequest.newBuilder()
       .setSubscriptionWithSubscriptionName(name)
-      .build()
+
+      //TODO: find a sensible configuration for this or put it in the config
+      .setMaxMessages(10) 
+      .build
   }
 
 }
