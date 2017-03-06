@@ -35,7 +35,8 @@ import com.google.pubsub.v1.{
   TopicName,
   PubsubMessage,
   SubscriptionName,
-  PullRequest}
+  PullRequest,
+  ReceivedMessage}
 
 // Scala
 import scala.collection.JavaConverters._
@@ -68,20 +69,32 @@ class PubsubSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichme
     info("Using workerId: " + workerId)
 
     val subscriber = getTopicSubscriber(config)
+    val subscriptionName = SubscriptionName.create(s"${config.projectId}", s"${config.rawInStream}")
     val pullRequest = getPullRequest(config, subscriber)
 
     info(s"Processing raw input Pubsub topic: ${config.rawInStream}")
 
     while (true) {
-      val recordValues = subscriber.pull(pullRequest)
+      val acksAndBytes = subscriber.pull(pullRequest)
         .getReceivedMessagesList
         .asScala
         .toList
-        .map(_.getMessage.getData.toByteArray) // Get the values
+        .map(getDataAndAckId(_)) // Get the values
 
+      val (recordValues, toAck) = acksAndBytes.unzip
+
+      subscriber.acknowledge(subscriptionName, toAck.asJava)
       enrichAndStoreEvents(recordValues)
     }
   }
+
+  /**
+   * Get received message data and ack id
+   * @param rcvdMessage received message instance
+   * @return tuple with received message bytes and ack id
+   */
+  private def getDataAndAckId(rcvdMessage: ReceivedMessage): (Array[Byte], String) =
+    (rcvdMessage.getMessage.getData.toByteArray, rcvdMessage.getAckId)
 
   /**
    * Get the a subscriber to the Pub/Sub topic, based on the config file
