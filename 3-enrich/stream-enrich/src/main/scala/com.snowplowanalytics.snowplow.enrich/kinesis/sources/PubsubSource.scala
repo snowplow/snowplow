@@ -131,9 +131,7 @@ class PubsubSource(config: KinesisEnrichConfig, igluResolver: Resolver, enrichme
     val name = SubscriptionName.create(s"${config.projectId}", s"${config.rawInStream}")
     PullRequest.newBuilder()
       .setSubscriptionWithSubscriptionName(name)
-
-      //TODO: find a sensible configuration for this or put it in the config
-      .setMaxMessages(10) 
+      .setMaxMessages(config.maxRecords) 
       .build
   }
 
