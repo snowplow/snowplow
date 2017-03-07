@@ -38,7 +38,6 @@ module Snowplow
           config[:aws][:s3][:region],
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
-        s3.host = region_to_safe_host(config[:aws][:s3][:region])
 
         # Get S3 location of In Bucket plus local directory
         in_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:shredded][:good])
@@ -99,27 +98,6 @@ module Snowplow
 
         nil
       end
-
-      # Forces Fog to use the Northern Virginia endpoint
-      # (s3-external-1.amazonaws.com), which has better
-      # read-after-write properties than the global
-      # endpoint (s3.amazonaws.com).
-      #
-      # We return nil for any other region to delegate
-      # back to Fog for the most appropriate host (Fog
-      # has its own region_to_host method).
-      #
-      # Parameters:
-      # +region+:: the AWS region
-      def self.region_to_safe_host(region)
-        case region.to_s
-        when 'us-east-1', ''
-          's3-external-1.amazonaws.com'
-        else
-          nil
-        end
-      end
-
     end
   end
 end
