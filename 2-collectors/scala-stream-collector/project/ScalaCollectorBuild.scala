@@ -52,8 +52,7 @@ object ScalaCollectorBuild extends Build {
         Libraries.collectorPayload,
         Libraries.json4sJackson,
         Libraries.kafkaClients,
-        Libraries.googleCloud,
-        Libraries.googleAuth
+        Libraries.gcpPubsub
       )
     )
 }

@@ -22,9 +22,11 @@ import java.io.FileInputStream
 import scala.collection.JavaConversions._
 
 // PubSub
-import com.google.cloud.ByteArray
-import com.google.cloud.pubsub.{PubSub, PubSubOptions, Topic, TopicInfo, Message}
-import com.google.auth.oauth2.GoogleCredentials
+import com.google.cloud.pubsub.spi.v1.Publisher
+import com.google.pubsub.v1.TopicName
+import com.google.pubsub.v1.PubsubMessage
+import com.google.protobuf.ByteString
+
 
 // Config
 import com.typesafe.config.Config
@@ -48,25 +50,28 @@ class PubSubSink(config: CollectorConfig, inputType: InputType.InputType) extend
     case InputType.Bad  => config.pubsubTopicBadName
   }
 
-  private val pubSubTopic = getTopicObject
+  private val pubSubPublisher = createPublisher
 
   /**
-   * Instantiates an existing Topic on Cloud Pub/Sub,
+   * Instantiates a Publisher on an existing topic
    * with the given configuration options. If the name isn't correct, this will fail
    *
    * @return a PubSub Topic object
    */
-  private def getTopicObject: Topic = {
-    val pubsubOptions = if (config.googleAuthPath == "env") {
-        PubSubOptions.getDefaultInstance()
-    } else {
-        val optBuilder = PubSubOptions.newBuilder()
-        optBuilder.setProjectId(config.googleProjectId)
-        optBuilder.setCredentials(GoogleCredentials.fromStream(new FileInputStream(config.googleAuthPath)))
-        optBuilder.build()
-    }
-    val pubsub = pubsubOptions.getService()
-    pubsub.getTopic(topicName)
+  private def createPublisher: Publisher =
+    Publisher.newBuilder(
+        TopicName.create(s"${config.googleProjectId}",  s"$topicName")
+    ).build
+
+  /**
+   * Convert event bytes to PubsubMessage to be published
+   * @param event Event to be converted
+   * @return PubsubMessage instance
+   */
+  private def eventToPubsubMessage(event: Array[Byte]): PubsubMessage = {
+    PubsubMessage.newBuilder
+      .setData(ByteString.copyFrom(event))
+      .build
   }
 
   /**
@@ -77,18 +82,8 @@ class PubSubSink(config: CollectorConfig, inputType: InputType.InputType) extend
    */
   override def storeRawEvents(events: List[Array[Byte]], key: String) = {
     debug(s"Writing ${events.size} Thrift records to PubSub topic ${topicName}")
-    val messages = events.map(event => Message.of(ByteArray.copyFrom(event)))
-    if (messages.size != 0) {
-      try {
-          pubSubTopic.publish(messages)
-      } catch {
-        case e: Exception => {
-          error(s"Unable to send events: ${e.getMessage}")
-          e.printStackTrace()
-        }
-      }
-      Nil
-    } else Nil
+    events.foreach(event => pubSubPublisher.publish(eventToPubsubMessage(event)))
+    Nil
   }
 
   override def getType = Sink.PubSub

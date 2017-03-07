@@ -105,10 +105,6 @@ collector {
 
     gcpubsub {
 
-      # if set to 'env' it will use the GOOGLE_APPLICATION_CREDENTIALS environment variable,
-      # else, it assumes an absolute path, to the json credentials file
-      google-auth-path: "{{collectorPubSubAuthPath}}"
-
       # this is the project ID inside of which your collector will be running
       google-project-id: "{{collectorPubSubProjectId}}"
 

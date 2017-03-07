@@ -34,8 +34,7 @@ object Dependencies {
     val yodaTime         = "2.1"
     val yodaConvert      = "1.2"
     val kafka            = "0.10.1.0"
-    val googleCloud      = "0.8.0"
-    val googleAuth       = "0.6.0"
+    val gcpPubsub        = "0.9.3-alpha"
     // Scala
     val snowplowCommonEnrich = "0.22.0"
     val igluClient       = "0.3.2"
@@ -62,8 +61,7 @@ object Dependencies {
     val yodaTime         = "joda-time"             %  "joda-time"                       % V.yodaTime
     val yodaConvert      = "org.joda"              %  "joda-convert"                    % V.yodaConvert
     val kafkaClients     = "org.apache.kafka"      %  "kafka-clients"                   % V.kafka
-    val googleCloud      = "com.google.cloud"      %  "google-cloud"                    % V.googleCloud
-    val googleAuth       = "com.google.auth"       %  "google-auth-library-oauth2-http" % V.googleAuth
+    val gcpPubsub        = "com.google.cloud"      %  "google-cloud-pubsub"             % V.gcpPubsub
 
     // Scala
     // Exclude netaporter to prevent conflicting cross-version suffixes for shapeless
