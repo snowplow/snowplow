@@ -50,7 +50,8 @@ object SnowplowStreamEnrichBuild extends Build {
         Libraries.igluClient,
         Libraries.snowplowTracker,
         Libraries.kafkaClients,
-        Libraries.gcpPubsub
+        Libraries.gcpPubsub,
+        Libraries.gcpDatastore
         // Add your additional libraries here (comma-separated)...
       )
     )
