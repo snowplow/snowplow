@@ -34,6 +34,7 @@ lazy val root = project.in(file("."))
       Dependencies.Libraries.s3Sdk,
       Dependencies.Libraries.dynamodbSdk,
       Dependencies.Libraries.pubsub,
+      Dependencies.Libraries.datastore,
       Dependencies.Libraries.kafkaClients,
       Dependencies.Libraries.nsqClient,
       Dependencies.Libraries.commonsCodec,
