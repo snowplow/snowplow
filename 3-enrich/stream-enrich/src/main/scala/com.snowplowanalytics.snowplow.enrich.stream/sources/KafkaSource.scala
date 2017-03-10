@@ -22,13 +22,11 @@ package enrich
 package stream
 package sources
 
-import java.net.InetAddress
-import java.util.{Properties, UUID}
+import java.util.Properties
 
 import scala.collection.JavaConverters._
 
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.slf4j.LoggerFactory
 
 import common.enrichments.EnrichmentRegistry
 import iglu.client.Resolver
@@ -43,18 +41,12 @@ class KafkaSource(
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker]
-) extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
+) extends Source(config, igluResolver, enrichmentRegistry, tracker) {
 
-  lazy val log = LoggerFactory.getLogger(getClass())
+  override val MaxRecordSize = None
 
-  /**
-   * Never-ending processing loop over source stream.
-   */
+  /** Never-ending processing loop over source stream. */
   override def run(): Unit = {
-    val workerId = InetAddress.getLocalHost().getCanonicalHostName() +
-      ":" + UUID.randomUUID()
-    log.info("Using workerId: " + workerId)
-
     val consumer = createConsumer(config)
 
     log.info(s"Running Kafka consumer group: ${config.streams.appName}.")

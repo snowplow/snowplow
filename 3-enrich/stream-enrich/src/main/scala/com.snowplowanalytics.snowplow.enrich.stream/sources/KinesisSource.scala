@@ -34,7 +34,6 @@ import com.amazonaws.services.kinesis.clientlibrary.exceptions._
 import com.amazonaws.services.kinesis.clientlibrary.lib.worker._
 import com.amazonaws.services.kinesis.model.Record
 import org.apache.thrift.TDeserializer
-import org.slf4j.LoggerFactory
 
 import common.enrichments.EnrichmentRegistry
 import iglu.client.Resolver
@@ -50,9 +49,9 @@ class KinesisSource(
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker]
-) extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
+) extends Source(config, igluResolver, enrichmentRegistry, tracker) {
 
-  lazy val log = LoggerFactory.getLogger(getClass())
+  override val MaxRecordSize = Some(1000000L)
 
   /**
    * Never-ending processing loop over source stream.

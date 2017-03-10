@@ -23,7 +23,6 @@ package enrich
 package stream
 package sources
 
-// NSQ
 import com.snowplowanalytics.client.nsq.NSQConsumer
 import com.snowplowanalytics.client.nsq.lookup.DefaultNSQLookup
 import com.snowplowanalytics.client.nsq.NSQMessage
@@ -32,24 +31,13 @@ import com.snowplowanalytics.client.nsq.callbacks.NSQMessageCallback
 import com.snowplowanalytics.client.nsq.callbacks.NSQErrorCallback
 import com.snowplowanalytics.client.nsq.exceptions.NSQException
 
-// Iglu
 import iglu.client.Resolver
-
-// Snowplow
 import common.enrichments.EnrichmentRegistry
-
-// Tracker
-import com.snowplowanalytics.snowplow.scalatracker.Tracker
-
-// Logging
-import org.slf4j.LoggerFactory
-
-// This project
+import scalatracker.Tracker
 import model._
 
 /**
   * Source to read raw events from NSQ.
-  *
   * @param config Configuration for NSQ
   * @param igluResolver Instance of resolver for iglu
   * @param enrichmentRegistry EnrichmentRegistry instance
@@ -60,13 +48,11 @@ class NsqSource(
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker]
-) extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
+) extends Source(config, igluResolver, enrichmentRegistry, tracker) {
 
-  lazy val log = LoggerFactory.getLogger(getClass())
+  override val MaxRecordSize = None
 
-  /**
-    * Consumer will be started to wait new message.
-    */
+  /** Consumer will be started to wait new message. */
   override def run(): Unit = {
 
     val nsqCallback = new NSQMessageCallback {

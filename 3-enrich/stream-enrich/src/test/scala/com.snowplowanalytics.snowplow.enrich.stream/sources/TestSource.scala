@@ -37,7 +37,9 @@ class TestSource(
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker]
-) extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
+) extends Source(config, igluResolver, enrichmentRegistry, tracker) {
+
+  override val MaxRecordSize = None
 
   override def run(): Unit =
     throw new RuntimeException("run() should not be called on TestSource")

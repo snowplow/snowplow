@@ -20,16 +20,21 @@ package com.snowplowanalytics.snowplow.enrich.stream
 
 import scala.util.{Failure, Success, Try}
 
-object utils {
-    // to rm once 2.12 as well as the right projections
-    def fold[A, B](t: Try[A])(ft: Throwable => B, fa: A => B): B = t match {
-      case Success(a) => fa(a)
-      case Failure(t) => ft(t)
-    }
+import scalaz._
+import Scalaz._
 
-    def filterOrElse[L, R](e: Either[L, R])(p: R => Boolean, l: => L): Either[L, R] = e match {
-      case Right(r) if p(r) => Right(r)
-      case Right(_)         => Left(l)
-      case o                => o
-    }
+object utils {
+  // to rm once 2.12 as well as the right projections
+  def fold[A, B](t: Try[A])(ft: Throwable => B, fa: A => B): B = t match {
+    case Success(a) => fa(a)
+    case Failure(t) => ft(t)
+  }
+
+  def toValidation[A](t: Try[A]): \/[Throwable, A] = fold(t)(_.left, _.right)
+
+  def filterOrElse[L, R](e: Either[L, R])(p: R => Boolean, l: => L): Either[L, R] = e match {
+    case Right(r) if p(r) => Right(r)
+    case Right(_)         => Left(l)
+    case o                => o
+  }
 }
