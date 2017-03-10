@@ -33,7 +33,6 @@ import com.amazonaws.services.kinesis.model._
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
 import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder
-import org.slf4j.LoggerFactory
 
 import model._
 import scalatracker.Tracker
@@ -48,8 +47,7 @@ class KinesisSink(
   inputType: InputType,
   streamName: String,
   tracker: Option[Tracker]
-) extends ISink {
-  private lazy val log = LoggerFactory.getLogger(getClass())
+) extends Sink {
 
   /** Kinesis records must not exceed 1MB */
   private val MaxBytes = 1000000L
@@ -170,7 +168,7 @@ class KinesisSink(
    * @param events List of events together with their partition keys
    * @return whether to send the stored events to Kinesis
    */
-  def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
+  override def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
     val wrappedEvents = events.map(e => ByteBuffer.wrap(e._1.getBytes(UTF_8)) -> e._2)
     wrappedEvents.foreach(EventStorage.addEvent(_))
 
@@ -192,7 +190,7 @@ class KinesisSink(
    * Blocking method to send all stored records to Kinesis
    * Splits the stored records into smaller batches (by byte size or record number) if necessary
    */
-  def flush(): Unit = {
+  override def flush(): Unit = {
     EventStorage.sealBatch()
     // Send events in the order they were received
     EventStorage.completeBatches.reverse.foreach(b => sendBatch(b.reverse))
