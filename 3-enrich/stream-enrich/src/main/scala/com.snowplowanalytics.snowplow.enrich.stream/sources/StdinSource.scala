@@ -23,8 +23,6 @@ package enrich
 package stream
 package sources
 
-import scala.io.Source
-
 import org.apache.commons.codec.binary.Base64
 
 import common.enrichments.EnrichmentRegistry
@@ -32,22 +30,19 @@ import iglu.client.Resolver
 import model.EnrichConfig
 import scalatracker.Tracker
 
-/**
- * Source to decode raw events (in base64)
- * from stdin.
- */
+/** Source to decode raw events (in base64) from stdin. */
 class StdinSource(
   config: EnrichConfig,
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker]
-) extends AbstractSource(config, igluResolver, enrichmentRegistry, tracker) {
+) extends Source(config, igluResolver, enrichmentRegistry, tracker) {
 
-  /**
-   * Never-ending processing loop over source stream.
-   */
+  override val MaxRecordSize = None
+
+  /** Never-ending processing loop over source stream. */
   override def run(): Unit =
-    for (ln <- Source.stdin.getLines) {
+    for (ln <- scala.io.Source.stdin.getLines) {
       val bytes = Base64.decodeBase64(ln)
       enrichAndStoreEvents(List(bytes))
     }
