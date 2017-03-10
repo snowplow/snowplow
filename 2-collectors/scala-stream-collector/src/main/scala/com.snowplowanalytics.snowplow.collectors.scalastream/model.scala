@@ -85,7 +85,12 @@ package model {
     private def isIam(key: String): Boolean = key == "iam"
     private def isEnv(key: String): Boolean = key == "env"
   }
-  final case class BackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
+  final case class BackoffPolicyConfig(
+    minBackoff: Long,
+    maxBackoff: Long,
+    totalBackoff: Long,
+    multiplier: Double
+  )
   sealed trait SinkConfig
   final case class Kinesis(
     region: String,
@@ -98,6 +103,10 @@ package model {
       case _ => s"https://kinesis.$region.amazonaws.com"
     }
   }
+  final case class PubSub(
+    googleProjectId: String,
+    backoffPolicy: BackoffPolicyConfig
+  ) extends SinkConfig
   final case class Kafka(brokers: String, retries: Int) extends SinkConfig
   final case class Nsq(host: String, port: Int) extends SinkConfig
   case object Stdout extends SinkConfig

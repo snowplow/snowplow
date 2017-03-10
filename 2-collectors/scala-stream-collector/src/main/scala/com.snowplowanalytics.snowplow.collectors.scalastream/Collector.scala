@@ -79,6 +79,8 @@ object Collector {
           val es = new ScheduledThreadPoolExecutor(kc.threadPoolSize)
           (KinesisSink.createAndInitialize(kc, bufferConf, goodStream, es),
             KinesisSink.createAndInitialize(kc, bufferConf, badStream, es))
+        case pc: PubSub =>
+          (new PubSubSink(pc, bufferConf, goodStream), new PubSubSink(pc, bufferConf, badStream))
         case kc: Kafka =>
           (new KafkaSink(kc, bufferConf, goodStream), new KafkaSink(kc, bufferConf, badStream))
         case nc: Nsq => (new NsqSink(nc, goodStream), new NsqSink(nc, badStream))

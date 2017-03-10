@@ -31,13 +31,14 @@ lazy val root = project.in(file("."))
   .settings(
     libraryDependencies ++= Seq(
       // Java
-      Dependencies.Libraries.awsSdk,
+      Dependencies.Libraries.kinesis,
+      Dependencies.Libraries.pubsub,
       Dependencies.Libraries.kafkaClients,
+      Dependencies.Libraries.nsqClient,
       Dependencies.Libraries.yodaTime,
       Dependencies.Libraries.slf4j,
       Dependencies.Libraries.log4jOverSlf4j,
       Dependencies.Libraries.config,
-      Dependencies.Libraries.nsqClient,
       // Scala
       Dependencies.Libraries.scopt,
       Dependencies.Libraries.scalaz7,
