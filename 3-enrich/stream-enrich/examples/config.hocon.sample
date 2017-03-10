@@ -24,6 +24,7 @@ enrich {
   # Sinks currently supported are:
   # 'kinesis' for writing enriched events to one Kinesis stream and invalid events to another.
   # 'kafka' for writing enriched events to one Kafka topic and invalid events to another.
+  # 'pubsub' for writing enriched events to one Cloud Pubsub topic and invalid events to another.
   # 'stdouterr' for writing enriched events to stdout and invalid events to stderr.
   #    Using "sbt assembly" and "java -jar" is recommended to disable sbt
   #    logging.
@@ -46,11 +47,15 @@ enrich {
     brokers: "{{enrichKafkaBrokers}}"
   }
 
+  pubsub {
+    projectId: "{{gcpProjectId}}"
+  }
+
   streams {
     in: {
       raw: "{{enrichStreamsInRaw}}"
 
-      # Maximum number of records to get from Kinesis per call to GetRecords
+      # Maximum number of records to get from Kinesis or PubSub per call to GetRecords
       maxRecords: 10000
 
       # After enrichment, are accumulated in a buffer before being sent to Kinesis.
