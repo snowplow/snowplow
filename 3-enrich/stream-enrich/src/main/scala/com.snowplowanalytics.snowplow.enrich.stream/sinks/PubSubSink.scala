@@ -48,8 +48,7 @@ object PubSubSink {
   ): \/[Throwable, PubSubSink] = for {
     batching <- batchingSettings(bufferConfig).right
     retry = retrySettings(pubSubConfig.backoffPolicy)
-    publisher <-
-      toValidation(createPublisher(pubSubConfig.googleProjectId, topicName, batching, retry))
+    publisher <- toEither(createPublisher(pubSubConfig.googleProjectId, topicName, batching, retry))
     topicExists <- topicExists(pubSubConfig.googleProjectId, topicName)
       .flatMap { b =>
         if (b) b.right
@@ -90,11 +89,11 @@ object PubSubSink {
 
   /** Checks that a PubSub topic exists **/
   private def topicExists(projectId: String, topicName: String): \/[Throwable, Boolean] = for {
-    topicAdminClient <- toValidation(Try(TopicAdminClient.create()))
-    topics <- toValidation(Try(topicAdminClient.listTopics(ProjectName.of(projectId))))
+    topicAdminClient <- toEither(Try(TopicAdminClient.create()))
+    topics <- toEither(Try(topicAdminClient.listTopics(ProjectName.of(projectId))))
       .map(_.iterateAll.asScala.toList)
     exists = topics.map(_.getName).contains(topicName)
-    _ <- toValidation(Try(topicAdminClient.close()))
+    _ <- toEither(Try(topicAdminClient.close()))
   } yield exists
 }
 
