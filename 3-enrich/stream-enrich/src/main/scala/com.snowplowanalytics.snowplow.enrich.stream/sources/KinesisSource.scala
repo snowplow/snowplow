@@ -97,15 +97,13 @@ class KinesisSource(
 
   // Factory needed by the Amazon Kinesis Consumer library to
   // create a processor.
-  class RawEventProcessorFactory(config: EnrichConfig, sink: ISink)
+  class RawEventProcessorFactory(config: EnrichConfig, sink: Sink)
       extends IRecordProcessorFactory {
-    override def createProcessor: IRecordProcessor = {
-      new RawEventProcessor(config, sink);
-    }
+    override def createProcessor: IRecordProcessor = new RawEventProcessor(config, sink)
   }
 
   // Process events from a Kinesis stream.
-  class RawEventProcessor(config: EnrichConfig, sink: ISink)
+  class RawEventProcessor(config: EnrichConfig, sink: Sink)
       extends IRecordProcessor {
     private val thriftDeserializer = new TDeserializer()
 

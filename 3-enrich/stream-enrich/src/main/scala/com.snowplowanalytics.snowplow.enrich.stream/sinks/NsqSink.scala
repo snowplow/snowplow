@@ -19,16 +19,12 @@
 package com.snowplowanalytics.snowplow.enrich.stream
 package sinks
 
-// Java
 import java.nio.charset.StandardCharsets.UTF_8
 
-// NSQ
-import com.snowplowanalytics.client.nsq.NSQProducer
-
-//Scala
 import scala.collection.JavaConverters._
 
-// This project
+import com.snowplowanalytics.client.nsq.NSQProducer
+
 import model._
 
 /**
@@ -37,7 +33,7 @@ import model._
 class NsqSink(
   nsqConfig: NsqConfig,
   topicName: String
-) extends ISink {
+) extends Sink {
 
   private val producer = new NSQProducer().addAddress(nsqConfig.host, nsqConfig.port).start()
 
@@ -52,5 +48,5 @@ class NsqSink(
     !events.isEmpty
   }
 
-  override def flush() = ()
+  override def flush(): Unit = ()
 }
