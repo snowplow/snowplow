@@ -31,6 +31,10 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
 import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.GetObjectRequest
 
+//Google Datastore
+import com.google.cloud.datastore.{DatastoreOptions, Query, Entity, Key, ReadOption}
+import com.google.cloud.datastore.DatastoreOptions.DefaultDatastoreFactory
+
 // Logging
 import org.slf4j.LoggerFactory
 
@@ -75,6 +79,7 @@ object KinesisEnrichApp extends App {
 
   val FilepathRegex = "^file:(.+)$".r
   val DynamoDBRegex = "^dynamodb:([^/]*)/([^/]*)/([^/]*)$".r
+  val GoogleDSRegex = "^googleds:([^/]*)/([^/]*)/([^/]*)$".r
 
   val parser = new ArgotParser(
     programName = generated.Settings.name,
@@ -102,14 +107,14 @@ object KinesisEnrichApp extends App {
 
   // Mandatory resolver argument
   val resolverOption = parser.option[String](
-      List("resolver"), "'file:[filename]' or 'dynamodb:[region/table/key]'", """
+      List("resolver"), "'file:[filename]' or 'dynamodb:[region/table/key]' or 'googleds:[projectId/kind/key]'", """
         |Iglu resolver file.""".stripMargin) {
     (c, opt) => c
   }
 
   // Optional directory of enrichment configuration JSONs
   val enrichmentsOption = parser.option[String](
-      List("enrichments"), "'file:[filename]' or 'dynamodb:[region/table/partialKey]'", """
+      List("enrichments"), "'file:[filename]' or 'dynamodb:[region/table/partialKey]' or 'googleds:[projectId/kind/key]'", """
         |Directory of enrichment configuration JSONs.""".stripMargin) {
     (c, opt) => c
   }
@@ -177,6 +182,7 @@ object KinesisEnrichApp extends App {
   val source = kinesisEnrichConfig.source match {
     case Source.Kafka => new KafkaSource(kinesisEnrichConfig, igluResolver, registry, tracker)
     case Source.Kinesis => new KinesisSource(kinesisEnrichConfig, igluResolver, registry, tracker)
+    case Source.Pubsub => new PubsubSource(kinesisEnrichConfig, igluResolver, registry, tracker)
     case Source.Stdin => new StdinSource(kinesisEnrichConfig, igluResolver, registry, tracker)
   }
 
@@ -191,7 +197,7 @@ object KinesisEnrichApp extends App {
    * Return a JSON string based on the resolver argument
    *
    * @param resolverArgument
-   * @return JSON from a local file or stored in DynamoDB
+   * @return JSON from a local file or stored in DynamoDB or stored in GoogleDS
    */
   def extractResolver(resolverArgument: String): String = resolverArgument match {
     case FilepathRegex(filepath) => {
@@ -203,7 +209,8 @@ object KinesisEnrichApp extends App {
       }
     }
     case DynamoDBRegex(region, table, key) => lookupDynamoDBConfig(region, table, key)
-    case _ => parser.usage(s"Resolver argument [$resolverArgument] must begin with 'file:' or 'dynamodb:'")
+    case GoogleDSRegex(projectId, kind, key) => lookupGoogleDSConfig(projectId, kind, key)
+    case _ => parser.usage(s"Resolver argument [$resolverArgument] must begin with 'file:' or 'dynamodb:' or 'googleds:'")
   }
 
   /**
@@ -221,6 +228,22 @@ object KinesisEnrichApp extends App {
     val dynamoDB = new DynamoDB(dynamoDBClient)
     val item = dynamoDB.getTable(table).getItem("id", key)
     item.getString("json")
+  }
+
+  /**
+   * Fetch configuration from Google Datastore
+   *
+   * @param projectId Project ID on GCP
+   * @param kind The string that describes the kind of entity that holds this config
+   * @param key The value of the entity key for the configuration
+   * @return The JSON stored in Google Datastore
+   */
+  def lookupGoogleDSConfig(projectId: String, kind: String, key: String): String = {
+    val ds = (new DefaultDatastoreFactory).create(DatastoreOptions.getDefaultInstance)
+    ds.get(
+      Key.newBuilder(projectId, kind, key).build,
+      ReadOption.eventualConsistency
+    ).getString("json")
   }
 
   /**
@@ -247,7 +270,20 @@ object KinesisEnrichApp extends App {
           case (jsons, _) => jsons
         }
       }
-      case Some(other) => parser.usage(s"Enrichments argument [$other] must begin with 'file:' or 'dynamodb:'")
+      case Some(GoogleDSRegex(projectId, kind, key)) => {
+        (lookupGoogleDSEnrichments(kind), tracker) match {
+          case (Nil, Some(t)) => {
+            SnowplowTracking.trackApplicationWarning(t, s"No enrichments found with entities of kind ${kind}")
+            Nil
+          }
+          case (Nil, None) => {
+            info(s"No enrichments found with entities of kind ${kind}")
+            Nil
+          }
+          case (jsons, _) => jsons
+        }
+      }
+      case Some(other) => parser.usage(s"Enrichments argument [$other] must begin with 'file:' or 'dynamodb:' or 'googleds:'")
     }
     val combinedJson = ("schema" -> "iglu:com.snowplowanalytics.snowplow/enrichments/jsonschema/1-0-0") ~
     ("data" -> jsons.toList.map(parse(_)))
@@ -288,6 +324,26 @@ object KinesisEnrichApp extends App {
   }
 
   /**
+   * Get a list of enrichment JSONs from Google Datastore
+   *
+   * @param projectId Project ID on GCP
+   * @param kind The string that describes the kind of entity that holds this config
+   * @param key The value of the entity key for the configuration
+   * @return List of JSONs
+   */
+  def lookupGoogleDSEnrichments(kind: String): List[String] = {
+    val ds = (new DefaultDatastoreFactory).create(DatastoreOptions.getDefaultInstance)
+    val q = Query.newEntityQueryBuilder
+      .setKind(kind)
+      .build
+
+    ds.run(q, ReadOption.eventualConsistency)
+      .asScala
+      .toList
+      .map(entity => entity.getString("json"))
+  }
+
+  /**
    * Downloads an object from S3 and returns whether
    * or not it was successful.
    *
@@ -324,6 +380,7 @@ class KinesisEnrichConfig(config: Config) {
   val source = enrich.getString("source") match {
     case "kafka" => Source.Kafka
     case "kinesis" => Source.Kinesis
+    case "pubsub" => Source.Pubsub
     case "stdin" => Source.Stdin
     case "test" => Source.Test
     case _ => throw new RuntimeException("enrich.source unknown.")
@@ -332,6 +389,7 @@ class KinesisEnrichConfig(config: Config) {
   val sink = enrich.getString("sink") match {
     case "kafka" => Sink.Kafka
     case "kinesis" => Sink.Kinesis
+    case "pubsub" => Sink.Pubsub
     case "stdouterr" => Sink.Stdouterr
     case "test" => Sink.Test
     case _ => throw new RuntimeException("enrich.sink unknown.")
@@ -343,6 +401,9 @@ class KinesisEnrichConfig(config: Config) {
 
   private val kafka = enrich.getConfig("kafka")
   val kafkaBrokers = kafka.getString("brokers")
+
+  private val pubsub = enrich.getConfig("pubsub")
+  val projectId = pubsub.getString("projectId")
 
   private val streams = enrich.getConfig("streams")
 
