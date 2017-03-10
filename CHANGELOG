@@ -1,3 +1,23 @@
+Release 87 Chichen Itza (2016-02-21)
+------------------------------------
+EmrEtlRunner: bump to 0.23.0 (#2960)
+EmrEtlRunner: bump JRuby version to 9.1.6.0 (#3050)
+EmrEtlRunner: bump Elasticity to 6.0.10 (#3013)
+EmrEtlRunner: remove AnonIpHash from contracts.rb (#2523)
+EmrEtlRunner: remove UnmatchedLzoFilesError check (#2740)
+EmrEtlRunner: use S3DistCp not Sluice for archive_raw step (#1977)
+EmrEtlRunner: add warning about the array of in buckets in config.yml (#2462)
+EmrEtlRunner: add dedicated return code of 4 for DirectoryNotEmptyError (#2546)
+EmrEtlRunner: add support for specifying EBS for Hadoop workers (#2950)
+EmrEtlRunner: add example EBS configuration to config.yml.sample (#3012)
+EmrEtlRunner: catch Elasticity ThrottlingExceptions while waiting for EMR (#3028)
+EmrEtlRunner: catch Elasticity ArgumentErrors while waiting for EMR (#3027)
+StorageLoader: bump to 0.9.0 (#2961)
+StorageLoader: bump JRuby version to 9.1.6.0 (#3051)
+StorageLoader: fix typo in S3Tasks.download_events (#2888)
+StorageLoader: update manifest table as part of Redshift load transaction (#2280)
+Redshift: added manifest table (#2265)
+
 Release 86 Petra (2016-12-20)
 -----------------------------
 Common: add AWS credentials to .travis.yml (#2963)

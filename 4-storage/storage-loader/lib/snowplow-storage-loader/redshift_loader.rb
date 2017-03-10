@@ -53,6 +53,9 @@ module Snowplow
         # First let's get our statements for shredding (if any)
         shredded_statements = get_shredded_statements(config, target, s3)
 
+        # Now let's get the manifest statement
+        manifest_statement = get_manifest_statement(target[:table], shredded_statements.length)
+
         # Build our main transaction, consisting of COPY and COPY FROM JSON
         # statements, and potentially also a set of table ANALYZE statements.
 
@@ -75,7 +78,7 @@ module Snowplow
           [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:shredded][:good] + altered_enriched_subdirectory, target[:table], target[:maxerror])]
         else
           [build_copy_from_tsv_statement(config, config[:aws][:s3][:buckets][:enriched][:good], target[:table], target[:maxerror])]
-        end + shredded_statements.map(&:copy)
+        end + shredded_statements.map(&:copy) + [manifest_statement]
 
         credentials = [config[:aws][:access_key_id], config[:aws][:secret_access_key]]
 
@@ -147,6 +150,28 @@ module Snowplow
             )
           }
         end
+      end
+
+      # Generates the SQL statement for updating the
+      # manifest table
+      #
+      # Parameters:
+      # +events_table+:: the name of the events table being loaded
+      # +shredded_cardinality+:: the number of shredded child events and contexts tables loaded in this run
+      Contract String, Num => String
+      def self.get_manifest_statement(events_table, shredded_cardinality)
+
+        s = extract_schema(events_table)
+        schema = if s.nil? then "" else "#{s}." end
+
+        "INSERT INTO #{schema}manifest
+          SELECT etl_tstamp, sysdate AS commit_tstamp, count(*) AS event_count, #{shredded_cardinality} AS shredded_cardinality
+          FROM #{events_table}
+          WHERE etl_tstamp IS NOT null
+          GROUP BY 1
+          ORDER BY etl_tstamp DESC
+          LIMIT 1;
+        "
       end
 
       # Looks at the events table to determine if there's
