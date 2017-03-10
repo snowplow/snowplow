@@ -29,13 +29,15 @@ import java.util.UUID
 import scala.util.Random
 import scala.util.control.NonFatal
 
-import org.apache.commons.codec.binary.Base64
+// scalaz import have to be first, there is a weird conflict with json4s imports
 import scalaz.{Sink => _, _}
 import Scalaz._
+import org.apache.commons.codec.binary.Base64
+import org.joda.time.DateTime
 import org.json4s.{ThreadLocal => _, _}
 import org.json4s.JsonDSL._
 import org.json4s.jackson.JsonMethods._
-import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 import common.{EtlPipeline, ValidatedMaybeCollectorPayload}
 import common.enrichments.EnrichmentRegistry
@@ -46,27 +48,21 @@ import model._
 import scalatracker.Tracker
 import sinks._
 
-object AbstractSource {
-  /** Kinesis records must not exceed 1MB */
-  val MaxBytes = 1000000L
+object Source {
 
   /**
    * If a bad row JSON is too big, reduce it's size
-   *
    * @param value Bad row JSON which is too large
    * @return Bad row JSON with `size` field instead of `line` field
    */
   def adjustOversizedFailureJson(value: String): String = {
     val size = getSize(value)
     try {
-
       val jsonWithoutLine = parse(value) removeField {
         case ("line", _) => true
         case _ => false
       }
-
       compact(render({("size" -> size): JValue} merge jsonWithoutLine))
-
     } catch {
       case NonFatal(e) =>
         BadRow.oversizedRow(size, NonEmptyList("Unable to extract errors field from original oversized bad row JSON"))
@@ -75,41 +71,30 @@ object AbstractSource {
 
   /**
    * Convert a too-large successful event to a failure
-   *
    * @param value Event which passed enrichment but was too large
    * @param maximum Maximum allowable bytes
    * @return Bad row JSON
    */
   def oversizedSuccessToFailure(value: String, maximum: Long): String = {
-    val size = AbstractSource.getSize(value)
+    val size = Source.getSize(value)
     BadRow.oversizedRow(size, NonEmptyList(s"Enriched event size of $size bytes is greater than allowed maximum of $maximum"))
   }
 
-  /**
-   * The size of a string in bytes
-   *
-   * @param evt
-   * @return size
-   */
+  /** The size of a string in bytes */
   def getSize(evt: String): Long = ByteBuffer.wrap(evt.getBytes(UTF_8)).capacity.toLong
 }
 
-/**
- * Abstract base for the different sources
- * we support.
- */
-abstract class AbstractSource(
+/** Abstract base for the different sources we support. */
+abstract class Source(
   config: EnrichConfig,
   igluResolver: Resolver,
   enrichmentRegistry: EnrichmentRegistry,
   tracker: Option[Tracker]
 ) {
 
-  val MaxRecordSize = if (config.sinkType == KinesisSink) {
-    Some(AbstractSource.MaxBytes)
-  } else {
-    None
-  }
+  val MaxRecordSize: Option[Long]
+
+  lazy val log = LoggerFactory.getLogger(getClass())
 
   /**
    * Never-ending processing loop over source stream.
@@ -206,7 +191,6 @@ abstract class AbstractSource(
    * in the appropriate sinks. If doing so causes the number of events
    * stored in a sink to become sufficiently large, all sinks are flushed
    * and we return `true`, signalling that it is time to checkpoint
-   *
    * @param binaryData Thrift raw event
    * @return Whether to checkpoint
    */
@@ -218,7 +202,7 @@ abstract class AbstractSource(
       case (value, key) => if (! isTooLarge(value)) {
         value -> key
       } else {
-        AbstractSource.adjustOversizedFailureJson(value) -> key
+        Source.adjustOversizedFailureJson(value) -> key
       }
     }
 
@@ -227,12 +211,11 @@ abstract class AbstractSource(
     val sizeBasedFailures = for {
       (value, key) <- tooBigSuccesses
       m <- MaxRecordSize
-    } yield AbstractSource.oversizedSuccessToFailure(value, m) -> key
+    } yield Source.oversizedSuccessToFailure(value, m) -> key
 
     val successesTriggeredFlush = sink.get.map(_.storeEnrichedEvents(smallEnoughSuccesses))
     val failuresTriggeredFlush = badSink.get.map(_.storeEnrichedEvents(failures ++ sizeBasedFailures))
     if (successesTriggeredFlush == Some(true) || failuresTriggeredFlush == Some(true)) {
-
       // Block until the records have been sent to Kinesis
       sink.get.foreach(_.flush)
       badSink.get.foreach(_.flush)
@@ -245,13 +228,12 @@ abstract class AbstractSource(
 
   /**
    * Whether a record is too large to send to Kinesis
-   *
    * @param evt
    * @return boolean size decision
    */
   private def isTooLarge(evt: String): Boolean = MaxRecordSize match {
     case None => false
-    case Some(m) => AbstractSource.getSize(evt) >= m
+    case Some(m) => Source.getSize(evt) >= m
   }
 
 }

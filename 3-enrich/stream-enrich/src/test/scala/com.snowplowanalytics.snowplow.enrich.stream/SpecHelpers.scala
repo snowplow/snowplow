@@ -218,6 +218,7 @@ object SpecHelpers {
         InConfig("raw"),
         OutConfig("enriched", "bad", "partitionkey"),
         KinesisConfig("region", 10, "TRIM_HORIZON", None, BackoffPolicyConfig(10L, 100L, 1000L, 1.2d)),
+        PubSubConfig("project-id", BackoffPolicyConfig(10L, 100L, 1000L, 1.2d), 10),
         KafkaConfig("brokers", 1),
         NsqConfig("channel", "localhost", 4160, "localhost", 4161),
         BufferConfig(1000L, 100L, 1200L),

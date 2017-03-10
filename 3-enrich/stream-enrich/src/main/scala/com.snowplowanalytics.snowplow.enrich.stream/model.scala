@@ -77,6 +77,7 @@ object model {
     in: InConfig,
     out: OutConfig,
     kinesis: KinesisConfig,
+    pubsub: PubSubConfig,
     kafka: KafkaConfig,
     nsq: NsqConfig,
     buffer: BufferConfig,
@@ -110,7 +111,11 @@ object model {
       case _ => s"https://kinesis.$region.amazonaws.com"
     }
   }
-  final case class PubSubConfig(googleProjectId: String, backoffPolicy: BackoffPolicyConfig)
+  final case class PubSubConfig(
+    googleProjectId: String,
+    backoffPolicy: BackoffPolicyConfig,
+    threadPoolSize: Int
+  )
   final case class KafkaConfig(brokers: String, retries: Int)
   final case class NsqConfig(
     rawChannel: String,

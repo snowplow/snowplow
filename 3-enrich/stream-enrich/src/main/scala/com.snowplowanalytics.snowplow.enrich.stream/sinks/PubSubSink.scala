@@ -30,7 +30,7 @@ import com.google.api.gax.batching.BatchingSettings
 import com.google.api.gax.retrying.RetrySettings
 import com.google.api.gax.rpc.ApiException
 import com.google.cloud.pubsub.v1.{Publisher, TopicAdminClient}
-import com.google.pubsub.v1.{ProjectName, PubsubMessage, TopicName}
+import com.google.pubsub.v1.{ProjectName, PubsubMessage, ProjectTopicName}
 import com.google.protobuf.ByteString
 import org.threeten.bp.Duration
 import scalaz._
@@ -68,7 +68,7 @@ object PubSubSink {
     batchingSettings: BatchingSettings,
     retrySettings: RetrySettings
   ): Try[Publisher] =
-    Try(Publisher.newBuilder(TopicName.of(projectId, topicName))
+    Try(Publisher.newBuilder(ProjectTopicName.of(projectId, topicName))
       .setBatchingSettings(batchingSettings)
       .setRetrySettings(retrySettings)
       .build())

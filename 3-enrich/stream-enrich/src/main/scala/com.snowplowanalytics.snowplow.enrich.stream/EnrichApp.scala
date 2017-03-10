@@ -43,7 +43,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 import org.slf4j.LoggerFactory
 import pureconfig._
-import scalaz.{Sink => _, _}
+import scalaz.{Sink => _, Source => _, _}
 import Scalaz._
 
 import common.FatalEtlError
