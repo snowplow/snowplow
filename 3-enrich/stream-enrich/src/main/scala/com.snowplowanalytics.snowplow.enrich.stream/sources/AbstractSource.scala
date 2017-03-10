@@ -136,7 +136,7 @@ abstract class AbstractSource(
    * @param inputType Whether the sink is for good events or bad events
    * @return ThreadLocal sink
    */
-  private def getThreadLocalSink(inputType: InputType) = new ThreadLocal[Option[ISink]] {
+  private def getThreadLocalSink(inputType: InputType) = new ThreadLocal[Option[sinks.Sink]] {
     val streamName = getStreamName(inputType)
     lazy val kafkaConfig = config.streams.kafka
     lazy val kinesisConfig = config.streams.kinesis

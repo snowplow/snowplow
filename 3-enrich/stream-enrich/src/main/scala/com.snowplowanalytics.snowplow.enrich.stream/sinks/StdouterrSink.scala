@@ -24,7 +24,7 @@ import model._
 /**
  * Stdouterr Sink for Scala enrichment
  */
-class StdouterrSink(inputType: InputType) extends ISink {
+class StdouterrSink(inputType: InputType) extends Sink {
 
   /**
    * Side-effecting function to store the EnrichedEvent
@@ -37,7 +37,7 @@ class StdouterrSink(inputType: InputType) extends ISink {
    * @param events Sequence of enriched events and (unused) partition keys
    * @return Whether to checkpoint
    */
-  def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
+  override def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
     inputType match {
       case Good => events.foreach(e => println(e._1)) // To stdout
       case Bad => events.foreach(e => Console.err.println(e._1)) // To stderr
@@ -45,5 +45,5 @@ class StdouterrSink(inputType: InputType) extends ISink {
     !events.isEmpty
   }
 
-  def flush() = ()
+  override def flush(): Unit = ()
 }
