@@ -84,6 +84,12 @@ object model {
   )
   final case class InConfig(raw: String)
   final case class OutConfig(enriched: String, bad: String, partitionKey: String)
+  final case class BackoffPolicyConfig(
+    minBackoff: Long,
+    maxBackoff: Long,
+    totalBackoff: Long,
+    multiplier: Double
+  )
   final case class KinesisConfig(
     region: String,
     maxRecords: Int,
@@ -104,7 +110,7 @@ object model {
       case _ => s"https://kinesis.$region.amazonaws.com"
     }
   }
-  final case class BackoffPolicyConfig(minBackoff: Long, maxBackoff: Long)
+  final case class PubSubConfig(googleProjectId: String, backoffPolicy: BackoffPolicyConfig)
   final case class KafkaConfig(brokers: String, retries: Int)
   final case class NsqConfig(
     rawChannel: String,

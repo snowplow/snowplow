@@ -28,11 +28,12 @@ object Dependencies {
     // Java
     val awsSdk               = "1.11.115"
     val kinesisClient        = "1.8.1"
+    val pubsub               = "0.35.0-beta"
     val kafkaClients         = "0.10.2.1"
+    val nsqClient            = "1.2.0"
     val commonsCodec         = "1.10"
     val config               = "1.3.1"
     val slf4j                = "1.7.5"
-    val nsqClient            = "1.2.0"
     // Scala
     val scopt                = "3.6.0"
     val scalaz7              = "7.0.9"
@@ -53,12 +54,13 @@ object Dependencies {
     val dynamodbSdk          = "com.amazonaws"         %  "aws-java-sdk-dynamodb"     % V.awsSdk
     val s3Sdk                = "com.amazonaws"         %  "aws-java-sdk-s3"           % V.awsSdk
     val kinesisClient        = "com.amazonaws"         %  "amazon-kinesis-client"     % V.kinesisClient
+    val pubsub               = "com.google.cloud"      %  "google-cloud-pubsub"       % V.pubsub
     val kafkaClients         = "org.apache.kafka"      %  "kafka-clients"             % V.kafkaClients
+    val nsqClient            = "com.snowplowanalytics" %  "nsq-java-client"           % V.nsqClient
     val commonsCodec         = "commons-codec"         %  "commons-codec"             % V.commonsCodec
     val config               = "com.typesafe"          %  "config"                    % V.config
     val slf4j                = "org.slf4j"             %  "slf4j-simple"              % V.slf4j
     val log4jOverSlf4j       = "org.slf4j"             %  "log4j-over-slf4j"          % V.slf4j
-    val nsqClient            = "com.snowplowanalytics" %  "nsq-java-client"           % V.nsqClient
     // Scala
     val scopt                = "com.github.scopt"      %% "scopt"                     % V.scopt
     val scalaz7              = "org.scalaz"            %% "scalaz-core"               % V.scalaz7

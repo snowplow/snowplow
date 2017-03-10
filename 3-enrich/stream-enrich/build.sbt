@@ -29,16 +29,17 @@ lazy val root = project.in(file("."))
   .settings(
     libraryDependencies ++= Seq(
       // Java
-      Dependencies.Libraries.kinesisSdk,
-      Dependencies.Libraries.dynamodbSdk,
-      Dependencies.Libraries.s3Sdk,
       Dependencies.Libraries.kinesisClient,
+      Dependencies.Libraries.kinesisSdk,
+      Dependencies.Libraries.s3Sdk,
+      Dependencies.Libraries.dynamodbSdk,
+      Dependencies.Libraries.pubsub,
       Dependencies.Libraries.kafkaClients,
+      Dependencies.Libraries.nsqClient,
       Dependencies.Libraries.commonsCodec,
       Dependencies.Libraries.config,
       Dependencies.Libraries.slf4j,
       Dependencies.Libraries.log4jOverSlf4j,
-      Dependencies.Libraries.nsqClient,
       // Scala
       Dependencies.Libraries.scopt,
       Dependencies.Libraries.scalaz7,

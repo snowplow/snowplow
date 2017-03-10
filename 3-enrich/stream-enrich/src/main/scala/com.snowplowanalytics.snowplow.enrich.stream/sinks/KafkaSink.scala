@@ -23,7 +23,6 @@ package sinks
 import java.util.Properties
 
 import org.apache.kafka.clients.producer._
-import org.slf4j.LoggerFactory
 
 import model._
 import scalatracker.Tracker
@@ -37,9 +36,7 @@ class KafkaSink(
   inputType: InputType,
   topicName: String,
   tracker: Option[Tracker]
-) extends ISink {
-
-  private lazy val log = LoggerFactory.getLogger(getClass())
+) extends Sink {
 
   private val kafkaProducer = createProducer(kafkaConfig, bufferConfig)
 
@@ -50,7 +47,7 @@ class KafkaSink(
    * @param events List of events together with their partition keys
    * @return whether to send the stored events to Kafka
    */
-  def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
+  override def storeEnrichedEvents(events: List[(String, String)]): Boolean = {
 
     // Log BadRows
     inputType match {
@@ -72,7 +69,7 @@ class KafkaSink(
   }
 
   /** Blocking method to send all buffered records to Kafka. */
-  def flush(): Unit = kafkaProducer.flush()
+  override def flush(): Unit = kafkaProducer.flush()
 
   private def createProducer(
     kafkaConfig: KafkaConfig,

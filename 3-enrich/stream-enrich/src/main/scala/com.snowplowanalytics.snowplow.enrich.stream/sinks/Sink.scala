@@ -19,15 +19,16 @@
 package com.snowplowanalytics.snowplow.enrich
 package stream.sinks
 
+import org.slf4j.LoggerFactory
+
 /**
  * An interface for all sinks to use to store events.
  */
-trait ISink {
+trait Sink {
 
-  /**
-   * Side-effecting function to store the EnrichedEvent
-   * to the given output stream.
-   */
+  lazy val log = LoggerFactory.getLogger(getClass())
+
+  /** Side-effecting function to store the EnrichedEvent to the given output stream. */
   def storeEnrichedEvents(events: List[(String, String)]): Boolean
 
   def flush(): Unit
