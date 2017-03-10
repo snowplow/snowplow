@@ -56,10 +56,10 @@ object PubSubSource {
     sub: ProjectSubscriptionName,
     topic: ProjectTopicName
   ): \/[Throwable, Subscription] = for {
-    subscriptionAdminClient <- toValidation(Try(SubscriptionAdminClient.create()))
+    subscriptionAdminClient <- toEither(Try(SubscriptionAdminClient.create()))
     subscription = subscriptionAdminClient.createSubscription(
       sub, topic, PushConfig.getDefaultInstance(), 0)
-    _ <- toValidation(Try(subscriptionAdminClient.close()))
+    _ <- toEither(Try(subscriptionAdminClient.close()))
   } yield subscription
 }
 
