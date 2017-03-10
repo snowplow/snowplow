@@ -29,6 +29,7 @@ object Dependencies {
     val awsSdk               = "1.11.115"
     val kinesisClient        = "1.8.1"
     val pubsub               = "0.37.0-beta"
+    val datastore            = "1.19.0"
     val kafkaClients         = "0.10.2.1"
     val nsqClient            = "1.2.0"
     val commonsCodec         = "1.10"
@@ -55,6 +56,7 @@ object Dependencies {
     val s3Sdk                = "com.amazonaws"         %  "aws-java-sdk-s3"           % V.awsSdk
     val kinesisClient        = "com.amazonaws"         %  "amazon-kinesis-client"     % V.kinesisClient
     val pubsub               = "com.google.cloud"      %  "google-cloud-pubsub"       % V.pubsub
+    val datastore            = "com.google.cloud"      %  "google-cloud-datastore"    % V.datastore
     val kafkaClients         = "org.apache.kafka"      %  "kafka-clients"             % V.kafkaClients
     val nsqClient            = "com.snowplowanalytics" %  "nsq-java-client"           % V.nsqClient
     val commonsCodec         = "commons-codec"         %  "commons-codec"             % V.commonsCodec

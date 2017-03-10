@@ -32,12 +32,12 @@ import sys.process._
 
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.client.builder.AwsClientBuilder.EndpointConfiguration
-import com.amazonaws.services.dynamodbv2.model.ScanRequest
-import com.amazonaws.services.dynamodbv2.model.AttributeValue
+import com.amazonaws.services.dynamodbv2.model.{AttributeValue, ScanRequest}
 import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.model.GetObjectRequest
+import com.google.cloud.datastore._
 import com.typesafe.config.ConfigFactory
 import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
@@ -62,7 +62,8 @@ object EnrichApp {
 
   val FilepathRegex = "^file:(.+)$".r
   val DynamoDBRegex = "^dynamodb:([^/]*)/([^/]*)/([^/]*)$".r
-  val regexMsg = "'file:[filename]' or 'dynamodb:[region/table/key]'"
+  val DatastoreRegex = "^datastore:([^/]*)/([^/]*)$".r
+  val regexMsg = "'file:[filename]', 'dynamodb:[region/table/key]' or 'datastore:[kind/key]'"
 
   case class FileConfig(
     config: File = new File("."),
@@ -86,14 +87,14 @@ object EnrichApp {
         .text(s"Iglu resolver file, $regexMsg")
         .action((r: String, c: FileConfig) => c.copy(resolver = r))
         .validate(_ match {
-          case FilepathRegex(_) | DynamoDBRegex(_, _, _) => success
+          case FilepathRegex(_) | DynamoDBRegex(_, _, _) | DatastoreRegex(_, _) => success
           case _ => failure(s"Resolver doesn't match accepted uris: $regexMsg")
         })
       opt[String]("enrichments").optional().valueName("<enrichment directory uri>")
         .text(s"Directory of enrichment configuration JSONs, $regexMsg")
         .action((e: String, c: FileConfig) => c.copy(enrichmentsDir = Some(e)))
         .validate(_ match {
-          case FilepathRegex(_) | DynamoDBRegex(_, _, _) => success
+          case FilepathRegex(_) | DynamoDBRegex(_, _, _) | DatastoreRegex(_, _) => success
           case _ => failure(s"Enrichments directory doesn't match accepted uris: $regexMsg")
         })
       opt[Unit]("force-ip-lookups-download")
@@ -155,10 +156,10 @@ object EnrichApp {
     cacheFiles(registry, forceDownload, provider).fold(fs => throw FatalEtlError(fs), _ => ())
 
     val source = ec.sourceType match {
-      case KafkaSource => new KafkaSource(ec, igluResolver, registry, tracker)
       case KinesisSource => new KinesisSource(ec, igluResolver, registry, tracker)
-      case StdinSource => new StdinSource(ec, igluResolver, registry, tracker)
+      case KafkaSource => new KafkaSource(ec, igluResolver, registry, tracker)
       case NsqSource => new NsqSource(ec, igluResolver, registry, tracker)
+      case StdinSource => new StdinSource(ec, igluResolver, registry, tracker)
     }
 
     tracker.foreach(SnowplowTracking.initializeSnowplowTracking)
@@ -219,8 +220,9 @@ object EnrichApp {
         "Iglu resolver configuration file \"%s\" does not exist".format(filepath).failure
       }
     case DynamoDBRegex(region, table, key) =>
-      lookupDynamoDBConfig(provider, region, table, key).success
-    case _ => s"Resolver argument [$resolverArgument] must begin with 'file:' or 'dynamodb:'".failure
+      lookupDynamoDBResolver(provider, region, table, key).success
+    case DatastoreRegex(kind, key) => lookupDatastoreResolver(kind, key).validation
+    case _ => s"Resolver argument [$resolverArgument] must match $regexMsg".failure
   }
 
   /**
@@ -232,7 +234,7 @@ object EnrichApp {
    * @param key The value of the primary key for the configuration
    * @return The JSON stored in DynamoDB
    */
-  def lookupDynamoDBConfig(provider: AWSCredentialsProvider,
+  def lookupDynamoDBResolver(provider: AWSCredentialsProvider,
       region: String, table: String, key: String): String = {
     val dynamoDBClient = AmazonDynamoDBClientBuilder
       .standard()
@@ -243,6 +245,22 @@ object EnrichApp {
     val item = dynamoDB.getTable(table).getItem("id", key)
     item.getString("json")
   }
+
+  /**
+   * Retrieves the resolver from Google Cloud Datastore, assumes the entity key is "json".
+   * @param kind the kind of the Entity to retrieve
+   * @param keyName the name of the key where the resolver is stored
+   * @return the resolver as JSON
+   */
+  def lookupDatastoreResolver(kind: String, keyName: String): \/[String, String] = for {
+    datastore <- DatastoreOptions.getDefaultInstance().getService().right
+    key = datastore.newKeyFactory().setKind(kind).newKey(keyName)
+    // weird varargs overloading causes conflicts
+    valueOrNull <- utils.toEither(Try(datastore.get(key, List.empty[ReadOption]: _*)))
+      .leftMap(_.getMessage)
+    value <- Option(valueOrNull).fold("Null value".left[Entity])(_.right[String])
+    json <- utils.toEither(Try(value.getString("json"))).leftMap(_.getMessage)
+  } yield json
 
   /**
    * Return an enrichment configuration JSON based on the enrichments argument
@@ -266,6 +284,12 @@ object EnrichApp {
           case Nil => s"No enrichments found with partial key $partialKey".failure
           case js => js.success
         }
+      case DatastoreRegex(kind, partialKey) =>
+        lookupDatastoreEnrichments(kind, partialKey).validation.leftMap(_.getMessage)
+          .flatMap {
+            case Nil => s"No enrichments found with partial key $partialKey".failure
+            case js => js.success
+          }
       case other => s"Enrichments argument [$other] must match $regexMsg".failure
     }.getOrElse(Nil.success)
 
@@ -314,6 +338,19 @@ object EnrichApp {
       }
     } flatMap(_.get("json"))
   }
+
+  def lookupDatastoreEnrichments(
+      kind: String, partialKey: String): \/[Throwable, List[String]] = for {
+    datastore <- DatastoreOptions.getDefaultInstance().getService().right
+    query = Query.newEntityQueryBuilder().setKind(kind).build()
+    // weird varargs overloading causes conflicts
+    values <- utils.toEither(Try(datastore.run(query, List.empty[ReadOption]: _*)))
+      .map(_.asScala.toList)
+    jsons <- values
+      .filter(v => v.getKey() != null && v.getKey().getName().startsWith(partialKey))
+      .map(v => utils.toEither(Try(v.getString("json"))))
+      .sequenceU
+  } yield jsons
 
   /**
    * Downloads an object from S3 and returns whether or not it was successful.

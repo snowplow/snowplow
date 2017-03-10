@@ -30,7 +30,7 @@ object utils {
     case Failure(t) => ft(t)
   }
 
-  def toValidation[A](t: Try[A]): \/[Throwable, A] = fold(t)(_.left, _.right)
+  def toEither[A](t: Try[A]): \/[Throwable, A] = fold(t)(_.left, _.right)
 
   def filterOrElse[L, R](e: Either[L, R])(p: R => Boolean, l: => L): Either[L, R] = e match {
     case Right(r) if p(r) => Right(r)
