@@ -28,6 +28,6 @@ require_relative 'snowplow-storage-loader/sanitization'
 module Snowplow
   module StorageLoader
     NAME          = "snowplow-storage-loader"
-    VERSION       = "0.10.0-rc3"
+    VERSION       = "0.10.0-rc4"
   end
 end
