@@ -1,0 +1,12 @@
+# JVM-specific
+*.class
+
+# sbt specific
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# Vagrant
+.vagrant
