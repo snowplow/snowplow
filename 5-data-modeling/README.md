@@ -1,6 +1,6 @@
 # Data modeling
 
-![architecture] [architecture-image]
+![architecture][architecture-image]
 
 ## What is data modeling?
 
@@ -26,7 +26,7 @@ Coming soon.
 
 The data models are copyright 2016 Snowplow Analytics Ltd.
 
-Licensed under the [Apache License, Version 2.0] [license] (the "License");
+Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
 
 Unless required by applicable law or agreed to in writing, software
