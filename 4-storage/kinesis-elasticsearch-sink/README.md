@@ -6,7 +6,7 @@ The Kinesis Elasticsearch Sink consumes Snowplow enriched events or failed event
 
 ## Building
 
-Assuming you already have [SBT 0.13.0] [sbt] installed:
+Assuming you already have [SBT 0.13.0][sbt] installed:
 
     $ git clone git://github.com/snowplow/snowplow.git
     $ cd 4-storage/kinesis-elasticsearch-sink
@@ -50,14 +50,14 @@ Next, start the sink, making sure to specify your new config file:
 
 | Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
 |-----------------------------|-----------------------|--------------------------------------|
-| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
-| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
+| ![i1][techdocs-image]      | ![i2][setup-image]   | ![i3][roadmap-image]                |
+| [Technical Docs][techdocs] | [Setup Guide][setup] | _coming soon_                        |
 
 ## Copyright and license
 
 Copyright 2014 Snowplow Analytics Ltd.
 
-Licensed under the [Apache License, Version 2.0] [license] (the "License");
+Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
 
 Unless required by applicable law or agreed to in writing, software
