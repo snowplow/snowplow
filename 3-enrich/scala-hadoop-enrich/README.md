@@ -2,15 +2,15 @@
 
 ## Introduction
 
-This is the Snowplow Enrichment process implemented for Hadoop using [Scalding] [scalding]. The Hadoop Enrichment parses raw Snowplow event logs, extracts the Snowplow events, enriches them (e.g. with geo-location information) and then writes them out to Snowplow-format event files.
+This is the Snowplow Enrichment process implemented for Hadoop using [Scalding][scalding]. The Hadoop Enrichment parses raw Snowplow event logs, extracts the Snowplow events, enriches them (e.g. with geo-location information) and then writes them out to Snowplow-format event files.
 
-The Snowplow Hadoop Enrichment process is an alternative to the Snowplow [Kinesis Enrichment] [kinesis-enrich] process.
+The Snowplow Hadoop Enrichment process is an alternative to the Snowplow [Kinesis Enrichment][kinesis-enrich] process.
 
 ## Technical overview
 
-Scala Hadoop Enrich is written in [Scalding] [scalding], the Scala library/DSL on top of [Cascading] [cascading], the Java data processing framework which in turn wraps Hadoop.
+Scala Hadoop Enrich is written in [Scalding][scalding], the Scala library/DSL on top of [Cascading][cascading], the Java data processing framework which in turn wraps Hadoop.
 
-The process can be run on [Amazon Elastic MapReduce] [emr] using the [EmrEtlRunner] [emr-etl-runner] Ruby app.
+The process can be run on [Amazon Elastic MapReduce][emr] using the [EmrEtlRunner][emr-etl-runner] Ruby app.
 
 ## Building
 
@@ -36,14 +36,14 @@ If you get errors reported in some tests, run those tests individually with `tes
 
 | Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
 |-----------------------------|-----------------------|--------------------------------------|
-| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
-| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
+| ![i1][techdocs-image]      | ![i2][setup-image]   | ![i3][roadmap-image]                |
+| [Technical Docs][techdocs] | [Setup Guide][setup] | _coming soon_                        |
 
 ## Copyright and license
 
 Copyright 2012-2015 Snowplow Analytics Ltd.
 
-Licensed under the [Apache License, Version 2.0] [license] (the "License");
+Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
 
 Unless required by applicable law or agreed to in writing, software

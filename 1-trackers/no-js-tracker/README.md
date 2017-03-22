@@ -8,22 +8,22 @@ The SnowPlow No-JavaScript (No-JS) tracker can be used to track views of HTML pa
 
 The No-JavaScript tracker is effectively a wizard that generates a static SnowPlow tracking tag for a particular HTML page e.g. email. The wizard takes a set of inputs e.g. collector endpoint and page title, and generates a tracking tag that works with any of the SnowPlow collectors.
 
-The wizard source code can be found [here] [wizard]. The logic for generating the tag is stored in the [Javascript file] [js-wizard] invoked by the wizard.
+The wizard source code can be found [here][wizard]. The logic for generating the tag is stored in the [Javascript file][js-wizard] invoked by the wizard.
 
 ## Find out more
 
 | Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
 |-----------------------------|-----------------------|--------------------------------------|
-| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
-| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
+| ![i1][techdocs-image]      | ![i2][setup-image]   | ![i3][roadmap-image]                |
+| [Technical Docs][techdocs] | [Setup Guide][setup] | _coming soon_                        |
 
-Also see [this introductory blog post] [intro-blog-post]. A hosted version of the wizard can be found [on the SnowPlow Analytics website] [hosted-wizard].
+Also see [this introductory blog post][intro-blog-post]. A hosted version of the wizard can be found [on the SnowPlow Analytics website][hosted-wizard].
 
 ## Copyright and license
 
 The No-JavaScript Tracker is copyright 2012-2013 SnowPlow Analytics Ltd.
 
-Licensed under the [Apache License, Version 2.0] [license] (the "License");
+Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
 
 Unless required by applicable law or agreed to in writing, software
