@@ -71,3 +71,10 @@ deploy:
     on:
       tags: true
       condition: '"$(.travis/is_emr_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+  - provider: script
+    script: ./.travis/deploy_event_manifest_populator.sh $TRAVIS_TAG
+    skip_cleanup: true
+    on:
+      tags: true
+      condition: '"$(.travis/is_event_manifest_populator_release_tag.sh $TRAVIS_TAG)" == "" && $? == 0'
+

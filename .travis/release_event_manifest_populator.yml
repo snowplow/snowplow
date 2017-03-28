@@ -1,0 +1,40 @@
+---
+# --- Variables --- #
+
+local:
+  root_dir : <%= ENV['TRAVIS_BUILD_DIR'] %>
+
+# --- Release Manager Config --- #
+
+# Required: deployment targets
+targets:
+  - type              : "awss3"
+    access_key_id     : <%= ENV['AWS_ACCESS_KEY'] %>
+    secret_access_key : <%= ENV['AWS_SECRET_KEY'] %>
+
+# Required: packages to be deployed
+packages:
+  # AWS S3 plain upload example
+  - name     : "event-manifest-populator-asset"        # Just for convenience
+    bucket   : "snowplow-hosted-assets"
+    path     : "5-data-modeling/event-manifest-populator"
+    region   : "us-west-1"
+    publish  : true
+    override : false
+    continue_on_conflict : false
+    version  : <%= FUNC['sbt_version(5-data-modeling/event-manifest-populator/)'] %>
+
+    # Required IF '--check-version' is passed: will assert that both versions are the same
+    build_version : <%= ENV['TRAVIS_BUILD_RELEASE_TAG'] %>
+
+    # Optional: Build commands
+    build_commands:
+      - cd 5-data-modeling/event-manifest-populator && sbt assembly && cd ../..
+
+    # Required: Artifact. Version will be inserted between prefix and suffix
+    artifacts:
+      - type   : "asis"
+        prefix : "event-manifest-populator-"
+        suffix : ".jar"
+        binary_paths:
+          - "5-data-modeling/event-manifest-populator/target/scala-2.11/event-manifest-populator-{{ packages.0.build_version }}.jar"
