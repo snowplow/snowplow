@@ -24,7 +24,7 @@ from boto.emr.step import JarStep
 
 
 DIR_WITH_JAR = "./target/scala-2.11/"
-JAR_FILE = "event-manifest-populator-0.1.0.jar"
+JAR_FILE = "event-manifest-populator-0.1.0-rc1.jar"
 
 S3_REGIONS = {'us-east-1': Location.DEFAULT,
               'us-west-1': Location.USWest,
