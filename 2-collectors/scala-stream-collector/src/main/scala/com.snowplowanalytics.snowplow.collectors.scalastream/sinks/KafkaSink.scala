@@ -52,7 +52,7 @@ class KafkaSink(
     props.put("linger.ms", bufferConfig.timeLimit.toString)
     props.put("key.serializer",
       "org.apache.kafka.common.serialization.StringSerializer")
-    props.put("value.serializer", 
+    props.put("value.serializer",
       "org.apache.kafka.common.serialization.ByteArraySerializer")
 
     new KafkaProducer[String, Array[Byte]](props)
