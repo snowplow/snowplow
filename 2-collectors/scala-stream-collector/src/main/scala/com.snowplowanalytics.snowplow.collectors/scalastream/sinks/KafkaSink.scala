@@ -57,11 +57,12 @@ class KafkaSink(config: CollectorConfig, inputType: InputType.InputType) extends
     props.put("bootstrap.servers", config.kafkaBrokers)
     props.put("acks", "all")
     props.put("retries", "0")
-    props.put("batch.size", config.byteLimit.toString)
+    props.put("buffer.memory", config.byteLimit.toString)
+    props.put("batch.size", config.recordLimit.toString)
     props.put("linger.ms", config.timeLimit.toString)
-    props.put("key.serializer", 
+    props.put("key.serializer",
       "org.apache.kafka.common.serialization.StringSerializer")
-    props.put("value.serializer", 
+    props.put("value.serializer",
       "org.apache.kafka.common.serialization.ByteArraySerializer")
 
     new KafkaProducer[String, Array[Byte]](props)
