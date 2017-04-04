@@ -143,8 +143,11 @@ module Snowplow
       #   org_schema_web_page_1
       #
       # Parameters:
-      # +schema+:: the schema that tables should live in      
-      Contract String => String
+      # +schema+:: the schema that tables should live in
+      # +vendor+:: the vendor of the schema
+      # +name+:: the name of the schema
+      # +version_model+:: the MODEL part of the schema's SchemaVer version
+      Contract Maybe[String], String, String, String => String
       def get_table(schema, vendor, name, version_model)
         schema = if schema.nil? then "" else "#{schema}." end
         v = make_sql_safe(vendor)

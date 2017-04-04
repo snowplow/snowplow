@@ -18,11 +18,12 @@ package inputs
 import java.util.UUID
 
 // Joda-Time
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 
 // Scala
 import scala.util.Try
+import scala.util.control.NonFatal
 
 // Scalaz
 import scalaz._
@@ -114,7 +115,7 @@ object EnrichedEventLoader {
    */
   private def validateUuid(field: String, str: String): ValidatedString = {
 
-    def check(s: String)(u: UUID): Boolean = (u != null && s == u.toString)
+    def check(s: String)(u: UUID): Boolean = u != null && s == u.toString
     val uuid = Try(UUID.fromString(str)).toOption.filter(check(str))
     uuid match {
       case Some(_) => str.success
@@ -138,7 +139,7 @@ object EnrichedEventLoader {
       val _ = RedshiftTstampFormat.parseDateTime(str)
       str.success
     } catch {
-      case e: Throwable =>
+      case NonFatal(e) =>
         s"Field [$field]: [$str] is not in the expected Redshift/Postgres timestamp format".fail
     }
 }

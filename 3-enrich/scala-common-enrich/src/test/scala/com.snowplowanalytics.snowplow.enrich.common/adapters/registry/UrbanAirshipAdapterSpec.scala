@@ -160,7 +160,7 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
           val event = successes.head
           compact(parse(event.parameters("ue_pr"))) must beEqualTo(expectedCompactedUnstructEvent)
         }
-        case _ => failure("payload was not accepted")
+        case _ => ko("payload was not accepted")
       }
     }
 
@@ -170,7 +170,7 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
           val event = successes.head
           event.parameters("ttm") must beEqualTo("1447432312393") // "occurred" field value in ms past epoch (2015-11-13T16:31:52.393Z)
         }
-        case _ => failure("payload was not populated")
+        case _ => ko("payload was not populated")
       }
     }
 
@@ -180,7 +180,7 @@ class UrbanAirshipAdapterSpec extends Specification with ValidationMatchers {
           val event = successes.head
           event.parameters("eid") must beEqualTo("e3314efb-9058-dbaf-c4bb-b754fca73613") // id field value
         }
-        case _ => failure("payload was not populated")
+        case _ => ko("payload was not populated")
       }
     }
 

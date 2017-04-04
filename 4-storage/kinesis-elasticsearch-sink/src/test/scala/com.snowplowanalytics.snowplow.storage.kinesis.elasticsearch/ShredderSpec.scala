@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+/**
+ * Copyright (c) 2014-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,6 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
+
 package com.snowplowanalytics.snowplow.storage.kinesis.elasticsearch
 
 // Scalaz
@@ -34,6 +35,11 @@ class ShredderSpec extends Specification with ValidationMatchers {
     "convert a snake_case schema to an Elasticsearch field name" in {
       val actual = Shredder.fixSchema("unstruct_event", "iglu:com.snowplowanalytics.snowplow/change_form/jsonschema/1-0-0")
       actual must beSuccessful("unstruct_event_com_snowplowanalytics_snowplow_change_form_1")
+    }
+
+    "convert a schema with a hyphen to an Elasticsearch field name" in {
+      val actual = Shredder.fixSchema("unstruct_event", "iglu:com.hy-phen/evt/jsonschema/1-0-0")
+      actual must beSuccessful("unstruct_event_com_hy_phen_evt_1")
     }
 
     "convert a PascalCase schema to an Elasticsearch field name" in {
@@ -134,7 +140,7 @@ class ShredderSpec extends Specification with ValidationMatchers {
       val expected = NonEmptyList(
         "Could not extract inner data field from custom context",
         "Context JSON did not contain a stringly typed schema field",
-        """Schema failing does not conform to regular expression .+:([a-zA-Z0-9_\.]+)/([a-zA-Z0-9_]+)/[^/]+/(.*)""")
+        """Schema failing does not conform to regular expression %s""".format(Shredder.schemaPattern))
 
       actual must be failing(expected)
     }

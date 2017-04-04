@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2012-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -49,6 +49,7 @@ import registry.{
   JavascriptScriptEnrichment,
   EventFingerprintEnrichment,
   CookieExtractorEnrichment,
+  HttpHeaderExtractorEnrichment,
   WeatherEnrichment,
   UserAgentUtilsEnrichmentConfig,
   UaParserEnrichmentConfig,
@@ -56,7 +57,16 @@ import registry.{
   JavascriptScriptEnrichmentConfig,
   EventFingerprintEnrichmentConfig,
   CookieExtractorEnrichmentConfig,
+  HttpHeaderExtractorEnrichmentConfig,
   WeatherEnrichmentConfig
+}
+import registry.apirequest.{
+  ApiRequestEnrichment,
+  ApiRequestEnrichmentConfig
+}
+import registry.sqlquery.{
+  SqlQueryEnrichment,
+  SqlQueryEnrichmentConfig
 }
 
 import utils.ScalazJson4sUtils
@@ -152,8 +162,14 @@ object EnrichmentRegistry {
             EventFingerprintEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "cookie_extractor_config") {
             CookieExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "http_header_extractor_config") {
+            HttpHeaderExtractorEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else if (nm == "weather_enrichment_config") {
             WeatherEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "api_request_enrichment_config") {
+            ApiRequestEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
+          } else if (nm == "sql_query_enrichment_config") {
+            SqlQueryEnrichmentConfig.parse(enrichmentConfig, schemaKey).map((nm, _).some)
           } else {
             None.success // Enrichment is not recognized yet
           }
@@ -193,7 +209,7 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    *
    * @return Option boxing the IpLookupsEnrichment instance
    */
-  def getIpLookupsEnrichment: Option[IpLookupsEnrichment] = 
+  def getIpLookupsEnrichment: Option[IpLookupsEnrichment] =
     getEnrichment[IpLookupsEnrichment]("ip_lookups")
 
   /**
@@ -202,7 +218,7 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    *
    * @return Option boxing the RefererParserEnrichment instance
    */
-  def getRefererParserEnrichment: Option[RefererParserEnrichment] = 
+  def getRefererParserEnrichment: Option[RefererParserEnrichment] =
     getEnrichment[RefererParserEnrichment]("referer_parser")
 
   /**
@@ -211,7 +227,7 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    *
    * @return Option boxing the CampaignAttributionEnrichment instance
    */
-  def getCampaignAttributionEnrichment: Option[CampaignAttributionEnrichment] = 
+  def getCampaignAttributionEnrichment: Option[CampaignAttributionEnrichment] =
     getEnrichment[CampaignAttributionEnrichment]("campaign_attribution")
 
   /**
@@ -229,7 +245,7 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    *
    * @return Option boxing the UserAgentUtilsEnrichment instance
    */
-  def getUserAgentUtilsEnrichment: Option[UserAgentUtilsEnrichment.type] = 
+  def getUserAgentUtilsEnrichment: Option[UserAgentUtilsEnrichment.type] =
     getEnrichment[UserAgentUtilsEnrichment.type]("user_agent_utils_config")
 
   /**
@@ -238,7 +254,7 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    *
    * @return Option boxing the UaParserEnrichment instance
    */
-  def getUaParserEnrichment: Option[UaParserEnrichment.type] = 
+  def getUaParserEnrichment: Option[UaParserEnrichment.type] =
     getEnrichment[UaParserEnrichment.type]("ua_parser_config")
 
   /**
@@ -247,7 +263,7 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    *
    * @return Option boxing the JavascriptScriptEnrichment instance
    */
-  def getJavascriptScriptEnrichment: Option[JavascriptScriptEnrichment] = 
+  def getJavascriptScriptEnrichment: Option[JavascriptScriptEnrichment] =
     getEnrichment[JavascriptScriptEnrichment]("javascript_script_config")
 
   /**
@@ -268,6 +284,15 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
   def getCookieExtractorEnrichment: Option[CookieExtractorEnrichment] =
     getEnrichment[CookieExtractorEnrichment]("cookie_extractor_config")
 
+  /*
+   * Returns an Option boxing the HttpHeaderExtractorEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the HttpHeaderExtractorEnrichment instance
+   */
+  def getHttpHeaderExtractorEnrichment: Option[HttpHeaderExtractorEnrichment] =
+    getEnrichment[HttpHeaderExtractorEnrichment]("http_header_extractor_config")
+
   /**
    * Returns an Option boxing the WeatherEnrichment
    * config value if present, or None if not
@@ -276,6 +301,24 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    */
   def getWeatherEnrichment: Option[WeatherEnrichment] =
     getEnrichment[WeatherEnrichment]("weather_enrichment_config")
+
+  /**
+    * Returns an Option boxing the ApiRequestEnrichment
+    * config value if present, or None if not
+    *
+    * @return Option boxing the ApiRequestEnrichment instance
+    */
+  def getApiRequestEnrichment: Option[ApiRequestEnrichment] =
+    getEnrichment[ApiRequestEnrichment]("api_request_enrichment_config")
+
+  /**
+   * Returns an Option boxing the SqlQueryEnrichment
+   * config value if present, or None if not
+   *
+   * @return Option boxing the SqlQueryEnrichment instance
+   */
+  def getSqlQueryEnrichment: Option[SqlQueryEnrichment] =
+    getEnrichment[SqlQueryEnrichment]("sql_query_enrichment_config")
 
   /**
    * Returns an Option boxing an Enrichment
@@ -292,7 +335,7 @@ case class EnrichmentRegistry(private val configs: EnrichmentMap) {
    * Adapted from http://stackoverflow.com/questions/6686992/scala-asinstanceof-with-parameterized-types
    * Used to convert an Enrichment to a
    * specific subtype of Enrichment
-   * 
+   *
    * @tparam A Type to cast to
    * @param a The object to cast to type A
    * @return a, converted to type A

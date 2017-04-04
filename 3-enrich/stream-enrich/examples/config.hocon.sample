@@ -1,0 +1,104 @@
+# Copyright (c) 2013-2016 Snowplow Analytics Ltd. All rights reserved.
+#
+# This program is licensed to you under the Apache License Version 2.0, and
+# you may not use this file except in compliance with the Apache License
+# Version 2.0.  You may obtain a copy of the Apache License Version 2.0 at
+# http://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the Apache License Version 2.0 is distributed on an "AS
+# IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.  See the Apache License Version 2.0 for the specific language
+# governing permissions and limitations there under.
+
+# This file (application.conf.example) contains a template with
+# configuration options for Stream Enrich.
+
+enrich {
+  # Sources currently supported are:
+  # 'kinesis' for reading Thrift-serialized records from a Kinesis stream
+  # 'kafka' for reading Thrift-serialized records from a Kafka topic
+  # 'stdin' for reading Base64-encoded Thrift-serialized records from stdin
+  source = "kinesis"
+
+  # Sinks currently supported are:
+  # 'kinesis' for writing enriched events to one Kinesis stream and invalid events to another.
+  # 'kafka' for writing enriched events to one Kafka topic and invalid events to another.
+  # 'stdouterr' for writing enriched events to stdout and invalid events to stderr.
+  #    Using "sbt assembly" and "java -jar" is recommended to disable sbt
+  #    logging.
+  sink = "kinesis"
+
+  # AWS credentials
+  #
+  # If both are set to 'default', use the default AWS credentials provider chain.
+  #
+  # If both are set to 'iam', use AWS IAM Roles to provision credentials.
+  #
+  # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+  aws {
+    access-key: "iam"
+    secret-key: "iam"
+  }
+
+  # Kafka configuration
+  kafka {
+    brokers: "{{enrichKafkaBrokers}}"
+  }
+
+  streams {
+    in: {
+      raw: "{{enrichStreamsInRaw}}"
+
+      # Maximum number of records to get from Kinesis per call to GetRecords
+      maxRecords: 10000
+
+      # After enrichment, are accumulated in a buffer before being sent to Kinesis.
+      # The buffer is emptied whenever:
+      # - the number of stored records reaches record-limit or
+      # - the combined size of the stored records reaches byte-limit or
+      # - the time in milliseconds since it was last emptied exceeds time-limit when
+      #   a new event enters the buffer
+      buffer: {
+        byte-limit: {{enrichStreamsBufferByteThreshold}}
+        record-limit: {{enrichStreamsBufferRecordThreshold}} # Not supported by Kafka; will be ignored
+        time-limit: {{enrichStreamsBufferTimeThreshold}}
+      }
+    }
+
+    out: {
+      enriched: "{{enrichStreamsOutEnriched}}"
+      bad: "{{enrichStreamsOutBad}}"
+
+      # Minimum and maximum backoff periods
+      # - Units: Milliseconds
+      backoffPolicy: {
+        minBackoff: {{enrichStreamsOutMinBackoff}}
+        maxBackoff: {{enrichStreamsOutMaxBackoff}}
+      }
+    }
+
+    # "app-name" is used for a DynamoDB table to maintain stream state.
+    # "app-name" is used as the Kafka consumer group ID.
+    # You can set it automatically using: "SnowplowKinesisEnrich-$\\{enrich.streams.in.raw\\}"
+    app-name: "{{enrichStreamsAppName}}"
+
+    # LATEST: most recent data.
+    # TRIM_HORIZON: oldest available data.
+    # Note: This only effects the first run of this application
+    # on a stream.
+    initial-position = "TRIM_HORIZON"
+
+    region: "{{enrichStreamsRegion}}"
+  }
+
+  # Optional section for tracking endpoints
+  monitoring {
+    snowplow {
+      collector-uri: "{{collectorUri}}"
+      collector-port: 80
+      app-id: "{{enrichAppName}}"
+      method: "GET"
+    }
+  }
+}

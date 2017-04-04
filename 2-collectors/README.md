@@ -14,7 +14,7 @@ A Collector captures and logs these events in their raw form, ready to be proces
 |-----------------------------------|--------------------------------------------------------------|------------------|
 | [cloudfront-collector] [c1]       | An Amazon CloudFront-based collector. No moving parts        | Production-ready |
 | [clojure-collector] [c2]          | A Clojure collector which runs on Amazon Elastic Beanstalk   | Production-ready |
-| [scala-stream-collector] [c3] (1) | A Scala stream-based collector which logs to Amazon Kinesis  | Beta             |
+| [scala-stream-collector] [c3] (1) | A Scala stream-based collector which logs to Amazon Kinesis  | Production-ready |
 | [thrift-raw-event] [c4]           | Thrift format for raw Snowplow events. Used in (1)           | Production-ready |
 
 ## Find out more

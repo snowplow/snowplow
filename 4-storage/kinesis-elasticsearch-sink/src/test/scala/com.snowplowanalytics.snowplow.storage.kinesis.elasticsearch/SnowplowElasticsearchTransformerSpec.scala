@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+/**
+ * Copyright (c) 2014-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -10,6 +10,7 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
+
 package com.snowplowanalytics.snowplow
 package storage.kinesis.elasticsearch
 
@@ -125,7 +126,7 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       "platform" -> "web",
       "etl_tstamp" -> "2017-01-26 00:01:25.292",
       "collector_tstamp" -> "2013-11-26 00:02:05",
-      "dvce_tstamp" -> "2013-11-26 00:03:57.885",
+      "dvce_created_tstamp" -> "2013-11-26 00:03:57.885",
       "event" -> "page_view",
       "event_id" -> "c6ef3124-b53a-4b13-a233-0088f79dcbcb",
       "txn_id" -> "41828",
@@ -245,7 +246,13 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
       "refr_device_tstamp" -> "",
       "derived_contexts" -> derivedContextsJson,
       "domain_sessionid" -> "2b15e5c8-d3b1-11e4-b9d6-1681e6b88ec1",
-      "derived_tstamp" -> "2013-11-26 00:03:57.886"
+      "derived_tstamp" -> "2013-11-26 00:03:57.886",
+      "event_vendor" -> "com.snowplowanalytics.snowplow",
+      "event_name" -> "link_click",
+      "event_format" -> "jsonschema",
+      "event_version" -> "1-0-0",
+      "event_fingerprint" -> "e3dbfa9cca0412c3d4052863cefb547f",
+      "true_tstamp" -> "2013-11-26 00:03:57.886"
       )
 
       val eventValues = nvPairs.unzip._2.toArray
@@ -266,7 +273,7 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
         "platform" : "web",
         "etl_tstamp" : "2017-01-26T00:01:25.292Z",
         "collector_tstamp" : "2013-11-26T00:02:05Z",
-        "dvce_tstamp" : "2013-11-26T00:03:57.885Z",
+        "dvce_created_tstamp" : "2013-11-26T00:03:57.885Z",
         "event" : "page_view",
         "event_id" : "c6ef3124-b53a-4b13-a233-0088f79dcbcb",
         "txn_id" : 41828,
@@ -432,7 +439,13 @@ class SnowplowElasticsearchTransformerSpec extends Specification with Validation
           "deviceFamily": "Other"
         }],
         "domain_sessionid": "2b15e5c8-d3b1-11e4-b9d6-1681e6b88ec1",
-        "derived_tstamp": "2013-11-26T00:03:57.886Z"
+        "derived_tstamp": "2013-11-26T00:03:57.886Z",
+        "event_vendor": "com.snowplowanalytics.snowplow",
+        "event_name": "link_click",
+        "event_format": "jsonschema",
+        "event_version": "1-0-0",
+        "event_fingerprint": "e3dbfa9cca0412c3d4052863cefb547f",
+        "true_tstamp": "2013-11-26T00:03:57.886Z"
       }""")
 
       // Specific fields

@@ -15,13 +15,6 @@ package hadoop
 package jobs
 package good
 
-// Scalding
-import com.twitter.scalding._
-
-// Cascading
-import cascading.tuple.TupleEntry
-import cascading.tap.SinkMode
-
 // This project
 import JobSpecHelpers._
 
@@ -62,6 +55,7 @@ class MultipleJsonSpec extends Specification {
       val lines = JobSpecHelpers.readFile(Sinks.output, "atomic-events")
       lines mustEqual Seq(MultipleJsonSpec.expectedAtomicEvent)
     }
+
     "shred the Snowplow link_click event into its appropriate path" in {
       val lines = JobSpecHelpers.readFile(Sinks.output, MultipleJsonSpec.expectedEvent.path)
       lines mustEqual Seq(MultipleJsonSpec.expectedEvent.contents)
@@ -76,9 +70,11 @@ class MultipleJsonSpec extends Specification {
       val expectedFiles = List("atomic-events", MultipleJsonSpec.expectedEvent.path, MultipleJsonSpec.expectedContext.path)
       JobSpecHelpers.listFilesWithExclusions(Sinks.output, expectedFiles) must be empty
     }
+
     "not trap any exceptions" in {
       Sinks.exceptions must beEmptyFile
     }
+
     "not write any bad row JSONs" in {
       Sinks.badRows must beEmptyFile
     }
