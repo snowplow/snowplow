@@ -59,6 +59,7 @@ class CollectorServiceActor(collectorConfig: CollectorConfig,
 }
 
 /**
+  *
   * Companion object for the CollectorService class
   */
 object CollectorService {
