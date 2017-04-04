@@ -17,6 +17,10 @@ package collectors
 package scalastream
 
 // Scala
+import com.snowplowanalytics.snowplow.CollectorPayload
+import com.snowplowanalytics.snowplow.collectors.scalastream.sinks.TestSink
+import spray.http.{HttpCookie, HttpHeader}
+
 import scala.collection.mutable.MutableList
 
 // Akka
@@ -31,10 +35,10 @@ import spray.testkit.Specs2RouteTest
 // Spray
 import spray.http.{DateTime,HttpHeader,HttpRequest,HttpCookie,RemoteAddress}
 import spray.http.HttpHeaders.{
-  Cookie,
-  `Set-Cookie`,
-  `Remote-Address`,
-  `Raw-Request-URI`
+Cookie,
+`Set-Cookie`,
+`Remote-Address`,
+`Raw-Request-URI`
 }
 
 // Config
@@ -47,9 +51,10 @@ import org.apache.thrift.TDeserializer
 import sinks._
 import CollectorPayload.thrift.model1.CollectorPayload
 
+
 class CollectorServiceSpec extends Specification with Specs2RouteTest with
-     AnyMatchers {
-   val testConf: Config = ConfigFactory.parseString("""
+  AnyMatchers {
+  val testConf: Config = ConfigFactory.parseString("""
 collector {
   interface = "0.0.0.0"
   port = 8080
@@ -66,6 +71,7 @@ collector {
     expiration = 365 days
     name = sp
     domain = "test-domain.com"
+    SP-Cookie = "666"
   }
 
   sink {
@@ -116,7 +122,7 @@ collector {
   // option. However, the testing does not read this option and a
   // remote address always needs to be set.
   def CollectorGet(uri: String, cookie: Option[`HttpCookie`] = None,
-      remoteAddr: String = "127.0.0.1") = {
+                   remoteAddr: String = "127.0.0.1") = {
     val headers: MutableList[HttpHeader] =
       MutableList(`Remote-Address`(remoteAddr),`Raw-Request-URI`(uri))
     cookie.foreach(headers += `Cookie`(_))
@@ -184,7 +190,7 @@ collector {
     }
     "return the same cookie as passed in" in {
       CollectorGet("/i", Some(HttpCookie(collectorConfig.cookieName.get, "UUID_Test"))) ~>
-          collectorService.collectorRoute ~> check {
+        collectorService.collectorRoute ~> check {
         val httpCookies: List[HttpCookie] = headers.collect {
           case `Set-Cookie`(hc) => hc
         }
@@ -198,7 +204,7 @@ collector {
     }
     "override cookie with nuid parameter" in {
       CollectorGet("/i?nuid=UUID_Test_New", Some(HttpCookie("sp", "UUID_Test"))) ~>
-          collectorService.collectorRoute ~> check {
+        collectorService.collectorRoute ~> check {
         val httpCookies: List[HttpCookie] = headers.collect {
           case `Set-Cookie`(hc) => hc
         }
@@ -227,7 +233,7 @@ collector {
     "store the expected event as a serialized Thrift object in the enabled sink" in {
       val payloadData = "param1=val1&param2=val2"
       val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
-        None, "localhost", RemoteAddress("127.0.0.1"), new HttpRequest(), None, "/i", true)._2
+        None, "localhost", RemoteAddress("127.0.0.1"), new HttpRequest(), None, "/i", true, null)._2
 
       val storedEvent = new CollectorPayload
       this.synchronized {
