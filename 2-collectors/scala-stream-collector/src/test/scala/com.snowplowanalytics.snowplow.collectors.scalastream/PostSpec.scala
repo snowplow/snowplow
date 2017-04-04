@@ -66,6 +66,7 @@ collector {
     expiration = 365 days
     name = sp
     domain = "test-domain.com"
+    SP-Cookie = "666"
   }
 
   sink {
@@ -221,7 +222,7 @@ collector {
     "store the expected event as a serialized Thrift object in the enabled sink" in {
       val payloadData = "param1=val1&param2=val2"
       val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
-        None, "localhost", RemoteAddress("127.0.0.1"), new HttpRequest(), None, "/com.snowplowanalytics.snowplow/tp2", false)._2
+        None, "localhost", RemoteAddress("127.0.0.1"), new HttpRequest(), None, "/com.snowplowanalytics.snowplow/tp2", false, "666")._2
 
       val storedEvent = new CollectorPayload
       this.synchronized {

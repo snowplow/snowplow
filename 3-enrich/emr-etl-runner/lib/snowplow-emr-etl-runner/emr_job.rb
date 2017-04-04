@@ -20,6 +20,7 @@ require 'awrence'
 require 'json'
 require 'base64'
 require 'contracts'
+require 'aws-sdk'
 
 # Global variable used to decide whether to patch Elasticity's AwsRequestV4 payload with Configurations
 # This is only necessary if we are loading Thrift with AMI >= 4.0.0
@@ -95,8 +96,15 @@ module Snowplow
 
         # Configure Elasticity with your AWS credentials
         Elasticity.configure do |c|
-          c.access_key = config[:aws][:access_key_id]
-          c.secret_key = config[:aws][:secret_access_key]
+          if ( config[:aws][:access_key_id] == 'iam' && config[:aws][:secret_access_key] == 'iam' )
+            credentials_from_role = Aws::InstanceProfileCredentials.new.credentials
+            c.access_key = credentials_from_role.access_key_id
+            c.secret_key = credentials_from_role.secret_access_key
+            c.security_token = credentials_from_role.session_token
+          else
+            c.access_key = config[:aws][:access_key_id]
+            c.secret_key = config[:aws][:secret_access_key]
+          end
         end
 
         # Create a job flow
