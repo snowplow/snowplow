@@ -33,7 +33,7 @@ object Dependencies {
     val awsSdk           = "1.6.10"
     val yodaTime         = "2.1"
     val yodaConvert      = "1.2"
-    val kafka            = "0.10.1.0"
+    val kafka            = "0.10.2.0"
     // Scala
     val snowplowCommonEnrich = "0.22.0"
     val igluClient       = "0.3.2"

@@ -93,12 +93,18 @@ collector {
     }
 
     kafka {
-      brokers: "{{collectorKafkaBrokers}}"
-
       # Data will be stored in the following topics
       topic {
         good: "{{collectorKafkaTopicGoodName}}"
         bad: "{{collectorKafkaTopicBadName}}"
+      }
+
+      producer {
+         bootstrap.servers: "{{collectorKafkaBrokers}}"
+         # store any additional Kafka native configuration here
+         # example:
+         # security.protocol = SSL
+         # timeout.ms = 60000
       }
     }
 
