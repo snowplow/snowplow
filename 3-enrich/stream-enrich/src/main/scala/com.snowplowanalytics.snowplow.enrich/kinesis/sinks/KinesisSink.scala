@@ -70,7 +70,7 @@ import com.snowplowanalytics.snowplow.scalatracker.Tracker
  * Kinesis Sink for Scala enrichment
  */
 class KinesisSink(provider: AWSCredentialsProvider,
-    config: KinesisEnrichConfig, inputType: InputType.InputType, tracker: Option[Tracker]) extends ISink {
+                  config: EnrichConfig, inputType: InputType.InputType, tracker: Option[Tracker]) extends ISink {
   private lazy val log = LoggerFactory.getLogger(getClass())
   import log.{error, debug, info, trace}
 

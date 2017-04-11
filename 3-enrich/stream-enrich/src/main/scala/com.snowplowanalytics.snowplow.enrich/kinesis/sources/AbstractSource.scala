@@ -122,8 +122,8 @@ object AbstractSource {
  * Abstract base for the different sources
  * we support.
  */
-abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolver,
-                              enrichmentRegistry: EnrichmentRegistry, 
+abstract class AbstractSource(config: EnrichConfig, igluResolver: Resolver,
+                              enrichmentRegistry: EnrichmentRegistry,
                               tracker: Option[Tracker]) {
   
   val MaxRecordSize = if (config.sink == Sink.Kinesis) {
