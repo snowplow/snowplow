@@ -17,7 +17,7 @@ class CollectorConfigSpec extends Specification with Specs2RouteTest with
 
   "Snowplow's Collector Configuration" should {
     "correctly parse Kafka configs" in {
-      props.getProperty("bootstrap.server") must not be empty
+      props.getProperty("bootstrap.servers") must not be null
       // default override
       props.getProperty("acks") must beEqualTo ("1")
       // timeout.ms is an additional property
