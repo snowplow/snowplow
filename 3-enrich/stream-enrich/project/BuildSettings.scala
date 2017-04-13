@@ -22,7 +22,7 @@ object BuildSettings {
     organization          :=  "com.snowplowanalytics",
     version               :=  "0.10.0",
     description           :=  "The Snowplow Enrichment process, implemented as an Amazon Kinesis app",
-    scalaVersion          :=  "2.10.1",
+    scalaVersion          :=  "2.10.4",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
                                   "-feature", "-target:jvm-1.7"),
     scalacOptions in Test :=  Seq("-Yrangepos"),

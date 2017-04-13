@@ -174,12 +174,12 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
   }
 
   /**
-   * Convert incoming binary Thrift records to lists of enriched events
-   *
-   * @param binaryData Thrift raw event
-   * @return List containing successful or failed events, each with a
-   *         partition key
-   */
+    * Convert incoming binary Thrift records to lists of enriched events
+    *
+    * @param binaryData Thrift raw event
+    * @return List containing successful or failed events, each with a
+    *         partition key
+    */
   def enrichEvents(binaryData: Array[Byte]): List[Validation[(String, String), (String, String)]] = {
     val canonicalInput: ValidatedMaybeCollectorPayload = ThriftLoader.toCollectorPayload(binaryData)
     val processedEvents: List[ValidationNel[String, EnrichedEvent]] = EtlPipeline.processEvents(
@@ -189,11 +189,15 @@ abstract class AbstractSource(config: KinesisEnrichConfig, igluResolver: Resolve
       canonicalInput)
     processedEvents.map(validatedMaybeEvent => {
       validatedMaybeEvent match {
-        case Success(co) => (tabSeparateEnrichedEvent(co), if (config.useIpAddressAsPartitionKey) {
-            co.user_ipaddress
-          } else {
-            UUID.randomUUID.toString
-          }).success
+          //hack for mobile kinesis partition key change
+        case Success(co) => (tabSeparateEnrichedEvent(co), if (co.platform == "mob" && co.domain_userid != null &&
+          co.domain_userid.length() > 1) {
+          co.domain_userid
+        }else if(config.useIpAddressAsPartitionKey){
+          co.user_ipaddress
+        }else{
+          UUID.randomUUID.toString
+        }).success
         case Failure(errors) => {
           val line = new String(Base64.encodeBase64(binaryData), UTF_8)
           (BadRow(line, errors).toCompactJson -> Random.nextInt.toString).fail
