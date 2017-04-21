@@ -35,7 +35,7 @@ object Dependencies {
     val yodaConvert      = "1.2"
     val kafka            = "0.10.1.0"
     // Scala
-    val snowplowCommonEnrich = "0.22.0"
+    val snowplowCommonEnrich = "1.22.0"
     val igluClient       = "0.3.2"
     val scalaz7          = "7.0.0"
     val snowplowRawEvent = "0.1.0"
