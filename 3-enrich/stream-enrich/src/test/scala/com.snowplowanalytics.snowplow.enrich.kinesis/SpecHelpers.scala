@@ -50,7 +50,7 @@ object SpecHelpers {
   /**
    * The Stream Enrich being used
    */
-  val EnrichVersion = "kinesis-0.10.0-common-0.24.0"
+  val EnrichVersion = "kinesis-0.10.0-common-1.24.0" //our nordstrom version of common enrich
 
   val TimestampRegex = "[0-9\\s-:.]+"
 
