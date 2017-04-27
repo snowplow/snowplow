@@ -2,9 +2,9 @@
 
 ## Introduction
 
-[PostgreSQL] [postgres] ("Postgres") is an advanced open-source Object-Relational DBMS. Postgres is an excellent storage target for Snowplow data, supporting a variety of rich SQL querying techniques (e.g. [windowing] [window-functions]) as well as connections to a variety of BI and dashboarding tools.
+[PostgreSQL][postgres] ("Postgres") is an advanced open-source Object-Relational DBMS. Postgres is an excellent storage target for Snowplow data, supporting a variety of rich SQL querying techniques (e.g. [windowing][window-functions]) as well as connections to a variety of BI and dashboarding tools.
 
-Hosted options for Postgres include [Heroku] [heroku] and [Engine Yard] [engine-yard], with a [full list of hosting providers] [hosted-postgres] available from PostgreSQL themselves.
+Hosted options for Postgres include [Heroku][heroku] and [Engine Yard][engine-yard], with a [full list of hosting providers][hosted-postgres] available from PostgreSQL themselves.
 
 ## Contents
 
@@ -17,14 +17,14 @@ The contents of this folder are as follows:
 
 | Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
 |-----------------------------|-----------------------|--------------------------------------|
-| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
-| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
+| ![i1][techdocs-image]      | ![i2][setup-image]   | ![i3][roadmap-image]                |
+| [Technical Docs][techdocs] | [Setup Guide][setup] | _coming soon_                        |
 
 ## Copyright and license
 
 postgres-storage is copyright 2013 Snowplow Analytics Ltd.
 
-Licensed under the [Apache License, Version 2.0] [license] (the "License");
+Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
 
 Unless required by applicable law or agreed to in writing, software

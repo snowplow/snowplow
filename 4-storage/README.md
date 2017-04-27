@@ -1,27 +1,27 @@
 # Storage
 
-![architecture] [architecture-image]
+![architecture][architecture-image]
 
 ## Overview
 
-**Storage** is where atomic Snowplow events are stored by the [Enrich] [enrich] process, ready for querying by Snowplow [Analytics] [analytics] tools.
+**Storage** is where atomic Snowplow events are stored by the [Enrich][enrich] process, ready for querying by Snowplow [Analytics][analytics] tools.
 
 ## Available storage
 
 | Storage                       | Description                                                               | Status           |
 |-------------------------------|---------------------------------------------------------------------------|------------------|
-| [s3 / hive-storage] [s1]      | Snowplow events stored in a Hive-compatible flatfile format on Amazon S3  | Production-ready |
-| [redshift-storage] [s3] (1)   | Snowplow events stored in a table in [Amazon Redshift] [redshift]         | Production-ready |
-| [postgres-storage] [s2] (2)   | Snowplow events stored in a table in [PostgreSQL] [postgres]              | Production-ready |
-| [storage-loader] [s4]         | A Ruby application for loading Snowplow events into (1) and (2)           | Production-ready |
-| [kinesis-elasticsearch-sink] [s5] | Snowplow events stored in [Elasticsearch] [elasticsearch]             | Production-ready |
+| [s3 / hive-storage][s1]      | Snowplow events stored in a Hive-compatible flatfile format on Amazon S3  | Production-ready |
+| [redshift-storage][s3] (1)   | Snowplow events stored in a table in [Amazon Redshift][redshift]         | Production-ready |
+| [postgres-storage][s2] (2)   | Snowplow events stored in a table in [PostgreSQL][postgres]              | Production-ready |
+| [storage-loader][s4]         | A Ruby application for loading Snowplow events into (1) and (2)           | Production-ready |
+| [kinesis-elasticsearch-sink][s5] | Snowplow events stored in [Elasticsearch][elasticsearch]             | Production-ready |
 
 ## Find out more
 
 | Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
 |-----------------------------|-----------------------|--------------------------------------|
-| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
-| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
+| ![i1][techdocs-image]      | ![i2][setup-image]   | ![i3][roadmap-image]                |
+| [Technical Docs][techdocs] | [Setup Guide][setup] | _coming soon_                        |
 
 [architecture-image]: https://d3i6fms1cm1j0i.cloudfront.net/github-wiki/images/snowplow-architecture-4-storage.png
 [trackers]: https://github.com/snowplow/snowplow/tree/master/1-trackers

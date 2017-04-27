@@ -2,17 +2,17 @@
 
 ## Introduction
 
-Snowplow::StorageLoader is a Ruby application (built with [Bundler] [bundler]) to load Snowplow event data into various databases and "big data" platforms. Currently, StorageLoader supports three storage targets:
+Snowplow::StorageLoader is a Ruby application (built with [Bundler][bundler]) to load Snowplow event data into various databases and "big data" platforms. Currently, StorageLoader supports three storage targets:
 
-* [Amazon S3] [s3]
-* [Amazon Redshift] [redshift]
-* [PostgreSQL] [postgres]
+* [Amazon S3][s3]
+* [Amazon Redshift][redshift]
+* [PostgreSQL][postgres]
 
 In the future we plan on supporting other storage targets, including:
 
-* [Google BigQuery] [bigquery]
-* [Neo4J] [neo4j]
-* [SkyDB] [skydb]
+* [Google BigQuery][bigquery]
+* [Neo4J][neo4j]
+* [SkyDB][skydb]
 
 # Technical documentation
 
@@ -20,7 +20,7 @@ We will be adding the technical documentation for StorageLoader on the Wiki soon
 
 ## Deployment and configuration
 
-For detailed instructions on installing, running and scheduling StorageLoader on your server, please see the [StorageLoader Setup Guide] [setup] on the Wiki.
+For detailed instructions on installing, running and scheduling StorageLoader on your server, please see the [StorageLoader Setup Guide][setup] on the Wiki.
 
 ## Contributing
 
@@ -28,15 +28,15 @@ We will be adding a guide to contributing to StorageLoader on the Wiki soon.
 
 ## Credits and thanks
 
-StorageLoader was developed by [Alex Dean] [alexanderdean] ([Snowplow Analytics] [snowplow-analytics]).
+StorageLoader was developed by [Alex Dean][alexanderdean] ([Snowplow Analytics][snowplow-analytics]).
 
-StorageLoader in turn depends heavily on [Sluice] [sluice], a Ruby toolkit for cloud-friendly ETL, written by [Alex Dean] [alexanderdean] ([Snowplow Analytics] [snowplow-analytics]) and [Michael Tibben] [mtibben] ([99designs] [99designs]).
+StorageLoader in turn depends heavily on [Sluice][sluice], a Ruby toolkit for cloud-friendly ETL, written by [Alex Dean][alexanderdean] ([Snowplow Analytics][snowplow-analytics]) and [Michael Tibben][mtibben] ([99designs][99designs]).
 
 ## Copyright and license
 
 Snowplow::StorageLoader is copyright 2012-2014 Snowplow Analytics Ltd.
 
-Licensed under the [Apache License, Version 2.0] [license] (the "License");
+Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
 
 Unless required by applicable law or agreed to in writing, software
@@ -47,8 +47,8 @@ limitations under the License.
 
 | Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
 |-----------------------------|-----------------------|--------------------------------------|
-| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
-| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
+| ![i1][techdocs-image]      | ![i2][setup-image]   | ![i3][roadmap-image]                |
+| [Technical Docs][techdocs] | [Setup Guide][setup] | _coming soon_                        |
 
 [bundler]: http://gembundler.com/
 

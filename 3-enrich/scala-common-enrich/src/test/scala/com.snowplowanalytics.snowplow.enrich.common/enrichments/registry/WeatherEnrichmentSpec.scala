@@ -131,7 +131,7 @@ class WeatherEnrichmentSpec extends Specification  { def is =
       case weather: JValue => {
         val e = (weather \ "data").extractOpt[TransformedWeather]
         e.map(_.dt) must beSome.like {                            // succesfull transformation
-          case dt => dt must equalTo("2015-08-29T23:16:14.000Z")  // closest stamp storing on server
+          case dt => dt must equalTo("2015-08-30T00:00:00.000Z")  // closest stamp storing on server
         }
       }
     }

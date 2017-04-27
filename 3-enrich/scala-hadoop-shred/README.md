@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This is a [Scalding] [scalding] job which:
+This is a [Scalding][scalding] job which:
 
 1. Reads Snowplow enriched events from S3
 2. Extracts any unstructured event JSONs and context JSONs found
@@ -10,20 +10,20 @@ This is a [Scalding] [scalding] job which:
 4. Adds metadata to these JSONs to track their origins
 5. Writes these JSONs out to nested folders dependent on their schema
 
-It is designed to be run by the [EmrEtlRunner] [emr-etl-runner] immediately after the [Scala Hadoop Enrich] [scala-hadoop-enrich] job.
+It is designed to be run by the [EmrEtlRunner][emr-etl-runner] immediately after the [Scala Hadoop Enrich][scala-hadoop-enrich] job.
 
 ## Find out more
 
 | Technical Docs              | Setup Guide           | Roadmap & Contributing               |         
 |-----------------------------|-----------------------|--------------------------------------|
-| ![i1] [techdocs-image]      | ![i2] [setup-image]   | ![i3] [roadmap-image]                |
-| [Technical Docs] [techdocs] | [Setup Guide] [setup] | _coming soon_                        |
+| ![i1][techdocs-image]      | ![i2][setup-image]   | ![i3][roadmap-image]                |
+| [Technical Docs][techdocs] | [Setup Guide][setup] | _coming soon_                        |
 
 ## Copyright and license
 
 Copyright 2014 Snowplow Analytics Ltd.
 
-Licensed under the [Apache License, Version 2.0] [license] (the "License");
+Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
 
 Unless required by applicable law or agreed to in writing, software

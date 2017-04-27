@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Copyright (c) 2012-2014 Snowplow Analytics Ltd. All rights reserved.
+# Copyright (c) 2012-2017 Snowplow Analytics Ltd. All rights reserved.
 #
 # This program is licensed to you under the Apache License Version 2.0,
 # and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -34,8 +34,8 @@ fatal = runner::Monitoring::Logging.method(:fatal_with)
 # Note that each step is only actioned if the previous step succeeded without error.
 begin
 
-  args, config, enrichments, resolver = runner::Cli.get_args_config_enrichments_resolver()
-  r = runner::Runner.new(args, config, enrichments, resolver)
+  args, config, enrichments, resolver, targets = runner::Cli.get_args_config_enrichments_resolver()
+  r = runner::Runner.new(args, config, enrichments, resolver, targets)
   r.run()
 
 # Don't print stack trace for configuration errors

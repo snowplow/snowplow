@@ -17,7 +17,7 @@ function die() {
 master="snowplow-hosted-assets"
 master_region="eu-west-1"
 slave_stem="${master}-"
-declare -a regions=( "us-east-1" "us-west-1" "us-west-2" "sa-east-1" "eu-central-1" "ap-southeast-1" "ap-southeast-2" "ap-northeast-1" "ap-south-1" "us-east-2" "ca-central-1" "eu-west-2" )
+declare -a regions=( "us-east-1" "us-west-1" "us-west-2" "sa-east-1" "eu-central-1" "ap-southeast-1" "ap-southeast-2" "ap-northeast-1" "ap-south-1" "us-east-2" "ca-central-1" "eu-west-2" "ap-northeast-2" )
 
 [ -z "${AWS_ACCESS_KEY_ID}" ] && die "Need to set AWS_ACCESS_KEY_ID"
 [ -z "${AWS_SECRET_ACCESS_KEY}" ] && die "Need to set AWS_SECRET_ACCESS_KEY"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -18,7 +18,7 @@ object BuildSettings {
   // Basic settings for our app
   lazy val basicSettings = Seq[Setting[_]](
     organization  := "com.snowplowanalytics",
-    version       := "0.10.0",
+    version       := "0.11.0",
     description   := "Hadoop job to shred event and context JSONs from enriched event TSVs",
     scalaVersion  := "2.10.4",
     scalacOptions := Seq("-deprecation", "-encoding", "utf8"),
@@ -27,15 +27,26 @@ object BuildSettings {
   )
 
   // sbt-assembly settings for building a fat jar
-  import sbtassembly.Plugin._
-  import AssemblyKeys._
+  import sbtassembly._
+  import sbtassembly.AssemblyPlugin._
+  import sbtassembly.AssemblyKeys._
   lazy val sbtAssemblySettings = assemblySettings ++ Seq(
 
     // Slightly cleaner jar name
-    jarName in assembly := { name.value + "-" + version.value + ".jar" },
-    
+    assemblyJarName in assembly := { name.value + "-" + version.value + ".jar" },
+
+    // For AMI 4.5.0, could be removed in future versions
+    assemblyShadeRules in assembly := Seq(
+      ShadeRule.rename(
+        "com.amazonaws.**" -> "shadeaws.@1",
+        "com.fasterxml.**" -> "shadejackson.@1",
+        "org.apache.http.**" -> "shadehttp.@1"
+      ).inAll
+    ),
+
     // Drop these jars
-    excludedJars in assembly <<= (fullClasspath in assembly) map { cp =>
+    assemblyExcludedJars in assembly := {
+      val cp = (fullClasspath in assembly).value
       val excludes = Set(
         "jsp-api-2.1-6.1.14.jar",
         "jsp-2.1-6.1.14.jar",
@@ -47,14 +58,14 @@ object BuildSettings {
         "hadoop-core-1.1.2.jar", // Provided by Amazon EMR. Delete this line if you're not on EMR
         "hadoop-tools-1.1.2.jar" // "
       ) 
-      cp filter { jar => excludes(jar.data.getName) }
+      cp.filter { jar => excludes(jar.data.getName) }
     },
-    
-    mergeStrategy in assembly <<= (mergeStrategy in assembly) {
-      (old) => {
-        case "project.clj" => MergeStrategy.discard // Leiningen build files
-        case x => old(x)
-      }
+
+    assemblyMergeStrategy in assembly := {
+      case "project.clj" => MergeStrategy.discard // Leiningen build files
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
     }
   )
 

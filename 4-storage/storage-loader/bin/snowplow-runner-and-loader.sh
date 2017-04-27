@@ -18,9 +18,10 @@ RUNNER_CONFIG=/path/to/your-runner-config.yml
 RESOLVER=/path/to/your-resolver.json
 RUNNER_ENRICHMENTS=/path/to/your/enrichment-jsons
 LOADER_CONFIG=/path/to/your-loader-config.yml
+TARGETS_PATH=/path/to/your/targets-jsons
 
 # Run the ETL job on EMR
-./${RUNNER_PATH} --config ${RUNNER_CONFIG} --resolver ${RESOLVER} --enrichments ${RUNNER_ENRICHMENTS}
+./${RUNNER_PATH} --config ${RUNNER_CONFIG} --resolver ${RESOLVER} --enrichments ${RUNNER_ENRICHMENTS} --targets ${TARGETS_PATH}
 
 # Check the damage
 ret_val=$?
@@ -28,6 +29,10 @@ if [ $ret_val -eq 3 ]
 then
 	echo "No Snowplow logs to process since last run, exiting with return code 0. StorageLoader not run"
 	exit 0
+elif [ $ret_val -eq 4 ]
+then
+    echo "EmrEtlRunner returned 4, directory is not empty. StorageLoader not run"
+    exit 0
 elif [ $ret_val -ne 0 ]
 then
     echo "Error running EmrEtlRunner, exiting with return code ${ret_val}. StorageLoader not run"
@@ -35,4 +40,5 @@ then
 fi
 
 # If all okay, run the storage load too
-./${LOADER_PATH} --config ${LOADER_CONFIG}
+./${LOADER_PATH} --config ${LOADER_CONFIG} --targets ${TARGETS_PATH} --resolver ${RESOLVER}
+

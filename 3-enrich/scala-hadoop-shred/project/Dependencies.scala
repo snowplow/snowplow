@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2017 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
  * and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -29,17 +29,17 @@ object Dependencies {
     // Java
     val hadoop          = "2.4.1"
     val cascading       = "2.7.0"
-    // val commonsLang      = "3.1"
-    val jacksonDatabind = "2.2.3"
     val jsonValidator   = "2.2.3"
     val yodaTime        = "2.1"
     val yodaConvert     = "1.2"
+    val dynamodb        = "1.11.98"
     // Scala
     val json4sJackson   = "3.2.11"
     val commonEnrich    = "0.23.0"
     val scalding        = "0.15.0"
     val scalaz7         = "7.0.0"
     val igluClient      = "0.4.0"
+
     // Scala (test only)
     val specs2          = "1.14" // Downgrade to prevent issues in job tests. WAS: "2.3.11"
     val scalazSpecs2    = "0.1.2"
@@ -52,17 +52,15 @@ object Dependencies {
     val cascadingCore    = "cascading"                  %  "cascading-core"               % V.cascading
     val cascadingLocal   = "cascading"                  %  "cascading-local"              % V.cascading
     val cascadingHadoop  = "cascading"                  %  "cascading-hadoop2-mr1"        % V.cascading
-    // val commonsLang      = "org.apache.commons"         %  "commons-lang3"           % V.commonsLang
-    val jacksonDatabind  = "com.fasterxml.jackson.core" %  "jackson-databind"        % V.jacksonDatabind
     val jsonValidator    = "com.github.fge"             %  "json-schema-validator"   % V.jsonValidator
     val yodaTime         = "joda-time"                  %  "joda-time"               % V.yodaTime
     val yodaConvert      = "org.joda"                   %  "joda-convert"            % V.yodaConvert
+    val dynamodb         = "com.amazonaws"              %  "aws-java-sdk-dynamodb"   % V.dynamodb
     // Scala
     val json4sJackson    = "org.json4s"                 %% "json4s-jackson"          % V.json4sJackson
     val commonEnrich     = "com.snowplowanalytics"      %  "snowplow-common-enrich"  % V.commonEnrich
     val scaldingCore     = "com.twitter"                %% "scalding-core"           % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" ) exclude( "cascading", "cascading-hadoop2-mr1" )
     val scaldingArgs     = "com.twitter"                %% "scalding-args"           % V.scalding exclude( "cascading", "cascading-local" ) exclude( "cascading", "cascading-hadoop" ) exclude( "cascading", "cascading-hadoop2-mr1" )
-    // val scaldingJson     = "com.twitter"                %% "scalding-json"           % V.scalding
     val scalaz7          = "org.scalaz"                 %% "scalaz-core"             % V.scalaz7
     val igluClient       = "com.snowplowanalytics"      %% "iglu-scala-client"       % V.igluClient
     // Scala (test only)

@@ -9,7 +9,7 @@ Events are enriched using the [scala-common-enrich][common-enrich] library.
 
 ## Building
 
-Assuming you already have [SBT 0.13.0] [sbt] installed:
+Assuming you already have [SBT 0.13.0][sbt] installed:
 
     $ git clone git://github.com/snowplow/snowplow.git
     $ cd 3-enrich/stream-enrich
@@ -38,7 +38,7 @@ OPTIONS
 
 Copyright 2014 Snowplow Analytics Ltd.
 
-Licensed under the [Apache License, Version 2.0] [license] (the "License");
+Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
 
 Unless required by applicable law or agreed to in writing, software
