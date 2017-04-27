@@ -37,21 +37,21 @@ enrich {
   #
   # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
   aws {
-    access-key: "iam"
-    secret-key: "iam"
+    access-key = "iam"
+    secret-key = "iam"
   }
 
   # Kafka configuration
   kafka {
-    brokers: "{{enrichKafkaBrokers}}"
+    brokers = "{{enrichKafkaBrokers}}"
   }
 
   streams {
-    in: {
-      raw: "{{enrichStreamsInRaw}}"
+    in {
+      raw = "{{enrichStreamsInRaw}}"
 
       # Maximum number of records to get from Kinesis per call to GetRecords
-      maxRecords: 10000
+      maxRecords = 10000
 
       # After enrichment, are accumulated in a buffer before being sent to Kinesis.
       # The buffer is emptied whenever:
@@ -59,29 +59,29 @@ enrich {
       # - the combined size of the stored records reaches byte-limit or
       # - the time in milliseconds since it was last emptied exceeds time-limit when
       #   a new event enters the buffer
-      buffer: {
-        byte-limit: {{enrichStreamsBufferByteThreshold}}
-        record-limit: {{enrichStreamsBufferRecordThreshold}} # Not supported by Kafka; will be ignored
-        time-limit: {{enrichStreamsBufferTimeThreshold}}
+      buffer {
+        byte-limit = {{enrichStreamsBufferByteThreshold}}
+        record-limit = {{enrichStreamsBufferRecordThreshold}} # Not supported by Kafka; will be ignored
+        time-limit = {{enrichStreamsBufferTimeThreshold}}
       }
     }
 
-    out: {
-      enriched: "{{enrichStreamsOutEnriched}}"
-      bad: "{{enrichStreamsOutBad}}"
+    out {
+      enriched = "{{enrichStreamsOutEnriched}}"
+      bad = "{{enrichStreamsOutBad}}"
 
       # Minimum and maximum backoff periods
       # - Units: Milliseconds
-      backoffPolicy: {
-        minBackoff: {{enrichStreamsOutMinBackoff}}
-        maxBackoff: {{enrichStreamsOutMaxBackoff}}
+      backoffPolicy {
+        minBackoff = {{enrichStreamsOutMinBackoff}}
+        maxBackoff = {{enrichStreamsOutMaxBackoff}}
       }
     }
 
     # "app-name" is used for a DynamoDB table to maintain stream state.
     # "app-name" is used as the Kafka consumer group ID.
     # You can set it automatically using: "SnowplowKinesisEnrich-$\\{enrich.streams.in.raw\\}"
-    app-name: "{{enrichStreamsAppName}}"
+    app-name = "{{enrichStreamsAppName}}"
 
     # LATEST: most recent data.
     # TRIM_HORIZON: oldest available data.
@@ -89,16 +89,16 @@ enrich {
     # on a stream.
     initial-position = "TRIM_HORIZON"
 
-    region: "{{enrichStreamsRegion}}"
+    region = "{{enrichStreamsRegion}}"
   }
 
   # Optional section for tracking endpoints
   monitoring {
     snowplow {
-      collector-uri: "{{collectorUri}}"
-      collector-port: 80
-      app-id: "{{enrichAppName}}"
-      method: "GET"
+      collector-uri = "{{collectorUri}}"
+      collector-port = 80
+      app-id = "{{enrichAppName}}"
+      method = "GET"
     }
   }
 }

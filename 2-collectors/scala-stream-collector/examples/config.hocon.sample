@@ -63,7 +63,7 @@ collector {
     enabled = "kinesis"
 
     kinesis {
-      thread-pool-size: 10 # Thread pool size for Kinesis API requests
+      thread-pool-size = 10 # Thread pool size for Kinesis API requests
 
       # The following are used to authenticate for the Amazon Kinesis sink.
       #
@@ -74,31 +74,31 @@ collector {
       #
       # If both are set to 'env', use environment variables AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
       aws {
-        access-key: "iam"
-        secret-key: "iam"
+        access-key = "iam"
+        secret-key = "iam"
       }
 
       # Data will be stored in the following stream.
       stream {
-        region: "{{collectorSinkKinesisStreamRegion}}"
-        good: "{{collectorKinesisStreamGoodName}}"
-        bad: "{{collectorKinesisStreamBadName}}"
+        region = "{{collectorSinkKinesisStreamRegion}}"
+        good = "{{collectorKinesisStreamGoodName}}"
+        bad = "{{collectorKinesisStreamBadName}}"
       }
 
       # Minimum and maximum backoff periods
-      backoffPolicy: {
-        minBackoff: {{collectorSinkKinesisMinBackoffMillis}}
-        maxBackoff: {{collectorSinkKinesisMaxBackoffMillis}}
+      backoffPolicy {
+        minBackoff = {{collectorSinkKinesisMinBackoffMillis}}
+        maxBackoff = {{collectorSinkKinesisMaxBackoffMillis}}
       }
     }
 
     kafka {
-      brokers: "{{collectorKafkaBrokers}}"
+      brokers = "{{collectorKafkaBrokers}}"
 
       # Data will be stored in the following topics
       topic {
-        good: "{{collectorKafkaTopicGoodName}}"
-        bad: "{{collectorKafkaTopicBadName}}"
+        good = "{{collectorKafkaTopicGoodName}}"
+        bad = "{{collectorKafkaTopicBadName}}"
       }
     }
 
@@ -108,9 +108,9 @@ collector {
     # - the combined size of the stored records reaches byte-limit or
     # - the time in milliseconds since the buffer was last emptied reaches time-limit
     buffer {
-      byte-limit: {{collectorSinkBufferByteThreshold}}
-      record-limit: {{collectorSinkBufferRecordThreshold}} # Not supported by Kafka; will be ignored
-      time-limit: {{collectorSinkBufferTimeThreshold}}
+      byte-limit = {{collectorSinkBufferByteThreshold}}
+      record-limit = {{collectorSinkBufferRecordThreshold}} # Not supported by Kafka; will be ignored
+      time-limit = {{collectorSinkBufferTimeThreshold}}
     }
   }
 }
