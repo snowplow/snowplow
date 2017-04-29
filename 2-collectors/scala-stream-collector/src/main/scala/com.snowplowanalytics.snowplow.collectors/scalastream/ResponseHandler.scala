@@ -57,6 +57,7 @@ import spray.http.HttpHeaders.{
   `Access-Control-Allow-Origin`,
   `Access-Control-Allow-Credentials`,
   `Access-Control-Allow-Headers`,
+  `X-Forwarded-For`,
   RawHeader
 }
 import spray.http.MediaTypes.`image/gif`
@@ -147,6 +148,12 @@ class ResponseHandler(config: CollectorConfig, sinks: CollectorSinks)(implicit c
 
         // toLowerCase called because Spray seems to convert "utf" to "UTF"
         ct => event.contentType = ct.value.toLowerCase
+      }
+
+      // X-Forwarded-For is the originating IP address of a client connecting 
+      // to a web server through an HTTP proxy or load balancer.
+      request.headers.find(_ match {case `X-Forwarded-For`(xf) => true; case _ => false}) foreach {
+        xf => event.ipAddress = xf.value.split(',')(0)
       }
 
       // Only send to Kinesis if we aren't shutting down
