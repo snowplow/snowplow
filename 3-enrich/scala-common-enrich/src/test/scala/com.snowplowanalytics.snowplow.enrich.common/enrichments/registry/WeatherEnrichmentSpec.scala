@@ -62,7 +62,7 @@ class WeatherEnrichmentSpec extends Specification  { def is =
   object validEvent {
     var lat: JFloat = 20.713052f
     var lon: JFloat = 70.98224f
-    var time: DateTime = new DateTime("2015-08-29T23:56:01.003+00:00")
+    var time: DateTime = new DateTime("2017-05-01T23:56:01.003+00:00")
   }
 
   def e1 = {
@@ -99,7 +99,7 @@ class WeatherEnrichmentSpec extends Specification  { def is =
     stamp.toEither must beRight.like {
       case weather: JValue => {
         val temp = weather.findField { case JField("humidity", _) => true; case _ => false }
-        temp must beSome(("humidity", JDouble(100.0)))
+        temp must beSome(("humidity", JDouble(97.0)))
       }
     }
   }
@@ -132,7 +132,7 @@ class WeatherEnrichmentSpec extends Specification  { def is =
       case weather: JValue => {
         val e = (weather \ "data").extractOpt[TransformedWeather]
         e.map(_.dt) must beSome.like {                            // succesfull transformation
-          case dt => dt must equalTo("2015-08-30T00:00:00.000Z")  // closest stamp storing on server
+          case dt => dt must equalTo("2017-05-02T00:00:00.000Z")  // closest stamp storing on server
         }
       }
     }
