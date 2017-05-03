@@ -79,9 +79,9 @@ module Snowplow
         custom_assets_bucket = self.class.get_hosted_assets_bucket(config[:aws][:s3][:buckets][:assets], config[:aws][:emr][:region])
         assets = self.class.get_assets(
           custom_assets_bucket,
-          config[:enrich][:versions][:hadoop_enrich],
-          config[:enrich][:versions][:hadoop_shred],
-          config[:enrich][:versions][:hadoop_elasticsearch])
+          config[:enrich][:versions][:spark_enrich],
+          config[:storage][:versions][:relational_database_shredder],
+          config[:storage][:versions][:hadoop_elasticsearch])
 
         run_tstamp = Time.new
         run_id = run_tstamp.strftime("%Y-%m-%d-%H-%M-%S")
@@ -183,7 +183,7 @@ module Snowplow
         else
           "#{standard_assets_bucket}common/emr/snowplow-ami4-bootstrap-0.2.0.sh"
         end
-        cc_version = get_cc_version(config[:enrich][:versions][:hadoop_enrich])
+        cc_version = get_cc_version(config[:enrich][:versions][:spark_enrich])
         @jobflow.add_bootstrap_action(Elasticity::BootstrapAction.new(bootstrap_jar_location, cc_version))
 
         # Install and launch HBase
@@ -822,8 +822,8 @@ module Snowplow
           '3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-'
         end
         {
-          :enrich   => "#{assets_bucket}3-enrich/#{enrich_path_middle}-#{hadoop_enrich_version}.jar",
-          :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
+          :enrich   => "#{assets_bucket}3-enrich/#{enrich_path_middle}-#{spark_enrich_version}.jar",
+          :shred    => "#{assets_bucket}#{shred_path}#{rds_version}.jar",
           :elasticsearch => "#{assets_bucket}4-storage/hadoop-elasticsearch-sink/hadoop-elasticsearch-sink-#{hadoop_elasticsearch_version}.jar",
         }
       end
