@@ -4,6 +4,7 @@ scala:
 jdk:
   - oraclejdk7
 before_script:
+  - sudo chmod +x /usr/local/bin/sbt
   - psql -U postgres -c "CREATE USER enricher WITH password 'supersecret1';"
   - psql -U postgres -c "CREATE DATABASE sql_enrichment_test WITH OWNER = enricher;"
   - psql -U postgres -d sql_enrichment_test < integration-tests/sql-enrichment-test.sql
