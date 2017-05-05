@@ -89,7 +89,7 @@ class WeatherEnrichmentSpec extends Specification  { def is =
   def e5 = {
     val enr = WeatherEnrichment("KEY", 5200, 1, "history.openweathermap.org", 10)
     val stamp = enr.getWeatherContext(Option(validEvent.lat), Option(validEvent.lon), Option(validEvent.time))
-    stamp.toEither must beLeft.like { case e => e must contain("ParseError") }
+    stamp.toEither must beLeft.like { case e => e must contain("AuthorizationError") }
   }
 
   def e6 = {

@@ -1,5 +1,5 @@
 {
-  "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-0",
+  "schema": "iglu:com.snowplowanalytics.iglu/resolver-config/jsonschema/1-0-1",
   "data": {
     "cacheSize": 500,
     "repositories": [

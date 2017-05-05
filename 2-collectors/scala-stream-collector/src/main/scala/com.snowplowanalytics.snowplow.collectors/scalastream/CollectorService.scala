@@ -17,24 +17,29 @@ package collectors
 package scalastream
 
 // Akka
-import akka.actor.{Actor,ActorRefFactory}
+import akka.actor.{Actor, ActorRefFactory}
 import akka.pattern.ask
 import akka.util.Timeout
+import spray.http.{HttpCookie, Timedout}
+import spray.routing.{Directive1, HttpService}
 
 // Spray
 import spray.http.Timedout
+import spray.http.HttpCookie
 import spray.http.HttpHeaders.RawHeader
 import spray.routing.HttpService
+import spray.routing.Directive1
 
 // Scala
 import scala.concurrent.duration._
 
 // Snowplow
 import sinks._
+import utils.SplitBatch
 
 // Actor accepting Http requests for the Scala collector.
 class CollectorServiceActor(collectorConfig: CollectorConfig,
-    sinks: CollectorSinks) extends Actor with HttpService {
+                            sinks: CollectorSinks) extends Actor with HttpService {
   implicit val timeout: Timeout = 1.second // For the actor 'asks'
   def actorRefFactory = context
 
@@ -43,7 +48,7 @@ class CollectorServiceActor(collectorConfig: CollectorConfig,
 
   // Use CollectorService so the same route can be accessed differently
   // in the testing framework.
-  private val collectorService = new CollectorService(responseHandler, context)
+  private val collectorService = new CollectorService(collectorConfig, responseHandler, context)
 
   // Message loop for the Spray service.
   def receive = handleTimeouts orElse runRoute(collectorService.collectorRoute)
@@ -54,8 +59,9 @@ class CollectorServiceActor(collectorConfig: CollectorConfig,
 }
 
 /**
- * Companion object for the CollectorService class
- */
+  *
+  * Companion object for the CollectorService class
+  */
 object CollectorService {
   private val QuerystringExtractor = "^[^?]*\\?([^#]*)(?:#.*)?$".r
 }
@@ -63,36 +69,42 @@ object CollectorService {
 // Store the route in CollectorService to be accessed from
 // both CollectorServiceActor and from the testing framework.
 class CollectorService(
-    responseHandler: ResponseHandler,
-    context: ActorRefFactory) extends HttpService {
+                        collectorConfig: CollectorConfig,
+                        responseHandler: ResponseHandler,
+                        context: ActorRefFactory) extends HttpService {
   def actorRefFactory = context
+
+  val cookieName = collectorConfig.cookieName
 
   // TODO: reduce code duplication here
   val collectorRoute = {
     post {
       path(Segment / Segment) { (path1, path2) =>
-        optionalCookie("sp") { reqCookie =>
+        cookieIfWanted(cookieName) { reqCookie =>
           optionalHeaderValueByName("User-Agent") { userAgent =>
             optionalHeaderValueByName("Referer") { refererURI =>
               headerValueByName("Raw-Request-URI") { rawRequest =>
-                hostName { host =>
-                  clientIP { ip =>
-                    requestInstance{ request =>
-                      entity(as[String]) { body =>
-                        complete(
-                          responseHandler.cookie(
-                            null,
-                            body,
-                            reqCookie,
-                            userAgent,
-                            host,
-                            ip,
-                            request,
-                            refererURI,
-                            "/" + path1 + "/" + path2,
-                            false
-                          )._1
-                        )
+                headerValueByName("SP-Cookie") { spCookie =>
+                  hostName { host =>
+                    clientIP { ip =>
+                      requestInstance { request =>
+                        entity(as[String]) { body =>
+                          complete(
+                            responseHandler.cookie(
+                              null,
+                              body,
+                              reqCookie,
+                              userAgent,
+                              host,
+                              ip,
+                              request,
+                              refererURI,
+                              "/" + path1 + "/" + path2,
+                              false,
+                              spCookie
+                            )._1
+                          )
+                        }
                       }
                     }
                   }
@@ -103,32 +115,33 @@ class CollectorService(
         }
       }
     } ~
-    get {
-      path("""ice\.png""".r | "i".r) { path =>
-        optionalCookie("sp") { reqCookie =>
-          optionalHeaderValueByName("User-Agent") { userAgent =>
-            optionalHeaderValueByName("Referer") { refererURI =>
-              headerValueByName("Raw-Request-URI") { rawRequest =>
-                hostName { host =>
-                  clientIP { ip =>
-                    requestInstance{ request =>
-                      complete(
-                        responseHandler.cookie(
-                          rawRequest match {
-                            case CollectorService.QuerystringExtractor(qs) => qs
-                            case _ => ""
-                          },
-                          null,
-                          reqCookie,
-                          userAgent,
-                          host,
-                          ip,
-                          request,
-                          refererURI,
-                          "/" + path,
-                          true
-                        )._1
-                      )
+      post {
+        path(Segment / Segment) { (path1, path2) =>
+          cookieIfWanted(cookieName) { reqCookie =>
+            optionalHeaderValueByName("User-Agent") { userAgent =>
+              optionalHeaderValueByName("Referer") { refererURI =>
+                headerValueByName("Raw-Request-URI") { rawRequest =>
+                  hostName { host =>
+                    clientIP { ip =>
+                      requestInstance { request =>
+                        entity(as[String]) { body =>
+                          complete(
+                            responseHandler.cookie(
+                              null,
+                              body,
+                              reqCookie,
+                              userAgent,
+                              host,
+                              ip,
+                              request,
+                              refererURI,
+                              "/" + path1 + "/" + path2,
+                              false,
+                              null
+                            )._1
+                          )
+                        }
+                      }
                     }
                   }
                 }
@@ -136,39 +149,35 @@ class CollectorService(
             }
           }
         }
-      }
-    } ~
-    get {
-      path("health".r) { path =>
-        complete(responseHandler.healthy)
-      }
-    } ~
-    get {
-      path(Segment / Segment) { (path1, path2) =>
-        optionalCookie("sp") { reqCookie =>
-          optionalHeaderValueByName("User-Agent") { userAgent =>
-            optionalHeaderValueByName("Referer") { refererURI =>
-              headerValueByName("Raw-Request-URI") { rawRequest =>
-                hostName { host =>
-                  clientIP { ip =>
-                    requestInstance{ request =>
-                      complete(
-                        responseHandler.cookie(
-                          rawRequest match {
-                            case CollectorService.QuerystringExtractor(qs) => qs
-                            case _ => ""
-                          },
-                          null,
-                          reqCookie,
-                          userAgent,
-                          host,
-                          ip,
-                          request,
-                          refererURI,
-                          "/" + path1 + "/" + path2,
-                          true
-                        )._1
-                      )
+      } ~
+      get {
+        path("""ice\.png""".r | "i".r) { path =>
+          cookieIfWanted(cookieName) { reqCookie =>
+            optionalHeaderValueByName("User-Agent") { userAgent =>
+              optionalHeaderValueByName("Referer") { refererURI =>
+                headerValueByName("Raw-Request-URI") { rawRequest =>
+                  hostName { host =>
+                    clientIP { ip =>
+                      requestInstance{ request =>
+                        complete(
+                          responseHandler.cookie(
+                            rawRequest match {
+                              case CollectorService.QuerystringExtractor(qs) => qs
+                              case _ => ""
+                            },
+                            null,
+                            reqCookie,
+                            userAgent,
+                            host,
+                            ip,
+                            request,
+                            refererURI,
+                            "/" + path,
+                            true,
+                            null
+                          )._1
+                        )
+                      }
                     }
                   }
                 }
@@ -176,18 +185,69 @@ class CollectorService(
             }
           }
         }
-      }
-    } ~
-    options {
-      requestInstance { request =>
-        complete(responseHandler.preflightResponse(request))
-      }
-    } ~
-    get {
-      path("""crossdomain\.xml""".r) { path =>
-        complete(responseHandler.flashCrossDomainPolicy)
-      }
-    } ~
-    complete(responseHandler.notFound)
+      } ~
+      get {
+        path("health".r) { path =>
+          complete(responseHandler.healthy)
+        }
+      } ~
+      get {
+        path(Segment / Segment) { (path1, path2) =>
+          cookieIfWanted(cookieName) { reqCookie =>
+            optionalHeaderValueByName("User-Agent") { userAgent =>
+              optionalHeaderValueByName("Referer") { refererURI =>
+                headerValueByName("Raw-Request-URI") { rawRequest =>
+                  hostName { host =>
+                    clientIP { ip =>
+                      requestInstance{ request =>
+                        complete(
+                          responseHandler.cookie(
+                            rawRequest match {
+                              case CollectorService.QuerystringExtractor(qs) => qs
+                              case _ => ""
+                            },
+                            null,
+                            reqCookie,
+                            userAgent,
+                            host,
+                            ip,
+                            request,
+                            refererURI,
+                            "/" + path1 + "/" + path2,
+                            true,
+                            null
+                          )._1
+                        )
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      } ~
+      options {
+        requestInstance { request =>
+          complete(responseHandler.preflightResponse(request))
+        }
+      } ~
+      get {
+        path("""crossdomain\.xml""".r) { path =>
+          complete(responseHandler.flashCrossDomainPolicy)
+        }
+      } ~
+      complete(responseHandler.notFound)
+  }
+
+  /**
+    * Directive to extract a cookie if a cookie name is specified and if such a cookie exists
+    *
+    * @param name Optionally configured cookie name
+    * @return Directive1[Option[HttpCookie]]
+    */
+  def cookieIfWanted(name: Option[String]): Directive1[Option[HttpCookie]] = name match {
+    case Some(n) => optionalCookie(n)
+    case None => optionalHeaderValue(x => None)
   }
 }

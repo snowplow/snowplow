@@ -34,7 +34,6 @@ import outputs.EnrichedEvent
 
 // Iglu Scala Client
 import iglu.client.{
-  SchemaKey,
   SchemaCriterion,
   JsonSchemaPair,
   Resolver
@@ -92,43 +91,82 @@ object Shredder {
     val partialHierarchy = makePartialHierarchy(
       event.event_id, event.collector_tstamp)
 
-    // Get our unstructured event and Lists of contexts and derived_contexts, all Option-boxed
-    val ue = extractUnstructEvent(event)
+    // Get our unstructured event and Lists of contexts and derived_contexts
+    val ue = extractAndValidateUnstructEvent(event)
+    val c = extractAndValidateCustomContexts(event)
+    val dc = extractAndValidateDerivedContexts(event)
 
-    def extractContexts(json: String, field: String): Option[ValidatedNelMessage[List[JsonNode]]] = {
-      for {
-        v <- extractAndValidateJson(field, ContextsSchema, Option(json))
-      } yield for {
-        j <- v
-        l = j.iterator.toList
-      } yield l
+    // Joining all validated JSONs into a single validated List[JsonNode], collecting Failures too
+    val all = ue |+| c |+| dc
+
+    val allWithMetadata = all.map { jsonSchemaPairs =>
+      jsonSchemaPairs.map(pair => attachMetadata(pair, partialHierarchy))
     }
 
-    val c  = extractContexts(event.contexts, "context")
-    val dc = extractContexts(event.derived_contexts, "derived_contexts")
-
-    def flatten(o: Option[ValidatedNelMessage[JsonNodes]]): ValidatedNelMessage[JsonNodes] = o match {
-      case Some(vjl) => vjl
-      case None => List[JsonNode]().success
-    }
-
-    // Let's harmonize our Option[JsonNode] and Option[List[JsonNode]]
-    // into a List[JsonNode], collecting Failures too
-    val all = (flatten(ue) |@| flatten(c) |@| flatten(dc)) { _ ++ _  ++ _ }
-
-    // Let's validate the instances against their schemas, and
-    // then attach metadata to the nodes
-    (for {
-      list <- all
-    } yield for {
-      node <- list
-    } yield for {
-      js   <- node.validateAndIdentifySchema(false)
-      mj   =  attachMetadata(js, partialHierarchy)
-    } yield mj).flatMap(_.sequenceU) // Swap nested List[scalaz.Validation[...]
+    allWithMetadata
   }
 
-  def extractUnstructEvent(event: EnrichedEvent)(implicit resolver: Resolver): Option[ValidatedNelMessage[JsonNodes]] = {
+  /**
+   * Extract unstruct event out of [[EnrichedEvent]] and validate against it's schema
+   *
+   * @param event The Snowplow enriched event to find unstruct event in
+   * @param resolver iglu resolver
+   * @return validated list (empty or single-element) of pairs consist of unstruct event schema and node
+   */
+  def extractAndValidateUnstructEvent(event: EnrichedEvent)
+                                     (implicit resolver: Resolver): ValidatedNelMessage[JsonSchemaPairs] = {
+    val extracted: ValidatedNelMessage[JsonNodes] = flatten(extractUnstructEvent(event))
+    validate(extracted)
+  }
+
+  /**
+   * Extract list of custom contexts out of string and validate each against its schema
+   *
+   * @param event The Snowplow enriched event to extract custom context JSONs from
+   * @param resolver iglu resolver
+   * @return validated list of pairs consist of schema and node
+   */
+  def extractAndValidateCustomContexts(event: EnrichedEvent)
+                                      (implicit resolver: Resolver): ValidatedNelMessage[JsonSchemaPairs] =
+    extractAndValidateContexts(event.contexts, "context")
+
+  /**
+   * Extract list of derived contexts out of string and validate each against its schema
+   *
+   * @param event The Snowplow enriched event to extract custom context JSONs from
+   * @param resolver iglu resolver
+   * @return validated list of pairs consist of schema and node
+   */
+  def extractAndValidateDerivedContexts(event: EnrichedEvent)
+                                       (implicit resolver: Resolver): ValidatedNelMessage[JsonSchemaPairs] =
+    extractAndValidateContexts(event.derived_contexts, "derived_contexts")
+
+  /**
+   * Extract list of contexts out of string and validate each against its schema
+   *
+   * @param json string supposed to contain Snowplow Contexts object
+   * @param field field where object is came from (used only for error log)
+   * @param resolver iglu resolver
+   * @return validated list of pairs consist of schema and node
+   */
+  private[shredder] def extractAndValidateContexts(json: String, field: String)
+                                                  (implicit resolver: Resolver): ValidatedNelMessage[JsonSchemaPairs] = {
+    val extracted: ValidatedNelMessage[JsonNodes] = flatten(extractContexts(json, field))
+    validate(extracted)
+  }
+
+  /**
+   * Extract unstruct event as JsonNode
+   * Extraction involves validation against schema
+   * Event itself extracted as List (empty or with single element)
+   *
+   * @param event The Snowplow enriched event to shred JSONs from
+   * @param resolver Our implicit Iglu resolver, for schema lookups
+   * @return a Validation containing on Success a List (possible empty) of JsonNodes
+   *         and on Failure a NonEmptyList of JsonNodes containing error messages
+   */
+  def extractUnstructEvent(event: EnrichedEvent)
+                          (implicit resolver: Resolver): Option[ValidatedNelMessage[JsonNodes]] = {
     for {
       v <- extractAndValidateJson("ue_properties", UePropertiesSchema, Option(event.unstruct_event))
     } yield for {
@@ -136,6 +174,52 @@ object Shredder {
       l = List(j)
     } yield l
   }
+
+  /**
+   * Extract list of contexts out of string
+   * Extraction involves validation against schema
+   *
+   * @param json string with contexts object
+   * @param field field where object is came from (used only for error log)
+   * @param resolver Our implicit Iglu resolver, for schema lookups
+   * @return an Optional Validation containing on Success a List (possible empty) of JsonNodes
+   *         and on Failure a NonEmptyList of JsonNodes containing error messages
+   */
+  private[shredder] def extractContexts(json: String, field: String)
+                                       (implicit resolver: Resolver): Option[ValidatedNelMessage[JsonNodes]] = {
+    for {
+      v <- extractAndValidateJson(field, ContextsSchema, Option(json))
+    } yield for {
+      j <- v
+      l = j.iterator.toList
+    } yield l
+  }
+
+  /**
+   * Fetch Iglu Schema for each [[JsonNode]] in [[ValidatedNelMessage]] and validate this node against it
+   *
+   * @param validatedJsons list of valid JSONs supposed to be Self-describing
+   * @return validated list of pairs consist of schema and node
+   */
+  private[shredder] def validate(validatedJsons: ValidatedNelMessage[JsonNodes])
+                                (implicit resolver: Resolver): ValidatedNelMessage[JsonSchemaPairs] = {
+    val validated = validatedJsons.map { (jsonNodes: List[JsonNode]) =>
+      jsonNodes.map(_.validateAndIdentifySchema(false))
+    }
+    validated.flatMap(_.sequenceU) // Swap nested List[scalaz.Validation[...]
+  }
+
+  /**
+   * Flatten Option[List] to List
+   *
+   * @param o Option with List
+   * @return empty list in case of None, or non-empty in case of some
+   */
+  private[shredder] def flatten(o: Option[ValidatedNelMessage[JsonNodes]]): ValidatedNelMessage[JsonNodes] = o match {
+    case Some(vjl) => vjl
+    case None => List[JsonNode]().success
+  }
+
 
   /**
    * Convenience to make a partial TypeHierarchy.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Snowplow Analytics Ltd. All rights reserved.
+ * Copyright (c) 2014-2016 Snowplow Analytics Ltd. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0, and
  * you may not use this file except in compliance with the Apache License
@@ -62,8 +62,11 @@ collector {
   }
 
   cookie {
+    enabled = true
     expiration = 365 days
+    name = sp
     domain = "test-domain.com"
+    SP-Cookie = "666"
   }
 
   sink {
@@ -79,15 +82,25 @@ collector {
         good: "snowplow_collector_example"
         bad: "snowplow_collector_example"
       }
-      buffer {
-        byte-limit: 4000000 # 4MB
-        record-limit: 500 # 500 records
-        time-limit: 60000 # 1 minute
-      }
       backoffPolicy {
         minBackoff: 3000 # 3 seconds
         maxBackoff: 600000 # 5 minutes
       }
+    }
+
+    kafka {
+      brokers: "localhost:9092"
+
+      topic {
+        good: "good-topic"
+        bad: "bad-topic"
+      }
+    }
+
+    buffer {
+      byte-limit: 4000000 # 4MB
+      record-limit: 500 # 500 records
+      time-limit: 60000 # 1 minute
     }
   }
 }
@@ -96,7 +109,7 @@ collector {
   val sink = new TestSink
   val sinks = CollectorSinks(sink, sink)
   val responseHandler = new ResponseHandler(collectorConfig, sinks)
-  val collectorService = new CollectorService(responseHandler, system)
+  val collectorService = new CollectorService(collectorConfig, responseHandler, system)
   val thriftDeserializer = new TDeserializer
 
   // By default, spray will always add Remote-Address to every request
@@ -126,18 +139,46 @@ collector {
         // this will need to be changed.
         val httpCookie = httpCookies(0)
 
-        httpCookie.name must be("sp")
+        httpCookie.name must beEqualTo(collectorConfig.cookieName.get)
+        httpCookie.name must beEqualTo("sp")
+        httpCookie.path must beSome("/")
         httpCookie.domain must beSome
         httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
         httpCookie.expires must beSome
+        httpCookie.content.matches("""[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}""")
         val expiration = httpCookie.expires.get
-        val offset = expiration.clicks - collectorConfig.cookieExpiration -
-          DateTime.now.clicks
+        val offset = expiration.clicks - collectorConfig.cookieExpiration.get - DateTime.now.clicks
         offset.asInstanceOf[Int] must beCloseTo(0, 2000) // 1000 ms window.
       }
     }
+    "return a cookie containing nuid query parameter" in {
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2?nuid=UUID_Test_New") ~> collectorService.collectorRoute ~> check {
+        headers must not be empty
+
+        val httpCookies: List[HttpCookie] = headers.collect {
+          case `Set-Cookie`(hc) => hc
+        }
+        httpCookies must not be empty
+
+        // Assume we only return a single cookie.
+        // If the collector is modified to return multiple cookies,
+        // this will need to be changed.
+        val httpCookie = httpCookies(0)
+
+        httpCookie.name must beEqualTo(collectorConfig.cookieName.get)
+        httpCookie.name must beEqualTo("sp")
+        httpCookie.path must beSome("/")
+        httpCookie.domain must beSome
+        httpCookie.domain.get must be(collectorConfig.cookieDomain.get)
+        httpCookie.expires must beSome
+        httpCookie.content must beEqualTo("UUID_Test_New")
+        val expiration = httpCookie.expires.get
+        val offset = expiration.clicks - collectorConfig.cookieExpiration.get - DateTime.now.clicks
+        offset.asInstanceOf[Int] must beCloseTo(0, 3600000) // 1 hour window.
+      }
+    }
     "return the same cookie as passed in" in {
-      CollectorPost("/com.snowplowanalytics.snowplow/tp2", Some(HttpCookie("sp", "UUID_Test"))) ~>
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2", Some(HttpCookie(collectorConfig.cookieName.get, "UUID_Test"))) ~>
           collectorService.collectorRoute ~> check {
         val httpCookies: List[HttpCookie] = headers.collect {
           case `Set-Cookie`(hc) => hc
@@ -148,6 +189,20 @@ collector {
         val httpCookie = httpCookies(0)
 
         httpCookie.content must beEqualTo("UUID_Test")
+      }
+    }
+    "override cookie with nuid parameter" in {
+      CollectorPost("/com.snowplowanalytics.snowplow/tp2?nuid=UUID_Test_New", Some(HttpCookie("sp", "UUID_Test"))) ~>
+          collectorService.collectorRoute ~> check {
+        val httpCookies: List[HttpCookie] = headers.collect {
+          case `Set-Cookie`(hc) => hc
+        }
+        // Assume we only return a single cookie.
+        // If the collector is modified to return multiple cookies,
+        // this will need to be changed.
+        val httpCookie = httpCookies(0)
+
+        httpCookie.content must beEqualTo("UUID_Test_New")
       }
     }
     "return a P3P header" in {
@@ -167,17 +222,17 @@ collector {
     "store the expected event as a serialized Thrift object in the enabled sink" in {
       val payloadData = "param1=val1&param2=val2"
       val storedRecordBytes = responseHandler.cookie(payloadData, null, None,
-        None, "localhost", RemoteAddress("127.0.0.1"), new HttpRequest(), None, "/com.snowplowanalytics.snowplow/tp2", false)._2
+        None, "localhost", RemoteAddress("127.0.0.1"), new HttpRequest(), None, "/com.snowplowanalytics.snowplow/tp2", false, "666")._2
 
       val storedEvent = new CollectorPayload
       this.synchronized {
         thriftDeserializer.deserialize(storedEvent, storedRecordBytes.head)
       }
 
-      storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 1000)
+      storedEvent.timestamp must beCloseTo(DateTime.now.clicks, 60000)
       storedEvent.encoding must beEqualTo("UTF-8")
       storedEvent.ipAddress must beEqualTo("127.0.0.1")
-      storedEvent.collector must beEqualTo("ssc-0.5.0-test")
+      storedEvent.collector must beEqualTo("ssc-0.9.0-test")
       storedEvent.path must beEqualTo("/com.snowplowanalytics.snowplow/tp2")
       storedEvent.querystring must beEqualTo(payloadData)
     }

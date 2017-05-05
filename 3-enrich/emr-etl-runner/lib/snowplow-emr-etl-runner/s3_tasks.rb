@@ -51,7 +51,9 @@ module Snowplow
       #
       # Parameters:
       # +region+:: the region to add into the filenames
-      Contract String, String => Func[String, String => String]
+      # +collector_format+:: the format of the collector log files
+      # Contract String, String => Func[String, String => String] disabled contract because of:
+      # https://github.com/egonSchiele/contracts.ruby/issues/238
       def self.build_fix_filenames(region, collector_format)
         return lambda { |basename, filepath|
 
@@ -168,40 +170,6 @@ module Snowplow
 
           true
         end
-      end
-
-      # Moves (archives) the processed CloudFront logs to an archive bucket.
-      # Prevents the same log files from being processed again.
-      #
-      # Parameters:
-      # +config+:: the hash of configuration options
-      Contract ConfigHash => nil
-      def self.archive_logs(config)
-        Monitoring::Logging::logger.debug 'Archiving CloudFront logs...'
-
-        s3 = Sluice::Storage::S3::new_fog_s3_from(
-          config[:aws][:s3][:region],
-          config[:aws][:access_key_id],
-          config[:aws][:secret_access_key])
-
-        # Get S3 locations
-        processing_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:raw][:processing]);
-        archive_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:raw][:archive]);
-
-        # Attach date path if filenames include datestamp
-        add_date_path = lambda { |filepath|
-          if m = filepath.match('[^/]+\.(\d\d\d\d-\d\d-\d\d)-\d\d\.[^/]+\.gz$')
-            filename = m[0]
-            date = m[1]
-            return date + '/' + filename
-          else
-            return filepath
-          end
-        }
-
-        # Move all the files in the Processing Bucket
-        Sluice::Storage::S3::move_files(s3, processing_location, archive_location, '.+', add_date_path)
-        nil
       end
 
     end

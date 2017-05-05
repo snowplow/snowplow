@@ -31,13 +31,14 @@ module Snowplow
       #
       # Parameters:
       # +config+:: the hash of configuration options
-      def download_events(config)
+      def self.download_events(config)
         puts "Downloading Snowplow events..."
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
           config[:aws][:s3][:region],
           config[:aws][:access_key_id],
           config[:aws][:secret_access_key])
+        s3.host = region_to_safe_host(config[:aws][:s3][:region])
 
         # Get S3 location of In Bucket plus local directory
         in_location = Sluice::Storage::S3::Location.new(config[:aws][:s3][:buckets][:shredded][:good])
@@ -48,14 +49,13 @@ module Snowplow
 
         nil
       end
-      module_function :download_events
 
       # Moves (archives) the loaded Snowplow event files to the
       # Archive Bucket.
       #
       # Parameters:
       # +config+:: the hash of configuration options
-      def archive_files(config)
+      def self.archive_files(config)
         puts 'Archiving Snowplow events...'
 
         s3 = Sluice::Storage::S3::new_fog_s3_from(
@@ -69,7 +69,6 @@ module Snowplow
       
         nil
       end
-      module_function :archive_files
 
     private
 
@@ -80,7 +79,7 @@ module Snowplow
       # +s3+:: the S3 connection
       # +config+:: the hash of configuration options
       # +file_type+:: the type of files (a symbol)
-      def archive_files_of_type(s3, config, file_type)
+      def self.archive_files_of_type(s3, config, file_type)
 
         # Check we have shredding configured
         good_path = config[:aws][:s3][:buckets][file_type][:good]
@@ -100,7 +99,26 @@ module Snowplow
 
         nil
       end
-      module_function :archive_files_of_type
+
+      # Forces Fog to use the Northern Virginia endpoint
+      # (s3-external-1.amazonaws.com), which has better
+      # read-after-write properties than the global
+      # endpoint (s3.amazonaws.com).
+      #
+      # We return nil for any other region to delegate
+      # back to Fog for the most appropriate host (Fog
+      # has its own region_to_host method).
+      #
+      # Parameters:
+      # +region+:: the AWS region
+      def self.region_to_safe_host(region)
+        case region.to_s
+        when 'us-east-1', ''
+          's3-external-1.amazonaws.com'
+        else
+          nil
+        end
+      end
 
     end
   end

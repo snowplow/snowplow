@@ -23,10 +23,9 @@ module Snowplow
       #
       # Parameters:
       # +folder+:: the folder containing the files to delete 
-      def delete_events(folder)
+      def self.delete_events(folder)
         FileUtils.rm_rf("#{folder}/.", :secure => true)
       end
-      module_function :delete_events
 
     end
   end

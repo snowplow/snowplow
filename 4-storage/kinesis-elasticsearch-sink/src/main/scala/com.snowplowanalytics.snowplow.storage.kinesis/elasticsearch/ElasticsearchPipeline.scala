@@ -1,5 +1,5 @@
- /*
- * Copyright (c) 2014 Snowplow Analytics Ltd.
+/**
+ * Copyright (c) 2014-2016 Snowplow Analytics Ltd.
  * All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -16,6 +16,7 @@
  * See the Apache License Version 2.0 for the specific language
  * governing permissions and limitations there under.
  */
+
 package com.snowplowanalytics.snowplow
 package storage.kinesis.elasticsearch
 
@@ -53,6 +54,7 @@ import scalatracker.Tracker
  * @param tracker a Tracker instance
  * @param maxConnectionTime the maximum amount of time
  *        we can attempt to send to elasticsearch
+ * @param elasticsearchClientType The type of ES Client to use
  */
 class ElasticsearchPipeline(
   streamType: StreamType,
@@ -61,10 +63,14 @@ class ElasticsearchPipeline(
   goodSink: Option[ISink],
   badSink: ISink,
   tracker: Option[Tracker] = None,
-  maxConnectionTime: Long) extends IKinesisConnectorPipeline[ValidatedRecord, EmitterInput] {
+  maxConnectionTime: Long,
+  elasticsearchClientType: String,
+  connTimeout: Int,
+  readTimeout: Int
+) extends IKinesisConnectorPipeline[ValidatedRecord, EmitterInput] {
 
   override def getEmitter(configuration: KinesisConnectorConfiguration): IEmitter[EmitterInput] =
-    new SnowplowElasticsearchEmitter(configuration, goodSink, badSink, tracker, maxConnectionTime)
+    new SnowplowElasticsearchEmitter(configuration, goodSink, badSink, tracker, maxConnectionTime, elasticsearchClientType, connTimeout, readTimeout)
 
   override def getBuffer(configuration: KinesisConnectorConfiguration) = new BasicMemoryBuffer[ValidatedRecord](configuration)
 

@@ -19,7 +19,7 @@ module Snowplow
 
       # Replaces any substring of length at least min_replaced_substring_length of an error message
       # if it is also a substring of any credential string
-      def sanitize_message(message, credentials, min_replaced_substring_length=7)
+      def self.sanitize_message(message, credentials, min_replaced_substring_length=7)
         credentials.each do |cred|
           (0..(cred.length - min_replaced_substring_length)).each do |start|
             (cred.length.downto(start + min_replaced_substring_length)).each do |finish|
@@ -29,7 +29,6 @@ module Snowplow
         end
         message
       end
-      module_function :sanitize_message
 
     end
   end
