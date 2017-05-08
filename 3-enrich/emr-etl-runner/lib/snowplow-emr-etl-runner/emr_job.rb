@@ -293,21 +293,40 @@ module Snowplow
             enrich_final_output
           end
 
-          enrich_step = build_scalding_step(
-            "Enrich Raw Events",
-            assets[:enrich],
-            "enrich.hadoop.EtlJob",
-            { :in     => enrich_step_input,
-              :good   => enrich_step_output,
-              :bad    => self.class.partition_by_run(csbe[:bad],    run_id),
-              :errors => self.class.partition_by_run(csbe[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
-            },
-            { :input_format     => config[:collectors][:format],
-              :etl_tstamp       => etl_tstamp,
-              :iglu_config      => self.class.build_iglu_config_json(resolver),
-              :enrichments      => self.class.build_enrichments_json(enrichments_array)
-            }
-          )
+          enrich_step =
+            if self.class.is_spark_enrich(config[:enrich][:versions][:spark_enrich]) then
+              @jobflow.add_application("Spark")
+              build_spark_step(
+                "Enrich Raw Events",
+                assets[:enrich],
+                "enrich.spark.EnrichJob",
+                { :in     => enrich_step_input,
+                  :good   => enrich_step_output,
+                  :bad    => self.class.partition_by_run(csbe[:bad],    run_id)
+                },
+                { 'input-format'    => config[:collectors][:format],
+                  'etl-timestamp'   => etl_tstamp,
+                  'iglu-config'     => self.class.build_iglu_config_json(resolver),
+                  'enrichments'     => self.class.build_enrichments_json(enrichments_array)
+                }
+              )
+            else
+              build_scalding_step(
+                "Enrich Raw Events",
+                assets[:enrich],
+                "enrich.hadoop.EtlJob",
+                { :in     => enrich_step_input,
+                  :good   => enrich_step_output,
+                  :bad    => self.class.partition_by_run(csbe[:bad],    run_id),
+                  :errors => self.class.partition_by_run(csbe[:errors], run_id, config[:enrich][:continue_on_unexpected_error])
+                },
+                { :input_format     => config[:collectors][:format],
+                  :etl_tstamp       => etl_tstamp,
+                  :iglu_config      => self.class.build_iglu_config_json(resolver),
+                  :enrichments      => self.class.build_enrichments_json(enrichments_array)
+                }
+              )
+            end
 
           # Late check whether our enrichment directory is empty. We do an early check too
           csbe_good_loc = Sluice::Storage::S3::Location.new(csbe[:good])
@@ -754,9 +773,36 @@ module Snowplow
         "#{bucket}#{suffix}/"
       end
 
+      # Check if the supplied enrich version relates to spark enrich or the legacy
+      # scala-hadoop-enrich.
+      #
+      # Parameters:
+      # +enrich_version+:: the specified enrich version
+      Contract String => Bool
+      def self.is_spark_enrich(enrich_version)
+        version = enrich_version.split('.').map { |v| v.to_i }
+        unless version.length == 3
+          raise ArgumentError, 'The enrich job version could not be parsed'
+        end
+        version[0] >= 1 && version[1] >= 9
+      end
+
+      # Retrieve the s3 paths of the needed assets: Spark enrich, Relational Database Shredder and
+      # the Hadoop Elasticsearch sink.
+      #
+      # Parameters:
+      # +assets_bucket+:: the s3 bucket where the assets are supposed to be located
+      # +spark_enrich_version+:: version of the Spark enrich job to use
+      # +rds_version+:: version of the relational database shredder job to use
+      # +hadoop_elasticsearch_version+:: version of the Hadoop Elasticsearch sink to use
       Contract String, String, String, String => AssetsHash
-      def self.get_assets(assets_bucket, hadoop_enrich_version, hadoop_shred_version, hadoop_elasticsearch_version)
-        enrich_path_middle = hadoop_enrich_version[0] == '0' ? 'hadoop-etl/snowplow-hadoop-etl' : 'scala-hadoop-enrich/snowplow-hadoop-enrich'
+      def self.get_assets(assets_bucket, spark_enrich_version, rds_version, hadoop_elasticsearch_version)
+        enrich_path_middle = if is_spark_enrich(spark_enrich_version)
+          'spark-enrich/snowplow-spark-enrich'
+        else
+          spark_enrich_version[0] == '0' ? 'hadoop-etl/snowplow-hadoop-etl' : 'scala-hadoop-enrich/snowplow-hadoop-enrich'
+        end
+        shred_path = '3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-'
         {
           :enrich   => "#{assets_bucket}3-enrich/#{enrich_path_middle}-#{hadoop_enrich_version}.jar",
           :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
