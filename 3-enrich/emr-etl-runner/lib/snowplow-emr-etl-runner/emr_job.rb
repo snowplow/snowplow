@@ -773,6 +773,20 @@ module Snowplow
         "#{bucket}#{suffix}/"
       end
 
+      # Check if the supplied shred version relates to the relational-database-shredder or the
+      # legacy scala-hadoop-shred.
+      #
+      # Parameters:
+      # +shred_version+:: the specified shred version
+      Contract String => Bool
+      def self.is_relational_database_shredder(shred_version)
+        version = shred_version.split('.').map { |v| v.to_i }
+        unless version.length == 3
+          raise ArgumentError, 'The shred job version could not be parsed'
+        end
+        version[1] >= 12
+      end
+
       # Check if the supplied enrich version relates to spark enrich or the legacy
       # scala-hadoop-enrich.
       #
@@ -802,7 +816,11 @@ module Snowplow
         else
           spark_enrich_version[0] == '0' ? 'hadoop-etl/snowplow-hadoop-etl' : 'scala-hadoop-enrich/snowplow-hadoop-enrich'
         end
-        shred_path = '3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-'
+        shred_path = if is_relational_database_shredder(rds_version) then
+          '4-storage/rdb-shredder/snowplow-rdb-shredder-'
+        else
+          '3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-'
+        end
         {
           :enrich   => "#{assets_bucket}3-enrich/#{enrich_path_middle}-#{hadoop_enrich_version}.jar",
           :shred    => "#{assets_bucket}3-enrich/scala-hadoop-shred/snowplow-hadoop-shred-#{hadoop_shred_version}.jar",
