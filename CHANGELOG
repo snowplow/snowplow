@@ -1,5 +1,5 @@
 Release 88 Angkor Wat (2017-04-27)
-------------------------------------
+----------------------------------
 Documentation: fix incorrect release date for R87 (#3126)
 Common: update copyright years in README (#3148)
 Common: add CI/CD for EmrEtlRunner and StorageLoader (#3102)
