@@ -15,7 +15,7 @@
 lazy val root = project.in(file("."))
   .settings(
     name        := "snowplow-spark-enrich",
-    version     := "1.9.0",
+    version     := "1.9.0-rc1",
     description := "The Snowplow Spark Enrichment process"
   )
   .settings(BuildSettings.buildSettings)
