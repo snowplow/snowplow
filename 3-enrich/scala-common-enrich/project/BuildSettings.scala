@@ -25,6 +25,7 @@ object BuildSettings {
     crossScalaVersions    :=  Seq("2.10.6", "2.11.11"),
     scalacOptions         :=  compilerOptions,
     scalacOptions in Test :=  Seq("-Yrangepos"),
+    javacOptions          :=  javaCompilerOptions,
     resolvers             ++= Dependencies.resolutionRepos
   )
 
@@ -40,8 +41,12 @@ object BuildSettings {
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
     "-Xfuture",
-    "-Xlint",
-    "-target:jvm-1.7"
+    "-Xlint"
+  )
+
+  lazy val javaCompilerOptions = Seq(
+    "-source", "1.8",
+    "-target", "1.8"
   )
 
   // Makes our SBT app settings available from within the ETL

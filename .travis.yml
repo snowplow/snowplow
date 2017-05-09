@@ -2,7 +2,7 @@ language: scala
 scala:
   - 2.10.6
 jdk:
-  - oraclejdk7
+  - oraclejdk8
 before_script:
   - sudo chmod +x /usr/local/bin/sbt
   - psql -U postgres -c "CREATE USER enricher WITH password 'supersecret1';"
