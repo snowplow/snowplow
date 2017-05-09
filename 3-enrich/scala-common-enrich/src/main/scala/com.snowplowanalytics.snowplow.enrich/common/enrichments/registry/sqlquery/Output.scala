@@ -31,7 +31,6 @@ import org.json4s.jackson.JsonMethods.parseOpt
 // Joda
 import org.joda.time.DateTime
 
-
 /**
  * Container class for output preferences.
  * Describes how to transform data fetched from DB into derived contexts
