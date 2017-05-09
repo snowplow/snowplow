@@ -22,6 +22,7 @@ object BuildSettings {
     organization  := "com.snowplowanalytics",
     scalaVersion  := "2.11.11",
     scalacOptions := compilerOptions,
+    javacOptions  := javaCompilerOptions,
     parallelExecution in Test := false, // Parallel tests cause havoc with Spark
     resolvers     ++= Dependencies.resolutionRepos
   )
@@ -38,8 +39,12 @@ object BuildSettings {
     "-Ywarn-dead-code",
     "-Ywarn-numeric-widen",
     "-Xfuture",
-    "-Xlint",
-    "-target:jvm-1.7"
+    "-Xlint"
+  )
+
+  lazy val javaCompilerOptions = Seq(
+    "-source", "1.8",
+    "-target", "1.8"
   )
 
   // Makes our SBT app settings available from within the ETL
