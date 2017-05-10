@@ -86,8 +86,9 @@ class ElasticsearchSenderHTTP(
    * Prepare the elasticsearch client
    */
   private val factory: JestClientFactory = new JestClientFactory()
+
   factory.setHttpClientConfig(new HttpClientConfig
-    .Builder("http://" + configuration.ELASTICSEARCH_ENDPOINT + ":" + configuration.ELASTICSEARCH_PORT)
+    .Builder("https://" + configuration.ELASTICSEARCH_ENDPOINT + ":" + configuration.ELASTICSEARCH_PORT)
     .multiThreaded(true)
     .discoveryEnabled(false)
     .maxConnectionIdleTime(30L, TimeUnit.SECONDS)

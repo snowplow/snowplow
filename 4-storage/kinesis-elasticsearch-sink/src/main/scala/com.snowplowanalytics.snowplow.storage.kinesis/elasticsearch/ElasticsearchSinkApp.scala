@@ -155,7 +155,7 @@ object ElasticsearchSinkApp extends App {
       }
 
       lazy val elasticsearchSender: ElasticsearchSender = (
-        if (clientType == "http") {
+        if ((clientType == "http") | (clientType == "https")){
           new ElasticsearchSenderHTTP(finalConfig, None, maxConnectionTime, connTimeout, readTimeout)
         } else {
           new ElasticsearchSenderTransport(finalConfig, None, maxConnectionTime)
