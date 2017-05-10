@@ -30,6 +30,9 @@ env:
   - secure: stEnjuXCyIoTh0wluBNwgwflc9j+QNq5QbzeEOv8KZQ6KAVjwikX1gzMGNBaD5a0JFgUuE8Wd55l5RMfb+P5Wt8Th7WpyJ55SaOlTz6nDWGFxpOo1XJy4UI7Qr9CPEmqWwsS7Kxl7+jVEJPIYbItr0a+oGsajAtNsly9C88S5w0=
    # AWS_STAGING_SECRET_ACCESS_KEY
   - secure: tTXtm8oxwHDpHPGByCbSao7Kauq8SFpeyBYpBoN4e9uUYbgzmwMNLts/tWAZpHGmmnKhrEFVZp/tfqgA1fMgPGFvMmJTFrvceBkPzbc7T3Ck8bxpAGoL8TmSvET9lC+NxP8A0s1Uvdo1Y9ue6lkNh8l74oDDZSSfdGqnNOc2rJ4=
+  - SONA_USER=snowplow
+  # SONA_PASS
+  - secure: l826euZgoTP33un5ND8zbGpBTHjTZ/4c9l1aqCi2mEnoIE40DXFyYEr8mtGX0EJXUEATIY4G9RsdYTj6kdoxiZLNLP01f7bTTCB0773L9/CplQqajfQ4XqfteN80S8uvxVwxYM/1MyGKa6B54k8prlaOh+8Gsk5iwLSGvq7S/Lk=
   matrix:
   - TEST_DIR=3-enrich/scala-common-enrich/
 before_install:
