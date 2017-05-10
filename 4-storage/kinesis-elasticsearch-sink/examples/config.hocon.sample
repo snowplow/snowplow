@@ -85,7 +85,7 @@ sink {
   elasticsearch {
 
     # Events are indexed using an Elasticsearch Client
-    # - type: http or transport (will default to transport)
+    # - type: http, https, or transport (will default to transport)
     # - endpoint: the cluster endpoint
     # - port: the port the cluster can be accessed on
     #   - for http this is usually 9200
