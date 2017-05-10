@@ -20,6 +20,7 @@ lazy val root = project.in(file("."))
     description := "Common functionality for enriching raw Snowplow events"
   )
   .settings(BuildSettings.buildSettings)
+  .settings(BuildSettings.publishSettings)
   .settings(
     libraryDependencies ++= Seq(
       // Java
