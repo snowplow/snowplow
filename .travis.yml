@@ -36,6 +36,7 @@ env:
   matrix:
   - TEST_DIR=3-enrich/scala-common-enrich/
   - TEST_DIR=3-enrich/spark-enrich/
+  - TEST_DIR=4-storage/relational-database-shredder/
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y lzop
@@ -71,7 +72,7 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_release_tag.sh relational_database_shredder $TRAVIS_TAG)" == "" && $? == 0'
+      condition: '"$(.travis/is_release_tag.sh relational_database_shredder $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 4-storage/relational-database-shredder/'
   - provider: script
     script: ./.travis/deploy.sh hadoop_event_recovery $TRAVIS_TAG
     skip_cleanup: true
