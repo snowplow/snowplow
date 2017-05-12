@@ -23,7 +23,7 @@ object BuildSettings {
     organization          :=  "com.snowplowanalytics",
     version               :=  "0.24.1",
     description           :=  "Common functionality for enriching raw Snowplow events",
-    scalaVersion          :=  "2.10.1",
+    scalaVersion          :=  "2.10.4",
     scalacOptions         :=  Seq("-deprecation", "-encoding", "utf8",
                                   "-unchecked", "-feature",
                                   "-target:jvm-1.7"),
