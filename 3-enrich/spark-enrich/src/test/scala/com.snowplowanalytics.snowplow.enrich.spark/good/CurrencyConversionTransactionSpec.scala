@@ -20,7 +20,7 @@ import org.specs2.mutable.Specification
 object CurrencyConversionTransactionSpec {
   import EnrichJobSpec._
   val lines = Lines(
-    "2012-05-27  11:35:53  DFW3  3343  70.46.123.145 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 - Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=tr&tr_id=order-123&tr_af=psychicbazaar&tr_tt=8000&tr_tx=200&tr_sh=50&tr_ci=London&tr_st=England&tr_co=UK&dtm=1364177017342&tr_cu=USD&cx=ewoicGFnZSI6eyJjYXRlZ29yeSI6InByb2R1Y3QiLCJza3UiOjM4Mn0sICJjb3VudHMiOiBbMS4wLCAyLjAsIDMuMCwgNC4wXQp9&tid=028288&duid=a279872d76480afb&vid=1&aid=CFe23a&lang=en-GB&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F119-psycards-book-and-deck-starter-pack.html%3Fview%3Dprint%23detail&cv=clj-0.3.0-tom-0.0.2"
+    "2012-05-27  11:35:53  DFW3  3343  70.46.123.145 GET d3gs014xn8p70.cloudfront.net  /ice.png  200 - Mozilla/5.0%20(Windows%20NT%206.1;%20WOW64;%20rv:12.0)%20Gecko/20100101%20Firefox/12.0  &e=tr&tr_id=order-123&tr_af=psychicbazaar&tr_tt=8000&tr_tx=200&tr_sh=50&tr_ci=London&tr_st=England&tr_co=UK&dtm=1364177017342&tr_cu=USD&tid=028288&duid=a279872d76480afb&vid=1&aid=CFe23a&lang=en-GB&f_pdf=0&f_qt=1&f_realp=0&f_wma=1&f_dir=0&f_fla=1&f_java=1&f_gears=0&f_ag=0&res=1920x1080&cookie=1&url=http%3A%2F%2Fwww.psychicbazaar.com%2Foracles%2F119-psycards-book-and-deck-starter-pack.html%3Fview%3Dprint%23detail&cv=clj-0.3.0-tom-0.0.2"
   )
 
   val expected = List(
@@ -76,7 +76,7 @@ object CurrencyConversionTransactionSpec {
     null, //
     null, //
     null, //
-    """{"page":{"category":"product","sku":382},"counts":[1.0,2.0,3.0,4.0]}""",
+    null, // No custom contexts
     null, // Structured event fields empty
     null, //
     null, //
@@ -146,8 +146,14 @@ object CurrencyConversionTransactionSpec {
     null,
     null,
     null,
+    """{"schema":"iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-1","data":[{"schema":"iglu:com.snowplowanalytics.snowplow/ua_parser_context/jsonschema/1-0-0","data":{"useragentFamily":"Firefox","useragentMajor":"12","useragentMinor":"0","useragentPatch":null,"useragentVersion":"Firefox 12.0","osFamily":"Windows 7","osMajor":null,"osMinor":null,"osPatch":null,"osPatchMinor":null,"osVersion":"Windows 7","deviceFamily":"Other"}}]}""",
     null,
-    null
+    "2012-05-27 11:35:53.000",
+    "com.snowplowanalytics.snowplow",
+    "transaction",
+    "jsonschema",
+    "1-0-0",
+    "634b48b2242b6205d8ad7cc1ef87932e"
   )
 }
 
