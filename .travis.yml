@@ -37,6 +37,7 @@ env:
   matrix:
   - TEST_DIR=3-enrich/scala-common-enrich/
   - TEST_DIR=3-enrich/spark-enrich/
+  - TEST_DIR=4-storage/relational-database-shredder/
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y lzop
