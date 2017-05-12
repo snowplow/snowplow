@@ -35,6 +35,7 @@ env:
   - secure: l826euZgoTP33un5ND8zbGpBTHjTZ/4c9l1aqCi2mEnoIE40DXFyYEr8mtGX0EJXUEATIY4G9RsdYTj6kdoxiZLNLP01f7bTTCB0773L9/CplQqajfQ4XqfteN80S8uvxVwxYM/1MyGKa6B54k8prlaOh+8Gsk5iwLSGvq7S/Lk=
   matrix:
   - TEST_DIR=3-enrich/scala-common-enrich/
+  - TEST_DIR=3-enrich/spark-enrich/
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y lzop
@@ -64,7 +65,7 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
-      condition: '"$(.travis/is_release_tag.sh spark_enrich $TRAVIS_TAG)" == "" && $? == 0'
+      condition: '"$(.travis/is_release_tag.sh spark_enrich $TRAVIS_TAG)" == "" && $? == 0 && $TEST_DIR = 3-enrich/spark-enrich/'
   - provider: script
     script: ./.travis/deploy.sh relational_database_shredder $TRAVIS_TAG
     skip_cleanup: true
