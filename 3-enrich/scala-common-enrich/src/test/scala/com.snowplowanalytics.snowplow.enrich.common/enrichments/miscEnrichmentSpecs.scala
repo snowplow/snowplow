@@ -36,7 +36,7 @@ class EtlVersionSpec extends MutSpecification {
 
   "The ETL version" should {
     "be successfully returned" in {
-      MiscEnrichments.etlVersion("spark-x.x.x") must_== "spark-x.x.x-common-0.25.0-M3"
+      MiscEnrichments.etlVersion("spark-x.x.x") must_== "spark-x.x.x-common-0.25.0-M4"
     }
   }
 }
